@@ -11943,7 +11943,7 @@ public final class mudclient implements Runnable {
 		if(worldEditorInterface.isTerrainPainting())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",localZ);
 		if(worldEditorInterface.isSceneryPlacing())
-			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),localZ);
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+WorldEditorDefinitionCatalog.sceneryReference(worldEditorInterface.getSceneryId()),localZ);
 		if(worldEditorInterface.isNpcPlacing())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),localZ);
 		if(worldEditorInterface.isGroundItemPlacing())
@@ -12223,10 +12223,10 @@ public final class mudclient implements Runnable {
 								if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
 										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceX(var9), id,
-										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Inspect editor data");
+										"@cya@"+WorldEditorDefinitionCatalog.boundaryReference(id), "Inspect editor data");
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
 										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceX(var9), id,
-										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Copy editor data");
+										"@cya@"+WorldEditorDefinitionCatalog.boundaryReference(id), "Copy editor data");
 								}
 							}
 						}
@@ -12278,15 +12278,15 @@ public final class mudclient implements Runnable {
 										if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
 											this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9), this.getGameObjectInstanceX(var9),
-											this.getGameObjectInstanceID(var9), "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
+											this.getGameObjectInstanceID(var9), "@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id), "Inspect editor data");
 										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
 											this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9), this.getGameObjectInstanceX(var9),
-										this.getGameObjectInstanceID(var9), "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
+										this.getGameObjectInstanceID(var9), "@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id), "Copy editor data");
 									}
 									if (worldEditorInterface != null && worldEditorInterface.isSceneryRotating())
-										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Rotate scenery");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id),"Rotate scenery");
 									if (worldEditorInterface != null && worldEditorInterface.isSceneryRemoving())
-										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Remove scenery");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id),"Remove scenery");
 
 										this.menuCommon
 											.addTileItem_WithID(MenuItemAction.OBJECT_EXAMINE,

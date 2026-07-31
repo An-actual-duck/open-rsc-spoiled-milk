@@ -211,6 +211,42 @@ one clean-close copy-on-write package swap. Import/export of that layered
 package remains a later explicit transaction; authoring the spawn does not
 write the target game.
 
+### Definition-aware selection and visual catalog
+
+World Builder 2 needs an editor vocabulary separate from gameplay-facing
+definition names. Canonical names such as `Rock`, `Chest`, `Door`, and
+`Ladder` are valid in game but insufficient when dozens of stable IDs share
+them. Cleanup must not renumber IDs or silently rename server/client gameplay
+definitions because scripts, maps, saves, and protocol behavior depend on
+those identities.
+
+The implementation sequence is:
+
+1. [x] Generate a versioned editor-only scenery/boundary catalog from
+   authoritative definitions, active ID constants, and mining, fishing,
+   woodcutting, harvesting, and runecrafting behavior tables.
+2. [x] Apply semantic labels in Builder selectors and Builder-only context
+   actions, retain the numeric ID in context references, and fall back to the
+   runtime name when a catalog row is missing or its canonical name drifts.
+3. [x] Keep a small reviewed override file for corrections the sources cannot
+   express and generate an audit of unresolved ID-only legacy variants.
+4. [ ] Add one searchable selection browser backed by this catalog, beginning
+   with scenery and boundaries rather than independent per-tool search code.
+5. [ ] Add lazily rendered, cached visual cards for scenery and boundaries;
+   never render every 3D model every frame.
+6. [ ] Extend the shared browser to items, NPCs, floor textures, roofs, and
+   other definition families after each family has an authoritative metadata
+   and preview contract.
+
+The first catalog covers all 1,332 scenery and 214 boundary IDs. It records
+canonical names, semantic display labels, provenance, tags, and search terms;
+the generated audit is
+[`../info/world-builder-definition-catalog.md`](../info/world-builder-definition-catalog.md).
+Equivalent IDs may share a functional label (for example both tin-rock model
+variants are `Rock (tin)`), while the stable ID and future visual card retain
+their exact identity. This establishes the data foundation for an NEI-style
+browser without putting a 1,546-model render workload into the live scene.
+
 ## Compatibility Contract
 
 The first release supports known Spoiled Milk private-server layouts, not all

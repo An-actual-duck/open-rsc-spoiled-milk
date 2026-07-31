@@ -1,0 +1,25 @@
+{
+  "schema": "world-editor-definition-label-overrides-v1",
+  "scenery": [
+    {
+      "id": 1240,
+      "label": "Pine Tree (festive)",
+      "reason": "The authoritative description identifies this duplicate Pine Tree model as festive.",
+      "tags": [
+        "pine tree",
+        "festive"
+      ]
+    }
+  ],
+  "boundary": [
+    {
+      "id": 101,
+      "label": "Fence (loose panels)",
+      "reason": "Correct the source-definition spelling while retaining the authoritative boundary ID.",
+      "tags": [
+        "fence",
+        "loose panels"
+      ]
+    }
+  ]
+}

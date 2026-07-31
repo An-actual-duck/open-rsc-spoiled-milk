@@ -706,7 +706,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void terrainField(int x,int y,String label,boolean enabled,String value,boolean focused){checkbox(x+10,y,enabled,label);button(x+150,y,28,"-");textField(x+185,y,80,value,focused);button(x+272,y,28,"+");}
 	private void structureField(int x,int y,String label,boolean enabled,String value,boolean focused,String description){checkbox(x+10,y,enabled,label);button(x+118,y,24,"-");textField(x+148,y,54,value,focused);button(x+208,y,24,"+");graphics().drawString(description,x+240,y+17,0xbdbdbd,1);}
 	private String roofDescription(){return terrainRoof==0?"none":"#"+(terrainRoof-1)+" profile";}
-	private String wallDescription(int raw){try{return raw==0?"none":"#"+(raw-1)+" "+EntityHandler.getDoorDef(raw-1).getName();}catch(Exception e){return "undefined";}}
+	private String wallDescription(int raw){try{return raw==0?"none":"#"+(raw-1)+" "+WorldEditorDefinitionCatalog.boundaryLabel(raw-1);}catch(Exception e){return "undefined";}}
 	private String floorTextureDescription(){
 		if(terrainFloorTexture==0)return "Floor Texture 0: none (base Floor Color is visible).";
 		if(terrainFloorTexture==250)return "Floor Texture 250: bridge transition sentinel.";
@@ -742,7 +742,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		button(x+10,y+276,165,"Save queued edits");
 	}
 	private void toolButton(int x,int y,int w,String text,boolean active){graphics().drawBoxAlpha(x,y,w,24,active?0x365b82:0x333333,220);graphics().drawBoxBorder(x,w,y,24,active?0x66b3ff:0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
-	private String sceneryName(){try{return EntityHandler.getObjectDef(sceneryId).getName();}catch(Exception e){return "Unknown scenery";}}
+	private String sceneryName(){try{return WorldEditorDefinitionCatalog.sceneryLabel(sceneryId);}catch(Exception e){return "Unknown scenery";}}
 	private String npcName(){try{return EntityHandler.getNpcDef(npcId).getName();}catch(Exception e){return "Unknown NPC";}}
 	private String groundItemName(){try{return EntityHandler.getItemDef(groundItemId).getName();}catch(Exception e){return "Unknown item";}}
 	private boolean groundItemStackable(){try{return EntityHandler.getItemDef(groundItemId).isStackable();}catch(Exception e){return false;}}
@@ -760,7 +760,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private static String point(int x,int y,int level){return x<0||y<0?"not set":x+","+y+",L"+level;}
 	private static int diagonalDefinitionId(int v){if(v>0&&v<12000)return v-1;if(v>12000&&v<24000)return v-12001;return -1;}
 	private static String diagonalRotation(int v){return v>12000&&v<24000?"rotated":v>0&&v<12000?"not rotated":"none";}
-	private static String wall(int id,String name){return id<0?"none":"#"+id+" ("+name+")";}
+	private static String wall(int id,String name){return id<0?"none":"#"+id+" ("+WorldEditorDefinitionCatalog.boundaryLabel(id,name)+")";}
 	private static String planeName(int plane){switch(plane){case 0:return "Surface";case 1:return "First floor";case 2:return "Second floor";case -1:case 3:return "Underground";default:return plane<0?"Depth "+plane:"Upper level "+plane;}}
 	private static int valueAfter(String text,String marker){if(text==null)return -1;int at=text.indexOf(marker);if(at<0)return -1;at+=marker.length();int end=at;while(end<text.length()&&Character.isDigit(text.charAt(end)))end++;try{return Integer.parseInt(text.substring(at,end));}catch(Exception e){return -1;}}
 	private static String join(String[] lines){StringBuilder b=new StringBuilder();for(String line:lines)b.append(line).append(' ');return b.toString();}
