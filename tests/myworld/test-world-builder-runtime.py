@@ -248,7 +248,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                             && !profile.declaresLayer(-3), "declared signed levels");
                         require("-2,-1,0,1,2,10".equals(
                             profile.layeredLevelsLabel()), "level label");
-                        require("f914d93e7abcf".equals(
+                        require("f914d93e7abc".equals(
                             profile.layeredManifestShort()), "manifest identity");
                         System.setProperty(
                             WorldBuilderClientProfile.LAYERED_TERRAIN_DRAFT_PROPERTY, "true");

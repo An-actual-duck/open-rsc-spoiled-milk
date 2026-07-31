@@ -5,9 +5,11 @@ import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
+import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.coordinate.NativeLayeredGameObjectIdentity;
@@ -76,6 +78,17 @@ public final class WorldEditorSessionManager {
 		new LinkedHashMap<NativeNpcKey,NativeNpcState>();
 	private final Set<NativeNpcKey> nativeNpcDirty =
 		new HashSet<NativeNpcKey>();
+	private final Map<NativeGroundItemKey,NativeGroundItemState>
+		nativeGroundItemBase =
+			new LinkedHashMap<NativeGroundItemKey,NativeGroundItemState>();
+	private final Map<NativeGroundItemKey,NativeGroundItemState>
+		nativeGroundItemOverlay =
+			new LinkedHashMap<NativeGroundItemKey,NativeGroundItemState>();
+	private final Map<NativeGroundItemKey,NativeGroundItemState>
+		nativeGroundItemSaved =
+			new LinkedHashMap<NativeGroundItemKey,NativeGroundItemState>();
+	private final Set<NativeGroundItemKey> nativeGroundItemDirty =
+		new HashSet<NativeGroundItemKey>();
 	private String nativeTerrainBaseManifestSha256;
 	private long nativeTerrainSceneRevision;
 	public WorldEditorSessionManager() { this(null, new SecureRandom()); }
@@ -599,6 +612,87 @@ public final class WorldEditorSessionManager {
 		return npc;
 	}
 
+	public synchronized GroundItem placeNativeGroundItem(
+		Player player,
+		int itemId,
+		int amount,
+		int respawnSeconds,
+		int x,
+		int y) {
+		WorldLocation location = activeNativePlacementLocation(player, x, y);
+		com.openrsc.server.external.ItemDefinition definition =
+			player.getWorld().getServer().getEntityHandler()
+				.getItemDef(itemId);
+		if (definition == null) {
+			throw new IllegalArgumentException(
+				"Invalid item definition ID.");
+		}
+		if (amount < 1) {
+			throw new IllegalArgumentException(
+				"Ground-item amount must be at least 1.");
+		}
+		if (!definition.isStackable() && amount != 1) {
+			throw new IllegalArgumentException(
+				"Non-stackable ground items must use amount 1.");
+		}
+		if (respawnSeconds < 1
+			|| respawnSeconds
+				> NativeLayeredGroundItemPlacement.MAX_RESPAWN_SECONDS) {
+			throw new IllegalArgumentException(
+				"Ground-item respawn time must be from 1 to "
+					+ NativeLayeredGroundItemPlacement.MAX_RESPAWN_SECONDS
+					+ " seconds.");
+		}
+		if (player.getWorld().hasNativeLayeredGroundItemPlacement(location)) {
+			throw new IllegalArgumentException(
+				"There is already an authored ground-item spawn in that spot.");
+		}
+		NativeGroundItemKey key = new NativeGroundItemKey(location);
+		captureNativeGroundItemBase(key, null);
+		NativeGroundItemState base = nativeGroundItemBase.get(key);
+		String placementId = base == null
+			? nativeGroundItemPlacementId(location) : base.placementId;
+		NativeLayeredGroundItemPlacement placement =
+			NativeLayeredGroundItemPlacement.authored(
+				placementId, itemId, location, amount, respawnSeconds);
+		GroundItem item =
+			player.getWorld().registerNativeLayeredGroundItem(placement);
+		if (item == null
+			|| item.getNativeLayeredPlacement() != placement) {
+			throw new IllegalStateException(
+				"Ground-item spawn could not be registered.");
+		}
+		recordNativeGroundItem(
+			key, NativeGroundItemState.from(placement));
+		return item;
+	}
+
+	public synchronized GroundItem removeNativeGroundItem(
+		Player player,
+		int itemId,
+		int x,
+		int y) {
+		WorldLocation location = activeNativePlacementLocation(player, x, y);
+		GroundItem item =
+			player.getWorld().findNativeLayeredGroundItem(location);
+		if (item == null || item.getID() != itemId
+			|| !location.equals(item.getWorldLocation())
+			|| !player.getWorld().getRegionManager().isNativeLayeredPlacement(
+				item, RegionManager.NATIVE_LAYERED_GROUND_ITEM_KIND)) {
+			throw new IllegalArgumentException(
+				"Only a visible package-owned ground-item spawn on this "
+					+ "Builder-created level is editable.");
+		}
+		NativeGroundItemState current =
+			NativeGroundItemState.from(
+				item.getNativeLayeredPlacement());
+		NativeGroundItemKey key = new NativeGroundItemKey(location);
+		captureNativeGroundItemBase(key, current);
+		item.retireNativeLayeredPlacement();
+		recordNativeGroundItem(key, null);
+		return item;
+	}
+
 	public synchronized WorldEditorLayeredTerrainJournal.SaveResult
 		saveNativeTerrainDraft(Player player) throws IOException {
 		if (!ownsActiveSession(player)) {
@@ -609,7 +703,8 @@ public final class WorldEditorSessionManager {
 			&& nativeTerrainGrowth.equals(nativeTerrainGrowthSaved)
 			&& nativeLevelCreations.equals(nativeLevelCreationsSaved)
 			&& nativeSceneryDirty.isEmpty()
-			&& nativeNpcDirty.isEmpty()) {
+			&& nativeNpcDirty.isEmpty()
+			&& nativeGroundItemDirty.isEmpty()) {
 			throw new IllegalStateException("Layered draft is empty.");
 		}
 		if (nativeTerrainBaseManifestSha256 == null) {
@@ -689,13 +784,37 @@ public final class WorldEditorSessionManager {
 				persisted.maxX,
 				persisted.maxY));
 		}
+		List<WorldEditorLayeredTerrainJournal.GroundItemEdit> groundItems =
+			new ArrayList<WorldEditorLayeredTerrainJournal.GroundItemEdit>(
+				nativeGroundItemOverlay.size());
+		for (Map.Entry<NativeGroundItemKey,NativeGroundItemState> entry
+			: nativeGroundItemOverlay.entrySet()) {
+			NativeGroundItemKey key = entry.getKey();
+			NativeGroundItemState target = entry.getValue();
+			NativeGroundItemState persisted = target == null
+				? nativeGroundItemBase.get(key) : target;
+			if (persisted == null) {
+				throw new IllegalStateException(
+					"Layered ground-item removal has no persisted identity.");
+			}
+			groundItems.add(
+				new WorldEditorLayeredTerrainJournal.GroundItemEdit(
+					target == null,
+					key.level,
+					key.x,
+					key.y,
+					persisted.placementId,
+					persisted.itemId,
+					persisted.amount,
+					persisted.respawnSeconds));
+		}
 		WorldEditStorageContext paths = storage(player);
 		Path journal = paths.layeredTerrainDraftJournal();
 		paths.validateWorkingAuthoredFile(journal);
 		WorldEditorLayeredTerrainJournal.SaveResult saved =
 			WorldEditorLayeredTerrainJournal.save(
 				journal, nativeTerrainBaseManifestSha256, levels, sectors,
-				tiles, scenery, npcs);
+				tiles, scenery, npcs, groundItems);
 		nativeTerrainSaved.clear();
 		nativeTerrainSaved.putAll(nativeTerrainOverlay);
 		nativeTerrainDirty.clear();
@@ -709,6 +828,9 @@ public final class WorldEditorSessionManager {
 		nativeNpcSaved.clear();
 		nativeNpcSaved.putAll(nativeNpcOverlay);
 		nativeNpcDirty.clear();
+		nativeGroundItemSaved.clear();
+		nativeGroundItemSaved.putAll(nativeGroundItemOverlay);
+		nativeGroundItemDirty.clear();
 		return saved;
 	}
 
@@ -740,6 +862,10 @@ public final class WorldEditorSessionManager {
 
 	public synchronized int nativeNpcDraftSize() {
 		return nativeNpcDirty.size();
+	}
+
+	public synchronized int nativeGroundItemDraftSize() {
+		return nativeGroundItemDirty.size();
 	}
 
 	public synchronized int terrainDraftSize(){return terrainDraft.size()+nativeTerrainDraftSize();}
@@ -1152,6 +1278,13 @@ public final class WorldEditorSessionManager {
 			+signedToken(coordinate.getX())+".y"
 			+signedToken(coordinate.getY());
 	}
+	private static String nativeGroundItemPlacementId(WorldLocation location){
+		WorldCoordinate coordinate=location.getCoordinate();
+		return "spoiled-milk.builder.ground-item.l"
+			+signedToken(coordinate.getLevel())+".x"
+			+signedToken(coordinate.getX())+".y"
+			+signedToken(coordinate.getY());
+	}
 	private void captureNativeNpcBase(
 		NativeNpcKey key,NativeNpcState state){
 		if(!nativeNpcBase.containsKey(key))nativeNpcBase.put(key,state);
@@ -1166,6 +1299,30 @@ public final class WorldEditorSessionManager {
 			?nativeNpcSaved.get(key):base;
 		if(java.util.Objects.equals(target,saved))nativeNpcDirty.remove(key);
 		else nativeNpcDirty.add(key);
+	}
+	private void captureNativeGroundItemBase(
+		NativeGroundItemKey key,NativeGroundItemState state){
+		if(!nativeGroundItemBase.containsKey(key)){
+			nativeGroundItemBase.put(key,state);
+		}
+	}
+	private void recordNativeGroundItem(
+		NativeGroundItemKey key,NativeGroundItemState state){
+		NativeGroundItemState base=nativeGroundItemBase.get(key);
+		if(java.util.Objects.equals(base,state)){
+			nativeGroundItemOverlay.remove(key);
+		}else{
+			nativeGroundItemOverlay.put(key,state);
+		}
+		NativeGroundItemState target=nativeGroundItemOverlay.containsKey(key)
+			?nativeGroundItemOverlay.get(key):base;
+		NativeGroundItemState saved=nativeGroundItemSaved.containsKey(key)
+			?nativeGroundItemSaved.get(key):base;
+		if(java.util.Objects.equals(target,saved)){
+			nativeGroundItemDirty.remove(key);
+		}else{
+			nativeGroundItemDirty.add(key);
+		}
 	}
 	private static String signedToken(int value){
 		return value<0?"m"+Long.toString(-(long)value):"p"+Integer.toString(value);
@@ -1306,6 +1463,53 @@ public final class WorldEditorSessionManager {
 		}
 		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeNpcState))return false;NativeNpcState state=(NativeNpcState)other;return level==state.level&&npcId==state.npcId&&startX==state.startX&&startY==state.startY&&minX==state.minX&&minY==state.minY&&maxX==state.maxX&&maxY==state.maxY&&placementId.equals(state.placementId);}
 		@Override public int hashCode(){int result=placementId.hashCode();result=31*result+level;result=31*result+npcId;result=31*result+startX;result=31*result+startY;result=31*result+minX;result=31*result+minY;result=31*result+maxX;return 31*result+maxY;}
+	}
+	private static final class NativeGroundItemKey {
+		final WorldSpaceId worldSpace;final int level,x,y;
+		NativeGroundItemKey(WorldLocation location){
+			worldSpace=location.getWorldSpace();
+			WorldCoordinate coordinate=location.getCoordinate();
+			level=coordinate.getLevel();x=coordinate.getX();y=coordinate.getY();
+		}
+		@Override public boolean equals(Object other){
+			if(this==other)return true;
+			if(!(other instanceof NativeGroundItemKey))return false;
+			NativeGroundItemKey key=(NativeGroundItemKey)other;
+			return level==key.level&&x==key.x&&y==key.y
+				&&worldSpace.equals(key.worldSpace);
+		}
+		@Override public int hashCode(){
+			int result=worldSpace.hashCode();result=31*result+level;
+			result=31*result+x;return 31*result+y;
+		}
+	}
+	private static final class NativeGroundItemState {
+		final String placementId;final int itemId,amount,respawnSeconds;
+		NativeGroundItemState(
+			String placementId,int itemId,int amount,int respawnSeconds){
+			this.placementId=placementId;this.itemId=itemId;
+			this.amount=amount;this.respawnSeconds=respawnSeconds;
+		}
+		static NativeGroundItemState from(
+			NativeLayeredGroundItemPlacement placement){
+			if(placement==null)throw new IllegalArgumentException(
+				"Native layered ground-item identity is unavailable.");
+			return new NativeGroundItemState(
+				placement.getPlacementId(),placement.getItemId(),
+				placement.getAmount(),placement.getRespawnSeconds());
+		}
+		@Override public boolean equals(Object other){
+			if(this==other)return true;
+			if(!(other instanceof NativeGroundItemState))return false;
+			NativeGroundItemState state=(NativeGroundItemState)other;
+			return itemId==state.itemId&&amount==state.amount
+				&&respawnSeconds==state.respawnSeconds
+				&&placementId.equals(state.placementId);
+		}
+		@Override public int hashCode(){
+			int result=placementId.hashCode();result=31*result+itemId;
+			result=31*result+amount;return 31*result+respawnSeconds;
+		}
 	}
 	private static final class NativeLevelCreation {
 		final int level,anchorX,anchorY;final String name,role;

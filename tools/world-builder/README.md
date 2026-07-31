@@ -4,6 +4,22 @@ This module owns standalone World Builder project discovery, manifests,
 workspace management, export, import, rollback, and launch supervision as
 those phases are implemented.
 
+## Product generations
+
+The packed-map editor is frozen and unmaintained at release tag
+`rsc-world-editor-v1.03`. Current signed-layered work belongs to the separate
+`Spoiled Milk World Builder 2` product and update channel
+`rsc-world-editor-v2`. Its archive prefix, install folder, signed-layered
+workspace, and release identity are distinct; automatic updates are eligible
+only from v2 itself, and the v2 packaged launcher refuses a legacy or
+unidentified workspace.
+
+The ambiguous `scripts/package-world-builder-release.sh` command therefore
+fails closed. Future v2 artifacts use
+`scripts/package-world-builder-v2-release.sh`, which embeds the reviewed
+signed-layered package and remains production-locked until layered
+export/import and final release validation are accepted.
+
 Read-only target discovery remains available independently:
 
 ```bash
@@ -47,9 +63,9 @@ tree is read-only throughout preparation and use.
 
 The Builder server receives the canonical workspace root explicitly and
 refuses to start from any directory other than `<workspace>/working/server`.
-Terrain, scenery, NPC overlays, the client terrain mirror, and terrain backups
-all resolve through that validated context. The editor shows the project folder
-name, source revision, and current saved/unsaved state.
+Terrain, scenery, NPC and ground-item overlays, the client terrain mirror, and
+terrain backups all resolve through that validated context. The editor shows
+the project folder name, source revision, and current saved/unsaved state.
 
 The launcher keeps logs under `<workspace>/logs`, active PID files and the
 last-run receipt under `<workspace>/run`, and refuses a second process for the
@@ -85,22 +101,36 @@ drift, or a draft that changes accepted package content is refused. The
 Builder-only runtime profile cannot start an ordinary server. Terrain/entity
 editing on the accepted source levels and layered export remain disabled.
 
-### Layered draft: terrain editing
+### Layered draft: generated-level authoring
 
-Once at least one level has been created, the Builder enables its existing
-terrain tools only on Builder-created levels. Inspect or copy a tile, choose
-the checked elevation, floor-color, floor-texture, roof, wall, or diagonal
-fields, and paint with the 1-by-1 or 3-by-3 brush. The server applies the
-working overlay immediately to terrain presentation and collision. Painting
-on accepted source levels `-1`, `0`, `1`, or `2` is refused, and scenery/NPC
-editing remains locked.
+Once at least one level has been created, the Builder enables terrain,
+scenery, NPC, and collectible ground-item tools only on Builder-created
+levels. Inspect or copy a tile, choose the checked elevation, floor-color,
+floor-texture, roof, wall, or diagonal fields, and paint with the 1-by-1 or
+3-by-3 brush. The server applies the working overlay immediately to terrain
+presentation and collision. Scenery and NPC tools place and remove
+package-owned entities through their native signed-level registries.
 
-Select **Save** to write a bounded deterministic terrain journal. Saving does
+The **Items** tab places one respawning package-owned spawn per tile. Select an
+item definition, stack amount, and `1..86400` second respawn time, then
+right-click allocated terrain to place it. Non-stackable definitions always
+use amount `1`. In Remove mode, right-click a visible authored ground item and
+choose **Remove spawn**; removal permanently cancels any delayed respawn for
+that slot. A picked-up spawn keeps its slot reserved while absent and must
+respawn before the first removal control can select it.
+
+All mutation on accepted source levels `-2`, `-1`, `0`, `1`, `2`, and `10`
+is refused. Generated-level placement also refuses absent terrain, invalid
+definitions, conflicting authored slots, and unallocated NPC roaming bounds.
+
+Select **Save** to write one bounded deterministic v5 draft journal containing
+terrain, sector growth, scenery, NPC, and ground-item operations. Saving does
 not modify the source snapshot, target private server, or exported game files.
 Close the Builder normally; while holding the workspace lock, the launcher
 materializes that journal through a copy-on-write package transaction, verifies
 the complete source descendant and hashes, then removes the journal. Reopen the
-same workspace to review the durable result.
+same workspace to review the durable result. The launcher remains backward
+compatible with earlier v1-v4 journals.
 
 Allocate one new void-backed sector at an existing edge from an active
 Builder-created level with:
@@ -116,8 +146,8 @@ use Floor Color `1` plus blocking/invisible Floor Texture `8`, so creators
 paint only the area they want instead of erasing a large floor or ocean.
 Unallocated sectors use the same explicit-void presentation. Save, close, and
 reopen before painting a new sector. Each transaction is also limited to 4,096
-distinct edited tiles. Placement authoring, terrain deletion, layered-package
-export, and target-game import remain separate future gates.
+distinct edited tiles. Standalone boundary-object authoring, terrain deletion,
+layered-package export, and target-game import remain separate future gates.
 
 After closing the Builder, export the saved working map with explicit release
 provenance:

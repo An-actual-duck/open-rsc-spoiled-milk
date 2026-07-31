@@ -1173,7 +1173,18 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             placement = {
                 "boundaries": [],
                 "encoding": "layered-world-placements-v3",
-                "groundItems": [],
+                "groundItems": [
+                    {
+                        "amount": 25,
+                        "itemId": 10,
+                        "placementId": (
+                            "spoiled-milk.builder.ground-item."
+                            "lm3.xp140.yp640"
+                        ),
+                        "position": {"x": 140, "y": 640},
+                        "respawnSeconds": 5,
+                    }
+                ],
                 "level": -3,
                 "npcs": [],
                 "scenery": [],

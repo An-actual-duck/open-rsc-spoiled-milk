@@ -10084,6 +10084,17 @@ public final class mudclient implements Runnable {
 
 	private void addGroundItemMenuEntry(int index) {
 		String itemActor = "@lre@" + EntityHandler.getItemDef(this.groundItemID[index]).getName();
+		if (this.worldEditorInterface != null
+			&& this.worldEditorInterface.isGroundItemRemoving()) {
+			this.menuCommon.addTileItem_WithID(
+				MenuItemAction.WORLD_EDITOR_REMOVE_GROUND_ITEM,
+				this.groundItemZ[index],
+				this.groundItemID[index],
+				this.groundItemX[index],
+				this.groundItemID[index],
+				itemActor,
+				"Remove spawn");
+		}
 		if (this.selectedSpell >= 0) {
 			SpellDef spellDef = EntityHandler.getSpellDef(this.selectedSpell);
 			if (spellDef != null && spellDef.getSpellType() == 3) {
@@ -11937,9 +11948,11 @@ public final class mudclient implements Runnable {
 		if(worldEditorInterface.isTerrainPainting())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PAINT_TERRAIN,"Paint terrain",localZ);
 		if(worldEditorInterface.isSceneryPlacing())
-			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+EntityHandler.getObjectDef(worldEditorInterface.getSceneryId()).getName(),localZ);
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_SCENERY,"Place "+WorldEditorDefinitionCatalog.sceneryReference(worldEditorInterface.getSceneryId()),localZ);
 		if(worldEditorInterface.isNpcPlacing())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_NPC,"Place "+EntityHandler.getNpcDef(worldEditorInterface.getNpcId()).getName(),localZ);
+		if(worldEditorInterface.isGroundItemPlacing())
+			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_PLACE_GROUND_ITEM,"Place "+EntityHandler.getItemDef(worldEditorInterface.getGroundItemId()).getName(),localZ);
 	}
 	private boolean addProjectedEditorTileFallback(){
 		boolean editorOpen=worldEditorInterface!=null&&worldEditorInterface.isEditorOpen();
@@ -12215,10 +12228,10 @@ public final class mudclient implements Runnable {
 								if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
 										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceX(var9), id,
-										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Inspect editor data");
+										"@cya@"+WorldEditorDefinitionCatalog.boundaryReference(id), "Inspect editor data");
 									this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
 										this.getWallObjectInstanceZ(var9), this.getWallObjectInstanceDir(var9), this.getWallObjectInstanceX(var9), id,
-										"@cya@"+EntityHandler.getDoorDef(id).getName(), "Copy editor data");
+										"@cya@"+WorldEditorDefinitionCatalog.boundaryReference(id), "Copy editor data");
 								}
 							}
 						}
@@ -12270,15 +12283,15 @@ public final class mudclient implements Runnable {
 										if (worldEditorInterface != null && worldEditorInterface.isInspecting()) {
 											this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_INSPECT_OBJECT,
 											this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9), this.getGameObjectInstanceX(var9),
-											this.getGameObjectInstanceID(var9), "@cya@"+EntityHandler.getObjectDef(id).getName(), "Inspect editor data");
+											this.getGameObjectInstanceID(var9), "@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id), "Inspect editor data");
 										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_COPY_OBJECT,
 											this.getGameObjectInstanceZ(var9), this.getGameObjectInstanceDir(var9), this.getGameObjectInstanceX(var9),
-										this.getGameObjectInstanceID(var9), "@cya@"+EntityHandler.getObjectDef(id).getName(), "Copy editor data");
+										this.getGameObjectInstanceID(var9), "@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id), "Copy editor data");
 									}
 									if (worldEditorInterface != null && worldEditorInterface.isSceneryRotating())
-										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Rotate scenery");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_ROTATE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id),"Rotate scenery");
 									if (worldEditorInterface != null && worldEditorInterface.isSceneryRemoving())
-										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+EntityHandler.getObjectDef(id).getName(),"Remove scenery");
+										this.menuCommon.addTileItem_WithID(MenuItemAction.WORLD_EDITOR_REMOVE_SCENERY,this.getGameObjectInstanceZ(var9),this.getGameObjectInstanceDir(var9),this.getGameObjectInstanceX(var9),id,"@cya@"+WorldEditorDefinitionCatalog.sceneryReference(id),"Remove scenery");
 
 										this.menuCommon
 											.addTileItem_WithID(MenuItemAction.OBJECT_EXAMINE,
@@ -19565,6 +19578,25 @@ public final class mudclient implements Runnable {
 				case WORLD_EDITOR_REMOVE_SCENERY: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("robject "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
 				case WORLD_EDITOR_PLACE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("cnpc "+worldEditorInterface.getNpcId()+" "+worldEditorInterface.getNpcRadius()+" "+(indexOrX+midRegionBaseX)+" "+(idOrZ+midRegionBaseZ)); break; }
 				case WORLD_EDITOR_REMOVE_NPC: { worldEditorInterface.markPotentialEntityEdit();sendCommandString("rpc "+indexOrX); break; }
+				case WORLD_EDITOR_PLACE_GROUND_ITEM: {
+					int worldX=indexOrX+midRegionBaseX,worldY=idOrZ+midRegionBaseZ;
+					worldEditorInterface.recordWorldClick(worldX,worldY);
+					worldEditorInterface.markPotentialEntityEdit();
+					sendCommandString("buildergrounditem "
+						+worldEditorInterface.getGroundItemId()+" "
+						+worldEditorInterface.getGroundItemAmount()+" "
+						+worldEditorInterface.getGroundItemRespawnSeconds()+" "
+						+worldX+" "+worldY);
+					break;
+				}
+				case WORLD_EDITOR_REMOVE_GROUND_ITEM: {
+					int worldX=indexOrX+midRegionBaseX,worldY=idOrZ+midRegionBaseZ;
+					worldEditorInterface.recordWorldClick(worldX,worldY);
+					worldEditorInterface.markPotentialEntityEdit();
+					sendCommandString("removebuildergrounditem "
+						+tileID+" "+worldX+" "+worldY);
+					break;
+				}
 				case MOD_SUMMON_PLAYER: {
 					String playerName = var9;
 					playerName = playerName.replaceAll(" ", "_");
@@ -28242,6 +28274,9 @@ public final class mudclient implements Runnable {
 			x += x;
 		else if (x < -1)
 			x -= (-x);
+		if (worldEditorInterface != null && worldEditorInterface.scrollDefinitionBrowser(x)) {
+			return;
+		}
 		if (showUiTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
 			if (uiTabPlayerInfoSubTab == 1) {
 				panelQuestInfo.scrollMethodList(controlQuestInfoPanel, x);

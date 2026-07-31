@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import hashlib
+import json
 import os
 import shutil
 import subprocess
@@ -10,9 +11,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PACKAGER = ROOT / "scripts/package-world-builder-release.sh"
+PACKAGER = ROOT / "scripts/package-world-builder-v2-release.sh"
+LEGACY_PACKAGER = ROOT / "scripts/package-world-builder-release.sh"
 VERSION = "v0.1.0-alpha.1"
-PACKAGE_ROOT = "Spoiled Milk World Builder"
+VERSION_NUMBER = VERSION[1:]
+PACKAGE_ROOT = "Spoiled Milk World Builder 2"
+PRODUCT_ID = "rsc-world-editor-v2"
 NATIVE_ENTRIES = (
     "linux/x64/org/lwjgl/liblwjgl.so",
     "linux/x64/org/lwjgl/glfw/libglfw.so",
@@ -82,7 +86,11 @@ def make_fixture(
         write(root / "server" / name, "\n")
     write(root / "server/globalrules.txt", "rules\n")
     write(root / "tools/world-builder/schema/project.json", "{}\n")
-    shutil.copytree(ROOT / "release/world-builder", root / "release/world-builder")
+    shutil.copytree(
+        ROOT / "release/world-builder-v2", root / "release/world-builder-v2"
+    )
+    write(root / "layered-world-package/manifest.json", '{"schemaVersion":1}\n')
+    write(root / "layered-world-package/terrain/fixture.raw", "layered terrain\n")
     write(root / "release/player/ASSET-SOURCES.txt", "player assets resolved\n")
     write(root / "LICENSE", "AGPL fixture\n")
     credits = (
@@ -127,24 +135,31 @@ def make_fixture(
 
 
 def run_packager(
-    root: Path, linux_runtime: Path, windows_runtime: Path
+    root: Path,
+    linux_runtime: Path,
+    windows_runtime: Path,
+    skip_build: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["ROOT_DIR"] = str(root)
-    env["SPOILED_MILK_WORLD_BUILDER_RELEASE_TEST_MODE"] = "1"
+    arguments = [
+        "bash",
+        str(PACKAGER),
+        "--version",
+        VERSION,
+        "--linux-jre",
+        str(linux_runtime),
+        "--windows-jre",
+        str(windows_runtime),
+        "--layered-package",
+        str(root / "layered-world-package"),
+        "--assets-cleared",
+    ]
+    if skip_build:
+        env["SPOILED_MILK_WORLD_BUILDER_V2_RELEASE_TEST_MODE"] = "1"
+        arguments.append("--skip-build")
     return subprocess.run(
-        [
-            "bash",
-            str(PACKAGER),
-            "--version",
-            VERSION,
-            "--linux-jre",
-            str(linux_runtime),
-            "--windows-jre",
-            str(windows_runtime),
-            "--assets-cleared",
-            "--skip-build",
-        ],
+        arguments,
         cwd=ROOT,
         env=env,
         text=True,
@@ -153,6 +168,30 @@ def run_packager(
 
 
 class WorldBuilderReleaseTest(unittest.TestCase):
+    def test_legacy_release_entrypoint_is_frozen_and_fail_closed(self):
+        result = subprocess.run(
+            ["bash", str(LEGACY_PACKAGER)],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("frozen at rsc-world-editor-v1.03", result.stderr)
+        self.assertIn("package-world-builder-v2-release.sh", result.stderr)
+
+    def test_public_v2_packaging_stays_locked_until_layered_release_gate(self):
+        with tempfile.TemporaryDirectory(prefix="world-builder-v2-release-gate-") as temp:
+            fixture = Path(temp)
+            linux_runtime, windows_runtime = make_fixture(fixture)
+            result = run_packager(
+                fixture, linux_runtime, windows_runtime, skip_build=False
+            )
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn(
+                "layered export/import and final release validation",
+                result.stderr,
+            )
+
     def test_packager_rejects_unresolved_icon_provenance(self):
         with tempfile.TemporaryDirectory(prefix="world-builder-release-credits-") as temp:
             fixture = Path(temp)
@@ -186,9 +225,9 @@ class WorldBuilderReleaseTest(unittest.TestCase):
             result = run_packager(fixture, linux_runtime, windows_runtime)
             self.assertEqual(0, result.returncode, result.stdout + result.stderr)
             source_commit = git(fixture, "rev-parse", "HEAD")
-            output = fixture / "output/releases/world-builder" / VERSION
-            linux_archive = output / f"spoiled-milk-world-builder-{VERSION}-linux-x64.zip"
-            windows_archive = output / f"spoiled-milk-world-builder-{VERSION}-windows-x64.zip"
+            output = fixture / "output/releases/world-builder-v2" / VERSION
+            linux_archive = output / f"rsc-world-editor-v2-{VERSION_NUMBER}-linux-x64.zip"
+            windows_archive = output / f"rsc-world-editor-v2-{VERSION_NUMBER}-windows-x64.zip"
             checksums = output / "SHA256SUMS.txt"
             for artifact in (linux_archive, windows_archive, checksums):
                 self.assertTrue(artifact.is_file(), artifact)
@@ -213,6 +252,7 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                         prefix + "Undo Last Map Import.sh",
                         prefix + "Undo Last Map Import.cmd",
                         prefix + "README.txt",
+                        prefix + "RELEASE-IDENTITY.json",
                         prefix + "VERSION.txt",
                         prefix + "SOURCE-COMMIT.txt",
                         prefix + "LICENSE",
@@ -224,6 +264,7 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                         prefix + "builder-runtime/server/plugins.jar",
                         prefix + "builder-runtime/server/inc/sqlite/myworld_seed.db",
                         prefix + "builder-runtime/launcher/world-builder-tools.jar",
+                        prefix + "builder-runtime/layered-world/package/manifest.json",
                     }
                     self.assertFalse(required - names, required - names)
                     if windows:
@@ -249,6 +290,20 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                         f"{source_commit}\n",
                         archive.read(prefix + "SOURCE-COMMIT.txt").decode(),
                     )
+                    identity = json.loads(
+                        archive.read(prefix + "RELEASE-IDENTITY.json").decode()
+                    )
+                    self.assertEqual(1, identity["schemaVersion"])
+                    self.assertEqual(PRODUCT_ID, identity["productId"])
+                    self.assertEqual(2, identity["productGeneration"])
+                    self.assertEqual(PRODUCT_ID, identity["updateChannel"])
+                    self.assertEqual([PRODUCT_ID], identity["automaticUpgradeFromProductIds"])
+                    self.assertEqual("rsc-world-editor-v1", identity["legacyProductId"])
+                    self.assertEqual("rsc-world-editor-v1.03", identity["legacyFinalTag"])
+                    self.assertFalse(identity["legacyWorkspaceMigration"])
+                    self.assertEqual("signed-layered-v1", identity["worldCoordinateModel"])
+                    self.assertEqual(VERSION, identity["version"])
+                    self.assertEqual(source_commit, identity["sourceCommit"])
                     readme = archive.read(prefix + "README.txt").decode()
                     self.assertIn(VERSION, readme)
                     self.assertIn(source_commit, readme)
@@ -258,12 +313,19 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                     self.assertIn("Set a North Wall, East Wall, or Diagonal Wall value to 0", readme)
                     self.assertIn("Set Floor Texture to 8 to erase terrain", readme)
                     self.assertIn("Save does not copy those files into the parent private server", readme)
+                    self.assertIn("never installs as an automatic v1 update", readme)
+                    self.assertIn(
+                        "does not open or migrate a v1 workspace",
+                        " ".join(readme.split()),
+                    )
                     self.assertIn('"Import Map Changes.sh"', readme)
                     self.assertIn("exact state immediately before the most recent successful", readme)
                     start_cmd = archive.read(prefix + "Start World Builder.cmd").decode()
                     self.assertIn(r"runtime\bin\java.exe", start_cmd)
                     self.assertIn("launch --server-root", start_cmd)
                     self.assertIn("run --workspace", start_cmd)
+                    self.assertIn("--layered-package", start_cmd)
+                    self.assertIn("--layered-profile spoiled-milk-replacement", start_cmd)
                     import_cmd = archive.read(prefix + "Import Map Changes.cmd").decode()
                     self.assertIn("export-import", import_cmd)
                     undo_cmd = archive.read(prefix + "Undo Last Map Import.cmd").decode()
@@ -299,6 +361,14 @@ class WorldBuilderReleaseTest(unittest.TestCase):
             self.assertIn("44600\n", start_call)
 
             write(package / "workspace/project-source.json", "{}\n")
+            refused_legacy = subprocess.run(
+                ["bash", str(package / "Start World Builder.sh")],
+                cwd=Path(temp), env=env, text=True, capture_output=True,
+            )
+            self.assertNotEqual(0, refused_legacy.returncode)
+            self.assertIn("legacy or unidentified", refused_legacy.stderr)
+
+            write(package / "workspace/layered-review.json", "{}\n")
             restarted = subprocess.run(
                 ["bash", str(package / "Start World Builder.sh")],
                 cwd=Path(temp), env=env, text=True, capture_output=True,

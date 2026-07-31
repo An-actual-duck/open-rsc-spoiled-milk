@@ -195,12 +195,13 @@ public enum NativeLayeredWorldRuntimeProfile {
 			|| loaded.getTerrainSectorCount() < 1782
 			|| loaded.getPlacementSetCount() != loaded.getLevelCount()
 			|| loaded.getNpcPlacementCount() < 3775
-				|| loaded.getGroundItemPlacementCount() != 879
-				|| loaded.getSceneryPlacementCount() < 27887
+			|| loaded.getGroundItemPlacementCount() < 879
+			|| loaded.getSceneryPlacementCount() < 27887
 			|| loaded.getBoundaryPlacementCount() != 971) {
 			throw new IllegalStateException(
 				"The spoiled-milk-builder-draft profile requires an additive "
-				+ "terrain/NPC/scenery descendant of the accepted Spoiled Milk package");
+				+ "terrain/NPC/scenery/ground-item descendant of the accepted "
+				+ "Spoiled Milk package");
 		}
 		for (int level : new int[] {-2, -1, 0, 1, 2, 10}) {
 			if (!loaded.declaresLevel(WorldSpaceId.GLOBAL, level)) {
@@ -230,10 +231,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 				requireBuilderSourcePlacementCounts(set, 37, 22, 199, 36);
 			} else if (set.getLevel() == 10) {
 				requireBuilderSourcePlacementCounts(set, 28, 4, 194, 6);
-			} else if (!set.getGroundItems().isEmpty()
-				|| !set.getBoundaries().isEmpty()) {
+			} else if (!set.getBoundaries().isEmpty()) {
 				throw new IllegalStateException(
-					"Builder-created levels may contain NPC and scenery placements only");
+					"Builder-created levels may not contain authored boundaries");
 			}
 		}
 		if (placementLevels.size() != loaded.getLevelCount()) {

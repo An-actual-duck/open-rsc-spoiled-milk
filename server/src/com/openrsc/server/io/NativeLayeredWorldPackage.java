@@ -60,7 +60,6 @@ public final class NativeLayeredWorldPackage {
 	private static final int MAX_PLACEMENTS_PER_SET = 65536;
 	private static final int MAX_NPC_ROAM_RADIUS = 64;
 	private static final int MAX_NPC_ROAM_SPAN = 4096;
-	private static final int MAX_GROUND_ITEM_RESPAWN_SECONDS = 86400;
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
 	private static final Pattern VERSION =
@@ -576,10 +575,11 @@ public final class NativeLayeredWorldPackage {
 			int itemId = nonNegativeInt(value, "itemId");
 			int amount = positiveInt(value, "amount");
 			int respawnSeconds = positiveInt(value, "respawnSeconds");
-			if (respawnSeconds > MAX_GROUND_ITEM_RESPAWN_SECONDS) {
+			if (respawnSeconds
+				> NativeLayeredGroundItemPlacement.MAX_RESPAWN_SECONDS) {
 				throw new IOException(
 					"groundItems[" + index + "].respawnSeconds must be 1.."
-						+ MAX_GROUND_ITEM_RESPAWN_SECONDS);
+						+ NativeLayeredGroundItemPlacement.MAX_RESPAWN_SECONDS);
 			}
 			groundItems.add(new NativeLayeredGroundItemPlacement(
 				placementId,

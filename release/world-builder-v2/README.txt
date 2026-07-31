@@ -1,21 +1,30 @@
-SPOILED MILK WORLD BUILDER @VERSION@
-====================================
+SPOILED MILK WORLD BUILDER 2 @VERSION@
+======================================
 
 This package edits a compatible Spoiled Milk private server without changing
 its active map until you deliberately import your work.
 
+This is the signed-layered second generation of the editor. It is a separate
+product from the frozen packed-map RSC World Editor v1 line, whose final tag is
+rsc-world-editor-v1.03. World Builder 2 uses product and update channel
+rsc-world-editor-v2. It never installs as an automatic v1 update, and it does
+not open or migrate a v1 workspace.
+
 INSTALLATION
 ------------
 
-Place the entire "Spoiled Milk World Builder" folder directly inside the root
+Place the entire "Spoiled Milk World Builder 2" folder directly inside the root
 of your private server. The result should look like this:
 
   Your Private Server/
     Client_Base/
     server/
-    Spoiled Milk World Builder/
+    Spoiled Milk World Builder 2/
 
 Do not place it inside the server/ or Client_Base/ folder.
+Do not extract it over a legacy World Editor or copy a legacy workspace into
+this folder. Keep both installations side by side if both map formats are
+needed.
 
 STARTING AND SAVING
 -------------------
@@ -33,9 +42,9 @@ workspace. Later launches reopen that same workspace. The local Builder account
 logs in automatically, is invulnerable, and opens the world editor.
 
 Use the editor's Save control before closing. Save writes the current terrain,
-scenery, and NPC work to project files inside:
+scenery, NPC, and respawning ground-item work to project files inside:
 
-  Spoiled Milk World Builder/workspace/
+  Spoiled Milk World Builder 2/workspace/
 
 Save does not copy those files into the parent private server. You can save,
 close, and reopen World Builder as often as you like while the server continues
@@ -140,15 +149,16 @@ inside workspace/. Preserve that folder if you move or update World Builder.
 UPDATING OR STARTING A FRESH PROJECT
 ------------------------------------
 
-Each workspace is tied to the exact private-server map and definitions it was
-created from. World Builder intentionally does not rebase an old project onto
-a different Spoiled Milk release.
+Each workspace is tied to the exact private-server map, coordinate model, and
+definitions it was created from. World Builder 2 intentionally does not rebase
+an old project onto a different Spoiled Milk release and does not adopt a
+packed-map World Editor v1 workspace.
 
 When updating the target private server:
 
-1. Close World Builder and preserve the entire old World Builder folder.
+1. Close World Builder 2 and preserve the entire old World Builder 2 folder.
 2. Finish or undo any import made by that old workspace.
-3. Install the World Builder package shipped beside the new server release.
+3. Install the World Builder 2 package shipped beside the new server release.
 4. Start it with no workspace/ folder so it creates a fresh project from the
    new release.
 
@@ -181,6 +191,10 @@ REQUIREMENTS AND LIMITS
 - Use a World Builder package alongside the exact Spoiled Milk release it was
   built for. Cross-version project rebasing and imports are intentionally
   refused.
+- RSC World Editor v1 and World Builder 2 use separate product identities,
+  update channels, release tags, archive prefixes, install folders, and
+  workspace formats. There is no automatic upgrade or workspace migration
+  between them.
 - The default local Builder port is 43615. Before the first launch, advanced
   users may set WORLD_BUILDER_PORT to another free port from 1 through 65534.
 - Boundary-object authoring and automatic project rebasing are not included.

@@ -412,6 +412,109 @@ public final class WorldBuilderLayeredDraftHarness {
             "NPC removal restored empty placement payload");
 
         draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        String firstItemPlacementId =
+            "spoiled-milk.builder.ground-item.lm3.xp143.yp641";
+        String secondItemPlacementId =
+            "spoiled-milk.builder.ground-item.lm3.xp144.yp641";
+        String itemDraft =
+            "world-builder-layered-draft-v5\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "level-count\t0\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t0\n"
+            + "npc-count\t0\n"
+            + "ground-item-count\t2\n"
+            + "ground-item\tupsert\t-3\t144\t641\t"
+            + secondItemPlacementId + "\t10\t25\t5\n"
+            + "ground-item\tupsert\t-3\t143\t641\t"
+            + firstItemPlacementId + "\t20\t1\t30\n";
+        Files.write(journal, itemDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult itemCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(itemCommit.groundItemCount == 2
+                && itemCommit.npcCount == 0
+                && itemCommit.sceneryCount == 0,
+            "ground-item journal commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        draft.requireTerrainDraftDescendant(accepted);
+        authored = null;
+        for (WorldBuilderLayeredPackage.PlacementRecord record
+            : draft.placementRecords) {
+            if (record.level == -3) authored = record;
+        }
+        require(authored != null && authored.groundItemCount == 2
+                && authored.npcCount == 0
+                && authored.sceneryCount == 0
+                && authored.boundaryCount == 0,
+            "new-level ground-item placement payload");
+        authoredText = new String(
+            Files.readAllBytes(authoredPayload), StandardCharsets.UTF_8);
+        require(authoredText.contains("\"placementId\": \""
+                    + firstItemPlacementId + "\"")
+                && authoredText.contains("\"itemId\": 20")
+                && authoredText.contains("\"amount\": 25")
+                && authoredText.contains("\"respawnSeconds\": 5")
+                && authoredText.indexOf(firstItemPlacementId)
+                    < authoredText.indexOf(secondItemPlacementId),
+            "authored ground items are complete and deterministically sorted");
+        require(WorldBuilderLayeredReview.readIfPresent(workspace)
+                .manifestSha256.equals(itemCommit.manifestSha256),
+            "ground-item commit changed across reopen");
+
+        String staleItemRemoval =
+            "world-builder-layered-draft-v5\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "level-count\t0\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t0\n"
+            + "npc-count\t0\n"
+            + "ground-item-count\t1\n"
+            + "ground-item\tremove\t-3\t143\t641\t"
+            + firstItemPlacementId + "\t20\t2\t30\n";
+        Files.write(
+            journal, staleItemRemoval.getBytes(StandardCharsets.US_ASCII));
+        boolean staleItemRemovalRefused = false;
+        try {
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        } catch (WorldBuilderDiscoveryException expected) {
+            staleItemRemovalRefused = expected.getMessage().contains(
+                "no longer matches");
+        }
+        require(staleItemRemovalRefused && Files.exists(journal),
+            "stale ground-item removal refusal");
+        require(draft.manifestSha256.equals(
+            WorldBuilderLayeredPackage.discoverDraft(working).manifestSha256),
+            "stale ground-item removal changed working package");
+
+        String removeItemDraft =
+            "world-builder-layered-draft-v5\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "level-count\t0\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t0\n"
+            + "npc-count\t0\n"
+            + "ground-item-count\t1\n"
+            + "ground-item\tremove\t-3\t143\t641\t"
+            + firstItemPlacementId + "\t20\t1\t30\n";
+        Files.write(
+            journal, removeItemDraft.getBytes(StandardCharsets.US_ASCII));
+        WorldBuilderLayeredTerrainDraftJournal.CommitResult removeItemCommit =
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        require(removeItemCommit.groundItemCount == 1,
+            "ground-item removal journal commit");
+        draft = WorldBuilderLayeredPackage.discoverDraft(working);
+        authoredText = new String(
+            Files.readAllBytes(authoredPayload), StandardCharsets.UTF_8);
+        require(!authoredText.contains(firstItemPlacementId)
+                && authoredText.contains(secondItemPlacementId),
+            "ground-item removal retained the independent spawn");
+
         int priorTerrainCount = draft.terrainSectorCount;
         int priorPlacementCount = draft.placementSetCount;
         String v4SceneryId =
@@ -505,6 +608,36 @@ public final class WorldBuilderLayeredDraftHarness {
         require(beforeSourceRefusal.equals(
             WorldBuilderLayeredPackage.discoverDraft(working).manifestSha256),
             "source-level refusal changed the working draft");
+        Files.delete(journal);
+
+        String refusedSourceItem =
+            "world-builder-layered-draft-v5\n"
+            + "base-manifest-sha256\t" + draft.manifestSha256 + "\n"
+            + "level-count\t0\n"
+            + "tile-count\t0\n"
+            + "sector-count\t0\n"
+            + "scenery-count\t0\n"
+            + "npc-count\t0\n"
+            + "ground-item-count\t1\n"
+            + "ground-item\tupsert\t0\t120\t648\t"
+            + "spoiled-milk.builder.ground-item.lp0.xp120.yp648"
+            + "\t10\t1\t30\n";
+        Files.write(
+            journal,
+            refusedSourceItem.getBytes(StandardCharsets.US_ASCII));
+        boolean sourceItemRefused = false;
+        try {
+            new WorldBuilderLayeredTerrainDraftJournal()
+                .commitIfPresentLocked(workspace);
+        } catch (WorldBuilderDiscoveryException expected) {
+            sourceItemRefused = expected.getMessage().contains(
+                "restricted to a Builder-created level");
+        }
+        require(sourceItemRefused && Files.exists(journal),
+            "accepted source-level ground-item refusal");
+        require(beforeSourceRefusal.equals(
+            WorldBuilderLayeredPackage.discoverDraft(working).manifestSha256),
+            "source-level item refusal changed the working draft");
         Files.delete(journal);
 
         String stableFingerprint = draft.packageFingerprintSha256;

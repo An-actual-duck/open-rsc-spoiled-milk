@@ -1,5 +1,5 @@
-SPOILED MILK WORLD BUILDER ASSET SOURCES
-========================================
+SPOILED MILK WORLD BUILDER 2 ASSET SOURCES
+==========================================
 
 The packaged client uses the Spoiled Milk visual assets described in the
 included PLAYER-ASSET-SOURCES.txt.

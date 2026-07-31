@@ -65,6 +65,7 @@ python3 ./tests/myworld/test-source-cleanup.py
 python3 ./tests/myworld/test-world-start.py
 python3 ./tests/myworld/test-world-npc-edit-persistence.py
 python3 ./tests/myworld/test-world-editor-vertical-pairing.py
+python3 ./tests/myworld/test-world-editor-definition-catalog.py
 LAYERED_TEST_WORKSPACE="$(
   mktemp -d "${TMPDIR:-/tmp}/spoiled-milk-layered-tests.XXXXXX"
 )"

@@ -1,6 +1,7 @@
-# Standalone World Builder Plan
+# Standalone World Builder 2 Plan
 
-Status: active; Phases 0-4 complete, Phase 5 standalone packaging active
+Status: active; Phases 0-4 complete, Phase 5 standalone packaging and layered
+feature-completeness work active
 
 Owner: Spoiled Milk project owner
 
@@ -14,9 +15,9 @@ Related plans:
 
 ## Summary
 
-Package the in-game world editor as a separate, approachable World Builder
-release while retaining the same editor inside the normal Spoiled Milk client
-and server.
+Package the signed-layered in-game world editor as a separate, approachable
+World Builder 2 release while retaining the same editor inside the normal
+Spoiled Milk client and server.
 
 The standalone release should feel like a single-player application: the user
 drops the World Builder folder into the root of a compatible private server,
@@ -35,18 +36,29 @@ An `Undo Last Map Import` action must restore the exact previous files.
 This is a separate product and release target, not a replacement for the
 administrator-only editor in the regular game.
 
+The packed-map editor is now a frozen legacy product. Its final release is
+`rsc-world-editor-v1.03`; it remains available for creators who retain packed
+maps, but receives no further maintenance. The signed-layered editor is
+generation 2 with product ID and update channel `rsc-world-editor-v2`. It uses
+the distinct install folder `Spoiled Milk World Builder 2`, artifact prefix
+`rsc-world-editor-v2`, and workspace model `signed-layered-v1`. V1 never
+automatically upgrades to v2, and v2 never adopts or silently converts a v1
+workspace.
+
 ## Desired User Experience
 
 The intended first-use flow is:
 
-1. Extract `Spoiled Milk World Builder` into a supported private-server root.
+1. Extract `Spoiled Milk World Builder 2` into a supported private-server root
+   alongside, rather than over, any legacy editor installation.
 2. Run `Start World Builder`.
 3. The launcher identifies the private server and creates an isolated project
    from its currently effective world files.
 4. A private loopback server and local client start automatically.
 5. Login is skipped. The user appears as `Builder`, invulnerable, with the
    world editor already open and Build renderer mode available.
-6. The user edits terrain, scenery, and NPCs and saves normally.
+6. The user edits terrain, scenery, NPCs, and collectible respawning ground
+   items and saves normally.
 7. The original private-server files remain unchanged.
 8. The user runs `Import Map Changes` when ready and reviews a clear preview.
 9. The importer backs up the target, installs and verifies the bundle, and
@@ -61,7 +73,8 @@ diagnostics, but should not be required knowledge for ordinary use.
 
 ### Included in the first complete release
 
-- A separate World Builder package and versioned release artifact.
+- A separate World Builder 2 package, product identity, update channel, and
+  versioned release artifact.
 - Automatic discovery of explicitly supported Spoiled Milk private-server
   layouts.
 - An isolated local Builder server, client, database, configuration, logs, and
@@ -70,7 +83,8 @@ diagnostics, but should not be required knowledge for ordinary use.
 - Normal authenticated login performed automatically by the client.
 - Server-enforced administrator access, invulnerability, and automatic world
   editor session opening.
-- Terrain, ordinary scenery, and NPC editing supported by the existing editor.
+- Terrain, ordinary scenery, NPC, and layered respawning ground-item editing
+  supported by the existing editor.
 - Isolated save, deterministic export, deliberate import, and exact rollback.
 - Self-contained Linux-x64 and Windows-x64 packages with platform launch,
   import, and rollback scripts plus bundled Java runtimes.
@@ -124,6 +138,10 @@ These rules are acceptance requirements for every implementation phase:
     not sufficient compatibility evidence.
 12. **The public server is out of scope.** Development and verification use a
     private local server only.
+13. **Product generations never cross-update.** V1 and v2 have distinct
+    product IDs, update channels, tag/archive prefixes, install folders, and
+    workspace formats. Neither line may claim the other as an automatic
+    update source.
 
 ## Existing Architecture and Reuse
 
@@ -179,6 +197,80 @@ ambiguous keys, and verify the resulting configuration before committing it.
 Absent optional overlay files are represented explicitly as absent/empty in
 the source manifest. The tool must distinguish “the source had no file” from
 “the source contained an empty array” so rollback can restore absence exactly.
+
+### Layered-generation placement extension
+
+The five-file table above remains the legacy packed-map export contract. It
+must not be silently broadened or claimed to carry native layered placements.
+The layered Builder instead writes package-owned
+`layered-world-placements-v3` payloads inside its isolated working package.
+Its first resumed feature-completeness milestone adds definition-aware ground
+spawns with amount and respawn time, persisted with terrain, level allocation,
+scenery, and NPC changes through one backward-compatible v5 draft journal and
+one clean-close copy-on-write package swap. Import/export of that layered
+package remains a later explicit transaction; authoring the spawn does not
+write the target game.
+
+### Definition-aware selection and visual catalog
+
+World Builder 2 needs an editor vocabulary separate from gameplay-facing
+definition names. Canonical names such as `Rock`, `Chest`, `Door`, and
+`Ladder` are valid in game but insufficient when dozens of stable IDs share
+them. Cleanup must not renumber IDs or silently rename server/client gameplay
+definitions because scripts, maps, saves, and protocol behavior depend on
+those identities.
+
+The implementation sequence is:
+
+1. [x] Generate a versioned editor-only scenery/boundary catalog from
+   authoritative definitions, active ID constants, and mining, fishing,
+   woodcutting, harvesting, and runecrafting behavior tables.
+2. [x] Apply semantic labels in Builder selectors and Builder-only context
+   actions, retain the numeric ID in context references, and fall back to the
+   runtime name when a catalog row is missing or its canonical name drifts.
+3. [x] Keep a small reviewed override file for corrections the sources cannot
+   express and generate an audit of unresolved ID-only legacy variants.
+4. [x] Give every built-in floor overlay a concise visual label in the direct
+   numeric selector, show walkability on its own line, and remove the
+   misleading zero-based definition number from wall captions while retaining
+   the raw one-based value authors actually paint.
+5. [ ] Add one searchable selection browser backed by this catalog, beginning
+   with scenery and boundaries rather than independent per-tool search code.
+   - [x] Add the scenery browser shell: multi-term semantic search, exact
+     numeric-ID search, eight visible text cards, clamped wheel/page scrolling,
+     click/Enter selection, and compatibility with compact and full layouts.
+   - [ ] Connect boundary/wall selectors to the same browser model after the
+     scenery interaction is owner-accepted.
+6. [ ] Add lazily rendered, cached visual cards for scenery and boundaries;
+   never render every 3D model every frame.
+7. [ ] Extend the shared browser to items, NPCs, floor textures, roofs, and
+   other definition families after each family has an authoritative metadata
+   and preview contract.
+   - [x] Connect NPC and respawning-ground-item selection to the shared text
+     browser. These two families are generated lazily from their authoritative
+     runtime definitions and search names, descriptions, actions, useful
+     traits, and exact stable IDs without changing gameplay data.
+   - [ ] Define and connect the remaining floor-texture, roof, and other
+     selector families after their author-facing metadata is reviewed.
+
+The first catalog covers all 1,332 scenery and 214 boundary IDs. It records
+canonical names, semantic display labels, provenance, tags, and search terms;
+the generated audit is
+[`../info/world-builder-definition-catalog.md`](../info/world-builder-definition-catalog.md).
+Equivalent IDs may share a functional label (for example both tin-rock model
+variants are `Rock (tin)`), while the stable ID and future visual card retain
+their exact identity. This establishes the data foundation for an NEI-style
+browser without putting a 1,546-model render workload into the live scene.
+Floor overlays remain authoritative raw landscape bytes and `TileDef` remains
+the collision/rendering source of truth; their new labels are editor-only
+presentation metadata, including the Spoiled Milk transparent path overlay and
+the legacy bridge-transition sentinel.
+
+The first browser slice filters only when its query changes and draws only the
+eight visible text cards. It therefore adds no eager model construction or
+per-frame traversal of the full scenery catalog. Lazy cached 3D previews remain
+a separate measured slice after the search and selection interaction is
+accepted.
 
 ## Compatibility Contract
 
@@ -239,7 +331,7 @@ or attempt to repair the target.
 The intended release layout is:
 
 ```text
-Spoiled Milk World Builder/
+Spoiled Milk World Builder 2/
   Start World Builder.sh
   Start World Builder.cmd
   Import Map Changes.sh
@@ -247,12 +339,14 @@ Spoiled Milk World Builder/
   Undo Last Map Import.sh
   Undo Last Map Import.cmd
   README.txt
+  RELEASE-IDENTITY.json
   VERSION.txt
   SOURCE-COMMIT.txt
   builder-runtime/
     client/
     server/
     launcher/
+    layered-world/package/
   workspace/
     project.json
     credentials/
@@ -479,12 +573,24 @@ the client connection and explain where its logs are located.
 
 ## Release Packaging
 
-World Builder receives its own packaging entry point and versioned artifacts,
-for example:
+World Builder 2 receives its own packaging entry point, product metadata, and
+versioned artifacts, for example:
 
-- `spoiled-milk-world-builder-vX.Y.Z-linux-x64.zip`
-- `spoiled-milk-world-builder-vX.Y.Z-windows-x64.zip`
+- `rsc-world-editor-v2-X.Y.Z-linux-x64.zip`
+- `rsc-world-editor-v2-X.Y.Z-windows-x64.zip`
 - `SHA256SUMS.txt`
+
+Every archive contains `RELEASE-IDENTITY.json`. An updater must require exact
+`productId` and `updateChannel` equality before offering an update. The only
+allowed automatic source product is `rsc-world-editor-v2`; legacy
+`rsc-world-editor-v1` is explicitly excluded, its final tag is recorded as
+`rsc-world-editor-v1.03`, and legacy workspace migration is false.
+
+The ambiguous `package-world-builder-release.sh` entry point now fails closed
+instead of packaging current sources under the legacy identity. V2 packaging
+uses `package-world-builder-v2-release.sh`, stages the reviewed signed-layered
+package, launches with the layered profile, and remains production-locked
+until layered export/import and final release validation are accepted.
 
 The release must contain built jars and resources; users should not need Java,
 Git, Ant, source code, or a development checkout. Both platform packages must
@@ -806,9 +912,10 @@ restart, and rollback restores every original byte and original file absence.
 - [x] Generate checksums and source provenance files.
 - [ ] Test from clean extracted archives outside the repository.
 
-Phase 5 foundation evidence recorded on 2026-07-14:
+Legacy v1 Phase 5 foundation evidence recorded on 2026-07-14:
 
-- `package-world-builder-release.sh` is manager-main-only, requires clean
+- The historical `package-world-builder-release.sh` was manager-main-only,
+  required clean
   published source, builds the client/server/tools, validates both bundled
   Java 17+ runtimes and legal files, checks protocol and required jar entries,
   stages separate self-contained Linux-x64 and Windows-x64 archives, and
@@ -826,7 +933,22 @@ Phase 5 foundation evidence recorded on 2026-07-14:
   requires exact `IMPORT` confirmation. `undo-latest-import` prints the
   authoritative rollback preview and requires exact `UNDO`; cancellation of
   either makes no target changes.
-- `python3 tests/myworld/test-world-builder-release.py` (4 tests) creates both
+- The legacy release line was frozen at tag `rsc-world-editor-v1.03`. Its
+  published artifact remains available but receives no further builds or
+  automatic successor.
+
+World Builder 2 release-line evidence recorded on 2026-07-30:
+
+- The old ambiguous packager now refuses current source, naming the frozen v1
+  endpoint and the separate v2 entry point.
+- `package-world-builder-v2-release.sh` is manager-main-only, emits folder
+  `Spoiled Milk World Builder 2`, archives under `rsc-world-editor-v2`, embeds
+  the signed-layered package, and passes the exact layered launch flags.
+- Each archive carries machine-readable identity restricting automatic
+  upgrades to `rsc-world-editor-v2` itself and explicitly recording no legacy
+  workspace migration. Production packaging remains fail-closed without the
+  future `RELEASE-READY` gate.
+- `python3 tests/myworld/test-world-builder-release.py` (6 tests) creates both
   archive types from a clean manager-main fixture, verifies archive contents,
   checksums, exclusions, Linux and Windows runtime files, substituted
   provenance, and runs every shell wrapper after extraction from outside the
@@ -867,9 +989,10 @@ Owner acceptance recorded on 2026-07-14:
   on port 43686. Automated legacy and OpenGL input/render guardrails pass, but
   a final real-archive clean-machine presentation check remains part of the
   release gate below.
-- The public artifact name is `Spoiled Milk World Builder`. Its release
-  version matches the companion Spoiled Milk release so users can identify
-  the exact compatible server/client package without a separate version map.
+- That acceptance applies to the frozen v1 artifact, `Spoiled Milk World
+  Builder`, whose final release is `rsc-world-editor-v1.03`. The active layered
+  product is `Spoiled Milk World Builder 2` on its independent
+  `rsc-world-editor-v2` channel and requires its own final visual acceptance.
 
 Exit gate: the project owner completes the intended workflow and explicitly
 accepts the standalone release behavior.
@@ -986,6 +1109,7 @@ age while they are the only rollback source.
 | Importer damages configuration formatting | Narrow key-aware update, full backup, duplicate-key refusal, post-write configuration validation |
 | Builder DB contaminates target accounts | Dedicated workspace SQLite database; database files excluded from exports/imports |
 | Normal game inherits auto-login or admin behavior | Explicit Builder profile checks on both client and server plus normal-mode regression tests |
+| Legacy editor auto-updates into an incompatible layered editor | Frozen v1 tag, distinct v2 product/update identity, archive and install names, exact-channel updater rule, no legacy workspace migration, and a retired ambiguous packager |
 | User loses rollback data by moving/deleting Builder | Clear receipt/backup location messaging and optional future backup export |
 | Release contains unlicensed assets | Packaging attribution gate and explicit provenance audit before publication |
 
@@ -1005,6 +1129,11 @@ age while they are the only rollback source.
 - Base-revision conflicts are refusals in the first release; no force import.
 - Rollback requires the current target to match the installed receipt.
 - The standalone release has its own packaging and versioned artifacts.
+- The packed-map v1 line is frozen at `rsc-world-editor-v1.03`.
+- The layered editor is World Builder 2, product/update channel
+  `rsc-world-editor-v2`, and accepts automatic updates only from itself.
+- V1 and v2 workspaces are intentionally incompatible; migration is never
+  implicit.
 
 ## Open Product Decisions
 
@@ -1052,6 +1181,8 @@ This plan can move to completed only when:
 - `Undo Last Map Import` restores exact prior files and behavior;
 - normal client/server/editor behavior remains unchanged outside Builder mode;
 - Linux and Windows release artifacts pass clean-extraction smoke tests;
+- v1 installations cannot discover v2 as an automatic update and v2 refuses
+  unidentified legacy workspace migration;
 - licenses, notices, and asset attribution are complete;
 - documentation is understandable without development knowledge; and
 - the project owner visually approves the complete edit/export/import/revert

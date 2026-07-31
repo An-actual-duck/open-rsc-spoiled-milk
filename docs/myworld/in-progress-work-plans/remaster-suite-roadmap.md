@@ -312,9 +312,12 @@ World Builder remains an independently released tool and repository. It owns:
 - compatibility checks against target capabilities and definitions;
 - end-user launchers, updater behavior, documentation, and diagnostics.
 
-The current Builder generation remains the legacy packed-map editor. The
-layered generation must use a separately named schema/adapter and must never
-guess a project's coordinate model.
+The packed-map generation is frozen at `rsc-world-editor-v1.03` and remains
+downloadable but unmaintained. The active layered generation is the separate
+`Spoiled Milk World Builder 2` product with product/update channel
+`rsc-world-editor-v2`, signed-layered workspace model, distinct archive and
+install names, and no implicit v1 workspace migration. Its schema/adapter must
+remain separately named and must never guess a project's coordinate model.
 
 World Builder does not own a target server's player accounts, live database,
 public process, arbitrary source patches, or gameplay scripts it cannot fully
@@ -542,10 +545,14 @@ a requirement to work through every bullet sequentially.
 
 - **Phase 5 is complete.** Its long completion record below is historical
   evidence, not an active percentage estimate.
-- **Phase 6 is partially complete and paused.** The isolated layered Builder
-  now provides the accepted development workbench through sparse level
-  creation and canonical generic ladder/stair auto-pairing. More editor
-  capabilities and export UI are not the current focus.
+- **Phase 6 is partially complete and active again.** The isolated layered
+  Builder provides the accepted development workbench through sparse level
+  creation and canonical generic ladder/stair auto-pairing. The resumed
+  feature-completeness and usability sequence begins with collectible,
+  respawning ground-item authoring; each later placement or workflow family
+  remains a focused milestone rather than one combined editor rewrite. This
+  line is now mechanically isolated as World Builder 2; v1 is frozen at
+  `rsc-world-editor-v1.03` and cannot auto-update into it.
 - **Phase 7 is narrowed to loader productionization.** Vanilla conversion,
   geographic realignment, and general conversion tooling remain on hold.
   Current loader choices are production package promotion, durable transition
@@ -1160,7 +1167,7 @@ and a deterministic void-backed 3-by-3 sector starter allocation with only a
 3-by-3 tile walkable anchor pad, then validates every path/hash/count before a
 rollback-protected working-package swap. The
 Builder-only runtime profile accepts exact source placements plus additive
-terrain, NPC, and scenery new-level descendants and is
+terrain, NPC, scenery, and ground-item new-level descendants and is
 explicitly refused outside World Builder; ordinary Spoiled Milk remains pinned
 to its exact reviewed manifest. The first private draft is level `-3` at
 `(140,640)`. The owner verified signed navigation, movement across sector and
@@ -1168,19 +1175,24 @@ presentation boundaries, tile inspection, surface return, and the complete
 route again after a clean client/server restart of the unchanged workspace.
 The source package remained immutable.
 
-The next Builder milestone is implemented and owner-accepted as a broad
-free-form workbench. Existing terrain Surface and Structure controls,
-Scenery Place/Rotate/Remove, and NPC Place/Remove are enabled together only on
-Builder-created levels; accepted source levels remain immutable. Painting
-updates the active native presentation/collision overlay, while **Save** writes
-one bounded deterministic v3 journal. A clean close lets the launcher
-materialize terrain, growth, scenery, and NPC operations through one
-source-reverified copy-on-write package swap, and the next launch reopens the
-durable result. `::buildergrow x y (level)` deliberately allocates one
-void-backed edge-adjacent sector; gaps, duplicates, edits to source levels,
-more than 4,096 tiles, or more than 64 new sectors refuse. Ground items,
-standalone boundary-object placement, terrain deletion, layered export, and
-target-game mutation remain locked behind later gates.
+The generated-level Builder workbench now combines existing terrain Surface
+and Structure controls, Scenery Place/Rotate/Remove, NPC Place/Remove, and the
+first collectible respawning ground-item Place/Remove tool. Accepted source
+levels remain immutable. Painting updates the active native
+presentation/collision overlay, while **Save** writes one bounded deterministic
+v5 journal; the launcher remains backward compatible with v1-v4. A clean close
+materializes terrain, growth, scenery, NPC, and ground-item operations through
+one source-reverified copy-on-write package swap, and the next launch reopens
+the durable result. Ground-item definitions, stackability, amount, respawn
+range, temporarily absent slot identity, permanent delayed-respawn
+cancellation, and same-X/Y cross-level independence are enforced on the
+server. `::buildergrow x y (level)` deliberately allocates one void-backed
+edge-adjacent sector; gaps, duplicates, edits to source levels, more than 4,096
+tiles, or more than 64 new sectors refuse. The item milestone is implemented,
+automated-validated, and owner-accepted; its final toolbar artwork uses the
+same credited Game-icons.net source as the other editor controls. Standalone
+boundary-object placement, terrain deletion, layered export, and target-game
+mutation remain locked behind later gates.
 
 The same milestone corrects an arbitrary-level presentation leak. Generated
 levels use render plane `0` only as a compatibility carrier and must not
@@ -1282,15 +1294,21 @@ existing bounded fixture profile unchanged.
 
 ### Phase 6: Layered World Builder generation
 
-Status: partially complete; further editor capability work is on hold after the
-accepted sparse-canvas workbench and canonical generic vertical auto-pairing.
+Status: partially complete and active; feature-completeness/tool-usability work
+resumed 2026-07-30 after the accepted sparse-canvas workbench and canonical
+generic vertical auto-pairing.
 
 Goal: make the layered RSC Remastered world and modder content directly
 authorable while retaining a clearly separated legacy editor.
 
 Work:
 
-- Keep the final packed-Y release available as the Legacy World Builder.
+- Keep packed-Y tag `rsc-world-editor-v1.03` available as the frozen,
+  unmaintained Legacy World Builder; never publish current source on its
+  product or update channel.
+- Release the layered editor only as `Spoiled Milk World Builder 2`, product
+  and update channel `rsc-world-editor-v2`, with distinct tag/archive/install
+  names, exact-channel update matching, and explicit legacy-workspace refusal.
 - Add a separately named RSC Remastered layered project, export, receipt, and
   adapter schema.
 - Import the frozen vanilla baseline into a new copied project through
@@ -1699,6 +1717,8 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
+| 2026-07-30 | Separate the signed-layered editor as World Builder generation 2 without forcing packed-map users forward. | Implemented and automated-validated. Legacy `rsc-world-editor-v1` is frozen at tag `rsc-world-editor-v1.03`; the ambiguous old packager refuses current source. V2 uses `Spoiled Milk World Builder 2`, product/update channel and artifact prefix `rsc-world-editor-v2`, embeds the signed-layered package, launches only with the layered profile, includes exact release identity allowing automatic updates only from v2 itself, and refuses a legacy/unidentified workspace. Public v2 packaging remains locked pending layered export/import and final release validation |
+| 2026-07-30 | Resume Phase 6 as a sequence of focused World Builder feature-completeness and usability milestones, beginning with collectible respawning ground items. | Implemented, automated-validated, and owner-accepted. The accepted isolated workspace and generated-level boundary allow one definition-aware package spawn per tile, configurable amount/respawn, ordinary pickup behavior, permanent per-location delayed-respawn cancellation, and one backward-compatible atomic journal/package transaction. The owner reported the complete tool working as intended and supplied its final credited Game-icons.net mark. Source-level mutation, boundary authoring, export/import, and target files remain separate gates |
 | 2026-07-27 | Complete the automated loader-v2 resident-sector milestone before readiness acknowledgement. | Default-off protocol v6 keeps an exact bounded connection-local client cache and server mirror, sends full inventories but only missing/changed payloads, reduces an adjacent shift to three new sector payloads, commits both sides transactionally, clears on reconnect, fails closed on missing/malformed references, records payload/reference metrics, and preserves protocol v5 as rollback. Client/server builds and focused compatibility/atomicity tests pass; private acceptance remains |
 | 2026-07-27 | Select native loader performance as the immediate RSC Remastered showcase milestone. | Begin with protocol-preserving server wire-product caching and stable transfer metrics, then add resident client sectors, delta delivery, readiness acknowledgement, and predictive activation. Current protocol v5 uses complete 48-tile sectors; older 24-tile wording describes historical protocol v4. Lazy server eviction remains deferred pending measurement and entity-lifecycle design |
 | 2026-07-27 | Accept canonical generic ladder/stair pairing as the final Builder capability before an editor hold. | IDs `5/6`, `41/42`, and `43/44` alone create a missing adjacent non-source level, safe landing, and inverse object. Owner round-trip/reuse passed; v4 clean close committed level `-5`, nine sectors, nine landing tiles, and two scenery records in manifest `d8fc45941e93`. Exceptional transition types remain explicit |

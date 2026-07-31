@@ -23,9 +23,9 @@ require("scene.projectScreenToTerrainTile(",
         "void projection is not tied to the presented terrain surface")
 require("presentationOnly&&(editorOpen||this.selectedSpell>=0)",
         "editor actions are not bounded to the active gameplay face window")
-require("mouseY>=getGameHeight()-70||mouseInTabArea_CUSTOM()",
+require("isMouseOverMessageUi(this.mouseX,this.mouseY)",
         "void projection can leak under client UI")
-require("else addProjectedEditorTileFallback();",
+require("} else {\n\t\t\t\taddProjectedEditorTileFallback();",
         "missing scene faces do not invoke the editor fallback")
 
 if CLIENT.count("addWorldEditorTileActions(") != 3:
@@ -37,6 +37,7 @@ for action in (
     "WORLD_EDITOR_PAINT_TERRAIN",
     "WORLD_EDITOR_PLACE_SCENERY",
     "WORLD_EDITOR_PLACE_NPC",
+    "WORLD_EDITOR_PLACE_GROUND_ITEM",
 ):
     require(action, f"projected terrain lost {action}")
 

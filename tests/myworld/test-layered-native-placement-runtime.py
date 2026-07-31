@@ -69,12 +69,34 @@ public final class NativeLayeredPlacementRegistryFixture {
             "foreign instance cannot release spawn");
         long generation = registry.remove(deep, deepItem);
         check(generation >= 0 && registry.size() == 1, "release exact spawn");
+        check(registry.containsPlacement(deep),
+            "temporarily absent spawn remains authored");
         check(registry.registerForGeneration(deep, generation, () -> deepItem)
                 == deepItem,
             "same-generation respawn");
+        long pendingDeepRespawn = registry.remove(deep, deepItem);
+        long pendingSurfaceRespawn = registry.remove(surface, surfaceItem);
+        Object editorReplacement = new Object();
+        check(registry.register(deep, () -> editorReplacement)
+                == editorReplacement,
+            "editor replacement registers while old timer is pending");
+        check(registry.retire(deep, editorReplacement),
+            "editor removal retires exact active placement");
+        check(!registry.containsPlacement(deep),
+            "retired placement is no longer authored");
+        check(registry.registerForGeneration(
+                deep, pendingDeepRespawn, Object::new) == null,
+            "retirement invalidates an older delayed respawn");
+        check(registry.registerForGeneration(
+                surface, pendingSurfaceRespawn, () -> surfaceItem)
+                == surfaceItem,
+            "retirement remains isolated from another level");
         registry.reset();
         check(registry.size() == 0, "reset");
-        check(registry.registerForGeneration(deep, generation, Object::new)
+        check(!registry.containsPlacement(surface),
+            "reset clears authored placement identities");
+        check(registry.registerForGeneration(
+                surface, pendingSurfaceRespawn, Object::new)
                 == null,
             "stale timer refused");
 
@@ -472,6 +494,8 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         )
         self.assertIn("registerNativeLayeredGroundItem", world)
         self.assertIn("removeNativeLayeredGroundItem", world)
+        self.assertIn("retireNativeLayeredGroundItem", world)
+        self.assertIn("hasNativeLayeredGroundItemPlacement", world)
         self.assertIn("findNativeLayeredGameObject(o)", world)
         self.assertIn(
             "registerGameObject(new GameObject(getWorld(), loc)",
@@ -483,6 +507,7 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         self.assertIn(
             "AuthoredLayeredGroundItemRegistry.NO_GENERATION", item
         )
+        self.assertIn("retireNativeLayeredPlacement", item)
         self.assertIn("populateNativeLayeredPlacements()", manager)
         self.assertIn("new Npc(", manager)
         self.assertIn("placement.getStart()", manager)

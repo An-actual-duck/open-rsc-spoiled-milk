@@ -27,3 +27,20 @@ The dock arrow also uses two state-specific files. `toolbar-collapse.png`
 points up while the dock is open; `toolbar-expand.png` points down while it is
 collapsed. Terrain is entered through the active Brush control, and Rotate is
 presented inside Scenery, so neither needs a separate dock icon.
+
+## Definition Catalog Contract
+
+`definition-catalog-v1.tsv` is a generated, editor-only search and naming
+index for scenery and boundary definitions. It is packaged beside the icons,
+but it is not artwork and is not covered by the icon license table.
+
+Regenerate the catalog and its audit from authoritative server definitions,
+behavior metadata, ID constants, and reviewed overrides with:
+
+```bash
+python3 tools/world-builder/generate-definition-catalog.py
+```
+
+The client accepts a semantic row only while its ID and canonical name still
+match the loaded gameplay definition. Missing, malformed, or stale catalog
+data falls back to the runtime name without changing gameplay behavior.

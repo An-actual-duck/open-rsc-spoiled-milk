@@ -854,6 +854,24 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			placement.getLocation(), item);
 	}
 
+	public boolean retireNativeLayeredGroundItem(final GroundItem item) {
+		NativeLayeredGroundItemPlacement placement =
+			item.getNativeLayeredPlacement();
+		return placement != null
+			&& nativeLayeredGroundItems.retire(
+				placement.getLocation(), item);
+	}
+
+	public GroundItem findNativeLayeredGroundItem(
+		final WorldLocation location) {
+		return nativeLayeredGroundItems.find(location);
+	}
+
+	public boolean hasNativeLayeredGroundItemPlacement(
+		final WorldLocation location) {
+		return nativeLayeredGroundItems.containsPlacement(location);
+	}
+
 	public void registerItem(final GroundItem i, final int delayTime) {
 		try {
 			if (Summoning.tryLootGoblinCollectGroundItem(i)) {
