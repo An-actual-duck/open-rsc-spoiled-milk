@@ -989,6 +989,9 @@ public final class World {
 			outerChunks,
 			retentionChunks,
 			triangles,
+			activePrebuild != null && activePrebuild.productCacheHit,
+			reusedCells,
+			builtCells,
 			"halo detail=" + (terrainOnly ? "terrain-ready" : "structure")
 				+ " src=" + sourceOuterSectors
 				+ "/16 mesh=" + outerChunks.size() + "/16 zeroTerrain="
@@ -2362,15 +2365,37 @@ public final class World {
 						: null;
 				if (showWallOnMinimap) {
 					phaseStartNanos = System.nanoTime();
+					long detailPhaseStartedNanos =
+						RenderTelemetry.boundaryDiagnosticsNow();
 					this.minimapGraphics.blackScreen(true);
+					RenderTelemetry.recordBoundaryPhase(
+						"minimap",
+						"clear",
+						detailPhaseStartedNanos,
+						detailPhaseStartedNanos == 0L
+							? 0L
+							: System.nanoTime()
+								- detailPhaseStartedNanos);
 
+					detailPhaseStartedNanos =
+						RenderTelemetry.boundaryDiagnosticsNow();
 					for (int x = 0; x < LOCAL_TILE_COUNT; ++x)
 						for (int z = 0; z < LOCAL_TILE_COUNT; ++z)
 							this.collisionFlags[x][z] = 0;
+					RenderTelemetry.recordBoundaryPhase(
+						"terrain",
+						"collision-clear",
+						detailPhaseStartedNanos,
+						detailPhaseStartedNanos == 0L
+							? 0L
+							: System.nanoTime()
+								- detailPhaseStartedNanos);
 
 					RSModel worldMod = this.modelAccumulate;
 					worldMod.resetFaceVertHead((int) 1);
 
+					detailPhaseStartedNanos =
+						RenderTelemetry.boundaryDiagnosticsNow();
 					if (nativeTerrainAuthorityOnly) {
 						this.publishTerrainAuthorityProduct(
 							worldProduct.terrainInput,
@@ -2379,18 +2404,52 @@ public final class World {
 						this.emitTerrainProduct(worldProduct.terrainInput, worldMod);
 						this.publishTerrainProduct(worldMod);
 					}
+					RenderTelemetry.recordBoundaryPhase(
+						"terrain",
+						"publish",
+						detailPhaseStartedNanos,
+						detailPhaseStartedNanos == 0L
+							? 0L
+							: System.nanoTime()
+								- detailPhaseStartedNanos);
 					terrainNanos = System.nanoTime() - phaseStartNanos;
 				}
 				phaseStartNanos = System.nanoTime();
 				this.modelAccumulate.resetFaceVertHead((int) 1);
+				long wallDetailStartedNanos =
+					RenderTelemetry.boundaryDiagnosticsNow();
 				this.emitWallProduct(
 					worldProduct.wallInput,
 					showWallOnMinimap,
 					nativeMinimap);
+				RenderTelemetry.recordBoundaryPhase(
+					"walls",
+					"emit",
+					wallDetailStartedNanos,
+					wallDetailStartedNanos == 0L
+						? 0L : System.nanoTime() - wallDetailStartedNanos);
 				if (nativeMinimap != null) {
+					long minimapPublishStartedNanos =
+						RenderTelemetry.boundaryDiagnosticsNow();
 					this.publishNativeMinimap(nativeMinimap, plane);
+					RenderTelemetry.recordBoundaryPhase(
+						"minimap",
+						"publish",
+						minimapPublishStartedNanos,
+						minimapPublishStartedNanos == 0L
+							? 0L
+							: System.nanoTime()
+								- minimapPublishStartedNanos);
 				}
+				wallDetailStartedNanos =
+					RenderTelemetry.boundaryDiagnosticsNow();
 				this.publishWallProduct(plane);
+				RenderTelemetry.recordBoundaryPhase(
+					"walls",
+					"publish",
+					wallDetailStartedNanos,
+					wallDetailStartedNanos == 0L
+						? 0L : System.nanoTime() - wallDetailStartedNanos);
 				wallNanos = System.nanoTime() - phaseStartNanos;
 
 				phaseStartNanos = System.nanoTime();
@@ -2434,9 +2493,20 @@ public final class World {
 		String key = worldModelProductKey(
 			plane, sectionX, sectionY, includeRoofGeometry, stackedUpperPlane);
 		WorldModelProduct cached;
+		long cacheLockStartedNanos =
+			RenderTelemetry.boundaryDiagnosticsNow();
+		long cacheLockWaitNanos = 0L;
 		synchronized (worldModelProductCacheLock) {
+			if (cacheLockStartedNanos != 0L) {
+				cacheLockWaitNanos =
+					System.nanoTime() - cacheLockStartedNanos;
+			}
 			cached = worldModelProductCache.get(key);
 		}
+		RenderTelemetry.recordBoundaryLockWait(
+			"world-model-product-cache",
+			cacheLockStartedNanos,
+			cacheLockWaitNanos);
 		if (cached != null && cached.hasTerrainIfNeeded(includeTerrain)) {
 			this.worldStreamManager.markWorldProductCacheHit(
 				plane,
@@ -2500,13 +2570,24 @@ public final class World {
 			return built;
 		}
 		boolean storedBuilt = false;
+		cacheLockStartedNanos =
+			RenderTelemetry.boundaryDiagnosticsNow();
+		cacheLockWaitNanos = 0L;
 		synchronized (worldModelProductCacheLock) {
+			if (cacheLockStartedNanos != 0L) {
+				cacheLockWaitNanos =
+					System.nanoTime() - cacheLockStartedNanos;
+			}
 			cached = worldModelProductCache.get(key);
 			if (cached == null || !cached.hasTerrainIfNeeded(includeTerrain)) {
 				worldModelProductCache.put(key, built);
 				storedBuilt = true;
 			}
 		}
+		RenderTelemetry.recordBoundaryLockWait(
+			"world-model-product-cache",
+			cacheLockStartedNanos,
+			cacheLockWaitNanos);
 		if (storedBuilt) {
 			this.worldStreamManager.markWorldProductBuilt(
 				plane,
@@ -2583,7 +2664,14 @@ public final class World {
 		int sectionY,
 		boolean requireTerrain) {
 		WorldModelProduct product;
+		long cacheLockStartedNanos =
+			RenderTelemetry.boundaryDiagnosticsNow();
+		long cacheLockWaitNanos = 0L;
 		synchronized (worldModelProductCacheLock) {
+			if (cacheLockStartedNanos != 0L) {
+				cacheLockWaitNanos =
+					System.nanoTime() - cacheLockStartedNanos;
+			}
 			product = worldModelProductCache.get(worldModelProductKey(
 				plane,
 				sectionX,
@@ -2591,6 +2679,10 @@ public final class World {
 				!Config.C_HIDE_ROOFS,
 				!requireTerrain && plane > 0));
 		}
+		RenderTelemetry.recordBoundaryLockWait(
+			"world-model-product-cache",
+			cacheLockStartedNanos,
+			cacheLockWaitNanos);
 		if (product == null || !product.hasTerrainIfNeeded(requireTerrain) || product.gpuChunkMesh == null) {
 			return;
 		}
@@ -2617,21 +2709,41 @@ public final class World {
 		 * threads from cloning and normalizing the same large mesh at once.
 		 * A hit only holds this private four-entry lock for one map lookup.
 		 */
+		long cacheLockStartedNanos =
+			RenderTelemetry.boundaryDiagnosticsNow();
+		long cacheLockAcquiredNanos = 0L;
+		long cacheLockReleasedNanos = 0L;
+		Renderer3DWorldChunkFrame.ChunkMesh chunk;
 		synchronized (preparedRendererChunkCacheLock) {
-			Renderer3DWorldChunkFrame.ChunkMesh chunk =
-				preparedRendererChunkCache.get(key);
-			if (chunk != null) {
-				return chunk;
+			if (cacheLockStartedNanos != 0L) {
+				cacheLockAcquiredNanos = System.nanoTime();
 			}
-			chunk = product.gpuChunkMesh.toRenderer3DWorldChunkMesh();
-			if (includeTerrainGrid && product.terrainInput != null) {
-				chunk.setWorldEditorTerrainGrid(
-					LOCAL_TILE_COUNT,
-					worldEditorTerrainGridHeights(product.terrainInput));
+			chunk = preparedRendererChunkCache.get(key);
+			if (chunk == null) {
+				chunk = product.gpuChunkMesh.toRenderer3DWorldChunkMesh();
+				if (includeTerrainGrid && product.terrainInput != null) {
+					chunk.setWorldEditorTerrainGrid(
+						LOCAL_TILE_COUNT,
+						worldEditorTerrainGridHeights(product.terrainInput));
+				}
+				preparedRendererChunkCache.put(key, chunk);
 			}
-			preparedRendererChunkCache.put(key, chunk);
-			return chunk;
+			if (cacheLockAcquiredNanos != 0L) {
+				cacheLockReleasedNanos = System.nanoTime();
+			}
 		}
+		RenderTelemetry.recordBoundaryLockWait(
+			"prepared-renderer-chunk-cache",
+			cacheLockStartedNanos,
+			cacheLockAcquiredNanos == 0L
+				? 0L : cacheLockAcquiredNanos - cacheLockStartedNanos);
+		RenderTelemetry.recordBoundaryPhase(
+			"lock-hold",
+			"prepared-renderer-chunk-cache",
+			cacheLockAcquiredNanos,
+			cacheLockReleasedNanos == 0L
+				? 0L : cacheLockReleasedNanos - cacheLockAcquiredNanos);
+		return chunk;
 	}
 
 	private static int[] worldEditorTerrainGridHeights(TerrainModelInput input) {
@@ -5635,13 +5747,37 @@ public final class World {
 		try {
 			ZipEntry e;
 			ByteBuffer data = null;
+			long archiveLockStartedNanos =
+				RenderTelemetry.boundaryDiagnosticsNow();
+			long archiveLockWaitNanos = 0L;
+			long archiveReadStartedNanos = 0L;
+			long archiveReadNanos = 0L;
 			synchronized (tileArchiveLock) {
+				if (archiveLockStartedNanos != 0L) {
+					long acquiredNanos = System.nanoTime();
+					archiveLockWaitNanos =
+						acquiredNanos - archiveLockStartedNanos;
+					archiveReadStartedNanos = acquiredNanos;
+				}
 				e = tileArchive.getEntry(filename);
 				if (e != null) {
 					data = DataConversions
 						.streamToBuffer(new BufferedInputStream(tileArchive.getInputStream(e)));
 				}
+				if (archiveReadStartedNanos != 0L) {
+					archiveReadNanos =
+						System.nanoTime() - archiveReadStartedNanos;
+				}
 			}
+			RenderTelemetry.recordBoundaryLockWait(
+				"tile-archive",
+				archiveLockStartedNanos,
+				archiveLockWaitNanos);
+			RenderTelemetry.recordBoundaryDiskRead(
+				"tile-archive",
+				data == null ? 0L : data.remaining(),
+				archiveReadStartedNanos,
+				archiveReadNanos);
 			if (e == null) {
 				Sector sector = new Sector();
 				if (height == 0 || height == 3) {
@@ -5751,6 +5887,9 @@ public final class World {
 		private final List<Renderer3DWorldChunkFrame.ChunkMesh>
 			retentionChunks;
 		private final int triangleCount;
+		private final boolean activeProductCacheHit;
+		private final int reusedCells;
+		private final int builtCells;
 		private final String compactDiagnosticSummary;
 		private final String cellDiagnostics;
 		private final long elapsedNanos;
@@ -5769,6 +5908,9 @@ public final class World {
 			List<Renderer3DWorldChunkFrame.ChunkMesh> outerChunks,
 			List<Renderer3DWorldChunkFrame.ChunkMesh> retentionChunks,
 			int triangleCount,
+			boolean activeProductCacheHit,
+			int reusedCells,
+			int builtCells,
 			String compactDiagnosticSummary,
 			String cellDiagnostics,
 			long elapsedNanos) {
@@ -5789,9 +5931,32 @@ public final class World {
 				new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
 					retentionChunks));
 			this.triangleCount = triangleCount;
+			this.activeProductCacheHit = activeProductCacheHit;
+			this.reusedCells = reusedCells;
+			this.builtCells = builtCells;
 			this.compactDiagnosticSummary = compactDiagnosticSummary;
 			this.cellDiagnostics = cellDiagnostics;
 			this.elapsedNanos = elapsedNanos;
+		}
+
+		public long getDiagnosticBuildNanos() {
+			return elapsedNanos;
+		}
+
+		public int getDiagnosticTriangleCount() {
+			return triangleCount;
+		}
+
+		public boolean isDiagnosticActiveProductCacheHit() {
+			return activeProductCacheHit;
+		}
+
+		public int getDiagnosticReusedCells() {
+			return reusedCells;
+		}
+
+		public int getDiagnosticBuiltCells() {
+			return builtCells;
 		}
 
 		public String summary() {

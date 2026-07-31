@@ -380,6 +380,156 @@ def correlation_flags(record: dict[str, Any]) -> list[str]:
     return flags
 
 
+def boundary_loading_lines(events: list[dict[str, Any]]) -> list[str]:
+    transitions = [
+        event
+        for event in events
+        if event.get("eventType") == "boundary.transition-summary"
+    ]
+    lines = ["", "## Boundary Loading Diagnostics", ""]
+    if not transitions:
+        lines.append(
+            "- No bounded boundary-transition summaries were recorded; "
+            "launch with `--boundary-diagnostics`."
+        )
+        return lines
+
+    render_samples = [
+        sample
+        for event in transitions
+        for sample in numeric_array(event, "frame.opengl.renderNanos")
+    ]
+    interval_samples = [
+        sample
+        for event in transitions
+        for sample in numeric_array(event, "frame.opengl.intervalNanos")
+        if sample > 0
+    ]
+    presentation_samples = [
+        sample
+        for event in transitions
+        for sample in numeric_array(event, "frame.presentation.totalNanos")
+    ]
+    lines.append(
+        f"- Completed bounded traces: {len(transitions)}; "
+        f"OpenGL/presentation samples: {len(render_samples)} / "
+        f"{len(presentation_samples)}."
+    )
+    for label, samples in (
+        ("OpenGL render", render_samples),
+        ("OpenGL interval", interval_samples),
+        ("frame presentation", presentation_samples),
+    ):
+        if not samples:
+            lines.append(f"- {label}: samples unavailable.")
+            continue
+        lines.append(
+            f"- {label} p50/p95/p99/max: "
+            f"{milliseconds(percentile(samples, 0.50))} / "
+            f"{milliseconds(percentile(samples, 0.95))} / "
+            f"{milliseconds(percentile(samples, 0.99))} / "
+            f"{milliseconds(max(samples))}."
+        )
+
+    cases: dict[str, list[dict[str, Any]]] = {}
+    for event in transitions:
+        dimensions = (
+            f"crossing={event.get('crossing.kind', 'unknown')}",
+            "visit=return" if event.get("visit.return") else "visit=first",
+            "prediction=matched"
+            if event.get("prediction.matched")
+            else "prediction=unmatched",
+            "scope=changed" if event.get("scopeChanged") else "scope=same",
+        )
+        for dimension in dimensions:
+            cases.setdefault(dimension, []).append(event)
+    lines.extend(["", "### Case matrix", ""])
+    for name, matching in sorted(cases.items()):
+        case_intervals = [
+            sample
+            for event in matching
+            for sample in numeric_array(event, "frame.opengl.intervalNanos")
+            if sample > 0
+        ]
+        case_uploads = [
+            sample
+            for event in matching
+            for sample in numeric_array(event, "frame.opengl.chunkUploadNanos")
+        ]
+        lines.append(
+            f"- `{name}`: {len(matching)} traces; interval p95/p99/max "
+            f"{milliseconds(percentile(case_intervals, 0.95))} / "
+            f"{milliseconds(percentile(case_intervals, 0.99))} / "
+            f"{milliseconds(max(case_intervals) if case_intervals else 0.0)}; "
+            f"chunk-upload max "
+            f"{milliseconds(max(case_uploads) if case_uploads else 0.0)}."
+        )
+
+    phase_samples: dict[str, list[float]] = {}
+    for event in transitions:
+        names = event.get("phase.names")
+        totals = numeric_array(event, "phase.totalNanos")
+        if not isinstance(names, list):
+            continue
+        for index, name in enumerate(names):
+            if not isinstance(name, str) or index >= len(totals):
+                continue
+            phase_samples.setdefault(name, []).append(totals[index])
+    lines.extend(["", "### Boundary phase distributions", ""])
+    if not phase_samples:
+        lines.append("- No named boundary phases were retained.")
+    else:
+        ranked = sorted(
+            phase_samples.items(),
+            key=lambda item: percentile(item[1], 0.95),
+            reverse=True,
+        )
+        for name, samples in ranked[:16]:
+            lines.append(
+                f"- `{name}` p50/p95/p99/max: "
+                f"{milliseconds(percentile(samples, 0.50))} / "
+                f"{milliseconds(percentile(samples, 0.95))} / "
+                f"{milliseconds(percentile(samples, 0.99))} / "
+                f"{milliseconds(max(samples))} ({len(samples)} traces)."
+            )
+
+    def worst_frame(event: dict[str, Any]) -> float:
+        intervals = numeric_array(event, "frame.opengl.intervalNanos")
+        renders = numeric_array(event, "frame.opengl.renderNanos")
+        return max(intervals + renders, default=0.0)
+
+    lines.extend(["", "### Worst correlated transitions", ""])
+    for event in sorted(transitions, key=worst_frame, reverse=True)[:5]:
+        uploads = numeric_array(event, "frame.opengl.chunkUploadNanos")
+        upload_bytes = numeric_array(event, "frame.opengl.uploadedBytes")
+        shadow_builds = numeric_array(event, "frame.opengl.shadowBuildNanos")
+        shadow_uploads = numeric_array(event, "frame.opengl.shadowUploadNanos")
+        intervals = numeric_array(event, "frame.opengl.intervalNanos")
+        renders = numeric_array(event, "frame.opengl.renderNanos")
+        lines.append(
+            f"- Trace {int(numeric(event, 'traceId'))} "
+            f"center {int(numeric(event, 'centerX', -1))},"
+            f"{int(numeric(event, 'centerY', -1))} "
+            f"({event.get('crossing.kind', 'unknown')}, "
+            f"{'return' if event.get('visit.return') else 'first visit'}): "
+            f"interval/render max "
+            f"{milliseconds(max(intervals) if intervals else 0.0)} / "
+            f"{milliseconds(max(renders) if renders else 0.0)}, "
+            f"upload {milliseconds(max(uploads) if uploads else 0.0)} / "
+            f"{int(max(upload_bytes) if upload_bytes else 0)} bytes, "
+            f"shadow build/upload "
+            f"{milliseconds(max(shadow_builds) if shadow_builds else 0.0)} / "
+            f"{milliseconds(max(shadow_uploads) if shadow_uploads else 0.0)}, "
+            f"GC {int(numeric(event, 'runtime.gcCountDelta'))} collections/"
+            f"{int(numeric(event, 'runtime.gcTimeMillisDelta'))}ms, "
+            f"locks {int(numeric(event, 'lock.waitCount'))}/"
+            f"{milliseconds(numeric(event, 'lock.waitNanos'))}, "
+            f"disk {int(numeric(event, 'disk.reads'))}/"
+            f"{milliseconds(numeric(event, 'disk.totalNanos'))}."
+        )
+    return lines
+
+
 def analyze_completed_capture(capture_dir: Path) -> tuple[bool, str]:
     result = subprocess.run(
         [sys.executable, str(CAPTURE_ANALYZER), str(capture_dir), "--strict"],
@@ -829,14 +979,23 @@ def build_summary(
     else:
         lines.append("- No movement timing summaries were recorded.")
     for index, marker in enumerate(movement_markers, start=1):
+        boundary_trace = int(numeric(marker, "boundary.traceId", -1))
+        boundary_text = (
+            f", boundary trace={boundary_trace}"
+            if boundary_trace >= 0
+            else ""
+        )
         lines.append(
             f"- Marker {index} at {numeric(marker, 'sessionElapsedNanos') / 1_000_000_000.0:.3f}s: "
             f"arrival={milliseconds(numeric(marker, 'movement.latestArrivalIntervalNanos'))}, "
             f"depth={int(numeric(marker, 'movement.currentWaypointDepth'))}, "
             f"current idle={milliseconds(numeric(marker, 'movement.currentIdleNanos'))}, "
             f"nearby client loop={milliseconds(numeric(marker, 'frame.clientLoopLatestNanos'))} "
-            f"(sample age {milliseconds(numeric(marker, 'frame.clientLoopSampleAgeNanos'))})."
+            f"(sample age {milliseconds(numeric(marker, 'frame.clientLoopSampleAgeNanos'))}"
+            f"{boundary_text})."
         )
+
+    lines.extend(boundary_loading_lines(events))
 
     lines.extend(["", "## Renderer Signals", ""])
     signal_types = (

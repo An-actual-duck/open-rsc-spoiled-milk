@@ -4202,6 +4202,19 @@ public final class mudclient implements Runnable {
 			this.cachedResidentObjectChunkPreviousViewCells);
 		this.cachedResidentObjectChunks.keySet().retainAll(retainedCells);
 		if (staticPresentationRebuildPending) {
+			BoundaryLoadingDiagnostics.recordStaticPresentationBuild(
+				objectInputs.size(),
+				cacheHits,
+				cacheMisses,
+				inputNanos,
+				meshBuildNanos,
+				meshCpuNanos,
+				parallelBuild,
+				parallelBuild
+					? residentObjectBuildWorkerCount() : 1);
+		}
+		if (staticPresentationRebuildPending
+			&& !BoundaryLoadingDiagnostics.isEnabled()) {
 			RendererDiagnosticSession.Record event =
 				RendererDiagnosticSession.newEventRecord(
 					"renderer.static-presentation-chunk-build");
@@ -25295,6 +25308,13 @@ public final class mudclient implements Runnable {
 		if (!released) {
 			return;
 		}
+		BoundaryLoadingDiagnostics.recordPresentationRelease(
+			freshFrameSamples,
+			this.layeredScenePresentationLatch.wasLastReleaseStable(),
+			worldChunkFrame == null
+				? 0 : worldChunkFrame.getChunkCount(),
+			worldChunkFrame == null
+				? 0 : worldChunkFrame.getTotalTriangleCount());
 		RendererDiagnosticSession.Record event =
 			RendererDiagnosticSession.newEventRecord(
 				"renderer.atomic-presentation-release");

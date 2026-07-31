@@ -344,6 +344,40 @@ public final class RenderTelemetry {
 		return isCollectionEnabled() ? System.nanoTime() : 0L;
 	}
 
+	public static boolean isBoundaryDiagnosticsEnabled() {
+		return BoundaryLoadingDiagnostics.isEnabled();
+	}
+
+	public static long boundaryDiagnosticsNow() {
+		return BoundaryLoadingDiagnostics.now();
+	}
+
+	public static void recordBoundaryPhase(
+		String owner,
+		String phase,
+		long startedNanos,
+		long durationNanos) {
+		BoundaryLoadingDiagnostics.recordPhase(
+			owner, phase, startedNanos, durationNanos);
+	}
+
+	public static void recordBoundaryDiskRead(
+		String source,
+		long bytes,
+		long startedNanos,
+		long durationNanos) {
+		BoundaryLoadingDiagnostics.recordDiskRead(
+			source, bytes, startedNanos, durationNanos);
+	}
+
+	public static void recordBoundaryLockWait(
+		String lock,
+		long startedNanos,
+		long durationNanos) {
+		BoundaryLoadingDiagnostics.recordLockWait(
+			lock, startedNanos, durationNanos);
+	}
+
 	public static long elapsedSince(long startNanos) {
 		return isCollectionEnabled() && startNanos != 0L ? System.nanoTime() - startNanos : 0L;
 	}
@@ -367,6 +401,7 @@ public final class RenderTelemetry {
 			return;
 		}
 
+		long frameSequence;
 		synchronized (RenderTelemetry.class) {
 			frameStats.record(totalNanos);
 			commitStats.record(commitNanos);
@@ -379,6 +414,7 @@ public final class RenderTelemetry {
 			diagnosticLastScalar = scalar;
 			diagnosticLastScalingType = String.valueOf(scalingType);
 			diagnosticLastFramePath = framePath == null ? "unknown" : framePath;
+			frameSequence = frameStats.count;
 
 			boolean slowFrame = totalNanos >= SLOW_FRAME_NANOS;
 			long now = System.nanoTime();
@@ -389,6 +425,11 @@ public final class RenderTelemetry {
 				printReport(slowFrame, totalNanos, sourceWidth, sourceHeight, scalar, scalingType, framePath);
 			}
 		}
+		BoundaryLoadingDiagnostics.recordPresentationFrame(
+			frameSequence,
+			totalNanos,
+			commitNanos,
+			presentNanos);
 	}
 
 	static void recordSceneRender(long nanos) {
@@ -525,6 +566,7 @@ public final class RenderTelemetry {
 				worldSectionLoadChunkFrameStats.record(chunkFrameNanos);
 				worldSectionLoadPreloadStats.record(preloadNanos);
 				if (RendererDiagnosticSession.isEnabled()
+					&& !BoundaryLoadingDiagnostics.isEnabled()
 					&& path != null
 					&& path.startsWith("native-")) {
 					openGLBoundaryTransitionTraceId++;
@@ -539,6 +581,7 @@ public final class RenderTelemetry {
 				RendererDiagnosticSession.newEventRecord(
 					"renderer.world-section-transition");
 			if (event != null) {
+				BoundaryLoadingDiagnostics.appendCorrelation(event);
 				event.string("path", path);
 				event.number("plane", plane);
 				event.number("sectionX", sectionX);
@@ -562,6 +605,24 @@ public final class RenderTelemetry {
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
 		}
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "total", 0L, totalNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "reset", 0L, resetNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "active-plane", 0L, activePlaneNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "upper-planes", 0L, upperPlanesNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "bridge", 0L, bridgeNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "active-chunk-build", 0L, activeChunkBuildNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "predictive-clear", 0L, predictiveClearNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "symmetric-compose", 0L, symmetricComposeNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-section", "preload", 0L, preloadNanos);
 		String summary =
 			"WORLD_SECTION_TRANSITION"
 				+ " path=" + path
@@ -603,14 +664,35 @@ public final class RenderTelemetry {
 		if (!RendererDiagnosticSession.isEnabled()) {
 			return;
 		}
+		OpenGLWorldChunkUploadStats safeUpload =
+			uploadStats == null
+				? OpenGLWorldChunkUploadStats.EMPTY
+				: uploadStats;
+		BoundaryLoadingDiagnostics.recordOpenGLWorldFrame(
+			chunkCount,
+			triangleCount,
+			safeUpload.uploadedBytesForRole(
+				Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD)
+				+ safeUpload.uploadedBytesForRole(
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS)
+				+ safeUpload.uploadedBytesForRole(
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS),
+			safeUpload.requestedChunks,
+			safeUpload.uploadedChunks,
+			safeUpload.reusedChunks,
+			safeUpload.deferredChunks,
+			chunkUploadNanos,
+			projectedDrawNanos,
+			residentDrawNanos,
+			remasterShadowPrepared,
+			explicitRemasterShadowRequested);
+		if (BoundaryLoadingDiagnostics.isEnabled()) {
+			return;
+		}
 		synchronized (RenderTelemetry.class) {
 			if (openGLBoundaryTransitionTraceFramesRemaining <= 0) {
 				return;
 			}
-			OpenGLWorldChunkUploadStats safeUpload =
-				uploadStats == null
-					? OpenGLWorldChunkUploadStats.EMPTY
-					: uploadStats;
 			OpenGLWorldChunkDrawStats safeDraw =
 				drawStats == null
 					? OpenGLWorldChunkDrawStats.EMPTY
@@ -792,6 +874,7 @@ public final class RenderTelemetry {
 				RendererDiagnosticSession.newEventRecord(
 					"renderer.world-model-transition");
 			if (event != null) {
+				BoundaryLoadingDiagnostics.appendCorrelation(event);
 				event.string("path", path);
 				event.number("plane", plane);
 				event.number("sectionX", sectionX);
@@ -806,6 +889,18 @@ public final class RenderTelemetry {
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
 		}
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-model", "total", 0L, totalNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-model", "section-window", 0L, sectionWindowNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-model", "product", 0L, productNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-model", "terrain-minimap", 0L, terrainNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-model", "walls-minimap", 0L, wallNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"world-model", "roof", 0L, roofNanos);
 		String summary =
 			"WORLD_MODEL_TRANSITION"
 				+ " path=" + path
@@ -846,6 +941,7 @@ public final class RenderTelemetry {
 				RendererDiagnosticSession.newEventRecord(
 					"renderer.client-region-transition");
 			if (event != null) {
+				BoundaryLoadingDiagnostics.appendCorrelation(event);
 				event.string("path", path);
 				event.bool("hardAreaLoad", hardAreaLoad);
 				event.bool("planeChanged", planeChanged);
@@ -867,6 +963,33 @@ public final class RenderTelemetry {
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
 		}
+		BoundaryLoadingDiagnostics.recordRegionTransition(
+			hardAreaLoad,
+			planeChanged,
+			baseDeltaX,
+			baseDeltaZ,
+			sceneryCount,
+			wallCount,
+			playerCount,
+			npcCount);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "total", 0L, totalNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "dematerialize", 0L, dematerializeNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "world-load", 0L, worldLoadNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "static-rebase", 0L, staticRebaseNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "static-materialize", 0L, staticMaterializeNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "ground-items", 0L, groundItemsNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "actor-rebase", 0L, actorRebaseNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "finalize", 0L, finalizeNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"client-region", "baseline", 0L, baselineNanos);
 		String summary =
 			"CLIENT_REGION_TRANSITION"
 				+ " path=" + path
@@ -1313,6 +1436,10 @@ public final class RenderTelemetry {
 			openGLRemasterShadowMaskBuildStats.record(buildNanos);
 			openGLRemasterShadowMaskUploadStats.record(uploadNanos);
 		}
+		BoundaryLoadingDiagnostics.recordOpenGLShadow(
+			buildNanos,
+			uploadNanos,
+			cacheHit || uploadSkipped);
 	}
 
 	static void recordOpenGLResidentChunkReplacement(
@@ -1519,17 +1646,26 @@ public final class RenderTelemetry {
 			return;
 		}
 
+		long intervalNanos = 0L;
+		long frameSequence;
 		synchronized (RenderTelemetry.class) {
 			long now = System.nanoTime();
 			if (lastOpenGLFrameNanos != 0L && now > lastOpenGLFrameNanos) {
-				openGLFrameIntervalStats.record(now - lastOpenGLFrameNanos);
+				intervalNanos = now - lastOpenGLFrameNanos;
+				openGLFrameIntervalStats.record(intervalNanos);
 			}
 			lastOpenGLFrameNanos = now;
 			openGLUploadStats.record(uploadNanos);
 			openGLRenderStats.record(renderNanos);
 			openGLFrames++;
 			openGLFramesWindow++;
+			frameSequence = openGLFrames;
 		}
+		BoundaryLoadingDiagnostics.recordOpenGLFrame(
+			frameSequence,
+			uploadNanos,
+			renderNanos,
+			intervalNanos);
 	}
 
 	static void resetOpenGLFramePacing() {
@@ -1572,6 +1708,13 @@ public final class RenderTelemetry {
 			openGLDebugOverlayStats.record(debugOverlayNanos);
 			openGLSwapStats.record(swapNanos);
 		}
+		BoundaryLoadingDiagnostics.recordOpenGLPhases(
+			baseNanos,
+			worldNanos,
+			worldSpriteNanos,
+			spriteOverlayNanos,
+			debugOverlayNanos,
+			swapNanos);
 	}
 
 	static void recordOpenGLWorldPhaseBreakdown(
@@ -2886,6 +3029,7 @@ public final class RenderTelemetry {
 					? -1L
 					: Math.max(0L, movementSampleNanos - lastClientLoopSampleNanos));
 		}
+		BoundaryLoadingDiagnostics.appendCorrelation(record);
 	}
 
 	private static void appendDiagnosticStage(

@@ -82,11 +82,20 @@ public class PacketHandler {
 	private int pendingLayeredTerrainContextSequence;
 	private String pendingLayeredTerrainWorldSpace;
 	private int pendingLayeredTerrainLogicalLevel;
+	private long pendingLayeredTerrainDecodeNanos;
+	private long pendingLayeredTerrainQueuedNanos;
 	private World.NativeLayeredTerrainHaloPrebuildResult
 		readyPredictedLayeredTerrainHalo;
 	private NativeLayeredTerrainSnapshot readyPredictedLayeredTerrainStage;
 	private NativeLayeredTerrainSnapshot
 		readyPredictedLayeredTerrainStructureStage;
+	private long readyPredictionDecodeNanos;
+	private long readyPredictionBuildNanos;
+	private long readyPredictionQueueLatencyNanos;
+	private boolean readyPredictionProductCacheHit = true;
+	private int readyPredictionTriangleCount;
+	private int readyPredictionReusedCells;
+	private int readyPredictionBuiltCells;
 
 	public String getSceneBaselineDebugSummary() {
 		return sceneBaselineState.summary();
@@ -258,6 +267,8 @@ public class PacketHandler {
 		pendingLayeredTerrainContextSequence = 0;
 		pendingLayeredTerrainWorldSpace = null;
 		pendingLayeredTerrainLogicalLevel = 0;
+		pendingLayeredTerrainDecodeNanos = 0L;
+		pendingLayeredTerrainQueuedNanos = 0L;
 	}
 
 	private void cancelPendingLayeredTerrainPrebuild() {
@@ -274,6 +285,13 @@ public class PacketHandler {
 		readyPredictedLayeredTerrainHalo = null;
 		readyPredictedLayeredTerrainStage = null;
 		readyPredictedLayeredTerrainStructureStage = null;
+		readyPredictionDecodeNanos = 0L;
+		readyPredictionBuildNanos = 0L;
+		readyPredictionQueueLatencyNanos = 0L;
+		readyPredictionProductCacheHit = true;
+		readyPredictionTriangleCount = 0;
+		readyPredictionReusedCells = 0;
+		readyPredictionBuiltCells = 0;
 	}
 
 	private SpriteDef getProjectileDefForUpdate(int sprite, String targetType, int targetServerIndex, int shooterServerIndex) {
@@ -438,8 +456,20 @@ public class PacketHandler {
 	}
 
 	public final void handlePacket(int opcode, int length) {
-		if (length > 0)
+		if (length <= 0) {
+			return;
+		}
+		long packetStartedNanos = BoundaryLoadingDiagnostics.now();
+		try {
 			handlePacket1(opcode, length);
+		} finally {
+			BoundaryLoadingDiagnostics.recordPacket(
+				opcode,
+				length,
+				packetStartedNanos,
+				packetStartedNanos == 0L
+					? 0L : System.nanoTime() - packetStartedNanos);
+		}
 	}
 
 	private void handlePacket1(int opcode, int length) {
@@ -609,6 +639,8 @@ public class PacketHandler {
 	}
 
 	private void updateLayeredSceneContext(int length) {
+		long contextStartedNanos = BoundaryLoadingDiagnostics.now();
+		long phaseStartedNanos = contextStartedNanos;
 		int protocolVersion = packetsIncoming.getUnsignedByte();
 		int sequence = packetsIncoming.get32();
 		int serverTick = packetsIncoming.get32();
@@ -621,6 +653,21 @@ public class PacketHandler {
 		int logicalLevel = packetsIncoming.get32();
 		int legacyX = packetsIncoming.getShort();
 		int legacyY = packetsIncoming.getShort();
+		BoundaryLoadingDiagnostics.beginContextTransition(
+			protocolVersion,
+			sequence,
+			serverTick,
+			logicalX,
+			logicalY,
+			logicalLevel,
+			contextStartedNanos);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"context",
+			"header-decode",
+			phaseStartedNanos,
+			phaseStartedNanos == 0L
+				? 0L : System.nanoTime() - phaseStartedNanos);
+		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		NativeLayeredTerrainSnapshot nativeTerrain = null;
 		if (protocolVersion
 				== LayeredSceneContextState.UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION) {
@@ -697,6 +744,13 @@ public class PacketHandler {
 					nativeLayeredTerrainResidentCache);
 			}
 		}
+		BoundaryLoadingDiagnostics.recordPhase(
+			"context",
+			"terrain-decode",
+			phaseStartedNanos,
+			phaseStartedNanos == 0L
+				? 0L : System.nanoTime() - phaseStartedNanos);
+		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		final boolean hadLayeredSceneContext =
 			layeredSceneContextState.hasContext();
 		LayeredSceneContextState.ApplyResult result = nativeTerrain == null
@@ -723,6 +777,13 @@ public class PacketHandler {
 				legacyX,
 				legacyY,
 				nativeTerrain);
+		BoundaryLoadingDiagnostics.recordPhase(
+			"context",
+			"state-accept",
+			phaseStartedNanos,
+			phaseStartedNanos == 0L
+				? 0L : System.nanoTime() - phaseStartedNanos);
+		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		final boolean atomicActivation = protocolVersion
 			== LayeredSceneContextState
 				.ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION;
@@ -749,9 +810,18 @@ public class PacketHandler {
 			result.isScopeChanged(),
 			result.isSyntheticDeepFixture(),
 			result.getNativeTerrainSnapshot());
+		BoundaryLoadingDiagnostics.recordPhase(
+			"context",
+			"scope-apply",
+			phaseStartedNanos,
+			phaseStartedNanos == 0L
+				? 0L : System.nanoTime() - phaseStartedNanos);
+		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
+		boolean predictedPublished = false;
 		if (atomicActivation) {
 			cancelPendingLayeredTerrainPrebuild();
-			publishReadyPredictedLayeredTerrainHalo(nativeTerrain);
+			predictedPublished =
+				publishReadyPredictedLayeredTerrainHalo(nativeTerrain);
 			layeredSceneActivationState.begin(sequence);
 			mc.beginLayeredSceneActivation(
 				hadLayeredSceneContext && !result.isScopeChanged());
@@ -759,6 +829,21 @@ public class PacketHandler {
 		} else {
 			clearReadyPredictedLayeredTerrainHalo();
 		}
+		BoundaryLoadingDiagnostics.recordPhase(
+			"context",
+			"prediction-and-activation",
+			phaseStartedNanos,
+			phaseStartedNanos == 0L
+				? 0L : System.nanoTime() - phaseStartedNanos);
+		if (nativeTerrain != null) {
+			BoundaryLoadingDiagnostics.updateDestination(
+				logicalLevel,
+				nativeTerrain.getCurrentChunkX(),
+				nativeTerrain.getCurrentChunkY(),
+				result.isScopeChanged(),
+				predictedPublished);
+		}
+		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		if (protocolVersion
 				== LayeredSceneContextState
 					.READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
@@ -766,6 +851,12 @@ public class PacketHandler {
 			sendLayeredTerrainReady(
 				sequence, worldSpace, logicalLevel, nativeTerrain);
 		}
+		BoundaryLoadingDiagnostics.recordPhase(
+			"context",
+			"ready-receipt",
+			phaseStartedNanos,
+			phaseStartedNanos == 0L
+				? 0L : System.nanoTime() - phaseStartedNanos);
 		String summary = getLayeredSceneContextDebugSummary();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
@@ -803,6 +894,8 @@ public class PacketHandler {
 	}
 
 	private void updateLayeredTerrainStage(final int length) {
+		final long stageStartedNanos =
+			BoundaryLoadingDiagnostics.now();
 		final int protocolVersion = packetsIncoming.getUnsignedByte();
 		final int stageSequence = packetsIncoming.get32();
 		final int contextSequence = packetsIncoming.get32();
@@ -824,10 +917,17 @@ public class PacketHandler {
 			throw new IllegalArgumentException(
 				"Native terrain stage body is missing");
 		}
+		final long bodyCopyStartedNanos =
+			BoundaryLoadingDiagnostics.now();
 		final byte[] body = new byte[bodyLength];
 		packetsIncoming.readBytes(bodyLength, body);
+		final long bodyCopyNanos =
+			bodyCopyStartedNanos == 0L
+				? 0L : System.nanoTime() - bodyCopyStartedNanos;
 		final NativeLayeredTerrainSnapshot activeTerrain =
 			layeredSceneContextState.getNativeTerrainSnapshot();
+		final long decodeStartedNanos =
+			BoundaryLoadingDiagnostics.now();
 		final NativeLayeredTerrainSnapshot stagedTerrain =
 			protocolVersion == 1
 				? NativeLayeredTerrainPacketDecoder.decodeV7Stage(
@@ -865,6 +965,9 @@ public class PacketHandler {
 						logicalLevel,
 						nativeLayeredTerrainResidentCache,
 						activeTerrain);
+		final long decodeNanos =
+			decodeStartedNanos == 0L
+				? 0L : System.nanoTime() - decodeStartedNanos;
 		if (pendingLayeredTerrainPrebuild != null
 			|| pendingLayeredTerrainHaloPrebuild != null) {
 			throw new IllegalStateException(
@@ -882,6 +985,10 @@ public class PacketHandler {
 		pendingLayeredTerrainContextSequence = contextSequence;
 		pendingLayeredTerrainWorldSpace = worldSpace;
 		pendingLayeredTerrainLogicalLevel = logicalLevel;
+		pendingLayeredTerrainDecodeNanos =
+			bodyCopyNanos + decodeNanos;
+		pendingLayeredTerrainQueuedNanos =
+			BoundaryLoadingDiagnostics.now();
 		if (protocolVersion == 1) {
 			pendingLayeredTerrainPrebuild =
 				mc.getWorld().preloadNativeLayeredTerrainSnapshot(
@@ -922,6 +1029,12 @@ public class PacketHandler {
 						mc.getWorldOffsetX(),
 						mc.getWorldOffsetZ());
 		}
+		BoundaryLoadingDiagnostics.recordPhase(
+			"terrain-stage",
+			"packet-and-queue",
+			stageStartedNanos,
+			stageStartedNanos == 0L
+				? 0L : System.nanoTime() - stageStartedNanos);
 		final String summary =
 			"layer terrain stage seq " + stageSequence
 				+ " context " + contextSequence
@@ -1059,6 +1172,8 @@ public class PacketHandler {
 						pendingLayeredTerrainStage,
 						mc.getWorldOffsetX(),
 						mc.getWorldOffsetZ());
+				pendingLayeredTerrainQueuedNanos =
+					BoundaryLoadingDiagnostics.now();
 				final String retry =
 					"predicted terrain halo scope changed before ack; retrying";
 				System.out.println(retry);
@@ -1073,6 +1188,27 @@ public class PacketHandler {
 			readyPredictedLayeredTerrainHalo = result;
 			readyPredictedLayeredTerrainStage =
 				pendingLayeredTerrainStage;
+			readyPredictionDecodeNanos +=
+				pendingLayeredTerrainDecodeNanos;
+			readyPredictionBuildNanos +=
+				result.getDiagnosticBuildNanos();
+			readyPredictionQueueLatencyNanos +=
+				pendingLayeredTerrainQueuedNanos == 0L
+					? 0L
+					: Math.max(
+						0L,
+						System.nanoTime()
+							- pendingLayeredTerrainQueuedNanos);
+			readyPredictionProductCacheHit &=
+				result.isDiagnosticActiveProductCacheHit();
+			readyPredictionTriangleCount =
+				Math.max(
+					readyPredictionTriangleCount,
+					result.getDiagnosticTriangleCount());
+			readyPredictionReusedCells +=
+				result.getDiagnosticReusedCells();
+			readyPredictionBuiltCells +=
+				result.getDiagnosticBuiltCells();
 			sendLayeredTerrainStageReady(
 				pendingLayeredTerrainStageProtocol,
 				pendingLayeredTerrainStageSequence,
@@ -1104,6 +1240,8 @@ public class PacketHandler {
 							pendingLayeredTerrainStage,
 							mc.getWorldOffsetX(),
 							mc.getWorldOffsetZ());
+				pendingLayeredTerrainQueuedNanos =
+					BoundaryLoadingDiagnostics.now();
 				final String retry =
 					"predicted terrain structure scope changed before ack; retrying";
 				System.out.println(retry);
@@ -1113,6 +1251,39 @@ public class PacketHandler {
 			readyPredictedLayeredTerrainHalo = result;
 			readyPredictedLayeredTerrainStructureStage =
 				pendingLayeredTerrainStage;
+			readyPredictionDecodeNanos +=
+				pendingLayeredTerrainDecodeNanos;
+			readyPredictionBuildNanos +=
+				result.getDiagnosticBuildNanos();
+			readyPredictionQueueLatencyNanos +=
+				pendingLayeredTerrainQueuedNanos == 0L
+					? 0L
+					: Math.max(
+						0L,
+						System.nanoTime()
+							- pendingLayeredTerrainQueuedNanos);
+			readyPredictionProductCacheHit &=
+				result.isDiagnosticActiveProductCacheHit();
+			readyPredictionTriangleCount =
+				Math.max(
+					readyPredictionTriangleCount,
+					result.getDiagnosticTriangleCount());
+			readyPredictionReusedCells +=
+				result.getDiagnosticReusedCells();
+			readyPredictionBuiltCells +=
+				result.getDiagnosticBuiltCells();
+			BoundaryLoadingDiagnostics.recordPrediction(
+				pendingLayeredTerrainLogicalLevel,
+				pendingLayeredTerrainStage.getCurrentChunkX(),
+				pendingLayeredTerrainStage.getCurrentChunkY(),
+				pendingLayeredTerrainStageProtocol,
+				readyPredictionDecodeNanos,
+				readyPredictionBuildNanos,
+				readyPredictionQueueLatencyNanos,
+				readyPredictionProductCacheHit,
+				readyPredictionTriangleCount,
+				readyPredictionReusedCells,
+				readyPredictionBuiltCells);
 			sendLayeredTerrainStageReady(
 				pendingLayeredTerrainStageProtocol,
 				pendingLayeredTerrainStageSequence,
@@ -3080,11 +3251,17 @@ public class PacketHandler {
 		final String receipt,
 		final boolean activationWasPending) {
 		refreshLayeredSceneActivationCover();
+		BoundaryLoadingDiagnostics.recordAtomicActivationProgress(
+			completed,
+			layeredSceneActivationState.hasPlayerReceipt(),
+			layeredSceneActivationState.hasStaticBaseline(),
+			layeredSceneActivationState.getElapsedMillis());
 		if (activationWasPending) {
 			RendererDiagnosticSession.Record event =
 				RendererDiagnosticSession.newEventRecord(
 					"renderer.atomic-activation-progress");
 			if (event != null) {
+				BoundaryLoadingDiagnostics.appendCorrelation(event);
 				event.string("receipt", receipt);
 				event.number(
 					"contextSequence",
