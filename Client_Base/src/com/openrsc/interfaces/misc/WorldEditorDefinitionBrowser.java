@@ -18,7 +18,9 @@ final class WorldEditorDefinitionBrowser {
 
 	enum Family {
 		SCENERY,
-		BOUNDARY
+		BOUNDARY,
+		NPC,
+		ITEM
 	}
 
 	private Family family = Family.SCENERY;
@@ -127,9 +129,22 @@ final class WorldEditorDefinitionBrowser {
 	}
 
 	private void rebuild() {
-		List<WorldEditorDefinitionCatalog.Entry> source = family == Family.BOUNDARY
-			? WorldEditorDefinitionCatalog.boundaryEntries()
-			: WorldEditorDefinitionCatalog.sceneryEntries();
+		List<WorldEditorDefinitionCatalog.Entry> source;
+		switch (family) {
+			case BOUNDARY:
+				source = WorldEditorDefinitionCatalog.boundaryEntries();
+				break;
+			case NPC:
+				source = WorldEditorDefinitionCatalog.npcEntries();
+				break;
+			case ITEM:
+				source = WorldEditorDefinitionCatalog.itemEntries();
+				break;
+			case SCENERY:
+			default:
+				source = WorldEditorDefinitionCatalog.sceneryEntries();
+				break;
+		}
 		String normalized = normalized(query);
 		if (normalized.isEmpty()) {
 			results = source;

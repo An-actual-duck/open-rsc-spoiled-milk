@@ -246,6 +246,12 @@ The implementation sequence is:
 7. [ ] Extend the shared browser to items, NPCs, floor textures, roofs, and
    other definition families after each family has an authoritative metadata
    and preview contract.
+   - [x] Connect NPC and respawning-ground-item selection to the shared text
+     browser. These two families are generated lazily from their authoritative
+     runtime definitions and search names, descriptions, actions, useful
+     traits, and exact stable IDs without changing gameplay data.
+   - [ ] Define and connect the remaining floor-texture, roof, and other
+     selector families after their author-facing metadata is reviewed.
 
 The first catalog covers all 1,332 scenery and 214 boundary IDs. It records
 canonical names, semantic display labels, provenance, tags, and search terms;

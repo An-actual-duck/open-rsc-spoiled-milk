@@ -1,6 +1,8 @@
 package com.openrsc.interfaces.misc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.ItemDef;
+import com.openrsc.client.entityhandling.defs.NPCDef;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -105,6 +107,15 @@ public final class WorldEditorDefinitionCatalog {
 		private static final LoadedCatalog INSTANCE = load();
 	}
 
+	/** Each runtime family is built only if its browser is opened. */
+	private static final class NpcHolder {
+		private static final List<Entry> NPCS = runtimeNpcs();
+	}
+
+	private static final class ItemHolder {
+		private static final List<Entry> ITEMS = runtimeItems();
+	}
+
 	private WorldEditorDefinitionCatalog() {
 	}
 
@@ -153,6 +164,102 @@ public final class WorldEditorDefinitionCatalog {
 
 	public static List<Entry> boundaryEntries() {
 		return Holder.INSTANCE.boundaryEntries;
+	}
+
+	public static List<Entry> npcEntries() {
+		return NpcHolder.NPCS;
+	}
+
+	public static List<Entry> itemEntries() {
+		return ItemHolder.ITEMS;
+	}
+
+	private static List<Entry> runtimeNpcs() {
+		List<Entry> entries = new ArrayList<Entry>();
+		for (int id = 0; id < EntityHandler.npcCount(); id++) {
+			NPCDef definition;
+			try {
+				definition = EntityHandler.getNpcDef(id);
+			} catch (RuntimeException failure) {
+				continue;
+			}
+			if (definition == null || definition.id != id) {
+				continue;
+			}
+			String name = normalized(definition.getName());
+			if (name.isEmpty()) {
+				continue;
+			}
+			String tags = definition.isAttackable() ? "Attackable" : "Protected";
+			String behavior = definition.isAttackable()
+				? "combat attackable target"
+				: "noncombat protected cannot attack";
+			String search = normalized(name + " " + safe(definition.getDescription()) + " "
+				+ safe(definition.getCommand1()) + " " + safe(definition.getCommand2()) + " "
+				+ behavior + " npc character");
+			entries.add(new Entry("npc", id, name, name, "runtime", tags, search));
+		}
+		return Collections.unmodifiableList(entries);
+	}
+
+	private static List<Entry> runtimeItems() {
+		List<Entry> entries = new ArrayList<Entry>();
+		for (int id = 0; id < EntityHandler.itemCount(); id++) {
+			ItemDef definition;
+			try {
+				definition = EntityHandler.findItem(id, false);
+			} catch (RuntimeException failure) {
+				continue;
+			}
+			if (definition == null || definition.id != id || isPlaceholderItem(definition)) {
+				continue;
+			}
+			String name = normalized(definition.getName());
+			if (name.isEmpty()) {
+				continue;
+			}
+			String tags = definition.isStackable() ? "Stackable" : "Single";
+			String traits = definition.isStackable() ? "stackable stack" : "single individual";
+			if (definition.isWieldable()) {
+				traits += " wieldable wearable equipment";
+			}
+			if (definition.membersItem) {
+				traits += " members";
+			}
+			if (definition.untradeable) {
+				traits += " untradeable";
+			}
+			String search = normalized(name + " " + safe(definition.getDescription()) + " "
+				+ commandTerms(definition.getCommand()) + " " + traits
+				+ " item ground spawn respawn");
+			entries.add(new Entry("item", id, name, name, "runtime", tags, search));
+		}
+		return Collections.unmodifiableList(entries);
+	}
+
+	private static boolean isPlaceholderItem(ItemDef definition) {
+		return "Unobtanium".equals(definition.getName()) && definition.getSpriteID() == 70;
+	}
+
+	private static String commandTerms(String[] commands) {
+		if (commands == null || commands.length == 0) {
+			return "";
+		}
+		StringBuilder joined = new StringBuilder();
+		for (String command : commands) {
+			if (command == null || command.trim().isEmpty()) {
+				continue;
+			}
+			if (joined.length() > 0) {
+				joined.append(' ');
+			}
+			joined.append(command);
+		}
+		return joined.toString();
+	}
+
+	private static String safe(String value) {
+		return value == null ? "" : value;
 	}
 
 	private static String label(Map<Integer, Entry> entries, int id, String canonicalName, String fallback) {

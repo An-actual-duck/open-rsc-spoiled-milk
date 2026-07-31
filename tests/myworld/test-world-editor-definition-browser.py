@@ -26,9 +26,13 @@ class WorldEditorDefinitionBrowserTest(unittest.TestCase):
         self.assertIn("entry.tags() + \" \" + entry.searchTerms()", browser)
         self.assertIn("Integer exactId = numericToken(token)", browser)
         self.assertEqual(2, editor.count('"Browse scenery..."'))
+        self.assertEqual(2, editor.count('"Browse NPCs..."'))
+        self.assertEqual(2, editor.count('"Browse items..."'))
         self.assertIn("renderDefinitionBrowser", editor)
         self.assertIn("handleDefinitionBrowserMouse", editor)
         self.assertIn("selectDefinitionBrowserEntry", editor)
+        self.assertIn("case NPC:setNpcId(entry.id())", editor)
+        self.assertIn("case ITEM:setGroundItemId(entry.id())", editor)
         self.assertIn("definitionBrowser.resultAtVisibleSlot", editor)
         self.assertIn("scrollDefinitionBrowser", editor)
         self.assertIn("worldEditorInterface.scrollDefinitionBrowser(x)", client)
@@ -85,6 +89,31 @@ public final class WorldEditorDefinitionBrowserFixture {
         browser.open(WorldEditorDefinitionBrowser.Family.BOUNDARY, 8);
         browser.setQuery("gray bricks");
         require(visibleContains(browser, 8), "shared boundary metadata was not searchable");
+
+		browser.open(WorldEditorDefinitionBrowser.Family.NPC, 0);
+		require(browser.resultCount() == WorldEditorDefinitionCatalog.npcEntries().size(),
+			"unfiltered NPC count changed");
+		require(browser.resultCount() > 100, "NPC browser omitted runtime definitions");
+		require(visibleContains(browser, 0), "opening did not center the selected NPC");
+		browser.setQuery("hans castle servant combat");
+		require(browser.resultCount() >= 1, "NPC name/description/behavior search missed Hans");
+		require("Hans".equals(browser.resultAtVisibleSlot(0).displayName()),
+			"NPC search returned the wrong definition");
+		browser.setQuery("pickpocket citizens");
+		require(browser.resultCount() >= 1, "NPC action metadata was not searchable");
+
+		browser.open(WorldEditorDefinitionBrowser.Family.ITEM, 10);
+		require(browser.resultCount() == WorldEditorDefinitionCatalog.itemEntries().size(),
+			"unfiltered item count changed");
+		require(browser.resultCount() > 2000, "item browser omitted runtime definitions");
+		require(visibleContains(browser, 10), "opening did not center the selected item");
+		browser.setQuery("lovely money stackable");
+		require(visibleContains(browser, 10), "item description/trait search missed coins");
+		browser.setQuery("bury bones");
+		require(visibleContains(browser, 20), "item action search missed bones");
+		browser.setQuery("#18");
+		require(browser.resultCount() == 1, "exact item ID search returned extra definitions");
+		require(browser.resultAtVisibleSlot(0).id() == 18, "exact item ID search returned the wrong item");
         browser.close();
         require(!browser.isOpen(), "browser did not close");
     }

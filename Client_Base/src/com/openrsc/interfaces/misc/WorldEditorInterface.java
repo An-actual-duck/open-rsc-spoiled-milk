@@ -373,9 +373,24 @@ public final class WorldEditorInterface extends NCustomComponent {
 		coordinateFocus=0;replaceFocusedText=false;toolbar.open(WorldEditorToolbarState.Flyout.SCENERY);
 		definitionBrowser.open(WorldEditorDefinitionBrowser.Family.SCENERY,sceneryId);updatePresentationBounds();
 	}
+	private void openNpcBrowser(){
+		coordinateFocus=0;replaceFocusedText=false;toolbar.open(WorldEditorToolbarState.Flyout.NPC);
+		definitionBrowser.open(WorldEditorDefinitionBrowser.Family.NPC,npcId);updatePresentationBounds();
+	}
+	private void openGroundItemBrowser(){
+		coordinateFocus=0;replaceFocusedText=false;toolbar.open(WorldEditorToolbarState.Flyout.ITEMS);
+		definitionBrowser.open(WorldEditorDefinitionBrowser.Family.ITEM,groundItemId);updatePresentationBounds();
+	}
 	private void closeDefinitionBrowser(){definitionBrowser.close();updatePresentationBounds();}
 	private void selectDefinitionBrowserEntry(WorldEditorDefinitionCatalog.Entry entry){
-		if(entry==null)return;setSceneryId(entry.id());inspectionStatus="Selected "+WorldEditorDefinitionCatalog.sceneryLabel(entry.id())+" [#"+entry.id()+"] from search.";closeDefinitionBrowser();
+		if(entry==null)return;
+		switch(definitionBrowser.family()){
+			case NPC:setNpcId(entry.id());break;
+			case ITEM:setGroundItemId(entry.id());break;
+			case SCENERY:setSceneryId(entry.id());break;
+			case BOUNDARY:default:return;
+		}
+		inspectionStatus="Selected "+entry.displayName()+" [#"+entry.id()+"] from search.";closeDefinitionBrowser();
 	}
 	public boolean scrollDefinitionBrowser(int delta){
 		if(!definitionBrowser.isOpen())return false;int left=getX()+definitionBrowserOffsetX(),top=getY();
@@ -489,13 +504,15 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void handleCompactNpcMouse(int x,int y){
 		if(y>=56&&y<80){if(x>=8&&x<38)setNpcId(npcId-1);else if(x>=42&&x<130)focusNumber(4);else if(x>=134&&x<164)setNpcId(npcId+1);return;}
 		if(y>=100&&y<124){if(x>=8&&x<38)setNpcRadius(npcRadius-1);else if(x>=42&&x<130)focusNumber(5);else if(x>=134&&x<164)setNpcRadius(npcRadius+1);return;}
-		if(y>=138&&y<162)npcTool=x<88?NpcTool.PLACE:NpcTool.REMOVE;
+		if(y>=138&&y<162){npcTool=x<88?NpcTool.PLACE:NpcTool.REMOVE;return;}
+		if(y>=168&&y<192)openNpcBrowser();
 	}
 	private void handleCompactGroundItemMouse(int x,int y){
 		if(y>=50&&y<74){if(x>=8&&x<38)setGroundItemId(groundItemId-1);else if(x>=42&&x<130)focusNumber(14);else if(x>=134&&x<164)setGroundItemId(groundItemId+1);return;}
-		if(y>=92&&y<116){if(x>=8&&x<38)setGroundItemAmount(groundItemAmount-1);else if(x>=42&&x<130)focusNumber(15);else if(x>=134&&x<164)setGroundItemAmount(groundItemAmount+1);return;}
-		if(y>=134&&y<158){if(x>=8&&x<38)setGroundItemRespawnSeconds(groundItemRespawnSeconds-1);else if(x>=42&&x<130)focusNumber(16);else if(x>=134&&x<164)setGroundItemRespawnSeconds(groundItemRespawnSeconds+1);return;}
-		if(y>=164&&y<188)groundItemTool=x<88?GroundItemTool.PLACE:GroundItemTool.REMOVE;
+		if(y>=80&&y<104){openGroundItemBrowser();return;}
+		if(y>=108&&y<132){if(x>=68&&x<92)setGroundItemAmount(groundItemAmount-1);else if(x>=96&&x<144)focusNumber(15);else if(x>=148&&x<172)setGroundItemAmount(groundItemAmount+1);return;}
+		if(y>=136&&y<160){if(x>=68&&x<92)setGroundItemRespawnSeconds(groundItemRespawnSeconds-1);else if(x>=96&&x<144)focusNumber(16);else if(x>=148&&x<172)setGroundItemRespawnSeconds(groundItemRespawnSeconds+1);return;}
+		if(y>=166&&y<190)groundItemTool=x<88?GroundItemTool.PLACE:GroundItemTool.REMOVE;
 	}
 	private boolean handleDefinitionBrowserMouse(int x,int y,int click){
 		if(click==0)return true;if(click!=1)return true;
@@ -552,6 +569,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 				if(ry>=86&&ry<110&&rx>=10&&rx<38){setNpcId(npcId-1);return true;}
 				if(ry>=86&&ry<110&&rx>=45&&rx<125){focusNumber(4);return true;}
 				if(ry>=86&&ry<110&&rx>=132&&rx<160){setNpcId(npcId+1);return true;}
+				if(ry>=112&&ry<136&&rx>=175&&rx<309){openNpcBrowser();return true;}
 				if(ry>=145&&ry<169&&rx>=10&&rx<38){setNpcRadius(npcRadius-1);return true;}
 				if(ry>=145&&ry<169&&rx>=45&&rx<125){focusNumber(5);return true;}
 				if(ry>=145&&ry<169&&rx>=132&&rx<160){setNpcRadius(npcRadius+1);return true;}
@@ -562,6 +580,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 				if(ry>=86&&ry<110&&rx>=10&&rx<38){setGroundItemId(groundItemId-1);return true;}
 				if(ry>=86&&ry<110&&rx>=45&&rx<125){focusNumber(14);return true;}
 				if(ry>=86&&ry<110&&rx>=132&&rx<160){setGroundItemId(groundItemId+1);return true;}
+				if(ry>=112&&ry<136&&rx>=175&&rx<309){openGroundItemBrowser();return true;}
 				if(ry>=137&&ry<161&&rx>=118&&rx<146){setGroundItemAmount(groundItemAmount-1);return true;}
 				if(ry>=137&&ry<161&&rx>=153&&rx<233){focusNumber(15);return true;}
 				if(ry>=137&&ry<161&&rx>=240&&rx<268){setGroundItemAmount(groundItemAmount+1);return true;}
@@ -662,12 +681,14 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString(compactLine(npcName(),28),x+8,y+47,0xffff00,1);button(x+8,y+56,30,"-");textField(x+42,y+56,88,npcIdText,coordinateFocus==4);button(x+134,y+56,30,"+");
 		graphics().drawString("Roam radius",x+8,y+95,0xffff00,1);button(x+8,y+100,30,"-");textField(x+42,y+100,88,npcRadiusText,coordinateFocus==5);button(x+134,y+100,30,"+");
 		toolButton(x+8,y+138,76,"Place",npcTool==NpcTool.PLACE);toolButton(x+92,y+138,76,"Remove",npcTool==NpcTool.REMOVE);
+		button(x+8,y+168,164,"Browse NPCs...");
 	}
 	private void renderCompactGroundItems(int x,int y){
 		graphics().drawString(compactLine(groundItemName(),28),x+8,y+43,0xffff00,1);button(x+8,y+50,30,"-");textField(x+42,y+50,88,groundItemIdText,coordinateFocus==14);button(x+134,y+50,30,"+");
-		graphics().drawString("Amount",x+8,y+89,0xffff00,1);button(x+8,y+92,30,"-");textField(x+42,y+92,88,groundItemAmountText,coordinateFocus==15);button(x+134,y+92,30,"+");
-		graphics().drawString("Respawn seconds",x+8,y+131,0xffff00,1);button(x+8,y+134,30,"-");textField(x+42,y+134,88,groundItemRespawnText,coordinateFocus==16);button(x+134,y+134,30,"+");
-		toolButton(x+8,y+164,76,"Place",groundItemTool==GroundItemTool.PLACE);toolButton(x+92,y+164,76,"Remove",groundItemTool==GroundItemTool.REMOVE);
+		button(x+8,y+80,164,"Browse items...");
+		graphics().drawString("Amount",x+8,y+125,0xffff00,1);button(x+68,y+108,24,"-");textField(x+96,y+108,48,groundItemAmountText,coordinateFocus==15);button(x+148,y+108,24,"+");
+		graphics().drawString("Respawn",x+8,y+153,0xffff00,1);button(x+68,y+136,24,"-");textField(x+96,y+136,48,groundItemRespawnText,coordinateFocus==16);button(x+148,y+136,24,"+");
+		toolButton(x+8,y+166,76,"Place",groundItemTool==GroundItemTool.PLACE);toolButton(x+92,y+166,76,"Remove",groundItemTool==GroundItemTool.REMOVE);
 	}
 	private void renderCompactStatus(int x,int y){
 		int px=mc.getEditorPlayerWorldX(),py=mc.getEditorPlayerWorldY(),level=mc.getEditorPlayerWorldLevel(),queued=terrainDragPending.size()+(terrainStrokeTiles==null?0:terrainStrokeTiles.length)+pendingEntityActions;
@@ -772,26 +793,35 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 	private void renderDefinitionBrowser(int x,int y){
 		graphics().drawBoxAlpha(x,y,BROWSER_WIDTH,BROWSER_HEIGHT,0x24190c,245);graphics().drawBoxBorder(x,BROWSER_WIDTH,y,BROWSER_HEIGHT,0);
-		graphics().drawBoxAlpha(x,y,BROWSER_WIDTH,28,0x4a3620,255);graphics().drawString("Select Scenery",x+10,y+19,0xffff00,2);graphics().drawString("X",x+371,y+18,0xffffff,2);
-		graphics().drawString("Search by name, action, tag, or exact ID",x+10,y+45,0xbdbdbd,1);
+		graphics().drawBoxAlpha(x,y,BROWSER_WIDTH,28,0x4a3620,255);graphics().drawString("Select "+definitionBrowserFamilyLabel(),x+10,y+19,0xffff00,2);graphics().drawString("X",x+371,y+18,0xffffff,2);
+		graphics().drawString("Search by name, description, action, tag, or exact ID",x+10,y+45,0xbdbdbd,1);
 		graphics().drawBoxAlpha(x+10,y+50,278,24,0x222222,255);graphics().drawBoxBorder(x+10,278,y+50,24,0x66b3ff);
 		String query=definitionBrowser.query();graphics().drawString(compactLine(query.isEmpty()?"Type to search...":query+"|",42),x+16,y+67,query.isEmpty()?0x888888:0xffffff,2);button(x+296,y+50,84,"Clear");
 		graphics().drawString(definitionBrowser.resultCount()+" matches | mouse wheel or page buttons",x+10,y+92,0xff981f,1);
 		for(int slot=0;slot<WorldEditorDefinitionBrowser.VISIBLE_RESULTS;slot++){
 			WorldEditorDefinitionCatalog.Entry entry=definitionBrowser.resultAtVisibleSlot(slot);if(entry==null)continue;
 			int row=slot/WorldEditorDefinitionBrowser.COLUMNS,column=slot%WorldEditorDefinitionBrowser.COLUMNS;
-			int cardX=x+10+column*(BROWSER_CARD_WIDTH+6),cardY=y+BROWSER_GRID_Y+row*BROWSER_CARD_STEP_Y;boolean selected=entry.id()==sceneryId;
+			int cardX=x+10+column*(BROWSER_CARD_WIDTH+6),cardY=y+BROWSER_GRID_Y+row*BROWSER_CARD_STEP_Y;boolean selected=entry.id()==selectedDefinitionBrowserId();
 			graphics().drawBoxAlpha(cardX,cardY,BROWSER_CARD_WIDTH,BROWSER_CARD_HEIGHT,selected?0x365b82:0x333333,235);graphics().drawBoxBorder(cardX,BROWSER_CARD_WIDTH,cardY,BROWSER_CARD_HEIGHT,selected?0x66b3ff:0x080808);
-			graphics().drawString(compactLine(WorldEditorDefinitionCatalog.sceneryLabel(entry.id()),27),cardX+6,cardY+16,selected?0xffff00:0xffffff,1);
-			graphics().drawString(compactLine("#"+entry.id()+" | "+entry.canonicalName(),27),cardX+6,cardY+33,0xbdbdbd,1);
+			graphics().drawString(compactLine(entry.displayName(),27),cardX+6,cardY+16,selected?0xffff00:0xffffff,1);
+			graphics().drawString(compactLine(definitionBrowserEntryDetail(entry),27),cardX+6,cardY+33,0xbdbdbd,1);
 		}
-		if(definitionBrowser.resultCount()==0)graphics().drawString("No scenery definitions match this search.",x+10,y+127,0xff981f,2);
+		if(definitionBrowser.resultCount()==0)graphics().drawString("No "+definitionBrowserFamilyLabel().toLowerCase()+" definitions match this search.",x+10,y+127,0xff981f,2);
 		button(x+10,y+296,70,"Previous");button(x+310,y+296,70,"Next");String range=definitionBrowser.rangeLabel();graphics().drawString(range,x+195-graphics().stringWidth(1,range)/2,y+313,0xffffff,1);
+	}
+	private String definitionBrowserFamilyLabel(){switch(definitionBrowser.family()){
+		case BOUNDARY:return "Boundary";case NPC:return "NPC";case ITEM:return "Ground Item";case SCENERY:default:return "Scenery";}}
+	private int selectedDefinitionBrowserId(){switch(definitionBrowser.family()){
+		case NPC:return npcId;case ITEM:return groundItemId;case SCENERY:return sceneryId;case BOUNDARY:default:return -1;}}
+	private String definitionBrowserEntryDetail(WorldEditorDefinitionCatalog.Entry entry){
+		if(definitionBrowser.family()==WorldEditorDefinitionBrowser.Family.NPC||definitionBrowser.family()==WorldEditorDefinitionBrowser.Family.ITEM)return "#"+entry.id()+" | "+entry.tags();
+		return "#"+entry.id()+" | "+entry.canonicalName();
 	}
 	private void renderNpc(int x,int y){
 		graphics().drawString("NPC editing",x+10,y+70,0xffff00,2);
 		button(x+10,y+86,28,"-");textField(x+45,y+86,80,npcIdText,coordinateFocus==4);button(x+132,y+86,28,"+");
 		graphics().drawString(npcName(),x+175,y+103,0xffffff,2);
+		button(x+175,y+112,134,"Browse NPCs...");
 		graphics().drawString("Roam radius",x+10,y+137,0xffffff,2);button(x+10,y+145,28,"-");textField(x+45,y+145,80,npcRadiusText,coordinateFocus==5);button(x+132,y+145,28,"+");
 		toolButton(x+10,y+190,95,"Place",npcTool==NpcTool.PLACE);toolButton(x+112,y+190,95,"Remove",npcTool==NpcTool.REMOVE);
 		graphics().drawString(npcTool==NpcTool.PLACE?"Click terrain to place one NPC.":"Click an existing NPC to remove it.",x+10,y+235,0xffffff,2);
@@ -801,6 +831,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 		graphics().drawString("Respawning ground-item editing",x+10,y+70,0xffff00,2);
 		button(x+10,y+86,28,"-");textField(x+45,y+86,80,groundItemIdText,coordinateFocus==14);button(x+132,y+86,28,"+");
 		graphics().drawString(groundItemName(),x+175,y+103,0xffffff,2);
+		button(x+175,y+112,134,"Browse items...");
 		graphics().drawString("Amount",x+10,y+154,0xffffff,2);button(x+118,y+137,28,"-");textField(x+153,y+137,80,groundItemAmountText,coordinateFocus==15);button(x+240,y+137,28,"+");
 		graphics().drawString("Respawn seconds",x+10,y+205,0xffffff,2);button(x+118,y+188,28,"-");textField(x+153,y+188,80,groundItemRespawnText,coordinateFocus==16);button(x+240,y+188,28,"+");
 		toolButton(x+10,y+235,95,"Place",groundItemTool==GroundItemTool.PLACE);toolButton(x+112,y+235,95,"Remove",groundItemTool==GroundItemTool.REMOVE);
