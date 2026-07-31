@@ -225,9 +225,12 @@ public final class LayeredMapsCli {
 			"reviewState="
 				+ (target
 					== PreservationTerrainPackageGenerator.ContentTarget.SPOILED_MILK
-						? "production-rehearsal-pending"
+						? "production-approved"
 						: "transitions-pending"));
-		System.out.println("runtimePromotionApproved=false");
+		System.out.println(
+			"runtimePromotionApproved="
+				+ (target
+					== PreservationTerrainPackageGenerator.ContentTarget.SPOILED_MILK));
 		System.out.println("baselineSha256=" + result.baselineFingerprint);
 		System.out.println("terrainSectors=" + result.terrainSectorCount);
 		System.out.println("terrainPayloadBytes=" + result.terrainPayloadBytes);

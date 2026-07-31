@@ -1762,9 +1762,11 @@ final class PreservationTerrainPackageGenerator {
 			document.put(
 				"reviewState",
 				target == ContentTarget.SPOILED_MILK
-					? "production-rehearsal-pending"
+					? "production-approved"
 					: "transitions-pending");
-			document.put("runtimePromotionApproved", Boolean.FALSE);
+			document.put(
+				"runtimePromotionApproved",
+				Boolean.valueOf(target == ContentTarget.SPOILED_MILK));
 			document.put(
 				"baselineId",
 				PreservationBaselineInventory.BASELINE_ID);
@@ -1854,10 +1856,12 @@ final class PreservationTerrainPackageGenerator {
 			out.append("# ").append(target.reportTitle).append("\n\n");
 			out.append("- Review state: `")
 				.append(target == ContentTarget.SPOILED_MILK
-					? "production-rehearsal-pending"
+					? "production-approved"
 					: "transitions-pending")
 				.append("`\n");
-			out.append("- Runtime promotion approved: `false`\n");
+			out.append("- Runtime promotion approved: `")
+				.append(target == ContentTarget.SPOILED_MILK)
+				.append("`\n");
 			out.append("- Content target: `")
 				.append(target == ContentTarget.SPOILED_MILK
 					? "spoiled-milk" : "preservation")
@@ -1952,11 +1956,19 @@ final class PreservationTerrainPackageGenerator {
 					.append("`\n");
 			}
 			out.append("\n");
-			out.append(
-				"This package remains inside the isolated review workspace. "
-					+ "It is not eligible for runtime promotion or game export "
-					+ "until every transition is reviewed "
-					+ "and complete-world replacement ownership is proven.\n");
+			if (target == ContentTarget.SPOILED_MILK) {
+				out.append(
+					"This exact package is owner-approved for the guarded "
+						+ "Spoiled Milk production runtime. Release and live "
+						+ "deployment must still validate its pinned identity "
+						+ "and follow the public shutdown gate.\n");
+			} else {
+				out.append(
+					"This package remains inside the isolated review workspace. "
+						+ "It is not eligible for runtime promotion or game export "
+						+ "until every transition is reviewed "
+						+ "and complete-world replacement ownership is proven.\n");
+			}
 			return out.toString();
 		}
 

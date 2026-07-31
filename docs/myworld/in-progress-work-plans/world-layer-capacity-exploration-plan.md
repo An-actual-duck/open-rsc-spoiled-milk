@@ -115,6 +115,18 @@ final rehearsal is a release/deployment-path confirmation, not a reopening of
 the loader design. Public activation remains unauthorized until that rehearsal
 is owner-accepted and a fresh maintenance window is explicitly approved.
 
+Owner acceptance was recorded on 2026-07-30 after a second production-profile
+rehearsal corrected native border-transition cadence and complete minimap
+coverage. The accepted endpoint also retains the independently accepted
+direct-ground-item renderer path. Package
+`rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest
+`f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`,
+and fingerprint
+`add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`
+are now `production-approved` with `runtimePromotionApproved=true`. This
+approval permits guarded release packaging and deployment; it does not bypass
+the public-server shutdown permission, warning, backup, or restart gates.
+
 ## Active Loader Roadmap: 2026-07-27
 
 This section is the concise source of truth for current work. Older progress

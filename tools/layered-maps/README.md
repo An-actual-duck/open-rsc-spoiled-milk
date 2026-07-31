@@ -78,6 +78,8 @@ The active package is
 `f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`
 and package fingerprint
 `add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`.
+After the accepted 2026-07-30 production-profile rehearsal it is
+`production-approved` with `runtimePromotionApproved=true`.
 It is consumed by the `spoiled-milk-replacement` runtime profile. The server
 configuration API still defaults every layered gate off, while the guarded
 hosted configuration explicitly selects the reviewed production profile and

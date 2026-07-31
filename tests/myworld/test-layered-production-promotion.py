@@ -173,9 +173,10 @@ def test_release_and_deployment_are_fail_closed() -> None:
         "manager release omits the layered-world artifact",
     )
     require(
-        "production-rehearsal-pending" in generator
-        and 'document.put("runtimePromotionApproved", Boolean.FALSE)' in generator,
-        "source must remain promotion-pending until the final owner rehearsal",
+        "production-approved" in generator
+        and "Boolean.valueOf(target == ContentTarget.SPOILED_MILK)" in generator,
+        "the accepted Spoiled Milk target is not production-approved independently "
+        "of the pending Preservation target",
     )
     require(
         "layered_world_require_promotion_approved" in layered_library
@@ -231,9 +232,10 @@ def test_generated_package_matches_runtime_pin() -> None:
         text=True,
     )
     require(
-        approval.returncode != 0
-        and "production-rehearsal-pending" in approval.stderr,
-        "release/deployment promotion gate should remain closed before owner acceptance",
+        approval.returncode == 0,
+        "release/deployment promotion gate did not accept the owner-approved package:\n"
+        + approval.stdout
+        + approval.stderr,
     )
 
 
