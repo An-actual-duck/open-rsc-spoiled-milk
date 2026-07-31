@@ -883,6 +883,9 @@ public abstract class Mob extends Entity {
 
 		for (int[] offset : offsets) {
 			Point candidate = Point.location(target.getX() + offset[0], target.getY() + offset[1]);
+			if (!NpcMovementBoundary.allows(this, candidate)) {
+				continue;
+			}
 			if (!PathValidation.checkPoint(getWorld(), candidate)) {
 				continue;
 			}

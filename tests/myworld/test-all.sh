@@ -140,6 +140,7 @@ python3 ./tests/myworld/test-combat-data.py
 python3 ./tests/myworld/test-weapon-equip-slots.py
 python3 ./tests/myworld/test-melee-weapon-requirements.py
 python3 ./tests/myworld/test-combat-interaction.py
+python3 ./tests/myworld/test-npc-movement-boundary.py
 python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
 python3 ./tests/myworld/test-projectile-attack-range-audit.py

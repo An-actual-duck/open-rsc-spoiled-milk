@@ -1,7 +1,5 @@
 package com.openrsc.server.model;
 
-import com.openrsc.server.content.Summoning;
-import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -106,16 +104,9 @@ public class WalkingQueue {
 
 		if (mob.isNpc()) {
 			Npc npc = (Npc) mob;
-			NPCLoc loc = npc.getLoc();
-			Point currentPoint = Point.location(startX, startY);
 			Point destinationPoint = Point.location(destX, destY);
-			boolean summonedNpc = Summoning.isSummon(npc);
-			boolean useRoamBounds = !summonedNpc && !npc.inCombat() && !npc.isChasing();
-			boolean currentInBounds = useRoamBounds ? npc.inRoamBounds(currentPoint)
-				: currentPoint.inBounds(loc.minX(), loc.minY(), loc.maxX(), loc.maxY());
-			boolean destinationInBounds = useRoamBounds ? npc.inRoamBounds(destinationPoint)
-				: destinationPoint.inBounds(loc.minX(), loc.minY(), loc.maxX(), loc.maxY());
-			if (summonedNpc || destinationInBounds || (destX == 0 && destY == 0)) {
+			if (NpcMovementBoundary.allows(npc, destinationPoint)
+				|| (destX == 0 && destY == 0)) {
 				mob.face(Point.location(destX, destY));
 				mob.setLocation(Point.location(destX, destY));
 			} else {
