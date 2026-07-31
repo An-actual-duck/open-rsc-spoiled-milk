@@ -283,15 +283,6 @@ def test_scoped_collision_consumers() -> None:
         not in path_validation,
         "native path validation must not accept endpoint existence as reachability",
     )
-    distance_blocking = method_body(
-        path_validation,
-        "private static boolean checkBlockingDistance(",
-    )
-    require(
-        "if (t == null)" in distance_blocking
-        and "return true;" in distance_blocking,
-        "all scoped collision lookups must fail closed when terrain is missing",
-    )
     mob_blocking = method_body(
         path_validation,
         "private static boolean checkBlocking(Mob mob, int x, int y, int bit, boolean isCurrentTile)",

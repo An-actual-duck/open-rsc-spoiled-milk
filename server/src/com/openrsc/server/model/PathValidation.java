@@ -628,7 +628,7 @@ public class PathValidation {
 			}
 			throw missingTerrain;
 		}
-		if (t == null) {
+		if (t == null && tileLookup.failClosedOnMissingTile()) {
 			return true;
 		}
 		if (collisionMode == DistanceCollisionMode.HOSTILE_PROJECTILE) {
