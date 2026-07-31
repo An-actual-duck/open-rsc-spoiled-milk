@@ -17,7 +17,7 @@ public class MagicalPool implements OpLocTrigger {
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		if (obj.getID() == 1155) {
 			if (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 2) {
-				teleport(player, 471, 3385);
+				player.teleport(471, 553, -1, false);
 				player.message("you are teleported further under ground");
 			} else {
 				mes("you step into the pool");
@@ -31,7 +31,7 @@ public class MagicalPool implements OpLocTrigger {
 			delay(2);
 			mes("you feel energy rush through your veins");
 			delay(2);
-			teleport(player, 447, 3373);
+			player.teleport(447, 541, -1, false);
 			player.message("you are teleported to kolodions cave");
 		}
 	}

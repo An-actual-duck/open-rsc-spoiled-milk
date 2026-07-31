@@ -330,8 +330,10 @@ def ensure_source_mappings_exist() -> None:
         '"Choose a rune altar"',
         "LawJewelry::teleportToRuneAltar",
         "RuneAltarDestination.values()",
-        "AIR(ItemId.AIR_RUNE.id(), 305, 593)",
-        "LIFE(ItemId.LIFE_RUNE.id(), 282, 694)",
+        "AIR(ItemId.AIR_RUNE.id(), 305, 593, 0)",
+        "COSMIC(ItemId.COSMIC_RUNE.id(), 104, 724, -1)",
+        "SOUL(ItemId.SOUL_RUNE.id(), 610, 767, -1)",
+        "LIFE(ItemId.LIFE_RUNE.id(), 282, 694, 0)",
     ):
         if snippet not in law_text:
             fail(f"Dragonstone law amulet altar picker is missing: {snippet}")

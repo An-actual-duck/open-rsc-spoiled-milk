@@ -70,7 +70,7 @@ public class FishingCape implements OpInvTrigger, UseInvTrigger {
 					mes("one of the sharks falls out of your cape");
 				}
 				delay(3);
-				player.teleport(586, 522, true);
+				player.teleport(586, 522, 0, true);
 				if (charges == 0) {
 					mes("@red@Ah!! that was the last shark!!");
 				} else {

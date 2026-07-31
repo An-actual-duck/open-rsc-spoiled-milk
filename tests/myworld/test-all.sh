@@ -21,6 +21,7 @@ python3 ./tests/myworld/audit-item-id-integrity.py
 python3 ./tests/myworld/test-definition-override-loading.py
 python3 ./tests/myworld/test-player-data-integrity.py
 python3 ./tests/myworld/test-player-login-policy.py
+python3 ./tests/myworld/test-layered-player-login-recovery.py
 python3 ./tests/myworld/test-social-name-lookup.py
 python3 ./tests/myworld/test-server-social-failure-handling.py
 python3 ./tests/myworld/test-server-best-effort-cleanup.py
@@ -46,6 +47,7 @@ python3 ./tests/myworld/test-crafting-guild-extension.py
 python3 ./tests/myworld/test-cosmic-altar-path.py
 python3 ./tests/myworld/test-cosmic-sparkle-path.py
 python3 ./tests/myworld/test-enchanting-data.py
+python3 ./tests/myworld/test-layered-spell-teleport-destinations.py
 python3 ./tests/myworld/test-bangle-jewelry.py
 python3 ./tests/myworld/test-equipment-worn-appearances.py
 python3 ./tests/myworld/test-ingame-hiscores.py

@@ -48,7 +48,7 @@ public class CraftingCape implements OpInvTrigger {
 			delay(3);
 			checkPlagueSample(player);
 			if (item.getCatalogId() == ItemId.CRAFTING_CAPE.id()) {
-				player.teleport(347, 599, true);
+				player.teleport(347, 599, 0, true);
 				mes("You teleport to the Crafting Guild");
 				delay(3);
 			}

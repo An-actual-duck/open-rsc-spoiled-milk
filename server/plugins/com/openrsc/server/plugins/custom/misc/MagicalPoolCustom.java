@@ -39,32 +39,32 @@ public class MagicalPoolCustom implements OpLocTrigger {
 					"Dragon Maze (dangerous)", "Mage Arena (dangerous)", "Rune rocks (dangerous)", "Dragons (dangerous)", "Seers", "Further underground mage arena");
 
 				if (option == 0) {
-					player.teleport(218, 456);
+					player.teleport(218, 456, 0, false);
 				} else if (option == 1) {
-					player.teleport(111, 505);
+					player.teleport(111, 505, 0, false);
 				} else if (option == 2) {
-					player.teleport(120, 648);
+					player.teleport(120, 648, 0, false);
 				} else if (option == 3) {
-					player.teleport(272, 354);
+					player.teleport(272, 354, 0, false);
 				} else if (option == 4) {
-					player.teleport(187, 297);
+					player.teleport(187, 297, 0, false);
 				} else if (option == 5) {
-					player.teleport(218, 271);
+					player.teleport(218, 271, 0, false);
 				} else if (option == 6) {
-					player.teleport(316, 199);
+					player.teleport(316, 199, 0, false);
 				} else if (option == 7) {
-					player.teleport(271, 195);
+					player.teleport(271, 195, 0, false);
 				} else if (option == 8) {
-					player.teleport(224, 110);
+					player.teleport(224, 110, 0, false);
 				} else if (option == 9) {
-					player.teleport(264, 148);
+					player.teleport(264, 148, 0, false);
 				} else if (option == 10) {
-					player.teleport(143, 173);
+					player.teleport(143, 173, 0, false);
 				} else if (option == 11) {
-					player.teleport(505, 456);
+					player.teleport(505, 456, 0, false);
 				}else if (option == 12) {
 					if (player.getConfig().WANT_OPENPK_POINTS || (player.getCache().hasKey("mage_arena") && player.getCache().getInt("mage_arena") >= 2)) {
-						teleport(player, 471, 3385);
+						player.teleport(471, 553, -1, false);
 						player.message("you are teleported further under ground");
 					} else {
 						mes("you step into the pool");
@@ -79,7 +79,7 @@ public class MagicalPoolCustom implements OpLocTrigger {
 			delay(2);
 			mes("you feel energy rush through your veins");
 			delay(2);
-			teleport(player, 447, 3373);
+			player.teleport(447, 541, -1, false);
 			player.message("you are teleported to kolodions cave");
 		}
 	}

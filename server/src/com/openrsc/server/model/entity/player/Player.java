@@ -71,6 +71,7 @@ import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementDecision
 import com.openrsc.server.model.world.coordinate.LayeredRegionRetirementEligibilityLedger;
 import com.openrsc.server.model.world.coordinate.LayeredVisibilityWindowMirror;
 import com.openrsc.server.model.world.coordinate.LayeredRelativeTransition;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
@@ -4926,6 +4927,33 @@ public final class Player extends Mob {
 		setLocation(Point.location(x, y), true);
 		resetPath();
 		ActionSender.sendWorldInfo(this);
+	}
+
+	/**
+	 * Teleports to an explicit global coordinate and signed level.
+	 *
+	 * <p>The two-coordinate compatibility overload intentionally preserves the
+	 * player's current native-package level. Hard destinations must use this
+	 * overload so an underground origin cannot reinterpret a surface target (or
+	 * vice versa). Legacy runtimes receive the exact packed-Y projection.</p>
+	 */
+	public void teleport(
+		final int x,
+		final int y,
+		final int level,
+		final boolean bubble) {
+		WorldLocation destination = WorldLocation.global(
+			new WorldCoordinate(x, y, level));
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			teleportLayered(destination, bubble);
+			return;
+		}
+		Point legacyDestination = LegacyPackedPointAdapter.toLegacyPoint(
+			destination);
+		teleport(
+			legacyDestination.getX(),
+			legacyDestination.getY(),
+			bubble);
 	}
 
 	/**

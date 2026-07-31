@@ -43,7 +43,7 @@ public class AgilityCape implements OpInvTrigger {
 				mes("Aren't you supposed to be good at balancing?");
 				return;
 			}
-			player.teleport(591, 765, true);
+			player.teleport(591, 765, 0, true);
 			mes("You teleport to the Yanille agility dungeon");
 		}
 	}
