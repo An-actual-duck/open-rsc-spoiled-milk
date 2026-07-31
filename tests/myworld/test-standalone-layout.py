@@ -281,6 +281,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "server-failure-handling-b05.md",
             "static-analysis.md",
             "testing-quick-reference.md",
+            "world-builder-definition-catalog.md",
             "worship-skill-compatibility.md",
         ],
     }
