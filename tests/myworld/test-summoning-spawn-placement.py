@@ -30,8 +30,12 @@ def main() -> int:
             failures.append(f"Could not find {label} summon spawn block")
             continue
         body = match.group("body")
-        if "final Point spawnLocation = adjacentTo(owner);" not in body:
-            failures.append(f"{label} summons should choose an adjacent spawn location")
+        if "final WorldLocation spawnLocation = adjacentWorldLocation(owner);" not in body:
+            failures.append(
+                f"{label} summons should choose an exact adjacent spawn location"
+            )
+        if "new Npc(owner.getWorld(), profile.npcId, spawnLocation)" not in body:
+            failures.append(f"{label} summons should spawn in the owner's exact scope")
         if "new Npc(owner.getWorld(), profile.npcId, owner.getX(), owner.getY())" in body:
             failures.append(f"{label} summons must not spawn directly on the owner tile")
 
@@ -41,14 +45,20 @@ def main() -> int:
         failures.append("adjacent summon placement should validate candidate tiles")
     if "CollisionFlag.FULL_BLOCK" not in summoning:
         failures.append("summon spawn validation should reject blocked tiles")
-    if "PathValidation.checkAdjacentDistance(owner.getWorld(), owner.getX(), owner.getY(), x, y, true, false)" not in summoning:
-        failures.append("summon spawn validation should check movement from owner to candidate tile")
+    if "PathValidation.checkAdjacentDistance(\n\t\t\t\t\towner.getWorld(), owner.getWorldLocation(), destination," not in summoning:
+        failures.append(
+            "summon spawn validation should check movement in the owner's exact scope"
+        )
+    if "owner.getWorld().getTile(destination)" not in summoning:
+        failures.append("summon spawn validation should read the exact destination tile")
     if "private static boolean isSummonSpawnTileOccupied(final Player owner, final int x, final int y)" not in summoning:
         failures.append("summon spawn validation should avoid occupied adjacent tiles")
     if "owner.getViewArea().getPlayersInView()" not in summoning or "owner.getViewArea().getNpcsInView()" not in summoning:
         failures.append("summon spawn occupancy checks should use nearby entities")
     if "owner.getWorld().getPlayers()" in summoning or "owner.getWorld().getNpcs()" in summoning:
         failures.append("summon spawn occupancy checks must not scan whole-world entity lists")
+    if "owner.sharesSpatialDomain(player)" not in summoning or "owner.sharesSpatialDomain(npc)" not in summoning:
+        failures.append("summon spawn occupancy should ignore entities on other layers")
 
     if failures:
         print("FAIL:")

@@ -712,7 +712,12 @@ public final class Moderator implements CommandTrigger {
 				}
 
 			}
-			targetNpc.teleport(targetX, targetY);
+			if (args.length == 1
+				&& player.isLayeredLocationAuthorityEnabled()) {
+				targetNpc.teleport(player.getWorldLocation());
+			} else {
+				targetNpc.teleport(targetX, targetY);
+			}
 			player.message(messagePrefix + "The " + targetNpc.getDef().getName() + " has been teleported to (" + targetX + ", " + targetY + ")");
 		}
 	}

@@ -23,6 +23,7 @@ python3 ./tests/myworld/test-definition-override-loading.py
 python3 ./tests/myworld/test-player-data-integrity.py
 python3 ./tests/myworld/test-player-login-policy.py
 python3 ./tests/myworld/test-layered-player-login-recovery.py
+python3 ./tests/myworld/test-layered-location-followups.py
 python3 ./tests/myworld/test-social-name-lookup.py
 python3 ./tests/myworld/test-server-social-failure-handling.py
 python3 ./tests/myworld/test-server-best-effort-cleanup.py
@@ -140,6 +141,7 @@ python3 ./tests/myworld/test-combat-data.py
 python3 ./tests/myworld/test-weapon-equip-slots.py
 python3 ./tests/myworld/test-melee-weapon-requirements.py
 python3 ./tests/myworld/test-combat-interaction.py
+python3 ./tests/myworld/test-npc-movement-boundary.py
 python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
 python3 ./tests/myworld/test-projectile-attack-range-audit.py

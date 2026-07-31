@@ -11,6 +11,8 @@ import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.TelePoint;
 import com.openrsc.server.model.container.Equipment;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldObjectTransition;
 import com.openrsc.server.util.PersistenceManager;
 import org.apache.logging.log4j.LogManager;
@@ -1290,6 +1292,18 @@ public final class EntityHandler {
 			return point;
 		}
 		return null;
+	}
+
+	/** Looks up a packed telepoint using an exact layered source location. */
+	public TelePoint getObjectTelePoint(
+		final WorldLocation location,
+		final String command) {
+		try {
+			return getObjectTelePoint(
+				LegacyPackedPointAdapter.toLegacyPoint(location), command);
+		} catch (IllegalArgumentException unrepresentableLocation) {
+			return null;
+		}
 	}
 
 	/**

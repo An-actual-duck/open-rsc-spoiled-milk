@@ -17,6 +17,8 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.*;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.KillNpcTrigger;
@@ -33,6 +35,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Npc extends Mob {
@@ -115,6 +118,26 @@ public class Npc extends Mob {
 		this(world, new NPCLoc(id, x, y, x - 5, x + 5, y - 5, y + 5));
 	}
 
+	/** Creates a runtime NPC at an exact signed location. */
+	public Npc(
+		final World world,
+		final int id,
+		final WorldLocation location) {
+		this(world, id, location, 5);
+	}
+
+	/** Creates a runtime NPC with exact location and configured roam radius. */
+	public Npc(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int radius) {
+		this(
+			world,
+			createRuntimeNpcLoc(world, id, location, radius),
+			location);
+	}
+
 	public Npc(final World world, final int id, final int x, final int y, final int radius) {
 		this(world, new NPCLoc(id, x, y, x - radius, x + radius, y - radius, y + radius));
 	}
@@ -124,6 +147,13 @@ public class Npc extends Mob {
 	}
 
 	public Npc(final World world, final NPCLoc loc) {
+		this(world, loc, null);
+	}
+
+	private Npc(
+		final World world,
+		final NPCLoc loc,
+		final WorldLocation initialWorldLocation) {
 		super(world, EntityType.NPC);
 		if (loc.getAuthoredPlacementIdentity() != null) {
 			assignAuthoredPlacementIdentity(
@@ -148,7 +178,15 @@ public class Npc extends Mob {
 		this.loc = loc;
 		this.setNpcBehavior(new NpcBehavior(this));
 		super.setID(loc.getId());
-		super.setLocation(Point.location(loc.startX(), loc.startY()), true);
+		if (initialWorldLocation != null
+			&& getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			getWorld().getRegionManager().prepareNativeLayeredTransition(
+				null, initialWorldLocation, true);
+			super.setWorldLocation(initialWorldLocation, true);
+		} else {
+			super.setLocation(
+				Point.location(loc.startX(), loc.startY()), true);
+		}
 
 		getSkills().setLevelTo(Skill.ATTACK.id(), def.getAtt());
 		getSkills().setLevelTo(Skill.DEFENSE.id(), def.getDef());
@@ -157,6 +195,27 @@ public class Npc extends Mob {
 		getSkills().setLevelTo(Skill.HITS.id(), def.getHits());
 
 		getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
+	}
+
+	private static NPCLoc createRuntimeNpcLoc(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int radius) {
+		World checkedWorld = Objects.requireNonNull(world, "world");
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			location, "location");
+		Point runtimePoint = checkedWorld.getServer().getConfig()
+			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			? checkedWorld.getRegionManager()
+				.toRuntimeCompatibilityPoint(checkedLocation)
+			: LegacyPackedPointAdapter.toLegacyPoint(checkedLocation);
+		int x = runtimePoint.getX();
+		int y = runtimePoint.getY();
+		return new NPCLoc(
+			id, x, y,
+			x - radius, x + radius,
+			y - radius, y + radius);
 	}
 
 	/**
@@ -447,11 +506,14 @@ public class Npc extends Mob {
 	}
 
 	private Player selectPreferredThreat(final Player currentBest, final Map<UUID, Pair<Integer, Long>> damagers, final boolean requireMeleeRange) {
-		Player bestPlayer = currentBest;
+		Player bestPlayer = currentBest != null
+			&& sharesSpatialDomain(currentBest) ? currentBest : null;
 		int bestDamage = bestPlayer == null ? -1 : getTotalDamageBy(bestPlayer.getUUID());
 		for (Map.Entry<UUID, Pair<Integer, Long>> entry : damagers.entrySet()) {
 			Player player = getWorld().getPlayerByUUID(entry.getKey());
-			if (player == null || player.isRemoved() || player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			if (player == null || player.isRemoved()
+				|| player.getSkills().getLevel(Skill.HITS.id()) <= 0
+				|| !sharesSpatialDomain(player)) {
 				continue;
 			}
 			if (!player.getLocation().inBounds(loc.minX() - 4, loc.minY() - 4, loc.maxX() + 4, loc.maxY() + 4)) {
@@ -1540,6 +1602,25 @@ public class Npc extends Mob {
 
 	public void teleport(final int x, final int y) {
 		setLocation(Point.location(x, y), true);
+	}
+
+	/** Relocates this NPC to an exact signed location. */
+	public void teleport(final WorldLocation location) {
+		WorldLocation destination = Objects.requireNonNull(location, "location");
+		if (!getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			Point legacyDestination = LegacyPackedPointAdapter.toLegacyPoint(
+				destination);
+			teleport(legacyDestination.getX(), legacyDestination.getY());
+			return;
+		}
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			getWorld().getRegionManager().prepareNativeLayeredTransition(
+				getWorldLocation(), destination, true);
+			super.setWorldLocation(destination, true);
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	@Override

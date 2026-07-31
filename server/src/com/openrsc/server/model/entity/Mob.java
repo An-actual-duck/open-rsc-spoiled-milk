@@ -814,14 +814,16 @@ public abstract class Mob extends Entity {
 		WorldLocation owner = getWorldLocation();
 		if (getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
 			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
-			return getWorld().getTile(
-				new WorldLocation(
-					owner.getWorldSpace(),
-					new com.openrsc.server.model.world.coordinate
-						.WorldCoordinate(
-							x,
-							y,
-							owner.getCoordinate().getLevel())));
+			WorldLocation candidate = new WorldLocation(
+				owner.getWorldSpace(),
+				new WorldCoordinate(
+					x, y, owner.getCoordinate().getLevel()));
+			if (getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
+				&& !getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(candidate)) {
+				return null;
+			}
+			return getWorld().getTile(candidate);
 		}
 		return getWorld().getTile(x, y);
 	}
@@ -883,11 +885,13 @@ public abstract class Mob extends Entity {
 
 		for (int[] offset : offsets) {
 			Point candidate = Point.location(target.getX() + offset[0], target.getY() + offset[1]);
-			if (!PathValidation.checkPoint(getWorld(), candidate)) {
+			if (!NpcMovementBoundary.allows(this, candidate)) {
 				continue;
 			}
-			if (!PathValidation.checkAdjacentDistance(getWorld(), candidate.getX(), candidate.getY(),
-				target.getX(), target.getY(), true, false)) {
+			if (!PathValidation.checkPoint(this, candidate)) {
+				continue;
+			}
+			if (!isMeleeAdjacentPathClear(target, candidate)) {
 				continue;
 			}
 
@@ -903,6 +907,28 @@ public abstract class Mob extends Entity {
 		}
 
 		return best;
+	}
+
+	private boolean isMeleeAdjacentPathClear(
+		final Mob target,
+		final Point candidate) {
+		if (!sharesSpatialDomain(target)) {
+			return false;
+		}
+		if (!getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return PathValidation.checkAdjacentDistance(
+				getWorld(), candidate.getX(), candidate.getY(),
+				target.getX(), target.getY(), true, false);
+		}
+		WorldLocation current = getWorldLocation();
+		WorldLocation candidateLocation = new WorldLocation(
+			current.getWorldSpace(),
+			new WorldCoordinate(
+				candidate.getX(), candidate.getY(),
+				current.getCoordinate().getLevel()));
+		return PathValidation.checkAdjacentDistance(
+			getWorld(), candidateLocation, target.getWorldLocation(),
+			true, false);
 	}
 
 	public void walkToEntity(final int x, final int y) {
