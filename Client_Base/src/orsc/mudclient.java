@@ -4139,9 +4139,9 @@ public final class mudclient implements Runnable {
 							}
 							canonicalMismatchDetails
 								.append("cell=")
-								.append(input.cellX)
+								.append(input.localOriginTileX)
 								.append(',')
-								.append(input.cellZ)
+								.append(input.localOriginTileZ)
 								.append(':')
 								.append(comparison.summary());
 						}
@@ -4155,9 +4155,9 @@ public final class mudclient implements Runnable {
 							}
 							canonicalMismatchDetails
 								.append("cell=")
-								.append(input.cellX)
+								.append(input.localOriginTileX)
 								.append(',')
-								.append(input.cellZ)
+								.append(input.localOriginTileZ)
 								.append(":error=")
 								.append(
 									comparisonError.getClass()
@@ -4379,12 +4379,18 @@ public final class mudclient implements Runnable {
 			? Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
 			: Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
 		int cellTileSize = residentObjectChunkTileSize(chunkRole);
-		int cellX = Math.floorDiv(tileX, cellTileSize);
-		int cellZ = Math.floorDiv(tileZ, cellTileSize);
 		int worldTileX = Math.addExact(tileX, this.midRegionBaseX);
 		int worldTileZ = Math.addExact(tileZ, this.midRegionBaseZ);
-		int worldCellX = Math.floorDiv(worldTileX, cellTileSize);
-		int worldCellZ = Math.floorDiv(worldTileZ, cellTileSize);
+		int worldCellX = ResidentObjectChunkGrid.worldCellForLocalTile(
+			tileX, this.midRegionBaseX, cellTileSize);
+		int worldCellZ = ResidentObjectChunkGrid.worldCellForLocalTile(
+			tileZ, this.midRegionBaseZ, cellTileSize);
+		int localOriginTileX =
+			ResidentObjectChunkGrid.localOriginTileForWorldCell(
+				worldCellX, this.midRegionBaseX, cellTileSize);
+		int localOriginTileZ =
+			ResidentObjectChunkGrid.localOriginTileForWorldCell(
+				worldCellZ, this.midRegionBaseZ, cellTileSize);
 		long cellKey = residentObjectChunkCellKey(
 			worldCellX, worldCellZ, chunkRole);
 		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
@@ -4392,8 +4398,8 @@ public final class mudclient implements Runnable {
 			builder = new ResidentObjectChunkInputBuilder(
 				anchor,
 				cellKey,
-				cellX,
-				cellZ,
+				localOriginTileX,
+				localOriginTileZ,
 				worldCellX,
 				worldCellZ,
 				chunkRole,
@@ -4619,8 +4625,10 @@ public final class mudclient implements Runnable {
 			input.anchor.getPlane(),
 			input.anchor.getCenterSectionX(),
 			input.anchor.getCenterSectionY(),
-			input.anchor.getOriginWorldX() + input.cellX * input.cellTileSize * this.tileSize,
-			input.anchor.getOriginWorldZ() + input.cellZ * input.cellTileSize * this.tileSize,
+			input.anchor.getOriginWorldX()
+				+ input.localOriginTileX * this.tileSize,
+			input.anchor.getOriginWorldZ()
+				+ input.localOriginTileZ * this.tileSize,
 			models,
 			input.modelCount,
 			input.chunkRole);
@@ -4983,12 +4991,15 @@ public final class mudclient implements Runnable {
 		}
 		System.out.println("[scene-object-debug] " + event
 			+ " resident-cell=" + input.cellKey
-			+ " cell=" + input.cellX + "," + input.cellZ
+			+ " localOriginTile=" + input.localOriginTileX
+				+ "," + input.localOriginTileZ
 			+ " role=" + input.chunkRole
 			+ " models=" + input.modelCount
 			+ " matched=" + input.debugMatchedModelCount
-			+ " origin=" + (input.anchor.getOriginWorldX() + input.cellX * input.cellTileSize * this.tileSize)
-				+ "," + (input.anchor.getOriginWorldZ() + input.cellZ * input.cellTileSize * this.tileSize)
+			+ " origin=" + (input.anchor.getOriginWorldX()
+				+ input.localOriginTileX * this.tileSize)
+				+ "," + (input.anchor.getOriginWorldZ()
+					+ input.localOriginTileZ * this.tileSize)
 			+ " triangles=" + (chunk == null ? 0 : chunk.getTriangleCount())
 			+ " first=" + input.debugFirstModelSummary);
 	}
@@ -5001,9 +5012,8 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkInput {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
-		private final int cellX;
-		private final int cellZ;
-		private final int cellTileSize;
+		private final int localOriginTileX;
+		private final int localOriginTileZ;
 		private final int chunkRole;
 		private final RSModel[] models;
 		private final ResidentObjectCanonicalIdentity[]
@@ -5019,9 +5029,8 @@ public final class mudclient implements Runnable {
 		private ResidentObjectChunkInput(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
 			long cellKey,
-			int cellX,
-			int cellZ,
-			int cellTileSize,
+			int localOriginTileX,
+			int localOriginTileZ,
 			int chunkRole,
 			RSModel[] models,
 			ResidentObjectCanonicalIdentity[] canonicalIdentities,
@@ -5034,9 +5043,8 @@ public final class mudclient implements Runnable {
 			String debugFirstModelSummary) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
-			this.cellX = cellX;
-			this.cellZ = cellZ;
-			this.cellTileSize = cellTileSize;
+			this.localOriginTileX = localOriginTileX;
+			this.localOriginTileZ = localOriginTileZ;
 			this.chunkRole = chunkRole;
 			this.models = models;
 			this.canonicalIdentities = canonicalIdentities;
@@ -5053,9 +5061,8 @@ public final class mudclient implements Runnable {
 	private static final class ResidentObjectChunkInputBuilder {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
 		private final long cellKey;
-		private final int cellX;
-		private final int cellZ;
-		private final int cellTileSize;
+		private final int localOriginTileX;
+		private final int localOriginTileZ;
 		private final int chunkRole;
 		private final List<RSModel> models = new ArrayList<RSModel>();
 		private final List<ResidentObjectCanonicalIdentity>
@@ -5070,17 +5077,16 @@ public final class mudclient implements Runnable {
 		private ResidentObjectChunkInputBuilder(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
 			long cellKey,
-			int cellX,
-			int cellZ,
+			int localOriginTileX,
+			int localOriginTileZ,
 			int worldCellX,
 			int worldCellZ,
 			int chunkRole,
 			int cellTileSize) {
 			this.anchor = anchor;
 			this.cellKey = cellKey;
-			this.cellX = cellX;
-			this.cellZ = cellZ;
-			this.cellTileSize = cellTileSize;
+			this.localOriginTileX = localOriginTileX;
+			this.localOriginTileZ = localOriginTileZ;
 			this.chunkRole = chunkRole;
 			this.cacheKey = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getPlane());
@@ -5174,9 +5180,8 @@ public final class mudclient implements Runnable {
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
-				this.cellX,
-				this.cellZ,
-				this.cellTileSize,
+				this.localOriginTileX,
+				this.localOriginTileZ,
 				this.chunkRole,
 				modelArray,
 				canonicalIdentityArray,
