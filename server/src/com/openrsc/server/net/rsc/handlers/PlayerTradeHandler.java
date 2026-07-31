@@ -101,7 +101,9 @@ public class PlayerTradeHandler implements PayloadProcessor<PlayerTradeStruct, O
 					return;
 				}
 
-				if (!PathValidation.checkPath(player.getWorld(), player.getLocation(), affectedPlayer.getLocation())) {
+				if (!PathValidation.checkPath(
+					player.getWorld(), player.getWorldLocation(),
+					affectedPlayer.getWorldLocation(), false)) {
 					player.message("There is an obstacle in the way");
 					player.getTrade().resetAll();
 					player.resetPath();

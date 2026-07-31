@@ -58,15 +58,15 @@ public class AStarPathfinder {
 		int curposx, curposy;
 		for (int x = -depth; x <= depth; x++) {
 			for (int y = -depth; y <= depth; y++) {
-				TileValue tile = owner.getTileAtCurrentLevel(
-					center.getX() - x, center.getY() + y);
-				if (tile == null) {
-					continue;
-				}
 				curposx = x + depth;
 				curposy = y + depth;
+				TileValue tile = owner.getTileAtCurrentLevel(
+					center.getX() - x, center.getY() + y);
 
-				if ((tile.traversalMask & (CollisionFlag.FULL_BLOCK_A | CollisionFlag.FULL_BLOCK_B | CollisionFlag.FULL_BLOCK_C)) != 0) {
+				if (tile == null || (tile.traversalMask
+					& (CollisionFlag.FULL_BLOCK_A
+						| CollisionFlag.FULL_BLOCK_B
+						| CollisionFlag.FULL_BLOCK_C)) != 0) {
 					if (y < depth) {
 						costBoard[curposx][curposy+1].northBlocked = true;
 					}

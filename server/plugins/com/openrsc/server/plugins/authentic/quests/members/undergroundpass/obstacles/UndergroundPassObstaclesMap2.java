@@ -276,15 +276,15 @@ public class UndergroundPassObstaclesMap2 implements OpLocTrigger, OpBoundTrigge
 				player.message("you walk through");
 				if (obj.getDirection() == 0) {
 					if (obj.getY() == player.getY())
-						player.teleport(obj.getX(), obj.getY() - 1);
+						player.teleportCurrentScope(obj.getX(), obj.getY() - 1);
 					else
-						player.teleport(obj.getX(), obj.getY());
+						player.teleportCurrentScope(obj.getX(), obj.getY());
 				}
 				if (obj.getDirection() == 1) {
 					if (obj.getX() == player.getX())
-						player.teleport(obj.getX() - 1, obj.getY());
+						player.teleportCurrentScope(obj.getX() - 1, obj.getY());
 					else
-						player.teleport(obj.getX(), obj.getY());
+						player.teleportCurrentScope(obj.getX(), obj.getY());
 				}
 				player.incExp(Skill.THIEVING.id(), 15, true);
 				delay(3);

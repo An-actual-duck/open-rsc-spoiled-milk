@@ -321,7 +321,7 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 			openChest(obj, 2000, 1002);
 			player.message("Ahh! there is a poison spider inside");
 			player.message("Someone's idea of a joke...");
-			Npc spider = addnpc(player.getWorld(), NpcId.POISON_SPIDER.id(), obj.getX(), obj.getY() + 1, 60000 * 5);
+			Npc spider = addnpc(player, NpcId.POISON_SPIDER.id(), obj.getX(), obj.getY() + 1, 60000 * 5);
 			spider.startCombat(player);
 			delay(3);
 			player.message("The chest snaps shut");
@@ -449,14 +449,14 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 		else if (obj.getID() == SOUTH_WEST_BATTLEMENT) {
 			Npc ogre_guard = ifnearvisnpc(player, NpcId.OGRE_GUARD_BATTLEMENT.id(), 5);
 			if (player.getX() <= 664) {
-				player.teleport(player.getX() + 1, player.getY());
+				player.teleportCurrentScope(player.getX() + 1, player.getY());
 			} else {
 				if (player.getCache().hasKey("has_ogre_gift") || player.getQuestStage(Quests.WATCHTOWER) == -1) {
 					if (ogre_guard != null) {
 						npcsay(player, ogre_guard, "It's that creature again",
 							"This time we will let it go...");
 					}
-					player.teleport(player.getX() - 1, player.getY());
+					player.teleportCurrentScope(player.getX() - 1, player.getY());
 					player.message("You climb over the battlement");
 				} else if (player.getCache().hasKey("get_ogre_gift")) {
 					if (ogre_guard != null) {
@@ -503,19 +503,19 @@ public class WatchTowerObstacles implements OpLocTrigger, OpBoundTrigger, UseNpc
 		int choosenReward = (int) (Math.random() * randomChestReward.length);
 		if (choosenReward == 0) {
 			say(player, null, "Hey! a scorpion is in here!");
-			Npc scorp = addnpc(player.getWorld(), NpcId.POISON_SCORPION.id(), o.getX() - 1, o.getY(), 60000 * 5);
+			Npc scorp = addnpc(player, NpcId.POISON_SCORPION.id(), o.getX() - 1, o.getY(), 60000 * 5);
 			scorp.startCombat(player);
 		} else if (choosenReward == 1) {
 			say(player, null, "Oh no, not one of these spider things!");
-			Npc spider = addnpc(player.getWorld(), NpcId.POISON_SPIDER.id(), o.getX() - 1, o.getY(), 60000 * 5);
+			Npc spider = addnpc(player, NpcId.POISON_SPIDER.id(), o.getX() - 1, o.getY(), 60000 * 5);
 			spider.startCombat(player);
 		} else if (choosenReward == 2) {
 			say(player, null, "How on earth did this dwarf get in here ?");
-			Npc dwarf = addnpc(player.getWorld(), NpcId.CHAOS_DWARF.id(), o.getX() - 1, o.getY(), 60000 * 5);
+			Npc dwarf = addnpc(player, NpcId.CHAOS_DWARF.id(), o.getX() - 1, o.getY(), 60000 * 5);
 			dwarf.startCombat(player);
 		} else if (choosenReward == 3) {
 			say(player, null, "Ugh! a dirty rat!");
-			addnpc(player.getWorld(), NpcId.RAT_LVL8.id(), o.getX() - 1, o.getY(), 60000 * 5);
+			addnpc(player, NpcId.RAT_LVL8.id(), o.getX() - 1, o.getY(), 60000 * 5);
 		} else if (choosenReward == 4) {
 			say(player, null, "Oh dear, I bet these apples taste disgusting");
 			give(player, ItemId.ROTTEN_APPLES.id(), 1);

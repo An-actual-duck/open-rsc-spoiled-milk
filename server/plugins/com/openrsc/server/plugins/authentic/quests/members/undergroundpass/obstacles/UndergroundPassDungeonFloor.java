@@ -136,9 +136,9 @@ public class UndergroundPassDungeonFloor implements OpLocTrigger, OpBoundTrigger
 					player.message("you squeeze through the old railings");
 					if (obj.getDirection() == 0) {
 						if (obj.getY() == player.getY())
-							player.teleport(obj.getX(), obj.getY() - 1);
+							player.teleportCurrentScope(obj.getX(), obj.getY() - 1);
 						else
-							player.teleport(obj.getX(), obj.getY());
+							player.teleportCurrentScope(obj.getX(), obj.getY());
 					}
 				}
 			} else {

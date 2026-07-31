@@ -99,7 +99,7 @@ public class ShiloVillageUtils implements DropObjTrigger, OpInvTrigger, UseInvTr
 			delay(3);
 			mes("an apparition materialises right in front of you.");
 			delay(3);
-			Npc zadimus = addnpc(player.getWorld(), NpcId.ZADIMUS.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(60));
+			Npc zadimus = addnpc(player, NpcId.ZADIMUS.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(60));
 			delay();
 			if (zadimus != null) {
 				npcsay(player, zadimus, "You have released me from my torture, and now I shall aid you");
@@ -166,7 +166,7 @@ public class ShiloVillageUtils implements DropObjTrigger, OpInvTrigger, UseInvTr
 				delay(3);
 				mes("The bones turn to dust and forms into the shape of a human figure.");
 				delay(3);
-				Npc rash = addnpc(player.getWorld(), NpcId.RASHILIYIA.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(30));
+				Npc rash = addnpc(player, NpcId.RASHILIYIA.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(30));
 				mes("The figure turns to you and you hear a cackling, croaky voice on the air.");
 				delay(3);
 				if (rash != null) {
@@ -505,11 +505,11 @@ public class ShiloVillageUtils implements DropObjTrigger, OpInvTrigger, UseInvTr
 				player.message("against stone as you see skeletons and ");
 				delay(2);
 				player.message("Zombies rising up out of the ground.");
-				addnpc(player.getWorld(), 40, player.getX() - 1, player.getY() + 1, 60000);
-				addnpc(player.getWorld(), 40, player.getX() - 1, player.getY() - 1, 60000);
+				addnpc(player, 40, player.getX() - 1, player.getY() + 1, 60000);
+				addnpc(player, 40, player.getX() - 1, player.getY() - 1, 60000);
 
-				addnpc(player.getWorld(), 542, player.getX() + 2, player.getY() + 1, 60000);
-				addnpc(player.getWorld(), 542, player.getX() + 1, player.getY() - 1, 60000);
+				addnpc(player, 542, player.getX() + 2, player.getY() + 1, 60000);
+				addnpc(player, 542, player.getX() + 1, player.getY() - 1, 60000);
 				player.message("The coins turn to dust in your hands.");
 				player.getCache().store("coins_shilo_cave", true);
 			}

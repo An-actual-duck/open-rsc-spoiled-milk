@@ -37,9 +37,9 @@ def main() -> None:
 
     require(world, "handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);", "scenery projectile allowance registration")
     require(world, "resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);", "scenery projectile allowance reset")
-    require(RANGE_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())", "ranged clear-shot path validation")
-    require(THROWING_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(getWorld(), player.getLocation(), target.getLocation())", "thrown clear-shot path validation")
-    require(MAGIC_COMBAT_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())", "magic clear-shot path validation")
+    require(RANGE_EVENT.read_text(encoding="utf-8"), "player.getWorldLocation(),\n\t\t\ttarget.getWorldLocation(), false", "ranged scoped clear-shot path validation")
+    require(THROWING_EVENT.read_text(encoding="utf-8"), "getWorld(), player.getWorldLocation(),\n\t\t\ttarget.getWorldLocation(), false", "thrown scoped clear-shot path validation")
+    require(MAGIC_COMBAT_EVENT.read_text(encoding="utf-8"), "player.getWorldLocation(),\n\t\t\t\ttarget.getWorldLocation(), false", "magic scoped clear-shot path validation")
 
     print("PASS: tree scenery no longer blocks ranged or magic projectile line checks")
 

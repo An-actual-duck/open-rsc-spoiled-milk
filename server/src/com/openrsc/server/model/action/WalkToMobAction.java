@@ -39,6 +39,9 @@ public abstract class WalkToMobAction extends WalkToAction {
 		boolean myworldCombatAttack = actionType == ActionType.ATTACK && getPlayer().getConfig().WANT_MYWORLD;
 		boolean myworldMeleeAttack = myworldCombatAttack && ignoreProjectileAllowed;
 		boolean projectilePathAttack = actionType == ActionType.ATTACKMAGIC;
+		if (mob.isRemoved() || !getPlayer().sharesSpatialDomain(mob)) {
+			return false;
+		}
 		Point checkedPoint = ((ignoreProjectileAllowed || projectilePathAttack) && !myworldCombatAttack)
 			? getPlayer().getWalkingQueue().getNextMovement()
 			: getPlayer().getLocation();
@@ -61,6 +64,9 @@ public abstract class WalkToMobAction extends WalkToAction {
 	}
 
 	private boolean checkAdjacentDistance(final Point checkedPoint) {
+		if (!getPlayer().sharesSpatialDomain(mob)) {
+			return false;
+		}
 		if (!getPlayer().getConfig()
 				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
 			return PathValidation.checkAdjacentDistance(
@@ -69,8 +75,7 @@ public abstract class WalkToMobAction extends WalkToAction {
 				checkedPoint.getY(),
 				mob.getX(),
 				mob.getY(),
-				ignoreProjectileAllowed,
-				!ignoreProjectileAllowed);
+				ignoreProjectileAllowed, !ignoreProjectileAllowed);
 		}
 		try {
 			WorldLocation checkedLocation =
@@ -83,24 +88,22 @@ public abstract class WalkToMobAction extends WalkToAction {
 				getPlayer().getWorld(),
 				checkedLocation,
 				mob.getWorldLocation(),
-				ignoreProjectileAllowed,
-				!ignoreProjectileAllowed);
-		} catch (IllegalArgumentException outsideScope) {
+				ignoreProjectileAllowed, !ignoreProjectileAllowed);
+		} catch (IllegalArgumentException | IllegalStateException
+			invalidSpatialState) {
 			return false;
 		}
 	}
 
 	private void repathMyWorldMeleeAttackIfNeeded() {
-		if (mob.isRemoved()) {
+		if (mob.isRemoved() || !getPlayer().sharesSpatialDomain(mob)) {
 			return;
 		}
 		final Path path = getPlayer().getWalkingQueue().path;
 		final Point pathEnd = path == null || path.isEmpty() ? null : path.getWaypoints().peekLast();
 		if (pathEnd != null
 			&& pathEnd.withinRange(mob.getLocation(), radius)
-			&& PathValidation.checkAdjacentDistance(getPlayer().getWorld(),
-			pathEnd.getX(), pathEnd.getY(), mob.getX(), mob.getY(),
-			ignoreProjectileAllowed, !ignoreProjectileAllowed)) {
+			&& checkAdjacentDistance(pathEnd)) {
 			return;
 		}
 		getPlayer().walkAdjacentToEntity(mob);

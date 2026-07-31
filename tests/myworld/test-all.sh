@@ -33,6 +33,7 @@ python3 ./tests/myworld/test-magic-enchanting-costs.py
 python3 ./tests/myworld/test-animation-asset-migrations.py
 python3 ./tests/myworld/test-projectile-animation-fallbacks.py
 python3 ./tests/myworld/test-tier-two-spell-animations.py
+python3 ./tests/myworld/test-layered-location-runtime-regressions.py
 python3 ./tests/myworld/test-player-spell-animation-migration.py
 python3 ./tests/myworld/test-enemy-animation-migration.py
 python3 ./tests/myworld/test-equipment-proc-animation-migration.py

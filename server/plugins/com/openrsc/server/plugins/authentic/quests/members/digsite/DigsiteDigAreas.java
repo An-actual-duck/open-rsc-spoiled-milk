@@ -130,7 +130,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 	private void doSpade(Player player, Item item, GameObject obj) {
 		Npc workmanCheck = ifnearvisnpc(player, NpcId.WORKMAN.id(), 15);
 		if (workmanCheck != null) {
-			Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+			Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 			if (item.getCatalogId() == ItemId.SPADE.id() && item.getDef(player.getWorld()).getCommand() != null
 				&& item.getDef(player.getWorld()).getCommand()[0].equalsIgnoreCase("Dig") && obj == null) {
 				if (workman != null) {
@@ -153,7 +153,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 	private void rockPickOnSite(Player player, Item item, GameObject obj) {
 		if (item.getCatalogId() == ItemId.ROCK_PICK.id() && inArray(obj.getID(), SOIL)) {
 			if (!getLevel2Digsite(player)) {
-				Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+				Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 				if (workman != null) {
 					npcsay(player, workman, "No no, rockpicks should only be used");
 					npcWalkFromPlayer(player, workman);
@@ -163,7 +163,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 				return;
 			}
 			if (player.getQuestStage(Quests.DIGSITE) < 4 && getLevel2Digsite(player)) {
-				Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+				Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 				if (workman != null) {
 					npcsay(player, workman, "Sorry, you haven't passed level 2 earth sciences exam");
 					npcWalkFromPlayer(player, workman);
@@ -218,7 +218,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 					&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.GAUNTLETS_OF_CHAOS.id())
 					&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.GAUNTLETS_OF_COOKING.id())
 					&& !player.getCarriedItems().getEquipment().hasEquipped(ItemId.GAUNTLETS_OF_GOLDSMITHING.id())) {
-					Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+					Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 					if (workman != null) {
 						npcsay(player, workman, "Hey, where are your gloves ?");
 						npcWalkFromPlayer(player, workman);
@@ -229,7 +229,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 					return;
 				}
 				if (!player.getCarriedItems().getEquipment().hasEquipped(ItemId.BOOTS.id())) {
-					Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+					Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 					if (workman != null) {
 						npcsay(player, workman, "Oi, no boots!");
 						npcWalkFromPlayer(player, workman);
@@ -257,7 +257,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 				}
 			}
 			if (getLevel2Digsite(player)) {
-				Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+				Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 				if (workman != null) {
 					npcsay(player, workman, "Sorry, you must use a rockpick");
 					npcWalkFromPlayer(player, workman);
@@ -269,7 +269,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 			}
 			if (getLevel3Digsite(player)) {
 				if (!player.getCarriedItems().hasCatalogID(ItemId.SPECIMEN_JAR.id(), Optional.of(false))) { // HAS SPECIMEN JAR
-					Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+					Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 					if (workman != null) {
 						npcsay(player, workman, "Ahem! I don't see your sample jar");
 						npcWalkFromPlayer(player, workman);
@@ -282,7 +282,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 					return;
 				}
 				if (!player.getCarriedItems().hasCatalogID(ItemId.SPECIMEN_BRUSH.id(), Optional.of(false))) { // HAS SPECIMEN BRUSH
-					Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+					Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 					if (workman != null) {
 						npcsay(player, workman, "Wait just a minute!");
 						npcWalkFromPlayer(player, workman);
@@ -296,7 +296,7 @@ public class DigsiteDigAreas implements OpLocTrigger, UseLocTrigger, OpInvTrigge
 					return;
 				}
 				if (player.getQuestStage(Quests.DIGSITE) < 5) {
-					Npc workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+					Npc workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 					if (workman != null) {
 						npcsay(player, workman, "Sorry, you haven't passed level 3 earth sciences exam");
 						npcWalkFromPlayer(player, workman);

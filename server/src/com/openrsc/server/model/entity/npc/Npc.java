@@ -17,6 +17,8 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.*;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.KillNpcTrigger;
@@ -33,6 +35,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Npc extends Mob {
@@ -115,6 +118,29 @@ public class Npc extends Mob {
 		this(world, new NPCLoc(id, x, y, x - 5, x + 5, y - 5, y + 5));
 	}
 
+	/**
+	 * Creates an NPC directly in an authoritative signed location. Native
+	 * layered coordinates remain unpacked in the compatibility carrier, while
+	 * the legacy fallback retains the packed coordinate representation.
+	 */
+	public Npc(
+		final World world,
+		final int id,
+		final WorldLocation location) {
+		this(world, id, location, 5);
+	}
+
+	public Npc(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int radius) {
+		this(
+			world,
+			createRuntimeNpcLoc(world, id, location, radius),
+			location);
+	}
+
 	public Npc(final World world, final int id, final int x, final int y, final int radius) {
 		this(world, new NPCLoc(id, x, y, x - radius, x + radius, y - radius, y + radius));
 	}
@@ -124,6 +150,13 @@ public class Npc extends Mob {
 	}
 
 	public Npc(final World world, final NPCLoc loc) {
+		this(world, loc, null);
+	}
+
+	private Npc(
+		final World world,
+		final NPCLoc loc,
+		final WorldLocation initialWorldLocation) {
 		super(world, EntityType.NPC);
 		if (loc.getAuthoredPlacementIdentity() != null) {
 			assignAuthoredPlacementIdentity(
@@ -148,7 +181,15 @@ public class Npc extends Mob {
 		this.loc = loc;
 		this.setNpcBehavior(new NpcBehavior(this));
 		super.setID(loc.getId());
-		super.setLocation(Point.location(loc.startX(), loc.startY()), true);
+		if (initialWorldLocation != null
+			&& getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			getWorld().getRegionManager().prepareNativeLayeredTransition(
+				null, initialWorldLocation, true);
+			super.setWorldLocation(initialWorldLocation, true);
+		} else {
+			super.setLocation(
+				Point.location(loc.startX(), loc.startY()), true);
+		}
 
 		getSkills().setLevelTo(Skill.ATTACK.id(), def.getAtt());
 		getSkills().setLevelTo(Skill.DEFENSE.id(), def.getDef());
@@ -157,6 +198,27 @@ public class Npc extends Mob {
 		getSkills().setLevelTo(Skill.HITS.id(), def.getHits());
 
 		getWorld().getServer().getGameEventHandler().add(getStatRestorationEvent());
+	}
+
+	private static NPCLoc createRuntimeNpcLoc(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int radius) {
+		World checkedWorld = Objects.requireNonNull(world, "world");
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			location, "location");
+		Point runtimePoint = checkedWorld.getServer().getConfig()
+			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			? checkedWorld.getRegionManager()
+				.toRuntimeCompatibilityPoint(checkedLocation)
+			: LegacyPackedPointAdapter.toLegacyPoint(checkedLocation);
+		int x = runtimePoint.getX();
+		int y = runtimePoint.getY();
+		return new NPCLoc(
+			id, x, y,
+			x - radius, x + radius,
+			y - radius, y + radius);
 	}
 
 	/**
@@ -447,17 +509,13 @@ public class Npc extends Mob {
 	}
 
 	private Player selectPreferredThreat(final Player currentBest, final Map<UUID, Pair<Integer, Long>> damagers, final boolean requireMeleeRange) {
-		Player bestPlayer = currentBest;
+		Player bestPlayer = isPreferredThreatEligible(currentBest, requireMeleeRange)
+			? currentBest
+			: null;
 		int bestDamage = bestPlayer == null ? -1 : getTotalDamageBy(bestPlayer.getUUID());
 		for (Map.Entry<UUID, Pair<Integer, Long>> entry : damagers.entrySet()) {
 			Player player = getWorld().getPlayerByUUID(entry.getKey());
-			if (player == null || player.isRemoved() || player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-				continue;
-			}
-			if (!player.getLocation().inBounds(loc.minX() - 4, loc.minY() - 4, loc.maxX() + 4, loc.maxY() + 4)) {
-				continue;
-			}
-			if (requireMeleeRange && !player.withinRange(this, 1)) {
+			if (!isPreferredThreatEligible(player, requireMeleeRange)) {
 				continue;
 			}
 
@@ -472,6 +530,26 @@ public class Npc extends Mob {
 			}
 		}
 		return bestPlayer;
+	}
+
+	private boolean isPreferredThreatEligible(
+		final Player player,
+		final boolean requireMeleeRange) {
+		if (player == null
+			|| player.isRemoved()
+			|| player.getSkills().getLevel(Skill.HITS.id()) <= 0
+			|| !sharesSpatialDomain(player)) {
+			return false;
+		}
+		if (!player.getLocation().inBounds(
+			loc.minX() - 4, loc.minY() - 4,
+			loc.maxX() + 4, loc.maxY() + 4)) {
+			return false;
+		}
+		if (requireMeleeRange && !player.withinRange(this, 1)) {
+			return false;
+		}
+		return true;
 	}
 
 	private Player getLowestCombatLevelThreat(final boolean requireMeleeRange) {
@@ -1539,7 +1617,51 @@ public class Npc extends Mob {
 	}
 
 	public void teleport(final int x, final int y) {
+		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			teleport(LegacyPackedPointAdapter.fromPackedValues(x, y));
+			return;
+		}
 		setLocation(Point.location(x, y), true);
+	}
+
+	/**
+	 * Teleports this NPC to an unqualified coordinate in its current spatial
+	 * scope. Fixed scripted destinations belong to the historical packed-Y
+	 * {@link #teleport(int, int)} contract.
+	 */
+	public void teleportCurrentScope(final int x, final int y) {
+		if (getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			teleport(
+				getWorld().getRegionManager().fromRuntimeCompatibilityPoint(
+					Point.location(x, y), getWorldLocation(), false));
+			return;
+		}
+		setLocation(Point.location(x, y), true);
+	}
+
+	/**
+	 * Teleports this NPC to an exact signed location. This is required when an
+	 * NPC follows its owner across a level or world-space boundary because the
+	 * compatibility Point carrier does not retain either identity.
+	 */
+	public void teleport(final WorldLocation location) {
+		WorldLocation destination = Objects.requireNonNull(
+			location, "location");
+		if (!getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			Point legacyDestination = LegacyPackedPointAdapter.toLegacyPoint(
+				destination);
+			teleport(
+				legacyDestination.getX(), legacyDestination.getY());
+			return;
+		}
+		beginLayeredOwnerLifecycleOperation();
+		try {
+			getWorld().getRegionManager().prepareNativeLayeredTransition(
+				getWorldLocation(), destination, true);
+			super.setWorldLocation(destination, true);
+		} finally {
+			endLayeredOwnerLifecycleOperation();
+		}
 	}
 
 	@Override
@@ -1707,6 +1829,9 @@ public class Npc extends Mob {
 
 	private boolean checkBlocking(World world, int x, int y, int bit) {
 		TileValue t = getTileAtCurrentLevel(x, y);
+		if (t == null) {
+			return true;
+		}
 		Point point = new Point(x, y);
 		for (Npc n : getViewArea().getNpcsInView()) {
 			if (n.getLocation().equals(point)) {

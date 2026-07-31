@@ -75,6 +75,7 @@ import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+import com.openrsc.server.model.world.coordinate.WorldSpaceId;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.net.rsc.ClientLimitations;
@@ -4320,6 +4321,10 @@ public final class Player extends Mob {
 		teleport(x, y, false);
 	}
 
+	public void teleportCurrentScope(final int x, final int y) {
+		teleportCurrentScope(x, y, false);
+	}
+
 	public void addPrivateMessage(final PrivateMessage privateMessage) {
 		if (getPrivateMessageQueue().size() < 2) {
 			getPrivateMessageQueue().add(privateMessage);
@@ -4909,7 +4914,40 @@ public final class Player extends Mob {
 		getWorld().getServer().getGameEventHandler().addOrUpdate(sleepEvent);
 	}
 
+	/**
+	 * Teleports to an absolute coordinate in the historical packed-Y format.
+	 * This preserves the long-standing contract used by scripted destinations;
+	 * callers moving within an already established native layer must use
+	 * {@link #teleportCurrentScope(int, int, boolean)} instead.
+	 */
 	public void teleport(final int x, final int y, final boolean bubble) {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			teleportLayered(
+				LegacyPackedPointAdapter.fromPackedValues(x, y), bubble);
+			return;
+		}
+		teleportCurrentScope(x, y, bubble);
+	}
+
+	/**
+	 * Teleports to an unqualified runtime coordinate inside the Player's
+	 * current spatial scope. Native and synthetic scopes fail closed when the
+	 * destination is outside their available terrain.
+	 */
+	public void teleportCurrentScope(
+		final int x,
+		final int y,
+		final boolean bubble) {
+		if (getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			WorldLocation current = layeredLocationAuthority.isInitialized()
+				? getLayeredLocation() : null;
+			teleportLayered(
+				getWorld().getRegionManager()
+					.fromRuntimeCompatibilityPoint(
+						Point.location(x, y), current, false),
+				bubble);
+			return;
+		}
 		if (inCombat()) {
 			this.setLastOpponent(null);
 			combatEvent.resetCombat();
@@ -4930,12 +4968,9 @@ public final class Player extends Mob {
 	}
 
 	/**
-	 * Teleports to an explicit global coordinate and signed level.
-	 *
-	 * <p>The two-coordinate compatibility overload intentionally preserves the
-	 * player's current native-package level. Hard destinations must use this
-	 * overload so an underground origin cannot reinterpret a surface target (or
-	 * vice versa). Legacy runtimes receive the exact packed-Y projection.</p>
+	 * Teleports to an explicit global coordinate and signed level. This is the
+	 * preferred contract for new fixed destinations; legacy runtimes receive
+	 * the exact packed-Y projection.
 	 */
 	public void teleport(
 		final int x,
@@ -4957,21 +4992,25 @@ public final class Player extends Mob {
 	}
 
 	/**
+	 * Teleports to an absolute coordinate expressed in the legacy packed-Y
+	 * format. Native layered runtime points are intentionally unpacked, so a
+	 * fixed legacy destination must be decoded before it can cross layers.
+	 */
+	public void teleportLegacy(
+		final int x,
+		final int packedY,
+		final boolean bubble) {
+		teleport(x, packedY, bubble);
+	}
+
+	/**
 	 * Teleports to the configured legacy respawn coordinate without allowing
 	 * the current native package level to reinterpret that destination.
 	 */
 	public void teleportToConfiguredRespawn(final boolean bubble) {
-		if (!getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
-			teleport(
-				getConfig().RESPAWN_LOCATION_X,
-				getConfig().RESPAWN_LOCATION_Y,
-				bubble);
-			return;
-		}
-		teleportLayered(
-			LegacyPackedPointAdapter.fromPackedValues(
-				getConfig().RESPAWN_LOCATION_X,
-				getConfig().RESPAWN_LOCATION_Y),
+		teleportLegacy(
+			getConfig().RESPAWN_LOCATION_X,
+			getConfig().RESPAWN_LOCATION_Y,
 			bubble);
 	}
 
@@ -6048,21 +6087,30 @@ public final class Player extends Mob {
 	}
 
 	public Point summon(final Player summonTo) {
-		return summon(summonTo.getLocation());
+		if (!isLayeredLocationAuthorityEnabled()
+			|| !summonTo.isLayeredLocationAuthorityEnabled()) {
+			return summon(summonTo.getLocation());
+		}
+		Point originalLocation = getLocation();
+		resetSummonReturnPoint();
+		setSummonReturnPoint();
+		teleportLayered(summonTo.getWorldLocation(), true);
+		return originalLocation;
 	}
 
 	public void setSummonReturnPoint() {
 		if (wasSummoned())
 			return;
 
-		getCache().set("return_x", getX());
-		getCache().set("return_y", getY());
+		storeLegacyReturnLocation("return_x", "return_y");
+		storeLayeredReturnLocation("return");
 		getCache().store("was_summoned", true);
 	}
 
 	private void resetSummonReturnPoint() {
 		getCache().remove("return_x");
 		getCache().remove("return_y");
+		clearLayeredReturnLocation("return");
 		getCache().remove("was_summoned");
 	}
 
@@ -6085,7 +6133,10 @@ public final class Player extends Mob {
 			return null;
 
 		Point originalLocation = getLocation();
-		teleport(getSummonReturnX(), getSummonReturnY(), true);
+		if (!teleportToLayeredReturnLocation("return", true)
+			&& hasLegacyReturnLocation("return_x", "return_y")) {
+			teleport(getSummonReturnX(), getSummonReturnY(), true);
+		}
 		resetSummonReturnPoint();
 		return originalLocation;
 	}
@@ -6112,14 +6163,15 @@ public final class Player extends Mob {
 		if (isJailed())
 			return;
 
-		getCache().set("jail_return_x", getX());
-		getCache().set("jail_return_y", getY());
+		storeLegacyReturnLocation("jail_return_x", "jail_return_y");
+		storeLayeredReturnLocation("jail_return");
 		getCache().store("is_jailed", true);
 	}
 
 	private void resetJailReturnPoint() {
 		getCache().remove("jail_return_x");
 		getCache().remove("jail_return_y");
+		clearLayeredReturnLocation("jail_return");
 		getCache().remove("is_jailed");
 	}
 
@@ -6142,9 +6194,92 @@ public final class Player extends Mob {
 			return null;
 
 		Point originalLocation = getLocation();
-		teleport(getJailReturnX(), getJailReturnY(), true);
+		if (!teleportToLayeredReturnLocation("jail_return", true)
+			&& hasLegacyReturnLocation(
+				"jail_return_x", "jail_return_y")) {
+			teleport(getJailReturnX(), getJailReturnY(), true);
+		}
 		resetJailReturnPoint();
 		return originalLocation;
+	}
+
+	private void storeLayeredReturnLocation(final String prefix) {
+		if (!isLayeredLocationAuthorityEnabled()) {
+			return;
+		}
+		WorldLocation location = getLayeredLocation();
+		getCache().store(
+			prefix + "_layered_space",
+			location.getWorldSpace().getValue());
+		getCache().set(
+			prefix + "_layered_x",
+			location.getCoordinate().getX());
+		getCache().set(
+			prefix + "_layered_y",
+			location.getCoordinate().getY());
+		getCache().set(
+			prefix + "_layered_level",
+			location.getCoordinate().getLevel());
+	}
+
+	private void storeLegacyReturnLocation(
+		final String xKey,
+		final String yKey) {
+		if (!isLayeredLocationAuthorityEnabled()) {
+			getCache().set(xKey, getX());
+			getCache().set(yKey, getY());
+			return;
+		}
+		try {
+			Point legacyLocation = LegacyPackedPointAdapter.toLegacyPoint(
+				getLayeredLocation());
+			getCache().set(xKey, legacyLocation.getX());
+			getCache().set(yKey, legacyLocation.getY());
+		} catch (IllegalArgumentException unrepresentableLocation) {
+			/*
+			 * Exact layered metadata remains authoritative. A fabricated surface
+			 * fallback would be worse than having no legacy fallback at all.
+			 */
+			getCache().remove(xKey, yKey);
+		}
+	}
+
+	private boolean hasLegacyReturnLocation(
+		final String xKey,
+		final String yKey) {
+		return getCache().hasKey(xKey) && getCache().hasKey(yKey);
+	}
+
+	private boolean teleportToLayeredReturnLocation(
+		final String prefix,
+		final boolean bubble) {
+		String spaceKey = prefix + "_layered_space";
+		String xKey = prefix + "_layered_x";
+		String yKey = prefix + "_layered_y";
+		String levelKey = prefix + "_layered_level";
+		if (!isLayeredLocationAuthorityEnabled()
+			|| !getCache().hasKey(spaceKey)
+			|| !getCache().hasKey(xKey)
+			|| !getCache().hasKey(yKey)
+			|| !getCache().hasKey(levelKey)) {
+			return false;
+		}
+		teleportLayered(
+			new WorldLocation(
+				new WorldSpaceId(getCache().getString(spaceKey)),
+				new WorldCoordinate(
+					getCache().getInt(xKey),
+					getCache().getInt(yKey),
+					getCache().getInt(levelKey))),
+			bubble);
+		return true;
+	}
+
+	private void clearLayeredReturnLocation(final String prefix) {
+		getCache().remove(prefix + "_layered_space");
+		getCache().remove(prefix + "_layered_x");
+		getCache().remove(prefix + "_layered_y");
+		getCache().remove(prefix + "_layered_level");
 	}
 
 	public void setJailed(final boolean isJailed) {

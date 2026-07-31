@@ -86,9 +86,9 @@ public class UndergroundPassAgilityObstacles implements OpLocTrigger {
 			} else {
 				if (succeed(player, 1)) {
 					if (obj.getX() == player.getX() + 1) {
-						player.teleport(776, obj.getY());
+						player.teleportCurrentScope(776, obj.getY());
 					} else {
-						player.teleport(773, obj.getY());
+						player.teleportCurrentScope(773, obj.getY());
 					}
 					player.message("..you manage to cross safley");
 				} else {
@@ -106,13 +106,13 @@ public class UndergroundPassAgilityObstacles implements OpLocTrigger {
 			}
 			if (succeed(player, 1)) {
 				if (obj.getX() == player.getX() + 1) {
-					player.teleport(obj.getX() + 3, obj.getY());
+					player.teleportCurrentScope(obj.getX() + 3, obj.getY());
 				} else if (obj.getX() == player.getX() - 3) {
-					player.teleport(obj.getX() - 1, obj.getY());
+					player.teleportCurrentScope(obj.getX() - 1, obj.getY());
 				} else if (obj.getY() == player.getY() + 1) {
-					player.teleport(obj.getX(), obj.getY() + 3);
+					player.teleportCurrentScope(obj.getX(), obj.getY() + 3);
 				} else if (obj.getY() == player.getY() - 3) {
-					player.teleport(obj.getX(), obj.getY() - 1);
+					player.teleportCurrentScope(obj.getX(), obj.getY() - 1);
 				}
 				player.message("..you manage to cross safley");
 			} else {
