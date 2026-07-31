@@ -220,11 +220,14 @@ require(CORE.exists(), "Missing server/core.jar; run ./scripts/build-server.sh f
 WORLD_STUB = """
 package com.openrsc.server.model.world;
 
+import com.openrsc.server.Server;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 
 public final class World {
     private final TileValue[][] tiles = new TileValue[8][8];
+    private final Server server = new Server();
 
     public World() {
         for (int x = 0; x < tiles.length; x++) {
@@ -238,6 +241,12 @@ public final class World {
         return tiles[x][y];
     }
 
+    public TileValue getTile(WorldLocation location) {
+        return getTile(
+            location.getCoordinate().getX(),
+            location.getCoordinate().getY());
+    }
+
     public void setTile(int x, int y, TileValue tile) {
         tiles[x][y] = tile;
     }
@@ -246,11 +255,37 @@ public final class World {
         return null;
     }
 
+    public Server getServer() {
+        return server;
+    }
+
     private static TileValue initializedTile() {
         TileValue tile = new TileValue();
         tile.initializeTerrainCollision();
         tile.overlay = 1;
         return tile;
+    }
+}
+"""
+
+SERVER_CONFIGURATION_STUB = """
+package com.openrsc.server;
+
+public final class ServerConfiguration {
+    public boolean WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = false;
+    public int NPC_BLOCKING = 0;
+    public int PLAYER_BLOCKING = 0;
+}
+"""
+
+SERVER_STUB = """
+package com.openrsc.server;
+
+public final class Server {
+    private final ServerConfiguration configuration = new ServerConfiguration();
+
+    public ServerConfiguration getConfig() {
+        return configuration;
     }
 }
 """
@@ -319,6 +354,11 @@ public final class HostileProjectilePathHarness {
 
 with tempfile.TemporaryDirectory(prefix="hostile-projectile-path-") as temp:
     temp_path = Path(temp)
+    configuration_stub = temp_path / "com/openrsc/server/ServerConfiguration.java"
+    configuration_stub.parent.mkdir(parents=True)
+    configuration_stub.write_text(SERVER_CONFIGURATION_STUB, encoding="utf-8")
+    server_stub = temp_path / "com/openrsc/server/Server.java"
+    server_stub.write_text(SERVER_STUB, encoding="utf-8")
     stub = temp_path / "com/openrsc/server/model/world/World.java"
     stub.parent.mkdir(parents=True)
     stub.write_text(WORLD_STUB, encoding="utf-8")
@@ -332,6 +372,8 @@ with tempfile.TemporaryDirectory(prefix="hostile-projectile-path-") as temp:
             classpath,
             "-d",
             temp,
+            str(configuration_stub),
+            str(server_stub),
             str(stub),
             str(FLAGS),
             str(TILE),
@@ -365,8 +407,9 @@ require(
     "world object registration must own reversible hard-cover collision",
 )
 require(
-    "updateHostileProjectileBoundaryCollision(x, y, dir, true)" in world_source
-    and "updateHostileProjectileBoundaryCollision(x, y, dir, false)" in world_source,
+    "applyHostileProjectileCollision(oldObject, false);" in world_source
+    and "applyHostileProjectileCollision(newObject, true);" in world_source
+    and "updateHostileProjectileBoundaryCollision(" in world_source,
     "boundary walls and closed doors must register and unregister hard cover",
 )
 

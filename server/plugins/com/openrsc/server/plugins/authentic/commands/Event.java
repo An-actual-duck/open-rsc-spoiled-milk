@@ -8,6 +8,7 @@ import com.openrsc.server.database.impl.mysql.queries.logging.StaffLog;
 import com.openrsc.server.database.struct.LinkedPlayer;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -16,12 +17,15 @@ import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.ChatMessage;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.ZanarisLocation;
+import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.CommandTrigger;
 import com.openrsc.server.util.PidShuffler;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.CollisionFlag;
 import com.openrsc.server.util.rsc.MessageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -354,6 +358,7 @@ public final class Event implements CommandTrigger {
 		int radius = 3;
 		Point originalLocation;
 		Point teleportTo;
+		WorldLocation scopedTeleportTo = null;
 
 		if(args.length == 1) {
 			targetPlayer = player;
@@ -425,6 +430,8 @@ public final class Event implements CommandTrigger {
 					player.message(messagePrefix + "Invalid target");
 					return;
 				}
+				scopedTeleportTo =
+					LegacyPackedPointAdapter.fromLegacyPoint(teleportTo);
 			} else {
 				if (tpTo.isInvisibleTo(player) && !player.isAdmin()) {
 					player.message(messagePrefix + "You can not teleport to an invisible player.");
@@ -432,6 +439,14 @@ public final class Event implements CommandTrigger {
 				}
 				if (command.equalsIgnoreCase("tpat") || radius == 0) {
 					teleportTo = tpTo.getLocation();
+					if (tpTo.isLayeredLocationAuthorityEnabled()) {
+						scopedTeleportTo = tpTo.getWorldLocation();
+					}
+				} else if (tpTo.isLayeredLocationAuthorityEnabled()) {
+					scopedTeleportTo = furthestWalkableTileInScope(
+						tpTo, radius);
+					teleportTo = player.getWorld().getRegionManager()
+						.toRuntimeCompatibilityPoint(scopedTeleportTo);
 				} else {
 					teleportTo = tpTo.getLocation().furthestWalkableTile(player.getWorld(), radius);
 				}
@@ -483,7 +498,8 @@ public final class Event implements CommandTrigger {
 			targetPlayer.setSummonReturnPoint();
 		}
 
-		targetPlayer.teleport(teleportTo.getX(), teleportTo.getY(), true);
+		teleportStaffDestination(
+			targetPlayer, teleportTo, scopedTeleportTo, true);
 		targetPlayer.resetFollowing();
 
 		player.message(messagePrefix + "You have teleported " + targetPlayer.getUsername() + " to " + targetPlayer.getLocation() + " from " + originalLocation);
@@ -1328,6 +1344,7 @@ public final class Event implements CommandTrigger {
 		int radius = 5;
 		Point originalLocation;
 		Point teleportTo;
+		WorldLocation scopedTeleportTo = null;
 		boolean isSummon = command.toLowerCase().endsWith("to");
 
 		// determine if will be to town/player
@@ -1402,12 +1419,17 @@ public final class Event implements CommandTrigger {
 					player.message(messagePrefix + "Invalid target");
 					return;
 				}
+				scopedTeleportTo =
+					LegacyPackedPointAdapter.fromLegacyPoint(teleportTo);
 			} else {
 				if (tpTo.isInvisibleTo(player) && !player.isAdmin()) {
 					player.message(messagePrefix + "You can not teleport group to an invisible player.");
 					return;
 				}
 				teleportTo = tpTo.getLocation();
+				if (tpTo.isLayeredLocationAuthorityEnabled()) {
+					scopedTeleportTo = tpTo.getWorldLocation();
+				}
 			}
 		}
 		else {
@@ -1443,7 +1465,8 @@ public final class Event implements CommandTrigger {
 			}
 
 			originalLocation = targetPlayer.getLocation();
-			targetPlayer.teleport(teleportTo.getX(), teleportTo.getY(), true);
+			teleportStaffDestination(
+				targetPlayer, teleportTo, scopedTeleportTo, true);
 			targetPlayer.resetFollowing();
 
 			if(targetPlayer.getUsernameHash() != player.getUsernameHash() && targetPlayer.getLocation() != originalLocation && !player.isInvisibleTo(targetPlayer)) {
@@ -1458,7 +1481,8 @@ public final class Event implements CommandTrigger {
 			}
 
 			originalLocation = player.getLocation();
-			player.teleport(teleportTo.getX(), teleportTo.getY(), true);
+			teleportStaffDestination(
+				player, teleportTo, scopedTeleportTo, true);
 			player.resetFollowing();
 
 			player.message(messagePrefix + "You have teleported local group to " + teleportTo + " from nearby " + originalLocation);
@@ -1466,6 +1490,81 @@ public final class Event implements CommandTrigger {
 			player.getWorld().getServer().getGameLogger().addQuery(new StaffLog(player, 15, player.getUsername() + " has teleported local group to " + teleportTo + " from  nearby " + originalLocation));
 		} else {
 			player.message(messagePrefix + "No nearby players within " + radius + " tiles were found in your region");
+		}
+	}
+
+	private static void teleportStaffDestination(
+		final Player target,
+		final Point compatibilityDestination,
+		final WorldLocation scopedDestination,
+		final boolean bubble) {
+		if (scopedDestination != null
+			&& target.isLayeredLocationAuthorityEnabled()) {
+			target.teleportLayered(scopedDestination, bubble);
+			return;
+		}
+		target.teleport(
+			compatibilityDestination.getX(),
+			compatibilityDestination.getY(),
+			bubble);
+	}
+
+	private static WorldLocation furthestWalkableTileInScope(
+		final Player anchor,
+		final int requestedRadius) {
+		final WorldLocation center = anchor.getWorldLocation();
+		final WorldCoordinate coordinate = center.getCoordinate();
+		final int initialDirection = DataConversions.random(0, 3);
+		for (int radius = requestedRadius; radius > 0; radius--) {
+			for (int attempt = 0; attempt < 8; attempt++) {
+				int xOffset;
+				int yOffset;
+				switch ((initialDirection + attempt) % 4) {
+					case 0:
+						xOffset = radius;
+						yOffset = attempt < 4 ? 0 : radius;
+						break;
+					case 1:
+						xOffset = -radius;
+						yOffset = attempt < 4 ? 0 : radius;
+						break;
+					case 2:
+						xOffset = attempt < 4 ? 0 : radius;
+						yOffset = attempt < 4 ? radius : -radius;
+						break;
+					default:
+						xOffset = attempt < 4 ? 0 : -radius;
+						yOffset = -radius;
+						break;
+				}
+				WorldLocation candidate = new WorldLocation(
+					center.getWorldSpace(),
+					new WorldCoordinate(
+						coordinate.getX() + xOffset,
+						coordinate.getY() + yOffset,
+						coordinate.getLevel()));
+				if (isWalkableTileInScope(anchor, center, candidate)) {
+					return candidate;
+				}
+			}
+		}
+		return center;
+	}
+
+	private static boolean isWalkableTileInScope(
+		final Player anchor,
+		final WorldLocation center,
+		final WorldLocation candidate) {
+		try {
+			if (!PathValidation.checkPath(
+					anchor.getWorld(), candidate, center, true)) {
+				return false;
+			}
+			TileValue tile = anchor.getWorld().getTile(candidate);
+			return tile != null
+				&& (tile.traversalMask & CollisionFlag.FULL_BLOCK) == 0;
+		} catch (IllegalArgumentException | IllegalStateException invalidScope) {
+			return false;
 		}
 	}
 

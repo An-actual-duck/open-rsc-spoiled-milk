@@ -1236,7 +1236,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 			player.message("almost as if the Kharazi jungle were sighing.");
 			player.message("Perhaps Gujuo would like to see the totem pole.");
 			if (calledGujuo) {
-				Npc gujuo = addnpc(obj.getWorld(), NpcId.GUJUO.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(150));
+				Npc gujuo = addnpc(player, NpcId.GUJUO.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(150));
 				if (gujuo != null) {
 					gujuo.initializeTalkScript(player);
 				}

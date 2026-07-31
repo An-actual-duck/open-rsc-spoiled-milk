@@ -15,23 +15,23 @@ def main() -> None:
     ladders = LADDERS.read_text(encoding="utf-8")
     require(
         ladders,
-        "obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438",
-        "Heroes' Guild surface stairs trigger",
+        "matchesLegacyPackedLocation(obj, 368, 438)",
+        "Heroes' Guild exact surface stairs trigger",
     )
     require(
         ladders,
-        "player.teleport(371, 3266, false);",
-        "Heroes' Guild basement landing",
+        "player.teleportLegacyPacked(371, 3266, false);",
+        "Heroes' Guild explicit packed basement landing",
     )
     require(
         ladders,
-        "obj.getX() == 370 && obj.getY() == 3264",
-        "Heroes' Guild basement stairs trigger",
+        "matchesLegacyPackedLocation(obj, 370, 3264)",
+        "Heroes' Guild exact basement stairs trigger",
     )
     require(
         ladders,
-        "player.teleport(369, 437, false);",
-        "Heroes' Guild surface return landing",
+        "player.teleportLegacyPacked(369, 437, false);",
+        "Heroes' Guild explicit packed surface return landing",
     )
     print("PASS: Heroes' Guild stairs use the moved safe landing tiles")
 

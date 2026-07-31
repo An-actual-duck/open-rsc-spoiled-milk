@@ -125,10 +125,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 
-		boolean sameTile = attackerMob.getX() == targetMob.getX()
+		boolean sameTile = attackerMob.sharesSpatialDomain(targetMob)
+			&& attackerMob.getX() == targetMob.getX()
 			&& attackerMob.getY() == targetMob.getY();
-		boolean adjacent = !sameTile && PathValidation.checkAdjacentDistance(attackerMob.getWorld(),
-			attackerMob.getX(), attackerMob.getY(), targetMob.getX(), targetMob.getY(), true, false);
+		boolean adjacent = !sameTile && PathValidation.checkAdjacentDistance(
+			attackerMob, targetMob, true, false);
 		boolean crowdedSummonAssistReach = Summoning.canSummonUseCrowdedAssistReach(attackerMob, targetMob);
 		if ((!attackerMob.withinRange(targetMob, 1) || !adjacent) && !crowdedSummonAssistReach) {
 			// Don't force player to walk back if they're hostile and trying to run away

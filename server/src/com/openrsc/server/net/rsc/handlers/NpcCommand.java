@@ -45,7 +45,8 @@ public final class NpcCommand implements PayloadProcessor<TargetMobStruct, Opcod
 		boolean isGnomeballOp = command.equalsIgnoreCase("tackle") || command.equalsIgnoreCase("pass to");
 		int followRadius = isPickpocket
 			&& player.withinRange(affectedNpc, 1)
-			&& PathValidation.checkAdjacentDistance(player.getWorld(), player.getX(), player.getY(), affectedNpc.getX(), affectedNpc.getY(), true)
+			&& PathValidation.checkAdjacentDistance(
+				player, affectedNpc, true, true)
 			? 0 : 1;
 		// Don't believe that the player would follow during pickpocketing if they were on the same tile. If they do, they follow under the NPC for one tick, which has not been seen on footage review.
 		if (!isPickpocket || !player.getLocation().equals(affectedNpc.getLocation())) player.setFollowing(affectedNpc, followRadius, true, true);

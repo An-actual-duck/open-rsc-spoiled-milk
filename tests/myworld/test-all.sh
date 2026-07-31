@@ -23,6 +23,7 @@ python3 ./tests/myworld/test-definition-override-loading.py
 python3 ./tests/myworld/test-player-data-integrity.py
 python3 ./tests/myworld/test-player-login-policy.py
 python3 ./tests/myworld/test-layered-player-login-recovery.py
+python3 ./tests/myworld/test-layered-location-followups.py
 python3 ./tests/myworld/test-social-name-lookup.py
 python3 ./tests/myworld/test-server-social-failure-handling.py
 python3 ./tests/myworld/test-server-best-effort-cleanup.py

@@ -6,6 +6,7 @@ WORLD = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "worl
 RANGE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
 THROWING_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ThrowingEvent.java"
 MAGIC_COMBAT_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "MagicCombatEvent.java"
+PROJECTILE_POLICY = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "util" / "rsc" / "LegacyObjectProjectileCollisionPolicy.java"
 
 
 def fail(message: str) -> None:
@@ -19,27 +20,31 @@ def require(text: str, needle: str, description: str) -> None:
 
 def main() -> None:
     world = WORLD.read_text(encoding="utf-8")
-    helper_start = world.find("private boolean isProjectileClipAllowed(GameObject o)")
-    if helper_start < 0:
-        fail("missing projectile clip helper")
-
-    helper_end = world.find("\n\tprivate ", helper_start + 1)
-    if helper_end < 0:
-        fail("could not locate end of projectile clip helper")
-    helper = world[helper_start:helper_end]
-
-    tree_rule = 'o.getType() == 0 && o.getGameObjectDef().getName().toLowerCase().contains("tree")'
-    allowlist_loop = "for (final String s : com.openrsc.server.constants.Constants.objectsProjectileClipAllowed)"
-    require(helper, tree_rule, "all-tree projectile clipping allowance")
-    require(helper, allowlist_loop, "existing projectile clip allowlist")
-    if helper.find(tree_rule) > helper.find(allowlist_loop):
+    policy = PROJECTILE_POLICY.read_text(encoding="utf-8")
+    tree_rule = 'if (lowercaseName.contains("tree"))'
+    allowlist_loop = "for (String allowedName : checkedAllowedNames)"
+    require(policy, tree_rule, "all-tree projectile clipping allowance")
+    require(policy, allowlist_loop, "existing projectile clip allowlist")
+    if policy.find(tree_rule) > policy.find(allowlist_loop):
         fail("tree projectile allowance should run before legacy object allowlist")
 
-    require(world, "handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);", "scenery projectile allowance registration")
-    require(world, "resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);", "scenery projectile allowance reset")
-    require(RANGE_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())", "ranged clear-shot path validation")
-    require(THROWING_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(getWorld(), player.getLocation(), target.getLocation())", "thrown clear-shot path validation")
-    require(MAGIC_COMBAT_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())", "magic clear-shot path validation")
+    require(world, "Definition.scenery(", "scenery collision policy registration")
+    require(world, "Constants.objectsProjectileClipAllowed", "projectile allowlist routing")
+    require(
+        RANGE_EVENT.read_text(encoding="utf-8"),
+        "player.getWorld(), player.getWorldLocation(),",
+        "layer-qualified ranged clear-shot path validation",
+    )
+    require(
+        THROWING_EVENT.read_text(encoding="utf-8"),
+        "getWorld(), player.getWorldLocation(),",
+        "layer-qualified thrown clear-shot path validation",
+    )
+    require(
+        MAGIC_COMBAT_EVENT.read_text(encoding="utf-8"),
+        "player.getWorld(), player.getWorldLocation(),",
+        "layer-qualified magic clear-shot path validation",
+    )
 
     print("PASS: tree scenery no longer blocks ranged or magic projectile line checks")
 

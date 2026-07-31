@@ -20,8 +20,12 @@ def main() -> None:
 
     require(text, "private static Point findPlantLocation(Player player)", "resource seed placement helper")
     require(text, "CollisionFlag.FULL_BLOCK", "blocked-tile rejection")
-    require(text, "PathValidation.checkAdjacentDistance(player.getWorld(), player.getX(), player.getY(),",
-            "reachable-tile validation")
+    require(
+        text,
+        "player.getWorld(), playerLocation, scopedLocation,",
+        "exact-layer reachable-tile validation",
+    )
+    require(text, "player.getTileAtCurrentLevel(", "exact-layer tile lookup")
     require(text, "private static boolean hasMobAt(Player player, Point location)",
             "occupied-tile validation")
     require(text, "player.getViewArea().getPlayersInView()", "nearby-player occupancy lookup")

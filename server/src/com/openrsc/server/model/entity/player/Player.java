@@ -4929,6 +4929,19 @@ public final class Player extends Mob {
 		ActionSender.sendWorldInfo(this);
 	}
 
+	/** Teleports to an explicit destination encoded in classic packed-Y form. */
+	public void teleportLegacyPacked(
+		final int x,
+		final int packedY,
+		final boolean bubble) {
+		if (isLayeredLocationAuthorityEnabled()) {
+			teleportLayered(
+				LegacyPackedPointAdapter.fromPackedValues(x, packedY), bubble);
+			return;
+		}
+		teleport(x, packedY, bubble);
+	}
+
 	/**
 	 * Teleports to an explicit global coordinate and signed level.
 	 *
@@ -6048,36 +6061,30 @@ public final class Player extends Mob {
 	}
 
 	public Point summon(final Player summonTo) {
-		return summon(summonTo.getLocation());
+		if (!isLayeredLocationAuthorityEnabled()
+			|| !summonTo.isLayeredLocationAuthorityEnabled()) {
+			return summon(summonTo.getLocation());
+		}
+		Point originalLocation = getLocation();
+		resetSummonReturnPoint();
+		setSummonReturnPoint();
+		teleportLayered(summonTo.getWorldLocation(), true);
+		return originalLocation;
 	}
 
 	public void setSummonReturnPoint() {
 		if (wasSummoned())
 			return;
 
-		getCache().set("return_x", getX());
-		getCache().set("return_y", getY());
+		storeReturnLocation("return", "return_x", "return_y");
 		getCache().store("was_summoned", true);
 	}
 
 	private void resetSummonReturnPoint() {
 		getCache().remove("return_x");
 		getCache().remove("return_y");
+		PlayerReturnLocationStore.clearExact(getCache(), "return");
 		getCache().remove("was_summoned");
-	}
-
-	private int getSummonReturnX() {
-		if (!getCache().hasKey("return_x"))
-			return -1;
-
-		return getCache().getInt("return_x");
-	}
-
-	private int getSummonReturnY() {
-		if (!getCache().hasKey("return_y"))
-			return -1;
-
-		return getCache().getInt("return_y");
 	}
 
 	public Point returnFromSummon() {
@@ -6085,7 +6092,7 @@ public final class Player extends Mob {
 			return null;
 
 		Point originalLocation = getLocation();
-		teleport(getSummonReturnX(), getSummonReturnY(), true);
+		teleportToReturnLocation("return", "return_x", "return_y", true);
 		resetSummonReturnPoint();
 		return originalLocation;
 	}
@@ -6104,7 +6111,7 @@ public final class Player extends Mob {
 	public Point jail() {
 		Point originalLocation = getLocation();
 		setJailReturnPoint();
-		teleport(75, 1641, true);
+		teleportLegacyPacked(75, 1641, true);
 		return originalLocation;
 	}
 
@@ -6112,29 +6119,16 @@ public final class Player extends Mob {
 		if (isJailed())
 			return;
 
-		getCache().set("jail_return_x", getX());
-		getCache().set("jail_return_y", getY());
+		storeReturnLocation(
+			"jail_return", "jail_return_x", "jail_return_y");
 		getCache().store("is_jailed", true);
 	}
 
 	private void resetJailReturnPoint() {
 		getCache().remove("jail_return_x");
 		getCache().remove("jail_return_y");
+		PlayerReturnLocationStore.clearExact(getCache(), "jail_return");
 		getCache().remove("is_jailed");
-	}
-
-	private int getJailReturnX() {
-		if (!getCache().hasKey("jail_return_x"))
-			return -1;
-
-		return getCache().getInt("jail_return_x");
-	}
-
-	private int getJailReturnY() {
-		if (!getCache().hasKey("jail_return_y"))
-			return -1;
-
-		return getCache().getInt("jail_return_y");
 	}
 
 	public Point releaseFromJail() {
@@ -6142,9 +6136,53 @@ public final class Player extends Mob {
 			return null;
 
 		Point originalLocation = getLocation();
-		teleport(getJailReturnX(), getJailReturnY(), true);
+		teleportToReturnLocation(
+			"jail_return", "jail_return_x", "jail_return_y", true);
 		resetJailReturnPoint();
 		return originalLocation;
+	}
+
+	private void storeReturnLocation(
+		final String prefix,
+		final String legacyXKey,
+		final String legacyYKey) {
+		if (!isLayeredLocationAuthorityEnabled()) {
+			getCache().set(legacyXKey, getX());
+			getCache().set(legacyYKey, getY());
+			PlayerReturnLocationStore.clearExact(getCache(), prefix);
+			return;
+		}
+		WorldLocation location = getLayeredLocation();
+		PlayerReturnLocationStore.storeExact(getCache(), prefix, location);
+		PlayerReturnLocationStore.storeLegacyProjection(
+			getCache(), legacyXKey, legacyYKey, location);
+	}
+
+	private void teleportToReturnLocation(
+		final String prefix,
+		final String legacyXKey,
+		final String legacyYKey,
+		final boolean bubble) {
+		if (isLayeredLocationAuthorityEnabled()) {
+			Optional<WorldLocation> exact = PlayerReturnLocationStore.readExact(
+				getCache(), prefix);
+			if (exact.isPresent()) {
+				teleportLayered(exact.get(), bubble);
+				return;
+			}
+			Optional<Point> legacy = PlayerReturnLocationStore.readLegacy(
+				getCache(), legacyXKey, legacyYKey);
+			if (legacy.isPresent()) {
+				teleportLegacyPacked(
+					legacy.get().getX(), legacy.get().getY(), bubble);
+			}
+			return;
+		}
+		Optional<Point> legacy = PlayerReturnLocationStore.readLegacy(
+			getCache(), legacyXKey, legacyYKey);
+		if (legacy.isPresent()) {
+			teleport(legacy.get().getX(), legacy.get().getY(), bubble);
+		}
 	}
 
 	public void setJailed(final boolean isJailed) {

@@ -121,7 +121,9 @@ public class PlayerDuelHandler implements PayloadProcessor<PlayerDuelStruct, Opc
 					return;
 				}
 
-				if (!PathValidation.checkPath(player.getWorld(), player.getLocation(), affectedPlayer.getLocation())) {
+				if (!PathValidation.checkPath(
+					player.getWorld(), player.getWorldLocation(),
+					affectedPlayer.getWorldLocation(), false)) {
 					player.message("There is an obstacle in the way");
 					player.getDuel().resetAll();
 					return;

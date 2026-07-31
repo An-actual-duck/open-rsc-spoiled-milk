@@ -4,12 +4,14 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
+import com.openrsc.server.model.Point;
 import com.openrsc.server.model.TelePoint;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.minigames.ALumbridgeCarol;
@@ -95,19 +97,20 @@ public class Ladders {
 				player.teleport(271, 3339, false);
 			}
 			return;
-		} else if (obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438) {
+		} else if (obj.getID() == 42
+			&& matchesLegacyPackedLocation(obj, 368, 438)) {
 			player.message("You go down the stairs");
-			player.teleport(371, 3266, false);
+			player.teleportLegacyPacked(371, 3266, false);
 			return;
 		} else if (obj.getID() == 41) {
-			if (obj.getX() == 370 && obj.getY() == 3264) {
+			if (matchesLegacyPackedLocation(obj, 370, 3264)) {
 				player.message("You go up the stairs");
-				player.teleport(369, 437, false);
+				player.teleportLegacyPacked(369, 437, false);
 				return;
-			} else if (obj.getX() == 516 && obj.getY() == 1479) {
+			} else if (matchesLegacyPackedLocation(obj, 516, 1479)) {
 				// Legend's Guild second floor stairs up
 				player.message("You go up the stairs");
-				player.teleport(516, 2426, false);
+				player.teleportLegacyPacked(516, 2426, false);
 				if (player.getConfig().WANT_COMBAT_ODYSSEY) {
 					if (CombatOdyssey.getIntroStage(player) == CombatOdyssey.TALKED_TO_RADIMUS) {
 						CombatOdyssey.meetBiggum(player);
@@ -141,10 +144,11 @@ public class Ladders {
 			}
 		}
 
-		TelePoint telePoint = player.getWorld().getServer().getEntityHandler().getObjectTelePoint(obj
-			.getLocation(), command);
+		TelePoint telePoint = player.getWorld().getServer().getEntityHandler()
+			.getObjectTelePoint(obj.getWorldLocation(), command);
 		if (telePoint != null) {
-			player.teleport(telePoint.getX(), telePoint.getY(), false);
+			player.teleportLegacyPacked(
+				telePoint.getX(), telePoint.getY(), false);
 		} else if (obj.getID() == 487) {
 			player.message("You pull the lever");
 			player.teleport(567, 3330);
@@ -342,6 +346,21 @@ public class Ladders {
 					object.getWorldLocation(),
 					ZanarisLocation.EXIT_LADDER_X,
 					ZanarisLocation.EXIT_LADDER_Y));
+	}
+
+	private static boolean matchesLegacyPackedLocation(
+		final GameObject object,
+		final int x,
+		final int packedY) {
+		try {
+			Point legacyLocation = LegacyPackedPointAdapter.toLegacyPoint(
+				object.getWorldLocation());
+			return legacyLocation.getX() == x
+				&& legacyLocation.getY() == packedY;
+		} catch (IllegalArgumentException | IllegalStateException
+			unrepresentableLocation) {
+			return false;
+		}
 	}
 
 	private static Npc findNpcInPlayerDomain(

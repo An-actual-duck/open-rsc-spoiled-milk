@@ -11,6 +11,9 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.authentic.skills.woodcutting.Woodcutting;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
@@ -713,6 +716,7 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 	}
 
 	private static Point findPlantLocation(Player player) {
+		WorldLocation playerLocation = player.getWorldLocation();
 		int[][] offsets = {
 			{0, -1},
 			{1, 0},
@@ -725,13 +729,21 @@ public class ResourceSeeds implements OpInvTrigger, OpLocTrigger {
 		};
 		for (int[] offset : offsets) {
 			Point location = Point.location(player.getX() + offset[0], player.getY() + offset[1]);
+			WorldLocation scopedLocation = new WorldLocation(
+				playerLocation.getWorldSpace(),
+				new WorldCoordinate(
+					location.getX(), location.getY(),
+					playerLocation.getCoordinate().getLevel()));
 			if (!player.getWorld().withinWorld(location.getX(), location.getY())) {
 				continue;
 			}
-			if (player.getWorld().getTile(location) == null
-				|| (player.getWorld().getTile(location).traversalMask & CollisionFlag.FULL_BLOCK) != 0
-				|| !PathValidation.checkAdjacentDistance(player.getWorld(), player.getX(), player.getY(),
-					location.getX(), location.getY(), true, false)) {
+			TileValue tile = player.getTileAtCurrentLevel(
+				location.getX(), location.getY());
+			if (tile == null
+				|| (tile.traversalMask & CollisionFlag.FULL_BLOCK) != 0
+				|| !PathValidation.checkAdjacentDistance(
+					player.getWorld(), playerLocation, scopedLocation,
+					true, false)) {
 				continue;
 			}
 			GameObject existing = player.getWorld().getRegionManager()
