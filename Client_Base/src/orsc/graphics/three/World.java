@@ -928,12 +928,20 @@ public final class World {
 						roofInput =
 							buildRoofModelInput(window.sectors);
 					}
+					TerrainModelInput[] terrainBackdrops =
+						buildNativeUpperFloorTerrainBackdrops(
+							haloTerrain,
+							plane,
+							sectionX,
+							sectionY,
+							terrainInput);
 					WorldGpuChunkMesh mesh =
 						buildWorldGpuChunkMesh(
 							plane,
 							sectionX,
 							sectionY,
 							terrainInput,
+							terrainBackdrops,
 							wallInput,
 							roofInput,
 							includeRoofGeometry && !terrainOnly,
@@ -1101,8 +1109,16 @@ public final class World {
 				applyWallEndpointShadows(terrainInput, wallInput);
 			RoofModelInput roofInput =
 				buildRoofModelInput(window.sectors);
+			TerrainModelInput[] terrainBackdrops =
+				buildNativeUpperFloorTerrainBackdrops(
+					terrain,
+					plane,
+					sectionX,
+					sectionY,
+					terrainInput);
 			WorldModelProduct built = new WorldModelProduct(
 				terrainInput,
+				terrainBackdrops,
 				wallInput,
 				roofInput,
 				buildWorldGpuChunkMesh(
@@ -1110,6 +1126,7 @@ public final class World {
 					sectionX,
 					sectionY,
 					terrainInput,
+					terrainBackdrops,
 					wallInput,
 					roofInput,
 					includeRoofGeometry));
@@ -1330,8 +1347,16 @@ public final class World {
 				applyWallEndpointShadows(terrainInput, wallInput);
 			RoofModelInput roofInput =
 				buildRoofModelInput(window.sectors);
+			TerrainModelInput[] terrainBackdrops =
+				buildNativeUpperFloorTerrainBackdrops(
+					stagedTerrain,
+					plane,
+					sectionX,
+					sectionY,
+					terrainInput);
 			WorldModelProduct built = new WorldModelProduct(
 				terrainInput,
+				terrainBackdrops,
 				wallInput,
 				roofInput,
 				buildWorldGpuChunkMesh(
@@ -1339,6 +1364,7 @@ public final class World {
 					sectionX,
 					sectionY,
 					terrainInput,
+					terrainBackdrops,
 					wallInput,
 					roofInput,
 					includeRoofGeometry));
@@ -2656,6 +2682,7 @@ public final class World {
 			sectionX,
 			sectionY,
 			terrainInput,
+			new TerrainModelInput[0],
 			wallInput,
 			roofInput,
 			includeRoofGeometry,
@@ -2667,6 +2694,49 @@ public final class World {
 		int sectionX,
 		int sectionY,
 		TerrainModelInput terrainInput,
+		TerrainModelInput[] terrainBackdrops,
+		WallModelInput wallInput,
+		RoofModelInput roofInput,
+		boolean includeRoofGeometry) {
+		return buildWorldGpuChunkMesh(
+			plane,
+			sectionX,
+			sectionY,
+			terrainInput,
+			terrainBackdrops,
+			wallInput,
+			roofInput,
+			includeRoofGeometry,
+			true);
+	}
+
+	private static WorldGpuChunkMesh buildWorldGpuChunkMesh(
+		int plane,
+		int sectionX,
+		int sectionY,
+		TerrainModelInput terrainInput,
+		WallModelInput wallInput,
+		RoofModelInput roofInput,
+		boolean includeRoofGeometry,
+		boolean includePresentationEffects) {
+		return buildWorldGpuChunkMesh(
+			plane,
+			sectionX,
+			sectionY,
+			terrainInput,
+			new TerrainModelInput[0],
+			wallInput,
+			roofInput,
+			includeRoofGeometry,
+			includePresentationEffects);
+	}
+
+	private static WorldGpuChunkMesh buildWorldGpuChunkMesh(
+		int plane,
+		int sectionX,
+		int sectionY,
+		TerrainModelInput terrainInput,
+		TerrainModelInput[] terrainBackdrops,
 		WallModelInput wallInput,
 		RoofModelInput roofInput,
 		boolean includeRoofGeometry,
@@ -2692,6 +2762,14 @@ public final class World {
 		int drawOriginZ = 0;
 		if (terrainInput != null) {
 			addTerrainGpuChunkMesh(builder, terrainInput, drawOriginX, drawOriginZ);
+		}
+		if (terrainBackdrops != null) {
+			for (TerrainModelInput backdrop : terrainBackdrops) {
+				if (backdrop != null) {
+					addTerrainGpuChunkMesh(
+						builder, backdrop, drawOriginX, drawOriginZ);
+				}
+			}
 		}
 		addWallGpuChunkMesh(builder, wallInput, drawOriginX, drawOriginZ);
 		if (includeRoofGeometry) {
