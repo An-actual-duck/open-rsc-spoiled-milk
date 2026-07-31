@@ -121,9 +121,7 @@ public class MagicCombatEvent extends GameTickEvent {
 		}
 
 		if (player.withinRange(target, spellRange)
-			&& !PathValidation.checkPath(
-				player.getWorld(), player.getWorldLocation(),
-				target.getWorldLocation(), false)) {
+			&& !PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())) {
 			player.playerServerMessage(MessageType.QUEST, "I can't get a clear shot from here");
 			player.resetPath();
 			clearActiveEvent();

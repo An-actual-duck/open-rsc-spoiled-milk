@@ -104,9 +104,7 @@ public class RangeEvent extends GameTickEvent {
 
 		if (!player.finishedPath()) player.resetPath();
 
-		if (!PathValidation.checkPath(
-			player.getWorld(), player.getWorldLocation(),
-			target.getWorldLocation(), false)) {
+		if (!PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())) {
 			reset(ProjectileFailureReason.CANT_GET_CLEAR_SHOT);
 			return;
 		}

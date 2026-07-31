@@ -394,7 +394,7 @@ public class WitchesHouse implements QuestInterface, TalkNpcTrigger,
 			}
 			return;
 		}
-		Npc nextShape = addnpc(player, npc.getID() + 1, npc.getX(), npc.getY(), 300000);
+		Npc nextShape = addnpc(player.getWorld(), npc.getID() + 1, npc.getX(), npc.getY(), 300000);
 
 		player.message("The shapeshifer turns into a "
 			+ npcMessage(nextShape.getID()) + "!");

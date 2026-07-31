@@ -82,18 +82,18 @@ class DirectionalObjectInteractionTest(unittest.TestCase):
 
         compact_cardinal = compact(cardinal)
         for tile in (
-            "isTraversalClearAtCurrentLevel(getX()-1,getY(),CollisionFlag.WALL_WEST)",
-            "isTraversalClearAtCurrentLevel(getX()+1,getY(),CollisionFlag.WALL_EAST)",
-            "isTraversalClearAtCurrentLevel(getX(),getY()-1,CollisionFlag.WALL_SOUTH)",
-            "isTraversalClearAtCurrentLevel(getX(),getY()+1,CollisionFlag.WALL_NORTH)",
+            "objectReachTile(getX()-1,getY())",
+            "objectReachTile(getX()+1,getY())",
+            "objectReachTile(getX(),getY()-1)",
+            "objectReachTile(getX(),getY()+1)",
         ):
             self.assertIn(tile, compact_cardinal)
         compact_diagonal = compact(diagonal)
         for tile in (
-            "isTraversalClearAtCurrentLevel(getX()-1,getY()-1,CollisionFlag.WALL_SOUTH_WEST)",
-            "isTraversalClearAtCurrentLevel(getX()+1,getY()-1,CollisionFlag.WALL_SOUTH_EAST)",
-            "isTraversalClearAtCurrentLevel(getX()-1,getY()+1,CollisionFlag.WALL_NORTH_WEST)",
-            "isTraversalClearAtCurrentLevel(getX()+1,getY()+1,CollisionFlag.WALL_NORTH_EAST)",
+            "objectReachTile(getX()-1,getY()-1)",
+            "objectReachTile(getX()+1,getY()-1)",
+            "objectReachTile(getX()-1,getY()+1)",
+            "objectReachTile(getX()+1,getY()+1)",
         ):
             self.assertIn(tile, compact_diagonal)
 
@@ -108,20 +108,18 @@ class DirectionalObjectInteractionTest(unittest.TestCase):
         )
         resolver = method_body(
             self.mob,
-            "public final TileValue getTileAtCurrentLevel(",
+            "private TileValue objectReachTile(final int x, final int y)",
         )
 
         self.assertNotIn("getWorld().getTile(", cardinal)
         self.assertNotIn("getWorld().getTile(", diagonal)
         for snippet in (
-            "WorldLocation owner = getWorldLocation();",
+            "WorldLocation current = getWorldLocation();",
             "new WorldLocation(",
-            "owner.getWorldSpace(),",
+            "current.getWorldSpace(),",
             "new WorldCoordinate(",
-            "owner.getCoordinate().getLevel()",
-            "hasNativeLayeredTerrain(candidate)",
-            "getWorld().getTile(candidate)",
-            "return null;",
+            "current.getCoordinate().getLevel()",
+            "getWorld().getTile(reachabilityLocation)",
         ):
             self.assertIn(snippet, resolver)
 
@@ -142,31 +140,31 @@ class DirectionalObjectInteractionTest(unittest.TestCase):
 
         direction_two_cases = (
             ("object.getX()==player.getX()&&object.getY()==player.getY()+1",
-             "teleportCurrentScope(player,object.getX(),object.getY()+1);"),
+             "teleport(player,object.getX(),object.getY()+1);"),
             ("object.getX()==player.getX()-1&&object.getY()==player.getY()",
-             "teleportCurrentScope(player,object.getX()-1,object.getY());"),
+             "teleport(player,object.getX()-1,object.getY());"),
             ("object.getX()==player.getX()&&object.getY()==player.getY()-1",
-             "teleportCurrentScope(player,object.getX(),object.getY()-1);"),
+             "teleport(player,object.getX(),object.getY()-1);"),
             ("object.getX()==player.getX()+1&&object.getY()==player.getY()",
-             "teleportCurrentScope(player,object.getX()+1,object.getY());"),
+             "teleport(player,object.getX()+1,object.getY());"),
             ("object.getX()==player.getX()+1&&object.getY()==player.getY()+1",
-             "teleportCurrentScope(player,object.getX()+1,object.getY()+1);"),
+             "teleport(player,object.getX()+1,object.getY()+1);"),
             ("object.getX()==player.getX()-1&&object.getY()==player.getY()-1",
-             "teleportCurrentScope(player,object.getX()-1,object.getY()-1);"),
+             "teleport(player,object.getX()-1,object.getY()-1);"),
         )
         direction_three_cases = (
             ("object.getX()==player.getX()&&object.getY()==player.getY()-1",
-             "teleportCurrentScope(player,object.getX(),object.getY()-1);"),
+             "teleport(player,object.getX(),object.getY()-1);"),
             ("object.getX()==player.getX()+1&&object.getY()==player.getY()",
-             "teleportCurrentScope(player,object.getX()+1,object.getY());"),
+             "teleport(player,object.getX()+1,object.getY());"),
             ("object.getX()==player.getX()&&object.getY()==player.getY()+1",
-             "teleportCurrentScope(player,object.getX(),object.getY()+1);"),
+             "teleport(player,object.getX(),object.getY()+1);"),
             ("object.getX()==player.getX()-1&&object.getY()==player.getY()",
-             "teleportCurrentScope(player,object.getX()-1,object.getY());"),
+             "teleport(player,object.getX()-1,object.getY());"),
             ("object.getX()==player.getX()-1&&object.getY()==player.getY()+1",
-             "teleportCurrentScope(player,object.getX()-1,object.getY()+1);"),
+             "teleport(player,object.getX()-1,object.getY()+1);"),
             ("object.getX()==player.getX()+1&&object.getY()==player.getY()-1",
-             "teleportCurrentScope(player,object.getX()+1,object.getY()-1);"),
+             "teleport(player,object.getX()+1,object.getY()-1);"),
         )
 
         for block, cases in (
@@ -174,7 +172,7 @@ class DirectionalObjectInteractionTest(unittest.TestCase):
             (direction_three, direction_three_cases),
         ):
             compact_block = compact(block)
-            self.assertEqual(6, compact_block.count("teleportCurrentScope(player,"))
+            self.assertEqual(6, compact_block.count("teleport(player,"))
             for condition, destination in cases:
                 self.assertIn(
                     f"({condition}){{{destination}",

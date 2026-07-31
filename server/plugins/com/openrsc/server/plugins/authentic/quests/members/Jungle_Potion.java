@@ -690,7 +690,7 @@ public class Jungle_Potion implements QuestInterface, OpLocTrigger,
 					"Wait...I hear a voice....");
 				Npc zadimus = ifnearvisnpc(player, NpcId.ZADIMUS.id(), 10);
 				if (zadimus == null) {
-					zadimus = addnpc(player, NpcId.ZADIMUS.id(), player.getX(), player.getY());
+					zadimus = addnpc(player.getWorld(), NpcId.ZADIMUS.id(), player.getX(), player.getY());
 					npcsay(player, zadimus, "Rashiliyia has returned to her tomb and her power grows",
 						"you must gain entry to her resting place and",
 						"sanctify her remains in the manner of her son.",

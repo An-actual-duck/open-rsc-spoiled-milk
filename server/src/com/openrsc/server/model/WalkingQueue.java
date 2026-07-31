@@ -89,7 +89,7 @@ public class WalkingQueue {
 		if (mob.getAttribute("blink", false)) {
 			if (path.size() >= 1) {
 				walkPoint = path.getLastPoint();
-				((Player) mob).teleportCurrentScope(walkPoint.getX(), walkPoint.getY(), false);
+				((Player) mob).teleport(walkPoint.getX(), walkPoint.getY(), false);
 			}
 			return;
 		}

@@ -4,14 +4,12 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
-import com.openrsc.server.model.Point;
 import com.openrsc.server.model.TelePoint;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
-import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.minigames.ALumbridgeCarol;
@@ -43,37 +41,34 @@ public class Ladders {
 		if (obj.getID() == 487 && !config().MEMBER_WORLD) {
 			player.message(player.MEMBER_MESSAGE);
 			return;
-		} else if (obj.getID() == 79
-			&& matchesLegacyPackedLocation(obj, 243, 95)) {
+		} else if (obj.getID() == 79 && obj.getX() == 243 && obj.getY() == 95) {
 			player.message("Are you sure you want to go down to this lair?");
 			int menu = multi(player, "Yes I take the risk!", "No stay up here.");
 			if (menu == 0) {
 				player.message("You climb down the manhole and land in a water lair");
-				player.teleportLegacy(98, 2931, false);
+				player.teleport(98, 2931);
 			} else if (menu == 1) {
 				player.message("You decide to stay.");
 			}
 			//player.message("The new dungeon is available in a couple of minutes");
 			//player.message("We are doing the decoration, please stay tuned.");
 			return;
-		} else if (obj.getID() == 5
-			&& (matchesLegacyPackedLocation(obj, 98, 2930)
-				|| matchesLegacyPackedLocation(obj, 137, 2932))) {
-			player.teleportLegacy(243, 96, false);
+		} else if (obj.getID() == 5 && (obj.getX() == 98 && obj.getY() == 2930 || obj.getX() == 137 && obj.getY() == 2932)) {
+			player.teleport(243, 96);
 			player.message("You climb up the ladder");
 			return;
 		} else if (obj.getID() == 629) {
-			player.teleportLegacy(576, 3580, false);
+			player.teleport(576, 3580);
 			player.message("You go up the stairs");
 			return;
 		} else if (obj.getID() == 621) {
-			player.teleportLegacy(606, 3556, false);
+			player.teleport(606, 3556);
 			player.message("You go up the stairs");
 			return;
 		} else if (obj.getID() == 223
 			&& (LavaForgeLocation.isDwarvenMineDownLadder(
 					obj.getWorldLocation())
-				|| matchesLegacyPackedLocation(obj, 271, 3340))) {
+				|| (obj.getX() == 271 && obj.getY() == 3340))) {
 			//Ladder from dwarven mine to lava forge
 			if (player.getCache().hasKey("miniquest_dwarf_youth_rescue")) {
 				if (player.getWorld().getRegionManager()
@@ -82,13 +77,13 @@ public class Ladders {
 					player.teleportLayered(
 						LavaForgeLocation.entrance(), false);
 				} else {
-					player.teleportLegacy(329, 3419, false);
+					player.teleport(329, 3419, false);
 				}
 			} else
 				player.message("you don't have access to this area");
 			return;
 		} else if (obj.getID() == 5
-			&& (matchesLegacyPackedLocation(obj, 329, 3418)
+			&& ((obj.getX() == 329 && obj.getY() == 3418)
 				|| LavaForgeLocation.isExitLadder(
 					obj.getWorldLocation()))) {
 			//Ladder from lava forge to dwarven mine
@@ -97,23 +92,22 @@ public class Ladders {
 				player.teleportLayered(
 					LavaForgeLocation.dwarvenMineReturn(), false);
 			} else {
-				player.teleportLegacy(271, 3339, false);
+				player.teleport(271, 3339, false);
 			}
 			return;
-		} else if (obj.getID() == 42
-			&& matchesLegacyPackedLocation(obj, 368, 438)) {
+		} else if (obj.getID() == 42 && obj.getX() == 368 && obj.getY() == 438) {
 			player.message("You go down the stairs");
-			player.teleportLegacy(371, 3266, false);
+			player.teleport(371, 3266, false);
 			return;
 		} else if (obj.getID() == 41) {
-			if (matchesLegacyPackedLocation(obj, 370, 3264)) {
+			if (obj.getX() == 370 && obj.getY() == 3264) {
 				player.message("You go up the stairs");
-				player.teleportLegacy(369, 437, false);
+				player.teleport(369, 437, false);
 				return;
-			} else if (matchesLegacyPackedLocation(obj, 516, 1479)) {
+			} else if (obj.getX() == 516 && obj.getY() == 1479) {
 				// Legend's Guild second floor stairs up
 				player.message("You go up the stairs");
-				player.teleportLegacy(516, 2426, false);
+				player.teleport(516, 2426, false);
 				if (player.getConfig().WANT_COMBAT_ODYSSEY) {
 					if (CombatOdyssey.getIntroStage(player) == CombatOdyssey.TALKED_TO_RADIMUS) {
 						CombatOdyssey.meetBiggum(player);
@@ -125,7 +119,7 @@ public class Ladders {
 					}
 				}
 				return;
-			} else if (matchesLegacyPackedLocation(obj, 316, 546)) {
+			} else if (obj.getX() == 316 && obj.getY() == 546) {
 				// Rising Sun Inn (Falador) stairs up
 				if (player.getConfig().A_LUMBRIDGE_CAROL) {
 					int stage = ALumbridgeCarol.getStage(player);
@@ -142,32 +136,32 @@ public class Ladders {
 					}
 				}
 				player.message("You go up the stairs");
-				player.teleportLegacy(316, 1493, false);
+				player.teleport(316, 1493, false);
 				return;
 			}
 		}
 
-		TelePoint telePoint = player.getWorld().getServer().getEntityHandler()
-			.getObjectTelePoint(obj.getWorldLocation(), command);
+		TelePoint telePoint = player.getWorld().getServer().getEntityHandler().getObjectTelePoint(obj
+			.getLocation(), command);
 		if (telePoint != null) {
 			player.teleport(telePoint.getX(), telePoint.getY(), false);
 		} else if (obj.getID() == 487) {
 			player.message("You pull the lever");
-			player.teleportLegacy(567, 3330, false);
+			player.teleport(567, 3330);
 			delay();
 			if (player.getX() == 567 && player.getY() == 3330) {
 				displayTeleportBubble(player, player.getX(), player.getY(), false);
 			}
 		} else if (obj.getID() == 488) {
 			player.message("You pull the lever");
-			player.teleportLegacy(282, 3019, false);
+			player.teleport(282, 3019);
 			delay();
 			if (player.getX() == 282 && player.getY() == 3019) {
 				displayTeleportBubble(player, player.getX(), player.getY(), false);
 			}
 		} else if (obj.getID() == 349) {
 			player.playerServerMessage(MessageType.QUEST, "You pull the lever");
-			player.teleportLegacy(621, 596, false);
+			player.teleport(621, 596);
 			delay();
 			if (player.getX() == 621 && player.getY() == 596) {
 				displayTeleportBubble(player, player.getX(), player.getY(), false);
@@ -187,7 +181,7 @@ public class Ladders {
 			}
 			if (skip || teleport) {
 				player.message("you pull the lever");
-				player.teleportLegacy(180, 128, false);
+				player.teleport(180, 128);
 				displayTeleportBubble(player, player.getX(), player.getY(), false);
 				delay();
 				if (player.getX() == 180 && player.getY() == 128) {
@@ -199,7 +193,7 @@ public class Ladders {
 				player.getCarriedItems().remove(new Item(ItemId.PARAMAYA_REST_TICKET.id()));
 				player.message("The barman takes your ticket and allows you up to");
 				player.message("the dormitory.");
-				player.teleportLegacy(395, 2713, false);
+				player.teleport(395, 2713);
 				player.message("You climb up the ladder");
 			} else {
 				Npc kaleb = ifnearvisnpc(player, NpcId.KALEB.id(), 10);
@@ -211,8 +205,7 @@ public class Ladders {
 					player.message("Kaleb is busy at the moment.");
 				}
 			}
-		} else if (obj.getID() == 198
-			&& matchesLegacyPackedLocation(obj, 251, 468)) { // Prayer
+		} else if (obj.getID() == 198 && obj.getX() == 251 && obj.getY() == 468) { // Prayer
 			// Guild
 			// Ladder
 			if (!player.getCache().hasKey("prayer_guild")) {
@@ -227,7 +220,7 @@ public class Ladders {
 							npcsay(player, abbot, "Ok I see you are someone suitable for our order",
 								"You may join");
 							player.getCache().set("prayer_guild", 1);
-							player.teleportLegacy(251, 1411, false);
+							player.teleport(251, 1411, false);
 							player.message("You climb up the ladder");
 						} else {
 							npcsay(player, abbot, "No I feel you are not devout enough");
@@ -241,11 +234,10 @@ public class Ladders {
 					player.message("Abbot Langley is busy at the moment.");
 				}
 			} else {
-				player.teleportLegacy(251, 1411, false);
+				player.teleport(251, 1411, false);
 				player.message("You climb up the ladder");
 			}
-		} else if (obj.getID() == 223
-			&& matchesLegacyPackedLocation(obj, 274, 566)) { // Mining
+		} else if (obj.getID() == 223 && obj.getX() == 274 && obj.getY() == 566) { // Mining
 			// Guild
 			// Ladder
 			if (getCurrentLevel(player, Skill.MINING.id()) < 60) {
@@ -257,7 +249,7 @@ public class Ladders {
 				delay(2);
 				player.message("You need a mining level of 60 to enter");
 			} else {
-				player.teleportLegacy(274, 3397, false);
+				player.teleport(274, 3397, false);
 			}
 		} else if (obj.getID() == 199) { // ladder to black hole
 			if (!player.getCarriedItems().hasCatalogID(ItemId.DISK_OF_RETURNING.id(), Optional.of(false))) {
@@ -268,11 +260,10 @@ public class Ladders {
 				delay(2);
 				int offX = DataConversions.random(0,4) - 2;
 				int offY = DataConversions.random(0,4) - 2;
-				player.teleportLegacy(305 + offX, 3300 + offY, false);
+				player.teleport(305 + offX, 3300 + offY);
 				ActionSender.sendPlayerOnBlackHole(player);
 			}
-		} else if (obj.getID() == 342
-			&& matchesLegacyPackedLocation(obj, 611, 601)) {
+		} else if (obj.getID() == 342 && obj.getX() == 611 && obj.getY() == 601) {
 			Npc paladinGuard = ifnearvisnpc(player, NpcId.PALADIN.id(), 4);
 			if (paladinGuard != null) {
 				npcYell(player, paladinGuard, "Stop right there");
@@ -317,23 +308,18 @@ public class Ladders {
 							ZanarisLocation.surfaceExit(),
 							false);
 					} else {
-						player.teleportLegacy(98, 706, false);
+						player.teleport(98, 706, false);
 					}
 				}
 			}
-		} else if (obj.getID() == 1187
-			&& matchesLegacyPackedLocation(obj, 446, 3367)) {
-			player.teleportLegacy(222, 110, false);
-		} else if (obj.getID() == 331
-			&& matchesLegacyPackedLocation(obj, 150, 558)) {
-			player.teleportLegacy(151, 1505, false);
-		} else if (obj.getID() == 6
-			&& matchesLegacyPackedLocation(obj, 282, 185)
-			&& !config().MEMBER_WORLD) {
+		} else if (obj.getID() == 1187 && obj.getX() == 446 && obj.getY() == 3367) {
+			player.teleport(222, 110, false);
+		} else if (obj.getID() == 331 && obj.getX() == 150 && obj.getY() == 558) {
+			player.teleport(151, 1505, false);
+		} else if (obj.getID() == 6 && obj.getX() == 282 && obj.getY() == 185 && !config().MEMBER_WORLD) {
 			player.message(player.MEMBER_MESSAGE);
-		} else if (obj.getID() == 6
-			&& matchesLegacyPackedLocation(obj, 148, 1507)) {
-			player.teleportLegacy(148, 563, false);
+		} else if (obj.getID() == 6 && obj.getX() == 148 && obj.getY() == 1507) {
+			player.teleport(148, 563, false);
 		} else if (command.equals("climb-up") || command.equals("climb up")
 			|| command.equals("go up")) {
 			teleportVertical(player, true, obj);
@@ -351,30 +337,11 @@ public class Ladders {
 
 	private static boolean isZanarisExitLadder(GameObject object) {
 		return object.getID() == 249
-			&& (matchesLegacyPackedLocation(object, 98, 3537)
+			&& ((object.getX() == 98 && object.getY() == 3537)
 				|| ZanarisLocation.isAt(
 					object.getWorldLocation(),
 					ZanarisLocation.EXIT_LADDER_X,
 					ZanarisLocation.EXIT_LADDER_Y));
-	}
-
-	/**
-	 * Compares a classic script coordinate without treating a native layered
-	 * object's unpacked Y value as the old packed-Y carrier.
-	 */
-	private static boolean matchesLegacyPackedLocation(
-		final GameObject object,
-		final int x,
-		final int packedY) {
-		try {
-			Point legacyLocation = LegacyPackedPointAdapter.toLegacyPoint(
-				object.getWorldLocation());
-			return legacyLocation.getX() == x
-				&& legacyLocation.getY() == packedY;
-		} catch (IllegalArgumentException | IllegalStateException
-			unrepresentableLocation) {
-			return false;
-		}
 	}
 
 	private static Npc findNpcInPlayerDomain(

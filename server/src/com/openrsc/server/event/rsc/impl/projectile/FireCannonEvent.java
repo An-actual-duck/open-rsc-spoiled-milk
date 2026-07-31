@@ -117,9 +117,7 @@ public class FireCannonEvent extends GameTickEvent {
 			npc.getDef().isAttackable() &&
 			npc.getSkills().getLevel(Skill.HITS.id()) > 0 &&
 			npc.getLocation().inBounds(x - MAX_DISTANCE, y - MAX_DISTANCE, x + MAX_DISTANCE, y + MAX_DISTANCE) &&
-			PathValidation.checkPath(
-				this.player.getWorld(), this.player.getWorldLocation(),
-				npc.getWorldLocation(), false);
+			PathValidation.checkPath(this.player.getWorld(), this.player.getLocation(), npc.getLocation());
 	}
 
 	private static final class MobClockwiseComparator implements Comparator<Mob> {

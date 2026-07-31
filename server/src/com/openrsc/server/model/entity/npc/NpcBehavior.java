@@ -21,7 +21,6 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.states.CombatState;
-import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
@@ -353,10 +352,6 @@ public class NpcBehavior {
 			setRoaming();
 			return;
 		}
-		if (!npc.sharesSpatialDomain(target)) {
-			setRoaming();
-			return;
-		}
 
 		if (!Summoning.canSummonAttack(npc, target)) {
 			disengageFrom((Player) target);
@@ -416,35 +411,13 @@ public class NpcBehavior {
 			// TODO: Further investigation on whether NPCs would ignore diagonal blocks like players. For now, we let them ignore them for consistency.
 			Point checkedPoint = npc.getWalkingQueue().getNextMovement();
 			if (checkedPoint.withinRange(target.getLocation(), 1)
-				&& canEngageTargetFrom(checkedPoint)) {
+				&& PathValidation.checkAdjacentDistance(npc.getWorld(), checkedPoint.getX(), checkedPoint.getY(), target.getX(), target.getY(), true, false)) {
 				if (target.isPlayer() && target.isHostile() && target.getHostileTarget() != npc) {
 					npc.startCombat(target);
 				} else {
 					setFighting(target);
 				}
 			}
-		}
-	}
-
-	private boolean canEngageTargetFrom(final Point checkedPoint) {
-		if (!npc.sharesSpatialDomain(target)) {
-			return false;
-		}
-		if (!npc.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
-			return PathValidation.checkAdjacentDistance(
-				npc.getWorld(), checkedPoint.getX(), checkedPoint.getY(),
-				target.getX(), target.getY(), true, false);
-		}
-		try {
-			WorldLocation checkedLocation = npc.getWorld().getRegionManager()
-				.fromRuntimeCompatibilityPoint(
-					checkedPoint, npc.getWorldLocation(), false);
-			return PathValidation.checkAdjacentDistance(
-				npc.getWorld(), checkedLocation, target.getWorldLocation(),
-				true, false);
-		} catch (IllegalArgumentException | IllegalStateException
-			invalidSpatialState) {
-			return false;
 		}
 	}
 
@@ -676,9 +649,7 @@ public class NpcBehavior {
 	}
 
 	private boolean canAggro(final Mob target, final long now, final boolean forceAggressive) {
-		if (target == null
-			|| !npc.sharesSpatialDomain(target)
-			|| !Summoning.canSummonAttack(npc, target)) {
+		if (!Summoning.canSummonAttack(npc, target)) {
 			return false;
 		}
 

@@ -204,10 +204,10 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 				return;
 			}
 			if (obj.getID() == CLEAR_ROCKS_INIT_WEST && player.getX() > obj.getX() && player.getY() == obj.getY()) {
-				player.teleportCurrentScope(obj.getX() + 1, obj.getY());
+				player.teleport(obj.getX() + 1, obj.getY());
 			}
 			else if (obj.getID() == CLEAR_ROCKS_INIT_EAST && player.getX() < obj.getX() && player.getY() == obj.getY()) {
-				player.teleportCurrentScope(obj.getX() + 1, obj.getY());
+				player.teleport(obj.getX() + 1, obj.getY());
 			}
 			mes("you move the rocks from your path");
 			delay(3);
@@ -229,7 +229,7 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 				delay(3);
 				player.message("you feel a thread tug at your boot");
 				player.message("it's a trap");
-				player.teleportCurrentScope(obj.getX(), obj.getY());
+				player.teleport(obj.getX(), obj.getY());
 				obj.getWorld().replaceGameObject(obj,
 					new GameObject(obj.getWorld(), obj.getLocation(), 805, obj.getDirection(), obj
 						.getType()));
@@ -250,13 +250,13 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 						player.message("you manage to delay the trap..");
 						player.message("...long enough to cross the rocks");
 						if (obj.getX() == player.getX() + 1)
-							player.teleportCurrentScope(obj.getX() + 1, obj.getY());
+							player.teleport(obj.getX() + 1, obj.getY());
 						else
-							player.teleportCurrentScope(obj.getX() - 1, obj.getY());
+							player.teleport(obj.getX() - 1, obj.getY());
 					}
 					else {
 						player.message("but the trap activates");
-						player.teleportCurrentScope(obj.getX(), obj.getY());
+						player.teleport(obj.getX(), obj.getY());
 						obj.getWorld().replaceGameObject(obj,
 							new GameObject(obj.getWorld(), obj.getLocation(), 805, obj.getDirection(), obj
 								.getType()));
@@ -300,27 +300,27 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 				if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) { // X
 					if (object.getID() == 753) {
 						player.message("and drop down to the cave floor");
-						teleportCurrentScope(player, object.getX() - 2, object.getY());
+						teleport(player, object.getX() - 2, object.getY());
 					} else {
 						player.message("and drop down to the cave floor");
-						teleportCurrentScope(player, object.getX() - 1, object.getY());
+						teleport(player, object.getX() - 1, object.getY());
 					}
 				} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) { // Y
 					if (object.getID() == 753) {
 						player.message("and drop down to the cave floor");
-						teleportCurrentScope(player, object.getX() + 2, object.getY());
+						teleport(player, object.getX() + 2, object.getY());
 					} else {
 						player.message("and drop down to the cave floor");
-						teleportCurrentScope(player, object.getX() + 1, object.getY());
+						teleport(player, object.getX() + 1, object.getY());
 					}
 				}
 			}
 			if (object.getDirection() == 4 || object.getDirection() == 0) {
 				if (object.getX() == player.getX() && object.getY() == player.getY() + 1) { // X
-					teleportCurrentScope(player, object.getX(), object.getY() + 1);
+					teleport(player, object.getX(), object.getY() + 1);
 					player.message("and drop down to the cave floor");
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) { // Y
-					teleportCurrentScope(player, object.getX(), object.getY() - 1);
+					teleport(player, object.getX(), object.getY() - 1);
 				}
 			}
 		} else {
@@ -338,62 +338,62 @@ public class UndergroundPassObstaclesMap1 implements OpLocTrigger {
 			if (object.getDirection() == 1 || object.getDirection() == 2 || object.getDirection() == 4
 				|| object.getDirection() == 3) {
 				if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) { // X
-					teleportCurrentScope(player, object.getX() - 1, object.getY());
+					teleport(player, object.getX() - 1, object.getY());
 				} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) { // Y
-					teleportCurrentScope(player, object.getX() + 1, object.getY());
+					teleport(player, object.getX() + 1, object.getY());
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) { // left
 					// side
 					if (object.getID() == 749) {
-						teleportCurrentScope(player, object.getX(), object.getY() + 1);
+						teleport(player, object.getX(), object.getY() + 1);
 					} else {
-						teleportCurrentScope(player, object.getX() + 1, object.getY());
+						teleport(player, object.getX() + 1, object.getY());
 					}
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) { // right
 					// side.
 					if (object.getID() == 749) {
-						teleportCurrentScope(player, object.getX(), object.getY() - 1);
+						teleport(player, object.getX(), object.getY() - 1);
 					} else {
-						teleportCurrentScope(player, object.getX() + 1, object.getY());
+						teleport(player, object.getX() + 1, object.getY());
 					}
 				}
 			}
 			if (object.getDirection() == 6) {
 				if (object.getX() == player.getX() && object.getY() == player.getY() + 1) { // left
 					// side
-					teleportCurrentScope(player, object.getX(), object.getY() + 1);
+					teleport(player, object.getX(), object.getY() + 1);
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) { // right
 					// side.
-					teleportCurrentScope(player, object.getX(), object.getY() - 1);
+					teleport(player, object.getX(), object.getY() - 1);
 				} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-					teleportCurrentScope(player, object.getX() + 1, object.getY() + 1);
+					teleport(player, object.getX() + 1, object.getY() + 1);
 				} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-					teleportCurrentScope(player, object.getX(), object.getY() + 1);
+					teleport(player, object.getX(), object.getY() + 1);
 				}
 			}
 			if (object.getDirection() == 0) {
 				if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) { // X
-					teleportCurrentScope(player, object.getX() - 1, object.getY());
+					teleport(player, object.getX() - 1, object.getY());
 				} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) { // Y
-					teleportCurrentScope(player, object.getX() + 1, object.getY());
+					teleport(player, object.getX() + 1, object.getY());
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) { // left
 					// side
-					teleportCurrentScope(player, object.getX(), object.getY() + 1);
+					teleport(player, object.getX(), object.getY() + 1);
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) { // right
 					// side.
-					teleportCurrentScope(player, object.getX(), object.getY() - 1);
+					teleport(player, object.getX(), object.getY() - 1);
 				}
 			}
 			if (object.getDirection() == 7) {
 				if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) { // X
-					teleportCurrentScope(player, object.getX() - 1, object.getY() - 1);
+					teleport(player, object.getX() - 1, object.getY() - 1);
 				} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) { // Y
-					teleportCurrentScope(player, object.getX() + 1, object.getY());
+					teleport(player, object.getX() + 1, object.getY());
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) { // left
 					// side
-					teleportCurrentScope(player, object.getX(), object.getY() + 1);
+					teleport(player, object.getX(), object.getY() + 1);
 				} else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) { // right
 					// side.
-					teleportCurrentScope(player, object.getX() + 1, object.getY());
+					teleport(player, object.getX() + 1, object.getY());
 				}
 			}
 			player.message("and step down the other side");

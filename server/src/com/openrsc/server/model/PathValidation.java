@@ -9,7 +9,6 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
-import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
@@ -39,12 +38,6 @@ public class PathValidation {
 		DEFAULT,
 		STRICT_TRAVERSAL,
 		HOSTILE_PROJECTILE
-	}
-
-	private interface DistanceTileLookup {
-		TileValue getTile(int x, int y);
-
-		boolean failClosedOnMissingTile();
 	}
 
 	public static boolean checkPath(World world, Point src, Point dest) {
@@ -120,61 +113,25 @@ public class PathValidation {
 		if (!sameSpatialDomain(src, dest)) {
 			return false;
 		}
-		boolean sourceIsNative = world.getRegionManager()
-			.hasNativeLayeredTerrain(src);
-		boolean destinationIsNative = world.getRegionManager()
-			.hasNativeLayeredTerrain(dest);
-		if (sourceIsNative || destinationIsNative) {
-			if (!sourceIsNative || !destinationIsNative) {
-				return false;
-			}
+		if (world.getRegionManager().hasNativeLayeredTerrain(src)) {
+			return world.getRegionManager().hasNativeLayeredTerrain(dest);
+		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(src)) {
 			try {
-				return checkDistancePath(
-					world.getRegionManager()
-						.toRuntimeCompatibilityPoint(src),
-					world.getRegionManager()
-						.toRuntimeCompatibilityPoint(dest),
-					collisionMode,
-					nativeLayeredTileLookup(world, src));
-			} catch (IllegalArgumentException invalidLocation) {
-				return false;
-			} catch (IllegalStateException missingNativeTerrain) {
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(src);
+				world.getRegionManager()
+					.toRuntimeCompatibilityPoint(dest);
+				return true;
+			} catch (IllegalArgumentException outsideFixture) {
 				return false;
 			}
 		}
-		boolean sourceIsSynthetic = LayeredCompatibilityPointAdapter
-			.isSyntheticDeepLevel(src);
-		boolean destinationIsSynthetic = LayeredCompatibilityPointAdapter
-			.isSyntheticDeepLevel(dest);
-		if (sourceIsSynthetic || destinationIsSynthetic) {
-			if (!sourceIsSynthetic || !destinationIsSynthetic) {
-				return false;
-			}
-			try {
-				return checkDistancePath(
-					world.getRegionManager()
-						.toRuntimeCompatibilityPoint(src),
-					world.getRegionManager()
-						.toRuntimeCompatibilityPoint(dest),
-					collisionMode,
-					syntheticDeepTileLookup(world));
-			} catch (IllegalArgumentException invalidLocation) {
-				return false;
-			} catch (IllegalStateException unavailableFixture) {
-				return false;
-			}
-		}
-		try {
-			return checkLegacyPath(
-				world,
-				world.getRegionManager().toRuntimeCompatibilityPoint(src),
-				world.getRegionManager().toRuntimeCompatibilityPoint(dest),
-				collisionMode);
-		} catch (IllegalArgumentException invalidLocation) {
-			return false;
-		} catch (IllegalStateException missingTerrain) {
-			return false;
-		}
+		return checkLegacyPath(
+			world,
+			world.getRegionManager().toRuntimeCompatibilityPoint(src),
+			world.getRegionManager().toRuntimeCompatibilityPoint(dest),
+			collisionMode);
 	}
 
 	private static boolean checkLegacyPath(
@@ -182,18 +139,6 @@ public class PathValidation {
 		final Point src,
 		final Point dest,
 		final DistanceCollisionMode collisionMode) {
-		return checkDistancePath(
-			src,
-			dest,
-			collisionMode,
-			legacyTileLookup(world));
-	}
-
-	private static boolean checkDistancePath(
-		final Point src,
-		final Point dest,
-		final DistanceCollisionMode collisionMode,
-		final DistanceTileLookup tileLookup) {
 		final Deque<Point> path = new ArrayDeque<>();
 
 		final Point curPoint = new Point(src.getX(), src.getY());
@@ -223,14 +168,8 @@ public class PathValidation {
 
 		Point nextPoint = null;
 		while ((nextPoint = path.poll()) != null) {
-			if (!checkAdjacentDistance(
-				tileLookup,
-				curPoint.getX(),
-				curPoint.getY(),
-				nextPoint.getX(),
-				nextPoint.getY(),
-				collisionMode,
-				true)) return false;
+			if (!checkAdjacentDistance(world, curPoint.getX(), curPoint.getY(), nextPoint.getX(), nextPoint.getY(),
+				collisionMode, true)) return false;
 			curPoint.x = nextPoint.x;
 			curPoint.y = nextPoint.y;
 		}
@@ -303,54 +242,6 @@ public class PathValidation {
 			wantDiagCheck);
 	}
 
-	/**
-	 * Checks primitive runtime coordinates inside the mob's established spatial
-	 * scope. Layered callers must use this overload when their Point carrier no
-	 * longer contains a legacy-packed level.
-	 */
-	public static boolean checkAdjacentDistanceInScope(
-		final Mob scope,
-		final int startX,
-		final int startY,
-		final int destX,
-		final int destY,
-		final boolean ignoreProjectileAllowed,
-		final boolean wantDiagCheck) {
-		if (!scope.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
-			return checkAdjacentDistance(
-				scope.getWorld(),
-				startX,
-				startY,
-				destX,
-				destY,
-				ignoreProjectileAllowed,
-				wantDiagCheck);
-		}
-		try {
-			WorldLocation owner = scope.getWorldLocation();
-			WorldLocation start = scope.getWorld().getRegionManager()
-				.fromRuntimeCompatibilityPoint(
-					Point.location(startX, startY), owner, false);
-			WorldLocation destination = scope.getWorld().getRegionManager()
-				.fromRuntimeCompatibilityPoint(
-					Point.location(destX, destY), owner, false);
-			if (!sameSpatialDomain(owner, start)
-				|| !sameSpatialDomain(owner, destination)) {
-				return false;
-			}
-			return checkAdjacentDistance(
-				scope.getWorld(),
-				start,
-				destination,
-				ignoreProjectileAllowed,
-				wantDiagCheck);
-		} catch (IllegalArgumentException outsideScope) {
-			return false;
-		} catch (IllegalStateException missingTerrain) {
-			return false;
-		}
-	}
-
 	public static boolean checkAdjacentDistance(
 		final World world,
 		final WorldLocation start,
@@ -360,82 +251,33 @@ public class PathValidation {
 		if (!sameSpatialDomain(start, destination)) {
 			return false;
 		}
-		boolean startIsNative = world.getRegionManager()
-			.hasNativeLayeredTerrain(start);
-		boolean destinationIsNative = world.getRegionManager()
-			.hasNativeLayeredTerrain(destination);
-		if (startIsNative || destinationIsNative) {
-			if (!startIsNative || !destinationIsNative) {
-				return false;
-			}
+		if (world.getRegionManager().hasNativeLayeredTerrain(start)) {
+			return world.getRegionManager()
+				.hasNativeLayeredTerrain(destination);
+		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(start)) {
 			try {
-				Point startPoint = world.getRegionManager()
+				world.getRegionManager()
 					.toRuntimeCompatibilityPoint(start);
-				Point destinationPoint = world.getRegionManager()
+				world.getRegionManager()
 					.toRuntimeCompatibilityPoint(destination);
-				return checkAdjacentDistance(
-					nativeLayeredTileLookup(world, start),
-					startPoint.getX(),
-					startPoint.getY(),
-					destinationPoint.getX(),
-					destinationPoint.getY(),
-					ignoreProjectileAllowed
-						? DistanceCollisionMode.STRICT_TRAVERSAL
-						: DistanceCollisionMode.DEFAULT,
-					wantDiagCheck);
-			} catch (IllegalArgumentException invalidLocation) {
-				return false;
-			} catch (IllegalStateException missingNativeTerrain) {
+				return true;
+			} catch (IllegalArgumentException outsideFixture) {
 				return false;
 			}
 		}
-		boolean startIsSynthetic = LayeredCompatibilityPointAdapter
-			.isSyntheticDeepLevel(start);
-		boolean destinationIsSynthetic = LayeredCompatibilityPointAdapter
-			.isSyntheticDeepLevel(destination);
-		if (startIsSynthetic || destinationIsSynthetic) {
-			if (!startIsSynthetic || !destinationIsSynthetic) {
-				return false;
-			}
-			try {
-				Point startPoint = world.getRegionManager()
-					.toRuntimeCompatibilityPoint(start);
-				Point destinationPoint = world.getRegionManager()
-					.toRuntimeCompatibilityPoint(destination);
-				return checkAdjacentDistance(
-					syntheticDeepTileLookup(world),
-					startPoint.getX(),
-					startPoint.getY(),
-					destinationPoint.getX(),
-					destinationPoint.getY(),
-					ignoreProjectileAllowed
-						? DistanceCollisionMode.STRICT_TRAVERSAL
-						: DistanceCollisionMode.DEFAULT,
-					wantDiagCheck);
-			} catch (IllegalArgumentException invalidLocation) {
-				return false;
-			} catch (IllegalStateException unavailableFixture) {
-				return false;
-			}
-		}
-		try {
-			Point startPoint = world.getRegionManager()
-				.toRuntimeCompatibilityPoint(start);
-			Point destinationPoint = world.getRegionManager()
-				.toRuntimeCompatibilityPoint(destination);
-			return checkAdjacentDistance(
-				world,
-				startPoint.getX(),
-				startPoint.getY(),
-				destinationPoint.getX(),
-				destinationPoint.getY(),
-				ignoreProjectileAllowed,
-				wantDiagCheck);
-		} catch (IllegalArgumentException invalidLocation) {
-			return false;
-		} catch (IllegalStateException missingTerrain) {
-			return false;
-		}
+		Point startPoint = world.getRegionManager()
+			.toRuntimeCompatibilityPoint(start);
+		Point destinationPoint = world.getRegionManager()
+			.toRuntimeCompatibilityPoint(destination);
+		return checkAdjacentDistance(
+			world,
+			startPoint.getX(),
+			startPoint.getY(),
+			destinationPoint.getX(),
+			destinationPoint.getY(),
+			ignoreProjectileAllowed,
+			wantDiagCheck);
 	}
 
 	/**
@@ -460,53 +302,35 @@ public class PathValidation {
 	}
 
 	private static boolean checkAdjacentDistance(World world, int startX, int startY, int destX, int destY,
-										 DistanceCollisionMode collisionMode, boolean wantDiagCheck) {
-		return checkAdjacentDistance(
-			legacyTileLookup(world),
-			startX,
-			startY,
-			destX,
-			destY,
-			collisionMode,
-			wantDiagCheck);
-	}
-
-	private static boolean checkAdjacentDistance(
-		final DistanceTileLookup tileLookup,
-		final int startX,
-		final int startY,
-		final int destX,
-		final int destY,
-		final DistanceCollisionMode collisionMode,
-		final boolean wantDiagCheck) {
+												 DistanceCollisionMode collisionMode, boolean wantDiagCheck) {
 		int[] coords = {startX, startY};
 		boolean myXBlocked = false, myYBlocked = false, newXBlocked = false, newYBlocked = false;
 		if (startX > destX) {
 			// Check for wall on east edge of current square,
-			myXBlocked = checkBlockingDistance(tileLookup, startX, startY, CollisionFlag.WALL_EAST, true, collisionMode);
+			myXBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_EAST, true, collisionMode);
 			// Or on west edge of square we are travelling toward.
-			newXBlocked = checkBlockingDistance(tileLookup, startX - 1, startY, CollisionFlag.WALL_WEST, false, collisionMode);
+			newXBlocked = checkBlockingDistance(world, startX - 1, startY, CollisionFlag.WALL_WEST, false, collisionMode);
 			coords[0] = startX - 1;
 		} else if (startX < destX) {
 			// Check for wall on west edge of current square,
-			myXBlocked = checkBlockingDistance(tileLookup, startX, startY, CollisionFlag.WALL_WEST, true, collisionMode);
+			myXBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_WEST, true, collisionMode);
 			// Or on east edge of square we are travelling toward.
-			newXBlocked = checkBlockingDistance(tileLookup, startX + 1, startY, CollisionFlag.WALL_EAST, false, collisionMode);
+			newXBlocked = checkBlockingDistance(world, startX + 1, startY, CollisionFlag.WALL_EAST, false, collisionMode);
 			coords[0] = startX + 1;
 		}
 
 		if (startY > destY) {
 			// Check for wall on north edge of current square,
-			myYBlocked = checkBlockingDistance(tileLookup, startX, startY, CollisionFlag.WALL_NORTH, true, collisionMode);
+			myYBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_NORTH, true, collisionMode);
 			// Or on south edge of square we are travelling toward.
-			newYBlocked = checkBlockingDistance(tileLookup, startX, startY - 1, CollisionFlag.WALL_SOUTH, false, collisionMode);
+			newYBlocked = checkBlockingDistance(world, startX, startY - 1, CollisionFlag.WALL_SOUTH, false, collisionMode);
 			coords[1] = startY - 1;
 
 		} else if (startY < destY) {
 			// Check for wall on south edge of current square,
-			myYBlocked = checkBlockingDistance(tileLookup, startX, startY, CollisionFlag.WALL_SOUTH, true, collisionMode);
+			myYBlocked = checkBlockingDistance(world, startX, startY, CollisionFlag.WALL_SOUTH, true, collisionMode);
 			// Or on north edge of square we are travelling toward.
-			newYBlocked = checkBlockingDistance(tileLookup, startX, startY + 1, CollisionFlag.WALL_NORTH, false, collisionMode);
+			newYBlocked = checkBlockingDistance(world, startX, startY + 1, CollisionFlag.WALL_NORTH, false, collisionMode);
 			coords[1] = startY + 1;
 		}
 
@@ -527,15 +351,15 @@ public class PathValidation {
 		if (newXBlocked && newYBlocked) return false;
 
 		if (coords[0] > startX) {
-			newXBlocked = checkBlockingDistance(tileLookup, coords[0], coords[1], CollisionFlag.WALL_EAST, false, collisionMode);
+			newXBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_EAST, false, collisionMode);
 		} else if (coords[0] < startX) {
-			newXBlocked = checkBlockingDistance(tileLookup, coords[0], coords[1], CollisionFlag.WALL_WEST, false, collisionMode);
+			newXBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_WEST, false, collisionMode);
 		}
 
 		if (coords[1] > startY) {
-			newYBlocked = checkBlockingDistance(tileLookup, coords[0], coords[1], CollisionFlag.WALL_NORTH, false, collisionMode);
+			newYBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_NORTH, false, collisionMode);
 		} else if (coords[1] < startY) {
-			newYBlocked = checkBlockingDistance(tileLookup, coords[0], coords[1], CollisionFlag.WALL_SOUTH, false, collisionMode);
+			newYBlocked = checkBlockingDistance(world, coords[0], coords[1], CollisionFlag.WALL_SOUTH, false, collisionMode);
 		}
 
 		// Destination X and Y blocked.
@@ -564,25 +388,25 @@ public class PathValidation {
 		if (startX + 1 == destX && startY + 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 9");
 			bit = wantDiagCheck ? CollisionFlag.WALL_NORTH + CollisionFlag.WALL_EAST : -1;
-			diagonalBlocked = checkBlockingDistance(tileLookup, startX + 1, startY + 1,
+			diagonalBlocked = checkBlockingDistance(world, startX + 1, startY + 1,
 				bit, false, collisionMode);
 		}
 		else if (startX + 1 == destX && startY - 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 10");
 			bit = wantDiagCheck ? CollisionFlag.WALL_SOUTH + CollisionFlag.WALL_EAST : -1;
-			diagonalBlocked = checkBlockingDistance(tileLookup, startX + 1, startY - 1,
+			diagonalBlocked = checkBlockingDistance(world, startX + 1, startY - 1,
 				bit, false, collisionMode);
 		}
 		else if (startX - 1 == destX && startY + 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 11");
 			bit = wantDiagCheck ? CollisionFlag.WALL_NORTH + CollisionFlag.WALL_WEST : -1;
-			diagonalBlocked = checkBlockingDistance(tileLookup, startX - 1, startY + 1,
+			diagonalBlocked = checkBlockingDistance(world, startX - 1, startY + 1,
 				bit, false, collisionMode);
 		}
 		else if (startX - 1 == destX && startY - 1 == destY) {
 			if (DEBUG_DISTANCE) System.out.println("PathValidation 12");
 			bit = wantDiagCheck ? CollisionFlag.WALL_SOUTH + CollisionFlag.WALL_WEST : -1;
-			diagonalBlocked = checkBlockingDistance(tileLookup, startX - 1, startY - 1,
+			diagonalBlocked = checkBlockingDistance(world, startX - 1, startY - 1,
 				bit, false, collisionMode);
 		}
 
@@ -597,8 +421,8 @@ public class PathValidation {
 			//Check for any possible diagonal walls if the mob is going diagonally.
 			//Bit of -2 is to strictly only check diagonals - full blocks are ignored here, as they should be validated in a prior check.
 			//This serves to block diagonal movement when the wall layout leads from a diagonal to a vertical/horizontal wall.
-			diagonalWallBlocksDiagonalMovement = checkBlockingDistance(tileLookup, startX + xDiff, startY, -2, false, collisionMode)
-			|| checkBlockingDistance(tileLookup, startX, startY + yDiff, -2, false, collisionMode);
+			diagonalWallBlocksDiagonalMovement = checkBlockingDistance(world, startX + xDiff, startY, -2, false, collisionMode)
+			|| checkBlockingDistance(world, startX, startY + yDiff, -2, false, collisionMode);
 		}
 
 		if (diagonalWallBlocksDiagonalMovement) return false;
@@ -607,30 +431,9 @@ public class PathValidation {
 		return true;
 	}
 
-	private static boolean checkBlockingDistance(
-		final DistanceTileLookup tileLookup,
-		final int x,
-		final int y,
-		final int bit,
-		final boolean isCurrentTile,
-		final DistanceCollisionMode collisionMode) {
-		TileValue t;
-		try {
-			t = tileLookup.getTile(x, y);
-		} catch (IllegalArgumentException invalidLocation) {
-			if (tileLookup.failClosedOnMissingTile()) {
-				return true;
-			}
-			throw invalidLocation;
-		} catch (IllegalStateException missingTerrain) {
-			if (tileLookup.failClosedOnMissingTile()) {
-				return true;
-			}
-			throw missingTerrain;
-		}
-		if (t == null && tileLookup.failClosedOnMissingTile()) {
-			return true;
-		}
+	private static boolean checkBlockingDistance(World world, int x, int y, int bit, boolean isCurrentTile,
+												 DistanceCollisionMode collisionMode) {
+		TileValue t = world.getTile(x, y);
 		if (collisionMode == DistanceCollisionMode.HOSTILE_PROJECTILE) {
 			return isBlocking(t.getHostileProjectileCollisionMask(), (byte) bit, isCurrentTile);
 		}
@@ -639,66 +442,6 @@ public class PathValidation {
 		}
 
 		return isBlocking(t.traversalMask, (byte) bit, isCurrentTile);
-	}
-
-	private static DistanceTileLookup legacyTileLookup(final World world) {
-		return new DistanceTileLookup() {
-			@Override
-			public TileValue getTile(final int x, final int y) {
-				return world.getTile(x, y);
-			}
-
-			@Override
-			public boolean failClosedOnMissingTile() {
-				return false;
-			}
-		};
-	}
-
-	private static DistanceTileLookup nativeLayeredTileLookup(
-		final World world,
-		final WorldLocation scope) {
-		return new DistanceTileLookup() {
-			@Override
-			public TileValue getTile(final int x, final int y) {
-				WorldLocation candidate = new WorldLocation(
-					scope.getWorldSpace(),
-					new WorldCoordinate(
-						x,
-						y,
-						scope.getCoordinate().getLevel()));
-				if (!world.getRegionManager()
-					.hasNativeLayeredTerrain(candidate)) {
-					return null;
-				}
-				return world.getTile(candidate);
-			}
-
-			@Override
-			public boolean failClosedOnMissingTile() {
-				return true;
-			}
-		};
-	}
-
-	private static DistanceTileLookup syntheticDeepTileLookup(
-		final World world) {
-		return new DistanceTileLookup() {
-			@Override
-			public TileValue getTile(final int x, final int y) {
-				if (!LayeredCompatibilityPointAdapter
-						.containsSyntheticDeepCoordinate(x, y)) {
-					return null;
-				}
-				return world.getTile(
-					LayeredCompatibilityPointAdapter.deepLocation(x, y));
-			}
-
-			@Override
-			public boolean failClosedOnMissingTile() {
-				return true;
-			}
-		};
 	}
 
 	/**
@@ -1098,22 +841,17 @@ public class PathValidation {
 	private static boolean checkBlocking(Mob mob, int x, int y, int bit, boolean isCurrentTile) {
 		TileValue t;
 		WorldLocation owner = mob.getWorldLocation();
-		boolean nativeLayer = mob.getWorld().getRegionManager()
-			.hasNativeLayeredTerrain(owner);
-		if (nativeLayer
+		if (mob.getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
 			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
-			WorldLocation candidate = new WorldLocation(
-				owner.getWorldSpace(),
-				new WorldCoordinate(
-					x,
-					y,
-					owner.getCoordinate().getLevel()));
-			if (nativeLayer && !mob.getWorld().getRegionManager()
-					.hasNativeLayeredTerrain(candidate)) {
-				return true;
-			}
 			try {
-				t = mob.getWorld().getTile(candidate);
+				t = mob.getWorld().getTile(
+					new WorldLocation(
+						owner.getWorldSpace(),
+						new com.openrsc.server.model.world.coordinate
+							.WorldCoordinate(
+								x,
+								y,
+								owner.getCoordinate().getLevel())));
 			} catch (IllegalArgumentException outsideFixture) {
 				return true;
 			} catch (IllegalStateException missingNativeTerrain) {
@@ -1121,9 +859,6 @@ public class PathValidation {
 			}
 		} else {
 			t = mob.getWorld().getTile(x, y);
-		}
-		if (t == null) {
-			return true;
 		}
 		/*boolean inFisherKingdom = (mob.getLocation().inBounds(415, 976, 423, 984)
 			|| mob.getLocation().inBounds(511, 976, 519, 984));*/

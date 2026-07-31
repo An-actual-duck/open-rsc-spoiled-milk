@@ -15,7 +15,6 @@ python3 ./tests/myworld/test-client-runtime-item-definitions.py
 python3 ./tests/myworld/test-client-definition-registry-extraction.py
 python3 ./tests/myworld/test-client-server-object-collision-parity.py
 python3 ./tests/myworld/test-directional-object-interactions.py
-python3 ./tests/myworld/test-layered-location-runtime-regressions.py
 python3 ./tests/myworld/test-server-equipment-calculation-extraction.py
 python3 ./tests/myworld/test-server-spell-classification-extraction.py
 python3 ./tests/myworld/test-desktop-sound-lifecycle.py

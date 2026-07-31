@@ -407,7 +407,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 						if (outmenu == 0) {
 							while (player.getY() > 3707) {
 								player.damage(2);
-								player.teleportCurrentScope(player.getX(), player.getY() - 3);
+								player.teleport(player.getX(), player.getY() - 3);
 								delay(3);
 							}
 							player.damage(1);
@@ -1236,7 +1236,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 			player.message("almost as if the Kharazi jungle were sighing.");
 			player.message("Perhaps Gujuo would like to see the totem pole.");
 			if (calledGujuo) {
-				Npc gujuo = addnpc(player, NpcId.GUJUO.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(150));
+				Npc gujuo = addnpc(obj.getWorld(), NpcId.GUJUO.id(), player.getX(), player.getY(), (int)TimeUnit.SECONDS.toMillis(150));
 				if (gujuo != null) {
 					gujuo.initializeTalkScript(player);
 				}

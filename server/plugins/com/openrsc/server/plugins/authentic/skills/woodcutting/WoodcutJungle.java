@@ -37,7 +37,7 @@ public class WoodcutJungle implements OpLocTrigger,
 			handleJungleWoodcut(obj, player);
 		}
 		if (obj.getID() == JUNGLE_TREE_STUMP) {
-			player.teleportCurrentScope(obj.getX(), obj.getY());
+			player.teleport(obj.getX(), obj.getY());
 		}
 	}
 
@@ -119,7 +119,7 @@ public class WoodcutJungle implements OpLocTrigger,
 				player.getCarriedItems().getInventory().add(log);
 				player.playerServerMessage(MessageType.QUEST, "You get some wood");
 			}
-			player.teleportCurrentScope(obj.getX(), obj.getY());
+			player.teleport(obj.getX(), obj.getY());
 			if (player.getY() > 871) {
 				if (obj.getID() == JUNGLE_VINE)
 					delay(6);
@@ -191,7 +191,7 @@ public class WoodcutJungle implements OpLocTrigger,
 				handleJungleWoodcut(object, player);
 			}
 			if (object.getID() == JUNGLE_TREE_STUMP) {
-				player.teleportCurrentScope(object.getX(), object.getY());
+				player.teleport(object.getX(), object.getY());
 			}
 		}
 	}

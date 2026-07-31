@@ -141,7 +141,7 @@ public class RandomObjects implements OpLocTrigger {
 		// SMUGGLING GATE VARROCK
 		if (object.getX() == 94 && object.getY() == 521 && object.getID() == 60) {
 			int x = player.getX() == 94 ? 93 : 94, y = player.getY();
-			player.teleportCurrentScope(x, y, false);
+			player.teleport(x, y, false);
 		}
 		// ARDOUGNE WALL GATEWAY FOR BIOHAZARD ETC...
 		if (object.getID() == 450) {

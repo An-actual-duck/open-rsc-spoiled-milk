@@ -132,15 +132,15 @@ public class DigsiteWinch implements OpLocTrigger, UseLocTrigger {
 
 		Npc workman = ifnearvisnpc(player, NpcId.WORKMAN.id(), 5);
 		if (workman == null) {
-			workman = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 60000);
+			workman = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 60000);
 			workmanWasSpawned = true;
 		} else {
 			workmanWasSpawned = false;
 			workman.resetPath();
-			workman.teleportCurrentScope(player.getX(), player.getY());
+			workman.teleport(player.getX(), player.getY());
 		}
 		npcsay(player, workman, "Sorry, this area is private");
-		workman.teleportCurrentScope(player.getX() + (obj.getID() == WINCH[0] ? +1 : -1), player.getY());
+		workman.teleport(player.getX() + (obj.getID() == WINCH[0] ? +1 : -1), player.getY());
 		npcsay(player, workman, "The only way you'll get to use these",
 			"Is by impressing the expert",
 			"Up at the centre",

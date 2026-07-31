@@ -3,8 +3,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WORLD = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "world" / "World.java"
-PROJECTILE_POLICY = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "util" / "rsc" / "LegacyObjectProjectileCollisionPolicy.java"
-COLLISION_PLANNER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "GameTickEventRestorationCollisionFootprintPlanner.java"
 RANGE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
 THROWING_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ThrowingEvent.java"
 MAGIC_COMBAT_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "MagicCombatEvent.java"
@@ -21,23 +19,27 @@ def require(text: str, needle: str, description: str) -> None:
 
 def main() -> None:
     world = WORLD.read_text(encoding="utf-8")
-    policy = PROJECTILE_POLICY.read_text(encoding="utf-8")
-    planner = COLLISION_PLANNER.read_text(encoding="utf-8")
+    helper_start = world.find("private boolean isProjectileClipAllowed(GameObject o)")
+    if helper_start < 0:
+        fail("missing projectile clip helper")
 
-    tree_rule = 'if (lowercaseName.contains("tree"))'
-    allowlist_loop = "for (String allowedName : checkedAllowedNames)"
-    require(policy, tree_rule, "all-tree projectile clipping allowance")
-    require(policy, allowlist_loop, "existing projectile clip allowlist")
-    if policy.find(tree_rule) > policy.find(allowlist_loop):
+    helper_end = world.find("\n\tprivate ", helper_start + 1)
+    if helper_end < 0:
+        fail("could not locate end of projectile clip helper")
+    helper = world[helper_start:helper_end]
+
+    tree_rule = 'o.getType() == 0 && o.getGameObjectDef().getName().toLowerCase().contains("tree")'
+    allowlist_loop = "for (final String s : com.openrsc.server.constants.Constants.objectsProjectileClipAllowed)"
+    require(helper, tree_rule, "all-tree projectile clipping allowance")
+    require(helper, allowlist_loop, "existing projectile clip allowlist")
+    if helper.find(tree_rule) > helper.find(allowlist_loop):
         fail("tree projectile allowance should run before legacy object allowlist")
 
-    require(planner, "LegacyObjectProjectileCollisionPolicy", "shared projectile collision policy use")
-    require(planner, ".allowsSceneryProjectileClip(", "scenery projectile allowance planning")
-    require(world, "Definition.scenery(", "runtime scenery collision planning")
-    require(world, "Constants.objectsProjectileClipAllowed", "runtime projectile allowlist input")
-    require(RANGE_EVENT.read_text(encoding="utf-8"), "player.getWorldLocation(),\n\t\t\ttarget.getWorldLocation(), false", "ranged scoped clear-shot path validation")
-    require(THROWING_EVENT.read_text(encoding="utf-8"), "getWorld(), player.getWorldLocation(),\n\t\t\ttarget.getWorldLocation(), false", "thrown scoped clear-shot path validation")
-    require(MAGIC_COMBAT_EVENT.read_text(encoding="utf-8"), "player.getWorldLocation(),\n\t\t\t\ttarget.getWorldLocation(), false", "magic scoped clear-shot path validation")
+    require(world, "handleProjectileClipAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);", "scenery projectile allowance registration")
+    require(world, "resetProjectileAllowance(x, y, dir, o.getType(), o.getGameObjectDef().getType(), -1);", "scenery projectile allowance reset")
+    require(RANGE_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())", "ranged clear-shot path validation")
+    require(THROWING_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(getWorld(), player.getLocation(), target.getLocation())", "thrown clear-shot path validation")
+    require(MAGIC_COMBAT_EVENT.read_text(encoding="utf-8"), "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation())", "magic clear-shot path validation")
 
     print("PASS: tree scenery no longer blocks ranged or magic projectile line checks")
 

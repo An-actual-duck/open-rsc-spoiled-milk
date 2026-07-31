@@ -12,7 +12,7 @@ public class BlinkHandler implements PayloadProcessor<TargetPositionStruct, Opco
 		int coordX = payload.coordinate.getX();
 		int coordY = payload.coordinate.getY();
 		if (player.isMod() || player.isDev()) {
-			player.teleportCurrentScope(coordX, coordY);
+			player.teleport(coordX, coordY);
 			if (player.getPossessing() != null) {
 				player.resetFollowing();
 			}

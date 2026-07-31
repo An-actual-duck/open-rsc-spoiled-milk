@@ -106,7 +106,7 @@ public class DigsiteObjects implements OpLocTrigger, UseLocTrigger{
 			if (!player.getCarriedItems().hasCatalogID(ItemId.SPECIMEN_JAR.id(), Optional.of(false))) {
 				Npc workmanCheck = ifnearvisnpc(player, NpcId.WORKMAN.id(), 15);
 				if (workmanCheck == null) {
-					workmanCheck = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+					workmanCheck = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 				}
 				npcsay(player, workmanCheck, "Oi! what are you doing ?");
 				npcWalkFromPlayer(player, workmanCheck);
@@ -330,7 +330,7 @@ public class DigsiteObjects implements OpLocTrigger, UseLocTrigger{
 				case SPADE:
 					Npc workmanCheck = ifnearvisnpc(player, NpcId.WORKMAN.id(), 15);
 					if (workmanCheck == null) {
-						workmanCheck = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+						workmanCheck = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 					}
 					if (item.getCatalogId() == ItemId.TROWEL.id()) {
 						npcsay(player, workmanCheck, "Excuse me...",
@@ -355,7 +355,7 @@ public class DigsiteObjects implements OpLocTrigger, UseLocTrigger{
 		} else if (inArray(obj.getID(), BURIED_SKELETON) && item.getCatalogId() == ItemId.TROWEL.id()) {
 			Npc workmanCheck = ifnearvisnpc(player, NpcId.WORKMAN.id(), 15);
 			if (workmanCheck == null) {
-				workmanCheck = addnpc(player, NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
+				workmanCheck = addnpc(player.getWorld(), NpcId.WORKMAN.id(), player.getX(), player.getY(), 30000);
 			}
 			npcsay(player, workmanCheck, "Hey! that's fragile!",
 				"Stop poking it around with that trowel!");

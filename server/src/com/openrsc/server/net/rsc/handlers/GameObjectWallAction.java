@@ -77,10 +77,9 @@ public class GameObjectWallAction implements PayloadProcessor<TargetObjectStruct
 				String command = (getPlayer().click == 0 ? def.getCommand1() : def
 					.getCommand2()).toLowerCase();
 				Point telePoint = getPlayer().getWorld().getServer().getEntityHandler().getObjectTelePoint(
-					object.getWorldLocation(), command);
+					object.getLocation(), command);
 				if (telePoint != null) {
-					getPlayer().teleportLegacy(
-						telePoint.getX(), telePoint.getY(), false);
+					getPlayer().teleport(telePoint.getX(), telePoint.getY(), false);
 				}
 			}
 		});

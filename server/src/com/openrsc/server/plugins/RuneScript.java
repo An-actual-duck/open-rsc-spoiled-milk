@@ -852,8 +852,7 @@ public class RuneScript {
 		final Point interactingCoordinate = scriptContext.getInteractingCoordinate();
 		if (interactingCoordinate == null) return;
 
-		player.teleportLegacy(
-			interactingCoordinate.getX(), interactingCoordinate.getY(), false);
+		player.teleport(interactingCoordinate.getX(), interactingCoordinate.getY());
 	}
 
 	/**
@@ -1180,46 +1179,46 @@ public class RuneScript {
 		switch (interactingBoundary.getDirection()) {
 			case 0:
 				if (interactingBoundary.getLocation().equals(player.getLocation())) {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY() - 1);
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY() - 1);
 				} else {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY());
 				}
 				break;
 			case 1:
 				if (interactingBoundary.getLocation().equals(player.getLocation())) {
-					player.teleportCurrentScope(interactingBoundary.getX() - 1, interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX() - 1, interactingBoundary.getY());
 				} else {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY());
 				}
 				break;
 			case 2:
 				// front
 				if (interactingBoundary.getX() == player.getX() && interactingBoundary.getY() == player.getY() + 1) {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY() + 1);
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY() + 1);
 				} else if (interactingBoundary.getX() == player.getX() - 1 && interactingBoundary.getY() == player.getY()) {
-					player.teleportCurrentScope(interactingBoundary.getX() - 1, interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX() - 1, interactingBoundary.getY());
 				}
 
 				// back
 				else if (interactingBoundary.getX() == player.getX() && interactingBoundary.getY() == player.getY() - 1) {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY() - 1);
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY() - 1);
 				} else if (interactingBoundary.getX() == player.getX() + 1 && interactingBoundary.getY() == player.getY()) {
-					player.teleportCurrentScope(interactingBoundary.getX() + 1, interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX() + 1, interactingBoundary.getY());
 				}
 				break;
 			case 3:
 				// front
 				if (interactingBoundary.getX() == player.getX() && interactingBoundary.getY() == player.getY() - 1) {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY() - 1);
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY() - 1);
 				} else if (interactingBoundary.getX() == player.getX() + 1 && interactingBoundary.getY() == player.getY()) {
-					player.teleportCurrentScope(interactingBoundary.getX() + 1, interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX() + 1, interactingBoundary.getY());
 				}
 
 				// back
 				else if (interactingBoundary.getX() == player.getX() && interactingBoundary.getY() == player.getY() + 1) {
-					player.teleportCurrentScope(interactingBoundary.getX(), interactingBoundary.getY() + 1);
+					player.teleport(interactingBoundary.getX(), interactingBoundary.getY() + 1);
 				} else if (interactingBoundary.getX() == player.getX() - 1 && interactingBoundary.getY() == player.getY()) {
-					player.teleportCurrentScope(interactingBoundary.getX() - 1, interactingBoundary.getY());
+					player.teleport(interactingBoundary.getX() - 1, interactingBoundary.getY());
 				}
 				break;
 		}

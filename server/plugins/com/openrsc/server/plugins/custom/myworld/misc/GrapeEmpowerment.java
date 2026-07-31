@@ -28,7 +28,7 @@ public class GrapeEmpowerment implements UseInvTrigger {
 
 		if (compareItemsIds(item1, item2, ItemId.GRAPES.id(), ItemId.HOLY_SYMBOL_OF_SARADOMIN.id())) {
 			if (player.getLocation().isInZamorakMonksPlace()) {
-				Npc monk = addnpc(player, NpcId.MONK_OF_ZAMORAK.id(), player.getX(), player.getY(), (int) TimeUnit.SECONDS.toMillis(120));
+				Npc monk = addnpc(player.getWorld(), NpcId.MONK_OF_ZAMORAK.id(), player.getX(), player.getY(), (int) TimeUnit.SECONDS.toMillis(120));
 				if (monk != null) {
 					delay();
 					npcsay(player, monk, "How dare you go blessing in Saradomins name");
@@ -77,7 +77,7 @@ public class GrapeEmpowerment implements UseInvTrigger {
 			return;
 		} else if (compareItemsIds(item1, item2, ItemId.GRAPES.id(), ItemId.UNHOLY_SYMBOL_OF_ZAMORAK.id())) {
 			if (player.getLocation().isInSaradominMonksPlace()) {
-				Npc monk = addnpc(player, NpcId.MONK.id(), player.getX(), player.getY(), (int) TimeUnit.SECONDS.toMillis(120));
+				Npc monk = addnpc(player.getWorld(), NpcId.MONK.id(), player.getX(), player.getY(), (int) TimeUnit.SECONDS.toMillis(120));
 				if (monk != null) {
 					delay();
 					npcsay(player, monk, "You better stop cursing around on Zamoraks name");

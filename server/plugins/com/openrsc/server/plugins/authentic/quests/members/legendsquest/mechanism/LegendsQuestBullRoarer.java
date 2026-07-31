@@ -60,12 +60,12 @@ public class LegendsQuestBullRoarer implements OpInvTrigger {
 			delay(2);
 			Npc gujuo = ifnearvisnpc(player, NpcId.GUJUO.id(), 15);
 			if (gujuo == null) {
-				gujuo = addnpc(player, NpcId.GUJUO.id(), player.getX(), player.getY());
+				gujuo = addnpc(player.getWorld(), NpcId.GUJUO.id(), player.getX(), player.getY());
 				delayedRemoveGujuo(player, gujuo);
 			}
 			if (gujuo != null) {
 				gujuo.resetPath();
-				gujuo.teleportCurrentScope(player.getX(), player.getY());
+				gujuo.teleport(player.getX(), player.getY());
 				gujuo.initializeTalkScript(player);
 				delay();
 				npcWalkFromPlayer(player, gujuo);

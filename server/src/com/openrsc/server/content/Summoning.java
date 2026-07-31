@@ -24,7 +24,6 @@ import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
-import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.CollisionFlag;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -1141,8 +1140,8 @@ public final class Summoning {
 					System.currentTimeMillis() + SUPPORT_UPKEEP_INCREASE_MS);
 			}
 		}
-		final WorldLocation spawnLocation = adjacentWorldLocation(owner);
-		final Npc summon = new Npc(owner.getWorld(), profile.npcId, spawnLocation);
+		final Point spawnLocation = adjacentTo(owner);
+		final Npc summon = new Npc(owner.getWorld(), profile.npcId, spawnLocation.getX(), spawnLocation.getY());
 		summon.setShouldRespawn(false);
 		summon.relatedMob = owner;
 		summon.setAttribute(SUMMON_OWNER_KEY, owner.getUsernameHash());
@@ -1179,8 +1178,8 @@ public final class Summoning {
 	}
 
 	private static void spawnArmorSummon(final Player owner, final SummonProfile profile) {
-		final WorldLocation spawnLocation = adjacentWorldLocation(owner);
-		final Npc summon = new Npc(owner.getWorld(), profile.npcId, spawnLocation);
+		final Point spawnLocation = adjacentTo(owner);
+		final Npc summon = new Npc(owner.getWorld(), profile.npcId, spawnLocation.getX(), spawnLocation.getY());
 		summon.setShouldRespawn(false);
 		summon.relatedMob = owner;
 		summon.setAttribute(SUMMON_OWNER_KEY, owner.getUsernameHash());
@@ -1414,8 +1413,9 @@ public final class Summoning {
 
 	private static void keepNearOwner(final Player owner, final Npc summon) {
 		if (!summon.withinRange(owner, CATCH_UP_DISTANCE)) {
+			Point destination = adjacentTo(owner);
 			summon.resetPath();
-			summon.teleport(adjacentWorldLocation(owner));
+			summon.teleport(destination.getX(), destination.getY());
 			summon.face(owner);
 			return;
 		}
@@ -1442,49 +1442,11 @@ public final class Summoning {
 		return owner.getLocation();
 	}
 
-	private static WorldLocation adjacentWorldLocation(final Player owner) {
-		return resolveOwnerScopedLocation(owner, adjacentTo(owner));
-	}
-
-	private static WorldLocation resolveOwnerScopedLocation(
-		final Player owner,
-		final Point location) {
-		return owner.getWorld().getRegionManager()
-			.fromRuntimeCompatibilityPoint(
-				location,
-				owner.getWorldLocation(),
-				false);
-	}
-
 	private static boolean isValidAdjacentSummonTile(final Player owner, final int x, final int y) {
-		final WorldLocation destination;
-		try {
-			destination = resolveOwnerScopedLocation(
-				owner, Point.location(x, y));
-		} catch (IllegalArgumentException unavailableTile) {
+		if ((owner.getWorld().getTile(x, y).traversalMask & CollisionFlag.FULL_BLOCK) != 0) {
 			return false;
 		}
-		if (owner.getWorld().getRegionManager()
-				.hasNativeLayeredTerrain(owner.getWorldLocation())
-			&& !owner.getWorld().getRegionManager()
-				.hasNativeLayeredTerrain(destination)) {
-			return false;
-		}
-		try {
-			if ((owner.getWorld().getTile(destination).traversalMask
-				& CollisionFlag.FULL_BLOCK) != 0) {
-				return false;
-			}
-			if (!PathValidation.checkAdjacentDistance(
-				owner.getWorld(),
-				owner.getWorldLocation(),
-				destination,
-				true,
-				false)) {
-				return false;
-			}
-		} catch (IllegalArgumentException | IllegalStateException
-			unavailableTerrain) {
+		if (!PathValidation.checkAdjacentDistance(owner.getWorld(), owner.getX(), owner.getY(), x, y, true, false)) {
 			return false;
 		}
 		return !isSummonSpawnTileOccupied(owner, x, y);
@@ -1492,17 +1454,12 @@ public final class Summoning {
 
 	private static boolean isSummonSpawnTileOccupied(final Player owner, final int x, final int y) {
 		for (Player player : owner.getViewArea().getPlayersInView()) {
-			if (!player.isRemoved()
-				&& owner.sharesSpatialDomain(player)
-				&& player.getX() == x && player.getY() == y) {
+			if (!player.isRemoved() && player.getX() == x && player.getY() == y) {
 				return true;
 			}
 		}
 		for (Npc npc : owner.getViewArea().getNpcsInView()) {
-			if (!npc.isRemoved()
-				&& !npc.isRespawning()
-				&& owner.sharesSpatialDomain(npc)
-				&& npc.getX() == x && npc.getY() == y) {
+			if (!npc.isRemoved() && !npc.isRespawning() && npc.getX() == x && npc.getY() == y) {
 				return true;
 			}
 		}
@@ -1523,7 +1480,8 @@ public final class Summoning {
 			return;
 		}
 		if (!summon.inCombat() && !summon.withinRange(owner, FOLLOW_RADIUS)) {
-			summon.teleport(adjacentWorldLocation(owner));
+			Point destination = adjacentTo(owner);
+			summon.teleport(destination.getX(), destination.getY());
 		}
 		if (trySummonProjectileAttack(owner, summon, target)) {
 			return;
@@ -1674,11 +1632,7 @@ public final class Summoning {
 			moveSummonTowardAssistTarget(summon, target);
 			return !ATTACK_STYLE_MELEE_MAGIC.equals(style);
 		}
-		if (!PathValidation.checkPath(
-			summon.getWorld(),
-			summon.getWorldLocation(),
-			target.getWorldLocation(),
-			false)
+		if (!PathValidation.checkPath(summon.getWorld(), summon.getLocation(), target.getLocation())
 			&& !canSummonUseCrowdedAssistReach(summon, target)) {
 			moveSummonTowardAssistTarget(summon, target);
 			return !ATTACK_STYLE_MELEE_MAGIC.equals(style);

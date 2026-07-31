@@ -21,7 +21,6 @@ import com.openrsc.server.model.entity.player.ScriptContext;
 import com.openrsc.server.model.entity.update.Bubble;
 import com.openrsc.server.model.entity.update.ChatMessage;
 import com.openrsc.server.model.world.World;
-import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -494,9 +493,7 @@ public class Functions {
 	}
 
 	public static Npc addnpc(int id, int x, int y, final int time, final Player spawnedFor) {
-		final Npc npc = new Npc(
-			spawnedFor.getWorld(), id,
-			resolveCurrentScopeLocation(spawnedFor, x, y));
+		final Npc npc = new Npc(spawnedFor.getWorld(), id, x, y);
 		npc.setShouldRespawn(false);
 		npc.setAttribute("spawnedFor", spawnedFor);
 		spawnedFor.getWorld().registerNpc(npc);
@@ -515,20 +512,8 @@ public class Functions {
 		return npc;
 	}
 
-	/** Creates a non-respawning NPC in a Mob's exact spatial scope. */
-	public static Npc addnpc(Mob scope, int id, int x, int y) {
-		final Npc npc = new Npc(
-			scope.getWorld(), id,
-			resolveCurrentScopeLocation(scope, x, y));
-		npc.setShouldRespawn(false);
-		scope.getWorld().registerNpc(npc);
-		return npc;
-	}
-
 	public static Npc addnpc(Player player, int id, int x, int y, int radius, final int time) {
-		final Npc npc = new Npc(
-			player.getWorld(), id,
-			resolveCurrentScopeLocation(player, x, y), radius);
+		final Npc npc = new Npc(player.getWorld(), id, x, y, radius);
 		npc.setShouldRespawn(false);
 		player.getWorld().registerNpc(npc);
 		player.getWorld().getServer().getGameEventHandler().add(new SingleEvent(player.getWorld(), null, time, "Spawn Radius NPC Timed") {
@@ -551,40 +536,6 @@ public class Functions {
 		return npc;
 	}
 
-	/** Creates a timed, non-respawning NPC in a Mob's exact spatial scope. */
-	public static Npc addnpc(
-		final Mob scope,
-		final int id,
-		final int x,
-		final int y,
-		final int time) {
-		final Npc npc = new Npc(
-			scope.getWorld(), id,
-			resolveCurrentScopeLocation(scope, x, y));
-		npc.setShouldRespawn(false);
-		scope.getWorld().registerNpc(npc);
-		scope.getWorld().getServer().getGameEventHandler().add(
-			new SingleEvent(
-				scope.getWorld(), null, time, "Spawn Scoped NPC Timed") {
-				public void action() {
-					npc.remove();
-				}
-			});
-		return npc;
-	}
-
-	private static WorldLocation resolveCurrentScopeLocation(
-		final Mob scope,
-		final int x,
-		final int y) {
-		if (!scope.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
-			return LegacyPackedPointAdapter.fromPackedValues(x, y);
-		}
-		return scope.getWorld().getRegionManager()
-			.fromRuntimeCompatibilityPoint(
-				Point.location(x, y), scope.getWorldLocation(), false);
-	}
-
 	public static void addloc(final GameObject o) {
 		o.getWorld().registerGameObject(o);
 	}
@@ -595,15 +546,6 @@ public class Functions {
 
 	public static void teleport(Player player, int x, int y) {
 		player.teleport(x, y);
-	}
-
-	/**
-	 * Moves a player to an unqualified coordinate in their current spatial
-	 * scope. Use this for object/player-derived steps; fixed script destinations
-	 * continue to use {@link #teleport(Player, int, int)}.
-	 */
-	public static void teleportCurrentScope(Player player, int x, int y) {
-		player.teleportCurrentScope(x, y);
 	}
 
 	/**
@@ -1697,35 +1639,35 @@ public class Functions {
 	public static void doTentDoor(final GameObject object, final Player player) {
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else {
-				teleportCurrentScope(player, object.getX(), object.getY());
+				teleport(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 1) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			} else {
-				teleportCurrentScope(player, object.getX(), object.getY());
+				teleport(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 2) {
 			// DIAGONAL
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() + 1);
+				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			}
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY());
+				teleport(player, object.getX() + 1, object.getY());
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY() + 1);
+				teleport(player, object.getX() + 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY() - 1);
+				teleport(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
@@ -1733,16 +1675,16 @@ public class Functions {
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
 
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY());
+				teleport(player, object.getX() + 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() + 1);
+				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			}
 
 		}
@@ -1765,55 +1707,55 @@ public class Functions {
 		}
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else {
-				teleportCurrentScope(player, object.getX(), object.getY());
+				teleport(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 1) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			} else {
-				teleportCurrentScope(player, object.getX(), object.getY());
+				teleport(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 2) {
 			// DIAGONAL
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() + 1);
+				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			}
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY());
+				teleport(player, object.getX() + 1, object.getY());
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY() + 1);
+				teleport(player, object.getX() + 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY() - 1);
+				teleport(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
 
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY());
+				teleport(player, object.getX() + 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() + 1);
+				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY() + 1);
+				teleport(player, object.getX() - 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY() - 1);
+				teleport(player, object.getX() + 1, object.getY() - 1);
 			}
 		}
 	}
@@ -1843,36 +1785,36 @@ public class Functions {
 
 		if (object.getDirection() == 0) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else {
-				teleportCurrentScope(player, object.getX(), object.getY());
+				teleport(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 1) {
 			if (object.getLocation().equals(player.getLocation())) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			} else {
-				teleportCurrentScope(player, object.getX(), object.getY());
+				teleport(player, object.getX(), object.getY());
 			}
 		}
 		if (object.getDirection() == 2) {
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
 
-				teleportCurrentScope(player, object.getX(), object.getY() + 1);
+				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY());
+				teleport(player, object.getX() + 1, object.getY());
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY() + 1);
+				teleport(player, object.getX() + 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY() - 1);
+				teleport(player, object.getX() - 1, object.getY() - 1);
 			}
 		}
 		if (object.getDirection() == 3) {
@@ -1880,20 +1822,20 @@ public class Functions {
 			// front
 			if (object.getX() == player.getX() && object.getY() == player.getY() - 1) {
 
-				teleportCurrentScope(player, object.getX(), object.getY() - 1);
+				teleport(player, object.getX(), object.getY() - 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY());
+				teleport(player, object.getX() + 1, object.getY());
 			}
 
 			// back
 			else if (object.getX() == player.getX() && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX(), object.getY() + 1);
+				teleport(player, object.getX(), object.getY() + 1);
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY()) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY());
+				teleport(player, object.getX() - 1, object.getY());
 			} else if (object.getX() == player.getX() - 1 && object.getY() == player.getY() + 1) {
-				teleportCurrentScope(player, object.getX() - 1, object.getY() + 1);
+				teleport(player, object.getX() - 1, object.getY() + 1);
 			} else if (object.getX() == player.getX() + 1 && object.getY() == player.getY() - 1) {
-				teleportCurrentScope(player, object.getX() + 1, object.getY() - 1);
+				teleport(player, object.getX() + 1, object.getY() - 1);
 			}
 
 		}

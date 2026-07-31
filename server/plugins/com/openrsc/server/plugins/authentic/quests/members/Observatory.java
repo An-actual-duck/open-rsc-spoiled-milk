@@ -504,7 +504,7 @@ public class Observatory implements QuestInterface, TalkNpcTrigger,
 		else if (obj.getID() == 917) {
 			player.message("You search the chest");
 			player.message("The chest contains a poisonous spider!");
-			Npc spider = addnpc(player, NpcId.DUNGEON_SPIDER.id(), obj.getX(), obj.getY(), 120000);
+			Npc spider = addnpc(player.getWorld(), NpcId.DUNGEON_SPIDER.id(), obj.getX(), obj.getY(), 120000);
 			spider.setChasing(player);
 			player.getWorld().registerGameObject(
 				new GameObject(obj.getWorld(), obj.getLocation(), 929, obj.getDirection(),

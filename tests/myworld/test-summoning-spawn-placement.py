@@ -30,14 +30,8 @@ def main() -> int:
             failures.append(f"Could not find {label} summon spawn block")
             continue
         body = match.group("body")
-        if "final WorldLocation spawnLocation = adjacentWorldLocation(owner);" not in body:
-            failures.append(
-                f"{label} summons should choose an owner-scoped adjacent location"
-            )
-        if "new Npc(owner.getWorld(), profile.npcId, spawnLocation)" not in body:
-            failures.append(
-                f"{label} summons should initialize at the authoritative location"
-            )
+        if "final Point spawnLocation = adjacentTo(owner);" not in body:
+            failures.append(f"{label} summons should choose an adjacent spawn location")
         if "new Npc(owner.getWorld(), profile.npcId, owner.getX(), owner.getY())" in body:
             failures.append(f"{label} summons must not spawn directly on the owner tile")
 
@@ -47,36 +41,14 @@ def main() -> int:
         failures.append("adjacent summon placement should validate candidate tiles")
     if "CollisionFlag.FULL_BLOCK" not in summoning:
         failures.append("summon spawn validation should reject blocked tiles")
-    if "owner.getWorld().getTile(destination)" not in summoning:
-        failures.append("summon spawn validation should read the scoped candidate tile")
-    if re.search(
-        r"PathValidation\.checkAdjacentDistance\(\s*owner\.getWorld\(\),"
-        r"\s*owner\.getWorldLocation\(\),\s*destination,",
-        summoning,
-    ) is None:
-        failures.append(
-            "summon spawn validation should check scoped movement to the candidate"
-        )
+    if "PathValidation.checkAdjacentDistance(owner.getWorld(), owner.getX(), owner.getY(), x, y, true, false)" not in summoning:
+        failures.append("summon spawn validation should check movement from owner to candidate tile")
     if "private static boolean isSummonSpawnTileOccupied(final Player owner, final int x, final int y)" not in summoning:
         failures.append("summon spawn validation should avoid occupied adjacent tiles")
     if "owner.getViewArea().getPlayersInView()" not in summoning or "owner.getViewArea().getNpcsInView()" not in summoning:
         failures.append("summon spawn occupancy checks should use nearby entities")
     if "owner.getWorld().getPlayers()" in summoning or "owner.getWorld().getNpcs()" in summoning:
         failures.append("summon spawn occupancy checks must not scan whole-world entity lists")
-    if "owner.sharesSpatialDomain(player)" not in summoning or "owner.sharesSpatialDomain(npc)" not in summoning:
-        failures.append("summon occupancy checks should remain on the owner's level")
-    if re.search(
-        r"PathValidation\.checkPath\(\s*summon\.getWorld\(\),"
-        r"\s*summon\.getWorldLocation\(\),\s*target\.getWorldLocation\(\),",
-        summoning,
-    ) is None:
-        failures.append("summon projectile paths should use authoritative locations")
-    if summoning.count("summon.teleport(adjacentWorldLocation(owner));") != 2:
-        failures.append(
-            "summon catch-up paths should relocate to the owner's exact layered scope"
-        )
-    if "summon.teleport(destination.getX(), destination.getY())" in summoning:
-        failures.append("summon catch-up paths must not discard the owner's level")
 
     if failures:
         print("FAIL:")

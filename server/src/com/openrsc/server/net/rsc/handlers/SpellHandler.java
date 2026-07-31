@@ -1222,9 +1222,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				if (!canCast(getPlayer()) || getPlayer().getViewArea().getVisibleGroundItem(affectedItem.getID(), getLocation(), getPlayer()) == null || affectedItem.isRemoved()) {
 					return;
 				}
-				if (!PathValidation.checkPath(
-					getPlayer().getWorld(), getPlayer().getWorldLocation(),
-					affectedItem.getWorldLocation(), false)) {
+				if (!PathValidation.checkPath(getPlayer().getWorld(), getPlayer().getLocation(), affectedItem.getLocation())) {
 					getPlayer().playerServerMessage(MessageType.QUEST, "I can't see the object from here");
 					getPlayer().resetPath();
 					return;
@@ -1402,9 +1400,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 		}
 		if (player.withinRange(affectedMob, spellRange)
-			&& !PathValidation.checkPath(
-				player.getWorld(), player.getWorldLocation(),
-				affectedMob.getWorldLocation(), false)) {
+			&& !PathValidation.checkPath(player.getWorld(), player.getLocation(), affectedMob.getLocation())) {
 			magicDebug(player, "mobcast_reject reason=no_clear_path playerLoc=" + player.getLocation()
 				+ " targetLoc=" + affectedMob.getLocation());
 			player.playerServerMessage(MessageType.QUEST, "I can't get a clear shot from here");
@@ -1467,9 +1463,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					+ " target=" + describeMob(affectedMob) + " playerLoc=" + getPlayer().getLocation()
 					+ " targetLoc=" + affectedMob.getLocation()
 					+ " inRange=" + getPlayer().withinRange(affectedMob, spellRange));
-				if (!PathValidation.checkPath(
-					getPlayer().getWorld(), getPlayer().getWorldLocation(),
-					affectedMob.getWorldLocation(), false)) {
+				if (!PathValidation.checkPath(getPlayer().getWorld(), getPlayer().getLocation(), affectedMob.getLocation())) {
 					magicDebug(getPlayer(), "walk_action_reject reason=no_clear_path playerLoc=" + getPlayer().getLocation()
 						+ " targetLoc=" + affectedMob.getLocation());
 					getPlayer().playerServerMessage(MessageType.QUEST, "I can't get a clear shot from here");

@@ -305,7 +305,6 @@ public class GameObject extends Entity {
 	}
 
 	public boolean isTelePoint() {
-		return getWorld().getServer().getEntityHandler()
-			.getObjectTelePoint(getWorldLocation(), null) != null;
+		return getWorld().getServer().getEntityHandler().getObjectTelePoint(getLocation(), null) != null;
 	}
 }

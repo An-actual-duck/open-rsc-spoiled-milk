@@ -39,7 +39,7 @@ public class LegendsQuestCaveAgility implements OpLocTrigger {
 				}
 				if (succeed(player, 50)) {
 					player.message("You manage to keep your balance.");
-					player.teleportCurrentScope(obj.getX(), obj.getY());
+					player.teleport(obj.getX(), obj.getY());
 					player.incExp(Skill.AGILITY.id(), 20, true);
 				} else {
 					player.teleport(421, 3699);
