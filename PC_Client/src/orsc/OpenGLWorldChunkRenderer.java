@@ -31,6 +31,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private static final int LEGACY_TRANSPARENT_TEXTURE = 12345678;
 	private static final int NO_FALLBACK_COLOR = Integer.MIN_VALUE;
 	private static final int MAX_RESIDENT_CHUNKS = 256;
+	private static final int MAX_UPLOAD_DIAGNOSTIC_CHUNKS_PER_ROLE = 24;
 	static final int POSITION_COMPONENT_COUNT = 3;
 	private static final int COLOR_COMPONENT_COUNT = 4;
 	private static final int TEXTURE_COORD_COMPONENT_COUNT = 2;
@@ -216,11 +217,35 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		int deferredChunks = 0;
 		String uploadReason = "steady";
 		long uploadBudgetStart = System.nanoTime();
+		int cacheSizeBefore = residentChunks.size();
+		int[] requestedByRole =
+			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		int[] uploadedByRole =
+			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		int[] reusedByRole =
+			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		int[] deferredByRole =
+			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		long[] uploadedBytesByRole =
+			new long[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		long[] uploadNanosByRole =
+			new long[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		int coldKeyMisses = 0;
+		int alternateStorageKeyMisses = 0;
+		int alternateEquivalentKeyMisses = 0;
+		int existingKeyMismatches = 0;
+		UploadDiagnosticDetail diagnosticDetail =
+			RenderTelemetry.isOpenGLBoundaryTransitionTraceActive()
+				? new UploadDiagnosticDetail(
+					MAX_UPLOAD_DIAGNOSTIC_CHUNKS_PER_ROLE)
+				: null;
 		List<ShadowProofCaster> shadowProofCasters = shouldDrawProjectedShadowProof()
 			? buildProjectedShadowProofCasters(chunkFrame)
 			: Collections.<ShadowProofCaster>emptyList();
 		long shadowProofSignature =
 			shouldDrawProjectedShadowProof() ? shadowProofCasterSignature(shadowProofCasters) : 0L;
+		boolean drawOffsetSupported =
+			useResidentChunkShader(atlasTextureCoordinates);
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 			int vertexCount = chunk.getVertexCount();
 			int indexCount = chunk.getIndexCount();
@@ -229,16 +254,35 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			}
 
 			requestedChunks++;
+			int roleIndex =
+				OpenGLWorldChunkUploadStats.roleIndex(
+					chunk.getChunkRole());
+			requestedByRole[roleIndex]++;
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			int brightnessBits = currentBrightnessBits();
 			int fogModeBits = currentFogModeBits();
 			int lightingModeBits = currentLightingModeBits();
 			int geometryModeBits = currentGeometryModeBits();
+			long bufferSignature =
+				chunkBufferSignature(chunk, drawOffsetSupported);
+			boolean bufferMatches =
+				buffer != null && buffer.matches(
+					bufferSignature,
+					vertexCount,
+					indexCount,
+					chunk.getTriangleCount(),
+					atlasTextureCoordinates,
+					brightnessBits,
+					fogModeBits,
+					lightingModeBits,
+					geometryModeBits,
+					replacementCompositeEnabled,
+					shadowProofSignature);
 			String mismatchReason = buffer == null
 				? "new"
 				: buffer.mismatchReason(
-					chunk.getSignature(),
+					bufferSignature,
 					vertexCount,
 					indexCount,
 					chunk.getTriangleCount(),
@@ -251,40 +295,84 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					shadowProofSignature,
 					chunk.isObjectChunk(),
 					chunk.getChunkRole());
-			if (buffer != null && buffer.matches(
-				chunk.getSignature(),
-				vertexCount,
-				indexCount,
-				chunk.getTriangleCount(),
-				atlasTextureCoordinates,
-				brightnessBits,
-				fogModeBits,
-				lightingModeBits,
-				geometryModeBits,
-				replacementCompositeEnabled,
-				shadowProofSignature)) {
+			String diagnosticMissReason = mismatchReason;
+			if (buffer == null) {
+				int alternateClass = diagnosticDetail == null
+					? AlternateBufferMatch.NONE
+					: findAlternateBufferMatch(
+						key,
+						bufferSignature,
+						vertexCount,
+						indexCount,
+						chunk.getTriangleCount(),
+						atlasTextureCoordinates,
+						brightnessBits,
+						fogModeBits,
+						lightingModeBits,
+						geometryModeBits,
+						replacementCompositeEnabled,
+						shadowProofSignature);
+				if (alternateClass
+						== AlternateBufferMatch.EQUIVALENT) {
+					alternateEquivalentKeyMisses++;
+					diagnosticMissReason =
+						"new-alternate-equivalent";
+				} else if (alternateClass
+						== AlternateBufferMatch.STORAGE_ONLY) {
+					alternateStorageKeyMisses++;
+					diagnosticMissReason =
+						"new-alternate-storage";
+				} else {
+					coldKeyMisses++;
+					diagnosticMissReason = "new-cold";
+				}
+			} else if (!bufferMatches) {
+				existingKeyMismatches++;
+			}
+			if (bufferMatches) {
 				reusedChunks++;
+				reusedByRole[roleIndex]++;
 				continue;
 			}
 
 			if (buffer == null) {
 				if (shouldDeferChunkUpload(uploadBudgetStart, uploadedChunks, budgetedUploadsAllowed)) {
 					deferredChunks++;
+					deferredByRole[roleIndex]++;
 					uploadReason = mergeUploadReason(uploadReason, "defer:" + mismatchReason);
+					if (diagnosticDetail != null) {
+						diagnosticDetail.record(
+							chunk,
+							"defer-" + diagnosticMissReason,
+							0L,
+							0L);
+					}
 					continue;
 				}
 				buffer = new WorldChunkBuffer(gl.glGenBuffers(), gl.glGenBuffers(), gl.glGenBuffers());
 				residentChunks.put(key, buffer);
 			} else if (shouldDeferChunkUpload(uploadBudgetStart, uploadedChunks, budgetedUploadsAllowed)) {
 				deferredChunks++;
+				deferredByRole[roleIndex]++;
 				uploadReason = mergeUploadReason(uploadReason, "defer:" + mismatchReason);
+				if (diagnosticDetail != null) {
+					diagnosticDetail.record(
+						chunk,
+						"defer-" + mismatchReason,
+						0L,
+						0L);
+				}
 				continue;
 			}
 			uploadReason = mergeUploadReason(uploadReason, mismatchReason);
+			long chunkUploadStart =
+				diagnosticDetail == null
+					? 0L : System.nanoTime();
 			uploadChunk(
 				chunk,
 				buffer,
 				frame,
+				bufferSignature,
 				vertexCount,
 				indexCount,
 				atlasTextureCoordinates,
@@ -295,7 +383,25 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				replacementCompositeEnabled,
 				shadowProofCasters,
 				shadowProofSignature);
+			long chunkUploadNanos =
+				diagnosticDetail == null
+					? 0L
+					: Math.max(
+						0L,
+						System.nanoTime() - chunkUploadStart);
 			uploadedChunks++;
+			uploadedByRole[roleIndex]++;
+			uploadedBytesByRole[roleIndex] +=
+				buffer.uploadedByteCount;
+			uploadNanosByRole[roleIndex] +=
+				chunkUploadNanos;
+			if (diagnosticDetail != null) {
+				diagnosticDetail.record(
+					chunk,
+					"upload-" + diagnosticMissReason,
+					buffer.uploadedByteCount,
+					chunkUploadNanos);
+			}
 		}
 
 		int evictedChunks = evictOverflow();
@@ -307,7 +413,73 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			evictedChunks,
 			uploadReason,
 			Math.max(0L, System.nanoTime() - uploadBudgetStart),
-			budgetedUploadsAllowed ? CHUNK_UPLOAD_BUDGET_NANOS : 0L);
+			budgetedUploadsAllowed ? CHUNK_UPLOAD_BUDGET_NANOS : 0L,
+			requestedByRole,
+			uploadedByRole,
+			reusedByRole,
+			deferredByRole,
+			uploadedBytesByRole,
+			uploadNanosByRole,
+			coldKeyMisses,
+			alternateStorageKeyMisses,
+			alternateEquivalentKeyMisses,
+			existingKeyMismatches,
+			cacheSizeBefore,
+			residentChunks.size(),
+			diagnosticDetail == null
+				? "" : diagnosticDetail.summary(),
+			diagnosticDetail != null
+				&& diagnosticDetail.isTruncated());
+	}
+
+	private int findAlternateBufferMatch(
+		WorldChunkBufferKey requestedKey,
+		long signature,
+		int vertexCount,
+		int indexCount,
+		int triangleCount,
+		boolean atlasTextureCoordinates,
+		int brightnessBits,
+		int fogModeBits,
+		int lightingModeBits,
+		int geometryModeBits,
+		boolean replacementCompositeDrawOnly,
+		long shadowProofSignature) {
+		boolean storageMatch = false;
+		for (Map.Entry<WorldChunkBufferKey, WorldChunkBuffer> entry
+				: residentChunks.entrySet()) {
+			WorldChunkBufferKey candidateKey = entry.getKey();
+			if (candidateKey.equals(requestedKey)
+				|| candidateKey.plane != requestedKey.plane
+				|| candidateKey.objectOnly
+					!= requestedKey.objectOnly
+				|| candidateKey.chunkRole
+					!= requestedKey.chunkRole) {
+				continue;
+			}
+			WorldChunkBuffer candidate = entry.getValue();
+			if (candidate.signature != signature) {
+				continue;
+			}
+			storageMatch = true;
+			if (candidate.matches(
+					signature,
+					vertexCount,
+					indexCount,
+					triangleCount,
+					atlasTextureCoordinates,
+					brightnessBits,
+					fogModeBits,
+					lightingModeBits,
+					geometryModeBits,
+					replacementCompositeDrawOnly,
+					shadowProofSignature)) {
+				return AlternateBufferMatch.EQUIVALENT;
+			}
+		}
+		return storageMatch
+			? AlternateBufferMatch.STORAGE_ONLY
+			: AlternateBufferMatch.NONE;
 	}
 
 	private String mergeUploadReason(String currentReason, String nextReason) {
@@ -321,6 +493,14 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			return currentReason;
 		}
 		return currentReason + "+" + nextReason;
+	}
+
+	private long chunkBufferSignature(
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		boolean drawOffsetSupported) {
+		return drawOffsetSupported
+			? chunk.getStorageSignature()
+			: chunk.getSignature();
 	}
 
 	private boolean shouldDeferChunkUpload(
@@ -1586,6 +1766,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		int drawableTerrainBatches = 0;
 		int drawableWallBatches = 0;
 		int drawableRoofBatches = 0;
+		boolean drawOffsetSupported = useResidentChunkShader(textured);
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
 			if (chunk.getVertexCount() <= 0 || chunk.getIndexCount() <= 0) {
 				continue;
@@ -1594,7 +1775,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			if (buffer == null || !buffer.matches(
-				chunk.getSignature(),
+				chunkBufferSignature(chunk, drawOffsetSupported),
 				chunk.getVertexCount(),
 				chunk.getIndexCount(),
 				chunk.getTriangleCount(),
@@ -2054,7 +2235,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
 				WorldChunkBuffer buffer = residentChunks.get(key);
 				if (buffer == null || !buffer.matches(
-					chunk.getSignature(),
+					chunkBufferSignature(chunk, shaderActive),
 					chunk.getVertexCount(),
 					chunk.getIndexCount(),
 					chunk.getTriangleCount(),
@@ -2066,6 +2247,19 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 					replacementCompositeEnabled,
 					shadowProofSignature)) {
 					continue;
+				}
+				int drawOffsetX = shaderActive
+					? chunk.getVertexOffsetX() - buffer.uploadedVertexOffsetX
+					: 0;
+				int drawOffsetZ = shaderActive
+					? chunk.getVertexOffsetZ() - buffer.uploadedVertexOffsetZ
+					: 0;
+				if (shaderActive) {
+					residentChunkShader.setChunkOffsets(
+						drawOffsetX,
+						drawOffsetZ,
+						chunk.getLogicalWorldOffsetX(),
+						chunk.getLogicalWorldOffsetZ());
 				}
 				accumulator.recordConsideredChunk(key);
 				gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
@@ -2088,8 +2282,18 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 						continue;
 					}
 					accumulator.recordConsideredBatch();
-					if (isFrustumCulledChunkBatch(frame, batch, batchCullViewMatrix)
-						|| isFogCulledChunkBatch(frame, batch, batchCullViewMatrix)) {
+					if (isFrustumCulledChunkBatch(
+							frame,
+							batch,
+							batchCullViewMatrix,
+							drawOffsetX,
+							drawOffsetZ)
+						|| isFogCulledChunkBatch(
+							frame,
+							batch,
+							batchCullViewMatrix,
+							drawOffsetX,
+							drawOffsetZ)) {
 						accumulator.recordCulledBatch();
 						accumulator.recordSkippedBatch(batch.indexCount / 3);
 						continue;
@@ -2131,6 +2335,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				}
 			}
 		} finally {
+			if (shaderActive) {
+				residentChunkShader.setChunkOffsets(
+					0.0f, 0.0f, 0.0f, 0.0f);
+			}
 			if (residentObjectCull) {
 				gl.glDisable(gl.GL_CULL_FACE);
 			}
@@ -2274,7 +2482,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private boolean isFrustumCulledChunkBatch(
 		Renderer3DFrame frame,
 		WorldChunkMaterialBatch batch,
-		float[] viewMatrix) {
+		float[] viewMatrix,
+		int drawOffsetX,
+		int drawOffsetZ) {
 		if (frame == null || batch == null || viewMatrix == null || !batch.hasBounds()) {
 			return false;
 		}
@@ -2289,11 +2499,15 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		float minScreenY = Float.MAX_VALUE;
 		float maxScreenY = -Float.MAX_VALUE;
 		for (int xIndex = 0; xIndex < 2; xIndex++) {
-			float x = xIndex == 0 ? batch.minX : batch.maxX;
+			float x =
+				(xIndex == 0 ? batch.minX : batch.maxX)
+					+ drawOffsetX;
 			for (int yIndex = 0; yIndex < 2; yIndex++) {
 				float y = yIndex == 0 ? batch.minY : batch.maxY;
 				for (int zIndex = 0; zIndex < 2; zIndex++) {
-					float z = zIndex == 0 ? batch.minZ : batch.maxZ;
+					float z =
+						(zIndex == 0 ? batch.minZ : batch.maxZ)
+							+ drawOffsetZ;
 					float cameraX = viewMatrix[0] * x + viewMatrix[1] * y + viewMatrix[2] * z + viewMatrix[3];
 					float cameraY = viewMatrix[4] * x + viewMatrix[5] * y + viewMatrix[6] * z + viewMatrix[7];
 					float cameraZ = viewMatrix[8] * x + viewMatrix[9] * y + viewMatrix[10] * z + viewMatrix[11];
@@ -2321,18 +2535,24 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 	private boolean isFogCulledChunkBatch(
 		Renderer3DFrame frame,
 		WorldChunkMaterialBatch batch,
-		float[] viewMatrix) {
+		float[] viewMatrix,
+		int drawOffsetX,
+		int drawOffsetZ) {
 		if (frame == null || batch == null || viewMatrix == null || !batch.hasSpatialBounds()) {
 			return false;
 		}
 		float fogEnd = frame.getFogDistance() + FOG_BATCH_CULL_PADDING;
 		float nearestCameraZ = Float.MAX_VALUE;
 		for (int xIndex = 0; xIndex < 2; xIndex++) {
-			float x = xIndex == 0 ? batch.minX : batch.maxX;
+			float x =
+				(xIndex == 0 ? batch.minX : batch.maxX)
+					+ drawOffsetX;
 			for (int yIndex = 0; yIndex < 2; yIndex++) {
 				float y = yIndex == 0 ? batch.minY : batch.maxY;
 				for (int zIndex = 0; zIndex < 2; zIndex++) {
-					float z = zIndex == 0 ? batch.minZ : batch.maxZ;
+					float z =
+						(zIndex == 0 ? batch.minZ : batch.maxZ)
+							+ drawOffsetZ;
 					float cameraZ = viewMatrix[8] * x + viewMatrix[9] * y + viewMatrix[10] * z + viewMatrix[11];
 					if (cameraZ < nearestCameraZ) {
 						nearestCameraZ = cameraZ;
@@ -2779,6 +2999,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,
 		WorldChunkBuffer buffer,
 		Renderer3DFrame frame,
+		long bufferSignature,
 		int vertexCount,
 		int indexCount,
 		boolean atlasTextureCoordinates,
@@ -2795,6 +3016,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		WorldChunkMaterialBatch[] materialBatches =
 			copyMaterialIndices(chunk, indexCount, replacementCompositeDrawOnly, shouldUseSpatialMaterialBatches(chunk));
 		int bufferUsage = chunkBufferUsage(chunk);
+		long uploadedByteCount =
+			(long) vertexUploadBuffer.remaining() * 4L
+				+ (long) indexUploadBuffer.remaining() * 4L
+				+ (long) materialIndexUploadBuffer.remaining() * 4L;
 
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer.vertexBufferId);
 		gl.glBufferData(gl.GL_ARRAY_BUFFER, vertexUploadBuffer, bufferUsage);
@@ -2805,7 +3030,9 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0);
 
-		buffer.signature = chunk.getSignature();
+		buffer.signature = bufferSignature;
+		buffer.uploadedVertexOffsetX = chunk.getVertexOffsetX();
+		buffer.uploadedVertexOffsetZ = chunk.getVertexOffsetZ();
 		buffer.vertexCount = vertexCount;
 		buffer.indexCount = indexCount;
 		buffer.triangleCount = chunk.getTriangleCount();
@@ -2817,6 +3044,7 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		buffer.replacementCompositeDrawOnly = replacementCompositeDrawOnly;
 		buffer.materialBatches = materialBatches;
 		buffer.shadowProofSignature = shadowProofSignature;
+		buffer.uploadedByteCount = uploadedByteCount;
 	}
 
 	private int chunkBufferUsage(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
@@ -3405,6 +3633,104 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 		}
 	}
 
+	private static final class AlternateBufferMatch {
+		private static final int NONE = 0;
+		private static final int STORAGE_ONLY = 1;
+		private static final int EQUIVALENT = 2;
+
+		private AlternateBufferMatch() {
+		}
+	}
+
+	private static final class UploadDiagnosticDetail {
+		private final int maxChunksPerRole;
+		private final int[] recordedByRole =
+			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		private final int[] omittedByRole =
+			new int[OpenGLWorldChunkUploadStats.ROLE_COUNT];
+		private final StringBuilder detail = new StringBuilder();
+
+		private UploadDiagnosticDetail(int maxChunksPerRole) {
+			this.maxChunksPerRole =
+				Math.max(1, maxChunksPerRole);
+		}
+
+		private void record(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			String status,
+			long uploadedBytes,
+			long uploadNanos) {
+			int roleIndex =
+				OpenGLWorldChunkUploadStats.roleIndex(
+					chunk.getChunkRole());
+			if (recordedByRole[roleIndex]
+					>= maxChunksPerRole) {
+				omittedByRole[roleIndex]++;
+				return;
+			}
+			recordedByRole[roleIndex]++;
+			if (detail.length() > 0) {
+				detail.append(';');
+			}
+			detail.append(roleLabel(roleIndex))
+				.append("@p").append(chunk.getPlane())
+				.append(":s")
+				.append(chunk.getCenterSectionX())
+				.append(',').append(chunk.getCenterSectionY())
+				.append(":o")
+				.append(chunk.getOriginWorldX())
+				.append(',').append(chunk.getOriginWorldZ())
+				.append(":sig")
+				.append(Long.toHexString(
+					chunk.getStorageSignature()))
+				.append(":v").append(chunk.getVertexCount())
+				.append(":i").append(chunk.getIndexCount())
+				.append(':').append(status)
+				.append(":bytes").append(uploadedBytes)
+				.append(":nanos").append(uploadNanos);
+		}
+
+		private String summary() {
+			if (!isTruncated()) {
+				return detail.toString();
+			}
+			return detail.toString()
+				+ ";omitted="
+				+ omittedByRole[OpenGLWorldChunkUploadStats.ROLE_WORLD]
+				+ ","
+				+ omittedByRole[
+					OpenGLWorldChunkUploadStats
+						.ROLE_STATIC_OBJECTS]
+				+ ","
+				+ omittedByRole[
+					OpenGLWorldChunkUploadStats
+						.ROLE_ANIMATED_OBJECTS];
+		}
+
+		private boolean isTruncated() {
+			for (int omitted : omittedByRole) {
+				if (omitted > 0) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private static String roleLabel(int roleIndex) {
+			if (roleIndex
+					== OpenGLWorldChunkUploadStats
+						.ROLE_STATIC_OBJECTS) {
+				return "static";
+			}
+			if (roleIndex
+					== OpenGLWorldChunkUploadStats
+						.ROLE_ANIMATED_OBJECTS) {
+				return "animated";
+			}
+			return "world";
+		}
+	}
+
 	private void copyChunkIndices(Renderer3DWorldChunkFrame.ChunkMesh chunk, int indexCount) {
 		indexUploadBuffer.clear();
 		for (int index = 0; index < indexCount; index++) {
@@ -3898,6 +4224,8 @@ final class WorldChunkBuffer {
 	final int indexBufferId;
 	final int materialIndexBufferId;
 	long signature;
+	int uploadedVertexOffsetX;
+	int uploadedVertexOffsetZ;
 	int vertexCount;
 	int indexCount;
 	int triangleCount;
@@ -3909,6 +4237,7 @@ final class WorldChunkBuffer {
 	boolean replacementCompositeDrawOnly;
 	WorldChunkMaterialBatch[] materialBatches = new WorldChunkMaterialBatch[0];
 	long shadowProofSignature;
+	long uploadedByteCount;
 
 	WorldChunkBuffer(int vertexBufferId, int indexBufferId, int materialIndexBufferId) {
 		this.vertexBufferId = vertexBufferId;

@@ -30,8 +30,16 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
 
                     state.acceptStaticBaseline(17);
                     require(state.isPending(), "baseline alone");
+                    require(state.hasStaticBaseline(),
+                        "baseline receipt recorded");
+                    require(!state.hasPlayerReceipt(),
+                        "player receipt still absent");
                     state.acceptPlayerReceipt(17);
                     require(!state.isPending(), "exact pair");
+                    require(state.getSequence() == 17,
+                        "completed sequence retained");
+                    require(state.getElapsedMillis() >= 0,
+                        "elapsed time exposed");
                     require(state.summary().contains("ready seq 17"),
                         "ready summary");
 
@@ -272,11 +280,15 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
         )
         self.assertIn(
             "this.layeredSceneActivationPending\n"
-            "\t\t\t\t\t\t\t&& this.layeredSceneActivationRetainsPresentedFrame",
+            "\t\t\t\t\t\t\t&& this.shouldRetainLastPresentedFrame()",
             client,
         )
         self.assertIn(
             "public boolean shouldRetainLastPresentedFrame()", client
+        )
+        self.assertIn(
+            "completeLayeredSceneActivationFreshFrame(",
+            client,
         )
         self.assertIn(
             "mudclient.shouldRetainLastPresentedFrame()", applet
@@ -467,6 +479,12 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
         )
         self.assertIn(
             "ATOMIC_SCENE_ACTIVATION ", handler
+        )
+        self.assertIn(
+            '"renderer.atomic-activation-progress"', handler
+        )
+        self.assertIn(
+            'event.string("receipt", receipt);', handler
         )
 
 

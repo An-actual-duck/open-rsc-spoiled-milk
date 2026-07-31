@@ -294,6 +294,12 @@ public final class RenderTelemetry {
 	private static long lastClientLoopSampleNanos;
 	private static long openGLWorldChunkUploadBudgetLimitNanos;
 	private static String openGLWorldChunkUploadReason = "steady";
+	private static final int OPENGL_BOUNDARY_TRANSITION_TRACE_FRAMES = 90;
+	private static long openGLBoundaryTransitionTraceId;
+	private static int openGLBoundaryTransitionTraceFramesRemaining;
+	private static int openGLBoundaryTransitionTraceFrameIndex;
+	private static int openGLBoundaryTransitionSectionX;
+	private static int openGLBoundaryTransitionSectionY;
 	private static long lastReportNanos;
 	private static String openGLRemasterShadowMaskReason = "not-built";
 	private static String openGLResidentChunkReplacementReason = "not-requested";
@@ -505,6 +511,9 @@ public final class RenderTelemetry {
 		long upperPlanesNanos,
 		long bridgeNanos,
 		long chunkFrameNanos,
+		long activeChunkBuildNanos,
+		long predictiveClearNanos,
+		long symmetricComposeNanos,
 		long preloadNanos) {
 		if (isCollectionEnabled()) {
 			synchronized (RenderTelemetry.class) {
@@ -515,6 +524,16 @@ public final class RenderTelemetry {
 				worldSectionLoadBridgeStats.record(bridgeNanos);
 				worldSectionLoadChunkFrameStats.record(chunkFrameNanos);
 				worldSectionLoadPreloadStats.record(preloadNanos);
+				if (RendererDiagnosticSession.isEnabled()
+					&& path != null
+					&& path.startsWith("native-")) {
+					openGLBoundaryTransitionTraceId++;
+					openGLBoundaryTransitionTraceFramesRemaining =
+						OPENGL_BOUNDARY_TRANSITION_TRACE_FRAMES;
+					openGLBoundaryTransitionTraceFrameIndex = 0;
+					openGLBoundaryTransitionSectionX = sectionX;
+					openGLBoundaryTransitionSectionY = sectionY;
+				}
 			}
 			RendererDiagnosticSession.Record event =
 				RendererDiagnosticSession.newEventRecord(
@@ -530,6 +549,15 @@ public final class RenderTelemetry {
 				event.number("upperPlanesNanos", upperPlanesNanos);
 				event.number("bridgeNanos", bridgeNanos);
 				event.number("chunkFrameNanos", chunkFrameNanos);
+				event.number(
+					"activeChunkBuildNanos",
+					activeChunkBuildNanos);
+				event.number(
+					"predictiveClearNanos",
+					predictiveClearNanos);
+				event.number(
+					"symmetricComposeNanos",
+					symmetricComposeNanos);
 				event.number("preloadNanos", preloadNanos);
 				RendererDiagnosticSession.writeEventRecord(event);
 			}
@@ -545,9 +573,206 @@ public final class RenderTelemetry {
 				+ " upperMs=" + formatMillisRoot(upperPlanesNanos)
 				+ " bridgeMs=" + formatMillisRoot(bridgeNanos)
 				+ " frameMs=" + formatMillisRoot(chunkFrameNanos)
+				+ " frameBuildMs="
+					+ formatMillisRoot(activeChunkBuildNanos)
+				+ " frameClearMs="
+					+ formatMillisRoot(predictiveClearNanos)
+				+ " frameComposeMs="
+					+ formatMillisRoot(symmetricComposeNanos)
 				+ " preloadMs=" + formatMillisRoot(preloadNanos);
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
+	}
+
+	static void recordOpenGLBoundaryTransitionFrame(
+		int chunkCount,
+		int triangleCount,
+		OpenGLWorldChunkUploadStats uploadStats,
+		boolean replacementRequested,
+		boolean residentReady,
+		boolean residentActive,
+		String replacementReason,
+		boolean projectedWorldDrawn,
+		boolean residentWorldDrawn,
+		boolean remasterShadowPrepared,
+		boolean explicitRemasterShadowRequested,
+		OpenGLWorldChunkDrawStats drawStats,
+		long chunkUploadNanos,
+		long projectedDrawNanos,
+		long residentDrawNanos) {
+		if (!RendererDiagnosticSession.isEnabled()) {
+			return;
+		}
+		synchronized (RenderTelemetry.class) {
+			if (openGLBoundaryTransitionTraceFramesRemaining <= 0) {
+				return;
+			}
+			OpenGLWorldChunkUploadStats safeUpload =
+				uploadStats == null
+					? OpenGLWorldChunkUploadStats.EMPTY
+					: uploadStats;
+			OpenGLWorldChunkDrawStats safeDraw =
+				drawStats == null
+					? OpenGLWorldChunkDrawStats.EMPTY
+					: drawStats;
+			boolean shadowOverProjectedFallback =
+				projectedWorldDrawn
+					&& !residentWorldDrawn
+					&& explicitRemasterShadowRequested;
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.boundary-transition-frame");
+			if (event != null) {
+				event.number(
+					"transitionId",
+					openGLBoundaryTransitionTraceId);
+				event.number(
+					"transitionFrame",
+					openGLBoundaryTransitionTraceFrameIndex);
+				event.number(
+					"rendererFrameSequence",
+					frameStats.count);
+				event.number(
+					"sectionX",
+					openGLBoundaryTransitionSectionX);
+				event.number(
+					"sectionY",
+					openGLBoundaryTransitionSectionY);
+				event.number("world.chunkCount", chunkCount);
+				event.number("world.triangleCount", triangleCount);
+				event.number(
+					"upload.requested",
+					safeUpload.requestedChunks);
+				event.number(
+					"upload.uploaded",
+					safeUpload.uploadedChunks);
+				event.number(
+					"upload.reused",
+					safeUpload.reusedChunks);
+				event.number(
+					"upload.deferred",
+					safeUpload.deferredChunks);
+				appendOpenGLBoundaryUploadRole(
+					event,
+					"world",
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_WORLD,
+					safeUpload);
+				appendOpenGLBoundaryUploadRole(
+					event,
+					"staticObjects",
+					Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS,
+					safeUpload);
+				appendOpenGLBoundaryUploadRole(
+					event,
+					"animatedObjects",
+					Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_ANIMATED_OBJECTS,
+					safeUpload);
+				event.number(
+					"upload.miss.cold",
+					safeUpload.coldKeyMisses);
+				event.number(
+					"upload.miss.alternateStorage",
+					safeUpload.alternateStorageKeyMisses);
+				event.number(
+					"upload.miss.alternateEquivalent",
+					safeUpload.alternateEquivalentKeyMisses);
+				event.number(
+					"upload.miss.existingMismatch",
+					safeUpload.existingKeyMismatches);
+				event.number(
+					"upload.cache.before",
+					safeUpload.cacheSizeBefore);
+				event.number(
+					"upload.cache.after",
+					safeUpload.cacheSizeAfter);
+				event.string("upload.reason", safeUpload.reason);
+				event.string(
+					"upload.detail",
+					safeUpload.diagnosticDetail);
+				event.bool(
+					"upload.detailTruncated",
+					safeUpload.diagnosticDetailTruncated);
+				event.number("upload.phaseNanos", chunkUploadNanos);
+				event.bool(
+					"ownership.replacementRequested",
+					replacementRequested);
+				event.bool("ownership.residentReady", residentReady);
+				event.bool("ownership.residentActive", residentActive);
+				event.string(
+					"ownership.replacementReason",
+					replacementReason);
+				event.bool(
+					"draw.projectedWorld",
+					projectedWorldDrawn);
+				event.bool(
+					"draw.residentWorld",
+					residentWorldDrawn);
+				event.number(
+					"draw.projectedNanos",
+					projectedDrawNanos);
+				event.number(
+					"draw.residentNanos",
+					residentDrawNanos);
+				event.number(
+					"draw.residentChunks",
+					safeDraw.drawnChunks);
+				event.number(
+					"draw.residentTriangles",
+					safeDraw.drawnTriangles);
+				event.number(
+					"draw.shadowProofChunks",
+					safeDraw.shadowProofChunks);
+				event.bool(
+					"shadow.remasterPrepared",
+					remasterShadowPrepared);
+				event.bool(
+					"shadow.explicitRemasterRequested",
+					explicitRemasterShadowRequested);
+				event.bool(
+					"shadow.overProjectedFallback",
+					shadowOverProjectedFallback);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+			openGLBoundaryTransitionTraceFrameIndex++;
+			openGLBoundaryTransitionTraceFramesRemaining--;
+		}
+	}
+
+	static boolean isOpenGLBoundaryTransitionTraceActive() {
+		if (!RendererDiagnosticSession.isEnabled()) {
+			return false;
+		}
+		synchronized (RenderTelemetry.class) {
+			return openGLBoundaryTransitionTraceFramesRemaining > 0;
+		}
+	}
+
+	private static void appendOpenGLBoundaryUploadRole(
+		RendererDiagnosticSession.Record event,
+		String label,
+		int chunkRole,
+		OpenGLWorldChunkUploadStats upload) {
+		String prefix = "upload.role." + label + ".";
+		event.number(
+			prefix + "requested",
+			upload.requestedForRole(chunkRole));
+		event.number(
+			prefix + "uploaded",
+			upload.uploadedForRole(chunkRole));
+		event.number(
+			prefix + "reused",
+			upload.reusedForRole(chunkRole));
+		event.number(
+			prefix + "deferred",
+			upload.deferredForRole(chunkRole));
+		event.number(
+			prefix + "bytes",
+			upload.uploadedBytesForRole(chunkRole));
+		event.number(
+			prefix + "nanos",
+			upload.uploadNanosForRole(chunkRole));
 	}
 
 	public static void recordWorldModelTransition(

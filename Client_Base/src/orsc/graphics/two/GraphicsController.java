@@ -128,6 +128,7 @@ public class GraphicsController {
 	private int renderer2DNativeUiBlockCircle;
 	private int renderer2DNativeUiBlockPixel;
 	private boolean renderer2DNativeUiSoftwareDirty;
+	private boolean renderer2DCommandCaptureSuppressed;
 	private int[] renderer2DUiBasePixels;
 	private int renderer2DUiBaseWidth;
 	private int renderer2DUiBaseHeight;
@@ -207,7 +208,18 @@ public class GraphicsController {
 		renderer2DNativeUiBlockCircle = 0;
 		renderer2DNativeUiBlockPixel = 0;
 		renderer2DNativeUiSoftwareDirty = false;
+		renderer2DCommandCaptureSuppressed = false;
 		renderer2DUiBaseCaptured = false;
+	}
+
+	/**
+	 * Starts a frame whose completed software framebuffer is the sole visual
+	 * owner. Loading and other full-frame raster presentations must not also
+	 * replay their draw commands through the OpenGL overlay bridge.
+	 */
+	public final void beginSoftwareOwnedRenderer2DFrame() {
+		beginRenderer2DFrame();
+		renderer2DCommandCaptureSuppressed = true;
 	}
 
 	public final void setRenderer2DPhase(Renderer2DFrame.Phase phase) {
@@ -420,7 +432,9 @@ public class GraphicsController {
 	}
 
 	private boolean canCaptureRenderer2DNativeUiCommand() {
-		return canReplaceRenderer2DNativeUi() || canCaptureRenderer2DOpenGLWorldOverlayReplay();
+		return !renderer2DCommandCaptureSuppressed
+			&& (canReplaceRenderer2DNativeUi()
+				|| canCaptureRenderer2DOpenGLWorldOverlayReplay());
 	}
 
 	protected final void withRenderer2DLegacySpriteId(int legacySpriteId, Runnable drawAction) {
@@ -784,7 +798,8 @@ public class GraphicsController {
 		int sourceScaleY,
 		int alpha,
 		RendererSpriteTransform transform) {
-		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
+		if (renderer2DCommandCaptureSuppressed
+			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
 		}
 
@@ -962,7 +977,8 @@ public class GraphicsController {
 		int destColumnSkewPerRow,
 		boolean mirrorX,
 		RendererSpriteTransform transform) {
-		if (!Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
+		if (renderer2DCommandCaptureSuppressed
+			|| !Renderer2DSettings.isOpenGLSpriteCaptureEnabled()) {
 			return false;
 		}
 
@@ -2404,6 +2420,27 @@ public class GraphicsController {
 			throw GenUtil.makeThrowable(var11, "ua.BB(" + height + ',' + xOffset + ',' + yOffset + ',' + "dummy" + ','
 				+ layer + ',' + width + ')');
 		}
+	}
+
+	public final void publishMinimapRaster(int[] rowMajorPixels, int width, int height) {
+		if (rowMajorPixels == null
+			|| width <= 0
+			|| height <= 0
+			|| rowMajorPixels.length != width * height) {
+			throw new IllegalArgumentException("Invalid minimap raster");
+		}
+		int[] spritePixels = new int[rowMajorPixels.length];
+		int pixel = 0;
+		for (int x = 0; x < width; x++) {
+			for (int y = 0; y < height; y++) {
+				spritePixels[pixel++] = rowMajorPixels[x + y * width];
+			}
+		}
+		Sprite sprite = new Sprite(spritePixels, width, height);
+		sprite.setShift(0, 0);
+		sprite.setRequiresShift(false);
+		sprite.setSomething(width, height);
+		minimapSprite = sprite;
 	}
 
 	public final void drawVerticalGradient(int x, int y, int width, int height, int topColor, int bottomColor) {

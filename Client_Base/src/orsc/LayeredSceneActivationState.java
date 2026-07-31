@@ -53,6 +53,22 @@ final class LayeredSceneActivationState {
 		return sequence > 0;
 	}
 
+	int getSequence() {
+		return sequence;
+	}
+
+	boolean hasPlayerReceipt() {
+		return playerReceipt;
+	}
+
+	boolean hasStaticBaseline() {
+		return staticBaseline;
+	}
+
+	long getElapsedMillis() {
+		return elapsedMillis();
+	}
+
 	String summary() {
 		if (sequence <= 0) {
 			return "atomic idle";

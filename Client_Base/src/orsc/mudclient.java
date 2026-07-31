@@ -71,6 +71,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -118,6 +124,14 @@ public final class mudclient implements Runnable {
 	private static final long RESIDENT_OBJECT_CHUNK_FNV_PRIME = 0x100000001b3L;
 	private static final int RESIDENT_OBJECT_CHUNK_TILE_SIZE = 24;
 	private static final int RESIDENT_ANIMATED_OBJECT_CHUNK_TILE_SIZE = 8;
+	private static final int RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4;
+	private static final int RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM = 8;
+	private static final boolean
+		RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED =
+			readBoolean(
+				"spoiledmilk.residentObjectGeometryDiagnostics",
+				"SPOILED_MILK_RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS",
+				false);
 	public static final int spriteMedia = 2000;
 	public static final int spriteUtil = 2100;
 	public static final int spriteItem = 2150;
@@ -881,20 +895,45 @@ public final class mudclient implements Runnable {
 	private int lastObjectAnimatonNumberClaw = -1;
 	private boolean loadingArea = false;
 	private boolean layeredSceneActivationPending = false;
-	private boolean layeredSceneActivationRetainsPresentedFrame = false;
+	private final LayeredScenePresentationLatch
+		layeredScenePresentationLatch =
+			new LayeredScenePresentationLatch();
+	private boolean layeredSceneTerrainStageWaitLogged = false;
 	private boolean regionLoadNeedsHardPlayerReset = false;
 	private boolean hasCompletedInitialRegionLoad = false;
-	private final Map<Integer, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
-		new HashMap<Integer, ResidentObjectChunkCacheEntry>();
+	private final Map<Long, ResidentObjectChunkCacheEntry> cachedResidentObjectChunks =
+		new HashMap<Long, ResidentObjectChunkCacheEntry>();
+	private final ExecutorService residentObjectBuildExecutor =
+		Executors.newFixedThreadPool(
+			residentObjectBuildWorkerCount(),
+			new ThreadFactory() {
+				private int nextWorker = 1;
+
+				@Override
+				public Thread newThread(Runnable runnable) {
+					Thread thread = new Thread(
+						runnable,
+						"resident-object-build-" + nextWorker++);
+					thread.setDaemon(true);
+					thread.setPriority(
+						Math.max(
+							Thread.MIN_PRIORITY,
+							Thread.NORM_PRIORITY - 1));
+					return thread;
+				}
+			});
+	private final Set<Long> cachedResidentObjectChunkCurrentViewCells =
+		new HashSet<Long>();
+	private final Set<Long> cachedResidentObjectChunkPreviousViewCells =
+		new HashSet<Long>();
+	private int cachedResidentObjectChunkViewBaseX = Integer.MIN_VALUE;
+	private int cachedResidentObjectChunkViewBaseZ = Integer.MIN_VALUE;
 	private List<SceneBaselineState.Record>
 		staticPresentationSceneryRecords =
 			Collections.emptyList();
 	private List<SceneBaselineState.Record>
 		staticPresentationWallRecords =
 			Collections.emptyList();
-	private final List<StaticPresentationModel>
-		staticPresentationModels =
-			new ArrayList<StaticPresentationModel>();
 	private long staticPresentationRevision = 0L;
 	private long builtStaticPresentationRevision = -1L;
 	private int builtStaticPresentationBaseX = Integer.MIN_VALUE;
@@ -2439,10 +2478,38 @@ public final class mudclient implements Runnable {
 				return;
 			}
 
-			// TODO: Inauthentic to loop through packets like this.
-			int len = this.packetHandler.getClientStream().readIncomingPacket(packetHandler.getPacketsIncoming());
-			if (len > 0)
-				this.packetHandler.handlePacket(packetHandler.getPacketsIncoming().getUnsignedByte(), len);
+			/*
+			 * Keep the authentic one-packet cadence during ordinary play.
+			 * Protocol-v8 atomic activation is one ordered server update,
+			 * however, and may contain several baseline pages. Reading those
+			 * pages one per client tick made a local scene transition pause in
+			 * proportion to packet count. Drain only that bounded activation
+			 * burst, pausing if its terrain halo is still being prepared.
+			 */
+			int processedPackets = 0;
+			boolean activationBurst = this.layeredSceneActivationPending;
+			while (LayeredScenePacketDrainPolicy.shouldReadNext(
+					processedPackets,
+					activationBurst,
+					this.layeredSceneActivationPending,
+					this.packetHandler
+						.isLayeredTerrainActivationHaloPrebuildPending())) {
+				int len = this.packetHandler.getClientStream()
+					.readIncomingPacket(
+						this.packetHandler.getPacketsIncoming());
+				if (len <= 0) {
+					break;
+				}
+				boolean wasActivationPending =
+					this.layeredSceneActivationPending;
+				this.packetHandler.handlePacket(
+					this.packetHandler.getPacketsIncoming()
+						.getUnsignedByte(),
+					len);
+				processedPackets++;
+				activationBurst |= wasActivationPending
+					|| this.layeredSceneActivationPending;
+			}
 
 			if (System.currentTimeMillis() - timeOfLastCombatStylePacket > 1000) {
 				setCombatStyle(proposedStyle);
@@ -3708,8 +3775,7 @@ public final class mudclient implements Runnable {
 
 	public void clearStaticScenePresentation() {
 		if (this.staticPresentationSceneryRecords.isEmpty()
-			&& this.staticPresentationWallRecords.isEmpty()
-			&& this.staticPresentationModels.isEmpty()) {
+			&& this.staticPresentationWallRecords.isEmpty()) {
 			return;
 		}
 		this.staticPresentationSceneryRecords =
@@ -3718,86 +3784,21 @@ public final class mudclient implements Runnable {
 			Collections.emptyList();
 		this.staticPresentationRevision++;
 		invalidateStaticScenePresentationModels();
+		clearResidentObjectChunkCache();
 	}
 
 	private void invalidateStaticScenePresentationModels() {
-		this.staticPresentationModels.clear();
 		this.builtStaticPresentationRevision = -1L;
-		this.builtStaticPresentationBaseX = Integer.MIN_VALUE;
-		this.builtStaticPresentationBaseZ = Integer.MIN_VALUE;
-		clearResidentObjectChunkCache();
-	}
-
-	private void ensureStaticScenePresentationModels() {
-		if (this.builtStaticPresentationRevision
-				== this.staticPresentationRevision
-			&& this.builtStaticPresentationBaseX == this.midRegionBaseX
-			&& this.builtStaticPresentationBaseZ == this.midRegionBaseZ) {
-			return;
-		}
-		this.staticPresentationModels.clear();
-		int skipped = 0;
-		int index = 0;
-		for (SceneBaselineState.Record record
-				: this.staticPresentationSceneryRecords) {
-			RSModel model = createStaticPresentationGameObjectModel(
-				record, index);
-			if (model == null) {
-				skipped++;
-			} else {
-				this.staticPresentationModels.add(
-					new StaticPresentationModel(
-						Renderer3DModelKind.GAME_OBJECT,
-						index,
-						record.x - this.midRegionBaseX,
-						record.y - this.midRegionBaseZ,
-						record.id,
-						record.direction,
-						model));
-			}
-			index++;
-		}
-		for (SceneBaselineState.Record record
-				: this.staticPresentationWallRecords) {
-			RSModel model = createStaticPresentationWallObjectModel(
-				record, index);
-			if (model == null) {
-				skipped++;
-			} else {
-				this.staticPresentationModels.add(
-					new StaticPresentationModel(
-						Renderer3DModelKind.WALL_OBJECT,
-						index,
-						record.x - this.midRegionBaseX,
-						record.y - this.midRegionBaseZ,
-						record.id,
-						record.direction,
-						model));
-			}
-			index++;
-		}
-		this.builtStaticPresentationRevision =
-			this.staticPresentationRevision;
-		this.builtStaticPresentationBaseX = this.midRegionBaseX;
-		this.builtStaticPresentationBaseZ = this.midRegionBaseZ;
-		clearResidentObjectChunkCache();
-		String summary = "STATIC_SCENE_PRESENTATION"
-			+ " records="
-			+ (this.staticPresentationSceneryRecords.size()
-				+ this.staticPresentationWallRecords.size())
-			+ " models=" + this.staticPresentationModels.size()
-			+ " skipped=" + skipped
-			+ " base=" + this.midRegionBaseX + ","
-				+ this.midRegionBaseZ;
-		System.out.println(summary);
-		ClientRuntimeLogger.log(summary);
 	}
 
 	private RSModel createStaticPresentationGameObjectModel(
 		SceneBaselineState.Record record,
-		int index) {
+		int index,
+		int elevation) {
 		GameObjectDef def = EntityHandler.getObjectDef(record.id);
-		if (def == null || def.modelID < 0) {
+		if (def == null
+			|| def.modelID < 0
+			|| elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return null;
 		}
 		int localX = record.x - this.midRegionBaseX;
@@ -3813,11 +3814,6 @@ public final class mudclient implements Runnable {
 		}
 		int x = (2 * localX + xSize) * this.tileSize / 2;
 		int z = (2 * localZ + zSize) * this.tileSize / 2;
-		int elevation =
-			this.world.getPresentationTerrainElevation(x, z);
-		if (elevation == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
-			return null;
-		}
 		RSModel model = this.getModelCacheItem(def.modelID).clone();
 		model.key = -1 - index;
 		model.addRotation(0, record.direction * 32, 0);
@@ -3828,18 +3824,19 @@ public final class mudclient implements Runnable {
 		if (record.id == 74) {
 			model.translate2(0, -480, 0);
 		}
-		applyRenderer3DMaterialMetadata(
-			Renderer3DModelKind.GAME_OBJECT,
-			record.id,
-			model);
-		return model;
+		return prepareGameObjectInstanceModel(
+			record.id, model);
 	}
 
 	private RSModel createStaticPresentationWallObjectModel(
 		SceneBaselineState.Record record,
-		int index) {
+		int index,
+		int elevation1,
+		int elevation2) {
 		DoorDef definition = EntityHandler.getDoorDef(record.id);
-		if (definition == null) {
+		if (definition == null
+			|| elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
+			|| elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 			return null;
 		}
 		int x1 = record.x - this.midRegionBaseX;
@@ -3864,15 +3861,6 @@ public final class mudclient implements Runnable {
 		int y1World = y1 * this.tileSize;
 		int x2World = x2 * this.tileSize;
 		int y2World = y2 * this.tileSize;
-		int elevation1 = this.world.getPresentationTerrainElevation(
-			x1World, y1World);
-		int elevation2 = this.world.getPresentationTerrainElevation(
-			x2World, y2World);
-		if (elevation1 == World.PRESENTATION_ELEVATION_UNAVAILABLE
-			|| elevation2
-				== World.PRESENTATION_ELEVATION_UNAVAILABLE) {
-			return null;
-		}
 		int height = definition.getWallObjectHeight();
 		RSModel model = new RSModel(4, 1);
 		int v1 = model.insertVertex(
@@ -3901,6 +3889,14 @@ public final class mudclient implements Runnable {
 		return model;
 	}
 
+	private static int residentObjectBuildWorkerCount() {
+		return Math.max(
+			1,
+			Math.min(
+				RESIDENT_OBJECT_BUILD_WORKER_LIMIT,
+				Runtime.getRuntime().availableProcessors() - 1));
+	}
+
 	private Renderer3DWorldChunkFrame appendResidentObjectChunkFrame(Renderer3DWorldChunkFrame baseFrame) {
 		if (!Renderer3DSettings.canUseResidentObjectChunks()) {
 			clearResidentObjectChunkCache();
@@ -3910,43 +3906,397 @@ public final class mudclient implements Runnable {
 			clearResidentObjectChunkCache();
 			return baseFrame;
 		}
+		boolean staticPresentationRebuildPending =
+			this.builtStaticPresentationRevision
+					!= this.staticPresentationRevision
+				|| this.builtStaticPresentationBaseX
+					!= this.midRegionBaseX
+				|| this.builtStaticPresentationBaseZ
+					!= this.midRegionBaseZ;
+		long inputStartNanos = System.nanoTime();
 		List<ResidentObjectChunkInput> objectInputs = buildResidentObjectChunkInputs(baseFrame);
+		long inputNanos = System.nanoTime() - inputStartNanos;
 		if (objectInputs.isEmpty()) {
 			clearResidentObjectChunkCache();
+			this.builtStaticPresentationRevision =
+				this.staticPresentationRevision;
+			this.builtStaticPresentationBaseX =
+				this.midRegionBaseX;
+			this.builtStaticPresentationBaseZ =
+				this.midRegionBaseZ;
 			return baseFrame;
+		}
+		if (this.cachedResidentObjectChunkViewBaseX
+					!= this.midRegionBaseX
+				|| this.cachedResidentObjectChunkViewBaseZ
+					!= this.midRegionBaseZ) {
+			this.cachedResidentObjectChunkPreviousViewCells.clear();
+			this.cachedResidentObjectChunkPreviousViewCells.addAll(
+				this.cachedResidentObjectChunkCurrentViewCells);
+			this.cachedResidentObjectChunkCurrentViewCells.clear();
+			this.cachedResidentObjectChunkViewBaseX =
+				this.midRegionBaseX;
+			this.cachedResidentObjectChunkViewBaseZ =
+				this.midRegionBaseZ;
 		}
 		ArrayList<Renderer3DWorldChunkFrame.ChunkMesh> chunks =
 			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(baseFrame.getChunks());
-		Set<Integer> activeCells = new HashSet<Integer>();
-		for (ResidentObjectChunkInput input : objectInputs) {
+		List<Renderer3DWorldChunkFrame.ChunkMesh> objectChunks =
+			new ArrayList<Renderer3DWorldChunkFrame.ChunkMesh>(
+				Collections.nCopies(
+					objectInputs.size(),
+					(Renderer3DWorldChunkFrame.ChunkMesh) null));
+		List<PendingResidentObjectChunkBuild> pendingBuilds =
+			new ArrayList<PendingResidentObjectChunkBuild>();
+		Set<Long> activeCells = new HashSet<Long>();
+		int cacheHits = 0;
+		int cacheMisses = 0;
+		int canonicalOwnershipMatches = 0;
+		int canonicalOwnershipChanges = 0;
+		int canonicalOwnershipReuse = 0;
+		int canonicalGeometryComparisons = 0;
+		int canonicalExactRenderMatches = 0;
+		int canonicalPresentationSetMatches = 0;
+		int canonicalDrawMetadataMatches = 0;
+		int canonicalPositionMatches = 0;
+		int canonicalVertexAttributeMatches = 0;
+		int canonicalIndexMatches = 0;
+		int canonicalTriangleAttributeMatches = 0;
+		int canonicalTriangleSetMatches = 0;
+		int canonicalShadowSetMatches = 0;
+		int canonicalGlowSetMatches = 0;
+		int canonicalComparisonErrors = 0;
+		long canonicalComparisonNanos = 0L;
+		StringBuilder canonicalMismatchDetails =
+			new StringBuilder();
+		long meshBuildNanos = 0L;
+		long meshCpuNanos = 0L;
+		long parallelBuildStartNanos = 0L;
+		boolean parallelBuild =
+			staticPresentationRebuildPending
+				&& objectInputs.size()
+					>= RESIDENT_OBJECT_PARALLEL_BUILD_MINIMUM
+				&& residentObjectBuildWorkerCount() > 1
+				&& !RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED;
+		for (int inputIndex = 0;
+				inputIndex < objectInputs.size();
+				inputIndex++) {
+			final ResidentObjectChunkInput input =
+				objectInputs.get(inputIndex);
 			activeCells.add(input.cellKey);
 			ResidentObjectChunkCacheEntry cached = this.cachedResidentObjectChunks.get(input.cellKey);
+			ResidentObjectChunkCacheEntry canonicalComparisonCandidate =
+				null;
 			Renderer3DWorldChunkFrame.ChunkMesh objectChunk;
+			if (cached != null
+				&& cached.cacheKey != input.cacheKey
+				&& input.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				if (cached.canonicalContentKey
+						== input.canonicalContentKey) {
+					canonicalOwnershipMatches++;
+					if (RendererDiagnosticSession.isEnabled()
+						&& RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED) {
+						canonicalComparisonCandidate = cached;
+					}
+				} else {
+					canonicalOwnershipChanges++;
+				}
+			}
+			if (cached != null
+				&& cached.cacheKey == input.cacheKey
+				&& input.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				&& (cached.liveModelCount != input.liveModelCount
+					|| cached.presentationModelCount
+						!= input.presentationModelCount)) {
+				canonicalOwnershipReuse++;
+			}
 			if (cached != null && cached.cacheKey == input.cacheKey) {
-				objectChunk = cached.chunk;
+				if (input.chunkRole
+						== Renderer3DWorldChunkFrame
+							.CHUNK_ROLE_STATIC_OBJECTS) {
+					int offsetX = Math.multiplyExact(
+						cached.presentationBaseX - this.midRegionBaseX,
+						this.tileSize);
+					int offsetZ = Math.multiplyExact(
+						cached.presentationBaseZ - this.midRegionBaseZ,
+						this.tileSize);
+					objectChunk =
+						cached.chunk.rebaseStaticObjectPresentation(
+							input.anchor.getCenterSectionX(),
+							input.anchor.getCenterSectionY(),
+							offsetX,
+							offsetZ);
+					this.cachedResidentObjectChunks.put(
+						input.cellKey,
+						new ResidentObjectChunkCacheEntry(
+							input.cacheKey,
+							input.canonicalContentKey,
+							objectChunk,
+							this.midRegionBaseX,
+							this.midRegionBaseZ,
+							input.liveModelCount,
+							input.presentationModelCount));
+					cacheHits++;
+				} else if (cached.presentationBaseX
+						== this.midRegionBaseX
+					&& cached.presentationBaseZ
+						== this.midRegionBaseZ) {
+					objectChunk = cached.chunk;
+					cacheHits++;
+				} else {
+					cached = null;
+					objectChunk = null;
+				}
 			} else {
-				objectChunk = buildResidentObjectChunkMesh(input);
-				if (objectChunk == null || objectChunk.getTriangleCount() <= 0) {
-					debugResidentObjectChunkBuild("resident-chunk-empty", input, objectChunk);
-					this.cachedResidentObjectChunks.remove(input.cellKey);
+				cached = null;
+				objectChunk = null;
+			}
+			if (cached == null) {
+				cacheMisses++;
+				if (parallelBuild) {
+					if (pendingBuilds.isEmpty()) {
+						parallelBuildStartNanos =
+							System.nanoTime();
+					}
+					Future<ResidentObjectChunkBuildResult> future =
+						this.residentObjectBuildExecutor.submit(
+							new Callable<ResidentObjectChunkBuildResult>() {
+								@Override
+								public ResidentObjectChunkBuildResult call() {
+									return buildResidentObjectChunkMeshMeasured(
+										input);
+								}
+							});
+					pendingBuilds.add(
+						new PendingResidentObjectChunkBuild(
+							inputIndex,
+							input,
+							future));
 					continue;
 				}
-				debugResidentObjectChunkBuild("resident-chunk-build", input, objectChunk);
-				this.cachedResidentObjectChunks.put(
-					input.cellKey,
-					new ResidentObjectChunkCacheEntry(input.cacheKey, objectChunk));
+				ResidentObjectChunkBuildResult result =
+					buildResidentObjectChunkMeshMeasured(input);
+				meshBuildNanos += result.durationNanos;
+				meshCpuNanos += result.durationNanos;
+				objectChunk = result.chunk;
+				if (objectChunk != null
+					&& objectChunk.getTriangleCount() > 0
+					&& canonicalComparisonCandidate != null) {
+					long comparisonStartNanos =
+						System.nanoTime();
+					try {
+						int offsetX = Math.multiplyExact(
+							canonicalComparisonCandidate.presentationBaseX
+								- this.midRegionBaseX,
+							this.tileSize);
+						int offsetZ = Math.multiplyExact(
+							canonicalComparisonCandidate.presentationBaseZ
+								- this.midRegionBaseZ,
+							this.tileSize);
+						Renderer3DWorldChunkFrame.ChunkMesh rebased =
+							canonicalComparisonCandidate.chunk
+								.rebaseStaticObjectPresentation(
+									input.anchor.getCenterSectionX(),
+									input.anchor.getCenterSectionY(),
+									offsetX,
+									offsetZ);
+						ResidentObjectChunkGeometryComparison
+							comparison =
+								ResidentObjectChunkGeometryComparison
+									.compare(rebased, objectChunk);
+						canonicalGeometryComparisons++;
+						canonicalExactRenderMatches +=
+							comparison.exactRenderMatches ? 1 : 0;
+						canonicalPresentationSetMatches +=
+							comparison.presentationSetMatches ? 1 : 0;
+						canonicalDrawMetadataMatches +=
+							comparison.drawMetadataMatches ? 1 : 0;
+						canonicalPositionMatches +=
+							comparison.positionMatches ? 1 : 0;
+						canonicalVertexAttributeMatches +=
+							comparison.vertexAttributeMatches ? 1 : 0;
+						canonicalIndexMatches +=
+							comparison.indexMatches ? 1 : 0;
+						canonicalTriangleAttributeMatches +=
+							comparison.triangleAttributeMatches
+								? 1 : 0;
+						canonicalTriangleSetMatches +=
+							comparison.triangleSetMatches ? 1 : 0;
+						canonicalShadowSetMatches +=
+							comparison.shadowSetMatches ? 1 : 0;
+						canonicalGlowSetMatches +=
+							comparison.glowSetMatches ? 1 : 0;
+						if (!comparison.exactRenderMatches
+							&& canonicalMismatchDetails.length()
+								< 2048) {
+							if (canonicalMismatchDetails.length()
+									> 0) {
+								canonicalMismatchDetails.append(';');
+							}
+							canonicalMismatchDetails
+								.append("cell=")
+								.append(input.cellX)
+								.append(',')
+								.append(input.cellZ)
+								.append(':')
+								.append(comparison.summary());
+						}
+					} catch (RuntimeException comparisonError) {
+						canonicalComparisonErrors++;
+						if (canonicalMismatchDetails.length()
+								< 2048) {
+							if (canonicalMismatchDetails.length()
+									> 0) {
+								canonicalMismatchDetails.append(';');
+							}
+							canonicalMismatchDetails
+								.append("cell=")
+								.append(input.cellX)
+								.append(',')
+								.append(input.cellZ)
+								.append(":error=")
+								.append(
+									comparisonError.getClass()
+										.getSimpleName());
+						}
+					} finally {
+						canonicalComparisonNanos +=
+							System.nanoTime()
+								- comparisonStartNanos;
+					}
+				}
+				objectChunk = acceptResidentObjectChunkBuild(
+					input, objectChunk);
 			}
-			chunks.add(objectChunk);
+			objectChunks.set(inputIndex, objectChunk);
 		}
-		this.cachedResidentObjectChunks.keySet().retainAll(activeCells);
+		for (PendingResidentObjectChunkBuild pending
+				: pendingBuilds) {
+			ResidentObjectChunkBuildResult result =
+				awaitResidentObjectChunkBuild(pending.future);
+			meshCpuNanos += result.durationNanos;
+			objectChunks.set(
+				pending.inputIndex,
+				acceptResidentObjectChunkBuild(
+					pending.input,
+					result.chunk));
+		}
+		if (!pendingBuilds.isEmpty()) {
+			meshBuildNanos =
+				System.nanoTime() - parallelBuildStartNanos;
+		}
+		for (Renderer3DWorldChunkFrame.ChunkMesh objectChunk
+				: objectChunks) {
+			if (objectChunk != null) {
+				chunks.add(objectChunk);
+			}
+		}
+		this.cachedResidentObjectChunkCurrentViewCells.clear();
+		this.cachedResidentObjectChunkCurrentViewCells.addAll(activeCells);
+		Set<Long> retainedCells = new HashSet<Long>(activeCells);
+		retainedCells.addAll(
+			this.cachedResidentObjectChunkPreviousViewCells);
+		this.cachedResidentObjectChunks.keySet().retainAll(retainedCells);
+		if (staticPresentationRebuildPending) {
+			RendererDiagnosticSession.Record event =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.static-presentation-chunk-build");
+			if (event != null) {
+				event.number("inputs", objectInputs.size());
+				event.number("cacheHits", cacheHits);
+				event.number("cacheMisses", cacheMisses);
+				event.number(
+					"canonicalOwnershipMatches",
+					canonicalOwnershipMatches);
+				event.number(
+					"canonicalOwnershipChanges",
+					canonicalOwnershipChanges);
+				event.number(
+					"canonicalOwnershipReuse",
+					canonicalOwnershipReuse);
+				event.number(
+					"canonicalGeometryComparisons",
+					canonicalGeometryComparisons);
+				event.number(
+					"canonicalExactRenderMatches",
+					canonicalExactRenderMatches);
+				event.number(
+					"canonicalPresentationSetMatches",
+					canonicalPresentationSetMatches);
+				event.number(
+					"canonicalDrawMetadataMatches",
+					canonicalDrawMetadataMatches);
+				event.number(
+					"canonicalPositionMatches",
+					canonicalPositionMatches);
+				event.number(
+					"canonicalVertexAttributeMatches",
+					canonicalVertexAttributeMatches);
+				event.number(
+					"canonicalIndexMatches",
+					canonicalIndexMatches);
+				event.number(
+					"canonicalTriangleAttributeMatches",
+					canonicalTriangleAttributeMatches);
+				event.number(
+					"canonicalTriangleSetMatches",
+					canonicalTriangleSetMatches);
+				event.number(
+					"canonicalShadowSetMatches",
+					canonicalShadowSetMatches);
+				event.number(
+					"canonicalGlowSetMatches",
+					canonicalGlowSetMatches);
+				event.number(
+					"canonicalComparisonErrors",
+					canonicalComparisonErrors);
+				event.number(
+					"canonicalComparisonNanos",
+					canonicalComparisonNanos);
+				if (canonicalMismatchDetails.length() > 0) {
+					event.string(
+						"canonicalMismatchDetails",
+						canonicalMismatchDetails.toString());
+				}
+				event.number(
+					"cacheRetainedInactive",
+					Math.max(
+						0,
+						this.cachedResidentObjectChunks.size()
+							- activeCells.size()));
+				event.number(
+					"cacheEntries",
+					this.cachedResidentObjectChunks.size());
+				event.number("inputDurationNanos", inputNanos);
+				event.number("meshDurationNanos", meshBuildNanos);
+				event.number(
+					"meshCpuDurationNanos",
+					meshCpuNanos);
+				event.bool("meshParallel", parallelBuild);
+				event.number(
+					"meshWorkers",
+					parallelBuild
+						? residentObjectBuildWorkerCount() : 1);
+				RendererDiagnosticSession.writeEventRecord(event);
+			}
+		}
+		this.builtStaticPresentationRevision =
+			this.staticPresentationRevision;
+		this.builtStaticPresentationBaseX =
+			this.midRegionBaseX;
+		this.builtStaticPresentationBaseZ =
+			this.midRegionBaseZ;
 		return Renderer3DWorldChunkFrame.fromChunks(chunks);
 	}
 
 	private List<ResidentObjectChunkInput> buildResidentObjectChunkInputs(Renderer3DWorldChunkFrame baseFrame) {
 		Renderer3DWorldChunkFrame.ChunkMesh anchor = baseFrame.getChunks().get(0);
-		Map<Integer, ResidentObjectChunkInputBuilder> builders =
-			new TreeMap<Integer, ResidentObjectChunkInputBuilder>();
-		ensureStaticScenePresentationModels();
+		Map<Long, ResidentObjectChunkInputBuilder> builders =
+			new TreeMap<Long, ResidentObjectChunkInputBuilder>();
 		for (int i = 0; i < this.getGameObjectInstanceCount(); i++) {
 			if (this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null) {
 				addResidentObjectChunkModel(
@@ -3958,7 +4308,8 @@ public final class mudclient implements Runnable {
 					i,
 					this.getGameObjectInstanceID(i),
 					this.getGameObjectInstanceDir(i),
-					this.getGameObjectInstanceModel(i));
+					this.getGameObjectInstanceModel(i),
+					false);
 			}
 		}
 		for (int i = 0; i < this.getWallObjectInstanceCount(); i++) {
@@ -3972,21 +4323,38 @@ public final class mudclient implements Runnable {
 					i,
 					this.getWallObjectInstanceID(i),
 					this.getWallObjectInstanceDir(i),
-					this.getWallObjectInstanceModel(i));
+					this.getWallObjectInstanceModel(i),
+					false);
 			}
 		}
-		for (StaticPresentationModel presentation
-				: this.staticPresentationModels) {
+		int presentationIndex = 0;
+		for (SceneBaselineState.Record record
+				: this.staticPresentationSceneryRecords) {
 			addResidentObjectChunkModel(
 				builders,
 				anchor,
-				presentation.tileX,
-				presentation.tileZ,
-				presentation.kind,
-				presentation.instanceIndex,
-				presentation.objectId,
-				presentation.direction,
-				presentation.model);
+				record.x - this.midRegionBaseX,
+				record.y - this.midRegionBaseZ,
+				Renderer3DModelKind.GAME_OBJECT,
+				presentationIndex++,
+				record.id,
+				record.direction,
+				null,
+				true);
+		}
+		for (SceneBaselineState.Record record
+				: this.staticPresentationWallRecords) {
+			addResidentObjectChunkModel(
+				builders,
+				anchor,
+				record.x - this.midRegionBaseX,
+				record.y - this.midRegionBaseZ,
+				Renderer3DModelKind.WALL_OBJECT,
+				presentationIndex++,
+				record.id,
+				record.direction,
+				null,
+				true);
 		}
 		List<ResidentObjectChunkInput> inputs = new ArrayList<ResidentObjectChunkInput>(builders.size());
 		for (ResidentObjectChunkInputBuilder builder : builders.values()) {
@@ -3996,7 +4364,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void addResidentObjectChunkModel(
-		Map<Integer, ResidentObjectChunkInputBuilder> builders,
+		Map<Long, ResidentObjectChunkInputBuilder> builders,
 		Renderer3DWorldChunkFrame.ChunkMesh anchor,
 		int tileX,
 		int tileZ,
@@ -4004,32 +4372,72 @@ public final class mudclient implements Runnable {
 		int instanceIndex,
 		int objectId,
 		int direction,
-		RSModel model) {
-		int chunkRole = isAnimatedResidentObjectChunkModel(kind, objectId)
+		RSModel model,
+		boolean presentationOnly) {
+		int chunkRole = !presentationOnly
+			&& isAnimatedResidentObjectChunkModel(kind, objectId)
 			? Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS
 			: Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS;
 		int cellTileSize = residentObjectChunkTileSize(chunkRole);
 		int cellX = Math.floorDiv(tileX, cellTileSize);
 		int cellZ = Math.floorDiv(tileZ, cellTileSize);
-		int cellKey = (cellZ * 1024 + cellX) * 4 + chunkRole;
+		int worldTileX = Math.addExact(tileX, this.midRegionBaseX);
+		int worldTileZ = Math.addExact(tileZ, this.midRegionBaseZ);
+		int worldCellX = Math.floorDiv(worldTileX, cellTileSize);
+		int worldCellZ = Math.floorDiv(worldTileZ, cellTileSize);
+		long cellKey = residentObjectChunkCellKey(
+			worldCellX, worldCellZ, chunkRole);
 		ResidentObjectChunkInputBuilder builder = builders.get(cellKey);
 		if (builder == null) {
-			builder = new ResidentObjectChunkInputBuilder(anchor, cellKey, cellX, cellZ, chunkRole, cellTileSize);
+			builder = new ResidentObjectChunkInputBuilder(
+				anchor,
+				cellKey,
+				cellX,
+				cellZ,
+				worldCellX,
+				worldCellZ,
+				chunkRole,
+				cellTileSize);
 			builders.put(cellKey, builder);
 		}
 		boolean debugMatched = shouldDebugResidentObjectChunkModel(kind, tileX, tileZ, objectId);
+		ResidentObjectCanonicalIdentity canonicalIdentity =
+			chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				? createResidentObjectCanonicalIdentity(
+					kind,
+					worldTileX,
+					worldTileZ,
+					objectId,
+					direction)
+				: null;
 		builder.add(
 			kind,
 			instanceIndex,
 			tileX,
 			tileZ,
+			worldTileX,
+			worldTileZ,
 			objectId,
 			direction,
 			model,
+			canonicalIdentity,
+			presentationOnly,
 			debugMatched,
 			debugMatched
 				? debugSceneObjectChunkSummary(kind, instanceIndex, tileX, tileZ, objectId, direction, model)
 				: "");
+	}
+
+	private static long residentObjectChunkCellKey(
+		int worldCellX,
+		int worldCellZ,
+		int chunkRole) {
+		long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+		hash = mixResidentObjectChunkCacheKey(hash, worldCellX);
+		hash = mixResidentObjectChunkCacheKey(hash, worldCellZ);
+		return mixResidentObjectChunkCacheKey(hash, chunkRole);
 	}
 
 	private static int residentObjectChunkTileSize(int chunkRole) {
@@ -4103,8 +4511,89 @@ public final class mudclient implements Runnable {
 			return true;
 		}
 		com.openrsc.client.entityhandling.defs.GameObjectDef def = EntityHandler.getObjectDef(objectId);
-		return def != null
-			&& ("portal".equals(def.getObjectModel()) || FISHING_SPOT_MODEL_NAME.equals(def.getObjectModel()));
+		if (def == null) {
+			return false;
+		}
+		String modelName = lowerOrEmpty(def.getObjectModel());
+		return "portal".equals(modelName)
+			|| FISHING_SPOT_MODEL_NAME.equals(modelName)
+			|| modelName.startsWith("firea")
+			|| modelName.startsWith("fireplacea")
+			|| modelName.startsWith("lightning")
+			|| modelName.startsWith("firespell")
+			|| modelName.startsWith("spellcharge")
+			|| modelName.startsWith("torcha")
+			|| modelName.startsWith("skulltorcha")
+			|| modelName.startsWith("myworld_cosmic_sparkles")
+			|| modelName.startsWith("clawspell");
+	}
+
+	private ResidentObjectCanonicalIdentity
+		createResidentObjectCanonicalIdentity(
+			Renderer3DModelKind kind,
+			int worldTileX,
+			int worldTileZ,
+			int objectId,
+			int direction) {
+		int localX = worldTileX - this.midRegionBaseX;
+		int localZ = worldTileZ - this.midRegionBaseZ;
+		int elevation1 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
+		int elevation2 = World.PRESENTATION_ELEVATION_UNAVAILABLE;
+		if (kind == Renderer3DModelKind.GAME_OBJECT) {
+			GameObjectDef definition =
+				EntityHandler.getObjectDef(objectId);
+			if (definition != null && definition.modelID >= 0) {
+				int xSize;
+				int zSize;
+				if (direction == 0 || direction == 4) {
+					xSize = definition.getWidth();
+					zSize = definition.getHeight();
+				} else {
+					xSize = definition.getHeight();
+					zSize = definition.getWidth();
+				}
+				int centerX =
+					(2 * localX + xSize) * this.tileSize / 2;
+				int centerZ =
+					(2 * localZ + zSize) * this.tileSize / 2;
+				elevation1 =
+					this.world.getPresentationTerrainElevation(
+						centerX, centerZ);
+				elevation2 = elevation1;
+			}
+		} else if (kind == Renderer3DModelKind.WALL_OBJECT) {
+			int startX = localX;
+			int startZ = localZ;
+			int endpointX = localX;
+			int endpointZ = localZ;
+			if (direction == 1) {
+				endpointZ++;
+			} else if (direction == 0) {
+				endpointX++;
+			} else if (direction == 2) {
+				startX++;
+				endpointZ++;
+			} else if (direction == 3) {
+				endpointX++;
+				endpointZ++;
+			}
+			elevation1 =
+				this.world.getPresentationTerrainElevation(
+					startX * this.tileSize,
+					startZ * this.tileSize);
+			elevation2 =
+				this.world.getPresentationTerrainElevation(
+					endpointX * this.tileSize,
+					endpointZ * this.tileSize);
+		}
+		return new ResidentObjectCanonicalIdentity(
+			kind.ordinal(),
+			worldTileX,
+			worldTileZ,
+			objectId,
+			direction,
+			elevation1,
+			elevation2);
 	}
 
 	private static final class Renderer3DGlowSpec {
@@ -4119,47 +4608,149 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private static final class StaticPresentationModel {
-		private final Renderer3DModelKind kind;
-		private final int instanceIndex;
-		private final int tileX;
-		private final int tileZ;
-		private final int objectId;
-		private final int direction;
-		private final RSModel model;
-
-		private StaticPresentationModel(
-			Renderer3DModelKind kind,
-			int instanceIndex,
-			int tileX,
-			int tileZ,
-			int objectId,
-			int direction,
-			RSModel model) {
-			this.kind = kind;
-			this.instanceIndex = instanceIndex;
-			this.tileX = tileX;
-			this.tileZ = tileZ;
-			this.objectId = objectId;
-			this.direction = direction;
-			this.model = model;
-		}
-	}
-
 	private Renderer3DWorldChunkFrame.ChunkMesh buildResidentObjectChunkMesh(ResidentObjectChunkInput input) {
+		RSModel[] models = input.models;
+		if (input.chunkRole
+				== Renderer3DWorldChunkFrame
+					.CHUNK_ROLE_STATIC_OBJECTS) {
+			models = buildCanonicalResidentObjectModels(input);
+		}
 		return RSModel.buildRenderer3DObjectChunkMesh(
 			input.anchor.getPlane(),
 			input.anchor.getCenterSectionX(),
 			input.anchor.getCenterSectionY(),
 			input.anchor.getOriginWorldX() + input.cellX * input.cellTileSize * this.tileSize,
 			input.anchor.getOriginWorldZ() + input.cellZ * input.cellTileSize * this.tileSize,
-			input.models,
+			models,
 			input.modelCount,
 			input.chunkRole);
 	}
 
+	private RSModel[] buildCanonicalResidentObjectModels(
+		ResidentObjectChunkInput input) {
+		ResidentObjectCanonicalIdentity[] identities =
+			input.canonicalIdentities;
+		RSModel[] models =
+			new RSModel[identities == null ? 0 : identities.length];
+		for (int index = 0; index < models.length; index++) {
+			ResidentObjectCanonicalIdentity identity =
+				identities[index];
+			SceneBaselineState.Record record =
+				new SceneBaselineState.Record(
+					identity.objectId,
+					identity.worldTileX,
+					identity.worldTileZ,
+					identity.direction,
+					identity.kind
+						== Renderer3DModelKind.WALL_OBJECT.ordinal()
+							? 1 : 0);
+			models[index] =
+				identity.kind
+						== Renderer3DModelKind.GAME_OBJECT.ordinal()
+					? createStaticPresentationGameObjectModel(
+						record,
+						index,
+						identity.elevation1)
+					: createStaticPresentationWallObjectModel(
+						record,
+						index,
+						identity.elevation1,
+						identity.elevation2);
+		}
+		return models;
+	}
+
+	private ResidentObjectChunkBuildResult
+		buildResidentObjectChunkMeshMeasured(
+			ResidentObjectChunkInput input) {
+		long startNanos = System.nanoTime();
+		Renderer3DWorldChunkFrame.ChunkMesh chunk =
+			buildResidentObjectChunkMesh(input);
+		return new ResidentObjectChunkBuildResult(
+			chunk,
+			System.nanoTime() - startNanos);
+	}
+
+	private Renderer3DWorldChunkFrame.ChunkMesh
+		acceptResidentObjectChunkBuild(
+			ResidentObjectChunkInput input,
+			Renderer3DWorldChunkFrame.ChunkMesh objectChunk) {
+		if (objectChunk == null
+			|| objectChunk.getTriangleCount() <= 0) {
+			debugResidentObjectChunkBuild(
+				"resident-chunk-empty",
+				input,
+				objectChunk);
+			this.cachedResidentObjectChunks.remove(input.cellKey);
+			return null;
+		}
+		debugResidentObjectChunkBuild(
+			"resident-chunk-build",
+			input,
+			objectChunk);
+		this.cachedResidentObjectChunks.put(
+			input.cellKey,
+			new ResidentObjectChunkCacheEntry(
+				input.cacheKey,
+				input.canonicalContentKey,
+				objectChunk,
+				this.midRegionBaseX,
+				this.midRegionBaseZ,
+				input.liveModelCount,
+				input.presentationModelCount));
+		return objectChunk;
+	}
+
+	private static ResidentObjectChunkBuildResult
+		awaitResidentObjectChunkBuild(
+			Future<ResidentObjectChunkBuildResult> future) {
+		try {
+			return future.get();
+		} catch (InterruptedException interrupted) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException(
+				"Interrupted while building resident object chunks",
+				interrupted);
+		} catch (ExecutionException failed) {
+			throw new IllegalStateException(
+				"Resident object chunk build failed",
+				failed.getCause());
+		}
+	}
+
+	private static final class ResidentObjectChunkBuildResult {
+		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+		private final long durationNanos;
+
+		private ResidentObjectChunkBuildResult(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			long durationNanos) {
+			this.chunk = chunk;
+			this.durationNanos = durationNanos;
+		}
+	}
+
+	private static final class PendingResidentObjectChunkBuild {
+		private final int inputIndex;
+		private final ResidentObjectChunkInput input;
+		private final Future<ResidentObjectChunkBuildResult> future;
+
+		private PendingResidentObjectChunkBuild(
+			int inputIndex,
+			ResidentObjectChunkInput input,
+			Future<ResidentObjectChunkBuildResult> future) {
+			this.inputIndex = inputIndex;
+			this.input = input;
+			this.future = future;
+		}
+	}
+
 	private void clearResidentObjectChunkCache() {
 		this.cachedResidentObjectChunks.clear();
+		this.cachedResidentObjectChunkCurrentViewCells.clear();
+		this.cachedResidentObjectChunkPreviousViewCells.clear();
+		this.cachedResidentObjectChunkViewBaseX = Integer.MIN_VALUE;
+		this.cachedResidentObjectChunkViewBaseZ = Integer.MIN_VALUE;
 	}
 
 	private int getDebugPlayerWorldTileX() {
@@ -4409,27 +5000,36 @@ public final class mudclient implements Runnable {
 
 	private static final class ResidentObjectChunkInput {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
-		private final int cellKey;
+		private final long cellKey;
 		private final int cellX;
 		private final int cellZ;
 		private final int cellTileSize;
 		private final int chunkRole;
 		private final RSModel[] models;
+		private final ResidentObjectCanonicalIdentity[]
+			canonicalIdentities;
 		private final int modelCount;
 		private final long cacheKey;
+		private final long canonicalContentKey;
+		private final int liveModelCount;
+		private final int presentationModelCount;
 		private final int debugMatchedModelCount;
 		private final String debugFirstModelSummary;
 
 		private ResidentObjectChunkInput(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
-			int cellKey,
+			long cellKey,
 			int cellX,
 			int cellZ,
 			int cellTileSize,
 			int chunkRole,
 			RSModel[] models,
+			ResidentObjectCanonicalIdentity[] canonicalIdentities,
 			int modelCount,
 			long cacheKey,
+			long canonicalContentKey,
+			int liveModelCount,
+			int presentationModelCount,
 			int debugMatchedModelCount,
 			String debugFirstModelSummary) {
 			this.anchor = anchor;
@@ -4439,8 +5039,12 @@ public final class mudclient implements Runnable {
 			this.cellTileSize = cellTileSize;
 			this.chunkRole = chunkRole;
 			this.models = models;
+			this.canonicalIdentities = canonicalIdentities;
 			this.modelCount = modelCount;
 			this.cacheKey = cacheKey;
+			this.canonicalContentKey = canonicalContentKey;
+			this.liveModelCount = liveModelCount;
+			this.presentationModelCount = presentationModelCount;
 			this.debugMatchedModelCount = debugMatchedModelCount;
 			this.debugFirstModelSummary = debugFirstModelSummary;
 		}
@@ -4448,21 +5052,28 @@ public final class mudclient implements Runnable {
 
 	private static final class ResidentObjectChunkInputBuilder {
 		private final Renderer3DWorldChunkFrame.ChunkMesh anchor;
-		private final int cellKey;
+		private final long cellKey;
 		private final int cellX;
 		private final int cellZ;
 		private final int cellTileSize;
 		private final int chunkRole;
 		private final List<RSModel> models = new ArrayList<RSModel>();
+		private final List<ResidentObjectCanonicalIdentity>
+			canonicalIdentities =
+				new ArrayList<ResidentObjectCanonicalIdentity>();
 		private long cacheKey;
+		private int liveModelCount;
+		private int presentationModelCount;
 		private int debugMatchedModelCount;
 		private String debugFirstModelSummary = "";
 
 		private ResidentObjectChunkInputBuilder(
 			Renderer3DWorldChunkFrame.ChunkMesh anchor,
-			int cellKey,
+			long cellKey,
 			int cellX,
 			int cellZ,
+			int worldCellX,
+			int worldCellZ,
 			int chunkRole,
 			int cellTileSize) {
 			this.anchor = anchor;
@@ -4473,9 +5084,8 @@ public final class mudclient implements Runnable {
 			this.chunkRole = chunkRole;
 			this.cacheKey = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getPlane());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionX());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, anchor.getCenterSectionY());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, cellKey);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, worldCellX);
+			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, worldCellZ);
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, chunkRole);
 			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, cellTileSize);
 		}
@@ -4485,32 +5095,82 @@ public final class mudclient implements Runnable {
 			int instanceIndex,
 			int tileX,
 			int tileZ,
+			int worldTileX,
+			int worldTileZ,
 			int objectId,
 			int direction,
 			RSModel model,
+			ResidentObjectCanonicalIdentity canonicalIdentity,
+			boolean presentationOnly,
 			boolean debugMatched,
 			String debugSummary) {
-			this.models.add(model);
+			if (presentationOnly) {
+				this.presentationModelCount++;
+			} else {
+				this.liveModelCount++;
+			}
 			if (debugMatched) {
 				this.debugMatchedModelCount++;
 				if (this.debugFirstModelSummary.isEmpty()) {
 					this.debugFirstModelSummary = debugSummary == null ? "" : debugSummary;
 				}
 			}
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, kind.ordinal());
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, instanceIndex);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileX);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, tileZ);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, objectId);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, direction);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.key);
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, System.identityHashCode(model));
-			this.cacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, model.getRenderer3DTransformVersion());
+			if (this.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				if (canonicalIdentity == null) {
+					throw new IllegalArgumentException(
+						"Static resident scenery requires canonical identity");
+				}
+				this.canonicalIdentities.add(canonicalIdentity);
+			} else {
+				if (model == null) {
+					throw new IllegalArgumentException(
+						"Animated resident scenery requires a live model");
+				}
+				this.models.add(model);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, kind.ordinal());
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, instanceIndex);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, tileX);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, tileZ);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, objectId);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, direction);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, model.key);
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey, System.identityHashCode(model));
+				this.cacheKey = mixResidentObjectChunkCacheKey(
+					this.cacheKey,
+					model.getRenderer3DTransformVersion());
+			}
 		}
 
 		private ResidentObjectChunkInput build() {
+			Collections.sort(this.canonicalIdentities);
 			RSModel[] modelArray = this.models.toArray(new RSModel[this.models.size()]);
-			long finalCacheKey = mixResidentObjectChunkCacheKey(this.cacheKey, modelArray.length);
+			ResidentObjectCanonicalIdentity[] canonicalIdentityArray =
+				this.canonicalIdentities.toArray(
+					new ResidentObjectCanonicalIdentity[
+						this.canonicalIdentities.size()]);
+			int modelCount = this.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				? canonicalIdentityArray.length
+				: modelArray.length;
+			long canonicalContentKey =
+				buildCanonicalContentKey();
+			long finalCacheKey = this.chunkRole
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS
+				? canonicalContentKey
+				: mixResidentObjectChunkCacheKey(
+					this.cacheKey, modelArray.length);
 			return new ResidentObjectChunkInput(
 				this.anchor,
 				this.cellKey,
@@ -4519,20 +5179,694 @@ public final class mudclient implements Runnable {
 				this.cellTileSize,
 				this.chunkRole,
 				modelArray,
-				modelArray.length,
+				canonicalIdentityArray,
+				modelCount,
 				finalCacheKey,
+				canonicalContentKey,
+				this.liveModelCount,
+				this.presentationModelCount,
 				this.debugMatchedModelCount,
 				this.debugFirstModelSummary);
+		}
+
+		private long buildCanonicalContentKey() {
+			if (this.chunkRole
+					!= Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_STATIC_OBJECTS) {
+				return 0L;
+			}
+			long hash = this.cacheKey;
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.canonicalIdentities.size());
+			for (ResidentObjectCanonicalIdentity identity
+					: this.canonicalIdentities) {
+				hash = identity.mixInto(hash);
+			}
+			return hash;
+		}
+	}
+
+	private static final class ResidentObjectCanonicalIdentity
+			implements Comparable<ResidentObjectCanonicalIdentity> {
+		private final int kind;
+		private final int worldTileX;
+		private final int worldTileZ;
+		private final int objectId;
+		private final int direction;
+		private final int elevation1;
+		private final int elevation2;
+
+		private ResidentObjectCanonicalIdentity(
+			int kind,
+			int worldTileX,
+			int worldTileZ,
+			int objectId,
+			int direction,
+			int elevation1,
+			int elevation2) {
+			this.kind = kind;
+			this.worldTileX = worldTileX;
+			this.worldTileZ = worldTileZ;
+			this.objectId = objectId;
+			this.direction = direction;
+			this.elevation1 = elevation1;
+			this.elevation2 = elevation2;
+		}
+
+		private long mixInto(long hash) {
+			hash = mixResidentObjectChunkCacheKey(hash, this.kind);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.worldTileX);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.worldTileZ);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.objectId);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.direction);
+			hash = mixResidentObjectChunkCacheKey(
+				hash, this.elevation1);
+			return mixResidentObjectChunkCacheKey(
+				hash, this.elevation2);
+		}
+
+		@Override
+		public int compareTo(
+			ResidentObjectCanonicalIdentity other) {
+			int comparison = Integer.compare(
+				this.worldTileX, other.worldTileX);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.worldTileZ, other.worldTileZ);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(this.kind, other.kind);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.direction, other.direction);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.objectId, other.objectId);
+			if (comparison != 0) {
+				return comparison;
+			}
+			comparison = Integer.compare(
+				this.elevation1, other.elevation1);
+			return comparison != 0
+				? comparison
+				: Integer.compare(
+					this.elevation2, other.elevation2);
 		}
 	}
 
 	private static final class ResidentObjectChunkCacheEntry {
 		private final long cacheKey;
+		private final long canonicalContentKey;
 		private final Renderer3DWorldChunkFrame.ChunkMesh chunk;
+		private final int presentationBaseX;
+		private final int presentationBaseZ;
+		private final int liveModelCount;
+		private final int presentationModelCount;
 
-		private ResidentObjectChunkCacheEntry(long cacheKey, Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		private ResidentObjectChunkCacheEntry(
+			long cacheKey,
+			long canonicalContentKey,
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int presentationBaseX,
+			int presentationBaseZ,
+			int liveModelCount,
+			int presentationModelCount) {
 			this.cacheKey = cacheKey;
+			this.canonicalContentKey = canonicalContentKey;
 			this.chunk = chunk;
+			this.presentationBaseX = presentationBaseX;
+			this.presentationBaseZ = presentationBaseZ;
+			this.liveModelCount = liveModelCount;
+			this.presentationModelCount =
+				presentationModelCount;
+		}
+	}
+
+	private static final class ResidentObjectChunkGeometryComparison {
+		private final boolean drawMetadataMatches;
+		private final boolean bufferOriginMatches;
+		private final boolean positionMatches;
+		private final boolean vertexAttributeMatches;
+		private final boolean indexMatches;
+		private final boolean triangleAttributeMatches;
+		private final boolean triangleSetMatches;
+		private final boolean shadowExactMatches;
+		private final boolean shadowSetMatches;
+		private final boolean glowExactMatches;
+		private final boolean glowSetMatches;
+		private final boolean exactRenderMatches;
+		private final boolean presentationSetMatches;
+		private final int cachedVertexCount;
+		private final int freshVertexCount;
+		private final int cachedTriangleCount;
+		private final int freshTriangleCount;
+		private final long cachedStorageSignature;
+		private final long freshStorageSignature;
+		private final long cachedTriangleSetSignature;
+		private final long freshTriangleSetSignature;
+
+		private ResidentObjectChunkGeometryComparison(
+			boolean drawMetadataMatches,
+			boolean bufferOriginMatches,
+			boolean positionMatches,
+			boolean vertexAttributeMatches,
+			boolean indexMatches,
+			boolean triangleAttributeMatches,
+			boolean triangleSetMatches,
+			boolean shadowExactMatches,
+			boolean shadowSetMatches,
+			boolean glowExactMatches,
+			boolean glowSetMatches,
+			int cachedVertexCount,
+			int freshVertexCount,
+			int cachedTriangleCount,
+			int freshTriangleCount,
+			long cachedStorageSignature,
+			long freshStorageSignature,
+			long cachedTriangleSetSignature,
+			long freshTriangleSetSignature) {
+			this.drawMetadataMatches = drawMetadataMatches;
+			this.bufferOriginMatches = bufferOriginMatches;
+			this.positionMatches = positionMatches;
+			this.vertexAttributeMatches =
+				vertexAttributeMatches;
+			this.indexMatches = indexMatches;
+			this.triangleAttributeMatches =
+				triangleAttributeMatches;
+			this.triangleSetMatches = triangleSetMatches;
+			this.shadowExactMatches = shadowExactMatches;
+			this.shadowSetMatches = shadowSetMatches;
+			this.glowExactMatches = glowExactMatches;
+			this.glowSetMatches = glowSetMatches;
+			this.exactRenderMatches =
+				drawMetadataMatches
+					&& positionMatches
+					&& vertexAttributeMatches
+					&& indexMatches
+					&& triangleAttributeMatches
+					&& shadowExactMatches
+					&& glowExactMatches;
+			this.presentationSetMatches =
+				drawMetadataMatches
+					&& triangleSetMatches
+					&& shadowSetMatches
+					&& glowSetMatches;
+			this.cachedVertexCount = cachedVertexCount;
+			this.freshVertexCount = freshVertexCount;
+			this.cachedTriangleCount = cachedTriangleCount;
+			this.freshTriangleCount = freshTriangleCount;
+			this.cachedStorageSignature =
+				cachedStorageSignature;
+			this.freshStorageSignature = freshStorageSignature;
+			this.cachedTriangleSetSignature =
+				cachedTriangleSetSignature;
+			this.freshTriangleSetSignature =
+				freshTriangleSetSignature;
+		}
+
+		private static ResidentObjectChunkGeometryComparison
+			compare(
+				Renderer3DWorldChunkFrame.ChunkMesh cached,
+				Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			long[] cachedTriangles =
+				triangleFingerprints(cached);
+			long[] freshTriangles =
+				triangleFingerprints(fresh);
+			long[] cachedShadows =
+				shadowFingerprints(cached);
+			long[] freshShadows =
+				shadowFingerprints(fresh);
+			long[] cachedGlows =
+				glowFingerprints(cached);
+			long[] freshGlows =
+				glowFingerprints(fresh);
+			return new ResidentObjectChunkGeometryComparison(
+				sameDrawMetadata(cached, fresh),
+				cached.getOriginWorldX()
+						== fresh.getOriginWorldX()
+					&& cached.getOriginWorldZ()
+						== fresh.getOriginWorldZ(),
+				samePositions(cached, fresh),
+				sameVertexAttributes(cached, fresh),
+				sameIndices(cached, fresh),
+				sameTriangleAttributes(cached, fresh),
+				Arrays.equals(
+					cachedTriangles, freshTriangles),
+				sameShadowCasters(cached, fresh),
+				Arrays.equals(cachedShadows, freshShadows),
+				sameGlowEmitters(cached, fresh),
+				Arrays.equals(cachedGlows, freshGlows),
+				cached.getVertexCount(),
+				fresh.getVertexCount(),
+				cached.getTriangleCount(),
+				fresh.getTriangleCount(),
+				cached.getStorageSignature(),
+				fresh.getStorageSignature(),
+				fingerprintSet(cachedTriangles),
+				fingerprintSet(freshTriangles));
+		}
+
+		private String summary() {
+			return "meta=" + digit(drawMetadataMatches)
+				+ ",origin=" + digit(bufferOriginMatches)
+				+ ",position=" + digit(positionMatches)
+				+ ",vertex=" + digit(vertexAttributeMatches)
+				+ ",index=" + digit(indexMatches)
+				+ ",triangle=" + digit(triangleAttributeMatches)
+				+ ",triangleSet=" + digit(triangleSetMatches)
+				+ ",shadow=" + digit(shadowExactMatches)
+				+ ",shadowSet=" + digit(shadowSetMatches)
+				+ ",glow=" + digit(glowExactMatches)
+				+ ",glowSet=" + digit(glowSetMatches)
+				+ ",vertices=" + cachedVertexCount
+					+ "/" + freshVertexCount
+				+ ",triangles=" + cachedTriangleCount
+					+ "/" + freshTriangleCount
+				+ ",storage="
+					+ Long.toHexString(cachedStorageSignature)
+					+ "/"
+					+ Long.toHexString(freshStorageSignature)
+				+ ",triangleFingerprint="
+					+ Long.toHexString(
+						cachedTriangleSetSignature)
+					+ "/"
+					+ Long.toHexString(
+						freshTriangleSetSignature);
+		}
+
+		private static int digit(boolean value) {
+			return value ? 1 : 0;
+		}
+
+		private static boolean sameDrawMetadata(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			return cached.getPlane() == fresh.getPlane()
+				&& cached.getCenterSectionX()
+					== fresh.getCenterSectionX()
+				&& cached.getCenterSectionY()
+					== fresh.getCenterSectionY()
+				&& cached.getLogicalWorldOffsetX()
+					== fresh.getLogicalWorldOffsetX()
+				&& cached.getLogicalWorldOffsetZ()
+					== fresh.getLogicalWorldOffsetZ()
+				&& cached.isObjectChunk()
+					== fresh.isObjectChunk()
+				&& cached.getChunkRole()
+					== fresh.getChunkRole();
+		}
+
+		private static boolean samePositions(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getVertexCount()
+					!= fresh.getVertexCount()) {
+				return false;
+			}
+			int coordinateCount = cached.getVertexCount() * 3;
+			for (int coordinate = 0;
+					coordinate < coordinateCount;
+					coordinate++) {
+				if (cached.getVertexCoord(coordinate)
+						!= fresh.getVertexCoord(coordinate)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameVertexAttributes(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getVertexCount()
+					!= fresh.getVertexCount()) {
+				return false;
+			}
+			for (int vertex = 0;
+					vertex < cached.getVertexCount();
+					vertex++) {
+				if (Float.floatToIntBits(
+							cached.getVertexTextureU(vertex))
+						!= Float.floatToIntBits(
+							fresh.getVertexTextureU(vertex))
+					|| Float.floatToIntBits(
+							cached.getVertexTextureV(vertex))
+						!= Float.floatToIntBits(
+							fresh.getVertexTextureV(vertex))
+					|| cached.getVertexLight(vertex)
+						!= fresh.getVertexLight(vertex)
+					|| cached.getVertexNormalX(vertex)
+						!= fresh.getVertexNormalX(vertex)
+					|| cached.getVertexNormalY(vertex)
+						!= fresh.getVertexNormalY(vertex)
+					|| cached.getVertexNormalZ(vertex)
+						!= fresh.getVertexNormalZ(vertex)
+					|| cached.getVertexTerrainBlendColor(vertex)
+						!= fresh.getVertexTerrainBlendColor(vertex)
+					|| cached.getVertexTerrainBlendStrength(vertex)
+						!= fresh.getVertexTerrainBlendStrength(vertex)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameIndices(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getIndexCount()
+					!= fresh.getIndexCount()) {
+				return false;
+			}
+			for (int index = 0;
+					index < cached.getIndexCount();
+					index++) {
+				if (cached.getIndex(index)
+						!= fresh.getIndex(index)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameTriangleAttributes(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getTriangleCount()
+					!= fresh.getTriangleCount()) {
+				return false;
+			}
+			for (int triangle = 0;
+					triangle < cached.getTriangleCount();
+					triangle++) {
+				if (cached.getTriangleTexture(triangle)
+						!= fresh.getTriangleTexture(triangle)
+					|| cached.getTriangleFallbackColor(triangle)
+						!= fresh.getTriangleFallbackColor(triangle)
+					|| cached.getTriangleModelKind(triangle)
+						!= fresh.getTriangleModelKind(triangle)
+					|| cached.getTriangleMaterialFamily(triangle)
+						!= fresh.getTriangleMaterialFamily(
+							triangle)
+					|| cached
+							.getTriangleTerrainVariationMask(
+								triangle)
+						!= fresh
+							.getTriangleTerrainVariationMask(
+								triangle)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameShadowCasters(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getShadowCasterCount()
+					!= fresh.getShadowCasterCount()) {
+				return false;
+			}
+			for (int index = 0;
+					index < cached.getShadowCasterCount();
+					index++) {
+				if (!sameShadowCaster(
+						cached.getShadowCaster(index),
+						fresh.getShadowCaster(index))) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static boolean sameShadowCaster(
+			Renderer3DWorldChunkFrame.ShadowCaster cached,
+			Renderer3DWorldChunkFrame.ShadowCaster fresh) {
+			return cached.getModelKind() == fresh.getModelKind()
+				&& cached.getBaseX0() == fresh.getBaseX0()
+				&& cached.getBaseY() == fresh.getBaseY()
+				&& cached.getBaseZ0() == fresh.getBaseZ0()
+				&& cached.getBaseX1() == fresh.getBaseX1()
+				&& cached.getBaseZ1() == fresh.getBaseZ1()
+				&& cached.getHeight() == fresh.getHeight()
+				&& cached.getWidth() == fresh.getWidth()
+				&& cached.getOpacity() == fresh.getOpacity()
+				&& cached.isOutdoorOnly()
+					== fresh.isOutdoorOnly()
+				&& cached.getFootprintMinX()
+					== fresh.getFootprintMinX()
+				&& cached.getFootprintMaxX()
+					== fresh.getFootprintMaxX()
+				&& cached.getFootprintMinZ()
+					== fresh.getFootprintMinZ()
+				&& cached.getFootprintMaxZ()
+					== fresh.getFootprintMaxZ();
+		}
+
+		private static boolean sameGlowEmitters(
+			Renderer3DWorldChunkFrame.ChunkMesh cached,
+			Renderer3DWorldChunkFrame.ChunkMesh fresh) {
+			if (cached.getGlowEmitterCount()
+					!= fresh.getGlowEmitterCount()) {
+				return false;
+			}
+			for (int index = 0;
+					index < cached.getGlowEmitterCount();
+					index++) {
+				Renderer3DWorldChunkFrame.GlowEmitter left =
+					cached.getGlowEmitter(index);
+				Renderer3DWorldChunkFrame.GlowEmitter right =
+					fresh.getGlowEmitter(index);
+				if (left.getModelKind() != right.getModelKind()
+					|| left.getCenterX() != right.getCenterX()
+					|| left.getCenterY() != right.getCenterY()
+					|| left.getCenterZ() != right.getCenterZ()
+					|| left.getRadius() != right.getRadius()
+					|| left.getColor() != right.getColor()
+					|| left.getIntensity() != right.getIntensity()) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private static long[] triangleFingerprints(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			long[] fingerprints =
+				new long[chunk.getTriangleCount()];
+			for (int triangle = 0;
+					triangle < fingerprints.length;
+					triangle++) {
+				long header =
+					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleTexture(triangle));
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleFallbackColor(triangle));
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleModelKind(
+						triangle).ordinal());
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleMaterialFamily(
+						triangle).getShaderId());
+				header = mixGeometryFingerprint(
+					header,
+					chunk.getTriangleTerrainVariationMask(
+						triangle));
+				long[] vertices = new long[3];
+				for (int corner = 0; corner < 3; corner++) {
+					int indexOffset = triangle * 3 + corner;
+					int vertex =
+						indexOffset < chunk.getIndexCount()
+							? chunk.getIndex(indexOffset)
+							: -1;
+					vertices[corner] =
+						vertexFingerprint(chunk, vertex);
+				}
+				long first = triangleFingerprint(
+					header,
+					vertices[0],
+					vertices[1],
+					vertices[2]);
+				long second = triangleFingerprint(
+					header,
+					vertices[1],
+					vertices[2],
+					vertices[0]);
+				long third = triangleFingerprint(
+					header,
+					vertices[2],
+					vertices[0],
+					vertices[1]);
+				fingerprints[triangle] =
+					unsignedMinimum(first, second, third);
+			}
+			Arrays.sort(fingerprints);
+			return fingerprints;
+		}
+
+		private static long vertexFingerprint(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk,
+			int vertex) {
+			long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			if (vertex < 0 || vertex >= chunk.getVertexCount()) {
+				return mixGeometryFingerprint(hash, vertex);
+			}
+			int coordinate = vertex * 3;
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexCoord(coordinate));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexCoord(coordinate + 1));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexCoord(coordinate + 2));
+			hash = mixGeometryFingerprint(
+				hash,
+				Float.floatToIntBits(
+					chunk.getVertexTextureU(vertex)));
+			hash = mixGeometryFingerprint(
+				hash,
+				Float.floatToIntBits(
+					chunk.getVertexTextureV(vertex)));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexLight(vertex));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexNormalX(vertex));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexNormalY(vertex));
+			hash = mixGeometryFingerprint(
+				hash, chunk.getVertexNormalZ(vertex));
+			hash = mixGeometryFingerprint(
+				hash,
+				chunk.getVertexTerrainBlendColor(vertex));
+			return mixGeometryFingerprint(
+				hash,
+				chunk.getVertexTerrainBlendStrength(vertex));
+		}
+
+		private static long triangleFingerprint(
+			long header,
+			long first,
+			long second,
+			long third) {
+			long hash = mixGeometryFingerprint(header, first);
+			hash = mixGeometryFingerprint(hash, second);
+			return mixGeometryFingerprint(hash, third);
+		}
+
+		private static long unsignedMinimum(
+			long first,
+			long second,
+			long third) {
+			long minimum =
+				Long.compareUnsigned(first, second) <= 0
+					? first : second;
+			return Long.compareUnsigned(minimum, third) <= 0
+				? minimum : third;
+		}
+
+		private static long[] shadowFingerprints(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			long[] fingerprints =
+				new long[chunk.getShadowCasterCount()];
+			for (int index = 0;
+					index < fingerprints.length;
+					index++) {
+				Renderer3DWorldChunkFrame.ShadowCaster caster =
+					chunk.getShadowCaster(index);
+				long hash =
+					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+				hash = mixGeometryFingerprint(
+					hash, caster.getModelKind().ordinal());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseX0());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseY());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseZ0());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseX1());
+				hash = mixGeometryFingerprint(
+					hash, caster.getBaseZ1());
+				hash = mixGeometryFingerprint(
+					hash, caster.getHeight());
+				hash = mixGeometryFingerprint(
+					hash, caster.getWidth());
+				hash = mixGeometryFingerprint(
+					hash, caster.getOpacity());
+				hash = mixGeometryFingerprint(
+					hash, caster.isOutdoorOnly() ? 1 : 0);
+				hash = mixGeometryFingerprint(
+					hash, caster.getFootprintMinX());
+				hash = mixGeometryFingerprint(
+					hash, caster.getFootprintMaxX());
+				hash = mixGeometryFingerprint(
+					hash, caster.getFootprintMinZ());
+				fingerprints[index] = mixGeometryFingerprint(
+					hash, caster.getFootprintMaxZ());
+			}
+			Arrays.sort(fingerprints);
+			return fingerprints;
+		}
+
+		private static long[] glowFingerprints(
+			Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+			long[] fingerprints =
+				new long[chunk.getGlowEmitterCount()];
+			for (int index = 0;
+					index < fingerprints.length;
+					index++) {
+				Renderer3DWorldChunkFrame.GlowEmitter emitter =
+					chunk.getGlowEmitter(index);
+				long hash =
+					RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+				hash = mixGeometryFingerprint(
+					hash, emitter.getModelKind().ordinal());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getCenterX());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getCenterY());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getCenterZ());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getRadius());
+				hash = mixGeometryFingerprint(
+					hash, emitter.getColor());
+				fingerprints[index] = mixGeometryFingerprint(
+					hash, emitter.getIntensity());
+			}
+			Arrays.sort(fingerprints);
+			return fingerprints;
+		}
+
+		private static long fingerprintSet(long[] values) {
+			long hash = RESIDENT_OBJECT_CHUNK_FNV_OFFSET_BASIS;
+			hash = mixGeometryFingerprint(hash, values.length);
+			for (long value : values) {
+				hash = mixGeometryFingerprint(hash, value);
+			}
+			return hash;
+		}
+
+		private static long mixGeometryFingerprint(
+			long hash,
+			long value) {
+			hash ^= value;
+			return hash * RESIDENT_OBJECT_CHUNK_FNV_PRIME;
 		}
 	}
 
@@ -6957,19 +8291,10 @@ public final class mudclient implements Runnable {
 					// 256, this.screenOffsetY);
 					clientPort.draw();
 					} else if (this.layeredSceneActivationPending
-							&& this.layeredSceneActivationRetainsPresentedFrame) {
+							&& this.shouldRetainLastPresentedFrame()) {
 						clientPort.draw();
 					} else if (this.layeredSceneActivationPending) {
-						this.getSurface().blackScreen(true);
-						this.getSurface().drawColoredStringCentered(
-							this.halfGameWidth(),
-							"Loading... Please wait",
-							0xFFFFFF,
-							0,
-							1,
-							this.halfGameHeight());
-						this.drawChatMessageTabs(5);
-						clientPort.draw();
+						this.drawLoadingPleaseWaitFrame();
 					} else if (this.world.playerAlive) {
 						this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
 
@@ -7438,8 +8763,13 @@ public final class mudclient implements Runnable {
 					Renderer3DFrame renderer3DFrame = this.scene.getRenderer3DFrame();
 					if (renderer3DFrame != null) {
 						renderer3DFrame.setRoofVisibility(roofVisibility, this.lastHeightOffset);
+						Renderer3DWorldChunkFrame presentedWorldChunkFrame =
+							this.appendResidentObjectChunkFrame(
+								this.world.getRenderer3DWorldChunkFrame());
 						renderer3DFrame.setWorldChunkFrame(
-							this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame()));
+							presentedWorldChunkFrame);
+						this.completeLayeredSceneActivationFreshFrame(
+							presentedWorldChunkFrame);
 						Renderer3DDepthFrame depthFrame = renderer3DFrame.getDepthFrame();
 						Renderer3DMeshFrame meshFrame = renderer3DFrame.getMeshFrame();
 						RenderTelemetry.recordWorldGeometryFrame(
@@ -13110,8 +14440,14 @@ public final class mudclient implements Runnable {
 
 			int var6 = 192 + this.minimapRandom_2;
 			int var7 = 255 & this.cameraRotation + this.minimapRandom_1;
-			int mX = var6 * (this.localPlayer.currentX - 6040) * 3 / 2048;
-			int mZ = var6 * (this.localPlayer.currentZ - 6040) * 3 / 2048;
+			int minimapLocalCenter =
+				this.world.getMinimapLocalCenterPixel();
+			int mX = var6
+				* (this.localPlayer.currentX - minimapLocalCenter)
+				* 3 / 2048;
+			int mZ = var6
+				* (this.localPlayer.currentZ - minimapLocalCenter)
+				* 3 / 2048;
 			int var10 = FastMath.trigTable_1024[1023 & 1024 - var7 * 4];
 			int var11 = FastMath.trigTable_1024[(1023 & 1024 - var7 * 4) + 1024];
 			int var12 = mX * var11 + var10 * mZ >> 18;
@@ -19473,11 +20809,7 @@ public final class mudclient implements Runnable {
 					int oldBaseZ = this.midRegionBaseZ;
 					boolean heightOffsetChanged = this.lastHeightOffset != this.requestedPlane;
 					if (hardAreaLoad || !this.hasCompletedInitialRegionLoad) {
-						this.getSurface().drawColoredStringCentered(256, "Loading... Please wait", 0xFFFFFF, 0, 1, 192);
-						this.drawChatMessageTabs(5);
-						// this.getSurface().draw(this.graphics, this.screenOffsetX,
-						// 256, this.screenOffsetY);
-						clientPort.draw();
+						this.drawLoadingPleaseWaitFrame();
 					}
 					boolean centeredNativeWindow =
 						this.world.hasNativeLayeredTerrain();
@@ -19503,7 +20835,9 @@ public final class mudclient implements Runnable {
 					for (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {
 						this.dematerializeWallObjectInstance(i);
 					}
-					this.clearResidentObjectChunkCache();
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.clearResidentObjectChunkCache();
+					}
 					long dematerializeNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
@@ -19554,7 +20888,9 @@ public final class mudclient implements Runnable {
 					long staticRebaseNanos =
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
-					this.clearResidentObjectChunkCache();
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.clearResidentObjectChunkCache();
+					}
 					this.materializeLoadedTerrainScenery();
 					long staticMaterializeNanos =
 						System.nanoTime() - phaseStartNanos;
@@ -19649,6 +20985,20 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var22) {
 			throw GenUtil.makeThrowable(var22, "client.MB(" + wantZ + ',' + wantX + ',' + var3 + ')');
 		}
+	}
+
+	private void drawLoadingPleaseWaitFrame() {
+		this.getSurface().beginSoftwareOwnedRenderer2DFrame();
+		this.getSurface().blackScreen(true);
+		this.getSurface().drawColoredStringCentered(
+			this.halfGameWidth(),
+			"Loading... Please wait",
+			0xFFFFFF,
+			0,
+			1,
+			this.halfGameHeight());
+		this.drawChatMessageTabs(5);
+		clientPort.draw();
 	}
 
 	private void resetGroundItemsForHardAreaLoad() {
@@ -23863,21 +25213,115 @@ public final class mudclient implements Runnable {
 	public void setLayeredSceneActivationPending(
 		final boolean pending) {
 		this.layeredSceneActivationPending = pending;
-		if (!pending) {
-			this.layeredSceneActivationRetainsPresentedFrame = false;
-		}
+		this.layeredScenePresentationLatch.updatePending(pending);
 	}
 
 	public void beginLayeredSceneActivation(
 		final boolean retainPresentedFrame) {
 		this.layeredSceneActivationPending = true;
-		this.layeredSceneActivationRetainsPresentedFrame =
-			retainPresentedFrame;
+		this.layeredSceneTerrainStageWaitLogged = false;
+		this.layeredScenePresentationLatch.begin(retainPresentedFrame);
+	}
+
+	public void resetLayeredSceneActivationPresentation() {
+		this.layeredSceneActivationPending = false;
+		this.layeredSceneTerrainStageWaitLogged = false;
+		this.layeredScenePresentationLatch.reset();
 	}
 
 	public boolean shouldRetainLastPresentedFrame() {
-		return this.layeredSceneActivationPending
-			&& this.layeredSceneActivationRetainsPresentedFrame;
+		return this.layeredScenePresentationLatch
+			.shouldRetainLastPresentedFrame();
+	}
+
+	private void completeLayeredSceneActivationFreshFrame(
+		Renderer3DWorldChunkFrame worldChunkFrame) {
+		long staticWorldSignature =
+			worldChunkFrame == null
+				? 0L
+				: worldChunkFrame.getStaticPresentationSignature();
+		int staticChunkCount =
+			worldChunkFrame == null
+				? 0
+				: worldChunkFrame.getStaticPresentationChunkCount();
+		int previousSamples =
+			this.layeredScenePresentationLatch.getFreshFrameSamples();
+		boolean presentationProductsReady =
+			!this.packetHandler
+				.isLayeredTerrainPresentationStagePending();
+		if (!presentationProductsReady
+			&& this.shouldRetainLastPresentedFrame()
+			&& !this.layeredSceneTerrainStageWaitLogged) {
+			this.layeredSceneTerrainStageWaitLogged = true;
+			RendererDiagnosticSession.Record wait =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.atomic-presentation-wait");
+			if (wait != null) {
+				wait.string(
+					"reason",
+					"terrain-presentation-stage");
+				wait.number(
+					"terrainStage.protocol",
+					this.packetHandler
+						.getPendingLayeredTerrainPresentationStageProtocol());
+				wait.number(
+					"terrainStage.sequence",
+					this.packetHandler
+						.getPendingLayeredTerrainPresentationStageSequence());
+				RendererDiagnosticSession.writeEventRecord(wait);
+			}
+		}
+		boolean released =
+			this.layeredScenePresentationLatch.completeFreshFrame(
+				staticWorldSignature,
+				staticChunkCount,
+				presentationProductsReady);
+		int freshFrameSamples =
+			this.layeredScenePresentationLatch.getFreshFrameSamples();
+		if (freshFrameSamples > previousSamples) {
+			RendererDiagnosticSession.Record sample =
+				RendererDiagnosticSession.newEventRecord(
+					"renderer.atomic-presentation-sample");
+			if (sample != null) {
+				sample.number("world.staticChunkCount", staticChunkCount);
+				sample.number(
+					"world.staticPresentationSignature",
+					staticWorldSignature);
+				sample.number("stability.samples", freshFrameSamples);
+				sample.bool("stability.released", released);
+				RendererDiagnosticSession.writeEventRecord(sample);
+			}
+		}
+		if (!released) {
+			return;
+		}
+		RendererDiagnosticSession.Record event =
+			RendererDiagnosticSession.newEventRecord(
+				"renderer.atomic-presentation-release");
+		if (event != null) {
+			event.number(
+				"world.chunkCount",
+				worldChunkFrame == null
+					? 0 : worldChunkFrame.getChunkCount());
+			event.number(
+				"world.triangleCount",
+				worldChunkFrame == null
+					? 0 : worldChunkFrame.getTotalTriangleCount());
+			event.number(
+				"world.staticChunkCount",
+				staticChunkCount);
+			event.number(
+				"world.staticPresentationSignature",
+				staticWorldSignature);
+			event.number(
+				"stability.samples",
+				freshFrameSamples);
+			event.bool(
+				"stability.matched",
+				this.layeredScenePresentationLatch
+					.wasLastReleaseStable());
+			RendererDiagnosticSession.writeEventRecord(event);
+		}
 	}
 
 	public void applyLayeredSceneScope(

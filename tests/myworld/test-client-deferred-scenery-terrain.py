@@ -27,7 +27,7 @@ def main() -> None:
     require("private boolean hasLoadedTerrainForWallObject(int x, int y, int dir)" in client,
             "Client should check wall endpoints before drawing boundary models")
     require("private boolean hasLoadedTerrainForWorldPoint(int xWorld, int zWorld)" in client
-            and "return World.isLocalFaceTile(xTile, zTile);" in client,
+            and "this.world.isPresentationTerrainFaceTile(xTile, zTile);" in client,
             "Terrain checks should match the elevation interpolation window")
     require("private boolean[] gameObjectMaterialized" in instance_store
             and "private boolean[] wallObjectMaterialized" in instance_store,
@@ -55,12 +55,12 @@ def main() -> None:
             and "this.dematerializeWallObjectInstance(i);\n\t\t\tthis.setWallObjectInstanceModel(i, null);" in client
             and "this.clearResidentObjectChunkCache();\n\t\tthis.materializeLoadedTerrainScenery();" in client,
             "Roof-only world reloads should remove old scene models before rebuilding scenery")
-    require("this.dematerializeGameObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tfor (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {\n\t\t\t\t\t\tthis.dematerializeWallObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.world.loadSections" in client,
+    require("this.dematerializeGameObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tfor (int i = 0; this.getWallObjectInstanceCount() > i; ++i) {\n\t\t\t\t\t\tthis.dematerializeWallObjectInstance(i);\n\t\t\t\t\t}\n\t\t\t\t\tif (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\t}\n\t\t\t\t\tlong dematerializeNanos" in client,
             "Region shifts should detach existing scenery before loading the next terrain window")
-    require("this.clearResidentObjectChunkCache();\n\t\t\t\t\tthis.materializeLoadedTerrainScenery();" in client,
-            "Region shifts should clear resident object chunks before rebuilding scenery")
+    require("if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.clearResidentObjectChunkCache();\n\t\t\t\t\t}\n\t\t\t\t\tthis.materializeLoadedTerrainScenery();" in client,
+            "Hard or plane-changing region shifts should clear resident object chunks before rebuilding scenery")
     require("debugSceneGameObjectHover(var9, var8, var7);" in client
-            and "debugResidentObjectChunkBuild(\"resident-chunk-build\", input, objectChunk);" in client,
+            and "\"resident-chunk-build\",\n\t\t\tinput," in client,
             "Scene object diagnostics should trace hover and resident chunk rebuilds")
     require("spoiledmilk.sceneObjectDebug" in scene_object_debug
             and "SPOILED_MILK_SCENE_OBJECT_DEBUG" in scene_object_debug

@@ -31,7 +31,13 @@ def main() -> None:
 
     require(world, "private void publishTerrainProduct(RSModel worldMod)",
             "Terrain model publication should be isolated behind a product boundary")
-    require(world, "private TerrainModelInput buildTerrainModelInput(int plane, Sector[] sourceSectors)",
+    require(
+        world,
+        "private TerrainModelInput buildTerrainModelInput(\n"
+        "\t\tint plane,\n"
+        "\t\tint sectionX,\n"
+        "\t\tint sectionY,\n"
+        "\t\tSector[] sourceSectors)",
             "Terrain model input should be built from an explicit sector-window source")
     require(world, "private TerrainModelInput loadTerrainModelInput(int plane, int sectionX, int sectionY)",
             "Terrain model input should be loaded through the active-window cache")
@@ -67,7 +73,7 @@ def main() -> None:
             "Wall model input should be loaded through the active-window cache")
     require(world, "private WallModelInput buildWallModelInput(Sector[] sourceSectors)",
             "Wall model input should be built from an explicit sector-window source")
-    require(world, "private void emitWallProduct(WallModelInput input, boolean showWallOnMinimap)",
+    require(world, "private void emitWallProduct(",
             "Wall model input should replay through a wall product emitter")
     require(world, "segment.vertexCoords[offset]",
             "Wall product replay should use cached final wall vertices")
@@ -197,7 +203,10 @@ def main() -> None:
             "GPU-ready chunk meshes should preserve per-vertex light inputs")
     require(world, "Float.floatToIntBits(value)",
             "GPU-ready chunk mesh upload signatures should include texture coordinate bits")
-    require(world, "this.renderer3DWorldChunkFrame = this.buildRenderer3DWorldChunkFrame(plane, x, z);",
+    require(
+        world,
+        "this.renderer3DWorldChunkFrame =\n"
+        "\t\t\t\tthis.buildRenderer3DWorldChunkFrame(plane, x, z);",
             "Active section loads should refresh the renderer-v2 chunk snapshot")
     require(world, "private Renderer3DWorldChunkFrame.ChunkMesh toRenderer3DWorldChunkMesh()",
             "GPU-ready chunk meshes should convert to a frame-safe snapshot")
@@ -229,14 +238,80 @@ def main() -> None:
             "Client should build resident object chunks from cached object chunk inputs")
     require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
             "Client should reuse resident object chunks when object transforms are unchanged")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, tileX)",
-            "Resident object cache keys should include tile placement")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, objectId)",
-            "Resident object cache keys should include object identity")
-    require(mudclient, "mixResidentObjectChunkCacheKey(this.cacheKey, direction)",
-            "Resident object cache keys should include object direction")
+    require(mudclient, "Collections.sort(this.canonicalIdentities);",
+            "Canonical scenery should use deterministic world-record order")
+    require(
+        mudclient,
+        "? canonicalContentKey\n"
+        "\t\t\t\t: mixResidentObjectChunkCacheKey(",
+        "Static cache acceptance should use the canonical exact-content key",
+    )
+    require(
+        mudclient,
+        "for (SceneBaselineState.Record record\n"
+        "\t\t\t\t: this.staticPresentationSceneryRecords)",
+        "Outer scenery records should feed the same canonical pipeline as live inner scenery",
+    )
+    require(mudclient, "buildCanonicalResidentObjectModels(input)",
+            "Static models should be constructed lazily only for canonical cache misses")
+    require(mudclient, "hash, this.worldTileX",
+            "Canonical static keys should use stable world tile placement")
+    require(mudclient, "hash, this.objectId",
+            "Canonical static keys should include object identity")
+    require(mudclient, "hash, this.direction",
+            "Canonical static keys should include object direction")
+    require(mudclient, "hash, this.elevation1",
+            "Canonical static keys should include derived terrain elevation")
     require(mudclient, "model.getRenderer3DTransformVersion()",
-            "Resident object cache keys should include model transform versions")
+            "Animated resident object cache keys should retain live transform versions")
+    require(mudclient, 'modelName.startsWith("torcha")',
+            "Mutable torch scenery should remain outside canonical static reuse")
+    require(mudclient, 'modelName.startsWith("firea")',
+            "Mutable fire scenery should remain outside canonical static reuse")
+    require(mudclient, 'modelName.startsWith("myworld_cosmic_sparkles")',
+            "Mutable sparkle scenery should remain outside canonical static reuse")
+    require(mudclient, '"canonicalOwnershipReuse"',
+            "Transition diagnostics should expose exact cross-ownership reuse")
+    require(mudclient, "rebaseStaticObjectPresentation(",
+            "Overlapping static object chunks should survive adjacent client-origin shifts")
+    require(mudclient, "cached.presentationBaseX - this.midRegionBaseX",
+            "Static chunk reuse should derive the exact presentation-origin delta")
+    require(mudclient, "RESIDENT_OBJECT_BUILD_WORKER_LIMIT = 4",
+            "Transition chunk parallelism should remain explicitly bounded")
+    require(mudclient, "Executors.newFixedThreadPool(\n"
+            "\t\t\tresidentObjectBuildWorkerCount()",
+            "Resident scenery should use a dedicated bounded worker pool")
+    require(mudclient,
+            "Future<ResidentObjectChunkBuildResult> future =\n"
+            "\t\t\t\t\t\tthis.residentObjectBuildExecutor.submit(",
+            "Independent transition scenery chunks should build concurrently")
+    require(mudclient,
+            "objectChunks.set(\n"
+            "\t\t\t\tpending.inputIndex,\n"
+            "\t\t\t\tacceptResidentObjectChunkBuild(",
+            "Parallel scenery results should return to deterministic input order")
+    require(mudclient,
+            "&& !RESIDENT_OBJECT_GEOMETRY_DIAGNOSTICS_ENABLED;",
+            "Deep comparison runs should keep deterministic sequential construction")
+    require(mudclient, "cached != null && cached.cacheKey == input.cacheKey",
+            "Parallel chunk construction must retain exact cache identity checks")
+    forbid(mudclient, "staticContentKeySum",
+           "Order-independent approximate scenery equivalence must remain withdrawn")
+    require(mudclient, "cachedResidentObjectChunkPreviousViewCells",
+            "Resident scenery caching should retain the immediately previous view")
+    require(mudclient,
+            "this.cachedResidentObjectChunkPreviousViewCells.addAll(\n"
+            "\t\t\t\tthis.cachedResidentObjectChunkCurrentViewCells);",
+            "Adjacent region changes should rotate the current scenery footprint into the previous view")
+    require(mudclient,
+            "retainedCells.addAll(\n"
+            "\t\t\tthis.cachedResidentObjectChunkPreviousViewCells);",
+            "Resident scenery eviction should preserve the bounded current-plus-previous working set")
+    require(mudclient,
+            "this.cachedResidentObjectChunkPreviousViewCells.clear();",
+            "Hard cache invalidation should discard the retained previous view")
+    require(world_chunk_frame, "public ChunkMesh rebaseStaticObjectPresentation(",
+            "Chunk snapshots should translate retained static scenery without copying GPU arrays")
     require(mudclient, "this.isGameObjectInstanceMaterialized(i) && this.getGameObjectInstanceModel(i) != null",
             "Resident object chunk should only include materialized game-object instances")
     require(mudclient, "this.isWallObjectInstanceMaterialized(i) && this.getWallObjectInstanceModel(i) != null",
@@ -247,7 +322,10 @@ def main() -> None:
             "Wall-object material metadata should be attached once when constructing the live model")
     forbid(mudclient, "applyRenderer3DMaterialMetadata(kind, objectId, model);",
            "Resident object enumeration should not repeat immutable material classification every frame")
-    require(mudclient, "this.appendResidentObjectChunkFrame(this.world.getRenderer3DWorldChunkFrame())",
+    require(
+        mudclient,
+        "this.appendResidentObjectChunkFrame(\n"
+        "\t\t\t\t\t\t\t\tthis.world.getRenderer3DWorldChunkFrame())",
             "Renderer frames should receive resident world chunks plus dynamic object chunks")
     require(world_chunk_frame, "public final class Renderer3DWorldChunkFrame",
             "Renderer-v2 chunk snapshots should have a dedicated public frame type")
@@ -290,7 +368,13 @@ def main() -> None:
 
     require(world, "CpuSectionWindow window = loadCpuSectionWindow(plane, sectionX, sectionY);",
             "Terrain model input cache should build from the CPU section-window cache")
-    require(world, "TerrainModelInput built = buildTerrainModelInput(plane, window.sectors);",
+    require(
+        world,
+        "TerrainModelInput built = buildTerrainModelInput(\n"
+        "\t\t\tplane,\n"
+        "\t\t\tsectionX,\n"
+        "\t\t\tsectionY,\n"
+        "\t\t\twindow.sectors);",
             "Terrain model input should be built from cached CPU window sectors")
     require(
         world,
@@ -322,7 +406,7 @@ def main() -> None:
             "Landscape generation should replay terrain from the combined product")
     require(world, "this.publishTerrainProduct(worldMod);",
             "Landscape generation should call the terrain product boundary")
-    require(world, "private void publishTerrainAuthorityProduct(TerrainModelInput input)",
+    require(world, "private void publishTerrainAuthorityProduct(",
             "Native terrain authority should publish collision, minimap, and elevation without legacy geometry")
     require(world, "this.shouldUseNativeTerrainAuthorityOnly()",
             "Landscape generation should explicitly gate the native authority-only terrain path")
@@ -354,7 +438,7 @@ def main() -> None:
             "Native terrain raycast coverage should retain the resident world frame contract")
     require(mudclient, "MenuItemAction.LANDSCAPE_CAST_SPELL",
             "Projected native terrain picking should preserve ground-target spells")
-    require(world, "this.emitWallProduct(worldProduct.wallInput, showWallOnMinimap);",
+    require(world, "this.emitWallProduct(",
             "Landscape generation should replay walls from the combined product")
     require(world, "this.publishWallProduct(plane);",
             "Landscape generation should call the wall product boundary")

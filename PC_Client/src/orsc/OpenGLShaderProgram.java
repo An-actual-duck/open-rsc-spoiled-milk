@@ -129,6 +129,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		"#version 120\n"
 			+ "uniform mat4 uProjectionMatrix;\n"
 			+ "uniform mat4 uWorldViewMatrix;\n"
+			+ "uniform float uChunkOffsetX;\n"
+			+ "uniform float uChunkOffsetZ;\n"
+			+ "uniform float uTerrainWorldOffsetX;\n"
+			+ "uniform float uTerrainWorldOffsetZ;\n"
 			+ "attribute vec3 aPosition;\n"
 			+ "attribute vec2 aTexCoord;\n"
 			+ "attribute vec4 aMaterialColor;\n"
@@ -142,6 +146,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "attribute float aTerrainBlendStrength;\n"
 			+ "varying vec2 vTexCoord;\n"
 			+ "varying vec2 vWorldXZ;\n"
+			+ "varying vec2 vTerrainWorldXZ;\n"
 			+ "varying vec4 vMaterialColor;\n"
 			+ "varying vec3 vRawMaterialColor;\n"
 			+ "varying float vBaseLegacyLight;\n"
@@ -153,10 +158,12 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "varying float vTerrainBlendStrength;\n"
 			+ "varying float vCameraDepth;\n"
 			+ "void main() {\n"
-			+ "\tvec4 worldPosition = vec4(aPosition, 1.0);\n"
+			+ "\tvec3 rebasedPosition = aPosition + vec3(uChunkOffsetX, 0.0, uChunkOffsetZ);\n"
+			+ "\tvec4 worldPosition = vec4(rebasedPosition, 1.0);\n"
 			+ "\tgl_Position = uProjectionMatrix * worldPosition;\n"
 			+ "\tvTexCoord = aTexCoord;\n"
-			+ "\tvWorldXZ = aPosition.xz;\n"
+			+ "\tvWorldXZ = rebasedPosition.xz;\n"
+			+ "\tvTerrainWorldXZ = rebasedPosition.xz + vec2(uTerrainWorldOffsetX, uTerrainWorldOffsetZ);\n"
 			+ "\tvMaterialColor = aMaterialColor;\n"
 			+ "\tvRawMaterialColor = aRawMaterialColor;\n"
 			+ "\tvBaseLegacyLight = aBaseLegacyLight;\n"
@@ -215,6 +222,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "uniform float uGlowMaskInvSpanZ;\n"
 			+ "varying vec2 vTexCoord;\n"
 			+ "varying vec2 vWorldXZ;\n"
+			+ "varying vec2 vTerrainWorldXZ;\n"
 			+ "varying vec4 vMaterialColor;\n"
 			+ "varying vec3 vRawMaterialColor;\n"
 			+ "varying float vBaseLegacyLight;\n"
@@ -290,7 +298,7 @@ final class OpenGLShaderProgram implements AutoCloseable {
 			+ "\tif (match <= 0.001) {\n"
 			+ "\t\treturn color;\n"
 			+ "\t}\n"
-			+ "\tvec2 terrainPoint = vWorldXZ / 128.0;\n"
+			+ "\tvec2 terrainPoint = vTerrainWorldXZ / 128.0;\n"
 			+ "\tfloat shortDetail = terrainVariationNoise(terrainPoint * 1.35 + vec2(11.7, 3.2));\n"
 			+ "\tfloat midDetail = terrainVariationNoise(terrainPoint / 1.55);\n"
 			+ "\tfloat broadDrift = terrainVariationNoise(terrainPoint / 5.5);\n"
@@ -391,6 +399,10 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	private final int programId;
 	private final int projectionMatrixUniformLocation;
 	private final int worldViewMatrixUniformLocation;
+	private final int chunkOffsetXUniformLocation;
+	private final int chunkOffsetZUniformLocation;
+	private final int terrainWorldOffsetXUniformLocation;
+	private final int terrainWorldOffsetZUniformLocation;
 	private final int textureUniformLocation;
 	private final int shadowMaskUniformLocation;
 	private final int glowMaskUniformLocation;
@@ -487,11 +499,19 @@ final class OpenGLShaderProgram implements AutoCloseable {
 		int fogEndUniformLocation,
 		int fogRedUniformLocation,
 		int fogGreenUniformLocation,
-		int fogBlueUniformLocation) {
+		int fogBlueUniformLocation) throws Exception {
 		this.gl = gl;
 		this.programId = programId;
 		this.projectionMatrixUniformLocation = projectionMatrixUniformLocation;
 		this.worldViewMatrixUniformLocation = worldViewMatrixUniformLocation;
+		this.chunkOffsetXUniformLocation =
+			gl.glGetUniformLocation(programId, "uChunkOffsetX");
+		this.chunkOffsetZUniformLocation =
+			gl.glGetUniformLocation(programId, "uChunkOffsetZ");
+		this.terrainWorldOffsetXUniformLocation =
+			gl.glGetUniformLocation(programId, "uTerrainWorldOffsetX");
+		this.terrainWorldOffsetZUniformLocation =
+			gl.glGetUniformLocation(programId, "uTerrainWorldOffsetZ");
 		this.textureUniformLocation = textureUniformLocation;
 		this.shadowMaskUniformLocation = shadowMaskUniformLocation;
 		this.glowMaskUniformLocation = glowMaskUniformLocation;
@@ -916,6 +936,29 @@ final class OpenGLShaderProgram implements AutoCloseable {
 	void setTextureEnabled(boolean textureEnabled) throws Exception {
 		if (textureEnabledUniformLocation >= 0) {
 			gl.glUniform1i(textureEnabledUniformLocation, textureEnabled ? 1 : 0);
+		}
+	}
+
+	void setChunkOffsets(
+		float offsetX,
+		float offsetZ,
+		float terrainWorldOffsetX,
+		float terrainWorldOffsetZ) throws Exception {
+		if (chunkOffsetXUniformLocation >= 0) {
+			gl.glUniform1f(chunkOffsetXUniformLocation, offsetX);
+		}
+		if (chunkOffsetZUniformLocation >= 0) {
+			gl.glUniform1f(chunkOffsetZUniformLocation, offsetZ);
+		}
+		if (terrainWorldOffsetXUniformLocation >= 0) {
+			gl.glUniform1f(
+				terrainWorldOffsetXUniformLocation,
+				terrainWorldOffsetX);
+		}
+		if (terrainWorldOffsetZUniformLocation >= 0) {
+			gl.glUniform1f(
+				terrainWorldOffsetZUniformLocation,
+				terrainWorldOffsetZ);
 		}
 	}
 

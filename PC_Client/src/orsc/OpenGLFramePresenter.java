@@ -1532,11 +1532,13 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			canDrawProjectedMesh
 				&& !Renderer3DSettings.canSkipProjectedWorldCapture()
 				&& (WORLD_MESH_VISIBLE || WORLD_MESH_TEXTURED_VISIBLE);
+		OpenGLWorldChunkUploadStats chunkUploadStats =
+			OpenGLWorldChunkUploadStats.EMPTY;
 		if (WORLD_MESH_ENABLED && worldChunkRenderer != null) {
 			long chunkUploadPhaseStart = RenderTelemetry.now();
 			boolean budgetResidentChunkUploads =
 				canDrawProjectedStaticFallback && !Renderer3DSettings.canSkipLegacyWorldRaster();
-			OpenGLWorldChunkUploadStats chunkUploadStats = worldChunkRenderer.upload(
+			chunkUploadStats = worldChunkRenderer.upload(
 				frame.renderer3DFrame,
 				worldChunkFrame,
 				WORLD_CHUNKS_TEXTURED_VISIBLE,
@@ -1631,15 +1633,16 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			remasterTerrainShadowMaskPrepared =
 				worldChunkRenderer.prepareRemasterTerrainShadowMask(frame.renderer3DFrame);
 		}
+		OpenGLWorldChunkDrawStats chunkDrawStats =
+			OpenGLWorldChunkDrawStats.EMPTY;
 		if (drawResidentChunkDiagnostic
 			&& worldChunkRenderer != null
 			&& frame.renderer3DFrame != null) {
 			long chunkDrawPhaseStart = RenderTelemetry.now();
-			OpenGLWorldChunkDrawStats chunkDrawStats =
-				worldChunkRenderer.drawDiagnostic(
-					frame.renderer3DFrame,
-					WORLD_CHUNKS_FILLED_VISIBLE,
-					WORLD_CHUNKS_TEXTURED_VISIBLE);
+			chunkDrawStats = worldChunkRenderer.drawDiagnostic(
+				frame.renderer3DFrame,
+				WORLD_CHUNKS_FILLED_VISIBLE,
+				WORLD_CHUNKS_TEXTURED_VISIBLE);
 			chunkDrawPhaseNanos = RenderTelemetry.elapsedSince(chunkDrawPhaseStart);
 			RenderTelemetry.recordOpenGLWorldChunkDraw(
 				chunkDrawStats.drawnChunks,
@@ -1677,11 +1680,14 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldChunkRenderer.drawRemasterShadowInventoryDebug(frame.renderer3DFrame);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
-		if (shouldDrawRemasterTerrainShadowMask()
-			&& worldChunkRenderer != null
-			&& frame.renderer3DFrame != null
-			&& !remasterTerrainShadowMaskPrepared) {
-			worldChunkRenderer.drawRemasterTerrainShadowMask(frame.renderer3DFrame);
+		boolean explicitRemasterShadowRequested =
+			shouldDrawRemasterTerrainShadowMask()
+				&& worldChunkRenderer != null
+				&& frame.renderer3DFrame != null
+				&& !remasterTerrainShadowMaskPrepared;
+		if (explicitRemasterShadowRequested) {
+			worldChunkRenderer.drawRemasterTerrainShadowMask(
+				frame.renderer3DFrame);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
 		if (WorldEditorBuildSettings.isEnabled()
@@ -1690,6 +1696,22 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			worldChunkRenderer.drawWorldEditorBuildGrid(frame.renderer3DFrame);
 			useSourceProjection(frame.sourceWidth, frame.sourceHeight);
 		}
+		RenderTelemetry.recordOpenGLBoundaryTransitionFrame(
+			worldChunkFrame.getChunkCount(),
+			worldChunkFrame.getTotalTriangleCount(),
+			chunkUploadStats,
+			requestedResidentChunkReplacementComposite,
+			residentChunksReadyThisFrame,
+			residentChunkReplacementComposite,
+			residentReplacementReason,
+			canDrawProjectedMesh && drawProjectedMeshVisible,
+			drawResidentChunkDiagnostic,
+			remasterTerrainShadowMaskPrepared,
+			explicitRemasterShadowRequested,
+			chunkDrawStats,
+			chunkUploadPhaseNanos,
+			projectedMeshPhaseNanos,
+			chunkDrawPhaseNanos);
 		RenderTelemetry.recordOpenGLWorldPhaseBreakdown(
 			chunkUploadPhaseNanos,
 			projectedMeshPhaseNanos,

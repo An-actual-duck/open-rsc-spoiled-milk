@@ -80,6 +80,10 @@ public final class NativeLayeredTerrainStageReadiness {
 			&& manifestSha256.equals(targetManifestSha256);
 	}
 
+	public boolean hasProtocolVersion(final int expectedProtocolVersion) {
+		return protocolVersion == expectedProtocolVersion;
+	}
+
 	@Override
 	public boolean equals(final Object other) {
 		if (this == other) {

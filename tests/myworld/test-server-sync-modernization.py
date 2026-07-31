@@ -976,8 +976,9 @@ def main() -> None:
     )
     require(
         "want_sync_scene_baseline: false" in myworld_conf
-        and "want_sync_scene_baseline: false" in myworld_host_conf,
-        "scene baseline packet must remain default-off in checked-in server configs",
+        and "want_sync_scene_baseline: true" in myworld_host_conf,
+        "scene baseline should remain off for ordinary development and be "
+        "explicitly enabled by the accepted hosted layered profile",
     )
     require(
         "want_sync_movement_snapshot: true" in myworld_conf
