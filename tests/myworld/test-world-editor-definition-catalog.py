@@ -119,6 +119,23 @@ class WorldEditorDefinitionCatalogTest(unittest.TestCase):
         self.assertNotIn("WorldEditorDefinitionCatalog", SCENERY_XML.read_text(encoding="utf-8"))
         self.assertNotIn("WorldEditorDefinitionCatalog", BOUNDARY_XML.read_text(encoding="utf-8"))
 
+    def test_floor_texture_and_wall_descriptions_are_author_facing(self) -> None:
+        catalog_source = (
+            ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorDefinitionCatalog.java"
+        ).read_text(encoding="utf-8")
+        editor = (
+            ROOT / "Client_Base/src/com/openrsc/interfaces/misc/WorldEditorInterface.java"
+        ).read_text(encoding="utf-8")
+        self.assertIn('"Grey Road"', catalog_source)
+        self.assertIn('"Invisible Path"', catalog_source)
+        self.assertIn("floorTextureVisualName()", editor)
+        self.assertIn("floorTextureTraversal()", editor)
+        self.assertIn('return "Walkable"', editor)
+        self.assertIn('?"Not Walkable":"Walkable"', editor)
+        self.assertNotIn('"Floor Texture "+terrainFloorTexture', editor)
+        self.assertNotIn('raw==0?"none":"#"', editor)
+        self.assertNotIn('id<0?"none":"#"', editor)
+
     def test_compiled_client_packages_and_loads_the_catalog(self) -> None:
         self.assertTrue(CLIENT_JAR.is_file(), "build the client before running catalog runtime coverage")
         with zipfile.ZipFile(CLIENT_JAR) as archive:
@@ -137,6 +154,11 @@ public final class WorldEditorDefinitionCatalogFixture {
         expect("Rock (tin) [#104]", WorldEditorDefinitionCatalog.sceneryReference(104));
         expect("Ladder (Mining Guild, down)", WorldEditorDefinitionCatalog.sceneryLabel(223));
         expect("Door (Gray Bricks)", WorldEditorDefinitionCatalog.boundaryLabel(8));
+        expect("Grey Road", WorldEditorDefinitionCatalog.floorTextureLabel(1));
+        expect("Lava", WorldEditorDefinitionCatalog.floorTextureLabel(11));
+        expect("Invisible Path", WorldEditorDefinitionCatalog.floorTextureLabel(26));
+        expect("Bridge Transition", WorldEditorDefinitionCatalog.floorTextureLabel(250));
+        expect("Undefined Texture", WorldEditorDefinitionCatalog.floorTextureLabel(27));
         expect("runtime mismatch", WorldEditorDefinitionCatalog.sceneryLabel(104, "runtime mismatch"));
         if (WorldEditorDefinitionCatalog.sceneryEntries().size() != 1332) {
             throw new AssertionError("wrong scenery catalog size");

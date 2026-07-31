@@ -230,11 +230,15 @@ The implementation sequence is:
    runtime name when a catalog row is missing or its canonical name drifts.
 3. [x] Keep a small reviewed override file for corrections the sources cannot
    express and generate an audit of unresolved ID-only legacy variants.
-4. [ ] Add one searchable selection browser backed by this catalog, beginning
+4. [x] Give every built-in floor overlay a concise visual label in the direct
+   numeric selector, show walkability on its own line, and remove the
+   misleading zero-based definition number from wall captions while retaining
+   the raw one-based value authors actually paint.
+5. [ ] Add one searchable selection browser backed by this catalog, beginning
    with scenery and boundaries rather than independent per-tool search code.
-5. [ ] Add lazily rendered, cached visual cards for scenery and boundaries;
+6. [ ] Add lazily rendered, cached visual cards for scenery and boundaries;
    never render every 3D model every frame.
-6. [ ] Extend the shared browser to items, NPCs, floor textures, roofs, and
+7. [ ] Extend the shared browser to items, NPCs, floor textures, roofs, and
    other definition families after each family has an authoritative metadata
    and preview contract.
 
@@ -246,6 +250,10 @@ Equivalent IDs may share a functional label (for example both tin-rock model
 variants are `Rock (tin)`), while the stable ID and future visual card retain
 their exact identity. This establishes the data foundation for an NEI-style
 browser without putting a 1,546-model render workload into the live scene.
+Floor overlays remain authoritative raw landscape bytes and `TileDef` remains
+the collision/rendering source of truth; their new labels are editor-only
+presentation metadata, including the Spoiled Milk transparent path overlay and
+the legacy bridge-transition sentinel.
 
 ## Compatibility Contract
 

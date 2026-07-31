@@ -28,6 +28,35 @@ public final class WorldEditorDefinitionCatalog {
 		"dev/myworld/assets/ui/world-editor/definition-catalog-v1.tsv";
 	private static final String RESOURCE_PATH =
 		"myworld-assets/ui/world-editor/definition-catalog-v1.tsv";
+	private static final String[] FLOOR_TEXTURE_LABELS = {
+		"Base Floor Color",
+		"Grey Road",
+		"Water",
+		"Wooden Floor",
+		"Wooden Bridge",
+		"Grey Stone Floor",
+		"Red Carpet",
+		"Swamp Water",
+		"Invisible Void",
+		"White Border",
+		"Black Void",
+		"Lava",
+		"Wooden Bridge (alternate)",
+		"Blue Carpet",
+		"Pentagram",
+		"Purple Carpet",
+		"Dark Floor",
+		"Light Stone Floor",
+		"Dark Blue Floor",
+		"Black Void (alternate)",
+		"Invisible Agility Platform",
+		"Invisible Agility Platform",
+		"Dark Blue Floor (alternate)",
+		"Sand Floor",
+		"Mud Floor",
+		"Shallow Water",
+		"Invisible Path"
+	};
 
 	public static final class Entry {
 		private final String kind;
@@ -101,6 +130,21 @@ public final class WorldEditorDefinitionCatalog {
 
 	public static String boundaryReference(int id) {
 		return boundaryLabel(id) + " [#" + id + "]";
+	}
+
+	/**
+	 * Returns the author-facing appearance of the raw, one-based landscape
+	 * overlay value. This presentation metadata does not replace TileDef or
+	 * alter rendering, collision, archives, or protocol values.
+	 */
+	public static String floorTextureLabel(int overlay) {
+		if (overlay == 250) {
+			return "Bridge Transition";
+		}
+		if (overlay < 0 || overlay >= FLOOR_TEXTURE_LABELS.length) {
+			return "Undefined Texture";
+		}
+		return FLOOR_TEXTURE_LABELS[overlay];
 	}
 
 	public static List<Entry> sceneryEntries() {
