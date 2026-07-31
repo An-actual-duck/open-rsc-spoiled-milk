@@ -152,6 +152,28 @@ public final class NativeLayeredTerrainPacketDecoder {
 			true);
 	}
 
+	public static NativeLayeredTerrainSnapshot
+		decodePredictedSymmetricStructure(
+			byte[] payload,
+			String worldSpace,
+			int level,
+			NativeLayeredTerrainResidentCache residentCache,
+			NativeLayeredTerrainSnapshot activeTerrain) {
+		if (residentCache == null || activeTerrain == null) {
+			throw new IllegalArgumentException(
+				"Predicted symmetric structure requires resident and active terrain");
+		}
+		return decodeChunked(
+			payload,
+			worldSpace,
+			level,
+			NativeLayeredTerrainSnapshot
+				.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION,
+			residentCache,
+			activeTerrain,
+			true);
+	}
+
 	public static NativeLayeredTerrainSnapshot decodeV10Structure(
 		byte[] payload,
 		String worldSpace,

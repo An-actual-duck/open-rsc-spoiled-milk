@@ -200,6 +200,39 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                                 .groundElevation & 0xff) == 31,
                         "inner terrain");
 
+                    NativeLayeredTerrainSnapshot structural =
+                        NativeLayeredTerrainPacketDecoder
+                            .decodePredictedSymmetricStructure(
+                                structure(11, 12, MANIFEST),
+                                "global",
+                                0,
+                                cache,
+                                active);
+                    NativeLayeredTerrainSnapshot complete =
+                        NativeLayeredTerrainSnapshot.mergePresentation(
+                            predicted, structural);
+                    require(complete.getProtocolVersion()
+                            == NativeLayeredTerrainSnapshot
+                                .SYMMETRIC_STRUCTURE_PROTOCOL_VERSION,
+                        "complete prediction protocol");
+                    com.openrsc.client.model.Tile outer =
+                        complete.createTile(9 * 48, 12 * 48);
+                    require((outer.groundElevation & 0xff) == 31
+                            && (outer.roofTexture & 0xff) == 6
+                            && (outer.verticalWall & 0xff) == 7
+                            && (outer.horizontalWall & 0xff) == 8
+                            && outer.diagonalWalls == 0x01020304,
+                        "complete prediction fields");
+                    NativeLayeredTerrainSnapshot completeInner =
+                        complete.toAtomicActivationInnerWindow();
+                    require(completeInner.getProtocolVersion()
+                            == NativeLayeredTerrainSnapshot
+                                .ATOMIC_ACTIVATION_PROTOCOL_VERSION
+                            && completeInner.getChunkSlotCount() == 9,
+                        "complete inner product");
+                    require(cache.size() == 41,
+                        "predicted visual and structure residency");
+
                     int stableSize = cache.size();
                     expectFailure(
                         () -> decodeUnchecked(
@@ -328,6 +361,75 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                         return halo(centerX, centerY, manifest);
                     } catch (Exception failure) {
                         throw new RuntimeException(failure);
+                    }
+                }
+
+                private static byte[] structure(
+                        int centerX,
+                        int centerY,
+                        String manifest) throws Exception {
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    DataOutputStream output = new DataOutputStream(bytes);
+                    line(output, PACKAGE);
+                    line(output, VERSION);
+                    line(output, manifest);
+                    output.writeByte(48);
+                    output.writeInt(centerX);
+                    output.writeInt(centerY);
+                    output.writeByte(2);
+                    output.writeByte(25);
+                    for (int x = -2; x <= 2; x++) {
+                        for (int y = -2; y <= 2; y++) {
+                            int chunkX = centerX + x;
+                            int chunkY = centerY + y;
+                            boolean outer =
+                                Math.max(Math.abs(x), Math.abs(y)) == 2;
+                            output.writeInt(chunkX);
+                            output.writeInt(chunkY);
+                            output.writeByte(outer ? 1 : 0);
+                            if (!outer) {
+                                continue;
+                            }
+                            output.writeInt(chunkX);
+                            output.writeInt(chunkY);
+                            line(output,
+                                NativeLayeredTerrainChunk
+                                    .STRUCTURAL_ENCODING);
+                            line(output, SOURCE_SHA);
+                            output.writeByte(1);
+                            byte[] compressed = structuralSector();
+                            output.writeShort(compressed.length);
+                            output.write(compressed);
+                        }
+                    }
+                    output.close();
+                    return bytes.toByteArray();
+                }
+
+                private static byte[] structuralSector() {
+                    byte[] raw = new byte[48 * 48 * 7];
+                    for (int offset = 0;
+                            offset < raw.length;
+                            offset += 7) {
+                        raw[offset] = 6;
+                        raw[offset + 1] = 7;
+                        raw[offset + 2] = 8;
+                        raw[offset + 3] = 1;
+                        raw[offset + 4] = 2;
+                        raw[offset + 5] = 3;
+                        raw[offset + 6] = 4;
+                    }
+                    Deflater compressor =
+                        new Deflater(Deflater.BEST_SPEED);
+                    try {
+                        compressor.setInput(raw);
+                        compressor.finish();
+                        byte[] compressed = new byte[raw.length + 128];
+                        int length = compressor.deflate(compressed);
+                        require(compressor.finished(), "compression");
+                        return Arrays.copyOf(compressed, length);
+                    } finally {
+                        compressor.end();
                     }
                 }
 
@@ -647,6 +749,11 @@ class NativeTerrainPredictionTest(unittest.TestCase):
             updater,
         )
         self.assertIn(
+            "LAYERED_TERRAIN_PREDICTED_SYMMETRIC_STRUCTURE_"
+            "PROTOCOL_VERSION = 5",
+            updater,
+        )
+        self.assertIn(
             "maybeSendNativeTerrainPredictedSymmetricResidency(",
             updater,
         )
@@ -688,8 +795,12 @@ class NativeTerrainPredictionTest(unittest.TestCase):
         self.assertIn("OpcodeIn.LAYERED_TERRAIN_STAGE_READY", parser)
         self.assertIn("decodeV7Stage(", handler)
         self.assertIn("decodePredictedSymmetricHalo(", handler)
+        self.assertIn("decodePredictedSymmetricStructure(", handler)
         self.assertIn(
             "preloadPredictedNativeLayeredTerrainHalo(", handler
+        )
+        self.assertIn(
+            "preloadPredictedNativeLayeredTerrainStructure(", handler
         )
         self.assertIn(
             "publishReadyPredictedLayeredTerrainHalo(nativeTerrain)",
@@ -716,6 +827,104 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                 "residentTransaction.commit();",
                 decoder.index("requireAdjacentStage(activeTerrain, result);"),
             ),
+        )
+
+    def test_complete_prediction_is_required_and_carried_across_activation(
+        self,
+    ):
+        updater = (
+            ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
+        ).read_text(encoding="utf-8")
+        handler = (
+            ROOT / "Client_Base/src/orsc/PacketHandler.java"
+        ).read_text(encoding="utf-8")
+        world = (
+            ROOT / "Client_Base/src/orsc/graphics/three/World.java"
+        ).read_text(encoding="utf-8")
+
+        activation_gate = updater.split(
+            "private boolean canActivateNativeTerrainStage", 1
+        )[1].split(
+            "private boolean hasAcceptedPredictedSymmetricStage", 1
+        )[0]
+        self.assertIn(
+            "LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION",
+            activation_gate,
+        )
+        self.assertIn("return false;", activation_gate)
+
+        accepted_prediction = updater.split(
+            "private boolean hasAcceptedPredictedSymmetricStage", 1
+        )[1].split(
+            "private void maybeSendNativeTerrainStage", 1
+        )[0]
+        self.assertIn(
+            "LAYERED_TERRAIN_PREDICTED_SYMMETRIC_STRUCTURE_"
+            "PROTOCOL_VERSION",
+            accepted_prediction,
+        )
+
+        prediction_send = updater.split(
+            "private void maybeSendNativeTerrainPredictedSymmetricResidency",
+            1,
+        )[1].split(
+            "private int[] predictNativeTerrainCenter", 1
+        )[0]
+        self.assertIn("advanceToStructure", prediction_send)
+        self.assertIn(
+            "sendNativeTerrainPredictedSymmetricStage(\n"
+            "\t\t\tplayer, location, stagedTerrain, advanceToStructure);",
+            prediction_send,
+        )
+        prediction_stage_send = updater.split(
+            "private void sendNativeTerrainPredictedSymmetricStage", 1
+        )[1].split(
+            "private void maybeSendNativeTerrainSymmetricResidency", 1
+        )[0]
+        self.assertIn(
+            "stagedTerrain.populateSymmetricStructure(stage);",
+            prediction_stage_send,
+        )
+
+        context_activation = updater.split(
+            "if (predictedSymmetricReady)", 1
+        )[1].split(
+            "if (nativeTerrain != null && nativeTerrain.requiresReadiness())",
+            1,
+        )[0]
+        self.assertIn(
+            "NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE",
+            context_activation,
+        )
+        self.assertIn(
+            "NATIVE_TERRAIN_SYMMETRIC_STRUCTURE_CONTEXT_ATTRIBUTE",
+            context_activation,
+        )
+
+        self.assertLess(
+            updater.index(
+                "maybeSendPendingNativeTerrainPredictedSymmetricStructure("
+            ),
+            updater.index("canActivateNativeTerrainStage("),
+            "crossing the boundary between prediction halves must not "
+            "strand the structural stage",
+        )
+        self.assertIn(
+            "readyPredictedLayeredTerrainStructureStage", handler
+        )
+        self.assertIn(
+            "canAcceptPredictedNativeLayeredTerrainStructure(", handler
+        )
+        self.assertIn(
+            "publishPredictedNativeLayeredTerrainHalo(", handler
+        )
+        self.assertIn(
+            "publishNativeLayeredTerrainCompleteHalo(", world
+        )
+        self.assertIn(
+            "presentation.rebasePresentation(\n"
+            "\t\t\t\t\t\t\tpredictedRebaseX, predictedRebaseZ)",
+            world,
         )
 
     def _compile_and_run(self, class_name, harness, sources):

@@ -460,6 +460,70 @@ public final class World {
 			});
 	}
 
+	/**
+	 * Completes an adjacent prediction by merging its already-acknowledged
+	 * visual field with the matching structural outer ring. The resulting
+	 * terrain, wall, roof, and exact inner world products are prepared while
+	 * the old center is still authoritative.
+	 */
+	public Future<NativeLayeredTerrainHaloPrebuildResult>
+		preloadPredictedNativeLayeredTerrainStructure(
+			final NativeLayeredTerrainSnapshot visualTerrain,
+			final NativeLayeredTerrainSnapshot structuralTerrain,
+			final int worldOffsetX,
+			final int worldOffsetZ) {
+		if (visualTerrain == null
+			|| visualTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| structuralTerrain == null
+			|| structuralTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+			throw new IllegalArgumentException(
+				"Complete prediction requires visual and structural snapshots");
+		}
+		final NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (!matchesPredictedHalo(activeTerrain, visualTerrain)
+			|| !matchesPredictedHalo(activeTerrain, structuralTerrain)
+			|| visualTerrain.getCurrentChunkX()
+				!= structuralTerrain.getCurrentChunkX()
+			|| visualTerrain.getCurrentChunkY()
+				!= structuralTerrain.getCurrentChunkY()
+			|| syntheticDeepFixtureOffsetX != worldOffsetX
+			|| syntheticDeepFixtureOffsetZ != worldOffsetZ) {
+			throw new IllegalStateException(
+				"Predicted structure does not match its visual field");
+		}
+		final NativeLayeredTerrainSnapshot presentationTerrain =
+			NativeLayeredTerrainSnapshot.mergePresentation(
+				visualTerrain, structuralTerrain);
+		final long sourceRevision = worldEditorTerrainRevision;
+		final String activeScopeIdentity = activeTerrain.scopeIdentity();
+		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
+		final Renderer3DWorldChunkFrame reusableChunks =
+			reusableNativeLayeredTerrainChunks(
+				activeTerrain, worldOffsetX, worldOffsetZ);
+		return sectorPreloadExecutor.submit(
+			new Callable<NativeLayeredTerrainHaloPrebuildResult>() {
+				@Override
+				public NativeLayeredTerrainHaloPrebuildResult call() {
+					return buildNativeLayeredTerrainHalo(
+						activeTerrain,
+						presentationTerrain,
+						presentationTerrain.scopeIdentity(),
+						presentationTerrain.getProtocolVersion(),
+						activeScopeIdentity,
+						worldOffsetX,
+						worldOffsetZ,
+						sourceRevision,
+						includeRoofGeometry,
+						reusableChunks);
+				}
+			});
+	}
+
 	private Renderer3DWorldChunkFrame reusableNativeLayeredTerrainChunks(
 		NativeLayeredTerrainSnapshot activeTerrain,
 		int worldOffsetX,
@@ -516,6 +580,21 @@ public final class World {
 			return publishNativeLayeredTerrainVisualHalo(
 				result, haloTerrain, activeTerrain, worldOffsetX, worldOffsetZ);
 		}
+		return publishNativeLayeredTerrainCompleteHalo(
+			result,
+			symmetricNativeLayeredTerrainVisualSnapshot,
+			activeTerrain,
+			worldOffsetX,
+			worldOffsetZ);
+	}
+
+	private boolean publishNativeLayeredTerrainCompleteHalo(
+		NativeLayeredTerrainHaloPrebuildResult result,
+		NativeLayeredTerrainSnapshot visualTerrain,
+		NativeLayeredTerrainSnapshot activeTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		symmetricNativeLayeredTerrainVisualSnapshot = visualTerrain;
 		symmetricOuterRenderer3DWorldChunkFrame =
 			Renderer3DWorldChunkFrame.fromChunks(result.outerChunks);
 		symmetricRetainableRenderer3DWorldChunkFrame =
@@ -547,21 +626,27 @@ public final class World {
 	 */
 	public boolean publishPredictedNativeLayeredTerrainHalo(
 		NativeLayeredTerrainHaloPrebuildResult result,
-		NativeLayeredTerrainSnapshot haloTerrain,
+		NativeLayeredTerrainSnapshot visualTerrain,
+		NativeLayeredTerrainSnapshot structuralTerrain,
 		int worldOffsetX,
 		int worldOffsetZ) {
 		NativeLayeredTerrainSnapshot activeTerrain =
 			nativeLayeredTerrainSnapshot;
 		if (result == null
-			|| haloTerrain == null
-			|| haloTerrain.getProtocolVersion()
+			|| visualTerrain == null
+			|| visualTerrain.getProtocolVersion()
 				!= NativeLayeredTerrainSnapshot
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
-			|| !matchesActiveHalo(activeTerrain, haloTerrain)
-			|| !result.haloScopeIdentity.equals(
-				haloTerrain.scopeIdentity())
-			|| result.haloProtocolVersion
-				!= haloTerrain.getProtocolVersion()
+			|| structuralTerrain == null
+			|| structuralTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+			|| !matchesActiveHalo(activeTerrain, visualTerrain)
+			|| !matchesActiveHalo(activeTerrain, structuralTerrain)
+			|| visualTerrain.getCurrentChunkX()
+				!= structuralTerrain.getCurrentChunkX()
+			|| visualTerrain.getCurrentChunkY()
+				!= structuralTerrain.getCurrentChunkY()
 			|| result.sourceRevision + 1L
 				!= worldEditorTerrainRevision
 			|| result.worldOffsetX != worldOffsetX
@@ -571,8 +656,65 @@ public final class World {
 			|| result.includeRoofGeometry != !Config.C_HIDE_ROOFS) {
 			return false;
 		}
-		return publishNativeLayeredTerrainVisualHalo(
-			result, haloTerrain, activeTerrain, worldOffsetX, worldOffsetZ);
+		NativeLayeredTerrainSnapshot presentationTerrain =
+			NativeLayeredTerrainSnapshot.mergePresentation(
+				visualTerrain, structuralTerrain);
+		if (!result.haloScopeIdentity.equals(
+				presentationTerrain.scopeIdentity())
+			|| result.haloProtocolVersion
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+			return false;
+		}
+		return publishNativeLayeredTerrainCompleteHalo(
+			result,
+			visualTerrain,
+			activeTerrain,
+			worldOffsetX,
+			worldOffsetZ);
+	}
+
+	public boolean canAcceptPredictedNativeLayeredTerrainStructure(
+		NativeLayeredTerrainHaloPrebuildResult result,
+		NativeLayeredTerrainSnapshot visualTerrain,
+		NativeLayeredTerrainSnapshot structuralTerrain,
+		int worldOffsetX,
+		int worldOffsetZ) {
+		NativeLayeredTerrainSnapshot activeTerrain =
+			nativeLayeredTerrainSnapshot;
+		if (result == null
+			|| visualTerrain == null
+			|| visualTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+			|| structuralTerrain == null
+			|| structuralTerrain.getProtocolVersion()
+				!= NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+			|| !matchesPredictedHalo(activeTerrain, visualTerrain)
+			|| !matchesPredictedHalo(activeTerrain, structuralTerrain)
+			|| visualTerrain.getCurrentChunkX()
+				!= structuralTerrain.getCurrentChunkX()
+			|| visualTerrain.getCurrentChunkY()
+				!= structuralTerrain.getCurrentChunkY()) {
+			return false;
+		}
+		NativeLayeredTerrainSnapshot presentationTerrain =
+			NativeLayeredTerrainSnapshot.mergePresentation(
+				visualTerrain, structuralTerrain);
+		return result.activeScopeIdentity.equals(
+				activeTerrain.scopeIdentity())
+			&& result.haloScopeIdentity.equals(
+				presentationTerrain.scopeIdentity())
+			&& result.haloProtocolVersion
+				== NativeLayeredTerrainSnapshot
+					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
+			&& result.sourceRevision == worldEditorTerrainRevision
+			&& result.worldOffsetX == worldOffsetX
+			&& result.worldOffsetZ == worldOffsetZ
+			&& syntheticDeepFixtureOffsetX == worldOffsetX
+			&& syntheticDeepFixtureOffsetZ == worldOffsetZ
+			&& result.includeRoofGeometry == !Config.C_HIDE_ROOFS;
 	}
 
 	public boolean canAcceptPredictedNativeLayeredTerrainHalo(
@@ -681,13 +823,25 @@ public final class World {
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION;
 		boolean predicted =
-			terrainOnly && !matchesActiveHalo(activeTerrain, haloTerrain);
+			!matchesActiveHalo(activeTerrain, haloTerrain);
+		int predictedRebaseX = predicted
+			? Math.multiplyExact(
+				activeTerrain.getCurrentChunkX()
+					- haloTerrain.getCurrentChunkX(),
+				SECTION_SIZE * 128)
+			: 0;
+		int predictedRebaseZ = predicted
+			? Math.multiplyExact(
+				activeTerrain.getCurrentChunkY()
+					- haloTerrain.getCurrentChunkY(),
+				SECTION_SIZE * 128)
+			: 0;
 		NativeLayeredTerrainSnapshot activeProductTerrain =
 			predicted
 				? haloTerrain.toAtomicActivationInnerWindow()
 				: activeTerrain;
 		NativeWorldModelPrebuild activePrebuild =
-			terrainOnly
+			terrainOnly || predicted
 				? prebuildNativeWorldModelProduct(
 					activeProductTerrain,
 					worldOffsetX,
@@ -743,6 +897,10 @@ public final class World {
 				boolean reused = presentation != null;
 				if (reused) {
 					reusedCells++;
+					if (predicted) {
+						presentation = presentation.rebasePresentation(
+							predictedRebaseX, predictedRebaseZ);
+					}
 				} else {
 					CpuSectionWindow window =
 						buildNativeLayeredCpuSectionWindow(
@@ -838,7 +996,7 @@ public final class World {
 				+ "/" + wallTriangles + "/" + roofTriangles
 				+ " cells=reused:" + reusedCells
 				+ "/built:" + builtCells
-				+ (terrainOnly
+				+ (activePrebuild != null
 					? " activeProduct="
 						+ (activePrebuild.productCacheHit
 							? "hit" : "built")

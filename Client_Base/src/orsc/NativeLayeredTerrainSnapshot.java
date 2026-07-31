@@ -419,17 +419,20 @@ public final class NativeLayeredTerrainSnapshot {
 	}
 
 	/**
-	 * Extracts the authoritative radius-one window carried inside a
-	 * terrain-only radius-two prediction. The returned scope identity matches
-	 * the protocol-v8 context the server will send for the predicted center,
-	 * allowing its CPU/GPU product to be cached before that context becomes
-	 * authoritative.
+	 * Extracts the authoritative radius-one window carried inside a radius-two
+	 * prediction. A complete predicted presentation is represented by merged
+	 * visual and structural protocol data, while the inner nine sectors remain
+	 * the same full authoritative source image in either form. The returned
+	 * scope identity matches the protocol-v8 context the server will send for
+	 * the predicted center, allowing its CPU/GPU product to be cached before
+	 * that context becomes authoritative.
 	 */
 	public NativeLayeredTerrainSnapshot toAtomicActivationInnerWindow() {
-		if (protocolVersion != SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+		if ((protocolVersion != SYMMETRIC_RESIDENCY_PROTOCOL_VERSION
+				&& protocolVersion != SYMMETRIC_STRUCTURE_PROTOCOL_VERSION)
 			|| chunkRadius != SYMMETRIC_RESIDENCY_CHUNK_RADIUS) {
 			throw new IllegalStateException(
-				"Only a radius-two visual snapshot has an atomic inner window");
+				"Only a radius-two presentation has an atomic inner window");
 		}
 		int sourceWidth = chunkRadius * 2 + 1;
 		NativeLayeredTerrainChunk[] inner =
