@@ -871,6 +871,9 @@ public abstract class Mob extends Entity {
 
 		for (int[] offset : offsets) {
 			Point candidate = Point.location(target.getX() + offset[0], target.getY() + offset[1]);
+			if (!isMeleeAdjacentTileWithinMovementBounds(candidate)) {
+				continue;
+			}
 			if (!PathValidation.checkPoint(getWorld(), candidate)) {
 				continue;
 			}
@@ -891,6 +894,19 @@ public abstract class Mob extends Entity {
 		}
 
 		return best;
+	}
+
+	private boolean isMeleeAdjacentTileWithinMovementBounds(final Point candidate) {
+		if (!isNpc() || Summoning.isSummon(this)) {
+			return true;
+		}
+
+		final Npc npc = (Npc) this;
+		return candidate.inBounds(
+			npc.getLoc().minX(),
+			npc.getLoc().minY(),
+			npc.getLoc().maxX(),
+			npc.getLoc().maxY());
 	}
 
 	public void walkToEntity(final int x, final int y) {

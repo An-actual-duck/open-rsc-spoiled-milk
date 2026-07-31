@@ -72,6 +72,11 @@ def main() -> None:
         "getPlayer().walkAdjacentToEntity(mob);",
     )
     require_contains(MOB, "getConfig().WANT_MYWORLD || getConfig().WANT_IMPROVED_PATHFINDING")
+    require_contains(MOB, "if (!isMeleeAdjacentTileWithinMovementBounds(candidate))")
+    require_contains(MOB, "private boolean isMeleeAdjacentTileWithinMovementBounds(final Point candidate)")
+    require_contains(MOB, "if (!isNpc() || Summoning.isSummon(this))")
+    require_contains(MOB, "npc.getLoc().minX()")
+    require_contains(MOB, "npc.getLoc().maxY()")
     require_contains(NPC, "private int getTotalDamageBy(final UUID id)")
     require_contains(NPC, "private Pair<UUID, Long> getTopDamageDealer(final Mob fallbackAttacker)")
     require_contains(NPC, "private ArrayList<UUID> getAllDamageDealerIds()")
