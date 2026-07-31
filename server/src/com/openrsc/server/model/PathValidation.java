@@ -43,8 +43,6 @@ public class PathValidation {
 
 	private interface DistanceTileLookup {
 		TileValue getTile(int x, int y);
-
-		boolean failClosedOnMissingTile();
 	}
 
 	public static boolean checkPath(World world, Point src, Point dest) {
@@ -532,6 +530,11 @@ public class PathValidation {
 		return true;
 	}
 
+	/**
+	 * Treats absent or invalid terrain as blocking for every lookup backend.
+	 * Collision checks must never permit movement or line travel through gaps
+	 * in either legacy or layered map data.
+	 */
 	private static boolean checkBlockingDistance(
 		final DistanceTileLookup tileLookup,
 		final int x,
@@ -543,13 +546,10 @@ public class PathValidation {
 		try {
 			t = tileLookup.getTile(x, y);
 		} catch (IllegalArgumentException | IllegalStateException missingTile) {
-			if (tileLookup.failClosedOnMissingTile()) {
-				return true;
-			}
-			throw missingTile;
+			return true;
 		}
 		if (t == null) {
-			return tileLookup.failClosedOnMissingTile();
+			return true;
 		}
 		if (collisionMode == DistanceCollisionMode.HOSTILE_PROJECTILE) {
 			return isBlocking(t.getHostileProjectileCollisionMask(), (byte) bit, isCurrentTile);
@@ -566,11 +566,6 @@ public class PathValidation {
 			@Override
 			public TileValue getTile(final int x, final int y) {
 				return world.getTile(x, y);
-			}
-
-			@Override
-			public boolean failClosedOnMissingTile() {
-				return false;
 			}
 		};
 	}
@@ -591,11 +586,6 @@ public class PathValidation {
 				}
 				return world.getTile(candidate);
 			}
-
-			@Override
-			public boolean failClosedOnMissingTile() {
-				return true;
-			}
 		};
 	}
 
@@ -610,11 +600,6 @@ public class PathValidation {
 				}
 				return world.getTile(
 					LayeredCompatibilityPointAdapter.deepLocation(x, y));
-			}
-
-			@Override
-			public boolean failClosedOnMissingTile() {
-				return true;
 			}
 		};
 	}

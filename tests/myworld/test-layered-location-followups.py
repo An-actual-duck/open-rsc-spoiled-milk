@@ -409,10 +409,36 @@ public final class LayeredLocationFollowupsHarness {
             "missing upper tile contaminated surface collision");
     }
 
+    private static void testLegacyMissingTerrainFailsClosed() {
+        World world = new World();
+        world.getServer().getConfig()
+            .WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = false;
+        Point start = Point.location(1, 1);
+        Point end = Point.location(4, 1);
+
+        require(PathValidation.checkPath(world, start, end, false),
+            "clear legacy path was rejected");
+        require(PathValidation.checkHostileProjectilePath(world, start, end),
+            "clear legacy projectile path was rejected");
+
+        world.removeTile(location(2, 1, 0));
+        require(!PathValidation.checkPath(world, start, end, false),
+            "missing legacy tile allowed line travel");
+        require(!PathValidation.checkHostileProjectilePath(world, start, end),
+            "missing legacy tile allowed hostile projectile travel");
+        require(!PathValidation.checkAdjacentDistance(
+                world, 1, 1, 2, 1, false, true),
+            "missing legacy tile allowed adjacent movement");
+        require(!PathValidation.checkAdjacentDistance(
+                world, 7, 1, 8, 1, false, true),
+            "out-of-world legacy destination allowed adjacent movement");
+    }
+
     public static void main(String[] args) {
         testReturnLocations();
         testPackedStairsAndTelepoints();
         testScopedCollision();
+        testLegacyMissingTerrainFailsClosed();
     }
 }
 """
@@ -577,8 +603,9 @@ def check_integration_contracts() -> None:
     )
     require(
         "nativeLayeredTileLookup(world, src)" in path_validation
-        and "failClosedOnMissingTile()" in path_validation,
-        "layered collision does not execute against fail-closed scoped terrain",
+        and "failClosedOnMissingTile" not in path_validation
+        and re.search(r"if \(t == null\) \{\s*return true;", path_validation),
+        "collision lookup does not fail closed consistently for missing terrain",
     )
     require(
         not re.search(
