@@ -209,7 +209,6 @@ public final class LawJewelry implements OpInvTrigger, UseInvTrigger, UseLocTrig
 			player.message("Recharge it at the law altar.");
 			return true;
 		}
-
 		player.teleport(destination.x, destination.y, destination.level, true);
 		lawJewelry.setRemainingCharges(player, amulet, charges - 1);
 		player.message("Your law Bangle now has " + lawJewelry.formatCharges(charges - 1) + " remaining.");

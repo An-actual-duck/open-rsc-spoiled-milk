@@ -187,8 +187,8 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 							delay(3);
 							player.getCarriedItems().remove(new Item(ItemId.ANA_IN_A_BARREL.id()));
 							player.updateQuestStage(this, 10);
-							Npc Ana = addnpc(player.getWorld(), NpcId.ANA.id(), player.getX(), player.getY(), 60000);
-							Ana.teleport(player.getX(), player.getY() + 1);
+							Npc Ana = addnpc(player, NpcId.ANA.id(), player.getX(), player.getY(), 60000);
+							Ana.teleportCurrentScope(player.getX(), player.getY() + 1);
 							if (Ana != null) {
 								delay();
 								player.message("@gre@Ana: Hey great, there's my Mum!");
@@ -1082,7 +1082,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 								player.message("A guard notices you and starts running after you.");
 								Npc npcN = ifnearvisnpc(player, NpcId.MERCENARY.id(), 10);
 								if (npcN == null) {
-									npcN = addnpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
+									npcN = addnpc(player, NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
 									delay(2);
 								}
 								npcsay(player, npcN, "Hey! You're no slave!");
@@ -2271,7 +2271,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 				player.message("A guard notices you and starts running after you.");
 				Npc npcN = ifnearvisnpc(player, NpcId.MERCENARY.id(), 10);
 				if (npcN == null) {
-					npcN = addnpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
+					npcN = addnpc(player, NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
 					delay(2);
 				}
 				npcsay(player, npcN, "Hey! You're no slave!");
@@ -2451,7 +2451,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 					"It's a trade secret!");
 				if (gosh == 0) {
 					say(player, npc, "I used a key.");
-					Npc guard = addnpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
+					Npc guard = addnpc(player, NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
 					if (guard != null) {
 						npcsay(player, guard, "I heard that! So you used a key did you?! ");
 						if (player.getCarriedItems().hasCatalogID(ItemId.METAL_KEY.id(), Optional.of(false))) {
@@ -2476,7 +2476,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 				}
 				break;
 			case Ana.GUARDSRUBBISH:
-				Npc guard = addnpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
+				Npc guard = addnpc(player, NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
 				if (guard != null) {
 					npcsay(player, guard, "I heard that! So you managed to sneak in did you!",
 						"Guards! Guards!");
@@ -2625,8 +2625,8 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 						delay(3);
 						player.getCarriedItems().remove(new Item(ItemId.ANA_IN_A_BARREL.id()));
 						player.updateQuestStage(this, 10);
-						Npc Ana = addnpc(player.getWorld(), NpcId.ANA.id(), player.getX(), player.getY(), 60000);
-						Ana.teleport(player.getX(), player.getY() + 1);
+						Npc Ana = addnpc(player, NpcId.ANA.id(), player.getX(), player.getY(), 60000);
+						Ana.teleportCurrentScope(player.getX(), player.getY() + 1);
 						if (Ana != null) {
 							delay();
 							npcsay(player, Ana, "Great! Thanks for getting me out of that mine!",
@@ -2785,7 +2785,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 					mes("And your ears ring with the 'CLANG CLANG CLANG' as metal hits rock.");
 					delay(3);
 				} else {
-					final Npc n = addnpc(player.getWorld(), NpcId.DRAFT_MERCENARY_GUARD.id(), player.getX(), player.getY());
+					final Npc n = addnpc(player, NpcId.DRAFT_MERCENARY_GUARD.id(), player.getX(), player.getY());
 					player.getWorld().getServer().getGameEventHandler().add(
 						new SingleEvent(player.getWorld(), null, config().GAME_TICK * 50, "Draft Mercenary Talk Delay") {
 							public void action() {
@@ -3165,7 +3165,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 
 	private void failEscapeAnaInBarrel(Player player, Npc n) {
 		if (player.getCarriedItems().hasCatalogID(ItemId.ANA_IN_A_BARREL.id(), Optional.of(false))) {
-			n = addnpc(player.getWorld(), NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
+			n = addnpc(player, NpcId.MERCENARY.id(), player.getX(), player.getY(), 60000);
 			delay();
 			npcsay(player, n, "Hey, where d'ya think you're going with that barrel?",
 				"You should know that they go out on the cart!",
@@ -3174,7 +3174,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 			player.getCarriedItems().remove(new Item(ItemId.ANA_IN_A_BARREL.id()));
 			npcsay(player, n, "Blimey! It's a jail break!",
 				"They're making a break for it!");
-			Npc ana = addnpc(player.getWorld(), NpcId.ANA.id(), player.getX(), player.getY(), 30000);
+			Npc ana = addnpc(player, NpcId.ANA.id(), player.getX(), player.getY(), 30000);
 			delay();
 			npcsay(player, ana, "I could have told you we wouldn't get away with it!",
 				"Now look at the mess you've caused!");
@@ -3266,7 +3266,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 			} else {
 				Npc n = ifnearvisnpc(player, NpcId.BEDABIN_NOMAD_GUARD.id(), 5);
 				if (n == null) {
-					n = addnpc(player.getWorld(), NpcId.BEDABIN_NOMAD_GUARD.id(), player.getX(), player.getY(), 60000);
+					n = addnpc(player, NpcId.BEDABIN_NOMAD_GUARD.id(), player.getX(), player.getY(), 60000);
 					delay();
 				}
 				n.teleport(170, 794);
@@ -3323,7 +3323,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 			if (player.getY() >= 3617) {
 				if (player.getCarriedItems().hasCatalogID(ItemId.WROUGHT_IRON_KEY.id(), Optional.of(false))) {
 					player.message("You use the wrought iron key to unlock the gate.");
-					player.teleport(player.getX(), player.getY() - 1);
+					player.teleportCurrentScope(player.getX(), player.getY() - 1);
 				} else {
 					mes("You need a key to unlock this door,");
 					delay(3);
@@ -3332,7 +3332,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 				}
 			} else {
 				player.message("You push the gate open and walk through.");
-				player.teleport(player.getX(), player.getY() + 1);
+				player.teleportCurrentScope(player.getX(), player.getY() + 1);
 			}
 		}
 	}

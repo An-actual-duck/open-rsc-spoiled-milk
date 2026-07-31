@@ -71,7 +71,7 @@ public class Necromancer implements AttackNpcTrigger, KillNpcTrigger, SpellNpcTr
 
 			npcsay(player, necromancer, "I summon the undead to smite you down");
 
-			final Npc zombie = addnpc(necromancer.getWorld(), NpcId.ZOMBIE_INVOKED.id(),
+			final Npc zombie = addnpc(necromancer, NpcId.ZOMBIE_INVOKED.id(),
 				necromancer.getX(), necromancer.getY());
 
 			delay(3);
@@ -93,7 +93,7 @@ public class Necromancer implements AttackNpcTrigger, KillNpcTrigger, SpellNpcTr
 	@Override
 	public void onKillNpc(final Player player, final Npc necromancer) {
 		zombieCounter = 0;
-		final Npc zombie = addnpc(player.getWorld(), NpcId.ZOMBIE_INVOKED.id(), player.getX(), player.getY());
+		final Npc zombie = addnpc(player, NpcId.ZOMBIE_INVOKED.id(), player.getX(), player.getY());
 		zombie.startCombat(player);
 	}
 

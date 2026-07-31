@@ -7,6 +7,8 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.plugins.QuestInterface;
 import com.openrsc.server.plugins.authentic.npcs.varrock.ManPhoenix;
 import com.openrsc.server.plugins.custom.minigames.ArmyOfObscurity;
@@ -41,6 +43,8 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 	private static final int PHOENIX_CHEST_CLOSED = 82;
 	private static final int BARM_CUPBOARD_OPEN = 85;
 	private static final int BARM_CUPBOARD_CLOSED = 84;
+	private static final WorldLocation PHOENIX_GANG_ENTRANCE =
+		LegacyPackedPointAdapter.fromPackedValues(110, 3370);
 
 	@Override
 	public int getQuestId() {
@@ -542,7 +546,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 			} else {
 				player.message("The door won't open");
 			}
-		} else if (obj.getID() == 19 && obj.getY() == 3370) {
+		} else if (isPhoenixGangEntrance(obj)) {
 			Npc man = ifnearvisnpc(player, NpcId.STRAVEN.id(), 20);
 			if (isPhoenixGang(player)) {
 				if (player.getQuestStage(this) >= 0 && player.getQuestStage(this) < 5) {
@@ -553,15 +557,15 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 					if (!player.getConfig().OLD_QUEST_MECHANICS) {
 						player.message("The door is opened for you");
 						player.message("You go through the door");
-						if (player.getY() <= 3369) {
+						if (player.getY() < obj.getY()) {
 							doDoor(obj, player);
-							player.teleport(player.getX(), player.getY() + 1, false);
+							player.teleportCurrentScope(player.getX(), player.getY() + 1, false);
 						} else {
 							doDoor(obj, player);
-							player.teleport(player.getX(), player.getY() - 1, false);
+							player.teleportCurrentScope(player.getX(), player.getY() - 1, false);
 						}
 					} else {
-						if (player.getY() <= 3369) {
+						if (player.getY() < obj.getY()) {
 							player.message("The door is locked");
 							if (player.getCarriedItems().hasCatalogID(ItemId.PHOENIX_GANG_KEY.id())
 								&& player.getConfig().OLD_QUEST_MECHANICS) {
@@ -570,7 +574,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 							}
 						} else {
 							doDoor(obj, player);
-							player.teleport(player.getX(), player.getY() - 1, false);
+							player.teleportCurrentScope(player.getX(), player.getY() - 1, false);
 						}
 					}
 				}
@@ -597,7 +601,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 	@Override
 	public boolean blockOpBound(Player player, GameObject obj, Integer click) {
 		//door on phoenix gang entrance
-		if (obj.getID() == 19 && obj.getY() == 3370) {
+		if (isPhoenixGangEntrance(obj)) {
 			return true;
 		}
 		//door on black arm gang entrance
@@ -614,8 +618,8 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 	public boolean blockUseBound(Player player, GameObject obj, Item item) {
 		return (item.getCatalogId() == ItemId.PHOENIX_GANG_WEAPON_KEY.id() && obj.getID() == 20
 				&& obj.getY() == 532)
-			|| (item.getCatalogId() == ItemId.PHOENIX_GANG_KEY.id() && obj.getID() == 19
-			&& obj.getY() == 3370);
+			|| (item.getCatalogId() == ItemId.PHOENIX_GANG_KEY.id()
+			&& isPhoenixGangEntrance(obj));
 	}
 
 	@Override
@@ -628,8 +632,8 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 			doDoor(obj, player);
 			mes("You go through the door");
 			delay(3);
-		} else if (item.getCatalogId() == ItemId.PHOENIX_GANG_KEY.id() && obj.getID() == 19
-			&& obj.getY() == 3370) {
+		} else if (item.getCatalogId() == ItemId.PHOENIX_GANG_KEY.id()
+			&& isPhoenixGangEntrance(obj)) {
 			if (player.getConfig().OLD_QUEST_MECHANICS) {
 				// Retro RSC mechanic - had to use key on door to get in
 				thinkbubble(item);
@@ -648,6 +652,11 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 			}
 		}
 
+	}
+
+	private static boolean isPhoenixGangEntrance(final GameObject object) {
+		return object.getID() == 19
+			&& PHOENIX_GANG_ENTRANCE.equals(object.getWorldLocation());
 	}
 
 	@Override

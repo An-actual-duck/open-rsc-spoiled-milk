@@ -267,6 +267,9 @@ public abstract class Mob extends Entity {
 	}
 
 	public final boolean atObject(final GameObject o) {
+		if (!sharesSpatialDomain(o)) {
+			return false;
+		}
 		final Point[] boundaries = o.getObjectBoundary();
 		final Point low = boundaries[0];
 		final Point high = boundaries[1];
@@ -312,19 +315,23 @@ public abstract class Mob extends Entity {
 			return true;
 		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() && maxY >= getY()
-			&& (objectReachTile(getX() - 1, getY()).traversalMask & CollisionFlag.WALL_WEST) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX() - 1, getY(), CollisionFlag.WALL_WEST)) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() >= minY && maxY >= getY()
-			&& (CollisionFlag.WALL_EAST & objectReachTile(getX() + 1, getY()).traversalMask) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX() + 1, getY(), CollisionFlag.WALL_EAST)) {
 			return true;
 		}
 		if (minX <= getX() && maxX >= getX() && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH & objectReachTile(getX(), getY() - 1).traversalMask) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX(), getY() - 1, CollisionFlag.WALL_SOUTH)) {
 			return true;
 		}
 		if (minX <= getX() && getX() <= maxX && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH & objectReachTile(getX(), getY() + 1).traversalMask) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX(), getY() + 1, CollisionFlag.WALL_NORTH)) {
 			return true;
 		}
 		return false;
@@ -332,37 +339,33 @@ public abstract class Mob extends Entity {
 
 	private boolean canReachDiagonal(int minX, int maxX, int minY, int maxY) {
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() - 1 && maxY >= getY() - 1
-			&& (objectReachTile(getX() - 1, getY() - 1).traversalMask & CollisionFlag.WALL_SOUTH_WEST) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX() - 1, getY() - 1, CollisionFlag.WALL_SOUTH_WEST)) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH_EAST & objectReachTile(getX() + 1, getY() - 1).traversalMask) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX() + 1, getY() - 1, CollisionFlag.WALL_SOUTH_EAST)) {
 			return true;
 		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (objectReachTile(getX() - 1, getY() + 1).traversalMask & CollisionFlag.WALL_NORTH_WEST) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX() - 1, getY() + 1, CollisionFlag.WALL_NORTH_WEST)) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() + 1 >= minY && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH_EAST & objectReachTile(getX() + 1, getY() + 1).traversalMask) == 0) {
+			&& isTraversalClearAtCurrentLevel(
+				getX() + 1, getY() + 1, CollisionFlag.WALL_NORTH_EAST)) {
 			return true;
 		}
 		return false;
 	}
 
-	private TileValue objectReachTile(final int x, final int y) {
-		WorldLocation current = getWorldLocation();
-		WorldLocation reachabilityLocation = new WorldLocation(
-			current.getWorldSpace(),
-			new WorldCoordinate(
-				x,
-				y,
-				current.getCoordinate().getLevel()));
-		return getWorld().getTile(reachabilityLocation);
-	}
-
 	// canReach EVER, not canReach this tick
 	public final boolean canReach(Entity e) {
+		if (!sharesSpatialDomain(e)) {
+			return false;
+		}
 		int[] currentCoords = {getX(), getY()};
 		while (currentCoords[0] != e.getX() || currentCoords[1] != e.getY()) {
 			currentCoords = nextStep(currentCoords[0], currentCoords[1], e);
@@ -432,7 +435,11 @@ public abstract class Mob extends Entity {
 	}
 
 	private boolean isBlocking(Entity e, int x, int y, int bit) {
-		int val = getWorld().getTile(x, y).traversalMask;
+		TileValue tile = getTileAtCurrentLevel(x, y);
+		if (tile == null) {
+			return true;
+		}
+		int val = tile.traversalMask;
 		if ((val & bit) != 0) {
 			return true;
 		}
@@ -807,23 +814,45 @@ public abstract class Mob extends Entity {
 	/**
 	 * Resolves an unqualified movement coordinate in this mob's current signed
 	 * native scope. Legacy callers still receive the packed Region tile.
+	 * Missing native or synthetic terrain returns {@code null} instead of
+	 * falling through to the legacy surface tile at the same X/Y.
 	 */
 	public final TileValue getTileAtCurrentLevel(
 		final int x,
 		final int y) {
 		WorldLocation owner = getWorldLocation();
-		if (getWorld().getRegionManager().hasNativeLayeredTerrain(owner)
-			|| LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
-			return getWorld().getTile(
-				new WorldLocation(
-					owner.getWorldSpace(),
-					new com.openrsc.server.model.world.coordinate
-						.WorldCoordinate(
-							x,
-							y,
-							owner.getCoordinate().getLevel())));
+		WorldLocation candidate = new WorldLocation(
+			owner.getWorldSpace(),
+			new WorldCoordinate(
+				x, y, owner.getCoordinate().getLevel()));
+		if (getWorld().getRegionManager().hasNativeLayeredTerrain(owner)) {
+			if (!getWorld().getRegionManager()
+					.hasNativeLayeredTerrain(candidate)) {
+				return null;
+			}
+			return getWorld().getTile(candidate);
+		}
+		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(owner)) {
+			if (!LayeredCompatibilityPointAdapter
+					.containsSyntheticDeepCoordinate(x, y)) {
+				return null;
+			}
+			try {
+				return getWorld().getTile(candidate);
+			} catch (IllegalArgumentException | IllegalStateException
+				unavailableFixture) {
+				return null;
+			}
 		}
 		return getWorld().getTile(x, y);
+	}
+
+	private boolean isTraversalClearAtCurrentLevel(
+		final int x,
+		final int y,
+		final int mask) {
+		TileValue tile = getTileAtCurrentLevel(x, y);
+		return tile != null && (tile.traversalMask & mask) == 0;
 	}
 
 	public void walk(final int x, final int y) {
@@ -873,6 +902,9 @@ public abstract class Mob extends Entity {
 	}
 
 	private Point getClosestMeleeAdjacentTile(final Mob target) {
+		if (!sharesSpatialDomain(target)) {
+			return null;
+		}
 		Point best = null;
 		int bestDistance = Integer.MAX_VALUE;
 		int bestCardinalBias = Integer.MAX_VALUE;
@@ -883,11 +915,14 @@ public abstract class Mob extends Entity {
 
 		for (int[] offset : offsets) {
 			Point candidate = Point.location(target.getX() + offset[0], target.getY() + offset[1]);
-			if (!PathValidation.checkPoint(getWorld(), candidate)) {
+			TileValue candidateTile = getTileAtCurrentLevel(
+				candidate.getX(), candidate.getY());
+			if (candidateTile == null
+				|| (candidateTile.traversalMask
+					& CollisionFlag.FULL_BLOCK) != 0) {
 				continue;
 			}
-			if (!PathValidation.checkAdjacentDistance(getWorld(), candidate.getX(), candidate.getY(),
-				target.getX(), target.getY(), true, false)) {
+			if (!canMeleeFrom(candidate, target)) {
 				continue;
 			}
 
@@ -903,6 +938,14 @@ public abstract class Mob extends Entity {
 		}
 
 		return best;
+	}
+
+	private boolean canMeleeFrom(final Point candidate, final Mob target) {
+		return PathValidation.checkAdjacentDistanceInScope(
+			this,
+			candidate.getX(), candidate.getY(),
+			target.getX(), target.getY(),
+			true, false);
 	}
 
 	public void walkToEntity(final int x, final int y) {

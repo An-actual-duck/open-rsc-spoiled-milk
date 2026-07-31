@@ -7,11 +7,15 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.plugins.triggers.*;
 
 import static com.openrsc.server.plugins.Functions.*;
 
 public class LegendsQuestViyeldi implements TalkNpcTrigger, TakeObjTrigger, AttackNpcTrigger, SpellNpcTrigger, PlayerRangeNpcTrigger {
+	private static final WorldLocation VIYELDI_HAT_LOCATION =
+		LegacyPackedPointAdapter.fromPackedValues(426, 3708);
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
@@ -54,28 +58,33 @@ public class LegendsQuestViyeldi implements TalkNpcTrigger, TakeObjTrigger, Atta
 
 	@Override
 	public boolean blockTakeObj(Player player, GroundItem i) {
-		return i.getID() == ItemId.A_BLUE_WIZARDS_HAT.id() && i.getX() == 426 && i.getY() == 3708;
+		return isViyeldiHat(i);
 	}
 
 	@Override
 	public void onTakeObj(Player player, GroundItem i) {
-		if (i.getID() == ItemId.A_BLUE_WIZARDS_HAT.id() && i.getX() == 426 && i.getY() == 3708) {
-			player.teleport(i.getX(), i.getY());
+		if (isViyeldiHat(i)) {
+			player.teleportCurrentScope(i.getX(), i.getY());
 			mes("Your hand passes through the hat as if it wasn't there.");
 			delay(2);
 			if (player.getQuestStage(Quests.LEGENDS_QUEST) >= 8) {
 				return;
 			}
-			player.teleport(i.getX(), i.getY() - 1);
+			player.teleportCurrentScope(i.getX(), i.getY() - 1);
 			mes("Instantly the clothes begin to animate and then walk towards you.");
 			delay(2);
 			Npc n = ifnearvisnpc(player, NpcId.VIYELDI.id(), 3);
 			if (n == null)
-				n = addnpc(player.getWorld(), NpcId.VIYELDI.id(), i.getX(), i.getY(), 60000);
+				n = addnpc(player, NpcId.VIYELDI.id(), i.getX(), i.getY(), 60000);
 			if (n != null) {
 				n.initializeTalkScript(player);
 			}
 		}
+	}
+
+	private static boolean isViyeldiHat(final GroundItem item) {
+		return item.getID() == ItemId.A_BLUE_WIZARDS_HAT.id()
+			&& VIYELDI_HAT_LOCATION.equals(item.getWorldLocation());
 	}
 
 	@Override
