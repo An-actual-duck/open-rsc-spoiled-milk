@@ -29,6 +29,7 @@ import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -311,42 +312,53 @@ public abstract class Mob extends Entity {
 			return true;
 		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() && maxY >= getY()
-			&& (getWorld().getTile(getX() - 1, getY()).traversalMask & CollisionFlag.WALL_WEST) == 0) {
+			&& (objectReachTile(getX() - 1, getY()).traversalMask & CollisionFlag.WALL_WEST) == 0) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() >= minY && maxY >= getY()
-			&& (CollisionFlag.WALL_EAST & getWorld().getTile(getX() + 1, getY()).traversalMask) == 0) {
+			&& (CollisionFlag.WALL_EAST & objectReachTile(getX() + 1, getY()).traversalMask) == 0) {
 			return true;
 		}
 		if (minX <= getX() && maxX >= getX() && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH & getWorld().getTile(getX(), getY() - 1).traversalMask) == 0) {
+			&& (CollisionFlag.WALL_SOUTH & objectReachTile(getX(), getY() - 1).traversalMask) == 0) {
+			return true;
+		}
+		if (minX <= getX() && getX() <= maxX && minY <= getY() + 1 && maxY >= getY() + 1
+			&& (CollisionFlag.WALL_NORTH & objectReachTile(getX(), getY() + 1).traversalMask) == 0) {
 			return true;
 		}
 		return false;
 	}
 
 	private boolean canReachDiagonal(int minX, int maxX, int minY, int maxY) {
-		if (minX <= getX() && getX() <= maxX && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH & getWorld().getTile(getX(), getY() + 1).traversalMask) == 0) {
-			return true;
-		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() - 1 && maxY >= getY() - 1
-			&& (getWorld().getTile(getX() - 1, getY() - 1).traversalMask & CollisionFlag.WALL_SOUTH_WEST) == 0) {
+			&& (objectReachTile(getX() - 1, getY() - 1).traversalMask & CollisionFlag.WALL_SOUTH_WEST) == 0) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH_EAST & getWorld().getTile(getX() + 1, getY() - 1).traversalMask) == 0) {
+			&& (CollisionFlag.WALL_SOUTH_EAST & objectReachTile(getX() + 1, getY() - 1).traversalMask) == 0) {
 			return true;
 		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (getWorld().getTile(getX() - 1, getY() + 1).traversalMask & CollisionFlag.WALL_NORTH_WEST) == 0) {
+			&& (objectReachTile(getX() - 1, getY() + 1).traversalMask & CollisionFlag.WALL_NORTH_WEST) == 0) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() + 1 >= minY && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH_EAST & getWorld().getTile(getX() + 1, getY() + 1).traversalMask) == 0) {
+			&& (CollisionFlag.WALL_NORTH_EAST & objectReachTile(getX() + 1, getY() + 1).traversalMask) == 0) {
 			return true;
 		}
 		return false;
+	}
+
+	private TileValue objectReachTile(final int x, final int y) {
+		WorldLocation current = getWorldLocation();
+		WorldLocation reachabilityLocation = new WorldLocation(
+			current.getWorldSpace(),
+			new WorldCoordinate(
+				x,
+				y,
+				current.getCoordinate().getLevel()));
+		return getWorld().getTile(reachabilityLocation);
 	}
 
 	// canReach EVER, not canReach this tick
