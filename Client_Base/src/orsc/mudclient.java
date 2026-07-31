@@ -28269,6 +28269,9 @@ public final class mudclient implements Runnable {
 			x += x;
 		else if (x < -1)
 			x -= (-x);
+		if (worldEditorInterface != null && worldEditorInterface.scrollDefinitionBrowser(x)) {
+			return;
+		}
 		if (showUiTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
 			if (uiTabPlayerInfoSubTab == 1) {
 				panelQuestInfo.scrollMethodList(controlQuestInfoPanel, x);

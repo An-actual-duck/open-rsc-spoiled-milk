@@ -236,6 +236,11 @@ The implementation sequence is:
    the raw one-based value authors actually paint.
 5. [ ] Add one searchable selection browser backed by this catalog, beginning
    with scenery and boundaries rather than independent per-tool search code.
+   - [x] Add the scenery browser shell: multi-term semantic search, exact
+     numeric-ID search, eight visible text cards, clamped wheel/page scrolling,
+     click/Enter selection, and compatibility with compact and full layouts.
+   - [ ] Connect boundary/wall selectors to the same browser model after the
+     scenery interaction is owner-accepted.
 6. [ ] Add lazily rendered, cached visual cards for scenery and boundaries;
    never render every 3D model every frame.
 7. [ ] Extend the shared browser to items, NPCs, floor textures, roofs, and
@@ -254,6 +259,12 @@ Floor overlays remain authoritative raw landscape bytes and `TileDef` remains
 the collision/rendering source of truth; their new labels are editor-only
 presentation metadata, including the Spoiled Milk transparent path overlay and
 the legacy bridge-transition sentinel.
+
+The first browser slice filters only when its query changes and draws only the
+eight visible text cards. It therefore adds no eager model construction or
+per-frame traversal of the full scenery catalog. Lazy cached 3D previews remain
+a separate measured slice after the search and selection interaction is
+accepted.
 
 ## Compatibility Contract
 
