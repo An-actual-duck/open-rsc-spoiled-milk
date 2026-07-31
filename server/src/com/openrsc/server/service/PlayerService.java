@@ -20,6 +20,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPlayerLocationPersistenceSnapshot;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.LayeredPlayerLoginRecovery;
 import com.openrsc.server.model.world.coordinate.LayeredPlayerLocationPersistence;
 import com.openrsc.server.model.world.coordinate.LavaForgeLocation;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
@@ -236,6 +238,33 @@ public class PlayerService implements IPlayerService {
 			restoredLocation = migratedLocation;
 			restoredOrigin =
 				LavaForgeLocation.PERSISTENCE_MIGRATION_ORIGIN;
+			rewriteRequired = true;
+		}
+		WorldLocation configuredRespawn =
+			LegacyPackedPointAdapter.fromPackedValues(
+				configuration.RESPAWN_LOCATION_X,
+				configuration.RESPAWN_LOCATION_Y);
+		LayeredPlayerLoginRecovery.Decision loginRecovery =
+			LayeredPlayerLoginRecovery.resolve(
+				restoredLocation,
+				restoredOrigin,
+				configuredRespawn,
+				location -> {
+					TileValue tile = player.getWorld().getRegionManager()
+						.getTile(location);
+					return tile == null
+						? null
+						: Integer.valueOf(tile.overlay & 0xff);
+				});
+		if (loginRecovery.isRecovered()) {
+			LOGGER.warn(
+				"layered-player-location recovery playerId={} reason={} source={} destination={}",
+				player.getDatabaseID(),
+				loginRecovery.getReason(),
+				restoredLocation,
+				loginRecovery.getLocation());
+			restoredLocation = loginRecovery.getLocation();
+			restoredOrigin = loginRecovery.getOrigin();
 			rewriteRequired = true;
 		}
 		player.setInitialLayeredLocation(restoredLocation);
