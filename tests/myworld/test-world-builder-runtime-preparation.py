@@ -102,7 +102,6 @@ class WorldBuilderRuntimePreparationTest(unittest.TestCase):
             "server/badwords.txt": b"\n",
             "server/goodwords.txt": b"\n",
             "server/globalrules.txt": b"rules\n",
-            "server/ipbans.txt": b"\n",
             "server/lib/runtime.jar": b"library",
             "server/database/sqlite/core.sqlite": b"query definitions",
             "server/inc/sqlite/myworld_seed.db": b"clean-seed-database",
@@ -227,6 +226,36 @@ class WorldBuilderRuntimePreparationTest(unittest.TestCase):
             generated_overlay.write_text('{"sceneries":[]}\n', encoding="utf-8")
             self.assertEqual(before, self.snapshot(target))
             self.assertEqual(source_before, self.snapshot(source))
+
+    def test_first_prepare_does_not_require_or_import_ip_ban_state(self):
+        for runtime_bans in (None, b"198.51.100.12\n"):
+            with self.subTest(stale_runtime_bans=runtime_bans is not None):
+                with tempfile.TemporaryDirectory(
+                    prefix="world-builder-ipbans-isolation-"
+                ) as temp:
+                    base = Path(temp)
+                    target = base / "private-server"
+                    runtime = base / "release"
+                    workspace = base / "projects/First World"
+                    self.make_layout(target, terrain_seed=23, overlays=True)
+                    self.make_runtime(runtime)
+                    target_bans = target / "server/ipbans.txt"
+                    target_bans.write_bytes(b"203.0.113.7\n")
+                    runtime_bans_path = runtime / "server/ipbans.txt"
+                    if runtime_bans is not None:
+                        runtime_bans_path.write_bytes(runtime_bans)
+                    target_before = self.snapshot(target)
+                    runtime_before = self.snapshot(runtime)
+
+                    result = self.run_prepare(target, runtime, workspace)
+
+                    self.assertEqual(0, result.returncode, result.stderr)
+                    self.assertEqual(target_before, self.snapshot(target))
+                    self.assertEqual(runtime_before, self.snapshot(runtime))
+                    self.assertFalse(
+                        (workspace / "working/server/ipbans.txt").exists()
+                    )
+                    self.assertFalse((workspace / "source/server/ipbans.txt").exists())
 
     def test_changed_or_extended_source_snapshot_refuses_launch(self):
         with tempfile.TemporaryDirectory(prefix="world-builder-source-guard-") as temp:

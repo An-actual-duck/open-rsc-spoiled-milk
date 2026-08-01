@@ -291,7 +291,7 @@ stage_builder() {
 	cp -R "$ROOT_DIR/server/conf" "$runtime/server/conf"
 	cp -R "$ROOT_DIR/server/database" "$runtime/server/database"
 	cp "$SEED_DATABASE" "$runtime/server/inc/sqlite/myworld_seed.db"
-	for name in alertwords.txt badwords.txt goodwords.txt globalrules.txt ipbans.txt; do
+	for name in alertwords.txt badwords.txt goodwords.txt globalrules.txt; do
 		cp "$ROOT_DIR/server/$name" "$runtime/server/$name"
 	done
 	cp "$PACKAGE_ASSETS/world-builder-runtime.conf" "$runtime/server/myworld.conf"

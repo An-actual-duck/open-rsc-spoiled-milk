@@ -32,8 +32,7 @@ public final class WorldBuilderRuntimePreparer {
 		"server/alertwords.txt",
 		"server/badwords.txt",
 		"server/goodwords.txt",
-		"server/globalrules.txt",
-		"server/ipbans.txt"
+		"server/globalrules.txt"
 	);
 	private static final List<String> SERVER_DIRECTORIES = Arrays.asList(
 		"server/lib",
