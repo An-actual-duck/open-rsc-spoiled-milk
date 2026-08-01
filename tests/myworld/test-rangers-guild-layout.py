@@ -29,6 +29,7 @@ LOWES_ARCHERY_OPENPK = ROOT / "server/plugins/com/openrsc/server/plugins/custom/
 RANGERS_GUILD_RANGER = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildRanger.java"
 RANGERS_GUILD_DRAGON_SHOP = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildDragonShop.java"
 RANGERS_GUILD_POINTS_VENDOR = ROOT / "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java"
+RANGERS_GUILD_AREA = ROOT / "server/src/com/openrsc/server/content/RangersGuildArea.java"
 RANGERS_GUILD_POINTS = ROOT / "server/src/com/openrsc/server/content/RangersGuildPoints.java"
 SKILLS = ROOT / "server/src/com/openrsc/server/model/Skills.java"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
@@ -592,15 +593,21 @@ def ensure_rangers_guild_points_vendor():
 
 
 def ensure_rangers_guild_points_system():
+    area = RANGERS_GUILD_AREA.read_text(encoding="utf-8")
+    for fragment in (
+        "legacyPackedBounds(",
+        "484, 3281, 515, 3310",
+        "BASEMENT.contains(location)",
+        "ENTRANCE_DOOR.equals(location)",
+    ):
+        require(fragment in area, f"Rangers Guild layered area is missing: {fragment}")
+
     points = RANGERS_GUILD_POINTS.read_text(encoding="utf-8")
     for fragment in (
         'POINTS_CACHE_KEY = "rangers_guild_points"',
         'REMAINDER_CACHE_KEY = "rangers_guild_point_remainder"',
         "XP_PER_POINT = 10",
-        "BASEMENT_MIN_X = 484",
-        "BASEMENT_MAX_X = 515",
-        "BASEMENT_MIN_Y = 3281",
-        "BASEMENT_MAX_Y = 3310",
+        "RangersGuildArea.containsBasement(player.getWorldLocation())",
         "skill != Skill.RANGED.id()",
         "total / XP_PER_POINT",
         "total % XP_PER_POINT",

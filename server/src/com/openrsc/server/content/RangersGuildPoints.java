@@ -8,21 +8,13 @@ public final class RangersGuildPoints {
 	public static final String REMAINDER_CACHE_KEY = "rangers_guild_point_remainder";
 	public static final int XP_PER_POINT = 10;
 
-	private static final int BASEMENT_MIN_X = 484;
-	private static final int BASEMENT_MAX_X = 515;
-	private static final int BASEMENT_MIN_Y = 3281;
-	private static final int BASEMENT_MAX_Y = 3310;
-
 	private RangersGuildPoints() {
 	}
 
 	public static boolean isInBasement(Player player) {
 		return player != null
 			&& player.getConfig().WANT_MYWORLD
-			&& player.getX() >= BASEMENT_MIN_X
-			&& player.getX() <= BASEMENT_MAX_X
-			&& player.getY() >= BASEMENT_MIN_Y
-			&& player.getY() <= BASEMENT_MAX_Y;
+			&& RangersGuildArea.containsBasement(player.getWorldLocation());
 	}
 
 	public static void awardFromExperience(Player player, int skill, int experience) {
@@ -31,9 +23,9 @@ public final class RangersGuildPoints {
 		}
 
 		int remainder = getRemainder(player);
-		int total = remainder + experience;
-		int earnedPoints = total / XP_PER_POINT;
-		int newRemainder = total % XP_PER_POINT;
+		long total = (long) remainder + experience;
+		int earnedPoints = (int) (total / XP_PER_POINT);
+		int newRemainder = (int) (total % XP_PER_POINT);
 
 		if (earnedPoints > 0) {
 			addPoints(player, earnedPoints);
@@ -49,7 +41,8 @@ public final class RangersGuildPoints {
 		if (player == null || points <= 0) {
 			return;
 		}
-		setPoints(player, getPoints(player) + points);
+		long updatedPoints = (long) getPoints(player) + points;
+		setPoints(player, (int) Math.min(Integer.MAX_VALUE, updatedPoints));
 	}
 
 	public static boolean spendPoints(Player player, int points) {
