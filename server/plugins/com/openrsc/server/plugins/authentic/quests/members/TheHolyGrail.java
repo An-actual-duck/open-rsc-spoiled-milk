@@ -411,7 +411,7 @@ public class TheHolyGrail implements QuestInterface, TalkNpcTrigger,
 	 */
 	@Override
 	public void onTakeObj(Player player, GroundItem i) {
-		if (i.getID() == ItemId.HOLY_GRAIL.id() && i.getX() == 418 && i.getY() == 1924) {
+		if (i.getID() == ItemId.HOLY_GRAIL.id() && i.getX() == 418 && legacyPackedY(i) == 1924) {
 			mes("You feel that the grail shouldn't be moved");
 			delay(3);
 			mes("You must complete some task here before you are worthy");
@@ -421,7 +421,7 @@ public class TheHolyGrail implements QuestInterface, TalkNpcTrigger,
 
 	@Override
 	public boolean blockTakeObj(Player player, GroundItem i) {
-		return i.getID() == ItemId.HOLY_GRAIL.id() && i.getX() == 418 && i.getY() == 1924;
+		return i.getID() == ItemId.HOLY_GRAIL.id() && i.getX() == 418 && legacyPackedY(i) == 1924;
 	}
 
 	@Override

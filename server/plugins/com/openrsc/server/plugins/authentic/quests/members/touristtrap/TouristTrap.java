@@ -2773,7 +2773,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.SLAVES_ROBE_BOTTOM.id()) && player.getCarriedItems().getEquipment().hasEquipped(ItemId.SLAVES_ROBE_TOP.id())) {
 					mes("The door opens with some effort ");
 					delay(3);
-					if (obj.getX() == 81 && obj.getY() == 3633) {
+					if (obj.getX() == 81 && legacyPackedY(obj) == 3633) {
 						player.teleport(82, 802);
 						return;
 					}
@@ -2812,7 +2812,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 					mercenaryDialogue(player, n, Mercenary.THROW_PRISON);
 				}
 			} else if (command.equals("watch")) {
-				if (obj.getX() == 81 && obj.getY() == 3633) {
+				if (obj.getX() == 81 && legacyPackedY(obj) == 3633) {
 					player.message("Nothing much seems to happen.");
 				} else {
 					mes("You watch the doors for some time.");
@@ -3320,7 +3320,7 @@ public class TouristTrap implements QuestInterface, TalkNpcTrigger, UseNpcTrigge
 				}
 			}
 		} else if (obj.getID() == STURDY_IRON_GATE) {
-			if (player.getY() >= 3617) {
+			if (legacyPackedY(player) >= 3617) {
 				if (player.getCarriedItems().hasCatalogID(ItemId.WROUGHT_IRON_KEY.id(), Optional.of(false))) {
 					player.message("You use the wrought iron key to unlock the gate.");
 					player.teleport(player.getX(), player.getY() - 1);

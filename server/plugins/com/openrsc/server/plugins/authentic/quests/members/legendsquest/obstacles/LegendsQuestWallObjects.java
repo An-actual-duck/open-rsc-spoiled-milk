@@ -48,7 +48,7 @@ public class LegendsQuestWallObjects implements OpBoundTrigger, UseBoundTrigger 
 					delay(2);
 					mes("You walk for a short way before pushing open another door.");
 					delay(2);
-					if (obj.getX() == 464 && obj.getY() == 3721) {
+					if (obj.getX() == 464 && legacyPackedY(obj) == 3721) {
 						player.message("You appear in a large cavern like room filled with pools of water.");
 						player.teleport(467, 3724);
 					} else {
@@ -121,7 +121,7 @@ public class LegendsQuestWallObjects implements OpBoundTrigger, UseBoundTrigger 
 				player.damage(6);
 				say(player, null, "Ughhh!");
 			}
-			if (player.getY() >= 3729) {
+			if (legacyPackedY(player) >= 3729) {
 				player.teleport(457, 3727);
 			} else {
 				player.teleport(455, 3729);
@@ -168,9 +168,9 @@ public class LegendsQuestWallObjects implements OpBoundTrigger, UseBoundTrigger 
 							mes("For example, they seem to appear to come from straight out of the ground.");
 							delay(2);
 							say(player, null, "Mmmm, pretty!");
-							if (player.getX() >= 450 && player.getX() <= 455 && player.getY() >= 3704 && player.getY() <= 3711
-								|| player.getX() == 456 && player.getY() >= 3707 && player.getY() <= 3708
-								|| player.getX() == 449 && player.getY() >= 3707 && player.getY() <= 3708) {
+							if (player.getX() >= 450 && player.getX() <= 455 && legacyPackedY(player) >= 3704 && legacyPackedY(player) <= 3711
+								|| player.getX() == 456 && legacyPackedY(player) >= 3707 && legacyPackedY(player) <= 3708
+								|| player.getX() == 449 && legacyPackedY(player) >= 3707 && legacyPackedY(player) <= 3708) {
 								player.message("What would you like to do?");
 								int leave = multi(player,
 									"Leap out of the flaming Octagram...",
@@ -383,7 +383,7 @@ public class LegendsQuestWallObjects implements OpBoundTrigger, UseBoundTrigger 
 			delay(2);
 			mes("You walk for a short way before pushing open another door.");
 			delay(2);
-			if (obj.getX() == 464 && obj.getY() == 3721) {
+			if (obj.getX() == 464 && legacyPackedY(obj) == 3721) {
 				player.message("You appear in a large cavern like room filled with pools of water.");
 				player.teleport(467, 3724);
 			} else {

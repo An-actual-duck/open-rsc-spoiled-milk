@@ -156,7 +156,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
 		return (obj.getID() == 362 || obj.getID() == 363 || obj.getID() == 364 || obj.getID() == 365)
-				|| (obj.getID() == 373 || obj.getID() == 374) || (obj.getID() == 371 && obj.getY() == 3475);
+				|| (obj.getID() == 373 || obj.getID() == 374) || (obj.getID() == 371 && legacyPackedY(obj) == 3475);
 	}
 
 	@Override
@@ -166,7 +166,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 				case 0:
 				case 1:
 					if (player.getCache().hasKey("1st_cog") && obj.getID() == 364
-						&& obj.getX() == 581 && obj.getY() == 2525) {
+						&& obj.getX() == 581 && legacyPackedY(obj) == 2525) {
 						player.message("There's a large cog on this pole");
 						return;
 					} else if (player.getCache().hasKey("2nd_cog") && obj.getID() == 365
@@ -174,11 +174,11 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 						player.message("There's a large cog on this pole");
 						return;
 					} else if (player.getCache().hasKey("3rd_cog") && obj.getID() == 362
-						&& obj.getX() == 580 && obj.getY() == 3470) {
+						&& obj.getX() == 580 && legacyPackedY(obj) == 3470) {
 						player.message("There's a large cog on this pole");
 						return;
 					} else if (player.getCache().hasKey("4th_cog") && obj.getID() == 363
-						&& obj.getX() == 582 && obj.getY() == 1582) {
+						&& obj.getX() == 582 && legacyPackedY(obj) == 1582) {
 						player.message("There's a large cog on this pole");
 						return;
 					}
@@ -238,7 +238,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 				player.getCache().store("rats_dead", true);
 			}
 		}
-		else if (obj.getID() == 371 && obj.getY() == 3475) {
+		else if (obj.getID() == 371 && legacyPackedY(obj) == 3475) {
 			player.message("The gate is locked");
 			if (player.getConfig().WANT_FIXED_BROKEN_MECHANICS && player.getX() == obj.getX() - 1) {
 				// Custom behaviour, to prevent players getting locked in the dungeon rat cage.
@@ -300,7 +300,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 		/** TOP PURPLE POLE OTHERWISE NOT FIT MESSAGE - 1st cog **/
 		else if ((obj.getID() == 364 || obj.getID() == 363 || obj.getID() == 362 || obj.getID() == 365)
 			&& item.getCatalogId() == ItemId.LARGE_COG_PURPLE.id()) {
-			if (obj.getID() == 364 && obj.getX() == 581 && obj.getY() == 2525) {
+			if (obj.getID() == 364 && obj.getX() == 581 && legacyPackedY(obj) == 2525) {
 				if (atQuestStage(player, this, 1) && !player.getCache().hasKey("1st_cog")) {
 					player.message("The cog fits perfectly");
 					player.getCarriedItems().remove(new Item(ItemId.LARGE_COG_PURPLE.id()));
@@ -332,7 +332,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 		/** BOTTOM FLOOR BLUE POLE OTHERWISE NOT FIT MESSAGE - 3rd cog **/
 		else if ((obj.getID() == 364 || obj.getID() == 363 || obj.getID() == 362 || obj.getID() == 365)
 			&& item.getCatalogId() == ItemId.LARGE_COG_BLUE.id()) {
-			if (obj.getID() == 362 && obj.getX() == 580 && obj.getY() == 3470) {
+			if (obj.getID() == 362 && obj.getX() == 580 && legacyPackedY(obj) == 3470) {
 				if (atQuestStage(player, this, 1) && !player.getCache().hasKey("3rd_cog")) {
 					player.message("The cog fits perfectly");
 					player.getCarriedItems().remove(new Item(ItemId.LARGE_COG_BLUE.id()));
@@ -348,7 +348,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 		/** SECOND FLOOR RED POLE OTHERWISE NOT FIT MESSAGE - 4th cog **/
 		else if ((obj.getID() == 364 || obj.getID() == 363 || obj.getID() == 362 || obj.getID() == 365)
 			&& item.getCatalogId() == ItemId.LARGE_COG_RED.id()) {
-			if (obj.getID() == 363 && obj.getX() == 582 && obj.getY() == 1582) {
+			if (obj.getID() == 363 && obj.getX() == 582 && legacyPackedY(obj) == 1582) {
 				if (atQuestStage(player, this, 1) && !player.getCache().hasKey("4th_cog")) {
 					player.message("The cog fits perfectly");
 					player.getCarriedItems().remove(new Item(ItemId.LARGE_COG_RED.id()));
@@ -369,7 +369,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 	 */
 	@Override
 	public boolean blockOpBound(Player player, GameObject obj, Integer click) {
-		return (obj.getID() == 111) || (obj.getID() == 22 && obj.getX() == 584 && obj.getY() == 3457);
+		return (obj.getID() == 111) || (obj.getID() == 22 && obj.getX() == 584 && legacyPackedY(obj) == 3457);
 	}
 
 	@Override
@@ -386,7 +386,7 @@ public class ClockTower implements QuestInterface, TalkNpcTrigger,
 				}
 			}
 		}
-		else if (obj.getID() == 22 && obj.getX() == 584 && obj.getY() == 3457) {
+		else if (obj.getID() == 22 && obj.getX() == 584 && legacyPackedY(obj) == 3457) {
 			player.playSound("secretdoor");
 			player.message("You just went through a secret door");
 			doDoor(obj, player, 16);

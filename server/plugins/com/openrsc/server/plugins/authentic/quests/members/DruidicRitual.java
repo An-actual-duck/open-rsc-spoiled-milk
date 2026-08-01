@@ -333,13 +333,17 @@ public class DruidicRitual implements QuestInterface, TalkNpcTrigger,
 
 	@Override
 	public boolean blockOpBound(Player player, GameObject obj, Integer click) {
-		return (obj.getID() == 63 && obj.getY() == 3332) || (obj.getID() == 64 && (obj.getY() == 3336 || obj.getY() == 3332));
+		return (obj.getID() == 63 && Functions.legacyPackedY(obj) == 3332)
+			|| (obj.getID() == 64
+				&& (Functions.legacyPackedY(obj) == 3336
+					|| Functions.legacyPackedY(obj) == 3332));
 	}
 
 	@Override
 	public void onOpBound(Player player, GameObject obj, Integer click) {
-		if (obj.getID() == 63 && obj.getY() == 3332) {
-			Npc suit = player.getWorld().getNpc(NpcId.SUIT_OF_ARMOUR.id(), 374, 374, 3330, 3334);
+		if (obj.getID() == 63 && Functions.legacyPackedY(obj) == 3332) {
+			Npc suit = Functions.findNpcInLegacyPackedArea(
+				player, NpcId.SUIT_OF_ARMOUR.id(), 374, 374, 3330, 3334);
 			if (suit != null && !(player.getX() <= 373)) {
 				player.message("Suddenly the suit of armour comes to life!");
 				suit.setChasing(player);
@@ -347,7 +351,9 @@ public class DruidicRitual implements QuestInterface, TalkNpcTrigger,
 				Functions.doDoor(obj, player);
 			}
 		}
-		else if (obj.getID() == 64 && (obj.getY() == 3336 || obj.getY() == 3332)) {
+		else if (obj.getID() == 64
+			&& (Functions.legacyPackedY(obj) == 3336
+				|| Functions.legacyPackedY(obj) == 3332)) {
 			Functions.doDoor(obj, player);
 		}
 	}

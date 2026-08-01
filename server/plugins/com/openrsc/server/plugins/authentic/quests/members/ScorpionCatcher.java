@@ -512,9 +512,9 @@ public class ScorpionCatcher implements QuestInterface, TalkNpcTrigger,
 
 	@Override
 	public boolean blockUseBound(Player player, GameObject obj, Item item) {
-		return (obj.getID() == 83 && obj.getY() == 3428 && item.getCatalogId() == ItemId.JAIL_KEYS.id())
-				|| (obj.getID() == 83 && obj.getY() == 3425 && item.getCatalogId() == ItemId.JAIL_KEYS.id())
-				|| (obj.getID() == 84 && obj.getY() == 3353 && item.getCatalogId() == ItemId.DUSTY_KEY.id());
+		return (obj.getID() == 83 && legacyPackedY(obj) == 3428 && item.getCatalogId() == ItemId.JAIL_KEYS.id())
+				|| (obj.getID() == 83 && legacyPackedY(obj) == 3425 && item.getCatalogId() == ItemId.JAIL_KEYS.id())
+				|| (obj.getID() == 84 && legacyPackedY(obj) == 3353 && item.getCatalogId() == ItemId.DUSTY_KEY.id());
 	}
 
 	@Override
@@ -522,7 +522,7 @@ public class ScorpionCatcher implements QuestInterface, TalkNpcTrigger,
 		/*
 		 * Velrak cell door
 		 */
-		if (obj.getID() == 83 && obj.getY() == 3428 && item.getCatalogId() == ItemId.JAIL_KEYS.id()) {
+		if (obj.getID() == 83 && legacyPackedY(obj) == 3428 && item.getCatalogId() == ItemId.JAIL_KEYS.id()) {
 			thinkbubble(item);
 			doDoor(obj, player);
 		}
@@ -530,14 +530,14 @@ public class ScorpionCatcher implements QuestInterface, TalkNpcTrigger,
 		 * Below door infront of Velrak cell has nothing todo with quest or
 		 * anything important at all - replicated it anyway.
 		 */
-		if (obj.getID() == 83 && obj.getY() == 3425 && item.getCatalogId() == ItemId.JAIL_KEYS.id()) {
+		if (obj.getID() == 83 && legacyPackedY(obj) == 3425 && item.getCatalogId() == ItemId.JAIL_KEYS.id()) {
 			thinkbubble(item);
 			doDoor(obj, player);
 		}
 		/*
 		 * Dusty key door into blue dragons lair in Taverly dungeon
 		 */
-		if (obj.getID() == 84 && obj.getY() == 3353 && item.getCatalogId() == ItemId.DUSTY_KEY.id()) {
+		if (obj.getID() == 84 && legacyPackedY(obj) == 3353 && item.getCatalogId() == ItemId.DUSTY_KEY.id()) {
 			thinkbubble(item);
 			doDoor(obj, player);
 		}
@@ -545,12 +545,12 @@ public class ScorpionCatcher implements QuestInterface, TalkNpcTrigger,
 
 	@Override
 	public boolean blockOpBound(Player player, GameObject obj, Integer click) {
-		return obj.getID() == 87 && obj.getY() == 3353;
+		return obj.getID() == 87 && legacyPackedY(obj) == 3353;
 	}
 
 	@Override
 	public void onOpBound(Player player, GameObject obj, Integer click) {
-		if (obj.getID() == 87 && obj.getY() == 3353 && player.getQuestStage(this) == 2) {
+		if (obj.getID() == 87 && legacyPackedY(obj) == 3353 && player.getQuestStage(this) == 2) {
 			doDoor(obj, player);
 			player.message("You just went through a secret door");
 		}

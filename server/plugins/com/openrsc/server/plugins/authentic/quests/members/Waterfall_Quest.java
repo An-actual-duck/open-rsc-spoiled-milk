@@ -381,20 +381,21 @@ public class Waterfall_Quest implements QuestInterface, TalkNpcTrigger,
 				player.message("but find nothing");
 			}
 		} else if (obj.getID() == 480) {
-			Npc n = player.getWorld().getNpc(NpcId.GOLRIE.id(), 663, 668, 3520, 3529);
+			Npc n = findNpcInLegacyPackedArea(
+				player, NpcId.GOLRIE.id(), 663, 668, 3520, 3529);
 			if (player.getQuestStage(this) == 0) {
 				npcsay(player, n, "what are you doing down here",
 					"leave before you get yourself into trouble");
 				return;
-			} else if (player.getLocation().getY() <= 3529) {
+			} else if (legacyPackedY(player) <= 3529) {
 				doGate(player, obj);
 				return;
-			} else if (player.getLocation().getY() >= 3530 && player.getCache().hasKey("golrie_key") || player.getQuestStage(this) == -1) {
+			} else if (legacyPackedY(player) >= 3530 && player.getCache().hasKey("golrie_key") || player.getQuestStage(this) == -1) {
 				player.message("golrie has locked himself in");
 				return;
 			}
 
-			if (player.getLocation().getY() >= 3530) {
+			if (legacyPackedY(player) >= 3530) {
 				if (n != null) {
 					say(player, n, "are you ok?");
 					npcsay(player, n, "it's just those blasted hobgoblins",

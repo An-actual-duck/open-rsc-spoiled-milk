@@ -440,7 +440,8 @@ public class DoorAction {
 				break;
 
 			case DOOR_TEMPLE_IKOV_FEAR_ROOM: // Temple of Ikov: First door (533, 3342)
-				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.PENDANT_OF_LUCIEN.id()) || player.getY() >= 3335 && player.getY() <= 3341) {
+				if (player.getCarriedItems().getEquipment().hasEquipped(ItemId.PENDANT_OF_LUCIEN.id())
+					|| legacyPackedY(player) >= 3335 && legacyPackedY(player) <= 3341) {
 					player.message("You go through the door");
 					doDoor(obj, player);
 				} else {
@@ -459,7 +460,7 @@ public class DoorAction {
 					doDoor(obj, player);
 				} else {
 					player.message("Your weight is too much for the bridge to hold");
-					player.teleport(544, 3330);
+					player.teleportLegacyPacked(544, 3330, false);
 					delay();
 					player.message("You fall through the bridge");
 					delay(2);
@@ -679,12 +680,14 @@ public class DoorAction {
 				break;
 
 			case DOOR_MINING_GUILD: // Mining Guild Door
-				if (obj.getX() != 268 || obj.getY() != 3381) {
+				if (!matchesLegacyPackedLocation(obj, 268, 3381)) {
 					break;
 				}
-				if (player.getY() < 3381) {
+				if (legacyPackedY(player) < 3381) {
 					if (getCurrentLevel(player, Skill.MINING.id()) < 60) {
-						Npc dwarf = player.getWorld().getNpc(NpcId.DWARF_MINING_GUILD.id(), 265, 270, 3379, 3380);
+						Npc dwarf = findNpcInLegacyPackedArea(
+							player, NpcId.DWARF_MINING_GUILD.id(),
+							265, 270, 3379, 3380);
 						if (dwarf != null) {
 							npcsay(player, dwarf, "Sorry only the top miners are allowed in there");
 						}
@@ -909,7 +912,7 @@ public class DoorAction {
 				break;
 
 			case DOOR_SICK_MOURNER: // Biohazard
-				if (player.getY() >= 1513) {
+				if (legacyPackedY(player) >= 1513) {
 					doDoor(obj, player);
 					player.playerServerMessage(MessageType.QUEST, "You go through the door");
 					return;
@@ -986,13 +989,14 @@ public class DoorAction {
 			return true;
 		}
 		/* taverly dungeon door near jailer */
-		if ((obj.getID() == BoundaryId.DOOR_JAIL_KEY.id() && obj.getX() == 360 && obj.getY() == 3428)
-			|| (obj.getID() == BoundaryId.DOOR_JAIL_KEY.id() && obj.getX() == 360
-			&& obj.getY() == 3425)) {
+		if (obj.getID() == BoundaryId.DOOR_JAIL_KEY.id()
+			&& (matchesLegacyPackedLocation(obj, 360, 3428)
+				|| matchesLegacyPackedLocation(obj, 360, 3425))) {
 			return true;
 		}
 		/* Door to enter blue dragons in taverly dungeon */
-		if (obj.getID() == BoundaryId.DOOR_DUSTY_KEY.id() && obj.getX() == 355 && obj.getY() == 3353) {
+		if (obj.getID() == BoundaryId.DOOR_DUSTY_KEY.id()
+			&& matchesLegacyPackedLocation(obj, 355, 3353)) {
 			return true;
 		}
 
@@ -1524,15 +1528,18 @@ public class DoorAction {
 
 	private boolean isMiningGuildEliteDoor(GameObject obj) {
 		return obj.getID() == MINING_GUILD_ELITE_DOOR_ID
-			&& obj.getX() == MINING_GUILD_ELITE_DOOR_X
-			&& obj.getY() == MINING_GUILD_ELITE_DOOR_Y
+			&& matchesLegacyPackedLocation(
+				obj,
+				MINING_GUILD_ELITE_DOOR_X,
+				MINING_GUILD_ELITE_DOOR_Y)
 			&& obj.getDirection() == MINING_GUILD_ELITE_DOOR_DIRECTION;
 	}
 
 	private void handleMiningGuildEliteDoor(GameObject obj, Player player) {
 		if (isEnteringMiningGuildEliteArea(player)
 			&& getCurrentLevel(player, Skill.MINING.id()) < MINING_GUILD_ELITE_MINING_LEVEL) {
-			Npc nurmof = player.getWorld().getNpc(NpcId.NURMOF.id(), 268, 275, 3394, 3402);
+			Npc nurmof = findNpcInLegacyPackedArea(
+				player, NpcId.NURMOF.id(), 268, 275, 3394, 3402);
 			if (nurmof != null) {
 				npcsay(player, nurmof,
 					"Woah, hold your horses.",
@@ -1549,6 +1556,7 @@ public class DoorAction {
 	}
 
 	private boolean isEnteringMiningGuildEliteArea(Player player) {
-		return player.getY() < MINING_GUILD_ELITE_DOOR_Y;
+		return legacyPackedY(player) < MINING_GUILD_ELITE_DOOR_Y;
 	}
+
 }

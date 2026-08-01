@@ -265,7 +265,7 @@ public class WitchesHouse implements QuestInterface, TalkNpcTrigger,
 	@Override
 	public boolean blockOpLoc(Player player, GameObject obj, String command) {
 		return obj.getID() == 255 || (obj.getID() == 256 && obj.getX() == 363)
-				|| ((obj.getID() == WITCHES_HOUSE_CUPBOARD_OPEN || obj.getID() == WITCHES_HOUSE_CUPBOARD_CLOSED) && obj.getY() == 3328);
+				|| ((obj.getID() == WITCHES_HOUSE_CUPBOARD_OPEN || obj.getID() == WITCHES_HOUSE_CUPBOARD_CLOSED) && legacyPackedY(obj) == 3328);
 	}
 
 	@Override
@@ -299,7 +299,7 @@ public class WitchesHouse implements QuestInterface, TalkNpcTrigger,
 				doGate(player, obj);
 			}
 		}
-		else if ((obj.getID() == WITCHES_HOUSE_CUPBOARD_OPEN || obj.getID() == WITCHES_HOUSE_CUPBOARD_CLOSED) && obj.getY() == 3328) {
+		else if ((obj.getID() == WITCHES_HOUSE_CUPBOARD_OPEN || obj.getID() == WITCHES_HOUSE_CUPBOARD_CLOSED) && legacyPackedY(obj) == 3328) {
 			if (command.equalsIgnoreCase("open")) {
 				openCupboard(obj, player, WITCHES_HOUSE_CUPBOARD_OPEN);
 			} else if (command.equalsIgnoreCase("close")) {

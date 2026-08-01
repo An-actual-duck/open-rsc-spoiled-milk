@@ -108,7 +108,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		switch (obj.getID()) {
 			case 67:
-				if (player.getConfig().WANT_CUSTOM_QUESTS && obj.getX() == 221 && obj.getY() == 3518) {
+				if (player.getConfig().WANT_CUSTOM_QUESTS && obj.getX() == 221 && legacyPackedY(obj) == 3518) {
 					PeelingTheOnion.bookcaseSearch(player);
 					return;
 				}
@@ -542,7 +542,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 			} else {
 				player.message("The door won't open");
 			}
-		} else if (obj.getID() == 19 && obj.getY() == 3370) {
+		} else if (obj.getID() == 19 && legacyPackedY(obj) == 3370) {
 			Npc man = ifnearvisnpc(player, NpcId.STRAVEN.id(), 20);
 			if (isPhoenixGang(player)) {
 				if (player.getQuestStage(this) >= 0 && player.getQuestStage(this) < 5) {
@@ -553,7 +553,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 					if (!player.getConfig().OLD_QUEST_MECHANICS) {
 						player.message("The door is opened for you");
 						player.message("You go through the door");
-						if (player.getY() <= 3369) {
+						if (legacyPackedY(player) <= 3369) {
 							doDoor(obj, player);
 							player.teleport(player.getX(), player.getY() + 1, false);
 						} else {
@@ -561,7 +561,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 							player.teleport(player.getX(), player.getY() - 1, false);
 						}
 					} else {
-						if (player.getY() <= 3369) {
+						if (legacyPackedY(player) <= 3369) {
 							player.message("The door is locked");
 							if (player.getCarriedItems().hasCatalogID(ItemId.PHOENIX_GANG_KEY.id())
 								&& player.getConfig().OLD_QUEST_MECHANICS) {
@@ -597,7 +597,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 	@Override
 	public boolean blockOpBound(Player player, GameObject obj, Integer click) {
 		//door on phoenix gang entrance
-		if (obj.getID() == 19 && obj.getY() == 3370) {
+		if (obj.getID() == 19 && legacyPackedY(obj) == 3370) {
 			return true;
 		}
 		//door on black arm gang entrance
@@ -615,7 +615,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 		return (item.getCatalogId() == ItemId.PHOENIX_GANG_WEAPON_KEY.id() && obj.getID() == 20
 				&& obj.getY() == 532)
 			|| (item.getCatalogId() == ItemId.PHOENIX_GANG_KEY.id() && obj.getID() == 19
-			&& obj.getY() == 3370);
+			&& legacyPackedY(obj) == 3370);
 	}
 
 	@Override
@@ -629,7 +629,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 			mes("You go through the door");
 			delay(3);
 		} else if (item.getCatalogId() == ItemId.PHOENIX_GANG_KEY.id() && obj.getID() == 19
-			&& obj.getY() == 3370) {
+			&& legacyPackedY(obj) == 3370) {
 			if (player.getConfig().OLD_QUEST_MECHANICS) {
 				// Retro RSC mechanic - had to use key on door to get in
 				thinkbubble(item);

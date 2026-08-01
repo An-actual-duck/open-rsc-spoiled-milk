@@ -543,7 +543,7 @@ public class ErnestTheChicken implements QuestInterface,
 		if (obj.getID() >= 31 && obj.getID() <= 36) {
 			return true;
 		}
-		if (obj.getID() == 30 && obj.getX() == 226 && obj.getY() == 3378) {
+		if (obj.getID() == 30 && obj.getX() == 226 && legacyPackedY(obj) == 3378) {
 			return true;
 		}
 		return false;
@@ -700,7 +700,7 @@ public class ErnestTheChicken implements QuestInterface,
 					player.message("The door is locked");
 				break;
 		}
-		if (obj.getID() == 30 && obj.getX() == 226 && obj.getY() == 3378) {
+		if (obj.getID() == 30 && obj.getX() == 226 && legacyPackedY(obj) == 3378) {
 			if (c.hasKey("LeverF")
 				&& c.hasKey("LeverE")
 				&& c.getBoolean("LeverF")
