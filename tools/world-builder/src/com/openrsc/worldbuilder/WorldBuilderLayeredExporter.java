@@ -269,6 +269,7 @@ final class WorldBuilderLayeredExporter {
 				}
 			});
 		} catch (IOException ignored) {
+			// Best-effort staging cleanup must not mask the original export failure.
 		}
 	}
 
