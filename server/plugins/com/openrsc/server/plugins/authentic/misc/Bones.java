@@ -132,7 +132,7 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 
 	private void prayerCape(final Player player, final Item bone) {
 		final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
-		final int maxHits = player.getSkills().getMaxStat(Skill.HITS.id());
+		final int maxHits = player.getHealingMaximumHits();
 		if (currentHits >= maxHits) return;
 
 		int pointsToHeal = 0;

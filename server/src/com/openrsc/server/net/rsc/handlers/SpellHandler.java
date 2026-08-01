@@ -2172,7 +2172,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			return;
 		}
 		final int currentHits = caster.getSkills().getLevel(Skill.HITS.id());
-		final int maxHits = caster.getSkills().getMaxStat(Skill.HITS.id());
+		final int maxHits = caster.getHealingMaximumHits();
 		if (currentHits >= maxHits) {
 			return;
 		}
@@ -2343,7 +2343,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				return;
 			}
 			final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
-			final int maxHits = player.getSkills().getMaxStat(Skill.HITS.id());
+			final int maxHits = player.getHealingMaximumHits();
 			if (currentHits >= maxHits) {
 				player.message("You are already at full health");
 				return;
@@ -2409,7 +2409,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 			pulsesRemaining--;
 			final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
-			final int maxHits = player.getSkills().getMaxStat(Skill.HITS.id());
+			final int maxHits = player.getHealingMaximumHits();
 			if (currentHits < maxHits) {
 				final int healed = Math.min(healPerPulse, maxHits - currentHits);
 				player.getSkills().setLevel(Skill.HITS.id(), currentHits + healed, true);

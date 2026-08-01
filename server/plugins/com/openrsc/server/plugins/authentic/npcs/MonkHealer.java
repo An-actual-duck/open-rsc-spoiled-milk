@@ -23,8 +23,8 @@ public class MonkHealer implements TalkNpcTrigger {
 			delay(3);
 			int newHp = getCurrentLevel(player, Skill.HITS.id()) + 5;
 			boolean sendUpdate = player.getClientLimitations().supportsSkillUpdate;
-			if (newHp > getMaxLevel(player, Skill.HITS.id())) {
-				newHp = getMaxLevel(player, Skill.HITS.id());
+			if (newHp > player.getHealingMaximumHits()) {
+				newHp = player.getHealingMaximumHits();
 			}
 			player.getSkills().setLevel(Skill.HITS.id(), newHp, sendUpdate);
 			if (!sendUpdate) {

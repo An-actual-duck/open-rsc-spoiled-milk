@@ -27,7 +27,7 @@ public final class DivineGrace {
 		}
 
 		final int currentHits = attacker.getSkills().getLevel(Skill.HITS.id());
-		final int maxHits = attacker.getSkills().getMaxStat(Skill.HITS.id());
+		final int maxHits = attacker.getHealingMaximumHits();
 		final int healed = Math.min(damageDealt, Math.max(0, maxHits - currentHits));
 		if (healed <= 0) {
 			return false;
@@ -50,7 +50,7 @@ public final class DivineGrace {
 
 	private static double getProcChance(final Player attacker) {
 		final int currentHits = Math.max(0, attacker.getSkills().getLevel(Skill.HITS.id()));
-		final int maxHits = Math.max(1, attacker.getSkills().getMaxStat(Skill.HITS.id()));
+		final int maxHits = Math.max(1, attacker.getHealingMaximumHits());
 		final double missingHealthFraction = Math.max(0.0D, Math.min(1.0D, 1.0D - (currentHits / (double) maxHits)));
 		return MAX_PROC_CHANCE * Math.pow(missingHealthFraction, CURVE_POWER);
 	}

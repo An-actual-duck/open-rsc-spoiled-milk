@@ -21,7 +21,7 @@ public final class Leach {
 		if (player == null || player.isRemoved()) {
 			return 0;
 		}
-		final int maxHits = player.getSkills().getMaxStat(Skill.HITS.id());
+		final int maxHits = player.getHealingMaximumHits();
 		final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
 		final int healed = calculateHealing(damageDealt, leachPercent, maxHits - currentHits);
 		if (healed <= 0) {
