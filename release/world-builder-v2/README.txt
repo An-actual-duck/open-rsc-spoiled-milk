@@ -126,22 +126,35 @@ IMPORTING MAP CHANGES
 4. Review the exact preview.
 5. Type IMPORT only if the listed files are correct.
 
-The script exports the latest saved terrain, scenery, and NPC data from the
-World Builder workspace, validates the target revision, backs up every
-destination, installs both server and client terrain copies, verifies the
-result, and writes a receipt. Unsaved editor changes are not imported. The
-script refuses unknown, running, changed, or incompatible targets. There is no
-force option.
+The script exports the complete latest saved signed-layered package from the
+World Builder workspace. It verifies that package is an allowed descendant of
+the immutable package the project started from, validates the target revision
+and layered-runtime capability, and previews every package file plus every
+server configuration value that will change.
+
+After confirmation it installs the package under:
+
+  server/conf/server/data/world-builder-layered/package/
+
+It also updates the selected server/myworld.conf in the same transaction so a
+normal private-server start uses the exact installed package and its pinned
+manifest SHA-256. Every destination is staged, backed up when it existed,
+verified, and recorded in a receipt. Unsaved editor changes are not imported.
+The script refuses unknown, running, changed, incompatible, or already-active
+targets. There is no force option. Undo an active import before importing a
+newer saved draft from the same workspace.
 
 UNDOING THE LAST IMPORT
 -----------------------
 
 Keep the target private server stopped, then run "Undo Last Map Import.sh" or
 "Undo Last Map Import.cmd". Review the preview and type UNDO. This restores the
-target map to its exact state immediately before the most recent successful
-import. It is intended as the safety net when an imported map does not look or
-behave as expected. Undo refuses if the installed files were changed after the
-import, because overwriting those newer changes would be unsafe.
+selected configuration, removes the transaction-owned layered package, and
+restores the target to its exact state immediately before the most recent
+successful import. It is intended both as the safety net for an unsatisfactory
+map and as the required first step before importing a newer saved draft. Undo
+refuses if the installed package or configuration changed after the import,
+because overwriting those newer changes would be unsafe.
 
 Backups, transaction receipts, exports, logs, and the editable project remain
 inside workspace/. Preserve that folder if you move or update World Builder.
@@ -186,8 +199,10 @@ REQUIREMENTS AND LIMITS
   Git, Ant, or the project source code.
 - macOS is not included in the first public release.
 - The first release supports the current Spoiled Milk repository/private-server
-  layout using server/myworld.conf, Custom_Landscape.orsc, and MyWorld scenery
-  and NPC overlays. Similar-looking OpenRSC forks are not assumed compatible.
+  layout using server/myworld.conf and the advertised World Builder 2 layered
+  import capability. It imports one complete package containing terrain,
+  scenery, NPC, and respawning ground-item data. Similar-looking OpenRSC forks
+  are not assumed compatible.
 - Use a World Builder package alongside the exact Spoiled Milk release it was
   built for. Cross-version project rebasing and imports are intentionally
   refused.
@@ -201,5 +216,9 @@ REQUIREMENTS AND LIMITS
 - Workspace backup and receipt management is filesystem-based; there is no
   graphical retention manager in the first release.
 - Import and undo require the target private server to be offline.
+- After import, start the private server normally. The developer-only
+  --layered-production launcher option generates and selects the repository
+  baseline instead of the imported World Builder package and is not the
+  imported-map launch path.
 
 Release source commit: @SOURCE_COMMIT@

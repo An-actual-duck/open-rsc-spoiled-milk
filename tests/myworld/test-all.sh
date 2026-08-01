@@ -81,6 +81,7 @@ LAYERED_MAPS_WORKSPACE="$LAYERED_TEST_WORKSPACE" \
   ./tools/layered-maps/layered-maps.sh spoiled-milk-package
 export SPOILED_MILK_LAYERED_PACKAGE="$LAYERED_TEST_WORKSPACE/package"
 python3 ./tests/myworld/test-layered-production-promotion.py
+python3 ./tests/myworld/test-world-builder-layered-import.py
 python3 ./tests/myworld/test-native-terrain-wire-cache.py
 python3 ./tests/myworld/test-native-terrain-residency.py
 python3 ./tests/myworld/test-fatigue-sleep-removal.py

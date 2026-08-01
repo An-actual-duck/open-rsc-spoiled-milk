@@ -21,7 +21,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 	FIXTURE_ADDITIVE("fixture-additive", false),
 	PRESERVATION_R64_REPLACEMENT("preservation-r64-replacement", true),
 	SPOILED_MILK_REPLACEMENT("spoiled-milk-replacement", true),
-	SPOILED_MILK_BUILDER_DRAFT("spoiled-milk-builder-draft", true);
+	SPOILED_MILK_BUILDER_DRAFT("spoiled-milk-builder-draft", true),
+	SPOILED_MILK_WORLD_BUILDER_EXPORT(
+		"spoiled-milk-world-builder-export", true);
 
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
@@ -70,6 +72,10 @@ public enum NativeLayeredWorldRuntimeProfile {
 		return replacesLegacyBasePopulation;
 	}
 
+	public boolean requiresConfiguredManifestSha256() {
+		return this == SPOILED_MILK_WORLD_BUILDER_EXPORT;
+	}
+
 	public void validate(final NativeLayeredWorldPackageCatalog catalog) {
 		if (catalog == null) {
 			throw new IllegalArgumentException(
@@ -92,6 +98,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 				validateSpoiledMilk(catalog);
 				return;
 			case SPOILED_MILK_BUILDER_DRAFT:
+				validateSpoiledMilkBuilderDraft(catalog);
+				return;
+			case SPOILED_MILK_WORLD_BUILDER_EXPORT:
 				validateSpoiledMilkBuilderDraft(catalog);
 				return;
 			default:

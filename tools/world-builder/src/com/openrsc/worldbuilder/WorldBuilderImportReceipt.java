@@ -25,6 +25,7 @@ final class WorldBuilderImportReceipt {
 	final String transactionId;
 	final String status;
 	final String transactionType;
+	final String importMode;
 	final String createdAtUtc;
 	final String layoutAdapter;
 	final String targetIdentitySha256;
@@ -32,16 +33,20 @@ final class WorldBuilderImportReceipt {
 	final String exportManifestSha256;
 	final String selectedConfig;
 	final String revertsTransactionId;
+	final String layeredPackageManifestSha256;
+	final String layeredPackageFingerprintSha256;
 	final List<FileRecord> files;
 
 	private WorldBuilderImportReceipt(String transactionId, String status,
-		String transactionType, String createdAtUtc, String layoutAdapter,
+		String transactionType, String importMode, String createdAtUtc, String layoutAdapter,
 		String targetIdentitySha256, String targetFingerprintBeforeSha256,
 		String exportManifestSha256, String selectedConfig, String revertsTransactionId,
-		List<FileRecord> files) {
+		String layeredPackageManifestSha256,
+		String layeredPackageFingerprintSha256, List<FileRecord> files) {
 		this.transactionId = transactionId;
 		this.status = status;
 		this.transactionType = transactionType;
+		this.importMode = importMode;
 		this.createdAtUtc = createdAtUtc;
 		this.layoutAdapter = layoutAdapter;
 		this.targetIdentitySha256 = targetIdentitySha256;
@@ -49,6 +54,8 @@ final class WorldBuilderImportReceipt {
 		this.exportManifestSha256 = exportManifestSha256;
 		this.selectedConfig = selectedConfig;
 		this.revertsTransactionId = revertsTransactionId;
+		this.layeredPackageManifestSha256 = layeredPackageManifestSha256;
+		this.layeredPackageFingerprintSha256 = layeredPackageFingerprintSha256;
 		this.files = java.util.Collections.unmodifiableList(
 			new ArrayList<FileRecord>(files));
 	}
@@ -65,9 +72,11 @@ final class WorldBuilderImportReceipt {
 				action.beforeSha256, true, action.installedSha256, backup));
 		}
 		return new WorldBuilderImportReceipt(transactionId, "pending", "import",
+			plan.importMode,
 			Instant.now().toString(), WorldBuilderDiscovery.LAYOUT_ADAPTER,
 			targetIdentity(target), plan.sourceFingerprint, plan.exportManifestSha256,
-			plan.selectedConfig, "", files);
+			plan.selectedConfig, "", plan.layeredPackageManifestSha256,
+			plan.layeredPackageFingerprintSha256, files);
 	}
 
 	static WorldBuilderImportReceipt pendingRollback(Path target,
@@ -83,15 +92,20 @@ final class WorldBuilderImportReceipt {
 				importedFile.existedBefore, importedFile.beforeSha256, backup));
 		}
 		return new WorldBuilderImportReceipt(transactionId, "pending", "rollback",
-			Instant.now().toString(), imported.layoutAdapter, targetIdentity(target),
+			imported.importMode, Instant.now().toString(), imported.layoutAdapter,
+			targetIdentity(target),
 			stateFingerprint(imported.files, true), imported.exportManifestSha256,
-			imported.selectedConfig, imported.transactionId, files);
+			imported.selectedConfig, imported.transactionId,
+			imported.layeredPackageManifestSha256,
+			imported.layeredPackageFingerprintSha256, files);
 	}
 
 	WorldBuilderImportReceipt withStatus(String newStatus) {
 		return new WorldBuilderImportReceipt(transactionId, newStatus, transactionType,
-			createdAtUtc, layoutAdapter, targetIdentitySha256, targetFingerprintBeforeSha256,
-			exportManifestSha256, selectedConfig, revertsTransactionId, files);
+			importMode, createdAtUtc, layoutAdapter, targetIdentitySha256,
+			targetFingerprintBeforeSha256,
+			exportManifestSha256, selectedConfig, revertsTransactionId,
+			layeredPackageManifestSha256, layeredPackageFingerprintSha256, files);
 	}
 
 	static String targetIdentity(Path target) {
@@ -142,17 +156,29 @@ final class WorldBuilderImportReceipt {
 	static WorldBuilderImportReceipt read(Path path)
 		throws IOException, WorldBuilderDiscoveryException {
 		Map<String, Object> root = WorldBuilderJsonDocuments.readObject(path);
-		exactKeys(root, "schemaVersion", "manifestType", "transactionId", "status",
-			"transactionType", "createdAtUtc", "layoutAdapter", "targetIdentitySha256",
-			"targetFingerprintBeforeSha256", "exportManifestSha256", "selectedConfig",
-			"revertsTransactionId", "files");
-		if (integer(root, "schemaVersion") != 1
-			|| !"world-builder-import-receipt".equals(string(root, "manifestType"))) {
+		long schema = integer(root, "schemaVersion");
+		if (schema == 1) {
+			exactKeys(root, "schemaVersion", "manifestType", "transactionId", "status",
+				"transactionType", "createdAtUtc", "layoutAdapter", "targetIdentitySha256",
+				"targetFingerprintBeforeSha256", "exportManifestSha256", "selectedConfig",
+				"revertsTransactionId", "files");
+		} else if (schema == 2) {
+			exactKeys(root, "schemaVersion", "manifestType", "transactionId", "status",
+				"transactionType", "importMode", "createdAtUtc", "layoutAdapter",
+				"targetIdentitySha256", "targetFingerprintBeforeSha256",
+				"exportManifestSha256", "selectedConfig", "revertsTransactionId",
+				"layeredPackageManifestSha256",
+				"layeredPackageFingerprintSha256", "files");
+		} else {
+			throw new WorldBuilderDiscoveryException("Import receipt identity is invalid.");
+		}
+		if (!"world-builder-import-receipt".equals(string(root, "manifestType"))) {
 			throw new WorldBuilderDiscoveryException("Import receipt identity is invalid.");
 		}
 		String transactionId = string(root, "transactionId");
 		String status = string(root, "status");
 		String type = string(root, "transactionType");
+		String importMode = schema == 1 ? "legacy-files-v1" : string(root, "importMode");
 		String created = string(root, "createdAtUtc");
 		String layout = string(root, "layoutAdapter");
 		String targetIdentity = hash(root, "targetIdentitySha256");
@@ -160,9 +186,15 @@ final class WorldBuilderImportReceipt {
 		String exportManifest = hash(root, "exportManifestSha256");
 		String selectedConfig = string(root, "selectedConfig");
 		String reverts = string(root, "revertsTransactionId");
+		String layeredManifest = schema == 1 ? ""
+			: hash(root, "layeredPackageManifestSha256");
+		String layeredFingerprint = schema == 1 ? ""
+			: hash(root, "layeredPackageFingerprintSha256");
 		if (!transactionId.matches("[A-Za-z0-9._-]+")
 			|| !Arrays.asList("pending", "successful", "rolled-back", "reverted").contains(status)
 			|| !Arrays.asList("import", "rollback").contains(type)
+			|| !(schema == 1 ? "legacy-files-v1".equals(importMode)
+				: WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(importMode))
 			|| !WorldBuilderDiscovery.LAYOUT_ADAPTER.equals(layout)
 			|| !selectedConfig.matches("server/[A-Za-z0-9._/-]+\\.conf")
 			|| selectedConfig.contains("..")
@@ -175,8 +207,9 @@ final class WorldBuilderImportReceipt {
 			throw new WorldBuilderDiscoveryException("Import receipt timestamp is invalid.");
 		}
 		Object listed = root.get("files");
+		int maximumFiles = schema == 1 ? 7 : 65_540;
 		if (!(listed instanceof List) || ((List<?>)listed).isEmpty()
-			|| ((List<?>)listed).size() > 7) {
+			|| ((List<?>)listed).size() > maximumFiles) {
 			throw new WorldBuilderDiscoveryException("Import receipt file inventory is invalid.");
 		}
 		List<FileRecord> files = new ArrayList<FileRecord>();
@@ -203,26 +236,37 @@ final class WorldBuilderImportReceipt {
 			}
 			files.add(new FileRecord(relative, existed, before, installed, installedSha, backup));
 		}
-		return new WorldBuilderImportReceipt(transactionId, status, type, created, layout,
-			targetIdentity, targetBefore, exportManifest, selectedConfig, reverts, files);
+		return new WorldBuilderImportReceipt(transactionId, status, type, importMode,
+			created, layout, targetIdentity, targetBefore, exportManifest,
+			selectedConfig, reverts, layeredManifest, layeredFingerprint, files);
 	}
 
 	String toJson() {
-		StringBuilder json = new StringBuilder(2048);
-		json.append("{\n  \"schemaVersion\": 1,\n")
+		boolean layered = WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(importMode);
+		StringBuilder json = new StringBuilder(2048 + files.size() * 384);
+		json.append("{\n  \"schemaVersion\": ").append(layered ? 2 : 1).append(",\n")
 			.append("  \"manifestType\": \"world-builder-import-receipt\",\n")
 			.append("  \"transactionId\": \"").append(transactionId).append("\",\n")
 			.append("  \"status\": \"").append(status).append("\",\n")
-			.append("  \"transactionType\": \"").append(transactionType).append("\",\n")
-			.append("  \"createdAtUtc\": \"").append(createdAtUtc).append("\",\n")
+			.append("  \"transactionType\": \"").append(transactionType).append("\",\n");
+		if (layered) {
+			json.append("  \"importMode\": \"").append(importMode).append("\",\n");
+		}
+		json.append("  \"createdAtUtc\": \"").append(createdAtUtc).append("\",\n")
 			.append("  \"layoutAdapter\": \"").append(layoutAdapter).append("\",\n")
 			.append("  \"targetIdentitySha256\": \"").append(targetIdentitySha256).append("\",\n")
 			.append("  \"targetFingerprintBeforeSha256\": \"")
 			.append(targetFingerprintBeforeSha256).append("\",\n")
 			.append("  \"exportManifestSha256\": \"").append(exportManifestSha256).append("\",\n")
 			.append("  \"selectedConfig\": \"").append(escape(selectedConfig)).append("\",\n")
-			.append("  \"revertsTransactionId\": \"").append(revertsTransactionId).append("\",\n")
-			.append("  \"files\": [\n");
+			.append("  \"revertsTransactionId\": \"").append(revertsTransactionId).append("\",\n");
+		if (layered) {
+			json.append("  \"layeredPackageManifestSha256\": \"")
+				.append(layeredPackageManifestSha256).append("\",\n")
+				.append("  \"layeredPackageFingerprintSha256\": \"")
+				.append(layeredPackageFingerprintSha256).append("\",\n");
+		}
+		json.append("  \"files\": [\n");
 		for (int index = 0; index < files.size(); index++) {
 			FileRecord file = files.get(index);
 			json.append("    {\"relativePath\": \"").append(escape(file.relativePath))

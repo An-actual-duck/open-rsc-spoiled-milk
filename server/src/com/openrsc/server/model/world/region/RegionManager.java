@@ -261,6 +261,22 @@ public class RegionManager {
 				NativeLayeredWorldPackageCatalog.loadConfigured(
 					configuredPath.trim());
 			profile.validate(loaded);
+			final String configuredManifest = world.getServer().getConfig()
+				.LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256;
+			if (profile.requiresConfiguredManifestSha256()) {
+				if (configuredManifest == null
+					|| !configuredManifest.matches("[0-9a-f]{64}")) {
+					throw new IllegalStateException(
+						"The World Builder export profile requires an exact "
+							+ "layered package manifest SHA-256");
+				}
+				if (!configuredManifest.equals(
+						loaded.getPrimaryPackage().getManifestSha256())) {
+					throw new IllegalStateException(
+						"The installed World Builder export does not match "
+							+ "the configured layered package manifest SHA-256");
+				}
+			}
 			return loaded;
 		} catch (IOException failure) {
 			throw new IllegalStateException(

@@ -30,6 +30,12 @@ final class WorldBuilderConfigWriter {
 
 	static List<String> render(List<String> source, LinkedHashMap<String, String> overrides)
 		throws WorldBuilderDiscoveryException {
+		return render(source, overrides, "# Generated World Builder isolation settings");
+	}
+
+	static List<String> render(List<String> source,
+		LinkedHashMap<String, String> overrides, String generatedComment)
+		throws WorldBuilderDiscoveryException {
 		List<String> output = new ArrayList<String>(source.size() + overrides.size() + 2);
 		Set<String> replaced = new HashSet<String>();
 		for (String line : source) {
@@ -46,7 +52,7 @@ final class WorldBuilderConfigWriter {
 			output.add(matcher.group(1) + key + ": " + overrides.get(key) + matcher.group(4));
 		}
 		output.add("");
-		output.add("# Generated World Builder isolation settings");
+		output.add(generatedComment);
 		for (Map.Entry<String, String> override : overrides.entrySet()) {
 			if (!replaced.contains(override.getKey())) {
 				output.add(override.getKey() + ": " + override.getValue());

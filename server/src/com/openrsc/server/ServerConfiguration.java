@@ -100,6 +100,7 @@ public class ServerConfiguration {
 	public boolean WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY;
 	public boolean WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION;
 	public String LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
+	public String LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256;
 	public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
@@ -581,6 +582,11 @@ public class ServerConfiguration {
 			"openrsc.layeredNativeTerrainPackagePath",
 			"OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH",
 			"layered_native_terrain_package_path",
+			"");
+		LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 = readStringSystemEnvConfig(
+			"openrsc.layeredNativeTerrainManifestSha256",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256",
+			"layered_native_terrain_manifest_sha256",
 			"");
 		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE = readStringSystemEnvConfig(
 			"openrsc.layeredNativeWorldRuntimeProfile",
