@@ -35,7 +35,7 @@ public abstract class Entity {
 		authoredPlacementIdentity =
 			new LayeredAuthoredPlacementIdentitySlot();
 
-	private boolean removed = false;
+	private volatile boolean removed = false;
 
 	private final EntityType entityType;
 

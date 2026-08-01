@@ -1598,7 +1598,7 @@ public class Server implements Runnable {
 		}
 	}
 
-	private String buildBenchmarkSummary() {
+	private synchronized String buildBenchmarkSummary() {
 		final long samples = Math.max(1, benchmarkSamples);
 		final long visibilitySamples = Math.max(1, benchmarkVisibilitySnapshotSamples);
 		return "FOUNDATION_BENCHMARK "

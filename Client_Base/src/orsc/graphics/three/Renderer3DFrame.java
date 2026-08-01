@@ -45,11 +45,11 @@ public final class Renderer3DFrame {
 		Collections.unmodifiableList(worldSpriteSnapshots);
 	private final Map<Long, FaceCommand> worldFacesByModelFace;
 	private final int[] worldFaceCountsByKind;
-	private Renderer3DDepthFrame depthFrame;
+	private volatile Renderer3DDepthFrame depthFrame;
 	private Renderer3DMeshFrame meshFrame;
 	private Renderer3DWorldChunkFrame worldChunkFrame = Renderer3DWorldChunkFrame.EMPTY;
-	private Renderer3DRoofVisibility roofVisibility = Renderer3DRoofVisibility.VISIBLE;
-	private int activePlane;
+	private volatile Renderer3DRoofVisibility roofVisibility = Renderer3DRoofVisibility.VISIBLE;
+	private volatile int activePlane;
 	private boolean worldFaceStorageReleased;
 
 	Renderer3DFrame(

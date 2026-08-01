@@ -158,8 +158,9 @@ validate_runtime() {
 	else
 		runtime_major="${runtime_version%%.*}"
 	fi
-	[[ "$runtime_major" =~ ^[0-9]+$ ]] && ((runtime_major >= 17)) \
-		|| fail "$platform World Builder requires Java 17+; found $runtime_version"
+	if [[ ! "$runtime_major" =~ ^[0-9]+$ ]] || ((runtime_major < 17)); then
+		fail "$platform World Builder requires Java 17+; found $runtime_version"
+	fi
 	runtime_os="$(sed -n 's/^OS_NAME="\([^"]*\)".*/\1/p' "$runtime/release" | head -n 1)"
 	runtime_arch="$(sed -n 's/^OS_ARCH="\([^"]*\)".*/\1/p' "$runtime/release" | head -n 1)"
 	[[ "$runtime_os" == "$expected_os" ]] \

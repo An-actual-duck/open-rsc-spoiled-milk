@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -1182,13 +1183,13 @@ public final class WorldEditorSessionManager {
 	}
 	private WorldLocation activeNativePlacementLocation(
 		Player player,int x,int y){
-		int level=player==null?0
-			:player.getLayeredLocation().getCoordinate().getLevel();
-		requireNativeTerrainAuthoring(player,level);
+		Player checkedPlayer=Objects.requireNonNull(player,"player");
+		int level=checkedPlayer.getLayeredLocation().getCoordinate().getLevel();
+		requireNativeTerrainAuthoring(checkedPlayer,level);
 		WorldLocation location=new WorldLocation(
-			player.getLayeredLocation().getWorldSpace(),
+			checkedPlayer.getLayeredLocation().getWorldSpace(),
 			new WorldCoordinate(x,y,level));
-		NativeLayeredWorldPackage owner=nativeOwner(player,location);
+		NativeLayeredWorldPackage owner=nativeOwner(checkedPlayer,location);
 		if(!findNativeTerrainSector(
 				owner,WorldMapSectorId.from(location)).isPresent()){
 			throw new IllegalArgumentException(

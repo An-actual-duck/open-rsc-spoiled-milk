@@ -29,9 +29,9 @@ public final class LayeredSpatialEntityIndex {
 		new java.util.HashMap<WorldRegionKey, LinkedHashSet<Entity>>();
 	private final Map<WorldRegionKey, LinkedHashSet<Player>> playerRegions =
 		new java.util.HashMap<WorldRegionKey, LinkedHashSet<Player>>();
-	private final Map<WorldRegionKey, LinkedHashSet<GameObject>>
+	private final Map<WorldRegionKey, List<GameObject>>
 		gameObjectRegions =
-			new java.util.HashMap<WorldRegionKey, LinkedHashSet<GameObject>>();
+			new java.util.HashMap<WorldRegionKey, List<GameObject>>();
 	private final IdentityHashMap<Entity, WorldLocation> memberships =
 		new IdentityHashMap<Entity, WorldLocation>();
 	private long version;
@@ -336,12 +336,12 @@ public final class LayeredSpatialEntityIndex {
 			}
 		}
 		if (entity instanceof GameObject) {
-			LinkedHashSet<GameObject> gameObjects = gameObjectRegions.get(key);
+			List<GameObject> gameObjects = gameObjectRegions.get(key);
 			if (gameObjects == null) {
-				gameObjects = new LinkedHashSet<GameObject>();
+				gameObjects = new ArrayList<GameObject>();
 				gameObjectRegions.put(key, gameObjects);
 			}
-			if (!gameObjects.add((GameObject) entity)) {
+			if (containsIdentity(gameObjects, (GameObject) entity)) {
 				members.remove(entity);
 				if (members.isEmpty()) {
 					regions.remove(key);
@@ -349,6 +349,7 @@ public final class LayeredSpatialEntityIndex {
 				throw new IllegalStateException(
 					"Layered game object is already present in its target region");
 			}
+			gameObjects.add((GameObject) entity);
 		}
 	}
 
@@ -369,10 +370,11 @@ public final class LayeredSpatialEntityIndex {
 					"Layered player is absent from its indexed region");
 			}
 		}
-		LinkedHashSet<GameObject> gameObjects = null;
+		List<GameObject> gameObjects = null;
 		if (entity instanceof GameObject) {
 			gameObjects = gameObjectRegions.get(key);
-			if (gameObjects == null || !gameObjects.contains(entity)) {
+			if (gameObjects == null
+				|| !containsIdentity(gameObjects, (GameObject) entity)) {
 				throw new IllegalStateException(
 					"Layered game object is absent from its indexed region");
 			}
@@ -385,7 +387,7 @@ public final class LayeredSpatialEntityIndex {
 			}
 		}
 		if (gameObjects != null) {
-			gameObjects.remove(entity);
+			removeIdentity(gameObjects, (GameObject) entity);
 			if (gameObjects.isEmpty()) {
 				gameObjectRegions.remove(key);
 			}
@@ -436,16 +438,18 @@ public final class LayeredSpatialEntityIndex {
 		final WorldRegionKey key,
 		final Entity expected,
 		final Entity replacement) {
-		LinkedHashSet<GameObject> gameObjects = gameObjectRegions.get(key);
+		List<GameObject> gameObjects = gameObjectRegions.get(key);
 		if (expected instanceof GameObject) {
-			gameObjects.remove(expected);
+			removeIdentity(gameObjects, (GameObject) expected);
 		}
 		if (replacement instanceof GameObject) {
 			if (gameObjects == null) {
-				gameObjects = new LinkedHashSet<GameObject>();
+				gameObjects = new ArrayList<GameObject>();
 				gameObjectRegions.put(key, gameObjects);
 			}
-			gameObjects.add((GameObject) replacement);
+			if (!containsIdentity(gameObjects, (GameObject) replacement)) {
+				gameObjects.add((GameObject) replacement);
+			}
 		}
 		if (gameObjects != null && gameObjects.isEmpty()) {
 			gameObjectRegions.remove(key);
@@ -456,17 +460,45 @@ public final class LayeredSpatialEntityIndex {
 		final WorldRegionKey key,
 		final Entity expected,
 		final Entity replacement) {
-		LinkedHashSet<GameObject> gameObjects = gameObjectRegions.get(key);
+		List<GameObject> gameObjects = gameObjectRegions.get(key);
 		if (expected instanceof GameObject
-			&& (gameObjects == null || !gameObjects.contains(expected))) {
+			&& (gameObjects == null
+				|| !containsIdentity(gameObjects, (GameObject) expected))) {
 			throw new IllegalStateException(
 				"Layered game object replacement source is absent");
 		}
 		if (replacement instanceof GameObject
-			&& gameObjects != null && gameObjects.contains(replacement)) {
+			&& gameObjects != null
+			&& containsIdentity(gameObjects, (GameObject) replacement)) {
 			throw new IllegalStateException(
 				"Layered game object replacement target is already present");
 		}
+	}
+
+	private static boolean containsIdentity(
+		final List<GameObject> gameObjects,
+		final GameObject target) {
+		for (GameObject gameObject : gameObjects) {
+			if (gameObject == target) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean removeIdentity(
+		final List<GameObject> gameObjects,
+		final GameObject target) {
+		if (gameObjects == null) {
+			return false;
+		}
+		for (int index = 0; index < gameObjects.size(); index++) {
+			if (gameObjects.get(index) == target) {
+				gameObjects.remove(index);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static WorldRegionWindow requireBoundedWindow(

@@ -13,7 +13,7 @@ public class GameObject extends Entity {
 	/**
 	 * The direction the object points in
 	 */
-	private int direction;
+	private volatile int direction;
 	/**
 	 * Location definition of the object
 	 */
