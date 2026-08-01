@@ -459,12 +459,18 @@ package com.openrsc.server.model.entity.player;
 public final class Player {
     private final Skills skills;
     private final UpdateFlags flags = new UpdateFlags();
+    private final int healingMaximum;
     private boolean removed;
-    public Player(int current, int maximum) { skills = new Skills(current, maximum); }
+    public Player(int current, int maximum) { this(current, maximum, maximum); }
+    public Player(int current, int maximum, int healingMaximum) {
+        skills = new Skills(current, maximum);
+        this.healingMaximum = healingMaximum;
+    }
     public boolean isRemoved() { return removed; }
     public void setRemoved(boolean value) { removed = value; }
     public Skills getSkills() { return skills; }
     public UpdateFlags getUpdateFlags() { return flags; }
+    public int getHealingMaximumHits() { return healingMaximum; }
 }
 """,
         "com/openrsc/server/model/entity/update/HitSplat.java": """
@@ -507,6 +513,10 @@ public final class LeachCalculationFixture {
         equal(player.getSkills().getLevel(0), 10, "runtime maximum Hits");
         player.setRemoved(true);
         equal(Leach.heal(player, 10, 1.0D), 0, "removed player");
+
+        Player boosted = new Player(99, 99, 109);
+        equal(Leach.heal(boosted, 20, 1.0D), 10, "temporary maximum heal cap");
+        equal(boosted.getSkills().getLevel(0), 109, "temporary maximum Hits");
     }
 }
 """,

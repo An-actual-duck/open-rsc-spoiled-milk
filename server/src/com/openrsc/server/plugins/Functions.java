@@ -438,10 +438,13 @@ public class Functions {
 		// "the current level", but this is inconsistent with later observed behavior
 		// (from e.g. stat restore potions).
 		final int currentLevel = player.getSkills().getLevel(statId);
-		final int levelToScalePotionEffect = player.getConfig().HEALSTAT_ON_CURRENT_STAT ? currentLevel : player.getSkills().getMaxStat(statId);
+		final int normalLevel = statId == Skill.HITS.id()
+			? player.getHealingMaximumHits()
+			: player.getSkills().getMaxStat(statId);
+		final int levelToScalePotionEffect = player.getConfig().HEALSTAT_ON_CURRENT_STAT ? currentLevel : normalLevel;
 		final int newLevel = currentLevel + constant + (int)((levelToScalePotionEffect * percent) / 100.0);
 		player.getSkills().setLevel(statId,
-			Math.min(newLevel, player.getSkills().getMaxStat(statId)), true, false);
+			Math.min(newLevel, normalLevel), true, false);
 	}
 
 	/**

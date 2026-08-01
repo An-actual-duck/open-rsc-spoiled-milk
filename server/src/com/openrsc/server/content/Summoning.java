@@ -840,7 +840,7 @@ public final class Summoning {
 		if (owner == null || owner.isRemoved() || !owner.loggedIn()) {
 			return;
 		}
-		final int maxHits = owner.getSkills().getMaxStat(Skill.HITS.id());
+		final int maxHits = owner.getHealingMaximumHits();
 		final int currentHits = owner.getSkills().getLevel(Skill.HITS.id());
 		if (currentHits >= maxHits) {
 			return;

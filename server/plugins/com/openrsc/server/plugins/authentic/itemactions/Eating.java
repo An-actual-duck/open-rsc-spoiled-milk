@@ -206,7 +206,8 @@ public class Eating implements OpInvTrigger {
 				player.playerServerMessage(MessageType.QUEST, "You eat the " + item.getDef(player.getWorld()).getName().toLowerCase());
 			}
 
-			final boolean heals = player.getSkills().getLevel(Skill.HITS.id()) < player.getSkills().getMaxStat(Skill.HITS.id());
+			final int maximumHits = player.getHealingMaximumHits();
+			final boolean heals = player.getSkills().getLevel(Skill.HITS.id()) < maximumHits;
 			if (heals) {
 				int hpBefore = player.getSkills().getLevel(Skill.HITS.id());
 				int baseHeal = item.eatingHeals(player.getWorld());
@@ -217,8 +218,8 @@ public class Eating implements OpInvTrigger {
 					totalHeal = (int) Math.ceil(totalHeal * (1.0D + foodBonus));
 				}
 				int newHp = player.getSkills().getLevel(Skill.HITS.id()) + totalHeal;
-				if (newHp > player.getSkills().getMaxStat(Skill.HITS.id())) {
-					newHp = player.getSkills().getMaxStat(Skill.HITS.id());
+				if (newHp > maximumHits) {
+					newHp = maximumHits;
 				}
 				player.getSkills().setLevel(Skill.HITS.id(), newHp, sendUpdate);
 				addHealHitSplat(player, hpBefore, newHp);
@@ -247,11 +248,12 @@ public class Eating implements OpInvTrigger {
 			player.playerServerMessage(MessageType.QUEST, "You eat the sweetened fruit");
 
 			// Heal
-			if (player.getSkills().getLevel(Skill.HITS.id()) < player.getSkills().getMaxStat(Skill.HITS.id())) {
+			final int maximumHits = player.getHealingMaximumHits();
+			if (player.getSkills().getLevel(Skill.HITS.id()) < maximumHits) {
 				int hpBefore = player.getSkills().getLevel(Skill.HITS.id());
 				int newHp = hpBefore + DataConversions.random(1, 2);
-				if (newHp > player.getSkills().getMaxStat(Skill.HITS.id())) {
-					newHp = player.getSkills().getMaxStat(Skill.HITS.id());
+				if (newHp > maximumHits) {
+					newHp = maximumHits;
 				}
 				player.getSkills().setLevel(Skill.HITS.id(), newHp, sendUpdate);
 				addHealHitSplat(player, hpBefore, newHp);
@@ -310,16 +312,17 @@ public class Eating implements OpInvTrigger {
 			hpRestored = DataConversions.random(10, 20);
 		} else if (rand <= 28) { // 20/32 or 62% chance of healing 10% max hits
 			player.playerServerMessage(MessageType.QUEST, "It heals some health");
-			hpRestored = player.getSkills().getMaxStat(Skill.HITS.id()) * 10 / 100;
+			hpRestored = player.getHealingMaximumHits() * 10 / 100;
 		} else { // 3/32 or 9% that does nothing
 			player.playerServerMessage(MessageType.QUEST, "The kebab didn't seem to do a lot");
 			hpRestored = 0;
 		}
-		if (hpRestored > 0 && player.getSkills().getLevel(Skill.HITS.id()) < player.getSkills().getMaxStat(Skill.HITS.id())) {
+		final int maximumHits = player.getHealingMaximumHits();
+		if (hpRestored > 0 && player.getSkills().getLevel(Skill.HITS.id()) < maximumHits) {
 			int hpBefore = player.getSkills().getLevel(Skill.HITS.id());
 			int newStat = hpBefore + hpRestored;
-			if (newStat > player.getSkills().getMaxStat(Skill.HITS.id())) {
-				newStat = player.getSkills().getMaxStat(Skill.HITS.id());
+			if (newStat > maximumHits) {
+				newStat = maximumHits;
 			}
 			player.getSkills().setLevel(Skill.HITS.id(), newStat, sendUpdate);
 			addHealHitSplat(player, hpBefore, newStat);

@@ -1982,7 +1982,14 @@ public final class Player extends Mob {
 			final int previousBonus = getAttribute(bonusKey, 0);
 			final int nextBonus = percent <= 0 ? 0 : Math.max(0, (int) Math.floor(getSkills().getMaxStat(skill) * (percent / 100.0D)));
 			if (previousBonus != nextBonus) {
-				getSkills().setLevel(skill, Math.max(0, getSkills().getLevel(skill) - previousBonus + nextBonus), true, true);
+				final int nextLevel = skill == Skill.HITS.id()
+					? TemporaryMaximumHits.reconcileBonus(
+						getSkills().getLevel(skill),
+						getSkills().getMaxStat(skill),
+						previousBonus,
+						nextBonus)
+					: Math.max(0, getSkills().getLevel(skill) - previousBonus + nextBonus);
+				getSkills().setLevel(skill, nextLevel, true, true);
 				setAttribute(bonusKey, nextBonus);
 			}
 		}
@@ -2403,7 +2410,7 @@ public final class Player extends Mob {
 		if (target == null || minHeal <= 0 || maxHeal < minHeal) {
 			return;
 		}
-		final int maxHits = target.getSkills().getMaxStat(Skill.HITS.id());
+		final int maxHits = target.getHealingMaximumHits();
 		final int currentHits = target.getSkills().getLevel(Skill.HITS.id());
 		if (currentHits >= maxHits) {
 			return;
@@ -2485,12 +2492,29 @@ public final class Player extends Mob {
 		if (skill == Skill.RANGED.id()) {
 			return getSkills().getMaxStat(skill) + getAttribute("giant_might_ranged_bonus", 0) + potionBonus;
 		}
+		if (skill == Skill.HITS.id()) {
+			return TemporaryMaximumHits.healingCeiling(
+				getSkills().getMaxStat(skill), potionBonus);
+		}
 		return getSkills().getMaxStat(skill) + potionBonus;
+	}
+
+	/**
+	 * Returns the active healing ceiling without changing the durable base Hits
+	 * maximum. Equipment maximum-Hits bonuses are already represented by the
+	 * runtime max stat; Potion of Brawn is layered on top temporarily.
+	 */
+	public int getHealingMaximumHits() {
+		return getEquipmentAdjustedNormalLevel(Skill.HITS.id());
 	}
 
 	public int getPersistedSkillLevel(final int skill) {
 		syncHerblawSkillPotionBonuses();
 		final int potionBonus = getHerblawSkillPotionBonus(skill);
+		if (skill == Skill.HITS.id()) {
+			return TemporaryMaximumHits.persistedHits(
+				getSkills().getLevel(skill), getSkills().getMaxStat(skill));
+		}
 		if (skill == Skill.MELEE.id()) {
 			return Math.max(0, getSkills().getLevel(skill) - getAttribute("giant_might_melee_bonus", 0) - potionBonus);
 		}
