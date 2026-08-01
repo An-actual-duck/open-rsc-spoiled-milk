@@ -89,8 +89,18 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                                 "prepared runtime port");
                             List<String> server = command(classes, "FakeServer", workspace, port);
                             List<String> client = command(classes, "FakeClient", workspace, port);
+                            Path generatedIpBans = workspace.resolve("working/server/ipbans.txt");
+                            Path escapedIpBans = workspace.getParent().resolve("ipbans.txt");
+                            require(!Files.exists(generatedIpBans), "clean workspace starts without IP bans");
+                            require(!Files.exists(escapedIpBans), "no external IP bans before startup");
                             int first = supervisor.superviseWithCommands(workspace, port, server, client, 5000L);
                             require(first == 0, "first run");
+                            require(Files.isRegularFile(generatedIpBans),
+                                "server-generated IP bans remain in workspace");
+                            require(Files.size(generatedIpBans) == 0L,
+                                "server-generated IP bans start empty");
+                            require(!Files.exists(escapedIpBans),
+                                "server-generated IP bans never escape workspace");
                             require(!Files.exists(workspace.resolve("run/server.pid")), "server pid cleanup");
                             require(!Files.exists(workspace.resolve("run/client.pid")), "client pid cleanup");
                             require(!Files.exists(workspace.resolve("working/server/run/world-builder/ready")), "ready cleanup");
@@ -124,6 +134,7 @@ class WorldBuilderSupervisionTest(unittest.TestCase):
                             public static void main(String[] args) throws Exception {
                                 Path workspace = Paths.get(args[0]);
                                 int port = Integer.parseInt(args[1]);
+                                Files.write(Paths.get("ipbans.txt"), new byte[0]);
                                 Path control = workspace.resolve("working/server/run/world-builder");
                                 Path credential = workspace.resolve("working/server/inc/sqlite/world-builder.credential");
                                 Files.createDirectories(control);

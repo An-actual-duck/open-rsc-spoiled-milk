@@ -82,8 +82,9 @@ def make_fixture(
     write(root / "server/database/sqlite/core.sqlite", "queries")
     write(root / "server/inc/sqlite/myworld_seed.db", "clean-seed")
     write(root / "server/myworld.conf", "\tclient_version: 10047\n")
-    for name in ("alertwords.txt", "badwords.txt", "goodwords.txt", "ipbans.txt"):
+    for name in ("alertwords.txt", "badwords.txt", "goodwords.txt"):
         write(root / "server" / name, "\n")
+    write(root / "server/ipbans.txt", "ignored generated bans must not ship\n")
     write(root / "server/globalrules.txt", "rules\n")
     write(root / "tools/world-builder/schema/project.json", "{}\n")
     shutil.copytree(
@@ -122,7 +123,7 @@ def make_fixture(
     )
     write(windows_runtime / "NOTICE", "Windows runtime notice\n")
     write(windows_runtime / "legal/java.base/LICENSE", "Windows runtime license\n")
-    write(root / ".gitignore", "output/\n")
+    write(root / ".gitignore", "output/\nserver/ipbans.txt\n")
 
     git(root, "init", "--initial-branch=main")
     git(root, "config", "user.name", "World Builder Release Test")
@@ -278,7 +279,8 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                     forbidden = (
                         "/workspace/", "/exports/", "/backups/", "/receipts/", "/logs/",
                         "world_builder.db", "world-builder.credential", "credentials.txt",
-                        "uid.dat", "clientSettings.conf", "/ip.txt", "/port.txt",
+                        "uid.dat", "clientSettings.conf", "builder-runtime/server/ipbans.txt",
+                        "/ip.txt", "/port.txt",
                     )
                     self.assertFalse(
                         [name for name in names if any(fragment in name for fragment in forbidden)]
