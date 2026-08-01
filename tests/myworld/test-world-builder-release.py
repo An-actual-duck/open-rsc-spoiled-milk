@@ -321,7 +321,16 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                         " ".join(readme.split()),
                     )
                     self.assertIn('"Import Map Changes.sh"', readme)
-                    self.assertIn("exact state immediately before the most recent successful", readme)
+                    normalized_readme = " ".join(readme.split())
+                    self.assertIn(
+                        "exact state immediately before the most recent successful",
+                        normalized_readme,
+                    )
+                    self.assertIn(
+                        "server/conf/server/data/world-builder-layered/package/",
+                        readme,
+                    )
+                    self.assertIn("pinned manifest SHA-256", normalized_readme)
                     start_cmd = archive.read(prefix + "Start World Builder.cmd").decode()
                     self.assertIn(r"runtime\bin\java.exe", start_cmd)
                     self.assertIn("launch --server-root", start_cmd)
