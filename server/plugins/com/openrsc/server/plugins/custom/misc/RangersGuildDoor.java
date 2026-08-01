@@ -2,12 +2,16 @@ package com.openrsc.server.plugins.custom.misc;
 
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.RangersGuildArea;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpLocTrigger;
 
-import static com.openrsc.server.plugins.Functions.*;
+import static com.openrsc.server.plugins.Functions.doDoor;
+import static com.openrsc.server.plugins.Functions.findNpcInLegacyPackedArea;
+import static com.openrsc.server.plugins.Functions.getCurrentLevel;
+import static com.openrsc.server.plugins.Functions.npcsay;
 
 public final class RangersGuildDoor implements OpLocTrigger {
 	private static final int CLOSED_DOUBLE_DOORS = 64;
@@ -28,7 +32,9 @@ public final class RangersGuildDoor implements OpLocTrigger {
 		}
 
 		if (getCurrentLevel(player, Skill.RANGED.id()) < 66) {
-			Npc ranger = player.getWorld().getNpc(NpcId.RANGERS_GUILD_RANGER.id(), 493, 499, 461, 464);
+			Npc ranger = findNpcInLegacyPackedArea(
+				player, NpcId.RANGERS_GUILD_RANGER.id(),
+				493, 499, 461, 464);
 			if (ranger != null) {
 				npcsay(player, ranger, "Sorry, only skilled rangers are allowed in here");
 			}
@@ -44,8 +50,7 @@ public final class RangersGuildDoor implements OpLocTrigger {
 
 	private boolean isRangersGuildDoor(GameObject obj) {
 		return obj.getID() == CLOSED_DOUBLE_DOORS
-			&& obj.getX() == DOOR_X
-			&& obj.getY() == DOOR_Y
+			&& RangersGuildArea.isEntranceDoor(obj.getWorldLocation())
 			&& obj.getDirection() == DOOR_DIRECTION;
 	}
 }

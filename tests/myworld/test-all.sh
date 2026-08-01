@@ -30,6 +30,8 @@ python3 ./tests/myworld/test-social-name-lookup.py
 python3 ./tests/myworld/test-server-social-failure-handling.py
 python3 ./tests/myworld/test-server-best-effort-cleanup.py
 python3 ./tests/myworld/test-monster-slayer-foundation.py
+python3 ./tests/myworld/test-rangers-guild-layout.py
+python3 ./tests/myworld/test-rangers-guild-points-flow.py
 python3 ./tests/myworld/audit-client-sprite-references.py
 python3 ./tests/myworld/test-content-item-resolution.py
 python3 ./tests/myworld/test-magic-no-random-fail.py
