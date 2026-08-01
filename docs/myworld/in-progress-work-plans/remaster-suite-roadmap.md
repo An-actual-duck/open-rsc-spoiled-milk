@@ -312,7 +312,7 @@ World Builder remains an independently released tool and repository. It owns:
 - compatibility checks against target capabilities and definitions;
 - end-user launchers, updater behavior, documentation, and diagnostics.
 
-The packed-map generation is frozen at `rsc-world-editor-v1.03` and remains
+The packed-map generation is frozen at `v1.1.0` and remains
 downloadable but unmaintained. The active layered generation is the separate
 `Spoiled Milk World Builder 2` product with product/update channel
 `rsc-world-editor-v2`, signed-layered workspace model, distinct archive and
@@ -552,7 +552,7 @@ a requirement to work through every bullet sequentially.
   respawning ground-item authoring; each later placement or workflow family
   remains a focused milestone rather than one combined editor rewrite. This
   line is now mechanically isolated as World Builder 2; v1 is frozen at
-  `rsc-world-editor-v1.03` and cannot auto-update into it.
+  `v1.1.0` and cannot auto-update into it.
 - **Phase 7 is narrowed to loader productionization.** Vanilla conversion,
   geographic realignment, and general conversion tooling remain on hold.
   Current loader choices are production package promotion, durable transition
@@ -1303,7 +1303,7 @@ authorable while retaining a clearly separated legacy editor.
 
 Work:
 
-- Keep packed-Y tag `rsc-world-editor-v1.03` available as the frozen,
+- Keep packed-Y tag `v1.1.0` available as the frozen,
   unmaintained Legacy World Builder; never publish current source on its
   product or update channel.
 - Release the layered editor only as `Spoiled Milk World Builder 2`, product
@@ -1717,7 +1717,7 @@ The RSC Remastered product roadmap is complete when:
 
 | Date | Decision | Status |
 | --- | --- | --- |
-| 2026-07-30 | Separate the signed-layered editor as World Builder generation 2 without forcing packed-map users forward. | Implemented and automated-validated. Legacy `rsc-world-editor-v1` is frozen at tag `rsc-world-editor-v1.03`; the ambiguous old packager refuses current source. V2 uses `Spoiled Milk World Builder 2`, product/update channel and artifact prefix `rsc-world-editor-v2`, embeds the signed-layered package, launches only with the layered profile, includes exact release identity allowing automatic updates only from v2 itself, and refuses a legacy/unidentified workspace. Public v2 packaging remains locked pending layered export/import and final release validation |
+| 2026-07-30 | Separate the signed-layered editor as World Builder generation 2 without forcing packed-map users forward. | Implemented and automated-validated. Legacy `rsc-world-editor-v1` is frozen at tag `v1.1.0`; the ambiguous old packager refuses current source. V2 uses `Spoiled Milk World Builder 2`, product/update channel and artifact prefix `rsc-world-editor-v2`, embeds the signed-layered package, launches only with the layered profile, includes exact release identity allowing automatic updates only from v2 itself, and refuses a legacy/unidentified workspace. Public v2 packaging remains locked pending layered export/import and final release validation |
 | 2026-07-30 | Resume Phase 6 as a sequence of focused World Builder feature-completeness and usability milestones, beginning with collectible respawning ground items. | Implemented, automated-validated, and owner-accepted. The accepted isolated workspace and generated-level boundary allow one definition-aware package spawn per tile, configurable amount/respawn, ordinary pickup behavior, permanent per-location delayed-respawn cancellation, and one backward-compatible atomic journal/package transaction. The owner reported the complete tool working as intended and supplied its final credited Game-icons.net mark. Source-level mutation, boundary authoring, export/import, and target files remain separate gates |
 | 2026-07-27 | Complete the automated loader-v2 resident-sector milestone before readiness acknowledgement. | Default-off protocol v6 keeps an exact bounded connection-local client cache and server mirror, sends full inventories but only missing/changed payloads, reduces an adjacent shift to three new sector payloads, commits both sides transactionally, clears on reconnect, fails closed on missing/malformed references, records payload/reference metrics, and preserves protocol v5 as rollback. Client/server builds and focused compatibility/atomicity tests pass; private acceptance remains |
 | 2026-07-27 | Select native loader performance as the immediate RSC Remastered showcase milestone. | Begin with protocol-preserving server wire-product caching and stable transfer metrics, then add resident client sectors, delta delivery, readiness acknowledgement, and predictive activation. Current protocol v5 uses complete 48-tile sectors; older 24-tile wording describes historical protocol v4. Lazy server eviction remains deferred pending measurement and entity-lifecycle design |

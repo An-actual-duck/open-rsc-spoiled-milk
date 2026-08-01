@@ -176,7 +176,7 @@ class WorldBuilderReleaseTest(unittest.TestCase):
             capture_output=True,
         )
         self.assertNotEqual(0, result.returncode)
-        self.assertIn("frozen at rsc-world-editor-v1.03", result.stderr)
+        self.assertIn("frozen at v1.1.0", result.stderr)
         self.assertIn("package-world-builder-v2-release.sh", result.stderr)
 
     def test_public_v2_packaging_stays_locked_until_layered_release_gate(self):
@@ -299,7 +299,7 @@ class WorldBuilderReleaseTest(unittest.TestCase):
                     self.assertEqual(PRODUCT_ID, identity["updateChannel"])
                     self.assertEqual([PRODUCT_ID], identity["automaticUpgradeFromProductIds"])
                     self.assertEqual("rsc-world-editor-v1", identity["legacyProductId"])
-                    self.assertEqual("rsc-world-editor-v1.03", identity["legacyFinalTag"])
+                    self.assertEqual("v1.1.0", identity["legacyFinalTag"])
                     self.assertFalse(identity["legacyWorkspaceMigration"])
                     self.assertEqual("signed-layered-v1", identity["worldCoordinateModel"])
                     self.assertEqual(VERSION, identity["version"])

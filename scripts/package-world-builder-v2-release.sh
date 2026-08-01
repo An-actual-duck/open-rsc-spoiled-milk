@@ -16,7 +16,7 @@ PRODUCT_ID="rsc-world-editor-v2"
 PRODUCT_GENERATION=2
 UPDATE_CHANNEL="rsc-world-editor-v2"
 LEGACY_PRODUCT_ID="rsc-world-editor-v1"
-LEGACY_FINAL_TAG="rsc-world-editor-v1.03"
+LEGACY_FINAL_TAG="v1.1.0"
 PACKAGE_NAME="Spoiled Milk World Builder 2"
 ARTIFACT_PREFIX="rsc-world-editor-v2"
 

@@ -7,7 +7,7 @@ those phases are implemented.
 ## Product generations
 
 The packed-map editor is frozen and unmaintained at release tag
-`rsc-world-editor-v1.03`. Current signed-layered work belongs to the separate
+`v1.1.0`. Current signed-layered work belongs to the separate
 `Spoiled Milk World Builder 2` product and update channel
 `rsc-world-editor-v2`. Its archive prefix, install folder, signed-layered
 workspace, and release identity are distinct; automatic updates are eligible

@@ -6,7 +6,7 @@ its active map until you deliberately import your work.
 
 This is the signed-layered second generation of the editor. It is a separate
 product from the frozen packed-map RSC World Editor v1 line, whose final tag is
-rsc-world-editor-v1.03. World Builder 2 uses product and update channel
+v1.1.0. World Builder 2 uses product and update channel
 rsc-world-editor-v2. It never installs as an automatic v1 update, and it does
 not open or migrate a v1 workspace.
 

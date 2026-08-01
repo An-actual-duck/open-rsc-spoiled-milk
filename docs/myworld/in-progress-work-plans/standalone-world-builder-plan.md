@@ -37,7 +37,7 @@ This is a separate product and release target, not a replacement for the
 administrator-only editor in the regular game.
 
 The packed-map editor is now a frozen legacy product. Its final release is
-`rsc-world-editor-v1.03`; it remains available for creators who retain packed
+`v1.1.0`; it remains available for creators who retain packed
 maps, but receives no further maintenance. The signed-layered editor is
 generation 2 with product ID and update channel `rsc-world-editor-v2`. It uses
 the distinct install folder `Spoiled Milk World Builder 2`, artifact prefix
@@ -584,7 +584,7 @@ Every archive contains `RELEASE-IDENTITY.json`. An updater must require exact
 `productId` and `updateChannel` equality before offering an update. The only
 allowed automatic source product is `rsc-world-editor-v2`; legacy
 `rsc-world-editor-v1` is explicitly excluded, its final tag is recorded as
-`rsc-world-editor-v1.03`, and legacy workspace migration is false.
+`v1.1.0`, and legacy workspace migration is false.
 
 The ambiguous `package-world-builder-release.sh` entry point now fails closed
 instead of packaging current sources under the legacy identity. V2 packaging
@@ -933,7 +933,7 @@ Legacy v1 Phase 5 foundation evidence recorded on 2026-07-14:
   requires exact `IMPORT` confirmation. `undo-latest-import` prints the
   authoritative rollback preview and requires exact `UNDO`; cancellation of
   either makes no target changes.
-- The legacy release line was frozen at tag `rsc-world-editor-v1.03`. Its
+- The legacy release line was frozen at tag `v1.1.0`. Its
   published artifact remains available but receives no further builds or
   automatic successor.
 
@@ -990,7 +990,7 @@ Owner acceptance recorded on 2026-07-14:
   a final real-archive clean-machine presentation check remains part of the
   release gate below.
 - That acceptance applies to the frozen v1 artifact, `Spoiled Milk World
-  Builder`, whose final release is `rsc-world-editor-v1.03`. The active layered
+  Builder`, whose final release is `v1.1.0`. The active layered
   product is `Spoiled Milk World Builder 2` on its independent
   `rsc-world-editor-v2` channel and requires its own final visual acceptance.
 
@@ -1129,7 +1129,7 @@ age while they are the only rollback source.
 - Base-revision conflicts are refusals in the first release; no force import.
 - Rollback requires the current target to match the installed receipt.
 - The standalone release has its own packaging and versioned artifacts.
-- The packed-map v1 line is frozen at `rsc-world-editor-v1.03`.
+- The packed-map v1 line is frozen at `v1.1.0`.
 - The layered editor is World Builder 2, product/update channel
   `rsc-world-editor-v2`, and accepts automatic updates only from itself.
 - V1 and v2 workspaces are intentionally incompatible; migration is never
