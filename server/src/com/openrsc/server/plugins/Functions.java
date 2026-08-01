@@ -1987,8 +1987,10 @@ public class Functions {
 		// 7 - Diagonal N-W
 		// 8 - N->S
 		player.playSound("opendoor");
-		delloc(object);
-		addloc(new GameObject(object.getWorld(), object.getLocation(), replaceID, object.getDirection(), object.getType()));
+		GameObject openGate = new GameObject(
+			object.getWorld(), object.getLocation(), replaceID,
+			object.getDirection(), object.getType());
+		changeloc(object, openGate);
 
 		int dir = object.getDirection();
 		int pdir = player.getSprite();
