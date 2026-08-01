@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -94,7 +95,7 @@ public final class World {
 	private final Object worldEditorTerrainPatchLock = new Object();
 	private final Map<String, Map<Integer, TerrainPatch>> worldEditorTerrainPatches =
 		new HashMap<String, Map<Integer, TerrainPatch>>();
-	private volatile long worldEditorTerrainRevision = 0L;
+	private final AtomicLong worldEditorTerrainRevision = new AtomicLong();
 	private volatile boolean syntheticDeepFixtureTerrain;
 	private volatile int syntheticDeepFixtureOffsetX;
 	private volatile int syntheticDeepFixtureOffsetZ;
@@ -314,14 +315,14 @@ public final class World {
 			syntheticDeepFixtureOffsetX = worldOffsetX;
 			syntheticDeepFixtureOffsetZ = worldOffsetZ;
 			nativeLayeredTerrainActivationSummary = "";
-			worldEditorTerrainRevision++;
+			final long scopeRevision = worldEditorTerrainRevision.incrementAndGet();
 			if (nativeTerrainSnapshot != null) {
 				NativeWorldModelPrebuild prebuild =
 					prebuildNativeWorldModelProduct(
 						nativeTerrainSnapshot,
 						worldOffsetX,
 						worldOffsetZ,
-						worldEditorTerrainRevision,
+						scopeRevision,
 						!Config.C_HIDE_ROOFS);
 				System.out.println(
 					"NATIVE_TERRAIN_CONTEXT_PRODUCT"
@@ -372,7 +373,7 @@ public final class World {
 			throw new IllegalStateException(
 				"Native terrain halo does not match the active scope");
 		}
-		final long sourceRevision = worldEditorTerrainRevision;
+		final long sourceRevision = worldEditorTerrainRevision.get();
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
 		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
 		final Renderer3DWorldChunkFrame reusableChunks =
@@ -435,7 +436,7 @@ public final class World {
 			throw new IllegalStateException(
 				"Predicted native terrain does not match the active scope");
 		}
-		final long sourceRevision = worldEditorTerrainRevision;
+		final long sourceRevision = worldEditorTerrainRevision.get();
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
 		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
 		final Renderer3DWorldChunkFrame reusableChunks =
@@ -499,7 +500,7 @@ public final class World {
 		final NativeLayeredTerrainSnapshot presentationTerrain =
 			NativeLayeredTerrainSnapshot.mergePresentation(
 				visualTerrain, structuralTerrain);
-		final long sourceRevision = worldEditorTerrainRevision;
+		final long sourceRevision = worldEditorTerrainRevision.get();
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
 		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
 		final Renderer3DWorldChunkFrame reusableChunks =
@@ -566,7 +567,7 @@ public final class World {
 				haloTerrain.scopeIdentity())
 			|| result.haloProtocolVersion
 				!= haloTerrain.getProtocolVersion()
-			|| result.sourceRevision != worldEditorTerrainRevision
+			|| result.sourceRevision != worldEditorTerrainRevision.get()
 			|| result.worldOffsetX != worldOffsetX
 			|| result.worldOffsetZ != worldOffsetZ
 			|| syntheticDeepFixtureOffsetX != worldOffsetX
@@ -648,7 +649,7 @@ public final class World {
 			|| visualTerrain.getCurrentChunkY()
 				!= structuralTerrain.getCurrentChunkY()
 			|| result.sourceRevision + 1L
-				!= worldEditorTerrainRevision
+				!= worldEditorTerrainRevision.get()
 			|| result.worldOffsetX != worldOffsetX
 			|| result.worldOffsetZ != worldOffsetZ
 			|| syntheticDeepFixtureOffsetX != worldOffsetX
@@ -709,7 +710,7 @@ public final class World {
 			&& result.haloProtocolVersion
 				== NativeLayeredTerrainSnapshot
 					.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION
-			&& result.sourceRevision == worldEditorTerrainRevision
+			&& result.sourceRevision == worldEditorTerrainRevision.get()
 			&& result.worldOffsetX == worldOffsetX
 			&& result.worldOffsetZ == worldOffsetZ
 			&& syntheticDeepFixtureOffsetX == worldOffsetX
@@ -733,7 +734,7 @@ public final class World {
 				haloTerrain.scopeIdentity())
 			&& result.haloProtocolVersion
 				== haloTerrain.getProtocolVersion()
-			&& result.sourceRevision == worldEditorTerrainRevision
+			&& result.sourceRevision == worldEditorTerrainRevision.get()
 			&& result.worldOffsetX == worldOffsetX
 			&& result.worldOffsetZ == worldOffsetZ
 			&& syntheticDeepFixtureOffsetX == worldOffsetX
@@ -1206,7 +1207,7 @@ public final class World {
 			throw new IllegalStateException(
 				"Native terrain prebuild carrier offsets are stale");
 		}
-		final long sourceRevision = worldEditorTerrainRevision;
+		final long sourceRevision = worldEditorTerrainRevision.get();
 		final long targetRevision = Math.addExact(sourceRevision, 1L);
 		final String activeScopeIdentity = activeTerrain.scopeIdentity();
 		final boolean includeRoofGeometry = !Config.C_HIDE_ROOFS;
@@ -1240,9 +1241,9 @@ public final class World {
 				stagedTerrain.scopeIdentity())
 			&& result.activeScopeIdentity.equals(
 				activeTerrain.scopeIdentity())
-			&& result.sourceRevision == worldEditorTerrainRevision
+			&& result.sourceRevision == worldEditorTerrainRevision.get()
 			&& result.targetRevision
-				== Math.addExact(worldEditorTerrainRevision, 1L)
+				== Math.addExact(worldEditorTerrainRevision.get(), 1L)
 			&& result.worldOffsetX == worldOffsetX
 			&& result.worldOffsetZ == worldOffsetZ
 			&& syntheticDeepFixtureOffsetX == worldOffsetX
@@ -1389,7 +1390,7 @@ public final class World {
 		if (activeTerrain == null
 			|| product == null
 			|| product.gpuChunkMesh == null
-			|| result.sourceRevision != worldEditorTerrainRevision
+			|| result.sourceRevision != worldEditorTerrainRevision.get()
 			|| !result.activeScopeIdentity.equals(
 				activeTerrain.scopeIdentity())
 			|| syntheticDeepFixtureOffsetX != result.worldOffsetX
@@ -5113,7 +5114,7 @@ public final class World {
 
 	private String sectionWindowKey(int height, int sectionX, int sectionY) {
 		return sectorFilename(height, sectionX, sectionY)
-			+ "-editor-" + worldEditorTerrainRevision
+			+ "-editor-" + worldEditorTerrainRevision.get()
 			+ (nativeLayeredTerrainSnapshot != null
 				? "-native-"
 					+ nativeLayeredTerrainSnapshot.scopeIdentity()
@@ -5587,7 +5588,7 @@ public final class World {
 			if(patches==null){patches=new HashMap<Integer,TerrainPatch>();worldEditorTerrainPatches.put(sector,patches);}
 			int key=localX*SECTION_SIZE+localZ;TerrainPatch previous=patches.get(key);
 			patches.put(key,new TerrainPatch(localX,localZ,elevation,groundTexture,groundOverlay,roofTexture,horizontalWall,verticalWall,diagonal,overlayPainted||(previous!=null&&previous.editorPaintedOverlay)));
-			worldEditorTerrainRevision++;
+			worldEditorTerrainRevision.incrementAndGet();
 		}
 	}
 	private void applyWorldEditorTerrainPatches(Sector sector,int plane,int sectionX,int sectionY){

@@ -37,8 +37,8 @@ public final class Renderer3DDepthFrame {
 	private int consideredFaceCount;
 	private int acceptedFaceCount;
 	private int rejectedFaceCount;
-	private int triangleCount;
-	private int pixelWriteCount;
+	private volatile int triangleCount;
+	private volatile int pixelWriteCount;
 	private boolean released;
 
 	private Renderer3DDepthFrame(
@@ -78,6 +78,8 @@ public final class Renderer3DDepthFrame {
 	static Renderer3DDepthFrame render(Renderer3DFrame frame, EnumSet<Renderer3DModelKind> includedKinds) {
 		SpriteClipMask spriteClipMask = SpriteClipMask.from(frame, Renderer3DSettings.isVisibleWorldEnabled());
 		Renderer3DDepthFrame depthFrame = null;
+		int renderedTriangleCount = 0;
+		int renderedPixelWriteCount = 0;
 		boolean complete = false;
 		try {
 			depthFrame = new Renderer3DDepthFrame(
@@ -99,9 +101,16 @@ public final class Renderer3DDepthFrame {
 				}
 				depthFrame.acceptedFaceCount++;
 				for (int vertex = 1; vertex < face.getRenderVertexCount() - 1; vertex++) {
-					depthFrame.rasterizeTriangle(frame, face, 0, vertex, vertex + 1);
+					int trianglePixelWrites = depthFrame.rasterizeTriangle(
+						frame, face, 0, vertex, vertex + 1);
+					if (trianglePixelWrites >= 0) {
+						renderedTriangleCount++;
+						renderedPixelWriteCount += trianglePixelWrites;
+					}
 				}
 			}
+			depthFrame.triangleCount = renderedTriangleCount;
+			depthFrame.pixelWriteCount = renderedPixelWriteCount;
 			complete = true;
 			return depthFrame;
 		} finally {
@@ -432,7 +441,7 @@ public final class Renderer3DDepthFrame {
 			|| modelKind == Renderer3DModelKind.WALL_OBJECT;
 	}
 
-	private void rasterizeTriangle(Renderer3DFrame frame, Renderer3DFrame.FaceCommand face, int a, int b, int c) {
+	private int rasterizeTriangle(Renderer3DFrame frame, Renderer3DFrame.FaceCommand face, int a, int b, int c) {
 		int ax = frame.getCenterX() + face.getRenderScreenX()[a];
 		int ay = frame.getCenterY() + face.getRenderScreenY()[a];
 		int bx = frame.getCenterX() + face.getRenderScreenX()[b];
@@ -448,15 +457,15 @@ public final class Renderer3DDepthFrame {
 		int minY = Math.max(clipMinY, Math.min(ay, Math.min(by, cy)));
 		int maxY = Math.min(clipMaxY, Math.max(ay, Math.max(by, cy)));
 		if (minX > maxX || minY > maxY) {
-			return;
+			return -1;
 		}
 
 		int area = edge(ax, ay, bx, by, cx, cy);
 		if (area == 0) {
-			return;
+			return -1;
 		}
 
-		triangleCount++;
+		int trianglePixelWrites = 0;
 		boolean positiveArea = area > 0;
 		for (int y = minY; y <= maxY; y++) {
 			int rowMinX = minX;
@@ -500,10 +509,11 @@ public final class Renderer3DDepthFrame {
 					legacyDrawOrder[pixel] = face.getLegacyDrawOrder();
 					faceId[pixel] = face.getFaceId();
 					modelIndex[pixel] = face.getModelIndex();
-					pixelWriteCount++;
+					trianglePixelWrites++;
 				}
 			}
 		}
+		return trianglePixelWrites;
 	}
 
 	private static int shadeColor(int color, int depth, Renderer3DModelKind kind) {

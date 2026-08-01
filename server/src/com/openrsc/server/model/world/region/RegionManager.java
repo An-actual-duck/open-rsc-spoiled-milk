@@ -162,7 +162,7 @@ public class RegionManager {
 	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
 	private final NativeLayeredWorldRuntimeProfile
 		nativeLayeredWorldRuntimeProfile;
-	private boolean nativeLayeredPlacementsPopulated;
+	private volatile boolean nativeLayeredPlacementsPopulated;
 
 	private final World world;
 

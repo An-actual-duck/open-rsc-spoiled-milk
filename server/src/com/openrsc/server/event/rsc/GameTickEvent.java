@@ -27,8 +27,8 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	protected volatile boolean running = true;
 	private final Mob owner;
 	private final World world;
-	private volatile long delayTicks;
-	private volatile long ticksBeforeRun = -1;
+	private long delayTicks;
+	private long ticksBeforeRun = -1;
 	private long lifecycleVersion;
 	private String descriptor;
 	private long lastEventDuration = 0;
@@ -503,7 +503,9 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	public final boolean shouldRun() {
-		return running && ticksBeforeRun <= 0;
+		synchronized (timingLock) {
+			return running && ticksBeforeRun <= 0;
+		}
 	}
 
 	public void stop() {
@@ -604,7 +606,9 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	public long getTicksBeforeRun() {
-		return ticksBeforeRun;
+		synchronized (timingLock) {
+			return ticksBeforeRun;
+		}
 	}
 
 	public final long getLastEventDuration() {
@@ -612,7 +616,9 @@ public abstract class GameTickEvent implements Callable<Integer> {
 	}
 
 	public long getDelayTicks() {
-		return delayTicks;
+		synchronized (timingLock) {
+			return delayTicks;
+		}
 	}
 
 	public String getDescriptor() {
