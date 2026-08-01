@@ -301,7 +301,7 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 		return (obj.getY() == 643 && (obj.getID() == LUMBRIDGE_LADY_SARIM1 || obj.getID() == LUMBRIDGE_LADY_SARIM2))
 			|| (obj.getY() == 641 && (obj.getID() == LUMBRIDGE_LADY_CRANDOR1 || obj.getID() == LUMBRIDGE_LADY_CRANDOR2))
 			|| obj.getID() == BOATS_LADDER
-			|| ((obj.getY() == 3458 || obj.getY() == 3331)
+			|| ((legacyPackedY(obj) == 3458 || legacyPackedY(obj) == 3331)
 			&& (obj.getID() == MELZAR_CHEST_OPEN || obj.getID() == MELZAR_CHEST_CLOSED) || (obj.getID() == DWARVEN_CHEST_OPEN || obj.getID() == DWARVEN_CHEST_CLOSED));
 	}
 
@@ -447,7 +447,7 @@ public class DragonSlayer implements QuestInterface, UseLocTrigger,
 			}
 		} else if (obj.getID() == 58) {
 			//from side of crandor
-			if (player.getY() <= 3517) {
+			if (legacyPackedY(player) <= 3517) {
 				player.message("You just went through a secret door");
 				if (!player.getCache().hasKey("crandor_shortcut")) {
 					player.message("You remember where the door is for future use");

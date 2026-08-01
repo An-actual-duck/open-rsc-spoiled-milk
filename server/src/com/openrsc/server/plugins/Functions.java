@@ -11,6 +11,7 @@ import com.openrsc.server.model.Either;
 import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
@@ -595,6 +596,21 @@ public class Functions {
 
 	public static void teleport(Player player, int x, int y) {
 		player.teleport(x, y);
+	}
+
+	/** Matches an entity against a coordinate written in classic packed-Y form. */
+	public static boolean matchesLegacyPackedLocation(
+		final Entity entity,
+		final int x,
+		final int packedY) {
+		return LegacyPackedPointAdapter.fromPackedValues(x, packedY)
+			.equals(entity.getWorldLocation());
+	}
+
+	/** Returns an entity's Y coordinate in classic packed-Y form. */
+	public static int legacyPackedY(final Entity entity) {
+		return LegacyPackedPointAdapter.toLegacyPoint(entity.getWorldLocation())
+			.getY();
 	}
 
 	/**

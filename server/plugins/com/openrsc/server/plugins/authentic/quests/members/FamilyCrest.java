@@ -576,7 +576,10 @@ public class FamilyCrest implements QuestInterface, TalkNpcTrigger,
 
 	@Override
 	public boolean blockOpBound(Player player, GameObject obj, Integer click) {
-		return (obj.getID() == 88 && obj.getX() == 509 && obj.getY() == 3441) || (obj.getID() == 90 && obj.getX() == 512 && obj.getY() == 3441)
+		return (obj.getID() == 88 && obj.getX() == 509
+			&& Functions.legacyPackedY(obj) == 3441)
+			|| (obj.getID() == 90 && obj.getX() == 512
+				&& Functions.legacyPackedY(obj) == 3441)
 				|| obj.getID() == 91 || obj.getID() == 92;
 	}
 

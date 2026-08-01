@@ -363,7 +363,7 @@ public class TribalTotem implements QuestInterface, TalkNpcTrigger,
 				|| (obj.getID() == 329 && obj.getX() == 559 && obj.getY() == 617)
 				|| (obj.getID() == 328 && obj.getX() == 558 && obj.getY() == 617)
 				|| (obj.getID() == 331 && obj.getX() == 563 && obj.getY() == 587)
-				|| ((obj.getID() == 332 || obj.getID() == 333) && obj.getX() == 560 && obj.getY() == 1531);
+				|| ((obj.getID() == 332 || obj.getID() == 333) && obj.getX() == 560 && legacyPackedY(obj) == 1531);
 	}
 
 	@Override
@@ -444,7 +444,7 @@ public class TribalTotem implements QuestInterface, TalkNpcTrigger,
 				}
 			}
 		}
-		else if ((obj.getID() == HANDELMORT_CHEST_OPEN || obj.getID() == HANDELMORT_CHEST_CLOSED) && obj.getX() == 560 && obj.getY() == 1531) {
+		else if ((obj.getID() == HANDELMORT_CHEST_OPEN || obj.getID() == HANDELMORT_CHEST_CLOSED) && obj.getX() == 560 && legacyPackedY(obj) == 1531) {
 			if (command.equalsIgnoreCase("open")) {
 				openGenericObject(obj, player, HANDELMORT_CHEST_OPEN, "You open the chest");
 			} else if (command.equalsIgnoreCase("close")) {

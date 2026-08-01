@@ -386,15 +386,15 @@ public class Waterfall_Quest implements QuestInterface, TalkNpcTrigger,
 				npcsay(player, n, "what are you doing down here",
 					"leave before you get yourself into trouble");
 				return;
-			} else if (player.getLocation().getY() <= 3529) {
+			} else if (legacyPackedY(player) <= 3529) {
 				doGate(player, obj);
 				return;
-			} else if (player.getLocation().getY() >= 3530 && player.getCache().hasKey("golrie_key") || player.getQuestStage(this) == -1) {
+			} else if (legacyPackedY(player) >= 3530 && player.getCache().hasKey("golrie_key") || player.getQuestStage(this) == -1) {
 				player.message("golrie has locked himself in");
 				return;
 			}
 
-			if (player.getLocation().getY() >= 3530) {
+			if (legacyPackedY(player) >= 3530) {
 				if (n != null) {
 					say(player, n, "are you ok?");
 					npcsay(player, n, "it's just those blasted hobgoblins",

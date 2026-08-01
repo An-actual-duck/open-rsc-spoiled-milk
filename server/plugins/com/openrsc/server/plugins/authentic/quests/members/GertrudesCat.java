@@ -402,12 +402,12 @@ public class GertrudesCat implements QuestInterface, TalkNpcTrigger,
 
 	@Override
 	public boolean blockTakeObj(Player player, GroundItem i) {
-		return i.getID() == ItemId.GERTRUDES_CAT.id() && i.getY() == 2327;
+		return i.getID() == ItemId.GERTRUDES_CAT.id() && legacyPackedY(i) == 2327;
 	}
 
 	@Override
 	public void onTakeObj(Player player, GroundItem i) {
-		if (i.getID() == ItemId.GERTRUDES_CAT.id() && i.getY() == 2327) {
+		if (i.getID() == ItemId.GERTRUDES_CAT.id() && legacyPackedY(i) == 2327) {
 			int damage = DataConversions.getRandom().nextInt(2) + 1;
 			mes("you attempt to pick up the cat");
 			delay(3);

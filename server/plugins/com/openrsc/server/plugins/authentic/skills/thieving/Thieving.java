@@ -632,7 +632,7 @@ public class Thieving implements OpLocTrigger, OpNpcTrigger, OpBoundTrigger {
 			case 97:// Ardougne Paladin 2nd floor door id (97)
 				req = 61;
 				exp = 200;
-				if (player.getY() >= 1548 && player.getX() == 609) {
+				if (legacyPackedY(player) >= 1548 && player.getX() == 609) {
 					goThrough = true;
 				}
 				break;
