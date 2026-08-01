@@ -16,6 +16,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** Validates an export against its exact offline target and prepares an import plan. */
@@ -115,7 +116,6 @@ public final class WorldBuilderImporter {
 						"Another import or rollback is already using the target configuration.");
 					try (WorldBuilderTargetOfflineLease offline =
 						WorldBuilderTargetOfflineLease.acquire(target, project.selectedConfig)) {
-						verifySelectedConfig(target, project);
 						WorldBuilderImportReceipt imported = latestUndoableReceipt(
 							workspace, target, project);
 						RollbackPlan plan = rollbackPlan(workspace, target, imported);
@@ -186,6 +186,34 @@ public final class WorldBuilderImporter {
 
 	private static void validateReceiptDestinations(WorldBuilderImportReceipt receipt)
 		throws WorldBuilderDiscoveryException {
+		if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(receipt.importMode)) {
+			boolean selectedConfig = false;
+			boolean packageManifest = false;
+			for (WorldBuilderImportReceipt.FileRecord file : receipt.files) {
+				if (receipt.selectedConfig.equals(file.relativePath)) {
+					if (selectedConfig) {
+						throw new WorldBuilderDiscoveryException(
+							"Layered import receipt repeats its selected configuration.");
+					}
+					selectedConfig = true;
+					continue;
+				}
+				if (!isLayeredPackagePath(file.relativePath)) {
+					throw new WorldBuilderDiscoveryException(
+						"Layered import receipt contains an unsupported destination.");
+				}
+				if (file.relativePath.equals(
+					WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT
+						+ "/manifest.json")) {
+					packageManifest = true;
+				}
+			}
+			if (!selectedConfig || !packageManifest) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered import receipt inventory is incomplete.");
+			}
+			return;
+		}
 		java.util.Set<String> allowed = new java.util.HashSet<String>();
 		for (Destination destination : DESTINATIONS) {
 			allowed.add(destination.relativePath);
@@ -218,6 +246,17 @@ public final class WorldBuilderImporter {
 			actions.add(new RollbackAction(file.relativePath,
 				file.existedBefore ? "restore" : "remove", file.installedPresent,
 				file.installedSha256, file.existedBefore, file.beforeSha256, sourceBackup));
+		}
+		if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(imported.importMode)) {
+			java.util.Collections.sort(actions,
+				new java.util.Comparator<RollbackAction>() {
+					@Override public int compare(RollbackAction first, RollbackAction second) {
+						boolean firstConfig = imported.selectedConfig.equals(first.relativePath);
+						boolean secondConfig = imported.selectedConfig.equals(second.relativePath);
+						if (firstConfig != secondConfig) return firstConfig ? -1 : 1;
+						return first.relativePath.compareTo(second.relativePath);
+					}
+				});
 		}
 		return new RollbackPlan(workspace, target, imported, actions);
 	}
@@ -262,15 +301,28 @@ public final class WorldBuilderImporter {
 					throw new WorldBuilderDiscoveryException("Staged path escapes its transaction.");
 				}
 				Files.createDirectories(staged.getParent());
-				Files.copy(action.exportedPath, staged);
+				if (action.generatedBytes == null) {
+					Files.copy(action.exportedPath, staged);
+				} else {
+					Files.write(staged, action.generatedBytes);
+				}
 				verifyInstalled(staged, action.relativePath, action.installedSha256);
 			}
+			verifyStagedPlan(plan, staging);
 
 			WorldBuilderDiscoveryResult current = new WorldBuilderDiscovery().discover(
 				plan.targetRoot, plan.selectedConfig, project.contentFingerprint);
 			if (!plan.sourceFingerprint.equals(current.sourceFingerprintSha256)) {
 				throw new WorldBuilderDiscoveryException(
 					"Target changed after import planning; no files were installed.");
+			}
+			if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(plan.importMode)
+				&& Files.exists(plan.targetRoot.resolve(
+					WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT),
+					LinkOption.NOFOLLOW_LINKS)) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered target package destination appeared after planning; "
+						+ "no files were installed.");
 			}
 
 			int replaced = 0;
@@ -280,6 +332,7 @@ public final class WorldBuilderImporter {
 				verifyCurrent(destination, action.existedBefore, action.beforeSha256);
 				Path staged = staging.resolve(action.relativePath).normalize();
 				targetReplacementBegan = true;
+				ensureDestinationParent(plan.targetRoot, action.relativePath);
 				moveReplacing(staged, destination);
 				verifyInstalled(destination, action.relativePath, action.installedSha256);
 				replaced++;
@@ -294,7 +347,7 @@ public final class WorldBuilderImporter {
 		} catch (Exception failure) {
 			if (targetReplacementBegan) {
 				try {
-					restoreBeforeState(plan, pending, backupRoot);
+					restoreBeforeState(plan, pending, backupRoot, project);
 					pending.withStatus("rolled-back").write(plan.workspace);
 				} catch (Exception recoveryFailure) {
 					failure.addSuppressed(recoveryFailure);
@@ -364,7 +417,11 @@ public final class WorldBuilderImporter {
 			}
 			int replaced = 0;
 			for (RollbackAction action : plan.actions) {
-				verifySelectedConfig(plan.targetRoot, project);
+				if (!WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(
+						plan.importedReceipt.importMode)
+					|| !plan.importedReceipt.selectedConfig.equals(action.relativePath)) {
+					verifySelectedConfig(plan.targetRoot, project);
+				}
 				Path destination = destination(plan.targetRoot, action.relativePath);
 				replacementBegan = true;
 				if (action.restoredPresent) {
@@ -377,7 +434,11 @@ public final class WorldBuilderImporter {
 				replaced++;
 				failRollbackIfInjected(replaced);
 			}
-			verifyRollbackState(plan, false);
+			if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(
+					plan.importedReceipt.importMode)) {
+				pruneLayeredPackageDirectories(plan.targetRoot);
+			}
+			verifyRollbackState(plan, false, project);
 			WorldBuilderImportReceipt successful = pending.withStatus("successful");
 			successful.write(plan.workspace);
 			plan.importedReceipt.withStatus("reverted").write(plan.workspace);
@@ -388,7 +449,7 @@ public final class WorldBuilderImporter {
 		} catch (Exception failure) {
 			if (replacementBegan) {
 				try {
-					restoreRollbackBeforeState(plan, backupRoot);
+					restoreRollbackBeforeState(plan, backupRoot, project);
 					pending.withStatus("rolled-back").write(plan.workspace);
 					plan.importedReceipt.withStatus("successful").write(plan.workspace);
 				} catch (Exception recoveryFailure) {
@@ -433,7 +494,8 @@ public final class WorldBuilderImporter {
 		}
 	}
 
-	private static void verifyRollbackState(RollbackPlan plan, boolean currentState)
+	private static void verifyRollbackState(RollbackPlan plan, boolean currentState,
+		WorldBuilderProjectSource project)
 		throws IOException, WorldBuilderDiscoveryException {
 		for (RollbackAction action : plan.actions) {
 			boolean present = currentState ? action.currentPresent : action.restoredPresent;
@@ -443,6 +505,57 @@ public final class WorldBuilderImporter {
 			if (present) {
 				verifyInstalled(destination, action.relativePath, hash);
 			}
+		}
+		if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(
+				plan.importedReceipt.importMode)) {
+			if (currentState) {
+				WorldBuilderLayeredPackage accepted = WorldBuilderLayeredPackage.discover(
+					plan.workspace.resolve(
+						WorldBuilderRuntimePreparer.LAYERED_SOURCE_PACKAGE),
+					WorldBuilderLayeredPackage.PROFILE_ID);
+				WorldBuilderLayeredPackage installed =
+					WorldBuilderLayeredPackage.discoverDraft(plan.targetRoot.resolve(
+						WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT));
+				installed.requireFirstDraftDescendant(accepted);
+				if (!plan.importedReceipt.layeredPackageManifestSha256.equals(
+						installed.manifestSha256)
+					|| !plan.importedReceipt.layeredPackageFingerprintSha256.equals(
+						installed.packageFingerprintSha256)) {
+					throw new WorldBuilderDiscoveryException(
+						"Installed layered package changed after import.");
+				}
+				WorldBuilderImportReceipt.FileRecord config = null;
+				for (WorldBuilderImportReceipt.FileRecord file
+					: plan.importedReceipt.files) {
+					if (file.relativePath.equals(plan.importedReceipt.selectedConfig)) {
+						config = file;
+						break;
+					}
+				}
+				if (config == null) {
+					throw new WorldBuilderDiscoveryException(
+						"Layered import receipt has no configuration record.");
+				}
+				WorldBuilderLayeredImportConfiguration.verifyInstalled(
+					plan.targetRoot,
+					plan.targetRoot.resolve(plan.importedReceipt.selectedConfig),
+					plan.importedReceipt.layeredPackageManifestSha256,
+					config.installedSha256);
+			} else {
+				if (Files.exists(plan.targetRoot.resolve(
+						WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT),
+						LinkOption.NOFOLLOW_LINKS)) {
+					throw new IOException(
+						"Rollback retained unexpected layered package state.");
+				}
+				WorldBuilderDiscoveryResult restored = new WorldBuilderDiscovery().discover(
+					plan.targetRoot, project.selectedConfig, project.contentFingerprint);
+				if (!project.sourceFingerprint.equals(restored.sourceFingerprintSha256)) {
+					throw new IOException(
+						"Rollback did not restore the Builder source revision.");
+				}
+			}
+			return;
 		}
 		Path serverTerrain = plan.targetRoot.resolve(
 			"server/conf/server/data/Custom_Landscape.orsc");
@@ -454,7 +567,8 @@ public final class WorldBuilderImporter {
 		}
 	}
 
-	private static void restoreRollbackBeforeState(RollbackPlan plan, Path backupRoot)
+	private static void restoreRollbackBeforeState(RollbackPlan plan, Path backupRoot,
+		WorldBuilderProjectSource project)
 		throws IOException, WorldBuilderDiscoveryException {
 		for (RollbackAction action : plan.actions) {
 			Path target = destination(plan.targetRoot, action.relativePath);
@@ -472,9 +586,10 @@ public final class WorldBuilderImporter {
 			Path restore = target.resolveSibling("." + target.getFileName()
 				+ ".rollback-restore-" + UUID.randomUUID());
 			Files.copy(backup, restore);
+			ensureDestinationParent(plan.targetRoot, action.relativePath);
 			moveReplacing(restore, target);
 		}
-		verifyRollbackState(plan, true);
+		verifyRollbackState(plan, true, project);
 	}
 
 	private static void failRollbackIfInjected(int replacements) throws IOException {
@@ -501,11 +616,16 @@ public final class WorldBuilderImporter {
 			throw new WorldBuilderDiscoveryException(
 				"Import requires one immutable export directory from this Builder workspace.");
 		}
-		if (!project.layoutAdapter.equals(bundle.manifest.layoutAdapter)
-			|| !project.sourceFingerprint.equals(bundle.manifest.sourceFingerprint)
+		if (!project.sourceFingerprint.equals(bundle.manifest.sourceFingerprint)
 			|| !project.contentFingerprint.equals(bundle.manifest.contentFingerprint)) {
 			throw new WorldBuilderDiscoveryException(
 				"Export provenance does not match this Builder project source.");
+		}
+		if (bundle.manifest.isLayered()
+			? !WorldBuilderLayeredPackage.ADAPTER_ID.equals(bundle.manifest.layoutAdapter)
+			: !project.layoutAdapter.equals(bundle.manifest.layoutAdapter)) {
+			throw new WorldBuilderDiscoveryException(
+				"Export layout adapter does not match this Builder project.");
 		}
 
 		WorldBuilderDiscoveryResult discovered = new WorldBuilderDiscovery().discover(
@@ -514,6 +634,9 @@ public final class WorldBuilderImporter {
 			|| !project.sourceFingerprint.equals(discovered.sourceFingerprintSha256)) {
 			throw new WorldBuilderDiscoveryException(
 				"Target world files or configuration changed since this Builder project was created.");
+		}
+		if (bundle.manifest.isLayered()) {
+			return layeredPlanLocked(workspace, target, project, bundle);
 		}
 
 		List<Action> actions = new ArrayList<Action>();
@@ -537,9 +660,88 @@ public final class WorldBuilderImporter {
 		if (actions.isEmpty()) {
 			throw new WorldBuilderDiscoveryException("Export contains no installable changes.");
 		}
-		return new ImportPlan(workspace, target, bundle.root, project.selectedConfig,
+		return new ImportPlan("legacy-files-v1", workspace, target, bundle.root,
+			project.selectedConfig,
 			project.sourceFingerprint, bundle.manifestSha256, bundle.manifest.builderVersion,
-			bundle.manifest.sourceCommit, actions);
+			bundle.manifest.sourceCommit, "", "", actions,
+			java.util.Collections.<WorldBuilderLayeredImportConfiguration.Change>emptyList());
+	}
+
+	private ImportPlan layeredPlanLocked(Path workspace, Path target,
+		WorldBuilderProjectSource project, WorldBuilderExportBundle bundle)
+		throws IOException, WorldBuilderDiscoveryException {
+		WorldBuilderLayeredReview review = WorldBuilderLayeredReview.readIfPresent(workspace);
+		if (review == null) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered export requires its original layered Builder workspace.");
+		}
+		WorldBuilderLayeredPackage source = WorldBuilderLayeredPackage.discover(
+			workspace.resolve(WorldBuilderRuntimePreparer.LAYERED_SOURCE_PACKAGE),
+			WorldBuilderLayeredPackage.PROFILE_ID);
+		WorldBuilderLayeredPackage exported =
+			WorldBuilderLayeredPackage.discoverDraft(bundle.layeredPackageRoot);
+		exported.requireFirstDraftDescendant(source);
+		if (!source.manifestSha256.equals(
+				bundle.manifest.layeredSourceManifestSha256)
+			|| !source.packageFingerprintSha256.equals(
+				bundle.manifest.layeredSourcePackageFingerprintSha256)
+			|| !exported.manifestSha256.equals(
+				bundle.manifest.layeredPackageManifestSha256)
+			|| !exported.packageFingerprintSha256.equals(
+				bundle.manifest.layeredPackageFingerprintSha256)) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered export ancestry or package identity is inconsistent.");
+		}
+		Map<String, WorldBuilderLayeredPackage.FileRecord> sourceFiles =
+			new java.util.LinkedHashMap<String, WorldBuilderLayeredPackage.FileRecord>();
+		for (WorldBuilderLayeredPackage.FileRecord file : source.files) {
+			sourceFiles.put(file.relativePath, file);
+		}
+		for (WorldBuilderExportManifest.FileRecord file : bundle.manifest.files) {
+			WorldBuilderLayeredPackage.FileRecord original = sourceFiles.get(file.logicalName);
+			if (file.sourcePresent != (original != null)
+				|| (original != null && (!file.sourceSha256.equals(original.sha256)
+					|| file.changed == file.sha256.equals(original.sha256)))
+				|| (original == null && !file.changed)) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered export source state is inconsistent: " + file.logicalName);
+			}
+		}
+
+		Path packageRoot = target.resolve(
+			WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT).normalize();
+		if (!packageRoot.startsWith(target)) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered target package destination escapes the target.");
+		}
+		if (Files.exists(packageRoot, LinkOption.NOFOLLOW_LINKS)) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered target package destination already exists. Undo the prior "
+					+ "import or use a fresh matching private server; no overwrite is allowed.");
+		}
+		Path configPath = containedFile(target, target.resolve(project.selectedConfig),
+			"selected target configuration");
+		WorldBuilderLayeredImportConfiguration.Prepared configuration =
+			WorldBuilderLayeredImportConfiguration.prepare(
+				target, configPath, exported.manifestSha256);
+
+		List<Action> actions = new ArrayList<Action>();
+		for (WorldBuilderExportManifest.FileRecord file : bundle.manifest.files) {
+			WorldBuilderExportBundle.ExportedFile exportedFile = bundle.required(file.logicalName);
+			actions.add(new Action("add",
+				WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT + "/"
+					+ file.logicalName,
+				false, "", file.sha256, exportedFile.path, null));
+		}
+		actions.add(new Action("replace", project.selectedConfig, true,
+			project.selectedConfigSha256, configuration.sha256, null,
+			configuration.bytes));
+		return new ImportPlan(WorldBuilderLayeredImportConfiguration.IMPORT_MODE,
+			workspace, target, bundle.root, project.selectedConfig,
+			project.sourceFingerprint, bundle.manifestSha256,
+			bundle.manifest.builderVersion, bundle.manifest.sourceCommit,
+			exported.manifestSha256, exported.packageFingerprintSha256,
+			actions, configuration.changes);
 	}
 
 	private static void ensureSpace(ImportPlan plan, Path backupRoot, Path staging)
@@ -551,7 +753,7 @@ public final class WorldBuilderImporter {
 				backupBytes = safeAdd(backupBytes, Files.size(
 					destination(plan.targetRoot, action.relativePath)));
 			}
-			stagedBytes = safeAdd(stagedBytes, Files.size(action.exportedPath));
+				stagedBytes = safeAdd(stagedBytes, action.installedSize());
 		}
 		FileStore workspaceStore = Files.getFileStore(plan.workspace);
 		FileStore targetStore = Files.getFileStore(plan.targetRoot);
@@ -584,9 +786,18 @@ public final class WorldBuilderImporter {
 			throw new WorldBuilderDiscoveryException("Import destination escapes the target.");
 		}
 		Path parent = path.getParent();
-		if (parent == null || !Files.isDirectory(parent, LinkOption.NOFOLLOW_LINKS)
-			|| Files.isSymbolicLink(parent) || !parent.toRealPath().startsWith(target)
-			|| containsSymbolicLink(target, parent)) {
+		Path existingParent = parent;
+		while (existingParent != null
+			&& !Files.exists(existingParent, LinkOption.NOFOLLOW_LINKS)) {
+			existingParent = existingParent.getParent();
+		}
+		boolean missingParent = parent != null && !Files.exists(parent, LinkOption.NOFOLLOW_LINKS);
+		if (parent == null || existingParent == null || !existingParent.startsWith(target)
+			|| !Files.isDirectory(existingParent, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(existingParent)
+			|| !existingParent.toRealPath().startsWith(target)
+			|| containsSymbolicLink(target, existingParent)
+			|| (missingParent && !isLayeredPackagePath(relative))) {
 			throw new WorldBuilderDiscoveryException(
 				"Import destination directory is missing or unsafe: " + relative);
 		}
@@ -597,6 +808,82 @@ public final class WorldBuilderImporter {
 				"Import destination is unsafe: " + relative);
 		}
 		return path;
+	}
+
+	private static void ensureDestinationParent(Path target, String relative)
+		throws IOException, WorldBuilderDiscoveryException {
+		Path path = target.resolve(relative).normalize();
+		Path parent = path.getParent();
+		if (parent == null || !path.startsWith(target)) {
+			throw new WorldBuilderDiscoveryException("Import destination escapes the target.");
+		}
+		if (!Files.exists(parent, LinkOption.NOFOLLOW_LINKS)) {
+			if (!isLayeredPackagePath(relative)) {
+				throw new WorldBuilderDiscoveryException(
+					"Import destination directory is missing: " + relative);
+			}
+			Path current = target;
+			for (Path component : target.relativize(parent)) {
+				current = current.resolve(component);
+				if (!Files.exists(current, LinkOption.NOFOLLOW_LINKS)) {
+					Files.createDirectory(current);
+				}
+				if (!Files.isDirectory(current, LinkOption.NOFOLLOW_LINKS)
+					|| Files.isSymbolicLink(current)
+					|| !current.toRealPath().startsWith(target)) {
+					throw new WorldBuilderDiscoveryException(
+						"Layered import destination directory is unsafe: " + relative);
+				}
+			}
+		}
+		destination(target, relative);
+	}
+
+	private static boolean isLayeredPackagePath(String relative) {
+		return relative.startsWith(
+			WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT + "/");
+	}
+
+	private static void pruneLayeredPackageDirectories(Path target)
+		throws IOException, WorldBuilderDiscoveryException {
+		Path stop = target.resolve("server/conf/server/data").normalize();
+		Path packageRoot = target.resolve(
+			WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT).normalize();
+		if (!stop.startsWith(target) || !packageRoot.startsWith(stop)) {
+			throw new WorldBuilderDiscoveryException(
+				"Layered package cleanup path is unsafe.");
+		}
+		if (Files.isDirectory(packageRoot, LinkOption.NOFOLLOW_LINKS)
+			&& !Files.isSymbolicLink(packageRoot)) {
+			Files.walkFileTree(packageRoot, new SimpleFileVisitor<Path>() {
+				@Override public FileVisitResult postVisitDirectory(
+					Path directory, IOException failure) throws IOException {
+					if (failure != null) throw failure;
+					if (!containsAnyEntry(directory)) Files.delete(directory);
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		}
+		Path current = packageRoot;
+		while (!current.equals(stop)) {
+			if (!Files.exists(current, LinkOption.NOFOLLOW_LINKS)) {
+				current = current.getParent();
+				continue;
+			}
+			if (!Files.isDirectory(current, LinkOption.NOFOLLOW_LINKS)
+				|| Files.isSymbolicLink(current) || containsAnyEntry(current)) {
+				return;
+			}
+			Files.delete(current);
+			current = current.getParent();
+		}
+	}
+
+	private static boolean containsAnyEntry(Path directory) throws IOException {
+		try (java.nio.file.DirectoryStream<Path> stream =
+			Files.newDirectoryStream(directory)) {
+			return stream.iterator().hasNext();
+		}
 	}
 
 	private static Path safeWorkspaceDirectory(Path workspace, String relative)
@@ -667,7 +954,9 @@ public final class WorldBuilderImporter {
 			|| !expectedSha256.equals(WorldBuilderHashes.sha256(path))) {
 			throw new IOException("Installed file verification failed for " + relative);
 		}
-		if (relative.endsWith(".orsc")) {
+		if (isLayeredPackagePath(relative) || relative.endsWith(".conf")) {
+			return;
+		} else if (relative.endsWith(".orsc")) {
 			WorldBuilderDiscovery.validateTerrainArchive(path);
 		} else if (relative.endsWith("MyWorldSceneryLocs.json")) {
 			WorldBuilderJsonDocuments.validateSceneryLocs(path);
@@ -689,6 +978,18 @@ public final class WorldBuilderImporter {
 			verifyInstalled(destination(plan.targetRoot, action.relativePath),
 				action.relativePath, action.installedSha256);
 		}
+		if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(plan.importMode)) {
+			verifyLayeredPackage(plan,
+				plan.targetRoot.resolve(
+					WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT));
+			Action configuration = plan.actions.get(plan.actions.size() - 1);
+			WorldBuilderLayeredImportConfiguration.verifyInstalled(
+				plan.targetRoot,
+				plan.targetRoot.resolve(plan.selectedConfig),
+				plan.layeredPackageManifestSha256,
+				configuration.installedSha256);
+			return;
+		}
 		Path serverTerrain = plan.targetRoot.resolve(
 			"server/conf/server/data/Custom_Landscape.orsc");
 		Path clientTerrain = plan.targetRoot.resolve(
@@ -699,8 +1000,38 @@ public final class WorldBuilderImporter {
 		}
 	}
 
+	private static void verifyStagedPlan(ImportPlan plan, Path staging)
+		throws IOException, WorldBuilderDiscoveryException {
+		if (!WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(plan.importMode)) {
+			return;
+		}
+		verifyLayeredPackage(plan, staging.resolve(
+			WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT));
+		Action configuration = plan.actions.get(plan.actions.size() - 1);
+		Path stagedConfig = staging.resolve(plan.selectedConfig).normalize();
+		verifyInstalled(stagedConfig, plan.selectedConfig,
+			configuration.installedSha256);
+	}
+
+	private static void verifyLayeredPackage(ImportPlan plan, Path packageRoot)
+		throws IOException, WorldBuilderDiscoveryException {
+		WorldBuilderLayeredPackage accepted = WorldBuilderLayeredPackage.discover(
+			plan.workspace.resolve(WorldBuilderRuntimePreparer.LAYERED_SOURCE_PACKAGE),
+			WorldBuilderLayeredPackage.PROFILE_ID);
+		WorldBuilderLayeredPackage installed =
+			WorldBuilderLayeredPackage.discoverDraft(packageRoot);
+		installed.requireFirstDraftDescendant(accepted);
+		if (!plan.layeredPackageManifestSha256.equals(installed.manifestSha256)
+			|| !plan.layeredPackageFingerprintSha256.equals(
+				installed.packageFingerprintSha256)) {
+			throw new WorldBuilderDiscoveryException(
+				"Installed layered package does not match the exact export.");
+		}
+	}
+
 	private static void restoreBeforeState(ImportPlan plan,
-		WorldBuilderImportReceipt pending, Path backupRoot)
+		WorldBuilderImportReceipt pending, Path backupRoot,
+		WorldBuilderProjectSource project)
 		throws IOException, WorldBuilderDiscoveryException {
 		for (Action action : plan.actions) {
 			Path target = destination(plan.targetRoot, action.relativePath);
@@ -727,6 +1058,22 @@ public final class WorldBuilderImporter {
 		for (Action action : plan.actions) {
 			verifyCurrent(destination(plan.targetRoot, action.relativePath),
 				action.existedBefore, action.beforeSha256);
+		}
+		if (WorldBuilderLayeredImportConfiguration.IMPORT_MODE.equals(plan.importMode)) {
+			pruneLayeredPackageDirectories(plan.targetRoot);
+			if (Files.exists(plan.targetRoot.resolve(
+					WorldBuilderLayeredImportConfiguration.TARGET_PACKAGE_ROOT),
+					LinkOption.NOFOLLOW_LINKS)) {
+				throw new IOException(
+					"Restored target retained unexpected layered package state.");
+			}
+			WorldBuilderDiscoveryResult restored = new WorldBuilderDiscovery().discover(
+				plan.targetRoot, project.selectedConfig, project.contentFingerprint);
+			if (!project.sourceFingerprint.equals(restored.sourceFingerprintSha256)) {
+				throw new IOException(
+					"Restored target does not match the Builder source revision.");
+			}
+			return;
 		}
 		Path serverTerrain = plan.targetRoot.resolve(
 			"server/conf/server/data/Custom_Landscape.orsc");
@@ -886,15 +1233,28 @@ public final class WorldBuilderImporter {
 		final String beforeSha256;
 		final String installedSha256;
 		final Path exportedPath;
+		final byte[] generatedBytes;
 
 		Action(String operation, String relativePath, boolean existedBefore,
 			String beforeSha256, String installedSha256, Path exportedPath) {
+			this(operation, relativePath, existedBefore, beforeSha256,
+				installedSha256, exportedPath, null);
+		}
+
+		Action(String operation, String relativePath, boolean existedBefore,
+			String beforeSha256, String installedSha256, Path exportedPath,
+			byte[] generatedBytes) {
 			this.operation = operation;
 			this.relativePath = relativePath;
 			this.existedBefore = existedBefore;
 			this.beforeSha256 = beforeSha256;
 			this.installedSha256 = installedSha256;
 			this.exportedPath = exportedPath;
+			this.generatedBytes = generatedBytes;
+		}
+
+		long installedSize() throws IOException {
+			return generatedBytes == null ? Files.size(exportedPath) : generatedBytes.length;
 		}
 	}
 
@@ -921,6 +1281,7 @@ public final class WorldBuilderImporter {
 	}
 
 	public static final class ImportPlan {
+		public final String importMode;
 		public final Path workspace;
 		public final Path targetRoot;
 		public final Path exportDirectory;
@@ -929,11 +1290,18 @@ public final class WorldBuilderImporter {
 		public final String exportManifestSha256;
 		public final String builderVersion;
 		public final String sourceCommit;
+		public final String layeredPackageManifestSha256;
+		public final String layeredPackageFingerprintSha256;
 		final List<Action> actions;
+		final List<WorldBuilderLayeredImportConfiguration.Change> configurationChanges;
 
-		ImportPlan(Path workspace, Path targetRoot, Path exportDirectory,
+		ImportPlan(String importMode, Path workspace, Path targetRoot, Path exportDirectory,
 			String selectedConfig, String sourceFingerprint, String exportManifestSha256,
-			String builderVersion, String sourceCommit, List<Action> actions) {
+			String builderVersion, String sourceCommit,
+			String layeredPackageManifestSha256,
+			String layeredPackageFingerprintSha256, List<Action> actions,
+			List<WorldBuilderLayeredImportConfiguration.Change> configurationChanges) {
+			this.importMode = importMode;
 			this.workspace = workspace;
 			this.targetRoot = targetRoot;
 			this.exportDirectory = exportDirectory;
@@ -942,13 +1310,19 @@ public final class WorldBuilderImporter {
 			this.exportManifestSha256 = exportManifestSha256;
 			this.builderVersion = builderVersion;
 			this.sourceCommit = sourceCommit;
+			this.layeredPackageManifestSha256 = layeredPackageManifestSha256;
+			this.layeredPackageFingerprintSha256 = layeredPackageFingerprintSha256;
 			this.actions = java.util.Collections.unmodifiableList(
 				new ArrayList<Action>(actions));
+			this.configurationChanges = java.util.Collections.unmodifiableList(
+				new ArrayList<WorldBuilderLayeredImportConfiguration.Change>(
+					configurationChanges));
 		}
 
 		public String toJson() {
 			StringBuilder json = new StringBuilder(2048);
 			json.append("{\n  \"status\": \"ready\",\n  \"dryRun\": true,\n")
+				.append("  \"importMode\": \"").append(importMode).append("\",\n")
 				.append("  \"targetRoot\": \"").append(escape(targetRoot.toString())).append("\",\n")
 				.append("  \"selectedConfig\": \"").append(escape(selectedConfig)).append("\",\n")
 				.append("  \"exportDirectory\": \"").append(escape(exportDirectory.toString())).append("\",\n")
@@ -957,8 +1331,24 @@ public final class WorldBuilderImporter {
 				.append("  \"sourceFingerprintSha256\": \"").append(sourceFingerprint).append("\",\n")
 				.append("  \"exportManifestSha256\": \"").append(exportManifestSha256).append("\",\n")
 				.append("  \"backupDestination\": \"")
-				.append(escape(workspace.resolve("backups/<transaction-id>").toString())).append("\",\n")
-				.append("  \"configurationChanges\": [],\n  \"actions\": [\n");
+				.append(escape(workspace.resolve("backups/<transaction-id>").toString())).append("\",\n");
+			if (!layeredPackageManifestSha256.isEmpty()) {
+				json.append("  \"layeredPackageManifestSha256\": \"")
+					.append(layeredPackageManifestSha256).append("\",\n")
+					.append("  \"layeredPackageFingerprintSha256\": \"")
+					.append(layeredPackageFingerprintSha256).append("\",\n");
+			}
+			json.append("  \"configurationChanges\": [\n");
+			for (int index = 0; index < configurationChanges.size(); index++) {
+				WorldBuilderLayeredImportConfiguration.Change change =
+					configurationChanges.get(index);
+				json.append("    {\"key\": \"").append(escape(change.key))
+					.append("\", \"before\": \"").append(escape(change.before))
+					.append("\", \"after\": \"").append(escape(change.after))
+					.append("\"}").append(index + 1 < configurationChanges.size() ? "," : "")
+					.append('\n');
+			}
+			json.append("  ],\n  \"actions\": [\n");
 			for (int index = 0; index < actions.size(); index++) {
 				Action action = actions.get(index);
 				json.append("    {\"operation\": \"").append(action.operation)

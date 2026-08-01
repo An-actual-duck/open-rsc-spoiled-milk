@@ -17,14 +17,17 @@ final class WorldBuilderExportBundle {
 	final String manifestSha256;
 	final WorldBuilderExportManifest manifest;
 	final Map<String, ExportedFile> files;
+	final Path layeredPackageRoot;
 
 	private WorldBuilderExportBundle(Path root, Path manifestPath, String manifestSha256,
-		WorldBuilderExportManifest manifest, Map<String, ExportedFile> files) {
+		WorldBuilderExportManifest manifest, Map<String, ExportedFile> files,
+		Path layeredPackageRoot) {
 		this.root = root;
 		this.manifestPath = manifestPath;
 		this.manifestSha256 = manifestSha256;
 		this.manifest = manifest;
-		this.files = files;
+		this.files = java.util.Collections.unmodifiableMap(files);
+		this.layeredPackageRoot = layeredPackageRoot;
 	}
 
 	static WorldBuilderExportBundle open(Path requested)
@@ -53,13 +56,15 @@ final class WorldBuilderExportBundle {
 				throw new WorldBuilderDiscoveryException(
 					"Export file verification failed: " + record.bundlePath);
 			}
-			int entries = validateContent(record.logicalName, path);
-			if (!record.sourcePresent && record.changed != (entries > 0)) {
-				throw new WorldBuilderDiscoveryException(
-					"Export absent-source change state is inconsistent: " + record.bundlePath);
-			}
-			if ("terrain".equals(record.logicalName) && !record.sourcePresent) {
-				throw new WorldBuilderDiscoveryException("Export terrain has no source revision.");
+			if (!manifest.isLayered()) {
+				int entries = validateContent(record.logicalName, path);
+				if (!record.sourcePresent && record.changed != (entries > 0)) {
+					throw new WorldBuilderDiscoveryException(
+						"Export absent-source change state is inconsistent: " + record.bundlePath);
+				}
+				if ("terrain".equals(record.logicalName) && !record.sourcePresent) {
+					throw new WorldBuilderDiscoveryException("Export terrain has no source revision.");
+				}
 			}
 			files.put(record.logicalName, new ExportedFile(record, path));
 		}
@@ -87,8 +92,33 @@ final class WorldBuilderExportBundle {
 				}
 			}
 		}
+		Path layeredPackageRoot = null;
+		if (manifest.isLayered()) {
+			layeredPackageRoot = requiredDirectory(root,
+				root.resolve("authored/layered-world/package"),
+				"layered export package");
+			WorldBuilderLayeredPackage layered =
+				WorldBuilderLayeredPackage.discoverDraft(layeredPackageRoot);
+			if (!manifest.layeredPackageManifestSha256.equals(layered.manifestSha256)
+				|| !manifest.layeredPackageFingerprintSha256.equals(
+					layered.packageFingerprintSha256)
+				|| layered.files.size() != manifest.files.size()) {
+				throw new WorldBuilderDiscoveryException(
+					"Layered export package identity or inventory did not verify.");
+			}
+			for (WorldBuilderLayeredPackage.FileRecord file : layered.files) {
+				ExportedFile exported = files.get(file.relativePath);
+				if (exported == null || exported.record.size != file.size
+					|| !exported.record.sha256.equals(file.sha256)) {
+					throw new WorldBuilderDiscoveryException(
+						"Layered export package inventory did not verify: "
+							+ file.relativePath);
+				}
+			}
+		}
 		return new WorldBuilderExportBundle(root, manifestPath,
-			WorldBuilderHashes.sha256(manifestPath), manifest, files);
+			WorldBuilderHashes.sha256(manifestPath), manifest, files,
+			layeredPackageRoot);
 	}
 
 	ExportedFile required(String logicalName) throws WorldBuilderDiscoveryException {
@@ -123,6 +153,22 @@ final class WorldBuilderExportBundle {
 		if (!normalized.startsWith(root) || !Files.isRegularFile(normalized, LinkOption.NOFOLLOW_LINKS)
 			|| Files.isSymbolicLink(normalized)) {
 			throw new WorldBuilderDiscoveryException(label + " is missing or unsafe: " + normalized);
+		}
+		Path real = normalized.toRealPath();
+		if (!real.startsWith(root)) {
+			throw new WorldBuilderDiscoveryException(label + " resolves outside the export.");
+		}
+		return real;
+	}
+
+	private static Path requiredDirectory(Path root, Path path, String label)
+		throws IOException, WorldBuilderDiscoveryException {
+		Path normalized = path.toAbsolutePath().normalize();
+		if (!normalized.startsWith(root)
+			|| !Files.isDirectory(normalized, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(normalized)) {
+			throw new WorldBuilderDiscoveryException(
+				label + " is missing or unsafe: " + normalized);
 		}
 		Path real = normalized.toRealPath();
 		if (!real.startsWith(root)) {

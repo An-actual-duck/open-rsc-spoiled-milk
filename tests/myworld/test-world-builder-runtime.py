@@ -418,6 +418,10 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         exporter = (
             ROOT / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderExporter.java"
         ).read_text()
+        layered_exporter = (
+            ROOT
+            / "tools/world-builder/src/com/openrsc/worldbuilder/WorldBuilderLayeredExporter.java"
+        ).read_text()
         self.assertIn("-Dopenrsc.worldBuilderWorkspaceRoot=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderSourceRevision=", supervisor)
         self.assertIn("-Dopenrsc.worldBuilderLayeredReview=true", supervisor)
@@ -428,7 +432,9 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn("WorldBuilderLayeredReview.readIfPresent(workspace)", supervisor)
         self.assertIn("rsc-remastered.spoiled-milk-layered-world", layered_package)
         self.assertIn("Layered package contains missing or untracked files", layered_package)
-        self.assertIn("Layered World Builder review projects are read-only", exporter)
+        self.assertIn("WorldBuilderLayeredExporter.exportLocked", exporter)
+        self.assertIn("working.requireFirstDraftDescendant(source)", layered_exporter)
+        self.assertIn("WorldBuilderExportBundle.open(root)", layered_exporter)
         self.assertNotIn('workspace.resolve("server/run/world-builder")', supervisor)
 
 

@@ -1231,6 +1231,25 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 0, builder_draft.returncode, builder_draft.stderr
             )
 
+            exported_profile = subprocess.run(
+                [
+                    "java",
+                    "-cp",
+                    f"{self.classes}:{CORE_JAR}",
+                    "NativeLayeredRuntimeProfileFixture",
+                    "spoiled-milk-world-builder-export",
+                    str(package),
+                    "true",
+                    "true",
+                ],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+            )
+            self.assertEqual(
+                0, exported_profile.returncode, exported_profile.stderr
+            )
+
             pinned_release_refused = subprocess.run(
                 [
                     "java",
@@ -1494,6 +1513,12 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "LAYERED_NATIVE_TERRAIN_PACKAGE_PATH", configuration
         )
         self.assertIn(
+            "LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256", configuration
+        )
+        self.assertIn(
+            "OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256", configuration
+        )
+        self.assertIn(
             "OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE", configuration
         )
         self.assertIn(
@@ -1508,6 +1533,11 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             "profile.validate(loaded)",
             region_manager,
         )
+        self.assertIn("profile.requiresConfiguredManifestSha256()", region_manager)
+        self.assertIn(
+            "loaded.getPrimaryPackage().getManifestSha256()", region_manager
+        )
+        self.assertIn("spoiled-milk-world-builder-export", runtime_profile)
         self.assertIn(
             "PRESERVATION_R64_REPLACEMENT", runtime_profile
         )

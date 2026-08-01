@@ -207,9 +207,12 @@ The layered Builder instead writes package-owned
 Its first resumed feature-completeness milestone adds definition-aware ground
 spawns with amount and respawn time, persisted with terrain, level allocation,
 scenery, and NPC changes through one backward-compatible v5 draft journal and
-one clean-close copy-on-write package swap. Import/export of that layered
-package remains a later explicit transaction; authoring the spawn does not
-write the target game.
+one clean-close copy-on-write package swap. World Builder 2 now exports that
+validated descendant as a complete immutable native package. Its separate
+layered transaction installs the package under the target server data tree,
+pins its exact manifest in the selected configuration, and restores both the
+package absence and original configuration on undo. Authoring and saving still
+do not write the target game.
 
 ### Definition-aware selection and visual catalog
 
@@ -622,8 +625,8 @@ useful checkpoint with its test evidence before the next phase begins.
 | 0. Contracts and fixtures | Complete | Approved plan, supported-layout fixtures, deterministic discovery/manifest tests |
 | 1. Isolated Builder runtime | Complete | Loopback local launch, automatic Builder login, invulnerability, editor open, normal-mode regression coverage |
 | 2. Workspace-owned persistence | Complete | Terrain/scenery/NPC saves change only working files; target hashes remain identical |
-| 3. Deterministic export | Complete | Complete five-file bundle, manifest validation, repeatable hashes/content |
-| 4. Transactional import and rollback | Complete | Dry-run, offline guard, failure rollback, successful restart, byte-exact undo |
+| 3. Deterministic export | Complete | Legacy five-file and v2 full layered-package bundles, manifest validation, repeatable hashes/content |
+| 4. Transactional import and rollback | Complete | Legacy and layered dry-run, offline guard, failure rollback, receipts, configuration backup, byte-exact undo |
 | 5. Standalone release packaging | Active | Clean Linux/Windows artifacts, fresh-install smoke tests, attribution and checksum gates |
 | 6. Visual acceptance and documentation | Pending | Owner-verified editing/import/revert flow and final user documentation |
 
