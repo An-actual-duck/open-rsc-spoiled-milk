@@ -613,6 +613,32 @@ public class Functions {
 			.getY();
 	}
 
+	/** Finds a live NPC in the player's domain using classic packed bounds. */
+	public static Npc findNpcInLegacyPackedArea(
+		final Player player,
+		final int npcId,
+		final int minimumX,
+		final int maximumX,
+		final int minimumPackedY,
+		final int maximumPackedY) {
+		for (Npc npc : player.getWorld().getNpcs()) {
+			if (!npc.isRemoved()
+				&& !npc.isRespawning()
+				&& npc.getID() == npcId
+				&& npc.sharesSpatialDomain(player)) {
+				Point legacyLocation = LegacyPackedPointAdapter.toLegacyPoint(
+					npc.getWorldLocation());
+				if (legacyLocation.getX() >= minimumX
+					&& legacyLocation.getX() <= maximumX
+					&& legacyLocation.getY() >= minimumPackedY
+					&& legacyLocation.getY() <= maximumPackedY) {
+					return npc;
+				}
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * Adds an item to players inventory.
 	 */

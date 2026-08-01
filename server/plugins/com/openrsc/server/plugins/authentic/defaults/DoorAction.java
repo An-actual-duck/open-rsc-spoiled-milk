@@ -6,7 +6,6 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.ZanarisLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.custom.misc.WoodcuttingGuild;
@@ -686,7 +685,7 @@ public class DoorAction {
 				}
 				if (legacyPackedY(player) < 3381) {
 					if (getCurrentLevel(player, Skill.MINING.id()) < 60) {
-						Npc dwarf = findNpcInPlayerDomain(
+						Npc dwarf = findNpcInLegacyPackedArea(
 							player, NpcId.DWARF_MINING_GUILD.id(),
 							265, 270, 3379, 3380);
 						if (dwarf != null) {
@@ -1539,7 +1538,7 @@ public class DoorAction {
 	private void handleMiningGuildEliteDoor(GameObject obj, Player player) {
 		if (isEnteringMiningGuildEliteArea(player)
 			&& getCurrentLevel(player, Skill.MINING.id()) < MINING_GUILD_ELITE_MINING_LEVEL) {
-			Npc nurmof = findNpcInPlayerDomain(
+			Npc nurmof = findNpcInLegacyPackedArea(
 				player, NpcId.NURMOF.id(), 268, 275, 3394, 3402);
 			if (nurmof != null) {
 				npcsay(player, nurmof,
@@ -1560,28 +1559,4 @@ public class DoorAction {
 		return legacyPackedY(player) < MINING_GUILD_ELITE_DOOR_Y;
 	}
 
-	private static Npc findNpcInPlayerDomain(
-		final Player player,
-		final int npcId,
-		final int minimumX,
-		final int maximumX,
-		final int minimumPackedY,
-		final int maximumPackedY) {
-		for (Npc npc : player.getWorld().getNpcs()) {
-			if (!npc.isRemoved()
-				&& !npc.isRespawning()
-				&& npc.getID() == npcId
-				&& npc.sharesSpatialDomain(player)) {
-				Point legacyLocation = LegacyPackedPointAdapter.toLegacyPoint(
-					npc.getWorldLocation());
-				if (legacyLocation.getX() >= minimumX
-					&& legacyLocation.getX() <= maximumX
-					&& legacyLocation.getY() >= minimumPackedY
-					&& legacyLocation.getY() <= maximumPackedY) {
-					return npc;
-				}
-			}
-		}
-		return null;
-	}
 }

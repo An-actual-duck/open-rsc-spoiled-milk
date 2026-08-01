@@ -381,7 +381,8 @@ public class Waterfall_Quest implements QuestInterface, TalkNpcTrigger,
 				player.message("but find nothing");
 			}
 		} else if (obj.getID() == 480) {
-			Npc n = player.getWorld().getNpc(NpcId.GOLRIE.id(), 663, 668, 3520, 3529);
+			Npc n = findNpcInLegacyPackedArea(
+				player, NpcId.GOLRIE.id(), 663, 668, 3520, 3529);
 			if (player.getQuestStage(this) == 0) {
 				npcsay(player, n, "what are you doing down here",
 					"leave before you get yourself into trouble");

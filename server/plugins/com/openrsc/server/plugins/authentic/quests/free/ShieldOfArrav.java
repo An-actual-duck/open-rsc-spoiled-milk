@@ -561,7 +561,7 @@ public class ShieldOfArrav implements QuestInterface, UseBoundTrigger,
 							player.teleport(player.getX(), player.getY() - 1, false);
 						}
 					} else {
-					if (legacyPackedY(player) <= 3369) {
+						if (legacyPackedY(player) <= 3369) {
 							player.message("The door is locked");
 							if (player.getCarriedItems().hasCatalogID(ItemId.PHOENIX_GANG_KEY.id())
 								&& player.getConfig().OLD_QUEST_MECHANICS) {
