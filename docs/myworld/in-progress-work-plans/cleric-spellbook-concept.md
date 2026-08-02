@@ -283,6 +283,35 @@ change the result by one.
   It modifies only ordinary passive regeneration and never increases,
   accelerates, or duplicates Mend or Greater Mend pulses.
 
+### Effect Duration, Lifecycle, and Presentation
+
+- Every non-instant Cleric effect has a bounded server-authoritative lifetime.
+  The earlier fixed `60`-second suggestion is superseded.
+- Holy Power snapshots one discrete effect rank at cast time. That rank owns
+  every scalable part of the status, including its duration and, where
+  applicable, its charges or pulse strength. Duration does not continue to
+  change if the caster later changes equipment.
+- A charge-based status ends when either its timer expires or its charges reach
+  zero. A Mend-family status ends when its three-pulse sequence finishes or its
+  timer expires.
+- Active Cleric effects are transient session state. They clear when the
+  recipient dies or logs out and are not restored on the next login.
+- An effect also clears if its recipient no longer shares the originating
+  caster's party. This includes the caster leaving or logging out and prevents
+  joining a party only long enough to collect support buffs.
+- Timers, charges, and remaining Mend pulses must be visible on the affected
+  player's screen. Presentation extends the existing active-potion-effect HUD:
+  an identifying icon, a countdown, a hover label, and an optional remaining
+  charge/pulse count. Cleric effects do not introduce an unrelated second
+  status overlay.
+- The server remains authoritative. The client may count a supplied timer down
+  for presentation, but a refreshed, consumed, replaced, or cleared status
+  causes the server to send a new bounded snapshot.
+- Exact duration tables are authored per effect rank. Sharing the rank model
+  does not require every spell to share one duration ladder; long-lived Respite
+  and short tactical protection may use different values while still deriving
+  them from that spell's authored effect ranks.
+
 ### Devotion Economy
 
 - Sigil blessing creates a new repeatable Devotion sink.
@@ -353,6 +382,13 @@ These are current implementation facts, not new design decisions:
   cure.
 - Timed potion effects already use an integer magnitude plus an expiry, while
   several combat effects use an integer magnitude plus remaining attack count.
+- The custom client's active-potion HUD currently displays an item-definition
+  icon, a countdown, and the item name on hover. Its server snapshot is bounded
+  to `16` entries and carries only `itemId` plus `remainingSeconds`; it has no
+  charge field. Cleric presentation therefore needs a backward-compatible
+  optional count and a deliberate policy for a full status list rather than
+  silently hiding an active effect. Authentic clients do not receive this
+  custom packet, so gameplay state must never depend on HUD support.
 - The current damage roll already supports a chance to shift an offense roll
   one step upward before the defense roll is subtracted. This is a useful
   balance reference for Fervor, not a final Cleric formula.
@@ -363,9 +399,9 @@ These are current implementation facts, not new design decisions:
   before existing equipment and potion speed modifiers. It is not inherently
   limited to out-of-combat periods, which fits the revised Respite direction.
 
-## Holy Power Effect Ranks Under Evaluation
+## Holy Power Effect Rank Model
 
-The preferred direction is to map Holy Power into a small number of discrete
+The confirmed direction is to map Holy Power into a small number of discrete
 effect ranks instead of persisting arbitrary floating-point strength. For
 example, low Holy Power could apply `Aegis`, while crossing the next threshold
 applies `Aegis II` with two protected hits. Percentage effects advance through
@@ -384,15 +420,17 @@ This approach fits existing server patterns and has several advantages:
   display.
 
 The recommended implementation shape for later review is one stable effect
-identity with `rank`, `magnitude`, and either `expiresAt` or `chargesRemaining`.
-Holy Power selects and snapshots the rank when the spell is cast. Separate
-spell definitions for `Aegis`, `Aegis II`, and `Aegis III` would duplicate one
-mechanic and should be avoided; the rank belongs to the applied status.
+identity with `rank`, `magnitude`, `expiresAt`, and an optional
+`chargesRemaining` or `pulsesRemaining`. Holy Power selects and snapshots the
+rank when the spell is cast. Separate spell definitions for `Aegis`,
+`Aegis II`, and `Aegis III` would duplicate one mechanic and should be avoided;
+the rank belongs to the applied status.
 
-This is a strong design preference, not a completed numerical model. Holy
-Power thresholds, rank counts, exact values, refresh/replacement rules,
-stacking, persistence, death/logout cleanup, and status-display requirements
-remain to be settled.
+The discrete rank, snapshot, replacement, lifecycle, and presentation rules
+are settled. Spell-specific rank counts, Holy Power thresholds, numerical
+values, durations, icons, and final protocol/data structures remain balance
+and implementation design work except where this document explicitly confirms
+them.
 
 ## Unresolved Design Questions
 
@@ -451,8 +489,9 @@ remain to be settled.
 - Cast-level resource and experience behavior when an area spell applies to
   only some recipients or is wholly ineffective because every recipient has a
   stronger active family effect.
-- Whether effect ranks are cleared on death/logout or persist with bounded
-  remaining duration.
+- Exact per-rank duration tables, status icons and labels, optional-count
+  packet representation, compatibility behavior, and priority/overflow rules
+  for the existing `16`-entry HUD bound.
 - Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
   and provide Rally lifesteal.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
@@ -691,3 +730,18 @@ An equal effect refreshes to its normal full charges or complete three-pulse
 sequence without adding the old remainder. Respite may coexist with Mend or
 Greater Mend but affects only ordinary passive regeneration, never the active
 Mend-family pulses.
+
+### 2026-08-02: Ranked duration and status presentation
+
+Confirmed that non-instant Cleric effects have bounded durations selected by
+the same snapshotted Holy Power effect rank that selects their strength and
+charges. Charge effects end on timeout or charge exhaustion. Mend effects end
+after three pulses or timeout. Effects clear on recipient death/logout and
+when the source and recipient stop sharing a party; they are not persisted
+through login.
+
+Confirmed that affected players see Cleric timers and remaining charges or
+pulses through an extension of the existing active-potion-effect HUD. The
+present custom packet carries only an item ID and seconds remaining, so later
+implementation must add optional count presentation compatibly, keep gameplay
+server-authoritative, and define overflow behavior for its bounded list.
