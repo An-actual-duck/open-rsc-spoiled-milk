@@ -206,11 +206,11 @@ bands and fixed Ward/Aegis reductions are exceptions.
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Reduces current poison power rather than fully curing every poison; current target range is approximately `10-40` power from Holy Power |
 | 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
-| 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; Holy Power adds charges sooner and reaches a higher charge ceiling than Aegis |
+| 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; its four Holy Power ranks protect against `2/4/6/8` hits |
 | 2 | Greater Mend | Saradomin | Three-pulse regeneration heal staggered above Mend, scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
 | 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
 | 2 | Thorns | Guthix | Weak recoil placed on affected players; Holy Power increases reflected damage |
-| 2 | Aegis | Saradomin | Reduces each qualifying protected hit by a fixed `50%`; Holy Power adds charges more slowly and reaches a lower ceiling than Ward |
+| 2 | Aegis | Saradomin | Reduces each qualifying protected hit by a fixed `50%`; its four Holy Power ranks protect against `1/2/3/4` hits and require higher thresholds than Ward |
 | 2 | Rally | Zamorak | Players below half Hits gain temporary lifesteal until they recover above a Holy Power-dependent threshold |
 | 2 | Respite | Neutral | Long-lived, modest increase to normal passive regeneration; it is not restricted to out-of-combat periods |
 
@@ -226,6 +226,18 @@ Ward and Aegis must not turn prayer protection into complete damage immunity.
 Their reduction magnitudes are fixed: Ward reduces a qualifying hit by `25%`
 and Aegis reduces one by `50%`. Holy Power changes the number of protected
 hits, not either spell's percentage.
+
+| Effect rank | Ward charges | Aegis charges |
+| ---: | ---: | ---: |
+| I | 2 | 1 |
+| II | 4 | 2 |
+| III | 6 | 3 |
+| IV | 8 | 4 |
+
+Ward reaches each rank at a lower Holy Power threshold than Aegis. The raw
+thresholds remain open until Holy Power values are assigned across the blessed
+staff and god-staff progression.
+
 Percentage mitigation combines in two layers:
 
 1. The prayer system computes its normal aggregate reduction. Multiple prayer
@@ -428,10 +440,9 @@ remain to be settled.
 
 - Exact unlock levels for the six tier-one and six tier-two spells through
   Worship `30`.
-- The exact Holy Power thresholds and charge tables for Ward and Aegis. Ward
-  must gain charges at lower thresholds and reach a higher ceiling; Aegis
-  remains stronger per hit at its fixed `50%` reduction but costs more and
-  requires more frequent reapplication.
+- The exact Holy Power thresholds for the confirmed Ward and Aegis charge
+  tables. Ward must reach each corresponding rank with less Holy Power than
+  Aegis.
 - The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
@@ -628,3 +639,12 @@ Confirmed that area grows with the spell's tier rather than its Holy Power or
 effect rank. Standard tier-one spells reach `2` tiles from the caster and each
 later spell tier adds one tile, giving the general radius `tier + 1`. Unify
 retains an intentionally larger area, with its exact bonus still unresolved.
+
+### 2026-08-02: Ward and Aegis charge progression
+
+Confirmed four charge ranks for both protection spells. Ward protects against
+`2/4/6/8` qualifying hits at its fixed `25%` reduction. Aegis protects against
+`1/2/3/4` qualifying hits at its fixed `50%` reduction. Ward reaches its ranks
+at lower Holy Power thresholds, while Aegis concentrates comparable cumulative
+mitigation into fewer, more heavily reduced hits. Raw thresholds remain tied
+to the future Holy Power equipment-stat design.
