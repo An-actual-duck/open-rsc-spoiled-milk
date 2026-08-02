@@ -164,9 +164,10 @@ hard class, book-selection, or equipment lock:
 - Beneficial area effects apply only to eligible members of the caster's
   current party. Nearby non-party players are not affected merely because
   they are standing in the area.
-- The standard tier-one area begins at a radius of `3` tiles around the caster.
-- Standard area grows with spell tier. Exact later radii and the distance
-  metric remain balance decisions.
+- The standard tier-one area has a radius of `2` tiles around the caster.
+- Standard area grows by exactly one tile of radius per spell tier: tier two
+  reaches `3` tiles, tier three reaches `4`, and tier `N` reaches `N + 1`.
+  The precise tile-distance metric remains an implementation decision.
 - `Unify` deliberately has a larger area than other spells in its tier so it
   can gather eligible players before follow-up support casts.
 - Recipients must occupy the caster's current world space and signed map level.
@@ -195,8 +196,8 @@ used as a default design pattern.
 
 All twelve launch slots now have confirmed identities and effect directions.
 Numerical ranges explicitly described as tuning targets below remain
-provisional until separately approved; the confirmed Mend, Greater Mend, and
-Ward endpoints are exceptions.
+provisional until separately approved; the confirmed Mend and Greater Mend
+bands and fixed Ward/Aegis reductions are exceptions.
 
 | Tier | Spell | Identity | Confirmed effect direction |
 | ---: | --- | --- | --- |
@@ -205,11 +206,11 @@ Ward endpoints are exceptions.
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Reduces current poison power rather than fully curing every poison; current target range is approximately `10-40` power from Holy Power |
 | 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
-| 1 | Ward | Saradomin | Tier-one next-hit protection; Holy Power scales the reduction from `25%` to `40%`, below Aegis's intended protection |
+| 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; Holy Power adds charges sooner and reaches a higher charge ceiling than Aegis |
 | 2 | Greater Mend | Saradomin | Three-pulse regeneration heal staggered above Mend, scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
 | 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
 | 2 | Thorns | Guthix | Weak recoil placed on affected players; Holy Power increases reflected damage |
-| 2 | Aegis | Saradomin | Stronger charge-based protection than Ward; Holy Power increases how many qualifying hits it lasts, while its exact reduction awaits clarification between the earlier `50%` direction and the later `40%` example |
+| 2 | Aegis | Saradomin | Reduces each qualifying protected hit by a fixed `50%`; Holy Power adds charges more slowly and reaches a lower ceiling than Ward |
 | 2 | Rally | Zamorak | Players below half Hits gain temporary lifesteal until they recover above a Holy Power-dependent threshold |
 | 2 | Respite | Neutral | Long-lived, modest increase to normal passive regeneration; it is not restricted to out-of-combat periods |
 
@@ -222,6 +223,9 @@ first of repeated stronger copies.
 ### Protection Stacking Contract
 
 Ward and Aegis must not turn prayer protection into complete damage immunity.
+Their reduction magnitudes are fixed: Ward reduces a qualifying hit by `25%`
+and Aegis reduces one by `50%`. Holy Power changes the number of protected
+hits, not either spell's percentage.
 Percentage mitigation combines in two layers:
 
 1. The prayer system computes its normal aggregate reduction. Multiple prayer
@@ -230,10 +234,13 @@ Percentage mitigation combines in two layers:
    independent multiplier. Its percentage is never added to the prayer total.
 
 For example, a `60%` aggregate melee-prayer reduction leaves `40%` of the
-incoming damage. A separate `40%` Cleric reduction then leaves `60%` of that
-remainder: `0.40 * 0.60 = 0.24`, or `76%` combined reduction. Other mitigation
-families should likewise retain clear ownership rather than being folded into
-one uncapped additive percentage.
+incoming damage. If illustrating the stacking rule with a separate `40%`
+Cleric reduction, that layer leaves `60%` of the remainder:
+`0.40 * 0.60 = 0.24`, or `76%` combined reduction. With the now-confirmed
+`50%` Aegis value, the same prayer instead leaves `0.40 * 0.50 = 0.20`, or an
+`80%` combined reduction. Other mitigation families should likewise retain
+clear ownership rather than being folded into one uncapped additive
+percentage.
 
 This contract settles percentage composition but not integer rounding,
 minimum-damage behavior, eligible damage sources, or which layer consumes a
@@ -402,8 +409,9 @@ remain to be settled.
 - Per-spell self-application exceptions, party membership changes during an
   effect, PvP behavior, experience attribution, and abuse safeguards. The
   general recipient rule is settled as same-party only at cast time.
-- Exact area geometry, line-of-sight/path requirements, tier radii, and how
-  Unify selects safe reachable destination tiles without forced-movement abuse.
+- Exact area geometry, line-of-sight/path requirements, Unify's bonus radius,
+  and how Unify selects safe reachable destination tiles without
+  forced-movement abuse. Standard tier radii are settled by the `N + 1` rule.
 - Holy Power threshold tables and discrete ranks for each scalable effect.
 - Recast behavior when the recipient already has the same, stronger, or weaker
   rank, including whether a rejected cast consumes sigils or awards XP.
@@ -420,13 +428,10 @@ remain to be settled.
 
 - Exact unlock levels for the six tier-one and six tier-two spells through
   Worship `30`.
-- The exact Ward rank table between its confirmed `25%` floor and `40%`
-  ceiling, and whether Ward always protects one qualifying hit or gains
-  charges at higher Holy Power.
-- Whether Aegis retains its previously proposed fixed `50%` reduction while
-  Holy Power increases its charges, or whether its reduction also changes by
-  rank. The `40%` mitigation example used while settling stacking does not yet
-  override the earlier half-damage direction.
+- The exact Holy Power thresholds and charge tables for Ward and Aegis. Ward
+  must gain charges at lower thresholds and reach a higher ceiling; Aegis
+  remains stronger per hit at its fixed `50%` reduction but costs more and
+  requires more frequent reapplication.
 - The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
@@ -578,13 +583,15 @@ serve a distinct support purpose rather than repeating an elemental template.
 
 ### 2026-08-02: Caster-centered area support and revised roster
 
-Confirmed caster-centered area casting as the default, a standard tier-one
-radius of `3`, growth with later tiers, and exclusion of the caster unless a
-spell explicitly opts in. Replaced Discern with the enlarged-radius Unify and
-Renewal with Thorns. Defined Mend/Greater Mend regeneration, partial Purify,
-percentage Restore, roll-biased Fervor, post-defense Zeal, charge-ranked Aegis,
-low-health Rally lifesteal, and long-lived in-combat-compatible Respite. The
-former Ward slot and exact numerical tuning remain open.
+Confirmed caster-centered area casting as the default, an initial standard
+tier-one radius of `3`, growth with later tiers, and exclusion of the caster
+unless a spell explicitly opts in. This initial radius was superseded by the
+fixed radius ladder recorded below. Replaced Discern with the enlarged-radius
+Unify and Renewal with Thorns. Defined Mend/Greater Mend regeneration, partial
+Purify, percentage Restore, roll-biased Fervor, post-defense Zeal,
+charge-ranked Aegis, low-health Rally lifesteal, and long-lived
+in-combat-compatible Respite. The former Ward slot and exact numerical tuning
+were open at this point.
 
 Recorded discrete Holy Power effect ranks as the preferred model for further
 exploration because current timed and attack-count status systems already use
@@ -598,12 +605,26 @@ Confirmed three-pulse healing bands of `1-3` Hits per Mend pulse and `2-5`
 Hits per Greater Mend pulse.
 
 Restored Ward as the sixth tier-one spell and positioned it as the lesser
-Saradomin protection spell, reducing a qualifying hit by `25-40%` according to
-Holy Power. Cross-system percentage protection is multiplicative: prayer
-effects keep their current additive behavior within the prayer system, while
-Ward/Aegis applies separately to the remaining damage. Exact integer rounding,
-Ward charges, and whether Aegis retains a fixed `50%` reduction remain open.
+Saradomin protection spell. The initial `25-40%` range recorded here was
+superseded by the fixed protection values below. Cross-system percentage
+protection is multiplicative: prayer effects keep their current additive
+behavior within the prayer system, while Ward/Aegis applies separately to the
+remaining damage. Exact integer rounding, Ward charges, and the final Aegis
+magnitude were still open at this point.
 
 Clarified that discrete status ranks use values authored for each effect. The
 earlier `5%` examples were explanatory rather than a global progression rule;
 final rank tables remain balance work.
+
+### 2026-08-02: Fixed protection strengths and spell-tier radii
+
+Confirmed fixed mitigation strengths of `25%` for Ward and `50%` for Aegis.
+Holy Power increases only their protected-hit charges. Ward reaches additional
+charges with less Holy Power and has the higher charge ceiling, making it the
+cheaper, longer-lived defense. Aegis provides stronger protection against each
+hit but costs the tier-two sigil vector and must be reapplied more frequently.
+
+Confirmed that area grows with the spell's tier rather than its Holy Power or
+effect rank. Standard tier-one spells reach `2` tiles from the caster and each
+later spell tier adds one tile, giving the general radius `tier + 1`. Unify
+retains an intentionally larger area, with its exact bonus still unresolved.
