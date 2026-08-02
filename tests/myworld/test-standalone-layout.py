@@ -234,6 +234,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "terrain-expansion-plan.md",
             "tier-11-magic-gear-plan.md",
             "work-items.md",
+            "world-boundary-loading-diagnostics.md",
             "world-layer-capacity-exploration-plan.md",
         ],
         "completed-work-plans": [

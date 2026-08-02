@@ -136,6 +136,7 @@ python3 ./tests/myworld/test-movement-stutter-diagnostics.py
 python3 ./tests/myworld/test-client-movement-timing-diagnostics.py
 python3 ./tests/myworld/test-server-sync-modernization.py
 python3 ./tests/myworld/test-client-region-load-performance.py
+python3 ./tests/myworld/test-boundary-loading-diagnostics.py
 python3 ./tests/myworld/test-desktop-middle-mouse-camera-orbit.py
 python3 ./tests/myworld/test-desktop-middle-mouse-mode-option.py
 ./tests/myworld/test-renderer-guardrails.sh
