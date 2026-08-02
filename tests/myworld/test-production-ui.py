@@ -11,6 +11,9 @@ PRODUCTION_SESSION = (
 PRODUCTION_RECIPE = (
     ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "production" / "ProductionRecipe.java"
 )
+PRODUCTION_MEMORY = (
+    ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "production" / "ProductionMemory.java"
+)
 PRODUCTION_STRUCT = (
     ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "struct" / "outgoing" / "ProductionInterfaceStruct.java"
 )
@@ -52,6 +55,7 @@ def forbid(text: str, needle: str, message: str) -> None:
 def main() -> None:
     session_text = PRODUCTION_SESSION.read_text(encoding="utf-8")
     recipe_text = PRODUCTION_RECIPE.read_text(encoding="utf-8")
+    memory_text = PRODUCTION_MEMORY.read_text(encoding="utf-8")
     struct_text = PRODUCTION_STRUCT.read_text(encoding="utf-8")
     actionsender_text = ACTIONSENDER.read_text(encoding="utf-8")
     handler_text = INTERFACE_OPTION_HANDLER.read_text(encoding="utf-8")
@@ -112,8 +116,13 @@ def main() -> None:
     )
     require(
         actionsender_text,
-        "ProductionInterfaceStruct.open(session)",
-        "ActionSender should build production payloads through the shared struct factory",
+        "ProductionMemory.prepareDisplay(player, session)",
+        "ActionSender should resolve account-backed production memory before building payloads",
+    )
+    require(
+        actionsender_text,
+        "display.getSession(), display.getSelectedRecipeId(), display.getUiFlags()",
+        "ActionSender should pass remembered selection and navigation flags through the shared struct factory",
     )
     require(
         actionsender_text,
@@ -158,6 +167,31 @@ def main() -> None:
     forbidden = 'player.setSuspiciousPlayer(true, "unexpected legacy production option: " + option.name())'
     if forbidden in handler_text:
         fail("Legacy production option packets should not flag players as suspicious")
+    require(
+        memory_text,
+        'PREFERENCE_CACHE_KEY = "prod_remember_v1"',
+        "Production memory should use a versioned per-account preference key",
+    )
+    require(
+        memory_text,
+        "current.session != session || isPicker(session) || !started",
+        "Production memory should record only a successfully started final recipe",
+    )
+    require(
+        memory_text,
+        "session.getType() >= ProductionSession.TYPE_SMITHING\n\t\t\t&& session.getType() <= ProductionSession.TYPE_FURNACE_MATERIAL",
+        "Production memory should exclude non-production teleport and redemption interfaces",
+    )
+    require(
+        handler_text,
+        "case PRODUCTION_REMEMBER_TOGGLE:",
+        "Production preference changes should be handled server-side",
+    )
+    require(
+        handler_text,
+        "case PRODUCTION_BACK:",
+        "Production Back navigation should be handled server-side",
+    )
     require(
         crafting_text,
         "!session.isType(ProductionSession.TYPE_CRAFTING)",
@@ -257,6 +291,16 @@ def main() -> None:
         do_skill_interface_text,
         "sendProductionStart(productionQuantity);",
         "The normal Start button should preserve the selected numeric quantity",
+    )
+    require(
+        do_skill_interface_text,
+        'drawString("Remember last input"',
+        "Eligible production interfaces should expose the remembered-input checkbox",
+    )
+    require(
+        do_skill_interface_text,
+        'this.drawButton(x + 6, y + 7, 58, 26, "Back"',
+        "Nested production interfaces should expose Back navigation",
     )
     require(
         do_skill_interface_text,
