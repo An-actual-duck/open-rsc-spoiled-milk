@@ -73,8 +73,8 @@ skill.
   sigils in the player's inventory, following the existing full-inventory rune
   production pattern rather than requiring one interaction per sigil.
 - Silver is the material for more advanced sigils rather than an unrelated
-  secondary casting reagent. Its exact input form and quantity remain balance
-  decisions.
+  secondary casting reagent. Tier-two spells continue to use stone alongside
+  silver rather than replacing the earlier material.
 - Sigils are aligned to Saradomin, Guthix, or Zamorak. A Saradomin sigil can be
   blessed only at a Saradomin altar, and the same matching rule applies to the
   other two gods.
@@ -128,6 +128,8 @@ hard class, book-selection, or equipment lock:
   corresponding Magic-focused option.
 - Runes and sigils are separate inventory resources. Carrying meaningful
   supplies for both books consumes enough inventory space to be a real cost.
+- Higher Cleric tiers retain every lower sigil-material stack, creating an
+  intentional additional inventory commitment as the book becomes stronger.
 - Most Cleric spells support other players rather than the caster. The book has
   limited self-targeted support, making it intentionally less attractive as a
   second solo-combat book.
@@ -209,8 +211,10 @@ These are current implementation facts, not new design decisions:
 
 ### Sigil Taxonomy and Production
 
-- Exact spell costs and whether higher spells use one sigil family in larger
-  quantities or combinations of multiple symbols/material tiers.
+- Exact input form and production quantity for silver sigils.
+- The third and later material identities. Gold remains possible, but the
+  current preference is to expand silver through an enhanced form rather than
+  immediately changing to a wholly separate precious metal.
 - Exact Crafting levels, Crafting XP, Blessing XP, silver quantities, batch
   behavior, failure behavior, and inventory transformations, including whether
   any Worship XP remains part of production.
@@ -253,6 +257,31 @@ These are current implementation facts, not new design decisions:
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
   requirements and staff requirements.
+
+## Cumulative Sigil Cost Ladder
+
+Spell tiers retain and increase all earlier sigil materials. A tier does not
+replace the tier below it.
+
+| Spell tier | Required sigils per cast | Total sigils | Devotion embodied when blessed |
+| --- | --- | ---: | ---: |
+| 1 | `1` stone | 1 | `0.05` |
+| 2 | `2` stone + `1` silver | 3 | `0.15` |
+| 3 | `3` stone + `2` silver + `1` tier-three sigil | 6 | `0.30` |
+
+The general tier-`N` pattern is `N` of the first material, `N - 1` of the
+second, continuing upward until `1` of the newest material. This gives a total
+cast cost of `N * (N + 1) / 2` sigils. At the settled blessing price, the
+Devotion embodied in one cast is that total multiplied by `0.05`.
+
+The ladder settles material quantities, not the symbol mixture within an
+individual recipe. Whether a god-owned spell uses only that god's variants or
+combines an aligned sigil with neutral supporting sigils remains to be designed
+and must be displayed explicitly in the spell cost.
+
+Only tiers one and two are part of the initial rollout. Tier three documents
+the accepted progression formula but does not settle its material, spells, or
+release timing.
 
 ### Devotion Sources and Balance
 
@@ -342,3 +371,12 @@ Zamorak, and neutral. Using a chisel on stone or silver opens the normal
 Crafting selection window. Aligned sigils retain matching-altar rules; neutral
 sigils can be blessed at any god altar, charge that altar's god Devotion, and
 remain one neutral item regardless of the altar used.
+
+### 2026-08-02: Cumulative material and quantity progression
+
+Confirmed that higher spell tiers retain all prior sigil materials with
+staggered quantities: tier one costs `1` stone; tier two costs `2` stone and
+`1` silver; tier three costs `3` stone, `2` silver, and `1` of its new
+material. Later tiers continue the same descending quantity ladder. The
+tier-three material remains open, with an enhanced use of silver preferred
+over introducing gold without further design work.
