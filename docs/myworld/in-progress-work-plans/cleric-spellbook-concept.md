@@ -60,6 +60,9 @@ skill.
 
 - Cleric spells use new consumable resources called **sigils**, serving the
   spellbook role that runes serve for Magic.
+- Saradomin, Guthix, Zamorak, and neutral sigils are **primary sigils**. Every
+  Cleric spell requires the primary sigils associated with its god or neutral
+  identity.
 - Sigils begin with the same `Rune stone` resource used by Runecraft.
 - Sigils have stone and advanced silver material families. A player uses a
   chisel on the relevant stone or silver input to carve the holy symbol into
@@ -85,6 +88,15 @@ skill.
   altar. The altar used determines which god's Devotion pays the blessing cost,
   but the resulting item remains one neutral sigil rather than retaining an
   altar-specific variant.
+- Future **secondary sigils** may be added to individual spell recipes for
+  flavor and balance. They supplement mandatory primary sigils rather than
+  replacing the spell's god/neutral cost.
+- The relationship is analogous to a tier-defining rune plus an elemental rune
+  in Magic: the primary sigil establishes the Cleric tier and god identity,
+  while a secondary sigil can later distinguish the spell's particular
+  expression.
+- Secondary sigils are outside the first rollout. Their names, materials,
+  imbuing method, production skill requirements, and exact costs remain open.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -215,6 +227,9 @@ These are current implementation facts, not new design decisions:
 - The third and later material identities. Gold remains possible, but the
   current preference is to expand silver through an enhanced form rather than
   immediately changing to a wholly separate precious metal.
+- The eventual secondary-sigil catalog and how those lesser symbols are
+  imbued. No secondary-sigil production path should be invented for the first
+  rollout.
 - Exact Crafting levels, Crafting XP, Blessing XP, silver quantities, batch
   behavior, failure behavior, and inventory transformations, including whether
   any Worship XP remains part of production.
@@ -275,13 +290,19 @@ cast cost of `N * (N + 1) / 2` sigils. At the settled blessing price, the
 Devotion embodied in one cast is that total multiplied by `0.05`.
 
 The ladder settles material quantities, not the symbol mixture within an
-individual recipe. Whether a god-owned spell uses only that god's variants or
-combines an aligned sigil with neutral supporting sigils remains to be designed
-and must be displayed explicitly in the spell cost.
+individual exceptional recipe. By default, every material in a spell's primary
+cost uses the same alignment: Saradomin spells use Saradomin primary sigils,
+Guthix uses Guthix, Zamorak uses Zamorak, and non-aligned spells use neutral.
+An authored mixed-theme spell may depart from this only when the exceptional
+cost is intentional and displayed explicitly.
 
 Only tiers one and two are part of the initial rollout. Tier three documents
 the accepted progression formula but does not settle its material, spells, or
 release timing.
+
+The first rollout uses only these primary costs. Later secondary sigils are
+additional ingredients and do not alter or substitute for the cumulative
+primary ladder.
 
 ### Devotion Sources and Balance
 
@@ -380,3 +401,11 @@ staggered quantities: tier one costs `1` stone; tier two costs `2` stone and
 material. Later tiers continue the same descending quantity ladder. The
 tier-three material remains open, with an enhanced use of silver preferred
 over introducing gold without further design work.
+
+### 2026-08-02: Primary and deferred secondary sigils
+
+Confirmed that god/neutral sigils are mandatory primary resources and that all
+materials in a normal primary cost share the spell's alignment. Future
+secondary sigils may add spell-specific identity and balance in the way an
+elemental rune supplements a tier-defining Magic rune. The first rollout has
+no secondary sigils; their imbuing and production model remains unresolved.
