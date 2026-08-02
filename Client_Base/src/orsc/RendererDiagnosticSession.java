@@ -86,6 +86,7 @@ final class RendererDiagnosticSession {
 				}
 				captureIndexWriter = openWriter(new File(captureDirectory, "capture-index.jsonl"));
 				started = true;
+				BoundaryLoadingDiagnostics.initialize();
 				writeManifest("open");
 				Record event = newRecord("event");
 				event.string("eventType", "session.start");
@@ -112,6 +113,7 @@ final class RendererDiagnosticSession {
 			if (!started || closed) {
 				return;
 			}
+			BoundaryLoadingDiagnostics.flushOnSessionClose();
 			flushSuppressedReasonEvents();
 			Record event = newRecord("event");
 			event.string("eventType", "session.stop");
@@ -410,8 +412,18 @@ final class RendererDiagnosticSession {
 					+ " records are disabled.");
 			return;
 		}
+		long writeStartedNanos =
+			BoundaryLoadingDiagnostics.now();
 		writer.println(line);
 		writer.flush();
+		BoundaryLoadingDiagnostics.recordDiskRead(
+			eventRecord
+				? "diagnostic-event-log"
+				: "diagnostic-bulk-log",
+			estimatedBytes,
+			writeStartedNanos,
+			writeStartedNanos == 0L
+				? 0L : System.nanoTime() - writeStartedNanos);
 		structuredBytes += estimatedBytes;
 	}
 

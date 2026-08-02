@@ -31,12 +31,36 @@ final class ClientRuntimeLogger {
 	}
 
 	static void log(String message) {
+		long lockStartedNanos =
+			BoundaryLoadingDiagnostics.now();
+		long lockAcquiredNanos = 0L;
+		long writeNanos = 0L;
 		synchronized (LOCK) {
+			if (lockStartedNanos != 0L) {
+				lockAcquiredNanos = System.nanoTime();
+			}
+			long writeStartedNanos =
+				BoundaryLoadingDiagnostics.now();
 			try (PrintWriter writer = openWriter()) {
 				writer.println(timestamp() + " " + message);
 			} catch (IOException ignored) {
+			} finally {
+				if (writeStartedNanos != 0L) {
+					writeNanos =
+						System.nanoTime() - writeStartedNanos;
+				}
 			}
 		}
+		BoundaryLoadingDiagnostics.recordLockWait(
+			"client-runtime-log",
+			lockStartedNanos,
+			lockAcquiredNanos == 0L
+				? 0L : lockAcquiredNanos - lockStartedNanos);
+		BoundaryLoadingDiagnostics.recordDiskRead(
+			"client-runtime-log",
+			0L,
+			lockAcquiredNanos,
+			writeNanos);
 	}
 
 	static void logThrowable(String context, Throwable throwable) {

@@ -1,0 +1,457 @@
+# World-Boundary Loading Diagnostics and Decision Plan
+
+Status: paused at READY handoff; awaiting corrected upstairs map-loader data
+
+Branch: `refactor/boundary-loading-diagnostics`
+
+Scope: desktop client world-boundary transitions, especially renderer-v2/OpenGL
+
+Gameplay changes in this phase: none
+
+## Goal
+
+Identify which work causes the remaining visible frame drop at a world boundary
+before selecting another optimization. The transition must continue to:
+
+- retain the last complete scene while the replacement is incomplete;
+- activate terrain, static scenery, players, and NPCs atomically;
+- avoid the previously observed wrong-area flash;
+- keep deterministic terrain variation;
+- preserve classic/software rendering and all existing graphics settings.
+
+This phase adds bounded diagnostics, defines repeatable cases, gathers evidence,
+and compares solution families. It does not change loading cadence, scene
+ownership, upload policy, or visual behavior.
+
+## Transition Architecture
+
+The current native-layered transition crosses several threads and ownership
+boundaries:
+
+```text
+server context/stage packets
+    |
+    +-- predicted terrain stages 4/5
+    |      decode -> CPU prebuild worker -> ready prediction
+    |
+    `-- atomic context packet 157
+           decode -> accept scope -> publish prediction -> begin activation
+                                      |
+                                      v
+client loadNextRegion
+    dematerialize -> World.loadSections -> rebase/materialize entities
+                                      |
+                                      v
+World.loadSections
+    reset -> active/upper terrain products -> minimap/walls/roofs
+          -> chunk frame -> symmetric compose -> preload
+                                      |
+                                      v
+scene baseline + resident scenery construction
+    input assembly -> cache reuse/miss -> worker mesh construction
+                                      |
+                                      v
+OpenGL presenter
+    GPU chunk upload -> projected/resident draw -> shadow mask
+    -> overlays -> buffer swap
+                                      |
+                                      v
+atomic presentation latch
+    stable complete frame -> release retained prior frame
+```
+
+The important distinction is that a small synchronous client region load does
+not prove the visible transition is cheap. Large GPU uploads, a shadow rebuild,
+or the first presented replacement frame can occur after `loadNextRegion`
+returns.
+
+## Measurement Gaps in the Previous Instrumentation
+
+The existing renderer diagnostics were useful but could not provide one
+causal record:
+
+- CPU world, client-region, scenery, GPU, shadow, and frame events had separate
+  identifiers or no common identifier.
+- The old boundary trace wrote and flushed up to 90 individual JSON events per
+  transition while the run was active. That output could perturb the workload.
+- World-model `terrainNanos` and `wallNanos` combined terrain publication,
+  collision initialization, and minimap work.
+- Prediction build time, lead time, and whether the predicted product actually
+  matched the activated center were not joined to the transition.
+- Allocation, GC, named-thread CPU, lock wait, and archive reads were only
+  visible in broad periodic windows.
+- A Ctrl+F8 visual marker had nearby movement and frame data, but no direct
+  boundary trace identifier.
+
+## Bounded Diagnostic Design
+
+`--boundary-diagnostics` enables renderer diagnostics, forces frame capture
+off, and enables one correlated transition collector. Ordinary launches are
+unchanged.
+
+Each atomic context gets a privacy-safe trace ID. The trace retains data in
+memory and writes one `boundary.transition-summary` after the presentation
+latch releases and the configured settling frames have passed.
+
+### Captured ownership
+
+| Area | Measurements |
+| --- | --- |
+| Packet | opcode, byte count, total handling time, context header/body decode, state acceptance, scope application, ready receipt; scene-baseline protocol, server tick, context sequence, page category/index/total, record count, and arrival offset |
+| Prediction | target center, decode/build/queue latency, cache result, triangles, reused/built cells, lead time, match at activation |
+| Terrain | world-section phases, world-product phases, collision clear, terrain publication, wall emission/publication, roof publication |
+| Minimap | clear and native-raster publication |
+| Scenery | input assembly, cache hits/misses, wall-clock mesh time, worker CPU time, parallel worker count |
+| Residency/GPU | requested/uploaded/reused/deferred chunks, uploaded bytes, chunk-upload time, projected draw, resident draw |
+| Shadows | mask build, upload, reuse/preparation/request state |
+| Atomic transition | player/static receipt offsets, completion time, presentation-product readiness, retained-frame attempts, stability samples, release time |
+| Frames | bounded nearby client-loop/update/draw samples; OpenGL render and interval; presenter wait and submission-queue time; subphases; desktop frame commit/present timing |
+| Runtime | heap delta, GC count/time, process CPU, client/OpenGL/preload/object-worker CPU and allocation, blocked/waited counters |
+| External pressure | named cache/log-lock waits, actual tile-archive reads, runtime-log writes, and diagnostic-output flushes |
+| Scene shape | crossing kind, first/return visit, plane change, entity counts, chunk/triangle counts |
+
+Ctrl+F8 remains the manual “stutter observed now” marker. When a boundary trace
+is active, its event now includes `boundary.traceId` and
+`boundary.contextSequence`.
+
+### Bounds and disabled overhead
+
+- At most 256 transitions are accepted per client process by default.
+- One active trace retains at most 192 spans, 64 phase keys, 96 OpenGL frames,
+  96 client-loop samples, 96 presentation frames, and eight pre-transition
+  OpenGL/client-loop samples.
+- Scene-baseline packet details use a separate 32-entry aligned buffer so a low
+  span limit cannot hide which page or server tick completed an activation.
+- Prediction and visited-center indexes are fixed-size access-order maps of 32
+  and 64 entries.
+- Additional transitions and spans are counted as suppressed/dropped.
+- The existing diagnostic event-log byte limit remains a second output bound.
+- Runtime management-bean paths are prewarmed at session start and sampled only
+  at trace start/end.
+- The old 90-event boundary-frame stream is suppressed while the bounded suite
+  is active.
+- The disabled path allocates no trace rings, maps, or runtime samplers.
+- No account name, chat text, credential, host address, or network address is
+  recorded.
+
+The analyzer reports p50/p95/p99/max for raw boundary frame timings, phase
+distributions, case dimensions, and the five worst correlated traces.
+
+## Baseline Evidence from the Last Visual Session
+
+This is a baseline from
+`output/renderer-diagnostics/session-20260730-202915-412829`, not a final
+finding from the new suite.
+
+- There were 18 world-section transitions and 17 client-region transitions.
+- World-section p50/p95/max was 3.900/253.053/253.053 ms. The 253.053 ms sample
+  was the initial center `(50,50)` construction.
+- Client-region p50/p95/max was 6.462/9.074/9.074 ms.
+- Repeated cardinal crossings between centers `(50,50)` and `(51,50)` had
+  client-region work of 4.536–9.074 ms.
+- The first tracked GPU frame uploaded 117 chunks and 199,509,120 bytes in
+  300.376 ms.
+- The first ordinary adjacent crossing uploaded 95 chunks, reused eight, and
+  uploaded 176,198,400 bytes in 120.662 ms.
+- A relocation to the `(59,49)` area uploaded 124 chunks and 242,264,160 bytes
+  in 179.962 ms.
+- Its next adjacent transition uploaded 116 chunks, reused eight, and uploaded
+  216,196,560 bytes in 137.793 ms.
+- Once those views were resident, first-frame transition uploads fell to
+  0.219–0.672 ms, with 4–12 uploads and 99–117 reused chunks.
+
+This strongly motivates measuring GPU residency and upload work, but it does
+not yet prove that every remaining one-frame dip is caused by upload. The old
+trace did not join upload, CPU construction, GC, shadow, swap, and atomic
+release into one bounded record.
+
+## Repeatable Private Test Matrix
+
+Run only against a private server. Use a normal diagnostic run first; reserve a
+short JFR run for a remaining unexplained spike because profiling itself can
+change timings.
+
+Launch:
+
+```bash
+./scripts/run-client.sh --dev --boundary-diagnostics
+```
+
+Bracket each case with `::pf s <name>` and `::pf e <name>`. Press Ctrl+F8 as
+soon as a visible hitch is observed. Each repeated case should include two
+unmeasured warm-up crossings followed by at least ten measured crossings; 20
+is preferred when practical.
+
+| Case | Procedure | What it distinguishes |
+| --- | --- | --- |
+| Cold | Fresh private client/login, then first boundary crossing | archive/cache initialization, CPU mesh construction, first GPU allocation |
+| Warm cardinal | Alternate across one east/west or north/south boundary | stable per-crossing cost after caches are populated |
+| Return | A → B → A repeatedly | whether the prior center survives CPU and GPU residency |
+| Diagonal/corner | Cross both section axes at a corner | larger ring churn and prediction coverage |
+| Dense scenery | Repeat across the highest-scene-count candidate found in the trace | scenery input/mesh/cache and static GPU bytes |
+| Multi-level | Change floor/plane, cross or activate a new center, then return | scope invalidation, roof/upper-plane products, cache identity |
+
+The analyzer derives `cardinal`, `diagonal`, `level`, and `relocation` from the
+actual deltas. It separately groups first versus return visits, prediction
+matches, scope changes, and the enclosing named `::pf` test phase. It excludes
+the bounded pre-transition rings and non-settled/superseded traces from timing
+distributions. “Dense” should be selected from recorded scenery, wall, and
+triangle counts instead of assuming a location is dense by name.
+
+After closing the client:
+
+```bash
+python3 scripts/analyze-renderer-session.py \
+  output/renderer-diagnostics/<session> --strict
+```
+
+The generated `ai-summary.md` is the decision record. Retain the raw
+`events.jsonl` until the optimization direction is selected.
+
+### Matrix status at paused handoff
+
+- Cold, warm cardinal, return, and dense-scenery evidence has been captured.
+- The attempted corner route under `boundary-diagonal` crossed the Y and X
+  boundaries on separate steps, producing cardinal traces rather than a valid
+  simultaneous diagonal trace. It must be rerun after resumption with a route
+  that actually changes both section bases in one transition.
+- The `boundary-multilevel` phase exposed an unrelated broken upstairs map.
+  Its level-1 trace was superseded by the next level change and its level-2
+  trace ended with the diagnostic session; the player confirmed that the
+  upstairs itself is invalid because of a map-loader bug. Those samples are
+  not valid multi-level performance evidence.
+- Private client and server were stopped after the invalid map was confirmed.
+  Resume this matrix only after retrieving and integrating the corrected map
+  loader/data. Start a fresh diagnostic session, validate the upstairs scene
+  visually first, then capture multi-level and true diagonal cases before any
+  substantial loading optimization.
+
+## First Marked Cold-Case Evidence
+
+Session
+`output/renderer-diagnostics/session-20260802-104354-2428779` captured one
+settled first-visit cardinal crossing under `boundary-cold`. This run predates
+the added client-loop/retained-frame/presenter-wait fields, but its existing
+offset arrays and atomic events establish the following timeline:
+
+- The prior OpenGL frame completed 4.682 ms before context handling began.
+- The atomic Player receipt arrived about 83.600 ms after context start.
+- The complete static baseline arrived about 638.951 ms after context start.
+- Presentation first reported that the terrain product was still pending at
+  about 682.591 ms, sampled complete products around 726.149 and 742.142 ms,
+  and released the retained scene at 742.205 ms.
+- The first replacement OpenGL frame completed at 946.393 ms. Its render took
+  203.257 ms, including 151.668 ms to upload 228,054,240 bytes and 35.562 ms to
+  build the shadow mask.
+- The resulting measured OpenGL completion interval was 951.075 ms. It is not
+  a single 951 ms render call: roughly 639 ms precedes the final baseline, the
+  release/stability work continues to 742 ms, and the replacement render then
+  completes at 946 ms.
+- Client-side named packet/region phases do not account for the quiet interval
+  before the baseline. The largest recorded handlers were opcode 48 at 74.150
+  ms, scenery mesh construction at 34.178 ms, context handling at 17.522 ms,
+  and the client-region load at 9.878 ms.
+- GC accounted for 21 ms, measured disk work for 1.078 ms, and named lock
+  acquisition wait for 0.006 ms. None independently explains this cold hitch.
+
+The strongest current interpretation is **multiple serial contributors**:
+receipt/stage latency dominates the retained-scene duration, then a large cold
+GPU upload plus shadow build delays the first replacement frame. The client
+trace cannot yet distinguish network arrival from server update cadence during
+the quiet receipt interval, so this remains a measured boundary rather than a
+final server/network attribution. The newly added timeline fields separate
+client-loop continuity, retained-frame attempts, OpenGL presenter wait, and
+submission-queue time on the next run.
+
+## Warm Cardinal Directional Evidence
+
+Session
+`output/renderer-diagnostics/session-20260802-110206-2437601` measured repeated
+return crossings between centers `(11,11)` and `(11,12)` under
+`boundary-warm-cardinal`. The player reported that one direction had an easy to
+capture stutter while the reverse was nearly imperceptible. All 11 return
+crossings toward `(11,11)` and all 12 return crossings toward `(11,12)` matched
+the same direction-specific timing split:
+
+| Destination | Return traces | Static baseline p50/p95/p99/max | Release p50/p95/max | Retained attempts | Max render/client loop |
+| --- | ---: | --- | --- | --- | --- |
+| `(11,11)` | 11 | 15.306 / 18.789 / 18.789 / 18.789 ms | 28.979 / 38.431 / 38.431 ms | 1 | 37.960 / 38.914 ms |
+| `(11,12)` | 12 | 633.686 / 650.274 / 650.274 / 650.274 ms | 654.739 / 671.609 / 671.609 ms | 38–40 | 42.819 / 34.175 ms |
+
+Every correlated Ctrl+F8 marker attached to a settled boundary trace selected
+the slow `(11,12)` direction. Prediction was published and matched in both
+directions. Scenery mesh construction, cache behavior, GL render work, disk,
+GC, and measured locks were comparable and far below the 615 ms directional
+gap.
+
+The packet timeline identifies the exact gate. A representative slow trace
+received:
+
+- context 157, Player 191, and dynamic/static setup packets by 19.2 ms;
+- the atomic scene fence plus eight scene-baseline data pages by 20.5 ms;
+- the remaining two data pages at 633.4–633.7 ms;
+- static-baseline completion at 633.8 ms and presentation release at 654.7 ms.
+
+Page-level confirmation in
+`output/renderer-diagnostics/session-20260802-111800-2459330` removed the one
+remaining inference. The fast `(11,11)` product has exactly eight data pages:
+two gameplay-scenery pages, one gameplay-wall page, four presentation-scenery
+pages, and one presentation-wall page. With its fence, all nine packets arrived
+on server tick 3862 and completed by 32.5 ms. The slow `(11,12)` product has ten
+data pages: three gameplay-scenery pages, one gameplay-wall page, five
+presentation-scenery pages, and one presentation-wall page. Its fence and first
+eight data pages arrived on tick 3867 by 22.9 ms; presentation-scenery page 4
+and presentation-wall page 0 arrived on tick 3868 at 633.4 and 633.7 ms. The
+client handled both bursts promptly. This rules out client packet-drain cadence,
+renderer work, and network throughput as the cause of this repeatable
+warm-direction hold.
+
+The server source explains the 640 ms quantization:
+
+- protocol-v8 baseline data pages contain at most 512 records;
+- `sendSceneBaselineIfEnabled` sends at most eight data pages per game-state
+  update and retains category cursors for the next update;
+- an atomic fence is sent before that eight-page burst;
+- the high-frequency movement stream intentionally does not originate or
+  finish a context/baseline; the next opportunity is the 640 ms normal world
+  update.
+
+The fast scene fits the eight-page burst exactly, while the slow scene exceeds
+it by two pages and must wait for the next world update. That scene-density
+threshold—not traversal direction itself—produces the consistent directional
+asymmetry. The code comment promises that context and baseline are emitted as
+one ordered atomic update, but the eight-page server burst limit violates that
+promise for ordinary dense scenes.
+
+### Solution comparison for the confirmed warm gate
+
+1. **Complete protocol-v8 baseline in the initiating update, with an explicit
+   page/byte safety bound (recommended prototype).** Compute the required page
+   count first and send the complete atomic product when it fits the bound.
+   Refuse or pre-stage an oversized product rather than silently splitting an
+   activation across world ticks. This preserves the existing scene data and
+   atomic release semantics.
+2. **Raise the fixed burst from 8 to 16.** This is the smallest comparison
+   experiment and should remove the measured 10-page wait, but it is brittle:
+   a denser scene can cross the new threshold and recreate the same full-tick
+   hitch.
+3. **Pre-stage static presentation pages with the predicted center.** This is a
+   stronger long-term bandwidth design because most baseline bytes arrive
+   before activation, but it requires sequence-safe discard/replacement rules
+   and is materially more complex.
+4. **Finish baseline pages from the high-frequency movement poll.** This would
+   reduce the delay but spreads game-state presentation ownership across two
+   update paths and risks inconsistent snapshots; it is not recommended.
+5. **Release on the fence before outer presentation pages finish.** This would
+   hide the wait by exposing a mixed old/new scene and can restore the
+   wrong-area flash. It fails the scene-correctness requirement and is rejected.
+
+The next implementation decision should therefore separate this confirmed
+server page-cadence gate from cold GPU/upload work. Removing the full-tick warm
+wait is higher value and lower risk than another renderer micro-optimization;
+cold, diagonal, dense, and multi-level measurements remain necessary before
+selecting any broader GPU/residency change.
+
+## Evidence Decision Gates
+
+Use the following gates rather than optimizing whichever code is most visible:
+
+1. If the worst frame and chunk upload overlap, uploaded bytes are high, and
+   CPU phases are already below budget, prioritize residency/upload work.
+2. If scenery cache misses or worker mesh time overlap the spike, improve
+   prediction or cache identity before touching GPU scheduling.
+3. If terrain/minimap/wall publication dominates the client thread, separate
+   or prepare those products before activation.
+4. If a shadow build/upload dominates, repair its cache key or prepare the
+   replacement shadow product without weakening atomic presentation.
+5. If GC time or allocation deltas overlap the spike, pool or retain the
+   measured large products; do not guess based on heap size alone.
+6. If named lock wait is material, reduce that specific ownership conflict.
+   General parallelization is not justified without a measured lock owner.
+7. If disk reads occur on warm/return crossings, repair preload/residency. Disk
+   work on a truly cold run is a separate startup concern.
+8. If the frame spike remains unattributed after these phases, run the same
+   short case with `--jfr` and inspect driver/native/swap time.
+
+## Candidate Solution Families
+
+No option below is approved for implementation until the new case matrix is
+captured.
+
+### 1. Bounded GPU residency across adjacent centers
+
+Retain the exact reusable chunks for the previous and predicted neighboring
+centers, with a byte/chunk budget and deterministic eviction.
+
+- Best when return crossings show low CPU cost but repeat large uploads.
+- Low conceptual risk because it extends existing resident ownership.
+- Main tradeoff is GPU memory; eviction must not reintroduce the wrong-area
+  flash.
+
+### 2. Predicted GPU preparation
+
+Use the already acknowledged predicted radius-two products to queue OpenGL
+uploads before atomic activation.
+
+- Best when CPU prediction is ready early but activation still uploads most
+  chunks.
+- Upload commands must remain on the OpenGL context thread.
+- A stale prediction must be discardable without becoming drawable.
+
+### 3. Budgeted upload behind the retained frame
+
+Keep presenting the last complete frame while replacement uploads are spread
+over multiple frames, then release only when the complete new frame is stable.
+
+- Best when one large upload burst is the dominant spike.
+- Preserves atomic correctness if incomplete replacement chunks never leak.
+- Adds transition latency even while improving frame pacing.
+
+### 4. Strip/delta uploads
+
+Represent an adjacent transition as retained overlap plus only the entering
+outer strip/corner.
+
+- Potentially the lowest steady-state bandwidth.
+- Higher identity and invalidation complexity than bounded retention.
+- Requires special care for scenery, terrain edits, roofs, and plane changes.
+
+### 5. Reduce or repack resident geometry
+
+Reduce vertex/index bytes, duplicate attributes, or upload conversions.
+
+- Appropriate only if bytes remain high even when residency behaves correctly.
+- Broad renderer risk; it should follow evidence from role-specific byte totals.
+
+### 6. CPU product/preload changes
+
+Extend prediction, cache prepared renderer chunks, or change scenery worker
+ownership.
+
+- Appropriate only for measured CPU construction or lock contention.
+- Moving work earlier is not useful if the actual hitch is a later GPU upload.
+
+### 7. Shadow/minimap double buffering
+
+Prepare a new shadow/minimap product and swap it with the atomic scene.
+
+- Appropriate only if their measured build/upload phases dominate.
+- Must retain deterministic terrain variation and avoid partial old/new masks.
+
+## Current Recommendation
+
+Checkpoint the refined packet diagnostics and the confirmed page-cadence
+finding before changing behavior. Then prototype complete bounded protocol-v8
+baseline delivery and visually repeat the same directional case. Continue the
+remaining private case matrix before choosing any broader renderer
+optimization. Bounded GPU residency or predicted GPU preparation remain
+possible cold/dense-case candidates, but the choice between them depends on:
+
+- whether the remaining visible dip still coincides with large upload bytes;
+- whether the predicted product is ready with useful lead time;
+- whether return crossings already reuse the intended chunks;
+- whether dense and multi-level cases fail for a different reason.
+
+Checkpoint the diagnostic implementation and this plan before any substantive
+loader or renderer change. Visually compare the selected prototype on the same
+private cases, and do not publish or deploy based on automated results alone.
