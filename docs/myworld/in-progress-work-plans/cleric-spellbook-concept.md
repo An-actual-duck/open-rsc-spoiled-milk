@@ -89,15 +89,20 @@ skill.
   spellbook.
 - Blessed staves and god staves gain a **Holy Power** stat.
 - Ordinary Magic staves have no Holy Power.
-- Holy-oriented staves have weaker Magic Power than comparable
-  Magic-specialized staves. A player therefore cannot reach full Magic and
-  Cleric effectiveness with one staff.
+- The existing blessed-staff line, culminating in god staves, has weaker Magic
+  Power than comparable Magic-specialized staves. A player therefore cannot
+  reach full Magic and Cleric effectiveness with one staff.
 - Holy Power determines healing effectiveness and may scale other suitable
   support effects.
 - Holy Defense will not be introduced.
 - God spells and any associated offensive holy spells continue to use Magic
   Power and Magic Defense. Damage authority and offensive spell identity stay
   in the Magic combat model.
+- `Holy staff` is only descriptive shorthand for the existing blessed-staff
+  and god-staff progression. It is not a separate neutral equipment family.
+- God staves remain below comparable dedicated Magic staves in Magic Power.
+  Their required offensive god spells therefore retain a deliberate equipment
+  compromise rather than creating a best-in-both-books staff.
 
 ### Soft Specialization Pressures
 
@@ -105,7 +110,7 @@ The separation between the books is enforced through tradeoffs rather than a
 hard class, book-selection, or equipment lock:
 
 - A Magic-focused staff contributes Magic Power but no Holy Power.
-- A holy-focused staff contributes Holy Power but less Magic Power than the
+- A blessed or god staff contributes Holy Power but less Magic Power than the
   corresponding Magic-focused option.
 - Runes and sigils are separate inventory resources. Carrying meaningful
   supplies for both books consumes enough inventory space to be a real cost.
@@ -206,9 +211,6 @@ These are current implementation facts, not new design decisions:
   fixed effect to avoid mandatory staff swapping.
 - Self-casting, other-player targeting, party/group interaction, PvP behavior,
   experience attribution, and abuse safeguards.
-- Whether `holy staff` is a descriptive term for the existing blessed-staff
-  line or a distinct equipment family, and whether god staves are deliberately
-  stronger Magic/Holy hybrids than ordinary blessed staves.
 
 ### Initial Spell Content
 
@@ -286,3 +288,10 @@ strength comes from tradeoffs: Magic staves have no Holy Power, holy staves
 trade away Magic Power, carrying both runes and sigils strains inventory, and
 most Cleric support is aimed at other players rather than the caster. Hybrid
 play remains allowed but is intentionally less effective than specialization.
+
+### 2026-08-02: Staff terminology and god-staff boundary
+
+Clarified that `holy staff` was shorthand, not a new family. The existing
+blessed-staff progression culminates in god staves. All receive Holy Power,
+but even god staves retain less Magic Power than comparable dedicated Magic
+staves; offensive god spells continue to use Magic Power and Magic Defense.
