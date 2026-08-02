@@ -274,11 +274,19 @@ received:
 - the remaining two data pages at 633.4–633.7 ms;
 - static-baseline completion at 633.8 ms and presentation release at 654.7 ms.
 
-A representative fast reverse trace received the same first burst by 18.0 ms,
-then its final page at 18.1 ms because the next server update happened to fall
-immediately after the first. The client handled each burst promptly. This rules
-out client packet-drain cadence, renderer work, and network throughput as the
-cause of this repeatable warm-direction hold.
+Page-level confirmation in
+`output/renderer-diagnostics/session-20260802-111800-2459330` removed the one
+remaining inference. The fast `(11,11)` product has exactly eight data pages:
+two gameplay-scenery pages, one gameplay-wall page, four presentation-scenery
+pages, and one presentation-wall page. With its fence, all nine packets arrived
+on server tick 3862 and completed by 32.5 ms. The slow `(11,12)` product has ten
+data pages: three gameplay-scenery pages, one gameplay-wall page, five
+presentation-scenery pages, and one presentation-wall page. Its fence and first
+eight data pages arrived on tick 3867 by 22.9 ms; presentation-scenery page 4
+and presentation-wall page 0 arrived on tick 3868 at 633.4 and 633.7 ms. The
+client handled both bursts promptly. This rules out client packet-drain cadence,
+renderer work, and network throughput as the cause of this repeatable
+warm-direction hold.
 
 The server source explains the 640 ms quantization:
 
@@ -290,13 +298,12 @@ The server source explains the 640 ms quantization:
   finish a context/baseline; the next opportunity is the 640 ms normal world
   update.
 
-The two measured scenes need more than eight data pages (the representative
-slow transition needed ten and the fast reverse needed nine), so neither can
-complete in the initiating update. Alternating traversal phase-locks one
-direction just before the next world update and the other just after it,
-producing the consistent asymmetry. The code comment promises that context and
-baseline are emitted as one ordered atomic update, but the eight-page server
-burst limit violates that promise for ordinary dense scenes.
+The fast scene fits the eight-page burst exactly, while the slow scene exceeds
+it by two pages and must wait for the next world update. That scene-density
+threshold—not traversal direction itself—produces the consistent directional
+asymmetry. The code comment promises that context and baseline are emitted as
+one ordered atomic update, but the eight-page server burst limit violates that
+promise for ordinary dense scenes.
 
 ### Solution comparison for the confirmed warm gate
 
@@ -307,7 +314,7 @@ burst limit violates that promise for ordinary dense scenes.
    activation across world ticks. This preserves the existing scene data and
    atomic release semantics.
 2. **Raise the fixed burst from 8 to 16.** This is the smallest comparison
-   experiment and should remove the measured 9–10-page waits, but it is brittle:
+   experiment and should remove the measured 10-page wait, but it is brittle:
    a denser scene can cross the new threshold and recreate the same full-tick
    hitch.
 3. **Pre-stage static presentation pages with the predicted center.** This is a
