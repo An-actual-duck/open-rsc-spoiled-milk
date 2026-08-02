@@ -161,6 +161,9 @@ hard class, book-selection, or equipment lock:
   otherwise.
 - The caster is excluded from the affected players unless the individual
   spell explicitly permits self-application.
+- Beneficial area effects apply only to eligible members of the caster's
+  current party. Nearby non-party players are not affected merely because
+  they are standing in the area.
 - The standard tier-one area begins at a radius of `3` tiles around the caster.
 - Standard area grows with spell tier. Exact later radii and the distance
   metric remain balance decisions.
@@ -190,22 +193,23 @@ used as a default design pattern.
 
 ### Initial Spell Roster
 
-Eleven of the twelve launch slots now have confirmed identities and effect
-directions. Numerical ranges described as tuning targets below remain
-provisional until separately approved.
+All twelve launch slots now have confirmed identities and effect directions.
+Numerical ranges explicitly described as tuning targets below remain
+provisional until separately approved; the confirmed Mend, Greater Mend, and
+Ward endpoints are exceptions.
 
 | Tier | Spell | Identity | Confirmed effect direction |
 | ---: | --- | --- | --- |
-| 1 | Mend | Saradomin | Three-pulse regeneration heal; current target is `1` Hits per pulse at minimum, scaling quickly with Holy Power toward roughly `3` per pulse |
-| 1 | Unify | Neutral | Uses an enlarged radius and draws eligible affected players closer to the caster to set up later area support |
+| 1 | Mend | Saradomin | Three-pulse regeneration heal, scaling from `1` to `3` Hits per pulse with Holy Power (`3-9` total healing before healing-ceiling limits) |
+| 1 | Unify | Neutral | Uses an enlarged radius and draws eligible same-party players closer to the caster to set up later area support |
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Reduces current poison power rather than fully curing every poison; current target range is approximately `10-40` power from Holy Power |
 | 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
-| 1 | Open slot | Open | The earlier `Ward` suggestion was not reaffirmed and overlaps the new Aegis direction; this sixth tier-one slot remains unresolved |
-| 2 | Greater Mend | Saradomin | Uses the same three-pulse regeneration model as Mend with a higher healing floor and ceiling |
+| 1 | Ward | Saradomin | Tier-one next-hit protection; Holy Power scales the reduction from `25%` to `40%`, below Aegis's intended protection |
+| 2 | Greater Mend | Saradomin | Three-pulse regeneration heal staggered above Mend, scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
 | 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
 | 2 | Thorns | Guthix | Weak recoil placed on affected players; Holy Power increases reflected damage |
-| 2 | Aegis | Saradomin | Halves the next qualifying hit; Holy Power increases how many hits the protection lasts |
+| 2 | Aegis | Saradomin | Stronger charge-based protection than Ward; Holy Power increases how many qualifying hits it lasts, while its exact reduction awaits clarification between the earlier `50%` direction and the later `40%` example |
 | 2 | Rally | Zamorak | Players below half Hits gain temporary lifesteal until they recover above a Holy Power-dependent threshold |
 | 2 | Respite | Neutral | Long-lived, modest increase to normal passive regeneration; it is not restricted to out-of-combat periods |
 
@@ -214,6 +218,28 @@ covering several nearby allies. Mend and Greater Mend are regeneration effects,
 not large instant heals. Purify leaves room for later full poison cleansing,
 and Restore is the only planned spell in its restoration line rather than the
 first of repeated stronger copies.
+
+### Protection Stacking Contract
+
+Ward and Aegis must not turn prayer protection into complete damage immunity.
+Percentage mitigation combines in two layers:
+
+1. The prayer system computes its normal aggregate reduction. Multiple prayer
+   contributions continue to combine additively inside that existing system.
+2. A Cleric protection effect reduces the damage remaining after prayer as an
+   independent multiplier. Its percentage is never added to the prayer total.
+
+For example, a `60%` aggregate melee-prayer reduction leaves `40%` of the
+incoming damage. A separate `40%` Cleric reduction then leaves `60%` of that
+remainder: `0.40 * 0.60 = 0.24`, or `76%` combined reduction. Other mitigation
+families should likewise retain clear ownership rather than being folded into
+one uncapped additive percentage.
+
+This contract settles percentage composition but not integer rounding,
+minimum-damage behavior, eligible damage sources, or which layer consumes a
+Ward/Aegis charge. Those details must be specified and regression-tested before
+implementation, especially for small hits where sequential rounding can
+change the result by one.
 
 ### Devotion Economy
 
@@ -266,6 +292,12 @@ These are current implementation facts, not new design decisions:
   distinct support functions rather than mirroring that repetition.
 - The server has an active party system and already updates party health and
   combat state.
+- Active prayers of the same combat style currently contribute their effect
+  percentages to one additive prayer total. Combat damage applies that total
+  once with integer floor rounding. Other current mitigation families, such as
+  potion resistance, are applied separately in relevant combat paths. A later
+  Cleric implementation must remain a separate multiplier rather than adding
+  Ward or Aegis to the prayer accumulator.
 - Current player-targeted spell packets flow through a hostile/PvP handler and
   are rejected when PvP is disabled. Existing heal spells are self-cast. The
   caster-centered Cleric area action should not reuse, weaken, bypass, or
@@ -294,8 +326,11 @@ These are current implementation facts, not new design decisions:
 The preferred direction is to map Holy Power into a small number of discrete
 effect ranks instead of persisting arbitrary floating-point strength. For
 example, low Holy Power could apply `Aegis`, while crossing the next threshold
-applies `Aegis II` with two protected hits. Percentage effects could similarly
-advance through authored values such as `5%`, `10%`, and later steps.
+applies `Aegis II` with two protected hits. Percentage effects advance through
+spell-specific authored values rather than a universal `5%` ladder. Earlier
+percentage steps were illustrations only; each spell's thresholds and values
+must be tuned for its duration, area, resource cost, and interaction with
+existing systems.
 
 This approach fits existing server patterns and has several advantages:
 
@@ -364,10 +399,9 @@ remain to be settled.
   range, cooldowns, and behavior at full health.
 - Which non-healing effects may scale with Holy Power and which should have a
   fixed effect to avoid mandatory staff swapping.
-- Self-casting, other-player targeting, party/group interaction, PvP behavior,
-  experience attribution, and abuse safeguards.
-- Which nearby players are eligible for beneficial area effects: party members
-  only, players who explicitly accept aid, or another bounded rule.
+- Per-spell self-application exceptions, party membership changes during an
+  effect, PvP behavior, experience attribution, and abuse safeguards. The
+  general recipient rule is settled as same-party only at cast time.
 - Exact area geometry, line-of-sight/path requirements, tier radii, and how
   Unify selects safe reachable destination tiles without forced-movement abuse.
 - Holy Power threshold tables and discrete ranks for each scalable effect.
@@ -386,8 +420,13 @@ remain to be settled.
 
 - Exact unlock levels for the six tier-one and six tier-two spells through
   Worship `30`.
-- The sixth tier-one spell. The former `Ward` proposal needs confirmation,
-  replacement, or removal now that Aegis owns next-hit mitigation in tier two.
+- The exact Ward rank table between its confirmed `25%` floor and `40%`
+  ceiling, and whether Ward always protects one qualifying hit or gains
+  charges at higher Holy Power.
+- Whether Aegis retains its previously proposed fixed `50%` reduction while
+  Holy Power increases its charges, or whether its reduction also changes by
+  rank. The `40%` mitigation example used while settling stacking does not yet
+  override the earlier half-damage direction.
 - The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
@@ -550,3 +589,21 @@ former Ward slot and exact numerical tuning remain open.
 Recorded discrete Holy Power effect ranks as the preferred model for further
 exploration because current timed and attack-count status systems already use
 integer magnitudes, expiry times, and charges.
+
+### 2026-08-02: Party eligibility, healing bands, and mitigation composition
+
+Confirmed that caster-centered support affects same-party players only, with
+the caster still excluded unless a spell explicitly opts into self support.
+Confirmed three-pulse healing bands of `1-3` Hits per Mend pulse and `2-5`
+Hits per Greater Mend pulse.
+
+Restored Ward as the sixth tier-one spell and positioned it as the lesser
+Saradomin protection spell, reducing a qualifying hit by `25-40%` according to
+Holy Power. Cross-system percentage protection is multiplicative: prayer
+effects keep their current additive behavior within the prayer system, while
+Ward/Aegis applies separately to the remaining damage. Exact integer rounding,
+Ward charges, and whether Aegis retains a fixed `50%` reduction remain open.
+
+Clarified that discrete status ranks use values authored for each effect. The
+earlier `5%` examples were explanatory rather than a global progression rule;
+final rank tables remain balance work.
