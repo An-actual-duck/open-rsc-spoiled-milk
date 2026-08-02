@@ -12,6 +12,7 @@ import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.production.ProductionSession;
+import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.database.struct.HiscoreEntry;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
@@ -186,7 +187,12 @@ public class ActionSender {
 	}
 
 	public static void showProductionInterface(Player player, ProductionSession session) {
-		ProductionInterfaceStruct struct = ProductionInterfaceStruct.open(session);
+		ProductionMemory.Display display = ProductionMemory.prepareDisplay(player, session);
+		if (display.isSuppressed()) {
+			return;
+		}
+		ProductionInterfaceStruct struct = ProductionInterfaceStruct.open(
+			display.getSession(), display.getSelectedRecipeId(), display.getUiFlags());
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_PRODUCTION_INTERFACE, struct, player);
 	}
 

@@ -498,7 +498,7 @@ public class PacketHandler {
 			}
 
 			else if (opcode == 138) {
-				updateProductionInterface();
+				updateProductionInterface(length);
 			}
 
 			// Bank Pin Overlay
@@ -1777,7 +1777,7 @@ public class PacketHandler {
 		}
 	}
 
-	private void updateProductionInterface() {
+	private void updateProductionInterface(int packetLength) {
 		int interfaceId = packetsIncoming.getByte() & 0xff;
 		int actionId = packetsIncoming.getByte() & 0xff;
 		if (actionId == 1) {
@@ -1815,9 +1815,11 @@ public class PacketHandler {
 				ingredientAmounts[i][j] = packetsIncoming.getShort();
 			}
 		}
+		int uiFlags = packetsIncoming.packetEnd < packetLength
+			? packetsIncoming.getByte() & 0xff : 0;
 		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, resourceAmount, selectedRecipeId, quantity,
 			itemIds, requiredLevels, inputAmounts, outputAmounts, flags,
-			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts);
+			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts, uiFlags);
 	}
 
 	private void setIronmanOptions() {

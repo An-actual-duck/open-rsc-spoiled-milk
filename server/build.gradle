@@ -30,6 +30,11 @@ sourceSets {
             srcDirs "plugins"
         }
     }
+    test {
+        java {
+            srcDirs "test"
+        }
+    }
 }
 
 dependencies {
