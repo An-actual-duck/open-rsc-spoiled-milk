@@ -1,6 +1,6 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
-Status: diagnostics implementation and evidence collection in progress
+Status: paused at READY handoff; awaiting corrected upstairs map-loader data
 
 Branch: `refactor/boundary-loading-diagnostics`
 
@@ -207,6 +207,24 @@ python3 scripts/analyze-renderer-session.py \
 
 The generated `ai-summary.md` is the decision record. Retain the raw
 `events.jsonl` until the optimization direction is selected.
+
+### Matrix status at paused handoff
+
+- Cold, warm cardinal, return, and dense-scenery evidence has been captured.
+- The attempted corner route under `boundary-diagonal` crossed the Y and X
+  boundaries on separate steps, producing cardinal traces rather than a valid
+  simultaneous diagonal trace. It must be rerun after resumption with a route
+  that actually changes both section bases in one transition.
+- The `boundary-multilevel` phase exposed an unrelated broken upstairs map.
+  Its level-1 trace was superseded by the next level change and its level-2
+  trace ended with the diagnostic session; the player confirmed that the
+  upstairs itself is invalid because of a map-loader bug. Those samples are
+  not valid multi-level performance evidence.
+- Private client and server were stopped after the invalid map was confirmed.
+  Resume this matrix only after retrieving and integrating the corrected map
+  loader/data. Start a fresh diagnostic session, validate the upstairs scene
+  visually first, then capture multi-level and true diagonal cases before any
+  substantial loading optimization.
 
 ## First Marked Cold-Case Evidence
 
