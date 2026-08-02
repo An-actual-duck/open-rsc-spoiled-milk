@@ -12,6 +12,7 @@ import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
+import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
@@ -124,6 +125,12 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			case PRODUCTION_CLOSE:
 				handleProductionClose(player);
 				break;
+			case PRODUCTION_REMEMBER_TOGGLE:
+				handleProductionRememberToggle(player, payload);
+				break;
+			case PRODUCTION_BACK:
+				handleProductionBack(player);
+				break;
 			case AUTO_CAST_SPELL:
 				handleAutoCastSpell(player, payload);
 				break;
@@ -197,18 +204,23 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 					return 1;
 				}
 
+				ProductionMemory.beginStart(player, session, itemId);
 				boolean started;
 				try {
 					started = starter.start(player, session, itemId, quantity);
 				} catch (PluginInterruptedException e) {
+					ProductionMemory.finishStart(player, session, itemId, false);
 					return 1;
 				} catch (RuntimeException e) {
+					ProductionMemory.finishStart(player, session, itemId, false);
 					LOGGER.error("Production start failed player={} itemId={} amount={} sessionType={}",
 						player.getUsername(), itemId, quantity, session.getType(), e);
 					player.message("Unable to start production");
 					clearProductionState(player, session);
 					return 0;
 				}
+
+				ProductionMemory.finishStart(player, session, itemId, started);
 
 				ProductionSession currentSession = player.getAttribute("production_session", null);
 				if (currentSession != session) {
@@ -238,6 +250,25 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		clearProductionState(player, session);
 	}
 
+	private void handleProductionRememberToggle(Player player, OptionsStruct payload) {
+		ProductionSession session = player.getAttribute("production_session", null);
+		if (!ProductionMemory.isRememberable(session)) {
+			return;
+		}
+		if (payload.value != 0 && payload.value != 1) {
+			player.setSuspiciousPlayer(true, "invalid production remember preference");
+			return;
+		}
+		ProductionMemory.setEnabled(player, payload.value == 1);
+	}
+
+	private void handleProductionBack(Player player) {
+		ProductionSession parent = ProductionMemory.back(player);
+		if (parent != null) {
+			ActionSender.showProductionInterface(player, parent);
+		}
+	}
+
 	private void handleLegacyProductionOption(Player player, InterfaceOptions option) {
 		ProductionSession session = player.getAttribute("production_session", null);
 		if (session == null) {
@@ -250,6 +281,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		player.removeAttribute("production_session");
 		player.removeAttribute("production_starter");
 		player.removeAttribute("production_context_item_uid");
+		ProductionMemory.clearNavigation(player);
 		ActionSender.hideProductionInterface(player, session.getType());
 	}
 

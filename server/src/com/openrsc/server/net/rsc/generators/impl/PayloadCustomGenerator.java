@@ -1024,6 +1024,8 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 								builder.writeShort(production.ingredientAmounts[i][j]);
 							}
 						}
+						// Additive trailer: older custom clients safely ignore it.
+						builder.writeByte((byte) production.uiFlags);
 					}
 					break;
 
