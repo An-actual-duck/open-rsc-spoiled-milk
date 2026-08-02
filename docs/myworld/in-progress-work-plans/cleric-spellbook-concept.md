@@ -27,6 +27,9 @@ resource quantity is settled unless it appears under **Confirmed Direction**.
 - The initial rollout targets two support tiers, approximately the first half
   of the eventual spellbook, with progression extending through roughly
   Worship level `30`.
+- The initial rollout contains `12` spells: six tier-one spells and six
+  tier-two spells. Unlocks are staggered through the two level bands rather
+  than placing all six spells at one level; exact levels remain open.
 - The spellbook should create meaningful support and healing roles without
   replacing Magic's offensive and utility identity.
 - Magic and Cleric remain simultaneously accessible. Players do not switch an
@@ -211,6 +214,20 @@ These are current implementation facts, not new design decisions:
 - Existing rune production accepts one altar interaction and processes the
   available inventory in one action. Sigil blessing intentionally adopts that
   interaction model.
+- The current Magic definition contains `46` spells, including `26` at or below
+  Magic level `30`. Much of that density comes from repeated elemental attack
+  families and teleports; the Cleric launch catalog intentionally favors `12`
+  distinct support functions rather than mirroring that repetition.
+- The server has an active party system and already updates party health and
+  combat state.
+- Current player-targeted spell packets flow through a hostile/PvP handler and
+  are rejected when PvP is disabled. Existing heal spells are self-cast. A
+  later Cleric implementation therefore needs an explicitly non-hostile
+  player-target support path rather than weakening, bypassing, or overloading
+  PvP validation.
+- Existing shared mechanics can heal up to the player's valid healing ceiling,
+  restore reduced stats up to their normal levels, and cure poison. Those are
+  available implementation building blocks, not automatic spell selections.
 
 ## Unresolved Design Questions
 
@@ -264,10 +281,11 @@ These are current implementation facts, not new design decisions:
 
 ### Initial Spell Content
 
-- Exact tier breakpoints through Worship `30`.
-- The number and categories of launch spells: direct healing, healing over
-  time, cleansing, restoration, protection, travel, information, resource
-  support, or other utility.
+- Exact unlock levels for the six tier-one and six tier-two spells through
+  Worship `30`.
+- The categories of the `12` launch spells: direct healing, healing over time,
+  cleansing, restoration, protection, information, resource support, or other
+  utility.
 - The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
@@ -409,3 +427,10 @@ materials in a normal primary cost share the spell's alignment. Future
 secondary sigils may add spell-specific identity and balance in the way an
 elemental rune supplements a tier-defining Magic rune. The first rollout has
 no secondary sigils; their imbuing and production model remains unresolved.
+
+### 2026-08-02: Twelve-spell initial catalog
+
+Confirmed `12` initial spells, divided evenly into six tier-one and six
+tier-two unlocks staggered through approximately Worship level `30`. The count
+is intentionally smaller than Magic's level-30 catalog so each launch spell can
+serve a distinct support purpose rather than repeating an elemental template.
