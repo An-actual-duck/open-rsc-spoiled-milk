@@ -270,12 +270,18 @@ change the result by one.
   pulse streams or add their remaining pulses together.
 - Exclusivity is evaluated independently for each eligible party recipient of
   an area cast.
-- Exact replacement and refresh rules remain open. In particular, the design
-  must decide what happens when a weaker effect reaches a recipient who has a
-  stronger one and whether an equal effect restarts its duration or pulses.
-- Respite is not automatically part of the Mend family. Whether its passive
-  regeneration modifier can coexist with active Mend pulses remains a separate
-  balance decision.
+- A higher spell tier replaces a lower spell tier in the same family. Within
+  one spell, a higher Holy Power effect rank replaces a lower rank. A lower
+  tier or lower rank cannot overwrite the stronger active effect.
+- An equal effect refreshes to its full charge count or restarts its complete
+  three-pulse sequence. Refreshing never adds remaining charges or pulses to
+  the new full amount.
+- These rules mean Aegis can replace Ward, Greater Mend can replace Mend, and
+  neither replacement works in reverse while the higher-tier effect remains
+  active.
+- Respite is mechanically separate and may coexist with a Mend-family effect.
+  It modifies only ordinary passive regeneration and never increases,
+  accelerates, or duplicates Mend or Greater Mend pulses.
 
 ### Devotion Economy
 
@@ -442,10 +448,9 @@ remain to be settled.
   and how Unify selects safe reachable destination tiles without
   forced-movement abuse. Standard tier radii are settled by the `N + 1` rule.
 - Holy Power threshold tables and discrete ranks for each scalable effect.
-- Replacement and refresh behavior inside the exclusive protection and Mend
-  families when a recipient already has the same, stronger, or weaker effect,
-  including partial success across an area and whether a wholly ineffective
-  cast consumes sigils or awards XP.
+- Cast-level resource and experience behavior when an area spell applies to
+  only some recipients or is wholly ineffective because every recipient has a
+  stronger active family effect.
 - Whether effect ranks are cleared on death/logout or persist with bounded
   remaining duration.
 - Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
@@ -676,3 +681,13 @@ rule for Mend and Greater Mend: a recipient can have only one active
 three-pulse Mend-family effect, and repeated casts cannot create concurrent or
 additive pulse streams. Replacement, refresh, and Respite-interaction rules
 remain open.
+
+### 2026-08-02: Effect replacement hierarchy
+
+Confirmed deterministic replacement within the two exclusive families. A
+higher spell tier replaces a lower tier, and a higher Holy Power rank replaces
+a lower rank of the same spell. Lower effects cannot overwrite stronger ones.
+An equal effect refreshes to its normal full charges or complete three-pulse
+sequence without adding the old remainder. Respite may coexist with Mend or
+Greater Mend but affects only ordinary passive regeneration, never the active
+Mend-family pulses.
