@@ -443,7 +443,9 @@ def default_log_paths() -> list[Path]:
     log_dir = ROOT / "server" / "logs"
     if log_dir.exists():
         paths.extend(sorted(log_dir.glob(DEFAULT_ROTATED_LOG_GLOB)))
-    return dedupe_paths(paths)
+    if paths:
+        return dedupe_paths(paths)
+    return expand_log_paths([log_dir])
 
 
 def expand_log_paths(paths: Iterable[Path]) -> list[Path]:
@@ -513,6 +515,8 @@ def discover_live_sources(
     current_log = log_dir / "spoiled_milk_98.log"
     if not current_log.is_file():
         raise LiveSourceError(f"current live plugin log is missing: {current_log}")
+    if not os.access(current_log, os.R_OK):
+        raise LiveSourceError(f"current live plugin log is not readable: {current_log}")
     age_seconds = max(0.0, datetime.now().timestamp() - current_log.stat().st_mtime)
     maximum_age_seconds = maximum_log_age_hours * 3600
     if age_seconds > maximum_age_seconds:
@@ -522,10 +526,15 @@ def discover_live_sources(
             f"(limit {maximum_log_age_hours:g} hours)"
         )
     rotated_logs = sorted(log_dir.glob(DEFAULT_ROTATED_LOG_GLOB))
+    unreadable_rotated = [path for path in rotated_logs if not os.access(path, os.R_OK)]
+    if unreadable_rotated:
+        raise LiveSourceError(f"rotated live plugin log is not readable: {unreadable_rotated[0]}")
 
     external_db = (live_db_root.expanduser() / LIVE_DB_NAME).resolve()
     if not external_db.is_file():
         raise LiveSourceError(f"external live database is missing: {external_db}")
+    if not os.access(external_db, os.R_OK):
+        raise LiveSourceError(f"external live database is not readable: {external_db}")
     checkout_db = root / "server" / "inc" / "sqlite" / LIVE_DB_NAME
     if not checkout_db.is_symlink():
         raise LiveSourceError(f"live checkout database path is not a symlink: {checkout_db}")
@@ -821,9 +830,7 @@ def assign_server_runs(
 
 
 def activity_type(event: Event) -> str:
-    text = " ".join(
-        [event.action, event.hook, event.command, event.target_name, event.target_type]
-    ).casefold()
+    text = " ".join([event.action, event.hook, event.command, event.target_type]).casefold()
     if event.is_kill or any(
         token in text
         for token in ("attacknpc", "playermeleenpc", "playerrangenpc", "castnpc", "combat")
@@ -1667,6 +1674,9 @@ def main(argv: list[str] | None = None) -> int:
     events, warnings, tick_samples = parse_plugin_logs(
         log_paths, since, args.include_background, coverage
     )
+    if live_sources is not None and warnings:
+        print(f"ERROR: --live source read failed: {warnings[0]}", file=sys.stderr)
+        return 2
     if not log_paths:
         warnings.append("No plugin log sources were found.")
     if db_path is not None:
@@ -1675,6 +1685,9 @@ def main(argv: list[str] | None = None) -> int:
         )
         events.extend(db_events)
         warnings.extend(db_warnings)
+        if live_sources is not None and db_warnings:
+            print(f"ERROR: --live database read failed: {db_warnings[0]}", file=sys.stderr)
+            return 2
     events = assign_server_runs(events, tick_samples, coverage)
 
     if args.player:

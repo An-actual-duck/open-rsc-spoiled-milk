@@ -213,6 +213,7 @@ with tempfile.TemporaryDirectory(prefix="bot-report-v2-test-") as tmp_dir_string
         builder.emit("Interrupted Human", tick_gap=human_gaps[(index + 5) % len(human_gaps)])
 
     # One intentional server restart/tick reset creates a global run boundary.
+    builder.emit("Restart Witness", tick_gap=5)
     builder.restart()
     builder.emit("Restart Witness", tick_gap=2)
     for index in range(25):
@@ -335,6 +336,11 @@ with tempfile.TemporaryDirectory(prefix="bot-report-v2-test-") as tmp_dir_string
     require(
         payload["dataSourceCoverage"]["server_runs"] >= 2,
         "multiple server runs were not represented",
+    )
+    require(len(restart["sessions"]) == 2, f"restart did not split player sessions: {restart}")
+    require(
+        restart["sessions"][1]["start_reason"] == "server_restart_or_tick_reset",
+        f"restart boundary reason is missing: {restart['sessions']}",
     )
 
     overlap = reports.get("overlap only")

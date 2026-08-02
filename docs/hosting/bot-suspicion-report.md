@@ -106,16 +106,17 @@ identified or characterized as a bot.
 
 | Metric | Previous report | Revised report |
 | --- | ---: | ---: |
-| Score-eligible behavior events | 16,535 | 16,559 |
-| Additional summarized lifecycle/kill evidence | Not retained | 9,310 |
+| Score-eligible behavior events | 16,617 | 16,617 |
+| Additional summarized lifecycle/kill evidence | Not retained | 9,316 |
 | Players represented | 4 | 4 |
-| High | 1 | 0 |
-| Medium | 1 | 0 |
+| High | 2 | 0 |
+| Medium | 0 | 0 |
 | Low | Not defined separately | 2 |
 | Sparse/unclassified | 0 | 2 |
 | Maximum uncalibrated score | 95.0 | 45.9 |
+| Median uncalibrated score | 35.95 | 20.8 |
 
-The previous high/medium results were driven largely by activity volume, raw
+The previous high results were driven largely by activity volume, raw
 repetition, overlapping loops, and signals pooled across unrelated sessions.
 The revised output retains them only as anonymized review context and blocks
 medium/high classification without same-session, same-activity corroboration.
