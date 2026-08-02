@@ -29,6 +29,13 @@ resource quantity is settled unless it appears under **Confirmed Direction**.
   Worship level `30`.
 - The spellbook should create meaningful support and healing roles without
   replacing Magic's offensive and utility identity.
+- Magic and Cleric remain simultaneously accessible. Players do not switch an
+  exclusive active spellbook at an altar or through equipment.
+- Simultaneous access does not mean equal simultaneous effectiveness. The
+  design uses equipment, inventory, and targeting opportunity costs to
+  encourage a player to specialize in Magic or Cleric support at a given time.
+- Hybrid loadouts remain legal. They should be flexible but materially less
+  effective and less inventory-efficient than a focused loadout.
 
 ### Magic/Enchanting Mirror
 
@@ -81,12 +88,32 @@ skill.
 - The existing blessed-staff progression should become relevant to the Cleric
   spellbook.
 - Blessed staves and god staves gain a **Holy Power** stat.
+- Ordinary Magic staves have no Holy Power.
+- Holy-oriented staves have weaker Magic Power than comparable
+  Magic-specialized staves. A player therefore cannot reach full Magic and
+  Cleric effectiveness with one staff.
 - Holy Power determines healing effectiveness and may scale other suitable
   support effects.
 - Holy Defense will not be introduced.
 - God spells and any associated offensive holy spells continue to use Magic
   Power and Magic Defense. Damage authority and offensive spell identity stay
   in the Magic combat model.
+
+### Soft Specialization Pressures
+
+The separation between the books is enforced through tradeoffs rather than a
+hard class, book-selection, or equipment lock:
+
+- A Magic-focused staff contributes Magic Power but no Holy Power.
+- A holy-focused staff contributes Holy Power but less Magic Power than the
+  corresponding Magic-focused option.
+- Runes and sigils are separate inventory resources. Carrying meaningful
+  supplies for both books consumes enough inventory space to be a real cost.
+- Most Cleric spells support other players rather than the caster. The book has
+  limited self-targeted support, making it intentionally less attractive as a
+  second solo-combat book.
+- The goal is to make dedicated Cleric support valuable in group play without
+  preventing experimentation or situational hybrid builds.
 
 ### Devotion Economy
 
@@ -138,8 +165,6 @@ These are current implementation facts, not new design decisions:
 
 ### Casting and Spellbook Contract
 
-- Is the Cleric book available alongside Magic, or must players switch active
-  spellbooks? If it is switched, where and under what conditions?
 - Does casting award Worship experience, and if so, should healing/support XP
   depend on a successful useful effect rather than merely attempting a cast?
 - Are Cleric spells available to all players who meet the Worship requirement,
@@ -181,6 +206,9 @@ These are current implementation facts, not new design decisions:
   fixed effect to avoid mandatory staff swapping.
 - Self-casting, other-player targeting, party/group interaction, PvP behavior,
   experience attribution, and abuse safeguards.
+- Whether `holy staff` is a descriptive term for the existing blessed-staff
+  line or a distinct equipment family, and whether god staves are deliberately
+  stronger Magic/Holy hybrids than ordinary blessed staves.
 
 ### Initial Spell Content
 
@@ -250,3 +278,11 @@ the additional Devotion system. Blessing owns sigil and blessed-equipment
 production gates and XP. Relevant base skills still make the ordinary gear;
 Worship may gate use, but no longer gates or receives XP from its altar
 conversion.
+
+### 2026-08-02: Simultaneous books with soft specialization
+
+Confirmed that Magic and Cleric are always accessible together. Focused role
+strength comes from tradeoffs: Magic staves have no Holy Power, holy staves
+trade away Magic Power, carrying both runes and sigils strains inventory, and
+most Cleric support is aimed at other players rather than the caster. Hybrid
+play remains allowed but is intentionally less effective than specialization.
