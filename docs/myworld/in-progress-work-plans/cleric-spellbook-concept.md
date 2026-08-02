@@ -30,6 +30,25 @@ resource quantity is settled unless it appears under **Confirmed Direction**.
 - The spellbook should create meaningful support and healing roles without
   replacing Magic's offensive and utility identity.
 
+### Magic/Enchanting Mirror
+
+The established Magic and Enchanting relationship is the primary design guide
+for the new Worship and Blessing relationship. It is a guide rather than a
+requirement to copy every level, recipe, or effect one-to-one.
+
+| Magic-side role | Cleric-side role | Settled ownership |
+| --- | --- | --- |
+| Magic | Worship | Gates and advances through the spellbook that consumes the crafted casting resource |
+| Enchanting | Blessing | Gates production of casting resources and aligned equipment |
+| Runes | Blessed sigils | Consumable spell resources |
+| Enchanted equipment | Blessed equipment | Base gear transformed through the corresponding production skill |
+| Elemental production identity | God-aligned production identity | Cleric production adds matching-god altars and Devotion |
+
+Worship has a broader identity than Magic because it also owns the three
+god-specific Devotion relationships. Devotion is an additional requirement and
+economy for Blessing; it does not collapse Worship and Blessing back into one
+skill.
+
 ### Sigils
 
 - Cleric spells use new consumable resources called **sigils**, serving the
@@ -77,6 +96,19 @@ resource quantity is settled unless it appears under **Confirmed Direction**.
 - The design must add or expand ways to gain Devotion alongside this sink.
 - Devotion acquisition and expenditure must remain god-specific; blessing one
   god's sigil checks and drains only that god's Devotion.
+
+### Blessed-Equipment Skill Ownership
+
+- Crafting, Smithing, or the relevant base-production skill creates the
+  ordinary item.
+- Blessing level and the appropriate god's Devotion gate conversion into
+  blessed equipment.
+- Successful altar conversion awards Blessing XP rather than Worship XP.
+- Existing Worship production-level requirements for blessed equipment move to
+  Blessing. Worship remains the spellbook skill and may gate the use of blessed
+  equipment where appropriate to the item's support identity.
+- Exact Blessing and Worship requirements remain tier-by-tier balance work;
+  the ownership split itself is settled.
 
 ## Verified Repository Context
 
@@ -130,12 +162,8 @@ These are current implementation facts, not new design decisions:
 
 - Blessing's level curve, experience sources, production XP, cape, potion,
   guild or training support, and placement in skill interfaces.
-- Whether introducing Blessing replaces both the current Worship requirement
-  and Worship XP for existing blessed gear, or only replaces its production
-  level gate while some Worship relationship remains.
-- Whether creating a sigil awards Blessing XP only when it is successfully
-  blessed, and how carving Crafting XP and blessing Blessing XP divide the
-  total production reward.
+- How carving Crafting XP and successful altar-conversion Blessing XP divide
+  the total production reward.
 - Exact accounting for odd batch sizes. The present Devotion store uses whole
   offering units, while the settled sigil cost is half of one such unit. The
   later implementation must preserve the exact cumulative price without
@@ -183,6 +211,11 @@ These are current implementation facts, not new design decisions:
   offensive god spells away from Magic Power and Magic Defense.
 - Existing prayer allocation, god alignment, Devotion, blessed-equipment, and
   god-relic plans must be reconciled before implementation.
+- Current blessed-equipment code and plans use Worship requirements and
+  Worship XP for some production actions. The confirmed Blessing ownership
+  supersedes that production responsibility for this concept and requires a
+  later, focused synchronization; it does not authorize runtime changes on
+  this documentation branch.
 - Any finer fractional Devotion accounting must preserve existing saves and
   the three independent god balances.
 - A new Blessing skill affects skill identity, persistence, protocol, client
@@ -208,3 +241,12 @@ Devotion. One `Use` interaction blesses the full eligible inventory. Blessing
 prepays Devotion so casting does not charge it again. Added Blessing as a new
 production skill that gates sigil and blessed-gear creation, while Worship
 gates the Cleric spellbook itself.
+
+### 2026-08-02: Magic/Enchanting mirror and equipment ownership
+
+Adopted Magic/Enchanting as the design guide for Worship/Blessing without
+requiring one-to-one content. Worship owns spellbook progression and retains
+the additional Devotion system. Blessing owns sigil and blessed-equipment
+production gates and XP. Relevant base skills still make the ordinary gear;
+Worship may gate use, but no longer gates or receives XP from its altar
+conversion.
