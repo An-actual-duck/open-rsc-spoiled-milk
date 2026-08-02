@@ -71,6 +71,9 @@ skill.
 - Sigils are aligned to Saradomin, Guthix, or Zamorak. A Saradomin sigil can be
   blessed only at a Saradomin altar, and the same matching rule applies to the
   other two gods.
+- The spellbook may also contain non-aligned support spells when an effect does
+  not fit one god naturally. Their exact sigil/blessing cost remains to be
+  settled rather than forcing an arbitrary god label.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -119,6 +122,24 @@ hard class, book-selection, or equipment lock:
   second solo-combat book.
 - The goal is to make dedicated Cleric support valuable in group play without
   preventing experimentation or situational hybrid builds.
+
+### God Support Identities
+
+The Cleric book is shared rather than split into three exclusive god books.
+Spells may still have thematic god ownership, which determines their aligned
+sigil costs and gives each Devotion economy a distinct purpose.
+
+- **Saradomin:** healing and protection.
+- **Guthix:** cleansing, restoration, and balance.
+- **Zamorak:** buffs and ally empowerment, with an offensive or forceful tone
+  but without turning the normal Cleric catalog into direct-damage magic.
+- **Non-aligned:** support effects that do not fit a god cleanly. Neutral
+  design is preferable to assigning a misleading theme merely to fill a god's
+  quota.
+
+Sacrifice or health-exchange mechanics are not part of Zamorak's assumed
+identity. They may not fit RSC's combat and support model well and should not be
+used as a default design pattern.
 
 ### Devotion Economy
 
@@ -179,8 +200,10 @@ These are current implementation facts, not new design decisions:
 
 - Which carved symbols exist, which spells consume them, and whether spells
   use one sigil type or combinations.
-- Whether every support effect has three god variants or whether some sigils
-  are god-specific while the resulting spells remain shared.
+- How many reusable sigil types each god receives and whether higher spells use
+  one sigil family in larger quantities or combinations of multiple symbols.
+- What non-aligned spells consume: a neutral sigil blessed at any god altar,
+  any equivalent aligned sigil, or another clearly presented cost.
 - Exact Crafting levels, Crafting XP, Blessing XP, silver quantities, batch
   behavior, failure behavior, and inventory transformations, including whether
   any Worship XP remains part of production.
@@ -218,8 +241,8 @@ These are current implementation facts, not new design decisions:
 - The number and categories of launch spells: direct healing, healing over
   time, cleansing, restoration, protection, travel, information, resource
   support, or other utility.
-- Whether the three gods share the early support catalog or express distinct
-  support identities.
+- The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
+  in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
   requirements and staff requirements.
 
@@ -295,3 +318,11 @@ Clarified that `holy staff` was shorthand, not a new family. The existing
 blessed-staff progression culminates in god staves. All receive Holy Power,
 but even god staves retain less Magic Power than comparable dedicated Magic
 staves; offensive god spells continue to use Magic Power and Magic Defense.
+
+### 2026-08-02: Shared book with god support identities
+
+Selected a shared Cleric book whose spells may have thematic ownership:
+Saradomin healing/protection, Guthix cleansing/restoration/balance, and Zamorak
+buffs/ally empowerment. Non-aligned spells are welcome when no god is a natural
+fit. Sacrifice is not a default Zamorak mechanic because it is a poor fit for
+the expected RSC support model.
