@@ -61,19 +61,30 @@ skill.
 - Cleric spells use new consumable resources called **sigils**, serving the
   spellbook role that runes serve for Magic.
 - Sigils begin with the same `Rune stone` resource used by Runecraft.
-- A player uses a chisel on the stone to carve a holy symbol into it.
+- Sigils have stone and advanced silver material families. A player uses a
+  chisel on the relevant stone or silver input to carve the holy symbol into
+  that material.
+- Using the chisel opens the normal Crafting selection window. For each
+  material family, the player chooses one of four sigils: Saradomin, Guthix,
+  Zamorak, or neutral.
 - Carving has a Crafting requirement.
 - The carved sigil is then blessed by using it on the appropriate god altar.
 - One sigil-on-altar `Use` interaction blesses all eligible matching carved
   sigils in the player's inventory, following the existing full-inventory rune
   production pattern rather than requiring one interaction per sigil.
-- More advanced sigils incorporate silver.
+- Silver is the material for more advanced sigils rather than an unrelated
+  secondary casting reagent. Its exact input form and quantity remain balance
+  decisions.
 - Sigils are aligned to Saradomin, Guthix, or Zamorak. A Saradomin sigil can be
   blessed only at a Saradomin altar, and the same matching rule applies to the
   other two gods.
 - The spellbook may also contain non-aligned support spells when an effect does
-  not fit one god naturally. Their exact sigil/blessing cost remains to be
-  settled rather than forcing an arbitrary god label.
+  not fit one god naturally. Those spells consume neutral sigils rather than
+  being forced into a misleading god theme.
+- A neutral carved sigil can be blessed at any Saradomin, Guthix, or Zamorak
+  altar. The altar used determines which god's Devotion pays the blessing cost,
+  but the resulting item remains one neutral sigil rather than retaining an
+  altar-specific variant.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -198,18 +209,15 @@ These are current implementation facts, not new design decisions:
 
 ### Sigil Taxonomy and Production
 
-- Which carved symbols exist, which spells consume them, and whether spells
-  use one sigil type or combinations.
-- How many reusable sigil types each god receives and whether higher spells use
-  one sigil family in larger quantities or combinations of multiple symbols.
-- What non-aligned spells consume: a neutral sigil blessed at any god altar,
-  any equivalent aligned sigil, or another clearly presented cost.
+- Exact spell costs and whether higher spells use one sigil family in larger
+  quantities or combinations of multiple symbols/material tiers.
 - Exact Crafting levels, Crafting XP, Blessing XP, silver quantities, batch
   behavior, failure behavior, and inventory transformations, including whether
   any Worship XP remains part of production.
 - Whether carving with a chisel produces one sigil at a time or supports an
-  explicit quantity/batch flow. Altar blessing itself is already settled as a
-  full-inventory action.
+  explicit quantity/batch flow after the player makes a selection in the
+  Crafting window. Altar blessing itself is already settled as a
+  full-inventory action for the selected sigil.
 
 ### Blessing Skill and Exact Accounting
 
@@ -326,3 +334,11 @@ Saradomin healing/protection, Guthix cleansing/restoration/balance, and Zamorak
 buffs/ally empowerment. Non-aligned spells are welcome when no god is a natural
 fit. Sacrifice is not a default Zamorak mechanic because it is a poor fit for
 the expected RSC support model.
+
+### 2026-08-02: Four-symbol Crafting selection and neutral blessing
+
+Confirmed four carve choices for each sigil material: Saradomin, Guthix,
+Zamorak, and neutral. Using a chisel on stone or silver opens the normal
+Crafting selection window. Aligned sigils retain matching-altar rules; neutral
+sigils can be blessed at any god altar, charge that altar's god Devotion, and
+remain one neutral item regardless of the altar used.
