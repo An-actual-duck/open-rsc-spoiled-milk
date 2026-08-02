@@ -9,6 +9,8 @@ finished until its owner confirms that the important details are resolved.
 
 No spell list, numerical effect, production level, experience award, or
 resource quantity is settled unless it appears under **Confirmed Direction**.
+Ranges explicitly labelled as provisional tuning targets remain open even when
+recorded beside an otherwise confirmed spell identity.
 
 ## Confirmed Direction
 
@@ -151,6 +153,23 @@ hard class, book-selection, or equipment lock:
 - The goal is to make dedicated Cleric support valuable in group play without
   preventing experimentation or situational hybrid builds.
 
+### Area-of-Effect Casting Contract
+
+- Cleric spells are centered on the casting player and affect an area rather
+  than requiring the caster to select each recipient.
+- Every Cleric spell is area-of-effect unless its definition explicitly says
+  otherwise.
+- The caster is excluded from the affected players unless the individual
+  spell explicitly permits self-application.
+- The standard tier-one area begins at a radius of `3` tiles around the caster.
+- Standard area grows with spell tier. Exact later radii and the distance
+  metric remain balance decisions.
+- `Unify` deliberately has a larger area than other spells in its tier so it
+  can gather eligible players before follow-up support casts.
+- Recipients must occupy the caster's current world space and signed map level.
+  Cross-layer or cross-world support is never implied by matching X/Y
+  coordinates.
+
 ### God Support Identities
 
 The Cleric book is shared rather than split into three exclusive god books.
@@ -168,6 +187,33 @@ sigil costs and gives each Devotion economy a distinct purpose.
 Sacrifice or health-exchange mechanics are not part of Zamorak's assumed
 identity. They may not fit RSC's combat and support model well and should not be
 used as a default design pattern.
+
+### Initial Spell Roster
+
+Eleven of the twelve launch slots now have confirmed identities and effect
+directions. Numerical ranges described as tuning targets below remain
+provisional until separately approved.
+
+| Tier | Spell | Identity | Confirmed effect direction |
+| ---: | --- | --- | --- |
+| 1 | Mend | Saradomin | Three-pulse regeneration heal; current target is `1` Hits per pulse at minimum, scaling quickly with Holy Power toward roughly `3` per pulse |
+| 1 | Unify | Neutral | Uses an enlarged radius and draws eligible affected players closer to the caster to set up later area support |
+| 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
+| 1 | Purify | Guthix | Reduces current poison power rather than fully curing every poison; current target range is approximately `10-40` power from Holy Power |
+| 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
+| 1 | Open slot | Open | The earlier `Ward` suggestion was not reaffirmed and overlaps the new Aegis direction; this sixth tier-one slot remains unresolved |
+| 2 | Greater Mend | Saradomin | Uses the same three-pulse regeneration model as Mend with a higher healing floor and ceiling |
+| 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
+| 2 | Thorns | Guthix | Weak recoil placed on affected players; Holy Power increases reflected damage |
+| 2 | Aegis | Saradomin | Halves the next qualifying hit; Holy Power increases how many hits the protection lasts |
+| 2 | Rally | Zamorak | Players below half Hits gain temporary lifesteal until they recover above a Holy Power-dependent threshold |
+| 2 | Respite | Neutral | Long-lived, modest increase to normal passive regeneration; it is not restricted to out-of-combat periods |
+
+The spell directions intentionally scale back immediate power in exchange for
+covering several nearby allies. Mend and Greater Mend are regeneration effects,
+not large instant heals. Purify leaves room for later full poison cleansing,
+and Restore is the only planned spell in its restoration line rather than the
+first of repeated stronger copies.
 
 ### Devotion Economy
 
@@ -221,13 +267,55 @@ These are current implementation facts, not new design decisions:
 - The server has an active party system and already updates party health and
   combat state.
 - Current player-targeted spell packets flow through a hostile/PvP handler and
-  are rejected when PvP is disabled. Existing heal spells are self-cast. A
-  later Cleric implementation therefore needs an explicitly non-hostile
-  player-target support path rather than weakening, bypassing, or overloading
-  PvP validation.
+  are rejected when PvP is disabled. Existing heal spells are self-cast. The
+  caster-centered Cleric area action should not reuse, weaken, bypass, or
+  overload that hostile player-target path.
 - Existing shared mechanics can heal up to the player's valid healing ceiling,
   restore reduced stats up to their normal levels, and cure poison. Those are
   available implementation building blocks, not automatic spell selections.
+- Poison is represented as integer power, drains by `3` per poison pulse, and
+  is cured when it falls below `10`. Purify can therefore reduce that same
+  authoritative power while preserving a meaningful distinction from a full
+  cure.
+- Timed potion effects already use an integer magnitude plus an expiry, while
+  several combat effects use an integer magnitude plus remaining attack count.
+- The current damage roll already supports a chance to shift an offense roll
+  one step upward before the defense roll is subtracted. This is a useful
+  balance reference for Fervor, not a final Cleric formula.
+- Recoil and lifesteal behavior already exist, but their hooks span melee,
+  ranged/projectile, poison, and other damage paths. Thorns and Rally will need
+  explicit shared eligibility and attribution rules across applicable styles.
+- Normal Hits regeneration restores one point about every `100` game ticks
+  before existing equipment and potion speed modifiers. It is not inherently
+  limited to out-of-combat periods, which fits the revised Respite direction.
+
+## Holy Power Effect Ranks Under Evaluation
+
+The preferred direction is to map Holy Power into a small number of discrete
+effect ranks instead of persisting arbitrary floating-point strength. For
+example, low Holy Power could apply `Aegis`, while crossing the next threshold
+applies `Aegis II` with two protected hits. Percentage effects could similarly
+advance through authored values such as `5%`, `10%`, and later steps.
+
+This approach fits existing server patterns and has several advantages:
+
+- the effect shown to a player has an understandable name and strength;
+- each rank has an explicit, testable integer magnitude;
+- durations and remaining-hit charges can use existing integer state shapes;
+- balance changes edit a small rank table rather than continuous formulas; and
+- server authority does not depend on client rounding or floating-point
+  display.
+
+The recommended implementation shape for later review is one stable effect
+identity with `rank`, `magnitude`, and either `expiresAt` or `chargesRemaining`.
+Holy Power selects and snapshots the rank when the spell is cast. Separate
+spell definitions for `Aegis`, `Aegis II`, and `Aegis III` would duplicate one
+mechanic and should be avoided; the rank belongs to the applied status.
+
+This is a strong design preference, not a completed numerical model. Holy
+Power thresholds, rank counts, exact values, refresh/replacement rules,
+stacking, persistence, death/logout cleanup, and status-display requirements
+remain to be settled.
 
 ## Unresolved Design Questions
 
@@ -278,14 +366,28 @@ These are current implementation facts, not new design decisions:
   fixed effect to avoid mandatory staff swapping.
 - Self-casting, other-player targeting, party/group interaction, PvP behavior,
   experience attribution, and abuse safeguards.
+- Which nearby players are eligible for beneficial area effects: party members
+  only, players who explicitly accept aid, or another bounded rule.
+- Exact area geometry, line-of-sight/path requirements, tier radii, and how
+  Unify selects safe reachable destination tiles without forced-movement abuse.
+- Holy Power threshold tables and discrete ranks for each scalable effect.
+- Recast behavior when the recipient already has the same, stronger, or weaker
+  rank, including whether a rejected cast consumes sigils or awards XP.
+- Whether effect ranks are cleared on death/logout or persist with bounded
+  remaining duration.
+- Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
+  and provide Rally lifesteal.
+- Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
+  its ending health threshold, or both.
+- How Respite combines with existing regeneration potions, robes, amulets, and
+  passive-healing timing.
 
 ### Initial Spell Content
 
 - Exact unlock levels for the six tier-one and six tier-two spells through
   Worship `30`.
-- The categories of the `12` launch spells: direct healing, healing over time,
-  cleansing, restoration, protection, information, resource support, or other
-  utility.
+- The sixth tier-one spell. The former `Ward` proposal needs confirmation,
+  replacement, or removal now that Aegis owns next-hit mitigation in tier two.
 - The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
@@ -434,3 +536,17 @@ Confirmed `12` initial spells, divided evenly into six tier-one and six
 tier-two unlocks staggered through approximately Worship level `30`. The count
 is intentionally smaller than Magic's level-30 catalog so each launch spell can
 serve a distinct support purpose rather than repeating an elemental template.
+
+### 2026-08-02: Caster-centered area support and revised roster
+
+Confirmed caster-centered area casting as the default, a standard tier-one
+radius of `3`, growth with later tiers, and exclusion of the caster unless a
+spell explicitly opts in. Replaced Discern with the enlarged-radius Unify and
+Renewal with Thorns. Defined Mend/Greater Mend regeneration, partial Purify,
+percentage Restore, roll-biased Fervor, post-defense Zeal, charge-ranked Aegis,
+low-health Rally lifesteal, and long-lived in-combat-compatible Respite. The
+former Ward slot and exact numerical tuning remain open.
+
+Recorded discrete Holy Power effect ranks as the preferred model for further
+exploration because current timed and attack-count status systems already use
+integer magnitudes, expiry times, and charges.
