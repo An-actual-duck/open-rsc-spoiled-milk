@@ -346,6 +346,9 @@ def make_session(session_dir: Path) -> None:
                     "lock.waitNanos": 200_000,
                     "disk.reads": 1,
                     "disk.totalNanos": 900_000,
+                    "packet.sceneBaseline.serverTick": [120, 120, 121],
+                    "packet.sceneBaseline.pageCategory": [3, 4, 5],
+                    "packet.sceneBaseline.offsetNanos": [1_000_000, 2_000_000, 640_000_000],
                 },
             ),
             record(
@@ -427,6 +430,7 @@ def main() -> None:
             "`test=dense`: 2 traces; interval p95/p99/max 30.000ms / 30.000ms / 30.000ms",
             "`world-section.total` p50/p95/p99/max: 12.000ms / 20.000ms / 20.000ms / 20.000ms (2 traces).",
             "Trace 2 center 3,13 (diagonal, return): interval/render max 30.000ms / 25.000ms, upload 12.000ms / 4096 bytes",
+            "Packets: scene baseline 3 packets over 2 server ticks (120..121), fence=1, presentation-scenery=1, presentation-walls=1, final packet 640.000ms.",
             "Latest resident triangle total: 1186; unclassified 0 (0.00%).",
             "Family counts: unclassified=0, terrain=800, water=24, wall=160, roof=96, scenery=75, foliage=18, ore=7, emissive=4, effect=2.",
             "rotated-sprite: latest accepted 256, lifetime max 256, latest dropped 0, total dropped 3 across 1 report windows, limit 256",

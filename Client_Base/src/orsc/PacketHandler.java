@@ -2965,6 +2965,14 @@ public class PacketHandler {
 				recordsRead++;
 			}
 		}
+		BoundaryLoadingDiagnostics.recordSceneBaselinePacket(
+			protocolVersion,
+			serverTick,
+			locationContextSequence,
+			pageCategory,
+			pageIndex,
+			pageTotal,
+			recordsRead);
 		if (protocolVersion
 				== SceneBaselineState.ATOMIC_FENCE_PROTOCOL_VERSION
 			&& pageCategory == SceneBaselineState.PAGE_ATOMIC_FENCE) {

@@ -85,6 +85,12 @@ public final class BoundaryLoadingDiagnosticsFixture {
         }
         BoundaryLoadingDiagnostics.recordPacket(
             157, 256, before, 2_000_000L);
+        for (int page = 0; page < 40; page++) {
+            BoundaryLoadingDiagnostics.recordSceneBaselinePacket(
+                8, 200 + page / 8, contextSequence,
+                page == 0 ? 3 : 4,
+                Math.max(0, page - 1), 39, 512);
+        }
         BoundaryLoadingDiagnostics.recordRegionTransition(
             false, false, 48, 0, 1100, 40, 2, 12);
         BoundaryLoadingDiagnostics.recordStaticPresentationBuild(
@@ -177,6 +183,7 @@ def main() -> None:
         (source_text, "if (!ENABLED) {\n\t\t\treturn null;", "disabled storage allocation"),
         (source_text, "DEFAULT_MAX_TRANSITIONS = 256", "transition bound"),
         (source_text, "DEFAULT_MAX_SPANS = 192", "span bound"),
+        (source_text, "MAX_SCENE_BASELINE_PACKETS = 32", "baseline packet bound"),
         (source_text, "frame.opengl.renderP99Nanos", "frame percentile output"),
         (source_text, "frame.client.loopP99Nanos", "client-loop percentile output"),
         (source_text, "presentation.retainedAttempts", "atomic hold accounting"),
@@ -189,6 +196,7 @@ def main() -> None:
         (packet_text, "beginContextTransition", "packet context hook"),
         (packet_text, "recordPrediction", "prediction hook"),
         (packet_text, "recordAtomicActivationProgress", "atomic activation hook"),
+        (packet_text, "recordSceneBaselinePacket", "baseline packet detail hook"),
         (world_text, '"minimap",\n\t\t\t\t\t\t"publish"', "minimap hook"),
         (world_text, "recordBoundaryDiskRead", "disk hook"),
         (world_text, "recordBoundaryLockWait", "lock hook"),
@@ -293,6 +301,14 @@ def main() -> None:
             fail(f"frame storage exceeded fixed bound: {settled}")
         if len(settled.get("frame.client.loopNanos", [])) > 96:
             fail(f"client-loop storage exceeded fixed bound: {settled}")
+        if settled.get("packet.sceneBaseline.count") != 32:
+            fail(f"baseline packet storage did not stop at its bound: {settled}")
+        if settled.get("packet.sceneBaseline.dropped") != 8:
+            fail(f"baseline packet drops were not accounted: {settled}")
+        if len(settled.get("packet.sceneBaseline.serverTick", [])) != 32:
+            fail(f"baseline packet details lost array alignment: {settled}")
+        if settled.get("packet.sceneBaseline.pageCategory", [])[0] != 3:
+            fail(f"atomic fence category was not preserved: {settled}")
         if settled.get("frame.opengl.renderP50Nanos") != 10_000_000:
             fail(f"frame p50 accounting incorrect: {settled}")
         if settled.get("frame.opengl.renderP95Nanos") != 30_000_000:

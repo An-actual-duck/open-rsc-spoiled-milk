@@ -410,6 +410,48 @@ def correlation_flags(record: dict[str, Any]) -> list[str]:
     return flags
 
 
+def scene_baseline_packet_summary(record: dict[str, Any]) -> str:
+    ticks = record.get("packet.sceneBaseline.serverTick")
+    categories = record.get("packet.sceneBaseline.pageCategory")
+    offsets = record.get("packet.sceneBaseline.offsetNanos")
+    if not isinstance(ticks, list) or not ticks:
+        return "scene-baseline packet details unavailable"
+    numeric_ticks = [
+        int(value)
+        for value in ticks
+        if not isinstance(value, bool) and isinstance(value, (int, float))
+    ]
+    if not numeric_ticks:
+        return "scene-baseline packet details unavailable"
+    category_names = {
+        0: "empty",
+        1: "scenery",
+        2: "walls",
+        3: "fence",
+        4: "presentation-scenery",
+        5: "presentation-walls",
+    }
+    category_counts = Counter(
+        category_names.get(int(value), f"category-{int(value)}")
+        for value in categories
+        if not isinstance(value, bool) and isinstance(value, (int, float))
+    ) if isinstance(categories, list) else Counter()
+    category_text = ", ".join(
+        f"{name}={count}" for name, count in sorted(category_counts.items())
+    ) or "categories unavailable"
+    final_offset = "unavailable"
+    if isinstance(offsets, list) and offsets:
+        value = offsets[-1]
+        if not isinstance(value, bool) and isinstance(value, (int, float)):
+            final_offset = milliseconds(float(value))
+    return (
+        f"scene baseline {len(numeric_ticks)} packets over "
+        f"{len(set(numeric_ticks))} server ticks "
+        f"({min(numeric_ticks)}..{max(numeric_ticks)}), "
+        f"{category_text}, final packet {final_offset}"
+    )
+
+
 def boundary_loading_lines(events: list[dict[str, Any]]) -> list[str]:
     all_transitions = [
         event
@@ -647,6 +689,7 @@ def boundary_loading_lines(events: list[dict[str, Any]]) -> list[str]:
             f"{milliseconds(numeric(event, 'opengl.queue.totalNanos'))}/"
             f"{milliseconds(numeric(event, 'opengl.queue.maxNanos'))}."
         )
+        lines.append(f"  Packets: {scene_baseline_packet_summary(event)}.")
     return lines
 
 

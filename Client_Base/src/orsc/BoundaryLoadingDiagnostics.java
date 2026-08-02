@@ -38,6 +38,7 @@ final class BoundaryLoadingDiagnostics {
 	static final int MAX_OPENGL_FRAMES = 96;
 	static final int MAX_CLIENT_LOOP_FRAMES = 96;
 	static final int MAX_PRESENTATION_FRAMES = 96;
+	static final int MAX_SCENE_BASELINE_PACKETS = 32;
 	static final int RECENT_OPENGL_FRAMES = 8;
 	static final int RECENT_CLIENT_LOOP_FRAMES = 8;
 	static final int MAX_VISITED_CENTERS = 64;
@@ -240,6 +241,33 @@ final class BoundaryLoadingDiagnostics {
 				startedNanos,
 				durationNanos,
 				threadKind());
+		}
+	}
+
+	static void recordSceneBaselinePacket(
+		int protocolVersion,
+		int serverTick,
+		int contextSequence,
+		int pageCategory,
+		int pageIndex,
+		int pageTotal,
+		int records) {
+		if (!ENABLED) {
+			return;
+		}
+		synchronized (BoundaryLoadingDiagnostics.class) {
+			if (activeTrace == null) {
+				return;
+			}
+			activeTrace.recordSceneBaselinePacket(
+				protocolVersion,
+				serverTick,
+				contextSequence,
+				pageCategory,
+				pageIndex,
+				pageTotal,
+				records,
+				System.nanoTime());
 		}
 	}
 
@@ -1084,6 +1112,24 @@ final class BoundaryLoadingDiagnostics {
 		private long packetCount;
 		private long packetBytes;
 		private long packetNanos;
+		private final long[] sceneBaselineOffsets =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselineProtocolVersions =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselineServerTicks =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselineContextSequences =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselinePageCategories =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselinePageIndices =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselinePageTotals =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private final long[] sceneBaselineRecords =
+			new long[MAX_SCENE_BASELINE_PACKETS];
+		private int sceneBaselinePacketCount;
+		private long droppedSceneBaselinePackets;
 		private int diskReads;
 		private long diskBytes;
 		private long diskNanos;
@@ -1188,6 +1234,32 @@ final class BoundaryLoadingDiagnostics {
 					: phaseStartedNanos - startedNanos;
 			spanDurations[spanCount] = safeDuration;
 			spanCount++;
+		}
+
+		private void recordSceneBaselinePacket(
+			int protocolVersion,
+			int serverTick,
+			int contextSequence,
+			int pageCategory,
+			int pageIndex,
+			int pageTotal,
+			int records,
+			long observedNanos) {
+			if (sceneBaselinePacketCount
+					>= sceneBaselineOffsets.length) {
+				droppedSceneBaselinePackets++;
+				return;
+			}
+			int index = sceneBaselinePacketCount++;
+			sceneBaselineOffsets[index] =
+				observedNanos - startedNanos;
+			sceneBaselineProtocolVersions[index] = protocolVersion;
+			sceneBaselineServerTicks[index] = serverTick;
+			sceneBaselineContextSequences[index] = contextSequence;
+			sceneBaselinePageCategories[index] = pageCategory;
+			sceneBaselinePageIndices[index] = pageIndex;
+			sceneBaselinePageTotals[index] = pageTotal;
+			sceneBaselineRecords[index] = Math.max(0, records);
 		}
 
 		private void recordOpenGLFrame(OpenGLFrameSample sample) {
@@ -1718,6 +1790,52 @@ final class BoundaryLoadingDiagnostics {
 			event.number("packet.count", trace.packetCount);
 			event.number("packet.bytes", trace.packetBytes);
 			event.number("packet.totalNanos", trace.packetNanos);
+			event.number(
+				"packet.sceneBaseline.count",
+				trace.sceneBaselinePacketCount);
+			event.number(
+				"packet.sceneBaseline.dropped",
+				trace.droppedSceneBaselinePackets);
+			event.numbers(
+				"packet.sceneBaseline.offsetNanos",
+				Arrays.copyOf(
+					trace.sceneBaselineOffsets,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.protocolVersion",
+				Arrays.copyOf(
+					trace.sceneBaselineProtocolVersions,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.serverTick",
+				Arrays.copyOf(
+					trace.sceneBaselineServerTicks,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.contextSequence",
+				Arrays.copyOf(
+					trace.sceneBaselineContextSequences,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.pageCategory",
+				Arrays.copyOf(
+					trace.sceneBaselinePageCategories,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.pageIndex",
+				Arrays.copyOf(
+					trace.sceneBaselinePageIndices,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.pageTotal",
+				Arrays.copyOf(
+					trace.sceneBaselinePageTotals,
+					trace.sceneBaselinePacketCount));
+			event.numbers(
+				"packet.sceneBaseline.records",
+				Arrays.copyOf(
+					trace.sceneBaselineRecords,
+					trace.sceneBaselinePacketCount));
 			event.number("disk.reads", trace.diskReads);
 			event.number("disk.bytes", trace.diskBytes);
 			event.number("disk.totalNanos", trace.diskNanos);

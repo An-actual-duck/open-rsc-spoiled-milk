@@ -97,7 +97,7 @@ latch releases and the configured settling frames have passed.
 
 | Area | Measurements |
 | --- | --- |
-| Packet | opcode, byte count, total handling time, context header/body decode, state acceptance, scope application, ready receipt |
+| Packet | opcode, byte count, total handling time, context header/body decode, state acceptance, scope application, ready receipt; scene-baseline protocol, server tick, context sequence, page category/index/total, record count, and arrival offset |
 | Prediction | target center, decode/build/queue latency, cache result, triangles, reused/built cells, lead time, match at activation |
 | Terrain | world-section phases, world-product phases, collision clear, terrain publication, wall emission/publication, roof publication |
 | Minimap | clear and native-raster publication |
@@ -120,6 +120,8 @@ is active, its event now includes `boundary.traceId` and
 - One active trace retains at most 192 spans, 64 phase keys, 96 OpenGL frames,
   96 client-loop samples, 96 presentation frames, and eight pre-transition
   OpenGL/client-loop samples.
+- Scene-baseline packet details use a separate 32-entry aligned buffer so a low
+  span limit cannot hide which page or server tick completed an activation.
 - Prediction and visited-center indexes are fixed-size access-order maps of 32
   and 64 entries.
 - Additional transitions and spans are counted as suppressed/dropped.
@@ -243,6 +245,88 @@ final server/network attribution. The newly added timeline fields separate
 client-loop continuity, retained-frame attempts, OpenGL presenter wait, and
 submission-queue time on the next run.
 
+## Warm Cardinal Directional Evidence
+
+Session
+`output/renderer-diagnostics/session-20260802-110206-2437601` measured repeated
+return crossings between centers `(11,11)` and `(11,12)` under
+`boundary-warm-cardinal`. The player reported that one direction had an easy to
+capture stutter while the reverse was nearly imperceptible. All 11 return
+crossings toward `(11,11)` and all 12 return crossings toward `(11,12)` matched
+the same direction-specific timing split:
+
+| Destination | Return traces | Static baseline p50/p95/p99/max | Release p50/p95/max | Retained attempts | Max render/client loop |
+| --- | ---: | --- | --- | --- | --- |
+| `(11,11)` | 11 | 15.306 / 18.789 / 18.789 / 18.789 ms | 28.979 / 38.431 / 38.431 ms | 1 | 37.960 / 38.914 ms |
+| `(11,12)` | 12 | 633.686 / 650.274 / 650.274 / 650.274 ms | 654.739 / 671.609 / 671.609 ms | 38–40 | 42.819 / 34.175 ms |
+
+Every correlated Ctrl+F8 marker attached to a settled boundary trace selected
+the slow `(11,12)` direction. Prediction was published and matched in both
+directions. Scenery mesh construction, cache behavior, GL render work, disk,
+GC, and measured locks were comparable and far below the 615 ms directional
+gap.
+
+The packet timeline identifies the exact gate. A representative slow trace
+received:
+
+- context 157, Player 191, and dynamic/static setup packets by 19.2 ms;
+- the atomic scene fence plus eight scene-baseline data pages by 20.5 ms;
+- the remaining two data pages at 633.4–633.7 ms;
+- static-baseline completion at 633.8 ms and presentation release at 654.7 ms.
+
+A representative fast reverse trace received the same first burst by 18.0 ms,
+then its final page at 18.1 ms because the next server update happened to fall
+immediately after the first. The client handled each burst promptly. This rules
+out client packet-drain cadence, renderer work, and network throughput as the
+cause of this repeatable warm-direction hold.
+
+The server source explains the 640 ms quantization:
+
+- protocol-v8 baseline data pages contain at most 512 records;
+- `sendSceneBaselineIfEnabled` sends at most eight data pages per game-state
+  update and retains category cursors for the next update;
+- an atomic fence is sent before that eight-page burst;
+- the high-frequency movement stream intentionally does not originate or
+  finish a context/baseline; the next opportunity is the 640 ms normal world
+  update.
+
+The two measured scenes need more than eight data pages (the representative
+slow transition needed ten and the fast reverse needed nine), so neither can
+complete in the initiating update. Alternating traversal phase-locks one
+direction just before the next world update and the other just after it,
+producing the consistent asymmetry. The code comment promises that context and
+baseline are emitted as one ordered atomic update, but the eight-page server
+burst limit violates that promise for ordinary dense scenes.
+
+### Solution comparison for the confirmed warm gate
+
+1. **Complete protocol-v8 baseline in the initiating update, with an explicit
+   page/byte safety bound (recommended prototype).** Compute the required page
+   count first and send the complete atomic product when it fits the bound.
+   Refuse or pre-stage an oversized product rather than silently splitting an
+   activation across world ticks. This preserves the existing scene data and
+   atomic release semantics.
+2. **Raise the fixed burst from 8 to 16.** This is the smallest comparison
+   experiment and should remove the measured 9–10-page waits, but it is brittle:
+   a denser scene can cross the new threshold and recreate the same full-tick
+   hitch.
+3. **Pre-stage static presentation pages with the predicted center.** This is a
+   stronger long-term bandwidth design because most baseline bytes arrive
+   before activation, but it requires sequence-safe discard/replacement rules
+   and is materially more complex.
+4. **Finish baseline pages from the high-frequency movement poll.** This would
+   reduce the delay but spreads game-state presentation ownership across two
+   update paths and risks inconsistent snapshots; it is not recommended.
+5. **Release on the fence before outer presentation pages finish.** This would
+   hide the wait by exposing a mixed old/new scene and can restore the
+   wrong-area flash. It fails the scene-correctness requirement and is rejected.
+
+The next implementation decision should therefore separate this confirmed
+server page-cadence gate from cold GPU/upload work. Removing the full-tick warm
+wait is higher value and lower risk than another renderer micro-optimization;
+cold, diagonal, dense, and multi-level measurements remain necessary before
+selecting any broader GPU/residency change.
+
 ## Evidence Decision Gates
 
 Use the following gates rather than optimizing whichever code is most visible:
@@ -331,9 +415,12 @@ Prepare a new shadow/minimap product and swap it with the atomic scene.
 
 ## Current Recommendation
 
-Complete the new private case matrix before choosing an implementation.
-The prior baseline makes bounded GPU residency or predicted GPU preparation the
-leading candidates, but the choice between them depends on:
+Checkpoint the refined packet diagnostics and the confirmed page-cadence
+finding before changing behavior. Then prototype complete bounded protocol-v8
+baseline delivery and visually repeat the same directional case. Continue the
+remaining private case matrix before choosing any broader renderer
+optimization. Bounded GPU residency or predicted GPU preparation remain
+possible cold/dense-case candidates, but the choice between them depends on:
 
 - whether the remaining visible dip still coincides with large upload bytes;
 - whether the predicted product is ready with useful lead time;
