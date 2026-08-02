@@ -260,6 +260,23 @@ Ward/Aegis charge. Those details must be specified and regression-tested before
 implementation, especially for small hits where sequential rounding can
 change the result by one.
 
+### Exclusive Effect Families
+
+- Ward and Aegis occupy one protection-effect slot on each recipient. They can
+  never be active together, and a new cast never adds its charges to the
+  charges already present.
+- Mend and Greater Mend occupy one three-pulse healing-effect slot on each
+  recipient. Repeated casts and the two spell tiers cannot create overlapping
+  pulse streams or add their remaining pulses together.
+- Exclusivity is evaluated independently for each eligible party recipient of
+  an area cast.
+- Exact replacement and refresh rules remain open. In particular, the design
+  must decide what happens when a weaker effect reaches a recipient who has a
+  stronger one and whether an equal effect restarts its duration or pulses.
+- Respite is not automatically part of the Mend family. Whether its passive
+  regeneration modifier can coexist with active Mend pulses remains a separate
+  balance decision.
+
 ### Devotion Economy
 
 - Sigil blessing creates a new repeatable Devotion sink.
@@ -425,8 +442,10 @@ remain to be settled.
   and how Unify selects safe reachable destination tiles without
   forced-movement abuse. Standard tier radii are settled by the `N + 1` rule.
 - Holy Power threshold tables and discrete ranks for each scalable effect.
-- Recast behavior when the recipient already has the same, stronger, or weaker
-  rank, including whether a rejected cast consumes sigils or awards XP.
+- Replacement and refresh behavior inside the exclusive protection and Mend
+  families when a recipient already has the same, stronger, or weaker effect,
+  including partial success across an area and whether a wholly ineffective
+  cast consumes sigils or awards XP.
 - Whether effect ranks are cleared on death/logout or persist with bounded
   remaining duration.
 - Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
@@ -648,3 +667,12 @@ Confirmed four charge ranks for both protection spells. Ward protects against
 at lower Holy Power thresholds, while Aegis concentrates comparable cumulative
 mitigation into fewer, more heavily reduced hits. Raw thresholds remain tied
 to the future Holy Power equipment-stat design.
+
+### 2026-08-02: Exclusive protection and Mend families
+
+Confirmed that Ward and Aegis share one mutually exclusive protection slot.
+They cannot coexist or accumulate charges. Confirmed the same non-stacking
+rule for Mend and Greater Mend: a recipient can have only one active
+three-pulse Mend-family effect, and repeated casts cannot create concurrent or
+additive pulse streams. Replacement, refresh, and Respite-interaction rules
+remain open.
