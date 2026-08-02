@@ -378,6 +378,28 @@ public final class RenderTelemetry {
 			lock, startedNanos, durationNanos);
 	}
 
+	static void recordBoundaryPresentationRetention() {
+		BoundaryLoadingDiagnostics.recordPresentationRetention();
+	}
+
+	static void recordBoundaryPresentationProductsReady(boolean ready) {
+		BoundaryLoadingDiagnostics.recordPresentationProductsReady(ready);
+	}
+
+	static void recordBoundaryOpenGLPresenterWait(
+		long startedNanos,
+		long durationNanos,
+		boolean acquiredFrame,
+		boolean waited) {
+		BoundaryLoadingDiagnostics.recordOpenGLPresenterWait(
+			startedNanos, durationNanos, acquiredFrame, waited);
+	}
+
+	static void recordBoundaryOpenGLFrameDequeued(long submittedNanos) {
+		BoundaryLoadingDiagnostics.recordOpenGLFrameDequeued(
+			submittedNanos);
+	}
+
 	public static long elapsedSince(long startNanos) {
 		return isCollectionEnabled() && startNanos != 0L ? System.nanoTime() - startNanos : 0L;
 	}
@@ -456,6 +478,7 @@ public final class RenderTelemetry {
 			return;
 		}
 
+		long loopSequence;
 		synchronized (RenderTelemetry.class) {
 			lastClientLoopSampleNanos = System.nanoTime();
 			clientLoopStats.record(loopNanos);
@@ -467,7 +490,19 @@ public final class RenderTelemetry {
 			clientLoopSkippedDrawStats.record(skippedDraw ? 1 : 0);
 			clientLoopSleepRequestStats.record(sleepRequestMillis);
 			clientLoopStepSizeStats.record(stepSize);
+			loopSequence = clientLoopStats.count;
 		}
+		BoundaryLoadingDiagnostics.recordClientLoop(
+			loopSequence,
+			loopNanos,
+			sleepNanos,
+			updateNanos,
+			repositionNanos,
+			drawNanos,
+			updateCount,
+			sleepRequestMillis,
+			stepSize,
+			skippedDraw);
 	}
 
 	public static void recordScene3DPhases(

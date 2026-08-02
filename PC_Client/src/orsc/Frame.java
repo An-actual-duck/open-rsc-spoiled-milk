@@ -26,6 +26,7 @@ final class Frame {
 	final Renderer2DFrame renderer2DFrame;
 	final Renderer3DFrame renderer3DFrame;
 	final String[] rendererDebugOverlayLines;
+	long submittedNanos;
 	private final FrameBufferPool frameBufferPool;
 	private final FrameBuffer frameBuffer;
 	private boolean released;

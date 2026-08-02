@@ -104,8 +104,8 @@ latch releases and the configured settling frames have passed.
 | Scenery | input assembly, cache hits/misses, wall-clock mesh time, worker CPU time, parallel worker count |
 | Residency/GPU | requested/uploaded/reused/deferred chunks, uploaded bytes, chunk-upload time, projected draw, resident draw |
 | Shadows | mask build, upload, reuse/preparation/request state |
-| Atomic transition | player/static receipts, completion time, presentation samples, stability, release time |
-| Frames | OpenGL render and interval; subphases; desktop frame commit/present timing |
+| Atomic transition | player/static receipt offsets, completion time, presentation-product readiness, retained-frame attempts, stability samples, release time |
+| Frames | bounded nearby client-loop/update/draw samples; OpenGL render and interval; presenter wait and submission-queue time; subphases; desktop frame commit/present timing |
 | Runtime | heap delta, GC count/time, process CPU, client/OpenGL/preload/object-worker CPU and allocation, blocked/waited counters |
 | External pressure | named cache/log-lock waits, actual tile-archive reads, runtime-log writes, and diagnostic-output flushes |
 | Scene shape | crossing kind, first/return visit, plane change, entity counts, chunk/triangle counts |
@@ -118,7 +118,8 @@ is active, its event now includes `boundary.traceId` and
 
 - At most 256 transitions are accepted per client process by default.
 - One active trace retains at most 192 spans, 64 phase keys, 96 OpenGL frames,
-  96 presentation frames, and eight pre-transition OpenGL frames.
+  96 client-loop samples, 96 presentation frames, and eight pre-transition
+  OpenGL/client-loop samples.
 - Prediction and visited-center indexes are fixed-size access-order maps of 32
   and 64 entries.
 - Additional transitions and spans are counted as suppressed/dropped.
@@ -190,8 +191,10 @@ is preferred when practical.
 
 The analyzer derives `cardinal`, `diagonal`, `level`, and `relocation` from the
 actual deltas. It separately groups first versus return visits, prediction
-matches, and scope changes. “Dense” should be selected from recorded scenery,
-wall, and triangle counts instead of assuming a location is dense by name.
+matches, scope changes, and the enclosing named `::pf` test phase. It excludes
+the bounded pre-transition rings and non-settled/superseded traces from timing
+distributions. “Dense” should be selected from recorded scenery, wall, and
+triangle counts instead of assuming a location is dense by name.
 
 After closing the client:
 
@@ -202,6 +205,43 @@ python3 scripts/analyze-renderer-session.py \
 
 The generated `ai-summary.md` is the decision record. Retain the raw
 `events.jsonl` until the optimization direction is selected.
+
+## First Marked Cold-Case Evidence
+
+Session
+`output/renderer-diagnostics/session-20260802-104354-2428779` captured one
+settled first-visit cardinal crossing under `boundary-cold`. This run predates
+the added client-loop/retained-frame/presenter-wait fields, but its existing
+offset arrays and atomic events establish the following timeline:
+
+- The prior OpenGL frame completed 4.682 ms before context handling began.
+- The atomic Player receipt arrived about 83.600 ms after context start.
+- The complete static baseline arrived about 638.951 ms after context start.
+- Presentation first reported that the terrain product was still pending at
+  about 682.591 ms, sampled complete products around 726.149 and 742.142 ms,
+  and released the retained scene at 742.205 ms.
+- The first replacement OpenGL frame completed at 946.393 ms. Its render took
+  203.257 ms, including 151.668 ms to upload 228,054,240 bytes and 35.562 ms to
+  build the shadow mask.
+- The resulting measured OpenGL completion interval was 951.075 ms. It is not
+  a single 951 ms render call: roughly 639 ms precedes the final baseline, the
+  release/stability work continues to 742 ms, and the replacement render then
+  completes at 946 ms.
+- Client-side named packet/region phases do not account for the quiet interval
+  before the baseline. The largest recorded handlers were opcode 48 at 74.150
+  ms, scenery mesh construction at 34.178 ms, context handling at 17.522 ms,
+  and the client-region load at 9.878 ms.
+- GC accounted for 21 ms, measured disk work for 1.078 ms, and named lock
+  acquisition wait for 0.006 ms. None independently explains this cold hitch.
+
+The strongest current interpretation is **multiple serial contributors**:
+receipt/stage latency dominates the retained-scene duration, then a large cold
+GPU upload plus shadow build delays the first replacement frame. The client
+trace cannot yet distinguish network arrival from server update cadence during
+the quiet receipt interval, so this remains a measured boundary rather than a
+final server/network attribution. The newly added timeline fields separate
+client-loop continuity, retained-frame attempts, OpenGL presenter wait, and
+submission-queue time on the next run.
 
 ## Evidence Decision Gates
 

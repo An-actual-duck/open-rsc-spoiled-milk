@@ -16,6 +16,10 @@ WORLD = CLIENT / "src/orsc/graphics/three/World.java"
 CLIENT_MAIN = CLIENT / "src/orsc/mudclient.java"
 DIAGNOSTIC_SESSION = CLIENT / "src/orsc/RendererDiagnosticSession.java"
 RUNTIME_LOGGER = CLIENT / "src/orsc/ClientRuntimeLogger.java"
+PC_CLIENT = ROOT / "PC_Client/src/orsc"
+ORSC_APPLET = PC_CLIENT / "ORSCApplet.java"
+OPENGL_PRESENTER = PC_CLIENT / "OpenGLFramePresenter.java"
+PC_FRAME = PC_CLIENT / "Frame.java"
 LAUNCHER = ROOT / "scripts/run-client.sh"
 
 
@@ -37,6 +41,9 @@ def ensure_client_jar() -> None:
         CLIENT_MAIN,
         DIAGNOSTIC_SESSION,
         RUNTIME_LOGGER,
+        ORSC_APPLET,
+        OPENGL_PRESENTER,
+        PC_FRAME,
     )
     if CLIENT_JAR.exists() and all(
         source.stat().st_mtime <= CLIENT_JAR.stat().st_mtime
@@ -61,6 +68,9 @@ public final class BoundaryLoadingDiagnosticsFixture {
             500_000L, 250_000L, 350_000L, true, false);
         BoundaryLoadingDiagnostics.recordOpenGLFrame(
             contextSequence * 10L, 100_000L, 7_000_000L, 16_000_000L);
+        BoundaryLoadingDiagnostics.recordClientLoop(
+            contextSequence * 10L, 16_000_000L, 8_000_000L,
+            2_000_000L, 100_000L, 5_000_000L, 1, 8, 256, false);
         BoundaryLoadingDiagnostics.recordPrediction(
             0, centerX, 13, 5, 300_000L, 4_000_000L,
             8_000_000L, true, 900, 12, 4);
@@ -86,6 +96,17 @@ public final class BoundaryLoadingDiagnosticsFixture {
             "prepared-cache", before, 100_000L);
         BoundaryLoadingDiagnostics.recordAtomicActivationProgress(
             true, true, true, 12L);
+        BoundaryLoadingDiagnostics.recordPresentationRetention();
+        BoundaryLoadingDiagnostics.recordPresentationProductsReady(false);
+        BoundaryLoadingDiagnostics.recordOpenGLPresenterWait(
+            System.nanoTime() - 16_000_000L,
+            16_000_000L, false, true);
+        BoundaryLoadingDiagnostics.recordClientLoop(
+            contextSequence * 10L + 1L, 24_000_000L, 8_000_000L,
+            10_000_000L, 100_000L, 5_000_000L, 1, 8, 256, false);
+        BoundaryLoadingDiagnostics.recordPresentationProductsReady(true);
+        BoundaryLoadingDiagnostics.recordOpenGLFrameDequeued(
+            System.nanoTime() - 2_000_000L);
         BoundaryLoadingDiagnostics.recordOpenGLPhases(
             2_000_000L, 4_000_000L, 200_000L, 300_000L, 100_000L, 400_000L);
         BoundaryLoadingDiagnostics.recordOpenGLWorldFrame(
@@ -145,6 +166,9 @@ def main() -> None:
     client_text = CLIENT_MAIN.read_text(encoding="utf-8")
     diagnostic_session_text = DIAGNOSTIC_SESSION.read_text(encoding="utf-8")
     runtime_logger_text = RUNTIME_LOGGER.read_text(encoding="utf-8")
+    orsc_applet_text = ORSC_APPLET.read_text(encoding="utf-8")
+    opengl_presenter_text = OPENGL_PRESENTER.read_text(encoding="utf-8")
+    pc_frame_text = PC_FRAME.read_text(encoding="utf-8")
     launcher_text = LAUNCHER.read_text(encoding="utf-8")
 
     for haystack, snippet, label in (
@@ -154,6 +178,9 @@ def main() -> None:
         (source_text, "DEFAULT_MAX_TRANSITIONS = 256", "transition bound"),
         (source_text, "DEFAULT_MAX_SPANS = 192", "span bound"),
         (source_text, "frame.opengl.renderP99Nanos", "frame percentile output"),
+        (source_text, "frame.client.loopP99Nanos", "client-loop percentile output"),
+        (source_text, "presentation.retainedAttempts", "atomic hold accounting"),
+        (source_text, "opengl.presenterWait.totalNanos", "presenter wait accounting"),
         (source_text, "runtime.gcTimeMillisDelta", "GC accounting"),
         (source_text, "runtime.thread.opengl", "thread allocation accounting"),
         (telemetry_text, "recordOpenGLWorldFrame", "GPU residency hook"),
@@ -169,6 +196,10 @@ def main() -> None:
         (client_text, "recordPresentationRelease", "atomic presentation hook"),
         (diagnostic_session_text, '"diagnostic-event-log"', "diagnostic-output timing hook"),
         (runtime_logger_text, '"client-runtime-log"', "runtime-log timing hook"),
+        (orsc_applet_text, "recordBoundaryPresentationRetention", "retained-frame hook"),
+        (opengl_presenter_text, "recordBoundaryOpenGLPresenterWait", "presenter wait hook"),
+        (opengl_presenter_text, "recordBoundaryOpenGLFrameDequeued", "frame queue hook"),
+        (pc_frame_text, "submittedNanos", "frame submission timestamp"),
         (launcher_text, "--boundary-diagnostics", "launcher option"),
         (launcher_text, 'FRAME_CAPTURE_ENABLED=false', "capture isolation"),
     ):
@@ -260,6 +291,8 @@ def main() -> None:
             fail(f"phase storage exceeded fixed bound: {settled}")
         if len(settled.get("frame.opengl.renderNanos", [])) > 96:
             fail(f"frame storage exceeded fixed bound: {settled}")
+        if len(settled.get("frame.client.loopNanos", [])) > 96:
+            fail(f"client-loop storage exceeded fixed bound: {settled}")
         if settled.get("frame.opengl.renderP50Nanos") != 10_000_000:
             fail(f"frame p50 accounting incorrect: {settled}")
         if settled.get("frame.opengl.renderP95Nanos") != 30_000_000:
@@ -268,6 +301,14 @@ def main() -> None:
             fail(f"frame p99 accounting incorrect: {settled}")
         if settled.get("frame.opengl.renderMaxNanos") != 30_000_000:
             fail(f"frame max accounting incorrect: {settled}")
+        if settled.get("frame.client.loopMaxNanos") != 24_000_000:
+            fail(f"client-loop max accounting incorrect: {settled}")
+        if settled.get("presentation.retainedAttempts") != 1:
+            fail(f"presentation retention accounting incorrect: {settled}")
+        if settled.get("opengl.presenterWait.count") != 1:
+            fail(f"presenter wait accounting incorrect: {settled}")
+        if settled.get("opengl.queue.count") != 1:
+            fail(f"frame queue accounting incorrect: {settled}")
         if settled.get("disk.reads") != 1 or settled.get("lock.waitCount") != 1:
             fail(f"disk/lock accounting incorrect: {settled}")
         if settled.get("prediction.matched") is not True:

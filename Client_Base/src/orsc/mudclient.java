@@ -25262,6 +25262,8 @@ public final class mudclient implements Runnable {
 		boolean presentationProductsReady =
 			!this.packetHandler
 				.isLayeredTerrainPresentationStagePending();
+		RenderTelemetry.recordBoundaryPresentationProductsReady(
+			presentationProductsReady);
 		if (!presentationProductsReady
 			&& this.shouldRetainLastPresentedFrame()
 			&& !this.layeredSceneTerrainStageWaitLogged) {

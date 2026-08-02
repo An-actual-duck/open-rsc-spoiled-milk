@@ -373,6 +373,7 @@ final class OpenGLFramePresenter implements AutoCloseable {
 			renderer3DFrame,
 			rendererDebugOverlayLines);
 		RenderTelemetry.recordOpenGLSnapshot(RenderTelemetry.elapsedSince(snapshotStart));
+		frame.submittedNanos = RenderTelemetry.boundaryDiagnosticsNow();
 
 		synchronized (frameLock) {
 			if (pendingFrame != null) {
@@ -685,18 +686,29 @@ final class OpenGLFramePresenter implements AutoCloseable {
 	}
 
 	private Frame takeLatestFrame() throws InterruptedException {
+		long waitStart = RenderTelemetry.boundaryDiagnosticsNow();
+		Frame frame;
+		boolean waited = false;
 		synchronized (frameLock) {
 			if (pendingFrame == null && !closed) {
+				waited = true;
 				frameLock.wait(16L);
 			}
 
-			Frame frame = pendingFrame;
+			frame = pendingFrame;
 			pendingFrame = null;
-			return frame;
 		}
+		RenderTelemetry.recordBoundaryOpenGLPresenterWait(
+			waitStart,
+			waitStart == 0L ? 0L : System.nanoTime() - waitStart,
+			frame != null,
+			waited);
+		return frame;
 	}
 
 	private void renderFrame(Frame frame) throws Exception {
+		RenderTelemetry.recordBoundaryOpenGLFrameDequeued(
+			frame.submittedNanos);
 		OpenGLWindowController.SurfaceSize surface =
 			windowController.prepareFrame(frame.targetWidth, frame.targetHeight);
 		viewportPresenter.update(

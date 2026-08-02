@@ -36,8 +36,10 @@ final class BoundaryLoadingDiagnostics {
 	static final int DEFAULT_POST_RELEASE_FRAMES = 16;
 	static final int MAX_PHASE_KEYS = 64;
 	static final int MAX_OPENGL_FRAMES = 96;
+	static final int MAX_CLIENT_LOOP_FRAMES = 96;
 	static final int MAX_PRESENTATION_FRAMES = 96;
 	static final int RECENT_OPENGL_FRAMES = 8;
+	static final int RECENT_CLIENT_LOOP_FRAMES = 8;
 	static final int MAX_VISITED_CENTERS = 64;
 	static final int MAX_PREDICTIONS = 32;
 
@@ -57,6 +59,8 @@ final class BoundaryLoadingDiagnostics {
 
 	private static final OpenGLFrameSample[] RECENT_FRAMES =
 		createRecentFrames();
+	private static final ClientLoopSample[] RECENT_CLIENT_LOOPS =
+		createRecentClientLoops();
 	private static final Map<String, Integer> VISITED_CENTERS =
 		ENABLED
 			? new LinkedHashMap<String, Integer>(
@@ -98,6 +102,8 @@ final class BoundaryLoadingDiagnostics {
 	private static long suppressedTransitions;
 	private static int recentFrameWriteIndex;
 	private static int recentFrameCount;
+	private static int recentClientLoopWriteIndex;
+	private static int recentClientLoopCount;
 
 	private BoundaryLoadingDiagnostics() {
 	}
@@ -157,6 +163,7 @@ final class BoundaryLoadingDiagnostics {
 					RuntimeSnapshot.capture());
 				startedTransitions++;
 				copyRecentFrames(activeTrace);
+				copyRecentClientLoops(activeTrace);
 			}
 		}
 		writeCompleted(superseded);
@@ -500,6 +507,122 @@ final class BoundaryLoadingDiagnostics {
 		writeCompleted(completed);
 	}
 
+	static void recordClientLoop(
+		long sequence,
+		long loopNanos,
+		long sleepNanos,
+		long updateNanos,
+		long repositionNanos,
+		long drawNanos,
+		int updateCount,
+		int sleepRequestMillis,
+		int stepSize,
+		boolean skippedDraw) {
+		if (!ENABLED) {
+			return;
+		}
+		synchronized (BoundaryLoadingDiagnostics.class) {
+			ClientLoopSample sample =
+				RECENT_CLIENT_LOOPS[recentClientLoopWriteIndex];
+			sample.set(
+				sequence,
+				System.nanoTime(),
+				loopNanos,
+				sleepNanos,
+				updateNanos,
+				repositionNanos,
+				drawNanos,
+				updateCount,
+				sleepRequestMillis,
+				stepSize,
+				skippedDraw);
+			rememberRecentClientLoop();
+			if (activeTrace != null) {
+				activeTrace.recordClientLoop(sample);
+			}
+		}
+	}
+
+	static void recordPresentationRetention() {
+		if (!ENABLED) {
+			return;
+		}
+		synchronized (BoundaryLoadingDiagnostics.class) {
+			if (activeTrace != null) {
+				activeTrace.recordPresentationRetention(
+					System.nanoTime());
+			}
+		}
+	}
+
+	static void recordPresentationProductsReady(boolean ready) {
+		if (!ENABLED) {
+			return;
+		}
+		synchronized (BoundaryLoadingDiagnostics.class) {
+			if (activeTrace == null) {
+				return;
+			}
+			long now = System.nanoTime();
+			if (ready) {
+				if (activeTrace.presentationProductsReadyNanos == 0L) {
+					activeTrace.presentationProductsReadyNanos = now;
+				}
+			} else if (activeTrace.presentationProductsWaitNanos == 0L) {
+				activeTrace.presentationProductsWaitNanos = now;
+			}
+		}
+	}
+
+	static void recordOpenGLPresenterWait(
+		long startedNanos,
+		long durationNanos,
+		boolean acquiredFrame,
+		boolean waited) {
+		if (!ENABLED) {
+			return;
+		}
+		synchronized (BoundaryLoadingDiagnostics.class) {
+			if (activeTrace == null) {
+				return;
+			}
+			if (acquiredFrame) {
+				activeTrace.openGLPresenterAcquiredFrames++;
+			}
+			if (waited) {
+				activeTrace.openGLPresenterWaitCount++;
+				activeTrace.openGLPresenterWaitNanos +=
+					Math.max(0L, durationNanos);
+				activeTrace.openGLPresenterWaitMaxNanos =
+					Math.max(
+						activeTrace.openGLPresenterWaitMaxNanos,
+						Math.max(0L, durationNanos));
+				if (activeTrace.openGLPresenterWaitFirstNanos == 0L) {
+					activeTrace.openGLPresenterWaitFirstNanos =
+						startedNanos > 0L
+							? startedNanos : System.nanoTime();
+				}
+			}
+		}
+	}
+
+	static void recordOpenGLFrameDequeued(long submittedNanos) {
+		if (!ENABLED || submittedNanos <= 0L) {
+			return;
+		}
+		synchronized (BoundaryLoadingDiagnostics.class) {
+			if (activeTrace == null) {
+				return;
+			}
+			long queueNanos =
+				Math.max(0L, System.nanoTime() - submittedNanos);
+			activeTrace.openGLQueueSamples++;
+			activeTrace.openGLQueueNanos += queueNanos;
+			activeTrace.openGLQueueMaxNanos =
+				Math.max(activeTrace.openGLQueueMaxNanos, queueNanos);
+		}
+	}
+
 	static void recordAtomicActivationProgress(
 		boolean completed,
 		boolean playerReceipt,
@@ -512,6 +635,13 @@ final class BoundaryLoadingDiagnostics {
 			if (activeTrace == null) {
 				return;
 			}
+			long now = System.nanoTime();
+			if (playerReceipt && !activeTrace.atomicPlayerReceipt) {
+				activeTrace.atomicPlayerReceiptNanos = now;
+			}
+			if (staticBaseline && !activeTrace.atomicStaticBaseline) {
+				activeTrace.atomicStaticBaselineNanos = now;
+			}
 			activeTrace.atomicPlayerReceipt |= playerReceipt;
 			activeTrace.atomicStaticBaseline |= staticBaseline;
 			activeTrace.atomicElapsedNanos =
@@ -519,7 +649,7 @@ final class BoundaryLoadingDiagnostics {
 					activeTrace.atomicElapsedNanos,
 					Math.max(0L, elapsedMillis) * 1_000_000L);
 			if (completed) {
-				activeTrace.atomicCompletedNanos = System.nanoTime();
+				activeTrace.atomicCompletedNanos = now;
 			}
 		}
 	}
@@ -630,11 +760,39 @@ final class BoundaryLoadingDiagnostics {
 		}
 	}
 
+	private static void copyRecentClientLoops(Trace trace) {
+		int count = Math.min(
+			recentClientLoopCount,
+			RECENT_CLIENT_LOOP_FRAMES);
+		int start =
+			Math.floorMod(
+				recentClientLoopWriteIndex - count,
+				RECENT_CLIENT_LOOP_FRAMES);
+		for (int index = 0; index < count; index++) {
+			ClientLoopSample sample =
+				RECENT_CLIENT_LOOPS[
+					(start + index) % RECENT_CLIENT_LOOP_FRAMES];
+			if (sample != null) {
+				trace.recordClientLoop(sample);
+			}
+		}
+	}
+
 	private static void rememberRecentFrame() {
 		recentFrameWriteIndex =
 			(recentFrameWriteIndex + 1) % RECENT_OPENGL_FRAMES;
 		recentFrameCount =
 			Math.min(RECENT_OPENGL_FRAMES, recentFrameCount + 1);
+	}
+
+	private static void rememberRecentClientLoop() {
+		recentClientLoopWriteIndex =
+			(recentClientLoopWriteIndex + 1)
+				% RECENT_CLIENT_LOOP_FRAMES;
+		recentClientLoopCount =
+			Math.min(
+				RECENT_CLIENT_LOOP_FRAMES,
+				recentClientLoopCount + 1);
 	}
 
 	private static OpenGLScratch openGLScratch() {
@@ -649,6 +807,18 @@ final class BoundaryLoadingDiagnostics {
 			new OpenGLFrameSample[RECENT_OPENGL_FRAMES];
 		for (int index = 0; index < samples.length; index++) {
 			samples[index] = new OpenGLFrameSample();
+		}
+		return samples;
+	}
+
+	private static ClientLoopSample[] createRecentClientLoops() {
+		if (!ENABLED) {
+			return null;
+		}
+		ClientLoopSample[] samples =
+			new ClientLoopSample[RECENT_CLIENT_LOOP_FRAMES];
+		for (int index = 0; index < samples.length; index++) {
+			samples[index] = new ClientLoopSample();
 		}
 		return samples;
 	}
@@ -873,6 +1043,30 @@ final class BoundaryLoadingDiagnostics {
 		private int openGLFrameCount;
 		private long droppedOpenGLFrames;
 		private int openGLFramesAfterRelease;
+		private final long[] clientLoopSequences =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopOffsets =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopTotal =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopSleep =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopUpdate =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopReposition =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopDraw =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopUpdateCount =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopSleepRequestMillis =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopStepSize =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private final long[] clientLoopSkippedDraw =
+			new long[MAX_CLIENT_LOOP_FRAMES];
+		private int clientLoopFrameCount;
+		private long droppedClientLoopFrames;
 		private final long[] presentationSequences =
 			new long[MAX_PRESENTATION_FRAMES];
 		private final long[] presentationOffsets =
@@ -915,13 +1109,28 @@ final class BoundaryLoadingDiagnostics {
 
 		private boolean atomicPlayerReceipt;
 		private boolean atomicStaticBaseline;
+		private long atomicPlayerReceiptNanos;
+		private long atomicStaticBaselineNanos;
 		private long atomicElapsedNanos;
 		private long atomicCompletedNanos;
+		private long presentationProductsWaitNanos;
+		private long presentationProductsReadyNanos;
+		private int presentationRetentionCount;
+		private long presentationRetentionFirstNanos;
+		private long presentationRetentionLastNanos;
 		private long presentationReleaseNanos;
 		private int presentationSamples;
 		private boolean presentationStable;
 		private int releaseChunkCount;
 		private int releaseTriangleCount;
+		private int openGLPresenterWaitCount;
+		private long openGLPresenterWaitNanos;
+		private long openGLPresenterWaitMaxNanos;
+		private long openGLPresenterWaitFirstNanos;
+		private int openGLPresenterAcquiredFrames;
+		private int openGLQueueSamples;
+		private long openGLQueueNanos;
+		private long openGLQueueMaxNanos;
 
 		private Trace(
 			long traceId,
@@ -991,6 +1200,36 @@ final class BoundaryLoadingDiagnostics {
 				&& sample.observedNanos >= presentationReleaseNanos) {
 				openGLFramesAfterRelease++;
 			}
+		}
+
+		private void recordClientLoop(ClientLoopSample sample) {
+			if (clientLoopFrameCount >= clientLoopSequences.length) {
+				droppedClientLoopFrames++;
+				return;
+			}
+			int index = clientLoopFrameCount++;
+			clientLoopSequences[index] = sample.sequence;
+			clientLoopOffsets[index] =
+				sample.observedNanos - startedNanos;
+			clientLoopTotal[index] = sample.loopNanos;
+			clientLoopSleep[index] = sample.sleepNanos;
+			clientLoopUpdate[index] = sample.updateNanos;
+			clientLoopReposition[index] = sample.repositionNanos;
+			clientLoopDraw[index] = sample.drawNanos;
+			clientLoopUpdateCount[index] = sample.updateCount;
+			clientLoopSleepRequestMillis[index] =
+				sample.sleepRequestMillis;
+			clientLoopStepSize[index] = sample.stepSize;
+			clientLoopSkippedDraw[index] =
+				sample.skippedDraw ? 1L : 0L;
+		}
+
+		private void recordPresentationRetention(long observedNanos) {
+			presentationRetentionCount++;
+			if (presentationRetentionFirstNanos == 0L) {
+				presentationRetentionFirstNanos = observedNanos;
+			}
+			presentationRetentionLastNanos = observedNanos;
 		}
 
 		private void recordPresentationFrame(
@@ -1219,6 +1458,46 @@ final class BoundaryLoadingDiagnostics {
 				shadowUploadNanos, shadowReused,
 				shadowPrepared, shadowRequested);
 			return copy;
+		}
+	}
+
+	private static final class ClientLoopSample {
+		private long sequence;
+		private long observedNanos;
+		private long loopNanos;
+		private long sleepNanos;
+		private long updateNanos;
+		private long repositionNanos;
+		private long drawNanos;
+		private int updateCount;
+		private int sleepRequestMillis;
+		private int stepSize;
+		private boolean skippedDraw;
+
+		private void set(
+			long sequence,
+			long observedNanos,
+			long loopNanos,
+			long sleepNanos,
+			long updateNanos,
+			long repositionNanos,
+			long drawNanos,
+			int updateCount,
+			int sleepRequestMillis,
+			int stepSize,
+			boolean skippedDraw) {
+			this.sequence = sequence;
+			this.observedNanos = observedNanos;
+			this.loopNanos = Math.max(0L, loopNanos);
+			this.sleepNanos = Math.max(0L, sleepNanos);
+			this.updateNanos = Math.max(0L, updateNanos);
+			this.repositionNanos = Math.max(0L, repositionNanos);
+			this.drawNanos = Math.max(0L, drawNanos);
+			this.updateCount = Math.max(0, updateCount);
+			this.sleepRequestMillis =
+				Math.max(0, sleepRequestMillis);
+			this.stepSize = Math.max(0, stepSize);
+			this.skippedDraw = skippedDraw;
 		}
 	}
 
@@ -1467,6 +1746,18 @@ final class BoundaryLoadingDiagnostics {
 				"atomic.staticBaseline",
 				trace.atomicStaticBaseline);
 			event.number(
+				"atomic.playerReceiptOffsetNanos",
+				trace.atomicPlayerReceiptNanos == 0L
+					? -1L
+					: trace.atomicPlayerReceiptNanos
+						- trace.startedNanos);
+			event.number(
+				"atomic.staticBaselineOffsetNanos",
+				trace.atomicStaticBaselineNanos == 0L
+					? -1L
+					: trace.atomicStaticBaselineNanos
+						- trace.startedNanos);
+			event.number(
 				"atomic.elapsedNanos",
 				trace.atomicElapsedNanos);
 			event.number(
@@ -1474,6 +1765,33 @@ final class BoundaryLoadingDiagnostics {
 				trace.atomicCompletedNanos == 0L
 					? -1L
 					: trace.atomicCompletedNanos
+						- trace.startedNanos);
+			event.number(
+				"presentation.productsWaitOffsetNanos",
+				trace.presentationProductsWaitNanos == 0L
+					? -1L
+					: trace.presentationProductsWaitNanos
+						- trace.startedNanos);
+			event.number(
+				"presentation.productsReadyOffsetNanos",
+				trace.presentationProductsReadyNanos == 0L
+					? -1L
+					: trace.presentationProductsReadyNanos
+						- trace.startedNanos);
+			event.number(
+				"presentation.retainedAttempts",
+				trace.presentationRetentionCount);
+			event.number(
+				"presentation.retainedFirstOffsetNanos",
+				trace.presentationRetentionFirstNanos == 0L
+					? -1L
+					: trace.presentationRetentionFirstNanos
+						- trace.startedNanos);
+			event.number(
+				"presentation.retainedLastOffsetNanos",
+				trace.presentationRetentionLastNanos == 0L
+					? -1L
+					: trace.presentationRetentionLastNanos
 						- trace.startedNanos);
 			event.number(
 				"presentation.releaseOffsetNanos",
@@ -1493,6 +1811,33 @@ final class BoundaryLoadingDiagnostics {
 			event.number(
 				"presentation.releaseTriangles",
 				trace.releaseTriangleCount);
+			event.number(
+				"opengl.presenterWait.count",
+				trace.openGLPresenterWaitCount);
+			event.number(
+				"opengl.presenterWait.totalNanos",
+				trace.openGLPresenterWaitNanos);
+			event.number(
+				"opengl.presenterWait.maxNanos",
+				trace.openGLPresenterWaitMaxNanos);
+			event.number(
+				"opengl.presenterWait.firstOffsetNanos",
+				trace.openGLPresenterWaitFirstNanos == 0L
+					? -1L
+					: trace.openGLPresenterWaitFirstNanos
+						- trace.startedNanos);
+			event.number(
+				"opengl.presenterWait.acquiredFrames",
+				trace.openGLPresenterAcquiredFrames);
+			event.number(
+				"opengl.queue.count",
+				trace.openGLQueueSamples);
+			event.number(
+				"opengl.queue.totalNanos",
+				trace.openGLQueueNanos);
+			event.number(
+				"opengl.queue.maxNanos",
+				trace.openGLQueueMaxNanos);
 
 			event.strings(
 				"phase.names",
@@ -1540,6 +1885,7 @@ final class BoundaryLoadingDiagnostics {
 				suppressedTransitions);
 
 			appendOpenGLFrames(event);
+			appendClientLoopFrames(event);
 			appendPresentationFrames(event);
 			appendRuntime(event);
 			appendPrediction(event);
@@ -1699,6 +2045,62 @@ final class BoundaryLoadingDiagnostics {
 			event.number(
 				"frame.opengl.intervalMaxNanos",
 				percentile(interval, count, 1.0D));
+		}
+
+		private void appendClientLoopFrames(
+			RendererDiagnosticSession.Record event) {
+			int count = trace.clientLoopFrameCount;
+			event.number("frame.client.count", count);
+			event.number(
+				"frame.client.dropped",
+				trace.droppedClientLoopFrames);
+			event.numbers(
+				"frame.client.sequence",
+				Arrays.copyOf(trace.clientLoopSequences, count));
+			event.numbers(
+				"frame.client.offsetNanos",
+				Arrays.copyOf(trace.clientLoopOffsets, count));
+			event.numbers(
+				"frame.client.loopNanos",
+				Arrays.copyOf(trace.clientLoopTotal, count));
+			event.numbers(
+				"frame.client.sleepNanos",
+				Arrays.copyOf(trace.clientLoopSleep, count));
+			event.numbers(
+				"frame.client.updateNanos",
+				Arrays.copyOf(trace.clientLoopUpdate, count));
+			event.numbers(
+				"frame.client.repositionNanos",
+				Arrays.copyOf(trace.clientLoopReposition, count));
+			event.numbers(
+				"frame.client.drawNanos",
+				Arrays.copyOf(trace.clientLoopDraw, count));
+			event.numbers(
+				"frame.client.updateCount",
+				Arrays.copyOf(trace.clientLoopUpdateCount, count));
+			event.numbers(
+				"frame.client.sleepRequestMillis",
+				Arrays.copyOf(
+					trace.clientLoopSleepRequestMillis,
+					count));
+			event.numbers(
+				"frame.client.stepSize",
+				Arrays.copyOf(trace.clientLoopStepSize, count));
+			event.numbers(
+				"frame.client.skippedDraw",
+				Arrays.copyOf(trace.clientLoopSkippedDraw, count));
+			event.number(
+				"frame.client.loopP50Nanos",
+				percentile(trace.clientLoopTotal, count, 0.50D));
+			event.number(
+				"frame.client.loopP95Nanos",
+				percentile(trace.clientLoopTotal, count, 0.95D));
+			event.number(
+				"frame.client.loopP99Nanos",
+				percentile(trace.clientLoopTotal, count, 0.99D));
+			event.number(
+				"frame.client.loopMaxNanos",
+				percentile(trace.clientLoopTotal, count, 1.0D));
 		}
 
 		private void appendPresentationFrames(
