@@ -757,6 +757,22 @@ rank when the spell is cast. Separate spell definitions for `Aegis`,
 `Aegis II`, and `Aegis III` would duplicate one mechanic and should be avoided;
 the rank belongs to the applied status.
 
+The launch roster uses these confirmed thresholds:
+
+| Threshold family | Rank I | Rank II | Rank III | Rank IV |
+| --- | ---: | ---: | ---: | ---: |
+| Mend | 0 | 2 | 5 | — |
+| Fervor, Purify, and Restore | 0 | 2 | 5 | 8 |
+| Ward | 0 | 2 | 4 | 6 |
+| Greater Mend, Zeal, Thorns, Aegis, Rally, and Respite | 0 | 4 | 8 | 11 |
+
+Rank I is therefore available with no Holy Power staff. At Holy Power `5`, the
+Palm-tier launch-era point, a Cleric reaches Mend III, rank III in most
+tier-one effects, Ward III, and rank II in tier-two effects. Later staves keep
+the early book progressing: most tier-one effects peak at Holy Power `8`, Ward
+peaks earlier at `6`, and tier-two effects peak at the god-staff value of `11`.
+Unify has no Holy Power rank because its area and movement contract are fixed.
+
 The discrete rank, snapshot, replacement, lifecycle, and presentation rules
 are settled. Spell-specific rank counts, Holy Power thresholds, numerical
 values, durations, icons, and final protocol/data structures remain balance
@@ -803,16 +819,12 @@ them.
 
 ### Holy Power and Support Rules
 
-- The raw Holy Power thresholds for the confirmed Mend and Greater Mend ranks,
-  including which rank is available without a Holy Power staff.
 - PvP behavior, experience attribution, and remaining abuse safeguards.
   Same-party eligibility, launch-spell caster exclusion, and clearing effects
   on party separation are settled.
 - How Unify's one-time forced movement integrates with queued walking and the
   client movement presentation without desynchronization. This implementation
   detail may not weaken its settled collision, layer, or combat-state rules.
-- Holy Power threshold tables for each scalable effect. Rank counts and values
-  for the initial twelve spells are settled wherever scaling applies.
 - Cast-level resource and experience behavior when an area spell applies to
   only some recipients or is wholly ineffective because every recipient has a
   stronger active family effect.
@@ -829,9 +841,6 @@ them.
 
 - Exact unlock levels for the six tier-one and six tier-two spells through
   Worship `30`.
-- The exact Holy Power thresholds for the confirmed Ward and Aegis charge
-  tables. Ward must reach each corresponding rank with less Holy Power than
-  Aegis.
 - The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
   in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
@@ -954,6 +963,16 @@ their normal tier comparison. This produces blessed-staff Magic Power
 `4/6/8/12/14/16/20/22/24/28` and god-staff Magic Power `28`. Current data's
 flat blessed-staff value of `2` will require a later implementation
 synchronization; no runtime definition changes belong to this concept branch.
+
+### 2026-08-02: Launch Holy Power thresholds
+
+Confirmed rank thresholds `0/2/5` for Mend, `0/2/5/8` for the other scalable
+tier-one effects, and `0/4/8/11` for all scalable tier-two effects. Ward is the
+intentional tier-one exception at `0/2/4/6`, reaching its larger charge counts
+with less Holy Power than Aegis. Rank I remains available at Holy Power zero,
+Palm-tier Holy Power `5` gives strong but incomplete launch progression, and
+the god-staff value of `11` uniquely reaches rank IV tier-two support. Unify
+does not scale with Holy Power.
 
 ### 2026-08-02: Shared book with god support identities
 
