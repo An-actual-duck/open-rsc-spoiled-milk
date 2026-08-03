@@ -4,7 +4,8 @@
 
 - Branch: `feat/cleric-spellbook-foundation`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Current milestone: **C01 — definition catalog foundation**
+- Completed milestone: **C01 — definition catalog foundation**
+- Next planned milestone: **C02 — sigil item and asset identities**
 - Runtime exposure: **disabled**
 - Public-server work: **forbidden**
 
@@ -255,3 +256,33 @@ The first handoff is complete only when:
 - no production code outside the new foundation package references the catalog;
 - no unresolved behavior has been implemented;
 - the branch is clean, pushed, and marked READY with the exact commit.
+
+## C01 Completion Record
+
+C01 was completed on 2026-08-03 as an intentionally unreachable server-side
+foundation. It adds explicit Cleric spell identities, immutable definition and
+cost records, the twelve-entry launch catalog, and pure Holy Power effect-rank
+resolution. Nothing registers the catalog with server startup, packet
+handling, the legacy Magic spell list, an item, or a player-facing action.
+
+The compiled fixture validates every confirmed launch name, alignment,
+Worship gate, tier, radius, caster-exclusion rule, primary-sigil vector, stable
+identity, and Holy Power threshold. It also covers collection immutability,
+defensive copying, rank boundaries, invalid identities, invalid costs, and the
+deliberate rejection of unsettled tier-three costs. A source guard fails if
+production code outside the foundation package begins referencing it early.
+
+Verification completed from the milestone branch:
+
+- `python3 tests/myworld/test-cleric-spellbook-foundation.py`
+- `./scripts/build-server.sh`
+- `./scripts/lint.sh compiler --base 40d2407cb047742e52070e41fc5ef9d865bf77f5 --offline`
+- `./scripts/lint.sh analyze --base 40d2407cb047742e52070e41fc5ef9d865bf77f5 --offline`
+- `git diff --check`
+
+No client or visual verification is required for C01 because it deliberately
+has no presentation or runtime path. The supplied sigil PNGs remain untouched
+at their source location for C02, when their stable item identities, maintained
+asset locations, generated silver variants, and classic fallbacks can be added
+and verified together. All unresolved runtime-exposure blockers above remain
+open and continue to stop later dependent phases.
