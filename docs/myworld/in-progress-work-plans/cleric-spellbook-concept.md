@@ -105,11 +105,15 @@ skill.
   requiring one interaction per sigil. It does not silently convert other
   sigil identities carried at the same time.
 - Carving uses the familiar interruptible Crafting batch: each completed step
-  independently consumes one non-stackable input and adds one stackable
+  independently consumes one non-stackable input and adds one non-stackable
   unblessed output. Movement, logout, death, or another action stops before the
   next step; completed steps remain, while an incomplete step changes nothing.
   With a chisel occupying one of the 30 inventory slots, a normal full-input
   carving batch contains at most 29 Rune stones or Silver nuggets.
+- Unblessed sigils deliberately remain non-stackable until altar conversion;
+  blessed sigils are stackable. This preserves the intended Runecraft-like
+  gathering/banking, carving, altar run, and return loop instead of letting
+  carved stock collapse immediately into one inventory slot.
 - Altar conversion is instead one immediate, atomic whole-batch transaction.
   Before changing state, the server validates the exact matching input count,
   Blessing requirement, altar/god identity, Devotion eligibility and total
@@ -1017,6 +1021,13 @@ used material and alignment. It preflights all requirements, the complete
 Devotion cost, duplication output, XP, and inventory capacity; failure changes
 nothing and never drops overflow. A player may bank the chisel and convert 30
 matching sigils at once.
+
+Confirmed the production-loop stackability contract. Every carved unblessed
+sigil is non-stackable, while its blessed result is stackable. This keeps
+inventory pressure between the resource and altar stages and preserves the
+intended repeated bank-or-rock, carving, altar, and return route. It supersedes
+C02's provisional all-stackable inert definitions and requires server/client
+definition parity to change with C05.
 
 Confirmed exact fractional Devotion accounting. Existing per-god whole-
 offering cache keys retain their established meaning. A new signed

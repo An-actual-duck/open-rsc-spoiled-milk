@@ -172,7 +172,9 @@ using the now-complete C05 production contract. Reuse the existing Crafting
 selection/quantity flow.
 Each base carving action consumes one Rune stone or one Silver nugget and
 produces one corresponding unblessed sigil; alignment does not alter that
-quantity. Stone requires Crafting/Blessing `1/1`; silver requires `20/16`.
+quantity. Unblessed sigils are non-stackable so inventory pressure preserves
+the intended resource-to-altar production loop; blessed outputs are stackable.
+Stone requires Crafting/Blessing `1/1`; silver requires `20/16`.
 Use centralized altar god identity and the existing transaction pattern.
 Aligned sigils require their matching altar; neutral sigils accept any god
 altar and charge that altar's god while producing one neutral item identity.
@@ -347,11 +349,16 @@ open and continue to stop later dependent phases.
 
 ## C02 Completion Record
 
-C02 establishes sixteen inert, stackable item definitions at stable IDs
+C02 established sixteen inert item definitions at stable IDs
 `3293-3308`: four alignments, stone and silver materials, and unblessed and
 blessed states. It does not provide any acquisition or use path. The server
 definitions and direct client registry agree on names, descriptions, flags,
 IDs, and the exclusive item count of `3309`.
+
+C05 subsequently refines the provisional C02 stackability flag: the eight
+unblessed identities are non-stackable and the eight blessed identities remain
+stackable, preserving inventory pressure before altar conversion. This is an
+intentional production-economy decision, not identity drift.
 
 The owner's eight supplied sigil images and plain `stone.png` reference are
 preserved byte-for-byte in the maintained sigil asset folder. Eight derived

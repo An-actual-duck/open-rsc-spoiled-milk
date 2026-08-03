@@ -397,52 +397,6 @@ public class Inventory {
 		return false;
 	}
 
-	/**
-	 * Atomically consumes one exact non-stackable instance and merges a stackable
-	 * replacement when possible. No intermediate remove/add state can spill an
-	 * item to the ground.
-	 */
-	public boolean replaceExactStacked(Item itemToReplace, Item newItem, boolean sendInventory) {
-		if (!isSupportedStackReplacement(itemToReplace, newItem)
-			|| itemToReplace.getItemId() == Item.ITEM_ID_UNASSIGNED
-			|| itemToReplace.getAmount() != 1
-			|| itemToReplace.getCatalogId() == newItem.getCatalogId()) {
-			return false;
-		}
-		synchronized (list) {
-			int sourceIndex = -1;
-			Item targetStack = null;
-			final int maxStack = getMaximumStackAmount();
-			for (int index = 0; index < list.size(); index++) {
-				final Item existing = list.get(index);
-				if (existing.getItemId() == itemToReplace.getItemId()
-					&& existing.getCatalogId() == itemToReplace.getCatalogId()
-					&& existing.getNoted() == itemToReplace.getNoted()
-					&& existing.getAmount() == itemToReplace.getAmount()) {
-					sourceIndex = index;
-				}
-				if (existing.getCatalogId() == newItem.getCatalogId()
-					&& existing.getNoted() == newItem.getNoted()
-					&& existing.getAmount() <= maxStack - newItem.getAmount()) {
-					targetStack = existing;
-				}
-			}
-			if (sourceIndex < 0) {
-				return false;
-			}
-			if (targetStack == null) {
-				list.set(sourceIndex, newItem.copyWithItemId(itemToReplace.getItemId()));
-			} else {
-				targetStack.changeAmount(newItem.getAmount());
-				list.remove(sourceIndex);
-			}
-			if (sendInventory) {
-				ActionSender.sendInventory(player);
-			}
-			return true;
-		}
-	}
-
 	/** Returns whether an all-matching stack conversion can commit atomically. */
 	public boolean canReplaceAllCatalogStacked(Item sourceItems, Item newItem) {
 		if (!isSupportedStackReplacement(sourceItems, newItem)

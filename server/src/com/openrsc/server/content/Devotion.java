@@ -6,6 +6,8 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.MessageType;
 
+import java.util.function.BooleanSupplier;
+
 public final class Devotion {
 	private static final String CACHE_PREFIX = "devotion_";
 	private static final String CACHE_SUFFIX = "_offerings";
@@ -203,13 +205,39 @@ public final class Devotion {
 	 */
 	public static boolean trySpendDevotionHalfOfferingUnits(final Player player,
 			final PrayerCatalog.GodLine godLine, final int costHalfOfferingUnits) {
+		return trySpendDevotionHalfOfferingUnits(
+			player, godLine, costHalfOfferingUnits, () -> true);
+	}
+
+	/** Returns whether the exact cost can be paid without crossing the minimum. */
+	public static boolean canSpendDevotionHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int costHalfOfferingUnits) {
 		if (player == null || godLine == null || costHalfOfferingUnits <= 0
 			|| !player.getConfig().WANT_MYWORLD) {
 			return false;
 		}
 		synchronized (player) {
+			return DevotionHalfOfferingBalance.canSpendAboveMinimum(
+				getHalfOfferingUnits(player, godLine), costHalfOfferingUnits);
+		}
+	}
+
+	/**
+	 * Pays an exact cost only after the supplied state change commits. A rejected
+	 * state change leaves Devotion untouched, avoiding observable deduct/refund
+	 * side effects such as transient prayer deactivation.
+	 */
+	public static boolean trySpendDevotionHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int costHalfOfferingUnits,
+			final BooleanSupplier stateChange) {
+		if (player == null || godLine == null || costHalfOfferingUnits <= 0
+			|| stateChange == null || !player.getConfig().WANT_MYWORLD) {
+			return false;
+		}
+		synchronized (player) {
 			final int previous = getHalfOfferingUnits(player, godLine);
-			if (!DevotionHalfOfferingBalance.canSpendAboveMinimum(previous, costHalfOfferingUnits)) {
+			if (!DevotionHalfOfferingBalance.canSpendAboveMinimum(previous, costHalfOfferingUnits)
+				|| !stateChange.getAsBoolean()) {
 				return false;
 			}
 			final int updated = previous - costHalfOfferingUnits;

@@ -45,14 +45,15 @@ def validate_source_boundaries() -> None:
             if source.parent == JAVA_ROOT:
                 continue
             text = source.read_text(encoding="utf-8")
-            if "ClericSpellCatalog" in text or "content.cleric" in text:
+            if any(name in text for name in (
+                "ClericSpellCatalog", "ClericSpellDefinition", "ClericSpellId"
+            )):
                 references.append(str(source.relative_to(ROOT)))
     require(not references, "C01 must remain unreachable; external references: " + ", ".join(references))
 
     plan = IMPLEMENTATION_PLAN.read_text(encoding="utf-8")
     for unresolved in (
         "introductory unlock/quest",
-        "Silver sigil input form",
         "Sigil consumption",
         "PvP rules",
         "Status-HUD priority",

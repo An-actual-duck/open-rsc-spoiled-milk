@@ -150,7 +150,7 @@ def validate_definitions_and_scope() -> None:
         require(entry["name"] == name, f"server name drift for {item_id}")
         require(entry["description"] == description, f"server description drift for {item_id}")
         inert = {
-            "command": "", "isStackable": 1, "isUntradable": 0,
+            "command": "", "isStackable": 1 if item_id % 2 == 0 else 0, "isUntradable": 0,
             "isWearable": 0, "isNoteable": 0, "basePrice": 0,
         }
         for field, expected in inert.items():
@@ -287,7 +287,7 @@ public final class ClericSigilItemAssetFixture {
 			check(item.getSpriteID() == (index < 8 ? 443 : 134), "fallback sprite drift " + IDS[index]);
 			check(("external-png:" + ASSETS[index]).equals(item.getSpriteLocation()),
 				"asset location drift " + IDS[index]);
-			check(item.isStackable() && !item.isWieldable() && !item.membersItem
+			check(item.isStackable() == (index % 2 == 1) && !item.isWieldable() && !item.membersItem
 				&& !item.untradeable && !item.noteable && item.getBasePrice() == 0,
 				"inert client flags drift " + IDS[index]);
 			Sprite localSprite = local.getExternalItemSprite(item);

@@ -175,7 +175,7 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 				stopbatch();
 				break;
 			}
-			if (!inventory.replaceExactStacked(source, new Item(output.getItemId(), 1), true)) {
+			if (!inventory.replaceExact(source, new Item(output.getItemId(), 1), true)) {
 				player.message("The sigil could not be carved; your materials were not changed.");
 				stopbatch();
 				break;
@@ -223,18 +223,17 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 				player.message("You do not have enough inventory capacity to bless those sigils.");
 				return;
 			}
-			if (!Devotion.trySpendDevotionHalfOfferingUnits(player, chargedGod, inputCount)) {
+			if (!Devotion.canSpendDevotionHalfOfferingUnits(player, chargedGod, inputCount)) {
 				player.message("You do not have enough devotion to " + formatGodLine(chargedGod)
 					+ " to bless all " + inputCount + " sigils.");
 				return;
 			}
-			if (!inventory.replaceAllCatalogStacked(sourceItems, outputItems, true)) {
-				final int refunded = Devotion.adjustDevotionHalfOfferingUnits(
-					player, chargedGod, inputCount);
-				if (refunded != inputCount) {
-					throw new IllegalStateException("Failed to refund an uncommitted sigil blessing");
-				}
-				player.message("The blessing could not be completed; your devotion was refunded.");
+			if (!Devotion.trySpendDevotionHalfOfferingUnits(
+					player,
+					chargedGod,
+					inputCount,
+					() -> inventory.replaceAllCatalogStacked(sourceItems, outputItems, true))) {
+				player.message("The blessing could not be completed; nothing was changed.");
 				return;
 			}
 

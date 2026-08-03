@@ -41,7 +41,14 @@ public final class DevotionHalfOfferingBalance {
 	}
 
 	public static int adjust(final int exactHalfUnits, final long deltaHalfUnits) {
-		return clampHalfUnits((long) clampHalfUnits(exactHalfUnits) + deltaHalfUnits);
+		final long current = clampHalfUnits(exactHalfUnits);
+		if (deltaHalfUnits > 0L && current > Long.MAX_VALUE - deltaHalfUnits) {
+			return MAX_HALF_UNITS;
+		}
+		if (deltaHalfUnits < 0L && current < Long.MIN_VALUE - deltaHalfUnits) {
+			return MIN_HALF_UNITS;
+		}
+		return clampHalfUnits(current + deltaHalfUnits);
 	}
 
 	public static boolean canSpendAboveMinimum(final int exactHalfUnits, final int costHalfUnits) {
