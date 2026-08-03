@@ -458,11 +458,22 @@ Cleric reduction, that layer leaves `60%` of the remainder:
 clear ownership rather than being folded into one uncapped additive
 percentage.
 
-This contract settles percentage composition but not integer rounding,
-minimum-damage behavior, eligible damage sources, or which layer consumes a
-Ward/Aegis charge. Those details must be specified and regression-tested before
-implementation, especially for small hits where sequential rounding can
-change the result by one.
+Ward and Aegis protect against direct melee, ranged, and Magic hits, including
+critical hits. They exclude poison, recoil, summons, environmental damage, and
+other indirect or secondary effects. Existing defense and mitigation resolve
+first. Cleric protection then calculates remaining damage as:
+
+- Ward: `ceil(eligible damage * 0.75)`
+- Aegis: `ceil(eligible damage * 0.50)`
+
+The difference between eligible and remaining damage is recorded as prevented
+damage. A charge is consumed only when that difference is at least one. A hit
+already reduced to zero, or too small for the Cleric percentage to prevent a
+whole point, neither consumes a charge nor becomes zero through favorable
+rounding. The server sends an updated status snapshot immediately after a
+charge is consumed. Zeal subsequently uses the protected result as part of its
+final-damage calculation, and Thorns observes actual damage ultimately
+received.
 
 ### Exclusive Effect Families
 
@@ -740,9 +751,8 @@ them.
 - Status icons and labels; optional-count packet representation; compatibility
   behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
   Mend cadence and the tactical and Respite duration ladders are settled.
-- Which damage sources consume Ward/Aegis charges. Thorns, Zeal, and Rally are
-  settled as direct melee, ranged, and Magic damage under their respective
-  post-mitigation rules.
+- Shared combat-path implementation and blocked-damage telemetry for the
+  settled Ward/Aegis, Thorns, Zeal, and Rally direct-damage boundaries.
 - How Rally composes with existing blood-equipment and god-spell lifesteal.
   Rally's own rate, eligibility, rounding, threshold, and duration are settled,
   but independent stacking versus one combined bounded lifesteal family is not.
@@ -1023,6 +1033,15 @@ ranks healing `2/3/4/5` per pulse. This avoids a duplicate integer value merely
 to force both spells into four ranks. Greater Mend retains tier replacement
 priority over Mend, while Holy Power thresholds remain tied to the later staff
 stat design.
+
+### 2026-08-02: Ward and Aegis eligible-hit boundary
+
+Confirmed that Ward and Aegis protect direct melee, ranged, and Magic hits,
+including critical hits, after existing defense and mitigation. Remaining
+damage uses ceiling rounding at the fixed `75%` Ward or `50%` Aegis multiplier.
+A charge is consumed only if at least one whole point is prevented; zero or
+too-small hits consume nothing. Indirect and secondary damage are excluded,
+and charge consumption immediately refreshes the affected player's status HUD.
 
 ### 2026-08-02: Fervor roll-bias ranks
 
