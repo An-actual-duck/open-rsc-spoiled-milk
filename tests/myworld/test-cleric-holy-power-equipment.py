@@ -130,7 +130,7 @@ def verify_source_boundaries() -> None:
             "Holy Power must not affect offensive god spells")
 
     for snippet in (
-        '"Holy Power"',
+        '"Holy Pow"',
         "new int[equipmentStatNames.length]",
         "getBlessedStaffTier(item.id)",
         "return this.getMyWorldStaffMagicOffenseByTier(blessedTier) / 2;",
