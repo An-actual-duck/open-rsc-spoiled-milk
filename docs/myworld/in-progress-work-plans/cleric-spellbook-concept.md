@@ -147,9 +147,10 @@ hard class, book-selection, or equipment lock:
   supplies for both books consumes enough inventory space to be a real cost.
 - Higher Cleric tiers retain every lower sigil-material stack, creating an
   intentional additional inventory commitment as the book becomes stronger.
-- Most Cleric spells support other players rather than the caster. The book has
-  limited self-targeted support, making it intentionally less attractive as a
-  second solo-combat book.
+- The initial twelve Cleric spells support other players rather than the
+  caster; none of them self-apply. Future spells may opt into self-application
+  only through an explicit design decision, keeping the launch book
+  intentionally unattractive as a second solo-combat book.
 - The goal is to make dedicated Cleric support valuable in group play without
   preventing experimentation or situational hybrid builds.
 
@@ -161,6 +162,9 @@ hard class, book-selection, or equipment lock:
   otherwise.
 - The caster is excluded from the affected players unless the individual
   spell explicitly permits self-application.
+- None of the initial twelve spells permit self-application. This includes the
+  instant Purify and Restore effects as well as healing, buffs, protection, and
+  movement support.
 - Beneficial area effects apply only to eligible members of the caster's
   current party. Nearby non-party players are not affected merely because
   they are standing in the area.
@@ -776,9 +780,9 @@ them.
 - Holy Power values for each blessed-staff and god-staff tier.
 - The raw Holy Power thresholds for the confirmed Mend and Greater Mend ranks,
   including which rank is available without a Holy Power staff.
-- Per-spell self-application exceptions, PvP behavior, experience attribution,
-  and abuse safeguards. Same-party eligibility and clearing effects on party
-  separation are settled.
+- PvP behavior, experience attribution, and remaining abuse safeguards.
+  Same-party eligibility, launch-spell caster exclusion, and clearing effects
+  on party separation are settled.
 - How Unify's one-time forced movement integrates with queued walking and the
   client movement presentation without desynchronization. This implementation
   detail may not weaken its settled collision, layer, or combat-state rules.
@@ -1147,6 +1151,14 @@ square before other eligibility checks. Every recipient must have direct spell
 line-of-effect from the caster; walls, closed doors, and equivalent spell
 barriers block support. Recipients are resolved independently, so an obstructed
 party member does not invalidate the cast for unobstructed eligible members.
+
+### 2026-08-02: Launch-spell caster exclusion
+
+Confirmed that none of the initial twelve Cleric spells affect their caster.
+This applies equally to Purify and Restore, Mend-family healing, protection,
+buffs, regeneration, and Unify movement. Future content retains the ability to
+opt explicitly into self-application, but the launch roster establishes Cleric
+as party support rather than a personal healing and buff rotation.
 
 ### 2026-08-02: Respite regeneration ranks
 
