@@ -167,13 +167,20 @@ hard class, book-selection, or equipment lock:
 - The standard tier-one area has a radius of `2` tiles around the caster.
 - Standard area grows by exactly one tile of radius per spell tier: tier two
   reaches `3` tiles, tier three reaches `4`, and tier `N` reaches `N + 1`.
-  The precise tile-distance metric remains an implementation decision.
+  Radius uses the server's familiar square/Chebyshev entity-range metric: a
+  recipient two tiles away on both axes is still two tiles away. Thus a
+  tier-one spell covers a caster-centered `5 x 5` square before eligibility and
+  obstruction checks, while tier two covers `7 x 7`.
 - `Unify` has a fixed radius of `4` tiles, two tiles beyond the standard
   tier-one area, so it can gather eligible players before follow-up support
   casts.
 - Recipients must occupy the caster's current world space and signed map level.
   Cross-layer or cross-world support is never implied by matching X/Y
   coordinates.
+- Each recipient also requires direct spell line-of-effect from the caster.
+  Walls, closed doors, and other spell-blocking barriers exclude a player
+  behind them. Eligibility is evaluated independently: one blocked party member
+  does not prevent unobstructed members from receiving the spell.
 
 ### Unify Regrouping Contract
 
@@ -772,9 +779,6 @@ them.
 - Per-spell self-application exceptions, PvP behavior, experience attribution,
   and abuse safeguards. Same-party eligibility and clearing effects on party
   separation are settled.
-- Exact tile-distance geometry and line-of-sight behavior for ordinary area
-  support. Standard tier radii are settled by the `N + 1` rule, while Unify's
-  four-tile radius and collision-respecting two-step movement are settled.
 - How Unify's one-time forced movement integrates with queued walking and the
   client movement presentation without desynchronization. This implementation
   detail may not weaken its settled collision, layer, or combat-state rules.
@@ -1134,6 +1138,15 @@ collision, closed boundaries, missing terrain, world-space, or signed-layer
 separation, and it must not be implemented as a teleport. It is a one-time
 regroup that leaves the caster fixed and preserves recipient combat targets and
 active statuses.
+
+### 2026-08-02: Area geometry and spell line-of-effect
+
+Confirmed that Cleric area radii use the existing square/Chebyshev entity-range
+model. Tier one therefore considers a `5 x 5` square and tier two a `7 x 7`
+square before other eligibility checks. Every recipient must have direct spell
+line-of-effect from the caster; walls, closed doors, and equivalent spell
+barriers block support. Recipients are resolved independently, so an obstructed
+party member does not invalidate the cast for unobstructed eligible members.
 
 ### 2026-08-02: Respite regeneration ranks
 
