@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -21,6 +22,7 @@ INVENTORY = ROOT / "server/src/com/openrsc/server/model/container/Inventory.java
 COMBAT_FORMULA = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 SPELL_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+CLIENT_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 GENERATOR_DIR = ROOT / "server/src/com/openrsc/server/net/rsc/generators/impl"
 
@@ -99,6 +101,7 @@ def verify_source_boundaries() -> None:
     combat_formula = COMBAT_FORMULA.read_text(encoding="utf-8")
     spell_handler = SPELL_HANDLER.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
+    client_handler = CLIENT_HANDLER.read_text(encoding="utf-8")
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
 
     for snippet in (
@@ -149,6 +152,41 @@ def verify_source_boundaries() -> None:
             "short compatibility packets must clear unsupported extended stats")
     require("int intCount = Math.max(0, (length - 5) / 4);" in packet_handler,
             "client must retain length-aware equipment packet parsing")
+
+    staff_id_block = re.search(
+        r"MYWORLD_RUNE_STAFF_IDS\s*=\s*\{(.*?)\n\s*\};",
+        client_handler,
+        re.DOTALL,
+    )
+    staff_color_block = re.search(
+        r"MYWORLD_STAFF_RUNE_COLORS\s*=\s*\{(.*?)\n\s*\};",
+        client_handler,
+        re.DOTALL,
+    )
+    require(staff_id_block is not None and staff_color_block is not None,
+            "client colored-staff visual tables are missing")
+    staff_rows = [
+        tuple(int(value) for value in re.findall(r"\d+", row))
+        for row in re.findall(r"\{([^{}]+)\}", staff_id_block.group(1))
+    ]
+    staff_colors = [
+        int(value, 0)
+        for value in re.findall(r"0x[0-9A-Fa-f]+|\d+", staff_color_block.group(1))
+    ]
+    require(len(staff_rows) == len(staff_colors),
+            "client colored-staff ID and color tables have different lengths")
+    staff_color_by_first_id = {
+        row[0]: color for row, color in zip(staff_rows, staff_colors)
+    }
+    for first_id in BLESSED_FIRST_IDS:
+        require(tuple(range(first_id, first_id + 10)) in staff_rows,
+                f"blessed staff line {first_id} is missing from client visual mapping")
+    require(staff_color_by_first_id[2228] == 0xD40203,
+            "Zamorak blessed staffs must use fiery red symbols")
+    require(staff_color_by_first_id[3152] == 0xF0E68C,
+            "Saradomin blessed staffs must retain pale-yellow symbols")
+    require(staff_color_by_first_id[3162] == 0x3FAF5A,
+            "Guthix blessed staffs must use nature-green symbols")
 
     for name in DIRECT_EXTENDED_GENERATORS:
         source = (GENERATOR_DIR / f"{name}.java").read_text(encoding="utf-8")
