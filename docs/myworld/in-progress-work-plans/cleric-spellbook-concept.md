@@ -270,6 +270,34 @@ Zeal has four effect ranks and uses the tactical duration ladder:
   attack creates no credit. This avoids rounding each small hit upward and
   accidentally turning a modest percentage into a very large effective bonus.
 
+### Thorns Reflection Contract
+
+Thorns has four effect ranks and uses the tactical duration ladder:
+
+| Effect rank | Reflected damage | Duration |
+| ---: | ---: | ---: |
+| I | 5% | 30 seconds |
+| II | 8% | 45 seconds |
+| III | 11% | 60 seconds |
+| IV | 15% | 90 seconds |
+
+- Thorns is calculated from actual nonzero direct melee, ranged, or Magic
+  damage received after the protected player’s mitigation. It does not reduce
+  or absorb any part of that incoming hit.
+- Fractional reflected damage uses unbiased stochastic rounding: apply the
+  whole-number portion and use the fractional remainder as the chance to add
+  one. There is no guaranteed one-damage minimum, which would make rapid small
+  hits disproportionately valuable.
+- Poison, recoil, environmental damage, summons, and other indirect or
+  secondary damage cannot trigger Thorns.
+- Thorns reflection cannot trigger Thorns or equipment recoil in return. A
+  reflected hit is terminal for reflection processing.
+- Thorns may coexist with recoil equipment. Each source resolves independently
+  rather than combining their rates into one effect or replacing the other.
+- Reflected damage is attributed to the protected defender, not the Cleric who
+  originally applied Thorns. It may kill the attacker through the normal
+  attributed-death path.
+
 ### Protection Stacking Contract
 
 Ward and Aegis must not turn prayer protection into complete damage immunity.
@@ -472,6 +500,11 @@ These are current implementation facts, not new design decisions:
 - Recoil and lifesteal behavior already exist, but their hooks span melee,
   ranged/projectile, poison, and other damage paths. Thorns and Rally will need
   explicit shared eligibility and attribution rules across applicable styles.
+- Existing Chaos recoil rings reflect one quarter of the triggering damage
+  when they proc, with tier chances of `10/20/30/50/90%` and a minimum reflected
+  hit of one. Thorns is intentionally weaker at `5-15%`, has no minimum hit,
+  and is based on actual post-mitigation damage even though it is guaranteed to
+  evaluate on every eligible direct hit.
 - Normal Hits regeneration restores one point about every `100` game ticks
   before existing equipment and potion speed modifiers. It is not inherently
   limited to out-of-combat periods, which fits the revised Respite direction.
@@ -573,8 +606,9 @@ them.
 - Status icons and labels; optional-count packet representation; compatibility
   behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
   Mend cadence and the tactical and Respite duration ladders are settled.
-- Which damage sources consume Ward/Aegis charges, trigger Thorns, and provide
-  Rally lifesteal. Zeal is settled as direct melee, ranged, and Magic damage.
+- Which damage sources consume Ward/Aegis charges and provide Rally lifesteal.
+  Thorns and Zeal are settled as direct melee, ranged, and Magic damage under
+  their respective post-mitigation rules.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
   its ending health threshold, or both.
 - How Respite combines with existing regeneration potions, robes, amulets, and
@@ -864,3 +898,13 @@ multiplier. Poison, recoil, summons, and other indirect damage are excluded.
 A per-effect fractional accumulator carries sub-point bonus credit between
 qualifying hits so small-hit rounding cannot inflate the intended percentage;
 its remainder is discarded when the status ends or is replaced.
+
+### 2026-08-02: Thorns reflection ranks
+
+Confirmed Thorns ranks of `5/8/11/15%` and the tactical duration ladder. It
+reflects that percentage of actual post-mitigation direct melee, ranged, or
+Magic damage without reducing the incoming hit. Unbiased stochastic rounding
+handles fractional damage without a guaranteed minimum. Indirect and
+secondary damage are excluded, and reflected damage cannot recursively trigger
+any reflection. Thorns coexists independently with recoil equipment. Damage is
+attributed to the protected defender and may kill the attacker normally.
