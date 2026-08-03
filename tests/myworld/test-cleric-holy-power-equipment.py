@@ -14,6 +14,7 @@ SERVER_JAR = ROOT / "server/core.jar"
 SOURCE_DEFS = ROOT / "tools/generators/item-overrides/30-magic-weapons-and-hybrids.json"
 GENERATED_DEFS = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java"
+STAT_CALCULATOR = ROOT / "server/src/com/openrsc/server/model/container/EquipmentStatCalculator.java"
 ACTION_SENDER = ROOT / "server/src/com/openrsc/server/net/rsc/ActionSender.java"
 PLAYER_SERVICE = ROOT / "server/src/com/openrsc/server/service/PlayerService.java"
 INVENTORY = ROOT / "server/src/com/openrsc/server/model/container/Inventory.java"
@@ -27,6 +28,7 @@ BLESSED_FIRST_IDS = (2228, 3152, 3162)
 ORDINARY_STAFF_IDS = (100, 2131, 1764, 1769, 2136, 1774, 1779, 2141, 1784, 2146)
 ORDINARY_MAGIC = (8, 12, 16, 24, 28, 32, 40, 44, 48, 56)
 BLESSED_MAGIC = (4, 6, 8, 12, 14, 16, 20, 22, 24, 28)
+BLESSED_HOLY = (8, 12, 16, 24, 28, 32, 40, 44, 48, 56)
 GOD_STAFF_IDS = (1216, 1217, 1218)
 MODERN_GENERATORS = (
     "PayloadCustomGenerator",
@@ -90,6 +92,7 @@ def verify_definition_parity() -> None:
 
 def verify_source_boundaries() -> None:
     equipment = EQUIPMENT.read_text(encoding="utf-8")
+    stat_calculator = STAT_CALCULATOR.read_text(encoding="utf-8")
     action_sender = ACTION_SENDER.read_text(encoding="utf-8")
     player_service = PLAYER_SERVICE.read_text(encoding="utf-8")
     inventory = INVENTORY.read_text(encoding="utf-8")
@@ -106,6 +109,10 @@ def verify_source_boundaries() -> None:
         "EquipmentStatCalculator.holyPowerForItem(item.getCatalogId())",
     ):
         require(snippet in equipment, f"equipment-mode Holy Power boundary missing: {snippet}")
+    require(", ".join(str(value) for value in BLESSED_HOLY) in stat_calculator,
+            "server Holy Power mapping does not use the established staff-power ladder")
+    require("return 64;" in stat_calculator,
+            "god staves must use the tier-eleven Holy Power value")
     require(equipment.count("ActionSender.sendEquipmentStats(player, request.item.getDef(player.getWorld()).getWieldPosition())") >= 2,
             "equip and unequip must both refresh derived Holy Power")
     require("struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();" in action_sender,
@@ -169,14 +176,15 @@ public final class ClericHolyPowerEquipmentFixture {
 		int[] firstIds = {2228, 3152, 3162};
 		for (int firstId : firstIds) {
 			for (int tier = 0; tier < 10; tier++) {
-				check(EquipmentStatCalculator.holyPowerForItem(firstId + tier) == tier + 1,
+				check(EquipmentStatCalculator.holyPowerForItem(firstId + tier)
+					== new int[] {8, 12, 16, 24, 28, 32, 40, 44, 48, 56}[tier],
 					"wrong blessed Holy Power for " + (firstId + tier));
 			}
 		}
 
 		int[] godStaves = {1216, 1217, 1218};
 		for (int itemId : godStaves) {
-			check(EquipmentStatCalculator.holyPowerForItem(itemId) == 11,
+			check(EquipmentStatCalculator.holyPowerForItem(itemId) == 64,
 				"wrong god-staff Holy Power for " + itemId);
 		}
 

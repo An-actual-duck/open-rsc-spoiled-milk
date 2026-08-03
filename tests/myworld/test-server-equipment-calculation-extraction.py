@@ -15,7 +15,7 @@ STAT_CALCULATOR = ROOT / "server/src/com/openrsc/server/model/container/Equipmen
 SLOT_RULES = ROOT / "server/src/com/openrsc/server/model/container/EquipmentSlotRules.java"
 
 EXPECTED: dict[str, tuple[int, str]] = {
-    "getHolyPowerForItem": (4002, "e500eb75c3be9a967cc1caa9a41f946d05d561be15997697f2db64997ad34168"),
+    "getHolyPowerForItem": (4002, "c3592c03bfc4ca0a617c19769251d08de4f4981368eb56d61ada08f3c677e432"),
     "getGodEquipmentNaturalPrayerBonus": (4002, "751d228b94591005dd8b95fe0f92ac90ba6991b8eb918f7c86a86ca2b112daaf"),
     "getGodEquipmentResourceCost": (4002, "2b4706cde2e881bd58ddfc32e4f4aaf734ab230473f8f676e66487cd8e40f276"),
     "getGodEquipmentTargetWeaponAim": (4002, "555f20a1f84e426ef3e5e918fb5d53ea23891e6e50b8dcd9122b0a924ae3ab6e"),

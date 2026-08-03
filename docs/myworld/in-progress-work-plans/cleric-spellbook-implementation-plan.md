@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `feat/cleric-sigil-item-assets`
+- Branch: `feat/cleric-holy-power-equipment`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestone: **C01 — definition catalog foundation**
-- Current milestone: **C02 — sigil item and asset identities**
-- Next planned milestone after C02 review: **C03 — Holy Power equipment foundation**
-- Runtime exposure: **disabled**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities**
+- Current milestone: **C03 — Holy Power equipment foundation**
+- Next planned milestone after C03 review: **C04 — Blessing skill platform**
+- Runtime exposure: **Holy Power equipment statistic only; Cleric production and spell gameplay remain disabled**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -127,7 +127,9 @@ that every custom definition can be added to the legacy enum.
 ### C03 — Holy Power Equipment Foundation
 
 Add Holy Power as an equipment-derived server stat and a client-displayed
-equipment value. Map blessed staff tiers to `1-10` and god staves to `11`.
+equipment value. Map blessed staff tiers to the established full staff-power
+ladder (`8/12/16/24/28/32/40/44/48/56`) and god staves to the tier-eleven
+value `64`.
 Ordinary Magic staves and blessed armor contribute zero. Any aligned blessed
 or god staff empowers ordinary Cleric support regardless of spell alignment.
 

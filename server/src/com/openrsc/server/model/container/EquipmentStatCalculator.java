@@ -4,6 +4,9 @@ import com.openrsc.server.constants.ItemId;
 
 /** Pure definition-table and arithmetic calculations used by {@link Equipment}. */
 final class EquipmentStatCalculator {
+	private static final int[] BLESSED_STAFF_HOLY_POWER = {
+		8, 12, 16, 24, 28, 32, 40, 44, 48, 56
+	};
 	private EquipmentStatCalculator() {
 	}
 
@@ -22,24 +25,29 @@ final class EquipmentStatCalculator {
 	static int holyPowerForItem(final int itemId) {
 		if (itemId >= ItemId.BLESSED_STAFF.id()
 			&& itemId <= ItemId.BLESSED_BLOOD_STAFF.id()) {
-			return itemId - ItemId.BLESSED_STAFF.id() + 1;
+			return blessedStaffHolyPower(itemId - ItemId.BLESSED_STAFF.id());
 		}
 		if (itemId >= ItemId.SARADOMIN_BLESSED_STAFF.id()
 			&& itemId <= ItemId.SARADOMIN_BLESSED_BLOOD_STAFF.id()) {
-			return itemId - ItemId.SARADOMIN_BLESSED_STAFF.id() + 1;
+			return blessedStaffHolyPower(itemId - ItemId.SARADOMIN_BLESSED_STAFF.id());
 		}
 		if (itemId >= ItemId.GUTHIX_BLESSED_STAFF.id()
 			&& itemId <= ItemId.GUTHIX_BLESSED_BLOOD_STAFF.id()) {
-			return itemId - ItemId.GUTHIX_BLESSED_STAFF.id() + 1;
+			return blessedStaffHolyPower(itemId - ItemId.GUTHIX_BLESSED_STAFF.id());
 		}
 		switch (itemId) {
 			case 1216: // ItemId.STAFF_OF_ZAMORAK (switch labels must be constants)
 			case 1217: // ItemId.STAFF_OF_GUTHIX
 			case 1218: // ItemId.STAFF_OF_SARADOMIN
-				return 11;
+				return 64;
 			default:
 				return 0;
 		}
+	}
+
+	private static int blessedStaffHolyPower(final int tierIndex) {
+		return tierIndex >= 0 && tierIndex < BLESSED_STAFF_HOLY_POWER.length
+			? BLESSED_STAFF_HOLY_POWER[tierIndex] : 0;
 	}
 
 	static int godEquipmentNaturalPrayerBonus(final int itemId) {

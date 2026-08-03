@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public final class ClericSpellCatalog {
 	public static final int SCHEMA_VERSION = 1;
-	public static final int MAX_LAUNCH_HOLY_POWER = 11;
+	public static final int MAX_LAUNCH_HOLY_POWER = 64;
 
 	private static final List<ClericSpellDefinition> DEFINITIONS;
 	private static final Map<ClericSpellId, ClericSpellDefinition> BY_ID;
@@ -23,29 +23,29 @@ public final class ClericSpellCatalog {
 	static {
 		List<ClericSpellDefinition> definitions = new ArrayList<ClericSpellDefinition>();
 		definitions.add(definition(ClericSpellId.MEND, "Mend", ClericAlignment.SARADOMIN,
-			1, 1, 2, 0, 2, 5));
+			1, 1, 2, 0, 12, 28));
 		definitions.add(definition(ClericSpellId.UNIFY, "Unify", ClericAlignment.NEUTRAL,
 			3, 1, 4, 0));
 		definitions.add(definition(ClericSpellId.FERVOR, "Fervor", ClericAlignment.ZAMORAK,
-			5, 1, 2, 0, 2, 5, 8));
+			5, 1, 2, 0, 12, 28, 44));
 		definitions.add(definition(ClericSpellId.PURIFY, "Purify", ClericAlignment.GUTHIX,
-			8, 1, 2, 0, 2, 5, 8));
+			8, 1, 2, 0, 12, 28, 44));
 		definitions.add(definition(ClericSpellId.RESTORE, "Restore", ClericAlignment.GUTHIX,
-			11, 1, 2, 0, 2, 5, 8));
+			11, 1, 2, 0, 12, 28, 44));
 		definitions.add(definition(ClericSpellId.WARD, "Ward", ClericAlignment.SARADOMIN,
-			14, 1, 2, 0, 2, 4, 6));
+			14, 1, 2, 0, 12, 24, 32));
 		definitions.add(definition(ClericSpellId.GREATER_MEND, "Greater Mend", ClericAlignment.SARADOMIN,
-			16, 2, 3, 0, 4, 8, 11));
+			16, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.ZEAL, "Zeal", ClericAlignment.ZAMORAK,
-			19, 2, 3, 0, 4, 8, 11));
+			19, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.THORNS, "Thorns", ClericAlignment.GUTHIX,
-			22, 2, 3, 0, 4, 8, 11));
+			22, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.AEGIS, "Aegis", ClericAlignment.SARADOMIN,
-			25, 2, 3, 0, 4, 8, 11));
+			25, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.RALLY, "Rally", ClericAlignment.ZAMORAK,
-			28, 2, 3, 0, 4, 8, 11));
+			28, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.RESPITE, "Respite", ClericAlignment.NEUTRAL,
-			30, 2, 3, 0, 4, 8, 11));
+			30, 2, 3, 0, 24, 44, 64));
 
 		EnumMap<ClericSpellId, ClericSpellDefinition> ids =
 			new EnumMap<ClericSpellId, ClericSpellDefinition>(ClericSpellId.class);
