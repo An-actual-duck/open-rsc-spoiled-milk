@@ -120,9 +120,14 @@ skill.
   spellbook.
 - Blessed staves and god staves gain a **Holy Power** stat.
 - Ordinary Magic staves have no Holy Power.
-- The existing blessed-staff line, culminating in god staves, has weaker Magic
-  Power than comparable Magic-specialized staves. A player therefore cannot
-  reach full Magic and Cleric effectiveness with one staff.
+- A Cleric spell does not require a holy staff to cast. With no equipped
+  blessed or god staff, the caster has `0` Holy Power and receives only the
+  lowest available effect rank.
+- The three god-aligned blessed-staff lines share the same Holy Power ladder.
+  Any of them empowers any ordinary Cleric support spell; staff alignment does
+  not split the shared book or require three staff swaps. Matching-staff rules
+  remain available for offensive god spells.
+- Blessed armor does not grant Holy Power in the initial rollout.
 - Holy Power determines healing effectiveness and may scale other suitable
   support effects.
 - Holy Defense will not be introduced.
@@ -134,6 +139,29 @@ skill.
 - God staves remain below comparable dedicated Magic staves in Magic Power.
   Their required offensive god spells therefore retain a deliberate equipment
   compromise rather than creating a best-in-both-books staff.
+
+The confirmed staff values are:
+
+| Staff tier | Comparable dedicated-staff Magic Power | Blessed-staff Magic Power | Holy Power |
+| --- | ---: | ---: | ---: |
+| Staff | 8 | 4 | 1 |
+| Pine | 12 | 6 | 2 |
+| Oak | 16 | 8 | 3 |
+| Willow | 24 | 12 | 4 |
+| Palm | 28 | 14 | 5 |
+| Maple | 32 | 16 | 6 |
+| Yew | 40 | 20 | 7 |
+| Ebony | 44 | 22 | 8 |
+| Magic | 48 | 24 | 9 |
+| Blood | 56 | 28 | 10 |
+| Saradomin, Guthix, or Zamorak god staff | 56 | 28 | 11 |
+
+Each blessed or god staff receives exactly half the Magic Power of its normal
+comparison while equipped. The current MyWorld definitions already assign the
+listed `8-56` Magic Power ladder to ordinary staves and `56` to god staves, but
+the blessed variants presently use a flat value of `2`. Later implementation
+must synchronize those definitions to this table rather than preserving that
+flat compatibility value.
 
 ### Soft Specialization Pressures
 
@@ -775,9 +803,6 @@ them.
 
 ### Holy Power and Support Rules
 
-- Whether a staff is required to cast, merely recommended through stronger
-  effects, or optional for non-healing utility.
-- Holy Power values for each blessed-staff and god-staff tier.
 - The raw Holy Power thresholds for the confirmed Mend and Greater Mend ranks,
   including which rank is available without a Holy Power staff.
 - PvP behavior, experience attribution, and remaining abuse safeguards.
@@ -915,6 +940,20 @@ Clarified that `holy staff` was shorthand, not a new family. The existing
 blessed-staff progression culminates in god staves. All receive Holy Power,
 but even god staves retain less Magic Power than comparable dedicated Magic
 staves; offensive god spells continue to use Magic Power and Magic Defense.
+
+### 2026-08-02: Holy Power and half-Magic staff ladder
+
+Confirmed that casting remains possible at `0` Holy Power and therefore does
+not hard-require a staff; `0` receives the spell's lowest effect rank. The ten
+blessed-staff tiers receive Holy Power `1-10`, and all three god staves receive
+Holy Power `11`. Any alignment's staff empowers ordinary spells in the shared
+Cleric book, while blessed armor contributes no Holy Power at launch.
+
+Confirmed that blessed and god staves provide exactly half the Magic Power of
+their normal tier comparison. This produces blessed-staff Magic Power
+`4/6/8/12/14/16/20/22/24/28` and god-staff Magic Power `28`. Current data's
+flat blessed-staff value of `2` will require a later implementation
+synchronization; no runtime definition changes belong to this concept branch.
 
 ### 2026-08-02: Shared book with god support identities
 
