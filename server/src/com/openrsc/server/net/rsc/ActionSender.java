@@ -508,6 +508,7 @@ public class ActionSender {
 		struct.hidingPoints = player.getHidingPoints();
 		struct.rangedPoints = player.getCarriedItems().getEquipment().getDisplayedRangedOffense();
 		struct.magicPowerPoints = player.getCarriedItems().getEquipment().getDisplayedMagicOffense();
+		struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_EQUIPMENT_STATS, struct, player);
 		if (player.getConfig().WANT_MYWORLD) {
 			player.getPrayers().deactivateOverflowingPrayers();

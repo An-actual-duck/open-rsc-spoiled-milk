@@ -19,6 +19,29 @@ final class EquipmentStatCalculator {
 		return penalizedPieces * penaltyPerPiece;
 	}
 
+	static int holyPowerForItem(final int itemId) {
+		if (itemId >= ItemId.BLESSED_STAFF.id()
+			&& itemId <= ItemId.BLESSED_BLOOD_STAFF.id()) {
+			return itemId - ItemId.BLESSED_STAFF.id() + 1;
+		}
+		if (itemId >= ItemId.SARADOMIN_BLESSED_STAFF.id()
+			&& itemId <= ItemId.SARADOMIN_BLESSED_BLOOD_STAFF.id()) {
+			return itemId - ItemId.SARADOMIN_BLESSED_STAFF.id() + 1;
+		}
+		if (itemId >= ItemId.GUTHIX_BLESSED_STAFF.id()
+			&& itemId <= ItemId.GUTHIX_BLESSED_BLOOD_STAFF.id()) {
+			return itemId - ItemId.GUTHIX_BLESSED_STAFF.id() + 1;
+		}
+		switch (itemId) {
+			case 1216: // ItemId.STAFF_OF_ZAMORAK (switch labels must be constants)
+			case 1217: // ItemId.STAFF_OF_GUTHIX
+			case 1218: // ItemId.STAFF_OF_SARADOMIN
+				return 11;
+			default:
+				return 0;
+		}
+	}
+
 	static int godEquipmentNaturalPrayerBonus(final int itemId) {
 		switch (itemId) {
 			case 430: // BLACK_MACE

@@ -63,7 +63,9 @@ def main() -> None:
             "Player equipment checks should recognize all blessed staff variants")
     require("addAdditionalBlessedStaffDefinitions();" in client_handler,
             "Client handler should define Saradomin/Guthix blessed staffs")
-    require("(item.id >= 3152 && item.id <= 3171)" in client,
+    require("getBlessedStaffTier(item.id)" in client
+            and "itemId >= 3152 && itemId <= 3161" in client
+            and "itemId >= 3162 && itemId <= 3171" in client,
             "Client magic offense should include Saradomin/Guthix blessed staffs")
 
     print("PASS: blessed staff god variants validated")
