@@ -204,6 +204,21 @@ def validate_runtime_boundaries() -> None:
         require(snippet in plugin, f"C05 runtime contract missing: {snippet}")
     require("player.getPrayerBook()" not in plugin,
             "sigil blessing must not depend on the selected Worship alignment")
+    require("Skill.PRAYER" not in plugin and "Skill.WORSHIP" not in plugin,
+            "sigil production must not award Worship XP")
+    for alignment, god in (
+        ("SARADOMIN", "SARADOMIN"),
+        ("GUTHIX", "GUTHIX"),
+        ("ZAMORAK", "ZAMORAK"),
+    ):
+        require(
+            f"alignment == ClericAlignment.{alignment} "
+            f"&& altarGod == PrayerCatalog.GodLine.{god}" in plugin,
+            f"aligned altar policy drift for {alignment}",
+        )
+    require("if (alignment == ClericAlignment.NEUTRAL)" in plugin
+            and "return altarGod;" in plugin,
+            "neutral sigils must charge the recognized altar god")
     require("replaceExactStacked" not in inventory,
             "carving must not retain the obsolete stack-merging replacement path")
     require("synchronized (list)" in inventory and "canReplaceAllCatalogStackedLocked" in inventory,
