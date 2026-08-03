@@ -2,10 +2,11 @@
 
 ## Status
 
-- Branch: `feat/cleric-spellbook-foundation`
+- Branch: `feat/cleric-sigil-item-assets`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestone: **C01 — definition catalog foundation**
-- Next planned milestone: **C02 — sigil item and asset identities**
+- Current milestone: **C02 — sigil item and asset identities**
+- Next planned milestone after C02 review: **C03 — Holy Power equipment foundation**
 - Runtime exposure: **disabled**
 - Public-server work: **forbidden**
 
@@ -114,6 +115,14 @@ Verification:
 - client and server builds;
 - private inventory/ground-icon inspection if inert development spawning is
   authorized.
+
+Compatibility note: the legacy monolithic `ItemId` enum is already at the JVM
+64-KiB generated-method limit and cannot safely accept the sixteen new enum
+entries. `ClericSigilItemId` therefore owns their explicit stable numeric
+identities, material, alignment, and blessing state. `ItemId.maxCustom` remains
+the authoritative exclusive item-count boundary. Later Cleric code must use
+the focused identity catalog rather than relying on enum ordinals or assuming
+that every custom definition can be added to the legacy enum.
 
 ### C03 — Holy Power Equipment Foundation
 
@@ -286,3 +295,46 @@ at their source location for C02, when their stable item identities, maintained
 asset locations, generated silver variants, and classic fallbacks can be added
 and verified together. All unresolved runtime-exposure blockers above remain
 open and continue to stop later dependent phases.
+
+## C02 Completion Record
+
+C02 establishes sixteen inert, stackable item definitions at stable IDs
+`3293-3308`: four alignments, stone and silver materials, and unblessed and
+blessed states. It does not provide any acquisition or use path. The server
+definitions and direct client registry agree on names, descriptions, flags,
+IDs, and the exclusive item count of `3309`.
+
+The owner's eight supplied sigil images and plain `stone.png` reference are
+preserved byte-for-byte in the maintained sigil asset folder. Eight derived
+silver variants recolor only pixels belonging to the supplied stone substrate
+palette; every religious and neutral symbol pixel is unchanged. Maintained
+images remain `28x25` RGBA files. Client metadata renders stone at `28x25` and
+silver at `24x21`, using nearest-neighbor scaling for the requested smaller
+silver footprint.
+
+Enhanced clients search the focused maintained folder and package all PNGs in
+the client JAR. Missing external art remains safe: stone definitions fall back
+to authentic stone sprite `443`, while silver definitions fall back to
+authentic silver sprite `134`. Classic presentation therefore never depends on
+the new external artwork.
+
+The focused compiled fixtures validate stable identity lookups and rejection,
+all sixteen server/client records, source-art hashes, exact substrate-only
+silver transformation, alpha and dimensions, development and packaged loading,
+render bounds, packaged-resource presence, and the missing-PNG fallback path.
+Source guards keep the identities unreachable from production gameplay until a
+later approved phase. Verification for this milestone includes:
+
+- `python3 tests/myworld/test-cleric-spellbook-foundation.py`
+- `python3 tests/myworld/test-cleric-sigil-item-assets.py`
+- `python3 tests/myworld/test-client-definition-registry-extraction.py`
+- `python3 tests/myworld/audit-item-id-integrity.py`
+- `python3 tests/myworld/audit_client_item_coverage.py`
+- `./scripts/build-client.sh`
+- `./scripts/build-server.sh`
+- changed-code compiler and static analysis
+- `git diff --check`
+
+C02 deliberately adds no carving, altar conversion, Devotion accounting,
+Blessing behavior, spawn/drop/shop source, spell consumption, dialogue, packet,
+or player-visible spell functionality. All global runtime blockers remain open.

@@ -16,41 +16,43 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 CLIENT_ITEMS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
-ITEM_IDS = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
+LEGACY_ITEM_IDS = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
+SIGIL_ITEM_IDS = ROOT / "server/src/com/openrsc/server/content/cleric/ClericSigilItemId.java"
 SERVER_ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 SERVER_OVERRIDES = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 ASSET_LOADER = ROOT / "Client_Base/src/orsc/ClientExternalAssetLoader.java"
 CLIENT_BUILD = ROOT / "Client_Base/build.xml"
 ASSET_DIR = ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils"
+SERVER_CLERIC_ROOT = ROOT / "server/src/com/openrsc/server/content/cleric"
 
 SIGILS = (
-    (3293, "UNBLESSED_STONE_SARADOMIN_SIGIL", "Unblessed Saradomin stone sigil",
+    (3293, "UNBLESSED_STONE_SARADOMIN_SIGIL", "Unblessed stone sigil of Saradomin",
      "A carved stone sigil awaiting Saradomin's blessing", 443, "unblessed-sara-sigil@28x25"),
-    (3294, "BLESSED_STONE_SARADOMIN_SIGIL", "Saradomin stone sigil",
+    (3294, "BLESSED_STONE_SARADOMIN_SIGIL", "Stone sigil of Saradomin",
      "A stone sigil blessed by Saradomin", 443, "blessed-sara-sigil@28x25"),
-    (3295, "UNBLESSED_STONE_GUTHIX_SIGIL", "Unblessed Guthix stone sigil",
+    (3295, "UNBLESSED_STONE_GUTHIX_SIGIL", "Unblessed stone sigil of Guthix",
      "A carved stone sigil awaiting Guthix's blessing", 443, "unblessed-guth-sigil@28x25"),
-    (3296, "BLESSED_STONE_GUTHIX_SIGIL", "Guthix stone sigil",
+    (3296, "BLESSED_STONE_GUTHIX_SIGIL", "Stone sigil of Guthix",
      "A stone sigil blessed by Guthix", 443, "blessed-guth-sigil@28x25"),
-    (3297, "UNBLESSED_STONE_ZAMORAK_SIGIL", "Unblessed Zamorak stone sigil",
+    (3297, "UNBLESSED_STONE_ZAMORAK_SIGIL", "Unblessed stone sigil of Zamorak",
      "A carved stone sigil awaiting Zamorak's blessing", 443, "unblessed-zam-sigil@28x25"),
-    (3298, "BLESSED_STONE_ZAMORAK_SIGIL", "Zamorak stone sigil",
+    (3298, "BLESSED_STONE_ZAMORAK_SIGIL", "Stone sigil of Zamorak",
      "A stone sigil blessed by Zamorak", 443, "blessed-zam-sigil@28x25"),
     (3299, "UNBLESSED_STONE_NEUTRAL_SIGIL", "Unblessed neutral stone sigil",
      "A carved neutral stone sigil awaiting a blessing", 443, "unblessed-neutral-sigil@28x25"),
     (3300, "BLESSED_STONE_NEUTRAL_SIGIL", "Neutral stone sigil",
      "A neutral stone sigil blessed at a god altar", 443, "blessed-neutral-sigil@28x25"),
-    (3301, "UNBLESSED_SILVER_SARADOMIN_SIGIL", "Unblessed Saradomin silver sigil",
+    (3301, "UNBLESSED_SILVER_SARADOMIN_SIGIL", "Unblessed silver sigil of Saradomin",
      "A carved silver sigil awaiting Saradomin's blessing", 134, "silver-unblessed-sara-sigil@24x21"),
-    (3302, "BLESSED_SILVER_SARADOMIN_SIGIL", "Saradomin silver sigil",
+    (3302, "BLESSED_SILVER_SARADOMIN_SIGIL", "Silver sigil of Saradomin",
      "A silver sigil blessed by Saradomin", 134, "silver-blessed-sara-sigil@24x21"),
-    (3303, "UNBLESSED_SILVER_GUTHIX_SIGIL", "Unblessed Guthix silver sigil",
+    (3303, "UNBLESSED_SILVER_GUTHIX_SIGIL", "Unblessed silver sigil of Guthix",
      "A carved silver sigil awaiting Guthix's blessing", 134, "silver-unblessed-guth-sigil@24x21"),
-    (3304, "BLESSED_SILVER_GUTHIX_SIGIL", "Guthix silver sigil",
+    (3304, "BLESSED_SILVER_GUTHIX_SIGIL", "Silver sigil of Guthix",
      "A silver sigil blessed by Guthix", 134, "silver-blessed-guth-sigil@24x21"),
-    (3305, "UNBLESSED_SILVER_ZAMORAK_SIGIL", "Unblessed Zamorak silver sigil",
+    (3305, "UNBLESSED_SILVER_ZAMORAK_SIGIL", "Unblessed silver sigil of Zamorak",
      "A carved silver sigil awaiting Zamorak's blessing", 134, "silver-unblessed-zam-sigil@24x21"),
-    (3306, "BLESSED_SILVER_ZAMORAK_SIGIL", "Zamorak silver sigil",
+    (3306, "BLESSED_SILVER_ZAMORAK_SIGIL", "Silver sigil of Zamorak",
      "A silver sigil blessed by Zamorak", 134, "silver-blessed-zam-sigil@24x21"),
     (3307, "UNBLESSED_SILVER_NEUTRAL_SIGIL", "Unblessed neutral silver sigil",
      "A carved neutral silver sigil awaiting a blessing", 134, "silver-unblessed-neutral-sigil@24x21"),
@@ -71,6 +73,56 @@ SOURCE_HASHES = {
 }
 
 
+SERVER_IDENTITY_FIXTURE = r"""
+package com.openrsc.server.content.cleric;
+
+public final class ClericSigilItemIdentityFixture {
+	private static final ClericAlignment[] ALIGNMENTS = {
+		ClericAlignment.SARADOMIN, ClericAlignment.SARADOMIN,
+		ClericAlignment.GUTHIX, ClericAlignment.GUTHIX,
+		ClericAlignment.ZAMORAK, ClericAlignment.ZAMORAK,
+		ClericAlignment.NEUTRAL, ClericAlignment.NEUTRAL,
+		ClericAlignment.SARADOMIN, ClericAlignment.SARADOMIN,
+		ClericAlignment.GUTHIX, ClericAlignment.GUTHIX,
+		ClericAlignment.ZAMORAK, ClericAlignment.ZAMORAK,
+		ClericAlignment.NEUTRAL, ClericAlignment.NEUTRAL
+	};
+
+	private ClericSigilItemIdentityFixture() {
+	}
+
+	public static void main(String[] args) {
+		ClericSigilItemId[] identities = ClericSigilItemId.values();
+		check(identities.length == 16, "sigil identity count drift");
+		for (int index = 0; index < identities.length; index++) {
+			ClericSigilItemId identity = identities[index];
+			int expectedItemId = 3293 + index;
+			check(identity.getItemId() == expectedItemId, "item ID drift " + identity);
+			check(ClericSigilItemId.fromItemId(expectedItemId) == identity,
+				"item lookup drift " + identity);
+			check(identity.getMaterial() == (index < 8
+				? ClericSigilMaterial.STONE : ClericSigilMaterial.SILVER),
+				"material drift " + identity);
+			check(identity.getAlignment() == ALIGNMENTS[index], "alignment drift " + identity);
+			check(identity.isBlessed() == (index % 2 == 1), "blessing-state drift " + identity);
+		}
+		try {
+			ClericSigilItemId.fromItemId(3292);
+			throw new AssertionError("unknown item ID was accepted");
+		} catch (IllegalArgumentException expected) {
+			// Expected validation failure.
+		}
+	}
+
+	private static void check(boolean condition, String message) {
+		if (!condition) {
+			throw new AssertionError(message);
+		}
+	}
+}
+"""
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
@@ -82,15 +134,18 @@ def validate_definitions_and_scope() -> None:
     require(max(entries) == 3308, "sigils must occupy the next contiguous server item range")
     require(set(range(3293, 3309)) <= entries.keys(), "server sigil definition range is incomplete")
 
-    constants = ITEM_IDS.read_text(encoding="utf-8")
-    require("public static final int maxCustom = 3309;" in constants,
+    legacy_constants = LEGACY_ITEM_IDS.read_text(encoding="utf-8")
+    require("public static final int maxCustom = 3309;" in legacy_constants,
             "exclusive server item bound must include all sigils")
+    constants = SIGIL_ITEM_IDS.read_text(encoding="utf-8")
+    require("legacy {@code ItemId}" in constants and "JVM method-size" in constants,
+            "Cleric identity ownership must document the legacy enum compatibility boundary")
     client = CLIENT_ITEMS.read_text(encoding="utf-8")
     require("addClericSigilDefinitions();" in client, "client sigil definitions are not loaded")
 
     for item_id, constant, name, description, sprite_id, asset_spec in SIGILS:
-        require(f"{constant}({item_id})" in constants,
-                f"missing stable ItemId identity {constant}")
+        require(re.search(rf"{constant}\({item_id},\s*ClericSigilMaterial\.", constants) is not None,
+                f"missing stable Cleric sigil item identity {constant}")
         entry = entries[item_id]
         require(entry["name"] == name, f"server name drift for {item_id}")
         require(entry["description"] == description, f"server description drift for {item_id}")
@@ -118,11 +173,11 @@ def validate_definitions_and_scope() -> None:
 
     for source in (ROOT / "server/src", ROOT / "server/plugins"):
         for path in source.rglob("*.java"):
-            if path == ITEM_IDS:
+            if path == SIGIL_ITEM_IDS:
                 continue
             text = path.read_text(encoding="utf-8")
             for _, constant, *_ in SIGILS:
-                require(f"ItemId.{constant}" not in text,
+                require(f"ClericSigilItemId.{constant}" not in text,
                         f"C02 item became reachable from production code: {path.relative_to(ROOT)}")
 
     loader = ASSET_LOADER.read_text(encoding="utf-8")
@@ -149,6 +204,23 @@ def validate_source_assets() -> None:
         require(actual_hash == expected_hash, f"supplied source sprite changed: {name}")
 
 
+def build_and_run_server_identity_fixture() -> None:
+    sources = sorted(str(path) for path in SERVER_CLERIC_ROOT.glob("*.java"))
+    with tempfile.TemporaryDirectory(prefix="cleric-sigil-identities-") as temporary:
+        temp = Path(temporary)
+        source = temp / "com/openrsc/server/content/cleric/ClericSigilItemIdentityFixture.java"
+        source.parent.mkdir(parents=True)
+        source.write_text(textwrap.dedent(SERVER_IDENTITY_FIXTURE), encoding="utf-8")
+        classes = temp / "classes"
+        classes.mkdir()
+        subprocess.run(["javac", "-d", str(classes), *sources, str(source)], check=True)
+        subprocess.run(
+            ["java", "-cp", str(classes),
+             "com.openrsc.server.content.cleric.ClericSigilItemIdentityFixture"],
+            check=True,
+        )
+
+
 FIXTURE = r"""
 package orsc;
 
@@ -170,13 +242,13 @@ public final class ClericSigilItemAssetFixture {
 		3301, 3302, 3303, 3304, 3305, 3306, 3307, 3308
 	};
 	private static final String[] NAMES = {
-		"Unblessed Saradomin stone sigil", "Saradomin stone sigil",
-		"Unblessed Guthix stone sigil", "Guthix stone sigil",
-		"Unblessed Zamorak stone sigil", "Zamorak stone sigil",
+		"Unblessed stone sigil of Saradomin", "Stone sigil of Saradomin",
+		"Unblessed stone sigil of Guthix", "Stone sigil of Guthix",
+		"Unblessed stone sigil of Zamorak", "Stone sigil of Zamorak",
 		"Unblessed neutral stone sigil", "Neutral stone sigil",
-		"Unblessed Saradomin silver sigil", "Saradomin silver sigil",
-		"Unblessed Guthix silver sigil", "Guthix silver sigil",
-		"Unblessed Zamorak silver sigil", "Zamorak silver sigil",
+		"Unblessed silver sigil of Saradomin", "Silver sigil of Saradomin",
+		"Unblessed silver sigil of Guthix", "Silver sigil of Guthix",
+		"Unblessed silver sigil of Zamorak", "Silver sigil of Zamorak",
 		"Unblessed neutral silver sigil", "Neutral silver sigil"
 	};
 	private static final String[] ASSETS = {
@@ -344,6 +416,7 @@ def build_and_run_runtime_fixture() -> None:
 def main() -> None:
     validate_definitions_and_scope()
     validate_source_assets()
+    build_and_run_server_identity_fixture()
     build_and_run_runtime_fixture()
     print("PASS: Cleric C02 stable item and asset foundation checks passed")
 

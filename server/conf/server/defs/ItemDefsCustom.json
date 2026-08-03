@@ -46491,7 +46491,7 @@
     },
     {
       "id": 3293,
-      "name": "Unblessed Saradomin stone sigil",
+      "name": "Unblessed stone sigil of Saradomin",
       "description": "A carved stone sigil awaiting Saradomin's blessing",
       "command": "",
       "isFemaleOnly": 0,
@@ -46514,7 +46514,7 @@
     },
     {
       "id": 3294,
-      "name": "Saradomin stone sigil",
+      "name": "Stone sigil of Saradomin",
       "description": "A stone sigil blessed by Saradomin",
       "command": "",
       "isFemaleOnly": 0,
@@ -46537,7 +46537,7 @@
     },
     {
       "id": 3295,
-      "name": "Unblessed Guthix stone sigil",
+      "name": "Unblessed stone sigil of Guthix",
       "description": "A carved stone sigil awaiting Guthix's blessing",
       "command": "",
       "isFemaleOnly": 0,
@@ -46560,7 +46560,7 @@
     },
     {
       "id": 3296,
-      "name": "Guthix stone sigil",
+      "name": "Stone sigil of Guthix",
       "description": "A stone sigil blessed by Guthix",
       "command": "",
       "isFemaleOnly": 0,
@@ -46583,7 +46583,7 @@
     },
     {
       "id": 3297,
-      "name": "Unblessed Zamorak stone sigil",
+      "name": "Unblessed stone sigil of Zamorak",
       "description": "A carved stone sigil awaiting Zamorak's blessing",
       "command": "",
       "isFemaleOnly": 0,
@@ -46606,7 +46606,7 @@
     },
     {
       "id": 3298,
-      "name": "Zamorak stone sigil",
+      "name": "Stone sigil of Zamorak",
       "description": "A stone sigil blessed by Zamorak",
       "command": "",
       "isFemaleOnly": 0,
@@ -46675,7 +46675,7 @@
     },
     {
       "id": 3301,
-      "name": "Unblessed Saradomin silver sigil",
+      "name": "Unblessed silver sigil of Saradomin",
       "description": "A carved silver sigil awaiting Saradomin's blessing",
       "command": "",
       "isFemaleOnly": 0,
@@ -46698,7 +46698,7 @@
     },
     {
       "id": 3302,
-      "name": "Saradomin silver sigil",
+      "name": "Silver sigil of Saradomin",
       "description": "A silver sigil blessed by Saradomin",
       "command": "",
       "isFemaleOnly": 0,
@@ -46721,7 +46721,7 @@
     },
     {
       "id": 3303,
-      "name": "Unblessed Guthix silver sigil",
+      "name": "Unblessed silver sigil of Guthix",
       "description": "A carved silver sigil awaiting Guthix's blessing",
       "command": "",
       "isFemaleOnly": 0,
@@ -46744,7 +46744,7 @@
     },
     {
       "id": 3304,
-      "name": "Guthix silver sigil",
+      "name": "Silver sigil of Guthix",
       "description": "A silver sigil blessed by Guthix",
       "command": "",
       "isFemaleOnly": 0,
@@ -46767,7 +46767,7 @@
     },
     {
       "id": 3305,
-      "name": "Unblessed Zamorak silver sigil",
+      "name": "Unblessed silver sigil of Zamorak",
       "description": "A carved silver sigil awaiting Zamorak's blessing",
       "command": "",
       "isFemaleOnly": 0,
@@ -46790,7 +46790,7 @@
     },
     {
       "id": 3306,
-      "name": "Zamorak silver sigil",
+      "name": "Silver sigil of Zamorak",
       "description": "A silver sigil blessed by Zamorak",
       "command": "",
       "isFemaleOnly": 0,

@@ -20,7 +20,17 @@ def require(condition: bool, message: str) -> None:
 
 def validate_source_boundaries() -> None:
     java_files = sorted(JAVA_ROOT.glob("*.java"))
-    require(len(java_files) == 6, "Cleric foundation source inventory drift")
+    required_foundation = {
+        "ClericAlignment.java",
+        "ClericSigilCost.java",
+        "ClericSigilMaterial.java",
+        "ClericSpellCatalog.java",
+        "ClericSpellDefinition.java",
+        "ClericSpellId.java",
+    }
+    actual = {source.name for source in java_files}
+    require(required_foundation <= actual,
+            "Cleric C01 source missing: " + ", ".join(sorted(required_foundation - actual)))
     for source in java_files:
         text = source.read_text(encoding="utf-8")
         require(".ordinal()" not in text, f"{source.name} must not persist or transport enum ordinals")
