@@ -201,13 +201,13 @@ bands and fixed Ward/Aegis reductions are exceptions.
 
 | Tier | Spell | Identity | Confirmed effect direction |
 | ---: | --- | --- | --- |
-| 1 | Mend | Saradomin | Three-pulse regeneration heal on cast and approximately `5` and `10` seconds later, scaling from `1` to `3` Hits per pulse with Holy Power (`3-9` total healing before healing-ceiling limits) |
+| 1 | Mend | Saradomin | Three-pulse regeneration heal on cast and approximately `5` and `10` seconds later; its three ranks heal `1/2/3` Hits per pulse |
 | 1 | Unify | Neutral | Uses an enlarged radius and draws eligible same-party players closer to the caster to set up later area support |
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Instantly reduces current poison power by `10/20/30/40`; the existing below-`10` rule cures sufficiently weakened poison |
 | 1 | Restore | Guthix | Instantly restores every configured skill except Hits by `10/25/40/60%` of that skill's valid normal maximum without creating a boost |
 | 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; its four Holy Power ranks protect against `2/4/6/8` hits |
-| 2 | Greater Mend | Saradomin | Uses Mend's pulse cadence while scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
+| 2 | Greater Mend | Saradomin | Uses Mend's pulse cadence; its four ranks heal `2/3/4/5` Hits per pulse |
 | 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
 | 2 | Thorns | Guthix | Weak recoil placed on affected players; Holy Power increases reflected damage |
 | 2 | Aegis | Saradomin | Reduces each qualifying protected hit by a fixed `50%`; its four Holy Power ranks protect against `1/2/3/4` hits and require higher thresholds than Ward |
@@ -219,6 +219,27 @@ covering several nearby allies. Mend and Greater Mend are regeneration effects,
 not large instant heals. Purify leaves room for later full poison cleansing,
 and Restore is the only planned spell in its restoration line rather than the
 first of repeated stronger copies.
+
+### Mend-Family Healing Ranks
+
+Mend uses three meaningful integer ranks rather than forcing a duplicate value
+into a four-rank table. Greater Mend has enough numerical range for four:
+
+| Spell and effect rank | Healing per pulse | Three-pulse total before caps |
+| --- | ---: | ---: |
+| Mend I | 1 | 3 |
+| Mend II | 2 | 6 |
+| Mend III | 3 | 9 |
+| Greater Mend I | 2 | 6 |
+| Greater Mend II | 3 | 9 |
+| Greater Mend III | 4 | 12 |
+| Greater Mend IV | 5 | 15 |
+
+Both spells use the confirmed immediate, `8`-tick, and `16`-tick pulse cadence.
+Holy Power selects the healing rank but never accelerates the pulses. Each
+pulse clamps independently to the current valid healing ceiling. Greater Mend
+retains tier priority over Mend regardless of their numerical rank; within one
+spell, the normal higher-rank replacement rule applies.
 
 ### Purify Poison-Reduction Contract
 
@@ -703,17 +724,16 @@ them.
 - Whether a staff is required to cast, merely recommended through stronger
   effects, or optional for non-healing utility.
 - Holy Power values for each blessed-staff and god-staff tier.
-- The healing formula, minimum effect without a staff, caps, target rules,
-  range, cooldowns, and behavior at full health.
-- Which non-healing effects may scale with Holy Power and which should have a
-  fixed effect to avoid mandatory staff swapping.
-- Per-spell self-application exceptions, party membership changes during an
-  effect, PvP behavior, experience attribution, and abuse safeguards. The
-  general recipient rule is settled as same-party only at cast time.
+- The raw Holy Power thresholds for the confirmed Mend and Greater Mend ranks,
+  including which rank is available without a Holy Power staff.
+- Per-spell self-application exceptions, PvP behavior, experience attribution,
+  and abuse safeguards. Same-party eligibility and clearing effects on party
+  separation are settled.
 - Exact area geometry, line-of-sight/path requirements, Unify's bonus radius,
   and how Unify selects safe reachable destination tiles without
   forced-movement abuse. Standard tier radii are settled by the `N + 1` rule.
-- Holy Power threshold tables and discrete ranks for each scalable effect.
+- Holy Power threshold tables for each scalable effect. Rank counts and values
+  for the initial twelve spells are settled wherever scaling applies.
 - Cast-level resource and experience behavior when an area spell applies to
   only some recipients or is wholly ineffective because every recipient has a
   stronger active family effect.
@@ -726,8 +746,6 @@ them.
 - How Rally composes with existing blood-equipment and god-spell lifesteal.
   Rally's own rate, eligibility, rounding, threshold, and duration are settled,
   but independent stacking versus one combined bounded lifesteal family is not.
-- Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
-  its ending health threshold, or both.
 - Exact passive-healing clock synchronization when Respite is applied,
   refreshed, replaced, or expires. Its magnitude, duration, eligible healing
   stream, and multiplicative composition are settled.
@@ -997,6 +1015,14 @@ again `8` and `16` game ticks later, corresponding to approximately `5` and
 without changing cadence. Combat does not interrupt the effect. Every pulse
 clamps independently to the recipient's current valid healing ceiling; excess
 healing is wasted without ending the remaining sequence.
+
+### 2026-08-02: Mend-family healing ranks
+
+Confirmed three Mend ranks healing `1/2/3` Hits per pulse and four Greater Mend
+ranks healing `2/3/4/5` per pulse. This avoids a duplicate integer value merely
+to force both spells into four ranks. Greater Mend retains tier replacement
+priority over Mend, while Holy Power thresholds remain tied to the later staff
+stat design.
 
 ### 2026-08-02: Fervor roll-bias ranks
 
