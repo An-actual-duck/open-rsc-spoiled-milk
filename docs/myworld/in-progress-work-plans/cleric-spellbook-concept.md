@@ -204,7 +204,7 @@ bands and fixed Ward/Aegis reductions are exceptions.
 | 1 | Mend | Saradomin | Three-pulse regeneration heal on cast and approximately `5` and `10` seconds later, scaling from `1` to `3` Hits per pulse with Holy Power (`3-9` total healing before healing-ceiling limits) |
 | 1 | Unify | Neutral | Uses an enlarged radius and draws eligible same-party players closer to the caster to set up later area support |
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
-| 1 | Purify | Guthix | Reduces current poison power rather than fully curing every poison; current target range is approximately `10-40` power from Holy Power |
+| 1 | Purify | Guthix | Instantly reduces current poison power by `10/20/30/40`; the existing below-`10` rule cures sufficiently weakened poison |
 | 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
 | 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; its four Holy Power ranks protect against `2/4/6/8` hits |
 | 2 | Greater Mend | Saradomin | Uses Mend's pulse cadence while scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
@@ -219,6 +219,29 @@ covering several nearby allies. Mend and Greater Mend are regeneration effects,
 not large instant heals. Purify leaves room for later full poison cleansing,
 and Restore is the only planned spell in its restoration line rather than the
 first of repeated stronger copies.
+
+### Purify Poison-Reduction Contract
+
+Purify is an instant four-rank effect:
+
+| Effect rank | Poison-power reduction |
+| ---: | ---: |
+| I | 10 |
+| II | 20 |
+| III | 30 |
+| IV | 40 |
+
+- Purify subtracts its rank value from each eligible recipient's current
+  poison power. If the result is below `10`, the existing poison system cures
+  the recipient normally; otherwise poison continues from the reduced power.
+- A partial reduction retains the existing poison source attribution and
+  maximum accumulation state. Purify does not grant poison immunity or prevent
+  a later poison application.
+- Unpoisoned recipients receive no lingering status. Purify therefore has no
+  timer or HUD entry after its instant resolution.
+- Repeated casts are allowed. Severe poison can be removed with additional
+  tier-one sigils and casting actions, while a future full-cleansing spell can
+  remain the faster and more resource-efficient answer.
 
 ### Fervor Roll-Bias Contract
 
@@ -532,6 +555,10 @@ These are current implementation facts, not new design decisions:
   is cured when it falls below `10`. Purify can therefore reduce that same
   authoritative power while preserving a meaningful distinction from a full
   cure.
+- Current poison sources commonly begin around `20-68` power and advanced
+  effects can accumulate to `80`. Purify's `10-40` reductions can cure modest
+  poison or materially weaken severe poison without making one cast a universal
+  full cleanse.
 - Timed potion effects already use an integer magnitude plus an expiry, while
   several combat effects use an integer magnitude plus remaining attack count.
 - The custom client's active-potion HUD currently displays an item-definition
@@ -983,3 +1010,12 @@ regeneration interval, remains active during combat and at full health, and
 does not modify Mend pulses or other stat restoration. Existing regeneration
 potions, soul robes, body amulets, and Respite retain independent ownership and
 compose multiplicatively.
+
+### 2026-08-02: Purify poison-reduction ranks
+
+Confirmed instant Purify reductions of `10/20/30/40` current poison power. A
+result below the existing cure threshold of `10` ends poison normally;
+otherwise its reduced power, source attribution, and maximum accumulation
+state continue. Purify grants no immunity, creates no timed status, and may be
+cast repeatedly so severe poison trades additional sigils and actions for a
+full cure.
