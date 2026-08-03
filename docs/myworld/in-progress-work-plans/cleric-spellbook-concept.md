@@ -21,6 +21,9 @@ recorded beside an otherwise confirmed spell identity.
 - Spell unlocks are tiered by the player's Worship level rather than Magic.
 - Worship gates access to and progression through the spellbook; it does not
   gate production of the spellbook's resources and equipment.
+- Worship XP remains owned by its offering mechanic. Casting Cleric spells
+  grants no Worship XP, just as activating or benefiting from prayers does not
+  train Worship.
 - **Blessing** is a new production skill. It fills the relationship to Worship
   that Enchanting fills for Magic: Blessing levels gate the creation of sigils
   and blessed gear.
@@ -30,8 +33,8 @@ recorded beside an otherwise confirmed spell identity.
   of the eventual spellbook, with progression extending through roughly
   Worship level `30`.
 - The initial rollout contains `12` spells: six tier-one spells and six
-  tier-two spells. Unlocks are staggered through the two level bands rather
-  than placing all six spells at one level; exact levels remain open.
+  tier-two spells. Unlocks are staggered individually from Worship `1` through
+  `30` rather than placing all six spells at one level.
 - The spellbook should create meaningful support and healing roles without
   replacing Magic's offensive and utility identity.
 - Magic and Cleric remain simultaneously accessible. Players do not switch an
@@ -50,7 +53,7 @@ requirement to copy every level, recipe, or effect one-to-one.
 
 | Magic-side role | Cleric-side role | Settled ownership |
 | --- | --- | --- |
-| Magic | Worship | Gates and advances through the spellbook that consumes the crafted casting resource |
+| Magic | Worship | Gates the spellbook; unlike Magic casting, Cleric casting grants no skill XP because Worship advancement remains offering-owned |
 | Enchanting | Blessing | Gates production of casting resources and aligned equipment |
 | Runes | Blessed sigils | Consumable spell resources |
 | Enchanted equipment | Blessed equipment | Base gear transformed through the corresponding production skill |
@@ -804,8 +807,6 @@ them.
 
 ### Casting and Spellbook Contract
 
-- Does casting award Worship experience, and if so, should healing/support XP
-  depend on a successful useful effect rather than merely attempting a cast?
 - Are Cleric spells available to all players who meet the Worship requirement,
   or is there an introductory unlock or quest?
 
@@ -819,8 +820,8 @@ them.
   imbued. No secondary-sigil production path should be invented for the first
   rollout.
 - Exact Crafting levels, Crafting XP, Blessing XP, silver quantities, batch
-  behavior, failure behavior, and inventory transformations, including whether
-  any Worship XP remains part of production.
+  behavior, failure behavior, and inventory transformations. Neither carving,
+  blessing, nor casting awards Worship XP.
 - Whether carving with a chisel produces one sigil at a time or supports an
   explicit quantity/batch flow after the player makes a selection in the
   Crafting window. Altar blessing itself is already settled as a
@@ -840,15 +841,15 @@ them.
 
 ### Holy Power and Support Rules
 
-- PvP behavior, experience attribution, and remaining abuse safeguards.
+- PvP behavior and remaining abuse safeguards.
   Same-party eligibility, launch-spell caster exclusion, and clearing effects
   on party separation are settled.
 - How Unify's one-time forced movement integrates with queued walking and the
   client movement presentation without desynchronization. This implementation
   detail may not weaken its settled collision, layer, or combat-state rules.
-- Cast-level resource and experience behavior when an area spell applies to
-  only some recipients or is wholly ineffective because every recipient has a
-  stronger active family effect.
+- Cast-level resource behavior when an area spell applies to only some
+  recipients or is wholly ineffective because every recipient has a stronger
+  active family effect. Casting never awards Worship XP.
 - Status icons and labels; optional-count packet representation; compatibility
   behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
   Mend cadence and the tactical and Respite duration ladders are settled.
@@ -998,6 +999,14 @@ tier boundary: Mend `1`, Unify `3`, Fervor `5`, Purify `8`, Restore `11`, Ward
 `14`, Greater Mend `16`, Zeal `19`, Thorns `22`, Aegis `25`, Rally `28`, and
 Respite `30`. Resource costs remain determined by spell tier and effect ranks by
 Holy Power, independently of these Worship gates.
+
+### 2026-08-02: Offering-owned Worship advancement
+
+Confirmed that Cleric casting grants no Worship XP. Worship is the governing
+spellbook skill, but players train it through the established offering
+mechanic, just as using prayers does not itself award Worship XP. Crafting owns
+carving XP and Blessing owns successful altar-conversion XP; neither production
+step awards Worship XP either.
 
 ### 2026-08-02: Shared book with god support identities
 
