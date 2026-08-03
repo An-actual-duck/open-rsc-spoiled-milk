@@ -26,6 +26,10 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"spoiled-milk-world-builder-export", true),
 	ADAPTIVE_WORLD_BUILDER("adaptive-world-builder", true);
 
+	public static final int ADAPTIVE_MAX_LEVELS = 64;
+	public static final int ADAPTIVE_MAX_TERRAIN_SECTORS = 8192;
+	public static final int ADAPTIVE_MAX_PLACEMENTS = 100000;
+
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
 		"rsc-remastered.preservation-r64-parity-review";
@@ -130,9 +134,10 @@ public enum NativeLayeredWorldRuntimeProfile {
 			throw new IllegalStateException(
 				"The adaptive-world-builder profile requires one static global world space");
 		}
-		if (loaded.getLevelCount() < 1 || loaded.getLevelCount() > 64
+		if (loaded.getLevelCount() < 1
+			|| loaded.getLevelCount() > ADAPTIVE_MAX_LEVELS
 			|| loaded.getTerrainSectorCount() < 1
-			|| loaded.getTerrainSectorCount() > 8192
+			|| loaded.getTerrainSectorCount() > ADAPTIVE_MAX_TERRAIN_SECTORS
 			|| loaded.getPlacementSetCount() != loaded.getLevelCount()) {
 			throw new IllegalStateException(
 				"The adaptive-world-builder package exceeds its bounded level, "
@@ -142,9 +147,10 @@ public enum NativeLayeredWorldRuntimeProfile {
 			+ loaded.getGroundItemPlacementCount()
 			+ loaded.getSceneryPlacementCount()
 			+ loaded.getBoundaryPlacementCount();
-		if (placementCount > 100000L) {
+		if (placementCount > ADAPTIVE_MAX_PLACEMENTS) {
 			throw new IllegalStateException(
-				"The adaptive-world-builder package exceeds 100000 placements");
+				"The adaptive-world-builder package exceeds "
+					+ ADAPTIVE_MAX_PLACEMENTS + " placements");
 		}
 		Set<Integer> declaredLevels = new HashSet<Integer>();
 		for (NativeLayeredWorldPackage.LevelDeclaration level

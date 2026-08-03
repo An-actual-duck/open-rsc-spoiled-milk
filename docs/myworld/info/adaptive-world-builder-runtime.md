@@ -169,7 +169,8 @@ definition ID 7.
 New adaptive placement IDs use only family, signed level, coordinate, and a
 bounded deterministic collision slot under `world-builder.authored.*`. Host
 paths, time, randomness, package identity, and Spoiled Milk identity never
-enter them. Existing arbitrary placement IDs are retained across edit/save.
+enter them. Existing arbitrary placement and placement-set IDs are retained
+across edit/save.
 
 ## Verified save and recovery
 

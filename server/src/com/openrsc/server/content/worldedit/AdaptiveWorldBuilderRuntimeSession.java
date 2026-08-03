@@ -55,6 +55,8 @@ public final class AdaptiveWorldBuilderRuntimeSession {
 				"Adaptive session evidence requires explicit adaptive mode");
 		}
 		WorldEditStorageContext storage = server.getWorldEditStorage();
+		AdaptiveWorldBuilderRuntimeIdentity.validateEvidenceFiles(
+			server.getConfig(), storage);
 		Path composition = storage.validateGeneratedPath(
 			controlDirectory.resolve(COMPOSITION_FILE),
 			"adaptive effective-composition evidence");
@@ -87,7 +89,11 @@ public final class AdaptiveWorldBuilderRuntimeSession {
 				definitions.itemIdsCsv());
 		String canonical =
 			AdaptiveWorldBuilderRuntimeIdentity.canonicalSession(fields);
+		AdaptiveWorldBuilderRuntimeIdentity.validateEvidenceFiles(
+			server.getConfig(), storage);
 		writeAtomic(binding, canonical.getBytes(StandardCharsets.US_ASCII));
+		AdaptiveWorldBuilderRuntimeIdentity.validateEvidenceFiles(
+			server.getConfig(), storage);
 		String token = AdaptiveWorldBuilderRuntimeIdentity.fingerprint(fields);
 		return new AdaptiveWorldBuilderRuntimeSession(
 			token, binding, composition, fields);

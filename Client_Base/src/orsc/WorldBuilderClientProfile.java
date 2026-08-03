@@ -111,7 +111,8 @@ public final class WorldBuilderClientProfile {
 		if (credentialFile.isEmpty()) {
 			throw new IllegalArgumentException("World Builder credential file is required");
 		}
-		String credential = readCredential(Paths.get(credentialFile).toAbsolutePath().normalize());
+		Path credentialPath =
+			Paths.get(credentialFile).toAbsolutePath().normalize();
 		String projectName = validateProjectName(System.getProperty(PROJECT_NAME_PROPERTY, "Builder Project"));
 		String sourceRevision = System.getProperty(SOURCE_REVISION_PROPERTY, "").trim().toLowerCase();
 		if (!SOURCE_REVISION_PATTERN.matcher(sourceRevision).matches()) {
@@ -154,6 +155,7 @@ public final class WorldBuilderClientProfile {
 			}
 			adaptiveSession.requireEvidence(
 				Paths.get(definitionEvidence), Paths.get(assetEvidence));
+			credentialPath = adaptiveSession.requireCredential(credentialPath);
 			layeredReview = true;
 			layeredTerrainDraft = true;
 			layeredPackageId = adaptiveSession.packageId();
@@ -181,6 +183,7 @@ public final class WorldBuilderClientProfile {
 			layeredLevels = parseLevels(
 				System.getProperty(LAYERED_LEVELS_PROPERTY, ""));
 		}
+		String credential = readCredential(credentialPath);
 		current = new WorldBuilderClientProfile(
 			true, host, port, credential, projectName, sourceRevision,
 			layeredReview, layeredTerrainDraft,

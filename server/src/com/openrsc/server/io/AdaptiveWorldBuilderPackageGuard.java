@@ -38,9 +38,14 @@ public final class AdaptiveWorldBuilderPackageGuard {
 
 	public static Inventory requireClosedPackage(Path requestedRoot)
 		throws IOException {
-		Inventory inventory = inventory(requestedRoot);
+		Inventory before = inventory(requestedRoot);
 		NativeLayeredWorldPackage loaded =
-			NativeLayeredWorldPackage.load(inventory.getRoot());
+			NativeLayeredWorldPackage.load(before.getRoot());
+		Inventory inventory = inventory(before.getRoot());
+		if (!before.getFingerprint().equals(inventory.getFingerprint())) {
+			throw new IOException(
+				"Adaptive layered package changed while it was being validated");
+		}
 		if (!loaded.getExpectedRelativeFilePaths().equals(
 				inventory.getEntries().keySet())) {
 			Set<String> missing = new HashSet<String>(
@@ -53,7 +58,29 @@ public final class AdaptiveWorldBuilderPackageGuard {
 				"Adaptive layered package inventory is not closed; missing="
 					+ sorted(missing) + "; extra=" + sorted(extra));
 		}
+		requireLoadedHash(
+			inventory, "manifest.json", loaded.getManifestSha256());
+		for (NativeLayeredTerrainSector sector
+			: loaded.getTerrainSectors().values()) {
+			requireLoadedHash(
+				inventory, sector.getSourcePath(), sector.getSourceSha256());
+		}
+		for (NativeLayeredPlacementSet set
+			: loaded.getPlacementSets().values()) {
+			requireLoadedHash(
+				inventory, set.getSourcePath(), set.getSourceSha256());
+		}
 		return inventory;
+	}
+
+	private static void requireLoadedHash(
+		Inventory inventory, String path, String loadedSha256)
+		throws IOException {
+		Entry entry = inventory.getEntries().get(path);
+		if (entry == null || !entry.getSha256().equals(loadedSha256)) {
+			throw new IOException(
+				"Adaptive layered package changed while loading: " + path);
+		}
 	}
 
 	public static Inventory inventory(Path requestedRoot) throws IOException {

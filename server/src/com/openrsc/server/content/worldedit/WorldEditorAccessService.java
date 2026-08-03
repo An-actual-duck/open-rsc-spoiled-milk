@@ -10,6 +10,11 @@ public final class WorldEditorAccessService {
 	}
 
 	public static boolean open(Player player) {
+		if (!WorldBuilderPlayerSession.mayOpenEditor(player)) {
+			player.message(player.getConfig().MESSAGE_PREFIX
+				+ "Adaptive Builder client/server binding is not complete.");
+			return false;
+		}
 		WorldEditorSessionManager.OpenResult result = player.getWorld().getServer().getWorldEditorSessions()
 			.open(player, player.getConfig().ALLOW_IN_GAME_WORLD_EDITOR && player.getClientVersion() > 10000);
 		if (!result.opened) {

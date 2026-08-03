@@ -1,6 +1,7 @@
 package com.openrsc.server.content.worldedit;
 
 import com.openrsc.server.io.AdaptiveWorldBuilderPackageGuard;
+import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
@@ -141,8 +142,20 @@ public final class AdaptiveWorldBuilderPackagePublisher {
 				throw new IOException(
 					"Adaptive staged package changed before publication");
 			}
+			requireFingerprint(
+				"working package", expectedWorkingInventorySha256,
+				AdaptiveWorldBuilderPackageGuard.requireClosedPackage(
+					working).getFingerprint());
+			requireFingerprint(
+				"immutable source baseline", expectedBaselineInventorySha256,
+				AdaptiveWorldBuilderPackageGuard.requireClosedPackage(
+					immutable).getFingerprint());
 			writeTransaction(
 				transaction, current.getFingerprint(), newInventorySha256);
+			requireFingerprint(
+				"working package", expectedWorkingInventorySha256,
+				AdaptiveWorldBuilderPackageGuard.requireClosedPackage(
+					working).getFingerprint());
 			moveAtomic(working, previous);
 			previousMoved = true;
 			observer.at(Stage.PREVIOUS_MOVED, stage);
@@ -503,6 +516,21 @@ public final class AdaptiveWorldBuilderPackagePublisher {
 			List<Sector> sectors, List<Boundary> boundaries,
 			List<Scenery> scenery, List<Npc> npcs,
 			List<GroundItem> groundItems) {
+			if (worldSpaces == null || worldSpaces.size() != 1
+				|| levels == null || levels.isEmpty()
+				|| levels.size()
+					> NativeLayeredWorldRuntimeProfile.ADAPTIVE_MAX_LEVELS
+				|| sectors == null || sectors.isEmpty()
+				|| sectors.size()
+					> NativeLayeredWorldRuntimeProfile.ADAPTIVE_MAX_TERRAIN_SECTORS
+				|| boundaries == null || scenery == null || npcs == null
+				|| groundItems == null
+				|| (long) boundaries.size() + scenery.size() + npcs.size()
+					+ groundItems.size()
+					> NativeLayeredWorldRuntimeProfile.ADAPTIVE_MAX_PLACEMENTS) {
+				throw new IllegalArgumentException(
+					"Adaptive save model exceeds its bounded package contract");
+			}
 			this.packageId = packageId;
 			this.packageVersion = packageVersion;
 			this.presentationChunkSize = presentationChunkSize;
@@ -667,9 +695,7 @@ public final class AdaptiveWorldBuilderPackagePublisher {
 				if (index > 0) value.append(',');
 				Level level = levels.get(index);
 				FileRecord file = placementFiles.get(index);
-				String setId = "world-builder." + level.worldSpace + ".l"
-					+ signed(level.level);
-				value.append("{\"id\":"); json(value, setId);
+				value.append("{\"id\":"); json(value, level.placementSetId);
 				value.append(",\"worldSpace\":"); json(value, level.worldSpace);
 				value.append(",\"level\":").append(level.level)
 					.append(",\"encoding\":\"layered-world-placements-v3\",\"path\":");
@@ -699,12 +725,22 @@ public final class AdaptiveWorldBuilderPackagePublisher {
 		public final int level;
 		public final String name;
 		public final String role;
+		public final String placementSetId;
 
 		public Level(String worldSpace, int level, String name, String role) {
+			this(
+				worldSpace, level, name, role,
+				"world-builder." + worldSpace + ".l" + signed(level));
+		}
+
+		public Level(
+			String worldSpace, int level, String name, String role,
+			String placementSetId) {
 			this.worldSpace = worldSpace;
 			this.level = level;
 			this.name = name;
 			this.role = role;
+			this.placementSetId = placementSetId;
 		}
 	}
 
@@ -713,6 +749,11 @@ public final class AdaptiveWorldBuilderPackagePublisher {
 		public final byte[] bytes;
 
 		public Sector(WorldMapSectorId identity, byte[] bytes) {
+			if (identity == null || bytes == null
+				|| bytes.length != NativeLayeredTerrainSector.TILE_COUNT * 10) {
+				throw new IllegalArgumentException(
+					"Adaptive terrain sector must contain exact raw tile bytes");
+			}
 			this.identity = identity;
 			this.bytes = bytes.clone();
 		}

@@ -151,6 +151,8 @@ def write_package(root: Path, *, empty: bool = False) -> None:
 
 HARNESS = r"""
 import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderPackagePublisher;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeIdentity;
+import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.io.AdaptiveWorldBuilderPackageGuard;
 import com.openrsc.server.io.NativeLayeredBoundaryPlacement;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
@@ -159,6 +161,8 @@ import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredSceneryPlacement;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
+import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -167,13 +171,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class AdaptiveWorldBuilderRuntimeHarness {
+    private static String placementSetId(
+        NativeLayeredWorldPackage source,
+        NativeLayeredWorldPackage.LevelDeclaration level) {
+        String result = null;
+        for (NativeLayeredPlacementSet set : source.getPlacementSets().values()) {
+            if (set.getWorldSpace().equals(level.getWorldSpace())
+                && set.getLevel() == level.getLevel()) {
+                if (result != null) throw new IllegalStateException("ambiguous set");
+                result = set.getId();
+            }
+        }
+        if (result == null) throw new IllegalStateException("missing set");
+        return result;
+    }
+
     private static AdaptiveWorldBuilderPackagePublisher.Draft draft(
         NativeLayeredWorldPackage source) {
         List<AdaptiveWorldBuilderPackagePublisher.Level> levels = new ArrayList<>();
         for (NativeLayeredWorldPackage.LevelDeclaration level : source.getLevelDeclarations()) {
             levels.add(new AdaptiveWorldBuilderPackagePublisher.Level(
                 level.getWorldSpace().getValue(), level.getLevel(),
-                level.getName(), level.getRole()));
+                level.getName(), level.getRole(), placementSetId(source, level)));
         }
         List<AdaptiveWorldBuilderPackagePublisher.Sector> sectors = new ArrayList<>();
         boolean changed = false;
@@ -266,6 +285,56 @@ public final class AdaptiveWorldBuilderRuntimeHarness {
             System.out.println("recovered");
             return;
         }
+        if ("empty-origin".equals(mode)) {
+            NativeLayeredWorldPackage source = NativeLayeredWorldPackage.load(working);
+            NativeLayeredWorldRuntimeProfile.ADAPTIVE_WORLD_BUILDER.validate(
+                NativeLayeredWorldPackageCatalog.of(
+                    java.util.Collections.singletonList(source)));
+            AdaptiveWorldBuilderPackageGuard.Inventory inventory =
+                AdaptiveWorldBuilderPackageGuard.requireClosedPackage(working);
+            ServerConfiguration config = new ServerConfiguration();
+            config.WORLD_BUILDER_MODE = true;
+            config.WORLD_BUILDER_ADAPTIVE_MODE = true;
+            config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
+                AdaptiveWorldBuilderRuntimeIdentity.PROFILE_ID;
+            config.WORLD_BUILDER_PROJECT_ORIGIN =
+                AdaptiveWorldBuilderRuntimeIdentity.ORIGIN_EMPTY;
+            config.WORLD_BUILDER_DEFINITION_ID = "creator.definitions.v1";
+            config.WORLD_BUILDER_DEFINITION_SHA256 =
+                "1111111111111111111111111111111111111111111111111111111111111111";
+            config.WORLD_BUILDER_ASSET_ID = "creator.assets.v1";
+            config.WORLD_BUILDER_ASSET_SHA256 =
+                "2222222222222222222222222222222222222222222222222222222222222222";
+            config.WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256 =
+                inventory.getFingerprint();
+            config.LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 =
+                source.getManifestSha256();
+            config.LAYERED_NATIVE_TERRAIN_INVENTORY_SHA256 =
+                inventory.getFingerprint();
+            config.WORLD_BUILDER_INITIAL_WORLD_SPACE = "global";
+            config.WORLD_BUILDER_INITIAL_LEVEL = 0;
+            config.WORLD_BUILDER_INITIAL_X = 0;
+            config.WORLD_BUILDER_INITIAL_Y = 0;
+            config.CLIENT_VERSION = AdaptiveWorldBuilderRuntimeIdentity.CLIENT_VERSION;
+            AdaptiveWorldBuilderRuntimeIdentity.validateOriginPackage(config, source);
+            System.out.println("accepted-empty");
+            return;
+        }
+        if ("composition".equals(mode)) {
+            Path destination = Paths.get(args[2]);
+            NativeLayeredWorldPackage source = NativeLayeredWorldPackage.load(working);
+            AdaptiveWorldBuilderPackageGuard.Inventory inventory =
+                AdaptiveWorldBuilderPackageGuard.requireClosedPackage(working);
+            java.lang.reflect.Method writer =
+                com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeSession.class
+                    .getDeclaredMethod(
+                        "writeComposition", Path.class,
+                        NativeLayeredWorldPackage.class, String.class);
+            writer.setAccessible(true);
+            writer.invoke(null, destination, source, inventory.getFingerprint());
+            System.out.println("composition-written");
+            return;
+        }
         Path baseline = Paths.get(args[2]);
         NativeLayeredWorldPackage source = NativeLayeredWorldPackage.load(working);
         String workingHash = AdaptiveWorldBuilderPackageGuard
@@ -330,6 +399,10 @@ public final class AdaptiveWorldBuilderRuntimeHarness {
                         && stage == AdaptiveWorldBuilderPackagePublisher.Stage.PREVIOUS_MOVED) {
                         throw new IOException("injected interrupted save");
                     }
+                    if ("crash-moved".equals(mode)
+                        && stage == AdaptiveWorldBuilderPackagePublisher.Stage.PREVIOUS_MOVED) {
+                        Runtime.getRuntime().halt(73);
+                    }
                 }
             };
         }
@@ -358,7 +431,8 @@ public final class AdaptiveWorldBuilderClientBindingHarness {
         AdaptiveWorldBuilderClientSession session =
             AdaptiveWorldBuilderClientSession.load(binding);
         session.requireEvidence(Paths.get(args[1]), Paths.get(args[2]));
-        session.requirePackageIdentity(args[3], args[4], args[5]);
+        session.requireCredential(Paths.get(args[3]));
+        session.requirePackageIdentity(args[4], args[5], args[6]);
         System.out.println(session.token() + " " + session.packageId());
     }
 }
@@ -437,6 +511,12 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
         assets = evidence / "assets.bin"
         definitions.write_bytes(b"content-neutral definitions\n")
         assets.write_bytes(b"content-neutral assets\n")
+        credential = (
+            root / "project/working/runtime/server/inc/sqlite/"
+            "world-builder.credential"
+        )
+        credential.parent.mkdir(parents=True)
+        credential.write_text("Abcdefghijk23456789Z", encoding="ascii")
         fields = {
             "assetContract": "world-builder-client-asset-binding-v1",
             "assetIdentity": "creator.assets.v1",
@@ -485,13 +565,20 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
         return binding, definitions, assets, fields
 
     def run_client_binding(
-        self, binding: Path, definitions: Path, assets: Path, fields: dict
+        self, binding: Path, definitions: Path, assets: Path, fields: dict,
+        credential: Path | None = None,
     ):
+        if credential is None:
+            credential = (
+                binding.parents[2] / "working/runtime/server/inc/sqlite/"
+                "world-builder.credential"
+            )
         return subprocess.run(
             [
                 "java", "-cp", self.client_classpath,
                 "AdaptiveWorldBuilderClientBindingHarness",
                 str(binding), str(definitions), str(assets),
+                str(credential),
                 fields["packageId"], fields["packageVersion"],
                 fields["manifestSha256"],
             ],
@@ -502,20 +589,35 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
 
     def test_generic_package_publish_is_deterministic_and_preserves_all_families(self):
         outputs = []
+        compositions = []
         for name in ("short", "a-very-different-absolute-root-name"):
             with tempfile.TemporaryDirectory(prefix=f"adaptive-{name}-") as temp:
                 working, baseline, target = self.fixture(Path(temp))
+                sibling = Path(temp) / "existing-other-project"
+                sibling.mkdir()
+                (sibling / "keep.txt").write_bytes(b"unrelated workspace\n")
                 baseline_before = digest_tree(baseline)
                 target_before = digest_tree(target)
+                sibling_before = digest_tree(sibling)
                 result = self.run_harness("publish", working, baseline)
                 self.assertEqual(0, result.returncode, result.stderr)
                 fields = result.stdout.strip().split()
                 self.assertEqual(["1", "1", "1", "1"], fields[2:])
                 self.assertEqual(baseline_before, digest_tree(baseline))
                 self.assertEqual(target_before, digest_tree(target))
+                self.assertEqual(sibling_before, digest_tree(sibling))
                 self.assertEqual(
                     "creator.arbitrary-adopted-world",
                     json.loads((working / "manifest.json").read_text())["packageId"],
+                )
+                self.assertEqual(
+                    ["creator.global.lm3", "creator.global.lp0"],
+                    [
+                        value["id"]
+                        for value in json.loads(
+                            (working / "manifest.json").read_text()
+                        )["placementSets"]
+                    ],
                 )
                 outputs.append(
                     {
@@ -523,12 +625,36 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                         for path in working.rglob("*") if path.is_file()
                     }
                 )
+                composition = working.parents[2] / "run/effective.json"
+                composition.parent.mkdir(parents=True)
+                evidence = self.run_harness(
+                    "composition", working, composition
+                )
+                self.assertEqual(0, evidence.returncode, evidence.stderr)
+                parsed = json.loads(composition.read_text())
+                self.assertEqual(
+                    {"boundaries": 1, "groundItems": 1, "npcs": 1, "scenery": 1},
+                    parsed["counts"],
+                )
+                level_zero = next(
+                    value for value in parsed["placementSets"]
+                    if value["level"] == 0
+                )
+                self.assertEqual("creator.fixture.boundary", level_zero["boundaries"][0]["placementId"])
+                self.assertEqual("creator.fixture.ground-item", level_zero["groundItems"][0]["placementId"])
+                self.assertEqual("creator.fixture.npc", level_zero["npcs"][0]["placementId"])
+                self.assertEqual("creator.fixture.scenery", level_zero["scenery"][0]["placementId"])
+                self.assertRegex(level_zero["sourceSha256"], r"^[0-9a-f]{64}$")
+                compositions.append(composition.read_bytes())
         self.assertEqual(outputs[0], outputs[1])
+        self.assertEqual(compositions[0], compositions[1])
 
     def test_canonical_empty_package_is_accepted_without_fixed_world_identity(self):
         with tempfile.TemporaryDirectory(prefix="adaptive-empty-") as temp:
             working, baseline, target = self.fixture(Path(temp), empty=True)
             result = self.run_harness("guard", working)
+            self.assertEqual(0, result.returncode, result.stderr)
+            result = self.run_harness("empty-origin", working)
             self.assertEqual(0, result.returncode, result.stderr)
             payload = next((working / "terrain").rglob("*.raw")).read_bytes()
             self.assertEqual(bytes((0, 1, 8, 0, 0, 0, 0, 0, 0, 0)), payload[:10])
@@ -539,6 +665,17 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                 if path.is_file():
                     self.assertNotIn(b"spoiled-milk", path.read_bytes().lower())
 
+            manifest = json.loads((working / "manifest.json").read_text())
+            terrain = working / manifest["terrainSectors"][0]["path"]
+            invalid = bytes(10) * (48 * 48)
+            terrain.write_bytes(invalid)
+            manifest["terrainSectors"][0]["sha256"] = hashlib.sha256(
+                invalid
+            ).hexdigest()
+            (working / "manifest.json").write_bytes(canonical_json(manifest))
+            refused = self.run_harness("empty-origin", working)
+            self.assertNotEqual(0, refused.returncode)
+
     def test_injected_failures_leave_complete_working_baseline_and_target(self):
         for mode in (
             "fail-written", "fail-terrain-rehashed", "fail-placement-rehashed",
@@ -548,12 +685,21 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                 prefix=f"adaptive-{mode}-"
             ) as temp:
                 working, baseline, target = self.fixture(Path(temp))
-                before = (digest_tree(working), digest_tree(baseline), digest_tree(target))
+                sibling = Path(temp) / "existing-other-project"
+                sibling.mkdir()
+                (sibling / "keep.txt").write_bytes(b"unrelated workspace\n")
+                before = (
+                    digest_tree(working), digest_tree(baseline),
+                    digest_tree(target), digest_tree(sibling),
+                )
                 result = self.run_harness(mode, working, baseline)
                 self.assertNotEqual(0, result.returncode)
                 self.assertEqual(
                     before,
-                    (digest_tree(working), digest_tree(baseline), digest_tree(target)),
+                    (
+                        digest_tree(working), digest_tree(baseline),
+                        digest_tree(target), digest_tree(sibling),
+                    ),
                 )
                 parent = working.parent
                 self.assertFalse((parent / "package.save-stage").exists())
@@ -594,6 +740,27 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
             self.assertEqual(target_before, digest_tree(target))
             self.assertEqual(baseline_before, digest_tree(baseline))
 
+        with tempfile.TemporaryDirectory(prefix="adaptive-hard-crash-") as temp:
+            working, baseline, target = self.fixture(Path(temp))
+            working_before = digest_tree(working)
+            baseline_before = digest_tree(baseline)
+            target_before = digest_tree(target)
+            interrupted = self.run_harness("crash-moved", working, baseline)
+            self.assertEqual(73, interrupted.returncode)
+            parent = working.parent
+            self.assertFalse(working.exists())
+            self.assertTrue((parent / "package.save-stage").is_dir())
+            self.assertTrue((parent / "package.save-previous").is_dir())
+            self.assertTrue((parent / "package.save-transaction").is_file())
+            recovered = self.run_harness("recover", working)
+            self.assertEqual(0, recovered.returncode, recovered.stderr)
+            self.assertEqual(working_before, digest_tree(working))
+            self.assertEqual(baseline_before, digest_tree(baseline))
+            self.assertEqual(target_before, digest_tree(target))
+            self.assertFalse((parent / "package.save-stage").exists())
+            self.assertFalse((parent / "package.save-previous").exists())
+            self.assertFalse((parent / "package.save-transaction").exists())
+
     def test_links_escapes_and_unbounded_inputs_fail_closed(self):
         with tempfile.TemporaryDirectory(prefix="adaptive-hostile-") as temp:
             root = Path(temp)
@@ -625,6 +792,14 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                         outside_before,
                         hashlib.sha256(outside.read_bytes()).hexdigest(),
                     )
+
+            real_parent = root / "real-parent"
+            package = real_parent / "package"
+            write_package(package)
+            linked_parent = root / "linked-parent"
+            linked_parent.symlink_to(real_parent, target_is_directory=True)
+            result = self.run_harness("guard", linked_parent / "package")
+            self.assertNotEqual(0, result.returncode)
 
     def test_working_and_immutable_baseline_cannot_alias(self):
         with tempfile.TemporaryDirectory(prefix="adaptive-baseline-alias-") as temp:
@@ -673,6 +848,25 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                 binding, definitions, outside, fields
             )
             self.assertNotEqual(0, mismatch.returncode)
+
+            credential = (
+                binding.parents[2] / "working/runtime/server/inc/sqlite/"
+                "world-builder.credential"
+            )
+            outside_credential = root / "outside-credential"
+            outside_credential.write_bytes(credential.read_bytes())
+            mismatch = self.run_client_binding(
+                binding, definitions, assets, fields, outside_credential
+            )
+            self.assertNotEqual(0, mismatch.returncode)
+
+            credential_hardlink = credential.with_name("credential-hardlink")
+            os.link(credential, credential_hardlink)
+            mismatch = self.run_client_binding(
+                binding, definitions, assets, fields
+            )
+            self.assertNotEqual(0, mismatch.returncode)
+            credential_hardlink.unlink()
 
             hardlink = assets.with_name("assets-hardlink.bin")
             os.link(assets, hardlink)
@@ -795,6 +989,40 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
         self.assertIn(
             "AdaptiveWorldBuilderRuntimeIdentity.PLAYER_LOCATION_ORIGIN",
             player_service,
+        )
+        self.assertIn("if(destinationMissing){", sessions)
+        self.assertIn("if(destinationMissing&&!isAdaptive(player)){", sessions)
+        commands = (
+            ROOT / "server/src/com/openrsc/server/net/rsc/handlers/CommandHandler.java"
+        ).read_text()
+        self.assertIn(
+            '"builderbind".equalsIgnoreCase(cmd)\n'
+            "\t\t\t&& AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(",
+            commands,
+        )
+        editor_access = (
+            ROOT / "server/src/com/openrsc/server/content/worldedit/"
+            "WorldEditorAccessService.java"
+        ).read_text()
+        self.assertIn(
+            "WorldBuilderPlayerSession.mayOpenEditor(player)", editor_access
+        )
+        provisioner = (
+            ROOT / "server/src/com/openrsc/server/content/worldedit/"
+            "WorldBuilderAccountProvisioner.java"
+        ).read_text()
+        self.assertIn(
+            'validateGeneratedPath(\n\t\t\t\tcredentialPath, '
+            '"adaptive World Builder credential file")',
+            provisioner,
+        )
+        control = (
+            ROOT / "server/src/com/openrsc/server/content/worldedit/"
+            "WorldBuilderRuntimeControl.java"
+        ).read_text()
+        self.assertIn(
+            "allowedRoot.resolve(DEFAULT_CONTROL_DIRECTORY).normalize()",
+            control,
         )
 
 

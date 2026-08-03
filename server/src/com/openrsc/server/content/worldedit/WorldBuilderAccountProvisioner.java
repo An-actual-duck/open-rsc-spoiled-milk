@@ -40,6 +40,13 @@ public final class WorldBuilderAccountProvisioner {
 			return;
 		}
 		Path credentialPath = resolveCredentialPath();
+		if (AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(server.getConfig())) {
+			credentialPath = server.getWorldEditStorage().validateGeneratedPath(
+				credentialPath, "adaptive World Builder credential file");
+			if (Files.exists(credentialPath, LinkOption.NOFOLLOW_LINKS)) {
+				requireSingleLink(credentialPath);
+			}
+		}
 		String credential = readOrCreateCredential(credentialPath);
 		PlayerLoginData playerData = server.getDatabase().getPlayerLoginData(WorldBuilderMode.ACCOUNT_NAME);
 		if (playerData == null) {
@@ -126,6 +133,21 @@ public final class WorldBuilderAccountProvisioner {
 
 	public static boolean isValidCredential(String credential) {
 		return credential != null && CREDENTIAL_PATTERN.matcher(credential).matches();
+	}
+
+	private static void requireSingleLink(Path path) throws IOException {
+		try {
+			Object links = Files.getAttribute(
+				path, "unix:nlink", LinkOption.NOFOLLOW_LINKS);
+			if (links instanceof Number && ((Number) links).longValue() != 1L) {
+				throw new IOException(
+					"Adaptive World Builder credential file is hard linked");
+			}
+		} catch (UnsupportedOperationException unsupported) {
+			path.toRealPath();
+		} catch (IllegalArgumentException unsupported) {
+			path.toRealPath();
+		}
 	}
 
 	private static String newCredential() {

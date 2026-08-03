@@ -15,6 +15,8 @@ import java.nio.file.Paths;
  */
 public final class WorldEditStorageContext {
 	public static final String WORKSPACE_PROPERTY = "openrsc.worldBuilderWorkspaceRoot";
+	private static final long MAX_RUNTIME_EVIDENCE_BYTES =
+		1024L * 1024L * 1024L;
 
 	private final boolean builderMode;
 	private final boolean adaptiveMode;
@@ -264,6 +266,10 @@ public final class WorldEditStorageContext {
 			throw new IOException(label + " must remain in the isolated working tree.");
 		}
 		requireContainedRegularFile(workspaceRoot, candidate, label);
+		long size = Files.size(candidate);
+		if (size < 1L || size > MAX_RUNTIME_EVIDENCE_BYTES) {
+			throw new IOException(label + " size is outside its bounded contract.");
+		}
 		try {
 			Object links = Files.getAttribute(
 				candidate, "unix:nlink", LinkOption.NOFOLLOW_LINKS);

@@ -11,6 +11,7 @@ import com.openrsc.server.io.NativeLayeredNpcPlacement;
 import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredSceneryPlacement;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
+import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -41,6 +42,7 @@ import java.util.TreeMap;
 /** Single-owner, strictly sequenced editor session and bounded server-lifetime terrain draft. */
 public final class WorldEditorSessionManager {
 	public static final int TERRAIN_DRAFT_LIMIT = 4096;
+	public static final int ADAPTIVE_PLACEMENT_DRAFT_LIMIT = 4096;
 	private final SecureRandom random;
 	private final WorldEditStorageContext storage;
 	private Session active;
@@ -333,6 +335,7 @@ public final class WorldEditorSessionManager {
 			throw new IllegalArgumentException(
 				"New terrain must share an edge with allocated terrain.");
 		}
+		requireAdaptiveGrowthCapacity(player, owner, 1, false);
 		addNativeTerrainSector(requested);
 		nativeTerrainSceneRevision++;
 		return requested;
@@ -372,13 +375,6 @@ public final class WorldEditorSessionManager {
 		boolean createdLevel =
 			!owner.declaresLevel(worldSpace, level)
 				&& !nativeLevelCreations.containsKey(Integer.valueOf(level));
-		if (createdLevel) {
-			nativeLevelCreations.put(
-				Integer.valueOf(level),
-				new NativeLevelCreation(
-					level, worldX, worldY,
-					defaultLevelName(level), defaultLevelRole(level)));
-		}
 		int centerSectorX =
 			Math.floorDiv(worldX, NativeLayeredTerrainSector.SIZE);
 		int centerSectorY =
@@ -401,9 +397,17 @@ public final class WorldEditorSessionManager {
 				"Navigation target has no terrain but its work area is already allocated.");
 		}
 		if (nativeTerrainGrowth.size() + added.size() > 64) {
-			if (createdLevel) nativeLevelCreations.remove(Integer.valueOf(level));
 			throw new IllegalStateException(
 				"Terrain sector-growth draft limit reached.");
+		}
+		requireAdaptiveGrowthCapacity(
+			player, owner, added.size(), createdLevel);
+		if (createdLevel) {
+			nativeLevelCreations.put(
+				Integer.valueOf(level),
+				new NativeLevelCreation(
+					level, worldX, worldY,
+					defaultLevelName(level), defaultLevelRole(level)));
 		}
 		for (WorldMapSectorId identity : added) {
 			addNativeTerrainSector(identity);
@@ -543,6 +547,8 @@ public final class WorldEditorSessionManager {
 		NativeSceneryState current =
 			requireEditableNativeScenery(player, location, object);
 		NativeSceneryKey key = new NativeSceneryKey(location);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeSceneryBase,nativeSceneryOverlay);
 		captureNativeSceneryBase(key, current);
 		player.getWorld().unregisterGameObject(object);
 		recordNativeScenery(key, null);
@@ -558,6 +564,8 @@ public final class WorldEditorSessionManager {
 		NativeSceneryState current =
 			requireEditableNativeScenery(player, location, object);
 		NativeSceneryKey key = new NativeSceneryKey(location);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeSceneryBase,nativeSceneryOverlay);
 		captureNativeSceneryBase(key, current);
 		int direction = requestedDirection == null
 			? (object.getDirection() + 1) % 8
@@ -588,7 +596,10 @@ public final class WorldEditorSessionManager {
 		String placementId = availableNativeNpcPlacementId(player, location);
 		NativeNpcKey key = new NativeNpcKey(
 			location.getWorldSpace(), placementId);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeNpcBase,nativeNpcOverlay);
 		captureNativeNpcBase(key, null);
+		requireAdaptivePlacementCapacity(player);
 		Npc npc = new Npc(
 			player.getWorld(), npcId, x, y, minX, maxX, minY, maxY);
 		npc.setWorldLocation(location, true);
@@ -615,6 +626,8 @@ public final class WorldEditorSessionManager {
 		NativeNpcState current = NativeNpcState.from(npc);
 		NativeNpcKey key = new NativeNpcKey(
 			npc.getWorldLocation().getWorldSpace(), current.placementId);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeNpcBase,nativeNpcOverlay);
 		captureNativeNpcBase(key, current);
 		player.getWorld().unregisterNpc(npc);
 		recordNativeNpc(key, null);
@@ -657,8 +670,11 @@ public final class WorldEditorSessionManager {
 				"There is already an authored ground-item spawn in that spot.");
 		}
 		NativeGroundItemKey key = new NativeGroundItemKey(location);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeGroundItemBase,nativeGroundItemOverlay);
 		captureNativeGroundItemBase(key, null);
 		NativeGroundItemState base = nativeGroundItemBase.get(key);
+		if (base == null) requireAdaptivePlacementCapacity(player);
 		String placementId = base == null
 			? availableNativePlacementId(player, "ground-item", location)
 			: base.placementId;
@@ -697,6 +713,8 @@ public final class WorldEditorSessionManager {
 			NativeGroundItemState.from(
 				item.getNativeLayeredPlacement());
 		NativeGroundItemKey key = new NativeGroundItemKey(location);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeGroundItemBase,nativeGroundItemOverlay);
 		captureNativeGroundItemBase(key, current);
 		item.retireNativeLayeredPlacement();
 		recordNativeGroundItem(key, null);
@@ -944,7 +962,8 @@ public final class WorldEditorSessionManager {
 			: owner.getLevelDeclarations()) {
 			levels.add(new AdaptiveWorldBuilderPackagePublisher.Level(
 				level.getWorldSpace().getValue(), level.getLevel(),
-				level.getName(), level.getRole()));
+				level.getName(), level.getRole(),
+				adaptivePlacementSetId(owner, level)));
 			declaredLevels.add(Integer.valueOf(level.getLevel()));
 		}
 		for (NativeLevelCreation level : nativeLevelCreations.values()) {
@@ -1084,6 +1103,27 @@ public final class WorldEditorSessionManager {
 				groundItems.values()));
 	}
 
+	private static String adaptivePlacementSetId(
+		NativeLayeredWorldPackage owner,
+		NativeLayeredWorldPackage.LevelDeclaration level) {
+		String result = null;
+		for (NativeLayeredPlacementSet set : owner.getPlacementSets().values()) {
+			if (set.getWorldSpace().equals(level.getWorldSpace())
+				&& set.getLevel() == level.getLevel()) {
+				if (result != null) {
+					throw new IllegalStateException(
+						"Adaptive level has ambiguous placement-set identity.");
+				}
+				result = set.getId();
+			}
+		}
+		if (result == null) {
+			throw new IllegalStateException(
+				"Adaptive level has no placement-set identity.");
+		}
+		return result;
+	}
+
 	private static <T> void putPlacement(
 		Map<String, T> values, String placementId, T value) {
 		if (values.put(placementId, value) != null) {
@@ -1176,6 +1216,49 @@ public final class WorldEditorSessionManager {
 		return player!=null&&AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(
 			player.getConfig());
 	}
+	private void requireAdaptivePlacementDraftCapacity(
+		Player player,Object key,Map<?,?> base,Map<?,?> overlay){
+		if(!isAdaptive(player))return;
+		long captured=(long)nativeSceneryBase.size()+nativeNpcBase.size()
+			+nativeGroundItemBase.size();
+		long changed=(long)nativeSceneryOverlay.size()+nativeNpcOverlay.size()
+			+nativeGroundItemOverlay.size();
+		if((!base.containsKey(key)
+				&&captured>=ADAPTIVE_PLACEMENT_DRAFT_LIMIT)
+			||(!overlay.containsKey(key)
+				&&changed>=ADAPTIVE_PLACEMENT_DRAFT_LIMIT)){
+			throw new IllegalStateException(
+				"Adaptive placement draft limit reached.");
+		}
+	}
+	private void requireAdaptivePlacementCapacity(Player player){
+		if(!isAdaptive(player))return;
+		NativeLayeredWorldPackage owner=player.getWorld().getRegionManager()
+			.getNativeLayeredWorldPackage();
+		if(owner==null)throw new IllegalStateException(
+			"Adaptive layered working package is unavailable.");
+		long count=(long)owner.getBoundaryPlacementCount()
+			+owner.getSceneryPlacementCount()+owner.getNpcPlacementCount()
+			+owner.getGroundItemPlacementCount()
+			+placementDelta(nativeSceneryBase,nativeSceneryOverlay)
+			+placementDelta(nativeNpcBase,nativeNpcOverlay)
+			+placementDelta(nativeGroundItemBase,nativeGroundItemOverlay);
+		if(count>=NativeLayeredWorldRuntimeProfile.ADAPTIVE_MAX_PLACEMENTS){
+			throw new IllegalStateException(
+				"Adaptive static placement limit reached.");
+		}
+	}
+	private static <K,V> long placementDelta(
+		Map<K,V> base,Map<K,V> overlay){
+		long result=0L;
+		for(Map.Entry<K,V> entry:overlay.entrySet()){
+			V before=base.get(entry.getKey());
+			V after=entry.getValue();
+			if(before==null&&after!=null)result++;
+			else if(before!=null&&after==null)result--;
+		}
+		return result;
+	}
 	private static void requireBuilderCoordinate(int x,int y){
 		if(x<0||x>32767||y<0||y>32767){
 			throw new IllegalArgumentException(
@@ -1235,6 +1318,8 @@ public final class WorldEditorSessionManager {
 			throw new IllegalStateException(
 				"Terrain sector-growth draft limit reached.");
 		}
+		requireAdaptiveGrowthCapacity(
+			player,owner,accepted.size(),false);
 		for(WorldMapSectorId sector:accepted)addNativeTerrainSector(sector);
 		nativeTerrainSceneRevision++;
 	}
@@ -1261,6 +1346,24 @@ public final class WorldEditorSessionManager {
 				||findNativeTerrainSector(owner,neighbor).isPresent())return true;
 		}
 		return false;
+	}
+	private void requireAdaptiveGrowthCapacity(
+		Player player,NativeLayeredWorldPackage owner,
+		int additionalSectors,boolean additionalLevel){
+		if(!isAdaptive(player))return;
+		if(additionalSectors<0
+			||owner.getTerrainSectorCount()+nativeTerrainGrowth.size()
+				+additionalSectors
+				>NativeLayeredWorldRuntimeProfile.ADAPTIVE_MAX_TERRAIN_SECTORS){
+			throw new IllegalStateException(
+				"Adaptive terrain sector limit reached.");
+		}
+		int levels=owner.getLevelCount()+nativeLevelCreations.size()
+			+(additionalLevel?1:0);
+		if(levels>NativeLayeredWorldRuntimeProfile.ADAPTIVE_MAX_LEVELS){
+			throw new IllegalStateException(
+				"Adaptive signed-level limit reached.");
+		}
 	}
 	private void addNativeTerrainSector(WorldMapSectorId identity){
 		if(nativeTerrainGrowth.contains(identity))return;
@@ -1309,7 +1412,7 @@ public final class WorldEditorSessionManager {
 				&&!nativeLevelCreations.containsKey(Integer.valueOf(level));
 		Set<WorldMapSectorId> added=
 			new java.util.LinkedHashSet<WorldMapSectorId>();
-		if(destinationMissing&&!isAdaptive(player)){
+		if(destinationMissing){
 			collectNativeVerticalWorkArea(owner,destination,added);
 		}
 		if(inverseMissing){
@@ -1323,6 +1426,8 @@ public final class WorldEditorSessionManager {
 			throw new IllegalStateException(
 				"Terrain sector-growth draft limit reached.");
 		}
+		requireAdaptiveGrowthCapacity(
+			player,owner,added.size(),createdLevel);
 		if(createdLevel){
 			nativeLevelCreations.put(
 				Integer.valueOf(level),
@@ -1336,7 +1441,7 @@ public final class WorldEditorSessionManager {
 		for(WorldMapSectorId identity:added)addNativeTerrainSector(identity);
 		Set<NativeTileKey> cleared=
 			new java.util.LinkedHashSet<NativeTileKey>();
-		if(destinationMissing){
+		if(destinationMissing&&!isAdaptive(player)){
 			for(int x=destinationCoordinate.getX()-1;
 				x<=destinationCoordinate.getX()+1;x++){
 				for(int y=destinationCoordinate.getY()-1;
@@ -1415,8 +1520,11 @@ public final class WorldEditorSessionManager {
 		}
 		NativeLayeredWorldPackage owner=nativeOwner(player,location);
 		NativeSceneryKey key=new NativeSceneryKey(location);
+		requireAdaptivePlacementDraftCapacity(
+			player,key,nativeSceneryBase,nativeSceneryOverlay);
 		captureNativeSceneryBase(key,null);
 		NativeSceneryState base=nativeSceneryBase.get(key);
+		if(base==null)requireAdaptivePlacementCapacity(player);
 		String placementId=base==null
 			?availableNativePlacementId(player,"scenery",location):base.placementId;
 		WorldCoordinate coordinate=location.getCoordinate();

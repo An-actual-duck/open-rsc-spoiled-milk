@@ -29,14 +29,27 @@ public final class WorldBuilderRuntimeControl {
 			return;
 		}
 		final Path directory = resolveControlDirectory(server);
-		Files.createDirectories(directory);
-		if (Files.isSymbolicLink(directory)) {
-			throw new IOException("World Builder control directory cannot be a symbolic link");
+		if (AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(server.getConfig())) {
+			server.getWorldEditStorage().validateGeneratedPath(
+				directory, "adaptive World Builder control directory");
+			if (!Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) {
+				Files.createDirectory(directory);
+			}
+		} else {
+			Files.createDirectories(directory);
 		}
-		server.getWorldEditStorage().validateGeneratedPath(
+		if (!Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(directory)) {
+			throw new IOException(
+				"World Builder control directory is missing or unsafe");
+		}
+		Path checkedReady = server.getWorldEditStorage().validateGeneratedPath(
 			directory.resolve(READY_FILE), "World Builder readiness file");
-		server.getWorldEditStorage().validateGeneratedPath(
+		Path checkedShutdown = server.getWorldEditStorage().validateGeneratedPath(
 			directory.resolve(SHUTDOWN_FILE), "World Builder shutdown request");
+		requireReplaceableFile(checkedReady, "World Builder readiness file");
+		requireReplaceableFile(
+			checkedShutdown, "World Builder shutdown request");
 		final Path ready = directory.resolve(READY_FILE);
 		final Path shutdown = directory.resolve(SHUTDOWN_FILE);
 		final AdaptiveWorldBuilderProjectLock projectLock =
@@ -122,6 +135,15 @@ public final class WorldBuilderRuntimeControl {
 		}
 	}
 
+	private static void requireReplaceableFile(Path path, String label)
+		throws IOException {
+		if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)
+			&& (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
+				|| Files.isSymbolicLink(path))) {
+			throw new IOException(label + " is not a safe regular file");
+		}
+	}
+
 	private static void closeStartupLock(
 		AdaptiveWorldBuilderProjectLock lock, Exception failure) {
 		if (lock == null) return;
@@ -145,11 +167,17 @@ public final class WorldBuilderRuntimeControl {
 			directory = runtimeRoot.resolve(directory);
 		}
 		directory = directory.toAbsolutePath().normalize();
-		Path allowedRoot = AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(
-			server.getConfig())
+		boolean adaptive = AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(
+			server.getConfig());
+		Path allowedRoot = adaptive
 			? server.getWorldEditStorage().workspaceRoot() : runtimeRoot;
 		if (!directory.startsWith(allowedRoot)) {
 			throw new IOException("World Builder control directory must remain inside the isolated runtime");
+		}
+		if (adaptive && !directory.equals(
+				allowedRoot.resolve(DEFAULT_CONTROL_DIRECTORY).normalize())) {
+			throw new IOException(
+				"Adaptive World Builder control directory must use the exact project run layout");
 		}
 		return directory;
 	}

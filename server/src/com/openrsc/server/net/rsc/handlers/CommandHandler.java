@@ -5,6 +5,7 @@ import com.openrsc.server.net.rsc.PayloadProcessor;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.CommandStruct;
 import com.openrsc.server.plugins.triggers.CommandTrigger;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeIdentity;
 import com.openrsc.server.content.worldedit.WorldBuilderPlayerSession;
 
 import java.util.Arrays;
@@ -26,7 +27,9 @@ public final class CommandHandler implements PayloadProcessor<CommandStruct, Opc
 			cmd = s.substring(0, firstSpace).trim();
 			args = s.substring(firstSpace + 1).trim().split(" ");
 		}
-		if ("builderbind".equalsIgnoreCase(cmd)) {
+		if ("builderbind".equalsIgnoreCase(cmd)
+			&& AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(
+				player.getConfig())) {
 			WorldBuilderPlayerSession.bind(
 				player, args.length == 1 ? args[0] : null);
 			return;

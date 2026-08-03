@@ -215,6 +215,28 @@ public final class AdaptiveWorldBuilderClientSession {
 		}
 	}
 
+	public Path requireCredential(Path requested) {
+		try {
+			Path credential = safeRegularFile(
+				requested, 64L, "adaptive Builder credential");
+			Path working = safeDirectory(
+				workspaceRoot.resolve("working"),
+				"adaptive project working tree");
+			Path run = safeDirectory(
+				workspaceRoot.resolve("run"), "adaptive project run directory");
+			if (!credential.startsWith(working) && !credential.startsWith(run)) {
+				throw new IllegalArgumentException(
+					"Adaptive Builder credential must remain in project-owned runtime state");
+			}
+			return credential;
+		} catch (IllegalArgumentException failure) {
+			throw failure;
+		} catch (Exception failure) {
+			throw new IllegalArgumentException(
+				"Unable to validate adaptive Builder credential", failure);
+		}
+	}
+
 	/** Called only after the client has loaded its actual definition registry. */
 	public void requireClientDefinitions() {
 		for (int id : tileIds) require("tile", id, new Lookup() {
