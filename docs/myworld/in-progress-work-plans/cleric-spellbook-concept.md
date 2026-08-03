@@ -220,6 +220,30 @@ not large instant heals. Purify leaves room for later full poison cleansing,
 and Restore is the only planned spell in its restoration line rather than the
 first of repeated stronger copies.
 
+### Fervor Roll-Bias Contract
+
+Fervor has four effect ranks. Each gives direct player attacks the listed
+chance to raise their normal offense roll by exactly one before the target's
+defense roll is subtracted:
+
+| Effect rank | Upward-roll chance | Duration |
+| ---: | ---: | ---: |
+| I | 5% | 30 seconds |
+| II | 10% | 45 seconds |
+| III | 15% | 60 seconds |
+| IV | 20% | 90 seconds |
+
+- Fervor applies to direct melee, ranged, and Magic attacks made by the
+  affected player.
+- It adds to existing equipment-based upward-roll bias within that one roll
+  mechanism, subject to a valid probability bound. It does not multiply the
+  attack or accuracy stat.
+- A successful shift cannot raise the offense roll above its normal maximum.
+- Critical hits and indirect damage such as poison, recoil, summons, and other
+  secondary effects do not receive the shift.
+- Fervor changes the chance of a slightly better pre-defense roll. It does not
+  guarantee that the resulting attack deals damage after defense.
+
 ### Protection Stacking Contract
 
 Ward and Aegis must not turn prayer protection into complete damage immunity.
@@ -413,8 +437,12 @@ These are current implementation facts, not new design decisions:
   silently hiding an active effect. Authentic clients do not receive this
   custom packet, so gameplay state must never depend on HUD support.
 - The current damage roll already supports a chance to shift an offense roll
-  one step upward before the defense roll is subtracted. This is a useful
-  balance reference for Fervor, not a final Cleric formula.
+  one step upward before the defense roll is subtracted. This existing
+  mechanism is the implementation and balance model selected for Fervor.
+- Current equipment can contribute `10%` upward-roll bias from a medium helmet
+  and `20%` from the relevant weapon families. Those bonuses can already
+  combine. Fervor intentionally joins that same bounded roll-bias family rather
+  than introducing a second accuracy multiplier.
 - Recoil and lifesteal behavior already exist, but their hooks span melee,
   ranged/projectile, poison, and other damage paths. Thorns and Rally will need
   explicit shared eligibility and attribution rules across applicable styles.
@@ -791,3 +819,12 @@ again `8` and `16` game ticks later, corresponding to approximately `5` and
 without changing cadence. Combat does not interrupt the effect. Every pulse
 clamps independently to the recipient's current valid healing ceiling; excess
 healing is wasted without ending the remaining sequence.
+
+### 2026-08-02: Fervor roll-bias ranks
+
+Confirmed Fervor ranks of `5/10/15/20%`. On each normal direct melee, ranged,
+or Magic attack, this is the chance to lift the pre-defense offense roll by one
+without exceeding its normal maximum. It combines with existing equipment
+high-roll bias in the same bounded chance. Critical hits, poison, recoil,
+summons, and other indirect damage are excluded. Fervor uses the confirmed
+`30/45/60/90`-second tactical duration ladder.
