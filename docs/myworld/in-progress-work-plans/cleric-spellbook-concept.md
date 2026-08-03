@@ -205,7 +205,7 @@ bands and fixed Ward/Aegis reductions are exceptions.
 | 1 | Unify | Neutral | Uses an enlarged radius and draws eligible same-party players closer to the caster to set up later area support |
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Instantly reduces current poison power by `10/20/30/40`; the existing below-`10` rule cures sufficiently weakened poison |
-| 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
+| 1 | Restore | Guthix | Instantly restores every configured skill except Hits by `10/25/40/60%` of that skill's valid normal maximum without creating a boost |
 | 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; its four Holy Power ranks protect against `2/4/6/8` hits |
 | 2 | Greater Mend | Saradomin | Uses Mend's pulse cadence while scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
 | 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
@@ -242,6 +242,37 @@ Purify is an instant four-rank effect:
 - Repeated casts are allowed. Severe poison can be removed with additional
   tier-one sigils and casting actions, while a future full-cleansing spell can
   remain the faster and more resource-efficient answer.
+
+### Restore Skill-Recovery Contract
+
+Restore is an instant four-rank effect:
+
+| Effect rank | Recovery per affected skill |
+| ---: | ---: |
+| I | 10% of valid normal maximum |
+| II | 25% of valid normal maximum |
+| III | 40% of valid normal maximum |
+| IV | 60% of valid normal maximum |
+
+- Restore iterates every unique skill in the authoritative configured skill
+  registry and skips only Hits. It is not limited to a hand-maintained combat
+  list; production skills, Worship, Summoning, and the future Blessing skill
+  are eligible when their current levels are reduced.
+- For each eligible reduced skill, recovery is the rank percentage of that
+  skill's valid normal maximum, rounded up to a whole level and capped at the
+  missing amount. A skill already at or above that ceiling is unchanged.
+- The valid ceiling follows the server's authoritative equipment- and
+  temporary-effect-aware normal level. Restore can recover a legitimately
+  active boost after a drain, but it can never exceed that active ceiling or
+  create a new boost.
+- Legacy aliases that resolve to the same stable skill index are processed
+  once. In particular, compatibility Attack/Defense/Strength aliases must not
+  restore My World's unified Melee level three times.
+- Devotion balances, poison power, Hits, run energy, status conditions, and
+  other non-skill resources are outside Restore. Devotion is associated with
+  Worship but is not itself a current skill level.
+- Repeated casts are allowed. Restore resolves immediately and leaves no timed
+  status or HUD entry.
 
 ### Fervor Roll-Bias Contract
 
@@ -551,6 +582,10 @@ These are current implementation facts, not new design decisions:
 - Existing shared mechanics can heal up to the player's valid healing ceiling,
   restore reduced stats up to their normal levels, and cure poison. Those are
   available implementation building blocks, not automatic spell selections.
+- The current full stat-restoration potion already iterates the configured
+  skill registry and skips Hits. Restore adopts the same future-safe scope but
+  restores a rank percentage instead of setting every reduced skill directly
+  to its normal ceiling.
 - Poison is represented as integer power, drains by `3` per poison pulse, and
   is cured when it falls below `10`. Purify can therefore reduce that same
   authoritative power while preserving a meaningful distinction from a full
@@ -1019,3 +1054,12 @@ otherwise its reduced power, source attribution, and maximum accumulation
 state continue. Purify grants no immunity, creates no timed status, and may be
 cast repeatedly so severe poison trades additional sigils and actions for a
 full cure.
+
+### 2026-08-02: Restore all-stat recovery ranks
+
+Confirmed instant Restore ranks of `10/25/40/60%` of each skill's valid normal
+maximum. Restore covers every unique configured skill except Hits rather than
+maintaining a combat-only allowlist. It rounds each reduced skill's recovery up
+and caps it at the active legitimate ceiling, never creating a boost. Stable
+aliases are deduplicated. Devotion and other non-skill resources remain
+outside the effect, and repeated casts are allowed.
