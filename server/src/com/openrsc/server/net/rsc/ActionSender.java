@@ -1576,6 +1576,9 @@ public class ActionSender {
 				case "Summoning":
 					struct.currentSummoning = lvl;
 					break;
+				case "Blessing":
+					struct.currentBlessing = lvl;
+					break;
 				case "Influence":
 					struct.currentInfluence = lvl;
 					break;
@@ -1667,6 +1670,9 @@ public class ActionSender {
 				case "Summoning":
 					struct.maxSummoning = lvl;
 					break;
+				case "Blessing":
+					struct.maxBlessing = lvl;
+					break;
 				case "Influence":
 					struct.maxInfluence = lvl;
 					break;
@@ -1757,6 +1763,9 @@ public class ActionSender {
 					break;
 				case "Summoning":
 					struct.experienceSummoning = exp;
+					break;
+				case "Blessing":
+					struct.experienceBlessing = exp;
 					break;
 				case "Influence":
 					struct.experienceInfluence = exp;

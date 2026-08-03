@@ -40,9 +40,9 @@ def main() -> None:
     require(update_bank.group("body"), "int slot = packetsIncoming.getShort();", "Client bank update slot decoding")
     forbid(update_bank.group("body"), "int slot = packetsIncoming.getUnsignedByte();", "Client bank update byte slot decoding")
 
-    require(client_config, "CLIENT_VERSION = 10047;", "Client protocol version")
-    require(myworld_conf, "client_version: 10047", "MyWorld server protocol version")
-    require(myworld_host_conf, "client_version: 10047", "Hosted MyWorld server protocol version")
+    require(client_config, "CLIENT_VERSION = 10048;", "Client protocol version")
+    require(myworld_conf, "client_version: 10048", "MyWorld server protocol version")
+    require(myworld_host_conf, "client_version: 10048", "Hosted MyWorld server protocol version")
 
     print("PASS: custom bank update slots support values above 255")
 

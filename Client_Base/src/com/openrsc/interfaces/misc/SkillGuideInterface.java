@@ -1159,6 +1159,16 @@ public final class SkillGuideInterface {
 		if (mc.getSkillGuideChosen().equalsIgnoreCase("Summoning")) {
 			populateSummoningGuide();
 		}
+		if (mc.getSkillGuideChosen().equalsIgnoreCase("Blessing")) {
+			populateBlessingGuide();
+		}
+	}
+
+	private void populateBlessingGuide() {
+		skillMenuEntries.add(new SkillMenuItem(3293, "", "Blessing follows the standard level 1-99 experience curve"));
+		skillMenuEntries.add(new SkillMenuItem(3293, "", "Altar conversion awards Blessing experience"));
+		skillMenuEntries.add(new SkillMenuItem(3293, "", "Carving sigils awards Crafting experience"));
+		skillMenuEntries.add(new SkillMenuItem(3293, "", "Production does not award Worship experience"));
 	}
 
 	private void populateSummoningGuide() {

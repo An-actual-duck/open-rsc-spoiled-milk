@@ -28114,6 +28114,8 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Scaling");
 			skillGuideChosenTabs.add("Traits");
 			skillGuideChosenTabs.add("Info");
+		} else if (skillGuideChosen.equalsIgnoreCase("Blessing")) {
+			skillGuideChosenTabs.add("Info");
 		}
 
 		hiscoreGuideSkillId = -1;
@@ -28236,6 +28238,9 @@ public final class mudclient implements Runnable {
 		if (S_WANT_HARVESTING)
 			addSkill("Harvest");
 		addSkill("Summoning", "Summon");
+		// Internal/protocol order is append-only. The stats panel independently
+		// sorts display indices, so Blessing appears alphabetically to players.
+		addSkill("Blessing");
 	}
 
 	private int[] getDisplayedSkillIndices() {

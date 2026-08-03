@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `feat/cleric-holy-power-equipment`
+- Branch: `feat/cleric-blessing-skill-platform`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation**
-- Current milestone: **C03 complete; pending manager review**
-- Next planned milestone: **C04 — Blessing skill platform**
-- Runtime exposure: **Holy Power equipment statistic only; Cleric production and spell gameplay remain disabled**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform**
+- Current milestone: **C04 complete; pending manager review**
+- Next planned milestone: **C05 — sigil carving and altar blessing, only after its remaining balance/accounting decisions**
+- Runtime exposure: **Holy Power equipment statistic and the empty Blessing skill platform only; Cleric production and spell gameplay remain disabled**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -43,18 +43,18 @@ The following remain unresolved in the concept and may not be guessed:
 1. Whether the Cleric book is immediately available at the Worship requirement
    or requires an introductory unlock/quest.
 2. Silver sigil input form and production quantity.
-3. Crafting and Blessing levels, XP, batching, and failure behavior.
+3. Exact Crafting and Blessing recipe levels/base XP, batching, and failure
+   behavior. Skill ownership and the ten-level duplication/diminishing-XP
+   model are settled.
 4. Exact half-offering accounting for odd sigil quantities without corrupting
    existing integer Devotion saves.
-5. Blessing skill curve and all persistence, protocol, interface, highscores,
-   cape, potion, and XP-modifier consequences.
-6. Sigil consumption when an area cast has partial or no useful recipients.
-7. PvP rules and abuse safeguards.
-8. Status-HUD priority and overflow behavior at the existing 16-entry bound.
-9. Unify movement-queue/client-presentation integration.
-10. Respite passive-regeneration clock synchronization.
-11. Offensive god-spell placement and unlock requirements.
-12. Additional Devotion sources required to balance repeat sigil production.
+5. Sigil consumption when an area cast has partial or no useful recipients.
+6. PvP rules and abuse safeguards.
+7. Status-HUD priority and overflow behavior at the existing 16-entry bound.
+8. Unify movement-queue/client-presentation integration.
+9. Respite passive-regeneration clock synchronization.
+10. Offensive god-spell placement and unlock requirements.
+11. Additional Devotion sources required to balance repeat sigil production.
 
 Code may model already confirmed data adjacent to these questions, but it must
 not register or invoke behavior that depends on an unresolved answer.
@@ -147,16 +147,29 @@ Verification:
 
 ### C04 — Blessing Skill Platform
 
-Only after the remaining skill decisions are approved, add Blessing as a real
-skill across authoritative skill configuration, save/database round trips,
-packets, client layouts, guides, commands, XP modifiers, highscores, and any
-combat-level or total-level consumers. Preserve every existing skill index and
-compatibility alias; append or otherwise migrate only through an explicitly
-validated compatibility contract.
+Add Blessing as a real original-curve level `1-99` skill. Append it after all
+existing internal skill identities, while sorting its player-facing stats-tab
+placement alphabetically. Existing and new records begin at level `1`, zero
+XP. Persist current level, maximum level, XP, and cap date; include Blessing in
+skill totals, overall/per-skill highscores, dynamic command lookup, the empty
+skill-guide platform, general non-combat XP modifiers, and the production-skill
+Mind-necklace XP family. Do not add a cape, potion, guild, production handler,
+or high-tier content, and do not change combat level.
 
-Stop if the level curve, client placement, persistence migration, or protocol
-representation is not settled. Do not use Enchanting/RuneCraft aliases as an
-implementation shortcut.
+The migration contract is append-only. Add defaulted columns through both
+database dialects and templates. Extend only the maintained custom stat packet
+after Summoning and advance its enforced client version. Quest Points remains
+a separate byte after all skill fields. Legacy/authentic packet generators are
+unchanged. Do not use Enchanting/RuneCraft aliases as an implementation
+shortcut.
+
+Verification must cover the original curve, identity/order, existing/new
+record defaults, save/load round trips, Quest Points packet separation,
+legacy-packet non-change, totals, highscores, commands, skill selectors,
+applicable XP modifiers, and the absence of C05 production or new cape/potion/
+guild content. Build both client and server, run changed-code analysis, and
+privately inspect the stats panel, Quest Points, skill total, guide/hiscores,
+and a relogged Blessing value before handoff.
 
 ### C05 — Sigil Carving and Altar Blessing
 
@@ -386,5 +399,63 @@ Verification completed from the milestone branch:
 
 C03 adds no Cleric casting, effect application, sigil production or
 consumption, Blessing skill, persistence field, dialogue, shop, drop, or other
-player-visible Cleric gameplay. C04 remains blocked on the unresolved Blessing
-skill decisions recorded above.
+player-visible Cleric gameplay. At its handoff, C04 remained blocked on the
+then-unresolved Blessing skill decisions recorded above.
+
+## C04 Completion Record
+
+C04 appends Blessing after Summoning as a stable original-curve level `1-99`
+skill without renumbering an existing identity. The maintained client retains
+that transport order while sorting Blessing alphabetically in the stats panel.
+The skill starts at current/base level `1` with zero XP, counts toward skill
+totals and overall/per-skill highscores, resolves through dynamic commands,
+and has an intentionally informational guide with no production action.
+
+MySQL and SQLite schema templates and dated migration patches persist current
+level, base level, XP, and cap date. The executable SQLite migration fixture
+upgrades an account from the canonical pre-Blessing seed, preserves its Quest
+Points, checks the `1/1/0/null` defaults, writes non-default state, closes and
+reopens the database, and verifies both existing- and new-row behavior. A real
+isolated server startup applied the same SQLite patch once to the development
+database; after disconnect, `devduck` retained Blessing `12/12`, raw XP `6336`,
+an unset cap, and unchanged Quest Points, with a successful SQLite integrity
+check.
+
+Only the maintained custom stat packet gains Blessing fields, after Summoning
+in each of the current/base/XP arrays. Quest Points remains the following
+independent byte, and the coordinated enforced client version is `10048`.
+Authentic/legacy generators remain byte-for-byte outside this change. Blessing
+automatically receives the existing general non-combat XP handling and is
+explicitly included in the production-skill Mind-necklace XP family; the
+Insight level potion and combat-level calculation remain unchanged.
+
+The owner privately confirmed the alphabetical stats presentation, separate
+Quest Points, expected skill-total adjustment, informational guide/hiscores,
+and an administrator-set Blessing level on an isolated loopback world. The
+server was bound only to `127.0.0.1:43625`; neither the public server nor the
+other worker's private server was touched.
+
+Verification completed from the milestone branch:
+
+- `python3 tests/myworld/test-cleric-blessing-skill-platform.py`
+- focused skill-selector, stats-layout, hiscore, protocol-version, Worship,
+  Cleric-foundation, sigil-asset, Holy-Power, guide, potion, jewelry,
+  RuneCraft-XP, processing, and player-data guards
+- World Builder release, runtime-preparation, discovery, import, and export
+  suites
+- `./scripts/build-client.sh`
+- `./scripts/build-server.sh`
+- `python3 scripts/lint.py all --base spoiled-milk/main --offline`
+- `git diff --check`
+
+The player-release asset-inventory guard remains red on the C02 sigil artwork
+already present on `main`; its whitelist has not yet been reconciled with those
+merged assets. The layered World Builder import suite also requires a
+separately generated accepted package that was not available in this
+workspace. Neither limitation was changed in C04.
+
+C04 adds no sigil crafting, altar conversion, Devotion spending, Cleric spell,
+shop, drop, dialogue, cape, dedicated potion, guild, or high-tier content.
+Exact recipe requirements, base Crafting/Blessing XP, batching, transaction
+failure behavior, and half-offering accounting remain C05 decisions and stop
+production implementation until resolved.

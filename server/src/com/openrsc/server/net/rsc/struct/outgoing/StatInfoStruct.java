@@ -128,6 +128,11 @@ public class StatInfoStruct  extends AbstractStruct<OpcodeOut> {
 	public int maxSummoning = 1;
 	public int experienceSummoning;
 
+	// custom myworld skill; appended after Summoning in the maintained protocol
+	public int currentBlessing = 1;
+	public int maxBlessing = 1;
+	public int experienceBlessing;
+
 	public int questPoints;
 	public int computedInfluence = 1; // computed from quest points
 	public int computedExperienceInfluence; // computed from quest points (based on exp curve)

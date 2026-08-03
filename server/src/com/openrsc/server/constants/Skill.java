@@ -34,6 +34,7 @@ public class Skill {
 		RUNECRAFT = new Skill(Skills.RUNECRAFT),
 		HARVESTING = new Skill(Skills.HARVESTING),
 		SUMMONING = new Skill(Skills.SUMMONING),
+		BLESSING = new Skill(Skills.BLESSING),
 		CARPENTRY = new Skill(Skills.CARPENTRY),
 		INFLUENCE = new Skill(Skills.INFLUENCE);
 
