@@ -457,7 +457,7 @@ check.
 
 Only the maintained custom stat packet gains Blessing fields, after Summoning
 in each of the current/base/XP arrays. Quest Points remains the following
-independent byte, and the coordinated enforced client version is `10048`.
+independent byte, and the coordinated enforced client version is `10049`.
 Authentic/legacy generators remain byte-for-byte outside this change. Blessing
 automatically receives the existing general non-combat XP handling and is
 explicitly included in the production-skill Mind-necklace XP family; the

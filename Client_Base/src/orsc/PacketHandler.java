@@ -1505,7 +1505,7 @@ public class PacketHandler {
 
 			else if (opcode == 139) mc.setPrayerBook(packetsIncoming.getUnsignedByte());
 
-			else if (opcode == 145) mc.setCurrentDevotionLevel(readSignedShort());
+			else if (opcode == 145) mc.setCurrentDevotionHalfOfferingUnits(readSignedShort());
 
 				// Trade Accept or Decline (Self)
 			else if (opcode == 15) tradeSelfDecision();
