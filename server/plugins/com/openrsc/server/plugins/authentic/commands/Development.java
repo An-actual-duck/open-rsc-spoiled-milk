@@ -1582,6 +1582,28 @@ public final class Development implements CommandTrigger {
 		if((levelCreations>0||terrainEdits>0||terrainGrowth>0||nativeScenery>0||nativeNpcs>0||nativeGroundItems>0)&&!editor.ownsActiveSession(player)){player.message(messagePrefix+"Open and own ::worldeditormode before saving the layered draft.");return;}
 		if(player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE){
 			try{
+				if (com.openrsc.server.content.worldedit
+					.AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(
+						player.getConfig())) {
+					com.openrsc.server.content.worldedit
+						.AdaptiveWorldBuilderPackagePublisher.SaveResult saved =
+							editor.saveAdaptivePackage(player);
+					player.message(messagePrefix + "Saved the complete isolated "
+						+ "working package: " + saved.levelCount + " levels, "
+						+ saved.sectorCount + " terrain sectors, "
+						+ saved.boundaryCount + " boundaries, "
+						+ saved.sceneryCount + " scenery, " + saved.npcCount
+						+ " NPCs, and " + saved.groundItemCount
+						+ " ground-item spawns.");
+					player.message(messagePrefix + "Package manifest: "
+						+ saved.manifestSha256.substring(0, 12)
+						+ ". Reopen the Builder to load the published revision.");
+					LOGGER.info(player.getUsername()
+						+ " published adaptive layered package manifest "
+						+ saved.manifestSha256 + " inventory "
+						+ saved.inventorySha256);
+					return;
+				}
 				com.openrsc.server.content.worldedit.WorldEditorLayeredTerrainJournal.SaveResult saved=
 					editor.saveNativeTerrainDraft(player);
 				int total=saved.levelCount+saved.tileCount+saved.sectorCount+saved.sceneryCount+saved.npcCount+saved.groundItemCount;

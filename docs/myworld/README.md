@@ -52,6 +52,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   completed project changes.
 - [Testing quick reference](info/testing-quick-reference.md): compact field
   testing commands, IDs, and targeted fixture notes.
+- [Adaptive World Builder runtime](info/adaptive-world-builder-runtime.md):
+  versioned generic runtime identities, explicit activation, package and
+  workspace bounds, client/server binding, and verified save/recovery contract.
 
 ## In Progress Work Plans
 

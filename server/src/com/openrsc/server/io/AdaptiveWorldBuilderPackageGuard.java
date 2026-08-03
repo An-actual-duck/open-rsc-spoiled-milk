@@ -174,9 +174,9 @@ public final class AdaptiveWorldBuilderPackageGuard {
 					"Adaptive layered package contains a hard-linked file");
 			}
 		} catch (UnsupportedOperationException ignored) {
-			// File-key duplicate detection remains active on non-POSIX providers.
+			file.toRealPath();
 		} catch (IllegalArgumentException ignored) {
-			// The provider does not expose unix:nlink.
+			file.toRealPath();
 		}
 	}
 

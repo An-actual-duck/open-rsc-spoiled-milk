@@ -8,7 +8,6 @@ import com.openrsc.server.io.NativeLayeredNpcPlacement;
 import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredSceneryPlacement;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
-import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 
 import java.io.BufferedWriter;
@@ -292,7 +291,9 @@ public final class AdaptiveWorldBuilderRuntimeSession {
 					"Adaptive runtime evidence destination is hard linked");
 			}
 		} catch (UnsupportedOperationException ignored) {
+			destination.toRealPath();
 		} catch (IllegalArgumentException ignored) {
+			destination.toRealPath();
 		}
 	}
 

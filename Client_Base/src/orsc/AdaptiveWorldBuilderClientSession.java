@@ -48,6 +48,7 @@ public final class AdaptiveWorldBuilderClientSession {
 	public static final String PROFILE_ID = "adaptive-world-builder";
 	private static final long MAX_BINDING_BYTES = 1024L * 1024L;
 	private static final long MAX_COMPOSITION_BYTES = 64L * 1024L * 1024L;
+	private static final long MAX_EVIDENCE_BYTES = 1024L * 1024L * 1024L;
 	private static final Pattern ID =
 		Pattern.compile("[a-z0-9][a-z0-9._-]{0,127}");
 	private static final Pattern VERSION =
@@ -67,6 +68,7 @@ public final class AdaptiveWorldBuilderClientSession {
 			"serverBuild", "sourceBaselineInventorySha256")));
 
 	private final Path bindingFile;
+	private final Path workspaceRoot;
 	private final Map<String, String> fields;
 	private final String token;
 	private final int[] tileIds;
@@ -77,10 +79,12 @@ public final class AdaptiveWorldBuilderClientSession {
 	private final int[] levels;
 
 	private AdaptiveWorldBuilderClientSession(
-		Path bindingFile, Map<String, String> fields, String token,
+		Path bindingFile, Path workspaceRoot,
+		Map<String, String> fields, String token,
 		int[] tileIds, int[] boundaryIds, int[] sceneryIds,
 		int[] npcIds, int[] itemIds, int[] levels) {
 		this.bindingFile = bindingFile;
+		this.workspaceRoot = workspaceRoot;
 		this.fields = Collections.unmodifiableMap(
 			new LinkedHashMap<String, String>(fields));
 		this.token = token;
@@ -95,6 +99,7 @@ public final class AdaptiveWorldBuilderClientSession {
 	public static AdaptiveWorldBuilderClientSession load(Path requested) {
 		try {
 			Path path = safeRegularFile(requested, MAX_BINDING_BYTES, "runtime binding");
+			Path workspace = requireProjectBindingLocation(path);
 			byte[] bytes = Files.readAllBytes(path);
 			for (byte value : bytes) {
 				if ((value & 0xff) > 127) {
@@ -144,7 +149,7 @@ public final class AdaptiveWorldBuilderClientSession {
 					"Adaptive effective composition evidence hash mismatch");
 			}
 			return new AdaptiveWorldBuilderClientSession(
-				path, fields, token,
+				path, workspace, fields, token,
 				parseIds(fields.get("requiredTileIds")),
 				parseIds(fields.get("requiredBoundaryIds")),
 				parseIds(fields.get("requiredSceneryIds")),
@@ -178,6 +183,35 @@ public final class AdaptiveWorldBuilderClientSession {
 			|| !manifestSha256().equals(manifestSha256)) {
 			throw new IllegalArgumentException(
 				"Adaptive server terrain package identity differs from the bound session");
+		}
+	}
+
+	public void requireEvidence(Path definitionEvidence, Path assetEvidence) {
+		try {
+			Path definitions = safeRegularFile(
+				definitionEvidence, MAX_EVIDENCE_BYTES,
+				"client definition evidence");
+			Path assets = safeRegularFile(
+				assetEvidence, MAX_EVIDENCE_BYTES, "client asset evidence");
+			Path working = safeDirectory(
+				workspaceRoot.resolve("working"), "adaptive project working tree");
+			if (!definitions.startsWith(working) || !assets.startsWith(working)) {
+				throw new IllegalArgumentException(
+					"Adaptive client evidence must remain in the isolated project working tree");
+			}
+			if (!fields.get("definitionSha256").equals(sha256(definitions))) {
+				throw new IllegalArgumentException(
+					"Adaptive client definition evidence hash mismatch");
+			}
+			if (!fields.get("assetSha256").equals(sha256(assets))) {
+				throw new IllegalArgumentException(
+					"Adaptive client asset evidence hash mismatch");
+			}
+		} catch (IllegalArgumentException failure) {
+			throw failure;
+		} catch (Exception failure) {
+			throw new IllegalArgumentException(
+				"Unable to validate adaptive client evidence", failure);
 		}
 	}
 
@@ -286,7 +320,56 @@ public final class AdaptiveWorldBuilderClientSession {
 				throw new IOException(label + " is hard linked");
 			}
 		} catch (UnsupportedOperationException ignored) {
+			normalized.toRealPath();
 		} catch (IllegalArgumentException ignored) {
+			normalized.toRealPath();
+		}
+		return normalized.toRealPath();
+	}
+
+	private static Path requireProjectBindingLocation(Path binding)
+		throws IOException {
+		if (!"runtime-binding.properties".equals(
+				binding.getFileName().toString())) {
+			throw new IOException(
+				"Adaptive runtime binding has an unexpected file name");
+		}
+		Path control = binding.getParent();
+		Path run = control == null ? null : control.getParent();
+		Path workspace = run == null ? null : run.getParent();
+		if (control == null || run == null || workspace == null
+			|| !"world-builder".equals(control.getFileName().toString())
+			|| !"run".equals(run.getFileName().toString())) {
+			throw new IOException(
+				"Adaptive runtime binding is outside the project control layout");
+		}
+		Path checkedWorkspace = safeDirectory(
+			workspace, "adaptive project workspace");
+		Path expectedControl = safeDirectory(
+			checkedWorkspace.resolve("run/world-builder"),
+			"adaptive project control directory");
+		if (!binding.startsWith(expectedControl)) {
+			throw new IOException(
+				"Adaptive runtime binding escapes the project control directory");
+		}
+		return checkedWorkspace;
+	}
+
+	private static Path safeDirectory(Path requested, String label)
+		throws IOException {
+		Path normalized = requested.toAbsolutePath().normalize();
+		Path current = normalized.getRoot();
+		if (current == null) throw new IOException(label + " path has no root");
+		for (Path part : normalized) {
+			current = current.resolve(part);
+			if (Files.exists(current, LinkOption.NOFOLLOW_LINKS)
+				&& Files.isSymbolicLink(current)) {
+				throw new IOException(label + " path contains a symbolic link");
+			}
+		}
+		if (!Files.isDirectory(normalized, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(normalized)) {
+			throw new IOException(label + " is missing or unsafe");
 		}
 		return normalized.toRealPath();
 	}

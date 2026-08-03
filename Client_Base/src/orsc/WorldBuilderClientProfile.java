@@ -20,6 +20,10 @@ public final class WorldBuilderClientProfile {
 		"openrsc.worldBuilderAdaptiveMode";
 	public static final String RUNTIME_BINDING_FILE_PROPERTY =
 		"openrsc.worldBuilderRuntimeBindingFile";
+	public static final String DEFINITION_EVIDENCE_FILE_PROPERTY =
+		"openrsc.worldBuilderDefinitionEvidenceFile";
+	public static final String ASSET_EVIDENCE_FILE_PROPERTY =
+		"openrsc.worldBuilderAssetEvidenceFile";
 	public static final String LAYERED_REVIEW_PROPERTY = "openrsc.worldBuilderLayeredReview";
 	public static final String LAYERED_TERRAIN_DRAFT_PROPERTY =
 		"openrsc.worldBuilderLayeredTerrainDraft";
@@ -140,6 +144,16 @@ public final class WorldBuilderClientProfile {
 			}
 			adaptiveSession = AdaptiveWorldBuilderClientSession.load(
 				Paths.get(bindingFile));
+			String definitionEvidence = System.getProperty(
+				DEFINITION_EVIDENCE_FILE_PROPERTY, "").trim();
+			String assetEvidence = System.getProperty(
+				ASSET_EVIDENCE_FILE_PROPERTY, "").trim();
+			if (definitionEvidence.isEmpty() || assetEvidence.isEmpty()) {
+				throw new IllegalArgumentException(
+					"Adaptive client definition and asset evidence files are required");
+			}
+			adaptiveSession.requireEvidence(
+				Paths.get(definitionEvidence), Paths.get(assetEvidence));
 			layeredReview = true;
 			layeredTerrainDraft = true;
 			layeredPackageId = adaptiveSession.packageId();

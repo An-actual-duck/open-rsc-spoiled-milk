@@ -263,6 +263,9 @@ public class RegionManager {
 		try {
 			AdaptiveWorldBuilderPackageGuard.Inventory adaptiveInventory = null;
 			if (profile == NativeLayeredWorldRuntimeProfile.ADAPTIVE_WORLD_BUILDER) {
+				AdaptiveWorldBuilderRuntimeIdentity.validateEvidenceFiles(
+					world.getServer().getConfig(),
+					world.getServer().getWorldEditStorage());
 				Path expected = world.getServer().getWorldEditStorage()
 					.layeredWorkingPackage();
 				Path requested = Paths.get(configuredPath.trim())

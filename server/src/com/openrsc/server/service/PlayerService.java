@@ -9,6 +9,7 @@ import com.openrsc.server.database.struct.*;
 import com.openrsc.server.event.rsc.impl.DesertHeatEvent;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.content.LegacyAmuletCompatibility;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeIdentity;
 import com.openrsc.server.login.LoginRequest;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
@@ -177,6 +178,22 @@ public class PlayerService implements IPlayerService {
 
 	private void restorePlayerLayeredLocation(final Player player) {
 		if (!configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
+			return;
+		}
+		if (AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(configuration)) {
+			WorldLocation initial =
+				AdaptiveWorldBuilderRuntimeIdentity.initialLocation(configuration);
+			player.setInitialLayeredLocation(initial);
+			LayeredPlayerLocationPersistence.write(
+				player.getCache().getCacheMap(),
+				initial,
+				player.getLocation(),
+				AdaptiveWorldBuilderRuntimeIdentity.PLAYER_LOCATION_ORIGIN,
+				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+				true);
+			LOGGER.info(
+				"adaptive-world-builder player location initialized playerId={} location={}",
+				player.getDatabaseID(), initial);
 			return;
 		}
 		LayeredPlayerLocationPersistence.RestoreResult restored =

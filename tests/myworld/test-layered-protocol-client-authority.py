@@ -528,7 +528,9 @@ class LayeredProtocolClientAuthorityTest(unittest.TestCase):
             "applyNativeLayeredFixtureTerrain", client_world
         )
         native_apply = client_world[
-            client_world.index("private void applyNativeLayeredTerrain("):
+            client_world.index(
+                "private NativeLayeredTerrainApplyResult applyNativeLayeredTerrain("
+            ):
             client_world.index(
                 "private void applySyntheticDeepFixtureTerrain("
             )

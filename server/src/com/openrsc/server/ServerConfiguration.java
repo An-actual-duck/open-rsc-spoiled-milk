@@ -295,8 +295,10 @@ public class ServerConfiguration {
 	public String WORLD_BUILDER_PROJECT_ORIGIN;
 	public String WORLD_BUILDER_DEFINITION_ID;
 	public String WORLD_BUILDER_DEFINITION_SHA256;
+	public String WORLD_BUILDER_DEFINITION_EVIDENCE_PATH;
 	public String WORLD_BUILDER_ASSET_ID;
 	public String WORLD_BUILDER_ASSET_SHA256;
+	public String WORLD_BUILDER_ASSET_EVIDENCE_PATH;
 	public String WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256;
 	public String WORLD_BUILDER_INITIAL_WORLD_SPACE;
 	public int WORLD_BUILDER_INITIAL_LEVEL;
@@ -747,6 +749,11 @@ public class ServerConfiguration {
 			"OPENRSC_WORLD_BUILDER_DEFINITION_SHA256",
 			"world_builder_definition_sha256",
 			"");
+		WORLD_BUILDER_DEFINITION_EVIDENCE_PATH = readStringSystemEnvConfig(
+			"openrsc.worldBuilderDefinitionEvidencePath",
+			"OPENRSC_WORLD_BUILDER_DEFINITION_EVIDENCE_PATH",
+			"world_builder_definition_evidence_path",
+			"");
 		WORLD_BUILDER_ASSET_ID = readStringSystemEnvConfig(
 			"openrsc.worldBuilderAssetId",
 			"OPENRSC_WORLD_BUILDER_ASSET_ID",
@@ -756,6 +763,11 @@ public class ServerConfiguration {
 			"openrsc.worldBuilderAssetSha256",
 			"OPENRSC_WORLD_BUILDER_ASSET_SHA256",
 			"world_builder_asset_sha256",
+			"");
+		WORLD_BUILDER_ASSET_EVIDENCE_PATH = readStringSystemEnvConfig(
+			"openrsc.worldBuilderAssetEvidencePath",
+			"OPENRSC_WORLD_BUILDER_ASSET_EVIDENCE_PATH",
+			"world_builder_asset_evidence_path",
 			"");
 		WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256 =
 			readStringSystemEnvConfig(

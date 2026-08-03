@@ -9,6 +9,10 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldSpaceId;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
@@ -42,6 +46,8 @@ public final class AdaptiveWorldBuilderRuntimeIdentity {
 		"world-builder-native-layered-protocol-v1";
 	public static final String EFFECTIVE_COMPOSITION_ID =
 		"world-builder-effective-static-composition-v1";
+	public static final String PLAYER_LOCATION_ORIGIN =
+		"adaptive-world-builder-initial-v1";
 	public static final String PACKAGE_SCHEMA_ID =
 		"layered-world-package-v1";
 	public static final String PLACEMENT_ENCODING_ID =
@@ -110,6 +116,26 @@ public final class AdaptiveWorldBuilderRuntimeIdentity {
 				|| config.WORLD_BUILDER_INITIAL_Y != 0)) {
 			throw new IllegalArgumentException(
 				"Standalone empty mode must begin at global layer 0, coordinate 0,0");
+		}
+	}
+
+	public static void validateEvidenceFiles(
+		ServerConfiguration config, WorldEditStorageContext storage)
+		throws IOException {
+		validateConfiguredIdentities(config);
+		Path definitions = storage.validateRuntimeEvidenceFile(
+			config.WORLD_BUILDER_DEFINITION_EVIDENCE_PATH,
+			"adaptive server definition evidence");
+		Path assets = storage.validateRuntimeEvidenceFile(
+			config.WORLD_BUILDER_ASSET_EVIDENCE_PATH,
+			"adaptive server asset evidence");
+		if (!config.WORLD_BUILDER_DEFINITION_SHA256.equals(sha256(definitions))) {
+			throw new IOException(
+				"Adaptive server definition evidence hash mismatch");
+		}
+		if (!config.WORLD_BUILDER_ASSET_SHA256.equals(sha256(assets))) {
+			throw new IOException(
+				"Adaptive server asset evidence hash mismatch");
 		}
 	}
 
@@ -297,6 +323,26 @@ public final class AdaptiveWorldBuilderRuntimeIdentity {
 			byte[] hashed = digest.digest(value.getBytes(StandardCharsets.US_ASCII));
 			StringBuilder result = new StringBuilder(64);
 			for (byte part : hashed) {
+				result.append(String.format("%02x", part & 0xff));
+			}
+			return result.toString();
+		} catch (NoSuchAlgorithmException impossible) {
+			throw new IllegalStateException("SHA-256 is unavailable", impossible);
+		}
+	}
+
+	private static String sha256(Path path) throws IOException {
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] buffer = new byte[64 * 1024];
+			try (InputStream input = Files.newInputStream(path)) {
+				int count;
+				while ((count = input.read(buffer)) != -1) {
+					digest.update(buffer, 0, count);
+				}
+			}
+			StringBuilder result = new StringBuilder(64);
+			for (byte part : digest.digest()) {
 				result.append(String.format("%02x", part & 0xff));
 			}
 			return result.toString();

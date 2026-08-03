@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "manifestType": "adaptive-world-builder-runtime-capability",
+  "capabilityId": "adaptive-world-builder-runtime-capability-v1",
+  "profileId": "adaptive-world-builder",
+  "serverBuildId": "core-framework-adaptive-builder-server-v1",
+  "clientBuildId": "core-framework-adaptive-builder-client-v1",
+  "loaderId": "generic-signed-layered-loader-v1",
+  "authoringId": "generic-signed-layered-authoring-v1",
+  "definitionContractId": "world-builder-definition-catalog-binding-v1",
+  "assetContractId": "world-builder-client-asset-binding-v1",
+  "protocolId": "world-builder-native-layered-protocol-v1",
+  "effectiveCompositionId": "world-builder-effective-static-composition-v1",
+  "mapFormatId": "signed-layered-v1",
+  "packageSchemaId": "layered-world-package-v1",
+  "coordinateModel": "signed-layered-v1",
+  "encodingVersions": [1, 3],
+  "authoring": {
+    "editExistingLevels": true,
+    "createLevels": true,
+    "placementFamilies": ["boundary", "ground-item", "npc", "scenery"]
+  },
+  "activation": {
+    "worldBuilderMode": true,
+    "adaptiveMode": true,
+    "runtimeProfile": "adaptive-world-builder",
+    "builderOnly": true,
+    "loopbackOnly": true
+  },
+  "canonicalVoidTile": [0, 1, 8, 0, 0, 0, 0, 0, 0, 0]
+}

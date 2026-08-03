@@ -78,9 +78,15 @@ public final class WorldEditStorageContext {
 				workspace,
 				source.resolve("layered-baseline/package"),
 				"immutable layered baseline");
+			Path workingPackageLocation =
+				working.resolve("layered-world/package").normalize();
+			requireContainedPath(
+				workspace, workingPackageLocation,
+				"layered working package");
+			AdaptiveWorldBuilderPackagePublisher.recover(
+				workingPackageLocation);
 			Path workingPackage = requireContainedDirectory(
-				workspace,
-				working.resolve("layered-world/package"),
+				workspace, workingPackageLocation,
 				"layered working package");
 			if (Files.isSameFile(baseline, workingPackage)) {
 				throw new IOException(
@@ -145,6 +151,18 @@ public final class WorldEditStorageContext {
 			workspaceRoot,
 			workingRoot.resolve("layered-world/package").normalize(),
 			"layered working package");
+	}
+
+	public Path layeredWorkingPackageLocation() throws IOException {
+		if (!adaptiveMode) {
+			throw new IOException(
+				"A generic layered package location requires adaptive Builder mode.");
+		}
+		Path location =
+			workingRoot.resolve("layered-world/package").normalize();
+		requireContainedPath(
+			workspaceRoot, location, "layered working package");
+		return location;
 	}
 
 	public Path layeredTerrainDraftJournal() throws IOException {
@@ -232,6 +250,32 @@ public final class WorldEditStorageContext {
 			throw new IOException(label + " parent is missing or unsafe.");
 		}
 		return candidate;
+	}
+
+	public Path validateRuntimeEvidenceFile(String requested, String label)
+		throws IOException {
+		if (!adaptiveMode || requested == null || requested.trim().isEmpty()) {
+			throw new IOException(label + " is required in adaptive Builder mode.");
+		}
+		Path candidate = Paths.get(requested.trim());
+		if (!candidate.isAbsolute()) candidate = serverRoot.resolve(candidate);
+		candidate = candidate.toAbsolutePath().normalize();
+		if (!candidate.startsWith(workingRoot)) {
+			throw new IOException(label + " must remain in the isolated working tree.");
+		}
+		requireContainedRegularFile(workspaceRoot, candidate, label);
+		try {
+			Object links = Files.getAttribute(
+				candidate, "unix:nlink", LinkOption.NOFOLLOW_LINKS);
+			if (links instanceof Number && ((Number)links).longValue() != 1L) {
+				throw new IOException(label + " is hard linked.");
+			}
+		} catch (UnsupportedOperationException unsupported) {
+			candidate.toRealPath();
+		} catch (IllegalArgumentException unsupported) {
+			candidate.toRealPath();
+		}
+		return candidate.toRealPath();
 	}
 
 	private static Path requireDirectory(Path requested, String label) throws IOException {

@@ -6,6 +6,10 @@ import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
+import com.openrsc.server.io.NativeLayeredBoundaryPlacement;
+import com.openrsc.server.io.NativeLayeredNpcPlacement;
+import com.openrsc.server.io.NativeLayeredPlacementSet;
+import com.openrsc.server.io.NativeLayeredSceneryPlacement;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.GameObject;
@@ -32,6 +36,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 
 /** Single-owner, strictly sequenced editor session and bounded server-lifetime terrain draft. */
 public final class WorldEditorSessionManager {
@@ -91,6 +96,7 @@ public final class WorldEditorSessionManager {
 	private final Set<NativeGroundItemKey> nativeGroundItemDirty =
 		new HashSet<NativeGroundItemKey>();
 	private String nativeTerrainBaseManifestSha256;
+	private String nativeWorkingInventorySha256;
 	private long nativeTerrainSceneRevision;
 	public WorldEditorSessionManager() { this(null, new SecureRandom()); }
 	public WorldEditorSessionManager(WorldEditStorageContext storage) { this(storage, new SecureRandom()); }
@@ -442,8 +448,9 @@ public final class WorldEditorSessionManager {
 			source.getLoc().getNativeLayeredGameObjectIdentity();
 		if (sourceIdentity == null
 			|| !"scenery".equals(sourceIdentity.getKind())
-			|| !nativeSceneryPlacementId(sourceIdentity.getLocation())
-				.equals(sourceIdentity.getPlacementId())) {
+			|| (!isAdaptive(player)
+				&& !legacyNativeSceneryPlacementId(sourceIdentity.getLocation())
+					.equals(sourceIdentity.getPlacementId()))) {
 			return NativeVerticalPairResult.notApplicable();
 		}
 		WorldLocation sourceLocation = sourceIdentity.getLocation();
@@ -482,8 +489,9 @@ public final class WorldEditorSessionManager {
 			if (inverse.getID() != pairing.getInverseSceneryId()
 				|| inverse.getDirection() != source.getDirection()
 				|| inverseIdentity == null
-				|| !nativeSceneryPlacementId(inverseLocation)
-					.equals(inverseIdentity.getPlacementId())) {
+				|| (!isAdaptive(player)
+					&& !legacyNativeSceneryPlacementId(inverseLocation)
+						.equals(inverseIdentity.getPlacementId()))) {
 				throw new IllegalArgumentException(
 					"Automatic pairing found conflicting scenery at the "
 						+ "destination coordinates.");
@@ -652,7 +660,8 @@ public final class WorldEditorSessionManager {
 		captureNativeGroundItemBase(key, null);
 		NativeGroundItemState base = nativeGroundItemBase.get(key);
 		String placementId = base == null
-			? nativeGroundItemPlacementId(location) : base.placementId;
+			? availableNativePlacementId(player, "ground-item", location)
+			: base.placementId;
 		NativeLayeredGroundItemPlacement placement =
 			NativeLayeredGroundItemPlacement.authored(
 				placementId, itemId, location, amount, respawnSeconds);
@@ -696,6 +705,10 @@ public final class WorldEditorSessionManager {
 
 	public synchronized WorldEditorLayeredTerrainJournal.SaveResult
 		saveNativeTerrainDraft(Player player) throws IOException {
+		if (isAdaptive(player)) {
+			throw new IllegalStateException(
+				"Adaptive Builder saves publish a complete working package.");
+		}
 		if (!ownsActiveSession(player)) {
 			throw new IllegalStateException(
 				"An active world editor session owned by this administrator is required.");
@@ -833,6 +846,251 @@ public final class WorldEditorSessionManager {
 		nativeGroundItemSaved.putAll(nativeGroundItemOverlay);
 		nativeGroundItemDirty.clear();
 		return saved;
+	}
+
+	public synchronized AdaptiveWorldBuilderPackagePublisher.SaveResult
+		saveAdaptivePackage(final Player player) throws IOException {
+		requireNativeDraftSession(player);
+		if (!isAdaptive(player)) {
+			throw new IllegalStateException(
+				"Generic package publication requires adaptive Builder mode.");
+		}
+		if (!hasUnsavedNativeChanges()) {
+			throw new IllegalStateException("Layered draft is empty.");
+		}
+		NativeLayeredWorldPackage owner = player.getWorld().getRegionManager()
+			.getNativeLayeredWorldPackage();
+		if (owner == null) {
+			throw new IllegalStateException(
+				"Adaptive layered working package is unavailable.");
+		}
+		if (nativeTerrainBaseManifestSha256 == null) {
+			nativeOwner(player, player.getLayeredLocation());
+		}
+		WorldEditStorageContext paths = storage(player);
+		if (!paths.isAdaptiveMode()) {
+			throw new IllegalStateException(
+				"Adaptive package publication requires isolated adaptive storage.");
+		}
+		if (nativeWorkingInventorySha256 == null) {
+			nativeWorkingInventorySha256 =
+				player.getConfig().LAYERED_NATIVE_TERRAIN_INVENTORY_SHA256;
+		}
+		AdaptiveWorldBuilderPackagePublisher.Draft draft =
+			adaptiveDraft(owner);
+		AdaptiveWorldBuilderPackagePublisher.SaveResult saved =
+			AdaptiveWorldBuilderPackagePublisher.publish(
+				paths.layeredWorkingPackage(),
+				paths.sourceLayeredBaselinePackage(),
+				nativeWorkingInventorySha256,
+				player.getConfig()
+					.WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256,
+				draft,
+				new AdaptiveWorldBuilderPackagePublisher.PackageVerifier() {
+					@Override
+					public void verify(NativeLayeredWorldPackage worldPackage)
+						throws IOException {
+						try {
+							AdaptiveWorldBuilderDefinitionInventory.validate(
+								player.getWorld().getServer().getEntityHandler(),
+								worldPackage);
+						} catch (IllegalArgumentException failure) {
+							throw new IOException(
+								"Adaptive package definition validation failed",
+								failure);
+						}
+					}
+				},
+				AdaptiveWorldBuilderPackagePublisher.NO_OBSERVER);
+		nativeWorkingInventorySha256 = saved.inventorySha256;
+		markNativeChangesSaved();
+		return saved;
+	}
+
+	private boolean hasUnsavedNativeChanges() {
+		return !nativeTerrainDirty.isEmpty()
+			|| !nativeTerrainGrowth.equals(nativeTerrainGrowthSaved)
+			|| !nativeLevelCreations.equals(nativeLevelCreationsSaved)
+			|| !nativeSceneryDirty.isEmpty()
+			|| !nativeNpcDirty.isEmpty()
+			|| !nativeGroundItemDirty.isEmpty();
+	}
+
+	private void markNativeChangesSaved() {
+		nativeTerrainSaved.clear();
+		nativeTerrainSaved.putAll(nativeTerrainOverlay);
+		nativeTerrainDirty.clear();
+		nativeTerrainGrowthSaved.clear();
+		nativeTerrainGrowthSaved.addAll(nativeTerrainGrowth);
+		nativeLevelCreationsSaved.clear();
+		nativeLevelCreationsSaved.putAll(nativeLevelCreations);
+		nativeScenerySaved.clear();
+		nativeScenerySaved.putAll(nativeSceneryOverlay);
+		nativeSceneryDirty.clear();
+		nativeNpcSaved.clear();
+		nativeNpcSaved.putAll(nativeNpcOverlay);
+		nativeNpcDirty.clear();
+		nativeGroundItemSaved.clear();
+		nativeGroundItemSaved.putAll(nativeGroundItemOverlay);
+		nativeGroundItemDirty.clear();
+	}
+
+	private AdaptiveWorldBuilderPackagePublisher.Draft adaptiveDraft(
+		NativeLayeredWorldPackage owner) {
+		List<AdaptiveWorldBuilderPackagePublisher.Level> levels =
+			new ArrayList<AdaptiveWorldBuilderPackagePublisher.Level>();
+		Set<Integer> declaredLevels = new HashSet<Integer>();
+		for (NativeLayeredWorldPackage.LevelDeclaration level
+			: owner.getLevelDeclarations()) {
+			levels.add(new AdaptiveWorldBuilderPackagePublisher.Level(
+				level.getWorldSpace().getValue(), level.getLevel(),
+				level.getName(), level.getRole()));
+			declaredLevels.add(Integer.valueOf(level.getLevel()));
+		}
+		for (NativeLevelCreation level : nativeLevelCreations.values()) {
+			if (!declaredLevels.add(Integer.valueOf(level.level))) {
+				throw new IllegalStateException(
+					"Adaptive draft duplicates an existing level.");
+			}
+			levels.add(new AdaptiveWorldBuilderPackagePublisher.Level(
+				WorldSpaceId.GLOBAL.getValue(), level.level,
+				level.name, level.role));
+		}
+
+		Map<WorldMapSectorId, NativeLayeredTerrainSector> sectorModels =
+			new LinkedHashMap<WorldMapSectorId, NativeLayeredTerrainSector>();
+		sectorModels.putAll(owner.getTerrainSectors());
+		for (Map.Entry<WorldMapSectorId,NativeLayeredTerrainSector> entry
+			: nativeTerrainLiveSectors.entrySet()) {
+			if (sectorModels.put(entry.getKey(), entry.getValue()) != null) {
+				throw new IllegalStateException(
+					"Adaptive terrain growth duplicates an existing sector.");
+			}
+		}
+		List<AdaptiveWorldBuilderPackagePublisher.Sector> sectors =
+			new ArrayList<AdaptiveWorldBuilderPackagePublisher.Sector>();
+		for (NativeLayeredTerrainSector sector : sectorModels.values()) {
+			sectors.add(new AdaptiveWorldBuilderPackagePublisher.Sector(
+				sector.getIdentity(), copyNativeTerrainSectorWireBytes(sector)));
+		}
+
+		Map<String, AdaptiveWorldBuilderPackagePublisher.Boundary> boundaries =
+			new TreeMap<String, AdaptiveWorldBuilderPackagePublisher.Boundary>();
+		Map<String, AdaptiveWorldBuilderPackagePublisher.Scenery> scenery =
+			new TreeMap<String, AdaptiveWorldBuilderPackagePublisher.Scenery>();
+		Map<String, AdaptiveWorldBuilderPackagePublisher.Npc> npcs =
+			new TreeMap<String, AdaptiveWorldBuilderPackagePublisher.Npc>();
+		Map<String, AdaptiveWorldBuilderPackagePublisher.GroundItem> groundItems =
+			new TreeMap<String, AdaptiveWorldBuilderPackagePublisher.GroundItem>();
+		for (NativeLayeredPlacementSet set : owner.getPlacementSets().values()) {
+			for (NativeLayeredBoundaryPlacement value : set.getBoundaries()) {
+				putPlacement(boundaries, value.getPlacementId(),
+					new AdaptiveWorldBuilderPackagePublisher.Boundary(
+						value.getPlacementId(), value.getBoundaryId(),
+						value.getLocation(), value.getDirection()));
+			}
+			for (NativeLayeredSceneryPlacement value : set.getScenery()) {
+				putPlacement(scenery, value.getPlacementId(),
+					new AdaptiveWorldBuilderPackagePublisher.Scenery(
+						value.getPlacementId(), value.getSceneryId(),
+						value.getLocation(), value.getDirection()));
+			}
+			for (NativeLayeredNpcPlacement value : set.getNpcs()) {
+				putPlacement(npcs, value.getPlacementId(),
+					new AdaptiveWorldBuilderPackagePublisher.Npc(
+						value.getPlacementId(), value.getNpcId(), value.getStart(),
+						value.getMinX(), value.getMinY(),
+						value.getMaxX(), value.getMaxY()));
+			}
+			for (NativeLayeredGroundItemPlacement value : set.getGroundItems()) {
+				putPlacement(groundItems, value.getPlacementId(),
+					new AdaptiveWorldBuilderPackagePublisher.GroundItem(
+						value.getPlacementId(), value.getItemId(),
+						value.getLocation(), value.getAmount(),
+						value.getRespawnSeconds()));
+			}
+		}
+
+		for (Map.Entry<NativeSceneryKey,NativeSceneryState> entry
+			: nativeSceneryOverlay.entrySet()) {
+			NativeSceneryState base = nativeSceneryBase.get(entry.getKey());
+			NativeSceneryState target = entry.getValue();
+			String placementId = target == null
+				? base == null ? null : base.placementId : target.placementId;
+			if (placementId == null) {
+				throw new IllegalStateException(
+					"Adaptive scenery edit has no stable placement identity.");
+			}
+			scenery.remove(placementId);
+			if (target != null) {
+				putPlacement(scenery, placementId,
+					new AdaptiveWorldBuilderPackagePublisher.Scenery(
+						placementId, target.sceneryId,
+						entry.getKey().location(), target.direction));
+			}
+		}
+		for (Map.Entry<NativeNpcKey,NativeNpcState> entry
+			: nativeNpcOverlay.entrySet()) {
+			NativeNpcState base = nativeNpcBase.get(entry.getKey());
+			NativeNpcState target = entry.getValue();
+			String placementId = target == null
+				? base == null ? null : base.placementId : target.placementId;
+			if (placementId == null) {
+				throw new IllegalStateException(
+					"Adaptive NPC edit has no stable placement identity.");
+			}
+			npcs.remove(placementId);
+			if (target != null) {
+				WorldLocation start = new WorldLocation(
+					entry.getKey().worldSpace,
+					new WorldCoordinate(
+						target.startX, target.startY, target.level));
+				putPlacement(npcs, placementId,
+					new AdaptiveWorldBuilderPackagePublisher.Npc(
+						placementId, target.npcId, start,
+						target.minX, target.minY,
+						target.maxX, target.maxY));
+			}
+		}
+		for (Map.Entry<NativeGroundItemKey,NativeGroundItemState> entry
+			: nativeGroundItemOverlay.entrySet()) {
+			NativeGroundItemState base = nativeGroundItemBase.get(entry.getKey());
+			NativeGroundItemState target = entry.getValue();
+			String placementId = target == null
+				? base == null ? null : base.placementId : target.placementId;
+			if (placementId == null) {
+				throw new IllegalStateException(
+					"Adaptive ground-item edit has no stable placement identity.");
+			}
+			groundItems.remove(placementId);
+			if (target != null) {
+				putPlacement(groundItems, placementId,
+					new AdaptiveWorldBuilderPackagePublisher.GroundItem(
+						placementId, target.itemId,
+						entry.getKey().location(), target.amount,
+						target.respawnSeconds));
+			}
+		}
+		return new AdaptiveWorldBuilderPackagePublisher.Draft(
+			owner.getPackageId(), owner.getPackageVersion(),
+			owner.getPresentationChunkSize(), owner.getWorldSpaceKinds(),
+			levels, sectors,
+			new ArrayList<AdaptiveWorldBuilderPackagePublisher.Boundary>(
+				boundaries.values()),
+			new ArrayList<AdaptiveWorldBuilderPackagePublisher.Scenery>(
+				scenery.values()),
+			new ArrayList<AdaptiveWorldBuilderPackagePublisher.Npc>(npcs.values()),
+			new ArrayList<AdaptiveWorldBuilderPackagePublisher.GroundItem>(
+				groundItems.values()));
+	}
+
+	private static <T> void putPlacement(
+		Map<String, T> values, String placementId, T value) {
+		if (values.put(placementId, value) != null) {
+			throw new IllegalStateException(
+				"Adaptive package has a duplicate placement identity: "
+					+ placementId);
+		}
 	}
 
 	public synchronized int nativeTerrainDraftSize() {
@@ -1160,7 +1418,7 @@ public final class WorldEditorSessionManager {
 		captureNativeSceneryBase(key,null);
 		NativeSceneryState base=nativeSceneryBase.get(key);
 		String placementId=base==null
-			?nativeSceneryPlacementId(location):base.placementId;
+			?availableNativePlacementId(player,"scenery",location):base.placementId;
 		WorldCoordinate coordinate=location.getCoordinate();
 		GameObject object=new GameObject(
 			player.getWorld(),
@@ -1219,7 +1477,10 @@ public final class WorldEditorSessionManager {
 	}
 	private String availableNativeNpcPlacementId(
 		Player player,WorldLocation location){
-		String prefix=nativeNpcPlacementPrefix(location);
+		if(isAdaptive(player)){
+			return availableAdaptivePlacementId(player,"npc",location);
+		}
+		String prefix=legacyNativeNpcPlacementPrefix(location);
 		for(int slot=0;slot<4096;slot++){
 			String candidate=prefix+".s"+slot;
 			boolean used=false;
@@ -1268,21 +1529,71 @@ public final class WorldEditorSessionManager {
 		if(java.util.Objects.equals(target,saved))nativeSceneryDirty.remove(key);
 		else nativeSceneryDirty.add(key);
 	}
-	private static String nativeSceneryPlacementId(WorldLocation location){
+	private String availableNativePlacementId(
+		Player player,String family,WorldLocation location){
+		if(isAdaptive(player)){
+			return availableAdaptivePlacementId(player,family,location);
+		}
+		if("scenery".equals(family)){
+			return legacyNativeSceneryPlacementId(location);
+		}
+		if("ground-item".equals(family)){
+			return legacyNativeGroundItemPlacementId(location);
+		}
+		throw new IllegalArgumentException("Unsupported authored placement family");
+	}
+	private String availableAdaptivePlacementId(
+		Player player,String family,WorldLocation location){
+		WorldCoordinate coordinate=location.getCoordinate();
+		String prefix="world-builder.authored."+family+".l"
+			+signedToken(coordinate.getLevel())+".x"
+			+signedToken(coordinate.getX())+".y"
+			+signedToken(coordinate.getY());
+		for(int slot=0;slot<4096;slot++){
+			String candidate=prefix+".s"+slot;
+			if(!nativePlacementIdInUse(player,candidate))return candidate;
+		}
+		throw new IllegalStateException(
+			"Authored placement identity slots at this tile are exhausted.");
+	}
+	private boolean nativePlacementIdInUse(Player player,String candidate){
+		NativeLayeredWorldPackage owner=player.getWorld().getRegionManager()
+			.getNativeLayeredWorldPackage();
+		if(owner!=null){
+			for(NativeLayeredPlacementSet set:owner.getPlacementSets().values()){
+				for(NativeLayeredBoundaryPlacement value:set.getBoundaries())
+					if(candidate.equals(value.getPlacementId()))return true;
+				for(NativeLayeredSceneryPlacement value:set.getScenery())
+					if(candidate.equals(value.getPlacementId()))return true;
+				for(NativeLayeredNpcPlacement value:set.getNpcs())
+					if(candidate.equals(value.getPlacementId()))return true;
+				for(NativeLayeredGroundItemPlacement value:set.getGroundItems())
+					if(candidate.equals(value.getPlacementId()))return true;
+			}
+		}
+		for(NativeSceneryState value:nativeSceneryOverlay.values())
+			if(value!=null&&candidate.equals(value.placementId))return true;
+		for(NativeNpcState value:nativeNpcOverlay.values())
+			if(value!=null&&candidate.equals(value.placementId))return true;
+		for(NativeGroundItemState value:nativeGroundItemOverlay.values())
+			if(value!=null&&candidate.equals(value.placementId))return true;
+		return false;
+	}
+	private static String legacyNativeSceneryPlacementId(WorldLocation location){
 		WorldCoordinate coordinate=location.getCoordinate();
 		return "spoiled-milk.builder.scenery.l"
 			+signedToken(coordinate.getLevel())+".x"
 			+signedToken(coordinate.getX())+".y"
 			+signedToken(coordinate.getY());
 	}
-	private static String nativeNpcPlacementPrefix(WorldLocation location){
+	private static String legacyNativeNpcPlacementPrefix(WorldLocation location){
 		WorldCoordinate coordinate=location.getCoordinate();
 		return "spoiled-milk.builder.npc.l"
 			+signedToken(coordinate.getLevel())+".x"
 			+signedToken(coordinate.getX())+".y"
 			+signedToken(coordinate.getY());
 	}
-	private static String nativeGroundItemPlacementId(WorldLocation location){
+	private static String legacyNativeGroundItemPlacementId(WorldLocation location){
 		WorldCoordinate coordinate=location.getCoordinate();
 		return "spoiled-milk.builder.ground-item.l"
 			+signedToken(coordinate.getLevel())+".x"
@@ -1424,6 +1735,7 @@ public final class WorldEditorSessionManager {
 	private static final class NativeSceneryKey {
 		final WorldSpaceId worldSpace;final int level,x,y;
 		NativeSceneryKey(WorldLocation location){worldSpace=location.getWorldSpace();WorldCoordinate coordinate=location.getCoordinate();level=coordinate.getLevel();x=coordinate.getX();y=coordinate.getY();}
+		WorldLocation location(){return new WorldLocation(worldSpace,new WorldCoordinate(x,y,level));}
 		@Override public boolean equals(Object other){if(this==other)return true;if(!(other instanceof NativeSceneryKey))return false;NativeSceneryKey key=(NativeSceneryKey)other;return level==key.level&&x==key.x&&y==key.y&&worldSpace.equals(key.worldSpace);}
 		@Override public int hashCode(){int result=worldSpace.hashCode();result=31*result+level;result=31*result+x;return 31*result+y;}
 	}
@@ -1475,6 +1787,7 @@ public final class WorldEditorSessionManager {
 			WorldCoordinate coordinate=location.getCoordinate();
 			level=coordinate.getLevel();x=coordinate.getX();y=coordinate.getY();
 		}
+		WorldLocation location(){return new WorldLocation(worldSpace,new WorldCoordinate(x,y,level));}
 		@Override public boolean equals(Object other){
 			if(this==other)return true;
 			if(!(other instanceof NativeGroundItemKey))return false;

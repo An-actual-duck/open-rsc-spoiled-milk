@@ -60,11 +60,17 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                     import com.openrsc.server.database.DatabaseType;
                     public class ServerConfiguration {
                         public boolean WORLD_BUILDER_MODE;
+                        public boolean WORLD_BUILDER_ADAPTIVE_MODE;
                         public boolean WORLD_BUILDER_LAYERED_REVIEW_MODE;
                         public boolean WANT_LAYERED_PLAYER_LOCATION_AUTHORITY;
                         public boolean WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
                         public boolean WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY;
                         public boolean WANT_LAYERED_NATIVE_TERRAIN_PACKAGE;
+                        public boolean WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY;
+                        public boolean WANT_LAYERED_NATIVE_TERRAIN_READINESS;
+                        public boolean WANT_LAYERED_NATIVE_TERRAIN_PREDICTION;
+                        public boolean WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY;
+                        public boolean WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION;
                         public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
                         public String SERVER_BIND_ADDRESS;
                         public DatabaseType DB_TYPE;
@@ -80,8 +86,32 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            identity = Path(temp) / (
+                "com/openrsc/server/content/worldedit/"
+                "AdaptiveWorldBuilderRuntimeIdentity.java"
+            )
+            identity.parent.mkdir(parents=True, exist_ok=True)
+            identity.write_text(
+                textwrap.dedent(
+                    """
+                    package com.openrsc.server.content.worldedit;
+                    import com.openrsc.server.ServerConfiguration;
+                    public final class AdaptiveWorldBuilderRuntimeIdentity {
+                        public static final String PROFILE_ID = "adaptive-world-builder";
+                        public static boolean isAdaptive(ServerConfiguration config) {
+                            return config.WORLD_BUILDER_ADAPTIVE_MODE
+                                && PROFILE_ID.equals(config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE);
+                        }
+                        public static void validateConfiguredIdentities(ServerConfiguration config) {
+                            throw new IllegalArgumentException("stub adaptive identity refusal");
+                        }
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
             output = self.compile_and_run(
-                [stub, DATABASE_TYPE, SERVER_MODE],
+                [stub, identity, DATABASE_TYPE, SERVER_MODE],
                 "WorldBuilderModeHarness",
                 """
                 import com.openrsc.server.ServerConfiguration;
@@ -182,8 +212,32 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                 "public static String SERVER_IP = \"unchanged\"; public static int SERVER_PORT = 12; }\n",
                 encoding="utf-8",
             )
+            adaptive_session = fixture_path / "orsc/AdaptiveWorldBuilderClientSession.java"
+            adaptive_session.write_text(
+                textwrap.dedent(
+                    """
+                    package orsc;
+                    import java.nio.file.Path;
+                    public final class AdaptiveWorldBuilderClientSession {
+                        public static AdaptiveWorldBuilderClientSession load(Path path) {
+                            throw new IllegalArgumentException("stub adaptive session refusal");
+                        }
+                        public void requireEvidence(Path definitions, Path assets) { }
+                        public String packageId() { return ""; }
+                        public String packageVersion() { return ""; }
+                        public String manifestSha256() { return ""; }
+                        public String initialWorldSpace() { return ""; }
+                        public int[] levels() { return new int[0]; }
+                        public String token() { return ""; }
+                        public void requirePackageIdentity(String id, String version, String hash) { }
+                        public void requireClientDefinitions() { }
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
             output = self.compile_and_run(
-                [stub, CLIENT_PROFILE],
+                [stub, adaptive_session, CLIENT_PROFILE],
                 "orsc.WorldBuilderClientProfileHarness",
                 """
                 package orsc;
@@ -298,8 +352,44 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            identity = fixture / (
+                "stub/com/openrsc/server/content/worldedit/"
+                "AdaptiveWorldBuilderRuntimeIdentity.java"
+            )
+            identity.parent.mkdir(parents=True, exist_ok=True)
+            identity.write_text(
+                textwrap.dedent(
+                    """
+                    package com.openrsc.server.content.worldedit;
+                    import com.openrsc.server.ServerConfiguration;
+                    public final class AdaptiveWorldBuilderRuntimeIdentity {
+                        public static boolean isAdaptive(ServerConfiguration config) {
+                            return false;
+                        }
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
+            publisher = fixture / (
+                "stub/com/openrsc/server/content/worldedit/"
+                "AdaptiveWorldBuilderPackagePublisher.java"
+            )
+            publisher.write_text(
+                textwrap.dedent(
+                    """
+                    package com.openrsc.server.content.worldedit;
+                    import java.io.IOException;
+                    import java.nio.file.Path;
+                    public final class AdaptiveWorldBuilderPackagePublisher {
+                        public static void recover(Path path) throws IOException { }
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
             output = self.compile_and_run(
-                [stub, STORAGE_CONTEXT],
+                [stub, identity, publisher, STORAGE_CONTEXT],
                 "WorldEditStorageContextHarness",
                 """
                 import com.openrsc.server.ServerConfiguration;

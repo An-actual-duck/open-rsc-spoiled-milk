@@ -4,8 +4,6 @@ import java.util.Objects;
 
 /** Immutable static terrain values decoded without registering a runtime tile. */
 public final class NativeLayeredTerrainTile {
-	private static final NativeLayeredTerrainTile WORLD_BUILDER_VOID =
-		new NativeLayeredTerrainTile(0, 1, 8, 0, 0, 0, 0);
 	private final int elevation;
 	private final int texture;
 	private final int overlay;
@@ -16,11 +14,13 @@ public final class NativeLayeredTerrainTile {
 
 	/** The one canonical empty-world material shared by load and authoring. */
 	public static NativeLayeredTerrainTile worldBuilderVoid() {
-		return WORLD_BUILDER_VOID;
+		return new NativeLayeredTerrainTile(0, 1, 8, 0, 0, 0, 0);
 	}
 
 	public boolean isWorldBuilderVoid() {
-		return equals(WORLD_BUILDER_VOID);
+		return elevation == 0 && texture == 1 && overlay == 8
+			&& roof == 0 && verticalWall == 0 && horizontalWall == 0
+			&& diagonalWall == 0;
 	}
 
 	public NativeLayeredTerrainTile(
