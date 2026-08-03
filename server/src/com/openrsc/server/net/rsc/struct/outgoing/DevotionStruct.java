@@ -4,5 +4,5 @@ import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.struct.AbstractStruct;
 
 public class DevotionStruct extends AbstractStruct<OpcodeOut> {
-	public int devotionLevel;
+	public int devotionHalfOfferingUnits;
 }

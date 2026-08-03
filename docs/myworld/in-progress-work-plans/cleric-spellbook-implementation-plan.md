@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `feat/cleric-blessing-skill-platform`
+- Branch: `feat/cleric-sigil-production`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform**
-- Current milestone: **C04 complete; pending manager review**
-- Next planned milestone: **C05 — sigil carving and altar blessing, only after its remaining balance/accounting decisions**
-- Runtime exposure: **Holy Power equipment statistic and the empty Blessing skill platform only; Cleric production and spell gameplay remain disabled**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing**
+- Current milestone: **C05 implemented, automated-tested, and privately accepted**
+- Next planned milestone: **C06 — Cleric spellbook transport and presentation, after its unresolved exposure decisions are settled**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, and stone/silver sigil production; Cleric spell presentation and casting remain disabled**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -42,19 +42,13 @@ The following remain unresolved in the concept and may not be guessed:
 
 1. Whether the Cleric book is immediately available at the Worship requirement
    or requires an introductory unlock/quest.
-2. Silver sigil input form and production quantity.
-3. Exact Crafting and Blessing recipe levels/base XP, batching, and failure
-   behavior. Skill ownership and the ten-level duplication/diminishing-XP
-   model are settled.
-4. Exact half-offering accounting for odd sigil quantities without corrupting
-   existing integer Devotion saves.
-5. Sigil consumption when an area cast has partial or no useful recipients.
-6. PvP rules and abuse safeguards.
-7. Status-HUD priority and overflow behavior at the existing 16-entry bound.
-8. Unify movement-queue/client-presentation integration.
-9. Respite passive-regeneration clock synchronization.
-10. Offensive god-spell placement and unlock requirements.
-11. Additional Devotion sources required to balance repeat sigil production.
+2. Sigil consumption when an area cast has partial or no useful recipients.
+3. PvP rules and abuse safeguards.
+4. Status-HUD priority and overflow behavior at the existing 16-entry bound.
+5. Unify movement-queue/client-presentation integration.
+6. Respite passive-regeneration clock synchronization.
+7. Offensive god-spell placement and unlock requirements.
+8. Additional Devotion sources required to balance repeat sigil production.
 
 Code may model already confirmed data adjacent to these questions, but it must
 not register or invoke behavior that depends on an unresolved answer.
@@ -174,15 +168,57 @@ and a relogged Blessing value before handoff.
 ### C05 — Sigil Carving and Altar Blessing
 
 Implement chisel-driven Crafting selection and full-inventory altar conversion
-only after levels, XP, batching, silver inputs, and exact fractional Devotion
-accounting are decided. Use centralized altar god identity and the existing
-transaction pattern. Aligned sigils require their matching altar; neutral
-sigils accept any god altar and charge that altar's god while producing one
-neutral item identity. Eligibility is strictly above `-1000` Devotion.
+using the now-complete C05 production contract. Reuse the existing Crafting
+selection/quantity flow.
+Each base carving action consumes one Rune stone or one Silver nugget and
+produces one corresponding unblessed sigil; alignment does not alter that
+quantity. Unblessed sigils are non-stackable so inventory pressure preserves
+the intended resource-to-altar production loop; blessed outputs are stackable.
+Stone requires Crafting/Blessing `1/1`; silver requires `20/16`.
+Use centralized altar god identity and the existing transaction pattern.
+Aligned sigils require their matching altar; neutral sigils accept any god
+altar and charge that altar's god while producing one neutral item identity.
+The player's selected Worship alignment is irrelevant. The exact starting
+balance must be above `-1000`, and the full cost must fit without crossing
+below it. Ending exactly at `-1000` is valid; clamping an underfunded batch is
+not. Success feedback identifies the charged god and its exact remaining
+balance.
+
+Base `1x` XP per successful input is `5` Crafting plus `5` Blessing for stone,
+and `10` Crafting plus `10` Blessing for silver, awarded at their respective
+carving and conversion steps. Only conversion applies diminishing bonus-output
+XP; carving XP remains fixed per input.
+
+Carving is an interruptible per-item batch: each completed step consumes and
+adds atomically, completed steps survive interruption, and an incomplete next
+step changes nothing. `All` is server-clamped to eligible source materials;
+the required chisel leaves room for at most 29 non-stackable inputs in a
+standard inventory. Altar conversion is one immediate atomic transaction over
+all carried unblessed sigils of the exact selected material/alignment identity.
+Precompute every requirement, the total Devotion charge, duplicated output,
+XP, and capacity before mutation. Failure changes nothing and must not drop
+overflow. A 30-input conversion is supported after the chisel is banked.
+
+Keep `devotion_<god>_offerings` as the compatible whole-offering cache value
+and add a signed per-god half-offering remainder (`-1`, `0`, or `1`). Missing
+remainders mean zero. Perform all Devotion adjustments through centralized
+exact half-unit arithmetic, normalize both fields after each mutation, clamp
+the combined exact value, and clear the remainder on an explicit absolute
+level-set. Never use floating point or rescale an existing cache value. One
+sigil costs one half-offering unit: `1/2/29/30` inputs cost exactly
+`0.05/0.10/1.45/1.50` displayed Devotion.
+
+Change the maintained custom Devotion packet's value semantics from whole
+displayed levels to signed half-offering units while preserving its opcode and
+two-byte width. Advance the enforced maintained-client version and format the
+client value precisely (for example, `9.95`). Do not change authentic or legacy
+protocol generators.
 
 Verification must cover 1, 2, 29, and 30-item batches, exact cumulative cost,
 insufficient Devotion, inventory replacement failure, neutral altars, all
-three aligned altars, rollback, relog, and no Worship XP.
+three aligned altars, wrong-alignment rejection, a one-sigil success from
+`-999.95`, a multi-sigil atomic failure at that balance, rollback, exact
+client display, relog, and no Worship XP.
 
 ### C06 — Cleric Spellbook Transport and Presentation
 
@@ -313,11 +349,16 @@ open and continue to stop later dependent phases.
 
 ## C02 Completion Record
 
-C02 establishes sixteen inert, stackable item definitions at stable IDs
+C02 established sixteen inert item definitions at stable IDs
 `3293-3308`: four alignments, stone and silver materials, and unblessed and
 blessed states. It does not provide any acquisition or use path. The server
 definitions and direct client registry agree on names, descriptions, flags,
 IDs, and the exclusive item count of `3309`.
+
+C05 subsequently refines the provisional C02 stackability flag: the eight
+unblessed identities are non-stackable and the eight blessed identities remain
+stackable, preserving inventory pressure before altar conversion. This is an
+intentional production-economy decision, not identity drift.
 
 The owner's eight supplied sigil images and plain `stone.png` reference are
 preserved byte-for-byte in the maintained sigil asset folder. Eight derived
@@ -423,7 +464,7 @@ check.
 
 Only the maintained custom stat packet gains Blessing fields, after Summoning
 in each of the current/base/XP arrays. Quest Points remains the following
-independent byte, and the coordinated enforced client version is `10048`.
+independent byte, and C04's coordinated enforced client version was `10048`.
 Authentic/legacy generators remain byte-for-byte outside this change. Blessing
 automatically receives the existing general non-combat XP handling and is
 explicitly included in the production-skill Mind-necklace XP family; the
@@ -456,6 +497,76 @@ workspace. Neither limitation was changed in C04.
 
 C04 adds no sigil crafting, altar conversion, Devotion spending, Cleric spell,
 shop, drop, dialogue, cape, dedicated potion, guild, or high-tier content.
-Exact recipe requirements, base Crafting/Blessing XP, batching, transaction
-failure behavior, and half-offering accounting remain C05 decisions and stop
-production implementation until resolved.
+C05 owns the now-confirmed recipe requirements, base Crafting/Blessing XP,
+batching, transaction-failure behavior, and compatible half-offering
+accounting and Devotion-floor semantics. No C05 production-design blocker
+remained at the C04 handoff; the following record documents its implementation.
+
+## C05 Completion Record
+
+C05 makes the eight launch carving recipes and their altar conversions
+reachable without exposing Cleric spells. A chisel used on Rune stone (`1299`)
+or Silver nugget (`383`) opens the existing Crafting quantity interface with
+Saradomin, Guthix, Zamorak, and neutral choices. Stone uses Crafting/Blessing
+requirements `1/1` and base XP `5/5`; silver uses `20/16` and base XP `10/10`.
+Carving is an interruptible per-input batch and awards Crafting XP only after
+an exact in-slot conversion succeeds.
+
+The eight carved identities are deliberately non-stackable, while the eight
+blessed identities remain stackable. This C05 refinement of C02 preserves the
+intended inventory pressure and repeated resource/bank-to-altar loop. One
+sigil-on-altar action converts every carried unblessed sigil of the exact used
+material and alignment. Aligned inputs require their matching god altar;
+neutral inputs accept any recognized god altar and charge that altar's god.
+The selected Worship book is irrelevant. Output follows the existing
+one-extra-per-ten-level production ladder, and Blessing XP uses RuneCraft's
+exact diminishing `1x`, `1.5x`, `1.75x`, and later series.
+
+The compatible `devotion_<god>_offerings` cache value retains whole-offering
+meaning and a signed `-1/0/+1` remainder stores half-offering precision. Each
+input costs one half-offering unit, or `0.05` displayed Devotion, with bounded
+integer arithmetic and no eager migration. The transaction verifies the full
+cost and inventory conversion first, then commits both under player ownership;
+a rejected inventory state change never performs a transient deduction or
+prayer cleanup. Starting must be above `-1000`, ending exactly there is valid,
+and crossing it is rejected. The maintained Devotion packet keeps its opcode
+and signed-short width but now carries exact half-offering units, advances the
+enforced client version to `10049`, and displays fractional balances precisely.
+Authentic/legacy packet layouts remain unchanged.
+
+Executable coverage validates all eight recipes, stable item resolution,
+server/client stackability parity, level thresholds, `1/2/29/30` cost cases,
+ten-level output duplication, diminishing XP, overflow and corrupt-remainder
+rejection, exact positive/negative display, the `-999.95` floor boundary,
+atomic inventory preflight, and transaction-failure ordering. Relevant C01-C04,
+Devotion, ordinary prayer blessing, production UI/flow, item-integrity, client
+coverage, World Builder protocol, and release fixtures also pass.
+
+Verification completed from the milestone branch:
+
+- `python3 tests/myworld/test-cleric-sigil-production.py`
+- `python3 tests/myworld/test-cleric-sigil-item-assets.py`
+- `python3 tests/myworld/test-cleric-spellbook-foundation.py`
+- `python3 tests/myworld/test-cleric-blessing-skill-platform.py`
+- `python3 tests/myworld/test-cleric-holy-power-equipment.py`
+- focused Devotion, prayer-blessing, production, item-integrity, client-coverage,
+  bank-protocol, and World Builder discovery/release suites
+- `./scripts/build-client.sh`
+- `./scripts/build-server.sh`
+- `./scripts/lint.sh compiler --base cda8a0ab8566eb5d7551ce409ef0a4c3fb5a3112 --offline`
+- `./scripts/lint.sh analyze --base cda8a0ab8566eb5d7551ce409ef0a4c3fb5a3112 --offline`
+- `git diff --check`
+
+The owner privately accepted the Crafting UI, five separate unblessed
+inventory slots, artwork, whole-batch altar conversion, `2x` stone output at
+Blessing `16`, and exact Zamorak Devotion change from `10` to `9.75`. The
+matching client and server ran only on loopback ports `43625/43525`, because
+another worker already owned the ordinary private ports. That worker's process
+and the public server were untouched. The expected connection-reset diagnostic
+was limited to intentionally closing the private client after acceptance; no
+sigil-production exception occurred.
+
+C05 adds no Cleric spell transport, spellbook UI, casting, support effect,
+combat change, shop, drop, dialogue, secondary sigil, blessed equipment recipe,
+or additional Devotion source. C06 remains stopped on the unresolved runtime
+exposure decisions listed above; this branch does not begin it.

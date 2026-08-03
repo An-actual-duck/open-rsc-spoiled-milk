@@ -79,11 +79,11 @@ def main() -> None:
         require(10 * resources == resources * 10, "destruction transfer drift")
 
     require(
-        "return newOfferings - previousOfferings;" in devotion,
+        "return updated - previous;" in devotion,
         "Devotion adjustment must return the actual clamped change",
     )
     require(
-        "if (newOfferings < previousOfferings)" in devotion
+        "if (updated < previous)" in devotion
         and "player.getPrayers().deactivateOverflowingPrayers();" in devotion,
         "all Devotion reductions must clean up overflowing prayers",
     )

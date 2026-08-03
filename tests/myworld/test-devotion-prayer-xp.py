@@ -28,8 +28,10 @@ def main() -> None:
     require('CACHE_PREFIX = "devotion_"' in devotion, "devotion cache prefix should be stable")
     require('CACHE_SUFFIX = "_offerings"' in devotion, "devotion cache suffix should be stable")
     require("OFFERINGS_PER_BONUS_XP = 10" in devotion, "devotion should award +1 XP per 10 offerings")
-    require("MAX_DEVOTION_LEVEL = 1000" in devotion, "devotion should be capped at 1000")
-    require("MIN_DEVOTION_LEVEL = -1000" in devotion, "devotion should go down to -1000")
+    require("MAX_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MAX_DEVOTION_LEVEL" in devotion,
+            "devotion should use the exact balance's 1000 cap")
+    require("MIN_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MIN_DEVOTION_LEVEL" in devotion,
+            "devotion should use the exact balance's -1000 floor")
     require("MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL" in devotion,
             "negative devotion should use the same offering scale")
     require("DEVOTION_REQUIREMENT_PER_RESOURCE = 100" in devotion,
@@ -42,12 +44,13 @@ def main() -> None:
             "devotion fractional blessing-cost helper should exist")
     require("getBlessingPrayerXp" in devotion and "100.0D + devotionLevel" in devotion,
             "blessing Worship XP should scale by 1% per devotion")
-    require("clampOfferings((long) previousOfferings + offeringGain + blackUnicornOfferingGain)" in devotion,
-            "offering gains should clamp after long arithmetic")
-    require("clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL))" in devotion,
-            "devotion-level adjustments should not overflow before clamping")
-    require("clampOfferings((long) previousOfferings + offerings)" in devotion,
-            "offering adjustments should not overflow before clamping")
+    require("DevotionHalfOfferingBalance.adjust(" in devotion
+            and "* DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING" in devotion,
+            "offering gains should use bounded exact half-offering arithmetic")
+    require("(long) devotionLevels * DevotionHalfOfferingBalance.HALF_UNITS_PER_DEVOTION_LEVEL" in devotion,
+            "devotion-level adjustments should not overflow before exact clamping")
+    require("(long) offerings * DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING" in devotion,
+            "offering adjustments should not overflow before exact clamping")
     require("clampPositiveInt((long) resourceCost * DEVOTION_REQUIREMENT_PER_RESOURCE)" in devotion,
             "resource-cost devotion requirements should not overflow before clamping")
     require("clampPositiveInt((long) resourceCost * BLESSING_OFFERING_COST_PER_RESOURCE)" in devotion,
@@ -56,7 +59,7 @@ def main() -> None:
             "Devotion reductions should deactivate prayers above the new capacity")
     require("scaledXp >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.ceil(scaledXp)" in devotion,
             "blessing Worship XP should saturate instead of overflowing")
-    require("getDevotionLevelFromOfferings(previousOfferings)" in devotion,
+    require("DevotionHalfOfferingBalance.getDisplayedLevel(previousHalfOfferingUnits)" in devotion,
             "devotion bonus should be based on completed prior offering tiers")
     require("if (newDevotion > previousDevotion)" in devotion and "sendDevotionIncreaseMessage" in devotion,
             "devotion increase messages should trigger even while recovering from negative devotion")
@@ -86,18 +89,20 @@ def main() -> None:
             "Worship skill guide should explain blessed symbol offering bonus")
     require("+1 Worship XP per offering for each devotion" in guide,
             "Worship skill guide should explain devotion XP scaling")
-    require('drawString("Devotion: " + this.currentDevotionLevel' in client,
+    require('drawString("Devotion: "' in client
+            and "formatDevotionHalfOfferingUnits(this.currentDevotionHalfOfferingUnits)" in client,
             "Worship skill tooltip should show current devotion")
     require("private int readSignedShort()" in packet_handler
             and "value > Short.MAX_VALUE ? value - 0x10000 : value" in packet_handler,
             "client should have a signed short reader for devotion")
-    require("opcode == 145" in packet_handler and "setCurrentDevotionLevel(readSignedShort())" in packet_handler,
+    require("opcode == 145" in packet_handler
+            and "setCurrentDevotionHalfOfferingUnits(readSignedShort())" in packet_handler,
             "client should accept signed devotion updates from the server")
     require("sendDevotion(Player player)" in action_sender, "server should send devotion updates")
     require("put(OpcodeOut.SEND_DEVOTION, 145)" in custom_generator,
             "devotion packet should have a custom client opcode")
-    require("builder.writeShort(devotion.devotionLevel)" in custom_generator,
-            "server should send devotion as a signed short-sized value")
+    require("builder.writeShort(devotion.devotionHalfOfferingUnits)" in custom_generator,
+            "server should send exact devotion as a signed short-sized value")
 
     print("PASS: devotion Worship XP scaling is wired to bone and ash offerings")
 

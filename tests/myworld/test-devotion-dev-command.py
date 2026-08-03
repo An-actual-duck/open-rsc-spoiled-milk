@@ -22,7 +22,11 @@ def main() -> None:
 
     require(devotion, "public static void setDevotionLevel", "direct devotion setter")
     require(devotion, "clampDevotionLevel(devotionLevel)", "devotion setter clamp")
-    require(devotion, "clampedDevotionLevel * OFFERINGS_PER_DEVOTION_LEVEL", "level-to-offerings storage")
+    require(
+        devotion,
+        "clampedDevotionLevel * DevotionHalfOfferingBalance.HALF_UNITS_PER_DEVOTION_LEVEL",
+        "level-to-exact-half-offering storage",
+    )
     require(devotion, "ActionSender.sendDevotion(player);", "devotion client refresh")
     require(devotion, "ActionSender.sendEquipmentStats(player);", "dynamic equipment stat refresh")
     require(devotion, "player.getPrayers().deactivateOverflowingPrayers();", "prayer overflow cleanup")

@@ -999,7 +999,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 				case SEND_DEVOTION:
 					DevotionStruct devotion = (DevotionStruct) payload;
-					builder.writeShort(devotion.devotionLevel);
+					builder.writeShort(devotion.devotionHalfOfferingUnits);
 					break;
 
 				case SEND_PRODUCTION_INTERFACE:

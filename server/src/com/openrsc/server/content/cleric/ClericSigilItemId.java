@@ -31,15 +31,22 @@ public enum ClericSigilItemId {
 	BLESSED_SILVER_NEUTRAL_SIGIL(3308, ClericSigilMaterial.SILVER, ClericAlignment.NEUTRAL, true);
 
 	private static final Map<Integer, ClericSigilItemId> BY_ITEM_ID;
+	private static final Map<String, ClericSigilItemId> BY_PRODUCTION_KEY;
 
 	static {
 		Map<Integer, ClericSigilItemId> identities = new HashMap<Integer, ClericSigilItemId>();
+		Map<String, ClericSigilItemId> productionKeys = new HashMap<String, ClericSigilItemId>();
 		for (ClericSigilItemId identity : ClericSigilItemId.values()) {
 			if (identities.put(identity.itemId, identity) != null) {
 				throw new IllegalStateException("Duplicate Cleric sigil item ID: " + identity.itemId);
 			}
+			String productionKey = getProductionKey(identity.material, identity.alignment, identity.blessed);
+			if (productionKeys.put(productionKey, identity) != null) {
+				throw new IllegalStateException("Duplicate Cleric sigil production key: " + productionKey);
+			}
 		}
 		BY_ITEM_ID = Collections.unmodifiableMap(identities);
+		BY_PRODUCTION_KEY = Collections.unmodifiableMap(productionKeys);
 	}
 
 	private final int itemId;
@@ -77,5 +84,24 @@ public enum ClericSigilItemId {
 			throw new IllegalArgumentException("Unknown Cleric sigil item ID: " + itemId);
 		}
 		return identity;
+	}
+
+	public static ClericSigilItemId get(ClericSigilMaterial material,
+			ClericAlignment alignment, boolean blessed) {
+		if (material == null || alignment == null) {
+			throw new IllegalArgumentException("Cleric sigil material and alignment are required");
+		}
+		ClericSigilItemId identity = BY_PRODUCTION_KEY.get(
+			getProductionKey(material, alignment, blessed));
+		if (identity == null) {
+			throw new IllegalArgumentException(
+				"Unknown Cleric sigil production identity: " + material + "/" + alignment + "/" + blessed);
+		}
+		return identity;
+	}
+
+	private static String getProductionKey(ClericSigilMaterial material,
+			ClericAlignment alignment, boolean blessed) {
+		return material.name() + ':' + alignment.name() + ':' + blessed;
 	}
 }

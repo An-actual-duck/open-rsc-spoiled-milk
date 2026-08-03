@@ -1382,7 +1382,7 @@ public class ActionSender {
 			return;
 		}
 		DevotionStruct struct = new DevotionStruct();
-		struct.devotionLevel = Devotion.getCurrentDevotionLevel(player);
+		struct.devotionHalfOfferingUnits = Devotion.getHalfOfferingUnits(player, player.getPrayerBook());
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_DEVOTION, struct, player);
 	}
 

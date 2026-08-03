@@ -211,13 +211,15 @@ def main() -> None:
         "server/myworld-host.conf",
         "release/world-builder-v2/world-builder-runtime.conf",
     ):
-        require("10048" in read(relative), f"custom protocol version drift: {relative}")
+        require("10049" in read(relative), f"custom protocol version drift: {relative}")
 
-    plugin_sources = "\n".join(
-        path.read_text(encoding="utf-8") for path in (ROOT / "server/plugins").rglob("*.java")
-    )
-    require("Skill.BLESSING" not in plugin_sources,
-            "C04 must not make sigil production or other Blessing gameplay reachable")
+    blessing_plugins = []
+    for path in (ROOT / "server/plugins").rglob("*.java"):
+        if "Skill.BLESSING" in path.read_text(encoding="utf-8"):
+            blessing_plugins.append(str(path.relative_to(ROOT)))
+    require(blessing_plugins == [
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java"
+    ], "Blessing gameplay must remain limited to the approved C05 sigil production path")
 
     print("PASS: Blessing is append-only, persistent, ranked, and Quest-Points safe")
 

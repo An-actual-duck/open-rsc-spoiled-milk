@@ -397,6 +397,108 @@ public class Inventory {
 		return false;
 	}
 
+	/** Returns whether an all-matching stack conversion can commit atomically. */
+	public boolean canReplaceAllCatalogStacked(Item sourceItems, Item newItem) {
+		if (!isSupportedStackReplacement(sourceItems, newItem)
+			|| sourceItems.getCatalogId() == newItem.getCatalogId()) {
+			return false;
+		}
+		synchronized (list) {
+			return canReplaceAllCatalogStackedLocked(sourceItems, newItem);
+		}
+	}
+
+	/**
+	 * Replaces every matching source stack, requiring its total to equal the
+	 * caller's preflight count. Existing compatible output stacks are reused;
+	 * otherwise the first source slot and persistent item ID become the output.
+	 */
+	public boolean replaceAllCatalogStacked(Item sourceItems, Item newItem, boolean sendInventory) {
+		if (!isSupportedStackReplacement(sourceItems, newItem)
+			|| sourceItems.getCatalogId() == newItem.getCatalogId()) {
+			return false;
+		}
+		synchronized (list) {
+			if (!canReplaceAllCatalogStackedLocked(sourceItems, newItem)) {
+				return false;
+			}
+			final int maxStack = getMaximumStackAmount();
+			Item targetStack = null;
+			Item firstSource = null;
+			for (Item existing : list) {
+				if (existing.getCatalogId() == sourceItems.getCatalogId()
+					&& existing.getNoted() == sourceItems.getNoted() && firstSource == null) {
+					firstSource = existing;
+				}
+				if (existing.getCatalogId() == newItem.getCatalogId()
+					&& existing.getNoted() == newItem.getNoted()
+					&& existing.getAmount() <= maxStack - newItem.getAmount()) {
+					targetStack = existing;
+				}
+			}
+			if (firstSource == null) {
+				return false;
+			}
+			if (targetStack != null) {
+				targetStack.changeAmount(newItem.getAmount());
+				list.removeIf(existing -> existing.getCatalogId() == sourceItems.getCatalogId()
+					&& existing.getNoted() == sourceItems.getNoted());
+			} else {
+				final int firstSourceIndex = list.indexOf(firstSource);
+				final Item replacement = newItem.copyWithItemId(firstSource.getItemId());
+				list.set(firstSourceIndex, replacement);
+				list.removeIf(existing -> existing != replacement
+					&& existing.getCatalogId() == sourceItems.getCatalogId()
+					&& existing.getNoted() == sourceItems.getNoted());
+			}
+			if (sendInventory) {
+				ActionSender.sendInventory(player);
+			}
+			return true;
+		}
+	}
+
+	private boolean canReplaceAllCatalogStackedLocked(Item sourceItems, Item newItem) {
+		long matchingSourceAmount = 0L;
+		boolean hasSource = false;
+		final int maxStack = getMaximumStackAmount();
+		boolean hasCompatibleTargetStack = false;
+		for (Item existing : list) {
+			if (existing.getCatalogId() == sourceItems.getCatalogId()
+				&& existing.getNoted() == sourceItems.getNoted()) {
+				matchingSourceAmount += existing.getAmount();
+				hasSource = true;
+			}
+			if (existing.getCatalogId() == newItem.getCatalogId()
+				&& existing.getNoted() == newItem.getNoted()
+				&& existing.getAmount() <= maxStack - newItem.getAmount()) {
+				hasCompatibleTargetStack = true;
+			}
+		}
+		return hasSource
+			&& matchingSourceAmount == sourceItems.getAmount()
+			&& (hasCompatibleTargetStack || newItem.getAmount() <= maxStack);
+	}
+
+	private boolean isSupportedStackReplacement(Item sourceItems, Item newItem) {
+		if (sourceItems == null || newItem == null || sourceItems.getAmount() <= 0
+			|| newItem.getAmount() <= 0 || sourceItems.getNoted() || newItem.getNoted()) {
+			return false;
+		}
+		final ItemDefinition replacementDef = newItem.getDef(player.getWorld());
+		return replacementDef != null && replacementDef.isStackable()
+			&& (player.getConfig().RESTRICT_ITEM_ID < 0
+				|| player.getConfig().RESTRICT_ITEM_ID >= newItem.getCatalogId())
+			&& player.getClientLimitations().maxItemId >= newItem.getCatalogId()
+			&& newItem.getAmount() <= getMaximumStackAmount();
+	}
+
+	private int getMaximumStackAmount() {
+		return player.getConfig().SHORT_MAX_STACKS
+			? (Short.MAX_VALUE - Short.MIN_VALUE)
+			: Integer.MAX_VALUE;
+	}
+
 	// Used in custom bank interface to swap items.
 	public void swap(int slot, int to) {
 		if (slot < 0 || to < 0 || to == slot) {

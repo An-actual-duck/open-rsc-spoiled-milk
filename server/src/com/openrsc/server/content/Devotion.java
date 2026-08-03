@@ -6,15 +6,18 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.MessageType;
 
+import java.util.function.BooleanSupplier;
+
 public final class Devotion {
 	private static final String CACHE_PREFIX = "devotion_";
 	private static final String CACHE_SUFFIX = "_offerings";
+	private static final String HALF_OFFERING_REMAINDER_SUFFIX = "_half_offering_remainder";
 	private static final String SYMBOL_BONUS_SUFFIX = "_symbol_bonus_toggle";
 	private static final String BLACK_UNICORN_BONUS_SUFFIX = "_black_unicorn_bonus_toggle";
 	private static final int OFFERINGS_PER_BONUS_XP = 10;
 	public static final int OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP;
-	public static final int MAX_DEVOTION_LEVEL = 1000;
-	public static final int MIN_DEVOTION_LEVEL = -1000;
+	public static final int MAX_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MAX_DEVOTION_LEVEL;
+	public static final int MIN_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MIN_DEVOTION_LEVEL;
 	public static final int COMBAT_GROWTH_START_LEVEL = 250;
 	private static final int MAX_OFFERINGS = MAX_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
 	private static final int MIN_OFFERINGS = MIN_DEVOTION_LEVEL * OFFERINGS_PER_DEVOTION_LEVEL;
@@ -53,18 +56,20 @@ public final class Devotion {
 		}
 
 		final PrayerCatalog.GodLine godLine = player.getPrayerBook();
-		final String cacheKey = getOfferingCacheKey(godLine);
-		final int previousOfferings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		final int previousDevotion = getDevotionLevelFromOfferings(previousOfferings);
+		final int previousHalfOfferingUnits = getHalfOfferingUnits(player, godLine);
+		final int previousDevotion = DevotionHalfOfferingBalance.getDisplayedLevel(previousHalfOfferingUnits);
 		final int bonusXp = Math.max(0, Math.min(previousDevotion, MAX_DEVOTION_LEVEL));
 		final int offeringGain = getOfferingDevotionGain(player, godLine);
 		final int blackUnicornOfferingGain = blackUnicornBonus ? getEveryOtherOfferingBonus(player, godLine, BLACK_UNICORN_BONUS_SUFFIX) : 0;
-		final int newOfferings = clampOfferings((long) previousOfferings + offeringGain + blackUnicornOfferingGain);
-		player.getCache().set(cacheKey, newOfferings);
+		final int newHalfOfferingUnits = DevotionHalfOfferingBalance.adjust(
+			previousHalfOfferingUnits,
+			(long) (offeringGain + blackUnicornOfferingGain)
+				* DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING);
+		storeHalfOfferingUnits(player, godLine, newHalfOfferingUnits);
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
 
-		final int newDevotion = getDevotionLevelFromOfferings(newOfferings);
+		final int newDevotion = DevotionHalfOfferingBalance.getDisplayedLevel(newHalfOfferingUnits);
 		if (newDevotion > previousDevotion) {
 			sendDevotionIncreaseMessage(player, godLine, newDevotion);
 		}
@@ -75,13 +80,30 @@ public final class Devotion {
 		if (player == null || godLine == null) {
 			return 0;
 		}
-		final String cacheKey = getOfferingCacheKey(godLine);
-		final int offerings = player.getCache().hasKey(cacheKey) ? player.getCache().getInt(cacheKey) : 0;
-		return clampOfferings(offerings);
+		return DevotionHalfOfferingBalance.getWholeOfferings(getHalfOfferingUnits(player, godLine));
+	}
+
+	public static int getHalfOfferingUnits(final Player player, final PrayerCatalog.GodLine godLine) {
+		if (player == null || godLine == null) {
+			return 0;
+		}
+		final String offeringKey = getOfferingCacheKey(godLine);
+		final int wholeOfferings = player.getCache().hasKey(offeringKey)
+			? clampOfferings(player.getCache().getInt(offeringKey))
+			: 0;
+		final String remainderKey = getHalfOfferingRemainderCacheKey(godLine);
+		int remainder = player.getCache().hasKey(remainderKey)
+			? player.getCache().getInt(remainderKey)
+			: 0;
+		if (remainder < -1 || remainder > 1) {
+			player.getCache().remove(remainderKey);
+			remainder = 0;
+		}
+		return DevotionHalfOfferingBalance.fromStoredParts(wholeOfferings, remainder);
 	}
 
 	public static int getDevotionLevel(final Player player, final PrayerCatalog.GodLine godLine) {
-		return getDevotionLevelFromOfferings(getOfferings(player, godLine));
+		return DevotionHalfOfferingBalance.getDisplayedLevel(getHalfOfferingUnits(player, godLine));
 	}
 
 	public static int getCurrentDevotionLevel(final Player player) {
@@ -96,7 +118,10 @@ public final class Devotion {
 			return;
 		}
 		final int clampedDevotionLevel = clampDevotionLevel(devotionLevel);
-		player.getCache().set(getOfferingCacheKey(godLine), clampedDevotionLevel * OFFERINGS_PER_DEVOTION_LEVEL);
+		storeHalfOfferingUnits(
+			player,
+			godLine,
+			clampedDevotionLevel * DevotionHalfOfferingBalance.HALF_UNITS_PER_DEVOTION_LEVEL);
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
 		player.getPrayers().deactivateOverflowingPrayers();
@@ -134,17 +159,11 @@ public final class Devotion {
 		if (player == null || godLine == null || devotionLevels == 0 || !player.getConfig().WANT_MYWORLD) {
 			return;
 		}
-		final String cacheKey = getOfferingCacheKey(godLine);
-		final int previousOfferings = player.getCache().hasKey(cacheKey)
-			? clampOfferings(player.getCache().getInt(cacheKey))
-			: 0;
-		final int newOfferings = clampOfferings((long) previousOfferings + ((long) devotionLevels * OFFERINGS_PER_DEVOTION_LEVEL));
-		player.getCache().set(cacheKey, newOfferings);
-		ActionSender.sendDevotion(player);
-		ActionSender.sendEquipmentStats(player);
-		if (newOfferings < previousOfferings) {
-			player.getPrayers().deactivateOverflowingPrayers();
-		}
+		adjustDevotionHalfOfferingUnits(
+			player,
+			godLine,
+			(int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE,
+				(long) devotionLevels * DevotionHalfOfferingBalance.HALF_UNITS_PER_DEVOTION_LEVEL)));
 	}
 
 	/**
@@ -156,18 +175,81 @@ public final class Devotion {
 		if (player == null || godLine == null || offerings == 0 || !player.getConfig().WANT_MYWORLD) {
 			return 0;
 		}
-		final String cacheKey = getOfferingCacheKey(godLine);
-		final int previousOfferings = player.getCache().hasKey(cacheKey)
-			? clampOfferings(player.getCache().getInt(cacheKey))
-			: 0;
-		final int newOfferings = clampOfferings((long) previousOfferings + offerings);
-		player.getCache().set(cacheKey, newOfferings);
-		ActionSender.sendDevotion(player);
-		ActionSender.sendEquipmentStats(player);
-		if (newOfferings < previousOfferings) {
-			player.getPrayers().deactivateOverflowingPrayers();
+		final int actualHalfUnitChange = adjustDevotionHalfOfferingUnits(
+			player,
+			godLine,
+			(int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE,
+				(long) offerings * DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING)));
+		return actualHalfUnitChange / DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING;
+	}
+
+	/** Adjusts exact half-offering units and returns the signed applied change. */
+	public static int adjustDevotionHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int halfOfferingUnits) {
+		if (player == null || godLine == null || halfOfferingUnits == 0
+			|| !player.getConfig().WANT_MYWORLD) {
+			return 0;
 		}
-		return newOfferings - previousOfferings;
+		synchronized (player) {
+			final int previous = getHalfOfferingUnits(player, godLine);
+			final int updated = DevotionHalfOfferingBalance.adjust(previous, halfOfferingUnits);
+			storeHalfOfferingUnits(player, godLine, updated);
+			notifyBalanceChanged(player, previous, updated);
+			return updated - previous;
+		}
+	}
+
+	/**
+	 * Pays one atomic Cleric-production cost without crossing the exact minimum.
+	 * Reaching the minimum is permitted, but spending while already there is not.
+	 */
+	public static boolean trySpendDevotionHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int costHalfOfferingUnits) {
+		return trySpendDevotionHalfOfferingUnits(
+			player, godLine, costHalfOfferingUnits, () -> true);
+	}
+
+	/** Returns whether the exact cost can be paid without crossing the minimum. */
+	public static boolean canSpendDevotionHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int costHalfOfferingUnits) {
+		if (player == null || godLine == null || costHalfOfferingUnits <= 0
+			|| !player.getConfig().WANT_MYWORLD) {
+			return false;
+		}
+		synchronized (player) {
+			return DevotionHalfOfferingBalance.canSpendAboveMinimum(
+				getHalfOfferingUnits(player, godLine), costHalfOfferingUnits);
+		}
+	}
+
+	/**
+	 * Pays an exact cost only after the supplied state change commits. A rejected
+	 * state change leaves Devotion untouched, avoiding observable deduct/refund
+	 * side effects such as transient prayer deactivation.
+	 */
+	public static boolean trySpendDevotionHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int costHalfOfferingUnits,
+			final BooleanSupplier stateChange) {
+		if (player == null || godLine == null || costHalfOfferingUnits <= 0
+			|| stateChange == null || !player.getConfig().WANT_MYWORLD) {
+			return false;
+		}
+		synchronized (player) {
+			final int previous = getHalfOfferingUnits(player, godLine);
+			if (!DevotionHalfOfferingBalance.canSpendAboveMinimum(previous, costHalfOfferingUnits)
+				|| !stateChange.getAsBoolean()) {
+				return false;
+			}
+			final int updated = previous - costHalfOfferingUnits;
+			storeHalfOfferingUnits(player, godLine, updated);
+			notifyBalanceChanged(player, previous, updated);
+			return true;
+		}
+	}
+
+	public static String formatExactDevotion(final Player player,
+			final PrayerCatalog.GodLine godLine) {
+		return DevotionHalfOfferingBalance.format(getHalfOfferingUnits(player, godLine));
 	}
 
 	public static int getDevotionRequirementForResourceCost(final int resourceCost) {
@@ -238,13 +320,37 @@ public final class Devotion {
 		return false;
 	}
 
-	private static int getDevotionLevelFromOfferings(final int offerings) {
-		return clampDevotionLevel(offerings / OFFERINGS_PER_DEVOTION_LEVEL);
-	}
-
 	private static String getOfferingCacheKey(final PrayerCatalog.GodLine godLine) {
 		final PrayerCatalog.GodLine safeGodLine = godLine == null ? PrayerCatalog.getDefaultGodLine() : godLine;
 		return CACHE_PREFIX + safeGodLine.name().toLowerCase() + CACHE_SUFFIX;
+	}
+
+	private static String getHalfOfferingRemainderCacheKey(final PrayerCatalog.GodLine godLine) {
+		final PrayerCatalog.GodLine safeGodLine = godLine == null ? PrayerCatalog.getDefaultGodLine() : godLine;
+		return CACHE_PREFIX + safeGodLine.name().toLowerCase() + HALF_OFFERING_REMAINDER_SUFFIX;
+	}
+
+	private static void storeHalfOfferingUnits(final Player player,
+			final PrayerCatalog.GodLine godLine, final int exactHalfOfferingUnits) {
+		final int clamped = DevotionHalfOfferingBalance.clampHalfUnits(exactHalfOfferingUnits);
+		player.getCache().set(
+			getOfferingCacheKey(godLine),
+			DevotionHalfOfferingBalance.getWholeOfferings(clamped));
+		final String remainderKey = getHalfOfferingRemainderCacheKey(godLine);
+		final int remainder = DevotionHalfOfferingBalance.getHalfOfferingRemainder(clamped);
+		if (remainder == 0) {
+			player.getCache().remove(remainderKey);
+		} else {
+			player.getCache().set(remainderKey, remainder);
+		}
+	}
+
+	private static void notifyBalanceChanged(final Player player, final int previous, final int updated) {
+		ActionSender.sendDevotion(player);
+		ActionSender.sendEquipmentStats(player);
+		if (updated < previous) {
+			player.getPrayers().deactivateOverflowingPrayers();
+		}
 	}
 
 	private static String formatGodLine(final PrayerCatalog.GodLine godLine) {

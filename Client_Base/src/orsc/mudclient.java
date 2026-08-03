@@ -870,7 +870,7 @@ public final class mudclient implements Runnable {
 	private int[] experienceArray = new int[S_PLAYER_LEVEL_LIMIT];
 	private int fatigueSleeping = 0;
 	private int fatigueSleepingAuthentic = 0;
-	private int currentDevotionLevel = 0;
+	private int currentDevotionHalfOfferingUnits = 0;
 	private int gameHeight = 334;
 	private int gameWidth = 512;
 	private int groundItemCount = 0;
@@ -16871,7 +16871,9 @@ public final class mudclient implements Runnable {
 					}
 					if (skillNameLong[currentlyHoveredSkill].equalsIgnoreCase("Worship")) {
 						heightMargin += 12;
-						this.getSurface().drawString("Devotion: " + this.currentDevotionLevel, 5 + x, heightMargin, textColour, 1);
+						this.getSurface().drawString("Devotion: "
+							+ formatDevotionHalfOfferingUnits(this.currentDevotionHalfOfferingUnits),
+							5 + x, heightMargin, textColour, 1);
 					}
 				}
 			}
@@ -26181,8 +26183,20 @@ public final class mudclient implements Runnable {
 		this.clampPrayerIconScrollRow();
 	}
 
-	public void setCurrentDevotionLevel(int devotionLevel) {
-		this.currentDevotionLevel = devotionLevel;
+	public void setCurrentDevotionHalfOfferingUnits(int devotionHalfOfferingUnits) {
+		this.currentDevotionHalfOfferingUnits = Math.max(-20000, Math.min(20000, devotionHalfOfferingUnits));
+	}
+
+	public static String formatDevotionHalfOfferingUnits(int devotionHalfOfferingUnits) {
+		int clamped = Math.max(-20000, Math.min(20000, devotionHalfOfferingUnits));
+		long absolute = Math.abs((long) clamped);
+		long whole = absolute / 20;
+		int fractionalHundredths = (int) (absolute % 20) * 5;
+		if (fractionalHundredths == 0) {
+			return (clamped < 0 ? "-" : "") + whole;
+		}
+		return (clamped < 0 ? "-" : "") + whole + "."
+			+ (fractionalHundredths < 10 ? "0" : "") + fractionalHundredths;
 	}
 
 	public void setQuestName(int i, String s) {
