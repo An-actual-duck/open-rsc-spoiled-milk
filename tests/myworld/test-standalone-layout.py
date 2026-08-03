@@ -262,6 +262,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "slayer-guild-rough-draft-plan.md",
         ],
         "info": [
+            "adaptive-world-builder-runtime.md",
             "change-history.md",
             "client-auxiliary-types-b06.md",
             "client-definition-registry-b09.md",
