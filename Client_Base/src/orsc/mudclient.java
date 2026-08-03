@@ -428,8 +428,8 @@ public final class mudclient implements Runnable {
 	public final int[] equipIconXLocations = new int[]{98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153, 43};
 	public final int[] equipIconYLocations = new int[]{5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165, 125};
 	public final String[] equipmentStatNames = new String[]{"Rng. Def", "Mag. Def", "Mel. Def", "Mel. Pow",
-		"Prayer", "Rng. Pow", "Mag. Pow"};
-	public final int[] playerStatEquipment = new int[7];
+		"Prayer", "Rng. Pow", "Mag. Pow", "Holy Pow"};
+	public final int[] playerStatEquipment = new int[equipmentStatNames.length];
 	private final int[] mouseClickX = new int[8192];
 	private final int[] mouseClickY = new int[8192];
 	private final int[][] animDirLayer_To_CharLayer = new int[][]{{11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
@@ -12709,7 +12709,7 @@ public final class mudclient implements Runnable {
 				if (C_CUSTOM_UI)
 					yOffset -= 45;
 				this.getSurface().drawBoxAlpha(xOffset, yOffset, 245, 204, this.clearBox, 128);
-				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 45, this.clearBox, 128);
+				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 58, this.clearBox, 128);
 				Sprite todraw = null;
 
 				if (S_ITEMS_ON_DEATH_MENU) {
@@ -12753,11 +12753,14 @@ public final class mudclient implements Runnable {
 								yOffset + equipIconYLocations[i] + 11, 0xFFFF00, 1);
 					}
 				}
-				for (int currSkill = 0; currSkill < 3; ++currSkill) {
-					this.drawEquipmentStatusValue(currSkill, xOffset + 42, yOffset + 243 + currSkill * 13, 0xFFFFFF);
+				this.getSurface().drawLineHoriz(xOffset, yOffset + 228, 245, 0);
+				for (int currSkill = 0; currSkill < 4; ++currSkill) {
+					if (currSkill < 3) {
+						this.drawEquipmentStatusValue(currSkill, xOffset + 42,
+							yOffset + 243 + currSkill * 13, 0xFFFFFF);
+					}
 					this.drawEquipmentStatusValue(currSkill == 0 ? 3 : currSkill + 4, 244 / 2 + xOffset + 35,
 						yOffset + 243 + currSkill * 13, 0xFFFFFF);
-					this.getSurface().drawLineHoriz(xOffset, yOffset + 228, 245, 0);
 				}
 
 				if (var2 && !isAndroid() && this.mouseButtonClick == 0) {
@@ -14222,9 +14225,9 @@ public final class mudclient implements Runnable {
 		if (woodTier >= 0) {
 			return this.getMyWorldStaffMagicOffenseByTier(woodTier);
 		}
-		if ((item.id >= 2228 && item.id <= 2237)
-			|| (item.id >= 3152 && item.id <= 3171)) {
-			return 2;
+		int blessedTier = this.getBlessedStaffTier(item.id);
+		if (blessedTier >= 0) {
+			return this.getMyWorldStaffMagicOffenseByTier(blessedTier) / 2;
 		}
 		if (item.id >= 2238 && item.id <= 2327) {
 			return this.getMyWorldStaffMagicOffenseByTier((item.id - 2238) % 10);
@@ -14251,10 +14254,23 @@ public final class mudclient implements Runnable {
 			case 1216:
 			case 1217:
 			case 1218:
-				return 56;
+				return 28;
 			default:
 				return 0;
 		}
+	}
+
+	private int getBlessedStaffTier(int itemId) {
+		if (itemId >= 2228 && itemId <= 2237) {
+			return itemId - 2228;
+		}
+		if (itemId >= 3152 && itemId <= 3161) {
+			return itemId - 3152;
+		}
+		if (itemId >= 3162 && itemId <= 3171) {
+			return itemId - 3162;
+		}
+		return -1;
 	}
 
 	private int getMyWorldStaffWoodTier(int itemId) {
@@ -16777,8 +16793,10 @@ public final class mudclient implements Runnable {
 				yOffset += 13;
 
 				//Draw the equipment bonuses
-				for (currSkill = 0; currSkill < 3; ++currSkill) {
-					this.drawEquipmentStatusValue(currSkill, 5 + x, yOffset, textColour);
+				for (currSkill = 0; currSkill < 4; ++currSkill) {
+					if (currSkill < 3) {
+						this.drawEquipmentStatusValue(currSkill, 5 + x, yOffset, textColour);
+					}
 					this.drawEquipmentStatusValue(currSkill == 0 ? 3 : currSkill + 4, x + width / 2 - 5, yOffset, textColour);
 					yOffset += 13;
 				}

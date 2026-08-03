@@ -92,7 +92,7 @@ public final class ClericSpellbookFoundationFixture {
 
 	public static void main(String[] args) {
 		check(ClericSpellCatalog.SCHEMA_VERSION == 1, "schema version drift");
-		check(ClericSpellCatalog.MAX_LAUNCH_HOLY_POWER == 11, "Holy Power cap drift");
+		check(ClericSpellCatalog.MAX_LAUNCH_HOLY_POWER == 64, "Holy Power cap drift");
 
 		ClericSpellId[] ids = ClericSpellId.values();
 		List<ClericSpellDefinition> definitions = ClericSpellCatalog.getAll();
@@ -117,9 +117,9 @@ public final class ClericSpellbookFoundationFixture {
 		int[] tiers = {1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
 		int[] radii = {2, 4, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3};
 		int[][] thresholds = {
-			{0, 2, 5}, {0}, {0, 2, 5, 8}, {0, 2, 5, 8},
-			{0, 2, 5, 8}, {0, 2, 4, 6}, {0, 4, 8, 11}, {0, 4, 8, 11},
-			{0, 4, 8, 11}, {0, 4, 8, 11}, {0, 4, 8, 11}, {0, 4, 8, 11}
+			{0, 12, 28}, {0}, {0, 12, 28, 44}, {0, 12, 28, 44},
+			{0, 12, 28, 44}, {0, 12, 24, 32}, {0, 24, 44, 64}, {0, 24, 44, 64},
+			{0, 24, 44, 64}, {0, 24, 44, 64}, {0, 24, 44, 64}, {0, 24, 44, 64}
 		};
 
 		for (int index = 0; index < definitions.size(); index++) {

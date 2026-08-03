@@ -423,7 +423,13 @@ def main() -> None:
     require_exact(items_by_id, 1450, "rangedOffense", 26, "Poison dragon arrows normal ammo scaling")
     require_exact(items_by_id, 1451, "rangedOffense", 22, "Dragon bolts normal ammo scaling")
     require_exact(items_by_id, 1452, "rangedOffense", 22, "Poison dragon bolts normal ammo scaling")
-    require_uniform(items_by_id, [2228, 2229, 2230, 2231, 2232, 2233, 2234, 2235, 2236, 2237], "magicOffense", 2, "Blessed staff explicit magic offense")
+    blessed_staff_magic = [4, 6, 8, 12, 14, 16, 20, 22, 24, 28]
+    for first_id in (2228, 3152, 3162):
+        for tier, magic_power in enumerate(blessed_staff_magic):
+            require_exact(items_by_id, first_id + tier, "magicOffense", magic_power,
+                          "Blessed staff half-tier magic offense")
+    require_uniform(items_by_id, [1216, 1217, 1218], "magicOffense", 28,
+                    "God staff half-tier magic offense")
     require_uniform(items_by_id, [62, 28, 63, 423, 64, 65, 396, 3262], "weaponSpeed", 5, "Dagger family speed")
     require_uniform(items_by_id, [560, 559, 561, 565, 562, 564, 563], "weaponSpeed", 5, "Poisoned dagger family speed")
     require_uniform(items_by_id, [66, 1, 67, 424, 68, 69, 397, 3263], "weaponSpeed", 4, "Short sword family speed")

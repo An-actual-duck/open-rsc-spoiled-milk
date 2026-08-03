@@ -1644,6 +1644,35 @@ public class Equipment {
 		return total;
 	}
 
+	/**
+	 * Returns the strongest equipped Cleric staff's Holy Power. Holy Power is
+	 * derived rather than persisted, and is bounded even if legacy wield state
+	 * contains more than one main-hand item.
+	 */
+	public int getHolyPower() {
+		int strongest = 0;
+		if (player.getConfig().WANT_EQUIPMENT_TAB) {
+			synchronized (list) {
+				for (Item item : list) {
+					strongest = Math.max(strongest, getHolyPower(item));
+				}
+			}
+		} else {
+			synchronized (player.getCarriedItems().getInventory().getItems()) {
+				for (Item item : player.getCarriedItems().getInventory().getItems()) {
+					if (item.isWielded()) {
+						strongest = Math.max(strongest, getHolyPower(item));
+					}
+				}
+			}
+		}
+		return strongest;
+	}
+
+	private int getHolyPower(final Item item) {
+		return item == null ? 0 : EquipmentStatCalculator.holyPowerForItem(item.getCatalogId());
+	}
+
 	public int getCowHideHitsBonus() {
 		return hasFullCowHideSet() ? 5 : 0;
 	}

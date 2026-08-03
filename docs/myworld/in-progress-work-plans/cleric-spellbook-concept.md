@@ -148,24 +148,25 @@ The confirmed staff values are:
 
 | Staff tier | Comparable dedicated-staff Magic Power | Blessed-staff Magic Power | Holy Power |
 | --- | ---: | ---: | ---: |
-| Staff | 8 | 4 | 1 |
-| Pine | 12 | 6 | 2 |
-| Oak | 16 | 8 | 3 |
-| Willow | 24 | 12 | 4 |
-| Palm | 28 | 14 | 5 |
-| Maple | 32 | 16 | 6 |
-| Yew | 40 | 20 | 7 |
-| Ebony | 44 | 22 | 8 |
-| Magic | 48 | 24 | 9 |
-| Blood | 56 | 28 | 10 |
-| Saradomin, Guthix, or Zamorak god staff | 56 | 28 | 11 |
+| Staff | 8 | 4 | 8 |
+| Pine | 12 | 6 | 12 |
+| Oak | 16 | 8 | 16 |
+| Willow | 24 | 12 | 24 |
+| Palm | 28 | 14 | 28 |
+| Maple | 32 | 16 | 32 |
+| Yew | 40 | 20 | 40 |
+| Ebony | 44 | 22 | 44 |
+| Magic | 48 | 24 | 48 |
+| Blood | 56 | 28 | 56 |
+| Saradomin, Guthix, or Zamorak god staff | 56 | 28 | 64 |
 
 Each blessed or god staff receives exactly half the Magic Power of its normal
-comparison while equipped. The current MyWorld definitions already assign the
-listed `8-56` Magic Power ladder to ordinary staves and `56` to god staves, but
-the blessed variants presently use a flat value of `2`. Later implementation
-must synchronize those definitions to this table rather than preserving that
-flat compatibility value.
+comparison while equipped. Holy Power uses the established full staff-power
+ladder rather than a raw material-tier count, making each blessed staff's
+support specialization visibly stronger than its compromised Magic Power.
+God staves use the established tier-eleven power value of `64` for Holy Power
+while retaining `28` Magic Power. Effect thresholds are authored on this scale
+without changing which staff tiers reach each rank.
 
 ### Soft Specialization Pressures
 
@@ -785,16 +786,16 @@ The launch roster uses these confirmed thresholds:
 
 | Threshold family | Rank I | Rank II | Rank III | Rank IV |
 | --- | ---: | ---: | ---: | ---: |
-| Mend | 0 | 2 | 5 | — |
-| Fervor, Purify, and Restore | 0 | 2 | 5 | 8 |
-| Ward | 0 | 2 | 4 | 6 |
-| Greater Mend, Zeal, Thorns, Aegis, Rally, and Respite | 0 | 4 | 8 | 11 |
+| Mend | 0 | 12 | 28 | — |
+| Fervor, Purify, and Restore | 0 | 12 | 28 | 44 |
+| Ward | 0 | 12 | 24 | 32 |
+| Greater Mend, Zeal, Thorns, Aegis, Rally, and Respite | 0 | 24 | 44 | 64 |
 
-Rank I is therefore available with no Holy Power staff. At Holy Power `5`, the
+Rank I is therefore available with no Holy Power staff. At Holy Power `28`, the
 Palm-tier launch-era point, a Cleric reaches Mend III, rank III in most
 tier-one effects, Ward III, and rank II in tier-two effects. Later staves keep
-the early book progressing: most tier-one effects peak at Holy Power `8`, Ward
-peaks earlier at `6`, and tier-two effects peak at the god-staff value of `11`.
+the early book progressing: most tier-one effects peak at Holy Power `44`, Ward
+peaks earlier at `32`, and tier-two effects peak at the god-staff value of `64`.
 Unify has no Holy Power rank because its area and movement contract are fixed.
 
 The discrete rank, snapshot, replacement, lifecycle, and presentation rules
@@ -968,29 +969,32 @@ blessed-staff progression culminates in god staves. All receive Holy Power,
 but even god staves retain less Magic Power than comparable dedicated Magic
 staves; offensive god spells continue to use Magic Power and Magic Defense.
 
-### 2026-08-02: Holy Power and half-Magic staff ladder
+### 2026-08-03: Holy Power and half-Magic staff ladder
 
 Confirmed that casting remains possible at `0` Holy Power and therefore does
 not hard-require a staff; `0` receives the spell's lowest effect rank. The ten
-blessed-staff tiers receive Holy Power `1-10`, and all three god staves receive
-Holy Power `11`. Any alignment's staff empowers ordinary spells in the shared
-Cleric book, while blessed armor contributes no Holy Power at launch.
+blessed-staff tiers receive the established full staff-power ladder
+`8/12/16/24/28/32/40/44/48/56`, and all three god staves receive the
+tier-eleven value `64`. Any alignment's staff empowers ordinary spells in the
+shared Cleric book, while blessed armor contributes no Holy Power at launch.
 
 Confirmed that blessed and god staves provide exactly half the Magic Power of
 their normal tier comparison. This produces blessed-staff Magic Power
-`4/6/8/12/14/16/20/22/24/28` and god-staff Magic Power `28`. Current data's
-flat blessed-staff value of `2` will require a later implementation
-synchronization; no runtime definition changes belong to this concept branch.
+`4/6/8/12/14/16/20/22/24/28` and god-staff Magic Power `28`. The Holy Power
+scale deliberately differs from the earlier provisional raw tier count so the
+equipment panel reflects the staff's actual support specialization rather than
+placing incomparable `Power` values side by side.
 
-### 2026-08-02: Launch Holy Power thresholds
+### 2026-08-03: Launch Holy Power thresholds
 
-Confirmed rank thresholds `0/2/5` for Mend, `0/2/5/8` for the other scalable
-tier-one effects, and `0/4/8/11` for all scalable tier-two effects. Ward is the
-intentional tier-one exception at `0/2/4/6`, reaching its larger charge counts
-with less Holy Power than Aegis. Rank I remains available at Holy Power zero,
-Palm-tier Holy Power `5` gives strong but incomplete launch progression, and
-the god-staff value of `11` uniquely reaches rank IV tier-two support. Unify
-does not scale with Holy Power.
+Confirmed rank thresholds `0/12/28` for Mend, `0/12/28/44` for the other
+scalable tier-one effects, and `0/24/44/64` for all scalable tier-two effects.
+Ward is the intentional tier-one exception at `0/12/24/32`, reaching its
+larger charge counts with less Holy Power than Aegis. These are scale-only
+translations of the earlier staff-tier breakpoints: Rank I remains available
+at Holy Power zero, Palm-tier Holy Power `28` gives strong but incomplete
+launch progression, and the god-staff value of `64` uniquely reaches rank IV
+tier-two support. Unify does not scale with Holy Power.
 
 ### 2026-08-02: Launch Worship unlock sequence
 

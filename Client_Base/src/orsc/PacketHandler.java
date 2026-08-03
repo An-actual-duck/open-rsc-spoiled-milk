@@ -4566,6 +4566,9 @@ public class PacketHandler {
 		for (int eq = 0; eq < 5; ++eq) {
 			mc.setPlayerStatEquipment(eq, packetsIncoming.getUnsignedByte());
 		}
+		for (int eq = 5; eq < mc.playerStatEquipment.length; ++eq) {
+			mc.setPlayerStatEquipment(eq, 0);
+		}
 		// Below is for newer clients to get armour stats as integers (will be ignored by older clients)
 		int intCount = Math.max(0, (length - 5) / 4);
 		for (int eq = 0; eq < intCount; ++eq) {
