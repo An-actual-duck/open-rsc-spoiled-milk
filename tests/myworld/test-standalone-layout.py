@@ -197,6 +197,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "bug-fixes-and-small-updates.md",
             "chat-and-dialogue-channel-plan.md",
             "cleric-spellbook-concept.md",
+            "cleric-spellbook-implementation-plan.md",
             "code-cleanup-and-modularization-plan.md",
             "code-health-audit-2026-07-12.md",
             "devotion-destruction-blessing-audit.md",

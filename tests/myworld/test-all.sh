@@ -104,6 +104,7 @@ python3 ./tests/myworld/test-production-ui.py
 python3 ./tests/myworld/test-experience-skill-selectors.py
 python3 ./tests/myworld/test-production-behavior.py
 python3 ./tests/myworld/test-production-flow.py
+python3 ./tests/myworld/test-cleric-spellbook-foundation.py
 python3 ./tests/myworld/test-prayer-rework.py
 python3 ./tests/myworld/test-prayer-ui.py
 python3 ./tests/myworld/test-worship-skill-name.py

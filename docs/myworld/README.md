@@ -74,6 +74,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
   active collaborative concept for a Worship-tiered support spellbook, carved
   and blessed sigils, Holy Power, and an expanded Devotion economy.
+- [cleric-spellbook-implementation-plan.md](in-progress-work-plans/cleric-spellbook-implementation-plan.md):
+  ordered implementation slices, compatibility boundaries, verification gates,
+  and explicit stop conditions for unresolved Cleric design decisions.
 - [dragon-gear-crafting-plan.md](in-progress-work-plans/dragon-gear-crafting-plan.md):
   dragon gear crafting route, lava forge repair, black dragon scales, dragon
   metal drops, and purified rune forge relocation.
