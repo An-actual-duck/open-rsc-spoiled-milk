@@ -223,6 +223,7 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                             throw new IllegalArgumentException("stub adaptive session refusal");
                         }
                         public void requireEvidence(Path definitions, Path assets) { }
+                        public Path requireCredential(Path credential) { return credential; }
                         public String packageId() { return ""; }
                         public String packageVersion() { return ""; }
                         public String manifestSha256() { return ""; }

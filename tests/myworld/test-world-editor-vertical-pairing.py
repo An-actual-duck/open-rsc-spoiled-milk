@@ -117,7 +117,7 @@ class WorldEditorVerticalPairingTest(unittest.TestCase):
         self.assertIn("WORLD_BUILDER_MODE", sessions)
         self.assertIn("WORLD_BUILDER_LAYERED_REVIEW_MODE", sessions)
         self.assertIn(
-            "nativeSceneryPlacementId(sourceIdentity.getLocation())",
+            "legacyNativeSceneryPlacementId(sourceIdentity.getLocation())",
             sessions,
         )
         self.assertIn(

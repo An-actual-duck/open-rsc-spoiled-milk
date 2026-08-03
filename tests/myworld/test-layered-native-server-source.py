@@ -44,6 +44,28 @@ CLIENT_NATIVE_RESIDENCY = (
     ROOT / "Client_Base/src/orsc/NativeLayeredTerrainResidentCache.java"
 )
 
+CLIENT_PROFILE_STUB = r"""
+package orsc;
+
+/** Disabled profile used by the isolated native wire-format fixture. */
+public final class WorldBuilderClientProfile {
+    private static final WorldBuilderClientProfile CURRENT =
+        new WorldBuilderClientProfile();
+
+    private WorldBuilderClientProfile() {
+    }
+
+    public static WorldBuilderClientProfile current() {
+        return CURRENT;
+    }
+
+    public void requireNativePackageIdentity(
+            String packageId, String packageVersion, String manifestSha256) {
+        // The adaptive identity path has dedicated runtime coverage.
+    }
+}
+"""
+
 
 HARNESS = r"""
 import com.openrsc.server.io.NativeLayeredTerrainSector;
@@ -719,6 +741,9 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             prefix="layered-native-server-source-"
         )
         cls.classes = Path(cls.compile_temp.name)
+        profile_stub = cls.classes / "orsc/WorldBuilderClientProfile.java"
+        profile_stub.parent.mkdir(parents=True, exist_ok=True)
+        profile_stub.write_text(CLIENT_PROFILE_STUB, encoding="utf-8")
         subprocess.run(
             [
                 "javac",
@@ -734,6 +759,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(CLIENT_NATIVE_CHUNK),
                 str(CLIENT_NATIVE_SNAPSHOT),
                 str(CLIENT_NATIVE_RESIDENCY),
+                str(profile_stub),
                 str(CLIENT_NATIVE_DECODER),
             ],
             cwd=ROOT,
