@@ -326,6 +326,29 @@ threshold and duration instead of increasing all three dimensions at once:
   conditions. Falling below half again does not reactivate an ended status; a
   new cast is required.
 
+### Respite Regeneration Contract
+
+Respite increases the speed of ordinary passive Hits regeneration:
+
+| Effect rank | Regeneration speed | Duration |
+| ---: | ---: | ---: |
+| I | 10% faster | 5 minutes |
+| II | 15% faster | 10 minutes |
+| III | 20% faster | 15 minutes |
+| IV | 25% faster | 20 minutes |
+
+- Respite shortens the normal Hits-regeneration interval by dividing it by
+  `1 + rank bonus`. At rank IV alone, the authentic interval falls from roughly
+  `64` seconds to roughly `51.2` seconds.
+- It remains active in combat and continues counting down while the recipient
+  is already at the healing ceiling.
+- It affects only ordinary passive Hits regeneration. It never accelerates or
+  increases Mend/Greater Mend pulses and does not change restoration of other
+  combat stats.
+- Regeneration potions, soul robes, body amulets, and Respite remain separately
+  owned speed factors and compose multiplicatively. Respite is not added into
+  another system's percentage or multiplier.
+
 ### Protection Stacking Contract
 
 Ward and Aegis must not turn prayer protection into complete damage immunity.
@@ -643,8 +666,9 @@ them.
   but independent stacking versus one combined bounded lifesteal family is not.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
   its ending health threshold, or both.
-- How Respite combines with existing regeneration potions, robes, amulets, and
-  passive-healing timing.
+- Exact passive-healing clock synchronization when Respite is applied,
+  refreshed, replaced, or expires. Its magnitude, duration, eligible healing
+  stream, and multiplicative composition are settled.
 
 ### Initial Spell Content
 
@@ -950,3 +974,12 @@ actual direct melee, ranged, or Magic damage, including critical hits and
 Zeal-enhanced damage, while excluding indirect damage. Fractional credit
 carries without a minimum heal. Any healing source ends Rally upon reaching
 the rank threshold, and an ended effect does not reactivate without a new cast.
+
+### 2026-08-02: Respite regeneration ranks
+
+Confirmed Respite speed bonuses of `10/15/20/25%` with its established
+`5/10/15/20`-minute duration ladder. It shortens only the ordinary passive Hits
+regeneration interval, remains active during combat and at full health, and
+does not modify Mend pulses or other stat restoration. Existing regeneration
+potions, soul robes, body amulets, and Respite retain independent ownership and
+compose multiplicatively.
