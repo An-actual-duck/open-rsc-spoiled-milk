@@ -312,6 +312,22 @@ change the result by one.
   and short tactical protection may use different values while still deriving
   them from that spell's authored effect ranks.
 
+The initial duration ladders are confirmed as follows:
+
+| Effect rank | Tactical duration | Respite duration |
+| ---: | ---: | ---: |
+| I | 30 seconds | 5 minutes |
+| II | 45 seconds | 10 minutes |
+| III | 60 seconds | 15 minutes |
+| IV | 90 seconds | 20 minutes |
+
+The tactical ladder applies to Ward, Aegis, Fervor, Zeal, Thorns, and Rally.
+Charges or Rally's ending-health condition may end an effect before its timer;
+the listed duration is its upper bound. Respite uses the longer ladder because
+maintaining modest passive regeneration is its identity. Mend and Greater Mend
+remain three-pulse effects rather than adopting either duration ladder; their
+exact pulse cadence is still open.
+
 ### Devotion Economy
 
 - Sigil blessing creates a new repeatable Devotion sink.
@@ -398,6 +414,10 @@ These are current implementation facts, not new design decisions:
 - Normal Hits regeneration restores one point about every `100` game ticks
   before existing equipment and potion speed modifiers. It is not inherently
   limited to out-of-combat periods, which fits the revised Respite direction.
+- Current ordinary and super regeneration potions last `30` and `60` minutes
+  respectively. Respite's confirmed `5-20` minute duration ladder is shorter
+  and supports active Cleric maintenance without displacing those longer-lived
+  consumables solely through duration.
 
 ## Holy Power Effect Rank Model
 
@@ -489,9 +509,10 @@ them.
 - Cast-level resource and experience behavior when an area spell applies to
   only some recipients or is wholly ineffective because every recipient has a
   stronger active family effect.
-- Exact per-rank duration tables, status icons and labels, optional-count
-  packet representation, compatibility behavior, and priority/overflow rules
-  for the existing `16`-entry HUD bound.
+- Mend/Greater Mend pulse cadence; status icons and labels; optional-count
+  packet representation; compatibility behavior; and priority/overflow rules
+  for the existing `16`-entry HUD bound. Tactical and Respite duration ladders
+  are settled.
 - Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
   and provide Rally lifesteal.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
@@ -745,3 +766,13 @@ pulses through an extension of the existing active-potion-effect HUD. The
 present custom packet carries only an item ID and seconds remaining, so later
 implementation must add optional count presentation compatibly, keep gameplay
 server-authoritative, and define overflow behavior for its bounded list.
+
+### 2026-08-02: Tactical and Respite duration ladders
+
+Confirmed a shared four-rank duration ladder of `30/45/60/90` seconds for
+Ward, Aegis, Fervor, Zeal, Thorns, and Rally. Charges and spell-specific ending
+conditions can end these effects sooner. Confirmed a separate
+`5/10/15/20`-minute ladder for Respite, keeping its modest passive-regeneration
+support longer-lived while remaining shorter than current `30/60`-minute
+regeneration potions. Mend-family timing remains governed by three pulses, with
+their cadence unresolved.
