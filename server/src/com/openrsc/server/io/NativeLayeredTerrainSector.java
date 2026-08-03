@@ -66,7 +66,7 @@ public final class NativeLayeredTerrainSector {
 	public static NativeLayeredTerrainSector worldBuilderVoid(
 		WorldMapSectorId identity) {
 		NativeLayeredTerrainTile tile =
-			new NativeLayeredTerrainTile(0, 1, 8, 0, 0, 0, 0);
+			NativeLayeredTerrainTile.worldBuilderVoid();
 		NativeLayeredTerrainTile[] tiles =
 			new NativeLayeredTerrainTile[TILE_COUNT];
 		Arrays.fill(tiles, tile);

@@ -101,6 +101,7 @@ public class ServerConfiguration {
 	public boolean WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION;
 	public String LAYERED_NATIVE_TERRAIN_PACKAGE_PATH;
 	public String LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256;
+	public String LAYERED_NATIVE_TERRAIN_INVENTORY_SHA256;
 	public String LAYERED_NATIVE_WORLD_RUNTIME_PROFILE;
 	public int MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS;
 	public int MOVEMENT_STUTTER_POLL_OUTLIER_MS;
@@ -290,6 +291,17 @@ public class ServerConfiguration {
 	public boolean ALLOW_IN_GAME_WORLD_EDITOR;
 	public boolean WORLD_BUILDER_MODE;
 	public boolean WORLD_BUILDER_LAYERED_REVIEW_MODE;
+	public boolean WORLD_BUILDER_ADAPTIVE_MODE;
+	public String WORLD_BUILDER_PROJECT_ORIGIN;
+	public String WORLD_BUILDER_DEFINITION_ID;
+	public String WORLD_BUILDER_DEFINITION_SHA256;
+	public String WORLD_BUILDER_ASSET_ID;
+	public String WORLD_BUILDER_ASSET_SHA256;
+	public String WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256;
+	public String WORLD_BUILDER_INITIAL_WORLD_SPACE;
+	public int WORLD_BUILDER_INITIAL_LEVEL;
+	public int WORLD_BUILDER_INITIAL_X;
+	public int WORLD_BUILDER_INITIAL_Y;
 	public boolean LENIENT_CONTACT_DETAILS;
 	//loosened checks
 	public boolean LOOSE_SHALLOW_WATER_CHECK;
@@ -588,6 +600,11 @@ public class ServerConfiguration {
 			"OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256",
 			"layered_native_terrain_manifest_sha256",
 			"");
+		LAYERED_NATIVE_TERRAIN_INVENTORY_SHA256 = readStringSystemEnvConfig(
+			"openrsc.layeredNativeTerrainInventorySha256",
+			"OPENRSC_LAYERED_NATIVE_TERRAIN_INVENTORY_SHA256",
+			"layered_native_terrain_inventory_sha256",
+			"");
 		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE = readStringSystemEnvConfig(
 			"openrsc.layeredNativeWorldRuntimeProfile",
 			"OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE",
@@ -710,6 +727,62 @@ public class ServerConfiguration {
 		WORLD_BUILDER_MODE = tryReadBool("world_builder_mode").orElse(false);
 		WORLD_BUILDER_LAYERED_REVIEW_MODE =
 			tryReadBool("world_builder_layered_review_mode").orElse(false);
+		WORLD_BUILDER_ADAPTIVE_MODE = readBoolSystemEnvConfig(
+			"openrsc.worldBuilderAdaptiveMode",
+			"OPENRSC_WORLD_BUILDER_ADAPTIVE_MODE",
+			"world_builder_adaptive_mode",
+			false);
+		WORLD_BUILDER_PROJECT_ORIGIN = readStringSystemEnvConfig(
+			"openrsc.worldBuilderProjectOrigin",
+			"OPENRSC_WORLD_BUILDER_PROJECT_ORIGIN",
+			"world_builder_project_origin",
+			"");
+		WORLD_BUILDER_DEFINITION_ID = readStringSystemEnvConfig(
+			"openrsc.worldBuilderDefinitionId",
+			"OPENRSC_WORLD_BUILDER_DEFINITION_ID",
+			"world_builder_definition_id",
+			"");
+		WORLD_BUILDER_DEFINITION_SHA256 = readStringSystemEnvConfig(
+			"openrsc.worldBuilderDefinitionSha256",
+			"OPENRSC_WORLD_BUILDER_DEFINITION_SHA256",
+			"world_builder_definition_sha256",
+			"");
+		WORLD_BUILDER_ASSET_ID = readStringSystemEnvConfig(
+			"openrsc.worldBuilderAssetId",
+			"OPENRSC_WORLD_BUILDER_ASSET_ID",
+			"world_builder_asset_id",
+			"");
+		WORLD_BUILDER_ASSET_SHA256 = readStringSystemEnvConfig(
+			"openrsc.worldBuilderAssetSha256",
+			"OPENRSC_WORLD_BUILDER_ASSET_SHA256",
+			"world_builder_asset_sha256",
+			"");
+		WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256 =
+			readStringSystemEnvConfig(
+				"openrsc.worldBuilderSourceBaselineInventorySha256",
+				"OPENRSC_WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256",
+				"world_builder_source_baseline_inventory_sha256",
+				"");
+		WORLD_BUILDER_INITIAL_WORLD_SPACE = readStringSystemEnvConfig(
+			"openrsc.worldBuilderInitialWorldSpace",
+			"OPENRSC_WORLD_BUILDER_INITIAL_WORLD_SPACE",
+			"world_builder_initial_world_space",
+			"");
+		WORLD_BUILDER_INITIAL_LEVEL = readIntSystemEnvConfig(
+			"openrsc.worldBuilderInitialLevel",
+			"OPENRSC_WORLD_BUILDER_INITIAL_LEVEL",
+			"world_builder_initial_level",
+			0);
+		WORLD_BUILDER_INITIAL_X = readIntSystemEnvConfig(
+			"openrsc.worldBuilderInitialX",
+			"OPENRSC_WORLD_BUILDER_INITIAL_X",
+			"world_builder_initial_x",
+			0);
+		WORLD_BUILDER_INITIAL_Y = readIntSystemEnvConfig(
+			"openrsc.worldBuilderInitialY",
+			"OPENRSC_WORLD_BUILDER_INITIAL_Y",
+			"world_builder_initial_y",
+			0);
 		LENIENT_CONTACT_DETAILS = tryReadBool("lenient_contact_details").orElse(false);
 		CHAR_NAME_CAN_CONTAIN_MOD = tryReadBool("char_name_can_contain_mod").orElse(false);
 		CHAR_NAME_CAN_EQUAL_GLOBAL = tryReadBool("char_name_can_equal_global").orElse(false);

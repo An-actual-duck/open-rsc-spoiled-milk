@@ -11,6 +11,9 @@ import com.openrsc.server.content.worldedit.WorldEditStorageContext;
 import com.openrsc.server.content.worldedit.WorldBuilderAccountProvisioner;
 import com.openrsc.server.content.worldedit.WorldBuilderMode;
 import com.openrsc.server.content.worldedit.WorldBuilderRuntimeControl;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderDefinitionInventory;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeIdentity;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeSession;
 import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.JDBCDatabase;
 import com.openrsc.server.database.impl.mysql.MySqlGameDatabase;
@@ -111,6 +114,7 @@ public class Server implements Runnable {
 	private final MovementStutterDiagnostics movementStutterDiagnostics;
 	private final WorldEditStorageContext worldEditStorage;
 	private final WorldEditorSessionManager worldEditorSessions;
+	private volatile AdaptiveWorldBuilderRuntimeSession adaptiveWorldBuilderRuntimeSession;
 
 	private final World world;
 	private final String name;
@@ -751,6 +755,12 @@ public class Server implements Runnable {
 
 				LOGGER.info("Loading Game Definitions...");
 				getEntityHandler().load();
+				if (AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(getConfig())) {
+					AdaptiveWorldBuilderDefinitionInventory.validate(
+						getEntityHandler(),
+						getWorld().getRegionManager()
+							.getNativeLayeredWorldPackage());
+				}
 				LOGGER.info("Definitions Completed");
 
 				WorldBuilderAccountProvisioner.provision(this);
@@ -2262,6 +2272,21 @@ public class Server implements Runnable {
 	}
 
 	public final WorldEditorSessionManager getWorldEditorSessions() { return worldEditorSessions; }
+	public final AdaptiveWorldBuilderRuntimeSession getAdaptiveWorldBuilderRuntimeSession() {
+		return adaptiveWorldBuilderRuntimeSession;
+	}
+	public final void setAdaptiveWorldBuilderRuntimeSession(
+		AdaptiveWorldBuilderRuntimeSession session) {
+		if (!AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(getConfig())) {
+			throw new IllegalStateException(
+				"Adaptive runtime session cannot be installed outside adaptive mode");
+		}
+		if (session == null || adaptiveWorldBuilderRuntimeSession != null) {
+			throw new IllegalStateException(
+				"Adaptive runtime session must be installed exactly once");
+		}
+		adaptiveWorldBuilderRuntimeSession = session;
+	}
 
 	public final WorldEditStorageContext getWorldEditStorage() { return worldEditStorage; }
 

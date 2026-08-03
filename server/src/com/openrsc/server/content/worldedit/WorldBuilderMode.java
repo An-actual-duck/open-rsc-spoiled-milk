@@ -50,6 +50,25 @@ public final class WorldBuilderMode {
 					"Unsafe server configuration: spoiled-milk-builder-draft "
 						+ "is restricted to isolated World Builder mode");
 			}
+			if (config.WORLD_BUILDER_ADAPTIVE_MODE
+				|| AdaptiveWorldBuilderRuntimeIdentity.PROFILE_ID.equals(
+					config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				throw new IllegalArgumentException(
+					"Unsafe server configuration: adaptive World Builder authority "
+						+ "is restricted to explicit isolated World Builder mode");
+			}
+			return;
+		}
+		boolean adaptiveProfile =
+			AdaptiveWorldBuilderRuntimeIdentity.PROFILE_ID.equals(
+				config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE);
+		if (config.WORLD_BUILDER_ADAPTIVE_MODE != adaptiveProfile) {
+			throw new IllegalArgumentException(
+				"Unsafe World Builder configuration: adaptive mode and the "
+					+ "adaptive-world-builder profile must be selected together");
+		}
+		if (adaptiveProfile) {
+			validateAdaptive(config);
 			return;
 		}
 		List<String> errors = validationErrors(
@@ -87,6 +106,60 @@ public final class WorldBuilderMode {
 					+ "the complete Spoiled Milk native package authority "
 					+ "or its isolated Builder draft authority");
 		}
+	}
+
+	private static void validateAdaptive(ServerConfiguration config) {
+		List<String> errors = new ArrayList<String>();
+		if (!isLoopbackAddress(config.SERVER_BIND_ADDRESS)) {
+			errors.add("server_bind_address must resolve only to loopback addresses");
+		}
+		if (config.DB_TYPE != DatabaseType.SQLITE) {
+			errors.add("db_type must be sqlite");
+		}
+		if (!DATABASE_NAME.equals(config.DB_NAME)) {
+			errors.add("db_name must be " + DATABASE_NAME);
+		}
+		if (config.DB_TABLE_PREFIX != null && !config.DB_TABLE_PREFIX.isEmpty()) {
+			errors.add("db_table_prefix must be empty");
+		}
+		if (config.MAX_PLAYERS != 1) {
+			errors.add("max_players must be 1");
+		}
+		if (config.WANT_PACKET_REGISTER) {
+			errors.add("want_packet_register must be false");
+		}
+		if (!config.ALLOW_IN_GAME_WORLD_EDITOR) {
+			errors.add("allow_in_game_world_editor must be true");
+		}
+		if (!config.WORLD_BUILDER_LAYERED_REVIEW_MODE) {
+			errors.add("world_builder_layered_review_mode must be true");
+		}
+		if (!config.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY
+			|| !config.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			|| !config.WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY
+			|| !config.WANT_LAYERED_NATIVE_TERRAIN_PACKAGE
+			|| !config.WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY
+			|| !config.WANT_LAYERED_NATIVE_TERRAIN_READINESS
+			|| !config.WANT_LAYERED_NATIVE_TERRAIN_PREDICTION
+			|| !config.WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY
+			|| !config.WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION) {
+			errors.add("all native layered package, location, spatial, client, "
+				+ "residency, readiness, prediction, symmetry, and atomic gates "
+				+ "must be true");
+		}
+		if (!errors.isEmpty()) {
+			throw new IllegalArgumentException(
+				"Unsafe adaptive World Builder configuration: "
+					+ String.join("; ", errors));
+		}
+		AdaptiveWorldBuilderRuntimeIdentity.validateConfiguredIdentities(config);
+	}
+
+	public static boolean isLayeredAuthoringProfile(ServerConfiguration config) {
+		return config != null
+			&& ("spoiled-milk-builder-draft".equals(
+				config.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+				|| AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(config));
 	}
 
 	public static List<String> validationErrors(

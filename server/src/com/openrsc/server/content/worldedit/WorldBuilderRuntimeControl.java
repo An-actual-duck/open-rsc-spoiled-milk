@@ -32,10 +32,18 @@ public final class WorldBuilderRuntimeControl {
 		if (Files.isSymbolicLink(directory)) {
 			throw new IOException("World Builder control directory cannot be a symbolic link");
 		}
+		server.getWorldEditStorage().validateGeneratedPath(
+			directory.resolve(READY_FILE), "World Builder readiness file");
+		server.getWorldEditStorage().validateGeneratedPath(
+			directory.resolve(SHUTDOWN_FILE), "World Builder shutdown request");
 		final Path ready = directory.resolve(READY_FILE);
 		final Path shutdown = directory.resolve(SHUTDOWN_FILE);
 		Files.deleteIfExists(ready);
 		Files.deleteIfExists(shutdown);
+		if (AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(server.getConfig())) {
+			server.setAdaptiveWorldBuilderRuntimeSession(
+				AdaptiveWorldBuilderRuntimeSession.publish(server, directory));
+		}
 		Path stagedReady = directory.resolve(READY_FILE + ".tmp");
 		Files.write(stagedReady, "ready\n".getBytes(StandardCharsets.US_ASCII));
 		try {

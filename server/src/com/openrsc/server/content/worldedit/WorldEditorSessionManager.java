@@ -345,7 +345,7 @@ public final class WorldEditorSessionManager {
 				.hasNativeLayeredTerrain(destination)) {
 			return NativeTerrainProvisionResult.existing(destination);
 		}
-		if (isSourceLevel(level)) {
+		if (!isAdaptive(player) && isSourceLevel(level)) {
 			throw new IllegalArgumentException(
 				"Accepted source levels cannot be expanded in this Builder draft.");
 		}
@@ -402,20 +402,20 @@ public final class WorldEditorSessionManager {
 		for (WorldMapSectorId identity : added) {
 			addNativeTerrainSector(identity);
 		}
-		for (int x = worldX - 1; x <= worldX + 1; x++) {
-			for (int y = worldY - 1; y <= worldY + 1; y++) {
-				if (x < 0 || x > 32767 || y < 0 || y > 32767) continue;
-				WorldLocation location = new WorldLocation(
-					worldSpace, new WorldCoordinate(x, y, level));
-				if (!added.contains(WorldMapSectorId.from(location))) continue;
-				NativeLayeredTerrainTile base =
-					nativeBaseTile(owner, location);
-				NativeTileKey key = new NativeTileKey(location);
-				NativeLayeredTerrainTile floor =
-					new NativeLayeredTerrainTile(
+		if (!isAdaptive(player)) {
+			for (int x = worldX - 1; x <= worldX + 1; x++) {
+				for (int y = worldY - 1; y <= worldY + 1; y++) {
+					if (x < 0 || x > 32767 || y < 0 || y > 32767) continue;
+					WorldLocation location = new WorldLocation(
+						worldSpace, new WorldCoordinate(x, y, level));
+					if (!added.contains(WorldMapSectorId.from(location))) continue;
+					NativeLayeredTerrainTile base = nativeBaseTile(owner, location);
+					NativeTileKey key = new NativeTileKey(location);
+					NativeLayeredTerrainTile floor = new NativeLayeredTerrainTile(
 						base.getElevation(), 1, 0, 0, 0, 0, 0);
-				nativeTerrainOverlay.put(key, floor);
-				refreshNativeDirty(key);
+					nativeTerrainOverlay.put(key, floor);
+					refreshNativeDirty(key);
+				}
 			}
 		}
 		nativeTerrainSceneRevision++;
@@ -461,7 +461,7 @@ public final class WorldEditorSessionManager {
 		}
 		requireBuilderCoordinate(destinationX, destinationY);
 		int destinationLevel = Math.addExact(sourceLevel, levelDelta);
-		if (isSourceLevel(destinationLevel)) {
+		if (!isAdaptive(player) && isSourceLevel(destinationLevel)) {
 			throw new IllegalArgumentException(
 				"Automatic pairing cannot modify an accepted source level.");
 		}
@@ -891,8 +891,7 @@ public final class WorldEditorSessionManager {
 	private void requireNativeDraftSession(Player player){
 		if(player==null||!player.getConfig().WORLD_BUILDER_MODE
 			||!player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
-			||!"spoiled-milk-builder-draft".equals(
-				player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)){
+			||!WorldBuilderMode.isLayeredAuthoringProfile(player.getConfig())){
 			throw new IllegalStateException(
 				"Layered terrain authoring requires an isolated Builder draft.");
 		}
@@ -903,7 +902,7 @@ public final class WorldEditorSessionManager {
 	}
 	private void requireNativeTerrainAuthoring(Player player,int level){
 		requireNativeDraftSession(player);
-		if(isSourceLevel(level)){
+		if(!isAdaptive(player)&&isSourceLevel(level)){
 			throw new IllegalArgumentException(
 				"This first terrain-authoring slice is restricted to Builder-created levels.");
 		}
@@ -914,6 +913,10 @@ public final class WorldEditorSessionManager {
 	}
 	private static boolean isSourceLevel(int level){
 		return level==-2||level==-1||level==0||level==1||level==2||level==10;
+	}
+	private static boolean isAdaptive(Player player){
+		return player!=null&&AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(
+			player.getConfig());
 	}
 	private static void requireBuilderCoordinate(int x,int y){
 		if(x<0||x>32767||y<0||y>32767){
@@ -1026,7 +1029,7 @@ public final class WorldEditorSessionManager {
 				"Vertical destination and inverse scenery must share one level.");
 		}
 		int level=destinationCoordinate.getLevel();
-		if(isSourceLevel(level))throw new IllegalArgumentException(
+		if(!isAdaptive(player)&&isSourceLevel(level))throw new IllegalArgumentException(
 			"Automatic pairing cannot modify an accepted source level.");
 		NativeLayeredWorldPackage owner=player.getWorld().getRegionManager()
 			.getNativeLayeredWorldPackage();
@@ -1048,7 +1051,7 @@ public final class WorldEditorSessionManager {
 				&&!nativeLevelCreations.containsKey(Integer.valueOf(level));
 		Set<WorldMapSectorId> added=
 			new java.util.LinkedHashSet<WorldMapSectorId>();
-		if(destinationMissing){
+		if(destinationMissing&&!isAdaptive(player)){
 			collectNativeVerticalWorkArea(owner,destination,added);
 		}
 		if(inverseMissing){

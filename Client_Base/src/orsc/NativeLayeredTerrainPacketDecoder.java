@@ -232,6 +232,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 				readString(input, MAX_VERSION_BYTES, "package version");
 			String manifestSha256 =
 				readString(input, SHA256_BYTES, "manifest SHA-256");
+			WorldBuilderClientProfile.current().requireNativePackageIdentity(
+				packageId, packageVersion, manifestSha256);
 			int chunkSize = unsignedByte(input);
 			int currentChunkX = input.getInt();
 			int currentChunkY = input.getInt();

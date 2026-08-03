@@ -11,6 +11,7 @@ import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
+import com.openrsc.server.content.worldedit.WorldBuilderMode;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionEventRecoveryNoOpMetadata;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver.PackedRegionNpcOwnerPreservationNoOpMetadata;
@@ -145,8 +146,7 @@ public final class Development implements CommandTrigger {
 		}
 		if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
 			&& isLayeredBuilderMutationCommand(command)
-			&& !("spoiled-milk-builder-draft".equals(
-					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+			&& !(WorldBuilderMode.isLayeredAuthoringProfile(player.getConfig())
 				&& (command.equalsIgnoreCase("saveworldedits")
 					|| isLayeredBuilderSceneryCommand(command)))) {
 			player.message(messagePrefix
@@ -383,8 +383,8 @@ public final class Development implements CommandTrigger {
 		if (!player.getWorld().getRegionManager()
 			.hasNativeLayeredTerrain(destination)) {
 			if (!player.getConfig().WORLD_BUILDER_MODE
-				|| !"spoiled-milk-builder-draft".equals(
-					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				|| !WorldBuilderMode.isLayeredAuthoringProfile(
+					player.getConfig())) {
 				player.message(messagePrefix
 					+ "The reviewed package has no terrain at "
 					+x+","+y+",L"+level+".");
@@ -416,8 +416,7 @@ public final class Development implements CommandTrigger {
 		Player player, String command, String[] args) {
 		if (!player.getConfig().WORLD_BUILDER_MODE
 			|| !player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
-			|| !"spoiled-milk-builder-draft".equals(
-				player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)
+			|| !WorldBuilderMode.isLayeredAuthoringProfile(player.getConfig())
 			|| !player.getWorld().getServer().getWorldEditorSessions()
 				.ownsActiveSession(player)) {
 			player.message(messagePrefix

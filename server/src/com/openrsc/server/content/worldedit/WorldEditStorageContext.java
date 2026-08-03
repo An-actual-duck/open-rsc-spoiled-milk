@@ -17,6 +17,7 @@ public final class WorldEditStorageContext {
 	public static final String WORKSPACE_PROPERTY = "openrsc.worldBuilderWorkspaceRoot";
 
 	private final boolean builderMode;
+	private final boolean adaptiveMode;
 	private final Path workspaceRoot;
 	private final Path sourceRoot;
 	private final Path workingRoot;
@@ -24,11 +25,14 @@ public final class WorldEditStorageContext {
 	private final Path clientRoot;
 	private final Path configDirectory;
 	private final Path builderTerrainBackups;
+	private final Path sourceLayeredBaselinePackage;
 
-	private WorldEditStorageContext(boolean builderMode, Path workspaceRoot, Path sourceRoot,
+	private WorldEditStorageContext(boolean builderMode, boolean adaptiveMode,
+		Path workspaceRoot, Path sourceRoot,
 		Path workingRoot, Path serverRoot, Path clientRoot, Path configDirectory,
-		Path builderTerrainBackups) {
+		Path builderTerrainBackups, Path sourceLayeredBaselinePackage) {
 		this.builderMode = builderMode;
+		this.adaptiveMode = adaptiveMode;
 		this.workspaceRoot = workspaceRoot;
 		this.sourceRoot = sourceRoot;
 		this.workingRoot = workingRoot;
@@ -36,14 +40,15 @@ public final class WorldEditStorageContext {
 		this.clientRoot = clientRoot;
 		this.configDirectory = configDirectory;
 		this.builderTerrainBackups = builderTerrainBackups;
+		this.sourceLayeredBaselinePackage = sourceLayeredBaselinePackage;
 	}
 
 	public static WorldEditStorageContext create(ServerConfiguration config) throws IOException {
 		if (!config.WORLD_BUILDER_MODE) {
 			Path server = Paths.get("").toAbsolutePath().normalize();
 			Path client = server.resolve("../Client_Base").normalize();
-			return new WorldEditStorageContext(false, null, null, null, server, client,
-				server.resolve(config.CONFIG_DIR).normalize(), null);
+			return new WorldEditStorageContext(false, false, null, null, null,
+				server, client, server.resolve(config.CONFIG_DIR).normalize(), null, null);
 		}
 
 		String configuredRoot = System.getProperty(WORKSPACE_PROPERTY, "").trim();
@@ -53,26 +58,56 @@ public final class WorldEditStorageContext {
 		Path workspace = requireDirectory(Paths.get(configuredRoot), "World Builder workspace");
 		Path source = requireContainedDirectory(workspace, workspace.resolve("source"), "source snapshot");
 		Path working = requireContainedDirectory(workspace, workspace.resolve("working"), "working tree");
-		Path server = requireContainedDirectory(workspace, working.resolve("server"), "working server");
-		Path client = requireContainedDirectory(workspace, working.resolve("Client_Base"), "working client");
+		boolean adaptive = AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(config);
+		Path server = requireContainedDirectory(
+			workspace,
+			adaptive ? working.resolve("runtime/server") : working.resolve("server"),
+			"working server");
+		Path client = requireContainedDirectory(
+			workspace,
+			adaptive ? working.resolve("runtime/client") : working.resolve("Client_Base"),
+			"working client");
 		Path actualCwd = Paths.get("").toAbsolutePath().normalize().toRealPath();
 		if (!actualCwd.equals(server)) {
 			throw new IOException("World Builder server must run from its validated working/server directory.");
 		}
 		Path configDirectory = requireContainedDirectory(
 			workspace, server.resolve(config.CONFIG_DIR), "working configuration");
+		if (adaptive) {
+			Path baseline = requireContainedDirectory(
+				workspace,
+				source.resolve("layered-baseline/package"),
+				"immutable layered baseline");
+			Path workingPackage = requireContainedDirectory(
+				workspace,
+				working.resolve("layered-world/package"),
+				"layered working package");
+			if (Files.isSameFile(baseline, workingPackage)) {
+				throw new IOException(
+					"Layered working package aliases the immutable source baseline.");
+			}
+			Path run = requireContainedDirectory(
+				workspace, workspace.resolve("run"), "project runtime state");
+			return new WorldEditStorageContext(
+				true, true, workspace, source, working, server, client,
+				configDirectory, run.resolve("terrain-backups"), baseline);
+		}
 		Path serverTerrain = configDirectory.resolve("data/Custom_Landscape.orsc").normalize();
 		Path clientTerrain = client.resolve("Cache/video/Custom_Landscape.orsc").normalize();
 		requireContainedRegularFile(workspace, serverTerrain, "working server terrain");
 		requireContainedRegularFile(workspace, clientTerrain, "working client terrain");
 		Path backups = workspace.resolve("backups/terrain").normalize();
 		requireContainedPath(workspace, backups, "terrain backups");
-		return new WorldEditStorageContext(true, workspace, source, working, server, client,
-			configDirectory, backups);
+		return new WorldEditStorageContext(true, false, workspace, source, working,
+			server, client, configDirectory, backups, null);
 	}
 
 	public boolean isBuilderMode() {
 		return builderMode;
+	}
+
+	public boolean isAdaptiveMode() {
+		return adaptiveMode;
 	}
 
 	public Path workspaceRoot() {
@@ -89,6 +124,16 @@ public final class WorldEditStorageContext {
 
 	public Path configDirectory() {
 		return configDirectory;
+	}
+
+	public Path sourceLayeredBaselinePackage() throws IOException {
+		if (!adaptiveMode || sourceLayeredBaselinePackage == null) {
+			throw new IOException(
+				"An immutable layered baseline is available only in adaptive Builder mode.");
+		}
+		return requireContainedDirectory(
+			workspaceRoot, sourceLayeredBaselinePackage,
+			"immutable layered baseline");
 	}
 
 	public Path layeredWorkingPackage() throws IOException {
@@ -164,6 +209,29 @@ public final class WorldEditStorageContext {
 			|| Files.isSymbolicLink(parent) || !parent.toRealPath().startsWith(workingRoot)) {
 			throw new IOException("Authored world output directory is missing or unsafe: " + parent);
 		}
+	}
+
+	/** Validates a generated runtime path without creating or deleting it. */
+	public Path validateGeneratedPath(Path requested, String label)
+		throws IOException {
+		if (!builderMode) {
+			throw new IOException(
+				"Generated World Builder state requires isolated Builder mode.");
+		}
+		Path candidate = requested.toAbsolutePath().normalize();
+		requireContainedPath(workspaceRoot, candidate, label);
+		if (Files.exists(candidate, LinkOption.NOFOLLOW_LINKS)
+			&& Files.isSymbolicLink(candidate)) {
+			throw new IOException(label + " is a symbolic link.");
+		}
+		Path parent = candidate.getParent();
+		if (parent == null
+			|| !Files.isDirectory(parent, LinkOption.NOFOLLOW_LINKS)
+			|| Files.isSymbolicLink(parent)
+			|| !parent.toRealPath().startsWith(workspaceRoot)) {
+			throw new IOException(label + " parent is missing or unsafe.");
+		}
+		return candidate;
 	}
 
 	private static Path requireDirectory(Path requested, String label) throws IOException {

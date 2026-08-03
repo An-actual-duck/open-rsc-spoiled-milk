@@ -849,7 +849,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private void button(int x,int y,int w,String text){graphics().drawBoxAlpha(x,y,w,24,0x333333,220);graphics().drawBoxBorder(x,w,y,24,0);graphics().drawString(text,x+6,y+17,0xffffff,2);}
 	private boolean isLayeredReview(){return WorldBuilderClientProfile.current().isLayeredReview();}
 	private boolean isLayeredTerrainDraft(){return WorldBuilderClientProfile.current().isLayeredTerrainDraft();}
-	private boolean isLayeredSceneryDraftLevel(){if(!isLayeredTerrainDraft())return false;int level=mc.getEditorPlayerWorldLevel();return level!=-2&&level!=-1&&level!=0&&level!=1&&level!=2&&level!=10;}
+	private boolean isLayeredSceneryDraftLevel(){if(!isLayeredTerrainDraft())return false;return WorldBuilderClientProfile.current().canAuthorLevel(mc.getEditorPlayerWorldLevel());}
 	private boolean isLayeredPlacementDraftLevel(){return isLayeredSceneryDraftLevel();}
 	private int editorLevel(int worldY){return isLayeredReview()?mc.getEditorPlayerWorldLevel():Math.floorDiv(worldY,944);}
 	private boolean validTeleportLevel(int level){return !isLayeredReview()||isLayeredTerrainDraft()||WorldBuilderClientProfile.current().declaresLayer(level);}

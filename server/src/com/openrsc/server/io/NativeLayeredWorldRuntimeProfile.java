@@ -23,7 +23,8 @@ public enum NativeLayeredWorldRuntimeProfile {
 	SPOILED_MILK_REPLACEMENT("spoiled-milk-replacement", true),
 	SPOILED_MILK_BUILDER_DRAFT("spoiled-milk-builder-draft", true),
 	SPOILED_MILK_WORLD_BUILDER_EXPORT(
-		"spoiled-milk-world-builder-export", true);
+		"spoiled-milk-world-builder-export", true),
+	ADAPTIVE_WORLD_BUILDER("adaptive-world-builder", true);
 
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
@@ -73,7 +74,12 @@ public enum NativeLayeredWorldRuntimeProfile {
 	}
 
 	public boolean requiresConfiguredManifestSha256() {
-		return this == SPOILED_MILK_WORLD_BUILDER_EXPORT;
+		return this == SPOILED_MILK_WORLD_BUILDER_EXPORT
+			|| this == ADAPTIVE_WORLD_BUILDER;
+	}
+
+	public boolean requiresConfiguredInventorySha256() {
+		return this == ADAPTIVE_WORLD_BUILDER;
 	}
 
 	public void validate(final NativeLayeredWorldPackageCatalog catalog) {
@@ -103,9 +109,80 @@ public enum NativeLayeredWorldRuntimeProfile {
 			case SPOILED_MILK_WORLD_BUILDER_EXPORT:
 				validateSpoiledMilkBuilderDraft(catalog);
 				return;
+			case ADAPTIVE_WORLD_BUILDER:
+				validateAdaptiveWorldBuilder(catalog);
+				return;
 			default:
 				throw new IllegalStateException(
 					"Unhandled native layered world runtime profile: " + this);
+		}
+	}
+
+	private static void validateAdaptiveWorldBuilder(
+		final NativeLayeredWorldPackageCatalog catalog) {
+		if (catalog.size() != 1) {
+			throw new IllegalStateException(
+				"The adaptive-world-builder profile requires exactly one package");
+		}
+		final NativeLayeredWorldPackage loaded = catalog.getPrimaryPackage();
+		if (loaded.getWorldSpaceCount() != 1
+			|| !"static".equals(loaded.getWorldSpaceKinds().get("global"))) {
+			throw new IllegalStateException(
+				"The adaptive-world-builder profile requires one static global world space");
+		}
+		if (loaded.getLevelCount() < 1 || loaded.getLevelCount() > 64
+			|| loaded.getTerrainSectorCount() < 1
+			|| loaded.getTerrainSectorCount() > 8192
+			|| loaded.getPlacementSetCount() != loaded.getLevelCount()) {
+			throw new IllegalStateException(
+				"The adaptive-world-builder package exceeds its bounded level, "
+					+ "terrain, or placement-set contract");
+		}
+		long placementCount = (long) loaded.getNpcPlacementCount()
+			+ loaded.getGroundItemPlacementCount()
+			+ loaded.getSceneryPlacementCount()
+			+ loaded.getBoundaryPlacementCount();
+		if (placementCount > 100000L) {
+			throw new IllegalStateException(
+				"The adaptive-world-builder package exceeds 100000 placements");
+		}
+		Set<Integer> declaredLevels = new HashSet<Integer>();
+		for (NativeLayeredWorldPackage.LevelDeclaration level
+			: loaded.getLevelDeclarations()) {
+			if (!WorldSpaceId.GLOBAL.equals(level.getWorldSpace())
+				|| !declaredLevels.add(Integer.valueOf(level.getLevel()))) {
+				throw new IllegalStateException(
+					"The adaptive-world-builder package has ambiguous level ownership");
+			}
+			boolean hasTerrain = false;
+			for (com.openrsc.server.model.world.coordinate.WorldMapSectorId sector
+				: loaded.getTerrainSectors().keySet()) {
+				if (WorldSpaceId.GLOBAL.equals(sector.getWorldSpace())
+					&& sector.getLevel() == level.getLevel()) {
+					hasTerrain = true;
+					break;
+				}
+			}
+			if (!hasTerrain) {
+				throw new IllegalStateException(
+					"The adaptive-world-builder package has a level without terrain: "
+						+ level.getLevel());
+			}
+		}
+		Set<Integer> placementLevels = new HashSet<Integer>();
+		for (NativeLayeredPlacementSet set : loaded.getPlacementSets().values()) {
+			if (!WorldSpaceId.GLOBAL.equals(set.getWorldSpace())
+				|| !NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V3.equals(
+					set.getSourceEncoding())
+				|| !placementLevels.add(Integer.valueOf(set.getLevel()))) {
+				throw new IllegalStateException(
+					"The adaptive-world-builder profile requires one global v3 "
+						+ "placement set per level");
+			}
+		}
+		if (!declaredLevels.equals(placementLevels)) {
+			throw new IllegalStateException(
+				"The adaptive-world-builder placement levels are incomplete");
 		}
 	}
 

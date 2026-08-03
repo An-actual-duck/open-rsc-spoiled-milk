@@ -16,11 +16,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -224,9 +227,11 @@ public final class NativeLayeredWorldPackage {
 			if (name.isEmpty() || name.length() > 128) {
 				throw new IOException("levels[" + index + "].name length must be 1..128");
 			}
-			matchedString(value, "role", ID);
+			String role = matchedString(value, "role", ID);
 			LevelKey key =
-				new LevelKey(new WorldSpaceId(worldSpace), signedInt(value, "level"));
+				new LevelKey(
+					new WorldSpaceId(worldSpace), signedInt(value, "level"),
+					name, role);
 			if (!result.add(key)) {
 				throw new IOException(
 					"Duplicate level declaration: " + worldSpace + " " + key.level);
@@ -1065,6 +1070,46 @@ public final class NativeLayeredWorldPackage {
 		return placementSets;
 	}
 
+	/** Immutable package-declared world-space identities and kinds. */
+	public Map<String, String> getWorldSpaceKinds() {
+		return worldSpaceKinds;
+	}
+
+	/**
+	 * Returns level metadata in path-independent canonical order. The private
+	 * identity set remains unchanged; this view exists so a copy-on-write
+	 * publisher never has to re-read a live manifest for names or roles.
+	 */
+	public List<LevelDeclaration> getLevelDeclarations() {
+		List<LevelDeclaration> result = new ArrayList<LevelDeclaration>();
+		for (LevelKey level : levels) {
+			result.add(new LevelDeclaration(
+				level.worldSpace, level.level, level.name, level.role));
+		}
+		Collections.sort(result, new Comparator<LevelDeclaration>() {
+			@Override
+			public int compare(LevelDeclaration left, LevelDeclaration right) {
+				int value = left.worldSpace.getValue().compareTo(
+					right.worldSpace.getValue());
+				return value == 0 ? Integer.compare(left.level, right.level) : value;
+			}
+		});
+		return Collections.unmodifiableList(result);
+	}
+
+	/** Exact regular-file inventory declared by the manifest. */
+	public Set<String> getExpectedRelativeFilePaths() {
+		Set<String> result = new HashSet<String>();
+		result.add("manifest.json");
+		for (NativeLayeredTerrainSector sector : terrainSectors.values()) {
+			result.add(sector.getSourcePath());
+		}
+		for (NativeLayeredPlacementSet set : placementSets.values()) {
+			result.add(set.getSourcePath());
+		}
+		return Collections.unmodifiableSet(result);
+	}
+
 	private static JSONObject readObject(Path path) throws IOException {
 		if (!Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)
 			|| Files.isSymbolicLink(path)) {
@@ -1288,13 +1333,42 @@ public final class NativeLayeredWorldPackage {
 		return result.toString();
 	}
 
+	public static final class LevelDeclaration {
+		private final WorldSpaceId worldSpace;
+		private final int level;
+		private final String name;
+		private final String role;
+
+		private LevelDeclaration(
+			WorldSpaceId worldSpace, int level, String name, String role) {
+			this.worldSpace = worldSpace;
+			this.level = level;
+			this.name = name;
+			this.role = role;
+		}
+
+		public WorldSpaceId getWorldSpace() { return worldSpace; }
+		public int getLevel() { return level; }
+		public String getName() { return name; }
+		public String getRole() { return role; }
+	}
+
 	private static final class LevelKey {
 		final WorldSpaceId worldSpace;
 		final int level;
+		final String name;
+		final String role;
 
 		LevelKey(WorldSpaceId worldSpace, int level) {
+			this(worldSpace, level, "", "");
+		}
+
+		LevelKey(
+			WorldSpaceId worldSpace, int level, String name, String role) {
 			this.worldSpace = worldSpace;
 			this.level = level;
+			this.name = name;
+			this.role = role;
 		}
 
 		@Override

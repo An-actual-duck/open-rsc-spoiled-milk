@@ -5,6 +5,7 @@ import com.openrsc.server.content.worldedit.WorldEditorSessionManager.TerrainStr
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.NativeTerrainSnapshot;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager.NativeTerrainStrokeResult;
 import com.openrsc.server.content.worldedit.WorldEditorTerrainStroke;
+import com.openrsc.server.content.worldedit.WorldBuilderMode;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.WorldEditorTerrainArchive;
 import com.openrsc.server.io.WorldLoader;
@@ -36,8 +37,8 @@ public final class WorldEditorHandler implements PayloadProcessor<WorldEditorReq
 		try {
 			if (player.getConfig().WORLD_BUILDER_LAYERED_REVIEW_MODE
 				&& (request.type == 5 || request.type == 6)
-				&& !"spoiled-milk-builder-draft".equals(
-					player.getConfig().LAYERED_NATIVE_WORLD_RUNTIME_PROFILE)) {
+				&& !WorldBuilderMode.isLayeredAuthoringProfile(
+					player.getConfig())) {
 				error(player, validation.nextSequence,
 					"Layered package review is read-only; no terrain was changed.");
 				return;

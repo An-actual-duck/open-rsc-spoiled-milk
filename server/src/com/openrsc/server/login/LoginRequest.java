@@ -9,6 +9,7 @@ import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.rsc.ImmediateEvent;
 import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.content.worldedit.WorldBuilderMode;
+import com.openrsc.server.content.worldedit.WorldBuilderPlayerSession;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -148,6 +149,7 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 					loadingComplete(loadedPlayer);
 					loadedPlayer.desertHeatInit();
 					ActionSender.sendReleasedNameExplanation(loadedPlayer, usernameChangeType);
+					WorldBuilderPlayerSession.activate(loadedPlayer);
 				}
 			});
 

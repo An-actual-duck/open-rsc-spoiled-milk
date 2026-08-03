@@ -16,6 +16,10 @@ public final class WorldBuilderClientProfile {
 	public static final String CREDENTIAL_FILE_PROPERTY = "openrsc.worldBuilderCredentialFile";
 	public static final String PROJECT_NAME_PROPERTY = "openrsc.worldBuilderProjectName";
 	public static final String SOURCE_REVISION_PROPERTY = "openrsc.worldBuilderSourceRevision";
+	public static final String ADAPTIVE_PROPERTY =
+		"openrsc.worldBuilderAdaptiveMode";
+	public static final String RUNTIME_BINDING_FILE_PROPERTY =
+		"openrsc.worldBuilderRuntimeBindingFile";
 	public static final String LAYERED_REVIEW_PROPERTY = "openrsc.worldBuilderLayeredReview";
 	public static final String LAYERED_TERRAIN_DRAFT_PROPERTY =
 		"openrsc.worldBuilderLayeredTerrainDraft";
@@ -49,12 +53,15 @@ public final class WorldBuilderClientProfile {
 	private final String layeredManifestSha256;
 	private final String layeredWorldSpace;
 	private final int[] layeredLevels;
+	private final boolean adaptive;
+	private final AdaptiveWorldBuilderClientSession adaptiveSession;
 
 	private WorldBuilderClientProfile(boolean enabled, String host, int port, String credential,
 		String projectName, String sourceRevision, boolean layeredReview,
 		boolean layeredTerrainDraft,
 		String layeredPackageId, String layeredPackageVersion,
-		String layeredManifestSha256, String layeredWorldSpace, int[] layeredLevels) {
+		String layeredManifestSha256, String layeredWorldSpace, int[] layeredLevels,
+		boolean adaptive, AdaptiveWorldBuilderClientSession adaptiveSession) {
 		this.enabled = enabled;
 		this.host = host;
 		this.port = port;
@@ -68,6 +75,8 @@ public final class WorldBuilderClientProfile {
 		this.layeredManifestSha256 = layeredManifestSha256;
 		this.layeredWorldSpace = layeredWorldSpace;
 		this.layeredLevels = layeredLevels.clone();
+		this.adaptive = adaptive;
+		this.adaptiveSession = adaptiveSession;
 	}
 
 	public static synchronized WorldBuilderClientProfile initializeFromSystemProperties() {
@@ -104,6 +113,8 @@ public final class WorldBuilderClientProfile {
 		if (!SOURCE_REVISION_PATTERN.matcher(sourceRevision).matches()) {
 			throw new IllegalArgumentException("World Builder source revision is invalid");
 		}
+		boolean adaptive = strictBoolean(
+			ADAPTIVE_PROPERTY, System.getProperty(ADAPTIVE_PROPERTY, "false"));
 		boolean layeredReview = strictBoolean(
 			LAYERED_REVIEW_PROPERTY,
 			System.getProperty(LAYERED_REVIEW_PROPERTY, "false"));
@@ -119,7 +130,24 @@ public final class WorldBuilderClientProfile {
 		String layeredManifestSha256 = "";
 		String layeredWorldSpace = "";
 		int[] layeredLevels = new int[0];
-		if (layeredReview) {
+		AdaptiveWorldBuilderClientSession adaptiveSession = null;
+		if (adaptive) {
+			String bindingFile = System.getProperty(
+				RUNTIME_BINDING_FILE_PROPERTY, "").trim();
+			if (bindingFile.isEmpty()) {
+				throw new IllegalArgumentException(
+					RUNTIME_BINDING_FILE_PROPERTY + " is required");
+			}
+			adaptiveSession = AdaptiveWorldBuilderClientSession.load(
+				Paths.get(bindingFile));
+			layeredReview = true;
+			layeredTerrainDraft = true;
+			layeredPackageId = adaptiveSession.packageId();
+			layeredPackageVersion = adaptiveSession.packageVersion();
+			layeredManifestSha256 = adaptiveSession.manifestSha256();
+			layeredWorldSpace = adaptiveSession.initialWorldSpace();
+			layeredLevels = adaptiveSession.levels();
+		} else if (layeredReview) {
 			layeredPackageId = requiredIdentifier(
 				LAYERED_PACKAGE_ID_PROPERTY,
 				System.getProperty(LAYERED_PACKAGE_ID_PROPERTY, ""));
@@ -143,7 +171,8 @@ public final class WorldBuilderClientProfile {
 			true, host, port, credential, projectName, sourceRevision,
 			layeredReview, layeredTerrainDraft,
 			layeredPackageId, layeredPackageVersion,
-			layeredManifestSha256, layeredWorldSpace, layeredLevels);
+			layeredManifestSha256, layeredWorldSpace, layeredLevels,
+			adaptive, adaptiveSession);
 		return current;
 	}
 
@@ -187,6 +216,34 @@ public final class WorldBuilderClientProfile {
 		return enabled && layeredReview && layeredTerrainDraft;
 	}
 
+	public boolean isAdaptive() {
+		return enabled && adaptive && adaptiveSession != null;
+	}
+
+	public boolean canAuthorLevel(int level) {
+		return isAdaptive() || !isHistoricalSourceLevel(level);
+	}
+
+	public String runtimeBindingToken() {
+		if (!isAdaptive()) {
+			throw new IllegalStateException(
+				"Adaptive runtime binding is unavailable");
+		}
+		return adaptiveSession.token();
+	}
+
+	public void requireNativePackageIdentity(
+		String packageId, String packageVersion, String manifestSha256) {
+		if (isAdaptive()) {
+			adaptiveSession.requirePackageIdentity(
+				packageId, packageVersion, manifestSha256);
+		}
+	}
+
+	public void requireClientDefinitions() {
+		if (isAdaptive()) adaptiveSession.requireClientDefinitions();
+	}
+
 	public String layeredPackageId() {
 		return layeredPackageId;
 	}
@@ -223,7 +280,12 @@ public final class WorldBuilderClientProfile {
 	private static WorldBuilderClientProfile disabled() {
 		return new WorldBuilderClientProfile(
 			false, null, 0, null, "", "", false, false,
-			"", "", "", "", new int[0]);
+			"", "", "", "", new int[0], false, null);
+	}
+
+	private static boolean isHistoricalSourceLevel(int level) {
+		return level == -2 || level == -1 || level == 0
+			|| level == 1 || level == 2 || level == 10;
 	}
 
 	private static boolean strictBoolean(String property, String value) {

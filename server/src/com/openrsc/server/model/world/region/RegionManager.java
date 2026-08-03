@@ -25,6 +25,8 @@ import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
+import com.openrsc.server.io.AdaptiveWorldBuilderPackageGuard;
+import com.openrsc.server.content.worldedit.AdaptiveWorldBuilderRuntimeIdentity;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
@@ -79,6 +81,8 @@ import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -257,6 +261,29 @@ public class RegionManager {
 				"Layered native terrain package path is required when its gate is enabled");
 		}
 		try {
+			AdaptiveWorldBuilderPackageGuard.Inventory adaptiveInventory = null;
+			if (profile == NativeLayeredWorldRuntimeProfile.ADAPTIVE_WORLD_BUILDER) {
+				Path expected = world.getServer().getWorldEditStorage()
+					.layeredWorkingPackage();
+				Path requested = Paths.get(configuredPath.trim())
+					.toAbsolutePath().normalize();
+				if (!requested.toRealPath().equals(expected.toRealPath())) {
+					throw new IOException(
+						"Adaptive package path must be the isolated working package");
+				}
+				adaptiveInventory =
+					AdaptiveWorldBuilderPackageGuard.requireClosedPackage(expected);
+				AdaptiveWorldBuilderPackageGuard.Inventory baseline =
+					AdaptiveWorldBuilderPackageGuard.requireClosedPackage(
+						world.getServer().getWorldEditStorage()
+							.sourceLayeredBaselinePackage());
+				if (!baseline.getFingerprint().equals(
+						world.getServer().getConfig()
+							.WORLD_BUILDER_SOURCE_BASELINE_INVENTORY_SHA256)) {
+					throw new IOException(
+						"Immutable adaptive source baseline fingerprint mismatch");
+				}
+			}
 			NativeLayeredWorldPackageCatalog loaded =
 				NativeLayeredWorldPackageCatalog.loadConfigured(
 					configuredPath.trim());
@@ -267,7 +294,7 @@ public class RegionManager {
 				if (configuredManifest == null
 					|| !configuredManifest.matches("[0-9a-f]{64}")) {
 					throw new IllegalStateException(
-						"The World Builder export profile requires an exact "
+						"The selected World Builder profile requires an exact "
 							+ "layered package manifest SHA-256");
 				}
 				if (!configuredManifest.equals(
@@ -276,6 +303,20 @@ public class RegionManager {
 						"The installed World Builder export does not match "
 							+ "the configured layered package manifest SHA-256");
 				}
+			}
+			if (profile.requiresConfiguredInventorySha256()) {
+				String expectedInventory = world.getServer().getConfig()
+					.LAYERED_NATIVE_TERRAIN_INVENTORY_SHA256;
+				if (adaptiveInventory == null
+					|| expectedInventory == null
+					|| !expectedInventory.matches("[0-9a-f]{64}")
+					|| !expectedInventory.equals(
+						adaptiveInventory.getFingerprint())) {
+					throw new IllegalStateException(
+						"Adaptive working package inventory SHA-256 mismatch");
+				}
+				AdaptiveWorldBuilderRuntimeIdentity.validateOriginPackage(
+					world.getServer().getConfig(), loaded.getPrimaryPackage());
 			}
 			return loaded;
 		} catch (IOException failure) {
@@ -287,6 +328,12 @@ public class RegionManager {
 	}
 
 	public void load() {
+		if (nativeLayeredWorldRuntimeProfile
+			== NativeLayeredWorldRuntimeProfile.ADAPTIVE_WORLD_BUILDER) {
+			LOGGER.info(
+				"Skipping legacy terrain archives for explicit adaptive World Builder profile");
+			return;
+		}
 		// TODO: The WorldLoader.loadWorld() should accept a RegionManager as an argument and place regions there.
 		getWorld().getWorldLoader().loadWorld();
 	}

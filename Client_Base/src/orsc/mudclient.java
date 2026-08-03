@@ -27343,6 +27343,7 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		WorldBuilderClientProfile profile = WorldBuilderClientProfile.current();
+		profile.requireClientDefinitions();
 		// The initial server-config packet refreshes cached connection properties.
 		// Reassert the explicit local profile immediately before authenticated login.
 		profile.applyConnection();
@@ -27354,6 +27355,8 @@ public final class mudclient implements Runnable {
 			this.setUsername(profile.username());
 			this.showLoginScreenStatus("World Builder could not start.",
 				"Close it and check the local runtime logs.");
+		} else if (profile.isAdaptive()) {
+			this.sendCommandString("builderbind " + profile.runtimeBindingToken());
 		}
 	}
 
