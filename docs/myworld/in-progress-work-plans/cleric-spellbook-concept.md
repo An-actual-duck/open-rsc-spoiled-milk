@@ -298,6 +298,34 @@ Thorns has four effect ranks and uses the tactical duration ladder:
   originally applied Thorns. It may kill the attacker through the normal
   attributed-death path.
 
+### Rally Emergency-Lifesteal Contract
+
+Rally uses one fixed `20%` lifesteal rate. Holy Power increases the recovery
+threshold and duration instead of increasing all three dimensions at once:
+
+| Effect rank | Lifesteal | Ends at | Maximum duration |
+| ---: | ---: | ---: | ---: |
+| I | 20% | 55% Hits | 30 seconds |
+| II | 20% | 60% Hits | 45 seconds |
+| III | 20% | 65% Hits | 60 seconds |
+| IV | 20% | 70% Hits | 90 seconds |
+
+- An area cast applies Rally only to eligible party recipients who are below
+  `50%` of their current valid healing ceiling at cast time.
+- Rally heals from actual nonzero direct melee, ranged, and Magic damage dealt
+  by the affected player, including critical hits and damage already increased
+  by Zeal. Poison, recoil, summons, and other indirect or secondary damage are
+  excluded.
+- Each active Rally status carries fractional healing credit. Qualifying damage
+  contributes at `20%`; whole accumulated points heal and the remainder carries
+  until the effect ends. There is no guaranteed one-Hit minimum per attack.
+- Rally healing cannot exceed the player's valid healing ceiling. The effect
+  ends as soon as any healing source brings the player to or above that rank's
+  threshold, even if one heal crosses past the exact percentage.
+- Rally also ends on its tactical timer or the general Cleric lifecycle
+  conditions. Falling below half again does not reactivate an ended status; a
+  new cast is required.
+
 ### Protection Stacking Contract
 
 Ward and Aegis must not turn prayer protection into complete damage immunity.
@@ -498,8 +526,9 @@ These are current implementation facts, not new design decisions:
   combine. Fervor intentionally joins that same bounded roll-bias family rather
   than introducing a second accuracy multiplier.
 - Recoil and lifesteal behavior already exist, but their hooks span melee,
-  ranged/projectile, poison, and other damage paths. Thorns and Rally will need
-  explicit shared eligibility and attribution rules across applicable styles.
+  ranged/projectile, poison, and other damage paths. The settled Thorns and
+  Rally contracts therefore require a shared direct-damage eligibility hook
+  rather than copying only one existing combat path.
 - Existing Chaos recoil rings reflect one quarter of the triggering damage
   when they proc, with tier chances of `10/20/30/50/90%` and a minimum reflected
   hit of one. Thorns is intentionally weaker at `5-15%`, has no minimum hit,
@@ -606,9 +635,12 @@ them.
 - Status icons and labels; optional-count packet representation; compatibility
   behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
   Mend cadence and the tactical and Respite duration ladders are settled.
-- Which damage sources consume Ward/Aegis charges and provide Rally lifesteal.
-  Thorns and Zeal are settled as direct melee, ranged, and Magic damage under
-  their respective post-mitigation rules.
+- Which damage sources consume Ward/Aegis charges. Thorns, Zeal, and Rally are
+  settled as direct melee, ranged, and Magic damage under their respective
+  post-mitigation rules.
+- How Rally composes with existing blood-equipment and god-spell lifesteal.
+  Rally's own rate, eligibility, rounding, threshold, and duration are settled,
+  but independent stacking versus one combined bounded lifesteal family is not.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
   its ending health threshold, or both.
 - How Respite combines with existing regeneration potions, robes, amulets, and
@@ -908,3 +940,13 @@ handles fractional damage without a guaranteed minimum. Indirect and
 secondary damage are excluded, and reflected damage cannot recursively trigger
 any reflection. Thorns coexists independently with recoil equipment. Damage is
 attributed to the protected defender and may kill the attacker normally.
+
+### 2026-08-02: Rally emergency-lifesteal ranks
+
+Confirmed a fixed `20%` Rally lifesteal rate with rank recovery thresholds of
+`55/60/65/70%` Hits and the tactical duration ladder. Rally is applied only to
+eligible recipients below half their current healing ceiling. It heals from
+actual direct melee, ranged, or Magic damage, including critical hits and
+Zeal-enhanced damage, while excluding indirect damage. Fractional credit
+carries without a minimum heal. Any healing source ends Rally upon reaching
+the rank threshold, and an ended effect does not reactivate without a new cast.
