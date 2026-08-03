@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS `curstats`
     `agility`    tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
     `thieving`   tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
     `summoning`  tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
+    `blessing`   tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
     PRIMARY KEY (`playerID`),
     KEY `playerID` (`playerID`)
 ) ENGINE = InnoDB
@@ -90,6 +91,7 @@ CREATE TABLE IF NOT EXISTS `experience`
     `agility`    int(9)           NOT NULL DEFAULT 0,
     `thieving`   int(9)           NOT NULL DEFAULT 0,
     `summoning`  int(9)           NOT NULL DEFAULT 0,
+    `blessing`   int(9)           NOT NULL DEFAULT 0,
     PRIMARY KEY (`playerID`),
     KEY `playerID` (`playerID`)
 ) ENGINE = InnoDB
@@ -118,6 +120,7 @@ CREATE TABLE IF NOT EXISTS `maxstats`
     `agility`    tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
     `thieving`   tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
     `summoning`  tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
+    `blessing`   tinyint(3) UNSIGNED NOT NULL DEFAULT 1,
     PRIMARY KEY (`playerID`),
     KEY `playerID` (`playerID`)
 ) ENGINE = InnoDB
@@ -146,6 +149,7 @@ CREATE TABLE IF NOT EXISTS `capped_experience`
     `agility`    int(10) UNSIGNED,
     `thieving`   int(10) UNSIGNED,
     `summoning`  int(10) UNSIGNED,
+    `blessing`   int(10) UNSIGNED,
     PRIMARY KEY (`playerID`),
     KEY `playerID` (`playerID`)
 ) ENGINE = InnoDB

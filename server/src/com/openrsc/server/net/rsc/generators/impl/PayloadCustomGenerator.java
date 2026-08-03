@@ -395,6 +395,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) si.currentHarvesting);
 					}
 					builder.writeByte((byte) si.currentSummoning);
+					builder.writeByte((byte) si.currentBlessing);
 
 					// 18 skills minimum - max level
 					builder.writeByte((byte) si.maxAttack);
@@ -422,6 +423,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) si.maxHarvesting);
 					}
 					builder.writeByte((byte) si.maxSummoning);
+					builder.writeByte((byte) si.maxBlessing);
 
 					// 18 skills minimum - experiences
 					builder.writeInt(si.experienceAttack);
@@ -449,7 +451,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeInt(si.experienceHarvesting);
 					}
 					builder.writeInt(si.experienceSummoning);
+					builder.writeInt(si.experienceBlessing);
 
+					// Quest Points is not a skill slot. Keep it after every maintained
+					// custom-client skill field so appending a skill cannot consume it.
 					builder.writeByte((byte) si.questPoints);
 					break;
 

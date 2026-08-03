@@ -63,8 +63,8 @@ def main() -> None:
         "guide rendering must recognize Worship",
     )
     require(
-        '"Ranged", "Worship", "Magic"' in packet_handler,
-        "training presence must identify Worship",
+        'Discord.setLastUpdate("Training " + mc.getSkillNamesLong()[skill]);' in packet_handler,
+        "training presence must use the runtime skill display registry",
     )
     require(
         'mc.getSkillGuideChosen() + " Hiscores"' in guide,

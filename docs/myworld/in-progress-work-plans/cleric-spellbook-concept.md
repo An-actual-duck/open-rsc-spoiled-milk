@@ -28,6 +28,17 @@ recorded beside an otherwise confirmed spell identity.
 - **Blessing** is a new production skill. It fills the relationship to Worship
   that Enchanting fills for Magic: Blessing levels gate the creation of sigils
   and blessed gear.
+- Blessing uses the original RuneScape level `1-99` experience curve. Existing
+  and newly created players begin at level `1` with `0` Blessing XP.
+- Blessing is appended after every existing internal skill identity so it does
+  not renumber compatibility-sensitive skills. Player-facing skill lists sort
+  it alphabetically without changing that internal order.
+- Blessing counts toward skill totals and overall and per-skill highscores. It
+  participates in general non-combat XP modifiers and the existing
+  production-skill Mind-necklace XP family. This does not add a Blessing
+  potion: the existing Insight level-boost family remains unchanged.
+- No Blessing cape, potion, guild, or high-tier training content is part of the
+  initial skill platform.
 - Ordinary Cleric spells should be support spells. Direct combat spells are
   excluded except for the god-spell line.
 - The initial rollout targets two support tiers, approximately the first half
@@ -117,6 +128,18 @@ skill.
   costs exactly `1.5` Devotion.
 - Sigil blessing prepays the Devotion component of casting. Casting consumes
   the required blessed sigils but does not drain Devotion again.
+- Successful altar conversion awards Blessing XP; carving the unblessed sigil
+  awards Crafting XP. Neither production step nor Cleric casting awards
+  Worship XP.
+- Sigil output follows the current rune-production duplication model. A recipe
+  begins at one output and gains one additional output for every full ten
+  Blessing levels above its requirement. Bonus output uses the same diminishing
+  action-XP series as rune production: `1x`, `1.5x`, `1.75x`, `1.875x`, and so
+  on, approaching but never exceeding `2x` the single-output action XP before
+  normal rounding. Duplicated output consumes no additional carved sigils and
+  no additional Devotion; the Devotion charge remains attached to the one
+  conversion input. Exact recipe requirements and base Crafting/Blessing XP
+  remain C05 balance decisions.
 
 ### Staves and Holy Power
 
@@ -830,10 +853,9 @@ them.
 
 ### Blessing Skill and Exact Accounting
 
-- Blessing's level curve, experience sources, production XP, cape, potion,
-  guild or training support, and placement in skill interfaces.
-- How carving Crafting XP and successful altar-conversion Blessing XP divide
-  the total production reward.
+- Exact recipe levels and base Crafting/Blessing XP awards. Skill ownership,
+  the standard curve, ten-level duplication, and diminishing bonus-output XP
+  are settled, but their numerical recipe table is not.
 - Exact accounting for odd batch sizes. The present Devotion store uses whole
   offering units, while the settled sigil cost is half of one such unit. The
   later implementation must preserve the exact cumulative price without
@@ -925,8 +947,28 @@ primary ladder.
   layout, highscores, guides, commands, XP modifiers, and combat-level audits.
   Those surfaces must be inventoried before implementation rather than
   treating the skill as only a new server constant.
+- Quest Points remain a separate protocol and client field after the complete
+  custom skill payload. Appending Blessing must be paired with a custom-client
+  version bump; authentic/legacy stat packet layouts remain unchanged.
 
 ## Decision Log
+
+### 2026-08-03: Blessing skill platform and production progression
+
+Confirmed the original level `1-99` curve, level-`1`/zero-XP migration
+default, append-only internal identity, alphabetical presentation, totals,
+highscores, commands, persistence, and applicable general non-combat and
+Mind-necklace XP modifiers. Confirmed that C04 adds no Blessing cape, potion,
+guild, or high-tier content and does not change combat level. Quest Points must
+remain outside the skill arrays, and the maintained custom packet version must
+advance while legacy packet layouts remain fixed.
+
+Confirmed Crafting XP for carving, Blessing XP for successful altar
+conversion, and no Worship XP from production or casting. C05 will apply the
+existing rune-production model: one extra output per ten levels above the
+recipe requirement, diminishing total action XP of `1x`, `1.5x`, `1.75x`,
+`1.875x`, and so on, and no additional Devotion charge for duplicated output.
+Exact production requirements and base XP remain unresolved for C05.
 
 ### 2026-08-02: Initial concept foundation
 

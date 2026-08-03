@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `feat/cleric-holy-power-equipment`
+- Branch: `feat/cleric-blessing-skill-platform`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation**
-- Current milestone: **C03 complete; pending manager review**
-- Next planned milestone: **C04 — Blessing skill platform**
-- Runtime exposure: **Holy Power equipment statistic only; Cleric production and spell gameplay remain disabled**
+- Current milestone: **C04 — Blessing skill platform in progress**
+- Next planned milestone: **C05 — sigil carving and altar blessing, only after its remaining balance/accounting decisions**
+- Runtime exposure: **Holy Power equipment statistic and the empty Blessing skill platform only; Cleric production and spell gameplay remain disabled**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -43,18 +43,18 @@ The following remain unresolved in the concept and may not be guessed:
 1. Whether the Cleric book is immediately available at the Worship requirement
    or requires an introductory unlock/quest.
 2. Silver sigil input form and production quantity.
-3. Crafting and Blessing levels, XP, batching, and failure behavior.
+3. Exact Crafting and Blessing recipe levels/base XP, batching, and failure
+   behavior. Skill ownership and the ten-level duplication/diminishing-XP
+   model are settled.
 4. Exact half-offering accounting for odd sigil quantities without corrupting
    existing integer Devotion saves.
-5. Blessing skill curve and all persistence, protocol, interface, highscores,
-   cape, potion, and XP-modifier consequences.
-6. Sigil consumption when an area cast has partial or no useful recipients.
-7. PvP rules and abuse safeguards.
-8. Status-HUD priority and overflow behavior at the existing 16-entry bound.
-9. Unify movement-queue/client-presentation integration.
-10. Respite passive-regeneration clock synchronization.
-11. Offensive god-spell placement and unlock requirements.
-12. Additional Devotion sources required to balance repeat sigil production.
+5. Sigil consumption when an area cast has partial or no useful recipients.
+6. PvP rules and abuse safeguards.
+7. Status-HUD priority and overflow behavior at the existing 16-entry bound.
+8. Unify movement-queue/client-presentation integration.
+9. Respite passive-regeneration clock synchronization.
+10. Offensive god-spell placement and unlock requirements.
+11. Additional Devotion sources required to balance repeat sigil production.
 
 Code may model already confirmed data adjacent to these questions, but it must
 not register or invoke behavior that depends on an unresolved answer.
@@ -147,16 +147,29 @@ Verification:
 
 ### C04 — Blessing Skill Platform
 
-Only after the remaining skill decisions are approved, add Blessing as a real
-skill across authoritative skill configuration, save/database round trips,
-packets, client layouts, guides, commands, XP modifiers, highscores, and any
-combat-level or total-level consumers. Preserve every existing skill index and
-compatibility alias; append or otherwise migrate only through an explicitly
-validated compatibility contract.
+Add Blessing as a real original-curve level `1-99` skill. Append it after all
+existing internal skill identities, while sorting its player-facing stats-tab
+placement alphabetically. Existing and new records begin at level `1`, zero
+XP. Persist current level, maximum level, XP, and cap date; include Blessing in
+skill totals, overall/per-skill highscores, dynamic command lookup, the empty
+skill-guide platform, general non-combat XP modifiers, and the production-skill
+Mind-necklace XP family. Do not add a cape, potion, guild, production handler,
+or high-tier content, and do not change combat level.
 
-Stop if the level curve, client placement, persistence migration, or protocol
-representation is not settled. Do not use Enchanting/RuneCraft aliases as an
-implementation shortcut.
+The migration contract is append-only. Add defaulted columns through both
+database dialects and templates. Extend only the maintained custom stat packet
+after Summoning and advance its enforced client version. Quest Points remains
+a separate byte after all skill fields. Legacy/authentic packet generators are
+unchanged. Do not use Enchanting/RuneCraft aliases as an implementation
+shortcut.
+
+Verification must cover the original curve, identity/order, existing/new
+record defaults, save/load round trips, Quest Points packet separation,
+legacy-packet non-change, totals, highscores, commands, skill selectors,
+applicable XP modifiers, and the absence of C05 production or new cape/potion/
+guild content. Build both client and server, run changed-code analysis, and
+privately inspect the stats panel, Quest Points, skill total, guide/hiscores,
+and a relogged Blessing value before handoff.
 
 ### C05 — Sigil Carving and Altar Blessing
 
