@@ -168,11 +168,33 @@ hard class, book-selection, or equipment lock:
 - Standard area grows by exactly one tile of radius per spell tier: tier two
   reaches `3` tiles, tier three reaches `4`, and tier `N` reaches `N + 1`.
   The precise tile-distance metric remains an implementation decision.
-- `Unify` deliberately has a larger area than other spells in its tier so it
-  can gather eligible players before follow-up support casts.
+- `Unify` has a fixed radius of `4` tiles, two tiles beyond the standard
+  tier-one area, so it can gather eligible players before follow-up support
+  casts.
 - Recipients must occupy the caster's current world space and signed map level.
   Cross-layer or cross-world support is never implied by matching X/Y
   coordinates.
+
+### Unify Regrouping Contract
+
+Unify is a one-time collision-respecting regroup, not a short-range teleport or
+continuing tether:
+
+- Eligible party members already within the standard tier-one radius of `2`
+  tiles are not moved.
+- Eligible members `3` or `4` tiles away move up to two collision-valid steps
+  toward the caster, ideally bringing them inside that standard support area.
+- Every applied step must use ordinary traversability rules. Unify cannot pull
+  through walls, closed doors, blocked or missing terrain, unreachable
+  boundaries, or between world spaces or signed map levels.
+- If only one safe step is available, the recipient moves one step. If no safe
+  progress is available, that recipient remains in place; failure to move one
+  recipient does not invalidate safe movement for the others.
+- The caster is never moved. A recipient retains their combat target and active
+  statuses, and Unify does not establish a persistent movement relationship.
+- Later implementation should build on the server's collision-aware walking or
+  pathfinding primitives. Direct teleport behavior is not an acceptable
+  implementation shortcut for this spell.
 
 ### God Support Identities
 
@@ -202,7 +224,7 @@ bands and fixed Ward/Aegis reductions are exceptions.
 | Tier | Spell | Identity | Confirmed effect direction |
 | ---: | --- | --- | --- |
 | 1 | Mend | Saradomin | Three-pulse regeneration heal on cast and approximately `5` and `10` seconds later; its three ranks heal `1/2/3` Hits per pulse |
-| 1 | Unify | Neutral | Uses an enlarged radius and draws eligible same-party players closer to the caster to set up later area support |
+| 1 | Unify | Neutral | Uses a four-tile radius and moves eligible distant party members up to two collision-valid steps toward the caster |
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Instantly reduces current poison power by `10/20/30/40`; the existing below-`10` rule cures sufficiently weakened poison |
 | 1 | Restore | Guthix | Instantly restores every configured skill except Hits by `10/25/40/60%` of that skill's valid normal maximum without creating a boost |
@@ -750,9 +772,12 @@ them.
 - Per-spell self-application exceptions, PvP behavior, experience attribution,
   and abuse safeguards. Same-party eligibility and clearing effects on party
   separation are settled.
-- Exact area geometry, line-of-sight/path requirements, Unify's bonus radius,
-  and how Unify selects safe reachable destination tiles without
-  forced-movement abuse. Standard tier radii are settled by the `N + 1` rule.
+- Exact tile-distance geometry and line-of-sight behavior for ordinary area
+  support. Standard tier radii are settled by the `N + 1` rule, while Unify's
+  four-tile radius and collision-respecting two-step movement are settled.
+- How Unify's one-time forced movement integrates with queued walking and the
+  client movement presentation without desynchronization. This implementation
+  detail may not weaken its settled collision, layer, or combat-state rules.
 - Holy Power threshold tables for each scalable effect. Rank counts and values
   for the initial twelve spells are settled wherever scaling applies.
 - Cast-level resource and experience behavior when an area spell applies to
@@ -969,7 +994,7 @@ hit but costs the tier-two sigil vector and must be reapplied more frequently.
 Confirmed that area grows with the spell's tier rather than its Holy Power or
 effect rank. Standard tier-one spells reach `2` tiles from the caster and each
 later spell tier adds one tile, giving the general radius `tier + 1`. Unify
-retains an intentionally larger area, with its exact bonus still unresolved.
+retains an intentionally larger area; its exact contract was settled later.
 
 ### 2026-08-02: Ward and Aegis charge progression
 
@@ -1098,6 +1123,17 @@ threshold; it contributes no separate minimum heal. Any healing source may end
 Rally at the threshold, at which point its carried fraction is discarded. This
 avoids a new combined lifesteal system and preserves established item and spell
 behavior while keeping Rally bounded as supplemental emergency recovery.
+
+### 2026-08-02: Unify collision-respecting regroup
+
+Confirmed a fixed four-tile radius for Unify. Party recipients already inside
+the normal tier-one two-tile area do not move; recipients three or four tiles
+away move up to two safe steps toward the caster. Partial safe movement is
+allowed, while blocked recipients remain in place. The spell cannot bypass
+collision, closed boundaries, missing terrain, world-space, or signed-layer
+separation, and it must not be implemented as a teleport. It is a one-time
+regroup that leaves the caster fixed and preserves recipient combat targets and
+active statuses.
 
 ### 2026-08-02: Respite regeneration ranks
 
