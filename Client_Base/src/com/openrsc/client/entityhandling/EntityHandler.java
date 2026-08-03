@@ -5498,6 +5498,73 @@ public class EntityHandler {
 			false, false, true, 3292));
 	}
 
+	private static void addClericSigilDefinitions() {
+		setCustomItemDefinition(3293, new ItemDef(
+			"Unblessed Saradomin stone sigil", "A carved stone sigil awaiting Saradomin's blessing", "",
+			0, 443, "external-png:unblessed-sara-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3293));
+		setCustomItemDefinition(3294, new ItemDef(
+			"Saradomin stone sigil", "A stone sigil blessed by Saradomin", "",
+			0, 443, "external-png:blessed-sara-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3294));
+		setCustomItemDefinition(3295, new ItemDef(
+			"Unblessed Guthix stone sigil", "A carved stone sigil awaiting Guthix's blessing", "",
+			0, 443, "external-png:unblessed-guth-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3295));
+		setCustomItemDefinition(3296, new ItemDef(
+			"Guthix stone sigil", "A stone sigil blessed by Guthix", "",
+			0, 443, "external-png:blessed-guth-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3296));
+		setCustomItemDefinition(3297, new ItemDef(
+			"Unblessed Zamorak stone sigil", "A carved stone sigil awaiting Zamorak's blessing", "",
+			0, 443, "external-png:unblessed-zam-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3297));
+		setCustomItemDefinition(3298, new ItemDef(
+			"Zamorak stone sigil", "A stone sigil blessed by Zamorak", "",
+			0, 443, "external-png:blessed-zam-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3298));
+		setCustomItemDefinition(3299, new ItemDef(
+			"Unblessed neutral stone sigil", "A carved neutral stone sigil awaiting a blessing", "",
+			0, 443, "external-png:unblessed-neutral-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3299));
+		setCustomItemDefinition(3300, new ItemDef(
+			"Neutral stone sigil", "A neutral stone sigil blessed at a god altar", "",
+			0, 443, "external-png:blessed-neutral-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3300));
+		setCustomItemDefinition(3301, new ItemDef(
+			"Unblessed Saradomin silver sigil", "A carved silver sigil awaiting Saradomin's blessing", "",
+			0, 134, "external-png:silver-unblessed-sara-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3301));
+		setCustomItemDefinition(3302, new ItemDef(
+			"Saradomin silver sigil", "A silver sigil blessed by Saradomin", "",
+			0, 134, "external-png:silver-blessed-sara-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3302));
+		setCustomItemDefinition(3303, new ItemDef(
+			"Unblessed Guthix silver sigil", "A carved silver sigil awaiting Guthix's blessing", "",
+			0, 134, "external-png:silver-unblessed-guth-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3303));
+		setCustomItemDefinition(3304, new ItemDef(
+			"Guthix silver sigil", "A silver sigil blessed by Guthix", "",
+			0, 134, "external-png:silver-blessed-guth-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3304));
+		setCustomItemDefinition(3305, new ItemDef(
+			"Unblessed Zamorak silver sigil", "A carved silver sigil awaiting Zamorak's blessing", "",
+			0, 134, "external-png:silver-unblessed-zam-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3305));
+		setCustomItemDefinition(3306, new ItemDef(
+			"Zamorak silver sigil", "A silver sigil blessed by Zamorak", "",
+			0, 134, "external-png:silver-blessed-zam-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3306));
+		setCustomItemDefinition(3307, new ItemDef(
+			"Unblessed neutral silver sigil", "A carved neutral silver sigil awaiting a blessing", "",
+			0, 134, "external-png:silver-unblessed-neutral-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3307));
+		setCustomItemDefinition(3308, new ItemDef(
+			"Neutral silver sigil", "A neutral silver sigil blessed at a god altar", "",
+			0, 134, "external-png:silver-blessed-neutral-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3308));
+	}
+
 	private static void applyBangleVisuals() {
 		applyBangleVisuals(314, 317);
 		applyBangleVisuals(597, 597);
@@ -5709,6 +5776,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addExaltedRuneDefinitions();
 		addBangleJewelryDefinitions();
+		addClericSigilDefinitions();
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},
