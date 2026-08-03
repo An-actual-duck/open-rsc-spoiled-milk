@@ -201,13 +201,13 @@ bands and fixed Ward/Aegis reductions are exceptions.
 
 | Tier | Spell | Identity | Confirmed effect direction |
 | ---: | --- | --- | --- |
-| 1 | Mend | Saradomin | Three-pulse regeneration heal, scaling from `1` to `3` Hits per pulse with Holy Power (`3-9` total healing before healing-ceiling limits) |
+| 1 | Mend | Saradomin | Three-pulse regeneration heal on cast and approximately `5` and `10` seconds later, scaling from `1` to `3` Hits per pulse with Holy Power (`3-9` total healing before healing-ceiling limits) |
 | 1 | Unify | Neutral | Uses an enlarged radius and draws eligible same-party players closer to the caster to set up later area support |
 | 1 | Fervor | Zamorak | Timed accuracy support applied before enemy defense mitigation; Holy Power increases the strength of the upward roll bias |
 | 1 | Purify | Guthix | Reduces current poison power rather than fully curing every poison; current target range is approximately `10-40` power from Holy Power |
 | 1 | Restore | Guthix | Restores reduced combat stats toward their normal maximum without boosting them; current Holy Power target is approximately `10-60%` of each maximum |
 | 1 | Ward | Saradomin | Reduces each qualifying protected hit by a fixed `25%`; its four Holy Power ranks protect against `2/4/6/8` hits |
-| 2 | Greater Mend | Saradomin | Three-pulse regeneration heal staggered above Mend, scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
+| 2 | Greater Mend | Saradomin | Uses Mend's pulse cadence while scaling from `2` to `5` Hits per pulse with Holy Power (`6-15` total healing before healing-ceiling limits) |
 | 2 | Zeal | Zamorak | Timed percentage increase to damage after enemy defense has been applied; Holy Power selects its strength |
 | 2 | Thorns | Guthix | Weak recoil placed on affected players; Holy Power increases reflected damage |
 | 2 | Aegis | Saradomin | Reduces each qualifying protected hit by a fixed `50%`; its four Holy Power ranks protect against `1/2/3/4` hits and require higher thresholds than Ward |
@@ -325,8 +325,15 @@ The tactical ladder applies to Ward, Aegis, Fervor, Zeal, Thorns, and Rally.
 Charges or Rally's ending-health condition may end an effect before its timer;
 the listed duration is its upper bound. Respite uses the longer ladder because
 maintaining modest passive regeneration is its identity. Mend and Greater Mend
-remain three-pulse effects rather than adopting either duration ladder; their
-exact pulse cadence is still open.
+remain three-pulse effects rather than adopting either duration ladder.
+
+Mend-family pulses occur immediately when the effect is applied, then after
+`8` and `16` game ticks: approximately `5` and `10` seconds after casting at
+the authentic `640 ms` game-tick rate. Both spell tiers use this cadence. Holy
+Power changes healing per pulse but never makes the pulses arrive faster.
+Combat does not interrupt the sequence. Each pulse uses the recipient's valid
+healing ceiling at that moment; any excess healing is lost rather than stored,
+and a capped or wasted pulse does not cancel the remaining sequence.
 
 ### Devotion Economy
 
@@ -509,10 +516,9 @@ them.
 - Cast-level resource and experience behavior when an area spell applies to
   only some recipients or is wholly ineffective because every recipient has a
   stronger active family effect.
-- Mend/Greater Mend pulse cadence; status icons and labels; optional-count
-  packet representation; compatibility behavior; and priority/overflow rules
-  for the existing `16`-entry HUD bound. Tactical and Respite duration ladders
-  are settled.
+- Status icons and labels; optional-count packet representation; compatibility
+  behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
+  Mend cadence and the tactical and Respite duration ladders are settled.
 - Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
   and provide Rally lifesteal.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
@@ -775,4 +781,13 @@ conditions can end these effects sooner. Confirmed a separate
 `5/10/15/20`-minute ladder for Respite, keeping its modest passive-regeneration
 support longer-lived while remaining shorter than current `30/60`-minute
 regeneration potions. Mend-family timing remains governed by three pulses, with
-their cadence unresolved.
+their cadence still unresolved at this point.
+
+### 2026-08-02: Mend-family pulse cadence
+
+Confirmed that Mend and Greater Mend pulse immediately on application and
+again `8` and `16` game ticks later, corresponding to approximately `5` and
+`10` seconds at the authentic tick rate. Holy Power scales healing per pulse
+without changing cadence. Combat does not interrupt the effect. Every pulse
+clamps independently to the recipient's current valid healing ceiling; excess
+healing is wasted without ending the remaining sequence.
