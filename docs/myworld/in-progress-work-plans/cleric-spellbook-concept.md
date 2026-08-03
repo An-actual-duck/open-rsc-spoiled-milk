@@ -275,6 +275,27 @@ bands and fixed Ward/Aegis reductions are exceptions.
 | 2 | Rally | Zamorak | Players below half Hits gain temporary lifesteal until they recover above a Holy Power-dependent threshold |
 | 2 | Respite | Neutral | Long-lived, modest increase to normal passive regeneration; it is not restricted to out-of-combat periods |
 
+The twelve spells unlock individually through Worship `30`:
+
+| Worship level | Spell | Resource tier |
+| ---: | --- | ---: |
+| 1 | Mend | 1 |
+| 3 | Unify | 1 |
+| 5 | Fervor | 1 |
+| 8 | Purify | 1 |
+| 11 | Restore | 1 |
+| 14 | Ward | 1 |
+| 16 | Greater Mend | 2 |
+| 19 | Zeal | 2 |
+| 22 | Thorns | 2 |
+| 25 | Aegis | 2 |
+| 28 | Rally | 2 |
+| 30 | Respite | 2 |
+
+Worship level, sigil resource tier, and Holy Power effect rank remain separate
+axes. Unlocking a spell does not reduce its sigil vector, and equipping a
+stronger staff does not bypass its Worship requirement.
+
 The spell directions intentionally scale back immediate power in exchange for
 covering several nearby allies. Mend and Greater Mend are regeneration effects,
 not large instant heals. Purify leaves room for later full poison cleansing,
@@ -839,10 +860,6 @@ them.
 
 ### Initial Spell Content
 
-- Exact unlock levels for the six tier-one and six tier-two spells through
-  Worship `30`.
-- The exact distribution of Saradomin, Guthix, Zamorak, and non-aligned spells
-  in each early tier. The book is shared, but god identities remain distinct.
 - Placement and unlock rules for god spells, including their continued Magic
   requirements and staff requirements.
 
@@ -973,6 +990,14 @@ with less Holy Power than Aegis. Rank I remains available at Holy Power zero,
 Palm-tier Holy Power `5` gives strong but incomplete launch progression, and
 the god-staff value of `11` uniquely reaches rank IV tier-two support. Unify
 does not scale with Holy Power.
+
+### 2026-08-02: Launch Worship unlock sequence
+
+Confirmed staggered unlocks rather than granting six spells at each resource
+tier boundary: Mend `1`, Unify `3`, Fervor `5`, Purify `8`, Restore `11`, Ward
+`14`, Greater Mend `16`, Zeal `19`, Thorns `22`, Aegis `25`, Rally `28`, and
+Respite `30`. Resource costs remain determined by spell tier and effect ranks by
+Holy Power, independently of these Worship gates.
 
 ### 2026-08-02: Shared book with god support identities
 
