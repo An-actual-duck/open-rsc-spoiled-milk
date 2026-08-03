@@ -259,9 +259,9 @@ used as a default design pattern.
 ### Initial Spell Roster
 
 All twelve launch slots now have confirmed identities and effect directions.
-Numerical ranges explicitly described as tuning targets below remain
-provisional until separately approved; the confirmed Mend and Greater Mend
-bands and fixed Ward/Aegis reductions are exceptions.
+Numerical values recorded in the confirmed effect contracts below are settled.
+Any remaining ranges explicitly described as provisional tuning targets stay
+open until separately approved.
 
 | Tier | Spell | Identity | Confirmed effect direction |
 | ---: | --- | --- | --- |
@@ -533,9 +533,8 @@ hits, not either spell's percentage.
 | III | 6 | 3 |
 | IV | 8 | 4 |
 
-Ward reaches each rank at a lower Holy Power threshold than Aegis. The raw
-thresholds remain open until Holy Power values are assigned across the blessed
-staff and god-staff progression.
+Ward reaches each rank at a lower Holy Power threshold than Aegis. Their
+confirmed thresholds are recorded in the Holy Power Effect Rank Model below.
 
 Percentage mitigation combines in two layers:
 
