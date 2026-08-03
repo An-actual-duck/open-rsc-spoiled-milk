@@ -244,6 +244,32 @@ defense roll is subtracted:
 - Fervor changes the chance of a slightly better pre-defense roll. It does not
   guarantee that the resulting attack deals damage after defense.
 
+### Zeal Final-Damage Contract
+
+Zeal has four effect ranks and uses the tactical duration ladder:
+
+| Effect rank | Final-damage bonus | Duration |
+| ---: | ---: | ---: |
+| I | 5% | 30 seconds |
+| II | 8% | 45 seconds |
+| III | 11% | 60 seconds |
+| IV | 15% | 90 seconds |
+
+- Zeal applies to final nonzero damage from direct melee, ranged, and Magic
+  attacks made by the affected player, including critical hits.
+- Enemy defense and applicable protection are resolved before Zeal. Prayer
+  offense and Zeal remain independent multipliers rather than contributing to
+  one additive percentage pool.
+- Poison, recoil, summons, and other indirect or secondary damage do not gain
+  Zeal damage.
+- The server keeps a fractional bonus-credit accumulator for each active Zeal
+  recipient. Each qualifying hit contributes `final damage * Zeal percent`
+  hundredths; whole accumulated points become bonus damage and the remainder
+  carries to later qualifying hits during that Zeal effect.
+- Fractional carry is discarded when Zeal ends or is replaced. A zero-damage
+  attack creates no credit. This avoids rounding each small hit upward and
+  accidentally turning a modest percentage into a very large effective bonus.
+
 ### Protection Stacking Contract
 
 Ward and Aegis must not turn prayer protection into complete damage immunity.
@@ -547,8 +573,8 @@ them.
 - Status icons and labels; optional-count packet representation; compatibility
   behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
   Mend cadence and the tactical and Respite duration ladders are settled.
-- Which damage sources consume Aegis charges, trigger Thorns, receive Zeal,
-  and provide Rally lifesteal.
+- Which damage sources consume Ward/Aegis charges, trigger Thorns, and provide
+  Rally lifesteal. Zeal is settled as direct melee, ranged, and Magic damage.
 - Whether Rally's Holy Power-dependent percentage controls lifesteal strength,
   its ending health threshold, or both.
 - How Respite combines with existing regeneration potions, robes, amulets, and
@@ -828,3 +854,13 @@ without exceeding its normal maximum. It combines with existing equipment
 high-roll bias in the same bounded chance. Critical hits, poison, recoil,
 summons, and other indirect damage are excluded. Fervor uses the confirmed
 `30/45/60/90`-second tactical duration ladder.
+
+### 2026-08-02: Zeal final-damage ranks
+
+Confirmed Zeal ranks of `5/8/11/15%` and the tactical duration ladder. Zeal
+multiplies final nonzero direct melee, ranged, or Magic damage after defense
+and protection, including critical hits. Prayer offense remains a separate
+multiplier. Poison, recoil, summons, and other indirect damage are excluded.
+A per-effect fractional accumulator carries sub-point bonus credit between
+qualifying hits so small-hit rounding cannot inflate the intended percentage;
+its remainder is discarded when the status ends or is replaced.
