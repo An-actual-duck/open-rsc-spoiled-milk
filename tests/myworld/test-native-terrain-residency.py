@@ -24,6 +24,9 @@ CLIENT_RESIDENCY = (
 CLIENT_DECODER = (
     ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
 )
+CLIENT_PROFILE_STUB = (
+    ROOT / "tests/myworld/fixtures/orsc/WorldBuilderClientProfile.java"
+)
 
 
 class NativeTerrainResidencyTest(unittest.TestCase):
@@ -307,6 +310,7 @@ class NativeTerrainResidencyTest(unittest.TestCase):
                 CLIENT_CHUNK,
                 CLIENT_SNAPSHOT,
                 CLIENT_RESIDENCY,
+                CLIENT_PROFILE_STUB,
                 CLIENT_DECODER,
             ],
         )

@@ -22,6 +22,9 @@ CLIENT_RESIDENCY = (
 CLIENT_DECODER = (
     ROOT / "Client_Base/src/orsc/NativeLayeredTerrainPacketDecoder.java"
 )
+CLIENT_PROFILE_STUB = (
+    ROOT / "tests/myworld/fixtures/orsc/WorldBuilderClientProfile.java"
+)
 SPOILED_MILK_PACKAGE = (
     Path(
         os.environ.get(
@@ -348,6 +351,7 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
                     str(CLIENT_CHUNK),
                     str(CLIENT_SNAPSHOT),
                     str(CLIENT_RESIDENCY),
+                    str(CLIENT_PROFILE_STUB),
                     str(CLIENT_DECODER),
                     str(harness_path),
                 ],

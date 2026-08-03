@@ -11,6 +11,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CLIENT_PROFILE_STUB = (
+    ROOT / "tests/myworld/fixtures/orsc/WorldBuilderClientProfile.java"
+)
 PACKAGE_TERRAIN = (
     Path(
         os.environ.get(
@@ -363,6 +366,7 @@ class NativeTerrainSymmetricResidencyTest(unittest.TestCase):
                 / "Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java",
                 ROOT
                 / "Client_Base/src/orsc/NativeLayeredTerrainResidentCache.java",
+                CLIENT_PROFILE_STUB,
                 ROOT
                 / "Client_Base/src/orsc/"
                 "NativeLayeredTerrainPacketDecoder.java",
