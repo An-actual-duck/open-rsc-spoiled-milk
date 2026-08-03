@@ -2,10 +2,11 @@
 
 ## Status and Purpose
 
-This is an active design document for a Worship-tiered Cleric spellbook. It is
-not an implementation plan yet. Confirmed direction is recorded separately
-from unresolved design questions, and the concept should not be treated as
-finished until its owner confirms that the important details are resolved.
+This is the governing design document for a Worship-tiered Cleric spellbook.
+Confirmed direction is recorded separately from unresolved design questions.
+Ordered implementation work is tracked in
+[`cleric-spellbook-implementation-plan.md`](cleric-spellbook-implementation-plan.md),
+which may not invent answers to the unresolved sections below.
 
 No spell list, numerical effect, production level, experience award, or
 resource quantity is settled unless it appears under **Confirmed Direction**.
