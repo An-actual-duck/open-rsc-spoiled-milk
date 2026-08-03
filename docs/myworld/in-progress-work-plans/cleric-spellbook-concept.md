@@ -394,9 +394,19 @@ threshold and duration instead of increasing all three dimensions at once:
 - Each active Rally status carries fractional healing credit. Qualifying damage
   contributes at `20%`; whole accumulated points heal and the remainder carries
   until the effect ends. There is no guaranteed one-Hit minimum per attack.
+- Existing blood-equipment and god-spell lifesteal resolve first and retain
+  their established independent behavior. Rally does not combine their rates
+  into a new global lifesteal percentage or alter their rounding rules.
+- After those existing direct-hit lifesteal sources resolve, Rally contributes
+  its own fractional healing only if the status remains active and the player
+  is still below its ending threshold. This ordering makes Rally supplemental
+  emergency support without adding another minimum-heal award.
 - Rally healing cannot exceed the player's valid healing ceiling. The effect
   ends as soon as any healing source brings the player to or above that rank's
-  threshold, even if one heal crosses past the exact percentage.
+  threshold, even if one heal crosses past the exact percentage. Indirect
+  healing sources excluded from Rally damage eligibility may still end the
+  status by reaching that threshold. Any fractional Rally credit is discarded
+  when the status ends.
 - Rally also ends on its tactical timer or the general Cleric lifecycle
   conditions. Falling below half again does not reactivate an ended status; a
   new cast is required.
@@ -753,9 +763,6 @@ them.
   Mend cadence and the tactical and Respite duration ladders are settled.
 - Shared combat-path implementation and blocked-damage telemetry for the
   settled Ward/Aegis, Thorns, Zeal, and Rally direct-damage boundaries.
-- How Rally composes with existing blood-equipment and god-spell lifesteal.
-  Rally's own rate, eligibility, rounding, threshold, and duration are settled,
-  but independent stacking versus one combined bounded lifesteal family is not.
 - Exact passive-healing clock synchronization when Respite is applied,
   refreshed, replaced, or expires. Its magnitude, duration, eligible healing
   stream, and multiplicative composition are settled.
@@ -1081,6 +1088,16 @@ actual direct melee, ranged, or Magic damage, including critical hits and
 Zeal-enhanced damage, while excluding indirect damage. Fractional credit
 carries without a minimum heal. Any healing source ends Rally upon reaching
 the rank threshold, and an ended effect does not reactivate without a new cast.
+
+### 2026-08-02: Rally composition with existing lifesteal
+
+Confirmed that blood-equipment and god-spell lifesteal retain their existing
+independent mechanics and resolve before Rally. Rally then provides its own
+`20%` fractional healing only while the player remains below the rank's ending
+threshold; it contributes no separate minimum heal. Any healing source may end
+Rally at the threshold, at which point its carried fraction is discarded. This
+avoids a new combined lifesteal system and preserves established item and spell
+behavior while keeping Rally bounded as supplemental emergency recovery.
 
 ### 2026-08-02: Respite regeneration ranks
 
