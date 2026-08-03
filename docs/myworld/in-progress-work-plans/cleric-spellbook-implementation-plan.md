@@ -4,9 +4,9 @@
 
 - Branch: `feat/cleric-holy-power-equipment`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities**
-- Current milestone: **C03 — Holy Power equipment foundation**
-- Next planned milestone after C03 review: **C04 — Blessing skill platform**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation**
+- Current milestone: **C03 complete; pending manager review**
+- Next planned milestone: **C04 — Blessing skill platform**
 - Runtime exposure: **Holy Power equipment statistic only; Cleric production and spell gameplay remain disabled**
 - Public-server work: **forbidden**
 
@@ -61,7 +61,7 @@ not register or invoke behavior that depends on an unresolved answer.
 
 ## Ordered Implementation Sequence
 
-### C01 — Definition Catalog Foundation (current branch)
+### C01 — Definition Catalog Foundation
 
 Create a server-side, content-neutral metadata source for the confirmed launch
 roster:
@@ -340,3 +340,51 @@ later approved phase. Verification for this milestone includes:
 C02 deliberately adds no carving, altar conversion, Devotion accounting,
 Blessing behavior, spawn/drop/shop source, spell consumption, dialogue, packet,
 or player-visible spell functionality. All global runtime blockers remain open.
+
+## C03 Completion Record
+
+C03 adds Holy Power as an equipment-derived server statistic and an eighth
+extended equipment value in maintained clients. It is calculated from current
+equipment rather than persisted independently, so equip, unequip, both
+equipment modes, and relog all share the existing equipment authority. The
+authentic revision-38 six-byte equipment packet remains unchanged; maintained
+packet families append Holy Power after Magic Power and the client parses the
+optional extension by packet length.
+
+All three blessed-staff lines use Holy Power
+`8/12/16/24/28/32/40/44/48/56`; the three god staves use `64`. Ordinary Magic
+staves and blessed armor contribute zero. The launch Cleric-effect thresholds
+were translated to the same staff breakpoints, so the larger display scale
+does not change which staff tier reaches a given effect rank. Blessed-staff
+Magic Power is exactly half the comparable ordinary-staff ladder, and god
+staves retain Magic Power `28`. Existing offensive god spells continue to use
+the established Magic offense/defense calculation and never consult Holy
+Power.
+
+The client labels the stat `Holy Pow:` in both equipment-stat presentations.
+The blessed-staff inventory symbols now consistently communicate alignment:
+Zamorak is fiery red, Saradomin is pale yellow, and Guthix is nature green
+across every material tier. The owner privately confirmed no staff, ordinary
+staff, multiple blessed-staff tiers, god staff, equip/unequip, relog, both stat
+presentations, and the corrected alignment colors on the isolated loopback
+test world.
+
+Verification completed from the milestone branch:
+
+- `python3 tests/myworld/test-cleric-holy-power-equipment.py`
+- `python3 tests/myworld/test-cleric-spellbook-foundation.py`
+- `python3 tests/myworld/test-combat-data.py`
+- `python3 tests/myworld/test-blessed-staff-god-variants.py`
+- `python3 tests/myworld/test-god-special-prayers-and-spells.py`
+- `python3 tests/myworld/test-devotion-equipment-scaling.py`
+- `python3 tests/myworld/test-server-equipment-calculation-extraction.py`
+- `python3 tests/myworld/test-wood-crafting-client-definitions.py`
+- `./scripts/build-client.sh`
+- `./scripts/build-server.sh`
+- changed-code compiler and static analysis
+- `git diff --check`
+
+C03 adds no Cleric casting, effect application, sigil production or
+consumption, Blessing skill, persistence field, dialogue, shop, drop, or other
+player-visible Cleric gameplay. C04 remains blocked on the unresolved Blessing
+skill decisions recorded above.
