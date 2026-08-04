@@ -7,6 +7,7 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
+MYWORLD_ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
 CUSTOM_ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 MYWORLD_ITEMS = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 SMITHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smithing.java"
@@ -93,6 +94,7 @@ def load_items(path: Path, key: str) -> dict[int, dict]:
 
 def main() -> None:
     item_id_text = ITEM_ID.read_text(encoding="utf-8")
+    myworld_item_id_text = MYWORLD_ITEM_ID.read_text(encoding="utf-8")
     custom_items = load_items(CUSTOM_ITEMS, "items")
     myworld_items = load_items(MYWORLD_ITEMS, "items")
     smithing = SMITHING.read_text(encoding="utf-8")
@@ -159,6 +161,10 @@ def main() -> None:
     require("0x7585A8, 0x5BC878, 0x5A3F7D, 0x86D7FF" in client_defs,
             "Orichalcum scythe icon mask should use the established deep purple orichalcum palette")
     require("private static final int[] SCYTHE_IDS" in pvm_melee, "PvM melee should identify scythe weapons")
+    require("EXALTED_RUNE_SCYTHE = 3270" in myworld_item_id_text,
+            "Exalted Rune scythe custom identity should remain stable")
+    require("MyWorldItemId.EXALTED_RUNE_SCYTHE" in pvm_melee,
+            "PvM melee should recognize the Exalted Rune scythe for AoE cleave")
     for enum_name in ("BLACK_SCYTHE", "WHITE_SCYTHE", "GREY_SCYTHE"):
         require(f"ItemId.{enum_name}.id()" in pvm_melee, f"PvM melee should recognize {enum_name} as a scythe")
     require("applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob)" in pvm_melee,

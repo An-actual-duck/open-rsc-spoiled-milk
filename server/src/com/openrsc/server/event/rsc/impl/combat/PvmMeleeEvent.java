@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
@@ -50,6 +51,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		ItemId.IRON_SCYTHE.id(), ItemId.STEEL_SCYTHE.id(), ItemId.MITHRIL_SCYTHE.id(),
 		ItemId.TITAN_STEEL_SCYTHE.id(), ItemId.ADAMANTITE_SCYTHE.id(),
 		ItemId.ORICHALCUM_SCYTHE.id(), ItemId.RUNE_SCYTHE.id(),
+		MyWorldItemId.EXALTED_RUNE_SCYTHE,
 		ItemId.BLACK_SCYTHE.id(), ItemId.WHITE_SCYTHE.id(), ItemId.GREY_SCYTHE.id()
 	};
 	private final Mob attackerMob;
