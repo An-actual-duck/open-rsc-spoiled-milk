@@ -1985,7 +1985,11 @@ public final class Player extends Mob {
 		for (final int skill : skills) {
 			final String bonusKey = "potion_" + key + "_bonus_" + skill;
 			final int previousBonus = getAttribute(bonusKey, 0);
-			final int nextBonus = percent <= 0 ? 0 : Math.max(0, (int) Math.floor(getSkills().getMaxStat(skill) * (percent / 100.0D)));
+			final int nextBonus = percent <= 0
+				? 0
+				: skill == Skill.HITS.id()
+					? TemporaryMaximumHits.percentageBonus(getSkills().getMaxStat(skill), percent)
+					: Math.max(0, (int) Math.floor(getSkills().getMaxStat(skill) * (percent / 100.0D)));
 			if (previousBonus != nextBonus) {
 				final int nextLevel = skill == Skill.HITS.id()
 					? TemporaryMaximumHits.reconcileBonus(
