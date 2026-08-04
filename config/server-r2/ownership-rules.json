@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "evidenceBaseCommit": "6e1720900bbdccd46ba06b9726ac7e91a89b56f3",
+  "categories": [
+    "foundation",
+    "target-profile",
+    "spoiled-milk-content",
+    "maintained-compatibility",
+    "tool-only",
+    "diagnostic-proof",
+    "unresolved"
+  ],
+  "inputScope": {
+    "includePrefixes": [
+      "server/",
+      "release/world-builder-v2/",
+      "tools/layered-maps/"
+    ],
+    "includeExact": [
+      "scripts/audit-server-build.py",
+      "scripts/benchmark-server.sh",
+      "scripts/build-server.sh",
+      "scripts/deploy-live-main.sh",
+      "scripts/export-landscape-map.sh",
+      "scripts/import-landscape-map.sh",
+      "scripts/init-sqlite.sh",
+      "scripts/lib/layered-world-package.sh",
+      "scripts/lib/myworld-common.sh",
+      "scripts/package-world-builder-v2-release.sh",
+      "scripts/run-hosted-server.sh",
+      "scripts/run-server.sh",
+      "scripts/run-server-zgc.sh",
+      "scripts/stop-hosted-server.sh"
+    ],
+    "excludePrefixes": [
+      "server/.run/",
+      "server/avatars/",
+      "server/logs/",
+      "server/test/",
+      "tools/layered-maps/workspace/",
+      "tools/layered-maps/build/"
+    ],
+    "excludeExact": [
+      "server/.gitignore",
+      "server/SERVER.md",
+      "tools/layered-maps/.gitignore",
+      "tools/layered-maps/README.md"
+    ]
+  },
+  "rules": [
+    {
+      "pattern": "server/src/com/openrsc/server/content/worldedit/**",
+      "category": "tool-only",
+      "reason": "World Builder/editor-only runtime support"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/diagnostics/**",
+      "category": "diagnostic-proof",
+      "reason": "Bounded server diagnostics and parity evidence"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/constants/custom/MyWorld*",
+      "category": "spoiled-milk-content",
+      "reason": "Explicit MyWorld content identity catalog"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/content/cleric/**",
+      "category": "spoiled-milk-content",
+      "reason": "Spoiled Milk Cleric content"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
+      "category": "spoiled-milk-content",
+      "reason": "Spoiled Milk Monster Slayer content"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/content/minigame/combatodyssey/**",
+      "category": "spoiled-milk-content",
+      "reason": "Spoiled Milk Combat Odyssey content"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
+      "category": "spoiled-milk-content",
+      "reason": "Explicit Spoiled Milk gameplay implementation"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/content/LegacyAmuletCompatibility.java",
+      "category": "maintained-compatibility",
+      "reason": "Named maintained gameplay compatibility facade"
+    },
+    {
+      "pattern": "server/src/com/openrsc/server/content/**",
+      "category": "unresolved",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "pattern": "server/plugins/com/openrsc/server/plugins/custom/**",
+      "category": "spoiled-milk-content",
+      "reason": "Custom plugins shipped by the Spoiled Milk distribution"
+    },
+    {
+      "pattern": "server/plugins/com/openrsc/server/plugins/authentic/**",
+      "category": "target-profile",
+      "reason": "Authentic gameplay target-profile plugins"
+    },
+    {
+      "pattern": "server/plugins/com/openrsc/server/plugins/retro/**",
+      "category": "maintained-compatibility",
+      "reason": "Retro compatibility plugin family"
+    },
+    {
+      "pattern": "server/plugins/com/openrsc/server/plugins/shared/**",
+      "category": "maintained-compatibility",
+      "reason": "Shared legacy plugin triggers retained during extraction"
+    },
+    {
+      "pattern": "server/conf/server/data/Custom*",
+      "category": "spoiled-milk-content",
+      "reason": "Spoiled Milk custom terrain or sprite archive"
+    },
+    {
+      "pattern": "server/conf/server/data/{Authentic,F2P}*",
+      "category": "target-profile",
+      "reason": "Target-profile terrain or sprite archive"
+    },
+    {
+      "pattern": "server/conf/server/data/maps/**",
+      "category": "maintained-compatibility",
+      "reason": "Maintained legacy map archive family"
+    },
+    {
+      "pattern": "server/conf/server/defs/**/*{MyWorld,Custom,Harvesting,Runecraft,CustomQuest,MiceToMeetYou,Expansion,ModRoom,WoodcuttingGuild,Auction,PkBots}*",
+      "category": "spoiled-milk-content",
+      "reason": "Named Spoiled Milk definition or population override"
+    },
+    {
+      "pattern": "server/conf/server/defs/*{MyWorld,Custom}*",
+      "category": "spoiled-milk-content",
+      "reason": "Named Spoiled Milk definition override"
+    },
+    {
+      "pattern": "server/conf/server/defs/**/*{14,27,Patch18,Discontinued,Ironman,OpenPk,Other,retro}*",
+      "category": "maintained-compatibility",
+      "reason": "Versioned or named compatibility definition input"
+    },
+    {
+      "pattern": "server/conf/server/defs/locs/{BoundaryLocs,GroundItems,NpcLocs,SceneryLocs}.json",
+      "category": "target-profile",
+      "reason": "Base target population input"
+    },
+    {
+      "pattern": "server/conf/server/defs/{DoorDef,GameObjectDef,ItemDefs,NpcDefs,PrayerDef,SpellDef,TileDef}.xml",
+      "category": "target-profile",
+      "reason": "Base target definition input"
+    },
+    {
+      "pattern": "server/conf/server/defs/{ItemDefs,NpcDefs}.json",
+      "category": "target-profile",
+      "reason": "Base target definition input"
+    },
+    {
+      "pattern": "server/conf/server/defs/**",
+      "category": "unresolved",
+      "reason": "Definition ownership is not encoded strongly enough to infer safely"
+    },
+    {
+      "pattern": "server/conf/server/languages/Custom*",
+      "category": "spoiled-milk-content",
+      "reason": "Custom distribution message catalog"
+    },
+    {
+      "pattern": "server/conf/server/languages/Authentic*",
+      "category": "target-profile",
+      "reason": "Authentic target message catalog"
+    },
+    {
+      "pattern": "server/myworld*.conf",
+      "category": "target-profile",
+      "reason": "Spoiled Milk distribution composition profile"
+    },
+    {
+      "pattern": "server/database/**/*{summoning,blessing,harvesting,runecraft,custom}*",
+      "category": "spoiled-milk-content",
+      "reason": "Named custom-content persistence input"
+    },
+    {
+      "pattern": "server/database/**/*retro*",
+      "category": "maintained-compatibility",
+      "reason": "Retro persistence compatibility input"
+    },
+    {
+      "pattern": "server/database/**/core.*",
+      "category": "target-profile",
+      "reason": "Base database target schema"
+    },
+    {
+      "pattern": "server/database/**",
+      "category": "unresolved",
+      "reason": "Mixed persistence input requires backend/content ownership review"
+    },
+    {
+      "pattern": "server/inc/sqlite/myworld_seed.db",
+      "category": "spoiled-milk-content",
+      "reason": "Spoiled Milk development seed database"
+    },
+    {
+      "pattern": "server/inc/**",
+      "category": "maintained-compatibility",
+      "reason": "Retained platform/bootstrap compatibility input"
+    },
+    {
+      "pattern": "server/build.gradle",
+      "category": "maintained-compatibility",
+      "reason": "Secondary non-authoritative build description"
+    },
+    {
+      "pattern": "server/gradle/**",
+      "category": "maintained-compatibility",
+      "reason": "Secondary Gradle wrapper"
+    },
+    {
+      "pattern": "server/gradlew*",
+      "category": "maintained-compatibility",
+      "reason": "Secondary Gradle launcher"
+    },
+    {
+      "pattern": "server/compile*",
+      "category": "maintained-compatibility",
+      "reason": "Superseded platform build helper retained for compatibility"
+    },
+    {
+      "pattern": "server/world-builder-*",
+      "category": "tool-only",
+      "reason": "World Builder marker/input"
+    },
+    {
+      "pattern": "release/world-builder-v2/**",
+      "category": "tool-only",
+      "reason": "World Builder release input"
+    },
+    {
+      "pattern": "scripts/package-world-builder-v2-release.sh",
+      "category": "tool-only",
+      "reason": "World Builder packaging input"
+    },
+    {
+      "pattern": "scripts/{import-landscape-map,export-landscape-map}.sh",
+      "category": "tool-only",
+      "reason": "Map-authoring import/export tool"
+    },
+    {
+      "pattern": "tools/layered-maps/fixtures/**",
+      "category": "diagnostic-proof",
+      "reason": "Layered-package proof fixture"
+    },
+    {
+      "pattern": "tools/layered-maps/**",
+      "category": "tool-only",
+      "reason": "Layered-map schema, generator, or validation tool"
+    },
+    {
+      "pattern": "scripts/benchmark-server.sh",
+      "category": "diagnostic-proof",
+      "reason": "Server performance diagnostic input"
+    },
+    {
+      "pattern": "server/lib/**",
+      "category": "foundation",
+      "reason": "Ant-authoritative runtime dependency"
+    },
+    {
+      "pattern": "server/src/**",
+      "category": "foundation",
+      "reason": "Current Ant core source; direct content signals are recorded separately as debt"
+    },
+    {
+      "pattern": "scripts/**",
+      "category": "foundation",
+      "reason": "Server build, launch, audit, or operator-safety input"
+    },
+    {
+      "pattern": "server/build.xml",
+      "category": "foundation",
+      "reason": "Authoritative Ant build definition"
+    },
+    {
+      "pattern": "server/conf/**",
+      "category": "foundation",
+      "reason": "Content-neutral runtime configuration asset"
+    },
+    {
+      "pattern": "server/*",
+      "category": "foundation",
+      "reason": "Server root runtime/build input"
+    }
+  ],
+  "brandSignals": {
+    "want-myworld-flag": "(?i)\\bWANT_MYWORLD\\b|\\bwant_myworld\\b",
+    "myworld-name": "(?i)\\bmyworld\\b|MyWorld",
+    "spoiled-milk-name": "(?i)spoiled[ _-]?milk",
+    "myworld-plugin-namespace": "com\\.openrsc\\.server\\.plugins\\.custom\\.myworld"
+  }
+}

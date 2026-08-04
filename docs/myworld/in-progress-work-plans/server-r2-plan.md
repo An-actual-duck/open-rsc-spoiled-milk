@@ -1,6 +1,6 @@
 # Server R2 Productization Plan
 
-Status: ACTIVE PLANNING. No Server R2 production implementation has started.
+Status: ACTIVE IMPLEMENTATION. R2-0 is complete; R2-1 has not started.
 
 Plan date: 2026-07-30
 
@@ -92,8 +92,11 @@ This plan does not own:
 
 ## Current Evidence Snapshot
 
-All counts in this section are a planning snapshot at repository commit
-`4506ccda2` and must be refreshed by the first implementation branch.
+All counts in this section were refreshed from published `main` commit
+`6e1720900bbdccd46ba06b9726ac7e91a89b56f3` by the completed R2-0 audit. The
+checked human and JSON inventories are
+[`server-r2-ownership-inventory.md`](../info/server-r2-ownership-inventory.md)
+and `server-r2-ownership-inventory.json` beside it.
 
 ### Build and artifacts
 
@@ -102,9 +105,9 @@ All counts in this section are a planning snapshot at repository commit
   audit all follow this path.
 - Gradle is explicitly secondary and non-authoritative. Its combined source set
   and dependency declarations do not prove Ant artifact or runtime parity.
-- Ant compiles 894 Java files from `server/src` into a fat executable
+- Ant compiles 916 Java files from `server/src` into a fat executable
   `server/core.jar`.
-- Ant compiles 491 Java files from `server/plugins` into the separately loaded
+- Ant compiles 492 Java files from `server/plugins` into the separately loaded
   `server/plugins.jar`.
 - The checked-in library directory contains 21 JARs. Ant currently embeds all
   of them in `core.jar`, while run targets also put `server/lib/*` on the
@@ -179,25 +182,28 @@ current fail-closed checks.
 
 The current source tree does not yet provide a content-neutral build graph:
 
-- 190 files under `server/src` reference the current content/plugin namespaces.
+- 208 files under `server/src` reference the current content/plugin namespaces.
   This is a search heuristic requiring classification, not proof that every
   reference is wrong.
-- 59 files under `server/src` contain direct MyWorld/Spoiled Milk signals.
+- 61 files under `server/src` contain direct MyWorld/Spoiled Milk signals. The
+  wider R2-0 shipped-input inventory records 267 signal-bearing inputs across
+  core, plugins, data, configuration, database, release, and layered-tool
+  surfaces. Signals are evidence and never classify a file by themselves.
 - `ActionSender` imports `MyWorldItemId`, owns the
   `myworld_starter_bank_v1` cache key, constructs the Spoiled Milk welcome and
   starter bank, and selects payload generators. This is a concrete example of
   content behavior at the protocol layer.
 - `World` conditionally loads MyWorld definition foundations from
   `WANT_MYWORLD`.
-- `ServerConfiguration` is a 1,146-line flat mutable configuration object that
+- `ServerConfiguration` is a 1,152-line flat mutable configuration object that
   mixes transport, database, diagnostics, layered-world gates, legacy rules,
   World Builder settings, and Spoiled Milk gameplay switches.
 - `Server` is a 2,819-line composition root, lifecycle owner, network bootstrap,
   database migrator, plugin initializer, benchmark store, and diagnostics
   registry.
-- Other high-risk ownership concentrations remain in `Player` (6,946 lines),
-  `GameStateUpdater` (4,381), `ActionSender` (2,808), `World` (1,336), and
-  `RegionManager` (5,050).
+- Other high-risk ownership concentrations remain in `Player` (7,037 lines),
+  `GameStateUpdater` (4,590), `ActionSender` (2,840), `World` (1,354), and
+  `RegionManager` (5,066).
 - `LayeredCoordinateParityObserver` is a 12,403-line retained diagnostic/proof
   system. It must be classified before package inclusion; its size alone does
   not make it dead.
@@ -209,7 +215,7 @@ The current source tree does not yet provide a content-neutral build graph:
 - `PluginHandler` discovers trigger interfaces, injects the whole `Server`,
   recognizes quests, minigames, shops, `AbstractRegistrar`, and default
   handlers, and owns plugin-thread cleanup.
-- The one plugin artifact currently mixes 389 authentic, 84 custom, 15 shared,
+- The one plugin artifact currently mixes 389 authentic, 85 custom, 15 shared,
   and 3 retro Java files.
 - Existing trigger interfaces cover many NPC, item, scenery, wall, spell,
   combat, login/logout, command, and timed-event actions.
@@ -453,7 +459,7 @@ authority:
 
 Existing Guice injection of `Server` and existing trigger signatures remain
 available through a legacy adapter until authentic and Spoiled Milk parity is
-proven. New contracts must not force a flag-day rewrite of 491 plugin sources.
+proven. New contracts must not force a flag-day rewrite of 492 plugin sources.
 
 ### Lifecycle
 
@@ -529,6 +535,10 @@ gate; a later phase must not be used to conceal an earlier boundary failure.
 
 ### R2-0: Reproducible ownership and dependency baseline
 
+Status: **COMPLETE — 2026-08-04.** The implementation is audit/test/document
+only and changes no runtime source, build definition, configuration, data, or
+artifact composition.
+
 Goal: turn this planning inventory into a machine-checkable current baseline
 without changing runtime behavior.
 
@@ -570,6 +580,77 @@ Stop if:
 - the audit would encode generated/transient build output as source authority;
   or
 - enforcing the guard would require a broad package move.
+
+#### R2-0 completion record
+
+R2-0 establishes `scripts/audit-server-r2.py` and its reviewed rules/debt data
+under `config/server-r2/`. Two checked reports classify all 1,808 current
+shipped inputs into the seven required owner classes and retain the reason and
+matching rule for every entry. The inventory covers:
+
+- 916 Ant core sources, 492 Ant plugin sources, both artifact targets, and all
+  21 fat-JAR/runtime library inputs;
+- plugin families of 389 authentic, 85 custom, 15 shared, and 3 retro sources;
+- 42 definition inputs, 41 population inputs, 21 configuration inputs, 27
+  database patch/upgrade inputs, plus database schemas, addons, queries, and
+  the Spoiled Milk seed;
+- legacy and native map/archive inputs, the five declared layered runtime
+  profiles, layered schemas/tools/fixtures, and World Builder release inputs;
+  and
+- explicit Java imports, their reverse dependencies, file hashes, direct
+  MyWorld/Spoiled Milk signals, classification reasons, and the complete Ant
+  build-audit boundary.
+
+The current owner totals are 875 foundation, 412 target-profile, 178 Spoiled
+Milk content, 91 maintained compatibility, 133 tool-only, 10
+diagnostic/proof, and 109 explicitly unresolved inputs. The unresolved set is
+deliberate: 26 definition/population inputs, 51 database inputs, and 32 mixed
+`server.content` sources do not carry enough authority evidence for a safe
+final owner decision. They remain shipped and visible rather than being
+silently omitted or guessed.
+
+The dependency guard baselines 83 exact foundation-to-known-Spoiled-Milk Java
+import edges. An exact existing edge may remain or be removed, but a new or
+redirected edge fails `--check`. Brand words do not reclassify a file, and
+tests prove that suspicious names such as `CustomProtocol` cannot create false
+content ownership. The import graph intentionally covers explicit,
+non-wildcard Java imports only. Same-package, wildcard, reflective,
+configuration, and data coupling remains visible through owner/signal
+inventories and must receive a stronger contract in the appropriate later R2
+phase rather than inferred here.
+
+Verification completed headlessly against evidence base `6e1720900b`:
+
+- two independent JSON generations were byte-identical at SHA-256
+  `2aeaf25cb1edcdf89e72949c33d5e232830b6e2f63bcf2148012e85712c52324`;
+- `python3 scripts/audit-server-r2.py --check --base spoiled-milk/main` passed;
+- `python3 scripts/audit-server-build.py --check` passed with 21 libraries and
+  no validation errors;
+- `python3 tests/myworld/test-server-r2-boundary-audit.py` passed 6 tests;
+- `python3 tests/myworld/test-server-r2-dependency-guard.py` passed 3 tests;
+- `python3 tests/myworld/test-server-build-source-of-truth.py` passed;
+- `python3 tests/myworld/test-myworld-plugin-layout.py` passed;
+- `python3 tests/myworld/test-standalone-layout.py` passed;
+- `./scripts/lint.sh all --base spoiled-milk/main --offline` completed the
+  changed-code compiler, Checkstyle, PMD, ShellCheck, Ruff, CPD, and SpotBugs
+  lane with a current metadata receipt and no new gated finding; and
+- `./scripts/build-server.sh` compiled 916 core and 492 plugin sources and
+  passed its required artifact audit.
+
+No server/client process was launched, no release was built, and no live or
+private data was accessed. The repository-wide `tests/myworld/test-all.sh` was
+not run because it invokes `test-smoke.sh`, which launches a server and the
+owner explicitly prohibited launches during this unattended milestone. R2-0
+has no manual gameplay acceptance requirement because it changes only
+repository analysis and documentation.
+
+Recommended R2-1 start: characterize `Server` and `ServerConfiguration` into
+typed read-only views first, beginning with process/network and diagnostics,
+while retaining every current key, default, startup stage, and mutable facade.
+Before extraction, use the R2-0 reverse graph to select one low-content-signal
+view and add configuration/default/startup-order parity tests. Do not begin by
+moving the 32 unresolved content sources or by interpreting profile keys as a
+new stable plugin API.
 
 ### R2-1: Bootstrap, configuration, and lifecycle composition
 
@@ -1225,6 +1306,14 @@ change launchers, runtime cache defaults, or that test. The mismatch should be
 handled by a focused launcher/default-endpoint branch.
 
 ## Planning Change Log
+
+- **2026-08-04:** Completed R2-0 against published main `6e1720900b`. Added
+  deterministic human/JSON ownership and dependency inventories, classified
+  all 1,808 shipped inputs (including 109 explicit unresolved records),
+  baselined 83 existing foundation-to-Spoiled-Milk import edges, enforced new
+  edge refusal, integrated the Ant build audit, added focused determinism,
+  classification, and dependency tests, and completed all headless acceptance
+  checks. R2-1 remains unstarted pending manager integration of this boundary.
 
 - **2026-07-30:** Created the dedicated Server R2 plan from Phase 4. Reconciled
   the current Ant authority, B01-B11 server work, synchronization foundations,
