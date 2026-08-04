@@ -82,4 +82,13 @@ public final class NativeLayeredTerrainReadiness {
 			centerSectorY,
 			manifestSha256);
 	}
+
+	@Override
+	public String toString() {
+		return "context=" + contextSequence
+			+ ",world=" + worldSpace
+			+ ",level=" + logicalLevel
+			+ ",center=" + centerSectorX + "," + centerSectorY
+			+ ",manifest=" + manifestSha256;
+	}
 }

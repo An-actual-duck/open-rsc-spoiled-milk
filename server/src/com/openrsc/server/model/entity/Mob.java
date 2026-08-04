@@ -312,19 +312,19 @@ public abstract class Mob extends Entity {
 			return true;
 		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() && maxY >= getY()
-			&& (objectReachTile(getX() - 1, getY()).traversalMask & CollisionFlag.WALL_WEST) == 0) {
+			&& isObjectReachClear(getX() - 1, getY(), CollisionFlag.WALL_WEST)) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() >= minY && maxY >= getY()
-			&& (CollisionFlag.WALL_EAST & objectReachTile(getX() + 1, getY()).traversalMask) == 0) {
+			&& isObjectReachClear(getX() + 1, getY(), CollisionFlag.WALL_EAST)) {
 			return true;
 		}
 		if (minX <= getX() && maxX >= getX() && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH & objectReachTile(getX(), getY() - 1).traversalMask) == 0) {
+			&& isObjectReachClear(getX(), getY() - 1, CollisionFlag.WALL_SOUTH)) {
 			return true;
 		}
 		if (minX <= getX() && getX() <= maxX && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH & objectReachTile(getX(), getY() + 1).traversalMask) == 0) {
+			&& isObjectReachClear(getX(), getY() + 1, CollisionFlag.WALL_NORTH)) {
 			return true;
 		}
 		return false;
@@ -332,33 +332,35 @@ public abstract class Mob extends Entity {
 
 	private boolean canReachDiagonal(int minX, int maxX, int minY, int maxY) {
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() - 1 && maxY >= getY() - 1
-			&& (objectReachTile(getX() - 1, getY() - 1).traversalMask & CollisionFlag.WALL_SOUTH_WEST) == 0) {
+			&& isObjectReachClear(getX() - 1, getY() - 1, CollisionFlag.WALL_SOUTH_WEST)) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() - 1 >= minY && maxY >= getY() - 1
-			&& (CollisionFlag.WALL_SOUTH_EAST & objectReachTile(getX() + 1, getY() - 1).traversalMask) == 0) {
+			&& isObjectReachClear(getX() + 1, getY() - 1, CollisionFlag.WALL_SOUTH_EAST)) {
 			return true;
 		}
 		if (minX <= getX() - 1 && maxX >= getX() - 1 && minY <= getY() + 1 && maxY >= getY() + 1
-			&& (objectReachTile(getX() - 1, getY() + 1).traversalMask & CollisionFlag.WALL_NORTH_WEST) == 0) {
+			&& isObjectReachClear(getX() - 1, getY() + 1, CollisionFlag.WALL_NORTH_WEST)) {
 			return true;
 		}
 		if (1 + getX() >= minX && getX() + 1 <= maxX && getY() + 1 >= minY && maxY >= getY() + 1
-			&& (CollisionFlag.WALL_NORTH_EAST & objectReachTile(getX() + 1, getY() + 1).traversalMask) == 0) {
+			&& isObjectReachClear(getX() + 1, getY() + 1, CollisionFlag.WALL_NORTH_EAST)) {
 			return true;
 		}
 		return false;
 	}
 
-	private TileValue objectReachTile(final int x, final int y) {
-		WorldLocation current = getWorldLocation();
-		WorldLocation reachabilityLocation = new WorldLocation(
-			current.getWorldSpace(),
-			new WorldCoordinate(
-				x,
-				y,
-				current.getCoordinate().getLevel()));
-		return getWorld().getTile(reachabilityLocation);
+	private boolean isObjectReachClear(
+		final int x,
+		final int y,
+		final int collisionFlag) {
+		try {
+			TileValue tile = getTileAtCurrentLevel(x, y);
+			return tile != null
+				&& (tile.traversalMask & collisionFlag) == 0;
+		} catch (IllegalArgumentException | IllegalStateException missingTile) {
+			return false;
+		}
 	}
 
 	// canReach EVER, not canReach this tick

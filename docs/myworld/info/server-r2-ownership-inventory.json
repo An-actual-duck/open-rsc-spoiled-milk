@@ -680,7 +680,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "f2f275a26333ab8d0f2ac350aa2d34724708964a656c3bdd41cb4a87f048c19b",
+  "inputTreeSha256": "5d0eb1996ecdb18293a830a1edd41059c454576775089cf45f657640fe9f6464",
   "inputs": [
     {
       "brandSignals": [
@@ -30434,8 +30434,10 @@
       "sha256": "1ce36c810a5d2a1db07eba5fa3d42eb85b9f21a3230bacc88288731dbd4e6987"
     },
     {
-      "brandSignals": [],
-      "bytes": 179915,
+      "brandSignals": [
+        "spoiled-milk-name"
+      ],
+      "bytes": 190922,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -30569,6 +30571,10 @@
           "path": "server/src/com/openrsc/server/model/world/region/VisibilitySnapshot.java"
         },
         {
+          "import": "com.openrsc.server.net.PacketFrameLengthGuard",
+          "path": "server/src/com/openrsc/server/net/PacketFrameLengthGuard.java"
+        },
+        {
           "import": "com.openrsc.server.net.rsc.ActionSender",
           "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
         },
@@ -30633,7 +30639,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/GameStateUpdater.java",
       "reverseDependencies": [],
-      "sha256": "e16b9b194923ddc3402816cd72fb3ac583aad3b9f5f41e1f86699ba32538ec79"
+      "sha256": "edae648af8d132667dd4b89ee1ea1a5ebd2e1830aeda067c39ce3b80aecd5381"
     },
     {
       "brandSignals": [],
@@ -30668,6 +30674,19 @@
       "path": "server/src/com/openrsc/server/LoginExecutor.java",
       "reverseDependencies": [],
       "sha256": "425ddf4f15e53a17d41f982674da905320f2bd6cb5c35d997272d684a6208735"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 3695,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.SceneBaselineDeliveryPolicy",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/SceneBaselineDeliveryPolicy.java",
+      "reverseDependencies": [],
+      "sha256": "4ff56128b599401afe62d26946130e379bf2d75cf14aa66d54e61208dd976e68"
     },
     {
       "brandSignals": [
@@ -46176,7 +46195,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 68488,
+      "bytes": 68332,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -46422,7 +46441,7 @@
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java",
         "server/src/com/openrsc/server/util/rsc/Formulae.java"
       ],
-      "sha256": "fef5d59e664583ac49e3d2626cc7343745b37ac3bbefa517bf78f54a151f1b7e"
+      "sha256": "a9221d06bd82f814c0fc029d4c7a9a7da5b5a707b7bc6444e27ecd4bb2a587fc"
     },
     {
       "brandSignals": [],
@@ -52818,6 +52837,7 @@
         "server/src/com/openrsc/server/content/market/task/OpenMarketTask.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+        "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
         "server/src/com/openrsc/server/net/rsc/generators/PayloadGenerator.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/Payload115Generator.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/Payload140Generator.java",
@@ -52877,6 +52897,7 @@
         "server/src/com/openrsc/server/content/market/task/OpenMarketTask.java",
         "server/src/com/openrsc/server/login/CharacterCreateRequest.java",
         "server/src/com/openrsc/server/login/RecoveryAttemptRequest.java",
+        "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
         "server/src/com/openrsc/server/net/rsc/generators/PayloadGenerator.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/Payload115Generator.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/Payload140Generator.java",
@@ -52893,6 +52914,23 @@
         "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java"
       ],
       "sha256": "95b4a74519e22eb5222af6fdf73c493ae80e395429b92b0444914d70b14b2d50"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1619,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.net.PacketFrameLengthGuard",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/net/PacketFrameLengthGuard.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/GameStateUpdater.java",
+        "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
+        "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePaging.java"
+      ],
+      "sha256": "76943ab0ead84e813720e63195d3e2e2f8fe1b4e7f918b132310cfe28fb68e18"
     },
     {
       "brandSignals": [],
@@ -53063,8 +53101,10 @@
       "sha256": "2d10786eee5dc117622e82f0f2275d4a107e23a84a38eefe630a4a337d991a05"
     },
     {
-      "brandSignals": [],
-      "bytes": 5787,
+      "brandSignals": [
+        "spoiled-milk-name"
+      ],
+      "bytes": 8897,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53073,7 +53113,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/RSCProtocolEncoderMain.java",
       "reverseDependencies": [],
-      "sha256": "cd3fd719eeded6cdf97e6d9aa5ac3b20df40dbf9a4c92da4bf16b63f91f0fc1f"
+      "sha256": "ac1727b26d66bd1fccfb51cca645f772681039d4876ae69b2af573789ac0a5ff"
     },
     {
       "brandSignals": [],
@@ -53125,7 +53165,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 112542,
+      "bytes": 113681,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53526,7 +53566,7 @@
         "server/src/com/openrsc/server/plugins/menu/Menu.java",
         "server/src/com/openrsc/server/util/UsernameChange.java"
       ],
-      "sha256": "3b2751baa4fc8ff134ea1d6ac2bf89458b77bbce75a085776370d24b9c08cce4"
+      "sha256": "57d2010a5852579ae8b1b63b68cc8ba894ba1e7c323261d404b1105219500c14"
     },
     {
       "brandSignals": [],
@@ -53617,6 +53657,60 @@
     },
     {
       "brandSignals": [],
+      "bytes": 2012,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.net.Packet",
+          "path": "server/src/com/openrsc/server/net/Packet.java"
+        },
+        {
+          "import": "com.openrsc.server.net.PacketBuilder",
+          "path": "server/src/com/openrsc/server/net/PacketBuilder.java"
+        },
+        {
+          "import": "com.openrsc.server.net.PacketFrameLengthGuard",
+          "path": "server/src/com/openrsc/server/net/PacketFrameLengthGuard.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.LayeredTerrainStagePaging.Page",
+          "path": "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePaging.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.struct.outgoing.LayeredTerrainStageStruct",
+          "path": "server/src/com/openrsc/server/net/rsc/struct/outgoing/LayeredTerrainStageStruct.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.net.rsc.LayeredTerrainStagePacketPager",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
+      "reverseDependencies": [],
+      "sha256": "28ef6388639844017513971c1e84bbffb3486a27f948628d76a31120477246b0"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 4295,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.net.PacketFrameLengthGuard",
+          "path": "server/src/com/openrsc/server/net/PacketFrameLengthGuard.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.net.rsc.LayeredTerrainStagePaging",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePaging.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java"
+      ],
+      "sha256": "d859d331c9a3f7f3436df15b0d382bf6e1c8ffa2a4b510471f106bdde24efa92"
+    },
+    {
+      "brandSignals": [],
       "bytes": 39687,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
@@ -53680,7 +53774,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2548,
+      "bytes": 2777,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53700,11 +53794,11 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/GameStateUpdater.java"
       ],
-      "sha256": "b37b20bd2bc5c522d1bd784f51f016e62bc88a0bede9ca5e622d1b05b249bf41"
+      "sha256": "43c42df89a0e27ff79fb238c17a1f4ca214d2ecbc31b16b117a240346f0f0e90"
     },
     {
       "brandSignals": [],
-      "bytes": 3635,
+      "bytes": 3934,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53720,7 +53814,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/GameStateUpdater.java"
       ],
-      "sha256": "f352b6f30a354201340764974bb5c05b350ba2a3b5bef690f1584cce4e57fb99"
+      "sha256": "613301c4b994905cdea5eef6214fb582c4bf158f579c1ac8d695a8f32b18f6ac"
     },
     {
       "brandSignals": [],
@@ -60712,6 +60806,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/rsc/struct/outgoing/LayeredTerrainStageStruct.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
         "server/src/com/openrsc/server/net/rsc/NativeLayeredTerrainStageReadiness.java"
       ],
       "sha256": "9ea990257537ed16db505dcbd99b6004f8b0df0fb1e5db3bdb09bd87c6b64886"
@@ -67268,7 +67363,7 @@
   "summary": {
     "categoryCounts": {
       "diagnostic-proof": 10,
-      "foundation": 878,
+      "foundation": 882,
       "maintained-compatibility": 91,
       "spoiled-milk-content": 178,
       "target-profile": 412,
@@ -67276,13 +67371,13 @@
       "unresolved": 109
     },
     "configurationInputs": 21,
-    "coreJavaFiles": 919,
+    "coreJavaFiles": 923,
     "databasePatchInputs": 27,
     "definitionInputs": 42,
-    "directBrandSignalFiles": 267,
+    "directBrandSignalFiles": 269,
     "foundationToSpoiledMilkDependencies": 83,
     "kindCounts": {
-      "ant-core-source": 919,
+      "ant-core-source": 923,
       "ant-library": 21,
       "ant-plugin-source": 492,
       "build-definition": 2,
@@ -67310,7 +67405,7 @@
     },
     "pluginJavaFiles": 492,
     "populationInputs": 41,
-    "shippedInputs": 1811
+    "shippedInputs": 1815
   },
   "unresolvedInputs": [
     {

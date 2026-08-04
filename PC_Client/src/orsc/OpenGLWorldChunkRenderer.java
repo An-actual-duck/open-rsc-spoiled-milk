@@ -258,7 +258,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				OpenGLWorldChunkUploadStats.roleIndex(
 					chunk.getChunkRole());
 			requestedByRole[roleIndex]++;
-			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
+			WorldChunkBufferKey key = WorldChunkBufferKey.from(
+				chunk,
+				drawOffsetSupported,
+				shadowProofSignature);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			int brightnessBits = currentBrightnessBits();
 			int fogModeBits = currentFogModeBits();
@@ -1772,7 +1775,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				continue;
 			}
 			requiredResidentChunks++;
-			WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
+			WorldChunkBufferKey key = WorldChunkBufferKey.from(
+				chunk,
+				drawOffsetSupported,
+				shadowProofSignature);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			if (buffer == null || !buffer.matches(
 				chunkBufferSignature(chunk, drawOffsetSupported),
@@ -2232,7 +2238,10 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				if (!shouldDrawChunkModelKind(frame, chunk, modelKind)) {
 					continue;
 				}
-				WorldChunkBufferKey key = WorldChunkBufferKey.from(chunk);
+				WorldChunkBufferKey key = WorldChunkBufferKey.from(
+					chunk,
+					shaderActive,
+					shadowProofSignature);
 				WorldChunkBuffer buffer = residentChunks.get(key);
 				if (buffer == null || !buffer.matches(
 					chunkBufferSignature(chunk, shaderActive),
@@ -4159,6 +4168,9 @@ final class WorldChunkBufferKey {
 	final int originWorldZ;
 	final boolean objectOnly;
 	final int chunkRole;
+	final boolean drawOffsetStorage;
+	final long storageSignature;
+	final long storageVariantSignature;
 
 	WorldChunkBufferKey(
 		int plane,
@@ -4167,7 +4179,10 @@ final class WorldChunkBufferKey {
 		int originWorldX,
 		int originWorldZ,
 		boolean objectOnly,
-		int chunkRole) {
+		int chunkRole,
+		boolean drawOffsetStorage,
+		long storageSignature,
+		long storageVariantSignature) {
 		this.plane = plane;
 		this.centerSectionX = centerSectionX;
 		this.centerSectionY = centerSectionY;
@@ -4175,17 +4190,52 @@ final class WorldChunkBufferKey {
 		this.originWorldZ = originWorldZ;
 		this.objectOnly = objectOnly;
 		this.chunkRole = chunkRole;
+		this.drawOffsetStorage = drawOffsetStorage;
+		this.storageSignature = storageSignature;
+		this.storageVariantSignature = storageVariantSignature;
 	}
 
 	static WorldChunkBufferKey from(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
+		return from(chunk, false);
+	}
+
+	static WorldChunkBufferKey from(
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		boolean drawOffsetSupported) {
+		return from(chunk, drawOffsetSupported, 0L);
+	}
+
+	static WorldChunkBufferKey from(
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		boolean drawOffsetSupported,
+		long storageVariantSignature) {
+		boolean immutableStorageIdentity = drawOffsetSupported
+			&& chunk.getChunkRole()
+				!= Renderer3DWorldChunkFrame
+					.CHUNK_ROLE_ANIMATED_OBJECTS;
+		/*
+		 * The resident shader applies presentation rebases as a draw offset.
+		 * Its VBO therefore owns immutable mesh storage, not the current
+		 * section-center/origin presentation. Keeping positional keys on that
+		 * path made every adjacent rebase upload unchanged storage again.
+		 * Baked vertex variants (currently projected-shadow proof) must remain
+		 * distinct: collapsing them would overwrite the resident copy on every
+		 * return crossing. Animated-object storage changes every frame, so those
+		 * chunks deliberately retain a stable positional key and update their
+		 * existing buffer instead of allocating an unbounded stream of cache
+		 * entries. The fixed-function path also remains position-specific.
+		 */
 		return new WorldChunkBufferKey(
 			chunk.getPlane(),
-			chunk.getCenterSectionX(),
-			chunk.getCenterSectionY(),
-			chunk.getOriginWorldX(),
-			chunk.getOriginWorldZ(),
+			immutableStorageIdentity ? 0 : chunk.getCenterSectionX(),
+			immutableStorageIdentity ? 0 : chunk.getCenterSectionY(),
+			immutableStorageIdentity ? 0 : chunk.getOriginWorldX(),
+			immutableStorageIdentity ? 0 : chunk.getOriginWorldZ(),
 			chunk.isObjectChunk(),
-			chunk.getChunkRole());
+			chunk.getChunkRole(),
+			immutableStorageIdentity,
+			immutableStorageIdentity ? chunk.getStorageSignature() : 0L,
+			immutableStorageIdentity ? storageVariantSignature : 0L);
 	}
 
 	@Override
@@ -4197,13 +4247,21 @@ final class WorldChunkBufferKey {
 			return false;
 		}
 		WorldChunkBufferKey key = (WorldChunkBufferKey) other;
-		return plane == key.plane
-			&& centerSectionX == key.centerSectionX
+		if (plane != key.plane
+			|| objectOnly != key.objectOnly
+			|| chunkRole != key.chunkRole
+			|| drawOffsetStorage != key.drawOffsetStorage) {
+			return false;
+		}
+		if (drawOffsetStorage) {
+			return storageSignature == key.storageSignature
+				&& storageVariantSignature
+					== key.storageVariantSignature;
+		}
+		return centerSectionX == key.centerSectionX
 			&& centerSectionY == key.centerSectionY
 			&& originWorldX == key.originWorldX
-			&& originWorldZ == key.originWorldZ
-			&& objectOnly == key.objectOnly
-			&& chunkRole == key.chunkRole;
+			&& originWorldZ == key.originWorldZ;
 	}
 
 	@Override
@@ -4215,6 +4273,12 @@ final class WorldChunkBufferKey {
 		result = 31 * result + originWorldZ;
 		result = 31 * result + (objectOnly ? 1 : 0);
 		result = 31 * result + chunkRole;
+		result = 31 * result + (drawOffsetStorage ? 1 : 0);
+		result = 31 * result
+			+ (int) (storageSignature ^ (storageSignature >>> 32));
+		result = 31 * result
+			+ (int) (storageVariantSignature
+				^ (storageVariantSignature >>> 32));
 		return result;
 	}
 }
