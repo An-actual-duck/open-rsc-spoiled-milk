@@ -55,6 +55,7 @@ def validate_source_boundaries() -> None:
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
         "server/src/com/openrsc/server/content/status/ClericActiveStatusCollector.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
+        "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
         "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",

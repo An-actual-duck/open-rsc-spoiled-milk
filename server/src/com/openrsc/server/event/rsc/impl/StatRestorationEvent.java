@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.GameTickEventSpatialAffinity;
@@ -85,7 +86,9 @@ public class StatRestorationEvent extends GameTickEvent {
 		if (restoringHits.get()) {
 			long delay = 100 * getWorld().getServer().getConfig().GAME_TICK; // 64 seconds in authentic rate
 			if (getOwner().isPlayer()) {
-				delay = getNaturalHitsInterval((Player) getOwner(), 0.0D);
+				Player player = (Player) getOwner();
+				delay = getNaturalHitsInterval(player,
+					ClericTimedEffectRuntime.getRespiteSpeedBonus(player));
 			}
 			deltaCycles = (System.currentTimeMillis() - this.lastHitRestoration) / delay;
 			if (System.currentTimeMillis() - this.lastHitRestoration > delay && getOwner().isPlayer()) {
@@ -146,9 +149,8 @@ public class StatRestorationEvent extends GameTickEvent {
 
 	/**
 	 * Resolves independently owned speed factors without mutating the existing
-	 * natural-healing clock. C07 passes no active Respite bonus because status
-	 * representation belongs to C08; the later Respite effect supplies only its
-	 * snapshotted bonus here and must not reschedule or directly heal.
+	 * natural-healing clock. Respite contributes only its current validated
+	 * snapshotted bonus and must not reschedule or directly heal.
 	 */
 	long getNaturalHitsInterval(final Player player, final double respiteSpeedBonus) {
 		final long minimumInterval = getWorld().getServer().getConfig().GAME_TICK;

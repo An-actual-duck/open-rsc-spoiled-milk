@@ -170,8 +170,8 @@ public final class ClericEffectStateFixture {
 				&& magnitude.getFirstDelayedPulseTicks() == 8
 				&& magnitude.getSecondDelayedPulseTicks() == 16,
 				"Mend magnitude/cadence drift");
-			check(definition.getDuration().toNanos(640L) == 10_240_000_000L,
-				"Mend tick-relative duration drift");
+			check(definition.getDuration().toNanos(640L) == 10_880_000_000L,
+				"Mend final-pulse scheduler grace drift");
 		}
 
 		int[] greaterMend = {2, 3, 4, 5};
@@ -527,7 +527,8 @@ def validate_source_boundaries() -> None:
             "Player lacks content-neutral recipient-owned effect slot")
     require("TransientEffectMembershipToken.issue()" in player,
             "party membership does not issue a new opaque generation")
-    require("recipientState.clearOriginatingFrom(transientEffectSessionToken" in player,
+    require("recipientState.clearOriginatingFrom(" in player
+            and "transientEffectSessionToken, previousMembership" in player,
             "party transition does not use centralized transient-effect cleanup")
     require("com.openrsc.server.content.cleric" not in player,
             "foundation Player gained a reverse dependency on Cleric content")
@@ -536,7 +537,7 @@ def validate_source_boundaries() -> None:
         "private int getEquippedWeaponID", 1
     )[0]
     tutorial_return = death.index("skipTutorial();")
-    death_clear = death.index("getTransientEffectState().clearAll();")
+    death_clear = death.index("clearTransientEffectsAndRefreshStatus();")
     death_record = death.index('getCache().store("last_death"')
     require(tutorial_return < death_clear < death_record,
             "real-death cleanup must follow tutorial pseudo-death and precede death processing")
@@ -544,7 +545,7 @@ def validate_source_boundaries() -> None:
     logout = player.split("public void logout()", 1)[1].split(
         "public void sendMemberErrorMessage", 1
     )[0]
-    require(logout.index("getTransientEffectState().clearAll();")
+    require(logout.index("clearTransientEffectsAndRefreshStatus();")
             < logout.index("getParty().removePlayer"),
             "logout must clear received effects before party departure")
 
@@ -589,9 +590,9 @@ def validate_source_boundaries() -> None:
 
     casting = CASTING.read_text(encoding="utf-8")
     handler = HANDLER.read_text(encoding="utf-8")
-    require("definition.getId() != ClericSpellId.UNIFY" in casting
-            and "definition.getId() != ClericSpellId.PURIFY" in casting,
-            "only approved Unify and instant Purify may be reachable")
+    for spell in ("UNIFY", "PURIFY", "RESTORE", "MEND", "GREATER_MEND", "RESPITE"):
+        require(f"spellId == ClericSpellId.{spell}" in casting,
+                f"approved C07/C09 Cleric runtime omits {spell}")
     require("ClericEffectCatalog" not in casting and "ClericEffectRegistry" not in casting,
             "C08A casting path can populate the new registry")
     require("ClericEffectCatalog" not in handler and "ClericEffectRegistry" not in handler,
@@ -603,10 +604,11 @@ def validate_source_boundaries() -> None:
             continue
         if "ClericEffectCatalog" in path.read_text(encoding="utf-8"):
             production_catalog_references.append(path.relative_to(ROOT).as_posix())
-    require(production_catalog_references == [
-                "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java"
-            ],
-            f"effect catalog escaped approved C08B presentation: {production_catalog_references}")
+    require(set(production_catalog_references) == {
+                "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
+                "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+            },
+            f"effect catalog escaped approved C08B/C09 consumers: {production_catalog_references}")
 
     plan = PLAN.read_text(encoding="utf-8")
     require("C08A — `feat/cleric-effect-state-foundation`" in plan,

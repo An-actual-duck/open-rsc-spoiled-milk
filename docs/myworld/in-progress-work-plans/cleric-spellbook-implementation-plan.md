@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `main` (Purify integrated; AI-3 idle and ready for the next focused branch)
+- Branch: `feat/cleric-c09-support-batch` (complete C09 batch ready for manager review)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 Purify — implementation and private acceptance**
-- Current milestone: **C09 Restore — next bounded effect, awaiting activation on a focused branch**
-- Next planned milestone: **Implement and privately verify Restore without making later C09 spells reachable**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, party-only Unify, and the focused party-only Purify implementation; C08A's registry remains empty, while C08B presents only already-authoritative timed status snapshots**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance**
+- Current milestone: **C09 complete — ready for manager review and integration**
+- Next planned milestone: **C10 direct-combat support, only after the complete C09 batch is accepted and integrated**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog/status presentation, party-only Unify, Purify, Restore, Mend, Greater Mend, and Respite; C10 effects remain unavailable**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -598,8 +598,10 @@ C08 is complete only when:
 
 ### C09 — Low-Risk Support Effects
 
-Implement in narrow branches, beginning with mechanics that do not alter the
-shared combat damage pipeline:
+Implement in bounded families, beginning with mechanics that do not alter the
+shared combat damage pipeline. Purify was integrated first; the manager then
+authorized the remaining effects as one ordered release batch with coherent
+family checkpoints rather than separate approval stops:
 
 1. Purify;
 2. Restore;
@@ -607,7 +609,7 @@ shared combat damage pipeline:
 4. Respite using C07's natural-regeneration interval boundary after C08 owns
    its transient state.
 
-Each branch owns its pure calculations, lifecycle tests, area behavior,
+Each bounded family owns its pure calculations, lifecycle tests, area behavior,
 resource transaction, client text/HUD behavior where applicable, builds, and
 private verification.
 
@@ -1204,3 +1206,62 @@ Final verification completed on the focused branch:
 - authoritative Ant server and client builds;
 - changed-code compiler and static analysis against `502160e07`; and
 - `git diff --check`.
+
+## C09 Remaining Support Batch Completion Record
+
+The release batch completes C09 in the documented order. Restore is an instant
+Guthix support action that recovers `10`/`25`/`40`/`60` percent of each
+recipient's current equipment-aware normal maximum for every reduced configured
+skill except Hits. Recovery rounds upward, caps at the valid maximum, never
+lowers a stat, and spends nothing when no eligible recipient has a useful
+recovery.
+
+Mend and Greater Mend share one typed healing-pulse family. Each useful cast
+heals once immediately and twice more at the authored eight- and sixteen-tick
+marks, with `1`/`2`/`3` Hits per Mend pulse and `2`/`3`/`4`/`5` Hits per Greater
+Mend pulse. Healing uses each recipient's active temporary Hits ceiling.
+Greater Mend replaces Mend regardless of rank, higher ranks replace lower
+ranks, equal ranks refresh and restart the pulse schedule, and ineffective
+lower-tier/rank casts spend nothing. The server remains authoritative for the
+fixed pulse counter shown by the maintained-client HUD.
+
+Respite installs the typed passive-regeneration effect at
+`10`/`15`/`20`/`25` percent speed for `5`/`10`/`15`/`20` minutes. It composes as
+the final independent speed factor on the existing natural Hits regeneration
+interval. It neither heals immediately nor resets the existing regeneration
+clock, and it does not alter food, potion, prayer, equipment, or direct-healing
+behavior.
+
+All four spells reuse C07's snapshotted party, range, signed-level/world-space,
+line-of-effect, caster-exclusion, PvP, and one-cost atomic transaction. Timed
+effects reuse C08's recipient-owned registry, party/session origins,
+replacement rules, status transport, HUD counters, and death/logout/party
+cleanup. Preflight uses a side-effect-free registry preview; a registry and its
+pulse event are installed only inside a successful cast commit. No C10 effect,
+Worship XP, cache state, schema, login restoration, or combat-damage behavior
+is introduced.
+
+Private verification used maintained OpenGL clients and the isolated
+`43615/43515` server. The owner reported the C09 effects behaved correctly and
+approved the final compact spellbook presentation. God and neutral names were
+removed from tooltip headings to prevent overflow and avoid implying that
+player alignment gates casting; server-fed alignment metadata and visible
+sigil costs remain unchanged. The clients and isolated server were stopped,
+the tracked client port was restored to `43605`, and the public server and
+detached live checkout remained untouched.
+
+Final verification completed against published base `09f72b9eb`:
+
+- Restore, timed-support, Purify, C07 cast-transaction, C08 effect-state and
+  mixed-status HUD fixtures;
+- Cleric definition, presentation, Blessing, Holy Power, sigil asset/package,
+  and sigil-production fixtures;
+- Brawn healing-ceiling, potion HUD/runtime, Herblaw, Worship-cape healing,
+  summon healing, player-data, combat-invariant, moderator-death, and
+  death-altar fixtures;
+- `./scripts/build-server.sh` for authoritative Ant core and plugin artifacts;
+- the packaged client build exercised by the sigil asset fixture;
+- `./scripts/lint.sh compiler --base 09f72b9eb --offline`, with no new gated
+  compiler warnings; and
+- `./scripts/lint.sh analyze --base 09f72b9eb --offline`, with no Ruff findings
+  and no new SpotBugs findings. Checkstyle, PMD, and CPD remain report-only.

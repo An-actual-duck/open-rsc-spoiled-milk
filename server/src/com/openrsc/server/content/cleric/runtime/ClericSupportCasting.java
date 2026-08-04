@@ -1,7 +1,9 @@
 package com.openrsc.server.content.cleric.runtime;
 
+import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.cleric.ClericCastTransaction;
 import com.openrsc.server.content.cleric.ClericPurifyEffect;
+import com.openrsc.server.content.cleric.ClericRestoreEffect;
 import com.openrsc.server.content.cleric.ClericSigilItemId;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
@@ -31,8 +33,7 @@ public final class ClericSupportCasting {
 		if (caster == null || definition == null) {
 			throw new IllegalArgumentException("Cleric casting requires a player and definition");
 		}
-		if (definition.getId() != ClericSpellId.UNIFY
-				&& definition.getId() != ClericSpellId.PURIFY) {
+		if (!isImplemented(definition.getId())) {
 			return CastResult.notImplemented();
 		}
 
@@ -45,12 +46,29 @@ public final class ClericSupportCasting {
 			caster, partySnapshot, definition.getRadius(), new PlayerCandidateView(caster, party));
 		final List<ClericCastTransaction.PreparedApplication> applications =
 			new ArrayList<ClericCastTransaction.PreparedApplication>(targets.size());
-		final int purifyRank = definition.getId() == ClericSpellId.PURIFY
+		final int effectRank = definition.getId() != ClericSpellId.UNIFY
 			? definition.resolveEffectRank(
 				caster.getCarriedItems().getEquipment().getHolyPower()) : 0;
 		for (Player target : targets) {
-			applications.add(definition.getId() == ClericSpellId.UNIFY
-				? prepareUnify(target, caster) : preparePurify(target, purifyRank));
+			switch (definition.getId()) {
+				case UNIFY:
+					applications.add(prepareUnify(target, caster));
+					break;
+				case PURIFY:
+					applications.add(preparePurify(target, effectRank));
+					break;
+				case RESTORE:
+					applications.add(prepareRestore(target, effectRank));
+					break;
+				case MEND:
+				case GREATER_MEND:
+				case RESPITE:
+					applications.add(ClericTimedEffectRuntime.prepare(
+						caster, target, definition, effectRank));
+					break;
+				default:
+					throw new IllegalStateException("Unprepared implemented Cleric spell");
+			}
 		}
 
 		final ClericCastTransaction.Result transaction = ClericCastTransaction.execute(
@@ -78,6 +96,15 @@ public final class ClericSupportCasting {
 		return player.getConfig().USES_PK_MODE
 			|| player.getLocation().inWilderness()
 			|| player.getDuel().isDuelActive();
+	}
+
+	private static boolean isImplemented(final ClericSpellId spellId) {
+		return spellId == ClericSpellId.UNIFY
+			|| spellId == ClericSpellId.PURIFY
+			|| spellId == ClericSpellId.RESTORE
+			|| spellId == ClericSpellId.MEND
+			|| spellId == ClericSpellId.GREATER_MEND
+			|| spellId == ClericSpellId.RESPITE;
 	}
 
 	private static List<Player> snapshotPartyPlayers(Party party) {
@@ -125,6 +152,23 @@ public final class ClericSupportCasting {
 			recipient.getCurrentPoisonPower(), effectRank);
 		return plan.isUseful()
 			? new PurifyApplication(recipient, plan.getReduction())
+			: IneffectiveApplication.INSTANCE;
+	}
+
+	private static ClericCastTransaction.PreparedApplication prepareRestore(
+			final Player recipient, final int effectRank) {
+		final int skillCount = recipient.getWorld().getServer().getConstants()
+			.getSkills().getSkillsCount();
+		final int[] currentLevels = new int[skillCount];
+		final int[] validMaximums = new int[skillCount];
+		for (int skill = 0; skill < skillCount; skill++) {
+			currentLevels[skill] = recipient.getSkills().getLevel(skill);
+			validMaximums[skill] = recipient.getEquipmentAdjustedNormalLevel(skill);
+		}
+		final ClericRestoreEffect.Plan plan = ClericRestoreEffect.plan(
+			currentLevels, validMaximums, Skill.HITS.id(), effectRank);
+		return plan.isUseful()
+			? new RestoreApplication(recipient, plan.getRestoredLevels())
 			: IneffectiveApplication.INSTANCE;
 	}
 
@@ -246,6 +290,34 @@ public final class ClericSupportCasting {
 		@Override
 		public void commit() {
 			recipient.reduceCurrentPoisonPower(reduction);
+		}
+	}
+
+	private static final class RestoreApplication
+			implements ClericCastTransaction.PreparedApplication {
+		private final Player recipient;
+		private final int[] restoredLevels;
+
+		private RestoreApplication(final Player recipient, final int[] restoredLevels) {
+			this.recipient = recipient;
+			this.restoredLevels = restoredLevels.clone();
+		}
+
+		@Override
+		public boolean isUseful() {
+			return true;
+		}
+
+		@Override
+		public void commit() {
+			for (int skill = 0; skill < restoredLevels.length; skill++) {
+				final int current = recipient.getSkills().getLevel(skill);
+				final int validMaximum = recipient.getEquipmentAdjustedNormalLevel(skill);
+				final int restored = Math.min(restoredLevels[skill], validMaximum);
+				if (current < restored) {
+					recipient.getSkills().setLevel(skill, restored, true, true);
+				}
+			}
 		}
 	}
 

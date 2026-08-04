@@ -70,7 +70,9 @@ public final class ClericEffectCatalog {
 		for (int index = 0; index < hitsPerPulse.length; index++) {
 			add(bySpell, new ClericEffectRankDefinition<ClericEffectMagnitudes.HealingPulse>(
 				spellId, ClericEffectFamily.HEALING_PULSES, index + 1, precedence,
-				ClericEffectDuration.gameTicks(16), ClericEffectCounterKind.PULSES, 3,
+				// One bounded scheduler tick beyond the final tick-16 pulse keeps
+				// the endpoint from expiring before its event can consume it.
+				ClericEffectDuration.gameTicks(17), ClericEffectCounterKind.PULSES, 3,
 				new ClericEffectMagnitudes.HealingPulse(hitsPerPulse[index], 8, 16)));
 		}
 	}

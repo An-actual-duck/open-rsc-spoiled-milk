@@ -64,9 +64,9 @@ def validate_wiring() -> None:
     for pvp_boundary in ("USES_PK_MODE", "inWilderness()", "isDuelActive()"):
         require(pvp_boundary in casting,
                 f"shared C07 PvP boundary omits {pvp_boundary}")
-    require("definition.getId() != ClericSpellId.UNIFY" in casting
-            and "definition.getId() != ClericSpellId.PURIFY" in casting,
-            "only approved Unify and Purify effects may be reachable")
+    for spell in ("UNIFY", "PURIFY", "RESTORE", "MEND", "GREATER_MEND", "RESPITE"):
+        require(f"spellId == ClericSpellId.{spell}" in casting,
+                f"approved Cleric runtime omits {spell}")
     for forbidden in ("remove(", "addExperience", "incExp", "setLevel", "setSkill"):
         require(forbidden not in method,
                 f"C06 request unexpectedly mutates gameplay through {forbidden}")
@@ -87,6 +87,13 @@ def validate_wiring() -> None:
             "client does not submit the stable Cleric cast request")
     require("this.playerStatBase[5] >= definition.getWorshipLevel()" in mudclient,
             "client Worship gate does not match the server's trained-level gate")
+    tooltip_method = mudclient.split("private void drawClericTooltip", 1)[1].split(
+        "private int getClericSpellCodeAt", 1)[0]
+    require("definition.getAlignment()" not in tooltip_method,
+            "Cleric tooltip exposes resource alignment as a player-alignment requirement")
+    require('definition.getName() + " (Worship " + definition.getWorshipLevel() + ")"'
+            in tooltip_method,
+            "Cleric tooltip does not retain its compact Worship requirement")
     for name in (
         '"Mend"', '"Unify"', '"Fervor"', '"Purify"', '"Restore"', '"Ward"',
         '"Greater Mend"', '"Zeal"', '"Thorns"', '"Aegis"', '"Rally"', '"Respite"',

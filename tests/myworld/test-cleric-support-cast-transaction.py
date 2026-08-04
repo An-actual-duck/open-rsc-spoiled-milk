@@ -264,9 +264,9 @@ def validate_runtime_boundaries() -> None:
         "ActionSender.sendInventory(caster);",
     ):
         require(snippet in runtime, f"C07 runtime boundary missing: {snippet}")
-    require("definition.getId() != ClericSpellId.UNIFY" in runtime
-            and "definition.getId() != ClericSpellId.PURIFY" in runtime,
-            "only approved C07 Unify and C09 Purify effects may be reachable")
+    for spell in ("UNIFY", "PURIFY", "RESTORE", "MEND", "GREATER_MEND", "RESPITE"):
+        require(f"spellId == ClericSpellId.{spell}" in runtime,
+                f"approved Cleric runtime omits {spell}")
     require("teleport(" not in runtime and "teleportLayer" not in runtime,
             "Unify must never use teleport movement")
     require("Skill.PRAYER" not in runtime and "addExperience" not in runtime,
@@ -287,8 +287,8 @@ def validate_runtime_boundaries() -> None:
     require(preflight < state_change < removal,
             "sigil vector preflight, state commit, and removal ordering drift")
 
-    require("getNaturalHitsInterval((Player) getOwner(), 0.0D)" in restoration,
-            "C07 must leave Respite inactive until shared effect state exists")
+    require("ClericTimedEffectRuntime.getRespiteSpeedBonus(player)" in restoration,
+            "C09 Respite must supply only its validated natural-healing multiplier")
     require("lastHitRestoration" not in natural and "normalizeLevel" not in natural,
             "regeneration factor math must not reset the clock or grant a tick")
     require("must not reschedule or directly heal" in restoration.lower(),
