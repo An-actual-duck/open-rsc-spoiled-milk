@@ -914,20 +914,37 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
             public final class LayeredScenePacketDrainPolicyHarness {
                 public static void main(String[] arguments) {
                     require(LayeredScenePacketDrainPolicy.shouldReadNext(
-                        0, false, false, false),
-                        "normal cadence reads one packet");
+                        0, false, false, false, false),
+                        "legacy cadence reads one packet");
                     require(!LayeredScenePacketDrainPolicy.shouldReadNext(
-                        1, false, false, false),
-                        "normal cadence remains one packet");
+                        1, false, false, false, false),
+                        "legacy cadence remains one packet");
+
+                    for (int packet = 0;
+                            packet
+                                < LayeredScenePacketDrainPolicy
+                                    .LAYERED_NORMAL_PACKET_LIMIT;
+                            packet++) {
+                        require(
+                            LayeredScenePacketDrainPolicy.shouldReadNext(
+                                packet, false, false, false, true),
+                            "layered packet inside steady-state bound "
+                                + packet);
+                    }
+                    require(!LayeredScenePacketDrainPolicy.shouldReadNext(
+                        LayeredScenePacketDrainPolicy
+                            .LAYERED_NORMAL_PACKET_LIMIT,
+                        false, false, false, true),
+                        "layered steady-state drain has a hard bound");
 
                     require(LayeredScenePacketDrainPolicy.shouldReadNext(
-                        1, true, true, false),
+                        1, true, true, false, true),
                         "atomic activation drains its ordered update");
                     require(!LayeredScenePacketDrainPolicy.shouldReadNext(
-                        2, true, true, true),
+                        2, true, true, true, true),
                         "terrain halo build pauses the drain");
                     require(!LayeredScenePacketDrainPolicy.shouldReadNext(
-                        2, true, false, false),
+                        2, true, false, false, true),
                         "completed activation ends the drain");
 
                     for (int packet = 0;
@@ -937,19 +954,19 @@ class LayeredTransitionMinimapAcceptanceTest(unittest.TestCase):
                             packet++) {
                         require(
                             LayeredScenePacketDrainPolicy.shouldReadNext(
-                                packet, true, true, false),
+                                packet, true, true, false, true),
                             "atomic packet inside bound " + packet);
                     }
                     require(!LayeredScenePacketDrainPolicy.shouldReadNext(
                         LayeredScenePacketDrainPolicy
                             .ATOMIC_ACTIVATION_PACKET_LIMIT,
-                        true, true, false),
+                        true, true, false, true),
                         "atomic burst has a hard bound");
 
                     boolean rejectedNegative = false;
                     try {
                         LayeredScenePacketDrainPolicy.shouldReadNext(
-                            -1, false, false, false);
+                            -1, false, false, false, false);
                     } catch (IllegalArgumentException expected) {
                         rejectedNegative = true;
                     }

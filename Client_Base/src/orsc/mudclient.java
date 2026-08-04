@@ -2489,12 +2489,12 @@ public final class mudclient implements Runnable {
 			}
 
 			/*
-			 * Keep the authentic one-packet cadence during ordinary play.
-			 * Protocol-v8 atomic activation is one ordered server update,
-			 * however, and may contain several baseline pages. Reading those
-			 * pages one per client tick made a local scene transition pause in
-			 * proportion to packet count. Drain only that bounded activation
-			 * burst, pausing if its terrain halo is still being prepared.
+			 * Keep the authentic one-packet cadence for legacy connections.
+			 * Native layered sessions have a small bounded steady-state budget
+			 * so their additional ordered scene traffic cannot accumulate ahead
+			 * of movement responses. Protocol-v8 atomic activation gets a larger
+			 * bounded burst for its baseline pages, pausing if its terrain halo
+			 * is still being prepared.
 			 */
 			int processedPackets = 0;
 			boolean activationBurst = this.layeredSceneActivationPending;
@@ -2503,7 +2503,8 @@ public final class mudclient implements Runnable {
 					activationBurst,
 					this.layeredSceneActivationPending,
 					this.packetHandler
-						.isLayeredTerrainActivationHaloPrebuildPending())) {
+						.isLayeredTerrainActivationHaloPrebuildPending(),
+					this.packetHandler.hasLayeredSceneContext())) {
 				int len = this.packetHandler.getClientStream()
 					.readIncomingPacket(
 						this.packetHandler.getPacketsIncoming());

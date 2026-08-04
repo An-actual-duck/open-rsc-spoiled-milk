@@ -627,6 +627,36 @@ Prepare a new shadow/minimap product and swap it with the atomic scene.
 
 ## Current Recommendation
 
+### Private login follow-up: steady-state receive backlog
+
+The incremental frame receiver removed the login deadlock, but the first
+successful dense-scene session exposed a separate steady-state problem. The
+client kept rendering at approximately 60 FPS while its kernel receive queue
+grew to roughly 386 KiB and the server eventually became receive-window
+limited again. The server packet counter advanced by about 49,000 packets over
+ten minutes, which exceeds the legacy client's maximum consumption of one
+packet per frame.
+
+This was not an input, pathfinding, or teleport failure. Server logs confirmed
+that the same session accepted player navigation and moved `devduck` from
+`(576,576)` through `(574,575)`. It then accepted `tp 575 575` and `tp falador`,
+ending at `(304,542)`. Those updates were applied authoritatively while the
+client still appeared immobile because their ordered replies were delayed
+behind the growing receive backlog.
+
+The current bounded prototype therefore distinguishes two steady-state modes:
+
+- legacy/non-layered connections retain one packet per client frame;
+- native layered sessions may consume at most four packets per client frame;
+- atomic activation retains its separate 32-packet hard bound and terrain-halo
+  pause.
+
+Four packets per frame supplies bounded headroom over the measured private
+traffic without allowing an unlimited drain or changing legacy cadence. The
+policy has deterministic coverage for all three bounds. Private visual
+validation must confirm that login, walking, teleportation, boundary crossing,
+and frame pacing remain correct before this candidate is accepted.
+
 Complete private visual validation of both the bounded terrain-stage transport
 and incremental frame receive, then resume the diagonal matrix. After that,
 prototype complete bounded protocol-v8 baseline delivery and visually repeat
