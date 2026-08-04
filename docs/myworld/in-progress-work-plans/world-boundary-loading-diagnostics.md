@@ -7,7 +7,8 @@ Branch: `refactor/boundary-loading-diagnostics-followup`
 Scope: desktop client world-boundary transitions, especially renderer-v2/OpenGL
 
 Gameplay changes in this phase: one fail-closed upper-floor object-reach fix;
-boundary-loading behavior remains unchanged while evidence is collected
+terrain-stage transport now pages otherwise unrepresentable payloads, without
+changing terrain contents or scene activation semantics
 
 ## Goal
 
@@ -314,6 +315,19 @@ Recommended correctness milestone before further performance experiments:
    normal small stages, and atomic publication in deterministic tests.
 5. Repeat the same diagonal loop visually before resuming hitch comparisons.
 
+Implementation is now present for local validation. Stages at or below 65,532
+payload bytes retain their existing one-packet representation. Larger stages
+are serialized once and split into 24,000-byte fragments. Each opcode-154 page
+carries stage/context identity, total length, page index/count, and the complete
+stage CRC32. Client storage is bounded to one 1 MiB transaction, and terrain
+decode, resident-cache commit, prebuild, and readiness acknowledgement occur
+only after exact ordered assembly and checksum verification. A shared encoder
+guard now refuses every packet length that its selected legacy framing format
+cannot represent instead of narrowing it. Automated coverage includes the
+observed 69,043-byte receipt and stale, duplicate, out-of-order, corrupt,
+wrong-context, and superseded page sequences. Repeated private diagonal visual
+validation remains required before this milestone is considered complete.
+
 ## Corrected-Profile Multi-Level Evidence
 
 Session
@@ -571,8 +585,8 @@ Prepare a new shadow/minimap product and swap it with the atomic scene.
 
 ## Current Recommendation
 
-Checkpoint the refined packet diagnostics and the confirmed page-cadence
-finding before changing behavior. Then prototype complete bounded protocol-v8
+Complete private visual validation of the bounded terrain-stage transport, then
+resume the diagonal matrix. After that, prototype complete bounded protocol-v8
 baseline delivery and visually repeat the same directional case. Continue the
 remaining private case matrix before choosing any broader renderer
 optimization. Bounded GPU residency or predicted GPU preparation remain

@@ -65,6 +65,9 @@ public class PacketHandler {
 	private final NativeLayeredTerrainResidentCache
 		nativeLayeredTerrainResidentCache =
 			new NativeLayeredTerrainResidentCache();
+	private final NativeLayeredTerrainStageAssembler
+		layeredTerrainStageAssembler =
+			new NativeLayeredTerrainStageAssembler();
 	private int appliedSceneBaselineKey = 0;
 	private int appliedScenePresentationKey = 0;
 	private int layeredTerrainReadySequence = 0;
@@ -245,6 +248,7 @@ public class PacketHandler {
 			mc.clearStaticScenePresentation();
 		}
 		nativeLayeredTerrainResidentCache.clear();
+		layeredTerrainStageAssembler.reset();
 		sceneBaselineState.resetForScopeChange("none");
 		movementSnapshotStage.reset();
 		appliedSceneBaselineKey = 0;
@@ -780,6 +784,7 @@ public class PacketHandler {
 				legacyX,
 				legacyY,
 				nativeTerrain);
+		layeredTerrainStageAssembler.reset();
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
 			"state-accept",
@@ -899,13 +904,93 @@ public class PacketHandler {
 	private void updateLayeredTerrainStage(final int length) {
 		final long stageStartedNanos =
 			BoundaryLoadingDiagnostics.now();
-		final int protocolVersion = packetsIncoming.getUnsignedByte();
+		final int wireProtocolVersion = packetsIncoming.getUnsignedByte();
+		if (wireProtocolVersion
+				== NativeLayeredTerrainStageAssembler
+					.TRANSPORT_PROTOCOL_VERSION) {
+			updateLayeredTerrainStagePage(length, stageStartedNanos);
+			packetsIncoming.packetEnd = length;
+			return;
+		}
+		layeredTerrainStageAssembler.reset();
+		processLayeredTerrainStage(
+			packetsIncoming,
+			length,
+			wireProtocolVersion,
+			stageStartedNanos,
+			0,
+			0);
+	}
+
+	private void updateLayeredTerrainStagePage(
+			final int length,
+			final long stageStartedNanos) {
+		final int remainingHeaderBytes =
+			NativeLayeredTerrainStageAssembler.PAGE_ENVELOPE_BYTES - 1;
+		if (length - packetsIncoming.packetEnd < remainingHeaderBytes) {
+			layeredTerrainStageAssembler.reset();
+			return;
+		}
 		final int stageSequence = packetsIncoming.get32();
 		final int contextSequence = packetsIncoming.get32();
-		final int serverTick = packetsIncoming.get32();
-		final String worldSpace = packetsIncoming.readString();
-		final int logicalLevel = packetsIncoming.get32();
+		final int totalBytes = packetsIncoming.get32();
+		final int expectedCrc32 = packetsIncoming.get32();
+		final int pageIndex = packetsIncoming.getShort();
+		final int pageCount = packetsIncoming.getShort();
+		final int fragmentLength = packetsIncoming.getShort();
+		if (fragmentLength <= 0
+			|| fragmentLength != length - packetsIncoming.packetEnd) {
+			layeredTerrainStageAssembler.reset();
+			return;
+		}
+		final byte[] fragment = new byte[fragmentLength];
+		packetsIncoming.readBytes(fragmentLength, fragment);
+		final NativeLayeredTerrainStageAssembler.CompletedStage completed =
+			layeredTerrainStageAssembler.accept(
+				stageSequence,
+				contextSequence,
+				totalBytes,
+				expectedCrc32,
+				pageIndex,
+				pageCount,
+				fragment,
+				layeredTerrainStageSequence,
+				layeredSceneContextState.getSequence());
+		if (completed == null) {
+			return;
+		}
+		final byte[] serializedStage = completed.copyBytes();
+		final RSBuffer_Bits assembled =
+			new RSBuffer_Bits(serializedStage.length);
+		assembled.writeBytes(serializedStage, serializedStage.length);
+		assembled.packetEnd = 0;
+		final int stageProtocolVersion = assembled.getUnsignedByte();
+		processLayeredTerrainStage(
+			assembled,
+			serializedStage.length,
+			stageProtocolVersion,
+			stageStartedNanos,
+			completed.getStageSequence(),
+			completed.getContextSequence());
+	}
+
+	private void processLayeredTerrainStage(
+			final RSBuffer_Bits input,
+			final int length,
+			final int protocolVersion,
+			final long stageStartedNanos,
+			final int transportStageSequence,
+			final int transportContextSequence) {
+		final int stageSequence = input.get32();
+		final int contextSequence = input.get32();
+		final int serverTick = input.get32();
+		final String worldSpace = input.readString();
+		final int logicalLevel = input.get32();
 		if ((protocolVersion < 1 || protocolVersion > 5)
+			|| (transportStageSequence > 0
+				&& transportStageSequence != stageSequence)
+			|| (transportContextSequence > 0
+				&& transportContextSequence != contextSequence)
 			|| stageSequence <= layeredTerrainStageSequence
 			|| !layeredSceneContextState.matchesSequence(contextSequence)
 			|| !worldSpace.equals(
@@ -915,7 +1000,7 @@ public class PacketHandler {
 			throw new IllegalStateException(
 				"Native terrain stage does not match the active context");
 		}
-		final int bodyLength = length - packetsIncoming.packetEnd;
+		final int bodyLength = length - input.packetEnd;
 		if (bodyLength <= 0) {
 			throw new IllegalArgumentException(
 				"Native terrain stage body is missing");
@@ -923,7 +1008,7 @@ public class PacketHandler {
 		final long bodyCopyStartedNanos =
 			BoundaryLoadingDiagnostics.now();
 		final byte[] body = new byte[bodyLength];
-		packetsIncoming.readBytes(bodyLength, body);
+		input.readBytes(bodyLength, body);
 		final long bodyCopyNanos =
 			bodyCopyStartedNanos == 0L
 				? 0L : System.nanoTime() - bodyCopyStartedNanos;
@@ -1058,7 +1143,7 @@ public class PacketHandler {
 					: " prebuild queued");
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
-		packetsIncoming.packetEnd = length;
+		input.packetEnd = length;
 	}
 
 	public void pollLayeredTerrainStageReady() {

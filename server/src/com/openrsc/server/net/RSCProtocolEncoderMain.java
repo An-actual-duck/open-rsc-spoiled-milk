@@ -37,9 +37,12 @@ public final class RSCProtocolEncoderMain {
 			if (authenticClient == null || isInauthenticPacket(message.getID()) || authenticClient == -1) {
 				// This is code only to support RSCL based clients which simplified the network protocol
 				int packetLength = message.getBuffer().readableBytes();
-				ByteBuf buffer = Unpooled.buffer(packetLength + 3);
+				PacketFrameLengthGuard.requireSimplifiedPayloadLength(
+					packetLength);
+				int frameLength = Math.addExact(packetLength, 3);
+				ByteBuf buffer = Unpooled.buffer(frameLength);
 
-				buffer.writeShort(buffer.capacity());
+				buffer.writeShort(frameLength);
 				buffer.writeByte(message.getID());
 
 				buffer.writeBytes(message.getBuffer());
@@ -47,7 +50,10 @@ public final class RSCProtocolEncoderMain {
 			} else if (authenticClient >= 183) {
 				// Modern Authentic Packet Handling (With ISAAC)
 				// Don't know exactly when ISAAC started getting used, but mudclient 183 from 2004-02-04 uses opcode shuffling
-				int packetLength = message.getBuffer().readableBytes() + 1; // + 1 for opcode
+				int packetLength = Math.addExact(
+					message.getBuffer().readableBytes(), 1); // + 1 for opcode
+				PacketFrameLengthGuard.requireAuthenticPacketLength(
+					packetLength);
 
 				/* debug info
 				if (message.getID() != 191 && message.getID() != 79 && message.getID() != 48) {
@@ -99,7 +105,10 @@ public final class RSCProtocolEncoderMain {
 
 				outBuffer = buffer;
 			} else if (authenticClient >= 93) {
-				int packetLength = message.getBuffer().readableBytes() + 1; // + 1 for opcode
+				int packetLength = Math.addExact(
+					message.getBuffer().readableBytes(), 1); // + 1 for opcode
+				PacketFrameLengthGuard.requireAuthenticPacketLength(
+					packetLength);
 
 				ByteBuf buffer;
 				if (packetLength >= 160) {
@@ -141,7 +150,9 @@ public final class RSCProtocolEncoderMain {
 			} else if (authenticClient >= 14) {
 				//TODO: verify if always holds like this
 				int packetLength = message.getBuffer().readableBytes();
-				ByteBuf buffer = Unpooled.buffer(packetLength + 3);
+				PacketFrameLengthGuard.requireLegacyPayloadLength(packetLength);
+				ByteBuf buffer = Unpooled.buffer(
+					Math.addExact(packetLength, 3));
 
 				buffer.writeShort(packetLength + 1);
 				buffer.writeByte(message.getID());

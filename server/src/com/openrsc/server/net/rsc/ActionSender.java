@@ -133,7 +133,25 @@ public class ActionSender {
 		try {
 			Packet p = getGenerator(player).generate(payload, player);
 			if (p != null) {
-				player.write(p);
+				if (opcode == OpcodeOut.SEND_LAYERED_TERRAIN_STAGE) {
+					final List<Packet> terrainPackets;
+					try {
+						terrainPackets = LayeredTerrainStagePacketPager
+							.pageIfRequired(
+								p,
+								(LayeredTerrainStageStruct) payload);
+					} catch (IllegalArgumentException invalidStage) {
+						LOGGER.error(
+							"Refusing invalid layered terrain stage packet",
+							invalidStage);
+						return false;
+					}
+					for (Packet terrainPacket : terrainPackets) {
+						player.write(terrainPacket);
+					}
+				} else {
+					player.write(p);
+				}
 				return true;
 			}
 		} catch (GameNetworkException gne) {
