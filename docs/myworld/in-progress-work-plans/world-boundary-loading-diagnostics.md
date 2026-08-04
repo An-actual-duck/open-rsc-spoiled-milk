@@ -657,6 +657,42 @@ policy has deterministic coverage for all three bounds. Private visual
 validation must confirm that login, walking, teleportation, boundary crossing,
 and frame pacing remain correct before this candidate is accepted.
 
+### Unattended bounded baseline-completion prototype
+
+The next server-side candidate is implemented for automated review but has not
+yet received private visual acceptance. Before sending baseline data, the
+server now calculates the exact remaining page count and framed wire bytes
+across gameplay scenery, gameplay walls, presentation scenery, and
+presentation walls.
+
+For an actively fenced protocol-v8 scene only, the complete remaining product
+is queued in the initiating world update when it fits both hard bounds:
+
+- at most 16 baseline data pages;
+- at most 96 KiB including simplified frame overhead.
+
+The captured dense `(11,12)` product was 11 pages and approximately 50 KiB, so
+it qualifies without raising either ordinary paging limit. Non-atomic
+protocol-v8 updates retain eight pages per world update, and legacy baseline
+delivery retains four. An activation exceeding either cap uses the existing
+bounded fallback and records `ATOMIC_OVERSIZED_FALLBACK` with its page and byte
+measurements when boundary diagnostics are enabled.
+
+Baseline cursors now advance only after the exact packet is successfully
+generated and placed on the player's ordered outbound queue. A failed packet
+therefore remains owned by the pending product and is retried instead of being
+silently counted as delivered. The atomic-pending sequence is cleared only
+after all four categories are complete.
+
+Deterministic coverage exercises exact and partial pages, cursor accounting,
+the reconstructed 11-page case, both exact caps, both over-cap fallbacks,
+empty products, invalid inputs, and transactional integration ordering. Server
+compilation and the surrounding atomic-activation, presentation-ring, packet,
+wire-envelope, transition, and synchronization tests pass. The running private
+server was not restarted and no client was launched for this milestone; the
+first return test must load the checkpointed server build and repeat the same
+warm directional crossing.
+
 Complete private visual validation of both the bounded terrain-stage transport
 and incremental frame receive, then resume the diagonal matrix. After that,
 prototype complete bounded protocol-v8 baseline delivery and visually repeat

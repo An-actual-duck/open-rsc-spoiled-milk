@@ -684,9 +684,10 @@ def main() -> None:
         "scene baseline path should stay split from dynamic player/NPC visibility snapshots",
     )
     require(
-        "tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENE_BASELINE, baseline, player);"
+        "tryFinalizeAndSendPacketChecked(\n"
+        "\t\t\t\tOpcodeOut.SEND_SCENE_BASELINE, baseline, player)"
         in scene_baseline_block,
-        "scene baseline path should send the custom baseline packet only after building its DTO",
+        "scene baseline path should transactionally queue its completed DTO",
     )
     for snippet in (
         "private static final int SCENE_BASELINE_PROTOCOL_VERSION = 5;",
@@ -716,10 +717,11 @@ def main() -> None:
         "final SceneBaselineSummary previous = player.getAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE);",
         "sceneBaselinePageBurstLimit(current.protocolVersion)",
         "while (sentPages < pageBurstLimit)",
-        "sendSceneBaselinePacket(player, current, page);",
+        "sendSceneBaselinePacket(player, current, page)",
+        "current.recordSentPage(page);",
         "if (sentPages == 0 && previous != null && current.sameStaticPayload(previous))",
-        "sendSceneBaselinePacket(player, current, SceneBaselinePage.empty());",
-        "private void sendSceneBaselinePacket(",
+        "player, current, SceneBaselinePage.empty()",
+        "private boolean sendSceneBaselinePacket(",
         "page.applyTo(baseline);",
         "page.payloadBytes(current.protocolVersion)",
         "player.setAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE, current);",
