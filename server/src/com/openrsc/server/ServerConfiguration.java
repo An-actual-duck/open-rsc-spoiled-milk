@@ -2,6 +2,8 @@ package com.openrsc.server;
 
 import com.google.common.collect.ImmutableList;
 import com.openrsc.server.database.DatabaseType;
+import com.openrsc.server.config.DiagnosticsConfiguration;
+import com.openrsc.server.config.ProcessNetworkConfiguration;
 import com.openrsc.server.util.EntityList;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.YMLReader;
@@ -1123,6 +1125,51 @@ public class ServerConfiguration {
 		return webhookUrl != null
 			&& !webhookUrl.trim().isEmpty()
 			&& !webhookUrl.equals("null");
+	}
+
+	/**
+	 * Creates an immutable snapshot for startup and network-boundary consumers.
+	 * Existing callers may continue to use and mutate this compatibility facade.
+	 */
+	public ProcessNetworkConfiguration processNetworkConfiguration() {
+		return new ProcessNetworkConfiguration(
+			SERVER_BIND_ADDRESS,
+			SERVER_PORT,
+			WS_SERVER_PORT,
+			WANT_FEATURE_WEBSOCKETS,
+			SSL_SERVER_CERT_PATH,
+			SSL_SERVER_KEY_PATH,
+			MAX_CONNECTIONS_PER_IP,
+			MAX_CONNECTIONS_PER_SECOND,
+			MAX_PACKETS_PER_SECOND,
+			MAX_LOGINS_PER_SECOND,
+			MAX_LOGINS_PER_SERVER_PER_TICK,
+			MAX_PASSWORD_GUESSES_PER_FIVE_MINUTES,
+			NETWORK_FLOOD_IP_BAN_MINUTES,
+			MAX_PLAYERS,
+			MAX_PLAYERS_PER_IP,
+			SESSION_ID_SENDER_TIMER,
+			IGNORED_NETWORK_EXCEPTIONS,
+			NETWORK_CONNECTION_RESET_EXCEPTIONS);
+	}
+
+	/** Creates an immutable snapshot of constructor-time diagnostic settings. */
+	public DiagnosticsConfiguration diagnosticsConfiguration() {
+		return new DiagnosticsConfiguration(
+			DEBUG,
+			WANT_PCAP_LOGGING,
+			WANT_THREADING__BREAK_PID_PRIORITY,
+			WANT_FORCE_GC_ON_PROFILING,
+			WANT_SYNC_VISIBILITY_SHADOW,
+			WANT_SYNC_VISIBILITY_SNAPSHOT_INPUT,
+			WANT_SYNC_VISIBILITY_TICK_CACHE,
+			WANT_SYNC_SCENE_BASELINE,
+			WANT_SYNC_MOVEMENT_SNAPSHOT,
+			WANT_MOVEMENT_STUTTER_DIAGNOSTICS,
+			WANT_LAYERED_MAP_PARITY_OBSERVER,
+			MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS,
+			MOVEMENT_STUTTER_POLL_OUTLIER_MS,
+			MOVEMENT_STUTTER_TICK_OUTLIER_MS);
 	}
 
 	private void readGlobalRules(final String fileName) {
