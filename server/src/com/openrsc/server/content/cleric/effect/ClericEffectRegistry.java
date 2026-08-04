@@ -78,6 +78,22 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		return result;
 	}
 
+	/** Side-effect-free replacement preflight for the cast transaction. */
+	public synchronized ApplyResult preview(
+			ClericEffectRankDefinition<? extends ClericEffectMagnitude> definition,
+			ClericEffectOrigin origin, ClericEffectOriginValidator validator) {
+		requireDefinitionOriginAndValidator(definition, origin, validator);
+		if (!validator.isCurrent(origin)) {
+			return ApplyResult.REJECTED_INVALID_ORIGIN;
+		}
+		ClericEffectEntry existing = entries.get(definition.getFamily());
+		if (existing == null || existing.isExpired(clock.nanoTime())
+				|| !validator.isCurrent(existing.getOrigin())) {
+			return ApplyResult.APPLIED;
+		}
+		return classify(definition, existing);
+	}
+
 	public synchronized CounterResult consumeCounter(ClericEffectFamily family,
 			ClericEffectCounterKind expectedKind, ClericEffectOriginValidator validator) {
 		if (family == null || expectedKind == null || validator == null) {

@@ -64,7 +64,7 @@ def validate_wiring() -> None:
     for pvp_boundary in ("USES_PK_MODE", "inWilderness()", "isDuelActive()"):
         require(pvp_boundary in casting,
                 f"shared C07 PvP boundary omits {pvp_boundary}")
-    for spell in ("UNIFY", "PURIFY", "RESTORE"):
+    for spell in ("UNIFY", "PURIFY", "RESTORE", "MEND", "GREATER_MEND", "RESPITE"):
         require(f"spellId == ClericSpellId.{spell}" in casting,
                 f"approved Cleric runtime omits {spell}")
     for forbidden in ("remove(", "addExperience", "incExp", "setLevel", "setSkill"):

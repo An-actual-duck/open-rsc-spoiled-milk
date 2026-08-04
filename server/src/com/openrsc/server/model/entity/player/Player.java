@@ -4191,7 +4191,7 @@ public final class Player extends Mob {
 			return;
 		}
 
-		getTransientEffectState().clearAll();
+		clearTransientEffectsAndRefreshStatus();
 
 		// Seems to never be set
 		final ProjectileEvent projectileEvent = getAttribute("projectile");
@@ -4748,7 +4748,7 @@ public final class Player extends Mob {
 			teleport(791, 3469); // see [Logg/Tylerbeg/07-19-2018 11.11.46 log back in outside iban's chamber]
 		}
 
-		getTransientEffectState().clearAll();
+		clearTransientEffectsAndRefreshStatus();
 		if (getParty() != null) {
 			getParty().removePlayer(this.getUsername());
 		}
@@ -5970,20 +5970,23 @@ public final class Player extends Mob {
 			TransientEffectState departingState = getTransientEffectState();
 			Set<TransientEffectState> visited = Collections.newSetFromMap(
 				new IdentityHashMap<TransientEffectState, Boolean>());
-			departingState.clearAll();
+			clearTransientEffectsAndRefreshStatus();
 			visited.add(departingState);
 			for (PartyPlayer member : new ArrayList<PartyPlayer>(previousParty.getPlayers())) {
 				Player recipient = member.getPlayerReference();
 				if (recipient != null) {
 					TransientEffectState recipientState = recipient.getTransientEffectState();
 					if (visited.add(recipientState)) {
-						recipientState.clearOriginatingFrom(transientEffectSessionToken,
-							previousMembership);
+						int removed = recipientState.clearOriginatingFrom(
+							transientEffectSessionToken, previousMembership);
+						if (removed > 0) {
+							ActionSender.sendActivePotionEffects(recipient);
+						}
 					}
 				}
 			}
 		} else if (previousParty != null) {
-			getTransientEffectState().clearAll();
+			clearTransientEffectsAndRefreshStatus();
 		}
 
 		this.party = party;
@@ -6002,6 +6005,12 @@ public final class Player extends Mob {
 
 	public synchronized TransientEffectState getTransientEffectState() {
 		return transientEffectState;
+	}
+
+	private void clearTransientEffectsAndRefreshStatus() {
+		if (getTransientEffectState().clearAll() > 0) {
+			ActionSender.sendActivePotionEffects(this);
+		}
 	}
 
 	public synchronized void installTransientEffectState(TransientEffectState state) {

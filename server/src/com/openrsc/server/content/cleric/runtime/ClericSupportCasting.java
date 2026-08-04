@@ -60,6 +60,12 @@ public final class ClericSupportCasting {
 				case RESTORE:
 					applications.add(prepareRestore(target, effectRank));
 					break;
+				case MEND:
+				case GREATER_MEND:
+				case RESPITE:
+					applications.add(ClericTimedEffectRuntime.prepare(
+						caster, target, definition, effectRank));
+					break;
 				default:
 					throw new IllegalStateException("Unprepared implemented Cleric spell");
 			}
@@ -95,7 +101,10 @@ public final class ClericSupportCasting {
 	private static boolean isImplemented(final ClericSpellId spellId) {
 		return spellId == ClericSpellId.UNIFY
 			|| spellId == ClericSpellId.PURIFY
-			|| spellId == ClericSpellId.RESTORE;
+			|| spellId == ClericSpellId.RESTORE
+			|| spellId == ClericSpellId.MEND
+			|| spellId == ClericSpellId.GREATER_MEND
+			|| spellId == ClericSpellId.RESPITE;
 	}
 
 	private static List<Player> snapshotPartyPlayers(Party party) {
