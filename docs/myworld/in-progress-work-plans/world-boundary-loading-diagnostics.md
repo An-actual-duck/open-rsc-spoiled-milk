@@ -793,3 +793,59 @@ between them depends on:
 Checkpoint the diagnostic implementation and this plan before any substantive
 loader or renderer change. Visually compare the selected prototype on the same
 private cases, and do not publish or deploy based on automated results alone.
+
+### Private atomic-baseline acceptance and next renderer gate (2026-08-04)
+
+Session
+`output/renderer-diagnostics/session-20260804-111401-620485` used private port
+43615, the production-equivalent `spoiled-milk-replacement` layered package,
+renderer diagnostics with frame capture disabled, and server delivery
+diagnostics from `server/logs/spoiled_milk_dev_98.log`. The owner reported that
+the prior worst area improved from an approximately 45 FPS boundary dip to
+approximately 55 FPS. Lighter areas also converged on approximately 55 FPS,
+which removed the old direction/density asymmetry but left a common visible
+transition floor. Four intentional Ctrl+F8 observations were reported; the
+bounded recorder contains five marker events because one physical key action
+may have repeated. No visual wrong-area flash was reported.
+
+The bounded server prototype passes its private acceptance gate:
+
+- all 37 atomic products used `ATOMIC_COMPLETE`;
+- each product completed in its initiating update with zero pages/bytes left;
+- products contained 8-11 pages and at most 46,195 framed bytes;
+- game-thread delivery was 0.836 ms p50, 1.471 ms p95, and 2.262 ms max;
+- no generation/queue failure or oversized fallback occurred;
+- ordered queue growth was at most 11 entries, maximum queue depth was 38,
+  and the channel remained writable after every game-thread burst;
+- the sampled loopback socket queues returned to zero between transitions.
+
+The remaining client cost has two measured forms:
+
+1. Warm dense returns no longer wait a server tick. Their replacement frames
+   are dominated by shadow-mask construction: normally about 26-32 ms in the
+   marked sequence, with one 118.954 ms build coincident with 85 ms of GC.
+2. First visits and returns along the lighter cardinal route synchronously
+   upload nearly the entire resident frame. Individual crossings requested
+   106-125 chunks, uploaded 98-117, reused only 8-9, transferred 148-223 MiB,
+   and spent 99.650-145.998 ms inside chunk upload. The immediately repeated
+   return from center `(2,10)` to `(3,10)` still uploaded 117 of 125 chunks.
+
+The second result selects bounded residency before a broader prediction
+pipeline. `ChunkMesh.rebasePresentation` and
+`rebaseStaticObjectPresentation` intentionally preserve
+`storageSignature`, and the resident shader already applies the difference
+between a mesh's current vertex offset and the buffer's uploaded vertex
+offset. However, `WorldChunkBufferKey` currently includes presentation center
+and origin. Unchanged GPU storage therefore receives a new lookup key after a
+boundary rebase and is uploaded again despite the existing draw-offset
+contract.
+
+The next reversible prototype will key shader/draw-offset resident buffers by
+immutable storage identity plus plane/object role, while preserving the
+position-specific key for legacy paths that cannot apply draw offsets. It must
+prove that rebased meshes share a buffer key, different storage signatures do
+not, object roles and planes remain isolated, legacy keys remain positional,
+and buffer eviction/deletion stays single-owner and bounded. The same private
+routes must then demonstrate substantially higher reused-chunk counts and
+lower upload bytes without exposing stale or misplaced geometry. Shadow-mask
+preparation remains a separate follow-up after residency is corrected.
