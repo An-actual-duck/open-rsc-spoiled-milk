@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `main` (Purify integrated; AI-3 idle and ready for the next focused branch)
+- Branch: `feat/cleric-c09-support-batch` (remaining C09 effects implemented; private acceptance pending)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 Purify — implementation and private acceptance**
-- Current milestone: **C09 Restore — next bounded effect, awaiting activation on a focused branch**
-- Next planned milestone: **Implement and privately verify Restore without making later C09 spells reachable**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, party-only Unify, and the focused party-only Purify implementation; C08A's registry remains empty, while C08B presents only already-authoritative timed status snapshots**
+- Current milestone: **C09 support batch — Restore, Mend, Greater Mend, and Respite automated verification complete; private acceptance pending**
+- Next planned milestone: **C10 direct-combat support, only after the complete C09 batch is accepted and integrated**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog/status presentation, party-only Unify, Purify, Restore, Mend, Greater Mend, and Respite; later C09/C10 effects remain unavailable**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -598,8 +598,10 @@ C08 is complete only when:
 
 ### C09 — Low-Risk Support Effects
 
-Implement in narrow branches, beginning with mechanics that do not alter the
-shared combat damage pipeline:
+Implement in bounded families, beginning with mechanics that do not alter the
+shared combat damage pipeline. Purify was integrated first; the manager then
+authorized the remaining effects as one ordered release batch with coherent
+family checkpoints rather than separate approval stops:
 
 1. Purify;
 2. Restore;
@@ -607,7 +609,7 @@ shared combat damage pipeline:
 4. Respite using C07's natural-regeneration interval boundary after C08 owns
    its transient state.
 
-Each branch owns its pure calculations, lifecycle tests, area behavior,
+Each bounded family owns its pure calculations, lifecycle tests, area behavior,
 resource transaction, client text/HUD behavior where applicable, builds, and
 private verification.
 
