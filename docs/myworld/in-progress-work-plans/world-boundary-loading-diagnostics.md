@@ -1,6 +1,6 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
-Status: active; production-equivalent private profile restored for remaining matrix
+Status: active; diagonal stress exposed a bounded-transport correctness defect
 
 Branch: `refactor/boundary-loading-diagnostics-followup`
 
@@ -246,9 +246,73 @@ The generated `ai-summary.md` is the decision record. Retain the raw
   to have the replacement package, residency, readiness, prediction, symmetric
   residency, atomic activation, and synchronized-baseline flags enabled.
 - A marked four-circuit ground/first/second-floor capture is now complete on
-  that corrected profile. Its findings are recorded below. Only the true
-  diagonal/corner capture remains outstanding. That case must change both
-  48-tile section bases in one movement update.
+  that corrected profile. Its findings are recorded below.
+- True diagonal crossings were captured around the corner shared by native
+  centers `(11,11)` and `(12,12)`. Repetition exposed a deterministic packet
+  framing failure after the connection-local terrain residency cache churned;
+  that correctness defect must be fixed before completing the timing matrix.
+
+## Diagonal Stress Crash and Exact Transport Cause
+
+Session
+`output/renderer-diagnostics/session-20260803-220210-3973356` contains several
+successful true diagonal crossings followed by a client game crash during the
+next prediction. This was not a JVM, GPU, native-driver, or out-of-memory
+crash. The maintained client's game-crash handler caught:
+
+```text
+IllegalArgumentException: Native terrain source SHA-256 is unterminated
+client.LD(dummy,3508,154)
+```
+
+Opcode 154 is `SEND_LAYERED_TERRAIN_STAGE`. The failing protocol-v4 predicted
+symmetric halo was generated for center `(12,12)` after repeated returns to
+`(11,11)`. The server and client each retain 64 content identities in matching
+access-order caches. A radius-two receipt touches full inner terrain and
+visual-only outer terrain; its following structure receipt touches a separate
+set of structural identities. Repeated diagonal movement therefore evicted
+enough `(12,12)` identities that the next prediction needed 19 payload-bearing
+chunks and only six references.
+
+Replaying the exact accepted context/stage sequence against the production
+package and the same 64-entry LRU policy gives an opcode-154 payload of exactly
+69,043 bytes. Including the custom transport's two-byte length and opcode, the
+frame is 69,046 bytes. The custom-client branch of
+`RSCProtocolEncoderMain` writes that total to an unsigned two-byte field without
+a bounds check. It wraps as follows:
+
+```text
+69,046 mod 65,536 = 3,510
+3,510 - the two length bytes = 3,508 bytes delivered to PacketHandler
+```
+
+That is the exact `3508` reported by the client. The decoder received the
+beginning of a valid stage followed by a hard truncation in a later chunk's
+SHA field. Earlier crossings succeeded because their receipts were smaller;
+the first few cache cycles are part of the reproduction, not random crash
+timing.
+
+The current encoder also lacks a general guard against any non-raw custom
+packet exceeding the 65,535-byte frame ceiling. Merely rejecting this terrain
+packet would avoid corrupting the TCP stream but would leave prediction
+readiness permanently incomplete. The terrain protocol therefore needs a
+bounded multi-packet representation with client-side transactional assembly,
+plus a general encoder fail-closed guard so another oversized packet cannot be
+silently truncated.
+
+Recommended correctness milestone before further performance experiments:
+
+1. Add an explicit maximum custom-frame length and make the common encoder
+   reject oversized frames rather than narrowing them.
+2. Page a serialized terrain stage into independently frame-safe packets with
+   stage/context identity, page index/count, declared total size, and bounded
+   client assembly.
+3. Decode and commit the terrain residency transaction only after every page
+   of the exact stage has arrived. Missing, duplicate, stale, out-of-order, or
+   superseded pages must not mutate active terrain or send readiness.
+4. Cover the exact 69,043-byte cache-churn fixture, maximum page bounds,
+   normal small stages, and atomic publication in deterministic tests.
+5. Repeat the same diagonal loop visually before resuming hitch comparisons.
 
 ## Corrected-Profile Multi-Level Evidence
 
