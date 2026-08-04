@@ -210,8 +210,8 @@ def validate_runtime_wiring() -> None:
             "normal poison ticks and Purify do not share the cure threshold")
     require("if (poisonPower < 10)" not in poison_event,
             "PoisonEvent retained a second cure-threshold literal")
-    require("1. Purify;" in plan and "Each branch owns its pure calculations" in plan,
-            "C09 Purify branch contract is missing from the implementation plan")
+    require("1. Purify;" in plan and "Each bounded family owns its pure calculations" in plan,
+            "C09 Purify family contract is missing from the implementation plan")
 
 
 def run_compiled_fixture() -> None:
