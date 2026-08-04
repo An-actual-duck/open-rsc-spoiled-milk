@@ -5,8 +5,8 @@
 - Branch: `docs/cleric-c08-effect-state-decisions` (C08 planning/refinement)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify**
-- Current milestone: **C07 integrated into published `main` at `6e1720900`; C08 design refinement is active**
-- Next planned milestone: **C08 — shared Cleric effect state and HUD extension; runtime implementation remains blocked until this planning session is explicitly approved**
+- Current milestone: **C07 integrated into published `main` at `6e1720900`; C08 design is complete and awaiting explicit implementation approval**
+- Next planned milestone: **C08A — transient Cleric effect-state foundation, only after the owner explicitly approves runtime implementation**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08 and later spell effects remain disabled**
 - Public-server work: **forbidden**
 
@@ -47,15 +47,17 @@ recipient's queued walking before applying up to two ordinary,
 collision-checked steps. Respite joins the natural regeneration clock without
 resetting it or granting a free immediate tick.
 
+No C08 design question remains open. Its mixed HUD ordering, state ownership,
+typed magnitude/rank model, replacement, origin transfer, lifecycle, wire
+extension, fallback icons, labels, overflow behavior, and compatibility
+boundaries are settled below. This planning completion does **not** authorize
+runtime implementation; wait for an explicit owner instruction.
+
 The following remain later design work and may not be guessed:
 
-1. Lifecycle hook mechanics and final Cleric HUD icons/labels (C08). Mixed
-   potion/Cleric HUD priority, typed charge/pulse transport, recipient-owned
-   transient effect state, and accepted-application source transfer are
-   settled.
-2. Future offensive god-spell expansion beyond the existing Mage entries;
+1. Future offensive god-spell expansion beyond the existing Mage entries;
    existing god spells remain under Mage for the initial rollout.
-3. Additional Devotion sources for later economy tuning; the initial confirmed
+2. Additional Devotion sources for later economy tuning; the initial confirmed
    sigil-production economy may proceed without inventing them.
 
 ## Ordered Implementation Sequence
@@ -278,45 +280,319 @@ applying up to two ordinary, collision-valid server-authoritative steps.
 
 ### C08 — Shared Cleric Effect State and HUD Extension
 
-Implement transient effect identity, snapshotted rank, magnitude, expiry, and
-optional charges/pulses. Enforce replacement/exclusivity centrally and clear
-effects on death, logout, or party separation. Extend C06's expanded status
-packet compatibly with per-effect charges/pulses only after mixed-effect
-priority is settled. Preserve its visible overflow count. Authentic clients
-receive no custom dependency.
+#### Objective and hard boundary
 
-Settled presentation ordering is origin-neutral and urgency-based: finite
-tactical counters, short combat effects, longer combat support, then passive
-utility/skilling effects. Each group uses stable authored identity order, never
-remaining duration or application time. The server selects the first `32`
-entries from that ordered list, reports the exact bounded overflow, and does
-not let presentation priority affect gameplay state.
+C08 establishes the transient authority later support spells need and extends
+the shared maintained-client status presentation. It does **not** implement a
+spell effect. At the end of C08, Unify remains the only reachable Cleric
+support action; Mend, Fervor, Purify, Restore, Ward, Greater Mend, Zeal,
+Thorns, Aegis, Rally, and Respite retain their C07 unavailable response.
 
-Counter transport is also settled. Preserve the existing visible-entry prefix
-of item ID and remaining seconds plus its overflow count, then append a
-length-detected, versioned trailer with one explicit `NONE`, `CHARGES`, or
-`PULSES` kind and unsigned remaining count per visible entry. The timer alone
-counts down locally; counters change only on an authoritative snapshot, sent
-immediately for charge consumption and pulse completion. The HUD renders
-compact `3H`/`2P`-style badges and expands them in hover text. Older maintained
-parsing may ignore the trailer, while authentic clients continue receiving no
-custom packet.
+C08 must not:
 
-Effect-state ownership is recipient-local and transient. Add one
-`ClericEffectRegistry` per affected player, keyed by the seven exclusive
-families: healing pulses, accuracy, protection, damage, reflection, lifesteal,
-and passive regeneration. Each entry uses a stable spell identity and an
-immutable typed representation of snapshotted rank, mechanics, timing,
-optional counter, caster-session origin, and exact party-instance origin. The
-registry is the sole authority for recipient-specific replacement, expiry,
-counter/pulse progress, and lifecycle clearing. It is neither player-cache
-state nor persisted state, and it must not rely on a reusable numeric party ID
-for leave/rejoin validation. Every accepted refresh or replacement atomically
-transfers origin to the new caster and installs that cast's full snapshot,
-including its caster-session and party-instance tokens. Rejected weaker
-applications change neither effect state nor origin. Remaining C08 decisions
-must settle lifecycle cleanup hook mechanics and final icon/label metadata
-before runtime implementation begins.
+- change a Cleric spell's magnitude, rank threshold, duration, recipient, sigil
+  cost, or PvP boundary;
+- consume sigils for an unavailable effect or introduce a test-only live cast;
+- add persistence/cache keys, database fields, login restoration, or party
+  persistence for transient effects;
+- implement healing, accuracy, damage, reflection, lifesteal, protection, or
+  regeneration behavior in combat paths;
+- rename opcode `152` or remove its legacy potion-prefix compatibility;
+- add unique spell icons, caster bubbles, or animations before their separate
+  artwork review;
+- send custom status state to authentic clients; or
+- touch, restart, or deploy the public server.
+
+#### Authoritative effect-state model
+
+Each recipient owns one bounded, transient `ClericEffectRegistry`. It is keyed
+by exclusive family rather than display text, item ID, cache key, or mutable
+party object:
+
+| Family slot | Launch identities | Dominance within slot | Counter kind |
+| --- | --- | --- | --- |
+| Healing pulses | Mend, Greater Mend | spell tier first, then rank | `PULSES` |
+| Accuracy | Fervor | rank | `NONE` |
+| Protection | Ward, Aegis | spell tier first, then rank | `CHARGES` |
+| Damage | Zeal | rank | `NONE` |
+| Reflection | Thorns | rank | `NONE` |
+| Lifesteal | Rally | rank | `NONE` |
+| Passive regeneration | Respite | rank | `NONE` |
+
+Different family slots coexist. This table preserves the already confirmed
+Mend/Greater Mend and Ward/Aegis exclusivity while preventing later handlers
+from inventing local replacement flags.
+
+Create one authoritative typed rank definition per timed Cleric spell/rank.
+The common portion owns stable spell identity, family, one-based rank,
+duration, counter kind, and initial counter where applicable. Spell-specific
+immutable magnitude types own meaningful fields rather than an unlabeled
+integer array or string map: heal per pulse, upward-roll chance, damage bonus,
+reflection rate, fixed reduction and protected-hit count, lifesteal and ending
+Hits threshold, or passive-regeneration speed. The typed definitions generate
+both the catalog presentation metadata and the immutable magnitude snapshot
+installed in a registry. C09/C10 handlers must later consume these same
+definitions; they may not create a second gameplay table.
+
+An active registry entry combines that immutable definition snapshot with:
+
+- monotonic application and expiry deadlines;
+- optional remaining counter state with no underflow;
+- the originating caster's opaque session token; and
+- both caster and recipient opaque party-membership-generation tokens for the
+  exact membership tenure in which the cast succeeded.
+
+Use a testable monotonic clock abstraction because this state is never
+persisted. Do not base expiry behavior on player-cache timestamps. Registry
+snapshots are immutable and bounded to the seven family slots. Mutations and
+snapshots use one private registry synchronization boundary; cleanup must not
+hold two recipients' registry locks at once.
+
+Replacement produces an explicit result suitable for C07's useful-application
+contract. A higher spell tier wins before numerical rank in the two shared
+families; within one spell, higher rank replaces lower rank. Equal identity and
+rank refreshes the full duration and normal full counter without adding any
+remainder. Every accepted install, replacement, or refresh atomically adopts
+the newest caster session and membership origin. A rejected weaker application
+changes no timer, magnitude, counter, or origin and remains ineffective for
+resource spending.
+
+#### Membership and lifecycle integration
+
+Add an opaque membership-generation token beside current party membership. It
+is renewed on every join or login reattachment, including rejoining the same
+`Party` object, and cleared when membership ends. It is not the database party
+ID or Java `Party` object identity.
+
+Integrate cleanup at the existing convergent boundaries:
+
+- a genuine recipient death clears only that recipient's registry;
+- recipient logout clears that registry and restores nothing on relog;
+- before leave, kick, logout, or another membership transition commits, clear
+  the departing recipient's registry and remove entries originating from that
+  caster membership from each remaining online recipient;
+- caster death alone does not clear bounded blessings from living recipients;
+  later logout or party departure does; and
+- every pulse, counter use, combat/regeneration lookup, and HUD snapshot first
+  validates expiry, caster session, and both live membership-generation
+  tokens, removes invalid entries, and only then exposes behavior or display.
+
+`Party.removePlayer` is the current shared leave/kick/logout path and
+`Player.killedBy` is the guarded real-death path. The implementation may add a
+small lifecycle collaborator, but it must keep those established authorities
+and must not spread cleanup calls across individual commands or coordinate-
+specific handlers. Defensive validation covers abnormal disconnect ordering;
+do not add a periodic world-wide cleanup sweep.
+
+#### Mixed status inventory and stable presentation order
+
+Replace the potion-only internal snapshot record with a bounded generic status
+snapshot while retaining compatibility facades where names are externally or
+protocol sensitive. Presentation priority is metadata, not gameplay state.
+The exact launch ordering is:
+
+| Priority | Stable authored identities, in order |
+| ---: | --- |
+| 1 — finite tactical | `cleric:healing_pulses`, `cleric:protection` |
+| 2 — short combat | `potion:brawn`, `potion:deftness`, `cleric:fervor`, `cleric:rally`, `potion:stat_reduction_protection`, `cleric:thorns`, `cleric:zeal` |
+| 3 — longer combat support | `potion:magic_resistance`, `potion:melee_resistance`, `potion:poison_protection`, `potion:ranged_resistance`, `potion:regeneration`, `cleric:respite` |
+| 4 — utility/skilling | `potion:insight`, `potion:insight_skills`, `potion:luck`, `potion:notation`, `potion:skiller`, `potion:speed`, `potion:warrior` |
+
+Only one identity can occupy each Cleric family slot, so the concrete Mend or
+Greater Mend and Ward or Aegis identity inherits its family's position. The
+server never sorts by remaining time, application time, origin, or source type.
+A new future status defaults to the bottom group in development and must gain
+an explicit stable identity/order before release. Do not allow an unknown
+status to silently obtain tactical priority.
+
+Collect the known bounded potion and Cleric sources, select the first `32`
+entries, and report the exact number omitted from that bounded inventory. The
+existing `64`-entry server collection ceiling remains. Normal launch state is
+well below it, but tests must fill the bound so presentation behavior is not
+accidentally coupled to that expectation.
+
+#### Catalog and status wire contracts
+
+Advance the server-fed Cleric catalog schema in coordination with the client.
+For each timed spell it carries typed per-rank magnitude, duration, initial
+counter, and presentation-kind metadata. Instant Purify/Restore and movement-
+only Unify must not pretend to create timed statuses. The client formats these
+received values; it does not own an independent magnitude table or receive a
+free-form status string on every update.
+
+Keep opcode `152` and its existing length-compatible prefix exactly:
+
+1. unsigned visible count;
+2. for each visible entry, unsigned icon item ID and signed remaining seconds;
+3. unsigned overflow count.
+
+Append status-extension version `1`, an entry count that must equal the prefix
+count, and one fixed record per visible entry:
+
+- identity kind: `ITEM` or `CLERIC`;
+- unsigned stable identity (`itemId` for `ITEM`, stable spell code for
+  `CLERIC`);
+- rank (`0` for item-backed potion entries, one-based for Cleric entries);
+- explicit counter kind: `NONE`, `CHARGES`, or `PULSES`; and
+- unsigned remaining counter, necessarily zero for `NONE`.
+
+The coordinated client validates version, exact record count, identity/rank
+bounds, counter-kind/count agreement, and complete packet length before using
+any enrichment. An absent, unsupported, truncated, or malformed trailer is
+ignored as a whole while the already validated icon/timer prefix remains a
+safe presentation fallback. Do not partially apply an invalid trailer.
+Older maintained parsing can ignore trailing bytes. Advance the enforced
+maintained-client protocol version for the coordinated catalog/wire change;
+authentic generators continue to omit opcode `152` entirely.
+
+Caster session and party-membership tokens never enter either packet. If a
+Cleric catalog is unavailable or does not contain a received stable code, the
+client shows only the safe prefix icon/timer rather than guessing a label or
+crashing.
+
+#### HUD presentation
+
+Extract the bounded timer/counter/identity state from `mudclient` into a small
+compiled-testable active-status HUD model; leave drawing behavior at the
+existing HUD boundary. Preserve the current anchor, eight rows per column,
+countdown rounding, local timer compaction, and `+N more effects` disclosure.
+The row shows its icon, countdown, and an optional compact `3H` or `2P` badge.
+The client never decrements a charge or pulse itself; an authoritative snapshot
+is sent immediately when either changes.
+
+Potion rows retain the exact consumed item icon and item-name hover behavior.
+Cleric rows use the spell definition's aligned blessed-stone-sigil icon until
+unique artwork is approved. Their hover begins with exact spell name and Roman
+rank, followed by the catalog-derived active magnitude and any remaining
+counter, for example:
+
+- `Ward III — 25% reduction — 6 protected hits remaining`;
+- `Fervor III — 15% chance to raise offense roll by 1`;
+- `Rally II — 20% lifesteal until 60% Hits`;
+- `Respite IV — 25% faster passive regeneration`; and
+- `Mend II — 2 Hits per pulse — 2 healing pulses remaining`.
+
+Do not display caster name, session identity, or party identity. Unique status
+art later replaces only authoritative catalog icon fields and does not change
+effect or packet identity. Caster bubbles and animations remain unset.
+
+#### Focused implementation branches
+
+Implement C08 as two sequential reviewable branches from the then-current
+published `main`:
+
+1. **C08A — `feat/cleric-effect-state-foundation`**
+   - Add typed rank/magnitude definitions, families, counter kinds, origins,
+     immutable entries, the bounded recipient registry, and deterministic
+     replacement results.
+   - Add session and party-membership-generation identities and centralized
+     death/logout/membership cleanup with defensive validation.
+   - Wire an empty registry into `Player` without changing packets, the client,
+     sigil spending, or reachable spells.
+   - Stop and hand off after the compiled state/lifecycle fixture, server build,
+     and changed-code analysis pass. The production registry must remain empty
+     because no effect handler exists yet.
+2. **C08B — `feat/cleric-status-hud-extension`**
+   - Begin only after C08A is integrated.
+   - Extend the authoritative catalog with typed rank presentation, add the
+     unified status inventory/priority metadata, append and validate the
+     versioned opcode-`152` trailer, and extract the client HUD model.
+   - Retain the legacy prefix and authentic-client exclusion. Use the approved
+     sigil fallbacks and labels; add no new artwork.
+   - Use a temporary private-only status injection fixture for visual review
+     if required, and prove it is absent from the committed diff.
+   - Stop and hand off after automated verification and owner-confirmed private
+     presentation. Do not continue into C09 on this branch.
+
+Do not combine either branch with `Player` decomposition, party-system
+modernization, general potion refactoring, packet renaming, or combat-path
+changes. If a required hook cannot remain this narrow, stop and return the
+dependency to planning.
+
+#### Required verification
+
+C08A adds a compiled fixture covering:
+
+- all seven family slots and every confirmed timed spell/rank definition;
+- exact magnitude and duration tables, valid typed counters, immutable
+  snapshots, invalid rank/magnitude/counter rejection, and collection bounds;
+- different-family coexistence;
+- Greater Mend over Mend and Aegis over Ward regardless of numerical rank;
+- higher-rank replacement, lower-rank rejection, equal refresh without counter
+  accumulation, full snapshot replacement, and accepted-cast origin transfer;
+- monotonic expiry boundaries, counter decrement without underflow, pulse and
+  charge exhaustion, repeated clear/expiry idempotence, and no stale revival;
+- recipient death/logout, caster logout/departure, recipient leave/kick,
+  same-party leave/rejoin, caster relog, and defensive stale-origin rejection;
+- caster death preserving effects on living recipients until another lifecycle
+  condition occurs;
+- registry snapshot/mutation concurrency without exposing mutable state or
+  acquiring nested recipient locks; and
+- source guards proving no new cache/database key, login restoration, reachable
+  spell effect, or gameplay magnitude table exists outside the authority.
+
+C08B adds compiled packet/model and repository fixtures covering:
+
+- the exact current potion-family inventory and authored mixed priority order;
+- deterministic selection at 31, 32, 33, and 64 entries, exact overflow, and
+  no gameplay removal for an omitted status;
+- stable ordering across timer changes and refreshes;
+- byte-compatible legacy prefix decoding with no trailer;
+- valid mixed `ITEM`/`CLERIC` trailer decoding, all three counter kinds,
+  unsigned counter bounds, catalog lookup, rank labels, and fallback icons;
+- unsupported version, count mismatch, truncation, trailing garbage, unknown
+  identity, invalid rank, and kind/count mismatch falling back without partial
+  enrichment or a crash;
+- client-local timer countdown but no local counter decrement;
+- immediate authoritative refresh after counter/pulse changes;
+- potion-only icon/name/countdown behavior, Cleric exact magnitude labels,
+  Roman ranks, compact badges, `+N more effects`, and logout/reconnect clearing;
+- maintained-client version/catalog parity and authentic-client absence of the
+  packet; and
+- packaged fallback assets with no newly required PNG.
+
+Run at minimum on the applicable branch:
+
+- new `tests/myworld/test-cleric-effect-state.py` and
+  `tests/myworld/test-cleric-status-hud.py` compiled fixtures;
+- `python3 tests/myworld/test-cleric-support-cast-transaction.py`;
+- `python3 tests/myworld/test-cleric-spellbook-foundation.py`;
+- `python3 tests/myworld/test-cleric-spellbook-presentation.py`;
+- `python3 tests/myworld/test-potion-hud.py`;
+- `python3 tests/myworld/test-potion-runtime.py`;
+- `python3 tests/myworld/test-potion-brawn-healing-cap.py`;
+- relevant party, death, logout, prayer, god-spell, protocol-version, and
+  client-definition regression suites discovered at implementation time;
+- `./scripts/build-server.sh` and, for C08B, `./scripts/build-client.sh`;
+- changed-code compiler/static analysis against that branch's published-main
+  base, without broad baseline cleanup; and
+- `git diff --check`.
+
+Before C08B READY handoff, launch only a loopback/private client and server and
+ask the owner to inspect a potion-only row, representative `NONE`, `CHARGES`,
+and `PULSES` Cleric rows, exact hover magnitudes, rank labels, mixed ordering,
+32-entry overflow, expiry, counter refresh, and logout clearing. Screenshot
+capture is not required. An intentional owner close is not a failure. Remove
+all temporary injection code before checkpointing the reviewed commit.
+
+#### C08 acceptance and stop gates
+
+C08 is complete only when:
+
+- registry state remains transient, bounded, typed, and unreachable from
+  incomplete spell handlers;
+- replacement, origin, membership generation, cleanup, and defensive
+  validation match the confirmed contract;
+- one authoritative rank definition supplies both future mechanics and current
+  presentation;
+- mixed priority and overflow are deterministic without affecting gameplay;
+- the legacy packet prefix, maintained fallback behavior, and authentic-client
+  boundary pass regression coverage;
+- no new asset, cache key, database field, PvP support, Worship XP, sigil cost,
+  or spell effect has slipped into scope;
+- builds and changed-code analysis pass; and
+- the owner privately accepts C08B presentation before its exact pushed commit
+  is handed off.
 
 ### C09 — Low-Risk Support Effects
 
