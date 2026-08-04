@@ -4,8 +4,8 @@
 
 - Branch: `feat/cleric-spellbook-presentation`
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing**
-- Current milestone: **C06 — Cleric spellbook transport and presentation; implementation and verification in progress**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation**
+- Current milestone: **C06 implemented, automated-tested, and privately accepted**
 - Next planned milestone: **C07 — shared support targeting and cast transaction, only after its resource-failure rule is settled**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, and maintained-client Cleric catalog presentation; support effects and sigil consumption remain disabled**
 - Public-server work: **forbidden**
@@ -596,3 +596,70 @@ combat change, shop, drop, dialogue, secondary sigil, blessed equipment recipe,
 or additional Devotion source. The later C06 branch begins only the confirmed
 catalog transport, presentation, immediate-request boundary, and status
 capacity work described above; it does not reinterpret C05 production.
+
+## C06 Completion Record
+
+C06 adds a maintained-client-only, server-authoritative Cleric catalog packet
+using stable spell codes and schema version `1`. Its twelve records carry the
+confirmed Worship requirement, alignment, area, caster exclusion, primary
+stone/silver cost vector, concise effect description, spellbook icon item, and
+optional caster icon/animation identifiers. The client validates ordering,
+keys, schema, and bounds before replacing an immutable session snapshot. The
+coordinated maintained-client protocol version is `10050`; authentic protocol
+generators and the compatibility-sensitive legacy `Spells` identities remain
+unchanged.
+
+The custom interface now presents Spells as the top-level tab with nested Mage
+and Cleric tabs. Mage is the fresh-session default, while subsequent tab
+navigation remembers the player's last Mage/Cleric selection. Both icon and
+text layouts render Cleric metadata without a client-side name table. Clicking
+an unlocked Cleric entry submits one stable-code request immediately and
+clears item/spell targeting; it never creates a target cursor or autocast
+selection. The server validates maintained MyWorld use, identity, trained
+Worship level, and the initial no-PvP boundary, then intentionally reports that
+the effect is unavailable. C07 still owns party recipients, resource spending,
+cooldowns, and actual support effects.
+
+The existing custom status snapshot now transmits up to `32` entries from a
+server-side collection bounded to `64`, appending the number omitted. The HUD
+shows `+N more effects` when necessary. This increases capacity and makes
+overflow explicit without making client presentation authoritative or choosing
+the future mixed potion/Cleric priority and charge/pulse representation.
+
+Optional player-centered icon and animation hooks are present but all launch
+definitions deliberately leave them unset. The owner confirmed that final
+icon and animation visuals should be postponed until all major Cleric work is
+complete; later milestones must not invent or require those assets in the
+meantime.
+
+Verification completed from the milestone branch:
+
+- `python3 tests/myworld/test-cleric-spellbook-foundation.py`
+- `python3 tests/myworld/test-cleric-spellbook-presentation.py`
+- `python3 tests/myworld/test-potion-hud.py`
+- `python3 tests/myworld/test-cleric-sigil-production.py`
+- `python3 tests/myworld/test-cleric-sigil-item-assets.py`
+- `python3 tests/myworld/test-cleric-blessing-skill-platform.py`
+- `python3 tests/myworld/test-cleric-holy-power-equipment.py`
+- `python3 tests/myworld/test-spellbook-text-layouts.py`
+- `python3 tests/myworld/test-prayer-ui.py`
+- `python3 tests/myworld/test-god-special-prayers-and-spells.py`
+- `python3 tests/myworld/test-player-spell-animation-migration.py`
+- `python3 tests/myworld/test-bank-wide-slot-updates.py`
+- World Builder discovery and release suites
+- `./scripts/build-client.sh`
+- `./scripts/build-server.sh`
+- `python3 scripts/lint.py all --base spoiled-milk/main --offline`
+- `git diff --check`
+
+The owner privately accepted the Mage default, Mage/Cleric subtab navigation
+and memory, server-fed Cleric icons and tooltips, immediate click behavior,
+text layout, and unchanged Mage/god-spell presentation. The client and server
+ran only on loopback ports `43615/43515`; the public server was untouched. The
+client's intentional window close produced the existing connection-reset
+diagnostic during logout, with no Cleric presentation or protocol exception.
+
+C06 adds no support effect, party targeting, sigil consumption, cooldown,
+Worship XP, combat change, PvP support, caster visual asset, dialogue, shop,
+drop, or Devotion source. C07 remains blocked on the confirmed stop condition
+for partial or wholly ineffective area-cast resource behavior.
