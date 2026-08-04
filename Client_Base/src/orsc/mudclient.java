@@ -13902,10 +13902,8 @@ public final class mudclient implements Runnable {
 		if (definition == null) {
 			return;
 		}
-		String alignment = definition.getAlignment();
-		alignment = Character.toUpperCase(alignment.charAt(0)) + alignment.substring(1);
 		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			definition.getName() + " (Worship " + definition.getWorshipLevel() + ", " + alignment + ")",
+			definition.getName() + " (Worship " + definition.getWorshipLevel() + ")",
 			0xFFFF00, 0, 1, tooltipY + 13);
 		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
 			this.shortenTooltipDescription(definition.getDescription()),

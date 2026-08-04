@@ -87,6 +87,13 @@ def validate_wiring() -> None:
             "client does not submit the stable Cleric cast request")
     require("this.playerStatBase[5] >= definition.getWorshipLevel()" in mudclient,
             "client Worship gate does not match the server's trained-level gate")
+    tooltip_method = mudclient.split("private void drawClericTooltip", 1)[1].split(
+        "private int getClericSpellCodeAt", 1)[0]
+    require("definition.getAlignment()" not in tooltip_method,
+            "Cleric tooltip exposes resource alignment as a player-alignment requirement")
+    require('definition.getName() + " (Worship " + definition.getWorshipLevel() + ")"'
+            in tooltip_method,
+            "Cleric tooltip does not retain its compact Worship requirement")
     for name in (
         '"Mend"', '"Unify"', '"Fervor"', '"Purify"', '"Restore"', '"Ward"',
         '"Greater Mend"', '"Zeal"', '"Thorns"', '"Aegis"', '"Rally"', '"Respite"',
