@@ -58,12 +58,18 @@ public class Party {
 			return;
 		}
 
-		if (member.isOnline()) {
-			ActionSender.sendLeaveParty(member.getPlayerReference());
-			member.getPlayerReference().setParty(null);
-			member.getPlayerReference().message("You are no longer in a party");
-			member.getPlayerReference().setExpShared(0);
-			ActionSender.sendExpShared(member.getPlayerReference());
+		Player player = member.getPlayerReference();
+		boolean wasOnline = member.isOnline();
+		if (wasOnline) {
+			ActionSender.sendLeaveParty(player);
+		}
+		if (player != null) {
+			player.setParty(null);
+		}
+		if (wasOnline) {
+			player.message("You are no longer in a party");
+			player.setExpShared(0);
+			ActionSender.sendExpShared(player);
 		}
 
 		getPlayers().remove(member);

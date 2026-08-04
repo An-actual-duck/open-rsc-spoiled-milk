@@ -8,6 +8,13 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.achievement.Achievement;
 import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanInvite;
+import com.openrsc.server.content.cleric.effect.ClericEffectClock;
+import com.openrsc.server.content.cleric.effect.ClericEffectLifecycle;
+import com.openrsc.server.content.cleric.effect.ClericEffectOrigin;
+import com.openrsc.server.content.cleric.effect.ClericEffectOriginValidator;
+import com.openrsc.server.content.cleric.effect.ClericEffectRegistry;
+import com.openrsc.server.content.cleric.effect.ClericPartyMembershipToken;
+import com.openrsc.server.content.cleric.effect.ClericSessionToken;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyInvite;
@@ -170,6 +177,9 @@ public final class Player extends Mob {
 	private Trade trade;
 	private Clan clan;
 	private Party party;
+	private final ClericSessionToken clericSessionToken = ClericSessionToken.issue();
+	private final ClericEffectRegistry clericEffectRegistry;
+	private ClericPartyMembershipToken clericPartyMembershipToken;
 	private ClanInvite activeClanInvitation;
 	private PartyInvite activePartyInvitation;
 	public final int MAX_FATIGUE = 150000;
@@ -512,6 +522,8 @@ public final class Player extends Mob {
 	 */
 	public Player(final World world, final LoginRequest request) {
 		super(world, EntityType.PLAYER);
+		clericEffectRegistry = new ClericEffectRegistry(ClericEffectClock.system(
+			world.getServer().getConfig().GAME_TICK));
 
 		usernameHash = DataConversions.usernameToHash(request.getUsername());
 		username = DataConversions.hashToUsername(usernameHash);
@@ -546,6 +558,8 @@ public final class Player extends Mob {
 	 */
 	public Player(final World world, final long hash) {
 		super(world, EntityType.PLAYER);
+		clericEffectRegistry = new ClericEffectRegistry(ClericEffectClock.system(
+			world.getServer().getConfig().GAME_TICK));
 
 		usernameHash = hash;
 		username = DataConversions.hashToUsername(usernameHash);
@@ -4190,6 +4204,8 @@ public final class Player extends Mob {
 			return;
 		}
 
+		ClericEffectLifecycle.clearRecipient(clericEffectRegistry);
+
 		// Seems to never be set
 		final ProjectileEvent projectileEvent = getAttribute("projectile");
 		if (projectileEvent != null) projectileEvent.setCanceled(true);
@@ -4745,6 +4761,7 @@ public final class Player extends Mob {
 			teleport(791, 3469); // see [Logg/Tylerbeg/07-19-2018 11.11.46 log back in outside iban's chamber]
 		}
 
+		ClericEffectLifecycle.clearRecipient(clericEffectRegistry);
 		if (getParty() != null) {
 			getParty().removePlayer(this.getUsername());
 		}
@@ -5955,8 +5972,70 @@ public final class Player extends Mob {
 	}
 
 	public void setParty(final Party party) {
+		if (this.party == party) {
+			getUpdateFlags().setAppearanceChanged(true);
+			return;
+		}
+
+		Party previousParty = this.party;
+		ClericPartyMembershipToken previousMembership = clericPartyMembershipToken;
+		if (previousParty != null && previousMembership != null) {
+			ArrayList<ClericEffectRegistry> recipientRegistries =
+				new ArrayList<ClericEffectRegistry>();
+			for (PartyPlayer member : new ArrayList<PartyPlayer>(previousParty.getPlayers())) {
+				Player recipient = member.getPlayerReference();
+				if (recipient != null) {
+					recipientRegistries.add(recipient.getClericEffectRegistry());
+				}
+			}
+			ClericEffectLifecycle.endMembership(clericEffectRegistry,
+				clericSessionToken, previousMembership, recipientRegistries);
+		} else if (previousParty != null) {
+			ClericEffectLifecycle.clearRecipient(clericEffectRegistry);
+		}
+
 		this.party = party;
+		this.clericPartyMembershipToken = party == null
+			? null : ClericPartyMembershipToken.issue();
 		getUpdateFlags().setAppearanceChanged(true);
+	}
+
+	public ClericSessionToken getClericSessionToken() {
+		return clericSessionToken;
+	}
+
+	public ClericPartyMembershipToken getClericPartyMembershipToken() {
+		return clericPartyMembershipToken;
+	}
+
+	public ClericEffectRegistry getClericEffectRegistry() {
+		return clericEffectRegistry;
+	}
+
+	public ClericEffectOriginValidator getClericEffectOriginValidator() {
+		return new ClericEffectOriginValidator() {
+			@Override
+			public boolean isCurrent(ClericEffectOrigin origin) {
+				return isCurrentClericEffectOrigin(origin);
+			}
+		};
+	}
+
+	private boolean isCurrentClericEffectOrigin(ClericEffectOrigin origin) {
+		if (origin == null || party == null
+				|| clericPartyMembershipToken != origin.getRecipientMembership()) {
+			return false;
+		}
+		for (PartyPlayer member : new ArrayList<PartyPlayer>(party.getPlayers())) {
+			Player caster = member.getPlayerReference();
+			if (caster != null && caster.isLoggedIn() && !caster.isUnregistering()
+					&& caster.getParty() == party
+					&& caster.getClericSessionToken() == origin.getCasterSession()
+					&& caster.getClericPartyMembershipToken() == origin.getCasterMembership()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public PartyInvite getActivePartyInvite() {
