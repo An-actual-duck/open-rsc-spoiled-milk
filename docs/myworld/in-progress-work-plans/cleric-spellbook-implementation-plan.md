@@ -2,10 +2,10 @@
 
 ## Status
 
-- Branch: `feat/cleric-purify-effect` (first bounded C09 effect in progress)
+- Branch: `feat/cleric-purify-effect` (first bounded C09 effect complete and awaiting integration)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension**
-- Current milestone: **C09 Purify — automated verification in progress; private acceptance is still required**
+- Current milestone: **C09 Purify — implementation and private acceptance complete**
 - Next planned milestone: **C09 Restore, only after the focused Purify branch is accepted and integrated**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, party-only Unify, and the focused party-only Purify implementation; C08A's registry remains empty, while C08B presents only already-authoritative timed status snapshots**
 - Public-server work: **forbidden**
@@ -1167,3 +1167,40 @@ when the server sends a new authoritative snapshot. The injection was removed,
 the private processes were stopped, the tracked client port was restored to
 `43605`, and no fixture hook remains in the committed source. The public server
 and detached live checkout were untouched.
+
+## C09 Purify Completion Record
+
+The first C09 branch implements Purify as an instant, party-only Guthix support
+action. The caster's snapshotted Holy Power selects fixed reductions of
+`10`/`20`/`30`/`40` poison power. Useful recipients are selected through the
+existing C07 range, line-of-effect, PvP, party-session, and caster-exclusion
+boundary, and the full tier-one Guthix sigil cost is committed once for the
+useful cast rather than once per recipient. An all-unpoisoned recipient set is
+ineffective and spends nothing.
+
+One shared poison-power reduction boundary now keeps the live poison event,
+player-facing poison damage, and persisted current power synchronized. A
+remaining value below `10` uses the ordinary cure path; exactly `10` remains
+poisoned. Partial reduction preserves poison source attribution and maximum
+accumulation state. Purify adds no immunity, timer, transient registry entry,
+HUD row, Worship XP, or combat-pipeline behavior, and no later C09 spell was
+made reachable.
+
+Private verification used two maintained OpenGL clients and the isolated
+`43615/43515` server. The owner confirmed that a party-member cast removed the
+recipient's poison correctly. Server and client logs showed three successful
+Purify casts and no Purify-side exception. The clients and isolated server were
+then stopped, the tracked client port was restored to `43605`, and the public
+server and detached live checkout remained untouched.
+
+Final verification completed on the focused branch:
+
+- `python3 tests/myworld/test-cleric-purify-effect.py`
+- the C01-C08 Cleric foundation, equipment, production, casting, lifecycle,
+  presentation, and status-HUD fixtures;
+- poison model and 1,000-trial balance fixtures;
+- player-data, combat-invariant, god-weapon alignment, moderator-death, and
+  death-altar fixtures;
+- authoritative Ant server and client builds;
+- changed-code compiler and static analysis against `502160e07`; and
+- `git diff --check`.
