@@ -99,8 +99,6 @@ public final class ActiveStatusPacketDecoder {
 	}
 
 	public static final class DecodedSnapshot {
-		private static final DecodedSnapshot EMPTY = new DecodedSnapshot(
-			Collections.<Entry>emptyList(), 0, false);
 		private final List<Entry> entries;
 		private final int overflowCount;
 		private final boolean enriched;
@@ -111,7 +109,9 @@ public final class ActiveStatusPacketDecoder {
 			this.enriched = enriched;
 		}
 
-		public static DecodedSnapshot empty() { return EMPTY; }
+		public static DecodedSnapshot empty() {
+			return new DecodedSnapshot(Collections.<Entry>emptyList(), 0, false);
+		}
 		public List<Entry> getEntries() { return entries; }
 		public int getOverflowCount() { return overflowCount; }
 		public boolean isEnriched() { return enriched; }
