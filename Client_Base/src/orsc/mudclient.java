@@ -349,7 +349,6 @@ public final class mudclient implements Runnable {
 	private static final int HEALTH_HUD_COORDINATE_GAP = 16;
 	private static final int AUTO_ATTACK_HUD_SIZE = 16;
 	private static final int AUTO_ATTACK_HUD_GAP = 4;
-	private static final int MAX_ACTIVE_POTION_EFFECTS = 32;
 	private static final int POTION_HUD_X = 7;
 	private static final int POTION_HUD_Y = 36;
 	private static final int POTION_HUD_WIDTH = 76;
@@ -1175,6 +1174,8 @@ public final class mudclient implements Runnable {
 		"acid-armor-proc", "ice-sword-stab"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
+	private final Sprite[] clericIconSprites =
+		new Sprite[ClericSpellbookCatalog.MAX_DEFINITIONS];
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
 	private final ClientExternalAssetLoader externalAssetLoader = new ClientExternalAssetLoader();
@@ -1236,10 +1237,7 @@ public final class mudclient implements Runnable {
 	private MudClientGraphics surface;
 	private int systemUpdate = 0;
 	private int elixirTimer = 0;
-	private int activePotionEffectCount = 0;
-	private int activePotionEffectOverflowCount = 0;
-	private final int[] activePotionEffectItemIds = new int[MAX_ACTIVE_POTION_EFFECTS];
-	private final long[] activePotionEffectExpiresAt = new long[MAX_ACTIVE_POTION_EFFECTS];
+	private final ActiveStatusHudModel activeStatusHud = new ActiveStatusHudModel();
 	private boolean inWild = false;
 	private int teleportBubbleCount = 0;
 	private int[] teleportBubbleType = new int[50];
@@ -13856,8 +13854,12 @@ public final class mudclient implements Runnable {
 				GenUtil.buildColor(68, 68, 68), 160);
 			this.getSurface().drawBoxBorder(x, MAGIC_ICON_SIZE, y, MAGIC_ICON_SIZE,
 				isHovered ? 0xFFFF00 : 0);
+			Sprite clericIcon = this.getClericIconSprite(code);
 			ItemDef iconDefinition = EntityHandler.getItemDef(definition.getSpellbookIconItemId());
-			if (iconDefinition != null) {
+			if (clericIcon != null) {
+				this.getSurface().drawSprite(clericIcon, x + 2, y + 2,
+					MAGIC_ICON_SIZE - 4, MAGIC_ICON_SIZE - 4, 5924);
+			} else if (iconDefinition != null) {
 				Sprite icon = spriteSelect(iconDefinition);
 				this.getSurface().drawSpriteClipping(icon, x + 2, y + 2,
 					MAGIC_ICON_SIZE - 4, MAGIC_ICON_SIZE - 4,
@@ -13997,6 +13999,7 @@ public final class mudclient implements Runnable {
 	public void replaceClericSpellbook(int schemaVersion, List<ClericSpellDef> definitions) {
 		try {
 			this.clericSpellbook.replace(schemaVersion, definitions);
+			this.loadExternalClericIconSprites();
 			this.clampClericIconScrollRow();
 		} catch (IllegalArgumentException e) {
 			this.clearClericSpellbook();
@@ -14006,6 +14009,7 @@ public final class mudclient implements Runnable {
 
 	public void clearClericSpellbook() {
 		this.clericSpellbook.clear();
+		Arrays.fill(this.clericIconSprites, null);
 		this.clericIconScrollRow = 0;
 		this.clericTextScrollPosition = 0;
 	}
@@ -14722,6 +14726,13 @@ public final class mudclient implements Runnable {
 		return this.spellIconSprites[spellIndex];
 	}
 
+	private Sprite getClericIconSprite(int stableCode) {
+		if (stableCode < 0 || stableCode >= this.clericIconSprites.length) {
+			return null;
+		}
+		return this.clericIconSprites[stableCode];
+	}
+
 	private Sprite getPrayerIconSprite(int prayerIndex) {
 		if (prayerIndex < 0 || prayerIndex >= this.prayerIconSprites.length) {
 			return null;
@@ -14920,10 +14931,13 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawActivePotionEffectsHud() {
-		compactActivePotionEffects(System.currentTimeMillis());
-		int columns = Math.max(1, (activePotionEffectCount + POTION_HUD_ROWS_PER_COLUMN - 1)
+		ActiveStatusHudModel.Snapshot snapshot =
+			this.activeStatusHud.snapshot(System.currentTimeMillis());
+		List<ActiveStatusHudModel.Row> rows = snapshot.getRows();
+		int columns = Math.max(1, (rows.size() + POTION_HUD_ROWS_PER_COLUMN - 1)
 			/ POTION_HUD_ROWS_PER_COLUMN);
-		for (int i = 0; i < activePotionEffectCount; i++) {
+		for (int i = 0; i < rows.size(); i++) {
+			ActiveStatusHudModel.Row status = rows.get(i);
 			int column = i / POTION_HUD_ROWS_PER_COLUMN;
 			int row = i % POTION_HUD_ROWS_PER_COLUMN;
 			int x = POTION_HUD_X + column * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP);
@@ -14934,25 +14948,35 @@ public final class mudclient implements Runnable {
 			getSurface().drawBoxBorder(x, POTION_HUD_WIDTH, y, POTION_HUD_ROW_HEIGHT - 2,
 				hovered ? 0xFFFF00 : 0xB7B7B7);
 
-			ItemDef itemDef = EntityHandler.getItemDef(activePotionEffectItemIds[i]);
-			if (itemDef != null) {
+			ItemDef itemDef = EntityHandler.getItemDef(status.getIconItemId());
+			Sprite clericIcon = status.isCleric()
+				? this.getClericIconSprite(status.getStableIdentity()) : null;
+			if (clericIcon != null) {
+				getSurface().drawSprite(clericIcon, x + 2, y + 3,
+					POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT, 5924);
+			} else if (itemDef != null) {
 				Sprite sprite = spriteSelect(itemDef);
 				getSurface().drawSpriteClipping(sprite, x + 2, y + 3, POTION_HUD_ICON_WIDTH, POTION_HUD_ICON_HEIGHT,
 					itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
 			}
-			long remainingSeconds = Math.max(0L,
-				(activePotionEffectExpiresAt[i] - System.currentTimeMillis() + 999L) / 1000L);
 			getSurface().drawColoredStringCentered(x + POTION_HUD_ICON_WIDTH + 2
 				+ (POTION_HUD_WIDTH - POTION_HUD_ICON_WIDTH - 4) / 2,
-				formatPotionCountdown(remainingSeconds), 0xFFFFFF, 0, 1, y + 15);
-			if (hovered && itemDef != null) {
+				formatPotionCountdown(status.getRemainingSeconds()), 0xFFFFFF, 0, 1, y + 15);
+			String badge = status.getCounterBadge();
+			if (!badge.isEmpty()) {
+				getSurface().drawBoxAlpha(x + 11, y + 11, 13, 10, 0x111111, 220);
+				getSurface().drawColoredStringCentered(x + 17, badge, 0xFFFF00, 0, 0, y + 20);
+			}
+			if (hovered && (status.isCleric() || itemDef != null)) {
 				int tooltipX = POTION_HUD_X + columns * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP) + 1;
-				getSurface().drawString(itemDef.getName(), tooltipX, y + 15, 0xFFFFFF, 1);
+				String tooltip = status.isCleric()
+					? status.getClericHoverText() : itemDef.getName();
+				getSurface().drawString(tooltip, tooltipX, y + 15, 0xFFFFFF, 1);
 			}
 		}
-		if (this.activePotionEffectOverflowCount > 0) {
+		if (snapshot.getOverflowCount() > 0) {
 			int overflowY = POTION_HUD_Y + POTION_HUD_ROWS_PER_COLUMN * POTION_HUD_ROW_HEIGHT;
-			String label = "+" + this.activePotionEffectOverflowCount + " more effects";
+			String label = "+" + snapshot.getOverflowCount() + " more effects";
 			this.getSurface().drawBoxAlpha(POTION_HUD_X, overflowY,
 				POTION_HUD_WIDTH + 20, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
 			this.getSurface().drawBoxBorder(POTION_HUD_X, POTION_HUD_WIDTH + 20,
@@ -14973,45 +14997,22 @@ public final class mudclient implements Runnable {
 		return minutes + ":" + (remainder < 10L ? "0" : "") + remainder;
 	}
 
-	private void compactActivePotionEffects(long now) {
-		int next = 0;
-		for (int i = 0; i < activePotionEffectCount; i++) {
-			if (activePotionEffectExpiresAt[i] <= now) {
-				continue;
-			}
-			if (next != i) {
-				activePotionEffectItemIds[next] = activePotionEffectItemIds[i];
-				activePotionEffectExpiresAt[next] = activePotionEffectExpiresAt[i];
-			}
-			next++;
-		}
-		activePotionEffectCount = next;
-	}
-
 	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds) {
 		setActivePotionEffects(itemIds, remainingSeconds, 0);
 	}
 
 	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds, int overflowCount) {
-		clearActivePotionEffects();
-		this.activePotionEffectOverflowCount = Math.max(0, overflowCount);
-		int count = Math.min(MAX_ACTIVE_POTION_EFFECTS, Math.min(itemIds.length, remainingSeconds.length));
-		long now = System.currentTimeMillis();
-		for (int i = 0; i < count; i++) {
-			if (itemIds[i] < 0 || remainingSeconds[i] <= 0) {
-				continue;
-			}
-			activePotionEffectItemIds[activePotionEffectCount] = itemIds[i];
-			activePotionEffectExpiresAt[activePotionEffectCount] = now + remainingSeconds[i] * 1000L;
-			activePotionEffectCount++;
-		}
+		replaceActiveStatuses(ActiveStatusPacketDecoder.legacySnapshot(
+			itemIds, remainingSeconds, overflowCount));
+	}
+
+	public void replaceActiveStatuses(ActiveStatusPacketDecoder.DecodedSnapshot snapshot) {
+		this.activeStatusHud.replace(snapshot, this.clericSpellbook,
+			System.currentTimeMillis());
 	}
 
 	public void clearActivePotionEffects() {
-		activePotionEffectCount = 0;
-		activePotionEffectOverflowCount = 0;
-		Arrays.fill(activePotionEffectItemIds, 0);
-		Arrays.fill(activePotionEffectExpiresAt, 0L);
+		this.activeStatusHud.clear();
 	}
 
 	private void drawAutoAttackHudButton(int x, int y) {
@@ -22071,6 +22072,12 @@ public final class mudclient implements Runnable {
 		}, iconName + ".png");
 	}
 
+	private File getExternalClericIconFile(String iconName) {
+		return this.externalAssetLoader.findFirstFile(new String[] {
+			"dev/myworld/assets/sprites/UI/cleric"
+		}, iconName + ".png");
+	}
+
 	private void loadExternalGlyphTexture(int textureIndex) {
 		File glyphFile = getExternalGlyphTextureFile("air");
 		if (!this.externalAssetLoader.assetFileExists(glyphFile)) {
@@ -22313,6 +22320,24 @@ public final class mudclient implements Runnable {
 			loadedIcons++;
 		}
 		}
+
+	private void loadExternalClericIconSprites() {
+		Arrays.fill(this.clericIconSprites, null);
+		for (ClericSpellDef definition : this.clericSpellbook.snapshot()) {
+			String iconAssetKey = definition.getIconAssetKey();
+			if (iconAssetKey.isEmpty()) {
+				continue;
+			}
+			File iconFile = getExternalClericIconFile(iconAssetKey);
+			if (!this.externalAssetLoader.assetFileExists(iconFile)) {
+				continue;
+			}
+			Sprite sprite = this.externalAssetLoader.loadExternalWorldSprite(iconFile, 56);
+			if (sprite != null) {
+				this.clericIconSprites[definition.getStableCode()] = sprite;
+			}
+		}
+	}
 
 	private void loadExternalSummoningIconSprites() {
 		Arrays.fill(this.summoningIconSprites, null);

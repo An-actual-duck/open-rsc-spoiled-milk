@@ -2,6 +2,7 @@ package orsc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ClericSpellDef;
+import com.openrsc.client.entityhandling.defs.ClericEffectRankDef;
 import com.openrsc.client.entityhandling.defs.SpriteDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.instances.Item;
@@ -1528,21 +1529,10 @@ public class PacketHandler {
 	}
 
 	private void updateActivePotionEffects(int length) {
-		int count = packetsIncoming.getByte() & 0xff;
-		if (count > 32) {
-			mc.clearActivePotionEffects();
-			return;
-		}
-		int[] itemIds = new int[count];
-		int[] remainingSeconds = new int[count];
-		for (int i = 0; i < count; i++) {
-			itemIds[i] = packetsIncoming.getShort();
-			remainingSeconds[i] = Math.max(0, packetsIncoming.get32());
-		}
-		int encodedEntryBytes = 1 + count * 6;
-		int overflowCount = length >= encodedEntryBytes + 2
-			? packetsIncoming.getShort() & 0xffff : 0;
-		mc.setActivePotionEffects(itemIds, remainingSeconds, overflowCount);
+		int payloadLength = Math.max(0, length - packetsIncoming.packetEnd);
+		byte[] payload = new byte[payloadLength];
+		packetsIncoming.readBytes(payloadLength, payload);
+		mc.replaceActiveStatuses(ActiveStatusPacketDecoder.decode(payload));
 	}
 
 	private void updateClericSpellbook() {
@@ -1554,23 +1544,42 @@ public class PacketHandler {
 		}
 		ArrayList<ClericSpellDef> definitions = new ArrayList<ClericSpellDef>(count);
 		for (int i = 0; i < count; i++) {
+			int stableCode = packetsIncoming.getShort() & 0xffff;
+			String stableKey = packetsIncoming.readString();
+			String name = packetsIncoming.readString();
+			String description = packetsIncoming.readString();
+			String alignment = packetsIncoming.readString();
+			int worshipLevel = packetsIncoming.getByte() & 0xff;
+			int spellTier = packetsIncoming.getByte() & 0xff;
+			int radius = packetsIncoming.getByte() & 0xff;
+			boolean affectsCaster = packetsIncoming.getByte() != 0;
+			int spellbookIconItemId = packetsIncoming.getShort() & 0xffff;
+			int stoneSigilItemId = packetsIncoming.getShort() & 0xffff;
+			int stoneSigilCount = packetsIncoming.getByte() & 0xff;
+			int silverSigilItemId = packetsIncoming.getShort() & 0xffff;
+			int silverSigilCount = packetsIncoming.getByte() & 0xff;
+			int casterIconItemId = packetsIncoming.get32();
+			int casterAnimationId = packetsIncoming.get32();
+			String iconAssetKey = packetsIncoming.readString();
+			int rankCount = packetsIncoming.getByte() & 0xff;
+			ArrayList<ClericEffectRankDef> ranks =
+				new ArrayList<ClericEffectRankDef>(rankCount);
+			for (int rank = 0; rank < rankCount; rank++) {
+				ranks.add(new ClericEffectRankDef(
+					packetsIncoming.getByte() & 0xff,
+					packetsIncoming.get32(),
+					packetsIncoming.getByte() & 0xff,
+					packetsIncoming.getByte() & 0xff,
+					packetsIncoming.getShort() & 0xffff,
+					packetsIncoming.getShort() & 0xffff,
+					packetsIncoming.getShort() & 0xffff));
+			}
 			definitions.add(new ClericSpellDef(
-				packetsIncoming.getShort() & 0xffff,
-				packetsIncoming.readString(),
-				packetsIncoming.readString(),
-				packetsIncoming.readString(),
-				packetsIncoming.readString(),
-				packetsIncoming.getByte() & 0xff,
-				packetsIncoming.getByte() & 0xff,
-				packetsIncoming.getByte() & 0xff,
-				packetsIncoming.getByte() != 0,
-				packetsIncoming.getShort() & 0xffff,
-				packetsIncoming.getShort() & 0xffff,
-				packetsIncoming.getByte() & 0xff,
-				packetsIncoming.getShort() & 0xffff,
-				packetsIncoming.getByte() & 0xff,
-				packetsIncoming.get32(),
-				packetsIncoming.get32()));
+				stableCode, stableKey, name, description, alignment, worshipLevel,
+				spellTier, radius, affectsCaster, spellbookIconItemId,
+				stoneSigilItemId, stoneSigilCount, silverSigilItemId,
+				silverSigilCount, casterIconItemId, casterAnimationId,
+				iconAssetKey, ranks));
 		}
 		mc.replaceClericSpellbook(schemaVersion, definitions);
 	}

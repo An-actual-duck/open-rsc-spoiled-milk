@@ -53,6 +53,7 @@ def validate_source_boundaries() -> None:
     expected_authorized_references = {
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
+        "server/src/com/openrsc/server/content/status/ClericActiveStatusCollector.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
@@ -106,7 +107,7 @@ public final class ClericSpellbookFoundationFixture {
 	}
 
 	public static void main(String[] args) {
-		check(ClericSpellCatalog.SCHEMA_VERSION == 1, "schema version drift");
+		check(ClericSpellCatalog.SCHEMA_VERSION == 2, "schema version drift");
 		check(ClericSpellCatalog.MAX_LAUNCH_HOLY_POWER == 64, "Holy Power cap drift");
 
 		ClericSpellId[] ids = ClericSpellId.values();

@@ -12,6 +12,7 @@ import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyInvite;
 import com.openrsc.server.content.party.PartyPlayer;
+import com.openrsc.server.content.status.ActiveStatusEntry;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
 import com.openrsc.server.database.impl.mysql.queries.logging.LiveFeedLog;
 import com.openrsc.server.database.struct.PlayerInventory;
@@ -2050,8 +2051,8 @@ public final class Player extends Mob {
 		return Math.max(0, getCache().getInt(bonusKey));
 	}
 
-	public List<ActivePotionEffectStatus> getActivePotionEffectStatuses() {
-		final ArrayList<ActivePotionEffectStatus> statuses = new ArrayList<>();
+	public List<ActiveStatusEntry> getActivePotionEffectStatuses() {
+		final ArrayList<ActiveStatusEntry> statuses = new ArrayList<>();
 		final long now = System.currentTimeMillis();
 		syncHerblawSkillPotionBonuses();
 		addTimedPotionStatus(statuses, "brawn", "potion_brawn_expires_at", now);
@@ -2076,7 +2077,7 @@ public final class Player extends Mob {
 		return statuses;
 	}
 
-	private void addTimedPotionStatus(final List<ActivePotionEffectStatus> statuses, final String family,
+	private void addTimedPotionStatus(final List<ActiveStatusEntry> statuses, final String family,
 									 final String expiresKey, final long now) {
 		final String itemKey = POTION_STATUS_ITEM_PREFIX + family;
 		final long expiresAt = getAttribute(expiresKey, 0L);
@@ -2084,45 +2085,37 @@ public final class Player extends Mob {
 			removeAttribute(itemKey);
 			return;
 		}
-		addPotionStatus(statuses, getAttribute(itemKey, -1), expiresAt - now);
+		addPotionStatus(statuses, family, getAttribute(itemKey, -1), expiresAt - now);
 	}
 
-	private void addXpBrewStatus(final List<ActivePotionEffectStatus> statuses, final String key) {
+	private void addXpBrewStatus(final List<ActiveStatusEntry> statuses, final String key) {
 		final long remaining = getXpBrewRemainingMillis(key);
 		final String itemKey = "potion_" + key + "_xp_item_id";
 		if (remaining <= 0L || !getCache().hasKey(itemKey)) {
 			return;
 		}
-		addPotionStatus(statuses, getCache().getInt(itemKey), remaining);
+		addPotionStatus(statuses, key, getCache().getInt(itemKey), remaining);
 	}
 
-	private void addPoisonProtectionStatus(final List<ActivePotionEffectStatus> statuses, final long now) {
+	private void addPoisonProtectionStatus(final List<ActiveStatusEntry> statuses, final long now) {
 		final String itemKey = POTION_STATUS_ITEM_PREFIX + "poison_protection";
 		final long remaining = poisonProtectionExpiresAt - now;
 		if (remaining <= 0L) {
 			removeAttribute(itemKey);
 			return;
 		}
-		addPotionStatus(statuses, getAttribute(itemKey, -1), remaining);
+		addPotionStatus(statuses, "poison_protection", getAttribute(itemKey, -1), remaining);
 	}
 
-	private void addPotionStatus(final List<ActivePotionEffectStatus> statuses, final int itemId, final long remainingMs) {
+	private void addPotionStatus(final List<ActiveStatusEntry> statuses, final String family,
+			final int itemId, final long remainingMs) {
 		if (itemId < 0 || remainingMs <= 0L
 				|| statuses.size() >= MAX_REPORTED_ACTIVE_POTION_EFFECTS) {
 			return;
 		}
 		final long seconds = Math.max(1L, (remainingMs + 999L) / 1000L);
-		statuses.add(new ActivePotionEffectStatus(itemId, (int) Math.min(Integer.MAX_VALUE, seconds)));
-	}
-
-	public static final class ActivePotionEffectStatus {
-		public final int itemId;
-		public final int remainingSeconds;
-
-		private ActivePotionEffectStatus(final int itemId, final int remainingSeconds) {
-			this.itemId = itemId;
-			this.remainingSeconds = remainingSeconds;
-		}
+		statuses.add(ActiveStatusEntry.item("potion:" + family, itemId,
+			(int) Math.min(Integer.MAX_VALUE, seconds)));
 	}
 
 	private boolean isCombatXpSkill(final int skill) {

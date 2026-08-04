@@ -6,5 +6,6 @@ import com.openrsc.server.net.rsc.struct.AbstractStruct;
 
 public final class ClericSpellbookStruct extends AbstractStruct<OpcodeOut> {
 	public int schemaVersion;
+	public int gameTickMilliseconds;
 	public ClericSpellDefinition[] definitions = new ClericSpellDefinition[0];
 }

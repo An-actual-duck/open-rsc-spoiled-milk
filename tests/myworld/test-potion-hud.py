@@ -13,6 +13,8 @@ OPCODES = ROOT / "server/src/com/openrsc/server/net/rsc/enums/OpcodeOut.java"
 STRUCT = ROOT / "server/src/com/openrsc/server/net/rsc/struct/outgoing/ActivePotionEffectsStruct.java"
 PACKETS = ROOT / "Client_Base/src/orsc/PacketHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
+DECODER = ROOT / "Client_Base/src/orsc/ActiveStatusPacketDecoder.java"
+MODEL = ROOT / "Client_Base/src/orsc/ActiveStatusHudModel.java"
 
 
 def fail(message: str) -> None:
@@ -35,6 +37,8 @@ def main() -> None:
     struct = STRUCT.read_text(encoding="utf-8")
     packets = PACKETS.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
+    decoder = DECODER.read_text(encoding="utf-8")
+    model = MODEL.read_text(encoding="utf-8")
 
     require(opcodes, "SEND_ACTIVE_POTION_EFFECTS", "missing potion HUD opcode")
     require(validator, "ActivePotionEffectsStruct.class", "missing potion payload validation")
@@ -49,6 +53,9 @@ def main() -> None:
     require(struct, "int[] itemIds", "potion payload lacks item IDs")
     require(struct, "int[] remainingSeconds", "potion payload lacks durations")
     require(struct, "int totalCount", "potion payload lacks total status count")
+    require(struct, "EXTENSION_VERSION = 1", "mixed-status trailer version is missing")
+    require(struct, "int[] identityKinds", "mixed-status payload lacks identity kinds")
+    require(struct, "int[] remainingCounters", "mixed-status payload lacks counters")
 
     require(sender, "if (!player.isUsingCustomClient())", "legacy clients must not receive the custom packet")
     require(sender, "player.getActivePotionEffectStatuses()", "packet does not derive from server state")
@@ -81,17 +88,21 @@ def main() -> None:
 
     require(packets, "else if (opcode == 152) updateActivePotionEffects(length);",
             "client does not dispatch length-aware status snapshots")
-    require(packets, "if (count > 32)", "client does not reject oversized snapshots")
-    require(packets, "length >= encodedEntryBytes + 2",
+    require(packets, "ActiveStatusPacketDecoder.decode(payload)",
+            "client does not use the defensive mixed-status decoder")
+    require(decoder, "count > MAX_VISIBLE", "client does not reject oversized snapshots")
+    require(decoder, "cursor.remaining() < 2",
+            "client does not preserve legacy no-overflow prefixes")
+    require(decoder, "cursor.readUnsignedShort()",
             "client does not accept the optional overflow suffix")
-    require(client, "MAX_ACTIVE_POTION_EFFECTS = 32", "client status capacity was not expanded")
+    require(model, "ClericSpellbookCatalog", "mixed status model cannot validate enrichment")
     require(client, "POTION_HUD_ROWS_PER_COLUMN = 8", "multiple effects are not laid out in bounded columns")
     require(client, "POTION_HUD_Y + row * POTION_HUD_ROW_HEIGHT", "potion rows can overlap")
     require(client, "itemDef.getName()", "hover does not show the exact item name")
-    require(client, "compactActivePotionEffects(System.currentTimeMillis())",
+    require(model, "compact(nowMillis)",
             "expired effects do not disappear without another packet")
     require(client, "this.clearActivePotionEffects();", "logout/reconnect does not clear stale client state")
-    require(client, '"+" + this.activePotionEffectOverflowCount + " more effects"',
+    require(client, '"+" + snapshot.getOverflowCount() + " more effects"',
             "client does not disclose omitted status entries")
 
     print("PASS: expanded bounded server-authoritative status HUD wiring validated")

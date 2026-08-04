@@ -45,12 +45,16 @@ public final class ClericEffectDuration {
 	}
 
 	public long toNanos(long gameTickMilliseconds) {
+		return Math.multiplyExact(toMilliseconds(gameTickMilliseconds),
+			NANOS_PER_MILLISECOND);
+	}
+
+	public long toMilliseconds(long gameTickMilliseconds) {
 		if (gameTickMilliseconds <= 0L) {
 			throw new IllegalArgumentException("Game tick duration must be positive");
 		}
-		long milliseconds = unit == Unit.GAME_TICKS
+		return unit == Unit.GAME_TICKS
 			? Math.multiplyExact(amount, gameTickMilliseconds)
 			: amount;
-		return Math.multiplyExact(milliseconds, NANOS_PER_MILLISECOND);
 	}
 }

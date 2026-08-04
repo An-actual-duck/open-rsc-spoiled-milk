@@ -15,6 +15,9 @@ import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionMemory;
+import com.openrsc.server.content.status.ActiveStatusEntry;
+import com.openrsc.server.content.status.ActiveStatusInventory;
+import com.openrsc.server.content.status.ClericActiveStatusCollector;
 import com.openrsc.server.database.struct.HiscoreEntry;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
@@ -2202,16 +2205,30 @@ public class ActionSender {
 			return;
 		}
 
-		List<Player.ActivePotionEffectStatus> statuses = player.getActivePotionEffectStatuses();
+		List<ActiveStatusEntry> statuses = new ArrayList<ActiveStatusEntry>(
+			player.getActivePotionEffectStatuses());
+		ClericActiveStatusCollector.append(player, statuses);
+		ActiveStatusInventory inventory = ActiveStatusInventory.select(statuses);
+		List<ActiveStatusEntry> visible = inventory.getVisible();
 		ActivePotionEffectsStruct struct = new ActivePotionEffectsStruct();
-		struct.count = statuses.size();
-		struct.totalCount = statuses.size();
+		struct.count = visible.size();
+		struct.totalCount = inventory.getTotalCount();
 		struct.itemIds = new int[struct.count];
 		struct.remainingSeconds = new int[struct.count];
+		struct.identityKinds = new int[struct.count];
+		struct.stableIdentities = new int[struct.count];
+		struct.ranks = new int[struct.count];
+		struct.counterKinds = new int[struct.count];
+		struct.remainingCounters = new int[struct.count];
 		for (int i = 0; i < struct.count; i++) {
-			Player.ActivePotionEffectStatus status = statuses.get(i);
-			struct.itemIds[i] = status.itemId;
-			struct.remainingSeconds[i] = status.remainingSeconds;
+			ActiveStatusEntry status = visible.get(i);
+			struct.itemIds[i] = status.getIconItemId();
+			struct.remainingSeconds[i] = status.getRemainingSeconds();
+			struct.identityKinds[i] = status.getIdentityKind().getCode();
+			struct.stableIdentities[i] = status.getStableIdentity();
+			struct.ranks[i] = status.getRank();
+			struct.counterKinds[i] = status.getCounterKind().getCode();
+			struct.remainingCounters[i] = status.getRemainingCounter();
 		}
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, struct, player);
 	}
@@ -2223,6 +2240,7 @@ public class ActionSender {
 		}
 		ClericSpellbookStruct struct = new ClericSpellbookStruct();
 		struct.schemaVersion = ClericSpellCatalog.SCHEMA_VERSION;
+		struct.gameTickMilliseconds = player.getConfig().GAME_TICK;
 		struct.definitions = ClericSpellCatalog.getAll().toArray(
 			new ClericSpellDefinition[0]);
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_CLERIC_SPELLBOOK, struct, player);
