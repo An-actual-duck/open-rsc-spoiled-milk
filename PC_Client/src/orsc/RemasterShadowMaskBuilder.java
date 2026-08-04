@@ -218,8 +218,13 @@ final class RemasterShadowMaskBuilder {
 		if (chunkFrame == null) {
 			return mix(hash, 0);
 		}
-		hash = mix(hash, chunkFrame.getChunkCount());
+		hash = mix(hash, chunkFrame.getStaticPresentationChunkCount());
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+			if (chunk.getChunkRole()
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_ANIMATED_OBJECTS) {
+				continue;
+			}
 			boolean objectChunk = chunk.isObjectChunk();
 			hash = mix(hash, chunk.getPlane());
 			hash = mix(hash, chunk.getCenterSectionX());
@@ -230,6 +235,10 @@ final class RemasterShadowMaskBuilder {
 			hash = mix(hash, chunk.getChunkRole());
 			hash = mix(hash, chunk.getShadowCasterCount());
 			if (objectChunk) {
+				long casterSignature =
+					chunk.getShadowCasterInventorySignature();
+				hash = mix(hash, (int) casterSignature);
+				hash = mix(hash, (int) (casterSignature >>> 32));
 				continue;
 			}
 			hash = mix(hash, chunk.getTriangleCount());
@@ -627,6 +636,18 @@ final class RemasterShadowMaskBuilder {
 		float lightElevationDegrees) {
 		List<RemasterTerrainShadowCaster> casters = new ArrayList<RemasterTerrainShadowCaster>();
 		for (Renderer3DWorldChunkFrame.ChunkMesh chunk : chunkFrame.getChunks()) {
+			/*
+			 * Animated scenery is rendered normally, but its changing frames are
+			 * not stable owners for the cached terrain-shadow texture. Most are
+			 * emissive/effect models (fire, portals, ripples, and spell scenery);
+			 * including them made every boundary return miss the otherwise exact
+			 * static mask cache.
+			 */
+			if (chunk.getChunkRole()
+					== Renderer3DWorldChunkFrame
+						.CHUNK_ROLE_ANIMATED_OBJECTS) {
+				continue;
+			}
 			int casterCount = chunk.getShadowCasterCount();
 			for (int index = 0; index < casterCount; index++) {
 				Renderer3DWorldChunkFrame.ShadowCaster caster = chunk.getShadowCaster(index);

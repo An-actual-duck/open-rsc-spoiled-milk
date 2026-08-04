@@ -901,3 +901,31 @@ use storage-plus-baked-variant identity. The compiled fixture additionally
 proves different animated frame signatures resolve to one stable positional
 entry. A new private run must confirm the steady eviction stream is gone before
 the residency prototype can be accepted.
+
+Session `output/renderer-diagnostics/session-20260804-120427-758407` confirms
+that correction. The first two marker/crossing observations were explicitly
+identified as missing warm-ups and excluded. From the third marker onward,
+return crossings uploaded only 7--12 dynamic chunks, 0.904--1.404 MiB, in
+0.437--1.149 ms. The previous 75--84 chunk and 135--166 MiB resident-terrain
+bursts are gone. This accepts the residency prototype and moves the remaining
+normal hitch below GPU geometry upload.
+
+Warm transitions still spent 21.931--33.391 ms building the remaster terrain
+shadow mask. Most resulting OpenGL intervals were 82--105 ms and client-loop
+maxima were 42--63 ms. Trace 18 was a distinct 103 ms GC outlier and is not
+representative of the normal shadow cost. Exact return masks mostly reported
+`rebuilt:world`; only two early returns reported `mask-cache:world` at about
+6 ms.
+
+The mask builder was incorporating changing animated-object casters into its
+exact texture signature. Those chunks comprise rotating sails and primarily
+emissive/effect scenery such as fires, portals, fishing ripples, torches, and
+spell effects. They are not stable owners of a cached terrain-shadow texture.
+The next reversible prototype leaves their geometry rendering unchanged but
+excludes their casters from the terrain-shadow mask and its world signature.
+Static object caster inventories are now explicitly part of that signature,
+so actual scenery changes still invalidate the mask. A compiled A -> B -> A
+fixture proves an animated-frame change reuses A's mask while a static-world or
+static-caster change invalidates it. Visual validation must check both cache-hit
+timing and the appearance of animated scenery before this prototype is
+accepted.
