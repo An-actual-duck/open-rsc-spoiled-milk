@@ -166,13 +166,17 @@ def validate_runtime_wiring() -> None:
     mob = MOB.read_text(encoding="utf-8")
     poison_event = POISON_EVENT.read_text(encoding="utf-8")
     plan = PLAN.read_text(encoding="utf-8")
+    prepare_purify = runtime.split(
+        "private static ClericCastTransaction.PreparedApplication preparePurify", 1
+    )[1].split(
+        "private static ClericCastTransaction.PreparedApplication prepareRestore", 1
+    )[0]
 
     for snippet in (
-        "definition.getId() != ClericSpellId.UNIFY",
-        "definition.getId() != ClericSpellId.PURIFY",
+        "spellId == ClericSpellId.PURIFY",
         "definition.resolveEffectRank(",
         "caster.getCarriedItems().getEquipment().getHolyPower()",
-        "preparePurify(target, purifyRank)",
+        "preparePurify(target, effectRank)",
         "recipient.getCurrentPoisonPower()",
         "new PurifyApplication(recipient, plan.getReduction())",
         "recipient.reduceCurrentPoisonPower(reduction)",
@@ -180,7 +184,7 @@ def validate_runtime_wiring() -> None:
         "ClericSupportTargeting.resolve(",
     ):
         require(snippet in runtime, f"Purify runtime wiring missing: {snippet}")
-    require("ClericEffectRegistry" not in runtime,
+    require("ClericEffectRegistry" not in prepare_purify,
             "instant Purify must not create a transient Cleric status")
     require("addExperience" not in runtime and "Skill.PRAYER" not in runtime,
             "Purify must not award Worship XP")

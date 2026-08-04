@@ -264,9 +264,9 @@ def validate_runtime_boundaries() -> None:
         "ActionSender.sendInventory(caster);",
     ):
         require(snippet in runtime, f"C07 runtime boundary missing: {snippet}")
-    require("definition.getId() != ClericSpellId.UNIFY" in runtime
-            and "definition.getId() != ClericSpellId.PURIFY" in runtime,
-            "only approved C07 Unify and C09 Purify effects may be reachable")
+    for spell in ("UNIFY", "PURIFY", "RESTORE"):
+        require(f"spellId == ClericSpellId.{spell}" in runtime,
+                f"approved Cleric runtime omits {spell}")
     require("teleport(" not in runtime and "teleportLayer" not in runtime,
             "Unify must never use teleport movement")
     require("Skill.PRAYER" not in runtime and "addExperience" not in runtime,

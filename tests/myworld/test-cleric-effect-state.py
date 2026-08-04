@@ -589,9 +589,9 @@ def validate_source_boundaries() -> None:
 
     casting = CASTING.read_text(encoding="utf-8")
     handler = HANDLER.read_text(encoding="utf-8")
-    require("definition.getId() != ClericSpellId.UNIFY" in casting
-            and "definition.getId() != ClericSpellId.PURIFY" in casting,
-            "only approved Unify and instant Purify may be reachable")
+    for spell in ("UNIFY", "PURIFY", "RESTORE"):
+        require(f"spellId == ClericSpellId.{spell}" in casting,
+                f"approved instant/movement Cleric runtime omits {spell}")
     require("ClericEffectCatalog" not in casting and "ClericEffectRegistry" not in casting,
             "C08A casting path can populate the new registry")
     require("ClericEffectCatalog" not in handler and "ClericEffectRegistry" not in handler,
