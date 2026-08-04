@@ -883,3 +883,21 @@ legacy positioning, and simultaneous lookup of both shadow variants. Private
 visual validation must warm both directions before measuring; the expected
 signature of success is a one-time population cost followed by near-zero
 chunk uploads on repeated returns.
+
+The first validation of that correction,
+`output/renderer-diagnostics/session-20260804-115856-745238`, exposed a second
+ownership error. Nine marked hitches continued to coincide with 75--84 chunk,
+135.776--165.979 MiB upload bursts on the repeated `(11,11)`/`(12,12)` route.
+Console telemetry simultaneously reported a steady-state pattern of one chunk
+upload and one eviction while the player was not crossing a boundary.
+
+The remaining churn came from the animated-object chunk. Its storage signature
+changes as animation advances, so giving it immutable-storage key ownership
+allocated a new LRU entry on every frame. At 60 FPS this flushed both otherwise
+valid boundary variants between crossings. Animated storage is not immutable:
+it now retains the established position/role key and replaces that buffer's
+contents as frames advance. Static world and static-object chunks continue to
+use storage-plus-baked-variant identity. The compiled fixture additionally
+proves different animated frame signatures resolve to one stable positional
+entry. A new private run must confirm the steady eviction stream is gone before
+the residency prototype can be accepted.

@@ -98,6 +98,16 @@ public final class ResidentChunkStorageIdentityFixture {
 					Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,
 					201L), true, 501L),
 			"static and animated object roles remain isolated");
+		assertEquals(
+			WorldChunkBufferKey.from(
+				objectChunk(
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,
+					201L), true, 501L),
+			WorldChunkBufferKey.from(
+				objectChunk(
+					Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,
+					202L), true, 502L),
+			"animated frames update one stable positional cache entry");
 
 		System.out.println("PASS: resident chunk storage identity");
 	}
@@ -190,8 +200,9 @@ def main() -> None:
     renderer_source = CHUNK_RENDERER.read_text(encoding="utf-8")
     for fragment in (
         "boolean drawOffsetStorage",
-        "drawOffsetSupported ? chunk.getStorageSignature() : 0L",
-        "drawOffsetSupported ? storageVariantSignature : 0L",
+        "boolean immutableStorageIdentity = drawOffsetSupported",
+        "immutableStorageIdentity ? chunk.getStorageSignature() : 0L",
+        "immutableStorageIdentity ? storageVariantSignature : 0L",
         "if (drawOffsetStorage) {",
         "storageVariantSignature\n\t\t\t\t\t== key.storageVariantSignature",
         "WorldChunkBufferKey.from(\n\t\t\t\tchunk,\n\t\t\t\tdrawOffsetSupported,\n\t\t\t\tshadowProofSignature)",

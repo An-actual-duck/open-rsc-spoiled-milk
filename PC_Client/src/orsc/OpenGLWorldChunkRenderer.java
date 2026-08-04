@@ -4209,6 +4209,10 @@ final class WorldChunkBufferKey {
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,
 		boolean drawOffsetSupported,
 		long storageVariantSignature) {
+		boolean immutableStorageIdentity = drawOffsetSupported
+			&& chunk.getChunkRole()
+				!= Renderer3DWorldChunkFrame
+					.CHUNK_ROLE_ANIMATED_OBJECTS;
 		/*
 		 * The resident shader applies presentation rebases as a draw offset.
 		 * Its VBO therefore owns immutable mesh storage, not the current
@@ -4216,20 +4220,22 @@ final class WorldChunkBufferKey {
 		 * path made every adjacent rebase upload unchanged storage again.
 		 * Baked vertex variants (currently projected-shadow proof) must remain
 		 * distinct: collapsing them would overwrite the resident copy on every
-		 * return crossing. The fixed-function path cannot apply an offset and
-		 * deliberately retains the original position-specific identity.
+		 * return crossing. Animated-object storage changes every frame, so those
+		 * chunks deliberately retain a stable positional key and update their
+		 * existing buffer instead of allocating an unbounded stream of cache
+		 * entries. The fixed-function path also remains position-specific.
 		 */
 		return new WorldChunkBufferKey(
 			chunk.getPlane(),
-			drawOffsetSupported ? 0 : chunk.getCenterSectionX(),
-			drawOffsetSupported ? 0 : chunk.getCenterSectionY(),
-			drawOffsetSupported ? 0 : chunk.getOriginWorldX(),
-			drawOffsetSupported ? 0 : chunk.getOriginWorldZ(),
+			immutableStorageIdentity ? 0 : chunk.getCenterSectionX(),
+			immutableStorageIdentity ? 0 : chunk.getCenterSectionY(),
+			immutableStorageIdentity ? 0 : chunk.getOriginWorldX(),
+			immutableStorageIdentity ? 0 : chunk.getOriginWorldZ(),
 			chunk.isObjectChunk(),
 			chunk.getChunkRole(),
-			drawOffsetSupported,
-			drawOffsetSupported ? chunk.getStorageSignature() : 0L,
-			drawOffsetSupported ? storageVariantSignature : 0L);
+			immutableStorageIdentity,
+			immutableStorageIdentity ? chunk.getStorageSignature() : 0L,
+			immutableStorageIdentity ? storageVariantSignature : 0L);
 	}
 
 	@Override
