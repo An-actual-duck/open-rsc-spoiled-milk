@@ -1,7 +1,9 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
-Status: active; bounded terrain transport and incremental frame receive are
-implemented, with repeated visual stress validation still pending
+Status: integration checkpoint accepted; transport, atomic activation,
+diagnostics, warm-residency, static-shadow ownership, batched scene deltas, and
+diagonal prediction are validated. Further dense-area frame-pacing work remains
+as a separate follow-up.
 
 Branch: `refactor/boundary-loading-diagnostics-followup`
 
@@ -1010,3 +1012,42 @@ over a multi-halo cache for the next comparison because the same session's
 post-GC old-generation floor rose by about 616 MiB and direct-buffer floor by
 about 178 MiB while diagnostics were active; retaining additional complete
 terrain products before accounting for that memory would be needlessly risky.
+
+### Diagonal-prediction acceptance and integration boundary (2026-08-04)
+
+Private layered-runtime session
+`output/renderer-diagnostics/session-20260804-125659-995982` exercised commit
+`8cc1f483a` on the same repeated cardinal/diagonal route. The first manual
+Ctrl+F8 marker was explicitly identified as a misclick and is excluded. The
+tester reported no visual errors, described the remaining hitch as harder to
+time, and accepted this result as a worthwhile integration stopping point.
+
+The prediction correction removed the diagnosed mismatch:
+
+- all 18 settled transitions matched an acknowledged prediction, including all
+  10 diagonal crossings and all 16 return visits;
+- predicted player receipt on return visits was 0.655--1.080 ms after context,
+  rather than the approximately 100.2 ms synchronous recovery seen on the six
+  prior diagonal misses;
+- the batched scenery result remained stable at 4.419 ms p50 and 7.285 ms
+  p95/max for `packet.opcode-48`;
+- there were no client exceptions, wrong-area flashes, or reported scene
+  regressions.
+
+This does not claim that every boundary is seamless. Two first visits still
+paid 60.151--64.558 ms maximum chunk-upload work and produced 162.265--172.832
+ms maximum frame intervals. Warm returns no longer have prediction recovery or
+large static geometry uploads, but intermittent shadow refreshes still reached
+29.129--57.148 ms and the worst warm interval reached 122.289 ms. Across the
+whole diagnostic run, normal presented-frame drops were 0.09%; GC consumed
+2.392 seconds over 2,704 seconds and did not explain the recurring normal-path
+hitch by itself.
+
+The accepted integration boundary therefore consists of correctness-preserving
+transport hardening, bounded correlation diagnostics, retained atomic scene
+presentation, warm GPU residency, stable static-shadow cache ownership,
+linear-time legacy scene-delta application, and route-aware diagonal
+prediction. A follow-up should begin from the remaining first-visit upload and
+warm shadow-refresh evidence, with separate dense-scenery cases, rather than
+adding more speculative prepared halos. The latter remains deferred until its
+memory cost is understood.
