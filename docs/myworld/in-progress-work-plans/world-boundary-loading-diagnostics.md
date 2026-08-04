@@ -206,8 +206,15 @@ After closing the client:
 
 ```bash
 python3 scripts/analyze-renderer-session.py \
-  output/renderer-diagnostics/<session> --strict
+  output/renderer-diagnostics/<session> --strict \
+  --server-log server/logs/<private-current-log>
 ```
+
+Repeat `--server-log` for a rotated private log when a run spans rotation. If a
+server log is supplied but missing, the analyzer fails instead of silently
+omitting it. It retains at most the latest 4,096 recognized delivery records
+and parses only fixed timestamp, mode, page, byte, and context fields; unrelated
+account, address, credential, or chat text is never copied into the report.
 
 The generated `ai-summary.md` is the decision record. Retain the raw
 `events.jsonl` until the optimization direction is selected.
@@ -692,6 +699,45 @@ wire-envelope, transition, and synchronization tests pass. The running private
 server was not restarted and no client was launched for this milestone; the
 first return test must load the checkpointed server build and repeat the same
 warm directional crossing.
+
+The session analyzer can now join that return run to the server evidence. Its
+optional repeated `--server-log` input recognizes both the new bounded format
+and the earlier `sent=N progress=...` format. The report includes delivery-mode
+counts, remaining-page and wire-byte p50/p95/p99/max distributions, successful
+atomic completions, incomplete attempts, oversized fallbacks, queue failures,
+bounded-retention coverage, and timestamped context-sequence candidates for
+the client traces. Context sequence alone is explicitly labeled supporting
+evidence because it can repeat across players or server runs. A fixture
+containing an account name, address, and password proves that unrelated text
+does not reach output.
+
+### Exact return validation for the baseline prototype
+
+The next private run must restart the private server so it actually loads
+checkpoint `d3b98d933`; the server that remained running while this milestone
+was built still contains the older classes. After the user returns:
+
+1. Launch one private client with `--boundary-diagnostics`; do not enable frame
+   capture.
+2. Re-establish the known warm-cardinal route between centers `(11,11)` and
+   `(11,12)`. Perform two warm-up round trips, then at least six measured round
+   trips in each direction under one named performance phase.
+3. Press Ctrl+F8 immediately for any visible hitch or wrong-area flash. Confirm
+   walking, teleporting, login, and return movement remain responsive, and
+   sample the socket receive queue to ensure the steady-state backlog stays
+   near zero.
+4. In the server log, the captured dense direction should report
+   `mode=ATOMIC_COMPLETE`, `sent=11`, and `remainingAfterPages=0` in the
+   initiating update. Any `sendFailed=true`, incomplete atomic result, or
+   unexpected oversized fallback is a stop condition.
+5. Close the client normally and run the analyzer with the matching current
+   and rotated private logs. Compare client static-baseline/release offsets,
+   frame interval maxima, and server mode/page/byte records for the same
+   timestamp and context candidates.
+6. Only after the directional gate passes, resume cold, return, true diagonal,
+   dense-scenery, and multi-level cases. A correct same-tick warm result does
+   not establish that cold GPU uploads, shadows, or upper-level activation are
+   solved.
 
 Complete private visual validation of both the bounded terrain-stage transport
 and incremental frame receive, then resume the diagonal matrix. After that,

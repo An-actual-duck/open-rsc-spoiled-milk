@@ -27,6 +27,35 @@ def write_jsonl(path: Path, records: list[dict], partial: str = "") -> None:
     path.write_text(text + partial, encoding="utf-8")
 
 
+def modern_server_baseline(
+    *,
+    timestamp: str,
+    mode: str,
+    atomic: bool,
+    sent: int,
+    before_pages: int,
+    before_bytes: int,
+    after_pages: int,
+    after_bytes: int,
+    context: int,
+    page_limit: int,
+    failed: bool = False,
+) -> str:
+    return (
+        f"{timestamp} [Fixture : GameThread] INFO GameStateUpdater: - "
+        f"LAYERED_SCENE_BASELINE_PAGES mode={mode} "
+        f"atomicPending={'true' if atomic else 'false'} sent={sent} "
+        f"sendFailed={'true' if failed else 'false'} "
+        f"remainingBeforePages={before_pages} "
+        f"remainingBeforeWireBytes={before_bytes} "
+        f"remainingAfterPages={after_pages} "
+        f"remainingAfterWireBytes={after_bytes} pageLimit={page_limit} "
+        "completeCapPages=16 completeCapWireBytes=98304 "
+        f"progress=context={context},scenery=3/3,walls=1/1,"
+        "presentationScenery=6/6,presentationWalls=1/1"
+    )
+
+
 def make_session(session_dir: Path) -> None:
     captures = session_dir / "captures"
     capture_dir = captures / "capture-fixture"
@@ -267,6 +296,7 @@ def make_session(session_dir: Path) -> None:
                 eventType="boundary.transition-summary",
                 completion="settled",
                 traceId=1,
+                contextSequence=1,
                 centerX=2,
                 centerY=13,
                 sessionElapsedNanos=2_500_000_000,
@@ -310,6 +340,7 @@ def make_session(session_dir: Path) -> None:
                 eventType="boundary.transition-summary",
                 completion="settled",
                 traceId=2,
+                contextSequence=2,
                 centerX=3,
                 centerY=13,
                 sessionElapsedNanos=3_500_000_000,
@@ -443,6 +474,122 @@ def main() -> None:
         summary = (session_dir / "ai-summary.md").read_text(encoding="utf-8")
         if summary != result.stdout:
             raise AssertionError("written AI summary differs from stdout")
+
+        make_session(session_dir)
+        server_log = session_dir / "private-server.log"
+        server_log.write_text(
+            "\n".join(
+                [
+                    "2026-08-03 12:00:00 LOGIN player=PrivateDuck "
+                    "address=192.0.2.44 password=do-not-copy",
+                    modern_server_baseline(
+                        timestamp="2026-08-03 12:00:01",
+                        mode="ATOMIC_COMPLETE",
+                        atomic=True,
+                        sent=11,
+                        before_pages=11,
+                        before_bytes=50_122,
+                        after_pages=0,
+                        after_bytes=0,
+                        context=2,
+                        page_limit=11,
+                    ),
+                    modern_server_baseline(
+                        timestamp="2026-08-03 12:00:02",
+                        mode="STANDARD_BOUNDED",
+                        atomic=False,
+                        sent=4,
+                        before_pages=4,
+                        before_bytes=12_000,
+                        after_pages=0,
+                        after_bytes=0,
+                        context=1,
+                        page_limit=8,
+                    ),
+                    modern_server_baseline(
+                        timestamp="2026-08-03 12:00:03",
+                        mode="ATOMIC_OVERSIZED_FALLBACK",
+                        atomic=True,
+                        sent=4,
+                        before_pages=17,
+                        before_bytes=100_000,
+                        after_pages=13,
+                        after_bytes=75_000,
+                        context=2,
+                        page_limit=4,
+                    ),
+                    "2026-08-03 12:00:04 [Fixture : GameThread] INFO "
+                    "GameStateUpdater: - LAYERED_SCENE_BASELINE_PAGES sent=8 "
+                    "progress=context=1,scenery=3/3,walls=1/1,"
+                    "presentationScenery=4/6,presentationWalls=0/1",
+                    "2026-08-03 12:00:05 [Fixture : GameThread] WARN "
+                    "GameStateUpdater: - LAYERED_SCENE_BASELINE_DELIVERY "
+                    "mode=ATOMIC_COMPLETE sent=0 sendFailed=true "
+                    "remainingPages=11 remainingWireBytes=50122",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        result = run_analyzer(
+            session_dir, "--server-log", str(server_log), "--no-write"
+        )
+        if result.returncode != 0:
+            raise AssertionError(result.stderr)
+        for snippet in (
+            "## Server Scene-Baseline Delivery",
+            "Sources: 1; recognized records: 5; retained latest: 5 / 4096.",
+            "Coverage: modern bounded records=3, legacy records=1, "
+            "pre-queue delivery failures=1.",
+            "ATOMIC_COMPLETE=1, ATOMIC_OVERSIZED_FALLBACK=1, "
+            "STANDARD_BOUNDED=1",
+            "eligible-complete=1, eligible-incomplete-or-failed=0, "
+            "oversized-fallback pages=1",
+            "Largest retained delivery: 2026-08-03 12:00:03, context 2, "
+            "mode ATOMIC_OVERSIZED_FALLBACK",
+            "Queue failures retained unsent ownership: 1 records",
+            "Context candidate for client trace 1 at center 2,13: context 1, "
+            "2 retained server page records",
+            "Context candidate for client trace 2 at center 3,13: context 2, "
+            "2 retained server page records",
+            "only fixed delivery counters, modes, timestamps, and scene context IDs "
+            "are parsed",
+        ):
+            if snippet not in result.stdout:
+                raise AssertionError(f"missing {snippet!r} in:\n{result.stdout}")
+        for sensitive in ("PrivateDuck", "192.0.2.44", "do-not-copy"):
+            if sensitive in result.stdout:
+                raise AssertionError(f"server-log analyzer leaked {sensitive!r}")
+
+        make_session(session_dir)
+        server_log.write_text(
+            "\n".join(
+                "2026-08-03 12:00:00 [Fixture : GameThread] INFO "
+                "GameStateUpdater: - LAYERED_SCENE_BASELINE_PAGES sent=1 "
+                f"progress=context={context},scenery=1/1,walls=0/0,"
+                "presentationScenery=0/0,presentationWalls=0/0"
+                for context in range(4_101)
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        result = run_analyzer(
+            session_dir, "--server-log", str(server_log), "--no-write"
+        )
+        if result.returncode != 0:
+            raise AssertionError(result.stderr)
+        if "recognized records: 4101; retained latest: 4096 / 4096" not in result.stdout:
+            raise AssertionError(result.stdout)
+        if "discarded 5 oldest recognized records" not in result.stdout:
+            raise AssertionError(result.stdout)
+
+        make_session(session_dir)
+        missing_server_log = session_dir / "missing-server.log"
+        result = run_analyzer(
+            session_dir, "--server-log", str(missing_server_log), "--no-write"
+        )
+        if result.returncode == 0 or "missing server log" not in result.stderr:
+            raise AssertionError(result.stderr)
 
         make_session(session_dir)
         with (session_dir / "events.jsonl").open("a", encoding="utf-8") as writer:
