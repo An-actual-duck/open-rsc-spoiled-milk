@@ -50,14 +50,16 @@ def validate_source_boundaries() -> None:
                 "ClericSpellCatalog", "ClericSpellDefinition", "ClericSpellId"
             )):
                 references.append(str(source.relative_to(ROOT)))
-    expected_c07_references = {
+    expected_authorized_references = {
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
         "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
         "server/src/com/openrsc/server/net/rsc/struct/outgoing/ClericSpellbookStruct.java",
     }
-    require(set(references) == expected_c07_references,
+    require(set(references) == expected_authorized_references,
             "Cleric catalog exposure drift: " + ", ".join(references))
 
     plan = IMPLEMENTATION_PLAN.read_text(encoding="utf-8")

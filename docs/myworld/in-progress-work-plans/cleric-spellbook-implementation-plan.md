@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `docs/cleric-c08-effect-state-decisions` (C08 planning/refinement)
+- Branch: `feat/cleric-effect-state-foundation` (C08A implementation)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify**
-- Current milestone: **C07 integrated into published `main` at `6e1720900`; C08 design is complete and awaiting explicit implementation approval**
-- Next planned milestone: **C08A — transient Cleric effect-state foundation, only after the owner explicitly approves runtime implementation**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08 and later spell effects remain disabled**
+- Current milestone: **C08A implemented on its focused review branch from published `main` at `2a0ff5ddb`; its empty transient state authority and lifecycle hooks await manager integration**
+- Next planned milestone: **C08B — mixed status transport and HUD extension, only after C08A is integrated into published `main`**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08A's registry remains empty and C08B/later spell effects remain disabled**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -1025,3 +1025,60 @@ will supply only its snapshotted speed factor to this existing clock; C07
 passes zero, creates no status, does not reschedule the event, and cannot grant
 an immediate healing tick. All remaining spell effects and C08 status/HUD
 representation stay unreachable.
+
+## C08A Completion Record
+
+C08A adds the server-only transient authority required by later timed Cleric
+effects. Seven explicit stable family identities bound each recipient registry
+to one healing-pulse, accuracy, protection, damage, reflection, lifesteal, and
+passive-regeneration slot. Thirty-five immutable rank definitions cover all
+nine confirmed timed launch spells. Spell-specific magnitude types prevent an
+unlabeled value array from becoming a second balance table, and construction
+rejects mismatched spell, family, counter, and magnitude shapes. Purify,
+Restore, and Unify cannot create timed definitions.
+
+Every active entry owns an immutable definition snapshot, a monotonic
+application/expiry deadline, its typed remaining charge or pulse count, and
+opaque caster-session plus caster/recipient membership-generation origins.
+Higher-tier Greater Mend and Aegis replace lower-tier Mend and Ward before rank
+comparison; same-spell higher ranks replace, lower ranks are ineffective, and
+equal ranks refresh the complete duration and normal counter while transferring
+origin. Registry operations are synchronized within one recipient, snapshots
+are immutable, counters cannot underflow, and expiry/origin validation fails
+closed before state is exposed.
+
+`Player` now owns one empty registry and session identity, while each party
+join or login reattachment issues a fresh membership generation. Real death
+and logout clear received effects. The shared `Party.removePlayer` boundary
+now also ends membership for unregistering player references, not only members
+still considered online, so leave, kick, logout, and membership transition all
+clear the departing recipient and effects sourced from that exact membership
+before party-list removal. Caster death deliberately clears only the dead
+recipient's own registry; living recipients retain bounded effects until
+expiry, logout, or party separation. Cleanup is idempotent, deduplicates
+recipient registries, and never holds two registry locks at once.
+
+The compiled fixture covers all definitions and values, invalid construction,
+seven-family coexistence, tier/rank replacement and refresh, origin transfer,
+charge/pulse exhaustion, exact expiry, stale-session and same-party rejoin
+rejection, all lifecycle rules, immutable snapshots, bounded concurrency, and
+source guards for the convergent Player/Party boundaries. It also proves no
+handler can populate the registry and no cache, database, packet, login restore,
+client, sigil-spending, or non-Unify spell path references the new authority.
+
+Verification completed from the C08A branch:
+
+- `python3 tests/myworld/test-cleric-effect-state.py`
+- the C01 and C03-C07 Cleric regression fixtures
+- potion HUD, runtime, Brawn healing-cap, combat-invariant, ordinary-death,
+  player-data, god-spell, and prayer regression fixtures
+- `./scripts/build-server.sh`
+- `./scripts/lint.sh compiler --base 2a0ff5ddb1e77d72fbea354ac0a2e76a86f242de --offline`
+- `./scripts/lint.sh analyze --base 2a0ff5ddb1e77d72fbea354ac0a2e76a86f242de --offline`
+- `git diff --check`
+
+C08A changes no packet, client, status HUD, spell magnitude, sigil cost,
+Worship XP, persistence, PvP rule, or combat/regeneration behavior. Unify
+remains the only reachable Cleric support action. C08B must begin from a
+published main that contains C08A; it may consume this authority for
+presentation but must not expose C09/C10 mechanics.
