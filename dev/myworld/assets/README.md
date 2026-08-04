@@ -37,6 +37,7 @@ kept for asset work but are not packaged into the client.
   are sourced from a royalty-free repository.
 - Summon UI icon provenance is tracked in `dev/myworld/assets/credit`.
 - Magic UI icon provenance is tracked in `dev/myworld/assets/credit`.
+- Cleric UI icon provenance is tracked in `dev/myworld/assets/credit`.
 - ThatKidBobo supplied the initial remastered sprite, item, and texture batch.
   Detailed mappings and staging status are tracked in
   `remastered-sprites/CREDITS.md` and each leaf `set.json`.
