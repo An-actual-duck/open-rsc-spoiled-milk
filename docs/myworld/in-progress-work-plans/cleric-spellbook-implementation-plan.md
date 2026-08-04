@@ -2,11 +2,11 @@
 
 ## Status
 
-- Branch: `feat/cleric-c09-support-batch` (complete C09 batch ready for manager review)
+- Branch: `main` (complete C09 batch integrated; AI-3 ready for C10)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance**
-- Current milestone: **C09 complete — ready for manager review and integration**
-- Next planned milestone: **C10 direct-combat support, only after the complete C09 batch is accepted and integrated**
+- Current milestone: **C09 complete and integrated**
+- Next planned milestone: **C10 direct-combat support effects in coherent implementation families**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog/status presentation, party-only Unify, Purify, Restore, Mend, Greater Mend, and Respite; C10 effects remain unavailable**
 - Public-server work: **forbidden**
 
