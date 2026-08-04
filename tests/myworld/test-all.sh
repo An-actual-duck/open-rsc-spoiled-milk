@@ -10,6 +10,7 @@ cd "$ROOT_DIR"
 python3 ./tests/myworld/test-server-build-source-of-truth.py
 python3 ./tests/myworld/test-server-r2-boundary-audit.py
 python3 ./tests/myworld/test-server-r2-dependency-guard.py
+python3 ./tests/myworld/test-server-r2-configuration-views.py
 python3 ./tests/myworld/test-static-analysis-baseline.py
 python3 ./tests/myworld/test-compatibility-labels-and-prune-proof.py
 python3 ./tests/myworld/audit_client_item_coverage.py

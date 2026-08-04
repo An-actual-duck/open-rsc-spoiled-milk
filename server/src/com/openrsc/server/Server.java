@@ -5,6 +5,8 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.config.DiagnosticsConfiguration;
+import com.openrsc.server.config.ProcessNetworkConfiguration;
 import com.openrsc.server.content.achievement.AchievementSystem;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditStorageContext;
@@ -96,6 +98,8 @@ public class Server implements Runnable {
 	private final DiscordService discordService;
 	private final LoginExecutor loginExecutor;
 	private final ServerConfiguration config;
+	private final ProcessNetworkConfiguration processNetworkConfiguration;
+	private final DiagnosticsConfiguration diagnosticsConfiguration;
 	private ScheduledExecutorService scheduledExecutor;
 	private final PluginHandler pluginHandler;
 	private final CombatScriptLoader combatScriptLoader;
@@ -461,6 +465,10 @@ public class Server implements Runnable {
 	public Server(final String configFile) throws IOException {
 		config = new ServerConfiguration();
 		getConfig().initConfig(configFile);
+		processNetworkConfiguration = getConfig().processNetworkConfiguration();
+		diagnosticsConfiguration = getConfig().diagnosticsConfiguration();
+		processNetworkConfiguration.requireValid();
+		diagnosticsConfiguration.requireValid();
 		WorldBuilderMode.validate(getConfig());
 		worldEditStorage = WorldEditStorageContext.create(getConfig());
 		LOGGER.info("Server configuration loaded: " + getConfig().configFile);
@@ -469,18 +477,18 @@ public class Server implements Runnable {
 		worldDayNightClock = new WorldDayNightClock();
 		worldEditorSessions = new WorldEditorSessionManager(worldEditStorage);
 		movementStutterDiagnostics = new MovementStutterDiagnostics(
-			getConfig().WANT_MOVEMENT_STUTTER_DIAGNOSTICS,
+			diagnosticsConfiguration.isMovementStutterDiagnostics(),
 			10_000_000L,
-			getConfig().MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS * 1_000_000_000L,
-			getConfig().MOVEMENT_STUTTER_POLL_OUTLIER_MS * 1_000_000L,
-			getConfig().MOVEMENT_STUTTER_POLL_OUTLIER_MS * 1_000_000L,
-			getConfig().MOVEMENT_STUTTER_TICK_OUTLIER_MS * 1_000_000L);
+			diagnosticsConfiguration.getMovementStutterSummarySeconds() * 1_000_000_000L,
+			diagnosticsConfiguration.getMovementStutterPollOutlierMs() * 1_000_000L,
+			diagnosticsConfiguration.getMovementStutterPollOutlierMs() * 1_000_000L,
+			diagnosticsConfiguration.getMovementStutterTickOutlierMs() * 1_000_000L);
 		if (movementStutterDiagnostics.isEnabled()) {
 			LOGGER.info(
 				"Movement stutter diagnostics enabled: summary={}s pollOutlier={}ms tickOutlier={}ms",
-				box(getConfig().MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS),
-				box(getConfig().MOVEMENT_STUTTER_POLL_OUTLIER_MS),
-				box(getConfig().MOVEMENT_STUTTER_TICK_OUTLIER_MS));
+				box(diagnosticsConfiguration.getMovementStutterSummarySeconds()),
+				box(diagnosticsConfiguration.getMovementStutterPollOutlierMs()),
+				box(diagnosticsConfiguration.getMovementStutterTickOutlierMs()));
 		}
 
 		packetFilter = new RSCPacketFilter(this);
@@ -828,11 +836,11 @@ public class Server implements Runnable {
 				final ServerBootstrap bootstrap = new ServerBootstrap();
 				final Server serverOwner = this;
 
-				if (getConfig().WANT_FEATURE_WEBSOCKETS) {
-					if (!getConfig().SSL_SERVER_CERT_PATH.trim().isEmpty() && !getConfig().SSL_SERVER_KEY_PATH.trim().isEmpty()) {
+				if (processNetworkConfiguration.isWebsocketsEnabled()) {
+					if (!processNetworkConfiguration.getSslServerCertPath().trim().isEmpty() && !processNetworkConfiguration.getSslServerKeyPath().trim().isEmpty()) {
 						LOGGER.info("Loading Websockets SSL cert...");
 						try {
-							setSSLContext(loadWebsocketSSLFiles(getConfig().SSL_SERVER_CERT_PATH, getConfig().SSL_SERVER_KEY_PATH, null));
+							setSSLContext(loadWebsocketSSLFiles(processNetworkConfiguration.getSslServerCertPath(), processNetworkConfiguration.getSslServerKeyPath(), null));
 						} catch (CertificateExpiredException certExpiredEx) {
 							LOGGER.error("Websocket certificate is expired and can no longer be used...! Make sure to replace it.");
 						} catch (CertificateNotYetValidException certNotYetValidEx) {
@@ -849,7 +857,7 @@ public class Server implements Runnable {
 					}
 				}
 
-				if (!getConfig().WANT_FEATURE_WEBSOCKETS) {
+				if (!processNetworkConfiguration.isWebsocketsEnabled()) {
 					bootstrap.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).childHandler(
 						new ChannelInitializer<SocketChannel>() {
 							@Override
@@ -867,8 +875,8 @@ public class Server implements Runnable {
 					bootstrap.childOption(ChannelOption.SO_SNDBUF, 10000);
 					try {
 						getPluginHandler().handlePlugin(StartupTrigger.class);
-						serverChannel = bootstrap.bind(new InetSocketAddress(getConfig().SERVER_BIND_ADDRESS, getConfig().SERVER_PORT)).sync();
-						LOGGER.info("Game world is now online on {}:{}!", getConfig().SERVER_BIND_ADDRESS, box(getConfig().SERVER_PORT));
+						serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
+						LOGGER.info("Game world is now online on {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
 						LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
 						LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
 					} catch (final InterruptedException e) {
@@ -911,10 +919,10 @@ public class Server implements Runnable {
 
 					try {
 						getPluginHandler().handlePlugin(StartupTrigger.class);
-						serverChannel = bootstrap.bind(new InetSocketAddress(getConfig().SERVER_BIND_ADDRESS, getConfig().SERVER_PORT)).sync();
-						LOGGER.info("Game world is now online on TCP {}:{}!", getConfig().SERVER_BIND_ADDRESS, box(getConfig().SERVER_PORT));
-						serverChannelWs = bootstrapWs.bind(new InetSocketAddress(getConfig().SERVER_BIND_ADDRESS, getConfig().WS_SERVER_PORT)).sync();
-						LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", getConfig().SERVER_BIND_ADDRESS, box(getConfig().WS_SERVER_PORT));
+						serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
+						LOGGER.info("Game world is now online on TCP {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
+						serverChannelWs = bootstrapWs.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getWebsocketPort())).sync();
+						LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getWebsocketPort()));
 						LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
 						LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
 					} catch (final InterruptedException e) {
@@ -2259,6 +2267,14 @@ public class Server implements Runnable {
 
 	public final ServerConfiguration getConfig() {
 		return config;
+	}
+
+	public final ProcessNetworkConfiguration getProcessNetworkConfiguration() {
+		return processNetworkConfiguration;
+	}
+
+	public final DiagnosticsConfiguration getDiagnosticsConfiguration() {
+		return diagnosticsConfiguration;
 	}
 
 	public final WorldEditorSessionManager getWorldEditorSessions() { return worldEditorSessions; }
