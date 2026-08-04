@@ -8,29 +8,30 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CLIENT = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
+MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 SERVER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
 
 EXPECTED_EXALTED_APPEARANCES = {
-    3262: 1046,
-    3263: 1046,
-    3264: 1046,
-    3265: 1046,
-    3266: 1047,
-    3267: 1048,
-    3268: 1049,
-    3269: 1048,
-    3270: 1050,
-    3271: 1051,
-    3272: 1041,
-    3273: 1052,
-    3274: 1053,
-    3275: 1054,
-    3276: 1055,
-    3277: 1056,
-    3278: 1057,
-    3279: 1058,
-    3280: 1059,
+    3262: 1047,
+    3263: 1047,
+    3264: 1047,
+    3265: 1047,
+    3266: 1048,
+    3267: 1049,
+    3268: 1050,
+    3269: 1049,
+    3270: 1051,
+    3271: 1052,
+    3272: 1042,
+    3273: 1053,
+    3274: 1054,
+    3275: 1055,
+    3276: 1056,
+    3277: 1057,
+    3278: 1058,
+    3279: 1059,
+    3280: 1060,
 }
 
 
@@ -41,6 +42,7 @@ def fail(message: str) -> None:
 
 def main() -> None:
     client = CLIENT.read_text(encoding="utf-8")
+    mudclient = MUDCLIENT.read_text(encoding="utf-8")
     server = SERVER.read_text(encoding="utf-8")
     items = {
         int(item["id"]): item
@@ -54,6 +56,9 @@ def main() -> None:
                 f"Exalted Rune item {item_id} appearance is {actual}, "
                 f"expected stable ID {appearance_id}"
             )
+
+    if "int animID = player.layerAnimation[mappedLayer] - 1;" not in mudclient:
+        fail("Worn appearance protocol must retain its one-based wire-to-client conversion")
 
     reserved = 'new AnimationDef("nothing", "equipment", 0, 0, true, false, 0));//788 - reserved'
     stable_loop = (
@@ -87,7 +92,7 @@ def main() -> None:
 
     for marker in (
         "MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT = 15",
-        "MYWORLD_RUNE_STAFF_EXTENSION_APPEARANCE_START = 1061",
+        "MYWORLD_RUNE_STAFF_EXTENSION_APPEARANCE_START = 1062",
         "runeIndex < MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT",
     ):
         if marker not in server:

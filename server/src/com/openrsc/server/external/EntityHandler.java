@@ -61,10 +61,10 @@ public final class EntityHandler {
 
 	private final Server server;
 	private final PersistenceManager persistenceManager;
-	private static final int MYWORLD_STAFF_BASE_APPEARANCE_START = 789;
+	private static final int MYWORLD_STAFF_BASE_APPEARANCE_START = 790;
 	private static final int MYWORLD_RUNE_STAFF_APPEARANCE_START = MYWORLD_STAFF_BASE_APPEARANCE_START + 10;
 	private static final int MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT = 15;
-	private static final int MYWORLD_RUNE_STAFF_EXTENSION_APPEARANCE_START = 1061;
+	private static final int MYWORLD_RUNE_STAFF_EXTENSION_APPEARANCE_START = 1062;
 	private static final int MYWORLD_RUNE_CLOTH_COLOR_COUNT = 14;
 	private static final int MYWORLD_WOOL_ACCESSORY_APPEARANCE_COUNT = 2;
 	private static final int MYWORLD_PICKAXE_APPEARANCE_START = MYWORLD_RUNE_STAFF_APPEARANCE_START

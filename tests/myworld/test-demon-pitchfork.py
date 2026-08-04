@@ -50,8 +50,8 @@ def main() -> None:
 
     require("DEMON_PITCHFORK(3239)" in item_id, "ItemId should reserve Demon pitchfork")
     require("public static final int maxCustom = 3309;" in item_id, "maxCustom should include Demon pitchfork")
-    require("SHEARS(1041, WEAPON)" in appearance_id, "AppearanceId should reserve universal shears")
-    require("DEMON_PITCHFORK(1042, WEAPON)" in appearance_id, "AppearanceId should reserve Demon pitchfork")
+    require("SHEARS(1042, WEAPON)" in appearance_id, "AppearanceId should reserve universal shears")
+    require("DEMON_PITCHFORK(1043, WEAPON)" in appearance_id, "AppearanceId should reserve Demon pitchfork")
 
     for source_name, items in (("ItemDefsCustom", custom_items), ("ItemDefsMyWorld", myworld_items)):
         pitchfork = items.get(3239)
@@ -59,7 +59,7 @@ def main() -> None:
         require(pitchfork["name"] == "Demon pitchfork", f"{source_name} should keep the expected item name")
         require(pitchfork["weaponAimBonus"] == 31, f"{source_name} should use tier-9 long sword aim bonus")
         require(pitchfork["weaponPowerBonus"] == 31, f"{source_name} should use tier-9 long sword power bonus")
-        require(pitchfork["appearanceID"] == 1042, f"{source_name} should use the custom pitchfork appearance")
+        require(pitchfork["appearanceID"] == 1043, f"{source_name} should use the custom pitchfork appearance")
     require(myworld_items[3239]["meleeOffense"] == 60, "ItemDefsMyWorld should use tier-9 long sword melee offense")
     require(myworld_items[3239]["weaponSpeed"] == 3, "ItemDefsMyWorld should use tier-9 long sword weapon speed")
 

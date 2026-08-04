@@ -174,7 +174,7 @@ def require_tool_equip_gates() -> None:
             "requiredLevel": required_level,
         }
         if skill_id == 19:
-            expected["appearanceID"] = 1041
+            expected["appearanceID"] = 1042
         for field, value in expected.items():
             if entry.get(field) != value:
                 fail(f"Tool item {item_id} field {field} expected {value}, found {entry.get(field)!r}")
@@ -417,9 +417,9 @@ def require_shears_smithing_and_defs() -> None:
         if item_name not in custom_defs_text:
             fail(f"Custom item defs missing expected shears definition: {item_name}")
     for server_snippet in (
-        '"name": "Copper shears",\n      "description": "Copper shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1041,\n      "wearableID": 16,',
-        '"name": "Rune shears",\n      "description": "Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1041,\n      "wearableID": 16,',
-        '"name": "Exalted Rune shears",\n      "description": "Exalted Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 1,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1041,\n      "wearableID": 16,',
+        '"name": "Copper shears",\n      "description": "Copper shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1042,\n      "wearableID": 16,',
+        '"name": "Rune shears",\n      "description": "Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 0,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1042,\n      "wearableID": 16,',
+        '"name": "Exalted Rune shears",\n      "description": "Exalted Rune shears for harvesting",\n      "command": "",\n      "isFemaleOnly": 0,\n      "isMembersOnly": 1,\n      "isStackable": 0,\n      "isUntradable": 0,\n      "isWearable": 1,\n      "appearanceID": 1042,\n      "wearableID": 16,',
     ):
         if server_snippet not in custom_defs_text:
             fail(f"Custom shears defs do not remain equippable with the universal worn sprite: {server_snippet.splitlines()[0]}")
