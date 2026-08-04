@@ -85,22 +85,7 @@ public class StatRestorationEvent extends GameTickEvent {
 		if (restoringHits.get()) {
 			long delay = 100 * getWorld().getServer().getConfig().GAME_TICK; // 64 seconds in authentic rate
 			if (getOwner().isPlayer()) {
-				Player player = (Player) getOwner();
-				if (!player.getConfig().WANT_MYWORLD && player.getPrayers().isPrayerActivated(Prayers.RAPID_HEAL)) {
-					delay = 50 * getWorld().getServer().getConfig().GAME_TICK;
-				}
-				double soulRobeBonus = player.getSoulRobeHealthRegenerationBonus();
-				if (soulRobeBonus > 0.0D) {
-					delay = Math.max(getWorld().getServer().getConfig().GAME_TICK,
-						(int) Math.ceil(delay / (1.0D + soulRobeBonus)));
-				}
-				delay = Math.max(getWorld().getServer().getConfig().GAME_TICK,
-					(int) Math.ceil(delay / (double) player.getPotionOfRegenerationMultiplier()));
-				double bodyAmuletBonus = player.getCarriedItems().getEquipment().getBodyAmuletRegenSpeedBonus();
-				if (bodyAmuletBonus > 0.0D) {
-					delay = Math.max(getWorld().getServer().getConfig().GAME_TICK,
-						(int) Math.ceil(delay / (1.0D + bodyAmuletBonus)));
-				}
+				delay = getNaturalHitsInterval((Player) getOwner(), 0.0D);
 			}
 			deltaCycles = (System.currentTimeMillis() - this.lastHitRestoration) / delay;
 			if (System.currentTimeMillis() - this.lastHitRestoration > delay && getOwner().isPlayer()) {
@@ -157,6 +142,31 @@ public class StatRestorationEvent extends GameTickEvent {
 		if (!sendUpdate && (restoredHits || restoredStats)) {
 			getOwner().getSkills().sendUpdateAll();
 		}
+	}
+
+	/**
+	 * Resolves independently owned speed factors without mutating the existing
+	 * natural-healing clock. C07 passes no active Respite bonus because status
+	 * representation belongs to C08; the later Respite effect supplies only its
+	 * snapshotted bonus here and must not reschedule or directly heal.
+	 */
+	long getNaturalHitsInterval(final Player player, final double respiteSpeedBonus) {
+		final long minimumInterval = getWorld().getServer().getConfig().GAME_TICK;
+		long interval = 100L * minimumInterval;
+		if (!player.getConfig().WANT_MYWORLD
+			&& player.getPrayers().isPrayerActivated(Prayers.RAPID_HEAL)) {
+			interval = 50L * minimumInterval;
+		}
+		interval = NaturalHitsRegeneration.applySpeedBonus(
+			interval, minimumInterval, player.getSoulRobeHealthRegenerationBonus());
+		interval = NaturalHitsRegeneration.applySpeedBonus(
+			interval, minimumInterval,
+			Math.max(0, player.getPotionOfRegenerationMultiplier() - 1));
+		interval = NaturalHitsRegeneration.applySpeedBonus(
+			interval, minimumInterval,
+			player.getCarriedItems().getEquipment().getBodyAmuletRegenSpeedBonus());
+		return NaturalHitsRegeneration.applySpeedBonus(
+			interval, minimumInterval, respiteSpeedBonus);
 	}
 
 	/**

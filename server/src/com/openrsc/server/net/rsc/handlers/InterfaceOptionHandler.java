@@ -16,6 +16,7 @@ import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.cleric.ClericSpellCatalog;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
+import com.openrsc.server.content.cleric.runtime.ClericSupportCasting;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.container.Item;
@@ -145,10 +146,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		}
 	}
 
-	/**
-	 * C06 deliberately establishes only the immediate icon-to-server request.
-	 * C07 will own recipients, resource spending, and effect application.
-	 */
+	/** C06 request validation followed by C07's server-authoritative cast boundary. */
 	private void handleClericSpellCastRequest(Player player, OptionsStruct payload) {
 		if (!player.isUsingCustomClient() || !player.getConfig().WANT_MYWORLD) {
 			return;
@@ -164,7 +162,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			return;
 		}
 
-		if (player.getConfig().USES_PK_MODE || player.getLocation().inWilderness()) {
+		if (ClericSupportCasting.isPvpContext(player)) {
 			player.message("Cleric support spells cannot be cast in PvP areas");
 			return;
 		}
@@ -174,8 +172,29 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			return;
 		}
 
-		player.message(definition.getDisplayName()
-			+ " is not active until Cleric support effects are implemented");
+		final ClericSupportCasting.CastResult result =
+			ClericSupportCasting.cast(player, definition);
+		switch (result.getOutcome()) {
+			case SUCCESS:
+				player.message("You cast " + definition.getDisplayName() + " on "
+					+ result.getAffectedRecipientCount() + " party "
+					+ (result.getAffectedRecipientCount() == 1 ? "member" : "members"));
+				break;
+			case NO_USEFUL_RECIPIENT:
+				player.message("There are no eligible party members for "
+					+ definition.getDisplayName());
+				break;
+			case INSUFFICIENT_SIGILS:
+				player.message("You do not have the blessed sigils required to cast "
+					+ definition.getDisplayName());
+				break;
+			case NOT_IMPLEMENTED:
+				player.message(definition.getDisplayName()
+					+ " is not active until its Cleric support effect is implemented");
+				break;
+			default:
+				throw new IllegalStateException("Unsupported Cleric cast outcome");
+		}
 	}
 
 	private void handleAutoCastSpell(Player player, OptionsStruct payload) {

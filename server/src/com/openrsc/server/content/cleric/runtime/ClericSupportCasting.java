@@ -1,0 +1,260 @@
+package com.openrsc.server.content.cleric.runtime;
+
+import com.openrsc.server.content.cleric.ClericCastTransaction;
+import com.openrsc.server.content.cleric.ClericSigilItemId;
+import com.openrsc.server.content.cleric.ClericSigilMaterial;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
+import com.openrsc.server.content.cleric.ClericSpellId;
+import com.openrsc.server.content.cleric.ClericSupportTargeting;
+import com.openrsc.server.content.cleric.ClericUnifyStepPlanner;
+import com.openrsc.server.content.party.Party;
+import com.openrsc.server.content.party.PartyPlayer;
+import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.Point;
+import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.net.rsc.ActionSender;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/** Server adapters for the C07 Cleric targeting and cast-transaction contract. */
+public final class ClericSupportCasting {
+	private ClericSupportCasting() {
+	}
+
+	public static CastResult cast(final Player caster,
+			final ClericSpellDefinition definition) {
+		if (caster == null || definition == null) {
+			throw new IllegalArgumentException("Cleric casting requires a player and definition");
+		}
+		if (definition.getId() != ClericSpellId.UNIFY) {
+			return CastResult.notImplemented();
+		}
+
+		final Party party = caster.getParty();
+		if (party == null) {
+			return new CastResult(Outcome.NO_USEFUL_RECIPIENT, 0);
+		}
+		final List<Player> partySnapshot = snapshotPartyPlayers(party);
+		final List<Player> targets = ClericSupportTargeting.resolve(
+			caster, partySnapshot, definition.getRadius(), new PlayerCandidateView(caster, party));
+		final List<ClericCastTransaction.PreparedApplication> applications =
+			new ArrayList<ClericCastTransaction.PreparedApplication>(targets.size());
+		for (Player target : targets) {
+			applications.add(prepareUnify(target, caster));
+		}
+
+		final ClericCastTransaction.Result transaction = ClericCastTransaction.execute(
+			applications, new ClericCastTransaction.ResourceCommitBoundary() {
+				@Override
+				public boolean commit(Runnable applicationCommit) {
+					synchronized (caster) {
+						final Item[] cost = createCost(definition);
+						final boolean committed = caster.getCarriedItems().removeWithStateChange(
+							cost, false, () -> {
+								applicationCommit.run();
+								return true;
+							});
+						if (committed) {
+							ActionSender.sendInventory(caster);
+						}
+						return committed;
+					}
+				}
+			});
+		return CastResult.fromTransaction(transaction);
+	}
+
+	public static boolean isPvpContext(final Player player) {
+		return player.getConfig().USES_PK_MODE
+			|| player.getLocation().inWilderness()
+			|| player.getDuel().isDuelActive();
+	}
+
+	private static List<Player> snapshotPartyPlayers(Party party) {
+		final List<PartyPlayer> members = new ArrayList<PartyPlayer>(party.getPlayers());
+		final List<Player> players = new ArrayList<Player>(members.size());
+		for (PartyPlayer member : members) {
+			if (member != null && member.isOnline()) {
+				players.add(member.getPlayerReference());
+			}
+		}
+		return Collections.unmodifiableList(players);
+	}
+
+	private static ClericCastTransaction.PreparedApplication prepareUnify(
+			final Player recipient, final Player caster) {
+		final Point start = recipient.getLocation();
+		final Point destination = caster.getLocation();
+		final List<ClericUnifyStepPlanner.Step> planned = ClericUnifyStepPlanner.plan(
+			start.getX(), start.getY(), destination.getX(), destination.getY(),
+			new ClericUnifyStepPlanner.Traversability() {
+				@Override
+				public boolean canStep(int startX, int startY, int destinationX, int destinationY) {
+					if (!PathValidation.checkAdjacent(
+						recipient, startX, startY, destinationX, destinationY)) {
+						return false;
+					}
+					return recipient.getConfig().PLAYER_BLOCKING != 1
+						|| recipient.getWorld().getRegionManager().findInteractionPlayer(
+							destinationX, destinationY, recipient, false) == null;
+				}
+			});
+		if (planned.isEmpty()) {
+			return IneffectiveApplication.INSTANCE;
+		}
+		final List<Point> steps = new ArrayList<Point>(planned.size());
+		for (ClericUnifyStepPlanner.Step step : planned) {
+			steps.add(Point.location(step.getX(), step.getY()));
+		}
+		return new UnifyApplication(recipient, steps);
+	}
+
+	private static Item[] createCost(ClericSpellDefinition definition) {
+		final List<Item> cost = new ArrayList<Item>(ClericSigilMaterial.values().length);
+		for (ClericSigilMaterial material : ClericSigilMaterial.values()) {
+			final int count = definition.getPrimarySigilCost().getCount(material);
+			if (count > 0) {
+				cost.add(new Item(ClericSigilItemId.get(
+					material, definition.getAlignment(), true).getItemId(), count));
+			}
+		}
+		return cost.toArray(new Item[cost.size()]);
+	}
+
+	private static final class PlayerCandidateView
+			implements ClericSupportTargeting.CandidateView<Player> {
+		private final Player caster;
+		private final Party party;
+
+		private PlayerCandidateView(Player caster, Party party) {
+			this.caster = caster;
+			this.party = party;
+		}
+
+		@Override
+		public boolean isEligibleRecipient(Player candidate) {
+			return candidate.getParty() == party
+				&& candidate.isLoggedIn()
+				&& !candidate.isRemoved()
+				&& !candidate.isUnregistering()
+				&& !isPvpContext(candidate);
+		}
+
+		@Override
+		public Object getWorldSpace(Player candidate) {
+			return candidate.getWorldLocation().getWorldSpace();
+		}
+
+		@Override
+		public int getSignedLevel(Player candidate) {
+			return candidate.getWorldLocation().getCoordinate().getLevel();
+		}
+
+		@Override
+		public int getX(Player candidate) {
+			return candidate.getWorldLocation().getCoordinate().getX();
+		}
+
+		@Override
+		public int getY(Player candidate) {
+			return candidate.getWorldLocation().getCoordinate().getY();
+		}
+
+		@Override
+		public boolean hasLineOfEffect(Player ignoredCaster, Player candidate) {
+			final WorldLocation casterLocation = caster.getWorldLocation();
+			final WorldLocation candidateLocation = candidate.getWorldLocation();
+			return PathValidation.checkPath(
+				caster.getWorld(), casterLocation, candidateLocation, false);
+		}
+	}
+
+	private enum IneffectiveApplication implements ClericCastTransaction.PreparedApplication {
+		INSTANCE;
+
+		@Override
+		public boolean isUseful() {
+			return false;
+		}
+
+		@Override
+		public void commit() {
+			throw new IllegalStateException("An ineffective Cleric application cannot commit");
+		}
+	}
+
+	private static final class UnifyApplication
+			implements ClericCastTransaction.PreparedApplication {
+		private final Player recipient;
+		private final List<Point> steps;
+
+		private UnifyApplication(Player recipient, List<Point> steps) {
+			this.recipient = recipient;
+			this.steps = Collections.unmodifiableList(new ArrayList<Point>(steps));
+		}
+
+		@Override
+		public boolean isUseful() {
+			return true;
+		}
+
+		@Override
+		public void commit() {
+			recipient.resetPath();
+			for (Point step : steps) {
+				recipient.face(step);
+				recipient.setLocation(step, false);
+				recipient.stepIncrementActivity();
+			}
+		}
+	}
+
+	public enum Outcome {
+		SUCCESS,
+		NO_USEFUL_RECIPIENT,
+		INSUFFICIENT_SIGILS,
+		NOT_IMPLEMENTED
+	}
+
+	public static final class CastResult {
+		private static final CastResult NOT_IMPLEMENTED =
+			new CastResult(Outcome.NOT_IMPLEMENTED, 0);
+
+		private final Outcome outcome;
+		private final int affectedRecipientCount;
+
+		private CastResult(Outcome outcome, int affectedRecipientCount) {
+			this.outcome = outcome;
+			this.affectedRecipientCount = affectedRecipientCount;
+		}
+
+		private static CastResult notImplemented() {
+			return NOT_IMPLEMENTED;
+		}
+
+		private static CastResult fromTransaction(ClericCastTransaction.Result result) {
+			switch (result.getOutcome()) {
+				case SUCCESS:
+					return new CastResult(Outcome.SUCCESS, result.getAppliedRecipientCount());
+				case NO_USEFUL_APPLICATION:
+					return new CastResult(Outcome.NO_USEFUL_RECIPIENT, 0);
+				case INSUFFICIENT_RESOURCES:
+					return new CastResult(Outcome.INSUFFICIENT_SIGILS, 0);
+				default:
+					throw new IllegalStateException("Unsupported Cleric transaction outcome");
+			}
+		}
+
+		public Outcome getOutcome() {
+			return outcome;
+		}
+
+		public int getAffectedRecipientCount() {
+			return affectedRecipientCount;
+		}
+	}
+}
