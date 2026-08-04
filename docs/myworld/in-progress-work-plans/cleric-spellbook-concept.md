@@ -56,6 +56,27 @@ recorded beside an otherwise confirmed spell identity.
   encourage a player to specialize in Magic or Cleric support at a given time.
 - Hybrid loadouts remain legal. They should be flexible but materially less
   effective and less inventory-efficient than a focused loadout.
+- The maintained client's existing `Magic` top-level tab is presented as
+  **Spells**. Within it, **Mage** and **Cleric** are peer subtabs; Prayer and
+  Summon remain separate top-level peers rather than being moved into either
+  spellbook.
+- Mage is the initial subtab for each fresh client session. After the player
+  selects Mage or Cleric, the client remembers that choice while moving among
+  the other interface tabs for the rest of the session.
+- Cleric spells are immediately available when their Worship requirements are
+  met. There is no introductory quest or separate spellbook unlock.
+- Clicking a Cleric icon is the complete cast gesture. Cleric casts are
+  caster-centered and therefore never enter Magic's target-selection or
+  autocast state.
+- Cleric presentation metadata may optionally identify a player-centered
+  overhead icon and animation. Both are absent by default, and gameplay must
+  work without either final asset; later casting code invokes only explicitly
+  configured visual hooks.
+- Existing god spells remain in Mage for the initial rollout. This work does
+  not rename or renumber their legacy Magic identities.
+- Cleric support is disabled in PvP contexts for the initial rollout. Later
+  design may revisit that policy explicitly, but implementation must not infer
+  PvP recipient rules from the hostile Magic packet path.
 
 ### Magic/Enchanting Mirror
 
@@ -687,6 +708,14 @@ received.
 - The server remains authoritative. The client may count a supplied timer down
   for presentation, but a refreshed, consumed, replaced, or cleared status
   causes the server to send a new bounded snapshot.
+- Maintained-client status transport has room for `32` displayed entries. The
+  server may collect up to `64` bounded entries for reporting, sends the first
+  `32`, and includes the number omitted. The HUD must visibly report omitted
+  effects rather than implying the transmitted subset is complete. Gameplay
+  state and expiration never depend on this presentation bound.
+- Status priority among potion and future Cleric effects remains later C08
+  policy work. The C06 capacity increase and overflow indicator do not silently
+  choose an eviction priority.
 - Exact duration tables are authored per effect rank. Sharing the rank model
   does not require every spell to share one duration ladder; long-lived Respite
   and short tactical protection may use different values while still deriving
@@ -793,13 +822,14 @@ These are current implementation facts, not new design decisions:
   full cleanse.
 - Timed potion effects already use an integer magnitude plus an expiry, while
   several combat effects use an integer magnitude plus remaining attack count.
-- The custom client's active-potion HUD currently displays an item-definition
-  icon, a countdown, and the item name on hover. Its server snapshot is bounded
-  to `16` entries and carries only `itemId` plus `remainingSeconds`; it has no
-  charge field. Cleric presentation therefore needs a backward-compatible
-  optional count and a deliberate policy for a full status list rather than
-  silently hiding an active effect. Authentic clients do not receive this
-  custom packet, so gameplay state must never depend on HUD support.
+- The custom client's active-potion HUD displays an item-definition icon, a
+  countdown, and the item name on hover. Its server snapshot is bounded to
+  `32` transmitted entries, carries `itemId` plus `remainingSeconds`, and
+  includes an omitted-entry count; server collection is bounded to `64`. It
+  still has no per-effect charge field. C08 therefore needs a compatible
+  optional charge/count representation and a deliberate mixed-effect priority
+  policy. Authentic clients do not receive this custom packet, so gameplay
+  state must never depend on HUD support.
 - The current damage roll already supports a chance to shift an offense roll
   one step upward before the defense roll is subtracted. This existing
   mechanism is the implementation and balance model selected for Fervor.
@@ -875,11 +905,6 @@ them.
 
 ## Unresolved Design Questions
 
-### Casting and Spellbook Contract
-
-- Are Cleric spells available to all players who meet the Worship requirement,
-  or is there an introductory unlock or quest?
-
 ### Sigil Taxonomy and Production
 
 - The third and later material identities. Gold remains possible, but the
@@ -895,8 +920,8 @@ them.
 
 ### Holy Power and Support Rules
 
-- PvP behavior and remaining abuse safeguards.
-  Same-party eligibility, launch-spell caster exclusion, and clearing effects
+- Remaining non-PvP abuse safeguards. Initial Cleric PvP support is disabled;
+  same-party eligibility, launch-spell caster exclusion, and clearing effects
   on party separation are settled.
 - How Unify's one-time forced movement integrates with queued walking and the
   client movement presentation without desynchronization. This implementation
@@ -904,9 +929,10 @@ them.
 - Cast-level resource behavior when an area spell applies to only some
   recipients or is wholly ineffective because every recipient has a stronger
   active family effect. Casting never awards Worship XP.
-- Status icons and labels; optional-count packet representation; compatibility
-  behavior; and priority/overflow rules for the existing `16`-entry HUD bound.
-  Mend cadence and the tactical and Respite duration ladders are settled.
+- Final status icons and labels, optional per-effect charge/pulse packet
+  representation, and mixed potion/Cleric priority within the expanded bound.
+  Overflow indication, Mend cadence, and the tactical and Respite duration
+  ladders are settled.
 - Shared combat-path implementation and blocked-damage telemetry for the
   settled Ward/Aegis, Thorns, Zeal, and Rally direct-damage boundaries.
 - Exact passive-healing clock synchronization when Respite is applied,
@@ -915,8 +941,9 @@ them.
 
 ### Initial Spell Content
 
-- Placement and unlock rules for god spells, including their continued Magic
-  requirements and staff requirements.
+- Future god-spell expansion remains open. Existing god spells remain under
+  Mage with their current Magic and staff requirements for the initial Cleric
+  rollout.
 
 ## Cumulative Sigil Cost Ladder
 
@@ -983,6 +1010,23 @@ primary ladder.
   version bump; authentic/legacy stat packet layouts remain unchanged.
 
 ## Decision Log
+
+### 2026-08-03: Spellbook presentation and initial exposure
+
+Confirmed a Spells main tab containing Mage and Cleric subtabs. Mage is the
+fresh-session default and the last selected spell subtab is remembered during
+that session. Cleric icons submit an immediate caster-centered cast request
+without target selection or autocast. Worship level is the only spellbook
+access gate; there is no introductory quest. Existing god spells remain under
+Mage, initial Cleric PvP support is disabled, and authentic Magic identities
+remain unchanged.
+
+Confirmed expansion of maintained-client status transport from `16` to `32`
+displayed entries, with bounded server reporting up to `64` and a visible
+omitted-effect count. This does not decide the later mixed-effect priority or
+charge/pulse representation. Spell metadata also supports optional
+player-centered icon and animation hooks, both unset until final assets are
+approved.
 
 ### 2026-08-03: Stone and silver carving inputs
 

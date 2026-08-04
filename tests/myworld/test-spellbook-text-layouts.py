@@ -92,6 +92,7 @@ def main() -> None:
     require(mudclient, "if (settingIndex == 65 && this.mouseButtonClick == 1)",
             "general settings layout action")
     require(mudclient, "private int drawMagicTextList()", "magic text list")
+    require(mudclient, "private int drawClericTextList()", "Cleric text list")
     require(mudclient, "private int drawPrayerTextList()", "prayer text list")
     require(mudclient, "0xFFFFFF, 0, 1, prayerTooltipY + 4);",
             "prayer point summary clears its divider")
@@ -99,12 +100,14 @@ def main() -> None:
     require(mudclient, "this.getMagicMenuSpellIndex(selectedRow)",
             "hidden-spell canonical index mapping")
     require(mudclient, "this.activateMagicMenuSpell(spellIndex);", "shared magic action")
+    require(mudclient, "this.activateClericSpell(clericSpellCode);", "immediate Cleric action")
     require(mudclient, "this.togglePrayerMenuPrayer(spellIndex);", "shared prayer action")
     require(mudclient, "this.castSummon(summonIndex);", "shared summoning action")
     require(mudclient, "this.panelMagic.scrollMethodList(this.controlMagicPanel, x);",
             "text list mouse-wheel scrolling")
     require(mudclient, "this.saveSpellbookTextScrollPosition(this.magicOrPrayerList);",
             "per-tab text scroll preservation")
+    require(mudclient, "this.clericTextScrollPosition", "Cleric subtab scroll preservation")
     require(mudclient, "if (lastSelectedSpell != -1 && isAndroid())",
             "Android last-spell control retained")
 

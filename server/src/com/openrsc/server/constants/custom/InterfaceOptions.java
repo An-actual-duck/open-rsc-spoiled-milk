@@ -30,7 +30,8 @@ public enum InterfaceOptions {
 	CAST_SUMMON(22),
 	BANK_ITEM_PIN(23),
 	PRODUCTION_REMEMBER_TOGGLE(24),
-	PRODUCTION_BACK(25);
+	PRODUCTION_BACK(25),
+	CAST_CLERIC_SPELL(26);
 
 	private int option;
 

@@ -1141,6 +1141,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 						break;
 					case AUTO_CAST_SPELL:
 					case CAST_SUMMON:
+					case CAST_CLERIC_SPELL:
 						os.id = packet.readShort();
 						break;
 					case PRODUCTION_QUANTITY_DOWN_ONE:

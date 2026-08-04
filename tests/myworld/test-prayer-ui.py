@@ -45,7 +45,7 @@ def main():
             "Prayer UI should draw icon placeholder cells")
     require("prayerTooltipY = prayerGridY + prayerGridHeight + 14;" in mudclient,
             "Prayer icon detail text should use the compact vertical gap below the icon grid")
-    require("int prayerTooltipY = magicPanelYStart + 122;" in mudclient,
+    require("int prayerTooltipY = magicPanelYStart + 140;" in mudclient,
             "Prayer text detail should share the compact description panel")
     require("Reserved points: \" + this.getPrayerPointCost(hoveredPrayer)" in mudclient,
             "Prayer tooltip should show the effective allocation cost instead of drain rate")
