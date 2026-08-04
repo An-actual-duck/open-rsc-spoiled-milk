@@ -284,6 +284,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "server-build-source-of-truth.md",
             "server-equipment-spell-boundaries-b10.md",
             "server-failure-handling-b05.md",
+            "server-r2-ownership-inventory.md",
             "static-analysis.md",
             "testing-quick-reference.md",
             "world-builder-definition-catalog.md",

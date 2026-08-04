@@ -1,0 +1,422 @@
+{
+  "dependencies": [
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/GameStateUpdater.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/constants/Constants.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/constants/NpcDrops.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.content.BadLuckMitigation",
+      "source": "server/src/com/openrsc/server/constants/NpcDrops.java",
+      "target": "server/src/com/openrsc/server/content/BadLuckMitigation.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Leach",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
+      "target": "server/src/com/openrsc/server/content/Leach.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.CorrosiveAura",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/CorrosiveAura.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineGrace",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/DivineGrace.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineRetribution",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/DivineRetribution.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.PoisonPower",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/PoisonPower.java"
+    },
+    {
+      "import": "com.openrsc.server.content.PoisonProcChance",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/PoisonProcChance.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.TrueDefense",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/TrueDefense.java"
+    },
+    {
+      "import": "com.openrsc.server.content.SkillCapes",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
+      "target": "server/src/com/openrsc/server/content/SkillCapes.java"
+    },
+    {
+      "import": "com.openrsc.server.content.CorrosiveAura",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
+      "target": "server/src/com/openrsc/server/content/CorrosiveAura.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineRetribution",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
+      "target": "server/src/com/openrsc/server/content/DivineRetribution.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.TrueDefense",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
+      "target": "server/src/com/openrsc/server/content/TrueDefense.java"
+    },
+    {
+      "import": "com.openrsc.server.content.SkillCapes",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java",
+      "target": "server/src/com/openrsc/server/content/SkillCapes.java"
+    },
+    {
+      "import": "com.openrsc.server.content.CorrosiveAura",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/CorrosiveAura.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineGrace",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/DivineGrace.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineRetribution",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/DivineRetribution.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.PoisonPower",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/PoisonPower.java"
+    },
+    {
+      "import": "com.openrsc.server.content.PoisonProcChance",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/PoisonProcChance.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.TrueDefense",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/TrueDefense.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/FireCannonEvent.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.CorrosiveAura",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/CorrosiveAura.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineGrace",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/DivineGrace.java"
+    },
+    {
+      "import": "com.openrsc.server.content.DivineRetribution",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/DivineRetribution.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.PoisonPower",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/PoisonPower.java"
+    },
+    {
+      "import": "com.openrsc.server.content.PoisonProcChance",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/PoisonProcChance.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.TrueDefense",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/TrueDefense.java"
+    },
+    {
+      "import": "com.openrsc.server.content.SkillCapes",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
+      "target": "server/src/com/openrsc/server/content/SkillCapes.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeUtils.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.SkillCapes",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java",
+      "target": "server/src/com/openrsc/server/content/SkillCapes.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/external/EntityHandler.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/NpcMovementBoundary.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.RangersGuildPoints",
+      "source": "server/src/com/openrsc/server/model/Skills.java",
+      "target": "server/src/com/openrsc/server/content/RangersGuildPoints.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/model/container/Equipment.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Devotion",
+      "source": "server/src/com/openrsc/server/model/container/Equipment.java",
+      "target": "server/src/com/openrsc/server/content/Devotion.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/model/container/Equipment.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/container/Equipment.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/model/container/Item.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/entity/Mob.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/entity/npc/Npc.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Devotion",
+      "source": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
+      "target": "server/src/com/openrsc/server/content/Devotion.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/model/entity/player/Player.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Leach",
+      "source": "server/src/com/openrsc/server/model/entity/player/Player.java",
+      "target": "server/src/com/openrsc/server/content/Leach.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/entity/player/Player.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/model/world/World.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.combatodyssey.CombatOdysseyData",
+      "source": "server/src/com/openrsc/server/model/world/World.java",
+      "target": "server/src/com/openrsc/server/content/minigame/combatodyssey/CombatOdysseyData.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData",
+      "source": "server/src/com/openrsc/server/model/world/World.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Devotion",
+      "source": "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+      "target": "server/src/com/openrsc/server/content/Devotion.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSpellCatalog",
+      "source": "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSpellCatalog.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
+      "source": "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSigilItemId",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSigilItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSigilMaterial",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSigilMaterial.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSpellCatalog",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSpellCatalog.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericSupportCasting",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/ItemActionHandler.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/ItemUseOnItem.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/MenuReplyHandler.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/NpcCommand.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/NpcTalkTo.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.content.EnchantingItemEffects",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+    },
+    {
+      "import": "com.openrsc.server.content.SkillCapes",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+      "target": "server/src/com/openrsc/server/content/SkillCapes.java"
+    },
+    {
+      "import": "com.openrsc.server.content.Summoning",
+      "source": "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+      "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
+      "source": "server/src/com/openrsc/server/net/rsc/struct/outgoing/ClericSpellbookStruct.java",
+      "target": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/util/rsc/Formulae.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    }
+  ],
+  "evidenceBaseCommit": "6e1720900bbdccd46ba06b9726ac7e91a89b56f3",
+  "policy": "Exact foundation-to-Spoiled-Milk import edges allowed at R2-0; additions fail, removals are accepted.",
+  "schemaVersion": 1
+}
