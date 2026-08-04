@@ -46,6 +46,10 @@ def validate_sources() -> None:
                 f"opcode 152 trailer omits {field}")
     require("if (!player.isUsingCustomClient())" in sender,
             "authentic clients can receive the maintained status packet")
+    login = sender[sender.index("static void sendLogin(Player player)"):]
+    require(login.index("sendClericSpellbook(player);")
+            < login.index("sendActivePotionEffects(player);"),
+            "login sends enriched statuses before their validating Cleric catalog")
     for path in (SERVER / "net/rsc/generators/impl").glob("Payload*Generator.java"):
         if path.name != "PayloadCustomGenerator.java":
             require("SEND_ACTIVE_POTION_EFFECTS" not in read(path),

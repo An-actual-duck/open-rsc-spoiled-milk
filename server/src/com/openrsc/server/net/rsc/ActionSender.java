@@ -2487,8 +2487,8 @@ public class ActionSender {
 				int elixir = player.getElixir();
 				if (elixir > -1)
 					sendElixirTimer(player, player.getElixir());
-				sendActivePotionEffects(player);
 				sendClericSpellbook(player);
+				sendActivePotionEffects(player);
 
 				sendWakeUp(player, false, true);
 
