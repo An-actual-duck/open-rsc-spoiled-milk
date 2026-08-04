@@ -95,6 +95,7 @@ public class EntityHandler {
 		0xB7C9D9, 0xC86A2B, 16737817, 15654365, 15658734,
 		10072780, 0x8EA6BB, 11717785, 0x5A3F7D, 65535
 	};
+	private static final int MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT = 15;
 	private static final int EXALTED_RUNE_COLOR = 0xD8FFFF;
 
 	public static int getModelCount() {
@@ -7556,10 +7557,13 @@ public class EntityHandler {
 			animations.add(new AnimationDef("longbow", "equipment", 0xC78C4A, 0, false, false, 0));//785 - palm longbow
 			animations.add(new AnimationDef("longbow", "equipment", 0x333333, 0, false, false, 0));//786 - ebony longbow
 			animations.add(new AnimationDef("longbow", "equipment", 0xCC2222, 0, false, false, 0));//787 - blood longbow
+			// Preserve the published appearance-number contract: custom staves begin at 789.
+			animations.add(new AnimationDef("nothing", "equipment", 0, 0, true, false, 0));//788 - reserved
 			for (int woodColor : MYWORLD_STAFF_WOOD_COLORS) {
 				animations.add(new AnimationDef("staff", "equipment", woodColor, 0, true, false, 0));
 			}
-			for (int runeColor : MYWORLD_STAFF_RUNE_COLORS) {
+			for (int runeIndex = 0; runeIndex < MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT; runeIndex++) {
+				int runeColor = MYWORLD_STAFF_RUNE_COLORS[runeIndex];
 				for (int woodColor : MYWORLD_STAFF_WOOD_COLORS) {
 					animations.add(new AnimationDef("elementalstaff", "equipment", runeColor, woodColor, 0, true, false, 0));
 				}
@@ -7637,6 +7641,23 @@ public class EntityHandler {
 			animations.add(new AnimationDef("platemaillegs", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1058 - Exalted Rune plate legs
 			animations.add(new AnimationDef("platemailtop", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1059 - Exalted Rune plate body
 			animations.add(new AnimationDef("fplatemailtop", "equipment", EXALTED_RUNE_COLOR, 0, true, false, 0)); // 1060 - Exalted Rune female plate top
+			// New staff families extend the table without shifting published equipment IDs.
+			for (int runeIndex = MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT;
+				 runeIndex < MYWORLD_STAFF_RUNE_COLORS.length; runeIndex++) {
+				int runeColor = MYWORLD_STAFF_RUNE_COLORS[runeIndex];
+				for (int woodColor : MYWORLD_STAFF_WOOD_COLORS) {
+					animations.add(new AnimationDef("elementalstaff", "equipment", runeColor, woodColor, 0, true, false, 0));
+				}
+			}
+			verifyAnimationDefinition(1050, "scythe", EXALTED_RUNE_COLOR);
+		}
+	}
+
+	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {
+		AnimationDef animation = animations.get(appearanceId);
+		if (!expectedName.equals(animation.getName()) || animation.getCharColour() != expectedColour) {
+			throw new IllegalStateException("Appearance " + appearanceId + " must remain "
+				+ expectedName + " with colour " + Integer.toHexString(expectedColour));
 		}
 	}
 

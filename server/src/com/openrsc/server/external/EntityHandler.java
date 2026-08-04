@@ -63,10 +63,12 @@ public final class EntityHandler {
 	private final PersistenceManager persistenceManager;
 	private static final int MYWORLD_STAFF_BASE_APPEARANCE_START = 789;
 	private static final int MYWORLD_RUNE_STAFF_APPEARANCE_START = MYWORLD_STAFF_BASE_APPEARANCE_START + 10;
+	private static final int MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT = 15;
+	private static final int MYWORLD_RUNE_STAFF_EXTENSION_APPEARANCE_START = 1061;
 	private static final int MYWORLD_RUNE_CLOTH_COLOR_COUNT = 14;
 	private static final int MYWORLD_WOOL_ACCESSORY_APPEARANCE_COUNT = 2;
 	private static final int MYWORLD_PICKAXE_APPEARANCE_START = MYWORLD_RUNE_STAFF_APPEARANCE_START
-		+ (15 * 10)
+		+ (MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT * 10)
 		+ (MYWORLD_RUNE_CLOTH_COLOR_COUNT * 2)
 		+ MYWORLD_WOOL_ACCESSORY_APPEARANCE_COUNT;
 	private static final int MYWORLD_SHEARS_APPEARANCE_ID = AppearanceId.SHEARS.id();
@@ -1033,9 +1035,12 @@ public final class EntityHandler {
 		for (int woodIndex = 0; woodIndex < MYWORLD_STAFF_BASE_IDS.length; woodIndex++) {
 			setItemAppearance(MYWORLD_STAFF_BASE_IDS[woodIndex], MYWORLD_STAFF_BASE_APPEARANCE_START + woodIndex);
 		}
-		int appearanceId = MYWORLD_RUNE_STAFF_APPEARANCE_START;
-		for (int[] runeStaffIds : MYWORLD_RUNE_STAFF_IDS) {
-			for (int staffId : runeStaffIds) {
+		for (int runeIndex = 0; runeIndex < MYWORLD_RUNE_STAFF_IDS.length; runeIndex++) {
+			int appearanceId = runeIndex < MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT
+				? MYWORLD_RUNE_STAFF_APPEARANCE_START + (runeIndex * MYWORLD_STAFF_BASE_IDS.length)
+				: MYWORLD_RUNE_STAFF_EXTENSION_APPEARANCE_START
+					+ ((runeIndex - MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT) * MYWORLD_STAFF_BASE_IDS.length);
+			for (int staffId : MYWORLD_RUNE_STAFF_IDS[runeIndex]) {
 				setItemAppearance(staffId, appearanceId++);
 			}
 		}
