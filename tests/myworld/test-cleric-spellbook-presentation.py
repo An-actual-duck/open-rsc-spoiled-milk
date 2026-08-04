@@ -27,6 +27,7 @@ def validate_wiring() -> None:
     custom_parser = read(SERVER / "net/rsc/parsers/impl/PayloadCustomParser.java")
     sender = read(SERVER / "net/rsc/ActionSender.java")
     handler = read(SERVER / "net/rsc/handlers/InterfaceOptionHandler.java")
+    casting = read(SERVER / "content/cleric/runtime/ClericSupportCasting.java")
     options = read(SERVER / "constants/custom/InterfaceOptions.java")
     packet_handler = read(CLIENT / "orsc/PacketHandler.java")
     mudclient = read(CLIENT / "orsc/mudclient.java")
@@ -55,11 +56,16 @@ def validate_wiring() -> None:
         "private void handleAutoCastSpell", 1)[0]
     for boundary in (
         "player.isUsingCustomClient()", "WANT_MYWORLD", "ClericSpellCatalog.fromCode",
-        "USES_PK_MODE", "inWilderness()", "getMaxStat(Skill.PRAYER.id())",
+        "ClericSupportCasting.isPvpContext(player)", "getMaxStat(Skill.PRAYER.id())",
     ):
         require(boundary in method, f"cast request omits {boundary} boundary")
-    require("not active until Cleric support effects are implemented" in method,
-            "C06 request must stop before C07 gameplay")
+    require("ClericSupportCasting.cast(player, definition)" in method,
+            "C07 cast transaction is not connected to the C06 request")
+    for pvp_boundary in ("USES_PK_MODE", "inWilderness()", "isDuelActive()"):
+        require(pvp_boundary in casting,
+                f"shared C07 PvP boundary omits {pvp_boundary}")
+    require("definition.getId() != ClericSpellId.UNIFY" in casting,
+            "C08 and later effects must remain unreachable")
     for forbidden in ("remove(", "addExperience", "incExp", "setLevel", "setSkill"):
         require(forbidden not in method,
                 f"C06 request unexpectedly mutates gameplay through {forbidden}")
