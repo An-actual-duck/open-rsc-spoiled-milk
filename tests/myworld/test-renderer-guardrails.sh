@@ -29,6 +29,7 @@ renderer_tests=(
   test-legacy-software-scaling-settings.py
   test-client-external-asset-loader.py
   test-client-scene-instance-store.py
+  test-client-static-scene-delta-batch.py
   test-roof-visibility.py
   test-resident-chunk-storage-identity.py
   test-renderer-relog-resident-world.py

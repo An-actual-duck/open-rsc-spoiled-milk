@@ -3477,6 +3477,8 @@ public class PacketHandler {
 	}
 
 	private void showGameObjects(int length) {
+		LegacyStaticSceneDeltaBatch batch =
+			new LegacyStaticSceneDeltaBatch(false);
 		while (length > packetsIncoming.packetEnd) {
 			if (packetsIncoming.getUnsignedByte() != 255) {
 				--packetsIncoming.packetEnd;
@@ -3484,78 +3486,88 @@ public class PacketHandler {
 				int xTile = mc.getLocalPlayerX() + packetsIncoming.getByte();
 				int zTile = mc.getLocalPlayerZ() + packetsIncoming.getByte();
 				int dir = packetsIncoming.getByte();
-				int count = 0;
-
-				for (int i = 0; i < mc.getGameObjectInstanceCount(); ++i) {
-					if (mc.getGameObjectInstanceX(i) == xTile && zTile == mc.getGameObjectInstanceZ(i)) {
-						mc.dematerializeGameObjectInstance(i);
-					} else {
-						if (count != i) {
-							mc.setGameObjectInstanceX(count, mc.getGameObjectInstanceX(i));
-							mc.setGameObjectInstanceZ(count, mc.getGameObjectInstanceZ(i));
-							mc.setGameObjectInstanceID(count, mc.getGameObjectInstanceID(i));
-							mc.setGameObjectInstanceDir(count, mc.getGameObjectInstanceDir(i));
-							mc.setGameObjectInstanceModel(count, mc.getGameObjectInstanceModel(i));
-							mc.setGameObjectInstanceMaterialized(count, mc.isGameObjectInstanceMaterialized(i));
-							mc.setGameObjectInstancePendingAreaLoad(count, mc.isGameObjectInstancePendingAreaLoad(i));
-						}
-
-						++count;
-					}
-				}
-
-				mc.setGameObjectInstanceCount(count);
-
-				mc.getWorld().registerObjectDir(xTile, zTile, dir);
-				if (id != 60000) {
-					if (!mc.hasGameObjectInstanceCapacity()) {
-						continue;
-					}
-					int instanceIndex = mc.getGameObjectInstanceCount();
-					int modelIndex = com.openrsc.client.entityhandling.EntityHandler.getObjectDef(id).modelID;// CacheValues.gameObjectModelIndex[id];
-					RSModel m = mc.getModelCacheItem(modelIndex).clone();
-					applyExpandedGameObjectPickBounds(id, m);
-					m.key = instanceIndex;
-					m.addRotation(0, dir * 32, 0);
-					m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
-
-					mc.setGameObjectInstanceX(instanceIndex, xTile);
-					mc.setGameObjectInstanceZ(instanceIndex, zTile);
-					mc.setGameObjectInstanceID(instanceIndex, id);
-					mc.setGameObjectInstanceDir(instanceIndex, dir);
-					mc.setGameObjectInstanceModel(instanceIndex, m);
-					mc.setGameObjectInstanceMaterialized(instanceIndex, false);
-					mc.setGameObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
-					mc.materializeGameObjectInstance(instanceIndex);
-					mc.setGameObjectInstanceCount(instanceIndex + 1);
-				}
-
+				batch.addTileUpdate(id, xTile, zTile, dir);
 			} else {
-				int id = 0;
-				int xTile = mc.getLocalPlayerX() + packetsIncoming.getByte() >> 3;
-				int zTile = mc.getLocalPlayerZ() + packetsIncoming.getByte() >> 3;
-
-				for (int localIndex = 0; mc.getGameObjectInstanceCount() > localIndex; ++localIndex) {
-					int dxTile = (mc.getGameObjectInstanceX(localIndex) >> 3) - xTile;
-					int dzTile = (mc.getGameObjectInstanceZ(localIndex) >> 3) - zTile;
-					if (dxTile == 0 && dzTile == 0) {
-						mc.dematerializeGameObjectInstance(localIndex);
-					} else {
-						if (localIndex != id) {
-							mc.setGameObjectInstanceX(id, mc.getGameObjectInstanceX(localIndex));
-							mc.setGameObjectInstanceZ(id, mc.getGameObjectInstanceZ(localIndex));
-							mc.setGameObjectInstanceID(id, mc.getGameObjectInstanceID(localIndex));
-							mc.setGameObjectInstanceDir(id, mc.getGameObjectInstanceDir(localIndex));
-							mc.setGameObjectInstanceModel(id, mc.getGameObjectInstanceModel(localIndex));
-							mc.setGameObjectInstanceMaterialized(id, mc.isGameObjectInstanceMaterialized(localIndex));
-							mc.setGameObjectInstancePendingAreaLoad(id, mc.isGameObjectInstancePendingAreaLoad(localIndex));
-						}
-						++id;
-					}
-				}
-				mc.setGameObjectInstanceCount(id);
+				int regionX = (mc.getLocalPlayerX()
+					+ packetsIncoming.getByte()) >> 3;
+				int regionZ = (mc.getLocalPlayerZ()
+					+ packetsIncoming.getByte()) >> 3;
+				batch.addRegionClear(regionX, regionZ);
 			}
 		}
+		applyLegacyGameObjectBatch(batch);
+	}
+
+	private void applyLegacyGameObjectBatch(
+			final LegacyStaticSceneDeltaBatch batch) {
+		int retained = 0;
+		for (int index = 0;
+				index < mc.getGameObjectInstanceCount(); index++) {
+			if (batch.removesExisting(
+					mc.getGameObjectInstanceX(index),
+					mc.getGameObjectInstanceZ(index),
+					mc.getGameObjectInstanceDir(index))) {
+				mc.dematerializeGameObjectInstance(index);
+				continue;
+			}
+			if (retained != index) {
+				mc.setGameObjectInstanceX(
+					retained, mc.getGameObjectInstanceX(index));
+				mc.setGameObjectInstanceZ(
+					retained, mc.getGameObjectInstanceZ(index));
+				mc.setGameObjectInstanceID(
+					retained, mc.getGameObjectInstanceID(index));
+				mc.setGameObjectInstanceDir(
+					retained, mc.getGameObjectInstanceDir(index));
+				mc.setGameObjectInstanceModel(
+					retained, mc.getGameObjectInstanceModel(index));
+				mc.setGameObjectInstanceMaterialized(
+					retained, mc.isGameObjectInstanceMaterialized(index));
+				mc.setGameObjectInstancePendingAreaLoad(
+					retained, mc.isGameObjectInstancePendingAreaLoad(index));
+			}
+			retained++;
+		}
+		mc.setGameObjectInstanceCount(retained);
+
+		for (LegacyStaticSceneDeltaBatch.Record record : batch.records()) {
+			if (!record.isRegionClear()) {
+				mc.getWorld().registerObjectDir(
+					record.getX(), record.getZ(), record.getDirection());
+			}
+		}
+		for (LegacyStaticSceneDeltaBatch.Record record :
+				batch.survivingAdds()) {
+			addLegacyGameObject(record);
+		}
+	}
+
+	private void addLegacyGameObject(
+			final LegacyStaticSceneDeltaBatch.Record record) {
+		if (!mc.hasGameObjectInstanceCapacity()) {
+			return;
+		}
+		int instanceIndex = mc.getGameObjectInstanceCount();
+		int id = record.getId();
+		int dir = record.getDirection();
+		int xTile = record.getX();
+		int zTile = record.getZ();
+		int modelIndex = EntityHandler.getObjectDef(id).modelID;
+		RSModel m = mc.getModelCacheItem(modelIndex).clone();
+		applyExpandedGameObjectPickBounds(id, m);
+		m.key = instanceIndex;
+		m.addRotation(0, dir * 32, 0);
+		m.setDiffuseLightAndColor(-50, -10, -50, 48, 48, true, 117);
+
+		mc.setGameObjectInstanceX(instanceIndex, xTile);
+		mc.setGameObjectInstanceZ(instanceIndex, zTile);
+		mc.setGameObjectInstanceID(instanceIndex, id);
+		mc.setGameObjectInstanceDir(instanceIndex, dir);
+		mc.setGameObjectInstanceModel(instanceIndex, m);
+		mc.setGameObjectInstanceMaterialized(instanceIndex, false);
+		mc.setGameObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
+		mc.materializeGameObjectInstance(instanceIndex);
+		mc.setGameObjectInstanceCount(instanceIndex + 1);
 	}
 
 	private void applyExpandedGameObjectPickBounds(int objectId, RSModel model) {
@@ -3778,79 +3790,75 @@ public class PacketHandler {
 	}
 
 	private void showWalls(int length) {
+		LegacyStaticSceneDeltaBatch batch =
+			new LegacyStaticSceneDeltaBatch(true);
 		while (length > packetsIncoming.packetEnd) {
 			if (packetsIncoming.getUnsignedByte() == 255) {
-				int wallID = 0;
-				int var19 = mc.getLocalPlayerX() + packetsIncoming.getByte() >> 3;
-				int var6 = mc.getLocalPlayerZ() + packetsIncoming.getByte() >> 3;
-
-				for (int wallInstance = 0; mc.getWallObjectInstanceCount() > wallInstance; ++wallInstance) {
-					int dir = (mc.getWallObjectInstanceX(wallInstance) >> 3) - var19;
-					int var9 = (mc.getWallObjectInstanceZ(wallInstance) >> 3) - var6;
-					if (dir == 0 && var9 == 0) {
-						mc.dematerializeWallObjectInstance(wallInstance);
-					} else {
-						if (wallID != wallInstance) {
-							mc.setWallObjectInstanceModel(wallID, mc.getWallObjectInstanceModel(wallInstance));
-							mc.setWallObjectInstanceX(wallID, mc.getWallObjectInstanceX(wallInstance));
-							mc.setWallObjectInstanceZ(wallID, mc.getWallObjectInstanceZ(wallInstance));
-							mc.setWallObjectInstanceDir(wallID, mc.getWallObjectInstanceDir(wallInstance));
-							mc.setWallObjectInstanceID(wallID, mc.getWallObjectInstanceID(wallInstance));
-							mc.setWallObjectInstanceMaterialized(wallID, mc.isWallObjectInstanceMaterialized(wallInstance));
-							mc.setWallObjectInstancePendingAreaLoad(wallID, mc.isWallObjectInstancePendingAreaLoad(wallInstance));
-						}
-
-						++wallID;
-					}
-				}
-
-				mc.setWallObjectInstanceCount(wallID);
-
+				int regionX = (mc.getLocalPlayerX()
+					+ packetsIncoming.getByte()) >> 3;
+				int regionZ = (mc.getLocalPlayerZ()
+					+ packetsIncoming.getByte()) >> 3;
+				batch.addRegionClear(regionX, regionZ);
 			} else {
 				--packetsIncoming.packetEnd;
 				int id = packetsIncoming.getShort();
 				int x = mc.getLocalPlayerX() + packetsIncoming.getByte();
 				int y = mc.getLocalPlayerZ() + packetsIncoming.getByte();
 				int direction = packetsIncoming.getByte();
-				int localIndex = 0;
-
-				for (int var9 = 0; var9 < mc.getWallObjectInstanceCount(); ++var9) {
-					if (mc.getWallObjectInstanceX(var9) == x
-						&& mc.getWallObjectInstanceZ(var9) == y
-						&& direction == mc.getWallObjectInstanceDir(var9)) {
-						mc.dematerializeWallObjectInstance(var9);
-					} else {
-						if (var9 != localIndex) {
-							mc.setWallObjectInstanceModel(localIndex, mc.getWallObjectInstanceModel(var9));
-							mc.setWallObjectInstanceX(localIndex, mc.getWallObjectInstanceX(var9));
-							mc.setWallObjectInstanceZ(localIndex, mc.getWallObjectInstanceZ(var9));
-							mc.setWallObjectInstanceDir(localIndex, mc.getWallObjectInstanceDir(var9));
-							mc.setWallObjectInstanceID(localIndex, mc.getWallObjectInstanceID(var9));
-							mc.setWallObjectInstanceMaterialized(localIndex, mc.isWallObjectInstanceMaterialized(var9));
-							mc.setWallObjectInstancePendingAreaLoad(localIndex, mc.isWallObjectInstancePendingAreaLoad(var9));
-						}
-
-						++localIndex;
-					}
-				}
-
-				mc.setWallObjectInstanceCount(localIndex);
-				if (id != 60000) {
-					if (!mc.hasWallObjectInstanceCapacity()) {
-						continue;
-					}
-					int instanceIndex = mc.getWallObjectInstanceCount();
-					mc.setWallObjectInstanceModel(instanceIndex, null);
-					mc.setWallObjectInstanceX(instanceIndex, x);
-					mc.setWallObjectInstanceZ(instanceIndex, y);
-					mc.setWallObjectInstanceID(instanceIndex, id);
-					mc.setWallObjectInstanceDir(instanceIndex, direction);
-					mc.setWallObjectInstanceMaterialized(instanceIndex, false);
-					mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
-					mc.materializeWallObjectInstance(instanceIndex);
-					mc.setWallObjectInstanceCount(instanceIndex + 1);
-				}
+				batch.addTileUpdate(id, x, y, direction);
 			}
+		}
+		applyLegacyWallObjectBatch(batch);
+	}
+
+	private void applyLegacyWallObjectBatch(
+			final LegacyStaticSceneDeltaBatch batch) {
+		int retained = 0;
+		for (int index = 0;
+				index < mc.getWallObjectInstanceCount(); index++) {
+			if (batch.removesExisting(
+					mc.getWallObjectInstanceX(index),
+					mc.getWallObjectInstanceZ(index),
+					mc.getWallObjectInstanceDir(index))) {
+				mc.dematerializeWallObjectInstance(index);
+				continue;
+			}
+			if (retained != index) {
+				mc.setWallObjectInstanceModel(
+					retained, mc.getWallObjectInstanceModel(index));
+				mc.setWallObjectInstanceX(
+					retained, mc.getWallObjectInstanceX(index));
+				mc.setWallObjectInstanceZ(
+					retained, mc.getWallObjectInstanceZ(index));
+				mc.setWallObjectInstanceDir(
+					retained, mc.getWallObjectInstanceDir(index));
+				mc.setWallObjectInstanceID(
+					retained, mc.getWallObjectInstanceID(index));
+				mc.setWallObjectInstanceMaterialized(
+					retained, mc.isWallObjectInstanceMaterialized(index));
+				mc.setWallObjectInstancePendingAreaLoad(
+					retained, mc.isWallObjectInstancePendingAreaLoad(index));
+			}
+			retained++;
+		}
+		mc.setWallObjectInstanceCount(retained);
+
+		for (LegacyStaticSceneDeltaBatch.Record record :
+				batch.survivingAdds()) {
+			if (!mc.hasWallObjectInstanceCapacity()) {
+				break;
+			}
+			int instanceIndex = mc.getWallObjectInstanceCount();
+			mc.setWallObjectInstanceModel(instanceIndex, null);
+			mc.setWallObjectInstanceX(instanceIndex, record.getX());
+			mc.setWallObjectInstanceZ(instanceIndex, record.getZ());
+			mc.setWallObjectInstanceID(instanceIndex, record.getId());
+			mc.setWallObjectInstanceDir(
+				instanceIndex, record.getDirection());
+			mc.setWallObjectInstanceMaterialized(instanceIndex, false);
+			mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());
+			mc.materializeWallObjectInstance(instanceIndex);
+			mc.setWallObjectInstanceCount(instanceIndex + 1);
 		}
 	}
 

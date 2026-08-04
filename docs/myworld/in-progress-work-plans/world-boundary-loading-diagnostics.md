@@ -929,3 +929,48 @@ fixture proves an animated-frame change reuses A's mask while a static-world or
 static-caster change invalidates it. Visual validation must check both cache-hit
 timing and the appearance of animated scenery before this prototype is
 accepted.
+
+### Static-shadow acceptance and residual scenery cost (2026-08-04)
+
+Private session
+`output/renderer-diagnostics/session-20260804-121724-799028` exercised the
+static-shadow ownership build at `980c74b12` on the repeated
+`(11,11)`/`(12,12)` route. The tester described the remaining hitch as very
+minimal. The attempted final Ctrl+F8 marker did not reach the bounded event
+log, so no individual crossing is labelled as that observation; the session's
+ten warm return traces remain usable as an aggregate comparison.
+
+The static ownership correction behaved as intended:
+
+- return crossings retained the corrected GPU residency behavior, with only
+  dynamic chunks changing (normally about 1.404 MiB and less than 1.2 ms of
+  measured upload work);
+- ordinary return masks reported `mask-cache:world` and took 5.499--10.907 ms;
+- one day/night sun-bucket change caused the expected two-view refresh, taking
+  24.030 ms and 27.492 ms, after which both views returned to cache hits;
+- warm return OpenGL interval maxima were 68.751--101.974 ms, while normal
+  client-loop maxima were about 52--62 ms outside a distinct GC/cold outlier;
+- no wrong-area flash was reported in this run.
+
+The normal-path bottleneck has therefore moved again. `packet.opcode-48`
+(`SCENERY_HANDLER`) took about 22.676--29.494 ms on most warm returns. The
+server deliberately sends these legacy scenery deltas while the complete
+protocol-v8 baseline follows, preserving the validated fence and fallback
+behavior established after teleport-delay testing. The client handler applies
+each delta by rescanning and compacting the complete scenery list, making a
+boundary packet quadratic in changed-record count. A representative cached
+trace spent only 0.266 ms uploading chunks and 6.901 ms preparing its shadow
+mask, but waited 42.791 ms for the static baseline and released at 70.359 ms;
+the scenery handler accounted for 29.494 ms of that interval.
+
+The next bounded prototype keeps the legacy packet and atomic fence semantics
+unchanged, but parses one packet into a `LegacyStaticSceneDeltaBatch`. It
+compacts existing scenery/walls once, preserves exact-tile and directional-wall
+replacement, preserves 8x8 clear records, discards only additions superseded
+later in the same packet, and then materializes the surviving additions in
+their original final order. This avoids suppressing compatibility traffic or
+turning the complete baseline into a new all-object reconstruction. A
+deterministic fixture compares the batch result with the old sequential
+semantics across explicit edge cases and 500 seeded mixed packets. Private
+visual acceptance must confirm fence parity, ordinary object mutations, wall
+and door changes, and boundary timing before this optimization is retained.
