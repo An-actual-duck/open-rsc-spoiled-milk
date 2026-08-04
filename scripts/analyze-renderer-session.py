@@ -2,6 +2,7 @@
 """Validate and summarize a renderer diagnostic session for AI-assisted review."""
 
 import argparse
+import gzip
 import json
 import math
 import re
@@ -39,6 +40,11 @@ _MODERN_SERVER_BASELINE_PATTERN = re.compile(
     r"pageLimit=(?P<pageLimit>\d+) "
     r"completeCapPages=(?P<completeCapPages>\d+) "
     r"completeCapWireBytes=(?P<completeCapWireBytes>\d+) "
+    r"(?:deliveryNanos=(?P<deliveryNanos>\d+) "
+    r"queueBefore=(?P<queueBefore>\d+) "
+    r"queueAfter=(?P<queueAfter>\d+) "
+    r"writableBefore=(?P<writableBefore>true|false) "
+    r"writableAfter=(?P<writableAfter>true|false) )?"
     r"progress=" + _PROGRESS_PATTERN
 )
 _LEGACY_SERVER_BASELINE_PATTERN = re.compile(
@@ -50,6 +56,21 @@ _SERVER_BASELINE_FAILURE_PATTERN = re.compile(
     r"mode=(?P<mode>[A-Z_]+) sent=0 sendFailed=true "
     r"remainingPages=(?P<remainingPages>\d+) "
     r"remainingWireBytes=(?P<remainingWireBytes>\d+)"
+    r"(?: deliveryNanos=(?P<deliveryNanos>\d+) "
+    r"queueBefore=(?P<queueBefore>\d+) "
+    r"queueAfter=(?P<queueAfter>\d+) "
+    r"writableBefore=(?P<writableBefore>true|false) "
+    r"writableAfter=(?P<writableAfter>true|false))?"
+)
+_SERVER_BASELINE_ENCODED_PATTERN = re.compile(
+    r"LAYERED_PACKET_ENCODED packet=(?P<packet>\d+) opcode=143 "
+    r"bytes=(?P<bytes>\d+) identity=scene-baseline "
+    r"protocol=(?P<protocol>\d+),"
+    r"(?:context=(?P<context>\d+),)?"
+    r"category=(?P<category>\d+),"
+    r"page=(?P<pageIndex>\d+)/(?P<pageTotal>\d+) "
+    r"writable=(?P<writable>true|false) "
+    r"bytesBeforeUnwritable=(?P<bytesBeforeUnwritable>\d+)"
 )
 _SERVER_LOG_TIMESTAMP_PATTERN = re.compile(
     r"\b(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\b"
@@ -174,6 +195,12 @@ def parse_server_scene_baseline_line(
             "presentationWallsTotal",
         ):
             record[key] = int(values[key])
+        for key in ("deliveryNanos", "queueBefore", "queueAfter"):
+            if values.get(key) is not None:
+                record[key] = int(values[key])
+        for key in ("writableBefore", "writableAfter"):
+            if values.get(key) is not None:
+                record[key] = values[key] == "true"
         return record
 
     match = _LEGACY_SERVER_BASELINE_PATTERN.search(line)
@@ -203,7 +230,7 @@ def parse_server_scene_baseline_line(
     match = _SERVER_BASELINE_FAILURE_PATTERN.search(line)
     if match is not None:
         values = match.groupdict()
-        return {
+        record = {
             "kind": "delivery-failure",
             "format": "modern",
             "source": source_name,
@@ -214,6 +241,37 @@ def parse_server_scene_baseline_line(
             "remainingPages": int(values["remainingPages"]),
             "remainingWireBytes": int(values["remainingWireBytes"]),
         }
+        for key in ("deliveryNanos", "queueBefore", "queueAfter"):
+            if values.get(key) is not None:
+                record[key] = int(values[key])
+        for key in ("writableBefore", "writableAfter"):
+            if values.get(key) is not None:
+                record[key] = values[key] == "true"
+        return record
+
+    match = _SERVER_BASELINE_ENCODED_PATTERN.search(line)
+    if match is not None:
+        values = match.groupdict()
+        record = {
+            "kind": "encoded-page",
+            "format": "modern",
+            "source": source_name,
+            "timestamp": timestamp,
+            "writable": values["writable"] == "true",
+        }
+        for key in (
+            "packet",
+            "bytes",
+            "protocol",
+            "category",
+            "pageIndex",
+            "pageTotal",
+            "bytesBeforeUnwritable",
+        ):
+            record[key] = int(values[key])
+        if values.get("context") is not None:
+            record["context"] = int(values["context"])
+        return record
     return None
 
 
@@ -231,7 +289,12 @@ def read_server_scene_baseline_logs(paths: list[Path]) -> dict[str, Any]:
             fail(f"missing server log: {supplied_path}")
         source_names.append(path.name)
         try:
-            with path.open("r", encoding="utf-8", errors="replace") as reader:
+            reader_context = (
+                gzip.open(path, "rt", encoding="utf-8", errors="replace")
+                if path.suffix.lower() == ".gz"
+                else path.open("r", encoding="utf-8", errors="replace")
+            )
+            with reader_context as reader:
                 for line in reader:
                     record = parse_server_scene_baseline_line(line, path.name)
                     if record is None:
@@ -892,9 +955,13 @@ def server_scene_baseline_lines(
     failures = [
         record for record in records if record.get("kind") == "delivery-failure"
     ]
+    encoded_pages = [
+        record for record in records if record.get("kind") == "encoded-page"
+    ]
     lines.append(
         f"- Coverage: modern bounded records={len(modern)}, legacy records="
-        f"{len(legacy)}, pre-queue delivery failures={len(failures)}."
+        f"{len(legacy)}, pre-queue delivery failures={len(failures)}, "
+        f"encoded baseline pages={len(encoded_pages)}."
     )
 
     if modern:
@@ -961,6 +1028,40 @@ def server_scene_baseline_lines(
             f"{byte_count(numeric(largest, 'remainingBeforeWireBytes'))}->"
             f"{byte_count(numeric(largest, 'remainingAfterWireBytes'))}."
         )
+
+        timed_deliveries = [
+            record
+            for record in modern + failures
+            if "deliveryNanos" in record
+        ]
+        if timed_deliveries:
+            delivery_nanos = [
+                numeric(record, "deliveryNanos") for record in timed_deliveries
+            ]
+            queue_growth = [
+                numeric(record, "queueAfter") - numeric(record, "queueBefore")
+                for record in timed_deliveries
+            ]
+            queue_after = [numeric(record, "queueAfter") for record in timed_deliveries]
+            unwritable_after = sum(
+                1 for record in timed_deliveries if not record.get("writableAfter", True)
+            )
+            lines.append(
+                "- Game-thread delivery p50/p95/p99/max: "
+                f"{milliseconds(percentile(delivery_nanos, 0.50))} / "
+                f"{milliseconds(percentile(delivery_nanos, 0.95))} / "
+                f"{milliseconds(percentile(delivery_nanos, 0.99))} / "
+                f"{milliseconds(max(delivery_nanos))}; queue growth "
+                f"p50/p95/max {percentile(queue_growth, 0.50):.0f} / "
+                f"{percentile(queue_growth, 0.95):.0f} / {max(queue_growth):.0f}, "
+                f"maximum queue after {max(queue_after):.0f}, "
+                f"unwritable-after records {unwritable_after}."
+            )
+        else:
+            lines.append(
+                "- Game-thread delivery duration and queue-pressure fields are "
+                "unavailable in these bounded records."
+            )
     else:
         lines.append(
             "- Modern page/byte/mode accounting is unavailable; these logs predate "
@@ -974,6 +1075,31 @@ def server_scene_baseline_lines(
             "- Queue failures retained unsent ownership: "
             f"{len(failures)} records; maximum {max(remaining_pages):.0f} pages / "
             f"{byte_count(max(remaining_bytes))}."
+        )
+
+    if encoded_pages:
+        encoded_bytes = [numeric(record, "bytes") for record in encoded_pages]
+        encoder_headroom = [
+            numeric(record, "bytesBeforeUnwritable") for record in encoded_pages
+        ]
+        unwritable = sum(
+            1 for record in encoded_pages if not record.get("writable", True)
+        )
+        context_coverage = sum(1 for record in encoded_pages if "context" in record)
+        lines.append(
+            "- Encoder delivery: payload bytes p50/p95/p99/max "
+            f"{byte_count(percentile(encoded_bytes, 0.50))} / "
+            f"{byte_count(percentile(encoded_bytes, 0.95))} / "
+            f"{byte_count(percentile(encoded_bytes, 0.99))} / "
+            f"{byte_count(max(encoded_bytes))}; total "
+            f"{byte_count(sum(encoded_bytes))}; channel unwritable "
+            f"for {unwritable}/{len(encoded_pages)} records; minimum reported "
+            f"headroom {byte_count(min(encoder_headroom))}; context coverage "
+            f"{context_coverage}/{len(encoded_pages)}."
+        )
+    else:
+        lines.append(
+            "- Encoder-side page timing/backpressure records were unavailable."
         )
 
     transitions = [
@@ -1022,8 +1148,9 @@ def server_scene_baseline_lines(
             "correlation."
         )
     lines.append(
-        "- Privacy boundary: only fixed delivery counters, modes, timestamps, and "
-        "scene context IDs are parsed; unrelated log text is never copied."
+        "- Privacy boundary: only fixed delivery counters, modes, timestamps, "
+        "packet IDs, byte counts, queue/channel pressure, and scene context IDs "
+        "are parsed; unrelated log text is never copied."
     )
     return lines
 

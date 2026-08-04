@@ -1292,6 +1292,15 @@ public final class GameStateUpdater {
 			wallsChanged,
 			groundItemsChanged,
 			staticPresentation);
+		final long deliveryStartedNanos =
+			LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+				? System.nanoTime() : 0L;
+		final int outgoingQueueBefore =
+			LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+				? player.getOutgoingPacketQueueSize() : -1;
+		final boolean channelWritableBefore =
+			LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+				&& player.isOutgoingChannelWritable();
 		final int remainingPagesBefore =
 			remainingSceneBaselinePageCount(current);
 		final long remainingWireBytesBefore =
@@ -1332,10 +1341,17 @@ public final class GameStateUpdater {
 			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
 				LOGGER.warn(
 					"LAYERED_SCENE_BASELINE_DELIVERY mode={} sent=0 "
-						+ "sendFailed=true remainingPages={} remainingWireBytes={}",
+						+ "sendFailed=true remainingPages={} remainingWireBytes={} "
+						+ "deliveryNanos={} queueBefore={} queueAfter={} "
+						+ "writableBefore={} writableAfter={}",
 					delivery.getMode(),
 					remainingPagesBefore,
-					remainingWireBytesBefore);
+					remainingWireBytesBefore,
+					System.nanoTime() - deliveryStartedNanos,
+					outgoingQueueBefore,
+					player.getOutgoingPacketQueueSize(),
+					channelWritableBefore,
+					player.isOutgoingChannelWritable());
 			}
 			return;
 		}
@@ -1363,7 +1379,9 @@ public final class GameStateUpdater {
 					+ "sent={} sendFailed={} remainingBeforePages={} "
 					+ "remainingBeforeWireBytes={} remainingAfterPages={} "
 					+ "remainingAfterWireBytes={} pageLimit={} "
-					+ "completeCapPages={} completeCapWireBytes={} progress={}",
+					+ "completeCapPages={} completeCapWireBytes={} "
+					+ "deliveryNanos={} queueBefore={} queueAfter={} "
+					+ "writableBefore={} writableAfter={} progress={}",
 				delivery.getMode(),
 				atomicActivationPending,
 				sentPages,
@@ -1375,6 +1393,11 @@ public final class GameStateUpdater {
 				pageBurstLimit,
 				SceneBaselineDeliveryPolicy.ATOMIC_COMPLETE_MAX_PAGES,
 				SceneBaselineDeliveryPolicy.ATOMIC_COMPLETE_MAX_WIRE_BYTES,
+				System.nanoTime() - deliveryStartedNanos,
+				outgoingQueueBefore,
+				player.getOutgoingPacketQueueSize(),
+				channelWritableBefore,
+				player.isOutgoingChannelWritable(),
 				current.pageProgressSummary());
 		}
 	}

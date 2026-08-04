@@ -11,6 +11,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 POLICY = ROOT / "server/src/com/openrsc/server/SceneBaselineDeliveryPolicy.java"
 UPDATER = ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
+ENCODER = ROOT / "server/src/com/openrsc/server/net/RSCProtocolEncoderMain.java"
 
 
 class SceneBaselineDeliveryPolicyTest(unittest.TestCase):
@@ -213,10 +214,20 @@ class SceneBaselineDeliveryPolicyTest(unittest.TestCase):
         self.assertIn("ATOMIC_OVERSIZED_FALLBACK", POLICY.read_text())
         self.assertIn("remainingBeforeWireBytes", method)
         self.assertIn("completeCapWireBytes", method)
+        self.assertIn("deliveryStartedNanos", method)
+        self.assertIn("getOutgoingPacketQueueSize()", method)
+        self.assertIn("isOutgoingChannelWritable()", method)
+        self.assertIn("deliveryNanos={}", method)
+        self.assertIn("queueBefore={}", method)
+        self.assertIn("writableAfter={}", method)
         self.assertIn(
             "ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE", updater
         )
         self.assertIn("clearCompletedAtomicSceneBaseline(", updater)
+
+        encoder = ENCODER.read_text(encoding="utf-8")
+        self.assertIn('contextIdentity = ",context="', encoder)
+        self.assertIn("+ contextIdentity", encoder)
 
 
 if __name__ == "__main__":

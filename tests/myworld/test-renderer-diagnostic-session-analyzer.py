@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import gzip
 import json
 import subprocess
 import tempfile
@@ -493,6 +494,10 @@ def main() -> None:
                         after_bytes=0,
                         context=2,
                         page_limit=11,
+                    ).replace(
+                        "progress=",
+                        "deliveryNanos=2000000 queueBefore=7 queueAfter=18 "
+                        "writableBefore=true writableAfter=true progress=",
                     ),
                     modern_server_baseline(
                         timestamp="2026-08-03 12:00:02",
@@ -526,6 +531,15 @@ def main() -> None:
                     "GameStateUpdater: - LAYERED_SCENE_BASELINE_DELIVERY "
                     "mode=ATOMIC_COMPLETE sent=0 sendFailed=true "
                     "remainingPages=11 remainingWireBytes=50122",
+                    "2026-08-03 12:00:06 [Fixture : IOWorkerThread-1] INFO "
+                    "RSCProtocolEncoderMain: - LAYERED_PACKET_ENCODED packet=33 "
+                    "opcode=143 bytes=6218 identity=scene-baseline protocol=8,"
+                    "context=2,category=4,page=0/6 writable=true "
+                    "bytesBeforeUnwritable=12000",
+                    "2026-08-03 12:00:06 [Fixture : IOWorkerThread-1] INFO "
+                    "RSCProtocolEncoderMain: - LAYERED_PACKET_ENCODED packet=34 "
+                    "opcode=143 bytes=4730 identity=scene-baseline protocol=8,"
+                    "category=5,page=0/1 writable=false bytesBeforeUnwritable=0",
                 ]
             )
             + "\n",
@@ -538,28 +552,53 @@ def main() -> None:
             raise AssertionError(result.stderr)
         for snippet in (
             "## Server Scene-Baseline Delivery",
-            "Sources: 1; recognized records: 5; retained latest: 5 / 4096.",
+            "Sources: 1; recognized records: 7; retained latest: 7 / 4096.",
             "Coverage: modern bounded records=3, legacy records=1, "
-            "pre-queue delivery failures=1.",
+            "pre-queue delivery failures=1, encoded baseline pages=2.",
             "ATOMIC_COMPLETE=1, ATOMIC_OVERSIZED_FALLBACK=1, "
             "STANDARD_BOUNDED=1",
             "eligible-complete=1, eligible-incomplete-or-failed=0, "
             "oversized-fallback pages=1",
             "Largest retained delivery: 2026-08-03 12:00:03, context 2, "
             "mode ATOMIC_OVERSIZED_FALLBACK",
+            "Game-thread delivery p50/p95/p99/max: 2.000ms / 2.000ms / "
+            "2.000ms / 2.000ms; queue growth p50/p95/max 11 / 11 / 11, "
+            "maximum queue after 18, unwritable-after records 0.",
             "Queue failures retained unsent ownership: 1 records",
+            "Encoder delivery: payload bytes p50/p95/p99/max",
+            "channel unwritable for 1/2 records; minimum reported headroom "
+            "0 bytes (0.0 KiB); context coverage 1/2.",
             "Context candidate for client trace 1 at center 2,13: context 1, "
             "2 retained server page records",
             "Context candidate for client trace 2 at center 3,13: context 2, "
             "2 retained server page records",
-            "only fixed delivery counters, modes, timestamps, and scene context IDs "
-            "are parsed",
+            "only fixed delivery counters, modes, timestamps, packet IDs, byte "
+            "counts, queue/channel pressure, and scene context IDs are parsed",
         ):
             if snippet not in result.stdout:
                 raise AssertionError(f"missing {snippet!r} in:\n{result.stdout}")
         for sensitive in ("PrivateDuck", "192.0.2.44", "do-not-copy"):
             if sensitive in result.stdout:
                 raise AssertionError(f"server-log analyzer leaked {sensitive!r}")
+
+        make_session(session_dir)
+        rotated_log = session_dir / "private-server.20260803.log.gz"
+        with gzip.open(rotated_log, "wt", encoding="utf-8") as writer:
+            writer.write(
+                "2026-08-03 12:00:04 [Fixture : GameThread] INFO "
+                "GameStateUpdater: - LAYERED_SCENE_BASELINE_PAGES sent=8 "
+                "progress=context=1,scenery=3/3,walls=1/1,"
+                "presentationScenery=4/6,presentationWalls=0/1\n"
+            )
+        result = run_analyzer(
+            session_dir, "--server-log", str(rotated_log), "--no-write"
+        )
+        if result.returncode != 0:
+            raise AssertionError(result.stderr)
+        if "recognized records: 1" not in result.stdout:
+            raise AssertionError(result.stdout)
+        if "legacy records=1" not in result.stdout:
+            raise AssertionError(result.stdout)
 
         make_session(session_dir)
         server_log.write_text(

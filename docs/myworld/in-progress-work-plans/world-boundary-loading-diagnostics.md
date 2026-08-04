@@ -210,11 +210,13 @@ python3 scripts/analyze-renderer-session.py \
   --server-log server/logs/<private-current-log>
 ```
 
-Repeat `--server-log` for a rotated private log when a run spans rotation. If a
-server log is supplied but missing, the analyzer fails instead of silently
-omitting it. It retains at most the latest 4,096 recognized delivery records
-and parses only fixed timestamp, mode, page, byte, and context fields; unrelated
-account, address, credential, or chat text is never copied into the report.
+Repeat `--server-log` for a rotated private log when a run spans rotation;
+plain-text and `.gz` rotations are both supported. If a server log is supplied
+but missing, the analyzer fails instead of silently omitting it. It retains at
+most the latest 4,096 recognized delivery records and parses only fixed
+timestamp, mode, page, byte, queue/channel-pressure, and context fields;
+unrelated account, address, credential, or chat text is never copied into the
+report.
 
 The generated `ai-summary.md` is the decision record. Retain the raw
 `events.jsonl` until the optimization direction is selected.
@@ -705,11 +707,47 @@ optional repeated `--server-log` input recognizes both the new bounded format
 and the earlier `sent=N progress=...` format. The report includes delivery-mode
 counts, remaining-page and wire-byte p50/p95/p99/max distributions, successful
 atomic completions, incomplete attempts, oversized fallbacks, queue failures,
-bounded-retention coverage, and timestamped context-sequence candidates for
-the client traces. Context sequence alone is explicitly labeled supporting
-evidence because it can repeat across players or server runs. A fixture
-containing an account name, address, and password proves that unrelated text
-does not reach output.
+game-thread delivery duration, ordered-queue growth, channel writability,
+encoder payload/headroom samples, bounded-retention coverage, and timestamped
+context-sequence candidates for the client traces. Context sequence alone is
+explicitly labeled supporting evidence because it can repeat across players or
+server runs. The encoder diagnostic now carries the scene context alongside
+protocol/category/page identity, allowing queued work to be distinguished from
+work that reached Netty framing. A fixture containing an account name, address,
+and password proves that unrelated text does not reach output.
+
+Re-analysis of the preserved rotated pre-prototype server log found 21 legacy
+page-summary records and 99 matching encoder page records. Ninety of those 99
+encoder samples reported the channel unwritable, while the old identity format
+did not include context. This does not establish that channel pressure caused
+the visual hitch—the client trace still shows the decisive extra world tick—but
+it makes queue and encoder measurements a required acceptance signal for the
+larger same-tick burst. The new format supplies those missing fields.
+
+### Unattended automated verification (2026-08-04)
+
+No client was launched for this verification. The stale private server was
+stopped before the build/test run, and no public/live service was touched.
+
+- The authoritative client and server builds pass.
+- The focused baseline policy, incremental packet-frame, terrain-stage paging,
+  layered client-authority, atomic activation, visibility-ring, wire-envelope,
+  transition/minimap, movement synchronization, packet diagnostics, boundary
+  diagnostics, and session-analyzer tests pass.
+- `./scripts/lint.sh all --offline --base $(git merge-base
+  spoiled-milk/main HEAD)` passes with no new gated javac, Ruff, or SpotBugs
+  findings.
+- The repository-wide deterministic suite passes when continued around two
+  guards already stale relative to published `main`: the registry fixture
+  expects 1,060 animations and older item/animation hashes while runtime now
+  resolves 1,080 animations and current item data; the repeating-action test
+  still expects the skill-name table in `PacketHandler` after that ownership
+  moved. This branch changes neither catalog/fixture nor the Harvest ownership.
+  Both exact failures are retained for manager follow-up rather than silently
+  changing unrelated baselines.
+- The analyzer was exercised against the actual gzip-rotated private server log
+  as well as privacy, missing-path, bounded-retention, old-format, new-format,
+  queue-pressure, encoder-pressure, and context-correlation fixtures.
 
 ### Exact return validation for the baseline prototype
 

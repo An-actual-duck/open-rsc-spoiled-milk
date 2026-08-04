@@ -221,7 +221,13 @@ public final class RSCProtocolEncoderMain {
 		}
 
 		int pageOffset = start + 1 + 4 + 2 + 2;
+		String contextIdentity = "";
 		if (protocol >= 6) {
+			if (pageOffset + 4 > start + readable) {
+				return "scene-baseline protocol=" + protocol
+					+ ",truncated-context";
+			}
+			contextIdentity = ",context=" + payload.getInt(pageOffset);
 			pageOffset += 4;
 		}
 		pageOffset += 6 * 2 + 5 * 4;
@@ -233,6 +239,7 @@ public final class RSCProtocolEncoderMain {
 				+ ",truncated-header";
 		}
 		return "scene-baseline protocol=" + protocol
+			+ contextIdentity
 			+ ",category=" + payload.getUnsignedByte(pageOffset)
 			+ ",page=" + payload.getUnsignedShort(pageOffset + 1)
 			+ "/" + payload.getUnsignedShort(pageOffset + 3);
