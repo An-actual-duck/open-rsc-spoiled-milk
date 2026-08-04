@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.authentic.skills.woodcutting;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.external.ObjectWoodcuttingDef;
@@ -73,6 +74,9 @@ public class Woodcutting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	public static int getAxeTier(int axeId) {
+		if (axeId == MyWorldItemId.EXALTED_RUNE_HATCHET) {
+			return 12;
+		}
 		switch (ItemId.getById(axeId)) {
 			case COPPER_AXE:
 				return 2;

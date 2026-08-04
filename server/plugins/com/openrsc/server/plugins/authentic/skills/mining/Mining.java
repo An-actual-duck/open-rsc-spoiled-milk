@@ -5,6 +5,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.external.GameObjectDef;
@@ -72,6 +73,9 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	}
 
 	public static int getPickaxeRequiredLevel(int axeId) {
+		if (axeId == MyWorldItemId.EXALTED_RUNE_PICKAXE) {
+			return 90;
+		}
 		switch (ItemId.getById(axeId)) {
 			case RUNE_PICKAXE:
 				return 70;
@@ -98,6 +102,9 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	}
 
 	public static int getPickaxeRepeat(int axeId) {
+		if (axeId == MyWorldItemId.EXALTED_RUNE_PICKAXE) {
+			return 32;
+		}
 		switch (ItemId.getById(axeId)) {
 			case COPPER_PICKAXE:
 				return 2;
@@ -124,6 +131,9 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 	}
 
 	public static int getPickaxeTier(int axeId) {
+		if (axeId == MyWorldItemId.EXALTED_RUNE_PICKAXE) {
+			return 11;
+		}
 		switch (ItemId.getById(axeId)) {
 			case COPPER_PICKAXE:
 				return 2;
@@ -619,6 +629,9 @@ public final class Mining implements OpLocTrigger, UseLocTrigger {
 		//If server doesn't use batching, pickaxe shouldn't improve gathering chance
 		if (!config().BATCH_PROGRESSION) {
 			return 0;
+		}
+		if (axeId == MyWorldItemId.EXALTED_RUNE_PICKAXE) {
+			return 56;
 		}
 		switch (ItemId.getById(axeId)) {
 			case BRONZE_PICKAXE:

@@ -1,5 +1,6 @@
 package com.openrsc.server.external;
 
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.util.rsc.Formulae;
 
 /**
@@ -80,6 +81,8 @@ public final class ObjectWoodcuttingDef {
 
 	public double getRate(int level, int axe) {
 		switch (axe) {
+			case MyWorldItemId.EXALTED_RUNE_HATCHET:
+				return getExtendedRate(level, 6);
 			default:
 			case 2047:
 				return rateBronze[level];

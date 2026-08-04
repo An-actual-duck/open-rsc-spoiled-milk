@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.authentic.skills.woodcutting;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -146,6 +147,9 @@ public class WoodcutJungle implements OpLocTrigger,
 	 * How much of a bonus does the woodcut axe give?
 	 */
 	public int calcAxeBonus(int axeId) {
+		if (axeId == MyWorldItemId.EXALTED_RUNE_HATCHET) {
+			return 64;
+		}
 		switch (ItemId.getById(axeId)) {
 			case IRON_AXE:
 				return 4;
