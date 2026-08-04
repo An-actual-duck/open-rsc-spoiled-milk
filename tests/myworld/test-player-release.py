@@ -47,6 +47,33 @@ OPENGL_RUNTIME_ENTRIES = [
     "windows/x64/org/lwjgl/glfw/glfw.dll",
     "windows/x64/org/lwjgl/opengl/lwjgl_opengl.dll",
 ]
+CLERIC_SIGIL_ASSET_FILES = {
+    "stone.png",
+    "blessed-guth-sigil.png",
+    "blessed-neutral-sigil.png",
+    "blessed-sara-sigil.png",
+    "blessed-zam-sigil.png",
+    "unblessed-guth-sigil.png",
+    "unblessed-neutral-sigil.png",
+    "unblessed-sara-sigil.png",
+    "unblessed-zam-sigil.png",
+    "silver-blessed-guth-sigil.png",
+    "silver-blessed-neutral-sigil.png",
+    "silver-blessed-sara-sigil.png",
+    "silver-blessed-zam-sigil.png",
+    "silver-unblessed-guth-sigil.png",
+    "silver-unblessed-neutral-sigil.png",
+    "silver-unblessed-sara-sigil.png",
+    "silver-unblessed-zam-sigil.png",
+}
+CLERIC_SIGIL_JAR_ENTRIES = {
+    f"myworld-assets/sprites/items/inventory-ground/resources/sigils/{name}"
+    for name in CLERIC_SIGIL_ASSET_FILES
+}
+CLERIC_SIGIL_SOURCE_PATHS = {
+    ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils" / name
+    for name in CLERIC_SIGIL_ASSET_FILES
+}
 
 
 def fail(message: str) -> None:
@@ -591,6 +618,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
+    required |= CLERIC_SIGIL_JAR_ENTRIES
     with zipfile.ZipFile(ROOT / "Client_Base" / "Open_RSC_Client.jar") as jar:
         names = set(jar.namelist())
         missing = required - names
@@ -649,6 +677,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         "myworld-assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         "myworld-assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
+    allowed_item_asset_names |= CLERIC_SIGIL_JAR_ENTRIES
     unexpected_item_assets = sorted(
         name for name in names
         if name.startswith("myworld-assets/sprites/items/")
@@ -709,6 +738,7 @@ def test_runtime_visual_assets_are_embedded_in_client_jar() -> None:
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/shuriken-mould.png",
         ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools/throwing-knife-mould.png",
     }
+    allowed_item_sprite_paths |= CLERIC_SIGIL_SOURCE_PATHS
     item_sprite_root = ROOT / "dev/myworld/assets/sprites/items"
     if item_sprite_root.exists():
         unexpected_item_sprites = sorted(

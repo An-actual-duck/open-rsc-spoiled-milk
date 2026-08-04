@@ -20,6 +20,7 @@ def main() -> None:
         "compareToIgnoreCase(skillName) > 0",
         "return displayedSkills.length / 2;",
         'addSkill("Enchanting", "Enchant");',
+        'addSkill("Blessing");',
         'this.getSurface().drawString("Quest Points:@yel@" + this.questPoints',
     )
     for snippet in required:

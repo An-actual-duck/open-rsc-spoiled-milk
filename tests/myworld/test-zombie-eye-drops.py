@@ -156,7 +156,7 @@ def png_visible_colors(path: Path) -> set[tuple[int, int, int]]:
 def main() -> None:
 	item_id_text = ITEM_ID.read_text(encoding="utf-8")
 	require("ZOMBIE_EYE(3238)" in item_id_text, "ItemId should define Zombie eye")
-	require("public static final int maxCustom = 3293;" in item_id_text,
+	require("public static final int maxCustom = 3309;" in item_id_text,
 		"ItemId.maxCustom should include Zombie eye")
 
 	custom_items = json.loads(ITEM_DEFS_CUSTOM.read_text(encoding="utf-8"))["items"]

@@ -136,7 +136,7 @@ public final class Player extends Mob {
 	private static final int[] POTION_INSIGHT_SKILLS = {
 		Skill.MAGIC.id(), Skill.RUNECRAFT.id(), Skill.SUMMONING.id(), Skill.COOKING.id(), Skill.PRAYER.id()
 	};
-	private static final int MAX_ACTIVE_POTION_EFFECTS = 16;
+	private static final int MAX_REPORTED_ACTIVE_POTION_EFFECTS = 64;
 	private static final String POTION_STATUS_ITEM_PREFIX = "potion_status_item_";
 
 	// activity indicator for kitten to cat growth
@@ -2103,7 +2103,8 @@ public final class Player extends Mob {
 	}
 
 	private void addPotionStatus(final List<ActivePotionEffectStatus> statuses, final int itemId, final long remainingMs) {
-		if (itemId < 0 || remainingMs <= 0L || statuses.size() >= MAX_ACTIVE_POTION_EFFECTS) {
+		if (itemId < 0 || remainingMs <= 0L
+				|| statuses.size() >= MAX_REPORTED_ACTIVE_POTION_EFFECTS) {
 			return;
 		}
 		final long seconds = Math.max(1L, (remainingMs + 999L) / 1000L);

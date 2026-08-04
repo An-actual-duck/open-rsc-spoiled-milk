@@ -12,7 +12,11 @@ import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
+import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
+import com.openrsc.server.content.cleric.runtime.ClericSupportCasting;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.container.Item;
@@ -124,12 +128,72 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			case PRODUCTION_CLOSE:
 				handleProductionClose(player);
 				break;
+			case PRODUCTION_REMEMBER_TOGGLE:
+				handleProductionRememberToggle(player, payload);
+				break;
+			case PRODUCTION_BACK:
+				handleProductionBack(player);
+				break;
 			case AUTO_CAST_SPELL:
 				handleAutoCastSpell(player, payload);
 				break;
 			case CAST_SUMMON:
 				Summoning.castSummon(player, payload.id);
 				break;
+			case CAST_CLERIC_SPELL:
+				handleClericSpellCastRequest(player, payload);
+				break;
+		}
+	}
+
+	/** C06 request validation followed by C07's server-authoritative cast boundary. */
+	private void handleClericSpellCastRequest(Player player, OptionsStruct payload) {
+		if (!player.isUsingCustomClient() || !player.getConfig().WANT_MYWORLD) {
+			return;
+		}
+
+		final ClericSpellDefinition definition;
+		try {
+			definition = ClericSpellCatalog.fromCode(payload.id);
+		} catch (IllegalArgumentException e) {
+			LOGGER.warn("Ignoring unknown Cleric spell code={} player={}",
+				payload.id, player.getUsername());
+			player.setSuspiciousPlayer(true, "invalid Cleric spell identity");
+			return;
+		}
+
+		if (ClericSupportCasting.isPvpContext(player)) {
+			player.message("Cleric support spells cannot be cast in PvP areas");
+			return;
+		}
+		if (player.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) {
+			player.message("You need Worship level " + definition.getWorshipLevel()
+				+ " to cast " + definition.getDisplayName());
+			return;
+		}
+
+		final ClericSupportCasting.CastResult result =
+			ClericSupportCasting.cast(player, definition);
+		switch (result.getOutcome()) {
+			case SUCCESS:
+				player.message("You cast " + definition.getDisplayName() + " on "
+					+ result.getAffectedRecipientCount() + " party "
+					+ (result.getAffectedRecipientCount() == 1 ? "member" : "members"));
+				break;
+			case NO_USEFUL_RECIPIENT:
+				player.message("There are no eligible party members for "
+					+ definition.getDisplayName());
+				break;
+			case INSUFFICIENT_SIGILS:
+				player.message("You do not have the blessed sigils required to cast "
+					+ definition.getDisplayName());
+				break;
+			case NOT_IMPLEMENTED:
+				player.message(definition.getDisplayName()
+					+ " is not active until its Cleric support effect is implemented");
+				break;
+			default:
+				throw new IllegalStateException("Unsupported Cleric cast outcome");
 		}
 	}
 
@@ -197,18 +261,23 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 					return 1;
 				}
 
+				ProductionMemory.beginStart(player, session, itemId);
 				boolean started;
 				try {
 					started = starter.start(player, session, itemId, quantity);
 				} catch (PluginInterruptedException e) {
+					ProductionMemory.finishStart(player, session, itemId, false);
 					return 1;
 				} catch (RuntimeException e) {
+					ProductionMemory.finishStart(player, session, itemId, false);
 					LOGGER.error("Production start failed player={} itemId={} amount={} sessionType={}",
 						player.getUsername(), itemId, quantity, session.getType(), e);
 					player.message("Unable to start production");
 					clearProductionState(player, session);
 					return 0;
 				}
+
+				ProductionMemory.finishStart(player, session, itemId, started);
 
 				ProductionSession currentSession = player.getAttribute("production_session", null);
 				if (currentSession != session) {
@@ -238,6 +307,25 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		clearProductionState(player, session);
 	}
 
+	private void handleProductionRememberToggle(Player player, OptionsStruct payload) {
+		ProductionSession session = player.getAttribute("production_session", null);
+		if (!ProductionMemory.isRememberable(session)) {
+			return;
+		}
+		if (payload.value != 0 && payload.value != 1) {
+			player.setSuspiciousPlayer(true, "invalid production remember preference");
+			return;
+		}
+		ProductionMemory.setEnabled(player, payload.value == 1);
+	}
+
+	private void handleProductionBack(Player player) {
+		ProductionSession parent = ProductionMemory.back(player);
+		if (parent != null) {
+			ActionSender.showProductionInterface(player, parent);
+		}
+	}
+
 	private void handleLegacyProductionOption(Player player, InterfaceOptions option) {
 		ProductionSession session = player.getAttribute("production_session", null);
 		if (session == null) {
@@ -250,6 +338,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		player.removeAttribute("production_session");
 		player.removeAttribute("production_starter");
 		player.removeAttribute("production_context_item_uid");
+		ProductionMemory.clearNavigation(player);
 		ActionSender.hideProductionInterface(player, session.getType());
 	}
 

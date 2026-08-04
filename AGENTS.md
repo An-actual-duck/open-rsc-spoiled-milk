@@ -114,6 +114,9 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 - Do not assume ignored files are disposable. Databases, credentials, logs,
   and release artifacts live outside Git and must be audited separately.
 - Do not run two AI sessions in the same worktree.
+- Collaboration scripts reject callers whose current directory is outside a
+  registered Core-Framework manager/worker worktree. This prevents another
+  project manager from accidentally activating or collecting these slots.
 - Do not launch the public server from the manager or a worker slot.
 - If Git state is unexpected, stop editing and let the manager inventory it.
 

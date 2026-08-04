@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS `curstats`
     `agility`    tinyint(3) NOT NULL DEFAULT 1,
     `thieving`   tinyint(3) NOT NULL DEFAULT 1,
     `harvesting` tinyint(3) NOT NULL DEFAULT 1,
-    `runecraft`  tinyint(3) NOT NULL DEFAULT 1
+    `runecraft`  tinyint(3) NOT NULL DEFAULT 1,
+    `blessing`   tinyint(3) NOT NULL DEFAULT 1
 );
 
 DROP TABLE IF EXISTS `droplogs`;
@@ -84,7 +85,8 @@ CREATE TABLE IF NOT EXISTS `experience`
     `agility`    int(9)  NOT NULL DEFAULT 0,
     `thieving`   int(9)  NOT NULL DEFAULT 0,
     `harvesting` int(9)  NOT NULL DEFAULT 0,
-    `runecraft`  int(9)  NOT NULL DEFAULT 0
+    `runecraft`  int(9)  NOT NULL DEFAULT 0,
+    `blessing`   int(9)  NOT NULL DEFAULT 0
 );
 
 DROP TABLE IF EXISTS `maxstats`;
@@ -110,7 +112,8 @@ CREATE TABLE IF NOT EXISTS `maxstats`
     `agility`    tinyint(3) NOT NULL DEFAULT 1,
     `thieving`   tinyint(3) NOT NULL DEFAULT 1,
     `harvesting` tinyint(3) NOT NULL DEFAULT 1,
-    `runecraft`  tinyint(3) NOT NULL DEFAULT 1
+    `runecraft`  tinyint(3) NOT NULL DEFAULT 1,
+    `blessing`   tinyint(3) NOT NULL DEFAULT 1
 );
 
 DROP TABLE IF EXISTS `capped_experience`;
@@ -136,7 +139,8 @@ CREATE TABLE IF NOT EXISTS `capped_experience`
     `agility`    int(10),
     `thieving`   int(10),
     `harvesting` int(10),
-    `runecraft`  int(10)
+    `runecraft`  int(10),
+    `blessing`   int(10)
 );
 
 DROP TABLE IF EXISTS `friends`;

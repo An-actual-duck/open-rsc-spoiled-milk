@@ -19,6 +19,7 @@ public enum OpcodeOut {
 	SEND_INVENTORY,
 	SEND_ELIXIR, // custom
 	SEND_ACTIVE_POTION_EFFECTS, // custom
+	SEND_CLERIC_SPELLBOOK, // custom maintained-client catalog
 	SEND_APPEARANCE_SCREEN,
 	SEND_NPC_COORDS,
 	SEND_DEATH,

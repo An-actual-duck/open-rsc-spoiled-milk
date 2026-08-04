@@ -7,11 +7,14 @@ import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanManager;
 import com.openrsc.server.content.clan.ClanPlayer;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.production.ProductionSession;
+import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.database.struct.HiscoreEntry;
 import com.openrsc.server.database.struct.UsernameChangeType;
 import com.openrsc.server.event.custom.HolidayDropEvent;
@@ -186,7 +189,12 @@ public class ActionSender {
 	}
 
 	public static void showProductionInterface(Player player, ProductionSession session) {
-		ProductionInterfaceStruct struct = ProductionInterfaceStruct.open(session);
+		ProductionMemory.Display display = ProductionMemory.prepareDisplay(player, session);
+		if (display.isSuppressed()) {
+			return;
+		}
+		ProductionInterfaceStruct struct = ProductionInterfaceStruct.open(
+			display.getSession(), display.getSelectedRecipeId(), display.getUiFlags());
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_PRODUCTION_INTERFACE, struct, player);
 	}
 
@@ -502,6 +510,7 @@ public class ActionSender {
 		struct.hidingPoints = player.getHidingPoints();
 		struct.rangedPoints = player.getCarriedItems().getEquipment().getDisplayedRangedOffense();
 		struct.magicPowerPoints = player.getCarriedItems().getEquipment().getDisplayedMagicOffense();
+		struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_EQUIPMENT_STATS, struct, player);
 		if (player.getConfig().WANT_MYWORLD) {
 			player.getPrayers().deactivateOverflowingPrayers();
@@ -1375,7 +1384,7 @@ public class ActionSender {
 			return;
 		}
 		DevotionStruct struct = new DevotionStruct();
-		struct.devotionLevel = Devotion.getCurrentDevotionLevel(player);
+		struct.devotionHalfOfferingUnits = Devotion.getHalfOfferingUnits(player, player.getPrayerBook());
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_DEVOTION, struct, player);
 	}
 
@@ -1569,6 +1578,9 @@ public class ActionSender {
 				case "Summoning":
 					struct.currentSummoning = lvl;
 					break;
+				case "Blessing":
+					struct.currentBlessing = lvl;
+					break;
 				case "Influence":
 					struct.currentInfluence = lvl;
 					break;
@@ -1660,6 +1672,9 @@ public class ActionSender {
 				case "Summoning":
 					struct.maxSummoning = lvl;
 					break;
+				case "Blessing":
+					struct.maxBlessing = lvl;
+					break;
 				case "Influence":
 					struct.maxInfluence = lvl;
 					break;
@@ -1750,6 +1765,9 @@ public class ActionSender {
 					break;
 				case "Summoning":
 					struct.experienceSummoning = exp;
+					break;
+				case "Blessing":
+					struct.experienceBlessing = exp;
 					break;
 				case "Influence":
 					struct.experienceInfluence = exp;
@@ -2155,6 +2173,7 @@ public class ActionSender {
 		List<Player.ActivePotionEffectStatus> statuses = player.getActivePotionEffectStatuses();
 		ActivePotionEffectsStruct struct = new ActivePotionEffectsStruct();
 		struct.count = statuses.size();
+		struct.totalCount = statuses.size();
 		struct.itemIds = new int[struct.count];
 		struct.remainingSeconds = new int[struct.count];
 		for (int i = 0; i < struct.count; i++) {
@@ -2163,6 +2182,18 @@ public class ActionSender {
 			struct.remainingSeconds[i] = status.remainingSeconds;
 		}
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, struct, player);
+	}
+
+	/** Sends authoritative Cleric display metadata only to the maintained client. */
+	public static void sendClericSpellbook(Player player) {
+		if (!player.isUsingCustomClient()) {
+			return;
+		}
+		ClericSpellbookStruct struct = new ClericSpellbookStruct();
+		struct.schemaVersion = ClericSpellCatalog.SCHEMA_VERSION;
+		struct.definitions = ClericSpellCatalog.getAll().toArray(
+			new ClericSpellDefinition[0]);
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_CLERIC_SPELLBOOK, struct, player);
 	}
 
 	/**
@@ -2407,6 +2438,7 @@ public class ActionSender {
 				if (elixir > -1)
 					sendElixirTimer(player, player.getElixir());
 				sendActivePotionEffects(player);
+				sendClericSpellbook(player);
 
 				sendWakeUp(player, false, true);
 

@@ -5,6 +5,7 @@ import com.openrsc.server.model.entity.player.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 /** CarriedItems: A wrapper for inventory and equipment items.
  *
@@ -137,7 +138,23 @@ public class CarriedItems {
 	 */
 	public boolean remove(final Item[] items, final boolean updateClient)
 	{
-		if (items.length == 0)
+		return removeWithStateChange(items, updateClient, () -> true);
+	}
+
+	/**
+	 * Removes a complete item vector only after a supplied state change commits.
+	 *
+	 * <p>The item preflight, state change, and deterministic removals share the
+	 * same inventory/equipment lock boundary. The callback must be a fully
+	 * prepared, non-throwing change and return false without retaining side
+	 * effects when it cannot commit. This is intended for cross-state actions
+	 * such as a Cleric cast where neither partial item spending nor a transient
+	 * deduct/refund cycle is acceptable.</p>
+	 */
+	public boolean removeWithStateChange(final Item[] items, final boolean updateClient,
+			final BooleanSupplier stateChange)
+	{
+		if (items == null || items.length == 0 || stateChange == null)
 		{
 			// Nothing to remove
 			return false;
@@ -216,7 +233,12 @@ public class CarriedItems {
 					equipmentItems.add(removeItem);
 				}
 
-				// Matching items were found in inventory/equipment for all items to be removed.
+				// Matching items were found for the complete vector. Apply the
+				// prepared state change before the now-deterministic removals.
+				if (!stateChange.getAsBoolean())
+				{
+					return false;
+				}
 
 				for (final Item item : inventoryItems)
 				{

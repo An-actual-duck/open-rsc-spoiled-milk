@@ -3,6 +3,7 @@ package orsc;
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.EntityHandler.GUIPARTS;
 import com.openrsc.client.entityhandling.EntityHandler.PROJECTILE_TYPES;
+import com.openrsc.client.entityhandling.defs.ClericSpellDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.defs.ElementalSpellDisplayMetadata;
 import com.openrsc.client.entityhandling.defs.NPCDef;
@@ -258,6 +259,10 @@ public final class mudclient implements Runnable {
 	private static final int MAGIC_ICON_GAP = 5;
 	private static final int INTERFACE_OPTION_AUTO_CAST_SPELL = 21;
 	private static final int INTERFACE_OPTION_CAST_SUMMON = 22;
+	private static final int INTERFACE_OPTION_CAST_CLERIC_SPELL = 26;
+	private static final int SPELLS_SUBTAB_MAGE = 0;
+	private static final int SPELLS_SUBTAB_CLERIC = 1;
+	private static final int SPELLS_SUBTAB_HEIGHT = 18;
 	private static final int MAX_PRAYER_ICONS = 16;
 	private static final int PRAYER_ICON_COLUMNS = MAGIC_ICON_COLUMNS;
 	private static final int PRAYER_ICON_VISIBLE_ROWS = MAGIC_ICON_VISIBLE_ROWS;
@@ -344,7 +349,7 @@ public final class mudclient implements Runnable {
 	private static final int HEALTH_HUD_COORDINATE_GAP = 16;
 	private static final int AUTO_ATTACK_HUD_SIZE = 16;
 	private static final int AUTO_ATTACK_HUD_GAP = 4;
-	private static final int MAX_ACTIVE_POTION_EFFECTS = 16;
+	private static final int MAX_ACTIVE_POTION_EFFECTS = 32;
 	private static final int POTION_HUD_X = 7;
 	private static final int POTION_HUD_Y = 36;
 	private static final int POTION_HUD_WIDTH = 76;
@@ -358,7 +363,7 @@ public final class mudclient implements Runnable {
 	private static final int CUSTOM_UI_INVENTORY_PANEL_HEIGHT = 228;
 	private static final int CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT = 273;
 	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
-	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 182;
+	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 200;
 	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
 	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
 	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
@@ -428,8 +433,8 @@ public final class mudclient implements Runnable {
 	public final int[] equipIconXLocations = new int[]{98, 98, 98, 153, 43, 43, 98, 98, 43, 153, 153, 43};
 	public final int[] equipIconYLocations = new int[]{5, 85, 125, 85, 85, 165, 165, 45, 45, 45, 165, 125};
 	public final String[] equipmentStatNames = new String[]{"Rng. Def", "Mag. Def", "Mel. Def", "Mel. Pow",
-		"Prayer", "Rng. Pow", "Mag. Pow"};
-	public final int[] playerStatEquipment = new int[7];
+		"Prayer", "Rng. Pow", "Mag. Pow", "Holy Pow"};
+	public final int[] playerStatEquipment = new int[equipmentStatNames.length];
 	private final int[] mouseClickX = new int[8192];
 	private final int[] mouseClickY = new int[8192];
 	private final int[][] animDirLayer_To_CharLayer = new int[][]{{11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
@@ -870,7 +875,7 @@ public final class mudclient implements Runnable {
 	private int[] experienceArray = new int[S_PLAYER_LEVEL_LIMIT];
 	private int fatigueSleeping = 0;
 	private int fatigueSleepingAuthentic = 0;
-	private int currentDevotionLevel = 0;
+	private int currentDevotionHalfOfferingUnits = 0;
 	private int gameHeight = 334;
 	private int gameWidth = 512;
 	private int groundItemCount = 0;
@@ -1232,6 +1237,7 @@ public final class mudclient implements Runnable {
 	private int systemUpdate = 0;
 	private int elixirTimer = 0;
 	private int activePotionEffectCount = 0;
+	private int activePotionEffectOverflowCount = 0;
 	private final int[] activePotionEffectItemIds = new int[MAX_ACTIVE_POTION_EFFECTS];
 	private final long[] activePotionEffectExpiresAt = new long[MAX_ACTIVE_POTION_EFFECTS];
 	private boolean inWild = false;
@@ -1263,6 +1269,8 @@ public final class mudclient implements Runnable {
 	private int worldOffsetZ = 0;
 	private int prayerMenuIndex = 0;
 	private int magicMenuIndex = 0;
+	private int spellsSubtab = SPELLS_SUBTAB_MAGE;
+	private final ClericSpellbookCatalog clericSpellbook = new ClericSpellbookCatalog();
 	private Panel menuNewUser;
 	private int menuNewUserUsername;
 	private int menuNewUserPassword;
@@ -1281,9 +1289,11 @@ public final class mudclient implements Runnable {
 	private int settingsBlockGlobal;
 	private int lastSelectedSpell = -1;
 	private int magicIconScrollRow = 0;
+	private int clericIconScrollRow = 0;
 	private int prayerIconScrollRow = 0;
 	private int summoningIconScrollRow = 0;
 	private int magicTextScrollPosition = 0;
+	private int clericTextScrollPosition = 0;
 	private int prayerTextScrollPosition = 0;
 	private int summoningTextScrollPosition = 0;
 	private int flag = 0;
@@ -12709,7 +12719,7 @@ public final class mudclient implements Runnable {
 				if (C_CUSTOM_UI)
 					yOffset -= 45;
 				this.getSurface().drawBoxAlpha(xOffset, yOffset, 245, 204, this.clearBox, 128);
-				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 45, this.clearBox, 128);
+				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 58, this.clearBox, 128);
 				Sprite todraw = null;
 
 				if (S_ITEMS_ON_DEATH_MENU) {
@@ -12753,11 +12763,14 @@ public final class mudclient implements Runnable {
 								yOffset + equipIconYLocations[i] + 11, 0xFFFF00, 1);
 					}
 				}
-				for (int currSkill = 0; currSkill < 3; ++currSkill) {
-					this.drawEquipmentStatusValue(currSkill, xOffset + 42, yOffset + 243 + currSkill * 13, 0xFFFFFF);
+				this.getSurface().drawLineHoriz(xOffset, yOffset + 228, 245, 0);
+				for (int currSkill = 0; currSkill < 4; ++currSkill) {
+					if (currSkill < 3) {
+						this.drawEquipmentStatusValue(currSkill, xOffset + 42,
+							yOffset + 243 + currSkill * 13, 0xFFFFFF);
+					}
 					this.drawEquipmentStatusValue(currSkill == 0 ? 3 : currSkill + 4, 244 / 2 + xOffset + 35,
 						yOffset + 243 + currSkill * 13, 0xFFFFFF);
-					this.getSurface().drawLineHoriz(xOffset, yOffset + 228, 245, 0);
 				}
 
 				if (var2 && !isAndroid() && this.mouseButtonClick == 0) {
@@ -13308,7 +13321,7 @@ public final class mudclient implements Runnable {
 			if (!C_CUSTOM_UI)
 				this.getSurface().drawSprite(spriteSelect(GUIPARTS.MENUSPELLS.getDef()), magicPanelX - 49, 3);
 			if (C_CUSTOM_UI)
-				magicPanelYStart = maxY - 182;
+				magicPanelYStart = maxY - CUSTOM_UI_MAGIC_PANEL_HEIGHT;
 			short magicPanelWidth = 196;
 			int inactiveTabColor = GenUtil.buildColor(160, 160, 160);
 			int activeTabColor = GenUtil.buildColor(220, 220, 220);
@@ -13321,15 +13334,15 @@ public final class mudclient implements Runnable {
 				this.magicOrPrayerList == 1 ? activeTabColor : inactiveTabColor, 128);
 			this.getSurface().drawBoxAlpha(magicPanelX + firstTabWidth + secondTabWidth, magicPanelYStart, thirdTabWidth, 24,
 				this.magicOrPrayerList == 2 ? activeTabColor : inactiveTabColor, 128);
-			this.getSurface().drawBoxAlpha(magicPanelX, magicPanelYStart + 24, magicPanelWidth, 90, GenUtil.buildColor(220, 220, 220), 128);
-			this.getSurface().drawBoxAlpha(magicPanelX, 114 + magicPanelYStart, magicPanelWidth, 68, GenUtil.buildColor(160, 160, 160),
+			this.getSurface().drawBoxAlpha(magicPanelX, magicPanelYStart + 24, magicPanelWidth, 108, GenUtil.buildColor(220, 220, 220), 128);
+			this.getSurface().drawBoxAlpha(magicPanelX, 132 + magicPanelYStart, magicPanelWidth, 68, GenUtil.buildColor(160, 160, 160),
 				128);
 			this.getSurface().drawLineHoriz(magicPanelX, 24 + magicPanelYStart, magicPanelWidth, 0);
 			this.getSurface().drawLineVert(magicPanelX + firstTabWidth, 0 + magicPanelYStart, 0, 24);
 			this.getSurface().drawLineVert(magicPanelX + firstTabWidth + secondTabWidth, 0 + magicPanelYStart, 0, 24);
-			this.getSurface().drawLineHoriz(magicPanelX, magicPanelYStart + 113, magicPanelWidth, 0);
+			this.getSurface().drawLineHoriz(magicPanelX, magicPanelYStart + 131, magicPanelWidth, 0);
 			if (var2 == -74) {
-				this.getSurface().drawColoredStringCentered(magicPanelX + firstTabWidth / 2, "Magic", 0, var2 + 74, 4, 16 + magicPanelYStart);
+				this.getSurface().drawColoredStringCentered(magicPanelX + firstTabWidth / 2, "Spells", 0, var2 + 74, 4, 16 + magicPanelYStart);
 				this.getSurface().drawColoredStringCentered(magicPanelX + firstTabWidth + secondTabWidth / 2, "Prayer", 0, 0, 4, 16 + magicPanelYStart);
 				this.getSurface().drawColoredStringCentered(magicPanelX + firstTabWidth + secondTabWidth + thirdTabWidth / 2, "Summon", 0, 0, 4, 16 + magicPanelYStart);
 				int spellIndex;
@@ -13343,11 +13356,26 @@ public final class mudclient implements Runnable {
 				int lastSpellWidth = magicPanelWidth;
 				int lastSpellHeight = 50;
 				int lastSpellX = magicPanelX;
-				int lastSpellY = magicPanelYStart + 182;
+				int lastSpellY = magicPanelYStart + CUSTOM_UI_MAGIC_PANEL_HEIGHT;
 				String lastSpellNameColor = "@yel@";
 
-				// 0 is magic list
+				// 0 is the Spells list, with remembered Mage and Cleric subtabs.
 				if (this.magicOrPrayerList == 0) {
+					this.drawSpellsSubtabs(magicPanelX, magicPanelYStart, magicPanelWidth,
+						inactiveTabColor, activeTabColor);
+					if (this.spellsSubtab == SPELLS_SUBTAB_CLERIC) {
+						int hoveredCleric = SpellbookLayoutSettings.usesTextLayout()
+							? this.drawClericTextList()
+							: this.drawClericIconGrid(magicPanelX, magicPanelYStart, magicPanelWidth);
+						if (hoveredCleric >= 0) {
+							this.drawClericTooltip(hoveredCleric, magicPanelX,
+								magicPanelYStart + 132, magicPanelWidth);
+						} else {
+							this.getSurface().drawColoredStringCentered(magicPanelX + magicPanelWidth / 2,
+								"Point at a Cleric spell for details", 0, 0, 1,
+								magicPanelYStart + 145);
+						}
+					} else {
 					int hoveredSpell = -1;
 					if (SpellbookLayoutSettings.usesTextLayout()) {
 						hoveredSpell = this.drawMagicTextList();
@@ -13359,7 +13387,7 @@ public final class mudclient implements Runnable {
 					int spellGap = MAGIC_ICON_GAP;
 					int spellGridWidth = spellColumns * spellIconSize + (spellColumns - 1) * spellGap;
 					int spellGridX = magicPanelX + (magicPanelWidth - spellGridWidth) / 2;
-					int spellGridY = magicPanelYStart + 27;
+					int spellGridY = magicPanelYStart + 45;
 					int relativeSpellMouseX = this.mouseX - spellGridX;
 					int relativeSpellMouseY = this.mouseY - spellGridY;
 					int firstVisibleSpellSlot = this.magicIconScrollRow * spellColumns;
@@ -13420,10 +13448,10 @@ public final class mudclient implements Runnable {
 
 					magicLevel = hoveredSpell;
 					if (magicLevel != -1) {
-						this.drawMagicTooltip(magicLevel, magicPanelX, magicPanelYStart + 114, magicPanelWidth);
+						this.drawMagicTooltip(magicLevel, magicPanelX, magicPanelYStart + 132, magicPanelWidth);
 					} else {
 						this.getSurface().drawColoredStringCentered(magicPanelX + magicPanelWidth / 2,
-							"Point at a spell for a description", 0, 0, 1, magicPanelYStart + 127);
+							"Point at a spell for a description", 0, 0, 1, magicPanelYStart + 145);
 					}
 
 					// Android "cast last spell" box
@@ -13457,8 +13485,9 @@ public final class mudclient implements Runnable {
 								getSurface().drawColoredStringCentered(lastSpellX + (lastSpellWidth / 2), lastSpellNameColor + s, 0, 0, 1,
 									lastSpellY + textHeightOffset + 1);
 								textHeightOffset += 10;
-							}
 						}
+					}
+				}
 					}
 				}
 
@@ -13467,7 +13496,7 @@ public final class mudclient implements Runnable {
 					int prayerAllocatedPoints = this.getAllocatedPrayerPoints();
 					int prayerMaxPoints = this.getPrayerAllocationPoints();
 					int prayerAvailablePoints = Math.max(0, prayerMaxPoints - prayerAllocatedPoints);
-					int prayerTooltipY = magicPanelYStart + 122;
+					int prayerTooltipY = magicPanelYStart + 140;
 					int hoveredPrayer = -1;
 					if (SpellbookLayoutSettings.usesTextLayout()) {
 						hoveredPrayer = this.drawPrayerTextList();
@@ -13479,7 +13508,7 @@ public final class mudclient implements Runnable {
 					int prayerGap = PRAYER_ICON_GAP;
 					int prayerGridWidth = prayerColumns * prayerIconSize + (prayerColumns - 1) * prayerGap;
 					int prayerGridX = magicPanelX + (magicPanelWidth - prayerGridWidth) / 2;
-					int prayerGridY = magicPanelYStart + 27;
+					int prayerGridY = magicPanelYStart + 45;
 					int prayerGridHeight = PRAYER_ICON_VISIBLE_ROWS * prayerIconSize + (PRAYER_ICON_VISIBLE_ROWS - 1) * prayerGap;
 					prayerTooltipY = prayerGridY + prayerGridHeight + 14;
 					int relativePrayerMouseX = this.mouseX - prayerGridX;
@@ -13545,7 +13574,7 @@ public final class mudclient implements Runnable {
 
 				// 2 is summoning list
 				if (this.magicOrPrayerList == 2) {
-					int summonTooltipY = magicPanelYStart + 114;
+					int summonTooltipY = magicPanelYStart + 132;
 					int hoveredSummon = -1;
 					if (SpellbookLayoutSettings.usesTextLayout()) {
 						hoveredSummon = this.drawSummoningTextList();
@@ -13557,7 +13586,7 @@ public final class mudclient implements Runnable {
 					int summonGap = SUMMONING_ICON_GAP;
 					int summonGridWidth = summonColumns * summonIconSize + (summonColumns - 1) * summonGap;
 					int summonGridX = magicPanelX + (magicPanelWidth - summonGridWidth) / 2;
-					int summonGridY = magicPanelYStart + 27;
+					int summonGridY = magicPanelYStart + 45;
 					int summonGridHeight = SUMMONING_ICON_VISIBLE_ROWS * summonIconSize + (SUMMONING_ICON_VISIBLE_ROWS - 1) * summonGap;
 					int relativeSummonMouseX = this.mouseX - summonGridX;
 					int relativeSummonMouseY = this.mouseY - summonGridY;
@@ -13608,7 +13637,7 @@ public final class mudclient implements Runnable {
 				if (var1) {
 					magicPanelX = 199 - this.getSurface().width2 + this.mouseX;
 					int relativeMouseY = this.mouseY - 36;
-					int maxClickableY = isAndroid() ? 250 : 182;
+					int maxClickableY = isAndroid() ? 268 : CUSTOM_UI_MAGIC_PANEL_HEIGHT;
 					if (C_CUSTOM_UI)
 						relativeMouseY = this.mouseY - magicPanelYStart;
 					if (magicPanelX >= 0 && relativeMouseY >= 0 && magicPanelX < 196 && relativeMouseY < maxClickableY) {
@@ -13627,13 +13656,18 @@ public final class mudclient implements Runnable {
 									this.magicOrPrayerList = clickedList;
 									this.restoreSpellbookTextScrollPosition(this.magicOrPrayerList);
 								} else {
-									if (this.magicOrPrayerList == 0) {
+									if (this.magicOrPrayerList == 0
+											&& this.spellsSubtab == SPELLS_SUBTAB_MAGE) {
 										magicMenuIndex = this.magicIconScrollRow;
 									}
 									this.magicOrPrayerList = clickedList;
 									if (this.magicOrPrayerList == 0) {
-										this.magicIconScrollRow = magicMenuIndex;
-										this.clampMagicIconScrollRow();
+										if (this.spellsSubtab == SPELLS_SUBTAB_CLERIC) {
+											this.clampClericIconScrollRow();
+										} else {
+											this.magicIconScrollRow = magicMenuIndex;
+											this.clampMagicIconScrollRow();
+										}
 									} else if (this.magicOrPrayerList == 1) {
 										this.clampPrayerIconScrollRow();
 									} else {
@@ -13642,8 +13676,25 @@ public final class mudclient implements Runnable {
 								}
 							}
 						}
+						if (this.mouseButtonClick == 1 && this.magicOrPrayerList == 0
+								&& relativeMouseY > 24 && relativeMouseY <= 24 + SPELLS_SUBTAB_HEIGHT) {
+							int clickedSubtab = magicPanelX < magicPanelWidth / 2
+								? SPELLS_SUBTAB_MAGE : SPELLS_SUBTAB_CLERIC;
+							this.switchSpellsSubtab(clickedSubtab);
+							this.mouseButtonClick = 0;
+						}
 
 						if (this.mouseButtonClick == 1 && this.magicOrPrayerList == 0) {
+							if (this.spellsSubtab == SPELLS_SUBTAB_CLERIC) {
+								int clericSpellCode;
+								if (SpellbookLayoutSettings.usesTextLayout()) {
+									clericSpellCode = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+								} else {
+									clericSpellCode = this.getClericSpellCodeAt(
+										magicPanelX, relativeMouseY - 45, magicPanelWidth);
+								}
+								this.activateClericSpell(clericSpellCode);
+							} else {
 							spellIndex = -1;
 							if (SpellbookLayoutSettings.usesTextLayout()) {
 								int selectedRow = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
@@ -13655,7 +13706,7 @@ public final class mudclient implements Runnable {
 								int spellGridWidth = spellColumns * spellIconSize + (spellColumns - 1) * spellGap;
 								int spellGridX = (magicPanelWidth - spellGridWidth) / 2;
 								int localSpellX = magicPanelX - spellGridX;
-								int localSpellY = relativeMouseY - 27;
+								int localSpellY = relativeMouseY - 45;
 								int spellColumn = localSpellX / (spellIconSize + spellGap);
 								int spellRow = localSpellY / (spellIconSize + spellGap);
 								if (localSpellX >= 0 && localSpellY >= 0
@@ -13687,7 +13738,8 @@ public final class mudclient implements Runnable {
 								&& mouseButtonClick > 0) {
 								selectedSpell = -1;
 								lastSelectedSpell = -1;
-								mouseButtonClick = 0;
+									mouseButtonClick = 0;
+								}
 							}
 						}
 
@@ -13702,7 +13754,7 @@ public final class mudclient implements Runnable {
 								int prayerGridWidth = prayerColumns * prayerIconSize + (prayerColumns - 1) * prayerGap;
 								int prayerGridX = (magicPanelWidth - prayerGridWidth) / 2;
 								int localPrayerX = magicPanelX - prayerGridX;
-								int localPrayerY = relativeMouseY - 27;
+								int localPrayerY = relativeMouseY - 45;
 								int prayerColumn = localPrayerX / (prayerIconSize + prayerGap);
 								int prayerRow = localPrayerY / (prayerIconSize + prayerGap);
 								if (localPrayerX >= 0 && localPrayerY >= 0
@@ -13731,7 +13783,7 @@ public final class mudclient implements Runnable {
 								int summonGridWidth = summonColumns * summonIconSize + (summonColumns - 1) * summonGap;
 								int summonGridX = (magicPanelWidth - summonGridWidth) / 2;
 								int localSummonX = magicPanelX - summonGridX;
-								int localSummonY = relativeMouseY - 27;
+								int localSummonY = relativeMouseY - 45;
 								int summonColumn = localSummonX / (summonIconSize + summonGap);
 								int summonRow = localSummonY / (summonIconSize + summonGap);
 								if (localSummonX >= 0 && localSummonY >= 0
@@ -13755,6 +13807,206 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException var16) {
 			throw GenUtil.makeThrowable(var16, "client.GA(" + var1 + ',' + var2 + ')');
 		}
+	}
+
+	private void drawSpellsSubtabs(int panelX, int panelY, int panelWidth,
+			int inactiveColor, int activeColor) {
+		int mageWidth = panelWidth / 2;
+		int clericWidth = panelWidth - mageWidth;
+		int y = panelY + 24;
+		this.getSurface().drawBoxAlpha(panelX, y, mageWidth, SPELLS_SUBTAB_HEIGHT,
+			this.spellsSubtab == SPELLS_SUBTAB_MAGE ? activeColor : inactiveColor, 128);
+		this.getSurface().drawBoxAlpha(panelX + mageWidth, y, clericWidth, SPELLS_SUBTAB_HEIGHT,
+			this.spellsSubtab == SPELLS_SUBTAB_CLERIC ? activeColor : inactiveColor, 128);
+		this.getSurface().drawLineVert(panelX + mageWidth, y, 0, SPELLS_SUBTAB_HEIGHT);
+		this.getSurface().drawLineHoriz(panelX, y + SPELLS_SUBTAB_HEIGHT, panelWidth, 0);
+		this.getSurface().drawColoredStringCentered(panelX + mageWidth / 2,
+			"Mage", 0, 0, 1, y + 13);
+		this.getSurface().drawColoredStringCentered(panelX + mageWidth + clericWidth / 2,
+			"Cleric", 0, 0, 1, y + 13);
+	}
+
+	private int drawClericIconGrid(int panelX, int panelY, int panelWidth) {
+		this.panelMagic.clearList(this.controlMagicPanel);
+		this.clampClericIconScrollRow();
+		int gridWidth = MAGIC_ICON_COLUMNS * MAGIC_ICON_SIZE
+			+ (MAGIC_ICON_COLUMNS - 1) * MAGIC_ICON_GAP;
+		int gridX = panelX + (panelWidth - gridWidth) / 2;
+		int gridY = panelY + 45;
+		int relativeX = this.mouseX - gridX;
+		int relativeY = this.mouseY - gridY;
+		int first = this.clericIconScrollRow * MAGIC_ICON_COLUMNS;
+		int last = first + MAGIC_ICON_COLUMNS * MAGIC_ICON_VISIBLE_ROWS;
+		int hovered = -1;
+		for (int code = first; code < this.clericSpellbook.size() && code < last; code++) {
+			ClericSpellDef definition = this.clericSpellbook.get(code);
+			int visible = code - first;
+			int column = visible % MAGIC_ICON_COLUMNS;
+			int row = visible / MAGIC_ICON_COLUMNS;
+			int x = gridX + column * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP);
+			int y = gridY + row * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP);
+			boolean isHovered = relativeX >= column * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP)
+				&& relativeX < column * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP) + MAGIC_ICON_SIZE
+				&& relativeY >= row * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP)
+				&& relativeY < row * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP) + MAGIC_ICON_SIZE;
+			boolean hasLevel = this.hasClericWorshipLevel(definition);
+			boolean hasSigils = this.hasClericSigils(definition);
+			this.getSurface().drawBoxAlpha(x, y, MAGIC_ICON_SIZE, MAGIC_ICON_SIZE,
+				GenUtil.buildColor(68, 68, 68), 160);
+			this.getSurface().drawBoxBorder(x, MAGIC_ICON_SIZE, y, MAGIC_ICON_SIZE,
+				isHovered ? 0xFFFF00 : 0);
+			ItemDef iconDefinition = EntityHandler.getItemDef(definition.getSpellbookIconItemId());
+			if (iconDefinition != null) {
+				Sprite icon = spriteSelect(iconDefinition);
+				this.getSurface().drawSpriteClipping(icon, x + 2, y + 2,
+					MAGIC_ICON_SIZE - 4, MAGIC_ICON_SIZE - 4,
+					iconDefinition.getPictureMask(), 0, iconDefinition.getBlueMask(), false, 0, 1);
+			} else {
+				int textColor = hasLevel ? hasSigils ? 0xFFFF00 : 0xBBBBBB : 0x333333;
+				this.getSurface().drawColoredStringCentered(x + MAGIC_ICON_SIZE / 2,
+					this.getSpellInitials(definition.getName()), textColor, 0, 0, y + 12);
+			}
+			if (!hasLevel) {
+				this.getSurface().drawBoxAlpha(x + 1, y + 1,
+					MAGIC_ICON_SIZE - 2, MAGIC_ICON_SIZE - 2, 0, 140);
+			}
+			if (isHovered) {
+				hovered = code;
+			}
+		}
+		this.drawClericIconScrollbar(panelX + panelWidth - 11, gridY,
+			MAGIC_ICON_VISIBLE_ROWS * MAGIC_ICON_SIZE
+				+ (MAGIC_ICON_VISIBLE_ROWS - 1) * MAGIC_ICON_GAP);
+		return hovered;
+	}
+
+	private int drawClericTextList() {
+		this.panelMagic.clearList(this.controlMagicPanel);
+		for (int code = 0; code < this.clericSpellbook.size(); code++) {
+			ClericSpellDef definition = this.clericSpellbook.get(code);
+			String color = !this.hasClericWorshipLevel(definition)
+				? "@bla@" : this.hasClericSigils(definition) ? "@yel@" : "@whi@";
+			this.panelMagic.setListEntry(this.controlMagicPanel, code,
+				color + "Lvl " + definition.getWorshipLevel() + ": " + definition.getName(),
+				0, null, null);
+		}
+		this.panelMagic.drawPanel();
+		return this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+	}
+
+	private void drawClericTooltip(int stableCode, int panelX, int tooltipY, int panelWidth) {
+		ClericSpellDef definition = this.clericSpellbook.get(stableCode);
+		if (definition == null) {
+			return;
+		}
+		String alignment = definition.getAlignment();
+		alignment = Character.toUpperCase(alignment.charAt(0)) + alignment.substring(1);
+		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
+			definition.getName() + " (Worship " + definition.getWorshipLevel() + ", " + alignment + ")",
+			0xFFFF00, 0, 1, tooltipY + 13);
+		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
+			this.shortenTooltipDescription(definition.getDescription()),
+			0xFFFFFF, 0, 0, tooltipY + 26);
+		int count = definition.getSilverSigilCount() > 0 ? 2 : 1;
+		this.drawTooltipCosts(
+			new int[] {definition.getStoneSigilItemId(), definition.getSilverSigilItemId()},
+			new int[] {definition.getStoneSigilCount(), definition.getSilverSigilCount()},
+			count, panelX, tooltipY + 31, panelWidth);
+	}
+
+	private int getClericSpellCodeAt(int localPanelX, int localGridY, int panelWidth) {
+		int gridWidth = MAGIC_ICON_COLUMNS * MAGIC_ICON_SIZE
+			+ (MAGIC_ICON_COLUMNS - 1) * MAGIC_ICON_GAP;
+		int gridX = (panelWidth - gridWidth) / 2;
+		int localX = localPanelX - gridX;
+		if (localX < 0 || localGridY < 0) {
+			return -1;
+		}
+		int column = localX / (MAGIC_ICON_SIZE + MAGIC_ICON_GAP);
+		int row = localGridY / (MAGIC_ICON_SIZE + MAGIC_ICON_GAP);
+		if (column < 0 || column >= MAGIC_ICON_COLUMNS || row < 0 || row >= MAGIC_ICON_VISIBLE_ROWS
+				|| localX % (MAGIC_ICON_SIZE + MAGIC_ICON_GAP) >= MAGIC_ICON_SIZE
+				|| localGridY % (MAGIC_ICON_SIZE + MAGIC_ICON_GAP) >= MAGIC_ICON_SIZE) {
+			return -1;
+		}
+		int stableCode = (this.clericIconScrollRow + row) * MAGIC_ICON_COLUMNS + column;
+		return this.clericSpellbook.get(stableCode) == null ? -1 : stableCode;
+	}
+
+	private void activateClericSpell(int stableCode) {
+		ClericSpellDef definition = this.clericSpellbook.get(stableCode);
+		if (definition == null) {
+			return;
+		}
+		if (!this.hasClericWorshipLevel(definition)) {
+			this.showMessage(false, null,
+				"You need Worship level " + definition.getWorshipLevel() + " to cast " + definition.getName(),
+				MessageType.GAME, 0, null);
+			return;
+		}
+		this.packetHandler.getClientStream().newPacket(Opcodes.Out.INTERFACE_OPTIONS.getOpcode());
+		this.packetHandler.getClientStream().bufferBits.putByte(INTERFACE_OPTION_CAST_CLERIC_SPELL);
+		this.packetHandler.getClientStream().bufferBits.putShort(definition.getStableCode());
+		this.packetHandler.getClientStream().finishPacket();
+		this.selectedSpell = -1;
+		this.selectedItemInventoryIndex = -1;
+		this.showUiTab = Config.MAGIC_AND_PRAYER_TAB;
+		this.magicOrPrayerList = 0;
+	}
+
+	private boolean hasClericWorshipLevel(ClericSpellDef definition) {
+		return definition != null && this.playerStatBase != null
+			&& this.playerStatBase.length > 5
+			&& this.playerStatBase[5] >= definition.getWorshipLevel();
+	}
+
+	private boolean hasClericSigils(ClericSpellDef definition) {
+		return definition != null
+			&& this.getInventoryCount(definition.getStoneSigilItemId()) >= definition.getStoneSigilCount()
+			&& (definition.getSilverSigilCount() == 0
+				|| this.getInventoryCount(definition.getSilverSigilItemId()) >= definition.getSilverSigilCount());
+	}
+
+	private void switchSpellsSubtab(int nextSubtab) {
+		if (nextSubtab != SPELLS_SUBTAB_MAGE && nextSubtab != SPELLS_SUBTAB_CLERIC) {
+			return;
+		}
+		if (nextSubtab == this.spellsSubtab) {
+			return;
+		}
+		if (SpellbookLayoutSettings.usesTextLayout()) {
+			if (this.spellsSubtab == SPELLS_SUBTAB_MAGE) {
+				this.magicTextScrollPosition = this.panelMagic.getScrollPosition(this.controlMagicPanel);
+			} else {
+				this.clericTextScrollPosition = this.panelMagic.getScrollPosition(this.controlMagicPanel);
+			}
+		}
+		this.spellsSubtab = nextSubtab;
+		if (SpellbookLayoutSettings.usesTextLayout()) {
+			this.panelMagic.resetListToIndex(this.controlMagicPanel,
+				this.spellsSubtab == SPELLS_SUBTAB_MAGE
+					? this.magicTextScrollPosition : this.clericTextScrollPosition);
+		} else if (this.spellsSubtab == SPELLS_SUBTAB_MAGE) {
+			this.clampMagicIconScrollRow();
+		} else {
+			this.clampClericIconScrollRow();
+		}
+	}
+
+	public void replaceClericSpellbook(int schemaVersion, List<ClericSpellDef> definitions) {
+		try {
+			this.clericSpellbook.replace(schemaVersion, definitions);
+			this.clampClericIconScrollRow();
+		} catch (IllegalArgumentException e) {
+			this.clearClericSpellbook();
+			System.out.println("Rejected Cleric spellbook metadata: " + e.getMessage());
+		}
+	}
+
+	public void clearClericSpellbook() {
+		this.clericSpellbook.clear();
+		this.clericIconScrollRow = 0;
+		this.clericTextScrollPosition = 0;
 	}
 
 	private int drawMagicTextList() {
@@ -13828,7 +14080,11 @@ public final class mudclient implements Runnable {
 	private void saveSpellbookTextScrollPosition(int tab) {
 		int position = this.panelMagic.getScrollPosition(this.controlMagicPanel);
 		if (tab == 0) {
-			this.magicTextScrollPosition = position;
+			if (this.spellsSubtab == SPELLS_SUBTAB_CLERIC) {
+				this.clericTextScrollPosition = position;
+			} else {
+				this.magicTextScrollPosition = position;
+			}
 		} else if (tab == 1) {
 			this.prayerTextScrollPosition = position;
 		} else {
@@ -13838,7 +14094,8 @@ public final class mudclient implements Runnable {
 
 	private void restoreSpellbookTextScrollPosition(int tab) {
 		int position = tab == 0
-			? this.magicTextScrollPosition
+			? this.spellsSubtab == SPELLS_SUBTAB_CLERIC
+				? this.clericTextScrollPosition : this.magicTextScrollPosition
 			: tab == 1 ? this.prayerTextScrollPosition : this.summoningTextScrollPosition;
 		this.panelMagic.resetListToIndex(this.controlMagicPanel, position);
 	}
@@ -14025,6 +14282,24 @@ public final class mudclient implements Runnable {
 	private void scrollMagicIconMenu(int scrollDelta) {
 		this.magicIconScrollRow += scrollDelta;
 		this.clampMagicIconScrollRow();
+	}
+
+	private int getClericIconTotalRows() {
+		return (this.clericSpellbook.size() + MAGIC_ICON_COLUMNS - 1) / MAGIC_ICON_COLUMNS;
+	}
+
+	private int getClericIconMaxScrollRow() {
+		return Math.max(0, this.getClericIconTotalRows() - MAGIC_ICON_VISIBLE_ROWS);
+	}
+
+	private void clampClericIconScrollRow() {
+		this.clericIconScrollRow = Math.max(0,
+			Math.min(this.clericIconScrollRow, this.getClericIconMaxScrollRow()));
+	}
+
+	private void scrollClericIconMenu(int scrollDelta) {
+		this.clericIconScrollRow += scrollDelta;
+		this.clampClericIconScrollRow();
 	}
 
 	private int getPrayerIconTotalRows() {
@@ -14222,9 +14497,9 @@ public final class mudclient implements Runnable {
 		if (woodTier >= 0) {
 			return this.getMyWorldStaffMagicOffenseByTier(woodTier);
 		}
-		if ((item.id >= 2228 && item.id <= 2237)
-			|| (item.id >= 3152 && item.id <= 3171)) {
-			return 2;
+		int blessedTier = this.getBlessedStaffTier(item.id);
+		if (blessedTier >= 0) {
+			return this.getMyWorldStaffMagicOffenseByTier(blessedTier) / 2;
 		}
 		if (item.id >= 2238 && item.id <= 2327) {
 			return this.getMyWorldStaffMagicOffenseByTier((item.id - 2238) % 10);
@@ -14251,10 +14526,23 @@ public final class mudclient implements Runnable {
 			case 1216:
 			case 1217:
 			case 1218:
-				return 56;
+				return 28;
 			default:
 				return 0;
 		}
+	}
+
+	private int getBlessedStaffTier(int itemId) {
+		if (itemId >= 2228 && itemId <= 2237) {
+			return itemId - 2228;
+		}
+		if (itemId >= 3152 && itemId <= 3161) {
+			return itemId - 3152;
+		}
+		if (itemId >= 3162 && itemId <= 3171) {
+			return itemId - 3162;
+		}
+		return -1;
 	}
 
 	private int getMyWorldStaffWoodTier(int itemId) {
@@ -14357,6 +14645,24 @@ public final class mudclient implements Runnable {
 		int thumbTravel = Math.max(0, height - thumbHeight - 2);
 		int thumbY = y + 1 + (thumbTravel * this.magicIconScrollRow) / maxScrollRow;
 		this.getSurface().drawBoxAlpha(x + 2, thumbY, width - 4, thumbHeight, GenUtil.buildColor(190, 190, 190), 192);
+	}
+
+	private void drawClericIconScrollbar(int x, int y, int height) {
+		int maxScrollRow = this.getClericIconMaxScrollRow();
+		if (maxScrollRow <= 0) {
+			return;
+		}
+		int totalRows = this.getClericIconTotalRows();
+		int width = 8;
+		this.getSurface().drawBoxBorder(x, width, y, height, 0);
+		this.getSurface().drawBoxAlpha(x + 1, y + 1, width - 2, height - 2,
+			GenUtil.buildColor(48, 48, 48), 160);
+		int thumbHeight = Math.max(12,
+			(height * MAGIC_ICON_VISIBLE_ROWS) / Math.max(1, totalRows));
+		int thumbTravel = Math.max(0, height - thumbHeight - 2);
+		int thumbY = y + 1 + (thumbTravel * this.clericIconScrollRow) / maxScrollRow;
+		this.getSurface().drawBoxAlpha(x + 2, thumbY, width - 4, thumbHeight,
+			GenUtil.buildColor(190, 190, 190), 192);
 	}
 
 	private void drawPrayerIconScrollbar(int x, int y, int height) {
@@ -14643,6 +14949,16 @@ public final class mudclient implements Runnable {
 				getSurface().drawString(itemDef.getName(), tooltipX, y + 15, 0xFFFFFF, 1);
 			}
 		}
+		if (this.activePotionEffectOverflowCount > 0) {
+			int overflowY = POTION_HUD_Y + POTION_HUD_ROWS_PER_COLUMN * POTION_HUD_ROW_HEIGHT;
+			String label = "+" + this.activePotionEffectOverflowCount + " more effects";
+			this.getSurface().drawBoxAlpha(POTION_HUD_X, overflowY,
+				POTION_HUD_WIDTH + 20, POTION_HUD_ROW_HEIGHT - 2, 0x111111, 190);
+			this.getSurface().drawBoxBorder(POTION_HUD_X, POTION_HUD_WIDTH + 20,
+				overflowY, POTION_HUD_ROW_HEIGHT - 2, 0xB7B7B7);
+			this.getSurface().drawColoredStringCentered(POTION_HUD_X + (POTION_HUD_WIDTH + 20) / 2,
+				label, 0xFFFFFF, 0, 1, overflowY + 15);
+		}
 	}
 
 	private String formatPotionCountdown(long seconds) {
@@ -14672,7 +14988,12 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds) {
+		setActivePotionEffects(itemIds, remainingSeconds, 0);
+	}
+
+	public void setActivePotionEffects(int[] itemIds, int[] remainingSeconds, int overflowCount) {
 		clearActivePotionEffects();
+		this.activePotionEffectOverflowCount = Math.max(0, overflowCount);
 		int count = Math.min(MAX_ACTIVE_POTION_EFFECTS, Math.min(itemIds.length, remainingSeconds.length));
 		long now = System.currentTimeMillis();
 		for (int i = 0; i < count; i++) {
@@ -14687,6 +15008,7 @@ public final class mudclient implements Runnable {
 
 	public void clearActivePotionEffects() {
 		activePotionEffectCount = 0;
+		activePotionEffectOverflowCount = 0;
 		Arrays.fill(activePotionEffectItemIds, 0);
 		Arrays.fill(activePotionEffectExpiresAt, 0L);
 	}
@@ -16777,8 +17099,10 @@ public final class mudclient implements Runnable {
 				yOffset += 13;
 
 				//Draw the equipment bonuses
-				for (currSkill = 0; currSkill < 3; ++currSkill) {
-					this.drawEquipmentStatusValue(currSkill, 5 + x, yOffset, textColour);
+				for (currSkill = 0; currSkill < 4; ++currSkill) {
+					if (currSkill < 3) {
+						this.drawEquipmentStatusValue(currSkill, 5 + x, yOffset, textColour);
+					}
 					this.drawEquipmentStatusValue(currSkill == 0 ? 3 : currSkill + 4, x + width / 2 - 5, yOffset, textColour);
 					yOffset += 13;
 				}
@@ -16853,7 +17177,9 @@ public final class mudclient implements Runnable {
 					}
 					if (skillNameLong[currentlyHoveredSkill].equalsIgnoreCase("Worship")) {
 						heightMargin += 12;
-						this.getSurface().drawString("Devotion: " + this.currentDevotionLevel, 5 + x, heightMargin, textColour, 1);
+						this.getSurface().drawString("Devotion: "
+							+ formatDevotionHalfOfferingUnits(this.currentDevotionHalfOfferingUnits),
+							5 + x, heightMargin, textColour, 1);
 					}
 				}
 			}
@@ -17289,7 +17615,8 @@ public final class mudclient implements Runnable {
 		int maxY = getUITabsY();
 		panelSettings.reposition(controlSettingPanel, var3 + 1, (maxY - 240) + 16, 195, 184);
 		panelSocial.reposition(controlSocialPanel, var3, (maxY - 182) + 40, 196, 126);
-		panelMagic.reposition(controlMagicPanel, var3, (maxY - 182) + 24, 196, 90);
+		panelMagic.reposition(controlMagicPanel, var3,
+			(maxY - CUSTOM_UI_MAGIC_PANEL_HEIGHT) + 24 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, (maxY - 287) + 24, 196, 251);
 		int offX = 300;
@@ -17307,7 +17634,7 @@ public final class mudclient implements Runnable {
 			panelSettings.reposition(controlSettingPanel, var3 + 1, 24 + var12 + 16, 195, 184);
 		}
 		panelSocial.reposition(controlSocialPanel, var3, var12 + 40, 196, 126);
-		panelMagic.reposition(controlMagicPanel, var3, 24 + var12, 196, 90);
+		panelMagic.reposition(controlMagicPanel, var3, 24 + var12 + SPELLS_SUBTAB_HEIGHT, 196, 90);
 		panelPlayerInfo.reposition(controlPlayerInfoPanel, var3, 24 + var12, 196, 251);
 		panelQuestInfo.reposition(controlQuestInfoPanel, var3, 24 + var12, 196, 251);
 		panelMessageTabs.reposition(panelMessageChat, 5, getGameHeight() - 65, getGameWidth() - 10, 56);
@@ -20552,6 +20879,7 @@ public final class mudclient implements Runnable {
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.clearActivePotionEffects();
+			this.clearClericSpellbook();
 		} catch (RuntimeException var3) {
 			throw GenUtil.makeThrowable(var3, "client.FC(" + "dummy" + ')');
 		}
@@ -23284,6 +23612,7 @@ public final class mudclient implements Runnable {
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.clearActivePotionEffects();
+			this.clearClericSpellbook();
 			this.stopSoundPlayback();
 			if (var1 <= 59) {
 				this.drawDialogOptionsMenu(-85);
@@ -23507,6 +23836,7 @@ public final class mudclient implements Runnable {
 			this.systemUpdate = 0;
 			this.elixirTimer = 0;
 			this.clearActivePotionEffects();
+			this.clearClericSpellbook();
 			this.loginScreenNumber = 0;
 			this.logoutTimeout = 0;
 			this.hasCompletedInitialRegionLoad = false;
@@ -26163,8 +26493,20 @@ public final class mudclient implements Runnable {
 		this.clampPrayerIconScrollRow();
 	}
 
-	public void setCurrentDevotionLevel(int devotionLevel) {
-		this.currentDevotionLevel = devotionLevel;
+	public void setCurrentDevotionHalfOfferingUnits(int devotionHalfOfferingUnits) {
+		this.currentDevotionHalfOfferingUnits = Math.max(-20000, Math.min(20000, devotionHalfOfferingUnits));
+	}
+
+	public static String formatDevotionHalfOfferingUnits(int devotionHalfOfferingUnits) {
+		int clamped = Math.max(-20000, Math.min(20000, devotionHalfOfferingUnits));
+		long absolute = Math.abs((long) clamped);
+		long whole = absolute / 20;
+		int fractionalHundredths = (int) (absolute % 20) * 5;
+		if (fractionalHundredths == 0) {
+			return (clamped < 0 ? "-" : "") + whole;
+		}
+		return (clamped < 0 ? "-" : "") + whole + "."
+			+ (fractionalHundredths < 10 ? "0" : "") + fractionalHundredths;
 	}
 
 	public void setQuestName(int i, String s) {
@@ -27202,7 +27544,8 @@ public final class mudclient implements Runnable {
 				this.panelMagic = new Panel(this.getSurface(), 5);
 				int var3 = this.getSurface().width2 - 199;
 				byte var12 = 36;
-				this.controlMagicPanel = this.panelMagic.addScrollingList(var3, 24 + var12, 196, 90, 500, 1, true);
+				this.controlMagicPanel = this.panelMagic.addScrollingList(
+					var3, 24 + var12 + SPELLS_SUBTAB_HEIGHT, 196, 90, 500, 1, true);
 				this.panelSocial = new Panel(this.getSurface(), 5);
 				this.controlSocialPanel = this.panelSocial.addScrollingList(var3, var12 + 40, 196, 126, 500, 1,
 					true);
@@ -28096,6 +28439,8 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Scaling");
 			skillGuideChosenTabs.add("Traits");
 			skillGuideChosenTabs.add("Info");
+		} else if (skillGuideChosen.equalsIgnoreCase("Blessing")) {
+			skillGuideChosenTabs.add("Info");
 		}
 
 		hiscoreGuideSkillId = -1;
@@ -28218,6 +28563,9 @@ public final class mudclient implements Runnable {
 		if (S_WANT_HARVESTING)
 			addSkill("Harvest");
 		addSkill("Summoning", "Summon");
+		// Internal/protocol order is append-only. The stats panel independently
+		// sorts display indices, so Blessing appears alphabetically to players.
+		addSkill("Blessing");
 	}
 
 	private int[] getDisplayedSkillIndices() {
@@ -28309,7 +28657,11 @@ public final class mudclient implements Runnable {
 			if (SpellbookLayoutSettings.usesTextLayout()) {
 				this.panelMagic.scrollMethodList(this.controlMagicPanel, x);
 			} else if (this.magicOrPrayerList == 0) {
-				this.scrollMagicIconMenu(x);
+				if (this.spellsSubtab == SPELLS_SUBTAB_CLERIC) {
+					this.scrollClericIconMenu(x);
+				} else {
+					this.scrollMagicIconMenu(x);
+				}
 			} else if (this.magicOrPrayerList == 1) {
 				this.scrollPrayerIconMenu(x);
 			} else {

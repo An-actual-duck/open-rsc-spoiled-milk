@@ -26,6 +26,7 @@ public class Skills {
 		COOKING = "COOKING", WOODCUTTING = "WOODCUTTING", FLETCHING = "FLETCHING", FISHING = "FISHING", FIREMAKING = "FIREMAKING",
 		TAILORING = "TAILORING", CRAFTING = "CRAFTING", SMITHING = "SMITHING", MINING = "MINING", HERBLAW = "HERBLAW", AGILITY = "AGILITY",
 		THIEVING = "THIEVING", RUNECRAFT = "RUNECRAFT", HARVESTING = "HARVESTING", SUMMONING = "SUMMONING",
+		BLESSING = "BLESSING",
 		CARPENTRY = "CARPENTRY", INFLUENCE = "INFLUENCE";
 
 	public HashMap<SkillDef.EXP_CURVE, int[]> experienceCurves;
@@ -256,6 +257,9 @@ public class Skills {
 				skills.add(new SkillDef("Harvesting", "Harvesting", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 			}
 			skills.add(new SkillDef("Summoning", "Summoning", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
+			// Blessing is append-only: existing skill IDs remain stable while the
+			// maintained client presents this skill alphabetically.
+			skills.add(new SkillDef("Blessing", "Blessing", 1, 99, SkillDef.EXP_CURVE.ORIGINAL, skillIndex++));
 		}
 
 		mapSkills = new HashMap<>();

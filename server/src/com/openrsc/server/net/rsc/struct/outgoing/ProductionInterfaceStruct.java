@@ -18,6 +18,7 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 	public int resourceAmount;
 	public int selectedRecipeId;
 	public int selectedQuantity;
+	public int uiFlags;
 	public int[] itemIds;
 	public int[] requiredLevels;
 	public int[] inputAmounts;
@@ -28,14 +29,20 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 	public int[][] ingredientAmounts;
 
 	public static ProductionInterfaceStruct open(ProductionSession session) {
+		return open(session, session.getDefaultRecipeId(), 0);
+	}
+
+	public static ProductionInterfaceStruct open(ProductionSession session, int selectedRecipeId, int uiFlags) {
 		ProductionInterfaceStruct struct = new ProductionInterfaceStruct();
 		struct.interfaceId = session.getType();
 		struct.actionId = ACTION_SHOW;
 		struct.title = session.getTitle();
 		struct.inputItemId = session.getInputItemId();
 		struct.resourceAmount = session.getResourceAmount();
-		struct.selectedRecipeId = session.getDefaultRecipeId();
+		struct.selectedRecipeId = session.getRecipeByItemId(selectedRecipeId) != null
+			? selectedRecipeId : session.getDefaultRecipeId();
 		struct.selectedQuantity = 1;
+		struct.uiFlags = uiFlags;
 		int count = session.getRecipes().size();
 		struct.itemIds = new int[count];
 		struct.requiredLevels = new int[count];

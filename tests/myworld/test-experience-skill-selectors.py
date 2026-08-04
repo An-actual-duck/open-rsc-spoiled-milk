@@ -28,8 +28,8 @@ package com.openrsc.interfaces.misc;
 
 public final class ExperienceSkillSelectorRegression {
     public static void main(String[] args) {
-        int[] skillIds = ExperienceSkillSelector.buildSelectableSkillIds(21);
-        if (skillIds.length != 20) throw new AssertionError("expected 20 selectable skills");
+        int[] skillIds = ExperienceSkillSelector.buildSelectableSkillIds(22);
+        if (skillIds.length != 21) throw new AssertionError("expected 21 selectable skills");
         for (int row = 0; row < skillIds.length; row++) {
             int skillId = skillIds[row];
             if (skillId == 11) throw new AssertionError("retired Firemaking was selectable");
@@ -48,8 +48,11 @@ public final class ExperienceSkillSelectorRegression {
         if (ExperienceSkillSelector.resolveSkillId(skillIds, 19) != 20) {
             throw new AssertionError("Summoning row did not map to skill 20");
         }
+        if (ExperienceSkillSelector.resolveSkillId(skillIds, 20) != 21) {
+            throw new AssertionError("Blessing row did not map to skill 21");
+        }
         if (ExperienceSkillSelector.resolveSkillId(skillIds, -1) != -1
-                || ExperienceSkillSelector.resolveSkillId(skillIds, 20) != -1) {
+                || ExperienceSkillSelector.resolveSkillId(skillIds, 21) != -1) {
             throw new AssertionError("out-of-range rows must be rejected");
         }
     }
@@ -133,7 +136,7 @@ def main() -> None:
     compile_and_run_selector_regression()
     audit_selector_users()
     audit_reset_control()
-    print("PASS: Experience Config safely maps 21 skill IDs and resets all counters")
+    print("PASS: Experience Config safely maps 22 skill IDs and resets all counters")
 
 
 if __name__ == "__main__":

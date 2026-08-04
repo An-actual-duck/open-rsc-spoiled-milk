@@ -13,4 +13,5 @@ public class EquipmentStatsStruct extends AbstractStruct<OpcodeOut> {
 	public int hidingPoints; // retro rsc equipment stat
 	public int rangedPoints; // not sent in original rsc but possibly virtual
 	public int magicPowerPoints; // MyWorld custom client equipment power
+	public int holyPowerPoints; // MyWorld Cleric support power; ignored by older clients
 }

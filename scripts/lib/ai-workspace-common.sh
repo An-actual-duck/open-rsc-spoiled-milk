@@ -61,6 +61,24 @@ ai_initialize_context() {
     AI_COMMON_GIT_DIR="$(cd "$ROOT_DIR/$AI_COMMON_GIT_DIR" && pwd -P)"
   fi
   AI_STATE_DIR="$AI_COMMON_GIT_DIR/ai-workspaces"
+
+  ai_require_invocation_from_managed_worktree
+}
+
+ai_require_invocation_from_managed_worktree() {
+  local caller candidate candidate_real
+
+  caller="$(pwd -P)"
+  while IFS= read -r candidate; do
+    [[ -n "$candidate" ]] || continue
+    candidate_real="$(ai_realpath "$candidate" 2>/dev/null || true)"
+    [[ -n "$candidate_real" ]] || continue
+    if [[ "$caller" == "$candidate_real" || "$caller" == "$candidate_real"/* ]]; then
+      return 0
+    fi
+  done < <(git -C "$ROOT_DIR" worktree list --porcelain | sed -n 's/^worktree //p')
+
+  ai_fail "Refusing cross-project invocation from $caller. Run this workflow only inside a registered $AI_PROJECT_NAME worktree."
 }
 
 ai_normalize_slot() {

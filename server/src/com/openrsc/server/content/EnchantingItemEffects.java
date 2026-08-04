@@ -1632,7 +1632,8 @@ public final class EnchantingItemEffects {
 	public static boolean isMindNecklaceXpSkill(final int skillId) {
 		return skillId == Skill.CRAFTING.id()
 			|| skillId == Skill.SMITHING.id()
-			|| skillId == Skill.RUNECRAFT.id();
+			|| skillId == Skill.RUNECRAFT.id()
+			|| skillId == Skill.BLESSING.id();
 	}
 
 	public static boolean isMindRingXpSkill(final int skillId) {

@@ -1,6 +1,7 @@
 package orsc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.ClericSpellDef;
 import com.openrsc.client.entityhandling.defs.SpriteDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.instances.Item;
@@ -498,7 +499,7 @@ public class PacketHandler {
 			}
 
 			else if (opcode == 138) {
-				updateProductionInterface();
+				updateProductionInterface(length);
 			}
 
 			// Bank Pin Overlay
@@ -590,7 +591,7 @@ public class PacketHandler {
 
 			else if (opcode == 151) updateWorldEditor();
 
-			else if (opcode == 152) updateActivePotionEffects();
+			else if (opcode == 152) updateActivePotionEffects(length);
 
 			else if (opcode == 154) updateLayeredTerrainStage(length);
 
@@ -598,6 +599,8 @@ public class PacketHandler {
 			else if (opcode == 155) loadHiscores();
 
 			else if (opcode == 157) updateLayeredSceneContext(length);
+
+			else if (opcode == 158) updateClericSpellbook();
 
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
@@ -1428,9 +1431,9 @@ public class PacketHandler {
 		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);
 	}
 
-	private void updateActivePotionEffects() {
+	private void updateActivePotionEffects(int length) {
 		int count = packetsIncoming.getByte() & 0xff;
-		if (count > 16) {
+		if (count > 32) {
 			mc.clearActivePotionEffects();
 			return;
 		}
@@ -1440,7 +1443,40 @@ public class PacketHandler {
 			itemIds[i] = packetsIncoming.getShort();
 			remainingSeconds[i] = Math.max(0, packetsIncoming.get32());
 		}
-		mc.setActivePotionEffects(itemIds, remainingSeconds);
+		int encodedEntryBytes = 1 + count * 6;
+		int overflowCount = length >= encodedEntryBytes + 2
+			? packetsIncoming.getShort() & 0xffff : 0;
+		mc.setActivePotionEffects(itemIds, remainingSeconds, overflowCount);
+	}
+
+	private void updateClericSpellbook() {
+		int schemaVersion = packetsIncoming.getByte() & 0xff;
+		int count = packetsIncoming.getByte() & 0xff;
+		if (count > ClericSpellbookCatalog.MAX_DEFINITIONS) {
+			mc.clearClericSpellbook();
+			return;
+		}
+		ArrayList<ClericSpellDef> definitions = new ArrayList<ClericSpellDef>(count);
+		for (int i = 0; i < count; i++) {
+			definitions.add(new ClericSpellDef(
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getByte() != 0,
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.get32(),
+				packetsIncoming.get32()));
+		}
+		mc.replaceClericSpellbook(schemaVersion, definitions);
 	}
 
 	public final void handlePacket2(int opcode, int length) {
@@ -1505,7 +1541,7 @@ public class PacketHandler {
 
 			else if (opcode == 139) mc.setPrayerBook(packetsIncoming.getUnsignedByte());
 
-			else if (opcode == 145) mc.setCurrentDevotionLevel(readSignedShort());
+			else if (opcode == 145) mc.setCurrentDevotionHalfOfferingUnits(readSignedShort());
 
 				// Trade Accept or Decline (Self)
 			else if (opcode == 15) tradeSelfDecision();
@@ -1777,7 +1813,7 @@ public class PacketHandler {
 		}
 	}
 
-	private void updateProductionInterface() {
+	private void updateProductionInterface(int packetLength) {
 		int interfaceId = packetsIncoming.getByte() & 0xff;
 		int actionId = packetsIncoming.getByte() & 0xff;
 		if (actionId == 1) {
@@ -1815,9 +1851,11 @@ public class PacketHandler {
 				ingredientAmounts[i][j] = packetsIncoming.getShort();
 			}
 		}
+		int uiFlags = packetsIncoming.packetEnd < packetLength
+			? packetsIncoming.getByte() & 0xff : 0;
 		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, resourceAmount, selectedRecipeId, quantity,
 			itemIds, requiredLevels, inputAmounts, outputAmounts, flags,
-			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts);
+			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts, uiFlags);
 	}
 
 	private void setIronmanOptions() {
@@ -4286,14 +4324,10 @@ public class PacketHandler {
 		updateExperienceTracker(skill, oldXP, oldLvl);
 
 		// Update the discord status
-		final String[] skillNames = {"Melee", "Defense", "Strength", "Hits",
-			"Ranged", "Worship", "Magic", "Cooking", "Woodcutting", "Fletching",
-			"Fishing", "Retired", "Crafting", "Smithing", "Mining", "Herblaw",
-			"Agility", "Thieving", "Enchanting", "Harvest", "Summoning"};
 		if (skill == 0 || skill == 1 || skill == 2 || skill == 3) {
 			Discord.setLastUpdate("Training Combat");
 		} else {
-			Discord.setLastUpdate("Training " + skillNames[skill]);
+			Discord.setLastUpdate("Training " + mc.getSkillNamesLong()[skill]);
 		}
 	}
 
@@ -4563,6 +4597,9 @@ public class PacketHandler {
 	private void updateEquipmentStats(int length) {
 		for (int eq = 0; eq < 5; ++eq) {
 			mc.setPlayerStatEquipment(eq, packetsIncoming.getUnsignedByte());
+		}
+		for (int eq = 5; eq < mc.playerStatEquipment.length; ++eq) {
+			mc.setPlayerStatEquipment(eq, 0);
 		}
 		// Below is for newer clients to get armour stats as integers (will be ignored by older clients)
 		int intCount = Math.max(0, (length - 5) / 4);

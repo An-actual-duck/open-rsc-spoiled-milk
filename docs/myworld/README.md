@@ -71,6 +71,12 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-health-audit-2026-07-12.md](in-progress-work-plans/code-health-audit-2026-07-12.md):
   evidence-backed size/churn, band-aid, compatibility, dead-code, and static-
   analysis audit with prioritized follow-up branches.
+- [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
+  active collaborative concept for a Worship-tiered support spellbook, carved
+  and blessed sigils, Holy Power, and an expanded Devotion economy.
+- [cleric-spellbook-implementation-plan.md](in-progress-work-plans/cleric-spellbook-implementation-plan.md):
+  ordered implementation slices, compatibility boundaries, verification gates,
+  and explicit stop conditions for unresolved Cleric design decisions.
 - [dragon-gear-crafting-plan.md](in-progress-work-plans/dragon-gear-crafting-plan.md):
   dragon gear crafting route, lava forge repair, black dragon scales, dragon
   metal drops, and purified rune forge relocation.

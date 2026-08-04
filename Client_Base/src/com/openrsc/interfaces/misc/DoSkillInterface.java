@@ -26,6 +26,14 @@ public final class DoSkillInterface {
 	private int inputItemId = -1;
 	private int productionResourceAmount = 0;
 	private int productionInterfaceId = -1;
+	private boolean productionRememberSupported = false;
+	private boolean productionRememberEnabled = false;
+	private boolean productionCanGoBack = false;
+	private static final int PRODUCTION_CONTENT_HEIGHT = 292;
+	private static final int PRODUCTION_REMEMBER_HEIGHT = 316;
+	private static final int PRODUCTION_UI_REMEMBER_SUPPORTED = 1;
+	private static final int PRODUCTION_UI_REMEMBER_ENABLED = 2;
+	private static final int PRODUCTION_UI_CAN_GO_BACK = 4;
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
@@ -260,7 +268,7 @@ public final class DoSkillInterface {
 
 	private void renderProductionInterface() {
 		width = 430;
-		height = 292;
+		height = productionRememberSupported ? PRODUCTION_REMEMBER_HEIGHT : PRODUCTION_CONTENT_HEIGHT;
 		autoHeight = 0;
 		reposition();
 		mc.getSurface().drawBoxAlpha(x, y, width, height, panelColour, 160);
@@ -275,6 +283,14 @@ public final class DoSkillInterface {
 				closeProductionInterface();
 			}
 		});
+		if (productionCanGoBack) {
+			this.drawButton(x + 6, y + 7, 58, 26, "Back", 2, false, new ButtonHandler() {
+				@Override
+				void handle() {
+					sendProductionBack();
+				}
+			});
+		}
 
 		int columns = 6;
 		int itemBoxWidth = 49;
@@ -340,8 +356,8 @@ public final class DoSkillInterface {
 		}
 
 		ProductionRecipeView selected = getSelectedRecipe();
-		int footerY = y + height - 84;
-		int quantityY = y + height - 40;
+		int footerY = y + PRODUCTION_CONTENT_HEIGHT - 84;
+		int quantityY = y + PRODUCTION_CONTENT_HEIGHT - 40;
 		int quantityX = x + width - 328;
 		boolean showQuantityControls = !isPickerInterface();
 		int materialDetailX = quantityX;
@@ -449,6 +465,32 @@ public final class DoSkillInterface {
 		});
 		if (!startEnabled) {
 			mc.getSurface().drawBoxAlpha(x + width - 92, quantityY - 1, 76, 22, 0, 128);
+		}
+
+		if (productionRememberSupported) {
+			drawProductionRememberCheckbox();
+		}
+	}
+
+	private void drawProductionRememberCheckbox() {
+		final int checkboxX = x + 14;
+		final int checkboxY = y + PRODUCTION_CONTENT_HEIGHT + 5;
+		final int checkboxSize = 14;
+		final int rowRight = checkboxX + 185;
+		boolean hovered = mc.getMouseX() >= checkboxX && mc.getMouseX() <= rowRight
+			&& mc.getMouseY() >= checkboxY && mc.getMouseY() <= checkboxY + checkboxSize;
+		int background = hovered ? 0x52463B : 0x222222;
+		mc.getSurface().drawBoxAlpha(checkboxX, checkboxY, checkboxSize, checkboxSize, background, 192);
+		mc.getSurface().drawBoxBorder(checkboxX, checkboxSize, checkboxY, checkboxSize,
+			productionRememberEnabled ? 0xC1B575 : 0x777775);
+		if (productionRememberEnabled) {
+			drawString("X", checkboxX + 3, checkboxY + 11, 2, 0xF0D8A8);
+		}
+		drawString("Remember last input", checkboxX + checkboxSize + 6, checkboxY + 11, 2, textColour);
+		if (hovered && mc.getMouseClick() == 1) {
+			productionRememberEnabled = !productionRememberEnabled;
+			sendProductionRememberPreference();
+			mc.setMouseClick(0);
 		}
 	}
 
@@ -679,6 +721,19 @@ public final class DoSkillInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
+	private void sendProductionRememberPreference() {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(24);
+		mc.packetHandler.getClientStream().bufferBits.putByte(productionRememberEnabled ? 1 : 0);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
+	private void sendProductionBack() {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(25);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
 	private ProductionRecipeView getSelectedRecipe() {
 		if (selectedRecipeIndex < 0 || selectedRecipeIndex >= productionRecipes.size()) {
 			return null;
@@ -688,7 +743,7 @@ public final class DoSkillInterface {
 
 	public void openProductionInterface(int interfaceId, String title, int inputItemId, int resourceAmount, int selectedRecipeId, int quantity,
 		int[] itemIds, int[] requiredLevels, int[] inputAmounts, int[] outputAmounts, int[] flags,
-		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts) {
+		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts, int uiFlags) {
 		this.title = title;
 		this.productionInterfaceId = interfaceId;
 		this.inputItemId = inputItemId;
@@ -699,6 +754,9 @@ public final class DoSkillInterface {
 		this.rightClickMenu = false;
 		this.itemSelected = -1;
 		this.selectedRecipeIndex = -1;
+		this.productionRememberSupported = (uiFlags & PRODUCTION_UI_REMEMBER_SUPPORTED) != 0;
+		this.productionRememberEnabled = (uiFlags & PRODUCTION_UI_REMEMBER_ENABLED) != 0;
+		this.productionCanGoBack = (uiFlags & PRODUCTION_UI_CAN_GO_BACK) != 0;
 		for (int i = 0; i < itemIds.length; i++) {
 			ProductionRecipeView recipe = new ProductionRecipeView(itemIds[i], requiredLevels[i], inputAmounts[i],
 				outputAmounts[i], flags[i], ingredientItemIds[i], ingredientFallbackItemIds[i], ingredientAmounts[i]);
@@ -721,6 +779,9 @@ public final class DoSkillInterface {
 		this.inputItemId = -1;
 		this.productionResourceAmount = 0;
 		this.productionInterfaceId = -1;
+		this.productionRememberSupported = false;
+		this.productionRememberEnabled = false;
+		this.productionCanGoBack = false;
 		setVisible(false);
 	}
 

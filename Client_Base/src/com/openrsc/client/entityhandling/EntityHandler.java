@@ -46,9 +46,10 @@ public class EntityHandler {
 		0xA0522D, 0x6B4F2A, 0x333333, 0x4B2E83, 0xCC2222
 	};
 	private static final int[] MYWORLD_STAFF_RUNE_COLORS = {
-		0x0AE5E4, 0x0401DC, 0x642E01, 0xD40203, 0xF0E68C,
+		0x0AE5E4, 0x0401DC, 0x642E01, 0xD40203, 0xD40203,
 		0x9A4A3A, 0xC88A54, 0xF2D13D, 0xFF8800, 0x3FAF5A,
-		0x1B8A8F, 0x222222, 0x7F1D1D, 0x8FA8C9, 0xFFD95A
+		0x1B8A8F, 0x222222, 0x7F1D1D, 0x8FA8C9, 0xFFD95A,
+		0xF0E68C, 0x3FAF5A
 	};
 	private static final int[][] MYWORLD_RUNE_STAFF_IDS = {
 		{101, 2132, 1765, 1770, 2137, 1775, 1780, 2142, 1785, 2147},
@@ -65,7 +66,9 @@ public class EntityHandler {
 		{2298, 2299, 2300, 2301, 2302, 2303, 2304, 2305, 2306, 2307},
 		{2308, 2309, 2310, 2311, 2312, 2313, 2314, 2315, 2316, 2317},
 		{2318, 2319, 2320, 2321, 2322, 2323, 2324, 2325, 2326, 2327},
-		{2754, 2755, 2756, 2757, 2758, 2759, 2760, 2761, 2762, 2763}
+		{2754, 2755, 2756, 2757, 2758, 2759, 2760, 2761, 2762, 2763},
+		{3152, 3153, 3154, 3155, 3156, 3157, 3158, 3159, 3160, 3161},
+		{3162, 3163, 3164, 3165, 3166, 3167, 3168, 3169, 3170, 3171}
 	};
 	private static final int[] MYWORLD_RUNE_CLOTH_COLORS = {
 		0x87CEEB, 0x8B4A3B, 0x1F4E8C, 0x7A5230, 0xC62828,
@@ -5498,6 +5501,73 @@ public class EntityHandler {
 			false, false, true, 3292));
 	}
 
+	private static void addClericSigilDefinitions() {
+		setCustomItemDefinition(3293, new ItemDef(
+			"Unblessed stone sigil of Saradomin", "A carved stone sigil awaiting Saradomin's blessing", "",
+			0, 443, "external-png:unblessed-sara-sigil@28x25", false, false, 0, 0,
+			false, false, false, 3293));
+		setCustomItemDefinition(3294, new ItemDef(
+			"Stone sigil of Saradomin", "A stone sigil blessed by Saradomin", "",
+			0, 443, "external-png:blessed-sara-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3294));
+		setCustomItemDefinition(3295, new ItemDef(
+			"Unblessed stone sigil of Guthix", "A carved stone sigil awaiting Guthix's blessing", "",
+			0, 443, "external-png:unblessed-guth-sigil@28x25", false, false, 0, 0,
+			false, false, false, 3295));
+		setCustomItemDefinition(3296, new ItemDef(
+			"Stone sigil of Guthix", "A stone sigil blessed by Guthix", "",
+			0, 443, "external-png:blessed-guth-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3296));
+		setCustomItemDefinition(3297, new ItemDef(
+			"Unblessed stone sigil of Zamorak", "A carved stone sigil awaiting Zamorak's blessing", "",
+			0, 443, "external-png:unblessed-zam-sigil@28x25", false, false, 0, 0,
+			false, false, false, 3297));
+		setCustomItemDefinition(3298, new ItemDef(
+			"Stone sigil of Zamorak", "A stone sigil blessed by Zamorak", "",
+			0, 443, "external-png:blessed-zam-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3298));
+		setCustomItemDefinition(3299, new ItemDef(
+			"Unblessed neutral stone sigil", "A carved neutral stone sigil awaiting a blessing", "",
+			0, 443, "external-png:unblessed-neutral-sigil@28x25", false, false, 0, 0,
+			false, false, false, 3299));
+		setCustomItemDefinition(3300, new ItemDef(
+			"Neutral stone sigil", "A neutral stone sigil blessed at a god altar", "",
+			0, 443, "external-png:blessed-neutral-sigil@28x25", true, false, 0, 0,
+			false, false, false, 3300));
+		setCustomItemDefinition(3301, new ItemDef(
+			"Unblessed silver sigil of Saradomin", "A carved silver sigil awaiting Saradomin's blessing", "",
+			0, 134, "external-png:silver-unblessed-sara-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3301));
+		setCustomItemDefinition(3302, new ItemDef(
+			"Silver sigil of Saradomin", "A silver sigil blessed by Saradomin", "",
+			0, 134, "external-png:silver-blessed-sara-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3302));
+		setCustomItemDefinition(3303, new ItemDef(
+			"Unblessed silver sigil of Guthix", "A carved silver sigil awaiting Guthix's blessing", "",
+			0, 134, "external-png:silver-unblessed-guth-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3303));
+		setCustomItemDefinition(3304, new ItemDef(
+			"Silver sigil of Guthix", "A silver sigil blessed by Guthix", "",
+			0, 134, "external-png:silver-blessed-guth-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3304));
+		setCustomItemDefinition(3305, new ItemDef(
+			"Unblessed silver sigil of Zamorak", "A carved silver sigil awaiting Zamorak's blessing", "",
+			0, 134, "external-png:silver-unblessed-zam-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3305));
+		setCustomItemDefinition(3306, new ItemDef(
+			"Silver sigil of Zamorak", "A silver sigil blessed by Zamorak", "",
+			0, 134, "external-png:silver-blessed-zam-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3306));
+		setCustomItemDefinition(3307, new ItemDef(
+			"Unblessed neutral silver sigil", "A carved neutral silver sigil awaiting a blessing", "",
+			0, 134, "external-png:silver-unblessed-neutral-sigil@24x21", false, false, 0, 0,
+			false, false, false, 3307));
+		setCustomItemDefinition(3308, new ItemDef(
+			"Neutral silver sigil", "A neutral silver sigil blessed at a god altar", "",
+			0, 134, "external-png:silver-blessed-neutral-sigil@24x21", true, false, 0, 0,
+			false, false, false, 3308));
+	}
+
 	private static void applyBangleVisuals() {
 		applyBangleVisuals(314, 317);
 		applyBangleVisuals(597, 597);
@@ -5709,6 +5779,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addExaltedRuneDefinitions();
 		addBangleJewelryDefinitions();
+		addClericSigilDefinitions();
 		addScytheLineDefinitions();
 		addHoodDefinition();
 		addSoulRingLine(1705, new String[] {"Sapphire", "Emerald", "Ruby", "Dragonstone"},

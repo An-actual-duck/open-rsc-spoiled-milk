@@ -254,6 +254,7 @@ public class Payload235Generator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(es.prayerPoints);
 					builder.writeInt(es.rangedPoints);
 					builder.writeInt(es.magicPowerPoints);
+					builder.writeInt(es.holyPowerPoints);
 					break;
 
 				case SEND_QUESTS:

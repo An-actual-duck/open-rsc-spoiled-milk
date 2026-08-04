@@ -228,7 +228,7 @@ The current source tree does not yet provide a content-neutral build graph:
 - Login parsing supports multiple authentic layouts and a custom client version,
   while `ActionSender.getGenerator` independently selects among the legacy and
   custom payload generators.
-- Checked-in Spoiled Milk configuration requires custom client version `10047`.
+- Checked-in Spoiled Milk configuration requires custom client version `10050`.
 - Layered terrain packets carry their own protocol/stage/readiness versions.
 - TCP, optional WebSocket, legacy payload families, and the custom client are
   active compatibility surfaces.

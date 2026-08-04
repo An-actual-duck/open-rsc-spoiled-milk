@@ -998,7 +998,11 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 							os.id = packet.readInt();
 							break;
 					case CANCEL_BATCH:
+					case PRODUCTION_BACK:
 						//nothing
+						break;
+					case PRODUCTION_REMEMBER_TOGGLE:
+						os.value = packet.readByte();
 						break;
 					case IRONMAN_MODE:
 						os.value = packet.readByte();
@@ -1137,6 +1141,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 						break;
 					case AUTO_CAST_SPELL:
 					case CAST_SUMMON:
+					case CAST_CLERIC_SPELL:
 						os.id = packet.readShort();
 						break;
 					case PRODUCTION_QUANTITY_DOWN_ONE:

@@ -1,6 +1,9 @@
 package com.openrsc.server.net.rsc.generators.impl;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.cleric.ClericSigilItemId;
+import com.openrsc.server.content.cleric.ClericSigilMaterial;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.model.Point;
@@ -40,6 +43,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_INVENTORY, 53);
 		put(OpcodeOut.SEND_ELIXIR, 54); // custom
 		put(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, 152); // custom
+		put(OpcodeOut.SEND_CLERIC_SPELLBOOK, 158); // custom maintained-client catalog
 		put(OpcodeOut.SEND_APPEARANCE_SCREEN, 59);
 		put(OpcodeOut.SEND_NPC_COORDS, 79);
 		put(OpcodeOut.SEND_DEATH, 83);
@@ -359,11 +363,45 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 				case SEND_ACTIVE_POTION_EFFECTS:
 					ActivePotionEffectsStruct potionEffects = (ActivePotionEffectsStruct) payload;
-					int potionEffectCount = Math.max(0, Math.min(16, potionEffects.count));
+					int potionEffectCount = Math.max(0, Math.min(32, potionEffects.count));
 					builder.writeByte((byte) potionEffectCount);
 					for (int i = 0; i < potionEffectCount; i++) {
 						builder.writeShort(potionEffects.itemIds[i]);
 						builder.writeInt(potionEffects.remainingSeconds[i]);
+					}
+					int potionEffectOverflow = Math.max(0,
+						potionEffects.totalCount - potionEffectCount);
+					builder.writeShort(Math.min(65535, potionEffectOverflow));
+					break;
+
+				case SEND_CLERIC_SPELLBOOK:
+					ClericSpellbookStruct clericSpellbook = (ClericSpellbookStruct) payload;
+					ClericSpellDefinition[] clericDefinitions = clericSpellbook.definitions;
+					int clericDefinitionCount = Math.max(0, Math.min(32, clericDefinitions.length));
+					builder.writeByte((byte) clericSpellbook.schemaVersion);
+					builder.writeByte((byte) clericDefinitionCount);
+					for (int i = 0; i < clericDefinitionCount; i++) {
+						ClericSpellDefinition definition = clericDefinitions[i];
+						builder.writeShort(definition.getStableCode());
+						builder.writeString(definition.getStableKey());
+						builder.writeString(definition.getDisplayName());
+						builder.writeString(definition.getEffectDescription());
+						builder.writeString(definition.getAlignment().getKey());
+						builder.writeByte((byte) definition.getWorshipLevel());
+						builder.writeByte((byte) definition.getSpellTier());
+						builder.writeByte((byte) definition.getRadius());
+						builder.writeByte((byte) (definition.affectsCaster() ? 1 : 0));
+						builder.writeShort(definition.getPresentation().getSpellbookIconItemId());
+						builder.writeShort(ClericSigilItemId.get(ClericSigilMaterial.STONE,
+							definition.getAlignment(), true).getItemId());
+						builder.writeByte((byte) definition.getPrimarySigilCost()
+							.getCount(ClericSigilMaterial.STONE));
+						builder.writeShort(ClericSigilItemId.get(ClericSigilMaterial.SILVER,
+							definition.getAlignment(), true).getItemId());
+						builder.writeByte((byte) definition.getPrimarySigilCost()
+							.getCount(ClericSigilMaterial.SILVER));
+						builder.writeInt(definition.getPresentation().getCasterIconItemId());
+						builder.writeInt(definition.getPresentation().getCasterAnimationId());
 					}
 					break;
 
@@ -395,6 +433,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) si.currentHarvesting);
 					}
 					builder.writeByte((byte) si.currentSummoning);
+					builder.writeByte((byte) si.currentBlessing);
 
 					// 18 skills minimum - max level
 					builder.writeByte((byte) si.maxAttack);
@@ -422,6 +461,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) si.maxHarvesting);
 					}
 					builder.writeByte((byte) si.maxSummoning);
+					builder.writeByte((byte) si.maxBlessing);
 
 					// 18 skills minimum - experiences
 					builder.writeInt(si.experienceAttack);
@@ -449,7 +489,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeInt(si.experienceHarvesting);
 					}
 					builder.writeInt(si.experienceSummoning);
+					builder.writeInt(si.experienceBlessing);
 
+					// Quest Points is not a skill slot. Keep it after every maintained
+					// custom-client skill field so appending a skill cannot consume it.
 					builder.writeByte((byte) si.questPoints);
 					break;
 
@@ -492,6 +535,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					builder.writeInt(es.prayerPoints);
 					builder.writeInt(es.rangedPoints);
 					builder.writeInt(es.magicPowerPoints);
+					builder.writeInt(es.holyPowerPoints);
 					break;
 
 				case SEND_QUESTS:
@@ -993,7 +1037,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 
 				case SEND_DEVOTION:
 					DevotionStruct devotion = (DevotionStruct) payload;
-					builder.writeShort(devotion.devotionLevel);
+					builder.writeShort(devotion.devotionHalfOfferingUnits);
 					break;
 
 				case SEND_PRODUCTION_INTERFACE:
@@ -1024,6 +1068,8 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 								builder.writeShort(production.ingredientAmounts[i][j]);
 							}
 						}
+						// Additive trailer: older custom clients safely ignore it.
+						builder.writeByte((byte) production.uiFlags);
 					}
 					break;
 

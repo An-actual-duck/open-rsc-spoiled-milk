@@ -256,6 +256,21 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
         self.assertIn("branch=fix/status", status)
         self.assertIn("remote=MISSING", status)
 
+    def test_cross_project_invocation_is_rejected(self) -> None:
+        f = self.fixture
+        outside = f.base / "unrelated-project"
+        outside.mkdir()
+        for script in ("ai-workspace.sh", "ai-manager.sh"):
+            result = subprocess.run(
+                ["bash", str(f.root / "scripts" / script), "status"],
+                cwd=outside,
+                env={**f.env, "ROOT_DIR": str(f.root)},
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Refusing cross-project invocation", result.stderr)
+
     def test_clean_detached_unique_commit_is_blocked_then_rescued(self) -> None:
         f = self.fixture
         f.run("ai-workspace.sh", "create", "ai-1")

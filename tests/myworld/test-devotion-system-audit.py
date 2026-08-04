@@ -72,8 +72,8 @@ def main() -> None:
 
     for marker in (
         "OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP",
-        "MAX_DEVOTION_LEVEL = 1000",
-        "MIN_DEVOTION_LEVEL = -1000",
+        "MAX_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MAX_DEVOTION_LEVEL",
+        "MIN_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MIN_DEVOTION_LEVEL",
         "DEVOTION_REQUIREMENT_PER_RESOURCE = 100",
         "BLESSING_OFFERING_COST_PER_RESOURCE = OFFERINGS_PER_DEVOTION_LEVEL / 2",
         "return bonusXp * 4;",

@@ -16,6 +16,7 @@ EXTERNAL_ITEM_SPRITE_DIRS = [
     ROOT / "dev/myworld/assets/sprites/items/inventory-ground/agility-pouches",
     ROOT / "dev/myworld/assets/sprites/items/inventory-ground/tools",
     ROOT / "dev/myworld/assets/sprites/items/inventory-ground/weapons",
+    ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils",
     ROOT / "dev/myworld/assets/sprites/items/inventory-ground/resources",
     ROOT / "dev/myworld/assets/sprites/items/inventory-ground",
     ROOT / "output/pngs",

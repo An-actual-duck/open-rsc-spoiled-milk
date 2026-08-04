@@ -169,6 +169,8 @@ def main() -> None:
     helper_staff_ids = set()
     for call in re.findall(r"addCustomWoodStaffDefinitions\((.*?)\);", client_text, re.DOTALL):
         helper_staff_ids.update(int(value) for value in re.findall(r"\b\d{3,4}\b", call))
+    for first_id in re.findall(r"addBlessedStaffLine\((\d+),", client_text):
+        helper_staff_ids.update(range(int(first_id), int(first_id) + 10))
 
     for item_id in sorted(client_staff_ids - legacy_staff_ids - helper_staff_ids):
         require(
