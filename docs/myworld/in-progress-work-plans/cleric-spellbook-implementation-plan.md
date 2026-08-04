@@ -49,8 +49,10 @@ resetting it or granting a free immediate tick.
 
 The following remain later design work and may not be guessed:
 
-1. Mixed potion/Cleric status priority and charge/pulse representation within
-   the expanded transport bound (C08).
+1. Charge/pulse packet representation, shared effect-state ownership and
+   lifecycle details, and final Cleric HUD icons/labels (C08). Mixed
+   potion/Cleric HUD priority is settled as origin-neutral urgency groups with
+   stable authored ordering.
 2. Future offensive god-spell expansion beyond the existing Mage entries;
    existing god spells remain under Mage for the initial rollout.
 3. Additional Devotion sources for later economy tuning; the initial confirmed
@@ -282,6 +284,25 @@ effects on death, logout, or party separation. Extend C06's expanded status
 packet compatibly with per-effect charges/pulses only after mixed-effect
 priority is settled. Preserve its visible overflow count. Authentic clients
 receive no custom dependency.
+
+Settled presentation ordering is origin-neutral and urgency-based: finite
+tactical counters, short combat effects, longer combat support, then passive
+utility/skilling effects. Each group uses stable authored identity order, never
+remaining duration or application time. The server selects the first `32`
+entries from that ordered list, reports the exact bounded overflow, and does
+not let presentation priority affect gameplay state.
+
+Counter transport is also settled. Preserve the existing visible-entry prefix
+of item ID and remaining seconds plus its overflow count, then append a
+length-detected, versioned trailer with one explicit `NONE`, `CHARGES`, or
+`PULSES` kind and unsigned remaining count per visible entry. The timer alone
+counts down locally; counters change only on an authoritative snapshot, sent
+immediately for charge consumption and pulse completion. The HUD renders
+compact `3H`/`2P`-style badges and expands them in hover text. Older maintained
+parsing may ignore the trailer, while authentic clients continue receiving no
+custom packet. Remaining C08 decisions must settle effect-state and
+originating-party ownership, lifecycle cleanup mechanics, and final icon/label
+metadata before runtime implementation begins.
 
 ### C09 — Low-Risk Support Effects
 

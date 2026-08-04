@@ -705,6 +705,15 @@ received.
   an identifying icon, a countdown, a hover label, and an optional remaining
   charge/pulse count. Cleric effects do not introduce an unrelated second
   status overlay.
+- Counter presentation is explicitly typed by the server as `NONE`, `CHARGES`,
+  or `PULSES`; the client never infers semantics from an icon, item name, or
+  spell identity. Each row always retains its countdown. Charge effects add a
+  compact `H` badge such as `3H` for three protected hits, while Mend-family
+  effects add a compact `P` badge such as `2P`. Hover text expands the meaning,
+  for example `Ward III — 3 protected hits remaining`. Only the timer counts
+  down locally. Counter values change only through a new authoritative server
+  snapshot, sent immediately after a protected hit consumes a charge or a
+  healing pulse completes.
 - The server remains authoritative. The client may count a supplied timer down
   for presentation, but a refreshed, consumed, replaced, or cleared status
   causes the server to send a new bounded snapshot.
@@ -713,9 +722,21 @@ received.
   `32`, and includes the number omitted. The HUD must visibly report omitted
   effects rather than implying the transmitted subset is complete. Gameplay
   state and expiration never depend on this presentation bound.
-- Status priority among potion and future Cleric effects remains later C08
-  policy work. The C06 capacity increase and overflow indicator do not silently
-  choose an eviction priority.
+- The existing maintained-client status-packet prefix remains item identity,
+  remaining seconds, and overflow count. C08 appends a length-detected,
+  explicitly versioned extension containing one counter kind and unsigned
+  remaining count for each visible entry. Older maintained parsing can ignore
+  the trailer, coordinated clients validate its version and entry count, and
+  authentic clients continue receiving no custom status packet.
+- The bounded mixed HUD uses origin-neutral urgency groups. Finite tactical
+  counters such as Mend-family pulses and Ward/Aegis charges come first,
+  followed by short combat effects from either Cleric spells or potions, then
+  longer combat support such as Respite and regeneration/resistance effects,
+  and finally skilling, XP, luck, notation, speed, and other passive utility
+  effects. Within each group, one authored stable identity order is used; the
+  server never sorts by remaining duration or application time. Overflow omits
+  from the bottom of this ordered presentation list and reports the exact
+  omitted count. Priority affects presentation only, never gameplay state.
 - Exact duration tables are authored per effect rank. Sharing the rank model
   does not require every spell to share one duration ladder; long-lived Respite
   and short tactical protection may use different values while still deriving
@@ -1485,3 +1506,24 @@ then uses up to two ordinary collision-checked, server-authoritative steps.
 Confirmed that Respite participates in the natural passive-regeneration clock
 without resetting it or granting an immediate free tick. These decisions clear
 the remaining C07 design stop while leaving mixed status-HUD priority for C08.
+
+### 2026-08-04: Mixed status-HUD priority
+
+Confirmed origin-neutral, urgency-based priority for the shared potion/Cleric
+HUD. Finite tactical counters appear first, then short combat effects, longer
+combat support, and passive utility/skilling effects. Each group uses stable
+authored identity order rather than expiry or application time, preventing
+icons from jumping between snapshots. The first `32` entries remain visible,
+lower-priority entries are omitted first, and `+N more effects` continues to
+report the exact bounded overflow. This ordering is presentation-only and does
+not change expiration, replacement, or effect strength.
+
+### 2026-08-04: Typed charge and pulse presentation
+
+Confirmed server-authored `NONE`, `CHARGES`, and `PULSES` counter kinds. The HUD
+keeps a countdown on every row and adds compact `3H`/`2P`-style badges for
+protected hits and healing pulses, with fully descriptive hover text. Clients
+never infer or locally decrement counters; charge consumption and pulse
+completion send immediate authoritative snapshots. The wire format preserves
+the existing item/timer/overflow prefix and adds a length-detected, versioned
+per-entry counter trailer. Authentic clients remain outside this custom packet.
