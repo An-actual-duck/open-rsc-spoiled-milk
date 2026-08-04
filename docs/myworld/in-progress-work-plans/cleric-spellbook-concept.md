@@ -677,6 +677,13 @@ received.
 - An equal effect refreshes to its full charge count or restarts its complete
   three-pulse sequence. Refreshing never adds remaining charges or pulses to
   the new full amount.
+- Every accepted refresh or replacement makes the newly casting Cleric the
+  effect's origin. The accepted application atomically installs its complete
+  rank snapshot, duration, charges/pulses, caster-session identity, and current
+  party-membership-generation token. The effect consequently survives
+  departure of an older caster but clears if its new originating caster
+  departs. A rejected weaker application changes neither the active effect nor
+  its origin.
 - These rules mean Aegis can replace Ward, Greater Mend can replace Mend, and
   neither replacement works in reverse while the higher-tier effect remains
   active.
@@ -692,19 +699,90 @@ received.
   every scalable part of the status, including its duration and, where
   applicable, its charges or pulse strength. Duration does not continue to
   change if the caster later changes equipment.
+- Each recipient owns one transient in-memory `ClericEffectRegistry`. It is the
+  single authority for that recipient's Cleric-effect replacement, expiry,
+  counter consumption, pulse completion, and lifecycle clearing; Cleric
+  effects are not party-wide mutable buff objects.
+- The registry is keyed by the seven exclusive effect families: healing pulses
+  (Mend/Greater Mend), accuracy (Fervor), protection (Ward/Aegis), damage
+  (Zeal), reflection (Thorns), lifesteal (Rally), and passive regeneration
+  (Respite). Effects in different family slots may coexist unless a later
+  explicitly confirmed rule says otherwise.
+- Each active entry carries a stable spell identity, its snapshotted effect
+  rank, immutable typed effect parameters, application and expiry times, an
+  optional typed charge/pulse counter, the originating caster-session identity,
+  and the exact originating party-membership-generation token. Do not
+  represent spell mechanics as an unlabeled integer array or generic
+  string-keyed map.
+- The party-membership-generation token is opaque state for the
+  actual runtime party tenure, not the `Party` object reference or a reusable
+  numeric party ID. It is renewed whenever a player joins or reattaches.
+  Leaving and rejoining even the same party therefore cannot make an old
+  effect valid again. The caster session identity similarly prevents a later
+  login from impersonating the session that created the effect.
 - A charge-based status ends when either its timer expires or its charges reach
   zero. A Mend-family status ends when its three-pulse sequence finishes or its
   timer expires.
 - Active Cleric effects are transient session state. They clear when the
-  recipient dies or logs out and are not restored on the next login.
+  recipient dies or logs out and are not restored on the next login. They must
+  not use player-cache keys or persistence fields.
 - An effect also clears if its recipient no longer shares the originating
   caster's party. This includes the caster leaving or logging out and prevents
   joining a party only long enough to collect support buffs.
+- Caster death alone does not clear already granted effects from living
+  recipients. Cleric effects are bounded blessings rather than maintained
+  auras, and death alone changes neither the caster session nor party
+  membership. If death is followed by logout or departure, the corresponding
+  cleanup applies normally.
+- Cleanup is eager at the established lifecycle boundaries. Recipient death or
+  logout clears that recipient's complete registry. Before a leave, kick,
+  logout, or other party-membership transition commits, the departing player
+  loses all received effects and every online recipient loses effects whose
+  origin is that departing caster membership. Each affected maintained client
+  receives a new status snapshot.
+- Every gameplay read remains fail-closed even after eager cleanup. Before an
+  effect pulses, consumes a charge, changes combat or regeneration, or enters
+  a HUD snapshot, it revalidates expiry, caster session, and both current
+  party-membership-generation tokens. Invalid entries are removed before they
+  can contribute behavior. This defensive check covers unusual disconnect or
+  teardown ordering without requiring a periodic world-wide sweep.
 - Timers, charges, and remaining Mend pulses must be visible on the affected
   player's screen. Presentation extends the existing active-potion-effect HUD:
   an identifying icon, a countdown, a hover label, and an optional remaining
   charge/pulse count. Cleric effects do not introduce an unrelated second
   status overlay.
+- Counter presentation is explicitly typed by the server as `NONE`, `CHARGES`,
+  or `PULSES`; the client never infers semantics from an icon, item name, or
+  spell identity. Each row always retains its countdown. Charge effects add a
+  compact `H` badge such as `3H` for three protected hits, while Mend-family
+  effects add a compact `P` badge such as `2P`. Hover text expands the meaning,
+  for example `Ward III — 3 protected hits remaining`. Only the timer counts
+  down locally. Counter values change only through a new authoritative server
+  snapshot, sent immediately after a protected hit consumes a charge or a
+  healing pulse completes.
+- A Cleric status is identified in the versioned trailer by its stable Cleric
+  spell code and one-based snapshotted effect rank. The legacy-compatible item
+  ID remains the safe icon carrier, not the effect identity. Potion entries
+  retain their item identity and established item-name hover behavior.
+- Until unique spell artwork is approved, Cleric statuses reuse the same
+  aligned blessed-stone-sigil fallback icon already authored for their
+  spellbook definitions. Several spells may therefore share an icon without
+  sharing an identity. Later artwork changes only the authoritative catalog
+  icon field and requires no packet-identity migration.
+- Hover text begins with the exact spell name and Roman-numeral rank and then
+  describes the active, snapshotted magnitude. Counter effects also state the
+  remaining protected hits or healing pulses. Examples include `Ward III —
+  25% reduction — 6 protected hits remaining`, `Fervor III — 15% chance to
+  raise offense roll by 1`, `Rally II — 20% lifesteal until 60% Hits`, and
+  `Respite IV — 25% faster passive regeneration`.
+- Rank/magnitude labels come from server-authoritative typed effect-rank
+  metadata delivered with the Cleric catalog. The maintained client formats
+  the received metadata but must not own a second spell-magnitude table, and
+  the status packet must not resend free-form labels on every timer update.
+  Later effect handlers consume the same typed rank metadata used for these
+  labels so gameplay and presentation cannot drift.
+- Caster-session and party-membership tokens remain server-only. The HUD does
+  not expose caster names, session identifiers, or party identifiers.
 - The server remains authoritative. The client may count a supplied timer down
   for presentation, but a refreshed, consumed, replaced, or cleared status
   causes the server to send a new bounded snapshot.
@@ -713,9 +791,21 @@ received.
   `32`, and includes the number omitted. The HUD must visibly report omitted
   effects rather than implying the transmitted subset is complete. Gameplay
   state and expiration never depend on this presentation bound.
-- Status priority among potion and future Cleric effects remains later C08
-  policy work. The C06 capacity increase and overflow indicator do not silently
-  choose an eviction priority.
+- The existing maintained-client status-packet prefix remains item identity,
+  remaining seconds, and overflow count. C08 appends a length-detected,
+  explicitly versioned extension containing one counter kind and unsigned
+  remaining count for each visible entry. Older maintained parsing can ignore
+  the trailer, coordinated clients validate its version and entry count, and
+  authentic clients continue receiving no custom status packet.
+- The bounded mixed HUD uses origin-neutral urgency groups. Finite tactical
+  counters such as Mend-family pulses and Ward/Aegis charges come first,
+  followed by short combat effects from either Cleric spells or potions, then
+  longer combat support such as Respite and regeneration/resistance effects,
+  and finally skilling, XP, luck, notation, speed, and other passive utility
+  effects. Within each group, one authored stable identity order is used; the
+  server never sorts by remaining duration or application time. Overflow omits
+  from the bottom of this ordered presentation list and reports the exact
+  omitted count. Priority affects presentation only, never gameplay state.
 - Exact duration tables are authored per effect rank. Sharing the rank model
   does not require every spell to share one duration ladder; long-lived Respite
   and short tactical protection may use different values while still deriving
@@ -897,11 +987,11 @@ the early book progressing: most tier-one effects peak at Holy Power `44`, Ward
 peaks earlier at `32`, and tier-two effects peak at the god-staff value of `64`.
 Unify has no Holy Power rank because its area and movement contract are fixed.
 
-The discrete rank, snapshot, replacement, lifecycle, and presentation rules
-are settled. Spell-specific rank counts, Holy Power thresholds, numerical
-values, durations, icons, and final protocol/data structures remain balance
-and implementation design work except where this document explicitly confirms
-them.
+The discrete rank, snapshot, replacement, lifecycle, and launch status-HUD
+presentation rules are settled. Spell-specific rank counts, Holy Power
+thresholds, numerical values, and durations are confirmed where this document
+provides their tables. Unique spell artwork and final caster animations remain
+deferred; the C08 wire and fallback-icon contracts do not depend on them.
 
 ## Remaining Design Questions and Confirmed Boundaries
 
@@ -932,10 +1022,11 @@ them.
   useful application. If every candidate is ineffective, the cast spends
   nothing. Resource removal and all successful applications commit atomically.
   Casting never awards Worship XP.
-- Final status icons and labels, optional per-effect charge/pulse packet
-  representation, and mixed potion/Cleric priority within the expanded bound.
-  Overflow indication, Mend cadence, and the tactical and Respite duration
-  ladders are settled.
+- C08's mixed-HUD priority, fallback icons, exact labels, stable effect
+  identity/rank transport, typed charge/pulse representation, and overflow
+  behavior are settled. Unique spell art and caster animations remain deferred
+  until the broader Cleric work is complete and can replace catalog
+  presentation fields without changing the status protocol.
 - Shared combat-path implementation and blocked-damage telemetry for the
   settled Ward/Aegis, Thorns, Zeal, and Rally direct-damage boundaries.
 - Respite uses the existing natural passive-healing clock. Application,
@@ -1485,3 +1576,69 @@ then uses up to two ordinary collision-checked, server-authoritative steps.
 Confirmed that Respite participates in the natural passive-regeneration clock
 without resetting it or granting an immediate free tick. These decisions clear
 the remaining C07 design stop while leaving mixed status-HUD priority for C08.
+
+### 2026-08-04: Mixed status-HUD priority
+
+Confirmed origin-neutral, urgency-based priority for the shared potion/Cleric
+HUD. Finite tactical counters appear first, then short combat effects, longer
+combat support, and passive utility/skilling effects. Each group uses stable
+authored identity order rather than expiry or application time, preventing
+icons from jumping between snapshots. The first `32` entries remain visible,
+lower-priority entries are omitted first, and `+N more effects` continues to
+report the exact bounded overflow. This ordering is presentation-only and does
+not change expiration, replacement, or effect strength.
+
+### 2026-08-04: Typed charge and pulse presentation
+
+Confirmed server-authored `NONE`, `CHARGES`, and `PULSES` counter kinds. The HUD
+keeps a countdown on every row and adds compact `3H`/`2P`-style badges for
+protected hits and healing pulses, with fully descriptive hover text. Clients
+never infer or locally decrement counters; charge consumption and pulse
+completion send immediate authoritative snapshots. The wire format preserves
+the existing item/timer/overflow prefix and adds a length-detected, versioned
+per-entry counter trailer. Authentic clients remain outside this custom packet.
+
+### 2026-08-04: Recipient-owned effect state and origin
+
+Confirmed one transient `ClericEffectRegistry` per affected recipient, keyed by
+the healing-pulse, accuracy, protection, damage, reflection, lifesteal, and
+passive-regeneration exclusivity families. Each typed entry snapshots stable
+spell identity, rank, effect parameters, timing, optional charges or pulses,
+originating caster session, and the exact originating membership generation.
+The recipient registry is the sole lifecycle authority and is never persisted.
+Exact runtime session and party-membership-generation tokens ensure that
+logout or leave/rejoin cannot accidentally validate an effect created in an
+earlier membership context.
+
+### 2026-08-04: Accepted applications transfer effect origin
+
+Confirmed that every accepted refresh or replacement transfers ownership to
+the newly casting Cleric. Its full effect snapshot and current caster-session
+and party-membership-generation origins replace the earlier entry atomically.
+A rejected weaker cast leaves both state and origin untouched. This makes the
+Cleric who most recently paid for a useful application its lifecycle source
+and prevents the refreshed effect from disappearing merely because an older
+caster leaves.
+
+### 2026-08-04: Effect lifecycle and caster-death boundary
+
+Confirmed eager registry cleanup at recipient death/logout and at the existing
+party leave, kick, logout, and membership-transition boundary. A departing
+recipient loses all received effects, while effects originating from that
+departing caster are removed from remaining recipients. Gameplay and HUD reads
+also fail closed by revalidating expiry, caster session, and per-membership-
+generation party tokens before using an entry. Caster death by itself does not
+clear bounded blessings from living recipients because it does not end the
+caster's session or party membership; a subsequent logout or departure clears
+them normally.
+
+### 2026-08-04: Launch status icons and authoritative labels
+
+Confirmed that C08 reuses each spell definition's aligned blessed-stone-sigil
+icon until unique spell artwork is approved. The trailer identifies Cleric
+statuses by stable spell code and effect rank rather than that shared icon item
+ID. Hover labels show the exact name, Roman rank, active magnitude, and any
+remaining hit/pulse count using rank metadata from the server-authoritative
+Cleric catalog. Potions retain their current item identity and naming. Unique
+icons can later replace catalog fields without changing status identity or the
+wire contract, and origin tokens remain private server state.
