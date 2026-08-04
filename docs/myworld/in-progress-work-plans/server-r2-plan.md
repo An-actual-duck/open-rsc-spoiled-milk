@@ -92,9 +92,11 @@ This plan does not own:
 
 ## Current Evidence Snapshot
 
-All counts in this section were refreshed from published `main` commit
-`6e1720900bbdccd46ba06b9726ac7e91a89b56f3` by the completed R2-0 audit. The
-checked human and JSON inventories are
+R2-0 established its reviewed ownership rules and dependency baseline from
+published `main` commit `6e1720900bbdccd46ba06b9726ac7e91a89b56f3`.
+The checked inventories regenerate from the current shipped-input tree; they
+were most recently refreshed while integrating the accepted boundary-loading
+work at merge commit `001d34c5d`. The human and JSON inventories are
 [`server-r2-ownership-inventory.md`](../info/server-r2-ownership-inventory.md)
 and `server-r2-ownership-inventory.json` beside it.
 
@@ -105,7 +107,7 @@ and `server-r2-ownership-inventory.json` beside it.
   audit all follow this path.
 - Gradle is explicitly secondary and non-authoritative. Its combined source set
   and dependency declarations do not prove Ant artifact or runtime parity.
-- Ant compiles 916 Java files from `server/src` into a fat executable
+- Ant compiles 920 Java files from `server/src` into a fat executable
   `server/core.jar`.
 - Ant compiles 492 Java files from `server/plugins` into the separately loaded
   `server/plugins.jar`.
@@ -185,8 +187,8 @@ The current source tree does not yet provide a content-neutral build graph:
 - 208 files under `server/src` reference the current content/plugin namespaces.
   This is a search heuristic requiring classification, not proof that every
   reference is wrong.
-- 61 files under `server/src` contain direct MyWorld/Spoiled Milk signals. The
-  wider R2-0 shipped-input inventory records 267 signal-bearing inputs across
+- 63 files under `server/src` contain direct MyWorld/Spoiled Milk signals. The
+  wider checked shipped-input inventory records 269 signal-bearing inputs across
   core, plugins, data, configuration, database, release, and layered-tool
   surfaces. Signals are evidence and never classify a file by themselves.
 - `ActionSender` imports `MyWorldItemId`, owns the
@@ -202,7 +204,7 @@ The current source tree does not yet provide a content-neutral build graph:
   database migrator, plugin initializer, benchmark store, and diagnostics
   registry.
 - Other high-risk ownership concentrations remain in `Player` (7,037 lines),
-  `GameStateUpdater` (4,590), `ActionSender` (2,840), `World` (1,354), and
+  `GameStateUpdater` (4,910), `ActionSender` (2,872), `World` (1,354), and
   `RegionManager` (5,066).
 - `LayeredCoordinateParityObserver` is a 12,403-line retained diagnostic/proof
   system. It must be classified before package inclusion; its size alone does
@@ -584,7 +586,7 @@ Stop if:
 #### R2-0 completion record
 
 R2-0 establishes `scripts/audit-server-r2.py` and its reviewed rules/debt data
-under `config/server-r2/`. Two checked reports classify all 1,808 current
+under `config/server-r2/`. Two checked reports classified the initial 1,808
 shipped inputs into the seven required owner classes and retain the reason and
 matching rule for every entry. The inventory covers:
 
@@ -601,7 +603,7 @@ matching rule for every entry. The inventory covers:
   MyWorld/Spoiled Milk signals, classification reasons, and the complete Ant
   build-audit boundary.
 
-The current owner totals are 875 foundation, 412 target-profile, 178 Spoiled
+The initial owner totals were 875 foundation, 412 target-profile, 178 Spoiled
 Milk content, 91 maintained compatibility, 133 tool-only, 10
 diagnostic/proof, and 109 explicitly unresolved inputs. The unresolved set is
 deliberate: 26 definition/population inputs, 51 database inputs, and 32 mixed
@@ -1306,6 +1308,12 @@ change launchers, runtime cache defaults, or that test. The mismatch should be
 handled by a focused launcher/default-endpoint branch.
 
 ## Planning Change Log
+
+- **2026-08-04:** Refreshed the checked R2 ownership inventories after the
+  accepted boundary-loading integration. The current tree contains 1,812
+  shipped inputs and 920 Ant core sources; the four new inputs are foundation
+  transport/delivery classes. The known dependency debt remains exactly 83
+  edges and the unresolved set remains 109 inputs.
 
 - **2026-08-04:** Completed R2-0 against published main `6e1720900b`. Added
   deterministic human/JSON ownership and dependency inventories, classified
