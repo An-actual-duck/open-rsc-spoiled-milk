@@ -1,6 +1,7 @@
 # Server R2 Productization Plan
 
-Status: ACTIVE IMPLEMENTATION. R2-0 is complete; R2-1 has not started.
+Status: ACTIVE IMPLEMENTATION. R2-0 is complete; R2-1 is in progress through
+bounded configuration/lifecycle slices.
 
 Plan date: 2026-07-30
 
@@ -92,9 +93,11 @@ This plan does not own:
 
 ## Current Evidence Snapshot
 
-All counts in this section were refreshed from published `main` commit
-`6e1720900bbdccd46ba06b9726ac7e91a89b56f3` by the completed R2-0 audit. The
-checked human and JSON inventories are
+The R2-0 evidence authority remains published `main` commit
+`6e1720900bbdccd46ba06b9726ac7e91a89b56f3`. The checked human and JSON
+inventories are regenerated after each R2 source slice so their input-tree
+hash and current counts remain accurate without changing the approved
+dependency-debt baseline. They are
 [`server-r2-ownership-inventory.md`](../info/server-r2-ownership-inventory.md)
 and `server-r2-ownership-inventory.json` beside it.
 
@@ -105,7 +108,7 @@ and `server-r2-ownership-inventory.json` beside it.
   audit all follow this path.
 - Gradle is explicitly secondary and non-authoritative. Its combined source set
   and dependency declarations do not prove Ant artifact or runtime parity.
-- Ant compiles 916 Java files from `server/src` into a fat executable
+- Ant currently compiles 919 Java files from `server/src` into a fat executable
   `server/core.jar`.
 - Ant compiles 492 Java files from `server/plugins` into the separately loaded
   `server/plugins.jar`.
