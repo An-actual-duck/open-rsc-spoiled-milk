@@ -1,14 +1,16 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
-Status: active; diagonal stress exposed a bounded-transport correctness defect
+Status: active; bounded terrain transport and incremental frame receive are
+implemented, with repeated visual stress validation still pending
 
 Branch: `refactor/boundary-loading-diagnostics-followup`
 
 Scope: desktop client world-boundary transitions, especially renderer-v2/OpenGL
 
 Gameplay changes in this phase: one fail-closed upper-floor object-reach fix;
-terrain-stage transport now pages otherwise unrepresentable payloads, without
-changing terrain contents or scene activation semantics
+terrain-stage transport now pages otherwise unrepresentable payloads, and the
+client incrementally receives partial frames without exposing them before
+completion. Terrain contents and scene activation semantics are unchanged.
 
 ## Goal
 
@@ -328,6 +330,46 @@ observed 69,043-byte receipt and stale, duplicate, out-of-order, corrupt,
 wrong-context, and superseded page sequences. Repeated private diagonal visual
 validation remains required before this milestone is considered complete.
 
+## Dense Login Receive-Window Deadlock
+
+The first private validation after terrain-stage paging repeatedly accepted the
+login and built the native terrain, but remained on `Loading world` until the
+client's 1,000-poll network watchdog disconnected roughly 17 seconds later.
+The scene-baseline trace consistently stopped after presentation-scenery page
+1 of 6, even though the server's page cursors reached all 11 data pages.
+
+Bounded encoder and frame-reader diagnostics isolated the ownership boundary:
+
+- the server encoded every baseline page, including presentation-scenery pages
+  2--5 and the presentation-wall page;
+- the client remained correctly frame-aligned and read a valid 6,221-byte
+  frame header for presentation-scenery page 2;
+- only 2,805 of its 6,219 opcode-plus-payload bytes were then available;
+- `ss -tinmp` showed the client's 128 KiB receive allocation full and the
+  server receive-window-limited with 36--45 KiB still unsent;
+- the old reader would not consume any payload bytes until
+  `InputStream.available()` reported the entire 6,219 bytes, so the unread
+  2,805 bytes kept the receive window closed while the server needed an open
+  window to send the remaining 3,414 bytes.
+
+This was a deterministic TCP flow-control deadlock, not baseline loss, bad
+framing, terrain decode, renderer work, or server page-cursor behavior. The
+client now copies every currently available portion into its bounded packet
+buffer, resets the no-progress watchdog when bytes arrive, and invokes the
+packet handler only after the declared frame is complete. The regression
+harness delivers one frame over three partial chunks, verifies no early packet
+publication or premature timeout, and verifies alignment of the following
+frame.
+
+In diagnostic session
+`output/renderer-diagnostics/session-20260803-231456-52833`, the exact stalled
+frame completed as 2,805 plus 3,414 bytes immediately after this change. All
+remaining baseline pages arrived, atomic activation reported player/static
+receipt `ok/ok` in 399 ms, the structure stage completed, and both socket queues
+returned to a healthy state. The client reached the playable world without a
+watchdog disconnect. A user-visible repeat and the repeated diagonal stress
+case remain required before declaring the transport milestone complete.
+
 ## Corrected-Profile Multi-Level Evidence
 
 Session
@@ -585,12 +627,13 @@ Prepare a new shadow/minimap product and swap it with the atomic scene.
 
 ## Current Recommendation
 
-Complete private visual validation of the bounded terrain-stage transport, then
-resume the diagonal matrix. After that, prototype complete bounded protocol-v8
-baseline delivery and visually repeat the same directional case. Continue the
-remaining private case matrix before choosing any broader renderer
-optimization. Bounded GPU residency or predicted GPU preparation remain
-possible cold/dense-case candidates, but the choice between them depends on:
+Complete private visual validation of both the bounded terrain-stage transport
+and incremental frame receive, then resume the diagonal matrix. After that,
+prototype complete bounded protocol-v8 baseline delivery and visually repeat
+the same directional case. Continue the remaining private case matrix before
+choosing any broader renderer optimization. Bounded GPU residency or predicted
+GPU preparation remain possible cold/dense-case candidates, but the choice
+between them depends on:
 
 - whether the remaining visible dip still coincides with large upload bytes;
 - whether the predicted product is ready with useful lead time;

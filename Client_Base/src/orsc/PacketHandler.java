@@ -938,6 +938,17 @@ public class PacketHandler {
 		final int pageIndex = packetsIncoming.getShort();
 		final int pageCount = packetsIncoming.getShort();
 		final int fragmentLength = packetsIncoming.getShort();
+		if (BoundaryLoadingDiagnostics.isEnabled()) {
+			final String pageSummary =
+				"LAYERED_TERRAIN_STAGE_PAGE sequence=" + stageSequence
+					+ " context=" + contextSequence
+					+ " page=" + pageIndex + "/" + pageCount
+					+ " totalBytes=" + totalBytes
+					+ " fragmentBytes=" + fragmentLength
+					+ " wireBytes=" + length;
+			System.out.println(pageSummary);
+			ClientRuntimeLogger.log(pageSummary);
+		}
 		if (fragmentLength <= 0
 			|| fragmentLength != length - packetsIncoming.packetEnd) {
 			layeredTerrainStageAssembler.reset();

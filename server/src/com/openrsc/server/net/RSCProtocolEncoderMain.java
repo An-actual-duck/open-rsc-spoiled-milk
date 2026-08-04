@@ -6,8 +6,15 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public final class RSCProtocolEncoderMain {
 	public static final AttributeKey<ConnectionAttachment> attachment = AttributeKey.valueOf("conn-attachment");
+	private static final Logger LOGGER = LogManager.getLogger();
+	private static final boolean LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS =
+		Boolean.parseBoolean(System.getenv(
+			"SPOILED_MILK_BOUNDARY_DIAGNOSTICS"));
 
 	private boolean isInauthenticPacket(int opcode) {
 		switch (opcode) {
@@ -21,6 +28,7 @@ public final class RSCProtocolEncoderMain {
 		final Channel channel = ctx.channel();
 		ConnectionAttachment att = channel.attr(attachment).get();
 		ByteBuf outBuffer = null;
+		logLayeredPacketEncoding(channel, message);
 
 		if (att.player != null && att.player.get() != null) {
 			if (att.player.get().getWorld().getServer().getConfig().WANT_PCAP_LOGGING) {
@@ -165,5 +173,68 @@ public final class RSCProtocolEncoderMain {
 		}
 
 		return outBuffer;
+	}
+
+	/**
+	 * Records only packet identity, framing size, and channel pressure for the
+	 * two packets involved in atomic terrain activation. No account, address,
+	 * or packet contents are retained. The encoder boundary distinguishes a
+	 * packet that was merely queued by the game thread from one that actually
+	 * reached Netty framing.
+	 */
+	private static void logLayeredPacketEncoding(
+			final Channel channel,
+			final Packet message) {
+		if (!LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+			|| message == null
+			|| (message.getID() != 143 && message.getID() != 154)) {
+			return;
+		}
+		LOGGER.info(
+			"LAYERED_PACKET_ENCODED packet={} opcode={} bytes={} identity={} "
+				+ "writable={} bytesBeforeUnwritable={}",
+			message.getPacketNumber(),
+			message.getID(),
+			message.getBuffer().readableBytes(),
+			layeredPacketIdentity(message),
+			channel.isWritable(),
+			channel.bytesBeforeUnwritable());
+	}
+
+	private static String layeredPacketIdentity(final Packet message) {
+		final ByteBuf payload = message.getBuffer().duplicate();
+		final int start = payload.readerIndex();
+		final int readable = payload.readableBytes();
+		if (readable < 1) {
+			return "empty";
+		}
+		final int protocol = payload.getUnsignedByte(start);
+		if (message.getID() == 154) {
+			if (protocol == 6 && readable >= 23) {
+				return "terrain-page protocol=6,sequence="
+					+ payload.getInt(start + 1)
+					+ ",context=" + payload.getInt(start + 5)
+					+ ",page=" + payload.getUnsignedShort(start + 17)
+					+ "/" + payload.getUnsignedShort(start + 19);
+			}
+			return "terrain-stage protocol=" + protocol;
+		}
+
+		int pageOffset = start + 1 + 4 + 2 + 2;
+		if (protocol >= 6) {
+			pageOffset += 4;
+		}
+		pageOffset += 6 * 2 + 5 * 4;
+		if (protocol >= 8) {
+			pageOffset += 4 + 4 + 1 + 1 + 2 + 2 + 4 + 4;
+		}
+		if (pageOffset + 5 > start + readable) {
+			return "scene-baseline protocol=" + protocol
+				+ ",truncated-header";
+		}
+		return "scene-baseline protocol=" + protocol
+			+ ",category=" + payload.getUnsignedByte(pageOffset)
+			+ ",page=" + payload.getUnsignedShort(pageOffset + 1)
+			+ "/" + payload.getUnsignedShort(pageOffset + 3);
 	}
 }

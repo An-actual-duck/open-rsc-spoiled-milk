@@ -59,6 +59,9 @@ import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
 import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacketChecked;
 
 public final class GameStateUpdater {
+	private static final boolean LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS =
+		Boolean.parseBoolean(System.getenv(
+			"SPOILED_MILK_BOUNDARY_DIAGNOSTICS"));
 	private enum VisibilitySnapshotMode {
 		LEGACY,
 		SNAPSHOT
@@ -445,7 +448,21 @@ public final class GameStateUpdater {
 			player.getAttribute(
 				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE, null);
 		if (pending == null || !pending.matches(receipt)) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.info(
+					"LAYERED_TERRAIN_READY_IGNORED pending={} receiptContext={} "
+						+ "receiptWorld={} receiptLevel={} receiptCenter={},{}",
+					pending,
+					receipt.contextSequence,
+					receipt.worldSpace,
+					receipt.logicalLevel,
+					receipt.centerSectorX,
+					receipt.centerSectorY);
+			}
 			return;
+		}
+		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+			LOGGER.info("LAYERED_TERRAIN_READY_ACCEPTED pending={}", pending);
 		}
 		player.setAttribute(
 			NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, pending);
@@ -497,13 +514,32 @@ public final class GameStateUpdater {
 			player.getAttribute(
 				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
 		if (pending == null || !pending.matches(receipt)) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.info(
+					"LAYERED_TERRAIN_STAGE_READY_IGNORED pending={} receipt={}",
+					pending,
+					terrainStageReceiptSummary(receipt));
+			}
 			return;
 		}
 		final NativeLayeredSceneTerrain stagedTerrain =
 			player.getAttribute(
 				NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE, null);
 		if (stagedTerrain == null) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.info(
+					"LAYERED_TERRAIN_STAGE_READY_IGNORED pending={} "
+						+ "receipt={} reason=missing-transaction",
+					pending,
+					terrainStageReceiptSummary(receipt));
+			}
 			return;
+		}
+		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+			LOGGER.info(
+				"LAYERED_TERRAIN_STAGE_READY_ACCEPTED pending={} receipt={}",
+				pending,
+				terrainStageReceiptSummary(receipt));
 		}
 		stagedTerrain.commitResidency();
 		player.removeAttribute(
@@ -523,6 +559,21 @@ public final class GameStateUpdater {
 			player.removeAttribute(NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE);
 			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
 		}
+	}
+
+	private static String terrainStageReceiptSummary(
+			final LayeredTerrainStageReadyStruct receipt) {
+		if (receipt == null) {
+			return "none";
+		}
+		return "protocol=" + receipt.protocolVersion
+			+ ",sequence=" + receipt.stageSequence
+			+ ",context=" + receipt.contextSequence
+			+ ",world=" + receipt.worldSpace
+			+ ",level=" + receipt.logicalLevel
+			+ ",center=" + receipt.centerSectorX + ","
+				+ receipt.centerSectorY
+			+ ",manifest=" + receipt.manifestSha256;
 	}
 
 	private boolean canActivateNativeTerrainStage(
@@ -1261,6 +1312,12 @@ public final class GameStateUpdater {
 		}
 
 		player.setAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE, current);
+		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS && sentPages > 0) {
+			LOGGER.info(
+				"LAYERED_SCENE_BASELINE_PAGES sent={} progress={}",
+				sentPages,
+				current.pageProgressSummary());
+		}
 	}
 
 	private void sendAtomicSceneActivationFenceIfNeeded(
@@ -1706,6 +1763,22 @@ public final class GameStateUpdater {
 						presentationScenery, protocolVersion)
 				&& presentationWallsPageCursor
 					>= pageTotalFor(
+						presentationWalls, protocolVersion);
+		}
+
+		private String pageProgressSummary() {
+			return "context=" + locationContextSequence
+				+ ",scenery=" + sceneryPageCursor + "/"
+					+ pageTotalFor(scenery, protocolVersion)
+				+ ",walls=" + wallsPageCursor + "/"
+					+ pageTotalFor(walls, protocolVersion)
+				+ ",presentationScenery="
+					+ presentationSceneryPageCursor + "/"
+					+ pageTotalFor(
+						presentationScenery, protocolVersion)
+				+ ",presentationWalls="
+					+ presentationWallsPageCursor + "/"
+					+ pageTotalFor(
 						presentationWalls, protocolVersion);
 		}
 
