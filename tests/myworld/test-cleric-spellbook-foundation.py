@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile and validate the unreachable Cleric definition foundation."""
+"""Compile and validate the stable Cleric definition foundation."""
 
 import subprocess
 import tempfile
@@ -27,6 +27,7 @@ def validate_source_boundaries() -> None:
         "ClericSpellCatalog.java",
         "ClericSpellDefinition.java",
         "ClericSpellId.java",
+        "ClericSpellPresentation.java",
     }
     actual = {source.name for source in java_files}
     require(required_foundation <= actual,
@@ -49,14 +50,20 @@ def validate_source_boundaries() -> None:
                 "ClericSpellCatalog", "ClericSpellDefinition", "ClericSpellId"
             )):
                 references.append(str(source.relative_to(ROOT)))
-    require(not references, "C01 must remain unreachable; external references: " + ", ".join(references))
+    expected_c06_references = {
+        "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+        "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+        "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
+        "server/src/com/openrsc/server/net/rsc/struct/outgoing/ClericSpellbookStruct.java",
+    }
+    require(set(references) == expected_c06_references,
+            "Cleric catalog exposure drift: " + ", ".join(references))
 
     plan = IMPLEMENTATION_PLAN.read_text(encoding="utf-8")
     for unresolved in (
-        "introductory unlock/quest",
         "Sigil consumption",
-        "PvP rules",
-        "Status-HUD priority",
+        "Unify movement",
+        "Respite",
     ):
         require(unresolved in plan, f"implementation stop condition missing: {unresolved}")
 
@@ -129,11 +136,20 @@ public final class ClericSpellbookFoundationFixture {
 			check(definition.getStableCode() == index, "stable code drift at " + index);
 			check(keys[index].equals(definition.getStableKey()), "stable key drift at " + index);
 			check(names[index].equals(definition.getDisplayName()), "display name drift at " + index);
+			check(definition.getEffectDescription() != null
+				&& !definition.getEffectDescription().trim().isEmpty(),
+				"effect description missing at " + index);
 			check(definition.getAlignment() == alignments[index], "alignment drift at " + index);
 			check(definition.getWorshipLevel() == levels[index], "Worship level drift at " + index);
 			check(definition.getSpellTier() == tiers[index], "spell tier drift at " + index);
 			check(definition.getRadius() == radii[index], "radius drift at " + index);
 			check(!definition.affectsCaster(), "launch caster exclusion drift at " + index);
+			check(definition.getPresentation().getSpellbookIconItemId() >= 0,
+				"spellbook icon missing at " + index);
+			check(!definition.getPresentation().hasCasterIcon(),
+				"unapproved caster icon configured at " + index);
+			check(!definition.getPresentation().hasCasterAnimation(),
+				"unapproved caster animation configured at " + index);
 			checkArray(definition.getHolyPowerThresholds(), thresholds[index],
 				"Holy Power thresholds drift at " + index);
 
@@ -198,12 +214,14 @@ public final class ClericSpellbookFoundationFixture {
 			ClericSpellCatalog.get(ClericSpellId.MEND).resolveEffectRank(-1);
 		} }, "negative Holy Power");
 		reject(new Action() { public void run() {
-			new ClericSpellDefinition(ClericSpellId.MEND, "Bad", ClericAlignment.SARADOMIN,
-				1, 1, 2, false, ClericSigilCost.forLaunchTier(1), 0, 0);
+			new ClericSpellDefinition(ClericSpellId.MEND, "Bad", "Bad definition",
+				ClericAlignment.SARADOMIN, 1, 1, 2, false,
+				ClericSigilCost.forLaunchTier(1), new ClericSpellPresentation(1, -1, -1), 0, 0);
 		} }, "duplicate thresholds");
 		reject(new Action() { public void run() {
-			new ClericSpellDefinition(ClericSpellId.MEND, "Bad", ClericAlignment.SARADOMIN,
-				1, 1, 2, false, ClericSigilCost.forLaunchTier(1), 1);
+			new ClericSpellDefinition(ClericSpellId.MEND, "Bad", "Bad definition",
+				ClericAlignment.SARADOMIN, 1, 1, 2, false,
+				ClericSigilCost.forLaunchTier(1), new ClericSpellPresentation(1, -1, -1), 1);
 		} }, "thresholds without zero");
 	}
 }

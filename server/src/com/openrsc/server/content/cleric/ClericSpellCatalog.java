@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Confirmed launch metadata only. This catalog is intentionally not registered
- * with startup, packets, handlers, or the legacy Magic spell list yet.
+ * Authoritative launch metadata shared by maintained-client presentation and
+ * the bounded Cleric cast-request boundary. It remains independent of the
+ * legacy Magic spell list and does not implement spell effects.
  */
 public final class ClericSpellCatalog {
 	public static final int SCHEMA_VERSION = 1;
@@ -22,29 +23,41 @@ public final class ClericSpellCatalog {
 
 	static {
 		List<ClericSpellDefinition> definitions = new ArrayList<ClericSpellDefinition>();
-		definitions.add(definition(ClericSpellId.MEND, "Mend", ClericAlignment.SARADOMIN,
+		definitions.add(definition(ClericSpellId.MEND, "Mend",
+			"Heals nearby party members over three pulses.", ClericAlignment.SARADOMIN,
 			1, 1, 2, 0, 12, 28));
-		definitions.add(definition(ClericSpellId.UNIFY, "Unify", ClericAlignment.NEUTRAL,
+		definitions.add(definition(ClericSpellId.UNIFY, "Unify",
+			"Draws distant nearby party members closer.", ClericAlignment.NEUTRAL,
 			3, 1, 4, 0));
-		definitions.add(definition(ClericSpellId.FERVOR, "Fervor", ClericAlignment.ZAMORAK,
+		definitions.add(definition(ClericSpellId.FERVOR, "Fervor",
+			"Improves nearby party members' accuracy.", ClericAlignment.ZAMORAK,
 			5, 1, 2, 0, 12, 28, 44));
-		definitions.add(definition(ClericSpellId.PURIFY, "Purify", ClericAlignment.GUTHIX,
+		definitions.add(definition(ClericSpellId.PURIFY, "Purify",
+			"Reduces poison on nearby party members.", ClericAlignment.GUTHIX,
 			8, 1, 2, 0, 12, 28, 44));
-		definitions.add(definition(ClericSpellId.RESTORE, "Restore", ClericAlignment.GUTHIX,
+		definitions.add(definition(ClericSpellId.RESTORE, "Restore",
+			"Restores reduced stats other than Hits.", ClericAlignment.GUTHIX,
 			11, 1, 2, 0, 12, 28, 44));
-		definitions.add(definition(ClericSpellId.WARD, "Ward", ClericAlignment.SARADOMIN,
+		definitions.add(definition(ClericSpellId.WARD, "Ward",
+			"Reduces several direct hits by 25 percent.", ClericAlignment.SARADOMIN,
 			14, 1, 2, 0, 12, 24, 32));
-		definitions.add(definition(ClericSpellId.GREATER_MEND, "Greater Mend", ClericAlignment.SARADOMIN,
+		definitions.add(definition(ClericSpellId.GREATER_MEND, "Greater Mend",
+			"Heals nearby party members with stronger pulses.", ClericAlignment.SARADOMIN,
 			16, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.ZEAL, "Zeal", ClericAlignment.ZAMORAK,
+		definitions.add(definition(ClericSpellId.ZEAL, "Zeal",
+			"Improves nearby party members' direct damage.", ClericAlignment.ZAMORAK,
 			19, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.THORNS, "Thorns", ClericAlignment.GUTHIX,
+		definitions.add(definition(ClericSpellId.THORNS, "Thorns",
+			"Reflects some direct damage taken by nearby allies.", ClericAlignment.GUTHIX,
 			22, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.AEGIS, "Aegis", ClericAlignment.SARADOMIN,
+		definitions.add(definition(ClericSpellId.AEGIS, "Aegis",
+			"Reduces a few direct hits by 50 percent.", ClericAlignment.SARADOMIN,
 			25, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.RALLY, "Rally", ClericAlignment.ZAMORAK,
+		definitions.add(definition(ClericSpellId.RALLY, "Rally",
+			"Grants injured nearby allies temporary lifesteal.", ClericAlignment.ZAMORAK,
 			28, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.RESPITE, "Respite", ClericAlignment.NEUTRAL,
+		definitions.add(definition(ClericSpellId.RESPITE, "Respite",
+			"Improves nearby party members' passive healing.", ClericAlignment.NEUTRAL,
 			30, 2, 3, 0, 24, 44, 64));
 
 		EnumMap<ClericSpellId, ClericSpellDefinition> ids =
@@ -75,10 +88,17 @@ public final class ClericSpellCatalog {
 	}
 
 	private static ClericSpellDefinition definition(ClericSpellId id, String displayName,
+			String effectDescription,
 			ClericAlignment alignment, int worshipLevel, int spellTier, int radius,
 			int... holyPowerThresholds) {
-		return new ClericSpellDefinition(id, displayName, alignment, worshipLevel, spellTier,
-			radius, false, ClericSigilCost.forLaunchTier(spellTier), holyPowerThresholds);
+		int spellbookIconItemId = ClericSigilItemId.get(
+			ClericSigilMaterial.STONE, alignment, true).getItemId();
+		return new ClericSpellDefinition(id, displayName, effectDescription, alignment,
+			worshipLevel, spellTier,
+			radius, false, ClericSigilCost.forLaunchTier(spellTier),
+			new ClericSpellPresentation(spellbookIconItemId,
+				ClericSpellPresentation.NONE, ClericSpellPresentation.NONE),
+			holyPowerThresholds);
 	}
 
 	private static void validateDefinition(ClericSpellDefinition definition) {

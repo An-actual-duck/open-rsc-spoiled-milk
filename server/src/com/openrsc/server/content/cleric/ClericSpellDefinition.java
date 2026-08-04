@@ -6,22 +6,30 @@ import java.util.Arrays;
 public final class ClericSpellDefinition {
 	private final ClericSpellId id;
 	private final String displayName;
+	private final String effectDescription;
 	private final ClericAlignment alignment;
 	private final int worshipLevel;
 	private final int spellTier;
 	private final int radius;
 	private final boolean affectsCaster;
 	private final ClericSigilCost primarySigilCost;
+	private final ClericSpellPresentation presentation;
 	private final int[] holyPowerThresholds;
 
-	ClericSpellDefinition(ClericSpellId id, String displayName, ClericAlignment alignment,
+	ClericSpellDefinition(ClericSpellId id, String displayName, String effectDescription,
+			ClericAlignment alignment,
 			int worshipLevel, int spellTier, int radius, boolean affectsCaster,
-			ClericSigilCost primarySigilCost, int... holyPowerThresholds) {
-		if (id == null || alignment == null || primarySigilCost == null) {
-			throw new IllegalArgumentException("Cleric spell identity, alignment, and cost are required");
+			ClericSigilCost primarySigilCost, ClericSpellPresentation presentation,
+			int... holyPowerThresholds) {
+		if (id == null || alignment == null || primarySigilCost == null || presentation == null) {
+			throw new IllegalArgumentException(
+				"Cleric spell identity, alignment, cost, and presentation are required");
 		}
 		if (displayName == null || displayName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Cleric spell display name is required");
+		}
+		if (effectDescription == null || effectDescription.trim().isEmpty()) {
+			throw new IllegalArgumentException("Cleric spell effect description is required");
 		}
 		if (worshipLevel < 1 || spellTier < 1 || radius < 1) {
 			throw new IllegalArgumentException("Cleric spell level, tier, and radius must be positive");
@@ -29,12 +37,14 @@ public final class ClericSpellDefinition {
 		validateThresholds(holyPowerThresholds);
 		this.id = id;
 		this.displayName = displayName;
+		this.effectDescription = effectDescription;
 		this.alignment = alignment;
 		this.worshipLevel = worshipLevel;
 		this.spellTier = spellTier;
 		this.radius = radius;
 		this.affectsCaster = affectsCaster;
 		this.primarySigilCost = primarySigilCost;
+		this.presentation = presentation;
 		this.holyPowerThresholds = holyPowerThresholds.clone();
 	}
 
@@ -65,6 +75,10 @@ public final class ClericSpellDefinition {
 		return displayName;
 	}
 
+	public String getEffectDescription() {
+		return effectDescription;
+	}
+
 	public ClericAlignment getAlignment() {
 		return alignment;
 	}
@@ -87,6 +101,10 @@ public final class ClericSpellDefinition {
 
 	public ClericSigilCost getPrimarySigilCost() {
 		return primarySigilCost;
+	}
+
+	public ClericSpellPresentation getPresentation() {
+		return presentation;
 	}
 
 	public int[] getHolyPowerThresholds() {

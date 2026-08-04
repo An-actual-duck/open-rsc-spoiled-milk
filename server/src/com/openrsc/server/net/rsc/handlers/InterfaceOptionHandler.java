@@ -14,6 +14,8 @@ import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.content.production.ProductionMemory;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.model.container.Item;
@@ -137,7 +139,43 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			case CAST_SUMMON:
 				Summoning.castSummon(player, payload.id);
 				break;
+			case CAST_CLERIC_SPELL:
+				handleClericSpellCastRequest(player, payload);
+				break;
 		}
+	}
+
+	/**
+	 * C06 deliberately establishes only the immediate icon-to-server request.
+	 * C07 will own recipients, resource spending, and effect application.
+	 */
+	private void handleClericSpellCastRequest(Player player, OptionsStruct payload) {
+		if (!player.isUsingCustomClient() || !player.getConfig().WANT_MYWORLD) {
+			return;
+		}
+
+		final ClericSpellDefinition definition;
+		try {
+			definition = ClericSpellCatalog.fromCode(payload.id);
+		} catch (IllegalArgumentException e) {
+			LOGGER.warn("Ignoring unknown Cleric spell code={} player={}",
+				payload.id, player.getUsername());
+			player.setSuspiciousPlayer(true, "invalid Cleric spell identity");
+			return;
+		}
+
+		if (player.getConfig().USES_PK_MODE || player.getLocation().inWilderness()) {
+			player.message("Cleric support spells cannot be cast in PvP areas");
+			return;
+		}
+		if (player.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) {
+			player.message("You need Worship level " + definition.getWorshipLevel()
+				+ " to cast " + definition.getDisplayName());
+			return;
+		}
+
+		player.message(definition.getDisplayName()
+			+ " is not active until Cleric support effects are implemented");
 	}
 
 	private void handleAutoCastSpell(Player player, OptionsStruct payload) {

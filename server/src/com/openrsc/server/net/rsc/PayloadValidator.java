@@ -31,6 +31,7 @@ public class PayloadValidator {
 		put(OpcodeOut.SEND_INVENTORY, InventoryStruct.class);
 		put(OpcodeOut.SEND_ELIXIR, ElixirUpdateStruct.class); // custom
 		put(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, ActivePotionEffectsStruct.class); // custom
+		put(OpcodeOut.SEND_CLERIC_SPELLBOOK, ClericSpellbookStruct.class); // custom
 		put(OpcodeOut.SEND_APPEARANCE_SCREEN, NoPayloadStruct.class);
 		put(OpcodeOut.SEND_NPC_COORDS, MobsUpdateStruct.class);
 		put(OpcodeOut.SEND_DEATH, NoPayloadStruct.class);

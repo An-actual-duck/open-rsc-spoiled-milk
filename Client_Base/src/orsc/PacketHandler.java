@@ -1,6 +1,7 @@
 package orsc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
+import com.openrsc.client.entityhandling.defs.ClericSpellDef;
 import com.openrsc.client.entityhandling.defs.SpriteDef;
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.entityhandling.instances.Item;
@@ -590,7 +591,7 @@ public class PacketHandler {
 
 			else if (opcode == 151) updateWorldEditor();
 
-			else if (opcode == 152) updateActivePotionEffects();
+			else if (opcode == 152) updateActivePotionEffects(length);
 
 			else if (opcode == 154) updateLayeredTerrainStage(length);
 
@@ -598,6 +599,8 @@ public class PacketHandler {
 			else if (opcode == 155) loadHiscores();
 
 			else if (opcode == 157) updateLayeredSceneContext(length);
+
+			else if (opcode == 158) updateClericSpellbook();
 
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
@@ -1428,9 +1431,9 @@ public class PacketHandler {
 		if(type==6)mc.worldEditorInterface.showError(message);else mc.worldEditorInterface.showInfo(type,message);
 	}
 
-	private void updateActivePotionEffects() {
+	private void updateActivePotionEffects(int length) {
 		int count = packetsIncoming.getByte() & 0xff;
-		if (count > 16) {
+		if (count > 32) {
 			mc.clearActivePotionEffects();
 			return;
 		}
@@ -1440,7 +1443,40 @@ public class PacketHandler {
 			itemIds[i] = packetsIncoming.getShort();
 			remainingSeconds[i] = Math.max(0, packetsIncoming.get32());
 		}
-		mc.setActivePotionEffects(itemIds, remainingSeconds);
+		int encodedEntryBytes = 1 + count * 6;
+		int overflowCount = length >= encodedEntryBytes + 2
+			? packetsIncoming.getShort() & 0xffff : 0;
+		mc.setActivePotionEffects(itemIds, remainingSeconds, overflowCount);
+	}
+
+	private void updateClericSpellbook() {
+		int schemaVersion = packetsIncoming.getByte() & 0xff;
+		int count = packetsIncoming.getByte() & 0xff;
+		if (count > ClericSpellbookCatalog.MAX_DEFINITIONS) {
+			mc.clearClericSpellbook();
+			return;
+		}
+		ArrayList<ClericSpellDef> definitions = new ArrayList<ClericSpellDef>(count);
+		for (int i = 0; i < count; i++) {
+			definitions.add(new ClericSpellDef(
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.readString(),
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getByte() != 0,
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.getShort() & 0xffff,
+				packetsIncoming.getByte() & 0xff,
+				packetsIncoming.get32(),
+				packetsIncoming.get32()));
+		}
+		mc.replaceClericSpellbook(schemaVersion, definitions);
 	}
 
 	public final void handlePacket2(int opcode, int length) {

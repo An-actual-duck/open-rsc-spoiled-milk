@@ -7,6 +7,8 @@ import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanManager;
 import com.openrsc.server.content.clan.ClanPlayer;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyManager;
@@ -2171,6 +2173,7 @@ public class ActionSender {
 		List<Player.ActivePotionEffectStatus> statuses = player.getActivePotionEffectStatuses();
 		ActivePotionEffectsStruct struct = new ActivePotionEffectsStruct();
 		struct.count = statuses.size();
+		struct.totalCount = statuses.size();
 		struct.itemIds = new int[struct.count];
 		struct.remainingSeconds = new int[struct.count];
 		for (int i = 0; i < struct.count; i++) {
@@ -2179,6 +2182,18 @@ public class ActionSender {
 			struct.remainingSeconds[i] = status.remainingSeconds;
 		}
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_ACTIVE_POTION_EFFECTS, struct, player);
+	}
+
+	/** Sends authoritative Cleric display metadata only to the maintained client. */
+	public static void sendClericSpellbook(Player player) {
+		if (!player.isUsingCustomClient()) {
+			return;
+		}
+		ClericSpellbookStruct struct = new ClericSpellbookStruct();
+		struct.schemaVersion = ClericSpellCatalog.SCHEMA_VERSION;
+		struct.definitions = ClericSpellCatalog.getAll().toArray(
+			new ClericSpellDefinition[0]);
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_CLERIC_SPELLBOOK, struct, player);
 	}
 
 	/**
@@ -2423,6 +2438,7 @@ public class ActionSender {
 				if (elixir > -1)
 					sendElixirTimer(player, player.getElixir());
 				sendActivePotionEffects(player);
+				sendClericSpellbook(player);
 
 				sendWakeUp(player, false, true);
 
