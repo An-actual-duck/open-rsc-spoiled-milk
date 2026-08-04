@@ -1,12 +1,13 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
-Status: paused at READY handoff; awaiting corrected upstairs map-loader data
+Status: active; production-equivalent private profile restored for remaining matrix
 
-Branch: `refactor/boundary-loading-diagnostics`
+Branch: `refactor/boundary-loading-diagnostics-followup`
 
 Scope: desktop client world-boundary transitions, especially renderer-v2/OpenGL
 
-Gameplay changes in this phase: none
+Gameplay changes in this phase: one fail-closed upper-floor object-reach fix;
+boundary-loading behavior remains unchanged while evidence is collected
 
 ## Goal
 
@@ -208,23 +209,89 @@ python3 scripts/analyze-renderer-session.py \
 The generated `ai-summary.md` is the decision record. Retain the raw
 `events.jsonl` until the optimization direction is selected.
 
-### Matrix status at paused handoff
+### Current matrix status
 
 - Cold, warm cardinal, return, and dense-scenery evidence has been captured.
 - The attempted corner route under `boundary-diagonal` crossed the Y and X
   boundaries on separate steps, producing cardinal traces rather than a valid
   simultaneous diagonal trace. It must be rerun after resumption with a route
   that actually changes both section bases in one transition.
-- The `boundary-multilevel` phase exposed an unrelated broken upstairs map.
-  Its level-1 trace was superseded by the next level change and its level-2
-  trace ended with the diagnostic session; the player confirmed that the
-  upstairs itself is invalid because of a map-loader bug. Those samples are
-  not valid multi-level performance evidence.
-- Private client and server were stopped after the invalid map was confirmed.
-  Resume this matrix only after retrieving and integrating the corrected map
-  loader/data. Start a fresh diagnostic session, validate the upstairs scene
-  visually first, then capture multi-level and true diagonal cases before any
-  substantial loading optimization.
+- The first resumed upstairs check found an unrelated ladder-interaction
+  failure: directional object reach constructed a logical location from an
+  already packed upper-floor Y coordinate plus the explicit level, causing an
+  exact-projection exception on every ladder interaction tick.
+  `Mob.isObjectReachClear` now derives the checked tile through the mob's
+  current-level projection and fails closed on an invalid tile. This
+  correctness repair is checkpointed as `d1d3acfe4`.
+- The resumed client/server pair was then discovered to have been launched
+  with `scripts/private-server/server.sh`. That convenience launcher uses
+  `myworld.conf` without the production native-layered runtime flags. The
+  public server enables the replacement package, residency, readiness,
+  prediction, symmetric residency, atomic activation, and synchronized scene
+  baseline. The player's visible world edges exposed the mismatch. Therefore
+  all performance observations from
+  `session-20260802-151808-2782853`--including its apparent 44--64 ms floor
+  changes--are invalid for comparison with the public loader.
+- Client class and source equality against current main was confirmed, but
+  that comparison used the same incorrectly configured private server. It
+  proves the topic branch did not alter those client classes; it does not prove
+  loader parity because the effective loader is negotiated by the server.
+- A fresh private package has now been generated and validated with
+  `scripts/run-server.sh --layered-production`. The replacement-profile server
+  and diagnostics client session `session-20260802-154618-2791426` are the
+  corrected basis for renewed visual validation and capture.
+- The player visually confirmed that the corrected production-equivalent
+  profile no longer exposed world edges. The client negotiated the native
+  authoritative protocol-v8 path, and the private server process was verified
+  to have the replacement package, residency, readiness, prediction, symmetric
+  residency, atomic activation, and synchronized-baseline flags enabled.
+- A marked four-circuit ground/first/second-floor capture is now complete on
+  that corrected profile. Its findings are recorded below. Only the true
+  diagonal/corner capture remains outstanding. That case must change both
+  48-tile section bases in one movement update.
+
+## Corrected-Profile Multi-Level Evidence
+
+Session
+`output/renderer-diagnostics/session-20260802-154618-2791426` contains the
+production-equivalent validation and the marked `boundary-multilevel` phase
+from 19:54:44 through 19:55:30 UTC. The player completed four full circuits:
+ground to first, first to second, second to first, and first to ground. The
+client's sixteen plane-changing region records confirm all four circuits; their
+synchronous client-region work was only 1.368--4.082 ms.
+
+The visible cost is strongly asymmetric by destination:
+
+| Destination | Measured transitions | Baseline packets | Atomic baseline | Worst OpenGL interval | Worst client loop | Largest chunk upload |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| First floor from ground | 4 | 4 | 49--51 ms | 18.6--23.6 ms | 21.2--22.8 ms | 6.0--6.3 ms |
+| Second floor | 4 | 4 | 50--51 ms | 22.4--22.7 ms | 20.0--20.4 ms | 1.3--1.5 ms |
+| First floor from second | 4 | 4 | 49 ms | 19.1--19.6 ms | 20.5--21.1 ms | 0.7--0.8 ms |
+| Ground floor | 4 | 9 | 219--303 ms | 146.8--215.6 ms for the three completed summaries | 52.5--94.8 ms including the marked final return | 81.2--83.8 ms |
+
+The Ctrl+F8 marker landed on the final ground return. At the marker the nearby
+client-loop maximum was 94.810 ms and the current OpenGL render was 110.755 ms;
+the atomic receipt record completed at 303 ms. The three preceding ground
+returns each assembled 86 scenery inputs and spent 60.499--65.008 ms of worker
+CPU on scenery meshes, then incurred an 81.2--83.8 ms maximum chunk upload.
+Upper-floor transitions assembled only 8--26 scenery inputs and did not show a
+comparable upload burst.
+
+These ladder transitions start a fresh context each time. The next ladder use
+therefore marks the preceding trace `superseded` before the collector's longer
+settling timeout, even with a two-second visual pause. The direct packet,
+region, CPU, GPU, and bounded frame rings are complete and internally
+consistent, but the generic analyzer intentionally excludes them from its
+settled-only aggregate. The table above is consequently derived from the
+marked trace records directly rather than from the aggregate case matrix.
+
+This case does not identify ladder handling or synchronous client-region work
+as the hitch. Returning to the much denser ground scene combines more static
+baseline data, materially more scenery construction, and an approximately
+82 ms GPU upload. It is a separate cold/dense scene cost from the already
+confirmed 640 ms server page-cadence threshold: these ground products use one
+fence plus eight data pages and therefore do not spill into a second normal
+world update.
 
 ## First Marked Cold-Case Evidence
 
