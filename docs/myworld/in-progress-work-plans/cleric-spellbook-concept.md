@@ -903,7 +903,7 @@ values, durations, icons, and final protocol/data structures remain balance
 and implementation design work except where this document explicitly confirms
 them.
 
-## Unresolved Design Questions
+## Remaining Design Questions and Confirmed Boundaries
 
 ### Sigil Taxonomy and Production
 
@@ -923,20 +923,24 @@ them.
 - Remaining non-PvP abuse safeguards. Initial Cleric PvP support is disabled;
   same-party eligibility, launch-spell caster exclusion, and clearing effects
   on party separation are settled.
-- How Unify's one-time forced movement integrates with queued walking and the
-  client movement presentation without desynchronization. This implementation
-  detail may not weaken its settled collision, layer, or combat-state rules.
-- Cast-level resource behavior when an area spell applies to only some
-  recipients or is wholly ineffective because every recipient has a stronger
-  active family effect. Casting never awards Worship XP.
+- Unify clears an affected recipient's queued walking before applying up to
+  two ordinary server-authoritative, collision-valid steps. It must not weaken
+  the settled collision, layer, or combat-state rules or act as a teleport.
+- A cast spends one complete sigil vector exactly once when at least one
+  recipient receives a useful application. Partial success is valid and
+  ineffective recipients are skipped. An equal-strength refresh counts as a
+  useful application. If every candidate is ineffective, the cast spends
+  nothing. Resource removal and all successful applications commit atomically.
+  Casting never awards Worship XP.
 - Final status icons and labels, optional per-effect charge/pulse packet
   representation, and mixed potion/Cleric priority within the expanded bound.
   Overflow indication, Mend cadence, and the tactical and Respite duration
   ladders are settled.
 - Shared combat-path implementation and blocked-damage telemetry for the
   settled Ward/Aegis, Thorns, Zeal, and Rally direct-damage boundaries.
-- Exact passive-healing clock synchronization when Respite is applied,
-  refreshed, replaced, or expires. Its magnitude, duration, eligible healing
+- Respite uses the existing natural passive-healing clock. Application,
+  refresh, replacement, and expiry must not reset that clock or grant a free
+  immediate regeneration tick. Its magnitude, duration, eligible healing
   stream, and multiplicative composition are settled.
 
 ### Initial Spell Content
@@ -1467,3 +1471,17 @@ maintaining a combat-only allowlist. It rounds each reduced skill's recovery up
 and caps it at the active legitimate ceiling, never creating a boost. Stable
 aliases are deduplicated. Devotion and other non-skill resources remain
 outside the effect, and repeated casts are allowed.
+
+### 2026-08-03: Cast transaction and runtime integration rules
+
+Confirmed that a Cleric area cast consumes one full sigil vector only when at
+least one eligible recipient receives a useful application. Partial success
+commits normally and skips ineffective recipients; an equal-strength refresh
+counts as useful. A wholly ineffective cast consumes nothing. Sigil removal
+and all successful effect applications are one atomic server transaction.
+
+Confirmed that Unify first clears queued walking for each affected recipient,
+then uses up to two ordinary collision-checked, server-authoritative steps.
+Confirmed that Respite participates in the natural passive-regeneration clock
+without resetting it or granting an immediate free tick. These decisions clear
+the remaining C07 design stop while leaving mixed status-HUD priority for C08.

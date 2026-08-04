@@ -60,12 +60,16 @@ def validate_source_boundaries() -> None:
             "Cleric catalog exposure drift: " + ", ".join(references))
 
     plan = IMPLEMENTATION_PLAN.read_text(encoding="utf-8")
-    for unresolved in (
-        "Sigil consumption",
-        "Unify movement",
-        "Respite",
+    for settled_c07_rule in (
+        "Spend one full cast vector exactly once",
+        "if every recipient is\nineffective, spend nothing",
+        "queued walking",
+        "natural regeneration clock",
     ):
-        require(unresolved in plan, f"implementation stop condition missing: {unresolved}")
+        require(settled_c07_rule in plan,
+                f"settled C07 contract missing: {settled_c07_rule}")
+    require("C07 remains blocked" not in plan,
+            "C07 must not remain blocked after its runtime rules were settled")
 
 
 FIXTURE = r"""

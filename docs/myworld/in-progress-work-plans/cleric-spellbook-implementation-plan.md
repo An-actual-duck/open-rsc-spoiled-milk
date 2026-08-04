@@ -2,11 +2,11 @@
 
 ## Status
 
-- Branch: `feat/cleric-spellbook-presentation`
+- Branch: `main` (C06 integrated)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation**
-- Current milestone: **C06 implemented, automated-tested, and privately accepted**
-- Next planned milestone: **C07 — shared support targeting and cast transaction, only after its resource-failure rule is settled**
+- Current milestone: **C06 integrated, automated-tested, and privately accepted**
+- Next planned milestone: **C07 — shared support targeting and cast transaction; its cast-level resource, Unify movement, and Respite clock rules are settled**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, and maintained-client Cleric catalog presentation; support effects and sigil consumption remain disabled**
 - Public-server work: **forbidden**
 
@@ -36,20 +36,25 @@ sequencing, dependencies, verification, and stop conditions.
 - Do not alter, restart, or deploy the public server from an implementation
   branch.
 
-## Decisions That Block Runtime Exposure
+## Remaining Decisions by Later Milestone
 
-The following remain unresolved in the concept and may not be guessed:
+C07 is no longer design-blocked. Its cast transaction spends one complete
+sigil vector only when at least one eligible recipient receives a useful
+application; an entirely ineffective cast spends nothing. Partial success is
+valid, an equal-strength refresh is useful, and resource removal plus every
+successful application commit atomically. Unify clears each affected
+recipient's queued walking before applying up to two ordinary,
+collision-checked steps. Respite joins the natural regeneration clock without
+resetting it or granting a free immediate tick.
 
-1. Sigil consumption when an area cast has partial or no useful recipients.
-2. Unify movement-queue/client-presentation integration.
-3. Respite passive-regeneration clock synchronization.
-4. Mixed potion/Cleric status priority and charge/pulse representation within
-   the expanded transport bound.
-5. Future offensive god-spell expansion beyond the existing Mage entries.
-6. Additional Devotion sources required to balance repeat sigil production.
+The following remain later design work and may not be guessed:
 
-Code may model already confirmed data adjacent to these questions, but it must
-not register or invoke behavior that depends on an unresolved answer.
+1. Mixed potion/Cleric status priority and charge/pulse representation within
+   the expanded transport bound (C08).
+2. Future offensive god-spell expansion beyond the existing Mage entries;
+   existing god spells remain under Mage for the initial rollout.
+3. Additional Devotion sources for later economy tuning; the initial confirmed
+   sigil-production economy may proceed without inventing them.
 
 ## Ordered Implementation Sequence
 
@@ -261,8 +266,13 @@ the private presentation.
 Implement caster-centered square/Chebyshev party resolution, self exclusion,
 world-space and signed-layer equality, per-recipient spell line-of-effect, and
 one server-authoritative cast transaction. Standard radius is `tier + 1`;
-Unify is radius four. Do not finalize sigil spend on partial/empty casts until
-that open design question is approved. Preserve the C06 no-PvP boundary.
+Unify is radius four. Spend one full cast vector exactly once when at least one
+recipient receives a useful application, including an equal-strength refresh.
+Allow partial success and skip ineffective recipients; if every recipient is
+ineffective, spend nothing. Preflight and commit sigil removal and all
+successful applications as one atomic transaction. Preserve the C06 no-PvP
+boundary. For Unify, clear an affected recipient's queued walking before
+applying up to two ordinary, collision-valid server-authoritative steps.
 
 ### C08 — Shared Cleric Effect State and HUD Extension
 
@@ -661,5 +671,6 @@ diagnostic during logout, with no Cleric presentation or protocol exception.
 
 C06 adds no support effect, party targeting, sigil consumption, cooldown,
 Worship XP, combat change, PvP support, caster visual asset, dialogue, shop,
-drop, or Devotion source. C07 remains blocked on the confirmed stop condition
-for partial or wholly ineffective area-cast resource behavior.
+drop, or Devotion source. C07 may now proceed under the confirmed
+partial/ineffective cast transaction, Unify movement-queue, and Respite
+natural-regeneration-clock rules.
