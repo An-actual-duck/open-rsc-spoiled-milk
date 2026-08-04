@@ -5442,7 +5442,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3266, new ItemDef("Exalted Rune 2-handed Sword", "A very large shining sword", "",
 			156000, 82, "items:82", false, true, 8216, EXALTED_RUNE_COLOR, true, false, true, 3266));
 		setCustomItemDefinition(3267, new ItemDef("Exalted Rune Hatchet", "A woodcutters axe", "",
-			52000, 85, "items:85", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3267));
+			52000, 12, "items:12", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3267));
 		setCustomItemDefinition(3268, new ItemDef("Exalted Rune Pickaxe", "Used for mining", "",
 			52000, 72, "items:72", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3268));
 		setCustomItemDefinition(3269, new ItemDef("Exalted Rune battle Axe", "A vicious looking shining axe", "",
