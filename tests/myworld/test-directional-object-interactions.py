@@ -82,18 +82,18 @@ class DirectionalObjectInteractionTest(unittest.TestCase):
 
         compact_cardinal = compact(cardinal)
         for tile in (
-            "objectReachTile(getX()-1,getY())",
-            "objectReachTile(getX()+1,getY())",
-            "objectReachTile(getX(),getY()-1)",
-            "objectReachTile(getX(),getY()+1)",
+            "isObjectReachClear(getX()-1,getY(),CollisionFlag.WALL_WEST)",
+            "isObjectReachClear(getX()+1,getY(),CollisionFlag.WALL_EAST)",
+            "isObjectReachClear(getX(),getY()-1,CollisionFlag.WALL_SOUTH)",
+            "isObjectReachClear(getX(),getY()+1,CollisionFlag.WALL_NORTH)",
         ):
             self.assertIn(tile, compact_cardinal)
         compact_diagonal = compact(diagonal)
         for tile in (
-            "objectReachTile(getX()-1,getY()-1)",
-            "objectReachTile(getX()+1,getY()-1)",
-            "objectReachTile(getX()-1,getY()+1)",
-            "objectReachTile(getX()+1,getY()+1)",
+            "isObjectReachClear(getX()-1,getY()-1,CollisionFlag.WALL_SOUTH_WEST)",
+            "isObjectReachClear(getX()+1,getY()-1,CollisionFlag.WALL_SOUTH_EAST)",
+            "isObjectReachClear(getX()-1,getY()+1,CollisionFlag.WALL_NORTH_WEST)",
+            "isObjectReachClear(getX()+1,getY()+1,CollisionFlag.WALL_NORTH_EAST)",
         ):
             self.assertIn(tile, compact_diagonal)
 
@@ -108,20 +108,24 @@ class DirectionalObjectInteractionTest(unittest.TestCase):
         )
         resolver = method_body(
             self.mob,
-            "private TileValue objectReachTile(final int x, final int y)",
+            "private boolean isObjectReachClear(",
         )
 
         self.assertNotIn("getWorld().getTile(", cardinal)
         self.assertNotIn("getWorld().getTile(", diagonal)
         for snippet in (
-            "WorldLocation current = getWorldLocation();",
-            "new WorldLocation(",
-            "current.getWorldSpace(),",
-            "new WorldCoordinate(",
-            "current.getCoordinate().getLevel()",
-            "getWorld().getTile(reachabilityLocation)",
+            "getTileAtCurrentLevel(x, y)",
+            "tile != null",
+            "(tile.traversalMask & collisionFlag) == 0",
+            "IllegalArgumentException | IllegalStateException",
+            "return false;",
         ):
             self.assertIn(snippet, resolver)
+        self.assertNotIn(
+            "new WorldCoordinate(",
+            resolver,
+            "runtime packed Y must not be paired with an explicit level",
+        )
 
     def test_diagonal_doors_accept_all_six_positions_per_direction(self):
         do_door = method_body(

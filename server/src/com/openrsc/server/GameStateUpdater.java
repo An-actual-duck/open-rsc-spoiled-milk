@@ -38,6 +38,7 @@ import com.openrsc.server.net.rsc.NativeLayeredTerrainClientResidency;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainReadiness;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainStageReadiness;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainWireCache;
+import com.openrsc.server.net.PacketFrameLengthGuard;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.struct.incoming.LayeredTerrainReadyStruct;
 import com.openrsc.server.net.rsc.struct.incoming
@@ -59,6 +60,9 @@ import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacket;
 import static com.openrsc.server.net.rsc.ActionSender.tryFinalizeAndSendPacketChecked;
 
 public final class GameStateUpdater {
+	private static final boolean LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS =
+		Boolean.parseBoolean(System.getenv(
+			"SPOILED_MILK_BOUNDARY_DIAGNOSTICS"));
 	private enum VisibilitySnapshotMode {
 		LEGACY,
 		SNAPSHOT
@@ -139,6 +143,8 @@ public final class GameStateUpdater {
 		"layered_scene_context_protocol";
 	private static final String ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE =
 		"atomic_scene_fence_sequence";
+	private static final String ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE =
+		"atomic_scene_baseline_pending_sequence";
 	private static final String NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE =
 		"native_terrain_client_residency";
 	private static final String NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE =
@@ -445,7 +451,21 @@ public final class GameStateUpdater {
 			player.getAttribute(
 				NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE, null);
 		if (pending == null || !pending.matches(receipt)) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.info(
+					"LAYERED_TERRAIN_READY_IGNORED pending={} receiptContext={} "
+						+ "receiptWorld={} receiptLevel={} receiptCenter={},{}",
+					pending,
+					receipt.contextSequence,
+					receipt.worldSpace,
+					receipt.logicalLevel,
+					receipt.centerSectorX,
+					receipt.centerSectorY);
+			}
 			return;
+		}
+		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+			LOGGER.info("LAYERED_TERRAIN_READY_ACCEPTED pending={}", pending);
 		}
 		player.setAttribute(
 			NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, pending);
@@ -497,13 +517,32 @@ public final class GameStateUpdater {
 			player.getAttribute(
 				NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE, null);
 		if (pending == null || !pending.matches(receipt)) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.info(
+					"LAYERED_TERRAIN_STAGE_READY_IGNORED pending={} receipt={}",
+					pending,
+					terrainStageReceiptSummary(receipt));
+			}
 			return;
 		}
 		final NativeLayeredSceneTerrain stagedTerrain =
 			player.getAttribute(
 				NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE, null);
 		if (stagedTerrain == null) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.info(
+					"LAYERED_TERRAIN_STAGE_READY_IGNORED pending={} "
+						+ "receipt={} reason=missing-transaction",
+					pending,
+					terrainStageReceiptSummary(receipt));
+			}
 			return;
+		}
+		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+			LOGGER.info(
+				"LAYERED_TERRAIN_STAGE_READY_ACCEPTED pending={} receipt={}",
+				pending,
+				terrainStageReceiptSummary(receipt));
 		}
 		stagedTerrain.commitResidency();
 		player.removeAttribute(
@@ -523,6 +562,21 @@ public final class GameStateUpdater {
 			player.removeAttribute(NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE);
 			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
 		}
+	}
+
+	private static String terrainStageReceiptSummary(
+			final LayeredTerrainStageReadyStruct receipt) {
+		if (receipt == null) {
+			return "none";
+		}
+		return "protocol=" + receipt.protocolVersion
+			+ ",sequence=" + receipt.stageSequence
+			+ ",context=" + receipt.contextSequence
+			+ ",world=" + receipt.worldSpace
+			+ ",level=" + receipt.logicalLevel
+			+ ",center=" + receipt.centerSectorX + ","
+				+ receipt.centerSectorY
+			+ ",manifest=" + receipt.manifestSha256;
 	}
 
 	private boolean canActivateNativeTerrainStage(
@@ -864,69 +918,89 @@ public final class GameStateUpdater {
 			|| player.getWalkingQueue().path.isEmpty()) {
 			return null;
 		}
-		final int currentMidpointX =
-			activeTerrain.currentChunkX * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
-		final int currentMidpointY =
-			activeTerrain.currentChunkY * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
-		final boolean centeredSectionWindow =
-			usesCenteredClientSceneWindow(player);
-		for (final Point waypoint
-			: player.getWalkingQueue().path.getWaypoints()) {
-			final int distance = Math.max(
-				Math.abs(waypoint.getX() - player.getX()),
-				Math.abs(waypoint.getY() - player.getY()));
-			if (distance > NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
-				return null;
-			}
-			if (centeredSectionWindow
-					? waypoint.getX() >= currentMidpointX
-						&& waypoint.getX()
-							< currentMidpointX
-								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
-						&& waypoint.getY() >= currentMidpointY
-						&& waypoint.getY()
-							< currentMidpointY
-								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
-					: waypoint.getX()
-							> currentMidpointX
-								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
-						&& waypoint.getX()
-							< currentMidpointX
-								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS
-						&& waypoint.getY()
-							> currentMidpointY
-								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
-						&& waypoint.getY()
-							< currentMidpointY
-								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
-				continue;
-			}
-			final int targetCenterX = Math.floorDiv(
-				centeredSectionWindow
-					? clientLocalCenteredSectionAnchorForTile(
-						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH)
-					: clientLocalMidpointForTile(
-						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
-				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
-			final int targetCenterY = Math.floorDiv(
-				centeredSectionWindow
-					? clientLocalCenteredSectionAnchorForTile(
-						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT)
-					: clientLocalMidpointForTile(
-						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
-				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
-			final int deltaX =
-				targetCenterX - activeTerrain.currentChunkX;
-			final int deltaY =
-				targetCenterY - activeTerrain.currentChunkY;
-			if ((deltaX == 0 && deltaY == 0)
-				|| Math.abs(deltaX) > 1
-				|| Math.abs(deltaY) > 1) {
-				return null;
-			}
-			return new int[] {targetCenterX, targetCenterY};
+		return selectNativeTerrainPredictionCenter(
+			player.getX(),
+			player.getY(),
+			activeTerrain.currentChunkX,
+			activeTerrain.currentChunkY,
+			usesCenteredClientSceneWindow(player),
+			player.getWalkingQueue().path.getWaypoints());
+	}
+
+	static int[] selectNativeTerrainPredictionCenter(
+		final int playerX,
+		final int playerY,
+		final int activeCenterX,
+		final int activeCenterY,
+		final boolean centeredSectionWindow,
+		final Iterable<Point> waypoints) {
+		if (waypoints == null) {
+			return null;
 		}
-		return null;
+		/*
+		 * Movement polling can consume more than one queued waypoint before the
+		 * next game-state update emits a scene context. The first waypoint over
+		 * one axis can therefore describe a transient cardinal center while the
+		 * context actually activates the following diagonal center. Prepare for
+		 * the furthest planned waypoint inside the existing bounded lead instead
+		 * of pinning the prediction to that transient first crossing.
+		 */
+		Point predictedWaypoint = null;
+		for (final Point waypoint : waypoints) {
+			final int distance = Math.max(
+				Math.abs(waypoint.getX() - playerX),
+				Math.abs(waypoint.getY() - playerY));
+			if (distance > NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
+				break;
+			}
+			predictedWaypoint = waypoint;
+		}
+		if (predictedWaypoint == null) {
+			return null;
+		}
+		final int currentMidpointX =
+			activeCenterX * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		final int currentMidpointY =
+			activeCenterY * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		if (centeredSectionWindow
+				? predictedWaypoint.getX() >= currentMidpointX
+					&& predictedWaypoint.getX()
+						< currentMidpointX + NATIVE_LAYERED_WIRE_CHUNK_SIZE
+					&& predictedWaypoint.getY() >= currentMidpointY
+					&& predictedWaypoint.getY()
+						< currentMidpointY + NATIVE_LAYERED_WIRE_CHUNK_SIZE
+				: predictedWaypoint.getX()
+						> currentMidpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+					&& predictedWaypoint.getX()
+						< currentMidpointX + CLIENT_LOCAL_REGION_RELOAD_RADIUS
+					&& predictedWaypoint.getY()
+						> currentMidpointY - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+					&& predictedWaypoint.getY()
+						< currentMidpointY + CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
+			return null;
+		}
+		final int targetCenterX = Math.floorDiv(
+			centeredSectionWindow
+				? clientLocalCenteredSectionAnchorForTile(
+					predictedWaypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH)
+				: clientLocalMidpointForTile(
+					predictedWaypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int targetCenterY = Math.floorDiv(
+			centeredSectionWindow
+				? clientLocalCenteredSectionAnchorForTile(
+					predictedWaypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT)
+				: clientLocalMidpointForTile(
+					predictedWaypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int deltaX = targetCenterX - activeCenterX;
+		final int deltaY = targetCenterY - activeCenterY;
+		if ((deltaX == 0 && deltaY == 0)
+			|| Math.abs(deltaX) > 1
+			|| Math.abs(deltaY) > 1) {
+			return null;
+		}
+		return new int[] {targetCenterX, targetCenterY};
 	}
 
 	private boolean nativeTerrainPredictionEnabled() {
@@ -1238,9 +1312,36 @@ public final class GameStateUpdater {
 			wallsChanged,
 			groundItemsChanged,
 			staticPresentation);
+		final long deliveryStartedNanos =
+			LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+				? System.nanoTime() : 0L;
+		final int outgoingQueueBefore =
+			LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+				? player.getOutgoingPacketQueueSize() : -1;
+		final boolean channelWritableBefore =
+			LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+				&& player.isOutgoingChannelWritable();
+		final int remainingPagesBefore =
+			remainingSceneBaselinePageCount(current);
+		final long remainingWireBytesBefore =
+			remainingSceneBaselineWireBytes(current);
+		final Integer atomicPendingSequence = player.getAttribute(
+			ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,
+			Integer.valueOf(0));
+		final boolean atomicActivationPending =
+			current.protocolVersion
+				>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+			&& atomicPendingSequence.intValue()
+				== current.locationContextSequence;
+		final SceneBaselineDeliveryPolicy.Decision delivery =
+			SceneBaselineDeliveryPolicy.decide(
+				sceneBaselinePageBurstLimit(current.protocolVersion),
+				atomicActivationPending,
+				remainingPagesBefore,
+				remainingWireBytesBefore);
 		int sentPages = 0;
-		final int pageBurstLimit =
-			sceneBaselinePageBurstLimit(current.protocolVersion);
+		boolean sendFailed = false;
+		final int pageBurstLimit = delivery.getPageLimit();
 		while (sentPages < pageBurstLimit) {
 			final SceneBaselinePage page = buildNextSceneBaselinePage(
 				player, current, staticPresentation);
@@ -1248,19 +1349,88 @@ public final class GameStateUpdater {
 				break;
 			}
 
-			sendSceneBaselinePacket(player, current, page);
+			if (!sendSceneBaselinePacket(player, current, page)) {
+				sendFailed = true;
+				break;
+			}
+			current.recordSentPage(page);
 			sentPages++;
 		}
 
+		if (sendFailed && sentPages == 0) {
+			if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
+				LOGGER.warn(
+					"LAYERED_SCENE_BASELINE_DELIVERY mode={} sent=0 "
+						+ "sendFailed=true remainingPages={} remainingWireBytes={} "
+						+ "deliveryNanos={} queueBefore={} queueAfter={} "
+						+ "writableBefore={} writableAfter={}",
+					delivery.getMode(),
+					remainingPagesBefore,
+					remainingWireBytesBefore,
+					System.nanoTime() - deliveryStartedNanos,
+					outgoingQueueBefore,
+					player.getOutgoingPacketQueueSize(),
+					channelWritableBefore,
+					player.isOutgoingChannelWritable());
+			}
+			return;
+		}
+
 		if (sentPages == 0 && previous != null && current.sameStaticPayload(previous)) {
+			clearCompletedAtomicSceneBaseline(
+				player, current, atomicActivationPending);
 			return;
 		}
 
 		if (sentPages == 0) {
-			sendSceneBaselinePacket(player, current, SceneBaselinePage.empty());
+			if (!sendSceneBaselinePacket(
+					player, current, SceneBaselinePage.empty())) {
+				return;
+			}
 		}
 
 		player.setAttribute(SCENE_BASELINE_SUMMARY_ATTRIBUTE, current);
+		clearCompletedAtomicSceneBaseline(
+			player, current, atomicActivationPending);
+		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+			&& (sentPages > 0 || sendFailed)) {
+			LOGGER.info(
+				"LAYERED_SCENE_BASELINE_PAGES mode={} atomicPending={} "
+					+ "sent={} sendFailed={} remainingBeforePages={} "
+					+ "remainingBeforeWireBytes={} remainingAfterPages={} "
+					+ "remainingAfterWireBytes={} pageLimit={} "
+					+ "completeCapPages={} completeCapWireBytes={} "
+					+ "deliveryNanos={} queueBefore={} queueAfter={} "
+					+ "writableBefore={} writableAfter={} progress={}",
+				delivery.getMode(),
+				atomicActivationPending,
+				sentPages,
+				sendFailed,
+				remainingPagesBefore,
+				remainingWireBytesBefore,
+				remainingSceneBaselinePageCount(current),
+				remainingSceneBaselineWireBytes(current),
+				pageBurstLimit,
+				SceneBaselineDeliveryPolicy.ATOMIC_COMPLETE_MAX_PAGES,
+				SceneBaselineDeliveryPolicy.ATOMIC_COMPLETE_MAX_WIRE_BYTES,
+				System.nanoTime() - deliveryStartedNanos,
+				outgoingQueueBefore,
+				player.getOutgoingPacketQueueSize(),
+				channelWritableBefore,
+				player.isOutgoingChannelWritable(),
+				current.pageProgressSummary());
+		}
+	}
+
+	private void clearCompletedAtomicSceneBaseline(
+			final Player player,
+			final SceneBaselineSummary current,
+			final boolean atomicActivationPending) {
+		if (atomicActivationPending
+			&& current.hasSentCompleteStaticBaseline()) {
+			player.removeAttribute(
+				ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE);
+		}
 	}
 
 	private void sendAtomicSceneActivationFenceIfNeeded(
@@ -1307,18 +1477,25 @@ public final class GameStateUpdater {
 			player.setAttribute(
 				ATOMIC_SCENE_FENCE_SEQUENCE_ATTRIBUTE,
 				Integer.valueOf(contextSequence));
+			player.setAttribute(
+				ATOMIC_SCENE_BASELINE_PENDING_SEQUENCE_ATTRIBUTE,
+				Integer.valueOf(contextSequence));
 		}
 	}
 
-	private void sendSceneBaselinePacket(
+	private boolean sendSceneBaselinePacket(
 		final Player player,
 		final SceneBaselineSummary current,
 		final SceneBaselinePage page) {
 		final SceneBaselineStruct baseline = current.toStruct();
 		page.applyTo(baseline);
-		tryFinalizeAndSendPacket(OpcodeOut.SEND_SCENE_BASELINE, baseline, player);
+		if (!tryFinalizeAndSendPacketChecked(
+				OpcodeOut.SEND_SCENE_BASELINE, baseline, player)) {
+			return false;
+		}
 		getServer().addSceneBaselineMetrics(
 			page.recordCount(), page.payloadBytes(current.protocolVersion));
+		return true;
 	}
 
 	private SceneBaselineSummary buildSceneBaselineSummary(
@@ -1403,7 +1580,7 @@ public final class GameStateUpdater {
 			player.getLocalGameObjects().size(),
 			summary.protocolVersion);
 		if (summary.sceneryPageCursor < sceneryPageTotal) {
-			final int pageIndex = summary.sceneryPageCursor++;
+			final int pageIndex = summary.sceneryPageCursor;
 			return buildSceneBaselineObjectPage(
 				SCENE_BASELINE_PAGE_SCENERY,
 				pageIndex,
@@ -1416,7 +1593,7 @@ public final class GameStateUpdater {
 			player.getLocalWallObjects().size(),
 			summary.protocolVersion);
 		if (summary.wallsPageCursor < wallPageTotal) {
-			final int pageIndex = summary.wallsPageCursor++;
+			final int pageIndex = summary.wallsPageCursor;
 			return buildSceneBaselineObjectPage(
 				SCENE_BASELINE_PAGE_WALLS,
 				pageIndex,
@@ -1433,7 +1610,7 @@ public final class GameStateUpdater {
 			if (summary.presentationSceneryPageCursor
 					< presentationSceneryPageTotal) {
 				final int pageIndex =
-					summary.presentationSceneryPageCursor++;
+					summary.presentationSceneryPageCursor;
 				return buildSceneBaselinePresentationPage(
 					SCENE_BASELINE_PAGE_PRESENTATION_SCENERY,
 					pageIndex,
@@ -1449,7 +1626,7 @@ public final class GameStateUpdater {
 			if (summary.presentationWallsPageCursor
 					< presentationWallPageTotal) {
 				final int pageIndex =
-					summary.presentationWallsPageCursor++;
+					summary.presentationWallsPageCursor;
 				return buildSceneBaselinePresentationPage(
 					SCENE_BASELINE_PAGE_PRESENTATION_WALLS,
 					pageIndex,
@@ -1475,6 +1652,101 @@ public final class GameStateUpdater {
 				>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
 			? LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_BURST_LIMIT
 			: SCENE_BASELINE_PAGE_BURST_LIMIT;
+	}
+
+	private static int sceneBaselineFixedPayloadBytes(
+			final int protocolVersion) {
+		return SCENE_BASELINE_FIXED_PAYLOAD_BYTES
+			+ (protocolVersion >= LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
+				? LAYERED_CONTEXT_SEQUENCE_BYTES
+				: 0)
+			+ (protocolVersion
+					>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
+				? SCENE_BASELINE_PRESENTATION_HEADER_BYTES
+				: 0);
+	}
+
+	private static int sceneBaselineRecordBytes(final int category) {
+		return category == SCENE_BASELINE_PAGE_PRESENTATION_SCENERY
+			|| category == SCENE_BASELINE_PAGE_PRESENTATION_WALLS
+			? SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES
+			: SCENE_BASELINE_OBJECT_RECORD_BYTES;
+	}
+
+	private static int remainingSceneBaselinePageCount(
+			final SceneBaselineSummary summary) {
+		final int pageSize = sceneBaselinePageSize(summary.protocolVersion);
+		int remainingPages = 0;
+		remainingPages = Math.addExact(
+			remainingPages,
+			SceneBaselineDeliveryPolicy.remainingPageCount(
+				summary.scenery,
+				summary.sceneryPageCursor,
+				pageSize));
+		remainingPages = Math.addExact(
+			remainingPages,
+			SceneBaselineDeliveryPolicy.remainingPageCount(
+				summary.walls,
+				summary.wallsPageCursor,
+				pageSize));
+		remainingPages = Math.addExact(
+			remainingPages,
+			SceneBaselineDeliveryPolicy.remainingPageCount(
+				summary.presentationScenery,
+				summary.presentationSceneryPageCursor,
+				pageSize));
+		return Math.addExact(
+			remainingPages,
+			SceneBaselineDeliveryPolicy.remainingPageCount(
+				summary.presentationWalls,
+				summary.presentationWallsPageCursor,
+				pageSize));
+	}
+
+	private static long remainingSceneBaselineWireBytes(
+			final SceneBaselineSummary summary) {
+		final int pageSize = sceneBaselinePageSize(summary.protocolVersion);
+		final int fixedPayloadBytes =
+			sceneBaselineFixedPayloadBytes(summary.protocolVersion);
+		long remainingWireBytes = 0L;
+		remainingWireBytes = Math.addExact(
+			remainingWireBytes,
+			SceneBaselineDeliveryPolicy.remainingWireBytes(
+				summary.scenery,
+				summary.sceneryPageCursor,
+				pageSize,
+				fixedPayloadBytes,
+				sceneBaselineRecordBytes(SCENE_BASELINE_PAGE_SCENERY),
+				PacketFrameLengthGuard.SIMPLIFIED_FRAME_OVERHEAD_BYTES));
+		remainingWireBytes = Math.addExact(
+			remainingWireBytes,
+			SceneBaselineDeliveryPolicy.remainingWireBytes(
+				summary.walls,
+				summary.wallsPageCursor,
+				pageSize,
+				fixedPayloadBytes,
+				sceneBaselineRecordBytes(SCENE_BASELINE_PAGE_WALLS),
+				PacketFrameLengthGuard.SIMPLIFIED_FRAME_OVERHEAD_BYTES));
+		remainingWireBytes = Math.addExact(
+			remainingWireBytes,
+			SceneBaselineDeliveryPolicy.remainingWireBytes(
+				summary.presentationScenery,
+				summary.presentationSceneryPageCursor,
+				pageSize,
+				fixedPayloadBytes,
+				sceneBaselineRecordBytes(
+					SCENE_BASELINE_PAGE_PRESENTATION_SCENERY),
+				PacketFrameLengthGuard.SIMPLIFIED_FRAME_OVERHEAD_BYTES));
+		return Math.addExact(
+			remainingWireBytes,
+			SceneBaselineDeliveryPolicy.remainingWireBytes(
+				summary.presentationWalls,
+				summary.presentationWallsPageCursor,
+				pageSize,
+				fixedPayloadBytes,
+				sceneBaselineRecordBytes(
+					SCENE_BASELINE_PAGE_PRESENTATION_WALLS),
+				PacketFrameLengthGuard.SIMPLIFIED_FRAME_OVERHEAD_BYTES));
 	}
 
 	private int pageTotal(
@@ -1709,6 +1981,67 @@ public final class GameStateUpdater {
 						presentationWalls, protocolVersion);
 		}
 
+		private void recordSentPage(final SceneBaselinePage page) {
+			if (page == null || page.isEmpty()) {
+				throw new IllegalArgumentException(
+					"Cannot advance an empty scene-baseline page");
+			}
+			if (page.pageIndex < 0
+				|| page.pageIndex >= page.pageTotal) {
+				throw new IllegalStateException(
+					"Scene-baseline page index is outside its product");
+			}
+			switch (page.category) {
+				case SCENE_BASELINE_PAGE_SCENERY:
+					sceneryPageCursor = advanceCursor(
+						sceneryPageCursor, page);
+					break;
+				case SCENE_BASELINE_PAGE_WALLS:
+					wallsPageCursor = advanceCursor(
+						wallsPageCursor, page);
+					break;
+				case SCENE_BASELINE_PAGE_PRESENTATION_SCENERY:
+					presentationSceneryPageCursor = advanceCursor(
+						presentationSceneryPageCursor, page);
+					break;
+				case SCENE_BASELINE_PAGE_PRESENTATION_WALLS:
+					presentationWallsPageCursor = advanceCursor(
+						presentationWallsPageCursor, page);
+					break;
+				default:
+					throw new IllegalStateException(
+						"Unknown scene-baseline page category "
+							+ page.category);
+			}
+		}
+
+		private static int advanceCursor(
+				final int cursor,
+				final SceneBaselinePage page) {
+			if (cursor != page.pageIndex) {
+				throw new IllegalStateException(
+					"Out-of-order scene-baseline page: cursor="
+						+ cursor + " page=" + page.pageIndex);
+			}
+			return Math.incrementExact(cursor);
+		}
+
+		private String pageProgressSummary() {
+			return "context=" + locationContextSequence
+				+ ",scenery=" + sceneryPageCursor + "/"
+					+ pageTotalFor(scenery, protocolVersion)
+				+ ",walls=" + wallsPageCursor + "/"
+					+ pageTotalFor(walls, protocolVersion)
+				+ ",presentationScenery="
+					+ presentationSceneryPageCursor + "/"
+					+ pageTotalFor(
+						presentationScenery, protocolVersion)
+				+ ",presentationWalls="
+					+ presentationWallsPageCursor + "/"
+					+ pageTotalFor(
+						presentationWalls, protocolVersion);
+		}
+
 		private static int pageTotalFor(
 			final int recordCount,
 			final int protocolVersion) {
@@ -1774,23 +2107,10 @@ public final class GameStateUpdater {
 		}
 
 		private int payloadBytes(final int protocolVersion) {
-			return SCENE_BASELINE_FIXED_PAYLOAD_BYTES
-				+ (protocolVersion >= LAYERED_SCENE_BASELINE_PROTOCOL_VERSION
-					? LAYERED_CONTEXT_SEQUENCE_BYTES
-					: 0)
-				+ (protocolVersion
-						>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
-					? SCENE_BASELINE_PRESENTATION_HEADER_BYTES
-					: 0)
-				+ recordCount()
-					* (protocolVersion
-							>= LAYERED_PRESENTATION_SCENE_BASELINE_PROTOCOL_VERSION
-						&& (category
-								== SCENE_BASELINE_PAGE_PRESENTATION_SCENERY
-							|| category
-								== SCENE_BASELINE_PAGE_PRESENTATION_WALLS)
-						? SCENE_BASELINE_PRESENTATION_OBJECT_RECORD_BYTES
-						: SCENE_BASELINE_OBJECT_RECORD_BYTES);
+			return Math.addExact(
+				sceneBaselineFixedPayloadBytes(protocolVersion),
+				Math.multiplyExact(
+					recordCount(), sceneBaselineRecordBytes(category)));
 		}
 
 		private void applyTo(final SceneBaselineStruct struct) {

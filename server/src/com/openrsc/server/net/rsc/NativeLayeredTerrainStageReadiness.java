@@ -116,4 +116,15 @@ public final class NativeLayeredTerrainStageReadiness {
 			centerSectorY,
 			manifestSha256);
 	}
+
+	@Override
+	public String toString() {
+		return "protocol=" + protocolVersion
+			+ ",sequence=" + stageSequence
+			+ ",context=" + contextSequence
+			+ ",world=" + worldSpace
+			+ ",level=" + logicalLevel
+			+ ",center=" + centerSectorX + "," + centerSectorY
+			+ ",manifest=" + manifestSha256;
+	}
 }

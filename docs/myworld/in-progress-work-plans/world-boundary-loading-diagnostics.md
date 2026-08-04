@@ -1,12 +1,18 @@
 # World-Boundary Loading Diagnostics and Decision Plan
 
-Status: paused at READY handoff; awaiting corrected upstairs map-loader data
+Status: integration checkpoint accepted; transport, atomic activation,
+diagnostics, warm-residency, static-shadow ownership, batched scene deltas, and
+diagonal prediction are validated. Further dense-area frame-pacing work remains
+as a separate follow-up.
 
-Branch: `refactor/boundary-loading-diagnostics`
+Branch: `refactor/boundary-loading-diagnostics-followup`
 
 Scope: desktop client world-boundary transitions, especially renderer-v2/OpenGL
 
-Gameplay changes in this phase: none
+Gameplay changes in this phase: one fail-closed upper-floor object-reach fix;
+terrain-stage transport now pages otherwise unrepresentable payloads, and the
+client incrementally receives partial frames without exposing them before
+completion. Terrain contents and scene activation semantics are unchanged.
 
 ## Goal
 
@@ -202,29 +208,221 @@ After closing the client:
 
 ```bash
 python3 scripts/analyze-renderer-session.py \
-  output/renderer-diagnostics/<session> --strict
+  output/renderer-diagnostics/<session> --strict \
+  --server-log server/logs/<private-current-log>
 ```
+
+Repeat `--server-log` for a rotated private log when a run spans rotation;
+plain-text and `.gz` rotations are both supported. If a server log is supplied
+but missing, the analyzer fails instead of silently omitting it. It retains at
+most the latest 4,096 recognized delivery records and parses only fixed
+timestamp, mode, page, byte, queue/channel-pressure, and context fields;
+unrelated account, address, credential, or chat text is never copied into the
+report.
 
 The generated `ai-summary.md` is the decision record. Retain the raw
 `events.jsonl` until the optimization direction is selected.
 
-### Matrix status at paused handoff
+### Current matrix status
 
 - Cold, warm cardinal, return, and dense-scenery evidence has been captured.
 - The attempted corner route under `boundary-diagonal` crossed the Y and X
   boundaries on separate steps, producing cardinal traces rather than a valid
   simultaneous diagonal trace. It must be rerun after resumption with a route
   that actually changes both section bases in one transition.
-- The `boundary-multilevel` phase exposed an unrelated broken upstairs map.
-  Its level-1 trace was superseded by the next level change and its level-2
-  trace ended with the diagnostic session; the player confirmed that the
-  upstairs itself is invalid because of a map-loader bug. Those samples are
-  not valid multi-level performance evidence.
-- Private client and server were stopped after the invalid map was confirmed.
-  Resume this matrix only after retrieving and integrating the corrected map
-  loader/data. Start a fresh diagnostic session, validate the upstairs scene
-  visually first, then capture multi-level and true diagonal cases before any
-  substantial loading optimization.
+- The first resumed upstairs check found an unrelated ladder-interaction
+  failure: directional object reach constructed a logical location from an
+  already packed upper-floor Y coordinate plus the explicit level, causing an
+  exact-projection exception on every ladder interaction tick.
+  `Mob.isObjectReachClear` now derives the checked tile through the mob's
+  current-level projection and fails closed on an invalid tile. This
+  correctness repair is checkpointed as `d1d3acfe4`.
+- The resumed client/server pair was then discovered to have been launched
+  with `scripts/private-server/server.sh`. That convenience launcher uses
+  `myworld.conf` without the production native-layered runtime flags. The
+  public server enables the replacement package, residency, readiness,
+  prediction, symmetric residency, atomic activation, and synchronized scene
+  baseline. The player's visible world edges exposed the mismatch. Therefore
+  all performance observations from
+  `session-20260802-151808-2782853`--including its apparent 44--64 ms floor
+  changes--are invalid for comparison with the public loader.
+- Client class and source equality against current main was confirmed, but
+  that comparison used the same incorrectly configured private server. It
+  proves the topic branch did not alter those client classes; it does not prove
+  loader parity because the effective loader is negotiated by the server.
+- A fresh private package has now been generated and validated with
+  `scripts/run-server.sh --layered-production`. The replacement-profile server
+  and diagnostics client session `session-20260802-154618-2791426` are the
+  corrected basis for renewed visual validation and capture.
+- The player visually confirmed that the corrected production-equivalent
+  profile no longer exposed world edges. The client negotiated the native
+  authoritative protocol-v8 path, and the private server process was verified
+  to have the replacement package, residency, readiness, prediction, symmetric
+  residency, atomic activation, and synchronized-baseline flags enabled.
+- A marked four-circuit ground/first/second-floor capture is now complete on
+  that corrected profile. Its findings are recorded below.
+- True diagonal crossings were captured around the corner shared by native
+  centers `(11,11)` and `(12,12)`. Repetition exposed a deterministic packet
+  framing failure after the connection-local terrain residency cache churned;
+  that correctness defect must be fixed before completing the timing matrix.
+
+## Diagonal Stress Crash and Exact Transport Cause
+
+Session
+`output/renderer-diagnostics/session-20260803-220210-3973356` contains several
+successful true diagonal crossings followed by a client game crash during the
+next prediction. This was not a JVM, GPU, native-driver, or out-of-memory
+crash. The maintained client's game-crash handler caught:
+
+```text
+IllegalArgumentException: Native terrain source SHA-256 is unterminated
+client.LD(dummy,3508,154)
+```
+
+Opcode 154 is `SEND_LAYERED_TERRAIN_STAGE`. The failing protocol-v4 predicted
+symmetric halo was generated for center `(12,12)` after repeated returns to
+`(11,11)`. The server and client each retain 64 content identities in matching
+access-order caches. A radius-two receipt touches full inner terrain and
+visual-only outer terrain; its following structure receipt touches a separate
+set of structural identities. Repeated diagonal movement therefore evicted
+enough `(12,12)` identities that the next prediction needed 19 payload-bearing
+chunks and only six references.
+
+Replaying the exact accepted context/stage sequence against the production
+package and the same 64-entry LRU policy gives an opcode-154 payload of exactly
+69,043 bytes. Including the custom transport's two-byte length and opcode, the
+frame is 69,046 bytes. The custom-client branch of
+`RSCProtocolEncoderMain` writes that total to an unsigned two-byte field without
+a bounds check. It wraps as follows:
+
+```text
+69,046 mod 65,536 = 3,510
+3,510 - the two length bytes = 3,508 bytes delivered to PacketHandler
+```
+
+That is the exact `3508` reported by the client. The decoder received the
+beginning of a valid stage followed by a hard truncation in a later chunk's
+SHA field. Earlier crossings succeeded because their receipts were smaller;
+the first few cache cycles are part of the reproduction, not random crash
+timing.
+
+The current encoder also lacks a general guard against any non-raw custom
+packet exceeding the 65,535-byte frame ceiling. Merely rejecting this terrain
+packet would avoid corrupting the TCP stream but would leave prediction
+readiness permanently incomplete. The terrain protocol therefore needs a
+bounded multi-packet representation with client-side transactional assembly,
+plus a general encoder fail-closed guard so another oversized packet cannot be
+silently truncated.
+
+Recommended correctness milestone before further performance experiments:
+
+1. Add an explicit maximum custom-frame length and make the common encoder
+   reject oversized frames rather than narrowing them.
+2. Page a serialized terrain stage into independently frame-safe packets with
+   stage/context identity, page index/count, declared total size, and bounded
+   client assembly.
+3. Decode and commit the terrain residency transaction only after every page
+   of the exact stage has arrived. Missing, duplicate, stale, out-of-order, or
+   superseded pages must not mutate active terrain or send readiness.
+4. Cover the exact 69,043-byte cache-churn fixture, maximum page bounds,
+   normal small stages, and atomic publication in deterministic tests.
+5. Repeat the same diagonal loop visually before resuming hitch comparisons.
+
+Implementation is now present for local validation. Stages at or below 65,532
+payload bytes retain their existing one-packet representation. Larger stages
+are serialized once and split into 24,000-byte fragments. Each opcode-154 page
+carries stage/context identity, total length, page index/count, and the complete
+stage CRC32. Client storage is bounded to one 1 MiB transaction, and terrain
+decode, resident-cache commit, prebuild, and readiness acknowledgement occur
+only after exact ordered assembly and checksum verification. A shared encoder
+guard now refuses every packet length that its selected legacy framing format
+cannot represent instead of narrowing it. Automated coverage includes the
+observed 69,043-byte receipt and stale, duplicate, out-of-order, corrupt,
+wrong-context, and superseded page sequences. Repeated private diagonal visual
+validation remains required before this milestone is considered complete.
+
+## Dense Login Receive-Window Deadlock
+
+The first private validation after terrain-stage paging repeatedly accepted the
+login and built the native terrain, but remained on `Loading world` until the
+client's 1,000-poll network watchdog disconnected roughly 17 seconds later.
+The scene-baseline trace consistently stopped after presentation-scenery page
+1 of 6, even though the server's page cursors reached all 11 data pages.
+
+Bounded encoder and frame-reader diagnostics isolated the ownership boundary:
+
+- the server encoded every baseline page, including presentation-scenery pages
+  2--5 and the presentation-wall page;
+- the client remained correctly frame-aligned and read a valid 6,221-byte
+  frame header for presentation-scenery page 2;
+- only 2,805 of its 6,219 opcode-plus-payload bytes were then available;
+- `ss -tinmp` showed the client's 128 KiB receive allocation full and the
+  server receive-window-limited with 36--45 KiB still unsent;
+- the old reader would not consume any payload bytes until
+  `InputStream.available()` reported the entire 6,219 bytes, so the unread
+  2,805 bytes kept the receive window closed while the server needed an open
+  window to send the remaining 3,414 bytes.
+
+This was a deterministic TCP flow-control deadlock, not baseline loss, bad
+framing, terrain decode, renderer work, or server page-cursor behavior. The
+client now copies every currently available portion into its bounded packet
+buffer, resets the no-progress watchdog when bytes arrive, and invokes the
+packet handler only after the declared frame is complete. The regression
+harness delivers one frame over three partial chunks, verifies no early packet
+publication or premature timeout, and verifies alignment of the following
+frame.
+
+In diagnostic session
+`output/renderer-diagnostics/session-20260803-231456-52833`, the exact stalled
+frame completed as 2,805 plus 3,414 bytes immediately after this change. All
+remaining baseline pages arrived, atomic activation reported player/static
+receipt `ok/ok` in 399 ms, the structure stage completed, and both socket queues
+returned to a healthy state. The client reached the playable world without a
+watchdog disconnect. A user-visible repeat and the repeated diagonal stress
+case remain required before declaring the transport milestone complete.
+
+## Corrected-Profile Multi-Level Evidence
+
+Session
+`output/renderer-diagnostics/session-20260802-154618-2791426` contains the
+production-equivalent validation and the marked `boundary-multilevel` phase
+from 19:54:44 through 19:55:30 UTC. The player completed four full circuits:
+ground to first, first to second, second to first, and first to ground. The
+client's sixteen plane-changing region records confirm all four circuits; their
+synchronous client-region work was only 1.368--4.082 ms.
+
+The visible cost is strongly asymmetric by destination:
+
+| Destination | Measured transitions | Baseline packets | Atomic baseline | Worst OpenGL interval | Worst client loop | Largest chunk upload |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| First floor from ground | 4 | 4 | 49--51 ms | 18.6--23.6 ms | 21.2--22.8 ms | 6.0--6.3 ms |
+| Second floor | 4 | 4 | 50--51 ms | 22.4--22.7 ms | 20.0--20.4 ms | 1.3--1.5 ms |
+| First floor from second | 4 | 4 | 49 ms | 19.1--19.6 ms | 20.5--21.1 ms | 0.7--0.8 ms |
+| Ground floor | 4 | 9 | 219--303 ms | 146.8--215.6 ms for the three completed summaries | 52.5--94.8 ms including the marked final return | 81.2--83.8 ms |
+
+The Ctrl+F8 marker landed on the final ground return. At the marker the nearby
+client-loop maximum was 94.810 ms and the current OpenGL render was 110.755 ms;
+the atomic receipt record completed at 303 ms. The three preceding ground
+returns each assembled 86 scenery inputs and spent 60.499--65.008 ms of worker
+CPU on scenery meshes, then incurred an 81.2--83.8 ms maximum chunk upload.
+Upper-floor transitions assembled only 8--26 scenery inputs and did not show a
+comparable upload burst.
+
+These ladder transitions start a fresh context each time. The next ladder use
+therefore marks the preceding trace `superseded` before the collector's longer
+settling timeout, even with a two-second visual pause. The direct packet,
+region, CPU, GPU, and bounded frame rings are complete and internally
+consistent, but the generic analyzer intentionally excludes them from its
+settled-only aggregate. The table above is consequently derived from the
+marked trace records directly rather than from the aggregate case matrix.
+
+This case does not identify ladder handling or synchronous client-region work
+as the hitch. Returning to the much denser ground scene combines more static
+baseline data, materially more scenery construction, and an approximately
+82 ms GPU upload. It is a separate cold/dense scene cost from the already
+confirmed 640 ms server page-cadence threshold: these ground products use one
+fence plus eight data pages and therefore do not spill into a second normal
+world update.
 
 ## First Marked Cold-Case Evidence
 
@@ -440,12 +638,154 @@ Prepare a new shadow/minimap product and swap it with the atomic scene.
 
 ## Current Recommendation
 
-Checkpoint the refined packet diagnostics and the confirmed page-cadence
-finding before changing behavior. Then prototype complete bounded protocol-v8
-baseline delivery and visually repeat the same directional case. Continue the
-remaining private case matrix before choosing any broader renderer
-optimization. Bounded GPU residency or predicted GPU preparation remain
-possible cold/dense-case candidates, but the choice between them depends on:
+### Private login follow-up: steady-state receive backlog
+
+The incremental frame receiver removed the login deadlock, but the first
+successful dense-scene session exposed a separate steady-state problem. The
+client kept rendering at approximately 60 FPS while its kernel receive queue
+grew to roughly 386 KiB and the server eventually became receive-window
+limited again. The server packet counter advanced by about 49,000 packets over
+ten minutes, which exceeds the legacy client's maximum consumption of one
+packet per frame.
+
+This was not an input, pathfinding, or teleport failure. Server logs confirmed
+that the same session accepted player navigation and moved `devduck` from
+`(576,576)` through `(574,575)`. It then accepted `tp 575 575` and `tp falador`,
+ending at `(304,542)`. Those updates were applied authoritatively while the
+client still appeared immobile because their ordered replies were delayed
+behind the growing receive backlog.
+
+The current bounded prototype therefore distinguishes two steady-state modes:
+
+- legacy/non-layered connections retain one packet per client frame;
+- native layered sessions may consume at most four packets per client frame;
+- atomic activation retains its separate 32-packet hard bound and terrain-halo
+  pause.
+
+Four packets per frame supplies bounded headroom over the measured private
+traffic without allowing an unlimited drain or changing legacy cadence. The
+policy has deterministic coverage for all three bounds. Private visual
+validation must confirm that login, walking, teleportation, boundary crossing,
+and frame pacing remain correct before this candidate is accepted.
+
+### Unattended bounded baseline-completion prototype
+
+The next server-side candidate is implemented for automated review but has not
+yet received private visual acceptance. Before sending baseline data, the
+server now calculates the exact remaining page count and framed wire bytes
+across gameplay scenery, gameplay walls, presentation scenery, and
+presentation walls.
+
+For an actively fenced protocol-v8 scene only, the complete remaining product
+is queued in the initiating world update when it fits both hard bounds:
+
+- at most 16 baseline data pages;
+- at most 96 KiB including simplified frame overhead.
+
+The captured dense `(11,12)` product was 11 pages and approximately 50 KiB, so
+it qualifies without raising either ordinary paging limit. Non-atomic
+protocol-v8 updates retain eight pages per world update, and legacy baseline
+delivery retains four. An activation exceeding either cap uses the existing
+bounded fallback and records `ATOMIC_OVERSIZED_FALLBACK` with its page and byte
+measurements when boundary diagnostics are enabled.
+
+Baseline cursors now advance only after the exact packet is successfully
+generated and placed on the player's ordered outbound queue. A failed packet
+therefore remains owned by the pending product and is retried instead of being
+silently counted as delivered. The atomic-pending sequence is cleared only
+after all four categories are complete.
+
+Deterministic coverage exercises exact and partial pages, cursor accounting,
+the reconstructed 11-page case, both exact caps, both over-cap fallbacks,
+empty products, invalid inputs, and transactional integration ordering. Server
+compilation and the surrounding atomic-activation, presentation-ring, packet,
+wire-envelope, transition, and synchronization tests pass. The running private
+server was not restarted and no client was launched for this milestone; the
+first return test must load the checkpointed server build and repeat the same
+warm directional crossing.
+
+The session analyzer can now join that return run to the server evidence. Its
+optional repeated `--server-log` input recognizes both the new bounded format
+and the earlier `sent=N progress=...` format. The report includes delivery-mode
+counts, remaining-page and wire-byte p50/p95/p99/max distributions, successful
+atomic completions, incomplete attempts, oversized fallbacks, queue failures,
+game-thread delivery duration, ordered-queue growth, channel writability,
+encoder payload/headroom samples, bounded-retention coverage, and timestamped
+context-sequence candidates for the client traces. Context sequence alone is
+explicitly labeled supporting evidence because it can repeat across players or
+server runs. The encoder diagnostic now carries the scene context alongside
+protocol/category/page identity, allowing queued work to be distinguished from
+work that reached Netty framing. A fixture containing an account name, address,
+and password proves that unrelated text does not reach output.
+
+Re-analysis of the preserved rotated pre-prototype server log found 21 legacy
+page-summary records and 99 matching encoder page records. Ninety of those 99
+encoder samples reported the channel unwritable, while the old identity format
+did not include context. This does not establish that channel pressure caused
+the visual hitch—the client trace still shows the decisive extra world tick—but
+it makes queue and encoder measurements a required acceptance signal for the
+larger same-tick burst. The new format supplies those missing fields.
+
+### Unattended automated verification (2026-08-04)
+
+No client was launched for this verification. The stale private server was
+stopped before the build/test run, and no public/live service was touched.
+
+- The authoritative client and server builds pass.
+- The focused baseline policy, incremental packet-frame, terrain-stage paging,
+  layered client-authority, atomic activation, visibility-ring, wire-envelope,
+  transition/minimap, movement synchronization, packet diagnostics, boundary
+  diagnostics, and session-analyzer tests pass.
+- `./scripts/lint.sh all --offline --base $(git merge-base
+  spoiled-milk/main HEAD)` passes with no new gated javac, Ruff, or SpotBugs
+  findings.
+- The repository-wide deterministic suite passes when continued around two
+  guards already stale relative to published `main`: the registry fixture
+  expects 1,060 animations and older item/animation hashes while runtime now
+  resolves 1,080 animations and current item data; the repeating-action test
+  still expects the skill-name table in `PacketHandler` after that ownership
+  moved. This branch changes neither catalog/fixture nor the Harvest ownership.
+  Both exact failures are retained for manager follow-up rather than silently
+  changing unrelated baselines.
+- The analyzer was exercised against the actual gzip-rotated private server log
+  as well as privacy, missing-path, bounded-retention, old-format, new-format,
+  queue-pressure, encoder-pressure, and context-correlation fixtures.
+
+### Exact return validation for the baseline prototype
+
+The next private run must restart the private server so it actually loads
+checkpoint `d3b98d933`; the server that remained running while this milestone
+was built still contains the older classes. After the user returns:
+
+1. Launch one private client with `--boundary-diagnostics`; do not enable frame
+   capture.
+2. Re-establish the known warm-cardinal route between centers `(11,11)` and
+   `(11,12)`. Perform two warm-up round trips, then at least six measured round
+   trips in each direction under one named performance phase.
+3. Press Ctrl+F8 immediately for any visible hitch or wrong-area flash. Confirm
+   walking, teleporting, login, and return movement remain responsive, and
+   sample the socket receive queue to ensure the steady-state backlog stays
+   near zero.
+4. In the server log, the captured dense direction should report
+   `mode=ATOMIC_COMPLETE`, `sent=11`, and `remainingAfterPages=0` in the
+   initiating update. Any `sendFailed=true`, incomplete atomic result, or
+   unexpected oversized fallback is a stop condition.
+5. Close the client normally and run the analyzer with the matching current
+   and rotated private logs. Compare client static-baseline/release offsets,
+   frame interval maxima, and server mode/page/byte records for the same
+   timestamp and context candidates.
+6. Only after the directional gate passes, resume cold, return, true diagonal,
+   dense-scenery, and multi-level cases. A correct same-tick warm result does
+   not establish that cold GPU uploads, shadows, or upper-level activation are
+   solved.
+
+Complete private visual validation of both the bounded terrain-stage transport
+and incremental frame receive, then resume the diagonal matrix. After that,
+prototype complete bounded protocol-v8 baseline delivery and visually repeat
+the same directional case. Continue the remaining private case matrix before
+choosing any broader renderer optimization. Bounded GPU residency or predicted
+GPU preparation remain possible cold/dense-case candidates, but the choice
+between them depends on:
 
 - whether the remaining visible dip still coincides with large upload bytes;
 - whether the predicted product is ready with useful lead time;
@@ -455,3 +795,259 @@ possible cold/dense-case candidates, but the choice between them depends on:
 Checkpoint the diagnostic implementation and this plan before any substantive
 loader or renderer change. Visually compare the selected prototype on the same
 private cases, and do not publish or deploy based on automated results alone.
+
+### Private atomic-baseline acceptance and next renderer gate (2026-08-04)
+
+Session
+`output/renderer-diagnostics/session-20260804-111401-620485` used private port
+43615, the production-equivalent `spoiled-milk-replacement` layered package,
+renderer diagnostics with frame capture disabled, and server delivery
+diagnostics from `server/logs/spoiled_milk_dev_98.log`. The owner reported that
+the prior worst area improved from an approximately 45 FPS boundary dip to
+approximately 55 FPS. Lighter areas also converged on approximately 55 FPS,
+which removed the old direction/density asymmetry but left a common visible
+transition floor. Four intentional Ctrl+F8 observations were reported; the
+bounded recorder contains five marker events because one physical key action
+may have repeated. No visual wrong-area flash was reported.
+
+The bounded server prototype passes its private acceptance gate:
+
+- all 37 atomic products used `ATOMIC_COMPLETE`;
+- each product completed in its initiating update with zero pages/bytes left;
+- products contained 8-11 pages and at most 46,195 framed bytes;
+- game-thread delivery was 0.836 ms p50, 1.471 ms p95, and 2.262 ms max;
+- no generation/queue failure or oversized fallback occurred;
+- ordered queue growth was at most 11 entries, maximum queue depth was 38,
+  and the channel remained writable after every game-thread burst;
+- the sampled loopback socket queues returned to zero between transitions.
+
+The remaining client cost has two measured forms:
+
+1. Warm dense returns no longer wait a server tick. Their replacement frames
+   are dominated by shadow-mask construction: normally about 26-32 ms in the
+   marked sequence, with one 118.954 ms build coincident with 85 ms of GC.
+2. First visits and returns along the lighter cardinal route synchronously
+   upload nearly the entire resident frame. Individual crossings requested
+   106-125 chunks, uploaded 98-117, reused only 8-9, transferred 148-223 MiB,
+   and spent 99.650-145.998 ms inside chunk upload. The immediately repeated
+   return from center `(2,10)` to `(3,10)` still uploaded 117 of 125 chunks.
+
+The second result selects bounded residency before a broader prediction
+pipeline. `ChunkMesh.rebasePresentation` and
+`rebaseStaticObjectPresentation` intentionally preserve
+`storageSignature`, and the resident shader already applies the difference
+between a mesh's current vertex offset and the buffer's uploaded vertex
+offset. However, `WorldChunkBufferKey` currently includes presentation center
+and origin. Unchanged GPU storage therefore receives a new lookup key after a
+boundary rebase and is uploaded again despite the existing draw-offset
+contract.
+
+The next reversible prototype will key shader/draw-offset resident buffers by
+immutable storage identity plus plane/object role, while preserving the
+position-specific key for legacy paths that cannot apply draw offsets. It must
+prove that rebased meshes share a buffer key, different storage signatures do
+not, object roles and planes remain isolated, legacy keys remain positional,
+and buffer eviction/deletion stays single-owner and bounded. The same private
+routes must then demonstrate substantially higher reused-chunk counts and
+lower upload bytes without exposing stale or misplaced geometry. Shadow-mask
+preparation remains a separate follow-up after residency is corrected.
+
+### Storage-identity prototype correction (2026-08-04)
+
+The first storage-key prototype was visually exercised in
+`output/renderer-diagnostics/session-20260804-113602-643012`. The first two of
+eight Ctrl+F8 records were explicitly identified by the tester as accidental
+markers and are excluded. The six valid markers correspond to diagonal return
+traces 9 and 11--15.
+
+That run rejected the first key shape rather than validating it. Each marked
+crossing still uploaded 75--84 of 124--133 requested chunks, transferred
+135.843--166.045 MiB, and spent 98.464--123.091 ms in the maximum upload
+frame. The associated maximum client-loop samples were 51.419--74.992 ms.
+Shadow construction was normally 24.080--29.492 ms and therefore did not
+explain the much larger synchronous upload burst.
+
+The precise failure was cache-key conflation. Resident vertices include the
+projected-shadow proof baked from the complete active caster set, and
+`WorldChunkBuffer.matches` consequently includes that set's
+`shadowProofSignature`. The first prototype keyed only by immutable geometry.
+Two adjacent views containing the same geometry but different baked-shadow
+variants therefore addressed the same buffer and overwrote one another on
+every crossing. This traded the previous warm-return behavior for a consistent
+re-upload and must not be retained as-is.
+
+The corrected prototype keys shader/draw-offset storage by immutable geometry
+*and* the baked-vertex variant signature. Rebased copies of one variant still
+share a VBO, while the two boundary-specific shadow variants can coexist in
+the bounded LRU. The fixed-function path remains position-specific. A compiled
+fixture now proves rebased reuse, variant separation, plane/role isolation,
+legacy positioning, and simultaneous lookup of both shadow variants. Private
+visual validation must warm both directions before measuring; the expected
+signature of success is a one-time population cost followed by near-zero
+chunk uploads on repeated returns.
+
+The first validation of that correction,
+`output/renderer-diagnostics/session-20260804-115856-745238`, exposed a second
+ownership error. Nine marked hitches continued to coincide with 75--84 chunk,
+135.776--165.979 MiB upload bursts on the repeated `(11,11)`/`(12,12)` route.
+Console telemetry simultaneously reported a steady-state pattern of one chunk
+upload and one eviction while the player was not crossing a boundary.
+
+The remaining churn came from the animated-object chunk. Its storage signature
+changes as animation advances, so giving it immutable-storage key ownership
+allocated a new LRU entry on every frame. At 60 FPS this flushed both otherwise
+valid boundary variants between crossings. Animated storage is not immutable:
+it now retains the established position/role key and replaces that buffer's
+contents as frames advance. Static world and static-object chunks continue to
+use storage-plus-baked-variant identity. The compiled fixture additionally
+proves different animated frame signatures resolve to one stable positional
+entry. A new private run must confirm the steady eviction stream is gone before
+the residency prototype can be accepted.
+
+Session `output/renderer-diagnostics/session-20260804-120427-758407` confirms
+that correction. The first two marker/crossing observations were explicitly
+identified as missing warm-ups and excluded. From the third marker onward,
+return crossings uploaded only 7--12 dynamic chunks, 0.904--1.404 MiB, in
+0.437--1.149 ms. The previous 75--84 chunk and 135--166 MiB resident-terrain
+bursts are gone. This accepts the residency prototype and moves the remaining
+normal hitch below GPU geometry upload.
+
+Warm transitions still spent 21.931--33.391 ms building the remaster terrain
+shadow mask. Most resulting OpenGL intervals were 82--105 ms and client-loop
+maxima were 42--63 ms. Trace 18 was a distinct 103 ms GC outlier and is not
+representative of the normal shadow cost. Exact return masks mostly reported
+`rebuilt:world`; only two early returns reported `mask-cache:world` at about
+6 ms.
+
+The mask builder was incorporating changing animated-object casters into its
+exact texture signature. Those chunks comprise rotating sails and primarily
+emissive/effect scenery such as fires, portals, fishing ripples, torches, and
+spell effects. They are not stable owners of a cached terrain-shadow texture.
+The next reversible prototype leaves their geometry rendering unchanged but
+excludes their casters from the terrain-shadow mask and its world signature.
+Static object caster inventories are now explicitly part of that signature,
+so actual scenery changes still invalidate the mask. A compiled A -> B -> A
+fixture proves an animated-frame change reuses A's mask while a static-world or
+static-caster change invalidates it. Visual validation must check both cache-hit
+timing and the appearance of animated scenery before this prototype is
+accepted.
+
+### Static-shadow acceptance and residual scenery cost (2026-08-04)
+
+Private session
+`output/renderer-diagnostics/session-20260804-121724-799028` exercised the
+static-shadow ownership build at `980c74b12` on the repeated
+`(11,11)`/`(12,12)` route. The tester described the remaining hitch as very
+minimal. The attempted final Ctrl+F8 marker did not reach the bounded event
+log, so no individual crossing is labelled as that observation; the session's
+ten warm return traces remain usable as an aggregate comparison.
+
+The static ownership correction behaved as intended:
+
+- return crossings retained the corrected GPU residency behavior, with only
+  dynamic chunks changing (normally about 1.404 MiB and less than 1.2 ms of
+  measured upload work);
+- ordinary return masks reported `mask-cache:world` and took 5.499--10.907 ms;
+- one day/night sun-bucket change caused the expected two-view refresh, taking
+  24.030 ms and 27.492 ms, after which both views returned to cache hits;
+- warm return OpenGL interval maxima were 68.751--101.974 ms, while normal
+  client-loop maxima were about 52--62 ms outside a distinct GC/cold outlier;
+- no wrong-area flash was reported in this run.
+
+The normal-path bottleneck has therefore moved again. `packet.opcode-48`
+(`SCENERY_HANDLER`) took about 22.676--29.494 ms on most warm returns. The
+server deliberately sends these legacy scenery deltas while the complete
+protocol-v8 baseline follows, preserving the validated fence and fallback
+behavior established after teleport-delay testing. The client handler applies
+each delta by rescanning and compacting the complete scenery list, making a
+boundary packet quadratic in changed-record count. A representative cached
+trace spent only 0.266 ms uploading chunks and 6.901 ms preparing its shadow
+mask, but waited 42.791 ms for the static baseline and released at 70.359 ms;
+the scenery handler accounted for 29.494 ms of that interval.
+
+The next bounded prototype keeps the legacy packet and atomic fence semantics
+unchanged, but parses one packet into a `LegacyStaticSceneDeltaBatch`. It
+compacts existing scenery/walls once, preserves exact-tile and directional-wall
+replacement, preserves 8x8 clear records, discards only additions superseded
+later in the same packet, and then materializes the surviving additions in
+their original final order. This avoids suppressing compatibility traffic or
+turning the complete baseline into a new all-object reconstruction. A
+deterministic fixture compares the batch result with the old sequential
+semantics across explicit edge cases and 500 seeded mixed packets. Private
+visual acceptance must confirm fence parity, ordinary object mutations, wall
+and door changes, and boundary timing before this optimization is retained.
+
+### Batched-scene acceptance and diagonal prediction miss (2026-08-04)
+
+Private session
+`output/renderer-diagnostics/session-20260804-123424-922780` accepted the
+batched legacy scene delta implementation at `82bd92042`: no visual, scenery,
+door, or interaction errors were observed. `packet.opcode-48` fell from the
+previous 22.676--29.494 ms warm range to 4.360 ms p50, 7.113 ms p95, and
+7.369 ms maximum. The tester still perceived approximately the same small
+hitch, although it had become harder to mark accurately. The optimization is
+therefore correct and useful, but it was not the remaining perceptual cause.
+
+The session contains 34 settled transitions, including 31 return crossings.
+All six unmatched warm predictions target center `(12,12)`. They delay the
+player receipt to 100.197--100.286 ms after context and produce 153.4--243.6 ms
+maximum OpenGL intervals despite the now-cheap scenery handler. Runtime order
+identifies the exact mismatch: before each affected diagonal activation from
+`(11,11)` to `(12,12)`, the server prepared and acknowledged `(11,12)`. The
+predictor selects the first queued waypoint outside the current window. On a
+corner route that waypoint can cross one axis, while multiple movement polls
+before the next game-state update make the actual context cross both axes.
+The client correctly rejects the cardinal product rather than showing the
+wrong area, then blocks packet draining while it prepares the actual diagonal
+halo.
+
+The next reversible correction changes only prediction selection. Within the
+existing 48-tile lead bound, it selects the furthest queued waypoint that can
+be reached before that bound, then retains the established adjacent-center
+check. This makes a route whose first outside waypoint is `(11,12)` but whose
+bounded destination is `(12,12)` prepare the diagonal context. Cardinal paths,
+inside-window paths, distant paths, legacy midpoint behavior, and the
+one-center adjacency bound receive deterministic coverage. This is preferred
+over a multi-halo cache for the next comparison because the same session's
+post-GC old-generation floor rose by about 616 MiB and direct-buffer floor by
+about 178 MiB while diagnostics were active; retaining additional complete
+terrain products before accounting for that memory would be needlessly risky.
+
+### Diagonal-prediction acceptance and integration boundary (2026-08-04)
+
+Private layered-runtime session
+`output/renderer-diagnostics/session-20260804-125659-995982` exercised commit
+`8cc1f483a` on the same repeated cardinal/diagonal route. The first manual
+Ctrl+F8 marker was explicitly identified as a misclick and is excluded. The
+tester reported no visual errors, described the remaining hitch as harder to
+time, and accepted this result as a worthwhile integration stopping point.
+
+The prediction correction removed the diagnosed mismatch:
+
+- all 18 settled transitions matched an acknowledged prediction, including all
+  10 diagonal crossings and all 16 return visits;
+- predicted player receipt on return visits was 0.655--1.080 ms after context,
+  rather than the approximately 100.2 ms synchronous recovery seen on the six
+  prior diagonal misses;
+- the batched scenery result remained stable at 4.419 ms p50 and 7.285 ms
+  p95/max for `packet.opcode-48`;
+- there were no client exceptions, wrong-area flashes, or reported scene
+  regressions.
+
+This does not claim that every boundary is seamless. Two first visits still
+paid 60.151--64.558 ms maximum chunk-upload work and produced 162.265--172.832
+ms maximum frame intervals. Warm returns no longer have prediction recovery or
+large static geometry uploads, but intermittent shadow refreshes still reached
+29.129--57.148 ms and the worst warm interval reached 122.289 ms. Across the
+whole diagnostic run, normal presented-frame drops were 0.09%; GC consumed
+2.392 seconds over 2,704 seconds and did not explain the recurring normal-path
+hitch by itself.
+
+The accepted integration boundary therefore consists of correctness-preserving
+transport hardening, bounded correlation diagnostics, retained atomic scene
+presentation, warm GPU residency, stable static-shadow cache ownership,
+linear-time legacy scene-delta application, and route-aware diagonal
+prediction. A follow-up should begin from the remaining first-visit upload and
+warm shadow-refresh evidence, with separate dense-scenery cases, rather than
+adding more speculative prepared halos. The latter remains deferred until its
+memory cost is understood.

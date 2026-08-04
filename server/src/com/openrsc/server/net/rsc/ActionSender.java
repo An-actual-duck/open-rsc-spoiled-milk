@@ -62,6 +62,9 @@ public class ActionSender {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final boolean LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS =
+		Boolean.parseBoolean(System.getenv(
+			"SPOILED_MILK_BOUNDARY_DIAGNOSTICS"));
 	private static final String MYWORLD_STARTER_BANK_CACHE_KEY = "myworld_starter_bank_v1";
 	private static final PayloadGenerator<OpcodeOut> PAYLOAD_38_GENERATOR = new Payload38Generator();
 	private static final PayloadGenerator<OpcodeOut> PAYLOAD_69_GENERATOR = new Payload69Generator();
@@ -133,7 +136,36 @@ public class ActionSender {
 		try {
 			Packet p = getGenerator(player).generate(payload, player);
 			if (p != null) {
-				player.write(p);
+				if (opcode == OpcodeOut.SEND_LAYERED_TERRAIN_STAGE) {
+					final List<Packet> terrainPackets;
+					try {
+						terrainPackets = LayeredTerrainStagePacketPager
+							.pageIfRequired(
+								p,
+								(LayeredTerrainStageStruct) payload);
+					} catch (IllegalArgumentException invalidStage) {
+						LOGGER.error(
+							"Refusing invalid layered terrain stage packet",
+							invalidStage);
+						return false;
+					}
+					for (Packet terrainPacket : terrainPackets) {
+						player.write(terrainPacket);
+					}
+					if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS
+						&& terrainPackets.size() > 1) {
+						LOGGER.info(
+							"LAYERED_TERRAIN_STAGE_PAGED protocol={} sequence={} "
+								+ "context={} bytes={} pages={}",
+							((LayeredTerrainStageStruct) payload).protocolVersion,
+							((LayeredTerrainStageStruct) payload).sequence,
+							((LayeredTerrainStageStruct) payload).contextSequence,
+							p.getReadableBytes(),
+							terrainPackets.size());
+					}
+				} else {
+					player.write(p);
+				}
 				return true;
 			}
 		} catch (GameNetworkException gne) {
