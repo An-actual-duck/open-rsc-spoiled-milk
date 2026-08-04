@@ -2,10 +2,10 @@
 
 ## Status
 
-- Branch: `feat/cleric-status-hud-extension` (C08B implementation)
+- Branch: `main` (C08 integrated; C09 is next)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation**
-- Current milestone: **C08B implemented and privately accepted from published `main` at `ca9ac4576`; final clean-tree verification and READY handoff remain**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension**
+- Current milestone: **C08 is integrated, verified, and published; C09 may begin on a focused branch**
 - Next planned milestone: **C09 — low-risk support effects, only after C08B is accepted and integrated**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08A's registry remains empty, while C08B presents only already-authoritative status snapshots and does not enable a new spell effect**
 - Public-server work: **forbidden**
@@ -299,8 +299,7 @@ C08 must not:
   regeneration behavior in combat paths;
 - rename opcode `152` or remove its legacy potion-prefix compatibility;
 - add caster bubbles or animations before their separate artwork review, or
-  map any spell icon beyond the approved Atelier Pixerelia set (Respite retains
-  its safe sigil fallback);
+  map any spell icon beyond the approved twelve-icon Atelier Pixerelia set;
 - send custom status state to authentic clients; or
 - touch, restart, or deploy the public server.
 
@@ -462,9 +461,7 @@ The client never decrements a charge or pulse itself; an authoritative snapshot
 is sent immediately when either changes.
 
 Potion rows retain the exact consumed item icon and item-name hover behavior.
-Cleric rows use the spell definition's approved Atelier Pixerelia icon when
-mapped. Respite deliberately retains its aligned blessed-stone-sigil fallback;
-a supplied but not yet approved Respite PNG does not change that mapping.
+Cleric rows use the spell definition's approved Atelier Pixerelia icon.
 Their hover begins with exact spell name and Roman rank, followed by the
 catalog-derived active magnitude and any remaining counter, for example:
 
@@ -502,8 +499,7 @@ published `main`:
      unified status inventory/priority metadata, append and validate the
      versioned opcode-`152` trailer, and extract the client HUD model.
    - Retain the legacy prefix and authentic-client exclusion. Use the approved
-     Atelier Pixerelia spell icons and labels, with the sigil fallback for
-     Respite; assign no animation sheets.
+     Atelier Pixerelia spell icons and labels; assign no animation sheets.
    - Use a temporary private-only status injection fixture for visual review
      if required, and prove it is absent from the committed diff.
    - Stop and hand off after automated verification and owner-confirmed private
@@ -554,8 +550,8 @@ C08B adds compiled packet/model and repository fixtures covering:
   Roman ranks, compact badges, `+N more effects`, and logout/reconnect clearing;
 - maintained-client version/catalog parity and authentic-client absence of the
   packet; and
-- packaged approved icon assets, explicit Respite fallback, and no required
-  caster-bubble or animation asset.
+- all twelve packaged approved icon assets and no required caster-bubble or
+  animation asset.
 
 Run at minimum on the applicable branch:
 
@@ -1108,10 +1104,9 @@ The Cleric catalog advances to schema `2`. Its timed records are generated
 from the authoritative typed C08A rank definitions and carry duration,
 counter kind and initial value, presentation kind, and typed magnitude fields.
 Instant Purify/Restore and movement-only Unify carry no timed ranks. Approved
-Atelier Pixerelia spell-icon keys are server-fed for every matching spell;
-Respite deliberately retains its aligned sigil fallback despite the presence
-of an unapproved source PNG. Caster icons and animation identifiers remain
-unset, and no animation sheet is referenced.
+Atelier Pixerelia spell-icon keys are server-fed for all twelve spells. Caster
+icons and animation identifiers remain unset, and no animation sheet is
+referenced.
 
 Opcode `152` keeps its legacy count, item-icon/seconds records, and overflow
 prefix byte-for-byte before appending extension version `1`. Each fixed

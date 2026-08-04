@@ -63,8 +63,8 @@ def validate_sources() -> None:
             "catalog rank presentation does not derive from typed effect authority")
     require("SCHEMA_VERSION = 2" in catalog,
             "Cleric catalog schema was not advanced")
-    require("id == ClericSpellId.RESPITE" in catalog and 'return "";' in catalog,
-            "Respite no longer retains its explicit sigil fallback")
+    require("replace('_', '-')" in catalog,
+            "Cleric icon keys are not derived from stable spell identities")
     require("casterIconItemId" in presentation and "casterAnimationId" in presentation,
             "optional later visual hooks were removed")
     require("ClericSpellPresentation.NONE, ClericSpellPresentation.NONE" in catalog,
@@ -83,12 +83,10 @@ def validate_sources() -> None:
     icons = ROOT / "dev/myworld/assets/sprites/UI/cleric"
     mapped = {
         "mend", "unify", "fervor", "purify", "restore", "ward",
-        "greater-mend", "zeal", "thorns", "aegis", "rally",
+        "greater-mend", "zeal", "thorns", "aegis", "rally", "respite",
     }
     for key in mapped:
         require((icons / f"{key}.png").is_file(), f"packaged Cleric icon missing: {key}")
-    require((icons / "respite.png").is_file(),
-            "supplied but intentionally unmapped Respite source asset is missing")
     require('<include name="sprites/**/*.png"' in build,
             "Cleric PNG directory is not included by client packaging")
     require("on-entity" not in catalog + presentation + collector,
@@ -251,7 +249,7 @@ public final class ActiveStatusHudFixture {
 		String[] names = {"Mend", "Unify", "Fervor", "Purify", "Restore", "Ward",
 			"Greater Mend", "Zeal", "Thorns", "Aegis", "Rally", "Respite"};
 		String[] keys = {"mend", "unify", "fervor", "purify", "restore", "ward",
-			"greater-mend", "zeal", "thorns", "aegis", "rally", ""};
+			"greater-mend", "zeal", "thorns", "aegis", "rally", "respite"};
 		List<ClericEffectRankDef> ranks = new ArrayList<ClericEffectRankDef>();
 		if (code != 1 && code != 3 && code != 4) {
 			for (int value = 1; value <= (code == 0 ? 3 : 4); value++) {
@@ -368,8 +366,8 @@ public final class ActiveStatusHudFixture {
 			"Rally catalog magnitude drift");
 		check(spell(11).getEffectRank(4).getPrimaryMagnitude() == 25,
 			"Respite catalog magnitude drift");
-		check(spell(11).getIconAssetKey().isEmpty(),
-			"Respite should use the sigil fallback");
+		check(spell(11).getIconAssetKey().equals("respite"),
+			"Respite should use its approved icon");
 	}
 }
 """

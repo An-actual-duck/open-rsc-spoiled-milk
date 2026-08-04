@@ -102,11 +102,7 @@ public final class ClericSpellCatalog {
 	}
 
 	private static String statusIconAssetKey(ClericSpellId id) {
-		// Respite intentionally retains the safe aligned-sigil fallback until its
-		// newly supplied artwork receives a separate owner mapping decision.
-		if (id == ClericSpellId.RESPITE) {
-			return "";
-		}
+		// All twelve launch icons use the owner-approved Atelier Pixerelia set.
 		return id.getKey().substring("cleric.".length()).replace('_', '-');
 	}
 
