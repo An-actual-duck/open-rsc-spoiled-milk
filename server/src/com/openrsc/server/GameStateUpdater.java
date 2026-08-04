@@ -918,69 +918,89 @@ public final class GameStateUpdater {
 			|| player.getWalkingQueue().path.isEmpty()) {
 			return null;
 		}
-		final int currentMidpointX =
-			activeTerrain.currentChunkX * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
-		final int currentMidpointY =
-			activeTerrain.currentChunkY * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
-		final boolean centeredSectionWindow =
-			usesCenteredClientSceneWindow(player);
-		for (final Point waypoint
-			: player.getWalkingQueue().path.getWaypoints()) {
-			final int distance = Math.max(
-				Math.abs(waypoint.getX() - player.getX()),
-				Math.abs(waypoint.getY() - player.getY()));
-			if (distance > NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
-				return null;
-			}
-			if (centeredSectionWindow
-					? waypoint.getX() >= currentMidpointX
-						&& waypoint.getX()
-							< currentMidpointX
-								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
-						&& waypoint.getY() >= currentMidpointY
-						&& waypoint.getY()
-							< currentMidpointY
-								+ NATIVE_LAYERED_WIRE_CHUNK_SIZE
-					: waypoint.getX()
-							> currentMidpointX
-								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
-						&& waypoint.getX()
-							< currentMidpointX
-								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS
-						&& waypoint.getY()
-							> currentMidpointY
-								- CLIENT_LOCAL_REGION_RELOAD_RADIUS
-						&& waypoint.getY()
-							< currentMidpointY
-								+ CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
-				continue;
-			}
-			final int targetCenterX = Math.floorDiv(
-				centeredSectionWindow
-					? clientLocalCenteredSectionAnchorForTile(
-						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH)
-					: clientLocalMidpointForTile(
-						waypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
-				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
-			final int targetCenterY = Math.floorDiv(
-				centeredSectionWindow
-					? clientLocalCenteredSectionAnchorForTile(
-						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT)
-					: clientLocalMidpointForTile(
-						waypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
-				NATIVE_LAYERED_WIRE_CHUNK_SIZE);
-			final int deltaX =
-				targetCenterX - activeTerrain.currentChunkX;
-			final int deltaY =
-				targetCenterY - activeTerrain.currentChunkY;
-			if ((deltaX == 0 && deltaY == 0)
-				|| Math.abs(deltaX) > 1
-				|| Math.abs(deltaY) > 1) {
-				return null;
-			}
-			return new int[] {targetCenterX, targetCenterY};
+		return selectNativeTerrainPredictionCenter(
+			player.getX(),
+			player.getY(),
+			activeTerrain.currentChunkX,
+			activeTerrain.currentChunkY,
+			usesCenteredClientSceneWindow(player),
+			player.getWalkingQueue().path.getWaypoints());
+	}
+
+	static int[] selectNativeTerrainPredictionCenter(
+		final int playerX,
+		final int playerY,
+		final int activeCenterX,
+		final int activeCenterY,
+		final boolean centeredSectionWindow,
+		final Iterable<Point> waypoints) {
+		if (waypoints == null) {
+			return null;
 		}
-		return null;
+		/*
+		 * Movement polling can consume more than one queued waypoint before the
+		 * next game-state update emits a scene context. The first waypoint over
+		 * one axis can therefore describe a transient cardinal center while the
+		 * context actually activates the following diagonal center. Prepare for
+		 * the furthest planned waypoint inside the existing bounded lead instead
+		 * of pinning the prediction to that transient first crossing.
+		 */
+		Point predictedWaypoint = null;
+		for (final Point waypoint : waypoints) {
+			final int distance = Math.max(
+				Math.abs(waypoint.getX() - playerX),
+				Math.abs(waypoint.getY() - playerY));
+			if (distance > NATIVE_LAYERED_PREDICTIVE_LEAD_TILES) {
+				break;
+			}
+			predictedWaypoint = waypoint;
+		}
+		if (predictedWaypoint == null) {
+			return null;
+		}
+		final int currentMidpointX =
+			activeCenterX * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		final int currentMidpointY =
+			activeCenterY * NATIVE_LAYERED_WIRE_CHUNK_SIZE;
+		if (centeredSectionWindow
+				? predictedWaypoint.getX() >= currentMidpointX
+					&& predictedWaypoint.getX()
+						< currentMidpointX + NATIVE_LAYERED_WIRE_CHUNK_SIZE
+					&& predictedWaypoint.getY() >= currentMidpointY
+					&& predictedWaypoint.getY()
+						< currentMidpointY + NATIVE_LAYERED_WIRE_CHUNK_SIZE
+				: predictedWaypoint.getX()
+						> currentMidpointX - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+					&& predictedWaypoint.getX()
+						< currentMidpointX + CLIENT_LOCAL_REGION_RELOAD_RADIUS
+					&& predictedWaypoint.getY()
+						> currentMidpointY - CLIENT_LOCAL_REGION_RELOAD_RADIUS
+					&& predictedWaypoint.getY()
+						< currentMidpointY + CLIENT_LOCAL_REGION_RELOAD_RADIUS) {
+			return null;
+		}
+		final int targetCenterX = Math.floorDiv(
+			centeredSectionWindow
+				? clientLocalCenteredSectionAnchorForTile(
+					predictedWaypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH)
+				: clientLocalMidpointForTile(
+					predictedWaypoint.getX(), CLIENT_LOCAL_PLANE_WIDTH),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int targetCenterY = Math.floorDiv(
+			centeredSectionWindow
+				? clientLocalCenteredSectionAnchorForTile(
+					predictedWaypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT)
+				: clientLocalMidpointForTile(
+					predictedWaypoint.getY(), CLIENT_LOCAL_PLANE_HEIGHT),
+			NATIVE_LAYERED_WIRE_CHUNK_SIZE);
+		final int deltaX = targetCenterX - activeCenterX;
+		final int deltaY = targetCenterY - activeCenterY;
+		if ((deltaX == 0 && deltaY == 0)
+			|| Math.abs(deltaX) > 1
+			|| Math.abs(deltaY) > 1) {
+			return null;
+		}
+		return new int[] {targetCenterX, targetCenterY};
 	}
 
 	private boolean nativeTerrainPredictionEnabled() {

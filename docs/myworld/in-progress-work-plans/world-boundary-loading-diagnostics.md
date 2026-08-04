@@ -974,3 +974,39 @@ deterministic fixture compares the batch result with the old sequential
 semantics across explicit edge cases and 500 seeded mixed packets. Private
 visual acceptance must confirm fence parity, ordinary object mutations, wall
 and door changes, and boundary timing before this optimization is retained.
+
+### Batched-scene acceptance and diagonal prediction miss (2026-08-04)
+
+Private session
+`output/renderer-diagnostics/session-20260804-123424-922780` accepted the
+batched legacy scene delta implementation at `82bd92042`: no visual, scenery,
+door, or interaction errors were observed. `packet.opcode-48` fell from the
+previous 22.676--29.494 ms warm range to 4.360 ms p50, 7.113 ms p95, and
+7.369 ms maximum. The tester still perceived approximately the same small
+hitch, although it had become harder to mark accurately. The optimization is
+therefore correct and useful, but it was not the remaining perceptual cause.
+
+The session contains 34 settled transitions, including 31 return crossings.
+All six unmatched warm predictions target center `(12,12)`. They delay the
+player receipt to 100.197--100.286 ms after context and produce 153.4--243.6 ms
+maximum OpenGL intervals despite the now-cheap scenery handler. Runtime order
+identifies the exact mismatch: before each affected diagonal activation from
+`(11,11)` to `(12,12)`, the server prepared and acknowledged `(11,12)`. The
+predictor selects the first queued waypoint outside the current window. On a
+corner route that waypoint can cross one axis, while multiple movement polls
+before the next game-state update make the actual context cross both axes.
+The client correctly rejects the cardinal product rather than showing the
+wrong area, then blocks packet draining while it prepares the actual diagonal
+halo.
+
+The next reversible correction changes only prediction selection. Within the
+existing 48-tile lead bound, it selects the furthest queued waypoint that can
+be reached before that bound, then retains the established adjacent-center
+check. This makes a route whose first outside waypoint is `(11,12)` but whose
+bounded destination is `(12,12)` prepare the diagonal context. Cardinal paths,
+inside-window paths, distant paths, legacy midpoint behavior, and the
+one-center adjacency bound receive deterministic coverage. This is preferred
+over a multi-halo cache for the next comparison because the same session's
+post-GC old-generation floor rose by about 616 MiB and direct-buffer floor by
+about 178 MiB while diagnostics were active; retaining additional complete
+terrain products before accounting for that memory would be needlessly risky.
