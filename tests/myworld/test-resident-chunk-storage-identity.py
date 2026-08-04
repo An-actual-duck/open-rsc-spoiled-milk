@@ -35,11 +35,11 @@ public final class ResidentChunkStorageIdentityFixture {
 			worldChunk(0, 11, 9, 6244, -5944, 101L);
 
 		WorldChunkBufferKey sourceStorage =
-			WorldChunkBufferKey.from(source, true);
+			WorldChunkBufferKey.from(source, true, 501L);
 		WorldChunkBufferKey rebasedStorage =
-			WorldChunkBufferKey.from(rebased, true);
+			WorldChunkBufferKey.from(rebased, true, 501L);
 		WorldChunkBufferKey shiftedStorage =
-			WorldChunkBufferKey.from(shiftedIdentity, true);
+			WorldChunkBufferKey.from(shiftedIdentity, true, 501L);
 		assertEquals(sourceStorage, rebasedStorage,
 			"draw-offset rebase keeps resident storage identity");
 		assertEquals(sourceStorage, shiftedStorage,
@@ -52,6 +52,15 @@ public final class ResidentChunkStorageIdentityFixture {
 		resident.put(sourceStorage, "resident");
 		assertEquals("resident", resident.get(rebasedStorage),
 			"rebased frame resolves the existing resident buffer");
+		WorldChunkBufferKey alternateShadowVariant =
+			WorldChunkBufferKey.from(source, true, 502L);
+		assertNotEquals(sourceStorage, alternateShadowVariant,
+			"baked shadow variants retain separate resident buffers");
+		resident.put(alternateShadowVariant, "alternate");
+		assertEquals("resident", resident.get(sourceStorage),
+			"adding a shadow variant does not overwrite the first buffer");
+		assertEquals("alternate", resident.get(alternateShadowVariant),
+			"alternate shadow variant remains addressable");
 
 		assertNotEquals(
 			WorldChunkBufferKey.from(source, false),
@@ -61,29 +70,33 @@ public final class ResidentChunkStorageIdentityFixture {
 			WorldChunkBufferKey.from(source),
 			WorldChunkBufferKey.from(source, false),
 			"legacy overload retains positional behavior");
+		assertEquals(
+			WorldChunkBufferKey.from(source, false, 501L),
+			WorldChunkBufferKey.from(source, false, 502L),
+			"fixed-function identity ignores shader-only baked variants");
 		assertNotEquals(sourceStorage,
 			WorldChunkBufferKey.from(
-				worldChunk(0, 10, 10, 100, 200, 102L), true),
+				worldChunk(0, 10, 10, 100, 200, 102L), true, 501L),
 			"different immutable storage does not alias");
 		assertNotEquals(sourceStorage,
 			WorldChunkBufferKey.from(
-				worldChunk(1, 10, 10, 100, 200, 101L), true),
+				worldChunk(1, 10, 10, 100, 200, 101L), true, 501L),
 			"planes remain isolated");
 		assertNotEquals(sourceStorage,
 			WorldChunkBufferKey.from(
 				objectChunk(
 					Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,
-					101L), true),
+					101L), true, 501L),
 			"world and object storage remain isolated");
 		assertNotEquals(
 			WorldChunkBufferKey.from(
 				objectChunk(
 					Renderer3DWorldChunkFrame.CHUNK_ROLE_STATIC_OBJECTS,
-					201L), true),
+					201L), true, 501L),
 			WorldChunkBufferKey.from(
 				objectChunk(
 					Renderer3DWorldChunkFrame.CHUNK_ROLE_ANIMATED_OBJECTS,
-					201L), true),
+					201L), true, 501L),
 			"static and animated object roles remain isolated");
 
 		System.out.println("PASS: resident chunk storage identity");
@@ -178,10 +191,11 @@ def main() -> None:
     for fragment in (
         "boolean drawOffsetStorage",
         "drawOffsetSupported ? chunk.getStorageSignature() : 0L",
+        "drawOffsetSupported ? storageVariantSignature : 0L",
         "if (drawOffsetStorage) {",
-        "return storageSignature == key.storageSignature;",
-        "WorldChunkBufferKey.from(\n\t\t\t\tchunk,\n\t\t\t\tdrawOffsetSupported)",
-        "WorldChunkBufferKey.from(\n\t\t\t\t\tchunk,\n\t\t\t\t\tshaderActive)",
+        "storageVariantSignature\n\t\t\t\t\t== key.storageVariantSignature",
+        "WorldChunkBufferKey.from(\n\t\t\t\tchunk,\n\t\t\t\tdrawOffsetSupported,\n\t\t\t\tshadowProofSignature)",
+        "WorldChunkBufferKey.from(\n\t\t\t\t\tchunk,\n\t\t\t\t\tshaderActive,\n\t\t\t\t\tshadowProofSignature)",
     ):
         require(renderer_source, fragment)
 

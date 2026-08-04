@@ -849,3 +849,37 @@ and buffer eviction/deletion stays single-owner and bounded. The same private
 routes must then demonstrate substantially higher reused-chunk counts and
 lower upload bytes without exposing stale or misplaced geometry. Shadow-mask
 preparation remains a separate follow-up after residency is corrected.
+
+### Storage-identity prototype correction (2026-08-04)
+
+The first storage-key prototype was visually exercised in
+`output/renderer-diagnostics/session-20260804-113602-643012`. The first two of
+eight Ctrl+F8 records were explicitly identified by the tester as accidental
+markers and are excluded. The six valid markers correspond to diagonal return
+traces 9 and 11--15.
+
+That run rejected the first key shape rather than validating it. Each marked
+crossing still uploaded 75--84 of 124--133 requested chunks, transferred
+135.843--166.045 MiB, and spent 98.464--123.091 ms in the maximum upload
+frame. The associated maximum client-loop samples were 51.419--74.992 ms.
+Shadow construction was normally 24.080--29.492 ms and therefore did not
+explain the much larger synchronous upload burst.
+
+The precise failure was cache-key conflation. Resident vertices include the
+projected-shadow proof baked from the complete active caster set, and
+`WorldChunkBuffer.matches` consequently includes that set's
+`shadowProofSignature`. The first prototype keyed only by immutable geometry.
+Two adjacent views containing the same geometry but different baked-shadow
+variants therefore addressed the same buffer and overwrote one another on
+every crossing. This traded the previous warm-return behavior for a consistent
+re-upload and must not be retained as-is.
+
+The corrected prototype keys shader/draw-offset storage by immutable geometry
+*and* the baked-vertex variant signature. Rebased copies of one variant still
+share a VBO, while the two boundary-specific shadow variants can coexist in
+the bounded LRU. The fixed-function path remains position-specific. A compiled
+fixture now proves rebased reuse, variant separation, plane/role isolation,
+legacy positioning, and simultaneous lookup of both shadow variants. Private
+visual validation must warm both directions before measuring; the expected
+signature of success is a one-time population cost followed by near-zero
+chunk uploads on repeated returns.

@@ -260,7 +260,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			requestedByRole[roleIndex]++;
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(
 				chunk,
-				drawOffsetSupported);
+				drawOffsetSupported,
+				shadowProofSignature);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			int brightnessBits = currentBrightnessBits();
 			int fogModeBits = currentFogModeBits();
@@ -1776,7 +1777,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 			requiredResidentChunks++;
 			WorldChunkBufferKey key = WorldChunkBufferKey.from(
 				chunk,
-				drawOffsetSupported);
+				drawOffsetSupported,
+				shadowProofSignature);
 			WorldChunkBuffer buffer = residentChunks.get(key);
 			if (buffer == null || !buffer.matches(
 				chunkBufferSignature(chunk, drawOffsetSupported),
@@ -2238,7 +2240,8 @@ final class OpenGLWorldChunkRenderer implements AutoCloseable {
 				}
 				WorldChunkBufferKey key = WorldChunkBufferKey.from(
 					chunk,
-					shaderActive);
+					shaderActive,
+					shadowProofSignature);
 				WorldChunkBuffer buffer = residentChunks.get(key);
 				if (buffer == null || !buffer.matches(
 					chunkBufferSignature(chunk, shaderActive),
@@ -4167,6 +4170,7 @@ final class WorldChunkBufferKey {
 	final int chunkRole;
 	final boolean drawOffsetStorage;
 	final long storageSignature;
+	final long storageVariantSignature;
 
 	WorldChunkBufferKey(
 		int plane,
@@ -4177,7 +4181,8 @@ final class WorldChunkBufferKey {
 		boolean objectOnly,
 		int chunkRole,
 		boolean drawOffsetStorage,
-		long storageSignature) {
+		long storageSignature,
+		long storageVariantSignature) {
 		this.plane = plane;
 		this.centerSectionX = centerSectionX;
 		this.centerSectionY = centerSectionY;
@@ -4187,6 +4192,7 @@ final class WorldChunkBufferKey {
 		this.chunkRole = chunkRole;
 		this.drawOffsetStorage = drawOffsetStorage;
 		this.storageSignature = storageSignature;
+		this.storageVariantSignature = storageVariantSignature;
 	}
 
 	static WorldChunkBufferKey from(Renderer3DWorldChunkFrame.ChunkMesh chunk) {
@@ -4196,13 +4202,22 @@ final class WorldChunkBufferKey {
 	static WorldChunkBufferKey from(
 		Renderer3DWorldChunkFrame.ChunkMesh chunk,
 		boolean drawOffsetSupported) {
+		return from(chunk, drawOffsetSupported, 0L);
+	}
+
+	static WorldChunkBufferKey from(
+		Renderer3DWorldChunkFrame.ChunkMesh chunk,
+		boolean drawOffsetSupported,
+		long storageVariantSignature) {
 		/*
 		 * The resident shader applies presentation rebases as a draw offset.
 		 * Its VBO therefore owns immutable mesh storage, not the current
 		 * section-center/origin presentation. Keeping positional keys on that
-		 * path made every adjacent rebase upload unchanged storage again. The
-		 * fixed-function path cannot apply an offset and deliberately retains
-		 * the original position-specific identity.
+		 * path made every adjacent rebase upload unchanged storage again.
+		 * Baked vertex variants (currently projected-shadow proof) must remain
+		 * distinct: collapsing them would overwrite the resident copy on every
+		 * return crossing. The fixed-function path cannot apply an offset and
+		 * deliberately retains the original position-specific identity.
 		 */
 		return new WorldChunkBufferKey(
 			chunk.getPlane(),
@@ -4213,7 +4228,8 @@ final class WorldChunkBufferKey {
 			chunk.isObjectChunk(),
 			chunk.getChunkRole(),
 			drawOffsetSupported,
-			drawOffsetSupported ? chunk.getStorageSignature() : 0L);
+			drawOffsetSupported ? chunk.getStorageSignature() : 0L,
+			drawOffsetSupported ? storageVariantSignature : 0L);
 	}
 
 	@Override
@@ -4232,7 +4248,9 @@ final class WorldChunkBufferKey {
 			return false;
 		}
 		if (drawOffsetStorage) {
-			return storageSignature == key.storageSignature;
+			return storageSignature == key.storageSignature
+				&& storageVariantSignature
+					== key.storageVariantSignature;
 		}
 		return centerSectionX == key.centerSectionX
 			&& centerSectionY == key.centerSectionY
@@ -4252,6 +4270,9 @@ final class WorldChunkBufferKey {
 		result = 31 * result + (drawOffsetStorage ? 1 : 0);
 		result = 31 * result
 			+ (int) (storageSignature ^ (storageSignature >>> 32));
+		result = 31 * result
+			+ (int) (storageVariantSignature
+				^ (storageVariantSignature >>> 32));
 		return result;
 	}
 }
