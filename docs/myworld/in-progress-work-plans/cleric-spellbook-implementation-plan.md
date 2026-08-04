@@ -2,11 +2,11 @@
 
 ## Status
 
-- Branch: `feat/cleric-support-cast-transaction` (C07 ready for manager review)
+- Branch: `docs/cleric-c08-effect-state-decisions` (C08 planning/refinement)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify**
-- Current milestone: **C07 implemented and automated-tested; exact branch handoff pending**
-- Next planned milestone: **C08 — shared Cleric effect state and HUD extension, blocked until mixed potion/Cleric status priority and charge/pulse representation are settled**
+- Current milestone: **C07 integrated into published `main` at `6e1720900`; C08 design refinement is active**
+- Next planned milestone: **C08 — shared Cleric effect state and HUD extension; runtime implementation remains blocked until this planning session is explicitly approved**
 - Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08 and later spell effects remain disabled**
 - Public-server work: **forbidden**
 
