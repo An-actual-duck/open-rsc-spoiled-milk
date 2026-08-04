@@ -109,7 +109,7 @@ def validate_wiring() -> None:
         ROOT / "release/world-builder-v2/world-builder-runtime.conf",
     )
     for surface in version_surfaces:
-        require("10050" in read(surface),
+        require("10051" in read(surface),
                 f"maintained-client protocol version drift: {surface.relative_to(ROOT)}")
 
 
@@ -160,20 +160,20 @@ public final class ClericSpellbookPresentationFixture {
 			// Expected.
 		}
 		reject(new Action() { public void run() {
-			catalog.replace(2, Arrays.asList(first));
+			catalog.replace(3, Arrays.asList(first));
 		} }, "unknown schema");
 		reject(new Action() { public void run() {
-			catalog.replace(1, Arrays.asList(second));
+			catalog.replace(2, Arrays.asList(second));
 		} }, "out-of-order code");
 		reject(new Action() { public void run() {
-			catalog.replace(1, Arrays.asList(first, definition(1, "cleric.first")));
+			catalog.replace(2, Arrays.asList(first, definition(1, "cleric.first")));
 		} }, "duplicate key");
 		List<ClericSpellDef> oversized = new ArrayList<ClericSpellDef>();
 		for (int i = 0; i <= ClericSpellbookCatalog.MAX_DEFINITIONS; i++) {
 			oversized.add(definition(i, "cleric." + i));
 		}
 		reject(new Action() { public void run() {
-			catalog.replace(1, oversized);
+			catalog.replace(2, oversized);
 		} }, "oversized catalog");
 
 		final int[] calls = {0, 0};
@@ -197,6 +197,7 @@ public final class ClericSpellbookPresentationFixture {
 
 def run_compiled_fixture() -> None:
     sources = [
+        CLIENT / "com/openrsc/client/entityhandling/defs/ClericEffectRankDef.java",
         CLIENT / "com/openrsc/client/entityhandling/defs/ClericSpellDef.java",
         CLIENT / "orsc/ClericSpellbookCatalog.java",
         SERVER / "content/cleric/ClericSpellPresentation.java",

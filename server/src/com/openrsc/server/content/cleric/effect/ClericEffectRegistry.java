@@ -120,6 +120,30 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		return Collections.unmodifiableList(new ArrayList<ClericEffectEntry>(entries.values()));
 	}
 
+	/**
+	 * Returns one server-authoritative timer/counter snapshot using the same
+	 * monotonic instant for validation and countdown rounding.
+	 */
+	public synchronized List<ClericEffectStatusSnapshot> statusSnapshot(
+			ClericEffectOriginValidator validator) {
+		if (validator == null) {
+			throw new IllegalArgumentException("Cleric effect snapshot validator is required");
+		}
+		long nowNanos = clock.nanoTime();
+		purgeInvalidLocked(nowNanos, validator);
+		ArrayList<ClericEffectStatusSnapshot> snapshots =
+			new ArrayList<ClericEffectStatusSnapshot>(entries.size());
+		for (ClericEffectEntry entry : entries.values()) {
+			long remainingNanos = entry.getRemainingNanos(nowNanos);
+			long remainingSeconds = remainingNanos / 1_000_000_000L
+				+ (remainingNanos % 1_000_000_000L == 0L ? 0L : 1L);
+			snapshots.add(new ClericEffectStatusSnapshot(entry.getDefinition(),
+				(int) Math.min(Integer.MAX_VALUE, remainingSeconds),
+				entry.getRemainingCounter()));
+		}
+		return Collections.unmodifiableList(snapshots);
+	}
+
 	public synchronized int size(ClericEffectOriginValidator validator) {
 		if (validator == null) {
 			throw new IllegalArgumentException("Cleric effect size validator is required");

@@ -602,8 +602,10 @@ def validate_source_boundaries() -> None:
             continue
         if "ClericEffectCatalog" in path.read_text(encoding="utf-8"):
             production_catalog_references.append(path.relative_to(ROOT).as_posix())
-    require(not production_catalog_references,
-            f"effect catalog escaped inert C08A package: {production_catalog_references}")
+    require(production_catalog_references == [
+                "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java"
+            ],
+            f"effect catalog escaped approved C08B presentation: {production_catalog_references}")
 
     plan = PLAN.read_text(encoding="utf-8")
     require("C08A — `feat/cleric-effect-state-foundation`" in plan,

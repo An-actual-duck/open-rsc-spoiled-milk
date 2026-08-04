@@ -10,7 +10,7 @@ import java.util.Set;
 
 /** Session-local validated snapshot of the server's Cleric spell catalog. */
 public final class ClericSpellbookCatalog {
-	public static final int SCHEMA_VERSION = 1;
+	public static final int SCHEMA_VERSION = 2;
 	public static final int MAX_DEFINITIONS = 32;
 
 	private List<ClericSpellDef> definitions = Collections.emptyList();

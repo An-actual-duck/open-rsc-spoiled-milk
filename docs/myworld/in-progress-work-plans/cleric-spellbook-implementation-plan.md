@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `feat/cleric-effect-state-foundation` (C08A implementation)
+- Branch: `feat/cleric-status-hud-extension` (C08B implementation)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify**
-- Current milestone: **C08A implemented on its focused review branch from published `main` at `2a0ff5ddb`; its empty transient state authority and lifecycle hooks await manager integration**
-- Next planned milestone: **C08B — mixed status transport and HUD extension, only after C08A is integrated into published `main`**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08A's registry remains empty and C08B/later spell effects remain disabled**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation**
+- Current milestone: **C08B implemented and privately accepted from published `main` at `ca9ac4576`; final clean-tree verification and READY handoff remain**
+- Next planned milestone: **C09 — low-risk support effects, only after C08B is accepted and integrated**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08A's registry remains empty, while C08B presents only already-authoritative status snapshots and does not enable a new spell effect**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -298,8 +298,9 @@ C08 must not:
 - implement healing, accuracy, damage, reflection, lifesteal, protection, or
   regeneration behavior in combat paths;
 - rename opcode `152` or remove its legacy potion-prefix compatibility;
-- add unique spell icons, caster bubbles, or animations before their separate
-  artwork review;
+- add caster bubbles or animations before their separate artwork review, or
+  map any spell icon beyond the approved Atelier Pixerelia set (Respite retains
+  its safe sigil fallback);
 - send custom status state to authentic clients; or
 - touch, restart, or deploy the public server.
 
@@ -461,10 +462,11 @@ The client never decrements a charge or pulse itself; an authoritative snapshot
 is sent immediately when either changes.
 
 Potion rows retain the exact consumed item icon and item-name hover behavior.
-Cleric rows use the spell definition's aligned blessed-stone-sigil icon until
-unique artwork is approved. Their hover begins with exact spell name and Roman
-rank, followed by the catalog-derived active magnitude and any remaining
-counter, for example:
+Cleric rows use the spell definition's approved Atelier Pixerelia icon when
+mapped. Respite deliberately retains its aligned blessed-stone-sigil fallback;
+a supplied but not yet approved Respite PNG does not change that mapping.
+Their hover begins with exact spell name and Roman rank, followed by the
+catalog-derived active magnitude and any remaining counter, for example:
 
 - `Ward III — 25% reduction — 6 protected hits remaining`;
 - `Fervor III — 15% chance to raise offense roll by 1`;
@@ -500,7 +502,8 @@ published `main`:
      unified status inventory/priority metadata, append and validate the
      versioned opcode-`152` trailer, and extract the client HUD model.
    - Retain the legacy prefix and authentic-client exclusion. Use the approved
-     sigil fallbacks and labels; add no new artwork.
+     Atelier Pixerelia spell icons and labels, with the sigil fallback for
+     Respite; assign no animation sheets.
    - Use a temporary private-only status injection fixture for visual review
      if required, and prove it is absent from the committed diff.
    - Stop and hand off after automated verification and owner-confirmed private
@@ -551,7 +554,8 @@ C08B adds compiled packet/model and repository fixtures covering:
   Roman ranks, compact badges, `+N more effects`, and logout/reconnect clearing;
 - maintained-client version/catalog parity and authentic-client absence of the
   packet; and
-- packaged fallback assets with no newly required PNG.
+- packaged approved icon assets, explicit Respite fallback, and no required
+  caster-bubble or animation asset.
 
 Run at minimum on the applicable branch:
 
@@ -1089,3 +1093,59 @@ Worship XP, persistence, PvP rule, or combat/regeneration behavior. Unify
 remains the only reachable Cleric support action. C08B must begin from a
 published main that contains C08A; it may consume this authority for
 presentation but must not expose C09/C10 mechanics.
+
+## C08B Completion Record
+
+C08B replaces the potion-only presentation snapshot with one bounded mixed
+status inventory while retaining `sendActivePotionEffects` and opcode `152` as
+compatibility-facing names. The server collects at most `64` presentation
+entries, applies the exact authored Cleric/potion priority independent of
+timers, and sends the first `32` plus the exact omitted count. Reading an
+already-installed concrete Cleric registry is optional; C08B neither installs
+nor populates one, so Unify remains the only reachable support action.
+
+The Cleric catalog advances to schema `2`. Its timed records are generated
+from the authoritative typed C08A rank definitions and carry duration,
+counter kind and initial value, presentation kind, and typed magnitude fields.
+Instant Purify/Restore and movement-only Unify carry no timed ranks. Approved
+Atelier Pixerelia spell-icon keys are server-fed for every matching spell;
+Respite deliberately retains its aligned sigil fallback despite the presence
+of an unapproved source PNG. Caster icons and animation identifiers remain
+unset, and no animation sheet is referenced.
+
+Opcode `152` keeps its legacy count, item-icon/seconds records, and overflow
+prefix byte-for-byte before appending extension version `1`. Each fixed
+extension record carries item/Cleric identity, stable identity, rank, counter
+kind, and authoritative remaining counter. The coordinated maintained-client
+version is `10051`; authentic generators still omit both the status and Cleric
+catalog packets. Login sends the validating catalog before the enriched status
+snapshot.
+
+The client extracts packet decoding and timer/counter/identity ownership from
+`mudclient` into compiled-testable classes. An absent, unsupported, truncated,
+malformed, unknown, or trailing-garbage extension falls back as one unit to
+the already validated item/timer prefix. Catalog absence or disagreement does
+the same. The client counts down only time; it never decrements charges or
+pulses. Drawing retains the established anchor, eight rows per column,
+countdown rounding, local expiry compaction, potion item icons/names, and
+`+N more effects`, while adding compact `H`/`P` badges and exact server-fed
+Cleric rank/magnitude hover text.
+
+The compiled C08B fixture covers the exact potion-family inventory and mixed
+priority, stable selection and overflow at `31`, `32`, `33`, and `64` entries,
+timer-independent ordering, legacy prefix variants, valid mixed trailers, all
+counter kinds, whole-extension fallback cases, exact representative hover
+labels, fixed counters during local countdown, fallback icons, expiry,
+catalog absence, and logout clearing. Existing C08A/C07, potion, protocol,
+death, prayer/god-spell, bank-slot, and World Builder compatibility fixtures,
+both authoritative builds, and changed-code analysis also pass.
+
+Private verification used a display-only injection on the loopback
+`43615/43515` server/client pair. The owner inspected the mixed HUD and then
+confirmed that a refreshed snapshot dropping from `36` entries to `32`
+removed the `+4 more effects` disclosure. This also characterized the intended
+boundary: omitted entries have no client-side timers, so overflow changes only
+when the server sends a new authoritative snapshot. The injection was removed,
+the private processes were stopped, the tracked client port was restored to
+`43605`, and no fixture hook remains in the committed source. The public server
+and detached live checkout were untouched.

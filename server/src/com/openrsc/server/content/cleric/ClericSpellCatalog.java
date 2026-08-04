@@ -13,7 +13,7 @@ import java.util.Map;
  * legacy Magic spell list and does not implement spell effects.
  */
 public final class ClericSpellCatalog {
-	public static final int SCHEMA_VERSION = 1;
+	public static final int SCHEMA_VERSION = 2;
 	public static final int MAX_LAUNCH_HOLY_POWER = 64;
 
 	private static final List<ClericSpellDefinition> DEFINITIONS;
@@ -96,9 +96,18 @@ public final class ClericSpellCatalog {
 		return new ClericSpellDefinition(id, displayName, effectDescription, alignment,
 			worshipLevel, spellTier,
 			radius, false, ClericSigilCost.forLaunchTier(spellTier),
-			new ClericSpellPresentation(spellbookIconItemId,
+			new ClericSpellPresentation(spellbookIconItemId, statusIconAssetKey(id),
 				ClericSpellPresentation.NONE, ClericSpellPresentation.NONE),
 			holyPowerThresholds);
+	}
+
+	private static String statusIconAssetKey(ClericSpellId id) {
+		// Respite intentionally retains the safe aligned-sigil fallback until its
+		// newly supplied artwork receives a separate owner mapping decision.
+		if (id == ClericSpellId.RESPITE) {
+			return "";
+		}
+		return id.getKey().substring("cleric.".length()).replace('_', '-');
 	}
 
 	private static void validateDefinition(ClericSpellDefinition definition) {

@@ -4,6 +4,10 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.cleric.ClericSigilItemId;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
+import com.openrsc.server.content.cleric.effect.ClericEffectCatalog;
+import com.openrsc.server.content.cleric.effect.ClericEffectMagnitude;
+import com.openrsc.server.content.cleric.effect.ClericEffectPresentationKind;
+import com.openrsc.server.content.cleric.effect.ClericEffectRankDefinition;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemLoc;
 import com.openrsc.server.model.Point;
@@ -372,6 +376,15 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 					int potionEffectOverflow = Math.max(0,
 						potionEffects.totalCount - potionEffectCount);
 					builder.writeShort(Math.min(65535, potionEffectOverflow));
+					builder.writeByte((byte) ActivePotionEffectsStruct.EXTENSION_VERSION);
+					builder.writeByte((byte) potionEffectCount);
+					for (int i = 0; i < potionEffectCount; i++) {
+						builder.writeByte((byte) potionEffects.identityKinds[i]);
+						builder.writeShort(potionEffects.stableIdentities[i]);
+						builder.writeByte((byte) potionEffects.ranks[i]);
+						builder.writeByte((byte) potionEffects.counterKinds[i]);
+						builder.writeShort(potionEffects.remainingCounters[i]);
+					}
 					break;
 
 				case SEND_CLERIC_SPELLBOOK:
@@ -402,6 +415,26 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 							.getCount(ClericSigilMaterial.SILVER));
 						builder.writeInt(definition.getPresentation().getCasterIconItemId());
 						builder.writeInt(definition.getPresentation().getCasterAnimationId());
+						builder.writeString(definition.getPresentation().getStatusIconAssetKey());
+						java.util.List<ClericEffectRankDefinition<? extends ClericEffectMagnitude>>
+							ranks = ClericEffectCatalog.getRanks(definition.getId());
+						builder.writeByte((byte) ranks.size());
+						for (ClericEffectRankDefinition<? extends ClericEffectMagnitude> rank : ranks) {
+							ClericEffectPresentationKind presentationKind =
+								ClericEffectPresentationKind.forMagnitude(rank.getMagnitude());
+							long durationMillis = rank.getDuration().toMilliseconds(
+								clericSpellbook.gameTickMilliseconds);
+							if (durationMillis > Integer.MAX_VALUE) {
+								throw new IllegalStateException("Cleric status duration exceeds wire bound");
+							}
+							builder.writeByte((byte) rank.getRank());
+							builder.writeInt((int) durationMillis);
+							builder.writeByte((byte) presentationKind.getCode());
+							builder.writeByte((byte) rank.getCounterKind().getCode());
+							builder.writeShort(rank.getInitialCounter());
+							builder.writeShort(presentationKind.getPrimaryMagnitude(rank.getMagnitude()));
+							builder.writeShort(presentationKind.getSecondaryMagnitude(rank.getMagnitude()));
+						}
 					}
 					break;
 
