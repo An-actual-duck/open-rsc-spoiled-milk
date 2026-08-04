@@ -49,10 +49,10 @@ resetting it or granting a free immediate tick.
 
 The following remain later design work and may not be guessed:
 
-1. Charge/pulse packet representation, shared effect-state ownership and
-   lifecycle details, and final Cleric HUD icons/labels (C08). Mixed
-   potion/Cleric HUD priority is settled as origin-neutral urgency groups with
-   stable authored ordering.
+1. Lifecycle hook mechanics and final Cleric HUD icons/labels (C08). Mixed
+   potion/Cleric HUD priority, typed charge/pulse transport, recipient-owned
+   transient effect state, and accepted-application source transfer are
+   settled.
 2. Future offensive god-spell expansion beyond the existing Mage entries;
    existing god spells remain under Mage for the initial rollout.
 3. Additional Devotion sources for later economy tuning; the initial confirmed
@@ -300,9 +300,23 @@ counts down locally; counters change only on an authoritative snapshot, sent
 immediately for charge consumption and pulse completion. The HUD renders
 compact `3H`/`2P`-style badges and expands them in hover text. Older maintained
 parsing may ignore the trailer, while authentic clients continue receiving no
-custom packet. Remaining C08 decisions must settle effect-state and
-originating-party ownership, lifecycle cleanup mechanics, and final icon/label
-metadata before runtime implementation begins.
+custom packet.
+
+Effect-state ownership is recipient-local and transient. Add one
+`ClericEffectRegistry` per affected player, keyed by the seven exclusive
+families: healing pulses, accuracy, protection, damage, reflection, lifesteal,
+and passive regeneration. Each entry uses a stable spell identity and an
+immutable typed representation of snapshotted rank, mechanics, timing,
+optional counter, caster-session origin, and exact party-instance origin. The
+registry is the sole authority for recipient-specific replacement, expiry,
+counter/pulse progress, and lifecycle clearing. It is neither player-cache
+state nor persisted state, and it must not rely on a reusable numeric party ID
+for leave/rejoin validation. Every accepted refresh or replacement atomically
+transfers origin to the new caster and installs that cast's full snapshot,
+including its caster-session and party-instance tokens. Rejected weaker
+applications change neither effect state nor origin. Remaining C08 decisions
+must settle lifecycle cleanup hook mechanics and final icon/label metadata
+before runtime implementation begins.
 
 ### C09 — Low-Risk Support Effects
 

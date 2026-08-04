@@ -677,6 +677,12 @@ received.
 - An equal effect refreshes to its full charge count or restarts its complete
   three-pulse sequence. Refreshing never adds remaining charges or pulses to
   the new full amount.
+- Every accepted refresh or replacement makes the newly casting Cleric the
+  effect's origin. The accepted application atomically installs its complete
+  rank snapshot, duration, charges/pulses, caster-session identity, and current
+  party-instance token. The effect consequently survives departure of an older
+  caster but clears if its new originating caster departs. A rejected weaker
+  application changes neither the active effect nor its origin.
 - These rules mean Aegis can replace Ward, Greater Mend can replace Mend, and
   neither replacement works in reverse while the higher-tier effect remains
   active.
@@ -692,11 +698,31 @@ received.
   every scalable part of the status, including its duration and, where
   applicable, its charges or pulse strength. Duration does not continue to
   change if the caster later changes equipment.
+- Each recipient owns one transient in-memory `ClericEffectRegistry`. It is the
+  single authority for that recipient's Cleric-effect replacement, expiry,
+  counter consumption, pulse completion, and lifecycle clearing; Cleric
+  effects are not party-wide mutable buff objects.
+- The registry is keyed by the seven exclusive effect families: healing pulses
+  (Mend/Greater Mend), accuracy (Fervor), protection (Ward/Aegis), damage
+  (Zeal), reflection (Thorns), lifesteal (Rally), and passive regeneration
+  (Respite). Effects in different family slots may coexist unless a later
+  explicitly confirmed rule says otherwise.
+- Each active entry carries a stable spell identity, its snapshotted effect
+  rank, immutable typed effect parameters, application and expiry times, an
+  optional typed charge/pulse counter, the originating caster-session identity,
+  and the exact originating party-instance token. Do not represent spell
+  mechanics as an unlabeled integer array or generic string-keyed map.
+- The party-instance token must identify the actual runtime party membership
+  context, not merely a reusable numeric party ID. Leaving and rejoining even
+  the same party therefore cannot make an old effect valid again. The caster
+  session identity similarly prevents a later login from impersonating the
+  session that created the effect.
 - A charge-based status ends when either its timer expires or its charges reach
   zero. A Mend-family status ends when its three-pulse sequence finishes or its
   timer expires.
 - Active Cleric effects are transient session state. They clear when the
-  recipient dies or logs out and are not restored on the next login.
+  recipient dies or logs out and are not restored on the next login. They must
+  not use player-cache keys or persistence fields.
 - An effect also clears if its recipient no longer shares the originating
   caster's party. This includes the caster leaving or logging out and prevents
   joining a party only long enough to collect support buffs.
@@ -1527,3 +1553,24 @@ never infer or locally decrement counters; charge consumption and pulse
 completion send immediate authoritative snapshots. The wire format preserves
 the existing item/timer/overflow prefix and adds a length-detected, versioned
 per-entry counter trailer. Authentic clients remain outside this custom packet.
+
+### 2026-08-04: Recipient-owned effect state and origin
+
+Confirmed one transient `ClericEffectRegistry` per affected recipient, keyed by
+the healing-pulse, accuracy, protection, damage, reflection, lifesteal, and
+passive-regeneration exclusivity families. Each typed entry snapshots stable
+spell identity, rank, effect parameters, timing, optional charges or pulses,
+originating caster session, and the exact originating party instance. The
+recipient registry is the sole lifecycle authority and is never persisted.
+Exact runtime session and party-instance tokens ensure that logout or
+leave/rejoin cannot accidentally validate an effect created in an earlier
+membership context.
+
+### 2026-08-04: Accepted applications transfer effect origin
+
+Confirmed that every accepted refresh or replacement transfers ownership to
+the newly casting Cleric. Its full effect snapshot and current caster-session
+and party-instance origins replace the earlier entry atomically. A rejected
+weaker cast leaves both state and origin untouched. This makes the Cleric who
+most recently paid for a useful application its lifecycle source and prevents
+the refreshed effect from disappearing merely because an older caster leaves.
