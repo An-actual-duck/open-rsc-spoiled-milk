@@ -199,10 +199,11 @@ The current source tree does not yet provide a content-neutral build graph:
   content behavior at the protocol layer.
 - `World` conditionally loads MyWorld definition foundations from
   `WANT_MYWORLD`.
-- `ServerConfiguration` is a 1,152-line flat mutable configuration object that
+- `ServerConfiguration` remains a 1,199-line mutable compatibility facade that
   mixes transport, database, diagnostics, layered-world gates, legacy rules,
-  World Builder settings, and Spoiled Milk gameplay switches.
-- `Server` is a 2,819-line composition root, lifecycle owner, network bootstrap,
+  World Builder settings, and Spoiled Milk gameplay switches. Its first two
+  read-only projections now cover process/network and diagnostics.
+- `Server` is a 2,835-line composition root, lifecycle owner, network bootstrap,
   database migrator, plugin initializer, benchmark store, and diagnostics
   registry.
 - Other high-risk ownership concentrations remain in `Player` (7,037 lines),
@@ -693,6 +694,87 @@ Gate:
 - no service thread or listener survives a failed composition; and
 - public launch/deployment scripts are unchanged unless their guards become
   stricter.
+
+#### R2-1 slice 1 completion record: process/network and diagnostics
+
+Status: **COMPLETE — 2026-08-04. R2-1 remains in progress.**
+
+This first bounded slice introduces immutable
+`ProcessNetworkConfiguration` and `DiagnosticsConfiguration` projections from
+the existing mutable `ServerConfiguration` facade. It does not rename or
+remove a key, alter a checked-in configuration, change a default, or move
+parsing authority. `Server` creates both snapshots immediately after the
+existing `initConfig` call and validates them before World Builder storage,
+database construction, plugins, service threads, or listener binding.
+
+The startup endpoint, WebSocket selection, and initial TLS file selection now
+read the frozen process/network view. Movement-stutter diagnostic construction
+reads the frozen diagnostics view. Runtime-administered admission and flood
+limits deliberately continue reading the mutable compatibility facade because
+the existing administrator commands change `MAX_CONNECTIONS_PER_SECOND` and
+`MAX_CONNECTIONS_PER_IP` while a server is running. This is a compatibility
+boundary, not accidental partial migration.
+
+The views validate nonblank bind addresses, valid TCP/WS port ranges,
+incompatible active-WebSocket port reuse, nonnegative network limits, and the
+existing minimum diagnostic intervals. Validation errors and collection
+properties are read-only. Ambiguous ownership is recorded without guessing:
+`max_players` spans network admission and world capacity;
+`session_id_sender_timer` is actually a connection timeout; SSL paths retain
+their `connections.conf` precedence; the legacy double underscore in
+`want_threading__break_pid_priority` remains exact; and the scene/movement
+flags retain their diagnostic/protocol overlap. No deprecated key belongs to
+these two views, so their deprecated-key lists are explicitly empty while the
+legacy facade continues reporting its existing deprecations.
+
+The compiled fixture in
+`tests/myworld/test-server-r2-configuration-views.py` parses copied
+`myworld.conf` and `myworld-host.conf` profiles and compares every projected
+field with the legacy facade. It also covers the existing missing-file default
+path, the existing malformed-value process failure, incompatible typed values,
+immutable validation errors, validation-before-resource ordering, frozen
+listener endpoints, and retained mutable rate-limit consumers. Every fixture
+runs in a temporary directory and constructs no `Server`, Netty bootstrap,
+database, plugin, service thread, or listener.
+
+The current merged-tree inventory contains 1,815 shipped inputs: 923 Ant core
+sources, 492 Ant plugin sources, and 21 libraries. The owner totals are 882
+foundation, 412 target-profile, 178 Spoiled Milk content, 91 maintained
+compatibility, 133 tool-only, 10 diagnostic/proof, and 109 unresolved. Its
+input-tree SHA-256 is
+`5d0eb1996ecdb18293a830a1edd41059c454576775089cf45f657640fe9f6464`.
+The approved dependency-debt file remains byte-identical at SHA-256
+`615452b8d4892f9346a9bb073520091a82648e1440750331fb0c34e63769ec03`
+and still contains 83 edges.
+
+Headless verification on the current merged tree:
+
+- `./scripts/build-server.sh` compiled 923 core and 492 plugin sources and
+  passed the authoritative artifact audit;
+- `python3 scripts/audit-server-r2.py --check --base spoiled-milk/main`
+  passed;
+- `test-server-r2-boundary-audit.py` passed 6 tests;
+- `test-server-r2-dependency-guard.py` passed 3 tests;
+- `test-server-r2-configuration-views.py` passed 7 tests;
+- the server build-source, MyWorld plugin-layout, and standalone-layout guards
+  passed;
+- `./scripts/lint.sh all --base spoiled-milk/main --offline` passed changed-code
+  javac and SpotBugs gates with no new finding; and
+- `test-private-server-launchers.py` passed three of four tests. Its remaining
+  assertion is pre-existing on `spoiled-milk/main`: the Windows cache fixture
+  expects private port `43615`, while the tracked cache contains public port
+  `43605`. This slice does not change that unrelated endpoint policy.
+
+No server or client was launched, and no database, release, deployment, or live
+state was touched.
+
+Recommended R2-1 slice 2: introduce a testable configuration-load result/
+exception boundary around malformed and unknown-profile inputs while retaining
+the current command-line exit status and `ServerConfiguration` facade. Prove
+that parse/validation failure constructs no resource, thread, or listener, then
+use that boundary as the seam for later startup-stage extraction. Keep typed
+persistence/world/content views and partial-start rollback out of that one
+slice.
 
 ### R2-2: Extension registry and legacy plugin adapter
 
@@ -1310,6 +1392,15 @@ change launchers, runtime cache defaults, or that test. The mismatch should be
 handled by a focused launcher/default-endpoint branch.
 
 ## Planning Change Log
+
+- **2026-08-04:** Completed the first bounded R2-1 slice after merging current
+  published `main`. Added immutable process/network and diagnostics views,
+  retained the mutable compatibility facade for live-administered limits,
+  validated before resource/listener creation, added seven no-listener parity
+  and failure fixtures, refreshed the 1,815-input inventory without changing
+  its 83-edge debt baseline, and passed build/audit/changed-code gates. R2-1
+  remains in progress; the next recommended slice is a testable configuration
+  load failure boundary.
 
 - **2026-08-04:** Refreshed the checked R2 ownership inventories after the
   accepted boundary-loading integration. The current tree contains 1,812
