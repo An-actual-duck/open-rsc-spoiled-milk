@@ -1393,6 +1393,15 @@ handled by a focused launcher/default-endpoint branch.
 
 ## Planning Change Log
 
+- **2026-08-04:** Refreshed the checked ownership inventory after the reviewed
+  Cleric C08A integration. The current tree contains 1,832 shipped inputs, 940
+  Ant core sources, and 492 plugin sources. C08A uses a content-neutral
+  recipient-owned transient-effect slot and opaque lifecycle tokens in
+  foundational `Player`/`Party` code; the concrete Cleric registry depends
+  inward on that contract. The approved foundation-to-Spoiled-Milk dependency
+  debt therefore remains exactly 83 edges, and the unresolved inventory remains
+  109 inputs.
+
 - **2026-08-04:** Completed the first bounded R2-1 slice after merging current
   published `main`. Added immutable process/network and diagnostics views,
   retained the mutable compatibility facade for live-administered limits,

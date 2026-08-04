@@ -487,8 +487,10 @@ published `main`:
      replacement results.
    - Add session and party-membership-generation identities and centralized
      death/logout/membership cleanup with defensive validation.
-   - Wire an empty registry into `Player` without changing packets, the client,
-     sigil spending, or reachable spells.
+   - Wire a content-neutral empty transient-effect slot and opaque lifecycle
+     tokens into `Player`. Keep the concrete Cleric registry content-owned and
+     unattached until a later approved effect handler needs it, without
+     changing packets, the client, sigil spending, or reachable spells.
    - Stop and hand off after the compiled state/lifecycle fixture, server build,
      and changed-code analysis pass. The production registry must remain empty
      because no effect handler exists yet.
@@ -1047,16 +1049,21 @@ origin. Registry operations are synchronized within one recipient, snapshots
 are immutable, counters cannot underflow, and expiry/origin validation fails
 closed before state is exposed.
 
-`Player` now owns one empty registry and session identity, while each party
-join or login reattachment issues a fresh membership generation. Real death
-and logout clear received effects. The shared `Party.removePlayer` boundary
-now also ends membership for unregistering player references, not only members
-still considered online, so leave, kick, logout, and membership transition all
-clear the departing recipient and effects sourced from that exact membership
-before party-list removal. Caster death deliberately clears only the dead
-recipient's own registry; living recipients retain bounded effects until
-expiry, logout, or party separation. Cleanup is idempotent, deduplicates
-recipient registries, and never holds two registry locks at once.
+`Player` now owns a content-neutral empty transient-effect slot and opaque
+session identity, while each party join or login reattachment issues a fresh
+membership generation. The concrete Cleric registry implements that narrow
+foundation-facing lifecycle contract but remains content-owned and unattached
+until a later approved effect handler creates state. This preserves the Server
+R2 dependency direction: foundation lifecycle code never imports Cleric
+content. Real death and logout clear received effects. The shared
+`Party.removePlayer` boundary now also ends membership for unregistering player
+references, not only members still considered online, so leave, kick, logout,
+and membership transition all clear the departing recipient and effects
+sourced from that exact membership before party-list removal. Caster death
+deliberately clears only the dead recipient's own state; living recipients
+retain bounded effects until expiry, logout, or party separation. Cleanup is
+idempotent, deduplicates recipient states, and never holds two registry locks
+at once.
 
 The compiled fixture covers all definitions and values, invalid construction,
 seven-family coexistence, tier/rank replacement and refresh, origin transfer,

@@ -1,5 +1,8 @@
 package com.openrsc.server.content.cleric.effect;
 
+import com.openrsc.server.model.entity.player.TransientEffectMembershipToken;
+import com.openrsc.server.model.entity.player.TransientEffectSessionToken;
+
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
@@ -17,8 +20,8 @@ public final class ClericEffectLifecycle {
 	}
 
 	public static int endMembership(ClericEffectRegistry departingRecipient,
-			ClericSessionToken departingSession,
-			ClericPartyMembershipToken departingMembership,
+			TransientEffectSessionToken departingSession,
+			TransientEffectMembershipToken departingMembership,
 			Iterable<ClericEffectRegistry> partyRecipientRegistries) {
 		if (departingRecipient == null || departingSession == null
 				|| departingMembership == null || partyRecipientRegistries == null) {

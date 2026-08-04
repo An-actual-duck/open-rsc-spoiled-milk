@@ -13,10 +13,12 @@ ROOT = Path(__file__).resolve().parents[2]
 CLERIC_ROOT = ROOT / "server/src/com/openrsc/server/content/cleric"
 EFFECT_ROOT = CLERIC_ROOT / "effect"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+PLAYER_EFFECT_ROOT = ROOT / "server/src/com/openrsc/server/model/entity/player"
 PARTY = ROOT / "server/src/com/openrsc/server/content/party/Party.java"
 PARTY_MANAGER = ROOT / "server/src/com/openrsc/server/content/party/PartyManager.java"
 CASTING = CLERIC_ROOT / "runtime/ClericSupportCasting.java"
 HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java"
+ORIGINS = EFFECT_ROOT / "ClericEffectOrigins.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/cleric-spellbook-implementation-plan.md"
 
 
@@ -29,6 +31,8 @@ FIXTURE = r"""
 package com.openrsc.server.content.cleric.effect;
 
 import com.openrsc.server.content.cleric.ClericSpellId;
+import com.openrsc.server.model.entity.player.TransientEffectMembershipToken;
+import com.openrsc.server.model.entity.player.TransientEffectSessionToken;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,8 +74,8 @@ public final class ClericEffectStateFixture {
 	}
 
 	private static final class LiveOrigins implements ClericEffectOriginValidator {
-		private final Set<ClericSessionToken> sessions = identitySet();
-		private final Set<ClericPartyMembershipToken> memberships = identitySet();
+		private final Set<TransientEffectSessionToken> sessions = identitySet();
+		private final Set<TransientEffectMembershipToken> memberships = identitySet();
 
 		void add(ClericEffectOrigin origin) {
 			sessions.add(origin.getCasterSession());
@@ -79,19 +83,19 @@ public final class ClericEffectStateFixture {
 			memberships.add(origin.getRecipientMembership());
 		}
 
-		void removeSession(ClericSessionToken session) {
+		void removeSession(TransientEffectSessionToken session) {
 			sessions.remove(session);
 		}
 
-		void addSession(ClericSessionToken session) {
+		void addSession(TransientEffectSessionToken session) {
 			sessions.add(session);
 		}
 
-		void removeMembership(ClericPartyMembershipToken membership) {
+		void removeMembership(TransientEffectMembershipToken membership) {
 			memberships.remove(membership);
 		}
 
-		void addMembership(ClericPartyMembershipToken membership) {
+		void addMembership(TransientEffectMembershipToken membership) {
 			memberships.add(membership);
 		}
 
@@ -121,9 +125,9 @@ public final class ClericEffectStateFixture {
 		}
 	}
 
-	private static ClericEffectOrigin origin(ClericPartyMembershipToken recipient) {
-		return new ClericEffectOrigin(ClericSessionToken.issue(),
-			ClericPartyMembershipToken.issue(), recipient);
+	private static ClericEffectOrigin origin(TransientEffectMembershipToken recipient) {
+		return new ClericEffectOrigin(TransientEffectSessionToken.issue(),
+			TransientEffectMembershipToken.issue(), recipient);
 	}
 
 	private static ClericEffectRankDefinition<?> effect(ClericSpellId spell, int rank) {
@@ -249,7 +253,7 @@ public final class ClericEffectStateFixture {
 	private static void replacementAndCounterChecks() {
 		FakeClock clock = new FakeClock(1_000_000L, 640L);
 		ClericEffectRegistry registry = new ClericEffectRegistry(clock);
-		ClericPartyMembershipToken recipient = ClericPartyMembershipToken.issue();
+		TransientEffectMembershipToken recipient = TransientEffectMembershipToken.issue();
 		ClericEffectOrigin firstCaster = origin(recipient);
 		ClericEffectOrigin secondCaster = origin(recipient);
 		LiveOrigins live = new LiveOrigins();
@@ -351,7 +355,7 @@ public final class ClericEffectStateFixture {
 	private static void expiryAndOriginChecks() {
 		FakeClock clock = new FakeClock(0L, 640L);
 		ClericEffectRegistry registry = new ClericEffectRegistry(clock);
-		ClericPartyMembershipToken recipient = ClericPartyMembershipToken.issue();
+		TransientEffectMembershipToken recipient = TransientEffectMembershipToken.issue();
 		ClericEffectOrigin origin = origin(recipient);
 		LiveOrigins live = new LiveOrigins();
 		live.add(origin);
@@ -369,14 +373,14 @@ public final class ClericEffectStateFixture {
 		check(registry.size(live) == 0, "caster relog/logout token invalidation drift");
 		live.addSession(origin.getCasterSession());
 
-		ClericEffectOrigin staleMembership = origin(ClericPartyMembershipToken.issue());
+		ClericEffectOrigin staleMembership = origin(TransientEffectMembershipToken.issue());
 		live.add(staleMembership);
 		registry.apply(effect(ClericSpellId.ZEAL, 1), staleMembership, live);
 		live.removeMembership(staleMembership.getRecipientMembership());
-		live.addMembership(ClericPartyMembershipToken.issue());
+		live.addMembership(TransientEffectMembershipToken.issue());
 		check(registry.size(live) == 0, "same-party leave/rejoin must invalidate old effect");
 
-		ClericEffectOrigin invalid = origin(ClericPartyMembershipToken.issue());
+		ClericEffectOrigin invalid = origin(TransientEffectMembershipToken.issue());
 		check(registry.apply(effect(ClericSpellId.FERVOR, 1), invalid, live)
 			== ClericEffectRegistry.ApplyResult.REJECTED_INVALID_ORIGIN,
 			"invalid candidate origin must fail closed");
@@ -390,8 +394,8 @@ public final class ClericEffectStateFixture {
 
 	private static void lifecycleChecks() {
 		FakeClock clock = new FakeClock(0L, 640L);
-		ClericEffectOrigin departingOrigin = origin(ClericPartyMembershipToken.issue());
-		ClericEffectOrigin otherOrigin = origin(ClericPartyMembershipToken.issue());
+		ClericEffectOrigin departingOrigin = origin(TransientEffectMembershipToken.issue());
+		ClericEffectOrigin otherOrigin = origin(TransientEffectMembershipToken.issue());
 		LiveOrigins live = new LiveOrigins();
 		live.add(departingOrigin);
 		live.add(otherOrigin);
@@ -433,7 +437,7 @@ public final class ClericEffectStateFixture {
 	private static void concurrencyChecks() throws Exception {
 		FakeClock clock = new FakeClock(0L, 640L);
 		final ClericEffectRegistry registry = new ClericEffectRegistry(clock);
-		final ClericEffectOrigin origin = origin(ClericPartyMembershipToken.issue());
+		final ClericEffectOrigin origin = origin(TransientEffectMembershipToken.issue());
 		final LiveOrigins live = new LiveOrigins();
 		live.add(origin);
 		final CountDownLatch start = new CountDownLatch(1);
@@ -488,8 +492,8 @@ public final class ClericEffectStateFixture {
 			ClericSpellId.PURIFY, ClericEffectFamily.DAMAGE, 1, 1,
 			ClericEffectDuration.seconds(30), ClericEffectCounterKind.NONE, 0, magnitude),
 			"instant spell timed state");
-		reject(() -> new ClericEffectOrigin(null, ClericPartyMembershipToken.issue(),
-			ClericPartyMembershipToken.issue()), "partial origin");
+		reject(() -> new ClericEffectOrigin(null, TransientEffectMembershipToken.issue(),
+			TransientEffectMembershipToken.issue()), "partial origin");
 		reject(() -> new ClericEffectRegistry(null), "missing clock");
 	}
 
@@ -517,20 +521,22 @@ def validate_source_boundaries() -> None:
         require(forbidden not in lowered, f"effect foundation crossed inert boundary: {forbidden}")
 
     player = PLAYER.read_text(encoding="utf-8")
-    require("private final ClericSessionToken clericSessionToken" in player,
-            "Player lacks process-local Cleric session identity")
-    require("private final ClericEffectRegistry clericEffectRegistry" in player,
-            "Player lacks recipient-owned Cleric registry")
-    require("ClericPartyMembershipToken.issue()" in player,
+    require("private final TransientEffectSessionToken transientEffectSessionToken" in player,
+            "Player lacks process-local transient-effect session identity")
+    require("TransientEffectState transientEffectState = TransientEffectState.empty()" in player,
+            "Player lacks content-neutral recipient-owned effect slot")
+    require("TransientEffectMembershipToken.issue()" in player,
             "party membership does not issue a new opaque generation")
-    require("ClericEffectLifecycle.endMembership(clericEffectRegistry" in player,
-            "party transition does not use centralized Cleric cleanup")
+    require("recipientState.clearOriginatingFrom(transientEffectSessionToken" in player,
+            "party transition does not use centralized transient-effect cleanup")
+    require("com.openrsc.server.content.cleric" not in player,
+            "foundation Player gained a reverse dependency on Cleric content")
 
     death = player.split("public void killedBy(final Mob mob)", 1)[1].split(
         "private int getEquippedWeaponID", 1
     )[0]
     tutorial_return = death.index("skipTutorial();")
-    death_clear = death.index("ClericEffectLifecycle.clearRecipient(clericEffectRegistry);")
+    death_clear = death.index("getTransientEffectState().clearAll();")
     death_record = death.index('getCache().store("last_death"')
     require(tutorial_return < death_clear < death_record,
             "real-death cleanup must follow tutorial pseudo-death and precede death processing")
@@ -538,19 +544,20 @@ def validate_source_boundaries() -> None:
     logout = player.split("public void logout()", 1)[1].split(
         "public void sendMemberErrorMessage", 1
     )[0]
-    require(logout.index("ClericEffectLifecycle.clearRecipient(clericEffectRegistry);")
+    require(logout.index("getTransientEffectState().clearAll();")
             < logout.index("getParty().removePlayer"),
             "logout must clear received effects before party departure")
 
     set_party = player.split("public void setParty(final Party party)", 1)[1].split(
         "public PartyInvite getActivePartyInvite", 1
     )[0]
-    require(set_party.index("ClericEffectLifecycle.endMembership")
+    require(set_party.index("recipientState.clearOriginatingFrom")
             < set_party.index("this.party = party"),
             "membership cleanup must precede party transition")
-    require("caster.isLoggedIn() && !caster.isUnregistering()" in set_party,
+    origins = ORIGINS.read_text(encoding="utf-8")
+    require("caster.isLoggedIn() && !caster.isUnregistering()" in origins,
             "defensive origin validation does not reject stale caster sessions")
-    require("caster.getParty() == party" in set_party,
+    require("caster.getParty() == party" in origins,
             "defensive origin validation does not require current shared party")
 
     set_party_calls = []
@@ -607,7 +614,15 @@ def validate_source_boundaries() -> None:
 
 def run_compiled_fixture() -> None:
     sources = sorted(str(path) for path in CLERIC_ROOT.glob("*.java"))
-    sources.extend(sorted(str(path) for path in EFFECT_ROOT.glob("*.java")))
+    sources.extend(sorted(
+        str(path) for path in EFFECT_ROOT.glob("*.java")
+        if path.name != "ClericEffectOrigins.java"
+    ))
+    sources.extend(str(PLAYER_EFFECT_ROOT / name) for name in (
+        "TransientEffectMembershipToken.java",
+        "TransientEffectSessionToken.java",
+        "TransientEffectState.java",
+    ))
     with tempfile.TemporaryDirectory(prefix="cleric-c08a-") as temporary:
         temp = Path(temporary)
         fixture = temp / "com/openrsc/server/content/cleric/effect/ClericEffectStateFixture.java"

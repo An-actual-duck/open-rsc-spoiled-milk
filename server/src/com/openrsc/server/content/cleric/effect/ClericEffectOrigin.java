@@ -1,14 +1,17 @@
 package com.openrsc.server.content.cleric.effect;
 
+import com.openrsc.server.model.entity.player.TransientEffectMembershipToken;
+import com.openrsc.server.model.entity.player.TransientEffectSessionToken;
+
 /** Immutable server-only origin for one recipient's transient Cleric effect. */
 public final class ClericEffectOrigin {
-	private final ClericSessionToken casterSession;
-	private final ClericPartyMembershipToken casterMembership;
-	private final ClericPartyMembershipToken recipientMembership;
+	private final TransientEffectSessionToken casterSession;
+	private final TransientEffectMembershipToken casterMembership;
+	private final TransientEffectMembershipToken recipientMembership;
 
-	public ClericEffectOrigin(ClericSessionToken casterSession,
-			ClericPartyMembershipToken casterMembership,
-			ClericPartyMembershipToken recipientMembership) {
+	public ClericEffectOrigin(TransientEffectSessionToken casterSession,
+			TransientEffectMembershipToken casterMembership,
+			TransientEffectMembershipToken recipientMembership) {
 		if (casterSession == null || casterMembership == null || recipientMembership == null) {
 			throw new IllegalArgumentException("Complete Cleric effect origin is required");
 		}
@@ -17,20 +20,20 @@ public final class ClericEffectOrigin {
 		this.recipientMembership = recipientMembership;
 	}
 
-	public ClericSessionToken getCasterSession() {
+	public TransientEffectSessionToken getCasterSession() {
 		return casterSession;
 	}
 
-	public ClericPartyMembershipToken getCasterMembership() {
+	public TransientEffectMembershipToken getCasterMembership() {
 		return casterMembership;
 	}
 
-	public ClericPartyMembershipToken getRecipientMembership() {
+	public TransientEffectMembershipToken getRecipientMembership() {
 		return recipientMembership;
 	}
 
-	public boolean originatedFrom(ClericSessionToken session,
-			ClericPartyMembershipToken membership) {
+	public boolean originatedFrom(TransientEffectSessionToken session,
+			TransientEffectMembershipToken membership) {
 		return casterSession == session && casterMembership == membership;
 	}
 }

@@ -680,7 +680,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "5d0eb1996ecdb18293a830a1edd41059c454576775089cf45f657640fe9f6464",
+  "inputTreeSha256": "25b16800dddda86d7685ecd975ab9081a0e8298a066de62a5d97131e476ceef5",
   "inputs": [
     {
       "brandSignals": [
@@ -34117,6 +34117,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/cleric/ClericSpellCatalog.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java"
       ],
@@ -34133,6 +34134,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
@@ -34152,6 +34154,8 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/cleric/ClericSpellId.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java"
       ],
       "sha256": "d7876050604807fecb11abe6f63af566f6de3e7e89259afc568c5eaa13bf5bef"
@@ -34198,6 +34202,254 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java"
       ],
       "sha256": "ed93be60d0b642c87d678f878641defcc7ba54acf6897e42507c658040a5a62d"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 9135,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.content.cleric.ClericSpellCatalog",
+          "path": "server/src/com/openrsc/server/content/cleric/ClericSpellCatalog.java"
+        },
+        {
+          "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
+          "path": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+        },
+        {
+          "import": "com.openrsc.server.content.cleric.ClericSpellId",
+          "path": "server/src/com/openrsc/server/content/cleric/ClericSpellId.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectCatalog",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
+      "reverseDependencies": [],
+      "sha256": "fa2a0fc4646b14ed3465f76aaa3d709dfcc0d158487d18c751ef4d01c9f948fd"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 611,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectClock",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectClock.java",
+      "reverseDependencies": [],
+      "sha256": "efbd939bbfbb3358c774bebeafb17b48d4055de2d3e8d405d3a97507a4109db3"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 589,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectCounterKind",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCounterKind.java",
+      "reverseDependencies": [],
+      "sha256": "9112e79ab175d9479d97e554f90cd54d94f827cf1af8cac4603d21f037c09dec"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1539,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectDuration",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectDuration.java",
+      "reverseDependencies": [],
+      "sha256": "7f00010ead130c70b794e143c673e1c56cb041f70bead139149dda409918ecab"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 2077,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectEntry",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectEntry.java",
+      "reverseDependencies": [],
+      "sha256": "0f58a77ca73bb8c053945b4e875efa0189ecd8dcd683ac16baf6eac57d4eefc2"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1950,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectFamily",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectFamily.java",
+      "reverseDependencies": [],
+      "sha256": "2b1210ed258d58d80bfee89072fe883229197d76ff03e21cc7cfe950bf1105a9"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1593,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectMembershipToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectMembershipToken.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectSessionToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectSessionToken.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectLifecycle",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectLifecycle.java",
+      "reverseDependencies": [],
+      "sha256": "e88fba6096f8657bf649bc6e777d5fa1ca9a6e36f180e17b38f5f6eec8100289"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 174,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectMagnitude",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectMagnitude.java",
+      "reverseDependencies": [],
+      "sha256": "6409410f38d3490a4c4653153af1933974b736d6768edf570056baaab6d47672"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 3969,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectMagnitudes",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectMagnitudes.java",
+      "reverseDependencies": [],
+      "sha256": "3961658317d529b048ecf1b8e6a42e739d9080a2c5c772bb42a34a38900c3d71"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1478,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectMembershipToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectMembershipToken.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectSessionToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectSessionToken.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectOrigin",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigin.java",
+      "reverseDependencies": [],
+      "sha256": "c4625c3daabad2774b7ee840c344871b3fdb967901f275ac31e96edb3bdc63e9"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 231,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectOriginValidator",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOriginValidator.java",
+      "reverseDependencies": [],
+      "sha256": "8be7c9ec96831c7604e05a43b94cb6cf21c2bc7e87a5a1141adbd62305702add"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 2419,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.content.party.Party",
+          "path": "server/src/com/openrsc/server/content/party/Party.java"
+        },
+        {
+          "import": "com.openrsc.server.content.party.PartyPlayer",
+          "path": "server/src/com/openrsc/server/content/party/PartyPlayer.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectMembershipToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectMembershipToken.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectOrigins",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigins.java",
+      "reverseDependencies": [],
+      "sha256": "3a73010b87f98d700d095eba2d9487d79e8029085f27c5107db545f356c10c43"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 4393,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.content.cleric.ClericSpellId",
+          "path": "server/src/com/openrsc/server/content/cleric/ClericSpellId.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectRankDefinition",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
+      "reverseDependencies": [],
+      "sha256": "92347462f0d343a5e37a4d2fcc597223bcf672e3162b1150ea15535326951f5f"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 6856,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Cleric content",
+      "classificationRule": "server/src/com/openrsc/server/content/cleric/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectMembershipToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectMembershipToken.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectSessionToken",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectSessionToken.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.TransientEffectState",
+          "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectState.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.cleric.effect.ClericEffectRegistry",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java",
+      "reverseDependencies": [],
+      "sha256": "76ab496c95b8836a670cb96f13716dbf45a13efc95e466fba37330a2aa8d98e7"
     },
     {
       "brandSignals": [],
@@ -34939,7 +35191,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7246,
+      "bytes": 7272,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -34969,12 +35221,13 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/party/Party.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigins.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java"
       ],
-      "sha256": "eb832502a6c779f2843338896ec5b169923ac50c23e76a45d025c6aed6272a4e"
+      "sha256": "c52bf9f52dcdc552805fee808404bd4dd03e49bf037c98893668a73217aee639"
     },
     {
       "brandSignals": [],
@@ -35063,6 +35316,7 @@
       "path": "server/src/com/openrsc/server/content/party/PartyPlayer.java",
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/commands/RegularPlayer.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigins.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
@@ -47348,7 +47602,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 224877,
+      "bytes": 227153,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48229,6 +48483,7 @@
         "server/src/com/openrsc/server/content/clan/ClanInvite.java",
         "server/src/com/openrsc/server/content/clan/ClanManager.java",
         "server/src/com/openrsc/server/content/clan/ClanPlayer.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigins.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/market/Market.java",
         "server/src/com/openrsc/server/content/market/task/BuyMarketItemTask.java",
@@ -48485,7 +48740,7 @@
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java",
         "server/src/com/openrsc/server/util/rsc/Formulae.java"
       ],
-      "sha256": "949860b513c5d7bee991053bb57ed1e868ad2789683cb79abd826e32d2fa8f5e"
+      "sha256": "c2d62817406325b5b0dea81f419e2277f89d9eac07ca0207e8657047d5d43a76"
     },
     {
       "brandSignals": [
@@ -48744,6 +48999,56 @@
       "path": "server/src/com/openrsc/server/model/entity/player/Trade.java",
       "reverseDependencies": [],
       "sha256": "90cc6176145b0410aafef5d0f1b8edae1ce2aef5b033529942a06c52302d3adb"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 341,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.model.entity.player.TransientEffectMembershipToken",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectMembershipToken.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectLifecycle.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigin.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigins.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java"
+      ],
+      "sha256": "4976876bfc9b7c7e285f5ef810b49bb52af203b011d20f7f3333b4f4b604e27b"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 321,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.model.entity.player.TransientEffectSessionToken",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectSessionToken.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectLifecycle.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectOrigin.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java"
+      ],
+      "sha256": "77b4c6784f3fb126be79cfdbeb7c81357aac19e0d29c6ed94782cf84f52b932e"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 930,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.model.entity.player.TransientEffectState",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/model/entity/player/TransientEffectState.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java"
+      ],
+      "sha256": "021845be41097809884c2cdf851cd76e87d840285e6f25c9915ac848d1b3cdef"
     },
     {
       "brandSignals": [],
@@ -67363,21 +67668,21 @@
   "summary": {
     "categoryCounts": {
       "diagnostic-proof": 10,
-      "foundation": 882,
+      "foundation": 885,
       "maintained-compatibility": 91,
-      "spoiled-milk-content": 178,
+      "spoiled-milk-content": 192,
       "target-profile": 412,
       "tool-only": 133,
       "unresolved": 109
     },
     "configurationInputs": 21,
-    "coreJavaFiles": 923,
+    "coreJavaFiles": 940,
     "databasePatchInputs": 27,
     "definitionInputs": 42,
     "directBrandSignalFiles": 269,
     "foundationToSpoiledMilkDependencies": 83,
     "kindCounts": {
-      "ant-core-source": 923,
+      "ant-core-source": 940,
       "ant-library": 21,
       "ant-plugin-source": 492,
       "build-definition": 2,
@@ -67405,7 +67710,7 @@
     },
     "pluginJavaFiles": 492,
     "populationInputs": 41,
-    "shippedInputs": 1815
+    "shippedInputs": 1832
   },
   "unresolvedInputs": [
     {

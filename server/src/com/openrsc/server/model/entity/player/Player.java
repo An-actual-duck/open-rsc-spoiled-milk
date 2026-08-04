@@ -8,13 +8,6 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.achievement.Achievement;
 import com.openrsc.server.content.clan.Clan;
 import com.openrsc.server.content.clan.ClanInvite;
-import com.openrsc.server.content.cleric.effect.ClericEffectClock;
-import com.openrsc.server.content.cleric.effect.ClericEffectLifecycle;
-import com.openrsc.server.content.cleric.effect.ClericEffectOrigin;
-import com.openrsc.server.content.cleric.effect.ClericEffectOriginValidator;
-import com.openrsc.server.content.cleric.effect.ClericEffectRegistry;
-import com.openrsc.server.content.cleric.effect.ClericPartyMembershipToken;
-import com.openrsc.server.content.cleric.effect.ClericSessionToken;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyInvite;
@@ -177,9 +170,10 @@ public final class Player extends Mob {
 	private Trade trade;
 	private Clan clan;
 	private Party party;
-	private final ClericSessionToken clericSessionToken = ClericSessionToken.issue();
-	private final ClericEffectRegistry clericEffectRegistry;
-	private ClericPartyMembershipToken clericPartyMembershipToken;
+	private final TransientEffectSessionToken transientEffectSessionToken =
+		TransientEffectSessionToken.issue();
+	private TransientEffectState transientEffectState = TransientEffectState.empty();
+	private TransientEffectMembershipToken transientEffectMembershipToken;
 	private ClanInvite activeClanInvitation;
 	private PartyInvite activePartyInvitation;
 	public final int MAX_FATIGUE = 150000;
@@ -522,8 +516,6 @@ public final class Player extends Mob {
 	 */
 	public Player(final World world, final LoginRequest request) {
 		super(world, EntityType.PLAYER);
-		clericEffectRegistry = new ClericEffectRegistry(ClericEffectClock.system(
-			world.getServer().getConfig().GAME_TICK));
 
 		usernameHash = DataConversions.usernameToHash(request.getUsername());
 		username = DataConversions.hashToUsername(usernameHash);
@@ -558,8 +550,6 @@ public final class Player extends Mob {
 	 */
 	public Player(final World world, final long hash) {
 		super(world, EntityType.PLAYER);
-		clericEffectRegistry = new ClericEffectRegistry(ClericEffectClock.system(
-			world.getServer().getConfig().GAME_TICK));
 
 		usernameHash = hash;
 		username = DataConversions.hashToUsername(usernameHash);
@@ -4204,7 +4194,7 @@ public final class Player extends Mob {
 			return;
 		}
 
-		ClericEffectLifecycle.clearRecipient(clericEffectRegistry);
+		getTransientEffectState().clearAll();
 
 		// Seems to never be set
 		final ProjectileEvent projectileEvent = getAttribute("projectile");
@@ -4761,7 +4751,7 @@ public final class Player extends Mob {
 			teleport(791, 3469); // see [Logg/Tylerbeg/07-19-2018 11.11.46 log back in outside iban's chamber]
 		}
 
-		ClericEffectLifecycle.clearRecipient(clericEffectRegistry);
+		getTransientEffectState().clearAll();
 		if (getParty() != null) {
 			getParty().removePlayer(this.getUsername());
 		}
@@ -5978,64 +5968,54 @@ public final class Player extends Mob {
 		}
 
 		Party previousParty = this.party;
-		ClericPartyMembershipToken previousMembership = clericPartyMembershipToken;
+		TransientEffectMembershipToken previousMembership = transientEffectMembershipToken;
 		if (previousParty != null && previousMembership != null) {
-			ArrayList<ClericEffectRegistry> recipientRegistries =
-				new ArrayList<ClericEffectRegistry>();
+			TransientEffectState departingState = getTransientEffectState();
+			Set<TransientEffectState> visited = Collections.newSetFromMap(
+				new IdentityHashMap<TransientEffectState, Boolean>());
+			departingState.clearAll();
+			visited.add(departingState);
 			for (PartyPlayer member : new ArrayList<PartyPlayer>(previousParty.getPlayers())) {
 				Player recipient = member.getPlayerReference();
 				if (recipient != null) {
-					recipientRegistries.add(recipient.getClericEffectRegistry());
+					TransientEffectState recipientState = recipient.getTransientEffectState();
+					if (visited.add(recipientState)) {
+						recipientState.clearOriginatingFrom(transientEffectSessionToken,
+							previousMembership);
+					}
 				}
 			}
-			ClericEffectLifecycle.endMembership(clericEffectRegistry,
-				clericSessionToken, previousMembership, recipientRegistries);
 		} else if (previousParty != null) {
-			ClericEffectLifecycle.clearRecipient(clericEffectRegistry);
+			getTransientEffectState().clearAll();
 		}
 
 		this.party = party;
-		this.clericPartyMembershipToken = party == null
-			? null : ClericPartyMembershipToken.issue();
+		this.transientEffectMembershipToken = party == null
+			? null : TransientEffectMembershipToken.issue();
 		getUpdateFlags().setAppearanceChanged(true);
 	}
 
-	public ClericSessionToken getClericSessionToken() {
-		return clericSessionToken;
+	public TransientEffectSessionToken getTransientEffectSessionToken() {
+		return transientEffectSessionToken;
 	}
 
-	public ClericPartyMembershipToken getClericPartyMembershipToken() {
-		return clericPartyMembershipToken;
+	public TransientEffectMembershipToken getTransientEffectMembershipToken() {
+		return transientEffectMembershipToken;
 	}
 
-	public ClericEffectRegistry getClericEffectRegistry() {
-		return clericEffectRegistry;
+	public synchronized TransientEffectState getTransientEffectState() {
+		return transientEffectState;
 	}
 
-	public ClericEffectOriginValidator getClericEffectOriginValidator() {
-		return new ClericEffectOriginValidator() {
-			@Override
-			public boolean isCurrent(ClericEffectOrigin origin) {
-				return isCurrentClericEffectOrigin(origin);
-			}
-		};
-	}
-
-	private boolean isCurrentClericEffectOrigin(ClericEffectOrigin origin) {
-		if (origin == null || party == null
-				|| clericPartyMembershipToken != origin.getRecipientMembership()) {
-			return false;
+	public synchronized void installTransientEffectState(TransientEffectState state) {
+		if (state == null || state == TransientEffectState.empty()) {
+			throw new IllegalArgumentException("A concrete transient-effect state is required");
 		}
-		for (PartyPlayer member : new ArrayList<PartyPlayer>(party.getPlayers())) {
-			Player caster = member.getPlayerReference();
-			if (caster != null && caster.isLoggedIn() && !caster.isUnregistering()
-					&& caster.getParty() == party
-					&& caster.getClericSessionToken() == origin.getCasterSession()
-					&& caster.getClericPartyMembershipToken() == origin.getCasterMembership()) {
-				return true;
-			}
+		if (transientEffectState != TransientEffectState.empty()
+				&& transientEffectState != state) {
+			throw new IllegalStateException("Transient-effect state is already installed");
 		}
-		return false;
+		transientEffectState = state;
 	}
 
 	public PartyInvite getActivePartyInvite() {

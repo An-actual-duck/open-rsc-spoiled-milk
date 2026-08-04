@@ -1,5 +1,9 @@
 package com.openrsc.server.content.cleric.effect;
 
+import com.openrsc.server.model.entity.player.TransientEffectMembershipToken;
+import com.openrsc.server.model.entity.player.TransientEffectSessionToken;
+import com.openrsc.server.model.entity.player.TransientEffectState;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -9,7 +13,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Thread-safe, bounded, recipient-owned authority for transient Cleric effects. */
-public final class ClericEffectRegistry {
+public final class ClericEffectRegistry implements TransientEffectState {
 	public enum ApplyResult {
 		APPLIED(true),
 		REPLACED(true),
@@ -124,14 +128,16 @@ public final class ClericEffectRegistry {
 		return entries.size();
 	}
 
+	@Override
 	public synchronized int clearAll() {
 		int removed = entries.size();
 		entries.clear();
 		return removed;
 	}
 
-	public synchronized int clearOriginatingFrom(ClericSessionToken casterSession,
-			ClericPartyMembershipToken casterMembership) {
+	@Override
+	public synchronized int clearOriginatingFrom(TransientEffectSessionToken casterSession,
+			TransientEffectMembershipToken casterMembership) {
 		if (casterSession == null || casterMembership == null) {
 			throw new IllegalArgumentException("Complete Cleric caster origin is required");
 		}
