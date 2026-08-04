@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `main` (C08 integrated; C09 is next)
+- Branch: `feat/cleric-purify-effect` (first bounded C09 effect in progress)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension**
-- Current milestone: **C08 is integrated, verified, and published; C09 may begin on a focused branch**
-- Next planned milestone: **C09 — low-risk support effects, only after C08B is accepted and integrated**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08A's registry remains empty, while C08B presents only already-authoritative status snapshots and does not enable a new spell effect**
+- Current milestone: **C09 Purify — automated verification in progress; private acceptance is still required**
+- Next planned milestone: **C09 Restore, only after the focused Purify branch is accepted and integrated**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, party-only Unify, and the focused party-only Purify implementation; C08A's registry remains empty, while C08B presents only already-authoritative timed status snapshots**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -610,6 +610,29 @@ shared combat damage pipeline:
 Each branch owns its pure calculations, lifecycle tests, area behavior,
 resource transaction, client text/HUD behavior where applicable, builds, and
 private verification.
+
+The first bounded branch is Purify only. It may add one shared poison-power
+reduction boundary because the live poison event, persisted current power,
+normal cure threshold, source attribution, and maximum accumulation state must
+not drift apart. Purify resolves its four fixed reductions from the caster's
+snapshotted Holy Power rank, reuses C07's exact recipient snapshot and atomic
+sigil transaction, and remains wholly ineffective for an unpoisoned recipient.
+A result below the shared poison cure threshold uses ordinary poison cleanup;
+otherwise only current power changes. The partial path must preserve the
+source and accumulation ceiling and persist the reduced current power for
+relog. It creates no C08 registry entry, timer, immunity, HUD row, Worship XP,
+or combat-pipeline hook.
+
+Purify verification must cover all four ranks, exact and below-threshold cure
+boundaries, severe and repeated reductions, unpoisoned and mixed recipient
+sets, insufficient resources, one full Guthix tier-one cost per useful cast,
+C07 area/line-of-effect/PvP/caster exclusion, source and maximum-power
+preservation, current-power relog persistence, ordinary poison ticking and
+curing, both authoritative server artifacts, changed-code analysis, and a
+private two-player cast. The private route should compare no-staff and
+Holy-Power staff ranks, confirm that an all-unpoisoned cast spends nothing,
+and observe both a partial reduction and full cure. No client HUD entry is
+expected because Purify is instant.
 
 ### C10 — Direct-Combat Support Effects
 

@@ -64,8 +64,9 @@ def validate_wiring() -> None:
     for pvp_boundary in ("USES_PK_MODE", "inWilderness()", "isDuelActive()"):
         require(pvp_boundary in casting,
                 f"shared C07 PvP boundary omits {pvp_boundary}")
-    require("definition.getId() != ClericSpellId.UNIFY" in casting,
-            "C08 and later effects must remain unreachable")
+    require("definition.getId() != ClericSpellId.UNIFY" in casting
+            and "definition.getId() != ClericSpellId.PURIFY" in casting,
+            "only approved Unify and Purify effects may be reachable")
     for forbidden in ("remove(", "addExperience", "incExp", "setLevel", "setSkill"):
         require(forbidden not in method,
                 f"C06 request unexpectedly mutates gameplay through {forbidden}")

@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Leach;
+import com.openrsc.server.content.PoisonPowerReduction;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.Mob;
@@ -31,7 +32,7 @@ public class PoisonEvent extends GameTickEvent {
 
 	@Override
 	public void run() {
-		if (poisonPower < 10) {
+		if (PoisonPowerReduction.shouldCure(poisonPower)) {
 			mob.curePoison();
 			return;
 		}

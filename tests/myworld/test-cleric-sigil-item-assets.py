@@ -206,6 +206,7 @@ def validate_source_assets() -> None:
 
 def build_and_run_server_identity_fixture() -> None:
     sources = sorted(str(path) for path in SERVER_CLERIC_ROOT.glob("*.java"))
+    sources.append(str(ROOT / "server/src/com/openrsc/server/content/PoisonPowerReduction.java"))
     with tempfile.TemporaryDirectory(prefix="cleric-sigil-identities-") as temporary:
         temp = Path(temporary)
         source = temp / "com/openrsc/server/content/cleric/ClericSigilItemIdentityFixture.java"
