@@ -1,6 +1,7 @@
 package com.openrsc.server.model.entity;
 
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.PoisonPowerReduction;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
@@ -1848,6 +1849,33 @@ public abstract class Mob extends Entity {
 
 	public void applyPoison(final int poisonPower, final Mob poisonSource) {
 		applyPoison(poisonPower, poisonPower, poisonSource);
+	}
+
+	/**
+	 * Reduces the live poison event without changing its source or accumulation
+	 * ceiling. A result below the poison system's normal threshold cures through
+	 * the existing cleanup path; a partial reduction is persisted for relog.
+	 */
+	public boolean reduceCurrentPoisonPower(final int reduction) {
+		if (reduction <= 0) {
+			throw new IllegalArgumentException("Poison-power reduction must be positive");
+		}
+		final PoisonEvent poisonEvent = getAttribute("poisonEvent", null);
+		if (poisonEvent == null || poisonEvent.getPoisonPower() <= 0) {
+			return false;
+		}
+		final int remainingPower = PoisonPowerReduction.remainingPower(
+			poisonEvent.getPoisonPower(), reduction);
+		if (PoisonPowerReduction.shouldCure(remainingPower)) {
+			curePoison();
+			return true;
+		}
+		poisonEvent.setPoisonPower(remainingPower);
+		setPoisonDamage(remainingPower);
+		if (isPlayer()) {
+			((Player) this).getCache().set("poisoned", remainingPower);
+		}
+		return true;
 	}
 
 	// part of NPC poison feature

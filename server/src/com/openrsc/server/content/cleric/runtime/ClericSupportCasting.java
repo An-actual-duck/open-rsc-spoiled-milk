@@ -1,6 +1,7 @@
 package com.openrsc.server.content.cleric.runtime;
 
 import com.openrsc.server.content.cleric.ClericCastTransaction;
+import com.openrsc.server.content.cleric.ClericPurifyEffect;
 import com.openrsc.server.content.cleric.ClericSigilItemId;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
@@ -20,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** Server adapters for the C07 Cleric targeting and cast-transaction contract. */
+/** Server adapters for the shared Cleric targeting and cast-transaction contract. */
 public final class ClericSupportCasting {
 	private ClericSupportCasting() {
 	}
@@ -30,7 +31,8 @@ public final class ClericSupportCasting {
 		if (caster == null || definition == null) {
 			throw new IllegalArgumentException("Cleric casting requires a player and definition");
 		}
-		if (definition.getId() != ClericSpellId.UNIFY) {
+		if (definition.getId() != ClericSpellId.UNIFY
+				&& definition.getId() != ClericSpellId.PURIFY) {
 			return CastResult.notImplemented();
 		}
 
@@ -43,8 +45,12 @@ public final class ClericSupportCasting {
 			caster, partySnapshot, definition.getRadius(), new PlayerCandidateView(caster, party));
 		final List<ClericCastTransaction.PreparedApplication> applications =
 			new ArrayList<ClericCastTransaction.PreparedApplication>(targets.size());
+		final int purifyRank = definition.getId() == ClericSpellId.PURIFY
+			? definition.resolveEffectRank(
+				caster.getCarriedItems().getEquipment().getHolyPower()) : 0;
 		for (Player target : targets) {
-			applications.add(prepareUnify(target, caster));
+			applications.add(definition.getId() == ClericSpellId.UNIFY
+				? prepareUnify(target, caster) : preparePurify(target, purifyRank));
 		}
 
 		final ClericCastTransaction.Result transaction = ClericCastTransaction.execute(
@@ -111,6 +117,15 @@ public final class ClericSupportCasting {
 			steps.add(Point.location(step.getX(), step.getY()));
 		}
 		return new UnifyApplication(recipient, steps);
+	}
+
+	private static ClericCastTransaction.PreparedApplication preparePurify(
+			final Player recipient, final int effectRank) {
+		final ClericPurifyEffect.Plan plan = ClericPurifyEffect.plan(
+			recipient.getCurrentPoisonPower(), effectRank);
+		return plan.isUseful()
+			? new PurifyApplication(recipient, plan.getReduction())
+			: IneffectiveApplication.INSTANCE;
 	}
 
 	private static Item[] createCost(ClericSpellDefinition definition) {
@@ -210,6 +225,27 @@ public final class ClericSupportCasting {
 				recipient.setLocation(step, false);
 				recipient.stepIncrementActivity();
 			}
+		}
+	}
+
+	private static final class PurifyApplication
+			implements ClericCastTransaction.PreparedApplication {
+		private final Player recipient;
+		private final int reduction;
+
+		private PurifyApplication(final Player recipient, final int reduction) {
+			this.recipient = recipient;
+			this.reduction = reduction;
+		}
+
+		@Override
+		public boolean isUseful() {
+			return true;
+		}
+
+		@Override
+		public void commit() {
+			recipient.reduceCurrentPoisonPower(reduction);
 		}
 	}
 

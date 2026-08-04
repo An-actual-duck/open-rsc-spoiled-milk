@@ -589,8 +589,9 @@ def validate_source_boundaries() -> None:
 
     casting = CASTING.read_text(encoding="utf-8")
     handler = HANDLER.read_text(encoding="utf-8")
-    require("definition.getId() != ClericSpellId.UNIFY" in casting,
-            "C08A exposed a non-Unify Cleric effect")
+    require("definition.getId() != ClericSpellId.UNIFY" in casting
+            and "definition.getId() != ClericSpellId.PURIFY" in casting,
+            "only approved Unify and instant Purify may be reachable")
     require("ClericEffectCatalog" not in casting and "ClericEffectRegistry" not in casting,
             "C08A casting path can populate the new registry")
     require("ClericEffectCatalog" not in handler and "ClericEffectRegistry" not in handler,
@@ -616,6 +617,7 @@ def validate_source_boundaries() -> None:
 
 def run_compiled_fixture() -> None:
     sources = sorted(str(path) for path in CLERIC_ROOT.glob("*.java"))
+    sources.append(str(ROOT / "server/src/com/openrsc/server/content/PoisonPowerReduction.java"))
     sources.extend(sorted(
         str(path) for path in EFFECT_ROOT.glob("*.java")
         if path.name != "ClericEffectOrigins.java"
