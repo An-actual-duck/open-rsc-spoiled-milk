@@ -158,13 +158,15 @@ public class StatRestorationEvent extends GameTickEvent {
 			interval = 50L * minimumInterval;
 		}
 		interval = NaturalHitsRegeneration.applySpeedBonus(
-			interval, minimumInterval, player.getSoulRobeHealthRegenerationBonus());
+			interval, minimumInterval,
+			Math.max(0.0D, player.getSoulRobeHealthRegenerationBonus()));
 		interval = NaturalHitsRegeneration.applySpeedBonus(
 			interval, minimumInterval,
 			Math.max(0, player.getPotionOfRegenerationMultiplier() - 1));
 		interval = NaturalHitsRegeneration.applySpeedBonus(
 			interval, minimumInterval,
-			player.getCarriedItems().getEquipment().getBodyAmuletRegenSpeedBonus());
+			Math.max(0.0D,
+				player.getCarriedItems().getEquipment().getBodyAmuletRegenSpeedBonus()));
 		return NaturalHitsRegeneration.applySpeedBonus(
 			interval, minimumInterval, respiteSpeedBonus);
 	}

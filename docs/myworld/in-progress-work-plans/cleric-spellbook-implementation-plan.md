@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `main` (C06 integrated)
+- Branch: `feat/cleric-support-cast-transaction` (C07 ready for manager review)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation**
-- Current milestone: **C06 integrated, automated-tested, and privately accepted**
-- Next planned milestone: **C07 — shared support targeting and cast transaction; its cast-level resource, Unify movement, and Respite clock rules are settled**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, and maintained-client Cleric catalog presentation; support effects and sigil consumption remain disabled**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify**
+- Current milestone: **C07 implemented and automated-tested; exact branch handoff pending**
+- Next planned milestone: **C08 — shared Cleric effect state and HUD extension, blocked until mixed potion/Cleric status priority and charge/pulse representation are settled**
+- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog presentation, and party-only Unify with its blessed-neutral-stone cost; C08 and later spell effects remain disabled**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -291,7 +291,8 @@ shared combat damage pipeline:
 1. Purify;
 2. Restore;
 3. Mend and Greater Mend;
-4. Respite after its regeneration-clock rule is resolved.
+4. Respite using C07's natural-regeneration interval boundary after C08 owns
+   its transient state.
 
 Each branch owns its pure calculations, lifecycle tests, area behavior,
 resource transaction, client text/HUD behavior where applicable, builds, and
@@ -305,12 +306,13 @@ blood-item, god-spell, recoil, critical-hit, prayer, poison, summon, and kill
 attribution behavior. Test melee, ranged, and Magic paths together so no effect
 is accidentally implemented only in one handler.
 
-### C11 — Unify Movement
+### C11 — Unify Movement (retired into C07)
 
-Implement last among the launch spells because it crosses movement queues,
-pathfinding, collision, layered maps, combat retention, and client movement
-presentation. Move only up to two validated steps; never teleport. Stop until
-the remaining queue/presentation decision is approved.
+The settled cast-transaction decision moved the bounded Unify implementation
+into C07. C07 clears affected recipients' queued walking and applies at most two
+ordinary collision-validated steps without teleporting, changing combat
+targets, or creating a persistent tether. There is no remaining independent
+C11 implementation branch; later changes to Unify require a new focused scope.
 
 ### C12 — Devotion Economy and Release Gate
 
@@ -674,3 +676,41 @@ Worship XP, combat change, PvP support, caster visual asset, dialogue, shop,
 drop, or Devotion source. C07 may now proceed under the confirmed
 partial/ineffective cast transaction, Unify movement-queue, and Respite
 natural-regeneration-clock rules.
+
+## C07 Completion Record
+
+C07 adds one shared, immutable party-target snapshot and resolves launch
+support recipients by identity rather than by nearby-player scans. The caster,
+offline or unregistering members, stale party references, PvP recipients,
+duplicate references, other world spaces, other signed levels, out-of-square
+range members, and recipients without spell line-of-effect are excluded
+independently. Walls, closed boundaries, and missing terrain therefore fail
+closed through the same layered-aware path authority used by Magic. A blocked
+or otherwise ineligible member does not invalidate an unobstructed one.
+
+The shared cast transaction receives only side-effect-free prepared
+applications. It skips ineffective recipients, treats an equal-strength
+refresh as useful when a later effect planner supplies one, and never enters
+the resource boundary for a wholly ineffective cast. One complete aligned
+stone/silver cost vector is preflighted once. Its prepared applications and
+deterministic item removal then commit under the same serialized player and
+container boundary, avoiding partial vectors and observable deduct/refund
+behavior. Casting still awards no Worship XP.
+
+Unify is the only support effect made reachable by C07. Eligible party members
+within two tiles remain unchanged and do not make a cast useful. Members three
+or four Chebyshev tiles away move one or two ordinary steps toward the caster.
+Every step is collision checked, diagonal movement may fall back to safe
+cardinal progress, and one safe step remains a useful partial application.
+Affected recipients have queued walking cleared first; their combat targets
+and statuses are not reset. Unify never teleports, crosses world/level
+boundaries, or creates a tether. One blessed neutral stone sigil is consumed
+once only when at least one recipient actually moves.
+
+C07 also extracts pure natural-Hits-regeneration interval math. Existing rapid
+heal, soul-robe, regeneration-potion, and body-amulet factors retain their
+order and independent multiplicative ownership. The later Respite application
+will supply only its snapshotted speed factor to this existing clock; C07
+passes zero, creates no status, does not reschedule the event, and cannot grant
+an immediate healing tick. All remaining spell effects and C08 status/HUD
+representation stay unreachable.

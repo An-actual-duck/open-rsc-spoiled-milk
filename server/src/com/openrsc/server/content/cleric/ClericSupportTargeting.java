@@ -37,10 +37,11 @@ public final class ClericSupportTargeting {
 		final int casterX = view.getX(caster);
 		final int casterY = view.getY(caster);
 		final Set<T> observed = Collections.newSetFromMap(new IdentityHashMap<T, Boolean>());
+		observed.add(caster);
 		final List<T> recipients = new ArrayList<T>();
 
 		for (T candidate : partyCandidates) {
-			if (candidate == null || candidate == caster || !observed.add(candidate)
+			if (candidate == null || !observed.add(candidate)
 				|| !view.isEligibleRecipient(candidate)) {
 				continue;
 			}

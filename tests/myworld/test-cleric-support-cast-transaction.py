@@ -15,6 +15,8 @@ RUNTIME = CLERIC_ROOT / "runtime/ClericSupportCasting.java"
 HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java"
 RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
 NATURAL_REGEN = ROOT / "server/src/com/openrsc/server/event/rsc/impl/NaturalHitsRegeneration.java"
+CARRIED_ITEMS = ROOT / "server/src/com/openrsc/server/model/container/CarriedItems.java"
+PLAN = ROOT / "docs/myworld/in-progress-work-plans/cleric-spellbook-implementation-plan.md"
 
 
 def require(condition: bool, message: str) -> None:
@@ -240,6 +242,8 @@ def validate_runtime_boundaries() -> None:
     handler = HANDLER.read_text(encoding="utf-8")
     restoration = RESTORATION.read_text(encoding="utf-8")
     natural = NATURAL_REGEN.read_text(encoding="utf-8")
+    carried_items = CARRIED_ITEMS.read_text(encoding="utf-8")
+    plan = PLAN.read_text(encoding="utf-8")
 
     for snippet in (
         "new ArrayList<PartyPlayer>(party.getPlayers())",
@@ -255,6 +259,7 @@ def validate_runtime_boundaries() -> None:
         "recipient.resetPath();",
         "recipient.setLocation(step, false);",
         "caster.getCarriedItems().removeWithStateChange(",
+        "ClericSigilItemId.get(\n\t\t\t\t\tmaterial, definition.getAlignment(), true)",
         "applicationCommit.run();",
         "ActionSender.sendInventory(caster);",
     ):
@@ -272,12 +277,24 @@ def validate_runtime_boundaries() -> None:
     require("ClericSupportCasting.isPvpContext(player)" in handler,
             "request handler must preserve the shared C07 PvP boundary")
 
+    atomic_method = carried_items.split(
+        "public boolean removeWithStateChange", 1
+    )[1].split("\n\t}\n}", 1)[0]
+    preflight = atomic_method.index("for (final Item item : items)")
+    state_change = atomic_method.index("stateChange.getAsBoolean()")
+    removal = atomic_method.index("inventory.remove(item, updateClient)")
+    require(preflight < state_change < removal,
+            "sigil vector preflight, state commit, and removal ordering drift")
+
     require("getNaturalHitsInterval((Player) getOwner(), 0.0D)" in restoration,
             "C07 must leave Respite inactive until shared effect state exists")
     require("lastHitRestoration" not in natural and "normalizeLevel" not in natural,
             "regeneration factor math must not reset the clock or grant a tick")
     require("must not reschedule or directly heal" in restoration.lower(),
             "Respite clock integration boundary must remain explicit")
+    require("## C07 Completion Record" in plan
+            and "C11 — Unify Movement (retired into C07)" in plan,
+            "C07 completion and retired duplicate Unify phase are undocumented")
 
 
 def run_compiled_fixture() -> None:
