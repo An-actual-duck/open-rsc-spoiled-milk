@@ -53,8 +53,8 @@ Ant compiles two active Java source roots separately:
 
 | Source root | Current count | Ant target | Artifact | Shape |
 | --- | ---: | --- | --- | --- |
-| `server/src` | 692 Java files | `compile_core` | `server/core.jar` | Executable fat jar with `com.openrsc.server.Server` as `Main-Class` and every `server/lib/*.jar` merged into it |
-| `server/plugins` | 488 Java files | `compile_plugins` | `server/plugins.jar` | Plugin-class jar compiled against `core.jar`; no dependency jars are merged |
+| `server/src` | 916 Java files | `compile_core` | `server/core.jar` | Executable fat jar with `com.openrsc.server.Server` as `Main-Class` and every `server/lib/*.jar` merged into it |
+| `server/plugins` | 492 Java files | `compile_plugins` | `server/plugins.jar` | Plugin-class jar compiled against `core.jar`; no dependency jars are merged |
 
 The one non-Java file under the plugin source root is a contributor README and
 is not copied into `plugins.jar` by the current Ant target. Runtime definitions,
