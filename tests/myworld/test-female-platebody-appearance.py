@@ -119,12 +119,12 @@ def main() -> int:
     require(appearances, "COPPER_PLATE_MAIL_BODY(691, BODY)", "Copper platebody appearance should be named")
     require(appearances, "TITAN_STEEL_PLATE_MAIL_BODY(692, BODY)", "Titan steel platebody appearance should be named")
     require(appearances, "ORICHALCUM_PLATE_MAIL_BODY(693, BODY)", "Orichalcum platebody appearance should be named")
-    require(appearances, "FEMALE_TIN_PLATE_MAIL_TOP(1037, BODY)", "Tin female plate top appearance should be named")
-    require(appearances, "FEMALE_COPPER_PLATE_MAIL_TOP(1038, BODY)", "Copper female plate top appearance should be named")
-    require(appearances, "FEMALE_TITAN_STEEL_PLATE_MAIL_TOP(1039, BODY)", "Titan steel female plate top appearance should be named")
-    require(appearances, "FEMALE_ORICHALCUM_PLATE_MAIL_TOP(1040, BODY)", "Orichalcum female plate top appearance should be named")
-    require(appearances, "EXALTED_RUNE_PLATE_MAIL_BODY(1059, BODY)", "Exalted Rune platebody appearance should be named")
-    require(appearances, "FEMALE_EXALTED_RUNE_PLATE_MAIL_TOP(1060, BODY)", "Exalted Rune female plate top appearance should be named")
+    require(appearances, "FEMALE_TIN_PLATE_MAIL_TOP(1038, BODY)", "Tin female plate top appearance should be named")
+    require(appearances, "FEMALE_COPPER_PLATE_MAIL_TOP(1039, BODY)", "Copper female plate top appearance should be named")
+    require(appearances, "FEMALE_TITAN_STEEL_PLATE_MAIL_TOP(1040, BODY)", "Titan steel female plate top appearance should be named")
+    require(appearances, "FEMALE_ORICHALCUM_PLATE_MAIL_TOP(1041, BODY)", "Orichalcum female plate top appearance should be named")
+    require(appearances, "EXALTED_RUNE_PLATE_MAIL_BODY(1060, BODY)", "Exalted Rune platebody appearance should be named")
+    require(appearances, "FEMALE_EXALTED_RUNE_PLATE_MAIL_TOP(1061, BODY)", "Exalted Rune female plate top appearance should be named")
     require(
         entity_handler,
         'new AnimationDef("fplatemailtop", "equipment", 0xB7C9D9, 0, true, false, 0)); // 1037 - Tin female plate top',
@@ -167,7 +167,7 @@ def main() -> int:
     require_item_appearance(items, 1970, 691, "Copper plate mail body")
     require_item_appearance(items, 1976, 692, "Titan steel plate mail body")
     require_item_appearance(items, 1982, 693, "Orichalcum plate mail body")
-    require_item_appearance(items, 3280, 1059, "Exalted Rune plate mail body")
+    require_item_appearance(items, 3280, 1060, "Exalted Rune plate mail body")
 
     print("PASS: unified platebodies resolve to female top visuals for female bodies")
     return 0

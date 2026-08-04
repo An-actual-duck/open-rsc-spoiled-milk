@@ -12,6 +12,13 @@ public final class TemporaryMaximumHits {
 	private TemporaryMaximumHits() {
 	}
 
+	public static int percentageBonus(final int ordinaryMaximum, final int bonusPercent) {
+		final long base = Math.max(0, ordinaryMaximum);
+		final long percent = Math.max(0, bonusPercent);
+		final long bonus = (base * percent + 99L) / 100L;
+		return bonus > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) bonus;
+	}
+
 	public static int healingCeiling(final int ordinaryMaximum, final int temporaryBonus) {
 		return boundedAdd(Math.max(0, ordinaryMaximum), Math.max(0, temporaryBonus));
 	}

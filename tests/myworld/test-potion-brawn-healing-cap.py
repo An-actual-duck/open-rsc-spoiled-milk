@@ -27,26 +27,43 @@ public final class TemporaryMaximumHitsHarness {
 
     public static void main(String[] args) {
         int ordinaryMaximum = 99;
+        int tenPercentBonus = TemporaryMaximumHits.percentageBonus(
+            ordinaryMaximum, 10);
+        equal(tenPercentBonus, 10, "99 Hits at 10 percent did not round to 109");
         int boosted = TemporaryMaximumHits.reconcileBonus(
-            ordinaryMaximum, ordinaryMaximum, 0, 10);
+            ordinaryMaximum, ordinaryMaximum, 0, tenPercentBonus);
         equal(boosted, 109, "Brawn activation did not grant its temporary Hits");
-        equal(TemporaryMaximumHits.healingCeiling(ordinaryMaximum, 10), 109,
+        equal(TemporaryMaximumHits.healingCeiling(ordinaryMaximum, tenPercentBonus), 109,
             "Brawn did not raise the healing ceiling");
 
         int damaged = boosted - 10;
         int healed = Math.min(
-            TemporaryMaximumHits.healingCeiling(ordinaryMaximum, 10),
+            TemporaryMaximumHits.healingCeiling(ordinaryMaximum, tenPercentBonus),
             damaged + 20);
         equal(healed, 109, "damage followed by healing stopped at base Hits");
 
+		int levelEightyMaximum = 80;
+		int levelEightyBonus = TemporaryMaximumHits.percentageBonus(
+			levelEightyMaximum, 10);
+		equal(levelEightyBonus, 8, "80 Hits at 10 percent did not grant 8 Hits");
+		int levelEightyBoosted = TemporaryMaximumHits.reconcileBonus(
+			levelEightyMaximum, levelEightyMaximum, 0, levelEightyBonus);
+		equal(levelEightyBoosted, 88, "level 80 Brawn activation ceiling was wrong");
+		int levelEightyDamaged = 76;
+		int levelEightyHealed = Math.min(
+			TemporaryMaximumHits.healingCeiling(levelEightyMaximum, levelEightyBonus),
+			levelEightyDamaged + 20);
+		equal(levelEightyHealed, 88,
+			"level 80 damage followed by healing stopped at base Hits");
+
         int expiredAtFull = TemporaryMaximumHits.reconcileBonus(
-            healed, ordinaryMaximum, 10, 0);
+            healed, ordinaryMaximum, tenPercentBonus, 0);
         equal(expiredAtFull, 99, "expiration left temporary Hits inflated");
         equal(TemporaryMaximumHits.healingCeiling(ordinaryMaximum, 0), 99,
             "expiration left the healing ceiling inflated");
 
         int expiredAfterDamage = TemporaryMaximumHits.reconcileBonus(
-            90, ordinaryMaximum, 10, 0);
+            90, ordinaryMaximum, tenPercentBonus, 0);
         equal(expiredAfterDamage, 90,
             "expiration applied Brawn's bonus as a second damage loss");
         equal(TemporaryMaximumHits.persistedHits(109, ordinaryMaximum), 99,
@@ -58,6 +75,8 @@ public final class TemporaryMaximumHitsHarness {
             "changing a bonus revived a dead player");
         equal(TemporaryMaximumHits.healingCeiling(Integer.MAX_VALUE, 10),
             Integer.MAX_VALUE, "healing ceiling overflowed");
+		equal(TemporaryMaximumHits.percentageBonus(Integer.MAX_VALUE, Integer.MAX_VALUE),
+			Integer.MAX_VALUE, "percentage bonus overflowed");
     }
 }
 """
@@ -106,6 +125,7 @@ def check_runtime_integrations() -> None:
 
     require(
         "TemporaryMaximumHits.reconcileBonus(" in player
+        and "TemporaryMaximumHits.percentageBonus(" in player
         and "public int getHealingMaximumHits()" in player
         and "TemporaryMaximumHits.persistedHits(" in player,
         "Player does not own Brawn activation, ceiling, expiration, and persistence policy",

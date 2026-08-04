@@ -196,6 +196,9 @@ python3 ./tests/myworld/test-leather-defense-budgets.py
 python3 ./tests/myworld/test-leather-set-bonuses.py
 python3 ./tests/myworld/test-magic-weapon-scaling.py
 python3 ./tests/myworld/test-metal-defense-budgets.py
+python3 ./tests/myworld/test-exalted-rune-inventory-icons.py
+python3 ./tests/myworld/test-equipment-animation-id-contract.py
+python3 ./tests/myworld/test-exalted-rune-gathering-tools.py
 python3 ./tests/myworld/test-mining-focus-and-tier11.py
 python3 ./tests/myworld/test-mining-guild-smithing-expansion.py
 python3 ./tests/myworld/test-mining-guild-elite-gate.py
