@@ -711,7 +711,7 @@ The confirmed launch mapping is:
 | Fervor | `fist` | 48 px |
 | Purify | `cleanse 2` | 48 px |
 | Restore | `cleanse` | 48 px |
-| Ward | `holy-shield` | 48 px |
+| Ward | `wall-shield` | 48 px |
 | Greater Mend | `greater-heal-alt` | 48 px |
 | Zeal | `Holy VFX 03` | 48 px |
 | Thorns | `thorns` | 32 px |
@@ -725,10 +725,7 @@ the excluded caster merely for initiating a cast, an ineffective recipient, a
 failed-resource cast, or Unify. Do not create projectiles or modify spell
 mechanics. Preserve the original animation-field wire position and legacy-
 named accessors as compatibility facades. Unknown effect identities remain a
-safe no-animation result for authentic or older clients. The supplied
-`holy-shield` and `Holy VFX 04` files are currently byte-identical despite
-their intentionally distinct catalog paths; private acceptance should call out
-that visual equivalence rather than silently remapping either spell.
+safe no-animation result for authentic or older clients.
 
 Complete private party-combat, animation, and production testing; package all
 client assets; run the full server/client/release suites; and retain feature

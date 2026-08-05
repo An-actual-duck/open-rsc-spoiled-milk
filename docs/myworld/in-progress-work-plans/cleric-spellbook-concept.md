@@ -1144,7 +1144,7 @@ approved.
 ### 2026-08-04: Launch on-entity animations
 
 Confirmed the following recipient-entity mappings: Mend `heal-alt`, Fervor
-`fist`, Purify `cleanse 2`, Restore `cleanse`, Ward `holy-shield`, Greater Mend
+`fist`, Purify `cleanse 2`, Restore `cleanse`, Ward `wall-shield`, Greater Mend
 `greater-heal-alt`, Zeal `Holy VFX 03`, Thorns `thorns`, Aegis `Holy VFX 04`,
 Rally `sword-clash`, and Respite `heart-pop`. Unify intentionally has no
 animation. These are compact on-entity effects with no projectile or caster

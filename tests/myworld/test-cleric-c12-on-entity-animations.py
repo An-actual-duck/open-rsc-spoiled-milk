@@ -21,7 +21,7 @@ ANIMATIONS = {
     "FERVOR": (68, "fist/fist.png", 672, 64, 14, 48),
     "PURIFY": (69, "cleanse 2/cleanse 2.png", 816, 64, 17, 48),
     "RESTORE": (70, "cleanse/cleanse.png", 816, 64, 17, 48),
-    "WARD": (71, "holy-shield/holy-shield.png", 816, 48, 17, 48),
+    "WARD": (71, "wall-shield/Buff n Debuff P4 04.png", 1472, 64, 23, 48),
     "GREATER_MEND": (72, "greater-heal-alt/greater-heal-alt.png", 1216, 64, 19, 48),
     "ZEAL": (73, "Holy VFX 03/Holy VFX 03(64x80).png", 1600, 80, 25, 48),
     "THORNS": (74, "thorns/thorns.png", 672, 32, 21, 32),
@@ -128,13 +128,13 @@ public final class ClericAnimationCatalogFixture {
 		int[] ids = {67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77};
 		String[] paths = {
 			"heal-alt/heal-alt.png", "fist/fist.png", "cleanse 2/cleanse 2.png",
-			"cleanse/cleanse.png", "holy-shield/holy-shield.png",
+			"cleanse/cleanse.png", "wall-shield/Buff n Debuff P4 04.png",
 			"greater-heal-alt/greater-heal-alt.png",
 			"Holy VFX 03/Holy VFX 03(64x80).png", "thorns/thorns.png",
 			"Holy VFX 04/Holy VFX 04(48x48).png", "sword-clash/sword-clash.png",
 			"heart-pop/heart-pop.png"
 		};
-		int[] frames = {27, 14, 17, 17, 17, 19, 25, 21, 17, 11, 18};
+		int[] frames = {27, 14, 17, 17, 23, 19, 25, 21, 17, 11, 18};
 		int[] sizes = {48, 48, 48, 48, 48, 48, 48, 32, 48, 48, 48};
 		Map<Integer, CombatEffectAnimationCatalog.Definition> definitions =
 			CombatEffectAnimationCatalog.getDefinitions();

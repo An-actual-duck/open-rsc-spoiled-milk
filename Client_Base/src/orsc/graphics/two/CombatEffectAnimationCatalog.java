@@ -119,7 +119,7 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 70, "cleric-restore", ON_ENTITY,
 			"cleanse/cleanse.png", 17, 1, 0, 17, 48);
 		define(definitions, 71, "cleric-ward", ON_ENTITY,
-			"holy-shield/holy-shield.png", 17, 1, 0, 17, 48);
+			"wall-shield/Buff n Debuff P4 04.png", 23, 1, 0, 23, 48);
 		define(definitions, 72, "cleric-greater-mend", ON_ENTITY,
 			"greater-heal-alt/greater-heal-alt.png", 19, 1, 0, 19, 48);
 		define(definitions, 73, "cleric-zeal", ON_ENTITY,
