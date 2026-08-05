@@ -70,6 +70,17 @@ public class CombatEffect {
 	public static final int TRUE_DEFENSE = 64;
 	public static final int TELEPORT = 65;
 	public static final int DRAGON_WEAPON_SLASH_2 = 66;
+	public static final int CLERIC_MEND = 67;
+	public static final int CLERIC_FERVOR = 68;
+	public static final int CLERIC_PURIFY = 69;
+	public static final int CLERIC_RESTORE = 70;
+	public static final int CLERIC_WARD = 71;
+	public static final int CLERIC_GREATER_MEND = 72;
+	public static final int CLERIC_ZEAL = 73;
+	public static final int CLERIC_THORNS = 74;
+	public static final int CLERIC_AEGIS = 75;
+	public static final int CLERIC_RALLY = 76;
+	public static final int CLERIC_RESPITE = 77;
 	public static final int DEMON_EXPLOSION = LESSER_DEMON_MAGIC;
 
 	public static final int HELLFIRE = HELLS_FIRE;

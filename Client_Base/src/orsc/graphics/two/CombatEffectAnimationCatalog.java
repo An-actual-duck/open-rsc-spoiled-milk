@@ -110,6 +110,28 @@ public final class CombatEffectAnimationCatalog {
 			"teleport/Buff n Debuff P1 04.png", 24, 1, 0, 24, 64);
 		define(definitions, 66, "fire-slash-2", ON_ENTITY,
 			"fire-slashes/Slash 2.png", 12, 1, 0, 12, 64);
+		define(definitions, 67, "cleric-mend", ON_ENTITY,
+			"heal-alt/heal-alt.png", 27, 1, 0, 27, 48);
+		define(definitions, 68, "cleric-fervor", ON_ENTITY,
+			"fist/fist.png", 14, 1, 0, 14, 48);
+		define(definitions, 69, "cleric-purify", ON_ENTITY,
+			"cleanse 2/cleanse 2.png", 17, 1, 0, 17, 48);
+		define(definitions, 70, "cleric-restore", ON_ENTITY,
+			"cleanse/cleanse.png", 17, 1, 0, 17, 48);
+		define(definitions, 71, "cleric-ward", ON_ENTITY,
+			"holy-shield/holy-shield.png", 17, 1, 0, 17, 48);
+		define(definitions, 72, "cleric-greater-mend", ON_ENTITY,
+			"greater-heal-alt/greater-heal-alt.png", 19, 1, 0, 19, 48);
+		define(definitions, 73, "cleric-zeal", ON_ENTITY,
+			"Holy VFX 03/Holy VFX 03(64x80).png", 25, 1, 0, 25, 48);
+		define(definitions, 74, "cleric-thorns", ON_ENTITY,
+			"thorns/thorns.png", 21, 1, 0, 21, 32);
+		define(definitions, 75, "cleric-aegis", ON_ENTITY,
+			"Holy VFX 04/Holy VFX 04(48x48).png", 17, 1, 0, 17, 48);
+		define(definitions, 76, "cleric-rally", ON_ENTITY,
+			"sword-clash/sword-clash.png", 11, 1, 0, 11, 48);
+		define(definitions, 77, "cleric-respite", ON_ENTITY,
+			"heart-pop/heart-pop.png", 18, 1, 0, 18, 48);
 
 		LinkedHashMap<Integer, Definition[]> sequences = new LinkedHashMap<Integer, Definition[]>();
 		for (Map.Entry<Integer, Definition> entry : definitions.entrySet()) {

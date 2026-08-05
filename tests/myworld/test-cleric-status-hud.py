@@ -67,8 +67,10 @@ def validate_sources() -> None:
             "Cleric icon keys are not derived from stable spell identities")
     require("casterIconItemId" in presentation and "casterAnimationId" in presentation,
             "optional later visual hooks were removed")
-    require("ClericSpellPresentation.NONE, ClericSpellPresentation.NONE" in catalog,
-            "C08B assigned an unapproved caster icon or animation")
+    require("ClericSpellPresentation.NONE, onEntityAnimationId(id)" in catalog,
+			"approved recipient animation is not paired with the absent caster icon")
+    require("case UNIFY:" in catalog and "return ClericSpellPresentation.NONE;" in catalog,
+			"Unify no-animation fallback is missing")
     require("ActiveStatusPacketDecoder.decode(payload)" in packet_handler,
             "client does not defensively decode the complete status payload")
     require("ActiveStatusHudModel activeStatusHud" in mudclient,
@@ -89,8 +91,8 @@ def validate_sources() -> None:
         require((icons / f"{key}.png").is_file(), f"packaged Cleric icon missing: {key}")
     require('<include name="sprites/**/*.png"' in build,
             "Cleric PNG directory is not included by client packaging")
-    require("on-entity" not in catalog + presentation + collector,
-            "C08B assigned an unapproved animation sheet")
+    require("setCombatEffect" not in collector,
+			"status-HUD collection improperly dispatches gameplay animations")
 
     for surface in (
         CLIENT / "orsc/Config.java",

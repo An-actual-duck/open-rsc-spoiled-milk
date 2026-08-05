@@ -29,6 +29,9 @@ kept for asset work but are not packaged into the client.
 
 - Pimen supplied the included added animation assets and has confirmed
   distribution with source code available.
+- The owner-approved Cleric mapping of Pimen animation sheets is recorded in
+  the Cleric concept and implementation plans; the source paths remain generic
+  reusable asset identities rather than being renamed after spells.
 - The project author created additional original sprites, including the fishing
   rod equipment sprites and the Bangle/Medallion item and wrist-slot graphics.
 - Held shears equipment sprites are planned author-created work and are not yet

@@ -184,7 +184,7 @@ def main() -> None:
 	require(client_mudclient, "COMBAT_EFFECT_FIRE_KIN_MAGIC = 55", "Client should define fire kin magic combat effect id")
 	require(client_mudclient, "COMBAT_EFFECT_ICE_KIN_MAGIC = 56", "Client should define ice kin magic combat effect id")
 	require(client_mudclient, "COMBAT_EFFECT_EARTH_KIN_MAGIC = 57", "Client should define earth kin magic combat effect id")
-	require(client_mudclient, "COMBAT_EFFECT_COUNT = 66", "Client should include the alternate Dragon weapon slash in the effect table")
+	require(client_mudclient, "COMBAT_EFFECT_COUNT = 77", "Client should include the appended Cleric effects in the effect table")
 	require(client_mudclient, '"battle-mage-air", "battle-mage-earth", "battle-mage-water", "battle-mage-fire"', "Client should name battle mage visual aliases")
 	require(client_mudclient, '"green-dragon-magic", "fire-dragon-magic"', "Client should name dragon magic On Player effects")
 	require(client_mudclient, '"otherworldly-being-magic", "paladin-magic"', "Client should name untyped On Player magic effects")

@@ -4,9 +4,10 @@ package com.openrsc.server.content.cleric;
  * Optional, asset-independent presentation identifiers for a Cleric spell.
  *
  * <p>The spellbook icon always has a safe existing item definition. Caster
- * bubble and animation identifiers remain absent until final artwork is
- * approved. Later cast code may dispatch the optional values through
- * {@link Hooks} without making gameplay depend on a client visual.</p>
+ * bubble and animation identifiers remain optional. The animation field keeps
+ * its original wire position and accessor names for compatibility, while the
+ * approved launch behavior attaches it to each successfully affected entity
+ * rather than the caster. Gameplay never depends on a client visual.</p>
  */
 public final class ClericSpellPresentation {
 	public static final int NONE = -1;
@@ -54,10 +55,18 @@ public final class ClericSpellPresentation {
 	}
 
 	public boolean hasCasterAnimation() {
-		return casterAnimationId != NONE;
+		return hasOnEntityAnimation();
 	}
 
 	public int getCasterAnimationId() {
+		return getOnEntityAnimationId();
+	}
+
+	public boolean hasOnEntityAnimation() {
+		return casterAnimationId != NONE;
+	}
+
+	public int getOnEntityAnimationId() {
 		return casterAnimationId;
 	}
 

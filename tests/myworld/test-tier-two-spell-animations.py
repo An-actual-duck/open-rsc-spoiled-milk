@@ -152,7 +152,7 @@ def main() -> int:
     client = read("Client_Base/src/orsc/mudclient.java")
     require(client, (
         "public static final int COMBAT_EFFECT_TELEPORT = 65;",
-        "public static final int COMBAT_EFFECT_COUNT = 66;",
+		"public static final int COMBAT_EFFECT_COUNT = 77;",
         '"true-defense", "teleport"',
         "ProjectileStaticAnimationCatalog.getDefinition(projectile.id)",
         "drawQueuedStaticProjectiles()",
@@ -219,8 +219,10 @@ def main() -> int:
     assert "Projectile.SKULL, CombatEffect.IBAN_BLAST, true" in spell_handler, \
         "Iban blast must render its projectile before its impact"
     assert re.search(
-        r"godSpellProjectile, godSpellImpact, true\)\);", spell_handler
+        r"godSpellProjectile, godSpellImpact, true\);", spell_handler
     ), "god spells must render their holy projectile before their impact"
+    assert "godSpellEvent.deferClericRally();" in spell_handler, \
+        "god spell impact must preserve deferred Rally settlement"
 
     migration_plan = read("docs/myworld/in-progress-work-plans/animation-asset-migration-plan.md")
     require(migration_plan, (

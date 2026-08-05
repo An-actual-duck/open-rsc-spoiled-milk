@@ -68,10 +68,10 @@ recorded beside an otherwise confirmed spell identity.
 - Clicking a Cleric icon is the complete cast gesture. Cleric casts are
   caster-centered and therefore never enter Magic's target-selection or
   autocast state.
-- Cleric presentation metadata may optionally identify a player-centered
-  overhead icon and animation. Both are absent by default, and gameplay must
-  work without either final asset; later casting code invokes only explicitly
-  configured visual hooks.
+- Cleric presentation metadata may optionally identify an overhead icon and
+  an on-entity animation. Gameplay remains independent of both visual hooks.
+  The launch animations are configured on each successfully affected party
+  member, never as a caster-only signal; Unify intentionally has no animation.
 - Existing god spells remain in Mage for the initial rollout. This work does
   not rename or renumber their legacy Magic identities.
 - Cleric support is disabled in PvP contexts for the initial rollout. Later
@@ -1004,11 +1004,11 @@ the early book progressing: most tier-one effects peak at Holy Power `44`, Ward
 peaks earlier at `32`, and tier-two effects peak at the god-staff value of `64`.
 Unify has no Holy Power rank because its area and movement contract are fixed.
 
-The discrete rank, snapshot, replacement, lifecycle, and launch status-HUD
-presentation rules are settled. Spell-specific rank counts, Holy Power
+The discrete rank, snapshot, replacement, lifecycle, launch status-HUD, and
+on-entity animation rules are settled. Spell-specific rank counts, Holy Power
 thresholds, numerical values, and durations are confirmed where this document
-provides their tables. Unique spell artwork and final caster animations remain
-deferred; the C08 wire and fallback-icon contracts do not depend on them.
+provides their tables. The C08 wire and fallback-icon contracts do not depend
+on animation availability.
 
 ## Remaining Design Questions and Confirmed Boundaries
 
@@ -1041,9 +1041,8 @@ deferred; the C08 wire and fallback-icon contracts do not depend on them.
   Casting never awards Worship XP.
 - C08's mixed-HUD priority, fallback icons, exact labels, stable effect
   identity/rank transport, typed charge/pulse representation, and overflow
-  behavior are settled. Unique spell art and caster animations remain deferred
-  until the broader Cleric work is complete and can replace catalog
-  presentation fields without changing the status protocol.
+  behavior are settled. C12 assigns recipient on-entity animations through the
+  existing optional catalog field without changing the status protocol.
 - Shared combat-path implementation and blocked-damage telemetry for the
   settled Ward/Aegis, Thorns, Zeal, and Rally direct-damage boundaries.
 - Respite uses the existing natural passive-healing clock. Application,
@@ -1139,8 +1138,22 @@ Confirmed expansion of maintained-client status transport from `16` to `32`
 displayed entries, with bounded server reporting up to `64` and a visible
 omitted-effect count. This does not decide the later mixed-effect priority or
 charge/pulse representation. Spell metadata also supports optional
-player-centered icon and animation hooks, both unset until final assets are
+overhead-icon and animation hooks, initially unset until final assets are
 approved.
+
+### 2026-08-04: Launch on-entity animations
+
+Confirmed the following recipient-entity mappings: Mend `heal-alt`, Fervor
+`fist`, Purify `cleanse 2`, Restore `cleanse`, Ward `holy-shield`, Greater Mend
+`greater-heal-alt`, Zeal `Holy VFX 03`, Thorns `thorns`, Aegis `Holy VFX 04`,
+Rally `sword-clash`, and Respite `heart-pop`. Unify intentionally has no
+animation. These are compact on-entity effects with no projectile or caster
+bubble. Each visual is queued only for a party member whose useful gameplay
+application commits inside the successful atomic sigil transaction; excluded,
+ineffective, and failed-resource recipients produce no visual. Most sheets use
+a `48`-pixel maximum presentation footprint and Thorns uses `32` to keep group
+casting unobtrusive. Missing or unsupported visual assets remain a safe client-
+only no-animation fallback and never affect gameplay.
 
 ### 2026-08-03: Stone and silver carving inputs
 
