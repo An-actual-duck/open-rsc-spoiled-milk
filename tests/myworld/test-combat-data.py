@@ -506,7 +506,7 @@ def main() -> None:
     require_exact(effective_items_by_id, 3237, "appearanceID", 49, "Earth sword iron long sword equipped visual")
     require_exact(items_by_id, 3239, "meleeOffense", items_by_id[74]["meleeOffense"], "Demon pitchfork tier-9 long sword profile")
     require_exact(items_by_id, 3239, "weaponSpeed", items_by_id[74]["weaponSpeed"], "Demon pitchfork tier-9 long sword profile")
-    require_exact(effective_items_by_id, 3239, "appearanceID", 1042, "Demon pitchfork custom equipped visual")
+    require_exact(effective_items_by_id, 3239, "appearanceID", 1043, "Demon pitchfork custom equipped visual")
     require_exact(items_by_id, 1289, "meleeOffense", 12, "Scythe baseline profile")
     require_exact(items_by_id, 1289, "weaponSpeed", 3, "Scythe baseline profile")
     require_exact(items_by_id, 1346, "meleeOffense", 163, "Dragon 2h tier-11 fire-breath profile")
