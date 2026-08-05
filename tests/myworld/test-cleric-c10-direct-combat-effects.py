@@ -286,6 +286,10 @@ def run_compiled_fixture() -> None:
         "TransientEffectSessionToken.java",
         "TransientEffectState.java",
     ))
+    sources.extend(str(SERVER / "runtime" / name) for name in (
+        "GameClock.java",
+        "SystemGameClock.java",
+    ))
     with tempfile.TemporaryDirectory(prefix="cleric-c10-direct-") as temporary:
         temp = Path(temporary)
         fixture = temp / (

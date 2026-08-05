@@ -86,7 +86,7 @@ def main() -> None:
 		"battle mage": ("AIR", "WATER", "EARTH", "FIRE"),
 	}
 	for npc_name, elements in expected_splits.items():
-		pattern = rf"case \"{re.escape(npc_name)}\":.*?return randomElement\({', '.join('NpcMagicElement\\.' + e for e in elements)}\);"
+		pattern = rf"case \"{re.escape(npc_name)}\":.*?return randomElement\(npc, {', '.join('NpcMagicElement\\.' + e for e in elements)}\);"
 		require_regex(profile, pattern, f"{npc_name} elemental split")
 
 	for snippet in (

@@ -504,6 +504,14 @@ green source-text assertion as runtime coverage.
 
 ### A02 — `refactor/combat-deterministic-runtime-seams`
 
+Implementation record: the focused worker branch now provides the bounded
+`GameClock`, `GameRandom`, production adapters, typed `CombatTick`, test-only
+mutable/seeded adapters, and a one-whole-tick driver through the existing event
+handler. The A01 gate has grown from 11 original scenarios to 20 executable
+scenarios without changing formulas, balance, cadence, scheduling authority, or
+production artifacts. Integration remains subject to manager review of the
+exact READY handoff.
+
 Scope:
 
 - Add `GameClock`, `GameRandom`, production adapters, `CombatTick`, and

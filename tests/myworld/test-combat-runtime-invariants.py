@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Validate MyWorld combat runtime invariants that need scripted playtest coverage.
+"""Validate supplemental source-shape guards around MyWorld combat behavior.
 
-This is intentionally source-backed rather than client-backed. The repo does not
-currently have a Java integration test harness, so this pins the server-side
-behavior that would otherwise need repeated manual playtests.
+The executable Java combat gate owns runtime outcomes and ordering. These checks
+continue to pin configuration, catalog, and compatibility wiring that is useful
+to review without pretending source text is a runtime substitute.
 """
 
 import re
@@ -109,9 +109,9 @@ def main() -> None:
     validate_damage_share_math()
 
     require_contains(NPC_ATTACK_STYLE_PROFILE, "private static final int DEFAULT_PROJECTILE_RANGE = 5;")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "return distance > 1 || rollsPreferredProjectileAttack();")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 65")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 10")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "return distance > 1 || rollsPreferredProjectileAttack(npc);")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "npc.getWorld().getServer().getCombatRandom().nextInt(100) < 65")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "npc.getWorld().getServer().getCombatRandom().nextInt(100) < 10")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_RANGED || this == PURE_MAGIC;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_RANGED || this == MELEE_RANGED;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_MAGIC || this == MELEE_FREQUENT_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;")
@@ -228,8 +228,16 @@ def main() -> None:
     )
 
     require_contains(DROP_TABLE, "public ArrayList<Item> rollPersonalLoot(Player owner, double contributionScale)")
-    require_contains(DROP_TABLE, "drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))")
-    require_contains(DROP_TABLE, "scaleRareNormalDrops && isRareNormalDrop(drop) && !passesContributionGate(contributionScale)")
+    require_regex(
+        DROP_TABLE,
+        r"drop\.table\.isRare\(\)\s*&& \(suppressRareTables\s*\|\| !passesContributionGate\(contributionScale,\s*owner\.getWorld\(\)\.getServer\(\)\.getCombatRandom\(\)\)\)",
+        "rare-table contribution gate uses the server-owned replayable random source",
+    )
+    require_regex(
+        DROP_TABLE,
+        r"scaleRareNormalDrops\s*&& isRareNormalDrop\(drop\)\s*&& !passesContributionGate\(contributionScale, random\)",
+        "rare normal-drop contribution gate reuses the owning roll source",
+    )
     require_contains(DROP_TABLE, "private static final double MINIMUM_RARE_CONTRIBUTION_SCALE = 0.05D;")
     require_contains(NPC_DROPS, "private final HashMap<Integer, ArrayList<HiddenUniqueDrop>> hiddenUniqueDrops;")
     require_contains(NPC_DROPS, "createHiddenUniqueDrops();")

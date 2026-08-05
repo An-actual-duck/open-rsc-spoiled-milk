@@ -23,7 +23,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the two combat fixture
+The test target compiles production server sources and the four combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
@@ -98,11 +98,12 @@ changed-code analysis and the focused
 combat, poison, projectile, NPC, Cleric, summoning, dragon, and layered-world
 Python suites alongside this gate.
 
-## A01 boundary
+## A01/A02 boundary
 
-These scenarios intentionally assert outcomes that do not depend on a chosen
-random roll or elapsed wall-clock boundary. Deterministic formula replay and
-multi-tick timing need the bounded production seams recorded in
-[`combat-a02-required-seams.md`](combat-a02-required-seams.md). Until A02 lands,
-do not weaken this gate with source-text assertions or substitute a new random
-or timing implementation inside the fixture.
+A01 established the real-Java gate without moving production authority. A02
+adds the bounded production-preserving clock, random, and whole-tick test seams
+recorded in [`combat-a02-required-seams.md`](combat-a02-required-seams.md), so
+the same gate now also replays chosen hit/miss, NPC style, cooldown, retreat,
+projectile, secondary-target, lifesteal, effect-expiry, and selected-drop
+boundaries. Source-text checks remain supplemental and must not replace these
+runtime scenarios.

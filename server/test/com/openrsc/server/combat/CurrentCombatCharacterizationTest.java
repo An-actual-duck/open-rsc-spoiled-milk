@@ -164,6 +164,12 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(Double.valueOf(legacyDouble),
 			Double.valueOf(ProductionGameRandom.INSTANCE.nextDouble()),
 			"production random double adapter parity");
+		DataConversions.getRandom().setSeed(replaySeed);
+		final int legacyInclusive = DataConversions.random(-3, 5);
+		DataConversions.getRandom().setSeed(replaySeed);
+		assertEquals(Integer.valueOf(legacyInclusive),
+			Integer.valueOf(ProductionGameRandom.INSTANCE.nextIntInclusive(-3, 5)),
+			"production random inclusive-bound adapter parity");
 
 		final long systemMillis = System.currentTimeMillis();
 		final long adaptedMillis = SystemGameClock.INSTANCE.currentTimeMillis();
