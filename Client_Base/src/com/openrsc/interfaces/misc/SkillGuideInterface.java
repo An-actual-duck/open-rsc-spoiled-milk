@@ -1226,7 +1226,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(53, "51", "Restless Shade - Combat; 2 life, 3 cosmic, soul, ashes");
 			addSummonGuide(748, "55", "Guard Dog - Support; 2 life, 2 body, soul, bones");
 			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature");
-			addSummonGuide(845, "61", "Foundry Dragon - Support; 2 life, 5 fire, nature, dragon bones");
+			addSummonGuide(845, "61", "Foundry Dragon - Support; 2 life, 5 fire, nature, soul, dragon bones");
 			addSummonGuide(298, "64", "Astral Wraith - Combat; 2 life, 4 cosmic, soul, bones");
 			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, demon ash");
 		} else if (curTab == 1) {

@@ -139,12 +139,13 @@ def main() -> int:
         "cost(ItemId.LIFE_RUNE.id(), 2)",
         "cost(ItemId.FIRE_RUNE.id(), 5)",
         "cost(ItemId.NATURE_RUNE.id(), 1)",
+        "cost(ItemId.SOUL_RUNE.id(), 1)",
         "cost(ItemId.DRAGON_BONES.id(), 1)",
     ):
         if expected not in foundry_profile:
             fail(f"Foundry Dragon profile is missing {expected}")
-    if client_cost_item_ids[12] != [37, 31, 40, 814] or client_cost_amounts[12] != [2, 5, 1, 1]:
-        fail("Foundry Dragon dropdown cost icons should be life, fire, nature, dragon bones")
+    if client_cost_item_ids[12] != [37, 31, 40, 825, 814] or client_cost_amounts[12] != [2, 5, 1, 1, 1]:
+        fail("Foundry Dragon dropdown cost icons should be life, fire, nature, soul, dragon bones")
 
     upkeep_checks = (
         "SUPPORT_UPKEEP_BASE_COST = 1",
@@ -202,7 +203,7 @@ def main() -> int:
         fail("Summoning plan should not document bones for Delivery Camel")
 
     foundry_plan = plan[plan.index("### Foundry Dragon"):plan.index("### Astral Wraith")]
-    for expected in ("`2 Life runes`", "`5 Fire runes`", "`1 Nature rune`", "`1 Dragon bones`"):
+    for expected in ("`2 Life runes`", "`5 Fire runes`", "`1 Nature rune`", "`1 Soul rune`", "`1 Dragon bones`"):
         if expected not in foundry_plan:
             fail(f"Summoning plan should document Foundry Dragon cost {expected}")
 

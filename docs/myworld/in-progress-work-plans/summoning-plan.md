@@ -281,7 +281,8 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 - level: `61`
 - role: support
 - cast XP: `365`
-- cost: `2 Life runes`, `5 Fire runes`, `1 Nature rune`, `1 Dragon bones`
+- cost: `2 Life runes`, `5 Fire runes`, `1 Nature rune`, `1 Soul rune`,
+  `1 Dragon bones`
 - upkeep: standard support-summon Life-rune upkeep
 - effect: while its active summon NPC remains owned by the player, every coal
   in a bar-smelting recipe is replaced by `5 Fire runes` and `1 Nature rune`

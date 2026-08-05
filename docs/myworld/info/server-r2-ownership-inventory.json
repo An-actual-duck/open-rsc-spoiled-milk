@@ -740,7 +740,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "525b3a38961c726a01c9721d61e5c50b884406273579d7801cc6650ad31472a9",
+  "inputTreeSha256": "1d6bfd73c963359cfa4567e9967ea8285d70b8c49593539d0495d807bd5df98b",
   "inputs": [
     {
       "brandSignals": [
@@ -33742,7 +33742,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 82619,
+      "bytes": 82653,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -33898,7 +33898,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/NpcTalkTo.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "f130e1266c4e3393ec14f87f20faafd40140f923f476ac24c77e69fffadc90f7"
+      "sha256": "8d079503b032700dc9bc6d0a481e5320b979068d31517c59e975b05bf2cbf120"
     },
     {
       "brandSignals": [],

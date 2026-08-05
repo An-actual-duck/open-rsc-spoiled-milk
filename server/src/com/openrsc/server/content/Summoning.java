@@ -202,6 +202,7 @@ public final class Summoning {
 		cost(ItemId.LIFE_RUNE.id(), 2),
 		cost(ItemId.FIRE_RUNE.id(), 5),
 		cost(ItemId.NATURE_RUNE.id(), 1),
+		cost(ItemId.SOUL_RUNE.id(), 1),
 		cost(ItemId.DRAGON_BONES.id(), 1)
 	);
 	private static final SummonProfile OTHERWORLDLY_BEING_PROFILE = combatProfile(
