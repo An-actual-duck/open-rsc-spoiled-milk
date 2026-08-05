@@ -78,9 +78,8 @@ from the summon display name in lowercase with spaces converted to dashes:
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
 `guard-dog.png`, `delivery-camel.png`, `foundry-dragon.png`,
 `astral-wraith.png`, and `abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon
-by Atelier Pixerelia. Dedicated Foundry Dragon menu art
-has not been supplied, so its slot intentionally uses the client's built-in `FD` initials
-until `foundry-dragon.png` is available.
+by Atelier Pixerelia. Foundry Dragon uses its purpose-made
+`foundry-dragon.png` icon by KURAI.
 
 ## Summon Roles
 
