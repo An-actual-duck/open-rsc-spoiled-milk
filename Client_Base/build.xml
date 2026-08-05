@@ -55,7 +55,10 @@
             <classpath refid="client.classpath"/>
             <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
         </javac>
-        <jar basedir="${build}" destfile="${jar}">
+        <!-- LWJGL's code and native jars intentionally repeat identical archive
+             metadata. Keep the first copy so the fat JAR has one record per
+             path while retaining every unique class, asset, and native. -->
+        <jar basedir="${build}" destfile="${jar}" duplicate="preserve">
             <zipgroupfileset dir="${lib}" includes="**/*.jar"/>
             <manifest>
                 <attribute name="Main-Class" value="orsc.OpenRSC"/>
