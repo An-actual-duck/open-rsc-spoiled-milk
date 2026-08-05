@@ -363,6 +363,9 @@ def validate_runtime_wiring() -> None:
                 f"{label} omits Cleric blocked-damage telemetry")
         require("inflictJewelryEffectDamage(target, hitter" in event_source,
                 f"{label} bypasses the attributed terminal reflection path")
+        require("if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0)" in event_source
+                and "CorrosiveAura.apply" in event_source,
+                f"{label} lets reactive effects run after lethal Thorns")
 
     require("isClericEligibleProjectileType()" in projectile,
             "projectile direct/secondary boundary is missing")
@@ -381,6 +384,8 @@ def validate_runtime_wiring() -> None:
     require("inflictClericThornsDamage" in projectile
             and "caster.killedBy(opponent)" in projectile,
             "projectile Thorns lacks normal defender attribution")
+    require("Thorns owns the attacker's terminal death" in projectile,
+            "lethal projectile Thorns does not stop later attacker procs")
 
     require("calculateSecondaryMagicDamage(caster, npc, secondaryMax)" in spell_handler,
             "god-spell area damage can inherit Fervor")

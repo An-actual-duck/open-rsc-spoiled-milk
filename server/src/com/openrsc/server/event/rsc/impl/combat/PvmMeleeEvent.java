@@ -324,10 +324,13 @@ public class PvmMeleeEvent extends GameTickEvent {
 			sendSound((Player) target, hitter, damage > 0);
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
 			updateParty((Player) target);
-			CorrosiveAura.apply((Player) target, hitter, damageDealt);
-			DivineRetribution.Result result = DivineRetribution.apply((Player) target, hitter, damageDealt);
-			if (result.killedAttacker()) {
-				onDeath(hitter, target);
+			if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0) {
+				CorrosiveAura.apply((Player) target, hitter, damageDealt);
+				DivineRetribution.Result result = DivineRetribution.apply(
+					(Player) target, hitter, damageDealt);
+				if (result.killedAttacker()) {
+					onDeath(hitter, target);
+				}
 			}
 		}
 		if (hitter.isPlayer()) {

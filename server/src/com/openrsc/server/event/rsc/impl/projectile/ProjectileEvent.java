@@ -461,6 +461,14 @@ public class ProjectileEvent extends SingleTickEvent {
 				inflictClericThornsDamage(clericAfter.getThornsDamage());
 			}
 		}
+		if (caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			// Thorns owns the attacker's terminal death. Still settle a simultaneous
+			// primary-hit kill, but do not let a dead attacker trigger later procs.
+			if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				handleDeath();
+			}
+			return;
+		}
 
 		if (caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& ((Player) caster).applyDeathRingChargeHit((Npc) opponent)) {
