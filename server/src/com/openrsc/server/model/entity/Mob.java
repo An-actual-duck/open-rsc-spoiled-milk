@@ -1836,6 +1836,9 @@ public abstract class Mob extends Entity {
 		if (appliedPoisonPower <= 0 || maxPoisonPower <= 0) {
 			return;
 		}
+		if (isNpc() && !((Npc) this).canReceivePoison()) {
+			return;
+		}
 		poisonOwnerId = poisonSource != null && poisonSource.isPlayer() ? poisonSource.getUUID() : null;
 		final int nextMaxPower = Math.max(getPoisonMaxPower(), maxPoisonPower);
 		setPoisonMaxPower(nextMaxPower);
