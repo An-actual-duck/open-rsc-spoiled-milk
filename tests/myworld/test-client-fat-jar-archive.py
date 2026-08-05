@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import argparse
 import os
 import subprocess
 import sys
@@ -14,6 +13,7 @@ BUILD_XML = ROOT / "Client_Base/build.xml"
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 LWJGL_LIB = ROOT / "PC_Client/lib/lwjgl"
 MODULES = ("lwjgl", "lwjgl-glfw", "lwjgl-opengl")
+REQUIRED_NATIVE_CLASSIFIERS = ("natives-linux", "natives-windows")
 REQUIRED_ENTRIES = {
     "orsc/OpenRSC.class",
     "orsc/OpenGLFramePresenter.class",
@@ -44,16 +44,14 @@ def native_identity(path: Path) -> tuple[str, str] | None:
     return None
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--require-native-classifier",
-        action="append",
-        default=[],
-        help="Require all three LWJGL module jars for this classifier",
-    )
-    args = parser.parse_args()
+def find_casefold_collisions(names: list[str]) -> list[list[str]]:
+    folded: dict[str, set[str]] = {}
+    for name in names:
+        folded.setdefault(name.casefold(), set()).add(name)
+    return sorted(sorted(paths) for paths in folded.values() if len(paths) > 1)
 
+
+def main() -> int:
     build = ET.parse(BUILD_XML).getroot()
     compile_target = build.find("target[@name='compile']")
     jar_task = None if compile_target is None else compile_target.find("jar")
@@ -86,11 +84,15 @@ def main() -> int:
                     if previous != content:
                         fail(f"Native input jars disagree about duplicate entry {name}")
 
-    for classifier in args.require_native_classifier:
+    for classifier in REQUIRED_NATIVE_CLASSIFIERS:
         present_modules = classifiers.get(classifier, set())
         missing_modules = sorted(set(MODULES) - present_modules)
         if missing_modules:
-            fail(f"Missing {classifier} input jars for: {', '.join(missing_modules)}")
+            fail(
+                f"Missing {classifier} input jars for: {', '.join(missing_modules)}. "
+                "Run LWJGL_NATIVE_CLASSIFIERS='natives-linux natives-windows' "
+                "./scripts/download-lwjgl.sh"
+            )
 
     environment = dict(os.environ)
     environment["SPOILED_MILK_RELEASE_BUILD"] = "1"
@@ -112,6 +114,12 @@ def main() -> int:
         duplicates = sorted(name for name, count in counts.items() if count > 1)
         if duplicates:
             fail(f"Client fat JAR contains duplicate paths: {duplicates}")
+        casefold_collisions = find_casefold_collisions(names)
+        if casefold_collisions:
+            fail(
+                "Client fat JAR contains case-insensitive path collisions: "
+                f"{casefold_collisions}"
+            )
         missing = sorted((REQUIRED_ENTRIES | set(expected_native_content)) - set(names))
         if missing:
             fail(f"Client fat JAR is missing required entries: {missing}")
@@ -127,8 +135,8 @@ def main() -> int:
 
     checked_classifiers = ", ".join(sorted(classifiers)) or "none"
     print(
-        "PASS: client fat JAR paths are unique and required classes, assets, "
-        f"release marker, and native inputs remain ({checked_classifiers})"
+        "PASS: client fat JAR paths are exact- and casefold-unique and required "
+        f"classes, assets, release marker, and native inputs remain ({checked_classifiers})"
     )
     return 0
 
