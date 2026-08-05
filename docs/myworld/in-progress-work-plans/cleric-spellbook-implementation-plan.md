@@ -4,9 +4,9 @@
 
 - Branch: `main` (C10 integrated; all twelve launch spells implemented)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance**
-- Current milestone: **C12 Devotion-source rebalance implemented and privately accepted; launch on-entity animation verification in progress**
-- Next planned milestone: **Finish C12 private animation and release verification; C11 remains retired into C07**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance; C12 — Devotion-source rebalance, Black Unicorn set replacement, compact launch animations, and private acceptance**
+- Current milestone: **C12 implementation complete and READY for manager review**
+- Next planned milestone: **Manager integration and release verification; C11 remains retired into C07**
 - Runtime exposure: **All twelve launch Cleric spells are implemented on `main`, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
 - Public-server work: **forbidden**
 
