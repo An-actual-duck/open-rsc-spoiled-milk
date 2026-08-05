@@ -1,5 +1,6 @@
 package com.openrsc.server.content.cleric.effect;
 
+import com.openrsc.server.content.cleric.ClericSpellId;
 import com.openrsc.server.model.entity.player.TransientEffectMembershipToken;
 import com.openrsc.server.model.entity.player.TransientEffectSessionToken;
 import com.openrsc.server.model.entity.player.TransientEffectState;
@@ -42,6 +43,8 @@ public final class ClericEffectRegistry implements TransientEffectState {
 	private final ClericEffectClock clock;
 	private final EnumMap<ClericEffectFamily, ClericEffectEntry> entries =
 		new EnumMap<ClericEffectFamily, ClericEffectEntry>(ClericEffectFamily.class);
+	private final EnumMap<ClericEffectFamily, Integer> fractionalHundredths =
+		new EnumMap<ClericEffectFamily, Integer>(ClericEffectFamily.class);
 
 	public ClericEffectRegistry(ClericEffectClock clock) {
 		if (clock == null) {
@@ -75,6 +78,7 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		}
 		entries.put(definition.getFamily(), new ClericEffectEntry(definition, origin,
 			nowNanos, expiresAtNanos, definition.getInitialCounter()));
+		fractionalHundredths.remove(definition.getFamily());
 		return result;
 	}
 
@@ -96,6 +100,14 @@ public final class ClericEffectRegistry implements TransientEffectState {
 
 	public synchronized CounterResult consumeCounter(ClericEffectFamily family,
 			ClericEffectCounterKind expectedKind, ClericEffectOriginValidator validator) {
+		return consumeCounter(family, expectedKind, null, validator);
+	}
+
+	/** Consumes a counter only while the exact definition observed by a caller remains active. */
+	public synchronized CounterResult consumeCounter(ClericEffectFamily family,
+			ClericEffectCounterKind expectedKind,
+			ClericEffectRankDefinition<? extends ClericEffectMagnitude> expectedDefinition,
+			ClericEffectOriginValidator validator) {
 		if (family == null || expectedKind == null || validator == null) {
 			throw new IllegalArgumentException("Cleric counter lookup requires family, kind, and validator");
 		}
@@ -103,6 +115,9 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		purgeInvalidLocked(nowNanos, validator);
 		ClericEffectEntry existing = entries.get(family);
 		if (existing == null) {
+			return CounterResult.MISSING_OR_INVALID;
+		}
+		if (expectedDefinition != null && existing.getDefinition() != expectedDefinition) {
 			return CounterResult.MISSING_OR_INVALID;
 		}
 		if (expectedKind == ClericEffectCounterKind.NONE
@@ -113,10 +128,54 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		int remaining = existing.getRemainingCounter() - 1;
 		if (remaining == 0) {
 			entries.remove(family);
+			fractionalHundredths.remove(family);
 			return CounterResult.EXHAUSTED;
 		}
 		entries.put(family, existing.withRemainingCounter(remaining));
 		return CounterResult.CONSUMED;
+	}
+
+	/**
+	 * Converts percentage hundredths into whole points while carrying only the
+	 * remainder for the exact active effect snapshot. Replacement, refresh,
+	 * expiry, and lifecycle cleanup all discard the carry.
+	 */
+	public synchronized int accumulateFractionalPercent(ClericEffectFamily family,
+			ClericSpellId expectedSpell,
+			ClericEffectRankDefinition<? extends ClericEffectMagnitude> expectedDefinition,
+			int amount, int percent, ClericEffectOriginValidator validator) {
+		if (family == null || expectedSpell == null || expectedDefinition == null
+				|| validator == null || amount < 0 || percent <= 0 || percent > 100) {
+			throw new IllegalArgumentException("Complete bounded Cleric fractional state is required");
+		}
+		purgeInvalidLocked(clock.nanoTime(), validator);
+		ClericEffectEntry existing = entries.get(family);
+		if (amount == 0 || existing == null
+				|| existing.getDefinition() != expectedDefinition
+				|| existing.getDefinition().getSpellId() != expectedSpell) {
+			return 0;
+		}
+		long hundredths = Math.addExact(Math.multiplyExact((long) amount, (long) percent),
+			fractionalHundredths.containsKey(family)
+				? fractionalHundredths.get(family).longValue() : 0L);
+		long whole = hundredths / 100L;
+		fractionalHundredths.put(family, Integer.valueOf((int) (hundredths % 100L)));
+		return (int) Math.min(Integer.MAX_VALUE, whole);
+	}
+
+	/** Removes an exact active definition without affecting another family or replacement. */
+	public synchronized boolean remove(ClericEffectFamily family,
+			ClericEffectRankDefinition<? extends ClericEffectMagnitude> expectedDefinition) {
+		if (family == null || expectedDefinition == null) {
+			throw new IllegalArgumentException("Cleric effect removal requires an exact definition");
+		}
+		ClericEffectEntry existing = entries.get(family);
+		if (existing == null || existing.getDefinition() != expectedDefinition) {
+			return false;
+		}
+		entries.remove(family);
+		fractionalHundredths.remove(family);
+		return true;
 	}
 
 	public synchronized Optional<ClericEffectEntry> get(ClericEffectFamily family,
@@ -172,6 +231,7 @@ public final class ClericEffectRegistry implements TransientEffectState {
 	public synchronized int clearAll() {
 		int removed = entries.size();
 		entries.clear();
+		fractionalHundredths.clear();
 		return removed;
 	}
 
@@ -187,11 +247,33 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		while (iterator.hasNext()) {
 			ClericEffectEntry entry = iterator.next().getValue();
 			if (entry.getOrigin().originatedFrom(casterSession, casterMembership)) {
+				fractionalHundredths.remove(entry.getDefinition().getFamily());
 				iterator.remove();
 				removed++;
 			}
 		}
 		return removed;
+	}
+
+	@Override
+	public synchronized int onHitsLevelIncreased(int currentHits, int healingCeiling) {
+		if (currentHits < 0 || healingCeiling <= 0) {
+			return 0;
+		}
+		ClericEffectEntry entry = entries.get(ClericEffectFamily.LIFESTEAL);
+		if (entry == null || entry.isExpired(clock.nanoTime())
+				|| entry.getDefinition().getSpellId() != ClericSpellId.RALLY) {
+			return 0;
+		}
+		ClericEffectMagnitudes.Lifesteal magnitude =
+			(ClericEffectMagnitudes.Lifesteal) entry.getDefinition().getMagnitude();
+		if ((long) currentHits * 100L
+				< (long) healingCeiling * magnitude.getEndingHitsPercent()) {
+			return 0;
+		}
+		entries.remove(ClericEffectFamily.LIFESTEAL);
+		fractionalHundredths.remove(ClericEffectFamily.LIFESTEAL);
+		return 1;
 	}
 
 	private ApplyResult classify(
@@ -226,6 +308,7 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		while (iterator.hasNext()) {
 			ClericEffectEntry entry = iterator.next().getValue();
 			if (entry.isExpired(nowNanos) || !validator.isCurrent(entry.getOrigin())) {
+				fractionalHundredths.remove(entry.getDefinition().getFamily());
 				iterator.remove();
 			}
 		}

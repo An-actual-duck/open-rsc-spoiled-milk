@@ -127,7 +127,7 @@ def main() -> None:
 
     require(
         projectile_event,
-        "((Player) opponent).updateDamageAndBlockedDamageTracking(caster, damageDealt, 0);",
+        "caster, damageDealt, clericPreventedDamage);",
         "NPC projectile damage should count as owner taking damage for summon assist",
     )
     require(

@@ -13,6 +13,7 @@ import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.TrueDefense;
+import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
@@ -182,15 +183,15 @@ public class PvmMeleeEvent extends GameTickEvent {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
 		inflictDamage(attackerMob, targetMob, damage);
+		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
 		applyBearMaulSecondHit(attackerMob, targetMob, damage);
 		if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 			applyDragonWeaponBreathDamage(attackerMob, targetMob);
 			applyElementalSwordProc(attackerMob, targetMob);
 			applyDemonPitchforkHellBlazeProc(attackerMob, targetMob, damage);
 			applyNpcMeleeSpecialProc(attackerMob, targetMob, damage);
-		}
-		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
 		applyChaosAmuletChainLightning(attackerMob, targetMob, damage);
@@ -270,7 +271,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 
 		int lastHits = target.getLevel(Skill.HITS.id());
-		final int rawDamage = damage;
 		if (target.isPlayer()) {
 			Player targetPlayer = (Player) target;
 			damage = targetPlayer.applyRobeDamageMitigation(damage);
@@ -282,6 +282,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 		damage = applyFrostbiteReflection(hitter, target, damage);
 		if (target.isPlayer()) {
 			damage = TrueDefense.apply((Player) target, damage);
+		}
+		final ClericDirectCombatRuntime.BeforeDamage clericDamage =
+			ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
+		damage = clericDamage.getDamage();
+		final int rawDamage = damage;
+		if (target.isPlayer() && clericDamage.getPreventedDamage() > 0) {
+			((Player) target).updateDamageAndBlockedDamageTracking(
+				hitter, 0, clericDamage.getPreventedDamage());
 		}
 		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
@@ -305,6 +313,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);
+		}
+		final ClericDirectCombatRuntime.AfterDamage clericAfter =
+			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageDealt);
+		if (clericAfter.getThornsDamage() > 0) {
+			inflictJewelryEffectDamage(target, hitter, clericAfter.getThornsDamage());
 		}
 
 		if (target.isPlayer()) {
@@ -612,9 +625,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 			int damage;
 			if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
-				damage = OSRSCombatFormula.Melee.doMeleeDamage(player, npc);
+				damage = OSRSCombatFormula.Melee.doSecondaryMeleeDamage(player, npc);
 			} else {
-				damage = CombatFormula.doMeleeDamage(player, npc);
+				damage = CombatFormula.doSecondaryMeleeDamage(player, npc);
 			}
 			damage = applyPlayerMeleeDamageBuff(player, damage);
 			inflictScytheCleaveDamage(player, npc, damage);

@@ -6007,6 +6007,14 @@ public final class Player extends Mob {
 		return transientEffectState;
 	}
 
+	/** Content-neutral bridge used after every ordinary Hits increase. */
+	public void onHitsLevelIncreased() {
+		if (getTransientEffectState().onHitsLevelIncreased(
+				getSkills().getLevel(Skill.HITS.id()), getHealingMaximumHits()) > 0) {
+			ActionSender.sendActivePotionEffects(this);
+		}
+	}
+
 	private void clearTransientEffectsAndRefreshStatus() {
 		if (getTransientEffectState().clearAll() > 0) {
 			ActionSender.sendActivePotionEffects(this);

@@ -324,7 +324,7 @@ def ensure_source_support(items: dict[int, dict]) -> None:
         "npc != primaryTarget",
         "npc.getDef().isAttackable()",
         "primaryTarget.getLocation(), 2",
-        "Math.ceil(damage / 2.0D)",
+        "Math.ceil(secondaryEffectDamage / 2.0D)",
         "splinterTarget.addMageDamage(casterPlayer",
     ):
         if snippet not in projectile_event_text:

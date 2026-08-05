@@ -3,6 +3,7 @@ package com.openrsc.server.event.rsc.impl.combat;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.SkillCapes;
+import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -24,6 +25,17 @@ public class OSRSCombatFormula {
 	/**
 	 * Roll how much damage to deal
 	 */
+	private static int applyFervorRollBias(final Mob attacker, final int damage,
+			final int maxHit) {
+		double fervorChance = ClericDirectCombatRuntime.combineFervorRollChance(
+			attacker, 0.0D);
+		if (damage < maxHit && fervorChance > 0.0D
+				&& DataConversions.getRandom().nextDouble() < fervorChance) {
+			return damage + 1;
+		}
+		return damage;
+	}
+
 	private static int rollDamage(final int maxHit) {
 		return DataConversions.random(0, maxHit);
 	}
@@ -143,6 +155,15 @@ public class OSRSCombatFormula {
 		}
 
 		public static int doMeleeDamage(final Mob attacker, final Mob defender) {
+			return doMeleeDamage(attacker, defender, true);
+		}
+
+		public static int doSecondaryMeleeDamage(final Mob attacker, final Mob defender) {
+			return doMeleeDamage(attacker, defender, false);
+		}
+
+		private static int doMeleeDamage(final Mob attacker, final Mob defender,
+				final boolean directAttack) {
 			// Break out early if it's a weak mob.
 			if (attacker.isNpc() && attacker.getSkills().getLevel(Skill.STRENGTH.id()) < 5)
 				return 0;
@@ -151,7 +172,9 @@ public class OSRSCombatFormula {
 
 			boolean isHit = rollHit(hitChance);
 			boolean wasHit = isHit;
-			int damage = rollDamage(calcMaxHit(attacker));
+			final int maxHit = calcMaxHit(attacker);
+			int damage = rollDamage(maxHit);
+			boolean criticalHit = false;
 
 			// CHeck if attack cape should activate
 			if (attacker.isPlayer()) {
@@ -162,11 +185,14 @@ public class OSRSCombatFormula {
 					((Player) attacker).message("@red@Your Melee cape has prevented a zero hit");
 
 				// Check if strength cape should activate
-				final int maxHit = calcMaxHit(attacker);
 				if (damage >= maxHit - (maxHit * 0.5) && SkillCapes.shouldActivate((Player) attacker, STRENGTH_CAPE, isHit)) {
 					damage += (maxHit*0.2);
+					criticalHit = true;
 					((Player) attacker).message("@ora@Your Strength cape has granted you a critical hit");
 				}
+			}
+			if (directAttack && !criticalHit) {
+				damage = applyFervorRollBias(attacker, damage, maxHit);
 			}
 
 			return isHit ? damage : 0;
@@ -255,7 +281,8 @@ public class OSRSCombatFormula {
 		 */
 		public static int doRangedDamage(final Mob attacker, final int bowId, final int arrowId, final Mob defender, final boolean skillCape) {
 			boolean isHit = rollHit(calcHitChance(attacker, defender, bowId));
-			return isHit ? rollDamage(calcMaxHit(attacker, arrowId) * (skillCape ? 2 : 1)) : 0;
+			final int maxHit = calcMaxHit(attacker, arrowId) * (skillCape ? 2 : 1);
+			return isHit ? applyFervorRollBias(attacker, rollDamage(maxHit), maxHit) : 0;
 		}
 
 		/**

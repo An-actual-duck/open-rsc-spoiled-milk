@@ -2,6 +2,7 @@ package com.openrsc.server.content.cleric.runtime;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.cleric.ClericCastTransaction;
+import com.openrsc.server.content.cleric.ClericDirectCombatEffects;
 import com.openrsc.server.content.cleric.ClericHealingPulseEffect;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.content.cleric.ClericSpellId;
@@ -33,8 +34,14 @@ public final class ClericTimedEffectRuntime {
 			final Player caster, final Player recipient,
 			final ClericSpellDefinition spell, final int effectRank) {
 		if (caster == null || recipient == null || spell == null
-				|| !isC09TimedSpell(spell.getId())) {
-			throw new IllegalArgumentException("Unsupported timed C09 Cleric application");
+				|| !isImplementedTimedSpell(spell.getId())) {
+			throw new IllegalArgumentException("Unsupported timed Cleric application");
+		}
+		if (spell.getId() == ClericSpellId.RALLY
+				&& !ClericDirectCombatEffects.isBelowPercent(
+					recipient.getSkills().getLevel(Skill.HITS.id()),
+					recipient.getHealingMaximumHits(), 50)) {
+			return IneffectiveApplication.INSTANCE;
 		}
 		final RegistryAttachment attachment = registryForPreparation(recipient);
 		final ClericEffectRankDefinition<? extends ClericEffectMagnitude> definition =
@@ -116,9 +123,15 @@ public final class ClericTimedEffectRuntime {
 		}
 	}
 
-	private static boolean isC09TimedSpell(final ClericSpellId spellId) {
+	private static boolean isImplementedTimedSpell(final ClericSpellId spellId) {
 		return spellId == ClericSpellId.MEND
+			|| spellId == ClericSpellId.FERVOR
+			|| spellId == ClericSpellId.WARD
 			|| spellId == ClericSpellId.GREATER_MEND
+			|| spellId == ClericSpellId.ZEAL
+			|| spellId == ClericSpellId.THORNS
+			|| spellId == ClericSpellId.AEGIS
+			|| spellId == ClericSpellId.RALLY
 			|| spellId == ClericSpellId.RESPITE;
 	}
 
@@ -146,6 +159,21 @@ public final class ClericTimedEffectRuntime {
 		MISSING_OR_INVALID,
 		CONTINUES,
 		COMPLETED
+	}
+
+	private enum IneffectiveApplication
+			implements ClericCastTransaction.PreparedApplication {
+		INSTANCE;
+
+		@Override
+		public boolean isUseful() {
+			return false;
+		}
+
+		@Override
+		public void commit() {
+			throw new IllegalStateException("Ineffective Rally application committed");
+		}
 	}
 
 	private static final class RegistryAttachment {

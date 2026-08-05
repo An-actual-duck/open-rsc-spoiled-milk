@@ -6,6 +6,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.SkillCapes;
+import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -73,22 +74,45 @@ public class CombatFormula {
 	}
 
 	public static int calculateMagicDamage(final Mob source, final Mob victim, final double spellPower) {
+		return calculateMagicDamage(source, victim, spellPower, true);
+	}
+
+	public static int calculateSecondaryMagicDamage(final Mob source, final Mob victim,
+			final double spellPower) {
+		return calculateMagicDamage(source, victim, spellPower, false);
+	}
+
+	private static int calculateMagicDamage(final Mob source, final Mob victim,
+			final double spellPower, final boolean directAttack) {
 		int spellMax = Math.max(1, (int) Math.ceil(spellPower));
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
-		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseMax);
+		int damage = rollPlayerCrit(source, attackMax) ? attackMax
+			: applyMitigationRoll(source, victim, attackMax, defenseMax, directAttack);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
 		return applyDamageMultiplier(source, damage);
 	}
 
 	public static int calculateMagicDamage(final Mob source, final Mob victim, final double spellPower, final double maxHitPercent) {
+		return calculateMagicDamage(source, victim, spellPower, maxHitPercent, true);
+	}
+
+	public static int calculateSecondaryMagicDamage(final Mob source, final Mob victim,
+			final double spellPower, final double maxHitPercent) {
+		return calculateMagicDamage(source, victim, spellPower, maxHitPercent, false);
+	}
+
+	private static int calculateMagicDamage(final Mob source, final Mob victim,
+			final double spellPower, final double maxHitPercent,
+			final boolean directAttack) {
 		int spellMax = Math.max(1, (int) Math.ceil(spellPower));
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
-		int damage = rollPlayerCrit(source, cappedAttackMax) ? cappedAttackMax : applyMitigationRoll(source, victim, cappedAttackMax, defenseMax);
+		int damage = rollPlayerCrit(source, cappedAttackMax) ? cappedAttackMax
+			: applyMitigationRoll(source, victim, cappedAttackMax, defenseMax, directAttack);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
 		return applyDamageMultiplier(source, damage);
 	}
@@ -204,8 +228,19 @@ public class CombatFormula {
 	 * @return The amount to hit.
 	 */
 	public static int doMeleeDamage(final Mob source, final Mob victim) {
+		return doMeleeDamage(source, victim, true);
+	}
+
+	public static int doSecondaryMeleeDamage(final Mob source, final Mob victim) {
+		return doMeleeDamage(source, victim, false);
+	}
+
+	private static int doMeleeDamage(final Mob source, final Mob victim,
+			final boolean directAttack) {
 		final int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense()));
-		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()));
+		int damage = rollPlayerCrit(source, attackMax) ? attackMax
+			: applyMitigationRoll(source, victim, attackMax,
+				defenseToMitigation(victim.getMeleeDefense()), directAttack);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MELEE);
 		damage = applyDamageMultiplier(source, damage);
 		damage = applyFireSwordElementalBonus(source, victim, damage);
@@ -408,6 +443,11 @@ public class CombatFormula {
 	}
 
 	private static int rollDamage(final Mob source, final int maxHit) {
+		return rollDamage(source, maxHit, true);
+	}
+
+	private static int rollDamage(final Mob source, final int maxHit,
+			final boolean directAttack) {
 		if (maxHit <= 0) {
 			return 0;
 		}
@@ -416,8 +456,13 @@ public class CombatFormula {
 			&& DataConversions.getRandom().nextDouble() < source.getWindLowRollBiasChance()) {
 			roll -= 1;
 		}
-		if (source != null && source.getDamageRollHighBiasChance() > 0.0D && roll < maxHit
-			&& DataConversions.getRandom().nextDouble() < source.getDamageRollHighBiasChance()) {
+		final double existingChance = source == null
+			? 0.0D : source.getDamageRollHighBiasChance();
+		final double upwardChance = directAttack
+			? ClericDirectCombatRuntime.combineFervorRollChance(source, existingChance)
+			: Math.min(1.0D, Math.max(0.0D, existingChance));
+		if (roll < maxHit && upwardChance > 0.0D
+				&& DataConversions.getRandom().nextDouble() < upwardChance) {
 			roll += 1;
 		}
 		return roll;
@@ -454,15 +499,25 @@ public class CombatFormula {
 	}
 
 	private static int applyMitigationRoll(final Mob source, final Mob victim, final int attackMax, final int defenseMax) {
-		int offenseRoll = rollIncomingDamage(source, victim, attackMax);
+		return applyMitigationRoll(source, victim, attackMax, defenseMax, true);
+	}
+
+	private static int applyMitigationRoll(final Mob source, final Mob victim,
+			final int attackMax, final int defenseMax, final boolean directAttack) {
+		int offenseRoll = rollIncomingDamage(source, victim, attackMax, directAttack);
 		int defenseRoll = defenseMax <= 0 ? 0 : DataConversions.random(1, defenseMax);
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
 
 	private static int rollIncomingDamage(final Mob source, final Mob victim, final int attackMax) {
+		return rollIncomingDamage(source, victim, attackMax, true);
+	}
+
+	private static int rollIncomingDamage(final Mob source, final Mob victim,
+			final int attackMax, final boolean directAttack) {
 		return source != null && source.isNpc()
 			? rollNpcDamage(source, attackMax)
-			: rollDamage(source, attackMax);
+			: rollDamage(source, attackMax, directAttack);
 	}
 
 	private static int applyDamageMultiplier(final Mob source, final int damage) {

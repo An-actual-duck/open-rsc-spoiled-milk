@@ -10,6 +10,14 @@ public interface TransientEffectState {
 	int clearOriginatingFrom(TransientEffectSessionToken session,
 		TransientEffectMembershipToken membership);
 
+	/**
+	 * Gives transient content one content-neutral notification after a player's
+	 * Hits level increases. Implementations may clear effects whose authored
+	 * recovery threshold has been reached; no persistent skill state belongs
+	 * here.
+	 */
+	int onHitsLevelIncreased(int currentHits, int healingCeiling);
+
 	static TransientEffectState empty() {
 		return Empty.INSTANCE;
 	}
@@ -31,6 +39,11 @@ public interface TransientEffectState {
 			if (session == null || membership == null) {
 				throw new IllegalArgumentException("Complete transient-effect origin is required");
 			}
+			return 0;
+		}
+
+		@Override
+		public int onHitsLevelIncreased(int currentHits, int healingCeiling) {
 			return 0;
 		}
 	}

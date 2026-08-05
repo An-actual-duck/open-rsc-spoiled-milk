@@ -10,6 +10,7 @@ import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.TrueDefense;
+import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
@@ -53,6 +54,11 @@ public class ProjectileEvent extends SingleTickEvent {
 	protected boolean showProjectile;
 	boolean canceled;
 	boolean shouldChase;
+	private boolean deferClericRally;
+	private boolean clericDirectImpactResolved;
+	private boolean clericDeferredRallyResolved;
+	private int clericDirectDamageDealt;
+	private int secondaryEffectDamage;
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type) {
 		this(world, caster, opponent, damage, type, true, -1);
@@ -199,7 +205,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			if (opponent.isPlayer()) {
 				final Player opponentPlayer = (Player) opponent;
 				if (opponentPlayer.getCarriedItems().getEquipment().getChaosRecoilChance() > 0.0D) {
-					recoilDamage(opponentPlayer, caster, damage);
+					recoilDamage(opponentPlayer, caster, secondaryEffectDamage);
 				} else if (opponent.getSkills().getLevel(Skill.HITS.id()) > 0) {
 					if (opponentPlayer.checkRingOfLife(caster))
 						return;
@@ -213,7 +219,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applyChaosAmuletChainLightning() {
-		if (!caster.isPlayer() || damage <= 0 || !opponent.isNpc()) {
+		if (!caster.isPlayer() || secondaryEffectDamage <= 0 || !opponent.isNpc()) {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
@@ -226,7 +232,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 
 		Mob anchor = opponent;
-		int chainDamage = Math.max(1, (int) Math.ceil(damage / 2.0D));
+		int chainDamage = Math.max(1, (int) Math.ceil(secondaryEffectDamage / 2.0D));
 		for (int hop = 0; hop < CHAOS_CHAIN_LIGHTNING_MAX_HOPS; hop++) {
 			if (DataConversions.getRandom().nextDouble() >= chainChance) {
 				break;
@@ -372,6 +378,14 @@ public class ProjectileEvent extends SingleTickEvent {
 			damage = TrueDefense.apply((Player) opponent, damage);
 		}
 		final boolean trueDefenseBlocked = damageBeforeTrueDefense > 0 && damage == 0;
+		secondaryEffectDamage = damage;
+		int clericPreventedDamage = 0;
+		if (isClericEligibleProjectileType()) {
+			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
+				ClericDirectCombatRuntime.beforeDirectDamage(caster, opponent, damage);
+			damage = clericDamage.getDamage();
+			clericPreventedDamage = clericDamage.getPreventedDamage();
+		}
 		int lastHits = opponent.getLevel(Skill.HITS.id());
 		opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
@@ -382,7 +396,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 
 		if (caster.isNpc() && opponent.isPlayer()) {
-			((Player) opponent).updateDamageAndBlockedDamageTracking(caster, damageDealt, 0);
+			((Player) opponent).updateDamageAndBlockedDamageTracking(
+				caster, damageDealt, clericPreventedDamage);
 			applyBalrogMagicSplash((Npc) caster, (Player) opponent, damageDealt);
 		}
 
@@ -435,6 +450,16 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		if (caster.isPlayer() && isPrimaryProjectileAttackType()) {
 			((Player) caster).applyBloodAmuletLifesteal(damageDealt);
+		}
+		if (isClericEligibleProjectileType()) {
+			clericDirectDamageDealt = damageDealt;
+			clericDirectImpactResolved = true;
+			final ClericDirectCombatRuntime.AfterDamage clericAfter =
+				ClericDirectCombatRuntime.afterExistingLifesteal(
+					caster, opponent, damageDealt, !deferClericRally);
+			if (clericAfter.getThornsDamage() > 0) {
+				inflictClericThornsDamage(clericAfter.getThornsDamage());
+			}
 		}
 
 		if (caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
@@ -574,7 +599,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (splinterTarget == null) {
 			return;
 		}
-		final int splinterDamage = Math.max(1, (int) Math.ceil(damage / 2.0D));
+		final int splinterDamage = Math.max(1,
+			(int) Math.ceil(secondaryEffectDamage / 2.0D));
 		final int lastHits = splinterTarget.getLevel(Skill.HITS.id());
 		splinterTarget.getSkills().subtractLevel(Skill.HITS.id(), splinterDamage, false);
 		splinterTarget.getUpdateFlags().setDamage(new Damage(splinterTarget, splinterDamage));
@@ -972,6 +998,46 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private boolean isPrimaryProjectileAttackType() {
 		return type == 1 || type == 2 || type == 4 || type == 5;
+	}
+
+	private boolean isClericEligibleProjectileType() {
+		return type == 1 || type == 2 || type == 4;
+	}
+
+	/** Defers only Rally so established god-spell lifesteal can resolve first. */
+	public void deferClericRally() {
+		deferClericRally = true;
+	}
+
+	public void resolveDeferredClericRally() {
+		if (!deferClericRally || clericDeferredRallyResolved
+				|| !clericDirectImpactResolved) {
+			return;
+		}
+		clericDeferredRallyResolved = true;
+		ClericDirectCombatRuntime.applyDeferredRally(
+			caster, opponent, clericDirectDamageDealt);
+	}
+
+	private void inflictClericThornsDamage(final int reflectedDamage) {
+		if (reflectedDamage <= 0 || caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final int lastHits = caster.getLevel(Skill.HITS.id());
+		caster.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
+		caster.getUpdateFlags().setDamage(new Damage(caster, reflectedDamage));
+		caster.getUpdateFlags().addHitSplat(
+			new HitSplat(caster, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
+		if (caster.isNpc() && opponent.isPlayer()) {
+			((Npc) caster).addCombatDamage(
+				(Player) opponent, Math.min(reflectedDamage, lastHits));
+		}
+		if (caster.isPlayer()) {
+			ActionSender.sendStat((Player) caster, Skill.HITS.id());
+		}
+		if (caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			caster.killedBy(opponent);
+		}
 	}
 
 	public void setCanceled(boolean b) {

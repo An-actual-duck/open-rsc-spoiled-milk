@@ -129,7 +129,7 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
 
-    require_contains(COMBAT_FORMULA, "applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getMeleeDefense()))")
+    require_contains(COMBAT_FORMULA, "defenseToMitigation(victim.getMeleeDefense()), directAttack)")
     require_contains(COMBAT_FORMULA, "applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()))")
     require_contains(COMBAT_FORMULA, "int defenseMax = defenseToMitigation(victim.getMagicDefense());")
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")

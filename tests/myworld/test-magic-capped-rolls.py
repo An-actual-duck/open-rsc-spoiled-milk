@@ -17,7 +17,7 @@ def fail(message: str) -> None:
 
 def main() -> None:
     formula = COMBAT_FORMULA.read_text(encoding="utf-8")
-    if "applyMitigationRoll(source, victim, cappedAttackMax, defenseMax)" not in formula:
+    if "applyMitigationRoll(source, victim, cappedAttackMax, defenseMax, directAttack)" not in formula:
         fail("capped magic spells should roll directly against cappedAttackMax")
     if re.search(r"Math\.min\s*\(\s*offenseRoll\s*,\s*damageCap\s*\)", formula):
         fail("capped magic spells should not roll high and clamp high rolls into the cap")
