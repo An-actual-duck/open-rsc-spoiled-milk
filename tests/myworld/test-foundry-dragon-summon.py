@@ -74,8 +74,8 @@ def main() -> int:
         "NpcId.FOUNDRY_DRAGON.id()",
         "cost(ItemId.LIFE_RUNE.id(), 2)",
         "cost(ItemId.FIRE_RUNE.id(), 5)",
-        "cost(ItemId.NATURE_RUNE.id(), 2)",
-        "cost(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1)",
+        "cost(ItemId.NATURE_RUNE.id(), 1)",
+        "cost(ItemId.DRAGON_BONES.id(), 1)",
     ):
         require(profile, expected, f"Foundry Dragon profile missing {expected}")
     require(
@@ -120,7 +120,7 @@ def main() -> int:
     amounts = parse_int_matrix(client, "SUMMONING_COST_AMOUNTS")
     if len(ids) != 15 or len(amounts) != 15:
         fail("client summon cost matrices must remain aligned to all 15 summons")
-    if ids[12] != [37, 31, 40, 1347] or amounts[12] != [2, 5, 2, 1]:
+    if ids[12] != [37, 31, 40, 814] or amounts[12] != [2, 5, 1, 1]:
         fail("client Foundry Dragon cost row is incorrect")
     for text in (
         '"Foundry Dragon"',
@@ -129,7 +129,7 @@ def main() -> int:
     ):
         require(client, text, f"client summon display missing {text}")
     for text in (
-        'addSummonGuide(845, "61", "Foundry Dragon - Support; 2 life, 5 fire, 2 nature, black dragon scale")',
+        'addSummonGuide(845, "61", "Foundry Dragon - Support; 2 life, 5 fire, nature, dragon bones")',
         'addSummonGuide(845, "61", "Foundry Dragon - Does not engage in combat")',
         'addSummonGuide(845, "61", "Foundry - each coal costs 5 fire and 1 nature rune")',
     ):

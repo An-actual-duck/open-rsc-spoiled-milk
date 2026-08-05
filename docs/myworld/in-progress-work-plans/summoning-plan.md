@@ -282,8 +282,7 @@ until `foundry-dragon.png` is available.
 - level: `61`
 - role: support
 - cast XP: `365`
-- cost: `2 Life runes`, `5 Fire runes`, `2 Nature runes`,
-  `1 Black dragon scale`
+- cost: `2 Life runes`, `5 Fire runes`, `1 Nature rune`, `1 Dragon bones`
 - upkeep: standard support-summon Life-rune upkeep
 - effect: while its active summon NPC remains owned by the player, every coal
   in a bar-smelting recipe is replaced by `5 Fire runes` and `1 Nature rune`
@@ -297,8 +296,8 @@ until `foundry-dragon.png` is available.
 - visual: reuses the Black Dragon sprite at approximately the Baby Blue
   Dragon's half scale; the support profile prevents combat
 - progression rationale: level `61` and `365` cast XP evenly bridge Delivery
-  Camel (`58`/`335`) and Astral Wraith (`64`/`395`), while the black dragon
-  scale and elemental rune cost fit the summon and its powerful resource swap
+  Camel (`58`/`335`) and Astral Wraith (`64`/`395`), while the dragon bones and
+  elemental rune cost fit the summon and its powerful resource swap
 
 ### Astral Wraith
 

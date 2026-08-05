@@ -201,8 +201,8 @@ public final class Summoning {
 		"Foundry Dragon", 61, 365, NpcId.FOUNDRY_DRAGON.id(), KIND_FOUNDRY_DRAGON, 0,
 		cost(ItemId.LIFE_RUNE.id(), 2),
 		cost(ItemId.FIRE_RUNE.id(), 5),
-		cost(ItemId.NATURE_RUNE.id(), 2),
-		cost(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1)
+		cost(ItemId.NATURE_RUNE.id(), 1),
+		cost(ItemId.DRAGON_BONES.id(), 1)
 	);
 	private static final SummonProfile OTHERWORLDLY_BEING_PROFILE = combatProfile(
 		"Astral Wraith", 64, 395, NpcId.OTHERWORLDLY_BEING.id(), KIND_OTHERWORLDLY_BEING, 10, 8, 7, 14, 25, TRAIT_SPELL_ECHO,
