@@ -4,7 +4,10 @@ import com.google.common.collect.Multimap;
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.model.combat.CombatTick;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.container.Equipment;
+import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
@@ -71,6 +74,22 @@ final class CurrentCombatHarness implements AutoCloseable {
 		return random;
 	}
 
+	/**
+	 * Advances the current event scheduler by one whole configured game tick.
+	 * The production handler's private all-event boundary and Server's private
+	 * tick increment remain the only scheduler authorities exercised here.
+	 */
+	CombatTick advanceOneCombatTick() throws ReflectiveOperationException {
+		ensureOpen();
+		invokePrivate(server.getGameEventHandler(), "processEvents",
+			new Class<?>[0]);
+		server.getGameEventHandler().cleanupEvents();
+		invokePrivate(server, "advanceTicks", new Class<?>[] {long.class},
+			Long.valueOf(1L));
+		clock.advanceMillis(server.getConfig().GAME_TICK);
+		return CombatTick.of(server.getCurrentTick());
+	}
+
 	Player player(final String name, final int x, final int packedY) {
 		ensureOpen();
 		openTile(x, packedY);
@@ -96,6 +115,26 @@ final class CurrentCombatHarness implements AutoCloseable {
 		world.registerNpc(npc);
 		npcs.add(npc);
 		return npc;
+	}
+
+	void equip(final Player player, final int itemId, final int amount)
+			throws ReflectiveOperationException {
+		final int slot = server.getEntityHandler().getItemDef(itemId).getWieldPosition();
+		if (slot < 0 || slot >= Equipment.SLOT_COUNT) {
+			throw new IllegalArgumentException("Item has no equipment slot: " + itemId);
+		}
+		final Field list = Equipment.class.getDeclaredField("list");
+		list.setAccessible(true);
+		final Item item = new Item(itemId, amount, false, 10_000_000L + itemId);
+		item.setWielded(true);
+		((Item[]) list.get(player.getCarriedItems().getEquipment()))[slot] = item;
+	}
+
+	static Object readPrivateField(final Object target, final String fieldName)
+			throws ReflectiveOperationException {
+		final Field field = target.getClass().getDeclaredField(fieldName);
+		field.setAccessible(true);
+		return field.get(target);
 	}
 
 	void openTile(final int x, final int packedY) {

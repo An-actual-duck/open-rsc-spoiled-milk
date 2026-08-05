@@ -417,7 +417,8 @@ public class ThrowingEvent extends GameTickEvent {
 
 	private void addRandomShurikenTargets(List<Mob> targets, List<Npc> candidates) {
 		while (targets.size() < SHURIKEN_THROW_COUNT && !candidates.isEmpty()) {
-			addShurikenTarget(targets, candidates.remove(DataConversions.random(0, candidates.size() - 1)));
+			addShurikenTarget(targets, candidates.remove(
+				getWorld().getServer().getCombatRandom().nextInt(candidates.size())));
 		}
 	}
 
@@ -499,7 +500,8 @@ public class ThrowingEvent extends GameTickEvent {
 			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(hitTarget, damage), true);
 		}
 
-		if (Formulae.loseArrow(damage)) {
+		if (Formulae.loseArrow(damage,
+				getWorld().getServer().getCombatRandom())) {
 			if (!DropTable.handleRingOfAvarice(player, new Item(throwingID, 1))) {
 				if (!Summoning.tryLootGoblinCollectStackableItem(player, throwingID, 1)) {
 					GroundItem thrownItemOnGround = getFloorItem(throwingID, player, hitTarget);

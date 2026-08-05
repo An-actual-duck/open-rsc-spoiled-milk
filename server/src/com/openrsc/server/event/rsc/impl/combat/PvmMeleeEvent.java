@@ -34,6 +34,7 @@ import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.runtime.GameRandom;
 import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -85,7 +86,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		int retreatTicks = 5;
 		long retreatWindowMs = TimeUnit.MILLISECONDS.convert(retreatTicks * attackerMob.getConfig().GAME_TICK, TimeUnit.MILLISECONDS);
-		long timeSinceRetreat = System.currentTimeMillis() - targetMob.getRanAwayTimer();
+		long timeSinceRetreat = attackerMob.getWorld().getServer().getGameClock()
+			.currentTimeMillis() - targetMob.getRanAwayTimer();
 		return timeSinceRetreat < retreatWindowMs;
 	}
 
@@ -203,7 +205,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			final Player targetPlayer = (Player) targetMob;
 			final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
 			if (recoilChance > 0.0D) {
-				final double recoilRoll = DataConversions.getRandom().nextDouble();
+				final double recoilRoll = combatRandom().nextDouble();
 				final int divisor = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilDamageDivisor();
 				final int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
 				final boolean proc = recoilRoll < recoilChance;
@@ -460,11 +462,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (damage > 0) {
 			player.applyElementalGiantMightDebuff(target);
 		}
-		if (player.hasFullOgreSet() && DataConversions.getRandom().nextDouble() < player.getOgreStaggeringBlowProcChance()) {
+		if (player.hasFullOgreSet() && combatRandom().nextDouble() < player.getOgreStaggeringBlowProcChance()) {
 			target.applyOgreStaggerDebuff();
 		}
 		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
-		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
+		if (smokePercent > 0 && combatRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
 			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));
 			target.applySmokeAccuracyDebuff(smokePercent);
 		}
@@ -472,13 +474,13 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final int infernalPieces = player.getInfernalArmorPieceCount();
 		if (infernalMaxHit > 0) {
 			final double infernalChance = player.getInfernalFireProcChance();
-			final double infernalRoll = DataConversions.getRandom().nextDouble();
+			final double infernalRoll = combatRandom().nextDouble();
 			final boolean infernalProc = infernalRoll < infernalChance;
 			int procDamage = 0;
 			int procDamageDealt = 0;
 			if (infernalProc) {
 				target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.infernalEffectForMaxHit(infernalMaxHit)));
-				procDamage = DataConversions.random(0, infernalMaxHit);
+				procDamage = combatRandom().nextIntInclusive(0, infernalMaxHit);
 				procDamageDealt = inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 				target.applyInfernalFireDefenseDebuff(player.getInfernalFireDefenseDebuffPercent());
 			}
@@ -488,22 +490,22 @@ public class PvmMeleeEvent extends GameTickEvent {
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvm_melee", target, damage, infernalPieces,
 				infernalMaxHit, -1.0D, 0.0D, false, 0, 0);
 		}
-		if (player.hasFullBlueDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
+		if (player.hasFullBlueDragonSet() && combatRandom().nextDouble() < 0.20D) {
+			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 			target.applyDragonWaterMaxHitDebuff(10);
 		}
-		if (player.hasFullEarthDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
+		if (player.hasFullEarthDragonSet() && combatRandom().nextDouble() < 0.20D) {
+			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 			target.applyDragonEarthAttackSpeedDebuff(6);
 		}
-		if (player.hasFullRedDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
+		if (player.hasFullRedDragonSet() && combatRandom().nextDouble() < 0.20D) {
+			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
@@ -514,17 +516,17 @@ public class PvmMeleeEvent extends GameTickEvent {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
 		if (player.hasFullBlackDragonSet() && "black".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
-			final int procDamage = DataConversions.random(0, 10);
+			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 		}
 		if (player.hasFullElderGreenDragonSet() && "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
-			final int procDamage = DataConversions.random(0, 10);
+			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
-			switch (DataConversions.random(0, 2)) {
+			switch (combatRandom().nextIntInclusive(0, 2)) {
 				case 0:
 					target.applyDragonWaterMaxHitDebuff(10);
 					break;
@@ -562,7 +564,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (breathDamage <= 0) {
 			return;
 		}
-		final int slashEffect = DataConversions.random(0, 1) == 0
+		final int slashEffect = combatRandom().nextIntInclusive(0, 1) == 0
 			? CombatEffect.DRAGON_WEAPON_BREATH
 			: CombatEffect.DRAGON_WEAPON_SLASH_2;
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, slashEffect));
@@ -574,7 +576,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 		final int effectType = CombatFormula.getElementalSwordProcEffect(hitter);
-		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance()) {
+		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance(hitter)) {
 			return;
 		}
 		if (effectType == CombatEffect.ICE_SWORD) {
@@ -597,7 +599,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.HELLS_BLAZE));
-		final int procDamage = CombatFormula.rollDemonPitchforkHellBlazeDamage();
+		final int procDamage = CombatFormula.rollDemonPitchforkHellBlazeDamage(hitter);
 		if (procDamage > 0) {
 			inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 		}
@@ -609,7 +611,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		final Npc npc = (Npc) hitter;
 		if (npc.getID() != NpcId.KOLODION_DEMON.id()
-			|| DataConversions.getRandom().nextDouble() >= KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE) {
+			|| combatRandom().nextDouble() >= KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE) {
 			return;
 		}
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.FIRE_CLAW));
@@ -810,7 +812,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		Mob anchor = target;
 		int chainDamage = Math.max(1, (int) Math.ceil(baseDamage / 2.0D));
 		for (int hop = 0; hop < CHAOS_CHAIN_LIGHTNING_MAX_HOPS; hop++) {
-			if (DataConversions.getRandom().nextDouble() >= chainChance) {
+			if (combatRandom().nextDouble() >= chainChance) {
 				break;
 			}
 			final Mob chainTarget = selectChaosChainLightningTarget(player, anchor);
@@ -873,7 +875,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (candidates.isEmpty()) {
 			return null;
 		}
-		return candidates.get(DataConversions.random(0, candidates.size() - 1));
+		return candidates.get(combatRandom().nextInt(candidates.size()));
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {
@@ -903,10 +905,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 			appliedPoisonPower = Math.max(appliedPoisonPower, player.getMeleePoisonArmorAppliedPower());
 			target.getUpdateFlags().setProjectile(new Projectile(player, target, Projectile.ACID_ARMOR_PROC));
 		}
-		if (player.hasFullBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
+		if (player.hasFullBlackDragonSet() && combatRandom().nextDouble() < 0.20D) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, 15);
 			player.setAttribute("dragon_breath_armor_proc", "black");
-		} else if (player.hasFullElderGreenDragonSet() && DataConversions.getRandom().nextDouble() < 0.60D) {
+		} else if (player.hasFullElderGreenDragonSet() && combatRandom().nextDouble() < 0.60D) {
 			appliedPoisonPower = Math.max(appliedPoisonPower, 20);
 			player.setAttribute("dragon_breath_armor_proc", "elder_green");
 		}
@@ -1023,5 +1025,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		PvmMeleeEvent targetEvent = targetMob.getPvmMeleeEvent();
 		return targetEvent != null && targetEvent.isRunning() && targetEvent.getTarget() == attackerMob;
+	}
+
+	private GameRandom combatRandom() {
+		return getWorld().getServer().getCombatRandom();
 	}
 }

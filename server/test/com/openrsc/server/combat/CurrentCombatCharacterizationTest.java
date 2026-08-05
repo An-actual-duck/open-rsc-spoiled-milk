@@ -1,6 +1,7 @@
 package com.openrsc.server.combat;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.cleric.ClericSpellId;
 import com.openrsc.server.content.cleric.ClericSupportTargeting;
@@ -12,20 +13,28 @@ import com.openrsc.server.content.cleric.effect.ClericEffectOrigins;
 import com.openrsc.server.content.cleric.effect.ClericEffectRankDefinition;
 import com.openrsc.server.content.cleric.effect.ClericEffectRegistry;
 import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
+import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.event.custom.NpcLootEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.PluginTickEvent;
+import com.openrsc.server.event.rsc.DuplicationStrategy;
+import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
+import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.combat.CombatTick;
 import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.npc.NpcAttackStyleProfile;
+import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
@@ -54,6 +63,7 @@ public final class CurrentCombatCharacterizationTest {
 		System.getProperty("combat.summary.file", "");
 	private static final boolean FORCE_ZERO_SCENARIOS =
 		Boolean.getBoolean("combat.forceZeroScenarios");
+	private static final int DRAGONSTONE_BANGLE_OF_SIPHONING = 1733;
 	private static int passed;
 
 	private CurrentCombatCharacterizationTest() {
@@ -68,6 +78,18 @@ public final class CurrentCombatCharacterizationTest {
 		try (CurrentCombatHarness harness = new CurrentCombatHarness()) {
 			run(harness, "deterministic_runtime_contracts_preserve_production_sources",
 				CurrentCombatCharacterizationTest::deterministicRuntimeContracts);
+			run(harness, "current_scheduler_advances_one_whole_combat_tick",
+				CurrentCombatCharacterizationTest::currentSchedulerTickDriver);
+			run(harness, "melee_ranged_magic_formula_replay_is_byte_identical",
+				CurrentCombatCharacterizationTest::deterministicFormulaReplay);
+			run(harness, "npc_projectile_style_and_element_rolls_are_replayable",
+				CurrentCombatCharacterizationTest::deterministicNpcProjectileProfile);
+			run(harness, "ranged_and_throwing_cooldowns_remain_whole_tick_boundaries",
+				CurrentCombatCharacterizationTest::rangedCooldownBoundaries);
+			run(harness, "ranged_and_magic_projectiles_settle_on_current_tick_boundary",
+				CurrentCombatCharacterizationTest::projectileImpactBoundary);
+			run(harness, "selected_drop_outcomes_replay_from_server_random_source",
+				CurrentCombatCharacterizationTest::deterministicDropReplay);
 			run(harness, "melee_ranged_magic_damage_share_xp",
 				CurrentCombatCharacterizationTest::damageShareExperience);
 			run(harness, "attack_eligibility_precedes_plugin_callback",
@@ -84,8 +106,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::summonOwnerContribution);
 			run(harness, "scythe_cleave_selects_adjacent_secondary_npcs",
 				CurrentCombatCharacterizationTest::scytheCleaveSelection);
+			run(harness, "scythe_damage_and_lifesteal_settle_in_current_order",
+				CurrentCombatCharacterizationTest::scytheDamageAndLifesteal);
 			run(harness, "shuriken_selects_three_unique_valid_targets",
 				CurrentCombatCharacterizationTest::shurikenSelection);
+			run(harness, "shuriken_damage_and_lifesteal_wait_for_projectile_impact",
+				CurrentCombatCharacterizationTest::shurikenDamageAndLifesteal);
 			run(harness, "support_aoe_excludes_caster_cross_level_and_blocked",
 				CurrentCombatCharacterizationTest::supportAreaSelection);
 			run(harness, "npc_death_listener_is_exactly_once",
@@ -155,6 +181,223 @@ public final class CurrentCombatCharacterizationTest {
 		final double fraction = random.nextDouble();
 		return first + "|" + inclusive + "|" + fraction + "|"
 			+ random.describeState();
+	}
+
+	private static void currentSchedulerTickDriver(
+			final CurrentCombatHarness harness) throws Exception {
+		final List<String> callbacks = new ArrayList<String>();
+		final Player owner = harness.player("tick driver", 82, 82);
+		harness.server().getGameEventHandler().add(new GameTickEvent(
+				harness.world(), null, 1L, "A02 non-player tick fixture",
+				DuplicationStrategy.ALLOW_MULTIPLE) {
+			@Override
+			public void run() {
+				callbacks.add("non-player");
+				stop();
+			}
+		});
+		harness.server().getGameEventHandler().add(new GameTickEvent(
+				harness.world(), owner, 1L, "A02 player tick fixture",
+				DuplicationStrategy.ALLOW_MULTIPLE) {
+			@Override
+			public void run() {
+				callbacks.add("player");
+				stop();
+			}
+		});
+		final long tickBefore = harness.server().getCurrentTick();
+		final long millisBefore = harness.clock().currentTimeMillis();
+		final CombatTick advanced = harness.advanceOneCombatTick();
+		assertEquals(Arrays.asList("non-player", "player"), callbacks,
+			"current production event-handler ordering");
+		assertEquals(Long.valueOf(tickBefore + 1L),
+			Long.valueOf(advanced.value()), "whole scheduler tick advance");
+		assertEquals(Long.valueOf(millisBefore + harness.server().getConfig().GAME_TICK),
+			Long.valueOf(harness.clock().currentTimeMillis()),
+			"mutable clock advances by exactly one configured tick");
+	}
+
+	private static void deterministicFormulaReplay(
+			final CurrentCombatHarness harness) {
+		final Player player = harness.player("formula replay", 86, 86);
+		final Npc victim = harness.npc(NpcId.GREATER_DEMON.id(), 87, 86);
+		final String first = combatFormulaTranscript(harness, player, victim,
+			0xA02F0A1L);
+		final String second = combatFormulaTranscript(harness, player, victim,
+			0xA02F0A1L);
+		assertEquals(first, second,
+			"melee/ranged/magic formula replay must be byte-identical");
+		assertTrue(first.contains("int("),
+			"formula replay must record bounded production-equivalent draws");
+
+		harness.random().reset(0xA02A11L);
+		harness.random().scriptInts(Integer.valueOf(0), Integer.valueOf(-1));
+		assertEquals(0, CombatFormula.doMeleeDamage(player, victim),
+			"scripted melee miss");
+		harness.random().reset(0xA02A12L);
+		harness.random().scriptInts(Integer.valueOf(-1), Integer.valueOf(0));
+		assertTrue(CombatFormula.doMeleeDamage(player, victim) > 0,
+			"scripted melee hit");
+
+		harness.random().reset(0xA02A13L);
+		harness.random().scriptInts(Integer.valueOf(0), Integer.valueOf(-1));
+		assertEquals(0, CombatFormula.doRangedDamage(
+			player, -1, -1, victim, false), "scripted ranged miss");
+		harness.random().reset(0xA02A14L);
+		harness.random().scriptInts(Integer.valueOf(-1), Integer.valueOf(0));
+		assertTrue(CombatFormula.doRangedDamage(
+			player, -1, -1, victim, false) > 0, "scripted ranged hit");
+
+		harness.random().reset(0xA02A15L);
+		harness.random().scriptInts(Integer.valueOf(0), Integer.valueOf(-1));
+		assertEquals(0, CombatFormula.calculateMagicDamage(
+			player, victim, 12.0D), "scripted magic miss");
+		harness.random().reset(0xA02A16L);
+		harness.random().scriptInts(Integer.valueOf(-1), Integer.valueOf(0));
+		assertTrue(CombatFormula.calculateMagicDamage(
+			player, victim, 12.0D) > 0, "scripted magic hit");
+	}
+
+	private static void projectileImpactBoundary(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player rangedCaster = harness.player("ranged impact", 94, 94);
+		final Player magicCaster = harness.player("magic impact", 94, 96);
+		final Npc rangedTarget = harness.npc(3, 95, 94);
+		final Npc magicTarget = harness.npc(3, 95, 96);
+		final int rangedBefore = rangedTarget.getSkills().getLevel(Skill.HITS.id());
+		final int magicBefore = magicTarget.getSkills().getLevel(Skill.HITS.id());
+		harness.server().getGameEventHandler().add(new ProjectileEvent(
+			harness.world(), rangedCaster, rangedTarget, 2, 2, true,
+			DuplicationStrategy.ALLOW_MULTIPLE));
+		harness.server().getGameEventHandler().add(new ProjectileEvent(
+			harness.world(), magicCaster, magicTarget, 2, 1, true,
+			DuplicationStrategy.ALLOW_MULTIPLE));
+		assertEquals(rangedBefore,
+			rangedTarget.getSkills().getLevel(Skill.HITS.id()),
+			"ranged damage before projectile impact tick");
+		assertEquals(magicBefore,
+			magicTarget.getSkills().getLevel(Skill.HITS.id()),
+			"magic damage before projectile impact tick");
+		harness.advanceOneCombatTick();
+		assertEquals(rangedBefore - 2,
+			rangedTarget.getSkills().getLevel(Skill.HITS.id()),
+			"ranged impact settlement");
+		assertEquals(magicBefore - 2,
+			magicTarget.getSkills().getLevel(Skill.HITS.id()),
+			"magic impact settlement");
+	}
+
+	private static String combatFormulaTranscript(
+			final CurrentCombatHarness harness, final Player player,
+			final Npc victim, final long seed) {
+		harness.random().reset(seed);
+		final int melee = CombatFormula.doMeleeDamage(player, victim);
+		final int ranged = CombatFormula.doRangedDamage(
+			player, -1, -1, victim, false);
+		final int magic = CombatFormula.calculateMagicDamage(
+			player, victim, 12.0D);
+		return "melee=" + melee + "|ranged=" + ranged + "|magic=" + magic
+			+ "|" + harness.random().describeState();
+	}
+
+	private static void rangedCooldownBoundaries(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player player = harness.player("cooldown owner", 92, 92);
+		final Npc target = harness.npc(3, 93, 92);
+
+		final RangeEvent range = new RangeEvent(
+			harness.world(), player, 1L, target);
+		player.setRangeEvent(range);
+		player.setAttribute("can_range_again",
+			Long.valueOf(harness.server().getCurrentTick() + 10L));
+		range.reTarget(target);
+		assertEquals(Long.valueOf(harness.server().getCurrentTick() + 1L),
+			player.getAttribute("can_range_again", Long.valueOf(0L)),
+			"range retarget truncates to the existing one-tick boundary");
+		range.run();
+		assertTrue(player.getRangeEvent() == range,
+			"range remains cooldown-blocked before the next tick");
+		harness.advanceOneCombatTick();
+		range.run();
+		assertTrue(player.getRangeEvent() == null,
+			"range reaches its normal validation path on the boundary tick");
+
+		final ThrowingEvent throwing = new ThrowingEvent(
+			harness.world(), player, 1L, target);
+		player.setThrowingEvent(throwing);
+		player.setAttribute("can_range_again",
+			Long.valueOf(harness.server().getCurrentTick() + 10L));
+		throwing.reTarget(target);
+		assertEquals(Long.valueOf(harness.server().getCurrentTick() + 1L),
+			player.getAttribute("can_range_again", Long.valueOf(0L)),
+			"throwing retarget truncates to the existing one-tick boundary");
+		throwing.run();
+		assertTrue(player.getThrowingEvent() == throwing,
+			"throwing remains cooldown-blocked before the next tick");
+		harness.advanceOneCombatTick();
+		throwing.run();
+		assertTrue(player.getThrowingEvent() == null,
+			"throwing reaches its normal validation path on the boundary tick");
+	}
+
+	private static void deterministicNpcProjectileProfile(
+			final CurrentCombatHarness harness) {
+		final Npc demon = harness.npc(NpcId.GREATER_DEMON.id(), 89, 89);
+		final NpcAttackStyleProfile demonProfile =
+			NpcAttackStyleProfile.forNpc(demon);
+		assertEquals(NpcAttackStyleProfile.MELEE_MAGIC, demonProfile,
+			"greater demon mixed attack profile");
+		harness.random().reset(0xA02A771L);
+		harness.random().scriptInts(Integer.valueOf(64), Integer.valueOf(65));
+		assertTrue(demonProfile.prefersProjectileAtDistance(demon, 1),
+			"mixed NPC projectile roll immediately below its threshold");
+		assertFalse(demonProfile.prefersProjectileAtDistance(demon, 1),
+			"mixed NPC melee roll at its threshold");
+
+		final Npc battleMage = harness.npc(NpcId.BATTLE_MAGE_GUTHIX.id(), 90, 89);
+		final NpcAttackStyleProfile mageProfile =
+			NpcAttackStyleProfile.forNpc(battleMage);
+		assertEquals(NpcAttackStyleProfile.PURE_MAGIC, mageProfile,
+			"battle mage projectile profile");
+		harness.random().scriptInts(Integer.valueOf(0), Integer.valueOf(3));
+		assertEquals(NpcMagicElement.AIR,
+			mageProfile.getMagicElement(battleMage),
+			"scripted first battle-mage element");
+		assertEquals(NpcMagicElement.FIRE,
+			mageProfile.getMagicElement(battleMage),
+			"scripted final battle-mage element");
+		assertTrue(harness.random().describeState().contains("int(4)=3"),
+			"NPC profile replay reports its bounded element draw");
+	}
+
+	private static void deterministicDropReplay(
+			final CurrentCombatHarness harness) {
+		final Player owner = harness.player("drop replay", 90, 90);
+		final DropTable table = new DropTable("A02 deterministic drop fixture");
+		table.addItemDrop(ItemId.COINS.id(), 7, 1);
+		table.addItemDrop(ItemId.BONES.id(), 1, 1);
+
+		harness.random().reset(0xA02D20FL);
+		harness.random().scriptInts(Integer.valueOf(0));
+		final List<Item> first = table.rollItem(owner);
+		assertEquals(1, first.size(), "first selected drop count");
+		assertEquals(ItemId.COINS.id(), first.get(0).getCatalogId(),
+			"scripted first drop identity");
+		final String firstState = harness.random().describeState();
+
+		harness.random().reset(0xA02D20FL);
+		harness.random().scriptInts(Integer.valueOf(0));
+		final List<Item> replayed = table.rollItem(owner);
+		assertEquals(first.get(0).getCatalogId(), replayed.get(0).getCatalogId(),
+			"selected drop replay identity");
+		assertEquals(firstState, harness.random().describeState(),
+			"selected drop replay draw transcript");
+
+		harness.random().reset(0xA02D20FL);
+		harness.random().scriptInts(Integer.valueOf(1));
+		final List<Item> alternate = table.rollItem(owner);
+		assertEquals(ItemId.BONES.id(), alternate.get(0).getCatalogId(),
+			"alternate bounded drop outcome");
 	}
 
 	private static void damageShareExperience(final CurrentCombatHarness harness)
@@ -253,7 +496,12 @@ public final class CurrentCombatCharacterizationTest {
 		processNpcAttack(player, npc);
 		assertNull(player.getWalkToAction(),
 			"ordinary retreat window must reject a fresh attack request");
+		harness.advanceOneCombatTick();
+		processNpcAttack(player, npc);
+		assertNotNull(player.getWalkToAction(),
+			"ordinary retreat window expires at the current whole-tick boundary");
 
+		npc.setRanAwayTimer();
 		npc.setHostile(player, HostileState.HostilityType.PROVOKED);
 		processNpcAttack(player, npc);
 		assertNotNull(player.getWalkToAction(),
@@ -328,6 +576,20 @@ public final class CurrentCombatCharacterizationTest {
 			"Rally resolves after existing lifesteal");
 		assertEquals(42, attacker.getSkills().getLevel(Skill.HITS.id()),
 			"Rally applies its returned healing");
+
+		final long thornsDurationMillis = ClericEffectCatalog
+			.get(ClericSpellId.THORNS, 1).getDuration()
+			.toMilliseconds(harness.server().getConfig().GAME_TICK);
+		harness.clock().advanceMillis(thornsDurationMillis - 1L);
+		assertTrue(defenderEffects.get(
+			com.openrsc.server.content.cleric.effect.ClericEffectFamily.REFLECTION,
+			defenderValidator).isPresent(),
+			"Cleric effect remains active immediately before its existing deadline");
+		harness.clock().advanceMillis(1L);
+		assertFalse(defenderEffects.get(
+			com.openrsc.server.content.cleric.effect.ClericEffectFamily.REFLECTION,
+			defenderValidator).isPresent(),
+			"Cleric effect expires at its existing monotonic deadline");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -366,27 +628,138 @@ public final class CurrentCombatCharacterizationTest {
 			"distant NPC is outside scythe cleave");
 	}
 
+	private static void scytheDamageAndLifesteal(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player player = harness.player("scythe settlement", 324, 324);
+		final Npc primary = harness.npc(NpcId.GREATER_DEMON.id(), 325, 324);
+		final Npc secondaryA = harness.npc(NpcId.GREATER_DEMON.id(), 324, 325);
+		final Npc secondaryB = harness.npc(NpcId.GREATER_DEMON.id(), 323, 324);
+		harness.equip(player, ItemId.TIN_SCYTHE.id(), 1);
+		harness.equip(player, DRAGONSTONE_BANGLE_OF_SIPHONING, 1);
+		player.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 40, false);
+		final int primaryBefore = primary.getSkills().getLevel(Skill.HITS.id());
+		final int secondaryABefore = secondaryA.getSkills().getLevel(Skill.HITS.id());
+		final int secondaryBBefore = secondaryB.getSkills().getLevel(Skill.HITS.id());
+
+		harness.random().reset(0xA02C1EAL);
+		harness.random().scriptInts(
+			Integer.valueOf(-1), Integer.valueOf(0),
+			Integer.valueOf(-1), Integer.valueOf(0),
+			Integer.valueOf(-1), Integer.valueOf(0));
+		new PvmMeleeEvent(harness.world(), player, primary).run();
+
+		assertTrue(primary.getSkills().getLevel(Skill.HITS.id()) < primaryBefore,
+			"scythe primary damage settlement");
+		assertTrue(secondaryA.getSkills().getLevel(Skill.HITS.id()) < secondaryABefore,
+			"first scythe cleave settlement");
+		assertTrue(secondaryB.getSkills().getLevel(Skill.HITS.id()) < secondaryBBefore,
+			"second scythe cleave settlement");
+		assertEquals(26, player.getSkills().getLevel(Skill.HITS.id()),
+			"primary and two cleaves each apply existing lifesteal after damage");
+	}
+
 	@SuppressWarnings("unchecked")
 	private static void shurikenSelection(final CurrentCombatHarness harness)
 			throws Exception {
 		harness.openRectangle(338, 344, 338, 344);
 		final Player player = harness.player("shuriken user", 340, 340);
 		final Npc primary = harness.npc(3, 341, 340);
-		final Npc second = harness.npc(3, 340, 341);
-		final Npc third = harness.npc(3, 341, 341);
+		harness.npc(3, 340, 341);
+		harness.npc(3, 341, 341);
+		harness.npc(3, 339, 341);
+		harness.npc(3, 339, 340);
+		harness.npc(3, 340, 339);
 		final ThrowingEvent event = new ThrowingEvent(
 			harness.world(), player, 1, primary);
 		final int itemId = ItemId.TIN_SHURIKEN.id();
+		harness.random().reset(0xA025A17L);
 		final List<Mob> targets = (List<Mob>) CurrentCombatHarness.invokePrivate(
 			event, "selectThrowingTargets",
 			new Class<?>[] {Player.class, int.class, int.class},
 			player, Integer.valueOf(itemId),
 			Integer.valueOf(RangeUtils.getThrowingAttackRadius(itemId)));
 		assertEquals(3, targets.size(), "shuriken target cap");
-		assertTrue(targets.contains(primary) && targets.contains(second)
-			&& targets.contains(third), "all three valid shuriken targets selected");
+		assertTrue(targets.contains(primary),
+			"current primary target remains in capped shuriken selection");
 		assertEquals(3, new java.util.HashSet<Mob>(targets).size(),
 			"shuriken target identities must be unique");
+		final List<Integer> firstOrder = mobIndices(targets);
+		final String firstState = harness.random().describeState();
+		harness.random().reset(0xA025A17L);
+		final List<Mob> replayed = (List<Mob>) CurrentCombatHarness.invokePrivate(
+			event, "selectThrowingTargets",
+			new Class<?>[] {Player.class, int.class, int.class},
+			player, Integer.valueOf(itemId),
+			Integer.valueOf(RangeUtils.getThrowingAttackRadius(itemId)));
+		assertEquals(firstOrder, mobIndices(replayed),
+			"shuriken secondary ordering must replay for more candidates than the cap");
+		assertEquals(firstState, harness.random().describeState(),
+			"shuriken random draw transcript");
+	}
+
+	private static List<Integer> mobIndices(final List<Mob> mobs) {
+		final List<Integer> indices = new ArrayList<Integer>(mobs.size());
+		for (Mob mob : mobs) {
+			indices.add(Integer.valueOf(mob.getIndex()));
+		}
+		return indices;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static void shurikenDamageAndLifesteal(
+			final CurrentCombatHarness harness) throws Exception {
+		harness.openRectangle(382, 388, 382, 388);
+		final Player player = harness.player("shuriken settlement", 385, 385);
+		final Npc primary = harness.npc(NpcId.GREATER_DEMON.id(), 386, 385);
+		harness.npc(NpcId.GREATER_DEMON.id(), 385, 386);
+		harness.npc(NpcId.GREATER_DEMON.id(), 386, 386);
+		harness.npc(NpcId.GREATER_DEMON.id(), 384, 386);
+		harness.npc(NpcId.GREATER_DEMON.id(), 384, 385);
+		harness.npc(NpcId.GREATER_DEMON.id(), 385, 384);
+		harness.equip(player, ItemId.TIN_SHURIKEN.id(), 4);
+		harness.equip(player, DRAGONSTONE_BANGLE_OF_SIPHONING, 1);
+		player.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 40, false);
+		final ThrowingEvent event = new ThrowingEvent(
+			harness.world(), player, 1, primary);
+		harness.random().reset(0xA025E77L);
+		harness.random().scriptInts(
+			Integer.valueOf(0), Integer.valueOf(0),
+			Integer.valueOf(-1), Integer.valueOf(0), Integer.valueOf(0),
+			Integer.valueOf(-1), Integer.valueOf(0), Integer.valueOf(0),
+			Integer.valueOf(-1), Integer.valueOf(0), Integer.valueOf(0));
+		event.run();
+		final List<Mob> selected = new ArrayList<Mob>((List<Mob>)
+			CurrentCombatHarness.readPrivateField(event, "shurikenTargetLock"));
+		assertEquals(3, selected.size(), "full-path shuriken target count");
+		final List<Integer> hitsBefore = new ArrayList<Integer>(selected.size());
+		for (Mob target : selected) {
+			hitsBefore.add(Integer.valueOf(
+				target.getSkills().getLevel(Skill.HITS.id())));
+		}
+		assertEquals(20, player.getSkills().getLevel(Skill.HITS.id()),
+			"shuriken lifesteal cannot precede projectile impact");
+		// Shuriken launch intentionally primes every NPC's independent counterattack.
+		// Stop only those fresh target-owned events so this replay measures the
+		// player-owned projectile impact/lifesteal boundary without retaliation
+		// obscuring the healing assertion on the same production scheduler tick.
+		for (GameTickEvent scheduled :
+				harness.server().getGameEventHandler().getEvents()) {
+			if (selected.contains(scheduled.getOwner())) {
+				scheduled.stop();
+			}
+		}
+		harness.server().getGameEventHandler().cleanupEvents();
+
+		harness.advanceOneCombatTick();
+		for (int index = 0; index < selected.size(); index++) {
+			assertTrue(selected.get(index).getSkills().getLevel(Skill.HITS.id())
+					< hitsBefore.get(index).intValue(),
+				"selected shuriken target damage " + index);
+		}
+		assertTrue(player.getSkills().getLevel(Skill.HITS.id()) > 20,
+			"three shuriken impacts apply lifesteal after their damage");
 	}
 
 	private static void supportAreaSelection(final CurrentCombatHarness ignored) {
@@ -433,7 +806,8 @@ public final class CurrentCombatCharacterizationTest {
 
 	private static ClericEffectRegistry registry(final Player player) {
 		final ClericEffectRegistry registry = new ClericEffectRegistry(
-			ClericEffectClock.system(player.getConfig().GAME_TICK));
+			ClericEffectClock.game(player.getWorld().getServer().getGameClock(),
+				player.getConfig().GAME_TICK));
 		player.installTransientEffectState(registry);
 		return registry;
 	}

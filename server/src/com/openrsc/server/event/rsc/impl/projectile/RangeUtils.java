@@ -337,7 +337,7 @@ public class RangeUtils {
     }
 
     public static void handleArrowLossAndDrop(World world, Player player, Mob target, int damage, int arrowId) {
-        if (Formulae.loseArrow(damage)) {
+        if (Formulae.loseArrow(damage, world.getServer().getCombatRandom())) {
             if (!DropTable.handleRingOfAvarice(player, new Item(arrowId, 1))) {
                 if (Summoning.tryLootGoblinCollectStackableItem(player, arrowId, 1)) {
                     return;
@@ -368,14 +368,16 @@ public class RangeUtils {
     public static void applyPoison(Player player, Mob target, int arrowId) {
         final boolean isWeaponPoisoned = RangeUtils.POISONED_ITEMS.contains(arrowId);
         if (isWeaponPoisoned && target.isPlayer()) {
-            if (DataConversions.random(1, 8) == 1) {
+            if (player.getWorld().getServer().getCombatRandom()
+                    .nextIntInclusive(1, 8) == 1) {
                 poisonTarget(player, target, 20);
             }
         }
         // Poison Arrows/Bolts Ability to Poison an NPC
         if (player.getConfig().WANT_POISON_NPCS) {
             if (isWeaponPoisoned && target.isNpc()) {
-                if (DataConversions.random(1, 50) == 1) {
+                if (player.getWorld().getServer().getCombatRandom()
+                        .nextIntInclusive(1, 50) == 1) {
                     poisonTarget(player, target, 60);
                 }
             }

@@ -9,6 +9,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.runtime.GameRandom;
 
 import java.security.InvalidParameterException;
 
@@ -725,6 +726,13 @@ public final class Formulae {
 	 */
 	public static boolean loseArrow(int damage) {
 		return DataConversions.random(0, 6) != 0;
+	}
+
+	public static boolean loseArrow(final int damage, final GameRandom random) {
+		if (random == null) {
+			throw new NullPointerException("random");
+		}
+		return random.nextIntInclusive(0, 6) != 0;
 	}
 
 	public static int getRepeatTimes(Player player, int skill) {

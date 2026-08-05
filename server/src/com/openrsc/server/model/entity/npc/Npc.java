@@ -1035,7 +1035,7 @@ public class Npc extends Mob {
 
 	private boolean passesPersonalRareDropGate(double contributionScale) {
 		double scaledChance = Math.max(0.05D, Math.min(1.0D, contributionScale));
-		return DataConversions.getRandom().nextDouble() < scaledChance;
+		return getWorld().getServer().getCombatRandom().nextDouble() < scaledChance;
 	}
 
 	public static ArrayList<Item> calculateCustomKingBlackDragonDropTest(Player owner, boolean ringOfWealth) {
