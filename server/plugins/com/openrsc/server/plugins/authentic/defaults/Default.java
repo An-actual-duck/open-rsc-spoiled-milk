@@ -224,14 +224,18 @@ public class Default implements DefaultHandler,
 		if (affectedMob.getLocation().inBounds(220, 107, 224, 111)) { // mage arena block real rsc.
 			player.message("Here kolodion protects all from your attack");
 			player.face(affectedMob); // TODO: not necessary to do this if the walk handler would do it for us.
+			player.cancelPendingMeleeAttack(affectedMob);
 			return;
 		}
 
 		if (AttackPlayer.attackPrevented(player, affectedMob)) {
+			player.cancelPendingMeleeAttack(affectedMob);
 			return;
 		}
 
-		player.startCombat(affectedMob);
+		if (!player.commitPendingMeleeAttack(affectedMob)) {
+			return;
+		}
 		if (config().WANT_PARTIES) {
 			if (player.getParty() != null) {
 				player.getParty().sendParty();
@@ -246,8 +250,10 @@ public class Default implements DefaultHandler,
 
 	@Override
 	public void onAttackNpc(Player player, Npc affectedmob) {
+		if (!player.commitPendingMeleeAttack(affectedmob)) {
+			return;
+		}
 		player.setLastTileClicked(null);
-		player.startCombat(affectedmob);
 		if (config().WANT_PARTIES) {
 			if (player.getParty() != null) {
 				player.getParty().sendParty();

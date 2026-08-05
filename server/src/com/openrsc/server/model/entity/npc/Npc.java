@@ -1486,6 +1486,7 @@ public class Npc extends Mob {
 	}
 
 	private void removeWithinLayeredOwnerLifecycle() {
+		advanceCombatLifecycle();
 		setAttribute(DEATH_VISUAL_TICK_ATTRIBUTE, getWorld().getServer().getCurrentTick());
 		// Removal is the authoritative end of this NPC lifetime, including
 		// scripted and unattributed paths that do not complete killedBy().
@@ -1873,6 +1874,7 @@ public class Npc extends Mob {
 	public void superRemove() {
 		beginLayeredOwnerLifecycleOperation();
 		try {
+			advanceCombatLifecycle();
 			super.remove();
 		} finally {
 			endLayeredOwnerLifecycleOperation();

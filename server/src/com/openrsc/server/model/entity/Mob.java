@@ -19,6 +19,10 @@ import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.*;
 import com.openrsc.server.model.Path.PathType;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.AttackTransactionResult;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcAttackStyleProfile;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
@@ -45,6 +49,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class Mob extends Entity {
 
@@ -127,6 +132,8 @@ public abstract class Mob extends Entity {
 	 * Unique ID for event tracking.
 	 */
 	private final UUID uuid;
+	/** Generation token for delayed combat work that must not cross lifetimes. */
+	private final AtomicLong combatLifecycle = new AtomicLong(1L);
 	/**
 	 * Timer used to track start and end of combat
 	 */
@@ -1169,6 +1176,9 @@ public abstract class Mob extends Entity {
 
 			pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, victim);
 			getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
+		if (this.isPlayer() && victim.isNpc()) {
+			Summoning.recordCombatSummonEngagement((Player) this, (Npc) victim);
+		}
 		if (victim.isPlayer() && !victimShouldAvoidCombat && !attackerIsSummon) {
 			((Player) victim).message("You are under attack!");
 			ActionSender.sendSound((Player) victim, "underattack");
@@ -1194,9 +1204,8 @@ public abstract class Mob extends Entity {
 		}
 
 		if (this.isPlayer() && attacker.isNpc() && ((Player) this).getAutoCastSpell() != null) {
-			resetPath();
-			resetRange();
-			if (MagicCombatEvent.start((Player) this, attacker)) {
+			if (MagicCombatEvent.start((Player) this, attacker,
+				AttackIntent.Source.RETALIATION)) {
 				return;
 			}
 		}
@@ -1206,6 +1215,10 @@ public abstract class Mob extends Entity {
 		}
 
 		if (pvmMeleeEvent != null && pvmMeleeEvent.isRunning() && pvmMeleeEvent.getTarget().equals(attacker)) {
+			return;
+		}
+		if (this.isPlayer()) {
+			startPlayerMeleePvmCounterCombat(attacker);
 			return;
 		}
 
@@ -1220,14 +1233,39 @@ public abstract class Mob extends Entity {
 		resetPath();
 		resetRange();
 
-			setOpponent(attacker);
+		setOpponent(attacker);
 		setCombatTimer();
 
 		// Set hostility state for counter-combat
 		setHostile(attacker, HostileState.HostilityType.ATTACKED);
 
-			pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, attacker);
-			getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
+		pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, attacker);
+		getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
+	}
+
+	private void startPlayerMeleePvmCounterCombat(final Mob attacker) {
+		final Player player = (Player) this;
+		final AttackIntent intent = player.getAttackTransaction().issue(
+			attacker, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+			AttackIntent.Source.RETALIATION, null);
+		if (intent == null) return;
+		player.getAttackTransaction().commit(intent,
+			new PlayerAttackTransaction.CommitAction() {
+				@Override
+				public boolean commit() {
+					if (pvmMeleeEvent != null) resetCombatEvent();
+					resetPath();
+					resetRange();
+					setOpponent(attacker);
+					setCombatTimer();
+					setHostile(attacker, HostileState.HostilityType.ATTACKED);
+					pvmMeleeEvent = new PvmMeleeEvent(getWorld(), player, attacker);
+					getWorld().getServer().getGameEventHandler()
+						.addOrUpdate(pvmMeleeEvent);
+					return pvmMeleeEvent.isRunning()
+						&& pvmMeleeEvent.getTarget() == attacker;
+				}
+			});
 	}
 
 	private boolean startPlayerRangedPvmCounterCombat(final Mob attacker) {
@@ -1244,56 +1282,59 @@ public abstract class Mob extends Entity {
 		if (!player.checkAttack(attacker, true)) {
 			return true;
 		}
-
-		if (pvmMeleeEvent != null) {
-			resetCombatEvent();
-		}
-		resetPath();
-		setOpponent(attacker);
-		setCombatTimer();
-		setHostile(attacker, HostileState.HostilityType.ATTACKED);
-
-		final GameEventHandler gameEventHandler = getWorld().getServer().getGameEventHandler();
-		if (throwingEquip < 0 && rangeEquip > 0) {
-			ThrowingEvent throwingEvent = player.getThrowingEvent();
-			if (throwingEvent != null) {
-				throwingEvent.stop();
-				player.setThrowingEvent(null);
-			}
-
-			RangeEvent rangeEvent = player.getRangeEvent();
-			if (rangeEvent != null) {
-				if (!rangeEvent.getTarget().equals(attacker)) {
-					rangeEvent.reTarget(attacker);
+		final boolean throwing = throwingEquip >= 0;
+		final AttackIntent intent = player.getAttackTransaction().issue(
+			attacker, throwing ? CombatStyle.THROWING : CombatStyle.RANGED,
+			throwing ? AttackIntent.Channel.THROWING : AttackIntent.Channel.RANGED,
+			AttackIntent.Source.RETALIATION, null);
+		if (intent == null) return true;
+		player.getAttackTransaction().commit(intent,
+			new PlayerAttackTransaction.CommitAction() {
+				@Override
+				public boolean commit() {
+					if (pvmMeleeEvent != null) resetCombatEvent();
+					resetPath();
+					setOpponent(attacker);
+					setCombatTimer();
+					setHostile(attacker, HostileState.HostilityType.ATTACKED);
+					final GameEventHandler handler = getWorld().getServer()
+						.getGameEventHandler();
+					if (!throwing) {
+						ThrowingEvent oldThrowing = player.getThrowingEvent();
+						if (oldThrowing != null) {
+							oldThrowing.stop();
+							player.setThrowingEvent(null);
+						}
+						RangeEvent event = player.getRangeEvent();
+						if (event != null) {
+							if (!event.getTarget().equals(attacker)) event.reTarget(attacker);
+							event.restart();
+							return true;
+						}
+						event = new RangeEvent(player.getWorld(), player, 1, attacker);
+						player.setRangeEvent(event);
+						handler.add(event);
+						return true;
+					}
+					RangeEvent oldRange = player.getRangeEvent();
+					if (oldRange != null) {
+						oldRange.stop();
+						player.setRangeEvent(null);
+					}
+					ThrowingEvent event = player.getThrowingEvent();
+					if (event != null) {
+						if (event.shouldAutoRetaliateRetarget(player, attacker)) {
+							event.reTarget(attacker);
+						}
+						event.restart();
+						return true;
+					}
+					event = new ThrowingEvent(player.getWorld(), player, 1, attacker);
+					player.setThrowingEvent(event);
+					handler.add(event);
+					return true;
 				}
-				rangeEvent.restart();
-				return true;
-			}
-
-			rangeEvent = new RangeEvent(player.getWorld(), player, 1, attacker);
-			player.setRangeEvent(rangeEvent);
-			gameEventHandler.add(rangeEvent);
-			return true;
-		}
-
-		RangeEvent rangeEvent = player.getRangeEvent();
-		if (rangeEvent != null) {
-			rangeEvent.stop();
-			player.setRangeEvent(null);
-		}
-
-		ThrowingEvent throwingEvent = player.getThrowingEvent();
-		if (throwingEvent != null) {
-			if (throwingEvent.shouldAutoRetaliateRetarget(player, attacker)) {
-				throwingEvent.reTarget(attacker);
-			}
-			throwingEvent.restart();
-			return true;
-		}
-
-		throwingEvent = new ThrowingEvent(player.getWorld(), player, 1, attacker);
-		player.setThrowingEvent(throwingEvent);
-		gameEventHandler.add(throwingEvent);
+			});
 		return true;
 	}
 
@@ -1941,6 +1982,14 @@ public abstract class Mob extends Entity {
 
 	public UUID getUUID() {
 		return uuid;
+	}
+
+	public long getCombatLifecycle() {
+		return combatLifecycle.get();
+	}
+
+	public long advanceCombatLifecycle() {
+		return combatLifecycle.incrementAndGet();
 	}
 
 	public CombatEvent getCombatEvent() {

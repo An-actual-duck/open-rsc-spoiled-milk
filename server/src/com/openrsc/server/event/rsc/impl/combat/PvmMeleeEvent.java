@@ -24,6 +24,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.combat.AttackIntent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -415,7 +416,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (!targetPlayer.checkAttack(hitter, false)) {
 			return;
 		}
-		if (targetPlayer.getAutoCastSpell() != null && MagicCombatEvent.start(targetPlayer, hitter)) {
+		if (targetPlayer.getAutoCastSpell() != null && MagicCombatEvent.start(
+			targetPlayer, hitter, AttackIntent.Source.RETALIATION)) {
 			return;
 		}
 		targetPlayer.startPvmCounterCombat(hitter);

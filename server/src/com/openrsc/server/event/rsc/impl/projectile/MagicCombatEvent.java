@@ -8,8 +8,15 @@ import com.openrsc.server.external.SpellDef;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.action.ActionType;
 import com.openrsc.server.model.action.WalkToMobAction;
+import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.AttackTransactionResult;
+import com.openrsc.server.model.combat.CombatParticipantSnapshot;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.handlers.SpellHandler;
 import com.openrsc.server.util.rsc.MessageType;
@@ -18,15 +25,22 @@ public class MagicCombatEvent extends GameTickEvent {
 	private final Player player;
 	private Mob target;
 	private Spells spell;
+	private CombatParticipantSnapshot targetSnapshot;
 
 	public MagicCombatEvent(final World world, final Player owner, final long tickDelay, final Mob target, final Spells spell) {
 		super(world, owner, tickDelay, "Magic Combat Event", DuplicationStrategy.ONE_PER_MOB);
 		this.player = owner;
 		this.target = target;
 		this.spell = spell;
+		this.targetSnapshot = CombatParticipantSnapshot.capture(target);
 	}
 
 	public static boolean start(final Player player, final Mob target) {
+		return start(player, target, AttackIntent.Source.COMPATIBILITY);
+	}
+
+	public static boolean start(final Player player, final Mob target,
+			final AttackIntent.Source source) {
 		if (player == null || target == null) {
 			return false;
 		}
@@ -37,19 +51,37 @@ public class MagicCombatEvent extends GameTickEvent {
 			return false;
 		}
 
-		player.setWalkToAction(null);
-		player.resetFollowing();
-		player.resetRange();
-		MagicCombatEvent event = player.getMagicCombatEvent();
-		if (event != null && event.isRunning()) {
-			event.reTarget(target, spell);
-			return true;
+		final AttackIntent intent = player.getAttackTransaction().issue(
+			target, CombatStyle.MAGIC, AttackIntent.Channel.AUTOCAST,
+			source == null ? AttackIntent.Source.COMPATIBILITY : source, spell);
+		// A pending manual command wins over auto-retaliation without allowing a
+		// fallback melee/ranged counterattack to overwrite it.
+		if (intent == null) return true;
+		final MagicCombatEvent current = player.getMagicCombatEvent();
+		final MagicCombatEvent replacement = current != null && current.isRunning()
+			? current : new MagicCombatEvent(player.getWorld(), player, 0, target, spell);
+		final AttackTransactionResult committed = player.getAttackTransaction().commit(
+			intent, new PlayerAttackTransaction.CommitAction() {
+				@Override
+				public boolean commit() {
+					player.setWalkToAction(null);
+					player.resetFollowing();
+					player.resetRange();
+					if (replacement == current) {
+						replacement.reTarget(target, spell);
+					} else {
+						player.setMagicCombatEvent(replacement);
+						player.getWorld().getServer().getGameEventHandler()
+							.addOrUpdate(replacement);
+					}
+					return player.getMagicCombatEvent() == replacement
+						&& replacement.isRunning();
+				}
+			});
+		if (committed.isCommitted() && target.isNpc()) {
+			Summoning.recordCombatSummonEngagement(player, (Npc) target);
 		}
-
-		event = new MagicCombatEvent(player.getWorld(), player, 0, target, spell);
-		player.setMagicCombatEvent(event);
-		player.getWorld().getServer().getGameEventHandler().addOrUpdate(event);
-		return true;
+		return committed.isCommitted();
 	}
 
 	public Mob getTarget() {
@@ -59,6 +91,7 @@ public class MagicCombatEvent extends GameTickEvent {
 	public void reTarget(final Mob target, final Spells spell) {
 		this.target = target;
 		this.spell = spell;
+		this.targetSnapshot = CombatParticipantSnapshot.capture(target);
 		player.setWalkToAction(null);
 		player.resetFollowing();
 		setDelayTicks(0);
@@ -136,6 +169,10 @@ public class MagicCombatEvent extends GameTickEvent {
 
 	private boolean canContinue() {
 		if (player == null || target == null || spell == null) {
+			return false;
+		}
+		if (player.getMagicCombatEvent() != this
+			|| targetSnapshot == null || !targetSnapshot.matches(target)) {
 			return false;
 		}
 		if (!player.loggedIn()

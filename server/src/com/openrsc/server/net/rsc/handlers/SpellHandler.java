@@ -31,6 +31,10 @@ import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.action.ActionType;
 import com.openrsc.server.model.action.WalkToMobAction;
+import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.AttackTransactionResult;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.action.WalkToPointAction;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -257,7 +261,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				return;
 			}
 		}
-		handleMobCast(player, affectedMob, spellEnum, spell.getSpellType());
+		handleMobCast(player, affectedMob, spellEnum, spell.getSpellType(), false);
 	}
 
 	private static double getRuneNegationChance(final Player player, final Item equippedStaff, final int runeId) {
@@ -456,7 +460,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 
 		final Mob selfHealRetaliationTarget = getSelfHealRetaliationTarget(player, payload);
-		player.resetAllExceptDueling();
+		if (!SpellClassification.isMobCastOpcode(opcode)) {
+			player.resetAllExceptDueling();
+		}
 
 		if (!player.isUsingCustomClient()) {
 			//int idx = Constants.spellMap.getOrDefault(payload.spell, 0);
@@ -1445,6 +1451,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private void handleMobCast(final Player player, final Mob affectedMob, Spells spellEnum, int spellType) {
+		handleMobCast(player, affectedMob, spellEnum, spellType, true);
+	}
+
+	private void handleMobCast(final Player player, final Mob affectedMob,
+			Spells spellEnum, int spellType, final boolean transactional) {
 		final int spellRange = player.getConfig().SPELL_RANGE_DISTANCE + RangeUtils.PLAYER_COMBAT_RANGE_BONUS;
 		final SpellDef debugSpell = player.getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
 		magicDebug(player, "mobcast_start spell=" + describeSpell(spellEnum, debugSpell)
@@ -1516,16 +1527,31 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 		final boolean alreadyCanCast = player.withinRange(affectedMob, spellRange);
 		final int spellApproachRange = alreadyCanCast ? spellRange : RangeUtils.getApproachRadius(spellRange);
+		final AttackIntent intent = transactional
+			? player.getAttackTransaction().issue(affectedMob, CombatStyle.MAGIC,
+				AttackIntent.Channel.MAGIC, AttackIntent.Source.MANUAL, spellEnum)
+			: null;
 		magicDebug(player, "mobcast_walk_action_set range=" + spellRange + " approachRange=" + spellApproachRange
 			+ " target=" + describeMob(affectedMob)
 			+ " retargetingNpcWhileInCombat=" + retargetingNpcWhileInCombat);
 		player.setFollowing(affectedMob, spellApproachRange, true, true);
-		player.setWalkToAction(new WalkToMobAction(player, affectedMob, spellApproachRange, false, ActionType.ATTACKMAGIC) {
+		final WalkToMobAction approach = new WalkToMobAction(player, affectedMob, spellApproachRange, false, ActionType.ATTACKMAGIC) {
+			private void cancelIntent() {
+				if (transactional) {
+					getPlayer().getAttackTransaction().cancel(intent,
+						AttackTransactionResult.Reason.ELIGIBILITY_REJECTED);
+				}
+			}
+
 			public void executeInternal() {
 				magicDebug(getPlayer(), "walk_action_execute spell=" + describeSpell(spellEnum, debugSpell)
 					+ " target=" + describeMob(affectedMob) + " playerLoc=" + getPlayer().getLocation()
 					+ " targetLoc=" + affectedMob.getLocation()
 					+ " inRange=" + getPlayer().withinRange(affectedMob, spellRange));
+				if (transactional && !getPlayer().getAttackTransaction()
+					.prepare(intent).isReadyToCommit()) {
+					return;
+				}
 				if (!PathValidation.checkPath(
 					getPlayer().getWorld(), getPlayer().getWorldLocation(),
 					affectedMob.getWorldLocation(), false)) {
@@ -1533,12 +1559,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						+ " targetLoc=" + affectedMob.getLocation());
 					getPlayer().playerServerMessage(MessageType.QUEST, "I can't get a clear shot from here");
 					getPlayer().resetPath();
+					cancelIntent();
 					return;
-				}
-				if (retargetingNpcWhileInCombat) {
-					magicDebug(getPlayer(), "walk_action_reset_combat_for_retarget oldOpponent="
-						+ describeMob(getPlayer().getOpponent()));
-					getPlayer().resetCombatEvent();
 				}
 				getPlayer().resetFollowing();
 				getPlayer().resetPath();
@@ -1547,11 +1569,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					magicDebug(getPlayer(), "walk_action_reject reason=cast_timer_or_dead wait=" + getPlayer().getSpellWait()
 						+ " targetHits=" + affectedMob.getSkills().getLevel(Skill.HITS.id()));
 					getPlayer().resetPath();
+					cancelIntent();
 					return;
 				}
 				if (!getPlayer().checkAttack(affectedMob, true) && affectedMob.isPlayer()) {
 					magicDebug(getPlayer(), "walk_action_reject reason=check_attack_player target=" + describeMob(affectedMob));
 					getPlayer().resetPath();
+					cancelIntent();
 					return;
 				}
 				if (!getPlayer().checkAttack(affectedMob, true) && affectedMob.isNpc()) {
@@ -1577,6 +1601,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							+ " inCombat=" + inCombat + " specialMob=" + isRightMob);
 						getPlayer().message("I can't attack that");
 						getPlayer().resetPath();
+						cancelIntent();
 						return;
 					}
 				}
@@ -1590,6 +1615,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					// message already given out
 					magicDebug(getPlayer(), "walk_action_reject reason=runes spell=" + describeSpell(spellEnum, spell));
 					getPlayer().resetPath();
+					cancelIntent();
 					return;
 				}
 				boolean capeActivated = necessaryRunes == null;
@@ -1630,7 +1656,26 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					}
 
 				}
-				getPlayer().resetAllExceptDueling();
+				if (transactional) {
+					AttackTransactionResult committed = getPlayer().getAttackTransaction().commit(
+						intent, new PlayerAttackTransaction.CommitAction() {
+							@Override
+							public boolean commit() {
+								if (retargetingNpcWhileInCombat) {
+									magicDebug(getPlayer(), "walk_action_reset_combat_for_retarget oldOpponent="
+										+ describeMob(getPlayer().getOpponent()));
+									getPlayer().resetCombatEvent();
+								}
+								getPlayer().resetAllExceptDueling();
+								return true;
+							}
+						});
+					if (!committed.isCommitted()) {
+						return;
+					}
+				} else {
+					getPlayer().resetAllExceptDueling();
+				}
 				EntityType entityType = mob.isPlayer() ? EntityType.PLAYER : EntityType.NPC;
 				boolean isClaws = false;
 				switch (spellEnum) {
@@ -2022,7 +2067,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						break;
 				}
 			}
-		});
+		};
+		player.setWalkToAction(approach);
+		if (transactional) {
+			player.getAttackTransaction().bindApproach(intent, approach);
+		}
 	}
 
 	private Mob getSelfHealRetaliationTarget(Player player, SpellStruct payload) {

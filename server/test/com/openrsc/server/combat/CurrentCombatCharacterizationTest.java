@@ -3,6 +3,7 @@ package com.openrsc.server.combat;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.cleric.ClericSpellId;
 import com.openrsc.server.content.cleric.ClericSupportTargeting;
 import com.openrsc.server.content.cleric.effect.ClericEffectCatalog;
@@ -25,11 +26,22 @@ import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
+import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.combat.CombatTick;
+import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.AttackTransactionResult;
+import com.openrsc.server.model.combat.CombatEligibility;
+import com.openrsc.server.model.combat.CombatEligibilityDecision;
+import com.openrsc.server.model.combat.CombatEligibilityMessageAdapter;
+import com.openrsc.server.model.combat.CombatEligibilityPhase;
+import com.openrsc.server.model.combat.CombatEligibilityReason;
+import com.openrsc.server.model.combat.CombatEligibilityRequest;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -40,7 +52,10 @@ import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.AttackHandler;
+import com.openrsc.server.net.rsc.handlers.SpellHandler;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
+import com.openrsc.server.net.rsc.struct.incoming.SpellStruct;
+import com.openrsc.server.plugins.DefaultHandler;
 import com.openrsc.server.plugins.triggers.AttackNpcTrigger;
 import com.openrsc.server.runtime.ProductionGameRandom;
 import com.openrsc.server.runtime.SystemGameClock;
@@ -54,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -92,6 +108,18 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::deterministicDropReplay);
 			run(harness, "melee_ranged_magic_damage_share_xp",
 				CurrentCombatCharacterizationTest::damageShareExperience);
+			run(harness, "combat_eligibility_reasons_preserve_legacy_messages",
+				CurrentCombatCharacterizationTest::combatEligibilityReasons);
+			run(harness, "latest_melee_intent_wins_and_default_plugin_commits_once",
+				CurrentCombatCharacterizationTest::meleeIntentOrdering);
+			run(harness, "denied_retarget_preserves_current_melee_encounter",
+				CurrentCombatCharacterizationTest::deniedRetargetPreservesEncounter);
+			run(harness, "walk_logout_death_expiry_and_npc_lifecycle_cancel_intents",
+				CurrentCombatCharacterizationTest::attackIntentLifecycle);
+			run(harness, "ranged_throwing_and_magic_starts_commit_through_transactions",
+				CurrentCombatCharacterizationTest::attackStyleTransactions);
+			run(harness, "manual_intent_has_priority_over_autocast_retaliation",
+				CurrentCombatCharacterizationTest::manualIntentPriority);
 			run(harness, "attack_eligibility_precedes_plugin_callback",
 				CurrentCombatCharacterizationTest::attackEligibilityAndPluginOrder);
 			run(harness, "layered_domain_and_line_of_effect_reject_cross_level",
@@ -431,6 +459,303 @@ public final class CurrentCombatCharacterizationTest {
 			"shared Hits-focus XP");
 	}
 
+	private static void combatEligibilityReasons(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player source = harness.player("elig source", 106, 106);
+		final Player target = harness.player("elig target", 107, 106);
+		CombatEligibilityDecision decision = CombatEligibility.evaluate(
+			CombatEligibilityRequest.builder(source, target,
+				CombatEligibilityPhase.COMMAND, CombatStyle.MELEE)
+				.playerAttackRules(true).build());
+		assertEquals(CombatEligibilityReason.PVP_DISABLED, decision.getReason(),
+			"PvP-disabled reason");
+		assertEquals(Collections.singletonList("This is a PvM-only world"),
+			CombatEligibilityMessageAdapter.legacyAttackMessages(source, decision),
+			"MyWorld PvP-disabled message");
+
+		final boolean previousPvp = harness.server().getConfig().WANT_PVP;
+		harness.server().getConfig().WANT_PVP = true;
+		try {
+			party(source, target);
+			decision = CombatEligibility.evaluate(
+				CombatEligibilityRequest.builder(source, target,
+					CombatEligibilityPhase.COMMAND, CombatStyle.MELEE)
+					.playerAttackRules(true).build());
+			assertEquals(CombatEligibilityReason.PARTY_MEMBER, decision.getReason(),
+				"party friendly-fire reason");
+			assertEquals(Collections.singletonList(
+				"You can't attack your party members"),
+				CombatEligibilityMessageAdapter.legacyAttackMessages(source, decision),
+				"party friendly-fire message");
+		} finally {
+			harness.server().getConfig().WANT_PVP = previousPvp;
+		}
+
+		final Npc banker = harness.npc(NpcId.BANKER.id(), 108, 106);
+		decision = CombatEligibility.evaluate(
+			CombatEligibilityRequest.builder(source, banker,
+				CombatEligibilityPhase.COMMAND, CombatStyle.MELEE)
+				.playerAttackRules(true).build());
+		assertEquals(CombatEligibilityReason.TARGET_NOT_ATTACKABLE,
+			decision.getReason(), "non-attackable NPC reason");
+
+		final Npc summon = harness.npc(3, 109, 106);
+		summon.setAttribute("myworld_summon_owner", source.getUsernameHash());
+		decision = CombatEligibility.evaluate(
+			CombatEligibilityRequest.builder(source, summon,
+				CombatEligibilityPhase.COMMAND, CombatStyle.MELEE)
+				.summonRules(true).build());
+		assertEquals(CombatEligibilityReason.TARGET_IS_SUMMON,
+			decision.getReason(), "summon friendly-fire reason");
+
+		final boolean previousLayered = harness.server().getConfig()
+			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
+		harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = true;
+		try {
+			final Npc otherLevel = harness.npc(
+				3, 106, LegacyPackedPointAdapter.LEVEL_STRIDE + 106);
+			decision = CombatEligibility.evaluate(
+				CombatEligibilityRequest.builder(source, otherLevel,
+					CombatEligibilityPhase.APPROACH, CombatStyle.MELEE)
+					.sameSpatialDomain(true).build());
+			assertEquals(CombatEligibilityReason.DIFFERENT_SPATIAL_DOMAIN,
+				decision.getReason(), "layered-domain reason");
+		} finally {
+			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
+				previousLayered;
+		}
+	}
+
+	private static void meleeIntentOrdering(final CurrentCombatHarness harness)
+			throws Exception {
+		final TransactionDefaultPlugin plugin = new TransactionDefaultPlugin();
+		harness.installDefaultPlugin(plugin);
+		final Player player = harness.player("intent ordering", 112, 112);
+		final Npc first = harness.npc(3, 113, 112);
+		final Npc second = harness.npc(3, 112, 113);
+		first.setHostile(player, HostileState.HostilityType.PROVOKED);
+		second.setHostile(player, HostileState.HostilityType.PROVOKED);
+
+		processNpcAttack(player, first);
+		final WalkToAction stale = player.getWalkToAction();
+		assertNotNull(stale, "first melee approach");
+		processNpcAttack(player, second);
+		final WalkToAction winner = player.getWalkToAction();
+		assertNotNull(winner, "replacement melee approach");
+		assertTrue(winner != stale, "newer command replaces old approach");
+		assertEquals(second, player.getAttackTransaction().getPending().getTarget(),
+			"newest intent target");
+
+		stale.execute();
+		assertNull(player.getPvmMeleeEvent(),
+			"stale callback cannot start the old target");
+		assertEquals(second, player.getAttackTransaction().getPending().getTarget(),
+			"stale callback cannot clear the winner");
+		winner.execute();
+		final PluginTickEvent pluginEvent = findPluginEvent(
+			harness, "TransactionDefaultPlugin.onAttackNpc");
+		assertNotNull(pluginEvent, "default attack callback event");
+		pluginEvent.run();
+		assertEquals(Collections.singletonList("default"), plugin.events(),
+			"default callback count");
+		assertNotNull(player.getPvmMeleeEvent(), "committed melee event");
+		assertEquals(second, player.getPvmMeleeEvent().getTarget(),
+			"winning melee target");
+		assertNull(player.getAttackTransaction().getPending(),
+			"committed intent is cleared");
+
+		final AttackIntent later = player.getAttackTransaction().issue(
+			first, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+			AttackIntent.Source.MANUAL, null);
+		assertFalse(player.commitPendingMeleeAttack(second),
+			"stale delayed plugin callback cannot use the compatibility bridge");
+		assertTrue(player.getAttackTransaction().getPending() == later,
+			"stale delayed plugin callback cannot clear the current intent");
+		player.getAttackTransaction().cancel(later,
+			AttackTransactionResult.Reason.SUPERSEDED);
+	}
+
+	private static void deniedRetargetPreservesEncounter(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player player = harness.player("denied retarget", 116, 116);
+		final Npc active = harness.npc(3, 117, 116);
+		final Npc banker = harness.npc(NpcId.BANKER.id(), 116, 117);
+		active.setHostile(player, HostileState.HostilityType.PROVOKED);
+		player.startCombat(active);
+		assertNotNull(player.getPvmMeleeEvent(), "existing melee encounter");
+
+		processNpcAttack(player, banker);
+		final WalkToAction denied = player.getWalkToAction();
+		assertNotNull(denied, "non-attackable retarget reaches eligibility callback");
+		denied.execute();
+		assertTrue(player.getPvmMeleeEvent().isRunning(),
+			"denial leaves current event running");
+		assertEquals(active, player.getPvmMeleeEvent().getTarget(),
+			"denial leaves current target unchanged");
+		assertNull(player.getAttackTransaction().getPending(),
+			"denied intent rolls back");
+	}
+
+	private static void attackIntentLifecycle(final CurrentCombatHarness harness)
+			throws Exception {
+		final Player player = harness.player("intent lifecycle", 120, 120);
+		final Npc target = harness.npc(3, 121, 120);
+		target.setHostile(player, HostileState.HostilityType.PROVOKED);
+		processNpcAttack(player, target);
+		assertNotNull(player.getAttackTransaction().getPending(),
+			"walk cancellation fixture intent");
+		player.setWalkToAction(null);
+		assertNull(player.getAttackTransaction().getPending(),
+			"replacing bound walk cancels intent");
+
+		final Player loadout = harness.player("loadout tx", 122, 120);
+		harness.equip(loadout, ItemId.SHORTBOW.id(), 1);
+		final AttackIntent ranged = loadout.getAttackTransaction().issue(
+			target, CombatStyle.RANGED, AttackIntent.Channel.RANGED,
+			AttackIntent.Source.MANUAL, null);
+		harness.equip(loadout, ItemId.BRONZE_THROWING_DART.id(), 10);
+		final AttackTransactionResult changedLoadout =
+			loadout.getAttackTransaction().prepare(ranged);
+		assertEquals(AttackTransactionResult.Reason.LOADOUT_CHANGED,
+			changedLoadout.getReason(), "equipment change rejects stale intent");
+		assertNull(loadout.getAttackTransaction().getPending(),
+			"loadout-rejected intent is cleared");
+
+		AttackIntent intent = player.getAttackTransaction().issue(
+			target, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+			AttackIntent.Source.MANUAL, null);
+		for (long tick = 0; tick <= PlayerAttackTransaction.MAX_PENDING_TICKS; tick++) {
+			harness.advanceOneCombatTick();
+		}
+		AttackTransactionResult expired = player.getAttackTransaction().prepare(intent);
+		assertEquals(AttackTransactionResult.Reason.EXPIRED, expired.getReason(),
+			"bounded stale-intent expiry");
+		assertNull(player.getAttackTransaction().getPending(),
+			"expired intent cleared");
+		intent = player.getAttackTransaction().issue(
+			target, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+			AttackIntent.Source.MANUAL, null);
+		for (long tick = 0; tick <= PlayerAttackTransaction.MAX_PENDING_TICKS; tick++) {
+			harness.advanceOneCombatTick();
+		}
+		assertNull(player.getAttackTransaction().getPending(),
+			"expired intent is cleared without executing its stale callback");
+
+		intent = player.getAttackTransaction().issue(
+			target, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+			AttackIntent.Source.MANUAL, null);
+		target.advanceCombatLifecycle();
+		AttackTransactionResult changed = player.getAttackTransaction().prepare(intent);
+		assertEquals(AttackTransactionResult.Reason.PARTICIPANT_CHANGED,
+			changed.getReason(), "NPC lifetime change rejects stale intent");
+
+		player.getAttackTransaction().issue(target, CombatStyle.MELEE,
+			AttackIntent.Channel.MELEE, AttackIntent.Source.MANUAL, null);
+		player.setLoggedIn(false);
+		assertNull(player.getAttackTransaction().getPending(),
+			"logout clears pending attack");
+		player.setLoggedIn(true);
+
+		player.getAttackTransaction().issue(target, CombatStyle.MELEE,
+			AttackIntent.Channel.MELEE, AttackIntent.Source.MANUAL, null);
+		player.killedBy(target);
+		assertNull(player.getAttackTransaction().getPending(),
+			"death clears pending attack");
+	}
+
+	private static void attackStyleTransactions(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player ranger = harness.player("range tx", 126, 126);
+		final Npc rangeTarget = harness.npc(3, 127, 126);
+		harness.equip(ranger, ItemId.SHORTBOW.id(), 1);
+		processNpcAttack(ranger, rangeTarget);
+		final WalkToAction rangedApproach = ranger.getWalkToAction();
+		assertNotNull(rangedApproach, "ranged approach");
+		rangedApproach.execute();
+		assertNotNull(ranger.getRangeEvent(), "ranged event committed");
+		assertEquals(rangeTarget, ranger.getRangeEvent().getTarget(),
+			"ranged transaction target");
+
+		final Player thrower = harness.player("throw tx", 130, 126);
+		final Npc throwingTarget = harness.npc(3, 131, 126);
+		harness.equip(thrower, ItemId.BRONZE_THROWING_DART.id(), 20);
+		assertEquals(Integer.valueOf(ItemId.BRONZE_THROWING_DART.id()),
+			Integer.valueOf(thrower.getThrowingEquip()), "throwing equipment fixture");
+		processNpcAttack(thrower, throwingTarget);
+		final WalkToAction throwingApproach = thrower.getWalkToAction();
+		assertNotNull(throwingApproach, "throwing approach");
+		assertTrue(throwingApproach.shouldExecute(),
+			"adjacent throwing approach is executable");
+		throwingApproach.execute();
+		assertTrue(thrower.getThrowingEvent() != null,
+			"throwing event committed; pending="
+				+ (thrower.getAttackTransaction().getPending() == null ? "none"
+					: thrower.getAttackTransaction().getPending().getChannel())
+				+ " equipment=" + thrower.getThrowingEquip()
+				+ " busy=" + thrower.isBusy() + " combat=" + thrower.inCombat());
+		assertEquals(throwingTarget, thrower.getThrowingEvent().getTarget(),
+			"throwing transaction target");
+
+		final Player mage = harness.player("magic tx", 134, 126);
+		final Npc magicTarget = harness.npc(3, 135, 126);
+		mage.getClientLimitations().maxItemId = Integer.MAX_VALUE;
+		for (final Map.Entry<Integer, Integer> rune : harness.server()
+				.getEntityHandler().getSpellDef(Spells.WIND_STRIKE)
+				.getRunesRequired()) {
+			assertTrue(mage.getCarriedItems().getInventory().add(
+				new Item(rune.getKey(), rune.getValue() + 10)),
+				"magic transaction rune fixture accepts item " + rune.getKey());
+			assertTrue(mage.getCarriedItems().getInventory().countId(rune.getKey())
+				>= rune.getValue(), "magic transaction rune fixture counts item "
+				+ rune.getKey());
+		}
+		final SpellStruct payload = new SpellStruct();
+		payload.setOpcode(OpcodeIn.CAST_ON_NPC);
+		payload.spell = Spells.WIND_STRIKE;
+		payload.targetIndex = magicTarget.getIndex();
+		final int projectilesBefore = countEventsOfType(harness,
+			ProjectileEvent.class);
+		new SpellHandler().process(payload, mage);
+		final WalkToAction magicApproach = mage.getWalkToAction();
+		assertNotNull(magicApproach, "manual magic approach");
+		magicApproach.execute();
+		assertNull(mage.getAttackTransaction().getPending(),
+			"manual magic intent committed before projectile settlement");
+		assertEquals(Integer.valueOf(projectilesBefore + 1),
+			Integer.valueOf(countEventsOfType(harness, ProjectileEvent.class)),
+			"manual magic keeps current projectile settlement path");
+
+		final Player noRunes = harness.player("no rune tx", 138, 126);
+		final Npc noRuneTarget = harness.npc(3, 139, 126);
+		payload.targetIndex = noRuneTarget.getIndex();
+		new SpellHandler().process(payload, noRunes);
+		final WalkToAction noRuneApproach = noRunes.getWalkToAction();
+		assertNotNull(noRuneApproach, "missing-rune magic approach");
+		noRuneApproach.execute();
+		assertNull(noRunes.getAttackTransaction().getPending(),
+			"missing runes roll back the manual magic intent");
+		assertEquals(Integer.valueOf(projectilesBefore + 1),
+			Integer.valueOf(countEventsOfType(harness, ProjectileEvent.class)),
+			"missing runes install no projectile settlement");
+	}
+
+	private static void manualIntentPriority(final CurrentCombatHarness harness) {
+		final Player player = harness.player("manual priority", 140, 126);
+		final Npc manualTarget = harness.npc(3, 141, 126);
+		final Npc attacker = harness.npc(3, 140, 127);
+		final AttackIntent manual = player.getAttackTransaction().issue(
+			manualTarget, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+			AttackIntent.Source.MANUAL, null);
+		player.setAutoCastSpell(com.openrsc.server.constants.Spells.WIND_STRIKE);
+		assertTrue(MagicCombatEvent.start(player, attacker,
+			AttackIntent.Source.RETALIATION),
+			"suppressed retaliation is handled without melee fallback");
+		assertTrue(player.getAttackTransaction().getPending() == manual,
+			"retaliation cannot replace pending manual intent");
+		assertNull(player.getMagicCombatEvent(),
+			"suppressed retaliation installs no autocast event");
+	}
+
 	private static void attackEligibilityAndPluginOrder(
 			final CurrentCombatHarness harness) throws Exception {
 		final RecordingAttackPlugin plugin = new RecordingAttackPlugin();
@@ -448,6 +773,8 @@ public final class CurrentCombatCharacterizationTest {
 		action.execute();
 		assertEquals(Collections.singletonList("block"), plugin.events(),
 			"plugin block callback must precede its action callback");
+		assertNull(player.getAttackTransaction().getPending(),
+			"blocking plugin owns the action and clears the default attack intent");
 
 		PluginTickEvent pluginEvent = null;
 		for (GameTickEvent event : harness.server().getGameEventHandler().getEvents()) {
@@ -810,6 +1137,31 @@ public final class CurrentCombatCharacterizationTest {
 		new AttackHandler().process(payload, player);
 	}
 
+	private static PluginTickEvent findPluginEvent(
+			final CurrentCombatHarness harness, final String descriptor) {
+		for (GameTickEvent event : harness.server().getGameEventHandler().getEvents()) {
+			if (event instanceof PluginTickEvent
+				&& descriptor.equals(event.getDescriptor())) {
+				return (PluginTickEvent) event;
+			}
+		}
+		return null;
+	}
+
+	private static boolean hasEventType(final CurrentCombatHarness harness,
+			final Class<?> eventType) {
+		return countEventsOfType(harness, eventType) > 0;
+	}
+
+	private static int countEventsOfType(final CurrentCombatHarness harness,
+			final Class<?> eventType) {
+		int count = 0;
+		for (GameTickEvent event : harness.server().getGameEventHandler().getEvents()) {
+			if (eventType.isInstance(event)) count++;
+		}
+		return count;
+	}
+
 	private static ClericEffectRegistry registry(final Player player) {
 		final ClericEffectRegistry registry = new ClericEffectRegistry(
 			ClericEffectClock.game(player.getWorld().getServer().getGameClock(),
@@ -929,6 +1281,29 @@ public final class CurrentCombatCharacterizationTest {
 		@Override
 		public void onAttackNpc(final Player player, final Npc npc) {
 			events.add("action");
+		}
+
+		List<String> events() {
+			synchronized (events) {
+				return new ArrayList<String>(events);
+			}
+		}
+	}
+
+	private static final class TransactionDefaultPlugin
+			implements DefaultHandler, AttackNpcTrigger {
+		private final List<String> events = Collections.synchronizedList(
+			new ArrayList<String>());
+
+		@Override
+		public boolean blockAttackNpc(final Player player, final Npc npc) {
+			return false;
+		}
+
+		@Override
+		public void onAttackNpc(final Player player, final Npc npc) {
+			events.add("default");
+			player.commitPendingMeleeAttack(npc);
 		}
 
 		List<String> events() {
