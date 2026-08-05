@@ -61,7 +61,13 @@ public final class ClericSupportCasting {
 					applications.add(prepareRestore(target, effectRank));
 					break;
 				case MEND:
+				case FERVOR:
+				case WARD:
 				case GREATER_MEND:
+				case ZEAL:
+				case THORNS:
+				case AEGIS:
+				case RALLY:
 				case RESPITE:
 					applications.add(ClericTimedEffectRuntime.prepare(
 						caster, target, definition, effectRank));
@@ -103,7 +109,13 @@ public final class ClericSupportCasting {
 			|| spellId == ClericSpellId.PURIFY
 			|| spellId == ClericSpellId.RESTORE
 			|| spellId == ClericSpellId.MEND
+			|| spellId == ClericSpellId.FERVOR
+			|| spellId == ClericSpellId.WARD
 			|| spellId == ClericSpellId.GREATER_MEND
+			|| spellId == ClericSpellId.ZEAL
+			|| spellId == ClericSpellId.THORNS
+			|| spellId == ClericSpellId.AEGIS
+			|| spellId == ClericSpellId.RALLY
 			|| spellId == ClericSpellId.RESPITE;
 	}
 

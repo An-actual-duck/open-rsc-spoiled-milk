@@ -12,6 +12,7 @@ import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.TrueDefense;
+import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
@@ -190,14 +191,14 @@ public class CombatEvent extends GameTickEvent {
 			}
 
 			inflictDamage(hitter, target, damage);
+			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				return;
+			}
 			applyBearMaulSecondHit(hitter, target, damage);
 			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(hitter, target);
 				applyElementalSwordProc(hitter, target);
 				applyDemonPitchforkHellBlazeProc(hitter, target, damage);
-			}
-			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-				return;
 			}
 			applyWeaponPoison(hitter, target, damage);
 			applyChaosAmuletChainLightning(hitter, target, damage);
@@ -474,6 +475,13 @@ public class CombatEvent extends GameTickEvent {
 		if (target.isPlayer()) {
 			damage = TrueDefense.apply((Player) target, damage);
 		}
+		final ClericDirectCombatRuntime.BeforeDamage clericDamage =
+			ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
+		damage = clericDamage.getDamage();
+		if (target.isPlayer() && clericDamage.getPreventedDamage() > 0) {
+			((Player) target).updateDamageAndBlockedDamageTracking(
+				hitter, 0, clericDamage.getPreventedDamage());
+		}
 
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());
@@ -501,16 +509,24 @@ public class CombatEvent extends GameTickEvent {
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);
 		}
+		final ClericDirectCombatRuntime.AfterDamage clericAfter =
+			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageDealt);
+		if (clericAfter.getThornsDamage() > 0) {
+			inflictJewelryEffectDamage(target, hitter, clericAfter.getThornsDamage());
+		}
 
 		// Update players sound and party.
 		if (target.isPlayer()) {
 			sendSound((Player)target, hitter, damage > 0);
 			ActionSender.sendStat((Player)target, Skill.HITS.id());
 			updateParty((Player)target);
-			CorrosiveAura.apply((Player) target, hitter, damageDealt);
-			DivineRetribution.Result result = DivineRetribution.apply((Player) target, hitter, damageDealt);
-			if (result.killedAttacker()) {
-				onDeath(hitter, target);
+			if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0) {
+				CorrosiveAura.apply((Player) target, hitter, damageDealt);
+				DivineRetribution.Result result = DivineRetribution.apply(
+					(Player) target, hitter, damageDealt);
+				if (result.killedAttacker()) {
+					onDeath(hitter, target);
+				}
 			}
 		}
 		if (hitter.isPlayer()) {

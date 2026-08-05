@@ -53,7 +53,9 @@ def validate_source_boundaries() -> None:
     expected_authorized_references = {
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java",
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
+        "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java",
         "server/src/com/openrsc/server/content/status/ClericActiveStatusCollector.java",
+        "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",

@@ -177,12 +177,17 @@ public class Skills {
 			}
 			return;
 		}
+		final int previousLevel = levels[skill];
 		levels[skill] = level;
 		if (levels[skill] <= 0) {
 			levels[skill] = 0;
 		}
 		if (sendUpdate) {
 			sendUpdate(skill);
+		}
+		if (skill == Skill.HITS.id() && levels[skill] > previousLevel
+				&& mob instanceof Player) {
+			((Player) mob).onHitsLevelIncreased();
 		}
 		if (skill == Skill.PRAYER.id() && mob.isPlayer()) {
 			syncPrayerStateAndAllocation(skill, !fromRestoreEvent);

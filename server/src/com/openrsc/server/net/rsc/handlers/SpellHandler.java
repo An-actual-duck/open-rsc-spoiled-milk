@@ -1824,13 +1824,17 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						final int godSpellProjectile = SpellClassification.getGodSpellProjectileVisual(spellEnum);
 						final int godSpellImpact = SpellClassification.getGodSpellImpactEffect(spellEnum);
 						final int primaryDamage = CombatFormula.calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum);
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
+						final ProjectileEvent godSpellEvent = new ProjectileEvent(
+							getPlayer().getWorld(), getPlayer(), affectedMob,
 							primaryDamage, 1, setChasing,
-							0, 0, 0, 0, godSpellProjectile, godSpellImpact, true));
+							0, 0, 0, 0, godSpellProjectile, godSpellImpact, true);
+						godSpellEvent.deferClericRally();
+						getPlayer().getWorld().getServer().getGameEventHandler().add(godSpellEvent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
 							@Override
 							public void action() {
 								applyGodSpellAreaEffects(getPlayer(), affectedMob, spellEnum, primaryDamage);
+								godSpellEvent.resolveDeferredClericRally();
 							}
 						});
 						finalizeSpell(getPlayer(), spell, DEFAULT, giveExp);
@@ -2061,7 +2065,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidGodSpellAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateMagicDamage(caster, npc, secondaryMax);
+			final int damage = CombatFormula.calculateSecondaryMagicDamage(caster, npc, secondaryMax);
 			final int appliedDamage = applyGodSpellSecondaryDamage(caster, npc, damage);
 			totalDamage += appliedDamage;
 			applyGodSpellSpecialEffect(caster, npc, spellEnum, appliedDamage, false);
@@ -2080,7 +2084,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateMagicDamage(
+			final int damage = CombatFormula.calculateSecondaryMagicDamage(
 				caster, npc, secondaryMax, SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
 			applyGodSpellSecondaryDamage(caster, npc, damage);
 		}
