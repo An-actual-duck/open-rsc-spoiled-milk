@@ -39,6 +39,7 @@ public class MagicCombatEvent extends GameTickEvent {
 		return start(player, target, AttackIntent.Source.COMPATIBILITY);
 	}
 
+	@SuppressWarnings("PMD.CompareObjectsWithEquals")
 	public static boolean start(final Player player, final Mob target,
 			final AttackIntent.Source source) {
 		if (player == null || target == null) {
@@ -58,7 +59,8 @@ public class MagicCombatEvent extends GameTickEvent {
 		// fallback melee/ranged counterattack to overwrite it.
 		if (intent == null) return true;
 		final MagicCombatEvent current = player.getMagicCombatEvent();
-		final MagicCombatEvent replacement = current != null && current.isRunning()
+		final boolean reuseCurrent = current != null && current.isRunning();
+		final MagicCombatEvent replacement = reuseCurrent
 			? current : new MagicCombatEvent(player.getWorld(), player, 0, target, spell);
 		final AttackTransactionResult committed = player.getAttackTransaction().commit(
 			intent, new PlayerAttackTransaction.CommitAction() {
@@ -67,7 +69,7 @@ public class MagicCombatEvent extends GameTickEvent {
 					player.setWalkToAction(null);
 					player.resetFollowing();
 					player.resetRange();
-					if (replacement == current) {
+					if (reuseCurrent) {
 						replacement.reTarget(target, spell);
 					} else {
 						player.setMagicCombatEvent(replacement);

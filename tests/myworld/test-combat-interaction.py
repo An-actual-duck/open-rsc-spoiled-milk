@@ -29,6 +29,13 @@ def require_contains(path: Path, needle: str) -> None:
         fail(f"{path.name} missing expected text: {needle}")
 
 
+def require_contains_normalized(path: Path, needle: str) -> None:
+    text = " ".join(path.read_text(encoding="utf-8").split())
+    normalized_needle = " ".join(needle.split())
+    if normalized_needle not in text:
+        fail(f"{path.name} missing expected text: {needle}")
+
+
 def require_not_contains(path: Path, needle: str) -> None:
     text = path.read_text(encoding="utf-8")
     if needle in text:
@@ -93,7 +100,10 @@ def main() -> None:
     require_contains(DROP_TABLE, "public ArrayList<Item> rollPersonalLoot(Player owner, double contributionScale)")
     require_contains(DROP_TABLE, "RARE_NORMAL_DROP_MAX_WEIGHT = 2")
     require_contains(DROP_TABLE, "RARE_NORMAL_DROP_IDS")
-    require_contains(DROP_TABLE, "drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))")
+    require_contains_normalized(
+        DROP_TABLE,
+        "drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale, owner.getWorld().getServer().getCombatRandom()))",
+    )
     require_contains(DROP_TABLE, "private static boolean isRareNormalDrop(Drop drop)")
     require_contains(SPELL_HANDLER, "retargetingNpcWhileInCombat")
     require_contains(SPELL_HANDLER, "player.getConfig().BLOCK_USE_MAGIC_IN_COMBAT && player.inCombat() && !retargetingNpcWhileInCombat")

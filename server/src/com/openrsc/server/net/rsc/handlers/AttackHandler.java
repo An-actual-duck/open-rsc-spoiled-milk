@@ -23,6 +23,7 @@ import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
 import com.openrsc.server.plugins.triggers.AttackNpcTrigger;
 import com.openrsc.server.plugins.triggers.AttackPlayerTrigger;
+import com.openrsc.server.plugins.handler.PluginHandler;
 
 import static com.openrsc.server.plugins.Functions.inArray;
 
@@ -201,13 +202,21 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 					if (mob.isNpc()) {
 						NpcInteraction interaction = NpcInteraction.NPC_ATTACK;
 						NpcInteraction.setInteractions(((Npc)mob), getPlayer(), interaction);
-						boolean blocked = getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(AttackNpcTrigger.class, getPlayer(), new Object[]{getPlayer(), (Npc) mob}, this);
-						if (blocked) {
+						PluginHandler plugins = getPlayer().getWorld().getServer()
+							.getPluginHandler();
+						boolean blocked = plugins.handlePlugin(AttackNpcTrigger.class,
+							getPlayer(), new Object[]{getPlayer(), (Npc) mob}, this);
+						if (blocked || plugins.isReloading()
+							|| !plugins.hasDefaultHandlerFor(AttackNpcTrigger.class)) {
 							getPlayer().cancelPendingMeleeAttack(mob);
 						}
 					} else {
-						boolean blocked = getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(AttackPlayerTrigger.class, getPlayer(), new Object[]{getPlayer(), mob}, this);
-						if (blocked) {
+						PluginHandler plugins = getPlayer().getWorld().getServer()
+							.getPluginHandler();
+						boolean blocked = plugins.handlePlugin(AttackPlayerTrigger.class,
+							getPlayer(), new Object[]{getPlayer(), mob}, this);
+						if (blocked || plugins.isReloading()
+							|| !plugins.hasDefaultHandlerFor(AttackPlayerTrigger.class)) {
 							getPlayer().cancelPendingMeleeAttack(mob);
 						}
 					}

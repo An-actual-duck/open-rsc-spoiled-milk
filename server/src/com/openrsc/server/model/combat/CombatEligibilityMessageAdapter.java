@@ -22,7 +22,17 @@ public final class CombatEligibilityMessageAdapter {
 		if (player == null || decision == null || decision.isAllowed()) {
 			return Collections.emptyList();
 		}
-		switch (decision.getReason()) {
+		return legacyAttackMessages(player, decision.getReason(),
+			decision.getDetailValue());
+	}
+
+	public static List<String> legacyAttackMessages(final Player player,
+			final CombatEligibilityReason reason, final int detailValue) {
+		if (player == null || reason == null
+			|| reason == CombatEligibilityReason.ALLOWED) {
+			return Collections.emptyList();
+		}
+		switch (reason) {
 			case PVP_DISABLED:
 				return Collections.singletonList(player.getConfig().WANT_MYWORLD
 					? "This is a PvM-only world"
@@ -45,7 +55,7 @@ public final class CombatEligibilityMessageAdapter {
 			case TARGET_WILDERNESS_LEVEL_MISMATCH:
 				return Arrays.asList(
 					"You can only attack players within "
-						+ decision.getDetailValue() + " levels of your own here",
+						+ detailValue + " levels of your own here",
 					"Move further into the wilderness for less restrictions");
 			default:
 				return Collections.emptyList();

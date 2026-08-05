@@ -472,6 +472,37 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(Collections.singletonList("This is a PvM-only world"),
 			CombatEligibilityMessageAdapter.legacyAttackMessages(source, decision),
 			"MyWorld PvP-disabled message");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.PK_MODE_DISABLED, 0,
+			"You are not allowed to attack that person");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.TARGET_INVULNERABLE, 0,
+			"You are not allowed to attack that person");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.PK_LUMBRIDGE_RESTRICTED, 0,
+			"You can't attack other players here. Move out of Lumbridge");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.PK_BANKER_RESTRICTED, 0,
+			"You cannot attack other players in the vicinity of a banker");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.PK_LEVEL_MISMATCH, 0,
+			"You can only attack players with combat close to your own");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.SOURCE_OUTSIDE_WILDERNESS, 0,
+			"You can't attack other players here. Move to the wilderness");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.TARGET_OUTSIDE_WILDERNESS, 0,
+			"You can't attack other players here. Move to the wilderness");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.SOURCE_WILDERNESS_LEVEL_MISMATCH, 7,
+			"You can only attack players within 7 levels of your own here",
+			"Move further into the wilderness for less restrictions");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.TARGET_WILDERNESS_LEVEL_MISMATCH, 9,
+			"You can only attack players within 9 levels of your own here",
+			"Move further into the wilderness for less restrictions");
+		assertLegacyMessages(source,
+			CombatEligibilityReason.TARGET_REATTACK_PROTECTED, 0);
 
 		final boolean previousPvp = harness.server().getConfig().WANT_PVP;
 		harness.server().getConfig().WANT_PVP = true;
@@ -1160,6 +1191,15 @@ public final class CurrentCombatCharacterizationTest {
 			if (eventType.isInstance(event)) count++;
 		}
 		return count;
+	}
+
+	private static void assertLegacyMessages(final Player player,
+			final CombatEligibilityReason reason, final int detail,
+			final String... expected) {
+		assertEquals(Arrays.asList(expected),
+			CombatEligibilityMessageAdapter.legacyAttackMessages(
+				player, reason, detail),
+			"legacy message mapping for " + reason);
 	}
 
 	private static ClericEffectRegistry registry(final Player player) {

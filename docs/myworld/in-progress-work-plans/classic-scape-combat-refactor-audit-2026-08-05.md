@@ -532,6 +532,15 @@ player-visible cadence.
 
 ### A03 — `refactor/combat-eligibility-transactions`
 
+Implementation record: the focused worker branch now provides the
+side-effect-free reason-coded eligibility service, exact per-player attack
+intent serialization, 100-tick stale-intent lease, participant generation
+guards, and validate/approach/commit integration for melee, bow, throwing,
+targeted magic, autocast, and player retaliation. Compatibility entry points
+and stateful content/plugin gates remain in place. The A01/A02 gate has grown
+from 20 to 26 executable scenarios. Integration remains subject to manager
+review of the exact READY handoff.
+
 Scope central eligibility/reason codes and validate/approach/commit attack
 starts while preserving current movement and plugin ordering. Cover every
 style, summons, PvP compatibility, quest/guild restrictions, layered domains,

@@ -20,7 +20,6 @@ import com.openrsc.server.model.*;
 import com.openrsc.server.model.Path.PathType;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.combat.AttackIntent;
-import com.openrsc.server.model.combat.AttackTransactionResult;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -1321,17 +1320,17 @@ public abstract class Mob extends Entity {
 						oldRange.stop();
 						player.setRangeEvent(null);
 					}
-					ThrowingEvent event = player.getThrowingEvent();
-					if (event != null) {
-						if (event.shouldAutoRetaliateRetarget(player, attacker)) {
-							event.reTarget(attacker);
+					ThrowingEvent throwingEvent = player.getThrowingEvent();
+					if (throwingEvent != null) {
+						if (throwingEvent.shouldAutoRetaliateRetarget(player, attacker)) {
+							throwingEvent.reTarget(attacker);
 						}
-						event.restart();
+						throwingEvent.restart();
 						return true;
 					}
-					event = new ThrowingEvent(player.getWorld(), player, 1, attacker);
-					player.setThrowingEvent(event);
-					handler.add(event);
+					throwingEvent = new ThrowingEvent(player.getWorld(), player, 1, attacker);
+					player.setThrowingEvent(throwingEvent);
+					handler.add(throwingEvent);
 					return true;
 				}
 			});
