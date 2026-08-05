@@ -631,6 +631,29 @@ dragon mechanics, AoE proc/lifesteal, loot, kill-credit ties, plugin order,
 protocol order, persistence, or startup compatibility. “Matches
 Classic-Scape” is evidence, not authorization.
 
+## Audit-Branch Verification
+
+- Classic-Scape `f6def6ff`: `./server/test_combat` compiled 1,134 production
+  sources and 27 combat-test sources, then passed 113/113 scenarios with zero
+  expected failures.
+- Classic-Scape deliberate-failure fixture: `./server/test_combat
+  -Dcombat.injectFailure=true` failed at the advertised Ant preflight and was
+  accepted by the audit wrapper only because failure was expected.
+- Current Spoiled Milk: `./scripts/build-server.sh` built authoritative
+  `core.jar` (957 sources) and `plugins.jar` (492 sources), and the shipped Ant
+  dependency/classpath inventory passed.
+- Current focused fixtures passed:
+  `test-combat-scenarios.py`, `test-combat-runtime-invariants.py`,
+  `test-npc-poison-death-lifecycle.py`,
+  `test-cleric-c10-direct-combat-effects.py`,
+  `test-summoning-combat-assist.py`, and
+  `test-hostile-projectile-collision-policy.py`.
+- Offline changed-code analysis found no changed Java, Python, or shell files,
+  observed the existing 394 SpotBugs findings, and reported no new finding.
+- `git diff --check` passed, all 45 exact upstream commit links in this report
+  resolved to commits in the inspected clone, and the two root `LICENSE` files
+  were byte-identical.
+
 ## Final Recommendation
 
 Approve A01 only. Treat Classic-Scape as a well-documented reference
