@@ -97,7 +97,9 @@ R2-0 established its reviewed ownership rules and dependency baseline from
 published `main` commit `6e1720900bbdccd46ba06b9726ac7e91a89b56f3`.
 The checked inventories regenerate from the current shipped-input tree after
 each R2 source slice so their input-tree hash and current counts remain
-accurate without changing the approved dependency-debt baseline. The human and
+accurate. The dependency-debt baseline changes only after an explicit manager
+review; the v0.2.64 release review accepted 12 transitional Cleric and Exalted
+Rune integration edges, bringing that baseline from 83 to 95. The human and
 JSON inventories are
 [`server-r2-ownership-inventory.md`](../info/server-r2-ownership-inventory.md)
 and `server-r2-ownership-inventory.json` beside it.
@@ -1392,6 +1394,16 @@ change launchers, runtime cache defaults, or that test. The mismatch should be
 handled by a focused launcher/default-endpoint branch.
 
 ## Planning Change Log
+
+- **2026-08-05:** The v0.2.64 release preflight refreshed the deterministic
+  inventory to 1,848 shipped inputs, 956 Ant core sources, and 492 plugin
+  sources. It exposed 12 previously unbaselined imports added by the completed
+  Cleric combat/status integration and Exalted Rune tool integration. Manager
+  review accepted those exact edges as visible transitional debt so the tested
+  feature set can ship; the reviewed baseline is now 95 edges. R2-2/R2-3 must
+  replace the concrete Cleric runtime/catalog imports and target-owned item-ID
+  imports with content-neutral hooks and target-owned adapters rather than
+  treating this expansion as the desired Server R2 boundary.
 
 - **2026-08-04:** Refreshed the checked ownership inventory after the reviewed
   Cleric C08A integration. The current tree contains 1,832 shipped inputs, 940

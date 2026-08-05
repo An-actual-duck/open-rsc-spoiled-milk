@@ -31,6 +31,11 @@
       "target": "server/src/com/openrsc/server/content/Summoning.java"
     },
     {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java"
+    },
+    {
       "import": "com.openrsc.server.content.CorrosiveAura",
       "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
       "target": "server/src/com/openrsc/server/content/CorrosiveAura.java"
@@ -71,9 +76,19 @@
       "target": "server/src/com/openrsc/server/content/TrueDefense.java"
     },
     {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java"
+    },
+    {
       "import": "com.openrsc.server.content.SkillCapes",
       "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
       "target": "server/src/com/openrsc/server/content/SkillCapes.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java"
     },
     {
       "import": "com.openrsc.server.content.CorrosiveAura",
@@ -101,6 +116,16 @@
       "target": "server/src/com/openrsc/server/content/SkillCapes.java"
     },
     {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
       "import": "com.openrsc.server.content.CorrosiveAura",
       "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
       "target": "server/src/com/openrsc/server/content/CorrosiveAura.java"
@@ -139,6 +164,11 @@
       "import": "com.openrsc.server.content.TrueDefense",
       "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
       "target": "server/src/com/openrsc/server/content/TrueDefense.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java"
     },
     {
       "import": "com.openrsc.server.content.Summoning",
@@ -186,6 +216,11 @@
       "target": "server/src/com/openrsc/server/content/TrueDefense.java"
     },
     {
+      "import": "com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime",
+      "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+      "target": "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java"
+    },
+    {
       "import": "com.openrsc.server.content.SkillCapes",
       "source": "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
       "target": "server/src/com/openrsc/server/content/SkillCapes.java"
@@ -208,6 +243,11 @@
     {
       "import": "com.openrsc.server.constants.custom.MyWorldItemId",
       "source": "server/src/com/openrsc/server/external/EntityHandler.java",
+      "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+    },
+    {
+      "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+      "source": "server/src/com/openrsc/server/external/ObjectWoodcuttingDef.java",
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     },
     {
@@ -334,6 +374,26 @@
       "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
       "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
       "target": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.effect.ClericEffectCatalog",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectCatalog.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.effect.ClericEffectMagnitude",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectMagnitude.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.effect.ClericEffectPresentationKind",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectPresentationKind.java"
+    },
+    {
+      "import": "com.openrsc.server.content.cleric.effect.ClericEffectRankDefinition",
+      "source": "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
+      "target": "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java"
     },
     {
       "import": "com.openrsc.server.content.Summoning",
