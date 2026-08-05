@@ -10,7 +10,6 @@ import argparse
 import hashlib
 import json
 import re
-import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
@@ -24,6 +23,9 @@ BUILD_GRADLE = SERVER / "build.gradle"
 LIB = SERVER / "lib"
 CORE_JAR = SERVER / "core.jar"
 PLUGINS_JAR = SERVER / "plugins.jar"
+TEST_ONLY_CLASS_PREFIXES = (
+    "com/openrsc/server/combat/CurrentCombat",
+)
 
 ANT_TARGETS = ("compile_core", "compile_plugins", "runserver", "runserverzgc")
 AUTHORITATIVE_SCRIPTS = {
@@ -62,26 +64,43 @@ def ant_inventory() -> dict:
     }
     targets = {}
     missing = []
+
+    def classpath_entry(element: ET.Element, target_name: str) -> dict:
+        raw = element.attrib.get("location", element.attrib.get("path", ""))
+        resolved = substitute(raw, properties)
+        record = {"declared": raw, "resolved": resolved, "kind": "other", "exists": None}
+        if resolved == "lib/*":
+            record["kind"] = "jar-wildcard"
+            record["matches"] = sorted(path.name for path in LIB.glob("*.jar"))
+        elif resolved.endswith(".jar"):
+            record["kind"] = "jar"
+            path = SERVER / resolved
+            record["exists"] = path.is_file()
+            if not path.is_file():
+                missing.append({"target": target_name, "path": resolved})
+        return record
+
     for target_name in ANT_TARGETS:
         target = root.find(f"target[@name='{target_name}']")
         if target is None:
             targets[target_name] = []
             continue
         entries = []
-        for element in target.findall(".//classpath/pathelement"):
-            raw = element.attrib.get("location", element.attrib.get("path", ""))
-            resolved = substitute(raw, properties)
-            record = {"declared": raw, "resolved": resolved, "kind": "other", "exists": None}
-            if resolved == "lib/*":
-                record["kind"] = "jar-wildcard"
-                record["matches"] = sorted(path.name for path in LIB.glob("*.jar"))
-            elif resolved.endswith(".jar"):
-                record["kind"] = "jar"
-                path = SERVER / resolved
-                record["exists"] = path.is_file()
-                if not path.is_file():
-                    missing.append({"target": target_name, "path": resolved})
-            entries.append(record)
+        for classpath in target.findall(".//classpath"):
+            refid = classpath.attrib.get("refid")
+            if refid:
+                referenced = root.find(f"path[@id='{refid}']")
+                if referenced is None:
+                    missing.append({"target": target_name, "path": "refid:" + refid})
+                else:
+                    entries.extend(
+                        classpath_entry(element, target_name)
+                        for element in referenced.findall("pathelement")
+                    )
+            entries.extend(
+                classpath_entry(element, target_name)
+                for element in classpath.findall("pathelement")
+            )
         targets[target_name] = entries
 
     zipgroup = root.find("target[@name='compile_core']/.//zipgroupfileset")
@@ -168,6 +187,9 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
 
     if result.get("core", {}).get("present"):
         core_classes = jar_classes(CORE_JAR)
+        for prefix in TEST_ONLY_CLASS_PREFIXES:
+            if any(name.startswith(prefix) for name in core_classes):
+                errors.append(f"core.jar unexpectedly contains test fixture {prefix}")
         for required in (
             "com/openrsc/server/Server.class",
             "com/openrsc/server/plugins/io/PluginJarLoader.class",
@@ -179,6 +201,9 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
                 errors.append(f"core.jar missing required class {required}")
     if result.get("plugins", {}).get("present"):
         plugin_classes = jar_classes(PLUGINS_JAR)
+        for prefix in TEST_ONLY_CLASS_PREFIXES:
+            if any(name.startswith(prefix) for name in plugin_classes):
+                errors.append(f"plugins.jar unexpectedly contains test fixture {prefix}")
         if not plugin_classes:
             errors.append("plugins.jar contains no plugin classes")
         if "com/openrsc/server/Server.class" in plugin_classes:

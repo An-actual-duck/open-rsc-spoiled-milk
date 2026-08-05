@@ -34,6 +34,7 @@ JAVA_ROOTS = (
     "PC_Client/src",
     "server/src",
     "server/plugins",
+    "server/test",
     "tools/world-builder/src",
 )
 JAVA_EXTRA = ("tools/myworld/ExportBasicProjectileSheets.java",)

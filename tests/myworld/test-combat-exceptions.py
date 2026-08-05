@@ -67,23 +67,25 @@ def require_config_false(key: str) -> None:
 
 def validate_no_external_drop_items_calls() -> None:
     offenders = []
-    for path in SERVER.rglob("*.java"):
-        text = read(path)
-        if ".dropItems(" in text and path != NPC:
-            offenders.append(relative(path))
+    for source_root in (SERVER / "src", SERVER / "plugins"):
+        for path in source_root.rglob("*.java"):
+            text = read(path)
+            if ".dropItems(" in text and path != NPC:
+                offenders.append(relative(path))
     if offenders:
         fail("Unexpected direct NPC dropItems call outside Npc.java: " + ", ".join(offenders))
 
 
 def validate_killed_by_call_sites_are_reviewed() -> None:
     offenders = []
-    for path in SERVER.rglob("*.java"):
-        text = read(path)
-        if "killedBy(" not in text:
-            continue
-        rel = relative(path)
-        if rel not in ALLOWED_KILLED_BY_FILES:
-            offenders.append(rel)
+    for source_root in (SERVER / "src", SERVER / "plugins"):
+        for path in source_root.rglob("*.java"):
+            text = read(path)
+            if "killedBy(" not in text:
+                continue
+            rel = relative(path)
+            if rel not in ALLOWED_KILLED_BY_FILES:
+                offenders.append(rel)
     if offenders:
         fail("Unreviewed killedBy call site(s): " + ", ".join(sorted(offenders)))
 
