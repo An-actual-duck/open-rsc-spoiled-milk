@@ -32,6 +32,10 @@ public class PoisonEvent extends GameTickEvent {
 
 	@Override
 	public void run() {
+		if (mob.isNpc() && !((Npc) mob).canReceivePoison()) {
+			mob.curePoison();
+			return;
+		}
 		if (PoisonPowerReduction.shouldCure(poisonPower)) {
 			mob.curePoison();
 			return;

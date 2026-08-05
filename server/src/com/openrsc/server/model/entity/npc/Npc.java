@@ -721,7 +721,10 @@ public class Npc extends Mob {
 			deathListeners.clear();
 			return;
 		}
-		if (this.killed) return;
+		if (this.killed) {
+			this.curePoison();
+			return;
+		}
 		//this.killed = true; remove() assures everything went fine, and set killed to true
 
 		Player owner = getWorld().getPlayerByUUID(mob.getUUID());
@@ -1484,6 +1487,9 @@ public class Npc extends Mob {
 
 	private void removeWithinLayeredOwnerLifecycle() {
 		setAttribute(DEATH_VISUAL_TICK_ATTRIBUTE, getWorld().getServer().getCurrentTick());
+		// Removal is the authoritative end of this NPC lifetime, including
+		// scripted and unattributed paths that do not complete killedBy().
+		curePoison();
 		this.killed = true;
 		resetCombatEvent();
 		clearPlayerPvmMeleeEvents();
@@ -1512,6 +1518,9 @@ public class Npc extends Mob {
 				public void run() {
 					n.beginLayeredOwnerLifecycleOperation();
 					try {
+						// The same NPC object is reused after its delay. Keep the new
+						// lifetime clean even if a stale/late effect escaped removal.
+						n.curePoison();
 						n.killed = false;
 						n.setRemoved(false);
 						n.removeAttribute(DEATH_VISUAL_TICK_ATTRIBUTE);
@@ -1850,6 +1859,11 @@ public class Npc extends Mob {
 
 	public boolean isRespawning() {
 		return isRespawning;
+	}
+
+	/** Poison belongs to one live NPC lifetime and never crosses respawn. */
+	public boolean canReceivePoison() {
+		return !killed && !isRemoved() && !isRespawning();
 	}
 
 	private void setRespawning(final boolean isRespawning) {
