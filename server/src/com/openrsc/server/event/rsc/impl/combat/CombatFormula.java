@@ -13,6 +13,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
+import com.openrsc.server.runtime.GameRandom;
+import com.openrsc.server.runtime.ProductionGameRandom;
 import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
@@ -312,7 +314,12 @@ public class CombatFormula {
 	}
 
 	public static boolean rollElementalSwordProcChance() {
-		return DataConversions.getRandom().nextDouble() < (ELEMENTAL_SWORD_PROC_CHANCE_PERCENT / 100.0D);
+		return rollElementalSwordProcChance(null);
+	}
+
+	public static boolean rollElementalSwordProcChance(final Mob source) {
+		return combatRandom(source, null).nextDouble()
+			< (ELEMENTAL_SWORD_PROC_CHANCE_PERCENT / 100.0D);
 	}
 
 	public static int rollElementalSwordProcDamage(final Mob source) {
@@ -321,7 +328,8 @@ public class CombatFormula {
 		}
 		final int attackMax = offenseToMaxHit(source, source.getMeleeOffense());
 		final int procMax = getElementalSwordProcMax(attackMax);
-		return procMax <= 0 ? 0 : DataConversions.random(0, procMax);
+		return procMax <= 0 ? 0
+			: combatRandom(source, null).nextIntInclusive(0, procMax);
 	}
 
 	public static void applyElementalSwordProcDebuff(final Mob target, final int effectType) {
@@ -346,11 +354,17 @@ public class CombatFormula {
 		}
 		final Player player = (Player) source;
 		return player.getCarriedItems().getEquipment().hasEquipped(DEMON_PITCHFORK.id())
-			&& DataConversions.getRandom().nextDouble() < (DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT / 100.0D);
+			&& combatRandom(source, null).nextDouble()
+				< (DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT / 100.0D);
 	}
 
 	public static int rollDemonPitchforkHellBlazeDamage() {
-		return DataConversions.random(0, DEMON_PITCHFORK_HELL_BLAZE_MAX_HIT);
+		return rollDemonPitchforkHellBlazeDamage(null);
+	}
+
+	public static int rollDemonPitchforkHellBlazeDamage(final Mob source) {
+		return combatRandom(source, null).nextIntInclusive(
+			0, DEMON_PITCHFORK_HELL_BLAZE_MAX_HIT);
 	}
 
 	public static boolean usesDragonMeleeBreathWeapon(final Mob source) {
@@ -387,7 +401,8 @@ public class CombatFormula {
 
 	private static int rollDragonBreathDamage(final Mob source, final int attackMax) {
 		final int breathMax = getDragonBreathMax(attackMax);
-		return breathMax <= 0 ? 0 : DataConversions.random(0, breathMax);
+		return breathMax <= 0 ? 0
+			: combatRandom(source, null).nextIntInclusive(0, breathMax);
 	}
 
 	private static int getDragonBreathMax(final int attackMax) {
@@ -451,9 +466,10 @@ public class CombatFormula {
 		if (maxHit <= 0) {
 			return 0;
 		}
-		int roll = DataConversions.random(1, maxHit);
+		final GameRandom random = combatRandom(source, null);
+		int roll = random.nextIntInclusive(1, maxHit);
 		if (source != null && source.getWindLowRollBiasChance() > 0.0D && roll > 1
-			&& DataConversions.getRandom().nextDouble() < source.getWindLowRollBiasChance()) {
+			&& random.nextDouble() < source.getWindLowRollBiasChance()) {
 			roll -= 1;
 		}
 		final double existingChance = source == null
@@ -462,7 +478,7 @@ public class CombatFormula {
 			? ClericDirectCombatRuntime.combineFervorRollChance(source, existingChance)
 			: Math.min(1.0D, Math.max(0.0D, existingChance));
 		if (roll < maxHit && upwardChance > 0.0D
-				&& DataConversions.getRandom().nextDouble() < upwardChance) {
+				&& random.nextDouble() < upwardChance) {
 			roll += 1;
 		}
 		return roll;
@@ -479,10 +495,11 @@ public class CombatFormula {
 		if (maxHit <= 0) {
 			return 0;
 		}
-		double biasedRoll = Math.pow(DataConversions.getRandom().nextDouble(), 1.5D) * (maxHit + 1);
+		final GameRandom random = combatRandom(source, null);
+		double biasedRoll = Math.pow(random.nextDouble(), 1.5D) * (maxHit + 1);
 		int roll = Math.min(maxHit, (int) Math.floor(biasedRoll));
 		if (source != null && source.getWindLowRollBiasChance() > 0.0D && roll > 1
-			&& DataConversions.getRandom().nextDouble() < source.getWindLowRollBiasChance()) {
+			&& random.nextDouble() < source.getWindLowRollBiasChance()) {
 			roll -= 1;
 		}
 		return roll;
@@ -494,7 +511,8 @@ public class CombatFormula {
 
 	private static int applyMitigationRoll(final int attackMax, final int defenseMax, final boolean npcAttacker) {
 		int offenseRoll = npcAttacker ? rollNpcDamage(null, attackMax) : rollDamage(null, attackMax);
-		int defenseRoll = defenseMax <= 0 ? 0 : DataConversions.random(1, defenseMax);
+		int defenseRoll = defenseMax <= 0 ? 0
+			: ProductionGameRandom.INSTANCE.nextIntInclusive(1, defenseMax);
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
 
@@ -505,8 +523,16 @@ public class CombatFormula {
 	private static int applyMitigationRoll(final Mob source, final Mob victim,
 			final int attackMax, final int defenseMax, final boolean directAttack) {
 		int offenseRoll = rollIncomingDamage(source, victim, attackMax, directAttack);
-		int defenseRoll = defenseMax <= 0 ? 0 : DataConversions.random(1, defenseMax);
+		int defenseRoll = defenseMax <= 0 ? 0
+			: combatRandom(source, victim).nextIntInclusive(1, defenseMax);
 		return Math.max(offenseRoll - defenseRoll, 0);
+	}
+
+	private static GameRandom combatRandom(final Mob primary, final Mob secondary) {
+		final Mob context = primary != null ? primary : secondary;
+		return context == null
+			? ProductionGameRandom.INSTANCE
+			: context.getWorld().getServer().getCombatRandom();
 	}
 
 	private static int rollIncomingDamage(final Mob source, final Mob victim, final int attackMax) {

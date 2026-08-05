@@ -139,7 +139,9 @@ public final class ClericTimedEffectRuntime {
 		final TransientEffectState state = recipient.getTransientEffectState();
 		if (state == TransientEffectState.empty()) {
 			return new RegistryAttachment(new ClericEffectRegistry(
-				ClericEffectClock.system(recipient.getConfig().GAME_TICK)), true);
+				ClericEffectClock.game(
+					recipient.getWorld().getServer().getGameClock(),
+					recipient.getConfig().GAME_TICK)), true);
 		}
 		if (!(state instanceof ClericEffectRegistry)) {
 			throw new IllegalStateException("Unsupported installed transient-effect state");

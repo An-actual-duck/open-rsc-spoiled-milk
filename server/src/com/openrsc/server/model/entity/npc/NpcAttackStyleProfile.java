@@ -3,7 +3,6 @@ package com.openrsc.server.model.entity.npc;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.Projectile;
-import com.openrsc.server.util.rsc.DataConversions;
 
 public enum NpcAttackStyleProfile {
 	MELEE,
@@ -63,18 +62,18 @@ public enum NpcAttackStyleProfile {
 		if (isProjectilePrimary()) {
 			return true;
 		}
-		return distance > 1 || rollsPreferredProjectileAttack();
+		return distance > 1 || rollsPreferredProjectileAttack(npc);
 	}
 
-	private boolean rollsPreferredProjectileAttack() {
+	private boolean rollsPreferredProjectileAttack(final Npc npc) {
 		switch (this) {
 			case MELEE_RANGED:
 			case MELEE_MAGIC:
-				return DataConversions.getRandom().nextInt(100) < 65;
+				return npc.getWorld().getServer().getCombatRandom().nextInt(100) < 65;
 			case MELEE_FREQUENT_MAGIC:
-				return DataConversions.getRandom().nextInt(100) < 85;
+				return npc.getWorld().getServer().getCombatRandom().nextInt(100) < 85;
 			case MELEE_RARE_MAGIC:
-				return DataConversions.getRandom().nextInt(100) < 10;
+				return npc.getWorld().getServer().getCombatRandom().nextInt(100) < 10;
 			default:
 				return false;
 		}
@@ -272,16 +271,16 @@ public enum NpcAttackStyleProfile {
 		}
 		final String name = npc.getDef().getName().toLowerCase();
 		if (isKolodionIntroForm(npc)) {
-			return randomElement(NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
+			return randomElement(npc, NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
 		}
 		if (isKolodionOgreForm(npc)) {
-			return randomElement(NpcMagicElement.AIR, NpcMagicElement.EARTH);
+			return randomElement(npc, NpcMagicElement.AIR, NpcMagicElement.EARTH);
 		}
 		if (isKolodionSpiderForm(npc)) {
 			return NpcMagicElement.NONE;
 		}
 		if (isKolodionSoulessForm(npc)) {
-			return randomElement(NpcMagicElement.AIR, NpcMagicElement.THUNDER, NpcMagicElement.WOOD);
+			return randomElement(npc, NpcMagicElement.AIR, NpcMagicElement.THUNDER, NpcMagicElement.WOOD);
 		}
 		if (isKolodionDemonForm(npc)) {
 			return NpcMagicElement.FIRE;
@@ -297,20 +296,20 @@ public enum NpcAttackStyleProfile {
 		}
 		switch (name) {
 			case "darkwizard":
-				return randomElement(NpcMagicElement.FIRE, NpcMagicElement.AIR);
+				return randomElement(npc, NpcMagicElement.FIRE, NpcMagicElement.AIR);
 			case "witch":
-				return randomElement(NpcMagicElement.EARTH, NpcMagicElement.AIR);
+				return randomElement(npc, NpcMagicElement.EARTH, NpcMagicElement.AIR);
 			case "wizard":
-				return randomElement(NpcMagicElement.WATER, NpcMagicElement.AIR);
+				return randomElement(npc, NpcMagicElement.WATER, NpcMagicElement.AIR);
 			case "necromancer":
-				return randomElement(NpcMagicElement.FIRE, NpcMagicElement.WATER);
+				return randomElement(npc, NpcMagicElement.FIRE, NpcMagicElement.WATER);
 			case "skeleton mage":
-				return randomElement(NpcMagicElement.FIRE, NpcMagicElement.EARTH);
+				return randomElement(npc, NpcMagicElement.FIRE, NpcMagicElement.EARTH);
 			case "ghost":
 			case "nazastarool ghost":
-				return randomElement(NpcMagicElement.WATER, NpcMagicElement.EARTH);
+				return randomElement(npc, NpcMagicElement.WATER, NpcMagicElement.EARTH);
 			case "battle mage":
-				return randomElement(NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
+				return randomElement(npc, NpcMagicElement.AIR, NpcMagicElement.WATER, NpcMagicElement.EARTH, NpcMagicElement.FIRE);
 			case "lesser demon":
 			case "greater demon":
 			case "chronozon":
@@ -330,7 +329,7 @@ public enum NpcAttackStyleProfile {
 				return NpcMagicElement.EARTH;
 			default:
 				if (name.contains("wizard")) {
-					return randomElement(NpcMagicElement.WATER, NpcMagicElement.AIR);
+					return randomElement(npc, NpcMagicElement.WATER, NpcMagicElement.AIR);
 				}
 				return NpcMagicElement.NONE;
 		}
@@ -351,11 +350,12 @@ public enum NpcAttackStyleProfile {
 		}
 	}
 
-	private static NpcMagicElement randomElement(final NpcMagicElement... elements) {
+	private static NpcMagicElement randomElement(final Npc npc,
+			final NpcMagicElement... elements) {
 		if (elements == null || elements.length == 0) {
 			return NpcMagicElement.NONE;
 		}
-		return elements[DataConversions.getRandom().nextInt(elements.length)];
+		return elements[npc.getWorld().getServer().getCombatRandom().nextInt(elements.length)];
 	}
 
 	private static boolean isDragon(final Npc npc) {

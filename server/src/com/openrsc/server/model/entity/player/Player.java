@@ -2697,7 +2697,8 @@ public final class Player extends Mob {
 
 	public boolean rollCosmicRobeCrit() {
 		final double chance = getCosmicRobeCritChance();
-		return chance > 0.0D && DataConversions.getRandom().nextDouble() < chance;
+		return chance > 0.0D
+			&& getWorld().getServer().getCombatRandom().nextDouble() < chance;
 	}
 
 	public double getChaosRobeSurroundedDamageMultiplier() {

@@ -766,7 +766,7 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 		final int effectType = CombatFormula.getElementalSwordProcEffect(hitter);
-		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance()) {
+		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance(hitter)) {
 			return;
 		}
 		if (effectType == CombatEffect.ICE_SWORD) {
@@ -789,7 +789,7 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.HELLS_BLAZE));
-		final int procDamage = CombatFormula.rollDemonPitchforkHellBlazeDamage();
+		final int procDamage = CombatFormula.rollDemonPitchforkHellBlazeDamage(hitter);
 		if (procDamage > 0) {
 			inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 		}

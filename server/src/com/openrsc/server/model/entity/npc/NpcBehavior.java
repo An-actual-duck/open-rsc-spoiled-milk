@@ -56,8 +56,9 @@ public class NpcBehavior {
 		this.npc = npc;
 		this.gameTickMillis = npc.getConfig().GAME_TICK;
 		this.tickFactor = (int)Math.ceil(640.0 / npc.getConfig().GAME_TICK);
-		this.nextRoamMovementAt = System.currentTimeMillis()
-			+ (long)DataConversions.random(0, (ROAM_BASE_TICKS + ROAM_JITTER_TICKS) * tickFactor) * gameTickMillis;
+		this.nextRoamMovementAt = currentTimeMillis()
+			+ (long)randomInclusive(0,
+				(ROAM_BASE_TICKS + ROAM_JITTER_TICKS) * tickFactor) * gameTickMillis;
 		this.blackKnightsFortress = npc.getLoc().startX() > 274 && npc.getLoc().startX() < 283
 			&& npc.getLoc().startY() > 432 && npc.getLoc().startY() < 441;
 		this.draynorManorSkeleton = npc.getID() == NpcId.SKELETON_LVL21.id()
@@ -90,7 +91,7 @@ public class NpcBehavior {
 	}
 
 	public void tick(final boolean hasPlayers) {
-		final long now = System.currentTimeMillis();
+		final long now = currentTimeMillis();
 		final Server server = npc.getWorld().getServer();
 		if (!server.isFoundationBenchmarkDeepNpcProfilingEnabled()) {
 			if (state == State.ROAM) {
@@ -257,7 +258,7 @@ public class NpcBehavior {
 			return false;
 		}
 		final int hostilityChance = Math.min(1000, Math.abs(devotionLevel));
-		return DataConversions.getRandom().nextInt(1000) < hostilityChance;
+		return npc.getWorld().getServer().getCombatRandom().nextInt(1000) < hostilityChance;
 	}
 
 	private boolean isGodFollower() {
@@ -643,11 +644,11 @@ public class NpcBehavior {
 	private void walk_retreat(int time) {
 		Point walkTo;
 		if (time == -1) {
-			walkTo = Point.location(DataConversions.random(npc.getLoc().minX(), npc.getLoc().maxX()),
-				DataConversions.random(npc.getLoc().minY(), npc.getLoc().maxY()));
+			walkTo = Point.location(randomInclusive(npc.getLoc().minX(), npc.getLoc().maxX()),
+				randomInclusive(npc.getLoc().minY(), npc.getLoc().maxY()));
 		} else {
-			final int newX = npc.getX() + (DataConversions.random(-1, 1) * time);
-			final int newY = npc.getY() + (DataConversions.random(-1, 1) * time);
+			final int newX = npc.getX() + (randomInclusive(-1, 1) * time);
+			final int newY = npc.getY() + (randomInclusive(-1, 1) * time);
 			walkTo = Point.location(newX, newY);
 		}
 		npc.walk(walkTo.getX(), walkTo.getY());
@@ -659,8 +660,8 @@ public class NpcBehavior {
 		target.setLastCombatState(CombatState.WAITING);
 		npc.resetCombatEvent();
 
-		Point walkTo = Point.location(DataConversions.random(npc.getLoc().minX(), npc.getLoc().maxX()),
-			DataConversions.random(npc.getLoc().minY(), npc.getLoc().maxY()));
+		Point walkTo = Point.location(randomInclusive(npc.getLoc().minX(), npc.getLoc().maxX()),
+			randomInclusive(npc.getLoc().minY(), npc.getLoc().maxY()));
 		npc.walk(walkTo.getX(), walkTo.getY());
 	}
 
@@ -811,6 +812,14 @@ public class NpcBehavior {
 		}
 
 		return false;
+	}
+
+	private long currentTimeMillis() {
+		return npc.getWorld().getServer().getGameClock().currentTimeMillis();
+	}
+
+	private int randomInclusive(final int low, final int high) {
+		return npc.getWorld().getServer().getCombatRandom().nextIntInclusive(low, high);
 	}
 
 	enum State {

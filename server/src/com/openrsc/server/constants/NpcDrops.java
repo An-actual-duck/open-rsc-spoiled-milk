@@ -7,6 +7,7 @@ import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.runtime.GameRandom;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -142,7 +143,8 @@ public class NpcDrops {
 
 		final double scaledContribution = clampContributionScale(contributionScale);
 		for (HiddenUniqueDrop drop : drops) {
-			if (drop.roll(scaledContribution)) {
+			if (drop.roll(scaledContribution,
+					world.getServer().getCombatRandom())) {
 				items.add(new Item(drop.itemId, drop.amount, drop.noted));
 			}
 		}
@@ -242,9 +244,10 @@ public class NpcDrops {
 			this.noted = noted;
 		}
 
-		private boolean roll(final double contributionScale) {
+		private boolean roll(final double contributionScale,
+				final GameRandom random) {
 			final double chance = (numerator / (double) denominator) * contributionScale;
-			return chance > 0.0D && DataConversions.getRandom().nextDouble() < chance;
+			return chance > 0.0D && random.nextDouble() < chance;
 		}
 	}
 

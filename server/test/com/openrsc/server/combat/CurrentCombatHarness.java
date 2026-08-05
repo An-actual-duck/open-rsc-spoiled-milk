@@ -4,7 +4,10 @@ import com.google.common.collect.Multimap;
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.model.combat.CombatTick;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.container.Equipment;
+import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
@@ -25,20 +28,26 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Test-only fixture over the current production Server, World, Player, Npc,
  * scheduler, and plugin-handler implementations.
  *
- * <p>This intentionally does not provide deterministic time or random-number
- * seams. Scenarios in A01 assert only outcomes that are invariant under the
- * current production clock and generator. Controlled replay belongs to A02.</p>
+ * <p>A02 supplies deterministic time and random-number sources through the
+ * production Server constructor without installing alternate combat logic.</p>
  */
 final class CurrentCombatHarness implements AutoCloseable {
+	private static final long DEFAULT_CLOCK_MILLIS = 1_700_000_000_000L;
+	private static final long DEFAULT_RANDOM_SEED = 0x5A17C0B4L;
+
 	private final Server server;
 	private final World world;
+	private final MutableGameClock clock;
+	private final SeededGameRandom random;
 	private final List<Player> players = new ArrayList<Player>();
 	private final List<Npc> npcs = new ArrayList<Npc>();
 	private ThreadPoolExecutor pluginExecutor;
 	private boolean closed;
 
 	CurrentCombatHarness() throws IOException {
-		server = new Server("myworld.conf");
+		clock = new MutableGameClock(DEFAULT_CLOCK_MILLIS);
+		random = new SeededGameRandom(DEFAULT_RANDOM_SEED);
+		server = new Server("myworld.conf", clock, random);
 		server.getConfig().WANT_THREADING__BREAK_PID_PRIORITY = false;
 		server.getConfig().WANT_PVP = false;
 		server.getConfig().COMBAT_EXP_RATE = 1.0D;
@@ -55,6 +64,30 @@ final class CurrentCombatHarness implements AutoCloseable {
 
 	World world() {
 		return world;
+	}
+
+	MutableGameClock clock() {
+		return clock;
+	}
+
+	SeededGameRandom random() {
+		return random;
+	}
+
+	/**
+	 * Advances the current event scheduler by one whole configured game tick.
+	 * The production handler's private all-event boundary and Server's private
+	 * tick increment remain the only scheduler authorities exercised here.
+	 */
+	CombatTick advanceOneCombatTick() throws ReflectiveOperationException {
+		ensureOpen();
+		invokePrivate(server.getGameEventHandler(), "processEvents",
+			new Class<?>[0]);
+		server.getGameEventHandler().cleanupEvents();
+		invokePrivate(server, "advanceTicks", new Class<?>[] {long.class},
+			Long.valueOf(1L));
+		clock.advanceMillis(server.getConfig().GAME_TICK);
+		return CombatTick.of(server.getCurrentTick());
 	}
 
 	Player player(final String name, final int x, final int packedY) {
@@ -82,6 +115,26 @@ final class CurrentCombatHarness implements AutoCloseable {
 		world.registerNpc(npc);
 		npcs.add(npc);
 		return npc;
+	}
+
+	void equip(final Player player, final int itemId, final int amount)
+			throws ReflectiveOperationException {
+		final int slot = server.getEntityHandler().getItemDef(itemId).getWieldPosition();
+		if (slot < 0 || slot >= Equipment.SLOT_COUNT) {
+			throw new IllegalArgumentException("Item has no equipment slot: " + itemId);
+		}
+		final Field list = Equipment.class.getDeclaredField("list");
+		list.setAccessible(true);
+		final Item item = new Item(itemId, amount, false, 10_000_000L + itemId);
+		item.setWielded(true);
+		((Item[]) list.get(player.getCarriedItems().getEquipment()))[slot] = item;
+	}
+
+	static Object readPrivateField(final Object target, final String fieldName)
+			throws ReflectiveOperationException {
+		final Field field = target.getClass().getDeclaredField(fieldName);
+		field.setAccessible(true);
+		return field.get(target);
 	}
 
 	void openTile(final int x, final int packedY) {

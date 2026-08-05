@@ -630,6 +630,10 @@ def run_compiled_fixture() -> None:
         "TransientEffectSessionToken.java",
         "TransientEffectState.java",
     ))
+    sources.extend(str(ROOT / "server/src/com/openrsc/server/runtime" / name) for name in (
+        "GameClock.java",
+        "SystemGameClock.java",
+    ))
     with tempfile.TemporaryDirectory(prefix="cleric-c08a-") as temporary:
         temp = Path(temporary)
         fixture = temp / "com/openrsc/server/content/cleric/effect/ClericEffectStateFixture.java"

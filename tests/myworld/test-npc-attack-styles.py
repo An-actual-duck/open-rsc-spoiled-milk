@@ -169,8 +169,8 @@ def main() -> None:
         for npc_name in names:
             require_profile_case(profile_text, npc_name, profile)
 
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 65")
-    require_contains(NPC_ATTACK_STYLE_PROFILE, "DataConversions.getRandom().nextInt(100) < 10")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "npc.getWorld().getServer().getCombatRandom().nextInt(100) < 65")
+    require_contains(NPC_ATTACK_STYLE_PROFILE, "npc.getWorld().getServer().getCombatRandom().nextInt(100) < 10")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "MELEE_RARE_MAGIC")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()))")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, npc.getMagicOffense() / 12.0D);")

@@ -6,6 +6,7 @@ import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.runtime.GameRandom;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MessageType;
@@ -195,7 +196,8 @@ public class DropTable {
 		if (rollWeightTotal <= 0) {
 			return new RollResult();
 		}
-		int hit = DataConversions.random(0, rollWeightTotal - 1);
+		final GameRandom random = owner.getWorld().getServer().getCombatRandom();
+		int hit = random.nextInt(rollWeightTotal);
 		int sum = 0;
 		RollResult result = new RollResult();
 		for (Drop drop : rollTable.drops) {
@@ -213,7 +215,8 @@ public class DropTable {
 				}
 				else if (drop.type == dropType.ITEM) {
 					if (drop.weight == 0) continue;
-					if (scaleRareNormalDrops && isRareNormalDrop(drop) && !passesContributionGate(contributionScale)) {
+					if (scaleRareNormalDrops && isRareNormalDrop(drop)
+							&& !passesContributionGate(contributionScale, random)) {
 						break;
 					}
 					if (owner.getWorld().getServer().getEntityHandler().getItemDef(drop.id).isMembersOnly()
@@ -236,13 +239,15 @@ public class DropTable {
 				}
 			}
 		}
-		if (allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D && DataConversions.getRandom().nextDouble() < wealthChance) {
+		if (allowExtraRoll && !result.receivedRareTableReward
+				&& wealthChance > 0.0D && random.nextDouble() < wealthChance) {
 			owner.playerServerMessage(MessageType.QUEST, "@ora@Your ring of wealth shines brightly!");
 			owner.playSound("foundgem");
 			result.merge(rollRareTableChance(owner, contributionScale));
 		}
 		final double standardDropChance = getCosmicNecklaceStandardDropChance(owner);
-		if (allowExtraRoll && standardDropChance > 0.0D && DataConversions.getRandom().nextDouble() < standardDropChance) {
+		if (allowExtraRoll && standardDropChance > 0.0D
+				&& random.nextDouble() < standardDropChance) {
 			owner.playerServerMessage(MessageType.QUEST, "@ora@Your cosmic necklace gleams.");
 			result.items.addAll(rollItem(0.0D, owner, false, contributionScale, scaleRareNormalDrops, true).items);
 		}
@@ -257,7 +262,8 @@ public class DropTable {
 		if (rollWeightTotal <= 0) {
 			return new RollResult();
 		}
-		int hit = DataConversions.random(0, rollWeightTotal - 1);
+		int hit = owner.getWorld().getServer().getCombatRandom()
+			.nextInt(rollWeightTotal);
 		int sum = 0;
 		for (Drop drop : drops) {
 			sum += getRollWeight(drop, owner);
@@ -274,7 +280,9 @@ public class DropTable {
 
 	private RollResult rollTableDrop(Drop drop, Player owner, double contributionScale, boolean suppressRareTables) {
 		RollResult result = new RollResult();
-		if (drop.table.isRare() && (suppressRareTables || !passesContributionGate(contributionScale))) {
+		if (drop.table.isRare() && (suppressRareTables
+				|| !passesContributionGate(contributionScale,
+					owner.getWorld().getServer().getCombatRandom()))) {
 			return result;
 		}
 		boolean rareTable = drop.table.isRare();
@@ -320,9 +328,10 @@ public class DropTable {
 		return drop.weight;
 	}
 
-	private static boolean passesContributionGate(double contributionScale) {
+	private static boolean passesContributionGate(final double contributionScale,
+			final GameRandom random) {
 		double scaledChance = Math.max(MINIMUM_RARE_CONTRIBUTION_SCALE, Math.min(1.0D, contributionScale));
-		return DataConversions.getRandom().nextDouble() < scaledChance;
+		return random.nextDouble() < scaledChance;
 	}
 
 	private static boolean isRareNormalDrop(Drop drop) {

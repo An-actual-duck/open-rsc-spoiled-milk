@@ -1974,11 +1974,11 @@ public abstract class Mob extends Entity {
 	}
 
 	public void setCombatTimer(final int delay) {
-		combatTimer = System.currentTimeMillis() + delay;
+		combatTimer = getWorld().getServer().getGameClock().currentTimeMillis() + delay;
 	}
 
 	public void setCombatTimer() {
-		combatTimer = System.currentTimeMillis();
+		combatTimer = getWorld().getServer().getGameClock().currentTimeMillis();
 	}
 
 	public GameTickEvent getFollowEvent() {
