@@ -53,12 +53,18 @@ extension, fallback icons, labels, overflow behavior, and compatibility
 boundaries are settled below. This planning completion does **not** authorize
 runtime implementation; wait for an explicit owner instruction.
 
-The following remain later design work and may not be guessed:
+The following remains later design work and may not be guessed:
 
 1. Future offensive god-spell expansion beyond the existing Mage entries;
    existing god spells remain under Mage for the initial rollout.
-2. Additional Devotion sources for later economy tuning; the initial confirmed
-   sigil-production economy may proceed without inventing them.
+
+C12 is explicitly authorized to expand and rebalance Devotion mechanics rather
+than merely measuring the initial economy. It may redistribute Devotion bonuses
+among existing equipment and summons, including the Black Unicorn equipment set
+and Black Unicorn summon, add appropriate Devotion sources or modifiers, and
+iterate on the resulting acquisition/consumption balance. Exact player-facing
+values should be documented and reviewed as one coherent economy rather than
+introduced as unrelated local bonuses.
 
 ## Ordered Implementation Sequence
 
@@ -654,12 +660,26 @@ C11 implementation branch; later changes to Unify require a new focused scope.
 
 ### C12 — Devotion Economy and Release Gate
 
-Add approved Devotion sources, measure acquisition against expected sigil
-consumption, and validate that ordinary offerings remain relevant. Complete
-private party-combat and production testing, package all client assets, run the
-full server/client/release suites, and retain feature gating until all twelve
-spells and compatibility checks pass. Live activation is a separate manager
-operation subject to the public-server shutdown gate.
+Expand and rebalance Devotion acquisition, equipment bonuses, and summon
+bonuses against expected sigil consumption while keeping ordinary offerings
+relevant. This includes an explicit review and reassignment of the Black
+Unicorn equipment-set and summon Devotion effects, plus any supporting
+Devotion mechanics needed to make the full economy coherent. Record the old
+and new sources, values, stacking rules, and expected player loops so later
+tuning has one authority.
+
+Finalize the owner-approved spell-to-animation mapping during this milestone.
+Use the existing optional Cleric visual hooks, keep effects player-centered
+with no projectile animation, preserve safe no-animation fallback behavior,
+package and attribute every supplied asset, and verify that client/server
+catalog identities dispatch the intended animation without changing spell
+mechanics. AI-3 may work iteratively with the owner to inspect and assign the
+available sheets rather than guessing ambiguous mappings.
+
+Complete private party-combat, animation, and production testing; package all
+client assets; run the full server/client/release suites; and retain feature
+gating until all twelve spells and compatibility checks pass. Live activation
+is a separate manager operation subject to the public-server shutdown gate.
 
 ## Supplied Sigil Asset Inventory
 
