@@ -84,7 +84,7 @@
               message="com.mysql.cj.jdbc.Driver${line.separator}org.sqlite.JDBC${line.separator}"/>
         <echo file="${build}/META-INF/services/org.slf4j.spi.SLF4JServiceProvider" encoding="UTF-8"
               message="org.apache.logging.slf4j.SLF4JServiceProvider${line.separator}org.slf4j.nop.NOPServiceProvider${line.separator}"/>
-        <jar basedir="${build}" destfile="${jar}" duplicate="preserve">
+        <jar basedir="${build}" destfile="${jar}" duplicate="preserve" filesonly="true">
             <zipgroupfileset dir="${lib}" includes="*.jar"/>
             <manifest>
                 <attribute name="Main-Class" value="com.openrsc.server.Server"/>

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
+import stat
 import sys
 import tempfile
 import xml.etree.ElementTree as ET
@@ -59,13 +60,23 @@ def casefold_collisions(names: list[str]) -> list[list[str]]:
 
 def assert_unique_archive(path: Path) -> None:
     with ZipFile(path) as archive:
-        names = archive.namelist()
+        infos = archive.infolist()
+    names = [info.filename for info in infos]
     duplicate_paths = sorted(name for name, count in Counter(names).items() if count > 1)
     if duplicate_paths:
         fail(f"{path.name} contains exact duplicate paths: {duplicate_paths[:20]}")
     folded = casefold_collisions(names)
     if folded:
         fail(f"{path.name} contains case-insensitive path collisions: {folded[:20]}")
+    special_bits = stat.S_ISUID | stat.S_ISGID | stat.S_ISVTX
+    unsafe_modes = []
+    for info in infos:
+        mode = (info.external_attr >> 16) & 0xFFFF
+        allowed_types = {0, stat.S_IFDIR} if info.is_dir() else {0, stat.S_IFREG}
+        if stat.S_IFMT(mode) not in allowed_types or mode & special_bits:
+            unsafe_modes.append((info.filename, f"0{mode:o}"))
+    if unsafe_modes:
+        fail(f"{path.name} contains link/special Unix archive modes: {unsafe_modes[:20]}")
 
 
 def dependency_inventory() -> tuple[dict[str, list[tuple[Path, bytes]]], dict[str, set[str]]]:
@@ -142,6 +153,8 @@ def main() -> int:
         fail("Server Ant compile_core target is missing its jar task")
     if jar_task.get("duplicate") != "preserve":
         fail("Server fat JAR must preserve the first archive entry on dependency collisions")
+    if jar_task.get("filesonly") != "true":
+        fail("Server fat JAR must omit inherited directory records with unsafe ZIP modes")
     zipgroup = jar_task.find("zipgroupfileset")
     if zipgroup is None or zipgroup.get("includes") != "*.jar":
         fail("Server fat JAR no longer merges all shipped server libraries")
@@ -208,7 +221,7 @@ def main() -> int:
     run_service_loader_probe()
 
     print(
-        "PASS: server fat JARs are exact- and casefold-unique; adaptive classes, "
+        "PASS: server fat JARs have unique, regular archive entries; adaptive classes, "
         f"{len(duplicate_classes)} deterministic duplicate-class resolutions, and "
         f"{len(expected_services)} complete service descriptors remain; JDBC provider "
         "discovery is runtime-valid"

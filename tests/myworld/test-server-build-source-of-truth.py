@@ -51,6 +51,10 @@ def main() -> int:
             report["artifacts"][artifact]["casefold_collision_paths"] == 0,
             f"{artifact}.jar contains case-insensitive archive path collisions",
         )
+        require(
+            report["artifacts"][artifact]["unsafe_unix_mode_paths"] == 0,
+            f"{artifact}.jar contains link/special Unix archive modes",
+        )
     require(
         report["fat_jar_duplication"]["external_classes_also_in_core"] > 0,
         "core.jar no longer appears to be the documented fat jar",

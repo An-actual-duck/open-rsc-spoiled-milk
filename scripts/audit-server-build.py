@@ -10,6 +10,7 @@ import argparse
 import hashlib
 import json
 import re
+import stat
 import sys
 import xml.etree.ElementTree as ET
 import zipfile
@@ -121,7 +122,8 @@ def jar_classes(path: Path) -> set[str]:
         return {name for name in archive.namelist() if name.endswith(".class")}
 
 
-def archive_path_inventory(names: list[str]) -> dict:
+def archive_path_inventory(infos: list[zipfile.ZipInfo]) -> dict:
+    names = [info.filename for info in infos]
     counts = Counter(names)
     exact = sorted(name for name, count in counts.items() if count > 1)
     folded: dict[str, set[str]] = {}
@@ -130,12 +132,21 @@ def archive_path_inventory(names: list[str]) -> dict:
     casefold = sorted(
         sorted(paths) for paths in folded.values() if len(paths) > 1
     )
+    unsafe_modes = []
+    special_bits = stat.S_ISUID | stat.S_ISGID | stat.S_ISVTX
+    for info in infos:
+        mode = (info.external_attr >> 16) & 0xFFFF
+        allowed_types = {0, stat.S_IFDIR} if info.is_dir() else {0, stat.S_IFREG}
+        if stat.S_IFMT(mode) not in allowed_types or mode & special_bits:
+            unsafe_modes.append({"path": info.filename, "mode": f"0{mode:o}"})
     return {
         "exact_duplicate_paths": len(exact),
         "exact_duplicate_records": sum(counts[name] - 1 for name in exact),
         "exact_duplicate_examples": exact[:20],
         "casefold_collision_paths": len(casefold),
         "casefold_collision_examples": casefold[:20],
+        "unsafe_unix_mode_paths": len(unsafe_modes),
+        "unsafe_unix_mode_examples": unsafe_modes[:20],
     }
 
 
@@ -172,9 +183,10 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
                 errors.append(f"missing {path.relative_to(ROOT)}; run scripts/build-server.sh")
             continue
         with zipfile.ZipFile(path) as archive:
-            names = archive.namelist()
+            infos = archive.infolist()
+            names = [info.filename for info in infos]
             manifest = archive.read("META-INF/MANIFEST.MF").decode("utf-8", errors="replace")
-        path_inventory = archive_path_inventory(names)
+        path_inventory = archive_path_inventory(infos)
         result[label] = {
             "file": path.name,
             "present": True,
@@ -194,6 +206,11 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
             errors.append(
                 f"{path.name} contains {path_inventory['casefold_collision_paths']} "
                 f"case-insensitive path collisions: {path_inventory['casefold_collision_examples']}"
+            )
+        if path_inventory["unsafe_unix_mode_paths"]:
+            errors.append(
+                f"{path.name} contains {path_inventory['unsafe_unix_mode_paths']} entries with "
+                f"link/special Unix modes: {path_inventory['unsafe_unix_mode_examples']}"
             )
 
     if result.get("core", {}).get("present"):
@@ -300,7 +317,8 @@ def print_human(report: dict) -> None:
         if artifact.get("present"):
             print(
                 f"  {label}: {artifact['exact_duplicate_paths']} exact duplicate paths; "
-                f"{artifact['casefold_collision_paths']} case-insensitive collisions"
+                f"{artifact['casefold_collision_paths']} case-insensitive collisions; "
+                f"{artifact['unsafe_unix_mode_paths']} unsafe Unix modes"
             )
     print("\nAnt target classpaths")
     for target, entries in ant["targets"].items():
