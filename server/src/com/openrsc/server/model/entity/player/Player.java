@@ -39,6 +39,16 @@ import com.openrsc.server.model.entity.npc.NpcInteraction;
 import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
+import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.AttackTransactionResult;
+import com.openrsc.server.model.combat.CombatEligibility;
+import com.openrsc.server.model.combat.CombatEligibilityDecision;
+import com.openrsc.server.model.combat.CombatEligibilityMessageAdapter;
+import com.openrsc.server.model.combat.CombatEligibilityPhase;
+import com.openrsc.server.model.combat.CombatEligibilityReason;
+import com.openrsc.server.model.combat.CombatEligibilityRequest;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
@@ -168,6 +178,8 @@ public final class Player extends Mob {
 	private int npcDeaths = 0;
 	private volatile WalkToAction walkToAction;
 	private volatile WalkToAction lastExecutedWalkToAction;
+	private final PlayerAttackTransaction attackTransaction =
+		new PlayerAttackTransaction(this);
 	private Trade trade;
 	private Clan clan;
 	private Party party;
@@ -976,85 +988,17 @@ public final class Player extends Mob {
 	}
 
 	public boolean checkAttack(final Mob mob, final boolean missile) {
-		if (mob.isPlayer()) {
-			if (!getConfig().WANT_PVP) {
-				if (getConfig().WANT_MYWORLD) {
-					message("This is a PvM-only world");
-				} else {
-					message("You can't attack other players on this world");
-				}
-				return false;
-			}
-			Player victim = (Player) mob;
-			if (getParty() != null && ((Player) mob).getParty() != null && getParty() == ((Player) mob).getParty()) {
-				message("You can't attack your party members");
-				return false;
-			}
-			if ((inCombat() && getDuel().isDuelActive()) && (victim.inCombat() && victim.getDuel().isDuelActive())) {
-				Player opponent = (Player) getOpponent();
-				if (victim.equals(opponent)) {
-					return true;
-				}
-			}
-			if (!missile) {
-				if (!((Player)mob).canBeReattacked()) {
-					return false;
-				}
-			}
-
-			if (getConfig().USES_PK_MODE) {
-				if (getPkMode() == 0 || victim.getPkMode() == 0) {
-					message("You are not allowed to attack that person");
-					return false;
-				} else if (getLocation().isInLumbridgeStartingChunk()
-					|| victim.getLocation().isInLumbridgeStartingChunk()) {
-					message("You can't attack other players here. Move out of Lumbridge");
-					return false;
-				}  else if (checkVisNpc(this, NpcId.BANKER.id(), 5) != null) {
-					message("You cannot attack other players in the vicinity of a banker");
-					return false;
-				} else if (Math.abs(getCombatLevel() - victim.getCombatLevel()) > 5
-					|| Math.abs(getSkills().getMaxStat(Skill.ATTACK.id()) - victim.getSkills().getMaxStat(Skill.ATTACK.id())) > 10
-					|| Math.abs(getSkills().getMaxStat(Skill.DEFENSE.id()) - victim.getSkills().getMaxStat(Skill.DEFENSE.id())) > 10
-					|| Math.abs(getSkills().getMaxStat(Skill.STRENGTH.id()) - victim.getSkills().getMaxStat(Skill.STRENGTH.id())) > 10) {
-					// TODO: may need to check also hits?
-					message("You can only attack players with combat close to your own");
-					return false;
-				}
-			} else {
-				int myWildLvl = getLocation().wildernessLevel();
-				int victimWildLvl = victim.getLocation().wildernessLevel();
-				if (myWildLvl < 1 || victimWildLvl < 1) {
-					message("You can't attack other players here. Move to the wilderness");
-					return false;
-				}
-				int combDiff = Math.abs(getCombatLevel() - victim.getCombatLevel());
-				if (combDiff > myWildLvl) {
-					message("You can only attack players within " + (myWildLvl) + " levels of your own here");
-					message("Move further into the wilderness for less restrictions");
-					return false;
-				}
-				if (combDiff > victimWildLvl) {
-					message("You can only attack players within " + (victimWildLvl) + " levels of your own here");
-					message("Move further into the wilderness for less restrictions");
-					return false;
-				}
-			}
-
-			if (victim.isInvulnerableTo(this) || victim.isInvisibleTo(this)) {
-				message("You are not allowed to attack that person");
-				return false;
-			}
-			return true;
-		} else if (mob.isNpc()) {
-			Npc victim = (Npc) mob;
-			if (!victim.getDef().isAttackable()) {
-				setSuspiciousPlayer(true, "NPC isn't attackable");
-				return false;
-			}
-			return true;
+		final CombatStyle style = missile ? CombatStyle.RANGED : CombatStyle.MELEE;
+		final CombatEligibilityDecision decision = CombatEligibility.evaluate(
+			CombatEligibilityRequest.builder(this, mob,
+				CombatEligibilityPhase.COMPATIBILITY, style)
+				.playerAttackRules(true)
+				.build());
+		CombatEligibilityMessageAdapter.sendLegacyAttackMessage(this, decision);
+		if (decision.getReason() == CombatEligibilityReason.TARGET_NOT_ATTACKABLE) {
+			setSuspiciousPlayer(true, "NPC isn't attackable");
 		}
-		return true;
+		return decision.isAllowed();
 	}
 
 	@Override
@@ -4009,6 +3953,11 @@ public final class Player extends Mob {
 	}
 
 	public void setLoggedIn(final boolean loggedIn) {
+		if (this.loggedIn && !loggedIn) {
+			attackTransaction.cancelCurrent(
+				AttackTransactionResult.Reason.PARTICIPANT_CHANGED);
+			advanceCombatLifecycle();
+		}
 		if (loggedIn) {
 			currentLogin = System.currentTimeMillis();
 			if (getCache().hasKey("poisoned")) {
@@ -4176,6 +4125,9 @@ public final class Player extends Mob {
 		if (!isLoggedIn()) return;
 		if (killed) return;
 		killed = true;
+		attackTransaction.cancelCurrent(
+			AttackTransactionResult.Reason.PARTICIPANT_CHANGED);
+		advanceCombatLifecycle();
 
 		ActionSender.sendSound(this, "death");
 		ActionSender.sendDied(this);
@@ -5455,8 +5407,49 @@ public final class Player extends Mob {
 		return walkToAction;
 	}
 
-	public synchronized void setWalkToAction(final WalkToAction action) {
-		this.walkToAction = action;
+	public void setWalkToAction(final WalkToAction action) {
+		final WalkToAction previous;
+		synchronized (this) {
+			previous = this.walkToAction;
+			this.walkToAction = action;
+		}
+		attackTransaction.onWalkToActionChanged(previous, action);
+	}
+
+	public PlayerAttackTransaction getAttackTransaction() {
+		return attackTransaction;
+	}
+
+	/** Default-plugin bridge; direct scripted startCombat callers remain valid. */
+	public boolean commitPendingMeleeAttack(final Mob target) {
+		final AttackIntent intent = attackTransaction.getPending(
+			target, AttackIntent.Channel.MELEE);
+		if (intent == null) return false;
+		final AttackTransactionResult result = attackTransaction.commit(
+			intent, new PlayerAttackTransaction.CommitAction() {
+				@Override
+				public boolean commit() {
+					startCombat(target);
+					return hasActiveMeleeAttackAgainst(target);
+				}
+			});
+		return result.isCommitted();
+	}
+
+	public void cancelPendingMeleeAttack(final Mob target) {
+		final AttackIntent intent = attackTransaction.getPending(
+			target, AttackIntent.Channel.MELEE);
+		if (intent != null) {
+			attackTransaction.cancel(intent,
+				AttackTransactionResult.Reason.PLUGIN_BLOCKED);
+		}
+	}
+
+	private boolean hasActiveMeleeAttackAgainst(final Mob target) {
+		return target != null && (getOpponent() == target
+			|| getPvmMeleeEvent() != null
+			&& getPvmMeleeEvent().isRunning()
+			&& getPvmMeleeEvent().getTarget() == target);
 	}
 
 	public int getElixir() {

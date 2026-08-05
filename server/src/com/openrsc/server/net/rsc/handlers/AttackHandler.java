@@ -10,6 +10,10 @@ import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.action.ActionType;
 import com.openrsc.server.model.action.WalkToMobAction;
+import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.AttackTransactionResult;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
@@ -19,6 +23,7 @@ import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
 import com.openrsc.server.plugins.triggers.AttackNpcTrigger;
 import com.openrsc.server.plugins.triggers.AttackPlayerTrigger;
+import com.openrsc.server.plugins.handler.PluginHandler;
 
 import static com.openrsc.server.plugins.Functions.inArray;
 
@@ -73,12 +78,6 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			return;
 		}
 
-		if (retargetingNpcWhileInCombat || retargetingNpcWithRangedWhileInCombat || autoCastingNpcWhileInCombat) {
-			player.resetCombatEvent();
-		}
-
-		player.resetAll();
-
 		if (affectedMob.isPlayer()) {
 			assert affectedMob instanceof Player;
 			Player pl = (Player) affectedMob;
@@ -126,13 +125,15 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 			}
 		}
 
-		recordSummoningCombatEngagement(player, affectedMob);
-
-		if (player.getAutoCastSpell() != null && MagicCombatEvent.start(player, affectedMob)) {
+		if (player.getAutoCastSpell() != null && MagicCombatEvent.start(
+			player, affectedMob, AttackIntent.Source.MANUAL)) {
 			return;
 		}
 
 		if (player.getRangeEquip() < 0 && player.getThrowingEquip() < 0) {
+			final AttackIntent intent = player.getAttackTransaction().issue(
+				affectedMob, CombatStyle.MELEE, AttackIntent.Channel.MELEE,
+				AttackIntent.Source.MANUAL, null);
 
 			if (affectedMob.isPlayer() && !player.finishedPath() && !affectedMob.finishedPath()) {
 				int pidlessCatchingDistanceOffset = 0;
@@ -159,46 +160,87 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 				player.setFollowing(affectedMob, 0, false, true);
 			}
 
-			player.setWalkToAction(new WalkToMobAction(player, affectedMob, walkRadius, true, ActionType.ATTACK) {
+			final WalkToMobAction approach = new WalkToMobAction(player, affectedMob, walkRadius, true, ActionType.ATTACK) {
 				public void executeInternal() {
+					if (!getPlayer().getAttackTransaction().prepare(intent)
+						.isReadyToCommit()) {
+						return;
+					}
 					getPlayer().resetFollowing();
 
 					if (!getPlayer().getConfig().WANT_MYWORLD && mob.inCombat() && getPlayer().getRangeEquip() < 0 && getPlayer().getThrowingEquip() < 0) {
 						if (mob.isNpc()) {
 							Npc npc = (Npc) mob;
-							if (npc.tryTakeMeleeFocus(getPlayer())) {
+							AttackTransactionResult result = getPlayer().getAttackTransaction().commit(
+								intent, new PlayerAttackTransaction.CommitAction() {
+									@Override
+									public boolean commit() {
+										if (!npc.tryTakeMeleeFocus(getPlayer())) {
+											getPlayer().startCombat(npc);
+										}
+										return getPlayer().getPvmMeleeEvent() != null
+											&& getPlayer().getPvmMeleeEvent().isRunning()
+											&& getPlayer().getPvmMeleeEvent().getTarget() == npc;
+									}
+								});
+							if (result.isCommitted()) {
 								return;
 							}
-							getPlayer().startCombat(npc);
 							return;
 						}
 						getPlayer().message("I can't get close enough");
+						getPlayer().getAttackTransaction().cancel(intent,
+							AttackTransactionResult.Reason.ELIGIBILITY_REJECTED);
 						return;
 					}
-					if (getPlayer().isBusy() || mob.isBusy() || !getPlayer().checkAttack(mob, false)) {
+					if (getPlayer().isBusy() || mob.isBusy()
+						|| !getPlayer().checkAttack(mob, false)) {
+						getPlayer().getAttackTransaction().cancel(intent,
+							AttackTransactionResult.Reason.ELIGIBILITY_REJECTED);
 						return;
 					}
 					if (mob.isNpc()) {
-						Summoning.recordCombatSummonEngagement(getPlayer(), (Npc) mob);
 						NpcInteraction interaction = NpcInteraction.NPC_ATTACK;
 						NpcInteraction.setInteractions(((Npc)mob), getPlayer(), interaction);
-						getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(AttackNpcTrigger.class, getPlayer(), new Object[]{getPlayer(), (Npc) mob}, this);
+						PluginHandler plugins = getPlayer().getWorld().getServer()
+							.getPluginHandler();
+						boolean blocked = plugins.handlePlugin(AttackNpcTrigger.class,
+							getPlayer(), new Object[]{getPlayer(), (Npc) mob}, this);
+						if (blocked || plugins.isReloading()
+							|| !plugins.hasDefaultHandlerFor(AttackNpcTrigger.class)) {
+							getPlayer().cancelPendingMeleeAttack(mob);
+						}
 					} else {
-						getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(AttackPlayerTrigger.class, getPlayer(), new Object[]{getPlayer(), mob}, this);
+						PluginHandler plugins = getPlayer().getWorld().getServer()
+							.getPluginHandler();
+						boolean blocked = plugins.handlePlugin(AttackPlayerTrigger.class,
+							getPlayer(), new Object[]{getPlayer(), mob}, this);
+						if (blocked || plugins.isReloading()
+							|| !plugins.hasDefaultHandlerFor(AttackPlayerTrigger.class)) {
+							getPlayer().cancelPendingMeleeAttack(mob);
+						}
 					}
 				}
-			});
+			};
+			player.setWalkToAction(approach);
+			player.getAttackTransaction().bindApproach(intent, approach);
 		} else { // Attack with ranged instead of melee
 			if (!player.checkAttack(affectedMob, true)) {
 				return;
 			}
+			final boolean throwing = player.getThrowingEquip() >= 0;
+			final AttackIntent intent = player.getAttackTransaction().issue(
+				affectedMob,
+				throwing ? CombatStyle.THROWING : CombatStyle.RANGED,
+				throwing ? AttackIntent.Channel.THROWING : AttackIntent.Channel.RANGED,
+				AttackIntent.Source.MANUAL, null);
 			final Mob target = affectedMob;
 			player.resetPath();
 			int radius = player.getProjectileRadius();
 			int approachRadius = player.getProjectileApproachRadius();
 			int walkRadius = player.withinRange(affectedMob, radius) ? radius : approachRadius;
 			player.setFollowing(affectedMob, walkRadius, false);
-			player.setWalkToAction(new WalkToMobAction(player, affectedMob, walkRadius, false, ActionType.ATTACK) {
+			final WalkToMobAction approach = new WalkToMobAction(player, affectedMob, walkRadius, false, ActionType.ATTACK) {
 				public void executeInternal() {
 					boolean retargetingNpcWithRanged = getPlayer().inCombat()
 						&& getMob().isNpc()
@@ -206,94 +248,98 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 						&& getPlayer().getOpponent().isNpc()
 						&& !getPlayer().getOpponent().equals(getMob())
 						&& !getPlayer().getDuel().isDueling();
-					if (getPlayer().isBusy() || (getPlayer().inCombat() && !retargetingNpcWithRanged)) return;
-					if (retargetingNpcWithRanged) {
-						getPlayer().resetCombatEvent();
+					if (getPlayer().isBusy() || (getPlayer().inCombat() && !retargetingNpcWithRanged)) {
+						getPlayer().getAttackTransaction().cancel(intent,
+							AttackTransactionResult.Reason.ELIGIBILITY_REJECTED);
+						return;
 					}
-					getPlayer().resetFollowing();
-					if (getMob().isPlayer()) {
-						Player affectedPlayer = (Player) getMob();
-						getPlayer().setSkulledOn(affectedPlayer);
-						affectedPlayer.getTrade().resetAll();
-						if (affectedPlayer.getMenuHandler() != null) {
-							affectedPlayer.resetMenuHandler();
-						}
-						if (affectedPlayer.accessingBank()) {
-							affectedPlayer.resetBank();
-						}
-						if (affectedPlayer.accessingShop()) {
-							affectedPlayer.resetShop();
-						}
+					if (!getPlayer().getAttackTransaction().prepare(intent)
+						.isReadyToCommit()) {
+						return;
 					}
-
-					// Authentic player always faced NW
-					getPlayer().face(getPlayer().getX() + 1, getPlayer().getY() - 1);
-
-						int throwingEquip = getPlayer().getThrowingEquip();
-						int rangeEquip = getPlayer().getRangeEquip();
-
-					if (throwingEquip < 0 && rangeEquip > 0) {
-						recordSummoningCombatEngagement(getPlayer(), getMob());
-						// TODO: replace with gameEventHandler.addOrUpdate()
-						final GameEventHandler gameEventHandler = getPlayer().getWorld()
-							.getServer()
-							.getGameEventHandler();
-
-						RangeEvent rangeEvent = null;
-
-						for (final GameTickEvent gameTickEvent : gameEventHandler.getPlayerEvents(getPlayer())) {
-							if (gameTickEvent instanceof RangeEvent) {
-								rangeEvent = (RangeEvent) gameTickEvent;
-								break;
+					AttackTransactionResult committed = getPlayer().getAttackTransaction().commit(
+						intent, new PlayerAttackTransaction.CommitAction() {
+							@Override
+							public boolean commit() {
+								if (retargetingNpcWithRanged) {
+									getPlayer().resetCombatEvent();
+								}
+								getPlayer().resetAll();
+								getPlayer().resetFollowing();
+								if (getMob().isPlayer()) {
+									Player affectedPlayer = (Player) getMob();
+									getPlayer().setSkulledOn(affectedPlayer);
+									affectedPlayer.getTrade().resetAll();
+									if (affectedPlayer.getMenuHandler() != null) {
+										affectedPlayer.resetMenuHandler();
+									}
+									if (affectedPlayer.accessingBank()) affectedPlayer.resetBank();
+									if (affectedPlayer.accessingShop()) affectedPlayer.resetShop();
+								}
+								// Authentic player always faced NW.
+								getPlayer().face(getPlayer().getX() + 1, getPlayer().getY() - 1);
+								return installRangedOrThrowingEvent(getPlayer(), getMob(), target);
 							}
-						}
-
-						if (rangeEvent != null) {
-							if (!rangeEvent.getTarget().equals(getMob())) {
-								rangeEvent.reTarget(getMob());
-							}
-
-							rangeEvent.restart();
-							getPlayer().setRangeEvent(rangeEvent);
-							return;
-						}
-
-						rangeEvent = new RangeEvent(getPlayer().getWorld(), getPlayer(), 1, target);
-						getPlayer().setRangeEvent(rangeEvent);
-						gameEventHandler.add(rangeEvent);
-					} else {
-						recordSummoningCombatEngagement(getPlayer(), getMob());
-						// TODO: replace with gameEventHandler.addOrUpdate()
-						final GameEventHandler gameEventHandler = getPlayer().getWorld()
-							.getServer()
-							.getGameEventHandler();
-
-						ThrowingEvent throwingEvent = null;
-
-						for (final GameTickEvent gameTickEvent : gameEventHandler.getPlayerEvents(getPlayer())) {
-							if (gameTickEvent instanceof ThrowingEvent) {
-								throwingEvent = (ThrowingEvent) gameTickEvent;
-								break;
-							}
-						}
-
-						if (throwingEvent != null) {
-							if (!throwingEvent.getTarget().equals(getMob())) {
-								throwingEvent.reTarget(getMob());
-							}
-
-							throwingEvent.restart();
-							getPlayer().setThrowingEvent(throwingEvent);
-							return;
-						}
-
-						throwingEvent = new ThrowingEvent(getPlayer().getWorld(), getPlayer(), 1, target);
-						getPlayer().setThrowingEvent(throwingEvent);
-						gameEventHandler.add(throwingEvent);
+						});
+					if (!committed.isCommitted()) {
+						return;
+					}
+					if (getMob().isNpc()) {
+						Summoning.recordCombatSummonEngagement(
+							getPlayer(), (Npc) getMob());
 					}
 				}
-			});
+			};
+			player.setWalkToAction(approach);
+			player.getAttackTransaction().bindApproach(intent, approach);
 		}
+	}
+
+	private boolean installRangedOrThrowingEvent(final Player player,
+			final Mob target, final Mob originalTarget) {
+		final int throwingEquip = player.getThrowingEquip();
+		final int rangeEquip = player.getRangeEquip();
+		final GameEventHandler gameEventHandler = player.getWorld()
+			.getServer().getGameEventHandler();
+		if (throwingEquip < 0 && rangeEquip > 0) {
+			RangeEvent rangeEvent = null;
+			for (final GameTickEvent event : gameEventHandler.getPlayerEvents(player)) {
+				if (event instanceof RangeEvent) {
+					rangeEvent = (RangeEvent) event;
+					break;
+				}
+			}
+			if (rangeEvent != null) {
+				if (!rangeEvent.getTarget().equals(target)) rangeEvent.reTarget(target);
+				rangeEvent.restart();
+				player.setRangeEvent(rangeEvent);
+				return true;
+			}
+			rangeEvent = new RangeEvent(player.getWorld(), player, 1, originalTarget);
+			player.setRangeEvent(rangeEvent);
+			gameEventHandler.add(rangeEvent);
+			return true;
+		}
+		if (throwingEquip >= 0) {
+			ThrowingEvent throwingEvent = null;
+			for (final GameTickEvent event : gameEventHandler.getPlayerEvents(player)) {
+				if (event instanceof ThrowingEvent) {
+					throwingEvent = (ThrowingEvent) event;
+					break;
+				}
+			}
+			if (throwingEvent != null) {
+				if (!throwingEvent.getTarget().equals(target)) throwingEvent.reTarget(target);
+				throwingEvent.restart();
+				player.setThrowingEvent(throwingEvent);
+				return true;
+			}
+			throwingEvent = new ThrowingEvent(player.getWorld(), player, 1, originalTarget);
+			player.setThrowingEvent(throwingEvent);
+			gameEventHandler.add(throwingEvent);
+			return true;
+		}
+		return false;
 	}
 
 	private boolean canRetargetNpcWhileInCombat(final Player player, final Mob affectedMob) {
@@ -307,9 +353,4 @@ public class AttackHandler implements PayloadProcessor<TargetMobStruct, OpcodeIn
 		return true;
 	}
 
-	private void recordSummoningCombatEngagement(final Player player, final Mob target) {
-		if (target != null && target.isNpc()) {
-			Summoning.recordCombatSummonEngagement(player, (Npc) target);
-		}
-	}
 }

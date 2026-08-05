@@ -166,21 +166,38 @@ final class CurrentCombatHarness implements AutoCloseable {
 		instances.setAccessible(true);
 		((Multimap<Class<?>, Object>) instances.get(handler)).put(triggerType, plugin);
 
-		if (pluginExecutor == null) {
-			pluginExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-			final Field executor = PluginHandler.class.getDeclaredField("executor");
-			executor.setAccessible(true);
-			executor.set(handler, pluginExecutor);
-		}
+		ensurePluginExecutor(handler);
+	}
+
+	void installDefaultPlugin(final Object plugin)
+			throws ReflectiveOperationException {
+		ensureOpen();
+		final PluginHandler handler = server.getPluginHandler();
+		final Field reloading = PluginHandler.class.getDeclaredField("reloading");
+		reloading.setAccessible(true);
+		reloading.setBoolean(handler, false);
+		final Field defaultHandler = PluginHandler.class.getDeclaredField(
+			"defaultHandler");
+		defaultHandler.setAccessible(true);
+		defaultHandler.set(handler, plugin);
+		ensurePluginExecutor(handler);
+	}
+
+	private void ensurePluginExecutor(final PluginHandler handler)
+			throws ReflectiveOperationException {
+		if (pluginExecutor != null) return;
+		pluginExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+		final Field executor = PluginHandler.class.getDeclaredField("executor");
+		executor.setAccessible(true);
+		executor.set(handler, pluginExecutor);
 	}
 
 	GameTickEvent findEvent(final String descriptor) {
+		GameTickEvent found = null;
 		for (GameTickEvent event : server.getGameEventHandler().getEvents()) {
-			if (descriptor.equals(event.getDescriptor())) {
-				return event;
-			}
+			if (descriptor.equals(event.getDescriptor())) found = event;
 		}
-		return null;
+		return found;
 	}
 
 	static Object invokePrivate(final Object target, final String methodName,

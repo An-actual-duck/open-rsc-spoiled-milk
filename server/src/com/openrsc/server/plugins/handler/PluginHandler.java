@@ -231,6 +231,20 @@ public final class PluginHandler implements IPluginHandler {
         }
     }
 
+	/** Read-only dispatch availability used to close pending command state. */
+	public boolean hasDefaultHandlerFor(final Class<?> triggerType) {
+		synchronized (triggerTypeToInstance) {
+			return defaultHandler != null && triggerType != null
+				&& triggerType.isInstance(defaultHandler);
+		}
+	}
+
+	public boolean isReloading() {
+		synchronized (triggerTypeToInstance) {
+			return reloading;
+		}
+	}
+
     private void invokePluginAction(
             Class<?> triggerType,
             Player player,

@@ -98,7 +98,7 @@ changed-code analysis and the focused
 combat, poison, projectile, NPC, Cleric, summoning, dragon, and layered-world
 Python suites alongside this gate.
 
-## A01/A02 boundary
+## A01-A03 boundary
 
 A01 established the real-Java gate without moving production authority. A02
 adds the bounded production-preserving clock, random, and whole-tick test seams
@@ -107,3 +107,11 @@ the same gate now also replays chosen hit/miss, NPC style, cooldown, retreat,
 projectile, secondary-target, lifesteal, effect-expiry, and selected-drop
 boundaries. Source-text checks remain supplemental and must not replace these
 runtime scenarios.
+
+A03 grows the same gate from 20 to 26 scenarios. Its added scenarios exercise
+reason-coded compatibility messages, exact melee intent/plugin ownership,
+side-effect-free denial, lifecycle and lease cancellation, all maintained
+player attack-start styles, missing-resource rollback, and manual priority over
+passive autocast. The implementation and retained content-policy boundaries are
+recorded in
+[`combat-a03-eligibility-transactions.md`](combat-a03-eligibility-transactions.md).
