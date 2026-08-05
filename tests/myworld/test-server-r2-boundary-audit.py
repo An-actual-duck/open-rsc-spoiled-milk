@@ -92,7 +92,7 @@ class ServerR2BoundaryAuditTest(unittest.TestCase):
 
     def test_expected_server_input_families_are_present(self):
         summary = self.report["summary"]
-        self.assertEqual(956, summary["coreJavaFiles"])
+        self.assertEqual(957, summary["coreJavaFiles"])
         self.assertEqual(492, summary["pluginJavaFiles"])
         self.assertEqual(
             {"authentic": 389, "custom": 85, "retro": 3, "shared": 15},

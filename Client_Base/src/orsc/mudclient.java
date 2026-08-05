@@ -293,7 +293,7 @@ public final class mudclient implements Runnable {
 	private static final String[] SUMMONING_NAMES = {
 		"Broodling Spider", "Mischief Imp", "Loot Goblin", "Ironhide Bear", "Sacred Unicorn",
 		"Duskwind Bat", "Pack Rat", "Bound Battleaxe", "Mourning Unicorn",
-		"Restless Shade", "Guard Dog", "Delivery Camel", "Astral Wraith", "Abyssal Demon"
+		"Restless Shade", "Guard Dog", "Delivery Camel", "Foundry Dragon", "Astral Wraith", "Abyssal Demon"
 	};
 	private static final String[] SUMMONING_DESCRIPTIONS = {
 		"A small melee companion",
@@ -308,11 +308,12 @@ public final class mudclient implements Runnable {
 		"A fearful ranged companion",
 		"Keeps combat single-target",
 		"A camel to lighten your load",
+		"Replaces smelting coal with runes",
 		"A magic echo companion",
 		"A demon with Hell's Fire"
 	};
 	private static final int[] SUMMONING_LEVELS = {
-		1, 7, 12, 14, 20, 26, 33, 39, 45, 51, 55, 58, 64, 70
+		1, 7, 12, 14, 20, 26, 33, 39, 45, 51, 55, 58, 61, 64, 70
 	};
 	private static final int[][] SUMMONING_COST_ITEM_IDS = {
 		{37, 36},
@@ -327,6 +328,7 @@ public final class mudclient implements Runnable {
 		{37, 46, 825, 181},
 		{37, 36, 825, 20},
 		{37, 36, 42, 40},
+		{37, 31, 40, 814},
 		{37, 46, 825, 20},
 		{37, 619, 825, 3112}
 	};
@@ -343,6 +345,7 @@ public final class mudclient implements Runnable {
 		{2, 3, 1, 1},
 		{2, 2, 1, 1},
 		{1, 2, 2, 2},
+		{2, 5, 1, 1},
 		{2, 4, 1, 1},
 		{3, 1, 1, 1}
 	};

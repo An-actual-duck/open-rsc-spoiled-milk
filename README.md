@@ -247,9 +247,9 @@ New visual assets use the following source breakdown:
   source-available distribution.
 - **Pixel Banner**: Acid Gush, Earth Burst, Earth Impale, Ice Burst, Icicle
   Shot, Rock Throw, Thunder Ball, and Battering Ram icons.
-- **KURAI**: Abyssal Demon, Astral Wraith, Duskwind Bat, Ironhide Bear,
-  Mischief Imp, Broodling Spider, Delivery Camel, Restless Shade, and Zamorak's
-  Void icons.
+- **KURAI**: Abyssal Demon, Astral Wraith, Duskwind Bat, Foundry Dragon,
+  Ironhide Bear, Mischief Imp, Broodling Spider, Delivery Camel, Restless Shade,
+  and Zamorak's Void icons.
 - **InDark**: Bound Battleaxe icon.
 - **Atelier Pixerelia**: the Guard Dog summon icon and many Magic, Enchanting,
   and spell-effect icons.

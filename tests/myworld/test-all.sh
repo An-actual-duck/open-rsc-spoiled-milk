@@ -231,6 +231,7 @@ python3 ./tests/myworld/test-summoning-animation-effect.py
 python3 ./tests/myworld/test-summoning-costs.py
 python3 ./tests/myworld/test-summoning-display-names.py
 python3 ./tests/myworld/test-summoning-experience.py
+python3 ./tests/myworld/test-foundry-dragon-summon.py
 python3 ./tests/myworld/test-utility-summon-charges.py
 python3 ./tests/myworld/test-summon-health-restoration.py
 python3 ./tests/myworld/test-summoning-spawn-placement.py

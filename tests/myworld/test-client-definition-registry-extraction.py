@@ -16,7 +16,7 @@ PRAYER_BOOKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/PrayerB
 FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefinitionFallbackDiagnostics.java"
 
 EXPECTED: dict[str, tuple[int, str]] = {
-    "npcs": (845, "66d8165a4e8ca7e8559d8c70d8302c97f68595b421145addc3b5a15e74a14539"),
+    "npcs": (846, "7204acb9e7297698045065e47a7264b63f6ccafbd5752b830aef0f75550d3852"),
     "items": (3309, "b5a717a05e371091b6ec2a2e9f3c71b3b1bfe652527ff8db2bb076efcae5a520"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
     "animations": (1081, "40b82671b48b1a25f2ed7ccc3062ffbbaa2e1a34c85b663be215a4d19f1f3a0e"),

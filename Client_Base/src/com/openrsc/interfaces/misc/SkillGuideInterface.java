@@ -1226,6 +1226,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(53, "51", "Restless Shade - Combat; 2 life, 3 cosmic, soul, ashes");
 			addSummonGuide(748, "55", "Guard Dog - Support; 2 life, 2 body, soul, bones");
 			addSummonGuide(13, "58", "Delivery Camel - Utility; 1 life, 2 body, 2 law, 2 nature");
+			addSummonGuide(845, "61", "Foundry Dragon - Support; 2 life, 5 fire, nature, dragon bones");
 			addSummonGuide(298, "64", "Astral Wraith - Combat; 2 life, 4 cosmic, soul, bones");
 			addSummonGuide(184, "70", "Abyssal Demon - Combat; 3 life, blood, soul, demon ash");
 		} else if (curTab == 1) {
@@ -1241,6 +1242,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(53, "51", "Restless Shade - Hits 9 +1/9; dmg 4 +1/18");
 			addSummonGuide(748, "55", "Guard Dog - Does not engage in combat");
 			addSummonGuide(13, "58", "Delivery Camel - Does not engage in combat");
+			addSummonGuide(845, "61", "Foundry Dragon - Does not engage in combat");
 			addSummonGuide(298, "64", "Astral Wraith - Hits 10 +1/8; dmg 7 +1/14");
 			addSummonGuide(184, "70", "Abyssal Demon - Hits 18 +1/7; dmg 9 +1/12");
 		} else if (curTab == 2) {
@@ -1256,6 +1258,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
 			addSummonGuide(748, "55", "Watchful - one enemy; suppresses area attacks");
 			addSummonGuide(13, "58", "Beast of Burden - 2 uses; banks one stack");
+			addSummonGuide(845, "61", "Foundry - each coal costs 5 fire and 1 nature rune");
 			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
 			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
 		} else if (curTab == 3) {
@@ -1276,7 +1279,7 @@ public final class SkillGuideInterface {
 	}
 
 	private boolean isSummonGuideSideFacingNpc(int npcId) {
-		return npcId == 8 || npcId == 0 || npcId == 296 || npcId == 241 || npcId == 295 || npcId == 748 || npcId == 13;
+		return npcId == 8 || npcId == 0 || npcId == 296 || npcId == 241 || npcId == 295 || npcId == 748 || npcId == 13 || npcId == 845;
 	}
 
 	private void populateRangedGuide() {

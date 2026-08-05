@@ -6557,6 +6557,12 @@ public class EntityHandler {
 			new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 0, 0, 0, 904, 652, 10, 7, 70, 844
 		));
+		setCustomNpcDefinition(845, new NPCDef(
+			"Foundry Dragon", "A miniature black dragon radiating furnace heat", "",
+			1, 1, 1, 1, false,
+			new int[]{165, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 0, 271, 196, 10, 7, 30, 845
+		));
 	}
 
 	private static ItemDef createUnobtaniumPlaceholder(int id) {
