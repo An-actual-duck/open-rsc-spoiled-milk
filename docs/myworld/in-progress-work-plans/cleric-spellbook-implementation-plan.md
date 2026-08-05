@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `main` (complete C09 batch integrated; AI-3 ready for C10)
+- Branch: `feat/cleric-c10-combat-support-batch` (C10 implemented and privately accepted; awaiting manager review)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance**
-- Current milestone: **C09 complete and integrated**
-- Next planned milestone: **C10 direct-combat support effects in coherent implementation families**
-- Runtime exposure: **Holy Power equipment, Blessing skill state, stone/silver sigil production, maintained-client Cleric catalog/status presentation, party-only Unify, Purify, Restore, Mend, Greater Mend, and Respite; C10 effects remain unavailable**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance**
+- Current milestone: **C10 complete on its focused branch and awaiting manager review**
+- Next planned milestone: **C12 Devotion economy and release gate; C11 remains retired into C07**
+- Runtime exposure: **All twelve launch Cleric spells are implemented on the focused branch, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
@@ -1265,3 +1265,77 @@ Final verification completed against published base `09f72b9eb`:
   compiler warnings; and
 - `./scripts/lint.sh analyze --base 09f72b9eb --offline`, with no Ruff findings
   and no new SpotBugs findings. Checkstyle, PMD, and CPD remain report-only.
+
+## C10 Direct-Combat Support Batch Completion Record
+
+C10 introduces one content-owned direct-combat boundary shared by ordinary
+melee, ranged, and Magic hits. It deliberately excludes PvP, summons, cannon
+damage, scythe cleave, god-spell area damage, Iban area damage, poison, recoil,
+and other secondary damage. Existing critical-hit, mitigation, prayer,
+lifesteal, reactive-effect, damage-credit, and death-attribution paths retain
+their established order.
+
+Fervor adds a rank-based `5`/`10`/`15`/`20` percent chance to raise the normal
+offense roll by one before defense, combining with existing equipment high-roll
+probability without exceeding its bound or changing critical hits. Zeal adds
+`5`/`8`/`11`/`15` percent after mitigation to nonzero direct damage. Its exact
+hundredths carry is recipient-owned and is cleared on refresh, replacement,
+expiry, or lifecycle cleanup so frequent small hits do not lose or create
+damage through per-hit rounding.
+
+Ward reduces direct post-mitigation damage by `25` percent for
+`2`/`4`/`6`/`8` useful hits. Aegis replaces Ward, reduces damage by `50`
+percent, and protects `1`/`2`/`3`/`4` useful hits. Protection rounds the
+remaining hit upward, consumes a charge only when at least one whole point is
+prevented, immediately refreshes the authoritative HUD counter, and records
+the prevented amount through existing blocked-damage telemetry.
+
+Thorns reflects `5`/`8`/`11`/`15` percent of actual direct damage after
+mitigation, with bounded stochastic fractional rounding and no artificial
+minimum. Reflection uses the defender as the attributed source, may kill the
+attacker, coexists with equipment recoil, and is terminal: a lethal reflection
+cannot trigger later attacker procs, while a simultaneous primary-hit kill is
+still settled. Rally grants fixed `20` percent direct-damage lifesteal while a
+recipient begins below half of the active healing ceiling. It ends when healing
+reaches `55`/`60`/`65`/`70` percent at ranks I-IV, uses exact fractional carry,
+resolves after established lifesteal sources, respects temporary Hits ceilings,
+and is removed by any ordinary healing path that reaches its threshold.
+
+All C10 spells reuse C07's one-cost party targeting and C08's typed,
+recipient-owned effect registry, origin validation, replacement, HUD, and
+lifecycle cleanup. They award no Worship XP, persist no effect state, alter no
+database schema, and do not enable Cleric support in PvP.
+
+Private verification used two maintained OpenGL clients and the isolated
+`43615/43515` server. The owner performed a deliberately small acceptance pass
+with `devduck` and `testduck`, accepted the batch, and observed no presentation
+or gameplay concern. The runtime log independently confirms party-targeted
+Fervor and Ward casts and a correct no-cost refusal when a tier-two Zeal cast
+lacked its complete silver-and-stone cost. Exact behavior for every effect,
+rank, rounding boundary, replacement, carry reset, and combat-family path is
+covered by compiled and source-level regression fixtures rather than being
+claimed from that limited visual pass. Both private clients and the isolated
+server were then stopped, the tracked client port was restored to `43605`, and
+the public server and detached live checkout remained untouched.
+
+Final verification completed against published base `6ecba4600`:
+
+- the compiled C10 arithmetic, registry, replacement, carry, and source-wiring
+  fixture;
+- the complete Cleric C01-C10 definition, equipment, production, casting,
+  lifecycle, presentation, and HUD fixture family;
+- representative melee, ranged, Magic, critical, prayer, poison, summon,
+  god-spell, equipment-recoil, and combat-invariant regressions;
+- `./scripts/build-server.sh` for authoritative Ant core and plugin artifacts;
+- the maintained-client build through the packaged sigil-asset fixture;
+- changed-code compiler and static analysis against `6ecba4600`, with no new
+  gated compiler or SpotBugs findings; and
+- `git diff --check`.
+
+Three unrelated existing fixtures remain red against the published base and
+were not broadened into C10: the demon-pitchfork appearance expectation in
+`test-combat-data.py`, the reverse-bat-projectile expectation in
+`test-summon-lifesteal.py`, and an obsolete exact-source regex in
+`test-enchanted-robe-effects.py`. Focused replacement fixtures for those
+systems pass, and C10 changes none of the disputed definitions or legacy
+Summoning/robe code.
