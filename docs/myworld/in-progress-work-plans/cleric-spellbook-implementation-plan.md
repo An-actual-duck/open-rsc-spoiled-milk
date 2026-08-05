@@ -2,12 +2,12 @@
 
 ## Status
 
-- Branch: `feat/cleric-c10-combat-support-batch` (C10 implemented and privately accepted; awaiting manager review)
+- Branch: `main` (C10 integrated; all twelve launch spells implemented)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance**
-- Current milestone: **C10 complete on its focused branch and awaiting manager review**
+- Current milestone: **C10 complete and integrated**
 - Next planned milestone: **C12 Devotion economy and release gate; C11 remains retired into C07**
-- Runtime exposure: **All twelve launch Cleric spells are implemented on the focused branch, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
+- Runtime exposure: **All twelve launch Cleric spells are implemented on `main`, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
 - Public-server work: **forbidden**
 
 This plan orders implementation of the confirmed Cleric concept without
