@@ -135,6 +135,7 @@ public final class ClericSpellbookFoundationFixture {
 		int[] levels = {1, 3, 5, 8, 11, 14, 16, 19, 22, 25, 28, 30};
 		int[] tiers = {1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
 		int[] radii = {2, 4, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3};
+		int[] onEntityAnimations = {67, -1, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77};
 		int[][] thresholds = {
 			{0, 12, 28}, {0}, {0, 12, 28, 44}, {0, 12, 28, 44},
 			{0, 12, 28, 44}, {0, 12, 24, 32}, {0, 24, 44, 64}, {0, 24, 44, 64},
@@ -159,8 +160,14 @@ public final class ClericSpellbookFoundationFixture {
 				"spellbook icon missing at " + index);
 			check(!definition.getPresentation().hasCasterIcon(),
 				"unapproved caster icon configured at " + index);
-			check(!definition.getPresentation().hasCasterAnimation(),
-				"unapproved caster animation configured at " + index);
+			check(definition.getPresentation().getOnEntityAnimationId()
+				== onEntityAnimations[index], "on-entity animation drift at " + index);
+			check(definition.getPresentation().hasOnEntityAnimation()
+				== (onEntityAnimations[index] >= 0), "on-entity animation presence drift at " + index);
+			check(definition.getPresentation().getCasterAnimationId()
+				== onEntityAnimations[index], "legacy animation accessor drift at " + index);
+			check(definition.getPresentation().hasCasterAnimation()
+				== (onEntityAnimations[index] >= 0), "legacy animation predicate drift at " + index);
 			checkArray(definition.getHolyPowerThresholds(), thresholds[index],
 				"Holy Power thresholds drift at " + index);
 

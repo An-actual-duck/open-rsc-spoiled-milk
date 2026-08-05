@@ -208,6 +208,17 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;
 	public static final int COMBAT_EFFECT_TELEPORT = 65;
 	public static final int COMBAT_EFFECT_DRAGON_WEAPON_SLASH_2 = 66;
+	public static final int COMBAT_EFFECT_CLERIC_MEND = 67;
+	public static final int COMBAT_EFFECT_CLERIC_FERVOR = 68;
+	public static final int COMBAT_EFFECT_CLERIC_PURIFY = 69;
+	public static final int COMBAT_EFFECT_CLERIC_RESTORE = 70;
+	public static final int COMBAT_EFFECT_CLERIC_WARD = 71;
+	public static final int COMBAT_EFFECT_CLERIC_GREATER_MEND = 72;
+	public static final int COMBAT_EFFECT_CLERIC_ZEAL = 73;
+	public static final int COMBAT_EFFECT_CLERIC_THORNS = 74;
+	public static final int COMBAT_EFFECT_CLERIC_AEGIS = 75;
+	public static final int COMBAT_EFFECT_CLERIC_RALLY = 76;
+	public static final int COMBAT_EFFECT_CLERIC_RESPITE = 77;
 	public static final int COMBAT_EFFECT_DEMON_EXPLOSION = COMBAT_EFFECT_LESSER_DEMON_MAGIC;
 	public static final int COMBAT_EFFECT_HELLFIRE = COMBAT_EFFECT_HELLS_FIRE;
 	public static final int COMBAT_EFFECT_WIND_SLASH = COMBAT_EFFECT_AIR_SLASH;
@@ -215,7 +226,7 @@ public final class mudclient implements Runnable {
 	public static final int COMBAT_EFFECT_EXPLOSION = COMBAT_EFFECT_FIRE_BOMB;
 	public static final int COMBAT_EFFECT_WATER_VORTEX = COMBAT_EFFECT_KRAKEN;
 	public static final int COMBAT_EFFECT_FIRE_PILLAR = COMBAT_EFFECT_PHOENIX;
-	public static final int COMBAT_EFFECT_COUNT = 66;
+	public static final int COMBAT_EFFECT_COUNT = 77;
 	public static final int COMBAT_EFFECT_FRAME_SLOTS = 64;
 	public static final int HELLFIRE_COMBAT_EFFECT_FRAMES = COMBAT_EFFECT_FRAME_SLOTS;
 	private static final int COMBAT_EFFECT_FRAME_TICKS = 3;
@@ -1156,7 +1167,10 @@ public final class mudclient implements Runnable {
 		"green-dragon-magic", "fire-dragon-magic", "otherworldly-being-magic", "paladin-magic",
 		"fire-kin-magic", "ice-kin-magic", "earth-kin-magic", "dragon-weapon-breath",
 		"fire-sword", "ice-sword", "earth-sword", "elder-dragon-fireshot", "elder-dragon-burn",
-		"true-defense", "teleport", "dragon-weapon-slash-2"
+		"true-defense", "teleport", "dragon-weapon-slash-2", "cleric-mend",
+		"cleric-fervor", "cleric-purify", "cleric-restore", "cleric-ward",
+		"cleric-greater-mend", "cleric-zeal", "cleric-thorns", "cleric-aegis",
+		"cleric-rally", "cleric-respite"
 	};
 	private final Sprite[][] projectileEffectSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];
 	private final Sprite[][] projectileEffectMirrorSprites = new Sprite[CUSTOM_PROJECTILE_COUNT][PROJECTILE_EFFECT_FRAME_SLOTS];

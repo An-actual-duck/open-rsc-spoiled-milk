@@ -33,7 +33,7 @@ def main() -> int:
 
     require(combat_effect, "public static final int TRUE_DEFENSE = 64;", "server combat effect id", failures)
     require(client, "public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;", "client combat effect id", failures)
-    require(client, "public static final int COMBAT_EFFECT_COUNT = 66;", "client combat effect count", failures)
+    require(client, "public static final int COMBAT_EFFECT_COUNT = 77;", "client combat effect count", failures)
     require(client, '"true-defense"', "client combat effect name", failures)
     require(client, 'if ("true-defense".equals(animationName))', "client true-defense sheet loader", failures)
     require(client, "targetFrames, maxTargetSize, 22, 1, 22, 0);", "client true-defense frame geometry", failures)

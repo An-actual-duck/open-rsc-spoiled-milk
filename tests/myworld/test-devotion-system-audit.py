@@ -22,32 +22,28 @@ def require(condition: bool, message: str) -> None:
 
 
 def simulate_offerings(target: int, mode: str) -> tuple[int, int, int]:
-    """Return interactions, offering units, and current flat bonus XP."""
-    offerings = 0
+    """Return interactions, exact half-offering units, and flat bonus XP."""
+    half_offering_units = 0
     interactions = 0
     bonus_xp = 0
-    symbol_toggle = False
-    unicorn_toggle = False
 
-    while offerings // 10 < target:
-        devotion = offerings // 10
+    while half_offering_units // 20 < target:
+        devotion = half_offering_units // 20
         bonus_xp += devotion
-        gain = 1
+        gain = 2
 
-        if mode in {"symbol", "both"} and devotion >= 50:
-            if not symbol_toggle:
-                gain += 1
-            symbol_toggle = not symbol_toggle
+        if mode in {"symbol", "symbol_summon", "all"} and devotion >= 50:
+            gain += 2
 
-        if mode in {"unicorn", "both"}:
-            if not unicorn_toggle:
-                gain += 1
-            unicorn_toggle = not unicorn_toggle
+        if mode in {"unicorn", "symbol_summon", "summon_set", "all"}:
+            gain += 1
+        if mode in {"set", "summon_set", "all"}:
+            gain += 1
 
-        offerings = min(10_000, offerings + gain)
+        half_offering_units = min(20_000, half_offering_units + gain)
         interactions += 1
 
-    return interactions, offerings, bonus_xp
+    return interactions, half_offering_units, bonus_xp
 
 
 def main() -> None:
@@ -78,6 +74,7 @@ def main() -> None:
         "BLESSING_OFFERING_COST_PER_RESOURCE = OFFERINGS_PER_DEVOTION_LEVEL / 2",
         "return bonusXp * 4;",
         "100.0D + devotionLevel",
+        "DevotionOfferingGain.getHalfOfferingUnits(",
     ):
         require(marker in devotion, f"Devotion runtime changed: missing {marker}")
 
@@ -181,13 +178,17 @@ def main() -> None:
         )
 
     expected_progression = {
-        (25, "plain"): (250, 250, 3_000),
-        (500, "plain"): (5_000, 5_000, 1_247_500),
-        (1000, "plain"): (10_000, 10_000, 4_995_000),
-        (500, "symbol"): (3_500, 5_000, 835_750),
-        (1000, "symbol"): (6_833, 10_000, 3_333_750),
-        (500, "both"): (2_583, 5_000, 625_775),
-        (1000, "both"): (5_083, 10_000, 2_499_525),
+        (25, "plain"): (250, 500, 3_000),
+        (500, "plain"): (5_000, 10_000, 1_247_500),
+        (1000, "plain"): (10_000, 20_000, 4_995_000),
+        (500, "symbol"): (2_750, 10_000, 629_875),
+        (1000, "symbol"): (5_250, 20_000, 2_503_625),
+        (500, "unicorn"): (3_334, 10_002, 831_833),
+        (500, "set"): (3_334, 10_002, 831_833),
+        (500, "symbol_summon"): (2_134, 10_002, 502_283),
+        (500, "summon_set"): (2_500, 10_000, 623_750),
+        (500, "all"): (1_750, 10_000, 417_725),
+        (1000, "all"): (3_417, 20_000, 1_667_058),
     }
     for key, expected in expected_progression.items():
         require(

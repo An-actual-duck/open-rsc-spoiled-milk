@@ -4,9 +4,9 @@
 
 - Branch: `main` (C10 integrated; all twelve launch spells implemented)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
-- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance**
-- Current milestone: **C10 complete and integrated**
-- Next planned milestone: **C12 Devotion economy and release gate; C11 remains retired into C07**
+- Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance; C12 — Devotion-source rebalance, Black Unicorn set replacement, compact launch animations, and private acceptance**
+- Current milestone: **C12 implementation complete and READY for manager review**
+- Next planned milestone: **Manager integration and release verification; C11 remains retired into C07**
 - Runtime exposure: **All twelve launch Cleric spells are implemented on `main`, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
 - Public-server work: **forbidden**
 
@@ -65,6 +65,19 @@ and Black Unicorn summon, add appropriate Devotion sources or modifiers, and
 iterate on the resulting acquisition/consumption balance. Exact player-facing
 values should be documented and reviewed as one coherent economy rather than
 introduced as unrelated local bonuses.
+
+The owner has bounded the initial C12 Devotion change to three additive
+offering modifiers. A matching blessed symbol contributes `+1x` ordinary
+offering value, so symbol use totals `2x`. The Black Unicorn summon and full
+Black Unicorn leather set each contribute `+0.5x`, so all three bonuses plus
+the `1x` base total exactly `3x`. The full leather set loses its former `+10`
+Prayer-point bonus and instead heals successful manual offerings by type:
+regular bones `1`, big bones `2`, demon ash `3`, and dragon bones `4`, capped
+by the valid healing ceiling. Bat bones, ordinary ash, bonecrusher processing,
+and summon auto-offerings do not trigger the set heal. Existing Worship XP,
+summon double-XP behavior, Devotion sinks, and every other acquisition source
+remain unchanged. The existing half-offering balance provides exact arithmetic
+without legacy alternating-bonus toggles.
 
 ## Ordered Implementation Sequence
 
@@ -478,8 +491,10 @@ catalog-derived active magnitude and any remaining counter, for example:
 - `Mend II — 2 Hits per pulse — 2 healing pulses remaining`.
 
 Do not display caster name, session identity, or party identity. Unique status
-art later replaces only authoritative catalog icon fields and does not change
-effect or packet identity. Caster bubbles and animations remain unset.
+art replaces only authoritative catalog icon fields and does not change effect
+or packet identity. Caster bubbles remain unset; the later C12 recipient
+animations use the existing optional animation field without changing this
+status packet.
 
 #### Focused implementation branches
 
@@ -668,6 +683,17 @@ Devotion mechanics needed to make the full economy coherent. Record the old
 and new sources, values, stacking rules, and expected player loops so later
 tuning has one authority.
 
+The bounded first C12 implementation slice is the confirmed source rebalance
+above. It must verify all eight combinations of symbol/summon/set modifiers;
+successful-removal gating; the four heal values and healing ceiling; exclusion
+of bat bones, ordinary ash, bonecrusher, and summon auto-offerings; removal of
+the Black Unicorn set's Prayer bonus across equipment modes and relog; unchanged
+ordinary Worship XP and summon double XP; server/client guide and item text;
+exact balance persistence; server and client builds; and private gameplay
+checks. Old toggle cache values may remain harmless compatibility data but must
+no longer affect acquisition. This slice does not authorize other Devotion
+sources, sink changes, animation assignment, or release/deployment work.
+
 Finalize the owner-approved spell-to-animation mapping during this milestone.
 Use the existing optional Cleric visual hooks, keep effects player-centered
 with no projectile animation, preserve safe no-animation fallback behavior,
@@ -675,6 +701,31 @@ package and attribute every supplied asset, and verify that client/server
 catalog identities dispatch the intended animation without changing spell
 mechanics. AI-3 may work iteratively with the owner to inspect and assign the
 available sheets rather than guessing ambiguous mappings.
+
+The confirmed launch mapping is:
+
+| Spell | On-entity sheet | Compact maximum |
+| --- | --- | ---: |
+| Mend | `heal-alt` | 48 px |
+| Unify | None | — |
+| Fervor | `fist` | 48 px |
+| Purify | `cleanse 2` | 48 px |
+| Restore | `cleanse` | 48 px |
+| Ward | `wall-shield` | 48 px |
+| Greater Mend | `greater-heal-alt` | 48 px |
+| Zeal | `Holy VFX 03` | 48 px |
+| Thorns | `thorns` | 32 px |
+| Aegis | `Holy VFX 04` | 48 px |
+| Rally | `sword-clash` | 48 px |
+| Respite | `heart-pop` | 48 px |
+
+Queue the animation on each successfully affected recipient only after its
+useful application commits inside the atomic sigil transaction. Never animate
+the excluded caster merely for initiating a cast, an ineffective recipient, a
+failed-resource cast, or Unify. Do not create projectiles or modify spell
+mechanics. Preserve the original animation-field wire position and legacy-
+named accessors as compatibility facades. Unknown effect identities remain a
+safe no-animation result for authentic or older clients.
 
 Complete private party-combat, animation, and production testing; package all
 client assets; run the full server/client/release suites; and retain feature
@@ -1149,9 +1200,10 @@ The Cleric catalog advances to schema `2`. Its timed records are generated
 from the authoritative typed C08A rank definitions and carry duration,
 counter kind and initial value, presentation kind, and typed magnitude fields.
 Instant Purify/Restore and movement-only Unify carry no timed ranks. Approved
-Atelier Pixerelia spell-icon keys are server-fed for all twelve spells. Caster
-icons and animation identifiers remain unset, and no animation sheet is
-referenced.
+Atelier Pixerelia spell-icon keys are server-fed for all twelve spells. At
+C08B completion, caster icons and animation identifiers were unset and no
+animation sheet was referenced; C12 later populated only the compatible
+animation field with recipient on-entity identities.
 
 Opcode `152` keeps its legacy count, item-icon/seconds records, and overflow
 prefix byte-for-byte before appending extension version `1`. Each fixed

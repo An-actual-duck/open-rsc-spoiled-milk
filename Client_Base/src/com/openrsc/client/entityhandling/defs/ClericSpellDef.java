@@ -106,9 +106,13 @@ public final class ClericSpellDef {
 	public int getSilverSigilItemId() { return silverSigilItemId; }
 	public int getSilverSigilCount() { return silverSigilCount; }
 	public int getCasterIconItemId() { return casterIconItemId; }
-	public int getCasterAnimationId() { return casterAnimationId; }
 	public boolean hasCasterIcon() { return casterIconItemId >= 0; }
-	public boolean hasCasterAnimation() { return casterAnimationId >= 0; }
+	/** Compatibility accessor for the original presentation wire field name. */
+	public int getCasterAnimationId() { return getOnEntityAnimationId(); }
+	/** Compatibility predicate for the original presentation wire field name. */
+	public boolean hasCasterAnimation() { return hasOnEntityAnimation(); }
+	public int getOnEntityAnimationId() { return casterAnimationId; }
+	public boolean hasOnEntityAnimation() { return casterAnimationId >= 0; }
 	public List<ClericEffectRankDef> getEffectRanks() { return effectRanks; }
 	public ClericEffectRankDef getEffectRank(int rank) {
 		return rank <= 0 || rank > effectRanks.size() ? null : effectRanks.get(rank - 1);

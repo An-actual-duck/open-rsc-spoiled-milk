@@ -80,7 +80,7 @@ def main() -> int:
     ), "EntityHandler.java")
     require(client, (
         "COMBAT_EFFECT_DRAGON_WEAPON_SLASH_2 = 66",
-        "COMBAT_EFFECT_COUNT = 66",
+        "COMBAT_EFFECT_COUNT = 77",
         "CUSTOM_PROJECTILE_COUNT = 34",
     ), "mudclient.java")
 

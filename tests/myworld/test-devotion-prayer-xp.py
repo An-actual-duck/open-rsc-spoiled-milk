@@ -45,7 +45,7 @@ def main() -> None:
     require("getBlessingPrayerXp" in devotion and "100.0D + devotionLevel" in devotion,
             "blessing Worship XP should scale by 1% per devotion")
     require("DevotionHalfOfferingBalance.adjust(" in devotion
-            and "* DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING" in devotion,
+            and "DevotionOfferingGain.getHalfOfferingUnits(" in devotion,
             "offering gains should use bounded exact half-offering arithmetic")
     require("(long) devotionLevels * DevotionHalfOfferingBalance.HALF_UNITS_PER_DEVOTION_LEVEL" in devotion,
             "devotion-level adjustments should not overflow before exact clamping")
@@ -85,7 +85,7 @@ def main() -> None:
             "Worship skill guide should explain devotion levels")
     require("Devotion ranges from -1000 to 1000" in guide,
             "Worship skill guide should explain negative devotion range")
-    require("Blessed symbols give 1.5x devotion from offerings" in guide,
+    require("Matching blessed symbols give 2x devotion from offerings" in guide,
             "Worship skill guide should explain blessed symbol offering bonus")
     require("+1 Worship XP per offering for each devotion" in guide,
             "Worship skill guide should explain devotion XP scaling")

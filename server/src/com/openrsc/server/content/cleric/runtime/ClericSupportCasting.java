@@ -16,6 +16,7 @@ import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 
@@ -50,15 +51,16 @@ public final class ClericSupportCasting {
 			? definition.resolveEffectRank(
 				caster.getCarriedItems().getEquipment().getHolyPower()) : 0;
 		for (Player target : targets) {
+			final ClericCastTransaction.PreparedApplication application;
 			switch (definition.getId()) {
 				case UNIFY:
-					applications.add(prepareUnify(target, caster));
+					application = prepareUnify(target, caster);
 					break;
 				case PURIFY:
-					applications.add(preparePurify(target, effectRank));
+					application = preparePurify(target, effectRank);
 					break;
 				case RESTORE:
-					applications.add(prepareRestore(target, effectRank));
+					application = prepareRestore(target, effectRank);
 					break;
 				case MEND:
 				case FERVOR:
@@ -69,12 +71,13 @@ public final class ClericSupportCasting {
 				case AEGIS:
 				case RALLY:
 				case RESPITE:
-					applications.add(ClericTimedEffectRuntime.prepare(
-						caster, target, definition, effectRank));
+					application = ClericTimedEffectRuntime.prepare(
+						caster, target, definition, effectRank);
 					break;
 				default:
 					throw new IllegalStateException("Unprepared implemented Cleric spell");
 			}
+			applications.add(withOnEntityAnimation(target, definition, application));
 		}
 
 		final ClericCastTransaction.Result transaction = ClericCastTransaction.execute(
@@ -96,6 +99,16 @@ public final class ClericSupportCasting {
 				}
 			});
 		return CastResult.fromTransaction(transaction);
+	}
+
+	private static ClericCastTransaction.PreparedApplication withOnEntityAnimation(
+			final Player recipient, final ClericSpellDefinition definition,
+			final ClericCastTransaction.PreparedApplication application) {
+		if (!definition.getPresentation().hasOnEntityAnimation()) {
+			return application;
+		}
+		return new OnEntityAnimationApplication(recipient,
+			definition.getPresentation().getOnEntityAnimationId(), application);
 	}
 
 	public static boolean isPvpContext(final Player player) {
@@ -255,6 +268,32 @@ public final class ClericSupportCasting {
 		@Override
 		public void commit() {
 			throw new IllegalStateException("An ineffective Cleric application cannot commit");
+		}
+	}
+
+	private static final class OnEntityAnimationApplication
+			implements ClericCastTransaction.PreparedApplication {
+		private final Player recipient;
+		private final int animationId;
+		private final ClericCastTransaction.PreparedApplication application;
+
+		private OnEntityAnimationApplication(final Player recipient, final int animationId,
+				final ClericCastTransaction.PreparedApplication application) {
+			this.recipient = recipient;
+			this.animationId = animationId;
+			this.application = application;
+		}
+
+		@Override
+		public boolean isUseful() {
+			return application.isUseful();
+		}
+
+		@Override
+		public void commit() {
+			application.commit();
+			recipient.getUpdateFlags().setCombatEffect(
+				new CombatEffect(recipient, animationId));
 		}
 	}
 

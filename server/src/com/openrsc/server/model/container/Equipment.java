@@ -1640,7 +1640,6 @@ public class Equipment {
 			}
 		}
 		total += getUnicornHidePrayerBonus();
-		total += getBlackUnicornHidePrayerBonus();
 		return total;
 	}
 
@@ -1679,10 +1678,6 @@ public class Equipment {
 
 	public int getUnicornHidePrayerBonus() {
 		return hasFullUnicornHideSet() ? 10 : 0;
-	}
-
-	public int getBlackUnicornHidePrayerBonus() {
-		return hasFullBlackUnicornHideSet() ? 10 : 0;
 	}
 
 	private int getActivePrayerBonus(final Item item) {

@@ -188,7 +188,7 @@ def main():
         "public static final int COMBAT_EFFECT_ELDER_DRAGON_FIRESHOT = 62;",
         "public static final int COMBAT_EFFECT_ELDER_DRAGON_BURN = 63;",
         "public static final int COMBAT_EFFECT_TRUE_DEFENSE = 64;",
-		"public static final int COMBAT_EFFECT_COUNT = 66;",
+		"public static final int COMBAT_EFFECT_COUNT = 77;",
         '"battering-ram", "dragon-breath",',
         '"divine-grace", "divine-retribution", "corrosive-aura", "lesser-demon-magic", "greater-demon-magic",',
         '"enemy-earth-basic", "black-demon-magic", "balrog-magic"',

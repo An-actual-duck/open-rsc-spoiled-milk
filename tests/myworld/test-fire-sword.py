@@ -161,7 +161,7 @@ def main() -> None:
     require_text(mudclient, "COMBAT_EFFECT_FIRE_SWORD = 59", "Fire sword proc effect id")
     require_text(mudclient, "COMBAT_EFFECT_ICE_SWORD = 60", "Ice sword proc effect id")
     require_text(mudclient, "COMBAT_EFFECT_EARTH_SWORD = 61", "Earth sword proc effect id")
-    require_text(mudclient, "COMBAT_EFFECT_COUNT = 66", "Combat effect table includes the second Dragon weapon slash")
+    require_text(mudclient, "COMBAT_EFFECT_COUNT = 77", "Combat effect table includes appended Cleric effects")
     require_text(mudclient, '"fire-sword", "ice-sword", "earth-sword"', "Elemental sword proc effect names")
     require_text(mudclient, 'if ("ice-sword".equals(animationName))', "Ice sword proc sheet loader")
     require_text(mudclient, 'if ("earth-sword".equals(animationName))', "Earth sword proc sheet loader")

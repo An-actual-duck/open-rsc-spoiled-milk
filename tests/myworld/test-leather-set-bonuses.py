@@ -18,6 +18,8 @@ PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/pro
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
 LEATHER_DEBUFF_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/LeatherSetDebuffEvent.java"
+DEVOTION_PATH = ROOT / "server/src/com/openrsc/server/content/Devotion.java"
+BONES_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java"
 CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 ITEM_DEFS_MYWORLD_PATH = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 
@@ -52,9 +54,9 @@ def main() -> None:
     expect_contains(EQUIPMENT_PATH, "getGoblinTenacityProcChance()", "equipment goblin tenacity")
     expect_contains(EQUIPMENT_PATH, "return hasFullGoblinHideSet() ? 0.05D : 0.0D;", "goblin tenacity chance")
     expect_contains(EQUIPMENT_PATH, "getUnicornHidePrayerBonus()", "equipment unicorn bonus")
-    expect_contains(EQUIPMENT_PATH, "getBlackUnicornHidePrayerBonus()", "equipment black unicorn bonus")
     expect_contains(EQUIPMENT_PATH, "return hasFullUnicornHideSet() ? 10 : 0;", "unicorn prayer bonus should be unconditional")
-    expect_contains(EQUIPMENT_PATH, "return hasFullBlackUnicornHideSet() ? 10 : 0;", "black unicorn prayer bonus should be unconditional")
+    expect_not_contains(EQUIPMENT_PATH, "getBlackUnicornHidePrayerBonus()", "retired black unicorn prayer bonus")
+    expect_not_contains(EQUIPMENT_PATH, "total += getBlackUnicornHidePrayerBonus();", "retired black unicorn prayer total")
     expect_not_contains(EQUIPMENT_PATH, "hasFullUnicornHideSet() && player.getPrayerBook()", "unicorn prayer bonus god gate")
     expect_not_contains(EQUIPMENT_PATH, "hasFullBlackUnicornHideSet() && player.getPrayerBook()", "black unicorn prayer bonus god gate")
     expect_contains(EQUIPMENT_PATH, "getGiantMightSkillBonus(final int baseLevel)", "equipment giant might bonus")
@@ -72,6 +74,8 @@ def main() -> None:
     expect_contains(EQUIPMENT_PATH, "hasFullGoblinHideSet()", "goblin full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullUnicornHideSet()", "unicorn full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullBlackUnicornHideSet()", "black unicorn full-set detection")
+    expect_contains(DEVOTION_PATH, "hasFullBlackUnicornSetEquipped(player)", "black unicorn full-set Devotion bonus")
+    expect_contains(BONES_PATH, "applyBlackUnicornOfferingHeal(player, item);", "black unicorn manual-offering heal")
     expect_contains(EQUIPMENT_PATH, "hasFullBearHideSet()", "bear full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullGiantSet()", "giant full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullOgreSet()", "ogre full-set detection")
@@ -144,7 +148,8 @@ def main() -> None:
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "applyMyWorldLeatherArmorDescriptions();", "client leather examine descriptions hook")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full cow-hide set: +5 Hits.", "cow leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer.", "unicorn leather examine description")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer.", "black unicorn leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full set: +50% Devotion; normal/big/demon/dragon offerings heal 1/2/3/4 Hits.", "black unicorn leather examine description")
+    expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer.", "retired black unicorn leather examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer while worshipping Saradomin.", "old unicorn leather examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.", "old black unicorn leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.", "black dragon leather examine description")

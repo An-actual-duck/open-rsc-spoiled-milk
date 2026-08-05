@@ -97,8 +97,39 @@ public final class ClericSpellCatalog {
 			worshipLevel, spellTier,
 			radius, false, ClericSigilCost.forLaunchTier(spellTier),
 			new ClericSpellPresentation(spellbookIconItemId, statusIconAssetKey(id),
-				ClericSpellPresentation.NONE, ClericSpellPresentation.NONE),
+				ClericSpellPresentation.NONE, onEntityAnimationId(id)),
 			holyPowerThresholds);
+	}
+
+	private static int onEntityAnimationId(ClericSpellId id) {
+		switch (id) {
+			case MEND:
+				return 67;
+			case UNIFY:
+				return ClericSpellPresentation.NONE;
+			case FERVOR:
+				return 68;
+			case PURIFY:
+				return 69;
+			case RESTORE:
+				return 70;
+			case WARD:
+				return 71;
+			case GREATER_MEND:
+				return 72;
+			case ZEAL:
+				return 73;
+			case THORNS:
+				return 74;
+			case AEGIS:
+				return 75;
+			case RALLY:
+				return 76;
+			case RESPITE:
+				return 77;
+			default:
+				throw new IllegalArgumentException("Unknown Cleric animation identity: " + id);
+		}
 	}
 
 	private static String statusIconAssetKey(ClericSpellId id) {
