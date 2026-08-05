@@ -185,10 +185,23 @@ def main() -> None:
     for snippet in (
         "mc.setGameObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());",
         "mc.setWallObjectInstancePendingAreaLoad(instanceIndex, mc.isAreaLoadPending());",
-        "mc.setGameObjectInstancePendingAreaLoad(count, mc.isGameObjectInstancePendingAreaLoad(i));",
-        "mc.setWallObjectInstancePendingAreaLoad(localIndex, mc.isWallObjectInstancePendingAreaLoad(var9));",
+        "mc.setGameObjectInstancePendingAreaLoad(newIndex, mc.isGameObjectInstancePendingAreaLoad(oldIndex));",
+        "mc.setWallObjectInstancePendingAreaLoad(newIndex, mc.isWallObjectInstancePendingAreaLoad(oldIndex));",
     ):
         require(snippet in packet_handler, f"legacy scene transition metadata missing: {snippet}")
+    for pattern, description in (
+        (
+            r"setGameObjectInstancePendingAreaLoad\(\s*retained,\s*"
+            r"mc\.isGameObjectInstancePendingAreaLoad\(index\)\);",
+            "batched scenery compaction must retain pending-area metadata",
+        ),
+        (
+            r"setWallObjectInstancePendingAreaLoad\(\s*retained,\s*"
+            r"mc\.isWallObjectInstancePendingAreaLoad\(index\)\);",
+            "batched wall compaction must retain pending-area metadata",
+        ),
+    ):
+        require(re.search(pattern, packet_handler), description)
 
     verify_repeated_use_and_death_model()
     verify_legacy_deferred_load_model()
