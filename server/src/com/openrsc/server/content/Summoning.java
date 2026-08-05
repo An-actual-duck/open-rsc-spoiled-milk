@@ -768,6 +768,7 @@ public final class Summoning {
 		if (xp > 0) {
 			owner.incExp(Skill.PRAYER.id(), xp, true);
 			Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), devotionBonusXp);
+			BlackUnicornOfferingHealing.apply(owner, itemId, amount);
 			owner.message("@gre@Your black unicorn sanctifies the " + getPrayerDropName(owner, itemId, amount) + ".");
 		}
 		return true;

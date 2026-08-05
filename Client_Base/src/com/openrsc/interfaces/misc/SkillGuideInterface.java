@@ -1211,7 +1211,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
 			addSummonGuide(241, "33", "Hoarder - 4 uses; certs matching selected items");
 			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
-			addSummonGuide(296, "45", "Reverent - double XP and +50% Devotion from auto-offerings");
+			addSummonGuide(296, "45", "Reverent - double XP, +50% Devotion, and full-set healing from auto-offerings");
 			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
 			addSummonGuide(748, "55", "Watchful - one enemy; suppresses area attacks");
 			addSummonGuide(13, "58", "Beast of Burden - 2 uses; banks one stack");
@@ -1426,6 +1426,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuEntry("", "Every 10 offerings gives +1 devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Matching blessed symbols give 2x devotion from offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Mourning Unicorn and its full hide set each add 50%"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Full hide set heals 1/2/2/3/4 from bones/bat/big/demon/dragon offerings"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Mourning Unicorn auto-offerings also activate the set heal"));
 			skillMenuEntries.add(new SkillMenuEntry("", "+1 Worship XP per offering for each devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion is tracked separately for each god"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Devotion ranges from -1000 to 1000"));

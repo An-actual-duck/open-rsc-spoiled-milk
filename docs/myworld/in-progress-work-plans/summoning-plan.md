@@ -229,6 +229,10 @@ Atelier Pixerelia.
 - effect: automatically buries prayer drops such as bones, big bones, bat
   bones, and similar drops
 - reward: awards double Worship XP for automatically buried drops
+- synergy: while the owner wears the full Black Unicorn hide set, automatic
+  offerings trigger the same `1/2/2/3/4` Hits healing as manual
+  bones/bat/big/demon/dragon offerings; stacked drops multiply before the
+  healing cap
 
 ### Restless Shade
 
@@ -354,6 +358,8 @@ The first proof implementation has already established the core summon runtime.
   starts attacking.
 - `Mourning Unicorn` auto-buries prayer drops, including bones, bat bones, big
   bones, dragon bones, generic ashes, and demon ash, for double Worship XP.
+  With the full Black Unicorn hide set, every eligible non-ordinary-ash drop
+  also uses the shared set heal and stacked drops combine before the Hits cap.
 - `Guard Dog` limits PvM engagement to one enemy, suppresses player area
   attacks and procs, and restores normal targeting immediately when inactive.
 - Ranged and magic combat summons use projectile attacks with owner kill/XP

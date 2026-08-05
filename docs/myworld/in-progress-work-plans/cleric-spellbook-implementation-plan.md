@@ -72,12 +72,13 @@ offering value, so symbol use totals `2x`. The Black Unicorn summon and full
 Black Unicorn leather set each contribute `+0.5x`, so all three bonuses plus
 the `1x` base total exactly `3x`. The full leather set loses its former `+10`
 Prayer-point bonus and instead heals successful manual offerings by type:
-regular bones `1`, big bones `2`, demon ash `3`, and dragon bones `4`, capped
-by the valid healing ceiling. Bat bones, ordinary ash, bonecrusher processing,
-and summon auto-offerings do not trigger the set heal. Existing Worship XP,
-summon double-XP behavior, Devotion sinks, and every other acquisition source
-remain unchanged. The existing half-offering balance provides exact arithmetic
-without legacy alternating-bonus toggles.
+regular bones `1`, bat and big bones `2`, demon ash `3`, and dragon bones `4`,
+capped by the valid healing ceiling. Mourning Unicorn automatic offerings use
+the same healing authority, multiplying stacked drop quantities before the
+cap. Ordinary ash and Bonecrusher processing do not trigger the set heal.
+Existing Worship XP, summon double-XP behavior, Devotion sinks, and every other
+acquisition source remain unchanged. The existing half-offering balance
+provides exact arithmetic without legacy alternating-bonus toggles.
 
 ## Ordered Implementation Sequence
 
@@ -685,8 +686,9 @@ tuning has one authority.
 
 The bounded first C12 implementation slice is the confirmed source rebalance
 above. It must verify all eight combinations of symbol/summon/set modifiers;
-successful-removal gating; the four heal values and healing ceiling; exclusion
-of bat bones, ordinary ash, bonecrusher, and summon auto-offerings; removal of
+successful-removal gating; all five offering-to-heal mappings and the healing ceiling; exclusion
+of ordinary ash and Bonecrusher use; Bat-bone and stacked Mourning Unicorn
+auto-offering healing; removal of
 the Black Unicorn set's Prayer bonus across equipment modes and relog; unchanged
 ordinary Worship XP and summon double XP; server/client guide and item text;
 exact balance persistence; server and client builds; and private gameplay

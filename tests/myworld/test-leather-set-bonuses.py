@@ -20,6 +20,7 @@ OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/
 LEATHER_DEBUFF_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/LeatherSetDebuffEvent.java"
 DEVOTION_PATH = ROOT / "server/src/com/openrsc/server/content/Devotion.java"
 BONES_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java"
+SUMMONING_PATH = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 CLIENT_ENTITY_HANDLER_PATH = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 ITEM_DEFS_MYWORLD_PATH = ROOT / "server/conf/server/defs/ItemDefsMyWorld.json"
 
@@ -75,7 +76,8 @@ def main() -> None:
     expect_contains(EQUIPMENT_PATH, "hasFullUnicornHideSet()", "unicorn full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullBlackUnicornHideSet()", "black unicorn full-set detection")
     expect_contains(DEVOTION_PATH, "hasFullBlackUnicornSetEquipped(player)", "black unicorn full-set Devotion bonus")
-    expect_contains(BONES_PATH, "applyBlackUnicornOfferingHeal(player, item);", "black unicorn manual-offering heal")
+    expect_contains(BONES_PATH, "BlackUnicornOfferingHealing.apply(player, item.getCatalogId(), 1);", "black unicorn manual-offering heal")
+    expect_contains(SUMMONING_PATH, "BlackUnicornOfferingHealing.apply(owner, itemId, amount);", "black unicorn automatic-offering heal")
     expect_contains(EQUIPMENT_PATH, "hasFullBearHideSet()", "bear full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullGiantSet()", "giant full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullOgreSet()", "ogre full-set detection")
@@ -148,7 +150,7 @@ def main() -> None:
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "applyMyWorldLeatherArmorDescriptions();", "client leather examine descriptions hook")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full cow-hide set: +5 Hits.", "cow leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer.", "unicorn leather examine description")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full set: +50% Devotion; normal/big/demon/dragon offerings heal 1/2/3/4 Hits.", "black unicorn leather examine description")
+    expect_item_descriptions(range(1855, 1860), "Full set: +50% Devotion; bones/bat/big/demon/dragon offerings heal 1/2/2/3/4 Hits, including Mourning Unicorn offerings.", "black unicorn leather generated item examine")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer.", "retired black unicorn leather examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer while worshipping Saradomin.", "old unicorn leather examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.", "old black unicorn leather examine description")
