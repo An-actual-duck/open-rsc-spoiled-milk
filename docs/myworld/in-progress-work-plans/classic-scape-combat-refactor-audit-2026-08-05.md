@@ -553,6 +553,15 @@ order change.
 
 ### A04 — `refactor/combat-engagement-event-ownership`
 
+Implementation record: the focused worker branch now provides one
+`CombatEngagementAuthority` per mob, directional one-outgoing/many-incoming
+relationships, exact typed event slots, lifecycle snapshots, compatibility
+projections, reasoned teardown, and an explicit non-routine audit/repair path.
+Legacy opponent/event fields no longer form a second mutable graph. The
+A01–A03 gate has grown from 26 to 32 executable scenarios while preserving the
+narrow historical `inCombat()` boundary. Integration remains subject to
+manager review of the exact READY handoff.
+
 Create one directional engagement/event authority and project legacy fields
 from it. Cover one outgoing/many incoming relationships, passive retaliation,
 retargeting, stale callbacks, logout, teleport, death, and audit repair. Do not

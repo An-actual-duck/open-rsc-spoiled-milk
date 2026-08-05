@@ -914,6 +914,9 @@ public final class CurrentCombatCharacterizationTest {
 			"teleport closes the outgoing direction");
 		assertFalse(rangeTarget.hasIncomingAttackFrom(ranger),
 			"teleport removes target incoming ownership");
+		ranger.terminateCombatOwnership(CombatEngagementTerminalReason.TELEPORT);
+		assertFalse(ranger.hasOutgoingAttack(),
+			"repeated empty cleanup remains idempotent");
 
 		final Npc incomingAttacker = harness.npc(3, 154, 126);
 		final Player teleportedTarget = harness.player("teleport target", 155, 126);
@@ -936,6 +939,10 @@ public final class CurrentCombatCharacterizationTest {
 		assertNull(mage.getMagicCombatEvent(), "logout clears magic event ownership");
 		assertFalse(magicTarget.hasIncomingAttackFrom(mage),
 			"logout removes target incoming ownership");
+		mage.setLoggedIn(false);
+		mage.setLoggedIn(true);
+		assertFalse(mage.hasOutgoingAttack(),
+			"repeated logout and reconnect do not revive ownership");
 
 		final Player victim = harness.player("death target", 162, 126);
 		final Player attacker = harness.player("death owner", 163, 126);

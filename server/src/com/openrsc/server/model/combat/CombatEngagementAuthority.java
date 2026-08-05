@@ -35,6 +35,7 @@ public final class CombatEngagementAuthority {
 		this.owner = owner;
 	}
 
+	@SuppressWarnings("PMD.CompareObjectsWithEquals")
 	public CombatEngagement beginOutgoing(final Mob target,
 			final CombatStyle style, final boolean legacyOpponentProjection) {
 		if (target == null || target == owner) {
@@ -66,7 +67,7 @@ public final class CombatEngagementAuthority {
 				}
 				engagement.activate(owner, style,
 					legacyOpponentProjection, currentTick());
-				outgoing = engagement;
+				setOutgoingLocked(engagement);
 				targetAuthority.incoming.put(owner.getUUID(), engagement);
 				return engagement;
 			}
@@ -311,7 +312,7 @@ public final class CombatEngagementAuthority {
 		}
 	}
 
-	private void pruneLocked() {
+	private synchronized void pruneLocked() {
 		if (outgoing != null && (!outgoing.hasCurrentParticipantIdentity()
 			|| !outgoing.isDirectionActive(owner))) {
 			outgoing = null;
@@ -331,9 +332,22 @@ public final class CombatEngagementAuthority {
 		pruneEventBindingsLocked();
 	}
 
-	private CombatEngagement validOutgoingLocked() {
+	private synchronized CombatEngagement validOutgoingLocked() {
 		return outgoing != null && outgoing.hasCurrentParticipantIdentity()
 			&& outgoing.isDirectionActive(owner) ? outgoing : null;
+	}
+
+	private synchronized void setOutgoingLocked(
+			final CombatEngagement engagement) {
+		outgoing = engagement;
+	}
+
+	@SuppressWarnings("PMD.CompareObjectsWithEquals")
+	private synchronized void clearOutgoingIfLocked(
+			final CombatEngagement engagement) {
+		if (outgoing == engagement) {
+			outgoing = null;
+		}
 	}
 
 	private CombatEngagement findIncomingLocked(final Mob attacker) {
@@ -342,6 +356,7 @@ public final class CombatEngagementAuthority {
 			&& engagement.isDirectionActive(attacker) ? engagement : null;
 	}
 
+	@SuppressWarnings("PMD.CompareObjectsWithEquals")
 	private static void closeDirection(final CombatEngagement engagement,
 			final Mob source, final CombatEngagementTerminalReason reason) {
 		if (engagement == null || source == null || !engagement.contains(source)) {
@@ -362,9 +377,7 @@ public final class CombatEngagementAuthority {
 					sourceAuthority.currentTick())) {
 					return;
 				}
-				if (sourceAuthority.outgoing == engagement) {
-					sourceAuthority.outgoing = null;
-				}
+				sourceAuthority.clearOutgoingIfLocked(engagement);
 				final CombatEngagement incomingEngagement =
 					targetAuthority.incoming.get(source.getUUID());
 				if (incomingEngagement == engagement) {

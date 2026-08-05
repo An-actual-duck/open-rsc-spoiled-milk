@@ -53,7 +53,11 @@ def main() -> None:
     require_contains(ATTACK_HANDLER, "retargetingNpcWithRangedWhileInCombat")
     require_contains(ATTACK_HANDLER, "player.inCombat() && !retargetingNpcWhileInCombat")
     require_contains(MOB, "private void startPvmCombat(final Mob victim)")
-    require_contains(MOB, "pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, victim);")
+    require_contains_normalized(
+        MOB,
+        "final PvmMeleeEvent newPvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, victim);",
+    )
+    require_contains(MOB, "setPvmMeleeEvent(newPvmMeleeEvent);")
     require_contains(MOB, "public PvmMeleeEvent getPvmMeleeEvent()")
     require_contains(PVM_MELEE_EVENT, "class PvmMeleeEvent")
     require_contains(PVM_MELEE_EVENT, "public Mob getAttacker()")

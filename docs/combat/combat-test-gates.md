@@ -98,7 +98,7 @@ changed-code analysis and the focused
 combat, poison, projectile, NPC, Cleric, summoning, dragon, and layered-world
 Python suites alongside this gate.
 
-## A01-A03 boundary
+## A01-A04 boundary
 
 A01 established the real-Java gate without moving production authority. A02
 adds the bounded production-preserving clock, random, and whole-tick test seams
@@ -115,3 +115,12 @@ player attack-start styles, missing-resource rollback, and manual priority over
 passive autocast. The implementation and retained content-policy boundaries are
 recorded in
 [`combat-a03-eligibility-transactions.md`](combat-a03-eligibility-transactions.md).
+
+A04 grows the gate from 26 to 32 scenarios. Its added scenarios exercise one
+outgoing/many incoming engagement ownership, retargeting without peer teardown,
+stale callback isolation, teleport/logout/death cleanup, passive retaliation,
+explicit audit repair, and reciprocal melee teardown. The compatibility
+projection deliberately preserves the narrower historical meaning of
+`getOpponent()` and `inCombat()`. The ownership contract and deferred behavior
+decisions are recorded in
+[`combat-a04-engagement-event-ownership.md`](combat-a04-engagement-event-ownership.md).
