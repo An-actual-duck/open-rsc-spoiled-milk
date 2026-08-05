@@ -9,6 +9,7 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
@@ -54,6 +55,7 @@ public class RangeEvent extends GameTickEvent {
 
 	public void reTarget(final Mob mob) {
 		target = mob;
+		player.setRangeEvent(this);
 		setDelayTicks(2);
 		long currentTick = player.getWorld().getServer().getCurrentTick();
 		if (player.getAttribute("can_range_again", 0L) > currentTick + 1) {
@@ -67,6 +69,10 @@ public class RangeEvent extends GameTickEvent {
 
 	public void run() {
 		if (!running) return;
+		if (!player.isCurrentRangeEvent(this)) {
+			stop();
+			return;
+		}
 
 		long currentTick = player.getWorld().getServer().getCurrentTick();
 		if (player.getAttribute("can_range_again", 0L) > currentTick) return;
@@ -82,7 +88,8 @@ public class RangeEvent extends GameTickEvent {
 			target.getSkills().getLevel(Skill.HITS.id()) <= 0 ||
 			(target.isPlayer() && (!((Player) target).loggedIn() || !player.checkAttack(target, true))) ||
 			!player.withinRange(target)) {
-			player.resetRange();
+			player.terminateRangeEvent(
+				this, CombatEngagementTerminalReason.EVENT_ENDED);
 			return;
 		}
 
@@ -280,6 +287,7 @@ public class RangeEvent extends GameTickEvent {
 				player.message(message);
 			}
 		}
-		player.resetRange();
+		player.terminateRangeEvent(
+			this, CombatEngagementTerminalReason.EVENT_ENDED);
 	}
 }

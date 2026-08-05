@@ -8,6 +8,7 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.KillType;
@@ -53,6 +54,7 @@ public class ThrowingEvent extends GameTickEvent {
 
 	public void reTarget(final Mob mob) {
 		target = mob;
+		getPlayerOwner().setThrowingEvent(this);
 		shurikenTargetLock.clear();
 		setDelayTicks(2);
 		long currentTick = getPlayerOwner().getWorld().getServer().getCurrentTick();
@@ -88,12 +90,16 @@ public class ThrowingEvent extends GameTickEvent {
 	@Override
 	public void run() {
 		final Player player = getPlayerOwner();
+		if (!player.isCurrentThrowingEvent(this)) {
+			stop();
+			return;
+		}
 
 		long currentTick = player.getWorld().getServer().getCurrentTick();
 		if (player.getAttribute("can_range_again", 0L) > currentTick) return;
 		int throwingID = player.getThrowingEquip();
 		if (!resolvePrimaryTarget(player, throwingID)) {
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 
@@ -105,7 +111,7 @@ public class ThrowingEvent extends GameTickEvent {
 				|| target.getSkills().getLevel(Skill.HITS.id()) <= 0
 				|| !player.checkAttack(target, true)
 				|| !player.withinRange(target)) {
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 
@@ -114,7 +120,7 @@ public class ThrowingEvent extends GameTickEvent {
 			player.walkToEntity(target.getX(), target.getY());
 			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null && throwingID != -1) {
 				player.message("I can't get close enough");
-				player.resetRange();
+				terminateCurrent(player);
 			}
 			return;
 		}
@@ -129,7 +135,7 @@ public class ThrowingEvent extends GameTickEvent {
 			getWorld(), player.getWorldLocation(),
 			target.getWorldLocation(), false)) {
 			player.message("I can't get a clear shot from here");
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 
@@ -146,12 +152,12 @@ public class ThrowingEvent extends GameTickEvent {
 
 		if (target.isNpc()) {
 			if (target.getWorld().getServer().getPluginHandler().handlePlugin(PlayerRangeNpcTrigger.class, getPlayerOwner(), new Object[]{getOwner(), target})) {
-				player.resetRange();
+				terminateCurrent(player);
 				return;
 			}
 		} else {
 			if (target.getWorld().getServer().getPluginHandler().handlePlugin(PlayerRangePlayerTrigger.class, player, new Object[]{getOwner(), target})) {
-				player.resetRange();
+				terminateCurrent(player);
 				return;
 			}
 		}
@@ -159,20 +165,20 @@ public class ThrowingEvent extends GameTickEvent {
 		if (throwingID == -1) {
 			ActionSender.sendSound(player, "outofammo");
 			player.message(ProjectileFailureReason.OUT_OF_AMMO.getText());
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 
 		List<Mob> throwingTargets = selectThrowingTargets(player, throwingID, attackRadius);
 		if (throwingTargets.isEmpty()) {
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 
 		int throwsToConsume = RangeUtils.SHURIKENS.contains(throwingID) ? throwingTargets.size() : 1;
 		int availableThrows = getAvailableThrowingCount(player, throwingID);
 		if (availableThrows < 1) {
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 		throwsToConsume = Math.min(throwsToConsume, availableThrows);
@@ -180,7 +186,7 @@ public class ThrowingEvent extends GameTickEvent {
 			throwingTargets.remove(throwingTargets.size() - 1);
 		}
 		if (!removeThrowingItems(player, throwingID, throwsToConsume)) {
-			player.resetRange();
+			terminateCurrent(player);
 			return;
 		}
 		if (RangeUtils.SHURIKENS.contains(throwingID)) {
@@ -216,6 +222,11 @@ public class ThrowingEvent extends GameTickEvent {
 		player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
 		getOwner().setKillType(KillType.RANGED);
 		deliveredFirstProjectile = true;
+	}
+
+	private void terminateCurrent(final Player player) {
+		player.terminateThrowingEvent(
+			this, CombatEngagementTerminalReason.EVENT_ENDED);
 	}
 
 	private int getAvailableThrowingCount(Player player, int throwingID) {
@@ -262,6 +273,7 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 		target = fallback;
 		player.setOpponent(fallback);
+		player.setThrowingEvent(this);
 		player.setCombatTimer();
 		return true;
 	}

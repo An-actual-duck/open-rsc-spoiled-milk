@@ -14,6 +14,7 @@ import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.entity.*;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
@@ -1486,7 +1487,7 @@ public class Npc extends Mob {
 	}
 
 	private void removeWithinLayeredOwnerLifecycle() {
-		advanceCombatLifecycle();
+		advanceCombatLifecycle(CombatEngagementTerminalReason.DESPAWN);
 		setAttribute(DEATH_VISUAL_TICK_ATTRIBUTE, getWorld().getServer().getCurrentTick());
 		// Removal is the authoritative end of this NPC lifetime, including
 		// scripted and unattributed paths that do not complete killedBy().
@@ -1611,6 +1612,7 @@ public class Npc extends Mob {
 	}
 
 	public void teleport(final int x, final int y) {
+		terminateCombatOwnership(CombatEngagementTerminalReason.TELEPORT);
 		setLocation(Point.location(x, y), true);
 	}
 
@@ -1625,6 +1627,7 @@ public class Npc extends Mob {
 		}
 		beginLayeredOwnerLifecycleOperation();
 		try {
+			terminateCombatOwnership(CombatEngagementTerminalReason.TELEPORT);
 			getWorld().getRegionManager().prepareNativeLayeredTransition(
 				getWorldLocation(), destination, true);
 			super.setWorldLocation(destination, true);
@@ -1874,7 +1877,7 @@ public class Npc extends Mob {
 	public void superRemove() {
 		beginLayeredOwnerLifecycleOperation();
 		try {
-			advanceCombatLifecycle();
+			advanceCombatLifecycle(CombatEngagementTerminalReason.DESPAWN);
 			super.remove();
 		} finally {
 			endLayeredOwnerLifecycleOperation();

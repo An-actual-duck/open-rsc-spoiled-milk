@@ -25,6 +25,7 @@ import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -235,6 +236,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private boolean combatCanContinue() {
+		if (!attackerMob.isCurrentPvmMeleeEvent(this)) {
+			return false;
+		}
 		boolean attackerLoggedIn = !attackerMob.isPlayer() || ((Player) attackerMob).loggedIn();
 		boolean targetLoggedIn = !targetMob.isPlayer() || ((Player) targetMob).loggedIn();
 		boolean attackerRespawning = attackerMob.isNpc() && ((Npc) attackerMob).isRespawning();
@@ -985,29 +989,37 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	public void resetCombat() {
-		resetCombat(true);
+		terminate(CombatEngagementTerminalReason.LEGACY_RESET, true);
 	}
 
 	public void resetCombat(final boolean resetAttackerState) {
-		if (attackerMob != null) {
-			if (resetAttackerState && attackerMob.isPlayer()) {
-				((Player) attackerMob).resetAll();
-			}
-			if (attackerMob.getOpponent() == targetMob) {
-				attackerMob.setOpponent(null);
-			}
-			if (attackerMob.isHostileToward(targetMob)) {
-				attackerMob.clearHostility();
-			}
-			attackerMob.setPvmMeleeEvent(null);
-			attackerMob.setHitsMade(0);
-			if (attackerMob.getSprite() > 7) {
-				attackerMob.setSprite(4);
-				attackerMob.face(attackerMob.getX(), attackerMob.getY() - 1);
-			}
-			attackerMob.setCombatTimer();
+		terminate(CombatEngagementTerminalReason.LEGACY_RESET,
+			resetAttackerState);
+	}
+
+	public void terminate(final CombatEngagementTerminalReason reason,
+			final boolean resetAttackerState) {
+		if (attackerMob == null
+			|| !attackerMob.isCurrentPvmMeleeEvent(this)) {
+			stop();
+			return;
 		}
-		if (targetMob != null && targetMob.getOpponent() == attackerMob && !targetStillHasOutgoingCombat()) {
+		attackerMob.clearPvmMeleeEventIfCurrent(this, reason);
+		stop();
+		if (resetAttackerState && attackerMob.isPlayer()) {
+			((Player) attackerMob).resetAll();
+		}
+		if (attackerMob.isHostileToward(targetMob)) {
+			attackerMob.clearHostility();
+		}
+		attackerMob.setHitsMade(0);
+		if (attackerMob.getSprite() > 7) {
+			attackerMob.setSprite(4);
+			attackerMob.face(attackerMob.getX(), attackerMob.getY() - 1);
+		}
+		attackerMob.setCombatTimer();
+		if (targetMob != null && targetMob.getOpponent() == attackerMob
+			&& !targetStillHasOutgoingCombat()) {
 			targetMob.setOpponent(null);
 			if (targetMob.isHostileToward(attackerMob)) {
 				targetMob.clearHostility();
@@ -1018,15 +1030,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 				targetMob.face(targetMob.getX(), targetMob.getY() - 1);
 			}
 		}
-		stop();
 	}
 
 	private boolean targetStillHasOutgoingCombat() {
-		if (targetMob.getCombatEvent() != null && targetMob.getCombatEvent().isRunning()) {
-			return true;
-		}
-		PvmMeleeEvent targetEvent = targetMob.getPvmMeleeEvent();
-		return targetEvent != null && targetEvent.isRunning() && targetEvent.getTarget() == attackerMob;
+		return targetMob.getOutgoingCombatTarget() == attackerMob;
 	}
 
 	private GameRandom combatRandom() {
