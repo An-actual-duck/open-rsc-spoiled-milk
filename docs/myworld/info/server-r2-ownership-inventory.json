@@ -740,7 +740,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "b152078cc4bdc7ba793b6e06ec783e6af5071f5861066c3855a9353560d49691",
+  "inputTreeSha256": "525b3a38961c726a01c9721d61e5c50b884406273579d7801cc6650ad31472a9",
   "inputs": [
     {
       "brandSignals": [
@@ -33742,7 +33742,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 82630,
+      "bytes": 82619,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -33898,7 +33898,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/NpcTalkTo.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "12505284a5d5375bfd982bd15d7e95f68eb2a530835a06f1ad1b198f2a6ec400"
+      "sha256": "f130e1266c4e3393ec14f87f20faafd40140f923f476ac24c77e69fffadc90f7"
     },
     {
       "brandSignals": [],
@@ -40612,7 +40612,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2866,
+      "bytes": 2958,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -40666,7 +40666,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "db68dc7d0c0c28ffad8e369bf7b230859f86afcc5bde3c1de1e7753dc01f96b8"
+      "sha256": "a979bfcc2fe42d8153fa2a85e492e00272458d3adc75e934cf0952ff0622b2af"
     },
     {
       "brandSignals": [
@@ -47118,7 +47118,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 69352,
+      "bytes": 69420,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -47369,7 +47369,7 @@
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java",
         "server/src/com/openrsc/server/util/rsc/Formulae.java"
       ],
-      "sha256": "74d5eb63924182e7af016b16c7ba4c6021e41be3a67f26043a44ef942eedefcd"
+      "sha256": "e98a9a18b70fcd617a76c65e44ec5a3e18e217359eb64a837c7df546cb55dcde"
     },
     {
       "brandSignals": [],
@@ -47449,7 +47449,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 62758,
+      "bytes": 63274,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -47984,7 +47984,7 @@
         "server/src/com/openrsc/server/util/PathfindingDebug.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "4747d8950e3b96b9f17d0db400ab64fa2556a7f71b5dd67e34b79c663c9a25d1"
+      "sha256": "a1ea29a364d495aee1e27932d936ef552fac93fa75eb19e198750f1ef78d0512"
     },
     {
       "brandSignals": [],
