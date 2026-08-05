@@ -96,7 +96,7 @@ def main() -> int:
         "Guard Dog must keep client/server summon indexes aligned",
     )
     require(client, '"Restless Shade", "Guard Dog", "Delivery Camel"', "client summon order is wrong")
-    require(client, "1, 7, 12, 14, 20, 26, 33, 39, 45, 51, 55, 58, 64, 70", "client level is wrong")
+    require(client, "1, 7, 12, 14, 20, 26, 33, 39, 45, 51, 55, 58, 61, 64, 70", "client level is wrong")
     require(client, "{37, 36, 825, 20}", "client Guard Dog cost item IDs are wrong")
     require(client, "{2, 2, 1, 1}", "client Guard Dog cost amounts are wrong")
     require(client, "GUARD_DOG_SUMMON_NPC_ID = 748", "client Guard Dog NPC identity is missing")

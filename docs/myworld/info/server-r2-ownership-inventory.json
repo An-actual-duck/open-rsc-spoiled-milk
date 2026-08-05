@@ -740,7 +740,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "6e964fea74c60554d9751016c90fb26b64f0f709c2616b5d529be9ebbd2406f9",
+  "inputTreeSha256": "b152078cc4bdc7ba793b6e06ec783e6af5071f5861066c3855a9353560d49691",
   "inputs": [
     {
       "brandSignals": [
@@ -1716,7 +1716,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 42186,
+      "bytes": 43014,
       "category": "spoiled-milk-content",
       "classificationReason": "Named Spoiled Milk definition override",
       "classificationRule": "server/conf/server/defs/*{MyWorld,Custom}*",
@@ -1725,7 +1725,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/NpcDefsCustom.json",
       "reverseDependencies": [],
-      "sha256": "ba2134b030355bd34373e9f6d5ad23da0461407b1d1c118cabfa8ecb67b7d9d8"
+      "sha256": "cff22b7a478b0b6c9a9ee56e0eecdc14bac65ef4197d03786f3e0ce139167438"
     },
     {
       "brandSignals": [],
@@ -24948,7 +24948,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 30846,
+      "bytes": 33130,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -24978,8 +24978,12 @@
           "path": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
         },
         {
-          "import": "com.openrsc.server.content.SkillCapes",
-          "path": "server/src/com/openrsc/server/content/SkillCapes.java"
+          "import": "com.openrsc.server.content.FoundryDragonSmeltingCost",
+          "path": "server/src/com/openrsc/server/content/FoundryDragonSmeltingCost.java"
+        },
+        {
+          "import": "com.openrsc.server.content.Summoning",
+          "path": "server/src/com/openrsc/server/content/Summoning.java"
         },
         {
           "import": "com.openrsc.server.content.production.ProductionRecipe",
@@ -24996,10 +25000,6 @@
         {
           "import": "com.openrsc.server.external.Gauntlets",
           "path": "server/src/com/openrsc/server/external/Gauntlets.java"
-        },
-        {
-          "import": "com.openrsc.server.model.Point",
-          "path": "server/src/com/openrsc/server/model/Point.java"
         },
         {
           "import": "com.openrsc.server.model.container.Item",
@@ -25044,7 +25044,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/skills/crafting/Crafting.java"
       ],
-      "sha256": "41318fb38854663bc3a66b8f830039e51b4b4cd019662b3d62700ce08a4d56d4"
+      "sha256": "782ff707d6c7616c3740c2239152266ad0097ede0669960f503d9985ebd7f516"
     },
     {
       "brandSignals": [
@@ -31935,7 +31935,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 18245,
+      "bytes": 18267,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -32301,7 +32301,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/ItemUseOnNpc.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "295c8eec94c48d9b2ce7043f9e05eff721ba50f69e0f209483634a76135e43f0"
+      "sha256": "98c483cf778b6ee281f0c2981515122fc84968b43b4559270158441328ef780d"
     },
     {
       "brandSignals": [],
@@ -33359,6 +33359,22 @@
       "sha256": "db5fc2b2edfc9d884bc055ed3ad1a2af8eb11323d034a2ac7afb74a982fb9041"
     },
     {
+      "brandSignals": [],
+      "bytes": 822,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.content.FoundryDragonSmeltingCost",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/FoundryDragonSmeltingCost.java",
+      "reverseDependencies": [
+        "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smelting.java",
+        "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
+      ],
+      "sha256": "bb47639450111c84ecca919c30b3b54400e377e53a1e36b603fdb53a0b033902"
+    },
+    {
       "brandSignals": [
         "myworld-name"
       ],
@@ -33711,7 +33727,6 @@
         "server/plugins/com/openrsc/server/plugins/authentic/skills/fletching/Fletching.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/herblaw/Herblaw.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/mining/Mining.java",
-        "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smelting.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/thieving/Thieving.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/woodcutting/Woodcutting.java",
         "server/plugins/com/openrsc/server/plugins/custom/skills/harvesting/Harvesting.java",
@@ -33727,7 +33742,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 81400,
+      "bytes": 82630,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -33855,6 +33870,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
         "server/plugins/com/openrsc/server/plugins/authentic/npcs/SummoningNpcs.java",
+        "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smelting.java",
         "server/src/com/openrsc/server/GameStateUpdater.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java",
@@ -33882,7 +33898,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/NpcTalkTo.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "2a7b158b951cfb60cffed9c7f894a36110f9316b841dc91b3074c4accde1fb35"
+      "sha256": "12505284a5d5375bfd982bd15d7e95f68eb2a530835a06f1ad1b198f2a6ec400"
     },
     {
       "brandSignals": [],
@@ -45049,7 +45065,6 @@
         "server/plugins/com/openrsc/server/plugins/authentic/skills/crafting/Crafting.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/firemaking/Firemaking.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/ShiloFurnaceAccess.java",
-        "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smelting.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/thieving/Thieving.java",
         "server/plugins/com/openrsc/server/plugins/custom/minigames/ArmyOfObscurity.java",
         "server/plugins/com/openrsc/server/plugins/custom/minigames/micetomeetyou/Death.java",
@@ -58533,7 +58548,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 101019,
+      "bytes": 103684,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -58577,6 +58592,10 @@
         {
           "import": "com.openrsc.server.content.EnchantingItemEffects",
           "path": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
+        },
+        {
+          "import": "com.openrsc.server.content.FoundryDragonSmeltingCost",
+          "path": "server/src/com/openrsc/server/content/FoundryDragonSmeltingCost.java"
         },
         {
           "import": "com.openrsc.server.content.SkillCapes",
@@ -58818,7 +58837,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestDarkMetalGate.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
       ],
-      "sha256": "947029ca3208c7215cb488657a88f044b3816065d147e769937ace1f10f1e21b"
+      "sha256": "4f80e545882e8a19d8cac1685767078246efbe2fa7b5168435bf72350f467c66"
     },
     {
       "brandSignals": [],
@@ -68377,16 +68396,16 @@
       "spoiled-milk-content": 201,
       "target-profile": 412,
       "tool-only": 133,
-      "unresolved": 116
+      "unresolved": 117
     },
     "configurationInputs": 21,
-    "coreJavaFiles": 956,
+    "coreJavaFiles": 957,
     "databasePatchInputs": 27,
     "definitionInputs": 42,
     "directBrandSignalFiles": 271,
     "foundationToSpoiledMilkDependencies": 95,
     "kindCounts": {
-      "ant-core-source": 956,
+      "ant-core-source": 957,
       "ant-library": 21,
       "ant-plugin-source": 492,
       "build-definition": 2,
@@ -68414,7 +68433,7 @@
     },
     "pluginJavaFiles": 492,
     "populationInputs": 41,
-    "shippedInputs": 1848
+    "shippedInputs": 1849
   },
   "unresolvedInputs": [
     {
@@ -68739,6 +68758,10 @@
     },
     {
       "path": "server/src/com/openrsc/server/content/DropTable.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/FoundryDragonSmeltingCost.java",
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {

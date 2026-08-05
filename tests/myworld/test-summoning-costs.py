@@ -126,6 +126,26 @@ def main() -> int:
     if client_cost_item_ids[11] != [37, 36, 42, 40] or client_cost_amounts[11] != [1, 2, 2, 2]:
         fail("Delivery Camel dropdown cost icons should be life, body, law, nature only")
 
+    foundry_match = re.search(
+        r"private static final SummonProfile FOUNDRY_DRAGON_PROFILE = supportProfile\((?P<body>.*?)\n\t\);",
+        summoning,
+        re.S,
+    )
+    if not foundry_match:
+        fail("Foundry Dragon summon profile not found")
+    foundry_profile = foundry_match.group("body")
+    for expected in (
+        '"Foundry Dragon", 61, 365',
+        "cost(ItemId.LIFE_RUNE.id(), 2)",
+        "cost(ItemId.FIRE_RUNE.id(), 5)",
+        "cost(ItemId.NATURE_RUNE.id(), 2)",
+        "cost(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1)",
+    ):
+        if expected not in foundry_profile:
+            fail(f"Foundry Dragon profile is missing {expected}")
+    if client_cost_item_ids[12] != [37, 31, 40, 1347] or client_cost_amounts[12] != [2, 5, 2, 1]:
+        fail("Foundry Dragon dropdown cost icons should be life, fire, nature, black dragon scale")
+
     upkeep_checks = (
         "SUPPORT_UPKEEP_BASE_COST = 1",
         "SUPPORT_UPKEEP_INCREASE_MS = 3 * SUPPORT_UPKEEP_MS",
@@ -177,9 +197,14 @@ def main() -> int:
     if "`1 bones`" in rat_plan:
         fail("Summoning plan should not document bones for Pack Rat")
 
-    camel_plan = plan[plan.index("### Delivery Camel"):plan.index("### Astral Wraith")]
+    camel_plan = plan[plan.index("### Delivery Camel"):plan.index("### Foundry Dragon")]
     if "`1 bones`" in camel_plan:
         fail("Summoning plan should not document bones for Delivery Camel")
+
+    foundry_plan = plan[plan.index("### Foundry Dragon"):plan.index("### Astral Wraith")]
+    for expected in ("`2 Life runes`", "`5 Fire runes`", "`2 Nature runes`", "`1 Black dragon scale`"):
+        if expected not in foundry_plan:
+            fail(f"Summoning plan should document Foundry Dragon cost {expected}")
 
     print("PASS: summoning costs validated")
     return 0

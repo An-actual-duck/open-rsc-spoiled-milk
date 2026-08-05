@@ -12,7 +12,7 @@ runtime.
 - Maintain a real summoning system instead of one-off scripted companions.
 - Keep `Wolf` and `Hellhound` leather set bonuses on the summon runtime.
 - Support combat, support, and charge-limited utility summons.
-- Keep the first 14-summon catalog spaced from level `1` through level `70`.
+- Keep the first 15-summon catalog spaced from level `1` through level `70`.
 
 ## Core Rules
 
@@ -38,7 +38,7 @@ runtime.
 
 ## Skill Progression
 
-The first 14 summons are ordered below and should be evenly spaced across
+The first 15 summons are ordered below and should be evenly spaced across
 levels `1-70`.
 
 | Level | Summon | Role | Cast XP |
@@ -55,6 +55,7 @@ levels `1-70`.
 | 51 | Restless Shade | Combat, ranged plus fear | 280 |
 | 55 | Guard Dog | Support | 310 |
 | 58 | Delivery Camel | Utility | 335 |
+| 61 | Foundry Dragon | Support | 365 |
 | 64 | Astral Wraith | Combat, magic | 395 |
 | 70 | Abyssal Demon | Combat, melee or magic | 460 |
 
@@ -75,9 +76,11 @@ from the summon display name in lowercase with spaces converted to dashes:
 `broodling-spider.png`, `mischief-imp.png`, `loot-goblin.png`,
 `ironhide-bear.png`, `sacred-unicorn.png`, `duskwind-bat.png`, `pack-rat.png`,
 `bound-battleaxe.png`, `mourning-unicorn.png`, `restless-shade.png`,
-`guard-dog.png`, `delivery-camel.png`, `astral-wraith.png`, and
-`abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon by
-Atelier Pixerelia.
+`guard-dog.png`, `delivery-camel.png`, `foundry-dragon.png`,
+`astral-wraith.png`, and `abyssal-demon.png`. Guard Dog uses its purpose-made `guard-dog.png` icon
+by Atelier Pixerelia. Dedicated Foundry Dragon menu art
+has not been supplied, so its slot intentionally uses the client's built-in `FD` initials
+until `foundry-dragon.png` is available.
 
 ## Summon Roles
 
@@ -274,6 +277,29 @@ Atelier Pixerelia.
 - maximum: `450` displayed service XP, or `785` including the `335` cast XP
   (`1,350` and `2,355` respectively at the normal `3x` My World rate)
 
+### Foundry Dragon
+
+- level: `61`
+- role: support
+- cast XP: `365`
+- cost: `2 Life runes`, `5 Fire runes`, `2 Nature runes`,
+  `1 Black dragon scale`
+- upkeep: standard support-summon Life-rune upkeep
+- effect: while its active summon NPC remains owned by the player, every coal
+  in a bar-smelting recipe is replaced by `5 Fire runes` and `1 Nature rune`
+- safety: the full ore, spell-rune, and replacement-rune vector is checked and
+  removed atomically before any output or XP is awarded
+- paths: applies to modern furnace production, retro/direct furnace use,
+  batches, and the legacy Superheat runtime; lava-forge recipes contain no coal
+  and remain unchanged
+- Smithing cape: Superheat first applies its established coal reduction, then
+  converts the remaining coal requirement into runes
+- visual: reuses the Black Dragon sprite at approximately the Baby Blue
+  Dragon's half scale; the support profile prevents combat
+- progression rationale: level `61` and `365` cast XP evenly bridge Delivery
+  Camel (`58`/`335`) and Astral Wraith (`64`/`395`), while the black dragon
+  scale and elemental rune cost fit the summon and its powerful resource swap
+
 ### Astral Wraith
 
 - level: `64`
@@ -330,10 +356,10 @@ The first proof implementation has already established the core summon runtime.
 
 ## Current Implementation Status
 
-- The summon tab contains the first 14-summon catalog in the planned order.
+- The summon tab contains the first 15-summon catalog in the planned order.
 - Server casts are driven by shared summon profiles instead of one-off test
   entries.
-- Resource costs are enforced for the first 14 summons.
+- Resource costs are enforced for the first 15 summons.
 - Summoning has a `5 second` charge.
 - Taking damage during the charge interrupts the summon.
 - Costs are consumed after a successful charge, not when the summon is clicked.
@@ -351,9 +377,13 @@ The first proof implementation has already established the core summon runtime.
   then recovers by `1 Life rune` for each `1 minute` without a support summon.
 - Pack Rat and Delivery Camel persist for `4` and `2` successful services
   respectively; failed actions do not consume services.
+- Foundry Dragon replaces each required coal with `5 Fire runes` and
+  `1 Nature rune` across furnace and Superheat paths. Costs are one atomic
+  transaction, so missing runes cannot partially consume materials or create
+  output.
 - `Summoning` is a persisted MyWorld skill with database columns, stat packet
   fields, and client stat array support.
-- The first 14 summons are level-gated by Summoning level.
+- The first 15 summons are level-gated by Summoning level.
 - `Mischief Imp` blocks hostile NPC aggro while active and despawns when the player
   starts attacking.
 - `Mourning Unicorn` auto-buries prayer drops, including bones, bat bones, big
@@ -477,7 +507,7 @@ Remaining work after limited release:
 Implemented work:
 
 - replaced the temporary four-entry hardcoded client list with the first
-  14-summon catalog
+  15-summon catalog
 - added the persisted `Summoning` skill
 - enforce summon level requirements
 - enforce resource requirements server-side

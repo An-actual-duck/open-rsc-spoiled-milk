@@ -10,6 +10,7 @@ import com.openrsc.server.constants.SpellDamages;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
+import com.openrsc.server.content.FoundryDragonSmeltingCost;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
@@ -68,7 +69,9 @@ import org.apache.logging.log4j.Logger;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
@@ -1169,8 +1172,16 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			player.playerServerMessage(MessageType.QUEST, "This spell can only be used on ore");
 			return;
 		}
+		final boolean foundryDragonActive = Summoning.isFoundryDragonActive(player);
 		for (ReqOreDef reqOre : smeltingDef.getReqOres()) {
-			if (player.getCarriedItems().getInventory().countId(reqOre.getId()) < reqOre.getAmount()) {
+			final boolean missingFoundryFuel = foundryDragonActive && reqOre.getId() == ItemId.COAL.id()
+				&& (player.getCarriedItems().getInventory().countId(ItemId.FIRE_RUNE.id())
+					< FoundryDragonSmeltingCost.fireRunesForCoal(reqOre.getAmount())
+					|| player.getCarriedItems().getInventory().countId(ItemId.NATURE_RUNE.id())
+					< FoundryDragonSmeltingCost.natureRunesForCoal(reqOre.getAmount()));
+			final boolean missingOrdinaryOre = (!foundryDragonActive || reqOre.getId() != ItemId.COAL.id())
+				&& player.getCarriedItems().getInventory().countId(reqOre.getId()) < reqOre.getAmount();
+			if (missingFoundryFuel || missingOrdinaryOre) {
 				if (affectedItem.getCatalogId() == ItemId.IRON_ORE.id()) {
 					smeltingDef = player.getWorld().getServer().getEntityHandler().getItemSmeltingDef(9999);
 					break;
@@ -1178,6 +1189,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				if (affectedItem.getCatalogId() == ItemId.TIN_ORE.id() || affectedItem.getCatalogId() == ItemId.COPPER_ORE.id()) {
 					player.playerServerMessage(MessageType.QUEST, "You also need some " + (affectedItem.getCatalogId() == ItemId.TIN_ORE.id() ? "copper" : "tin")
 							+ " to make bronze");
+					return;
+				}
+				if (missingFoundryFuel) {
+					player.playerServerMessage(MessageType.QUEST, "You need "
+						+ FoundryDragonSmeltingCost.fireRunesForCoal(reqOre.getAmount()) + " fire runes and "
+						+ FoundryDragonSmeltingCost.natureRunesForCoal(reqOre.getAmount())
+						+ " nature runes to replace the coal for this smelt");
 					return;
 				}
 				player.playerServerMessage(MessageType.QUEST, "You need " + reqOre.getAmount() + " heaps of "
@@ -1192,27 +1210,68 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					+ player.getWorld().getServer().getEntityHandler().getItemDef(smeltingDef.barId).getName().toLowerCase().replaceAll("bar", ""));
 			return;
 		}
-		if (!checkAndRemoveRunes(player, spell)) {
+		final Set<Entry<Integer, Integer>> spellRunes;
+		try {
+			spellRunes = checkSpellRunes(player, spell, true);
+		} catch (SpellFailureException failure) {
 			return;
 		}
-		Item bar = new Item(smeltingDef.getBarId());
-		if (player.getCarriedItems().remove(affectedItem) == -1) return;
-		for (ReqOreDef reqOre : smeltingDef.getReqOres()) {
-			int toUse = reqOre.getAmount();
-			if (reqOre.getId() == ItemId.COAL.id()
-				&& SkillCapes.shouldActivate(player, ItemId.SMITHING_CAPE)) {
 
-				toUse = reqOre.getAmount()/2;
-				player.message("You heat the ore using half the usual amount of coal");
-			}
-			for (int i = 0; i < toUse; i++) {
-				player.getCarriedItems().remove(new Item(reqOre.getId()));
+		final Map<Integer, Integer> completeCost = new LinkedHashMap<>();
+		if (spellRunes != null) {
+			for (Entry<Integer, Integer> rune : spellRunes) {
+				addSuperheatCost(completeCost, rune.getKey(), rune.getValue());
 			}
 		}
+		addSuperheatCost(completeCost, affectedItem.getCatalogId(), affectedItem.getAmount());
+		boolean smithingCapeSavedCoal = false;
+		for (ReqOreDef reqOre : smeltingDef.getReqOres()) {
+			int amount = reqOre.getAmount();
+			if (reqOre.getId() == ItemId.COAL.id()
+				&& SkillCapes.shouldActivate(player, ItemId.SMITHING_CAPE)) {
+				amount = reqOre.getAmount() / 2;
+				smithingCapeSavedCoal = true;
+			}
+			if (foundryDragonActive && reqOre.getId() == ItemId.COAL.id()) {
+				addSuperheatCost(completeCost, ItemId.FIRE_RUNE.id(),
+					FoundryDragonSmeltingCost.fireRunesForCoal(amount));
+				addSuperheatCost(completeCost, ItemId.NATURE_RUNE.id(),
+					FoundryDragonSmeltingCost.natureRunesForCoal(amount));
+			} else {
+				addSuperheatCost(completeCost, reqOre.getId(), amount);
+			}
+		}
+		Item[] completeCostItems = new Item[completeCost.size()];
+		int costIndex = 0;
+		for (Entry<Integer, Integer> cost : completeCost.entrySet()) {
+			completeCostItems[costIndex++] = new Item(cost.getKey(), cost.getValue());
+		}
+		if (!player.getCarriedItems().remove(completeCostItems, false)) {
+			player.playerServerMessage(MessageType.QUEST,
+				"You don't have all the reagents and smelting materials you need");
+			return;
+		}
+		ActionSender.sendInventory(player);
+		if (smithingCapeSavedCoal) {
+			player.message(foundryDragonActive
+				? "Your smithing cape halves the Foundry Dragon's replacement fuel"
+				: "You heat the ore using half the usual amount of coal");
+		}
+
+		Item bar = new Item(smeltingDef.getBarId());
 		player.playerServerMessage(MessageType.QUEST, "You make a bar of " + bar.getDef(player.getWorld()).getName().replace("bar", "").toLowerCase());
 		player.getCarriedItems().getInventory().add(bar);
 		player.incExp(Skill.SMITHING.id(), smeltingDef.getExp(), true);
 		finalizeSpellNoMessage(player, spell);
+	}
+
+	private static void addSuperheatCost(Map<Integer, Integer> costs, int itemId, int amount) {
+		if (amount < 0) {
+			throw new IllegalArgumentException("Superheat cost cannot be negative");
+		}
+		if (amount > 0) {
+			costs.merge(itemId, amount, Math::addExact);
+		}
 	}
 
 	private void handleItemCast(Player player, final SpellDef spell, Spells spellEnum, final GroundItem affectedItem) {

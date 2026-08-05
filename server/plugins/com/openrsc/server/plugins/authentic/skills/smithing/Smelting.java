@@ -5,12 +5,12 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.custom.MyWorldItemId;
-import com.openrsc.server.content.SkillCapes;
+import com.openrsc.server.content.FoundryDragonSmeltingCost;
+import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
 import com.openrsc.server.external.Gauntlets;
-import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -23,7 +23,9 @@ import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.openrsc.server.plugins.Functions.*;
@@ -290,10 +292,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		List<ProductionRecipe> recipes = new ArrayList<>();
 		for (SmeltRecipe recipe : RECIPES) {
 			recipes.add(new ProductionRecipe(recipe.barId, recipe.requiredLevel,
-				recipe.totalInputAmount(), recipe.outputAmount,
+				recipe.totalInputAmount(player), recipe.outputAmount,
 				getCurrentLevel(player, Skill.SMITHING.id()) >= recipe.requiredLevel,
-				recipe.hasMaterials(player), recipe.ingredientItemIds(),
-				recipe.ingredientFallbackItemIds(), recipe.ingredientAmounts()));
+				recipe.hasMaterials(player), recipe.ingredientItemIds(player),
+				recipe.ingredientFallbackItemIds(player), recipe.ingredientAmounts(player)));
 		}
 		return new ProductionSession(ProductionSession.TYPE_SMELTING, "Choose a bar to smelt", -1, recipes);
 	}
@@ -350,10 +352,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		List<ProductionRecipe> recipes = new ArrayList<>();
 		for (SmeltRecipe recipe : LAVA_FORGE_RECIPES) {
 			recipes.add(new ProductionRecipe(recipe.barId, recipe.requiredLevel,
-				recipe.totalInputAmount(), recipe.outputAmount,
+				recipe.totalInputAmount(player), recipe.outputAmount,
 				getCurrentLevel(player, Skill.SMITHING.id()) >= recipe.requiredLevel,
-				recipe.hasMaterials(player), recipe.ingredientItemIds(),
-				recipe.ingredientFallbackItemIds(), recipe.ingredientAmounts()));
+				recipe.hasMaterials(player), recipe.ingredientItemIds(player),
+				recipe.ingredientFallbackItemIds(player), recipe.ingredientAmounts(player)));
 		}
 		return new ProductionSession(ProductionSession.TYPE_SMELTING, "Choose a lava forge bar", -1, recipes);
 	}
@@ -443,9 +445,13 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			}
 
 			player.playerServerMessage(MessageType.QUEST, recipe.startMessage(player));
-			ActionSender.sendActionProgressBar(player, recipe.progressItemId(), SMELTING_ACTION_DELAY_TICKS);
+			ActionSender.sendActionProgressBar(player, recipe.progressItemId(player), SMELTING_ACTION_DELAY_TICKS);
 			delay(SMELTING_ACTION_DELAY_TICKS);
-			recipe.consumeMaterials(player);
+			if (!recipe.consumeMaterials(player)) {
+				player.playerServerMessage(MessageType.QUEST, recipe.requirementMessage(player));
+				stopbatch();
+				break;
+			}
 			thinkbubble(new Item(recipe.barId));
 
 			if (recipe.barId == ItemId.IRON_BAR.id() && DataConversions.random(0, 1) == 1) {
@@ -609,7 +615,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 	private static int maxDirectSmelts(Player player, SmeltRecipe recipe) {
 		int max = Integer.MAX_VALUE;
-		for (Ingredient ingredient : recipe.ingredients) {
+		for (Ingredient ingredient : recipe.effectiveIngredients(player)) {
 			max = Math.min(max, ingredient.availableCount(player) / ingredient.amount);
 		}
 		return Math.max(1, max == Integer.MAX_VALUE ? 1 : max);
@@ -665,64 +671,75 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			this.ingredients = ingredients;
 		}
 
-		private int totalInputAmount() {
+		private int totalInputAmount(Player player) {
 			int total = 0;
-			for (Ingredient ingredient : ingredients) {
+			for (Ingredient ingredient : effectiveIngredients(player)) {
 				total += ingredient.amount;
 			}
 			return total;
 		}
 
 		private boolean hasMaterials(Player player) {
-			for (Ingredient ingredient : ingredients) {
-				if (!ingredient.has(player)) {
-					return false;
-				}
-			}
-			return true;
+			return resolvedCosts(player) != null;
 		}
 
-		private int[] ingredientItemIds() {
-			int[] ids = new int[ingredients.length];
-			for (int i = 0; i < ingredients.length; i++) {
-				ids[i] = ingredients[i].itemId;
+		private int[] ingredientItemIds(Player player) {
+			Ingredient[] effectiveIngredients = effectiveIngredients(player);
+			int[] ids = new int[effectiveIngredients.length];
+			for (int i = 0; i < effectiveIngredients.length; i++) {
+				ids[i] = effectiveIngredients[i].itemId;
 			}
 			return ids;
 		}
 
-		private int[] ingredientFallbackItemIds() {
-			int[] ids = new int[ingredients.length];
-			for (int i = 0; i < ingredients.length; i++) {
-				ids[i] = ingredients[i].fallbackItemId;
+		private int[] ingredientFallbackItemIds(Player player) {
+			Ingredient[] effectiveIngredients = effectiveIngredients(player);
+			int[] ids = new int[effectiveIngredients.length];
+			for (int i = 0; i < effectiveIngredients.length; i++) {
+				ids[i] = effectiveIngredients[i].fallbackItemId;
 			}
 			return ids;
 		}
 
-		private int[] ingredientAmounts() {
-			int[] amounts = new int[ingredients.length];
-			for (int i = 0; i < ingredients.length; i++) {
-				amounts[i] = ingredients[i].amount;
+		private int[] ingredientAmounts(Player player) {
+			Ingredient[] effectiveIngredients = effectiveIngredients(player);
+			int[] amounts = new int[effectiveIngredients.length];
+			for (int i = 0; i < effectiveIngredients.length; i++) {
+				amounts[i] = effectiveIngredients[i].amount;
 			}
 			return amounts;
 		}
 
-		private int progressItemId() {
-			return ingredients.length > 0 ? ingredients[0].itemId : barId;
+		private int progressItemId(Player player) {
+			Ingredient[] effectiveIngredients = effectiveIngredients(player);
+			return effectiveIngredients.length > 0 ? effectiveIngredients[0].itemId : barId;
 		}
 
-		private void consumeMaterials(Player player) {
-			for (Ingredient ingredient : ingredients) {
-				ingredient.consume(player);
+		private boolean consumeMaterials(Player player) {
+			Map<Integer, Integer> costs = resolvedCosts(player);
+			if (costs == null || costs.isEmpty()) {
+				return false;
 			}
+			Item[] items = new Item[costs.size()];
+			int index = 0;
+			for (Map.Entry<Integer, Integer> entry : costs.entrySet()) {
+				items[index++] = new Item(entry.getKey(), entry.getValue());
+			}
+			if (!player.getCarriedItems().remove(items, false)) {
+				return false;
+			}
+			ActionSender.sendInventory(player);
+			return true;
 		}
 
 		private String requirementMessage(Player player) {
 			StringBuilder builder = new StringBuilder("You need ");
-			for (int i = 0; i < ingredients.length; i++) {
+			Ingredient[] effectiveIngredients = effectiveIngredients(player);
+			for (int i = 0; i < effectiveIngredients.length; i++) {
 				if (i > 0) {
-					builder.append(i == ingredients.length - 1 ? " and " : ", ");
+					builder.append(i == effectiveIngredients.length - 1 ? " and " : ", ");
 				}
-				builder.append(ingredients[i].describe(player));
+				builder.append(effectiveIngredients[i].describe(player));
 			}
 			builder.append(" to smelt ").append(getBarName(player, this));
 			return builder.toString();
@@ -730,6 +747,36 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 
 		private String startMessage(Player player) {
 			return "You place the materials for " + getBarName(player, this) + " into the " + productionSite;
+		}
+
+		private Ingredient[] effectiveIngredients(Player player) {
+			if (!Summoning.isFoundryDragonActive(player)) {
+				return ingredients;
+			}
+			List<Ingredient> effective = new ArrayList<>();
+			for (Ingredient ingredient : ingredients) {
+				if (ingredient.itemId == ItemId.COAL.id() && ingredient.fallbackItemId < 0) {
+					effective.add(ingredient(ItemId.FIRE_RUNE.id(),
+						FoundryDragonSmeltingCost.fireRunesForCoal(ingredient.amount)));
+					effective.add(ingredient(ItemId.NATURE_RUNE.id(),
+						FoundryDragonSmeltingCost.natureRunesForCoal(ingredient.amount)));
+				} else {
+					effective.add(ingredient);
+				}
+			}
+			return effective.toArray(new Ingredient[0]);
+		}
+
+		private Map<Integer, Integer> resolvedCosts(Player player) {
+			Map<Integer, Integer> costs = new LinkedHashMap<>();
+			for (Ingredient ingredient : effectiveIngredients(player)) {
+				int selectedItemId = ingredient.selectItemId(player, costs);
+				if (selectedItemId < 0) {
+					return null;
+				}
+				costs.merge(selectedItemId, ingredient.amount, Math::addExact);
+			}
+			return costs;
 		}
 	}
 
@@ -742,17 +789,6 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			this.itemId = itemId;
 			this.fallbackItemId = fallbackItemId;
 			this.amount = amount;
-		}
-
-		private boolean has(Player player) {
-			return count(player, itemId) >= amount || (fallbackItemId > -1 && count(player, fallbackItemId) >= amount);
-		}
-
-		private void consume(Player player) {
-			int selectedItemId = count(player, itemId) >= amount ? itemId : fallbackItemId;
-			for (int i = 0; i < amount; i++) {
-				player.getCarriedItems().remove(new Item(selectedItemId));
-			}
 		}
 
 		private String describe(Player player) {
@@ -773,6 +809,20 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				available = Math.max(available, count(player, fallbackItemId));
 			}
 			return available;
+		}
+
+		private int selectItemId(Player player, Map<Integer, Integer> accruedCosts) {
+			int accruedPreferred = accruedCosts.getOrDefault(itemId, 0);
+			if (count(player, itemId) >= Math.addExact(accruedPreferred, amount)) {
+				return itemId;
+			}
+			if (fallbackItemId > -1) {
+				int accruedFallback = accruedCosts.getOrDefault(fallbackItemId, 0);
+				if (count(player, fallbackItemId) >= Math.addExact(accruedFallback, amount)) {
+					return fallbackItemId;
+				}
+			}
+			return -1;
 		}
 	}
 }

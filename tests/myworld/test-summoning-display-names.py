@@ -25,6 +25,7 @@ SUMMON_NAMES = [
     "Restless Shade",
     "Guard Dog",
     "Delivery Camel",
+    "Foundry Dragon",
     "Astral Wraith",
     "Abyssal Demon",
 ]
@@ -59,13 +60,15 @@ def main() -> int:
         failures.append("summon icon filenames must be derived from dashed summon names")
     if "drawSprite(summonIcon" not in client:
         failures.append("summon menu must draw summon icon sprites when present")
-    expected_icon_names = [asset_name(name) + ".png" for name in SUMMON_NAMES]
-    for filename in expected_icon_names:
+    initials_only_names = {"Foundry Dragon"}
+    expected_icon_names = [(name, asset_name(name) + ".png") for name in SUMMON_NAMES]
+    for name, filename in expected_icon_names:
         if filename not in plan:
             failures.append(f"summoning plan should document icon filename {filename}")
         icon_path = SUMMON_ICON_DIR / filename
         if not icon_path.exists():
-            failures.append(f"missing summon icon {filename}")
+            if name not in initials_only_names:
+                failures.append(f"missing summon icon {filename}")
             continue
         data = icon_path.read_bytes()
         if data[:8] != b"\x89PNG\r\n\x1a\n":
@@ -76,6 +79,8 @@ def main() -> int:
             failures.append(f"summon icon must have positive geometry: {filename}")
     if "this.getSpellInitials(SUMMONING_NAMES[summonIndex])" not in client:
         failures.append("client must retain initials fallback for summons without icon art")
+    if "built-in `FD` initials" not in plan:
+        failures.append("summoning plan must document the Foundry Dragon icon fallback")
 
     if failures:
         print("FAIL:")

@@ -75,6 +75,7 @@ public final class Summoning {
 	private static final String KIND_GHOST = "ghost";
 	private static final String KIND_GUARD_DOG = "guard_dog";
 	private static final String KIND_CAMEL = "camel";
+	private static final String KIND_FOUNDRY_DRAGON = "foundry_dragon";
 	private static final String KIND_OTHERWORLDLY_BEING = "otherworldly_being";
 	private static final String KIND_GREATER_DEMON = "greater_demon";
 	private static final String KIND_SPIRIT_WOLF = "spirit_wolf";
@@ -196,6 +197,13 @@ public final class Summoning {
 		cost(ItemId.LAW_RUNE.id(), 2),
 		cost(ItemId.NATURE_RUNE.id(), 2)
 	);
+	private static final SummonProfile FOUNDRY_DRAGON_PROFILE = supportProfile(
+		"Foundry Dragon", 61, 365, NpcId.FOUNDRY_DRAGON.id(), KIND_FOUNDRY_DRAGON, 0,
+		cost(ItemId.LIFE_RUNE.id(), 2),
+		cost(ItemId.FIRE_RUNE.id(), 5),
+		cost(ItemId.NATURE_RUNE.id(), 2),
+		cost(ItemId.KING_BLACK_DRAGON_SCALE.id(), 1)
+	);
 	private static final SummonProfile OTHERWORLDLY_BEING_PROFILE = combatProfile(
 		"Astral Wraith", 64, 395, NpcId.OTHERWORLDLY_BEING.id(), KIND_OTHERWORLDLY_BEING, 10, 8, 7, 14, 25, TRAIT_SPELL_ECHO,
 		cost(ItemId.LIFE_RUNE.id(), 2),
@@ -219,7 +227,8 @@ public final class Summoning {
 	private static final SummonProfile[] SUMMON_PROFILES = {
 		GIANT_SPIDER_PROFILE, IMP_PROFILE, LOOT_GOBLIN_PROFILE, BEAR_PROFILE, UNICORN_PROFILE,
 		GIANT_BAT_PROFILE, RAT_PROFILE, ANIMATED_AXE_PROFILE, BLACK_UNICORN_PROFILE,
-		GHOST_PROFILE, GUARD_DOG_PROFILE, CAMEL_PROFILE, OTHERWORLDLY_BEING_PROFILE, GREATER_DEMON_PROFILE
+		GHOST_PROFILE, GUARD_DOG_PROFILE, CAMEL_PROFILE, FOUNDRY_DRAGON_PROFILE,
+		OTHERWORLDLY_BEING_PROFILE, GREATER_DEMON_PROFILE
 	};
 	private static final SummonProfile[] ARMOR_SUMMON_PROFILES = {
 		SPIRIT_WOLF_PROFILE, SPIRIT_HELLHOUND_PROFILE
@@ -561,6 +570,26 @@ public final class Summoning {
 
 	public static boolean isPlayerAreaEffectSuppressed(final Player player) {
 		return getActiveGuardDog(player) != null;
+	}
+
+	/**
+	 * Returns whether the player's current manual summon owns the Foundry Dragon
+	 * smelting effect. The active NPC reference is the lifecycle token, so
+	 * dismissal, replacement, death, and logout all remove the effect without
+	 * persistent player state.
+	 */
+	public static boolean isFoundryDragonActive(final Player player) {
+		if (player == null || player.isRemoved() || !player.loggedIn()
+			|| player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return false;
+		}
+		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
+		return summon != null
+			&& !summon.isRemoved()
+			&& getSummonCurrentHits(summon) > 0
+			&& isOwnedSummon(player, summon)
+			&& SOURCE_MANUAL.equals(summon.getAttribute(SUMMON_SOURCE_KEY, ""))
+			&& KIND_FOUNDRY_DRAGON.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
 	}
 
 	public static Npc getGuardDogPrimaryEnemy(final Player player) {

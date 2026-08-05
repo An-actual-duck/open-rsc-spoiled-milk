@@ -214,7 +214,7 @@ def main() -> None:
     )
     require(
         smelting_text,
-        "ActionSender.sendActionProgressBar(player, recipe.progressItemId(), SMELTING_ACTION_DELAY_TICKS);",
+        "ActionSender.sendActionProgressBar(player, recipe.progressItemId(player), SMELTING_ACTION_DELAY_TICKS);",
         "Smelting should show the same per-action progress cadence as gathering skills",
     )
     require(
