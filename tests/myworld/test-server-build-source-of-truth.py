@@ -40,6 +40,19 @@ def main() -> int:
     require(not report["validation_errors"], "Shipped Ant path has validation errors")
     require(not report["ant"]["missing_explicit_entries"], "Ant references nonexistent jars")
     require(len(report["libraries"]) == 21, "Review the documented shipped-jar inventory")
+    for library in report["libraries"]:
+        require(
+            library["exact_duplicate_paths"] == 0,
+            f"server/lib/{library['file']} contains duplicate archive paths",
+        )
+        require(
+            library["casefold_collision_paths"] == 0,
+            f"server/lib/{library['file']} contains case-insensitive archive path collisions",
+        )
+        require(
+            library["unsafe_unix_mode_paths"] == 0,
+            f"server/lib/{library['file']} contains link/special Unix archive modes",
+        )
     require(report["artifacts"]["core"]["main_class"] == "com.openrsc.server.Server", "core.jar is not executable")
     require(report["artifacts"]["plugins"]["class_entries"] > 0, "plugins.jar is empty")
     for artifact in ("core", "plugins"):

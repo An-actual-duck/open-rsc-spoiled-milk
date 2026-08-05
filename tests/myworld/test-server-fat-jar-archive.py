@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import hashlib
 import subprocess
 import stat
 import sys
@@ -35,6 +36,34 @@ REQUIRED_SERVICE_PROVIDERS = {
         "org.slf4j.nop.NOPServiceProvider",
     },
 }
+VENDORED_PAYLOAD_BASELINES = {
+    "commons-lang-2.6.jar": {
+        "files": 138,
+        "sha256": "da26a04df2f4a59255c6f35c195c514cef0f9c969d0173b6a9c62efdd115f2ab",
+        "required": {
+            "META-INF/LICENSE.txt",
+            "META-INF/NOTICE.txt",
+            "META-INF/maven/commons-lang/commons-lang/pom.properties",
+            "META-INF/maven/commons-lang/commons-lang/pom.xml",
+        },
+    },
+    "emoji-java-5.1.1.jar": {
+        "files": 26,
+        "sha256": "80c3130a985d759a441a79c1731b7a3f4dc3a94b184c325f85910122f97f785f",
+        "required": {
+            "META-INF/maven/com.vdurmont/emoji-java/pom.properties",
+            "META-INF/maven/com.vdurmont/emoji-java/pom.xml",
+        },
+    },
+    "gitlab4j-api-4.12.17.jar": {
+        "files": 445,
+        "sha256": "501f8d14bbd3124d0170368391b279e87dce16fec66560b8aecd15493bdb5329",
+        "required": {
+            "META-INF/maven/org.gitlab4j/gitlab4j-api/pom.properties",
+            "META-INF/maven/org.gitlab4j/gitlab4j-api/pom.xml",
+        },
+    },
+}
 
 
 def fail(message: str) -> None:
@@ -58,7 +87,7 @@ def casefold_collisions(names: list[str]) -> list[list[str]]:
     return sorted(sorted(paths) for paths in folded.values() if len(paths) > 1)
 
 
-def assert_unique_archive(path: Path) -> None:
+def assert_safe_archive(path: Path) -> None:
     with ZipFile(path) as archive:
         infos = archive.infolist()
     names = [info.filename for info in infos]
@@ -77,6 +106,33 @@ def assert_unique_archive(path: Path) -> None:
             unsafe_modes.append((info.filename, f"0{mode:o}"))
     if unsafe_modes:
         fail(f"{path.name} contains link/special Unix archive modes: {unsafe_modes[:20]}")
+
+
+def assert_vendored_payload(path: Path, baseline: dict) -> None:
+    digest = hashlib.sha256()
+    with ZipFile(path) as archive:
+        files = sorted(
+            (info for info in archive.infolist() if not info.is_dir()),
+            key=lambda info: info.filename,
+        )
+        names = {info.filename for info in files}
+        for info in files:
+            encoded_name = info.filename.encode("utf-8")
+            content = archive.read(info)
+            digest.update(len(encoded_name).to_bytes(4, "big"))
+            digest.update(encoded_name)
+            digest.update(len(content).to_bytes(8, "big"))
+            digest.update(content)
+    if len(files) != baseline["files"]:
+        fail(
+            f"{path.name} file-entry count changed: expected {baseline['files']}, "
+            f"found {len(files)}"
+        )
+    if digest.hexdigest() != baseline["sha256"]:
+        fail(f"{path.name} file names or uncompressed payloads changed")
+    missing = sorted(baseline["required"] - names)
+    if missing:
+        fail(f"{path.name} lost required licensing/build metadata: {missing}")
 
 
 def dependency_inventory() -> tuple[dict[str, list[tuple[Path, bytes]]], dict[str, set[str]]]:
@@ -168,8 +224,15 @@ def main() -> int:
     if built.returncode != 0 or built.stdout.count("BUILD SUCCESSFUL") < 2:
         fail(f"Authoritative core.jar/plugins.jar build failed:\n{built.stdout}{built.stderr}")
 
-    assert_unique_archive(CORE_JAR)
-    assert_unique_archive(PLUGINS_JAR)
+    assert_safe_archive(CORE_JAR)
+    assert_safe_archive(PLUGINS_JAR)
+    library_jars = sorted(LIB_DIR.glob("*.jar"), key=lambda path: path.name)
+    if len(library_jars) != 21:
+        fail(f"Review shipped server library inventory: expected 21, found {len(library_jars)}")
+    for library in library_jars:
+        assert_safe_archive(library)
+    for name, baseline in sorted(VENDORED_PAYLOAD_BASELINES.items()):
+        assert_vendored_payload(LIB_DIR / name, baseline)
 
     class_sources, expected_services = dependency_inventory()
     duplicate_classes = {
@@ -221,7 +284,8 @@ def main() -> int:
     run_service_loader_probe()
 
     print(
-        "PASS: server fat JARs have unique, regular archive entries; adaptive classes, "
+        "PASS: server fat JARs and all 21 inputs have unique, regular archive entries; "
+        "normalized vendored payloads, adaptive classes, "
         f"{len(duplicate_classes)} deterministic duplicate-class resolutions, and "
         f"{len(expected_services)} complete service descriptors remain; JDBC provider "
         "discovery is runtime-valid"

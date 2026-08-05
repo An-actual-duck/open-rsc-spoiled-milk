@@ -154,7 +154,10 @@ def library_inventory(core_classes: set[str] | None) -> tuple[list[dict], dict]:
     libraries = []
     class_occurrences = Counter()
     for path in sorted(LIB.glob("*.jar")):
-        classes = jar_classes(path)
+        with zipfile.ZipFile(path) as archive:
+            infos = archive.infolist()
+            classes = {info.filename for info in infos if info.filename.endswith(".class")}
+        path_inventory = archive_path_inventory(infos)
         class_occurrences.update(classes)
         libraries.append({
             "file": path.name,
@@ -162,6 +165,7 @@ def library_inventory(core_classes: set[str] | None) -> tuple[list[dict], dict]:
             "sha256": sha256(path),
             "class_entries": len(classes),
             "classes_also_in_core": None if core_classes is None else len(classes & core_classes),
+            **path_inventory,
         })
     duplicates = sum(count - 1 for count in class_occurrences.values() if count > 1)
     union = set(class_occurrences)
@@ -264,6 +268,23 @@ def build_report(require_artifacts: bool) -> tuple[dict, list[str]]:
     ]
     errors.extend(artifact_errors)
     errors.extend(script_errors)
+
+    for library in libraries:
+        if library["exact_duplicate_paths"]:
+            errors.append(
+                f"server/lib/{library['file']} contains {library['exact_duplicate_paths']} exact "
+                f"duplicate paths: {library['exact_duplicate_examples']}"
+            )
+        if library["casefold_collision_paths"]:
+            errors.append(
+                f"server/lib/{library['file']} contains {library['casefold_collision_paths']} "
+                f"case-insensitive path collisions: {library['casefold_collision_examples']}"
+            )
+        if library["unsafe_unix_mode_paths"]:
+            errors.append(
+                f"server/lib/{library['file']} contains {library['unsafe_unix_mode_paths']} entries "
+                f"with link/special Unix modes: {library['unsafe_unix_mode_examples']}"
+            )
 
     for target_name in ("runserver", "runserverzgc"):
         kinds = {entry["kind"] for entry in ant["targets"].get(target_name, [])}
