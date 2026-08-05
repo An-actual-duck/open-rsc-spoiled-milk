@@ -24,6 +24,9 @@ BUILD_GRADLE = SERVER / "build.gradle"
 LIB = SERVER / "lib"
 CORE_JAR = SERVER / "core.jar"
 PLUGINS_JAR = SERVER / "plugins.jar"
+TEST_ONLY_CLASS_PREFIXES = (
+    "com/openrsc/server/combat/CurrentCombat",
+)
 
 ANT_TARGETS = ("compile_core", "compile_plugins", "runserver", "runserverzgc")
 AUTHORITATIVE_SCRIPTS = {
@@ -168,6 +171,9 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
 
     if result.get("core", {}).get("present"):
         core_classes = jar_classes(CORE_JAR)
+        for prefix in TEST_ONLY_CLASS_PREFIXES:
+            if any(name.startswith(prefix) for name in core_classes):
+                errors.append(f"core.jar unexpectedly contains test fixture {prefix}")
         for required in (
             "com/openrsc/server/Server.class",
             "com/openrsc/server/plugins/io/PluginJarLoader.class",
@@ -179,6 +185,9 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
                 errors.append(f"core.jar missing required class {required}")
     if result.get("plugins", {}).get("present"):
         plugin_classes = jar_classes(PLUGINS_JAR)
+        for prefix in TEST_ONLY_CLASS_PREFIXES:
+            if any(name.startswith(prefix) for name in plugin_classes):
+                errors.append(f"plugins.jar unexpectedly contains test fixture {prefix}")
         if not plugin_classes:
             errors.append("plugins.jar contains no plugin classes")
         if "com/openrsc/server/Server.class" in plugin_classes:

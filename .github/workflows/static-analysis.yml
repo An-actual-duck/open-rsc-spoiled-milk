@@ -28,6 +28,8 @@ jobs:
           python-version: '3.12'
       - name: Guard the baseline contract
         run: python3 tests/myworld/test-static-analysis-baseline.py
+      - name: Run current combat characterization gate
+        run: ./server/test_combat
       - name: Build all Ant products and compare javac findings
         run: ./scripts/lint.sh compiler --base "$GITHUB_BASE_SHA"
       - name: Upload exact Ant products

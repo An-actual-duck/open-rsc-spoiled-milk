@@ -74,6 +74,16 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 }
 
+["combat.injectFailure", "combat.forceZeroScenarios", "combat.output.root"].each { propertyName ->
+    def propertyValue = System.getProperty(propertyName)
+    if (propertyValue == null && project.hasProperty(propertyName)) {
+        propertyValue = project.property(propertyName).toString()
+    }
+    if (propertyValue != null) {
+        ant.project.setUserProperty(propertyName, propertyValue.toString())
+    }
+}
+
 ant.importBuild("build.xml") { targetName ->
     targetName == "clean" ? "ant_clean" : targetName
 }
@@ -84,6 +94,10 @@ run {
 }
 
 test {
+    dependsOn tasks.named("test_combat")
     useJUnitPlatform()
-    description = "Secondary Gradle test task; does not validate production-Ant packaging parity"
+    description = "Runs the authoritative Ant combat gate plus supplemental Gradle/JUnit tests; does not validate production-Ant packaging parity"
+    doFirst {
+        logger.lifecycle("Gradle test delegates combat validation to authoritative Ant test_combat; JUnit discovery is supplemental.")
+    }
 }

@@ -1,12 +1,46 @@
 <project default="compile_core" basedir=".">
     <property name="src" location="src"/>
     <property name="build" location="build"/>
+    <property name="test.src" location="test"/>
     <property name="lib" location="lib"/>
     <property name="jar" location="core.jar"/>
+    <property name="combat.output.root" location="../output/combat-test"/>
+    <property name="combat.build.core" location="${combat.output.root}/core-classes"/>
+    <property name="combat.build.test" location="${combat.output.root}/test-classes"/>
+    <property name="combat.summary.file" location="${combat.output.root}/summary.properties"/>
+    <property name="combat.injectFailure" value="false"/>
+    <property name="combat.forceZeroScenarios" value="false"/>
     <property name="javac.source" value="1.8"/>
     <property name="javac.target" value="1.8"/>
     <property name="javac.lint" value="-Xlint:deprecation"/>
     <property name="javac.maxwarns" value="100"/>
+
+    <condition property="combat.failure.fixture.enabled">
+        <istrue value="${combat.injectFailure}"/>
+    </condition>
+
+    <path id="core.compile.classpath">
+        <pathelement location="${lib}/commons-lang3-3.12.0.jar"/>
+        <pathelement location="${lib}/commons-codec-1.14.jar"/>
+        <pathelement location="${lib}/commons-compress-1.18.jar"/>
+        <pathelement location="${lib}/netty-all-4.1.33.Final.jar"/>
+        <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
+        <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
+        <pathelement location="${lib}/log4j-iostreams-2.17.0.jar"/>
+        <pathelement location="${lib}/xpp3-1.1.4c.jar"/>
+        <pathelement location="${lib}/xstream-1.4.18.jar"/>
+        <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
+        <pathelement location="${lib}/sqlite-jdbc-3.34.0.jar"/>
+        <pathelement location="${lib}/commons-lang-2.6.jar"/>
+        <pathelement location="${lib}/guava-30.1.1-jre.jar"/>
+        <pathelement location="${lib}/JDA-4.0.0_55-withDependencies.jar"/>
+        <pathelement location="${lib}/emoji-java-5.1.1.jar"/>
+        <pathelement location="${lib}/json-20190722.jar"/>
+        <pathelement location="${lib}/gitlab4j-api-4.12.17.jar"/>
+        <pathelement location="${lib}/slf4j-nop-2.0.0-alpha5.jar"/>
+        <pathelement location="${lib}/disruptor-3.3.11.jar"/>
+        <pathelement location="${lib}/guice-5.0.2-jar-with-dependencies.jar"/>
+    </path>
 
     <target name="clean">
         <delete dir="${build}" />
@@ -38,37 +72,7 @@
         <mkdir dir="${build}"/>
         <javac srcdir="${src}" destdir="${build}" debug="on" includeantruntime="false" target="${javac.target}"
                source="${javac.source}" encoding="UTF-8">
-            <classpath>
-                <pathelement location="${lib}/commons-lang3-3.12.0.jar"/>
-                <pathelement location="${lib}/commons-codec-1.14.jar"/>
-                <pathelement location="${lib}/commons-compress-1.18.jar"/>
-                <pathelement location="${lib}/netty-all-4.1.33.Final.jar"/>
-                <!--
-                <pathelement location="${lib}/netty-common-4.1.107.Final.jar"/>
-                <pathelement location="${lib}/netty-transport-4.1.107.Final.jar"/>
-                <pathelement location="${lib}/netty-transport-native-unix-common-4.1.107.Final.jar"/>
-                <pathelement location="${lib}/netty-buffer-4.1.107.Final.jar"/>
-                <pathelement location="${lib}/netty-codec-4.1.107.Final.jar"/>
-                <pathelement location="${lib}/netty-codec-http-4.1.107.Final.jar"/>
-                <pathelement location="${lib}/netty-handler-4.1.107.Final.jar"/>
-                -->
-                <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
-                <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
-                <pathelement location="${lib}/log4j-iostreams-2.17.0.jar"/>
-                <pathelement location="${lib}/xpp3-1.1.4c.jar"/>
-                <pathelement location="${lib}/xstream-1.4.18.jar"/>
-                <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
-                <pathelement location="${lib}/sqlite-jdbc-3.34.0.jar"/>
-                <pathelement location="${lib}/commons-lang-2.6.jar"/>
-                <pathelement location="${lib}/guava-30.1.1-jre.jar"/>
-                <pathelement location="${lib}/JDA-4.0.0_55-withDependencies.jar"/>
-                <pathelement location="${lib}/emoji-java-5.1.1.jar"/>
-                <pathelement location="${lib}/json-20190722.jar"/>
-                <pathelement location="${lib}/gitlab4j-api-4.12.17.jar"/>
-                <pathelement location="${lib}/slf4j-nop-2.0.0-alpha5.jar"/>
-                <pathelement location="${lib}/disruptor-3.3.11.jar"/>
-                <pathelement location="${lib}/guice-5.0.2-jar-with-dependencies.jar"/>
-            </classpath>
+            <classpath refid="core.compile.classpath"/>
             <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
         </javac>
         <jar basedir="${build}" destfile="${jar}">
@@ -79,6 +83,68 @@
         </jar>
         <delete dir="${build}"/>
     </target>
+
+    <target name="combat_gate_preflight" if="combat.failure.fixture.enabled">
+        <fail message="Deliberate combat gate failure fixture requested (combat.injectFailure=true)."/>
+    </target>
+
+    <target name="compile_combat_core" depends="combat_gate_preflight">
+        <delete dir="${combat.build.core}"/>
+        <delete dir="${combat.build.test}"/>
+        <delete file="${combat.summary.file}"/>
+        <mkdir dir="${combat.build.core}"/>
+        <javac srcdir="${src}" destdir="${combat.build.core}" debug="on"
+               includeantruntime="false" target="${javac.target}"
+               source="${javac.source}" encoding="UTF-8">
+            <classpath refid="core.compile.classpath"/>
+            <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
+        </javac>
+    </target>
+
+    <target name="compile_combat_tests" depends="compile_combat_core">
+        <mkdir dir="${combat.build.test}"/>
+        <javac srcdir="${test.src}" destdir="${combat.build.test}" debug="on"
+               includes="com/openrsc/server/combat/**/*.java"
+               includeantruntime="false" target="${javac.target}"
+               source="${javac.source}" encoding="UTF-8">
+            <classpath>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+            <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
+        </javac>
+    </target>
+
+    <target name="run_combat_characterization" depends="compile_combat_tests">
+        <java classname="com.openrsc.server.combat.CurrentCombatCharacterizationTest"
+              fork="true" failonerror="true" dir="${basedir}">
+            <sysproperty key="combat.summary.file" value="${combat.summary.file}"/>
+            <sysproperty key="combat.forceZeroScenarios" value="${combat.forceZeroScenarios}"/>
+            <classpath>
+                <pathelement location="${combat.build.test}"/>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+        <available file="${combat.summary.file}" property="combat.summary.present"/>
+        <fail unless="combat.summary.present"
+              message="Combat harness returned success without writing ${combat.summary.file}."/>
+        <loadproperties srcFile="${combat.summary.file}"/>
+        <condition property="combat.summary.nonzero">
+            <matches string="${combat.summary.scenarios}" pattern="^[1-9][0-9]*$"/>
+        </condition>
+        <fail unless="combat.summary.nonzero"
+              message="Combat harness executed zero scenarios: ${combat.summary.scenarios}."/>
+        <echo message="Combat gate totals: PASS=${combat.summary.pass} SCENARIOS=${combat.summary.scenarios}"/>
+        <delete dir="${combat.build.core}"/>
+        <delete dir="${combat.build.test}"/>
+    </target>
+
+    <target name="test_combat" depends="run_combat_characterization"
+            description="Run the current-state combat characterization harness"/>
+
+    <target name="test_combat_strict" depends="run_combat_characterization"
+            description="Alias for the current-state combat characterization gate"/>
 
     <property name="confFile" value="myworld" />
     <property name="coloredLogging" value="false" />

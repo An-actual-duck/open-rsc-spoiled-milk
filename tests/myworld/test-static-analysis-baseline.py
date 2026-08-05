@@ -32,6 +32,7 @@ def main() -> int:
         '"PC_Client/src"',
         '"server/src"',
         '"server/plugins"',
+        '"server/test"',
         '"tools/world-builder/src"',
     ):
         require(source_root in lint, f"Maintained Java root is absent from lint scope: {source_root}")

@@ -1,0 +1,15 @@
+#!/bin/sh
+# See docs/combat/combat-test-gates.md for the authoritative gate contract.
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+ANT_HOME=${ANT_HOME:-"$REPO_ROOT/tools/vendor/apache-ant-1.10.5"}
+ANT_RUNNER="$ANT_HOME/bin/ant"
+
+if [ ! -f "$ANT_RUNNER" ]; then
+    echo "ERROR: Bundled combat Ant launcher is missing: $ANT_RUNNER" >&2
+    exit 1
+fi
+
+exec env ANT_HOME="$ANT_HOME" sh "$ANT_RUNNER" -f "$SCRIPT_DIR/build.xml" "$@" test_combat
