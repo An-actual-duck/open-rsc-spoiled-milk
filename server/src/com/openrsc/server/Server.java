@@ -45,6 +45,10 @@ import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.net.rsc.Crypto;
 import com.openrsc.server.plugins.handler.PluginHandler;
 import com.openrsc.server.plugins.triggers.StartupTrigger;
+import com.openrsc.server.runtime.GameClock;
+import com.openrsc.server.runtime.GameRandom;
+import com.openrsc.server.runtime.ProductionGameRandom;
+import com.openrsc.server.runtime.SystemGameClock;
 import com.openrsc.server.service.IPlayerService;
 import com.openrsc.server.service.PcapLoggerService;
 import com.openrsc.server.service.PlayerService;
@@ -113,6 +117,8 @@ public class Server implements Runnable {
 	private final IPlayerService playerService;
 	private final I18NService i18nService;
 	private final MovementStutterDiagnostics movementStutterDiagnostics;
+	private final GameClock gameClock;
+	private final GameRandom combatRandom;
 	private final WorldEditStorageContext worldEditStorage;
 	private final WorldEditorSessionManager worldEditorSessions;
 
@@ -463,6 +469,18 @@ public class Server implements Runnable {
 	}
 
 	public Server(final String configFile) throws IOException {
+		this(configFile, SystemGameClock.INSTANCE, ProductionGameRandom.INSTANCE);
+	}
+
+	/**
+	 * Creates a server context with explicit gameplay runtime services. The
+	 * production constructor supplies adapters over the existing system clock
+	 * and random generator; isolated fixtures may supply deterministic sources.
+	 */
+	public Server(final String configFile, final GameClock gameClock,
+			final GameRandom combatRandom) throws IOException {
+		this.gameClock = Objects.requireNonNull(gameClock, "gameClock");
+		this.combatRandom = Objects.requireNonNull(combatRandom, "combatRandom");
 		config = new ServerConfiguration();
 		getConfig().initConfig(configFile);
 		processNetworkConfiguration = getConfig().processNetworkConfiguration();
@@ -1879,6 +1897,14 @@ public class Server implements Runnable {
 
 	public final GameEventHandler getGameEventHandler() {
 		return gameEventHandler;
+	}
+
+	public final GameClock getGameClock() {
+		return gameClock;
+	}
+
+	public final GameRandom getCombatRandom() {
+		return combatRandom;
 	}
 
 	public final GameStateUpdater getGameUpdater() {

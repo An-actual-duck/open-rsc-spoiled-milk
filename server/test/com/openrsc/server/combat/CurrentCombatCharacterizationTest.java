@@ -23,6 +23,7 @@ import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
 import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.action.WalkToAction;
+import com.openrsc.server.model.combat.CombatTick;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -32,6 +33,9 @@ import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.handlers.AttackHandler;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
 import com.openrsc.server.plugins.triggers.AttackNpcTrigger;
+import com.openrsc.server.runtime.ProductionGameRandom;
+import com.openrsc.server.runtime.SystemGameClock;
+import com.openrsc.server.util.rsc.DataConversions;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -62,6 +66,8 @@ public final class CurrentCombatCharacterizationTest {
 		}
 
 		try (CurrentCombatHarness harness = new CurrentCombatHarness()) {
+			run(harness, "deterministic_runtime_contracts_preserve_production_sources",
+				CurrentCombatCharacterizationTest::deterministicRuntimeContracts);
 			run(harness, "melee_ranged_magic_damage_share_xp",
 				CurrentCombatCharacterizationTest::damageShareExperience);
 			run(harness, "attack_eligibility_precedes_plugin_callback",
@@ -87,6 +93,68 @@ public final class CurrentCombatCharacterizationTest {
 		}
 		writeSummary();
 		System.out.println("Combat characterization scenarios passed: " + passed);
+	}
+
+	private static void deterministicRuntimeContracts(
+			final CurrentCombatHarness harness) {
+		assertTrue(harness.server().getGameClock() == harness.clock(),
+			"Server must retain the injected gameplay clock");
+		assertTrue(harness.server().getCombatRandom() == harness.random(),
+			"Server must retain the injected combat random source");
+
+		final long initialMillis = harness.clock().currentTimeMillis();
+		final long initialNanos = harness.clock().nanoTime();
+		harness.clock().advanceMillis(640L);
+		assertEquals(Long.valueOf(initialMillis + 640L),
+			Long.valueOf(harness.clock().currentTimeMillis()),
+			"mutable clock milliseconds");
+		assertEquals(Long.valueOf(initialNanos + 640_000_000L),
+			Long.valueOf(harness.clock().nanoTime()),
+			"mutable clock nanoseconds");
+
+		final CombatTick first = CombatTick.of(7L);
+		final CombatTick later = first.plus(5L);
+		assertEquals(Long.valueOf(12L), Long.valueOf(later.value()),
+			"typed combat tick addition");
+		assertEquals(Long.valueOf(5L), Long.valueOf(later.elapsedSince(first)),
+			"typed combat tick elapsed value");
+		assertFalse(CombatTick.unset().isSet(), "unset combat tick sentinel");
+
+		final long replaySeed = 0xA02C0B4L;
+		final String firstReplay = deterministicDrawTranscript(
+			harness.random(), replaySeed);
+		final String secondReplay = deterministicDrawTranscript(
+			harness.random(), replaySeed);
+		assertEquals(firstReplay, secondReplay,
+			"seeded random replay transcript must be byte-identical");
+
+		DataConversions.getRandom().setSeed(replaySeed);
+		final int legacyInt = DataConversions.getRandom().nextInt(37);
+		final double legacyDouble = DataConversions.getRandom().nextDouble();
+		DataConversions.getRandom().setSeed(replaySeed);
+		assertEquals(Integer.valueOf(legacyInt),
+			Integer.valueOf(ProductionGameRandom.INSTANCE.nextInt(37)),
+			"production random integer adapter parity");
+		assertEquals(Double.valueOf(legacyDouble),
+			Double.valueOf(ProductionGameRandom.INSTANCE.nextDouble()),
+			"production random double adapter parity");
+
+		final long systemMillis = System.currentTimeMillis();
+		final long adaptedMillis = SystemGameClock.INSTANCE.currentTimeMillis();
+		assertTrue(adaptedMillis >= systemMillis,
+			"production clock adapter cannot precede its immediate system read");
+		assertTrue(adaptedMillis - systemMillis < 1_000L,
+			"production clock adapter must use the current system clock");
+	}
+
+	private static String deterministicDrawTranscript(
+			final SeededGameRandom random, final long seed) {
+		random.reset(seed);
+		final int first = random.nextInt(17);
+		final int inclusive = random.nextIntInclusive(-3, 3);
+		final double fraction = random.nextDouble();
+		return first + "|" + inclusive + "|" + fraction + "|"
+			+ random.describeState();
 	}
 
 	private static void damageShareExperience(final CurrentCombatHarness harness)
@@ -409,7 +477,8 @@ public final class CurrentCombatCharacterizationTest {
 			passed++;
 			System.out.println("PASS " + name);
 		} catch (Throwable failure) {
-			System.err.println("FAIL " + name + ": " + failure.getMessage());
+			System.err.println("FAIL " + name + ": " + failure.getMessage()
+				+ " [" + harness.random().describeState() + "]");
 			if (failure instanceof Exception) {
 				throw (Exception) failure;
 			}

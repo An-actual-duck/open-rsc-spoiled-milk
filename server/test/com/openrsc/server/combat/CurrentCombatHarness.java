@@ -25,20 +25,26 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Test-only fixture over the current production Server, World, Player, Npc,
  * scheduler, and plugin-handler implementations.
  *
- * <p>This intentionally does not provide deterministic time or random-number
- * seams. Scenarios in A01 assert only outcomes that are invariant under the
- * current production clock and generator. Controlled replay belongs to A02.</p>
+ * <p>A02 supplies deterministic time and random-number sources through the
+ * production Server constructor without installing alternate combat logic.</p>
  */
 final class CurrentCombatHarness implements AutoCloseable {
+	private static final long DEFAULT_CLOCK_MILLIS = 1_700_000_000_000L;
+	private static final long DEFAULT_RANDOM_SEED = 0x5A17C0B4L;
+
 	private final Server server;
 	private final World world;
+	private final MutableGameClock clock;
+	private final SeededGameRandom random;
 	private final List<Player> players = new ArrayList<Player>();
 	private final List<Npc> npcs = new ArrayList<Npc>();
 	private ThreadPoolExecutor pluginExecutor;
 	private boolean closed;
 
 	CurrentCombatHarness() throws IOException {
-		server = new Server("myworld.conf");
+		clock = new MutableGameClock(DEFAULT_CLOCK_MILLIS);
+		random = new SeededGameRandom(DEFAULT_RANDOM_SEED);
+		server = new Server("myworld.conf", clock, random);
 		server.getConfig().WANT_THREADING__BREAK_PID_PRIORITY = false;
 		server.getConfig().WANT_PVP = false;
 		server.getConfig().COMBAT_EXP_RATE = 1.0D;
@@ -55,6 +61,14 @@ final class CurrentCombatHarness implements AutoCloseable {
 
 	World world() {
 		return world;
+	}
+
+	MutableGameClock clock() {
+		return clock;
+	}
+
+	SeededGameRandom random() {
+		return random;
 	}
 
 	Player player(final String name, final int x, final int packedY) {
