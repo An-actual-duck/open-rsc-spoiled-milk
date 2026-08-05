@@ -23,6 +23,7 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
+import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeUtils;
@@ -40,6 +41,8 @@ import com.openrsc.server.model.combat.CombatEligibilityMessageAdapter;
 import com.openrsc.server.model.combat.CombatEligibilityPhase;
 import com.openrsc.server.model.combat.CombatEligibilityReason;
 import com.openrsc.server.model.combat.CombatEligibilityRequest;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.CombatOwnershipAudit;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.Mob;
@@ -120,6 +123,18 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::attackStyleTransactions);
 			run(harness, "manual_intent_has_priority_over_autocast_retaliation",
 				CurrentCombatCharacterizationTest::manualIntentPriority);
+			run(harness, "directional_engagement_supports_many_incoming_attackers",
+				CurrentCombatCharacterizationTest::directionalEngagementOwnership);
+			run(harness, "stale_events_cannot_clear_retargeted_ownership",
+				CurrentCombatCharacterizationTest::staleEventOwnership);
+			run(harness, "teleport_logout_and_death_close_owned_events",
+				CurrentCombatCharacterizationTest::combatOwnershipLifecycle);
+			run(harness, "passive_retaliation_owns_no_outgoing_player_event",
+				CurrentCombatCharacterizationTest::passiveRetaliationOwnership);
+			run(harness, "combat_ownership_audit_repairs_only_explicit_anomalies",
+				CurrentCombatCharacterizationTest::combatOwnershipAuditRepair);
+			run(harness, "reciprocal_melee_teardown_closes_both_directions",
+				CurrentCombatCharacterizationTest::reciprocalOwnershipTeardown);
 			run(harness, "attack_eligibility_precedes_plugin_callback",
 				CurrentCombatCharacterizationTest::attackEligibilityAndPluginOrder);
 			run(harness, "layered_domain_and_line_of_effect_reject_cross_level",
@@ -787,6 +802,259 @@ public final class CurrentCombatCharacterizationTest {
 			"suppressed retaliation installs no autocast event");
 	}
 
+	private static void directionalEngagementOwnership(
+			final CurrentCombatHarness harness) {
+		final Player ranger = harness.player("direction ranger", 142, 126);
+		final Npc firstTarget = harness.npc(3, 143, 126);
+		final Npc nextTarget = harness.npc(3, 144, 126);
+		final Player secondAttacker = harness.player("direction melee", 143, 127);
+
+		final RangeEvent range = new RangeEvent(
+			harness.world(), ranger, 1, firstTarget);
+		ranger.setRangeEvent(range);
+		assertEquals(firstTarget, ranger.getOutgoingCombatTarget(),
+			"ranged event owns an outgoing direction");
+		assertTrue(firstTarget.hasIncomingAttackFrom(ranger),
+			"ranged target records its incoming direction");
+		assertNull(ranger.getOpponent(),
+			"ranged authority does not change the legacy melee projection");
+		ranger.setSprite(8);
+		assertFalse(ranger.inCombat(),
+			"ranged authority preserves legacy in-combat restrictions");
+		ranger.setSprite(4);
+
+		secondAttacker.setOpponent(firstTarget);
+		final PvmMeleeEvent secondEvent = new PvmMeleeEvent(
+			harness.world(), secondAttacker, firstTarget);
+		secondAttacker.setPvmMeleeEvent(secondEvent);
+		assertEquals(Integer.valueOf(2),
+			Integer.valueOf(firstTarget.getIncomingCombatAttackerCount()),
+			"one target supports independent incoming attackers");
+		firstTarget.setOpponent(ranger);
+		assertTrue(firstTarget.isMutuallyEngagedWith(ranger),
+			"counter direction shares the existing encounter");
+
+		range.reTarget(nextTarget);
+		assertEquals(nextTarget, ranger.getOutgoingCombatTarget(),
+			"retarget moves only the source outgoing direction");
+		assertFalse(firstTarget.hasIncomingAttackFrom(ranger),
+			"old target drops the retargeted incoming direction");
+		assertTrue(nextTarget.hasIncomingAttackFrom(ranger),
+			"new target records the retargeted incoming direction");
+		assertEquals(ranger, firstTarget.getOutgoingCombatTarget(),
+			"peer counter direction remains independently owned");
+
+		ranger.resetRange();
+		secondAttacker.resetCombatEvent();
+		firstTarget.setOpponent(null);
+
+		final Npc incomingNpc = harness.npc(3, 142, 129);
+		final Player rangedCounter = harness.player("ranged counter", 143, 129);
+		incomingNpc.setOpponent(rangedCounter);
+		final PvmMeleeEvent incomingMelee = new PvmMeleeEvent(
+			harness.world(), incomingNpc, rangedCounter);
+		incomingNpc.setPvmMeleeEvent(incomingMelee);
+		rangedCounter.setOpponent(incomingNpc);
+		final RangeEvent counterRange = new RangeEvent(
+			harness.world(), rangedCounter, 1, incomingNpc);
+		rangedCounter.setRangeEvent(counterRange);
+		incomingMelee.terminate(CombatEngagementTerminalReason.EVENT_ENDED, false);
+		assertEquals(counterRange, rangedCounter.getRangeEvent(),
+			"ending one direction preserves a ranged counter event");
+		assertEquals(incomingNpc, rangedCounter.getOutgoingCombatTarget(),
+			"ending one direction preserves the peer counter direction");
+		rangedCounter.resetRange();
+	}
+
+	private static void staleEventOwnership(
+			final CurrentCombatHarness harness) {
+		final Player attacker = harness.player("stale owner", 146, 126);
+		final Npc firstTarget = harness.npc(3, 147, 126);
+		final Npc currentTarget = harness.npc(3, 148, 126);
+
+		final RangeEvent staleRange = new RangeEvent(
+			harness.world(), attacker, 1, firstTarget);
+		attacker.setRangeEvent(staleRange);
+		final RangeEvent currentRange = new RangeEvent(
+			harness.world(), attacker, 1, currentTarget);
+		attacker.setRangeEvent(currentRange);
+		staleRange.run();
+		assertEquals(currentRange, attacker.getRangeEvent(),
+			"stale ranged callback cannot clear its replacement");
+		assertEquals(currentTarget, attacker.getOutgoingCombatTarget(),
+			"stale ranged callback cannot close current ownership");
+		attacker.resetRange();
+
+		attacker.setOpponent(firstTarget);
+		final PvmMeleeEvent staleMelee = new PvmMeleeEvent(
+			harness.world(), attacker, firstTarget);
+		attacker.setPvmMeleeEvent(staleMelee);
+		attacker.setOpponent(currentTarget);
+		final PvmMeleeEvent currentMelee = new PvmMeleeEvent(
+			harness.world(), attacker, currentTarget);
+		attacker.setPvmMeleeEvent(currentMelee);
+		staleMelee.resetCombat(false);
+		assertEquals(currentMelee, attacker.getPvmMeleeEvent(),
+			"stale melee callback cannot clear its replacement");
+		assertEquals(currentTarget, attacker.getOutgoingCombatTarget(),
+			"stale melee callback cannot close current ownership");
+		attacker.resetCombatEvent();
+	}
+
+	private static void combatOwnershipLifecycle(
+			final CurrentCombatHarness harness) {
+		final Player ranger = harness.player("teleport owner", 150, 126);
+		final Npc rangeTarget = harness.npc(3, 151, 126);
+		final RangeEvent range = new RangeEvent(
+			harness.world(), ranger, 1, rangeTarget);
+		ranger.setRangeEvent(range);
+		ranger.teleport(152, 126);
+		assertNull(ranger.getRangeEvent(), "teleport clears ranged event ownership");
+		assertFalse(ranger.hasOutgoingAttack(),
+			"teleport closes the outgoing direction");
+		assertFalse(rangeTarget.hasIncomingAttackFrom(ranger),
+			"teleport removes target incoming ownership");
+		ranger.terminateCombatOwnership(CombatEngagementTerminalReason.TELEPORT);
+		assertFalse(ranger.hasOutgoingAttack(),
+			"repeated empty cleanup remains idempotent");
+
+		final Npc incomingAttacker = harness.npc(3, 154, 126);
+		final Player teleportedTarget = harness.player("teleport target", 155, 126);
+		incomingAttacker.setOpponent(teleportedTarget);
+		final PvmMeleeEvent incomingEvent = new PvmMeleeEvent(
+			harness.world(), incomingAttacker, teleportedTarget);
+		incomingAttacker.setPvmMeleeEvent(incomingEvent);
+		teleportedTarget.teleport(156, 126);
+		assertNull(incomingAttacker.getPvmMeleeEvent(),
+			"target teleport stops an incoming attacker event");
+		assertFalse(incomingAttacker.hasOutgoingAttack(),
+			"target teleport closes incoming source ownership");
+
+		final Player mage = harness.player("logout owner", 158, 126);
+		final Npc magicTarget = harness.npc(3, 159, 126);
+		final MagicCombatEvent magic = new MagicCombatEvent(
+			harness.world(), mage, 1, magicTarget, Spells.WIND_STRIKE);
+		mage.setMagicCombatEvent(magic);
+		mage.setLoggedIn(false);
+		assertNull(mage.getMagicCombatEvent(), "logout clears magic event ownership");
+		assertFalse(magicTarget.hasIncomingAttackFrom(mage),
+			"logout removes target incoming ownership");
+		mage.setLoggedIn(false);
+		mage.setLoggedIn(true);
+		assertFalse(mage.hasOutgoingAttack(),
+			"repeated logout and reconnect do not revive ownership");
+
+		final Player victim = harness.player("death target", 162, 126);
+		final Player attacker = harness.player("death owner", 163, 126);
+		final RangeEvent deathRange = new RangeEvent(
+			harness.world(), attacker, 1, victim);
+		attacker.setRangeEvent(deathRange);
+		victim.killedBy(attacker);
+		assertNull(attacker.getRangeEvent(),
+			"target death stops an incoming ranged event");
+		assertFalse(attacker.hasOutgoingAttack(),
+			"target death closes attacker ownership");
+	}
+
+	private static void passiveRetaliationOwnership(
+			final CurrentCombatHarness harness) {
+		final Npc attacker = harness.npc(3, 166, 126);
+		final Player victim = harness.player("passive target", 167, 126);
+		victim.getCache().store("setting_auto_retaliate", false);
+
+		attacker.setOpponent(victim);
+		final PvmMeleeEvent attackEvent = new PvmMeleeEvent(
+			harness.world(), attacker, victim);
+		attacker.setPvmMeleeEvent(attackEvent);
+		victim.startPvmCounterCombat(attacker);
+		assertTrue(victim.hasIncomingAttackFrom(attacker),
+			"passive player records the NPC incoming direction");
+		assertFalse(victim.hasOutgoingAttack(),
+			"passive player owns no outgoing direction");
+		assertNull(victim.getOpponent(),
+			"passive player owns no legacy opponent projection");
+		assertNull(victim.getPvmMeleeEvent(),
+			"passive player owns no melee event");
+		assertFalse(victim.inCombat(),
+			"passive player preserves current walk and logout restrictions");
+
+		victim.getCache().store("setting_auto_retaliate", true);
+		victim.startPvmCounterCombat(attacker);
+		assertTrue(victim.hasOutgoingAttack(),
+			"enabled retaliation creates an outgoing direction");
+		assertEquals(attacker, victim.getOutgoingCombatTarget(),
+			"retaliation direction targets the incoming NPC");
+		assertTrue(victim.isMutuallyEngagedWith(attacker),
+			"retaliation joins the existing encounter");
+		assertNotNull(victim.getPvmMeleeEvent(),
+			"enabled retaliation owns its melee event");
+		victim.resetCombatEvent();
+		attacker.resetCombatEvent();
+	}
+
+	private static void combatOwnershipAuditRepair(
+			final CurrentCombatHarness harness) {
+		final Player owner = harness.player("audit owner", 170, 126);
+		final Npc target = harness.npc(3, 171, 126);
+		final RangeEvent abandoned = new RangeEvent(
+			harness.world(), owner, 1, target);
+		owner.setRangeEvent(abandoned);
+		abandoned.stop();
+
+		final CombatOwnershipAudit observed = owner.auditCombatOwnership(false);
+		assertEquals(Integer.valueOf(1),
+			Integer.valueOf(observed.getDiscrepancies().size()),
+			"read-only audit reports the stale slot");
+		assertEquals(Integer.valueOf(0), Integer.valueOf(observed.getRepairedCount()),
+			"read-only audit does not mutate ownership");
+
+		final CombatOwnershipAudit repaired = owner.auditCombatOwnership(true);
+		assertEquals(Integer.valueOf(1), Integer.valueOf(repaired.getRepairedCount()),
+			"explicit repair removes the stale slot");
+		assertFalse(owner.hasOutgoingAttack(),
+			"explicit repair closes its orphan outgoing direction");
+		assertFalse(target.hasIncomingAttackFrom(owner),
+			"explicit repair removes peer incoming ownership");
+		assertTrue(owner.auditCombatOwnership(false).isConsistent(),
+			"repaired authority subsequently audits cleanly");
+	}
+
+	private static void reciprocalOwnershipTeardown(
+			final CurrentCombatHarness harness) {
+		final Player attacker = harness.player("reciprocal one", 174, 126);
+		final Player defender = harness.player("reciprocal two", 175, 126);
+		attacker.setOpponent(defender);
+		defender.setOpponent(attacker);
+		final boolean shufflePid = harness.server().getConfig().SHUFFLE_PID_ORDER;
+		harness.server().getConfig().SHUFFLE_PID_ORDER = false;
+		final CombatEvent event;
+		try {
+			event = new CombatEvent(harness.world(), attacker, defender);
+		} finally {
+			harness.server().getConfig().SHUFFLE_PID_ORDER = shufflePid;
+		}
+		attacker.setCombatEvent(event);
+		defender.setCombatEvent(event);
+		assertTrue(attacker.isMutuallyEngagedWith(defender),
+			"reciprocal melee starts with two owned directions");
+
+		event.terminate(CombatEngagementTerminalReason.EVENT_ENDED);
+		assertNull(attacker.getCombatEvent(),
+			"reciprocal teardown clears attacker event slot");
+		assertNull(defender.getCombatEvent(),
+			"reciprocal teardown clears defender event slot");
+		assertFalse(attacker.hasOutgoingAttack(),
+			"reciprocal teardown closes attacker direction");
+		assertFalse(defender.hasOutgoingAttack(),
+			"reciprocal teardown closes defender direction");
+		assertEquals(Integer.valueOf(0),
+			Integer.valueOf(attacker.getIncomingCombatAttackerCount()),
+			"reciprocal teardown clears attacker incoming ownership");
+		assertEquals(Integer.valueOf(0),
+			Integer.valueOf(defender.getIncomingCombatAttackerCount()),
+			"reciprocal teardown clears defender incoming ownership");
+	}
+
 	private static void attackEligibilityAndPluginOrder(
 			final CurrentCombatHarness harness) throws Exception {
 		final RecordingAttackPlugin plugin = new RecordingAttackPlugin();
@@ -1011,7 +1279,11 @@ public final class CurrentCombatCharacterizationTest {
 			Integer.valueOf(-1), Integer.valueOf(0),
 			Integer.valueOf(-1), Integer.valueOf(0),
 			Integer.valueOf(-1), Integer.valueOf(0));
-		new PvmMeleeEvent(harness.world(), player, primary).run();
+		player.setOpponent(primary);
+		final PvmMeleeEvent event =
+			new PvmMeleeEvent(harness.world(), player, primary);
+		player.setPvmMeleeEvent(event);
+		event.run();
 
 		assertTrue(primary.getSkills().getLevel(Skill.HITS.id()) < primaryBefore,
 			"scythe primary damage settlement");
@@ -1087,6 +1359,7 @@ public final class CurrentCombatCharacterizationTest {
 			Skill.HITS.id(), 20, 40, false);
 		final ThrowingEvent event = new ThrowingEvent(
 			harness.world(), player, 1, primary);
+		player.setThrowingEvent(event);
 		harness.random().reset(0xA025E77L);
 		harness.random().scriptInts(
 			Integer.valueOf(0), Integer.valueOf(0),

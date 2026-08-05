@@ -5,6 +5,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
@@ -23,6 +24,10 @@ public class RangeEventNpc extends GameTickEvent {
         this.victim = victim;
     }
 
+    public Mob getTarget() {
+        return victim;
+    }
+
     public boolean equals(Object o) {
         if (o instanceof RangeEventNpc) {
             RangeEventNpc e = (RangeEventNpc) o;
@@ -33,19 +38,23 @@ public class RangeEventNpc extends GameTickEvent {
 
     public void run() {
         final Mob owner = getOwner();
+        if (!owner.isCurrentRangeEventNpc(this)) {
+            stop();
+            return;
+        }
         if ((victim.isPlayer() && !((Player) victim).loggedIn())
                 || victim.getSkills().getLevel(Skill.HITS.id()) <= 0
                 || !owner.withinRange(victim)) {
-            owner.resetRange();
+            terminate(CombatEngagementTerminalReason.EVENT_ENDED);
             return;
         }
         if (owner.inCombat()) {
-            owner.resetRange();
+            terminate(CombatEngagementTerminalReason.EVENT_ENDED);
             return;
         }
         if (!victim.getLocation().inBounds(((Npc) owner).getLoc().minX - 9, ((Npc) owner).getLoc().minY - 9,
                 ((Npc) owner).getLoc().maxX + 9, ((Npc) owner).getLoc().maxY + 9) && owner.isNpc()) {
-            owner.resetRange();
+            terminate(CombatEngagementTerminalReason.LEASH);
             return;
         }
         if (owner.getLocation().inWilderness() && victim.getLocation().inWilderness() && isUnreachable(victim)) {
@@ -53,27 +62,26 @@ public class RangeEventNpc extends GameTickEvent {
             if (owner.nextStep(owner.getX(), owner.getY(), victim) == null) {
                 Player playerTarget = (Player) victim;
                 playerTarget.message("You got away");
-                owner.resetRange();
+                terminate(CombatEngagementTerminalReason.LEASH);
             }
         } else if (!owner.getLocation().inWilderness() && !victim.getLocation().inWilderness() && isUnreachable(victim)) {
             owner.walkToEntity(victim.getX(), victim.getY());
             if (owner.nextStep(owner.getX(), owner.getY(), victim) == null) {
                 Player playerTarget = (Player) victim;
                 playerTarget.message("You got away");
-                owner.resetRange();
+                terminate(CombatEngagementTerminalReason.LEASH);
             }
         } else if (!owner.getLocation().inWilderness() && !victim.getLocation().inWilderness() && isUnreachable(victim)) {
             Player playerTarget = (Player) victim;
             playerTarget.message("You got away");
-            owner.resetRange();
+            terminate(CombatEngagementTerminalReason.LEASH);
         } else {
             owner.resetPath();
 			if (!PathValidation.checkHostileProjectilePath(
 				getWorld(),
 				owner.getWorldLocation(),
 				victim.getWorldLocation())) {
-                owner.resetRange();
-                stop();
+                terminate(CombatEngagementTerminalReason.EVENT_ENDED);
                 return;
             }
             owner.face(victim);
@@ -84,7 +92,7 @@ public class RangeEventNpc extends GameTickEvent {
                     Player playerTarget = (Player) victim;
                     if (!playerTarget.getConfig().WANT_MYWORLD && playerTarget.getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
                         playerTarget.message(owner + " is trying to shoot you!");
-                        stop();
+                        terminate(CombatEngagementTerminalReason.EVENT_ENDED);
                         return;
                     }
                 }
@@ -113,6 +121,14 @@ public class RangeEventNpc extends GameTickEvent {
                 getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), owner, victim, damage, 2));
                 owner.setKillType(KillType.RANGED);
             }
+    }
+
+    public void terminate(final CombatEngagementTerminalReason reason) {
+        final Mob owner = getOwner();
+        if (owner != null) {
+            owner.clearRangeEventNpcIfCurrent(this, reason);
+        }
+        stop();
     }
 
     private GroundItem getArrows(Player player) {

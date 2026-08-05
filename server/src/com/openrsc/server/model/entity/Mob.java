@@ -20,6 +20,11 @@ import com.openrsc.server.model.*;
 import com.openrsc.server.model.Path.PathType;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.CombatEngagement;
+import com.openrsc.server.model.combat.CombatEngagementAuthority;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.CombatEventSlot;
+import com.openrsc.server.model.combat.CombatOwnershipAudit;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -45,6 +50,7 @@ import com.openrsc.server.util.rsc.Formulae;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -97,7 +103,6 @@ public abstract class Mob extends Entity {
 	private int poisonMaxPower = 0;
 	private UUID poisonOwnerId = null;
 	private int waterSlowPercent = 0;
-	private RangeEventNpc rangeEventNpc;
 	private long lastRun = 0;
 	private boolean teleporting;
 	/**
@@ -108,8 +113,6 @@ public abstract class Mob extends Entity {
 	/**
 	 * The combat event instance.
 	 */
-	protected CombatEvent combatEvent;
-	protected PvmMeleeEvent pvmMeleeEvent;
 	/**
 	 * Have we moved since last update?
 	 */
@@ -131,6 +134,7 @@ public abstract class Mob extends Entity {
 	 * Unique ID for event tracking.
 	 */
 	private final UUID uuid;
+	private final CombatEngagementAuthority combatEngagementAuthority;
 	/** Generation token for delayed combat work that must not cross lifetimes. */
 	private final AtomicLong combatLifecycle = new AtomicLong(1L);
 	/**
@@ -144,7 +148,6 @@ public abstract class Mob extends Entity {
 	/**
 	 * Who they are in combat with
 	 */
-	private volatile Mob combatWith = null;
 	/**
 	 * Who they were last in combat with
 	 */
@@ -222,6 +225,7 @@ public abstract class Mob extends Entity {
 		super(world, type);
 		statRestorationEvent = new StatRestorationEvent(getWorld(), this);
 		uuid = UUID.randomUUID();
+		combatEngagementAuthority = new CombatEngagementAuthority(this);
 	}
 
 	/**
@@ -1047,9 +1051,11 @@ public abstract class Mob extends Entity {
 				NpcInteraction.setInteractions(((Npc)this), ((Player)victim), interaction);
 			}
 
-			combatEvent = new CombatEvent(getWorld(), this, victim);
-			victim.setCombatEvent(combatEvent);
-			getWorld().getServer().getGameEventHandler().add(combatEvent);
+			final CombatEvent newCombatEvent =
+				new CombatEvent(getWorld(), this, victim);
+			setCombatEvent(newCombatEvent);
+			victim.setCombatEvent(newCombatEvent);
+			getWorld().getServer().getGameEventHandler().add(newCombatEvent);
 			if (gotUnderAttack && !Summoning.isSummon(this)) {
 				if (victim.isPlayer()) {
 					// packet order is authentic here
@@ -1076,11 +1082,13 @@ public abstract class Mob extends Entity {
 			return;
 		}
 
-		if (combatEvent != null || (pvmMeleeEvent != null && pvmMeleeEvent.isRunning() && pvmMeleeEvent.getTarget().equals(victim))) {
+		if (getCombatEvent() != null || (getPvmMeleeEvent() != null
+			&& getPvmMeleeEvent().isRunning()
+			&& getPvmMeleeEvent().getTarget().equals(victim))) {
 			return;
 		}
 
-		if (pvmMeleeEvent != null) {
+		if (getPvmMeleeEvent() != null) {
 			resetCombatEvent();
 		}
 
@@ -1173,8 +1181,11 @@ public abstract class Mob extends Entity {
 			NpcInteraction.setInteractions(((Npc) victim), ((Player) this), interaction);
 		}
 
-			pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, victim);
-			getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
+			final PvmMeleeEvent newPvmMeleeEvent =
+				new PvmMeleeEvent(getWorld(), this, victim);
+			setPvmMeleeEvent(newPvmMeleeEvent);
+			getWorld().getServer().getGameEventHandler()
+				.addOrUpdate(newPvmMeleeEvent);
 		if (this.isPlayer() && victim.isNpc()) {
 			Summoning.recordCombatSummonEngagement((Player) this, (Npc) victim);
 		}
@@ -1191,7 +1202,7 @@ public abstract class Mob extends Entity {
 		if (Summoning.isSummon(this) || Summoning.isSummon(attacker)) {
 			return;
 		}
-		if (combatEvent != null) {
+		if (getCombatEvent() != null) {
 			return;
 		}
 
@@ -1213,7 +1224,8 @@ public abstract class Mob extends Entity {
 			return;
 		}
 
-		if (pvmMeleeEvent != null && pvmMeleeEvent.isRunning() && pvmMeleeEvent.getTarget().equals(attacker)) {
+		if (getPvmMeleeEvent() != null && getPvmMeleeEvent().isRunning()
+			&& getPvmMeleeEvent().getTarget().equals(attacker)) {
 			return;
 		}
 		if (this.isPlayer()) {
@@ -1221,7 +1233,7 @@ public abstract class Mob extends Entity {
 			return;
 		}
 
-		if (pvmMeleeEvent != null) {
+		if (getPvmMeleeEvent() != null) {
 			resetCombatEvent();
 		}
 
@@ -1238,8 +1250,11 @@ public abstract class Mob extends Entity {
 		// Set hostility state for counter-combat
 		setHostile(attacker, HostileState.HostilityType.ATTACKED);
 
-		pvmMeleeEvent = new PvmMeleeEvent(getWorld(), this, attacker);
-		getWorld().getServer().getGameEventHandler().addOrUpdate(pvmMeleeEvent);
+		final PvmMeleeEvent newPvmMeleeEvent =
+			new PvmMeleeEvent(getWorld(), this, attacker);
+		setPvmMeleeEvent(newPvmMeleeEvent);
+		getWorld().getServer().getGameEventHandler()
+			.addOrUpdate(newPvmMeleeEvent);
 	}
 
 	private void startPlayerMeleePvmCounterCombat(final Mob attacker) {
@@ -1252,17 +1267,19 @@ public abstract class Mob extends Entity {
 			new PlayerAttackTransaction.CommitAction() {
 				@Override
 				public boolean commit() {
-					if (pvmMeleeEvent != null) resetCombatEvent();
+					if (getPvmMeleeEvent() != null) resetCombatEvent();
 					resetPath();
 					resetRange();
 					setOpponent(attacker);
 					setCombatTimer();
 					setHostile(attacker, HostileState.HostilityType.ATTACKED);
-					pvmMeleeEvent = new PvmMeleeEvent(getWorld(), player, attacker);
+					final PvmMeleeEvent event =
+						new PvmMeleeEvent(getWorld(), player, attacker);
+					setPvmMeleeEvent(event);
 					getWorld().getServer().getGameEventHandler()
-						.addOrUpdate(pvmMeleeEvent);
-					return pvmMeleeEvent.isRunning()
-						&& pvmMeleeEvent.getTarget() == attacker;
+						.addOrUpdate(event);
+					return event.isRunning()
+						&& event.getTarget() == attacker;
 				}
 			});
 	}
@@ -1291,7 +1308,7 @@ public abstract class Mob extends Entity {
 			new PlayerAttackTransaction.CommitAction() {
 				@Override
 				public boolean commit() {
-					if (pvmMeleeEvent != null) resetCombatEvent();
+					if (getPvmMeleeEvent() != null) resetCombatEvent();
 					resetPath();
 					setOpponent(attacker);
 					setCombatTimer();
@@ -1338,13 +1355,96 @@ public abstract class Mob extends Entity {
 	}
 
 	public void resetCombatEvent() {
-		if (combatEvent != null) {
-			combatEvent.resetCombat();
+		final CombatEvent reciprocal = getCombatEvent();
+		if (reciprocal != null) {
+			reciprocal.resetCombat();
 		}
-		if (pvmMeleeEvent != null) {
-			pvmMeleeEvent.resetCombat(false);
+		final PvmMeleeEvent pvm = getPvmMeleeEvent();
+		if (pvm != null) {
+			pvm.resetCombat(false);
 		}
 		// Clear hostility when combat ends
+		clearHostility();
+	}
+
+	public boolean isCurrentCombatEvent(final CombatEvent event) {
+		return combatEngagementAuthority.isCurrentEvent(
+			CombatEventSlot.RECIPROCAL_MELEE, event);
+	}
+
+	public boolean isCurrentPvmMeleeEvent(final PvmMeleeEvent event) {
+		return combatEngagementAuthority.isCurrentEvent(
+			CombatEventSlot.PVM_MELEE, event);
+	}
+
+	public boolean isCurrentRangeEventNpc(final RangeEventNpc event) {
+		return combatEngagementAuthority.isCurrentEvent(
+			CombatEventSlot.NPC_RANGE, event);
+	}
+
+	public boolean clearCombatEventIfCurrent(final CombatEvent event,
+			final CombatEngagementTerminalReason reason) {
+		final boolean cleared = combatEngagementAuthority.clearEventIfCurrent(
+			CombatEventSlot.RECIPROCAL_MELEE, event, reason);
+		if (cleared) {
+			flagToolCombatAppearanceUpdate();
+		}
+		return cleared;
+	}
+
+	public boolean clearPvmMeleeEventIfCurrent(final PvmMeleeEvent event,
+			final CombatEngagementTerminalReason reason) {
+		final boolean cleared = combatEngagementAuthority.clearEventIfCurrent(
+			CombatEventSlot.PVM_MELEE, event, reason);
+		if (cleared) {
+			flagToolCombatAppearanceUpdate();
+		}
+		return cleared;
+	}
+
+	public boolean clearRangeEventNpcIfCurrent(final RangeEventNpc event,
+			final CombatEngagementTerminalReason reason) {
+		return combatEngagementAuthority.clearEventIfCurrent(
+			CombatEventSlot.NPC_RANGE, event, reason);
+	}
+
+	/** Stops only events owned by this mob that currently target the peer. */
+	public void terminateCombatEventsTargeting(final Mob target,
+			final CombatEngagementTerminalReason reason) {
+		if (target == null) {
+			return;
+		}
+		final CombatEvent reciprocal = getCombatEvent();
+		if (reciprocal != null
+			&& (reciprocal.getAttacker() == target
+				|| reciprocal.getVictim() == target)) {
+			reciprocal.terminate(reason);
+		}
+		final PvmMeleeEvent pvm = getPvmMeleeEvent();
+		if (pvm != null && pvm.getTarget() == target) {
+			pvm.terminate(reason, false);
+		}
+		final RangeEventNpc npcRange = getRangeEventNpc();
+		if (npcRange != null && npcRange.getTarget() == target) {
+			npcRange.terminate(reason);
+		}
+		if (isPlayer()) {
+			((Player) this).terminatePlayerCombatEventsTargeting(target, reason);
+		}
+	}
+
+	/** Explicit lifecycle boundary for logout, death, teleport, and removal. */
+	public void terminateCombatOwnership(
+			final CombatEngagementTerminalReason reason) {
+		final List<Mob> incoming = getIncomingCombatAttackers();
+		final Mob outgoing = getOutgoingCombatTarget();
+		if (outgoing != null) {
+			terminateCombatEventsTargeting(outgoing, reason);
+		}
+		for (final Mob attacker : incoming) {
+			attacker.terminateCombatEventsTargeting(this, reason);
+		}
+		combatEngagementAuthority.closeAll(reason);
 		clearHostility();
 	}
 
@@ -1420,18 +1520,29 @@ public abstract class Mob extends Entity {
 	}
 
 	public void resetRange() {
-		if (rangeEventNpc != null) {
-			rangeEventNpc.stop();
-			rangeEventNpc = null;
+		final RangeEventNpc event = getRangeEventNpc();
+		if (event != null) {
+			combatEngagementAuthority.clearEventIfCurrent(
+				CombatEventSlot.NPC_RANGE, event,
+				CombatEngagementTerminalReason.LEGACY_RESET);
+			event.stop();
 		}
 	}
 
 	public void setRangeEventNpc(RangeEventNpc event) {
-		if (rangeEventNpc != null) {
-			rangeEventNpc.stop();
+		final RangeEventNpc previous = getRangeEventNpc();
+		if (previous != null && previous != event) {
+			combatEngagementAuthority.clearEventIfCurrent(
+				CombatEventSlot.NPC_RANGE, previous,
+				CombatEngagementTerminalReason.RETARGETED);
+			previous.stop();
 		}
-		rangeEventNpc = event;
-		getWorld().getServer().getGameEventHandler().add(rangeEventNpc);
+		if (event != null) {
+			combatEngagementAuthority.registerEvent(
+				CombatEventSlot.NPC_RANGE, event, event.getTarget(),
+				CombatStyle.RANGED, false);
+			getWorld().getServer().getGameEventHandler().add(event);
+		}
 	}
 
 	/**
@@ -1762,9 +1873,9 @@ public abstract class Mob extends Entity {
 		final int newHp = currentHp - appliedDamage;
 		if (newHp <= 0) {
 			if (this.isPlayer()) {
-				killedBy(combatWith);
+				killedBy(getOpponent());
 			} else {
-				killedBy(combatWith);
+				killedBy(getOpponent());
 			}
 		} else {
 			skills.setLevel(Skill.HITS.id(), newHp);
@@ -1976,7 +2087,8 @@ public abstract class Mob extends Entity {
 	}
 
 	public RangeEventNpc getRangeEventNpc() {
-		return rangeEventNpc;
+		return combatEngagementAuthority.getEvent(
+			CombatEventSlot.NPC_RANGE, RangeEventNpc.class);
 	}
 
 	public UUID getUUID() {
@@ -1988,24 +2100,57 @@ public abstract class Mob extends Entity {
 	}
 
 	public long advanceCombatLifecycle() {
+		return advanceCombatLifecycle(
+			CombatEngagementTerminalReason.LIFECYCLE_CHANGED);
+	}
+
+	public long advanceCombatLifecycle(
+			final CombatEngagementTerminalReason reason) {
+		terminateCombatOwnership(reason);
 		return combatLifecycle.incrementAndGet();
 	}
 
 	public CombatEvent getCombatEvent() {
-		return combatEvent;
+		return combatEngagementAuthority.getEvent(
+			CombatEventSlot.RECIPROCAL_MELEE, CombatEvent.class);
 	}
 
 	public PvmMeleeEvent getPvmMeleeEvent() {
-		return pvmMeleeEvent;
+		return combatEngagementAuthority.getEvent(
+			CombatEventSlot.PVM_MELEE, PvmMeleeEvent.class);
 	}
 
 	public void setCombatEvent(final CombatEvent combatEvent2) {
-		this.combatEvent = combatEvent2;
+		final CombatEvent current = getCombatEvent();
+		if (combatEvent2 == null) {
+			if (current != null) {
+				combatEngagementAuthority.clearEventIfCurrent(
+					CombatEventSlot.RECIPROCAL_MELEE, current,
+					CombatEngagementTerminalReason.LEGACY_RESET);
+			}
+		} else {
+			final Mob peer = combatEvent2.getAttacker() == this
+				? combatEvent2.getVictim() : combatEvent2.getAttacker();
+			combatEngagementAuthority.registerEvent(
+				CombatEventSlot.RECIPROCAL_MELEE, combatEvent2, peer,
+				CombatStyle.MELEE, true);
+		}
 		flagToolCombatAppearanceUpdate();
 	}
 
 	public void setPvmMeleeEvent(final PvmMeleeEvent pvmMeleeEvent) {
-		this.pvmMeleeEvent = pvmMeleeEvent;
+		final PvmMeleeEvent current = getPvmMeleeEvent();
+		if (pvmMeleeEvent == null) {
+			if (current != null) {
+				combatEngagementAuthority.clearEventIfCurrent(
+					CombatEventSlot.PVM_MELEE, current,
+					CombatEngagementTerminalReason.LEGACY_RESET);
+			}
+		} else {
+			combatEngagementAuthority.registerEvent(
+				CombatEventSlot.PVM_MELEE, pvmMeleeEvent,
+				pvmMeleeEvent.getTarget(), CombatStyle.MELEE, true);
+		}
 		flagToolCombatAppearanceUpdate();
 	}
 
@@ -2058,11 +2203,17 @@ public abstract class Mob extends Entity {
 	}
 
 	public Mob getOpponent() {
-		return combatWith;
+		return combatEngagementAuthority.getLegacyOpponentProjection();
 	}
 
 	public void setOpponent(final Mob opponent) {
-		combatWith = opponent;
+		if (opponent == null) {
+			combatEngagementAuthority.closeOutgoing(
+				CombatEngagementTerminalReason.LEGACY_RESET);
+		} else {
+			combatEngagementAuthority.beginOutgoing(
+				opponent, CombatStyle.MELEE, true);
+		}
 		flagToolCombatAppearanceUpdate();
 	}
 
@@ -2128,7 +2279,47 @@ public abstract class Mob extends Entity {
 	}
 
 	public boolean inCombat() {
-		return mobSprite >= 8 && mobSprite <= 15 && combatWith != null;
+		return mobSprite >= 8 && mobSprite <= 15 && getOpponent() != null;
+	}
+
+	public CombatEngagementAuthority getCombatEngagementAuthority() {
+		return combatEngagementAuthority;
+	}
+
+	public CombatEngagement getOutgoingCombatEngagement() {
+		return combatEngagementAuthority.getOutgoing();
+	}
+
+	public Mob getOutgoingCombatTarget() {
+		return combatEngagementAuthority.getOutgoingTarget();
+	}
+
+	public boolean hasOutgoingAttack() {
+		return combatEngagementAuthority.hasOutgoing();
+	}
+
+	public boolean hasIncomingAttackers() {
+		return combatEngagementAuthority.hasIncoming();
+	}
+
+	public boolean hasIncomingAttackFrom(final Mob attacker) {
+		return combatEngagementAuthority.hasIncomingFrom(attacker);
+	}
+
+	public int getIncomingCombatAttackerCount() {
+		return combatEngagementAuthority.incomingCount();
+	}
+
+	public List<Mob> getIncomingCombatAttackers() {
+		return combatEngagementAuthority.incomingAttackers();
+	}
+
+	public boolean isMutuallyEngagedWith(final Mob peer) {
+		return combatEngagementAuthority.isMutuallyEngagedWith(peer);
+	}
+
+	public CombatOwnershipAudit auditCombatOwnership(final boolean repair) {
+		return combatEngagementAuthority.audit(repair);
 	}
 
 	/**

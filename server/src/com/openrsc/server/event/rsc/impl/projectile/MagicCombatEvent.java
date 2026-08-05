@@ -11,6 +11,7 @@ import com.openrsc.server.model.action.WalkToMobAction;
 import com.openrsc.server.model.combat.AttackIntent;
 import com.openrsc.server.model.combat.AttackTransactionResult;
 import com.openrsc.server.model.combat.CombatParticipantSnapshot;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.Mob;
@@ -94,6 +95,7 @@ public class MagicCombatEvent extends GameTickEvent {
 		this.target = target;
 		this.spell = spell;
 		this.targetSnapshot = CombatParticipantSnapshot.capture(target);
+		player.setMagicCombatEvent(this);
 		player.setWalkToAction(null);
 		player.resetFollowing();
 		setDelayTicks(0);
@@ -173,7 +175,7 @@ public class MagicCombatEvent extends GameTickEvent {
 		if (player == null || target == null || spell == null) {
 			return false;
 		}
-		if (player.getMagicCombatEvent() != this
+		if (!player.isCurrentMagicCombatEvent(this)
 			|| targetSnapshot == null || !targetSnapshot.matches(target)) {
 			return false;
 		}
@@ -193,9 +195,11 @@ public class MagicCombatEvent extends GameTickEvent {
 	}
 
 	private void clearActiveEvent() {
-		stop();
-		if (player != null && player.getMagicCombatEvent() == this) {
-			player.setMagicCombatEvent(null);
+		if (player != null) {
+			player.terminateMagicCombatEvent(
+				this, CombatEngagementTerminalReason.EVENT_ENDED);
+		} else {
+			stop();
 		}
 	}
 }

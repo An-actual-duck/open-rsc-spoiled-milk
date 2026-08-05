@@ -17,6 +17,7 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -821,61 +822,54 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	public void resetCombat() {
-		if (running) {
-			if (defenderMob != null) {
-				if (defenderMob.isPlayer()) {
-					Player player = (Player) defenderMob;
-					player.resetAll();
-				}
+		terminate(CombatEngagementTerminalReason.LEGACY_RESET);
+	}
 
-				//defenderMob.setBusy(false);
-				defenderMob.setOpponent(null);
-				defenderMob.setCombatEvent(null);
-				defenderMob.setHitsMade(0);
-				defenderMob.setSprite(4);
-				defenderMob.setCombatTimer();
-				defenderMob.face(defenderMob.getX(), defenderMob.getY() - 1);
-			}
-			if (attackerMob != null) {
-				if (attackerMob.isPlayer()) {
-					Player player = (Player) attackerMob;
-					player.resetAll();
-				}
-
-				//attackerMob.setBusy(false);
-				attackerMob.setOpponent(null);
-				attackerMob.setCombatEvent(null);
-				attackerMob.setHitsMade(0);
-				attackerMob.setSprite(4);
-				attackerMob.setCombatTimer();
-				attackerMob.face(attackerMob.getX(), attackerMob.getY() - 1);
-			}
-		} else {
-			// combat event was reset while combat event wasn't running.
-			// possible race condition; we will want to clean most things up if this happens.
-			if (defenderMob != null) {
-				defenderMob.setOpponent(null);
-				defenderMob.setCombatEvent(null);
-				defenderMob.setHitsMade(0);
-				if (defenderMob.getSprite() > 7) {
-					defenderMob.setSprite(4);
-					defenderMob.face(defenderMob.getX(), defenderMob.getY() - 1);
-				}
-			}
-			if (attackerMob != null) {
-				attackerMob.setOpponent(null);
-				attackerMob.setCombatEvent(null);
-				attackerMob.setHitsMade(0);
-				if (attackerMob.getSprite() > 7) {
-					attackerMob.setSprite(4);
-					attackerMob.face(attackerMob.getX(), attackerMob.getY() - 1);
-				}
-			}
+	public void terminate(final CombatEngagementTerminalReason reason) {
+		final boolean attackerCurrent = attackerMob != null
+			&& attackerMob.isCurrentCombatEvent(this);
+		final boolean defenderCurrent = defenderMob != null
+			&& defenderMob.isCurrentCombatEvent(this);
+		if (!attackerCurrent && !defenderCurrent) {
+			stop();
+			return;
+		}
+		final boolean wasRunning = running;
+		if (attackerCurrent) {
+			attackerMob.clearCombatEventIfCurrent(this, reason);
+		}
+		if (defenderCurrent) {
+			defenderMob.clearCombatEventIfCurrent(this, reason);
 		}
 		stop();
+		if (defenderCurrent) {
+			cleanupParticipant(defenderMob, wasRunning);
+		}
+		if (attackerCurrent) {
+			cleanupParticipant(attackerMob, wasRunning);
+		}
+	}
+
+	private void cleanupParticipant(final Mob participant,
+			final boolean resetPlayerState) {
+		if (resetPlayerState && participant.isPlayer()) {
+			((Player) participant).resetAll();
+		}
+		participant.setHitsMade(0);
+		if (participant.getSprite() > 7) {
+			participant.setSprite(4);
+			participant.face(participant.getX(), participant.getY() - 1);
+		}
+		if (resetPlayerState) {
+			participant.setCombatTimer();
+		}
 	}
 
 	private boolean combatCanContinue() {
+		if (!attackerMob.isCurrentCombatEvent(this)
+			|| !defenderMob.isCurrentCombatEvent(this)) {
+			return false;
+		}
 		boolean removed = attackerMob.isRemoved() || defenderMob.isRemoved();
 		boolean nextToVictim = attackerMob.getLocation().equals(defenderMob.getLocation());
 		if (defenderMob.isNpc() && attackerMob.isNpc()) {

@@ -47,6 +47,8 @@ import com.openrsc.server.model.combat.CombatEligibilityMessageAdapter;
 import com.openrsc.server.model.combat.CombatEligibilityPhase;
 import com.openrsc.server.model.combat.CombatEligibilityReason;
 import com.openrsc.server.model.combat.CombatEligibilityRequest;
+import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.CombatEventSlot;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.struct.UnequipRequest;
@@ -164,8 +166,6 @@ public final class Player extends Mob {
 	private Social social;
 	private Duel duel;
 	private DelayedEvent unregisterEvent;
-	private ThrowingEvent throwingEvent;
-	private MagicCombatEvent magicCombatEvent;
 	private Spells autoCastSpell;
 	private DelayedEvent chargeEvent = null;
 	private boolean sleeping = false;
@@ -399,7 +399,6 @@ public final class Player extends Mob {
 	/**
 	 * Ranging event
 	 */
-	private RangeEvent rangeEvent;
 	/**
 	 * If the player is reconnecting after connection loss
 	 */
@@ -1564,36 +1563,127 @@ public final class Player extends Mob {
 	}
 
 	public RangeEvent getRangeEvent() {
-		return rangeEvent;
+		return getCombatEngagementAuthority().getEvent(
+			CombatEventSlot.PLAYER_RANGE, RangeEvent.class);
 	}
 
 	public void setRangeEvent(final RangeEvent event) {
-		rangeEvent = event;
+		final RangeEvent current = getRangeEvent();
+		if (event == null) {
+			if (current != null) {
+				getCombatEngagementAuthority().clearEventIfCurrent(
+					CombatEventSlot.PLAYER_RANGE, current,
+					CombatEngagementTerminalReason.LEGACY_RESET);
+			}
+		} else {
+			getCombatEngagementAuthority().registerEvent(
+				CombatEventSlot.PLAYER_RANGE, event, event.getTarget(),
+				CombatStyle.RANGED, false);
+		}
 	}
 
 	public ThrowingEvent getThrowingEvent() {
-		return throwingEvent;
+		return getCombatEngagementAuthority().getEvent(
+			CombatEventSlot.PLAYER_THROWING, ThrowingEvent.class);
 	}
 
 	public void setThrowingEvent(final ThrowingEvent event) {
-		throwingEvent = event;
+		final ThrowingEvent current = getThrowingEvent();
+		if (event == null) {
+			if (current != null) {
+				getCombatEngagementAuthority().clearEventIfCurrent(
+					CombatEventSlot.PLAYER_THROWING, current,
+					CombatEngagementTerminalReason.LEGACY_RESET);
+			}
+		} else {
+			getCombatEngagementAuthority().registerEvent(
+				CombatEventSlot.PLAYER_THROWING, event, event.getTarget(),
+				CombatStyle.THROWING, false);
+		}
 	}
 
 	public MagicCombatEvent getMagicCombatEvent() {
-		return magicCombatEvent;
+		return getCombatEngagementAuthority().getEvent(
+			CombatEventSlot.PLAYER_MAGIC, MagicCombatEvent.class);
 	}
 
 	public void setMagicCombatEvent(final MagicCombatEvent event) {
-		if (magicCombatEvent != null && magicCombatEvent != event) {
-			magicCombatEvent.stop();
+		final MagicCombatEvent current = getMagicCombatEvent();
+		if (current != null && current != event) {
+			getCombatEngagementAuthority().clearEventIfCurrent(
+				CombatEventSlot.PLAYER_MAGIC, current,
+				CombatEngagementTerminalReason.RETARGETED);
+			current.stop();
 		}
-		magicCombatEvent = event;
+		if (event != null) {
+			getCombatEngagementAuthority().registerEvent(
+				CombatEventSlot.PLAYER_MAGIC, event, event.getTarget(),
+				CombatStyle.MAGIC, false);
+		}
 	}
 
 	public void resetMagicCombat() {
-		if (magicCombatEvent != null) {
-			magicCombatEvent.stop();
-			magicCombatEvent = null;
+		final MagicCombatEvent event = getMagicCombatEvent();
+		if (event != null) {
+			getCombatEngagementAuthority().clearEventIfCurrent(
+				CombatEventSlot.PLAYER_MAGIC, event,
+				CombatEngagementTerminalReason.LEGACY_RESET);
+			event.stop();
+		}
+	}
+
+	public boolean isCurrentRangeEvent(final RangeEvent event) {
+		return getCombatEngagementAuthority().isCurrentEvent(
+			CombatEventSlot.PLAYER_RANGE, event);
+	}
+
+	public boolean isCurrentThrowingEvent(final ThrowingEvent event) {
+		return getCombatEngagementAuthority().isCurrentEvent(
+			CombatEventSlot.PLAYER_THROWING, event);
+	}
+
+	public boolean isCurrentMagicCombatEvent(final MagicCombatEvent event) {
+		return getCombatEngagementAuthority().isCurrentEvent(
+			CombatEventSlot.PLAYER_MAGIC, event);
+	}
+
+	public boolean terminateRangeEvent(final RangeEvent event,
+			final CombatEngagementTerminalReason reason) {
+		final boolean cleared = getCombatEngagementAuthority().clearEventIfCurrent(
+			CombatEventSlot.PLAYER_RANGE, event, reason);
+		event.stop();
+		return cleared;
+	}
+
+	public boolean terminateThrowingEvent(final ThrowingEvent event,
+			final CombatEngagementTerminalReason reason) {
+		final boolean cleared = getCombatEngagementAuthority().clearEventIfCurrent(
+			CombatEventSlot.PLAYER_THROWING, event, reason);
+		event.stop();
+		return cleared;
+	}
+
+	public boolean terminateMagicCombatEvent(final MagicCombatEvent event,
+			final CombatEngagementTerminalReason reason) {
+		final boolean cleared = getCombatEngagementAuthority().clearEventIfCurrent(
+			CombatEventSlot.PLAYER_MAGIC, event, reason);
+		event.stop();
+		return cleared;
+	}
+
+	public void terminatePlayerCombatEventsTargeting(final Mob target,
+			final CombatEngagementTerminalReason reason) {
+		final RangeEvent range = getRangeEvent();
+		if (range != null && range.getTarget() == target) {
+			terminateRangeEvent(range, reason);
+		}
+		final ThrowingEvent throwing = getThrowingEvent();
+		if (throwing != null && throwing.getTarget() == target) {
+			terminateThrowingEvent(throwing, reason);
+		}
+		final MagicCombatEvent magic = getMagicCombatEvent();
+		if (magic != null && magic.getTarget() == target) {
+			terminateMagicCombatEvent(magic, reason);
 		}
 	}
 
@@ -3956,7 +4046,8 @@ public final class Player extends Mob {
 		if (this.loggedIn && !loggedIn) {
 			attackTransaction.cancelCurrent(
 				AttackTransactionResult.Reason.PARTICIPANT_CHANGED);
-			advanceCombatLifecycle();
+			advanceCombatLifecycle(
+				CombatEngagementTerminalReason.LOGOUT);
 		}
 		if (loggedIn) {
 			currentLogin = System.currentTimeMillis();
@@ -4065,7 +4156,7 @@ public final class Player extends Mob {
 	}
 
 	public boolean isRanging() {
-		return rangeEvent != null || throwingEvent != null;
+		return getRangeEvent() != null || getThrowingEvent() != null;
 	}
 
 	public boolean isReconnecting() {
@@ -4127,7 +4218,7 @@ public final class Player extends Mob {
 		killed = true;
 		attackTransaction.cancelCurrent(
 			AttackTransactionResult.Reason.PARTICIPANT_CHANGED);
-		advanceCombatLifecycle();
+		advanceCombatLifecycle(CombatEngagementTerminalReason.DEATH);
 
 		ActionSender.sendSound(this, "death");
 		ActionSender.sendDied(this);
@@ -4630,13 +4721,19 @@ public final class Player extends Mob {
 	}
 
 	public void resetRange() {
-		if (rangeEvent != null) {
-			rangeEvent.stop();
-			rangeEvent = null;
+		final RangeEvent range = getRangeEvent();
+		if (range != null) {
+			getCombatEngagementAuthority().clearEventIfCurrent(
+				CombatEventSlot.PLAYER_RANGE, range,
+				CombatEngagementTerminalReason.LEGACY_RESET);
+			range.stop();
 		}
-		if (throwingEvent != null) {
-			throwingEvent.stop();
-			throwingEvent = null;
+		final ThrowingEvent throwing = getThrowingEvent();
+		if (throwing != null) {
+			getCombatEngagementAuthority().clearEventIfCurrent(
+				CombatEventSlot.PLAYER_THROWING, throwing,
+				CombatEngagementTerminalReason.LEGACY_RESET);
+			throwing.stop();
 		}
 	}
 
@@ -4892,10 +4989,8 @@ public final class Player extends Mob {
 	}
 
 	public void teleport(final int x, final int y, final boolean bubble) {
-		if (inCombat()) {
-			this.setLastOpponent(null);
-			combatEvent.resetCombat();
-		}
+		setLastOpponent(null);
+		terminateCombatOwnership(CombatEngagementTerminalReason.TELEPORT);
 
 		if (bubble) {
 			for (Player player : getViewArea().getPlayersInView()) {
@@ -4980,10 +5075,8 @@ public final class Player extends Mob {
 			throw new IllegalStateException(
 				"Explicit layered teleport requires layered Player authority");
 		}
-		if (inCombat()) {
-			this.setLastOpponent(null);
-			combatEvent.resetCombat();
-		}
+		setLastOpponent(null);
+		terminateCombatOwnership(CombatEngagementTerminalReason.TELEPORT);
 		if (bubble) {
 			for (Player player : getViewArea().getPlayersInView()) {
 				if (!isInvisibleTo(player)) {
