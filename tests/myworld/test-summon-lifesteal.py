@@ -34,7 +34,7 @@ def main() -> None:
     require(summoning, "owner.getUpdateFlags().addHitSplat(new HitSplat(owner, HitSplat.TYPE_HEAL, healed));", "owner heal hitsplat")
     require(summoning, "ActionSender.sendStat(owner, Skill.HITS.id());", "owner hits stat update")
     require(summoning, "final boolean batLeechAttack = KIND_GIANT_BAT.equals(summon.getAttribute(SUMMON_KIND_KEY, \"\"));", "bat attack visual guard")
-    require(summoning, "target.getUpdateFlags().setProjectile(new Projectile(target, summon, Projectile.SUMMON_BAT_VAMPIRISM));", "reverse bat attack projectile")
+    require(summoning, "target.getUpdateFlags().setProjectile(new Projectile(summon, target, Projectile.SUMMON_BAT_VAMPIRISM));", "summon-to-target bat attack projectile")
     require(summoning, "projectileType, 0, !batLeechAttack)", "bat suppresses default projectile")
     require(summoning, "TRAIT_VAMPIRISM", "bat vampirism trait")
     require(summoning, '"Duskwind Bat", 26, 110, NpcId.GIANT_BAT.id(), KIND_GIANT_BAT, 7, 9, 3, 18, 30, TRAIT_VAMPIRISM', "lowered bat max hit")

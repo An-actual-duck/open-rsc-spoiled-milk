@@ -4,7 +4,7 @@ setlocal
 
 set "SCRIPT_DIR=%~dp0"
 for %%I in ("%SCRIPT_DIR%..") do set "REPO_ROOT=%%~fI"
-if not defined ANT_HOME set "ANT_HOME=%REPO_ROOT%\tools\vendor\apache-ant-1.10.5"
+set "ANT_HOME=%REPO_ROOT%\tools\vendor\apache-ant-1.10.5"
 set "ANT_RUNNER=%ANT_HOME%\bin\ant.bat"
 
 if not exist "%ANT_RUNNER%" (

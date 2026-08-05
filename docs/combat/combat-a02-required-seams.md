@@ -13,9 +13,12 @@ Introduce a `GameClock` abstraction with the current system-time behavior as
 the production adapter and a test-only mutable clock. Route only A01-relevant
 reads initially:
 
-- server/game ticks and event delay boundaries;
-- `NpcBehavior` attack, retreat, hostility, and cooldown time checks;
-- projectile launch-to-impact timing required by combat fixtures; and
+- `Server.getCurrentTick()` and the private event-processing boundary in
+  `GameEventHandler.processEvents()`;
+- `NpcBehavior` construction/`tick()` wall-clock reads and
+  `PvmMeleeEvent.checkRetreat()`'s `System.currentTimeMillis()` comparison;
+- `RangeEvent` and `ThrowingEvent` attack-tick checks, plus only the
+  projectile launch-to-impact boundary needed by combat fixtures; and
 - combat effect duration or pulse boundaries exercised by the fixture.
 
 The adapter must retain the current units, comparisons, boundary inclusivity,
@@ -27,10 +30,12 @@ must never run in a production configuration.
 Introduce `GameRandom` with an adapter over the exact current generator and a
 seeded/test implementation. Migrate only the random sites needed to replay:
 
-- melee, ranged, and magic accuracy/damage paths;
-- NPC projectile/style selection required by the scenario set;
-- scythe and shuriken secondary selection, damage, and on-hit rolls; and
-- drop rolls needed to characterize death/drop cardinality and ownership.
+- `CombatFormula` melee, ranged, and magic accuracy/damage rolls;
+- the `NpcBehavior` projectile/style decisions required by the scenario set;
+- `PvmMeleeEvent` secondary/proc selection and
+  `ThrowingEvent.selectThrowingTargets()` shuriken sampling; and
+- the `Npc`/drop-table rolls needed to characterize death/drop cardinality and
+  ownership.
 
 The production adapter must preserve generator choice, bound semantics,
 distribution, draw count, and draw order. Test failures should report the seed

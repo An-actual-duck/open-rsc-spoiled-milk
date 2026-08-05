@@ -466,6 +466,11 @@ of the recommended work, not the severity of leaving current code unchanged.
 
 ### A01 — `test/current-combat-characterization-harness` (recommended next)
 
+Implementation record: this branch now supplies the isolated Ant gate,
+cross-platform launchers, 11-scenario executable current-state fixture, CI
+entry point, artifact-exclusion check, and A02 seam inventory. Integration and
+the exact READY commit remain subject to manager review.
+
 Scope:
 
 - Add an isolated authoritative Ant combat-test target and Linux/Windows

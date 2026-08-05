@@ -10,7 +10,6 @@ import argparse
 import hashlib
 import json
 import re
-import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
@@ -65,26 +64,43 @@ def ant_inventory() -> dict:
     }
     targets = {}
     missing = []
+
+    def classpath_entry(element: ET.Element, target_name: str) -> dict:
+        raw = element.attrib.get("location", element.attrib.get("path", ""))
+        resolved = substitute(raw, properties)
+        record = {"declared": raw, "resolved": resolved, "kind": "other", "exists": None}
+        if resolved == "lib/*":
+            record["kind"] = "jar-wildcard"
+            record["matches"] = sorted(path.name for path in LIB.glob("*.jar"))
+        elif resolved.endswith(".jar"):
+            record["kind"] = "jar"
+            path = SERVER / resolved
+            record["exists"] = path.is_file()
+            if not path.is_file():
+                missing.append({"target": target_name, "path": resolved})
+        return record
+
     for target_name in ANT_TARGETS:
         target = root.find(f"target[@name='{target_name}']")
         if target is None:
             targets[target_name] = []
             continue
         entries = []
-        for element in target.findall(".//classpath/pathelement"):
-            raw = element.attrib.get("location", element.attrib.get("path", ""))
-            resolved = substitute(raw, properties)
-            record = {"declared": raw, "resolved": resolved, "kind": "other", "exists": None}
-            if resolved == "lib/*":
-                record["kind"] = "jar-wildcard"
-                record["matches"] = sorted(path.name for path in LIB.glob("*.jar"))
-            elif resolved.endswith(".jar"):
-                record["kind"] = "jar"
-                path = SERVER / resolved
-                record["exists"] = path.is_file()
-                if not path.is_file():
-                    missing.append({"target": target_name, "path": resolved})
-            entries.append(record)
+        for classpath in target.findall(".//classpath"):
+            refid = classpath.attrib.get("refid")
+            if refid:
+                referenced = root.find(f"path[@id='{refid}']")
+                if referenced is None:
+                    missing.append({"target": target_name, "path": "refid:" + refid})
+                else:
+                    entries.extend(
+                        classpath_entry(element, target_name)
+                        for element in referenced.findall("pathelement")
+                    )
+            entries.extend(
+                classpath_entry(element, target_name)
+                for element in classpath.findall("pathelement")
+            )
         targets[target_name] = entries
 
     zipgroup = root.find("target[@name='compile_core']/.//zipgroupfileset")

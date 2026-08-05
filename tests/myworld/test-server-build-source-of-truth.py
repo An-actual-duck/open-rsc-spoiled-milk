@@ -43,6 +43,14 @@ def main() -> int:
     require(report["artifacts"]["core"]["main_class"] == "com.openrsc.server.Server", "core.jar is not executable")
     require(report["artifacts"]["plugins"]["class_entries"] > 0, "plugins.jar is empty")
     require(
+        len(report["ant"]["targets"]["compile_core"]) == 20,
+        "compile_core classpath reference is missing or changed unexpectedly",
+    )
+    require(
+        all(entry["exists"] for entry in report["ant"]["targets"]["compile_core"]),
+        "compile_core classpath contains a missing shipped jar",
+    )
+    require(
         report["fat_jar_duplication"]["external_classes_also_in_core"] > 0,
         "core.jar no longer appears to be the documented fat jar",
     )

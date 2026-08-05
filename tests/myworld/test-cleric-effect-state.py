@@ -599,11 +599,12 @@ def validate_source_boundaries() -> None:
             "C08A request handler can populate the new registry")
 
     production_catalog_references = []
-    for path in (ROOT / "server").rglob("*.java"):
-        if EFFECT_ROOT in path.parents:
-            continue
-        if "ClericEffectCatalog" in path.read_text(encoding="utf-8"):
-            production_catalog_references.append(path.relative_to(ROOT).as_posix())
+    for source_root in (ROOT / "server/src", ROOT / "server/plugins"):
+        for path in source_root.rglob("*.java"):
+            if EFFECT_ROOT in path.parents:
+                continue
+            if "ClericEffectCatalog" in path.read_text(encoding="utf-8"):
+                production_catalog_references.append(path.relative_to(ROOT).as_posix())
     require(set(production_catalog_references) == {
                 "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
                 "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
