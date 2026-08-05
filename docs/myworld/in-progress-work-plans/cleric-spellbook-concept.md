@@ -842,6 +842,21 @@ and a capped or wasted pulse does not cancel the remaining sequence.
 - The design must add or expand ways to gain Devotion alongside this sink.
 - Devotion acquisition and expenditure must remain god-specific; blessing one
   god's sigil checks and drains only that god's Devotion.
+- The matching equipped Saradomin, Guthix, or Zamorak blessed symbol makes each
+  offering worth exactly `2x` its ordinary Devotion value.
+- The active Black Unicorn summon and the complete five-piece Black Unicorn
+  leather set each add `+0.5x` ordinary offering value. These are additive
+  bonuses: base `1x` plus symbol `+1x`, summon `+0.5x`, and set `+0.5x` yields
+  exactly `3x` when all three are active.
+- The full Black Unicorn leather set no longer grants `+10` Prayer points.
+  Instead, a successful manual offering heals the wearer for `1` Hit from
+  regular bones, `2` from big bones, `3` from demon ash, or `4` from dragon
+  bones. Bat bones, ordinary ash, bonecrusher use, and Black Unicorn
+  auto-offerings do not trigger this heal. Healing is capped by the player's
+  current valid healing ceiling.
+- These three source adjustments are the complete approved Devotion rebalance
+  for the initial Cleric release. Other acquisition sources and sink values
+  remain unchanged until separately reviewed.
 
 ### Blessed-Equipment Skill Ownership
 
@@ -865,8 +880,10 @@ These are current implementation facts, not new design decisions:
   use Prayer where required.
 - Devotion is stored independently for Saradomin, Guthix, and Zamorak in
   integer **offering units**.
-- One ordinary offering currently adds one stored offering unit. Ten stored
-  offering units equal one displayed Devotion level.
+- One ordinary offering adds two exact half-offering units. Ten ordinary
+  offering values, or twenty half-offering units, equal one displayed Devotion
+  level. Existing whole-offering cache keys remain the compatibility storage
+  authority alongside the signed half-offering remainder.
 - Current storage supports signed Devotion from `-1000` through `1000`.
 - Existing blessing transactions can charge stored offering units and already
   protect inventory replacement and Devotion deduction as one transaction.
@@ -1073,9 +1090,11 @@ primary ladder.
 
 ### Devotion Sources and Balance
 
-- Additional active, passive, repeatable, and limited Devotion sources.
-- How acquisition scales against expected sigil consumption without making
-  ordinary offerings irrelevant.
+- Initial release acquisition is limited to ordinary offerings plus the
+  confirmed matching-symbol, Black Unicorn summon, and full Black Unicorn set
+  additive modifiers documented above.
+- Post-release measurement should compare this acquisition rate against sigil
+  consumption without making unmodified ordinary offerings irrelevant.
 - Safeguards against farming one cheap Devotion source or blessing enormous
   stockpiles without meaningful cost.
 - How negative, neutral, high, capped, and permanently locked Devotion states

@@ -5,8 +5,8 @@
 - Branch: `main` (C10 integrated; all twelve launch spells implemented)
 - Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance**
-- Current milestone: **C10 complete and integrated**
-- Next planned milestone: **C12 Devotion economy and release gate; C11 remains retired into C07**
+- Current milestone: **C12 Devotion-source and Black Unicorn set rebalance in progress**
+- Next planned milestone: **Finish C12 release verification; C11 remains retired into C07**
 - Runtime exposure: **All twelve launch Cleric spells are implemented on `main`, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
 - Public-server work: **forbidden**
 
@@ -65,6 +65,19 @@ and Black Unicorn summon, add appropriate Devotion sources or modifiers, and
 iterate on the resulting acquisition/consumption balance. Exact player-facing
 values should be documented and reviewed as one coherent economy rather than
 introduced as unrelated local bonuses.
+
+The owner has bounded the initial C12 Devotion change to three additive
+offering modifiers. A matching blessed symbol contributes `+1x` ordinary
+offering value, so symbol use totals `2x`. The Black Unicorn summon and full
+Black Unicorn leather set each contribute `+0.5x`, so all three bonuses plus
+the `1x` base total exactly `3x`. The full leather set loses its former `+10`
+Prayer-point bonus and instead heals successful manual offerings by type:
+regular bones `1`, big bones `2`, demon ash `3`, and dragon bones `4`, capped
+by the valid healing ceiling. Bat bones, ordinary ash, bonecrusher processing,
+and summon auto-offerings do not trigger the set heal. Existing Worship XP,
+summon double-XP behavior, Devotion sinks, and every other acquisition source
+remain unchanged. The existing half-offering balance provides exact arithmetic
+without legacy alternating-bonus toggles.
 
 ## Ordered Implementation Sequence
 
@@ -667,6 +680,17 @@ Unicorn equipment-set and summon Devotion effects, plus any supporting
 Devotion mechanics needed to make the full economy coherent. Record the old
 and new sources, values, stacking rules, and expected player loops so later
 tuning has one authority.
+
+The bounded first C12 implementation slice is the confirmed source rebalance
+above. It must verify all eight combinations of symbol/summon/set modifiers;
+successful-removal gating; the four heal values and healing ceiling; exclusion
+of bat bones, ordinary ash, bonecrusher, and summon auto-offerings; removal of
+the Black Unicorn set's Prayer bonus across equipment modes and relog; unchanged
+ordinary Worship XP and summon double XP; server/client guide and item text;
+exact balance persistence; server and client builds; and private gameplay
+checks. Old toggle cache values may remain harmless compatibility data but must
+no longer affect acquisition. This slice does not authorize other Devotion
+sources, sink changes, animation assignment, or release/deployment work.
 
 Finalize the owner-approved spell-to-animation mapping during this milestone.
 Use the existing optional Cleric visual hooks, keep effects player-centered

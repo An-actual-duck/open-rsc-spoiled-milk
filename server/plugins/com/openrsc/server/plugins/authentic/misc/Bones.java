@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.authentic.misc;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.BlackUnicornOfferingEffect;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.container.Item;
@@ -65,10 +66,10 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 		}
 		if (player.getCarriedItems().remove(toRemove) != -1) {
 			giveBonesExperience(player, item);
-		}
-
-		if (SkillCapes.shouldActivate(player, ItemId.PRAYER_CAPE)) {
-			prayerCape(player, item);
+			if (SkillCapes.shouldActivate(player, ItemId.PRAYER_CAPE)) {
+				prayerCape(player, item);
+			}
+			applyBlackUnicornOfferingHeal(player, item);
 		}
 
 		// Repeat
@@ -156,6 +157,24 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 			mes("@yel@Your Worship cape activates, restoring " + healed + unit + "!");
 			player.getSkills().setLevel(Skill.HITS.id(), currentHits + healed, true);
 			player.getUpdateFlags().addHitSplat(new HitSplat(player, HitSplat.TYPE_HEAL, healed));
+		}
+	}
+
+	private void applyBlackUnicornOfferingHeal(final Player player, final Item offering) {
+		if (!player.getCarriedItems().getEquipment().hasFullBlackUnicornHideSet()) {
+			return;
+		}
+		final int requestedHealing = BlackUnicornOfferingEffect.getHealing(offering.getCatalogId());
+		final int currentHits = player.getSkills().getLevel(Skill.HITS.id());
+		final int maxHits = player.getHealingMaximumHits();
+		final int healed = Math.min(requestedHealing, maxHits - currentHits);
+		if (healed <= 0) {
+			return;
+		}
+		player.getSkills().setLevel(Skill.HITS.id(), currentHits + healed, true);
+		player.getUpdateFlags().addHitSplat(new HitSplat(player, HitSplat.TYPE_HEAL, healed));
+		if (player.getConfig().WANT_PARTIES && player.getParty() != null) {
+			player.getParty().sendParty();
 		}
 	}
 

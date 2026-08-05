@@ -4,6 +4,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
+DEVOTION = ROOT / "server/src/com/openrsc/server/content/Devotion.java"
+GAIN = ROOT / "server/src/com/openrsc/server/content/DevotionOfferingGain.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 
@@ -15,6 +17,8 @@ def require(text: str, snippet: str, label: str) -> None:
 
 def main() -> None:
     summoning = SUMMONING.read_text(encoding="utf-8")
+    devotion = DEVOTION.read_text(encoding="utf-8")
+    gain = GAIN.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     npc = NPC.read_text(encoding="utf-8")
 
@@ -37,6 +41,16 @@ def main() -> None:
         summoning,
         "bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner);",
         "Black unicorn auto-offerings should advance devotion with the unicorn bonus",
+    )
+    require(
+        devotion,
+        "DevotionOfferingGain.getHalfOfferingUnits(",
+        "Black unicorn auto-offerings should use exact additive Devotion gains",
+    )
+    require(
+        gain,
+        "BLACK_UNICORN_BONUS_HALF_UNITS = 1",
+        "Black unicorn should add exactly half an offering per offering",
     )
     require(
         summoning,

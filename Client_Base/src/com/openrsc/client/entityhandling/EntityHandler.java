@@ -6425,7 +6425,7 @@ public class EntityHandler {
 		setLeatherSetDescription(1840, 1844, "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.");
 		setLeatherSetDescription(1845, 1849, "Full unicorn-hide set: +10 Prayer.");
 		setLeatherSetDescription(1850, 1854, "Bear's Maul: melee hits become two hits for 60% damage each.");
-		setLeatherSetDescription(1855, 1859, "Full black unicorn-hide set: +10 Prayer.");
+		setLeatherSetDescription(1855, 1859, "Full set: +50% Devotion; normal/big/demon/dragon offerings heal 1/2/3/4 Hits.");
 		setLeatherSetDescription(1860, 1864, "Full scorpion-carapace set: 20% melee poison chance, up to 10 poison.");
 		setLeatherSetDescription(1865, 1869, "Full wolf-hide set: summons a spirit wolf companion.");
 		setLeatherSetDescription(1870, 1874, "Full spider-carapace set: 20% ranged poison chance, up to 10 poison.");

@@ -12,8 +12,6 @@ public final class Devotion {
 	private static final String CACHE_PREFIX = "devotion_";
 	private static final String CACHE_SUFFIX = "_offerings";
 	private static final String HALF_OFFERING_REMAINDER_SUFFIX = "_half_offering_remainder";
-	private static final String SYMBOL_BONUS_SUFFIX = "_symbol_bonus_toggle";
-	private static final String BLACK_UNICORN_BONUS_SUFFIX = "_black_unicorn_bonus_toggle";
 	private static final int OFFERINGS_PER_BONUS_XP = 10;
 	public static final int OFFERINGS_PER_DEVOTION_LEVEL = OFFERINGS_PER_BONUS_XP;
 	public static final int MAX_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MAX_DEVOTION_LEVEL;
@@ -59,12 +57,13 @@ public final class Devotion {
 		final int previousHalfOfferingUnits = getHalfOfferingUnits(player, godLine);
 		final int previousDevotion = DevotionHalfOfferingBalance.getDisplayedLevel(previousHalfOfferingUnits);
 		final int bonusXp = Math.max(0, Math.min(previousDevotion, MAX_DEVOTION_LEVEL));
-		final int offeringGain = getOfferingDevotionGain(player, godLine);
-		final int blackUnicornOfferingGain = blackUnicornBonus ? getEveryOtherOfferingBonus(player, godLine, BLACK_UNICORN_BONUS_SUFFIX) : 0;
+		final int offeringHalfUnits = DevotionOfferingGain.getHalfOfferingUnits(
+			hasBlessedSymbolEquipped(player, godLine),
+			blackUnicornBonus,
+			hasFullBlackUnicornSetEquipped(player));
 		final int newHalfOfferingUnits = DevotionHalfOfferingBalance.adjust(
 			previousHalfOfferingUnits,
-			(long) (offeringGain + blackUnicornOfferingGain)
-				* DevotionHalfOfferingBalance.HALF_UNITS_PER_OFFERING);
+			offeringHalfUnits);
 		storeHalfOfferingUnits(player, godLine, newHalfOfferingUnits);
 		ActionSender.sendDevotion(player);
 		ActionSender.sendEquipmentStats(player);
@@ -289,21 +288,6 @@ public final class Devotion {
 		return getDevotionGrowthBonus(player, godLine, PRAYER_BONUS_GROWTH_MAX);
 	}
 
-	private static int getOfferingDevotionGain(final Player player, final PrayerCatalog.GodLine godLine) {
-		if (!hasBlessedSymbolEquipped(player, godLine)) {
-			return 1;
-		}
-		return 1 + getEveryOtherOfferingBonus(player, godLine, SYMBOL_BONUS_SUFFIX);
-	}
-
-	private static int getEveryOtherOfferingBonus(final Player player, final PrayerCatalog.GodLine godLine, final String suffix) {
-		final PrayerCatalog.GodLine safeGodLine = godLine == null ? PrayerCatalog.getDefaultGodLine() : godLine;
-		final String cacheKey = CACHE_PREFIX + safeGodLine.name().toLowerCase() + suffix;
-		final boolean bonusThisOffering = !player.getCache().hasKey(cacheKey) || !player.getCache().getBoolean(cacheKey);
-		player.getCache().store(cacheKey, bonusThisOffering);
-		return bonusThisOffering ? 1 : 0;
-	}
-
 	private static boolean hasBlessedSymbolEquipped(final Player player, final PrayerCatalog.GodLine godLine) {
 		if (player == null || player.getCarriedItems() == null || player.getCarriedItems().getEquipment() == null || godLine == null) {
 			return false;
@@ -318,6 +302,13 @@ public final class Devotion {
 			return player.getCarriedItems().getEquipment().hasEquipped(ItemId.GUTHIX_SYMBOL.id());
 		}
 		return false;
+	}
+
+	private static boolean hasFullBlackUnicornSetEquipped(final Player player) {
+		return player != null
+			&& player.getCarriedItems() != null
+			&& player.getCarriedItems().getEquipment() != null
+			&& player.getCarriedItems().getEquipment().hasFullBlackUnicornHideSet();
 	}
 
 	private static String getOfferingCacheKey(final PrayerCatalog.GodLine godLine) {
