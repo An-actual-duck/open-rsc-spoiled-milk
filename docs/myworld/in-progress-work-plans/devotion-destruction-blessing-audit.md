@@ -288,6 +288,12 @@ The Black Unicorn path differs from manual burial in two additional ways:
 - it grants twice the normal mapped base Worship XP before the normal 3x My
   World rate.
 
+The later C12 settlement also makes Mourning Unicorn sanctification activate
+the full Black Unicorn hide set's offering heal. Manual and automatic offerings
+share one healing authority: bones heal `1`, bat or big bones `2`, demon ash
+`3`, and dragon bones `4` per item, with stacked drops multiplied before the
+current Hits ceiling. Ordinary ash and Bonecrusher processing remain excluded.
+
 ### Worship XP from offerings
 
 The successful offering first reads the completed Devotion level that existed

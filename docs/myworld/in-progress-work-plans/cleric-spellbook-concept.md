@@ -849,11 +849,11 @@ and a capped or wasted pulse does not cancel the remaining sequence.
   bonuses: base `1x` plus symbol `+1x`, summon `+0.5x`, and set `+0.5x` yields
   exactly `3x` when all three are active.
 - The full Black Unicorn leather set no longer grants `+10` Prayer points.
-  Instead, a successful manual offering heals the wearer for `1` Hit from
-  regular bones, `2` from big bones, `3` from demon ash, or `4` from dragon
-  bones. Bat bones, ordinary ash, bonecrusher use, and Black Unicorn
-  auto-offerings do not trigger this heal. Healing is capped by the player's
-  current valid healing ceiling.
+  Instead, a successful manual or Mourning Unicorn automatic offering heals
+  the wearer for `1` Hit from regular bones, `2` from bat or big bones, `3`
+  from demon ash, or `4` from dragon bones. Multiple automatically offered
+  drops multiply this value before one heal is capped by the player's current
+  valid healing ceiling. Ordinary ash and Bonecrusher use do not trigger it.
 - These three source adjustments are the complete approved Devotion rebalance
   for the initial Cleric release. Other acquisition sources and sink values
   remain unchanged until separately reviewed.

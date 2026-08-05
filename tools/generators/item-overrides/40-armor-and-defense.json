@@ -1248,6 +1248,7 @@
     },
     {
       "id": 1855,
+      "description": "Full set: +50% Devotion; bones/bat/big/demon/dragon offerings heal 1/2/2/3/4 Hits, including Mourning Unicorn offerings.",
       "meleeDefense": 1,
       "magicDefense": 1,
       "requiredLevel": 0,
@@ -1256,6 +1257,7 @@
     },
     {
       "id": 1856,
+      "description": "Full set: +50% Devotion; bones/bat/big/demon/dragon offerings heal 1/2/2/3/4 Hits, including Mourning Unicorn offerings.",
       "meleeDefense": 1,
       "rangedDefense": 1,
       "magicDefense": 2,
@@ -1265,6 +1267,7 @@
     },
     {
       "id": 1857,
+      "description": "Full set: +50% Devotion; bones/bat/big/demon/dragon offerings heal 1/2/2/3/4 Hits, including Mourning Unicorn offerings.",
       "meleeDefense": 1,
       "rangedDefense": 1,
       "magicDefense": 2,
@@ -1274,6 +1277,7 @@
     },
     {
       "id": 1858,
+      "description": "Full set: +50% Devotion; bones/bat/big/demon/dragon offerings heal 1/2/2/3/4 Hits, including Mourning Unicorn offerings.",
       "meleeDefense": 2,
       "rangedDefense": 1,
       "magicDefense": 3,
@@ -1283,6 +1287,7 @@
     },
     {
       "id": 1859,
+      "description": "Full set: +50% Devotion; bones/bat/big/demon/dragon offerings heal 1/2/2/3/4 Hits, including Mourning Unicorn offerings.",
       "meleeDefense": 2,
       "rangedDefense": 2,
       "magicDefense": 4,

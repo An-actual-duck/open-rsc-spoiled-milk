@@ -70,6 +70,7 @@ def main() -> None:
     require(guide, 'Every 10 offerings gives +1 devotion', "devotion level prayer guide")
     require(guide, 'Matching blessed symbols give 2x devotion from offerings', "blessed symbol devotion guide")
     require(guide, 'Mourning Unicorn and its full hide set each add 50%', "Black Unicorn devotion guide")
+    require(guide, 'Mourning Unicorn auto-offerings also activate the set heal', "Black Unicorn automatic healing guide")
     require(guide, '+1 Worship XP per offering for each devotion', "devotion XP prayer guide")
     require(guide, 'Devotion is tracked separately for each god', "per-god devotion guide")
     require(guide, 'Devotion ranges from -1000 to 1000', "devotion range prayer guide")

@@ -2,7 +2,7 @@ package com.openrsc.server.content;
 
 import com.openrsc.server.constants.ItemId;
 
-/** Fixed healing values for manual offerings made in the full Black Unicorn set. */
+/** Pure healing values and bounds for offerings made in the full Black Unicorn set. */
 public final class BlackUnicornOfferingEffect {
 	private BlackUnicornOfferingEffect() {
 	}
@@ -15,6 +15,9 @@ public final class BlackUnicornOfferingEffect {
 		if (offering == ItemId.BIG_BONES) {
 			return 2;
 		}
+		if (offering == ItemId.BAT_BONES) {
+			return 2;
+		}
 		if (offering == ItemId.DEMON_ASH) {
 			return 3;
 		}
@@ -22,5 +25,21 @@ public final class BlackUnicornOfferingEffect {
 			return 4;
 		}
 		return 0;
+	}
+
+	public static int getRequestedHealing(final int itemId, final int amount) {
+		if (amount <= 0) {
+			return 0;
+		}
+		return (int) Math.min(Integer.MAX_VALUE, (long) getHealing(itemId) * amount);
+	}
+
+	public static int calculateHealing(final int itemId, final int amount,
+			final boolean hasFullSet, final int currentHits, final int healingMaximumHits) {
+		if (!hasFullSet || currentHits >= healingMaximumHits) {
+			return 0;
+		}
+		final int requestedHealing = getRequestedHealing(itemId, amount);
+		return Math.min(requestedHealing, Math.max(0, healingMaximumHits - currentHits));
 	}
 }

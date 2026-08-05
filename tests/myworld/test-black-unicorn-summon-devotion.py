@@ -72,6 +72,11 @@ def main() -> None:
         "recordAutoBuryDevotionBonus(owner, amount)",
         "Black unicorn auto-offerings should record devotion for the whole stack",
     )
+    require(
+        summoning,
+        "BlackUnicornOfferingHealing.apply(owner, itemId, amount);",
+        "Black unicorn auto-offerings should apply shared stacked set healing",
+    )
     death_necklace_bonus = (
         "final Item boneDrop = applyDeathNecklaceGuaranteedDropBonus(owner, new Item(bones, 1));"
     )
