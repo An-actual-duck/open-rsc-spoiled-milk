@@ -121,6 +121,24 @@ def jar_classes(path: Path) -> set[str]:
         return {name for name in archive.namelist() if name.endswith(".class")}
 
 
+def archive_path_inventory(names: list[str]) -> dict:
+    counts = Counter(names)
+    exact = sorted(name for name, count in counts.items() if count > 1)
+    folded: dict[str, set[str]] = {}
+    for name in names:
+        folded.setdefault(name.casefold(), set()).add(name)
+    casefold = sorted(
+        sorted(paths) for paths in folded.values() if len(paths) > 1
+    )
+    return {
+        "exact_duplicate_paths": len(exact),
+        "exact_duplicate_records": sum(counts[name] - 1 for name in exact),
+        "exact_duplicate_examples": exact[:20],
+        "casefold_collision_paths": len(casefold),
+        "casefold_collision_examples": casefold[:20],
+    }
+
+
 def library_inventory(core_classes: set[str] | None) -> tuple[list[dict], dict]:
     libraries = []
     class_occurrences = Counter()
@@ -156,6 +174,7 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
         with zipfile.ZipFile(path) as archive:
             names = archive.namelist()
             manifest = archive.read("META-INF/MANIFEST.MF").decode("utf-8", errors="replace")
+        path_inventory = archive_path_inventory(names)
         result[label] = {
             "file": path.name,
             "present": True,
@@ -164,7 +183,18 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
             "entries": len(names),
             "class_entries": sum(name.endswith(".class") for name in names),
             "main_class": "com.openrsc.server.Server" if "Main-Class: com.openrsc.server.Server" in manifest else None,
+            **path_inventory,
         }
+        if path_inventory["exact_duplicate_paths"]:
+            errors.append(
+                f"{path.name} contains {path_inventory['exact_duplicate_paths']} exact duplicate paths: "
+                f"{path_inventory['exact_duplicate_examples']}"
+            )
+        if path_inventory["casefold_collision_paths"]:
+            errors.append(
+                f"{path.name} contains {path_inventory['casefold_collision_paths']} "
+                f"case-insensitive path collisions: {path_inventory['casefold_collision_examples']}"
+            )
 
     if result.get("core", {}).get("present"):
         core_classes = jar_classes(CORE_JAR)
@@ -266,6 +296,12 @@ def print_human(report: dict) -> None:
         f"{duplication['external_classes_also_in_core']} external classes are also in core.jar; "
         f"{duplication['duplicate_class_entries_between_libraries']} duplicate class inputs exist between lib jars."
     )
+    for label, artifact in report["artifacts"].items():
+        if artifact.get("present"):
+            print(
+                f"  {label}: {artifact['exact_duplicate_paths']} exact duplicate paths; "
+                f"{artifact['casefold_collision_paths']} case-insensitive collisions"
+            )
     print("\nAnt target classpaths")
     for target, entries in ant["targets"].items():
         rendered = []

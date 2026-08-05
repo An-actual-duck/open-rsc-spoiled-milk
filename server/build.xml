@@ -71,7 +71,20 @@
             </classpath>
             <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
         </javac>
-        <jar basedir="${build}" destfile="${jar}">
+        <!--
+          The dependency set intentionally overlaps (notably Guice's bundled
+          Guava classes). Preserve the first class/resource in Ant's stable
+          library order so the fat JAR has one path per entry. The two service
+          descriptors supplied by multiple dependencies are materialized in
+          the primary build tree first, preserving every provider instead of
+          allowing duplicate handling to discard one.
+        -->
+        <mkdir dir="${build}/META-INF/services"/>
+        <echo file="${build}/META-INF/services/java.sql.Driver" encoding="UTF-8"
+              message="com.mysql.cj.jdbc.Driver${line.separator}org.sqlite.JDBC${line.separator}"/>
+        <echo file="${build}/META-INF/services/org.slf4j.spi.SLF4JServiceProvider" encoding="UTF-8"
+              message="org.apache.logging.slf4j.SLF4JServiceProvider${line.separator}org.slf4j.nop.NOPServiceProvider${line.separator}"/>
+        <jar basedir="${build}" destfile="${jar}" duplicate="preserve">
             <zipgroupfileset dir="${lib}" includes="*.jar"/>
             <manifest>
                 <attribute name="Main-Class" value="com.openrsc.server.Server"/>

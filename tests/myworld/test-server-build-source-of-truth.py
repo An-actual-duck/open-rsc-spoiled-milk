@@ -42,6 +42,15 @@ def main() -> int:
     require(len(report["libraries"]) == 21, "Review the documented shipped-jar inventory")
     require(report["artifacts"]["core"]["main_class"] == "com.openrsc.server.Server", "core.jar is not executable")
     require(report["artifacts"]["plugins"]["class_entries"] > 0, "plugins.jar is empty")
+    for artifact in ("core", "plugins"):
+        require(
+            report["artifacts"][artifact]["exact_duplicate_paths"] == 0,
+            f"{artifact}.jar contains duplicate archive paths",
+        )
+        require(
+            report["artifacts"][artifact]["casefold_collision_paths"] == 0,
+            f"{artifact}.jar contains case-insensitive archive path collisions",
+        )
     require(
         report["fat_jar_duplication"]["external_classes_also_in_core"] > 0,
         "core.jar no longer appears to be the documented fat jar",
