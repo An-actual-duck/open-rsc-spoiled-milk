@@ -120,6 +120,56 @@ public final class ClericC10DirectCombatFixture {
 			"out-of-range stochastic roll");
 	}
 
+	private static void catalogChecks() {
+		int[] seconds = {30, 45, 60, 90};
+		int[] fervor = {5, 10, 15, 20};
+		int[] percentage = {5, 8, 11, 15};
+		int[] wardCharges = {2, 4, 6, 8};
+		int[] aegisCharges = {1, 2, 3, 4};
+		int[] rallyThresholds = {55, 60, 65, 70};
+		for (int rank = 1; rank <= 4; rank++) {
+			ClericEffectRankDefinition<?> accuracy =
+				ClericEffectCatalog.get(ClericSpellId.FERVOR, rank);
+			check(((ClericEffectMagnitudes.Accuracy) accuracy.getMagnitude())
+				.getUpwardRollChancePercent() == fervor[rank - 1],
+				"Fervor rank drift");
+			ClericEffectRankDefinition<?> ward =
+				ClericEffectCatalog.get(ClericSpellId.WARD, rank);
+			check(((ClericEffectMagnitudes.Protection) ward.getMagnitude())
+				.getReductionPercent() == 25
+				&& ward.getInitialCounter() == wardCharges[rank - 1],
+				"Ward rank drift");
+			ClericEffectRankDefinition<?> zeal =
+				ClericEffectCatalog.get(ClericSpellId.ZEAL, rank);
+			check(((ClericEffectMagnitudes.Damage) zeal.getMagnitude())
+				.getBonusPercent() == percentage[rank - 1], "Zeal rank drift");
+			ClericEffectRankDefinition<?> thorns =
+				ClericEffectCatalog.get(ClericSpellId.THORNS, rank);
+			check(((ClericEffectMagnitudes.Reflection) thorns.getMagnitude())
+				.getReflectedPercent() == percentage[rank - 1], "Thorns rank drift");
+			ClericEffectRankDefinition<?> aegis =
+				ClericEffectCatalog.get(ClericSpellId.AEGIS, rank);
+			check(((ClericEffectMagnitudes.Protection) aegis.getMagnitude())
+				.getReductionPercent() == 50
+				&& aegis.getInitialCounter() == aegisCharges[rank - 1],
+				"Aegis rank drift");
+			ClericEffectRankDefinition<?> rally =
+				ClericEffectCatalog.get(ClericSpellId.RALLY, rank);
+			ClericEffectMagnitudes.Lifesteal rallyMagnitude =
+				(ClericEffectMagnitudes.Lifesteal) rally.getMagnitude();
+			check(rallyMagnitude.getLifestealPercent() == 20
+				&& rallyMagnitude.getEndingHitsPercent() == rallyThresholds[rank - 1],
+				"Rally rank drift");
+			for (ClericEffectRankDefinition<?> definition : new ClericEffectRankDefinition<?>[] {
+				accuracy, ward, zeal, thorns, aegis, rally
+			}) {
+				check(definition.getDuration().toNanos(640L)
+					== seconds[rank - 1] * 1_000_000_000L,
+					"C10 tactical duration drift: " + definition.getSpellId());
+			}
+		}
+	}
+
 	private static void fractionalCarryChecks() {
 		FakeClock clock = new FakeClock();
 		ClericEffectOrigin origin = origin();
@@ -129,41 +179,42 @@ public final class ClericC10DirectCombatFixture {
 		registry.apply(zeal, origin, live);
 		for (int hit = 1; hit < 20; hit++) {
 			check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
-				ClericSpellId.ZEAL, zeal, 1, 5, live) == 0,
+				ClericSpellId.ZEAL, zeal, 1, live) == 0,
 				"Zeal rounded a small hit upward at hit " + hit);
 		}
 		check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
-			ClericSpellId.ZEAL, zeal, 1, 5, live) == 1,
+			ClericSpellId.ZEAL, zeal, 1, live) == 1,
 			"Zeal did not release one whole accumulated point");
 
 		for (int hit = 0; hit < 19; hit++) {
 			registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
-				ClericSpellId.ZEAL, zeal, 1, 5, live);
+				ClericSpellId.ZEAL, zeal, 1, live);
 		}
 		registry.apply(zeal, origin, live);
 		check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
-			ClericSpellId.ZEAL, zeal, 1, 5, live) == 0,
+			ClericSpellId.ZEAL, zeal, 1, live) == 0,
 			"equal-rank refresh retained old Zeal fraction");
 
 		ClericEffectRankDefinition<?> zealTwo = ClericEffectCatalog.get(ClericSpellId.ZEAL, 2);
 		registry.apply(zealTwo, origin, live);
 		check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
-			ClericSpellId.ZEAL, zeal, 1, 5, live) == 0,
+			ClericSpellId.ZEAL, zeal, 1, live) == 0,
 			"stale definition consumed a replacement's Zeal fraction");
 		check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
-			ClericSpellId.ZEAL, zealTwo, Integer.MAX_VALUE, 100, live)
-			== Integer.MAX_VALUE, "maximum Zeal fractional input overflowed");
+			ClericSpellId.ZEAL, zealTwo, Integer.MAX_VALUE, live)
+			== (int) ((long) Integer.MAX_VALUE * 8L / 100L),
+			"maximum Zeal fractional input overflowed");
 
 		ClericEffectRegistry rallyRegistry = new ClericEffectRegistry(clock);
 		ClericEffectRankDefinition<?> rally = ClericEffectCatalog.get(ClericSpellId.RALLY, 1);
 		rallyRegistry.apply(rally, origin, live);
 		for (int hit = 0; hit < 4; hit++) {
 			check(rallyRegistry.accumulateFractionalPercent(ClericEffectFamily.LIFESTEAL,
-				ClericSpellId.RALLY, rally, 1, 20, live) == 0,
+				ClericSpellId.RALLY, rally, 1, live) == 0,
 				"Rally invented a minimum heal");
 		}
 		check(rallyRegistry.accumulateFractionalPercent(ClericEffectFamily.LIFESTEAL,
-			ClericSpellId.RALLY, rally, 1, 20, live) == 1,
+			ClericSpellId.RALLY, rally, 1, live) == 1,
 			"Rally did not release one whole accumulated heal");
 		check(rallyRegistry.onHitsLevelIncreased(54, 100) == 0,
 			"Rally ended before its authored threshold");
@@ -174,13 +225,16 @@ public final class ClericC10DirectCombatFixture {
 
 		rallyRegistry.apply(rally, origin, live);
 		rallyRegistry.accumulateFractionalPercent(ClericEffectFamily.LIFESTEAL,
-			ClericSpellId.RALLY, rally, 4, 20, live);
+			ClericSpellId.RALLY, rally, 4, live);
 		clock.advanceSeconds(31);
 		check(rallyRegistry.size(live) == 0, "expired Rally state remained active");
 		rallyRegistry.apply(rally, origin, live);
 		check(rallyRegistry.accumulateFractionalPercent(ClericEffectFamily.LIFESTEAL,
-			ClericSpellId.RALLY, rally, 1, 20, live) == 0,
+			ClericSpellId.RALLY, rally, 1, live) == 0,
 			"expired Rally fraction leaked into a new effect");
+		clock.advanceSeconds(31);
+		check(rallyRegistry.onHitsLevelIncreased(1, 100) == 1,
+			"ordinary healing did not retire an already expired Rally");
 	}
 
 	private static void protectionCounterChecks() {
@@ -212,6 +266,7 @@ public final class ClericC10DirectCombatFixture {
 
 	public static void main(String[] args) {
 		pureArithmeticChecks();
+		catalogChecks();
 		fractionalCarryChecks();
 		protectionCounterChecks();
 	}

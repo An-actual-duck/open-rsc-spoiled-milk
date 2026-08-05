@@ -143,9 +143,9 @@ public final class ClericEffectRegistry implements TransientEffectState {
 	public synchronized int accumulateFractionalPercent(ClericEffectFamily family,
 			ClericSpellId expectedSpell,
 			ClericEffectRankDefinition<? extends ClericEffectMagnitude> expectedDefinition,
-			int amount, int percent, ClericEffectOriginValidator validator) {
+			int amount, ClericEffectOriginValidator validator) {
 		if (family == null || expectedSpell == null || expectedDefinition == null
-				|| validator == null || amount < 0 || percent <= 0 || percent > 100) {
+				|| validator == null || amount < 0) {
 			throw new IllegalArgumentException("Complete bounded Cleric fractional state is required");
 		}
 		purgeInvalidLocked(clock.nanoTime(), validator);
@@ -155,12 +155,29 @@ public final class ClericEffectRegistry implements TransientEffectState {
 				|| existing.getDefinition().getSpellId() != expectedSpell) {
 			return 0;
 		}
+		final int percent = fractionalPercent(expectedDefinition);
 		long hundredths = Math.addExact(Math.multiplyExact((long) amount, (long) percent),
 			fractionalHundredths.containsKey(family)
 				? fractionalHundredths.get(family).longValue() : 0L);
 		long whole = hundredths / 100L;
 		fractionalHundredths.put(family, Integer.valueOf((int) (hundredths % 100L)));
 		return (int) Math.min(Integer.MAX_VALUE, whole);
+	}
+
+	private static int fractionalPercent(
+			ClericEffectRankDefinition<? extends ClericEffectMagnitude> definition) {
+		if (definition.getFamily() == ClericEffectFamily.DAMAGE
+				&& definition.getSpellId() == ClericSpellId.ZEAL) {
+			return ((ClericEffectMagnitudes.Damage) definition.getMagnitude())
+				.getBonusPercent();
+		}
+		if (definition.getFamily() == ClericEffectFamily.LIFESTEAL
+				&& definition.getSpellId() == ClericSpellId.RALLY) {
+			return ((ClericEffectMagnitudes.Lifesteal) definition.getMagnitude())
+				.getLifestealPercent();
+		}
+		throw new IllegalArgumentException(
+			"Cleric fractional carry is limited to Zeal and Rally");
 	}
 
 	/** Removes an exact active definition without affecting another family or replacement. */
@@ -261,9 +278,13 @@ public final class ClericEffectRegistry implements TransientEffectState {
 			return 0;
 		}
 		ClericEffectEntry entry = entries.get(ClericEffectFamily.LIFESTEAL);
-		if (entry == null || entry.isExpired(clock.nanoTime())
-				|| entry.getDefinition().getSpellId() != ClericSpellId.RALLY) {
+		if (entry == null || entry.getDefinition().getSpellId() != ClericSpellId.RALLY) {
 			return 0;
+		}
+		if (entry.isExpired(clock.nanoTime())) {
+			entries.remove(ClericEffectFamily.LIFESTEAL);
+			fractionalHundredths.remove(ClericEffectFamily.LIFESTEAL);
+			return 1;
 		}
 		ClericEffectMagnitudes.Lifesteal magnitude =
 			(ClericEffectMagnitudes.Lifesteal) entry.getDefinition().getMagnitude();

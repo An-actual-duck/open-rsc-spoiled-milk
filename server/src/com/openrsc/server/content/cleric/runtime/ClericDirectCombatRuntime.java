@@ -161,11 +161,9 @@ public final class ClericDirectCombatRuntime {
 			return damage;
 		}
 		final ClericEffectEntry entry = current.get();
-		final int percent = ((ClericEffectMagnitudes.Damage) entry.getDefinition()
-			.getMagnitude()).getBonusPercent();
 		final int bonus = registry.accumulateFractionalPercent(
 			ClericEffectFamily.DAMAGE, ClericSpellId.ZEAL,
-			entry.getDefinition(), damage, percent, validator);
+			entry.getDefinition(), damage, validator);
 		return ClericDirectCombatEffects.addBounded(damage, bonus);
 	}
 
@@ -197,7 +195,7 @@ public final class ClericDirectCombatRuntime {
 		}
 		final int earned = registry.accumulateFractionalPercent(
 			ClericEffectFamily.LIFESTEAL, ClericSpellId.RALLY,
-			entry.getDefinition(), actualDamage, magnitude.getLifestealPercent(), validator);
+			entry.getDefinition(), actualDamage, validator);
 		final int healed = Math.min(earned, Math.max(0, healingCeiling - currentHits));
 		if (healed <= 0) {
 			return 0;
