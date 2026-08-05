@@ -126,6 +126,15 @@ public final class ClericSpellbookFoundationFixture {
 			"Mend", "Unify", "Fervor", "Purify", "Restore", "Ward",
 			"Greater Mend", "Zeal", "Thorns", "Aegis", "Rally", "Respite"
 		};
+		String[] descriptions = {
+			"Heals nearby allies.", "Draws nearby allies closer.",
+			"Improves nearby allies' accuracy.", "Reduces poison on nearby allies.",
+			"Restores nearby allies' reduced stats.", "Reduces damage to nearby allies.",
+			"Greatly heals nearby allies.", "Increases nearby allies' damage.",
+			"Makes nearby allies reflect damage.",
+			"Greatly reduces damage to nearby allies.",
+			"Grants nearby allies lifesteal.", "Improves nearby allies' regeneration."
+		};
 		ClericAlignment[] alignments = {
 			ClericAlignment.SARADOMIN, ClericAlignment.NEUTRAL, ClericAlignment.ZAMORAK,
 			ClericAlignment.GUTHIX, ClericAlignment.GUTHIX, ClericAlignment.SARADOMIN,
@@ -148,9 +157,10 @@ public final class ClericSpellbookFoundationFixture {
 			check(definition.getStableCode() == index, "stable code drift at " + index);
 			check(keys[index].equals(definition.getStableKey()), "stable key drift at " + index);
 			check(names[index].equals(definition.getDisplayName()), "display name drift at " + index);
-			check(definition.getEffectDescription() != null
-				&& !definition.getEffectDescription().trim().isEmpty(),
-				"effect description missing at " + index);
+			check(descriptions[index].equals(definition.getEffectDescription()),
+				"compact effect description drift at " + index);
+			check(definition.getEffectDescription().length() <= 40,
+				"effect description exceeds spellbook layout at " + index);
 			check(definition.getAlignment() == alignments[index], "alignment drift at " + index);
 			check(definition.getWorshipLevel() == levels[index], "Worship level drift at " + index);
 			check(definition.getSpellTier() == tiers[index], "spell tier drift at " + index);

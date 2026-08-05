@@ -24,40 +24,40 @@ public final class ClericSpellCatalog {
 	static {
 		List<ClericSpellDefinition> definitions = new ArrayList<ClericSpellDefinition>();
 		definitions.add(definition(ClericSpellId.MEND, "Mend",
-			"Heals nearby party members over three pulses.", ClericAlignment.SARADOMIN,
+			"Heals nearby allies.", ClericAlignment.SARADOMIN,
 			1, 1, 2, 0, 12, 28));
 		definitions.add(definition(ClericSpellId.UNIFY, "Unify",
-			"Draws distant nearby party members closer.", ClericAlignment.NEUTRAL,
+			"Draws nearby allies closer.", ClericAlignment.NEUTRAL,
 			3, 1, 4, 0));
 		definitions.add(definition(ClericSpellId.FERVOR, "Fervor",
-			"Improves nearby party members' accuracy.", ClericAlignment.ZAMORAK,
+			"Improves nearby allies' accuracy.", ClericAlignment.ZAMORAK,
 			5, 1, 2, 0, 12, 28, 44));
 		definitions.add(definition(ClericSpellId.PURIFY, "Purify",
-			"Reduces poison on nearby party members.", ClericAlignment.GUTHIX,
+			"Reduces poison on nearby allies.", ClericAlignment.GUTHIX,
 			8, 1, 2, 0, 12, 28, 44));
 		definitions.add(definition(ClericSpellId.RESTORE, "Restore",
-			"Restores reduced stats other than Hits.", ClericAlignment.GUTHIX,
+			"Restores nearby allies' reduced stats.", ClericAlignment.GUTHIX,
 			11, 1, 2, 0, 12, 28, 44));
 		definitions.add(definition(ClericSpellId.WARD, "Ward",
-			"Reduces several direct hits by 25 percent.", ClericAlignment.SARADOMIN,
+			"Reduces damage to nearby allies.", ClericAlignment.SARADOMIN,
 			14, 1, 2, 0, 12, 24, 32));
 		definitions.add(definition(ClericSpellId.GREATER_MEND, "Greater Mend",
-			"Heals nearby party members with stronger pulses.", ClericAlignment.SARADOMIN,
+			"Greatly heals nearby allies.", ClericAlignment.SARADOMIN,
 			16, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.ZEAL, "Zeal",
-			"Improves nearby party members' direct damage.", ClericAlignment.ZAMORAK,
+			"Increases nearby allies' damage.", ClericAlignment.ZAMORAK,
 			19, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.THORNS, "Thorns",
-			"Reflects some direct damage taken by nearby allies.", ClericAlignment.GUTHIX,
+			"Makes nearby allies reflect damage.", ClericAlignment.GUTHIX,
 			22, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.AEGIS, "Aegis",
-			"Reduces a few direct hits by 50 percent.", ClericAlignment.SARADOMIN,
+			"Greatly reduces damage to nearby allies.", ClericAlignment.SARADOMIN,
 			25, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.RALLY, "Rally",
-			"Grants injured nearby allies temporary lifesteal.", ClericAlignment.ZAMORAK,
+			"Grants nearby allies lifesteal.", ClericAlignment.ZAMORAK,
 			28, 2, 3, 0, 24, 44, 64));
 		definitions.add(definition(ClericSpellId.RESPITE, "Respite",
-			"Improves nearby party members' passive healing.", ClericAlignment.NEUTRAL,
+			"Improves nearby allies' regeneration.", ClericAlignment.NEUTRAL,
 			30, 2, 3, 0, 24, 44, 64));
 
 		EnumMap<ClericSpellId, ClericSpellDefinition> ids =

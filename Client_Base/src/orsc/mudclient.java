@@ -14026,6 +14026,10 @@ public final class mudclient implements Runnable {
 		this.clericTextScrollPosition = 0;
 	}
 
+	public List<ClericSpellDef> getClericSpellbookDefinitions() {
+		return this.clericSpellbook.snapshot();
+	}
+
 	private int drawMagicTextList() {
 		this.panelMagic.clearList(this.controlMagicPanel);
 		int row = 0;
@@ -28388,6 +28392,7 @@ public final class mudclient implements Runnable {
 			skillGuideChosenTabs.add("Guthix");
 			skillGuideChosenTabs.add("Gear");
 			skillGuideChosenTabs.add("Devotion");
+			skillGuideChosenTabs.add("Spells");
 			skillGuideChosenTabs.add("Info");
 		} else if (skillGuideChosen.equalsIgnoreCase("Magic")) {
 			skillGuideChosenTabs.add("Spells");

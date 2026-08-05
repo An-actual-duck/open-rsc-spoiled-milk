@@ -11,9 +11,13 @@ import orsc.graphics.two.GraphicsController;
 import orsc.mudclient;
 
 import java.util.ArrayList;
+import java.util.List;
 
 
 public final class SkillGuideInterface {
+	private static final int CLERIC_SPELL_GUIDE_ROW_HEIGHT = 55;
+	private static final int CLERIC_SPELL_GUIDE_VISIBLE_ROWS = 4;
+
 	public int curTab = 0;
 	public int skillGuideScroll;
 	public int hiscoreScroll;
@@ -248,6 +252,12 @@ public final class SkillGuideInterface {
 			mc.getSurface().drawString("Details", x + 140, y + 94, 0xffffff, 2);
 			return;
 		}
+		if (isClericSpellsTab()) {
+			mc.getSurface().drawString(
+				"Cleric spells - sigils, area, mechanics, and Holy Power",
+				x + 5, y + 94, 0xffffff, 2);
+			return;
+		}
 		if (isExpositoryTab()) {
 			int headerX = isSummoningInfoTab() ? x + 85 : x + 5;
 			mc.getSurface().drawString("Important information to know", headerX, y + 94, 0xffffff, 2);
@@ -269,12 +279,14 @@ public final class SkillGuideInterface {
 
 		// Sets up scroll
 		skillGuide.clearList(skillGuideScroll);
-		for (int i = -1; i <= skillMenuEntries.size(); i++) {
-			skillGuide.setListEntry(skillGuideScroll, i + 1, "", 0, (String) null, (String) null);
+		int trailingRows = isClericSpellsTab() ? 4 : 2;
+		for (int i = 0; i < skillMenuEntries.size() + trailingRows; i++) {
+			skillGuide.setListEntry(skillGuideScroll, i, "", 0, (String) null, (String) null);
 		}
 
 		int listStartPoint = skillGuide.getScrollPosition(skillGuideScroll);
-		int listEndPoint = listStartPoint + 5;
+		int listEndPoint = listStartPoint
+			+ (isClericSpellsTab() ? CLERIC_SPELL_GUIDE_VISIBLE_ROWS - 1 : 5);
 
 		int levelX = x + 10;
 		int spriteX = levelX + 15;
@@ -291,6 +303,12 @@ public final class SkillGuideInterface {
 				continue;
 
 			SkillMenuEntry curItem = skillMenuEntries.get(i);
+			if (curItem instanceof ClericSpellMenuItem) {
+				drawClericSpellGuideItem((ClericSpellMenuItem) curItem,
+					x, allY, i, listEndPoint);
+				allY += CLERIC_SPELL_GUIDE_ROW_HEIGHT;
+				continue;
+			}
 			if (curItem instanceof MagicSpellMenuItem) {
 				drawMagicSpellGuideItem((MagicSpellMenuItem) curItem, x, allY, i, listEndPoint);
 				allY += 37;
@@ -360,6 +378,21 @@ public final class SkillGuideInterface {
 		skillGuide.drawPanel();
 	}
 
+	private void drawClericSpellGuideItem(ClericSpellMenuItem spellItem,
+			int x, int allY, int rowIndex, int listEndPoint) {
+		ClericSpellGuideCatalog.Entry entry = spellItem.getEntry();
+		mc.getSurface().drawBoxAlpha(x, allY, width,
+			CLERIC_SPELL_GUIDE_ROW_HEIGHT, 0x45454545, 90);
+		drawString(entry.getHeader(), x + 10, allY + 13, 2, textColour);
+		drawString(entry.getArea(), x + 10, allY + 26, 1, textColour);
+		drawString(entry.getMechanics(), x + 10, allY + 38, 1, textColour);
+		drawString(entry.getHolyPower(), x + 10, allY + 50, 1, textColour);
+		if (rowIndex != skillMenuEntries.size() - 1 && rowIndex != listEndPoint) {
+			mc.getSurface().drawBoxBorder(x, width, allY,
+				CLERIC_SPELL_GUIDE_ROW_HEIGHT + 1, 0);
+		}
+	}
+
 	private void drawMagicSpellGuideItem(MagicSpellMenuItem spellItem, int x, int allY, int rowIndex, int listEndPoint) {
 		int gapHeight = 37;
 		int levelX = x + 10;
@@ -376,6 +409,14 @@ public final class SkillGuideInterface {
 
 	private boolean isMagicSpellsTab() {
 		return mc.getSkillGuideChosen().equals("Magic") && curTab == 0;
+	}
+
+	private boolean isClericSpellsTab() {
+		return mc.getSkillGuideChosen().equals("Worship")
+			&& mc.skillGuideChosenTabs != null
+			&& curTab >= 0
+			&& curTab < mc.skillGuideChosenTabs.size()
+			&& mc.skillGuideChosenTabs.get(curTab).equals("Spells");
 	}
 
 	private boolean isInfoTab() {
@@ -1450,12 +1491,26 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuEntry("", "Destruction grants 5x the item's production Worship XP"));
 			skillMenuEntries.add(new SkillMenuEntry("", "God artifacts cannot be destroyed"));
 		} else if (curTab == 5) {
+			addClericSpellGuideEntries();
+		} else if (curTab == 6) {
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Worship at a god's altar to switch prayers"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer does not drain over time"));
 			skillMenuEntries.add(new SkillMenuItem(388, "", "Prayer uses point reservation to activate"));
 			if (Config.S_WANT_CUSTOM_SPRITES) {
 				addSkillCapeGuide(1523, "Worship");
 			}
+		}
+	}
+
+	private void addClericSpellGuideEntries() {
+		List<ClericSpellGuideCatalog.Entry> entries = ClericSpellGuideCatalog.build(
+			mc.getClericSpellbookDefinitions());
+		for (ClericSpellGuideCatalog.Entry entry : entries) {
+			skillMenuEntries.add(new ClericSpellMenuItem(entry));
+		}
+		if (entries.isEmpty()) {
+			skillMenuEntries.add(new SkillMenuEntry("",
+				"Cleric spell details are unavailable until the catalog loads"));
 		}
 	}
 
@@ -1733,6 +1788,19 @@ public final class SkillGuideInterface {
 
 	public void setVisible(boolean visible) {
 		this.visible = visible;
+	}
+
+	private static final class ClericSpellMenuItem extends SkillMenuEntry {
+		private final ClericSpellGuideCatalog.Entry entry;
+
+		private ClericSpellMenuItem(ClericSpellGuideCatalog.Entry entry) {
+			super("", "");
+			this.entry = entry;
+		}
+
+		private ClericSpellGuideCatalog.Entry getEntry() {
+			return entry;
+		}
 	}
 }
 
