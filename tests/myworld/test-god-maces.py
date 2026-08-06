@@ -27,9 +27,9 @@ def main() -> None:
     myworld_items = load_items(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json")
 
     expected = {
-        3252: ("SARADOMIN_MACE", "Saradomin mace", 1043, "SARADOMIN", "saradomin-mace-icon", "0xFFD84A"),
-        3253: ("ZAMORAK_MACE", "Zamorak mace", 1044, "ZAMORAK", "zamorak-mace-icon", "0x8A2BE2"),
-        3254: ("GUTHIX_MACE", "Guthix mace", 1045, "GUTHIX", "guthix-mace-icon", "0xC2A678"),
+        3252: ("SARADOMIN_MACE", "Saradomin mace", 1044, 1043, "SARADOMIN", "saradomin-mace-icon", "0xFFD84A"),
+        3253: ("ZAMORAK_MACE", "Zamorak mace", 1045, 1044, "ZAMORAK", "zamorak-mace-icon", "0x8A2BE2"),
+        3254: ("GUTHIX_MACE", "Guthix mace", 1046, 1045, "GUTHIX", "guthix-mace-icon", "0xC2A678"),
     }
 
     require("public static final int maxCustom = 3311;" in item_id, "ItemId.maxCustom should include current custom items")
@@ -37,7 +37,7 @@ def main() -> None:
     require("GOD_MACE_DEVOTION_REQUIREMENT" not in equipment, "God maces should not require current devotion to wield")
     require("Devotion.getDevotionLevel(player, godLine)" not in equipment, "God mace devotion is an acquisition gate, not a wield gate")
 
-    for item_id_value, (constant, name, appearance, god_line, icon, animation_color) in expected.items():
+    for item_id_value, (constant, name, appearance, animation_index, god_line, icon, animation_color) in expected.items():
         require(f"{constant}({item_id_value})" in item_id, f"ItemId missing {constant}")
         require(f"{constant}({appearance}, WEAPON)" in appearance_id, f"AppearanceId missing {constant}")
         require(f"ItemId.{constant}.id()" in server_handler, f"Server handler should map {name} custom appearance")
@@ -45,7 +45,7 @@ def main() -> None:
         require(f"PrayerCatalog.GodLine.{god_line}" in equipment, f"{name} should be aligned to {god_line}")
         require(f'setCustomItemDefinition({item_id_value}, new ItemDef("{name}"' in client_defs, f"Client missing {name}")
         require(f'"external-png:{icon}"' in client_defs, f"Client should use external icon for {name}")
-        require(f'new AnimationDef("mace", "equipment", {animation_color}, 0, true, false, 0)); // {appearance} - {name}' in client_defs, f"Client should use recolored mace animation for {name}")
+        require(f'new AnimationDef("mace", "equipment", {animation_color}, 0, true, false, 0)); // {animation_index} - {name}' in client_defs, f"Client should use recolored mace animation for {name}")
         require((ROOT / f"dev/myworld/assets/sprites/items/inventory-ground/weapons/{icon}.png").is_file(), f"Missing icon asset for {name}")
 
         for source_name, items in (("ItemDefsCustom", custom_items), ("ItemDefsMyWorld", myworld_items)):
@@ -60,6 +60,17 @@ def main() -> None:
             require(item["weaponAimBonus"] == 60 and item["weaponPowerBonus"] == 60, f"{source_name} should use dragon-tier aim/power for {name}")
             require(item["prayerBonus"] == 11, f"{source_name} should use tier-11 mace prayer bonus for {name}")
             require(item["basePrice"] == 120000, f"{source_name} should use dragon-tier base price for {name}")
+
+        effective_item = dict(custom_items[item_id_value])
+        effective_item.update(myworld_items[item_id_value])
+        require(effective_item["isUntradable"] == 1, f"{name} should not be tradeable")
+        require(
+            f'setCustomItemDefinition({item_id_value}, new ItemDef("{name}",'
+            in client_defs
+            and f'"external-png:{icon}", false, true, 16, 0, true, true, true, {item_id_value}))'
+            in client_defs,
+            f"Client should mark {name} untradeable",
+        )
 
     print("PASS: god mace wiring validated")
 

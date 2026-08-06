@@ -3933,7 +3933,7 @@ public class EntityHandler {
 		addItemDefinition(new ItemDef("Beverage glass", "A glass left after a tasty drink", "", 1, -1, "items:525", false, false, 0, 0, false, false, true, 1345));
 
 		addItemDefinition(new ItemDef("Dragon 2-handed Sword", "A massive sword", "", 5000000, -1, "items:dragon2hander", false, true, 8216, 0, false, false, true, 1346));
-		addItemDefinition(new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", true, false, 0, 0, true, false, true, 1347));
+		addItemDefinition(new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", true, false, 0, 0, true, true, true, 1347));
 
 
 		//Harvesting
@@ -5791,9 +5791,9 @@ public class EntityHandler {
 		setCustomItemDefinition(3249, new ItemDef("Staff of Elements", "A tier 11 staff attuned to air, water, earth and fire runes", "", 120000, 123, "items:123", false, true, 16, 0xE9A33C, true, true, true, 3249));
 		setCustomItemDefinition(3250, new ItemDef("Staff of Power", "A tier 11 staff attuned to mind, chaos, death and blood runes", "", 120000, 123, "items:123", false, true, 16, 0x8A4FD7, true, true, true, 3250));
 		setCustomItemDefinition(3251, new ItemDef("Staff of Enlightenment", "A tier 11 staff attuned to body, cosmic, nature, law, soul and life runes", "", 120000, 123, "items:123", false, true, 16, 0x56C7B2, true, true, true, 3251));
-		setCustomItemDefinition(3252, new ItemDef("Saradomin mace", "A tier 11 mace blessed by Saradomin", "", 120000, -1, "external-png:saradomin-mace-icon", false, true, 16, 0, true, false, true, 3252));
-		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, false, true, 3253));
-		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, false, true, 3254));
+		setCustomItemDefinition(3252, new ItemDef("Saradomin mace", "A tier 11 mace blessed by Saradomin", "", 120000, -1, "external-png:saradomin-mace-icon", false, true, 16, 0, true, true, true, 3252));
+		setCustomItemDefinition(3253, new ItemDef("Zamorak mace", "A tier 11 mace blessed by Zamorak", "", 120000, -1, "external-png:zamorak-mace-icon", false, true, 16, 0, true, true, true, 3253));
+		setCustomItemDefinition(3254, new ItemDef("Guthix mace", "A tier 11 mace blessed by Guthix", "", 120000, -1, "external-png:guthix-mace-icon", false, true, 16, 0, true, true, true, 3254));
 		setCustomItemDefinition(3255, new ItemDef("Dragon sulfur", "A volatile sulfurous ore used for high-tier alloys", "", 12000, 23, "items:23", false, false, 0, 0xF05A1A, false, false, true, 3255));
 		setCustomItemDefinition(3256, new ItemDef("Fern leaf", "A leafy potion ingredient harvested from ferns", "", 4, -1, "external-png:fern-leaf@17x19", false, false, 0, 0, false, false, true, 3256));
 		setCustomItemDefinition(3257, new ItemDef("Mushroom", "A mushroom used as a potion ingredient", "", 8, -1, "external-png:mushroom@18x18", false, false, 0, 0, false, false, true, 3257));

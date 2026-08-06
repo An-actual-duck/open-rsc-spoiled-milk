@@ -87,10 +87,12 @@ def main() -> None:
         fail("Black dragon scale item ID should retain its repair-material name")
     if black_dragon_scale["isStackable"] != 1:
         fail("Black dragon scales must stack so 100 can fit in inventory for forge repair")
+    if black_dragon_scale["isUntradable"] != 1:
+        fail("Black dragon scales must not be tradeable")
     require(
         client_entity_handler,
-        'new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", true,',
-        "Client should display black dragon scales as one inventory stack",
+        'new ItemDef("Black dragon scale", "Taken from a black dragon", "", 2500, 146, "items:kbdscale", true, false, 0, 0, true, true, true, 1347)',
+        "Client should display black dragon scales as one untradeable inventory stack",
     )
     forbid(client_entity_handler, 'new ItemDef("Raw Dragon Metal",', "Client should not retain the retired item name")
     forbid(item_defs_custom, '"name": "Raw Dragon Metal"', "Server should not retain the retired item name")
