@@ -1,8 +1,10 @@
 # A05.1 Damage Request, Result, and Observation Foundation
 
-This is the historical A05.1 foundation record. A05.2's bounded primary-melee
-authority continuation is documented in
-`docs/combat/combat-a05-direct-melee-damage-transaction.md`.
+This is the historical A05.1 foundation record. The bounded primary-melee and
+primary-projectile authority continuations are documented in
+[`combat-a05-direct-melee-damage-transaction.md`](combat-a05-direct-melee-damage-transaction.md)
+and
+[`combat-a05-primary-projectile-damage-transaction.md`](combat-a05-primary-projectile-damage-transaction.md).
 
 ## Outcome and authority boundary
 

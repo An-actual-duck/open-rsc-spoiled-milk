@@ -141,3 +141,13 @@ and preserve its distinct factual HP loss, displayed hit, and historical
 post-hit hook value. Only the primary Hits/damage-update/hitsplat block moves;
 the bounded authority contract is recorded in
 [`combat-a05-direct-melee-damage-transaction.md`](combat-a05-direct-melee-damage-transaction.md).
+
+A05.3 grows the gate from 38 to 42 scenarios. Its fixtures pin all maintained
+player-ranged, thrown, player-magic, NPC, summon, Iban, and cannon primary
+projectile variants; zero and overkill settlement; exact contribution, XP,
+hitsplat, terminal callback, and transaction metadata; and shared-Hits
+compatibility for both projectile styles. An executable exclusion fixture also
+proves non-primary compatibility and chain-lightning damage remain outside the
+transaction. Only the adjacent primary-impact Hits/damage-update/hitsplat block
+moves; the boundary is recorded in
+[`combat-a05-primary-projectile-damage-transaction.md`](combat-a05-primary-projectile-damage-transaction.md).
