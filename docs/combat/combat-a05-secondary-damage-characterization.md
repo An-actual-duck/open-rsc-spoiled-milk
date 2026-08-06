@@ -28,11 +28,14 @@ a proposal to migrate them together.
 Implementation updates: published A05.4A moved only the six auxiliary Magic
 and true HP/update/hitsplat blocks through the transaction. A05.4B then moved
 only Frostbite, Cleric Thorns, melee/projectile jewelry recoil, and Divine
-Retribution reflection settlement through effect-specific requests. Their
+Retribution reflection settlement through effect-specific requests. A05.4C
+then moved only the settlement triplets for chain lightning, Splinter,
+blood/death robe splashes, Scythe cleave, Death Amulet, and Death Ring. Their
 exact stable identities and preserved boundaries are recorded in
-[`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md)
+[`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md),
+[`combat-a05-reflection-damage-transaction.md`](combat-a05-reflection-damage-transaction.md),
 and
-[`combat-a05-reflection-damage-transaction.md`](combat-a05-reflection-damage-transaction.md).
+[`combat-a05-player-child-damage-transaction.md`](combat-a05-player-child-damage-transaction.md).
 All other inventory rows remain outside those migrations.
 
 ## Reproducible inventory method
@@ -87,7 +90,7 @@ parent effect may aggregate damage later where called out.
 | --- | --- | --- | --- | --- |
 | Unknown/compatibility projectile type: `ProjectileEvent.projectileDamage` fallback at line 416 | Common pre-impact robe/potion/summon absorption and Frostbite; no True Defense; Cleric only for types 1/2/4 | Existing projectile style branches do not recognize an unknown type; no style contribution | Summon-style hitsplat; player stat and surrounding projectile hooks still run | Existing `handleDeath`; compatibility settlement remains outside A05.3; no independent lifesteal policy |
 | Projectile chain lightning: `applyChaosAmuletChainLightning` / `inflictChainLightningDamage` | Player targets receive potion Magic reduction for types 1/4 or potion Ranged reduction for 2/5; no robe, True Defense, or Cleric | Player caster; NPC contribution follows originating Magic/Ranged type and caps to Hits | Armor-proc hitsplat, chain projectile, player stat | Primary target uses event `handleDeath`; child uses `killedBy(caster)`; no local lifesteal or aggro |
-| Melee chain lightning and jewelry recoil: `CombatEvent` lines 219–275 and `PvmMeleeEvent` lines 219, 845–875 | None | `inflictJewelryEffectDamage` always records player-to-NPC **combat** contribution, including chain and reflected jewelry damage | Armor-proc hitsplat; player stat | Event `onDeath` owns terminal state/reset; no local lifesteal; chain target selection has no new aggro |
+| Melee chain lightning and jewelry recoil: `CombatEvent` and `PvmMeleeEvent` | None | The separate chain-lightning and jewelry-recoil helpers both record player-to-NPC **combat** contribution | Armor-proc hitsplat; player stat | Event `onDeath` owns terminal state/reset; no local lifesteal; chain target selection has no new aggro |
 | Projectile recoil: `ProjectileEvent.recoilDamage` | None | Defender is killer; unlike melee jewelry helper, no contribution is recorded | Armor-proc hitsplat; no explicit player stat packet | Ranged reset on lethal types 2/5; otherwise Ring of Life check; direct `killedBy`; no recursive reflection/lifesteal |
 | Frostbite: `applyFrostbiteReflection` and `inflictFrostbiteReflectedDamage` in `CombatEvent`, `PvmMeleeEvent`, and `ProjectileEvent` | None on reflected half; reflected amount is subtracted from the pending primary hit | Consumed Frostbite source is credited; player-source-to-NPC contribution is Magic | Armor-proc hitsplat; player stat | Event adapters own melee death; projectile calls `killedBy(creditedSource)`; no lifesteal or aggro |
 | Splinter: `ProjectileEvent.applySplinter` | None; guard-dog area suppression, radius 2, attackable living non-summon NPC selection | Projectile caster, Magic contribution | Armor-proc hitsplat | Starts chase when eligible and `shouldChase`; direct `killedBy(caster)`; no lifesteal |
@@ -101,7 +104,7 @@ parent effect may aggregate damage later where called out.
 | Elder Green Dragon sweep, fireshot, and burn: `ElderGreenDragonSpecialAttacks.inflictPlayerDamage` | Style robe + potion + summon absorption; True Defense for melee/ranged/magic but not burn | Dragon is killer; no contribution | Caller-selected standard or armor-proc hitsplat; player stat and party update | Corrosive Aura then Divine Retribution; reflected dragon death precedes victim death; otherwise victim death or combat timer/Ring of Life. Burn retains this owned source rather than `BurnEvent`'s helper attribution |
 | Summon bonus damage: `Summoning.inflictSummonBonusDamage` | Player target robe, then potion Magic or Melee | NPC target records summon contribution to online owner | Armor-proc hitsplat; player stat | Returns a lethal boolean to its caller; no local death, aggro, or lifesteal |
 | Divine Retribution: `DivineRetribution.apply` | None; damage is twice the already-applied incoming damage | Defending player; NPC attacker receives combat contribution | Divine effect plus armor-proc hitsplat; player attacker stat | Returns `killedAttacker`; each caller settles death in its own order; cannot recursively proc by itself |
-| Cleric Thorns: melee event calls to `inflictJewelryEffectDamage`; `ProjectileEvent.inflictClericThornsDamage` | None | Protected player receives combat contribution for NPC attacker | Armor-proc hitsplat; player attacker stat | Runs after established lifesteal; direct/event-specific death adapter; no recursive Thorns, recoil, or lifesteal |
+| Cleric Thorns: `inflictClericThornsDamage` in all three combat events | None | Protected player receives combat contribution for NPC attacker | Armor-proc hitsplat; player attacker stat | Runs after established lifesteal; direct/event-specific death adapter; no recursive Thorns, recoil, or lifesteal |
 | Death Amulet burst: `Player.applyDeathAmuletBurst` | None; charged kill-triggered radius selection | Wearing player, combat contribution | Armor-proc hitsplat | Direct `killedBy`; no summon-owner assist, aggro, lifesteal, explicit kill type, or player packet |
 | Death Ring charged hit: `Player.applyDeathRingChargeHit` | None | Wearing player, combat contribution plus summon-owner assist | Armor-proc hitsplat | Returns lethal boolean; caller owns terminal order; no local aggro/lifesteal |
 | Generic burn: `BurnEvent.run` | Compatibility helper only, including player Goblin Tenacity | No stored source; helper uses current opponent only on lethal | Standard hitsplat; player cache/message before damage | Decrements pulse/cache before damage and extinguishes afterward; no contribution, aggro, or lifesteal |
@@ -171,18 +174,21 @@ Each item below is a separate follow-up branch with its own stop gate.
    `ProjectileEvent`. Use separate effect identities and preserve robe/potion
    asymmetry, contribution style, returned value, and each event's death
    adapter moved. See the bounded implementation record linked above.
-2. **A05.4B — reflection families (implemented; pending manager review).**
+2. **A05.4B — reflection families (published).**
    Characterize and migrate Frostbite, Cleric Thorns, projectile recoil,
    melee jewelry recoil, and Divine Retribution individually. Preserve source
    attribution, incoming-hit reduction, post-lifesteal Thorns order,
    no-recursion rules, ranged reset, Ring of Life, and caller-owned
-   simultaneous death.
-3. **A05.4C — player-outgoing child/AoE hits.** Split chain lightning,
+   simultaneous death. Published on main at `42e15c5b6`.
+3. **A05.4C — player-outgoing child/AoE hits (implemented on the focused
+   branch).** Split chain lightning,
    Splinter, blood/death robe splashes, Scythe cleave, Death Amulet, and Death
    Ring into effect-specific requests. Preserve selection, layer/range/area
    suppression, style contribution, chase, zero-hit aggro, charge settlement,
    lifesteal, and per-child death order. Stop if an AoE eligibility policy must
-   be generalized to migrate HP.
+   be generalized to migrate HP. The bounded result is recorded in the A05.4C
+   transaction document linked above; manager review remains the integration
+   boundary.
 4. **A05.4D — owned NPC/summon/boss secondary hits.** Treat Balrog splash,
    Elder Green Dragon attacks/burn, and summon bonus damage as separate
    adapters. Preserve elemental mitigation, True Defense exclusions, blocked
@@ -207,7 +213,7 @@ Each item below is a separate follow-up branch with its own stop gate.
 For every implementation family, verify exact final Hits, displayed overkill,
 hitsplat type/cardinality, contribution style and cap, lifesteal count, aggro,
 kill source/type, update/stat/party packets, terminal callback count, and child
-hook order. Run the current 52-scenario combat gate, relevant focused content tests,
+hook order. Run the current 59-scenario combat gate, relevant focused content tests,
 authoritative core/plugin builds, production-artifact exclusion, and
 changed-code static analysis.
 

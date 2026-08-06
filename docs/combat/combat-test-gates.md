@@ -23,7 +23,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the six combat fixture
+The test target compiles production server sources and the seven combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
@@ -178,3 +178,13 @@ exclusions, caller-owned death, and simultaneous death. Chain lightning and
 all later secondary families remain outside this migration. The boundary is
 recorded in
 [`combat-a05-reflection-damage-transaction.md`](combat-a05-reflection-damage-transaction.md).
+
+A05.4C grows the gate from 52 to 59 scenarios. Its fixtures execute chain
+lightning in all three event owners, Splinter, blood and death robe splashes,
+Scythe cleave, Death Amulet, and Death Ring. They pin target eligibility,
+signed-level filtering, area suppression, style contribution, summon-assist
+policy, aggro, charge ownership, lifesteal, child death order, and exact
+transaction metadata. Only each family's existing Hits/update/hitsplat block
+moves; selection, formulas, resources, and terminal adapters remain local. The
+boundary is recorded in
+[`combat-a05-player-child-damage-transaction.md`](combat-a05-player-child-damage-transaction.md).

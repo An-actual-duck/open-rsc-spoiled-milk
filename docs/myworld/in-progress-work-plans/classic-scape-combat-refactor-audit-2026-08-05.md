@@ -614,7 +614,7 @@ contribution, return, stat-packet, and death adapters remain local and ordered.
 Two scenarios grow the gate from 46 to 48. The exact boundary is recorded in
 [`docs/combat/combat-a05-auxiliary-damage-transaction.md`](../../combat/combat-a05-auxiliary-damage-transaction.md).
 
-A05.4B implementation record: the focused worker branch moves only the
+A05.4B completion record: published main at merge commit `42e15c5b6` moves only the
 HP/update/hitsplat blocks for Frostbite, Cleric Thorns, melee and projectile
 jewelry recoil, and Divine Retribution through ten effect-specific resolved
 damage identities. It preserves pending-hit reduction, attribution and
@@ -623,6 +623,17 @@ packets, Ring of Life, ranged reset, helper results, caller-owned death, and
 simultaneous death. Five policy-specific scenarios replace one combined
 scenario, growing the gate from 48 to 52. The exact boundary is recorded in
 [`docs/combat/combat-a05-reflection-damage-transaction.md`](../../combat/combat-a05-reflection-damage-transaction.md);
+the manager-reviewed merge is the integration boundary.
+
+A05.4C implementation record: the focused worker branch moves only the
+HP/update/hitsplat blocks for chain lightning, Splinter, blood/death robe
+splashes, Scythe cleave, Death Amulet, and Death Ring through eleven
+owner/effect-specific resolved-damage identities. It preserves target
+selection, signed-level/range checks, area suppression, contribution and
+summon-assist style, zero-hit aggro, charge ownership, lifesteal, packets, and
+caller-owned per-child death order. Seven scenarios grow the gate from 52 to
+59. The exact boundary is recorded in
+[`docs/combat/combat-a05-player-child-damage-transaction.md`](../../combat/combat-a05-player-child-damage-transaction.md);
 manager review of the exact READY handoff remains the integration boundary.
 
 Use several branches rather than one migration commit:

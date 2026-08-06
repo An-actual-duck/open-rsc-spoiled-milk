@@ -243,14 +243,15 @@ final class CurrentCombatReflectionCharacterization {
 				defender, attacker, 5, 3, 2, true,
 				path + " melee jewelry transaction");
 
-			final Npc excludedChainTarget = npcWithHits(
+			final Npc chainTarget = npcWithHits(
 				harness, x + 2, 620, 20);
-			final int resultsBeforeChain = observedResults(harness).size();
-			invoke(event, "inflictJewelryEffectDamage",
+			invoke(event, "inflictChainLightningDamage",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
-				defender, excludedChainTarget, Integer.valueOf(2));
-			assertEquals(resultsBeforeChain, observedResults(harness).size(),
-				path + " chain-lightning helper remains outside A05.4B");
+				defender, chainTarget, Integer.valueOf(2));
+			assertReflectionResult(latestResult(harness),
+				path.chainEffectKey(), CombatStyle.MELEE, event,
+				defender, chainTarget, 2, 2, 0, false,
+				path + " chain-lightning A05.4C transaction");
 
 			final Player playerAttacker = harness.player(
 				"recoil player " + path.ordinal(), x + 2, 623);
@@ -267,8 +268,8 @@ final class CurrentCombatReflectionCharacterization {
 				path + " player melee recoil transaction");
 			x += 3;
 		}
-		assertEquals(4, observedResults(harness).size(),
-			"only melee jewelry recoil enters A05.4B transactions");
+		assertEquals(6, observedResults(harness).size(),
+			"melee recoil and separately owned chain hits are observed");
 	}
 
 	static void projectileRecoilPolicies(final CurrentCombatHarness harness)
@@ -740,6 +741,12 @@ final class CurrentCombatReflectionCharacterization {
 			return this == RECIPROCAL_MELEE
 				? "reciprocal-melee-jewelry-recoil"
 				: "pvm-melee-jewelry-recoil";
+		}
+
+		private String chainEffectKey() {
+			return this == RECIPROCAL_MELEE
+				? "reciprocal-melee-chain-lightning"
+				: "pvm-melee-chain-lightning";
 		}
 	}
 }

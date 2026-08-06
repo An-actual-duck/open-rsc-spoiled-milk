@@ -187,8 +187,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::primaryProjectileDamageTransactions);
 			run(harness, "primary_projectiles_preserve_shared_hits_mitigation",
 				CurrentCombatCharacterizationTest::primaryProjectileSharedHitsMitigation);
-			run(harness, "non_primary_projectile_damage_remains_outside_transaction",
-				CurrentCombatCharacterizationTest::nonPrimaryProjectileExclusion);
+			run(harness, "unknown_projectile_stays_outside_while_child_effect_is_owned",
+				CurrentCombatCharacterizationTest::nonPrimaryProjectileBoundary);
 			run(harness, "compatibility_helper_dot_and_death_order_remain_distinct",
 				CurrentCombatSecondaryDamageCharacterization::compatibilityHelperAndDamageOverTime);
 			run(harness, "projectile_secondary_damage_preserves_style_contribution",
@@ -207,6 +207,20 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatReflectionCharacterization::projectileRecoilPolicies);
 			run(harness, "divine_retribution_preserves_result_and_caller_owned_death",
 				CurrentCombatReflectionCharacterization::divineRetributionPolicies);
+			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
+				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
+			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
+				CurrentCombatChildDamageCharacterization::splinterPolicies);
+			run(harness, "blood_robe_splash_preserves_aoe_magic_child_policy",
+				CurrentCombatChildDamageCharacterization::bloodRobeSplashPolicies);
+			run(harness, "death_robe_splash_preserves_all_event_style_policies",
+				CurrentCombatChildDamageCharacterization::deathRobeSplashPolicies);
+			run(harness, "scythe_cleave_preserves_zero_aggro_lifesteal_and_death_order",
+				CurrentCombatChildDamageCharacterization::scytheCleavePolicies);
+			run(harness, "death_amulet_preserves_charge_aoe_and_child_death_policy",
+				CurrentCombatChildDamageCharacterization::deathAmuletPolicies);
+			run(harness, "death_ring_preserves_charge_credit_and_caller_owned_death",
+				CurrentCombatChildDamageCharacterization::deathRingPolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
 				CurrentCombatSecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
@@ -1689,7 +1703,7 @@ public final class CurrentCombatCharacterizationTest {
 			"one shared-Hits result per primary projectile style");
 	}
 
-	private static void nonPrimaryProjectileExclusion(
+	private static void nonPrimaryProjectileBoundary(
 			final CurrentCombatHarness harness) throws Exception {
 		final RecordingDamageObserver observer = damageObserver(harness);
 		observer.reset();
@@ -1717,11 +1731,14 @@ public final class CurrentCombatCharacterizationTest {
 			new Class<?>[] {Player.class, Mob.class, int.class},
 			source, secondaryTarget, Integer.valueOf(7));
 		assertEquals(13, secondaryTarget.getLevel(Skill.HITS.id()),
-			"secondary projectile damage retains legacy Hits mutation");
+			"secondary projectile damage retains final Hits");
 		assertEquals(1, secondaryTarget.getUpdateFlags().getHitSplats().size(),
 			"secondary projectile damage retains one hitsplat");
-		assertEquals(0, observer.results.size(),
-			"non-primary and secondary projectile damage stay outside A05.3");
+		assertEquals(1, observer.results.size(),
+			"A05.4C observes the child hit but not the unknown compatibility type");
+		assertEquals("projectile-chain-lightning",
+			observer.results.get(0).getRequest().getEffectKey(),
+			"child effect stable identity");
 	}
 
 	private static List<PrimaryProjectileSettlement>
