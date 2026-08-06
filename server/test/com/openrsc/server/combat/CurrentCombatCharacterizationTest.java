@@ -227,6 +227,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatOwnedDamageCharacterization::elderGreenDragonPolicies);
 			run(harness, "summon_bonus_preserves_style_mitigation_credit_and_caller_death",
 				CurrentCombatOwnedDamageCharacterization::summonBonusDamagePolicies);
+			run(harness, "delayed_god_spell_preserves_scheduling_resources_lifesteal_and_death_order",
+				CurrentCombatDelayedSpellCharacterization::godSpellAreaPolicies);
+			run(harness, "delayed_iban_blast_preserves_scheduling_resources_and_area_policy",
+				CurrentCombatDelayedSpellCharacterization::ibanBlastAreaPolicies);
+			run(harness, "delayed_salarin_strike_preserves_sparse_presentation_and_no_xp",
+				CurrentCombatDelayedSpellCharacterization::salarinStrikePolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
 				CurrentCombatSecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
