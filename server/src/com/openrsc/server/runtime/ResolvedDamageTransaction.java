@@ -13,9 +13,12 @@ import java.util.Objects;
  * Applies one already-resolved legacy damage request to the current Hits and
  * presentation fields.
  *
- * <p>This A05.2-A05.4D boundary deliberately owns no formula, mitigation,
+ * <p>This A05.2-A05.4E boundary deliberately owns no formula, mitigation,
  * contribution, lifesteal, effect, packet, XP, or death policy. Callers retain
- * those responsibilities and their existing order around this transaction.</p>
+ * those responsibilities and their existing order around this transaction.
+ * The request also selects whether settlement emits both the damage update and
+ * hitsplat or only the damage update; the latter preserves sparse legacy
+ * presentation such as Salarin's delayed strike.</p>
  */
 public final class ResolvedDamageTransaction {
 	public DamageResult apply(final DamageRequest request) {
@@ -28,9 +31,12 @@ public final class ResolvedDamageTransaction {
 			checkedRequest.getResolvedDamage(), false);
 		target.getUpdateFlags().setDamage(new Damage(
 			target, checkedRequest.getResolvedDamage()));
-		target.getUpdateFlags().addHitSplat(new HitSplat(
-			target, checkedRequest.getHitSplatType(),
-			checkedRequest.getResolvedDamage()));
+		if (checkedRequest.getPresentation()
+				== DamageRequest.Presentation.DAMAGE_AND_HITSPLAT) {
+			target.getUpdateFlags().addHitSplat(new HitSplat(
+				target, checkedRequest.getHitSplatType(),
+				checkedRequest.getResolvedDamage()));
+		}
 
 		final DamageResult result = DamageResult.appliedCurrentPath(
 			checkedRequest, hitsBefore, target.getLevel(Skill.HITS.id()));

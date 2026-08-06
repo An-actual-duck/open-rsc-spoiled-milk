@@ -646,6 +646,18 @@ regression brought the gate to 60 after A05.4C; three A05.4D scenarios grow it
 from 60 to 63. The exact boundary is recorded in
 [`docs/combat/combat-a05-owned-npc-summon-damage-transaction.md`](../../combat/combat-a05-owned-npc-summon-damage-transaction.md).
 
+A05.4E implementation record: the focused branch adds three full scheduled cast
+scenarios and grows the gate from 63 to 66. Salarin's delayed Hits/damage update
+and nonlethal NPC god/Iban area settlement move through three effect-specific
+resolved-damage identities. Rune and XP timing, selection, formulas,
+presentation, contribution, chase, specials, aggregate lifesteal, and scheduled
+event ownership remain unchanged. Lethal god/Iban helper hits deliberately stay
+outside the transaction because current death-before-presentation/contribution,
+displayed-overkill, and raw-Hits behavior cannot migrate without a delta. The
+exact boundary is recorded in
+[`docs/combat/combat-a05-delayed-spell-damage-transaction.md`](../../combat/combat-a05-delayed-spell-damage-transaction.md);
+the manager-reviewed merge remains the integration boundary.
+
 Use several branches rather than one migration commit:
 
 1. request/result types plus no-op observation;

@@ -39,6 +39,10 @@ preserved boundaries are recorded in
 [`combat-a05-player-child-damage-transaction.md`](combat-a05-player-child-damage-transaction.md),
 and
 [`combat-a05-owned-npc-summon-damage-transaction.md`](combat-a05-owned-npc-summon-damage-transaction.md).
+A05.4E then moved Salarin's delayed Hits/damage update and only safely
+representable nonlethal NPC god/Iban area settlement. Its explicit terminal
+compatibility stop boundary is recorded in
+[`combat-a05-delayed-spell-damage-transaction.md`](combat-a05-delayed-spell-damage-transaction.md).
 All other inventory rows remain outside those migrations.
 
 ## Reproducible inventory method
@@ -114,8 +118,8 @@ parent effect may aggregate damage later where called out.
 | Poison: `PoisonEvent.run` | Poison-power cure/reduction gates, then compatibility helper; Goblin Tenacity can reduce player HP loss | Stored owner UUID is used only for Blood Necklace Leach, not helper kill credit or contribution | Poison hitsplat; power/cache/message before damage | Leach uses factual returned damage after settlement; helper death-before-presentation order; poison lifecycle/death reset stays an A08 concern |
 | Desert heat: `DesertHeatEvent` | Waterskin prevention before random damage; helper Tenacity only after that | Environmental; lethal helper attribution is current opponent | Standard helper hitsplat/stat | No contribution/lifesteal/aggro; heat messages and waterskin mutation precede damage |
 | Dragon breath compatibility helpers: `DragonFireBreath.executeScript`, `RangeUtils.applyDragonFireBreath`, and pre-cast branch in `SpellHandler` | Each caller computes shield/current-Hits formula first; helper Tenacity afterward | Lethal helper attribution is current opponent | Standard helper hitsplat/stat | Ranged drain and messages remain caller-specific; no contribution/lifesteal/Cleric policy |
-| Delayed god/Iban area damage: `SpellHandler.applyGodSpellAreaEffects`, `applyIbanBlastAreaEffects`, `applyGodSpellSecondaryDamage` | Helper Tenacity only | Caster receives Magic contribution after helper settlement; outer god spell aggregates returned damage for one later lifesteal | Standard helper hitsplat/stat | Surviving NPC starts chase. Helper may already have called death using current opponent before the caster contribution is added; one-tick scheduling is authoritative |
-| Delayed Salarin strike: anonymous `MiniEvent` at `SpellHandler:1993–2014` | Player target potion Magic reduction only | Caster receives Magic contribution on NPC | Damage update but **no hitsplat** and no explicit player stat; party send checks caster party | Direct `killedBy(caster)` after update; no lifesteal/aggro/XP; one-tick delay and primary-before-secondary order are authoritative |
+| Delayed god/Iban area damage: `SpellHandler.applyGodSpellAreaEffects`, `applyIbanBlastAreaEffects`, `applyGodSpellSecondaryDamage` | Legacy helper mitigation only; active area children are NPCs | Caster receives Magic contribution after settlement; outer god spell aggregates returned damage for one later lifesteal | Standard damage update/hitsplat | Surviving NPC starts chase. A05.4E moves nonlethal NPC settlement only; lethal helper settlement still calls death using the current opponent before caster contribution; one-tick scheduling is authoritative |
+| Delayed Salarin strike: anonymous `MiniEvent` in `SpellHandler` | Player target potion Magic reduction only | Caster receives Magic contribution on NPC | A05.4E transaction damage update but **no hitsplat** and no explicit player stat; party send checks caster party | Direct `killedBy(caster)` after update/contribution; no lifesteal/aggro/XP; one-tick delay and primary-before-secondary order are authoritative |
 | `Functions.substat` Hits compatibility | Delegates Hits reduction to helper specifically to preserve Potion of Zamorak splat | Current opponent on lethal only | Standard helper hitsplat/stat | No contribution/lifesteal/aggro |
 | Tutorial rat safety script and `NpcBehavior` gnomeball tackle | Generic helper | Current opponent on lethal; tutorial script damages the attacker itself | Standard helper hitsplat/stat | Script-specific dialogue/state wraps helper; no contribution/lifesteal |
 | Admin `kill`, `damage`, `damagenpc`, development `killnpcs`, `ResetCrystal.smiteNpc` | None | Explicit admin player is passed to direct `killedBy` | Damage update only; no hitsplat or normal stat policy | Debug/administrative compatibility paths, not production combat; preserve separately and do not use them as transaction exemplars |
@@ -157,15 +161,16 @@ the authoritative combat gate, growing it from 42 to 46:
 
 Existing fixtures continue to cover chain exclusion from the A05.3
 transaction, Cleric direct-effect/Thorns order, scythe targeting and
-lifesteal, poison death/respawn cleanup, and summon contribution. No observer
-event is expected from any newly characterized path because no authority moved.
+lifesteal, poison death/respawn cleanup, and summon contribution. At the
+original A05.4 inventory boundary, no observer event was expected from a newly
+characterized path because no authority had moved.
 
-Salarin's anonymous delayed event, Elder Green Dragon's private style enum,
-and equipment-RNG-dependent robe/reflection entry points do not expose a small
-isolated production seam. Their source policies are recorded above. A later
-implementation family must add full-path deterministic fixtures before moving
-them; this inventory branch does not introduce production seams merely to make
-reflection convenient.
+Later bounded branches supplied the necessary runtime seams and fixtures.
+A05.4D covers Elder Green Dragon owned effects. A05.4E executes Salarin and
+god/Iban through the full cast and scheduler path before moving the safe
+settlement subset. Equipment-RNG-dependent robe/reflection entry points remain
+governed by their family-specific implementation records; the inventory branch
+did not introduce production seams merely to make them convenient.
 
 ## Ordered implementation families
 
@@ -196,10 +201,13 @@ Each item below is a separate follow-up branch with its own stop gate.
    tracking, party packets, reflection order, Ring of Life, and returned
    lethal booleans. The bounded result is recorded in the A05.4D transaction
    document linked above. Published on main at `f48d02bee`.
-5. **A05.4E — delayed spell secondaries.** Add full scheduled fixtures for
-   Salarin and god/Iban area effects before moving HP. Preserve one-tick delay,
-   rune/XP behavior, missing Salarin hitsplat/stat behavior, outer aggregated
-   god-spell lifesteal, contribution/chase timing, and current death attribution.
+5. **A05.4E — delayed spell secondaries (focused branch complete; manager review
+   pending).** Full scheduled fixtures execute Salarin and god/Iban area effects.
+   Salarin and nonlethal NPC god/Iban settlement use effect-specific requests;
+   lethal god/Iban hits deliberately retain `Mob.damage` because its death-before-
+   presentation/contribution and raw-Hits behavior cannot move without a delta.
+   The bounded result is recorded in the A05.4E transaction document linked
+   above.
 6. **A08 — typed poison and burn provenance/lifecycle.** Do not fold DoTs into
    an A05 helper migration. First settle owner persistence, offline owner,
    replacement, death/respawn, Leach, and kill-credit rules as already required
@@ -215,7 +223,7 @@ Each item below is a separate follow-up branch with its own stop gate.
 For every implementation family, verify exact final Hits, displayed overkill,
 hitsplat type/cardinality, contribution style and cap, lifesteal count, aggro,
 kill source/type, update/stat/party packets, terminal callback count, and child
-hook order. Run the current 59-scenario combat gate, relevant focused content tests,
+hook order. Run the current 66-scenario combat gate, relevant focused content tests,
 authoritative core/plugin builds, production-artifact exclusion, and
 changed-code static analysis.
 

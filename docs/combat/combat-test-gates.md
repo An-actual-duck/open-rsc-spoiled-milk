@@ -23,7 +23,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the eight combat fixture
+The test target compiles production server sources and the nine combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
@@ -200,3 +200,14 @@ Only each family's existing Hits/update/hitsplat block moves; formulas, RNG,
 selection, effects, packets, hooks, and terminal adapters remain local. The
 boundary is recorded in
 [`combat-a05-owned-npc-summon-damage-transaction.md`](combat-a05-owned-npc-summon-damage-transaction.md).
+
+A05.4E grows the gate from 63 to 66 scenarios. Its full cast fixtures execute
+god spells, Iban Blast, and Salarin elemental strikes through production cast
+approach, projectile, scheduler, inventory, and XP paths. They pin the one-tick
+delay, child eligibility, rune/XP behavior, Magic contribution, chase,
+aggregate god-spell lifesteal, Salarin's missing second hitsplat/stat behavior,
+and exact transaction metadata. Safely representable Salarin and nonlethal NPC
+god/Iban settlement moves; lethal god/Iban helper settlement remains outside
+because its death-before-presentation/contribution and raw-Hits behavior cannot
+move without a gameplay delta. The boundary is recorded in
+[`combat-a05-delayed-spell-damage-transaction.md`](combat-a05-delayed-spell-damage-transaction.md).

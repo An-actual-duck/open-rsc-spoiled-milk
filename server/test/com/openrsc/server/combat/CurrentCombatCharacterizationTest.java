@@ -2103,6 +2103,15 @@ public final class CurrentCombatCharacterizationTest {
 			request.getInputStage(), "damage input stage");
 		assertEquals(DamageRequest.SourceCategory.ACTOR,
 			request.getSourceCategory(), "damage source category");
+		assertEquals(DamageRequest.Presentation.DAMAGE_AND_HITSPLAT,
+			request.getPresentation(), "default damage presentation");
+		final DamageRequest damageOnly = DamageRequest.resolvedLegacy(
+			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			"fixture-damage-only", 1)
+			.presentation(DamageRequest.Presentation.DAMAGE_ONLY)
+			.build();
+		assertEquals(DamageRequest.Presentation.DAMAGE_ONLY,
+			damageOnly.getPresentation(), "damage-only presentation metadata");
 		assertTrue(request.getSourceSnapshot().matches(source),
 			"source snapshot starts current");
 		assertTrue(request.getTargetSnapshot().matches(target),

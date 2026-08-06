@@ -34,6 +34,8 @@ import com.openrsc.server.model.action.WalkToMobAction;
 import com.openrsc.server.model.combat.AttackIntent;
 import com.openrsc.server.model.combat.AttackTransactionResult;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.action.WalkToPointAction;
 import com.openrsc.server.model.container.Equipment;
@@ -48,7 +50,6 @@ import com.openrsc.server.model.entity.npc.NpcInteraction;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.ChatMessage;
 import com.openrsc.server.model.entity.update.CombatEffect;
-import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.CombatState;
@@ -79,6 +80,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.openrsc.server.plugins.Functions.delay;
 import static com.openrsc.server.plugins.Functions.getCurrentLevel;
@@ -99,6 +101,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private static final int HEAL_SPELL_INTERVAL_MS = 3000;
 	private static final int LESSER_HEAL_POWER_PER_PULSE = 60;
 	private static final int TELEPORT_CHARGE_MS = 5000;
+	private static final String GOD_SPELL_SECONDARY_EFFECT_KEY =
+		"delayed-god-spell-secondary";
+	private static final String IBAN_BLAST_SECONDARY_EFFECT_KEY =
+		"delayed-iban-blast-secondary";
+	private static final String SALARIN_SECONDARY_EFFECT_KEY =
+		"delayed-salarin-strike-secondary";
 
 	/**
 	 * The asynchronous logger.
@@ -1872,7 +1880,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
 							@Override
 							public void action() {
-								applyIbanBlastAreaEffects(getPlayer(), affectedMob);
+								applyIbanBlastAreaEffects(
+									getPlayer(), affectedMob, getUUID());
 							}
 						});
 						finalizeSpell(getPlayer(), spell, DEFAULT);
@@ -1938,7 +1947,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
 							@Override
 							public void action() {
-								applyGodSpellAreaEffects(getPlayer(), affectedMob, spellEnum, primaryDamage);
+								applyGodSpellAreaEffects(getPlayer(), affectedMob,
+									spellEnum, primaryDamage, getUUID());
 								godSpellEvent.resolveDeferredClericRally();
 							}
 						});
@@ -1998,11 +2008,20 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									if (affectedMob.isPlayer()) {
 										appliedSecondDamage = ((Player) affectedMob).applyPotionMagicDamageReduction(appliedSecondDamage);
 									}
-									int secondDamageLastHits = affectedMob.getSkills().getLevel(Skill.HITS.id());
-									affectedMob.getSkills().subtractLevel(Skill.HITS.id(), appliedSecondDamage, false);
-									affectedMob.getUpdateFlags().setDamage(new Damage(affectedMob, appliedSecondDamage));
+									final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+										getPlayer(), affectedMob,
+										DamageRequest.SourceCategory.OWNED_EFFECT,
+										SALARIN_SECONDARY_EFFECT_KEY, appliedSecondDamage)
+										.eventId(getUUID())
+										.style(CombatStyle.MAGIC)
+										.presentation(DamageRequest.Presentation.DAMAGE_ONLY)
+										.build();
+									final DamageResult damageResult = affectedMob.getWorld()
+										.getServer().getResolvedDamageTransaction()
+										.apply(damageRequest);
 									if (affectedMob.isNpc() && appliedSecondDamage > 0) {
-										((Npc) affectedMob).addMageDamage(getPlayer(), Math.min(appliedSecondDamage, secondDamageLastHits));
+										((Npc) affectedMob).addMageDamage(getPlayer(),
+											damageResult.getLegacyDamageDealt());
 									}
 									if (affectedMob.isPlayer()) {
 										if (getPlayer().getConfig().WANT_PARTIES) {
@@ -2159,7 +2178,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		player.startPvmCounterCombat(retaliationTarget);
 	}
 
-	private void applyGodSpellAreaEffects(final Player caster, final Mob primaryTarget, final Spells spellEnum, final int primaryDamage) {
+	private void applyGodSpellAreaEffects(final Player caster,
+			final Mob primaryTarget, final Spells spellEnum,
+			final int primaryDamage, final UUID eventId) {
 		final boolean advancedSpell = SpellClassification.isAdvancedGodSpell(spellEnum);
 		if (Summoning.isPlayerAreaEffectSuppressed(caster)) {
 			applyGodSpellSpecialEffect(caster, primaryTarget, spellEnum, primaryDamage, true);
@@ -2175,7 +2196,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				continue;
 			}
 			final int damage = CombatFormula.calculateSecondaryMagicDamage(caster, npc, secondaryMax);
-			final int appliedDamage = applyGodSpellSecondaryDamage(caster, npc, damage);
+			final int appliedDamage = applyGodSpellSecondaryDamage(
+				caster, npc, damage, GOD_SPELL_SECONDARY_EFFECT_KEY, eventId);
 			totalDamage += appliedDamage;
 			applyGodSpellSpecialEffect(caster, npc, spellEnum, appliedDamage, false);
 		}
@@ -2184,7 +2206,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		applyGodSpellLifesteal(caster, spellEnum, totalDamage);
 	}
 
-	private void applyIbanBlastAreaEffects(final Player caster, final Mob primaryTarget) {
+	private void applyIbanBlastAreaEffects(final Player caster,
+			final Mob primaryTarget, final UUID eventId) {
 		if (Summoning.isPlayerAreaEffectSuppressed(caster)) {
 			return;
 		}
@@ -2195,7 +2218,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 			final int damage = CombatFormula.calculateSecondaryMagicDamage(
 				caster, npc, secondaryMax, SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
-			applyGodSpellSecondaryDamage(caster, npc, damage);
+			applyGodSpellSecondaryDamage(caster, npc, damage,
+				IBAN_BLAST_SECONDARY_EFFECT_KEY, eventId);
 		}
 	}
 
@@ -2225,12 +2249,35 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private int applyGodSpellSecondaryDamage(final Player caster, final Mob target, final int damage) {
+		return applyGodSpellSecondaryDamage(caster, target, damage,
+			GOD_SPELL_SECONDARY_EFFECT_KEY, null);
+	}
+
+	private int applyGodSpellSecondaryDamage(final Player caster,
+			final Mob target, final int damage, final String effectKey,
+			final UUID eventId) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}
 		final int lastHits = target.getSkills().getLevel(Skill.HITS.id());
-		target.damage(damage);
-		final int appliedDamage = Math.min(damage, lastHits);
+		final int appliedDamage;
+		if (target.isNpc() && damage < lastHits) {
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				caster, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+				effectKey, damage)
+				.eventId(eventId)
+				.style(CombatStyle.MAGIC)
+				.hitSplatType(HitSplat.TYPE_STANDARD)
+				.build();
+			final DamageResult damageResult = target.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			appliedDamage = damageResult.getLegacyDamageDealt();
+		} else {
+			// The compatibility helper invokes lethal death before presentation
+			// and contribution. Preserve that path until death authority moves.
+			target.damage(damage);
+			appliedDamage = Math.min(damage, lastHits);
+		}
 		if (target.isNpc()) {
 			Npc npc = (Npc) target;
 			npc.addMageDamage(caster, appliedDamage);

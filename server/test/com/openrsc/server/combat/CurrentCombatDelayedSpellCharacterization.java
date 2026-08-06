@@ -9,6 +9,9 @@ import com.openrsc.server.event.custom.NpcLootEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.external.SpellDef;
 import com.openrsc.server.model.action.WalkToAction;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -22,12 +25,12 @@ import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Executable pre-migration A05.4E delayed-spell damage policies. */
+/** Executable A05.4E delayed-spell parity and transaction policies. */
 final class CurrentCombatDelayedSpellCharacterization {
 	private static final String SUMMON_OWNER_KEY = "myworld_summon_owner";
 
@@ -92,8 +95,12 @@ final class CurrentCombatDelayedSpellCharacterization {
 			"Saradomin area spell applies one aggregate lifesteal after children");
 		assertTrue(hasHealHit(caster),
 			"Saradomin aggregate lifesteal publishes one heal presentation");
-		assertNoDelayedResult(harness,
-			"God secondary remains outside the transaction before migration");
+		assertDamageResult(resultFor(harness, child,
+			"delayed-god-spell-secondary"), caster, child,
+			"delayed-god-spell-secondary", areaEvent.getUUID(),
+			100 - child.getLevel(Skill.HITS.id()),
+			DamageRequest.Presentation.DAMAGE_AND_HITSPLAT,
+			"God spell child transaction");
 
 		characterizeCompatibilityLethalOrder(harness, caster);
 	}
@@ -148,8 +155,12 @@ final class CurrentCombatDelayedSpellCharacterization {
 			"Iban Blast area damage has no aggregate lifesteal");
 		assertFalse(hasHealHit(caster),
 			"Iban Blast publishes no healing presentation");
-		assertNoDelayedResult(harness,
-			"Iban secondary remains outside the transaction before migration");
+		assertDamageResult(resultFor(harness, child,
+			"delayed-iban-blast-secondary"), caster, child,
+			"delayed-iban-blast-secondary", areaEvent.getUUID(),
+			100 - child.getLevel(Skill.HITS.id()),
+			DamageRequest.Presentation.DAMAGE_AND_HITSPLAT,
+			"Iban Blast child transaction");
 	}
 
 	static void salarinStrikePolicies(final CurrentCombatHarness harness)
@@ -192,8 +203,11 @@ final class CurrentCombatDelayedSpellCharacterization {
 			"Salarin retains only the primary hitsplat");
 		assertEquals(16, contribution(salarin, caster),
 			"Salarin records both primary and delayed Magic contribution");
-		assertNoDelayedResult(harness,
-			"Salarin second hit remains outside the transaction before migration");
+		assertDamageResult(resultFor(harness, salarin,
+			"delayed-salarin-strike-secondary"), caster, salarin,
+			"delayed-salarin-strike-secondary", secondHit.getUUID(), 4,
+			DamageRequest.Presentation.DAMAGE_ONLY,
+			"Salarin delayed transaction");
 	}
 
 	private static void characterizeCompatibilityLethalOrder(
@@ -239,6 +253,10 @@ final class CurrentCombatDelayedSpellCharacterization {
 			"God/Iban helper displayed lethal overkill");
 		assertEquals(5, contribution(lethal, caster),
 			"God/Iban helper adds delayed Magic contribution after death");
+		assertEquals(5, lethal.getLevel(Skill.HITS.id()),
+			"Compatibility-helper death retains the pre-death raw Hits value");
+		assertNoResultForTarget(harness, lethal,
+			"Lethal compatibility settlement remains outside the transaction");
 	}
 
 	private static Player spellCaster(final CurrentCombatHarness harness,
@@ -318,16 +336,55 @@ final class CurrentCombatDelayedSpellCharacterization {
 		return false;
 	}
 
-	private static void assertNoDelayedResult(
-			final CurrentCombatHarness harness, final String label) {
-		final List<com.openrsc.server.model.combat.DamageResult> results =
-			CurrentCombatCharacterizationTest.observedDamageResults(harness);
-		for (com.openrsc.server.model.combat.DamageResult result : results) {
-			final String key = result.getRequest().getEffectKey();
-			assertFalse(key.startsWith("delayed-god-spell")
-				|| key.startsWith("delayed-iban-blast")
-				|| key.startsWith("delayed-salarin"), label + ": " + key);
+	private static DamageResult resultFor(final CurrentCombatHarness harness,
+			final Mob target, final String effectKey) {
+		for (DamageResult result : CurrentCombatCharacterizationTest
+				.observedDamageResults(harness)) {
+			final DamageRequest request = result.getRequest();
+			if (request.getTarget() == target
+					&& effectKey.equals(request.getEffectKey())) {
+				return result;
+			}
 		}
+		throw new AssertionError("No result for " + effectKey
+			+ " targeting " + target);
+	}
+
+	private static void assertNoResultForTarget(
+			final CurrentCombatHarness harness, final Mob target,
+			final String label) {
+		for (DamageResult result : CurrentCombatCharacterizationTest
+				.observedDamageResults(harness)) {
+			assertTrue(result.getRequest().getTarget() != target,
+				label + ": " + result.getRequest().getEffectKey());
+		}
+	}
+
+	private static void assertDamageResult(final DamageResult result,
+			final Mob source, final Mob target, final String effectKey,
+			final UUID eventId, final int damage,
+			final DamageRequest.Presentation presentation,
+			final String label) {
+		final DamageRequest request = result.getRequest();
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			result.getStatus(), label + " status");
+		assertTrue(request.getSource() == source, label + " source identity");
+		assertTrue(request.getTarget() == target, label + " target identity");
+		assertEquals(DamageRequest.SourceCategory.OWNED_EFFECT,
+			request.getSourceCategory(), label + " category");
+		assertEquals(effectKey, request.getEffectKey(), label + " stable identity");
+		assertEquals(CombatStyle.MAGIC, request.getStyle(), label + " style");
+		assertEquals(eventId, request.getEventId(), label + " event identity");
+		assertEquals(presentation, request.getPresentation(),
+			label + " presentation policy");
+		assertEquals(damage, request.getResolvedDamage(),
+			label + " resolved damage");
+		assertEquals(damage, result.getActualDamage(),
+			label + " factual damage");
+		assertEquals(damage, result.getLegacyDamageDealt(),
+			label + " legacy damage");
+		assertEquals(0, result.getOverkillDamage(), label + " overkill");
+		assertFalse(result.isTargetTerminal(), label + " terminal outcome");
 	}
 
 	private static Integer[] repeat(final Integer value, final int count) {
