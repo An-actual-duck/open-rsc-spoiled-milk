@@ -45,6 +45,7 @@ import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.net.rsc.Crypto;
 import com.openrsc.server.plugins.handler.PluginHandler;
 import com.openrsc.server.plugins.triggers.StartupTrigger;
+import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.runtime.GameClock;
 import com.openrsc.server.runtime.GameRandom;
 import com.openrsc.server.runtime.ProductionGameRandom;
@@ -119,6 +120,7 @@ public class Server implements Runnable {
 	private final MovementStutterDiagnostics movementStutterDiagnostics;
 	private final GameClock gameClock;
 	private final GameRandom combatRandom;
+	private final CombatDamageObserver combatDamageObserver;
 	private final WorldEditStorageContext worldEditStorage;
 	private final WorldEditorSessionManager worldEditorSessions;
 
@@ -469,7 +471,8 @@ public class Server implements Runnable {
 	}
 
 	public Server(final String configFile) throws IOException {
-		this(configFile, SystemGameClock.INSTANCE, ProductionGameRandom.INSTANCE);
+		this(configFile, SystemGameClock.INSTANCE, ProductionGameRandom.INSTANCE,
+			CombatDamageObserver.NONE);
 	}
 
 	/**
@@ -479,8 +482,21 @@ public class Server implements Runnable {
 	 */
 	public Server(final String configFile, final GameClock gameClock,
 			final GameRandom combatRandom) throws IOException {
+		this(configFile, gameClock, combatRandom, CombatDamageObserver.NONE);
+	}
+
+	/**
+	 * Creates a server context with an optional read-only combat damage observer.
+	 * Production uses the inert observer; this constructor exists for isolated
+	 * characterization fixtures and future explicitly enabled diagnostics.
+	 */
+	public Server(final String configFile, final GameClock gameClock,
+			final GameRandom combatRandom,
+			final CombatDamageObserver combatDamageObserver) throws IOException {
 		this.gameClock = Objects.requireNonNull(gameClock, "gameClock");
 		this.combatRandom = Objects.requireNonNull(combatRandom, "combatRandom");
+		this.combatDamageObserver = Objects.requireNonNull(
+			combatDamageObserver, "combatDamageObserver");
 		config = new ServerConfiguration();
 		getConfig().initConfig(configFile);
 		processNetworkConfiguration = getConfig().processNetworkConfiguration();
@@ -1905,6 +1921,10 @@ public class Server implements Runnable {
 
 	public final GameRandom getCombatRandom() {
 		return combatRandom;
+	}
+
+	public final CombatDamageObserver getCombatDamageObserver() {
+		return combatDamageObserver;
 	}
 
 	public final GameStateUpdater getGameUpdater() {

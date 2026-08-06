@@ -25,7 +25,10 @@ import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.combat.AttackIntent;
+import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -36,6 +39,7 @@ import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.runtime.CombatDamageObservation;
 import com.openrsc.server.runtime.GameRandom;
 import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -298,10 +302,24 @@ public class PvmMeleeEvent extends GameTickEvent {
 			((Player) target).updateDamageAndBlockedDamageTracking(
 				hitter, 0, clericDamage.getPreventedDamage());
 		}
+		final int observedDamage = damage;
+		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
+		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
+		final java.util.UUID encounterId = engagement != null
+			&& engagement.peerOf(hitter) == target
+			? engagement.getEncounterId() : null;
+		final DamageRequest damageObservation = CombatDamageObservation.begin(
+			hitter, target, DamageRequest.SourceCategory.ACTOR,
+			"pvm-melee-primary", observedDamage,
+			builder -> builder.eventId(getUUID()).encounterId(encounterId)
+				.style(CombatStyle.MELEE).hitSplatType(hitSplatType));
 		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 		final int damageDealt = Math.min(damage, lastHits);
 		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, Summoning.getSummonDamageHitSplatType(hitter), damage));
+		target.getUpdateFlags().addHitSplat(new HitSplat(
+			target, hitSplatType, damage));
+		CombatDamageObservation.publish(damageObservation, lastHits,
+			target.getLevel(Skill.HITS.id()));
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {
 			Npc n = (Npc) target;

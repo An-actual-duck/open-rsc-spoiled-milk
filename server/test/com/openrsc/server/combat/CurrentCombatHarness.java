@@ -13,6 +13,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.plugins.handler.PluginHandler;
+import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.util.rsc.DataConversions;
 
 import java.io.IOException;
@@ -45,9 +46,14 @@ final class CurrentCombatHarness implements AutoCloseable {
 	private boolean closed;
 
 	CurrentCombatHarness() throws IOException {
+		this(CombatDamageObserver.NONE);
+	}
+
+	CurrentCombatHarness(final CombatDamageObserver damageObserver)
+			throws IOException {
 		clock = new MutableGameClock(DEFAULT_CLOCK_MILLIS);
 		random = new SeededGameRandom(DEFAULT_RANDOM_SEED);
-		server = new Server("myworld.conf", clock, random);
+		server = new Server("myworld.conf", clock, random, damageObserver);
 		server.getConfig().WANT_THREADING__BREAK_PID_PRIORITY = false;
 		server.getConfig().WANT_PVP = false;
 		server.getConfig().COMBAT_EXP_RATE = 1.0D;
