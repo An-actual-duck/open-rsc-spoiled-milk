@@ -90,8 +90,6 @@ contain A01 fixtures:
 ```bash
 if jar tf server/core.jar | grep -q 'com/openrsc/server/combat/CurrentCombat'; then exit 1; fi
 if jar tf server/plugins.jar | grep -q 'com/openrsc/server/combat/CurrentCombat'; then exit 1; fi
-if jar tf server/core.jar | grep -q 'com/openrsc/server/combat/SecondaryDamageCharacterization'; then exit 1; fi
-if jar tf server/plugins.jar | grep -q 'com/openrsc/server/combat/SecondaryDamageCharacterization'; then exit 1; fi
 ```
 
 The server build's artifact inventory enforces these fixture exclusions and

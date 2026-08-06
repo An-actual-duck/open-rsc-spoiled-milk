@@ -127,7 +127,7 @@ before implementation because line numbers will drift.
 
 ## Executable parity added in A05.4
 
-`SecondaryDamageCharacterization` adds four production-runtime scenarios to
+`CurrentCombatSecondaryDamageCharacterization` adds four production-runtime scenarios to
 the authoritative combat gate, growing it from 42 to 46:
 
 - compatibility-helper lethal ordering, factual overkill, poison power/type,

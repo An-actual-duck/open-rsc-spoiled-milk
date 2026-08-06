@@ -21,8 +21,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Executable A05.4 specifications for representative damage families that
  * intentionally remain outside the resolved-damage transaction.
  */
-final class SecondaryDamageCharacterization {
-	private SecondaryDamageCharacterization() {
+final class CurrentCombatSecondaryDamageCharacterization {
+	private CurrentCombatSecondaryDamageCharacterization() {
 	}
 
 	static void compatibilityHelperAndDamageOverTime(
