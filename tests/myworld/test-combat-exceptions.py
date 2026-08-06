@@ -109,7 +109,7 @@ def main() -> None:
 
     require_regex(
         SPELL_HANDLER,
-        r"secondDamageLastHits = affectedMob\.getSkills\(\)\.getLevel\(Skill\.HITS\.id\(\)\).*?\(\(Npc\) affectedMob\)\.addMageDamage\(getPlayer\(\), Math\.min\(appliedSecondDamage, secondDamageLastHits\)\).*?affectedMob\.killedBy\(getPlayer\(\)\);",
+        r"DamageRequest\.resolvedLegacy\(\s*getPlayer\(\), affectedMob,\s*DamageRequest\.SourceCategory\.OWNED_EFFECT,\s*SALARIN_SECONDARY_EFFECT_KEY, appliedSecondDamage\).*?\.presentation\(DamageRequest\.Presentation\.DAMAGE_ONLY\).*?\(\(Npc\) affectedMob\)\.addMageDamage\(getPlayer\(\),\s*damageResult\.getLegacyDamageDealt\(\)\);.*?affectedMob\.killedBy\(getPlayer\(\)\);",
         "Salarin's delayed second strike records magic contribution before it can kill",
     )
 
