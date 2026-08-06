@@ -132,3 +132,12 @@ observer setup and callback failures. Production keeps the observer disabled,
 and no damage or death authority moves. The source inventory and later
 source-family boundaries are recorded in
 [`combat-a05-damage-observation-foundation.md`](combat-a05-damage-observation-foundation.md).
+
+A05.2 grows the gate from 35 to 38 scenarios. Its fixtures pin zero,
+nonlethal, lethal/overkill, contribution, lifesteal, XP, hitsplat, terminal
+callback, and transaction-result parity across both primary melee event
+classes. They also exercise NPC-to-player settlement through Goblin's Tenacity
+and preserve its distinct factual HP loss, displayed hit, and historical
+post-hit hook value. Only the primary Hits/damage-update/hitsplat block moves;
+the bounded authority contract is recorded in
+[`combat-a05-direct-melee-damage-transaction.md`](combat-a05-direct-melee-damage-transaction.md).
