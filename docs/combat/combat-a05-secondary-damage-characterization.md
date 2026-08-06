@@ -190,13 +190,12 @@ Each item below is a separate follow-up branch with its own stop gate.
    lifesteal, and per-child death order. Stop if an AoE eligibility policy must
    be generalized to migrate HP. The bounded result is recorded in the A05.4C
    transaction document linked above. Published on main at `c8ada6fea`.
-4. **A05.4D — owned NPC/summon/boss secondary hits (implemented on the focused
-   branch).** Treat Balrog splash,
+4. **A05.4D — owned NPC/summon/boss secondary hits (published).** Treat Balrog splash,
    Elder Green Dragon attacks/burn, and summon bonus damage as separate
    adapters. Preserve elemental mitigation, True Defense exclusions, blocked
    tracking, party packets, reflection order, Ring of Life, and returned
    lethal booleans. The bounded result is recorded in the A05.4D transaction
-   document linked above; manager review remains the integration boundary.
+   document linked above. Published on main at `f48d02bee`.
 5. **A05.4E — delayed spell secondaries.** Add full scheduled fixtures for
    Salarin and god/Iban area effects before moving HP. Preserve one-tick delay,
    rune/XP behavior, missing Salarin hitsplat/stat behavior, outer aggregated

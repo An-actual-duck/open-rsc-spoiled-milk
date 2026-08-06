@@ -633,9 +633,9 @@ selection, signed-level/range checks, area suppression, contribution and
 summon-assist style, zero-hit aggro, charge ownership, lifesteal, packets, and
 caller-owned per-child death order. Seven scenarios grow the gate from 52 to
 59. The exact boundary is recorded in
-[`docs/combat/combat-a05-player-child-damage-transaction.md`](../../../combat/combat-a05-player-child-damage-transaction.md).
+[`docs/combat/combat-a05-player-child-damage-transaction.md`](../../combat/combat-a05-player-child-damage-transaction.md).
 
-A05.4D implementation record: the focused worker branch moves only the
+A05.4D completion record: published main at merge commit `f48d02bee` moves only the
 HP/update/hitsplat blocks for Balrog Magic splash, Elder Green Dragon owned
 attacks/burn, and summon trait bonus damage through seven stable identities.
 It preserves target selection, signed-level/range checks, style and elemental
@@ -644,8 +644,7 @@ contribution, player stat and party packets, effects, Ring of Life, reflection
 order, returned lethal facts, and caller-owned death. An independent poison
 regression brought the gate to 60 after A05.4C; three A05.4D scenarios grow it
 from 60 to 63. The exact boundary is recorded in
-[`docs/combat/combat-a05-owned-npc-summon-damage-transaction.md`](../../../combat/combat-a05-owned-npc-summon-damage-transaction.md);
-manager review of the exact READY handoff remains the integration boundary.
+[`docs/combat/combat-a05-owned-npc-summon-damage-transaction.md`](../../combat/combat-a05-owned-npc-summon-damage-transaction.md).
 
 Use several branches rather than one migration commit:
 
