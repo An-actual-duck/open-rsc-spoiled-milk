@@ -263,50 +263,6 @@ final class CurrentCombatSecondaryDamageCharacterization {
 			"ineffective auxiliary helpers publish no transaction results");
 	}
 
-	static void reflectionAttributionPolicies(
-			final CurrentCombatHarness harness) throws Exception {
-		final Player frostbiteSource = harness.player(
-			"frostbite source", 640, 620);
-		final Npc frostbiteTarget = npcWithHits(harness, 641, 620, 5);
-		frostbiteTarget.setShouldRespawn(false);
-		final AtomicInteger frostbiteDeaths = deathCounter(
-			harness, frostbiteTarget);
-		final ProjectileEvent frostbiteEvent = new ProjectileEvent(
-			harness.world(), frostbiteSource, frostbiteTarget, 0, 1, false);
-
-		invoke(frostbiteEvent, "inflictFrostbiteReflectedDamage",
-			new Class<?>[] {Mob.class, Mob.class, int.class},
-			frostbiteSource, frostbiteTarget, Integer.valueOf(7));
-		assertHit(frostbiteTarget, 7, HitSplat.TYPE_ARMOR_PROC,
-			"Frostbite reflected presentation");
-		assertEquals(5, contribution(
-			frostbiteTarget, frostbiteSource, "getMageDamageInfoBy"),
-			"Frostbite credits its originating player as Magic damage");
-		assertEquals(1, frostbiteDeaths.get(),
-			"Frostbite terminal callback cardinality");
-
-		final Player thornsOwner = harness.player("thorns owner", 644, 620);
-		final Npc thornsAttacker = npcWithHits(harness, 645, 620, 5);
-		thornsAttacker.setShouldRespawn(false);
-		final AtomicInteger thornsDeaths = deathCounter(
-			harness, thornsAttacker);
-		final ProjectileEvent thornsEvent = new ProjectileEvent(
-			harness.world(), thornsAttacker, thornsOwner, 0, 1, false);
-
-		invoke(thornsEvent, "inflictClericThornsDamage",
-			new Class<?>[] {int.class}, Integer.valueOf(7));
-		assertHit(thornsAttacker, 7, HitSplat.TYPE_ARMOR_PROC,
-			"Cleric Thorns presentation");
-		assertEquals(5, contribution(
-			thornsAttacker, thornsOwner, "getCombatDamageInfoBy"),
-			"Cleric Thorns credits the protected player as combat damage");
-		assertEquals(0, contribution(
-			thornsAttacker, thornsOwner, "getMageDamageInfoBy"),
-			"Cleric Thorns is not Magic contribution");
-		assertEquals(1, thornsDeaths.get(),
-			"Cleric Thorns terminal callback cardinality");
-	}
-
 	static void delayedSpellSecondaryHelperPolicy(
 			final CurrentCombatHarness harness) throws Exception {
 		final Player caster = harness.player("area caster", 650, 620);

@@ -11,14 +11,19 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ClientLimitations;
+import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.plugins.handler.PluginHandler;
 import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.util.rsc.DataConversions;
+import io.netty.channel.Channel;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -134,6 +139,52 @@ final class CurrentCombatHarness implements AutoCloseable {
 		final Item item = new Item(itemId, amount, false, 10_000_000L + itemId);
 		item.setWielded(true);
 		((Item[]) list.get(player.getCarriedItems().getEquipment()))[slot] = item;
+	}
+
+	void recordOutgoingPackets(final Player player)
+			throws ReflectiveOperationException {
+		final Channel channel = (Channel) Proxy.newProxyInstance(
+			Channel.class.getClassLoader(), new Class<?>[] {Channel.class},
+			(proxy, method, arguments) -> {
+				final String name = method.getName();
+				if ("isOpen".equals(name) || "isActive".equals(name)
+						|| "isWritable".equals(name)) {
+					return Boolean.TRUE;
+				}
+				if ("equals".equals(name)) {
+					return Boolean.valueOf(arguments != null
+						&& arguments.length == 1
+						&& System.identityHashCode(proxy)
+							== System.identityHashCode(arguments[0]));
+				}
+				if ("hashCode".equals(name)) {
+					return Integer.valueOf(System.identityHashCode(proxy));
+				}
+				if ("toString".equals(name)) {
+					return "combat-fixture-channel";
+				}
+				return null;
+			});
+		final Field channelField = Player.class.getDeclaredField("channel");
+		channelField.setAccessible(true);
+		channelField.set(player, channel);
+	}
+
+	@SuppressWarnings("unchecked")
+	int countOutgoingPackets(final Player player, final OpcodeOut opcode)
+			throws ReflectiveOperationException {
+		final int numericOpcode = ActionSender.getGenerator(player)
+			.fromOpcodeEnum(opcode, player).getOpcode();
+		final Field packetsField = Player.class.getDeclaredField(
+			"outgoingPackets");
+		packetsField.setAccessible(true);
+		int matches = 0;
+		for (Packet packet : (List<Packet>) packetsField.get(player)) {
+			if (packet.getID() == numericOpcode) {
+				matches++;
+			}
+		}
+		return matches;
 	}
 
 	static Object readPrivateField(final Object target, final String fieldName)

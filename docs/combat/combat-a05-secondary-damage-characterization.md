@@ -25,11 +25,15 @@ The scan found 32 direct Hits-subtraction sites outside
 debug/admin terminal `setLevel(HITS, 0)` paths. These are inventory facts, not
 a proposal to migrate them together.
 
-Implementation update: A05.4A subsequently moved only the six auxiliary Magic
-and true HP/update/hitsplat blocks through the transaction. Their exact stable
-identities and preserved boundaries are recorded in
-[`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md).
-All other inventory rows remain outside that migration.
+Implementation updates: published A05.4A moved only the six auxiliary Magic
+and true HP/update/hitsplat blocks through the transaction. A05.4B then moved
+only Frostbite, Cleric Thorns, melee/projectile jewelry recoil, and Divine
+Retribution reflection settlement through effect-specific requests. Their
+exact stable identities and preserved boundaries are recorded in
+[`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md)
+and
+[`combat-a05-reflection-damage-transaction.md`](combat-a05-reflection-damage-transaction.md).
+All other inventory rows remain outside those migrations.
 
 ## Reproducible inventory method
 
@@ -161,18 +165,18 @@ reflection convenient.
 
 Each item below is a separate follow-up branch with its own stop gate.
 
-1. **A05.4A — duplicated event-local auxiliary hits (implemented; pending
-   manager review).** Only the adjacent
-   Hits/update/hitsplat blocks in `inflictAuxiliaryMagicDamage` and
+1. **A05.4A — duplicated event-local auxiliary hits (published).** Only the
+   adjacent Hits/update/hitsplat blocks in `inflictAuxiliaryMagicDamage` and
    `inflictAuxiliaryTrueDamage` across `CombatEvent`, `PvmMeleeEvent`, and
    `ProjectileEvent`. Use separate effect identities and preserve robe/potion
    asymmetry, contribution style, returned value, and each event's death
    adapter moved. See the bounded implementation record linked above.
-2. **A05.4B — reflection families.** Characterize and migrate Frostbite,
-   Cleric Thorns, projectile recoil, melee jewelry recoil, and Divine
-   Retribution individually. Preserve source attribution, incoming-hit
-   reduction, post-lifesteal Thorns order, no-recursion rules, ranged reset,
-   Ring of Life, and caller-owned simultaneous death.
+2. **A05.4B — reflection families (implemented; pending manager review).**
+   Characterize and migrate Frostbite, Cleric Thorns, projectile recoil,
+   melee jewelry recoil, and Divine Retribution individually. Preserve source
+   attribution, incoming-hit reduction, post-lifesteal Thorns order,
+   no-recursion rules, ranged reset, Ring of Life, and caller-owned
+   simultaneous death.
 3. **A05.4C — player-outgoing child/AoE hits.** Split chain lightning,
    Splinter, blood/death robe splashes, Scythe cleave, Death Amulet, and Death
    Ring into effect-specific requests. Preserve selection, layer/range/area
@@ -203,7 +207,7 @@ Each item below is a separate follow-up branch with its own stop gate.
 For every implementation family, verify exact final Hits, displayed overkill,
 hitsplat type/cardinality, contribution style and cap, lifesteal count, aggro,
 kill source/type, update/stat/party packets, terminal callback count, and child
-hook order. Run the 46-scenario combat gate, relevant focused content tests,
+hook order. Run the current 52-scenario combat gate, relevant focused content tests,
 authoritative core/plugin builds, production-artifact exclusion, and
 changed-code static analysis.
 

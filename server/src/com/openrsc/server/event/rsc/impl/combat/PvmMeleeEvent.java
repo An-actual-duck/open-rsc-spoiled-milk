@@ -55,6 +55,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 		"pvm-melee-auxiliary-magic";
 	private static final String AUXILIARY_TRUE_DAMAGE_EFFECT_KEY =
 		"pvm-melee-auxiliary-true";
+	private static final String FROSTBITE_REFLECTION_EFFECT_KEY =
+		"pvm-melee-frostbite-reflection";
+	private static final String CLERIC_THORNS_EFFECT_KEY =
+		"pvm-melee-cleric-thorns";
+	private static final String JEWELRY_RECOIL_EFFECT_KEY =
+		"pvm-melee-jewelry-recoil";
 	private static final double KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE = 0.10D;
 	private static final int FIRE_CLAW_FIRE_DEFENSE_DEBUFF_PERCENT = 6;
 	private static final int[] SCYTHE_IDS = {
@@ -219,7 +225,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 				final int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
 				final boolean proc = recoilRoll < recoilChance;
 				if (proc && reflectedDamage > 0) {
-					inflictJewelryEffectDamage(targetMob, attackerMob, reflectedDamage);
+					inflictMeleeJewelryRecoilDamage(
+						targetMob, attackerMob, reflectedDamage);
 				}
 			}
 		}
@@ -343,7 +350,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final ClericDirectCombatRuntime.AfterDamage clericAfter =
 			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageDealt);
 		if (clericAfter.getThornsDamage() > 0) {
-			inflictJewelryEffectDamage(target, hitter, clericAfter.getThornsDamage());
+			inflictClericThornsDamage(
+				target, hitter, clericAfter.getThornsDamage());
 		}
 
 		if (target.isPlayer()) {
@@ -464,12 +472,18 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 		final Mob creditedSource = source != null ? source : target;
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, damage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			FROSTBITE_REFLECTION_EFFECT_KEY, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MAGIC)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (target.isNpc() && creditedSource.isPlayer()) {
-			((Npc) target).addMageDamage((Player) creditedSource, Math.min(damage, lastHits));
+			((Npc) target).addMageDamage(
+				(Player) creditedSource, damageResult.getLegacyDamageDealt());
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
@@ -889,6 +903,44 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, hitter);
+		}
+	}
+
+	private void inflictMeleeJewelryRecoilDamage(final Mob source,
+			final Mob target, final int damage) {
+		inflictReflectedCombatDamage(
+			source, target, damage, JEWELRY_RECOIL_EFFECT_KEY);
+	}
+
+	private void inflictClericThornsDamage(final Mob source,
+			final Mob target, final int damage) {
+		inflictReflectedCombatDamage(
+			source, target, damage, CLERIC_THORNS_EFFECT_KEY);
+	}
+
+	private void inflictReflectedCombatDamage(final Mob source,
+			final Mob target, final int damage, final String effectKey) {
+		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			return;
+		}
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			effectKey, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		if (target.isNpc() && source.isPlayer()) {
+			((Npc) target).addCombatDamage(
+				(Player) source, damageResult.getLegacyDamageDealt());
+		}
+		if (target.isPlayer()) {
+			ActionSender.sendStat((Player) target, Skill.HITS.id());
+		}
+		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+			onDeath(target, source);
 		}
 	}
 
