@@ -8,11 +8,13 @@ Ante replaces unavoidable PvM inventory loss with a player-authored risk
 contract. A player chooses which eligible unstackable inventory items they are
 willing to lose on death. Those items remain in the inventory rather than
 moving into escrow. The value exposed through Ante determines the player's
-rare-reward rate:
+ordinary and rare drop rates:
 
 - low risk means a longer rare-drop grind;
-- reaching the combat-level-scaled normal threshold restores ordinary rates;
-- exceeding that threshold improves rare-reward chances; and
+- reaching the combat-level-scaled normal threshold restores today's ordinary
+  and rare rates;
+- exceeding that threshold improves both common-drop frequency and rare-reward
+  chances; and
 - death loses the selected Ante items while protecting non-Ante inventory.
 
 The governing product principle is **low risk, high grind; high risk, high
@@ -31,11 +33,15 @@ confirmed feature.
 - Within an Ante-covered death, selected items are the items at risk and
   unselected inventory is protected.
 - An empty Ante selection is valid. It provides maximum item safety and the
-  lowest rare-reward rate.
+  lowest common and rare reward rates.
 - Every combat level has a normal-value threshold. The threshold rises
   monotonically as the player's combat level rises.
-- Reaching the threshold gives the current normal rare-reward rate. Ante value
-  below it reduces that rate; value above it increases that rate.
+- Reaching the threshold gives the current normal common and rare drop rates.
+  Ante value below it reduces both rates; value above it increases both rates.
+- Common-drop scaling changes how often ordinary common rewards occur, not the
+  quantity inside an awarded stack. Guaranteed bones, fixed quest rewards, and
+  true always-drops remain guaranteed rather than being reclassified as common
+  rolls.
 - The relationship is a sliding scale rather than a small set of equipment
   presets.
 - Loot sharing and personal contribution scaling must compose with Ante. No
@@ -56,8 +62,9 @@ deaths.
 
 Ante must become an explicit death policy rather than adding ad-hoc checks to
 that price-sorted iterator. Duel stakes, Hardcore status loss, scripted safe
-deaths, Ultimate Ironman rules, staff exceptions, untradeable-ground-item
-behavior, and PvP ownership all require explicit compatibility decisions.
+deaths, Ultimate Ironman rules, staff exceptions, and PvP ownership retain
+their explicit compatibility boundaries. Untradeable-ground-item behavior is
+outside Ante because non-tradeable items cannot be selected.
 
 ### Current personal loot and “LootShare” reality
 
@@ -95,8 +102,9 @@ named `Rare Drop Table`:
 - bad-luck mitigation; and
 - any plugin-owned drop path intentionally classified as rare.
 
-Guaranteed bones, fixed quest drops, always-drops, scripted awards, currencies,
-and ordinary common drops should not silently inherit Ante scaling.
+Guaranteed bones, fixed quest drops, true always-drops, and scripted awards do
+not inherit Ante scaling. Ordinary common table rewards do scale with Ante, but
+through an explicit common-frequency policy rather than the rare-drop gates.
 
 ## Ante Item Identity and Eligibility
 
@@ -130,13 +138,14 @@ audit must define the narrow safety exclusions needed to make “loss” real an
 prevent account damage:
 
 - stackable and noted items are ineligible;
+- non-tradeable/untradeable items are ineligible, even when unstackable;
 - the exact item instance must be in inventory, not merely equipped or banked;
 - server placeholders, administrator/debug items, and invalid definitions are
   ineligible;
 - an item that normal death rules cannot genuinely remove must not provide
-  reward value without an explicit destruction contract; and
-- irreplaceable quest, account-bound, or recovery-sensitive items require an
-  explicit allow, reject, or safe-reclaim decision before launch.
+  reward value; and
+- any tradeable but recovery-sensitive exception requires an explicit reviewed
+  exclusion before launch.
 
 This audit must not casually redefine “any unstackable item” into “equipment
 only.” Food, potions, tools, jewelry, and other unstackable items remain
@@ -201,59 +210,68 @@ result must satisfy:
 Exact threshold values remain open until the economy simulator and item-value
 audit are complete.
 
-## Provisional Sliding Reward Curve
+## Sliding Reward Curves — Balance TBD
 
-Ante uses a bounded multiplier `A(R)` centered on the ordinary rate:
+Ante has two bounded multipliers centered on the ordinary rate:
 
-| Ante ratio `R` | Provisional rare-reward multiplier |
-| ---: | ---: |
-| `0` | `0.25x` |
-| `0.25` | `0.50x` |
-| `0.50` | `0.75x` |
-| `1.00` | `1.00x` |
-| `2.00` | `1.25x` |
-| `4.00+` | `1.50x` cap |
+- `C(R)` controls how often ordinary common rewards occur; and
+- `A(R)` controls reviewed rare and unique reward chances.
 
-Interpolate continuously between breakpoints. This is a recommended tuning
-starting point, not a settled number table. It gives an empty Ante a real but
-long grind, restores today's odds at the combat-scaled threshold, and applies
-diminishing returns above normal so extreme wealth cannot trivialize rare
-rewards.
+Both equal exactly `1.00x` at `R = 1.00`, fall below `1.00x` when the player
+antes less than the normal threshold, and rise above `1.00x` when the player
+antes more. Empty Ante remains a valid nonzero low-rate profile rather than
+making ordinary or rare drops impossible. The exact low-risk floors,
+high-risk caps, breakpoints, interpolation, and whether the common and rare
+curves share values are all **TBD** pending simulation and owner approval.
+
+Common scaling means frequency rather than stack inflation. Below normal, an
+ordinary common reward opportunity occurs less often. Above normal, it occurs
+more often through a bounded common-only opportunity; awarded item quantities
+and relative common-table weights remain unchanged. The implementation method
+must preserve today's RNG/result stream at `1.00x` and must suppress rare
+tables from any common-only bonus opportunity.
 
 Before final approval, a simulator must report expected kills per reward and
 expected item loss exposure at representative combat levels, thresholds,
-contribution shares, NPC tables, and existing equipment/potion modifiers.
+contribution shares, common and rare NPC tables, and existing equipment/potion
+modifiers.
 
 ## Drop Calculation and LootShare Composition
 
 For each personal reward recipient, construct one immutable
-`RareRewardContext` containing:
+`DropRewardContext` containing:
 
 - recipient identity and lifecycle generation;
 - NPC and drop-family identity;
 - the recipient's contribution scale;
-- the recipient's valid Ante snapshot and multiplier;
+- the recipient's valid Ante snapshot and common/rare multipliers;
 - existing Luck, Wealth, Cosmic, and bad-luck facts; and
 - stable RNG/event identity for diagnostics and deterministic tests.
 
-The conceptual chance is:
+The conceptual rare chance is:
 
 `effective rare chance = base chance × contribution factor × Ante factor × existing applicable modifiers`
+
+The conceptual common occurrence is:
+
+`effective common frequency = current common opportunity × Ante common factor`
 
 This is an ownership model, not permission to multiply every current modifier
 blindly. Existing modifiers use different mechanics—weight adjustment, extra
 rolls, or gates—and must retain those mechanics. Ante is integrated exactly
-once at each audited rare seam and must not add an independent second RNG gate
-when its multiplier is `1.00x`. At the normal threshold, the same RNG stream
-must reproduce current results.
+once at each audited common or rare seam and must not add an independent second
+RNG gate when its multiplier is `1.00x`. At the normal threshold, the same RNG
+stream must reproduce current results.
 
 Rules:
 
 - contribution and Ante are personal; never average them across a party;
 - no player receives another player's Ante multiplier;
-- chance is capped at `100%` after applicable composition;
-- ordinary guaranteed/common rewards remain unchanged unless separately
-  approved;
+- common and rare chances are capped safely after applicable composition;
+- ordinary common frequency scales, while item quantities and relative common
+  weights remain unchanged;
+- guaranteed bones, fixed quest drops, true always-drops, and scripted awards
+  remain unchanged;
 - bad-luck state must not be reset, double-incremented, or made easier to farm
   by toggling Ante;
 - Wealth and Cosmic extra-roll cardinality remains unchanged;
@@ -315,10 +333,11 @@ Protect Item compatibility, or Soul-necklace extra-kept slots. Otherwise the
 displayed risk and reward would disagree. Conversely, non-Ante items must not
 fall through into the legacy iterator during an Ante-covered death.
 
-The selected items follow normal recoverability unless final design explicitly
-chooses destruction. Public ground ownership, private reclaim windows,
-untradeable behavior, and world cleanup must be shown in the interface rather
-than described vaguely as “lost.”
+Selected Ante items use the existing recoverable PvM ground-drop lifecycle.
+They are not permanently destroyed and do not enter a new reclaim service.
+Ground ownership, visibility, and cleanup timing remain the current PvM death
+contract and must be shown plainly in the interface. Non-tradeable items never
+enter this path because they cannot be selected for Ante.
 
 ### Simultaneous player and NPC death
 
@@ -328,13 +347,13 @@ player's loss. Processing player inventory removal first must not reduce the
 reward to empty Ante, and processing the NPC first must not spare selected
 items. Tests must cover both callback orders and exactly-once settlement.
 
-## Recommended Initial Death Scope
+## Confirmed Death Scope
 
-The safest first release is **ordinary PvM deaths on the maintained Spoiled
-Milk world**:
+Ante is **PvM-only** on the maintained Spoiled Milk world:
 
-- PvM death: Ante policy applies;
-- PvP/Wilderness death: retain current PvP loss and ownership rules;
+- NPC-caused PvM death: Ante policy applies, including in the Wilderness unless
+  another explicit safe/scripted activity contract takes authority;
+- player-caused PvP death: retain current PvP loss and ownership rules;
 - active duel: retain stake/death rules;
 - Ultimate Ironman: retain its existing full-loss identity until explicitly
   reviewed;
@@ -343,9 +362,11 @@ Milk world**:
 - safe minigame, tutorial, scripted, and staff/test deaths: retain their
   explicit existing contracts.
 
-This boundary is recommended, not yet owner-confirmed. Extending Ante to PvP
-would change player-kill incentives and cannot be inferred from a PvM rare-drop
-system.
+Ante never changes PvP rewards, player-kill ownership, player-caused Wilderness
+item loss, or duel stakes. Location alone does not decide the policy: an
+NPC-caused death remains PvM, while a player-caused death remains PvP. Any
+future PvP risk system requires a separate owner-approved design rather than an
+extension of this plan.
 
 ## Maintained-Client Interface
 
@@ -374,7 +395,7 @@ The interface should show:
 - a sliding `Low risk` → `Normal` → `High risk` meter;
 - a plain-language death result: “Selected items are at risk; other covered
   items are protected”;
-- whether selected losses are ground-recoverable or destroyed;
+- that selected losses use the recoverable PvM ground-drop lifecycle;
 - combat-lock status;
 - `Clear`, `Revert`, and explicit `Apply` controls; and
 - a high-value confirmation when a revision materially raises exposed value.
@@ -390,9 +411,9 @@ Keep feature ownership narrow:
 - `AnteSelectionService`: validates edits and owns persistence/reconciliation;
 - `AnteValuationCatalog`: item eligibility and authoritative value;
 - `AnteThresholdProfile`: combat-level threshold ladder;
-- `AnteRewardCurve`: bounded ratio-to-multiplier calculation;
+- `AnteRewardCurve`: bounded common- and rare-ratio calculations;
 - `AnteRiskSnapshot`: immutable selection/value/lifecycle fact;
-- `RareRewardContext`: composes contribution, Ante, and existing modifiers;
+- `DropRewardContext`: composes contribution, Ante, and existing modifiers;
 - `AnteDeathPolicy`: selects and settles at-risk instances; and
 - versioned custom protocol structs/handlers for snapshots and revisions.
 
@@ -431,9 +452,9 @@ Rollout rules:
   from server state.
 - Ensure safe-spotted or trivial NPC farming does not receive an unintended
   additional multiplier beyond the approved player-combat-level model.
-- Confirm whether recoverable ground drops provide enough risk. If not, use a
-  separate reviewed destruction or reclaim contract rather than quietly
-  changing ordinary ground-item ownership.
+- Preserve current recoverable PvM ground-drop ownership and cleanup; do not
+  replace it with destruction or a reclaim service inside an implementation
+  branch.
 - Rate-limit selection revisions and protocol requests.
 - Never expose future rolls, seeds, bad-luck counters, or hidden table contents
   through the interface.
@@ -447,7 +468,7 @@ Add bounded reason-coded diagnostics for:
 - combat-lock rejection;
 - threshold, value, ratio, and multiplier at reward settlement;
 - contribution and Ante factors applied to each rare family;
-- selected item loss and ground/reclaim outcome; and
+- selected item loss and recoverable ground-drop outcome; and
 - simultaneous death/kill snapshot reuse.
 
 Production logs must avoid unnecessary full-inventory dumps. Administrator
@@ -462,7 +483,7 @@ and multiplier but must not reveal pending RNG outcomes.
   levels, rare families, and current modifier composition.
 - Build a deterministic offline simulator for thresholds and expected rare
   rates.
-- Propose the final threshold ladder, curve, cap, and initial death scope.
+- Propose the final threshold ladder plus common and rare curves and caps.
 - Change no live death or drop behavior.
 
 Stop if normal-threshold simulations do not reproduce current reward odds.
@@ -494,9 +515,10 @@ items, or an unclear death warning.
 Stop on duplication, failure to lose a displayed-risk item, or loss of an
 unselected covered item.
 
-### ANTE-4 — Rare-reward and LootShare integration
+### ANTE-4 — Common/rare drop-rate and LootShare integration
 
-- Integrate Ante exactly once into every approved rare family.
+- Integrate Ante exactly once into ordinary common frequency and every approved
+  rare family.
 - Compose per-recipient contribution, current equipment/potions, and bad-luck
   behavior.
 - Preserve the originating recipient context through any shared distribution.
@@ -517,8 +539,8 @@ tested item instance.
 ### ANTE-6 — Public rollout and tuning
 
 - Release behind a reversible validated configuration flag.
-- Publish the exact death scope, normal-threshold meaning, and capped reward
-  curve to players.
+- Publish the PvM-only death scope, recoverable-loss behavior,
+  normal-threshold meaning, and approved common/rare curves to players.
 - Monitor value bands, death losses, expected-vs-observed rare outcomes, party
   composition, and item inflation.
 - Tune data tables rather than patching formulas throughout drop code.
@@ -539,9 +561,11 @@ Server/runtime coverage must include:
 - edits accepted out of combat and rejected during lock;
 - combat-level changes updating threshold without changing selection;
 - normal threshold reproducing current RNG outcomes;
+- below/above-threshold common-frequency scaling without quantity inflation;
 - below/above-threshold scaling for marked tables, rare normal drops, hidden
   uniques, and custom rare paths;
-- guaranteed/common/quest drops remaining unchanged;
+- guaranteed bones, fixed quest drops, true always-drops, and scripted awards
+  remaining unchanged;
 - contribution and Ante applied once per recipient;
 - Wealth, Cosmic, Luck, and bad-luck behavior preserved;
 - no party-member multiplier borrowing;
@@ -566,18 +590,12 @@ guards, and changed-code static analysis for every implementation milestone.
 The foundational and simulator work can begin without these final answers, but
 death/reward activation cannot:
 
-1. Confirm ordinary PvM as the initial death scope and retain current PvP,
-   duel, and Ultimate Ironman rules.
-2. Decide whether lost Ante items use current recoverable ground-drop behavior,
-   a private reclaim window, or permanent destruction.
-3. Approve the item safety exclusions, especially untradeable and irreplaceable
-   quest items.
-4. Approve the combat-level threshold ladder after the economy report.
-5. Approve the low-risk floor, high-risk cap, and interpolation curve after
-   simulation.
-6. Confirm that guaranteed/common drops remain unchanged and Ante affects only
-   reviewed rare-reward opportunities.
-7. Choose the authentic/old-client fallback contract.
+1. Approve the combat-level threshold ladder after the economy report.
+2. Approve the low-risk floors, high-risk caps, breakpoints, and interpolation
+   for common and rare rewards after simulation.
+3. Decide whether the common and rare curves use the same values or separate
+   tuning while retaining the same normal threshold.
+4. Choose the authentic/old-client fallback contract.
 
 ## Acceptance Criteria
 
@@ -586,11 +604,12 @@ Ante is complete only when:
 - the player can plainly see which exact inventory items are at risk;
 - those items remain in ordinary inventory with no duplicate escrow copy;
 - death loses every displayed-risk item and no other covered item;
-- zero risk produces the approved low rare rate;
-- the combat-scaled threshold reproduces ordinary rates;
-- additional real risk improves rare rates only up to the approved cap;
+- zero risk produces the approved low common and rare rates;
+- the combat-scaled threshold reproduces ordinary common and rare rates;
+- additional real risk improves both rates only up to their approved caps;
 - personal contribution/LootShare and Ante compose once and per recipient;
-- all rare families and existing drop modifiers have explicit tests;
+- common frequency, all rare families, and existing drop modifiers have
+  explicit tests;
 - simultaneous death cannot erase either the promised reward factor or item
   loss;
 - old clients cannot unknowingly operate under a misrepresented death policy;
