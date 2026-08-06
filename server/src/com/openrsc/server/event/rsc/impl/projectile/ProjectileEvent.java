@@ -15,6 +15,10 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.combat.CombatEngagement;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -387,10 +391,34 @@ public class ProjectileEvent extends SingleTickEvent {
 			clericPreventedDamage = clericDamage.getPreventedDamage();
 		}
 		int lastHits = opponent.getLevel(Skill.HITS.id());
-		opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		final int damageDealt = Math.min(damage, lastHits);
-		opponent.getUpdateFlags().setDamage(new Damage(opponent, damage));
-		opponent.getUpdateFlags().addHitSplat(new HitSplat(opponent, Summoning.getSummonDamageHitSplatType(caster), damage));
+		final int hitSplatType = Summoning.getSummonDamageHitSplatType(caster);
+		final int damageDealt;
+		if (isPrimaryProjectileAttackType()) {
+			final CombatEngagement engagement =
+				caster.getOutgoingCombatEngagement();
+			final java.util.UUID encounterId = engagement != null
+				&& engagement.peerOf(caster) == opponent
+				? engagement.getEncounterId() : null;
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				caster, opponent, DamageRequest.SourceCategory.ACTOR,
+				primaryProjectileEffectKey(), damage)
+				.eventId(getUUID())
+				.encounterId(encounterId)
+				.style(primaryProjectileCombatStyle())
+				.hitSplatType(hitSplatType)
+				.build();
+			final DamageResult damageResult = opponent.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			damageDealt = damageResult.getLegacyDamageDealt();
+		} else {
+			// Retain the legacy settlement for non-primary compatibility/debug
+			// types. Their behavior is outside the bounded A05.3 migration.
+			opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
+			damageDealt = Math.min(damage, lastHits);
+			opponent.getUpdateFlags().setDamage(new Damage(opponent, damage));
+			opponent.getUpdateFlags().addHitSplat(
+				new HitSplat(opponent, hitSplatType, damage));
+		}
 		if (impactEffectType > 0 && !trueDefenseBlocked) {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
@@ -1006,6 +1034,37 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private boolean isPrimaryProjectileAttackType() {
 		return type == 1 || type == 2 || type == 4 || type == 5;
+	}
+
+	private CombatStyle primaryProjectileCombatStyle() {
+		return type == 1 || type == 4
+			? CombatStyle.MAGIC : CombatStyle.RANGED;
+	}
+
+	private String primaryProjectileEffectKey() {
+		if (type == 4) {
+			return "projectile-iban-primary";
+		}
+		if (type == 5) {
+			return "projectile-cannon-primary";
+		}
+		final String style = type == 1 ? "magic" : "ranged";
+		if (Summoning.isSummon(caster)) {
+			return "projectile-summon-" + style + "-primary";
+		}
+		if (caster.isNpc()) {
+			return "projectile-npc-" + style + "-primary";
+		}
+		if (type == 2 && isThrownProjectile()) {
+			return "projectile-player-thrown-primary";
+		}
+		return "projectile-player-" + style + "-primary";
+	}
+
+	private boolean isThrownProjectile() {
+		return RangeUtils.THROWING_KNIVES.contains(poisonWeaponId)
+			|| RangeUtils.THROWING_DARTS.contains(poisonWeaponId)
+			|| RangeUtils.SHURIKENS.contains(poisonWeaponId);
 	}
 
 	private boolean isClericEligibleProjectileType() {

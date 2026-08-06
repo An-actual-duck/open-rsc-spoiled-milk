@@ -53,6 +53,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcAttackStyleProfile;
 import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
@@ -167,6 +168,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::supportAreaSelection);
 			run(harness, "npc_death_listener_is_exactly_once",
 				CurrentCombatCharacterizationTest::exactlyOnceDeathCallback);
+			run(harness, "primary_projectile_variants_preserve_current_impact_settlement",
+				CurrentCombatCharacterizationTest::primaryProjectileVariantSettlement);
 			run(harness, "pvm_primary_melee_preserves_zero_nonlethal_and_lethal_settlement",
 				CurrentCombatCharacterizationTest::pvmPrimaryMeleeSettlement);
 			run(harness, "reciprocal_primary_melee_preserves_zero_nonlethal_and_lethal_settlement",
@@ -176,6 +179,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::resolvedDamageContracts);
 			run(harness, "both_primary_melee_transactions_report_applied_outcomes",
 				CurrentCombatCharacterizationTest::primaryMeleeDamageTransactions);
+			run(harness, "primary_projectile_transactions_preserve_variant_metadata",
+				CurrentCombatCharacterizationTest::primaryProjectileDamageTransactions);
+			run(harness, "primary_projectiles_preserve_shared_hits_mitigation",
+				CurrentCombatCharacterizationTest::primaryProjectileSharedHitsMitigation);
+			run(harness, "non_primary_projectile_damage_remains_outside_transaction",
+				CurrentCombatCharacterizationTest::nonPrimaryProjectileExclusion);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
 				CurrentCombatCharacterizationTest::primaryMeleeSharedHitsMitigation);
 			run(harness, "damage_observer_failure_cannot_change_current_settlement",
@@ -1460,6 +1469,372 @@ public final class CurrentCombatCharacterizationTest {
 			"non-respawning NPC remains queued for terminal unregister");
 	}
 
+	private static void primaryProjectileVariantSettlement(
+			final CurrentCombatHarness harness) throws Exception {
+		exercisePrimaryProjectileVariants(harness, 500, 500);
+
+		final Player zeroCaster = harness.player("pj zero", 540, 500);
+		final Npc zeroTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 541, 500);
+		zeroTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final ProjectileEvent zeroEvent = projectileEvent(
+			harness, zeroCaster, zeroTarget, 0, 2,
+			ItemId.BRONZE_THROWING_KNIFE.id(), Projectile.THROWING_KNIFE,
+			0);
+		invokePrimaryProjectile(zeroEvent);
+		assertEquals(20, zeroTarget.getLevel(Skill.HITS.id()),
+			"zero thrown impact target Hits");
+		assertEquals(0, zeroTarget.getUpdateFlags().getDamage().get().getDamage(),
+			"zero thrown impact damage update");
+		assertEquals(1, zeroTarget.getUpdateFlags().getHitSplats().size(),
+			"zero thrown impact hitsplat cardinality");
+		assertEquals(0,
+			zeroTarget.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"zero thrown impact hitsplat amount");
+		assertEquals(0, projectileContribution(
+			zeroTarget, zeroCaster, "getRangeDamageInfoBy"),
+			"zero thrown impact contribution");
+		assertFalse(zeroTarget.hasDamageFrom(zeroCaster),
+			"zero thrown impact does not create damage ownership");
+
+		final Player lethalCaster = harness.player("pj lethal", 544, 500);
+		lethalCaster.setKillType(
+			com.openrsc.server.model.entity.KillType.MAGIC);
+		final Npc lethalTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 545, 500);
+		lethalTarget.setShouldRespawn(false);
+		lethalTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 5, 5, false);
+		final AtomicInteger deathCallbacks = new AtomicInteger();
+		lethalTarget.addDeathListener(new NpcLootEvent(
+			harness.world(), lethalTarget.getLocation(), lethalTarget.getID(),
+			1, ItemId.COINS.id()) {
+			@Override
+			public void onLootNpcDeath(final Player ignoredPlayer,
+					final Npc ignoredNpc) {
+				deathCallbacks.incrementAndGet();
+			}
+		});
+		final int magicExperienceBefore = lethalCaster.getSkills()
+			.getExperience(Skill.MAGIC.id());
+		final int hitsExperienceBefore = lethalCaster.getSkills()
+			.getExperience(Skill.HITS.id());
+		final ProjectileEvent lethalEvent = projectileEvent(
+			harness, lethalCaster, lethalTarget, 7, 1, -1,
+			Projectile.FIREBALL, 0);
+		invokePrimaryProjectile(lethalEvent);
+		assertEquals(0, lethalTarget.getLevel(Skill.HITS.id()),
+			"lethal projectile target Hits");
+		assertEquals(7,
+			lethalTarget.getUpdateFlags().getDamage().get().getDamage(),
+			"lethal projectile displayed overkill damage");
+		assertEquals(1, lethalTarget.getUpdateFlags().getHitSplats().size(),
+			"lethal projectile hitsplat cardinality");
+		assertEquals(7,
+			lethalTarget.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"lethal projectile hitsplat amount");
+		assertEquals(5, projectileContribution(
+			lethalTarget, lethalCaster, "getMageDamageInfoBy"),
+			"lethal projectile contribution caps to actual damage");
+		assertEquals(1, deathCallbacks.get(),
+			"lethal projectile death callback cardinality");
+		assertTrue(lethalTarget.isUnregistering(),
+			"lethal projectile terminal unregister state");
+		assertEquals(com.openrsc.server.model.entity.KillType.MAGIC,
+			lethalCaster.getKillType(), "lethal projectile kill type");
+		assertEquals(28, lethalCaster.getSkills()
+			.getExperience(Skill.MAGIC.id()) - magicExperienceBefore,
+			"lethal projectile Magic XP settlement");
+		assertEquals(9, lethalCaster.getSkills()
+			.getExperience(Skill.HITS.id()) - hitsExperienceBefore,
+			"lethal projectile Hits XP settlement");
+	}
+
+	private static void primaryProjectileDamageTransactions(
+			final CurrentCombatHarness harness) throws Exception {
+		final RecordingDamageObserver observer = damageObserver(harness);
+		observer.reset();
+		final List<PrimaryProjectileSettlement> settlements =
+			exercisePrimaryProjectileVariants(harness, 560, 520);
+		assertEquals(Integer.valueOf(settlements.size()),
+			Integer.valueOf(observer.results.size()),
+			"one transaction result per primary projectile variant");
+		for (int index = 0; index < settlements.size(); index++) {
+			final PrimaryProjectileSettlement settlement = settlements.get(index);
+			final DamageResult result = observer.results.get(index);
+			final String path = settlement.variant.label;
+			assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+				result.getStatus(), path + " transaction status");
+			assertEquals(settlement.variant.effectKey,
+				result.getRequest().getEffectKey(), path + " stable effect key");
+			assertEquals(settlement.variant.style,
+				result.getRequest().getStyle(), path + " combat style");
+			assertEquals(DamageRequest.SourceCategory.ACTOR,
+				result.getRequest().getSourceCategory(), path + " source category");
+			assertEquals(settlement.event.getUUID(),
+				result.getRequest().getEventId(), path + " event identity");
+			assertEquals(settlement.source,
+				result.getRequest().getSource(), path + " source identity");
+			assertEquals(settlement.target,
+				result.getRequest().getTarget(), path + " target identity");
+			assertTrue(result.getRequest().getSourceSnapshot()
+				.matches(settlement.source), path + " source snapshot");
+			assertTrue(result.getRequest().getTargetSnapshot()
+				.matches(settlement.target), path + " target snapshot");
+			assertEquals(7, result.getRequest().getResolvedDamage(),
+				path + " resolved damage");
+			assertEquals(settlement.variant.expectedHitSplatType,
+				result.getRequest().getHitSplatType(), path + " hitsplat type");
+			assertEquals(20, result.getHitsBefore(), path + " Hits before");
+			assertEquals(7, result.getActualDamage(), path + " actual damage");
+			assertEquals(7, result.getLegacyDamageDealt(),
+				path + " legacy downstream damage");
+			assertEquals(13, result.getHitsAfter(), path + " Hits after");
+			assertEquals(0, result.getOverkillDamage(), path + " overkill");
+			assertFalse(result.isTargetTerminal(), path + " terminal state");
+		}
+	}
+
+	private static void primaryProjectileSharedHitsMitigation(
+			final CurrentCombatHarness harness) throws Exception {
+		final RecordingDamageObserver observer = damageObserver(harness);
+		observer.reset();
+		for (int attackType = 1; attackType <= 2; attackType++) {
+			final Npc attacker = harness.npc(3, 600 + attackType * 3, 540);
+			final Player target = harness.player(
+				"pj ten" + attackType, 601 + attackType * 3, 540);
+			for (int itemId : new int[] {
+				ItemId.GOBLIN_HIDE_COIF.id(),
+				ItemId.GOBLIN_HIDE_GLOVES.id(),
+				ItemId.GOBLIN_HIDE_BOOTS.id(),
+				ItemId.GOBLIN_HIDE_CHAPS.id(),
+				ItemId.GOBLIN_HIDE_CUIRASS.id()}) {
+				harness.equip(target, itemId, 1);
+			}
+			target.getSkills().setTemporaryLevelAndMaxStat(
+				Skill.HITS.id(), 5, 40, false);
+			forceNextLegacyRandomBelow(0.05D);
+			final ProjectileEvent event = projectileEvent(
+				harness, attacker, target, 7, attackType, -1,
+				attackType == 1 ? Projectile.FIREBALL : Projectile.ROCK_THROW,
+				0);
+			invokePrimaryProjectile(event);
+			final String path = attackType == 1
+				? "magic projectile" : "ranged projectile";
+			assertEquals(1, target.getLevel(Skill.HITS.id()),
+				path + " Goblin Tenacity Hits settlement");
+			assertEquals(7,
+				target.getUpdateFlags().getDamage().get().getDamage(),
+				path + " displayed pre-Tenacity damage");
+			assertEquals(1, target.getUpdateFlags().getHitSplats().size(),
+				path + " Tenacity hitsplat cardinality");
+			assertEquals(7,
+				target.getUpdateFlags().getHitSplats().get(0).getAmount(),
+				path + " pre-Tenacity hitsplat amount");
+			final DamageResult result = observer.results.get(
+				observer.results.size() - 1);
+			assertEquals(4, result.getActualDamage(),
+				path + " factual post-Tenacity HP damage");
+			assertEquals(5, result.getLegacyDamageDealt(),
+				path + " historical post-hit hook damage");
+			assertFalse(result.isTargetTerminal(),
+				path + " Tenacity prevents terminal settlement");
+		}
+		assertEquals(2, observer.results.size(),
+			"one shared-Hits result per primary projectile style");
+	}
+
+	private static void nonPrimaryProjectileExclusion(
+			final CurrentCombatHarness harness) throws Exception {
+		final RecordingDamageObserver observer = damageObserver(harness);
+		observer.reset();
+		final Player source = harness.player("pj exclude", 612, 540);
+		final Npc compatibilityTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 613, 540);
+		compatibilityTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final ProjectileEvent compatibilityEvent = projectileEvent(
+			harness, source, compatibilityTarget, 7, 3, -1,
+			Projectile.GNOMEBALL, 0);
+		invokePrimaryProjectile(compatibilityEvent);
+		assertEquals(13, compatibilityTarget.getLevel(Skill.HITS.id()),
+			"non-primary compatibility projectile retains legacy Hits mutation");
+		assertEquals(1,
+			compatibilityTarget.getUpdateFlags().getHitSplats().size(),
+			"non-primary compatibility projectile retains one hitsplat");
+
+		final Npc secondaryTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 614, 540);
+		secondaryTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		CurrentCombatHarness.invokePrivate(compatibilityEvent,
+			"inflictChainLightningDamage",
+			new Class<?>[] {Player.class, Mob.class, int.class},
+			source, secondaryTarget, Integer.valueOf(7));
+		assertEquals(13, secondaryTarget.getLevel(Skill.HITS.id()),
+			"secondary projectile damage retains legacy Hits mutation");
+		assertEquals(1, secondaryTarget.getUpdateFlags().getHitSplats().size(),
+			"secondary projectile damage retains one hitsplat");
+		assertEquals(0, observer.results.size(),
+			"non-primary and secondary projectile damage stay outside A05.3");
+	}
+
+	private static List<PrimaryProjectileSettlement>
+			exercisePrimaryProjectileVariants(
+				final CurrentCombatHarness harness, final int baseX,
+				final int packedY) throws Exception {
+		final PrimaryProjectileVariant[] variants = {
+			new PrimaryProjectileVariant("player magic", 0, 1, -1,
+				Projectile.FIREBALL, 0, "getMageDamageInfoBy",
+				"projectile-player-magic-primary", CombatStyle.MAGIC, 0),
+			new PrimaryProjectileVariant("player ranged", 0, 2,
+				ItemId.BRONZE_ARROWS.id(), Projectile.ARROW, 0,
+				"getRangeDamageInfoBy", "projectile-player-ranged-primary",
+				CombatStyle.RANGED, 0),
+			new PrimaryProjectileVariant("player thrown", 0, 2,
+				ItemId.BRONZE_THROWING_KNIFE.id(), Projectile.THROWING_KNIFE,
+				0, "getRangeDamageInfoBy",
+				"projectile-player-thrown-primary", CombatStyle.RANGED, 0),
+			new PrimaryProjectileVariant("NPC magic", 1, 1, -1,
+				Projectile.ENEMY_FIRE_BASIC, 0, null,
+				"projectile-npc-magic-primary", CombatStyle.MAGIC, 0),
+			new PrimaryProjectileVariant("NPC ranged", 1, 2, -1,
+				Projectile.ROCK_THROW, 0, null,
+				"projectile-npc-ranged-primary", CombatStyle.RANGED, 0),
+			new PrimaryProjectileVariant("summon magic", 2, 1, -1,
+				Projectile.HOLY_MAGIC, 0, "getSummonDamageInfoBy",
+				"projectile-summon-magic-primary", CombatStyle.MAGIC, 2),
+			new PrimaryProjectileVariant("summon ranged", 2, 2, -1,
+				Projectile.ROCK_THROW, 0, "getSummonDamageInfoBy",
+				"projectile-summon-ranged-primary", CombatStyle.RANGED, 2),
+			new PrimaryProjectileVariant("Iban compatibility", 0, 4, -1,
+				Projectile.SKULL,
+				com.openrsc.server.model.entity.update.CombatEffect.IBAN_BLAST,
+				"getMageDamageInfoBy", "projectile-iban-primary",
+				CombatStyle.MAGIC, 0),
+			new PrimaryProjectileVariant("cannon compatibility", 0, 5, -1,
+				Projectile.SPIKED_BALL, 0, "getRangeDamageInfoBy",
+				"projectile-cannon-primary", CombatStyle.RANGED, 0)
+		};
+		final List<PrimaryProjectileSettlement> settlements =
+			new ArrayList<PrimaryProjectileSettlement>();
+		for (int index = 0; index < variants.length; index++) {
+			final PrimaryProjectileVariant variant = variants[index];
+			final int x = baseX + index * 3;
+			final Mob source;
+			final Mob target;
+			final Player contributionOwner;
+			if (variant.sourceKind == 0) {
+				contributionOwner = harness.player(
+					"pj" + baseX + "a" + index, x, packedY);
+				source = contributionOwner;
+				target = harness.npc(
+					NpcId.GREATER_DEMON.id(), x + 1, packedY);
+			} else if (variant.sourceKind == 1) {
+				contributionOwner = null;
+				source = harness.npc(3, x, packedY);
+				target = harness.player(
+					"pj" + baseX + "n" + index, x + 1, packedY);
+			} else {
+				contributionOwner = harness.player(
+					"pj" + baseX + "o" + index, x, packedY);
+				final Npc summon = harness.npc(3, x + 1, packedY);
+				summon.setAttribute("myworld_summon_owner",
+					contributionOwner.getUsernameHash());
+				source = summon;
+				target = harness.npc(
+					NpcId.GREATER_DEMON.id(), x + 2, packedY);
+			}
+			target.getSkills().setTemporaryLevelAndMaxStat(
+				Skill.HITS.id(), 20, 20, false);
+			final int magicExperienceBefore = contributionOwner == source
+				? contributionOwner.getSkills().getExperience(Skill.MAGIC.id()) : -1;
+			final int rangedExperienceBefore = contributionOwner == source
+				? contributionOwner.getSkills().getExperience(Skill.RANGED.id()) : -1;
+			final int hitsExperienceBefore = contributionOwner == source
+				? contributionOwner.getSkills().getExperience(Skill.HITS.id()) : -1;
+			final ProjectileEvent event = projectileEvent(
+				harness, source, target, 7, variant.attackType,
+				variant.poisonWeaponId, variant.projectileType,
+				variant.impactEffectType);
+			final Projectile launched = target.getUpdateFlags()
+				.getProjectile().get();
+			assertNotNull(launched, variant.label + " launch visual");
+			assertEquals(variant.projectileType, launched.getType(),
+				variant.label + " projectile type");
+			invokePrimaryProjectile(event);
+			assertEquals(13, target.getLevel(Skill.HITS.id()),
+				variant.label + " target Hits");
+			assertEquals(7,
+				target.getUpdateFlags().getDamage().get().getDamage(),
+				variant.label + " damage update");
+			assertEquals(1, target.getUpdateFlags().getHitSplats().size(),
+				variant.label + " hitsplat cardinality");
+			assertEquals(7,
+				target.getUpdateFlags().getHitSplats().get(0).getAmount(),
+				variant.label + " hitsplat amount");
+			assertEquals(variant.expectedHitSplatType,
+				target.getUpdateFlags().getHitSplats().get(0).getType(),
+				variant.label + " hitsplat type");
+			if (variant.impactEffectType > 0) {
+				assertNotNull(target.getUpdateFlags().getCombatEffect().get(),
+					variant.label + " impact effect");
+				assertEquals(variant.impactEffectType, target.getUpdateFlags()
+					.getCombatEffect().get().getEffectType(),
+					variant.label + " impact effect type");
+			}
+			if (variant.contributionMethod != null) {
+				assertEquals(7, projectileContribution(
+					(Npc) target, contributionOwner,
+					variant.contributionMethod),
+					variant.label + " contribution");
+				assertTrue(((Npc) target).hasDamageFrom(contributionOwner),
+					variant.label + " damage ownership");
+			}
+			if (contributionOwner == source) {
+				assertEquals(magicExperienceBefore, contributionOwner.getSkills()
+					.getExperience(Skill.MAGIC.id()),
+					variant.label + " impact does not duplicate Magic XP");
+				assertEquals(rangedExperienceBefore, contributionOwner.getSkills()
+					.getExperience(Skill.RANGED.id()),
+					variant.label + " impact does not duplicate Ranged XP");
+				assertEquals(hitsExperienceBefore, contributionOwner.getSkills()
+					.getExperience(Skill.HITS.id()),
+					variant.label + " impact does not duplicate Hits XP");
+			}
+			settlements.add(new PrimaryProjectileSettlement(
+				variant, event, source, target));
+		}
+		return settlements;
+	}
+
+	private static ProjectileEvent projectileEvent(
+			final CurrentCombatHarness harness, final Mob source,
+			final Mob target, final int damage, final int attackType,
+			final int poisonWeaponId, final int projectileType,
+			final int impactEffectType) {
+		return new ProjectileEvent(harness.world(), source, target, damage,
+			attackType, true, poisonWeaponId, 0, 0, 0, 0,
+			DuplicationStrategy.ALLOW_MULTIPLE, projectileType,
+			impactEffectType, true);
+	}
+
+	private static void invokePrimaryProjectile(final ProjectileEvent event)
+			throws Exception {
+		CurrentCombatHarness.invokePrivate(event, "projectileDamage",
+			new Class<?>[0]);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static int projectileContribution(final Npc target,
+			final Player owner, final String methodName) throws Exception {
+		final Pair<Integer, Long> contribution = (Pair<Integer, Long>)
+			CurrentCombatHarness.invokePrivate(target, methodName,
+				new Class<?>[] {UUID.class}, owner.getUUID());
+		return contribution.getLeft().intValue();
+	}
+
 	private static void pvmPrimaryMeleeSettlement(
 			final CurrentCombatHarness harness) throws Exception {
 		final PrimaryMeleeSettlement settlement = exercisePrimaryMeleeSettlement(
@@ -2020,6 +2395,54 @@ public final class CurrentCombatCharacterizationTest {
 
 	private interface Scenario {
 		void run(CurrentCombatHarness harness) throws Exception;
+	}
+
+	private static final class PrimaryProjectileVariant {
+		private final String label;
+		private final int sourceKind;
+		private final int attackType;
+		private final int poisonWeaponId;
+		private final int projectileType;
+		private final int impactEffectType;
+		private final String contributionMethod;
+		private final String effectKey;
+		private final CombatStyle style;
+		private final int expectedHitSplatType;
+
+		private PrimaryProjectileVariant(final String label,
+				final int sourceKind, final int attackType,
+				final int poisonWeaponId, final int projectileType,
+				final int impactEffectType, final String contributionMethod,
+				final String effectKey, final CombatStyle style,
+				final int expectedHitSplatType) {
+			this.label = label;
+			this.sourceKind = sourceKind;
+			this.attackType = attackType;
+			this.poisonWeaponId = poisonWeaponId;
+			this.projectileType = projectileType;
+			this.impactEffectType = impactEffectType;
+			this.contributionMethod = contributionMethod;
+			this.effectKey = effectKey;
+			this.style = style;
+			this.expectedHitSplatType = expectedHitSplatType;
+		}
+	}
+
+	private static final class PrimaryProjectileSettlement {
+		private final PrimaryProjectileVariant variant;
+		private final ProjectileEvent event;
+		private final Mob source;
+		private final Mob target;
+
+		private PrimaryProjectileSettlement(
+				final PrimaryProjectileVariant variant,
+				final ProjectileEvent event, final Mob source,
+				final Mob target) {
+			this.variant = variant;
+			this.event = event;
+			this.source = source;
+			this.target = target;
+		}
 	}
 
 	/** Closed fixture tuple for the two pre-transaction direct-melee paths. */
