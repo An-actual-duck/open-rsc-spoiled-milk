@@ -65,6 +65,10 @@ Core rules:
 - Reward costs are vectors. A higher challenge shop may require its native
   currency plus selected lower currencies, but never a currency above the
   reward's shop tier.
+- Each of the six challenge shops contains one permanent inventory-capacity
+  upgrade. Buying all six grows the player's inventory from 30 slots to a
+  7-by-7, 49-slot inventory; the upgrade is purchased rather than granted
+  automatically when the shop unlocks.
 - Higher contacts refuse assignment/shop access until the required rank and the
   host guild's normal access requirements are satisfied.
 - Existing Combat Odyssey state is migrated once without deleting its keys.
@@ -275,6 +279,69 @@ implementation synchronization must replace all six mandatory family sequences,
 rebuild affected family definitions and stable task keys before activation,
 recalculate kill/point totals, and update data/state/migration fixtures. It
 must not change live Combat Odyssey behavior while performing that sync.
+
+### Confirmed: Permanent Inventory-Capacity Shop Upgrades
+
+Every challenge shop contains exactly one one-time inventory-capacity upgrade.
+The upgrade becomes available when that shop is unlocked, but it is not an
+automatic rank reward: the player must purchase it with that shop's approved
+challenge-point cost vector. Exact prices remain part of the later shop-economy
+pass.
+
+The six increments and cumulative capacities are fixed:
+
+| Shop/contact | Native challenge | Slots added | Resulting capacity |
+| --- | --- | ---: | ---: |
+| Rising Sun/Falador | Fledgling | 2 | 32 |
+| Port Sarim | Initiate | 2 | 34 |
+| Brimhaven | Veteran | 3 | 37 |
+| Champions Guild | Elite | 3 | 40 |
+| Heroes Guild | Champion | 4 | 44 |
+| Legends Guild | Hero | 5 | 49 |
+
+The base capacity remains 30 and the final capacity is exactly 49. Upgrades are
+independent permanent entitlements and must be purchased in shop order because
+higher shops are rank-gated. They are not items, cannot be traded, dropped,
+lost on death, refunded, or purchased more than once. A purchase does not need
+a free inventory slot. It atomically validates the shop unlock, confirms that
+the corresponding upgrade is not already owned, deducts the complete typed
+cost vector, records the entitlement, and then refreshes the inventory UI.
+Failure at any stage leaves both points and capacity unchanged.
+
+Persist the six purchases as a stable six-bit entitlement mask owned by
+`MonsterSlayerState`, with bits mapped explicitly by stable shop key rather
+than JSON order or enum ordinal. Derive capacity as `30 +` the sum of the
+owned increments; do not persist a second mutable capacity value. Unknown bits,
+an upgrade whose prerequisite shop is not unlocked, or a non-prefix purchase
+sequence are invalid state and must be diagnosed rather than silently granting
+space.
+
+The client inventory panel must expand to a 7-by-7 grid containing all 49 slot
+positions. The first `current capacity` positions are active in deterministic
+display order. Every remaining position is drawn as a greyed-out locked slot
+so the player can see future capacity but cannot place, receive, select, drag,
+equip from, drop from, or otherwise interact with it. Purchasing an upgrade
+turns the next contiguous group of grey slots into normal inventory slots
+without moving existing items.
+
+The server remains authoritative for capacity. Implementation must replace or
+parameterize every gameplay assumption that inventory capacity is always 30,
+including item grants, stack splitting, bank withdrawal, trading, shops,
+production, ground-item pickup, equipment removal, death/Ante handling,
+teleports or quest rewards that require space, persistence, and admin tools.
+The client/server inventory packets and release clients must accept and render
+up to 49 entries while remaining safe for a normal 30-slot player. A client UI
+change and a server capacity change must ship together; do not activate the
+shop reward while either side still truncates or assumes 30.
+
+Required coverage includes every cumulative capacity above; one-time and
+out-of-order purchase rejection; atomic multi-balance deduction; reconnect and
+save/load persistence; full-inventory purchase; insertion at the new boundary;
+rejection beyond the current boundary; bank/trade/equipment/death flows at 30
+and 49 slots; locked-slot visuals and input rejection; layout at supported
+window/UI scales; and no item loss when a newer client observes an expanded
+inventory. A downgrade to a client or server that cannot represent the saved
+capacity must fail safely rather than truncate items.
 
 ### Unresolved Recruitment And First-Shop Details
 
@@ -737,6 +804,7 @@ Dialogue and kill handlers must not manipulate raw keys.
 | `monster_slayer_active_kills` | Integer | Bounded `0..requiredKills`; absent/zero when no active task. |
 | `monster_slayer_mandatory_<contact>` | Integer | Six keys storing the number of fixed tasks completed for that contact, bounded by that chain's data length. |
 | `monster_slayer_tasks_completed` | Long | Lifetime mandatory plus repeatable completion statistic; no rank authority. |
+| `monster_slayer_inventory_upgrades` | Integer | Stable six-bit entitlement mask for the ordered Fledgling through Hero shop upgrades. Capacity is derived from explicit shop-key bits and the fixed `2/2/3/3/4/5` increment table; no separate capacity cache is stored. |
 | `monster_slayer_migration_version` | Integer | One-time Odyssey migration marker; version `1` for the rules below. |
 | `monster_slayer_legacy_status` | Integer | `0` none, `1` partial, `2` completed-unclaimed, `3` completed-claimed. Preserves future commemorative eligibility. |
 | `monster_slayer_legacy_prestige` | Integer | Nonnegative snapshot of `co_prestige`; historical statistic only. |
@@ -756,6 +824,9 @@ Invariants:
   active-task clearing through one state-owner method on the game thread.
 - Task completion credits only the active definition's contact challenge. It
   cannot credit a caller-selected or higher balance.
+- Inventory capacity is derived from the validated shop-upgrade entitlement
+  mask and is bounded to `30..49`. Purchases are monotonic, one-time, and
+  sequential by unlocked shop; rank alone never grants an upgrade.
 - Multi-cost spending first validates the reward/shop tier, quantity, checked
   component multiplication, and all six available balances against an
   immutable snapshot. It computes the complete post-spend vector before
@@ -901,6 +972,11 @@ the scalar assumptions:
   vector before reporting failure.
 - No balance exchange, automatic conversion, overpayment from a higher balance,
   or fallback to a lower balance is allowed.
+- Each shop also exposes its one permanent inventory-capacity upgrade in a
+  dedicated permanent-unlocks category. It uses the same typed vector-cost
+  validation and exact refund guarantees as an item reward, but its grant is a
+  one-time entitlement mutation rather than an inventory item and therefore
+  does not perform the ordinary free-slot check.
 
 The current production interface cannot represent this faithfully:
 `ProductionSession` carries one scalar point value and each `ProductionRecipe`
