@@ -66,6 +66,7 @@ import com.openrsc.server.runtime.ProductionGameRandom;
 import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.runtime.SystemGameClock;
 import com.openrsc.server.util.rsc.DataConversions;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -77,6 +78,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Executable current-state combat specifications for the authoritative Ant build. */
@@ -165,6 +167,10 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::supportAreaSelection);
 			run(harness, "npc_death_listener_is_exactly_once",
 				CurrentCombatCharacterizationTest::exactlyOnceDeathCallback);
+			run(harness, "pvm_primary_melee_preserves_zero_nonlethal_and_lethal_settlement",
+				CurrentCombatCharacterizationTest::pvmPrimaryMeleeSettlement);
+			run(harness, "reciprocal_primary_melee_preserves_zero_nonlethal_and_lethal_settlement",
+				CurrentCombatCharacterizationTest::reciprocalPrimaryMeleeSettlement);
 			damageObserver.enabled = true;
 			run(harness, "resolved_damage_contracts_are_immutable_and_lifecycle_aware",
 				CurrentCombatCharacterizationTest::resolvedDamageContracts);
@@ -1450,6 +1456,187 @@ public final class CurrentCombatCharacterizationTest {
 			"non-respawning NPC remains queued for terminal unregister");
 	}
 
+	private static void pvmPrimaryMeleeSettlement(
+			final CurrentCombatHarness harness) throws Exception {
+		final PrimaryMeleeSettlement settlement = exercisePrimaryMeleeSettlement(
+			harness, true, 410);
+		assertPrimaryMeleeSettlement(settlement, "PvM primary melee");
+	}
+
+	private static void reciprocalPrimaryMeleeSettlement(
+			final CurrentCombatHarness harness) throws Exception {
+		final PrimaryMeleeSettlement reciprocal = exercisePrimaryMeleeSettlement(
+			harness, false, 430);
+		assertPrimaryMeleeSettlement(reciprocal, "reciprocal primary melee");
+		final PrimaryMeleeSettlement pvm = exercisePrimaryMeleeSettlement(
+			harness, true, 450);
+		assertEquals(pvm.meleeExperience, reciprocal.meleeExperience,
+			"primary melee paths preserve identical melee XP settlement");
+		assertEquals(pvm.hitsExperience, reciprocal.hitsExperience,
+			"primary melee paths preserve identical Hits XP settlement");
+	}
+
+	private static PrimaryMeleeSettlement exercisePrimaryMeleeSettlement(
+			final CurrentCombatHarness harness, final boolean pvm,
+			final int baseX) throws Exception {
+		final Player attacker = harness.player(
+			"melee " + baseX + " a", baseX, 410);
+		harness.equip(attacker, DRAGONSTONE_BANGLE_OF_SIPHONING, 1);
+		attacker.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 40, false);
+
+		final Npc nonlethal = harness.npc(
+			NpcId.GREATER_DEMON.id(), baseX + 1, 410);
+		nonlethal.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		invokePrimaryMelee(pvm, harness, attacker, nonlethal, 7);
+		final int nonlethalContribution = combatContribution(
+			nonlethal, attacker);
+
+		final Npc zero = harness.npc(
+			NpcId.GREATER_DEMON.id(), baseX, 411);
+		zero.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		invokePrimaryMelee(pvm, harness, attacker, zero, 0);
+		final int zeroContribution = combatContribution(zero, attacker);
+
+		final Player lethalAttacker = harness.player(
+			"melee " + baseX + " b", baseX, 413);
+		final Npc lethal = harness.npc(
+			NpcId.GREATER_DEMON.id(), baseX + 1, 413);
+		lethal.setShouldRespawn(false);
+		lethal.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 5, 5, false);
+		final AtomicInteger deathCallbacks = new AtomicInteger();
+		lethal.addDeathListener(new NpcLootEvent(
+			harness.world(), lethal.getLocation(), lethal.getID(),
+			1, ItemId.COINS.id()) {
+			@Override
+			public void onLootNpcDeath(final Player ignoredPlayer,
+					final Npc ignoredNpc) {
+				deathCallbacks.incrementAndGet();
+			}
+		});
+		final int meleeExperienceBefore = lethalAttacker.getSkills()
+			.getExperience(Skill.MELEE.id());
+		final int hitsExperienceBefore = lethalAttacker.getSkills()
+			.getExperience(Skill.HITS.id());
+		invokePrimaryMelee(pvm, harness, lethalAttacker, lethal, 7);
+
+		final PrimaryMeleeSettlement result = new PrimaryMeleeSettlement();
+		result.hitsMade = attacker.getHitsMade();
+		result.nonlethalHits = nonlethal.getLevel(Skill.HITS.id());
+		result.nonlethalDamageUpdate = nonlethal.getUpdateFlags()
+			.getDamage().get().getDamage();
+		result.nonlethalHitSplatCount = nonlethal.getUpdateFlags()
+			.getHitSplats().size();
+		result.nonlethalHitSplatType = nonlethal.getUpdateFlags()
+			.getHitSplats().get(0).getType();
+		result.nonlethalHitSplatAmount = nonlethal.getUpdateFlags()
+			.getHitSplats().get(0).getAmount();
+		result.nonlethalContribution = nonlethalContribution;
+		result.nonlethalDamageOwner = nonlethal.hasDamageFrom(attacker);
+		result.attackerHitsAfterLifesteal = attacker.getLevel(Skill.HITS.id());
+		result.zeroHits = zero.getLevel(Skill.HITS.id());
+		result.zeroDamageUpdate = zero.getUpdateFlags().getDamage().get().getDamage();
+		result.zeroHitSplatCount = zero.getUpdateFlags().getHitSplats().size();
+		result.zeroHitSplatAmount = zero.getUpdateFlags()
+			.getHitSplats().get(0).getAmount();
+		result.zeroContribution = zeroContribution;
+		result.zeroDamageOwner = zero.hasDamageFrom(attacker);
+		result.lethalHits = lethal.getLevel(Skill.HITS.id());
+		result.lethalDamageUpdate = lethal.getUpdateFlags()
+			.getDamage().get().getDamage();
+		result.lethalHitSplatCount = lethal.getUpdateFlags().getHitSplats().size();
+		result.lethalHitSplatAmount = lethal.getUpdateFlags()
+			.getHitSplats().get(0).getAmount();
+		result.lethalContribution = combatContribution(lethal, lethalAttacker);
+		result.deathCallbacks = deathCallbacks.get();
+		result.unregistering = lethal.isUnregistering();
+		result.attackerCombatState = lethalAttacker.getCombatState();
+		result.targetCombatState = lethal.getCombatState();
+		result.killType = lethalAttacker.getKillType();
+		result.meleeExperience = lethalAttacker.getSkills()
+			.getExperience(Skill.MELEE.id()) - meleeExperienceBefore;
+		result.hitsExperience = lethalAttacker.getSkills()
+			.getExperience(Skill.HITS.id()) - hitsExperienceBefore;
+		return result;
+	}
+
+	private static void invokePrimaryMelee(final boolean pvm,
+			final CurrentCombatHarness harness, final Mob hitter,
+			final Mob target, final int damage) throws Exception {
+		final Object event = pvm
+			? new PvmMeleeEvent(harness.world(), hitter, target)
+			: new CombatEvent(harness.world(), hitter, target);
+		CurrentCombatHarness.invokePrivate(event, "inflictDamage",
+			new Class<?>[] {Mob.class, Mob.class, int.class},
+			hitter, target, Integer.valueOf(damage));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static int combatContribution(final Npc target,
+			final Player attacker) throws Exception {
+		final Pair<Integer, Long> contribution = (Pair<Integer, Long>)
+			CurrentCombatHarness.invokePrivate(target, "getCombatDamageInfoBy",
+				new Class<?>[] {UUID.class}, attacker.getUUID());
+		return contribution.getLeft().intValue();
+	}
+
+	private static void assertPrimaryMeleeSettlement(
+			final PrimaryMeleeSettlement actual, final String path) {
+		assertEquals(2, actual.hitsMade,
+			path + " counts zero and nonlethal attack attempts");
+		assertEquals(13, actual.nonlethalHits, path + " nonlethal Hits");
+		assertEquals(7, actual.nonlethalDamageUpdate,
+			path + " nonlethal damage update");
+		assertEquals(1, actual.nonlethalHitSplatCount,
+			path + " nonlethal hitsplat cardinality");
+		assertEquals(0, actual.nonlethalHitSplatType,
+			path + " nonlethal hitsplat type");
+		assertEquals(7, actual.nonlethalHitSplatAmount,
+			path + " nonlethal hitsplat amount");
+		assertEquals(7, actual.nonlethalContribution,
+			path + " nonlethal contribution");
+		assertTrue(actual.nonlethalDamageOwner,
+			path + " nonlethal damage ownership");
+		assertEquals(21, actual.attackerHitsAfterLifesteal,
+			path + " lifesteal follows nonlethal damage");
+		assertEquals(20, actual.zeroHits, path + " zero-hit target Hits");
+		assertEquals(0, actual.zeroDamageUpdate, path + " zero damage update");
+		assertEquals(1, actual.zeroHitSplatCount,
+			path + " zero hitsplat cardinality");
+		assertEquals(0, actual.zeroHitSplatAmount,
+			path + " zero hitsplat amount");
+		assertEquals(0, actual.zeroContribution,
+			path + " zero contribution amount");
+		assertFalse(actual.zeroDamageOwner,
+			path + " zero contribution is not damage ownership");
+		assertEquals(0, actual.lethalHits, path + " lethal target Hits");
+		assertEquals(7, actual.lethalDamageUpdate,
+			path + " lethal displayed overkill damage");
+		assertEquals(1, actual.lethalHitSplatCount,
+			path + " lethal hitsplat cardinality");
+		assertEquals(7, actual.lethalHitSplatAmount,
+			path + " lethal hitsplat amount");
+		assertEquals(5, actual.lethalContribution,
+			path + " contribution caps to actual lethal damage");
+		assertEquals(1, actual.deathCallbacks,
+			path + " death listener cardinality");
+		assertTrue(actual.unregistering,
+			path + " terminal NPC unregister state");
+		assertEquals(com.openrsc.server.model.states.CombatState.WON,
+			actual.attackerCombatState, path + " attacker terminal state");
+		assertEquals(com.openrsc.server.model.states.CombatState.LOST,
+			actual.targetCombatState, path + " target terminal state");
+		assertEquals(com.openrsc.server.model.entity.KillType.COMBAT,
+			actual.killType, path + " kill type");
+		assertEquals(22, actual.meleeExperience,
+			path + " melee XP settlement");
+		assertEquals(22, actual.hitsExperience,
+			path + " Hits XP settlement");
+	}
+
 	private static void resolvedDamageContracts(
 			final CurrentCombatHarness harness) {
 		final Player source = harness.player("damage contract source", 380, 380);
@@ -1727,6 +1914,37 @@ public final class CurrentCombatCharacterizationTest {
 
 	private interface Scenario {
 		void run(CurrentCombatHarness harness) throws Exception;
+	}
+
+	/** Closed fixture tuple for the two pre-transaction direct-melee paths. */
+	private static final class PrimaryMeleeSettlement {
+		private int hitsMade;
+		private int nonlethalHits;
+		private int nonlethalDamageUpdate;
+		private int nonlethalHitSplatCount;
+		private int nonlethalHitSplatType;
+		private int nonlethalHitSplatAmount;
+		private int nonlethalContribution;
+		private boolean nonlethalDamageOwner;
+		private int attackerHitsAfterLifesteal;
+		private int zeroHits;
+		private int zeroDamageUpdate;
+		private int zeroHitSplatCount;
+		private int zeroHitSplatAmount;
+		private int zeroContribution;
+		private boolean zeroDamageOwner;
+		private int lethalHits;
+		private int lethalDamageUpdate;
+		private int lethalHitSplatCount;
+		private int lethalHitSplatAmount;
+		private int lethalContribution;
+		private int deathCallbacks;
+		private boolean unregistering;
+		private com.openrsc.server.model.states.CombatState attackerCombatState;
+		private com.openrsc.server.model.states.CombatState targetCombatState;
+		private com.openrsc.server.model.entity.KillType killType;
+		private int meleeExperience;
+		private int hitsExperience;
 	}
 
 	private static final class RecordingDamageObserver
