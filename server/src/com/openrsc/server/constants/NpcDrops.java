@@ -175,12 +175,12 @@ public class NpcDrops {
 			addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.DRAGON_SQUARE_SHIELD.id(), 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
 		}
 		addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), MyWorldItemId.EXALTED_RUNE_HELMET, 1, HiddenUniqueRarity.VERY_RARE_UNIQUE);
-		addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);
-		addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);
-		addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);
-		addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);
-		addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);
-		addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 2048);
+		addHiddenUniqueDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 64);
+		addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 64);
+		addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);
+		addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);
+		addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);
+		addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);
 	}
 
 	private void addHiddenUniqueDrop(final int npcId, final int itemId, final int amount, final HiddenUniqueRarity rarity) {
