@@ -365,7 +365,8 @@ def validate_runtime_wiring() -> None:
                 f"{label} omits shared post-lifesteal effects")
         require("getPreventedDamage()" in event_source,
                 f"{label} omits Cleric blocked-damage telemetry")
-        require("inflictJewelryEffectDamage(target, hitter" in event_source,
+        require("inflictClericThornsDamage(" in event_source
+                and "target, hitter" in event_source,
                 f"{label} bypasses the attributed terminal reflection path")
         require("if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0)" in event_source
                 and "CorrosiveAura.apply" in event_source,

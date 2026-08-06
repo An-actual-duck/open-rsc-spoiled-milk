@@ -152,7 +152,10 @@ final class CurrentCombatHarness implements AutoCloseable {
 					return Boolean.TRUE;
 				}
 				if ("equals".equals(name)) {
-					return Boolean.valueOf(proxy == arguments[0]);
+					return Boolean.valueOf(arguments != null
+						&& arguments.length == 1
+						&& System.identityHashCode(proxy)
+							== System.identityHashCode(arguments[0]));
 				}
 				if ("hashCode".equals(name)) {
 					return Integer.valueOf(System.identityHashCode(proxy));
