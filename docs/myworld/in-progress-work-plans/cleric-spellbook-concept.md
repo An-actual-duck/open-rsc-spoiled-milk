@@ -163,6 +163,16 @@ skill.
   expression.
 - Secondary sigils are outside the first rollout. Their names, materials,
   imbuing method, production skill requirements, and exact costs remain open.
+- A future post-launch extension introduces a **Fountain of Ichor**. Using an
+  unblessed sigil on the fountain is presented in flavor text as "dipping" the
+  sigil in ichor and produces an **Unholy sigil**. Both unblessed stone and
+  unblessed silver sigils are eligible, preserving those two material tiers in
+  the Unholy family.
+- Unholy sigils are intended as resources for a later hostile branch of the
+  Cleric spellbook. Those spells target enemies and apply debuffs, in contrast
+  to the initial player-support roster. The fountain and Unholy family are not
+  part of the initial Cleric rollout and do not make hostile Cleric casting
+  reachable yet.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -1020,6 +1030,11 @@ on animation availability.
 - The eventual secondary-sigil catalog and how those lesser symbols are
   imbued. No secondary-sigil production path should be invented for the first
   rollout.
+- The Fountain of Ichor's location and access requirements; whether dipping
+  preserves, replaces, or ignores the source sigil's alignment; the exact
+  Unholy item identities; interaction batching, stackability, production-skill
+  requirements, XP, and any additional cost. Only the stone-and-silver input
+  families and their hostile-debuff purpose are confirmed.
 - Neither carving, blessing, nor casting awards Worship XP. Material inputs,
   one-to-one base carving quantity, level requirements, base Crafting/Blessing
   XP, Crafting batch interruption, altar transactionality, and inventory
@@ -1123,6 +1138,17 @@ primary ladder.
   version bump; authentic/legacy stat packet layouts remain unchanged.
 
 ## Decision Log
+
+### 2026-08-06: Deferred Fountain of Ichor and Unholy sigils
+
+Confirmed a future Fountain of Ichor interaction where an unblessed sigil is
+used on the fountain and described as being dipped in ichor. Both stone and
+silver inputs produce corresponding Unholy sigils. These resources are for a
+later enemy-targeting Cleric branch built around debuffs rather than the
+player-support effects in the launch roster. This records direction only: it
+does not add the fountain, items, recipes, hostile casting, or settle alignment,
+cost, progression, batching, PvP, boss-immunity, targeting, or debuff-balance
+rules.
 
 ### 2026-08-03: Spellbook presentation and initial exposure
 
