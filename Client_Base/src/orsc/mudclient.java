@@ -403,26 +403,32 @@ public final class mudclient implements Runnable {
 	private static final int[] ALTAR_OBELISK_OBJECT_IDS = new int[] {
 		303, 300, 304, 301, 1298, 1299, 1300, 1301, 1302, 1303, 1304, 1305, 1306, 1322
 	};
-	private static final int[][] ALTAR_TILES = new int[][] {
-		{306, 593}, {147, 684}, {62, 464}, {50, 633}, {297, 438}, {259, 503}, {104, 3556},
-		{232, 375}, {392, 804}, {409, 534}, {392, 3540}, {247, 102}, {611, 3599}, {283, 694}
+	private static final AltarVisualAnchor[] ALTAR_ANCHORS = new AltarVisualAnchor[] {
+		altarAnchor(306, 593), altarAnchor(147, 684), altarAnchor(62, 464), altarAnchor(50, 633),
+		altarAnchor(297, 438), altarAnchor(259, 503), altarAnchor(104, 3556), altarAnchor(232, 375),
+		altarAnchor(392, 804), altarAnchor(409, 534), altarAnchor(392, 3540), altarAnchor(247, 102),
+		altarAnchor(611, 3599), altarAnchor(283, 694)
 	};
-	private static final int[][][] ALTAR_OBELISK_TILES = new int[][][] {
-		{{304, 596}, {309, 596}, {309, 591}, {304, 591}},
-		{{145, 687}, {150, 687}, {150, 682}, {145, 682}},
-		{{60, 467}, {65, 467}, {65, 462}, {60, 462}},
-		{{48, 636}, {53, 636}, {53, 631}, {48, 631}},
-		{{295, 441}, {300, 441}, {300, 436}, {295, 436}},
-		{{257, 506}, {262, 506}, {262, 501}, {257, 501}},
-		{{102, 3559}, {107, 3559}, {102, 3554}, {107, 3554}},
-		{{230, 378}, {235, 378}, {235, 373}, {230, 373}},
-		{{390, 807}, {395, 807}, {395, 802}, {390, 802}},
-		{{407, 537}, {412, 537}, {412, 532}, {407, 532}},
-		{{390, 3543}, {395, 3543}, {395, 3538}, {390, 3538}},
-		{{245, 105}, {250, 105}, {250, 100}, {245, 100}},
-		{{609, 3602}, {614, 3602}, {614, 3597}, {609, 3597}},
-		{{281, 697}, {286, 697}, {286, 692}, {281, 692}}
+	private static final AltarVisualAnchor[][] ALTAR_OBELISK_ANCHORS = new AltarVisualAnchor[][] {
+		{altarAnchor(304, 596), altarAnchor(309, 596), altarAnchor(309, 591), altarAnchor(304, 591)},
+		{altarAnchor(145, 687), altarAnchor(150, 687), altarAnchor(150, 682), altarAnchor(145, 682)},
+		{altarAnchor(60, 467), altarAnchor(65, 467), altarAnchor(65, 462), altarAnchor(60, 462)},
+		{altarAnchor(48, 636), altarAnchor(53, 636), altarAnchor(53, 631), altarAnchor(48, 631)},
+		{altarAnchor(295, 441), altarAnchor(300, 441), altarAnchor(300, 436), altarAnchor(295, 436)},
+		{altarAnchor(257, 506), altarAnchor(262, 506), altarAnchor(262, 501), altarAnchor(257, 501)},
+		{altarAnchor(102, 3559), altarAnchor(107, 3559), altarAnchor(102, 3554), altarAnchor(107, 3554)},
+		{altarAnchor(230, 378), altarAnchor(235, 378), altarAnchor(235, 373), altarAnchor(230, 373)},
+		{altarAnchor(390, 807), altarAnchor(395, 807), altarAnchor(395, 802), altarAnchor(390, 802)},
+		{altarAnchor(407, 537), altarAnchor(412, 537), altarAnchor(412, 532), altarAnchor(407, 532)},
+		{altarAnchor(390, 3543), altarAnchor(395, 3543), altarAnchor(395, 3538), altarAnchor(390, 3538)},
+		{altarAnchor(245, 105), altarAnchor(250, 105), altarAnchor(250, 100), altarAnchor(245, 100)},
+		{altarAnchor(609, 3602), altarAnchor(614, 3602), altarAnchor(614, 3597), altarAnchor(609, 3597)},
+		{altarAnchor(281, 697), altarAnchor(286, 697), altarAnchor(286, 692), altarAnchor(281, 692)}
 	};
+
+	private static AltarVisualAnchor altarAnchor(int legacyX, int legacyY) {
+		return AltarVisualAnchor.globalFromLegacy(legacyX, legacyY);
+	}
 	static final int spriteLogo = 3150;
 	public static KillAnnouncerQueue killQueue = new KillAnnouncerQueue();
 	public static int skillCount;
@@ -1155,6 +1161,9 @@ public final class mudclient implements Runnable {
 	private long altarVisualOwnerRevision = Long.MIN_VALUE;
 	private int altarVisualOwnerBaseX = Integer.MIN_VALUE;
 	private int altarVisualOwnerBaseZ = Integer.MIN_VALUE;
+	private String altarVisualOwnerWorldSpace = "";
+	private int altarVisualOwnerLevel = Integer.MIN_VALUE;
+	private boolean altarVisualOwnerNativeProjection;
 	private final Sprite[][] combatEffectSprites = new Sprite[COMBAT_EFFECT_COUNT + 1][COMBAT_EFFECT_FRAME_SLOTS];
 	private final int[] combatEffectFrameCounts = new int[COMBAT_EFFECT_COUNT + 1];
 	private final String[] combatEffectNames = new String[] {
@@ -8701,11 +8710,13 @@ public final class mudclient implements Runnable {
 					}
 
 					refreshAltarVisualOwnerPresence();
+					boolean nativeAltarProjection = usesNativeAltarVisualProjection();
 					for (int altarIndex = 0; altarIndex < ALTAR_ELEMENTS.length; altarIndex++) {
 						if (this.worldGlyphSprites[altarIndex] != null
 							&& this.altarGlyphOwnerPresent[altarIndex]) {
-							int glyphTileX = ALTAR_TILES[altarIndex][0] - this.midRegionBaseX;
-							int glyphTileZ = ALTAR_TILES[altarIndex][1] - this.midRegionBaseZ;
+							AltarVisualAnchor glyphAnchor = ALTAR_ANCHORS[altarIndex];
+							int glyphTileX = glyphAnchor.projectedX(nativeAltarProjection) - this.midRegionBaseX;
+							int glyphTileZ = glyphAnchor.projectedY(nativeAltarProjection) - this.midRegionBaseZ;
 							if (canDrawWorldSpriteAtLocalTile(glyphTileX, glyphTileZ)) {
 								int glyphWorldX = this.tileSize * glyphTileX + 128;
 								int glyphWorldZ = this.tileSize * glyphTileZ + 128;
@@ -8716,13 +8727,14 @@ public final class mudclient implements Runnable {
 							}
 						}
 
-						if (this.worldOrbSprites[altarIndex] != null && ALTAR_OBELISK_TILES[altarIndex] != null) {
-							for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[altarIndex].length; orbIndex++) {
+						if (this.worldOrbSprites[altarIndex] != null && ALTAR_OBELISK_ANCHORS[altarIndex] != null) {
+							for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_ANCHORS[altarIndex].length; orbIndex++) {
 								if (!this.altarOrbOwnerPresent[altarIndex][orbIndex]) {
 									continue;
 								}
-								int orbTileX = ALTAR_OBELISK_TILES[altarIndex][orbIndex][0] - this.midRegionBaseX;
-								int orbTileZ = ALTAR_OBELISK_TILES[altarIndex][orbIndex][1] - this.midRegionBaseZ;
+								AltarVisualAnchor orbAnchor = ALTAR_OBELISK_ANCHORS[altarIndex][orbIndex];
+								int orbTileX = orbAnchor.projectedX(nativeAltarProjection) - this.midRegionBaseX;
+								int orbTileZ = orbAnchor.projectedY(nativeAltarProjection) - this.midRegionBaseZ;
 								if (canDrawWorldSpriteAtLocalTile(orbTileX, orbTileZ)) {
 									int orbWorldX = this.tileSize * orbTileX + 64;
 									int orbWorldZ = this.tileSize * orbTileZ + 64;
@@ -24939,9 +24951,15 @@ public final class mudclient implements Runnable {
 
 	private void refreshAltarVisualOwnerPresence() {
 		long gameObjectRevision = this.sceneInstanceStore.getGameObjectRevision();
+		boolean nativeProjection = usesNativeAltarVisualProjection();
+		String activeWorldSpace = this.packetHandler.getLogicalWorldSpace();
+		int activeLevel = this.packetHandler.getLogicalWorldLevel(this.midRegionBaseZ);
 		if (this.altarVisualOwnerRevision == gameObjectRevision
 			&& this.altarVisualOwnerBaseX == this.midRegionBaseX
-			&& this.altarVisualOwnerBaseZ == this.midRegionBaseZ) {
+			&& this.altarVisualOwnerBaseZ == this.midRegionBaseZ
+			&& this.altarVisualOwnerWorldSpace.equals(activeWorldSpace)
+			&& this.altarVisualOwnerLevel == activeLevel
+			&& this.altarVisualOwnerNativeProjection == nativeProjection) {
 			return;
 		}
 
@@ -24957,8 +24975,8 @@ public final class mudclient implements Runnable {
 
 			int altarIndex = indexOfAltarOwner(ALTAR_OBJECT_IDS, objectId);
 			if (altarIndex >= 0
-				&& ALTAR_TILES[altarIndex][0] == worldX
-				&& ALTAR_TILES[altarIndex][1] == worldZ) {
+				&& ALTAR_ANCHORS[altarIndex].matchesOwner(
+					activeWorldSpace, activeLevel, worldX, worldZ, nativeProjection)) {
 				this.altarGlyphOwnerPresent[altarIndex] = true;
 			}
 
@@ -24966,9 +24984,10 @@ public final class mudclient implements Runnable {
 			if (obeliskIndex < 0) {
 				continue;
 			}
-			for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_TILES[obeliskIndex].length; orbIndex++) {
-				int[] orbTile = ALTAR_OBELISK_TILES[obeliskIndex][orbIndex];
-				if (orbTile[0] == worldX && orbTile[1] == worldZ) {
+			for (int orbIndex = 0; orbIndex < ALTAR_OBELISK_ANCHORS[obeliskIndex].length; orbIndex++) {
+				AltarVisualAnchor orbAnchor = ALTAR_OBELISK_ANCHORS[obeliskIndex][orbIndex];
+				if (orbAnchor.matchesOwner(
+					activeWorldSpace, activeLevel, worldX, worldZ, nativeProjection)) {
 					this.altarOrbOwnerPresent[obeliskIndex][orbIndex] = true;
 					break;
 				}
@@ -24978,6 +24997,13 @@ public final class mudclient implements Runnable {
 		this.altarVisualOwnerRevision = gameObjectRevision;
 		this.altarVisualOwnerBaseX = this.midRegionBaseX;
 		this.altarVisualOwnerBaseZ = this.midRegionBaseZ;
+		this.altarVisualOwnerWorldSpace = activeWorldSpace;
+		this.altarVisualOwnerLevel = activeLevel;
+		this.altarVisualOwnerNativeProjection = nativeProjection;
+	}
+
+	private boolean usesNativeAltarVisualProjection() {
+		return this.world != null && this.world.hasNativeLayeredTerrain();
 	}
 
 	private static int indexOfAltarOwner(int[] ownerIds, int objectId) {

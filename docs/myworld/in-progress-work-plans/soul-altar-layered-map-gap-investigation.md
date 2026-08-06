@@ -1,6 +1,6 @@
 # Soul Altar layered-map visual investigation
 
-Status: investigation complete; implementation intentionally pending review
+Status: approved implementation complete; private visual validation pending
 
 Branch: `fix/soul-altar-layered-map-gaps`
 
@@ -165,6 +165,35 @@ both classic and OpenGL modes. Confirm one center glyph, four orb visuals, all
 four obelisk owners, and continuous terrain across Y `767/768`. Repeat Cosmic
 and Death because they share the same latent defect.
 
+## Approved implementation
+
+The approved family-level correction is implemented in
+`AltarVisualAnchor`. Each fixed visual anchor is decoded once from its
+authoritative legacy placement into a typed global-world location containing
+logical X/Y and signed level while retaining its checked legacy packed-Y
+projection.
+
+The client now:
+
+- selects logical coordinates only while native layered terrain is active;
+- retains packed coordinates for the legacy loader;
+- requires world space, signed level, and projected coordinates to match an
+  altar or obelisk owner;
+- includes world space, level, and projection in the scene-revision cache key;
+- uses the same selected projection when positioning glyph and orb sprites.
+
+This corrects Cosmic, Death, and Soul together. Surface altars retain identical
+logical and legacy coordinates. A same-X/Y object on another level cannot own
+an altar visual.
+
+`test-altar-obelisk-symmetry.py` now compares decoded logical coordinates and
+runs a Java harness over both projections. It covers surface compatibility,
+all three underground families, wrong-level and wrong-world-space rejection,
+and native-window placement. `test-soul-altar-layered-seam.py` characterizes
+all 470 reviewed terrain changes, both storage sectors, the Y `767/768` seam,
+the generated raw-sector hashes, and the complete footprint inside one native
+active window.
+
 ## Local verification performed
 
 - Launched a private production-layered server on `127.0.0.1:43615`; startup
@@ -174,12 +203,13 @@ and Death because they share the same latent defect.
   service was changed or restarted.
 - `python3 tests/myworld/test-altar-obelisk-symmetry.py` — PASS.
 - `python3 tests/myworld/test-altar-visual-fallback.py` — PASS.
+- `python3 tests/myworld/test-soul-altar-layered-seam.py` — PASS.
 - `python3 tests/myworld/test-layered-native-package-foundation.py` — 15 PASS.
 - `python3 tests/myworld/test-layered-scene-visibility-rings.py` — PASS.
 - `python3 tests/myworld/test-native-terrain-symmetric-residency.py` — 4 PASS.
 - `python3 tests/myworld/test-native-terrain-atomic-activation.py` — 4 PASS.
 - `python3 tests/myworld/test-landscape-client-server-sync.py` — PASS.
+- `python3 tests/myworld/test-renderer-v2-world-geometry.py` — PASS.
+- `./scripts/build-client.sh` — BUILD SUCCESSFUL.
 
-The current altar symmetry test passing is explicitly not evidence that the
-native visual works; it demonstrates the missing logical-coordinate coverage
-described above.
+Private visual confirmation remains required before handoff.
