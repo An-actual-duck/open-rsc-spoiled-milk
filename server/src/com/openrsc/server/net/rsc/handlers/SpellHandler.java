@@ -1257,6 +1257,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				"You don't have all the reagents and smelting materials you need");
 			return;
 		}
+		Summoning.triggerFoundryDragonSmeltingAnimation(player);
 		ActionSender.sendInventory(player);
 		if (smithingCapeSavedCoal) {
 			player.message(foundryDragonActive

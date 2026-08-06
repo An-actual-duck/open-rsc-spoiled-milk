@@ -61,6 +61,7 @@ public final class Summoning {
 	private static final String SUPPORT_UPKEEP_SURCHARGE_KEY = "myworld_support_upkeep_surcharge";
 	private static final String SUPPORT_UPKEEP_RECOVERY_STARTED_KEY = "myworld_support_upkeep_recovery_started";
 	private static final String SUPPORT_UPKEEP_NEXT_INCREASE_KEY = "myworld_support_upkeep_next_increase";
+	private static final String FOUNDRY_DRAGON_ANIMATION_TICKS_KEY = "myworld_foundry_dragon_animation_ticks";
 	private static final String SOURCE_MANUAL = "manual";
 	private static final String SOURCE_ARMOR = "armor";
 	private static final String KIND_GIANT_SPIDER = "giant_spider";
@@ -99,6 +100,7 @@ public final class Summoning {
 	private static final int SUMMON_CROWDED_ASSIST_RANGE = 2;
 	private static final long SUMMON_ASSIST_ENGAGEMENT_COOLDOWN_MS = 8000L;
 	private static final int SUMMON_ATTACK_DELAY_TICKS = 3;
+	private static final int FOUNDRY_DRAGON_ANIMATION_TICKS = 2;
 	private static final int UTILITY_RAT_NPC_ID = 241;
 	private static final int NO_DURATION_LIMIT = -1;
 	private static final int UNICORN_PRAYER_BONUS = 10;
@@ -580,9 +582,13 @@ public final class Summoning {
 	 * persistent player state.
 	 */
 	public static boolean isFoundryDragonActive(final Player player) {
+		return getActiveFoundryDragon(player) != null;
+	}
+
+	private static Npc getActiveFoundryDragon(final Player player) {
 		if (player == null || player.isRemoved() || !player.loggedIn()
 			|| player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return false;
+			return null;
 		}
 		final Npc summon = player.getAttribute(MANUAL_SUMMON_KEY, null);
 		return summon != null
@@ -590,7 +596,36 @@ public final class Summoning {
 			&& getSummonCurrentHits(summon) > 0
 			&& isOwnedSummon(player, summon)
 			&& SOURCE_MANUAL.equals(summon.getAttribute(SUMMON_SOURCE_KEY, ""))
-			&& KIND_FOUNDRY_DRAGON.equals(summon.getAttribute(SUMMON_KIND_KEY, ""));
+			&& KIND_FOUNDRY_DRAGON.equals(summon.getAttribute(SUMMON_KIND_KEY, ""))
+			? summon : null;
+	}
+
+	/** Starts the visual only after a smelting path has atomically consumed its inputs. */
+	public static boolean triggerFoundryDragonSmeltingAnimation(final Player player) {
+		final Npc summon = getActiveFoundryDragon(player);
+		if (summon == null) {
+			return false;
+		}
+		final int baseDirection = summon.getSprite() & 7;
+		summon.setAttribute(FOUNDRY_DRAGON_ANIMATION_TICKS_KEY, FOUNDRY_DRAGON_ANIMATION_TICKS);
+		summon.setSprite(8 + baseDirection);
+		return true;
+	}
+
+	private static boolean tickFoundryDragonSmeltingAnimation(final Npc summon) {
+		final int ticksRemaining = summon.getAttribute(FOUNDRY_DRAGON_ANIMATION_TICKS_KEY, 0);
+		if (ticksRemaining <= 0) {
+			return false;
+		}
+		if (ticksRemaining > 1) {
+			summon.setAttribute(FOUNDRY_DRAGON_ANIMATION_TICKS_KEY, ticksRemaining - 1);
+			return true;
+		}
+		summon.removeAttribute(FOUNDRY_DRAGON_ANIMATION_TICKS_KEY);
+		if (summon.getSprite() > 7) {
+			summon.setSprite(summon.getSprite() & 7);
+		}
+		return false;
 	}
 
 	public static Npc getGuardDogPrimaryEnemy(final Player player) {
@@ -1327,7 +1362,9 @@ public final class Summoning {
 					return;
 				}
 
-				keepNearOwner(owner, summon);
+				if (!tickFoundryDragonSmeltingAnimation(summon)) {
+					keepNearOwner(owner, summon);
+				}
 				if (profile.role == SummonRole.SUPPORT) {
 					updateSupportUpkeepEscalation(owner);
 				}

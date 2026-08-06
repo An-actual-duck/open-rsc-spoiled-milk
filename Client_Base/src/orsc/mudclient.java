@@ -10427,18 +10427,8 @@ public final class mudclient implements Runnable {
 
 	public final void drawNPCDef(NPCDef def, int x, int y, int width1, int height, int animDir) {
 		int var11 = animDir & 7;
-		boolean mirror = false;
-		int directionGroup = var11;
-		if (var11 == 5) {
-			mirror = true;
-			directionGroup = 3;
-		} else if (var11 == 6) {
-			mirror = true;
-			directionGroup = 2;
-		} else if (var11 == 7) {
-			mirror = true;
-			directionGroup = 1;
-		}
+		boolean mirror = NpcDirectionalAnimationMapping.mirrors(var11);
+		int directionGroup = NpcDirectionalAnimationMapping.sourceDirection(var11);
 		int variant = directionGroup * 3;
 		for (int var15 = 0; var15 < 12; ++var15) {
 			int var16 = this.getAnimDirLayer_To_CharLayer()[var11][var15];
@@ -10686,22 +10676,8 @@ public final class mudclient implements Runnable {
 			NPCDef def = EntityHandler.getNpcDef(npc.npcId);
 			int npcColourTransform = getNpcSpriteColourTransform(npc);
 			int var11 = 7 & npc.direction.rsDir + (this.cameraRotation + 16) / 32;
-			boolean var12 = false;
-			int var13 = var11;
-			if (var11 != 5) {
-				if (var11 != 6) {
-					if (var11 == 7) {
-						var12 = true;
-						var13 = 1;
-					}
-				} else {
-					var12 = true;
-					var13 = 2;
-				}
-			} else {
-				var12 = true;
-				var13 = 3;
-			}
+			boolean var12 = NpcDirectionalAnimationMapping.mirrors(var11);
+			int var13 = NpcDirectionalAnimationMapping.sourceDirection(var11);
 
 			int var14 = this.animFrameToSprite_Walk[npc.stepFrame / def.getWalkModel() % 4] + var13 * 3;
 			if (isCombatDirection(npc.direction)) {
@@ -20998,6 +20974,7 @@ public final class mudclient implements Runnable {
 			}
 		}
 		if (S_WANT_CUSTOM_SPRITES) {
+			loadExternalFoundryDragonNpcSprite();
 			loadExternalEquipmentSprites();
 		}
 	}
@@ -21016,6 +20993,11 @@ public final class mudclient implements Runnable {
 				EntityHandler.getAnimationDef(animationIndex).number = EntityHandler.getAnimationDef(nextAnimationIndex)
 					.getNumber();
 				continue label0;
+			}
+			if ("foundrydragon".equalsIgnoreCase(s)) {
+				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
+				animationNumber += 27;
+				continue;
 			}
 
 			loadSprite(animationNumber, "entity", 15);
@@ -21905,6 +21887,39 @@ public final class mudclient implements Runnable {
 			"dev/myworld/assets/sprites/equipment",
 			"output/equipment"
 		}, equipmentName, "numbered");
+	}
+
+	private File getExternalFoundryDragonSpriteSheet() {
+		return this.externalAssetLoader.findFirstFile(new String[] {
+			"dev/myworld/assets/sprites/npcs/foundry-dragon"
+		}, "foundry-dragon-sprite-sheet.png");
+	}
+
+	private void loadExternalFoundryDragonNpcSprite() {
+		orsc.graphics.two.SpriteArchive.Entry spriteEntry =
+			this.externalAssetLoader.loadExternalNpcDirectionSheet(
+				getExternalFoundryDragonSpriteSheet(), "foundrydragon",
+				NpcDirectionalAnimationMapping.COMBAT_COLUMN + 1,
+				NpcDirectionalAnimationMapping.FRAMES_PER_DIRECTION);
+		if (spriteEntry == null) {
+			System.out.println("Missing or invalid Foundry Dragon NPC sprite sheet");
+			return;
+		}
+		EntityHandler.activateFoundryDragonExternalVisual();
+		if (S_WANT_CUSTOM_SPRITES) {
+			Map<String, orsc.graphics.two.SpriteArchive.Entry> npcSprites =
+				getSurface().spriteTree.get("npc");
+			if (npcSprites != null) {
+				npcSprites.put("foundrydragon", spriteEntry);
+			}
+			return;
+		}
+		AnimationDef animation = EntityHandler.getAnimationDef(
+			EntityHandler.getFoundryDragonAnimationId());
+		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
+			getSurface().sprites[animation.getNumber() + frame] =
+				spriteEntry.getFrames()[frame].getSprite();
+		}
 	}
 
 	private void loadExternalEquipmentSprites() {
@@ -27617,6 +27632,7 @@ public final class mudclient implements Runnable {
 					if (!this.errorLoadingData) {
 						this.loadEntitiesAuthentic();
 						if (!this.errorLoadingData) {
+							this.loadExternalFoundryDragonNpcSprite();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
 							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),

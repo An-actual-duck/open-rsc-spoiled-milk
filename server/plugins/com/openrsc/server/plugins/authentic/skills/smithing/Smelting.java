@@ -452,6 +452,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				stopbatch();
 				break;
 			}
+			Summoning.triggerFoundryDragonSmeltingAnimation(player);
 			thinkbubble(new Item(recipe.barId));
 
 			if (recipe.barId == ItemId.IRON_BAR.id() && DataConversions.random(0, 1) == 1) {

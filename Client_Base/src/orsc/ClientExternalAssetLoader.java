@@ -2,6 +2,7 @@ package orsc;
 
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.model.Sprite;
+import orsc.graphics.two.SpriteArchive.Entry;
 import orsc.graphics.two.SpriteArchive.Frame;
 
 import javax.imageio.ImageIO;
@@ -316,6 +317,58 @@ final class ClientExternalAssetLoader {
 		} catch (IOException failure) {
 			System.out.println("Failed to load external equipment frame " + sourceFile.getPath()
 				+ ": " + failure.getMessage());
+			return null;
+		}
+	}
+
+	/**
+	 * Loads the native-size NPC sheet contract used by the Foundry Dragon. Each
+	 * column is one camera-relative direction and contains its three animation
+	 * frames from top to bottom. The supplied 1465px sheet has five 244px
+	 * directional columns and a 245px combat column; the final remainder pixel
+	 * belongs to that last column so no artwork is rescaled or cropped.
+	 */
+	Entry loadExternalNpcDirectionSheet(File sourceFile, String spriteName,
+			int directionColumns, int framesPerDirection) {
+		if (spriteName == null || spriteName.length() == 0
+			|| directionColumns <= 0 || framesPerDirection <= 0) {
+			return null;
+		}
+		try {
+			BufferedImage source = readAssetImage(sourceFile);
+			if (source == null) {
+				return null;
+			}
+			int frameWidth = source.getWidth() / directionColumns;
+			int frameHeight = source.getHeight() / framesPerDirection;
+			int trailingWidth = source.getWidth() - frameWidth * directionColumns;
+			if (frameWidth <= 0 || frameHeight <= 0
+				|| source.getHeight() != frameHeight * framesPerDirection
+				|| trailingWidth < 0 || trailingWidth > 1) {
+				return null;
+			}
+
+			Entry entry = new Entry(spriteName, Entry.TYPE.NPC, null,
+				directionColumns * framesPerDirection);
+			for (int direction = 0; direction < directionColumns; direction++) {
+				int directionFrameWidth = frameWidth
+					+ (direction == directionColumns - 1 ? trailingWidth : 0);
+				for (int frameIndex = 0; frameIndex < framesPerDirection; frameIndex++) {
+					BufferedImage sourceFrame = source.getSubimage(
+						direction * frameWidth, frameIndex * frameHeight,
+						directionFrameWidth, frameHeight);
+					Frame frame = new Frame(directionFrameWidth, frameHeight, false, 0, 0,
+						directionFrameWidth, frameHeight);
+					sourceFrame.getRGB(0, 0, directionFrameWidth, frameHeight,
+						frame.getPixels(), 0, directionFrameWidth);
+					normalizePixels(frame.getPixels(), 64);
+					entry.getFrames()[direction * framesPerDirection + frameIndex] = frame;
+				}
+			}
+			return entry;
+		} catch (IOException failure) {
+			System.out.println("Failed to load external NPC direction sheet "
+				+ sourceFile.getPath() + ": " + failure.getMessage());
 			return null;
 		}
 	}

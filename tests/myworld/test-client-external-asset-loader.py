@@ -21,6 +21,7 @@ package orsc;
 
 import com.openrsc.client.entityhandling.defs.ItemDef;
 import com.openrsc.client.model.Sprite;
+import orsc.graphics.two.SpriteArchive.Entry;
 import orsc.graphics.two.SpriteArchive.Frame;
 
 import javax.imageio.ImageIO;
@@ -66,6 +67,10 @@ public final class ClientExternalAssetLoaderFixture {
 			pixelsItemsEquipmentAndIcons(root);
 		} else if ("frames".equals(scenario)) {
 			frameOrderAndSlicing(root);
+		} else if ("npc-directions".equals(scenario)) {
+			npcDirectionSheetAndMirroring(root);
+		} else if ("foundry-asset".equals(scenario)) {
+			actualFoundryDragonAsset(root);
 		} else if ("jar".equals(scenario)) {
 			packagedJarInventoryAndReads(root);
 		} else if ("diagnostics".equals(scenario)) {
@@ -289,6 +294,83 @@ public final class ClientExternalAssetLoaderFixture {
 		assertEquals(BLUE, onlyNonzeroColor(automaticStrip[2]), "single-file strip ordering");
 	}
 
+	private static void npcDirectionSheetAndMirroring(Path root) throws Exception {
+		Path working = root.resolve("npc-direction-work");
+		Files.createDirectories(working);
+		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(
+			working, ClientExternalAssetLoaderFixture.class);
+		int frameWidth = 2;
+		int frameHeight = 3;
+		BufferedImage sheet = new BufferedImage(
+			6 * frameWidth + 1, 3 * frameHeight, BufferedImage.TYPE_INT_ARGB);
+		int[] expected = new int[18];
+		for (int direction = 0; direction < 6; direction++) {
+			for (int frame = 0; frame < 3; frame++) {
+				int color = ((direction + 1) << 16) | ((frame + 1) << 8) | 0x55;
+				expected[direction * 3 + frame] = color;
+				fill(sheet, direction * frameWidth, frame * frameHeight,
+					frameWidth, frameHeight, opaque(color));
+			}
+		}
+		Path sheetPath = working.resolve("foundry-dragon.png");
+		writeImage(sheetPath, sheet);
+		Entry entry = loader.loadExternalNpcDirectionSheet(
+			sheetPath.toFile(), "foundrydragon", 6, 3);
+		assertTrue(entry != null, "native NPC direction sheet loads");
+		assertEquals(Entry.TYPE.NPC, entry.getType(), "NPC sprite entry type");
+		assertEquals(18, entry.getFrames().length, "NPC direction frame count");
+		for (int frame = 0; frame < expected.length; frame++) {
+			assertEquals(expected[frame], onlyNonzeroColor(entry.getFrames()[frame].getSprite()),
+				"column-major NPC frame " + frame);
+			int expectedWidth = frame / 3 == 5 ? frameWidth + 1 : frameWidth;
+			assertSpriteMetadata(entry.getFrames()[frame].getSprite(), expectedWidth, frameHeight,
+				"native NPC frame " + frame);
+		}
+
+		int[] expectedSources = new int[] {0, 1, 2, 3, 4, 3, 2, 1};
+		for (int direction = 0; direction < expectedSources.length; direction++) {
+			assertEquals(expectedSources[direction],
+				NpcDirectionalAnimationMapping.sourceDirection(direction),
+				"camera-relative source direction " + direction);
+			assertEquals(direction >= 5,
+				NpcDirectionalAnimationMapping.mirrors(direction),
+				"camera-relative mirror flag " + direction);
+			assertEquals(expectedSources[direction] * 3 + 2,
+				NpcDirectionalAnimationMapping.frameOffset(direction, 2),
+				"camera-relative frame offset " + direction);
+		}
+		assertEquals(15, NpcDirectionalAnimationMapping.combatFrameOffset(0),
+			"combat column begins after five direction columns");
+		assertEquals(17, NpcDirectionalAnimationMapping.combatFrameOffset(2),
+			"combat column contains all three fire-breath frames");
+
+		sheet.setRGB(sheet.getWidth() - 1, 0, opaque(RED));
+		writeImage(sheetPath, sheet);
+		Entry remainderEntry = loader.loadExternalNpcDirectionSheet(
+			sheetPath.toFile(), "foundrydragon", 6, 3);
+		assertTrue(remainderEntry != null, "last-column remainder belongs to combat frames");
+		assertEquals(1, count(remainderEntry.getFrames()[15].getSprite(), RED),
+			"combat frame preserves opaque final-column artwork");
+	}
+
+	private static void actualFoundryDragonAsset(Path root) throws Exception {
+		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(
+			root, ClientExternalAssetLoaderFixture.class);
+		File source = root.resolve(
+			"dev/myworld/assets/sprites/npcs/foundry-dragon/foundry-dragon-sprite-sheet.png")
+			.toFile();
+		Entry entry = loader.loadExternalNpcDirectionSheet(source, "foundrydragon", 6, 3);
+		assertTrue(entry != null, "tracked Foundry Dragon sheet decodes");
+		assertEquals(18, entry.getFrames().length, "tracked Foundry Dragon frame count");
+		for (int frame = 0; frame < entry.getFrames().length; frame++) {
+			int expectedWidth = frame >= 15 ? 245 : 244;
+			assertSpriteMetadata(entry.getFrames()[frame].getSprite(), expectedWidth, 163,
+				"tracked Foundry Dragon native frame " + frame);
+			assertTrue(nonzeroPixels(entry.getFrames()[frame].getSprite()) > 0,
+				"tracked Foundry Dragon frame contains artwork " + frame);
+		}
+	}
+
 	private static void packagedJarInventoryAndReads(Path root) throws Exception {
 		Path jar = root.resolve("assets.jar");
 		createAssetJar(jar);
@@ -433,6 +515,14 @@ public final class ClientExternalAssetLoaderFixture {
 		return count;
 	}
 
+	private static int nonzeroPixels(Sprite sprite) {
+		int count = 0;
+		for (int pixel : sprite.getPixels()) {
+			if (pixel != 0) count++;
+		}
+		return count;
+	}
+
 	private static int onlyNonzeroColor(Sprite sprite) {
 		int color = 0;
 		for (int pixel : sprite.getPixels()) {
@@ -564,6 +654,7 @@ def verify_source_ownership() -> None:
         "readAssetImage(",
         "itemSpriteCache",
         "loadExternalEquipmentFrame(",
+        "loadExternalNpcDirectionSheet(",
         "loadExternalPrayerIconSheet(",
         "loadAnimationDirectoryFrames(",
         "appendExternalAnimationGridSheetFrames(",
@@ -629,7 +720,7 @@ def main() -> None:
             cwd=ROOT,
             check=True,
         )
-        for scenario in ("paths", "pixels", "frames", "jar", "diagnostics"):
+        for scenario in ("paths", "pixels", "frames", "npc-directions", "jar", "diagnostics"):
             scenario_root = temp / scenario
             scenario_root.mkdir()
             subprocess.run(
@@ -645,6 +736,19 @@ def main() -> None:
                 cwd=ROOT,
                 check=True,
             )
+        subprocess.run(
+            [
+                "java",
+                "-Djava.awt.headless=true",
+                "-cp",
+                f"{temp}:{CLIENT_JAR}",
+                "orsc.ClientExternalAssetLoaderFixture",
+                str(ROOT),
+                "foundry-asset",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
 
     print("PASS: external asset discovery, decode, cache, frame, and packaged-JAR parity are stable")
 
