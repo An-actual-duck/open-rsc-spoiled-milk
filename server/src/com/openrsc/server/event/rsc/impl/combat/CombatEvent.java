@@ -17,7 +17,11 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
+import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -487,10 +491,22 @@ public class CombatEvent extends GameTickEvent {
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());
 		final int rawDamage = damage;
-		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		final int damageDealt = Math.min(damage, lastHits);
-		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, Summoning.getSummonDamageHitSplatType(hitter), damage));
+		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
+		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
+		final java.util.UUID encounterId = engagement != null
+			&& engagement.peerOf(hitter) == target
+			? engagement.getEncounterId() : null;
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.ACTOR,
+			"reciprocal-melee-primary", damage)
+			.eventId(getUUID())
+			.encounterId(encounterId)
+			.style(CombatStyle.MELEE)
+			.hitSplatType(hitSplatType)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {
 			Npc n = (Npc) target;

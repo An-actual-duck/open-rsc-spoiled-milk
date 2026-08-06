@@ -572,14 +572,22 @@ routine path rather than exposing a defect.
 
 ### A05 family — damage and death, split by source
 
-A05.1 implementation record: the focused worker branch now provides immutable
+A05.1 completion record: published main at merge commit `63a0bbcc0` provides immutable
 resolved-legacy damage request/result facts, lifecycle-aware participant
 snapshots, an inert production observer, safe observer-failure isolation, a
 complete current damage/death migration inventory, and one observation-only
 PvM melee boundary. It does not add a damage pipeline or move HP, contribution,
-effect, packet, or death authority. The A01–A04 gate grows from 32 to 35
-executable scenarios. Integration remains subject to manager review of the
-exact READY handoff.
+effect, packet, or death authority. The A01–A04 gate grew from 32 to 35
+executable scenarios.
+
+A05.2 implementation record: the focused worker branch adds exact zero,
+nonlethal, lethal/overkill, contribution, lifesteal, XP, terminal-hook,
+directionality, and shared-Hits compatibility fixtures for both primary melee
+classes. Only their adjacent Hits subtraction, damage update, and hitsplat move
+through a server-owned resolved-damage transaction. All formulas, mitigation,
+post-hit effects, packets, death, XP, drops, and plugin authority remain in
+their original event order. The gate grows from 35 to 38 scenarios. Manager
+review of the exact READY handoff remains the integration boundary.
 
 Use several branches rather than one migration commit:
 
