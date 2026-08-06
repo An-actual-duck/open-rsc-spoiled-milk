@@ -77,6 +77,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [cleric-spellbook-implementation-plan.md](in-progress-work-plans/cleric-spellbook-implementation-plan.md):
   ordered implementation slices, compatibility boundaries, verification gates,
   and explicit stop conditions for unresolved Cleric design decisions.
+- [ante-risk-reward-plan.md](in-progress-work-plans/ante-risk-reward-plan.md):
+  confirmed player-authored PvM death risk, combat-scaled rare-reward rates,
+  personal-loot composition, dedicated UI, and staged economy-safe rollout.
 - [dragon-gear-crafting-plan.md](in-progress-work-plans/dragon-gear-crafting-plan.md):
   dragon gear crafting route, lava forge repair, black dragon scales, dragon
   metal drops, and purified rune forge relocation.
