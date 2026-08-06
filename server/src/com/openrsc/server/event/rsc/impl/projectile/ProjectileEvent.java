@@ -45,6 +45,14 @@ public class ProjectileEvent extends SingleTickEvent {
 		"projectile-cleric-thorns";
 	private static final String JEWELRY_RECOIL_EFFECT_KEY =
 		"projectile-jewelry-recoil";
+	private static final String CHAIN_LIGHTNING_EFFECT_KEY =
+		"projectile-chain-lightning";
+	private static final String SPLINTER_EFFECT_KEY =
+		"projectile-splinter";
+	private static final String BLOOD_ROBE_SPLASH_EFFECT_KEY =
+		"projectile-blood-robe-splash";
+	private static final String DEATH_ROBE_OVERKILL_EFFECT_KEY =
+		"projectile-death-robe-overkill";
 	Mob caster, opponent;
 	protected int damage;
 	protected int windAccuracyDebuffPercent;
@@ -282,13 +290,22 @@ public class ProjectileEvent extends SingleTickEvent {
 				chainDamage = opponentPlayer.applyPotionRangedDamageReduction(chainDamage);
 			}
 		}
-		int lastHits = chainTarget.getLevel(Skill.HITS.id());
-		chainTarget.getSkills().subtractLevel(Skill.HITS.id(), chainDamage, false);
-		chainTarget.getUpdateFlags().setDamage(new Damage(chainTarget, chainDamage));
-		chainTarget.getUpdateFlags().addHitSplat(new HitSplat(chainTarget, HitSplat.TYPE_ARMOR_PROC, chainDamage));
+		final CombatStyle chainStyle = type == 1 || type == 4
+			? CombatStyle.MAGIC
+			: (type == 2 || type == 5 ? CombatStyle.RANGED : null);
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			casterPlayer, chainTarget,
+			DamageRequest.SourceCategory.OWNED_EFFECT,
+			CHAIN_LIGHTNING_EFFECT_KEY, chainDamage)
+			.eventId(getUUID())
+			.style(chainStyle)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = chainTarget.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (chainTarget.isNpc()) {
 			Npc npc = (Npc) chainTarget;
-			final int dealtDamage = Math.min(chainDamage, lastHits);
+			final int dealtDamage = damageResult.getLegacyDamageDealt();
 			if (type == 1 || type == 4) {
 				npc.addMageDamage(casterPlayer, dealtDamage);
 			} else if (type == 2 || type == 5) {
@@ -655,11 +672,18 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final int splinterDamage = Math.max(1,
 			(int) Math.ceil(secondaryEffectDamage / 2.0D));
-		final int lastHits = splinterTarget.getLevel(Skill.HITS.id());
-		splinterTarget.getSkills().subtractLevel(Skill.HITS.id(), splinterDamage, false);
-		splinterTarget.getUpdateFlags().setDamage(new Damage(splinterTarget, splinterDamage));
-		splinterTarget.getUpdateFlags().addHitSplat(new HitSplat(splinterTarget, HitSplat.TYPE_ARMOR_PROC, splinterDamage));
-		splinterTarget.addMageDamage(casterPlayer, Math.min(splinterDamage, lastHits));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			casterPlayer, splinterTarget,
+			DamageRequest.SourceCategory.OWNED_EFFECT,
+			SPLINTER_EFFECT_KEY, splinterDamage)
+			.eventId(getUUID())
+			.style(CombatStyle.MAGIC)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = splinterTarget.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		splinterTarget.addMageDamage(
+			casterPlayer, damageResult.getLegacyDamageDealt());
 		if (!splinterTarget.isChasing() && !splinterTarget.inCombat()
 			&& splinterTarget.getCombatState() != CombatState.RUNNING && this.shouldChase) {
 			splinterTarget.setChasing(casterPlayer);
@@ -886,11 +910,16 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void inflictBloodRobeSplashDamage(final Player casterPlayer, final Npc npc, final int splashDamage) {
-		final int lastHits = npc.getLevel(Skill.HITS.id());
-		npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
-		final int damageDealt = Math.min(splashDamage, lastHits);
-		npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
-		npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			casterPlayer, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
+			BLOOD_ROBE_SPLASH_EFFECT_KEY, splashDamage)
+			.eventId(getUUID())
+			.style(CombatStyle.MAGIC)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = npc.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		npc.addMageDamage(casterPlayer, damageDealt);
 		Summoning.recordOwnerCombatSummonDamage(casterPlayer, npc, damageDealt);
 		if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
@@ -915,11 +944,18 @@ public class ProjectileEvent extends SingleTickEvent {
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
 				continue;
 			}
-			final int lastHits = npc.getLevel(Skill.HITS.id());
-			npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
-			final int damageDealt = Math.min(splashDamage, lastHits);
-			npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
-			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			final CombatStyle splashStyle = type == 1 || type == 4
+				? CombatStyle.MAGIC : CombatStyle.RANGED;
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
+				DEATH_ROBE_OVERKILL_EFFECT_KEY, splashDamage)
+				.eventId(getUUID())
+				.style(splashStyle)
+				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+				.build();
+			final DamageResult damageResult = npc.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			final int damageDealt = damageResult.getLegacyDamageDealt();
 			if (type == 1 || type == 4) {
 				npc.addMageDamage(player, damageDealt);
 			} else {

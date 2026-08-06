@@ -33,7 +33,6 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
-import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.CombatState;
@@ -61,6 +60,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 		"pvm-melee-cleric-thorns";
 	private static final String JEWELRY_RECOIL_EFFECT_KEY =
 		"pvm-melee-jewelry-recoil";
+	private static final String CHAIN_LIGHTNING_EFFECT_KEY =
+		"pvm-melee-chain-lightning";
+	private static final String DEATH_ROBE_OVERKILL_EFFECT_KEY =
+		"pvm-melee-death-robe-overkill";
+	private static final String SCYTHE_CLEAVE_EFFECT_KEY =
+		"pvm-melee-scythe-cleave";
 	private static final double KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE = 0.10D;
 	private static final int FIRE_CLAW_FIRE_DEFENSE_DEBUFF_PERCENT = 6;
 	private static final int[] SCYTHE_IDS = {
@@ -415,11 +420,16 @@ public class PvmMeleeEvent extends GameTickEvent {
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
 				continue;
 			}
-			final int lastHits = npc.getLevel(Skill.HITS.id());
-			npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
-			final int damageDealt = Math.min(splashDamage, lastHits);
-			npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
-			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
+				DEATH_ROBE_OVERKILL_EFFECT_KEY, splashDamage)
+				.eventId(getUUID())
+				.style(CombatStyle.MELEE)
+				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+				.build();
+			final DamageResult damageResult = npc.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			final int damageDealt = damageResult.getLegacyDamageDealt();
 			npc.addCombatDamage(player, damageDealt);
 			Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
@@ -721,18 +731,16 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		if (damage <= 0 || npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (damage == 0 && npc.getSkills().getLevel(Skill.HITS.id()) > 0) {
-				npc.getUpdateFlags().setDamage(new Damage(npc, 0));
-				npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_STANDARD, 0));
+				applyScytheCleaveSettlement(player, npc, 0);
 				triggerScytheCleaveAggro(player, npc);
 			}
 			return;
 		}
 		damage = Summoning.applySummonOutgoingDamage(player, damage);
 		final int lastHits = npc.getLevel(Skill.HITS.id());
-		npc.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		final int damageDealt = Math.min(damage, lastHits);
-		npc.getUpdateFlags().setDamage(new Damage(npc, damage));
-		npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_STANDARD, damage));
+		final DamageResult damageResult = applyScytheCleaveSettlement(
+			player, npc, damage);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		npc.addCombatDamage(player, damageDealt);
 		Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
 		DivineGrace.apply(player, damageDealt);
@@ -756,6 +764,19 @@ public class PvmMeleeEvent extends GameTickEvent {
 			npc.setCombatTimer();
 			triggerScytheCleaveAggro(player, npc);
 		}
+	}
+
+	private DamageResult applyScytheCleaveSettlement(final Player player,
+			final Npc npc, final int damage) {
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
+			SCYTHE_CLEAVE_EFFECT_KEY, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
+			.build();
+		return npc.getWorld().getServer().getResolvedDamageTransaction()
+			.apply(damageRequest);
 	}
 
 	private void triggerScytheCleaveAggro(final Player player, final Npc npc) {
@@ -870,7 +891,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				break;
 			}
 			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop)));
-			inflictJewelryEffectDamage(hitter, chainTarget, chainDamage);
+			inflictChainLightningDamage(hitter, chainTarget, chainDamage);
 			anchor = chainTarget;
 			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
 		}
@@ -887,16 +908,22 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 	}
 
-	private void inflictJewelryEffectDamage(final Mob hitter, final Mob target, final int damage) {
+	private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, damage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			CHAIN_LIGHTNING_EFFECT_KEY, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (target.isNpc() && hitter.isPlayer()) {
-			((Npc) target).addCombatDamage((Player) hitter, Math.min(damage, lastHits));
+			((Npc) target).addCombatDamage(
+				(Player) hitter, damageResult.getLegacyDamageDealt());
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());

@@ -25,7 +25,6 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
-import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.CombatState;
@@ -50,6 +49,10 @@ public class CombatEvent extends GameTickEvent {
 		"reciprocal-melee-cleric-thorns";
 	private static final String JEWELRY_RECOIL_EFFECT_KEY =
 		"reciprocal-melee-jewelry-recoil";
+	private static final String CHAIN_LIGHTNING_EFFECT_KEY =
+		"reciprocal-melee-chain-lightning";
+	private static final String DEATH_ROBE_OVERKILL_EFFECT_KEY =
+		"reciprocal-melee-death-robe-overkill";
 	private final Mob attackerMob, defenderMob;
 	private int roundNumber = 0;
 	boolean isPvPCombat = false;
@@ -257,7 +260,7 @@ public class CombatEvent extends GameTickEvent {
 				break;
 			}
 			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop)));
-			inflictJewelryEffectDamage(hitter, chainTarget, chainDamage);
+			inflictChainLightningDamage(hitter, chainTarget, chainDamage);
 			anchor = chainTarget;
 			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
 		}
@@ -274,16 +277,22 @@ public class CombatEvent extends GameTickEvent {
 		}
 	}
 
-	private void inflictJewelryEffectDamage(final Mob hitter, final Mob target, final int damage) {
+	private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, damage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			CHAIN_LIGHTNING_EFFECT_KEY, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (target.isNpc() && hitter.isPlayer()) {
-			((Npc) target).addCombatDamage((Player) hitter, Math.min(damage, lastHits));
+			((Npc) target).addCombatDamage(
+				(Player) hitter, damageResult.getLegacyDamageDealt());
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
@@ -642,11 +651,16 @@ public class CombatEvent extends GameTickEvent {
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
 				continue;
 			}
-			final int lastHits = npc.getLevel(Skill.HITS.id());
-			npc.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
-			final int damageDealt = Math.min(splashDamage, lastHits);
-			npc.getUpdateFlags().setDamage(new Damage(npc, splashDamage));
-			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
+				DEATH_ROBE_OVERKILL_EFFECT_KEY, splashDamage)
+				.eventId(getUUID())
+				.style(CombatStyle.MELEE)
+				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+				.build();
+			final DamageResult damageResult = npc.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			final int damageDealt = damageResult.getLegacyDamageDealt();
 			npc.addCombatDamage(player, damageDealt);
 			Summoning.recordOwnerCombatSummonDamage(player, npc, damageDealt);
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {

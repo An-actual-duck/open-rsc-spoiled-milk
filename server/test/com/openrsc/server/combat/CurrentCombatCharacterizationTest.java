@@ -183,8 +183,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::primaryProjectileDamageTransactions);
 			run(harness, "primary_projectiles_preserve_shared_hits_mitigation",
 				CurrentCombatCharacterizationTest::primaryProjectileSharedHitsMitigation);
-			run(harness, "non_primary_projectile_damage_remains_outside_transaction",
-				CurrentCombatCharacterizationTest::nonPrimaryProjectileExclusion);
+			run(harness, "unknown_projectile_stays_outside_while_child_effect_is_owned",
+				CurrentCombatCharacterizationTest::nonPrimaryProjectileBoundary);
 			run(harness, "compatibility_helper_dot_and_death_order_remain_distinct",
 				CurrentCombatSecondaryDamageCharacterization::compatibilityHelperAndDamageOverTime);
 			run(harness, "projectile_secondary_damage_preserves_style_contribution",
@@ -1679,7 +1679,7 @@ public final class CurrentCombatCharacterizationTest {
 			"one shared-Hits result per primary projectile style");
 	}
 
-	private static void nonPrimaryProjectileExclusion(
+	private static void nonPrimaryProjectileBoundary(
 			final CurrentCombatHarness harness) throws Exception {
 		final RecordingDamageObserver observer = damageObserver(harness);
 		observer.reset();
@@ -1707,11 +1707,14 @@ public final class CurrentCombatCharacterizationTest {
 			new Class<?>[] {Player.class, Mob.class, int.class},
 			source, secondaryTarget, Integer.valueOf(7));
 		assertEquals(13, secondaryTarget.getLevel(Skill.HITS.id()),
-			"secondary projectile damage retains legacy Hits mutation");
+			"secondary projectile damage retains final Hits");
 		assertEquals(1, secondaryTarget.getUpdateFlags().getHitSplats().size(),
 			"secondary projectile damage retains one hitsplat");
-		assertEquals(0, observer.results.size(),
-			"non-primary and secondary projectile damage stay outside A05.3");
+		assertEquals(1, observer.results.size(),
+			"A05.4C observes the child hit but not the unknown compatibility type");
+		assertEquals("projectile-chain-lightning",
+			observer.results.get(0).getRequest().getEffectKey(),
+			"child effect stable identity");
 	}
 
 	private static List<PrimaryProjectileSettlement>

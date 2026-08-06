@@ -37,7 +37,6 @@ import com.openrsc.server.model.entity.UnregisterForcefulness;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
 import com.openrsc.server.model.entity.npc.NpcMagicElement;
-import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.combat.AttackIntent;
 import com.openrsc.server.model.combat.AttackTransactionResult;
@@ -50,6 +49,8 @@ import com.openrsc.server.model.combat.CombatEligibilityRequest;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatEventSlot;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
@@ -135,6 +136,10 @@ public final class Player extends Mob {
 	private static final int BODY_ROBE_POWER_DECAY_TICKS = 10;
 	private static final String DEATH_RING_CHARGE_LAST_DECAY_KEY = "death_ring_charge_last_decay";
 	private static final long DEATH_RING_CHARGE_DECAY_INTERVAL_MS = 60000L;
+	private static final String DEATH_AMULET_BURST_EFFECT_KEY =
+		"player-death-amulet-burst";
+	private static final String DEATH_RING_CHARGE_HIT_EFFECT_KEY =
+		"player-death-ring-charge-hit";
 
 	/**
 	 * The asynchronous logger.
@@ -2355,11 +2360,15 @@ public final class Player extends Mob {
 				continue;
 			}
 			final int damage = minDamage + DataConversions.getRandom().nextInt(maxDamage - minDamage + 1);
-			final int lastHits = npc.getSkills().getLevel(Skill.HITS.id());
-			npc.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-			npc.getUpdateFlags().setDamage(new Damage(npc, damage));
-			npc.getUpdateFlags().addHitSplat(new HitSplat(npc, HitSplat.TYPE_ARMOR_PROC, damage));
-			npc.addCombatDamage(this, Math.min(damage, lastHits));
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				this, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
+				DEATH_AMULET_BURST_EFFECT_KEY, damage)
+				.style(CombatStyle.MELEE)
+				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+				.build();
+			final DamageResult damageResult = npc.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			npc.addCombatDamage(this, damageResult.getLegacyDamageDealt());
 			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				npc.killedBy(this);
 			}
@@ -2394,11 +2403,15 @@ public final class Player extends Mob {
 		if (bonusDamage <= 0) {
 			return false;
 		}
-		final int lastHits = target.getSkills().getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), bonusDamage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, bonusDamage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, bonusDamage));
-		final int damageDealt = Math.min(bonusDamage, lastHits);
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			this, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			DEATH_RING_CHARGE_HIT_EFFECT_KEY, bonusDamage)
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		target.addCombatDamage(this, damageDealt);
 		Summoning.recordOwnerCombatSummonDamage(this, target, damageDealt);
 		return target.getSkills().getLevel(Skill.HITS.id()) <= 0;

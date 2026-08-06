@@ -10,6 +10,8 @@ import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -24,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Executable pre-migration A05.4C policy specifications. */
+/** Executable A05.4C player-child and area-damage parity specifications. */
 final class CurrentCombatChildDamageCharacterization {
 	private static final int DRAGONSTONE_BLOOD_AMULET = 1733;
 	private static final int DRAGONSTONE_CHAOS_AMULET = 1723;
@@ -50,7 +52,7 @@ final class CurrentCombatChildDamageCharacterization {
 			child.setShouldRespawn(false);
 			final DeathObservation death = observeDeath(harness, child, source);
 			final Object event = meleeEvent(path, harness, source, primary);
-			invoke(event, "inflictJewelryEffectDamage",
+			invoke(event, "inflictChainLightningDamage",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
 				source, child, Integer.valueOf(7));
 
@@ -64,6 +66,10 @@ final class CurrentCombatChildDamageCharacterization {
 				path + " chain has no local lifesteal");
 			assertFalse(child.isChasing(), path + " chain has no child aggro");
 			assertDeath(death, 1, true, path + " chain child death order");
+			assertDamageResult(result(harness, path.ordinal()), source, child,
+				path.effectKey, CombatStyle.MELEE, 7, 5, 2, true,
+				HitSplat.TYPE_ARMOR_PROC, true,
+				path + " chain transaction");
 			x += 8;
 		}
 
@@ -79,6 +85,10 @@ final class CurrentCombatChildDamageCharacterization {
 			"projectile Magic chain");
 		assertEquals(7, contribution(magicChild, caster,
 			"getMageDamageInfoBy"), "projectile chain Magic contribution");
+		assertDamageResult(result(harness, 2), caster, magicChild,
+			"projectile-chain-lightning", CombatStyle.MAGIC,
+			7, 7, 0, false, HitSplat.TYPE_ARMOR_PROC, true,
+			"projectile Magic chain transaction");
 
 		final Npc rangePrimary = npcWithHits(harness, 765, 620, 20);
 		final Npc rangeChild = npcWithHits(harness, 766, 620, 5);
@@ -94,6 +104,10 @@ final class CurrentCombatChildDamageCharacterization {
 			"getRangeDamageInfoBy"), "projectile chain capped Ranged contribution");
 		assertDeath(rangeDeath, 1, true,
 			"projectile chain direct child death order");
+		assertDamageResult(result(harness, 3), caster, rangeChild,
+			"projectile-chain-lightning", CombatStyle.RANGED,
+			8, 5, 3, true, HitSplat.TYPE_ARMOR_PROC, true,
+			"projectile Ranged chain transaction");
 
 		final Player mitigated = harness.player("chain mitigation", 770, 620);
 		mitigated.activateMagicResistancePotion(50, 60_000L);
@@ -104,6 +118,10 @@ final class CurrentCombatChildDamageCharacterization {
 			"projectile chain retains style-specific potion mitigation");
 		assertHit(mitigated, 4, HitSplat.TYPE_ARMOR_PROC,
 			"projectile chain mitigated player presentation");
+		assertDamageResult(result(harness, 4), caster, mitigated,
+			"projectile-chain-lightning", CombatStyle.MAGIC,
+			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, true,
+			"projectile mitigated chain transaction");
 
 		final boolean previousLayered = harness.server().getConfig()
 			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
@@ -135,7 +153,8 @@ final class CurrentCombatChildDamageCharacterization {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertNoTransactions(harness, "pre-migration chain lightning");
+		assertEquals(5, results(harness).size(),
+			"chain-lightning transaction cardinality");
 	}
 
 	static void splinterPolicies(final CurrentCombatHarness harness)
@@ -178,6 +197,10 @@ final class CurrentCombatChildDamageCharacterization {
 				"Splinter excludes cross-level NPCs");
 			assertEquals(20, summon.getLevel(Skill.HITS.id()),
 				"Splinter excludes summons");
+			assertDamageResult(result(harness, 0), caster, valid,
+				"projectile-splinter", CombatStyle.MAGIC,
+				5, 5, 0, false, HitSplat.TYPE_ARMOR_PROC, true,
+				"Splinter transaction");
 
 			final Player suppressed = harness.player("splinter guarded", 820, 620);
 			final Npc suppressedPrimary = npcWithHits(harness, 821, 620, 20);
@@ -193,7 +216,8 @@ final class CurrentCombatChildDamageCharacterization {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertNoTransactions(harness, "pre-migration Splinter");
+		assertEquals(1, results(harness).size(),
+			"Splinter transaction cardinality");
 	}
 
 	static void bloodRobeSplashPolicies(final CurrentCombatHarness harness)
@@ -239,6 +263,10 @@ final class CurrentCombatChildDamageCharacterization {
 				"Blood robe splash excludes cross-level NPCs");
 			assertEquals(20, summon.getLevel(Skill.HITS.id()),
 				"Blood robe splash excludes summons");
+			assertDamageResult(result(harness, 0), caster, valid,
+				"projectile-blood-robe-splash", CombatStyle.MAGIC,
+				6, 6, 0, false, HitSplat.TYPE_ARMOR_PROC, true,
+				"Blood robe nonlethal transaction");
 
 			final Npc lethal = npcWithHits(harness, 850, 620, 5);
 			lethal.setShouldRespawn(false);
@@ -251,17 +279,23 @@ final class CurrentCombatChildDamageCharacterization {
 			assertEquals(KillType.MAGIC, caster.getKillType(),
 				"Blood robe child kill type");
 			assertDeath(death, 1, true, "Blood robe child death order");
+			assertDamageResult(result(harness, 1), caster, lethal,
+				"projectile-blood-robe-splash", CombatStyle.MAGIC,
+				7, 5, 2, true, HitSplat.TYPE_ARMOR_PROC, true,
+				"Blood robe lethal transaction");
 		} finally {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertNoTransactions(harness, "pre-migration Blood robe splash");
+		assertEquals(2, results(harness).size(),
+			"Blood robe transaction cardinality");
 	}
 
 	static void deathRobeSplashPolicies(final CurrentCombatHarness harness)
 			throws Exception {
 		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		int x = 880;
+		int resultIndex = 0;
 		for (DeathRobePath path : DeathRobePath.values()) {
 			final Player caster = harness.player(
 				"death robe " + path.ordinal(), x, 620);
@@ -291,6 +325,10 @@ final class CurrentCombatChildDamageCharacterization {
 				path + " Death robe has no local lifesteal");
 			assertEquals(20, distant.getLevel(Skill.HITS.id()),
 				path + " Death robe excludes distant NPCs");
+			assertDamageResult(result(harness, resultIndex++), caster, valid,
+				path.effectKey, path.style, 6, 6, 0, false,
+				HitSplat.TYPE_ARMOR_PROC, true,
+				path + " Death robe nonlethal transaction");
 
 			final Player lethalCaster = harness.player(
 				"death lethal " + path.ordinal(), x, 630);
@@ -308,9 +346,14 @@ final class CurrentCombatChildDamageCharacterization {
 				path + " Death robe child kill type");
 			assertDeath(death, 1, true,
 				path + " Death robe child death order");
+			assertDamageResult(result(harness, resultIndex++),
+				lethalCaster, lethalChild, path.effectKey, path.style,
+				7, 5, 2, true, HitSplat.TYPE_ARMOR_PROC, true,
+				path + " Death robe lethal transaction");
 			x += 18;
 		}
-		assertNoTransactions(harness, "pre-migration Death robe splash");
+		assertEquals(8, results(harness).size(),
+			"Death robe transaction cardinality");
 	}
 
 	static void scytheCleavePolicies(final CurrentCombatHarness harness)
@@ -332,6 +375,10 @@ final class CurrentCombatChildDamageCharacterization {
 			"Scythe zero-hit presentation");
 		assertTrue(zero.getPvmMeleeEvent() != null,
 			"Scythe zero hit still establishes child aggro");
+		assertDamageResult(result(harness, 0), player, zero,
+			"pvm-melee-scythe-cleave", CombatStyle.MELEE,
+			0, 0, 0, false, HitSplat.TYPE_STANDARD, true,
+			"Scythe zero transaction");
 
 		final Npc nonlethal = npcWithHits(harness, 939, 620, 20);
 		invoke(event, "inflictScytheCleaveDamage",
@@ -350,6 +397,10 @@ final class CurrentCombatChildDamageCharacterization {
 			"Scythe establishes last opponent before child aggro");
 		assertTrue(nonlethal.getPvmMeleeEvent() != null,
 			"Scythe positive hit establishes child aggro");
+		assertDamageResult(result(harness, 1), player, nonlethal,
+			"pvm-melee-scythe-cleave", CombatStyle.MELEE,
+			6, 6, 0, false, HitSplat.TYPE_STANDARD, true,
+			"Scythe nonlethal transaction");
 
 		final Npc lethal = npcWithHits(harness, 940, 630, 5);
 		lethal.setShouldRespawn(false);
@@ -366,6 +417,10 @@ final class CurrentCombatChildDamageCharacterization {
 		assertEquals(KillType.COMBAT, player.getKillType(),
 			"Scythe child kill type");
 		assertDeath(death, 1, true, "Scythe child death order");
+		assertDamageResult(result(harness, 2), player, lethal,
+			"pvm-melee-scythe-cleave", CombatStyle.MELEE,
+			7, 5, 2, true, HitSplat.TYPE_STANDARD, true,
+			"Scythe lethal transaction");
 
 		final Npc otherLevel = npcWithHits(harness, 940,
 			LegacyPackedPointAdapter.LEVEL_STRIDE + 620, 20);
@@ -373,7 +428,8 @@ final class CurrentCombatChildDamageCharacterization {
 			new Class<?>[] {Player.class, Npc.class, Npc.class},
 			player, primary, otherLevel)).booleanValue(),
 			"Scythe excludes matching cross-level coordinates");
-		assertNoTransactions(harness, "pre-migration Scythe cleave");
+		assertEquals(3, results(harness).size(),
+			"Scythe transaction cardinality");
 	}
 
 	static void deathAmuletPolicies(final CurrentCombatHarness harness)
@@ -419,6 +475,11 @@ final class CurrentCombatChildDamageCharacterization {
 			assertEquals(0, deathAmuletCharge(player,
 				DRAGONSTONE_DEATH_AMULET),
 				"Death Amulet spends exactly one completed burst charge");
+			assertDamageResult(result(harness, 0), player, valid,
+				"player-death-amulet-burst", CombatStyle.MELEE,
+				burstDamage, burstDamage, 0, false,
+				HitSplat.TYPE_ARMOR_PROC, false,
+				"Death Amulet nonlethal transaction");
 
 			final Player suppressed = harness.player("death amulet guard", 990, 620);
 			harness.equip(suppressed, DRAGONSTONE_DEATH_AMULET, 1);
@@ -446,16 +507,24 @@ final class CurrentCombatChildDamageCharacterization {
 			primeDeathAmulet(lethalPlayer, SAPPHIRE_DEATH_AMULET,
 				lethalKilled);
 			lethalPlayer.applyDeathAmuletBurst(lethalKilled);
+			final int lethalDamage = lethalChild.getUpdateFlags()
+				.getDamage().get().getDamage();
 			assertEquals(1, contribution(lethalChild, lethalPlayer,
 				"getCombatDamageInfoBy"),
 				"Death Amulet lethal contribution is capped to child Hits");
 			assertDeath(death, 1, true,
 				"Death Amulet publishes presentation before child death");
+			assertDamageResult(result(harness, 1), lethalPlayer, lethalChild,
+				"player-death-amulet-burst", CombatStyle.MELEE,
+				lethalDamage, 1, lethalDamage - 1, true,
+				HitSplat.TYPE_ARMOR_PROC, false,
+				"Death Amulet lethal transaction");
 		} finally {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertNoTransactions(harness, "pre-migration Death Amulet");
+		assertEquals(2, results(harness).size(),
+			"Death Amulet transaction cardinality");
 	}
 
 	static void deathRingPolicies(final CurrentCombatHarness harness)
@@ -487,6 +556,10 @@ final class CurrentCombatChildDamageCharacterization {
 			"Death Ring has no local lifesteal");
 		assertEquals(100, EnchantingItemEffects.getDeathRingChargePoints(
 			player, ring), "Death Ring hit does not consume stored charge");
+		assertDamageResult(result(harness, 0), player, distant,
+			"player-death-ring-charge-hit", CombatStyle.MELEE,
+			10, 10, 0, false, HitSplat.TYPE_ARMOR_PROC, false,
+			"Death Ring nonlethal transaction");
 
 		final Npc lethal = npcWithHits(harness, 722, 700, 5);
 		lethal.setShouldRespawn(false);
@@ -502,6 +575,10 @@ final class CurrentCombatChildDamageCharacterization {
 		lethal.killedBy(player);
 		assertDeath(death, 1, true,
 			"Death Ring caller-owned death follows child presentation");
+		assertDamageResult(result(harness, 1), player, lethal,
+			"player-death-ring-charge-hit", CombatStyle.MELEE,
+			10, 5, 5, true, HitSplat.TYPE_ARMOR_PROC, false,
+			"Death Ring lethal transaction");
 
 		final Npc summon = npcWithHits(harness, 724, 700, 20);
 		summon.setAttribute("myworld_summon_owner", player.getUsernameHash());
@@ -509,7 +586,8 @@ final class CurrentCombatChildDamageCharacterization {
 			"Death Ring rejects summon targets before settlement");
 		assertEquals(20, summon.getLevel(Skill.HITS.id()),
 			"Death Ring leaves rejected summons unchanged");
-		assertNoTransactions(harness, "pre-migration Death Ring");
+		assertEquals(2, results(harness).size(),
+			"Death Ring transaction cardinality");
 	}
 
 	private static Object meleeEvent(final MeleeChildPath path,
@@ -637,11 +715,48 @@ final class CurrentCombatChildDamageCharacterization {
 		field.set(target, value);
 	}
 
-	private static void assertNoTransactions(
-			final CurrentCombatHarness harness, final String label) {
-		final List<DamageResult> results = CurrentCombatCharacterizationTest
-			.observedDamageResults(harness);
-		assertEquals(0, results.size(), label + " transaction cardinality");
+	private static List<DamageResult> results(
+			final CurrentCombatHarness harness) {
+		return CurrentCombatCharacterizationTest.observedDamageResults(harness);
+	}
+
+	private static DamageResult result(final CurrentCombatHarness harness,
+			final int index) {
+		final List<DamageResult> results = results(harness);
+		assertTrue(index >= 0 && index < results.size(),
+			"transaction result index " + index + " exists");
+		return results.get(index);
+	}
+
+	private static void assertDamageResult(final DamageResult result,
+			final Mob source, final Mob target, final String effectKey,
+			final CombatStyle style, final int resolvedDamage,
+			final int actualDamage, final int overkillDamage,
+			final boolean terminal, final int hitSplatType,
+			final boolean eventExpected, final String label) {
+		final DamageRequest request = result.getRequest();
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			result.getStatus(), label + " status");
+		assertTrue(request.getSource() == source, label + " source identity");
+		assertTrue(request.getTarget() == target, label + " target identity");
+		assertEquals(DamageRequest.SourceCategory.OWNED_EFFECT,
+			request.getSourceCategory(), label + " category");
+		assertEquals(effectKey, request.getEffectKey(), label + " stable identity");
+		assertEquals(style, request.getStyle(), label + " style");
+		assertEquals(eventExpected, request.getEventId() != null,
+			label + " event identity presence");
+		assertEquals(hitSplatType, request.getHitSplatType(),
+			label + " hitsplat type");
+		assertEquals(resolvedDamage, request.getResolvedDamage(),
+			label + " resolved damage");
+		assertEquals(actualDamage, result.getActualDamage(),
+			label + " factual damage");
+		assertEquals(actualDamage, result.getLegacyDamageDealt(),
+			label + " legacy damage");
+		assertEquals(overkillDamage, result.getOverkillDamage(),
+			label + " overkill");
+		assertEquals(terminal, result.isTargetTerminal(),
+			label + " terminal outcome");
 	}
 
 	private static void assertHit(final Mob target, final int amount,
@@ -707,23 +822,38 @@ final class CurrentCombatChildDamageCharacterization {
 	}
 
 	private enum MeleeChildPath {
-		RECIPROCAL,
-		PVM
+		RECIPROCAL("reciprocal-melee-chain-lightning"),
+		PVM("pvm-melee-chain-lightning");
+
+		private final String effectKey;
+
+		MeleeChildPath(final String effectKey) {
+			this.effectKey = effectKey;
+		}
 	}
 
 	private enum DeathRobePath {
-		RECIPROCAL("getCombatDamageInfoBy", KillType.COMBAT),
-		PVM("getCombatDamageInfoBy", KillType.COMBAT),
-		PROJECTILE_MAGIC("getMageDamageInfoBy", KillType.MAGIC),
-		PROJECTILE_RANGED("getRangeDamageInfoBy", KillType.RANGED);
+		RECIPROCAL("getCombatDamageInfoBy", KillType.COMBAT,
+			CombatStyle.MELEE, "reciprocal-melee-death-robe-overkill"),
+		PVM("getCombatDamageInfoBy", KillType.COMBAT,
+			CombatStyle.MELEE, "pvm-melee-death-robe-overkill"),
+		PROJECTILE_MAGIC("getMageDamageInfoBy", KillType.MAGIC,
+			CombatStyle.MAGIC, "projectile-death-robe-overkill"),
+		PROJECTILE_RANGED("getRangeDamageInfoBy", KillType.RANGED,
+			CombatStyle.RANGED, "projectile-death-robe-overkill");
 
 		private final String contributionMethod;
 		private final KillType killType;
+		private final CombatStyle style;
+		private final String effectKey;
 
 		DeathRobePath(final String contributionMethod,
-				final KillType killType) {
+				final KillType killType, final CombatStyle style,
+				final String effectKey) {
 			this.contributionMethod = contributionMethod;
 			this.killType = killType;
+			this.style = style;
+			this.effectKey = effectKey;
 		}
 	}
 
