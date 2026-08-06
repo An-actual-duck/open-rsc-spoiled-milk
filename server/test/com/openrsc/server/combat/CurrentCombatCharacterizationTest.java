@@ -203,6 +203,20 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatReflectionCharacterization::projectileRecoilPolicies);
 			run(harness, "divine_retribution_preserves_result_and_caller_owned_death",
 				CurrentCombatReflectionCharacterization::divineRetributionPolicies);
+			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
+				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
+			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
+				CurrentCombatChildDamageCharacterization::splinterPolicies);
+			run(harness, "blood_robe_splash_preserves_aoe_magic_child_policy",
+				CurrentCombatChildDamageCharacterization::bloodRobeSplashPolicies);
+			run(harness, "death_robe_splash_preserves_all_event_style_policies",
+				CurrentCombatChildDamageCharacterization::deathRobeSplashPolicies);
+			run(harness, "scythe_cleave_preserves_zero_aggro_lifesteal_and_death_order",
+				CurrentCombatChildDamageCharacterization::scytheCleavePolicies);
+			run(harness, "death_amulet_preserves_charge_aoe_and_child_death_policy",
+				CurrentCombatChildDamageCharacterization::deathAmuletPolicies);
+			run(harness, "death_ring_preserves_charge_credit_and_caller_owned_death",
+				CurrentCombatChildDamageCharacterization::deathRingPolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
 				CurrentCombatSecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
