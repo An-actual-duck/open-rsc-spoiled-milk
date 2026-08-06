@@ -580,14 +580,23 @@ PvM melee boundary. It does not add a damage pipeline or move HP, contribution,
 effect, packet, or death authority. The A01–A04 gate grew from 32 to 35
 executable scenarios.
 
-A05.2 implementation record: the focused worker branch adds exact zero,
+A05.2 completion record: published main at merge commit `a52968027` adds exact zero,
 nonlethal, lethal/overkill, contribution, lifesteal, XP, terminal-hook,
 directionality, and shared-Hits compatibility fixtures for both primary melee
 classes. Only their adjacent Hits subtraction, damage update, and hitsplat move
 through a server-owned resolved-damage transaction. All formulas, mitigation,
 post-hit effects, packets, death, XP, drops, and plugin authority remain in
-their original event order. The gate grows from 35 to 38 scenarios. Manager
-review of the exact READY handoff remains the integration boundary.
+their original event order. The gate grows from 35 to 38 scenarios.
+
+A05.3 implementation record: the focused worker branch adds executable
+settlement and transaction-result parity for player bow/crossbow, thrown,
+player magic, NPC magic/ranged, summon magic/ranged, Iban, and cannon primary
+impacts. Only the adjacent primary Hits subtraction, damage update, and
+hitsplat move through the same resolved-damage transaction. Unknown
+compatibility types and every secondary/reflection/AoE path remain local. The
+gate grows from 38 to 42 scenarios; manager review of the exact READY handoff
+remains the integration boundary. The complete boundary is recorded in
+[`docs/combat/combat-a05-primary-projectile-damage-transaction.md`](../../combat/combat-a05-primary-projectile-damage-transaction.md).
 
 Use several branches rather than one migration commit:
 

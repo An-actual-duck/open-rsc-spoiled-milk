@@ -1,5 +1,9 @@
 # A05.2 Direct Melee Damage Transaction
 
+This is the historical direct-melee authority record. A05.3's bounded primary
+projectile-impact continuation is documented in
+[`combat-a05-primary-projectile-damage-transaction.md`](combat-a05-primary-projectile-damage-transaction.md).
+
 ## Outcome and authority boundary
 
 A05.2 moves only the primary Hits mutation shared in shape by
