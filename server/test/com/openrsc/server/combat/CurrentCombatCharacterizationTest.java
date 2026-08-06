@@ -193,8 +193,16 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatSecondaryDamageCharacterization::auxiliarySettlementAcrossEvents);
 			run(harness, "all_auxiliary_helpers_preserve_magic_and_true_mitigation_asymmetry",
 				CurrentCombatSecondaryDamageCharacterization::auxiliaryMitigationAcrossEvents);
-			run(harness, "frostbite_and_thorns_preserve_distinct_attribution",
-				CurrentCombatSecondaryDamageCharacterization::reflectionAttributionPolicies);
+			run(harness, "frostbite_reflection_preserves_pending_hit_and_magic_attribution",
+				CurrentCombatReflectionCharacterization::frostbitePolicies);
+			run(harness, "cleric_thorns_preserves_post_hit_and_simultaneous_death_order",
+				CurrentCombatReflectionCharacterization::clericThornsPolicies);
+			run(harness, "melee_jewelry_recoil_preserves_combat_attribution_and_death_adapters",
+				CurrentCombatReflectionCharacterization::meleeJewelryRecoilPolicies);
+			run(harness, "projectile_recoil_preserves_ring_of_life_and_ranged_reset",
+				CurrentCombatReflectionCharacterization::projectileRecoilPolicies);
+			run(harness, "divine_retribution_preserves_result_and_caller_owned_death",
+				CurrentCombatReflectionCharacterization::divineRetributionPolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
 				CurrentCombatSecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
