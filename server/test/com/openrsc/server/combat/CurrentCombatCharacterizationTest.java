@@ -189,6 +189,10 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatSecondaryDamageCharacterization::compatibilityHelperAndDamageOverTime);
 			run(harness, "projectile_secondary_damage_preserves_style_contribution",
 				CurrentCombatSecondaryDamageCharacterization::projectileSecondaryContributionPolicies);
+			run(harness, "all_auxiliary_helpers_preserve_nonlethal_and_terminal_settlement",
+				CurrentCombatSecondaryDamageCharacterization::auxiliarySettlementAcrossEvents);
+			run(harness, "all_auxiliary_helpers_preserve_magic_and_true_mitigation_asymmetry",
+				CurrentCombatSecondaryDamageCharacterization::auxiliaryMitigationAcrossEvents);
 			run(harness, "frostbite_and_thorns_preserve_distinct_attribution",
 				CurrentCombatSecondaryDamageCharacterization::reflectionAttributionPolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
@@ -2255,6 +2259,15 @@ public final class CurrentCombatCharacterizationTest {
 			final CurrentCombatHarness harness) {
 		return (RecordingDamageObserver) harness.server()
 			.getCombatDamageObserver();
+	}
+
+	static void resetDamageObserver(final CurrentCombatHarness harness) {
+		damageObserver(harness).reset();
+	}
+
+	static List<DamageResult> observedDamageResults(
+			final CurrentCombatHarness harness) {
+		return new ArrayList<DamageResult>(damageObserver(harness).results);
 	}
 
 	private static void processNpcAttack(final Player player, final Npc npc)

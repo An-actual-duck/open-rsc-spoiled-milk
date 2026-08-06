@@ -1,13 +1,10 @@
 package com.openrsc.server.event.rsc.impl.combat;
 
 import com.openrsc.server.constants.Constants;
-import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.constants.Skills;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
-import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
@@ -25,7 +22,6 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
-import com.openrsc.server.model.entity.npc.NpcBehavior;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
@@ -44,6 +40,10 @@ public class CombatEvent extends GameTickEvent {
 
 	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
 	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
+	private static final String AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY =
+		"reciprocal-melee-auxiliary-magic";
+	private static final String AUXILIARY_TRUE_DAMAGE_EFFECT_KEY =
+		"reciprocal-melee-auxiliary-true";
 	private final Mob attackerMob, defenderMob;
 	private int roundNumber = 0;
 	boolean isPvPCombat = false;
@@ -618,11 +618,16 @@ public class CombatEvent extends GameTickEvent {
 			return 0;
 		}
 
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		final int damageDealt = Math.min(damage, lastHits);
-		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, damage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MAGIC)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		if (target.isNpc() && hitter.isPlayer()) {
 			((Npc) target).addMageDamage((Player) hitter, damageDealt);
 		}
@@ -646,12 +651,18 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, damage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, damage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			AUXILIARY_TRUE_DAMAGE_EFFECT_KEY, damage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (target.isNpc() && hitter.isPlayer()) {
-			((Npc) target).addCombatDamage((Player) hitter, Math.min(damage, lastHits));
+			((Npc) target).addCombatDamage(
+				(Player) hitter, damageResult.getLegacyDamageDealt());
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());

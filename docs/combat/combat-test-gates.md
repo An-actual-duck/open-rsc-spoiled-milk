@@ -159,3 +159,11 @@ Magic/combat contribution, Frostbite/Thorns attribution, hitsplats, death
 callback cardinality, and delayed god/Iban helper/chase behavior. The exhaustive
 inventory and deliberately split follow-up families are recorded in
 [`combat-a05-secondary-damage-characterization.md`](combat-a05-secondary-damage-characterization.md).
+
+A05.4A grows the gate from 46 to 48 scenarios. Its fixtures exercise all six
+event-local auxiliary Magic/true helpers across reciprocal melee, PvM melee,
+and projectile owners. They pin stable transaction identities, mitigation
+asymmetry, nonlethal and lethal/overkill settlement, return values,
+contribution style, callback cardinality, and zero/fully mitigated exclusion.
+Only Hits/update/hitsplat authority moves; the boundary is recorded in
+[`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md).

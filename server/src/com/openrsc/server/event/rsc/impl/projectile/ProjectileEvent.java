@@ -1,11 +1,9 @@
 package com.openrsc.server.event.rsc.impl.projectile;
 
-import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
-import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
@@ -14,7 +12,6 @@ import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
-import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
@@ -38,6 +35,10 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
 	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
+	private static final String AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY =
+		"projectile-auxiliary-magic";
+	private static final String AUXILIARY_TRUE_DAMAGE_EFFECT_KEY =
+		"projectile-auxiliary-true";
 	Mob caster, opponent;
 	protected int damage;
 	protected int windAccuracyDebuffPercent;
@@ -969,11 +970,16 @@ public class ProjectileEvent extends SingleTickEvent {
 			return 0;
 		}
 
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), bonusDamage, false);
-		final int damageDealt = Math.min(bonusDamage, lastHits);
-		target.getUpdateFlags().setDamage(new Damage(target, bonusDamage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, bonusDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY, bonusDamage)
+			.eventId(getUUID())
+			.style(CombatStyle.MAGIC)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		if (target.isNpc() && hitter.isPlayer()) {
 			((Npc) target).addMageDamage((Player) hitter, damageDealt);
 		}
@@ -997,12 +1003,18 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), bonusDamage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, bonusDamage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, bonusDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			AUXILIARY_TRUE_DAMAGE_EFFECT_KEY, bonusDamage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (target.isNpc() && hitter.isPlayer()) {
-			((Npc) target).addCombatDamage((Player) hitter, Math.min(bonusDamage, lastHits));
+			((Npc) target).addCombatDamage(
+				(Player) hitter, damageResult.getLegacyDamageDealt());
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());

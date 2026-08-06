@@ -597,14 +597,22 @@ compatibility types and every secondary/reflection/AoE path remain local. The
 gate grows from 38 to 42 scenarios. The complete boundary is recorded in
 [`docs/combat/combat-a05-primary-projectile-damage-transaction.md`](../../combat/combat-a05-primary-projectile-damage-transaction.md).
 
-A05.4 implementation record: the focused inventory branch changes no
+A05.4 completion record: published main at merge commit `7c8be55b3` changes no
 production damage or death authority. It identifies every remaining direct
 Hits mutation and `Mob.damage` compatibility caller, records mitigation,
 attribution, presentation, contribution, lifesteal, aggro, death, packet, and
 hook-order policy by family, and divides later work into bounded branches. Four
 representative runtime scenarios grow the gate from 42 to 46. The exact
 inventory is recorded in
-[`docs/combat/combat-a05-secondary-damage-characterization.md`](../../combat/combat-a05-secondary-damage-characterization.md);
+[`docs/combat/combat-a05-secondary-damage-characterization.md`](../../combat/combat-a05-secondary-damage-characterization.md).
+
+A05.4A implementation record: the focused worker branch moves only the six
+event-local auxiliary Magic/true Hits/update/hitsplat blocks in `CombatEvent`,
+`PvmMeleeEvent`, and `ProjectileEvent` through the resolved-damage transaction.
+Six event/contribution-specific keys preserve ownership; all mitigation,
+contribution, return, stat-packet, and death adapters remain local and ordered.
+Two scenarios grow the gate from 46 to 48. The exact boundary is recorded in
+[`docs/combat/combat-a05-auxiliary-damage-transaction.md`](../../combat/combat-a05-auxiliary-damage-transaction.md);
 manager review of the exact READY handoff remains the integration boundary.
 
 Use several branches rather than one migration commit:

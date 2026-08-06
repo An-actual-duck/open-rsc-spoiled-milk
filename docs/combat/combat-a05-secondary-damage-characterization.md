@@ -25,6 +25,12 @@ The scan found 32 direct Hits-subtraction sites outside
 debug/admin terminal `setLevel(HITS, 0)` paths. These are inventory facts, not
 a proposal to migrate them together.
 
+Implementation update: A05.4A subsequently moved only the six auxiliary Magic
+and true HP/update/hitsplat blocks through the transaction. Their exact stable
+identities and preserved boundaries are recorded in
+[`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md).
+All other inventory rows remain outside that migration.
+
 ## Reproducible inventory method
 
 Run these from the repository root:
@@ -155,12 +161,13 @@ reflection convenient.
 
 Each item below is a separate follow-up branch with its own stop gate.
 
-1. **A05.4A — duplicated event-local auxiliary hits.** Move only the adjacent
+1. **A05.4A — duplicated event-local auxiliary hits (implemented; pending
+   manager review).** Only the adjacent
    Hits/update/hitsplat blocks in `inflictAuxiliaryMagicDamage` and
    `inflictAuxiliaryTrueDamage` across `CombatEvent`, `PvmMeleeEvent`, and
    `ProjectileEvent`. Use separate effect identities and preserve robe/potion
    asymmetry, contribution style, returned value, and each event's death
-   adapter. This is the recommended first implementation branch.
+   adapter moved. See the bounded implementation record linked above.
 2. **A05.4B — reflection families.** Characterize and migrate Frostbite,
    Cleric Thorns, projectile recoil, melee jewelry recoil, and Divine
    Retribution individually. Preserve source attribution, incoming-hit
