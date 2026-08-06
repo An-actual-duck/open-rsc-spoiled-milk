@@ -185,6 +185,14 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::primaryProjectileSharedHitsMitigation);
 			run(harness, "non_primary_projectile_damage_remains_outside_transaction",
 				CurrentCombatCharacterizationTest::nonPrimaryProjectileExclusion);
+			run(harness, "compatibility_helper_dot_and_death_order_remain_distinct",
+				SecondaryDamageCharacterization::compatibilityHelperAndDamageOverTime);
+			run(harness, "projectile_secondary_damage_preserves_style_contribution",
+				SecondaryDamageCharacterization::projectileSecondaryContributionPolicies);
+			run(harness, "frostbite_and_thorns_preserve_distinct_attribution",
+				SecondaryDamageCharacterization::reflectionAttributionPolicies);
+			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
+				SecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
 				CurrentCombatCharacterizationTest::primaryMeleeSharedHitsMitigation);
 			run(harness, "damage_observer_failure_cannot_change_current_settlement",
