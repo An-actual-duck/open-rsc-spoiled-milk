@@ -154,7 +154,7 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::ordinaryNpcRetreatAndReengagement);
 			run(harness, "npc_poison_clears_on_death_and_respawn",
 				CurrentCombatCharacterizationTest::poisonDeathAndRespawn);
-			run(harness, "all_poisoned_exalted_rune_weapons_apply_tier_twelve_poison",
+			run(harness, "poisoned_exalted_rune_dagger_and_spear_apply_tier_twelve_poison",
 				CurrentCombatCharacterizationTest::poisonedExaltedRuneWeaponPower);
 			run(harness, "cleric_ward_aegis_rally_thorns_order",
 				CurrentCombatCharacterizationTest::clericDirectEffectOrder);
@@ -1224,13 +1224,6 @@ public final class CurrentCombatCharacterizationTest {
 			final CurrentCombatHarness harness) {
 		final int[] poisonedWeapons = {
 			MyWorldItemId.POISONED_EXALTED_RUNE_DAGGER,
-			MyWorldItemId.POISONED_EXALTED_RUNE_SHORT_SWORD,
-			MyWorldItemId.POISONED_EXALTED_RUNE_LONG_SWORD,
-			MyWorldItemId.POISONED_EXALTED_RUNE_SCIMITAR,
-			MyWorldItemId.POISONED_EXALTED_RUNE_2_HANDED_SWORD,
-			MyWorldItemId.POISONED_EXALTED_RUNE_BATTLE_AXE,
-			MyWorldItemId.POISONED_EXALTED_RUNE_SCYTHE,
-			MyWorldItemId.POISONED_EXALTED_RUNE_MACE,
 			MyWorldItemId.POISONED_EXALTED_RUNE_SPEAR
 		};
 		for (int weaponId : poisonedWeapons) {
@@ -1331,17 +1324,11 @@ public final class CurrentCombatCharacterizationTest {
 	private static void scytheCleaveSelection(final CurrentCombatHarness harness)
 			throws Exception {
 		final Player player = harness.player("scythe user", 310, 310);
-		harness.equip(player, MyWorldItemId.POISONED_EXALTED_RUNE_SCYTHE, 1);
 		final Npc primary = harness.npc(3, 311, 310);
 		final Npc adjacent = harness.npc(3, 310, 311);
 		final Npc distant = harness.npc(3, 313, 310);
 		final PvmMeleeEvent event = new PvmMeleeEvent(
 			harness.world(), player, primary);
-		final Method equipped = PvmMeleeEvent.class.getDeclaredMethod(
-			"isScytheEquipped", Player.class);
-		equipped.setAccessible(true);
-		assertTrue(((Boolean) equipped.invoke(event, player)).booleanValue(),
-			"poisoned Exalted Rune Scythe retains sweeping attack recognition");
 		final Method selection = PvmMeleeEvent.class.getDeclaredMethod(
 			"isValidScytheCleaveTarget", Player.class, Npc.class, Npc.class);
 		selection.setAccessible(true);

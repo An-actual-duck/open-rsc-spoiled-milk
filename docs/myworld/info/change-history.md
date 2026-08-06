@@ -23,7 +23,7 @@ This is the consolidated record of major MyWorld changes made so far. Detailed l
 
 ## Core Rules And Skills
 
-- Exalted Rune weapon poison covers all nine combat weapons while preserving each original profile; the poisoned Scythe retains its sweeping attack, and gathering tools remain excluded.
+- Exalted Rune weapon poison covers the eligible Dagger and Spear while preserving each original profile; all other Exalted Rune equipment remains excluded.
 - MyWorld is PvM-only.
 - Old fatigue/sleep behavior is disabled for MyWorld.
 - Combat now uses `Melee`, `Ranged`, and `Magic` as the active combat model instead of exposing the legacy Attack/Strength/Defense model directly to players.

@@ -34,14 +34,7 @@ public final class MyWorldItemId {
 	public static final int DRAGONSTONE_MEDALLION = 3291;
 	public static final int GOLD_BANGLE = 3292;
 	public static final int POISONED_EXALTED_RUNE_DAGGER = 3309;
-	public static final int POISONED_EXALTED_RUNE_SHORT_SWORD = 3310;
-	public static final int POISONED_EXALTED_RUNE_LONG_SWORD = 3311;
-	public static final int POISONED_EXALTED_RUNE_SCIMITAR = 3312;
-	public static final int POISONED_EXALTED_RUNE_2_HANDED_SWORD = 3313;
-	public static final int POISONED_EXALTED_RUNE_BATTLE_AXE = 3314;
-	public static final int POISONED_EXALTED_RUNE_SCYTHE = 3315;
-	public static final int POISONED_EXALTED_RUNE_MACE = 3316;
-	public static final int POISONED_EXALTED_RUNE_SPEAR = 3317;
+	public static final int POISONED_EXALTED_RUNE_SPEAR = 3310;
 
 	private MyWorldItemId() {
 	}

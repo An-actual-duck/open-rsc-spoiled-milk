@@ -5471,22 +5471,8 @@ public class EntityHandler {
 			260000, 8, "items:8", false, true, 322, EXALTED_RUNE_COLOR, true, false, true, 3280));
 		setCustomItemDefinition(3309, new ItemDef("Poisoned Exalted Rune dagger", "Short, radiant, and coated with venom", "",
 			52000, 80, "items:80", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3309));
-		setCustomItemDefinition(3310, new ItemDef("Poisoned Exalted Rune Short Sword", "A razor sharp shining sword coated with venom", "",
-			52000, 1, "items:1", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3310));
-		setCustomItemDefinition(3311, new ItemDef("Poisoned Exalted Rune Long Sword", "A razor sharp shining sword coated with venom", "",
-			104000, 81, "items:81", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3311));
-		setCustomItemDefinition(3312, new ItemDef("Poisoned Exalted Rune Scimitar", "A vicious curved shining sword coated with venom", "",
-			104000, 83, "items:83", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3312));
-		setCustomItemDefinition(3313, new ItemDef("Poisoned Exalted Rune 2-handed Sword", "A very large shining sword coated with venom", "",
-			156000, 82, "items:82", false, true, 8216, EXALTED_RUNE_COLOR, true, false, true, 3313));
-		setCustomItemDefinition(3314, new ItemDef("Poisoned Exalted Rune battle Axe", "A vicious looking shining axe coated with venom", "",
-			156000, 84, "items:84", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3314));
-		setCustomItemDefinition(3315, new ItemDef("Poisoned Exalted Rune Scythe", "A two-handed shining scythe coated with venom for sweeping attacks", "",
-			260000, 434, "items:434", false, true, 8216, EXALTED_RUNE_COLOR, true, false, true, 3315));
-		setCustomItemDefinition(3316, new ItemDef("Poisoned Exalted Rune Mace", "A spiky shining mace coated with venom", "",
-			52000, 0, "items:0", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3316));
-		setCustomItemDefinition(3317, new ItemDef("Poisoned Exalted Rune Spear", "A shining pointed stick coated with venom", "",
-			52000, 283, "items:283", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3317));
+		setCustomItemDefinition(3310, new ItemDef("Poisoned Exalted Rune Spear", "A shining pointed stick coated with venom", "",
+			52000, 283, "items:283", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3310));
 	}
 
 	private static void addBangleJewelryDefinitions() {

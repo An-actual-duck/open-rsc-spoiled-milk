@@ -79,13 +79,6 @@ public final class PoisonPower {
 	private static boolean isPoisonedExaltedRuneWeapon(final int itemId) {
 		switch (itemId) {
 			case MyWorldItemId.POISONED_EXALTED_RUNE_DAGGER:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_SHORT_SWORD:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_LONG_SWORD:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_SCIMITAR:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_2_HANDED_SWORD:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_BATTLE_AXE:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_SCYTHE:
-			case MyWorldItemId.POISONED_EXALTED_RUNE_MACE:
 			case MyWorldItemId.POISONED_EXALTED_RUNE_SPEAR:
 				return true;
 			default:

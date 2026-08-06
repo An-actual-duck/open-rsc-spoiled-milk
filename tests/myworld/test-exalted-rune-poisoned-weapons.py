@@ -15,20 +15,12 @@ MYWORLD_ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/custom/MyWorld
 ITEM_ID = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
 POISONING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvItemPoisoning.java"
 POISON_POWER = ROOT / "server/src/com/openrsc/server/content/PoisonPower.java"
-PVM_MELEE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 CLIENT_ITEMS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 DOCUMENTATION = ROOT / "docs/myworld/info/exalted-rune-poisoned-weapons.md"
 
 WEAPON_PAIRS = {
     3262: (3309, "DAGGER"),
-    3263: (3310, "SHORT_SWORD"),
-    3264: (3311, "LONG_SWORD"),
-    3265: (3312, "SCIMITAR"),
-    3266: (3313, "2_HANDED_SWORD"),
-    3269: (3314, "BATTLE_AXE"),
-    3270: (3315, "SCYTHE"),
-    3271: (3316, "MACE"),
-    3273: (3317, "SPEAR"),
+    3273: (3310, "SPEAR"),
 }
 
 SERVER_PARITY_FIELDS = (
@@ -112,7 +104,6 @@ def main() -> None:
     item_id_source = ITEM_ID.read_text(encoding="utf-8")
     poisoning = POISONING.read_text(encoding="utf-8")
     poison_power = POISON_POWER.read_text(encoding="utf-8")
-    pvm_melee = PVM_MELEE.read_text(encoding="utf-8")
 
     for plain_id, (poisoned_id, constant_suffix) in WEAPON_PAIRS.items():
         plain = items.get(plain_id)
@@ -151,12 +142,17 @@ def main() -> None:
         fail("weapon poison no longer uses the established exact-name conversion")
     if "return 12;" not in poison_power:
         fail("poisoned Exalted Rune weapons do not receive tier-12 poison power")
-    if "MyWorldItemId.POISONED_EXALTED_RUNE_SCYTHE" not in pvm_melee:
-        fail("poisoned Exalted Rune Scythe lost sweeping cleave recognition")
-    if "public static final int maxCustom = 3318;" not in item_id_source:
-        fail("exclusive custom item count does not cover IDs through 3317")
+    if "public static final int maxCustom = 3311;" not in item_id_source:
+        fail("exclusive custom item count does not cover IDs through 3310")
 
     excluded_names = {
+        "Poisoned Exalted Rune Short Sword",
+        "Poisoned Exalted Rune Long Sword",
+        "Poisoned Exalted Rune Scimitar",
+        "Poisoned Exalted Rune 2-handed Sword",
+        "Poisoned Exalted Rune battle Axe",
+        "Poisoned Exalted Rune Scythe",
+        "Poisoned Exalted Rune Mace",
         "Poisoned Exalted Rune Hatchet",
         "Poisoned Exalted Rune Pickaxe",
         "Poisoned Exalted Rune shears",
@@ -164,12 +160,12 @@ def main() -> None:
     actual_names = {str(item.get("name", "")) for item in items.values()}
     unexpected = sorted(excluded_names & actual_names)
     if unexpected:
-        fail(f"gathering tools unexpectedly became poisonable: {unexpected}")
+        fail(f"ineligible Exalted Rune items unexpectedly became poisonable: {unexpected}")
 
     if not DOCUMENTATION.is_file():
         fail("Exalted Rune poison family documentation is missing")
 
-    print("PASS: all nine Exalted Rune combat weapons preserve full parity and tier-12 poison behavior")
+    print("PASS: Exalted Rune Dagger and Spear preserve full parity and tier-12 poison behavior")
 
 
 if __name__ == "__main__":
