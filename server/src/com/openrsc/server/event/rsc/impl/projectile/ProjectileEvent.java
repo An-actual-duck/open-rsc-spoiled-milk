@@ -39,6 +39,12 @@ public class ProjectileEvent extends SingleTickEvent {
 		"projectile-auxiliary-magic";
 	private static final String AUXILIARY_TRUE_DAMAGE_EFFECT_KEY =
 		"projectile-auxiliary-true";
+	private static final String FROSTBITE_REFLECTION_EFFECT_KEY =
+		"projectile-frostbite-reflection";
+	private static final String CLERIC_THORNS_EFFECT_KEY =
+		"projectile-cleric-thorns";
+	private static final String JEWELRY_RECOIL_EFFECT_KEY =
+		"projectile-jewelry-recoil";
 	Mob caster, opponent;
 	protected int damage;
 	protected int windAccuracyDebuffPercent;
@@ -330,9 +336,14 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (!proc || reflectedDamage == 0)
 			return;
 
-		caster.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
-		caster.getUpdateFlags().setDamage(new Damage(caster, reflectedDamage));
-		caster.getUpdateFlags().addHitSplat(new HitSplat(caster, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
+			JEWELRY_RECOIL_EFFECT_KEY, reflectedDamage)
+			.eventId(getUUID())
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		caster.getWorld().getServer().getResolvedDamageTransaction()
+			.apply(damageRequest);
 
 		if (caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (type == 2 || type == 5) {
@@ -609,12 +620,18 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final Mob creditedSource = source != null ? source : target;
-		final int lastHits = target.getLevel(Skill.HITS.id());
-		target.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
-		target.getUpdateFlags().setDamage(new Damage(target, reflectedDamage));
-		target.getUpdateFlags().addHitSplat(new HitSplat(target, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
+			FROSTBITE_REFLECTION_EFFECT_KEY, reflectedDamage)
+			.eventId(getUUID())
+			.style(CombatStyle.MAGIC)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = target.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (target.isNpc() && creditedSource.isPlayer()) {
-			((Npc) target).addMageDamage((Player) creditedSource, Math.min(reflectedDamage, lastHits));
+			((Npc) target).addMageDamage(
+				(Player) creditedSource, damageResult.getLegacyDamageDealt());
 		}
 		if (target.isPlayer()) {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
@@ -1102,14 +1119,18 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (reflectedDamage <= 0 || caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		final int lastHits = caster.getLevel(Skill.HITS.id());
-		caster.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
-		caster.getUpdateFlags().setDamage(new Damage(caster, reflectedDamage));
-		caster.getUpdateFlags().addHitSplat(
-			new HitSplat(caster, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
+			CLERIC_THORNS_EFFECT_KEY, reflectedDamage)
+			.eventId(getUUID())
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = caster.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (caster.isNpc() && opponent.isPlayer()) {
 			((Npc) caster).addCombatDamage(
-				(Player) opponent, Math.min(reflectedDamage, lastHits));
+				(Player) opponent, damageResult.getLegacyDamageDealt());
 		}
 		if (caster.isPlayer()) {
 			ActionSender.sendStat((Player) caster, Skill.HITS.id());

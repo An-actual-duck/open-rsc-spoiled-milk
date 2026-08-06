@@ -23,7 +23,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the four combat fixture
+The test target compiles production server sources and the six combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
@@ -167,3 +167,14 @@ asymmetry, nonlethal and lethal/overkill settlement, return values,
 contribution style, callback cardinality, and zero/fully mitigated exclusion.
 Only Hits/update/hitsplat authority moves; the boundary is recorded in
 [`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md).
+
+A05.4B grows the gate from 48 to 52 scenarios by replacing one combined
+reflection scenario with five policy-specific fixtures. They execute
+Frostbite, Cleric Thorns, melee jewelry recoil, projectile recoil, and Divine
+Retribution across every current event owner. The gate pins incoming-hit and
+post-lifesteal order, attribution and contribution, stable transaction
+metadata, overkill, player stat packets, Ring of Life, ranged reset, recursion
+exclusions, caller-owned death, and simultaneous death. Chain lightning and
+all later secondary families remain outside this migration. The boundary is
+recorded in
+[`combat-a05-reflection-damage-transaction.md`](combat-a05-reflection-damage-transaction.md).

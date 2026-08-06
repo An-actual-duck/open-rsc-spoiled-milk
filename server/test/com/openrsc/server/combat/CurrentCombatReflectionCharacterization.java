@@ -14,17 +14,22 @@ import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.event.custom.NpcLootEvent;
+import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
 import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.HitSplat;
+import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -42,6 +47,7 @@ final class CurrentCombatReflectionCharacterization {
 
 	static void frostbitePolicies(final CurrentCombatHarness harness)
 			throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		int x = 700;
 		for (ReflectionEventPath path : ReflectionEventPath.values()) {
 			final Player source = harness.player(
@@ -68,7 +74,12 @@ final class CurrentCombatReflectionCharacterization {
 			assertEquals(0, contribution(
 				attacker, source, "getCombatDamageInfoBy"),
 				path + " Frostbite excludes combat contribution");
+			assertReflectionResult(latestResult(harness),
+				path.frostbiteEffectKey(), CombatStyle.MAGIC, event,
+				source, attacker, 5, 5, 0, false,
+				path + " Frostbite transaction");
 
+			final int resultsBeforeRepeat = observedResults(harness).size();
 			final int repeatedDamage = ((Integer) invoke(event,
 				"applyFrostbiteReflection",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
@@ -77,6 +88,8 @@ final class CurrentCombatReflectionCharacterization {
 				path + " Frostbite consumes exactly one pending reflection");
 			assertEquals(15, attacker.getLevel(Skill.HITS.id()),
 				path + " consumed Frostbite does not reflect twice");
+			assertEquals(resultsBeforeRepeat, observedResults(harness).size(),
+				path + " consumed Frostbite publishes no second transaction");
 
 			final Player lethalSource = harness.player(
 				"frost kill " + path.ordinal(), x, 623);
@@ -102,12 +115,43 @@ final class CurrentCombatReflectionCharacterization {
 				path + " lethal Frostbite caps contribution");
 			assertEquals(1, deaths.get(),
 				path + " Frostbite death callback cardinality");
+			assertReflectionResult(latestResult(harness),
+				path.frostbiteEffectKey(), CombatStyle.MAGIC, lethalEvent,
+				lethalSource, lethalAttacker, 5, 3, 2, true,
+				path + " lethal Frostbite transaction");
+
+			final Player playerAttacker = harness.player(
+				"frost player " + path.ordinal(), x + 1, 626);
+			final Player playerSource = harness.player(
+				"frost packet " + path.ordinal(), x, 626);
+			final Npc playerDefender = npcWithHits(
+				harness, x + 2, 626, 20);
+			harness.recordOutgoingPackets(playerAttacker);
+			playerAttacker.applyFrostbiteDebuff(playerSource);
+			final Object playerEvent = path.event(
+				harness, playerAttacker, playerDefender, 0);
+			final int statPacketsBeforeReflection = harness.countOutgoingPackets(
+				playerAttacker, OpcodeOut.SEND_STAT);
+			invoke(playerEvent, "applyFrostbiteReflection",
+				new Class<?>[] {Mob.class, Mob.class, int.class},
+				playerAttacker, playerDefender, Integer.valueOf(3));
+			assertEquals(statPacketsBeforeReflection + 1,
+				harness.countOutgoingPackets(
+					playerAttacker, OpcodeOut.SEND_STAT),
+				path + " Frostbite retains one player Hits stat packet");
+			assertReflectionResult(latestResult(harness),
+				path.frostbiteEffectKey(), CombatStyle.MAGIC, playerEvent,
+				playerSource, playerAttacker, 2, 2, 0, false,
+				path + " player Frostbite transaction");
 			x += 5;
 		}
+		assertEquals(9, observedResults(harness).size(),
+			"Frostbite publishes one transaction for each effective reflection");
 	}
 
 	static void clericThornsPolicies(final CurrentCombatHarness harness)
 			throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		int x = 720;
 		for (ReflectionEventPath path : ReflectionEventPath.values()) {
 			final Player supportCaster = harness.player(
@@ -138,6 +182,7 @@ final class CurrentCombatReflectionCharacterization {
 
 			forceNextLegacyIntBelow(75);
 			final Object event = path.event(harness, attacker, defender, 7);
+			final int resultsBeforeHit = observedResults(harness).size();
 			path.invokePrimary(event, attacker, defender, 7);
 			assertEquals(1, attackerDeaths.get(),
 				path + " Thorns attacker death callback cardinality");
@@ -153,12 +198,24 @@ final class CurrentCombatReflectionCharacterization {
 				path + " Thorns excludes Magic contribution");
 			assertTrue(defender.killed,
 				path + " simultaneous primary victim death is retained");
+			final java.util.List<DamageResult> results = observedResults(harness);
+			assertEquals(resultsBeforeHit + 2, results.size(),
+				path + " primary hit and Thorns publish exactly once each");
+			assertTrue(results.get(resultsBeforeHit).getRequest().getTarget()
+				== defender, path + " primary transaction precedes Thorns");
+			assertReflectionResult(results.get(resultsBeforeHit + 1),
+				path.thornsEffectKey(), CombatStyle.MELEE, event,
+				defender, attacker, 1, 1, 0, true,
+				path + " Thorns transaction");
 			x += 4;
 		}
+		assertEquals(6, observedResults(harness).size(),
+			"three primary hits and three Thorns reflections are observed");
 	}
 
 	static void meleeJewelryRecoilPolicies(
 			final CurrentCombatHarness harness) throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		int x = 740;
 		for (MeleeReflectionPath path : MeleeReflectionPath.values()) {
 			final Player defender = harness.player(
@@ -168,7 +225,7 @@ final class CurrentCombatReflectionCharacterization {
 			final AtomicInteger deaths = deathCounter(harness, attacker);
 			final Object event = path.event(harness, attacker, defender);
 
-			invoke(event, "inflictJewelryEffectDamage",
+			invoke(event, "inflictMeleeJewelryRecoilDamage",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
 				defender, attacker, Integer.valueOf(5));
 			assertHit(attacker, 5, HitSplat.TYPE_ARMOR_PROC,
@@ -181,12 +238,42 @@ final class CurrentCombatReflectionCharacterization {
 				path + " melee jewelry excludes Magic contribution");
 			assertEquals(1, deaths.get(),
 				path + " melee jewelry death callback cardinality");
+			assertReflectionResult(latestResult(harness),
+				path.recoilEffectKey(), CombatStyle.MELEE, event,
+				defender, attacker, 5, 3, 2, true,
+				path + " melee jewelry transaction");
+
+			final Npc excludedChainTarget = npcWithHits(
+				harness, x + 2, 620, 20);
+			final int resultsBeforeChain = observedResults(harness).size();
+			invoke(event, "inflictJewelryEffectDamage",
+				new Class<?>[] {Mob.class, Mob.class, int.class},
+				defender, excludedChainTarget, Integer.valueOf(2));
+			assertEquals(resultsBeforeChain, observedResults(harness).size(),
+				path + " chain-lightning helper remains outside A05.4B");
+
+			final Player playerAttacker = harness.player(
+				"recoil player " + path.ordinal(), x + 2, 623);
+			harness.recordOutgoingPackets(playerAttacker);
+			invoke(event, "inflictMeleeJewelryRecoilDamage",
+				new Class<?>[] {Mob.class, Mob.class, int.class},
+				defender, playerAttacker, Integer.valueOf(2));
+			assertEquals(1, harness.countOutgoingPackets(
+				playerAttacker, OpcodeOut.SEND_STAT),
+				path + " melee recoil retains one player Hits stat packet");
+			assertReflectionResult(latestResult(harness),
+				path.recoilEffectKey(), CombatStyle.MELEE, event,
+				defender, playerAttacker, 2, 2, 0, false,
+				path + " player melee recoil transaction");
 			x += 3;
 		}
+		assertEquals(4, observedResults(harness).size(),
+			"only melee jewelry recoil enters A05.4B transactions");
 	}
 
 	static void projectileRecoilPolicies(final CurrentCombatHarness harness)
 			throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		final Player recoilOwner = harness.player("projectile recoil", 750, 620);
 		harness.equip(recoilOwner, DRAGONSTONE_RING_OF_RECOIL, 1);
 		final Player savedCaster = harness.player("recoil saved", 751, 620);
@@ -205,6 +292,28 @@ final class CurrentCombatReflectionCharacterization {
 			"projectile recoil applies before Ring of Life threshold check");
 		assertTrue(savedCaster.getX() != initialX || savedCaster.getY() != initialY,
 			"projectile recoil retains nonlethal Ring of Life escape");
+		assertReflectionResult(latestResult(harness),
+			"projectile-jewelry-recoil", null, savedEvent,
+			recoilOwner, savedCaster, 2, 2, 0, false,
+			"nonlethal projectile recoil transaction");
+
+		final Player plainOwner = harness.player("recoil plain", 752, 620);
+		harness.equip(plainOwner, DRAGONSTONE_RING_OF_RECOIL, 1);
+		final Player plainCaster = harness.player("recoil no packet", 753, 620);
+		harness.recordOutgoingPackets(plainCaster);
+		forceNextLegacyDoubleBelow(0.90D);
+		final ProjectileEvent plainEvent = new ProjectileEvent(
+			harness.world(), plainCaster, plainOwner, 8, 2, false);
+		invoke(plainEvent, "recoilDamage",
+			new Class<?>[] {Player.class, Mob.class, int.class},
+			plainOwner, plainCaster, Integer.valueOf(8));
+		assertEquals(0, harness.countOutgoingPackets(
+			plainCaster, OpcodeOut.SEND_STAT),
+			"projectile recoil retains its absence of a player stat packet");
+		assertReflectionResult(latestResult(harness),
+			"projectile-jewelry-recoil", null, plainEvent,
+			plainOwner, plainCaster, 2, 2, 0, false,
+			"plain projectile recoil transaction");
 
 		final Player rangedOwner = harness.player("recoil range", 754, 620);
 		harness.equip(rangedOwner, DRAGONSTONE_RING_OF_RECOIL, 1);
@@ -234,6 +343,10 @@ final class CurrentCombatReflectionCharacterization {
 		assertEquals(0, contribution(
 			rangedCaster, rangedOwner, "getMageDamageInfoBy"),
 			"projectile recoil records no Magic contribution");
+		assertReflectionResult(latestResult(harness),
+			"projectile-jewelry-recoil", null, rangedEvent,
+			rangedOwner, rangedCaster, 2, 1, 1, true,
+			"ranged projectile recoil transaction");
 
 		final Player magicOwner = harness.player("recoil magic", 758, 620);
 		harness.equip(magicOwner, DRAGONSTONE_RING_OF_RECOIL, 1);
@@ -252,11 +365,18 @@ final class CurrentCombatReflectionCharacterization {
 			magicOwner, magicCaster, Integer.valueOf(8));
 		assertTrue(magicOwner.getRangeEvent() == retainedRange,
 			"lethal Magic projectile recoil does not use the ranged reset branch");
+		assertReflectionResult(latestResult(harness),
+			"projectile-jewelry-recoil", null, magicEvent,
+			magicOwner, magicCaster, 2, 1, 1, true,
+			"Magic projectile recoil transaction");
+		assertEquals(4, observedResults(harness).size(),
+			"projectile recoil publishes one result per effective reflection");
 		magicOwner.resetRange();
 	}
 
 	static void divineRetributionPolicies(
 			final CurrentCombatHarness harness) throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		final Player defender = divineDefender(
 			harness, "divine owner", 765, 620);
 		final Npc attacker = npcWithHits(harness, 766, 620, 15);
@@ -280,9 +400,29 @@ final class CurrentCombatReflectionCharacterization {
 			"Divine Retribution combat attribution");
 		assertEquals(0, deaths.get(),
 			"Divine Retribution returns death without invoking a caller adapter");
+		assertReflectionResult(latestResult(harness),
+			"divine-retribution", CombatStyle.MELEE, null,
+			defender, attacker, 40, 15, 25, true,
+			"Divine Retribution transaction");
 		attacker.killedBy(defender);
 		assertEquals(1, deaths.get(),
 			"Divine Retribution caller owns the death adapter");
+
+		final Player playerAttacker = harness.player(
+			"divine packet", 768, 620);
+		harness.recordOutgoingPackets(playerAttacker);
+		forceNextLegacyDoubleBelow(0.20D);
+		final DivineRetribution.Result playerResult = DivineRetribution.apply(
+			defender, playerAttacker, 5);
+		assertTrue(playerResult.didProc(),
+			"Divine Retribution player-attacker fixture procs");
+		assertEquals(1, harness.countOutgoingPackets(
+			playerAttacker, OpcodeOut.SEND_STAT),
+			"Divine Retribution retains one player Hits stat packet");
+		assertReflectionResult(latestResult(harness),
+			"divine-retribution", CombatStyle.MELEE, null,
+			defender, playerAttacker, 10, 10, 0, false,
+			"player Divine Retribution transaction");
 
 		final Player simultaneousDefender = divineDefender(
 			harness, "divine both", 770, 620);
@@ -314,6 +454,7 @@ final class CurrentCombatReflectionCharacterization {
 		final ProjectileEvent simultaneousEvent = new ProjectileEvent(
 			harness.world(), simultaneousAttacker, simultaneousDefender,
 			7, 2, false);
+		final int resultsBeforeHit = observedResults(harness).size();
 		invoke(simultaneousEvent, "projectileDamage", new Class<?>[0]);
 		assertEquals(1, simultaneousDeaths.get(),
 			"Divine simultaneous attacker death callback cardinality");
@@ -323,6 +464,16 @@ final class CurrentCombatReflectionCharacterization {
 			"projectile caller retains Divine ranged reset");
 		assertTrue(simultaneousDefender.killed,
 			"projectile caller retains simultaneous victim death");
+		final java.util.List<DamageResult> results = observedResults(harness);
+		assertEquals(resultsBeforeHit + 2, results.size(),
+			"projectile hit and Divine reflection publish exactly once each");
+		assertTrue(results.get(resultsBeforeHit).getRequest().getTarget()
+			== simultaneousDefender,
+			"incoming projectile transaction precedes Divine Retribution");
+		assertReflectionResult(results.get(resultsBeforeHit + 1),
+			"divine-retribution", CombatStyle.MELEE, null,
+			simultaneousDefender, simultaneousAttacker, 10, 8, 2, true,
+			"simultaneous Divine Retribution transaction");
 	}
 
 	private static Player divineDefender(final CurrentCombatHarness harness,
@@ -410,6 +561,52 @@ final class CurrentCombatReflectionCharacterization {
 			throws Exception {
 		return CurrentCombatHarness.invokePrivate(
 			target, method, parameterTypes, arguments);
+	}
+
+	private static java.util.List<DamageResult> observedResults(
+			final CurrentCombatHarness harness) {
+		return CurrentCombatCharacterizationTest.observedDamageResults(harness);
+	}
+
+	private static DamageResult latestResult(
+			final CurrentCombatHarness harness) {
+		final java.util.List<DamageResult> results = observedResults(harness);
+		if (results.isEmpty()) {
+			throw new AssertionError("Expected an observed damage result");
+		}
+		return results.get(results.size() - 1);
+	}
+
+	private static void assertReflectionResult(final DamageResult result,
+			final String effectKey, final CombatStyle style,
+			final Object event, final Mob source, final Mob target,
+			final int resolvedDamage, final int actualDamage,
+			final int overkillDamage, final boolean terminal,
+			final String label) {
+		final DamageRequest request = result.getRequest();
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			result.getStatus(), label + " applied status");
+		assertEquals(DamageRequest.SourceCategory.OWNED_EFFECT,
+			request.getSourceCategory(), label + " source category");
+		assertEquals(effectKey, request.getEffectKey(), label + " effect key");
+		assertEquals(style, request.getStyle(), label + " style");
+		assertTrue(request.getSource() == source, label + " source identity");
+		assertTrue(request.getTarget() == target, label + " target identity");
+		assertEquals(event == null ? null : ((GameTickEvent) event).getUUID(),
+			request.getEventId(), label + " event identity");
+		assertEquals(HitSplat.TYPE_ARMOR_PROC, request.getHitSplatType(),
+			label + " hitsplat type");
+		assertEquals(resolvedDamage, request.getResolvedDamage(),
+			label + " resolved damage");
+		assertEquals(actualDamage, result.getActualDamage(),
+			label + " actual damage");
+		assertEquals(Math.min(resolvedDamage,
+			result.getHitsBefore()), result.getLegacyDamageDealt(),
+			label + " legacy damage");
+		assertEquals(overkillDamage, result.getOverkillDamage(),
+			label + " overkill damage");
+		assertEquals(Boolean.valueOf(terminal),
+			Boolean.valueOf(result.isTargetTerminal()), label + " terminal fact");
 	}
 
 	private static void forceNextLegacyDoubleBelow(final double threshold) {
@@ -505,6 +702,27 @@ final class CurrentCombatReflectionCharacterization {
 				new Class<?>[] {Mob.class, Mob.class, int.class},
 				attacker, defender, Integer.valueOf(damage));
 		}
+
+		private String frostbiteEffectKey() {
+			return effectKey("frostbite-reflection");
+		}
+
+		private String thornsEffectKey() {
+			return effectKey("cleric-thorns");
+		}
+
+		private String effectKey(final String suffix) {
+			switch (this) {
+				case RECIPROCAL_MELEE:
+					return "reciprocal-melee-" + suffix;
+				case PVM_MELEE:
+					return "pvm-melee-" + suffix;
+				case PROJECTILE:
+					return "projectile-" + suffix;
+				default:
+					throw new AssertionError("Unhandled path " + this);
+			}
+		}
 	}
 
 	private enum MeleeReflectionPath {
@@ -516,6 +734,12 @@ final class CurrentCombatReflectionCharacterization {
 			return this == RECIPROCAL_MELEE
 				? new CombatEvent(harness.world(), attacker, defender)
 				: new PvmMeleeEvent(harness.world(), attacker, defender);
+		}
+
+		private String recoilEffectKey() {
+			return this == RECIPROCAL_MELEE
+				? "reciprocal-melee-jewelry-recoil"
+				: "pvm-melee-jewelry-recoil";
 		}
 	}
 }

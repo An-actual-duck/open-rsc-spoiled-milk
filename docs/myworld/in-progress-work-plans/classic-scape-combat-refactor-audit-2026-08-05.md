@@ -606,13 +606,23 @@ representative runtime scenarios grow the gate from 42 to 46. The exact
 inventory is recorded in
 [`docs/combat/combat-a05-secondary-damage-characterization.md`](../../combat/combat-a05-secondary-damage-characterization.md).
 
-A05.4A implementation record: the focused worker branch moves only the six
-event-local auxiliary Magic/true Hits/update/hitsplat blocks in `CombatEvent`,
+A05.4A completion record: published main at merge commit `b2dc18979` moves only
+the six event-local auxiliary Magic/true Hits/update/hitsplat blocks in `CombatEvent`,
 `PvmMeleeEvent`, and `ProjectileEvent` through the resolved-damage transaction.
 Six event/contribution-specific keys preserve ownership; all mitigation,
 contribution, return, stat-packet, and death adapters remain local and ordered.
 Two scenarios grow the gate from 46 to 48. The exact boundary is recorded in
-[`docs/combat/combat-a05-auxiliary-damage-transaction.md`](../../combat/combat-a05-auxiliary-damage-transaction.md);
+[`docs/combat/combat-a05-auxiliary-damage-transaction.md`](../../combat/combat-a05-auxiliary-damage-transaction.md).
+
+A05.4B implementation record: the focused worker branch moves only the
+HP/update/hitsplat blocks for Frostbite, Cleric Thorns, melee and projectile
+jewelry recoil, and Divine Retribution through ten effect-specific resolved
+damage identities. It preserves pending-hit reduction, attribution and
+contribution style, post-lifesteal order, recursion exclusions, player stat
+packets, Ring of Life, ranged reset, helper results, caller-owned death, and
+simultaneous death. Five policy-specific scenarios replace one combined
+scenario, growing the gate from 48 to 52. The exact boundary is recorded in
+[`docs/combat/combat-a05-reflection-damage-transaction.md`](../../combat/combat-a05-reflection-damage-transaction.md);
 manager review of the exact READY handoff remains the integration boundary.
 
 Use several branches rather than one migration commit:

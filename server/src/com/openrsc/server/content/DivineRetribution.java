@@ -2,18 +2,21 @@ package com.openrsc.server.content;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
-import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
 
 public final class DivineRetribution {
+	private static final String DAMAGE_EFFECT_KEY = "divine-retribution";
 	private static final double MAX_PROC_CHANCE = 0.90D;
 	private static final double DAMAGE_SCALE = 10.0D;
 	private static final double CURVE_POWER = 1.4D;
@@ -31,13 +34,18 @@ public final class DivineRetribution {
 		}
 
 		final int reflectedDamage = incomingDamage * 2;
-		final int lastHits = attacker.getLevel(Skill.HITS.id());
-		attacker.getSkills().subtractLevel(Skill.HITS.id(), reflectedDamage, false);
 		attacker.getUpdateFlags().setCombatEffect(new CombatEffect(attacker, CombatEffect.DIVINE_RETRIBUTION));
-		attacker.getUpdateFlags().setDamage(new Damage(attacker, reflectedDamage));
-		attacker.getUpdateFlags().addHitSplat(new HitSplat(attacker, HitSplat.TYPE_ARMOR_PROC, reflectedDamage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			defender, attacker, DamageRequest.SourceCategory.OWNED_EFFECT,
+			DAMAGE_EFFECT_KEY, reflectedDamage)
+			.style(CombatStyle.MELEE)
+			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.build();
+		final DamageResult damageResult = attacker.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
 		if (attacker.isNpc()) {
-			((Npc) attacker).addCombatDamage(defender, Math.min(reflectedDamage, lastHits));
+			((Npc) attacker).addCombatDamage(
+				defender, damageResult.getLegacyDamageDealt());
 		} else if (attacker.isPlayer()) {
 			ActionSender.sendStat((Player) attacker, Skill.HITS.id());
 		}
