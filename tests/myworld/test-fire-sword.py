@@ -136,7 +136,7 @@ def main() -> None:
     require_text(item_id_text, "FIRE_SWORD(3235)", "ItemId enum")
     require_text(item_id_text, "ICE_SWORD(3236)", "ItemId enum")
     require_text(item_id_text, "EARTH_SWORD(3237)", "ItemId enum")
-    require_text(item_id_text, "maxCustom = 3309", "ItemId maxCustom")
+    require_text(item_id_text, "maxCustom = 3318", "ItemId maxCustom")
 
     custom_items = load_json(ROOT / "server/conf/server/defs/ItemDefsCustom.json", "items")
     myworld_items = load_json(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json", "items")

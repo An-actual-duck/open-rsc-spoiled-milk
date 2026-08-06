@@ -69,6 +69,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		ItemId.TITAN_STEEL_SCYTHE.id(), ItemId.ADAMANTITE_SCYTHE.id(),
 		ItemId.ORICHALCUM_SCYTHE.id(), ItemId.RUNE_SCYTHE.id(),
 		MyWorldItemId.EXALTED_RUNE_SCYTHE,
+		MyWorldItemId.POISONED_EXALTED_RUNE_SCYTHE,
 		ItemId.BLACK_SCYTHE.id(), ItemId.WHITE_SCYTHE.id(), ItemId.GREY_SCYTHE.id()
 	};
 	private final Mob attackerMob;

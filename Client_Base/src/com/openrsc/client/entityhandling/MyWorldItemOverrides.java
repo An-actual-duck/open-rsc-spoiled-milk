@@ -1607,6 +1607,15 @@ final class MyWorldItemOverrides {
 		new ItemOverride(3278, "Exalted Rune Paladin Shield", null, 156000, -1, -1),
 		new ItemOverride(3279, "Exalted Rune Plate Mail Legs", null, 156000, -1, -1),
 		new ItemOverride(3280, "Exalted Rune Plate Mail Body", null, 260000, -1, -1),
+		new ItemOverride(3309, "Poisoned Exalted Rune dagger", null, 52000, -1, -1),
+		new ItemOverride(3310, "Poisoned Exalted Rune Short Sword", null, 52000, -1, -1),
+		new ItemOverride(3311, "Poisoned Exalted Rune Long Sword", null, 104000, -1, -1),
+		new ItemOverride(3312, "Poisoned Exalted Rune Scimitar", null, 104000, -1, -1),
+		new ItemOverride(3313, "Poisoned Exalted Rune 2-handed Sword", null, 156000, -1, -1),
+		new ItemOverride(3314, "Poisoned Exalted Rune battle Axe", null, 156000, -1, -1),
+		new ItemOverride(3315, "Poisoned Exalted Rune Scythe", null, 260000, -1, -1),
+		new ItemOverride(3316, "Poisoned Exalted Rune Mace", null, 52000, -1, -1),
+		new ItemOverride(3317, "Poisoned Exalted Rune Spear", null, 52000, -1, -1),
 	};
 
 	private MyWorldItemOverrides() {

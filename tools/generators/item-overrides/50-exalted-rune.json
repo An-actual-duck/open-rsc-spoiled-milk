@@ -215,6 +215,105 @@
       "requiredSkillID": -1,
       "meleeDefense": 45,
       "rangedDefense": 15
+    },
+    {
+      "id": 3309,
+      "name": "Poisoned Exalted Rune dagger",
+      "meleeOffense": 24,
+      "weaponSpeed": 5,
+      "weaponAimBonus": 30,
+      "weaponPowerBonus": 30,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3310,
+      "name": "Poisoned Exalted Rune Short Sword",
+      "meleeOffense": 45,
+      "weaponSpeed": 4,
+      "weaponAimBonus": 48,
+      "weaponPowerBonus": 48,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3311,
+      "name": "Poisoned Exalted Rune Long Sword",
+      "meleeOffense": 84,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 60,
+      "basePrice": 104000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3312,
+      "name": "Poisoned Exalted Rune Scimitar",
+      "meleeOffense": 43,
+      "weaponSpeed": 4,
+      "weaponAimBonus": 54,
+      "weaponPowerBonus": 54,
+      "basePrice": 104000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3313,
+      "name": "Poisoned Exalted Rune 2-handed Sword",
+      "meleeOffense": 174,
+      "weaponSpeed": 2,
+      "weaponAimBonus": 84,
+      "weaponPowerBonus": 84,
+      "basePrice": 156000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3314,
+      "name": "Poisoned Exalted Rune battle Axe",
+      "meleeOffense": 88,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 60,
+      "weaponPowerBonus": 78,
+      "basePrice": 156000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3315,
+      "name": "Poisoned Exalted Rune Scythe",
+      "meleeOffense": 132,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 132,
+      "weaponPowerBonus": 132,
+      "basePrice": 260000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3316,
+      "name": "Poisoned Exalted Rune Mace",
+      "meleeOffense": 53,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 46,
+      "weaponPowerBonus": 34,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3317,
+      "name": "Poisoned Exalted Rune Spear",
+      "meleeOffense": 51,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 46,
+      "weaponPowerBonus": 26,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
     }
   ]
 }

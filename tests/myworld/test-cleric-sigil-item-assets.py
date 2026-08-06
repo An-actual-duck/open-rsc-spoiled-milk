@@ -131,11 +131,11 @@ def require(condition: bool, message: str) -> None:
 def validate_definitions_and_scope() -> None:
     payload = json.loads(SERVER_ITEMS.read_text(encoding="utf-8"))["items"]
     entries = {int(entry["id"]): entry for entry in payload}
-    require(max(entries) == 3308, "sigils must occupy the next contiguous server item range")
+    require(max(entries) == 3317, "custom definitions must include the current contiguous item range")
     require(set(range(3293, 3309)) <= entries.keys(), "server sigil definition range is incomplete")
 
     legacy_constants = LEGACY_ITEM_IDS.read_text(encoding="utf-8")
-    require("public static final int maxCustom = 3309;" in legacy_constants,
+    require("public static final int maxCustom = 3318;" in legacy_constants,
             "exclusive server item bound must include all sigils")
     constants = SIGIL_ITEM_IDS.read_text(encoding="utf-8")
     require("legacy {@code ItemId}" in constants and "JVM method-size" in constants,
@@ -276,7 +276,7 @@ public final class ClericSigilItemAssetFixture {
 		Path root = Paths.get(args[0]);
 		Path assets = root.resolve("dev/myworld/assets/sprites/items/inventory-ground/resources/sigils");
 		EntityHandler.load(true);
-		check(EntityHandler.itemCount() == 3309, "client item count drift");
+		check(EntityHandler.itemCount() == 3318, "client item count drift");
 
 		ClientExternalAssetLoader local = new ClientExternalAssetLoader(root, mudclient.class);
 		ClientExternalAssetLoader packaged = new ClientExternalAssetLoader(
