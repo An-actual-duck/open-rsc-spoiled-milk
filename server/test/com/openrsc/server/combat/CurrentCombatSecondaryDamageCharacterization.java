@@ -9,6 +9,9 @@ import com.openrsc.server.event.rsc.impl.PoisonEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -131,6 +134,7 @@ final class CurrentCombatSecondaryDamageCharacterization {
 
 	static void auxiliarySettlementAcrossEvents(
 			final CurrentCombatHarness harness) throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		int x = 660;
 		for (AuxiliaryPath path : AuxiliaryPath.values()) {
 			final Player source = harness.player(
@@ -183,10 +187,25 @@ final class CurrentCombatSecondaryDamageCharacterization {
 				path + " auxiliary true terminal unregister");
 			x += 4;
 		}
+
+		final java.util.List<DamageResult> results =
+			CurrentCombatCharacterizationTest.observedDamageResults(harness);
+		assertEquals(6, results.size(),
+			"one transaction result per positive auxiliary hit");
+		int resultIndex = 0;
+		for (AuxiliaryPath path : AuxiliaryPath.values()) {
+			assertAuxiliaryResult(results.get(resultIndex++),
+				path.magicEffectKey, CombatStyle.MAGIC, 6, 6, 0,
+				path + " auxiliary Magic transaction");
+			assertAuxiliaryResult(results.get(resultIndex++),
+				path.trueEffectKey, CombatStyle.MELEE, 7, 5, 2,
+				path + " auxiliary true transaction");
+		}
 	}
 
 	static void auxiliaryMitigationAcrossEvents(
 			final CurrentCombatHarness harness) throws Exception {
+		CurrentCombatCharacterizationTest.resetDamageObserver(harness);
 		int x = 680;
 		for (AuxiliaryPath path : AuxiliaryPath.values()) {
 			final Npc source = harness.npc(NpcId.GREATER_DEMON.id(), x, 620);
@@ -218,8 +237,30 @@ final class CurrentCombatSecondaryDamageCharacterization {
 				path + " auxiliary true ignores potion reductions");
 			assertHit(trueTarget, 8, HitSplat.TYPE_ARMOR_PROC,
 				path + " auxiliary true presentation after robe-only path");
+
+			final Player blockedMagicTarget = harness.player(
+				"aux blocked " + path.ordinal(), x + 1, 626);
+			blockedMagicTarget.activateMagicResistancePotion(100, 60_000L);
+			final Object blockedMagicEvent = auxiliaryEvent(
+				path, harness, source, blockedMagicTarget);
+			assertEquals(0, inflictAuxiliaryMagic(
+				blockedMagicEvent, source, blockedMagicTarget, 8),
+				path + " fully mitigated auxiliary Magic return");
+			assertNoHit(blockedMagicTarget,
+				path + " fully mitigated auxiliary Magic");
+
+			final Player zeroTrueTarget = harness.player(
+				"aux zero " + path.ordinal(), x + 1, 629);
+			final Object zeroTrueEvent = auxiliaryEvent(
+				path, harness, source, zeroTrueTarget);
+			inflictAuxiliaryTrue(zeroTrueEvent, source, zeroTrueTarget, 0);
+			assertNoHit(zeroTrueTarget,
+				path + " zero auxiliary true");
 			x += 4;
 		}
+		assertEquals(6, CurrentCombatCharacterizationTest
+			.observedDamageResults(harness).size(),
+			"ineffective auxiliary helpers publish no transaction results");
 	}
 
 	static void reflectionAttributionPolicies(
@@ -381,6 +422,43 @@ final class CurrentCombatSecondaryDamageCharacterization {
 			label + " hitsplat type");
 	}
 
+	private static void assertNoHit(final Mob target, final String label) {
+		assertEquals(40, target.getLevel(Skill.HITS.id()),
+			label + " target Hits");
+		assertTrue(target.getUpdateFlags().getDamage().get() == null,
+			label + " has no damage update");
+		assertEquals(0, target.getUpdateFlags().getHitSplats().size(),
+			label + " has no hitsplat");
+	}
+
+	private static void assertAuxiliaryResult(final DamageResult result,
+			final String effectKey, final CombatStyle style,
+			final int resolvedDamage, final int actualDamage,
+			final int overkillDamage, final String label) {
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			result.getStatus(), label + " status");
+		assertEquals(DamageRequest.SourceCategory.OWNED_EFFECT,
+			result.getRequest().getSourceCategory(), label + " category");
+		assertEquals(effectKey, result.getRequest().getEffectKey(),
+			label + " stable identity");
+		assertEquals(style, result.getRequest().getStyle(),
+			label + " style");
+		assertTrue(result.getRequest().getEventId() != null,
+			label + " event identity");
+		assertEquals(HitSplat.TYPE_ARMOR_PROC,
+			result.getRequest().getHitSplatType(), label + " hitsplat type");
+		assertEquals(resolvedDamage, result.getRequest().getResolvedDamage(),
+			label + " resolved damage");
+		assertEquals(actualDamage, result.getActualDamage(),
+			label + " factual damage");
+		assertEquals(actualDamage, result.getLegacyDamageDealt(),
+			label + " legacy post-hit value");
+		assertEquals(overkillDamage, result.getOverkillDamage(),
+			label + " overkill");
+		assertEquals(overkillDamage > 0, result.isTargetTerminal(),
+			label + " terminal outcome");
+	}
+
 	private static void assertTrue(final boolean condition,
 			final String message) {
 		if (!condition) {
@@ -401,9 +479,40 @@ final class CurrentCombatSecondaryDamageCharacterization {
 		}
 	}
 
+	private static void assertEquals(final boolean expected,
+			final boolean actual, final String message) {
+		if (expected != actual) {
+			throw new AssertionError(message + ": expected " + expected
+				+ " but was " + actual);
+		}
+	}
+
+	private static void assertEquals(final Object expected,
+			final Object actual, final String message) {
+		if (expected == null ? actual != null : !expected.equals(actual)) {
+			throw new AssertionError(message + ": expected " + expected
+				+ " but was " + actual);
+		}
+	}
+
 	private enum AuxiliaryPath {
-		RECIPROCAL_MELEE,
-		PVM_MELEE,
-		PROJECTILE
+		RECIPROCAL_MELEE(
+			"reciprocal-melee-auxiliary-magic",
+			"reciprocal-melee-auxiliary-true"),
+		PVM_MELEE(
+			"pvm-melee-auxiliary-magic",
+			"pvm-melee-auxiliary-true"),
+		PROJECTILE(
+			"projectile-auxiliary-magic",
+			"projectile-auxiliary-true");
+
+		private final String magicEffectKey;
+		private final String trueEffectKey;
+
+		AuxiliaryPath(final String magicEffectKey,
+				final String trueEffectKey) {
+			this.magicEffectKey = magicEffectKey;
+			this.trueEffectKey = trueEffectKey;
+		}
 	}
 }
