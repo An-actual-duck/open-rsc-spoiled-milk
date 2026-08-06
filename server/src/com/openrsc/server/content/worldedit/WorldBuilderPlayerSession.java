@@ -77,6 +77,14 @@ public final class WorldBuilderPlayerSession {
 					BINDING_COMPLETE_ATTRIBUTE, Boolean.FALSE)));
 	}
 
+	/** Native terrain and scene packets remain withheld until builderbind. */
+	public static boolean mayReceiveWorldState(Player player) {
+		return player != null
+			&& (!AdaptiveWorldBuilderRuntimeIdentity.isAdaptive(player.getConfig())
+				|| Boolean.TRUE.equals(player.getAttribute(
+					BINDING_COMPLETE_ATTRIBUTE, Boolean.FALSE)));
+	}
+
 	private static void refuse(Player player, String message) {
 		LOGGER.error(message);
 		if (player != null) {

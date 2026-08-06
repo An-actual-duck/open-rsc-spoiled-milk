@@ -4,6 +4,7 @@ import com.openrsc.server.constants.AppearanceId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.worldedit.WorldBuilderPlayerSession;
 import com.openrsc.server.database.DatabaseLookupResult;
 import com.openrsc.server.database.GameDatabase;
 import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
@@ -273,6 +274,9 @@ public final class GameStateUpdater {
 	private boolean ensureLayeredSceneContext(
 		final Player player,
 		final boolean allowContextCreation) {
+		if (!WorldBuilderPlayerSession.mayReceiveWorldState(player)) {
+			return false;
+		}
 		if (!getServer().getConfig().WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY) {
 			return true;
 		}

@@ -59,6 +59,8 @@ public final class WorldBuilderClientProfile {
 	private final int[] layeredLevels;
 	private final boolean adaptive;
 	private final AdaptiveWorldBuilderClientSession adaptiveSession;
+	private boolean adaptiveServerBindingAccepted;
+	private boolean adaptiveNativeContextAccepted;
 
 	private WorldBuilderClientProfile(boolean enabled, String host, int port, String credential,
 		String projectName, String sourceRevision, boolean layeredReview,
@@ -235,6 +237,87 @@ public final class WorldBuilderClientProfile {
 
 	public boolean isAdaptive() {
 		return enabled && adaptive && adaptiveSession != null;
+	}
+
+	/**
+	 * The content-neutral adaptive runtime is the only client profile allowed
+	 * to start without a packed legacy landscape archive.
+	 */
+	public boolean isStrictAdaptiveTerrain() {
+		return isAdaptive();
+	}
+
+	public String strictAdaptiveMapIdentity() {
+		if (!isStrictAdaptiveTerrain()) {
+			throw new IllegalStateException(
+				"Strict adaptive terrain identity is unavailable");
+		}
+		return adaptiveSession.manifestSha256();
+	}
+
+	/** Called only for the server-authored editor-open receipt after builderbind. */
+	public synchronized void acceptAdaptiveServerBinding() {
+		if (isStrictAdaptiveTerrain()) {
+			adaptiveServerBindingAccepted = true;
+		}
+	}
+
+	/**
+	 * Accepts one server scene scope only after the authenticated adaptive
+	 * binding and exact native layered protocol have both been established.
+	 */
+	public synchronized void acceptAdaptiveNativeTerrainContext(
+		int protocolVersion,
+		String worldSpace,
+		int level,
+		int x,
+		int y,
+		NativeLayeredTerrainSnapshot terrain) {
+		if (!isStrictAdaptiveTerrain()) {
+			return;
+		}
+		if (!adaptiveServerBindingAccepted) {
+			throw new IllegalStateException(
+				"Strict adaptive terrain arrived before authenticated Builder binding");
+		}
+		if (protocolVersion
+				!= LayeredSceneContextState.ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION) {
+			throw new IllegalStateException(
+				"Strict adaptive terrain requires the atomic native layered protocol");
+		}
+		if (terrain == null
+			|| terrain.getProtocolVersion() != protocolVersion
+			|| !adaptiveSession.packageIdentity().equals(
+				terrain.packageIdentity())
+			|| !adaptiveSession.initialWorldSpace().equals(worldSpace)
+			|| !declaresLayer(level)
+			|| !terrain.covers(worldSpace, level, x, y)) {
+			throw new IllegalStateException(
+				"Strict adaptive terrain context does not match the bound native package");
+		}
+		if (!adaptiveNativeContextAccepted
+			&& (level != adaptiveSession.initialLevel()
+				|| x != adaptiveSession.initialX()
+				|| y != adaptiveSession.initialY())) {
+			throw new IllegalStateException(
+				"Strict adaptive initial terrain context differs from the runtime binding");
+		}
+		adaptiveNativeContextAccepted = true;
+	}
+
+	public synchronized boolean isAdaptiveWorldStateReady(
+		boolean initialRegionLoaded,
+		boolean nativeTerrainResident) {
+		return !isStrictAdaptiveTerrain()
+			|| adaptiveServerBindingAccepted
+				&& adaptiveNativeContextAccepted
+				&& initialRegionLoaded
+				&& nativeTerrainResident;
+	}
+
+	public synchronized void resetAdaptiveRuntimeState() {
+		adaptiveServerBindingAccepted = false;
+		adaptiveNativeContextAccepted = false;
 	}
 
 	public boolean canAuthorLevel(int level) {

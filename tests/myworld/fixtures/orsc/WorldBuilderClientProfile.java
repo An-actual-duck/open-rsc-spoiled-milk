@@ -12,6 +12,14 @@ public final class WorldBuilderClientProfile {
 		return CURRENT;
 	}
 
+	public boolean isStrictAdaptiveTerrain() {
+		return false;
+	}
+
+	public String strictAdaptiveMapIdentity() {
+		throw new IllegalStateException("fixture has no adaptive terrain");
+	}
+
 	public void requireNativePackageIdentity(
 		String packageId, String packageVersion, String manifestSha256) {
 		// Fixed-profile protocol fixtures intentionally have no adaptive binding.

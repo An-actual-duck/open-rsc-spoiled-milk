@@ -121,6 +121,36 @@ the private loopback login flow. The server opens the editor only after a
 constant-time comparison with its in-memory fingerprint. Any mismatch fails
 before an editable session.
 
+## Strict terrain startup and readiness
+
+Only the combination of `openrsc.worldBuilderMode=true`,
+`openrsc.worldBuilderAdaptiveMode=true`, and a fully verified adaptive runtime
+binding activates strict terrain startup. Neither property alone, loopback,
+missing files, editor availability, nor package shape activates it.
+
+In that strict profile the selected signed layered package is the sole terrain
+authority. Client `World` construction does not resolve, probe, open, hash, or
+read `Authentic_Landscape.orsc` or `Custom_Landscape.orsc`. The legacy archive
+open, archive hash, and sector-entry read paths each carry an adaptive tripwire;
+reaching one fails with the entry-point name instead of falling back. Normal
+preservation and Spoiled Milk clients retain the same legacy archive choice,
+open, and hash behavior.
+
+World state is withheld on both sides until the private binding handshake is
+complete. The server does not send scene context, terrain, or scene entities
+to an adaptive player before `builderbind` succeeds. The client accepts the
+first terrain context only after the server-authored editor-open receipt and
+only when protocol, package, manifest, world space, declared level, initial
+coordinates, and native coverage match the verified binding. A malformed or
+mismatched context fails before it becomes the active scene scope.
+
+The game view remains on its loading frame, and all World Editor mouse,
+keyboard, menu, drag-brush, and navigation input remains blocked, until the
+initial region has loaded and the verified native terrain snapshot is resident.
+The regular renderer-ready predicate carries the same gate. This prevents a
+strict adaptive session from exposing legacy terrain, zero-filled client
+state, or a stale scene while native delivery is pending.
+
 ## Generic package contract
 
 The adaptive profile accepts exactly one package with one `global` static
@@ -224,7 +254,12 @@ package, placement, protocol, persistence, editor, and runtime suites. It uses
 temporary content-neutral packages and checks deterministic output across
 absolute roots, all placement families, canonical empty terrain, strict client
 binding, capability evidence, link/path/size attacks, staged-byte tampering,
-interrupted recovery, and source/target preservation.
+interrupted recovery, and source/target preservation. The startup harness also
+constructs the real client `World` from adopted and standalone-empty bindings
+while both legacy archives are absent, records zero legacy read attempts,
+forces every guarded legacy entry point, and verifies that server binding,
+native context, initial-region load, and residency are all required before the
+adaptive world-ready predicate succeeds.
 
 Before a downstream release, an owner must still visually run both an adopted
 generic project and standalone empty project. The owner—not an AI screenshot

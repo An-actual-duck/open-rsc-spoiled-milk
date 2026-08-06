@@ -168,6 +168,9 @@ public final class AdaptiveWorldBuilderClientSession {
 	public String packageId() { return fields.get("packageId"); }
 	public String packageVersion() { return fields.get("packageVersion"); }
 	public String manifestSha256() { return fields.get("manifestSha256"); }
+	public String packageIdentity() {
+		return packageId() + "@" + packageVersion() + ":" + manifestSha256();
+	}
 	public String initialWorldSpace() { return fields.get("initialWorldSpace"); }
 	public int initialLevel() { return integer(fields, "initialLevel"); }
 	public int initialX() { return integer(fields, "initialX"); }

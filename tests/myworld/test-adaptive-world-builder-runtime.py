@@ -439,6 +439,201 @@ public final class AdaptiveWorldBuilderClientBindingHarness {
 """
 
 
+CLIENT_STARTUP_HARNESS = r"""
+import orsc.Config;
+import orsc.NativeLayeredTerrainChunk;
+import orsc.NativeLayeredTerrainSnapshot;
+import orsc.WorldBuilderClientProfile;
+import orsc.graphics.three.World;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+public final class AdaptiveWorldBuilderClientStartupHarness {
+    private static final String SOURCE_REVISION =
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    private static void require(boolean value, String message) {
+        if (!value) throw new AssertionError(message);
+    }
+
+    private static String repeated(char value) {
+        char[] result = new char[64];
+        java.util.Arrays.fill(result, value);
+        return new String(result);
+    }
+
+    private static Method worldMethod(String name, Class<?>... parameters)
+            throws Exception {
+        Method method = World.class.getDeclaredMethod(name, parameters);
+        method.setAccessible(true);
+        return method;
+    }
+
+    private static Throwable invokeFailure(
+            Method method, Object receiver, Object... arguments) throws Exception {
+        try {
+            method.invoke(receiver, arguments);
+            throw new AssertionError("strict adaptive legacy entry point was accepted");
+        } catch (InvocationTargetException expected) {
+            return expected.getCause();
+        }
+    }
+
+    private static NativeLayeredTerrainSnapshot terrain(
+            String packageId, String packageVersion, String manifest,
+            String worldSpace, int level, int x, int y) {
+        int centerX = Math.floorDiv(x, NativeLayeredTerrainSnapshot.SECTOR_SIZE);
+        int centerY = Math.floorDiv(y, NativeLayeredTerrainSnapshot.SECTOR_SIZE);
+        NativeLayeredTerrainChunk[] chunks = new NativeLayeredTerrainChunk[9];
+        int index = 0;
+        for (int deltaX = -1; deltaX <= 1; deltaX++) {
+            for (int deltaY = -1; deltaY <= 1; deltaY++) {
+                int chunkX = centerX + deltaX;
+                int chunkY = centerY + deltaY;
+                byte[] tiles = new byte[
+                    NativeLayeredTerrainSnapshot.SECTOR_SIZE
+                        * NativeLayeredTerrainSnapshot.SECTOR_SIZE
+                        * NativeLayeredTerrainChunk.TILE_WIRE_BYTES];
+                for (int offset = 0; offset < tiles.length;
+                        offset += NativeLayeredTerrainChunk.TILE_WIRE_BYTES) {
+                    tiles[offset + 1] = 1;
+                    tiles[offset + 2] = 8;
+                }
+                chunks[index++] = NativeLayeredTerrainChunk.available(
+                    NativeLayeredTerrainSnapshot.SECTOR_SIZE,
+                    chunkX, chunkY, chunkX, chunkY,
+                    NativeLayeredTerrainChunk.RAW_ENCODING, repeated('4'), tiles);
+            }
+        }
+        return new NativeLayeredTerrainSnapshot(
+            NativeLayeredTerrainSnapshot.ATOMIC_ACTIVATION_PROTOCOL_VERSION,
+            packageId, packageVersion, manifest,
+            NativeLayeredTerrainSnapshot.SECTOR_SIZE,
+            worldSpace, level, centerX, centerY, 1, chunks);
+    }
+
+    private static void setBaseProperties(String credential) {
+        System.setProperty(WorldBuilderClientProfile.HOST_PROPERTY, "127.0.0.1");
+        System.setProperty(WorldBuilderClientProfile.PORT_PROPERTY, "43615");
+        System.setProperty(
+            WorldBuilderClientProfile.CREDENTIAL_FILE_PROPERTY, credential);
+        System.setProperty(
+            WorldBuilderClientProfile.PROJECT_NAME_PROPERTY, "Adaptive Test");
+        System.setProperty(
+            WorldBuilderClientProfile.SOURCE_REVISION_PROPERTY, SOURCE_REVISION);
+    }
+
+    public static void main(String[] args) throws Exception {
+        setBaseProperties(args[3]);
+        System.setProperty(WorldBuilderClientProfile.ADAPTIVE_PROPERTY, "true");
+        System.setProperty(WorldBuilderClientProfile.ENABLED_PROPERTY, "false");
+        require(!WorldBuilderClientProfile.initializeFromSystemProperties()
+            .isStrictAdaptiveTerrain(), "adaptive property alone activated bypass");
+
+        System.setProperty(WorldBuilderClientProfile.ADAPTIVE_PROPERTY, "false");
+        System.setProperty(WorldBuilderClientProfile.ENABLED_PROPERTY, "true");
+        require(!WorldBuilderClientProfile.initializeFromSystemProperties()
+            .isStrictAdaptiveTerrain(), "world-builder property alone activated bypass");
+
+        System.setProperty(WorldBuilderClientProfile.ADAPTIVE_PROPERTY, "true");
+        System.setProperty(
+            WorldBuilderClientProfile.RUNTIME_BINDING_FILE_PROPERTY, args[0]);
+        System.setProperty(
+            WorldBuilderClientProfile.DEFINITION_EVIDENCE_FILE_PROPERTY, args[1]);
+        System.setProperty(
+            WorldBuilderClientProfile.ASSET_EVIDENCE_FILE_PROPERTY, args[2]);
+        WorldBuilderClientProfile profile =
+            WorldBuilderClientProfile.initializeFromSystemProperties();
+        require(profile.isStrictAdaptiveTerrain(), "strict adaptive profile missing");
+        Config.F_CACHE_DIR = args[4];
+
+        Method reset = worldMethod("resetLegacyLandscapeReadAttemptCount");
+        Method count = worldMethod("legacyLandscapeReadAttemptCount");
+        reset.invoke(null);
+        World world = new World(null, null);
+        require(((Long) count.invoke(null)).longValue() == 0L,
+            "strict startup attempted a legacy landscape read");
+        require(profile.layeredManifestShort().equals(world.mapHash.substring(0, 12)),
+            "strict startup map identity differs from its binding");
+        require(!profile.isAdaptiveWorldStateReady(true, true),
+            "world became ready before authenticated server binding");
+
+        Method guard = worldMethod(
+            "requireLegacyLandscapeArchiveReadAllowed", String.class);
+        Method hash = worldMethod("generateMapHash", String.class);
+        Method sector = worldMethod("readSectorTemplate", String.class, int.class);
+        Throwable failure = invokeFailure(guard, null, "archive-open");
+        require(failure.getMessage().contains("archive-open"),
+            "archive-open tripwire was not actionable");
+        failure = invokeFailure(hash, world, args[4] + "/missing.orsc");
+        require(failure.getMessage().contains("archive-hash"),
+            "archive-hash tripwire was not actionable");
+        failure = invokeFailure(sector, world, "h0x0y0", Integer.valueOf(0));
+        require(failure.getMessage().contains("sector-entry-read"),
+            "sector read tripwire was not actionable");
+        require(((Long) count.invoke(null)).longValue() == 3L,
+            "not every strict legacy landscape entry point was instrumented");
+
+        String packageId = profile.layeredPackageId();
+        String packageVersion = profile.layeredPackageVersion();
+        String manifest = args[5];
+        String worldSpace = profile.layeredWorldSpace();
+        int level = Integer.parseInt(args[6]);
+        int x = Integer.parseInt(args[7]);
+        int y = Integer.parseInt(args[8]);
+        NativeLayeredTerrainSnapshot accepted = terrain(
+            packageId, packageVersion, manifest, worldSpace, level, x, y);
+        try {
+            profile.acceptAdaptiveNativeTerrainContext(
+                8, worldSpace, level, x, y, accepted);
+            throw new AssertionError("terrain was accepted before server binding");
+        } catch (IllegalStateException expected) {
+        }
+        profile.acceptAdaptiveServerBinding();
+        require(!profile.isAdaptiveWorldStateReady(true, true),
+            "world became ready before native terrain context");
+        try {
+            profile.acceptAdaptiveNativeTerrainContext(
+                7, worldSpace, level, x, y, accepted);
+            throw new AssertionError("unsupported adaptive protocol was accepted");
+        } catch (IllegalStateException expected) {
+        }
+        try {
+            profile.acceptAdaptiveNativeTerrainContext(
+                8, worldSpace, level, x, y,
+                terrain("mismatch.package", packageVersion, manifest,
+                    worldSpace, level, x, y));
+            throw new AssertionError("mismatched package was accepted");
+        } catch (IllegalStateException expected) {
+        }
+        try {
+            profile.acceptAdaptiveNativeTerrainContext(
+                8, worldSpace, level, x, y,
+                terrain(packageId, packageVersion, repeated('5'),
+                    worldSpace, level, x, y));
+            throw new AssertionError("mismatched manifest was accepted");
+        } catch (IllegalStateException expected) {
+        }
+        try {
+            profile.acceptAdaptiveNativeTerrainContext(
+                8, worldSpace, level, x + 1, y, accepted);
+            throw new AssertionError("mismatched initial coordinate was accepted");
+        } catch (IllegalStateException expected) {
+        }
+        profile.acceptAdaptiveNativeTerrainContext(
+            8, worldSpace, level, x, y, accepted);
+        require(!profile.isAdaptiveWorldStateReady(false, true),
+            "world became ready before initial region load");
+        require(!profile.isAdaptiveWorldStateReady(true, false),
+            "world became ready without resident native terrain");
+        require(profile.isAdaptiveWorldStateReady(true, true),
+            "verified native terrain did not make adaptive world ready");
+        System.out.println("strict-startup-ok");
+    }
+}
+"""
+
+
 class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -474,6 +669,20 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
             capture_output=True,
             text=True,
         )
+        startup_source = classes / "AdaptiveWorldBuilderClientStartupHarness.java"
+        startup_source.write_text(
+            textwrap.dedent(CLIENT_STARTUP_HARNESS), encoding="utf-8"
+        )
+        subprocess.run(
+            [
+                "javac", "-source", "8", "-target", "8",
+                "-cp", str(CLIENT), "-d", str(classes), str(startup_source),
+            ],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         cls.classpath = os.pathsep.join((str(classes), str(CORE)))
         cls.client_classpath = os.pathsep.join((str(classes), str(CLIENT)))
 
@@ -500,7 +709,7 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
         (target / "server/maps/live.dat").write_bytes(b"target must not change\n")
         return working, baseline, target
 
-    def client_binding_fixture(self, root: Path):
+    def client_binding_fixture(self, root: Path, *, empty: bool = False):
         control = root / "project/run/world-builder"
         evidence = root / "project/working/runtime/client/evidence"
         control.mkdir(parents=True)
@@ -556,6 +765,16 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
             "serverBuild": "core-framework-adaptive-builder-server-v1",
             "sourceBaselineInventorySha256": "3" * 64,
         }
+        if empty:
+            fields.update({
+                "initialLevel": "0",
+                "initialX": "0",
+                "initialY": "0",
+                "levels": "0",
+                "packageId": "creator.standalone-empty-world",
+                "packageVersion": "1.0.0",
+                "projectOrigin": "standalone-empty",
+            })
         binding = control / "runtime-binding.properties"
         binding.write_text(
             "adaptive-world-builder-session-v1\n"
@@ -581,6 +800,27 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                 str(credential),
                 fields["packageId"], fields["packageVersion"],
                 fields["manifestSha256"],
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+    def run_client_startup(
+        self, binding: Path, definitions: Path, assets: Path, fields: dict,
+        cache: Path,
+    ):
+        credential = (
+            binding.parents[2] / "working/runtime/server/inc/sqlite/"
+            "world-builder.credential"
+        )
+        return subprocess.run(
+            [
+                "java", "-cp", self.client_classpath,
+                "AdaptiveWorldBuilderClientStartupHarness",
+                str(binding), str(definitions), str(assets), str(credential),
+                str(cache), fields["manifestSha256"], fields["initialLevel"],
+                fields["initialX"], fields["initialY"],
             ],
             cwd=ROOT,
             capture_output=True,
@@ -821,6 +1061,32 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
             self.assertEqual(0, accepted.returncode, accepted.stderr)
             self.assertIn(fields["packageId"], accepted.stdout)
 
+            for key, value in (
+                ("loader", "legacy-packed-loader-v1"),
+                ("authoring", "legacy-packed-authoring-v1"),
+                ("protocol", "legacy-packed-protocol-v1"),
+                ("coordinateModel", "legacy-packed-y-v1"),
+            ):
+                mismatched_fields = dict(fields)
+                mismatched_fields[key] = value
+                binding.write_text(
+                    "adaptive-world-builder-session-v1\n"
+                    + "".join(
+                        f"{name}={mismatched_fields[name]}\n"
+                        for name in sorted(mismatched_fields)
+                    ),
+                    encoding="ascii",
+                )
+                mismatch = self.run_client_binding(
+                    binding, definitions, assets, fields
+                )
+                self.assertNotEqual(0, mismatch.returncode, key)
+            binding.write_text(
+                "adaptive-world-builder-session-v1\n"
+                + "".join(f"{key}={fields[key]}\n" for key in sorted(fields)),
+                encoding="ascii",
+            )
+
             definitions.write_bytes(b"mismatched definitions\n")
             mismatch = self.run_client_binding(
                 binding, definitions, assets, fields
@@ -883,6 +1149,70 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
                 binding, definitions, assets, fields
             )
             self.assertNotEqual(0, mismatch.returncode)
+
+    def test_strict_startup_skips_legacy_archives_and_gates_native_readiness(self):
+        for empty in (False, True):
+            with self.subTest(empty=empty), tempfile.TemporaryDirectory(
+                prefix="adaptive-client-startup-"
+            ) as temp:
+                root = Path(temp)
+                binding, definitions, assets, fields = self.client_binding_fixture(
+                    root, empty=empty
+                )
+                cache = root / "absent-legacy-cache"
+                cache.mkdir()
+                self.assertFalse(
+                    (cache / "video/Authentic_Landscape.orsc").exists()
+                )
+                self.assertFalse(
+                    (cache / "video/Custom_Landscape.orsc").exists()
+                )
+                result = self.run_client_startup(
+                    binding, definitions, assets, fields, cache
+                )
+                self.assertEqual(0, result.returncode, result.stderr)
+                self.assertEqual("strict-startup-ok\n", result.stdout)
+
+    def test_strict_startup_guards_first_render_editor_and_server_scene_state(self):
+        world = (ROOT / "Client_Base/src/orsc/graphics/three/World.java").read_text()
+        profile = (
+            ROOT / "Client_Base/src/orsc/WorldBuilderClientProfile.java"
+        ).read_text()
+        packets = (ROOT / "Client_Base/src/orsc/PacketHandler.java").read_text()
+        client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
+        editor = (
+            ROOT / "Client_Base/src/com/openrsc/interfaces/misc/"
+            "WorldEditorInterface.java"
+        ).read_text()
+        updater = (ROOT / "server/src/com/openrsc/server/GameStateUpdater.java").read_text()
+        session = (
+            ROOT / "server/src/com/openrsc/server/content/worldedit/"
+            "WorldBuilderPlayerSession.java"
+        ).read_text()
+
+        strict_branch = world.index("isStrictAdaptiveTerrain()")
+        archive_choice = world.index("Authentic_Landscape.orsc")
+        self.assertLess(strict_branch, archive_choice)
+        for entry in ("archive-open", "archive-hash", "sector-entry-read"):
+            self.assertIn(
+                f'requireLegacyLandscapeArchiveReadAllowed("{entry}")', world
+            )
+        self.assertIn("LEGACY_LANDSCAPE_READ_ATTEMPTS.incrementAndGet()", world)
+        self.assertIn(
+            "!WorldBuilderClientProfile.current().isStrictAdaptiveTerrain()", world
+        )
+        self.assertIn("adaptiveServerBindingAccepted", profile)
+        self.assertIn("adaptiveNativeContextAccepted", profile)
+        context_accept = packets.index("acceptAdaptiveNativeTerrainContext(")
+        scene_accept = packets.index("layeredSceneContextState.accept(")
+        self.assertLess(context_accept, scene_accept)
+        self.assertIn("acceptAdaptiveServerBinding()", packets)
+        self.assertIn("if (!isAdaptiveWorldStateReadyForEditor()) {", client)
+        self.assertIn("drawLoadingPleaseWaitFrame();", client)
+        self.assertIn("!isAdaptiveWorldStateReadyForEditor())return", client)
+        self.assertGreaterEqual(editor.count("isAdaptiveWorldStateReadyForEditor()"), 2)
+        self.assertIn("WorldBuilderPlayerSession.mayReceiveWorldState(player)", updater)
+        self.assertIn("public static boolean mayReceiveWorldState", session)
 
     def test_discovery_evidence_is_strict_path_independent_and_version_bound(self):
         outputs = []

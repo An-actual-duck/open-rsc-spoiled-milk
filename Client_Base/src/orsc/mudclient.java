@@ -8243,6 +8243,10 @@ public final class mudclient implements Runnable {
 		try {
 			this.getSurface().beginRenderer2DFrame();
 			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.UI_OVERLAY);
+			if (!isAdaptiveWorldStateReadyForEditor()) {
+				this.drawLoadingPleaseWaitFrame();
+				return;
+			}
 
 			if (isAndroid()) {
 				this.menuCommon.font = osConfig.C_MENU_SIZE;
@@ -11953,7 +11957,7 @@ public final class mudclient implements Runnable {
 
 	// game screen right click menu definitions */
 	private void addWorldEditorTileActions(int localX,int localZ){
-		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return;
+		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen()||!isAdaptiveWorldStateReadyForEditor())return;
 		if(worldEditorInterface.isInspecting())
 			this.menuCommon.addCharacterItem_WithID(localX,"",MenuItemAction.WORLD_EDITOR_INSPECT_TERRAIN,"Inspect terrain",localZ);
 		if(worldEditorInterface.isInspecting()||worldEditorInterface.isTerrainPainting())
@@ -19013,6 +19017,14 @@ public final class mudclient implements Runnable {
 			int tileID = this.menuCommon.getItemTileID(item);
 			int var8 = this.menuCommon.getItemParam_l(item);
 			String var9 = this.menuCommon.getItemStringB(item);
+			if (var3 != null
+				&& var3.name().startsWith("WORLD_EDITOR_")
+				&& !isAdaptiveWorldStateReadyForEditor()) {
+				this.showMessage(false, null,
+					"Adaptive terrain is not ready for editing.",
+					MessageType.GAME, 0, null);
+				return;
+			}
 
 			ORSCharacter character = null;
 			int cTileX;
@@ -23770,7 +23782,7 @@ public final class mudclient implements Runnable {
 		WorldEditorBuildSettings.setEnabled(enabled);
 	}
 	private boolean updateWorldEditorTerrainDrag(){
-		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen())return false;int worldX=-1,worldY=-1;
+		if(worldEditorInterface==null||!worldEditorInterface.isEditorOpen()||!isAdaptiveWorldStateReadyForEditor())return false;int worldX=-1,worldY=-1;
 		boolean picking=controlPressed&&currentMouseButtonDown==1&&showUiTab==0&&mouseY<getGameHeight()-70&&!mouseInTabArea_CUSTOM();
 		if(picking&&scene!=null&&world!=null&&localPlayer!=null){int[] local=scene.projectScreenToGroundTile(mouseX,mouseY,tileSize,getClickTeleportGroundPlaneY());
 			if(local!=null&&local[0]>=0&&local[0]<World.LOCAL_TILE_COUNT&&local[1]>=0&&local[1]<World.LOCAL_TILE_COUNT){worldX=midRegionBaseX+local[0];worldY=midRegionBaseZ+local[1];}}
@@ -23782,7 +23794,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void worldEditorTeleport(int worldX, int worldY, int level) {
-		if (worldEditorInterface == null || !worldEditorInterface.isNavigating() || !canUseClickTeleport()) return;
+		if (worldEditorInterface == null || !worldEditorInterface.isNavigating() || !canUseClickTeleport() || !isAdaptiveWorldStateReadyForEditor()) return;
 		if (WorldBuilderClientProfile.current().isLayeredReview()) {
 			sendCommandString("buildergoto " + worldX + " " + worldY + " " + level);
 			return;
@@ -25168,7 +25180,14 @@ public final class mudclient implements Runnable {
 			&& this.hasCompletedInitialRegionLoad
 			&& !this.loadingArea
 			&& !this.layeredSceneActivationPending
+			&& isAdaptiveWorldStateReadyForEditor()
 			&& !this.isFullScreenModalUiActive();
+	}
+
+	public boolean isAdaptiveWorldStateReadyForEditor() {
+		return WorldBuilderClientProfile.current().isAdaptiveWorldStateReady(
+			this.hasCompletedInitialRegionLoad,
+			this.world != null && this.world.hasNativeLayeredTerrain());
 	}
 
 	public boolean isFullScreenModalUiActive() {
@@ -27343,6 +27362,7 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		WorldBuilderClientProfile profile = WorldBuilderClientProfile.current();
+		profile.resetAdaptiveRuntimeState();
 		profile.requireClientDefinitions();
 		// The initial server-config packet refreshes cached connection properties.
 		// Reassert the explicit local profile immediately before authenticated login.

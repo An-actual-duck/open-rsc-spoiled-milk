@@ -74,6 +74,8 @@ public final class World {
 	private static final int LAVA_GLOW_RADIUS = 384;
 	private static final int LAVA_GLOW_INTENSITY = 96;
 	private static final int LAVA_GLOW_NON_OVERWORLD_INTENSITY = 72;
+	private static final AtomicLong LEGACY_LANDSCAPE_READ_ATTEMPTS =
+		new AtomicLong();
 	private static final int SYNTHETIC_DEEP_MIN_X = 440;
 	private static final int SYNTHETIC_DEEP_MAX_X = 460;
 	private static final int SYNTHETIC_DEEP_MIN_Z = 590;
@@ -255,17 +257,28 @@ public final class World {
 
 			sectors = new Sector[ACTIVE_SECTION_COUNT];
 
-			try {
-				String path;
-				if (Config.S_WANT_CUSTOM_LANDSCAPE)
-					path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Custom_Landscape.orsc";
-				else
-					path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Authentic_Landscape.orsc";
-				tileArchive = new ZipFile(new File(path));
-				mapHash = generateMapHash(path);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(1);
+			if (WorldBuilderClientProfile.current().isStrictAdaptiveTerrain()) {
+				/*
+				 * The signed layered package is the sole terrain authority. Do not
+				 * resolve, probe, hash, or open a legacy landscape path here.
+				 */
+				tileArchive = null;
+				mapHash = WorldBuilderClientProfile.current()
+					.strictAdaptiveMapIdentity();
+			} else {
+				try {
+					String path;
+					if (Config.S_WANT_CUSTOM_LANDSCAPE)
+						path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Custom_Landscape.orsc";
+					else
+						path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Authentic_Landscape.orsc";
+					requireLegacyLandscapeArchiveReadAllowed("archive-open");
+					tileArchive = new ZipFile(new File(path));
+					mapHash = generateMapHash(path);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 			}
 
 		} catch (RuntimeException var4) {
@@ -1656,11 +1669,30 @@ public final class World {
 	}
 
 	private String generateMapHash(String path) {
+		requireLegacyLandscapeArchiveReadAllowed("archive-hash");
 		try {
 			return GenUtil.getMD5Checksum(path);
 		} catch (Exception e) {
 			return "failed-" + path;
 		}
+	}
+
+	private static void requireLegacyLandscapeArchiveReadAllowed(
+		String entryPoint) {
+		if (WorldBuilderClientProfile.current().isStrictAdaptiveTerrain()) {
+			LEGACY_LANDSCAPE_READ_ATTEMPTS.incrementAndGet();
+			throw new IllegalStateException(
+				"Strict adaptive World Builder forbids legacy landscape archive read at "
+					+ entryPoint);
+		}
+	}
+
+	private static long legacyLandscapeReadAttemptCount() {
+		return LEGACY_LANDSCAPE_READ_ATTEMPTS.get();
+	}
+
+	private static void resetLegacyLandscapeReadAttemptCount() {
+		LEGACY_LANDSCAPE_READ_ATTEMPTS.set(0L);
 	}
 
 	public static int worldTileToSection(int worldTile) {
@@ -4645,6 +4677,7 @@ public final class World {
 
 	private boolean shouldLoadUpperPlaneModels(int presentationPlane) {
 		return presentationPlane == 0
+			&& !WorldBuilderClientProfile.current().isStrictAdaptiveTerrain()
 			&& !syntheticDeepFixtureTerrain
 			&& (nativeLayeredTerrainSnapshot == null
 				|| nativeLayeredTerrainSnapshot.getLevel() == 0);
@@ -5745,6 +5778,7 @@ public final class World {
 	}
 
 	private Sector readSectorTemplate(String filename, int height) {
+		requireLegacyLandscapeArchiveReadAllowed("sector-entry-read");
 		try {
 			ZipEntry e;
 			ByteBuffer data = null;

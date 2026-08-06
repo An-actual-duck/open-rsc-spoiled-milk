@@ -299,6 +299,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	}
 
 	private boolean handleKey(char c,int key){
+		if(!mc.isAdaptiveWorldStateReadyForEditor())return true;
 		if(definitionBrowser.isOpen())return handleDefinitionBrowserKey(c,key);
 		WorldEditorKeyboardShortcuts.Action shortcut=WorldEditorKeyboardShortcuts.resolve(c,key,mc.getDesktopKeyCode(),mc.controlPressed,mc.shiftPressed,mode==Mode.TERRAIN,keyboardShortcutsEnabled);
 		if(shortcut==WorldEditorKeyboardShortcuts.Action.TOGGLE_CHAT){
@@ -422,6 +423,7 @@ public final class WorldEditorInterface extends NCustomComponent {
 	private int basePresentationWidth(){return toolbar.isExpandedFallback()?390:toolbar.isCollapsed()?40:toolbar.isFlyoutOpen()?DOCK_WIDTH+FLYOUT_GAP+FLYOUT_WIDTH:DOCK_WIDTH;}
 	private int definitionBrowserOffsetX(){return basePresentationWidth()+BROWSER_GAP;}
 	private boolean handleMouse(int mx,int my,int down,int click){
+		if(!mc.isAdaptiveWorldStateReadyForEditor())return true;
 		if(!isVisible())return false;int rx=mx-getX(),ry=my-getY();
 		if(rx<0||ry<0||ry>=getHeight())return false;
 		if(definitionBrowser.isOpen()){

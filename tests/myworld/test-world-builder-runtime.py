@@ -227,7 +227,11 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         public String packageId() { return ""; }
                         public String packageVersion() { return ""; }
                         public String manifestSha256() { return ""; }
+                        public String packageIdentity() { return ""; }
                         public String initialWorldSpace() { return ""; }
+                        public int initialLevel() { return 0; }
+                        public int initialX() { return 0; }
+                        public int initialY() { return 0; }
                         public int[] levels() { return new int[0]; }
                         public String token() { return ""; }
                         public void requirePackageIdentity(String id, String version, String hash) { }
@@ -237,8 +241,22 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            native_terrain = fixture_path / "orsc/NativeLayeredTerrainSnapshot.java"
+            native_terrain.write_text(
+                "package orsc; public final class NativeLayeredTerrainSnapshot { "
+                "public int getProtocolVersion(){return 8;} "
+                "public String packageIdentity(){return \"\";} "
+                "public boolean covers(String world,int level,int x,int y){return true;} }\n",
+                encoding="utf-8",
+            )
+            layered_context = fixture_path / "orsc/LayeredSceneContextState.java"
+            layered_context.write_text(
+                "package orsc; final class LayeredSceneContextState { "
+                "static final int ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION=8; }\n",
+                encoding="utf-8",
+            )
             output = self.compile_and_run(
-                [stub, adaptive_session, CLIENT_PROFILE],
+                [stub, adaptive_session, native_terrain, layered_context, CLIENT_PROFILE],
                 "orsc.WorldBuilderClientProfileHarness",
                 """
                 package orsc;
@@ -278,6 +296,8 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                             WorldBuilderClientProfile.initializeFromSystemProperties();
                         profile.applyConnection();
                         require(profile.isEnabled(), "profile enabled");
+                        require(!profile.isStrictAdaptiveTerrain(),
+                            "World Builder mode and loopback alone must not activate strict terrain");
                         require("Builder".equals(profile.username()), "fixed identity");
                         require("Abcdefghijk23456789Z".equals(profile.credential()), "credential");
                         require("Lumbridge Rebuild".equals(profile.projectName()), "project name");
@@ -295,6 +315,8 @@ class WorldBuilderRuntimeTest(unittest.TestCase):
                         System.setProperty(WorldBuilderClientProfile.LAYERED_LEVELS_PROPERTY, "-2,-1,0,1,2,10");
                         profile = WorldBuilderClientProfile.initializeFromSystemProperties();
                         require(profile.isLayeredReview(), "layered review enabled");
+                        require(!profile.isStrictAdaptiveTerrain(),
+                            "layered package shape must not activate strict terrain");
                         require(!profile.isLayeredTerrainDraft(), "review is not writable by default");
                         require(profile.declaresLayer(-2)
                             && profile.declaresLayer(-1)

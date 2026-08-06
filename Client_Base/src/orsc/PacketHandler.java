@@ -750,6 +750,14 @@ public class PacketHandler {
 			phaseStartedNanos,
 			phaseStartedNanos == 0L
 				? 0L : System.nanoTime() - phaseStartedNanos);
+		WorldBuilderClientProfile.current()
+			.acceptAdaptiveNativeTerrainContext(
+				protocolVersion,
+				worldSpace,
+				logicalLevel,
+				logicalX,
+				logicalY,
+				nativeTerrain);
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		final boolean hadLayeredSceneContext =
 			layeredSceneContextState.hasContext();
@@ -1404,7 +1412,7 @@ public class PacketHandler {
 	private void updateWorldEditor() {
 		int type=packetsIncoming.getByte()&0xff, version=packetsIncoming.getByte()&0xff, sequence=packetsIncoming.get32();
 		if(version!=1||mc.worldEditorInterface==null||Config.isAndroid())return;
-		if(type==1){mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
+		if(type==1){WorldBuilderClientProfile.current().acceptAdaptiveServerBinding();mc.worldEditorInterface.open(packetsIncoming.getLong(0),sequence);return;}
 		if(type==2){mc.worldEditorInterface.closeFromServer();return;}
 		if(type==8){int fieldMask=packetsIncoming.getByte()&0xff,count=packetsIncoming.getByte()&0xff;
 			if(count<1||count>64){mc.worldEditorInterface.showError("Server returned an invalid terrain stroke size.");return;}
