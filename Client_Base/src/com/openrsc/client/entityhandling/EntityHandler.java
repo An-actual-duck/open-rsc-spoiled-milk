@@ -97,6 +97,10 @@ public class EntityHandler {
 	};
 	private static final int MYWORLD_RUNE_STAFF_STABLE_COLOR_COUNT = 15;
 	private static final int EXALTED_RUNE_COLOR = 0xD8FFFF;
+	private static final int FOUNDRY_DRAGON_NPC_ID = 845;
+	private static final int FOUNDRY_DRAGON_FRAME_WIDTH = 244;
+	private static final int FOUNDRY_DRAGON_FRAME_HEIGHT = 163;
+	private static int foundryDragonAnimationId = -1;
 
 	public static int getModelCount() {
 		return REGISTRY.modelCount();
@@ -148,6 +152,20 @@ public class EntityHandler {
 
 	public static AnimationDef getAnimationDef(int id) {
 		return REGISTRY.animation(id);
+	}
+
+	public static int getFoundryDragonAnimationId() {
+		return foundryDragonAnimationId;
+	}
+
+	public static void activateFoundryDragonExternalVisual() {
+		if (foundryDragonAnimationId < 0 || FOUNDRY_DRAGON_NPC_ID >= npcs.size()) {
+			throw new IllegalStateException("Foundry Dragon animation is not registered");
+		}
+		NPCDef foundryDragon = npcs.get(FOUNDRY_DRAGON_NPC_ID);
+		foundryDragon.sprites[0] = foundryDragonAnimationId;
+		foundryDragon.camera1 = FOUNDRY_DRAGON_FRAME_WIDTH;
+		foundryDragon.camera2 = FOUNDRY_DRAGON_FRAME_HEIGHT;
 	}
 
 	public static int spellCount() {
@@ -7660,6 +7678,8 @@ public class EntityHandler {
 			}
 			verifyAnimationDefinition(1050, "scythe", EXALTED_RUNE_COLOR);
 		}
+		foundryDragonAnimationId = animations.size();
+		animations.add(new AnimationDef("foundrydragon", "npc", 0, 0, true, false, 0));
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

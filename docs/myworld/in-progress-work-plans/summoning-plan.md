@@ -293,8 +293,11 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
   and remain unchanged
 - Smithing cape: Superheat first applies its established coal reduction, then
   converts the remaining coal requirement into runes
-- visual: reuses the Black Dragon sprite at approximately the Baby Blue
-  Dragon's half scale; the support profile prevents combat
+- visual: uses the native-size `foundry-dragon-sprite-sheet.png` asset. Its
+  first five three-frame columns cover front through rear directions, mirrored
+  for the opposite facings; its sixth column is the fire-breath animation
+- successful furnace and Superheat actions briefly play the fire-breath pose;
+  failed material checks leave the summon in its normal directional animation
 - progression rationale: level `61` and `365` cast XP evenly bridge Delivery
   Camel (`58`/`335`) and Astral Wraith (`64`/`395`), while the dragon bones and
   elemental rune cost fit the summon and its powerful resource swap
