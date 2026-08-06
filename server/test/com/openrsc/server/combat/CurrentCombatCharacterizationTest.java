@@ -235,6 +235,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatDelayedSpellCharacterization::salarinStrikePolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
 				CurrentCombatSecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
+			run(harness, "ordinary_npc_death_preserves_rewards_listener_and_removal_order",
+				CurrentCombatDeathLifecycleCharacterization::ordinaryNpcDeathPolicies);
+			run(harness, "player_death_preserves_cleanup_duplicate_and_respawn_reset",
+				CurrentCombatDeathLifecycleCharacterization::playerDeathPolicies);
+			run(harness, "plugin_owned_npc_death_remains_an_explicit_compatibility_path",
+				CurrentCombatDeathLifecycleCharacterization::pluginOwnedNpcCompatibility);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
 				CurrentCombatCharacterizationTest::primaryMeleeSharedHitsMitigation);
 			run(harness, "damage_observer_failure_cannot_change_current_settlement",
