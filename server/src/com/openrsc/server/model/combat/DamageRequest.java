@@ -29,6 +29,12 @@ public final class DamageRequest {
 		RESOLVED_LEGACY
 	}
 
+	/** Presentation written by the resolved-damage transaction. */
+	public enum Presentation {
+		DAMAGE_AND_HITSPLAT,
+		DAMAGE_ONLY
+	}
+
 	private final UUID requestId;
 	private final UUID parentRequestId;
 	private final UUID eventId;
@@ -44,6 +50,7 @@ public final class DamageRequest {
 	private final InputStage inputStage;
 	private final int resolvedDamage;
 	private final int hitSplatType;
+	private final Presentation presentation;
 
 	private DamageRequest(final Builder builder) {
 		requestId = builder.requestId;
@@ -62,6 +69,7 @@ public final class DamageRequest {
 		inputStage = InputStage.RESOLVED_LEGACY;
 		resolvedDamage = builder.resolvedDamage;
 		hitSplatType = builder.hitSplatType;
+		presentation = builder.presentation;
 	}
 
 	public static Builder resolvedLegacy(final Mob source, final Mob target,
@@ -86,6 +94,7 @@ public final class DamageRequest {
 	public InputStage getInputStage() { return inputStage; }
 	public int getResolvedDamage() { return resolvedDamage; }
 	public int getHitSplatType() { return hitSplatType; }
+	public Presentation getPresentation() { return presentation; }
 
 	@Override
 	public boolean equals(final Object value) {
@@ -111,6 +120,7 @@ public final class DamageRequest {
 		private final String effectKey;
 		private final int resolvedDamage;
 		private int hitSplatType;
+		private Presentation presentation = Presentation.DAMAGE_AND_HITSPLAT;
 
 		private Builder(final Mob source, final Mob target,
 				final SourceCategory sourceCategory, final String effectKey,
@@ -162,6 +172,11 @@ public final class DamageRequest {
 					"hitSplatType must be non-negative");
 			}
 			hitSplatType = value;
+			return this;
+		}
+
+		public Builder presentation(final Presentation value) {
+			presentation = Objects.requireNonNull(value, "presentation");
 			return this;
 		}
 
