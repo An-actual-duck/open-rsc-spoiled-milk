@@ -11,6 +11,9 @@ import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.event.custom.NpcLootEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -18,7 +21,6 @@ import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.HitSplat;
-import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -27,10 +29,12 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Executable pre-migration A05.4D owned NPC/summon damage policies. */
+/** Executable A05.4D owned NPC/summon damage parity specifications. */
 final class CurrentCombatOwnedDamageCharacterization {
 	private static final String SUMMON_OWNER_KEY = "myworld_summon_owner";
 	private static final String SUMMON_KIND_KEY = "myworld_summon_kind";
@@ -128,13 +132,24 @@ final class CurrentCombatOwnedDamageCharacterization {
 				"Balrog True Defense block retains one Hits packet");
 			assertEquals(-1, blocked.getTrackedDamage(blockedBalrog),
 				"Balrog fully blocked splash is not damage tracked");
+			final List<DamageResult> results =
+				CurrentCombatCharacterizationTest.observedDamageResults(harness);
+			assertEquals(2, results.size(),
+				"Balrog publishes only the two eligible positive child hits");
+			assertDamageResult(resultFor(results, valid,
+				"projectile-balrog-magic-splash"), balrog, valid,
+				"projectile-balrog-magic-splash", CombatStyle.MAGIC,
+				2, 2, 0, false, HitSplat.TYPE_ARMOR_PROC, event.getUUID(),
+				"Balrog mitigated child transaction");
+			assertDamageResult(resultFor(results, lethal,
+				"projectile-balrog-magic-splash"), balrog, lethal,
+				"projectile-balrog-magic-splash", CombatStyle.MAGIC,
+				5, 3, 2, true, HitSplat.TYPE_ARMOR_PROC, event.getUUID(),
+				"Balrog lethal child transaction");
 		} finally {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		assertEquals(0, CurrentCombatCharacterizationTest
-			.observedDamageResults(harness).size(),
-			"Balrog splash remains outside the transaction before migration");
 	}
 
 	static void elderGreenDragonPolicies(final CurrentCombatHarness harness)
@@ -240,13 +255,46 @@ final class CurrentCombatOwnedDamageCharacterization {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				previousLayered;
 		}
-		final java.util.List<DamageResult> observed =
+		final List<DamageResult> observed =
 			CurrentCombatCharacterizationTest.observedDamageResults(harness);
-		assertEquals(1, observed.size(),
-			"Only existing Divine Retribution uses the transaction before migration");
+		assertEquals(7, observed.size(),
+			"Elder publishes six incoming hits and one Divine reflection");
+		assertDamageResult(resultFor(observed, melee,
+			"elder-green-dragon-melee-sweep"), dragon, melee,
+			"elder-green-dragon-melee-sweep", CombatStyle.MELEE,
+			6, 6, 0, false, HitSplat.TYPE_STANDARD, null,
+			"Elder melee transaction");
+		assertDamageResult(resultFor(observed, ranged,
+			"elder-green-dragon-ranged-fireshot"), dragon, ranged,
+			"elder-green-dragon-ranged-fireshot", CombatStyle.RANGED,
+			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Elder ranged transaction");
+		assertDamageResult(resultFor(observed, blocked,
+			"elder-green-dragon-melee-sweep"), dragon, blocked,
+			"elder-green-dragon-melee-sweep", CombatStyle.MELEE,
+			0, 0, 0, false, HitSplat.TYPE_STANDARD, null,
+			"Elder True Defense zero transaction");
+		assertDamageResult(resultFor(observed, burned,
+			"elder-green-dragon-burn-pulse"), dragon, burned,
+			"elder-green-dragon-burn-pulse", null,
+			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Elder burn transaction");
+		assertDamageResult(resultFor(observed, saved,
+			"elder-green-dragon-ranged-fireshot"), dragon, saved,
+			"elder-green-dragon-ranged-fireshot", CombatStyle.RANGED,
+			2, 2, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Elder Ring of Life transaction");
+		assertDamageResult(resultFor(observed, divine,
+			"elder-green-dragon-ranged-fireshot"), reflectedDragon, divine,
+			"elder-green-dragon-ranged-fireshot", CombatStyle.RANGED,
+			3, 3, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Elder reflected-hit incoming transaction");
+		assertEquals("elder-green-dragon-ranged-fireshot",
+			observed.get(5).getRequest().getEffectKey(),
+			"Elder incoming damage is published before reflection");
 		assertEquals("divine-retribution",
-			observed.get(0).getRequest().getEffectKey(),
-			"Elder incoming damage remains outside the transaction before migration");
+			observed.get(6).getRequest().getEffectKey(),
+			"Divine reflection follows Elder incoming publication");
 	}
 
 	static void summonBonusDamagePolicies(final CurrentCombatHarness harness)
@@ -312,9 +360,30 @@ final class CurrentCombatOwnedDamageCharacterization {
 		assertFalse(noOwnerTarget.hasDamageBy(owner),
 			"Offline summon owner receives no borrowed contribution");
 
-		assertEquals(0, CurrentCombatCharacterizationTest
-			.observedDamageResults(harness).size(),
-			"Summon bonus remains outside the transaction before migration");
+		final List<DamageResult> results =
+			CurrentCombatCharacterizationTest.observedDamageResults(harness);
+		assertEquals(5, results.size(),
+			"Summon bonus publishes one result per effective hit");
+		assertDamageResult(resultFor(results, lethalNpc, "summon-bonus-melee"),
+			summon, lethalNpc, "summon-bonus-melee", CombatStyle.MELEE,
+			7, 5, 2, true, HitSplat.TYPE_ARMOR_PROC, null,
+			"Summon lethal NPC bonus transaction");
+		assertDamageResult(resultFor(results, magicTarget, "summon-bonus-magic"),
+			summon, magicTarget, "summon-bonus-magic", CombatStyle.MAGIC,
+			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Summon Magic bonus transaction");
+		assertDamageResult(resultFor(results, meleeTarget, "summon-bonus-melee"),
+			summon, meleeTarget, "summon-bonus-melee", CombatStyle.MELEE,
+			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Summon Melee bonus transaction");
+		assertDamageResult(resultFor(results, lethalPlayer, "summon-bonus-magic"),
+			summon, lethalPlayer, "summon-bonus-magic", CombatStyle.MAGIC,
+			7, 5, 2, true, HitSplat.TYPE_ARMOR_PROC, null,
+			"Summon lethal player bonus transaction");
+		assertDamageResult(resultFor(results, noOwnerTarget, "summon-bonus-melee"),
+			noOwnerSummon, noOwnerTarget, "summon-bonus-melee", CombatStyle.MELEE,
+			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			"Offline-owner summon bonus transaction");
 	}
 
 	private static int inflictElderDamage(final Npc dragon,
@@ -494,6 +563,49 @@ final class CurrentCombatOwnedDamageCharacterization {
 			message + " damage update");
 		assertTrue(target.getUpdateFlags().getHitSplats().isEmpty(),
 			message + " hitsplat");
+	}
+
+	private static DamageResult resultFor(final List<DamageResult> results,
+			final Mob target, final String effectKey) {
+		for (DamageResult result : results) {
+			final DamageRequest request = result.getRequest();
+			if (request.getTarget() == target
+					&& effectKey.equals(request.getEffectKey())) {
+				return result;
+			}
+		}
+		throw new AssertionError("No result for " + effectKey
+			+ " targeting " + target);
+	}
+
+	private static void assertDamageResult(final DamageResult result,
+			final Mob source, final Mob target, final String effectKey,
+			final CombatStyle style, final int resolvedDamage,
+			final int actualDamage, final int overkillDamage,
+			final boolean terminal, final int hitSplatType,
+			final UUID eventId, final String label) {
+		final DamageRequest request = result.getRequest();
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			result.getStatus(), label + " status");
+		assertTrue(request.getSource() == source, label + " source identity");
+		assertTrue(request.getTarget() == target, label + " target identity");
+		assertEquals(DamageRequest.SourceCategory.OWNED_EFFECT,
+			request.getSourceCategory(), label + " category");
+		assertEquals(effectKey, request.getEffectKey(), label + " stable identity");
+		assertEquals(style, request.getStyle(), label + " style");
+		assertEquals(eventId, request.getEventId(), label + " event identity");
+		assertEquals(hitSplatType, request.getHitSplatType(),
+			label + " hitsplat type");
+		assertEquals(resolvedDamage, request.getResolvedDamage(),
+			label + " resolved damage");
+		assertEquals(actualDamage, result.getActualDamage(),
+			label + " factual damage");
+		assertEquals(Math.min(resolvedDamage, result.getHitsBefore()),
+			result.getLegacyDamageDealt(), label + " legacy damage");
+		assertEquals(overkillDamage, result.getOverkillDamage(),
+			label + " overkill");
+		assertEquals(terminal, result.isTargetTerminal(),
+			label + " terminal outcome");
 	}
 
 	private static void assertTrue(final boolean condition,

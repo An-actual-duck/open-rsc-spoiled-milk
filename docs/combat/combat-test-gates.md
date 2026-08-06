@@ -23,7 +23,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the seven combat fixture
+The test target compiles production server sources and the eight combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
@@ -188,3 +188,15 @@ transaction metadata. Only each family's existing Hits/update/hitsplat block
 moves; selection, formulas, resources, and terminal adapters remain local. The
 boundary is recorded in
 [`combat-a05-player-child-damage-transaction.md`](combat-a05-player-child-damage-transaction.md).
+
+An independent poison-weapon regression brought the gate from 59 to 60
+scenarios after A05.4C. A05.4D then grows it from 60 to 63 scenarios. Its
+fixtures execute Balrog Magic splash, Elder Green Dragon owned attacks/burn,
+and summon trait bonus damage. They pin target eligibility, signed-level
+filtering, style-specific mitigation, True Defense inclusion/exclusion,
+tracking, contribution, stat/party packets, Ring of Life, reflection order,
+returned lethal facts, caller-owned death, and exact transaction metadata.
+Only each family's existing Hits/update/hitsplat block moves; formulas, RNG,
+selection, effects, packets, hooks, and terminal adapters remain local. The
+boundary is recorded in
+[`combat-a05-owned-npc-summon-damage-transaction.md`](combat-a05-owned-npc-summon-damage-transaction.md).

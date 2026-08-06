@@ -13,7 +13,7 @@ import java.util.Objects;
  * Applies one already-resolved legacy damage request to the current Hits and
  * presentation fields.
  *
- * <p>This A05.2-A05.4C boundary deliberately owns no formula, mitigation,
+ * <p>This A05.2-A05.4D boundary deliberately owns no formula, mitigation,
  * contribution, lifesteal, effect, packet, XP, or death policy. Callers retain
  * those responsibilities and their existing order around this transaction.</p>
  */

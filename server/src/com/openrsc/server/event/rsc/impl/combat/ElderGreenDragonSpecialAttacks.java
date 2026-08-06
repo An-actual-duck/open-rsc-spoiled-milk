@@ -11,13 +11,15 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.CombatEffect;
-import com.openrsc.server.model.entity.update.Damage;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.world.World;
@@ -37,6 +39,14 @@ public final class ElderGreenDragonSpecialAttacks {
 	private static final String BURN_ACTIVE_KEY = "elder_green_dragon_burn_active";
 	private static final String BURN_END_AT_KEY = "elder_green_dragon_burn_end_at";
 	private static final String BURN_SOURCE_KEY = "elder_green_dragon_burn_source";
+	private static final String MELEE_SWEEP_EFFECT_KEY =
+		"elder-green-dragon-melee-sweep";
+	private static final String RANGED_FIRESHOT_EFFECT_KEY =
+		"elder-green-dragon-ranged-fireshot";
+	private static final String MAGIC_SECONDARY_EFFECT_KEY =
+		"elder-green-dragon-magic-secondary";
+	private static final String BURN_PULSE_EFFECT_KEY =
+		"elder-green-dragon-burn-pulse";
 
 	private ElderGreenDragonSpecialAttacks() {
 	}
@@ -178,11 +188,15 @@ public final class ElderGreenDragonSpecialAttacks {
 			damage = TrueDefense.apply(player, damage);
 		}
 
-		final int lastHits = player.getLevel(Skill.HITS.id());
-		player.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
-		final int damageDealt = Math.min(damage, lastHits);
-		player.getUpdateFlags().setDamage(new Damage(player, damage));
-		player.getUpdateFlags().addHitSplat(new HitSplat(player, hitSplatType, damage));
+		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+			dragon, player, DamageRequest.SourceCategory.OWNED_EFFECT,
+			damageEffectKey(style), damage)
+			.style(combatStyle(style))
+			.hitSplatType(hitSplatType)
+			.build();
+		final DamageResult damageResult = player.getWorld().getServer()
+			.getResolvedDamageTransaction().apply(damageRequest);
+		final int damageDealt = damageResult.getLegacyDamageDealt();
 		if (!damageAlreadyTracked) {
 			player.updateDamageAndBlockedDamageTracking(dragon, damageDealt, 0);
 		}
@@ -233,6 +247,36 @@ public final class ElderGreenDragonSpecialAttacks {
 
 	private static boolean isPrimaryDamageStyle(final DamageStyle style) {
 		return style == DamageStyle.MELEE || style == DamageStyle.RANGED || style == DamageStyle.MAGIC;
+	}
+
+	private static String damageEffectKey(final DamageStyle style) {
+		switch (style) {
+			case MELEE:
+				return MELEE_SWEEP_EFFECT_KEY;
+			case RANGED:
+				return RANGED_FIRESHOT_EFFECT_KEY;
+			case MAGIC:
+				return MAGIC_SECONDARY_EFFECT_KEY;
+			case BURN:
+				return BURN_PULSE_EFFECT_KEY;
+			default:
+				throw new IllegalArgumentException("Unsupported damage style: " + style);
+		}
+	}
+
+	private static CombatStyle combatStyle(final DamageStyle style) {
+		switch (style) {
+			case MELEE:
+				return CombatStyle.MELEE;
+			case RANGED:
+				return CombatStyle.RANGED;
+			case MAGIC:
+				return CombatStyle.MAGIC;
+			case BURN:
+				return null;
+			default:
+				throw new IllegalArgumentException("Unsupported damage style: " + style);
+		}
 	}
 
 	private enum DamageStyle {

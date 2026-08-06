@@ -30,12 +30,15 @@ and true HP/update/hitsplat blocks through the transaction. A05.4B then moved
 only Frostbite, Cleric Thorns, melee/projectile jewelry recoil, and Divine
 Retribution reflection settlement through effect-specific requests. A05.4C
 then moved only the settlement triplets for chain lightning, Splinter,
-blood/death robe splashes, Scythe cleave, Death Amulet, and Death Ring. Their
-exact stable identities and preserved boundaries are recorded in
+blood/death robe splashes, Scythe cleave, Death Amulet, and Death Ring. A05.4D
+then moved only Balrog Magic splash, Elder Green Dragon owned attacks and burn,
+and summon bonus-damage settlement. Their exact identities and
+preserved boundaries are recorded in
 [`combat-a05-auxiliary-damage-transaction.md`](combat-a05-auxiliary-damage-transaction.md),
 [`combat-a05-reflection-damage-transaction.md`](combat-a05-reflection-damage-transaction.md),
+[`combat-a05-player-child-damage-transaction.md`](combat-a05-player-child-damage-transaction.md),
 and
-[`combat-a05-player-child-damage-transaction.md`](combat-a05-player-child-damage-transaction.md).
+[`combat-a05-owned-npc-summon-damage-transaction.md`](combat-a05-owned-npc-summon-damage-transaction.md).
 All other inventory rows remain outside those migrations.
 
 ## Reproducible inventory method
@@ -180,20 +183,20 @@ Each item below is a separate follow-up branch with its own stop gate.
    attribution, incoming-hit reduction, post-lifesteal Thorns order,
    no-recursion rules, ranged reset, Ring of Life, and caller-owned
    simultaneous death. Published on main at `42e15c5b6`.
-3. **A05.4C — player-outgoing child/AoE hits (implemented on the focused
-   branch).** Split chain lightning,
+3. **A05.4C — player-outgoing child/AoE hits (published).** Split chain lightning,
    Splinter, blood/death robe splashes, Scythe cleave, Death Amulet, and Death
    Ring into effect-specific requests. Preserve selection, layer/range/area
    suppression, style contribution, chase, zero-hit aggro, charge settlement,
    lifesteal, and per-child death order. Stop if an AoE eligibility policy must
    be generalized to migrate HP. The bounded result is recorded in the A05.4C
-   transaction document linked above; manager review remains the integration
-   boundary.
-4. **A05.4D — owned NPC/summon/boss secondary hits.** Treat Balrog splash,
+   transaction document linked above. Published on main at `c8ada6fea`.
+4. **A05.4D — owned NPC/summon/boss secondary hits (implemented on the focused
+   branch).** Treat Balrog splash,
    Elder Green Dragon attacks/burn, and summon bonus damage as separate
    adapters. Preserve elemental mitigation, True Defense exclusions, blocked
    tracking, party packets, reflection order, Ring of Life, and returned
-   lethal booleans.
+   lethal booleans. The bounded result is recorded in the A05.4D transaction
+   document linked above; manager review remains the integration boundary.
 5. **A05.4E — delayed spell secondaries.** Add full scheduled fixtures for
    Salarin and god/Iban area effects before moving HP. Preserve one-tick delay,
    rune/XP behavior, missing Salarin hitsplat/stat behavior, outer aggregated
