@@ -98,7 +98,7 @@ changed-code analysis and the focused
 combat, poison, projectile, NPC, Cleric, summoning, dragon, and layered-world
 Python suites alongside this gate.
 
-## A01-A04 boundary
+## A01-A05.1 boundary
 
 A01 established the real-Java gate without moving production authority. A02
 adds the bounded production-preserving clock, random, and whole-tick test seams
@@ -124,3 +124,11 @@ projection deliberately preserves the narrower historical meaning of
 `getOpponent()` and `inCombat()`. The ownership contract and deferred behavior
 decisions are recorded in
 [`combat-a04-engagement-event-ownership.md`](combat-a04-engagement-event-ownership.md).
+
+A05.1 grows the gate from 32 to 35 scenarios. Its three added scenarios cover
+resolved legacy request/result invariants, lifecycle-aware participant
+snapshots, exact current PvM melee observation facts, and isolation from both
+observer setup and callback failures. Production keeps the observer disabled,
+and no damage or death authority moves. The source inventory and later
+source-family boundaries are recorded in
+[`combat-a05-damage-observation-foundation.md`](combat-a05-damage-observation-foundation.md).

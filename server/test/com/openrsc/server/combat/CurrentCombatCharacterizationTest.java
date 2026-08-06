@@ -44,6 +44,8 @@ import com.openrsc.server.model.combat.CombatEligibilityRequest;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatOwnershipAudit;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.container.Item;
@@ -61,6 +63,7 @@ import com.openrsc.server.net.rsc.struct.incoming.SpellStruct;
 import com.openrsc.server.plugins.DefaultHandler;
 import com.openrsc.server.plugins.triggers.AttackNpcTrigger;
 import com.openrsc.server.runtime.ProductionGameRandom;
+import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.runtime.SystemGameClock;
 import com.openrsc.server.util.rsc.DataConversions;
 
@@ -94,7 +97,10 @@ public final class CurrentCombatCharacterizationTest {
 			return;
 		}
 
-		try (CurrentCombatHarness harness = new CurrentCombatHarness()) {
+		final RecordingDamageObserver damageObserver =
+			new RecordingDamageObserver();
+		try (CurrentCombatHarness harness = new CurrentCombatHarness(
+				damageObserver)) {
 			run(harness, "deterministic_runtime_contracts_preserve_production_sources",
 				CurrentCombatCharacterizationTest::deterministicRuntimeContracts);
 			run(harness, "current_scheduler_advances_one_whole_combat_tick",
@@ -159,6 +165,13 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::supportAreaSelection);
 			run(harness, "npc_death_listener_is_exactly_once",
 				CurrentCombatCharacterizationTest::exactlyOnceDeathCallback);
+			damageObserver.enabled = true;
+			run(harness, "resolved_damage_contracts_are_immutable_and_lifecycle_aware",
+				CurrentCombatCharacterizationTest::resolvedDamageContracts);
+			run(harness, "pvm_melee_observation_reports_current_factual_outcome",
+				CurrentCombatCharacterizationTest::pvmMeleeDamageObservation);
+			run(harness, "damage_observer_failure_cannot_change_current_settlement",
+				CurrentCombatCharacterizationTest::damageObserverFailureIsolation);
 		}
 		writeSummary();
 		System.out.println("Combat characterization scenarios passed: " + passed);
@@ -170,6 +183,10 @@ public final class CurrentCombatCharacterizationTest {
 			"Server must retain the injected gameplay clock");
 		assertTrue(harness.server().getCombatRandom() == harness.random(),
 			"Server must retain the injected combat random source");
+		assertFalse(harness.server().getCombatDamageObserver().isEnabled(),
+			"combat characterization starts with inert damage observation");
+		assertFalse(CombatDamageObserver.NONE.isEnabled(),
+			"ordinary production observer remains inert");
 
 		final long initialMillis = harness.clock().currentTimeMillis();
 		final long initialNanos = harness.clock().nanoTime();
@@ -1433,6 +1450,137 @@ public final class CurrentCombatCharacterizationTest {
 			"non-respawning NPC remains queued for terminal unregister");
 	}
 
+	private static void resolvedDamageContracts(
+			final CurrentCombatHarness harness) {
+		final Player source = harness.player("damage contract source", 380, 380);
+		final Npc target = harness.npc(3, 381, 380);
+		final DamageRequest request = DamageRequest.resolvedLegacy(
+			source, target, DamageRequest.SourceCategory.ACTOR,
+			"fixture-resolved-damage", 14)
+			.style(CombatStyle.MELEE)
+			.hitSplatType(0)
+			.build();
+		assertEquals(DamageRequest.InputStage.RESOLVED_LEGACY,
+			request.getInputStage(), "damage input stage");
+		assertEquals(DamageRequest.SourceCategory.ACTOR,
+			request.getSourceCategory(), "damage source category");
+		assertTrue(request.getSourceSnapshot().matches(source),
+			"source snapshot starts current");
+		assertTrue(request.getTargetSnapshot().matches(target),
+			"target snapshot starts current");
+
+		final DamageResult result = DamageResult.observedCurrentPath(
+			request, 10, 0);
+		assertEquals(DamageResult.Status.OBSERVED_CURRENT_PATH,
+			result.getStatus(), "observation-only result status");
+		assertEquals(10, result.getActualDamage(), "actual damage cap");
+		assertEquals(4, result.getOverkillDamage(), "observed overkill");
+		assertTrue(result.isTargetTerminal(), "terminal Hits outcome");
+
+		source.advanceCombatLifecycle();
+		assertFalse(request.getSourceSnapshot().matches(source),
+			"captured source generation must not silently refresh");
+		boolean rejectedNegative = false;
+		try {
+			DamageRequest.resolvedLegacy(source, target,
+				DamageRequest.SourceCategory.ACTOR, "invalid", -1);
+		} catch (final IllegalArgumentException expected) {
+			rejectedNegative = true;
+		}
+		assertTrue(rejectedNegative,
+			"negative resolved damage must be rejected by the contract");
+	}
+
+	private static void pvmMeleeDamageObservation(
+			final CurrentCombatHarness harness) throws Exception {
+		final RecordingDamageObserver observer = damageObserver(harness);
+		observer.reset();
+		final Player attacker = harness.player("damage observer", 390, 390);
+		final Npc target = harness.npc(3, 391, 390);
+		target.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final PvmMeleeEvent event = new PvmMeleeEvent(
+			harness.world(), attacker, target);
+
+		CurrentCombatHarness.invokePrivate(event, "inflictDamage",
+			new Class<?>[] {Mob.class, Mob.class, int.class},
+			attacker, target, Integer.valueOf(7));
+
+		assertEquals(13, target.getLevel(Skill.HITS.id()),
+			"current melee Hits subtraction");
+		assertEquals(7, target.getUpdateFlags().getDamage().get().getDamage(),
+			"current damage update amount");
+		assertEquals(1, target.getUpdateFlags().getHitSplats().size(),
+			"current hitsplat cardinality");
+		assertEquals(7,
+			target.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"current hitsplat amount");
+		assertEquals(1, observer.results.size(),
+			"one factual observation per primary mutation");
+		final DamageResult result = observer.results.get(0);
+		assertEquals("pvm-melee-primary",
+			result.getRequest().getEffectKey(), "stable effect key");
+		assertEquals(CombatStyle.MELEE, result.getRequest().getStyle(),
+			"observed combat style");
+		assertEquals(event.getUUID(), result.getRequest().getEventId(),
+			"originating event identity");
+		assertEquals(20, result.getHitsBefore(), "observed Hits before");
+		assertEquals(7, result.getActualDamage(), "observed actual damage");
+		assertEquals(13, result.getHitsAfter(), "observed Hits after");
+		assertEquals(0, result.getOverkillDamage(), "non-overkill observation");
+		assertFalse(result.isTargetTerminal(), "nonterminal observation");
+	}
+
+	private static void damageObserverFailureIsolation(
+			final CurrentCombatHarness harness) throws Exception {
+		final RecordingDamageObserver observer = damageObserver(harness);
+		observer.reset();
+		observer.throwOnEnableCheck = true;
+		final Player setupAttacker = harness.player(
+			"failing observer setup", 400, 400);
+		final Npc setupTarget = harness.npc(3, 401, 400);
+		setupTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final PvmMeleeEvent setupEvent = new PvmMeleeEvent(
+			harness.world(), setupAttacker, setupTarget);
+		CurrentCombatHarness.invokePrivate(setupEvent, "inflictDamage",
+			new Class<?>[] {Mob.class, Mob.class, int.class},
+			setupAttacker, setupTarget, Integer.valueOf(7));
+		assertEquals(13, setupTarget.getLevel(Skill.HITS.id()),
+			"observer enable-check failure cannot prevent current damage");
+		assertEquals(1, setupTarget.getUpdateFlags().getHitSplats().size(),
+			"observer setup failure cannot suppress the hitsplat");
+		assertEquals(0, observer.calls,
+			"failed observation setup cannot publish a partial result");
+
+		observer.throwOnEnableCheck = false;
+		observer.throwOnObservation = true;
+		final Player attacker = harness.player("failing observer", 405, 400);
+		final Npc target = harness.npc(3, 406, 400);
+		target.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final PvmMeleeEvent event = new PvmMeleeEvent(
+			harness.world(), attacker, target);
+
+		CurrentCombatHarness.invokePrivate(event, "inflictDamage",
+			new Class<?>[] {Mob.class, Mob.class, int.class},
+			attacker, target, Integer.valueOf(7));
+
+		assertEquals(13, target.getLevel(Skill.HITS.id()),
+			"observer failure cannot roll back or repeat current damage");
+		assertEquals(1, target.getUpdateFlags().getHitSplats().size(),
+			"observer failure cannot duplicate the hitsplat");
+		assertEquals(1, observer.calls,
+			"failing observer is invoked exactly once");
+		observer.throwOnObservation = false;
+	}
+
+	private static RecordingDamageObserver damageObserver(
+			final CurrentCombatHarness harness) {
+		return (RecordingDamageObserver) harness.server()
+			.getCombatDamageObserver();
+	}
+
 	private static void processNpcAttack(final Player player, final Npc npc)
 			throws Exception {
 		final TargetMobStruct payload = new TargetMobStruct();
@@ -1579,6 +1727,41 @@ public final class CurrentCombatCharacterizationTest {
 
 	private interface Scenario {
 		void run(CurrentCombatHarness harness) throws Exception;
+	}
+
+	private static final class RecordingDamageObserver
+			implements CombatDamageObserver {
+		private final List<DamageResult> results =
+			new ArrayList<DamageResult>();
+		private boolean throwOnObservation;
+		private boolean throwOnEnableCheck;
+		private boolean enabled;
+		private int calls;
+
+		@Override
+		public boolean isEnabled() {
+			if (throwOnEnableCheck) {
+				throw new IllegalStateException(
+					"deliberate observer enable-check failure");
+			}
+			return enabled;
+		}
+
+		@Override
+		public void onDamageObserved(final DamageResult result) {
+			calls++;
+			if (throwOnObservation) {
+				throw new IllegalStateException("deliberate observer failure");
+			}
+			results.add(result);
+		}
+
+		void reset() {
+			results.clear();
+			calls = 0;
+			throwOnObservation = false;
+			throwOnEnableCheck = false;
+		}
 	}
 
 	private static final class RecordingAttackPlugin implements AttackNpcTrigger {

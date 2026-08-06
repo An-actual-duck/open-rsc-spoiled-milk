@@ -538,8 +538,8 @@ intent serialization, 100-tick stale-intent lease, participant generation
 guards, and validate/approach/commit integration for melee, bow, throwing,
 targeted magic, autocast, and player retaliation. Compatibility entry points
 and stateful content/plugin gates remain in place. The A01/A02 gate has grown
-from 20 to 26 executable scenarios. Integration remains subject to manager
-review of the exact READY handoff.
+from 20 to 26 executable scenarios. This work is integrated into published
+main at merge commit `d410d973c`.
 
 Scope central eligibility/reason codes and validate/approach/commit attack
 starts while preserving current movement and plugin ordering. Cover every
@@ -559,8 +559,8 @@ relationships, exact typed event slots, lifecycle snapshots, compatibility
 projections, reasoned teardown, and an explicit non-routine audit/repair path.
 Legacy opponent/event fields no longer form a second mutable graph. The
 A01–A03 gate has grown from 26 to 32 executable scenarios while preserving the
-narrow historical `inCombat()` boundary. Integration remains subject to
-manager review of the exact READY handoff.
+narrow historical `inCombat()` boundary. This work is integrated into
+published main at merge commit `4124e2bd1`.
 
 Create one directional engagement/event authority and project legacy fields
 from it. Cover one outgoing/many incoming relationships, passive retaliation,
@@ -571,6 +571,15 @@ Stop if both new and legacy state can mutate independently or if repair hides a
 routine path rather than exposing a defect.
 
 ### A05 family — damage and death, split by source
+
+A05.1 implementation record: the focused worker branch now provides immutable
+resolved-legacy damage request/result facts, lifecycle-aware participant
+snapshots, an inert production observer, safe observer-failure isolation, a
+complete current damage/death migration inventory, and one observation-only
+PvM melee boundary. It does not add a damage pipeline or move HP, contribution,
+effect, packet, or death authority. The A01–A04 gate grows from 32 to 35
+executable scenarios. Integration remains subject to manager review of the
+exact READY handoff.
 
 Use several branches rather than one migration commit:
 
