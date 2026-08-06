@@ -221,6 +221,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatChildDamageCharacterization::deathAmuletPolicies);
 			run(harness, "death_ring_preserves_charge_credit_and_caller_owned_death",
 				CurrentCombatChildDamageCharacterization::deathRingPolicies);
+			run(harness, "balrog_splash_preserves_mitigation_selection_and_child_death",
+				CurrentCombatOwnedDamageCharacterization::balrogSplashPolicies);
+			run(harness, "elder_green_dragon_preserves_style_tracking_packets_and_reflection_order",
+				CurrentCombatOwnedDamageCharacterization::elderGreenDragonPolicies);
+			run(harness, "summon_bonus_preserves_style_mitigation_credit_and_caller_death",
+				CurrentCombatOwnedDamageCharacterization::summonBonusDamagePolicies);
 			run(harness, "delayed_spell_secondary_preserves_helper_and_chase_policy",
 				CurrentCombatSecondaryDamageCharacterization::delayedSpellSecondaryHelperPolicy);
 			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",

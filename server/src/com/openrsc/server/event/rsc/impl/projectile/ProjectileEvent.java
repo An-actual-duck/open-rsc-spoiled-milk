@@ -53,6 +53,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		"projectile-blood-robe-splash";
 	private static final String DEATH_ROBE_OVERKILL_EFFECT_KEY =
 		"projectile-death-robe-overkill";
+	private static final String BALROG_MAGIC_SPLASH_EFFECT_KEY =
+		"projectile-balrog-magic-splash";
 	Mob caster, opponent;
 	protected int damage;
 	protected int windAccuracyDebuffPercent;
@@ -994,11 +996,16 @@ public class ProjectileEvent extends SingleTickEvent {
 				}
 				continue;
 			}
-			final int lastHits = splashTarget.getLevel(Skill.HITS.id());
-			splashTarget.getSkills().subtractLevel(Skill.HITS.id(), splashDamage, false);
-			final int damageDealt = Math.min(splashDamage, lastHits);
-			splashTarget.getUpdateFlags().setDamage(new Damage(splashTarget, splashDamage));
-			splashTarget.getUpdateFlags().addHitSplat(new HitSplat(splashTarget, HitSplat.TYPE_ARMOR_PROC, splashDamage));
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				balrog, splashTarget, DamageRequest.SourceCategory.OWNED_EFFECT,
+				BALROG_MAGIC_SPLASH_EFFECT_KEY, splashDamage)
+				.eventId(getUUID())
+				.style(CombatStyle.MAGIC)
+				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+				.build();
+			final DamageResult damageResult = splashTarget.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			final int damageDealt = damageResult.getLegacyDamageDealt();
 			if (impactEffectType > 0 && !trueDefenseBlocked) {
 				splashTarget.getUpdateFlags().setCombatEffect(new CombatEffect(splashTarget, impactEffectType));
 			}
