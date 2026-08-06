@@ -1331,11 +1331,17 @@ public final class CurrentCombatCharacterizationTest {
 	private static void scytheCleaveSelection(final CurrentCombatHarness harness)
 			throws Exception {
 		final Player player = harness.player("scythe user", 310, 310);
+		harness.equip(player, MyWorldItemId.POISONED_EXALTED_RUNE_SCYTHE, 1);
 		final Npc primary = harness.npc(3, 311, 310);
 		final Npc adjacent = harness.npc(3, 310, 311);
 		final Npc distant = harness.npc(3, 313, 310);
 		final PvmMeleeEvent event = new PvmMeleeEvent(
 			harness.world(), player, primary);
+		final Method equipped = PvmMeleeEvent.class.getDeclaredMethod(
+			"isScytheEquipped", Player.class);
+		equipped.setAccessible(true);
+		assertTrue(((Boolean) equipped.invoke(event, player)).booleanValue(),
+			"poisoned Exalted Rune Scythe retains sweeping attack recognition");
 		final Method selection = PvmMeleeEvent.class.getDeclaredMethod(
 			"isValidScytheCleaveTarget", Player.class, Npc.class, Npc.class);
 		selection.setAccessible(true);
