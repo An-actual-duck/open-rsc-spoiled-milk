@@ -1,5 +1,9 @@
 # A05.1 Damage Request, Result, and Observation Foundation
 
+This is the historical A05.1 foundation record. A05.2's bounded primary-melee
+authority continuation is documented in
+`docs/combat/combat-a05-direct-melee-damage-transaction.md`.
+
 ## Outcome and authority boundary
 
 A05.1 adds immutable `DamageRequest` and `DamageResult` facts plus an optional
@@ -177,8 +181,9 @@ behavior changes, so A05.1 has no private visual acceptance surface.
 
 ## Next bounded branches and stop conditions
 
-1. **A05.2 direct melee primary:** migrate only the two main melee primary-hit
-   blocks after exact hook/cardinality fixtures exist.
+1. **A05.2 direct melee primary:** implemented on its focused branch with both
+   main melee mutation blocks and exact parity fixtures; manager integration
+   remains the acceptance boundary.
 2. **A05.3 projectile primary:** migrate ranged/magic primary impacts without
    changing launch or settlement timing.
 3. **A05.4 secondary/reflection/environmental:** define explicit source policy

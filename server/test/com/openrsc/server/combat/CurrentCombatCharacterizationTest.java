@@ -174,8 +174,10 @@ public final class CurrentCombatCharacterizationTest {
 			damageObserver.enabled = true;
 			run(harness, "resolved_damage_contracts_are_immutable_and_lifecycle_aware",
 				CurrentCombatCharacterizationTest::resolvedDamageContracts);
-			run(harness, "pvm_melee_observation_reports_current_factual_outcome",
-				CurrentCombatCharacterizationTest::pvmMeleeDamageObservation);
+			run(harness, "both_primary_melee_transactions_report_applied_outcomes",
+				CurrentCombatCharacterizationTest::primaryMeleeDamageTransactions);
+			run(harness, "both_primary_melee_paths_preserve_shared_hits_mitigation",
+				CurrentCombatCharacterizationTest::primaryMeleeSharedHitsMitigation);
 			run(harness, "damage_observer_failure_cannot_change_current_settlement",
 				CurrentCombatCharacterizationTest::damageObserverFailureIsolation);
 		}
@@ -193,6 +195,8 @@ public final class CurrentCombatCharacterizationTest {
 			"combat characterization starts with inert damage observation");
 		assertFalse(CombatDamageObserver.NONE.isEnabled(),
 			"ordinary production observer remains inert");
+		assertNotNull(harness.server().getResolvedDamageTransaction(),
+			"server owns the resolved damage transaction");
 
 		final long initialMillis = harness.clock().currentTimeMillis();
 		final long initialNanos = harness.clock().nanoTime();
@@ -1631,9 +1635,9 @@ public final class CurrentCombatCharacterizationTest {
 			actual.targetCombatState, path + " target terminal state");
 		assertEquals(com.openrsc.server.model.entity.KillType.COMBAT,
 			actual.killType, path + " kill type");
-		assertEquals(22, actual.meleeExperience,
+		assertEquals(27, actual.meleeExperience,
 			path + " melee XP settlement");
-		assertEquals(22, actual.hitsExperience,
+		assertEquals(9, actual.hitsExperience,
 			path + " Hits XP settlement");
 	}
 
@@ -1663,6 +1667,14 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(10, result.getActualDamage(), "actual damage cap");
 		assertEquals(4, result.getOverkillDamage(), "observed overkill");
 		assertTrue(result.isTargetTerminal(), "terminal Hits outcome");
+		final DamageResult compatibilityAdjusted = DamageResult.appliedCurrentPath(
+			request, 10, 1);
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			compatibilityAdjusted.getStatus(), "applied result status");
+		assertEquals(9, compatibilityAdjusted.getActualDamage(),
+			"factual damage after shared Hits compatibility mitigation");
+		assertEquals(10, compatibilityAdjusted.getLegacyDamageDealt(),
+			"legacy post-hit value remains request-capped");
 
 		source.advanceCombatLifecycle();
 		assertFalse(request.getSourceSnapshot().matches(source),
@@ -1678,7 +1690,7 @@ public final class CurrentCombatCharacterizationTest {
 			"negative resolved damage must be rejected by the contract");
 	}
 
-	private static void pvmMeleeDamageObservation(
+	private static void primaryMeleeDamageTransactions(
 			final CurrentCombatHarness harness) throws Exception {
 		final RecordingDamageObserver observer = damageObserver(harness);
 		observer.reset();
@@ -1705,6 +1717,8 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(1, observer.results.size(),
 			"one factual observation per primary mutation");
 		final DamageResult result = observer.results.get(0);
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			result.getStatus(), "PvM transaction result status");
 		assertEquals("pvm-melee-primary",
 			result.getRequest().getEffectKey(), "stable effect key");
 		assertEquals(CombatStyle.MELEE, result.getRequest().getStyle(),
@@ -1716,6 +1730,40 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(13, result.getHitsAfter(), "observed Hits after");
 		assertEquals(0, result.getOverkillDamage(), "non-overkill observation");
 		assertFalse(result.isTargetTerminal(), "nonterminal observation");
+
+		final Player reciprocalAttacker = harness.player(
+			"damage reciprocal", 395, 390);
+		final Npc reciprocalTarget = harness.npc(3, 396, 390);
+		reciprocalTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final CombatEvent reciprocalEvent = new CombatEvent(
+			harness.world(), reciprocalAttacker, reciprocalTarget);
+		CurrentCombatHarness.invokePrivate(reciprocalEvent, "inflictDamage",
+			new Class<?>[] {Mob.class, Mob.class, int.class},
+			reciprocalAttacker, reciprocalTarget, Integer.valueOf(7));
+
+		assertEquals(13, reciprocalTarget.getLevel(Skill.HITS.id()),
+			"reciprocal melee Hits subtraction");
+		assertEquals(1, reciprocalTarget.getUpdateFlags().getHitSplats().size(),
+			"reciprocal melee hitsplat cardinality");
+		assertEquals(2, observer.results.size(),
+			"one transaction result from each primary melee path");
+		final DamageResult reciprocalResult = observer.results.get(1);
+		assertEquals(DamageResult.Status.APPLIED_CURRENT_PATH,
+			reciprocalResult.getStatus(), "reciprocal transaction result status");
+		assertEquals("reciprocal-melee-primary",
+			reciprocalResult.getRequest().getEffectKey(),
+			"reciprocal stable effect key");
+		assertEquals(CombatStyle.MELEE,
+			reciprocalResult.getRequest().getStyle(),
+			"reciprocal combat style");
+		assertEquals(reciprocalEvent.getUUID(),
+			reciprocalResult.getRequest().getEventId(),
+			"reciprocal event identity");
+		assertEquals(7, reciprocalResult.getActualDamage(),
+			"reciprocal actual damage");
+		assertEquals(13, reciprocalResult.getHitsAfter(),
+			"reciprocal Hits after");
 	}
 
 	private static void damageObserverFailureIsolation(
@@ -1760,6 +1808,64 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(1, observer.calls,
 			"failing observer is invoked exactly once");
 		observer.throwOnObservation = false;
+	}
+
+	private static void primaryMeleeSharedHitsMitigation(
+			final CurrentCombatHarness harness) throws Exception {
+		final RecordingDamageObserver observer = damageObserver(harness);
+		observer.reset();
+		assertSharedHitsMitigation(harness, observer, true, 460);
+		assertSharedHitsMitigation(harness, observer, false, 470);
+		assertEquals(2, observer.results.size(),
+			"one shared-Hits result from each primary melee path");
+	}
+
+	private static void assertSharedHitsMitigation(
+			final CurrentCombatHarness harness,
+			final RecordingDamageObserver observer, final boolean pvm,
+			final int baseX) throws Exception {
+		final Npc attacker = harness.npc(3, baseX, 420);
+		final Player target = harness.player("goblin " + baseX, baseX + 1, 420);
+		for (int itemId : new int[] {
+				ItemId.GOBLIN_HIDE_COIF.id(),
+				ItemId.GOBLIN_HIDE_GLOVES.id(),
+				ItemId.GOBLIN_HIDE_BOOTS.id(),
+				ItemId.GOBLIN_HIDE_CHAPS.id(),
+				ItemId.GOBLIN_HIDE_CUIRASS.id()}) {
+			harness.equip(target, itemId, 1);
+		}
+		target.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 5, 40, false);
+		forceNextLegacyRandomBelow(0.05D);
+		invokePrimaryMelee(pvm, harness, attacker, target, 7);
+
+		final String path = pvm ? "PvM" : "reciprocal";
+		assertEquals(1, target.getLevel(Skill.HITS.id()),
+			path + " Goblin Tenacity Hits settlement");
+		assertEquals(7, target.getUpdateFlags().getDamage().get().getDamage(),
+			path + " preserves displayed pre-Tenacity damage");
+		assertEquals(1, target.getUpdateFlags().getHitSplats().size(),
+			path + " Tenacity hitsplat cardinality");
+		assertEquals(7, target.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			path + " preserves pre-Tenacity hitsplat amount");
+		final DamageResult result = observer.results.get(observer.results.size() - 1);
+		assertEquals(4, result.getActualDamage(),
+			path + " factual post-Tenacity HP damage");
+		assertEquals(5, result.getLegacyDamageDealt(),
+			path + " historical post-hit hook damage");
+		assertFalse(result.isTargetTerminal(),
+			path + " Tenacity prevents terminal settlement");
+	}
+
+	private static void forceNextLegacyRandomBelow(final double threshold) {
+		for (long seed = 0L; seed < 100_000L; seed++) {
+			final java.util.Random candidate = new java.util.Random(seed);
+			if (candidate.nextDouble() < threshold) {
+				DataConversions.getRandom().setSeed(seed);
+				return;
+			}
+		}
+		throw new AssertionError("No deterministic legacy random seed found");
 	}
 
 	private static RecordingDamageObserver damageObserver(

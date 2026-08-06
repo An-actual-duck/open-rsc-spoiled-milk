@@ -46,6 +46,7 @@ import com.openrsc.server.net.rsc.Crypto;
 import com.openrsc.server.plugins.handler.PluginHandler;
 import com.openrsc.server.plugins.triggers.StartupTrigger;
 import com.openrsc.server.runtime.CombatDamageObserver;
+import com.openrsc.server.runtime.ResolvedDamageTransaction;
 import com.openrsc.server.runtime.GameClock;
 import com.openrsc.server.runtime.GameRandom;
 import com.openrsc.server.runtime.ProductionGameRandom;
@@ -121,6 +122,7 @@ public class Server implements Runnable {
 	private final GameClock gameClock;
 	private final GameRandom combatRandom;
 	private final CombatDamageObserver combatDamageObserver;
+	private final ResolvedDamageTransaction resolvedDamageTransaction;
 	private final WorldEditStorageContext worldEditStorage;
 	private final WorldEditorSessionManager worldEditorSessions;
 
@@ -497,6 +499,7 @@ public class Server implements Runnable {
 		this.combatRandom = Objects.requireNonNull(combatRandom, "combatRandom");
 		this.combatDamageObserver = Objects.requireNonNull(
 			combatDamageObserver, "combatDamageObserver");
+		this.resolvedDamageTransaction = new ResolvedDamageTransaction();
 		config = new ServerConfiguration();
 		getConfig().initConfig(configFile);
 		processNetworkConfiguration = getConfig().processNetworkConfiguration();
@@ -1925,6 +1928,10 @@ public class Server implements Runnable {
 
 	public final CombatDamageObserver getCombatDamageObserver() {
 		return combatDamageObserver;
+	}
+
+	public final ResolvedDamageTransaction getResolvedDamageTransaction() {
+		return resolvedDamageTransaction;
 	}
 
 	public final GameStateUpdater getGameUpdater() {

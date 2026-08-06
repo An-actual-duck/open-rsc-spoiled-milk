@@ -42,14 +42,25 @@ public final class CombatDamageObservation {
 		if (request == null) {
 			return;
 		}
+		publish(DamageResult.observedCurrentPath(request, hitsBefore, hitsAfter));
+	}
+
+	/** Safely publishes a result without allowing observation to affect combat. */
+	public static void publish(final DamageResult result) {
+		if (result == null) {
+			return;
+		}
 		try {
-			request.getTarget().getWorld().getServer().getCombatDamageObserver()
-				.onDamageObserved(DamageResult.observedCurrentPath(
-					request, hitsBefore, hitsAfter));
+			final CombatDamageObserver observer = result.getRequest().getTarget()
+				.getWorld().getServer().getCombatDamageObserver();
+			if (!observer.isEnabled()) {
+				return;
+			}
+			observer.onDamageObserved(result);
 		} catch (final RuntimeException observerFailure) {
 			LOGGER.warn(
 				"Combat damage observation failed for effect {}; gameplay result remains authoritative",
-				request.getEffectKey(), observerFailure);
+				result.getRequest().getEffectKey(), observerFailure);
 		}
 	}
 
