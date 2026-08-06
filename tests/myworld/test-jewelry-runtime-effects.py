@@ -597,10 +597,36 @@ def ensure_runtime_paths_are_wired() -> None:
                   "Elemental defense should come from the equipped Necklace neck slot")
 
     require("getWealthChance(owner)" in drop_table, "Cosmic rings should feed drop-table wealth chance")
-    require("allowExtraRoll && !result.receivedRareTableReward && wealthChance > 0.0D" in drop_table,
-            "Cosmic rings should only reroll when the primary roll produced no rare-table reward")
-    require("result.merge(rollRareTableChance(owner, contributionScale));" in drop_table,
-            "Cosmic rings should only retry the monster rare-table chance")
+    drop_roll = java_method_body(
+        drop_table,
+        "private RollResult rollItem(double wealthChance, Player owner, boolean allowExtraRoll, "
+        "double contributionScale, boolean scaleRareNormalDrops, boolean suppressRareTables)",
+    )
+    wealth_guard_match = re.search(
+        r"if\s*\((.*?)\)\s*\{\s*owner\s*\.\s*playerServerMessage\s*"
+        r"\(\s*MessageType\s*\.\s*QUEST\s*,\s*\"@ora@Your ring of wealth shines brightly!\"\s*\)",
+        drop_roll,
+        flags=re.S,
+    )
+    require(wealth_guard_match is not None,
+            "Cosmic ring retry should remain inside the wealth notification guard")
+    wealth_guard = wealth_guard_match.group(1)
+    for pattern, message in (
+        (r"\ballowExtraRoll\b", "Cosmic ring retry should require extra rolls to be enabled"),
+        (r"!\s*result\s*\.\s*receivedRareTableReward\b",
+         "Cosmic ring retry should require the primary roll to miss rare-table rewards"),
+        (r"wealthChance\s*>\s*0(?:\.0+)?D?\b",
+         "Cosmic ring retry should require a positive wealth chance"),
+        (r"random\s*\.\s*nextDouble\s*\(\s*\)\s*<\s*wealthChance\b",
+         "Cosmic ring retry should require the random roll to pass"),
+    ):
+        require_regex(wealth_guard, pattern, message)
+    require_regex(
+        drop_roll,
+        r"result\s*\.\s*merge\s*\(\s*rollRareTableChance\s*"
+        r"\(\s*owner\s*,\s*contributionScale\s*\)\s*\)\s*;",
+        "Cosmic rings should only retry the monster rare-table chance",
+    )
     require("drop.type == dropType.TABLE && drop.table.isRare()" in drop_table,
             "Ring of wealth retry should ignore standard monster-table drops")
     require("result.hitRareTable = true;" in drop_table,
@@ -861,23 +887,97 @@ def ensure_runtime_paths_are_wired() -> None:
     require("getLifeAmuletSummonMaxDamageBonus" in summoning,
             "Life amulet should increase combat summon max damage")
 
-    for text, label in (
-        (combat_event, "melee"),
-        (pvm_melee, "PvM melee"),
-        (projectile_event, "projectile"),
-    ):
-        require("getChaosNecklaceChainLightningChance" in text
-                and "CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3" in text
-                and "selectChaosChainLightningTarget" in text
-                and "DataConversions.getRandom().nextDouble() >= chainChance" in text
-                and "new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop))" in text
-                and "Projectile.CHAIN_LIGHTNING_A" in text
-                and "Projectile.CHAIN_LIGHTNING_B" in text
-                and "Projectile.CHAIN_LIGHTNING_C" in text
-                and "Math.ceil(chainDamage / 2.0D)" in text
-                and "!Summoning.isSummon(npc)" in text
-                and "HitSplat.TYPE_ARMOR_PROC" in text,
-                f"Chaos necklace {label} chain lightning should roll each hop, use A/B/C projectiles, avoid summons, and use yellow hitsplats")
+    chain_paths = (
+        (
+            combat_event,
+            "melee",
+            "private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage)",
+            "private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget)",
+            "private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage)",
+            (
+                r"!\s*hitter\s*\.\s*isPlayer\s*\(\s*\)",
+                r"baseDamage\s*<=\s*0",
+                r"!\s*target\s*\.\s*isNpc\s*\(\s*\)",
+            ),
+        ),
+        (
+            pvm_melee,
+            "PvM melee",
+            "private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage)",
+            "private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget)",
+            "private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage)",
+            (
+                r"!\s*hitter\s*\.\s*isPlayer\s*\(\s*\)",
+                r"baseDamage\s*<=\s*0",
+                r"!\s*target\s*\.\s*isNpc\s*\(\s*\)",
+            ),
+        ),
+        (
+            projectile_event,
+            "projectile",
+            "private void applyChaosAmuletChainLightning()",
+            "private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor)",
+            "private void inflictChainLightningDamage(final Player casterPlayer, final Mob chainTarget, int chainDamage)",
+            (
+                r"!\s*caster\s*\.\s*isPlayer\s*\(\s*\)",
+                r"secondaryEffectDamage\s*<=\s*0",
+                r"!\s*opponent\s*\.\s*isNpc\s*\(\s*\)",
+            ),
+        ),
+    )
+    for text, label, apply_signature, select_signature, damage_signature, eligibility_guards in chain_paths:
+        apply_chain = java_method_body(text, apply_signature)
+        select_chain = java_method_body(text, select_signature)
+        chain_projectile = java_method_body(
+            text,
+            "private int getChaosChainLightningProjectile(final int hop)",
+        )
+        inflict_chain = java_method_body(text, damage_signature)
+        for pattern, guard_label in (
+            *((pattern, "primary attack eligibility") for pattern in eligibility_guards),
+            (r"Summoning\s*\.\s*isPlayerAreaEffectSuppressed\s*\(", "Guard Dog AoE suppression"),
+            (r"chainChance\s*<=\s*0(?:\.0+)?D?\b", "non-positive proc chance"),
+            (
+                r"(?:DataConversions\s*\.\s*getRandom|combatRandom)\s*\(\s*\)\s*"
+                r"\.\s*nextDouble\s*\(\s*\)\s*>=\s*chainChance\b",
+                "per-hop chance roll",
+            ),
+            (r"chainTarget\s*==\s*null", "missing-target rejection"),
+        ):
+            require_regex(apply_chain, pattern,
+                          f"Chaos necklace {label} chain lightning {guard_label} is missing")
+        require_regex(
+            apply_chain,
+            r"new\s+Projectile\s*\(\s*anchor\s*,\s*chainTarget\s*,\s*"
+            r"getChaosChainLightningProjectile\s*\(\s*hop\s*\)\s*\)",
+            f"Chaos necklace {label} chain lightning projectile launch is missing",
+        )
+        require_regex(
+            apply_chain,
+            r"Math\s*\.\s*ceil\s*\(\s*chainDamage\s*/\s*2(?:\.0+)?D?\s*\)",
+            f"Chaos necklace {label} chain lightning damage falloff is missing",
+        )
+        for projectile_name in ("A", "B", "C"):
+            require_regex(
+                chain_projectile,
+                rf"Projectile\s*\.\s*CHAIN_LIGHTNING_{projectile_name}\b",
+                f"Chaos necklace {label} chain lightning projectile {projectile_name} is missing",
+            )
+        require_regex(
+            select_chain,
+            r"!\s*Summoning\s*\.\s*isSummon\s*\(\s*npc\s*\)",
+            f"Chaos necklace {label} chain lightning summon exclusion is missing",
+        )
+        require_regex(
+            inflict_chain,
+            r"HitSplat\s*\.\s*TYPE_ARMOR_PROC\b",
+            f"Chaos necklace {label} chain lightning yellow hitsplat is missing",
+        )
+        require_regex(
+            text,
+            r"\bCHAOS_CHAIN_LIGHTNING_MAX_HOPS\s*=\s*3\b",
+            f"Chaos necklace {label} chain lightning should retain its three-hop limit",
+        )
     require("getChaosRecoilChance" in combat_event
             and "getChaosRecoilChance" in pvm_melee
             and "getChaosRecoilChance" in projectile_event

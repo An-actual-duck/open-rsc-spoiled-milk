@@ -35,6 +35,24 @@ def require_regex(text: str, pattern: str, label: str) -> None:
 		fail(f"{label} missing expected pattern: {pattern}")
 
 
+def java_method_body(text: str, signature: str) -> str:
+	start = text.find(signature)
+	if start == -1:
+		fail(f"Missing Java method signature: {signature}")
+	opening_brace = text.find("{", start)
+	if opening_brace == -1:
+		fail(f"Missing Java method body: {signature}")
+	depth = 0
+	for index in range(opening_brace, len(text)):
+		if text[index] == "{":
+			depth += 1
+		elif text[index] == "}":
+			depth -= 1
+			if depth == 0:
+				return text[opening_brace + 1:index]
+	fail(f"Unterminated Java method body: {signature}")
+
+
 def main() -> None:
 	equipment = EQUIPMENT.read_text(encoding="utf-8")
 	player = PLAYER.read_text(encoding="utf-8")
@@ -106,7 +124,21 @@ def main() -> None:
 	require(projectile_event, "applyRobeDamageMitigation(damage, magicElement)", "Typed projectile damage should use elemental robe resistance")
 	require(projectile_event, "applyBloodRobeSplash((Player) caster, damageDealt);", "Blood robe should splash from actual blood spell projectile damage")
 	require(projectile_event, "applyDeathRobeOverkillSplash((Player) caster, (Npc) opponent, damage - lastHits);", "Death robe should splash projectile overkill")
-	require_regex(projectile_event, r"if \(!bloodSpell \|\| opponent == null \|\| !opponent\.isNpc\(\)\)", "Blood splash should be blood-spell and NPC gated")
+	blood_splash = java_method_body(
+		projectile_event,
+		"private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt)",
+	)
+	guard_match = re.search(r"if\s*\((.*?)\)\s*\{\s*return\s*;", blood_splash, re.DOTALL)
+	if guard_match is None:
+		fail("Blood splash should begin with a rejecting guard clause")
+	blood_splash_guard = guard_match.group(1)
+	for pattern, label in (
+		(r"Summoning\s*\.\s*isPlayerAreaEffectSuppressed\s*\(\s*casterPlayer\s*\)", "Guard Dog AoE suppression"),
+		(r"!\s*bloodSpell\b", "blood-spell requirement"),
+		(r"opponent\s*==\s*null", "missing-opponent rejection"),
+		(r"!\s*opponent\s*\.\s*isNpc\s*\(\s*\)", "non-NPC rejection"),
+	):
+		require_regex(blood_splash_guard, pattern, f"Blood splash {label}")
 
 	require(pvm_melee_event, "applyDeathRobeOverkillSplash((Player) hitter, (Npc) target, rawDamage - lastHits);", "Death robe should splash PvM melee overkill")
 	require(pvm_melee_event, "applyDeathRobeOverkillSplash(player, npc, damage - lastHits);", "Death robe should splash scythe cleave overkill")
