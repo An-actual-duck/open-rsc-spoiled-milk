@@ -588,15 +588,24 @@ through a server-owned resolved-damage transaction. All formulas, mitigation,
 post-hit effects, packets, death, XP, drops, and plugin authority remain in
 their original event order. The gate grows from 35 to 38 scenarios.
 
-A05.3 implementation record: the focused worker branch adds executable
+A05.3 completion record: published main at merge commit `06580f6e0` adds executable
 settlement and transaction-result parity for player bow/crossbow, thrown,
 player magic, NPC magic/ranged, summon magic/ranged, Iban, and cannon primary
 impacts. Only the adjacent primary Hits subtraction, damage update, and
 hitsplat move through the same resolved-damage transaction. Unknown
 compatibility types and every secondary/reflection/AoE path remain local. The
-gate grows from 38 to 42 scenarios; manager review of the exact READY handoff
-remains the integration boundary. The complete boundary is recorded in
+gate grows from 38 to 42 scenarios. The complete boundary is recorded in
 [`docs/combat/combat-a05-primary-projectile-damage-transaction.md`](../../combat/combat-a05-primary-projectile-damage-transaction.md).
+
+A05.4 implementation record: the focused inventory branch changes no
+production damage or death authority. It identifies every remaining direct
+Hits mutation and `Mob.damage` compatibility caller, records mitigation,
+attribution, presentation, contribution, lifesteal, aggro, death, packet, and
+hook-order policy by family, and divides later work into bounded branches. Four
+representative runtime scenarios grow the gate from 42 to 46. The exact
+inventory is recorded in
+[`docs/combat/combat-a05-secondary-damage-characterization.md`](../../combat/combat-a05-secondary-damage-characterization.md);
+manager review of the exact READY handoff remains the integration boundary.
 
 Use several branches rather than one migration commit:
 

@@ -151,3 +151,11 @@ proves non-primary compatibility and chain-lightning damage remain outside the
 transaction. Only the adjacent primary-impact Hits/damage-update/hitsplat block
 moves; the boundary is recorded in
 [`combat-a05-primary-projectile-damage-transaction.md`](combat-a05-primary-projectile-damage-transaction.md).
+
+A05.4 grows the gate from 42 to 46 scenarios without moving production damage
+authority. Its representative fixtures pin the compatibility helper's
+death-before-presentation order, poison/burn distinctions, secondary
+Magic/combat contribution, Frostbite/Thorns attribution, hitsplats, death
+callback cardinality, and delayed god/Iban helper/chase behavior. The exhaustive
+inventory and deliberately split follow-up families are recorded in
+[`combat-a05-secondary-damage-characterization.md`](combat-a05-secondary-damage-characterization.md).
