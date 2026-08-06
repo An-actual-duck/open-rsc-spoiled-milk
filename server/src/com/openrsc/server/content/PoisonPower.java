@@ -1,6 +1,7 @@
 package com.openrsc.server.content;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 
 public final class PoisonPower {
 
@@ -22,6 +23,9 @@ public final class PoisonPower {
 	}
 
 	private static int getWeaponTier(final int itemId) {
+		if (isPoisonedExaltedRuneWeapon(itemId)) {
+			return 12;
+		}
 		final ItemId item = ItemId.getById(itemId);
 		if (item == null) {
 			return -1;
@@ -70,5 +74,15 @@ public final class PoisonPower {
 			return 11;
 		}
 		return -1;
+	}
+
+	private static boolean isPoisonedExaltedRuneWeapon(final int itemId) {
+		switch (itemId) {
+			case MyWorldItemId.POISONED_EXALTED_RUNE_DAGGER:
+			case MyWorldItemId.POISONED_EXALTED_RUNE_SPEAR:
+				return true;
+			default:
+				return false;
+		}
 	}
 }

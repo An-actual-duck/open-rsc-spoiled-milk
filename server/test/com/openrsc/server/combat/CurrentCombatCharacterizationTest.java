@@ -4,6 +4,8 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.Spells;
+import com.openrsc.server.constants.custom.MyWorldItemId;
+import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.cleric.ClericSpellId;
 import com.openrsc.server.content.cleric.ClericSupportTargeting;
 import com.openrsc.server.content.cleric.effect.ClericEffectCatalog;
@@ -152,6 +154,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::ordinaryNpcRetreatAndReengagement);
 			run(harness, "npc_poison_clears_on_death_and_respawn",
 				CurrentCombatCharacterizationTest::poisonDeathAndRespawn);
+			run(harness, "poisoned_exalted_rune_dagger_and_spear_apply_tier_twelve_poison",
+				CurrentCombatCharacterizationTest::poisonedExaltedRuneWeaponPower);
 			run(harness, "cleric_ward_aegis_rally_thorns_order",
 				CurrentCombatCharacterizationTest::clericDirectEffectOrder);
 			run(harness, "summon_damage_contributes_to_owner_credit_not_style_xp",
@@ -1214,6 +1218,26 @@ public final class CurrentCombatCharacterizationTest {
 		assertFalse(npc.isRespawning(), "respawn callback must restore live state");
 		assertEquals(0, npc.getCurrentPoisonPower(), "respawn poison power");
 		assertTrue(npc.canReceivePoison(), "new NPC lifetime may receive new poison");
+	}
+
+	private static void poisonedExaltedRuneWeaponPower(
+			final CurrentCombatHarness harness) {
+		final int[] poisonedWeapons = {
+			MyWorldItemId.POISONED_EXALTED_RUNE_DAGGER,
+			MyWorldItemId.POISONED_EXALTED_RUNE_SPEAR
+		};
+		for (int weaponId : poisonedWeapons) {
+			assertTrue(PoisonPower.isPoisonWeapon(weaponId),
+				"Exalted Rune poisoned weapon classification " + weaponId);
+			assertEquals(120, PoisonPower.getWeaponMaxPoisonPower(weaponId),
+				"Exalted Rune poisoned weapon ceiling " + weaponId);
+			assertEquals(48, PoisonPower.getWeaponAppliedPoisonPower(weaponId),
+				"Exalted Rune poisoned weapon application " + weaponId);
+		}
+		assertFalse(PoisonPower.isPoisonWeapon(MyWorldItemId.EXALTED_RUNE_DAGGER),
+			"unpoisoned Exalted Rune weapon must remain inert");
+		assertFalse(PoisonPower.isPoisonWeapon(MyWorldItemId.EXALTED_RUNE_HATCHET),
+			"Exalted Rune gathering tools must remain outside weapon poison");
 	}
 
 	private static void clericDirectEffectOrder(final CurrentCombatHarness harness)

@@ -17,7 +17,7 @@ FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefi
 
 EXPECTED: dict[str, tuple[int, str]] = {
     "npcs": (846, "7204acb9e7297698045065e47a7264b63f6ccafbd5752b830aef0f75550d3852"),
-    "items": (3309, "b5a717a05e371091b6ec2a2e9f3c71b3b1bfe652527ff8db2bb076efcae5a520"),
+    "items": (3311, "0c3a6f0bf06a68deafd530c9b5b4bf74400e2127eb8f2f4ebb4cd117d721f079"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
     "animations": (1081, "40b82671b48b1a25f2ed7ccc3062ffbbaa2e1a34c85b663be215a4d19f1f3a0e"),
     "projectiles": (41, "c79c74303e8ce5c5c345640227a0023ccbc63285f0a652f404794c35c1d5385f"),
@@ -201,7 +201,7 @@ public final class ClientDefinitionRegistryFixture {
 		}
 		for (String line : lines) {
 			if (!line.startsWith("CLIENT_ITEM_DEF_FALLBACK requestedId=")
-				|| !line.contains(" reason=out-of-range itemCount=3309")) {
+				|| !line.contains(" reason=out-of-range itemCount=3311")) {
 				throw new AssertionError("Malformed fallback diagnostic: " + line);
 			}
 		}

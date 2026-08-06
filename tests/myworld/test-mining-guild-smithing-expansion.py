@@ -80,7 +80,7 @@ def main() -> None:
     )
 
     require("DRAGON_SULFUR(3255)" in item_id, "ItemId should reserve Dragon sulfur")
-    require("public static final int maxCustom = 3309;" in item_id, "ItemId.maxCustom should include Dragon sulfur")
+    require("public static final int maxCustom = 3311;" in item_id, "ItemId.maxCustom should include current custom items")
     require("ROCK_DRAGON_SULFUR(1328)" in scenery_id, "SceneryId should reserve the Dragon sulfur rock")
 
     dragon_sulfur = custom_items.get(3255)

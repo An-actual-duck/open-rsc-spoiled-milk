@@ -13521,6 +13521,28 @@
       "requiredSkillID": -1,
       "meleeDefense": 45,
       "rangedDefense": 15
+    },
+    {
+      "id": 3309,
+      "name": "Poisoned Exalted Rune dagger",
+      "meleeOffense": 24,
+      "weaponSpeed": 5,
+      "weaponAimBonus": 30,
+      "weaponPowerBonus": 30,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
+    },
+    {
+      "id": 3310,
+      "name": "Poisoned Exalted Rune Spear",
+      "meleeOffense": 51,
+      "weaponSpeed": 3,
+      "weaponAimBonus": 46,
+      "weaponPowerBonus": 26,
+      "basePrice": 52000,
+      "requiredLevel": 90,
+      "requiredSkillID": 0
     }
   ]
 }

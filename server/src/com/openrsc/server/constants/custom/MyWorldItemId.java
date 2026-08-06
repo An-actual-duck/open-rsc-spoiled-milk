@@ -33,6 +33,8 @@ public final class MyWorldItemId {
 	public static final int DIAMOND_MEDALLION = 3290;
 	public static final int DRAGONSTONE_MEDALLION = 3291;
 	public static final int GOLD_BANGLE = 3292;
+	public static final int POISONED_EXALTED_RUNE_DAGGER = 3309;
+	public static final int POISONED_EXALTED_RUNE_SPEAR = 3310;
 
 	private MyWorldItemId() {
 	}

@@ -5469,6 +5469,10 @@ public class EntityHandler {
 			156000, 9, "items:9", false, true, 644, EXALTED_RUNE_COLOR, true, false, true, 3279));
 		setCustomItemDefinition(3280, new ItemDef("Exalted Rune Plate Mail Body", "Excellent shining protection. 5% True Defense chance", "",
 			260000, 8, "items:8", false, true, 322, EXALTED_RUNE_COLOR, true, false, true, 3280));
+		setCustomItemDefinition(3309, new ItemDef("Poisoned Exalted Rune dagger", "Short, radiant, and coated with venom", "",
+			52000, 80, "items:80", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3309));
+		setCustomItemDefinition(3310, new ItemDef("Poisoned Exalted Rune Spear", "A shining pointed stick coated with venom", "",
+			52000, 283, "items:283", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3310));
 	}
 
 	private static void addBangleJewelryDefinitions() {

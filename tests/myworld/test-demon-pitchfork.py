@@ -49,7 +49,7 @@ def main() -> None:
     myworld_items = load_items(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json")
 
     require("DEMON_PITCHFORK(3239)" in item_id, "ItemId should reserve Demon pitchfork")
-    require("public static final int maxCustom = 3309;" in item_id, "maxCustom should include Demon pitchfork")
+    require("public static final int maxCustom = 3311;" in item_id, "maxCustom should include current custom items")
     require("SHEARS(1042, WEAPON)" in appearance_id, "AppearanceId should reserve universal shears")
     require("DEMON_PITCHFORK(1043, WEAPON)" in appearance_id, "AppearanceId should reserve Demon pitchfork")
 

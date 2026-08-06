@@ -32,7 +32,7 @@ def main() -> None:
         3254: ("GUTHIX_MACE", "Guthix mace", 1045, "GUTHIX", "guthix-mace-icon", "0xC2A678"),
     }
 
-    require("public static final int maxCustom = 3309;" in item_id, "ItemId.maxCustom should include god maces")
+    require("public static final int maxCustom = 3311;" in item_id, "ItemId.maxCustom should include current custom items")
     require("GOD_MACE_PRAYER_REQUIREMENT = 80" in equipment, "God maces should require 80 Worship")
     require("GOD_MACE_DEVOTION_REQUIREMENT" not in equipment, "God maces should not require current devotion to wield")
     require("Devotion.getDevotionLevel(player, godLine)" not in equipment, "God mace devotion is an acquisition gate, not a wield gate")
