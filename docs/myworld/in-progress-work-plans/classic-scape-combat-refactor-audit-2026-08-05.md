@@ -731,8 +731,8 @@ recovery, damage, animation, or authentic-client packet order.
 Status: A07.1 is implemented on its focused branch, pending manager review. It
 adds a typed, exact-size catalog for all 39 current secondary-damage settlement
 identities and replaces duplicated key literals without moving behavior. The
-compiled fixture proves that the current inventory already exceeds the
-upstream 32-effect assumption. Exact current policies and bounded A07.2-A07.5
+compiled fixture proves that 32 cannot be used as a total catalog capacity;
+per-phase work sizing remains A07.2. Exact current policies and bounded A07.2-A07.5
 follow-ups are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md).
 

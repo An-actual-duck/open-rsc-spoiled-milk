@@ -63,7 +63,7 @@ final class CurrentCombatSecondaryEffectPolicyCharacterization {
 		assertEquals(39, SecondaryEffectPolicy.currentPolicyCount(),
 			"current secondary-effect policy count");
 		assertTrue(SecondaryEffectPolicy.currentPolicyCount() > 32,
-			"current catalog proves the imported 32-entry cap is insufficient");
+			"32 entries cannot be used as a total catalog capacity");
 		assertEquals(expected, policies.keySet(),
 			"stable secondary-effect key inventory");
 		assertEquals(expected.size(), SecondaryEffectPolicy.values().length,

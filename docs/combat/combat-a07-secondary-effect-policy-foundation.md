@@ -27,8 +27,9 @@ changing the stable damage observations introduced by A05.
 
 The catalog is immutable, rejects duplicate/blank keys at class initialization,
 supports exact lookup, and derives its size from its declarations. The current
-inventory alone exceeds Classic-Scape's fixed 32-effect phase budget. A07 must
-therefore distinguish:
+total inventory alone exceeds 32, so Classic-Scape's number cannot be reused as
+a total registration/catalog cap. That fact does not prove how much work can
+occur in one phase. A07 must therefore distinguish:
 
 - registration capacity, which should grow with the immutable reviewed
   catalog and must not silently reject a newly declared effect; and
@@ -136,8 +137,8 @@ separate branch proves a common contract. DoT ownership remains A08.
 ## Verification and acceptance
 
 - The compiled catalog fixture asserts all 39 exact keys, five family counts,
-  lookup round trips, immutability, and explicit rejection of the imported
-  32-entry assumption.
+  lookup round trips, immutability, and explicit rejection of 32 as a total
+  catalog capacity. A07.2 still owns per-phase sizing.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.

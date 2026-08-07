@@ -272,8 +272,9 @@ cannonballs, and shutdown after launch. The boundary is recorded in
 
 A07.1 grows the gate from 83 to 84 scenarios. Its compiled fixture asserts the
 39 exact current secondary-damage policy identities, family counts, immutable
-lookup, and the evidence that Classic-Scape's fixed 32-effect assumption is
-already too small. Production call sites now consume those same stable keys
-from the typed catalog without moving target selection, proc execution,
+lookup, and the evidence that 32 cannot be used as a total catalog capacity.
+It does not select a per-phase work budget. Production call sites now consume
+those same stable keys from the typed catalog without moving target selection,
+proc execution,
 damage, ordering, or death authority. The boundary is recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](combat-a07-secondary-effect-policy-foundation.md).
