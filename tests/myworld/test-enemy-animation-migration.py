@@ -46,8 +46,10 @@ def main() -> int:
         "return DEMON_EXPLOSION;",
         'case "black demon":',
         "return BLACK_DEMON_MAGIC;",
+        'case "balrog":',
+        "return BALROG_MAGIC;",
     ), "CombatEffect.java")
-    for retired in ('case "balrog":', 'case "otherworldly being":', 'case "paladin":'):
+    for retired in ('case "otherworldly being":', 'case "paladin":'):
         assert retired not in effect, f"legacy enemy impact routing remains: {retired}"
 
     profile = read("server/src/com/openrsc/server/model/entity/npc/NpcAttackStyleProfile.java")

@@ -53,7 +53,7 @@ def main() -> None:
 		"FUNGUS(3258)",
 		"RED_FLOWER(3259)",
 		"BLUE_FLOWER(3260)",
-		"public static final int maxCustom = 3311;",
+		"public static final int maxCustom = 3318;",
 	):
 		require_text(item_id_text, snippet, "ItemId should define Herblaw side ingredient")
 

@@ -1583,7 +1583,8 @@ public final class SkillGuideInterface {
 			addLeatherGuide(1934, "54", "Red dragon hide armor");
 			addLeatherGuide(1939, "54", "Black demon hide armor");
 			addLeatherGuide(1944, "62", "Black dragon hide armor");
-			addLeatherGuide(1949, "70", "Balrog hide armor");
+			addLeatherGuide(3317, "70", "King black dragon hide armor");
+			addLeatherGuide(1949, "80", "Balrog hide armor");
 			addLeatherGuide(1954, "80", "Elder green dragon hide armor");
 		} else if (curTab == 1) {
 			skillMenuEntries.add(new SkillMenuItem(2050, "1", "Wool hat - 1 ball of wool"));

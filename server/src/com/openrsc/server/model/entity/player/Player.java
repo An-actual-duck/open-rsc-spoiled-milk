@@ -2689,8 +2689,32 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().hasFullBlackDragonSet();
 	}
 
+	public boolean hasFullKingBlackDragonSet() {
+		return getCarriedItems().getEquipment().hasFullKingBlackDragonSet();
+	}
+
 	public boolean hasFullElderGreenDragonSet() {
 		return getCarriedItems().getEquipment().hasFullElderGreenDragonSet();
+	}
+
+	public double getDragonBreathArmorProcChance() {
+		return getCarriedItems().getEquipment().getDragonBreathArmorProcChance();
+	}
+
+	public int getDragonBreathArmorAppliedPoisonPower() {
+		return getCarriedItems().getEquipment().getDragonBreathArmorAppliedPoisonPower();
+	}
+
+	public int getDragonBreathArmorMaxPoisonPower() {
+		return getCarriedItems().getEquipment().getDragonBreathArmorMaxPoisonPower();
+	}
+
+	public String getDragonBreathArmorProcKey() {
+		return getCarriedItems().getEquipment().getDragonBreathArmorProcKey();
+	}
+
+	public double getElderGreenDragonArmorProcChance() {
+		return getCarriedItems().getEquipment().getElderGreenDragonArmorProcChance();
 	}
 
 	public boolean hasFullFireGiantSet() {

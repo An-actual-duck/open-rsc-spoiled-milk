@@ -3,6 +3,7 @@ package com.openrsc.server.plugins.custom.skills.crafting;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.SceneryId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
@@ -41,7 +42,8 @@ public final class TanningRack implements OpLocTrigger, UseLocTrigger {
 		new MaterialProcess(ItemId.RED_DRAGON_HIDE.id(), ItemId.RED_DRAGON_LEATHER.id(), 8, 45),
 		new MaterialProcess(ItemId.BLACK_DEMON_HIDE.id(), ItemId.BLACK_DEMON_LEATHER.id(), 8, 45),
 		new MaterialProcess(ItemId.BLACK_DRAGON_HIDE.id(), ItemId.BLACK_DRAGON_LEATHER.id(), 9, 50),
-		new MaterialProcess(ItemId.BALROG_HIDE.id(), ItemId.BALROG_LEATHER.id(), 9, 50),
+		new MaterialProcess(MyWorldItemId.KING_BLACK_DRAGON_HIDE, MyWorldItemId.KING_BLACK_DRAGON_LEATHER, 9, 50),
+		new MaterialProcess(ItemId.BALROG_HIDE.id(), ItemId.BALROG_LEATHER.id(), 10, 55),
 		new MaterialProcess(ItemId.ELDER_GREEN_DRAGON_HIDE.id(), ItemId.ELDER_GREEN_DRAGON_LEATHER.id(), 10, 55)
 	};
 

@@ -5,6 +5,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
@@ -204,6 +205,7 @@ public class CombatEvent extends GameTickEvent {
 				damage = 0;
 			}
 
+			applyWeaponPoison(hitter, target, damage);
 			inflictDamage(hitter, target, damage);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
@@ -214,7 +216,6 @@ public class CombatEvent extends GameTickEvent {
 				applyElementalSwordProc(hitter, target);
 				applyDemonPitchforkHellBlazeProc(hitter, target, damage);
 			}
-			applyWeaponPoison(hitter, target, damage);
 			applyChaosAmuletChainLightning(hitter, target, damage);
 			if (target.isPlayer()) {
 				final Player targetPlayer = (Player) target;
@@ -402,16 +403,19 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {
-		if (!hitter.isPlayer() || damage <= 0) {
+		if (!hitter.isPlayer()) {
 			return;
 		}
 		final Player player = (Player) hitter;
 		player.removeAttribute("dragon_breath_armor_proc");
+		if (damage <= 0) {
+			return;
+		}
 		final Item weapon = player.getCarriedItems().getEquipment().get(EquipmentSlot.SLOT_MAINHAND.getIndex());
 		final int poisonWeaponId = weapon == null ? -1 : weapon.getCatalogId();
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
 		final int styleArmorMaxPower = player.getMeleePoisonArmorMaxPower();
-		final int breathArmorMaxPower = player.hasFullBlackDragonSet() ? 30 : (player.hasFullElderGreenDragonSet() ? 40 : 0);
+		final int breathArmorMaxPower = player.getDragonBreathArmorMaxPoisonPower();
 		final int armorMaxPower = styleArmorMaxPower + breathArmorMaxPower;
 		final int totalMaxPower = weaponMaxPower + armorMaxPower;
 		if (totalMaxPower <= 0) {
@@ -428,12 +432,13 @@ public class CombatEvent extends GameTickEvent {
 			appliedPoisonPower = Math.max(appliedPoisonPower, player.getMeleePoisonArmorAppliedPower());
 			target.getUpdateFlags().setProjectile(new Projectile(player, target, Projectile.ACID_ARMOR_PROC));
 		}
-		if (player.hasFullBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			appliedPoisonPower = Math.max(appliedPoisonPower, 15);
-			player.setAttribute("dragon_breath_armor_proc", "black");
-		} else if (player.hasFullElderGreenDragonSet() && DataConversions.getRandom().nextDouble() < 0.60D) {
-			appliedPoisonPower = Math.max(appliedPoisonPower, 20);
-			player.setAttribute("dragon_breath_armor_proc", "elder_green");
+		final double breathProcChance = player.getDragonBreathArmorProcChance();
+		if (breathProcChance > 0.0D
+				&& DataConversions.getRandom().nextDouble() < breathProcChance) {
+			appliedPoisonPower = Math.max(appliedPoisonPower,
+				player.getDragonBreathArmorAppliedPoisonPower());
+			player.setAttribute("dragon_breath_armor_proc",
+				player.getDragonBreathArmorProcKey());
 		}
 		if (appliedPoisonPower <= 0) {
 			return;
@@ -767,6 +772,11 @@ public class CombatEvent extends GameTickEvent {
 				procDamage = DataConversions.random(0, infernalMaxHit);
 				procDamageDealt = inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 				target.applyInfernalFireDefenseDebuff(player.getInfernalFireDefenseDebuffPercent());
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isNpc()) {
+					applyHellsInfernoSplash(player, (Npc) target, procDamageDealt);
+				} else if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isPlayer()) {
+					applyHellsInfernoPvpSplash(player, (Player) target, procDamageDealt);
+				}
 			}
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
 				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
@@ -795,17 +805,17 @@ public class CombatEvent extends GameTickEvent {
 			}
 			target.applyDragonFireDefenseDebuff(6);
 		}
-		if ("black".equals(player.getAttribute("dragon_breath_armor_proc", ""))
-			|| "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		final String dragonBreathProc = player.getAttribute("dragon_breath_armor_proc", "");
+		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
-		if (player.hasFullBlackDragonSet() && "black".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		if (player.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 		}
-		if (player.hasFullElderGreenDragonSet() && "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		if (player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
@@ -822,6 +832,42 @@ public class CombatEvent extends GameTickEvent {
 					break;
 			}
 		}
+		if (damage > 0 && player.getElderGreenDragonArmorProcChance() > 0.0D
+				&& DataConversions.getRandom().nextDouble()
+					< player.getElderGreenDragonArmorProcChance()) {
+			ElderGreenDragonArmorEffect.applyProc(player, target,
+				DataConversions.random(0, ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
+		}
+	}
+
+	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Npc npc : CombatEffectUtil.findPlayerOwnedNpcSplashTargets(player, primaryTarget,
+			CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			applyHellsInfernoSplashDamage(player, npc, splashDamage);
+		}
+	}
+
+	private void applyHellsInfernoPvpSplash(final Player player, final Player primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Player target : CombatEffectUtil.findPlayerOwnedPvpSplashTargets(player, primaryTarget,
+			CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			applyHellsInfernoSplashDamage(player, target, splashDamage);
+		}
+	}
+
+	private void applyHellsInfernoSplashDamage(final Player player, final Mob target,
+			final int splashDamage) {
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.HELLS_INFERNO));
+		inflictAuxiliaryMagicDamage(player, target, splashDamage);
 	}
 
 	private int applyPlayerMeleeDamageBuff(final Player player, final int damage) {

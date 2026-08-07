@@ -142,7 +142,7 @@ def main() -> None:
         fail("weapon poison no longer uses the established exact-name conversion")
     if "return 12;" not in poison_power:
         fail("poisoned Exalted Rune weapons do not receive tier-12 poison power")
-    if "public static final int maxCustom = 3311;" not in item_id_source:
+    if "public static final int maxCustom = 3318;" not in item_id_source:
         fail("exclusive custom item count does not cover IDs through 3310")
 
     excluded_names = {

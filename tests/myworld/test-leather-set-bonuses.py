@@ -15,6 +15,7 @@ STAT_RESTORATION_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/Sta
 COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
 LEATHER_DEBUFF_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/LeatherSetDebuffEvent.java"
@@ -70,7 +71,9 @@ def main() -> None:
     expect_contains(EQUIPMENT_PATH, "hasFullEarthDragonSet()", "equipment earth dragon set")
     expect_contains(EQUIPMENT_PATH, "hasFullRedDragonSet()", "equipment red dragon set")
     expect_contains(EQUIPMENT_PATH, "hasFullBlackDragonSet()", "equipment black dragon set")
+    expect_contains(EQUIPMENT_PATH, "hasFullKingBlackDragonSet()", "equipment KBD set")
     expect_contains(EQUIPMENT_PATH, "hasFullElderGreenDragonSet()", "equipment elder green dragon set")
+    expect_contains(EQUIPMENT_PATH, "getElderGreenDragonArmorProcChance()", "equipment elder green dragon proc")
     expect_contains(EQUIPMENT_PATH, "hasFullCowHideSet()", "cow full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullGoblinHideSet()", "goblin full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullUnicornHideSet()", "unicorn full-set detection")
@@ -111,6 +114,7 @@ def main() -> None:
     expect_contains(PLAYER_PATH, "hasFullGiantSet()", "player giant access")
     expect_contains(PLAYER_PATH, "hasFullOgreSet()", "player ogre access")
     expect_contains(PLAYER_PATH, "hasFullBlueDragonSet()", "player blue dragon access")
+    expect_contains(PLAYER_PATH, "hasFullKingBlackDragonSet()", "player KBD access")
     expect_contains(PLAYER_PATH, "hasFullElderGreenDragonSet()", "player elder green dragon access")
     expect_contains(ACTION_SENDER_PATH, "player.syncHitsEquipmentBonuses();", "equipment sync hook")
     expect_contains(ACTION_SENDER_PATH, "player.syncGiantMightEquipmentBonuses();", "giant equipment sync hook")
@@ -147,6 +151,15 @@ def main() -> None:
     expect_contains(PROJECTILE_EVENT_PATH, "applyPlayerProjectileDamageBuff", "projectile magic buff hook")
     expect_contains(PROJECTILE_EVENT_PATH, "casterPlayer.applyElementalGiantMightDebuff(opponent)", "ranged elemental giant hook")
     expect_contains(PROJECTILE_EVENT_PATH, "new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH)", "projectile dragon breath visual")
+    for path, label in ((COMBAT_EVENT_PATH, "combat"),
+                        (PVM_MELEE_PATH, "pvm"),
+                        (PROJECTILE_EVENT_PATH, "projectile")):
+        expect_contains(path, "ElderGreenDragonArmorEffect.applyProc", f"{label} elder armor proc")
+    expect_contains(ELDER_ARMOR_EFFECT_PATH, "findPlayerOwnedNpcSplashTargets", "elder NPC AOE policy")
+    expect_contains(ELDER_ARMOR_EFFECT_PATH, "findPlayerOwnedPvpSplashTargets", "elder PvP AOE policy")
+    expect_contains(ELDER_ARMOR_EFFECT_PATH, "BURN_PULSES = 5", "elder reduced burn duration")
+    expect_contains(ELDER_ARMOR_EFFECT_PATH, "BURN_DAMAGE = 1", "elder reduced burn damage")
+    expect_contains(ELDER_ARMOR_EFFECT_PATH, "existing.refresh(source)", "elder burn refresh without stacking")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "applyMyWorldLeatherArmorDescriptions();", "client leather examine descriptions hook")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full cow-hide set: +5 Hits.", "cow leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer.", "unicorn leather examine description")
@@ -155,7 +168,8 @@ def main() -> None:
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full unicorn-hide set: +10 Prayer while worshipping Saradomin.", "old unicorn leather examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black unicorn-hide set: +10 Prayer while worshipping Zamorak.", "old black unicorn leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.", "black dragon leather examine description")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full elder-green-dragon-hide set: 60% chance for dragon breath, max hit 40.", "elder green dragon leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full KBD-hide set: 40% chance for True Dragon's Breath", "KBD leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full elder-green-dragon-hide set: 60% Elder Breath; up to 10 true damage, half in radius 2, then five 1-damage burn pulses.", "elder green dragon leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.", "goblin leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Bear's Maul: melee hits become two hits for 60% damage each.", "bear leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might: +10% of base Melee and Ranged levels.", "giant leather examine description")

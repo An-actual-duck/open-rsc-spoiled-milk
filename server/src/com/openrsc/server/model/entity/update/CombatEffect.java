@@ -127,6 +127,8 @@ public class CombatEffect {
 				return DEMON_EXPLOSION;
 			case "black demon":
 				return BLACK_DEMON_MAGIC;
+			case "balrog":
+				return BALROG_MAGIC;
 			default:
 				return NONE;
 		}

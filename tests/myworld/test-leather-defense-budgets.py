@@ -32,6 +32,7 @@ FAMILY_NPC = {
     "red dragon": 201,
     "black demon": 290,
     "black dragon": 291,
+    "king black dragon": 477,
     "balrog": 809,
     "elder green dragon": 844,
 }
@@ -59,6 +60,7 @@ FAMILY_BASE_ID = {
     "red dragon": 1930,
     "black demon": 1935,
     "black dragon": 1940,
+    "king black dragon": 3313,
     "balrog": 1945,
     "elder green dragon": 1950,
 }
@@ -86,7 +88,8 @@ FAMILY_TIER = {
     "red dragon": 8,
     "black demon": 8,
     "black dragon": 9,
-    "balrog": 9,
+    "king black dragon": 9,
+    "balrog": 10,
     "elder green dragon": 10,
 }
 

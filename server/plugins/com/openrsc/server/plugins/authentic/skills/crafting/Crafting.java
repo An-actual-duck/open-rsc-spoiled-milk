@@ -1610,6 +1610,12 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private HideArmorRecipe getHideArmorRecipe(int materialId) {
+		if (materialId == MyWorldItemId.KING_BLACK_DRAGON_LEATHER) {
+			return new HideArmorRecipe(materialId, "King black dragon hide", 10, 70,
+				MyWorldItemId.KING_BLACK_DRAGON_COIF, MyWorldItemId.KING_BLACK_DRAGON_GLOVES,
+				MyWorldItemId.KING_BLACK_DRAGON_BOOTS, MyWorldItemId.KING_BLACK_DRAGON_CHAPS,
+				MyWorldItemId.KING_BLACK_DRAGON_CUIRASS);
+		}
 		switch (ItemId.getById(materialId)) {
 			case LEATHER:
 				return new HideArmorRecipe(materialId, "Cow hide", 1, 1,
@@ -1700,7 +1706,7 @@ public class Crafting implements UseInvTrigger,
 					ItemId.BLACK_DRAGON_COIF.id(), ItemId.BLACK_DRAGON_GLOVES.id(), ItemId.BLACK_DRAGON_BOOTS.id(),
 					ItemId.BLACK_DRAGON_CHAPS.id(), ItemId.BLACK_DRAGON_CUIRASS.id());
 			case BALROG_LEATHER:
-				return new HideArmorRecipe(materialId, "Balrog hide", 10, 70,
+				return new HideArmorRecipe(materialId, "Balrog hide", 11, 80,
 					ItemId.BALROG_COIF.id(), ItemId.BALROG_GLOVES.id(), ItemId.BALROG_BOOTS.id(),
 					ItemId.BALROG_CHAPS.id(), ItemId.BALROG_CUIRASS.id());
 			case ELDER_GREEN_DRAGON_LEATHER:

@@ -5,11 +5,14 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.event.custom.NpcLootEvent;
+import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
+import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
@@ -23,6 +26,7 @@ import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -45,6 +49,217 @@ final class CurrentCombatOwnedDamageCharacterization {
 		"myworld_summon_guard_enemy";
 
 	private CurrentCombatOwnedDamageCharacterization() {
+	}
+
+	static void hellsInfernoSplashMath(final CurrentCombatHarness harness)
+			throws Exception {
+		assertEquals(18, CombatEffectUtil.HELLS_INFERNO_MAX_HIT,
+			"Hell's Inferno tier-11 maximum");
+		assertEquals(2, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS,
+			"Hell's Inferno splash radius");
+		assertEquals(0, CombatEffectUtil.hellsInfernoSplashDamage(-1),
+			"negative primary damage cannot splash");
+		assertEquals(0, CombatEffectUtil.hellsInfernoSplashDamage(0),
+			"zero primary damage cannot splash");
+		assertEquals(1, CombatEffectUtil.hellsInfernoSplashDamage(1),
+			"one damage rounds up to one");
+		assertEquals(1, CombatEffectUtil.hellsInfernoSplashDamage(2),
+			"two damage halves to one");
+		assertEquals(2, CombatEffectUtil.hellsInfernoSplashDamage(3),
+			"odd primary damage rounds up");
+		assertEquals(9, CombatEffectUtil.hellsInfernoSplashDamage(18),
+			"maximum primary damage halves to nine");
+
+		final Player demonOwner = harness.player("inferno demon", 450, 450);
+		equipSet(harness, demonOwner, new ItemId[] {
+			ItemId.DEMON_COIF, ItemId.DEMON_GLOVES, ItemId.DEMON_BOOTS,
+			ItemId.DEMON_CHAPS, ItemId.DEMON_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.20D),
+			Double.valueOf(demonOwner.getCarriedItems().getEquipment()
+				.getInfernalFireProcChance()),
+			"Demon infernal proc rate remains unchanged");
+
+		final Player blackDemonOwner = harness.player("inferno black", 460, 460);
+		equipSet(harness, blackDemonOwner, new ItemId[] {
+			ItemId.BLACK_DEMON_COIF, ItemId.BLACK_DEMON_GLOVES,
+			ItemId.BLACK_DEMON_BOOTS, ItemId.BLACK_DEMON_CHAPS,
+			ItemId.BLACK_DEMON_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.20D),
+			Double.valueOf(blackDemonOwner.getCarriedItems().getEquipment()
+				.getInfernalFireProcChance()),
+			"Black Demon infernal proc rate remains unchanged");
+
+		final Player balrogOwner = harness.player("inferno balrog", 470, 470);
+		equipSet(harness, balrogOwner, new ItemId[] {
+			ItemId.BALROG_COIF, ItemId.BALROG_GLOVES, ItemId.BALROG_BOOTS,
+			ItemId.BALROG_CHAPS, ItemId.BALROG_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.40D),
+			Double.valueOf(balrogOwner.getCarriedItems().getEquipment()
+				.getInfernalFireProcChance()),
+			"Balrog infernal proc rate doubles to forty percent");
+	}
+
+	private static void equipSet(final CurrentCombatHarness harness,
+			final Player player, final ItemId[] itemIds) throws Exception {
+		for (ItemId itemId : itemIds) {
+			harness.equip(player, itemId.id(), 1);
+		}
+	}
+
+	static void hellsInfernoSplashPolicies(final CurrentCombatHarness harness)
+			throws Exception {
+		final Player meleeOwner = harness.player("inferno melee", 500, 500);
+		final Npc meleePrimary = npcWithHits(harness, NpcId.CHICKEN.id(), 501, 500, 20);
+		final Npc meleeSecondary = npcWithHits(harness, NpcId.CHICKEN.id(), 502, 500, 20);
+		final Npc meleeDistant = npcWithHits(harness, NpcId.CHICKEN.id(), 506, 500, 20);
+		final PvmMeleeEvent melee = new PvmMeleeEvent(
+			harness.world(), meleeOwner, meleePrimary);
+		invoke(melee, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			meleeOwner, meleePrimary, Integer.valueOf(5));
+		assertEquals(17, meleeSecondary.getLevel(Skill.HITS.id()),
+			"modern PvM melee splash uses half actual damage rounded up");
+		assertEquals(20, meleePrimary.getLevel(Skill.HITS.id()),
+			"modern PvM melee splash excludes its primary target");
+		assertEquals(20, meleeDistant.getLevel(Skill.HITS.id()),
+			"modern PvM melee splash respects radius two");
+		assertEquals(CombatEffect.HELLS_INFERNO,
+			meleeSecondary.getUpdateFlags().getCombatEffect().get().getEffectType(),
+			"modern PvM melee splash presents Hell's Inferno");
+
+		final Npc guardBlocked = npcWithHits(harness, NpcId.CHICKEN.id(), 502, 501, 20);
+		installGuardDog(harness, meleeOwner, 499, 500);
+		invoke(melee, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			meleeOwner, meleePrimary, Integer.valueOf(5));
+		assertEquals(20, guardBlocked.getLevel(Skill.HITS.id()),
+			"Guard Dog suppresses Hell's Inferno secondary damage");
+
+		final Player projectileOwner = harness.player("inferno projectile", 600, 600);
+		final Npc projectilePrimary = npcWithHits(harness, NpcId.CHICKEN.id(), 601, 600, 20);
+		final Npc projectileSecondary = npcWithHits(harness, NpcId.CHICKEN.id(), 602, 600, 20);
+		final ProjectileEvent projectile = new ProjectileEvent(
+			harness.world(), projectileOwner, projectilePrimary, 0, 2, false);
+		invoke(projectile, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			projectileOwner, projectilePrimary, Integer.valueOf(6));
+		assertEquals(17, projectileSecondary.getLevel(Skill.HITS.id()),
+			"projectile splash matches modern PvM melee damage");
+
+		final Player legacyOwner = harness.player("inferno legacy", 700, 700);
+		final Npc legacyPrimary = npcWithHits(harness, NpcId.CHICKEN.id(), 701, 700, 20);
+		final Npc legacySecondary = npcWithHits(harness, NpcId.CHICKEN.id(), 702, 700, 20);
+		final CombatEvent legacy = new CombatEvent(
+			harness.world(), legacyOwner, legacyPrimary);
+		invoke(legacy, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			legacyOwner, legacyPrimary, Integer.valueOf(6));
+		assertEquals(17, legacySecondary.getLevel(Skill.HITS.id()),
+			"legacy melee splash matches modern PvM and projectile damage");
+	}
+
+	static void kingBlackDragonSetProfile(final CurrentCombatHarness harness)
+			throws Exception {
+		final Player king = harness.player("king dragon set", 480, 480);
+		final int[] kingSet = {
+			MyWorldItemId.KING_BLACK_DRAGON_COIF,
+			MyWorldItemId.KING_BLACK_DRAGON_GLOVES,
+			MyWorldItemId.KING_BLACK_DRAGON_BOOTS,
+			MyWorldItemId.KING_BLACK_DRAGON_CHAPS,
+			MyWorldItemId.KING_BLACK_DRAGON_CUIRASS
+		};
+		for (int index = 0; index < kingSet.length - 1; index++) {
+			harness.equip(king, kingSet[index], 1);
+		}
+		assertFalse(king.hasFullKingBlackDragonSet(),
+			"four KBD pieces do not activate the set");
+		harness.equip(king, kingSet[kingSet.length - 1], 1);
+		assertTrue(king.hasFullKingBlackDragonSet(),
+			"all five KBD pieces activate the set");
+		assertEquals(Double.valueOf(0.40D),
+			Double.valueOf(king.getDragonBreathArmorProcChance()),
+			"KBD Dragon Breath chance");
+		assertEquals(20, king.getDragonBreathArmorAppliedPoisonPower(),
+			"KBD applied poison power");
+		assertEquals(40, king.getDragonBreathArmorMaxPoisonPower(),
+			"KBD poison ceiling");
+		assertEquals("king_black", king.getDragonBreathArmorProcKey(),
+			"KBD proc identity");
+
+		final Player elder = harness.player("elder dragon set", 490, 490);
+		equipSet(harness, elder, new ItemId[] {
+			ItemId.ELDER_GREEN_DRAGON_COIF, ItemId.ELDER_GREEN_DRAGON_GLOVES,
+			ItemId.ELDER_GREEN_DRAGON_BOOTS, ItemId.ELDER_GREEN_DRAGON_CHAPS,
+			ItemId.ELDER_GREEN_DRAGON_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.60D),
+			Double.valueOf(elder.getElderGreenDragonArmorProcChance()),
+			"Elder Breath chance");
+		assertEquals(Double.valueOf(0.0D),
+			Double.valueOf(elder.getDragonBreathArmorProcChance()),
+			"Elder no longer uses the poison Dragon Breath profile");
+		assertEquals(0, elder.getDragonBreathArmorAppliedPoisonPower(),
+			"Elder Breath does not add poison");
+		assertEquals(0, elder.getDragonBreathArmorMaxPoisonPower(),
+			"Elder Breath does not raise the poison ceiling");
+		assertEquals("", elder.getDragonBreathArmorProcKey(),
+			"Elder has no legacy Dragon Breath proc identity");
+
+		assertEquals(0, ElderGreenDragonArmorEffect.splashDamage(0),
+			"zero Elder true damage cannot splash");
+		assertEquals(1, ElderGreenDragonArmorEffect.splashDamage(1),
+			"one Elder true damage rounds up");
+		assertEquals(3, ElderGreenDragonArmorEffect.splashDamage(5),
+			"odd Elder true damage rounds up");
+		assertEquals(5, ElderGreenDragonArmorEffect.splashDamage(10),
+			"maximum Elder true damage halves to five");
+
+		final Npc primary = npcWithHits(harness, NpcId.CHICKEN.id(), 491, 490, 20);
+		final Npc secondary = npcWithHits(harness, NpcId.CHICKEN.id(), 492, 490, 20);
+		ElderGreenDragonArmorEffect.applyProc(elder, primary, 5);
+		assertEquals(15, primary.getLevel(Skill.HITS.id()),
+			"Elder primary receives rolled true damage");
+		assertEquals(17, secondary.getLevel(Skill.HITS.id()),
+			"Elder secondary receives half actual primary damage rounded up");
+		final String burnKey = "elder_green_dragon_armor_burn_event";
+		final Object primaryBurn = primary.getAttribute(burnKey, null);
+		assertTrue(primaryBurn != null, "Elder primary receives burn event");
+		final Object secondaryBurn = secondary.getAttribute(burnKey, null);
+		assertTrue(secondaryBurn != null, "Elder secondary receives burn event");
+		ElderGreenDragonArmorEffect.applyBurn(elder, primary);
+		assertTrue(primary.getAttribute(burnKey, null) == primaryBurn,
+			"Elder burn refreshes rather than stacking");
+		for (int pulse = 0; pulse < ElderGreenDragonArmorEffect.BURN_PULSES; pulse++) {
+			invoke(primaryBurn, "run", new Class<?>[0]);
+			invoke(secondaryBurn, "run", new Class<?>[0]);
+		}
+		assertEquals(10, primary.getLevel(Skill.HITS.id()),
+			"Elder primary burn applies five reduced pulses");
+		assertEquals(12, secondary.getLevel(Skill.HITS.id()),
+			"Elder secondary burn applies five reduced pulses");
+		assertTrue(primary.getAttribute(burnKey, null) == null,
+			"completed Elder primary burn clears lifecycle state");
+		assertTrue(secondary.getAttribute(burnKey, null) == null,
+			"completed Elder secondary burn clears lifecycle state");
+
+		final Player guarded = harness.player("guarded elder set", 520, 520);
+		final Npc guardedPrimary = npcWithHits(
+			harness, NpcId.CHICKEN.id(), 521, 520, 20);
+		final Npc guardedSecondary = npcWithHits(
+			harness, NpcId.CHICKEN.id(), 522, 520, 20);
+		installGuardDog(harness, guarded, 519, 520);
+		ElderGreenDragonArmorEffect.applyProc(guarded, guardedPrimary, 4);
+		assertEquals(16, guardedPrimary.getLevel(Skill.HITS.id()),
+			"Guard Dog preserves Elder primary true damage");
+		assertEquals(20, guardedSecondary.getLevel(Skill.HITS.id()),
+			"Guard Dog suppresses Elder secondary true damage");
+		final Object guardedBurn = guardedPrimary.getAttribute(burnKey, null);
+		for (int pulse = 0; pulse < ElderGreenDragonArmorEffect.BURN_PULSES; pulse++) {
+			invoke(guardedBurn, "run", new Class<?>[0]);
+		}
 	}
 
 	static void balrogSplashPolicies(final CurrentCombatHarness harness)

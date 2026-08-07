@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
@@ -901,18 +902,21 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applyWeaponPoison() {
-		if (!caster.isPlayer() || damage <= 0) {
+		if (!caster.isPlayer()) {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
 		casterPlayer.removeAttribute("dragon_breath_armor_proc");
+		if (damage <= 0) {
+			return;
+		}
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
 		final boolean isMagicAttack = type == 1 || type == 4;
 		final boolean isRangedAttack = type == 2 || type == 5;
 		final int styleArmorMaxPower = isMagicAttack
 			? casterPlayer.getMagicPoisonArmorMaxPower()
 			: (isRangedAttack ? casterPlayer.getRangedPoisonArmorMaxPower() : 0);
-		final int breathArmorMaxPower = casterPlayer.hasFullBlackDragonSet() ? 30 : (casterPlayer.hasFullElderGreenDragonSet() ? 40 : 0);
+		final int breathArmorMaxPower = casterPlayer.getDragonBreathArmorMaxPoisonPower();
 		final int armorMaxPower = styleArmorMaxPower + breathArmorMaxPower;
 		final int totalMaxPower = weaponMaxPower + armorMaxPower;
 		if (totalMaxPower <= 0) {
@@ -936,12 +940,13 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (magicArmorPoisonProc || rangedArmorPoisonProc) {
 			opponent.getUpdateFlags().setProjectile(new Projectile(casterPlayer, opponent, Projectile.ACID_ARMOR_PROC));
 		}
-		if (casterPlayer.hasFullBlackDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			appliedPoisonPower = Math.max(appliedPoisonPower, 15);
-			casterPlayer.setAttribute("dragon_breath_armor_proc", "black");
-		} else if (casterPlayer.hasFullElderGreenDragonSet() && DataConversions.getRandom().nextDouble() < 0.60D) {
-			appliedPoisonPower = Math.max(appliedPoisonPower, 20);
-			casterPlayer.setAttribute("dragon_breath_armor_proc", "elder_green");
+		final double breathProcChance = casterPlayer.getDragonBreathArmorProcChance();
+		if (breathProcChance > 0.0D
+				&& DataConversions.getRandom().nextDouble() < breathProcChance) {
+			appliedPoisonPower = Math.max(appliedPoisonPower,
+				casterPlayer.getDragonBreathArmorAppliedPoisonPower());
+			casterPlayer.setAttribute("dragon_breath_armor_proc",
+				casterPlayer.getDragonBreathArmorProcKey());
 		}
 		if (appliedPoisonPower <= 0) {
 			return;
@@ -982,6 +987,9 @@ public class ProjectileEvent extends SingleTickEvent {
 				procDamage = DataConversions.random(0, infernalMaxHit);
 				procDamageDealt = inflictAuxiliaryMagicDamage(caster, opponent, procDamage);
 				opponent.applyInfernalFireDefenseDebuff(casterPlayer.getInfernalFireDefenseDebuffPercent());
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && opponent.isNpc()) {
+					applyHellsInfernoSplash(casterPlayer, (Npc) opponent, procDamageDealt);
+				}
 			}
 			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
 				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
@@ -1010,17 +1018,17 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 			opponent.applyDragonFireDefenseDebuff(6);
 		}
-		if ("black".equals(casterPlayer.getAttribute("dragon_breath_armor_proc", ""))
-			|| "elder_green".equals(casterPlayer.getAttribute("dragon_breath_armor_proc", ""))) {
+		final String dragonBreathProc = casterPlayer.getAttribute("dragon_breath_armor_proc", "");
+		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			casterPlayer.getUpdateFlags().setCombatEffect(new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH));
 		}
-		if (casterPlayer.hasFullBlackDragonSet() && "black".equals(casterPlayer.getAttribute("dragon_breath_armor_proc", ""))) {
+		if (casterPlayer.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
 			}
 		}
-		if (casterPlayer.hasFullElderGreenDragonSet() && "elder_green".equals(casterPlayer.getAttribute("dragon_breath_armor_proc", ""))) {
+		if (casterPlayer.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
@@ -1036,6 +1044,25 @@ public class ProjectileEvent extends SingleTickEvent {
 					opponent.applyDragonFireDefenseDebuff(6);
 					break;
 			}
+		}
+		if (damage > 0 && casterPlayer.getElderGreenDragonArmorProcChance() > 0.0D
+				&& DataConversions.getRandom().nextDouble()
+					< casterPlayer.getElderGreenDragonArmorProcChance()) {
+			ElderGreenDragonArmorEffect.applyProc(casterPlayer, opponent,
+				DataConversions.random(0, ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
+		}
+	}
+
+	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Npc npc : CombatEffectUtil.findPlayerOwnedNpcSplashTargets(
+			player, primaryTarget, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			npc.getUpdateFlags().setCombatEffect(new CombatEffect(npc, CombatEffect.HELLS_INFERNO));
+			inflictAuxiliaryMagicDamage(player, npc, splashDamage);
 		}
 	}
 
