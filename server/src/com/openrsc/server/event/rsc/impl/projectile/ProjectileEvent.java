@@ -18,6 +18,7 @@ import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
+import com.openrsc.server.model.combat.ProjectileImpactValidator;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.KillType;
@@ -374,7 +375,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	@Override
 	public void action() {
-		final ProjectileImpactDecision impact = beginProjectileImpact(true);
+		final ProjectileImpactDecision impact = beginProjectileImpact();
 		if (!impact.isAuthorized()) {
 			return;
 		}
@@ -1322,27 +1323,25 @@ public class ProjectileEvent extends SingleTickEvent {
 		return type == 1 || type == 2 || type == 4;
 	}
 
-	/**
-	 * Enters the current delayed-impact contract without changing its policy.
-	 * Base combat projectiles retain cancellation plus the fixed 15-tile
-	 * same-domain gate; scripted subclasses retain cancellation only.
-	 */
-	protected final ProjectileImpactDecision beginProjectileImpact(
-			final boolean requireCurrentSpatialGate) {
+	/** Enters the producer-declared delayed-impact policy exactly once. */
+	protected final ProjectileImpactDecision beginProjectileImpact() {
 		if (!impactLedger.claimImpact()) {
 			return impactLedger.duplicate();
 		}
 		try {
-			if (canceled) {
+			if (canceled && launchSnapshot.getSpecification()
+					.getImpactPolicy().honorsCancellation()) {
 				return impactLedger.invalidate(
 					ProjectileImpactDecision.Reason.EXPLICIT_CANCELLATION,
 					null, null);
 			}
-			if (requireCurrentSpatialGate
-					&& !caster.withinRange(opponent, 15)) {
+			final ProjectileImpactDecision.Reason validation =
+				ProjectileImpactValidator.validate(
+					launchSnapshot, caster, opponent);
+			if (validation
+					!= ProjectileImpactDecision.Reason.CURRENT_POLICY_ACCEPTED) {
 				return impactLedger.invalidate(
-					ProjectileImpactDecision.Reason
-						.OUTSIDE_CURRENT_SPATIAL_GATE,
+					validation,
 					caster.getWorldLocation(), opponent.getWorldLocation());
 			}
 			return impactLedger.authorize(

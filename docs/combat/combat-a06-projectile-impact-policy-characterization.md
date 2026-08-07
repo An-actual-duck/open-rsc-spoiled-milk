@@ -1,7 +1,9 @@
 # A06.3 projectile impact policy characterization
 
-Status: CHARACTERIZATION AND OWNER DECISIONS COMPLETE; PRODUCTION POLICY
-UNCHANGED; READY FOR A SEPARATE BOUNDED IMPLEMENTATION BRANCH.
+Status: CHARACTERIZATION AND OWNER DECISIONS COMPLETE. The approved policy is
+implemented on a subsequent focused branch with private visual acceptance and
+manager integration pending. See
+[`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md).
 
 ## Scope and stop condition
 
@@ -213,6 +215,9 @@ The owner approved this complete set on 2026-08-07:
 
 ## Bounded implementation sequence after approval
 
+Status: implemented on the focused A06.3 production branch. The sequence below
+is retained as the approved implementation contract and review checklist.
+
 1. Add immutable, named impact-policy metadata to the typed producer
    specification. Keep positional constructors as explicit compatibility
    facades.
@@ -251,5 +256,7 @@ classified safely.
   reason, duplicate callback, and deliberate callback failure.
 - Full combat gate, authoritative core/plugin builds, plugin discovery,
   production-artifact exclusion of tests, and changed-code static analysis.
-- Private gameplay inspection for visible projectile disappearance at death,
-  teleport, level transition, and a closing door before READY handoff.
+- Private OpenGL inspection completed on 2026-08-07 with owner acceptance of
+  ordinary projectile presentation and clear/blocked-path behavior; executable
+  tests cover the timing-sensitive death, teleport, level-transition, and
+  closing-barrier cases.

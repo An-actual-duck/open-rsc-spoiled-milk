@@ -43,7 +43,7 @@ public abstract class CustomProjectileEvent extends ProjectileEvent {
 
 	@Override
 	public void action() {
-		final ProjectileImpactDecision impact = beginProjectileImpact(false);
+		final ProjectileImpactDecision impact = beginProjectileImpact();
 		if (!impact.isAuthorized()) {
 			return;
 		}

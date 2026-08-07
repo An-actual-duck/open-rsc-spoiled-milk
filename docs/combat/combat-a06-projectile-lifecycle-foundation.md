@@ -1,8 +1,9 @@
 # A06 projectile lifecycle foundation
 
-Status: A06.1 and A06.2 are implemented. A06.3 executable characterization and
-owner decisions are complete with production policy unchanged; its bounded
-implementation and A06.4 remain pending.
+Status: A06.1 and A06.2 are implemented. A06.3 characterization, owner
+decisions, and bounded production implementation are complete on focused
+branches; private visual acceptance and manager integration of A06.3 remain
+pending. A06.4 remains pending.
 
 ## Outcome and boundary
 
@@ -164,8 +165,9 @@ test classes remain excluded.
 Status: executable characterization and the approved policy matrix are
 recorded in
 [`combat-a06-projectile-impact-policy-characterization.md`](combat-a06-projectile-impact-policy-characterization.md).
-Production behavior remains unchanged pending a separate bounded implementation
-branch.
+The bounded implementation is recorded in
+[`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md);
+private visual acceptance and manager integration remain pending.
 
 Use the captured participant and `WorldLocation` evidence to decide, per
 family, target/source death, logout, removal/respawn, teleport, world-space or

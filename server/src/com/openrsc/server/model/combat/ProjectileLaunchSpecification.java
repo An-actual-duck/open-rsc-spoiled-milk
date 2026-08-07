@@ -13,35 +13,78 @@ import com.openrsc.server.model.entity.npc.NpcMagicElement;
 public final class ProjectileLaunchSpecification {
 	/** Stable current producer identities and their broader event families. */
 	public enum Producer {
-		PLAYER_BOW("player-bow", "player-bow-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		PLAYER_THROWN("player-thrown", "player-thrown-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		PLAYER_SHURIKEN("player-shuriken", "player-shuriken-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		PLAYER_MAGIC("player-magic", "player-magic-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		PLAYER_IBAN_MAGIC("player-iban-magic", "iban-magic-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		CANNON("cannon", "cannon-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		NPC_RANGED("npc-ranged", "npc-ranged-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		NPC_MAGIC("npc-magic", "npc-magic-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		NPC_COMPATIBILITY("npc-compatibility", "npc-compatibility-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		LEGACY_NPC_RANGED("legacy-npc-ranged", "npc-ranged-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		SUMMON_RANGED("summon-ranged", "summon-ranged-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		SUMMON_MAGIC("summon-magic", "summon-magic-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		SUMMON_COMPATIBILITY("summon-compatibility", "summon-compatibility-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		ADMIN_DEBUG("admin-debug", "admin-debug-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		COMPATIBILITY("positional-compatibility", "compatibility-projectile", ProjectileLaunchSnapshot.Kind.DAMAGING),
-		MAGIC_SCRIPTED_EFFECT("magic-scripted-effect", "custom-projectile", ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT),
-		LEGENDS_HOLY_WATER("legends-holy-water", "custom-projectile", ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT),
-		GNOME_BALL("gnome-ball", "ball-projectile", ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT),
-		BENIGN_COMPATIBILITY("benign-compatibility", "benign-projectile", ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT);
+		PLAYER_BOW("player-bow", "player-bow-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.PLAYER_DAMAGE),
+		PLAYER_THROWN("player-thrown", "player-thrown-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.PLAYER_DAMAGE),
+		PLAYER_SHURIKEN("player-shuriken", "player-shuriken-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.PLAYER_DAMAGE),
+		PLAYER_MAGIC("player-magic", "player-magic-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.PLAYER_DAMAGE),
+		PLAYER_IBAN_MAGIC("player-iban-magic", "iban-magic-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.PLAYER_DAMAGE),
+		CANNON("cannon", "cannon-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.PLAYER_DAMAGE),
+		NPC_RANGED("npc-ranged", "npc-ranged-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.NPC_DAMAGE),
+		NPC_MAGIC("npc-magic", "npc-magic-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.NPC_DAMAGE),
+		NPC_COMPATIBILITY("npc-compatibility",
+			"npc-compatibility-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.NPC_DAMAGE),
+		LEGACY_NPC_RANGED("legacy-npc-ranged", "npc-ranged-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.NPC_DAMAGE),
+		SUMMON_RANGED("summon-ranged", "summon-ranged-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.SUMMON_DAMAGE),
+		SUMMON_MAGIC("summon-magic", "summon-magic-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.SUMMON_DAMAGE),
+		SUMMON_COMPATIBILITY("summon-compatibility",
+			"summon-compatibility-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.SUMMON_DAMAGE),
+		ADMIN_DEBUG("admin-debug", "admin-debug-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.ADMIN_DAMAGE),
+		COMPATIBILITY("positional-compatibility", "compatibility-projectile",
+			ProjectileLaunchSnapshot.Kind.DAMAGING,
+			ProjectileImpactPolicy.POSITIONAL_COMPATIBILITY_DAMAGE),
+		MAGIC_SCRIPTED_EFFECT("magic-scripted-effect", "custom-projectile",
+			ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT,
+			ProjectileImpactPolicy.SCRIPTED_MAGIC),
+		LEGENDS_HOLY_WATER("legends-holy-water", "custom-projectile",
+			ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT,
+			ProjectileImpactPolicy.LEGENDS_HOLY_WATER),
+		GNOME_BALL("gnome-ball", "ball-projectile",
+			ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT,
+			ProjectileImpactPolicy.GNOME_BALL),
+		BENIGN_COMPATIBILITY("benign-compatibility", "benign-projectile",
+			ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT,
+			ProjectileImpactPolicy.BENIGN_COMPATIBILITY_CLEANUP);
 
 		private final String key;
 		private final String familyKey;
 		private final ProjectileLaunchSnapshot.Kind kind;
+		private final ProjectileImpactPolicy impactPolicy;
 
 		Producer(final String key, final String familyKey,
-				final ProjectileLaunchSnapshot.Kind kind) {
+				final ProjectileLaunchSnapshot.Kind kind,
+				final ProjectileImpactPolicy impactPolicy) {
 			this.key = key;
 			this.familyKey = familyKey;
 			this.kind = kind;
+			this.impactPolicy = impactPolicy;
 		}
 
 		public String getKey() {
@@ -54,6 +97,10 @@ public final class ProjectileLaunchSpecification {
 
 		public ProjectileLaunchSnapshot.Kind getKind() {
 			return kind;
+		}
+
+		public ProjectileImpactPolicy getImpactPolicy() {
+			return impactPolicy;
 		}
 	}
 
@@ -120,6 +167,10 @@ public final class ProjectileLaunchSpecification {
 
 	public ProjectileLaunchSnapshot.Kind getKind() {
 		return producer.getKind();
+	}
+
+	public ProjectileImpactPolicy getImpactPolicy() {
+		return producer.getImpactPolicy();
 	}
 
 	public int getProposedDamage() {
