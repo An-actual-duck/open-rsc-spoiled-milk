@@ -4,6 +4,7 @@ import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.world.World;
@@ -19,24 +20,44 @@ public class BenignProjectileEvent extends SingleTickEvent {
 	private final ProjectileImpactLedger impactLedger;
 
 	BenignProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type) {
-		super(world, caster, 1, "Benign Projectile Event");
+		this(world, caster, opponent, ProjectileLaunchSpecification.builder(
+			ProjectileLaunchSpecification.Producer.BENIGN_COMPATIBILITY,
+			damage, -1)
+			.presentation(type, 0, true)
+			.build());
+	}
+
+	BenignProjectileEvent(final World world, final Mob caster,
+			final Mob opponent,
+			final ProjectileLaunchSpecification launchSpecification) {
+		super(world, caster, 1, "Benign Projectile Event",
+			requireBenignSpecification(launchSpecification)
+				.getDuplicationStrategy());
 		this.caster = caster;
 		this.opponent = opponent;
-		this.damage = damage;
-		this.type = type;
+		this.damage = launchSpecification.getProposedDamage();
+		this.type = launchSpecification.getProjectileType();
 		final long launchTick = world.getServer().getCurrentTick();
 		this.launchSnapshot = ProjectileLaunchSnapshot.capture(
 			getUUID(), launchTick, launchTick + getDelayTicks(), caster,
-			opponent, ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT,
-			this instanceof BallProjectileEvent
-				? "ball-projectile" : "benign-projectile",
-			-1, type, 0, 0, true);
+			opponent, launchSpecification);
 		this.impactLedger = new ProjectileImpactLedger(launchSnapshot);
 		if (caster.isPlayer() && opponent.isPlayer()) {
 			caster.setAttribute("benignprojectile", this);
 			opponent.setAttribute("benignprojectile", this);
 		}
 		sendProjectile(caster, opponent);
+	}
+
+	private static ProjectileLaunchSpecification requireBenignSpecification(
+			final ProjectileLaunchSpecification launchSpecification) {
+		if (launchSpecification == null
+				|| launchSpecification.getKind()
+					!= ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT) {
+			throw new IllegalArgumentException(
+				"BenignProjectileEvent requires a benign-effect specification");
+		}
+		return launchSpecification;
 	}
 
 	private void sendProjectile(Mob caster, Mob opponent) {

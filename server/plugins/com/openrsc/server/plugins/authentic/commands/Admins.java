@@ -14,6 +14,7 @@ import com.openrsc.server.event.custom.NpcLootEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.handler.GameEventHandler;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEventNpc;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.ItemDefinition;
@@ -2690,7 +2691,12 @@ public final class Admins implements CommandTrigger {
 				player.message(badSyntaxPrefix + command.toUpperCase() + " [npc_id] (damage) (type)");
 			}
 		}
-		player.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(player.getWorld(), n, player, damage, type));
+		player.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
+			player.getWorld(), n, player,
+			ProjectileLaunchSpecification.builder(
+				ProjectileLaunchSpecification.Producer.ADMIN_DEBUG,
+				damage, type)
+				.build()));
 
 		String message = "Die " + player.getUsername() + "!";
 		for (Player playerToChat : n.getViewArea().getPlayersInView()) {

@@ -26,23 +26,15 @@ public final class ProjectileLaunchSnapshot {
 	private final CombatParticipantSnapshot targetSnapshot;
 	private final WorldLocation sourceLaunchLocation;
 	private final WorldLocation targetLaunchLocation;
-	private final Kind kind;
-	private final String familyKey;
-	private final int attackType;
-	private final int projectileType;
-	private final int impactEffectType;
-	private final int proposedDamage;
-	private final boolean visualRequested;
+	private final ProjectileLaunchSpecification specification;
 
 	private ProjectileLaunchSnapshot(final UUID eventId,
 			final long launchTick, final long expectedImpactTick,
 			final CombatParticipantSnapshot sourceSnapshot,
 			final CombatParticipantSnapshot targetSnapshot,
 			final WorldLocation sourceLaunchLocation,
-			final WorldLocation targetLaunchLocation, final Kind kind,
-			final String familyKey, final int attackType,
-			final int projectileType, final int impactEffectType,
-			final int proposedDamage, final boolean visualRequested) {
+			final WorldLocation targetLaunchLocation,
+			final ProjectileLaunchSpecification specification) {
 		this.eventId = eventId;
 		this.launchTick = launchTick;
 		this.expectedImpactTick = expectedImpactTick;
@@ -50,21 +42,13 @@ public final class ProjectileLaunchSnapshot {
 		this.targetSnapshot = targetSnapshot;
 		this.sourceLaunchLocation = sourceLaunchLocation;
 		this.targetLaunchLocation = targetLaunchLocation;
-		this.kind = kind;
-		this.familyKey = familyKey;
-		this.attackType = attackType;
-		this.projectileType = projectileType;
-		this.impactEffectType = impactEffectType;
-		this.proposedDamage = proposedDamage;
-		this.visualRequested = visualRequested;
+		this.specification = specification;
 	}
 
 	public static ProjectileLaunchSnapshot capture(final UUID eventId,
 			final long launchTick, final long expectedImpactTick,
-			final Mob source, final Mob target, final Kind kind,
-			final String familyKey, final int attackType,
-			final int projectileType, final int impactEffectType,
-			final int proposedDamage, final boolean visualRequested) {
+			final Mob source, final Mob target,
+			final ProjectileLaunchSpecification specification) {
 		if (eventId == null) {
 			throw new IllegalArgumentException("eventId cannot be null");
 		}
@@ -72,19 +56,15 @@ public final class ProjectileLaunchSnapshot {
 			throw new IllegalArgumentException(
 				"projectile participants cannot be null");
 		}
-		if (kind == null) {
-			throw new IllegalArgumentException("kind cannot be null");
-		}
-		if (familyKey == null || familyKey.trim().isEmpty()) {
-			throw new IllegalArgumentException("familyKey cannot be blank");
+		if (specification == null) {
+			throw new IllegalArgumentException(
+				"launch specification cannot be null");
 		}
 		return new ProjectileLaunchSnapshot(
 			eventId, launchTick, expectedImpactTick,
 			CombatParticipantSnapshot.capture(source),
 			CombatParticipantSnapshot.capture(target),
-			source.getWorldLocation(), target.getWorldLocation(), kind,
-			familyKey, attackType, projectileType, impactEffectType,
-			proposedDamage, visualRequested);
+			source.getWorldLocation(), target.getWorldLocation(), specification);
 	}
 
 	public UUID getEventId() {
@@ -116,30 +96,38 @@ public final class ProjectileLaunchSnapshot {
 	}
 
 	public Kind getKind() {
-		return kind;
+		return specification.getKind();
 	}
 
 	public String getFamilyKey() {
-		return familyKey;
+		return specification.getFamilyKey();
+	}
+
+	public String getProducerKey() {
+		return specification.getProducerKey();
 	}
 
 	public int getAttackType() {
-		return attackType;
+		return specification.getAttackType();
 	}
 
 	public int getProjectileType() {
-		return projectileType;
+		return specification.getProjectileType();
 	}
 
 	public int getImpactEffectType() {
-		return impactEffectType;
+		return specification.getImpactEffectType();
 	}
 
 	public int getProposedDamage() {
-		return proposedDamage;
+		return specification.getProposedDamage();
 	}
 
 	public boolean isVisualRequested() {
-		return visualRequested;
+		return specification.shouldShowProjectile();
+	}
+
+	public ProjectileLaunchSpecification getSpecification() {
+		return specification;
 	}
 }

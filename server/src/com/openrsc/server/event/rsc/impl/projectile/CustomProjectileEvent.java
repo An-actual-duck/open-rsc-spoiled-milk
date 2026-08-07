@@ -1,6 +1,8 @@
 package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
+import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -14,7 +16,29 @@ public abstract class CustomProjectileEvent extends ProjectileEvent {
 	}
 
 	protected CustomProjectileEvent(World world, Mob caster, Mob opponent, int type, boolean setChasing) {
-		super(world, caster, opponent, 0, type, setChasing);
+		this(world, caster, opponent, ProjectileLaunchSpecification.builder(
+			ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
+			0, type)
+			.chase(setChasing)
+			.build());
+	}
+
+	protected CustomProjectileEvent(final World world, final Mob caster,
+			final Mob opponent,
+			final ProjectileLaunchSpecification launchSpecification) {
+		super(world, caster, opponent,
+			requireScriptedSpecification(launchSpecification));
+	}
+
+	private static ProjectileLaunchSpecification requireScriptedSpecification(
+			final ProjectileLaunchSpecification launchSpecification) {
+		if (launchSpecification == null
+				|| launchSpecification.getKind()
+					!= ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT) {
+			throw new IllegalArgumentException(
+				"CustomProjectileEvent requires a scripted-effect specification");
+		}
+		return launchSpecification;
 	}
 
 	@Override

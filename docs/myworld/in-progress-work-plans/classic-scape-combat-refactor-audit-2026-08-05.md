@@ -700,12 +700,16 @@ cardinality change.
 
 ### A06 — projectile launch/impact/settlement
 
-Status: A06.1 lifecycle foundation implemented on the focused branch. It adds
-immutable current launch snapshots and bounded per-event exactly-once impact
-ledgers without changing current impact eligibility or resource authority. The
-producer-specification, impact-policy, and economy-ledger slices remain
+Status: A06.1 lifecycle foundation and A06.2 typed producer specifications are
+implemented on focused branches. The latter inventories all 22 tracked core
+and plugin construction sites, freezes former constructor-tail parameters,
+gives maintained special producers stable identities, and retains positional
+compatibility facades. Neither slice changes current impact eligibility or
+resource authority. A06.3 impact policy and A06.4 economy ledger remain
 pending. See
-[`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md).
+[`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md)
+and
+[`combat-a06-projectile-launch-specifications.md`](../../combat/combat-a06-projectile-launch-specifications.md).
 
 Introduce current-specific snapshots and ledgers for bow, thrown, magic, NPC,
 summon, chain, shuriken, and debug projectiles. Use current `WorldLocation` and

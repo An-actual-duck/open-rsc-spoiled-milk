@@ -18,6 +18,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.handler.PluginHandler;
@@ -185,9 +186,17 @@ public class RangeEvent extends GameTickEvent {
 
         player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
         ActionSender.sendSound(player, "shoot");
-        getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, target, damage, 2,
-			true, ammoId, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB,
-			isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true, dragonBreathDamage));
+		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
+			getWorld(), player, target,
+			ProjectileLaunchSpecification.builder(
+				ProjectileLaunchSpecification.Producer.PLAYER_BOW, damage, 2)
+				.chase(true)
+				.poisonWeaponId(ammoId)
+				.presentation(isCrossbow ? Projectile.BOLT : Projectile.ARROW,
+					0, true)
+				.dragonBreathDamage(dragonBreathDamage)
+				.duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
+				.build()));
 	}
 
 	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow) {

@@ -126,7 +126,10 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "target.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
     require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc, magicElement)")
-    require_contains(NPC_BEHAVIOR, "1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement")
+    require_contains(NPC_BEHAVIOR, "ProjectileLaunchSpecification.Producer.NPC_MAGIC")
+    require_contains(NPC_BEHAVIOR, ".elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)")
+    require_contains(NPC_BEHAVIOR, ".magicElement(magicElement)")
+    require_contains(NPC_BEHAVIOR, ".dualElementProcs(startleProcChancePercent,")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
 
     require_contains(COMBAT_FORMULA, "defenseToMitigation(victim.getMeleeDefense()), directAttack)")

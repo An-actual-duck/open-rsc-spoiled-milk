@@ -5,6 +5,7 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Quests;
 import com.openrsc.server.event.RestartableDelayedEvent;
 import com.openrsc.server.event.rsc.impl.projectile.CustomProjectileEvent;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -96,7 +97,12 @@ public class LegendsQuestHolyWater implements OpInvTrigger, UseInvTrigger {
 				player.message("You throw the holy watervial at Ungadulu.");
 				player.getCarriedItems().remove(new Item(item.getCatalogId()));
 				player.playSound("projectile");
-				player.getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(player.getWorld(), player, ungadulu, 1) {
+				player.getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
+					player.getWorld(), player, ungadulu,
+					ProjectileLaunchSpecification.builder(
+						ProjectileLaunchSpecification.Producer.LEGENDS_HOLY_WATER,
+						0, 1)
+						.build()) {
 					@Override
 					public void doSpell() {
 					}
