@@ -6464,7 +6464,7 @@ public class EntityHandler {
 		setLeatherSetDescription(1930, 1934, "Full red-dragon-hide set: 20% chance to weaken enemy defense by 6%.");
 		setLeatherSetDescription(1935, 1939, "Full black-demon-hide set: 20% chance for infernal fire, max hit 12.");
 		setLeatherSetDescription(1940, 1944, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.");
-		setLeatherSetDescription(1945, 1949, "Full balrog-hide set: 20% chance for infernal fire, max hit 18.");
+		setLeatherSetDescription(1945, 1949, "Full balrog-hide set: 40% chance for Hell's Inferno, max hit 18, with AOE splash.");
 		setLeatherSetDescription(1950, 1954, "Full elder-green-dragon-hide set: 60% chance for dragon breath, max hit 40.");
 	}
 

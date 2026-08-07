@@ -21742,6 +21742,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectSceneSize(int effectType) {
+		if (effectType == COMBAT_EFFECT_HELLS_INFERNO) {
+			return 336;
+		}
 		if (isGodSpellCombatEffect(effectType)) {
 			if (effectType == COMBAT_EFFECT_SARADOMIN_STRIKE
 				|| effectType == COMBAT_EFFECT_CLAW_OF_GUTHIX) {
@@ -21781,6 +21784,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectScreenSize(int effectType, int baseSize) {
+		if (effectType == COMBAT_EFFECT_HELLS_INFERNO) {
+			return Math.max(1, (baseSize * 3) / 2);
+		}
 		if (isGodSpellCombatEffect(effectType)) {
 			return baseSize * 2;
 		}

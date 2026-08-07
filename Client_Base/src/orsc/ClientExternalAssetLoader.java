@@ -803,15 +803,16 @@ final class ClientExternalAssetLoader {
 	private Sprite createExternalAnimationSprite(BufferedImage source, int maxTargetSize, int sourceMaxSize) {
 		BufferedImage scaled = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = createNearestNeighborGraphics(scaled);
+		int boundedTargetSize = Math.max(1, Math.min(64, maxTargetSize));
 		int scaleBase = sourceMaxSize > 0 ? sourceMaxSize : Math.max(source.getWidth(), source.getHeight());
-		int targetWidth = Math.max(1, (source.getWidth() * maxTargetSize) / Math.max(1, scaleBase));
-		int targetHeight = Math.max(1, (source.getHeight() * maxTargetSize) / Math.max(1, scaleBase));
-		if (targetHeight > maxTargetSize) {
-			targetHeight = maxTargetSize;
+		int targetWidth = Math.max(1, (source.getWidth() * boundedTargetSize) / Math.max(1, scaleBase));
+		int targetHeight = Math.max(1, (source.getHeight() * boundedTargetSize) / Math.max(1, scaleBase));
+		if (targetHeight > boundedTargetSize) {
+			targetHeight = boundedTargetSize;
 			targetWidth = Math.max(1, (source.getWidth() * targetHeight) / Math.max(1, source.getHeight()));
 		}
-		if (targetWidth > maxTargetSize) {
-			targetWidth = maxTargetSize;
+		if (targetWidth > boundedTargetSize) {
+			targetWidth = boundedTargetSize;
 			targetHeight = Math.max(1, (source.getHeight() * targetWidth) / Math.max(1, source.getWidth()));
 		}
 		int drawX = (64 - targetWidth) / 2;

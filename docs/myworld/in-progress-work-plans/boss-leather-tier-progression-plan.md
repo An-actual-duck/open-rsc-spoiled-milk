@@ -112,7 +112,7 @@ No gameplay changes. Preserve its current:
 
 ## Hell's Inferno AOE Proposal
 
-Hell's Inferno remains a 20% full-set proc and retains its name, full primary
+Hell's Inferno becomes a 40% full-set proc and retains its name, full primary
 maximum of 18 fire-Magic damage, and 12% fire-defense debuff.
 
 To echo Balrog's own Magic attack at a safer player-owned scale:
@@ -121,8 +121,9 @@ To echo Balrog's own Magic attack at a safer player-owned scale:
 2. Search radius 2 around the primary target for other valid hostile targets.
 3. Apply 50% of the primary proc's actual damage to each secondary target,
    rounded up, after each secondary target's own Magic mitigation.
-4. Show Hell's Inferno on every affected target. Increase the effect's rendered
-   scale from 64 to a proposed 96 pixels so it reads as the tier-11 AOE.
+4. Show Hell's Inferno on every affected target. Increase the final effect draw
+   from 64 to 96 pixels so it reads as the tier-11 AOE, while keeping each
+   decoded frame inside the loader's fixed 64-pixel canvas.
 5. Keep the 12% debuff on the primary target only. Secondary targets receive
    splash damage but no additional debuff, matching Balrog's boss splash.
 
@@ -200,15 +201,19 @@ Breath.
   108-point style-defense budget above, and Elder's current economy rung.
 - Elder definitions, acquisition, defensive values, and proc behavior were not
   changed.
-- Hell's Inferno keeps its 20% primary proc, maximum hit 18, and primary-only
+- Hell's Inferno now has a Balrog-specific 40% primary proc, maximum hit 18,
+  and primary-only
   12% fire-defense debuff. It now splashes half of actual primary proc damage,
   rounded up, through each secondary target's Magic mitigation within radius
   two. NPC secondaries exclude summons, dead/removed/unattackable targets, and
   the primary. PvP secondaries pass the side-effect-free combat eligibility
   policy, exclude party members and invalid Wilderness targets, and are
   disabled during duels. Guard Dog suppresses all secondary damage.
-- Explosion VFX 11 renders at a 96-pixel maximum for the strengthened player
-  proc. Balrog's normal Magic attack once again resolves combat effect 46,
+- Explosion VFX 11 contains 16 sheet cells but only 14 visible frames. It now
+  plays those 14 frames and renders at 96 pixels in the final screen/scene draw
+  rather than attempting to place a 96-pixel frame into the loader's fixed
+  64-pixel canvas, which clipped both sides. Balrog's normal Magic attack once
+  again resolves combat effect 46,
   backed by the intact 18-frame sheet copied into the preferred on-entity
   animation tree.
 - The KBD set deliberately has no full-set runtime detector or proc yet. That

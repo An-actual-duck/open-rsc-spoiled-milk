@@ -1874,6 +1874,9 @@ public class Equipment {
 	}
 
 	public double getInfernalFireProcChance() {
+		if (hasFullBalrogSet()) {
+			return 0.40D;
+		}
 		return getInfernalFireProcMaxHit() > 0 ? 0.20D : 0.0D;
 	}
 

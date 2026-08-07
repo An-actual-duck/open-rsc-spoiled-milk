@@ -92,6 +92,13 @@ def main() -> int:
     equipment = read("server/src/com/openrsc/server/model/container/Equipment.java")
     assert "hasFullKingBlackDragonSet" not in equipment
     assert "KING_BLACK_DRAGON_CUIRASS" not in equipment
+    require_all(equipment, (
+        "if (hasFullBalrogSet()) {",
+        "return 0.40D;",
+        "return getInfernalFireProcMaxHit() > 0 ? 0.20D : 0.0D;",
+    ))
+    for item_id in range(1945, 1950):
+        assert "Hell's Inferno: a 40% chance" in custom[item_id]["description"]
 
     utility = read("server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java")
     require_all(utility, (
@@ -139,8 +146,16 @@ def main() -> int:
     require_all(catalog, (
         'define(definitions, 46, "fire-orb-explosion", ON_ENTITY,',
         '"fire-orb-explosion/Fire Orb Explosion(48x48).png", 18, 1, 0, 18, 64);',
-        '"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 16, 96);',
+        '"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 14, 64);',
     ))
+    client = read("Client_Base/src/orsc/mudclient.java")
+    require_all(client, (
+        "if (effectType == COMBAT_EFFECT_HELLS_INFERNO)",
+        "return 336;",
+        "return Math.max(1, (baseSize * 3) / 2);",
+    ))
+    asset_loader = read("Client_Base/src/orsc/ClientExternalAssetLoader.java")
+    assert "Math.min(64, maxTargetSize)" in asset_loader
     assert png_size(
         "dev/myworld/assets/animations/on-entity/fire-orb-explosion/Fire Orb Explosion(48x48).png"
     ) == (864, 48)

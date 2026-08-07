@@ -42,7 +42,7 @@ def main() -> int:
         'define(definitions, 1, "explosion-vfx-15"',
         'define(definitions, 2, "explosion-vfx-17"',
         'define(definitions, 15, "explosion-vfx-11"',
-        '"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 16, 96);',
+        '"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 14, 64);',
         'define(definitions, 46, "fire-orb-explosion"',
         '"fire-orb-explosion/Fire Orb Explosion(48x48).png", 18, 1, 0, 18, 64);',
         'define(definitions, 58, "fire-slash-1"',
@@ -73,6 +73,7 @@ def main() -> int:
     server_projectile = read("server/src/com/openrsc/server/model/entity/update/Projectile.java")
     client_handler = read("Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java")
     client = read("Client_Base/src/orsc/mudclient.java")
+    asset_loader = read("Client_Base/src/orsc/ClientExternalAssetLoader.java")
     require(server_effect, ("DRAGON_WEAPON_SLASH_2 = 66",), "CombatEffect.java")
     require(server_projectile, (
         "ACID_ARMOR_PROC = 39",
@@ -86,7 +87,15 @@ def main() -> int:
         "COMBAT_EFFECT_DRAGON_WEAPON_SLASH_2 = 66",
         "COMBAT_EFFECT_COUNT = 77",
         "CUSTOM_PROJECTILE_COUNT = 34",
+        "if (effectType == COMBAT_EFFECT_HELLS_INFERNO)",
+        "return 336;",
+        "return Math.max(1, (baseSize * 3) / 2);",
     ), "mudclient.java")
+    require(asset_loader, (
+        "int boundedTargetSize = Math.max(1, Math.min(64, maxTargetSize));",
+        "source.getWidth() * boundedTargetSize",
+        "source.getHeight() * boundedTargetSize",
+    ), "ClientExternalAssetLoader.java")
 
     for source, random_choice in (
         ("server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",

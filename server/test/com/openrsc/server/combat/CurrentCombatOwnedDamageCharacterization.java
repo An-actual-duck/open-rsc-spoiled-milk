@@ -50,7 +50,8 @@ final class CurrentCombatOwnedDamageCharacterization {
 	private CurrentCombatOwnedDamageCharacterization() {
 	}
 
-	static void hellsInfernoSplashMath(final CurrentCombatHarness harness) {
+	static void hellsInfernoSplashMath(final CurrentCombatHarness harness)
+			throws Exception {
 		assertEquals(18, CombatEffectUtil.HELLS_INFERNO_MAX_HIT,
 			"Hell's Inferno tier-11 maximum");
 		assertEquals(2, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS,
@@ -67,6 +68,44 @@ final class CurrentCombatOwnedDamageCharacterization {
 			"odd primary damage rounds up");
 		assertEquals(9, CombatEffectUtil.hellsInfernoSplashDamage(18),
 			"maximum primary damage halves to nine");
+
+		final Player demonOwner = harness.player("inferno demon", 450, 450);
+		equipSet(harness, demonOwner, new ItemId[] {
+			ItemId.DEMON_COIF, ItemId.DEMON_GLOVES, ItemId.DEMON_BOOTS,
+			ItemId.DEMON_CHAPS, ItemId.DEMON_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.20D),
+			Double.valueOf(demonOwner.getCarriedItems().getEquipment()
+				.getInfernalFireProcChance()),
+			"Demon infernal proc rate remains unchanged");
+
+		final Player blackDemonOwner = harness.player("inferno black", 460, 460);
+		equipSet(harness, blackDemonOwner, new ItemId[] {
+			ItemId.BLACK_DEMON_COIF, ItemId.BLACK_DEMON_GLOVES,
+			ItemId.BLACK_DEMON_BOOTS, ItemId.BLACK_DEMON_CHAPS,
+			ItemId.BLACK_DEMON_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.20D),
+			Double.valueOf(blackDemonOwner.getCarriedItems().getEquipment()
+				.getInfernalFireProcChance()),
+			"Black Demon infernal proc rate remains unchanged");
+
+		final Player balrogOwner = harness.player("inferno balrog", 470, 470);
+		equipSet(harness, balrogOwner, new ItemId[] {
+			ItemId.BALROG_COIF, ItemId.BALROG_GLOVES, ItemId.BALROG_BOOTS,
+			ItemId.BALROG_CHAPS, ItemId.BALROG_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.40D),
+			Double.valueOf(balrogOwner.getCarriedItems().getEquipment()
+				.getInfernalFireProcChance()),
+			"Balrog infernal proc rate doubles to forty percent");
+	}
+
+	private static void equipSet(final CurrentCombatHarness harness,
+			final Player player, final ItemId[] itemIds) throws Exception {
+		for (ItemId itemId : itemIds) {
+			harness.equip(player, itemId.id(), 1);
+		}
 	}
 
 	static void hellsInfernoSplashPolicies(final CurrentCombatHarness harness)

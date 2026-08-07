@@ -15942,7 +15942,7 @@
     {
       "id": 1945,
       "name": "Balrog-hide coif",
-      "description": "Coif made from balrog leather. A full set grants Hell's Inferno: a 20% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
+      "description": "Coif made from balrog leather. A full set grants Hell's Inferno: a 40% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15965,7 +15965,7 @@
     {
       "id": 1946,
       "name": "Balrog-hide gloves",
-      "description": "Gloves made from balrog leather. A full set grants Hell's Inferno: a 20% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
+      "description": "Gloves made from balrog leather. A full set grants Hell's Inferno: a 40% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -15988,7 +15988,7 @@
     {
       "id": 1947,
       "name": "Balrog-hide boots",
-      "description": "Boots made from balrog leather. A full set grants Hell's Inferno: a 20% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
+      "description": "Boots made from balrog leather. A full set grants Hell's Inferno: a 40% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16011,7 +16011,7 @@
     {
       "id": 1948,
       "name": "Balrog-hide chaps",
-      "description": "Chaps made from balrog leather. A full set grants Hell's Inferno: a 20% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
+      "description": "Chaps made from balrog leather. A full set grants Hell's Inferno: a 40% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16034,7 +16034,7 @@
     {
       "id": 1949,
       "name": "Balrog-hide cuirass",
-      "description": "Cuirass made from balrog leather. A full set grants Hell's Inferno: a 20% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
+      "description": "Cuirass made from balrog leather. A full set grants Hell's Inferno: a 40% chance to deal up to 18 fire magic damage, debuff the primary target, and splash half the damage onto nearby enemies.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
