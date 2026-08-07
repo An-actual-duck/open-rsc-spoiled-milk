@@ -17,6 +17,7 @@ PK_BOT = SERVER / "plugins" / "com" / "openrsc" / "server" / "plugins" / "custom
 
 ALLOWED_KILLED_BY_FILES = {
     "server/src/com/openrsc/server/Server.java",
+    "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
