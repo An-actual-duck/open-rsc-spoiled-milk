@@ -52,6 +52,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
+import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.death.DeathContext;
 import com.openrsc.server.model.entity.death.DeathTransition;
@@ -2349,15 +2350,8 @@ public final class Player extends Mob {
 		}
 		EnchantingItemEffects.setDeathAmuletBurstChargePoints(this, deathAmulet, nextChargePoints - requiredChargePoints);
 		final Point center = getLocation();
-		for (Npc npc : getViewArea().getNpcsInView()) {
-			if (npc == null || npc == killed || npc.isRemoved() || npc.isRespawning()
-				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()
-				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-				continue;
-			}
-			if (!npc.withinRange(center, radius)) {
-				continue;
-			}
+		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundFixedPoint(
+				this, center, killed, radius)) {
 			final int damage = minDamage + DataConversions.getRandom().nextInt(maxDamage - minDamage + 1);
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				this, npc, DamageRequest.SourceCategory.OWNED_EFFECT,

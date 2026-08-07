@@ -734,11 +734,15 @@ identities and replaces duplicated key literals without moving behavior. The
 compiled fixture proves that 32 cannot be used as a total catalog capacity;
 A07.2 adds 71 separate semantic identities, exact nine-phase counts, an
 active-plan inventory, and descriptive current-plus-four planning budgets. It
-does not add a registry or executor. Exact current policies and bounded
-A07.3-A07.5 follow-ups are recorded in
+does not add a registry or executor. A07.3 is prepared on its focused branch:
+it centralizes only compatible player-owned NPC radius enumeration while
+preserving distinct live and eager-snapshot timing. A07.4-A07.5 remain bounded
+follow-ups. Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
-[`combat-a07-secondary-effect-descriptor-inventory.md`](../../combat/combat-a07-secondary-effect-descriptor-inventory.md).
+[`combat-a07-secondary-effect-descriptor-inventory.md`](../../combat/combat-a07-secondary-effect-descriptor-inventory.md),
+with the selector contract in
+[`combat-a07-player-owned-npc-radius-selection.md`](../../combat/combat-a07-player-owned-npc-radius-selection.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

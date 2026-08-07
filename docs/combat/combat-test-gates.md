@@ -288,3 +288,13 @@ keys and that the catalog exposes no executor-shaped method. Current combat
 callers do not consume the catalog. The inventory and active-plan audit are
 recorded in
 [`combat-a07-secondary-effect-descriptor-inventory.md`](combat-a07-secondary-effect-descriptor-inventory.md).
+
+A07.3 grows the gate from 85 to 86 scenarios. Its compiled fixture proves
+view-order preservation, signed-level isolation, current radius/living/
+attackable/summon filters, intentional wall pass-through, Guard Dog
+suppression, lazy per-child revalidation, eager compatibility snapshots, and
+moving-primary versus fixed-terminal centers. Only compatible player-owned NPC
+radius enumeration moves; damage, charge, contribution, aggro, presentation,
+death, and unrelated AoE families remain with their owners. The boundary is
+recorded in
+[`combat-a07-player-owned-npc-radius-selection.md`](combat-a07-player-owned-npc-radius-selection.md).
