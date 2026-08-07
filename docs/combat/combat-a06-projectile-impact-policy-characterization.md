@@ -1,7 +1,7 @@
 # A06.3 projectile impact policy characterization
 
-Status: CHARACTERIZATION COMPLETE; PRODUCTION POLICY UNCHANGED; OWNER DECISIONS
-PENDING.
+Status: CHARACTERIZATION AND OWNER DECISIONS COMPLETE; PRODUCTION POLICY
+UNCHANGED; READY FOR A SEPARATE BOUNDED IMPLEMENTATION BRANCH.
 
 ## Scope and stop condition
 
@@ -10,11 +10,11 @@ for every typed projectile producer. It does not change a combat formula,
 damage result, resource cost, experience award, launch check, projectile
 timing, visual, packet, effect, death adapter, or runtime eligibility rule.
 
-The implementation branch must not begin until the four visible policy choices
-under [Owner decisions](#owner-decisions) are settled. Retargeting, launch-time
-protection, sibling ownership, and duplicate callback behavior already have a
-clear preserve-current recommendation and do not need to be reopened unless
-the owner disagrees.
+The four visible policy choices under
+[Confirmed owner decisions](#confirmed-owner-decisions) were approved on
+2026-08-07. Retargeting, launch-time protection, sibling ownership, and
+duplicate callback behavior retain the documented current behavior. This
+characterization branch deliberately does not begin production implementation.
 
 Evidence comes from the current repository at `e6b452484`, especially:
 
@@ -103,13 +103,11 @@ denial.
 - Legends holy water selects Ungadulu within four tiles before constructing its
   otherwise effect-empty visual callback.
 
-## Recommended policy shape
-
-These are recommendations, not settled requirements.
+## Confirmed policy
 
 ### Target lifetime
 
-Recommended: every gameplay-bearing damaging, scripted, and ball impact must
+Confirmed: every gameplay-bearing damaging, scripted, and ball impact must
 still address the exact target lifetime captured at launch. Reject a dead,
 removed, unregistered, logged-out, replaced-session, or respawn-reused target.
 This closes the confirmed stale-respawn hit without changing damage or death
@@ -118,10 +116,10 @@ attributes even when a participant has left.
 
 ### Source lifetime
 
-Recommended: distinguish a launched projectile surviving its source's death
+Confirmed: distinguish a launched projectile surviving its source's death
 from a stale source session or replacement lifetime.
 
-| Producer group | Recommended source rule | Reason |
+| Producer group | Confirmed source rule | Reason |
 | --- | --- | --- |
 | Player bow/thrown/shuriken/Magic/Iban and cannon | A launched impact may survive ordinary source death; reject logout, changed session, different world, or a new live lifetime | Preserves the intuitive and current one-tick fired-projectile result without attributing new work to a replacement login |
 | NPC ranged/Magic and legacy NPC ranged | A launched impact may survive the old NPC's terminal death, but never an NPC respawn/reused lifetime | The missile has already been emitted; respawn identity must not authorize it |
@@ -139,7 +137,7 @@ other consumers or infer safety solely from the same Java object/UUID.
 
 ### Distance and domain
 
-Recommended for damaging impacts: measure the target's current location from
+Confirmed for damaging impacts: measure the target's current location from
 the source's frozen launch location with the current 15-tile compatibility
 ceiling. This is the smallest defensible change: it prevents two actors from
 teleporting together to carry a shot across the map while retaining generous
@@ -152,7 +150,7 @@ launch-origin ceiling. A short same-level teleport is indistinguishable from
 movement unless its existing combat lifecycle advances; do not add a new
 global teleport-generation contract in A06.3.
 
-Recommended exceptions:
+Confirmed exceptions:
 
 - Legends holy water uses its established four-tile launch ceiling.
 - Gnome ball retains unlimited distance but requires both participants to stay
@@ -166,7 +164,7 @@ of those radii, and A06.3 should not invent them.
 
 ### Collision
 
-Recommended: damaging and scripted gameplay impacts recheck the same semantic
+Confirmed: damaging and scripted gameplay impacts recheck the same semantic
 path used by their producer, from the frozen source launch location to the
 target's current location. A door or wall that becomes blocking during the
 one-tick flight then prevents damage/effects; opening a previously blocked path
@@ -196,9 +194,9 @@ The policy must name the semantic explicitly:
   callback work. A later A06.4 decision separately owns already-paid resources
   and launch-time experience.
 
-## Owner decisions
+## Confirmed owner decisions
 
-Before production implementation, confirm or replace these recommendations:
+The owner approved this complete set on 2026-08-07:
 
 1. **Target terminal state:** invalidate all gameplay-bearing impacts against
    dead, removed, logged-out, replacement-session, or respawned targets;
