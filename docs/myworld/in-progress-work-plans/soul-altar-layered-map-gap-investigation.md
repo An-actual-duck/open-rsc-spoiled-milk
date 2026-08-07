@@ -1,6 +1,6 @@
 # Soul Altar layered-map visual investigation
 
-Status: approved implementation complete; private visual validation pending
+Status: approved implementation complete and privately validated
 
 Branch: `fix/soul-altar-layered-map-gaps`
 
@@ -212,4 +212,7 @@ active window.
 - `python3 tests/myworld/test-renderer-v2-world-geometry.py` — PASS.
 - `./scripts/build-client.sh` — BUILD SUCCESSFUL.
 
-Private visual confirmation remains required before handoff.
+Private visual confirmation was completed on August 6, 2026 against the native
+production-layered profile. The project owner confirmed the Soul, Cosmic, and
+Death altar visuals and surroundings look correct. The private client and
+server were then stopped; no public service was changed.
