@@ -7,13 +7,16 @@ import com.openrsc.server.event.custom.NpcLootEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.death.DeathContext;
+import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
+import com.openrsc.server.model.entity.death.DeathLifecycleState;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.plugins.triggers.KillNpcTrigger;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** Executable pre-migration A05.5 death and compatibility policies. */
+/** Executable A05.5 death-lifecycle and compatibility policies. */
 final class CurrentCombatDeathLifecycleCharacterization {
 	private CurrentCombatDeathLifecycleCharacterization() {
 	}
@@ -32,6 +35,8 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		final AtomicInteger listeners = new AtomicInteger();
 		final AtomicBoolean killedAtListener = new AtomicBoolean();
 		final AtomicBoolean removedAtListener = new AtomicBoolean();
+		final AtomicBoolean reentered = new AtomicBoolean();
+		final long combatLifecycleAtBegin = target.getCombatLifecycle();
 		target.addDeathListener(new NpcLootEvent(harness.world(),
 			target.getLocation(), target.getID(), 1, ItemId.COINS.id()) {
 			@Override
@@ -40,6 +45,9 @@ final class CurrentCombatDeathLifecycleCharacterization {
 				listeners.incrementAndGet();
 				killedAtListener.set(target.killed);
 				removedAtListener.set(target.isRemoved());
+				if (reentered.compareAndSet(false, true)) {
+					target.killedBy(killer);
+				}
 			}
 		});
 
@@ -55,6 +63,19 @@ final class CurrentCombatDeathLifecycleCharacterization {
 			"ordinary NPC removal sets legacy killed projection");
 		assertTrue(target.isUnregistering(),
 			"ordinary non-respawning NPC queues terminal unregister");
+		final DeathLifecycleSnapshot terminal =
+			target.getDeathLifecycleSnapshot();
+		assertEquals(DeathLifecycleState.DEAD, terminal.getState(),
+			"ordinary NPC lifecycle reaches dead after removal");
+		assertEquals(1L, terminal.getDuplicateAttempts(),
+			"reentrant NPC death is rejected exactly once");
+		assertNotNull(terminal.getContext(),
+			"ordinary NPC retains its completed death identity");
+		assertTrue(terminal.getContext().getKiller() == killer,
+			"ordinary NPC death identity retains the direct killer");
+		assertEquals(combatLifecycleAtBegin,
+			terminal.getContext().getTargetCombatLifecycle(),
+			"ordinary NPC death captures the pre-removal combat generation");
 		assertEquals(killsBefore + 1, killer.getNpcKills(),
 			"ordinary NPC awards one kill counter");
 		assertTrue(killer.getSkills().getExperience(Skill.MELEE.id())
@@ -66,6 +87,80 @@ final class CurrentCombatDeathLifecycleCharacterization {
 			"post-removal duplicate cannot replay an NPC listener");
 		assertEquals(killsBefore + 1, killer.getNpcKills(),
 			"post-removal duplicate cannot replay kill rewards");
+
+		final Npc respawning = harness.npc(
+			NpcId.GREATER_DEMON.id(), 612, 760);
+		final int respawningHits = respawning.getLevel(Skill.HITS.id());
+		respawning.addCombatDamage(killer, respawningHits);
+		respawning.getSkills().setLevel(Skill.HITS.id(), 0);
+		respawning.killedBy(killer);
+		final DeathLifecycleSnapshot waiting =
+			respawning.getDeathLifecycleSnapshot();
+		assertEquals(DeathLifecycleState.RESPAWNING, waiting.getState(),
+			"ordinary respawning NPC retains terminal ownership during delay");
+		final DeathContext completedContext = waiting.getContext();
+		final GameTickEvent respawn = harness.findEvent("Respawn NPC");
+		assertNotNull(respawn, "ordinary NPC schedules its production respawn");
+		respawn.run();
+		final DeathLifecycleSnapshot alive =
+			respawning.getDeathLifecycleSnapshot();
+		assertEquals(DeathLifecycleState.ALIVE, alive.getState(),
+			"NPC respawn creates a new live death generation");
+		assertEquals(waiting.getLifecycleId() + 1L, alive.getLifecycleId(),
+			"NPC respawn advances death generation exactly once");
+		assertTrue(alive.getContext() == null,
+			"NPC respawn clears the completed death identity");
+		assertFalse(respawning.completeDeathLifecycleRespawn(completedContext),
+			"stale NPC respawn context cannot reset the new lifetime");
+	}
+
+	static void failedNpcDeathCannotReplay(final CurrentCombatHarness harness) {
+		final Player killer = harness.player("failed death owner", 620, 770);
+		final Npc target = harness.npc(
+			NpcId.GREATER_DEMON.id(), 621, 770);
+		target.setShouldRespawn(false);
+		final int targetHits = target.getLevel(Skill.HITS.id());
+		target.addCombatDamage(killer, targetHits);
+		target.getSkills().setLevel(Skill.HITS.id(), 0);
+		final int killsBefore = killer.getNpcKills();
+		final AtomicInteger listeners = new AtomicInteger();
+		target.addDeathListener(new NpcLootEvent(harness.world(),
+			target.getLocation(), target.getID(), 1, ItemId.COINS.id()) {
+			@Override
+			public void onLootNpcDeath(final Player ignoredPlayer,
+					final Npc ignoredNpc) {
+				listeners.incrementAndGet();
+				throw new IllegalStateException(
+					"deliberate death-listener fixture failure");
+			}
+		});
+
+		boolean propagated = false;
+		try {
+			target.killedBy(killer);
+		} catch (final IllegalStateException expected) {
+			propagated = true;
+		}
+
+		assertTrue(propagated,
+			"death-listener failure retains existing propagation");
+		assertTrue(target.killed,
+			"failed optional NPC callback still completes removal");
+		assertTrue(target.isUnregistering(),
+			"failed optional NPC callback queues terminal unregister");
+		assertEquals(DeathLifecycleState.DEAD,
+			target.getDeathLifecycleSnapshot().getState(),
+			"failed optional NPC callback retains terminal ownership");
+		assertEquals(1, listeners.get(),
+			"failed optional NPC listener executes once");
+		assertEquals(killsBefore + 1, killer.getNpcKills(),
+			"rewards preceding the failed listener execute once");
+
+		target.killedBy(killer);
+		assertEquals(1, listeners.get(),
+			"later lethal request cannot replay a failed listener");
+		assertEquals(killsBefore + 1, killer.getNpcKills(),
+			"later lethal request cannot replay preceding rewards");
 	}
 
 	static void playerDeathPolicies(final CurrentCombatHarness harness)
@@ -92,6 +187,11 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		assertEquals(1, harness.countOutgoingPackets(
 			victim, OpcodeOut.SEND_DEATH),
 			"player death packet cardinality");
+		final DeathLifecycleSnapshot waiting = victim.getDeathLifecycleSnapshot();
+		assertEquals(DeathLifecycleState.RESPAWNING, waiting.getState(),
+			"player lifecycle remains respawning during killed guard");
+		assertTrue(waiting.getContext().getKiller() == killer,
+			"player lifecycle retains its direct killer identity");
 
 		victim.killedBy(killer);
 		assertEquals(1, harness.countOutgoingPackets(
@@ -103,6 +203,15 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		reset.run();
 		assertFalse(victim.killed,
 			"player respawn delay releases the legacy killed guard");
+		final DeathLifecycleSnapshot alive = victim.getDeathLifecycleSnapshot();
+		assertEquals(DeathLifecycleState.ALIVE, alive.getState(),
+			"player killed reset creates a live death generation");
+		assertEquals(waiting.getLifecycleId() + 1L, alive.getLifecycleId(),
+			"player respawn advances death generation exactly once");
+		assertTrue(alive.getContext() == null,
+			"player respawn clears the completed death identity");
+		assertFalse(victim.completeDeathLifecycleRespawn(waiting.getContext()),
+			"stale player reset cannot alter the new lifetime");
 	}
 
 	static void pluginOwnedNpcCompatibility(final CurrentCombatHarness harness)
@@ -135,12 +244,59 @@ final class CurrentCombatDeathLifecycleCharacterization {
 			"plugin-owned death bypasses ordinary reward listeners");
 		assertEquals(0, killer.getNpcKills(),
 			"plugin-owned death bypasses ordinary kill rewards");
+		assertEquals(DeathLifecycleState.ALIVE,
+			target.getDeathLifecycleSnapshot().getState(),
+			"plugin-owned NPC remains outside ordinary lifecycle authority");
+		assertTrue(target.getDeathLifecycleSnapshot().getContext() == null,
+			"plugin-owned NPC has no misleading ordinary death identity");
 
 		target.killedBy(killer);
 		assertEquals(2, plugin.blockCalls.get(),
 			"maintained plugin-owned compatibility accepts another decision");
 		assertEquals(0, listeners.get(),
 			"repeat plugin-owned decision still bypasses ordinary listeners");
+	}
+
+	static void playerTutorialAndLoggedOutCompatibility(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player tutorial = harness.player(
+			"tutorial death lifecycle", 200, 730);
+		final Npc peter = harness.npc(NpcId.PETER_SKIPPIN.id(), 201, 730);
+		harness.recordOutgoingPackets(tutorial);
+		tutorial.getSkills().setLevel(Skill.HITS.id(), 0);
+		final long tutorialGeneration = tutorial.getDeathLifecycleSnapshot()
+			.getLifecycleId();
+
+		tutorial.killedBy(peter);
+
+		assertFalse(tutorial.killed,
+			"Peter Skippin tutorial death immediately releases killed guard");
+		assertEquals(DeathLifecycleState.ALIVE,
+			tutorial.getDeathLifecycleSnapshot().getState(),
+			"tutorial survivor returns to a live death lifecycle");
+		assertEquals(tutorialGeneration + 1L,
+			tutorial.getDeathLifecycleSnapshot().getLifecycleId(),
+			"tutorial survivor advances death identity exactly once");
+		assertTrue(tutorial.getDeathLifecycleSnapshot().getContext() == null,
+			"tutorial survivor clears the discarded death identity");
+		assertEquals(1, harness.countOutgoingPackets(
+			tutorial, OpcodeOut.SEND_DEATH),
+			"tutorial skip retains its legacy death packet");
+
+		final Player loggedOut = harness.player(
+			"logged out death lifecycle", 660, 760);
+		loggedOut.setLoggedIn(false);
+		final long loggedOutGeneration = loggedOut.getDeathLifecycleSnapshot()
+			.getLifecycleId();
+		loggedOut.killedBy(peter);
+		assertFalse(loggedOut.killed,
+			"logged-out player death remains an intentional no-op");
+		assertEquals(DeathLifecycleState.ALIVE,
+			loggedOut.getDeathLifecycleSnapshot().getState(),
+			"logged-out no-op acquires no death ownership");
+		assertEquals(loggedOutGeneration,
+			loggedOut.getDeathLifecycleSnapshot().getLifecycleId(),
+			"logged-out no-op does not advance death identity");
 	}
 
 	private static final class RecordingKillPlugin implements KillNpcTrigger {
@@ -186,6 +342,22 @@ final class CurrentCombatDeathLifecycleCharacterization {
 	private static void assertEquals(final int expected, final int actual,
 			final String message) {
 		if (expected != actual) {
+			throw new AssertionError(message + ": expected " + expected
+				+ ", got " + actual);
+		}
+	}
+
+	private static void assertEquals(final long expected, final long actual,
+			final String message) {
+		if (expected != actual) {
+			throw new AssertionError(message + ": expected " + expected
+				+ ", got " + actual);
+		}
+	}
+
+	private static void assertEquals(final Object expected, final Object actual,
+			final String message) {
+		if (expected == null ? actual != null : !expected.equals(actual)) {
 			throw new AssertionError(message + ": expected " + expected
 				+ ", got " + actual);
 		}

@@ -52,6 +52,8 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
+import com.openrsc.server.model.entity.death.DeathContext;
+import com.openrsc.server.model.entity.death.DeathTransition;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
@@ -4228,6 +4230,9 @@ public final class Player extends Mob {
 	public void killedBy(final Mob mob) {
 		if (!isLoggedIn()) return;
 		if (killed) return;
+		final DeathTransition transition = tryBeginDeathLifecycle(mob);
+		if (!transition.isStarted()) return;
+		final DeathContext deathContext = transition.getContext();
 		killed = true;
 		attackTransaction.cancelCurrent(
 			AttackTransactionResult.Reason.PARTICIPANT_CHANGED);
@@ -4240,6 +4245,7 @@ public final class Player extends Mob {
 		if (this.getLocation().onTutorialIsland()
 			&& (mob.isNpc() && mob.getID() == NpcId.PETER_SKIPPIN.id())) {
 			killed = false;
+			reviveDeathLifecycle(deathContext);
 			resetCombatEvent();
 			setLastOpponent(null);
 			getSkills().setLevel(Skill.HITS.id(), getSkills().getMaxStat(Skill.HITS.id()));
@@ -4359,12 +4365,16 @@ public final class Player extends Mob {
 
 		getUpdateFlags().reset();
 		removeSkull();
+		markDeathLifecycleDead(deathContext);
+		markDeathLifecycleRespawning(deathContext);
 
 		getWorld().getServer().getGameEventHandler().add(
 			new DelayedEvent(getWorld(), this, getConfig().GAME_TICK * 5L, "Reset Killed") {
-				@Override
+			@Override
 				public void run() {
-					getOwner().killed = false;
+					if (getOwner().completeDeathLifecycleRespawn(deathContext)) {
+						getOwner().killed = false;
+					}
 					stop();
 				}
 			}

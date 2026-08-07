@@ -16,6 +16,8 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.entity.*;
+import com.openrsc.server.model.entity.death.DeathContext;
+import com.openrsc.server.model.entity.death.DeathTransition;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
@@ -61,7 +63,7 @@ public class Npc extends Mob {
 			new NpcOwnerPreservationLifecycleGate();
 	private NpcBehavior npcBehavior;
 	private ArrayList<NpcLootEvent> deathListeners = new ArrayList<NpcLootEvent>(1); // TODO: Should use a more generic class. Maybe PlayerKilledNpcListener, but that is in plugins jar.
-	private static int[] removeHandledInPlugin = {
+	private static final int[] PLUGIN_OWNED_DEATH_NPC_IDS = {
 		NpcId.RAT_TUTORIAL.id(),
 		NpcId.DELRITH.id(),
 		NpcId.COUNT_DRAYNOR.id(),
@@ -726,6 +728,41 @@ public class Npc extends Mob {
 			this.curePoison();
 			return;
 		}
+		if (isPluginOwnedDeathCompatibility()) {
+			processLegacyDeath(mob, true);
+			return;
+		}
+		final DeathTransition transition = tryBeginDeathLifecycle(mob);
+		if (!transition.isStarted()) {
+			this.curePoison();
+			return;
+		}
+		final DeathContext context = transition.getContext();
+		try {
+			processLegacyDeath(mob, false);
+		} catch (final RuntimeException failure) {
+			if (!killed) {
+				try {
+					deathListeners.clear();
+					remove();
+				} catch (final RuntimeException cleanupFailure) {
+					failure.addSuppressed(cleanupFailure);
+				}
+			}
+			finalizeDeathLifecycle(context);
+			LOGGER.error(
+				"NPC death processing failed after ownership was acquired: npc={} lifecycle={}",
+				getID(), context.getLifecycleId(), failure);
+			throw failure;
+		} catch (final Error failure) {
+			finalizeDeathLifecycle(context);
+			throw failure;
+		}
+		finalizeDeathLifecycle(context);
+	}
+
+	private void processLegacyDeath(final Mob mob,
+			final boolean pluginOwnsDeath) {
 		//this.killed = true; remove() assures everything went fine, and set killed to true
 
 		Player owner = getWorld().getPlayerByUUID(mob.getUUID());
@@ -746,13 +783,11 @@ public class Npc extends Mob {
 		}
 
 		owner.getWorld().getServer().getPluginHandler().handlePlugin(KillNpcTrigger.class, owner, new Object[]{owner, this});
-		for (int npcId : removeHandledInPlugin) {
-			if (this.getID() == npcId) {
-				if (this.getID() == NpcId.RAT_TUTORIAL.id()) {
-					remove();
-				}
-				return;
+		if (pluginOwnsDeath) {
+			if (this.getID() == NpcId.RAT_TUTORIAL.id()) {
+				remove();
 			}
+			return;
 		}
 
 		// Reset the player's range timer
@@ -812,6 +847,27 @@ public class Npc extends Mob {
 
 		deathListeners.clear();
 		remove();
+	}
+
+	private boolean isPluginOwnedDeathCompatibility() {
+		for (final int npcId : PLUGIN_OWNED_DEATH_NPC_IDS) {
+			if (getID() == npcId) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void finalizeDeathLifecycle(final DeathContext context) {
+		if (!killed) {
+			// Legacy failures before remove() left the NPC retryable.
+			abandonDeathLifecycle(context);
+			return;
+		}
+		markDeathLifecycleDead(context);
+		if (isRespawning()) {
+			markDeathLifecycleRespawning(context);
+		}
 	}
 
 	private void logNpcKill(Player owner) {
@@ -1487,6 +1543,7 @@ public class Npc extends Mob {
 	}
 
 	private void removeWithinLayeredOwnerLifecycle() {
+		final DeathContext deathContext = getActiveDeathContext();
 		advanceCombatLifecycle(CombatEngagementTerminalReason.DESPAWN);
 		setAttribute(DEATH_VISUAL_TICK_ATTRIBUTE, getWorld().getServer().getCurrentTick());
 		// Removal is the authoritative end of this NPC lifetime, including
@@ -1544,6 +1601,9 @@ public class Npc extends Mob {
 						rangeDamagers.clear();
 						combatDamagers.clear();
 						summonDamagers.clear();
+						if (deathContext != null) {
+							n.completeDeathLifecycleRespawn(deathContext);
+						}
 					} finally {
 						n.endLayeredOwnerLifecycleOperation();
 					}

@@ -23,7 +23,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the nine combat fixture
+The test target compiles production server sources and the ten combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:
@@ -211,3 +211,11 @@ god/Iban settlement moves; lethal god/Iban helper settlement remains outside
 because its death-before-presentation/contribution and raw-Hits behavior cannot
 move without a gameplay delta. The boundary is recorded in
 [`combat-a05-delayed-spell-damage-transaction.md`](combat-a05-delayed-spell-damage-transaction.md).
+
+A05.5 grows the gate from 66 to 71 scenarios. Its fixtures pin ordinary NPC
+reward/listener/removal order, reentrant exactly-once ownership, NPC and player
+respawn generations, a deliberate listener failure, player death cleanup and
+packets, tutorial survival, logged-out no-op behavior, and the ten-ID
+plugin-owned compatibility boundary. Existing simultaneous-death fixtures
+remain authoritative. The bounded lifecycle is recorded in
+[`combat-a05-atomic-death-lifecycle.md`](combat-a05-atomic-death-lifecycle.md).

@@ -201,13 +201,13 @@ Each item below is a separate follow-up branch with its own stop gate.
    tracking, party packets, reflection order, Ring of Life, and returned
    lethal booleans. The bounded result is recorded in the A05.4D transaction
    document linked above. Published on main at `f48d02bee`.
-5. **A05.4E — delayed spell secondaries (focused branch complete; manager review
-   pending).** Full scheduled fixtures execute Salarin and god/Iban area effects.
+5. **A05.4E — delayed spell secondaries (published).** Full scheduled fixtures
+   execute Salarin and god/Iban area effects.
    Salarin and nonlethal NPC god/Iban settlement use effect-specific requests;
    lethal god/Iban hits deliberately retain `Mob.damage` because its death-before-
    presentation/contribution and raw-Hits behavior cannot move without a delta.
    The bounded result is recorded in the A05.4E transaction document linked
-   above.
+   above. Published on main at `4c1a1ced8`.
 6. **A08 — typed poison and burn provenance/lifecycle.** Do not fold DoTs into
    an A05 helper migration. First settle owner persistence, offline owner,
    replacement, death/respawn, Leach, and kill-credit rules as already required
@@ -223,7 +223,7 @@ Each item below is a separate follow-up branch with its own stop gate.
 For every implementation family, verify exact final Hits, displayed overkill,
 hitsplat type/cardinality, contribution style and cap, lifesteal count, aggro,
 kill source/type, update/stat/party packets, terminal callback count, and child
-hook order. Run the current 66-scenario combat gate, relevant focused content tests,
+hook order. Run the current 71-scenario combat gate, relevant focused content tests,
 authoritative core/plugin builds, production-artifact exclusion, and
 changed-code static analysis.
 

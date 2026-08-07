@@ -115,8 +115,8 @@ def main() -> None:
 
     require_regex(
         NPC,
-        r"removeHandledInPlugin = \{.*?NpcId\.DELRITH\.id\(\).*?NpcId\.COUNT_DRAYNOR\.id\(\).*?NpcId\.CHRONOZON\.id\(\).*?NpcId\.BLACK_KNIGHT_TITAN\.id\(\).*?\};",
-        "quest/plugin-owned NPC deaths stay explicit in removeHandledInPlugin",
+        r"PLUGIN_OWNED_DEATH_NPC_IDS = \{.*?NpcId\.DELRITH\.id\(\).*?NpcId\.COUNT_DRAYNOR\.id\(\).*?NpcId\.CHRONOZON\.id\(\).*?NpcId\.BLACK_KNIGHT_TITAN\.id\(\).*?\};",
+        "quest/plugin-owned NPC deaths stay explicit in the compatibility inventory",
     )
 
     print("PASS: combat exception guardrails validated")

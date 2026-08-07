@@ -27,6 +27,10 @@ import com.openrsc.server.model.combat.CombatEventSlot;
 import com.openrsc.server.model.combat.CombatOwnershipAudit;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
+import com.openrsc.server.model.entity.death.DeathContext;
+import com.openrsc.server.model.entity.death.DeathLifecycleAuthority;
+import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
+import com.openrsc.server.model.entity.death.DeathTransition;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcAttackStyleProfile;
 import com.openrsc.server.model.entity.npc.NpcInteraction;
@@ -135,6 +139,7 @@ public abstract class Mob extends Entity {
 	 */
 	private final UUID uuid;
 	private final CombatEngagementAuthority combatEngagementAuthority;
+	private final DeathLifecycleAuthority deathLifecycleAuthority;
 	/** Generation token for delayed combat work that must not cross lifetimes. */
 	private final AtomicLong combatLifecycle = new AtomicLong(1L);
 	/**
@@ -226,6 +231,7 @@ public abstract class Mob extends Entity {
 		statRestorationEvent = new StatRestorationEvent(getWorld(), this);
 		uuid = UUID.randomUUID();
 		combatEngagementAuthority = new CombatEngagementAuthority(this);
+		deathLifecycleAuthority = new DeathLifecycleAuthority(this);
 	}
 
 	/**
@@ -2093,6 +2099,41 @@ public abstract class Mob extends Entity {
 
 	public UUID getUUID() {
 		return uuid;
+	}
+
+	/** Acquires ordinary death ownership without moving any death policy. */
+	public final DeathTransition tryBeginDeathLifecycle(final Mob killer) {
+		return deathLifecycleAuthority.tryBegin(killer);
+	}
+
+	public final boolean markDeathLifecycleDead(final DeathContext context) {
+		return deathLifecycleAuthority.markDead(context);
+	}
+
+	public final boolean markDeathLifecycleRespawning(
+			final DeathContext context) {
+		return deathLifecycleAuthority.markRespawning(context);
+	}
+
+	public final boolean completeDeathLifecycleRespawn(
+			final DeathContext context) {
+		return deathLifecycleAuthority.completeRespawn(context);
+	}
+
+	public final boolean reviveDeathLifecycle(final DeathContext context) {
+		return deathLifecycleAuthority.revive(context);
+	}
+
+	public final boolean abandonDeathLifecycle(final DeathContext context) {
+		return deathLifecycleAuthority.abandon(context);
+	}
+
+	public final DeathContext getActiveDeathContext() {
+		return deathLifecycleAuthority.getActiveContext();
+	}
+
+	public final DeathLifecycleSnapshot getDeathLifecycleSnapshot() {
+		return deathLifecycleAuthority.snapshot();
 	}
 
 	public long getCombatLifecycle() {
