@@ -1,7 +1,7 @@
 # A06.3 projectile impact policy implementation
 
-Status: IMPLEMENTED AND AUTOMATED GATES PASS ON THE FOCUSED BRANCH; PRIVATE
-VISUAL ACCEPTANCE AND MANAGER INTEGRATION REMAIN PENDING.
+Status: IMPLEMENTED, AUTOMATED GATES PASS, AND PRIVATE OPENGL ACCEPTANCE IS
+COMPLETE ON THE FOCUSED BRANCH; MANAGER INTEGRATION REMAINS PENDING.
 
 ## Outcome and boundary
 
@@ -111,7 +111,15 @@ Automated verification completed before private testing:
 
 ## Private acceptance and stop condition
 
-Before READY handoff, privately inspect ordinary player and NPC projectiles
+Private OpenGL inspection completed on 2026-08-07 against a loopback-only
+server on port 43616. The owner confirmed ordinary projectile presentation,
+clear-path impact behavior, and blocked-path feedback looked correct, with no
+visible combat regression. The executable gate supplies deterministic coverage
+for death/disappearance, teleport and signed-level transitions, and barriers
+introduced during flight; those timing-sensitive invalidations were not
+claimed as independently reproduced by eye.
+
+The private acceptance checklist was to inspect ordinary player and NPC projectiles
 whose target dies/disappears, a long teleport or level transition during
 flight, and a door or wall that closes during flight. The launch visual should
 still appear, but no impact damage/effect should appear after invalidation.

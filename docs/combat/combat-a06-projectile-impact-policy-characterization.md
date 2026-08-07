@@ -256,5 +256,7 @@ classified safely.
   reason, duplicate callback, and deliberate callback failure.
 - Full combat gate, authoritative core/plugin builds, plugin discovery,
   production-artifact exclusion of tests, and changed-code static analysis.
-- Private gameplay inspection for visible projectile disappearance at death,
-  teleport, level transition, and a closing door before READY handoff.
+- Private OpenGL inspection completed on 2026-08-07 with owner acceptance of
+  ordinary projectile presentation and clear/blocked-path behavior; executable
+  tests cover the timing-sensitive death, teleport, level-transition, and
+  closing-barrier cases.

@@ -705,8 +705,9 @@ implemented on focused branches. The latter inventories all 22 tracked core
 and plugin construction sites, freezes former constructor-tail parameters,
 gives maintained special producers stable identities, and retains positional
 compatibility facades. A06.3 characterization and its approved family decision
-matrix are complete, and the bounded production policy is implemented on a
-focused branch pending private visual acceptance and manager integration.
+matrix are complete, and the bounded production policy is implemented with
+private OpenGL acceptance complete on the focused branch; manager integration
+remains pending.
 A06.4 economy settlement remains pending. See
 [`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md)
 and
