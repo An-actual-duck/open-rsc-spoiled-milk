@@ -90,13 +90,23 @@ def main() -> int:
     ))
 
     equipment = read("server/src/com/openrsc/server/model/container/Equipment.java")
-    assert "hasFullKingBlackDragonSet" not in equipment
-    assert "KING_BLACK_DRAGON_CUIRASS" not in equipment
     require_all(equipment, (
+        "private static final int[] kingBlackDragonSetIds",
+        "MyWorldItemId.KING_BLACK_DRAGON_CUIRASS",
+        "public boolean hasFullKingBlackDragonSet()",
+        "public double getDragonBreathArmorProcChance()",
+        "if (hasFullKingBlackDragonSet()) {\n\t\t\treturn 0.40D;",
+        "public int getDragonBreathArmorAppliedPoisonPower()",
+        "public int getDragonBreathArmorMaxPoisonPower()",
+        'return "king_black";',
         "if (hasFullBalrogSet()) {",
         "return 0.40D;",
         "return getInfernalFireProcMaxHit() > 0 ? 0.20D : 0.0D;",
     ))
+    for item_id in range(3313, 3318):
+        assert custom[item_id]["description"].startswith(
+            "Full KBD-hide set: 40% chance for True Dragon's Breath"
+        )
     for item_id in range(1945, 1950):
         assert "Hell's Inferno: a 40% chance" in custom[item_id]["description"]
 
@@ -121,6 +131,12 @@ def main() -> int:
     ):
         event = read(event_path)
         require_all(event, (
+            "getDragonBreathArmorMaxPoisonPower()",
+            "getDragonBreathArmorProcChance()",
+            "getDragonBreathArmorAppliedPoisonPower()",
+            "getDragonBreathArmorProcKey()",
+            '"king_black".equals(dragonBreathProc)',
+            "hasFullKingBlackDragonSet()",
             "applyHellsInfernoSplash",
             "CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt)",
             "CombatEffectUtil.findPlayerOwnedNpcSplashTargets(",

@@ -160,6 +160,51 @@ final class CurrentCombatOwnedDamageCharacterization {
 			"legacy melee splash matches modern PvM and projectile damage");
 	}
 
+	static void kingBlackDragonSetProfile(final CurrentCombatHarness harness)
+			throws Exception {
+		final Player king = harness.player("king dragon set", 480, 480);
+		final int[] kingSet = {
+			MyWorldItemId.KING_BLACK_DRAGON_COIF,
+			MyWorldItemId.KING_BLACK_DRAGON_GLOVES,
+			MyWorldItemId.KING_BLACK_DRAGON_BOOTS,
+			MyWorldItemId.KING_BLACK_DRAGON_CHAPS,
+			MyWorldItemId.KING_BLACK_DRAGON_CUIRASS
+		};
+		for (int index = 0; index < kingSet.length - 1; index++) {
+			harness.equip(king, kingSet[index], 1);
+		}
+		assertFalse(king.hasFullKingBlackDragonSet(),
+			"four KBD pieces do not activate the set");
+		harness.equip(king, kingSet[kingSet.length - 1], 1);
+		assertTrue(king.hasFullKingBlackDragonSet(),
+			"all five KBD pieces activate the set");
+		assertEquals(Double.valueOf(0.40D),
+			Double.valueOf(king.getDragonBreathArmorProcChance()),
+			"KBD Dragon Breath chance");
+		assertEquals(20, king.getDragonBreathArmorAppliedPoisonPower(),
+			"KBD applied poison power");
+		assertEquals(40, king.getDragonBreathArmorMaxPoisonPower(),
+			"KBD poison ceiling");
+		assertEquals("king_black", king.getDragonBreathArmorProcKey(),
+			"KBD proc identity");
+
+		final Player elder = harness.player("elder dragon set", 490, 490);
+		equipSet(harness, elder, new ItemId[] {
+			ItemId.ELDER_GREEN_DRAGON_COIF, ItemId.ELDER_GREEN_DRAGON_GLOVES,
+			ItemId.ELDER_GREEN_DRAGON_BOOTS, ItemId.ELDER_GREEN_DRAGON_CHAPS,
+			ItemId.ELDER_GREEN_DRAGON_CUIRASS
+		});
+		assertEquals(Double.valueOf(0.60D),
+			Double.valueOf(elder.getDragonBreathArmorProcChance()),
+			"Elder Dragon Breath chance remains unchanged");
+		assertEquals(20, elder.getDragonBreathArmorAppliedPoisonPower(),
+			"Elder applied poison power remains unchanged");
+		assertEquals(40, elder.getDragonBreathArmorMaxPoisonPower(),
+			"Elder poison ceiling remains unchanged");
+		assertEquals("elder_green", elder.getDragonBreathArmorProcKey(),
+			"Elder proc identity remains unchanged");
+	}
+
 	static void balrogSplashPolicies(final CurrentCombatHarness harness)
 			throws Exception {
 		CurrentCombatCharacterizationTest.resetDamageObserver(harness);

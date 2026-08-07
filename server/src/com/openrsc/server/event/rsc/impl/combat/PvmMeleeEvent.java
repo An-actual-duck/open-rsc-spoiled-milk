@@ -563,17 +563,19 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 			target.applyDragonFireDefenseDebuff(6);
 		}
-		if ("black".equals(player.getAttribute("dragon_breath_armor_proc", ""))
-			|| "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		final String dragonBreathProc = player.getAttribute("dragon_breath_armor_proc", "");
+		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)
+				|| "elder_green".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
-		if (player.hasFullBlackDragonSet() && "black".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		if (player.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
 			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 		}
-		if (player.hasFullElderGreenDragonSet() && "elder_green".equals(player.getAttribute("dragon_breath_armor_proc", ""))) {
+		if ((player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc))
+				|| (player.hasFullElderGreenDragonSet() && "elder_green".equals(dragonBreathProc))) {
 			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
@@ -1019,7 +1021,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final int poisonWeaponId = weapon == null ? -1 : weapon.getCatalogId();
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
 		final int styleArmorMaxPower = player.getMeleePoisonArmorMaxPower();
-		final int breathArmorMaxPower = player.hasFullBlackDragonSet() ? 30 : (player.hasFullElderGreenDragonSet() ? 40 : 0);
+		final int breathArmorMaxPower = player.getDragonBreathArmorMaxPoisonPower();
 		final int armorMaxPower = styleArmorMaxPower + breathArmorMaxPower;
 		final int totalMaxPower = weaponMaxPower + armorMaxPower;
 		if (totalMaxPower <= 0) {
@@ -1036,12 +1038,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 			appliedPoisonPower = Math.max(appliedPoisonPower, player.getMeleePoisonArmorAppliedPower());
 			target.getUpdateFlags().setProjectile(new Projectile(player, target, Projectile.ACID_ARMOR_PROC));
 		}
-		if (player.hasFullBlackDragonSet() && combatRandom().nextDouble() < 0.20D) {
-			appliedPoisonPower = Math.max(appliedPoisonPower, 15);
-			player.setAttribute("dragon_breath_armor_proc", "black");
-		} else if (player.hasFullElderGreenDragonSet() && combatRandom().nextDouble() < 0.60D) {
-			appliedPoisonPower = Math.max(appliedPoisonPower, 20);
-			player.setAttribute("dragon_breath_armor_proc", "elder_green");
+		final double breathProcChance = player.getDragonBreathArmorProcChance();
+		if (breathProcChance > 0.0D && combatRandom().nextDouble() < breathProcChance) {
+			appliedPoisonPower = Math.max(appliedPoisonPower,
+				player.getDragonBreathArmorAppliedPoisonPower());
+			player.setAttribute("dragon_breath_armor_proc",
+				player.getDragonBreathArmorProcKey());
 		}
 		if (appliedPoisonPower <= 0) {
 			return;

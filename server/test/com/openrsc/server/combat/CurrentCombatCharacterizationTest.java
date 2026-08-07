@@ -234,6 +234,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatOwnedDamageCharacterization::hellsInfernoSplashMath);
 			run(harness, "hells_inferno_splash_preserves_selection_guard_dog_and_event_parity",
 				CurrentCombatOwnedDamageCharacterization::hellsInfernoSplashPolicies);
+			run(harness, "king_black_dragon_set_uses_middle_dragon_breath_profile",
+				CurrentCombatOwnedDamageCharacterization::kingBlackDragonSetProfile);
 			run(harness, "elder_green_dragon_preserves_style_tracking_packets_and_reflection_order",
 				CurrentCombatOwnedDamageCharacterization::elderGreenDragonPolicies);
 			run(harness, "summon_bonus_preserves_style_mitigation_credit_and_caller_death",

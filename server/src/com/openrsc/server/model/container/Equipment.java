@@ -278,6 +278,13 @@ public class Equipment {
 		ItemId.BLACK_DRAGON_CHAPS.id(),
 		ItemId.BLACK_DRAGON_CUIRASS.id()
 	};
+	private static final int[] kingBlackDragonSetIds = {
+		MyWorldItemId.KING_BLACK_DRAGON_COIF,
+		MyWorldItemId.KING_BLACK_DRAGON_GLOVES,
+		MyWorldItemId.KING_BLACK_DRAGON_BOOTS,
+		MyWorldItemId.KING_BLACK_DRAGON_CHAPS,
+		MyWorldItemId.KING_BLACK_DRAGON_CUIRASS
+	};
 	private static final int[] elderGreenDragonSetIds = {
 		ItemId.ELDER_GREEN_DRAGON_COIF.id(),
 		ItemId.ELDER_GREEN_DRAGON_GLOVES.id(),
@@ -1902,8 +1909,46 @@ public class Equipment {
 		return hasFullSet(blackDragonSetIds);
 	}
 
+	public boolean hasFullKingBlackDragonSet() {
+		return hasFullSet(kingBlackDragonSetIds);
+	}
+
 	public boolean hasFullElderGreenDragonSet() {
 		return hasFullSet(elderGreenDragonSetIds);
+	}
+
+	public double getDragonBreathArmorProcChance() {
+		if (hasFullElderGreenDragonSet()) {
+			return 0.60D;
+		}
+		if (hasFullKingBlackDragonSet()) {
+			return 0.40D;
+		}
+		return hasFullBlackDragonSet() ? 0.20D : 0.0D;
+	}
+
+	public int getDragonBreathArmorAppliedPoisonPower() {
+		if (hasFullKingBlackDragonSet() || hasFullElderGreenDragonSet()) {
+			return 20;
+		}
+		return hasFullBlackDragonSet() ? 15 : 0;
+	}
+
+	public int getDragonBreathArmorMaxPoisonPower() {
+		if (hasFullKingBlackDragonSet() || hasFullElderGreenDragonSet()) {
+			return 40;
+		}
+		return hasFullBlackDragonSet() ? 30 : 0;
+	}
+
+	public String getDragonBreathArmorProcKey() {
+		if (hasFullElderGreenDragonSet()) {
+			return "elder_green";
+		}
+		if (hasFullKingBlackDragonSet()) {
+			return "king_black";
+		}
+		return hasFullBlackDragonSet() ? "black" : "";
 	}
 
 	public int getMeleeOffense() {

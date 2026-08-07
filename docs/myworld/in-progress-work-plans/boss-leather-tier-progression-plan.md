@@ -183,12 +183,15 @@ silently substituted for the boss's normal attack impact.
    Balrog primary/AOE procs, Guard Dog suppression, and Balrog boss projectiles
    on a private server/client.
 
-## Decision Still Needed
+## KBD Set Effect Decision
 
-The KBD tier-10 set needs its own five-piece effect. That decision can be made
-after its item family and visual direction are reviewed; it does not need to
-reuse either Black Dragon's poison effect or Elder Green Dragon's True Dragon's
-Breath.
+KBD is the middle Dragon Breath tier. Its complete five-piece set uses Elder
+Green Dragon's existing True Dragon's Breath package at a 40% proc chance:
+0-10 bonus true damage, 20 applied poison power up to a 40-power ceiling, and
+one random Water, Earth, or Fire debuff. Black Dragon remains at 20% and Elder
+remains at 60%, establishing a 20/40/60 progression. Elder will receive a new
+effect later, but its current behavior remains intact until that design is
+chosen.
 
 ## Implemented Result
 
@@ -217,5 +220,7 @@ Breath.
   again resolves combat effect 46,
   backed by the intact 18-frame sheet copied into the preferred on-entity
   animation tree.
-- The KBD set deliberately has no full-set runtime detector or proc yet. That
-  remains the next design discussion rather than an inferred effect.
+- The complete KBD set now has a runtime detector and the middle 40% True
+  Dragon's Breath profile across legacy melee, modern PvM melee, ranged, and
+  Magic attacks. Elder's current 60% profile remains unchanged pending its
+  later replacement effect.
