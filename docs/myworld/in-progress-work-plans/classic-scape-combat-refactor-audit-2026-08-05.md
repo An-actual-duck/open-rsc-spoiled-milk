@@ -700,6 +700,13 @@ cardinality change.
 
 ### A06 — projectile launch/impact/settlement
 
+Status: A06.1 lifecycle foundation implemented on the focused branch. It adds
+immutable current launch snapshots and bounded per-event exactly-once impact
+ledgers without changing current impact eligibility or resource authority. The
+producer-specification, impact-policy, and economy-ledger slices remain
+pending. See
+[`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md).
+
 Introduce current-specific snapshots and ledgers for bow, thrown, magic, NPC,
 summon, chain, shuriken, and debug projectiles. Use current `WorldLocation` and
 semantic collision authority. Cover teleport/layer changes, source/target
