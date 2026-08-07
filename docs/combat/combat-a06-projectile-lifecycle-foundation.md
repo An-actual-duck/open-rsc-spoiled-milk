@@ -1,7 +1,8 @@
 # A06 projectile lifecycle foundation
 
-Status: A06.1 implementation complete on the focused foundation branch; the
-producer-policy and resource-settlement slices below remain pending.
+Status: A06.1 and A06.2 are implemented. A06.3 executable characterization is
+complete with production policy unchanged and explicit owner decisions pending;
+A06.4 remains pending.
 
 ## Outcome and boundary
 
@@ -159,6 +160,12 @@ mutation checks, authentic-client packet order, and artifact checks proving
 test classes remain excluded.
 
 ### A06.3 — impact eligibility policy
+
+Status: executable characterization and the provisional policy matrix are
+recorded in
+[`combat-a06-projectile-impact-policy-characterization.md`](combat-a06-projectile-impact-policy-characterization.md).
+Production behavior remains unchanged until its four owner decisions are
+settled.
 
 Use the captured participant and `WorldLocation` evidence to decide, per
 family, target/source death, logout, removal/respawn, teleport, world-space or

@@ -244,3 +244,12 @@ visual-before-impact presentation order. Damage, resource, impact-policy, and
 packet authority remain unchanged. The producer inventory and boundary are
 recorded in
 [`combat-a06-projectile-launch-specifications.md`](combat-a06-projectile-launch-specifications.md).
+
+A06.3 characterization grows the gate from 74 to 75 scenarios without changing
+production impact policy. Its executable matrix covers source/target death,
+logout/reconnect, real same-object NPC respawn, source and paired movement,
+teleport, signed-level transitions, the current global-only world-space gate,
+collision changes, retargeting, launch-time protection, scripted/ball/base
+benign differences, and independent shuriken siblings. The pending owner
+choices and bounded implementation gates are recorded in
+[`combat-a06-projectile-impact-policy-characterization.md`](combat-a06-projectile-impact-policy-characterization.md).
