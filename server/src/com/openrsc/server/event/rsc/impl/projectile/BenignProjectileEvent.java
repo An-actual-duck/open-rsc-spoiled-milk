@@ -5,7 +5,6 @@ import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.entity.Mob;
-import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.world.World;
 
