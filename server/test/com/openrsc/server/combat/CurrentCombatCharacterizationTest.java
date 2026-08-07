@@ -119,6 +119,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::rangedCooldownBoundaries);
 			run(harness, "ranged_and_magic_projectiles_settle_on_current_tick_boundary",
 				CurrentCombatCharacterizationTest::projectileImpactBoundary);
+			run(harness, "current_projectile_impact_lifecycle_policy_is_characterized",
+				CurrentCombatProjectileLifecycleCharacterization::currentImpactPolicy);
 			run(harness, "selected_drop_outcomes_replay_from_server_random_source",
 				CurrentCombatCharacterizationTest::deterministicDropReplay);
 			run(harness, "melee_ranged_magic_damage_share_xp",
