@@ -55,6 +55,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		"projectile-death-robe-overkill";
 	private static final String BALROG_MAGIC_SPLASH_EFFECT_KEY =
 		"projectile-balrog-magic-splash";
+	private static final String UNCLASSIFIED_PROJECTILE_EFFECT_KEY =
+		"projectile-unclassified-compatibility";
 	Mob caster, opponent;
 	protected int damage;
 	protected int windAccuracyDebuffPercent;
@@ -441,9 +443,20 @@ public class ProjectileEvent extends SingleTickEvent {
 			final DamageResult damageResult = opponent.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);
 			damageDealt = damageResult.getLegacyDamageDealt();
+		} else if (damage >= 0) {
+			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
+				caster, opponent, DamageRequest.SourceCategory.ACTOR,
+				UNCLASSIFIED_PROJECTILE_EFFECT_KEY, damage)
+				.eventId(getUUID())
+				.hitSplatType(hitSplatType)
+				.build();
+			final DamageResult damageResult = opponent.getWorld().getServer()
+				.getResolvedDamageTransaction().apply(damageRequest);
+			damageDealt = damageResult.getLegacyDamageDealt();
 		} else {
-			// Retain the legacy settlement for non-primary compatibility/debug
-			// types. Their behavior is outside the bounded A05.3 migration.
+			// The admin projectile hook historically accepts signed values. A
+			// negative value raises Hits above max and is not damage, so it cannot
+			// be represented by the non-negative resolved-damage contract.
 			opponent.getSkills().subtractLevel(Skill.HITS.id(), damage, false);
 			damageDealt = Math.min(damage, lastHits);
 			opponent.getUpdateFlags().setDamage(new Damage(opponent, damage));
