@@ -37,8 +37,11 @@ occur in one phase. A07 must therefore distinguish:
   effects in each characterized phase, including explicitly named planned
   effects and reviewed headroom.
 
-A07.1 intentionally chooses no execution budget because no shared executor or
-complete semantic descriptor inventory exists yet.
+A07.1 intentionally chose no execution budget because no shared executor or
+complete semantic descriptor inventory existed yet. A07.2 is now complete and
+records the 71 semantic identities, per-phase counts, and descriptive planning
+budgets in
+[`combat-a07-secondary-effect-descriptor-inventory.md`](combat-a07-secondary-effect-descriptor-inventory.md).
 
 ## Current policy matrix
 
@@ -94,6 +97,10 @@ family and stop if it requires a common chain that changes any of those facts.
 
 ### A07.2 — semantic descriptor inventory and phase budget
 
+Status: complete. `SecondaryEffectDescriptor` is descriptive only; the current
+maximum phase count is 30 and the reviewed planning budget is 34 for that
+phase. No shared executor or runtime cap was introduced.
+
 - Give each proc/debuff/heal/child semantic a stable identity separate from its
   A05 damage settlement identity.
 - Record phase, style/source/target gate, zero-damage rule, RNG draw timing,
@@ -136,13 +143,15 @@ separate branch proves a common contract. DoT ownership remains A08.
 
 ## Verification and acceptance
 
-- The compiled catalog fixture asserts all 39 exact keys, five family counts,
+- The A07.1 compiled catalog fixture asserts all 39 exact keys, five family counts,
   lookup round trips, immutability, and explicit rejection of 32 as a total
-  catalog capacity. A07.2 still owns per-phase sizing.
+  catalog capacity. The A07.2 fixture separately asserts 71 semantic keys,
+  complete immutable metadata, exact counts for all nine phases, and planning
+  budgets with no runtime authority.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 84 scenarios.
+- The authoritative combat gate passes 85 scenarios.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,
