@@ -253,3 +253,13 @@ collision changes, retargeting, launch-time protection, scripted/ball/base
 benign differences, and independent shuriken siblings. The approved owner
 choices and bounded implementation gates are recorded in
 [`combat-a06-projectile-impact-policy-characterization.md`](combat-a06-projectile-impact-policy-characterization.md).
+
+The focused A06.3 implementation retains 75 scenarios while converting the
+decision-evidence fixture to the approved result matrix. It now asserts every
+new typed invalidation reason; exact target/source/session and summon-owner
+rules; player/NPC source-death exceptions; real target and source NPC reuse;
+launch-domain and launch-origin range; general and hostile collision rechecks;
+holy-water, gnome-ball, positional, and base-benign exceptions; and unchanged
+retarget, protection, sibling, duplicate, and failure ordering. The production
+boundary is recorded in
+[`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md).

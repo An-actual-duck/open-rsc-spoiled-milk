@@ -704,14 +704,17 @@ Status: A06.1 lifecycle foundation and A06.2 typed producer specifications are
 implemented on focused branches. The latter inventories all 22 tracked core
 and plugin construction sites, freezes former constructor-tail parameters,
 gives maintained special producers stable identities, and retains positional
-compatibility facades. A06.3 now has executable current-policy characterization
-and an approved family decision matrix, but no production eligibility change;
-its bounded implementation and A06.4 economy ledger remain pending. See
+compatibility facades. A06.3 characterization and its approved family decision
+matrix are complete, and the bounded production policy is implemented on a
+focused branch pending private visual acceptance and manager integration.
+A06.4 economy settlement remains pending. See
 [`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md)
 and
 [`combat-a06-projectile-launch-specifications.md`](../../combat/combat-a06-projectile-launch-specifications.md),
 plus
-[`combat-a06-projectile-impact-policy-characterization.md`](../../combat/combat-a06-projectile-impact-policy-characterization.md).
+[`combat-a06-projectile-impact-policy-characterization.md`](../../combat/combat-a06-projectile-impact-policy-characterization.md)
+and
+[`combat-a06-projectile-impact-policy.md`](../../combat/combat-a06-projectile-impact-policy.md).
 
 Introduce current-specific snapshots and ledgers for bow, thrown, magic, NPC,
 summon, chain, shuriken, and debug projectiles. Use current `WorldLocation` and

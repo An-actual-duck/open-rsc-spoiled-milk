@@ -1,7 +1,9 @@
 # A06.3 projectile impact policy characterization
 
-Status: CHARACTERIZATION AND OWNER DECISIONS COMPLETE; PRODUCTION POLICY
-UNCHANGED; READY FOR A SEPARATE BOUNDED IMPLEMENTATION BRANCH.
+Status: CHARACTERIZATION AND OWNER DECISIONS COMPLETE. The approved policy is
+implemented on a subsequent focused branch with private visual acceptance and
+manager integration pending. See
+[`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md).
 
 ## Scope and stop condition
 
@@ -212,6 +214,9 @@ The owner approved this complete set on 2026-08-07:
    damaging/scripted gameplay, while gnome ball and benign cleanup ignore it.
 
 ## Bounded implementation sequence after approval
+
+Status: implemented on the focused A06.3 production branch. The sequence below
+is retained as the approved implementation contract and review checklist.
 
 1. Add immutable, named impact-policy metadata to the typed producer
    specification. Keep positional constructors as explicit compatibility
