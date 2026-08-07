@@ -39,6 +39,7 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.combat.ProjectileResourceLedger;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.action.WalkToPointAction;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -103,12 +104,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private static final int HEAL_SPELL_INTERVAL_MS = 3000;
 	private static final int LESSER_HEAL_POWER_PER_PULSE = 60;
 	private static final int TELEPORT_CHARGE_MS = 5000;
-	private static final String GOD_SPELL_SECONDARY_EFFECT_KEY =
-		"delayed-god-spell-secondary";
-	private static final String IBAN_BLAST_SECONDARY_EFFECT_KEY =
-		"delayed-iban-blast-secondary";
-	private static final String SALARIN_SECONDARY_EFFECT_KEY =
-		"delayed-salarin-strike-secondary";
 
 	/**
 	 * The asynchronous logger.
@@ -2197,7 +2192,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 										getPlayer(), affectedMob,
 										DamageRequest.SourceCategory.OWNED_EFFECT,
-										SALARIN_SECONDARY_EFFECT_KEY, appliedSecondDamage)
+										SecondaryEffectPolicy.DELAYED_SALARIN_STRIKE_SECONDARY
+											.getStableKey(), appliedSecondDamage)
 										.eventId(getUUID())
 										.style(CombatStyle.MAGIC)
 										.presentation(DamageRequest.Presentation.DAMAGE_ONLY)
@@ -2399,7 +2395,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 			final int damage = CombatFormula.calculateSecondaryMagicDamage(caster, npc, secondaryMax);
 			final int appliedDamage = applyGodSpellSecondaryDamage(
-				caster, npc, damage, GOD_SPELL_SECONDARY_EFFECT_KEY, eventId);
+				caster, npc, damage,
+				SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY, eventId);
 			totalDamage += appliedDamage;
 			applyGodSpellSpecialEffect(caster, npc, spellEnum, appliedDamage, false);
 		}
@@ -2421,7 +2418,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			final int damage = CombatFormula.calculateSecondaryMagicDamage(
 				caster, npc, secondaryMax, SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
 			applyGodSpellSecondaryDamage(caster, npc, damage,
-				IBAN_BLAST_SECONDARY_EFFECT_KEY, eventId);
+				SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY, eventId);
 		}
 	}
 
@@ -2452,11 +2449,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 	private int applyGodSpellSecondaryDamage(final Player caster, final Mob target, final int damage) {
 		return applyGodSpellSecondaryDamage(caster, target, damage,
-			GOD_SPELL_SECONDARY_EFFECT_KEY, null);
+			SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY, null);
 	}
 
 	private int applyGodSpellSecondaryDamage(final Player caster,
-			final Mob target, final int damage, final String effectKey,
+			final Mob target, final int damage,
+			final SecondaryEffectPolicy effectPolicy,
 			final UUID eventId) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
@@ -2466,7 +2464,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if (target.isNpc() && damage < lastHits) {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				caster, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-				effectKey, damage)
+				effectPolicy.getStableKey(), damage)
 				.eventId(eventId)
 				.style(CombatStyle.MAGIC)
 				.hitSplatType(HitSplat.TYPE_STANDARD)

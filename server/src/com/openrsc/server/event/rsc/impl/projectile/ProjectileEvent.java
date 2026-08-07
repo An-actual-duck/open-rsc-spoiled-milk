@@ -23,6 +23,7 @@ import com.openrsc.server.model.combat.ProjectileImpactValidator;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.combat.ProjectileResourceLedger;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -42,26 +43,26 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
 	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
-	private static final String AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY =
-		"projectile-auxiliary-magic";
-	private static final String AUXILIARY_TRUE_DAMAGE_EFFECT_KEY =
-		"projectile-auxiliary-true";
-	private static final String FROSTBITE_REFLECTION_EFFECT_KEY =
-		"projectile-frostbite-reflection";
-	private static final String CLERIC_THORNS_EFFECT_KEY =
-		"projectile-cleric-thorns";
-	private static final String JEWELRY_RECOIL_EFFECT_KEY =
-		"projectile-jewelry-recoil";
-	private static final String CHAIN_LIGHTNING_EFFECT_KEY =
-		"projectile-chain-lightning";
-	private static final String SPLINTER_EFFECT_KEY =
-		"projectile-splinter";
-	private static final String BLOOD_ROBE_SPLASH_EFFECT_KEY =
-		"projectile-blood-robe-splash";
-	private static final String DEATH_ROBE_OVERKILL_EFFECT_KEY =
-		"projectile-death-robe-overkill";
-	private static final String BALROG_MAGIC_SPLASH_EFFECT_KEY =
-		"projectile-balrog-magic-splash";
+	private static final SecondaryEffectPolicy AUXILIARY_MAGIC_DAMAGE_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_AUXILIARY_MAGIC;
+	private static final SecondaryEffectPolicy AUXILIARY_TRUE_DAMAGE_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_AUXILIARY_TRUE;
+	private static final SecondaryEffectPolicy FROSTBITE_REFLECTION_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_FROSTBITE_REFLECTION;
+	private static final SecondaryEffectPolicy CLERIC_THORNS_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_CLERIC_THORNS;
+	private static final SecondaryEffectPolicy JEWELRY_RECOIL_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_JEWELRY_RECOIL;
+	private static final SecondaryEffectPolicy CHAIN_LIGHTNING_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_CHAIN_LIGHTNING;
+	private static final SecondaryEffectPolicy SPLINTER_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_SPLINTER;
+	private static final SecondaryEffectPolicy BLOOD_ROBE_SPLASH_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_BLOOD_ROBE_SPLASH;
+	private static final SecondaryEffectPolicy DEATH_ROBE_OVERKILL_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_DEATH_ROBE_OVERKILL;
+	private static final SecondaryEffectPolicy BALROG_MAGIC_SPLASH_POLICY =
+		SecondaryEffectPolicy.PROJECTILE_BALROG_MAGIC_SPLASH;
 	private static final String UNCLASSIFIED_PROJECTILE_EFFECT_KEY =
 		"projectile-unclassified-compatibility";
 	Mob caster, opponent;
@@ -486,7 +487,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			casterPlayer, chainTarget,
 			DamageRequest.SourceCategory.OWNED_EFFECT,
-			CHAIN_LIGHTNING_EFFECT_KEY, chainDamage)
+			CHAIN_LIGHTNING_POLICY.getStableKey(), chainDamage)
 			.eventId(getUUID())
 			.style(chainStyle)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -545,7 +546,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
-			JEWELRY_RECOIL_EFFECT_KEY, reflectedDamage)
+			JEWELRY_RECOIL_POLICY.getStableKey(), reflectedDamage)
 			.eventId(getUUID())
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
@@ -840,7 +841,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final Mob creditedSource = source != null ? source : target;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			FROSTBITE_REFLECTION_EFFECT_KEY, reflectedDamage)
+			FROSTBITE_REFLECTION_POLICY.getStableKey(), reflectedDamage)
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -876,7 +877,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			casterPlayer, splinterTarget,
 			DamageRequest.SourceCategory.OWNED_EFFECT,
-			SPLINTER_EFFECT_KEY, splinterDamage)
+			SPLINTER_POLICY.getStableKey(), splinterDamage)
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1139,7 +1140,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	private void inflictBloodRobeSplashDamage(final Player casterPlayer, final Npc npc, final int splashDamage) {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			casterPlayer, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-			BLOOD_ROBE_SPLASH_EFFECT_KEY, splashDamage)
+			BLOOD_ROBE_SPLASH_POLICY.getStableKey(), splashDamage)
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1175,7 +1176,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				? CombatStyle.MAGIC : CombatStyle.RANGED;
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-				DEATH_ROBE_OVERKILL_EFFECT_KEY, splashDamage)
+				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
 				.eventId(getUUID())
 				.style(splashStyle)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1223,7 +1224,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			}
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				balrog, splashTarget, DamageRequest.SourceCategory.OWNED_EFFECT,
-				BALROG_MAGIC_SPLASH_EFFECT_KEY, splashDamage)
+				BALROG_MAGIC_SPLASH_POLICY.getStableKey(), splashDamage)
 				.eventId(getUUID())
 				.style(CombatStyle.MAGIC)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1257,7 +1258,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY, bonusDamage)
+			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), bonusDamage)
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1290,7 +1291,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_TRUE_DAMAGE_EFFECT_KEY, bonusDamage)
+			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), bonusDamage)
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1450,7 +1451,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
-			CLERIC_THORNS_EFFECT_KEY, reflectedDamage)
+			CLERIC_THORNS_POLICY.getStableKey(), reflectedDamage)
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)

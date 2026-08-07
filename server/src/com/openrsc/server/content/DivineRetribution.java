@@ -5,6 +5,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -16,7 +17,6 @@ import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
 
 public final class DivineRetribution {
-	private static final String DAMAGE_EFFECT_KEY = "divine-retribution";
 	private static final double MAX_PROC_CHANCE = 0.90D;
 	private static final double DAMAGE_SCALE = 10.0D;
 	private static final double CURVE_POWER = 1.4D;
@@ -37,7 +37,8 @@ public final class DivineRetribution {
 		attacker.getUpdateFlags().setCombatEffect(new CombatEffect(attacker, CombatEffect.DIVINE_RETRIBUTION));
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			defender, attacker, DamageRequest.SourceCategory.OWNED_EFFECT,
-			DAMAGE_EFFECT_KEY, reflectedDamage)
+			SecondaryEffectPolicy.DIVINE_RETRIBUTION.getStableKey(),
+			reflectedDamage)
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();

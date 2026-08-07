@@ -107,6 +107,8 @@ public final class CurrentCombatCharacterizationTest {
 			new RecordingDamageObserver();
 		try (CurrentCombatHarness harness = new CurrentCombatHarness(
 				damageObserver)) {
+			run(harness, "secondary_effect_policies_have_stable_exact_sized_catalog",
+				CurrentCombatSecondaryEffectPolicyCharacterization::stablePolicyCatalog);
 			run(harness, "deterministic_runtime_contracts_preserve_production_sources",
 				CurrentCombatCharacterizationTest::deterministicRuntimeContracts);
 			run(harness, "current_scheduler_advances_one_whole_combat_tick",

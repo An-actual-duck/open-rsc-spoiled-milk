@@ -14,6 +14,7 @@ import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -39,14 +40,6 @@ public final class ElderGreenDragonSpecialAttacks {
 	private static final String BURN_ACTIVE_KEY = "elder_green_dragon_burn_active";
 	private static final String BURN_END_AT_KEY = "elder_green_dragon_burn_end_at";
 	private static final String BURN_SOURCE_KEY = "elder_green_dragon_burn_source";
-	private static final String MELEE_SWEEP_EFFECT_KEY =
-		"elder-green-dragon-melee-sweep";
-	private static final String RANGED_FIRESHOT_EFFECT_KEY =
-		"elder-green-dragon-ranged-fireshot";
-	private static final String MAGIC_SECONDARY_EFFECT_KEY =
-		"elder-green-dragon-magic-secondary";
-	private static final String BURN_PULSE_EFFECT_KEY =
-		"elder-green-dragon-burn-pulse";
 
 	private ElderGreenDragonSpecialAttacks() {
 	}
@@ -190,7 +183,7 @@ public final class ElderGreenDragonSpecialAttacks {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			dragon, player, DamageRequest.SourceCategory.OWNED_EFFECT,
-			damageEffectKey(style), damage)
+			damagePolicy(style).getStableKey(), damage)
 			.style(combatStyle(style))
 			.hitSplatType(hitSplatType)
 			.build();
@@ -249,16 +242,16 @@ public final class ElderGreenDragonSpecialAttacks {
 		return style == DamageStyle.MELEE || style == DamageStyle.RANGED || style == DamageStyle.MAGIC;
 	}
 
-	private static String damageEffectKey(final DamageStyle style) {
+	private static SecondaryEffectPolicy damagePolicy(final DamageStyle style) {
 		switch (style) {
 			case MELEE:
-				return MELEE_SWEEP_EFFECT_KEY;
+				return SecondaryEffectPolicy.ELDER_GREEN_DRAGON_MELEE_SWEEP;
 			case RANGED:
-				return RANGED_FIRESHOT_EFFECT_KEY;
+				return SecondaryEffectPolicy.ELDER_GREEN_DRAGON_RANGED_FIRESHOT;
 			case MAGIC:
-				return MAGIC_SECONDARY_EFFECT_KEY;
+				return SecondaryEffectPolicy.ELDER_GREEN_DRAGON_MAGIC_SECONDARY;
 			case BURN:
-				return BURN_PULSE_EFFECT_KEY;
+				return SecondaryEffectPolicy.ELDER_GREEN_DRAGON_BURN_PULSE;
 			default:
 				throw new IllegalArgumentException("Unsupported damage style: " + style);
 		}
