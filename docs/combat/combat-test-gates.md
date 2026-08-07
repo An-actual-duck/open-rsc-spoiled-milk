@@ -278,3 +278,13 @@ those same stable keys from the typed catalog without moving target selection,
 proc execution,
 damage, ordering, or death authority. The boundary is recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](combat-a07-secondary-effect-policy-foundation.md).
+
+A07.2 grows the gate from 84 to 85 scenarios. Its compiled fixture asserts the
+71 exact current semantic effect identities, complete phase/style/gate/zero-hit/
+RNG/state/recursion/presentation/owner metadata, immutable lookup and sets,
+nine exact phase counts, and descriptive planning budgets with four reviewed
+headroom slots. It also proves that semantic keys do not reuse A05 settlement
+keys and that the catalog exposes no executor-shaped method. Current combat
+callers do not consume the catalog. The inventory and active-plan audit are
+recorded in
+[`combat-a07-secondary-effect-descriptor-inventory.md`](combat-a07-secondary-effect-descriptor-inventory.md).
