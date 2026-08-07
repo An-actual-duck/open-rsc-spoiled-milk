@@ -1,5 +1,6 @@
 package com.openrsc.server.event.rsc.impl.projectile;
 
+import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -18,7 +19,11 @@ public abstract class CustomProjectileEvent extends ProjectileEvent {
 
 	@Override
 	public void action() {
-		if (!canceled) {
+		final ProjectileImpactDecision impact = beginProjectileImpact(false);
+		if (!impact.isAuthorized()) {
+			return;
+		}
+		try {
 			doSpell();
 			if (opponent.isNpc() && caster.isPlayer()) {
 				Npc npc = (Npc) opponent;
@@ -27,6 +32,13 @@ public abstract class CustomProjectileEvent extends ProjectileEvent {
 					npc.setChasing(player);
 				}
 			}
+			completeProjectileImpact(impact);
+		} catch (final RuntimeException failure) {
+			failProjectileImpact();
+			throw failure;
+		} catch (final Error failure) {
+			failProjectileImpact();
+			throw failure;
 		}
 	}
 

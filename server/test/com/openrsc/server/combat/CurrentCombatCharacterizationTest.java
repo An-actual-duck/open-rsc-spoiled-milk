@@ -1740,6 +1740,9 @@ public final class CurrentCombatCharacterizationTest {
 		final ProjectileEvent compatibilityEvent = projectileEvent(
 			harness, source, compatibilityTarget, 7, 3, -1,
 			Projectile.GNOMEBALL, 0);
+		assertEquals("compatibility-projectile",
+			compatibilityEvent.getLaunchSnapshot().getFamilyKey(),
+			"unclassified/debug launch family remains explicit");
 		invokePrimaryProjectile(compatibilityEvent);
 		assertEquals(13, compatibilityTarget.getLevel(Skill.HITS.id()),
 			"non-primary compatibility projectile retains legacy Hits mutation");
@@ -1893,6 +1896,10 @@ public final class CurrentCombatCharacterizationTest {
 				ItemId.BRONZE_THROWING_KNIFE.id(), Projectile.THROWING_KNIFE,
 				0, "getRangeDamageInfoBy",
 				"projectile-player-thrown-primary", CombatStyle.RANGED, 0),
+			new PrimaryProjectileVariant("player shuriken", 0, 2,
+				ItemId.TIN_SHURIKEN.id(), Projectile.SHURIKEN,
+				0, "getRangeDamageInfoBy",
+				"projectile-player-thrown-primary", CombatStyle.RANGED, 0),
 			new PrimaryProjectileVariant("NPC magic", 1, 1, -1,
 				Projectile.ENEMY_FIRE_BASIC, 0, null,
 				"projectile-npc-magic-primary", CombatStyle.MAGIC, 0),
@@ -1955,6 +1962,9 @@ public final class CurrentCombatCharacterizationTest {
 				harness, source, target, 7, variant.attackType,
 				variant.poisonWeaponId, variant.projectileType,
 				variant.impactEffectType);
+			assertEquals(expectedLaunchFamily(variant),
+				event.getLaunchSnapshot().getFamilyKey(),
+				variant.label + " launch family");
 			final Projectile launched = target.getUpdateFlags()
 				.getProjectile().get();
 			assertNotNull(launched, variant.label + " launch visual");
@@ -2004,6 +2014,33 @@ public final class CurrentCombatCharacterizationTest {
 				variant, event, source, target));
 		}
 		return settlements;
+	}
+
+	private static String expectedLaunchFamily(
+			final PrimaryProjectileVariant variant) {
+		if (variant.attackType == 5) {
+			return "cannon-projectile";
+		}
+		if (variant.attackType == 4) {
+			return "iban-magic-projectile";
+		}
+		if (variant.sourceKind == 2) {
+			return variant.attackType == 1 ? "summon-magic-projectile"
+				: "summon-ranged-projectile";
+		}
+		if (variant.sourceKind == 1) {
+			return variant.attackType == 1 ? "npc-magic-projectile"
+				: "npc-ranged-projectile";
+		}
+		if (variant.attackType == 1) {
+			return "player-magic-projectile";
+		}
+		if (RangeUtils.SHURIKENS.contains(variant.poisonWeaponId)) {
+			return "player-shuriken-projectile";
+		}
+		return RangeUtils.THROWING_KNIVES.contains(variant.poisonWeaponId)
+			|| RangeUtils.THROWING_DARTS.contains(variant.poisonWeaponId)
+			? "player-thrown-projectile" : "player-bow-projectile";
 	}
 
 	private static ProjectileEvent projectileEvent(

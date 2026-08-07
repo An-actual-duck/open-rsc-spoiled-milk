@@ -1,5 +1,6 @@
 package com.openrsc.server.event.rsc.impl.projectile;
 
+import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.world.World;
 
@@ -11,8 +12,19 @@ public abstract class BallProjectileEvent extends BenignProjectileEvent {
 
 	@Override
 	public void action() {
-		if (!canceled) {
+		final ProjectileImpactDecision impact = beginBenignImpact(true);
+		if (!impact.isAuthorized()) {
+			return;
+		}
+		try {
 			doSpell();
+			completeBenignImpact(impact);
+		} catch (final RuntimeException failure) {
+			failBenignImpact();
+			throw failure;
+		} catch (final Error failure) {
+			failBenignImpact();
+			throw failure;
 		}
 	}
 

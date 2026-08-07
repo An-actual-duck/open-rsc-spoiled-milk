@@ -16,6 +16,9 @@ import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.ProjectileImpactDecision;
+import com.openrsc.server.model.combat.ProjectileImpactLedger;
+import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -82,6 +85,8 @@ public class ProjectileEvent extends SingleTickEvent {
 	private boolean clericDeferredRallyResolved;
 	private int clericDirectDamageDealt;
 	private int secondaryEffectDamage;
+	private final ProjectileLaunchSnapshot launchSnapshot;
+	private final ProjectileImpactLedger impactLedger;
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type) {
 		this(world, caster, opponent, damage, type, true, -1);
@@ -176,6 +181,12 @@ public class ProjectileEvent extends SingleTickEvent {
 		this.impactEffectType = impactEffectType;
 		this.showProjectile = showProjectile;
 		this.shouldChase = setChasing;
+		final long launchTick = world.getServer().getCurrentTick();
+		this.launchSnapshot = ProjectileLaunchSnapshot.capture(
+			getUUID(), launchTick, launchTick + getDelayTicks(), caster,
+			opponent, projectileLaunchKind(), projectileLaunchFamilyKey(),
+			type, projectileType, impactEffectType, damage, showProjectile);
+		this.impactLedger = new ProjectileImpactLedger(launchSnapshot);
 
 		if (this.showProjectile) {
 			sendProjectile(caster, opponent);
@@ -217,27 +228,36 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	@Override
 	public void action() {
-		if (!canceled && caster.withinRange(opponent, 15)) {// maybe this will
-			// cancel the damage
-			// out on death
+		final ProjectileImpactDecision impact = beginProjectileImpact(true);
+		if (!impact.isAuthorized()) {
+			return;
+		}
+		try {
 			projectileDamage();
-			if (caster.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-				return;
-			}
-			applyChaosAmuletChainLightning();
-			if (opponent.isPlayer()) {
-				final Player opponentPlayer = (Player) opponent;
-				if (opponentPlayer.getCarriedItems().getEquipment().getChaosRecoilChance() > 0.0D) {
-					recoilDamage(opponentPlayer, caster, secondaryEffectDamage);
-				} else if (opponent.getSkills().getLevel(Skill.HITS.id()) > 0) {
-					if (opponentPlayer.checkRingOfLife(caster))
+			if (caster.getSkills().getLevel(Skill.HITS.id()) > 0) {
+				applyChaosAmuletChainLightning();
+				if (opponent.isPlayer()) {
+					final Player opponentPlayer = (Player) opponent;
+					if (opponentPlayer.getCarriedItems().getEquipment().getChaosRecoilChance() > 0.0D) {
+						recoilDamage(opponentPlayer, caster, secondaryEffectDamage);
+					} else if (opponent.getSkills().getLevel(Skill.HITS.id()) > 0
+							&& opponentPlayer.checkRingOfLife(caster)) {
+						completeProjectileImpact(impact);
 						return;
+					}
+				}
+				caster.consumeAttackBasedDebuffs();
+				if (caster.isPlayer()) {
+					((Player) caster).consumeLeatherSetAttackBuffs();
 				}
 			}
-			caster.consumeAttackBasedDebuffs();
-			if (caster.isPlayer()) {
-				((Player) caster).consumeLeatherSetAttackBuffs();
-			}
+			completeProjectileImpact(impact);
+		} catch (final RuntimeException failure) {
+			failProjectileImpact();
+			throw failure;
+		} catch (final Error failure) {
+			failProjectileImpact();
+			throw failure;
 		}
 	}
 
@@ -1121,6 +1141,45 @@ public class ProjectileEvent extends SingleTickEvent {
 		return type == 1 || type == 2 || type == 4 || type == 5;
 	}
 
+	private ProjectileLaunchSnapshot.Kind projectileLaunchKind() {
+		return this instanceof CustomProjectileEvent
+			? ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT
+			: ProjectileLaunchSnapshot.Kind.DAMAGING;
+	}
+
+	private String projectileLaunchFamilyKey() {
+		if (this instanceof CustomProjectileEvent) {
+			return "custom-projectile";
+		}
+		if (type == 5) {
+			return "cannon-projectile";
+		}
+		if (type == 4) {
+			return "iban-magic-projectile";
+		}
+		if (Summoning.isSummon(caster)) {
+			return type == 1 ? "summon-magic-projectile"
+				: (type == 2 ? "summon-ranged-projectile"
+					: "summon-compatibility-projectile");
+		}
+		if (caster.isNpc()) {
+			return type == 1 ? "npc-magic-projectile"
+				: (type == 2 ? "npc-ranged-projectile"
+					: "npc-compatibility-projectile");
+		}
+		if (caster.isPlayer() && type == 2) {
+			if (RangeUtils.SHURIKENS.contains(poisonWeaponId)) {
+				return "player-shuriken-projectile";
+			}
+			return isThrownProjectile() ? "player-thrown-projectile"
+				: "player-bow-projectile";
+		}
+		if (caster.isPlayer() && type == 1) {
+			return "player-magic-projectile";
+		}
+		return "compatibility-projectile";
+	}
+
 	private CombatStyle primaryProjectileCombatStyle() {
 		return type == 1 || type == 4
 			? CombatStyle.MAGIC : CombatStyle.RANGED;
@@ -1154,6 +1213,65 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private boolean isClericEligibleProjectileType() {
 		return type == 1 || type == 2 || type == 4;
+	}
+
+	/**
+	 * Enters the current delayed-impact contract without changing its policy.
+	 * Base combat projectiles retain cancellation plus the fixed 15-tile
+	 * same-domain gate; scripted subclasses retain cancellation only.
+	 */
+	protected final ProjectileImpactDecision beginProjectileImpact(
+			final boolean requireCurrentSpatialGate) {
+		if (!impactLedger.claimImpact()) {
+			return impactLedger.duplicate();
+		}
+		try {
+			if (canceled) {
+				return impactLedger.invalidate(
+					ProjectileImpactDecision.Reason.EXPLICIT_CANCELLATION,
+					null, null);
+			}
+			if (requireCurrentSpatialGate
+					&& !caster.withinRange(opponent, 15)) {
+				return impactLedger.invalidate(
+					ProjectileImpactDecision.Reason
+						.OUTSIDE_CURRENT_SPATIAL_GATE,
+					caster.getWorldLocation(), opponent.getWorldLocation());
+			}
+			return impactLedger.authorize(
+				caster.getWorldLocation(), opponent.getWorldLocation());
+		} catch (final RuntimeException failure) {
+			impactLedger.fail();
+			throw failure;
+		} catch (final Error failure) {
+			impactLedger.fail();
+			throw failure;
+		}
+	}
+
+	protected final void completeProjectileImpact(
+			final ProjectileImpactDecision impact) {
+		impactLedger.complete(impact);
+	}
+
+	protected final void failProjectileImpact() {
+		impactLedger.fail();
+	}
+
+	public final ProjectileLaunchSnapshot getLaunchSnapshot() {
+		return launchSnapshot;
+	}
+
+	public final ProjectileImpactLedger.State getProjectileImpactState() {
+		return impactLedger.getState();
+	}
+
+	public final ProjectileImpactDecision getInitialProjectileImpactDecision() {
+		return impactLedger.getInitialDecision();
+	}
+
+	public final int getProjectileImpactCallbackCount() {
+		return impactLedger.getCallbackCount();
 	}
 
 	/** Defers only Rally so established god-spell lifesteal can resolve first. */
