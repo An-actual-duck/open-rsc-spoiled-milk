@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.rsc.DataConversions;
 
@@ -98,6 +99,13 @@ public class FireCannonEvent extends GameTickEvent {
 		//Max hit of 35 at level 99 as per Wayback Machine tip.it
 		final int maxHit = (this.player.getSkills().getMaxStat(Skill.RANGED.id()) / 3) + 2;
 		final int damage = DataConversions.random(0, maxHit);
+		final ProjectileResourceLedger resourceLedger =
+			ProjectileResourceLedger.trackedLaunch(
+				ProjectileLaunchSpecification.Producer.CANNON);
+		resourceLedger.recordItemCost(ItemId.MULTI_CANNON_BALL.id(), 1, 1,
+			ProjectileResourceLedger.ItemSource.INVENTORY,
+			ProjectileResourceLedger.Preservation.NONE);
+		resourceLedger.seal();
 
 		// Authentically npcs are shot a second time on-death
 		// TODO: replicate this bug somehow?
@@ -107,7 +115,7 @@ public class FireCannonEvent extends GameTickEvent {
 				ProjectileLaunchSpecification.Producer.CANNON, damage, 5)
 				.chase(false)
 				.duplicationStrategy(DuplicationStrategy.ALLOW_MULTIPLE)
-				.build());
+				.build(), resourceLedger);
 
 		this.world.getServer().getGameEventHandler().add(pjEvent);
 		this.player.playSound("shoot");

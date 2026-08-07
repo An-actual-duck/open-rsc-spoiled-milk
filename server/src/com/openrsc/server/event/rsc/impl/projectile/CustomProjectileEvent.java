@@ -3,6 +3,7 @@ package com.openrsc.server.event.rsc.impl.projectile;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -28,6 +29,14 @@ public abstract class CustomProjectileEvent extends ProjectileEvent {
 			final ProjectileLaunchSpecification launchSpecification) {
 		super(world, caster, opponent,
 			requireScriptedSpecification(launchSpecification));
+	}
+
+	protected CustomProjectileEvent(final World world, final Mob caster,
+			final Mob opponent,
+			final ProjectileLaunchSpecification launchSpecification,
+			final ProjectileResourceLedger resourceLedger) {
+		super(world, caster, opponent,
+			requireScriptedSpecification(launchSpecification), resourceLedger);
 	}
 
 	private static ProjectileLaunchSpecification requireScriptedSpecification(

@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.rsc.Formulae;
@@ -99,6 +100,12 @@ public class RangeEventNpc extends GameTickEvent {
                 }
                 int damage = RangeUtils.doRangedDamage(getPlayerOwner(), ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
 
+                final ProjectileResourceLedger resourceLedger =
+                    ProjectileResourceLedger.trackedLaunch(
+                        ProjectileLaunchSpecification.Producer.LEGACY_NPC_RANGED);
+                ProjectileResourceLedger.RecoveryDestination recovery =
+                    ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED;
+                int recoveredAmount = 0;
                 if (Formulae.loseArrow(damage)) {
                     GroundItem arrows = getArrows(getPlayerOwner());
                     if (arrows == null) {
@@ -111,11 +118,22 @@ public class RangeEventNpc extends GameTickEvent {
                                     1,
                                     p
                             ));
+                            recoveredAmount++;
+                        }
+                        if (recoveredAmount > 0) {
+                            recovery = ProjectileResourceLedger
+                                .RecoveryDestination.LEGACY_GROUND_PER_PLAYER;
                         }
                     } else {
                         arrows.setAmount(arrows.getAmount() + 1);
+                        recoveredAmount = 1;
+                        recovery = ProjectileResourceLedger.RecoveryDestination
+                            .GROUND_EXISTING_STACK;
                     }
                 }
+                resourceLedger.recordRecovery(ItemId.BRONZE_ARROWS.id(),
+                    recoveredAmount, recovery, victim.getWorldLocation());
+                resourceLedger.seal();
                 if (victim.isPlayer() && owner.isNpc()) {
                     ((Player) victim).message(owner + " is shooting at you!");
                 }
@@ -124,7 +142,7 @@ public class RangeEventNpc extends GameTickEvent {
                         ProjectileLaunchSpecification.builder(
                                 ProjectileLaunchSpecification.Producer.LEGACY_NPC_RANGED,
                                 damage, 2)
-                                .build()));
+                                .build(), resourceLedger));
                 owner.setKillType(KillType.RANGED);
             }
     }

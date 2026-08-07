@@ -6,6 +6,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.event.RestartableDelayedEvent;
 import com.openrsc.server.event.rsc.impl.projectile.CustomProjectileEvent;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -95,14 +96,27 @@ public class LegendsQuestHolyWater implements OpInvTrigger, UseInvTrigger {
 			}
 			else {
 				player.message("You throw the holy watervial at Ungadulu.");
-				player.getCarriedItems().remove(new Item(item.getCatalogId()));
+				final long removedHolyWater = player.getCarriedItems().remove(
+					new Item(item.getCatalogId()));
+				final ProjectileResourceLedger resourceLedger =
+					ProjectileResourceLedger.trackedLaunch(
+						ProjectileLaunchSpecification.Producer.LEGENDS_HOLY_WATER);
+				resourceLedger.recordItemCost(item.getCatalogId(), 1,
+					removedHolyWater == -1 ? 0 : 1,
+					player.getConfig().WANT_EQUIPMENT_TAB
+						? ProjectileResourceLedger.ItemSource.EQUIPMENT
+						: ProjectileResourceLedger.ItemSource.WIELDED_INVENTORY,
+					removedHolyWater == -1
+						? ProjectileResourceLedger.Preservation.REMOVAL_FAILED_COMPATIBILITY
+						: ProjectileResourceLedger.Preservation.NONE);
+				resourceLedger.seal();
 				player.playSound("projectile");
 				player.getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
 					player.getWorld(), player, ungadulu,
 					ProjectileLaunchSpecification.builder(
 						ProjectileLaunchSpecification.Producer.LEGENDS_HOLY_WATER,
 						0, 1)
-						.build()) {
+						.build(), resourceLedger) {
 					@Override
 					public void doSpell() {
 					}
