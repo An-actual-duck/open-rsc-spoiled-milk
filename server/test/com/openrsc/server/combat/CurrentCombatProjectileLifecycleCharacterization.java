@@ -14,6 +14,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
+import com.openrsc.server.model.combat.ProjectileImpactPolicy;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -42,8 +43,8 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 	static void currentImpactPolicy(final CurrentCombatHarness harness) {
 		explicitCancellationRetainsLaunchVisual(harness);
 		currentSpatialGateInvalidatesImpact(harness);
-		participantLifecycleDoesNotCurrentlyCancelImpact(harness);
-		terminalParticipantsRetainCurrentImpactPolicy(harness);
+		participantLifecycleInvalidatesImpact(harness);
+		terminalParticipantPolicy(harness);
 		duplicateCallbackSettlesExactlyOnce(harness);
 		scriptedAndBenignCallbacksSettleExactlyOnce(harness);
 		failedScriptedCallbackCannotReplay(harness);
@@ -52,6 +53,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 	static void policyDecisionEvidence(final CurrentCombatHarness harness)
 			throws Exception {
 		participantTerminationEvidence(harness);
+		sourceFamilyLifetimeEvidence(harness);
 		movementAndDomainEvidence(harness);
 		collisionRetargetAndProtectionEvidence(harness);
 		familyAndSiblingEvidence(harness);
@@ -105,6 +107,12 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 				producer + " family identity");
 			assertEquals(producer.getKind(), snapshot.getKind(),
 				producer + " launch kind");
+			assertEquals(producer.getImpactPolicy(),
+				snapshot.getSpecification().getImpactPolicy(),
+				producer + " impact policy identity");
+			assertEquals(expectedImpactPolicy(producer),
+				producer.getImpactPolicy(),
+				producer + " approved impact policy mapping");
 			if (producer.getKind()
 					== ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT) {
 				assertEquals(sourceVisualsBefore + 1,
@@ -290,6 +298,44 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		}
 	}
 
+	private static ProjectileImpactPolicy expectedImpactPolicy(
+			final ProjectileLaunchSpecification.Producer producer) {
+		switch (producer) {
+			case PLAYER_BOW:
+			case PLAYER_THROWN:
+			case PLAYER_SHURIKEN:
+			case PLAYER_MAGIC:
+			case PLAYER_IBAN_MAGIC:
+			case CANNON:
+				return ProjectileImpactPolicy.PLAYER_DAMAGE;
+			case NPC_RANGED:
+			case NPC_MAGIC:
+			case NPC_COMPATIBILITY:
+			case LEGACY_NPC_RANGED:
+				return ProjectileImpactPolicy.NPC_DAMAGE;
+			case SUMMON_RANGED:
+			case SUMMON_MAGIC:
+			case SUMMON_COMPATIBILITY:
+				return ProjectileImpactPolicy.SUMMON_DAMAGE;
+			case ADMIN_DEBUG:
+				return ProjectileImpactPolicy.ADMIN_DAMAGE;
+			case COMPATIBILITY:
+				return ProjectileImpactPolicy
+					.POSITIONAL_COMPATIBILITY_DAMAGE;
+			case MAGIC_SCRIPTED_EFFECT:
+				return ProjectileImpactPolicy.SCRIPTED_MAGIC;
+			case LEGENDS_HOLY_WATER:
+				return ProjectileImpactPolicy.LEGENDS_HOLY_WATER;
+			case GNOME_BALL:
+				return ProjectileImpactPolicy.GNOME_BALL;
+			case BENIGN_COMPATIBILITY:
+				return ProjectileImpactPolicy.BENIGN_COMPATIBILITY_CLEANUP;
+			default:
+				throw new IllegalStateException(
+					"Unhandled projectile producer: " + producer);
+		}
+	}
+
 	private static void assertSpecificationParity(
 			final ProjectileLaunchSpecification expected,
 			final ProjectileLaunchSpecification actual,
@@ -334,6 +380,8 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			actual.getDragonBreathDamage(), message + " dragon breath");
 		assertEquals(expected.getDuplicationStrategy(),
 			actual.getDuplicationStrategy(), message + " duplication strategy");
+		assertEquals(expected.getImpactPolicy(), actual.getImpactPolicy(),
+			message + " impact policy");
 	}
 
 	private static void explicitCancellationRetainsLaunchVisual(
@@ -391,7 +439,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			.getTargetImpactLocation().getCoordinate().getX(),
 			"impact decision records current target location");
 		assertEquals(ProjectileImpactDecision.Reason
-				.OUTSIDE_CURRENT_SPATIAL_GATE,
+				.OUTSIDE_LAUNCH_ORIGIN_RANGE,
 			distant.getInitialProjectileImpactDecision().getReason(),
 			"out-of-range impact reason");
 
@@ -410,14 +458,17 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 				901, LegacyPackedPointAdapter.LEVEL_STRIDE + 700), true);
 			crossLayer.action();
 			assertEquals(layerHits, layerTarget.getLevel(Skill.HITS.id()),
-				"a signed-level change must suppress impact through withinRange");
+				"a signed-level change must suppress impact");
+			assertEquals(ProjectileImpactDecision.Reason.LAUNCH_DOMAIN_DEPARTURE,
+				crossLayer.getInitialProjectileImpactDecision().getReason(),
+				"signed-level invalidation reason");
 		} finally {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
 				layeredBefore;
 		}
 	}
 
-	private static void participantLifecycleDoesNotCurrentlyCancelImpact(
+	private static void participantLifecycleInvalidatesImpact(
 			final CurrentCombatHarness harness) {
 		final Player source = harness.player("pj lifecycle source", 910, 700);
 		final Npc target = harness.npc(
@@ -428,18 +479,22 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		source.advanceCombatLifecycle();
 		target.advanceCombatLifecycle();
 		event.action();
-		assertEquals(hitsBefore - 3, target.getLevel(Skill.HITS.id()),
-			"current in-flight impacts ignore participant lifecycle changes");
+		assertEquals(hitsBefore, target.getLevel(Skill.HITS.id()),
+			"a replacement target lifetime must reject an in-flight impact");
 		assertFalse(event.getLaunchSnapshot().getSourceSnapshot().matches(source),
 			"source launch generation remains immutable");
 		assertFalse(event.getLaunchSnapshot().getTargetSnapshot().matches(target),
 			"target launch generation remains immutable");
-		assertEquals(ProjectileImpactLedger.State.SETTLED,
+		assertEquals(ProjectileImpactLedger.State.INVALIDATED,
 			event.getProjectileImpactState(),
-			"lifecycle change retains current settlement behavior");
+			"lifecycle change invalidates settlement");
+		assertEquals(ProjectileImpactDecision.Reason
+				.TARGET_IDENTITY_SESSION_OR_LIFETIME_CHANGED,
+			event.getInitialProjectileImpactDecision().getReason(),
+			"target replacement lifetime reason");
 	}
 
-	private static void terminalParticipantsRetainCurrentImpactPolicy(
+	private static void terminalParticipantPolicy(
 			final CurrentCombatHarness harness) {
 		final Player deadSource = harness.player(
 			"pj dead source", 930, 700);
@@ -463,9 +518,13 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			harness, liveSource, removedTarget, 3);
 		removedTarget.remove();
 		targetRemovalImpact.action();
-		assertEquals(removedTargetHits - 3,
+		assertEquals(removedTargetHits,
 			removedTarget.getLevel(Skill.HITS.id()),
-			"current launched impact persists after target removal");
+			"a launched impact cannot hit a removed target");
+		assertEquals(ProjectileImpactDecision.Reason
+				.TARGET_TERMINAL_OR_UNREGISTERED,
+			targetRemovalImpact.getInitialProjectileImpactDecision().getReason(),
+			"removed target invalidation reason");
 	}
 
 	private static void participantTerminationEvidence(
@@ -481,12 +540,16 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		loggedOutSource.sessionId++;
 		loggedOutSource.setLoggedIn(true);
 		sourceSessionChanged.action();
-		assertEquals(logoutTargetHits - 3,
+		assertEquals(logoutTargetHits,
 			logoutTarget.getLevel(Skill.HITS.id()),
-			"source logout and reconnect currently retain a launched hit");
+			"source logout and reconnect invalidate a launched hit");
 		assertFalse(sourceSessionChanged.getLaunchSnapshot()
 			.getSourceSnapshot().matches(loggedOutSource),
 			"source snapshot detects the replacement login session");
+		assertEquals(ProjectileImpactDecision.Reason
+				.SOURCE_IDENTITY_SESSION_OR_LIFETIME_CHANGED,
+			sourceSessionChanged.getInitialProjectileImpactDecision().getReason(),
+			"source replacement session reason");
 
 		final Npc npcSource = harness.npc(
 			NpcId.GREATER_DEMON.id(), 820, 780);
@@ -500,12 +563,16 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		reconnectedTarget.sessionId++;
 		reconnectedTarget.setLoggedIn(true);
 		targetSessionChanged.action();
-		assertEquals(reconnectedHits - 3,
+		assertEquals(reconnectedHits,
 			reconnectedTarget.getLevel(Skill.HITS.id()),
-			"target logout and reconnect currently retain a launched hit");
+			"target logout and reconnect invalidate a launched hit");
 		assertFalse(targetSessionChanged.getLaunchSnapshot()
 			.getTargetSnapshot().matches(reconnectedTarget),
 			"target snapshot detects the replacement login session");
+		assertEquals(ProjectileImpactDecision.Reason
+				.TARGET_IDENTITY_SESSION_OR_LIFETIME_CHANGED,
+			targetSessionChanged.getInitialProjectileImpactDecision().getReason(),
+			"target replacement session reason");
 
 		final Player deadTargetSource = harness.player(
 			"pj dead target source", 830, 780);
@@ -516,9 +583,13 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		deadTarget.getSkills().setLevel(Skill.HITS.id(), 0);
 		deadTarget.advanceCombatLifecycle();
 		targetAlreadyTerminal.action();
-		assertEquals(ProjectileImpactLedger.State.SETTLED,
+		assertEquals(ProjectileImpactLedger.State.INVALIDATED,
 			targetAlreadyTerminal.getProjectileImpactState(),
-			"a target already at zero Hits currently reaches impact settlement");
+			"a target already at zero Hits cannot reach impact settlement");
+		assertEquals(ProjectileImpactDecision.Reason
+				.TARGET_TERMINAL_OR_UNREGISTERED,
+			targetAlreadyTerminal.getInitialProjectileImpactDecision().getReason(),
+			"zero-Hits target reason");
 
 		final Player respawnSource = harness.player(
 			"pj respawn source", 840, 780);
@@ -545,12 +616,143 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			"respawn fixture restores the same NPC object");
 		final int respawnedHits = respawnedTarget.getLevel(Skill.HITS.id());
 		staleLifetimeImpact.action();
-		assertEquals(respawnedHits - 3,
+		assertEquals(respawnedHits,
 			respawnedTarget.getLevel(Skill.HITS.id()),
-			"a stale projectile currently damages the reused NPC lifetime");
+			"a stale projectile cannot damage the reused NPC lifetime");
 		assertFalse(staleLifetimeImpact.getLaunchSnapshot()
 			.getTargetSnapshot().matches(respawnedTarget),
 			"target snapshot distinguishes the reused NPC lifetime");
+		assertEquals(ProjectileImpactDecision.Reason
+				.TARGET_IDENTITY_SESSION_OR_LIFETIME_CHANGED,
+			staleLifetimeImpact.getInitialProjectileImpactDecision().getReason(),
+			"respawn-reused target reason");
+	}
+
+	private static void sourceFamilyLifetimeEvidence(
+			final CurrentCombatHarness harness) {
+		openHostileProjectileRectangle(harness, 740, 751, 780, 780);
+		final Npc deadNpcSource = harness.npc(
+			NpcId.GREATER_DEMON.id(), 740, 780);
+		final Npc deadNpcTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 741, 780);
+		final int deadNpcTargetHits = deadNpcTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent oldNpcMissile = typedProjectile(
+			harness, deadNpcSource, deadNpcTarget, 3,
+			ProjectileLaunchSpecification.Producer.NPC_RANGED, 2);
+		deadNpcSource.remove();
+		oldNpcMissile.action();
+		assertEquals(ProjectileImpactLedger.State.SETTLED,
+			oldNpcMissile.getProjectileImpactState(),
+			"an emitted NPC projectile reaches settlement after source death ("
+				+ oldNpcMissile.getInitialProjectileImpactDecision().getReason()
+				+ ")");
+		assertEquals(deadNpcTargetHits - 3,
+			deadNpcTarget.getLevel(Skill.HITS.id()),
+			"an emitted NPC projectile may survive the old source's death");
+
+		final Npc reusedNpcSource = harness.npc(
+			NpcId.GREATER_DEMON.id(), 750, 780);
+		final Npc reusedNpcTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 751, 780);
+		final int reusedNpcTargetHits =
+			reusedNpcTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent reusedNpcMissile = typedProjectile(
+			harness, reusedNpcSource, reusedNpcTarget, 3,
+			ProjectileLaunchSpecification.Producer.NPC_MAGIC, 1);
+		final List<GameTickEvent> eventsBeforeRemoval =
+			new ArrayList<GameTickEvent>(
+				harness.server().getGameEventHandler().getEvents());
+		reusedNpcSource.remove();
+		final GameTickEvent respawn = findNewRespawnEvent(
+			harness, eventsBeforeRemoval);
+		assertTrue(respawn != null,
+			"source reuse fixture captures the real NPC respawn callback");
+		respawn.run();
+		reusedNpcMissile.action();
+		assertEquals(reusedNpcTargetHits,
+			reusedNpcTarget.getLevel(Skill.HITS.id()),
+			"an NPC projectile cannot cross source respawn reuse");
+		assertEquals(ProjectileImpactDecision.Reason
+				.SOURCE_IDENTITY_SESSION_OR_LIFETIME_CHANGED,
+			reusedNpcMissile.getInitialProjectileImpactDecision().getReason(),
+			"respawn-reused source reason");
+
+		final Player summonOwner = harness.player(
+			"pj summon owner", 760, 780);
+		final Npc removedSummon = harness.npc(
+			NpcId.GREATER_DEMON.id(), 761, 780);
+		removedSummon.relatedMob = summonOwner;
+		final Npc summonTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 762, 780);
+		final int summonTargetHits = summonTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent removedSummonMissile = typedProjectile(
+			harness, removedSummon, summonTarget, 3,
+			ProjectileLaunchSpecification.Producer.SUMMON_RANGED, 2);
+		removedSummon.remove();
+		removedSummonMissile.action();
+		assertEquals(summonTargetHits,
+			summonTarget.getLevel(Skill.HITS.id()),
+			"a removed summon cannot settle its projectile");
+		assertEquals(ProjectileImpactDecision.Reason
+				.SOURCE_TERMINAL_OR_UNREGISTERED,
+			removedSummonMissile.getInitialProjectileImpactDecision().getReason(),
+			"removed summon source reason");
+
+		final Player replacementOwner = harness.player(
+			"pj replacement summon owner", 770, 780);
+		final Npc ownedSummon = harness.npc(
+			NpcId.GREATER_DEMON.id(), 771, 780);
+		ownedSummon.relatedMob = replacementOwner;
+		final Npc ownerTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 772, 780);
+		final int ownerTargetHits = ownerTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent ownerSessionMissile = typedProjectile(
+			harness, ownedSummon, ownerTarget, 3,
+			ProjectileLaunchSpecification.Producer.SUMMON_MAGIC, 1);
+		replacementOwner.setLoggedIn(false);
+		replacementOwner.sessionId++;
+		replacementOwner.setLoggedIn(true);
+		ownerSessionMissile.action();
+		assertEquals(ownerTargetHits, ownerTarget.getLevel(Skill.HITS.id()),
+			"a summon projectile cannot cross its owner's login session");
+		assertEquals(ProjectileImpactDecision.Reason
+				.SOURCE_IDENTITY_SESSION_OR_LIFETIME_CHANGED,
+			ownerSessionMissile.getInitialProjectileImpactDecision().getReason(),
+			"replacement summon-owner session reason");
+
+		final Player continuingOwner = harness.player(
+			"pj continuing summon owner", 775, 790);
+		final Npc continuingSummon = harness.npc(
+			NpcId.GREATER_DEMON.id(), 776, 790);
+		continuingSummon.relatedMob = continuingOwner;
+		final Npc continuingTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 777, 790);
+		final int continuingHits = continuingTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent continuingMissile = typedProjectile(
+			harness, continuingSummon, continuingTarget, 3,
+			ProjectileLaunchSpecification.Producer.SUMMON_MAGIC, 1);
+		continuingOwner.advanceCombatLifecycle();
+		continuingMissile.action();
+		assertEquals(continuingHits - 3,
+			continuingTarget.getLevel(Skill.HITS.id()),
+			"summon ownership follows login session, not owner combat lifecycle");
+
+		final Npc adminSource = harness.npc(
+			NpcId.GREATER_DEMON.id(), 780, 780);
+		final Player adminTarget = harness.player(
+			"pj admin target", 781, 780);
+		final int adminTargetHits = adminTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent adminMissile = typedProjectile(
+			harness, adminSource, adminTarget, 3,
+			ProjectileLaunchSpecification.Producer.ADMIN_DEBUG, 2);
+		adminSource.remove();
+		adminMissile.action();
+		assertEquals(adminTargetHits, adminTarget.getLevel(Skill.HITS.id()),
+			"an admin projectile requires its exact live source");
+		assertEquals(ProjectileImpactDecision.Reason
+				.SOURCE_TERMINAL_OR_UNREGISTERED,
+			adminMissile.getInitialProjectileImpactDecision().getReason(),
+			"terminal admin source reason");
 	}
 
 	private static void movementAndDomainEvidence(
@@ -564,9 +766,23 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			harness, movedSource, stationaryTarget, 3);
 		movedSource.setLocation(Point.location(870, 780), true);
 		sourceMovedOut.action();
-		assertEquals(stationaryHits,
+		assertEquals(stationaryHits - 3,
 			stationaryTarget.getLevel(Skill.HITS.id()),
-			"moving only the source outside current range invalidates impact");
+			"source-only movement does not move the frozen range origin");
+
+		harness.openRectangle(860, 866, 790, 790);
+		final Player shortMoveSource = harness.player(
+			"pj short move source", 860, 790);
+		final Npc shortMoveTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 861, 790);
+		final int shortMoveHits = shortMoveTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent shortMove = projectile(
+			harness, shortMoveSource, shortMoveTarget, 3);
+		shortMoveTarget.teleport(866, 790);
+		shortMove.action();
+		assertEquals(shortMoveHits - 3,
+			shortMoveTarget.getLevel(Skill.HITS.id()),
+			"same-domain movement inside the launch-origin ceiling remains valid");
 
 		final Player travelingSource = harness.player(
 			"pj traveling source", 880, 780);
@@ -578,15 +794,19 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		travelingSource.teleport(910, 780, false);
 		travelingTarget.teleport(911, 780);
 		currentPairRange.action();
-		assertEquals(travelingHits - 3,
+		assertEquals(travelingHits,
 			travelingTarget.getLevel(Skill.HITS.id()),
-			"participants teleporting together retain current-source range");
+			"paired long movement cannot carry a projectile from launch");
 		assertEquals(880, currentPairRange.getLaunchSnapshot()
 			.getSourceLaunchLocation().getCoordinate().getX(),
 			"teleport preserves immutable source launch geography");
 		assertEquals(910, currentPairRange.getInitialProjectileImpactDecision()
 			.getSourceImpactLocation().getCoordinate().getX(),
-			"settlement records the source's current post-teleport geography");
+			"invalidation records the source's current post-teleport geography");
+		assertEquals(ProjectileImpactDecision.Reason
+				.OUTSIDE_LAUNCH_ORIGIN_RANGE,
+			currentPairRange.getInitialProjectileImpactDecision().getReason(),
+			"paired long-movement reason");
 
 		final boolean layeredBefore = harness.server().getConfig()
 			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY;
@@ -608,9 +828,13 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			layerTarget.setLocation(Point.location(921,
 				LegacyPackedPointAdapter.LEVEL_STRIDE + 780), true);
 			pairedLayerChange.action();
-			assertEquals(layerHits - 3,
+			assertEquals(layerHits,
 				layerTarget.getLevel(Skill.HITS.id()),
-				"participants changing signed level together currently settle");
+				"participants changing signed level together invalidate");
+			assertEquals(ProjectileImpactDecision.Reason
+					.LAUNCH_DOMAIN_DEPARTURE,
+				pairedLayerChange.getInitialProjectileImpactDecision().getReason(),
+				"paired signed-level transition reason");
 
 			final Player unsupportedSpaceSource = harness.player(
 				"pj unsupported space", 930, 780);
@@ -654,9 +878,48 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			collisionSource.getWorldLocation(), collisionTarget.getWorldLocation(),
 			false), "a barrier appearing during flight blocks the path authority");
 		collisionChanged.action();
-		assertEquals(collisionHits - 3,
+		assertEquals(collisionHits,
 			collisionTarget.getLevel(Skill.HITS.id()),
-			"current impact ignores a barrier appearing during flight");
+			"impact rechecks a general-projectile barrier");
+		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
+			collisionChanged.getInitialProjectileImpactDecision().getReason(),
+			"general-projectile collision reason");
+
+		final Npc compatibilityTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 954, 780);
+		final int compatibilityHits =
+			compatibilityTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent positionalCompatibility = typedProjectile(
+			harness, collisionSource, compatibilityTarget, 3,
+			ProjectileLaunchSpecification.Producer.COMPATIBILITY, 3);
+		positionalCompatibility.action();
+		assertEquals(compatibilityHits - 3,
+			compatibilityTarget.getLevel(Skill.HITS.id()),
+			"positional compatibility retains its explicit no-recheck semantic");
+
+		openHostileProjectileRectangle(harness, 700, 704, 780, 780);
+		final Npc hostileSource = harness.npc(
+			NpcId.GREATER_DEMON.id(), 700, 780);
+		final Player hostileTarget = harness.player(
+			"pj hostile collision target", 704, 780);
+		assertTrue(PathValidation.checkHostileProjectilePath(harness.world(),
+			hostileSource.getWorldLocation(), hostileTarget.getWorldLocation()),
+			"hostile collision fixture begins with clear hard cover");
+		final int hostileHits = hostileTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent hostileChanged = typedProjectile(
+			harness, hostileSource, hostileTarget, 3,
+			ProjectileLaunchSpecification.Producer.NPC_RANGED, 2);
+		harness.world().getTile(702, 780)
+			.addHostileProjectileCollision(CollisionFlag.FULL_BLOCK);
+		assertFalse(PathValidation.checkHostileProjectilePath(harness.world(),
+			hostileSource.getWorldLocation(), hostileTarget.getWorldLocation()),
+			"new hard cover blocks the hostile-projectile semantic");
+		hostileChanged.action();
+		assertEquals(hostileHits, hostileTarget.getLevel(Skill.HITS.id()),
+			"NPC impact rechecks hostile-projectile hard cover");
+		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
+			hostileChanged.getInitialProjectileImpactDecision().getReason(),
+			"hostile-projectile collision reason");
 
 		final Player retargetedSource = harness.player(
 			"pj retarget source", 960, 780);
@@ -727,8 +990,12 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		scriptedSource.setLoggedIn(false);
 		scriptedTarget.setLocation(Point.location(995, 780), true);
 		scripted.action();
-		assertEquals(1, scriptedCalls.get(),
-			"scripted effects currently ignore logout and long movement");
+		assertEquals(0, scriptedCalls.get(),
+			"scripted effects reject a logged-out source");
+		assertEquals(ProjectileImpactDecision.Reason
+				.SOURCE_TERMINAL_OR_UNREGISTERED,
+			scripted.getInitialProjectileImpactDecision().getReason(),
+			"scripted source terminal reason");
 
 		final Player ballSource = harness.player(
 			"pj ball lifecycle source", 980, 780);
@@ -740,8 +1007,12 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		ballTarget.setLoggedIn(false);
 		ballTarget.setLocation(Point.location(1005, 780), true);
 		ball.action();
-		assertEquals(1, ballCalls.get(),
-			"ball effects currently ignore logout and long movement");
+		assertEquals(0, ballCalls.get(),
+			"ball effects reject a logged-out target");
+		assertEquals(ProjectileImpactDecision.Reason
+				.TARGET_TERMINAL_OR_UNREGISTERED,
+			ball.getInitialProjectileImpactDecision().getReason(),
+			"ball target terminal reason");
 
 		final Constructor<BenignProjectileEvent> benignConstructor =
 			BenignProjectileEvent.class.getDeclaredConstructor(
@@ -755,6 +1026,69 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		assertEquals(ProjectileImpactLedger.State.SETTLED,
 			benign.getProjectileImpactState(),
 			"base benign compatibility cleanup ignores its dormant cancel flag");
+		assertTrue(ballSource.getAttribute("benignprojectile") == null,
+			"base benign cleanup clears the source compatibility attribute");
+		assertTrue(ballTarget.getAttribute("benignprojectile") == null,
+			"base benign cleanup clears the target compatibility attribute");
+
+		harness.openRectangle(720, 724, 810, 810);
+		final Player validHolySource = harness.player(
+			"pj valid holy source", 720, 810);
+		final Npc validHolyTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 724, 810);
+		final AtomicInteger validHolyCalls = new AtomicInteger();
+		final RecordingCustomProjectile validHolyWater =
+			new RecordingCustomProjectile(harness.world(), validHolySource,
+				validHolyTarget, validHolyCalls, false,
+				ProjectileLaunchSpecification.builder(
+					ProjectileLaunchSpecification.Producer.LEGENDS_HOLY_WATER,
+					0, 1).build());
+		validHolyWater.action();
+		assertEquals(1, validHolyCalls.get(),
+			"Legends holy water settles at its inclusive four-tile ceiling");
+
+		final Player holySource = harness.player(
+			"pj holy source", 710, 810);
+		final Npc holyTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 711, 810);
+		final AtomicInteger holyCalls = new AtomicInteger();
+		final RecordingCustomProjectile holyWater =
+			new RecordingCustomProjectile(harness.world(), holySource, holyTarget,
+				holyCalls, false, ProjectileLaunchSpecification.builder(
+					ProjectileLaunchSpecification.Producer.LEGENDS_HOLY_WATER,
+					0, 1).build());
+		holyTarget.setLocation(Point.location(715, 810), true);
+		holyWater.action();
+		assertEquals(0, holyCalls.get(),
+			"Legends holy water retains its four-tile launch ceiling");
+		assertEquals(ProjectileImpactDecision.Reason
+				.OUTSIDE_LAUNCH_ORIGIN_RANGE,
+			holyWater.getInitialProjectileImpactDecision().getReason(),
+			"holy-water range reason");
+
+		final Player playerBallSource = harness.player(
+			"pj distant ball source", 700, 810);
+		final Npc npcBallTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 740, 810);
+		final AtomicInteger playerToNpcCalls = new AtomicInteger();
+		final RecordingBallProjectile playerToNpcBall =
+			new RecordingBallProjectile(harness.world(), playerBallSource,
+				npcBallTarget, playerToNpcCalls);
+		playerToNpcBall.action();
+		assertEquals(1, playerToNpcCalls.get(),
+			"player-to-NPC gnome ball retains unlimited distance");
+
+		final Npc npcBallSource = harness.npc(
+			NpcId.GREATER_DEMON.id(), 750, 810);
+		final Player playerBallTarget = harness.player(
+			"pj distant ball target", 790, 810);
+		final AtomicInteger npcToPlayerCalls = new AtomicInteger();
+		final RecordingBallProjectile npcToPlayerBall =
+			new RecordingBallProjectile(harness.world(), npcBallSource,
+				playerBallTarget, npcToPlayerCalls);
+		npcToPlayerBall.action();
+		assertEquals(1, npcToPlayerCalls.get(),
+			"NPC-to-player gnome ball retains unlimited distance");
 
 		final Player siblingSource = harness.player(
 			"pj sibling source", 800, 800);
@@ -821,7 +1155,6 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		final RecordingCustomProjectile custom =
 			new RecordingCustomProjectile(
 				harness.world(), customSource, customTarget, customCalls, false);
-		customTarget.setLocation(Point.location(980, 700), true);
 		custom.action();
 		custom.action();
 		assertEquals(1, customCalls.get(),
@@ -898,6 +1231,30 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 				.presentation(attackType, 0, true)
 				.duplicationStrategy(DuplicationStrategy.ALLOW_MULTIPLE)
 				.build());
+	}
+
+	private static GameTickEvent findNewRespawnEvent(
+			final CurrentCombatHarness harness,
+			final List<GameTickEvent> eventsBeforeRemoval) {
+		for (GameTickEvent candidate
+				: harness.server().getGameEventHandler().getEvents()) {
+			if ("Respawn NPC".equals(candidate.getDescriptor())
+					&& !eventsBeforeRemoval.contains(candidate)) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	private static void openHostileProjectileRectangle(
+			final CurrentCombatHarness harness, final int minX, final int maxX,
+			final int minY, final int maxY) {
+		harness.openRectangle(minX, maxX, minY, maxY);
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				harness.world().getTile(x, y).initializeTerrainCollision();
+			}
+		}
 	}
 
 	private static int countProjectileEvents(

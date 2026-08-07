@@ -3,6 +3,7 @@ package com.openrsc.server.event.rsc.impl.projectile;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
+import com.openrsc.server.model.combat.ProjectileImpactValidator;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.Mob;
@@ -67,7 +68,7 @@ public class BenignProjectileEvent extends SingleTickEvent {
 
 	@Override
 	public void action() {
-		final ProjectileImpactDecision impact = beginBenignImpact(false);
+		final ProjectileImpactDecision impact = beginBenignImpact();
 		if (!impact.isAuthorized()) {
 			return;
 		}
@@ -86,16 +87,25 @@ public class BenignProjectileEvent extends SingleTickEvent {
 		}
 	}
 
-	protected final ProjectileImpactDecision beginBenignImpact(
-			final boolean honorCancellation) {
+	protected final ProjectileImpactDecision beginBenignImpact() {
 		if (!impactLedger.claimImpact()) {
 			return impactLedger.duplicate();
 		}
 		try {
-			if (honorCancellation && canceled) {
+			if (canceled && launchSnapshot.getSpecification()
+					.getImpactPolicy().honorsCancellation()) {
 				return impactLedger.invalidate(
 					ProjectileImpactDecision.Reason.EXPLICIT_CANCELLATION,
 					null, null);
+			}
+			final ProjectileImpactDecision.Reason validation =
+				ProjectileImpactValidator.validate(
+					launchSnapshot, caster, opponent);
+			if (validation
+					!= ProjectileImpactDecision.Reason.CURRENT_POLICY_ACCEPTED) {
+				return impactLedger.invalidate(
+					validation, caster.getWorldLocation(),
+					opponent.getWorldLocation());
 			}
 			return impactLedger.authorize(
 				caster.getWorldLocation(), opponent.getWorldLocation());

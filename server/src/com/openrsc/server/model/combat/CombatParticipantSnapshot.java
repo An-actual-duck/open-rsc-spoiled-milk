@@ -34,13 +34,21 @@ public final class CombatParticipantSnapshot {
 	}
 
 	public boolean matches(final Mob participant) {
+		return matchesIdentityAndSession(participant)
+			&& lifecycle == participant.getCombatLifecycle();
+	}
+
+	/** Matches stable object/world identity and a player's exact login session. */
+	public boolean matchesIdentityAndSession(final Mob participant) {
 		if (participant == null || participant.getWorld() != world
-			|| !identity.equals(participant.getUUID())
-			|| lifecycle != participant.getCombatLifecycle()) {
+				|| !identity.equals(participant.getUUID())) {
 			return false;
 		}
-		return !participant.isPlayer()
-			|| playerSessionId != null
-			&& playerSessionId.intValue() == ((Player) participant).sessionId;
+		if (participant.isPlayer()) {
+			return playerSessionId != null
+				&& playerSessionId.intValue()
+					== ((Player) participant).sessionId;
+		}
+		return playerSessionId == null;
 	}
 }

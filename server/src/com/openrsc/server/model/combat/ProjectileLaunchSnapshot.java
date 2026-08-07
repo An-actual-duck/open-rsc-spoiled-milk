@@ -24,6 +24,7 @@ public final class ProjectileLaunchSnapshot {
 	private final long expectedImpactTick;
 	private final CombatParticipantSnapshot sourceSnapshot;
 	private final CombatParticipantSnapshot targetSnapshot;
+	private final CombatParticipantSnapshot sourceOwnerSnapshot;
 	private final WorldLocation sourceLaunchLocation;
 	private final WorldLocation targetLaunchLocation;
 	private final ProjectileLaunchSpecification specification;
@@ -32,6 +33,7 @@ public final class ProjectileLaunchSnapshot {
 			final long launchTick, final long expectedImpactTick,
 			final CombatParticipantSnapshot sourceSnapshot,
 			final CombatParticipantSnapshot targetSnapshot,
+			final CombatParticipantSnapshot sourceOwnerSnapshot,
 			final WorldLocation sourceLaunchLocation,
 			final WorldLocation targetLaunchLocation,
 			final ProjectileLaunchSpecification specification) {
@@ -40,6 +42,7 @@ public final class ProjectileLaunchSnapshot {
 		this.expectedImpactTick = expectedImpactTick;
 		this.sourceSnapshot = sourceSnapshot;
 		this.targetSnapshot = targetSnapshot;
+		this.sourceOwnerSnapshot = sourceOwnerSnapshot;
 		this.sourceLaunchLocation = sourceLaunchLocation;
 		this.targetLaunchLocation = targetLaunchLocation;
 		this.specification = specification;
@@ -64,6 +67,9 @@ public final class ProjectileLaunchSnapshot {
 			eventId, launchTick, expectedImpactTick,
 			CombatParticipantSnapshot.capture(source),
 			CombatParticipantSnapshot.capture(target),
+			specification.getImpactPolicy().requiresExactLiveSourceOwner()
+				&& source.relatedMob != null
+					? CombatParticipantSnapshot.capture(source.relatedMob) : null,
 			source.getWorldLocation(), target.getWorldLocation(), specification);
 	}
 
@@ -85,6 +91,10 @@ public final class ProjectileLaunchSnapshot {
 
 	public CombatParticipantSnapshot getTargetSnapshot() {
 		return targetSnapshot;
+	}
+
+	public CombatParticipantSnapshot getSourceOwnerSnapshot() {
+		return sourceOwnerSnapshot;
 	}
 
 	public WorldLocation getSourceLaunchLocation() {

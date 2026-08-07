@@ -59,11 +59,10 @@ public final class ProjectileImpactLedger {
 			final WorldLocation sourceImpactLocation,
 			final WorldLocation targetImpactLocation) {
 		requireState(State.VALIDATING);
-		if (reason != ProjectileImpactDecision.Reason.EXPLICIT_CANCELLATION
-				&& reason != ProjectileImpactDecision.Reason
-					.OUTSIDE_CURRENT_SPATIAL_GATE) {
+		if (reason == ProjectileImpactDecision.Reason.CURRENT_POLICY_ACCEPTED
+				|| reason == ProjectileImpactDecision.Reason.DUPLICATE_CALLBACK) {
 			throw new IllegalArgumentException(
-				"reason is not a current invalidation: " + reason);
+				"reason is not an invalidation: " + reason);
 		}
 		initialDecision = new ProjectileImpactDecision(
 			launchSnapshot, ProjectileImpactDecision.Outcome.INVALIDATED,

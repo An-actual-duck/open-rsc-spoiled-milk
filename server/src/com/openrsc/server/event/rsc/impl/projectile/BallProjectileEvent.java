@@ -22,7 +22,7 @@ public abstract class BallProjectileEvent extends BenignProjectileEvent {
 
 	@Override
 	public void action() {
-		final ProjectileImpactDecision impact = beginBenignImpact(true);
+		final ProjectileImpactDecision impact = beginBenignImpact();
 		if (!impact.isAuthorized()) {
 			return;
 		}
