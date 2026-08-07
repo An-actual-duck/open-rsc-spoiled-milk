@@ -121,6 +121,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::projectileImpactBoundary);
 			run(harness, "current_projectile_impact_lifecycle_policy_is_characterized",
 				CurrentCombatProjectileLifecycleCharacterization::currentImpactPolicy);
+			run(harness, "projectile_impact_policy_decision_evidence_is_executable",
+				CurrentCombatProjectileLifecycleCharacterization::policyDecisionEvidence);
 			run(harness, "typed_projectile_producer_launches_have_stable_identity",
 				CurrentCombatProjectileLifecycleCharacterization::typedProducerLaunches);
 			run(harness, "projectile_specifications_freeze_constructor_tail_parameters",
