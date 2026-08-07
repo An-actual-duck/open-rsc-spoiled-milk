@@ -190,8 +190,10 @@ behavior changes, so A05.1 has no private visual acceptance surface.
    changing launch or settlement timing.
 3. **A05.4 secondary/reflection/environmental:** define explicit source policy
    for the inventoried paths and compatibility helper.
-4. **A05.5 death lifecycle:** introduce atomic death results and plugin adapters
-   only after NPC/player phase parity and simultaneous-death coverage.
+4. **A05.5 death lifecycle:** implemented on its focused branch with atomic
+   ordinary-death ownership, immutable lifecycle contexts, respawn generations,
+   and an explicit quest/plugin-owned compatibility adapter. Manager integration
+   remains the acceptance boundary.
 5. **A05.6 pruning:** remove direct mutations only when runtime coverage proves
    them obsolete.
 

@@ -646,7 +646,7 @@ regression brought the gate to 60 after A05.4C; three A05.4D scenarios grow it
 from 60 to 63. The exact boundary is recorded in
 [`docs/combat/combat-a05-owned-npc-summon-damage-transaction.md`](../../combat/combat-a05-owned-npc-summon-damage-transaction.md).
 
-A05.4E implementation record: the focused branch adds three full scheduled cast
+A05.4E completion record: published main at merge commit `4c1a1ced8` adds three full scheduled cast
 scenarios and grows the gate from 63 to 66. Salarin's delayed Hits/damage update
 and nonlethal NPC god/Iban area settlement move through three effect-specific
 resolved-damage identities. Rune and XP timing, selection, formulas,
@@ -656,6 +656,19 @@ outside the transaction because current death-before-presentation/contribution,
 displayed-overkill, and raw-Hits behavior cannot migrate without a delta. The
 exact boundary is recorded in
 [`docs/combat/combat-a05-delayed-spell-damage-transaction.md`](../../combat/combat-a05-delayed-spell-damage-transaction.md);
+the manager-reviewed merge remains the integration boundary.
+
+A05.5 implementation record: the focused branch adds atomic per-mob ownership
+for ordinary reward-eligible death, immutable death contexts, typed
+start/duplicate transitions, lifecycle snapshots, and stale-safe NPC/player
+respawn generations. It preserves all ordinary NPC and player phase ordering,
+the public `killedBy` surface, compatibility-helper raw-Hits/presentation,
+event-local death adapters, and simultaneous-death behavior. Ten quest/tutorial
+NPC IDs are explicitly retained as plugin-owned compatibility and the dormant
+`PlayerDeathTrigger` is not activated. Five scenarios grow the gate from 66 to
+71, including reentrant exactly-once ownership and deliberate listener failure.
+The exact boundary is recorded in
+[`docs/combat/combat-a05-atomic-death-lifecycle.md`](../../combat/combat-a05-atomic-death-lifecycle.md);
 the manager-reviewed merge remains the integration boundary.
 
 Use several branches rather than one migration commit:
