@@ -33,9 +33,9 @@ def main() -> None:
         3229: ("Black Spear", 4, 283, "items:283", 181),
         3230: ("White Spear", 4, 283, "items:283", 181),
         3231: ("Grey Spear", 4, 283, "items:283", 181),
-        3232: ("Black Scythe", 4, 434, "items:434", 1033),
-        3233: ("White Scythe", 4, 434, "items:434", 1033),
-        3234: ("Grey Scythe", 4, 434, "items:434", 1033),
+        3232: ("Black Scythe", 4, 434, "items:434", 1034),
+        3233: ("White Scythe", 4, 434, "items:434", 1034),
+        3234: ("Grey Scythe", 4, 434, "items:434", 1034),
     }
     custom_by_id = {item["id"]: item for item in custom_defs}
     myworld_by_id = {item["id"]: item for item in myworld_defs}

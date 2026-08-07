@@ -171,7 +171,7 @@ def main():
     for item_id, name in expected_blessed_scythes.items():
         item = by_id(custom_items, item_id)
         assert item["name"] == name
-        assert item["appearanceID"] == 1033
+        assert item["appearanceID"] == 1034
         assert item["wearableID"] & 8 == 8
         override = by_id(myworld_items, item_id)
         assert override["meleeOffense"] == 65
