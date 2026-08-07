@@ -728,8 +728,7 @@ recovery, damage, animation, or authentic-client packet order.
 
 ### A07 — current-specific secondary, AoE, and on-hit policies
 
-Status: A07.1 is implemented on published main, and A07.2 is implemented on its
-focused review branch. A07.1
+Status: A07.1 and A07.2 are implemented on published main. A07.1
 adds a typed, exact-size catalog for all 39 current secondary-damage settlement
 identities and replaces duplicated key literals without moving behavior. The
 compiled fixture proves that 32 cannot be used as a total catalog capacity;
