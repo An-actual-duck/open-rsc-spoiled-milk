@@ -37,6 +37,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.action.WalkToPointAction;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -1702,7 +1703,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, 1, setChasing) {
+						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
+							getPlayer().getWorld(), getPlayer(), affectedMob,
+							ProjectileLaunchSpecification.builder(
+								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
+								0, 1)
+								.chase(setChasing)
+								.build()) {
 							@Override
 							public void doSpell() {
 								// https://www.tip.it/runescape/times/view/615-forever-runescape-part-1
@@ -1733,7 +1740,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, 1, setChasing) {
+						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
+							getPlayer().getWorld(), getPlayer(), affectedMob,
+							ProjectileLaunchSpecification.builder(
+								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
+								0, 1)
+								.chase(setChasing)
+								.build()) {
 							@Override
 							public void doSpell() {
 								for (int stat : stats) {
@@ -1829,7 +1842,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 						final int stat = affectsStat;
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, 1, setChasing) {
+						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
+							getPlayer().getWorld(), getPlayer(), affectedMob,
+							ProjectileLaunchSpecification.builder(
+								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
+								0, 1)
+								.chase(setChasing)
+								.build()) {
 							@Override
 							public void doSpell() {
 								affectedMob.getSkills().setLevel(stat, newStat);
@@ -1856,7 +1875,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
 							return;
 						}
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damaga, 1, setChasing));
+						getPlayer().getWorld().getServer().getGameEventHandler().add(
+							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
+								affectedMob, ProjectileLaunchSpecification.builder(
+									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
+									damaga, 1)
+									.chase(setChasing)
+									.build()));
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						return;
 
@@ -1874,9 +1899,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						}
 						final double ibanDamageCapPercent = SpellClassification.getSpellDamageCapPercent(spellEnum);
 						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob,
-							ibanPrimaryDamage, 4, setChasing,
-							0, 0, 0, 0, Projectile.SKULL, CombatEffect.IBAN_BLAST, true));
+						getPlayer().getWorld().getServer().getGameEventHandler().add(
+							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
+								affectedMob, ProjectileLaunchSpecification.builder(
+									ProjectileLaunchSpecification.Producer.PLAYER_IBAN_MAGIC,
+									ibanPrimaryDamage, 4)
+									.chase(setChasing)
+									.presentation(Projectile.SKULL,
+										CombatEffect.IBAN_BLAST, true)
+									.build()));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
 							@Override
 							public void action() {
@@ -1940,8 +1971,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						final int primaryDamage = CombatFormula.calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum);
 						final ProjectileEvent godSpellEvent = new ProjectileEvent(
 							getPlayer().getWorld(), getPlayer(), affectedMob,
-							primaryDamage, 1, setChasing,
-							0, 0, 0, 0, godSpellProjectile, godSpellImpact, true);
+							ProjectileLaunchSpecification.builder(
+								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
+								primaryDamage, 1)
+								.chase(setChasing)
+								.presentation(godSpellProjectile, godSpellImpact, true)
+								.build());
 						godSpellEvent.deferClericRally();
 						getPlayer().getWorld().getServer().getGameEventHandler().add(godSpellEvent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
@@ -1968,7 +2003,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 						int damageR = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, maxR);
 
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damageR, 1, setChasing));
+						getPlayer().getWorld().getServer().getGameEventHandler().add(
+							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
+								affectedMob, ProjectileLaunchSpecification.builder(
+									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
+									damageR, 1)
+									.chase(setChasing)
+									.build()));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						break;
@@ -1999,7 +2040,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							// Shout message from NPC when being maged
 							affectedMob.getUpdateFlags().setChatMessage(new ChatMessage(affectedMob, "Aaarrgh my head", getPlayer()));
 							// Deal first damage
-							getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, firstDamage, 1));
+							getPlayer().getWorld().getServer().getGameEventHandler().add(
+								new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
+									affectedMob, ProjectileLaunchSpecification.builder(
+										ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
+										firstDamage, 1)
+										.build()));
 							// Deal Second Damage
 							getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Salarin the Twisted Strike") {
 								@Override
@@ -2076,12 +2122,24 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						magicDebug(getPlayer(), "spell_projectile_enqueue spell=" + describeSpell(spellEnum, spell)
 							+ " target=" + describeMob(affectedMob) + " damage=" + damage
 							+ " max=" + max + " projectile=" + projectileVisual + " impact=" + impactEffect);
-						getPlayer().getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getPlayer().getWorld(), getPlayer(), affectedMob, damage, 1, setChasing,
-							windAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
-							projectileVisual, impactEffect,
-							SpellClassification.shouldShowSpellProjectile(spellEnum, impactEffect),
-							startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent,
-							splinterProcChancePercent, SpellClassification.isBloodSpell(spell)));
+						getPlayer().getWorld().getServer().getGameEventHandler().add(
+							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
+								affectedMob, ProjectileLaunchSpecification.builder(
+									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
+									damage, 1)
+									.chase(setChasing)
+									.elementalDebuffs(windAccuracyDebuffPercent,
+										waterMaxHitDebuffPercent,
+										earthAttackSpeedDebuffPercent,
+										fireDefenseDebuffPercent)
+									.presentation(projectileVisual, impactEffect,
+										SpellClassification.shouldShowSpellProjectile(
+											spellEnum, impactEffect))
+									.dualElementProcs(startleProcChancePercent,
+										acidPoisonPower, frostbiteProcChancePercent,
+										splinterProcChancePercent)
+									.bloodSpell(SpellClassification.isBloodSpell(spell))
+									.build()));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						break;

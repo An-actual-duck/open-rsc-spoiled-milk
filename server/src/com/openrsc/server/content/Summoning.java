@@ -19,6 +19,7 @@ import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -1770,8 +1771,15 @@ public final class Summoning {
 			target.getUpdateFlags().setProjectile(new Projectile(summon, target, Projectile.SUMMON_BAT_VAMPIRISM));
 		}
 		summon.getWorld().getServer().getGameEventHandler().add(
-			new ProjectileEvent(summon.getWorld(), summon, target, damage, projectileType, false,
-				0, 0, 0, 0, projectileType, 0, !batLeechAttack)
+			new ProjectileEvent(summon.getWorld(), summon, target,
+				ProjectileLaunchSpecification.builder(
+					projectileType == 2
+						? ProjectileLaunchSpecification.Producer.SUMMON_RANGED
+						: ProjectileLaunchSpecification.Producer.SUMMON_MAGIC,
+					damage, projectileType)
+					.chase(false)
+					.presentation(projectileType, 0, !batLeechAttack)
+					.build())
 		);
 		return true;
 	}

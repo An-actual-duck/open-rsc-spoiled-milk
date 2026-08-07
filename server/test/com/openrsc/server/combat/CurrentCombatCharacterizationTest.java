@@ -121,6 +121,10 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::projectileImpactBoundary);
 			run(harness, "current_projectile_impact_lifecycle_policy_is_characterized",
 				CurrentCombatProjectileLifecycleCharacterization::currentImpactPolicy);
+			run(harness, "typed_projectile_producer_launches_have_stable_identity",
+				CurrentCombatProjectileLifecycleCharacterization::typedProducerLaunches);
+			run(harness, "projectile_specifications_freeze_constructor_tail_parameters",
+				CurrentCombatProjectileLifecycleCharacterization::specificationAndFacadeParity);
 			run(harness, "selected_drop_outcomes_replay_from_server_random_source",
 				CurrentCombatCharacterizationTest::deterministicDropReplay);
 			run(harness, "melee_ranged_magic_damage_share_xp",

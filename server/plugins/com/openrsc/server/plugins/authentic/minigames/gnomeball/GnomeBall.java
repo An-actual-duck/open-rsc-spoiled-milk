@@ -5,6 +5,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Minigames;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.impl.projectile.BallProjectileEvent;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
@@ -57,7 +58,9 @@ public class GnomeBall implements MiniGameInterface, UsePlayerTrigger, TakeObjTr
 			} else {
 				// does not matter where the players are at, neither in the field or wild,
 				// nor if they have free inventory space
-				player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, otherPlayer, 3) {
+				player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(
+					player.getWorld(), player, otherPlayer,
+					gnomeBallLaunch()) {
 					@Override
 					public void doSpell() {
 						if (otherPlayer.isPlayer()) {
@@ -99,7 +102,8 @@ public class GnomeBall implements MiniGameInterface, UsePlayerTrigger, TakeObjTr
 		} else if (playerZone == Zone.ZONE_1XP_OUTER || playerZone == Zone.ZONE_1XP_INNER) {
 			player.setAttribute("throwing_ball_game", true);
 			Npc goalie = ifnearvisnpc(player, GnomeNpcs.GOALIE, 15);
-			player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, goalie, 3) {
+			player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(
+				player.getWorld(), player, goalie, gnomeBallLaunch()) {
 				@Override
 				public void doSpell() {
 
@@ -134,7 +138,8 @@ public class GnomeBall implements MiniGameInterface, UsePlayerTrigger, TakeObjTr
 		} else if (playerZone == Zone.ZONE_2XP_OUTER || playerZone == Zone.ZONE_2XP_INNER) {
 			player.setAttribute("throwing_ball_game", true);
 			Npc goalie = ifnearvisnpc(player, GnomeNpcs.GOALIE, 15);
-			player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, goalie, 3) {
+			player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(
+				player.getWorld(), player, goalie, gnomeBallLaunch()) {
 				@Override
 				public void doSpell() {
 
@@ -175,6 +180,13 @@ public class GnomeBall implements MiniGameInterface, UsePlayerTrigger, TakeObjTr
 			mes("maybe you should try playing on the pitch!");
 			delay(3);
 		}
+	}
+
+	private static ProjectileLaunchSpecification gnomeBallLaunch() {
+		return ProjectileLaunchSpecification.builder(
+			ProjectileLaunchSpecification.Producer.GNOME_BALL, 0, -1)
+			.presentation(3, 0, true)
+			.build();
 	}
 
 	private void cheerLeaderCelebrate(Player player, Npc n) {

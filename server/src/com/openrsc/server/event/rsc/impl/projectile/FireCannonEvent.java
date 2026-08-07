@@ -11,6 +11,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.rsc.DataConversions;
 
@@ -100,8 +101,13 @@ public class FireCannonEvent extends GameTickEvent {
 
 		// Authentically npcs are shot a second time on-death
 		// TODO: replicate this bug somehow?
-		final ProjectileEvent pjEvent = new ProjectileEvent(this.world, this.player, this.targetNpc, damage, 5,
-			false, DuplicationStrategy.ALLOW_MULTIPLE);
+		final ProjectileEvent pjEvent = new ProjectileEvent(
+			this.world, this.player, this.targetNpc,
+			ProjectileLaunchSpecification.builder(
+				ProjectileLaunchSpecification.Producer.CANNON, damage, 5)
+				.chase(false)
+				.duplicationStrategy(DuplicationStrategy.ALLOW_MULTIPLE)
+				.build());
 
 		this.world.getServer().getGameEventHandler().add(pjEvent);
 		this.player.playSound("shoot");

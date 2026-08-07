@@ -19,6 +19,7 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -89,36 +90,55 @@ public class ProjectileEvent extends SingleTickEvent {
 	private final ProjectileImpactLedger impactLedger;
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type) {
-		this(world, caster, opponent, damage, type, true, -1);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, true, -1, 0, 0, 0, 0,
+			DuplicationStrategy.ONE_PER_MOB, type, 0, true,
+			NpcMagicElement.NONE, 0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing) {
-		this(world, caster, opponent, damage, type, setChasing, -1, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB, type, 0, true);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, 0, 0, 0, 0,
+			DuplicationStrategy.ONE_PER_MOB, type, 0, true,
+			NpcMagicElement.NONE, 0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing, int poisonWeaponId) {
-		this(world, caster, opponent, damage, type, setChasing, poisonWeaponId, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB, type, 0, true);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, poisonWeaponId, 0, 0, 0, 0,
+			DuplicationStrategy.ONE_PER_MOB, type, 0, true,
+			NpcMagicElement.NONE, 0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing, int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent, int fireDefenseDebuffPercent) {
-		this(world, caster, opponent, damage, type, setChasing, -1, windAccuracyDebuffPercent, waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB, type, 0, true);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+			fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
+			type, 0, true, NpcMagicElement.NONE, 0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
 						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile) {
-		this(world, caster, opponent, damage, type, setChasing, -1, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
-			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
-			projectileType, impactEffectType, showProjectile);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+			fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
+			projectileType, impactEffectType, showProjectile,
+			NpcMagicElement.NONE, 0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
 						   int windAccuracyDebuffPercent, int waterMaxHitDebuffPercent, int earthAttackSpeedDebuffPercent,
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
 						   NpcMagicElement magicElement) {
-		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
-			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile);
-		this.magicElement = magicElement == null ? NpcMagicElement.NONE : magicElement;
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+			fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
+			projectileType, impactEffectType, showProjectile,
+			magicElement, 0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
@@ -126,10 +146,13 @@ public class ProjectileEvent extends SingleTickEvent {
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
 						   NpcMagicElement magicElement, int startleProcChancePercent, int acidPoisonPower,
 						   int frostbiteProcChancePercent, int splinterProcChancePercent) {
-		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
-			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile,
-			startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent);
-		this.magicElement = magicElement == null ? NpcMagicElement.NONE : magicElement;
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+			fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
+			projectileType, impactEffectType, showProjectile, magicElement,
+			startleProcChancePercent, acidPoisonPower,
+			frostbiteProcChancePercent, splinterProcChancePercent, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
@@ -137,12 +160,13 @@ public class ProjectileEvent extends SingleTickEvent {
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
 						   int startleProcChancePercent, int acidPoisonPower, int frostbiteProcChancePercent,
 						   int splinterProcChancePercent) {
-		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
-			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile);
-		this.startleProcChancePercent = startleProcChancePercent;
-		this.acidPoisonPower = acidPoisonPower;
-		this.frostbiteProcChancePercent = frostbiteProcChancePercent;
-		this.splinterProcChancePercent = splinterProcChancePercent;
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+			fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
+			projectileType, impactEffectType, showProjectile,
+			NpcMagicElement.NONE, startleProcChancePercent, acidPoisonPower,
+			frostbiteProcChancePercent, splinterProcChancePercent, false, 0));
 	}
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type, boolean setChasing,
@@ -150,16 +174,23 @@ public class ProjectileEvent extends SingleTickEvent {
 						   int fireDefenseDebuffPercent, int projectileType, int impactEffectType, boolean showProjectile,
 						   int startleProcChancePercent, int acidPoisonPower, int frostbiteProcChancePercent,
 						   int splinterProcChancePercent, boolean bloodSpell) {
-		this(world, caster, opponent, damage, type, setChasing, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
-			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, projectileType, impactEffectType, showProjectile,
-			startleProcChancePercent, acidPoisonPower, frostbiteProcChancePercent, splinterProcChancePercent);
-		this.bloodSpell = bloodSpell;
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, windAccuracyDebuffPercent,
+			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+			fireDefenseDebuffPercent, DuplicationStrategy.ONE_PER_MOB,
+			projectileType, impactEffectType, showProjectile,
+			NpcMagicElement.NONE, startleProcChancePercent, acidPoisonPower,
+			frostbiteProcChancePercent, splinterProcChancePercent,
+			bloodSpell, 0));
 	}
 
 	public ProjectileEvent(final World world, final Mob caster, final Mob opponent, final int damage, final int type,
 						   final boolean setChasing, final DuplicationStrategy duplicationStrategy)
 	{
-		this(world, caster, opponent, damage, type, setChasing, -1, 0, 0, 0, 0, duplicationStrategy, type, 0, true);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1, 0, 0, 0, 0,
+			duplicationStrategy, type, 0, true, NpcMagicElement.NONE,
+			0, 0, 0, 0, false, 0));
 	}
 
 	public ProjectileEvent(final World world, final Mob caster, final Mob opponent, final int damage, final int type,
@@ -167,25 +198,52 @@ public class ProjectileEvent extends SingleTickEvent {
 						   final int earthAttackSpeedDebuffPercent, final int fireDefenseDebuffPercent, final DuplicationStrategy duplicationStrategy,
 						   final int projectileType, final int impactEffectType, final boolean showProjectile)
 	{
-		super(world, caster, 1, "Projectile Event", duplicationStrategy);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, poisonWeaponId,
+			windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
+			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
+			duplicationStrategy, projectileType, impactEffectType, showProjectile,
+			NpcMagicElement.NONE, 0, 0, 0, 0, false, 0));
+	}
+
+	/** Named A06 producer path. Positional constructors remain compatibility facades. */
+	public ProjectileEvent(final World world, final Mob caster,
+			final Mob opponent,
+			final ProjectileLaunchSpecification launchSpecification) {
+		super(world, caster, 1, "Projectile Event",
+			requireLaunchSpecification(launchSpecification)
+				.getDuplicationStrategy());
 		this.caster = caster;
 		this.opponent = opponent;
-		this.damage = damage;
-		this.poisonWeaponId = poisonWeaponId;
-		this.windAccuracyDebuffPercent = windAccuracyDebuffPercent;
-		this.waterMaxHitDebuffPercent = waterMaxHitDebuffPercent;
-		this.earthAttackSpeedDebuffPercent = earthAttackSpeedDebuffPercent;
-		this.fireDefenseDebuffPercent = fireDefenseDebuffPercent;
-		this.type = type;
-		this.projectileType = projectileType;
-		this.impactEffectType = impactEffectType;
-		this.showProjectile = showProjectile;
-		this.shouldChase = setChasing;
+		this.damage = launchSpecification.getProposedDamage();
+		this.poisonWeaponId = launchSpecification.getPoisonWeaponId();
+		this.windAccuracyDebuffPercent =
+			launchSpecification.getWindAccuracyDebuffPercent();
+		this.waterMaxHitDebuffPercent =
+			launchSpecification.getWaterMaxHitDebuffPercent();
+		this.earthAttackSpeedDebuffPercent =
+			launchSpecification.getEarthAttackSpeedDebuffPercent();
+		this.fireDefenseDebuffPercent =
+			launchSpecification.getFireDefenseDebuffPercent();
+		this.type = launchSpecification.getAttackType();
+		this.projectileType = launchSpecification.getProjectileType();
+		this.impactEffectType = launchSpecification.getImpactEffectType();
+		this.showProjectile = launchSpecification.shouldShowProjectile();
+		this.shouldChase = launchSpecification.shouldChase();
+		this.magicElement = launchSpecification.getMagicElement();
+		this.startleProcChancePercent =
+			launchSpecification.getStartleProcChancePercent();
+		this.acidPoisonPower = launchSpecification.getAcidPoisonPower();
+		this.frostbiteProcChancePercent =
+			launchSpecification.getFrostbiteProcChancePercent();
+		this.splinterProcChancePercent =
+			launchSpecification.getSplinterProcChancePercent();
+		this.bloodSpell = launchSpecification.isBloodSpell();
+		this.dragonBreathDamage = launchSpecification.getDragonBreathDamage();
 		final long launchTick = world.getServer().getCurrentTick();
 		this.launchSnapshot = ProjectileLaunchSnapshot.capture(
 			getUUID(), launchTick, launchTick + getDelayTicks(), caster,
-			opponent, projectileLaunchKind(), projectileLaunchFamilyKey(),
-			type, projectileType, impactEffectType, damage, showProjectile);
+			opponent, launchSpecification);
 		this.impactLedger = new ProjectileImpactLedger(launchSnapshot);
 
 		if (this.showProjectile) {
@@ -207,18 +265,106 @@ public class ProjectileEvent extends SingleTickEvent {
 						   final int earthAttackSpeedDebuffPercent, final int fireDefenseDebuffPercent, final DuplicationStrategy duplicationStrategy,
 						   final int projectileType, final int impactEffectType, final boolean showProjectile, final int dragonBreathDamage)
 	{
-		this(world, caster, opponent, damage, type, setChasing, poisonWeaponId, windAccuracyDebuffPercent,
-			waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, duplicationStrategy,
-			projectileType, impactEffectType, showProjectile);
-		this.dragonBreathDamage = dragonBreathDamage;
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, poisonWeaponId,
+			windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
+			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
+			duplicationStrategy, projectileType, impactEffectType, showProjectile,
+			NpcMagicElement.NONE, 0, 0, 0, 0, false, dragonBreathDamage));
 	}
 
 	public ProjectileEvent(final World world, final Mob caster, final Mob opponent, final int damage, final int type,
 						   final boolean setChasing, final int windAccuracyDebuffPercent, final int waterMaxHitDebuffPercent,
 						   final int earthAttackSpeedDebuffPercent, final int fireDefenseDebuffPercent, final DuplicationStrategy duplicationStrategy)
 	{
-		this(world, caster, opponent, damage, type, setChasing, -1, windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
-			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent, duplicationStrategy, type, 0, true);
+		this(world, caster, opponent, legacySpecification(
+			caster, damage, type, setChasing, -1,
+			windAccuracyDebuffPercent, waterMaxHitDebuffPercent,
+			earthAttackSpeedDebuffPercent, fireDefenseDebuffPercent,
+			duplicationStrategy, type, 0, true, NpcMagicElement.NONE,
+			0, 0, 0, 0, false, 0));
+	}
+
+	private static ProjectileLaunchSpecification requireLaunchSpecification(
+			final ProjectileLaunchSpecification launchSpecification) {
+		if (launchSpecification == null) {
+			throw new IllegalArgumentException(
+				"launchSpecification cannot be null");
+		}
+		return launchSpecification;
+	}
+
+	private static ProjectileLaunchSpecification legacySpecification(
+			final Mob caster, final int damage, final int type,
+			final boolean setChasing, final int poisonWeaponId,
+			final int windAccuracyDebuffPercent,
+			final int waterMaxHitDebuffPercent,
+			final int earthAttackSpeedDebuffPercent,
+			final int fireDefenseDebuffPercent,
+			final DuplicationStrategy duplicationStrategy,
+			final int projectileType, final int impactEffectType,
+			final boolean showProjectile,
+			final NpcMagicElement magicElement,
+			final int startleProcChancePercent,
+			final int acidPoisonPower,
+			final int frostbiteProcChancePercent,
+			final int splinterProcChancePercent,
+			final boolean bloodSpell, final int dragonBreathDamage) {
+		return ProjectileLaunchSpecification.builder(
+			legacyProducer(caster, type, poisonWeaponId), damage, type)
+			.chase(setChasing)
+			.poisonWeaponId(poisonWeaponId)
+			.elementalDebuffs(windAccuracyDebuffPercent,
+				waterMaxHitDebuffPercent, earthAttackSpeedDebuffPercent,
+				fireDefenseDebuffPercent)
+			.presentation(projectileType, impactEffectType, showProjectile)
+			.magicElement(magicElement)
+			.dualElementProcs(startleProcChancePercent, acidPoisonPower,
+				frostbiteProcChancePercent, splinterProcChancePercent)
+			.bloodSpell(bloodSpell)
+			.dragonBreathDamage(dragonBreathDamage)
+			.duplicationStrategy(duplicationStrategy)
+			.build();
+	}
+
+	private static ProjectileLaunchSpecification.Producer legacyProducer(
+			final Mob caster, final int type, final int poisonWeaponId) {
+		if (type == 5) {
+			return ProjectileLaunchSpecification.Producer.CANNON;
+		}
+		if (type == 4) {
+			return ProjectileLaunchSpecification.Producer.PLAYER_IBAN_MAGIC;
+		}
+		if (Summoning.isSummon(caster)) {
+			return type == 1
+				? ProjectileLaunchSpecification.Producer.SUMMON_MAGIC
+				: (type == 2
+					? ProjectileLaunchSpecification.Producer.SUMMON_RANGED
+					: ProjectileLaunchSpecification.Producer
+						.SUMMON_COMPATIBILITY);
+		}
+		if (caster.isNpc()) {
+			return type == 1
+				? ProjectileLaunchSpecification.Producer.NPC_MAGIC
+				: (type == 2
+					? ProjectileLaunchSpecification.Producer.NPC_RANGED
+					: ProjectileLaunchSpecification.Producer
+						.NPC_COMPATIBILITY);
+		}
+		if (caster.isPlayer() && type == 2) {
+			if (RangeUtils.SHURIKENS.contains(poisonWeaponId)) {
+				return ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN;
+			}
+			if (RangeUtils.THROWING_KNIVES.contains(poisonWeaponId)
+					|| RangeUtils.THROWING_DARTS.contains(poisonWeaponId)) {
+				return ProjectileLaunchSpecification.Producer.PLAYER_THROWN;
+			}
+			return ProjectileLaunchSpecification.Producer.PLAYER_BOW;
+		}
+		if (caster.isPlayer() && type == 1) {
+			return ProjectileLaunchSpecification.Producer.PLAYER_MAGIC;
+		}
+		return ProjectileLaunchSpecification.Producer.COMPATIBILITY;
 	}
 
 	private void sendProjectile(Mob caster, Mob opponent) {
@@ -1139,45 +1285,6 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private boolean isPrimaryProjectileAttackType() {
 		return type == 1 || type == 2 || type == 4 || type == 5;
-	}
-
-	private ProjectileLaunchSnapshot.Kind projectileLaunchKind() {
-		return this instanceof CustomProjectileEvent
-			? ProjectileLaunchSnapshot.Kind.SCRIPTED_EFFECT
-			: ProjectileLaunchSnapshot.Kind.DAMAGING;
-	}
-
-	private String projectileLaunchFamilyKey() {
-		if (this instanceof CustomProjectileEvent) {
-			return "custom-projectile";
-		}
-		if (type == 5) {
-			return "cannon-projectile";
-		}
-		if (type == 4) {
-			return "iban-magic-projectile";
-		}
-		if (Summoning.isSummon(caster)) {
-			return type == 1 ? "summon-magic-projectile"
-				: (type == 2 ? "summon-ranged-projectile"
-					: "summon-compatibility-projectile");
-		}
-		if (caster.isNpc()) {
-			return type == 1 ? "npc-magic-projectile"
-				: (type == 2 ? "npc-ranged-projectile"
-					: "npc-compatibility-projectile");
-		}
-		if (caster.isPlayer() && type == 2) {
-			if (RangeUtils.SHURIKENS.contains(poisonWeaponId)) {
-				return "player-shuriken-projectile";
-			}
-			return isThrownProjectile() ? "player-thrown-projectile"
-				: "player-bow-projectile";
-		}
-		if (caster.isPlayer() && type == 1) {
-			return "player-magic-projectile";
-		}
-		return "compatibility-projectile";
 	}
 
 	private CombatStyle primaryProjectileCombatStyle() {

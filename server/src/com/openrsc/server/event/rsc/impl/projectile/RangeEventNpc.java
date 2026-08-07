@@ -11,6 +11,7 @@ import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.rsc.Formulae;
@@ -118,7 +119,12 @@ public class RangeEventNpc extends GameTickEvent {
                 if (victim.isPlayer() && owner.isNpc()) {
                     ((Player) victim).message(owner + " is shooting at you!");
                 }
-                getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), owner, victim, damage, 2));
+                getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
+                        getWorld(), owner, victim,
+                        ProjectileLaunchSpecification.builder(
+                                ProjectileLaunchSpecification.Producer.LEGACY_NPC_RANGED,
+                                damage, 2)
+                                .build()));
                 owner.setKillType(KillType.RANGED);
             }
     }

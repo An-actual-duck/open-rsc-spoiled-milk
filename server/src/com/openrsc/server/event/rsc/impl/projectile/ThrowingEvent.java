@@ -17,6 +17,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.PlayerRangeNpcTrigger;
@@ -536,7 +537,18 @@ public class ThrowingEvent extends GameTickEvent {
 		final DuplicationStrategy projectileDuplicationStrategy = RangeUtils.SHURIKENS.contains(throwingID)
 			? DuplicationStrategy.ALLOW_MULTIPLE
 			: DuplicationStrategy.ONE_PER_MOB;
-		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(getWorld(), player, hitTarget, damage, 2,
-			true, throwingID, 0, 0, 0, 0, projectileDuplicationStrategy, projectileType, 0, showProjectile));
+		final ProjectileLaunchSpecification.Producer projectileProducer =
+			RangeUtils.SHURIKENS.contains(throwingID)
+				? ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN
+				: ProjectileLaunchSpecification.Producer.PLAYER_THROWN;
+		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
+			getWorld(), player, hitTarget,
+			ProjectileLaunchSpecification.builder(
+				projectileProducer, damage, 2)
+				.chase(true)
+				.poisonWeaponId(throwingID)
+				.presentation(projectileType, 0, showProjectile)
+				.duplicationStrategy(projectileDuplicationStrategy)
+				.build()));
 	}
 }

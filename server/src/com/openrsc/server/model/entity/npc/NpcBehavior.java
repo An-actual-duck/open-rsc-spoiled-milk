@@ -15,6 +15,7 @@ import com.openrsc.server.model.action.ActionType;
 import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.action.WalkToMobAction;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
@@ -541,8 +542,14 @@ public class NpcBehavior {
 
 			int damage = CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false);
 			npc.setKillType(KillType.RANGED);
-			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage,
-				2, true, 0, 0, 0, 0, profile.getRangedProjectileVisual(npc), 0, true));
+			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
+				npc.getWorld(), npc, target,
+				ProjectileLaunchSpecification.builder(
+					ProjectileLaunchSpecification.Producer.NPC_RANGED,
+					damage, 2)
+					.chase(true)
+					.presentation(profile.getRangedProjectileVisual(npc), 0, true)
+					.build()));
 			return true;
 		}
 
@@ -555,9 +562,20 @@ public class NpcBehavior {
 			int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);
 			int splinterProcChancePercent = profile.getMagicSplinterProcChancePercent(npc, magicElement);
 			npc.setKillType(KillType.MAGIC);
-			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(npc.getWorld(), npc, target, damage,
-				1, true, 0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement,
-				startleProcChancePercent, acidPoisonPower, 0, splinterProcChancePercent));
+			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
+				npc.getWorld(), npc, target,
+				ProjectileLaunchSpecification.builder(
+					ProjectileLaunchSpecification.Producer.NPC_MAGIC,
+					damage, 1)
+					.chase(true)
+					.elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)
+					.presentation(
+						profile.getMagicProjectileVisual(npc, magicElement),
+						impactEffectType, true)
+					.magicElement(magicElement)
+					.dualElementProcs(startleProcChancePercent,
+						acidPoisonPower, 0, splinterProcChancePercent)
+					.build()));
 			return true;
 		}
 

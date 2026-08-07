@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.SingleEvent;
 import com.openrsc.server.event.rsc.impl.projectile.BallProjectileEvent;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -265,7 +266,13 @@ public class GnomeNpcs implements AttackNpcTrigger, SpellNpcTrigger, PlayerRange
 			}
 			else {
 				player.setAttribute("throwing_ball_game", true);
-				player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(player.getWorld(), player, n, 3) {
+				player.getWorld().getServer().getGameEventHandler().add(new BallProjectileEvent(
+					player.getWorld(), player, n,
+					ProjectileLaunchSpecification.builder(
+						ProjectileLaunchSpecification.Producer.GNOME_BALL,
+						0, -1)
+						.presentation(3, 0, true)
+						.build()) {
 					@Override
 					public void doSpell() {
 					}
