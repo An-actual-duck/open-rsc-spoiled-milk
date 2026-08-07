@@ -187,7 +187,7 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::primaryProjectileDamageTransactions);
 			run(harness, "primary_projectiles_preserve_shared_hits_mitigation",
 				CurrentCombatCharacterizationTest::primaryProjectileSharedHitsMitigation);
-			run(harness, "unknown_projectile_stays_outside_while_child_effect_is_owned",
+			run(harness, "unknown_projectile_preserves_compatibility_settlement",
 				CurrentCombatCharacterizationTest::nonPrimaryProjectileBoundary);
 			run(harness, "compatibility_helper_dot_and_death_order_remain_distinct",
 				CurrentCombatSecondaryDamageCharacterization::compatibilityHelperAndDamageOverTime);
@@ -1740,9 +1740,64 @@ public final class CurrentCombatCharacterizationTest {
 		invokePrimaryProjectile(compatibilityEvent);
 		assertEquals(13, compatibilityTarget.getLevel(Skill.HITS.id()),
 			"non-primary compatibility projectile retains legacy Hits mutation");
+		assertEquals(7,
+			compatibilityTarget.getUpdateFlags().getDamage().get().getDamage(),
+			"non-primary compatibility projectile damage update amount");
 		assertEquals(1,
 			compatibilityTarget.getUpdateFlags().getHitSplats().size(),
 			"non-primary compatibility projectile retains one hitsplat");
+		assertEquals(7,
+			compatibilityTarget.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"non-primary compatibility projectile hitsplat amount");
+		assertEquals(0, projectileContribution(
+			compatibilityTarget, source, "getCombatDamageInfoBy"),
+			"non-primary compatibility projectile excludes combat contribution");
+		assertEquals(0, projectileContribution(
+			compatibilityTarget, source, "getMageDamageInfoBy"),
+			"non-primary compatibility projectile excludes Magic contribution");
+		assertEquals(0, projectileContribution(
+			compatibilityTarget, source, "getRangeDamageInfoBy"),
+			"non-primary compatibility projectile excludes Ranged contribution");
+		assertEquals(0, observer.results.size(),
+			"pre-migration compatibility projectile has no transaction result");
+
+		final Npc lethalCompatibilityTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 613, 541);
+		lethalCompatibilityTarget.setShouldRespawn(false);
+		lethalCompatibilityTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 5, 5, false);
+		final AtomicInteger lethalCallbacks = new AtomicInteger();
+		final AtomicInteger presentedAtDeath = new AtomicInteger();
+		lethalCompatibilityTarget.addDeathListener(new NpcLootEvent(
+			harness.world(), lethalCompatibilityTarget.getLocation(),
+			lethalCompatibilityTarget.getID(), 1, ItemId.COINS.id()) {
+			@Override
+			public void onLootNpcDeath(final Player ignoredPlayer,
+					final Npc ignoredNpc) {
+				lethalCallbacks.incrementAndGet();
+				if (lethalCompatibilityTarget.getUpdateFlags().getDamage()
+						.get() != null
+						&& lethalCompatibilityTarget.getUpdateFlags()
+						.getHitSplats().size() == 1) {
+					presentedAtDeath.incrementAndGet();
+				}
+			}
+		});
+		final ProjectileEvent lethalCompatibilityEvent = projectileEvent(
+			harness, source, lethalCompatibilityTarget, 7, 3, -1,
+			Projectile.GNOMEBALL, 0);
+		invokePrimaryProjectile(lethalCompatibilityEvent);
+		assertEquals(0,
+			lethalCompatibilityTarget.getLevel(Skill.HITS.id()),
+			"lethal compatibility projectile reaches zero Hits");
+		assertEquals(1, lethalCallbacks.get(),
+			"lethal compatibility projectile callback cardinality");
+		assertEquals(1, presentedAtDeath.get(),
+			"compatibility projectile publishes presentation before death");
+		assertTrue(lethalCompatibilityTarget.isUnregistering(),
+			"lethal compatibility projectile uses the existing death adapter");
+		assertEquals(0, observer.results.size(),
+			"pre-migration lethal compatibility projectile has no result");
 
 		final Npc secondaryTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 614, 540);
@@ -1757,7 +1812,7 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(1, secondaryTarget.getUpdateFlags().getHitSplats().size(),
 			"secondary projectile damage retains one hitsplat");
 		assertEquals(1, observer.results.size(),
-			"A05.4C observes the child hit but not the unknown compatibility type");
+			"A05.4C observes the child hit but not compatibility projectiles");
 		assertEquals("projectile-chain-lightning",
 			observer.results.get(0).getRequest().getEffectKey(),
 			"child effect stable identity");
