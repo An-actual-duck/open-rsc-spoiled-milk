@@ -61,8 +61,8 @@ public final class CombatEffectAnimationCatalog {
 		define(definitions, 12, "earth-4", ON_ENTITY,
 			"earth-4/Earth Impale 64x64.png", 17, 1, 0, 17, 64);
 		define(definitions, 14, "fire-4", ON_ENTITY, "fire-4/Fire Beam.png", 10, 1, 0, 10, 64);
-		define(definitions, 15, "explosion-vfx-11", ON_ENTITY,
-			"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 14, 64);
+		define(definitions, 15, "explosion-vfx-1", ON_ENTITY,
+			"explosions/Explosion VFX 1(32x32).png", 10, 1, 0, 9, 64);
 		define(definitions, 16, "lesser-heal", ON_ENTITY,
 			"lesser-heal/Buff n Debuff P1 03.png", 16, 1, 0, 16, 64);
 		define(definitions, 17, "greater-heal", ON_ENTITY,

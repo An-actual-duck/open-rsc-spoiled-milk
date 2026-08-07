@@ -165,7 +165,7 @@ Implementation should:
 - visually verify complete 18-frame playback in both directions and on primary
   and splash targets.
 
-Hell's Inferno remains a separate Explosion VFX 11 animation and should not be
+Hell's Inferno remains a separate Explosion VFX 1 animation and should not be
 silently substituted for the boss's normal attack impact.
 
 ## Implementation Waves
@@ -209,10 +209,11 @@ Breath.
   the primary. PvP secondaries pass the side-effect-free combat eligibility
   policy, exclude party members and invalid Wilderness targets, and are
   disabled during duels. Guard Dog suppresses all secondary damage.
-- Explosion VFX 11 contains 16 sheet cells but only 14 visible frames. It now
-  plays those 14 frames and renders at 96 pixels in the final screen/scene draw
-  rather than attempting to place a 96-pixel frame into the loader's fixed
-  64-pixel canvas, which clipped both sides. Balrog's normal Magic attack once
+- Explosion VFX 1 contains 10 sheet cells with nine visible frames. It plays
+  those nine frames at 96 pixels in the final screen/scene draw. A
+  direction-aware 16-pixel correction moves the primary effect away from the
+  attacker and back toward the struck enemy's tile center; secondary effects
+  without a combat-facing direction remain centered. Balrog's normal Magic attack once
   again resolves combat effect 46,
   backed by the intact 18-frame sheet copied into the preferred on-entity
   animation tree.

@@ -10936,6 +10936,8 @@ public final class mudclient implements Runnable {
 			int drawY = y + height / 2 - drawHeight / 2;
 			int offsetSize = Math.max(drawWidth, drawHeight);
 			drawX += getCombatEffectScreenXOffset(character.combatEffectType, frame, offsetSize);
+			drawX += getCombatEffectTargetScreenXOffset(character,
+				character.combatEffectType, offsetSize);
 			drawY += getCombatEffectScreenYOffset(character.combatEffectType, frame, offsetSize);
 			character.hasCombatEffectScreenAnchor = true;
 			character.combatEffectScreenX = drawX;
@@ -21843,7 +21845,10 @@ public final class mudclient implements Runnable {
 			return;
 		}
 		if (isCombatDirection(character.direction)) {
-			this.scene.setCombatXOffset(86, spriteIndex, useCombatBFrames(character.direction) ? 30 : -30);
+			int offset = character.combatEffectType == COMBAT_EFFECT_HELLS_INFERNO
+				? (useCombatBFrames(character.direction) ? -16 : 16)
+				: (useCombatBFrames(character.direction) ? 30 : -30);
+			this.scene.setCombatXOffset(86, spriteIndex, offset);
 		}
 	}
 
@@ -23255,6 +23260,18 @@ public final class mudclient implements Runnable {
 			return SUMMON_CHARGE_LOOP_X_OFFSET;
 		}
 		return 0;
+	}
+
+	private int getCombatEffectTargetScreenXOffset(ORSCharacter character,
+			int effectType, int size) {
+		if (effectType != COMBAT_EFFECT_HELLS_INFERNO || character == null
+				|| !isCombatDirection(character.direction)) {
+			return 0;
+		}
+		// Combat sprites face and visually extend toward their opponent. Move this
+		// on-entity blast back toward the struck character's tile center.
+		int correction = Math.max(1, size / 6);
+		return useCombatBFrames(character.direction) ? -correction : correction;
 	}
 
 	private int getCombatEffectScreenYOffset(int effectType, int frame, int size) {

@@ -223,7 +223,7 @@ Add one row for every live effect as it enters a wave.
 | 4 | Tail Sting, Spitting Venom, Mystic Venom | Moving projectile | `acid-basic-2` | No | Added | Required | Field test |
 | 4 | Hell's Fire | On-entity impact | `explosion-vfx-15` | No | Added | Required | Field test |
 | 4 | Hell's Blaze | On-entity impact | `explosion-vfx-17` | No | Added | Required | Field test |
-| 4 | Hell's Inferno | On-entity impact | `explosion-vfx-11` | No | Added | Required | Field test |
+| 4 | Hell's Inferno | On-entity impact | `explosion-vfx-1` | No | Added | Required | Field test |
 
 Wave 2 was deliberately approved as one player-spellbook completion batch
 rather than five smaller assignment groups. It also widens the Teleport sheet

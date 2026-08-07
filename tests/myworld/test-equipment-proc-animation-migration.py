@@ -28,7 +28,7 @@ def main() -> int:
         "on-entity/fire-slashes/Slash 1.png": (416, 32),
         "on-entity/fire-slashes/Slash 2.png": (384, 32),
         "on-entity/bubble-shield/true-defense.png": (1408, 64),
-        "on-entity/explosions/Explosion VFX 11(64x32).png": (1024, 32),
+        "on-entity/explosions/Explosion VFX 1(32x32).png": (320, 32),
         "on-entity/fire-orb-explosion/Fire Orb Explosion(48x48).png": (864, 48),
         "on-entity/wood-6/Wood VFX 05(48x48).png": (816, 48),
         "projectile-moving/acid-basic-2/Acid VFX 03(56x48).png": (896, 48),
@@ -41,8 +41,8 @@ def main() -> int:
     require(catalog, (
         'define(definitions, 1, "explosion-vfx-15"',
         'define(definitions, 2, "explosion-vfx-17"',
-        'define(definitions, 15, "explosion-vfx-11"',
-        '"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 14, 64);',
+        'define(definitions, 15, "explosion-vfx-1"',
+        '"explosions/Explosion VFX 1(32x32).png", 10, 1, 0, 9, 64);',
         'define(definitions, 46, "fire-orb-explosion"',
         '"fire-orb-explosion/Fire Orb Explosion(48x48).png", 18, 1, 0, 18, 64);',
         'define(definitions, 58, "fire-slash-1"',
@@ -90,6 +90,9 @@ def main() -> int:
         "if (effectType == COMBAT_EFFECT_HELLS_INFERNO)",
         "return 336;",
         "return Math.max(1, (baseSize * 3) / 2);",
+        "getCombatEffectTargetScreenXOffset(character,",
+        "int correction = Math.max(1, size / 6);",
+        "useCombatBFrames(character.direction) ? -correction : correction",
     ), "mudclient.java")
     require(asset_loader, (
         "int boundedTargetSize = Math.max(1, Math.min(64, maxTargetSize));",

@@ -146,19 +146,24 @@ def main() -> int:
     require_all(catalog, (
         'define(definitions, 46, "fire-orb-explosion", ON_ENTITY,',
         '"fire-orb-explosion/Fire Orb Explosion(48x48).png", 18, 1, 0, 18, 64);',
-        '"explosions/Explosion VFX 11(64x32).png", 16, 1, 0, 14, 64);',
+        '"explosions/Explosion VFX 1(32x32).png", 10, 1, 0, 9, 64);',
     ))
     client = read("Client_Base/src/orsc/mudclient.java")
     require_all(client, (
         "if (effectType == COMBAT_EFFECT_HELLS_INFERNO)",
         "return 336;",
         "return Math.max(1, (baseSize * 3) / 2);",
+        "getCombatEffectTargetScreenXOffset(character,",
+        "useCombatBFrames(character.direction) ? -correction : correction",
     ))
     asset_loader = read("Client_Base/src/orsc/ClientExternalAssetLoader.java")
     assert "Math.min(64, maxTargetSize)" in asset_loader
     assert png_size(
         "dev/myworld/assets/animations/on-entity/fire-orb-explosion/Fire Orb Explosion(48x48).png"
     ) == (864, 48)
+    assert png_size(
+        "dev/myworld/assets/animations/on-entity/explosions/Explosion VFX 1(32x32).png"
+    ) == (320, 32)
 
     print("PASS: KBD tier 10, Balrog tier 11 AOE, Elder preservation, and Balrog impact validated")
     return 0
