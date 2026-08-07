@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
@@ -900,11 +901,14 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applyWeaponPoison() {
-		if (!caster.isPlayer() || damage <= 0) {
+		if (!caster.isPlayer()) {
 			return;
 		}
 		final Player casterPlayer = (Player) caster;
 		casterPlayer.removeAttribute("dragon_breath_armor_proc");
+		if (damage <= 0) {
+			return;
+		}
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
 		final boolean isMagicAttack = type == 1 || type == 4;
 		final boolean isRangedAttack = type == 2 || type == 5;
@@ -1014,8 +1018,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			opponent.applyDragonFireDefenseDebuff(6);
 		}
 		final String dragonBreathProc = casterPlayer.getAttribute("dragon_breath_armor_proc", "");
-		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)
-				|| "elder_green".equals(dragonBreathProc)) {
+		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			casterPlayer.getUpdateFlags().setCombatEffect(new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH));
 		}
 		if (casterPlayer.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
@@ -1024,8 +1027,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
 			}
 		}
-		if ((casterPlayer.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc))
-				|| (casterPlayer.hasFullElderGreenDragonSet() && "elder_green".equals(dragonBreathProc))) {
+		if (casterPlayer.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
@@ -1041,6 +1043,12 @@ public class ProjectileEvent extends SingleTickEvent {
 					opponent.applyDragonFireDefenseDebuff(6);
 					break;
 			}
+		}
+		if (damage > 0 && casterPlayer.getElderGreenDragonArmorProcChance() > 0.0D
+				&& DataConversions.getRandom().nextDouble()
+					< casterPlayer.getElderGreenDragonArmorProcChance()) {
+			ElderGreenDragonArmorEffect.applyProc(casterPlayer, opponent,
+				DataConversions.random(0, ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
 		}
 	}
 

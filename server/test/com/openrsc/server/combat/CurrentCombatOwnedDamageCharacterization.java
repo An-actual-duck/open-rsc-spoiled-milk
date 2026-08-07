@@ -5,6 +5,7 @@ import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
@@ -195,14 +196,70 @@ final class CurrentCombatOwnedDamageCharacterization {
 			ItemId.ELDER_GREEN_DRAGON_CUIRASS
 		});
 		assertEquals(Double.valueOf(0.60D),
+			Double.valueOf(elder.getElderGreenDragonArmorProcChance()),
+			"Elder Breath chance");
+		assertEquals(Double.valueOf(0.0D),
 			Double.valueOf(elder.getDragonBreathArmorProcChance()),
-			"Elder Dragon Breath chance remains unchanged");
-		assertEquals(20, elder.getDragonBreathArmorAppliedPoisonPower(),
-			"Elder applied poison power remains unchanged");
-		assertEquals(40, elder.getDragonBreathArmorMaxPoisonPower(),
-			"Elder poison ceiling remains unchanged");
-		assertEquals("elder_green", elder.getDragonBreathArmorProcKey(),
-			"Elder proc identity remains unchanged");
+			"Elder no longer uses the poison Dragon Breath profile");
+		assertEquals(0, elder.getDragonBreathArmorAppliedPoisonPower(),
+			"Elder Breath does not add poison");
+		assertEquals(0, elder.getDragonBreathArmorMaxPoisonPower(),
+			"Elder Breath does not raise the poison ceiling");
+		assertEquals("", elder.getDragonBreathArmorProcKey(),
+			"Elder has no legacy Dragon Breath proc identity");
+
+		assertEquals(0, ElderGreenDragonArmorEffect.splashDamage(0),
+			"zero Elder true damage cannot splash");
+		assertEquals(1, ElderGreenDragonArmorEffect.splashDamage(1),
+			"one Elder true damage rounds up");
+		assertEquals(3, ElderGreenDragonArmorEffect.splashDamage(5),
+			"odd Elder true damage rounds up");
+		assertEquals(5, ElderGreenDragonArmorEffect.splashDamage(10),
+			"maximum Elder true damage halves to five");
+
+		final Npc primary = npcWithHits(harness, NpcId.CHICKEN.id(), 491, 490, 20);
+		final Npc secondary = npcWithHits(harness, NpcId.CHICKEN.id(), 492, 490, 20);
+		ElderGreenDragonArmorEffect.applyProc(elder, primary, 5);
+		assertEquals(15, primary.getLevel(Skill.HITS.id()),
+			"Elder primary receives rolled true damage");
+		assertEquals(17, secondary.getLevel(Skill.HITS.id()),
+			"Elder secondary receives half actual primary damage rounded up");
+		final String burnKey = "elder_green_dragon_armor_burn_event";
+		final Object primaryBurn = primary.getAttribute(burnKey, null);
+		assertTrue(primaryBurn != null, "Elder primary receives burn event");
+		final Object secondaryBurn = secondary.getAttribute(burnKey, null);
+		assertTrue(secondaryBurn != null, "Elder secondary receives burn event");
+		ElderGreenDragonArmorEffect.applyBurn(elder, primary);
+		assertTrue(primary.getAttribute(burnKey, null) == primaryBurn,
+			"Elder burn refreshes rather than stacking");
+		for (int pulse = 0; pulse < ElderGreenDragonArmorEffect.BURN_PULSES; pulse++) {
+			invoke(primaryBurn, "run", new Class<?>[0]);
+			invoke(secondaryBurn, "run", new Class<?>[0]);
+		}
+		assertEquals(10, primary.getLevel(Skill.HITS.id()),
+			"Elder primary burn applies five reduced pulses");
+		assertEquals(12, secondary.getLevel(Skill.HITS.id()),
+			"Elder secondary burn applies five reduced pulses");
+		assertTrue(primary.getAttribute(burnKey, null) == null,
+			"completed Elder primary burn clears lifecycle state");
+		assertTrue(secondary.getAttribute(burnKey, null) == null,
+			"completed Elder secondary burn clears lifecycle state");
+
+		final Player guarded = harness.player("guarded elder set", 520, 520);
+		final Npc guardedPrimary = npcWithHits(
+			harness, NpcId.CHICKEN.id(), 521, 520, 20);
+		final Npc guardedSecondary = npcWithHits(
+			harness, NpcId.CHICKEN.id(), 522, 520, 20);
+		installGuardDog(harness, guarded, 519, 520);
+		ElderGreenDragonArmorEffect.applyProc(guarded, guardedPrimary, 4);
+		assertEquals(16, guardedPrimary.getLevel(Skill.HITS.id()),
+			"Guard Dog preserves Elder primary true damage");
+		assertEquals(20, guardedSecondary.getLevel(Skill.HITS.id()),
+			"Guard Dog suppresses Elder secondary true damage");
+		final Object guardedBurn = guardedPrimary.getAttribute(burnKey, null);
+		for (int pulse = 0; pulse < ElderGreenDragonArmorEffect.BURN_PULSES; pulse++) {
+			invoke(guardedBurn, "run", new Class<?>[0]);
+		}
 	}
 
 	static void balrogSplashPolicies(final CurrentCombatHarness harness)

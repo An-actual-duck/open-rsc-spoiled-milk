@@ -2713,6 +2713,10 @@ public final class Player extends Mob {
 		return getCarriedItems().getEquipment().getDragonBreathArmorProcKey();
 	}
 
+	public double getElderGreenDragonArmorProcChance() {
+		return getCarriedItems().getEquipment().getElderGreenDragonArmorProcChance();
+	}
+
 	public boolean hasFullFireGiantSet() {
 		return getCarriedItems().getEquipment().hasFullFireGiantSet();
 	}

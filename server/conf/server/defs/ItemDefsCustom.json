@@ -16057,7 +16057,7 @@
     {
       "id": 1950,
       "name": "Elder-green-dragon-hide coif",
-      "description": "Coif made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "description": "Coif made from elder green dragon leather. Full set: 60% chance for Elder Breath, dealing up to 10 true damage to the primary target, half that actual damage within 2 tiles, then 1 burn damage for 5 pulses.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16080,7 +16080,7 @@
     {
       "id": 1951,
       "name": "Elder-green-dragon-hide gloves",
-      "description": "Gloves made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "description": "Gloves made from elder green dragon leather. Full set: 60% chance for Elder Breath, dealing up to 10 true damage to the primary target, half that actual damage within 2 tiles, then 1 burn damage for 5 pulses.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16103,7 +16103,7 @@
     {
       "id": 1952,
       "name": "Elder-green-dragon-hide boots",
-      "description": "Boots made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "description": "Boots made from elder green dragon leather. Full set: 60% chance for Elder Breath, dealing up to 10 true damage to the primary target, half that actual damage within 2 tiles, then 1 burn damage for 5 pulses.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16126,7 +16126,7 @@
     {
       "id": 1953,
       "name": "Elder-green-dragon-hide chaps",
-      "description": "Chaps made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "description": "Chaps made from elder green dragon leather. Full set: 60% chance for Elder Breath, dealing up to 10 true damage to the primary target, half that actual damage within 2 tiles, then 1 burn damage for 5 pulses.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -16149,7 +16149,7 @@
     {
       "id": 1954,
       "name": "Elder-green-dragon-hide cuirass",
-      "description": "Cuirass made from elder green dragon leather. When wearing 5 matching Elder Green Dragon armor pieces you will get the True Dragon's Breath trait. True Dragon's Breath has a 60% chance to proc with each attack, dealing up to 10 dragon breath damage that ignores defense, applying poison, and randomly using water, earth, or fire breath.",
+      "description": "Cuirass made from elder green dragon leather. Full set: 60% chance for Elder Breath, dealing up to 10 true damage to the primary target, half that actual damage within 2 tiles, then 1 burn damage for 5 pulses.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

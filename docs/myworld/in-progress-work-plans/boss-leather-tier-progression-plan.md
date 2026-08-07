@@ -12,11 +12,11 @@ The three boss sources will use two equipment tiers:
 | --- | ---: | --- |
 | King Black Dragon | 10 | Reintroduce a purpose-specific KBD hide, leather, and five-piece set. |
 | Balrog | 11 | Raise the existing set from tier 10 and strengthen Hell's Inferno. |
-| Elder Green Dragon | 11 | Leave the existing armor statistics, effect, acquisition, and encounter unchanged. |
+| Elder Green Dragon | 11 | Preserve its armor progression while replacing its effect with Elder Breath AOE and burn. |
 
 This treats Balrog and Elder Green Dragon as different tier-11 sidegrades.
-Balrog remains the fire-Magic/AOE set; Elder Green Dragon remains the
-multi-element dragon-breath/poison set.
+Balrog remains the fire-Magic/AOE set; Elder Green Dragon becomes the
+true-damage AOE/burn set modeled after its source boss.
 
 ## Encounter Comparison
 
@@ -46,9 +46,9 @@ long-range players can potentially reduce its practical farming difficulty.
   Dragon to preserve player holdings. Those IDs must remain Elder items.
 - KBD currently drops ordinary Black dragon hide rather than a unique hide.
 
-The implementation should preserve Elder Green Dragon exactly as it behaves
-today. KBD takes over Balrog's current progression rung, while Balrog moves to
-the existing Elder rung. This avoids silently increasing Elder equipment.
+The implementation preserves Elder Green Dragon's production, stats, and
+acquisition. KBD takes over Balrog's prior progression rung, while Balrog moves
+to the existing Elder rung. This avoids silently increasing Elder equipment.
 
 ## Proposed Stat and Production Changes
 
@@ -102,13 +102,17 @@ stats, recipes, and drop source remain separate.
 
 ### Elder Green Dragon
 
-No gameplay changes. Preserve its current:
+Preserve its five armor IDs, Crafting requirements, defensive values, hide
+acquisition, tanning, boss encounter, and 60% full-set proc rate. Replace the
+KBD-like poison/element package with `Elder Breath`:
 
-- five armor items and IDs;
-- Crafting requirements and defensive values;
-- True Dragon's Breath proc chance, damage, poison, and elements;
-- hide acquisition and tanning behavior;
-- boss stats, reach, attacks, and Mischief Imp interaction.
+- deal 0-10 true damage to the primary target;
+- splash half the primary's actual true damage, rounded up, to valid hostile
+  targets within radius 2;
+- apply a reduced burn of 1 damage for five pulses to every surviving target
+  damaged by the proc;
+- refresh an existing Elder burn rather than stacking another burn;
+- suppress only secondary targets while Guard Dog is active.
 
 ## Hell's Inferno AOE Proposal
 
@@ -188,10 +192,9 @@ silently substituted for the boss's normal attack impact.
 KBD is the middle Dragon Breath tier. Its complete five-piece set uses Elder
 Green Dragon's existing True Dragon's Breath package at a 40% proc chance:
 0-10 bonus true damage, 20 applied poison power up to a 40-power ceiling, and
-one random Water, Earth, or Fire debuff. Black Dragon remains at 20% and Elder
-remains at 60%, establishing a 20/40/60 progression. Elder will receive a new
-effect later, but its current behavior remains intact until that design is
-chosen.
+one random Water, Earth, or Fire debuff. Black Dragon remains at 20%. Elder
+retains the top 60% rate but now uses its separate Elder Breath AOE/burn effect
+rather than KBD's poison and elemental debuff package.
 
 ## Implemented Result
 
@@ -202,8 +205,11 @@ chosen.
   101-point style-defense budget above, and the former Balrog economy rung.
 - Balrog now uses tier-11 Crafting levels 80-83, the Elder tanning/XP rung, the
   108-point style-defense budget above, and Elder's current economy rung.
-- Elder definitions, acquisition, defensive values, and proc behavior were not
-  changed.
+- Elder definitions, acquisition, and defensive values remain unchanged. Its
+  60% proc is now Elder Breath: 0-10 true damage to the primary, half actual
+  primary damage rounded up within radius 2, and five 1-damage burn pulses on
+  every surviving target damaged by the proc. The burn refreshes rather than
+  stacks, and Guard Dog suppresses only the secondary AOE targets.
 - Hell's Inferno now has a Balrog-specific 40% primary proc, maximum hit 18,
   and primary-only
   12% fire-defense debuff. It now splashes half of actual primary proc damage,
@@ -222,5 +228,5 @@ chosen.
   animation tree.
 - The complete KBD set now has a runtime detector and the middle 40% True
   Dragon's Breath profile across legacy melee, modern PvM melee, ranged, and
-  Magic attacks. Elder's current 60% profile remains unchanged pending its
-  later replacement effect.
+  Magic attacks. Elder's separate 60% Elder Breath profile covers those same
+  attack paths without KBD poison or elemental debuffs.

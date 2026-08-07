@@ -681,19 +681,26 @@ Leather and carapace armor use full-set bonuses tied to the source creature.
 
 - `Balrog` -> `Hell's Inferno`
   - proc-based
-  - `20%` chance per attack
+  - `40%` chance per attack
   - deals fire magic damage up to max hit `18`
   - applies fire debuff tier `4`
+  - splashes half actual primary damage, rounded up, within radius `2`
 
-- `Elder Green Dragon` -> `True Dragon's Breath`
+- `King Black Dragon` -> `True Dragon's Breath`
+  - proc-based
+  - `40%` chance per attack
+  - ignores defense and deals up to max hit `10`
+  - applies `20` poison up to a `40` poison ceiling
+  - randomly applies the water, earth, or fire dragon debuff
+
+- `Elder Green Dragon` -> `Elder Breath`
   - proc-based
   - `60%` chance per attack
-  - dragon breath attack
-  - no combat type
-  - ignores defense
-  - randomly selects `water`, `earth`, or `fire` damage when it procs
-  - deals up to max hit `10`
-  - applies `4` poison regardless of chosen element
+  - ignores defense and deals up to max hit `10` to the primary target
+  - splashes half actual primary damage, rounded up, within radius `2`
+  - every surviving damaged target burns for `1` damage across `5` pulses
+  - reapplication refreshes the burn rather than stacking it
+  - Guard Dog suppresses secondary targets but preserves the primary effect
 
 ### Examine Text Rules
 

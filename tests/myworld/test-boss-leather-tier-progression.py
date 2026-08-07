@@ -109,6 +109,11 @@ def main() -> int:
         )
     for item_id in range(1945, 1950):
         assert "Hell's Inferno: a 40% chance" in custom[item_id]["description"]
+    for item_id in range(1950, 1955):
+        description = custom[item_id]["description"]
+        assert "60% chance for Elder Breath" in description
+        assert "half that actual damage within 2 tiles" in description
+        assert "1 burn damage for 5 pulses" in description
 
     utility = read("server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java")
     require_all(utility, (
@@ -140,7 +145,33 @@ def main() -> int:
             "applyHellsInfernoSplash",
             "CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt)",
             "CombatEffectUtil.findPlayerOwnedNpcSplashTargets(",
+            "ElderGreenDragonArmorEffect.applyProc",
         ))
+    elder_armor = read("server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java")
+    require_all(elder_armor, (
+        "PROC_CHANCE = 0.60D",
+        "MAX_TRUE_DAMAGE = 10",
+        "SPLASH_RADIUS = 2",
+        "BURN_DAMAGE = 1",
+        "BURN_PULSES = 5",
+        "findPlayerOwnedNpcSplashTargets",
+        "findPlayerOwnedPvpSplashTargets",
+        "existing.refresh(source)",
+    ))
+    assert 'return "elder_green"' not in equipment
+    for event_path in (
+        "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
+        "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+        "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
+    ):
+        assert '"elder_green".equals(dragonBreathProc)' not in read(event_path)
+
+    legacy_melee = read("server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java")
+    modern_melee = read("server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java")
+    assert legacy_melee.index("applyWeaponPoison(hitter, target, damage);") \
+        < legacy_melee.index("inflictDamage(hitter, target, damage);")
+    assert modern_melee.index("applyWeaponPoison(attackerMob, targetMob, damage);") \
+        < modern_melee.index("inflictDamage(attackerMob, targetMob, damage);")
     for event_path in (
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
@@ -181,7 +212,7 @@ def main() -> int:
         "dev/myworld/assets/animations/on-entity/explosions/Explosion VFX 1(32x32).png"
     ) == (320, 32)
 
-    print("PASS: KBD tier 10, Balrog tier 11 AOE, Elder preservation, and Balrog impact validated")
+    print("PASS: KBD tier 10, Balrog tier 11 AOE, Elder Breath AOE/burn, and Balrog impact validated")
     return 0
 
 

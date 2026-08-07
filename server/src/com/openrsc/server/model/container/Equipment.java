@@ -1918,9 +1918,6 @@ public class Equipment {
 	}
 
 	public double getDragonBreathArmorProcChance() {
-		if (hasFullElderGreenDragonSet()) {
-			return 0.60D;
-		}
 		if (hasFullKingBlackDragonSet()) {
 			return 0.40D;
 		}
@@ -1928,27 +1925,28 @@ public class Equipment {
 	}
 
 	public int getDragonBreathArmorAppliedPoisonPower() {
-		if (hasFullKingBlackDragonSet() || hasFullElderGreenDragonSet()) {
+		if (hasFullKingBlackDragonSet()) {
 			return 20;
 		}
 		return hasFullBlackDragonSet() ? 15 : 0;
 	}
 
 	public int getDragonBreathArmorMaxPoisonPower() {
-		if (hasFullKingBlackDragonSet() || hasFullElderGreenDragonSet()) {
+		if (hasFullKingBlackDragonSet()) {
 			return 40;
 		}
 		return hasFullBlackDragonSet() ? 30 : 0;
 	}
 
 	public String getDragonBreathArmorProcKey() {
-		if (hasFullElderGreenDragonSet()) {
-			return "elder_green";
-		}
 		if (hasFullKingBlackDragonSet()) {
 			return "king_black";
 		}
 		return hasFullBlackDragonSet() ? "black" : "";
+	}
+
+	public double getElderGreenDragonArmorProcChance() {
+		return hasFullElderGreenDragonSet() ? 0.60D : 0.0D;
 	}
 
 	public int getMeleeOffense() {

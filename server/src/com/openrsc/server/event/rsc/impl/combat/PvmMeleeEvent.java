@@ -8,6 +8,7 @@ import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
 import com.openrsc.server.content.Summoning;
@@ -204,6 +205,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (attackerMob.isPlayer()) {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
+		applyWeaponPoison(attackerMob, targetMob, damage);
 		inflictDamage(attackerMob, targetMob, damage);
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
@@ -215,7 +217,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 			applyDemonPitchforkHellBlazeProc(attackerMob, targetMob, damage);
 			applyNpcMeleeSpecialProc(attackerMob, targetMob, damage);
 		}
-		applyWeaponPoison(attackerMob, targetMob, damage);
 		applyChaosAmuletChainLightning(attackerMob, targetMob, damage);
 		int scytheTargetsHit = 1;
 		if (!attackSuppressed && attackerMob.isPlayer() && targetMob.isNpc()) {
@@ -564,8 +565,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			target.applyDragonFireDefenseDebuff(6);
 		}
 		final String dragonBreathProc = player.getAttribute("dragon_breath_armor_proc", "");
-		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)
-				|| "elder_green".equals(dragonBreathProc)) {
+		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
 		if (player.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
@@ -574,8 +574,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
 			}
 		}
-		if ((player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc))
-				|| (player.hasFullElderGreenDragonSet() && "elder_green".equals(dragonBreathProc))) {
+		if (player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
 				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
@@ -591,6 +590,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 					target.applyDragonFireDefenseDebuff(6);
 					break;
 			}
+		}
+		if (damage > 0 && player.getElderGreenDragonArmorProcChance() > 0.0D
+				&& combatRandom().nextDouble() < player.getElderGreenDragonArmorProcChance()) {
+			ElderGreenDragonArmorEffect.applyProc(player, target,
+				combatRandom().nextIntInclusive(0,
+					ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
 		}
 	}
 
@@ -1012,11 +1017,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {
-		if (!hitter.isPlayer() || damage <= 0) {
+		if (!hitter.isPlayer()) {
 			return;
 		}
 		final Player player = (Player) hitter;
 		player.removeAttribute("dragon_breath_armor_proc");
+		if (damage <= 0) {
+			return;
+		}
 		final Item weapon = player.getCarriedItems().getEquipment().get(EquipmentSlot.SLOT_MAINHAND.getIndex());
 		final int poisonWeaponId = weapon == null ? -1 : weapon.getCatalogId();
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
