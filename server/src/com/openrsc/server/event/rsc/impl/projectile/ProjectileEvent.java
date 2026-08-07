@@ -23,6 +23,7 @@ import com.openrsc.server.model.combat.ProjectileImpactValidator;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.combat.ProjectileResourceLedger;
+import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
@@ -1125,14 +1126,8 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(damageDealt * splashPercent));
-		for (Npc npc : casterPlayer.getViewArea().getNpcsInView()) {
-			if (npc == null || npc == opponent || npc.isRemoved() || npc.isRespawning()
-				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()) {
-				continue;
-			}
-			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(opponent.getLocation(), 2)) {
-				continue;
-			}
+		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
+				casterPlayer, (Npc) opponent, 2)) {
 			inflictBloodRobeSplashDamage(casterPlayer, npc, splashDamage);
 		}
 	}
@@ -1164,14 +1159,8 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
-		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning()
-				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()) {
-				continue;
-			}
-			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
-				continue;
-			}
+		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
+				player, primaryTarget, 2)) {
 			final CombatStyle splashStyle = type == 1 || type == 4
 				? CombatStyle.MAGIC : CombatStyle.RANGED;
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(

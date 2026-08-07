@@ -121,13 +121,21 @@ def main() -> int:
         "HELLS_INFERNO_SPLASH_RADIUS = 2",
         "hellsInfernoSplashDamage",
         "Summoning.isPlayerAreaEffectSuppressed(player)",
-        "Summoning.isSummon(npc)",
-        "!npc.getDef().isAttackable()",
-        "!npc.withinRange(primaryTarget.getLocation(), radius)",
+        "PlayerOwnedNpcRadiusSelection",
         "findPlayerOwnedPvpSplashTargets",
         "player.getDuel().isDuelActive()",
         "CombatEligibility.evaluate(CombatEligibilityRequest.builder(",
         ".playerAttackRules(true)",
+    ))
+    radius_selection = read(
+        "server/src/com/openrsc/server/model/combat/PlayerOwnedNpcRadiusSelection.java"
+    )
+    require_all(radius_selection, (
+        "owner.getViewArea().getNpcsInView()",
+        "Summoning.isSummon(npc)",
+        "!npc.getDef().isAttackable()",
+        "npc.withinRange(center, radius)",
+        "snapshotViewOrder",
     ))
     for event_path in (
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",

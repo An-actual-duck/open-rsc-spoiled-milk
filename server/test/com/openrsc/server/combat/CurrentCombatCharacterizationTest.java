@@ -244,6 +244,9 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatChildDamageCharacterization::deathAmuletPolicies);
 			run(harness, "death_ring_preserves_charge_credit_and_caller_owned_death",
 				CurrentCombatChildDamageCharacterization::deathRingPolicies);
+			run(harness, "player_owned_radius_selection_preserves_view_filters_and_revalidation",
+				CurrentCombatPlayerOwnedRadiusSelectionCharacterization
+					::ordinarySplashAndTerminalBurstPolicies);
 			run(harness, "balrog_splash_preserves_mitigation_selection_and_child_death",
 				CurrentCombatOwnedDamageCharacterization::balrogSplashPolicies);
 			run(harness, "hells_inferno_splash_uses_actual_damage_and_rounds_up",

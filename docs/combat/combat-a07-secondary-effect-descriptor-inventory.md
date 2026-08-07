@@ -156,7 +156,7 @@ are not interchangeable:
 - deterministic debuffs do not gain a registry draw merely because nearby
   effects have one.
 
-The 85-scenario compiled combat gate continues to execute the current event
+The 86-scenario compiled combat gate continues to execute the current event
 owners. Its A05.4 families prove reflection, chain, Splinter, robe, Scythe,
 jewelry, boss, summon, and delayed ordering. Existing Cleric, poison, leather,
 jewelry, prayer, and summoning fixtures provide the remaining source evidence.
@@ -193,8 +193,8 @@ impact must be reviewed explicitly.
 - No selector, registry, shared executor, random service, charge transaction,
   packet, animation, damage, balance, timing, or death path changes here.
 
-A07.3 must stop if a proposed player-owned radius selector changes view order,
-world/layer membership, line-of-effect, Guard Dog suppression, primary/summon
-exclusion, revalidation, aggro, or child death order. A07.4 continues to own
-chain and random-single traversal, and A07.5 may consolidate only one proven
-duplicated proc family at a time.
+A07.3 is now characterized and implemented as the bounded live/snapshot policy
+recorded in
+[`combat-a07-player-owned-npc-radius-selection.md`](combat-a07-player-owned-npc-radius-selection.md).
+A07.4 continues to own chain and random-single traversal, and A07.5 may
+consolidate only one proven duplicated proc family at a time.

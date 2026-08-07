@@ -6,6 +6,7 @@ import com.openrsc.server.model.combat.CombatEligibility;
 import com.openrsc.server.model.combat.CombatEligibilityPhase;
 import com.openrsc.server.model.combat.CombatEligibilityRequest;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -48,20 +49,12 @@ public final class CombatEffectUtil {
 	public static List<Npc> findPlayerOwnedNpcSplashTargets(final Player player,
 			final Npc primaryTarget, final int radius) {
 		if (player == null || primaryTarget == null || radius < 0
-			|| Summoning.isPlayerAreaEffectSuppressed(player)) {
+				|| Summoning.isPlayerAreaEffectSuppressed(player)) {
 			return Collections.emptyList();
 		}
-		final List<Npc> targets = new ArrayList<>();
-		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning()
-				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()
-				|| npc.getSkills().getLevel(Skill.HITS.id()) <= 0
-				|| !npc.withinRange(primaryTarget.getLocation(), radius)) {
-				continue;
-			}
-			targets.add(npc);
-		}
-		return targets;
+		return PlayerOwnedNpcRadiusSelection
+			.aroundPrimary(player, primaryTarget, radius)
+			.snapshotViewOrder();
 	}
 
 	public static List<Player> findPlayerOwnedPvpSplashTargets(final Player player,

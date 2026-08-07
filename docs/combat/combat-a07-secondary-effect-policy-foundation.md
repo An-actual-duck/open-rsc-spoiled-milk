@@ -114,11 +114,15 @@ fixture.
 
 ### A07.3 — player-owned radius selection, split by compatible policy
 
-Characterize and migrate only target enumeration for one compatible group at a
-time. Candidate groups are ordinary player-owned radius-2 NPC splashes, then
-terminal bursts. Preserve current view ordering, Guard Dog suppression,
-spatial-domain behavior, primary exclusion, summon exclusion, wall behavior,
-and revalidation timing.
+Status: complete on the focused implementation branch. The typed selector and
+its two explicit live/snapshot timing contracts are recorded in
+[`combat-a07-player-owned-npc-radius-selection.md`](combat-a07-player-owned-npc-radius-selection.md).
+
+Only target enumeration for the compatible ordinary player-owned NPC splash
+and Death Amulet terminal-burst groups moves. Current view ordering, Guard Dog
+suppression, spatial-domain behavior, primary exclusion, summon exclusion,
+wall behavior, moving/fixed center choices, and revalidation timing remain
+unchanged.
 
 Do not combine Scythe, random Splinter, chain traversal, boss-player areas, or
 delayed spell areas merely because each is called AoE.
@@ -151,7 +155,8 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 85 scenarios.
+- The authoritative combat gate passes 86 scenarios, including the compiled
+  A07.3 view/filter/revalidation contract.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,

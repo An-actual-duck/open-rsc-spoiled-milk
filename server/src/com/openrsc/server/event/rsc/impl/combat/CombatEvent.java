@@ -20,6 +20,7 @@ import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
@@ -650,14 +651,8 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
-		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc == null || npc == primaryTarget || npc.isRemoved() || npc.isRespawning()
-				|| Summoning.isSummon(npc) || !npc.getDef().isAttackable()) {
-				continue;
-			}
-			if (npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || !npc.withinRange(primaryTarget.getLocation(), 2)) {
-				continue;
-			}
+		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
+				player, primaryTarget, 2)) {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
 				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)

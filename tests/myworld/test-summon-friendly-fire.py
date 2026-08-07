@@ -12,6 +12,7 @@ THROWING_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile
 COMBAT_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+PLAYER_NPC_RADIUS_SELECTION = ROOT / "server/src/com/openrsc/server/model/combat/PlayerOwnedNpcRadiusSelection.java"
 
 
 def fail(message: str) -> None:
@@ -49,6 +50,9 @@ def require_absent(source: str, snippet: str, message: str) -> None:
 
 
 def require_npc_damage_area(name: str, body: str, attackable_required: bool = True) -> None:
+    if "PlayerOwnedNpcRadiusSelection." in body:
+        require_absent(body, "getPlayersInView()", f"{name} must not select player targets")
+        return
     require_contains(body, "getNpcsInView()", f"{name} should select NPC area targets")
     require_absent(body, "getPlayersInView()", f"{name} must not select player targets")
     require_contains(body, "Summoning.isSummon", f"{name} must exclude summons")
@@ -63,6 +67,12 @@ def main() -> int:
     combat_event = COMBAT_EVENT.read_text(encoding="utf-8")
     pvm_melee_event = PVM_MELEE_EVENT.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
+    player_npc_radius_selection = PLAYER_NPC_RADIUS_SELECTION.read_text(encoding="utf-8")
+
+    require_npc_damage_area(
+        "Shared player-owned NPC radius selection",
+        player_npc_radius_selection,
+    )
 
     if "isValidIbanBlastAreaTarget(primaryTarget, npc)" not in spell_handler:
         fail("Iban Blast area selection should use its summon-aware target guard")
