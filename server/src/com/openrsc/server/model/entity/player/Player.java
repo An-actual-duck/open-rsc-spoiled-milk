@@ -52,6 +52,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.death.DeathContext;
 import com.openrsc.server.model.entity.death.DeathTransition;
 import com.openrsc.server.model.struct.UnequipRequest;
@@ -138,10 +139,6 @@ public final class Player extends Mob {
 	private static final int BODY_ROBE_POWER_DECAY_TICKS = 10;
 	private static final String DEATH_RING_CHARGE_LAST_DECAY_KEY = "death_ring_charge_last_decay";
 	private static final long DEATH_RING_CHARGE_DECAY_INTERVAL_MS = 60000L;
-	private static final String DEATH_AMULET_BURST_EFFECT_KEY =
-		"player-death-amulet-burst";
-	private static final String DEATH_RING_CHARGE_HIT_EFFECT_KEY =
-		"player-death-ring-charge-hit";
 
 	/**
 	 * The asynchronous logger.
@@ -2364,7 +2361,8 @@ public final class Player extends Mob {
 			final int damage = minDamage + DataConversions.getRandom().nextInt(maxDamage - minDamage + 1);
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				this, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-				DEATH_AMULET_BURST_EFFECT_KEY, damage)
+				SecondaryEffectPolicy.PLAYER_DEATH_AMULET_BURST.getStableKey(),
+				damage)
 				.style(CombatStyle.MELEE)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 				.build();
@@ -2407,7 +2405,8 @@ public final class Player extends Mob {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			this, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			DEATH_RING_CHARGE_HIT_EFFECT_KEY, bonusDamage)
+			SecondaryEffectPolicy.PLAYER_DEATH_RING_CHARGE_HIT.getStableKey(),
+			bonusDamage)
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();

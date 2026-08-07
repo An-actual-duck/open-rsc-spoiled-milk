@@ -20,6 +20,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -58,10 +59,6 @@ public final class Summoning {
 	private static final String SUMMON_PRAYER_BONUS_KEY = "myworld_summon_prayer_bonus";
 	private static final String SUMMON_UTILITY_USES_REMAINING_KEY = "myworld_summon_utility_uses_remaining";
 	private static final String SUMMON_GUARD_ENEMY_KEY = "myworld_summon_guard_enemy";
-	private static final String SUMMON_BONUS_MAGIC_EFFECT_KEY =
-		"summon-bonus-magic";
-	private static final String SUMMON_BONUS_MELEE_EFFECT_KEY =
-		"summon-bonus-melee";
 	private static final String RAT_AWAITING_ITEM_KEY = "myworld_rat_awaiting_item";
 	private static final String RAT_NPC_KEY = "myworld_rat_note_npc";
 	private static final String CAMEL_AWAITING_ITEM_KEY = "myworld_camel_awaiting_item";
@@ -1964,8 +1961,10 @@ public final class Summoning {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			summon, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			magicDamage ? SUMMON_BONUS_MAGIC_EFFECT_KEY
-				: SUMMON_BONUS_MELEE_EFFECT_KEY, damage)
+			magicDamage
+				? SecondaryEffectPolicy.SUMMON_BONUS_MAGIC.getStableKey()
+				: SecondaryEffectPolicy.SUMMON_BONUS_MELEE.getStableKey(),
+			damage)
 			.style(magicDamage ? CombatStyle.MAGIC : CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();

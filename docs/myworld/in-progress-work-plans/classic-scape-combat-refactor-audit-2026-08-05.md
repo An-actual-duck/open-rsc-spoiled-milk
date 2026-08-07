@@ -700,14 +700,13 @@ cardinality change.
 
 ### A06 — projectile launch/impact/settlement
 
-Status: A06.1 through A06.3 are implemented on published main. A06.2
+Status: A06.1 through A06.4 are implemented on published main. A06.2
 inventories all 22 tracked core and plugin construction sites, freezes former
 constructor-tail parameters, gives maintained special producers stable
 identities, and retains positional compatibility facades. A06.3 includes its
-approved family decision matrix and bounded production policy. A06.4's
-observational economy-settlement ledger and executable conservation fixtures
-are complete on its focused branch; manager review and integration remain
-pending. See
+approved family decision matrix and bounded production policy. A06.4 adds the
+observational economy-settlement ledger and executable conservation fixtures.
+See
 [`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md)
 and
 [`combat-a06-projectile-launch-specifications.md`](../../combat/combat-a06-projectile-launch-specifications.md),
@@ -728,6 +727,14 @@ Stop if the branch changes projectile speed/range, spell/ammo costs, prayer,
 recovery, damage, animation, or authentic-client packet order.
 
 ### A07 — current-specific secondary, AoE, and on-hit policies
+
+Status: A07.1 is implemented on its focused branch, pending manager review. It
+adds a typed, exact-size catalog for all 39 current secondary-damage settlement
+identities and replaces duplicated key literals without moving behavior. The
+compiled fixture proves that 32 cannot be used as a total catalog capacity;
+per-phase work sizing remains A07.2. Exact current policies and bounded A07.2-A07.5
+follow-ups are recorded in
+[`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

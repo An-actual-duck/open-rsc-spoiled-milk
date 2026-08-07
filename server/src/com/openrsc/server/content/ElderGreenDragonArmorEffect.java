@@ -5,6 +5,7 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -23,10 +24,6 @@ public final class ElderGreenDragonArmorEffect {
 	public static final int BURN_DAMAGE = 1;
 	public static final int BURN_PULSES = 5;
 
-	private static final String TRUE_DAMAGE_EFFECT_KEY =
-		"elder-green-dragon-armor-true-damage";
-	private static final String BURN_DAMAGE_EFFECT_KEY =
-		"elder-green-dragon-armor-burn";
 	private static final String BURN_EVENT_KEY =
 		"elder_green_dragon_armor_burn_event";
 
@@ -73,7 +70,8 @@ public final class ElderGreenDragonArmorEffect {
 
 	public static int inflictTrueDamage(final Player source, final Mob target,
 			final int damage) {
-		return inflictOwnedDamage(source, target, damage, TRUE_DAMAGE_EFFECT_KEY);
+		return inflictOwnedDamage(source, target, damage,
+			SecondaryEffectPolicy.ELDER_GREEN_DRAGON_ARMOR_TRUE_DAMAGE);
 	}
 
 	public static void applyBurn(final Player source, final Mob target) {
@@ -103,13 +101,13 @@ public final class ElderGreenDragonArmorEffect {
 	}
 
 	private static int inflictOwnedDamage(final Player source, final Mob target,
-			final int damage, final String effectKey) {
+			final int damage, final SecondaryEffectPolicy effectPolicy) {
 		if (damage <= 0 || !isValidSource(source) || !isValidTarget(target)) {
 			return 0;
 		}
 		final DamageRequest request = DamageRequest.resolvedLegacy(
 			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			effectKey, damage)
+			effectPolicy.getStableKey(), damage)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult result = target.getWorld().getServer()
@@ -169,7 +167,7 @@ public final class ElderGreenDragonArmorEffect {
 				return;
 			}
 			inflictOwnedDamage(currentSource, target, BURN_DAMAGE,
-				BURN_DAMAGE_EFFECT_KEY);
+				SecondaryEffectPolicy.ELDER_GREEN_DRAGON_ARMOR_BURN);
 			synchronized (this) {
 				pulsesRemaining--;
 				if (pulsesRemaining <= 0

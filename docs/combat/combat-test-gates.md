@@ -263,3 +263,18 @@ holy-water, gnome-ball, positional, and base-benign exceptions; and unchanged
 retarget, protection, sibling, duplicate, and failure ordering. The production
 boundary is recorded in
 [`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md).
+
+A06.4 grows the gate from 75 to 83 scenarios. Its fixtures prove typed,
+exactly-once resource settlement for bow ammunition, shuriken duplication,
+inventory-mode compatibility, ground/drop recovery, Magic runes and XP,
+cannonballs, and shutdown after launch. The boundary is recorded in
+[`combat-a06-projectile-resource-ledger.md`](combat-a06-projectile-resource-ledger.md).
+
+A07.1 grows the gate from 83 to 84 scenarios. Its compiled fixture asserts the
+39 exact current secondary-damage policy identities, family counts, immutable
+lookup, and the evidence that 32 cannot be used as a total catalog capacity.
+It does not select a per-phase work budget. Production call sites now consume
+those same stable keys from the typed catalog without moving target selection,
+proc execution,
+damage, ordering, or death authority. The boundary is recorded in
+[`combat-a07-secondary-effect-policy-foundation.md`](combat-a07-secondary-effect-policy-foundation.md).

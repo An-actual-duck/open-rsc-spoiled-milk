@@ -30,6 +30,7 @@ import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -51,22 +52,22 @@ public class PvmMeleeEvent extends GameTickEvent {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
 	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
-	private static final String AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY =
-		"pvm-melee-auxiliary-magic";
-	private static final String AUXILIARY_TRUE_DAMAGE_EFFECT_KEY =
-		"pvm-melee-auxiliary-true";
-	private static final String FROSTBITE_REFLECTION_EFFECT_KEY =
-		"pvm-melee-frostbite-reflection";
-	private static final String CLERIC_THORNS_EFFECT_KEY =
-		"pvm-melee-cleric-thorns";
-	private static final String JEWELRY_RECOIL_EFFECT_KEY =
-		"pvm-melee-jewelry-recoil";
-	private static final String CHAIN_LIGHTNING_EFFECT_KEY =
-		"pvm-melee-chain-lightning";
-	private static final String DEATH_ROBE_OVERKILL_EFFECT_KEY =
-		"pvm-melee-death-robe-overkill";
-	private static final String SCYTHE_CLEAVE_EFFECT_KEY =
-		"pvm-melee-scythe-cleave";
+	private static final SecondaryEffectPolicy AUXILIARY_MAGIC_DAMAGE_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_AUXILIARY_MAGIC;
+	private static final SecondaryEffectPolicy AUXILIARY_TRUE_DAMAGE_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_AUXILIARY_TRUE;
+	private static final SecondaryEffectPolicy FROSTBITE_REFLECTION_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_FROSTBITE_REFLECTION;
+	private static final SecondaryEffectPolicy CLERIC_THORNS_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_CLERIC_THORNS;
+	private static final SecondaryEffectPolicy JEWELRY_RECOIL_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_JEWELRY_RECOIL;
+	private static final SecondaryEffectPolicy CHAIN_LIGHTNING_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_CHAIN_LIGHTNING;
+	private static final SecondaryEffectPolicy DEATH_ROBE_OVERKILL_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_DEATH_ROBE_OVERKILL;
+	private static final SecondaryEffectPolicy SCYTHE_CLEAVE_POLICY =
+		SecondaryEffectPolicy.PVM_MELEE_SCYTHE_CLEAVE;
 	private static final double KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE = 0.10D;
 	private static final int FIRE_CLAW_FIRE_DEFENSE_DEBUFF_PERCENT = 6;
 	private static final int[] SCYTHE_IDS = {
@@ -423,7 +424,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-				DEATH_ROBE_OVERKILL_EFFECT_KEY, splashDamage)
+				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
 				.eventId(getUUID())
 				.style(CombatStyle.MELEE)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -485,7 +486,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final Mob creditedSource = source != null ? source : target;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			FROSTBITE_REFLECTION_EFFECT_KEY, damage)
+			FROSTBITE_REFLECTION_POLICY.getStableKey(), damage)
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -793,7 +794,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			final Npc npc, final int damage) {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-			SCYTHE_CLEAVE_EFFECT_KEY, damage)
+			SCYTHE_CLEAVE_POLICY.getStableKey(), damage)
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_STANDARD)
@@ -828,7 +829,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_MAGIC_DAMAGE_EFFECT_KEY, damage)
+			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), damage)
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -861,7 +862,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_TRUE_DAMAGE_EFFECT_KEY, damage)
+			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), damage)
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -937,7 +938,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			CHAIN_LIGHTNING_EFFECT_KEY, damage)
+			CHAIN_LIGHTNING_POLICY.getStableKey(), damage)
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -959,23 +960,24 @@ public class PvmMeleeEvent extends GameTickEvent {
 	private void inflictMeleeJewelryRecoilDamage(final Mob source,
 			final Mob target, final int damage) {
 		inflictReflectedCombatDamage(
-			source, target, damage, JEWELRY_RECOIL_EFFECT_KEY);
+			source, target, damage, JEWELRY_RECOIL_POLICY);
 	}
 
 	private void inflictClericThornsDamage(final Mob source,
 			final Mob target, final int damage) {
 		inflictReflectedCombatDamage(
-			source, target, damage, CLERIC_THORNS_EFFECT_KEY);
+			source, target, damage, CLERIC_THORNS_POLICY);
 	}
 
 	private void inflictReflectedCombatDamage(final Mob source,
-			final Mob target, final int damage, final String effectKey) {
+			final Mob target, final int damage,
+			final SecondaryEffectPolicy effectPolicy) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			effectKey, damage)
+			effectPolicy.getStableKey(), damage)
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
