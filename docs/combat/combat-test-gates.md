@@ -228,3 +228,19 @@ executable. A signed negative admin compatibility value remains a direct,
 unobserved HP adjustment and is pinned separately. The residual inventory and
 stop boundary are recorded in
 [`combat-a05-direct-hit-mutation-cleanup.md`](combat-a05-direct-hit-mutation-cleanup.md).
+
+The integrated A06.1 baseline contains 72 scenarios. A06.1 adds immutable
+launch snapshots and an exactly-once per-event impact ledger to the existing
+projectile lifecycle scenario. Cancellation, the current spatial gate,
+participant lifecycle compatibility, duplicate callbacks, scripted/benign
+events, and failed-callback non-replay remain executable. The boundary is
+recorded in
+[`combat-a06-projectile-lifecycle-foundation.md`](combat-a06-projectile-lifecycle-foundation.md).
+
+A06.2 grows the gate from 72 to 74 scenarios. Its fixtures launch every typed
+producer identity, compare positional compatibility facades with equivalent
+typed specifications, freeze every former constructor-tail parameter, and pin
+visual-before-impact presentation order. Damage, resource, impact-policy, and
+packet authority remain unchanged. The producer inventory and boundary are
+recorded in
+[`combat-a06-projectile-launch-specifications.md`](combat-a06-projectile-launch-specifications.md).

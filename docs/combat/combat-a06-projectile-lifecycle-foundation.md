@@ -140,6 +140,11 @@ authorized impact.
 
 ### A06.2 — typed producer launch specification
 
+Status: implemented on the focused A06.2 branch. All 22 tracked production
+construction sites now use immutable named specifications; positional
+constructors remain compatibility facades. See
+[`combat-a06-projectile-launch-specifications.md`](combat-a06-projectile-launch-specifications.md).
+
 Inventory every core and plugin constructor call, then introduce named launch
 specifications at producers while retaining positional compatibility facades.
 Freeze effect parameters currently written by constructor tails, including

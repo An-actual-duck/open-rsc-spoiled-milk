@@ -218,9 +218,12 @@ def main() -> None:
         "semantic hostile-projectile collision API",
     )
 
-    action = method_body(projectile_event, "public void action()")
-    require(action, "caster.withinRange(opponent, 15)", "delayed projectile delivery cap")
-    if "PathValidation" in action or "getProjectileRange" in action:
+    impact_gate = method_body(
+        projectile_event,
+        "protected final ProjectileImpactDecision beginProjectileImpact",
+    )
+    require(impact_gate, "caster.withinRange(opponent, 15)", "delayed projectile delivery cap")
+    if "PathValidation" in impact_gate or "getProjectileRange" in impact_gate:
         fail("Projectile delivery unexpectedly rechecks launch collision or attack range")
     assert_boundary("delayed projectile delivery", 15)
 

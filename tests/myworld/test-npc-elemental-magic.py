@@ -119,8 +119,9 @@ def main() -> None:
 	require(behavior, "profile.getMagicProjectileVisual(npc, magicElement)", "NPC projectile visual should match selected element")
 	require(behavior, "profile.getMagicImpactEffect(npc, magicElement)", "NPC impact effect should match selected element")
 	require(behavior, "int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);", "NPC projectile should carry selected fire debuff")
-	require(behavior, "0, 0, 0, fireDefenseDebuffPercent, profile.getMagicProjectileVisual(npc, magicElement), impactEffectType, true, magicElement,", "NPC projectile fire debuff should match selected element")
-	require(behavior, "true, magicElement,\n\t\t\t\tstartleProcChancePercent, acidPoisonPower, 0, splinterProcChancePercent));", "NPC projectile should carry selected element")
+	require(behavior, ".elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)", "NPC projectile fire debuff should match selected element")
+	require(behavior, ".magicElement(magicElement)", "NPC projectile should carry selected element")
+	require(behavior, ".dualElementProcs(startleProcChancePercent,\n\t\t\t\t\t\tacidPoisonPower, 0, splinterProcChancePercent)", "NPC projectile should carry selected dual-element procs")
 
 	require(projectile, "protected NpcMagicElement magicElement = NpcMagicElement.NONE;", "Projectile should default to untyped magic")
 	require(projectile, "applyRobeDamageMitigation(damage, magicElement)", "Projectile damage should pass element to robe resistance")
