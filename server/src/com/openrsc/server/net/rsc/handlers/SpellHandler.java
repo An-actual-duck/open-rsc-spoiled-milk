@@ -38,6 +38,7 @@ import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.action.WalkToPointAction;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
@@ -340,6 +341,82 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 
 		return true;
+	}
+
+	private static ProjectileResourceLedger consumeProjectileSpellRunes(
+			final Player player, final SpellDef spell,
+			final Boolean magicCapeActivated,
+			final ProjectileLaunchSpecification.Producer producer) {
+		final ProjectileResourceLedger resourceLedger =
+			ProjectileResourceLedger.trackedLaunch(producer);
+		final Set<Entry<Integer, Integer>> runesToConsume;
+		if (Boolean.TRUE.equals(magicCapeActivated)) {
+			runesToConsume = null;
+		} else {
+			try {
+				runesToConsume = checkSpellRunes(
+					player, spell, magicCapeActivated == null);
+			} catch (SpellFailureException failure) {
+				return null;
+			}
+		}
+
+		final Map<Integer, Integer> plannedRemoval =
+			new LinkedHashMap<Integer, Integer>();
+		if (runesToConsume != null) {
+			for (Entry<Integer, Integer> rune : runesToConsume) {
+				plannedRemoval.put(rune.getKey(), rune.getValue());
+			}
+		}
+		final Map<Integer, Integer> countsBefore =
+			new LinkedHashMap<Integer, Integer>();
+		for (Entry<Integer, Integer> rune : spell.getRunesRequired()) {
+			countsBefore.put(rune.getKey(), player.getCarriedItems()
+				.getInventory().countId(rune.getKey()));
+		}
+		if (runesToConsume != null) {
+			for (Entry<Integer, Integer> rune : runesToConsume) {
+				player.getCarriedItems().remove(
+					new Item(rune.getKey(), rune.getValue()));
+			}
+		}
+
+		for (Entry<Integer, Integer> rune : spell.getRunesRequired()) {
+			final int before = countsBefore.get(rune.getKey()).intValue();
+			final int after = player.getCarriedItems().getInventory()
+				.countId(rune.getKey());
+			final int removed = Math.max(0, before - after);
+			final int planned = plannedRemoval.containsKey(rune.getKey())
+				? plannedRemoval.get(rune.getKey()).intValue() : 0;
+			final ProjectileResourceLedger.Preservation preservation;
+			if (runesToConsume == null) {
+				preservation = ProjectileResourceLedger.Preservation.MAGIC_CAPE;
+			} else if (planned == 0) {
+				preservation =
+					ProjectileResourceLedger.Preservation.EQUIPMENT_EFFECT;
+			} else if (removed < rune.getValue()) {
+				preservation = ProjectileResourceLedger.Preservation
+					.REMOVAL_FAILED_COMPATIBILITY;
+			} else {
+				preservation = ProjectileResourceLedger.Preservation.NONE;
+			}
+			resourceLedger.recordItemCost(rune.getKey(), rune.getValue(),
+				removed, ProjectileResourceLedger.ItemSource.INVENTORY,
+				preservation);
+		}
+		return resourceLedger;
+	}
+
+	private static void completeProjectileSpellResources(
+			final ProjectileResourceLedger resourceLedger,
+			final Player player, final SpellDef spell,
+			final int experienceBefore, final boolean giveExperience) {
+		final int skillId = getMagicId(player, spell);
+		resourceLedger.recordExperience(skillId,
+			giveExperience ? spell.getExp() : 0,
+			player.getSkills().getExperience(skillId) - experienceBefore,
+			ProjectileResourceLedger.ExperienceBasis.MAGIC_BASE_CAST);
+		resourceLedger.seal();
 	}
 
 	private static Item getEquippedStaff(final Player player) {
@@ -1699,9 +1776,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger fearResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated, ProjectileLaunchSpecification.Producer
+									.MAGIC_SCRIPTED_EFFECT);
+						if (fearResources == null) {
 							return;
 						}
+						final int fearExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
 							getPlayer().getWorld(), getPlayer(), affectedMob,
@@ -1709,7 +1792,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
 								0, 1)
 								.chase(setChasing)
-								.build()) {
+								.build(), fearResources) {
 							@Override
 							public void doSpell() {
 								// https://www.tip.it/runescape/times/view/615-forever-runescape-part-1
@@ -1724,6 +1807,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						});
 
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(fearResources,
+							getPlayer(), spell, fearExperienceBefore, true);
 						break;
 
 					case CONFUSE_R:
@@ -1736,9 +1821,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						}
 
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger confuseResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated, ProjectileLaunchSpecification.Producer
+									.MAGIC_SCRIPTED_EFFECT);
+						if (confuseResources == null) {
 							return;
 						}
+						final int confuseExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
 							getPlayer().getWorld(), getPlayer(), affectedMob,
@@ -1746,7 +1837,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
 								0, 1)
 								.chase(setChasing)
-								.build()) {
+								.build(), confuseResources) {
 							@Override
 							public void doSpell() {
 								for (int stat : stats) {
@@ -1762,6 +1853,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						});
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(confuseResources,
+							getPlayer(), spell, confuseExperienceBefore, true);
 						return;
 
 					/*
@@ -1838,9 +1931,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().playerServerMessage(MessageType.QUEST, "Your opponent already has weakened " + skillName);
 							return;
 						}
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger debuffResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated, ProjectileLaunchSpecification.Producer
+									.MAGIC_SCRIPTED_EFFECT);
+						if (debuffResources == null) {
 							return;
 						}
+						final int debuffExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 						final int stat = affectsStat;
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new CustomProjectileEvent(
 							getPlayer().getWorld(), getPlayer(), affectedMob,
@@ -1848,7 +1947,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
 								0, 1)
 								.chase(setChasing)
-								.build()) {
+								.build(), debuffResources) {
 							@Override
 							public void doSpell() {
 								affectedMob.getSkills().setLevel(stat, newStat);
@@ -1858,6 +1957,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						});
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(debuffResources,
+							getPlayer(), spell, debuffExperienceBefore, true);
 						return;
 					case CRUMBLE_UNDEAD:
 						if (affectedMob.isPlayer()) {
@@ -1872,17 +1973,25 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 						int damaga = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, Constants.CRUMBLE_UNDEAD_MAX);
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger crumbleResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated,
+								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
+						if (crumbleResources == null) {
 							return;
 						}
+						final int crumbleExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(
 							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
 								affectedMob, ProjectileLaunchSpecification.builder(
 									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
 									damaga, 1)
 									.chase(setChasing)
-									.build()));
+									.build(), crumbleResources));
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(crumbleResources,
+							getPlayer(), spell, crumbleExperienceBefore, true);
 						return;
 
 					case IBAN_BLAST:
@@ -1894,9 +2003,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().message("you need the staff of iban or staff of power to cast this spell");
 							return;
 						}
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger ibanResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated, ProjectileLaunchSpecification.Producer
+									.PLAYER_IBAN_MAGIC);
+						if (ibanResources == null) {
 							return;
 						}
+						final int ibanExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 						final double ibanDamageCapPercent = SpellClassification.getSpellDamageCapPercent(spellEnum);
 						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(
@@ -1907,7 +2022,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									.chase(setChasing)
 									.presentation(Projectile.SKULL,
 										CombatEffect.IBAN_BLAST, true)
-									.build()));
+									.build(), ibanResources));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
 							@Override
 							public void action() {
@@ -1916,6 +2031,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						});
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(ibanResources,
+							getPlayer(), spell, ibanExperienceBefore, true);
 						break;
 					case CLAWS_OF_GUTHIX:
 					case CLAW_OF_GUTHIX:
@@ -1950,9 +2067,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						}
 
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger godSpellResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated,
+								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
+						if (godSpellResources == null) {
 							return;
 						}
+						final int godSpellExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 
 						boolean giveExp = true;
 						if (getPlayer().getWorld().getRegionManager()
@@ -1976,7 +2099,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								primaryDamage, 1)
 								.chase(setChasing)
 								.presentation(godSpellProjectile, godSpellImpact, true)
-								.build());
+								.build(), godSpellResources);
 						godSpellEvent.deferClericRally();
 						getPlayer().getWorld().getServer().getGameEventHandler().add(godSpellEvent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
@@ -1988,15 +2111,23 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							}
 						});
 						finalizeSpell(getPlayer(), spell, DEFAULT, giveExp);
+						completeProjectileSpellResources(godSpellResources,
+							getPlayer(), spell, godSpellExperienceBefore, giveExp);
 						break;
 
 					case CHILL_BOLT:
 					case SHOCK_BOLT:
 					case ELEMENTAL_BOLT:
 					case WIND_BOLT_R:
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger boltResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated,
+								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
+						if (boltResources == null) {
 							return;
 						}
+						final int boltExperienceBefore = getPlayer().getSkills()
+							.getExperience(getMagicId(getPlayer(), spell));
 
 						double maxR = getPlayer().getWorld().getServer().getConstants().getSpellDamages().getSpellDamage(spellEnum, entityType, SpellDamages.MagicType.GOODEVILMAGIC);
 						maxR = applyElementalRingDamageBonus(getPlayer(), spellEnum, maxR);
@@ -2009,15 +2140,24 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
 									damageR, 1)
 									.chase(setChasing)
-									.build()));
+									.build(), boltResources));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(boltResources,
+							getPlayer(), spell, boltExperienceBefore, true);
 						break;
 
 					default:
-						if (!checkAndRemoveRunes(getPlayer(), spell, capeActivated)) {
+						final ProjectileResourceLedger defaultSpellResources =
+							consumeProjectileSpellRunes(getPlayer(), spell,
+								capeActivated,
+								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
+						if (defaultSpellResources == null) {
 							return;
 						}
+						final int defaultSpellExperienceBefore =
+							getPlayer().getSkills().getExperience(
+								getMagicId(getPlayer(), spell));
 						// SALARIN THE TWISTED - STRIKE SPELLS
 						if (affectedMob.getID() == NpcId.SALARIN_THE_TWISTED.id() && (spellEnum == Spells.WIND_STRIKE
 							|| spellEnum == Spells.WATER_STRIKE || spellEnum == Spells.EARTH_STRIKE
@@ -2043,9 +2183,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().getWorld().getServer().getGameEventHandler().add(
 								new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
 									affectedMob, ProjectileLaunchSpecification.builder(
-										ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
-										firstDamage, 1)
-										.build()));
+									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
+									firstDamage, 1)
+									.build(), defaultSpellResources));
 							// Deal Second Damage
 							getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Salarin the Twisted Strike") {
 								@Override
@@ -2087,6 +2227,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().playerServerMessage(MessageType.QUEST, "Cast spell successfully");
 							// Note: it is authentic not to play the "spellok" sound when casting mind spells on Salarin. See kRiStOf/Salarin The Twisted
 							getPlayer().setCastTimer();
+							completeProjectileSpellResources(defaultSpellResources,
+								getPlayer(), spell, defaultSpellExperienceBefore, false);
 							return;
 						}
 
@@ -2139,9 +2281,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 										acidPoisonPower, frostbiteProcChancePercent,
 										splinterProcChancePercent)
 									.bloodSpell(SpellClassification.isBloodSpell(spell))
-									.build()));
+									.build(), defaultSpellResources));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
+						completeProjectileSpellResources(defaultSpellResources,
+							getPlayer(), spell, defaultSpellExperienceBefore, true);
 						break;
 				}
 			}

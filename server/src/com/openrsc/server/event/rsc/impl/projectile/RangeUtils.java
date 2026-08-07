@@ -14,6 +14,7 @@ import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
@@ -337,28 +338,37 @@ public class RangeUtils {
     }
 
     public static void handleArrowLossAndDrop(World world, Player player, Mob target, int damage, int arrowId) {
+        settleProjectileRecovery(world, player, target, damage, arrowId);
+    }
+
+    public static ProjectileResourceLedger.RecoveryDestination settleProjectileRecovery(
+            World world, Player player, Mob target, int damage, int projectileItemId) {
         if (Formulae.loseArrow(damage, world.getServer().getCombatRandom())) {
-            if (!DropTable.handleRingOfAvarice(player, new Item(arrowId, 1))) {
-                if (Summoning.tryLootGoblinCollectStackableItem(player, arrowId, 1)) {
-                    return;
-                }
-                GroundItem arrows = getArrows(arrowId, target, player);
-                if (arrows == null) {
-                    world.registerItem(
-                            new GroundItem(
-                                    player.getWorld(),
-                                    arrowId,
-                                    target.getX(),
-                                    target.getY(),
-                                    1,
-                                    player
-                            )
-                    );
-                } else {
-                    arrows.setAmount(arrows.getAmount() + 1);
-                }
+            if (DropTable.handleRingOfAvarice(player, new Item(projectileItemId, 1))) {
+                return ProjectileResourceLedger.RecoveryDestination.RING_OF_AVARICE;
+            }
+            if (Summoning.tryLootGoblinCollectStackableItem(player, projectileItemId, 1)) {
+                return ProjectileResourceLedger.RecoveryDestination.LOOT_GOBLIN;
+            }
+            GroundItem projectiles = getArrows(projectileItemId, target, player);
+            if (projectiles == null || !projectiles.getDef().isStackable()) {
+                world.registerItem(
+                        new GroundItem(
+                                player.getWorld(),
+                                projectileItemId,
+                                target.getX(),
+                                target.getY(),
+                                1,
+                                player
+                        )
+                );
+                return ProjectileResourceLedger.RecoveryDestination.GROUND_NEW_STACK;
+            } else {
+                projectiles.setAmount(projectiles.getAmount() + 1);
+                return ProjectileResourceLedger.RecoveryDestination.GROUND_EXISTING_STACK;
             }
         }
+        return ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED;
     }
 
     private static GroundItem getArrows(int id, Mob target, Player player) {

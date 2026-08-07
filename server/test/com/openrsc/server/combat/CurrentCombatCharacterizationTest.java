@@ -127,6 +127,16 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatProjectileLifecycleCharacterization::typedProducerLaunches);
 			run(harness, "projectile_specifications_freeze_constructor_tail_parameters",
 				CurrentCombatProjectileLifecycleCharacterization::specificationAndFacadeParity);
+			run(harness, "projectile_resource_ledgers_are_typed_sealed_and_bound_once",
+				CurrentCombatProjectileResourceCharacterization::ledgerContractAndCoverage);
+			run(harness, "bow_and_shuriken_launch_resources_settle_exactly_once",
+				CurrentCombatProjectileResourceCharacterization::rangedAndThrownLaunchSettlement);
+			run(harness, "inventory_mode_and_recovery_destinations_preserve_current_economy",
+				CurrentCombatProjectileResourceCharacterization::inventoryModeAndRecoverySettlement);
+			run(harness, "magic_runes_preservation_and_cast_xp_settle_at_launch",
+				CurrentCombatProjectileResourceCharacterization::magicLaunchSettlement);
+			run(harness, "cannon_cost_survives_projectile_shutdown_without_replay",
+				CurrentCombatProjectileResourceCharacterization::cannonAndShutdownSettlement);
 			run(harness, "selected_drop_outcomes_replay_from_server_random_source",
 				CurrentCombatCharacterizationTest::deterministicDropReplay);
 			run(harness, "melee_ranged_magic_damage_share_xp",

@@ -2,7 +2,6 @@ package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
@@ -10,7 +9,6 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.container.Item;
-import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -18,6 +16,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.PlayerRangeNpcTrigger;
@@ -77,10 +76,6 @@ public class ThrowingEvent extends GameTickEvent {
 
 	public void restart() {
 		running = true;
-	}
-
-	private GroundItem getFloorItem(int id, Player player, Mob floorTarget) {
-		return floorTarget.getViewArea().getVisibleGroundItem(id, floorTarget.getLocation(), player);
 	}
 
 	private int getAttackRadius(final int throwingEquip) {
@@ -506,25 +501,40 @@ public class ThrowingEvent extends GameTickEvent {
 
 	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile, boolean firstProjectileThisAttack) {
 		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
+		final ProjectileLaunchSpecification.Producer projectileProducer =
+			RangeUtils.SHURIKENS.contains(throwingID)
+				? ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN
+				: ProjectileLaunchSpecification.Producer.PLAYER_THROWN;
+		final ProjectileResourceLedger resourceLedger =
+			ProjectileResourceLedger.trackedLaunch(projectileProducer);
+		resourceLedger.recordItemCost(throwingID, 1, 1,
+			getWorld().getServer().getConfig().WANT_EQUIPMENT_TAB
+				? ProjectileResourceLedger.ItemSource.EQUIPMENT
+				: ProjectileResourceLedger.ItemSource.INVENTORY,
+			ProjectileResourceLedger.Preservation.NONE);
 
 		RangeUtils.applyDragonFireBreath(player, hitTarget, deliveredFirstProjectile || !firstProjectileThisAttack);
+		final int rangedExperienceBefore =
+			player.getSkills().getExperience(Skill.RANGED.id());
+		int baseRangedExperience = 0;
 		if((hitTarget.isPlayer() || getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT) && damage > 0) {
-			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(hitTarget, damage), true);
+			baseRangedExperience = Formulae.rangedHitExperience(hitTarget, damage);
+			player.incExp(Skill.RANGED.id(), baseRangedExperience, true);
 		}
 
-		if (Formulae.loseArrow(damage,
-				getWorld().getServer().getCombatRandom())) {
-			if (!DropTable.handleRingOfAvarice(player, new Item(throwingID, 1))) {
-				if (!Summoning.tryLootGoblinCollectStackableItem(player, throwingID, 1)) {
-					GroundItem thrownItemOnGround = getFloorItem(throwingID, player, hitTarget);
-					if (thrownItemOnGround == null || !thrownItemOnGround.getDef().isStackable()) {
-						getWorld().registerItem(new GroundItem(player.getWorld(), throwingID, hitTarget.getX(), hitTarget.getY(), 1, player));
-					} else {
-						thrownItemOnGround.setAmount(thrownItemOnGround.getAmount() + 1);
-					}
-				}
-			}
-		}
+		final ProjectileResourceLedger.RecoveryDestination recovery =
+			RangeUtils.settleProjectileRecovery(
+				getWorld(), player, hitTarget, damage, throwingID);
+		resourceLedger.recordRecovery(throwingID,
+			recovery == ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED
+				? 0 : 1,
+			recovery, hitTarget.getWorldLocation());
+		resourceLedger.recordExperience(Skill.RANGED.id(),
+			baseRangedExperience,
+			player.getSkills().getExperience(Skill.RANGED.id())
+				- rangedExperienceBefore,
+			ProjectileResourceLedger.ExperienceBasis.RANGED_HIT);
+		resourceLedger.seal();
 
 		final int projectileType = RangeUtils.SHURIKENS.contains(throwingID)
 			? Projectile.SHURIKEN
@@ -536,10 +546,6 @@ public class ThrowingEvent extends GameTickEvent {
 		final DuplicationStrategy projectileDuplicationStrategy = RangeUtils.SHURIKENS.contains(throwingID)
 			? DuplicationStrategy.ALLOW_MULTIPLE
 			: DuplicationStrategy.ONE_PER_MOB;
-		final ProjectileLaunchSpecification.Producer projectileProducer =
-			RangeUtils.SHURIKENS.contains(throwingID)
-				? ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN
-				: ProjectileLaunchSpecification.Producer.PLAYER_THROWN;
 		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
 			getWorld(), player, hitTarget,
 			ProjectileLaunchSpecification.builder(
@@ -548,6 +554,6 @@ public class ThrowingEvent extends GameTickEvent {
 				.poisonWeaponId(throwingID)
 				.presentation(projectileType, 0, showProjectile)
 				.duplicationStrategy(projectileDuplicationStrategy)
-				.build()));
+				.build(), resourceLedger));
 	}
 }

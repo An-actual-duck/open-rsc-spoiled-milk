@@ -700,22 +700,23 @@ cardinality change.
 
 ### A06 — projectile launch/impact/settlement
 
-Status: A06.1 lifecycle foundation and A06.2 typed producer specifications are
-implemented on focused branches. The latter inventories all 22 tracked core
-and plugin construction sites, freezes former constructor-tail parameters,
-gives maintained special producers stable identities, and retains positional
-compatibility facades. A06.3 characterization and its approved family decision
-matrix are complete, and the bounded production policy is implemented with
-private OpenGL acceptance complete on the focused branch; manager integration
-remains pending.
-A06.4 economy settlement remains pending. See
+Status: A06.1 through A06.3 are implemented on published main. A06.2
+inventories all 22 tracked core and plugin construction sites, freezes former
+constructor-tail parameters, gives maintained special producers stable
+identities, and retains positional compatibility facades. A06.3 includes its
+approved family decision matrix and bounded production policy. A06.4's
+observational economy-settlement ledger and executable conservation fixtures
+are complete on its focused branch; manager review and integration remain
+pending. See
 [`combat-a06-projectile-lifecycle-foundation.md`](../../combat/combat-a06-projectile-lifecycle-foundation.md)
 and
 [`combat-a06-projectile-launch-specifications.md`](../../combat/combat-a06-projectile-launch-specifications.md),
 plus
 [`combat-a06-projectile-impact-policy-characterization.md`](../../combat/combat-a06-projectile-impact-policy-characterization.md)
 and
-[`combat-a06-projectile-impact-policy.md`](../../combat/combat-a06-projectile-impact-policy.md).
+[`combat-a06-projectile-impact-policy.md`](../../combat/combat-a06-projectile-impact-policy.md),
+plus
+[`combat-a06-projectile-resource-ledger.md`](../../combat/combat-a06-projectile-resource-ledger.md).
 
 Introduce current-specific snapshots and ledgers for bow, thrown, magic, NPC,
 summon, chain, shuriken, and debug projectiles. Use current `WorldLocation` and

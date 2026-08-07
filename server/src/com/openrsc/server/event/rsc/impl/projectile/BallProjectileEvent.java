@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.world.World;
 
@@ -18,6 +19,13 @@ public abstract class BallProjectileEvent extends BenignProjectileEvent {
 			final Mob opponent,
 			final ProjectileLaunchSpecification launchSpecification) {
 		super(world, caster, opponent, launchSpecification);
+	}
+
+	protected BallProjectileEvent(final World world, final Mob caster,
+			final Mob opponent,
+			final ProjectileLaunchSpecification launchSpecification,
+			final ProjectileResourceLedger resourceLedger) {
+		super(world, caster, opponent, launchSpecification, resourceLedger);
 	}
 
 	@Override

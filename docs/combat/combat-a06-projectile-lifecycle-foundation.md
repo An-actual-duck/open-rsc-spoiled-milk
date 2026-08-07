@@ -1,9 +1,9 @@
 # A06 projectile lifecycle foundation
 
-Status: A06.1 and A06.2 are implemented. A06.3 characterization, owner
-decisions, and bounded production implementation are complete on focused
-branches; private visual acceptance and manager integration of A06.3 remain
-pending. A06.4 remains pending.
+Status: A06.1 through A06.3 are implemented on published main. A06.4's bounded
+resource/progression ledger is implemented and executable on its focused
+branch; manager review and integration remain pending. See
+[`combat-a06-projectile-resource-ledger.md`](combat-a06-projectile-resource-ledger.md).
 
 ## Outcome and boundary
 
@@ -162,12 +162,11 @@ test classes remain excluded.
 
 ### A06.3 — impact eligibility policy
 
-Status: executable characterization and the approved policy matrix are
-recorded in
+Status: implemented on published main. Executable characterization and the
+approved policy matrix are recorded in
 [`combat-a06-projectile-impact-policy-characterization.md`](combat-a06-projectile-impact-policy-characterization.md).
 The bounded implementation is recorded in
-[`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md);
-private visual acceptance and manager integration remain pending.
+[`combat-a06-projectile-impact-policy.md`](combat-a06-projectile-impact-policy.md).
 
 Use the captured participant and `WorldLocation` evidence to decide, per
 family, target/source death, logout, removal/respawn, teleport, world-space or
@@ -185,6 +184,11 @@ teleport, signed layer/world-space change, long movement, collision changes,
 retarget, protected launch behavior, siblings, and every invalidation reason.
 
 ### A06.4 — resource and progression settlement ledger
+
+Status: implemented and executable on the focused A06.4 branch. The exact
+inventory, observational authority boundary, compatibility findings, and
+verification are recorded in
+[`combat-a06-projectile-resource-ledger.md`](combat-a06-projectile-resource-ledger.md).
 
 Characterize and then type the existing launch-time economy separately for
 bow, thrown, shuriken volleys, magic, cannon, and retained compatibility

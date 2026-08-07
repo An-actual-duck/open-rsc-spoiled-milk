@@ -22,6 +22,7 @@ import com.openrsc.server.model.combat.ProjectileImpactLedger;
 import com.openrsc.server.model.combat.ProjectileImpactValidator;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -90,6 +91,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	private int secondaryEffectDamage;
 	private final ProjectileLaunchSnapshot launchSnapshot;
 	private final ProjectileImpactLedger impactLedger;
+	private final ProjectileResourceLedger resourceLedger;
 
 	public ProjectileEvent(World world, Mob caster, Mob opponent, int damage, int type) {
 		this(world, caster, opponent, legacySpecification(
@@ -212,9 +214,22 @@ public class ProjectileEvent extends SingleTickEvent {
 	public ProjectileEvent(final World world, final Mob caster,
 			final Mob opponent,
 			final ProjectileLaunchSpecification launchSpecification) {
+		this(world, caster, opponent, launchSpecification,
+			ProjectileResourceLedger.defaultFor(
+				requireLaunchSpecification(launchSpecification).getProducer()));
+	}
+
+	/** Named A06 producer path with an observational launch-resource receipt. */
+	public ProjectileEvent(final World world, final Mob caster,
+			final Mob opponent,
+			final ProjectileLaunchSpecification launchSpecification,
+			final ProjectileResourceLedger resourceLedger) {
 		super(world, caster, 1, "Projectile Event",
 			requireLaunchSpecification(launchSpecification)
 				.getDuplicationStrategy());
+		if (resourceLedger == null) {
+			throw new IllegalArgumentException("resourceLedger cannot be null");
+		}
 		this.caster = caster;
 		this.opponent = opponent;
 		this.damage = launchSpecification.getProposedDamage();
@@ -247,6 +262,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			getUUID(), launchTick, launchTick + getDelayTicks(), caster,
 			opponent, launchSpecification);
 		this.impactLedger = new ProjectileImpactLedger(launchSnapshot);
+		this.resourceLedger = resourceLedger;
+		this.resourceLedger.bindEvent(getUUID(),
+			launchSpecification.getProducer());
 
 		if (this.showProjectile) {
 			sendProjectile(caster, opponent);
@@ -1405,6 +1423,10 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	public final int getProjectileImpactCallbackCount() {
 		return impactLedger.getCallbackCount();
+	}
+
+	public final ProjectileResourceLedger getProjectileResourceLedger() {
+		return resourceLedger;
 	}
 
 	/** Defers only Rally so established god-spell lifesteal can resolve first. */

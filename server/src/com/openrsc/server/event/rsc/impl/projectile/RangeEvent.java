@@ -19,6 +19,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.handler.PluginHandler;
@@ -171,12 +172,36 @@ public class RangeEvent extends GameTickEvent {
 			? 0
 			: CombatFormula.rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape);
 
+		final ProjectileResourceLedger resourceLedger =
+			ProjectileResourceLedger.trackedLaunch(
+				ProjectileLaunchSpecification.Producer.PLAYER_BOW);
+		resourceLedger.recordItemCost(ammoId, 1, 1,
+			config.WANT_EQUIPMENT_TAB
+				? ProjectileResourceLedger.ItemSource.EQUIPMENT
+				: ProjectileResourceLedger.ItemSource.INVENTORY,
+			ProjectileResourceLedger.Preservation.NONE);
+		final int rangedExperienceBefore =
+			player.getSkills().getExperience(Skill.RANGED.id());
+		int baseRangedExperience = 0;
 		if ((target.isPlayer() || getWorld().getServer().getConfig().RANGED_GIVES_XP_HIT) && damage > 0) {
-			player.incExp(Skill.RANGED.id(), Formulae.rangedHitExperience(target, damage), true);
+			baseRangedExperience = Formulae.rangedHitExperience(target, damage);
+			player.incExp(Skill.RANGED.id(), baseRangedExperience, true);
 		}
 
 		RangeUtils.applyDragonFireBreath(player, target, deliveredFirstProjectile);
-		RangeUtils.handleArrowLossAndDrop(getWorld(), player, target, damage, ammoId);
+		final ProjectileResourceLedger.RecoveryDestination recovery =
+			RangeUtils.settleProjectileRecovery(
+				getWorld(), player, target, damage, ammoId);
+		resourceLedger.recordRecovery(ammoId,
+			recovery == ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED
+				? 0 : 1,
+			recovery, target.getWorldLocation());
+		resourceLedger.recordExperience(Skill.RANGED.id(),
+			baseRangedExperience,
+			player.getSkills().getExperience(Skill.RANGED.id())
+				- rangedExperienceBefore,
+			ProjectileResourceLedger.ExperienceBasis.RANGED_HIT);
+		resourceLedger.seal();
 
 		getOwner().setKillType(KillType.RANGED);
 		deliveredFirstProjectile = true;
@@ -196,7 +221,7 @@ public class RangeEvent extends GameTickEvent {
 					0, true)
 				.dragonBreathDamage(dragonBreathDamage)
 				.duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
-				.build()));
+				.build(), resourceLedger));
 	}
 
 	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow) {
