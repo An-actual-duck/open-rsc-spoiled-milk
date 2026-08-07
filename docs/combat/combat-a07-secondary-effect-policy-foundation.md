@@ -114,7 +114,7 @@ fixture.
 
 ### A07.3 — player-owned radius selection, split by compatible policy
 
-Status: complete on the focused implementation branch. The typed selector and
+Status: complete on published main. The typed selector and
 its two explicit live/snapshot timing contracts are recorded in
 [`combat-a07-player-owned-npc-radius-selection.md`](combat-a07-player-owned-npc-radius-selection.md).
 

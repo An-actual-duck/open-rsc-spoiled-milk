@@ -734,7 +734,7 @@ identities and replaces duplicated key literals without moving behavior. The
 compiled fixture proves that 32 cannot be used as a total catalog capacity;
 A07.2 adds 71 separate semantic identities, exact nine-phase counts, an
 active-plan inventory, and descriptive current-plus-four planning budgets. It
-does not add a registry or executor. A07.3 is prepared on its focused branch:
+does not add a registry or executor. A07.3 is implemented on published main:
 it centralizes only compatible player-owned NPC radius enumeration while
 preserving distinct live and eager-snapshot timing. A07.4-A07.5 remain bounded
 follow-ups. Exact current policies are recorded in
