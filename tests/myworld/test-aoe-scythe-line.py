@@ -112,7 +112,7 @@ def main() -> None:
         require(custom["isWearable"] == 1, f"{name} should be wearable")
         require(custom["wearSlot"] == 4, f"{name} should use mainhand weapon slot")
         require(custom["wearableID"] & 8 == 8, f"{name} should conflict with shields as a two-handed weapon")
-        require(custom["appearanceID"] == 1033, f"{name} should use custom white combat scythe appearance")
+        require(custom["appearanceID"] == 1034, f"{name} should use custom white combat scythe appearance")
         expected_offense = EXPECTED_SCYTHE_OFFENSE[item_id]
         require(custom["weaponAimBonus"] == expected_offense, f"{name} should use tuned two-handed aim")
         require(custom["weaponPowerBonus"] == expected_offense, f"{name} should use tuned two-handed power")
@@ -146,7 +146,7 @@ def main() -> None:
         require(custom["isWearable"] == 1, f"{name} should be wearable")
         require(custom["wearSlot"] == 4, f"{name} should use mainhand weapon slot")
         require(custom["wearableID"] & 8 == 8, f"{name} should conflict with shields as a two-handed weapon")
-        require(custom["appearanceID"] == 1033, f"{name} should use custom white combat scythe appearance")
+        require(custom["appearanceID"] == 1034, f"{name} should use custom white combat scythe appearance")
         override = myworld_items.get(item_id)
         require(override is not None, f"ItemDefsMyWorld missing combat override for {name}")
         require(override["weaponSpeed"] == 3, f"{name} should use normal weapon speed")

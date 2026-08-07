@@ -11,6 +11,7 @@ CLIENT = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler
 MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 SERVER = ROOT / "server/src/com/openrsc/server/external/EntityHandler.java"
 ITEMS = ROOT / "server/conf/server/defs/ItemDefsCustom.json"
+AUTHENTIC_ITEMS = ROOT / "server/conf/server/defs/ItemDefs.json"
 
 EXPECTED_EXALTED_APPEARANCES = {
     3262: 1047,
@@ -34,6 +35,25 @@ EXPECTED_EXALTED_APPEARANCES = {
     3280: 1060,
 }
 
+EXPECTED_SCYTHE_APPEARANCES = {
+    1289: 229,  # Authentic holiday Scythe -> client animation 228.
+    **{item_id: 1034 for item_id in range(3181, 3191)},
+    **{item_id: 1034 for item_id in range(3232, 3235)},
+    3270: 1051,  # Exalted Rune Scythe -> client animation 1050.
+}
+
+SCYTHE_ANIMATION_MARKERS = {
+    229: 'new AnimationDef("scythe", "equipment", 0, 0, true, false, 0));//228',
+    1034: (
+        'new AnimationDef("scythe", "equipment", 0xF0F0F0, 0, '
+        'true, false, 0)); // 1033 - Combat Scythe'
+    ),
+    1051: (
+        'new AnimationDef("scythe", "equipment", EXALTED_RUNE_COLOR, 0, '
+        'true, false, 0)); // 1050 - Exalted Rune scythe'
+    ),
+}
+
 
 def fail(message: str) -> None:
     print(f"FAIL: {message}", file=sys.stderr)
@@ -48,6 +68,11 @@ def main() -> None:
         int(item["id"]): item
         for item in json.loads(ITEMS.read_text(encoding="utf-8"))["items"]
     }
+    authentic_items = {
+        int(item["id"]): item
+        for item in json.loads(AUTHENTIC_ITEMS.read_text(encoding="utf-8"))["item"]
+    }
+    all_items = {**authentic_items, **items}
 
     for item_id, appearance_id in EXPECTED_EXALTED_APPEARANCES.items():
         actual = items.get(item_id, {}).get("appearanceID")
@@ -55,6 +80,25 @@ def main() -> None:
             fail(
                 f"Exalted Rune item {item_id} appearance is {actual}, "
                 f"expected stable ID {appearance_id}"
+            )
+
+    for item_id, appearance_id in EXPECTED_SCYTHE_APPEARANCES.items():
+        item = all_items.get(item_id)
+        if item is None:
+            fail(f"Scythe item {item_id} is missing from server definitions")
+        if "Scythe" not in item["name"]:
+            fail(f"Scythe item {item_id} has unexpected name {item['name']!r}")
+        actual = item.get("appearanceID")
+        if actual != appearance_id:
+            fail(
+                f"{item['name']} ({item_id}) appearance is {actual}, expected "
+                f"one-based scythe appearance {appearance_id}"
+            )
+        marker = SCYTHE_ANIMATION_MARKERS[appearance_id]
+        if marker not in client:
+            fail(
+                f"{item['name']} ({item_id}) appearance {appearance_id} must resolve "
+                f"to client scythe animation {appearance_id - 1}"
             )
 
     if "int animID = player.layerAnimation[mappedLayer] - 1;" not in mudclient:
@@ -98,7 +142,7 @@ def main() -> None:
         if marker not in server:
             fail(f"Server staff appearance mapping is missing {marker}")
 
-    print("PASS: stable equipment animation IDs and Exalted Rune appearances align")
+    print("PASS: stable equipment animation IDs and all scythe appearances align")
 
 
 if __name__ == "__main__":
