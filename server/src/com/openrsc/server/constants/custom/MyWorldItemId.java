@@ -35,6 +35,13 @@ public final class MyWorldItemId {
 	public static final int GOLD_BANGLE = 3292;
 	public static final int POISONED_EXALTED_RUNE_DAGGER = 3309;
 	public static final int POISONED_EXALTED_RUNE_SPEAR = 3310;
+	public static final int KING_BLACK_DRAGON_HIDE = 3311;
+	public static final int KING_BLACK_DRAGON_LEATHER = 3312;
+	public static final int KING_BLACK_DRAGON_COIF = 3313;
+	public static final int KING_BLACK_DRAGON_GLOVES = 3314;
+	public static final int KING_BLACK_DRAGON_BOOTS = 3315;
+	public static final int KING_BLACK_DRAGON_CHAPS = 3316;
+	public static final int KING_BLACK_DRAGON_CUIRASS = 3317;
 
 	private MyWorldItemId() {
 	}

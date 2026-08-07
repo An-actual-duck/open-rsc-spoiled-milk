@@ -149,7 +149,9 @@ def main() -> None:
 	require(server_combat_effect, "public static final int DEMON_EXPLOSION = LESSER_DEMON_MAGIC;", "Demons sharing VFX 15 should share one generic effect id")
 	require(server_combat_effect, "case \"chronozon\":", "Chronozon should use the shared demon explosion")
 	require(server_combat_effect, "case \"black demon\":", "Black demon should use its own magic effect")
-	for retired in ('case "balrog":', 'case "otherworldly being":', 'case "paladin":'):
+	require(server_combat_effect, 'case "balrog":', "Balrog should restore its dedicated impact mapping")
+	require(server_combat_effect, "return BALROG_MAGIC;", "Balrog should use its dedicated impact effect")
+	for retired in ('case "otherworldly being":', 'case "paladin":'):
 		if retired in server_combat_effect:
 			fail(f"Ordinary enemy still requests retired legacy impact: {retired}")
 	require(client_entity_handler, "ENEMY_AIR_BASIC(25)", "Client projectile enum should define enemy air basic")

@@ -767,6 +767,11 @@ public class CombatEvent extends GameTickEvent {
 				procDamage = DataConversions.random(0, infernalMaxHit);
 				procDamageDealt = inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 				target.applyInfernalFireDefenseDebuff(player.getInfernalFireDefenseDebuffPercent());
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isNpc()) {
+					applyHellsInfernoSplash(player, (Npc) target, procDamageDealt);
+				} else if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isPlayer()) {
+					applyHellsInfernoPvpSplash(player, (Player) target, procDamageDealt);
+				}
 			}
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
 				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
@@ -822,6 +827,36 @@ public class CombatEvent extends GameTickEvent {
 					break;
 			}
 		}
+	}
+
+	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Npc npc : CombatEffectUtil.findPlayerOwnedNpcSplashTargets(player, primaryTarget,
+			CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			applyHellsInfernoSplashDamage(player, npc, splashDamage);
+		}
+	}
+
+	private void applyHellsInfernoPvpSplash(final Player player, final Player primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Player target : CombatEffectUtil.findPlayerOwnedPvpSplashTargets(player, primaryTarget,
+			CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			applyHellsInfernoSplashDamage(player, target, splashDamage);
+		}
+	}
+
+	private void applyHellsInfernoSplashDamage(final Player player, final Mob target,
+			final int splashDamage) {
+		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.HELLS_INFERNO));
+		inflictAuxiliaryMagicDamage(player, target, splashDamage);
 	}
 
 	private int applyPlayerMeleeDamageBuff(final Player player, final int damage) {

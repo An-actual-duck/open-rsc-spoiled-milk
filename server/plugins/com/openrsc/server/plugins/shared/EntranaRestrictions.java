@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.shared;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Equipment;
@@ -109,6 +110,7 @@ public final class EntranaRestrictions {
 		ItemId.BLACK_DRAGON_CUIRASS.id(),
 		ItemId.BALROG_CUIRASS.id(),
 		ItemId.ELDER_GREEN_DRAGON_CUIRASS.id(),
+		MyWorldItemId.KING_BLACK_DRAGON_CUIRASS,
 
 		// Cross Bows
 		ItemId.PHOENIX_CROSSBOW.id(),

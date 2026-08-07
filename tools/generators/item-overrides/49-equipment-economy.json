@@ -223,11 +223,11 @@
     },
     {
       "id": 1831,
-      "basePrice": 8400
+      "basePrice": 14000
     },
     {
       "id": 1832,
-      "basePrice": 12000
+      "basePrice": 20000
     },
     {
       "id": 1833,
@@ -2971,6 +2971,14 @@
     {
       "id": 3111,
       "basePrice": 35000
+    },
+    {
+      "id": 3311,
+      "basePrice": 8400
+    },
+    {
+      "id": 3312,
+      "basePrice": 12000
     }
   ]
 }

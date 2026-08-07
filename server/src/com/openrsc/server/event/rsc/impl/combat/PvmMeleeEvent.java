@@ -532,6 +532,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 				procDamage = combatRandom().nextIntInclusive(0, infernalMaxHit);
 				procDamageDealt = inflictAuxiliaryMagicDamage(hitter, target, procDamage);
 				target.applyInfernalFireDefenseDebuff(player.getInfernalFireDefenseDebuffPercent());
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isNpc()) {
+					applyHellsInfernoSplash(player, (Npc) target, procDamageDealt);
+				}
 			}
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvm_melee", target, damage, infernalPieces,
 				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
@@ -586,6 +589,19 @@ public class PvmMeleeEvent extends GameTickEvent {
 					target.applyDragonFireDefenseDebuff(6);
 					break;
 			}
+		}
+	}
+
+	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Npc npc : CombatEffectUtil.findPlayerOwnedNpcSplashTargets(
+			player, primaryTarget, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			npc.getUpdateFlags().setCombatEffect(new CombatEffect(npc, CombatEffect.HELLS_INFERNO));
+			inflictAuxiliaryMagicDamage(player, npc, splashDamage);
 		}
 	}
 

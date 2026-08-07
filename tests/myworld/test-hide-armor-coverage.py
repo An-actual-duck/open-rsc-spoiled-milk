@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 ITEM_ID_PATH = ROOT / "server/src/com/openrsc/server/constants/ItemId.java"
+MYWORLD_ITEM_ID_PATH = ROOT / "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
 CRAFTING_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/crafting/Crafting.java"
 TANNING_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/custom/skills/crafting/TanningRack.java"
 SKILL_GUIDE_PATH = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
@@ -243,6 +244,7 @@ HIDE_LINES = [
 
 def main() -> None:
     item_id_text = ITEM_ID_PATH.read_text(encoding="utf-8")
+    myworld_item_id_text = MYWORLD_ITEM_ID_PATH.read_text(encoding="utf-8")
     crafting_text = CRAFTING_PATH.read_text(encoding="utf-8")
     tanning_text = TANNING_PATH.read_text(encoding="utf-8")
     skill_guide_text = SKILL_GUIDE_PATH.read_text(encoding="utf-8")
@@ -272,7 +274,8 @@ def main() -> None:
                 fail(f"Crafting.java missing hide-armour output wiring: {output}")
 
     crafting_level_snippets = (
-        'new HideArmorRecipe(materialId, "Balrog hide", 10, 70,',
+        'new HideArmorRecipe(materialId, "King black dragon hide", 10, 70,',
+        'new HideArmorRecipe(materialId, "Balrog hide", 11, 80,',
         'new HideArmorRecipe(materialId, "Elder green dragon hide", 11, 80,',
         "case 11:\n\t\t\t\treturn 80;",
     )
@@ -281,12 +284,41 @@ def main() -> None:
             fail(f"Crafting.java missing hide-armour level snippet: {snippet}")
 
     guide_level_snippets = (
-        'addLeatherGuide(1949, "70", "Balrog hide armor");',
+        'addLeatherGuide(3317, "70", "King black dragon hide armor");',
+        'addLeatherGuide(1949, "80", "Balrog hide armor");',
         'addLeatherGuide(1954, "80", "Elder green dragon hide armor");',
     )
     for snippet in guide_level_snippets:
         if snippet not in skill_guide_text:
             fail(f"SkillGuideInterface.java missing hide-armour guide snippet: {snippet}")
+
+    for constant in (
+        "KING_BLACK_DRAGON_HIDE",
+        "KING_BLACK_DRAGON_LEATHER",
+        "KING_BLACK_DRAGON_COIF",
+        "KING_BLACK_DRAGON_GLOVES",
+        "KING_BLACK_DRAGON_BOOTS",
+        "KING_BLACK_DRAGON_CHAPS",
+        "KING_BLACK_DRAGON_CUIRASS",
+    ):
+        if f"public static final int {constant}" not in myworld_item_id_text:
+            fail(f"MyWorldItemId.java missing KBD hide-family constant: {constant}")
+    for snippet in (
+        "materialId == MyWorldItemId.KING_BLACK_DRAGON_LEATHER",
+        "MyWorldItemId.KING_BLACK_DRAGON_COIF",
+        "MyWorldItemId.KING_BLACK_DRAGON_GLOVES",
+        "MyWorldItemId.KING_BLACK_DRAGON_BOOTS",
+        "MyWorldItemId.KING_BLACK_DRAGON_CHAPS",
+        "MyWorldItemId.KING_BLACK_DRAGON_CUIRASS",
+    ):
+        if snippet not in crafting_text:
+            fail(f"Crafting.java missing KBD hide-family wiring: {snippet}")
+    for snippet in (
+        "MyWorldItemId.KING_BLACK_DRAGON_HIDE",
+        "MyWorldItemId.KING_BLACK_DRAGON_LEATHER",
+    ):
+        if snippet not in tanning_text:
+            fail(f"TanningRack.java missing KBD tanning wiring: {snippet}")
 
     print("PASS: hide and carapace armour coverage looks complete")
 

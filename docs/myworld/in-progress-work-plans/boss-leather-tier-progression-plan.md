@@ -1,6 +1,6 @@
 # Boss Leather Tier Progression Plan
 
-Status: direction selected; implementation awaiting approval
+Status: approved implementation complete; private visual verification pending
 
 Scope: King Black Dragon, Balrog, and Elder Green Dragon hide armor
 
@@ -73,7 +73,10 @@ the existing Elder rung. This avoids silently increasing Elder equipment.
 | Full set | 36 | 29 | 36 | 101 |
 
 KBD's set effect and visual identity need a separate design decision before
-implementation. It must not reuse Elder Green Dragon's migrated IDs.
+implementation. It does not reuse Elder Green Dragon's migrated IDs. Until a
+purpose-specific asset direction is selected, its five wearable definitions
+reuse the established Black dragon armor appearance IDs; its item identity,
+stats, recipes, and drop source remain separate.
 
 ### Balrog: tier 11 sidegrade
 
@@ -169,8 +172,9 @@ silently substituted for the boss's normal attack impact.
 1. Add constants, authoritative/generated definitions, assets, Crafting and
    tanning coverage for the KBD family; do not yet assign a set effect.
 2. Raise Balrog production and defensive stats, leaving Elder unchanged.
-3. Centralize Hell's Inferno resolution and add its radius-2 secondary damage
-   across PvM melee, PvP melee, and projectile attacks.
+3. Centralize Hell's Inferno selection and half-damage rounding and add its
+   radius-2 secondary damage across legacy melee, modern PvM melee, PvP melee,
+   and projectile attacks.
 4. Restore Balrog NPC impact animation through the modern animation catalog.
 5. Update guides, examines, acquisition documentation, data-integrity tests,
    combat tests, and animation tests.
@@ -184,3 +188,28 @@ The KBD tier-10 set needs its own five-piece effect. That decision can be made
 after its item family and visual direction are reviewed; it does not need to
 reuse either Black Dragon's poison effect or Elder Green Dragon's True Dragon's
 Breath.
+
+## Implemented Result
+
+- Added custom IDs 3311-3317 for KBD hide, leather, and the five basic armor
+  pieces. KBD retains its ordinary Black dragon hide drop and additionally
+  drops one purpose-specific KBD hide.
+- KBD uses tier-10 Crafting levels 70-73, the former Balrog tanning rung, the
+  101-point style-defense budget above, and the former Balrog economy rung.
+- Balrog now uses tier-11 Crafting levels 80-83, the Elder tanning/XP rung, the
+  108-point style-defense budget above, and Elder's current economy rung.
+- Elder definitions, acquisition, defensive values, and proc behavior were not
+  changed.
+- Hell's Inferno keeps its 20% primary proc, maximum hit 18, and primary-only
+  12% fire-defense debuff. It now splashes half of actual primary proc damage,
+  rounded up, through each secondary target's Magic mitigation within radius
+  two. NPC secondaries exclude summons, dead/removed/unattackable targets, and
+  the primary. PvP secondaries pass the side-effect-free combat eligibility
+  policy, exclude party members and invalid Wilderness targets, and are
+  disabled during duels. Guard Dog suppresses all secondary damage.
+- Explosion VFX 11 renders at a 96-pixel maximum for the strengthened player
+  proc. Balrog's normal Magic attack once again resolves combat effect 46,
+  backed by the intact 18-frame sheet copied into the preferred on-entity
+  animation tree.
+- The KBD set deliberately has no full-set runtime detector or proc yet. That
+  remains the next design discussion rather than an inferred effect.

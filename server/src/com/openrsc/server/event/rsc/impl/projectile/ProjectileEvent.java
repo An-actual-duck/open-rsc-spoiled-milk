@@ -981,6 +981,9 @@ public class ProjectileEvent extends SingleTickEvent {
 				procDamage = DataConversions.random(0, infernalMaxHit);
 				procDamageDealt = inflictAuxiliaryMagicDamage(caster, opponent, procDamage);
 				opponent.applyInfernalFireDefenseDebuff(casterPlayer.getInfernalFireDefenseDebuffPercent());
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && opponent.isNpc()) {
+					applyHellsInfernoSplash(casterPlayer, (Npc) opponent, procDamageDealt);
+				}
 			}
 			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
 				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
@@ -1035,6 +1038,19 @@ public class ProjectileEvent extends SingleTickEvent {
 					opponent.applyDragonFireDefenseDebuff(6);
 					break;
 			}
+		}
+	}
+
+	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
+			final int primaryDamageDealt) {
+		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
+		if (splashDamage <= 0) {
+			return;
+		}
+		for (Npc npc : CombatEffectUtil.findPlayerOwnedNpcSplashTargets(
+			player, primaryTarget, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
+			npc.getUpdateFlags().setCombatEffect(new CombatEffect(npc, CombatEffect.HELLS_INFERNO));
+			inflictAuxiliaryMagicDamage(player, npc, splashDamage);
 		}
 	}
 

@@ -2220,6 +2220,7 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_SCALE.id(), "Black dragon scale");
 		addGuaranteedDrop(NpcId.BALROG.id(), ItemId.BALROG_HIDE.id(), "Balrog hide");
 		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "King Black Dragon black dragon hide");
+		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), MyWorldItemId.KING_BLACK_DRAGON_HIDE, "King Black Dragon hide");
 		addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.KING_BLACK_DRAGON_SCALE.id(), 2, "King Black Dragon black dragon scale");
 		addGuaranteedDrop(NpcId.ELDER_GREEN_DRAGON.id(), ItemId.ELDER_GREEN_DRAGON_HIDE.id(), "Elder Green Dragon hide");
 		createElderGreenDragonDropTable();

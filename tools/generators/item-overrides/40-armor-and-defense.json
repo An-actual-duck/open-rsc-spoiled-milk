@@ -2078,43 +2078,43 @@
       "magicDefense": 4,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 11250
+      "basePrice": 18750
     },
     {
       "id": 1946,
       "meleeDefense": 6,
       "rangedDefense": 4,
-      "magicDefense": 7,
+      "magicDefense": 8,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 22500
+      "basePrice": 37500
     },
     {
       "id": 1947,
       "meleeDefense": 6,
       "rangedDefense": 4,
-      "magicDefense": 7,
+      "magicDefense": 8,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 22500
+      "basePrice": 37500
     },
     {
       "id": 1948,
-      "meleeDefense": 8,
+      "meleeDefense": 9,
       "rangedDefense": 6,
-      "magicDefense": 11,
+      "magicDefense": 12,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 33750
+      "basePrice": 56250
     },
     {
       "id": 1949,
-      "meleeDefense": 11,
-      "rangedDefense": 7,
-      "magicDefense": 15,
+      "meleeDefense": 12,
+      "rangedDefense": 8,
+      "magicDefense": 16,
       "requiredLevel": 0,
       "requiredSkillID": -1,
-      "basePrice": 45000
+      "basePrice": 75000
     },
     {
       "id": 1950,
@@ -3131,6 +3131,51 @@
       "meleeDefense": 1,
       "requiredLevel": 0,
       "requiredSkillID": -1
+    },
+    {
+      "id": 3313,
+      "meleeDefense": 3,
+      "rangedDefense": 3,
+      "magicDefense": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "basePrice": 11250
+    },
+    {
+      "id": 3314,
+      "meleeDefense": 6,
+      "rangedDefense": 5,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "basePrice": 22500
+    },
+    {
+      "id": 3315,
+      "meleeDefense": 6,
+      "rangedDefense": 5,
+      "magicDefense": 6,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "basePrice": 22500
+    },
+    {
+      "id": 3316,
+      "meleeDefense": 9,
+      "rangedDefense": 7,
+      "magicDefense": 9,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "basePrice": 33750
+    },
+    {
+      "id": 3317,
+      "meleeDefense": 12,
+      "rangedDefense": 9,
+      "magicDefense": 12,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "basePrice": 45000
     }
   ]
 }

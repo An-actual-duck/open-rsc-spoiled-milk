@@ -230,6 +230,10 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatChildDamageCharacterization::deathRingPolicies);
 			run(harness, "balrog_splash_preserves_mitigation_selection_and_child_death",
 				CurrentCombatOwnedDamageCharacterization::balrogSplashPolicies);
+			run(harness, "hells_inferno_splash_uses_actual_damage_and_rounds_up",
+				CurrentCombatOwnedDamageCharacterization::hellsInfernoSplashMath);
+			run(harness, "hells_inferno_splash_preserves_selection_guard_dog_and_event_parity",
+				CurrentCombatOwnedDamageCharacterization::hellsInfernoSplashPolicies);
 			run(harness, "elder_green_dragon_preserves_style_tracking_packets_and_reflection_order",
 				CurrentCombatOwnedDamageCharacterization::elderGreenDragonPolicies);
 			run(harness, "summon_bonus_preserves_style_mitigation_credit_and_caller_death",

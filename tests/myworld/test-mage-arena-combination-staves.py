@@ -86,7 +86,7 @@ def main() -> int:
 		require(mask in client_defs, f"Client placeholder mask missing for {name}")
 		require(f'new SkillMenuItem({item_id_value}, "80", "{name}")' in skill_guide, f"Magic guide missing {name}")
 
-	require("public static final int maxCustom = 3311;" in item_id, "ItemId.maxCustom should include current custom items")
+	require("public static final int maxCustom = 3318;" in item_id, "ItemId.maxCustom should include current custom items")
 
 	for snippet in (
 		"STAFF_OF_ELEMENTS_RUNES",

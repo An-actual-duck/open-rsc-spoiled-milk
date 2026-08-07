@@ -9,7 +9,9 @@ import com.openrsc.server.content.party.Party;
 import com.openrsc.server.content.party.PartyPlayer;
 import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.event.custom.NpcLootEvent;
+import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
+import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
@@ -23,6 +25,7 @@ import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -45,6 +48,77 @@ final class CurrentCombatOwnedDamageCharacterization {
 		"myworld_summon_guard_enemy";
 
 	private CurrentCombatOwnedDamageCharacterization() {
+	}
+
+	static void hellsInfernoSplashMath(final CurrentCombatHarness harness) {
+		assertEquals(18, CombatEffectUtil.HELLS_INFERNO_MAX_HIT,
+			"Hell's Inferno tier-11 maximum");
+		assertEquals(2, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS,
+			"Hell's Inferno splash radius");
+		assertEquals(0, CombatEffectUtil.hellsInfernoSplashDamage(-1),
+			"negative primary damage cannot splash");
+		assertEquals(0, CombatEffectUtil.hellsInfernoSplashDamage(0),
+			"zero primary damage cannot splash");
+		assertEquals(1, CombatEffectUtil.hellsInfernoSplashDamage(1),
+			"one damage rounds up to one");
+		assertEquals(1, CombatEffectUtil.hellsInfernoSplashDamage(2),
+			"two damage halves to one");
+		assertEquals(2, CombatEffectUtil.hellsInfernoSplashDamage(3),
+			"odd primary damage rounds up");
+		assertEquals(9, CombatEffectUtil.hellsInfernoSplashDamage(18),
+			"maximum primary damage halves to nine");
+	}
+
+	static void hellsInfernoSplashPolicies(final CurrentCombatHarness harness)
+			throws Exception {
+		final Player meleeOwner = harness.player("inferno melee", 500, 500);
+		final Npc meleePrimary = npcWithHits(harness, NpcId.CHICKEN.id(), 501, 500, 20);
+		final Npc meleeSecondary = npcWithHits(harness, NpcId.CHICKEN.id(), 502, 500, 20);
+		final Npc meleeDistant = npcWithHits(harness, NpcId.CHICKEN.id(), 506, 500, 20);
+		final PvmMeleeEvent melee = new PvmMeleeEvent(
+			harness.world(), meleeOwner, meleePrimary);
+		invoke(melee, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			meleeOwner, meleePrimary, Integer.valueOf(5));
+		assertEquals(17, meleeSecondary.getLevel(Skill.HITS.id()),
+			"modern PvM melee splash uses half actual damage rounded up");
+		assertEquals(20, meleePrimary.getLevel(Skill.HITS.id()),
+			"modern PvM melee splash excludes its primary target");
+		assertEquals(20, meleeDistant.getLevel(Skill.HITS.id()),
+			"modern PvM melee splash respects radius two");
+		assertEquals(CombatEffect.HELLS_INFERNO,
+			meleeSecondary.getUpdateFlags().getCombatEffect().get().getEffectType(),
+			"modern PvM melee splash presents Hell's Inferno");
+
+		final Npc guardBlocked = npcWithHits(harness, NpcId.CHICKEN.id(), 502, 501, 20);
+		installGuardDog(harness, meleeOwner, 499, 500);
+		invoke(melee, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			meleeOwner, meleePrimary, Integer.valueOf(5));
+		assertEquals(20, guardBlocked.getLevel(Skill.HITS.id()),
+			"Guard Dog suppresses Hell's Inferno secondary damage");
+
+		final Player projectileOwner = harness.player("inferno projectile", 600, 600);
+		final Npc projectilePrimary = npcWithHits(harness, NpcId.CHICKEN.id(), 601, 600, 20);
+		final Npc projectileSecondary = npcWithHits(harness, NpcId.CHICKEN.id(), 602, 600, 20);
+		final ProjectileEvent projectile = new ProjectileEvent(
+			harness.world(), projectileOwner, projectilePrimary, 0, 2, false);
+		invoke(projectile, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			projectileOwner, projectilePrimary, Integer.valueOf(6));
+		assertEquals(17, projectileSecondary.getLevel(Skill.HITS.id()),
+			"projectile splash matches modern PvM melee damage");
+
+		final Player legacyOwner = harness.player("inferno legacy", 700, 700);
+		final Npc legacyPrimary = npcWithHits(harness, NpcId.CHICKEN.id(), 701, 700, 20);
+		final Npc legacySecondary = npcWithHits(harness, NpcId.CHICKEN.id(), 702, 700, 20);
+		final CombatEvent legacy = new CombatEvent(
+			harness.world(), legacyOwner, legacyPrimary);
+		invoke(legacy, "applyHellsInfernoSplash",
+			new Class<?>[] {Player.class, Npc.class, int.class},
+			legacyOwner, legacyPrimary, Integer.valueOf(6));
+		assertEquals(17, legacySecondary.getLevel(Skill.HITS.id()),
+			"legacy melee splash matches modern PvM and projectile damage");
 	}
 
 	static void balrogSplashPolicies(final CurrentCombatHarness harness)

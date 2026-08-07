@@ -167,7 +167,12 @@ def main() -> None:
     require(
         drops,
         'addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.BLACK_DRAGON_HIDE.id(), "King Black Dragon black dragon hide");',
-        "King Black Dragon should now use black dragon hide as its guaranteed hide drop",
+        "King Black Dragon should retain its ordinary black dragon hide drop",
+    )
+    require(
+        drops,
+        'addGuaranteedDrop(NpcId.KING_BLACK_DRAGON.id(), MyWorldItemId.KING_BLACK_DRAGON_HIDE, "King Black Dragon hide");',
+        "King Black Dragon should drop its purpose-specific tier-10 hide",
     )
     require(
         drops,
