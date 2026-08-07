@@ -55,6 +55,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.npc.NpcAttackStyleProfile;
 import com.openrsc.server.model.entity.npc.NpcMagicElement;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.HostileState;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
@@ -1758,8 +1759,35 @@ public final class CurrentCombatCharacterizationTest {
 		assertEquals(0, projectileContribution(
 			compatibilityTarget, source, "getRangeDamageInfoBy"),
 			"non-primary compatibility projectile excludes Ranged contribution");
-		assertEquals(0, observer.results.size(),
-			"pre-migration compatibility projectile has no transaction result");
+		assertEquals(1, observer.results.size(),
+			"compatibility projectile emits one transaction result");
+		final DamageResult compatibilityResult = observer.results.get(0);
+		assertEquals("projectile-unclassified-compatibility",
+			compatibilityResult.getRequest().getEffectKey(),
+			"compatibility projectile stable identity");
+		assertEquals(DamageRequest.SourceCategory.ACTOR,
+			compatibilityResult.getRequest().getSourceCategory(),
+			"compatibility projectile source category");
+		assertTrue(compatibilityResult.getRequest().getSource() == source,
+			"compatibility projectile source identity");
+		assertTrue(compatibilityResult.getRequest().getTarget()
+			== compatibilityTarget,
+			"compatibility projectile target identity");
+		assertEquals(compatibilityEvent.getUUID(),
+			compatibilityResult.getRequest().getEventId(),
+			"compatibility projectile event identity");
+		assertTrue(compatibilityResult.getRequest().getStyle() == null,
+			"unclassified projectile does not invent a combat style");
+		assertEquals(HitSplat.TYPE_STANDARD,
+			compatibilityResult.getRequest().getHitSplatType(),
+			"compatibility projectile hitsplat identity");
+		assertEquals(DamageRequest.Presentation.DAMAGE_AND_HITSPLAT,
+			compatibilityResult.getRequest().getPresentation(),
+			"compatibility projectile presentation policy");
+		assertEquals(7, compatibilityResult.getActualDamage(),
+			"compatibility projectile factual damage");
+		assertFalse(compatibilityResult.isTargetTerminal(),
+			"nonlethal compatibility projectile result");
 
 		final Npc lethalCompatibilityTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 613, 541);
@@ -1796,8 +1824,37 @@ public final class CurrentCombatCharacterizationTest {
 			"compatibility projectile publishes presentation before death");
 		assertTrue(lethalCompatibilityTarget.isUnregistering(),
 			"lethal compatibility projectile uses the existing death adapter");
-		assertEquals(0, observer.results.size(),
-			"pre-migration lethal compatibility projectile has no result");
+		assertEquals(2, observer.results.size(),
+			"lethal compatibility projectile emits one additional result");
+		final DamageResult lethalCompatibilityResult = observer.results.get(1);
+		assertEquals(5, lethalCompatibilityResult.getActualDamage(),
+			"lethal compatibility projectile factual damage");
+		assertEquals(5,
+			lethalCompatibilityResult.getLegacyDamageDealt(),
+			"lethal compatibility projectile legacy hook damage");
+		assertEquals(2, lethalCompatibilityResult.getOverkillDamage(),
+			"lethal compatibility projectile overkill");
+		assertTrue(lethalCompatibilityResult.isTargetTerminal(),
+			"lethal compatibility projectile terminal result");
+
+		final Npc signedCompatibilityTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 613, 542);
+		signedCompatibilityTarget.getSkills().setTemporaryLevelAndMaxStat(
+			Skill.HITS.id(), 20, 20, false);
+		final ProjectileEvent signedCompatibilityEvent = projectileEvent(
+			harness, source, signedCompatibilityTarget, -3, 3, -1,
+			Projectile.GNOMEBALL, 0);
+		invokePrimaryProjectile(signedCompatibilityEvent);
+		assertEquals(23, signedCompatibilityTarget.getLevel(Skill.HITS.id()),
+			"signed compatibility projectile retains legacy HP increase");
+		assertEquals(-3, signedCompatibilityTarget.getUpdateFlags()
+			.getDamage().get().getDamage(),
+			"signed compatibility projectile retains negative presentation");
+		assertEquals(0, signedCompatibilityTarget.getUpdateFlags()
+			.getHitSplats().get(0).getAmount(),
+			"signed compatibility projectile retains clamped hitsplat");
+		assertEquals(2, observer.results.size(),
+			"signed compatibility adjustment is not represented as damage");
 
 		final Npc secondaryTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 614, 540);
@@ -1811,10 +1868,10 @@ public final class CurrentCombatCharacterizationTest {
 			"secondary projectile damage retains final Hits");
 		assertEquals(1, secondaryTarget.getUpdateFlags().getHitSplats().size(),
 			"secondary projectile damage retains one hitsplat");
-		assertEquals(1, observer.results.size(),
-			"A05.4C observes the child hit but not compatibility projectiles");
+		assertEquals(3, observer.results.size(),
+			"compatibility and child transactions retain exact cardinality");
 		assertEquals("projectile-chain-lightning",
-			observer.results.get(0).getRequest().getEffectKey(),
+			observer.results.get(2).getRequest().getEffectKey(),
 			"child effect stable identity");
 	}
 

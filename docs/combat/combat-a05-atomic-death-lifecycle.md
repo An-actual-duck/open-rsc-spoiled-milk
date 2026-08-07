@@ -158,8 +158,10 @@ contribution, migrate `Mob.damage`, change script/admin removal, alter death
 drops, or make lifecycle state a new combat eligibility rule. The public
 `killedBy` compatibility surface remains intact.
 
-A05.6 may prune direct mutations only when runtime evidence proves them
-obsolete. A later failure-hardening branch may add stage-level retry/diagnostic
-state, but must first define which optional callback failures are recoverable.
+A05.6's focused branch finds no redundant post-migration block safe to delete.
+It migrates the one representable non-negative unclassified projectile
+settlement and records why signed/admin/script/helper mutations remain active.
+A later failure-hardening branch may add stage-level retry/diagnostic state,
+but must first define which optional callback failures are recoverable.
 Plugin-owned quest deaths require individual characterization before any ID can
 leave the compatibility inventory.

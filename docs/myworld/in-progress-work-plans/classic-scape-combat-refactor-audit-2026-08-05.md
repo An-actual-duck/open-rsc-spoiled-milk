@@ -658,8 +658,8 @@ exact boundary is recorded in
 [`docs/combat/combat-a05-delayed-spell-damage-transaction.md`](../../combat/combat-a05-delayed-spell-damage-transaction.md);
 the manager-reviewed merge remains the integration boundary.
 
-A05.5 implementation record: the focused branch adds atomic per-mob ownership
-for ordinary reward-eligible death, immutable death contexts, typed
+A05.5 completion record: published main at merge commit `e018334b6` adds
+atomic per-mob ownership for ordinary reward-eligible death, immutable death contexts, typed
 start/duplicate transitions, lifecycle snapshots, and stale-safe NPC/player
 respawn generations. It preserves all ordinary NPC and player phase ordering,
 the public `killedBy` surface, compatibility-helper raw-Hits/presentation,
@@ -669,7 +669,20 @@ NPC IDs are explicitly retained as plugin-owned compatibility and the dormant
 71, including reentrant exactly-once ownership and deliberate listener failure.
 The exact boundary is recorded in
 [`docs/combat/combat-a05-atomic-death-lifecycle.md`](../../combat/combat-a05-atomic-death-lifecycle.md);
-the manager-reviewed merge remains the integration boundary.
+the published merge is the integration boundary.
+
+A05.6 implementation record: the focused branch reruns the residual direct-Hits
+inventory after A05.5. Non-negative unclassified projectile settlement moves
+through `projectile-unclassified-compatibility` with actor provenance, event
+identity, no invented style, and unchanged presentation/death order. The
+compiled fixture now covers nonlethal, lethal-overkill, contribution,
+presentation-before-death, callback, signed-negative, and observation
+cardinality policies. Signed projectile input, admin commands, Reset Crystal,
+Necronomicon self-harm, terminal development tools, `Mob.damage`, poison/burn,
+and delayed lethal god/Iban remain explicit active compatibility boundaries.
+The exact inventory and A05 stopping point are recorded in
+[`docs/combat/combat-a05-direct-hit-mutation-cleanup.md`](../../combat/combat-a05-direct-hit-mutation-cleanup.md);
+manager review remains the integration boundary.
 
 Use several branches rather than one migration commit:
 

@@ -43,6 +43,12 @@ A05.4E then moved Salarin's delayed Hits/damage update and only safely
 representable nonlethal NPC god/Iban area settlement. Its explicit terminal
 compatibility stop boundary is recorded in
 [`combat-a05-delayed-spell-damage-transaction.md`](combat-a05-delayed-spell-damage-transaction.md).
+A05.6 then reran the residual inventory, moved non-negative unclassified
+projectile settlement through a stable transaction identity, and retained the
+signed projectile, admin, scripted self-harm, compatibility-helper, and
+terminal tool paths whose contracts are not interchangeable with damage. Its
+bounded stopping point is recorded in
+[`combat-a05-direct-hit-mutation-cleanup.md`](combat-a05-direct-hit-mutation-cleanup.md).
 All other inventory rows remain outside those migrations.
 
 ## Reproducible inventory method
@@ -95,7 +101,7 @@ parent effect may aggregate damage later where called out.
 
 | Family and exact symbols | Mitigation | Attribution and contribution | Presentation and packets | Aggro, death, and hook order |
 | --- | --- | --- | --- | --- |
-| Unknown/compatibility projectile type: `ProjectileEvent.projectileDamage` fallback at line 416 | Common pre-impact robe/potion/summon absorption and Frostbite; no True Defense; Cleric only for types 1/2/4 | Existing projectile style branches do not recognize an unknown type; no style contribution | Summon-style hitsplat; player stat and surrounding projectile hooks still run | Existing `handleDeath`; compatibility settlement remains outside A05.3; no independent lifesteal policy |
+| Unknown/compatibility projectile type: `ProjectileEvent.projectileDamage` fallback | Common pre-impact robe/potion/summon absorption and Frostbite; no True Defense; Cleric only for types 1/2/4 | Existing projectile style branches do not recognize an unknown type; no style contribution. A05.6 gives non-negative settlement its own transaction identity; signed admin adjustments remain direct. | Summon-style hitsplat; player stat and surrounding projectile hooks still run | Existing `handleDeath`; no independent lifesteal policy |
 | Projectile chain lightning: `applyChaosAmuletChainLightning` / `inflictChainLightningDamage` | Player targets receive potion Magic reduction for types 1/4 or potion Ranged reduction for 2/5; no robe, True Defense, or Cleric | Player caster; NPC contribution follows originating Magic/Ranged type and caps to Hits | Armor-proc hitsplat, chain projectile, player stat | Primary target uses event `handleDeath`; child uses `killedBy(caster)`; no local lifesteal or aggro |
 | Melee chain lightning and jewelry recoil: `CombatEvent` and `PvmMeleeEvent` | None | The separate chain-lightning and jewelry-recoil helpers both record player-to-NPC **combat** contribution | Armor-proc hitsplat; player stat | Event `onDeath` owns terminal state/reset; no local lifesteal; chain target selection has no new aggro |
 | Projectile recoil: `ProjectileEvent.recoilDamage` | None | Defender is killer; unlike melee jewelry helper, no contribution is recorded | Armor-proc hitsplat; no explicit player stat packet | Ranged reset on lethal types 2/5; otherwise Ring of Life check; direct `killedBy`; no recursive reflection/lifesteal |
@@ -212,7 +218,14 @@ Each item below is a separate follow-up branch with its own stop gate.
    an A05 helper migration. First settle owner persistence, offline owner,
    replacement, death/respawn, Leach, and kill-credit rules as already required
    by A08.
-7. **Compatibility-helper and script migration, last.** Inventory each of the
+7. **A05.6 residual direct-Hits cleanup (focused branch; manager review
+   pending).** Non-negative unclassified projectile settlement is now owned by
+   `projectile-unclassified-compatibility`. Signed projectile adjustment and
+   the active admin/script paths remain explicit because they cannot satisfy
+   the current damage invariants without behavior changes. The exact stopping
+   point and reproducible residual inventory are recorded in the A05.6 document
+   linked above.
+8. **Compatibility-helper and script migration, last.** Inventory each of the
    129 plugin calls by intent before changing `Mob.damage`. Define explicit
    environmental, scripted, self-harm, and admin/debug source categories;
    preserve or deliberately replace death-before-presentation only with owner

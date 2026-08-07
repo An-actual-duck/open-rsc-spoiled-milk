@@ -194,8 +194,10 @@ behavior changes, so A05.1 has no private visual acceptance surface.
    ordinary-death ownership, immutable lifecycle contexts, respawn generations,
    and an explicit quest/plugin-owned compatibility adapter. Manager integration
    remains the acceptance boundary.
-5. **A05.6 pruning:** remove direct mutations only when runtime coverage proves
-   them obsolete.
+5. **A05.6 pruning:** focused implementation migrates the one representable
+   residual core projectile block and proves the remaining direct admin,
+   signed, self-harm, terminal-tool, and helper paths are active compatibility
+   boundaries. Manager integration remains the acceptance boundary.
 
 Stop any branch on a formula, mitigation, damage display, contribution, XP,
 lifesteal, proc, aggro, overkill, death, drop, plugin, packet, RNG draw, or hook

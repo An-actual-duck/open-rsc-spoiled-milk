@@ -219,3 +219,12 @@ packets, tutorial survival, logged-out no-op behavior, and the ten-ID
 plugin-owned compatibility boundary. Existing simultaneous-death fixtures
 remain authoritative. The bounded lifecycle is recorded in
 [`combat-a05-atomic-death-lifecycle.md`](combat-a05-atomic-death-lifecycle.md).
+
+A05.6 keeps the gate at 71 scenarios and strengthens the existing
+unknown-projectile fixture. Non-negative unclassified settlement now reports a
+stable transaction identity; nonlethal, lethal-overkill, zero-contribution,
+presentation-before-death, callback, and child-effect cardinality remain
+executable. A signed negative admin compatibility value remains a direct,
+unobserved HP adjustment and is pinned separately. The residual inventory and
+stop boundary are recorded in
+[`combat-a05-direct-hit-mutation-cleanup.md`](combat-a05-direct-hit-mutation-cleanup.md).
