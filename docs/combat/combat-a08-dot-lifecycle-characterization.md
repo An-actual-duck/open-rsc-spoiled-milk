@@ -38,6 +38,9 @@ hide it behind equal final Hits.
 - poison continuing while its player source is offline, Leach stopping while
   that source is absent, and Leach resuming through the username-derived stable
   UUID after a new session equips the necklace;
+- a separate source-logout/relog path with an unrelated equipped player as the
+  target's current opponent, proving continued poison damage, durable source
+  identity, exclusive Blood Leach resumption, and durable-source lethal credit;
 - legacy player poison restoration with current/maximum values, no restored
   source, exactly one fresh event, and a full eight-tick countdown;
 - legacy poison-without-maximum fallback and current orphan-cache cleanup
@@ -396,8 +399,8 @@ event.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 120/120 scenarios on the durable-provenance,
-  failed-save-atomicity, and server-restart branch.
+- `./server/test_combat` — PASS, 121/121 scenarios on the durable-provenance,
+  failed-save-atomicity, server-restart, and source-relog branches.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

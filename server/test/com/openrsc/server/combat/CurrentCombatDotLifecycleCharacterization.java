@@ -215,6 +215,71 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"relogged owner resumes typed poison contribution");
 	}
 
+	static void poisonSourceRelogRetainsCreditAndLeachBoundaries(
+			final CurrentCombatHarness harness) throws Exception {
+		final String sourceName = "poison src a";
+		final Player source = harness.player(sourceName, 730, 680);
+		harness.equip(source, DRAGONSTONE_NECKLACE_OF_LEACH, 1);
+		setHits(source, 20, 40);
+		final Player unrelated = harness.player("poison rival", 731, 680);
+		harness.equip(unrelated, DRAGONSTONE_NECKLACE_OF_LEACH, 1);
+		setHits(unrelated, 20, 40);
+		final Npc target = npcWithHits(harness, 732, 680, 16);
+		target.setShouldRespawn(false);
+		target.setOpponent(unrelated);
+		target.applyPoison(40, 40, source);
+		final PoisonEvent event = target.getAttribute("poisonEvent", null);
+		final UUID durableSourceId = source.getUUID();
+		assertEquals(durableSourceId, target.getPoisonProvenance().getSourceId(),
+			"poison state owns the applying player's durable identity");
+		assertEquals(durableSourceId, poisonOwner(event),
+			"poison event owns the applying player's durable identity");
+
+		harness.logout(source);
+		event.run();
+		assertEquals(12, target.getLevel(Skill.HITS.id()),
+			"offline-owner poison continues to damage the active target");
+		assertEquals(20, unrelated.getLevel(Skill.HITS.id()),
+			"unrelated equipped player cannot Leach an offline source's poison");
+		assertEquals(durableSourceId, target.getPoisonProvenance().getSourceId(),
+			"offline pulse does not replace durable poison ownership");
+		assertEquals(1, eventCount(harness, target, "Poison Event"),
+			"offline source leaves exactly one target poison event");
+
+		final Player relogged = harness.player(sourceName, 733, 680);
+		setHits(relogged, 20, 40);
+		assertEquals(durableSourceId, relogged.getUUID(),
+			"relog recreates the same durable player identity");
+		event.run();
+		assertEquals(9, target.getLevel(Skill.HITS.id()),
+			"relogged source keeps the existing poison stream active");
+		assertEquals(20, relogged.getLevel(Skill.HITS.id()),
+			"correct relogged source without Leach equipment receives no healing");
+		assertEquals(20, unrelated.getLevel(Skill.HITS.id()),
+			"unrelated equipped player remains unable to receive Leach healing");
+
+		harness.equip(relogged, DRAGONSTONE_NECKLACE_OF_LEACH, 1);
+		event.run();
+		assertEquals(6, target.getLevel(Skill.HITS.id()),
+			"equipped relogged source continues the same poison stream");
+		assertEquals(23, relogged.getLevel(Skill.HITS.id()),
+			"only the correct live source session resumes Blood Leach");
+		assertEquals(durableSourceId, target.getPoisonProvenance().getSourceId(),
+			"relog and Leach changes never replace poison ownership");
+
+		target.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 3, 16,
+			false);
+		final int sourceKillsBefore = relogged.getNpcKills();
+		final int unrelatedKillsBefore = unrelated.getNpcKills();
+		event.run();
+		assertTrue(target.isUnregistering(),
+			"durably owned lethal poison removes the NPC");
+		assertEquals(sourceKillsBefore + 1, relogged.getNpcKills(),
+			"relogged durable poison source receives lethal NPC credit");
+		assertEquals(unrelatedKillsBefore, unrelated.getNpcKills(),
+			"unrelated current opponent receives no durable poison credit");
+	}
+
 	static void poisonThresholdsAndLiveDecayEquipment(
 			final CurrentCombatHarness harness) throws Exception {
 		final Npc belowThreshold = npcWithHits(harness, 614, 680, 20);

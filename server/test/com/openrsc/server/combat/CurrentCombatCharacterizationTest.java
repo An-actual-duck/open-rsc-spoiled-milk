@@ -186,6 +186,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_leach_tracks_live_source_sessions_without_contribution",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonPulseLeachAndSourceAvailability);
+			run(harness, "generic_poison_source_relog_preserves_credit_and_leach_identity",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonSourceRelogRetainsCreditAndLeachBoundaries);
 			run(harness, "generic_poison_thresholds_and_live_decay_equipment_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonThresholdsAndLiveDecayEquipment);
