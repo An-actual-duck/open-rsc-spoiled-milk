@@ -789,17 +789,19 @@ A08.1 is complete on published main. The implementation inventory, lifecycle
 risks, policy decisions, and staged test plan are recorded in
 [`combat-a08-poison-burn-provenance-audit.md`](../../combat/combat-a08-poison-burn-provenance-audit.md).
 
-A08.2 now has a second executable lifecycle checkpoint on published main in
+A08.2 now has a third executable lifecycle checkpoint on published main in
 [`combat-a08-dot-lifecycle-characterization.md`](../../combat/combat-a08-dot-lifecycle-characterization.md).
 It guards current stacking, cadence, cache restoration and corruption,
 source-session, duplicate scheduling, producer, death, Leach, contribution,
-and lethal-attribution behavior and records newly proven generic-burn
-replacement/NPC-removal defects. On 2026-08-07 the project owner
-approved state-changing-only poison ownership transfer, factual poison
-contribution, no synthesized offline-owner rewards or unrelated-opponent kill
-credit, and retirement/migration of dormant generic burn. The remaining
-exceptional-producer and failure-injection fixture matrix remains open; typed
-settlement must not begin until that executable boundary is ready.
+lethal-attribution, exceptional-producer, large-value, scheduler-failure, and
+logout-save failure behavior. It also records newly proven generic-burn
+replacement/NPC-removal defects. On 2026-08-07 the project owner approved
+state-changing-only poison ownership transfer, factual poison contribution, no
+synthesized offline-owner rewards or unrelated-opponent kill credit, and
+retirement/migration of dormant generic burn. The currently actionable A08.2
+matrix is complete; typed state work may begin with target-policy fixtures for
+those four decisions and retain server-restart provenance as an implementation-
+phase gate once a versioned durable source record exists.
 
 Move poison/burn ownership behind typed state only after exact current
 strength, stacking, replacement, feedback, persistence, death/respawn, logout,

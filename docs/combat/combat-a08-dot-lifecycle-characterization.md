@@ -317,7 +317,8 @@ migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 110/110 scenarios.
+- `./server/test_combat` — PASS, 111/111 scenarios on the combined published
+  combat baseline.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.
