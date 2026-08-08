@@ -315,6 +315,8 @@ public final class CurrentCombatCharacterizationTest {
 					::elderGreenArmorTriggerPolicies);
 			run(harness, "bear_maul_preserves_second_hit_eligibility_and_callback",
 				CurrentCombatBearMaulCharacterization::bearMaulPolicies);
+			run(harness, "dragon_melee_breath_preserves_visual_and_callback_policy",
+				CurrentCombatDragonMeleeBreathCharacterization::dragonMeleeBreathPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",

@@ -37,6 +37,7 @@ import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
+import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
@@ -589,18 +590,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyDragonWeaponBreathDamage(final Mob hitter, final Mob target) {
-		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		final int breathDamage = CombatFormula.rollDragonMeleeBreathDamage(hitter);
-		if (breathDamage <= 0) {
-			return;
-		}
-		final int slashEffect = combatRandom().nextIntInclusive(0, 1) == 0
-			? CombatEffect.DRAGON_WEAPON_BREATH
-			: CombatEffect.DRAGON_WEAPON_SLASH_2;
-		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, slashEffect));
-		inflictAuxiliaryTrueDamage(hitter, target, breathDamage);
+		DragonMeleeBreathFollowup.tryApply(hitter, target, combatRandom(),
+			() -> CombatFormula.rollDragonMeleeBreathDamage(hitter),
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
 	}
 
 	private void applyElementalSwordProc(final Mob hitter, final Mob target) {

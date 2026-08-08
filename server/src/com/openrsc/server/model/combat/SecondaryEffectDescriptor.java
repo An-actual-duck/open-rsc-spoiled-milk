@@ -320,7 +320,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.CURRENT_ATTACK_PAIR, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
 		RandomTiming.PAYLOAD_ONLY, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.ALLOW_SCYTHE_DESCENDANTS, PresentationPolicy.MIXED,
-		"CombatEvent/PvmMeleeEvent.applyDragonWeaponBreathDamage", "auxiliary damage characterization"),
+		"DragonMeleeBreathFollowup via primary melee event methods", "A07.5K compiled visual/callback parity fixture"),
 	ELEMENTAL_SWORD("semantic.elemental-sword",
 		phases(Phase.AFTER_ROOT_ATTACK), styles(Style.MELEE),
 		ParticipantGate.CURRENT_ATTACK_PAIR, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
