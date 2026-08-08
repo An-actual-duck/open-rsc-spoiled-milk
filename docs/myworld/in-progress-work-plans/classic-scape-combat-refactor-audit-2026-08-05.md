@@ -774,6 +774,10 @@ be characterized.
 
 ### A08 — DoT provenance and lifecycle
 
+A08.1 is complete on published main. The implementation inventory, lifecycle
+risks, policy decisions, and staged test plan are recorded in
+[`combat-a08-poison-burn-provenance-audit.md`](../../combat/combat-a08-poison-burn-provenance-audit.md).
+
 Move poison/burn ownership behind typed state only after exact current
 strength, stacking, replacement, feedback, persistence, death/respawn, logout,
 offline owner, and kill-credit rules are fixtures. Preserve `ad02e5aec` and
