@@ -76,7 +76,9 @@ public class PoisonEvent extends GameTickEvent {
 	private int settleTypedPoisonDamage(final int requestedDamage) {
 		int resolvedDamage = requestedDamage;
 		if (mob.isPlayer()) {
-			resolvedDamage = ((Player) mob).applyGoblinTenacity(resolvedDamage);
+			final Player player = (Player) mob;
+			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
+			resolvedDamage = player.applyGoblinTenacity(resolvedDamage);
 		}
 		final Mob source = resolveLiveSource();
 		final DamageRequest request = DamageRequest.resolvedLegacy(source, mob,

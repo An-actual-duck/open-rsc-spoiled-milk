@@ -351,6 +351,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 		tenacityEvent.run();
 		assertEquals(1, tenacious.getLevel(Skill.HITS.id()),
 			"Goblin Tenacity reduces lethal poison to leave one Hit");
+		assertTrue(tenacious.getAttribute("last_damage_taken_at", 0L) > 0L,
+			"typed poison preserves the player damage timestamp");
 		assertEquals(24, source.getLevel(Skill.HITS.id()),
 			"Leach uses four factual post-Tenacity damage");
 		assertEquals(4,
