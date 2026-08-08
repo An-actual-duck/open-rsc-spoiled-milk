@@ -339,8 +339,8 @@ approved contribution and lethal-credit tests enabled.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 112/112 scenarios on this target-policy
-  foundation branch.
+- `./server/test_combat` — PASS, 113/113 scenarios on the combined published
+  combat baseline.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

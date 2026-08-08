@@ -802,9 +802,12 @@ replacement/NPC-removal defects. On 2026-08-07 the project owner approved
 state-changing-only poison ownership transfer, factual poison contribution, no
 synthesized offline-owner rewards or unrelated-opponent kill credit, and
 retirement/migration of dormant generic burn. The currently actionable A08.2
-matrix is complete; typed state work may begin with target-policy fixtures for
-those four decisions and retain server-restart provenance as an implementation-
-phase gate once a versioned durable source record exists.
+matrix is complete. A08.3 now has compiled immutable provenance and target-
+policy types covering those four decisions without changing runtime behavior.
+The next bounded step is one atomic target registry/application path; runtime
+settlement migration must retain the approved contribution and lethal-credit
+fixtures. Server-restart provenance remains an implementation-phase gate once
+a versioned durable source record exists.
 
 Move poison/burn ownership behind typed state only after exact current
 strength, stacking, replacement, feedback, persistence, death/respawn, logout,
