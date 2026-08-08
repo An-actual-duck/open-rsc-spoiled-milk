@@ -754,8 +754,9 @@ event-owned auxiliary true-damage callback, and five-attack defense-debuff
 refresh unit. A07.5F is implemented on published main with the separately
 characterized Black Dragon full-set and exact-marker gate, inclusive payload draw, and
 event-owned auxiliary true-damage callback. Poison, marker ownership, shared
-Black/KBD presentation, and KBD payload behavior remain event-owned; later
-families remain bounded follow-ups.
+Black/KBD presentation remain event-owned. A07.5G separately extracts KBD's
+exact marker, inclusive payload, and post-payload elemental-debuff selection;
+later families remain bounded follow-ups.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -770,8 +771,9 @@ plus the first six proc contracts in
 [`combat-a07-blue-dragon-water-proc.md`](../../combat/combat-a07-blue-dragon-water-proc.md),
 [`combat-a07-earth-dragon-slow-proc.md`](../../combat/combat-a07-earth-dragon-slow-proc.md),
 [`combat-a07-red-dragon-fire-proc.md`](../../combat/combat-a07-red-dragon-fire-proc.md),
+[`combat-a07-black-dragon-breath-followup.md`](../../combat/combat-a07-black-dragon-breath-followup.md),
 and
-[`combat-a07-black-dragon-breath-followup.md`](../../combat/combat-a07-black-dragon-breath-followup.md).
+[`combat-a07-king-black-dragon-breath-followup.md`](../../combat/combat-a07-king-black-dragon-breath-followup.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

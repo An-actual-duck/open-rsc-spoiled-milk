@@ -22,6 +22,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
@@ -1012,23 +1013,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
 				caster, opponent, procDamage));
-		if (casterPlayer.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
-			}
-			switch (DataConversions.random(0, 2)) {
-				case 0:
-					opponent.applyDragonWaterMaxHitDebuff(10);
-					break;
-				case 1:
-					opponent.applyDragonEarthAttackSpeedDebuff(6);
-					break;
-				default:
-					opponent.applyDragonFireDefenseDebuff(6);
-					break;
-			}
-		}
+		KingBlackDragonBreathFollowup.tryApply(casterPlayer, opponent,
+			dragonBreathProc, ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(caster, opponent, procDamage));
 		if (damage > 0 && casterPlayer.getElderGreenDragonArmorProcChance() > 0.0D
 				&& DataConversions.getRandom().nextDouble()
 					< casterPlayer.getElderGreenDragonArmorProcChance()) {

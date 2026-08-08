@@ -35,6 +35,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.RedDragonFireProc;
@@ -554,23 +555,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		BlackDragonBreathFollowup.tryApply(player, dragonBreathProc,
 			combatRandom(), procDamage -> inflictAuxiliaryTrueDamage(
 				hitter, target, procDamage));
-		if (player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
-			final int procDamage = combatRandom().nextIntInclusive(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-			switch (combatRandom().nextIntInclusive(0, 2)) {
-				case 0:
-					target.applyDragonWaterMaxHitDebuff(10);
-					break;
-				case 1:
-					target.applyDragonEarthAttackSpeedDebuff(6);
-					break;
-				default:
-					target.applyDragonFireDefenseDebuff(6);
-					break;
-			}
-		}
+		KingBlackDragonBreathFollowup.tryApply(player, target, dragonBreathProc,
+			combatRandom(), procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		if (damage > 0 && player.getElderGreenDragonArmorProcChance() > 0.0D
 				&& combatRandom().nextDouble() < player.getElderGreenDragonArmorProcChance()) {
 			ElderGreenDragonArmorEffect.applyProc(player, target,

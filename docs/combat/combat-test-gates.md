@@ -367,3 +367,11 @@ Black set plus exact-marker payload gate moves; poison chance/state, marker
 ownership, presentation, transaction, and death adapters remain event-owned.
 The boundary is recorded in
 [`combat-a07-black-dragon-breath-followup.md`](combat-a07-black-dragon-breath-followup.md).
+
+A07.5G grows the current gate from 108 to 109 scenarios. Its executable
+contract verifies KBD's complete-set plus exact-marker gate, inclusive payload,
+zero-payload element application, each Water/Earth/Fire result, five-attack
+expiry, and no-draw ineligible calls. The three owner paths continue to retain
+poison chance/state, marker ownership, shared presentation, damage transaction,
+and death adapters. The boundary is recorded in
+[`combat-a07-king-black-dragon-breath-followup.md`](combat-a07-king-black-dragon-breath-followup.md).

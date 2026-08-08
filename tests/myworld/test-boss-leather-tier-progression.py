@@ -149,7 +149,7 @@ def main() -> int:
             "getDragonBreathArmorAppliedPoisonPower()",
             "getDragonBreathArmorProcKey()",
             '"king_black".equals(dragonBreathProc)',
-            "hasFullKingBlackDragonSet()",
+            "KingBlackDragonBreathFollowup.tryApply",
             "applyHellsInfernoSplash",
             "CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt)",
             "CombatEffectUtil.findPlayerOwnedNpcSplashTargets(",

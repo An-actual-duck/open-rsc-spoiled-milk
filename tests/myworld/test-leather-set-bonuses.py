@@ -21,6 +21,7 @@ BLUE_DRAGON_WATER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat
 EARTH_DRAGON_SLOW_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/EarthDragonSlowProc.java"
 RED_DRAGON_FIRE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/RedDragonFireProc.java"
 BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlackDragonBreathFollowup.java"
+KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/KingBlackDragonBreathFollowup.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
@@ -172,6 +173,7 @@ def main() -> None:
         expect_contains(path, "EarthDragonSlowProc.tryApply", f"{label} shared Earth Dragon slow proc")
         expect_contains(path, "RedDragonFireProc.tryApply", f"{label} shared Red Dragon fire proc")
         expect_contains(path, "BlackDragonBreathFollowup.tryApply", f"{label} shared Black Dragon follow-up")
+        expect_contains(path, "KingBlackDragonBreathFollowup.tryApply", f"{label} shared King Black Dragon follow-up")
     expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
     expect_contains(OGRE_STAGGER_PROC_PATH, "random.nextDouble()", "Ogre single random draw")
     expect_contains(OGRE_STAGGER_PROC_PATH, "source.getOgreStaggeringBlowProcChance()", "Ogre configured chance")
@@ -250,6 +252,34 @@ def main() -> None:
     expect_contains(BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "auxiliaryTrueDamage.apply(rolledDamage);",
                     "Black Dragon event-owned true-damage callback")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "!source.hasFullKingBlackDragonSet()\n\t\t\t\t|| !KING_BLACK_MARKER.equals(marker)",
+                    "KBD set and marker gate")
+    expect_not_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                        "random.nextDouble()",
+                        "KBD event-owned chance draw")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "random.nextIntInclusive(0, MAX_PROC_DAMAGE)",
+                    "KBD inclusive payload draw")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "auxiliaryTrueDamage.apply(rolledDamage);",
+                    "KBD event-owned true-damage callback")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "switch (random.nextIntInclusive(0, 2))",
+                    "KBD elemental selection draw")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "target.applyDragonWaterMaxHitDebuff(",
+                    "KBD water debuff")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "target.applyDragonEarthAttackSpeedDebuff(",
+                    "KBD earth debuff")
+    expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                    "target.applyDragonFireDefenseDebuff(",
+                    "KBD fire debuff")
+    expect_before(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
+                  "auxiliaryTrueDamage.apply(rolledDamage);",
+                  "switch (random.nextIntInclusive(0, 2))",
+                  "KBD damage-before-element policy")
     for path, label in ((COMBAT_EVENT_PATH, "combat"),
                         (PVM_MELEE_PATH, "pvm"),
                         (PROJECTILE_EVENT_PATH, "projectile")):
