@@ -808,7 +808,7 @@ public class CombatEvent extends GameTickEvent {
 	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
 			final int primaryDamageDealt) {
 		HellsInfernoNpcSplash.apply(player, primaryTarget, primaryDamageDealt,
-			(npc, splashDamage) -> applyHellsInfernoSplashDamage(player, npc, splashDamage));
+			(npc, splashDamage) -> inflictAuxiliaryMagicDamage(player, npc, splashDamage));
 	}
 
 	private void applyHellsInfernoPvpSplash(final Player player, final Player primaryTarget,
