@@ -326,3 +326,13 @@ five-attack accuracy-debuff refresh and expiry contract. Only the identical
 proc unit moves; phase gates, surrounding chain order, and debuff consumption
 remain with their existing owners. The boundary is recorded in
 [`combat-a07-baby-dragon-smoke-proc.md`](combat-a07-baby-dragon-smoke-proc.md).
+
+A07.5C grows the gate from 90 to 91 scenarios. Its pre-migration and parity
+fixture executes reciprocal melee, PvM melee, and projectile-impact owners and
+proves Blue Dragon water success on settled-zero primary damage, exact chance
+and inclusive damage-draw ordering, zero-damage successful procs, combat-style
+auxiliary contribution and hitsplats, no-draw rejection, and the target-owned
+five-attack max-hit-debuff refresh and expiry contract. The event owners retain
+the auxiliary true-damage transaction and death adapter behind a narrow
+callback. The boundary is recorded in
+[`combat-a07-blue-dragon-water-proc.md`](combat-a07-blue-dragon-water-proc.md).

@@ -14,6 +14,7 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
@@ -988,13 +989,10 @@ public class ProjectileEvent extends SingleTickEvent {
 			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
 				infernalMaxHit, -1.0D, 0.0D, false, 0, 0);
 		}
-		if (casterPlayer.hasFullBlueDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
-			}
-			opponent.applyDragonWaterMaxHitDebuff(10);
-		}
+		BlueDragonWaterProc.tryApply(casterPlayer, opponent,
+			ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(
+				caster, opponent, procDamage));
 		if (casterPlayer.hasFullEarthDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {

@@ -17,6 +17,7 @@ PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/Pvm
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 OGRE_STAGGER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/OgreStaggeringBlowProc.java"
 BABY_DRAGON_SMOKE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BabyDragonSmokeProc.java"
+BLUE_DRAGON_WATER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlueDragonWaterProc.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
@@ -43,6 +44,12 @@ def expect_not_contains(path: Path, needle: str, label: str) -> None:
     text = path.read_text()
     if needle in text:
         fail(f"{label} should not contain `{needle}` in {path}")
+
+
+def expect_before(path: Path, first: str, second: str, label: str) -> None:
+    text = path.read_text()
+    if first not in text or second not in text or text.index(first) >= text.index(second):
+        fail(f"{label} has incorrect ordering in {path}")
 
 
 def expect_item_descriptions(item_ids: range, description: str, label: str) -> None:
@@ -158,6 +165,7 @@ def main() -> None:
                         (PROJECTILE_EVENT_PATH, "projectile")):
         expect_contains(path, "OgreStaggeringBlowProc.tryApply", f"{label} shared Ogre stagger proc")
         expect_contains(path, "BabyDragonSmokeProc.tryApply", f"{label} shared Baby Dragon smoke proc")
+        expect_contains(path, "BlueDragonWaterProc.tryApply", f"{label} shared Blue Dragon water proc")
     expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
     expect_contains(OGRE_STAGGER_PROC_PATH, "random.nextDouble()", "Ogre single random draw")
     expect_contains(OGRE_STAGGER_PROC_PATH, "source.getOgreStaggeringBlowProcChance()", "Ogre configured chance")
@@ -173,6 +181,23 @@ def main() -> None:
     expect_contains(BABY_DRAGON_SMOKE_PROC_PATH,
                     "target.applySmokeAccuracyDebuff(smokePercent);",
                     "Baby Dragon target debuff")
+    expect_contains(BLUE_DRAGON_WATER_PROC_PATH,
+                    "if (!source.hasFullBlueDragonSet())",
+                    "Blue Dragon complete-set gate")
+    expect_contains(BLUE_DRAGON_WATER_PROC_PATH, "random.nextDouble()", "Blue Dragon chance draw")
+    expect_contains(BLUE_DRAGON_WATER_PROC_PATH,
+                    "random.nextIntInclusive(0, MAX_PROC_DAMAGE)",
+                    "Blue Dragon inclusive damage draw")
+    expect_contains(BLUE_DRAGON_WATER_PROC_PATH,
+                    "auxiliaryTrueDamage.apply(rolledDamage);",
+                    "Blue Dragon event-owned true-damage callback")
+    expect_contains(BLUE_DRAGON_WATER_PROC_PATH,
+                    "target.applyDragonWaterMaxHitDebuff(MAX_HIT_DEBUFF_PERCENT);",
+                    "Blue Dragon water debuff")
+    expect_before(BLUE_DRAGON_WATER_PROC_PATH,
+                  "auxiliaryTrueDamage.apply(rolledDamage);",
+                  "target.applyDragonWaterMaxHitDebuff(MAX_HIT_DEBUFF_PERCENT);",
+                  "Blue Dragon damage-before-debuff policy")
     for path, label in ((COMBAT_EVENT_PATH, "combat"),
                         (PVM_MELEE_PATH, "pvm"),
                         (PROJECTILE_EVENT_PATH, "projectile")):
@@ -215,7 +240,7 @@ def main() -> None:
     expect_not_contains(COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "legacy formula-only giant multiplier")
     expect_not_contains(OSRS_COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "osrs formula-only giant multiplier")
 
-    print("PASS: leather set bonuses and shared Ogre/Baby Dragon procs are wired")
+    print("PASS: leather set bonuses and bounded shared proc families are wired")
 
 
 if __name__ == "__main__":

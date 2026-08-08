@@ -203,4 +203,7 @@ A07.5 begins with the proven-identical Ogre Stagger proc recorded in
 [`combat-a07-ogre-stagger-proc.md`](combat-a07-ogre-stagger-proc.md), followed
 by the separately characterized Baby Dragon smoke proc recorded in
 [`combat-a07-baby-dragon-smoke-proc.md`](combat-a07-baby-dragon-smoke-proc.md).
+The third bounded family is the separately characterized Blue Dragon water proc
+recorded in
+[`combat-a07-blue-dragon-water-proc.md`](combat-a07-blue-dragon-water-proc.md).
 Later families still require separate characterization and branches.

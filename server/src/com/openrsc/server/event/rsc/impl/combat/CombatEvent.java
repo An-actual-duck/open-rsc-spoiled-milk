@@ -16,6 +16,7 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
@@ -762,13 +763,10 @@ public class CombatEvent extends GameTickEvent {
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
 				infernalMaxHit, -1.0D, 0.0D, false, 0, 0);
 		}
-		if (player.hasFullBlueDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-			target.applyDragonWaterMaxHitDebuff(10);
-		}
+		BlueDragonWaterProc.tryApply(player, target,
+			ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		if (player.hasFullEarthDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {

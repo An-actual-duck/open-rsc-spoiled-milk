@@ -23,6 +23,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.combat.AttackIntent;
@@ -534,13 +535,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvm_melee", target, damage, infernalPieces,
 				infernalMaxHit, -1.0D, 0.0D, false, 0, 0);
 		}
-		if (player.hasFullBlueDragonSet() && combatRandom().nextDouble() < 0.20D) {
-			final int procDamage = combatRandom().nextIntInclusive(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-			target.applyDragonWaterMaxHitDebuff(10);
-		}
+		BlueDragonWaterProc.tryApply(player, target, combatRandom(),
+			procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		if (player.hasFullEarthDragonSet() && combatRandom().nextDouble() < 0.20D) {
 			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {

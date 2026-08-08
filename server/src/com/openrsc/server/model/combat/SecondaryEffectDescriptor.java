@@ -199,7 +199,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
 		RandomTiming.SINGLE_DRAW_THEN_PAYLOAD, StateOwner.TARGET_DEBUFF,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.HIT_SPLAT,
-		"central applyLeatherSetOnHitEffects methods", "dragon leather fixtures"),
+		"BlueDragonWaterProc via central on-hit methods", "A07.5C compiled water parity fixture"),
 	EARTH_DRAGON_SLOW("semantic.earth-dragon-slow",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
