@@ -24,6 +24,7 @@ INFERNAL_FIRE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/Inf
 ELDER_GREEN_ARMOR_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/ElderGreenDragonArmorProc.java"
 BEAR_MAUL_SECOND_HIT_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BearMaulSecondHit.java"
 DRAGON_MELEE_BREATH_PATH = ROOT / "server/src/com/openrsc/server/model/combat/DragonMeleeBreathFollowup.java"
+ELEMENTAL_SWORD_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/ElementalSwordProc.java"
 BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlackDragonBreathFollowup.java"
 KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/KingBlackDragonBreathFollowup.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
@@ -284,6 +285,12 @@ def main() -> None:
                     "breathDamageRoll.roll()", "Dragon melee breath owner formula callback")
     expect_contains(DRAGON_MELEE_BREATH_PATH,
                     "auxiliaryTrueDamage.apply(damage)", "Dragon melee breath owner damage callback")
+    expect_contains(ELEMENTAL_SWORD_PROC_PATH,
+                    "Projectile.ICE_SWORD_STAB", "Elemental Sword ice projectile")
+    expect_contains(ELEMENTAL_SWORD_PROC_PATH,
+                    "debuffApplier.apply(effect)", "Elemental Sword owner debuff callback")
+    expect_contains(ELEMENTAL_SWORD_PROC_PATH,
+                    "auxiliaryTrueDamage.apply(damage)", "Elemental Sword owner damage callback")
     expect_contains(BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "!source.hasFullBlackDragonSet() || !BLACK_MARKER.equals(marker)",
                     "Black Dragon set and marker gate")

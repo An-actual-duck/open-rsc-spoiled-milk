@@ -37,6 +37,7 @@ import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
+import com.openrsc.server.model.combat.ElementalSwordProc;
 import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
@@ -596,23 +597,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
-		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		final int effectType = CombatFormula.getElementalSwordProcEffect(hitter);
-		if (effectType == CombatEffect.NONE || !CombatFormula.rollElementalSwordProcChance(hitter)) {
-			return;
-		}
-		if (effectType == CombatEffect.ICE_SWORD) {
-			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.ICE_SWORD_STAB));
-		} else {
-			target.getUpdateFlags().setCombatEffect(new CombatEffect(target, effectType));
-		}
-		CombatFormula.applyElementalSwordProcDebuff(target, effectType);
-		final int procDamage = CombatFormula.rollElementalSwordProcDamage(hitter);
-		if (procDamage > 0) {
-			inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-		}
+		ElementalSwordProc.tryApply(hitter, target,
+			() -> CombatFormula.getElementalSwordProcEffect(hitter),
+			() -> CombatFormula.rollElementalSwordProcChance(hitter),
+			effect -> CombatFormula.applyElementalSwordProcDebuff(target, effect),
+			() -> CombatFormula.rollElementalSwordProcDamage(hitter),
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
 	}
 
 	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {
