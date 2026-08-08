@@ -616,8 +616,10 @@ lifesteal, contribution, drop, XP, or callback-cardinality drift.
 Status: the first bounded slice is implemented for player generic poison. One
 versioned, live-reference-free record now replaces legacy cache writes;
 login normalizes or clears legacy state, restores one event, and removes
-legacy shadow/orphan keys. Actual save/restart and save-failure atomicity remain
-the next persistence gates.
+legacy shadow/orphan keys. Failed-save atomicity now retains the live player
+and target-owned poison event, clearing only request flags for retry; it never
+reports a failed database write as a successful logout. Actual process-restart
+coverage remains the next persistence gate.
 
 - Read current `poisoned`, `poisoned_max`, `burn_damage`, and `burn_pulses` as
   legacy inputs under a versioned migration.
