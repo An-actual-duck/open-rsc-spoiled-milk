@@ -43,6 +43,7 @@ import com.openrsc.server.model.combat.ElementalSwordProc;
 import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
+import com.openrsc.server.model.combat.KolodionFireClawProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
@@ -605,12 +606,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyNpcMeleeSpecialProc(final Mob hitter, final Mob target, final int damage) {
-		if (!hitter.isNpc() || damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		final Npc npc = (Npc) hitter;
-		if (npc.getID() != NpcId.KOLODION_DEMON.id()
-			|| combatRandom().nextDouble() >= KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE) {
+		if (!KolodionFireClawProc.tryApply(hitter, target, damage,
+			KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE, combatRandom())) {
 			return;
 		}
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.FIRE_CLAW));

@@ -330,6 +330,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatElementalSwordProcCharacterization::elementalSwordPolicies);
 			run(harness, "demon_pitchfork_preserves_hell_blaze_callback_order",
 				CurrentCombatDemonPitchforkCharacterization::hellBlazePolicies);
+			run(harness, "kolodion_fire_claw_preserves_gate_and_rng_boundary",
+				CurrentCombatKolodionFireClawCharacterization::fireClawPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
