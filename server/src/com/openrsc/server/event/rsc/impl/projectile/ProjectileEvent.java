@@ -24,6 +24,7 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.InfernalFireProc;
+import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
@@ -1022,15 +1023,8 @@ public class ProjectileEvent extends SingleTickEvent {
 
 	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
 			final int primaryDamageDealt) {
-		final int splashDamage = CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt);
-		if (splashDamage <= 0) {
-			return;
-		}
-		for (Npc npc : CombatEffectUtil.findPlayerOwnedNpcSplashTargets(
-			player, primaryTarget, CombatEffectUtil.HELLS_INFERNO_SPLASH_RADIUS)) {
-			npc.getUpdateFlags().setCombatEffect(new CombatEffect(npc, CombatEffect.HELLS_INFERNO));
-			inflictAuxiliaryMagicDamage(player, npc, splashDamage);
-		}
+		HellsInfernoNpcSplash.apply(player, primaryTarget, primaryDamageDealt,
+			(npc, splashDamage) -> inflictAuxiliaryMagicDamage(player, npc, splashDamage));
 	}
 
 	private void applyDragonWeaponBreathDamage() {
