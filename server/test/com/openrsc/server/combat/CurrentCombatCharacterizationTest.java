@@ -177,6 +177,27 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::ordinaryNpcRetreatAndReengagement);
 			run(harness, "npc_poison_clears_on_death_and_respawn",
 				CurrentCombatCharacterizationTest::poisonDeathAndRespawn);
+			run(harness, "generic_poison_stacking_ownership_and_cadence_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonStackingOwnershipAndCadence);
+			run(harness, "generic_poison_leach_tracks_live_source_sessions_without_contribution",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonPulseLeachAndSourceAvailability);
+			run(harness, "generic_poison_thresholds_and_live_decay_equipment_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonThresholdsAndLiveDecayEquipment);
+			run(harness, "generic_poison_legacy_restore_and_orphan_cleanup_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonPersistenceAndOrphanCompatibility);
+			run(harness, "generic_burn_replacement_restore_and_cleanup_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::burnReplacementPersistenceAndCleanup);
+			run(harness, "elder_burns_stop_when_their_required_sources_leave",
+				CurrentCombatDotLifecycleCharacterization
+					::elderBurnSourceAvailability);
+			run(harness, "dot_target_death_and_poison_lethal_attribution_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::targetDeathAndLethalAttributionBoundaries);
 			run(harness, "poisoned_exalted_rune_dagger_and_spear_apply_tier_twelve_poison",
 				CurrentCombatCharacterizationTest::poisonedExaltedRuneWeaponPower);
 			run(harness, "cleric_ward_aegis_rally_thorns_order",
