@@ -207,6 +207,15 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_target_death_and_poison_lethal_attribution_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::targetDeathAndLethalAttributionBoundaries);
+			run(harness, "player_target_poison_lethal_attribution_is_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::playerTargetLethalAttributionBoundaries);
+			run(harness, "core_combat_poison_producers_have_success_and_miss_parity",
+				CurrentCombatDotLifecycleCharacterization
+					::coreCombatPoisonProducerParity);
+			run(harness, "named_poison_producers_have_success_and_miss_parity",
+				CurrentCombatDotLifecycleCharacterization
+					::namedPoisonProducerParity);
 			run(harness, "poisoned_exalted_rune_dagger_and_spear_apply_tier_twelve_poison",
 				CurrentCombatCharacterizationTest::poisonedExaltedRuneWeaponPower);
 			run(harness, "cleric_ward_aegis_rally_thorns_order",

@@ -3,15 +3,25 @@ package com.openrsc.server.combat;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.BurnEvent;
 import com.openrsc.server.event.rsc.impl.PoisonEvent;
+import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
+import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
+import com.openrsc.server.event.rsc.impl.combat.scripts.all.NpcPoisonPlayerScript;
+import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.player.PrayerCatalog;
+import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.net.rsc.handlers.SpellHandler;
 import com.openrsc.server.util.rsc.DataConversions;
 
 import java.lang.reflect.Method;
@@ -653,6 +663,209 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"opponentless lethal compatibility result still drives Leach");
 	}
 
+	static void playerTargetLethalAttributionBoundaries(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player poisonOwner = harness.player(
+			"dot pvp poison owner", 680, 680);
+		final Npc engagedNpc = harness.npc(
+			NpcId.GREATER_DEMON.id(), 682, 680);
+		final Player playerOwnedVictim = harness.player(
+			"dot pvp owned victim", 681, 680);
+		harness.recordOutgoingPackets(playerOwnedVictim);
+		setHits(playerOwnedVictim, 4, 40);
+		playerOwnedVictim.setOpponent(engagedNpc);
+		playerOwnedVictim.applyPoison(40, 40, poisonOwner);
+		final PoisonEvent ownedEvent = playerOwnedVictim.getAttribute(
+			"poisonEvent", null);
+		ownedEvent.run();
+		final DeathLifecycleSnapshot ownedDeath =
+			playerOwnedVictim.getDeathLifecycleSnapshot();
+		assertTrue(ownedDeath.getContext().getKiller() == engagedNpc,
+			"player-owned lethal poison currently credits the victim's opponent");
+		assertTrue(ownedDeath.getContext().getKiller() != poisonOwner,
+			"player-owned lethal poison does not credit its durable owner");
+
+		final Npc poisonNpc = harness.npc(
+			NpcId.DUNGEON_SPIDER.id(), 684, 680);
+		final Npc unrelatedNpc = harness.npc(
+			NpcId.GREATER_DEMON.id(), 686, 680);
+		final Player npcOwnedVictim = harness.player(
+			"dot npc owned victim", 685, 680);
+		harness.recordOutgoingPackets(npcOwnedVictim);
+		setHits(npcOwnedVictim, 4, 40);
+		npcOwnedVictim.setOpponent(unrelatedNpc);
+		npcOwnedVictim.applyPoison(40, 40, poisonNpc);
+		final PoisonEvent npcOwnedEvent = npcOwnedVictim.getAttribute(
+			"poisonEvent", null);
+		assertNull(poisonOwner(npcOwnedEvent),
+			"NPC poison source identity is discarded at application");
+		npcOwnedEvent.run();
+		final DeathLifecycleSnapshot npcOwnedDeath =
+			npcOwnedVictim.getDeathLifecycleSnapshot();
+		assertTrue(npcOwnedDeath.getContext().getKiller() == unrelatedNpc,
+			"NPC-sourced lethal poison currently credits an unrelated opponent");
+		assertTrue(npcOwnedDeath.getContext().getKiller() != poisonNpc,
+			"NPC-sourced lethal poison cannot retain its applying NPC");
+
+		final Npc environmentalOpponent = harness.npc(
+			NpcId.GREATER_DEMON.id(), 688, 680);
+		final Player environmentalVictim = harness.player(
+			"dot environment victim", 687, 680);
+		harness.recordOutgoingPackets(environmentalVictim);
+		setHits(environmentalVictim, 4, 40);
+		environmentalVictim.setOpponent(environmentalOpponent);
+		environmentalVictim.applyPoison(40, 40);
+		final PoisonEvent environmentalEvent = environmentalVictim.getAttribute(
+			"poisonEvent", null);
+		environmentalEvent.run();
+		assertTrue(environmentalVictim.getDeathLifecycleSnapshot()
+				.getContext().getKiller() == environmentalOpponent,
+			"unattributed lethal poison currently credits the victim's opponent");
+	}
+
+	static void coreCombatPoisonProducerParity(
+			final CurrentCombatHarness harness) throws Exception {
+		final int weaponId = ItemId.POISONED_RUNE_DAGGER.id();
+
+		final Player reciprocalSource = harness.player(
+			"dot reciprocal source", 690, 680);
+		harness.equip(reciprocalSource, weaponId, 1);
+		final Npc reciprocalMiss = npcWithHits(harness, 691, 680, 40);
+		final CombatEvent reciprocal = new CombatEvent(
+			harness.world(), reciprocalSource, reciprocalMiss);
+		invokePoisonProducer(reciprocal, CombatEvent.class,
+			reciprocalSource, reciprocalMiss, 0);
+		assertNull(reciprocalMiss.getAttribute("poisonEvent", null),
+			"zero-damage reciprocal melee cannot poison");
+		final Npc reciprocalHit = npcWithHits(harness, 692, 680, 40);
+		invokePoisonProducer(reciprocal, CombatEvent.class,
+			reciprocalSource, reciprocalHit, 1);
+		assertWeaponPoison(reciprocalHit, reciprocalSource,
+			"reciprocal melee poison");
+
+		final Player pvmSource = harness.player("dot pvm source", 694, 680);
+		harness.equip(pvmSource, weaponId, 1);
+		final Npc pvmMiss = npcWithHits(harness, 695, 680, 40);
+		final PvmMeleeEvent pvm = new PvmMeleeEvent(
+			harness.world(), pvmSource, pvmMiss);
+		invokePoisonProducer(pvm, PvmMeleeEvent.class, pvmSource, pvmMiss, 0);
+		assertNull(pvmMiss.getAttribute("poisonEvent", null),
+			"zero-damage PvM melee cannot poison");
+		final Npc pvmHit = npcWithHits(harness, 696, 680, 40);
+		invokePoisonProducer(pvm, PvmMeleeEvent.class, pvmSource, pvmHit, 1);
+		assertWeaponPoison(pvmHit, pvmSource, "PvM melee poison");
+
+		final Player projectileSource = harness.player(
+			"dot projectile source", 698, 680);
+		final Npc projectileMiss = npcWithHits(harness, 699, 680, 40);
+		final ProjectileEvent missedProjectile = new ProjectileEvent(
+			harness.world(), projectileSource, projectileMiss, 0, 2, false,
+			weaponId);
+		invokeNoArg(missedProjectile, ProjectileEvent.class,
+			"applyWeaponPoison");
+		assertNull(projectileMiss.getAttribute("poisonEvent", null),
+			"zero-damage projectile cannot poison");
+		final Npc projectileHit = npcWithHits(harness, 700, 680, 40);
+		final ProjectileEvent hitProjectile = new ProjectileEvent(
+			harness.world(), projectileSource, projectileHit, 1, 2, false,
+			weaponId);
+		invokeNoArg(hitProjectile, ProjectileEvent.class,
+			"applyWeaponPoison");
+		assertWeaponPoison(projectileHit, projectileSource,
+			"projectile weapon poison");
+
+		final Player acidSource = harness.player("dot acid source", 702, 680);
+		final Npc acidMiss = npcWithHits(harness, 703, 680, 40);
+		final ProjectileEvent missedAcid = acidProjectile(
+			harness.world(), acidSource, acidMiss, 0);
+		invokeNoArg(missedAcid, ProjectileEvent.class,
+			"applyDualElementOnHitEffects");
+		assertNull(acidMiss.getAttribute("poisonEvent", null),
+			"zero-damage dual-element Acid cannot poison");
+		final Npc acidHit = npcWithHits(harness, 704, 680, 40);
+		forceNextLegacyRandomBelow(0.25D);
+		final ProjectileEvent hitAcid = acidProjectile(
+			harness.world(), acidSource, acidHit, 1);
+		invokeNoArg(hitAcid, ProjectileEvent.class,
+			"applyDualElementOnHitEffects");
+		assertEquals(40, acidHit.getCurrentPoisonPower(),
+			"dual-element Acid applied power");
+		assertEquals(40, acidHit.getPoisonMaxPower(),
+			"dual-element Acid maximum power");
+		assertEquals(acidSource.getUUID(), poisonOwner(
+			acidHit.getAttribute("poisonEvent", null)),
+			"dual-element Acid source");
+	}
+
+	static void namedPoisonProducerParity(
+			final CurrentCombatHarness harness) throws Exception {
+		final SpellHandler spellHandler = new SpellHandler();
+		final Player guthixSource = harness.player(
+			"dot guthix source", 706, 680);
+		final Npc primary = npcWithHits(harness, 707, 680, 40);
+		invokeGuthixPoison(spellHandler, guthixSource, primary, false, true);
+		assertEquals(20, primary.getCurrentPoisonPower(),
+			"primary Guthix poison applied power");
+		assertEquals(40, primary.getPoisonMaxPower(),
+			"primary Guthix poison maximum power");
+		assertEquals(guthixSource.getUUID(), poisonOwner(
+			primary.getAttribute("poisonEvent", null)),
+			"primary Guthix poison source");
+
+		final Npc secondaryMiss = npcWithHits(harness, 708, 680, 40);
+		forceNextLegacyRandomAtLeast(0.50D);
+		invokeGuthixPoison(
+			spellHandler, guthixSource, secondaryMiss, true, false);
+		assertNull(secondaryMiss.getAttribute("poisonEvent", null),
+			"failed secondary Guthix roll cannot poison");
+		final Npc secondaryHit = npcWithHits(harness, 709, 680, 40);
+		forceNextLegacyRandomBelow(0.50D);
+		invokeGuthixPoison(
+			spellHandler, guthixSource, secondaryHit, true, false);
+		assertEquals(20, secondaryHit.getCurrentPoisonPower(),
+			"successful advanced secondary Guthix applied power");
+		assertEquals(40, secondaryHit.getPoisonMaxPower(),
+			"successful advanced secondary Guthix maximum power");
+
+		final Player auraSource = harness.player("dot aura source", 711, 680);
+		auraSource.setPrayerBook(PrayerCatalog.GodLine.GUTHIX);
+		harness.equip(auraSource, ItemId.GUTHIX_MACE.id(), 1);
+		auraSource.getPrayers().setPrayer(Prayers.CORROSIVE_AURA, true, false);
+		final Npc auraTarget = npcWithHits(harness, 712, 680, 40);
+		assertFalse(CorrosiveAura.apply(auraSource, auraTarget, 0),
+			"zero incoming damage cannot trigger Corrosive Aura");
+		assertNull(auraTarget.getAttribute("poisonEvent", null),
+			"failed Corrosive Aura leaves no poison state");
+		assertTrue(CorrosiveAura.apply(auraSource, auraTarget, 1),
+			"eligible Corrosive Aura application succeeds");
+		assertEquals(10, auraTarget.getCurrentPoisonPower(),
+			"full-health Corrosive Aura applied power");
+		assertEquals(10, auraTarget.getPoisonMaxPower(),
+			"first Corrosive Aura maximum power");
+		assertEquals(auraSource.getUUID(), poisonOwner(
+			auraTarget.getAttribute("poisonEvent", null)),
+			"Corrosive Aura source");
+
+		final NpcPoisonPlayerScript npcPoison = new NpcPoisonPlayerScript();
+		final Npc spider = harness.npc(NpcId.DUNGEON_SPIDER.id(), 714, 680);
+		final Player protectedVictim = harness.player(
+			"dot protected victim", 715, 680);
+		protectedVictim.setAntidoteProtection();
+		assertFalse(npcPoison.shouldExecute(spider, protectedVictim),
+			"antidote blocks NPC poison before its random roll");
+		assertNull(protectedVictim.getAttribute("poisonEvent", null),
+			"blocked NPC poison leaves no state");
+		final Player npcVictim = harness.player("dot npc victim", 716, 680);
+		forceNextLegacyIntAtLeast(90);
+		assertTrue(npcPoison.shouldExecute(spider, npcVictim),
+			"eligible poison NPC succeeds on a deterministic roll");
+		npcPoison.executeScript(spider, npcVictim);
+		assertEquals(38, npcVictim.getCurrentPoisonPower(),
+			"default NPC poison applied power");
+		assertNull(poisonOwner(npcVictim.getAttribute("poisonEvent", null)),
+			"NPC poison is currently unattributed");
+	}
+
 	private static Npc npcWithHits(final CurrentCombatHarness harness,
 			final int x, final int y, final int hits) {
 		final Npc npc = harness.npc(NpcId.GREATER_DEMON.id(), x, y);
@@ -676,6 +889,48 @@ final class CurrentCombatDotLifecycleCharacterization {
 		}
 	}
 
+	private static void assertWeaponPoison(final Npc target,
+			final Player source, final String label) {
+		assertEquals(40, target.getCurrentPoisonPower(),
+			label + " applied power");
+		assertEquals(100, target.getPoisonMaxPower(),
+			label + " maximum power");
+		assertEquals(source.getUUID(), poisonOwner(
+			target.getAttribute("poisonEvent", null)), label + " source");
+	}
+
+	private static ProjectileEvent acidProjectile(final World world,
+			final Player source, final Npc target, final int damage) {
+		return new ProjectileEvent(world, source, target, damage, 1, false,
+			0, 0, 0, 0, 0, 0, false, 0, 40, 0, 0);
+	}
+
+	private static void invokePoisonProducer(final Object event,
+			final Class<?> owner, final Mob source, final Mob target,
+			final int damage) throws Exception {
+		final Method method = owner.getDeclaredMethod("applyWeaponPoison",
+			Mob.class, Mob.class, int.class);
+		method.setAccessible(true);
+		method.invoke(event, source, target, damage);
+	}
+
+	private static void invokeNoArg(final Object event, final Class<?> owner,
+			final String methodName) throws Exception {
+		final Method method = owner.getDeclaredMethod(methodName);
+		method.setAccessible(true);
+		method.invoke(event);
+	}
+
+	private static void invokeGuthixPoison(final SpellHandler handler,
+			final Player source, final Mob target, final boolean advanced,
+			final boolean primary) throws Exception {
+		final Method method = SpellHandler.class.getDeclaredMethod(
+			"applyGuthixGodSpellPoison", Player.class, Mob.class,
+			boolean.class, boolean.class);
+		method.setAccessible(true);
+		method.invoke(handler, source, target, advanced, primary);
+	}
+
 	private static void applyElderBossBurn(final World world,
 			final Npc dragon, final Player target) throws Exception {
 		final Method method = ElderGreenDragonSpecialAttacks.class
@@ -693,6 +948,28 @@ final class CurrentCombatDotLifecycleCharacterization {
 			}
 		}
 		throw new AssertionError("No deterministic legacy random seed found");
+	}
+
+	private static void forceNextLegacyRandomAtLeast(final double threshold) {
+		for (long seed = 0L; seed < 100_000L; seed++) {
+			final java.util.Random candidate = new java.util.Random(seed);
+			if (candidate.nextDouble() >= threshold) {
+				DataConversions.getRandom().setSeed(seed);
+				return;
+			}
+		}
+		throw new AssertionError("No deterministic legacy random seed found");
+	}
+
+	private static void forceNextLegacyIntAtLeast(final int threshold) {
+		for (long seed = 0L; seed < 100_000L; seed++) {
+			final java.util.Random candidate = new java.util.Random(seed);
+			if (candidate.nextInt(100) >= threshold) {
+				DataConversions.getRandom().setSeed(seed);
+				return;
+			}
+		}
+		throw new AssertionError("No deterministic legacy integer seed found");
 	}
 
 	private static GameTickEvent findOwnedEvent(

@@ -1,9 +1,9 @@
 # A08.2 DoT Lifecycle Characterization
 
-Status: first executable current-state evidence milestone complete; the four
+Status: second executable current-state evidence milestone complete; the four
 gameplay-policy decisions below were approved by the project owner on
-2026-08-07. Remaining corruption, producer, and player-death fixtures still
-precede typed runtime implementation.
+2026-08-07. Remaining exceptional producer and failure-injection fixtures
+still precede typed runtime implementation.
 
 Baseline: published `main` at `904218197c72be996329a50c9acd8d873fac6a7d`.
 
@@ -50,6 +50,11 @@ hide it behind equal final Hits.
 - player death clearing generic poison and generic burn runtime/cache state;
 - lethal poison credit when a different opponent is engaged and the
   opponentless lethal boundary; and
+- player-target lethal poison attribution for player, NPC, and unattributed
+  application sources when a different opponent is attached at death;
+- deterministic successful and guarded/failed application through reciprocal
+  melee, PvM melee, projectile weapon poison, dual-element Acid, primary and
+  secondary Guthix poison, Corrosive Aura, and NPC poison; and
 - Elder armor burn stopping on player-source logout and Elder boss burn
   stopping on dragon-source removal.
 
@@ -121,6 +126,38 @@ poison owner through Leach.
 This is evidence for the A08/A09 attribution decision, not authorization to
 redirect rewards in this phase.
 
+### Player poison deaths discard causal source identity
+
+The player-target cases confirm the same opponent substitution at a more
+dangerous boundary. A player poison owner remains available to `PoisonEvent`
+only as a UUID for Leach, while an NPC source is discarded during application
+and environment/script poison has no source. When the pulse kills a player,
+all three paths call `killedBy` with the victim's current opponent. The death
+lifecycle therefore records an unrelated engaged NPC as killer in each tested
+case, not the poison applier or an explicit environment cause.
+
+A08.3 needs a causal source kind and durable identity that can be passed into
+death settlement. It must not infer poison ownership from the mutable opponent
+field, and it must define a safe offline/despawned-source fallback without
+holding a stale live `Mob` reference.
+
+### Core and named producer parity
+
+The executable producer slice now proves both no-damage/failed guards and
+successful application for the common combat routes. It also pins the current
+power/source differences: Rune dagger poison applies 40 with a 100 ceiling,
+dual-element Acid 40/40, ordinary primary Guthix 20/40, advanced secondary
+Guthix 20/40 after its 50% roll, full-health Corrosive Aura 10/10, and default
+Dungeon Spider poison 38/38 without source identity. Antidote protection blocks
+the NPC producer before its random roll.
+
+This coverage uses production methods and deterministic production random
+sources; it does not substitute a model-only calculation. Sinister Chest,
+admin self-poison, and the disabled-on-My-World legacy PvP script remain for a
+later exceptional-producer slice because their value lies chiefly in plugin,
+command, and configuration integration boundaries rather than another direct
+`Mob.applyPoison` formula.
+
 ## Current behavior now guarded
 
 | Boundary | Executable result |
@@ -143,8 +180,12 @@ redirect rewards in this phase.
 | Negative/overflow poison | Invalid running state restores/forms, then pulse validation throws |
 | Wrong runtime attribute type | Cure/extinguish throws instead of failing closed |
 | Player death | Generic poison and burn state/cache clear |
+| Player poison death | Mutable current opponent, not poison source, owns death lifecycle |
+| NPC/environment poison death | Applying cause is absent; mutable current opponent owns death lifecycle |
 | Elder armor source logout | Event clears before another pulse |
 | Elder boss source removal | Event and target markers clear before another pulse |
+| Core poison producers | Reciprocal/PvM/projectile weapon and Acid success plus zero-damage guard characterized |
+| Named poison producers | Guthix, Corrosive Aura, and NPC success/failed gates characterized |
 
 ## Approved policy decisions
 
@@ -181,9 +222,9 @@ The next characterization slice should cover:
 - deliberate duplicate scheduler registration attempts;
 - excessive pulse/damage burn values and mismatched mixed cache values;
 - failed logout-save and tick/death callback failure injection;
-- player-target poison lethal attribution for player/NPC/environment sources;
-- deterministic successful/failed application parity for every producer
-  family; and
+- exceptional producer integration for legacy non-My-World PvP poison,
+  Sinister Chest, and admin self-poison, plus producer-inventory drift checks;
+  and
 - server-restart persistence once a versioned source record exists to preserve.
 
 Cases governed by the four approved decisions should gain explicit target-
@@ -192,7 +233,7 @@ migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 102/102 scenarios.
+- `./server/test_combat` — PASS, 105/105 scenarios.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.
