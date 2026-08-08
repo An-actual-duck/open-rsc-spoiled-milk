@@ -21,6 +21,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.KillType;
@@ -731,9 +732,8 @@ public class CombatEvent extends GameTickEvent {
 		if (damage > 0) {
 			player.applyElementalGiantMightDebuff(target);
 		}
-		if (player.hasFullOgreSet() && DataConversions.getRandom().nextDouble() < player.getOgreStaggeringBlowProcChance()) {
-			target.applyOgreStaggerDebuff();
-		}
+		OgreStaggeringBlowProc.tryApply(
+			player, target, ProductionGameRandom.INSTANCE);
 		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
 			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));

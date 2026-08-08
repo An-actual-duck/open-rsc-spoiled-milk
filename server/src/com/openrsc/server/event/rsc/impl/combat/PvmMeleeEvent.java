@@ -31,6 +31,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -507,9 +508,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (damage > 0) {
 			player.applyElementalGiantMightDebuff(target);
 		}
-		if (player.hasFullOgreSet() && combatRandom().nextDouble() < player.getOgreStaggeringBlowProcChance()) {
-			target.applyOgreStaggerDebuff();
-		}
+		OgreStaggeringBlowProc.tryApply(player, target, combatRandom());
 		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && combatRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
 			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));

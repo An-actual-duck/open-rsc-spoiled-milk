@@ -18,6 +18,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
 import com.openrsc.server.model.combat.ProjectileImpactValidator;
@@ -959,9 +960,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (damage > 0 && (type == 2 || type == 5)) {
 			casterPlayer.applyElementalGiantMightDebuff(opponent);
 		}
-		if (casterPlayer.hasFullOgreSet() && DataConversions.getRandom().nextDouble() < casterPlayer.getOgreStaggeringBlowProcChance()) {
-			opponent.applyOgreStaggerDebuff();
-		}
+		OgreStaggeringBlowProc.tryApply(
+			casterPlayer, opponent, ProductionGameRandom.INSTANCE);
 		final int smokePercent = casterPlayer.getBabyDragonSmokeAccuracyDebuffPercent();
 		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < casterPlayer.getBabyDragonSmokeProcChance()) {
 			opponent.getUpdateFlags().setProjectile(new Projectile(caster, opponent, Projectile.BLOW_SMOKE));
