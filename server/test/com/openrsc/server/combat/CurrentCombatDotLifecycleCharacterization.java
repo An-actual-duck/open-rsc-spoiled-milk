@@ -14,6 +14,7 @@ import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.combat.scripts.all.NpcPoisonPlayerScript;
 import com.openrsc.server.event.rsc.impl.combat.scripts.all.PlayerPoisonScript;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.login.PlayerSaveRequest;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -359,6 +360,13 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"negative poison fails when its first pulse validates power");
 		assertTrue(negativeEvent.isRunning(),
 			"failed negative poison pulse leaves event running");
+		for (int tick = 0; tick < 8; tick++) {
+			negativeEvent.tick();
+		}
+		assertEquals(1, negativeEvent.call().intValue(),
+			"scheduler boundary reports the invalid poison callback failure");
+		assertFalse(negativeEvent.isRunning(),
+			"scheduler callback failure stops the invalid poison event");
 		negativePoison.curePoison();
 
 		final Player invertedPoison = harness.player(
@@ -414,6 +422,39 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"wrong burn attribute type currently aborts cleanup");
 		wrongBurnAttribute.removeAttribute("burnEvent");
 		wrongBurnAttribute.extinguish();
+	}
+
+	static void failedLogoutSaveBoundary(
+			final CurrentCombatHarness harness) {
+		final Player player = harness.player("dot failed logout save", 675, 680);
+		player.applyPoison(40, 40);
+		final PoisonEvent poison = player.getAttribute("poisonEvent", null);
+		assertNotNull(poison,
+			"logout-save fixture begins with active persisted poison");
+		player.setSaving(true);
+		player.setLoggingOut(true);
+
+		// Harness players intentionally have no database row. The production
+		// service reaches its missing-row error path without a write. Its current
+		// MessageFormat error path throws before PlayerSaveRequest can clear the
+		// flags or apply its documented failed-save logout policy.
+		assertThrows(IllegalArgumentException.class,
+			() -> new PlayerSaveRequest(harness.server(), player, true).process(),
+			"missing-row logout save escapes before request cleanup");
+
+		assertTrue(player.loggedIn(),
+			"failed logout save leaves the live session present by current behavior");
+		assertTrue(player.isSaving(),
+			"failed logout save leaves saving state stuck");
+		assertTrue(player.isLoggingOut(),
+			"failed logout save leaves logout state stuck");
+		assertTrue(poison.isRunning(),
+			"failed logout save leaves owner-bound poison running");
+		assertTrue(harness.world().getPlayers().contains(player),
+			"failed logout save leaves the player in the world list");
+		player.setSaving(false);
+		player.setLoggingOut(false);
+		player.curePoison();
 	}
 
 	static void repeatedRelogEventCardinality(

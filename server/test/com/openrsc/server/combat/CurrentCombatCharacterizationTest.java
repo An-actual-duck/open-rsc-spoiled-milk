@@ -195,6 +195,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_corrupt_legacy_and_runtime_state_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::corruptLegacyAndRuntimeStateBoundaries);
+			run(harness, "dot_failed_logout_save_cleanup_is_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::failedLogoutSaveBoundary);
 			run(harness, "dot_repeated_relogs_preserve_one_fresh_event_per_effect",
 				CurrentCombatDotLifecycleCharacterization
 					::repeatedRelogEventCardinality);

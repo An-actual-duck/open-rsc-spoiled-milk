@@ -1,10 +1,11 @@
 # A08.2 DoT Lifecycle Characterization
 
-Status: second executable current-state evidence milestone complete; the four
+Status: executable current-state evidence milestone complete; the four
 gameplay-policy decisions below were approved by the project owner on
 2026-08-07. A third exceptional-boundaries fixture now covers the legacy PvP
-producer and valid large generic-burn values. Plugin/command integration and
-failure-injection fixtures still precede typed runtime implementation.
+producer, valid large generic-burn values, scheduler callback failure, and
+failed logout-save cleanup. The remaining exceptional producer assertions are
+source-order guards; typed runtime implementation can now begin.
 
 Baseline: published `main` at `904218197c72be996329a50c9acd8d873fac6a7d`.
 
@@ -45,6 +46,16 @@ hide it behind equal final Hits.
   replacement behavior, complete-pair restoration, partial-pair behavior, and
   NPC-removal behavior;
 - nonnumeric burn-cache and wrong-runtime-attribute burn failure behavior;
+- scheduler-dispatched invalid poison callback behavior: the event boundary
+  catches the exception, reports failure, and stops the event (unlike direct
+  `run()` invocation, which leaves it running);
+- failed NPC death-listener behavior through the shared combat fixture: the
+  terminal lifecycle is acquired, removal and preceding rewards occur once,
+  and a later lethal request cannot replay the throwing callback; and
+- missing-row logout-save behavior through the real `PlayerSaveRequest` and
+  `PlayerService` path: current error formatting throws before request cleanup,
+  leaving the live session, save/logout flags, and owner-bound poison event in
+  place;
 - three repeated fresh target sessions restoring poison and burn exactly once,
   with logout stopping/removing each session's scheduler entries and each new
   session receiving new event identities/full countdowns;
@@ -206,6 +217,25 @@ cleans up its event; the combat presentation layer caps that hitsplat at 255.
 Typed A08 state must decide and validate its maximums explicitly, while
 preserving that client-facing cap wherever protocol compatibility requires it.
 
+### Failure boundaries are not transactional today
+
+There are two distinct failure boundaries. A direct `PoisonEvent.run()` failure
+leaves the event running, but the ordinary scheduler `GameTickEvent.call()`
+catches the same callback exception and stops the event. Neither path rolls
+back any state already changed by a callback; typed A08 ticking must validate
+before mutation and define whether an invalid record is quarantined, cured, or
+reported.
+
+The real missing-row logout-save route reveals a separate, pre-existing
+failure: `PlayerService.savePlayer` attempts to build an error message with an
+invalid `MessageFormat` pattern. That unchecked exception escapes
+`PlayerSaveRequest` (which catches only `GameDatabaseException`) before it can
+clear `saving`/`loggingOut` or execute its documented failed-save session
+cleanup. The player and its active poison event remain live. A08.4 must not
+rely on a successful logout-save for safe effect cleanup; the save/logout path
+also needs its own atomic failure correction before any durable provenance
+record is introduced.
+
 ## Current behavior now guarded
 
 | Boundary | Executable result |
@@ -231,6 +261,8 @@ preserving that client-facing cap wherever protocol compatibility requires it.
 | NPC generic burn removal | Burn remains and can tick after unregistering begins |
 | Nonnumeric cache value | Login throws; poison may leave a scheduled zero-state event |
 | Negative/overflow poison | Invalid running state restores/forms, then pulse validation throws |
+| Scheduler-dispatched invalid poison | Scheduler catches the callback error and stops the event; direct `run()` does not |
+| Missing-row logout save | Error-format exception escapes before flags, session, or poison cleanup |
 | Wrong runtime attribute type | Cure/extinguish throws instead of failing closed |
 | Player death | Generic poison and burn state/cache clear |
 | Player poison death | Mutable current opponent, not poison source, owns death lifecycle |
@@ -269,14 +301,15 @@ coincidental opponent.
 
 ## Remaining matrix before A08.3/A08.4
 
-This checkpoint intentionally does not claim the full future matrix is done.
-The next characterization slice should cover:
+This checkpoint completes the currently actionable generic lifecycle and
+failure-injection characterization. The remaining implementation-phase work is:
 
-- failed logout-save and tick/death callback failure injection;
-- exceptional producer integration for Sinister Chest and admin self-poison,
-  plus producer-inventory drift checks;
-  and
-- server-restart persistence once a versioned source record exists to preserve.
+- add target-policy fixtures for the four approved migration decisions;
+- replace source-order producer guards for Sinister Chest/admin self-poison
+  with plugin/command integration tests if a narrow plugin harness becomes
+  available; and
+- characterize server-restart provenance persistence only after A08.3 creates
+  a versioned durable source record to preserve.
 
 Cases governed by the four approved decisions should gain explicit target-
 policy fixtures alongside (not silently replacing) the current-behavior
@@ -284,7 +317,7 @@ migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 109/109 scenarios.
+- `./server/test_combat` — PASS, 110/110 scenarios.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.
