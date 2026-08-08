@@ -346,3 +346,13 @@ auxiliary contribution and hitsplats, no-draw rejection, and the target-owned
 retain the auxiliary true-damage transaction and death adapter behind a narrow
 callback. The boundary is recorded in
 [`combat-a07-earth-dragon-slow-proc.md`](combat-a07-earth-dragon-slow-proc.md).
+
+A07.5E grows the gate from 92 to 93 scenarios. Its pre-migration and parity
+fixture executes reciprocal melee, PvM melee, and projectile-impact owners and
+proves Red Dragon fire success on settled-zero primary damage, exact chance and
+inclusive damage-draw ordering, zero-damage successful procs, combat-style
+auxiliary contribution and hitsplats, no-draw rejection, and the target-owned
+6% defense penalty with five-attack refresh and expiry. The event owners retain
+the auxiliary true-damage transaction and death adapter behind a narrow
+callback. The boundary is recorded in
+[`combat-a07-red-dragon-fire-proc.md`](combat-a07-red-dragon-fire-proc.md).

@@ -748,7 +748,10 @@ chance and damage draws, event-owned auxiliary true-damage callback, and
 five-attack max-hit-debuff refresh unit. A07.5D is implemented on published main
 with the separately characterized Earth Dragon set gate, chance and damage
 draws, event-owned auxiliary true-damage callback, and five-attack
-attack-speed-debuff refresh unit; later families remain bounded follow-ups.
+attack-speed-debuff refresh unit. A07.5E is the focused branch for the
+separately characterized Red Dragon set gate, chance and damage draws,
+event-owned auxiliary true-damage callback, and five-attack defense-debuff
+refresh unit; later families remain bounded follow-ups.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -757,12 +760,13 @@ with the selector contract in
 [`combat-a07-player-owned-npc-radius-selection.md`](../../combat/combat-a07-player-owned-npc-radius-selection.md)
 and the traversal contract in
 [`combat-a07-chain-random-traversal-policy.md`](../../combat/combat-a07-chain-random-traversal-policy.md),
-plus the first four proc contracts in
+plus the first five proc contracts in
 [`combat-a07-ogre-stagger-proc.md`](../../combat/combat-a07-ogre-stagger-proc.md),
 [`combat-a07-baby-dragon-smoke-proc.md`](../../combat/combat-a07-baby-dragon-smoke-proc.md),
 [`combat-a07-blue-dragon-water-proc.md`](../../combat/combat-a07-blue-dragon-water-proc.md),
+[`combat-a07-earth-dragon-slow-proc.md`](../../combat/combat-a07-earth-dragon-slow-proc.md),
 and
-[`combat-a07-earth-dragon-slow-proc.md`](../../combat/combat-a07-earth-dragon-slow-proc.md).
+[`combat-a07-red-dragon-fire-proc.md`](../../combat/combat-a07-red-dragon-fire-proc.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

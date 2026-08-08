@@ -29,6 +29,7 @@ import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
+import com.openrsc.server.model.combat.RedDragonFireProc;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.combat.SplinterTargetSelectionPolicy;
 import com.openrsc.server.model.entity.KillType;
@@ -998,13 +999,10 @@ public class ProjectileEvent extends SingleTickEvent {
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
 				caster, opponent, procDamage));
-		if (casterPlayer.hasFullRedDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
-			}
-			opponent.applyDragonFireDefenseDebuff(6);
-		}
+		RedDragonFireProc.tryApply(casterPlayer, opponent,
+			ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(
+				caster, opponent, procDamage));
 		final String dragonBreathProc = casterPlayer.getAttribute("dragon_breath_armor_proc", "");
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			casterPlayer.getUpdateFlags().setCombatEffect(new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH));
