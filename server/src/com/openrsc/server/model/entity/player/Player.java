@@ -4092,6 +4092,8 @@ public final class Player extends Mob {
 				} else {
 					getCache().remove(PoisonDurableRecord.CACHE_KEY);
 				}
+				getCache().remove("poisoned");
+				getCache().remove("poisoned_max");
 			} else if (getCache().hasKey("poisoned")) {
 				try {
 					final int current = getCache().getInt("poisoned");
@@ -4105,6 +4107,8 @@ public final class Player extends Mob {
 					getCache().remove("poisoned");
 					getCache().remove("poisoned_max");
 				}
+			} else if (getCache().hasKey("poisoned_max")) {
+				getCache().remove("poisoned_max");
 			}
 			if (getCache().hasKey("burn_pulses") && getCache().hasKey("burn_damage")) {
 				setBurnDamage(getCache().getInt("burn_damage"));

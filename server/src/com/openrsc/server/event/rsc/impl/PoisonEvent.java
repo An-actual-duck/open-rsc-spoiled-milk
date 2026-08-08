@@ -65,7 +65,6 @@ public class PoisonEvent extends GameTickEvent {
 		if (mob.isPlayer()) {
 			Player player = (Player) mob;
 			player.message("@gr3@You @gr2@are @gr1@poisioned! @gr2@You @gr3@lose @gr2@" + damage + " @gr1@health.");
-			player.getCache().set("poisoned", poisonPower);
 		}
 		if (damage > 0) {
 			final int actualDamage = settleTypedPoisonDamage(damage);

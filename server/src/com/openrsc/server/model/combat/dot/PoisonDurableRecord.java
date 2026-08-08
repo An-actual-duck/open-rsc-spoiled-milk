@@ -35,6 +35,7 @@ public final class PoisonDurableRecord {
 			if (parts.length != 7 || !"1".equals(parts[0])) return null;
 			final int current = Integer.parseInt(parts[1]);
 			final int maximum = Integer.parseInt(parts[2]);
+			if (current <= 0 || maximum < current) return null;
 			PeriodicEffectProvenance provenance = null;
 			if (!"NONE".equals(parts[3])) {
 				final PeriodicEffectSourceKind kind =

@@ -2129,9 +2129,6 @@ public abstract class Mob extends Entity {
 		}
 		poisonEvent.setPoisonPower(remainingPower);
 		setPoisonDamage(remainingPower);
-		if (isPlayer()) {
-			((Player) this).getCache().set("poisoned", remainingPower);
-		}
 		return true;
 	}
 
@@ -2156,10 +2153,7 @@ public abstract class Mob extends Entity {
 
 	public void setPoisonMaxPower(final int poisonMaxPower) {
 		this.poisonMaxPower = Math.max(0, poisonMaxPower);
-		if (isPlayer()) {
-			Player player = (Player) this;
-			player.getCache().store("poisoned_max", this.poisonMaxPower);
-		}
+		persistPoisonState();
 	}
 
 	private void persistPoisonState() {

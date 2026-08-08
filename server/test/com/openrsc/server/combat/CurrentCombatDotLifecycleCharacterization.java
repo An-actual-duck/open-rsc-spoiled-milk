@@ -412,7 +412,7 @@ final class CurrentCombatDotLifecycleCharacterization {
 		final Player negativePoison = harness.player(
 			"dot negative", 662, 680,
 			player -> player.getCache().set("poisoned", -5));
-	final PoisonEvent negativeEvent = negativePoison.getAttribute(
+		final PoisonEvent negativeEvent = negativePoison.getAttribute(
 			"poisonEvent", null);
 		assertNull(negativeEvent,
 			"negative legacy poison is rejected before event registration");
@@ -436,8 +436,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 			player -> player.getCache().set("poisoned_max", 40));
 		assertNull(orphanMaximum.getAttribute("poisonEvent", null),
 			"orphan maximum does not restore poison event");
-		assertTrue(orphanMaximum.getCache().hasKey("poisoned_max"),
-			"orphan maximum remains stale after login");
+		assertFalse(orphanMaximum.getCache().hasKey("poisoned_max"),
+			"orphan maximum is cleared during login migration");
 
 		final Npc overflow = npcWithHits(harness, 668, 680, 20);
 		overflow.applyPoison(Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -557,6 +557,10 @@ final class CurrentCombatDotLifecycleCharacterization {
 		final String targetName = "dot durable target";
 		final Player original = harness.player(targetName, 679, 680);
 		original.applyPoison(40, 60, source);
+		assertFalse(original.getCache().hasKey("poisoned"),
+			"new poison application writes no legacy current key");
+		assertFalse(original.getCache().hasKey("poisoned_max"),
+			"new poison application writes no legacy maximum key");
 		final String record = original.getCache().getString(
 			PoisonDurableRecord.CACHE_KEY);
 		assertNotNull(record, "active player poison writes one durable record");
@@ -564,11 +568,19 @@ final class CurrentCombatDotLifecycleCharacterization {
 		assertNotNull(decoded, "durable poison record decodes successfully");
 		assertEquals(source.getUUID(), decoded.getState().getProvenance().getSourceId(),
 			"durable poison record stores the player source ID, not a live reference");
+		final PoisonEvent originalEvent = original.getAttribute("poisonEvent", null);
+		originalEvent.run();
+		assertFalse(original.getCache().hasKey("poisoned"),
+			"poison ticks do not recreate the legacy current key");
+		assertFalse(original.getCache().hasKey("poisoned_max"),
+			"poison ticks do not recreate the legacy maximum key");
 		harness.logout(original);
 
-		final Player restored = harness.player(targetName, 680, 680,
-			player -> player.getCache().store(PoisonDurableRecord.CACHE_KEY,
-				record));
+		final Player restored = harness.player(targetName, 680, 680, player -> {
+			player.getCache().store(PoisonDurableRecord.CACHE_KEY, record);
+			player.getCache().store("poisoned", 10);
+			player.getCache().store("poisoned_max", 20);
+		});
 		final PoisonEvent event = restored.getAttribute("poisonEvent", null);
 		assertNotNull(event, "durable poison restores one event");
 		assertEquals(40, restored.getCurrentPoisonPower(),
