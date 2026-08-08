@@ -59,11 +59,11 @@ therefore cannot provide both the current inventory and even this minimal
 reviewed headroom. The total catalog is unbounded by an unrelated fixed value
 and currently contains 71 descriptors.
 
-The fifth bounded A07.5 extraction, Red Dragon fire, now has its own shared
-execution unit and compiled three-owner parity fixture. Black/King Black Dragon
-breath follow-ups and all later proc families remain separate follow-ups
-requiring their own executable characterization; descriptor similarity is not
-migration authority.
+The sixth bounded A07.5 extraction, the Black Dragon breath follow-up, now has
+its own shared payload unit and compiled three-owner poison/marker/presentation
+parity fixture. King Black Dragon and all later proc families remain separate
+follow-ups requiring their own executable characterization; descriptor
+similarity is not migration authority.
 
 ## Stable semantic inventory
 

@@ -14,6 +14,7 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
@@ -1007,12 +1008,10 @@ public class ProjectileEvent extends SingleTickEvent {
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			casterPlayer.getUpdateFlags().setCombatEffect(new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH));
 		}
-		if (casterPlayer.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
-			}
-		}
+		BlackDragonBreathFollowup.tryApply(casterPlayer, dragonBreathProc,
+			ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(
+				caster, opponent, procDamage));
 		if (casterPlayer.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {

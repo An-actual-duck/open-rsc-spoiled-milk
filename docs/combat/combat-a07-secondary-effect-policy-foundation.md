@@ -141,7 +141,7 @@ a separately approved behavior change, not part of this refactor.
 ### A07.5 — one duplicated proc family at a time
 
 Status: the first five bounded families are complete on published main;
-later families remain separately characterized follow-ups.
+A07.5F is the focused Black Dragon breath follow-up.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
 nearby families are recorded in
@@ -162,6 +162,11 @@ debuff refresh. Its separate contract is recorded in
 draws, event-owned auxiliary true-damage callback, and five-attack defense
 debuff refresh. Its separate contract is recorded in
 [`combat-a07-red-dragon-fire-proc.md`](combat-a07-red-dragon-fire-proc.md).
+`BlackDragonBreathFollowup` centralizes only the complete-set and exact-marker
+gate, inclusive payload draw, and event-owned auxiliary true-damage callback.
+Poison chance/state, marker ownership, and shared Black/KBD presentation remain
+event-owned. Its separate contract is recorded in
+[`combat-a07-black-dragon-breath-followup.md`](combat-a07-black-dragon-breath-followup.md).
 A07.5 remains open for separately characterized one-family branches.
 
 Move only an effect whose melee/projectile policies are proven identical into
@@ -183,10 +188,10 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 93 scenarios, including the compiled
-  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first five A07.5
+- The authoritative combat gate passes 94 scenarios, including the compiled
+  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first six A07.5
   shared proc contracts for Ogre Stagger, Baby Dragon smoke, Blue Dragon water,
-  Earth Dragon slow, and Red Dragon fire.
+  Earth Dragon slow, Red Dragon fire, and the Black Dragon breath follow-up.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,

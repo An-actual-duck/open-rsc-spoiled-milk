@@ -16,6 +16,7 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
@@ -781,12 +782,10 @@ public class CombatEvent extends GameTickEvent {
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
-		if (player.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-		}
+		BlackDragonBreathFollowup.tryApply(player, dragonBreathProc,
+			ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		if (player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {
