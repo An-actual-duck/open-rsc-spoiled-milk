@@ -736,8 +736,8 @@ A07.2 adds 71 separate semantic identities, exact nine-phase counts, an
 active-plan inventory, and descriptive current-plus-four planning budgets. It
 does not add a registry or executor. A07.3 is implemented on published main:
 it centralizes only compatible player-owned NPC radius enumeration while
-preserving distinct live and eager-snapshot timing. A07.4 is prepared on its
-focused branch with separate chain and Splinter target policies that preserve
+preserving distinct live and eager-snapshot timing. A07.4 is implemented on
+published main with separate chain and Splinter target policies that preserve
 revisits, RNG order, wall behavior, and event-owned execution. A07.5 remains a
 bounded follow-up. Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)

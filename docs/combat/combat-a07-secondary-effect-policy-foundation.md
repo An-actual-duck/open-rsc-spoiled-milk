@@ -129,7 +129,7 @@ delayed spell areas merely because each is called AoE.
 
 ### A07.4 — chain and random-single traversal
 
-Status: complete on the focused implementation branch. Chain lightning and
+Status: complete on published main. Chain lightning and
 Splinter remain separate typed policies, as recorded in
 [`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
 
