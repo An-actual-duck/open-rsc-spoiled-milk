@@ -190,7 +190,8 @@ def main() -> int:
         ))
     reciprocal = read("server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java")
     require_all(reciprocal, (
-        "applyHellsInfernoPvpSplash(player, (Player) target, procDamageDealt)",
+        "applyHellsInfernoFollowup(player, target,",
+        "applyHellsInfernoPvpSplash(player, (Player) target, primaryDamageDealt)",
         "CombatEffectUtil.findPlayerOwnedPvpSplashTargets(",
         "new CombatEffect(target, CombatEffect.HELLS_INFERNO)",
     ))

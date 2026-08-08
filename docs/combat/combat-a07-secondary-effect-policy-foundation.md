@@ -140,7 +140,7 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first seven bounded families are complete on published main;
+Status: the first eight bounded families are complete on published main;
 later families remain separately characterized follow-ups.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
@@ -171,6 +171,10 @@ event-owned. Its separate contract is recorded in
 marker, payload plus elemental-selection policy, and three target-debuff
 outcomes. Its separate contract is recorded in
 [`combat-a07-king-black-dragon-breath-followup.md`](combat-a07-king-black-dragon-breath-followup.md).
+`InfernalFireProc` centralizes only its common chance/payload/presentation/
+defense-debuff core. Its owner callbacks retain the deliberately different
+Hell's Inferno area policies. Its separate contract is recorded in
+[`combat-a07-infernal-fire-proc.md`](combat-a07-infernal-fire-proc.md).
 A07.5 remains open for separately characterized one-family branches.
 
 Move only an effect whose melee/projectile policies are proven identical into
@@ -192,11 +196,11 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 109 scenarios, including the compiled
-  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first seven A07.5
+- The authoritative combat gate passes 112 scenarios, including the compiled
+  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first eight A07.5
   shared proc contracts for Ogre Stagger, Baby Dragon smoke, Blue Dragon water,
   Earth Dragon slow, Red Dragon fire, Black Dragon breath, and the King Black
-  Dragon payload/element follow-up.
+  Dragon payload/element follow-up, and Infernal Fire.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,
