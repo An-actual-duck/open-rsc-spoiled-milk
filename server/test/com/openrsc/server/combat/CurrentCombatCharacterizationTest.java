@@ -251,6 +251,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "red_dragon_fire_preserves_rng_damage_and_refresh_policy",
 				CurrentCombatRedDragonFireProcCharacterization
 					::redDragonFirePolicies);
+			run(harness, "black_dragon_breath_preserves_marker_poison_and_payload_policy",
+				CurrentCombatBlackDragonBreathProcCharacterization
+					::blackDragonBreathPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
