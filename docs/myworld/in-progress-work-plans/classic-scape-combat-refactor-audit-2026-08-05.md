@@ -761,7 +761,9 @@ presentation/defense-debuff core while retaining each owner's Hell's Inferno
 area policy and damage/death authority; later families remain bounded follow-ups.
 A07.5I separately extracts only Elder Green armor's shared positive-primary
 chance/payload trigger; its existing Breath and burn implementation remains
-content-owned.
+content-owned. A07.5J separately extracts Bear Maul's identical player/full-set,
+positive-primary-hit, and living-target gate while retaining ordering and
+auxiliary damage settlement in each melee event.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -770,7 +772,7 @@ with the selector contract in
 [`combat-a07-player-owned-npc-radius-selection.md`](../../combat/combat-a07-player-owned-npc-radius-selection.md)
 and the traversal contract in
 [`combat-a07-chain-random-traversal-policy.md`](../../combat/combat-a07-chain-random-traversal-policy.md),
-plus the first eight proc contracts in
+plus the bounded proc contracts in
 [`combat-a07-ogre-stagger-proc.md`](../../combat/combat-a07-ogre-stagger-proc.md),
 [`combat-a07-baby-dragon-smoke-proc.md`](../../combat/combat-a07-baby-dragon-smoke-proc.md),
 [`combat-a07-blue-dragon-water-proc.md`](../../combat/combat-a07-blue-dragon-water-proc.md),
@@ -778,8 +780,10 @@ plus the first eight proc contracts in
 [`combat-a07-red-dragon-fire-proc.md`](../../combat/combat-a07-red-dragon-fire-proc.md),
 [`combat-a07-black-dragon-breath-followup.md`](../../combat/combat-a07-black-dragon-breath-followup.md),
 [`combat-a07-king-black-dragon-breath-followup.md`](../../combat/combat-a07-king-black-dragon-breath-followup.md),
+[`combat-a07-infernal-fire-proc.md`](../../combat/combat-a07-infernal-fire-proc.md),
+[`combat-a07-elder-green-armor-trigger.md`](../../combat/combat-a07-elder-green-armor-trigger.md),
 and
-[`combat-a07-infernal-fire-proc.md`](../../combat/combat-a07-infernal-fire-proc.md).
+[`combat-a07-bear-maul-second-hit.md`](../../combat/combat-a07-bear-maul-second-hit.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

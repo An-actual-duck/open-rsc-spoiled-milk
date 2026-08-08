@@ -389,3 +389,10 @@ order, inclusive maximum, failed chance, and no-draw rejection. Elder Breath
 and burn remain content-owned in `ElderGreenDragonArmorEffect`. The boundary is
 recorded in
 [`combat-a07-elder-green-armor-trigger.md`](combat-a07-elder-green-armor-trigger.md).
+
+A07.5J grows the current gate from 114 to 115 scenarios. Its compiled contract
+proves Bear Maul's player-source, complete-set, positive-primary-hit, and
+living-target eligibility plus the unchanged second-hit payload. Primary-hit
+ordering and auxiliary damage settlement remain owned by each melee event. The
+boundary is recorded in
+[`combat-a07-bear-maul-second-hit.md`](combat-a07-bear-maul-second-hit.md).
