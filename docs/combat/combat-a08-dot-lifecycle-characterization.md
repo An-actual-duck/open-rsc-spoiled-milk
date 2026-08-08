@@ -357,15 +357,37 @@ state boundaries:
 - NPC poison passes the attacking NPC into the common application path, which
   records typed NPC identity but still grants no player Leach owner.
 
-Generic poison still uses the compatibility damage helper and legacy player
-cache restoration. Contribution, lethal kill settlement, durable provenance
-persistence, and the generic-burn retirement migration remain deliberately
-out of scope for this commit.
+Generic poison still uses legacy player-cache restoration. Durable provenance
+persistence, generic-burn retirement, and migration of the Elder burn families
+remain deliberately out of scope for this commit.
+
+## A08.3 typed generic-poison tick settlement
+
+Generic poison pulses now use a `DamageRequest` with source category `DOT` and
+the stable `generic-poison` effect key. The tick preserves the legacy poison
+power drain, player message/cache write, poison hitsplat, Goblin Tenacity, and
+factual Blood Necklace Leach calculation, while the typed transaction owns the
+actual Hits mutation and damage observation.
+
+The approved attribution rules are now live for generic poison:
+
+- factual tick damage records NPC contribution for an online player source;
+- a lethal target is settled against the live provenance source rather than
+  `target.getOpponent()`;
+- an offline/no-longer-live player source receives neither synthetic reward nor
+  unrelated-opponent fallback; source-less NPC deaths remove without player
+  reward, and source-less player deaths use a null environmental cause; and
+- live NPC provenance can kill a player as the applying NPC, without becoming
+  a player Leach owner.
+
+This remains intentionally limited to generic poison. Versioned persistence,
+full source-key serialization, generic-burn retirement, and any migration of
+the two Elder burn families remain later A08 work.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 114/114 scenarios on the combined published
-  combat baseline.
+- `./server/test_combat` — PASS, 114/114 scenarios on this typed poison tick
+  settlement branch.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

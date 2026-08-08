@@ -1908,7 +1908,7 @@ public abstract class Mob extends Entity {
 
 	public void startPoisonEvent() {
 		synchronized (poisonStateLock()) {
-			ensurePoisonEvent(getPoisonDamage(), poisonOwnerId);
+			ensurePoisonEvent(getPoisonDamage(), poisonProvenance);
 		}
 	}
 
@@ -2018,7 +2018,7 @@ public abstract class Mob extends Entity {
 			}
 			if (existing == null) {
 				final PoisonEvent candidate = new PoisonEvent(getWorld(), this,
-					next.getCurrentPower(), nextOwnerId);
+					next.getCurrentPower(), next.getProvenance(), true);
 				if (!getWorld().getServer().getGameEventHandler().add(candidate)) {
 					return;
 				}
@@ -2030,23 +2030,24 @@ public abstract class Mob extends Entity {
 			poisonOwnerId = nextOwnerId;
 			final PoisonEvent active = getAttribute("poisonEvent", null);
 			active.setPoisonPower(next.getCurrentPower());
-			active.setPoisonOwnerId(nextOwnerId);
+			active.setProvenance(next.getProvenance());
 		}
 	}
 
-	private boolean ensurePoisonEvent(final int power, final UUID ownerId) {
+	private boolean ensurePoisonEvent(final int power,
+			final PeriodicEffectProvenance provenance) {
 		final Object attribute = getAttribute("poisonEvent", null);
 		if (attribute instanceof PoisonEvent) {
 			final PoisonEvent existing = (PoisonEvent) attribute;
 			existing.setPoisonPower(power);
-			existing.setPoisonOwnerId(ownerId);
+			existing.setProvenance(provenance);
 			return true;
 		}
 		if (attribute != null) {
 			removeAttribute("poisonEvent");
 		}
 		final PoisonEvent candidate = new PoisonEvent(getWorld(), this, power,
-			ownerId);
+			provenance, true);
 		if (!getWorld().getServer().getGameEventHandler().add(candidate)) {
 			return false;
 		}

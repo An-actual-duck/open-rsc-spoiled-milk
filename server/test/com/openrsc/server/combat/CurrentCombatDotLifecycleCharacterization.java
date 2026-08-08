@@ -183,8 +183,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"live Dragonstone Leach heals factual poison damage");
 		assertHit(target, 4, HitSplat.TYPE_POISON,
 			"generic poison presentation");
-		assertFalse(target.hasDamageBy(source),
-			"generic poison currently records no NPC contribution");
+		assertTrue(target.hasDamageBy(source),
+			"typed poison records factual NPC contribution for its player source");
 
 		setHits(source, 20, 40);
 		harness.logout(source);
@@ -206,8 +206,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"relogged-source poison keeps ticking");
 		assertEquals(23, relogged.getLevel(Skill.HITS.id()),
 			"live replacement session resumes Leach from current equipment");
-		assertFalse(target.hasDamageBy(relogged),
-			"relogged owner still receives no poison contribution");
+		assertTrue(target.hasDamageBy(relogged),
+			"relogged owner resumes typed poison contribution");
 	}
 
 	static void poisonThresholdsAndLiveDecayEquipment(
@@ -884,14 +884,14 @@ final class CurrentCombatDotLifecycleCharacterization {
 		creditedEvent.run();
 		assertTrue(creditedTarget.isUnregistering(),
 			"lethal poison enters ordinary NPC removal with an opponent");
-		assertEquals(ownerKillsBefore, poisonOwner.getNpcKills(),
-			"poison source currently receives no lethal NPC credit");
-		assertEquals(opponentKillsBefore + 1, opponent.getNpcKills(),
-			"current opponent receives lethal poison NPC credit");
+		assertEquals(ownerKillsBefore + 1, poisonOwner.getNpcKills(),
+			"typed poison source receives lethal NPC credit");
+		assertEquals(opponentKillsBefore, opponent.getNpcKills(),
+			"unrelated current opponent receives no poison NPC credit");
 		assertEquals(24, poisonOwner.getLevel(Skill.HITS.id()),
 			"poison source still receives factual-damage Leach");
-		assertFalse(creditedTarget.hasDamageBy(poisonOwner),
-			"lethal poison still records no source contribution");
+		assertTrue(creditedTarget.hasDamageBy(poisonOwner),
+			"lethal poison records factual source contribution");
 
 		setHits(poisonOwner, 20, 40);
 		final Npc opponentless = npcWithHits(harness, 648, 680, 4);
@@ -900,12 +900,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 		final PoisonEvent opponentlessEvent = opponentless.getAttribute(
 			"poisonEvent", null);
 		opponentlessEvent.run();
-		assertEquals(4, opponentless.getLevel(Skill.HITS.id()),
-			"opponentless lethal helper leaves NPC Hits unchanged");
-		assertFalse(opponentless.isUnregistering(),
-			"opponentless lethal poison does not remove the NPC");
-		assertEquals(0, opponentless.getCurrentPoisonPower(),
-			"opponentless lethal poison is nevertheless cured");
+		assertTrue(opponentless.isUnregistering(),
+			"opponentless typed poison removes the NPC through its source");
 		assertEquals(24, poisonOwner.getLevel(Skill.HITS.id()),
 			"opponentless lethal compatibility result still drives Leach");
 	}
@@ -927,10 +923,10 @@ final class CurrentCombatDotLifecycleCharacterization {
 		ownedEvent.run();
 		final DeathLifecycleSnapshot ownedDeath =
 			playerOwnedVictim.getDeathLifecycleSnapshot();
-		assertTrue(ownedDeath.getContext().getKiller() == engagedNpc,
-			"player-owned lethal poison currently credits the victim's opponent");
-		assertTrue(ownedDeath.getContext().getKiller() != poisonOwner,
-			"player-owned lethal poison does not credit its durable owner");
+		assertTrue(ownedDeath.getContext().getKiller() == poisonOwner,
+			"player-owned lethal poison credits its durable owner");
+		assertTrue(ownedDeath.getContext().getKiller() != engagedNpc,
+			"player-owned lethal poison ignores the victim's unrelated opponent");
 
 		final Npc poisonNpc = harness.npc(
 			NpcId.DUNGEON_SPIDER.id(), 684, 680);
@@ -945,14 +941,14 @@ final class CurrentCombatDotLifecycleCharacterization {
 		final PoisonEvent npcOwnedEvent = npcOwnedVictim.getAttribute(
 			"poisonEvent", null);
 		assertNull(poisonOwner(npcOwnedEvent),
-			"NPC poison source identity is discarded at application");
+			"NPC poison has no player Leach owner");
 		npcOwnedEvent.run();
 		final DeathLifecycleSnapshot npcOwnedDeath =
 			npcOwnedVictim.getDeathLifecycleSnapshot();
-		assertTrue(npcOwnedDeath.getContext().getKiller() == unrelatedNpc,
-			"NPC-sourced lethal poison currently credits an unrelated opponent");
-		assertTrue(npcOwnedDeath.getContext().getKiller() != poisonNpc,
-			"NPC-sourced lethal poison cannot retain its applying NPC");
+		assertTrue(npcOwnedDeath.getContext().getKiller() == poisonNpc,
+			"NPC-sourced lethal poison retains its applying NPC");
+		assertTrue(npcOwnedDeath.getContext().getKiller() != unrelatedNpc,
+			"NPC-sourced lethal poison ignores an unrelated opponent");
 
 		final Npc environmentalOpponent = harness.npc(
 			NpcId.GREATER_DEMON.id(), 688, 680);
@@ -966,8 +962,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"poisonEvent", null);
 		environmentalEvent.run();
 		assertTrue(environmentalVictim.getDeathLifecycleSnapshot()
-				.getContext().getKiller() == environmentalOpponent,
-			"unattributed lethal poison currently credits the victim's opponent");
+				.getContext().getKiller() == null,
+			"unattributed lethal poison has no unrelated-opponent fallback");
 	}
 
 	static void coreCombatPoisonProducerParity(
