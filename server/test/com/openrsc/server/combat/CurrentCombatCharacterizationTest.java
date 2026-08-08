@@ -239,6 +239,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "ogre_stagger_preserves_three_path_rng_and_zero_hit_policy",
 				CurrentCombatSharedProcCharacterization
 					::ogreStaggeringBlowPolicies);
+			run(harness, "baby_dragon_smoke_preserves_rng_projectile_and_refresh_policy",
+				CurrentCombatBabyDragonSmokeCharacterization
+					::babyDragonSmokePolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
