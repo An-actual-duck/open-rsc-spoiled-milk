@@ -1,7 +1,8 @@
 # A08.2 DoT Lifecycle Characterization
 
 Status: executable current-state evidence milestone complete; the first A08.3
-target-policy foundation is now compiled and independently guarded. The four
+atomic generic-poison state/application migration is now compiled and guarded.
+The four
 gameplay-policy decisions below were approved by the project owner on
 2026-08-07. A third exceptional-boundaries fixture now covers the legacy PvP
 producer, valid large generic-burn values, scheduler callback failure, and
@@ -332,15 +333,39 @@ foundation fixes these migration invariants before registry/tick wiring:
 - generic burn is explicitly marked `RETIRE_AND_MIGRATE`, rather than being
   silently adapted into either active Elder burn family.
 
-These classes do not yet replace `Mob` fields, `PoisonEvent`, cache keys, or
-the legacy damage helper. The next branch must attach the value types to one
-atomic target registry/application path, then migrate settlement only with the
-approved contribution and lethal-credit tests enabled.
+These classes initially left `Mob` fields, `PoisonEvent`, cache keys, and the
+legacy damage helper unchanged. The atomic application step below now consumes
+them for state calculation/provenance; settlement and persistence migration
+remain separate, explicitly guarded phases.
+
+## A08.3 atomic generic-poison application
+
+The first runtime migration now uses `PoisonTargetState` to calculate a whole
+bounded next state before exposing it to the target/event registry. The target
+lock covers calculation, canonical event selection, state projection, and
+event update. This deliberately changes only the approved/defensive target
+state boundaries:
+
+- current power addition uses a wide intermediate and caps at the retained
+  maximum instead of signed-integer overflow;
+- a no-op capped application retains its prior provenance and player Leach
+  owner;
+- `PoisonEvent` uses `ONE_PER_MOB`, so a detached second poison stream is
+  rejected by the scheduler;
+- poison cleanup removes cache state even when the event marker is absent or
+  malformed; and
+- NPC poison passes the attacking NPC into the common application path, which
+  records typed NPC identity but still grants no player Leach owner.
+
+Generic poison still uses the compatibility damage helper and legacy player
+cache restoration. Contribution, lethal kill settlement, durable provenance
+persistence, and the generic-burn retirement migration remain deliberately
+out of scope for this commit.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 113/113 scenarios on the combined published
-  combat baseline.
+- `./server/test_combat` — PASS, 113/113 scenarios on this atomic target-state
+  branch.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

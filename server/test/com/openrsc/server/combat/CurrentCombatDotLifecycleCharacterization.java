@@ -146,11 +146,11 @@ final class CurrentCombatDotLifecycleCharacterization {
 		target.applyPoison(1, 1, latest);
 		assertEquals(60, target.getCurrentPoisonPower(),
 			"application at ceiling cannot inflate poison");
-		assertEquals(latest.getUUID(), poisonOwner(event),
-			"current compatibility transfers ownership even with no power increase");
+		assertEquals(first.getUUID(), poisonOwner(event),
+			"capped no-op application preserves effective poison ownership");
 		target.applyPoison(1, 1, null);
-		assertNull(poisonOwner(event),
-			"unattributed capped application clears player ownership");
+		assertEquals(first.getUUID(), poisonOwner(event),
+			"unattributed capped no-op cannot clear poison ownership");
 		assertEquals(1, eventCount(harness, target, "Poison Event"),
 			"reapplication never duplicates the scheduler event");
 
@@ -319,10 +319,10 @@ final class CurrentCombatDotLifecycleCharacterization {
 		orphan.getCache().set("poisoned_max", 50);
 		orphan.removeAttribute("poisonEvent");
 		orphan.curePoison();
-		assertTrue(orphan.getCache().hasKey("poisoned"),
-			"current orphan cure leaves legacy poison current cache behind");
-		assertTrue(orphan.getCache().hasKey("poisoned_max"),
-			"current orphan cure leaves legacy poison maximum cache behind");
+		assertFalse(orphan.getCache().hasKey("poisoned"),
+			"orphan cure clears legacy poison current cache");
+		assertFalse(orphan.getCache().hasKey("poisoned_max"),
+			"orphan cure clears legacy poison maximum cache");
 		assertEquals(0, orphan.getCurrentPoisonPower(),
 			"orphan cure still clears runtime poison power");
 	}
@@ -450,18 +450,17 @@ final class CurrentCombatDotLifecycleCharacterization {
 		final PoisonEvent overflowEvent = overflow.getAttribute(
 			"poisonEvent", null);
 		overflow.applyPoison(1, Integer.MAX_VALUE);
-		assertEquals(Integer.MIN_VALUE, overflow.getCurrentPoisonPower(),
-			"additive poison power currently overflows signed integer range");
-		assertThrows(IllegalArgumentException.class, overflowEvent::run,
-			"overflowed poison fails on pulse validation");
+		assertEquals(Integer.MAX_VALUE, overflow.getCurrentPoisonPower(),
+			"bounded poison application cannot overflow signed integer range");
+		assertTrue(overflowEvent.isRunning(),
+			"bounded maximum poison remains a valid scheduled state");
 		overflow.curePoison();
 
 		final Npc wrongPoisonAttribute = npcWithHits(harness, 670, 680, 20);
 		wrongPoisonAttribute.setAttribute("poisonEvent", "wrong-type");
-		assertThrows(ClassCastException.class, wrongPoisonAttribute::curePoison,
-			"wrong poison attribute type currently aborts cleanup");
-		wrongPoisonAttribute.removeAttribute("poisonEvent");
 		wrongPoisonAttribute.curePoison();
+		assertNull(wrongPoisonAttribute.getAttribute("poisonEvent", null),
+			"wrong poison attribute type is removed by fail-closed cleanup");
 
 		final Player nonnumericBurn = harness.player("dot bad burn", 672, 680);
 		harness.logout(nonnumericBurn);
@@ -566,19 +565,17 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"poisonEvent", null);
 		final PoisonEvent duplicatePoison = new PoisonEvent(
 			harness.world(), poisoned, 20, null);
-		assertTrue(harness.server().getGameEventHandler().add(duplicatePoison),
-			"poison scheduler currently admits a duplicate stream");
-		assertEquals(2, eventCount(harness, poisoned, "Poison Event"),
+		assertFalse(harness.server().getGameEventHandler().add(duplicatePoison),
+			"poison scheduler rejects a duplicate stream");
+		assertEquals(1, eventCount(harness, poisoned, "Poison Event"),
 			"duplicate poison scheduler cardinality");
 		canonicalPoison.run();
-		duplicatePoison.run();
-		assertEquals(34, poisoned.getLevel(Skill.HITS.id()),
-			"both admitted poison streams independently deal damage");
+		assertEquals(36, poisoned.getLevel(Skill.HITS.id()),
+			"only canonical poison stream deals damage");
 		assertSame(canonicalPoison, poisoned.getAttribute("poisonEvent", null),
-			"duplicate poison remains detached from canonical mob attribute");
+			"rejected duplicate cannot replace canonical mob attribute");
 		assertEquals(37, poisoned.getCurrentPoisonPower(),
-			"canonical poison power hides duplicate stream power");
-		duplicatePoison.stop();
+			"canonical poison power remains the target state");
 		poisoned.curePoison();
 
 		final Player burning = harness.player("dot duplicate burn", 720, 680);
@@ -1113,7 +1110,13 @@ final class CurrentCombatDotLifecycleCharacterization {
 		assertEquals(38, npcVictim.getCurrentPoisonPower(),
 			"default NPC poison applied power");
 		assertNull(poisonOwner(npcVictim.getAttribute("poisonEvent", null)),
-			"NPC poison is currently unattributed");
+			"NPC poison has no player Leach owner");
+		assertEquals(PeriodicEffectSourceKind.NPC,
+			npcVictim.getPoisonProvenance().getSourceKind(),
+			"NPC poison retains typed NPC provenance");
+		assertEquals(spider.getUUID(),
+			npcVictim.getPoisonProvenance().getSourceId(),
+			"NPC poison retains source runtime identity");
 	}
 
 	private static Npc npcWithHits(final CurrentCombatHarness harness,

@@ -27,6 +27,8 @@ import com.openrsc.server.model.combat.CombatEventSlot;
 import com.openrsc.server.model.combat.CombatOwnershipAudit;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
+import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
+import com.openrsc.server.model.combat.dot.PoisonTargetState;
 import com.openrsc.server.model.entity.death.DeathContext;
 import com.openrsc.server.model.entity.death.DeathLifecycleAuthority;
 import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
@@ -106,6 +108,14 @@ public abstract class Mob extends Entity {
 	private int poisonDamage = 0;
 	private int poisonMaxPower = 0;
 	private UUID poisonOwnerId = null;
+	private PeriodicEffectProvenance poisonProvenance = null;
+	/*
+	 * Some focused NPC lifecycle fixtures allocate a Mob without running its
+	 * constructor. Keep the ordinary eager lock, but recover it lazily for that
+	 * compatibility path rather than making poison cleanup throw before it can
+	 * clear terminal state.
+	 */
+	private volatile Object poisonStateLock = new Object();
 	private int waterSlowPercent = 0;
 	private long lastRun = 0;
 	private boolean teleporting;
@@ -1560,23 +1570,24 @@ public abstract class Mob extends Entity {
 	}
 
 	public void curePoison() {
-		final Mob me = this;
-		final PoisonEvent poisonEvent = getAttribute("poisonEvent", null);
-		if (poisonEvent != null) {
-			poisonEvent.stop();
-			removeAttribute("poisonEvent");
-			if (me.isPlayer()) {
-				if (((Player) me).getCache().hasKey("poisoned")) {
-					((Player) me).getCache().remove("poisoned");
-				}
-				if (((Player) me).getCache().hasKey("poisoned_max")) {
-					((Player) me).getCache().remove("poisoned_max");
-				}
+		synchronized (poisonStateLock()) {
+			final Object attribute = getAttribute("poisonEvent", null);
+			if (attribute instanceof PoisonEvent) {
+				((PoisonEvent) attribute).stop();
 			}
+			if (attribute != null) {
+				removeAttribute("poisonEvent");
+			}
+			if (isPlayer()) {
+				final Player player = (Player) this;
+				player.getCache().remove("poisoned");
+				player.getCache().remove("poisoned_max");
+			}
+			poisonMaxPower = 0;
+			poisonOwnerId = null;
+			poisonProvenance = null;
+			setPoisonDamage(0);
 		}
-		poisonMaxPower = 0;
-		poisonOwnerId = null;
-		setPoisonDamage(0);
 	}
 
 	public void extinguish() {
@@ -1896,15 +1907,9 @@ public abstract class Mob extends Entity {
 	}
 
 	public void startPoisonEvent() {
-		final PoisonEvent existingPoisonEvent = getAttribute("poisonEvent", null);
-		if (existingPoisonEvent != null) {
-			existingPoisonEvent.setPoisonPower(getPoisonDamage());
-			existingPoisonEvent.setPoisonOwnerId(poisonOwnerId);
-			return;
+		synchronized (poisonStateLock()) {
+			ensurePoisonEvent(getPoisonDamage(), poisonOwnerId);
 		}
-		final PoisonEvent poisonEvent = new PoisonEvent(getWorld(), this, getPoisonDamage(), poisonOwnerId);
-		setAttribute("poisonEvent", poisonEvent);
-		getWorld().getServer().getGameEventHandler().add(poisonEvent);
 	}
 
 	public void startBurnEvent() {
@@ -1996,11 +2001,85 @@ public abstract class Mob extends Entity {
 		if (isNpc() && !((Npc) this).canReceivePoison()) {
 			return;
 		}
-		poisonOwnerId = poisonSource != null && poisonSource.isPlayer() ? poisonSource.getUUID() : null;
-		final int nextMaxPower = Math.max(getPoisonMaxPower(), maxPoisonPower);
-		setPoisonMaxPower(nextMaxPower);
-		setPoisonDamage(Math.min(nextMaxPower, getCurrentPoisonPower() + appliedPoisonPower));
-		startPoisonEvent();
+		synchronized (poisonStateLock()) {
+			final PoisonTargetState current = PoisonTargetState.of(
+				Math.max(0, getCurrentPoisonPower()), getPoisonMaxPower(),
+				poisonProvenance);
+			final PoisonTargetState next = current.apply(appliedPoisonPower,
+				maxPoisonPower, poisonProvenanceFor(poisonSource));
+			final UUID nextOwnerId = next.getProvenance() != null
+				&& next.getProvenance().isPlayer()
+				? next.getProvenance().getSourceId() : null;
+			final Object previousAttribute = getAttribute("poisonEvent", null);
+			final PoisonEvent existing = previousAttribute instanceof PoisonEvent
+				? (PoisonEvent) previousAttribute : null;
+			if (previousAttribute != null && existing == null) {
+				removeAttribute("poisonEvent");
+			}
+			if (existing == null) {
+				final PoisonEvent candidate = new PoisonEvent(getWorld(), this,
+					next.getCurrentPower(), nextOwnerId);
+				if (!getWorld().getServer().getGameEventHandler().add(candidate)) {
+					return;
+				}
+				setAttribute("poisonEvent", candidate);
+			}
+			setPoisonMaxPower(next.getMaximumPower());
+			setPoisonDamage(next.getCurrentPower());
+			poisonProvenance = next.getProvenance();
+			poisonOwnerId = nextOwnerId;
+			final PoisonEvent active = getAttribute("poisonEvent", null);
+			active.setPoisonPower(next.getCurrentPower());
+			active.setPoisonOwnerId(nextOwnerId);
+		}
+	}
+
+	private boolean ensurePoisonEvent(final int power, final UUID ownerId) {
+		final Object attribute = getAttribute("poisonEvent", null);
+		if (attribute instanceof PoisonEvent) {
+			final PoisonEvent existing = (PoisonEvent) attribute;
+			existing.setPoisonPower(power);
+			existing.setPoisonOwnerId(ownerId);
+			return true;
+		}
+		if (attribute != null) {
+			removeAttribute("poisonEvent");
+		}
+		final PoisonEvent candidate = new PoisonEvent(getWorld(), this, power,
+			ownerId);
+		if (!getWorld().getServer().getGameEventHandler().add(candidate)) {
+			return false;
+		}
+		setAttribute("poisonEvent", candidate);
+		return true;
+	}
+
+	private Object poisonStateLock() {
+		Object lock = poisonStateLock;
+		if (lock != null) {
+			return lock;
+		}
+		synchronized (this) {
+			if (poisonStateLock == null) {
+				poisonStateLock = new Object();
+			}
+			return poisonStateLock;
+		}
+	}
+
+	private static PeriodicEffectProvenance poisonProvenanceFor(
+			final Mob source) {
+		if (source == null) {
+			return null;
+		}
+		if (source.isPlayer()) {
+			return PeriodicEffectProvenance.player(source.getUUID());
+		}
+		if (source.isNpc()) {
+			return PeriodicEffectProvenance.npc(source.getUUID(),
+				Math.max(1L, source.getCombatLifecycle()));
+		}
+		return null;
 	}
 
 	public void applyPoison(final int poisonPower) {
@@ -2050,6 +2129,11 @@ public abstract class Mob extends Entity {
 
 	public int getPoisonMaxPower() {
 		return poisonMaxPower;
+	}
+
+	/** Durable poison provenance; null denotes legacy unattributed poison. */
+	public PeriodicEffectProvenance getPoisonProvenance() {
+		return poisonProvenance;
 	}
 
 	public void setPoisonMaxPower(final int poisonMaxPower) {
