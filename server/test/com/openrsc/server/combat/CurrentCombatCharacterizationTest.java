@@ -242,6 +242,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "baby_dragon_smoke_preserves_rng_projectile_and_refresh_policy",
 				CurrentCombatBabyDragonSmokeCharacterization
 					::babyDragonSmokePolicies);
+			run(harness, "blue_dragon_water_preserves_rng_damage_and_refresh_policy",
+				CurrentCombatBlueDragonWaterProcCharacterization
+					::blueDragonWaterPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
