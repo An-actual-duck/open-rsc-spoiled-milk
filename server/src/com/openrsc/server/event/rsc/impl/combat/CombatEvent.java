@@ -15,6 +15,7 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
+import com.openrsc.server.model.combat.BabyDragonSmokeProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
@@ -734,11 +735,8 @@ public class CombatEvent extends GameTickEvent {
 		}
 		OgreStaggeringBlowProc.tryApply(
 			player, target, ProductionGameRandom.INSTANCE);
-		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
-		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
-			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));
-			target.applySmokeAccuracyDebuff(smokePercent);
-		}
+		BabyDragonSmokeProc.tryApply(
+			player, target, ProductionGameRandom.INSTANCE);
 		final int infernalMaxHit = player.getInfernalFireProcMaxHit();
 		final int infernalPieces = player.getInfernalArmorPieceCount();
 		if (infernalMaxHit > 0) {

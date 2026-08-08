@@ -740,7 +740,10 @@ preserving distinct live and eager-snapshot timing. A07.4 is implemented on
 published main with separate chain and Splinter target policies that preserve
 revisits, RNG order, wall behavior, and event-owned execution. A07.5A is
 implemented on published main with only the proven-identical Ogre Stagger complete-set,
-draw, and one-attack debuff unit; later families remain bounded follow-ups.
+draw, and one-attack debuff unit. A07.5B is implemented on its focused branch
+with the separately characterized Baby Dragon equipment gate, draw, smoke
+projectile, and five-attack accuracy-debuff refresh unit; later families remain
+bounded follow-ups.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -749,8 +752,10 @@ with the selector contract in
 [`combat-a07-player-owned-npc-radius-selection.md`](../../combat/combat-a07-player-owned-npc-radius-selection.md)
 and the traversal contract in
 [`combat-a07-chain-random-traversal-policy.md`](../../combat/combat-a07-chain-random-traversal-policy.md),
-plus the first proc contract in
-[`combat-a07-ogre-stagger-proc.md`](../../combat/combat-a07-ogre-stagger-proc.md).
+plus the first two proc contracts in
+[`combat-a07-ogre-stagger-proc.md`](../../combat/combat-a07-ogre-stagger-proc.md)
+and
+[`combat-a07-baby-dragon-smoke-proc.md`](../../combat/combat-a07-baby-dragon-smoke-proc.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

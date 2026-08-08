@@ -13,6 +13,7 @@ import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
+import com.openrsc.server.model.combat.BabyDragonSmokeProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
@@ -962,11 +963,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		OgreStaggeringBlowProc.tryApply(
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE);
-		final int smokePercent = casterPlayer.getBabyDragonSmokeAccuracyDebuffPercent();
-		if (smokePercent > 0 && DataConversions.getRandom().nextDouble() < casterPlayer.getBabyDragonSmokeProcChance()) {
-			opponent.getUpdateFlags().setProjectile(new Projectile(caster, opponent, Projectile.BLOW_SMOKE));
-			opponent.applySmokeAccuracyDebuff(smokePercent);
-		}
+		BabyDragonSmokeProc.tryApply(
+			casterPlayer, opponent, ProductionGameRandom.INSTANCE);
 		final int infernalMaxHit = casterPlayer.getInfernalFireProcMaxHit();
 		final int infernalPieces = casterPlayer.getInfernalArmorPieceCount();
 		if (infernalMaxHit > 0) {

@@ -53,10 +53,10 @@ attack suppression, message, packet, animation, combat timing, damage,
 contribution, death, or balance rule. The descriptor catalog remains
 descriptive; the shared proc does not use it as a runtime registry.
 
-A07.5 remains a one-family-per-branch sequence. Baby Dragon smoke is the most
-obvious next candidate, but it requires its own pre-migration fixture for
-projectile presentation and draw ordering. No other leather effect is approved
-for consolidation by this result.
+A07.5 remains a one-family-per-branch sequence. Baby Dragon smoke received its
+own pre-migration fixture and bounded extraction in A07.5B, recorded in
+[`combat-a07-baby-dragon-smoke-proc.md`](combat-a07-baby-dragon-smoke-proc.md).
+No other leather effect is approved for consolidation by either result.
 
 ## Executable evidence
 

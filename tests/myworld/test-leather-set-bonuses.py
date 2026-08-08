@@ -16,6 +16,7 @@ COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 OGRE_STAGGER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/OgreStaggeringBlowProc.java"
+BABY_DRAGON_SMOKE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BabyDragonSmokeProc.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
@@ -156,10 +157,22 @@ def main() -> None:
                         (PVM_MELEE_PATH, "pvm"),
                         (PROJECTILE_EVENT_PATH, "projectile")):
         expect_contains(path, "OgreStaggeringBlowProc.tryApply", f"{label} shared Ogre stagger proc")
+        expect_contains(path, "BabyDragonSmokeProc.tryApply", f"{label} shared Baby Dragon smoke proc")
     expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
     expect_contains(OGRE_STAGGER_PROC_PATH, "random.nextDouble()", "Ogre single random draw")
     expect_contains(OGRE_STAGGER_PROC_PATH, "source.getOgreStaggeringBlowProcChance()", "Ogre configured chance")
     expect_contains(OGRE_STAGGER_PROC_PATH, "target.applyOgreStaggerDebuff();", "Ogre target debuff")
+    expect_contains(BABY_DRAGON_SMOKE_PROC_PATH,
+                    "source.getBabyDragonSmokeAccuracyDebuffPercent()",
+                    "Baby Dragon equipment effect gate")
+    expect_contains(BABY_DRAGON_SMOKE_PROC_PATH, "random.nextDouble()", "Baby Dragon single random draw")
+    expect_contains(BABY_DRAGON_SMOKE_PROC_PATH,
+                    "source.getBabyDragonSmokeProcChance()",
+                    "Baby Dragon configured chance")
+    expect_contains(BABY_DRAGON_SMOKE_PROC_PATH, "Projectile.BLOW_SMOKE", "Baby Dragon smoke presentation")
+    expect_contains(BABY_DRAGON_SMOKE_PROC_PATH,
+                    "target.applySmokeAccuracyDebuff(smokePercent);",
+                    "Baby Dragon target debuff")
     for path, label in ((COMBAT_EVENT_PATH, "combat"),
                         (PVM_MELEE_PATH, "pvm"),
                         (PROJECTILE_EVENT_PATH, "projectile")):
@@ -202,7 +215,7 @@ def main() -> None:
     expect_not_contains(COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "legacy formula-only giant multiplier")
     expect_not_contains(OSRS_COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "osrs formula-only giant multiplier")
 
-    print("PASS: leather set bonuses wired for tenacity, maul, giant might, debuff, poison, infernal, dragon-breath, and ogre families")
+    print("PASS: leather set bonuses and shared Ogre/Baby Dragon procs are wired")
 
 
 if __name__ == "__main__":

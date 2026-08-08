@@ -181,7 +181,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
 		RandomTiming.EQUIPMENT_CONDITIONAL_DRAW, StateOwner.TARGET_DEBUFF,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.PROJECTILE,
-		"central applyLeatherSetOnHitEffects methods", "leather set fixtures"),
+		"BabyDragonSmokeProc via central on-hit methods", "A07.5B compiled smoke parity fixture"),
 	INFERNAL_FIRE("semantic.infernal-fire",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
