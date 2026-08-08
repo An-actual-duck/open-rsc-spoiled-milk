@@ -748,8 +748,8 @@ chance and damage draws, event-owned auxiliary true-damage callback, and
 five-attack max-hit-debuff refresh unit. A07.5D is implemented on published main
 with the separately characterized Earth Dragon set gate, chance and damage
 draws, event-owned auxiliary true-damage callback, and five-attack
-attack-speed-debuff refresh unit. A07.5E is the focused branch for the
-separately characterized Red Dragon set gate, chance and damage draws,
+attack-speed-debuff refresh unit. A07.5E is implemented on published main with
+the separately characterized Red Dragon set gate, chance and damage draws,
 event-owned auxiliary true-damage callback, and five-attack defense-debuff
 refresh unit; later families remain bounded follow-ups.
 Exact current policies are recorded in

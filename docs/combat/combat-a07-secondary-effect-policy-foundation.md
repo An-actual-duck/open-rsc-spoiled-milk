@@ -140,8 +140,8 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first four bounded families are complete on published main;
-A07.5E is the focused Red Dragon fire follow-up.
+Status: the first five bounded families are complete on published main;
+later families remain separately characterized follow-ups.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
 nearby families are recorded in
