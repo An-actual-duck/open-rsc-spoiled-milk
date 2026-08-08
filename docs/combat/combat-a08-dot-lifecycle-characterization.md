@@ -47,6 +47,10 @@ hide it behind equal final Hits.
 - three repeated fresh target sessions restoring poison and burn exactly once,
   with logout stopping/removing each session's scheduler entries and each new
   session receiving new event identities/full countdowns;
+- deliberate duplicate scheduler admission for poison versus scheduler refusal
+  for generic burn, including the detached poison stream's independent damage;
+- zero-damage, zero-pulse, and negative complete burn-cache pairs scheduling
+  invalid events that clear only on their first pulse;
 - player death clearing generic poison and generic burn runtime/cache state;
 - lethal poison credit when a different opponent is engaged and the
   opponentless lethal boundary; and
@@ -158,6 +162,28 @@ later exceptional-producer slice because their value lies chiefly in plugin,
 command, and configuration integration boundaries rather than another direct
 `Mob.applyPoison` formula.
 
+### Poison permits detached duplicate scheduler streams
+
+Normal `applyPoison` calls reuse the mob's canonical event, but `PoisonEvent`
+declares `ALLOW_MULTIPLE`. A deliberate second registration for the same target
+is therefore admitted. Both streams damage independently, while only the first
+event remains reachable through the mob's `poisonEvent` attribute and
+`getCurrentPoisonPower`. Cure can stop only that canonical event; an already
+admitted detached stream is outside the target's cleanup ownership.
+
+Generic `BurnEvent` instead declares `ONE_PER_MOB`, and the same direct
+duplicate attempt is rejected. This scheduler protection does not solve the
+active-reapplication orphan described above because burn state mutation and
+attribute replacement happen before the failed registration. Typed A08 state
+must own exactly one clock by identity and make registry admission, state
+mutation, and cleanup atomic.
+
+Complete but nonsensical burn cache pairs (`0/3`, `7/0`, and negative values)
+all schedule events during login. Their first pulse recognizes invalid state
+and clears them without damage. This is less severe than the nonnumeric login
+failure, but still violates fail-closed restoration: invalid optional state
+should be normalized before scheduler admission, not one clock cycle later.
+
 ## Current behavior now guarded
 
 | Boundary | Executable result |
@@ -168,6 +194,9 @@ command, and configuration integration boundaries rather than another direct
 | Same source relog | Stable UUID resolves new session; live equipment can resume Leach |
 | Poison target relog | Current/maximum restore; owner is lost; one event starts at eight ticks |
 | Three repeated target relogs | Logout removes each scheduled event; each fresh session restores exactly one new poison and burn event |
+| Direct duplicate poison registration | Scheduler admits a detached second stream; both streams damage |
+| Direct duplicate burn registration | Scheduler rejects the second stream |
+| Zero/negative complete burn cache | Invalid event schedules, then clears without damage on first pulse |
 | Poison contribution | Always zero through generic tick path |
 | Normal poison cure | Runtime and cache clear |
 | Cure with missing event | Runtime clears; legacy cache incorrectly remains |
@@ -219,8 +248,7 @@ coincidental opponent.
 This checkpoint intentionally does not claim the full future matrix is done.
 The next characterization slice should cover:
 
-- deliberate duplicate scheduler registration attempts;
-- excessive pulse/damage burn values and mismatched mixed cache values;
+- excessive positive pulse/damage burn values;
 - failed logout-save and tick/death callback failure injection;
 - exceptional producer integration for legacy non-My-World PvP poison,
   Sinister Chest, and admin self-poison, plus producer-inventory drift checks;
@@ -233,7 +261,7 @@ migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 105/105 scenarios.
+- `./server/test_combat` — PASS, 106/106 scenarios.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

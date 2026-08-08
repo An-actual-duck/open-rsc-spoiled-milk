@@ -459,6 +459,86 @@ final class CurrentCombatDotLifecycleCharacterization {
 		}
 	}
 
+	static void duplicateSchedulerAndMixedBurnBoundaries(
+			final CurrentCombatHarness harness) {
+		final Npc poisoned = npcWithHits(harness, 718, 680, 40);
+		poisoned.applyPoison(40, 40);
+		final PoisonEvent canonicalPoison = poisoned.getAttribute(
+			"poisonEvent", null);
+		final PoisonEvent duplicatePoison = new PoisonEvent(
+			harness.world(), poisoned, 20, null);
+		assertTrue(harness.server().getGameEventHandler().add(duplicatePoison),
+			"poison scheduler currently admits a duplicate stream");
+		assertEquals(2, eventCount(harness, poisoned, "Poison Event"),
+			"duplicate poison scheduler cardinality");
+		canonicalPoison.run();
+		duplicatePoison.run();
+		assertEquals(34, poisoned.getLevel(Skill.HITS.id()),
+			"both admitted poison streams independently deal damage");
+		assertSame(canonicalPoison, poisoned.getAttribute("poisonEvent", null),
+			"duplicate poison remains detached from canonical mob attribute");
+		assertEquals(37, poisoned.getCurrentPoisonPower(),
+			"canonical poison power hides duplicate stream power");
+		duplicatePoison.stop();
+		poisoned.curePoison();
+
+		final Player burning = harness.player("dot duplicate burn", 720, 680);
+		burning.applyBurn(3, 2);
+		final BurnEvent canonicalBurn = burning.getAttribute("burnEvent", null);
+		final BurnEvent duplicateBurn = new BurnEvent(
+			harness.world(), burning, 7, 4);
+		assertFalse(harness.server().getGameEventHandler().add(duplicateBurn),
+			"burn scheduler rejects a second stream for the same target");
+		assertEquals(1, eventCount(harness, burning, "Burn Event"),
+			"duplicate burn scheduler cardinality");
+		assertSame(canonicalBurn, burning.getAttribute("burnEvent", null),
+			"rejected duplicate burn cannot replace canonical attribute");
+		burning.extinguish();
+
+		final Player zeroDamage = harness.player(
+			"dot zero burn damage", 722, 680, player -> {
+				player.getCache().set("burn_damage", 0);
+				player.getCache().set("burn_pulses", 3);
+			});
+		final BurnEvent zeroDamageEvent = zeroDamage.getAttribute(
+			"burnEvent", null);
+		assertNotNull(zeroDamageEvent,
+			"zero-damage mixed burn cache schedules before validation");
+		zeroDamageEvent.run();
+		assertNull(zeroDamage.getAttribute("burnEvent", null),
+			"zero-damage mixed burn clears on first pulse");
+		assertFalse(zeroDamage.getCache().hasKey("burn_damage"),
+			"zero-damage mixed burn clears damage cache");
+		assertFalse(zeroDamage.getCache().hasKey("burn_pulses"),
+			"zero-damage mixed burn clears pulse cache");
+
+		final Player zeroPulses = harness.player(
+			"dot zero burn pulses", 724, 680, player -> {
+				player.getCache().set("burn_damage", 7);
+				player.getCache().set("burn_pulses", 0);
+			});
+		final BurnEvent zeroPulseEvent = zeroPulses.getAttribute(
+			"burnEvent", null);
+		assertNotNull(zeroPulseEvent,
+			"zero-pulse mixed burn cache schedules before validation");
+		zeroPulseEvent.run();
+		assertNull(zeroPulses.getAttribute("burnEvent", null),
+			"zero-pulse mixed burn clears on first pulse");
+
+		final Player negativeBurn = harness.player(
+			"dot negative burn", 726, 680, player -> {
+				player.getCache().set("burn_damage", -7);
+				player.getCache().set("burn_pulses", -3);
+			});
+		final BurnEvent negativeBurnEvent = negativeBurn.getAttribute(
+			"burnEvent", null);
+		assertNotNull(negativeBurnEvent,
+			"negative burn cache schedules before validation");
+		negativeBurnEvent.run();
+		assertNull(negativeBurn.getAttribute("burnEvent", null),
+			"negative burn clears on first pulse without damage");
+	}
+
 	static void burnReplacementPersistenceAndCleanup(
 			final CurrentCombatHarness harness) throws Exception {
 		final Player target = harness.player("dot burn replace", 630, 680);

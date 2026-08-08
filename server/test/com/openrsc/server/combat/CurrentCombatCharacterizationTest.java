@@ -198,6 +198,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_repeated_relogs_preserve_one_fresh_event_per_effect",
 				CurrentCombatDotLifecycleCharacterization
 					::repeatedRelogEventCardinality);
+			run(harness, "dot_duplicate_scheduler_and_mixed_burn_boundaries_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::duplicateSchedulerAndMixedBurnBoundaries);
 			run(harness, "generic_burn_replacement_restore_and_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::burnReplacementPersistenceAndCleanup);
