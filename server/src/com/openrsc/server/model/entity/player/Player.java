@@ -4085,11 +4085,16 @@ public final class Player extends Mob {
 		if (loggedIn) {
 			currentLogin = System.currentTimeMillis();
 			if (getCache().hasKey(PoisonDurableRecord.CACHE_KEY)) {
-				final PoisonDurableRecord record = PoisonDurableRecord.decode(
-					getCache().getString(PoisonDurableRecord.CACHE_KEY));
-				if (record != null) {
-					restoreDurablePoison(record.getState());
-				} else {
+				try {
+					final PoisonDurableRecord record = PoisonDurableRecord.decode(
+						getCache().getString(PoisonDurableRecord.CACHE_KEY));
+					if (record != null) {
+						restoreDurablePoison(record.getState());
+					} else {
+						getCache().remove(PoisonDurableRecord.CACHE_KEY);
+					}
+				} catch (final RuntimeException invalidDurablePoison) {
+					// Cache values are persisted data: a wrong type must not prevent login.
 					getCache().remove(PoisonDurableRecord.CACHE_KEY);
 				}
 				getCache().remove("poisoned");
