@@ -248,6 +248,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "earth_dragon_slow_preserves_rng_damage_and_refresh_policy",
 				CurrentCombatEarthDragonSlowProcCharacterization
 					::earthDragonSlowPolicies);
+			run(harness, "red_dragon_fire_preserves_rng_damage_and_refresh_policy",
+				CurrentCombatRedDragonFireProcCharacterization
+					::redDragonFirePolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
