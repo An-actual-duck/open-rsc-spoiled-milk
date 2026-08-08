@@ -109,7 +109,13 @@ public abstract class Mob extends Entity {
 	private int poisonMaxPower = 0;
 	private UUID poisonOwnerId = null;
 	private PeriodicEffectProvenance poisonProvenance = null;
-	private final Object poisonStateLock = new Object();
+	/*
+	 * Some focused NPC lifecycle fixtures allocate a Mob without running its
+	 * constructor. Keep the ordinary eager lock, but recover it lazily for that
+	 * compatibility path rather than making poison cleanup throw before it can
+	 * clear terminal state.
+	 */
+	private volatile Object poisonStateLock = new Object();
 	private int waterSlowPercent = 0;
 	private long lastRun = 0;
 	private boolean teleporting;
@@ -1564,7 +1570,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public void curePoison() {
-		synchronized (poisonStateLock) {
+		synchronized (poisonStateLock()) {
 			final Object attribute = getAttribute("poisonEvent", null);
 			if (attribute instanceof PoisonEvent) {
 				((PoisonEvent) attribute).stop();
@@ -1901,7 +1907,7 @@ public abstract class Mob extends Entity {
 	}
 
 	public void startPoisonEvent() {
-		synchronized (poisonStateLock) {
+		synchronized (poisonStateLock()) {
 			ensurePoisonEvent(getPoisonDamage(), poisonOwnerId);
 		}
 	}
@@ -1995,7 +2001,7 @@ public abstract class Mob extends Entity {
 		if (isNpc() && !((Npc) this).canReceivePoison()) {
 			return;
 		}
-		synchronized (poisonStateLock) {
+		synchronized (poisonStateLock()) {
 			final PoisonTargetState current = PoisonTargetState.of(
 				Math.max(0, getCurrentPoisonPower()), getPoisonMaxPower(),
 				poisonProvenance);
@@ -2046,6 +2052,19 @@ public abstract class Mob extends Entity {
 		}
 		setAttribute("poisonEvent", candidate);
 		return true;
+	}
+
+	private Object poisonStateLock() {
+		Object lock = poisonStateLock;
+		if (lock != null) {
+			return lock;
+		}
+		synchronized (this) {
+			if (poisonStateLock == null) {
+				poisonStateLock = new Object();
+			}
+			return poisonStateLock;
+		}
 	}
 
 	private static PeriodicEffectProvenance poisonProvenanceFor(
