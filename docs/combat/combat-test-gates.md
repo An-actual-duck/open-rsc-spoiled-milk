@@ -410,3 +410,10 @@ debuff-before-damage, and positive-payload callback sequence. Formula and RNG
 ownership plus damage/death settlement remain event-owned. The boundary is
 recorded in
 [`combat-a07-elemental-sword-proc.md`](combat-a07-elemental-sword-proc.md).
+
+A07.5M grows the combined gate from 118 to 119 scenarios. Its compiled contract
+proves Demon Pitchfork Hell's Blaze positive-primary/living-target gates,
+chance-before-payload ordering, presentation, zero-payload behavior, and the
+positive auxiliary-Magic callback. Formula/RNG ownership and settlement remain
+event-owned. The boundary is recorded in
+[`combat-a07-demon-pitchfork-hell-blaze.md`](combat-a07-demon-pitchfork-hell-blaze.md).

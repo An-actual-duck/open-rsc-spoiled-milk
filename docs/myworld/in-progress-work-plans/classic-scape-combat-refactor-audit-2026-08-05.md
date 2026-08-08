@@ -768,7 +768,10 @@ Dragon melee breath's identical living-target, positive-roll, visual-draw, and
 callback unit while retaining weapon eligibility, formula RNG, ordering, and
 damage/death settlement in each event. A07.5L separately extracts Elemental
 Sword's identical presentation/debuff/damage sequence while leaving formulas,
-RNG, and settlement event-owned.
+RNG, and settlement event-owned. A07.5M separately extracts Demon Pitchfork
+Hell's Blaze's identical positive-primary, chance/payload, presentation, and
+auxiliary-Magic callback sequence while leaving formulas, RNG, and settlement
+event-owned.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -789,8 +792,9 @@ plus the bounded proc contracts in
 [`combat-a07-elder-green-armor-trigger.md`](../../combat/combat-a07-elder-green-armor-trigger.md),
 [`combat-a07-bear-maul-second-hit.md`](../../combat/combat-a07-bear-maul-second-hit.md),
 [`combat-a07-dragon-melee-breath-followup.md`](../../combat/combat-a07-dragon-melee-breath-followup.md),
+[`combat-a07-elemental-sword-proc.md`](../../combat/combat-a07-elemental-sword-proc.md),
 and
-[`combat-a07-elemental-sword-proc.md`](../../combat/combat-a07-elemental-sword-proc.md).
+[`combat-a07-demon-pitchfork-hell-blaze.md`](../../combat/combat-a07-demon-pitchfork-hell-blaze.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,
