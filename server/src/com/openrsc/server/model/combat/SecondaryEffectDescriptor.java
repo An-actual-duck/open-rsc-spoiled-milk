@@ -332,7 +332,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,
 		RandomTiming.SINGLE_DRAW_THEN_PAYLOAD, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.EFFECT,
-		"CombatEvent/PvmMeleeEvent.applyDemonPitchforkHellBlazeProc", "auxiliary damage characterization"),
+		"DemonPitchforkHellBlazeProc via primary melee event methods", "A07.5M compiled callback-order fixture"),
 	KOLODION_FIRE_CLAW("semantic.kolodion-fire-claw",
 		phases(Phase.AFTER_ROOT_ATTACK), styles(Style.MELEE),
 		ParticipantGate.KOLODION_TO_MOB, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,

@@ -37,6 +37,7 @@ import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
+import com.openrsc.server.model.combat.DemonPitchforkHellBlazeProc;
 import com.openrsc.server.model.combat.ElementalSwordProc;
 import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.InfernalFireProc;
@@ -606,17 +607,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {
-		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		if (!CombatFormula.rollDemonPitchforkHellBlazeProc(hitter)) {
-			return;
-		}
-		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.HELLS_BLAZE));
-		final int procDamage = CombatFormula.rollDemonPitchforkHellBlazeDamage(hitter);
-		if (procDamage > 0) {
-			inflictAuxiliaryMagicDamage(hitter, target, procDamage);
-		}
+		DemonPitchforkHellBlazeProc.tryApply(target, damage,
+			() -> CombatFormula.rollDemonPitchforkHellBlazeProc(hitter),
+			() -> CombatFormula.rollDemonPitchforkHellBlazeDamage(hitter),
+			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage));
 	}
 
 	private void applyNpcMeleeSpecialProc(final Mob hitter, final Mob target, final int damage) {
