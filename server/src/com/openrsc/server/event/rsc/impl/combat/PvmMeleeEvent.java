@@ -36,6 +36,7 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
+import com.openrsc.server.model.combat.RedDragonFireProc;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -542,13 +543,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		EarthDragonSlowProc.tryApply(player, target, combatRandom(),
 			procDamage -> inflictAuxiliaryTrueDamage(
 				hitter, target, procDamage));
-		if (player.hasFullRedDragonSet() && combatRandom().nextDouble() < 0.20D) {
-			final int procDamage = combatRandom().nextIntInclusive(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-			target.applyDragonFireDefenseDebuff(6);
-		}
+		RedDragonFireProc.tryApply(player, target, combatRandom(),
+			procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		final String dragonBreathProc = player.getAttribute("dragon_breath_armor_proc", "");
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
