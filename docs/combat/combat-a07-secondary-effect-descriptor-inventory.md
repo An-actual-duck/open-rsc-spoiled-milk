@@ -64,7 +64,8 @@ its own shared payload unit and compiled three-owner poison/marker/presentation
 parity fixture. The seventh, King Black Dragon breath follow-up, separately
 owns its exact marker, payload, and elemental-selection contract. The eighth,
 Infernal Fire, separately centralizes only its common core and leaves Hell's
-Inferno area policy with each event owner. All later proc families remain
+Inferno area policy with each event owner. The ninth, Elder Green armor,
+centralizes only its trigger and leaves Breath/burn content-owned. All later proc families remain
 separate follow-ups requiring their own executable characterization; descriptor
 similarity is not migration authority.
 

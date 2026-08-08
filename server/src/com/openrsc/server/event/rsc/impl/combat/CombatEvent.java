@@ -25,6 +25,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
@@ -781,12 +782,9 @@ public class CombatEvent extends GameTickEvent {
 		KingBlackDragonBreathFollowup.tryApply(player, target, dragonBreathProc,
 			ProductionGameRandom.INSTANCE, procDamage -> inflictAuxiliaryTrueDamage(
 				hitter, target, procDamage));
-		if (damage > 0 && player.getElderGreenDragonArmorProcChance() > 0.0D
-				&& DataConversions.getRandom().nextDouble()
-					< player.getElderGreenDragonArmorProcChance()) {
-			ElderGreenDragonArmorEffect.applyProc(player, target,
-				DataConversions.random(0, ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
-		}
+		ElderGreenDragonArmorProc.tryApply(player, damage,
+			ProductionGameRandom.INSTANCE, procDamage ->
+				ElderGreenDragonArmorEffect.applyProc(player, target, procDamage));
 	}
 
 	private void applyHellsInfernoFollowup(final Player player, final Mob target,

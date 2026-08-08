@@ -759,6 +759,9 @@ exact marker, inclusive payload, and post-payload elemental-debuff selection;
 A07.5H separately extracts Infernal Fire's shared chance/payload/
 presentation/defense-debuff core while retaining each owner's Hell's Inferno
 area policy and damage/death authority; later families remain bounded follow-ups.
+A07.5I separately extracts only Elder Green armor's shared positive-primary
+chance/payload trigger; its existing Breath and burn implementation remains
+content-owned.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and

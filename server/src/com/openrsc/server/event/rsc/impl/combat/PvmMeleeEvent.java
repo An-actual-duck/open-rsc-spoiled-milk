@@ -35,6 +35,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
@@ -555,12 +556,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		KingBlackDragonBreathFollowup.tryApply(player, target, dragonBreathProc,
 			combatRandom(), procDamage -> inflictAuxiliaryTrueDamage(
 				hitter, target, procDamage));
-		if (damage > 0 && player.getElderGreenDragonArmorProcChance() > 0.0D
-				&& combatRandom().nextDouble() < player.getElderGreenDragonArmorProcChance()) {
-			ElderGreenDragonArmorEffect.applyProc(player, target,
-				combatRandom().nextIntInclusive(0,
-					ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
-		}
+		ElderGreenDragonArmorProc.tryApply(player, damage, combatRandom(),
+			procDamage -> ElderGreenDragonArmorEffect.applyProc(
+				player, target, procDamage));
 	}
 
 	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,
