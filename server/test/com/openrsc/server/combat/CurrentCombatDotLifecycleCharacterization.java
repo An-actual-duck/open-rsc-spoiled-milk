@@ -484,26 +484,37 @@ final class CurrentCombatDotLifecycleCharacterization {
 		player.setSaving(true);
 		player.setLoggingOut(true);
 
-		// Harness players intentionally have no database row. The production
-		// service reaches its missing-row error path without a write. Its current
-		// MessageFormat error path throws before PlayerSaveRequest can clear the
-		// flags or apply its documented failed-save logout policy.
-		assertThrows(IllegalArgumentException.class,
-			() -> new PlayerSaveRequest(harness.server(), player, true).process(),
-			"missing-row logout save escapes before request cleanup");
+		// Harness players intentionally have no database row. This exercises the
+		// production failed-save path without writing: failure must retain the
+		// live session, clear request flags, and allow a later retry.
+		new PlayerSaveRequest(harness.server(), player, true).process();
 
 		assertTrue(player.loggedIn(),
-			"failed logout save leaves the live session present by current behavior");
-		assertTrue(player.isSaving(),
-			"failed logout save leaves saving state stuck");
-		assertTrue(player.isLoggingOut(),
-			"failed logout save leaves logout state stuck");
+			"failed logout save retains the live session for a later retry");
+		assertFalse(player.isSaving(),
+			"failed logout save clears saving state");
+		assertFalse(player.isLoggingOut(),
+			"failed logout save clears logout state");
 		assertTrue(poison.isRunning(),
-			"failed logout save leaves owner-bound poison running");
+			"failed logout save retains owner-bound poison");
 		assertTrue(harness.world().getPlayers().contains(player),
-			"failed logout save leaves the player in the world list");
-		player.setSaving(false);
-		player.setLoggingOut(false);
+			"failed logout save retains the player in the world list");
+
+		for (int retry = 0; retry < 5; retry++) {
+			player.setSaving(true);
+			player.setLoggingOut(true);
+			new PlayerSaveRequest(harness.server(), player, true).process();
+			assertTrue(player.loggedIn(),
+				"repeated failed logout save retains live session " + retry);
+			assertFalse(player.isSaving(),
+				"repeated failed logout save clears saving state " + retry);
+			assertFalse(player.isLoggingOut(),
+				"repeated failed logout save clears logout state " + retry);
+			assertTrue(poison.isRunning(),
+				"repeated failed logout save retains poison event " + retry);
+			assertEquals(1, eventCount(harness, player, "Poison Event"),
+				"repeated failed logout save never duplicates poison event " + retry);
+		}
 		player.curePoison();
 	}
 

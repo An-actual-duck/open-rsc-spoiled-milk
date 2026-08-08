@@ -1,7 +1,6 @@
 package com.openrsc.server.login;
 
 import com.openrsc.server.Server;
-import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
@@ -47,20 +46,18 @@ public class PlayerSaveRequest extends LoginExecutorProcess {
 			if (success && this.logout) {
 				logoutSaveSuccess();
 			} else if (this.logout) {
-				LOGGER.error("Logout save failed for {}; clearing live session to avoid a stuck login.", player.getUsername());
-				logoutSaveSuccess();
+				LOGGER.error("Logout save failed for {}; retaining the live session for retry.",
+					player.getUsername());
 			}
+		} catch (final RuntimeException ex) {
+			LOGGER.error("Error saving player; retaining the live session for retry.", ex);
+		} finally {
+			// A failed save must not remove a live player or their target-owned
+			// effects. Clear only request state so a later autosave/logout can retry.
 			getPlayer().setSaving(false);
 			if (this.logout) {
 				getPlayer().setLoggingOut(false);
 			}
-		} catch (final GameDatabaseException ex) {
-			LOGGER.error("Error saving the player, phantom player may have extra login count on their IP address now...! Have a look at this Exception:", ex);
-			if (getPlayer() != null) {
-				getPlayer().setSaving(false);
-				getPlayer().setLoggingOut(false);
-			}
-		} finally {
 			getServer().recordPlayerSaveTiming(this.logout,
 				processStartedAtNanos - queuedAtNanos,
 				System.nanoTime() - processStartedAtNanos);

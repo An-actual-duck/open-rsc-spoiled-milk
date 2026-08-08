@@ -396,8 +396,8 @@ event.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 117/117 scenarios on this durable provenance
-  branch.
+- `./server/test_combat` — PASS, 118/118 scenarios on the durable-provenance
+  and failed-save-atomicity branch.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

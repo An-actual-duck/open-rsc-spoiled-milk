@@ -13,6 +13,8 @@ POISON_TARGET_STATE_PATH = ROOT / "server/src/com/openrsc/server/model/combat/do
 POISON_TARGET_POLICY_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonTargetPolicy.java"
 POISON_DURABLE_RECORD_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonDurableRecord.java"
 PLAYER_PATH = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+PLAYER_SAVE_REQUEST_PATH = ROOT / "server/src/com/openrsc/server/login/PlayerSaveRequest.java"
+PLAYER_SERVICE_PATH = ROOT / "server/src/com/openrsc/server/service/PlayerService.java"
 COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
@@ -134,6 +136,40 @@ def main() -> None:
     expect_contains(PLAYER_PATH, "getMeleePoisonArmorMaxPower()", "player melee poison armor access")
     expect_contains(PLAYER_PATH, "getRangedPoisonArmorMaxPower()", "player ranged poison armor access")
     expect_contains(PLAYER_PATH, "getMagicPoisonArmorMaxPower()", "player magic poison armor access")
+
+    player_save = extract_method(
+        PLAYER_SAVE_REQUEST_PATH,
+        "protected void processInternal()",
+        "player save request",
+    )
+    expect_method_contains(
+        player_save,
+        "if (success && this.logout) { logoutSaveSuccess(); }",
+        "only a successful logout save removes the live session",
+    )
+    expect_method_contains(
+        player_save,
+        "retaining the live session for retry",
+        "failed logout save remains retryable",
+    )
+    expect_method_order(
+        player_save,
+        [
+            "getPlayer().setSaving(false);",
+            "getPlayer().setLoggingOut(false);",
+        ],
+        "failed save cleanup releases request flags",
+    )
+    player_save_service = extract_method(
+        PLAYER_SERVICE_PATH,
+        "public boolean savePlayer(final Player player)",
+        "player persistence service",
+    )
+    expect_method_contains(
+        player_save_service,
+        "player.checkAndIncrementSaveAttempts(); return false;",
+        "failed player persistence never reports a successful save",
+    )
 
     expect_contains(MOB_PATH, "applyPoison(final int appliedPoisonPower, final int maxPoisonPower)", "shared poison application")
 
