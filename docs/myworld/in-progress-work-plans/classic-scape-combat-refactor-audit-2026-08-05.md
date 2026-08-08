@@ -806,11 +806,14 @@ state-changing-only poison ownership transfer, factual poison contribution, no
 synthesized offline-owner rewards or unrelated-opponent kill credit, and
 retirement/migration of dormant generic burn. The currently actionable A08.2
 matrix is complete. A08.3 now has compiled immutable provenance and target-
-policy types covering those four decisions without changing runtime behavior.
-The next bounded step is one atomic target registry/application path; runtime
-settlement migration must retain the approved contribution and lethal-credit
-fixtures. Server-restart provenance remains an implementation-phase gate once
-a versioned durable source record exists.
+policy types covering those four decisions. Its first runtime slice now owns
+one atomic generic-poison target registry/application path, rejects duplicate
+target streams, retains provenance on capped no-op applications, bounds
+overflow, and fails closed during malformed cleanup. The next bounded step is
+generic-poison tick settlement using this typed state while retaining the
+approved contribution, Leach, and lethal-credit fixtures. Server-restart
+provenance remains an implementation-phase gate once a versioned durable
+source record exists.
 
 Move poison/burn ownership behind typed state only after exact current
 strength, stacking, replacement, feedback, persistence, death/respawn, logout,

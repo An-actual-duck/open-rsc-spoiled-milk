@@ -364,8 +364,8 @@ out of scope for this commit.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 113/113 scenarios on this atomic target-state
-  branch.
+- `./server/test_combat` — PASS, 114/114 scenarios on the combined published
+  combat baseline.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.
