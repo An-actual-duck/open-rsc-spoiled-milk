@@ -314,7 +314,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,
 		RandomTiming.NONE, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.ALLOW_SCYTHE_DESCENDANTS, PresentationPolicy.HIT_SPLAT,
-		"CombatEvent/PvmMeleeEvent.applyBearMaulSecondHit", "auxiliary damage characterization"),
+		"BearMaulSecondHit via primary melee event methods", "A07.5J compiled eligibility parity fixture"),
 	DRAGON_MELEE_BREATH("semantic.dragon-melee-breath",
 		phases(Phase.AFTER_ROOT_ATTACK), styles(Style.MELEE),
 		ParticipantGate.CURRENT_ATTACK_PAIR, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
