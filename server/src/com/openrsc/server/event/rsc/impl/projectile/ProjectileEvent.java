@@ -22,6 +22,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
@@ -972,26 +973,22 @@ public class ProjectileEvent extends SingleTickEvent {
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE);
 		final int infernalMaxHit = casterPlayer.getInfernalFireProcMaxHit();
 		final int infernalPieces = casterPlayer.getInfernalArmorPieceCount();
-		if (infernalMaxHit > 0) {
-			final double infernalChance = casterPlayer.getInfernalFireProcChance();
-			final double infernalRoll = DataConversions.getRandom().nextDouble();
-			final boolean infernalProc = infernalRoll < infernalChance;
-			int procDamage = 0;
-			int procDamageDealt = 0;
-			if (infernalProc) {
-				opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, CombatEffect.infernalEffectForMaxHit(infernalMaxHit)));
-				procDamage = DataConversions.random(0, infernalMaxHit);
-				procDamageDealt = inflictAuxiliaryMagicDamage(caster, opponent, procDamage);
-				opponent.applyInfernalFireDefenseDebuff(casterPlayer.getInfernalFireDefenseDebuffPercent());
-				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && opponent.isNpc()) {
+		final InfernalFireProc.Result infernal = InfernalFireProc.tryApply(
+			casterPlayer, opponent, ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryMagicDamage(caster, opponent, procDamage),
+			procDamageDealt -> {
+				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT
+						&& opponent.isNpc()) {
 					applyHellsInfernoSplash(casterPlayer, (Npc) opponent, procDamageDealt);
 				}
-			}
+			});
+		if (infernal.isConfigured()) {
 			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
-				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
+				infernal.getMaxHit(), infernal.getRoll(), infernal.getChance(), infernal.isTriggered(),
+				infernal.getRolledDamage(), infernal.getDamageDealt());
 		} else if (infernalPieces > 0) {
 			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
-				infernalMaxHit, -1.0D, 0.0D, false, 0, 0);
+				infernal.getMaxHit(), -1.0D, 0.0D, false, 0, 0);
 		}
 		BlueDragonWaterProc.tryApply(casterPlayer, opponent,
 			ProductionGameRandom.INSTANCE,

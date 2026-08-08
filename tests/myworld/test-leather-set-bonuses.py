@@ -20,6 +20,7 @@ BABY_DRAGON_SMOKE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat
 BLUE_DRAGON_WATER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlueDragonWaterProc.java"
 EARTH_DRAGON_SLOW_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/EarthDragonSlowProc.java"
 RED_DRAGON_FIRE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/RedDragonFireProc.java"
+INFERNAL_FIRE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/InfernalFireProc.java"
 BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlackDragonBreathFollowup.java"
 KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/KingBlackDragonBreathFollowup.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
@@ -172,6 +173,7 @@ def main() -> None:
         expect_contains(path, "BlueDragonWaterProc.tryApply", f"{label} shared Blue Dragon water proc")
         expect_contains(path, "EarthDragonSlowProc.tryApply", f"{label} shared Earth Dragon slow proc")
         expect_contains(path, "RedDragonFireProc.tryApply", f"{label} shared Red Dragon fire proc")
+        expect_contains(path, "InfernalFireProc.tryApply", f"{label} shared Infernal Fire proc")
         expect_contains(path, "BlackDragonBreathFollowup.tryApply", f"{label} shared Black Dragon follow-up")
         expect_contains(path, "KingBlackDragonBreathFollowup.tryApply", f"{label} shared King Black Dragon follow-up")
     expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
@@ -240,6 +242,26 @@ def main() -> None:
                   "auxiliaryTrueDamage.apply(rolledDamage);",
                   "target.applyDragonFireDefenseDebuff(DEFENSE_DEBUFF_PERCENT);",
                   "Red Dragon damage-before-debuff policy")
+    expect_contains(INFERNAL_FIRE_PROC_PATH,
+                    "random.nextDouble()",
+                    "Infernal Fire chance draw")
+    expect_contains(INFERNAL_FIRE_PROC_PATH,
+                    "random.nextIntInclusive(0, maxHit)",
+                    "Infernal Fire inclusive payload draw")
+    expect_contains(INFERNAL_FIRE_PROC_PATH,
+                    "auxiliaryMagicDamage.apply(rolledDamage)",
+                    "Infernal Fire event-owned magic-damage callback")
+    expect_contains(INFERNAL_FIRE_PROC_PATH,
+                    "target.applyInfernalFireDefenseDebuff(",
+                    "Infernal Fire defense debuff")
+    expect_before(INFERNAL_FIRE_PROC_PATH,
+                  "auxiliaryMagicDamage.apply(rolledDamage)",
+                  "target.applyInfernalFireDefenseDebuff(",
+                  "Infernal Fire damage-before-debuff policy")
+    expect_before(INFERNAL_FIRE_PROC_PATH,
+                  "target.applyInfernalFireDefenseDebuff(",
+                  "postDamageFollowup.apply(damageDealt)",
+                  "Infernal Fire debuff-before-followup policy")
     expect_contains(BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "!source.hasFullBlackDragonSet() || !BLACK_MARKER.equals(marker)",
                     "Black Dragon set and marker gate")

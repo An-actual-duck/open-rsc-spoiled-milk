@@ -187,7 +187,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
 		RandomTiming.SINGLE_DRAW_THEN_PAYLOAD, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.MIXED,
-		"central applyLeatherSetOnHitEffects methods", "infernal armor fixtures"),
+		"InfernalFireProc via central on-hit methods", "A07.5H compiled payload/debuff parity fixture"),
 	HELLS_INFERNO_SPLASH("semantic.hells-inferno-splash",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE_AREA, ZeroDamageRule.POSITIVE_CHILD_SOURCE_DAMAGE,

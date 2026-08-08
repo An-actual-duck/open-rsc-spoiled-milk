@@ -25,6 +25,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
@@ -744,28 +745,18 @@ public class CombatEvent extends GameTickEvent {
 			player, target, ProductionGameRandom.INSTANCE);
 		final int infernalMaxHit = player.getInfernalFireProcMaxHit();
 		final int infernalPieces = player.getInfernalArmorPieceCount();
-		if (infernalMaxHit > 0) {
-			final double infernalChance = player.getInfernalFireProcChance();
-			final double infernalRoll = DataConversions.getRandom().nextDouble();
-			final boolean infernalProc = infernalRoll < infernalChance;
-			int procDamage = 0;
-			int procDamageDealt = 0;
-			if (infernalProc) {
-				target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.infernalEffectForMaxHit(infernalMaxHit)));
-				procDamage = DataConversions.random(0, infernalMaxHit);
-				procDamageDealt = inflictAuxiliaryMagicDamage(hitter, target, procDamage);
-				target.applyInfernalFireDefenseDebuff(player.getInfernalFireDefenseDebuffPercent());
-				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isNpc()) {
-					applyHellsInfernoSplash(player, (Npc) target, procDamageDealt);
-				} else if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT && target.isPlayer()) {
-					applyHellsInfernoPvpSplash(player, (Player) target, procDamageDealt);
-				}
-			}
+		final InfernalFireProc.Result infernal = InfernalFireProc.tryApply(player,
+			target, ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage),
+			procDamageDealt -> applyHellsInfernoFollowup(player, target,
+				infernalMaxHit, procDamageDealt));
+		if (infernal.isConfigured()) {
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
-				infernalMaxHit, infernalRoll, infernalChance, infernalProc, procDamage, procDamageDealt);
+				infernal.getMaxHit(), infernal.getRoll(), infernal.getChance(), infernal.isTriggered(),
+				infernal.getRolledDamage(), infernal.getDamageDealt());
 		} else if (infernalPieces > 0) {
 			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
-				infernalMaxHit, -1.0D, 0.0D, false, 0, 0);
+				infernal.getMaxHit(), -1.0D, 0.0D, false, 0, 0);
 		}
 		BlueDragonWaterProc.tryApply(player, target,
 			ProductionGameRandom.INSTANCE,
@@ -795,6 +786,18 @@ public class CombatEvent extends GameTickEvent {
 					< player.getElderGreenDragonArmorProcChance()) {
 			ElderGreenDragonArmorEffect.applyProc(player, target,
 				DataConversions.random(0, ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
+		}
+	}
+
+	private void applyHellsInfernoFollowup(final Player player, final Mob target,
+			final int maxHit, final int primaryDamageDealt) {
+		if (maxHit != CombatEffectUtil.HELLS_INFERNO_MAX_HIT) {
+			return;
+		}
+		if (target.isNpc()) {
+			applyHellsInfernoSplash(player, (Npc) target, primaryDamageDealt);
+		} else if (target.isPlayer()) {
+			applyHellsInfernoPvpSplash(player, (Player) target, primaryDamageDealt);
 		}
 	}
 

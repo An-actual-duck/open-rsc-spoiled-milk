@@ -756,7 +756,9 @@ characterized Black Dragon full-set and exact-marker gate, inclusive payload dra
 event-owned auxiliary true-damage callback. Poison, marker ownership, shared
 Black/KBD presentation remain event-owned. A07.5G separately extracts KBD's
 exact marker, inclusive payload, and post-payload elemental-debuff selection;
-later families remain bounded follow-ups.
+A07.5H separately extracts Infernal Fire's shared chance/payload/
+presentation/defense-debuff core while retaining each owner's Hell's Inferno
+area policy and damage/death authority; later families remain bounded follow-ups.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -765,15 +767,16 @@ with the selector contract in
 [`combat-a07-player-owned-npc-radius-selection.md`](../../combat/combat-a07-player-owned-npc-radius-selection.md)
 and the traversal contract in
 [`combat-a07-chain-random-traversal-policy.md`](../../combat/combat-a07-chain-random-traversal-policy.md),
-plus the first six proc contracts in
+plus the first eight proc contracts in
 [`combat-a07-ogre-stagger-proc.md`](../../combat/combat-a07-ogre-stagger-proc.md),
 [`combat-a07-baby-dragon-smoke-proc.md`](../../combat/combat-a07-baby-dragon-smoke-proc.md),
 [`combat-a07-blue-dragon-water-proc.md`](../../combat/combat-a07-blue-dragon-water-proc.md),
 [`combat-a07-earth-dragon-slow-proc.md`](../../combat/combat-a07-earth-dragon-slow-proc.md),
 [`combat-a07-red-dragon-fire-proc.md`](../../combat/combat-a07-red-dragon-fire-proc.md),
 [`combat-a07-black-dragon-breath-followup.md`](../../combat/combat-a07-black-dragon-breath-followup.md),
+[`combat-a07-king-black-dragon-breath-followup.md`](../../combat/combat-a07-king-black-dragon-breath-followup.md),
 and
-[`combat-a07-king-black-dragon-breath-followup.md`](../../combat/combat-a07-king-black-dragon-breath-followup.md).
+[`combat-a07-infernal-fire-proc.md`](../../combat/combat-a07-infernal-fire-proc.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

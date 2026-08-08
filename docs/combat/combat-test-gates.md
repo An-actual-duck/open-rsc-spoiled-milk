@@ -375,3 +375,10 @@ expiry, and no-draw ineligible calls. The three owner paths continue to retain
 poison chance/state, marker ownership, shared presentation, damage transaction,
 and death adapters. The boundary is recorded in
 [`combat-a07-king-black-dragon-breath-followup.md`](combat-a07-king-black-dragon-breath-followup.md).
+
+A07.5H grows the current gate from 111 to 112 scenarios. Its compiled contract
+proves Infernal Fire chance/payload draw cardinality, zero-payload behavior,
+presentation, event-owned magic-damage callback ordering, defense-debuff
+refresh/expiry, and no-draw unconfigured calls. Hell's Inferno area policy and
+death adapters remain deliberately owner-owned. The boundary is recorded in
+[`combat-a07-infernal-fire-proc.md`](combat-a07-infernal-fire-proc.md).
