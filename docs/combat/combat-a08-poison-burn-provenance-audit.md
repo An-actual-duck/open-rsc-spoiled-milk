@@ -613,7 +613,11 @@ lifesteal, contribution, drop, XP, or callback-cardinality drift.
 
 ### A08.4 — persistence and lifecycle migration
 
-Status: next bounded implementation phase.
+Status: the first bounded slice is implemented for player generic poison. One
+versioned, live-reference-free record now replaces legacy cache writes;
+login normalizes or clears legacy state, restores one event, and removes
+legacy shadow/orphan keys. Actual save/restart and save-failure atomicity remain
+the next persistence gates.
 
 - Read current `poisoned`, `poisoned_max`, `burn_damage`, and `burn_pulses` as
   legacy inputs under a versioned migration.

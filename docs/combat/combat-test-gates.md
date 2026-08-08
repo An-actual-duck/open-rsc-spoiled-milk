@@ -403,3 +403,10 @@ visual draw, and unchanged auxiliary-damage callback. Weapon eligibility,
 formula RNG, ordering, and damage/death settlement remain event-owned. The
 boundary is recorded in
 [`combat-a07-dragon-melee-breath-followup.md`](combat-a07-dragon-melee-breath-followup.md).
+
+A07.5L grows the combined gate from 117 to 118 scenarios. Its compiled contract
+proves Elemental Sword's living-target, effect/chance, presentation,
+debuff-before-damage, and positive-payload callback sequence. Formula and RNG
+ownership plus damage/death settlement remain event-owned. The boundary is
+recorded in
+[`combat-a07-elemental-sword-proc.md`](combat-a07-elemental-sword-proc.md).

@@ -766,7 +766,9 @@ positive-primary-hit, and living-target gate while retaining ordering and
 auxiliary damage settlement in each melee event. A07.5K separately extracts
 Dragon melee breath's identical living-target, positive-roll, visual-draw, and
 callback unit while retaining weapon eligibility, formula RNG, ordering, and
-damage/death settlement in each event.
+damage/death settlement in each event. A07.5L separately extracts Elemental
+Sword's identical presentation/debuff/damage sequence while leaving formulas,
+RNG, and settlement event-owned.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -786,8 +788,9 @@ plus the bounded proc contracts in
 [`combat-a07-infernal-fire-proc.md`](../../combat/combat-a07-infernal-fire-proc.md),
 [`combat-a07-elder-green-armor-trigger.md`](../../combat/combat-a07-elder-green-armor-trigger.md),
 [`combat-a07-bear-maul-second-hit.md`](../../combat/combat-a07-bear-maul-second-hit.md),
+[`combat-a07-dragon-melee-breath-followup.md`](../../combat/combat-a07-dragon-melee-breath-followup.md),
 and
-[`combat-a07-dragon-melee-breath-followup.md`](../../combat/combat-a07-dragon-melee-breath-followup.md).
+[`combat-a07-elemental-sword-proc.md`](../../combat/combat-a07-elemental-sword-proc.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,
@@ -821,8 +824,10 @@ overflow, and fails closed during malformed cleanup. Generic-poison ticks now
 settle through the typed DOT damage transaction with factual contribution,
 live-source Leach, explicit source-based lethal credit, and no unrelated-
 opponent fallback. The next bounded step is A08.4's versioned durable poison
-record and legacy-cache migration, including logout/login and server-restart
-provenance gates.
+record and legacy-cache migration. Its first player-poison slice is now live:
+one versioned record replaces legacy writes, login normalizes or clears legacy
+state, and exactly one event is restored. Actual save/restart and save-failure
+atomicity remain the next provenance gates.
 
 Move poison/burn ownership behind typed state only after exact current
 strength, stacking, replacement, feedback, persistence, death/respawn, logout,
