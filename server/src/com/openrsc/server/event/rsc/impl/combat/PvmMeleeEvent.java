@@ -33,6 +33,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
@@ -538,13 +539,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		BlueDragonWaterProc.tryApply(player, target, combatRandom(),
 			procDamage -> inflictAuxiliaryTrueDamage(
 				hitter, target, procDamage));
-		if (player.hasFullEarthDragonSet() && combatRandom().nextDouble() < 0.20D) {
-			final int procDamage = combatRandom().nextIntInclusive(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-			target.applyDragonEarthAttackSpeedDebuff(6);
-		}
+		EarthDragonSlowProc.tryApply(player, target, combatRandom(),
+			procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		if (player.hasFullRedDragonSet() && combatRandom().nextDouble() < 0.20D) {
 			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {

@@ -18,6 +18,7 @@ PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/pro
 OGRE_STAGGER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/OgreStaggeringBlowProc.java"
 BABY_DRAGON_SMOKE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BabyDragonSmokeProc.java"
 BLUE_DRAGON_WATER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlueDragonWaterProc.java"
+EARTH_DRAGON_SLOW_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/EarthDragonSlowProc.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
@@ -166,6 +167,7 @@ def main() -> None:
         expect_contains(path, "OgreStaggeringBlowProc.tryApply", f"{label} shared Ogre stagger proc")
         expect_contains(path, "BabyDragonSmokeProc.tryApply", f"{label} shared Baby Dragon smoke proc")
         expect_contains(path, "BlueDragonWaterProc.tryApply", f"{label} shared Blue Dragon water proc")
+        expect_contains(path, "EarthDragonSlowProc.tryApply", f"{label} shared Earth Dragon slow proc")
     expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
     expect_contains(OGRE_STAGGER_PROC_PATH, "random.nextDouble()", "Ogre single random draw")
     expect_contains(OGRE_STAGGER_PROC_PATH, "source.getOgreStaggeringBlowProcChance()", "Ogre configured chance")
@@ -198,6 +200,23 @@ def main() -> None:
                   "auxiliaryTrueDamage.apply(rolledDamage);",
                   "target.applyDragonWaterMaxHitDebuff(MAX_HIT_DEBUFF_PERCENT);",
                   "Blue Dragon damage-before-debuff policy")
+    expect_contains(EARTH_DRAGON_SLOW_PROC_PATH,
+                    "if (!source.hasFullEarthDragonSet())",
+                    "Earth Dragon complete-set gate")
+    expect_contains(EARTH_DRAGON_SLOW_PROC_PATH, "random.nextDouble()", "Earth Dragon chance draw")
+    expect_contains(EARTH_DRAGON_SLOW_PROC_PATH,
+                    "random.nextIntInclusive(0, MAX_PROC_DAMAGE)",
+                    "Earth Dragon inclusive damage draw")
+    expect_contains(EARTH_DRAGON_SLOW_PROC_PATH,
+                    "auxiliaryTrueDamage.apply(rolledDamage);",
+                    "Earth Dragon event-owned true-damage callback")
+    expect_contains(EARTH_DRAGON_SLOW_PROC_PATH,
+                    "target.applyDragonEarthAttackSpeedDebuff(\n\t\t\tATTACK_SPEED_DEBUFF_PERCENT);",
+                    "Earth Dragon slow debuff")
+    expect_before(EARTH_DRAGON_SLOW_PROC_PATH,
+                  "auxiliaryTrueDamage.apply(rolledDamage);",
+                  "target.applyDragonEarthAttackSpeedDebuff(",
+                  "Earth Dragon damage-before-debuff policy")
     for path, label in ((COMBAT_EVENT_PATH, "combat"),
                         (PVM_MELEE_PATH, "pvm"),
                         (PROJECTILE_EVENT_PATH, "projectile")):

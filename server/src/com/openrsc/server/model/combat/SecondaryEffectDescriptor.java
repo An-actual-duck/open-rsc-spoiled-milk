@@ -205,7 +205,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
 		RandomTiming.SINGLE_DRAW_THEN_PAYLOAD, StateOwner.TARGET_DEBUFF,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.HIT_SPLAT,
-		"central applyLeatherSetOnHitEffects methods", "dragon leather fixtures"),
+		"EarthDragonSlowProc via central on-hit methods", "A07.5D compiled slow parity fixture"),
 	RED_DRAGON_FIRE("semantic.red-dragon-fire",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
