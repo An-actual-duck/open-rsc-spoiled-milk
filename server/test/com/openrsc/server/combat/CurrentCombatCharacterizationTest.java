@@ -204,6 +204,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_repeated_relogs_preserve_one_fresh_event_per_effect",
 				CurrentCombatDotLifecycleCharacterization
 					::repeatedRelogEventCardinality);
+			run(harness, "dot_durable_provenance_round_trip_restores_one_event",
+				CurrentCombatDotLifecycleCharacterization
+					::durablePoisonProvenanceRoundTrip);
 			run(harness, "dot_duplicate_scheduler_and_mixed_burn_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::duplicateSchedulerAndMixedBurnBoundaries);

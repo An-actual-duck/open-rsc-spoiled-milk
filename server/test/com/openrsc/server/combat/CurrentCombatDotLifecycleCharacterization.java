@@ -24,6 +24,7 @@ import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind;
+import com.openrsc.server.model.combat.dot.PoisonDurableRecord;
 import com.openrsc.server.model.combat.dot.PoisonTargetPolicy;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.handlers.SpellHandler;
@@ -299,6 +300,12 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"restored poison starts a fresh full countdown");
 		assertEquals(1, eventCount(harness, restored, "Poison Event"),
 			"restored poison event cardinality");
+		assertTrue(restored.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
+			"legacy poison is migrated to the durable record on login");
+		assertFalse(restored.getCache().hasKey("poisoned"),
+			"legacy current poison key is removed after migration");
+		assertFalse(restored.getCache().hasKey("poisoned_max"),
+			"legacy maximum poison key is removed after migration");
 
 		restored.curePoison();
 		assertFalse(restored.getCache().hasKey("poisoned"),
@@ -393,17 +400,13 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"dot bad poison", 660, 680);
 		harness.logout(nonnumericPoison);
 		nonnumericPoison.getCache().store("poisoned", "not-a-number");
-		assertThrows(NumberFormatException.class,
-			() -> nonnumericPoison.setLoggedIn(true),
-			"nonnumeric poison currently aborts session restoration");
+		nonnumericPoison.setLoggedIn(true);
 		final PoisonEvent failedRestore = nonnumericPoison.getAttribute(
 			"poisonEvent", null);
-		assertNotNull(failedRestore,
-			"failed nonnumeric poison restore leaves an event marker");
-		assertTrue(failedRestore.isRunning(),
-			"failed nonnumeric poison restore leaves a scheduled event");
-		assertFalse(nonnumericPoison.loggedIn(),
-			"failed nonnumeric poison restore never completes login state");
+		assertNull(failedRestore,
+			"nonnumeric poison restore creates no event marker");
+		assertTrue(nonnumericPoison.loggedIn(),
+			"nonnumeric poison restore cannot abort account login");
 		nonnumericPoison.curePoison();
 
 		final Player negativePoison = harness.player(
@@ -411,21 +414,10 @@ final class CurrentCombatDotLifecycleCharacterization {
 			player -> player.getCache().set("poisoned", -5));
 		final PoisonEvent negativeEvent = negativePoison.getAttribute(
 			"poisonEvent", null);
-		assertEquals(-5, negativePoison.getCurrentPoisonPower(),
-			"negative legacy poison restores without validation");
-		assertEquals(0, negativePoison.getPoisonMaxPower(),
-			"negative legacy maximum is independently clamped to zero");
-		assertThrows(IllegalArgumentException.class, negativeEvent::run,
-			"negative poison fails when its first pulse validates power");
-		assertTrue(negativeEvent.isRunning(),
-			"failed negative poison pulse leaves event running");
-		for (int tick = 0; tick < 8; tick++) {
-			negativeEvent.tick();
-		}
-		assertEquals(1, negativeEvent.call().intValue(),
-			"scheduler boundary reports the invalid poison callback failure");
-		assertFalse(negativeEvent.isRunning(),
-			"scheduler callback failure stops the invalid poison event");
+		assertNull(negativeEvent,
+			"negative legacy poison is rejected before event registration");
+		assertEquals(0, negativePoison.getCurrentPoisonPower(),
+			"negative legacy poison is cleared during restoration");
 		negativePoison.curePoison();
 
 		final Player invertedPoison = harness.player(
@@ -434,9 +426,9 @@ final class CurrentCombatDotLifecycleCharacterization {
 				player.getCache().set("poisoned_max", 20);
 			});
 		assertEquals(80, invertedPoison.getCurrentPoisonPower(),
-			"legacy current above maximum is not clamped");
-		assertEquals(20, invertedPoison.getPoisonMaxPower(),
-			"legacy inverted maximum remains lower than current");
+			"legacy current remains after normalization");
+		assertEquals(80, invertedPoison.getPoisonMaxPower(),
+			"legacy maximum normalizes to at least current power");
 		invertedPoison.curePoison();
 
 		final Player orphanMaximum = harness.player(
@@ -444,8 +436,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 			player -> player.getCache().set("poisoned_max", 40));
 		assertNull(orphanMaximum.getAttribute("poisonEvent", null),
 			"orphan maximum does not restore poison event");
-		assertTrue(orphanMaximum.getCache().hasKey("poisoned_max"),
-			"orphan maximum remains stale after login");
+		assertFalse(orphanMaximum.getCache().hasKey("poisoned_max"),
+			"orphan maximum is cleared during login migration");
 
 		final Npc overflow = npcWithHits(harness, 668, 680, 20);
 		overflow.applyPoison(Integer.MAX_VALUE, Integer.MAX_VALUE);
@@ -557,6 +549,60 @@ final class CurrentCombatDotLifecycleCharacterization {
 			assertEquals(0, eventCount(harness, player, "Burn Event"),
 				"logout removes burn scheduler entry in session " + session);
 		}
+	}
+
+	static void durablePoisonProvenanceRoundTrip(
+			final CurrentCombatHarness harness) {
+		final Player source = harness.player("dot durable source", 678, 680);
+		final String targetName = "dot durable target";
+		final Player original = harness.player(targetName, 679, 680);
+		original.applyPoison(40, 60, source);
+		assertFalse(original.getCache().hasKey("poisoned"),
+			"new poison application writes no legacy current key");
+		assertFalse(original.getCache().hasKey("poisoned_max"),
+			"new poison application writes no legacy maximum key");
+		final String record = original.getCache().getString(
+			PoisonDurableRecord.CACHE_KEY);
+		assertNotNull(record, "active player poison writes one durable record");
+		final PoisonDurableRecord decoded = PoisonDurableRecord.decode(record);
+		assertNotNull(decoded, "durable poison record decodes successfully");
+		assertEquals(source.getUUID(), decoded.getState().getProvenance().getSourceId(),
+			"durable poison record stores the player source ID, not a live reference");
+		final PoisonEvent originalEvent = original.getAttribute("poisonEvent", null);
+		originalEvent.run();
+		assertFalse(original.getCache().hasKey("poisoned"),
+			"poison ticks do not recreate the legacy current key");
+		assertFalse(original.getCache().hasKey("poisoned_max"),
+			"poison ticks do not recreate the legacy maximum key");
+		harness.logout(original);
+
+		final Player restored = harness.player(targetName, 680, 680, player -> {
+			player.getCache().store(PoisonDurableRecord.CACHE_KEY, record);
+			player.getCache().store("poisoned", 10);
+			player.getCache().store("poisoned_max", 20);
+		});
+		final PoisonEvent event = restored.getAttribute("poisonEvent", null);
+		assertNotNull(event, "durable poison restores one event");
+		assertEquals(40, restored.getCurrentPoisonPower(),
+			"durable poison restores current power");
+		assertEquals(60, restored.getPoisonMaxPower(),
+			"durable poison restores maximum power");
+		assertEquals(source.getUUID(), restored.getPoisonProvenance().getSourceId(),
+			"durable poison restores player source identity without live references");
+		assertEquals(1, eventCount(harness, restored, "Poison Event"),
+			"durable poison restoration registers exactly one event");
+		assertFalse(restored.getCache().hasKey("poisoned"),
+			"durable poison restoration needs no legacy current cache key");
+		assertFalse(restored.getCache().hasKey("poisoned_max"),
+			"durable poison restoration needs no legacy maximum cache key");
+
+		final Player malformed = harness.player("dot durable malformed", 681, 680,
+			player -> player.getCache().store(PoisonDurableRecord.CACHE_KEY,
+				"not-a-durable-poison-record"));
+		assertNull(malformed.getAttribute("poisonEvent", null),
+			"malformed durable poison data does not create a scheduler event");
+		assertFalse(malformed.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
+			"malformed durable poison data is discarded at the login boundary");
 	}
 
 	static void duplicateSchedulerAndMixedBurnBoundaries(

@@ -11,6 +11,7 @@ MOB_PATH = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 POISON_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java"
 POISON_TARGET_STATE_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonTargetState.java"
 POISON_TARGET_POLICY_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonTargetPolicy.java"
+POISON_DURABLE_RECORD_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonDurableRecord.java"
 PLAYER_PATH = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
@@ -108,7 +109,7 @@ def main() -> None:
 
     expect_contains(MOB_PATH, "private int poisonMaxPower = 0;", "mob poison max state")
     expect_contains(MOB_PATH, "applyPoison(final int appliedPoisonPower, final int maxPoisonPower)", "shared poison application")
-    expect_contains(MOB_PATH, 'player.getCache().store("poisoned_max"', "player poison max persistence")
+    expect_contains(MOB_PATH, 'player.getCache().store(PoisonDurableRecord.CACHE_KEY', "durable player poison persistence")
     expect_contains(MOB_PATH, "synchronized (poisonStateLock())", "atomic poison target-state boundary")
     expect_contains(MOB_PATH, "private Object poisonStateLock()", "constructor-bypass poison lock recovery")
     expect_contains(MOB_PATH, "final PoisonTargetState next = current.apply", "poison next-state calculation")
@@ -119,7 +120,17 @@ def main() -> None:
     expect_contains(POISON_EVENT_PATH, 'DamageRequest.SourceCategory.DOT, "generic-poison"', "typed poison tick settlement")
     expect_contains(POISON_EVENT_PATH, "getResolvedDamageTransaction().apply(request)", "typed poison damage transaction")
 
-    expect_contains(PLAYER_PATH, 'getCache().hasKey("poisoned_max") ? getCache().getInt("poisoned_max") : getCache().getInt("poisoned")', "player poison max restore")
+    expect_contains(POISON_DURABLE_RECORD_PATH, 'CACHE_KEY = "poison_state_v1"', "versioned durable poison cache key")
+    expect_contains(POISON_DURABLE_RECORD_PATH, 'return "1|" + state.getCurrentPower()', "versioned durable poison encoding")
+    expect_contains(POISON_DURABLE_RECORD_PATH, 'if (parts.length != 7 || !"1".equals(parts[0])) return null;', "durable poison version validation")
+    expect_contains(PLAYER_PATH, 'getCache().hasKey(PoisonDurableRecord.CACHE_KEY)', "durable poison login restore preference")
+    expect_contains(PLAYER_PATH, 'restoreDurablePoison(record.getState());', "durable poison state restore")
+    expect_contains(PLAYER_PATH, 'final int maximum = getCache().hasKey("poisoned_max")', "legacy poison maximum migration")
+    expect_contains(PLAYER_PATH, 'Math.max(current, maximum)', "legacy poison maximum normalization")
+    expect_contains(PLAYER_PATH, 'getCache().remove(PoisonDurableRecord.CACHE_KEY);', "malformed durable poison removal")
+    expect_not_contains(POISON_EVENT_PATH, 'getCache().set("poisoned"', "legacy poison tick cache writes")
+    expect_not_contains(MOB_PATH, 'getCache().set("poisoned"', "legacy poison reduction cache writes")
+    expect_not_contains(MOB_PATH, 'getCache().store("poisoned_max"', "legacy poison maximum cache writes")
     expect_contains(PLAYER_PATH, "getMeleePoisonArmorMaxPower()", "player melee poison armor access")
     expect_contains(PLAYER_PATH, "getRangedPoisonArmorMaxPower()", "player ranged poison armor access")
     expect_contains(PLAYER_PATH, "getMagicPoisonArmorMaxPower()", "player magic poison armor access")

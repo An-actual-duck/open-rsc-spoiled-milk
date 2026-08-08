@@ -53,6 +53,7 @@ import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
+import com.openrsc.server.model.combat.dot.PoisonDurableRecord;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.death.DeathContext;
 import com.openrsc.server.model.entity.death.DeathTransition;
@@ -4083,11 +4084,31 @@ public final class Player extends Mob {
 		}
 		if (loggedIn) {
 			currentLogin = System.currentTimeMillis();
-			if (getCache().hasKey("poisoned")) {
-				startPoisonEvent();
-				PoisonEvent poisonEvent = getAttribute("poisonEvent", null);
-				poisonEvent.setPoisonPower(getCache().getInt("poisoned"));
-				setPoisonMaxPower(getCache().hasKey("poisoned_max") ? getCache().getInt("poisoned_max") : getCache().getInt("poisoned"));
+			if (getCache().hasKey(PoisonDurableRecord.CACHE_KEY)) {
+				final PoisonDurableRecord record = PoisonDurableRecord.decode(
+					getCache().getString(PoisonDurableRecord.CACHE_KEY));
+				if (record != null) {
+					restoreDurablePoison(record.getState());
+				} else {
+					getCache().remove(PoisonDurableRecord.CACHE_KEY);
+				}
+				getCache().remove("poisoned");
+				getCache().remove("poisoned_max");
+			} else if (getCache().hasKey("poisoned")) {
+				try {
+					final int current = getCache().getInt("poisoned");
+					final int maximum = getCache().hasKey("poisoned_max")
+						? getCache().getInt("poisoned_max") : current;
+					restoreDurablePoison(com.openrsc.server.model.combat.dot.PoisonTargetState.of(
+						current, Math.max(current, maximum), null));
+					getCache().remove("poisoned");
+					getCache().remove("poisoned_max");
+				} catch (final RuntimeException invalidLegacyPoison) {
+					getCache().remove("poisoned");
+					getCache().remove("poisoned_max");
+				}
+			} else if (getCache().hasKey("poisoned_max")) {
+				getCache().remove("poisoned_max");
 			}
 			if (getCache().hasKey("burn_pulses") && getCache().hasKey("burn_damage")) {
 				setBurnDamage(getCache().getInt("burn_damage"));
