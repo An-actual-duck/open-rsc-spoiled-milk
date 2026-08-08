@@ -140,9 +140,7 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first bounded family is complete on published main, and A07.5B
-extracts the separately characterized Baby Dragon smoke proc on its focused
-branch.
+Status: the first two bounded families are complete on published main.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
 nearby families are recorded in
