@@ -9,6 +9,8 @@ POISON_POWER_PATH = ROOT / "server/src/com/openrsc/server/content/PoisonPower.ja
 POISON_PROC_CHANCE_PATH = ROOT / "server/src/com/openrsc/server/content/PoisonProcChance.java"
 MOB_PATH = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 POISON_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java"
+POISON_TARGET_STATE_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonTargetState.java"
+POISON_TARGET_POLICY_PATH = ROOT / "server/src/com/openrsc/server/model/combat/dot/PoisonTargetPolicy.java"
 PLAYER_PATH = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
@@ -107,8 +109,12 @@ def main() -> None:
     expect_contains(MOB_PATH, "private int poisonMaxPower = 0;", "mob poison max state")
     expect_contains(MOB_PATH, "applyPoison(final int appliedPoisonPower, final int maxPoisonPower)", "shared poison application")
     expect_contains(MOB_PATH, 'player.getCache().store("poisoned_max"', "player poison max persistence")
-    expect_contains(MOB_PATH, 'final PoisonEvent existingPoisonEvent = getAttribute("poisonEvent", null);', "poison event lookup on reapply")
-    expect_contains(MOB_PATH, "existingPoisonEvent.setPoisonPower(getPoisonDamage());", "poison reapply updates existing event without curing")
+    expect_contains(MOB_PATH, "synchronized (poisonStateLock)", "atomic poison target-state boundary")
+    expect_contains(MOB_PATH, "final PoisonTargetState next = current.apply", "poison next-state calculation")
+    expect_contains(MOB_PATH, "ensurePoisonEvent(getPoisonDamage(), poisonOwnerId);", "poison restore event lookup")
+    expect_contains(POISON_TARGET_STATE_PATH, "final long uncappedPower", "poison overflow-safe accumulation")
+    expect_contains(POISON_TARGET_POLICY_PATH, "transfersProvenance", "capped provenance transfer policy")
+    expect_contains(POISON_EVENT_PATH, "DuplicationStrategy.ONE_PER_MOB", "single poison scheduler stream")
 
     expect_contains(PLAYER_PATH, 'getCache().hasKey("poisoned_max") ? getCache().getInt("poisoned_max") : getCache().getInt("poisoned")', "player poison max restore")
     expect_contains(PLAYER_PATH, "getMeleePoisonArmorMaxPower()", "player melee poison armor access")

@@ -11,7 +11,8 @@ public class NpcPoisonPlayerScript implements CombatSideEffectScript {
 
 	@Override
 	public void executeScript(Mob attacker, Mob victim) {
-		victim.applyPoison(attacker.getWorld().getServer().getConstants().getPoison().npcData.getOrDefault(attacker.getID(), 38));
+		victim.applyPoison(attacker.getWorld().getServer().getConstants()
+			.getPoison().npcData.getOrDefault(attacker.getID(), 38), attacker);
 	}
 
 	@Override

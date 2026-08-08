@@ -24,7 +24,7 @@ public class PoisonEvent extends GameTickEvent {
 	private UUID poisonOwnerId;
 
 	public PoisonEvent(World world, Mob owner, int poisonPower, UUID poisonOwnerId) {
-		super(world, owner, TICK_DELAY, "Poison Event", DuplicationStrategy.ALLOW_MULTIPLE);
+		super(world, owner, TICK_DELAY, "Poison Event", DuplicationStrategy.ONE_PER_MOB);
 		this.mob = owner;
 		this.poisonPower = poisonPower;
 		this.poisonOwnerId = poisonOwnerId;
