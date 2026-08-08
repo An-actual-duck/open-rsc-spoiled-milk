@@ -16,6 +16,7 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BearMaulSecondHit;
 import com.openrsc.server.model.combat.BlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.combat.CombatEngagement;
@@ -838,11 +839,8 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void applyBearMaulSecondHit(final Mob hitter, final Mob target, final int damage) {
-		if (!hitter.isPlayer() || !((Player) hitter).hasFullBearHideSet() || damage <= 0
-			|| target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		inflictAuxiliaryTrueDamage(hitter, target, damage);
+		BearMaulSecondHit.tryApply(hitter, target, damage,
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
 	}
 
 	private void applyDragonWeaponBreathDamage(final Mob hitter, final Mob target) {

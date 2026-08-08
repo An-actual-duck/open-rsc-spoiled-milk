@@ -22,6 +22,7 @@ EARTH_DRAGON_SLOW_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat
 RED_DRAGON_FIRE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/RedDragonFireProc.java"
 INFERNAL_FIRE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/InfernalFireProc.java"
 ELDER_GREEN_ARMOR_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/ElderGreenDragonArmorProc.java"
+BEAR_MAUL_SECOND_HIT_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BearMaulSecondHit.java"
 BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlackDragonBreathFollowup.java"
 KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/KingBlackDragonBreathFollowup.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
@@ -272,6 +273,10 @@ def main() -> None:
                     "random.nextIntInclusive(0,", "Elder inclusive payload draw")
     expect_contains(ELDER_GREEN_ARMOR_PROC_PATH,
                     "procPayload.apply", "Elder owner-content callback")
+    expect_contains(BEAR_MAUL_SECOND_HIT_PATH,
+                    "hasFullBearHideSet()", "Bear complete-set gate")
+    expect_contains(BEAR_MAUL_SECOND_HIT_PATH,
+                    "auxiliaryTrueDamage.apply(damage)", "Bear event-owned damage callback")
     expect_contains(BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "!source.hasFullBlackDragonSet() || !BLACK_MARKER.equals(marker)",
                     "Black Dragon set and marker gate")
