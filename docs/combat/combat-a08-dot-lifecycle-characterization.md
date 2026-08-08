@@ -2,8 +2,9 @@
 
 Status: second executable current-state evidence milestone complete; the four
 gameplay-policy decisions below were approved by the project owner on
-2026-08-07. Remaining exceptional producer and failure-injection fixtures
-still precede typed runtime implementation.
+2026-08-07. A third exceptional-boundaries fixture now covers the legacy PvP
+producer and valid large generic-burn values. Plugin/command integration and
+failure-injection fixtures still precede typed runtime implementation.
 
 Baseline: published `main` at `904218197c72be996329a50c9acd8d873fac6a7d`.
 
@@ -51,6 +52,11 @@ hide it behind equal final Hits.
   for generic burn, including the detached poison stream's independent damage;
 - zero-damage, zero-pulse, and negative complete burn-cache pairs scheduling
   invalid events that clear only on their first pulse;
+- the legacy non-My-World PvP poison producer, including its My World gate,
+  poisoned-equipment requirement, deterministic roll, antidote guard, and
+  unattributed 48/48 application; and
+- large valid generic-burn values, including `Integer.MAX_VALUE` damage
+  reaching ordinary lethal handling while the visible hitsplat caps at 255;
 - player death clearing generic poison and generic burn runtime/cache state;
 - lethal poison credit when a different opponent is engaged and the
   opponentless lethal boundary; and
@@ -184,6 +190,22 @@ and clears them without damage. This is less severe than the nonnumeric login
 failure, but still violates fail-closed restoration: invalid optional state
 should be normalized before scheduler admission, not one clock cycle later.
 
+### Legacy PvP poison and large valid burn boundaries
+
+`PlayerPoisonScript` correctly refuses to run while `WANT_MYWORLD` is true.
+With the compatibility mode enabled, it requires a wielded item whose name
+contains `poisoned`, passes its one-in-four random gate, and applies an
+unattributed 48/48 poison state. Its execute path separately honors the
+target's antidote protection. It is therefore an active compatibility producer,
+not a safe generic producer to delete or migrate by a My World-only search.
+
+Positive burn values have no upper input bound. A 39-damage event with
+`Integer.MAX_VALUE` pulses persists the decremented pulse count correctly. An
+`Integer.MAX_VALUE` damage pulse reaches normal player death handling and
+cleans up its event; the combat presentation layer caps that hitsplat at 255.
+Typed A08 state must decide and validate its maximums explicitly, while
+preserving that client-facing cap wherever protocol compatibility requires it.
+
 ## Current behavior now guarded
 
 | Boundary | Executable result |
@@ -197,6 +219,8 @@ should be normalized before scheduler admission, not one clock cycle later.
 | Direct duplicate poison registration | Scheduler admits a detached second stream; both streams damage |
 | Direct duplicate burn registration | Scheduler rejects the second stream |
 | Zero/negative complete burn cache | Invalid event schedules, then clears without damage on first pulse |
+| Legacy PvP poison | Disabled in My World; compatibility path applies unattributed 48/48 poison after its own guard/roll |
+| Large positive generic burn | Large pulse count decrements safely; maximum damage is lethal but visible hitsplat caps at 255 |
 | Poison contribution | Always zero through generic tick path |
 | Normal poison cure | Runtime and cache clear |
 | Cure with missing event | Runtime clears; legacy cache incorrectly remains |
@@ -248,10 +272,9 @@ coincidental opponent.
 This checkpoint intentionally does not claim the full future matrix is done.
 The next characterization slice should cover:
 
-- excessive positive pulse/damage burn values;
 - failed logout-save and tick/death callback failure injection;
-- exceptional producer integration for legacy non-My-World PvP poison,
-  Sinister Chest, and admin self-poison, plus producer-inventory drift checks;
+- exceptional producer integration for Sinister Chest and admin self-poison,
+  plus producer-inventory drift checks;
   and
 - server-restart persistence once a versioned source record exists to preserve.
 
@@ -261,7 +284,7 @@ migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 106/106 scenarios.
+- `./server/test_combat` — PASS, 109/109 scenarios.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

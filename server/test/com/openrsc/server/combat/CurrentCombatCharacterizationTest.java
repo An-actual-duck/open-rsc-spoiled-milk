@@ -201,6 +201,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_duplicate_scheduler_and_mixed_burn_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::duplicateSchedulerAndMixedBurnBoundaries);
+			run(harness, "dot_legacy_pvp_poison_and_positive_burn_boundaries_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::legacyPvpPoisonAndPositiveBurnBoundaries);
 			run(harness, "generic_burn_replacement_restore_and_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::burnReplacementPersistenceAndCleanup);
