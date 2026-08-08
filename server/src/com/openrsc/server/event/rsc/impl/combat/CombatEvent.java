@@ -28,6 +28,7 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.DemonPitchforkHellBlazeProc;
+import com.openrsc.server.model.combat.PlayerMeleeDamageBuff;
 import com.openrsc.server.model.combat.ElementalSwordProc;
 import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.InfernalFireProc;
@@ -834,11 +835,7 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private int applyPlayerMeleeDamageBuff(final Player player, final int damage) {
-		if (damage <= 0) {
-			return damage;
-		}
-		final int buffedDamage = Math.max(0, (int) Math.floor(damage * player.getLeatherSetMeleeDamageMultiplier()));
-		return player.applyBearMaulDamage(buffedDamage);
+		return PlayerMeleeDamageBuff.apply(player, damage);
 	}
 
 	private void applyBearMaulSecondHit(final Mob hitter, final Mob target, final int damage) {

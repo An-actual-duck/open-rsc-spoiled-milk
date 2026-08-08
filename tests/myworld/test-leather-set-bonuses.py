@@ -26,6 +26,7 @@ BEAR_MAUL_SECOND_HIT_PATH = ROOT / "server/src/com/openrsc/server/model/combat/B
 DRAGON_MELEE_BREATH_PATH = ROOT / "server/src/com/openrsc/server/model/combat/DragonMeleeBreathFollowup.java"
 ELEMENTAL_SWORD_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/ElementalSwordProc.java"
 DEMON_PITCHFORK_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/DemonPitchforkHellBlazeProc.java"
+PLAYER_MELEE_DAMAGE_BUFF_PATH = ROOT / "server/src/com/openrsc/server/model/combat/PlayerMeleeDamageBuff.java"
 BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlackDragonBreathFollowup.java"
 KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/KingBlackDragonBreathFollowup.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
@@ -296,6 +297,10 @@ def main() -> None:
                     "CombatEffect.HELLS_BLAZE", "Demon Pitchfork presentation")
     expect_contains(DEMON_PITCHFORK_PROC_PATH,
                     "auxiliaryMagicDamage.apply(damage)", "Demon Pitchfork owner damage callback")
+    expect_contains(PLAYER_MELEE_DAMAGE_BUFF_PATH,
+                    "player.getLeatherSetMeleeDamageMultiplier()", "shared melee multiplier")
+    expect_contains(PLAYER_MELEE_DAMAGE_BUFF_PATH,
+                    "player.applyBearMaulDamage(buffedDamage)", "shared Bear damage adjustment")
     expect_contains(BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "!source.hasFullBlackDragonSet() || !BLACK_MARKER.equals(marker)",
                     "Black Dragon set and marker gate")
