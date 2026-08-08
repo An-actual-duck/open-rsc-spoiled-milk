@@ -180,6 +180,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_stacking_ownership_and_cadence_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonStackingOwnershipAndCadence);
+			run(harness, "dot_approved_target_policy_foundation_is_executable",
+				CurrentCombatDotLifecycleCharacterization
+					::approvedTargetPolicyFoundation);
 			run(harness, "generic_poison_leach_tracks_live_source_sessions_without_contribution",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonPulseLeachAndSourceAvailability);
