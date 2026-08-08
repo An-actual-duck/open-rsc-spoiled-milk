@@ -393,39 +393,24 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"dot bad poison", 660, 680);
 		harness.logout(nonnumericPoison);
 		nonnumericPoison.getCache().store("poisoned", "not-a-number");
-		assertThrows(NumberFormatException.class,
-			() -> nonnumericPoison.setLoggedIn(true),
-			"nonnumeric poison currently aborts session restoration");
+		nonnumericPoison.setLoggedIn(true);
 		final PoisonEvent failedRestore = nonnumericPoison.getAttribute(
 			"poisonEvent", null);
-		assertNotNull(failedRestore,
-			"failed nonnumeric poison restore leaves an event marker");
-		assertTrue(failedRestore.isRunning(),
-			"failed nonnumeric poison restore leaves a scheduled event");
-		assertFalse(nonnumericPoison.loggedIn(),
-			"failed nonnumeric poison restore never completes login state");
+		assertNull(failedRestore,
+			"nonnumeric poison restore creates no event marker");
+		assertTrue(nonnumericPoison.loggedIn(),
+			"nonnumeric poison restore cannot abort account login");
 		nonnumericPoison.curePoison();
 
 		final Player negativePoison = harness.player(
 			"dot negative", 662, 680,
 			player -> player.getCache().set("poisoned", -5));
-		final PoisonEvent negativeEvent = negativePoison.getAttribute(
+	final PoisonEvent negativeEvent = negativePoison.getAttribute(
 			"poisonEvent", null);
-		assertEquals(-5, negativePoison.getCurrentPoisonPower(),
-			"negative legacy poison restores without validation");
-		assertEquals(0, negativePoison.getPoisonMaxPower(),
-			"negative legacy maximum is independently clamped to zero");
-		assertThrows(IllegalArgumentException.class, negativeEvent::run,
-			"negative poison fails when its first pulse validates power");
-		assertTrue(negativeEvent.isRunning(),
-			"failed negative poison pulse leaves event running");
-		for (int tick = 0; tick < 8; tick++) {
-			negativeEvent.tick();
-		}
-		assertEquals(1, negativeEvent.call().intValue(),
-			"scheduler boundary reports the invalid poison callback failure");
-		assertFalse(negativeEvent.isRunning(),
-			"scheduler callback failure stops the invalid poison event");
+		assertNull(negativeEvent,
+			"negative legacy poison is rejected before event registration");
+		assertEquals(0, negativePoison.getCurrentPoisonPower(),
+			"negative legacy poison is cleared during restoration");
 		negativePoison.curePoison();
 
 		final Player invertedPoison = harness.player(
@@ -434,9 +419,9 @@ final class CurrentCombatDotLifecycleCharacterization {
 				player.getCache().set("poisoned_max", 20);
 			});
 		assertEquals(80, invertedPoison.getCurrentPoisonPower(),
-			"legacy current above maximum is not clamped");
-		assertEquals(20, invertedPoison.getPoisonMaxPower(),
-			"legacy inverted maximum remains lower than current");
+			"legacy current remains after normalization");
+		assertEquals(80, invertedPoison.getPoisonMaxPower(),
+			"legacy maximum normalizes to at least current power");
 		invertedPoison.curePoison();
 
 		final Player orphanMaximum = harness.player(

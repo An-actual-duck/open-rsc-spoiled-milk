@@ -28,6 +28,7 @@ import com.openrsc.server.model.combat.CombatOwnershipAudit;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.PlayerAttackTransaction;
 import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
+import com.openrsc.server.model.combat.dot.PoisonDurableRecord;
 import com.openrsc.server.model.combat.dot.PoisonTargetState;
 import com.openrsc.server.model.entity.death.DeathContext;
 import com.openrsc.server.model.entity.death.DeathLifecycleAuthority;
@@ -1582,6 +1583,7 @@ public abstract class Mob extends Entity {
 				final Player player = (Player) this;
 				player.getCache().remove("poisoned");
 				player.getCache().remove("poisoned_max");
+				player.getCache().remove(PoisonDurableRecord.CACHE_KEY);
 			}
 			poisonMaxPower = 0;
 			poisonOwnerId = null;
@@ -2031,6 +2033,21 @@ public abstract class Mob extends Entity {
 			final PoisonEvent active = getAttribute("poisonEvent", null);
 			active.setPoisonPower(next.getCurrentPower());
 			active.setProvenance(next.getProvenance());
+			persistPoisonState();
+		}
+	}
+
+	public void restoreDurablePoison(final PoisonTargetState state) {
+		if (state == null || state.getCurrentPower() <= 0) return;
+		synchronized (poisonStateLock()) {
+			poisonMaxPower = state.getMaximumPower();
+			poisonDamage = state.getCurrentPower();
+			poisonProvenance = state.getProvenance();
+			poisonOwnerId = poisonProvenance != null && poisonProvenance.isPlayer()
+				? poisonProvenance.getSourceId() : null;
+			if (ensurePoisonEvent(poisonDamage, poisonProvenance)) {
+				persistPoisonState();
+			}
 		}
 	}
 
@@ -2143,6 +2160,16 @@ public abstract class Mob extends Entity {
 			Player player = (Player) this;
 			player.getCache().store("poisoned_max", this.poisonMaxPower);
 		}
+	}
+
+	private void persistPoisonState() {
+		if (!isPlayer() || poisonDamage <= 0 || poisonMaxPower < poisonDamage) {
+			return;
+		}
+		final Player player = (Player) this;
+		player.getCache().store(PoisonDurableRecord.CACHE_KEY,
+			new PoisonDurableRecord(PoisonTargetState.of(poisonDamage,
+				poisonMaxPower, poisonProvenance)).encode());
 	}
 
 	private String describePoisonDebugTarget() {
@@ -2591,6 +2618,7 @@ public abstract class Mob extends Entity {
 
 	public void setPoisonDamage(int poisonDamage) {
 		this.poisonDamage = poisonDamage;
+		persistPoisonState();
 	}
 
 	public int getBurnDamage() {
