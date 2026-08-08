@@ -22,6 +22,7 @@ import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
+import com.openrsc.server.model.combat.BabyDragonSmokeProc;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.combat.AttackIntent;
@@ -509,11 +510,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			player.applyElementalGiantMightDebuff(target);
 		}
 		OgreStaggeringBlowProc.tryApply(player, target, combatRandom());
-		final int smokePercent = player.getBabyDragonSmokeAccuracyDebuffPercent();
-		if (smokePercent > 0 && combatRandom().nextDouble() < player.getBabyDragonSmokeProcChance()) {
-			target.getUpdateFlags().setProjectile(new Projectile(hitter, target, Projectile.BLOW_SMOKE));
-			target.applySmokeAccuracyDebuff(smokePercent);
-		}
+		BabyDragonSmokeProc.tryApply(player, target, combatRandom());
 		final int infernalMaxHit = player.getInfernalFireProcMaxHit();
 		final int infernalPieces = player.getInfernalArmorPieceCount();
 		if (infernalMaxHit > 0) {

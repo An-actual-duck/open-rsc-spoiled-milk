@@ -140,11 +140,17 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first bounded family is complete on published main.
+Status: the first bounded family is complete on published main, and A07.5B
+extracts the separately characterized Baby Dragon smoke proc on its focused
+branch.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
 nearby families are recorded in
 [`combat-a07-ogre-stagger-proc.md`](combat-a07-ogre-stagger-proc.md).
+`BabyDragonSmokeProc` centralizes only the positive equipment-effect gate,
+single draw, smoke projectile, and five-attack accuracy-debuff refresh unit.
+Its separate contract is recorded in
+[`combat-a07-baby-dragon-smoke-proc.md`](combat-a07-baby-dragon-smoke-proc.md).
 A07.5 remains open for separately characterized one-family branches.
 
 Move only an effect whose melee/projectile policies are proven identical into
@@ -166,9 +172,9 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 89 scenarios, including the compiled
-  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first A07.5 shared
-  proc contracts.
+- The authoritative combat gate passes 90 scenarios, including the compiled
+  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first two A07.5 shared
+  proc contracts for Ogre Stagger and Baby Dragon smoke.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,

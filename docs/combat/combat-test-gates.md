@@ -317,3 +317,12 @@ rejection for incomplete equipment, dead targets, and non-player sources.
 Only that identical proc unit moves; surrounding phase gates and leather
 chains remain event-owned. The boundary is recorded in
 [`combat-a07-ogre-stagger-proc.md`](combat-a07-ogre-stagger-proc.md).
+
+A07.5B grows the gate from 89 to 90 scenarios. Its pre-migration and parity
+fixture executes reciprocal melee, PvM melee, and projectile-impact owners and
+proves Baby Dragon smoke success on settled zero, the exact smoke projectile,
+one-draw success/failure behavior, no-draw rejection, and the target-owned
+five-attack accuracy-debuff refresh and expiry contract. Only the identical
+proc unit moves; phase gates, surrounding chain order, and debuff consumption
+remain with their existing owners. The boundary is recorded in
+[`combat-a07-baby-dragon-smoke-proc.md`](combat-a07-baby-dragon-smoke-proc.md).
