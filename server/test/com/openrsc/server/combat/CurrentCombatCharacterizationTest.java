@@ -322,6 +322,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatDragonMeleeBreathCharacterization::dragonMeleeBreathPolicies);
 			run(harness, "elemental_sword_preserves_presentation_and_callback_order",
 				CurrentCombatElementalSwordProcCharacterization::elementalSwordPolicies);
+			run(harness, "demon_pitchfork_preserves_hell_blaze_callback_order",
+				CurrentCombatDemonPitchforkCharacterization::hellBlazePolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
