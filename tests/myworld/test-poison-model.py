@@ -109,7 +109,7 @@ def main() -> None:
 
     expect_contains(MOB_PATH, "private int poisonMaxPower = 0;", "mob poison max state")
     expect_contains(MOB_PATH, "applyPoison(final int appliedPoisonPower, final int maxPoisonPower)", "shared poison application")
-    expect_contains(MOB_PATH, 'player.getCache().store("poisoned_max"', "player poison max persistence")
+    expect_contains(MOB_PATH, 'player.getCache().store(PoisonDurableRecord.CACHE_KEY', "durable player poison persistence")
     expect_contains(MOB_PATH, "synchronized (poisonStateLock())", "atomic poison target-state boundary")
     expect_contains(MOB_PATH, "private Object poisonStateLock()", "constructor-bypass poison lock recovery")
     expect_contains(MOB_PATH, "final PoisonTargetState next = current.apply", "poison next-state calculation")
