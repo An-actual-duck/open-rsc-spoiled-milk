@@ -596,6 +596,11 @@ proposed assertion silently chooses a reward policy.
 
 ### A08.3 — typed state/provenance foundation
 
+Status: implemented for generic poison application and tick settlement. The
+runtime now uses atomic typed target state, one scheduler stream, bounded
+application, typed DOT settlement, factual contribution and Leach, and
+explicit lethal attribution without unrelated-opponent fallback.
+
 - Add immutable/bounded provenance and periodic-state value types.
 - Add atomic target registry/application and one-event enforcement.
 - Migrate generic poison state/application first while preserving power,
@@ -607,6 +612,8 @@ Stop on formula, RNG, application phase, countdown, hitsplat, packet,
 lifesteal, contribution, drop, XP, or callback-cardinality drift.
 
 ### A08.4 — persistence and lifecycle migration
+
+Status: next bounded implementation phase.
 
 - Read current `poisoned`, `poisoned_max`, `burn_damage`, and `burn_pulses` as
   legacy inputs under a versioned migration.

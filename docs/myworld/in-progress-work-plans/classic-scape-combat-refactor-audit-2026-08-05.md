@@ -813,11 +813,12 @@ matrix is complete. A08.3 now has compiled immutable provenance and target-
 policy types covering those four decisions. Its first runtime slice now owns
 one atomic generic-poison target registry/application path, rejects duplicate
 target streams, retains provenance on capped no-op applications, bounds
-overflow, and fails closed during malformed cleanup. The next bounded step is
-generic-poison tick settlement using this typed state while retaining the
-approved contribution, Leach, and lethal-credit fixtures. Server-restart
-provenance remains an implementation-phase gate once a versioned durable
-source record exists.
+overflow, and fails closed during malformed cleanup. Generic-poison ticks now
+settle through the typed DOT damage transaction with factual contribution,
+live-source Leach, explicit source-based lethal credit, and no unrelated-
+opponent fallback. The next bounded step is A08.4's versioned durable poison
+record and legacy-cache migration, including logout/login and server-restart
+provenance gates.
 
 Move poison/burn ownership behind typed state only after exact current
 strength, stacking, replacement, feedback, persistence, death/respawn, logout,
