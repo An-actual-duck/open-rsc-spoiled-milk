@@ -31,6 +31,10 @@ import com.openrsc.server.net.rsc.handlers.SpellHandler;
 import com.openrsc.server.util.rsc.DataConversions;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.UUID;
 
 /**
@@ -614,6 +618,40 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"malformed durable poison data does not create a scheduler event");
 		assertFalse(malformed.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
 			"malformed durable poison data is discarded at the login boundary");
+	}
+
+	static void durablePoisonSurvivesServerRestart(
+			final CurrentCombatHarness ignored) throws Exception {
+		final Path persistedRecord = Files.createTempFile(
+			"spoiled-milk-poison-restart-", ".state");
+		try {
+			runPoisonRestartFixture("write", persistedRecord);
+			runPoisonRestartFixture("read", persistedRecord);
+		} finally {
+			Files.deleteIfExists(persistedRecord);
+		}
+	}
+
+	private static void runPoisonRestartFixture(final String phase,
+			final Path persistedRecord) throws Exception {
+		final String javaHome = System.getProperty("java.home");
+		final String javaBinary = javaHome + java.io.File.separator + "bin"
+			+ java.io.File.separator + "java";
+		final Process process = new ProcessBuilder(javaBinary, "-cp",
+			System.getProperty("java.class.path"),
+			PoisonProcessRestartFixture.class.getName(), phase,
+			persistedRecord.toString()).redirectErrorStream(true).start();
+		final ByteArrayOutputStream output = new ByteArrayOutputStream();
+		try (InputStream input = process.getInputStream()) {
+			final byte[] buffer = new byte[4096];
+			for (int count; (count = input.read(buffer)) != -1;) {
+				output.write(buffer, 0, count);
+			}
+		}
+		if (process.waitFor() != 0) {
+			throw new AssertionError("poison restart fixture " + phase
+				+ " failed: " + output.toString("UTF-8"));
+		}
 	}
 
 	static void duplicateSchedulerAndMixedBurnBoundaries(
