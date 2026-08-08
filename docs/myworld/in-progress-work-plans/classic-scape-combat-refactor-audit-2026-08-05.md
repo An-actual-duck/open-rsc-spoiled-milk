@@ -787,15 +787,16 @@ A08.1 is complete on published main. The implementation inventory, lifecycle
 risks, policy decisions, and staged test plan are recorded in
 [`combat-a08-poison-burn-provenance-audit.md`](../../combat/combat-a08-poison-burn-provenance-audit.md).
 
-A08.2 now has a first executable lifecycle checkpoint in
+A08.2 now has a second executable lifecycle checkpoint on published main in
 [`combat-a08-dot-lifecycle-characterization.md`](../../combat/combat-a08-dot-lifecycle-characterization.md).
-It guards current stacking, cadence, cache restoration, source-session, death,
-Leach, contribution, and lethal-attribution behavior and records newly proven
-generic-burn replacement/NPC-removal defects. On 2026-08-07 the project owner
+It guards current stacking, cadence, cache restoration and corruption,
+source-session, duplicate scheduling, producer, death, Leach, contribution,
+and lethal-attribution behavior and records newly proven generic-burn
+replacement/NPC-removal defects. On 2026-08-07 the project owner
 approved state-changing-only poison ownership transfer, factual poison
 contribution, no synthesized offline-owner rewards or unrelated-opponent kill
 credit, and retirement/migration of dormant generic burn. The remaining
-corruption, producer, and player-death fixture matrix is still open; typed
+exceptional-producer and failure-injection fixture matrix remains open; typed
 settlement must not begin until that executable boundary is ready.
 
 Move poison/burn ownership behind typed state only after exact current
