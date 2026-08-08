@@ -326,7 +326,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.CURRENT_ATTACK_PAIR, ZeroDamageRule.SETTLED_ZERO_ALLOWED,
 		RandomTiming.SINGLE_DRAW_THEN_PAYLOAD, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.ALLOW_SCYTHE_DESCENDANTS, PresentationPolicy.MIXED,
-		"CombatEvent/PvmMeleeEvent.applyElementalSwordProc", "auxiliary damage characterization"),
+		"ElementalSwordProc via primary melee event methods", "A07.5L compiled callback-order fixture"),
 	DEMON_PITCHFORK_HELL_BLAZE("semantic.demon-pitchfork-hell-blaze",
 		phases(Phase.AFTER_ROOT_ATTACK), styles(Style.MELEE),
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,
