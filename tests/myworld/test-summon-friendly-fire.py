@@ -13,6 +13,8 @@ COMBAT_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/Comba
 PVM_MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 PLAYER_NPC_RADIUS_SELECTION = ROOT / "server/src/com/openrsc/server/model/combat/PlayerOwnedNpcRadiusSelection.java"
+CHAIN_TRAVERSAL = ROOT / "server/src/com/openrsc/server/model/combat/ChainLightningTraversalPolicy.java"
+SPLINTER_SELECTION = ROOT / "server/src/com/openrsc/server/model/combat/SplinterTargetSelectionPolicy.java"
 
 
 def fail(message: str) -> None:
@@ -50,7 +52,11 @@ def require_absent(source: str, snippet: str, message: str) -> None:
 
 
 def require_npc_damage_area(name: str, body: str, attackable_required: bool = True) -> None:
-    if "PlayerOwnedNpcRadiusSelection." in body:
+    if any(policy in body for policy in (
+        "PlayerOwnedNpcRadiusSelection.",
+        "ChainLightningTraversalPolicy.",
+        "SplinterTargetSelectionPolicy.",
+    )):
         require_absent(body, "getPlayersInView()", f"{name} must not select player targets")
         return
     require_contains(body, "getNpcsInView()", f"{name} should select NPC area targets")
@@ -68,11 +74,15 @@ def main() -> int:
     pvm_melee_event = PVM_MELEE_EVENT.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     player_npc_radius_selection = PLAYER_NPC_RADIUS_SELECTION.read_text(encoding="utf-8")
+    chain_traversal = CHAIN_TRAVERSAL.read_text(encoding="utf-8")
+    splinter_selection = SPLINTER_SELECTION.read_text(encoding="utf-8")
 
     require_npc_damage_area(
         "Shared player-owned NPC radius selection",
         player_npc_radius_selection,
     )
+    require_npc_damage_area("Chain traversal policy", chain_traversal)
+    require_npc_damage_area("Splinter selection policy", splinter_selection)
 
     if "isValidIbanBlastAreaTarget(primaryTarget, npc)" not in spell_handler:
         fail("Iban Blast area selection should use its summon-aware target guard")
@@ -80,7 +90,9 @@ def main() -> int:
         fail("Iban Blast and god-spell area effects must both exclude summons")
     if "caster.getLocation().inWilderness()" in spell_handler:
         fail("God-spell area effects must not include incidental Wilderness player targets")
-    if projectile_event.count("!Summoning.isSummon(npc)") < 2:
+    if (projectile_event + chain_traversal + splinter_selection).count(
+        "!Summoning.isSummon(npc)"
+    ) < 2:
         fail("Projectile splash and Splinter effects must exclude summons")
     if "|| Summoning.isSummon(npc)" not in throwing_event:
         fail("Shuriken splash target selection must exclude summons")
@@ -89,11 +101,12 @@ def main() -> int:
         ("combat", combat_event),
         ("PvM melee", pvm_melee_event),
     ):
-        if "if (!primaryTarget.isNpc()) {\n\t\t\treturn null;" not in source:
+        if ("if (!primaryTarget.isNpc()) {\n\t\t\treturn null;" not in source
+                and "ChainLightningTraversalPolicy.selectNext" not in source):
             fail(f"{source_name} splash effects must not apply a second hit to player targets")
-    if "!Summoning.isSummon(npc)" not in combat_event:
+    if "!Summoning.isSummon(npc)" not in (combat_event + chain_traversal):
         fail("Combat splash effects must exclude summons")
-    if "!Summoning.isSummon(npc)" not in pvm_melee_event:
+    if "!Summoning.isSummon(npc)" not in (pvm_melee_event + chain_traversal):
         fail("PvM melee splash effects must exclude summons")
     if "npc.getSkills().getLevel(Skill.HITS.id()) <= 0 || Summoning.isSummon(npc)" not in pvm_melee_event:
         fail("Scythe cleave target validation and aggro must exclude summons")

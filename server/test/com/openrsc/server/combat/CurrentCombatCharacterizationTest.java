@@ -230,6 +230,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatReflectionCharacterization::projectileRecoilPolicies);
 			run(harness, "divine_retribution_preserves_result_and_caller_owned_death",
 				CurrentCombatReflectionCharacterization::divineRetributionPolicies);
+			run(harness, "chain_traversal_preserves_revisits_rng_cap_removal_and_geometry",
+				CurrentCombatChainRandomTraversalCharacterization
+					::chainTraversalPolicies);
+			run(harness, "splinter_selection_preserves_proc_rng_and_random_single_geometry",
+				CurrentCombatChainRandomTraversalCharacterization
+					::splinterSelectionPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
