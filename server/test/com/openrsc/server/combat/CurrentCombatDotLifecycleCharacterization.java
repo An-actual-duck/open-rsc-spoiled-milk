@@ -12,7 +12,9 @@ import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.combat.scripts.all.NpcPoisonPlayerScript;
+import com.openrsc.server.event.rsc.impl.combat.scripts.all.PlayerPoisonScript;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.login.PlayerSaveRequest;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -358,6 +360,13 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"negative poison fails when its first pulse validates power");
 		assertTrue(negativeEvent.isRunning(),
 			"failed negative poison pulse leaves event running");
+		for (int tick = 0; tick < 8; tick++) {
+			negativeEvent.tick();
+		}
+		assertEquals(1, negativeEvent.call().intValue(),
+			"scheduler boundary reports the invalid poison callback failure");
+		assertFalse(negativeEvent.isRunning(),
+			"scheduler callback failure stops the invalid poison event");
 		negativePoison.curePoison();
 
 		final Player invertedPoison = harness.player(
@@ -413,6 +422,39 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"wrong burn attribute type currently aborts cleanup");
 		wrongBurnAttribute.removeAttribute("burnEvent");
 		wrongBurnAttribute.extinguish();
+	}
+
+	static void failedLogoutSaveBoundary(
+			final CurrentCombatHarness harness) {
+		final Player player = harness.player("dot failed logout save", 675, 680);
+		player.applyPoison(40, 40);
+		final PoisonEvent poison = player.getAttribute("poisonEvent", null);
+		assertNotNull(poison,
+			"logout-save fixture begins with active persisted poison");
+		player.setSaving(true);
+		player.setLoggingOut(true);
+
+		// Harness players intentionally have no database row. The production
+		// service reaches its missing-row error path without a write. Its current
+		// MessageFormat error path throws before PlayerSaveRequest can clear the
+		// flags or apply its documented failed-save logout policy.
+		assertThrows(IllegalArgumentException.class,
+			() -> new PlayerSaveRequest(harness.server(), player, true).process(),
+			"missing-row logout save escapes before request cleanup");
+
+		assertTrue(player.loggedIn(),
+			"failed logout save leaves the live session present by current behavior");
+		assertTrue(player.isSaving(),
+			"failed logout save leaves saving state stuck");
+		assertTrue(player.isLoggingOut(),
+			"failed logout save leaves logout state stuck");
+		assertTrue(poison.isRunning(),
+			"failed logout save leaves owner-bound poison running");
+		assertTrue(harness.world().getPlayers().contains(player),
+			"failed logout save leaves the player in the world list");
+		player.setSaving(false);
+		player.setLoggingOut(false);
+		player.curePoison();
 	}
 
 	static void repeatedRelogEventCardinality(
@@ -537,6 +579,77 @@ final class CurrentCombatDotLifecycleCharacterization {
 		negativeBurnEvent.run();
 		assertNull(negativeBurn.getAttribute("burnEvent", null),
 			"negative burn clears on first pulse without damage");
+	}
+
+	static void legacyPvpPoisonAndPositiveBurnBoundaries(
+			final CurrentCombatHarness harness) throws Exception {
+		final PlayerPoisonScript legacyPvp = new PlayerPoisonScript();
+		final Player attacker = harness.player("dot legacy attacker", 728, 680);
+		final Player victim = harness.player("dot legacy victim", 729, 680);
+		harness.equip(attacker, ItemId.POISONED_RUNE_DAGGER.id(), 1);
+
+		assertTrue(harness.server().getConfig().WANT_MYWORLD,
+			"combat harness starts in My World mode");
+		assertFalse(legacyPvp.shouldExecute(attacker, victim),
+			"legacy PvP poison is disabled in My World mode");
+
+		harness.server().getConfig().WANT_MYWORLD = false;
+		try {
+			final Player noWeapon = harness.player(
+				"dot legacy no weapon", 730, 680);
+			assertFalse(legacyPvp.shouldExecute(noWeapon, victim),
+				"legacy PvP poison requires a wielded poisoned item");
+			forceNextLegacyIntBelow(1, 4, 1);
+			assertTrue(legacyPvp.shouldExecute(attacker, victim),
+				"legacy PvP poison succeeds with its deterministic one-in-four roll");
+			legacyPvp.executeScript(attacker, victim);
+			assertEquals(48, victim.getCurrentPoisonPower(),
+				"legacy PvP poison applied power");
+			assertEquals(48, victim.getPoisonMaxPower(),
+				"legacy PvP poison maximum power");
+			assertNull(poisonOwner(victim.getAttribute("poisonEvent", null)),
+				"legacy PvP poison does not retain the applying player");
+			victim.curePoison();
+			victim.setAntidoteProtection();
+			legacyPvp.executeScript(attacker, victim);
+			assertNull(victim.getAttribute("poisonEvent", null),
+				"legacy PvP execution honors target antidote protection");
+		} finally {
+			harness.server().getConfig().WANT_MYWORLD = true;
+		}
+
+		final Player largePulseTarget = harness.player(
+			"dot large burn target", 732, 680);
+		setHits(largePulseTarget, 40, 40);
+		largePulseTarget.applyBurn(39, Integer.MAX_VALUE);
+		final BurnEvent largePulse = largePulseTarget.getAttribute(
+			"burnEvent", null);
+		largePulse.run();
+		assertEquals(1, largePulseTarget.getLevel(Skill.HITS.id()),
+			"large valid burn pulse applies its configured positive damage");
+		assertEquals(Integer.MAX_VALUE - 1,
+			largePulseTarget.getCache().getInt("burn_pulses"),
+			"large valid burn pulse decrements without overflow");
+		assertEquals(39, largePulseTarget.getCache().getInt("burn_damage"),
+			"large valid burn pulse persists its configured damage");
+		largePulseTarget.extinguish();
+
+		final Player maxDamageTarget = harness.player(
+			"dot max burn target", 734, 680);
+		harness.recordOutgoingPackets(maxDamageTarget);
+		final Npc maxDamageOpponent = harness.npc(
+			NpcId.GREATER_DEMON.id(), 735, 680);
+		maxDamageTarget.setOpponent(maxDamageOpponent);
+		maxDamageTarget.applyBurn(Integer.MAX_VALUE, 1);
+		final BurnEvent maxDamage = maxDamageTarget.getAttribute("burnEvent", null);
+		maxDamage.run();
+		assertEquals(255,
+			maxDamageTarget.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"maximum positive burn damage clamps its visible hitsplat");
+		assertTrue(maxDamageTarget.killed,
+			"maximum positive burn damage reaches ordinary player death handling");
+		assertNull(maxDamageTarget.getAttribute("burnEvent", null),
+			"terminal maximum burn cleanup clears its event");
 	}
 
 	static void burnReplacementPersistenceAndCleanup(
@@ -1045,6 +1158,18 @@ final class CurrentCombatDotLifecycleCharacterization {
 		for (long seed = 0L; seed < 100_000L; seed++) {
 			final java.util.Random candidate = new java.util.Random(seed);
 			if (candidate.nextInt(100) >= threshold) {
+				DataConversions.getRandom().setSeed(seed);
+				return;
+			}
+		}
+		throw new AssertionError("No deterministic legacy integer seed found");
+	}
+
+	private static void forceNextLegacyIntBelow(final int low, final int high,
+			final int expected) {
+		for (long seed = 0L; seed < 100_000L; seed++) {
+			final java.util.Random candidate = new java.util.Random(seed);
+			if (low + candidate.nextInt(high - low + 1) == expected) {
 				DataConversions.getRandom().setSeed(seed);
 				return;
 			}
