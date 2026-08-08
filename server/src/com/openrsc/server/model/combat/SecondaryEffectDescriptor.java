@@ -369,7 +369,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE_TO_NPC_AREA, ZeroDamageRule.TERMINAL_OVERKILL,
 		RandomTiming.NONE, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.ALLOW_SCYTHE_DESCENDANTS, PresentationPolicy.HIT_SPLAT,
-		"central applyDeathRobeOverkillSplash methods", "Death robe characterization"),
+		"DeathRobeOverkillSplash with event-owned child settlement", "A07.5S compiled terminal-payload fixture"),
 	DEATH_RING_CHARGE_ACQUISITION("semantic.death-ring-charge-acquisition",
 		phases(Phase.KILL_SETTLEMENT), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC, Style.SPECIAL),
 		ParticipantGate.PLAYER_KILL_OWNER, ZeroDamageRule.QUALIFYING_KILL,

@@ -15,6 +15,7 @@ PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 PLAYER_NPC_RADIUS_SELECTION = ROOT / "server/src/com/openrsc/server/model/combat/PlayerOwnedNpcRadiusSelection.java"
 CHAIN_TRAVERSAL = ROOT / "server/src/com/openrsc/server/model/combat/ChainLightningTraversalPolicy.java"
 SPLINTER_SELECTION = ROOT / "server/src/com/openrsc/server/model/combat/SplinterTargetSelectionPolicy.java"
+DEATH_ROBE_SPLASH = ROOT / "server/src/com/openrsc/server/model/combat/DeathRobeOverkillSplash.java"
 
 
 def fail(message: str) -> None:
@@ -76,6 +77,7 @@ def main() -> int:
     player_npc_radius_selection = PLAYER_NPC_RADIUS_SELECTION.read_text(encoding="utf-8")
     chain_traversal = CHAIN_TRAVERSAL.read_text(encoding="utf-8")
     splinter_selection = SPLINTER_SELECTION.read_text(encoding="utf-8")
+    death_robe_splash = DEATH_ROBE_SPLASH.read_text(encoding="utf-8")
 
     require_npc_damage_area(
         "Shared player-owned NPC radius selection",
@@ -83,6 +85,7 @@ def main() -> int:
     )
     require_npc_damage_area("Chain traversal policy", chain_traversal)
     require_npc_damage_area("Splinter selection policy", splinter_selection)
+    require_npc_damage_area("Death robe splash selection", death_robe_splash)
 
     if "isValidIbanBlastAreaTarget(primaryTarget, npc)" not in spell_handler:
         fail("Iban Blast area selection should use its summon-aware target guard")
@@ -127,12 +130,15 @@ def main() -> int:
     require_npc_damage_area("Death amulet Burst", method_body(player, "public void applyDeathAmuletBurst"))
     require_npc_damage_area("Chaos robe surrounded bonus", method_body(player, "public double getChaosRobeSurroundedDamageMultiplier"))
     require_npc_damage_area("Projectile blood-robe splash", method_body(projectile_event, "private void applyBloodRobeSplash"))
-    require_npc_damage_area("Projectile death-robe overkill splash", method_body(projectile_event, "private void applyDeathRobeOverkillSplash"))
+    require_contains(method_body(projectile_event, "private void applyDeathRobeOverkillSplash"),
+                     "DeathRobeOverkillSplash.apply", "Projectile death robe must use shared selection")
     require_npc_damage_area("Projectile chaos chain lightning", method_body(projectile_event, "private Mob selectChaosChainLightningTarget"))
     require_npc_damage_area("Splinter projectile proc", method_body(projectile_event, "private Npc selectSplinterTarget"))
-    require_npc_damage_area("Generic combat death-robe overkill splash", method_body(combat_event, "private void applyDeathRobeOverkillSplash"))
+    require_contains(method_body(combat_event, "private void applyDeathRobeOverkillSplash"),
+                     "DeathRobeOverkillSplash.apply", "Combat death robe must use shared selection")
     require_npc_damage_area("Generic combat chaos chain lightning", method_body(combat_event, "private Mob selectChaosChainLightningTarget"))
-    require_npc_damage_area("PvM melee death-robe overkill splash", method_body(pvm_melee_event, "private void applyDeathRobeOverkillSplash"))
+    require_contains(method_body(pvm_melee_event, "private void applyDeathRobeOverkillSplash"),
+                     "DeathRobeOverkillSplash.apply", "PvM death robe must use shared selection")
     require_npc_damage_area("PvM melee chaos chain lightning", method_body(pvm_melee_event, "private Mob selectChaosChainLightningTarget"))
     require_contains(
         method_body(pvm_melee_event, "private boolean isValidScytheCleaveTarget"),

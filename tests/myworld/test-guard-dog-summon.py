@@ -16,6 +16,7 @@ PROJECTILE = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/Pro
 THROWING = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java"
 CANNON = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/FireCannonEvent.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
+DEATH_ROBE_SPLASH = ROOT / "server/src/com/openrsc/server/model/combat/DeathRobeOverkillSplash.java"
 SPELLS = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
@@ -68,6 +69,7 @@ def main() -> int:
     throwing = THROWING.read_text(encoding="utf-8")
     cannon = CANNON.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
+    death_robe_splash = DEATH_ROBE_SPLASH.read_text(encoding="utf-8")
     spells = SPELLS.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
     guide = GUIDE.read_text(encoding="utf-8")
@@ -175,19 +177,17 @@ def main() -> int:
     for source, signature in (
         (pvm, "private int applyScytheNpcCleave"),
         (pvm, "private void applyChaosAmuletChainLightning"),
-        (pvm, "private void applyDeathRobeOverkillSplash"),
         (combat, "private void applyChaosAmuletChainLightning"),
-        (combat, "private void applyDeathRobeOverkillSplash"),
         (projectile, "private void applyChaosAmuletChainLightning"),
         (projectile, "private void applySplinter"),
         (projectile, "private void applyBloodRobeSplash"),
-        (projectile, "private void applyDeathRobeOverkillSplash"),
         (throwing, "private List<Mob> selectThrowingTargets"),
         (player, "public void applyDeathAmuletBurst"),
         (spells, "private void applyGodSpellAreaEffects"),
         (spells, "private void applyIbanBlastAreaEffects"),
     ):
         require_guard(source, signature)
+    require_guard(death_robe_splash, "public static void apply")
 
     god_spell = method_body(spells, "private void applyGodSpellAreaEffects")
     require(

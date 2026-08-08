@@ -28,6 +28,7 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.DemonPitchforkHellBlazeProc;
+import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
 import com.openrsc.server.model.combat.PlayerMeleeDamageBuff;
 import com.openrsc.server.model.combat.ElementalSwordProc;
 import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
@@ -643,14 +644,8 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
-		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
-		if (Summoning.isPlayerAreaEffectSuppressed(player)
-			|| overkillDamage <= 0 || splashPercent <= 0.0D) {
-			return;
-		}
-		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
-		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
-				player, primaryTarget, 2)) {
+		DeathRobeOverkillSplash.apply(player, primaryTarget, overkillDamage,
+			(npc, splashDamage) -> {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
 				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
@@ -668,7 +663,7 @@ public class CombatEvent extends GameTickEvent {
 				player.setKillType(KillType.COMBAT);
 				npc.killedBy(player);
 			}
-		}
+		});
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage) {

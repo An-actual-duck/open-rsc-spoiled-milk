@@ -334,6 +334,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatKolodionFireClawCharacterization::fireClawPolicies);
 			run(harness, "projectile_elemental_damage_buff_preserves_magic_precedence",
 				CurrentCombatPlayerProjectileDamageBuffCharacterization::projectileBuffPolicies);
+			run(harness, "death_robe_terminal_payload_preserves_floor_and_minimum",
+				CurrentCombatDeathRobeOverkillCharacterization::terminalPayloadPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",

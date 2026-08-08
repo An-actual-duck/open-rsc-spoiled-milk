@@ -771,7 +771,17 @@ Sword's identical presentation/debuff/damage sequence while leaving formulas,
 RNG, and settlement event-owned. A07.5M separately extracts Demon Pitchfork
 Hell's Blaze's identical positive-primary, chance/payload, presentation, and
 auxiliary-Magic callback sequence while leaving formulas, RNG, and settlement
-event-owned.
+event-owned. A07.5N extracts only the identical PlayerMeleeDamageBuff
+composition used by primary and Scythe paths. A07.5O extracts the NPC-only
+Hell's Inferno splash selection/presentation, while A07.5P routes the
+reciprocal NPC branch through that same owner-callback helper; the distinct PvP
+reciprocal policy remains event-owned. The current bounded batch adds A07.5Q
+Kolodion Fire Claw's NPC/positive-hit/living-target/chance gate, A07.5R the
+projectile-only elemental-leather primary-magic multiplier and its historical
+Earth/Water/Fire precedence, and A07.5S Death Robe's identical suppression,
+floor-with-minimum payload, and NPC-radius selection. In every Death Robe
+owner, style-specific damage transaction, contribution, KillType, and child
+death order remain local.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
