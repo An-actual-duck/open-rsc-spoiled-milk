@@ -738,8 +738,8 @@ does not add a registry or executor. A07.3 is implemented on published main:
 it centralizes only compatible player-owned NPC radius enumeration while
 preserving distinct live and eager-snapshot timing. A07.4 is implemented on
 published main with separate chain and Splinter target policies that preserve
-revisits, RNG order, wall behavior, and event-owned execution. A07.5 begins on
-its focused branch with only the proven-identical Ogre Stagger complete-set,
+revisits, RNG order, wall behavior, and event-owned execution. A07.5A is
+implemented on published main with only the proven-identical Ogre Stagger complete-set,
 draw, and one-attack debuff unit; later families remain bounded follow-ups.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
