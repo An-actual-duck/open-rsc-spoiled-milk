@@ -229,7 +229,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,
 		RandomTiming.SINGLE_DRAW_THEN_PAYLOAD, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.CONTENT_OWNED, PresentationPolicy.MIXED,
-		"ElderGreenDragonArmorEffect.applyProc", "Elder armor characterization"),
+		"ElderGreenDragonArmorProc via central on-hit methods", "A07.5I compiled trigger parity fixture"),
 	ELDER_GREEN_DRAGON_ARMOR_BURN_APPLICATION("semantic.elder-green-dragon-armor-burn-application",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE_AREA, ZeroDamageRule.POSITIVE_CHILD_SOURCE_DAMAGE,

@@ -22,6 +22,7 @@ import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
+import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
@@ -1013,12 +1014,10 @@ public class ProjectileEvent extends SingleTickEvent {
 		KingBlackDragonBreathFollowup.tryApply(casterPlayer, opponent,
 			dragonBreathProc, ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(caster, opponent, procDamage));
-		if (damage > 0 && casterPlayer.getElderGreenDragonArmorProcChance() > 0.0D
-				&& DataConversions.getRandom().nextDouble()
-					< casterPlayer.getElderGreenDragonArmorProcChance()) {
-			ElderGreenDragonArmorEffect.applyProc(casterPlayer, opponent,
-				DataConversions.random(0, ElderGreenDragonArmorEffect.MAX_TRUE_DAMAGE));
-		}
+		ElderGreenDragonArmorProc.tryApply(casterPlayer, damage,
+			ProductionGameRandom.INSTANCE, procDamage ->
+				ElderGreenDragonArmorEffect.applyProc(casterPlayer, opponent,
+					procDamage));
 	}
 
 	private void applyHellsInfernoSplash(final Player player, final Npc primaryTarget,

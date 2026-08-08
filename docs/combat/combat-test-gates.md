@@ -382,3 +382,10 @@ presentation, event-owned magic-damage callback ordering, defense-debuff
 refresh/expiry, and no-draw unconfigured calls. Hell's Inferno area policy and
 death adapters remain deliberately owner-owned. The boundary is recorded in
 [`combat-a07-infernal-fire-proc.md`](combat-a07-infernal-fire-proc.md).
+
+A07.5I grows the current gate from 113 to 114 scenarios. Its compiled trigger
+contract proves Elder Green armor's positive-primary gate, chance/payload draw
+order, inclusive maximum, failed chance, and no-draw rejection. Elder Breath
+and burn remain content-owned in `ElderGreenDragonArmorEffect`. The boundary is
+recorded in
+[`combat-a07-elder-green-armor-trigger.md`](combat-a07-elder-green-armor-trigger.md).
