@@ -8,7 +8,11 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.entity.update.HitSplat;
+import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.model.world.World;
 
 import java.util.UUID;
@@ -22,12 +26,22 @@ public class PoisonEvent extends GameTickEvent {
 
 	private int poisonPower;
 	private UUID poisonOwnerId;
+	private PeriodicEffectProvenance provenance;
 
 	public PoisonEvent(World world, Mob owner, int poisonPower, UUID poisonOwnerId) {
+		this(world, owner, poisonPower, poisonOwnerId == null ? null
+			: PeriodicEffectProvenance.player(poisonOwnerId), true);
+	}
+
+	public PoisonEvent(World world, Mob owner, int poisonPower,
+			final PeriodicEffectProvenance provenance,
+			final boolean typedProvenance) {
 		super(world, owner, TICK_DELAY, "Poison Event", DuplicationStrategy.ONE_PER_MOB);
 		this.mob = owner;
 		this.poisonPower = poisonPower;
-		this.poisonOwnerId = poisonOwnerId;
+		this.provenance = provenance;
+		this.poisonOwnerId = provenance != null && provenance.isPlayer()
+			? provenance.getSourceId() : null;
 	}
 
 	@Override
@@ -54,9 +68,63 @@ public class PoisonEvent extends GameTickEvent {
 			player.getCache().set("poisoned", poisonPower);
 		}
 		if (damage > 0) {
-			final int actualDamage = mob.damageAndGetActualDamage(damage, HitSplat.TYPE_POISON);
+			final int actualDamage = settleTypedPoisonDamage(damage);
 			applyLeach(actualDamage);
 		}
+	}
+
+	private int settleTypedPoisonDamage(final int requestedDamage) {
+		int resolvedDamage = requestedDamage;
+		if (mob.isPlayer()) {
+			final Player player = (Player) mob;
+			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
+			resolvedDamage = player.applyGoblinTenacity(resolvedDamage);
+		}
+		final Mob source = resolveLiveSource();
+		final DamageRequest request = DamageRequest.resolvedLegacy(source, mob,
+			DamageRequest.SourceCategory.DOT, "generic-poison", resolvedDamage)
+			.eventId(getUUID())
+			.hitSplatType(HitSplat.TYPE_POISON)
+			.build();
+		final DamageResult result = getWorld().getServer()
+			.getResolvedDamageTransaction().apply(request);
+		if (mob.isPlayer()) {
+			ActionSender.sendStat((Player) mob, Skill.HITS.id());
+		}
+		if (mob.isNpc() && source instanceof Player) {
+			((Npc) mob).addCombatDamage((Player) source,
+				result.getActualDamage());
+		}
+		if (result.isTargetTerminal()) {
+			if (source != null) {
+				mob.killedBy(source);
+			} else if (mob.isNpc()) {
+				// A source-less periodic kill must still end the NPC lifetime, but
+				// must not manufacture player reward/credit from a stale opponent.
+				((Npc) mob).remove();
+			} else {
+				mob.killedBy(null);
+			}
+		}
+		return result.getActualDamage();
+	}
+
+	private Mob resolveLiveSource() {
+		if (provenance == null || provenance.getSourceId() == null) {
+			return null;
+		}
+		if (provenance.isPlayer()) {
+			final Player player = getWorld().getPlayerByUUID(
+				provenance.getSourceId());
+			return player == null || player.isRemoved()
+				|| player.getLevel(Skill.HITS.id()) <= 0 ? null : player;
+		}
+		if (provenance.getSourceKind()
+			== com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind.NPC) {
+			final Npc npc = getWorld().getNpcByUUID(provenance.getSourceId());
+			return npc == null || npc.isRemoved() ? null : npc;
+		}
+		return null;
 	}
 
 	private void applyLeach(final int damage) {
@@ -91,6 +159,14 @@ public class PoisonEvent extends GameTickEvent {
 
 	public void setPoisonOwnerId(final UUID poisonOwnerId) {
 		this.poisonOwnerId = poisonOwnerId;
+		this.provenance = poisonOwnerId == null ? null
+			: PeriodicEffectProvenance.player(poisonOwnerId);
+	}
+
+	public void setProvenance(final PeriodicEffectProvenance provenance) {
+		this.provenance = provenance;
+		this.poisonOwnerId = provenance != null && provenance.isPlayer()
+			? provenance.getSourceId() : null;
 	}
 
 	//Part of Poison NPC feature

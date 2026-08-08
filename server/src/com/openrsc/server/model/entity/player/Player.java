@@ -4259,7 +4259,7 @@ public final class Player extends Mob {
 		ActionSender.sendDied(this);
 
 		// Cabbage tutorial skip
-		if (this.getLocation().onTutorialIsland()
+		if (this.getLocation().onTutorialIsland() && mob != null
 			&& (mob.isNpc() && mob.getID() == NpcId.PETER_SKIPPIN.id())) {
 			killed = false;
 			reviveDeathLifecycle(deathContext);

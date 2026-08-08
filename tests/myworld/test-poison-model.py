@@ -112,10 +112,12 @@ def main() -> None:
     expect_contains(MOB_PATH, "synchronized (poisonStateLock())", "atomic poison target-state boundary")
     expect_contains(MOB_PATH, "private Object poisonStateLock()", "constructor-bypass poison lock recovery")
     expect_contains(MOB_PATH, "final PoisonTargetState next = current.apply", "poison next-state calculation")
-    expect_contains(MOB_PATH, "ensurePoisonEvent(getPoisonDamage(), poisonOwnerId);", "poison restore event lookup")
+    expect_contains(MOB_PATH, "ensurePoisonEvent(getPoisonDamage(), poisonProvenance);", "poison restore event lookup")
     expect_contains(POISON_TARGET_STATE_PATH, "final long uncappedPower", "poison overflow-safe accumulation")
     expect_contains(POISON_TARGET_POLICY_PATH, "transfersProvenance", "capped provenance transfer policy")
     expect_contains(POISON_EVENT_PATH, "DuplicationStrategy.ONE_PER_MOB", "single poison scheduler stream")
+    expect_contains(POISON_EVENT_PATH, 'DamageRequest.SourceCategory.DOT, "generic-poison"', "typed poison tick settlement")
+    expect_contains(POISON_EVENT_PATH, "getResolvedDamageTransaction().apply(request)", "typed poison damage transaction")
 
     expect_contains(PLAYER_PATH, 'getCache().hasKey("poisoned_max") ? getCache().getInt("poisoned_max") : getCache().getInt("poisoned")', "player poison max restore")
     expect_contains(PLAYER_PATH, "getMeleePoisonArmorMaxPower()", "player melee poison armor access")

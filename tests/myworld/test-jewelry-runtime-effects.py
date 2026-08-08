@@ -765,10 +765,12 @@ def ensure_runtime_paths_are_wired() -> None:
             "Damage callers that own follow-up effects should be able to use post-mitigation, overkill-capped damage")
     require("setPoisonOwnerId" in poison_event
             and "getBloodNecklaceLeachPercent()" in poison_event
-            and "final int actualDamage = mob.damageAndGetActualDamage(damage, HitSplat.TYPE_POISON);" in poison_event
+            and "final int actualDamage = settleTypedPoisonDamage(damage);" in poison_event
+            and 'DamageRequest.SourceCategory.DOT, "generic-poison"' in poison_event
+            and "getResolvedDamageTransaction().apply(request)" in poison_event
             and "applyLeach(actualDamage);" in poison_event
             and "Leach.heal(poisonOwner, damage, leachPercent);" in poison_event,
-            "Poison ticks should Leach their actual applied damage to the player source when equipped")
+            "Typed poison ticks should Leach their factual applied damage to the player source when equipped")
     require("attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower, defender);" in corrosive_aura,
             "Corrosive Aura should attribute its poison to the defending player who owns the effect")
     require("applyBloodAmuletLifesteal" not in poison_event
