@@ -356,3 +356,14 @@ auxiliary contribution and hitsplats, no-draw rejection, and the target-owned
 the auxiliary true-damage transaction and death adapter behind a narrow
 callback. The boundary is recorded in
 [`combat-a07-red-dragon-fire-proc.md`](combat-a07-red-dragon-fire-proc.md).
+
+A07.5F grows the gate from 93 to 94 scenarios. Its pre-migration and parity
+fixture executes reciprocal melee, PvM melee, and projectile-impact poison and
+leather owners and proves Black Dragon's exact chance-then-payload RNG order,
+15/30 poison state, marker creation/retention, shared presentation, zero-payload
+success, positive auxiliary contribution/hitsplats, stale-marker clearing,
+no-draw exclusions, and KBD-marker presentation compatibility. Only the full
+Black set plus exact-marker payload gate moves; poison chance/state, marker
+ownership, presentation, transaction, and death adapters remain event-owned.
+The boundary is recorded in
+[`combat-a07-black-dragon-breath-followup.md`](combat-a07-black-dragon-breath-followup.md).

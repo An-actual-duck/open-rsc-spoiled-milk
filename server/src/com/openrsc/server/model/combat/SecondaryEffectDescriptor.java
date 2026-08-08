@@ -217,7 +217,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SUCCESSFUL_POISON_MARKER,
 		RandomTiming.PAYLOAD_ONLY, StateOwner.SOURCE_TRANSIENT_MARKER,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.MIXED,
-		"central applyLeatherSetOnHitEffects methods", "dragon leather fixtures"),
+		"BlackDragonBreathFollowup via central on-hit methods", "A07.5F compiled marker/payload parity fixture"),
 	KING_BLACK_DRAGON_BREATH_FOLLOWUP("semantic.king-black-dragon-breath-followup",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SUCCESSFUL_POISON_MARKER,

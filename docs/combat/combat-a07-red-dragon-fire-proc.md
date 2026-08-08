@@ -41,12 +41,13 @@ The descriptor catalog remains descriptive. Runtime execution does not query
 
 ## Explicit exclusions
 
-Black Dragon, King Black Dragon, Infernal Fire, poison, splash, boss, summon,
-delayed, reflection, AoE, and DoT behavior remain outside this branch. Similar
-source shape does not approve a breath follow-up or any other family for
-consolidation without its own executable characterization. Debuff state,
-composition, defense application, and per-target-attack consumption remain
-owned by `Mob`.
+Black Dragon is separately characterized and its narrow payload extracted by
+[`combat-a07-black-dragon-breath-followup.md`](combat-a07-black-dragon-breath-followup.md).
+King Black Dragon, Infernal Fire, poison, splash, boss, summon, delayed,
+reflection, AoE, and DoT behavior remain outside this branch. Similar source
+shape does not approve any other family for consolidation without its own
+executable characterization. Debuff state, composition, defense application,
+and per-target-attack consumption remain owned by `Mob`.
 
 ## Executable evidence
 

@@ -23,6 +23,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
+import com.openrsc.server.model.combat.BlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
@@ -550,12 +551,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
-		if (player.hasFullBlackDragonSet() && "black".equals(dragonBreathProc)) {
-			final int procDamage = combatRandom().nextIntInclusive(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(hitter, target, procDamage);
-			}
-		}
+		BlackDragonBreathFollowup.tryApply(player, dragonBreathProc,
+			combatRandom(), procDamage -> inflictAuxiliaryTrueDamage(
+				hitter, target, procDamage));
 		if (player.hasFullKingBlackDragonSet() && "king_black".equals(dragonBreathProc)) {
 			final int procDamage = combatRandom().nextIntInclusive(0, 10);
 			if (procDamage > 0) {
