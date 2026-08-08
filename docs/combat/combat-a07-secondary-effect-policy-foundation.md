@@ -140,7 +140,7 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first thirteen bounded families are complete on published main;
+Status: the first fourteen bounded families are complete on published main;
 later families remain separately characterized follow-ups.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
@@ -199,6 +199,9 @@ living-target, chance/payload, presentation, and positive auxiliary-Magic
 callback sequence. Formula/RNG ownership and settlement remain event-owned.
 Its separate contract is recorded in
 [`combat-a07-demon-pitchfork-hell-blaze.md`](combat-a07-demon-pitchfork-hell-blaze.md).
+`PlayerMeleeDamageBuff` centralizes only the shared nonpositive, floor/clamp,
+and Bear-Maul composition used by primary and Scythe melee paths. Its contract
+is recorded in [`combat-a07-player-melee-damage-buff.md`](combat-a07-player-melee-damage-buff.md).
 A07.5 remains open for separately characterized one-family branches.
 
 Move only an effect whose melee/projectile policies are proven identical into

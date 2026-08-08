@@ -27,6 +27,7 @@ DRAGON_MELEE_BREATH_PATH = ROOT / "server/src/com/openrsc/server/model/combat/Dr
 ELEMENTAL_SWORD_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/ElementalSwordProc.java"
 DEMON_PITCHFORK_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/DemonPitchforkHellBlazeProc.java"
 PLAYER_MELEE_DAMAGE_BUFF_PATH = ROOT / "server/src/com/openrsc/server/model/combat/PlayerMeleeDamageBuff.java"
+HELLS_INFERNO_NPC_SPLASH_PATH = ROOT / "server/src/com/openrsc/server/model/combat/HellsInfernoNpcSplash.java"
 BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlackDragonBreathFollowup.java"
 KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH = ROOT / "server/src/com/openrsc/server/model/combat/KingBlackDragonBreathFollowup.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
@@ -301,6 +302,10 @@ def main() -> None:
                     "player.getLeatherSetMeleeDamageMultiplier()", "shared melee multiplier")
     expect_contains(PLAYER_MELEE_DAMAGE_BUFF_PATH,
                     "player.applyBearMaulDamage(buffedDamage)", "shared Bear damage adjustment")
+    expect_contains(HELLS_INFERNO_NPC_SPLASH_PATH,
+                    "findPlayerOwnedNpcSplashTargets", "shared Inferno NPC selection")
+    expect_contains(HELLS_INFERNO_NPC_SPLASH_PATH,
+                    "auxiliaryMagicDamage.apply(target, splashDamage)", "Inferno owner magic callback")
     expect_contains(BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "!source.hasFullBlackDragonSet() || !BLACK_MARKER.equals(marker)",
                     "Black Dragon set and marker gate")
