@@ -751,8 +751,8 @@ draws, event-owned auxiliary true-damage callback, and five-attack
 attack-speed-debuff refresh unit. A07.5E is implemented on published main with
 the separately characterized Red Dragon set gate, chance and damage draws,
 event-owned auxiliary true-damage callback, and five-attack defense-debuff
-refresh unit. A07.5F is the focused branch for the separately characterized
-Black Dragon full-set and exact-marker gate, inclusive payload draw, and
+refresh unit. A07.5F is implemented on published main with the separately
+characterized Black Dragon full-set and exact-marker gate, inclusive payload draw, and
 event-owned auxiliary true-damage callback. Poison, marker ownership, shared
 Black/KBD presentation, and KBD payload behavior remain event-owned; later
 families remain bounded follow-ups.
