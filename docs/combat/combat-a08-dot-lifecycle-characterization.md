@@ -26,6 +26,9 @@ hide it behind equal final Hits.
 - cure/damage boundaries at powers 9, 10, 19, and 20, including the one-pulse
   delay before a post-drain sub-10 remainder cures, plus live Nature Cleansing
   equipment changing only later decay;
+- factual-damage Leach boundaries for Goblin Tenacity, NPC overkill, and zero
+  actual damage, including the compatibility distinction between requested
+  hitsplat damage and capped HP loss;
 - poison continuing while its player source is offline, Leach stopping while
   that source is absent, and Leach resuming through the username-derived stable
   UUID after a new session equips the necklace;
@@ -143,7 +146,6 @@ coincidental opponent.
 This checkpoint intentionally does not claim the full future matrix is done.
 The next characterization slice should cover:
 
-- overkill, zero factual damage, and Goblin Tenacity;
 - repeated target relogs and scheduler duplication attempts;
 - malformed, nonnumeric, negative, excessive, and mismatched cache values;
 - failed logout-save and tick/death callback failure injection;
@@ -157,7 +159,7 @@ decision evidence, not guessed acceptance assertions.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 99/99 scenarios.
+- `./server/test_combat` — PASS, 100/100 scenarios.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

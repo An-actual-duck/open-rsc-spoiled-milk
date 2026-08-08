@@ -1,5 +1,6 @@
 package com.openrsc.server.combat;
 
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.ElderGreenDragonArmorEffect;
@@ -11,6 +12,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.util.rsc.DataConversions;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
@@ -256,6 +258,64 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"orphan cure still clears runtime poison power");
 	}
 
+	static void poisonFactualDamageBoundaries(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player source = harness.player("dot actual src", 626, 680);
+		harness.equip(source, DRAGONSTONE_NECKLACE_OF_LEACH, 1);
+
+		setHits(source, 20, 40);
+		final Player tenacious = harness.player("dot tenacity", 627, 680);
+		for (ItemId item : new ItemId[] {
+			ItemId.GOBLIN_HIDE_COIF,
+			ItemId.GOBLIN_HIDE_GLOVES,
+			ItemId.GOBLIN_HIDE_BOOTS,
+			ItemId.GOBLIN_HIDE_CHAPS,
+			ItemId.GOBLIN_HIDE_CUIRASS
+		}) {
+			harness.equip(tenacious, item.id(), 1);
+		}
+		setHits(tenacious, 5, 40);
+		forceNextLegacyRandomBelow(0.05D);
+		tenacious.applyPoison(70, 70, source);
+		final PoisonEvent tenacityEvent = tenacious.getAttribute(
+			"poisonEvent", null);
+		tenacityEvent.run();
+		assertEquals(1, tenacious.getLevel(Skill.HITS.id()),
+			"Goblin Tenacity reduces lethal poison to leave one Hit");
+		assertEquals(24, source.getLevel(Skill.HITS.id()),
+			"Leach uses four factual post-Tenacity damage");
+		assertEquals(4,
+			tenacious.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"poison presentation uses post-Tenacity damage");
+
+		setHits(source, 20, 40);
+		final Npc overkill = npcWithHits(harness, 628, 680, 2);
+		overkill.setShouldRespawn(false);
+		overkill.setOpponent(source);
+		overkill.applyPoison(40, 40, source);
+		final PoisonEvent overkillEvent = overkill.getAttribute(
+			"poisonEvent", null);
+		overkillEvent.run();
+		assertTrue(overkill.isUnregistering(),
+			"overkill poison completes ordinary NPC death");
+		assertEquals(22, source.getLevel(Skill.HITS.id()),
+			"Leach caps healing at two factual overkill damage");
+		assertEquals(4,
+			overkill.getUpdateFlags().getHitSplats().get(0).getAmount(),
+			"compatibility hitsplat retains requested overkill amount");
+
+		setHits(source, 20, 40);
+		final Npc zero = npcWithHits(harness, 629, 680, 1);
+		zero.getSkills().setLevel(Skill.HITS.id(), 0);
+		zero.applyPoison(40, 40, source);
+		final PoisonEvent zeroEvent = zero.getAttribute("poisonEvent", null);
+		zeroEvent.run();
+		assertEquals(20, source.getLevel(Skill.HITS.id()),
+			"zero factual poison damage provides no Leach");
+		assertEquals(0, zero.getCurrentPoisonPower(),
+			"zero-Hits opponentless poison is cured by lethal compatibility path");
+	}
+
 	static void burnReplacementPersistenceAndCleanup(
 			final CurrentCombatHarness harness) throws Exception {
 		final Player target = harness.player("dot burn replace", 630, 680);
@@ -489,6 +549,17 @@ final class CurrentCombatDotLifecycleCharacterization {
 			.getDeclaredMethod("applyBurn", World.class, Npc.class, Player.class);
 		method.setAccessible(true);
 		method.invoke(null, world, dragon, target);
+	}
+
+	private static void forceNextLegacyRandomBelow(final double threshold) {
+		for (long seed = 0L; seed < 100_000L; seed++) {
+			final java.util.Random candidate = new java.util.Random(seed);
+			if (candidate.nextDouble() < threshold) {
+				DataConversions.getRandom().setSeed(seed);
+				return;
+			}
+		}
+		throw new AssertionError("No deterministic legacy random seed found");
 	}
 
 	private static GameTickEvent findOwnedEvent(

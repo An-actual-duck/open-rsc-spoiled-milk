@@ -189,6 +189,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_legacy_restore_and_orphan_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonPersistenceAndOrphanCompatibility);
+			run(harness, "generic_poison_leach_uses_factual_overkill_and_tenacity_damage",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonFactualDamageBoundaries);
 			run(harness, "generic_burn_replacement_restore_and_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::burnReplacementPersistenceAndCleanup);
