@@ -38,9 +38,15 @@ hide it behind equal final Hits.
   source, exactly one fresh event, and a full eight-tick countdown;
 - legacy poison-without-maximum fallback and current orphan-cache cleanup
   behavior;
+- nonnumeric, negative, inverted current/maximum, orphan-maximum, signed
+  overflow, and wrong-runtime-attribute poison failure behavior;
 - generic burn first application, pulse/cache order, standard hitsplat,
   replacement behavior, complete-pair restoration, partial-pair behavior, and
   NPC-removal behavior;
+- nonnumeric burn-cache and wrong-runtime-attribute burn failure behavior;
+- three repeated fresh target sessions restoring poison and burn exactly once,
+  with logout stopping/removing each session's scheduler entries and each new
+  session receiving new event identities/full countdowns;
 - player death clearing generic poison and generic burn runtime/cache state;
 - lethal poison credit when a different opponent is engaged and the
   opponentless lethal boundary; and
@@ -85,6 +91,23 @@ where a valid `poisonEvent` attribute exists. If the event/attribute is missing,
 runtime power is reset but both cache keys remain and can restore poison on a
 later login. A08.4 must make state removal independent of event presence.
 
+### Corrupt optional state can abort login or poison the scheduler
+
+A nonnumeric `poisoned` value throws during `setLoggedIn(true)` after a
+zero-power poison event has already been attached and scheduled, while the
+player never reaches logged-in state. A nonnumeric burn value also aborts
+login, though burn parsing fails before event creation. Negative poison
+restores into a running event and throws on its first pulse. Current power above
+the stored maximum is accepted without clamping; an orphan maximum remains
+stale; additive integer overflow produces `Integer.MIN_VALUE` poison and a
+later pulse exception. Wrong object types under either runtime event attribute
+throw during cleanup.
+
+A08.4 must parse optional effects independently before scheduling anything,
+bound arithmetic before mutation, reject/quarantine invalid records without
+failing account login, and make cleanup tolerate missing or malformed legacy
+runtime markers.
+
 ### Lethal poison follows opponent, not poison source
 
 Generic poison records no contribution. Its compatibility damage helper calls
@@ -107,6 +130,7 @@ redirect rewards in this phase.
 | Poison source logout | Target continues ticking; Leach pauses |
 | Same source relog | Stable UUID resolves new session; live equipment can resume Leach |
 | Poison target relog | Current/maximum restore; owner is lost; one event starts at eight ticks |
+| Three repeated target relogs | Logout removes each scheduled event; each fresh session restores exactly one new poison and burn event |
 | Poison contribution | Always zero through generic tick path |
 | Normal poison cure | Runtime and cache clear |
 | Cure with missing event | Runtime clears; legacy cache incorrectly remains |
@@ -115,6 +139,9 @@ redirect rewards in this phase.
 | Complete generic burn cache pair | Restores one fresh eight-tick event |
 | Partial generic burn pair | No event; lone cache key remains stale |
 | NPC generic burn removal | Burn remains and can tick after unregistering begins |
+| Nonnumeric cache value | Login throws; poison may leave a scheduled zero-state event |
+| Negative/overflow poison | Invalid running state restores/forms, then pulse validation throws |
+| Wrong runtime attribute type | Cure/extinguish throws instead of failing closed |
 | Player death | Generic poison and burn state/cache clear |
 | Elder armor source logout | Event clears before another pulse |
 | Elder boss source removal | Event and target markers clear before another pulse |
@@ -151,8 +178,8 @@ coincidental opponent.
 This checkpoint intentionally does not claim the full future matrix is done.
 The next characterization slice should cover:
 
-- repeated target relogs and scheduler duplication attempts;
-- malformed, nonnumeric, negative, excessive, and mismatched cache values;
+- deliberate duplicate scheduler registration attempts;
+- excessive pulse/damage burn values and mismatched mixed cache values;
 - failed logout-save and tick/death callback failure injection;
 - player-target poison lethal attribution for player/NPC/environment sources;
 - deterministic successful/failed application parity for every producer
@@ -165,7 +192,7 @@ migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 100/100 scenarios.
+- `./server/test_combat` — PASS, 102/102 scenarios.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

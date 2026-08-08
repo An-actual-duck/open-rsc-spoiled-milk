@@ -316,6 +316,139 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"zero-Hits opponentless poison is cured by lethal compatibility path");
 	}
 
+	static void corruptLegacyAndRuntimeStateBoundaries(
+			final CurrentCombatHarness harness) {
+		final Player nonnumericPoison = harness.player(
+			"dot bad poison", 660, 680);
+		harness.logout(nonnumericPoison);
+		nonnumericPoison.getCache().store("poisoned", "not-a-number");
+		assertThrows(NumberFormatException.class,
+			() -> nonnumericPoison.setLoggedIn(true),
+			"nonnumeric poison currently aborts session restoration");
+		final PoisonEvent failedRestore = nonnumericPoison.getAttribute(
+			"poisonEvent", null);
+		assertNotNull(failedRestore,
+			"failed nonnumeric poison restore leaves an event marker");
+		assertTrue(failedRestore.isRunning(),
+			"failed nonnumeric poison restore leaves a scheduled event");
+		assertFalse(nonnumericPoison.loggedIn(),
+			"failed nonnumeric poison restore never completes login state");
+		nonnumericPoison.curePoison();
+
+		final Player negativePoison = harness.player(
+			"dot negative", 662, 680,
+			player -> player.getCache().set("poisoned", -5));
+		final PoisonEvent negativeEvent = negativePoison.getAttribute(
+			"poisonEvent", null);
+		assertEquals(-5, negativePoison.getCurrentPoisonPower(),
+			"negative legacy poison restores without validation");
+		assertEquals(0, negativePoison.getPoisonMaxPower(),
+			"negative legacy maximum is independently clamped to zero");
+		assertThrows(IllegalArgumentException.class, negativeEvent::run,
+			"negative poison fails when its first pulse validates power");
+		assertTrue(negativeEvent.isRunning(),
+			"failed negative poison pulse leaves event running");
+		negativePoison.curePoison();
+
+		final Player invertedPoison = harness.player(
+			"dot inverted", 664, 680, player -> {
+				player.getCache().set("poisoned", 80);
+				player.getCache().set("poisoned_max", 20);
+			});
+		assertEquals(80, invertedPoison.getCurrentPoisonPower(),
+			"legacy current above maximum is not clamped");
+		assertEquals(20, invertedPoison.getPoisonMaxPower(),
+			"legacy inverted maximum remains lower than current");
+		invertedPoison.curePoison();
+
+		final Player orphanMaximum = harness.player(
+			"dot orphan max", 666, 680,
+			player -> player.getCache().set("poisoned_max", 40));
+		assertNull(orphanMaximum.getAttribute("poisonEvent", null),
+			"orphan maximum does not restore poison event");
+		assertTrue(orphanMaximum.getCache().hasKey("poisoned_max"),
+			"orphan maximum remains stale after login");
+
+		final Npc overflow = npcWithHits(harness, 668, 680, 20);
+		overflow.applyPoison(Integer.MAX_VALUE, Integer.MAX_VALUE);
+		final PoisonEvent overflowEvent = overflow.getAttribute(
+			"poisonEvent", null);
+		overflow.applyPoison(1, Integer.MAX_VALUE);
+		assertEquals(Integer.MIN_VALUE, overflow.getCurrentPoisonPower(),
+			"additive poison power currently overflows signed integer range");
+		assertThrows(IllegalArgumentException.class, overflowEvent::run,
+			"overflowed poison fails on pulse validation");
+		overflow.curePoison();
+
+		final Npc wrongPoisonAttribute = npcWithHits(harness, 670, 680, 20);
+		wrongPoisonAttribute.setAttribute("poisonEvent", "wrong-type");
+		assertThrows(ClassCastException.class, wrongPoisonAttribute::curePoison,
+			"wrong poison attribute type currently aborts cleanup");
+		wrongPoisonAttribute.removeAttribute("poisonEvent");
+		wrongPoisonAttribute.curePoison();
+
+		final Player nonnumericBurn = harness.player("dot bad burn", 672, 680);
+		harness.logout(nonnumericBurn);
+		nonnumericBurn.getCache().store("burn_damage", "not-a-number");
+		nonnumericBurn.getCache().set("burn_pulses", 3);
+		assertThrows(NumberFormatException.class,
+			() -> nonnumericBurn.setLoggedIn(true),
+			"nonnumeric burn currently aborts session restoration");
+		assertNull(nonnumericBurn.getAttribute("burnEvent", null),
+			"failed burn parsing occurs before event registration");
+
+		final Npc wrongBurnAttribute = npcWithHits(harness, 674, 680, 20);
+		wrongBurnAttribute.setAttribute("burnEvent", "wrong-type");
+		assertThrows(ClassCastException.class, wrongBurnAttribute::extinguish,
+			"wrong burn attribute type currently aborts cleanup");
+		wrongBurnAttribute.removeAttribute("burnEvent");
+		wrongBurnAttribute.extinguish();
+	}
+
+	static void repeatedRelogEventCardinality(
+			final CurrentCombatHarness harness) {
+		final String name = "dot relog";
+		PoisonEvent priorPoison = null;
+		BurnEvent priorBurn = null;
+		for (int session = 0; session < 3; session++) {
+			final Player player = harness.player(name, 676, 680, restored -> {
+				restored.getCache().set("poisoned", 40);
+				restored.getCache().set("poisoned_max", 60);
+				restored.getCache().set("burn_damage", 2);
+				restored.getCache().set("burn_pulses", 3);
+			});
+			final PoisonEvent poison = player.getAttribute("poisonEvent", null);
+			final BurnEvent burn = player.getAttribute("burnEvent", null);
+			assertNotNull(poison, "relog poison event session " + session);
+			assertNotNull(burn, "relog burn event session " + session);
+			assertEquals(1, eventCount(harness, player, "Poison Event"),
+				"one poison event in relog session " + session);
+			assertEquals(1, eventCount(harness, player, "Burn Event"),
+				"one burn event in relog session " + session);
+			assertEquals(8L, poison.getTicksBeforeRun(),
+				"poison relog resets full countdown in session " + session);
+			assertEquals(8L, burn.getTicksBeforeRun(),
+				"burn relog resets full countdown in session " + session);
+			if (priorPoison != null) {
+				assertNotSame(priorPoison, poison,
+					"fresh session creates a new poison event");
+				assertNotSame(priorBurn, burn,
+					"fresh session creates a new burn event");
+			}
+			priorPoison = poison;
+			priorBurn = burn;
+			harness.logout(player);
+			assertFalse(poison.isRunning(),
+				"logout stops poison event in session " + session);
+			assertFalse(burn.isRunning(),
+				"logout stops burn event in session " + session);
+			assertEquals(0, eventCount(harness, player, "Poison Event"),
+				"logout removes poison scheduler entry in session " + session);
+			assertEquals(0, eventCount(harness, player, "Burn Event"),
+				"logout removes burn scheduler entry in session " + session);
+		}
+	}
+
 	static void burnReplacementPersistenceAndCleanup(
 			final CurrentCombatHarness harness) throws Exception {
 		final Player target = harness.player("dot burn replace", 630, 680);
@@ -630,6 +763,23 @@ final class CurrentCombatDotLifecycleCharacterization {
 		assertTrue(value != null, message + ": expected a value");
 	}
 
+	private static void assertThrows(
+			final Class<? extends Throwable> expected,
+			final ThrowingAction action, final String message) {
+		try {
+			action.run();
+		} catch (final Throwable failure) {
+			if (expected.isInstance(failure)) {
+				return;
+			}
+			throw new AssertionError(message + ": expected "
+				+ expected.getSimpleName() + ", got "
+				+ failure.getClass().getSimpleName(), failure);
+		}
+		throw new AssertionError(message + ": expected "
+			+ expected.getSimpleName());
+	}
+
 	@SuppressWarnings("PMD.CompareObjectsWithEquals")
 	private static void assertSame(final Object expected, final Object actual,
 			final String message) {
@@ -658,5 +808,9 @@ final class CurrentCombatDotLifecycleCharacterization {
 			throw new AssertionError(message + ": expected " + expected
 				+ ", got " + actual);
 		}
+	}
+
+	private interface ThrowingAction {
+		void run() throws Exception;
 	}
 }

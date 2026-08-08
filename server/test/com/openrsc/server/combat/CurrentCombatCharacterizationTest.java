@@ -192,6 +192,12 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_leach_uses_factual_overkill_and_tenacity_damage",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonFactualDamageBoundaries);
+			run(harness, "dot_corrupt_legacy_and_runtime_state_boundaries_are_characterized",
+				CurrentCombatDotLifecycleCharacterization
+					::corruptLegacyAndRuntimeStateBoundaries);
+			run(harness, "dot_repeated_relogs_preserve_one_fresh_event_per_effect",
+				CurrentCombatDotLifecycleCharacterization
+					::repeatedRelogEventCardinality);
 			run(harness, "generic_burn_replacement_restore_and_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::burnReplacementPersistenceAndCleanup);
