@@ -741,9 +741,9 @@ published main with separate chain and Splinter target policies that preserve
 revisits, RNG order, wall behavior, and event-owned execution. A07.5A is
 implemented on published main with only the proven-identical Ogre Stagger
 complete-set, draw, and one-attack debuff unit. A07.5B is implemented on
-published main with the separately characterized Baby Dragon equipment gate, draw, smoke
-projectile, and five-attack accuracy-debuff refresh unit. A07.5C is implemented
-on its focused branch with the separately characterized Blue Dragon set gate,
+published main with the separately characterized Baby Dragon equipment gate,
+draw, smoke projectile, and five-attack accuracy-debuff refresh unit. A07.5C is
+implemented on published main with the separately characterized Blue Dragon set gate,
 chance and damage draws, event-owned auxiliary true-damage callback, and
 five-attack max-hit-debuff refresh unit; later families remain bounded
 follow-ups.
