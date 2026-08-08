@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import sys
 from pathlib import Path
 
@@ -34,6 +35,38 @@ def expect_not_contains(path: Path, needle: str, label: str) -> None:
     text = path.read_text()
     if needle in text:
         fail(f"{label} still contains `{needle}` in {path}")
+
+
+def extract_method(path: Path, signature: str, label: str) -> str:
+    text = path.read_text()
+    signature_start = text.find(signature)
+    if signature_start == -1:
+        fail(f"{label} method signature `{signature}` missing in {path}")
+    body_start = text.find("{", signature_start)
+    if body_start == -1:
+        fail(f"{label} method body missing in {path}")
+
+    depth = 0
+    for index in range(body_start, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[signature_start:index + 1]
+    fail(f"{label} method body is unbalanced in {path}")
+
+
+def expect_method_contains(method: str, needle: str, label: str) -> None:
+    normalized_method = " ".join(method.split())
+    normalized_needle = " ".join(needle.split())
+    if normalized_needle not in normalized_method:
+        fail(f"{label} missing `{needle}` in its method scope")
+
+
+def expect_method_matches(method: str, pattern: str, label: str) -> None:
+    if re.search(pattern, method) is None:
+        fail(f"{label} missing its formatting-tolerant pattern in method scope")
 
 
 def main() -> None:
@@ -79,9 +112,49 @@ def main() -> None:
     expect_contains(PROJECTILE_EVENT_PATH, "casterPlayer.getMagicPoisonArmorMaxPower()", "magic armor poison contribution")
     expect_contains(PROJECTILE_EVENT_PATH, "casterPlayer.getRangedPoisonArmorMaxPower()", "ranged armor poison contribution")
 
-    expect_contains(RANGE_EVENT_PATH, "true, ammoId, 0, 0, 0, 0, DuplicationStrategy.ONE_PER_MOB", "ranged poison deferred to projectile impact")
-    expect_contains(THROWING_EVENT_PATH, "true, throwingID, 0, 0, 0, 0, projectileDuplicationStrategy", "thrown poison deferred to projectile impact")
-    expect_contains(THROWING_EVENT_PATH, "? DuplicationStrategy.ALLOW_MULTIPLE", "shuriken projectiles avoid per-player event de-duplication")
+    range_run = extract_method(RANGE_EVENT_PATH, "public void run()", "ranged attack")
+    expect_method_contains(range_run, "new ProjectileEvent(", "ranged attack launches an impact event")
+    expect_method_matches(
+        range_run,
+        r"ProjectileLaunchSpecification\s*\.\s*builder\s*\(\s*"
+        r"ProjectileLaunchSpecification\s*\.\s*Producer\s*\.\s*PLAYER_BOW\s*,\s*"
+        r"damage\s*,\s*2\s*\)",
+        "ranged projectile producer and impact style",
+    )
+    expect_method_contains(range_run, ".chase(true)", "ranged projectile chase policy")
+    expect_method_contains(range_run, ".poisonWeaponId(ammoId)", "ranged poison deferred to projectile impact")
+    expect_method_contains(
+        range_run,
+        ".duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)",
+        "ranged projectile duplication policy",
+    )
+    expect_method_contains(range_run, ".build(), resourceLedger)", "ranged typed launch and resource ledger")
+
+    throwing_hit = extract_method(
+        THROWING_EVENT_PATH,
+        "private void applyThrowingHit(",
+        "thrown attack",
+    )
+    expect_method_contains(throwing_hit, "new ProjectileEvent(", "thrown attack launches an impact event")
+    expect_method_matches(
+        throwing_hit,
+        r"ProjectileLaunchSpecification\s*\.\s*builder\s*\(\s*"
+        r"projectileProducer\s*,\s*damage\s*,\s*2\s*\)",
+        "thrown projectile producer and impact style",
+    )
+    expect_method_contains(throwing_hit, ".chase(true)", "thrown projectile chase policy")
+    expect_method_contains(throwing_hit, ".poisonWeaponId(throwingID)", "thrown poison deferred to projectile impact")
+    expect_method_contains(
+        throwing_hit,
+        "RangeUtils.SHURIKENS.contains(throwingID) ? DuplicationStrategy.ALLOW_MULTIPLE : DuplicationStrategy.ONE_PER_MOB",
+        "shuriken projectiles avoid per-player event de-duplication",
+    )
+    expect_method_contains(
+        throwing_hit,
+        ".duplicationStrategy(projectileDuplicationStrategy)",
+        "thrown projectile duplication policy",
+    )
+    expect_method_contains(throwing_hit, ".build(), resourceLedger)", "thrown typed launch and resource ledger")
     expect_not_contains(THROWING_EVENT_PATH, "RangeUtils.poisonTarget(getOwner(), target", "legacy thrown poison pre-impact application")
 
     expect_contains(PLAYER_POISON_SCRIPT_PATH, "if (attacker.getConfig().WANT_MYWORLD)", "legacy pvp poison disabled for myworld")
