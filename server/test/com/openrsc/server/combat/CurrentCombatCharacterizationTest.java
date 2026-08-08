@@ -236,6 +236,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "splinter_selection_preserves_proc_rng_and_random_single_geometry",
 				CurrentCombatChainRandomTraversalCharacterization
 					::splinterSelectionPolicies);
+			run(harness, "ogre_stagger_preserves_three_path_rng_and_zero_hit_policy",
+				CurrentCombatSharedProcCharacterization
+					::ogreStaggeringBlowPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
