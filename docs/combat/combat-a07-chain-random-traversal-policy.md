@@ -97,7 +97,8 @@ at each caller before traversal begins.
 
 This policy does not include Scythe, shuriken, all-recipient splashes, boss
 areas, delayed spells, PvP targeting, damage execution, or proc registration.
-A07.5 remains the next bounded branch.
+The first A07.5 bounded family is recorded separately in
+[`combat-a07-ogre-stagger-proc.md`](combat-a07-ogre-stagger-proc.md).
 
 Stop any future traversal consolidation if it changes RNG source/count/order,
 candidate view order, revisit behavior, cap, signed-level membership, wall

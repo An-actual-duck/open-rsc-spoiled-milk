@@ -199,4 +199,6 @@ recorded in
 A07.4 now owns chain and random-single traversal through the separate
 compatibility policies recorded in
 [`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
-A07.5 may consolidate only one proven duplicated proc family at a time.
+A07.5 begins with only the proven-identical Ogre Stagger proc recorded in
+[`combat-a07-ogre-stagger-proc.md`](combat-a07-ogre-stagger-proc.md). Later
+families still require separate characterization and branches.

@@ -308,3 +308,12 @@ compatibility. Candidate enumeration moves to separate chain and Splinter
 policies; chance, damage, presentation, contribution, aggro, and death remain
 event-owned. The boundary is recorded in
 [`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
+
+A07.5A grows the gate from 88 to 89 scenarios. Its pre-migration and parity
+fixture executes reciprocal melee, PvM melee, and projectile-impact owners and
+proves Ogre Stagger's full-set gate, one-draw success/failure behavior,
+settled-zero eligibility, single-attack replacement state, and no-draw
+rejection for incomplete equipment, dead targets, and non-player sources.
+Only that identical proc unit moves; surrounding phase gates and leather
+chains remain event-owned. The boundary is recorded in
+[`combat-a07-ogre-stagger-proc.md`](combat-a07-ogre-stagger-proc.md).

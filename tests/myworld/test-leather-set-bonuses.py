@@ -15,6 +15,7 @@ STAT_RESTORATION_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/Sta
 COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+OGRE_STAGGER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/OgreStaggeringBlowProc.java"
 ELDER_ARMOR_EFFECT_PATH = ROOT / "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java"
 COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
 OSRS_COMBAT_FORMULA_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/OSRSCombatFormula.java"
@@ -151,6 +152,14 @@ def main() -> None:
     expect_contains(PROJECTILE_EVENT_PATH, "applyPlayerProjectileDamageBuff", "projectile magic buff hook")
     expect_contains(PROJECTILE_EVENT_PATH, "casterPlayer.applyElementalGiantMightDebuff(opponent)", "ranged elemental giant hook")
     expect_contains(PROJECTILE_EVENT_PATH, "new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH)", "projectile dragon breath visual")
+    for path, label in ((COMBAT_EVENT_PATH, "combat"),
+                        (PVM_MELEE_PATH, "pvm"),
+                        (PROJECTILE_EVENT_PATH, "projectile")):
+        expect_contains(path, "OgreStaggeringBlowProc.tryApply", f"{label} shared Ogre stagger proc")
+    expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
+    expect_contains(OGRE_STAGGER_PROC_PATH, "random.nextDouble()", "Ogre single random draw")
+    expect_contains(OGRE_STAGGER_PROC_PATH, "source.getOgreStaggeringBlowProcChance()", "Ogre configured chance")
+    expect_contains(OGRE_STAGGER_PROC_PATH, "target.applyOgreStaggerDebuff();", "Ogre target debuff")
     for path, label in ((COMBAT_EVENT_PATH, "combat"),
                         (PVM_MELEE_PATH, "pvm"),
                         (PROJECTILE_EVENT_PATH, "projectile")):
