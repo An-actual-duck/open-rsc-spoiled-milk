@@ -1,6 +1,7 @@
 # A08.2 DoT Lifecycle Characterization
 
-Status: executable current-state evidence milestone complete; the four
+Status: executable current-state evidence milestone complete; the first A08.3
+target-policy foundation is now compiled and independently guarded. The four
 gameplay-policy decisions below were approved by the project owner on
 2026-08-07. A third exceptional-boundaries fixture now covers the legacy PvP
 producer, valid large generic-burn values, scheduler callback failure, and
@@ -315,10 +316,31 @@ Cases governed by the four approved decisions should gain explicit target-
 policy fixtures alongside (not silently replacing) the current-behavior
 migration baselines when typed state/settlement is introduced.
 
+## A08.3 target-policy foundation
+
+`PeriodicEffectProvenance` and `PoisonTargetPolicy` now make the approved
+decisions explicit without retaining live entities or changing current combat
+settlement. They distinguish durable player identity, NPC runtime identity plus
+lifetime generation, and stable environment/script keys. The executable
+foundation fixes these migration invariants before registry/tick wiring:
+
+- an application can transfer poison provenance only when it increases current
+  poison power;
+- only a live player provenance is eligible for player contribution/reward
+  attribution—an offline player, NPC, environment, or script source cannot
+  fall back to a target's unrelated current opponent; and
+- generic burn is explicitly marked `RETIRE_AND_MIGRATE`, rather than being
+  silently adapted into either active Elder burn family.
+
+These classes do not yet replace `Mob` fields, `PoisonEvent`, cache keys, or
+the legacy damage helper. The next branch must attach the value types to one
+atomic target registry/application path, then migrate settlement only with the
+approved contribution and lethal-credit tests enabled.
+
 ## Verification
 
-- `./server/test_combat` — PASS, 111/111 scenarios on the combined published
-  combat baseline.
+- `./server/test_combat` — PASS, 112/112 scenarios on this target-policy
+  foundation branch.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

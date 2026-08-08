@@ -22,6 +22,9 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
+import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
+import com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind;
+import com.openrsc.server.model.combat.dot.PoisonTargetPolicy;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.handlers.SpellHandler;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -42,6 +45,60 @@ final class CurrentCombatDotLifecycleCharacterization {
 	private static final int DRAGONSTONE_NECKLACE_OF_CLEANSING = 1657;
 
 	private CurrentCombatDotLifecycleCharacterization() {
+	}
+
+	static void approvedTargetPolicyFoundation(
+			final CurrentCombatHarness harness) {
+		final UUID playerId = UUID.randomUUID();
+		final UUID npcId = UUID.randomUUID();
+		final PeriodicEffectProvenance player =
+			PeriodicEffectProvenance.player(playerId);
+		final PeriodicEffectProvenance npc =
+			PeriodicEffectProvenance.npc(npcId, 7L);
+		final PeriodicEffectProvenance environment =
+			PeriodicEffectProvenance.environment("sinister-chest");
+		final PeriodicEffectProvenance script =
+			PeriodicEffectProvenance.script("admin-poison-self");
+
+		assertEquals(PeriodicEffectSourceKind.PLAYER, player.getSourceKind(),
+			"player provenance has an explicit durable source kind");
+		assertEquals(playerId, player.getSourceId(),
+			"player provenance retains only the stable player ID");
+		assertEquals(0L, player.getSourceLifecycle(),
+			"player provenance does not retain a live session generation");
+		assertEquals(PeriodicEffectSourceKind.NPC, npc.getSourceKind(),
+			"NPC provenance has an explicit actor source kind");
+		assertEquals(npcId, npc.getSourceId(),
+			"NPC provenance retains its runtime identity");
+		assertEquals(7L, npc.getSourceLifecycle(),
+			"NPC provenance retains a positive lifetime generation");
+		assertEquals("sinister-chest", environment.getSourceKey(),
+			"environment provenance uses a stable non-actor key");
+		assertEquals("admin-poison-self", script.getSourceKey(),
+			"script provenance uses a stable non-actor key");
+
+		assertTrue(PoisonTargetPolicy.transfersProvenance(20, 21),
+			"power-changing poison application transfers provenance");
+		assertFalse(PoisonTargetPolicy.transfersProvenance(20, 20),
+			"capped no-op poison application cannot transfer provenance");
+		assertThrows(IllegalArgumentException.class,
+			() -> PoisonTargetPolicy.transfersProvenance(-1, 0),
+			"policy rejects corrupt negative poison power");
+
+		assertEquals(playerId,
+			PoisonTargetPolicy.eligiblePlayerAttribution(player, true),
+			"online player source is the only eligible player attribution");
+		assertNull(PoisonTargetPolicy.eligiblePlayerAttribution(player, false),
+			"offline player source receives no synthesized attribution");
+		assertNull(PoisonTargetPolicy.eligiblePlayerAttribution(npc, true),
+			"NPC source cannot be coerced into player attribution");
+		assertNull(PoisonTargetPolicy.eligiblePlayerAttribution(environment, true),
+			"environment source has no unrelated-opponent fallback");
+		assertNull(PoisonTargetPolicy.eligiblePlayerAttribution(script, true),
+			"script source has no unrelated-opponent fallback");
+		assertEquals(PoisonTargetPolicy.GenericBurnDisposition.RETIRE_AND_MIGRATE,
+			PoisonTargetPolicy.genericBurnDisposition(),
+			"generic burn retirement is explicit before runtime migration");
 	}
 
 	static void poisonStackingOwnershipAndCadence(
