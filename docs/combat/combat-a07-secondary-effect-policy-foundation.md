@@ -140,7 +140,8 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first three bounded families are complete on published main.
+Status: the first three bounded families are complete on published main;
+A07.5D is the focused Earth Dragon slow follow-up.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
 nearby families are recorded in
@@ -153,6 +154,10 @@ Its separate contract is recorded in
 draws, event-owned auxiliary true-damage callback, and five-attack max-hit
 debuff refresh. Its separate contract is recorded in
 [`combat-a07-blue-dragon-water-proc.md`](combat-a07-blue-dragon-water-proc.md).
+`EarthDragonSlowProc` centralizes only the complete-set gate, chance and damage
+draws, event-owned auxiliary true-damage callback, and five-attack attack-speed
+debuff refresh. Its separate contract is recorded in
+[`combat-a07-earth-dragon-slow-proc.md`](combat-a07-earth-dragon-slow-proc.md).
 A07.5 remains open for separately characterized one-family branches.
 
 Move only an effect whose melee/projectile policies are proven identical into
@@ -174,10 +179,10 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 91 scenarios, including the compiled
-  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first three A07.5
-  shared proc contracts for Ogre Stagger, Baby Dragon smoke, and Blue Dragon
-  water.
+- The authoritative combat gate passes 92 scenarios, including the compiled
+  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first four A07.5
+  shared proc contracts for Ogre Stagger, Baby Dragon smoke, Blue Dragon water,
+  and Earth Dragon slow.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,

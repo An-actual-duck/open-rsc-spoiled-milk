@@ -20,6 +20,7 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
@@ -993,13 +994,10 @@ public class ProjectileEvent extends SingleTickEvent {
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
 				caster, opponent, procDamage));
-		if (casterPlayer.hasFullEarthDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
-			final int procDamage = DataConversions.random(0, 10);
-			if (procDamage > 0) {
-				inflictAuxiliaryTrueDamage(caster, opponent, procDamage);
-			}
-			opponent.applyDragonEarthAttackSpeedDebuff(6);
-		}
+		EarthDragonSlowProc.tryApply(casterPlayer, opponent,
+			ProductionGameRandom.INSTANCE,
+			procDamage -> inflictAuxiliaryTrueDamage(
+				caster, opponent, procDamage));
 		if (casterPlayer.hasFullRedDragonSet() && DataConversions.getRandom().nextDouble() < 0.20D) {
 			final int procDamage = DataConversions.random(0, 10);
 			if (procDamage > 0) {

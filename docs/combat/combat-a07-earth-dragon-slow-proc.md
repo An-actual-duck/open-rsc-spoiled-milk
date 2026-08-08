@@ -1,9 +1,9 @@
-# A07.5C Blue Dragon Water Proc
+# A07.5D Earth Dragon Slow Proc
 
 ## Scope and authority
 
-A07.5C moves one proven-identical proc family, Blue Dragon water, into
-`BlueDragonWaterProc`. The shared unit owns only the complete-set gate, chance
+A07.5D moves one proven-identical proc family, Earth Dragon slow, into
+`EarthDragonSlowProc`. The shared unit owns only the complete-set gate, chance
 and damage draws, invocation of an event-owned auxiliary true-damage callback,
 and target-debuff application. Reciprocal melee, PvM melee, and projectile
 impact retain the surviving-target/player-source phase gate, auxiliary damage
@@ -11,14 +11,14 @@ transaction, mitigation, contribution, presentation, death adapter, and all
 surrounding effect order.
 
 This is a behavior-preserving ownership extraction. It changes no equipment,
-chance, damage, magnitude, duration, max-hit formula, contribution, aggro,
-lifesteal, death, packet, animation, timing, or balance rule.
+chance, damage, magnitude, duration, attack-speed calculation, contribution,
+aggro, lifesteal, death, packet, animation, timing, or balance rule.
 
 ## Preserved contract
 
-- The proc remains after Infernal Fire and before Earth Dragon in each leather
-  on-hit chain.
-- A complete Blue Dragon set is required. Rejected equipment consumes no
+- The proc remains after Blue Dragon water and before Red Dragon fire in each
+  leather on-hit chain.
+- A complete Earth Dragon set is required. Rejected equipment consumes no
   random value.
 - An eligible attempt draws the existing 20% chance exactly once. A failed
   attempt consumes no damage draw.
@@ -31,27 +31,26 @@ lifesteal, death, packet, animation, timing, or balance rule.
 - Positive rolled damage invokes the original event helper before applying the
   debuff. That preserves armor-proc hitsplats, combat-style contribution,
   player mitigation/stat packets, and each event's existing death adapter.
-- The target retains the existing max-merge 10% max-hit reduction and
+- The target retains the existing max-merge 6% attack-speed penalty and
   five-attack refresh policy. Repeat success refreshes five remaining attacks
-  rather than creating an independent stack.
+  rather than creating an independent stack. Other attack-speed modifiers
+  retain their separately owned composition rules.
 
 The descriptor catalog remains descriptive. Runtime execution does not query
 `SecondaryEffectDescriptor`.
 
 ## Explicit exclusions
 
-Earth Dragon is separately characterized and extracted by
-[`combat-a07-earth-dragon-slow-proc.md`](combat-a07-earth-dragon-slow-proc.md).
 Red Dragon, Black Dragon, King Black Dragon, Infernal Fire, poison, splash,
 boss, summon, delayed, reflection, AoE, and DoT behavior remain outside this
-branch. Similar source shape does not approve Red Dragon for consolidation
-without its own executable characterization. Debuff state and consumption
-remain owned by `Mob`.
+branch. Similar source shape does not approve Red Dragon or any other family
+for consolidation without its own executable characterization. Debuff state,
+composition, and per-target-attack consumption remain owned by `Mob`.
 
 ## Executable evidence
 
-The compiled A07.5C scenario executes all three private production owners before
-and after extraction. It proves:
+The compiled A07.5D scenario executes all three private production owners
+before and after extraction. It proves:
 
 - success on settled-zero primary damage;
 - exact chance-then-inclusive-damage RNG transcripts;
@@ -59,10 +58,10 @@ and after extraction. It proves:
 - zero-damage success still applying and refreshing the debuff;
 - one chance draw on failure and no draw for incomplete equipment, dead
   targets, or non-player sources; and
-- 10% max-hit reduction, refresh after partial consumption, and expiry after
-  five target attacks.
+- 6% attack-speed penalty, two representative attack consumptions, refresh
+  after partial consumption, and expiry after five target attacks.
 
-The authoritative combat gate grows from 90 to 91 scenarios. Existing
+The authoritative combat gate grows from 91 to 92 scenarios. Existing
 auxiliary-damage, leather, projectile, primary-damage, death, and debuff
 coverage continues to guard the callback boundary and surrounding ordering. No
 private visual acceptance is required for this server-only internal extraction.
