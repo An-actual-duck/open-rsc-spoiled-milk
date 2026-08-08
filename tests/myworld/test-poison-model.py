@@ -74,6 +74,17 @@ def expect_method_matches(method: str, pattern: str, label: str) -> None:
         fail(f"{label} missing its formatting-tolerant pattern in method scope")
 
 
+def expect_method_order(method: str, needles: list[str], label: str) -> None:
+    normalized_method = " ".join(method.split())
+    position = -1
+    for needle in needles:
+        normalized_needle = " ".join(needle.split())
+        next_position = normalized_method.find(normalized_needle, position + 1)
+        if next_position == -1:
+            fail(f"{label} missing ordered step `{needle}` in method scope")
+        position = next_position
+
+
 def main() -> None:
     expect_contains(POISON_POWER_PATH, "getWeaponMaxPoisonPower", "weapon poison max power")
     expect_contains(POISON_POWER_PATH, "getWeaponAppliedPoisonPower", "weapon poison applied power")
@@ -183,8 +194,44 @@ def main() -> None:
         "secondary Guthix poison",
     )
     expect_contains(CORROSIVE_AURA_PATH, "attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower, defender);", "Corrosive Aura poison application")
-    expect_contains(SINISTER_CHEST_PATH, "player.applyPoison(68);", "Sinister Chest poison application")
-    expect_contains(ADMIN_COMMANDS_PATH, "player.applyPoison(poisonPower, poisonPower);", "admin poison diagnostic application")
+    sinister_use = extract_method(
+        SINISTER_CHEST_PATH,
+        "public void onUseLoc(Player player, GameObject obj, Item item)",
+        "Sinister Chest use",
+    )
+    expect_method_contains(
+        sinister_use,
+        "item.getCatalogId() == ItemId.SINISTER_KEY.id() && obj.getID() == SINISTER_CHEST",
+        "Sinister Chest key/chest guard",
+    )
+    expect_method_order(
+        sinister_use,
+        [
+            "player.getCarriedItems().remove(new Item(ItemId.SINISTER_KEY.id())) == -1) return",
+            "give(player, ItemId.UNIDENTIFIED_HARRALANDER.id(), 2);",
+            "give(player, ItemId.UNIDENTIFIED_TORSTOL.id(), 1);",
+            "player.applyPoison(68);",
+        ],
+        "Sinister Chest key removal, reward, then poison order",
+    )
+
+    admin_poison = extract_method(
+        ADMIN_COMMANDS_PATH,
+        "private void poisonSelfForTesting(final Player player, final String command, final String[] args)",
+        "admin poison diagnostic",
+    )
+    expect_method_contains(admin_poison, "int poisonPower = 30;", "admin poison default power")
+    expect_method_contains(admin_poison, "Integer.parseInt(args[0])", "admin poison numeric parser")
+    expect_method_contains(admin_poison, "if (poisonPower <= 0)", "admin poison positive-only guard")
+    expect_method_order(
+        admin_poison,
+        [
+            "player.curePoison();",
+            "player.applyPoison(poisonPower, poisonPower);",
+            "Applied poison power",
+        ],
+        "admin poison replaces prior state before reporting success",
+    )
 
     print("PASS: poison model uses max/applied power, successful-hit procs, shared impact resolution, and a guarded producer inventory")
 
