@@ -24,6 +24,7 @@ import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind;
+import com.openrsc.server.model.combat.dot.PoisonDurableRecord;
 import com.openrsc.server.model.combat.dot.PoisonTargetPolicy;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.handlers.SpellHandler;
@@ -299,6 +300,12 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"restored poison starts a fresh full countdown");
 		assertEquals(1, eventCount(harness, restored, "Poison Event"),
 			"restored poison event cardinality");
+		assertTrue(restored.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
+			"legacy poison is migrated to the durable record on login");
+		assertFalse(restored.getCache().hasKey("poisoned"),
+			"legacy current poison key is removed after migration");
+		assertFalse(restored.getCache().hasKey("poisoned_max"),
+			"legacy maximum poison key is removed after migration");
 
 		restored.curePoison();
 		assertFalse(restored.getCache().hasKey("poisoned"),
@@ -542,6 +549,48 @@ final class CurrentCombatDotLifecycleCharacterization {
 			assertEquals(0, eventCount(harness, player, "Burn Event"),
 				"logout removes burn scheduler entry in session " + session);
 		}
+	}
+
+	static void durablePoisonProvenanceRoundTrip(
+			final CurrentCombatHarness harness) {
+		final Player source = harness.player("dot durable source", 678, 680);
+		final String targetName = "dot durable target";
+		final Player original = harness.player(targetName, 679, 680);
+		original.applyPoison(40, 60, source);
+		final String record = original.getCache().getString(
+			PoisonDurableRecord.CACHE_KEY);
+		assertNotNull(record, "active player poison writes one durable record");
+		final PoisonDurableRecord decoded = PoisonDurableRecord.decode(record);
+		assertNotNull(decoded, "durable poison record decodes successfully");
+		assertEquals(source.getUUID(), decoded.getState().getProvenance().getSourceId(),
+			"durable poison record stores the player source ID, not a live reference");
+		harness.logout(original);
+
+		final Player restored = harness.player(targetName, 680, 680,
+			player -> player.getCache().store(PoisonDurableRecord.CACHE_KEY,
+				record));
+		final PoisonEvent event = restored.getAttribute("poisonEvent", null);
+		assertNotNull(event, "durable poison restores one event");
+		assertEquals(40, restored.getCurrentPoisonPower(),
+			"durable poison restores current power");
+		assertEquals(60, restored.getPoisonMaxPower(),
+			"durable poison restores maximum power");
+		assertEquals(source.getUUID(), restored.getPoisonProvenance().getSourceId(),
+			"durable poison restores player source identity without live references");
+		assertEquals(1, eventCount(harness, restored, "Poison Event"),
+			"durable poison restoration registers exactly one event");
+		assertFalse(restored.getCache().hasKey("poisoned"),
+			"durable poison restoration needs no legacy current cache key");
+		assertFalse(restored.getCache().hasKey("poisoned_max"),
+			"durable poison restoration needs no legacy maximum cache key");
+
+		final Player malformed = harness.player("dot durable malformed", 681, 680,
+			player -> player.getCache().store(PoisonDurableRecord.CACHE_KEY,
+				"not-a-durable-poison-record"));
+		assertNull(malformed.getAttribute("poisonEvent", null),
+			"malformed durable poison data does not create a scheduler event");
+		assertFalse(malformed.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
+			"malformed durable poison data is discarded at the login boundary");
 	}
 
 	static void duplicateSchedulerAndMixedBurnBoundaries(

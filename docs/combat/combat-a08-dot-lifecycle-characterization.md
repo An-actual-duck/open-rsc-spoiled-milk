@@ -380,14 +380,24 @@ The approved attribution rules are now live for generic poison:
 - live NPC provenance can kill a player as the applying NPC, without becoming
   a player Leach owner.
 
-This remains intentionally limited to generic poison. Versioned persistence,
-full source-key serialization, generic-burn retirement, and any migration of
-the two Elder burn families remain later A08 work.
+This remains intentionally limited to generic poison. Generic-burn retirement
+and any migration of the two Elder burn families remain later A08 work.
+
+## A08.4 durable generic-poison record
+
+Player poison now persists as one versioned `poison_state_v1` cache record
+containing bounded current/maximum power plus only serializable provenance.
+It never stores a live `Mob`, player session, NPC object, or event reference.
+Login restores one valid record into one poison event. Old `poisoned` and
+`poisoned_max` cache rows are read once, normalized (`maximum >= current`),
+written as the durable record, and removed. Nonnumeric, negative, or otherwise
+invalid legacy state is cleared without preventing login or registering an
+event.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 114/114 scenarios on this typed poison tick
-  settlement branch.
+- `./server/test_combat` — PASS, 117/117 scenarios on this durable provenance
+  branch.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.
