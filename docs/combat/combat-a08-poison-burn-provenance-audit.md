@@ -432,6 +432,13 @@ and nonreversible account diagnostic identifier are sufficient.
 
 ## Policy decisions required before implementation
 
+> Decision update (2026-08-07): the project owner approved
+> state-changing-only capped ownership transfer, factual poison contribution,
+> no synthesized rewards for an offline poison owner and no unrelated-opponent
+> fallback credit, and retirement/migration of dormant generic burn. The exact
+> accepted wording and executable-evidence boundary are recorded in
+> [`combat-a08-dot-lifecycle-characterization.md`](combat-a08-dot-lifecycle-characterization.md).
+
 The following recommendations preserve current gameplay where it is coherent
 and make currently accidental behavior explicit. Rows marked **decision** can
 change rewards or PvP outcomes and must be approved before A08.2+ changes them.

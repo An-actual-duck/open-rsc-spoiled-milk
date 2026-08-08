@@ -1,7 +1,9 @@
 # A08.2 DoT Lifecycle Characterization
 
-Status: executable current-state evidence complete; gameplay-policy decisions
-remain open.
+Status: first executable current-state evidence milestone complete; the four
+gameplay-policy decisions below were approved by the project owner on
+2026-08-07. Remaining corruption, producer, and player-death fixtures still
+precede typed runtime implementation.
 
 Baseline: published `main` at `904218197c72be996329a50c9acd8d873fac6a7d`.
 
@@ -117,25 +119,28 @@ redirect rewards in this phase.
 | Elder armor source logout | Event clears before another pulse |
 | Elder boss source removal | Event and target markers clear before another pulse |
 
-## Decisions still required before typed settlement
+## Approved policy decisions
 
-A08.3 must not begin reward-changing settlement until the owner approves these
-choices:
+The project owner approved the following A08 migration policy on 2026-08-07:
 
-1. **Capped ownership transfer:** should an application that adds zero power
-   replace poison ownership? Recommendation remains no; only a state-changing
-   application should transfer ownership.
-2. **Poison contribution:** should factual poison damage count toward the
-   source's NPC contribution? Recommendation remains yes so contribution and
-   kill ownership agree.
-3. **Offline owner death:** if poison kills an NPC while its durable player
-   owner is offline, should rewards be withheld, deferred, or given to an
-   eligible current participant? Recommendation remains no synthesized offline
-   loot/XP and no unrelated-opponent credit.
-4. **Generic burn disposition:** should generic burn remain as a repaired
-   compatibility family or should recognized legacy rows be retired? There are
-   no active production applications, so migration/retirement is the smaller
-   long-term surface if persisted legacy rows can be handled safely.
+1. **Capped ownership transfer:** an application that adds zero power does not
+   replace poison ownership. Only a state-changing application may transfer
+   ownership.
+2. **Poison contribution:** factual poison damage counts toward its durable
+   player's NPC contribution so contribution and kill ownership agree.
+3. **Offline owner death:** an offline poison owner receives no synthesized
+   loot or XP. An unrelated current opponent also must not receive the poison
+   kill merely because it occupies the legacy opponent field. Durable source
+   identity remains available for audit and an explicit no-online-owner reward
+   result.
+4. **Generic burn disposition:** retire/migrate the dormant generic burn family
+   instead of preserving it as an active effect family. Recognized legacy rows
+   must be handled deterministically and safely; retirement must not turn
+   malformed optional state into an account-login failure.
+
+These decisions authorize future fixture expectations and A08.3/A08.4 design.
+They do not retroactively turn the current-behavior assertions into desired
+behavior, and this characterization branch still makes no runtime changes.
 
 The broader source-kind question from A08.1 also remains: NPC, environment, and
 script poison need explicit causal identity for player deaths rather than a
@@ -154,8 +159,9 @@ The next characterization slice should cover:
   family; and
 - server-restart persistence once a versioned source record exists to preserve.
 
-Cases whose expected result depends on the four decisions above should remain
-decision evidence, not guessed acceptance assertions.
+Cases governed by the four approved decisions should gain explicit target-
+policy fixtures alongside (not silently replacing) the current-behavior
+migration baselines when typed state/settlement is introduced.
 
 ## Verification
 
