@@ -745,10 +745,10 @@ published main with the separately characterized Baby Dragon equipment gate,
 draw, smoke projectile, and five-attack accuracy-debuff refresh unit. A07.5C is
 implemented on published main with the separately characterized Blue Dragon set gate,
 chance and damage draws, event-owned auxiliary true-damage callback, and
-five-attack max-hit-debuff refresh unit. A07.5D is the focused branch for the
-separately characterized Earth Dragon set gate, chance and damage draws,
-event-owned auxiliary true-damage callback, and five-attack attack-speed-debuff
-refresh unit; later families remain bounded follow-ups.
+five-attack max-hit-debuff refresh unit. A07.5D is implemented on published main
+with the separately characterized Earth Dragon set gate, chance and damage
+draws, event-owned auxiliary true-damage callback, and five-attack
+attack-speed-debuff refresh unit; later families remain bounded follow-ups.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
