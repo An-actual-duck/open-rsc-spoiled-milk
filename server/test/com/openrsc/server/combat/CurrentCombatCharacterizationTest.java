@@ -207,6 +207,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_durable_provenance_round_trip_restores_one_event",
 				CurrentCombatDotLifecycleCharacterization
 					::durablePoisonProvenanceRoundTrip);
+			run(harness, "dot_durable_poison_survives_server_restart",
+				CurrentCombatDotLifecycleCharacterization
+					::durablePoisonSurvivesServerRestart);
 			run(harness, "dot_duplicate_scheduler_and_mixed_burn_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::duplicateSchedulerAndMixedBurnBoundaries);

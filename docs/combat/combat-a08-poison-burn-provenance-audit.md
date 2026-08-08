@@ -618,8 +618,11 @@ versioned, live-reference-free record now replaces legacy cache writes;
 login normalizes or clears legacy state, restores one event, and removes
 legacy shadow/orphan keys. Failed-save atomicity now retains the live player
 and target-owned poison event, clearing only request flags for retry; it never
-reports a failed database write as a successful logout. Actual process-restart
-coverage remains the next persistence gate.
+reports a failed database write as a successful logout. A serialized durable
+record is also now verified across independently constructed production-server
+fixtures: a fresh login restores one event, the full countdown, and stable
+player-source identity. Database-driver crash/recovery remains an integration
+environment concern rather than a second poison-state format.
 
 - Read current `poisoned`, `poisoned_max`, `burn_damage`, and `burn_pulses` as
   legacy inputs under a versioned migration.
