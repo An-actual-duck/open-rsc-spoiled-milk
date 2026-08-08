@@ -196,5 +196,7 @@ impact must be reviewed explicitly.
 A07.3 is now characterized and implemented as the bounded live/snapshot policy
 recorded in
 [`combat-a07-player-owned-npc-radius-selection.md`](combat-a07-player-owned-npc-radius-selection.md).
-A07.4 continues to own chain and random-single traversal, and A07.5 may
-consolidate only one proven duplicated proc family at a time.
+A07.4 now owns chain and random-single traversal through the separate
+compatibility policies recorded in
+[`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
+A07.5 may consolidate only one proven duplicated proc family at a time.

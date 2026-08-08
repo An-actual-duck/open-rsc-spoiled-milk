@@ -129,10 +129,14 @@ delayed spell areas merely because each is called AoE.
 
 ### A07.4 — chain and random-single traversal
 
-Treat chain lightning and Splinter separately. Add executable cycle, repeated
-target, RNG order, layer, source/target removal, cap, and child-death tests
-before deciding whether current target revisits or missing line-of-effect are
-compatibility behavior or separately approved defects.
+Status: complete on the focused implementation branch. Chain lightning and
+Splinter remain separate typed policies, as recorded in
+[`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
+
+Executable cycle, repeated-target, RNG order, layer, source/target removal,
+respawn, cap, wall, and child-death tests establish current target revisits and
+missing line-of-effect checks as maintained compatibility. Changing either is
+a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
@@ -155,8 +159,8 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 86 scenarios, including the compiled
-  A07.3 view/filter/revalidation contract.
+- The authoritative combat gate passes 88 scenarios, including the compiled
+  A07.3 view/filter/revalidation and A07.4 traversal/RNG contracts.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,

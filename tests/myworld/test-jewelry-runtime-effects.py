@@ -25,6 +25,7 @@ SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
 COMBAT_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java"
 PVM_MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+CHAIN_TRAVERSAL = ROOT / "server/src/com/openrsc/server/model/combat/ChainLightningTraversalPolicy.java"
 FISHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/fishing/Fishing.java"
 MINING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/mining/Mining.java"
 WOODCUTTING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/woodcutting/Woodcutting.java"
@@ -568,6 +569,7 @@ def ensure_runtime_paths_are_wired() -> None:
     combat_event = COMBAT_EVENT.read_text(encoding="utf-8")
     pvm_melee = PVM_MELEE_EVENT.read_text(encoding="utf-8")
     projectile_event = PROJECTILE_EVENT.read_text(encoding="utf-8")
+    chain_traversal = CHAIN_TRAVERSAL.read_text(encoding="utf-8")
     law_jewelry = LAW_JEWELRY.read_text(encoding="utf-8")
     nature_alchemy_amulet = NATURE_ALCHEMY_AMULET.read_text(encoding="utf-8")
     fishing = FISHING.read_text(encoding="utf-8")
@@ -963,21 +965,29 @@ def ensure_runtime_paths_are_wired() -> None:
                 rf"Projectile\s*\.\s*CHAIN_LIGHTNING_{projectile_name}\b",
                 f"Chaos necklace {label} chain lightning projectile {projectile_name} is missing",
             )
-        require_regex(
-            select_chain,
-            r"!\s*Summoning\s*\.\s*isSummon\s*\(\s*npc\s*\)",
-            f"Chaos necklace {label} chain lightning summon exclusion is missing",
+        require(
+            "ChainLightningTraversalPolicy.selectNext" in select_chain,
+            f"Chaos necklace {label} must use the shared traversal policy",
         )
         require_regex(
             inflict_chain,
             r"HitSplat\s*\.\s*TYPE_ARMOR_PROC\b",
             f"Chaos necklace {label} chain lightning yellow hitsplat is missing",
         )
-        require_regex(
-            text,
-            r"\bCHAOS_CHAIN_LIGHTNING_MAX_HOPS\s*=\s*3\b",
-            f"Chaos necklace {label} chain lightning should retain its three-hop limit",
+        require(
+            "ChainLightningTraversalPolicy.MAX_HOPS" in apply_chain,
+            f"Chaos necklace {label} chain lightning should use the shared hop cap",
         )
+    require_regex(
+        chain_traversal,
+        r"!\s*Summoning\s*\.\s*isSummon\s*\(\s*npc\s*\)",
+        "Chaos necklace traversal summon exclusion is missing",
+    )
+    require_regex(
+        chain_traversal,
+        r"\bMAX_HOPS\s*=\s*3\b",
+        "Chaos necklace traversal should retain its three-hop limit",
+    )
     require("getChaosRecoilChance" in combat_event
             and "getChaosRecoilChance" in pvm_melee
             and "getChaosRecoilChance" in projectile_event

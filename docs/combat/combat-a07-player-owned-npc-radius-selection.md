@@ -43,8 +43,10 @@ movement during one child settlement cannot move the remaining burst center.
 The following are intentionally outside this compatible group: PvP splash
 selection, Scythe cleave, Splinter, chain lightning, shuriken, boss-to-player
 areas, delayed spell areas, Soul Amulet healing, and all damage/proc execution.
-A07.4 continues to own chain and random-single traversal; A07.5 continues to own
-any shared proc executor.
+A07.4 owns chain and random-single traversal through the separate policy
+recorded in
+[`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
+A07.5 continues to own any shared proc executor.
 
 ## Verification
 

@@ -15,6 +15,7 @@ import com.openrsc.server.event.rsc.SingleTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
@@ -25,6 +26,7 @@ import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
+import com.openrsc.server.model.combat.SplinterTargetSelectionPolicy;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -37,13 +39,12 @@ import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.states.CombatState;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.runtime.ProductionGameRandom;
 import com.openrsc.server.util.rsc.CombatEffectUtil;
 import com.openrsc.server.util.rsc.DataConversions;
 
 public class ProjectileEvent extends SingleTickEvent {
 
-	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
-	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
 	private static final SecondaryEffectPolicy AUXILIARY_MAGIC_DAMAGE_POLICY =
 		SecondaryEffectPolicy.PROJECTILE_AUXILIARY_MAGIC;
 	private static final SecondaryEffectPolicy AUXILIARY_TRUE_DAMAGE_POLICY =
@@ -444,7 +445,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		Mob anchor = opponent;
 		int chainDamage = Math.max(1, (int) Math.ceil(secondaryEffectDamage / 2.0D));
-		for (int hop = 0; hop < CHAOS_CHAIN_LIGHTNING_MAX_HOPS; hop++) {
+		for (int hop = 0; hop < ChainLightningTraversalPolicy.MAX_HOPS; hop++) {
 			if (DataConversions.getRandom().nextDouble() >= chainChance) {
 				break;
 			}
@@ -515,22 +516,8 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor) {
-		if (anchor == null || !anchor.isNpc()) {
-			return null;
-		}
-		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
-		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc != null && npc != anchor && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
-				&& npc.getDef().isAttackable()
-				&& !Summoning.isSummon(npc)
-				&& npc.withinRange(anchor.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
-				candidates.add(npc);
-			}
-		}
-		if (candidates.isEmpty()) {
-			return null;
-		}
-		return candidates.get(DataConversions.random(0, candidates.size() - 1));
+		return ChainLightningTraversalPolicy.selectNext(
+			player, anchor, ProductionGameRandom.INSTANCE);
 	}
 
 	private void recoilDamage(Player opponent, Mob caster, int damage) {
@@ -903,22 +890,8 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private Npc selectSplinterTarget(final Player casterPlayer, final Mob primaryTarget) {
-		if (!primaryTarget.isNpc()) {
-			return null;
-		}
-		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
-		for (Npc npc : casterPlayer.getViewArea().getNpcsInView()) {
-			if (npc != null && npc != primaryTarget && !npc.isRemoved()
-				&& !Summoning.isSummon(npc)
-				&& npc.getDef().isAttackable() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
-				&& npc.getLocation().withinRange(primaryTarget.getLocation(), 2)) {
-				candidates.add(npc);
-			}
-		}
-		if (candidates.isEmpty()) {
-			return null;
-		}
-		return candidates.get(DataConversions.random(0, candidates.size() - 1));
+		return SplinterTargetSelectionPolicy.select(
+			casterPlayer, primaryTarget, ProductionGameRandom.INSTANCE);
 	}
 
 	private void applyWeaponPoison() {

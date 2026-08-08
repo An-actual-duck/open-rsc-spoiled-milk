@@ -28,6 +28,7 @@ import com.openrsc.server.model.combat.AttackIntent;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
@@ -51,8 +52,6 @@ import java.util.concurrent.TimeUnit;
 
 public class PvmMeleeEvent extends GameTickEvent {
 	private static final Logger LOGGER = LogManager.getLogger();
-	private static final int CHAOS_CHAIN_LIGHTNING_MAX_HOPS = 3;
-	private static final int CHAOS_CHAIN_LIGHTNING_RADIUS = 4;
 	private static final SecondaryEffectPolicy AUXILIARY_MAGIC_DAMAGE_POLICY =
 		SecondaryEffectPolicy.PVM_MELEE_AUXILIARY_MAGIC;
 	private static final SecondaryEffectPolicy AUXILIARY_TRUE_DAMAGE_POLICY =
@@ -901,7 +900,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		Mob anchor = target;
 		int chainDamage = Math.max(1, (int) Math.ceil(baseDamage / 2.0D));
-		for (int hop = 0; hop < CHAOS_CHAIN_LIGHTNING_MAX_HOPS; hop++) {
+		for (int hop = 0; hop < ChainLightningTraversalPolicy.MAX_HOPS; hop++) {
 			if (combatRandom().nextDouble() >= chainChance) {
 				break;
 			}
@@ -992,25 +991,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget) {
-		if (primaryTarget == null) {
-			return null;
-		}
-		if (!primaryTarget.isNpc()) {
-			return null;
-		}
-		final java.util.ArrayList<Npc> candidates = new java.util.ArrayList<Npc>();
-		for (Npc npc : player.getViewArea().getNpcsInView()) {
-			if (npc != null && npc != primaryTarget && !npc.isRemoved() && npc.getSkills().getLevel(Skill.HITS.id()) > 0
-				&& npc.getDef().isAttackable()
-				&& !Summoning.isSummon(npc)
-				&& npc.withinRange(primaryTarget.getLocation(), CHAOS_CHAIN_LIGHTNING_RADIUS)) {
-				candidates.add(npc);
-			}
-		}
-		if (candidates.isEmpty()) {
-			return null;
-		}
-		return candidates.get(combatRandom().nextInt(candidates.size()));
+		return ChainLightningTraversalPolicy.selectNext(
+			player, primaryTarget, combatRandom());
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {

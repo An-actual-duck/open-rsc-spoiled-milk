@@ -298,3 +298,13 @@ radius enumeration moves; damage, charge, contribution, aggro, presentation,
 death, and unrelated AoE families remain with their owners. The boundary is
 recorded in
 [`combat-a07-player-owned-npc-radius-selection.md`](combat-a07-player-owned-npc-radius-selection.md).
+
+A07.4 grows the gate from 86 to 88 scenarios. Its pre-migration and parity
+fixtures prove chain revisits, its exact three-hop cap, chance-before-index RNG
+order, continuation from a dead child's location, empty-selection draw count,
+Splinter's proc-before-index order, signed-level membership, intentional wall
+pass-through, removed anchor/candidate/owner behavior, and visible-respawning
+compatibility. Candidate enumeration moves to separate chain and Splinter
+policies; chance, damage, presentation, contribution, aggro, and death remain
+event-owned. The boundary is recorded in
+[`combat-a07-chain-random-traversal-policy.md`](combat-a07-chain-random-traversal-policy.md).
