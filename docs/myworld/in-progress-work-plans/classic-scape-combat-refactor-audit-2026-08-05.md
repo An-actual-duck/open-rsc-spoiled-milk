@@ -763,7 +763,10 @@ A07.5I separately extracts only Elder Green armor's shared positive-primary
 chance/payload trigger; its existing Breath and burn implementation remains
 content-owned. A07.5J separately extracts Bear Maul's identical player/full-set,
 positive-primary-hit, and living-target gate while retaining ordering and
-auxiliary damage settlement in each melee event.
+auxiliary damage settlement in each melee event. A07.5K separately extracts
+Dragon melee breath's identical living-target, positive-roll, visual-draw, and
+callback unit while retaining weapon eligibility, formula RNG, ordering, and
+damage/death settlement in each event.
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and
@@ -782,8 +785,9 @@ plus the bounded proc contracts in
 [`combat-a07-king-black-dragon-breath-followup.md`](../../combat/combat-a07-king-black-dragon-breath-followup.md),
 [`combat-a07-infernal-fire-proc.md`](../../combat/combat-a07-infernal-fire-proc.md),
 [`combat-a07-elder-green-armor-trigger.md`](../../combat/combat-a07-elder-green-armor-trigger.md),
+[`combat-a07-bear-maul-second-hit.md`](../../combat/combat-a07-bear-maul-second-hit.md),
 and
-[`combat-a07-bear-maul-second-hit.md`](../../combat/combat-a07-bear-maul-second-hit.md).
+[`combat-a07-dragon-melee-breath-followup.md`](../../combat/combat-a07-dragon-melee-breath-followup.md).
 
 Define explicit policies per effect family, then consolidate duplicated proc
 chains. Include eligibility, world/layer, range, line-of-effect, zero-hit aggro,

@@ -140,7 +140,7 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first ten bounded families are complete on published main;
+Status: the first eleven bounded families are complete on published main;
 later families remain separately characterized follow-ups.
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
@@ -184,6 +184,11 @@ positive-primary-hit, and living-target eligibility gate. Each melee event
 retains ordering and auxiliary true-damage settlement. Its separate contract is
 recorded in
 [`combat-a07-bear-maul-second-hit.md`](combat-a07-bear-maul-second-hit.md).
+`DragonMeleeBreathFollowup` centralizes only the identical living-target,
+positive formula-roll, binary visual, and event-owned auxiliary-damage callback
+unit. Weapon eligibility and formula RNG remain in each melee event. Its
+separate contract is recorded in
+[`combat-a07-dragon-melee-breath-followup.md`](combat-a07-dragon-melee-breath-followup.md).
 A07.5 remains open for separately characterized one-family branches.
 
 Move only an effect whose melee/projectile policies are proven identical into
@@ -205,12 +210,12 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combat gate passes 115 scenarios, including the compiled
-  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first ten A07.5
+- The authoritative combat gate passes 116 scenarios, including the compiled
+  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first eleven A07.5
   shared proc contracts for Ogre Stagger, Baby Dragon smoke, Blue Dragon water,
   Earth Dragon slow, Red Dragon fire, Black Dragon breath, and the King Black
   Dragon payload/element follow-up, Infernal Fire, Elder Green's armor trigger,
-  and Bear Maul's second-hit eligibility.
+  Bear Maul's second-hit eligibility, and Dragon melee breath follow-up.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,

@@ -396,3 +396,10 @@ living-target eligibility plus the unchanged second-hit payload. Primary-hit
 ordering and auxiliary damage settlement remain owned by each melee event. The
 boundary is recorded in
 [`combat-a07-bear-maul-second-hit.md`](combat-a07-bear-maul-second-hit.md).
+
+A07.5K grows the current gate from 115 to 116 scenarios. Its compiled contract
+proves Dragon melee breath's living-target and positive-roll gates, binary
+visual draw, and unchanged auxiliary-damage callback. Weapon eligibility,
+formula RNG, ordering, and damage/death settlement remain event-owned. The
+boundary is recorded in
+[`combat-a07-dragon-melee-breath-followup.md`](combat-a07-dragon-melee-breath-followup.md).
