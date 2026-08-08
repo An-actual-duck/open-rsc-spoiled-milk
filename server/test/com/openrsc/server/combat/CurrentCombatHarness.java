@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.function.Consumer;
 
 /**
  * Test-only fixture over the current production Server, World, Player, Npc,
@@ -102,6 +103,11 @@ final class CurrentCombatHarness implements AutoCloseable {
 	}
 
 	Player player(final String name, final int x, final int packedY) {
+		return player(name, x, packedY, null);
+	}
+
+	Player player(final String name, final int x, final int packedY,
+			final Consumer<Player> beforeLogin) {
 		ensureOpen();
 		openTile(x, packedY);
 		final Player player = new Player(
@@ -111,12 +117,28 @@ final class CurrentCombatHarness implements AutoCloseable {
 			server.getConfig().CLIENT_VERSION));
 		player.setInitialLocation(Point.location(x, packedY));
 		setCombatSkills(player, 40, 40);
+		if (beforeLogin != null) {
+			beforeLogin.accept(player);
+		}
 		world.getPlayers().add(player);
 		player.updateRegion();
 		player.setBusy(false);
 		player.setLoggedIn(true);
 		players.add(player);
 		return player;
+	}
+
+	void logout(final Player player) {
+		ensureOpen();
+		for (GameTickEvent event : new ArrayList<GameTickEvent>(
+				server.getGameEventHandler().getPlayerEvents(player))) {
+			event.stop();
+		}
+		server.getGameEventHandler().cleanupEvents();
+		player.remove();
+		world.getPlayers().remove(player);
+		world.removePlayer(player.getUsernameHash());
+		player.setLoggedIn(false);
 	}
 
 	Npc npc(final int id, final int x, final int packedY) {

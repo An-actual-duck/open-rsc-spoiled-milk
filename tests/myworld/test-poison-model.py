@@ -16,6 +16,11 @@ PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/pro
 RANGE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java"
 THROWING_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java"
 PLAYER_POISON_SCRIPT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/PlayerPoisonScript.java"
+NPC_POISON_SCRIPT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/NpcPoisonPlayerScript.java"
+SPELL_HANDLER_PATH = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
+CORROSIVE_AURA_PATH = ROOT / "server/src/com/openrsc/server/content/CorrosiveAura.java"
+SINISTER_CHEST_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/SinisterChest.java"
+ADMIN_COMMANDS_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java"
 INV_ITEM_POISONING_PATH = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/itemactions/InvItemPoisoning.java"
 ITEM_HERB_SECOND_PATH = ROOT / "server/conf/server/defs/extras/ItemHerbSecond.xml"
 
@@ -158,8 +163,30 @@ def main() -> None:
     expect_not_contains(THROWING_EVENT_PATH, "RangeUtils.poisonTarget(getOwner(), target", "legacy thrown poison pre-impact application")
 
     expect_contains(PLAYER_POISON_SCRIPT_PATH, "if (attacker.getConfig().WANT_MYWORLD)", "legacy pvp poison disabled for myworld")
+    expect_contains(PLAYER_POISON_SCRIPT_PATH, "player.applyPoison(48);", "legacy pvp poison application")
+    expect_contains(NPC_POISON_SCRIPT_PATH, "victim.applyPoison(", "npc poison application")
+    expect_contains(NPC_POISON_SCRIPT_PATH, "player.isAntidoteProtected()", "npc poison antidote guard")
 
-    print("PASS: poison model uses max/applied power, successful-hit procs, and shared impact resolution")
+    guthix_poison = extract_method(
+        SPELL_HANDLER_PATH,
+        "private void applyGuthixGodSpellPoison(",
+        "Guthix god-spell poison",
+    )
+    expect_method_contains(
+        guthix_poison,
+        "target.applyPoison(advancedSpell ? 40 : 20, advancedSpell ? 80 : 40, caster);",
+        "primary Guthix poison",
+    )
+    expect_method_contains(
+        guthix_poison,
+        "target.applyPoison(advancedSpell ? 20 : 10, advancedSpell ? 40 : 20, caster);",
+        "secondary Guthix poison",
+    )
+    expect_contains(CORROSIVE_AURA_PATH, "attacker.applyPoison(poisonPower, attacker.getCurrentPoisonPower() + poisonPower, defender);", "Corrosive Aura poison application")
+    expect_contains(SINISTER_CHEST_PATH, "player.applyPoison(68);", "Sinister Chest poison application")
+    expect_contains(ADMIN_COMMANDS_PATH, "player.applyPoison(poisonPower, poisonPower);", "admin poison diagnostic application")
+
+    print("PASS: poison model uses max/applied power, successful-hit procs, shared impact resolution, and a guarded producer inventory")
 
 
 if __name__ == "__main__":

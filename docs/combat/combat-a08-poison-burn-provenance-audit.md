@@ -432,6 +432,13 @@ and nonreversible account diagnostic identifier are sufficient.
 
 ## Policy decisions required before implementation
 
+> Decision update (2026-08-07): the project owner approved
+> state-changing-only capped ownership transfer, factual poison contribution,
+> no synthesized rewards for an offline poison owner and no unrelated-opponent
+> fallback credit, and retirement/migration of dormant generic burn. The exact
+> accepted wording and executable-evidence boundary are recorded in
+> [`combat-a08-dot-lifecycle-characterization.md`](combat-a08-dot-lifecycle-characterization.md).
+
 The following recommendations preserve current gameplay where it is coherent
 and make currently accidental behavior explicit. Rows marked **decision** can
 change rewards or PvP outcomes and must be approved before A08.2+ changes them.
@@ -536,6 +543,13 @@ target-lifetime-only periodic state at the lifecycle authority rather than
 waiting for an event to notice later.
 
 ## Existing regression evidence and gaps
+
+> A08.2 update: the first executable lifecycle slice is recorded in
+> [`combat-a08-dot-lifecycle-characterization.md`](combat-a08-dot-lifecycle-characterization.md).
+> It corrects this audit's generic-burn replacement description: active
+> reapplication clears the newly written state and leaves an unscheduled
+> zero-state marker because the prior `ONE_PER_MOB` event still awaits cleanup.
+> It also proves generic burn can tick after NPC removal begins.
 
 The current suite proves useful fragments, but not the provenance lifecycle as
 a whole:
