@@ -223,7 +223,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.SUCCESSFUL_POISON_MARKER,
 		RandomTiming.PAYLOAD_ONLY, StateOwner.SOURCE_TRANSIENT_MARKER,
 		RecursionPolicy.NO_REENTRY, PresentationPolicy.MIXED,
-		"central applyLeatherSetOnHitEffects methods", "King Black Dragon set characterization"),
+		"KingBlackDragonBreathFollowup via central on-hit methods", "A07.5G compiled payload/element parity fixture"),
 	ELDER_GREEN_DRAGON_ARMOR_BREATH("semantic.elder-green-dragon-armor-breath",
 		phases(Phase.SURVIVING_TARGET), styles(Style.MELEE, Style.RANGED, Style.THROWING, Style.MAGIC),
 		ParticipantGate.PLAYER_SOURCE, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,
