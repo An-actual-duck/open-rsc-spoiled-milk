@@ -25,6 +25,7 @@ import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
+import com.openrsc.server.model.combat.PlayerProjectileDamageBuff;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
@@ -1040,21 +1041,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private int applyPlayerProjectileDamageBuff(final Player player, final int damage) {
-		if (damage <= 0) {
-			return damage;
-		}
-		if (type == 1 || type == 4) {
-			if (earthAttackSpeedDebuffPercent > 0) {
-				return Math.max(0, (int) Math.floor(damage * player.getEarthMagicDamageMultiplier()));
-			}
-			if (waterMaxHitDebuffPercent > 0) {
-				return Math.max(0, (int) Math.floor(damage * player.getWaterMagicDamageMultiplier()));
-			}
-			if (fireDefenseDebuffPercent > 0) {
-				return Math.max(0, (int) Math.floor(damage * player.getFireMagicDamageMultiplier()));
-			}
-		}
-		return damage;
+		return PlayerProjectileDamageBuff.apply(player, damage,
+			type == 1 || type == 4, earthAttackSpeedDebuffPercent,
+			waterMaxHitDebuffPercent, fireDefenseDebuffPercent);
 	}
 
 	private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt) {

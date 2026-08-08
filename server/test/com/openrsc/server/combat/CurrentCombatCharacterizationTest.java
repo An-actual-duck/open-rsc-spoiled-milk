@@ -332,6 +332,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatDemonPitchforkCharacterization::hellBlazePolicies);
 			run(harness, "kolodion_fire_claw_preserves_gate_and_rng_boundary",
 				CurrentCombatKolodionFireClawCharacterization::fireClawPolicies);
+			run(harness, "projectile_elemental_damage_buff_preserves_magic_precedence",
+				CurrentCombatPlayerProjectileDamageBuffCharacterization::projectileBuffPolicies);
 			run(harness, "chain_lightning_preserves_selection_style_and_child_death",
 				CurrentCombatChildDamageCharacterization::chainLightningPolicies);
 			run(harness, "splinter_preserves_selection_magic_credit_and_aggro",
