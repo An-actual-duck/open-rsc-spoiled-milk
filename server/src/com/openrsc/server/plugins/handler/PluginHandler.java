@@ -11,6 +11,10 @@ import com.openrsc.server.Server;
 import com.openrsc.server.event.custom.ShopRestockEvent;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
+import com.openrsc.server.extensions.ExtensionContext;
+import com.openrsc.server.extensions.ExtensionDescriptor;
+import com.openrsc.server.extensions.ExtensionRegistry;
+import com.openrsc.server.extensions.ServerExtension;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.entity.player.Player;
@@ -45,6 +49,9 @@ public final class PluginHandler implements IPluginHandler {
     private final Set<Class<?>> triggerTypes = new HashSet<>();
     private final ClassToInstanceMap<Object> pluginInstances = MutableClassToInstanceMap.create();
     private final PluginJarLoader loader = new PluginJarLoader();
+    private final ExtensionRegistry extensionRegistry = new ExtensionRegistry();
+	/** Scheduled work owned by the declared legacy package, not by World globally. */
+	private final List<ShopRestockEvent> legacyShopRestockEvents = new ArrayList<ShopRestockEvent>();
     private final Injector injector;
     private ThreadPoolExecutor executor;
     private boolean reloading = true;
@@ -109,7 +116,9 @@ public final class PluginHandler implements IPluginHandler {
 
                 for (final Shop shop : shopPlugin.getShops(server.getWorld())) {
                     server.getWorld().getShops().add(shop);
-                    server.getGameEventHandler().add(new ShopRestockEvent(server.getWorld(), shop));
+					final ShopRestockEvent restockEvent = new ShopRestockEvent(server.getWorld(), shop);
+					legacyShopRestockEvents.add(restockEvent);
+                    server.getGameEventHandler().add(restockEvent);
                 }
             }
 
@@ -147,27 +156,52 @@ public final class PluginHandler implements IPluginHandler {
     }
 
     public void load() throws Exception {
-        // TODO: Separate static loading from class based loading.
-        reloading = false;
-
-        defaultHandler = null;
-        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool(threadFactory);
-
-        loader.loadJar();
-        initPlugins();
+		// plugins.jar remains one declared compatibility package until artifact parity
+		// exists; discovery/activation now have a transactional owner boundary.
+		reloading = true;
+		extensionRegistry.reset();
+		extensionRegistry.discover(Collections.singletonList(new LegacyPluginsJarExtension()));
+		extensionRegistry.activate(ExtensionContext.create());
+		reloading = false;
     }
 
     public void unload() throws IOException {
         reloading = true;
+		for (com.openrsc.server.extensions.ExtensionCleanupFailure failure : extensionRegistry.deactivate().getFailures()) {
+			LOGGER.error("Legacy plugin cleanup failed for {} during {}: {}", failure.getExtensionId(),
+				failure.getPhase(), failure.getExceptionType());
+		}
+		extensionRegistry.reset();
+	}
+
+	private void loadLegacyPlugins() throws Exception {
+		defaultHandler = null;
+		executor = (ThreadPoolExecutor) Executors.newCachedThreadPool(threadFactory);
+		loader.loadJar();
+		initPlugins();
+	}
+
+    private void unloadLegacyPlugins() throws IOException {
+		if (executor == null) return;
+		IOException cleanupFailure = null;
+
+		for (ShopRestockEvent restockEvent : new ArrayList<ShopRestockEvent>(legacyShopRestockEvents)) {
+			restockEvent.stop();
+			server.getGameEventHandler().remove(restockEvent);
+		}
+		legacyShopRestockEvents.clear();
 
         getExecutor().shutdown();
         try {
             final boolean terminationResult = getExecutor().awaitTermination(1, TimeUnit.MINUTES);
             if (!terminationResult) {
                 LOGGER.error("PluginHandler thread pool termination failed");
+				cleanupFailure = new IOException("PluginHandler thread pool termination timed out");
             }
         } catch (final InterruptedException e) {
             LOGGER.error("PluginHandler thread pool termination interrupted", e);
+			Thread.currentThread().interrupt();
+			cleanupFailure = new IOException("PluginHandler thread pool termination interrupted", e);
         }
 
         server.getWorld().getQuests().clear();
@@ -180,7 +214,24 @@ public final class PluginHandler implements IPluginHandler {
 
         executor = null;
         defaultHandler = null;
+		if (cleanupFailure != null) throw cleanupFailure;
     }
+
+	/** Compatibility adapter: all existing reflected plugins.jar content is one package. */
+	private final class LegacyPluginsJarExtension implements ServerExtension {
+		private final ExtensionDescriptor descriptor = new ExtensionDescriptor(
+			"legacy-plugins-jar", "plugins.jar compatibility adapter",
+			Collections.<String>emptySet(), new LinkedHashSet<String>(Arrays.asList(
+				"commands", "quests", "minigames", "triggers", "shops", "scheduled-events")));
+		@Override public ExtensionDescriptor descriptor() { return descriptor; }
+		@Override public void activate(final ExtensionContext context) throws Exception {
+			context.onDeactivate("legacy-plugin-runtime", new com.openrsc.server.extensions.ExtensionCleanup() {
+				@Override public void close() throws Exception { unloadLegacyPlugins(); }
+			});
+			loadLegacyPlugins();
+		}
+		@Override public void deactivate() { /* Context-owned cleanup performs the legacy teardown exactly once. */ }
+	}
 
     public boolean handlePlugin(Class<?> triggerType, Player owner, Object[] data, WalkToAction walkToAction) {
         final String simpleName = triggerType.getSimpleName();

@@ -765,7 +765,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "3189d0d6a966254684c696f097b9614a8c67b187abb967195c90b3064a64c108",
+  "inputTreeSha256": "1ca4dae2c245878ac6b475e1dd937a46f40428b96a5b6135714f9e354d4c2812",
   "inputs": [
     {
       "brandSignals": [
@@ -43771,6 +43771,196 @@
     },
     {
       "brandSignals": [],
+      "bytes": 1423,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionCapability",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionCapability.java",
+      "reverseDependencies": [],
+      "sha256": "1e0c46d011f11acb91c9ff677d6b7bf5c50777ca0a627e58dab195fa8ca47bb4"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 194,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionCleanup",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionCleanup.java",
+      "reverseDependencies": [],
+      "sha256": "798efcf74ab03e9ef72f5523c9ace62581074790a79c1501fca6ed9efac51bc1"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 648,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionCleanupFailure",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionCleanupFailure.java",
+      "reverseDependencies": [],
+      "sha256": "cf42b29fcfc3b201b90975de9b7739527aa72021f10a4967080bb0e0a8ad25e3"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 725,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionCleanupReport",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionCleanupReport.java",
+      "reverseDependencies": [],
+      "sha256": "f253783bfeab1987a1d0b6939fd48f904169e68e580e5d7a02120551f9da87a4"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1398,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionContext",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionContext.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/plugins/handler/PluginHandler.java"
+      ],
+      "sha256": "f1beb53429ba839dbb850043326bef5a2194538658192a0cbf0a103892750ba9"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 4271,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionDescriptor",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionDescriptor.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/plugins/handler/PluginHandler.java"
+      ],
+      "sha256": "d2583c1dc4a519f09a696b75f3464045e431c4df3790ecae987b6abe55ddb3ba"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 166,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionHealth",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionHealth.java",
+      "reverseDependencies": [],
+      "sha256": "b2670800c9ce5074ca1c22b7503bef0fdb6fb4342d53a96f2a33d255d38908d0"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 799,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionHealthReceipt",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionHealthReceipt.java",
+      "reverseDependencies": [],
+      "sha256": "100aed7d99cbb7060d3d30f2983d0d1a7c8803a44c1e3d0ee32226ec91699584"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1820,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionOwnershipReceipt",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionOwnershipReceipt.java",
+      "reverseDependencies": [],
+      "sha256": "e567784fa27be42584865a219ba74f74ad92785f78b2ef0af26bc093c03abcaa"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 10157,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionRegistry",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionRegistry.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/plugins/handler/PluginHandler.java"
+      ],
+      "sha256": "4049882a0708027cf30fcd9f2dbe83ac06e57594c2088bb90dd098ae99ac1f54"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 201,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionReloadPolicy",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionReloadPolicy.java",
+      "reverseDependencies": [],
+      "sha256": "25ed1c4b1ab6f7da5a68e9f0e9619bfad12a79e8d6acdecda6a03c2b9253f71d"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1198,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ExtensionReloadResult",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ExtensionReloadResult.java",
+      "reverseDependencies": [],
+      "sha256": "6539afa38e2fc60ba8c278a76694b209cfb0e7ddfbf26a975f8f20511470a3b6"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1789,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.SemanticVersion",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/SemanticVersion.java",
+      "reverseDependencies": [],
+      "sha256": "98ce77c2e949e3fcd4331973b86a5b593e72c679d7cd0fdc39a2ef0734349c3f"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 419,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.extensions.ServerExtension",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/extensions/ServerExtension.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/plugins/handler/PluginHandler.java"
+      ],
+      "sha256": "d0e58b62986dd5315949897b4fc7e4fb439777d9a9ed4d569ddd080f89dca403"
+    },
+    {
+      "brandSignals": [],
       "bytes": 702,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
@@ -47065,6 +47255,7 @@
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+        "server/src/com/openrsc/server/runtime/CombatTraceRecord.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
       "sha256": "923ce371461fff64586c64344d17113505a1f554cc3ed6b6c7716b17812f706b"
@@ -47109,6 +47300,7 @@
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/runtime/CombatDamageObservation.java",
+        "server/src/com/openrsc/server/runtime/CombatTraceRecord.java",
         "server/src/com/openrsc/server/runtime/ResolvedDamageTransaction.java"
       ],
       "sha256": "bd038f481399d6b23155572e7bd36f8704f8fd8748739441a8b91541b25800b0"
@@ -47136,6 +47328,8 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/runtime/CombatDamageObservation.java",
         "server/src/com/openrsc/server/runtime/CombatDamageObserver.java",
+        "server/src/com/openrsc/server/runtime/CombatTraceObserver.java",
+        "server/src/com/openrsc/server/runtime/CombatTraceRecord.java",
         "server/src/com/openrsc/server/runtime/ResolvedDamageTransaction.java"
       ],
       "sha256": "accf8e1236435540303054d26ca9fc26bc5a23247473bc17192eea40477ad0e9"
@@ -66249,7 +66443,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 13945,
+      "bytes": 16724,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -66269,6 +66463,22 @@
         {
           "import": "com.openrsc.server.event.rsc.PluginTickEvent",
           "path": "server/src/com/openrsc/server/event/rsc/PluginTickEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.extensions.ExtensionContext",
+          "path": "server/src/com/openrsc/server/extensions/ExtensionContext.java"
+        },
+        {
+          "import": "com.openrsc.server.extensions.ExtensionDescriptor",
+          "path": "server/src/com/openrsc/server/extensions/ExtensionDescriptor.java"
+        },
+        {
+          "import": "com.openrsc.server.extensions.ExtensionRegistry",
+          "path": "server/src/com/openrsc/server/extensions/ExtensionRegistry.java"
+        },
+        {
+          "import": "com.openrsc.server.extensions.ServerExtension",
+          "path": "server/src/com/openrsc/server/extensions/ServerExtension.java"
         },
         {
           "import": "com.openrsc.server.model.Shop",
@@ -66307,7 +66517,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
-      "sha256": "96d4a8297abcfaddaf303f93928b7387e724dbbc02623114a3fd2ee00813e683"
+      "sha256": "145ac69b517e970cf622a1fff91764ee61f7da74782993e44a60fca5e821b26b"
     },
     {
       "brandSignals": [],
@@ -67725,7 +67935,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2299,
+      "bytes": 2367,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -67747,7 +67957,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/runtime/CombatDamageObservation.java",
       "reverseDependencies": [],
-      "sha256": "e21d571fab10e752de5302e5c597a36b27f762160b01f673879d7cfd6a15ddf7"
+      "sha256": "70f9fb2a258b8cc76d09e94efb4c8a0a6e01c50e5b1e6e15b9d104b0dbe920b5"
     },
     {
       "brandSignals": [],
@@ -67768,6 +67978,76 @@
         "server/src/com/openrsc/server/Server.java"
       ],
       "sha256": "e853f81df742a87df301f858404be9e9088c4d1134debb74daa53c064c57b8cd"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 2369,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.combat.DamageResult",
+          "path": "server/src/com/openrsc/server/model/combat/DamageResult.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.runtime.CombatTraceObserver",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/runtime/CombatTraceObserver.java",
+      "reverseDependencies": [],
+      "sha256": "e345afd1fc8b34dbe540620246d3ab410b6d9d1c4121a9db0bf411337287c7b4"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1413,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.runtime.CombatTraceProfile",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/runtime/CombatTraceProfile.java",
+      "reverseDependencies": [],
+      "sha256": "240b7f70c18d9392c34a1136f5f77009747814590e041627479d17597935d526"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 2410,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.combat.CombatStyle",
+          "path": "server/src/com/openrsc/server/model/combat/CombatStyle.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.DamageRequest",
+          "path": "server/src/com/openrsc/server/model/combat/DamageRequest.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.DamageResult",
+          "path": "server/src/com/openrsc/server/model/combat/DamageResult.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.runtime.CombatTraceRecord",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/runtime/CombatTraceRecord.java",
+      "reverseDependencies": [],
+      "sha256": "2a538951546ac2b63ab53305548109decf2065c0a55bfd593460ea661b208c78"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 958,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.runtime.CombatTraceRedaction",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/runtime/CombatTraceRedaction.java",
+      "reverseDependencies": [],
+      "sha256": "0902c32fbeb0e624fa65c5ba2d1059b279b07765d52668399616200e7cca6457"
     },
     {
       "brandSignals": [],
@@ -71391,7 +71671,7 @@
   "summary": {
     "categoryCounts": {
       "diagnostic-proof": 10,
-      "foundation": 969,
+      "foundation": 987,
       "maintained-compatibility": 91,
       "spoiled-milk-content": 201,
       "target-profile": 412,
@@ -71399,13 +71679,13 @@
       "unresolved": 118
     },
     "configurationInputs": 21,
-    "coreJavaFiles": 1040,
+    "coreJavaFiles": 1058,
     "databasePatchInputs": 27,
     "definitionInputs": 42,
     "directBrandSignalFiles": 275,
     "foundationToSpoiledMilkDependencies": 100,
     "kindCounts": {
-      "ant-core-source": 1040,
+      "ant-core-source": 1058,
       "ant-library": 21,
       "ant-plugin-source": 492,
       "build-definition": 2,
@@ -71433,7 +71713,7 @@
     },
     "pluginJavaFiles": 492,
     "populationInputs": 41,
-    "shippedInputs": 1934
+    "shippedInputs": 1952
   },
   "unresolvedInputs": [
     {
