@@ -780,7 +780,7 @@ slice.
 
 #### R2-1 completion record: bootstrap, configuration, and lifecycle composition
 
-Status: **COMPLETE — 2026-08-08.**
+Status: **COMPLETE — 2026-08-08, strengthened after lifecycle review.**
 
 `ServerConfigurationLoader` now owns the side-effect-free load/parse/typed-
 validation boundary. It returns `ServerConfigurationLoadResult`, retaining the
@@ -854,24 +854,34 @@ Status: **COMPLETE — 2026-08-08.**
 Core now owns immutable extension descriptors (identity, owner receipt,
 dependencies, and capabilities), a narrow `ExtensionContext`, and a
 deterministic `ExtensionRegistry`. Discovery rejects duplicate identities;
-resolution is lexically deterministic and rejects missing dependencies and
-cycles before activation. Activation is transactional: a failed package
-deactivates the successfully activated prefix in reverse order, and normal
+resolution is lexically deterministic and rejects missing dependencies,
+cycles, duplicate capability providers, and incompatible semantic capability
+versions before activation. Activation is transactional: every package receives
+an ownership receipt and can register cleanup as it acquires resources. A
+failed package releases its own acquired resources and deactivates before the
+successfully activated prefix is rolled back in reverse order. Normal
 deactivation/reset is idempotent.
 
 The shipped `plugins.jar` remains unsplit and is registered as the single
 `legacy-plugins-jar` compatibility package. Its existing reflection scan,
 default handler, commands, quests, minigames, triggers, shops, restock events,
-and plugin executor remain inside `PluginHandler`'s legacy adapter. Unload
-therefore follows the existing cleanup path (executor termination, registries,
-quest/minigame/shop collections, and classloader close) while the registry
-owns the activation/deactivation transaction. No content package receives a
-new direct foundation import.
+and plugin executor remain inside `PluginHandler`'s legacy adapter. Legacy
+shop restock events are now retained as package-owned work and are stopped and
+removed on unload before the shop registry is cleared. Unload therefore follows
+the existing cleanup path (executor termination, registries, quest/minigame/
+shop collections, scheduled restocks, and classloader close) while the registry
+owns the activation/deactivation transaction. The compatibility adapter is
+explicitly restart-required; future packages may declare hot reload only after
+their ownership receipts cover all registrations, schedules, and threads.
+Health receipts are bounded and contain no exception messages. No content
+package receives a new direct foundation import.
 
 Compiled headless coverage proves deterministic ordering, duplicate/missing/
-cycle rejection, partial registration rollback, reverse cleanup, and a second
-extension using only the narrow API. Existing default-handler and MyWorld
-layout fixtures preserve compatibility behavior. R2-3 may now introduce
+cycle rejection, versioned capability compatibility/conflicts, partial
+registration rollback including the failing package's resource receipt,
+reverse cleanup, health reporting, restart-required rejection, hot reload, and
+a second extension using only the narrow API. Existing default-handler and
+MyWorld layout fixtures preserve compatibility behavior. R2-3 may now introduce
 declared definition/population packages without splitting `plugins.jar` first.
 
 ### R2-3: Target definitions, population, and world-package boundary

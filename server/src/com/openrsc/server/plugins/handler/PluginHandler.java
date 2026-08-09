@@ -50,6 +50,8 @@ public final class PluginHandler implements IPluginHandler {
     private final ClassToInstanceMap<Object> pluginInstances = MutableClassToInstanceMap.create();
     private final PluginJarLoader loader = new PluginJarLoader();
     private final ExtensionRegistry extensionRegistry = new ExtensionRegistry();
+	/** Scheduled work owned by the declared legacy package, not by World globally. */
+	private final List<ShopRestockEvent> legacyShopRestockEvents = new ArrayList<ShopRestockEvent>();
     private final Injector injector;
     private ThreadPoolExecutor executor;
     private boolean reloading = true;
@@ -114,7 +116,9 @@ public final class PluginHandler implements IPluginHandler {
 
                 for (final Shop shop : shopPlugin.getShops(server.getWorld())) {
                     server.getWorld().getShops().add(shop);
-                    server.getGameEventHandler().add(new ShopRestockEvent(server.getWorld(), shop));
+					final ShopRestockEvent restockEvent = new ShopRestockEvent(server.getWorld(), shop);
+					legacyShopRestockEvents.add(restockEvent);
+                    server.getGameEventHandler().add(restockEvent);
                 }
             }
 
@@ -174,8 +178,14 @@ public final class PluginHandler implements IPluginHandler {
 		initPlugins();
 	}
 
-	private void unloadLegacyPlugins() throws IOException {
+    private void unloadLegacyPlugins() throws IOException {
 		if (executor == null) return;
+
+		for (ShopRestockEvent restockEvent : new ArrayList<ShopRestockEvent>(legacyShopRestockEvents)) {
+			restockEvent.stop();
+			server.getGameEventHandler().remove(restockEvent);
+		}
+		legacyShopRestockEvents.clear();
 
         getExecutor().shutdown();
         try {
