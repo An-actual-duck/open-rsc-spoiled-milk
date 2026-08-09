@@ -895,6 +895,13 @@ configuration/reload, observer construction, and startup/shutdown lifecycle
 coverage. Missing custom content or retained compatibility modes must not
 abort startup without a reviewed distribution contract.
 
+### A01–A11 closeout
+
+Complete. The definitive completion, acceptance, and remaining-work record is
+[`docs/combat/combat-a01-a11-program-closeout.md`](../../combat/combat-a01-a11-program-closeout.md).
+The only A11 work still open is the explicitly separate Server R2-2 integration
+contract; it is not a new combat authority or gameplay refactor.
+
 ## Program Acceptance Gates
 
 Every implementation branch must satisfy all applicable gates:
@@ -945,13 +952,7 @@ Classic-Scape” is evidence, not authorization.
 
 ## Final Recommendation
 
-Approve A01 only. Treat Classic-Scape as a well-documented reference
-implementation and test-design source, not as a patch series to merge. After
-A01 proves current behavior, use the audit's ordered branches to adopt small
-ownership boundaries while current Spoiled Milk remains the behavior authority.
-
-Reassess the sequence after A02 and after each damage-family migration. If the
-executable characterization cost proves higher than the duplicated-code risk,
-stopping with the improved harness and deterministic seams is a valid outcome;
-the project does not need to complete the entire upstream architecture to gain
-its safest benefits.
+The original A01-only recommendation is superseded. A01–A11 is now complete;
+use the closeout record for accepted boundaries and remaining owner decisions.
+Classic-Scape remains a reference and test-design source, never an automatic
+patch series or behavior authority.
