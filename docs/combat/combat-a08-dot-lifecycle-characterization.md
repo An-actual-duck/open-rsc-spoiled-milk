@@ -395,12 +395,21 @@ Login restores one valid record into one poison event. Old `poisoned` and
 `poisoned_max` cache rows are read once, normalized (`maximum >= current`),
 written as the durable record, and removed. Nonnumeric, negative, or otherwise
 invalid legacy state is cleared without preventing login or registering an
-event.
+event. A malformed v1 record, including a cache value of the wrong runtime
+type, is likewise discarded rather than preventing login.
+
+The lifecycle batch additionally proves that a poisoned target can log out and
+relog repeatedly from its own durable record without retaining or duplicating
+the prior scheduler event. Player death removes the v1 record before respawn,
+and authoritative NPC removal clears generic poison before any late callback
+can deal damage. Generic burn remains explicitly outside this bounded generic-
+poison correction and is retained for its later A08.5 migration work.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 121/121 scenarios on the durable-provenance,
-  failed-save-atomicity, server-restart, and source-relog branches.
+- `./server/test_combat` — PASS, 122/122 scenarios on the durable-provenance,
+  failed-save-atomicity, server-restart, source-relog, and target-lifecycle
+  branches.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

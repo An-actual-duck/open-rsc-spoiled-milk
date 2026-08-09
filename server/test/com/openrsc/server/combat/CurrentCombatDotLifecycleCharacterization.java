@@ -683,6 +683,67 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"malformed durable poison data does not create a scheduler event");
 		assertFalse(malformed.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
 			"malformed durable poison data is discarded at the login boundary");
+
+		final Player wrongType = harness.player("dot durable type", 682, 680,
+			player -> player.getCache().put(PoisonDurableRecord.CACHE_KEY,
+				Integer.valueOf(40)));
+		assertTrue(wrongType.loggedIn(),
+			"wrong-type durable poison data cannot abort account login");
+		assertNull(wrongType.getAttribute("poisonEvent", null),
+			"wrong-type durable poison data cannot create an event");
+		assertFalse(wrongType.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
+			"wrong-type durable poison data is discarded at the login boundary");
+	}
+
+	static void poisonTargetLifecycleBatch(final CurrentCombatHarness harness)
+			throws Exception {
+		final Player source = harness.player("life source", 684, 680);
+		final String targetName = "life target";
+		Player target = harness.player(targetName, 685, 680);
+		target.applyPoison(50, 60, source);
+		PoisonEvent prior = target.getAttribute("poisonEvent", null);
+		assertNotNull(prior, "target logout fixture begins poisoned");
+
+		for (int relog = 0; relog < 3; relog++) {
+			final String record = target.getCache().getString(
+				PoisonDurableRecord.CACHE_KEY);
+			final int current = target.getCurrentPoisonPower();
+			harness.logout(target);
+			assertFalse(prior.isRunning(),
+				"target logout stops the prior poison event " + relog);
+			target = harness.player(targetName, 685 + relog, 680,
+				player -> player.getCache().store(PoisonDurableRecord.CACHE_KEY, record));
+			final PoisonEvent restored = target.getAttribute("poisonEvent", null);
+			assertNotNull(restored,
+				"target relog restores poison event " + relog);
+			assertNotSame(prior, restored,
+				"target relog creates a fresh poison event " + relog);
+			assertEquals(current, target.getCurrentPoisonPower(),
+				"target relog preserves durable poison power " + relog);
+			assertEquals(source.getUUID(), poisonOwner(restored),
+				"target relog preserves durable poison source " + relog);
+			assertEquals(1, eventCount(harness, target, "Poison Event"),
+				"target relog owns exactly one poison event " + relog);
+			prior = restored;
+			restored.run();
+		}
+
+		final Npc removed = npcWithHits(harness, 690, 680, 20);
+		removed.setShouldRespawn(false);
+		removed.applyPoison(40, 40, source);
+		final PoisonEvent removedEvent = removed.getAttribute("poisonEvent", null);
+		removed.remove();
+		assertFalse(removedEvent.isRunning(),
+			"NPC removal stops generic poison immediately");
+		assertNull(removed.getAttribute("poisonEvent", null),
+			"NPC removal clears poison event ownership");
+		assertEquals(0, removed.getCurrentPoisonPower(),
+			"NPC removal clears generic poison power");
+		assertEquals(0, eventCount(harness, removed, "Poison Event"),
+			"NPC removal removes poison scheduler entry");
+		removedEvent.run();
+		assertEquals(20, removed.getLevel(Skill.HITS.id()),
+			"late removed-NPC poison callback cannot damage the target");
 	}
 
 	static void durablePoisonSurvivesServerRestart(
@@ -1026,6 +1087,8 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"player death clears poison cache");
 		assertFalse(victim.getCache().hasKey("poisoned_max"),
 			"player death clears poison maximum cache");
+		assertFalse(victim.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
+			"player death clears the durable poison record before respawn");
 		assertFalse(victim.getCache().hasKey("burn_damage"),
 			"player death clears generic burn damage cache");
 		assertFalse(victim.getCache().hasKey("burn_pulses"),
