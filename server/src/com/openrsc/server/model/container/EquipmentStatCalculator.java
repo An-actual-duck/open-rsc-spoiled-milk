@@ -1,6 +1,7 @@
 package com.openrsc.server.model.container;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.WoolRobeDefense;
 
 /** Pure definition-table and arithmetic calculations used by {@link Equipment}. */
 final class EquipmentStatCalculator {
@@ -300,7 +301,7 @@ final class EquipmentStatCalculator {
 		final int resourceCost = godEquipmentResourceCost(itemId);
 		return resourceCost > 0
 			? Math.max(blessedWoolBaseMagicDefense(itemId),
-				(int) Math.ceil(9 * resourceCost * 0.6D))
+				WoolRobeDefense.budget(9, resourceCost))
 			: 0;
 	}
 

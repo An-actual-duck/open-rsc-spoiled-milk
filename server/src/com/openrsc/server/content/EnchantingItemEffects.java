@@ -1284,7 +1284,7 @@ public final class EnchantingItemEffects {
 		if (baselineMagicDefense <= 0 || resourceCost <= 0) {
 			return 0;
 		}
-		final int scaledBudget = (int) Math.ceil(tier * resourceCost * 0.6D);
+		final int scaledBudget = WoolRobeDefense.budget(tier, resourceCost);
 		return Math.max(baselineMagicDefense, scaledBudget);
 	}
 
