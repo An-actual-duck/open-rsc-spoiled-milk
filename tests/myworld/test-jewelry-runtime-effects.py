@@ -237,6 +237,7 @@ CHAOS_AMULET_BONUS_RUNE_WEIGHTS = parse_int_matrix("CHAOS_AMULET_BONUS_RUNE_WEIG
 LAW_BANKING_CHARGES = parse_int_array("LAW_BANKING_CHARGES")
 NATURE_ALCHEMY_AMULET_CHARGES = parse_int_array("NATURE_ALCHEMY_AMULET_CHARGES")
 GATHERING_AMULET_YIELD_BONUSES = parse_int_array("GATHERING_AMULET_YIELD_BONUSES")
+ANGLER_BANGLE_BEST_CATCH_CHANCES = parse_int_array("ANGLER_BANGLE_BEST_CATCH_CHANCES")
 
 
 def tier(item_id: int, line: list[int]) -> int:
@@ -405,6 +406,8 @@ def ensure_formula_source_matches_design() -> None:
             "Nature alchemy amulets should use the requested charge ladder")
     require(GATHERING_AMULET_YIELD_BONUSES == [10, 20, 30, 50, 100],
             "Gathering amulets should use the requested non-linear yield curve")
+    require(ANGLER_BANGLE_BEST_CATCH_CHANCES == [10, 20, 30, 60, 100],
+            "Angler Bangles should directly select the best catch at 10/20/30/60/100%")
 
     require(SOUL_RING_SURVIVAL_CHANCES == [0.10, 0.20, 0.30, 0.50, 0.90],
             "Soul rings should use the requested lifesaving survival ladder")
@@ -725,7 +728,8 @@ def ensure_runtime_paths_are_wired() -> None:
             "bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), rewardQuantity))",
         ), "mining"),
         (fishing, (
-            "FishingBestCatchWeights.applyBonus(weights, tiers,",
+            "FishingBestCatchSelector.shouldSelectBestCatch(bestCatchChance, DataConversions.random(1, 100))",
+            "FishingBestCatchSelector.selectHighestTierIndex(tiers,",
             "getAnglerBangleBestCatchChanceBonusPercent()",
             "awardFishingCatch(player, object, fish, true);",
         ), "fishing"),

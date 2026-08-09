@@ -2,7 +2,7 @@ package com.openrsc.server.plugins.authentic.skills.fishing;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.content.FishingBestCatchWeights;
+import com.openrsc.server.content.FishingBestCatchSelector;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
@@ -383,8 +383,13 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			weights[index] = levelWeight * tierWeight;
 			tiers[index] = fish.tier;
 		}
-		weights = FishingBestCatchWeights.applyBonus(weights, tiers,
-			player.getCarriedItems().getEquipment().getAnglerBangleBestCatchChanceBonusPercent());
+		final int bestCatchChance = player.getCarriedItems().getEquipment()
+			.getAnglerBangleBestCatchChanceBonusPercent();
+		if (FishingBestCatchSelector.shouldSelectBestCatch(bestCatchChance, DataConversions.random(1, 100))) {
+			final int bestCatchCount = FishingBestCatchSelector.countHighestTierEntries(tiers);
+			return eligibleFish.get(FishingBestCatchSelector.selectHighestTierIndex(tiers,
+				DataConversions.random(0, bestCatchCount - 1)));
+		}
 		for (int weight : weights) {
 			totalWeight += weight;
 		}

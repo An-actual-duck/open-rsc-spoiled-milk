@@ -485,6 +485,7 @@ public final class EnchantingItemEffects {
 	private static final int[] LAW_BANKING_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] NATURE_ALCHEMY_AMULET_CHARGES = {100, 200, 300, 500, 1000};
 	private static final int[] GATHERING_AMULET_YIELD_BONUSES = {10, 20, 30, 50, 100};
+	private static final int[] ANGLER_BANGLE_BEST_CATCH_CHANCES = {10, 20, 30, 60, 100};
 	private static final int GATHERING_AMULET_YIELD_POINTS_PER_ITEM = 10000;
 	private static final int GATHERING_AMULET_YIELD_POINTS_PER_PERCENT = 100;
 	private static final String GATHERING_AMULET_YIELD_CACHE_PREFIX = "gathering_amulet_yield_bonus_";
@@ -1531,10 +1532,10 @@ public final class EnchantingItemEffects {
 		return tier == -1 ? 0 : GATHERING_AMULET_YIELD_BONUSES[tier - 1];
 	}
 
-	/** Angler's Bangels increase weighted selection of the best available fish. */
+	/** Angler's Bangels directly select the best eligible fish on a successful roll. */
 	public static int getAnglerBangleBestCatchChanceBonusPercent(final int itemId) {
 		final int tier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, WATER_ALTAR);
-		return tier == -1 ? 0 : GATHERING_AMULET_YIELD_BONUSES[tier - 1];
+		return tier == -1 ? 0 : ANGLER_BANGLE_BEST_CATCH_CHANCES[tier - 1];
 	}
 
 	public static int consumeGatheringAmuletBonusItems(final Player player, final int skillId, final int itemId,

@@ -127,8 +127,9 @@ Bangel:
 
 - Angler's Bangle improves selection of the highest-tier eligible catch at a
   multi-fish My World fishing spot.
-- Tiers 1–5 multiply the best catch's existing roll weight by
-  `1.1x`, `1.2x`, `1.3x`, `1.5x`, and `2.0x` respectively.
+- Tiers 1–5 have a direct `10%`, `20%`, `30%`, `60%`, and `100%` chance to
+  select the best eligible catch. Dragonstone therefore guarantees the best
+  eligible fish.
 - It does not add catch quantity or Fishing XP, and a spot with only one
   eligible tier has no alternative outcome to favor.
 

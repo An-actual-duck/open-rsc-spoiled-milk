@@ -351,7 +351,8 @@ def ensure_source_mappings_exist() -> None:
         'addLawAmuletLine(1709, tiers, lawAmuletPrices, gemMasks);',
         '"Teleport,Check"',
         'addGatheringAmuletLine(1593, tiers, "Woodcutter\'s", "Boosts woodcutting log yield by %d%%.", amuletPrices, gemMasks);',
-        'addGatheringAmuletLine(1598, tiers, "Angler\'s", "Increases best catch chance by %d%%.", amuletPrices, gemMasks);',
+        'addExplicitGatheringAmuletLine(1598, tiers, "Angler\'s", "Has a %d%% chance to catch the best eligible fish.",',
+        'new int[] {10, 20, 30, 60, 100}, amuletPrices, gemMasks);',
         'addNecklaceLine(1613, tiers, "Evasion", "Adds +%d ranged defense.", 3, necklacePrices, gemMasks);',
         'addNecklaceLine(1623, tiers, "Equilibrium", "Adds +%d melee, ranged, and magic defense.", 2, necklacePrices, gemMasks);',
         'addNecklaceLine(1628, tiers, "Bulwark", "Adds +%d melee defense.", 3, necklacePrices, gemMasks);',
@@ -446,6 +447,9 @@ def ensure_client_jewelry_coverage() -> None:
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addGatheringAmuletLine\((\d+),\s*tiers,", client_text):
+        start = int(match.group(1))
+        client_ids.update(range(start, start + 5))
+    for match in re.finditer(r"addExplicitGatheringAmuletLine\((\d+),\s*tiers,", client_text):
         start = int(match.group(1))
         client_ids.update(range(start, start + 5))
     for match in re.finditer(r"addAlchemyAmuletLine\((\d+),\s*tiers,", client_text):

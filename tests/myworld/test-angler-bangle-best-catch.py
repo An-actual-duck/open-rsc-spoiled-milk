@@ -1,35 +1,46 @@
 #!/usr/bin/env python3
-"""Verify the Angler's Bangle boosts only highest-tier fishing outcomes."""
+"""Verify the Angler's Bangle directly selects the best fishing outcome."""
 from pathlib import Path
 import subprocess
 import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-WEIGHTS = ROOT / "server/src/com/openrsc/server/content/FishingBestCatchWeights.java"
+SELECTOR = ROOT / "server/src/com/openrsc/server/content/FishingBestCatchSelector.java"
 
 FIXTURE = """
 package com.openrsc.server.content;
 
-import java.util.Arrays;
+public final class FishingBestCatchSelectorFixture {
+    private static void expect(boolean actual, boolean expected, String label) {
+        if (actual != expected) {
+            throw new AssertionError(label + ": expected " + expected + ", got " + actual);
+        }
+    }
 
-public final class FishingBestCatchWeightsFixture {
-    private static void expect(int[] actual, int[] expected, String label) {
-        if (!Arrays.equals(actual, expected)) {
-            throw new AssertionError(label + ": expected " + Arrays.toString(expected)
-                + ", got " + Arrays.toString(actual));
+    private static void expect(int actual, int expected, String label) {
+        if (actual != expected) {
+            throw new AssertionError(label + ": expected " + expected + ", got " + actual);
         }
     }
 
     public static void main(String[] args) {
-        expect(FishingBestCatchWeights.applyBonus(new int[] {100, 100}, new int[] {1, 2}, 10),
-            new int[] {100, 110}, "tier-one best-catch boost");
-        expect(FishingBestCatchWeights.applyBonus(new int[] {100, 100}, new int[] {1, 2}, 100),
-            new int[] {100, 200}, "dragonstone doubles best-catch weight");
-        expect(FishingBestCatchWeights.applyBonus(new int[] {10, 20, 20}, new int[] {1, 2, 2}, 100),
-            new int[] {10, 40, 40}, "tied best tier is boosted evenly");
-        expect(FishingBestCatchWeights.applyBonus(new int[] {10, 20}, new int[] {1, 2}, 0),
-            new int[] {10, 20}, "no bangle leaves weights unchanged");
+        expect(FishingBestCatchSelector.shouldSelectBestCatch(10, 10), true,
+            "tier one includes its upper boundary");
+        expect(FishingBestCatchSelector.shouldSelectBestCatch(10, 11), false,
+            "tier one leaves a failed roll to normal fishing");
+        expect(FishingBestCatchSelector.shouldSelectBestCatch(60, 60), true,
+            "diamond tier direct chance uses sixty percent");
+        expect(FishingBestCatchSelector.shouldSelectBestCatch(60, 61), false,
+            "diamond tier direct chance is bounded");
+        expect(FishingBestCatchSelector.shouldSelectBestCatch(100, 100), true,
+            "dragonstone guarantees the best catch");
+        expect(FishingBestCatchSelector.countHighestTierEntries(new int[] {1, 3, 3, 2}), 2,
+            "all tied highest-tier fish are eligible for direct selection");
+        expect(FishingBestCatchSelector.selectHighestTierIndex(new int[] {1, 3, 3, 2}, 0), 1,
+            "first tied highest-tier fish can be selected");
+        expect(FishingBestCatchSelector.selectHighestTierIndex(new int[] {1, 3, 3, 2}, 1), 2,
+            "second tied highest-tier fish can be selected");
     }
 }
 """
@@ -38,12 +49,12 @@ public final class FishingBestCatchWeightsFixture {
 def main() -> None:
     with tempfile.TemporaryDirectory() as directory:
         temp = Path(directory)
-        fixture = temp / "FishingBestCatchWeightsFixture.java"
+        fixture = temp / "FishingBestCatchSelectorFixture.java"
         fixture.write_text(FIXTURE, encoding="utf-8")
-        subprocess.run(["javac", "-d", str(temp), str(WEIGHTS), str(fixture)], check=True, cwd=ROOT)
-        subprocess.run(["java", "-cp", str(temp), "com.openrsc.server.content.FishingBestCatchWeightsFixture"],
+        subprocess.run(["javac", "-d", str(temp), str(SELECTOR), str(fixture)], check=True, cwd=ROOT)
+        subprocess.run(["java", "-cp", str(temp), "com.openrsc.server.content.FishingBestCatchSelectorFixture"],
                        check=True, cwd=ROOT)
-    print("PASS: Angler's Bangle boosts only best-tier fish selection weights")
+    print("PASS: Angler's Bangle directly selects the best-tier fish")
 
 
 if __name__ == "__main__":
