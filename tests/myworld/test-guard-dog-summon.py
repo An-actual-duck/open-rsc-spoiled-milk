@@ -17,6 +17,7 @@ THROWING = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/Throw
 CANNON = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/FireCannonEvent.java"
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 DEATH_ROBE_SPLASH = ROOT / "server/src/com/openrsc/server/model/combat/DeathRobeOverkillSplash.java"
+CHAOS_CHAIN_LIGHTNING = ROOT / "server/src/com/openrsc/server/model/combat/ChaosChainLightningProc.java"
 SPELLS = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
@@ -70,6 +71,7 @@ def main() -> int:
     cannon = CANNON.read_text(encoding="utf-8")
     player = PLAYER.read_text(encoding="utf-8")
     death_robe_splash = DEATH_ROBE_SPLASH.read_text(encoding="utf-8")
+    chaos_chain_lightning = CHAOS_CHAIN_LIGHTNING.read_text(encoding="utf-8")
     spells = SPELLS.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
     guide = GUIDE.read_text(encoding="utf-8")
@@ -176,9 +178,6 @@ def main() -> int:
 
     for source, signature in (
         (pvm, "private int applyScytheNpcCleave"),
-        (pvm, "private void applyChaosAmuletChainLightning"),
-        (combat, "private void applyChaosAmuletChainLightning"),
-        (projectile, "private void applyChaosAmuletChainLightning"),
         (projectile, "private void applySplinter"),
         (projectile, "private void applyBloodRobeSplash"),
         (throwing, "private List<Mob> selectThrowingTargets"),
@@ -188,6 +187,7 @@ def main() -> int:
     ):
         require_guard(source, signature)
     require_guard(death_robe_splash, "public static void apply")
+    require_guard(chaos_chain_lightning, "public static void tryApply")
 
     god_spell = method_body(spells, "private void applyGodSpellAreaEffects")
     require(

@@ -344,7 +344,7 @@ public enum SecondaryEffectDescriptor {
 		ParticipantGate.PLAYER_SOURCE_TO_NPC_AREA, ZeroDamageRule.POSITIVE_ROLLED_DAMAGE,
 		RandomTiming.PER_HOP_CHANCE_AND_TARGET, StateOwner.SOURCE_EQUIPMENT,
 		RecursionPolicy.ROOT_ATTACK_ONLY, PresentationPolicy.PROJECTILE,
-		"central applyChaosAmuletChainLightning methods", "chain lightning characterization"),
+		"ChaosChainLightningProc with event-owned child settlement", "A07.5T compiled chain payload/presentation fixture"),
 	SCYTHE_CLEAVE("semantic.scythe-cleave",
 		phases(Phase.AFTER_ROOT_ATTACK), styles(Style.MELEE),
 		ParticipantGate.PLAYER_SOURCE_TO_NPC_AREA, ZeroDamageRule.SETTLED_ZERO_ALLOWED,

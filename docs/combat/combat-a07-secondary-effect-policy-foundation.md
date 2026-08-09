@@ -140,8 +140,10 @@ a separately approved behavior change, not part of this refactor.
 
 ### A07.5 — one duplicated proc family at a time
 
-Status: the first fourteen bounded families are complete on published main;
-later families remain separately characterized follow-ups.
+Status: complete. The bounded shared families are implemented; the remaining
+descriptors are intentionally retained with their specialized owners in the
+completion inventory
+[`combat-a07-completion-inventory.md`](combat-a07-completion-inventory.md).
 `OgreStaggeringBlowProc` centralizes only the identical complete-set gate,
 single draw, and one-attack debuff application. The contract and excluded
 nearby families are recorded in
@@ -202,7 +204,12 @@ Its separate contract is recorded in
 `PlayerMeleeDamageBuff` centralizes only the shared nonpositive, floor/clamp,
 and Bear-Maul composition used by primary and Scythe melee paths. Its contract
 is recorded in [`combat-a07-player-melee-damage-buff.md`](combat-a07-player-melee-damage-buff.md).
-A07.5 remains open for separately characterized one-family branches.
+`KolodionFireClawProc`, `PlayerProjectileDamageBuff`,
+`DeathRobeOverkillSplash`, and `ChaosChainLightningProc` complete the remaining
+behavior-preserving shared boundaries. Chain Lightning retains owner callbacks
+for style, contribution, and death. A07.5 is closed; its retained owner
+boundaries are listed in
+[`combat-a07-completion-inventory.md`](combat-a07-completion-inventory.md).
 
 Move only an effect whose melee/projectile policies are proven identical into
 a shared executor. Preserve RNG call count/order, zero-hit eligibility,
