@@ -86,22 +86,12 @@ public class Npc extends Mob {
 	private NPCLoc loc;
 
 	/**
-	 * Holds players that did damage with combat
+	 * Factual player-owned damage for this NPC lifetime. Settlement keeps its
+	 * distinct legacy roles (final hit, loot, style XP, and summon XP) rather
+	 * than collapsing them into one generic "owner".
 	 */
-	private Map<UUID, Pair<Integer, Long>> combatDamagers = new HashMap<UUID, Pair<Integer,Long>>();
-	/**
-	 * Holds players that did damage with mage
-	 */
-	private Map<UUID, Pair<Integer, Long>> mageDamagers = new HashMap<UUID, Pair<Integer,Long>>();
-	/**
-	 * Holds players that did damage with range
-	 */
-	private Map<UUID, Pair<Integer, Long>> rangeDamagers = new HashMap<UUID, Pair<Integer,Long>>();
-	/**
-	 * Holds owner credit for summon damage. This counts for loot and kill credit,
-	 * but is intentionally excluded from combat-style XP distribution.
-	 */
-	private Map<UUID, Pair<Integer, Long>> summonDamagers = new HashMap<UUID, Pair<Integer,Long>>();
+	private final NpcContributionLedger contributionLedger =
+		new NpcContributionLedger();
 	private Map<Long, PendingSummoningExperience> pendingSummoningExperience = new HashMap<Long, PendingSummoningExperience>();
 
 
@@ -228,11 +218,7 @@ public class Npc extends Mob {
 	 * @param damage current attack's damage
 	 */
 	public void addCombatDamage(final Player mob, final int damage) {
-		if (combatDamagers.containsKey(mob.getUUID())) {
-			combatDamagers.put(mob.getUUID(), Pair.of(combatDamagers.get(mob.getUUID()).getLeft() + damage, mob.getUsernameHash()));
-		} else {
-			combatDamagers.put(mob.getUUID(), Pair.of(damage, mob.getUsernameHash()));
-		}
+		addContribution(NpcContributionRole.MELEE, mob, damage);
 	}
 
 	/**
@@ -242,11 +228,7 @@ public class Npc extends Mob {
 	 * @param damage current attack's damage
 	 */
 	public void addMageDamage(final Player mob, final int damage) {
-		if (mageDamagers.containsKey(mob.getUUID())) {
-			mageDamagers.put(mob.getUUID(), Pair.of(mageDamagers.get(mob.getUUID()).getLeft() + damage, mob.getUsernameHash()));
-		} else {
-			mageDamagers.put(mob.getUUID(), Pair.of(damage, mob.getUsernameHash()));
-		}
+		addContribution(NpcContributionRole.MAGIC, mob, damage);
 	}
 
 	/**
@@ -256,19 +238,17 @@ public class Npc extends Mob {
 	 * @param damage current attack's damage
 	 */
 	public void addRangeDamage(final Player mob, final int damage) {
-		if (rangeDamagers.containsKey(mob.getUUID())) {
-			rangeDamagers.put(mob.getUUID(), Pair.of(rangeDamagers.get(mob.getUUID()).getLeft() + damage, mob.getUsernameHash()));
-		} else {
-			rangeDamagers.put(mob.getUUID(), Pair.of(damage, mob.getUsernameHash()));
-		}
+		addContribution(NpcContributionRole.RANGED, mob, damage);
 	}
 
 	public void addSummonDamage(final Player mob, final int damage) {
-		if (summonDamagers.containsKey(mob.getUUID())) {
-			summonDamagers.put(mob.getUUID(), Pair.of(summonDamagers.get(mob.getUUID()).getLeft() + damage, mob.getUsernameHash()));
-		} else {
-			summonDamagers.put(mob.getUUID(), Pair.of(damage, mob.getUsernameHash()));
-		}
+		addContribution(NpcContributionRole.SUMMON, mob, damage);
+	}
+
+	private void addContribution(final NpcContributionRole role,
+			final Player player, final int damage) {
+		contributionLedger.record(role, player.getUUID(),
+			player.getUsernameHash(), damage);
 	}
 
 	public void displayNpcTeleportBubble(final int x, final int y) {
@@ -290,20 +270,16 @@ public class Npc extends Mob {
 	 * @return Pair
 	 */
 	private Pair<Integer, Long> getCombatDamageInfoBy(final UUID ID) {
-		if (!combatDamagers.containsKey(ID)) {
-			return Pair.of(0, 0L);
-		}
-		int dmgDone = combatDamagers.get(ID).getLeft();
-		return Pair.of(Math.min(dmgDone, this.getDef().getHits()), combatDamagers.get(ID).getRight());
+		return getContributionDamageInfo(NpcContributionRole.MELEE, ID);
 	}
 
 	/**
-	 * Iterates over combatDamagers map and returns the keys
+	 * Returns factual melee contributor identities.
 	 *
 	 * @return ArrayList<String>
 	 */
 	private ArrayList<UUID> getCombatDamagers() {
-		return new ArrayList<UUID>(combatDamagers.keySet());
+		return contributionLedger.contributorIds(NpcContributionRole.MELEE);
 	}
 
 	public boolean hasDamageFrom(final Player player) {
@@ -336,20 +312,16 @@ public class Npc extends Mob {
 	 * @return Pair
 	 */
 	private Pair<Integer, Long> getMageDamageInfoBy(final UUID ID) {
-		if (!mageDamagers.containsKey(ID)) {
-			return Pair.of(0, 0L);
-		}
-		int dmgDone = mageDamagers.get(ID).getLeft();
-		return Pair.of(Math.min(dmgDone, this.getDef().getHits()), mageDamagers.get(ID).getRight());
+		return getContributionDamageInfo(NpcContributionRole.MAGIC, ID);
 	}
 
 	/**
-	 * Iterates over mageDamagers map and returns the keys
+	 * Returns factual Magic contributor identities.
 	 *
 	 * @return ArrayList<String>
 	 */
 	private ArrayList<UUID> getMageDamagers() {
-		return new ArrayList<UUID>(mageDamagers.keySet());
+		return contributionLedger.contributorIds(NpcContributionRole.MAGIC);
 	}
 
 	/**
@@ -359,32 +331,32 @@ public class Npc extends Mob {
 	 * @return Pair
 	 */
 	private Pair<Integer, Long> getRangeDamageInfoBy(final UUID ID) {
-		if (!rangeDamagers.containsKey(ID)) {
-			return Pair.of(0, 0L);
-		}
-		int dmgDone = rangeDamagers.get(ID).getLeft();
-		return Pair.of(Math.min(dmgDone, this.getDef().getHits()), rangeDamagers.get(ID).getRight());
+		return getContributionDamageInfo(NpcContributionRole.RANGED, ID);
 	}
 
 	/**
-	 * Iterates over rangeDamagers map and returns the keys
+	 * Returns factual ranged contributor identities.
 	 *
 	 * @return ArrayList<String>
 	 */
 	private ArrayList<UUID> getRangeDamagers() {
-		return new ArrayList<UUID>(rangeDamagers.keySet());
+		return contributionLedger.contributorIds(NpcContributionRole.RANGED);
 	}
 
 	private Pair<Integer, Long> getSummonDamageInfoBy(final UUID ID) {
-		if (!summonDamagers.containsKey(ID)) {
-			return Pair.of(0, 0L);
-		}
-		int dmgDone = summonDamagers.get(ID).getLeft();
-		return Pair.of(Math.min(dmgDone, this.getDef().getHits()), summonDamagers.get(ID).getRight());
+		return getContributionDamageInfo(NpcContributionRole.SUMMON, ID);
 	}
 
 	private ArrayList<UUID> getSummonDamagers() {
-		return new ArrayList<UUID>(summonDamagers.keySet());
+		return contributionLedger.contributorIds(NpcContributionRole.SUMMON);
+	}
+
+	private Pair<Integer, Long> getContributionDamageInfo(
+			final NpcContributionRole role, final UUID id) {
+		final NpcContributionLedger.Contribution contribution =
+			contributionLedger.get(role, id);
+		return Pair.of(Math.min(contribution.getDamage(),
+			this.getDef().getHits()), contribution.getUsernameHash());
 	}
 
 	private int getTotalDamageBy(final UUID id) {
@@ -508,12 +480,14 @@ public class Npc extends Mob {
 		return Pair.of(topDamageUuid, topDamageHash);
 	}
 
-	private Player selectPreferredThreat(final Player currentBest, final Map<UUID, Pair<Integer, Long>> damagers, final boolean requireMeleeRange) {
+	private Player selectPreferredThreat(final Player currentBest,
+			final NpcContributionRole role,
+			final boolean requireMeleeRange) {
 		Player bestPlayer = currentBest != null
 			&& sharesSpatialDomain(currentBest) ? currentBest : null;
 		int bestDamage = bestPlayer == null ? -1 : getTotalDamageBy(bestPlayer.getUUID());
-		for (Map.Entry<UUID, Pair<Integer, Long>> entry : damagers.entrySet()) {
-			Player player = getWorld().getPlayerByUUID(entry.getKey());
+		for (UUID id : contributionLedger.contributorIds(role)) {
+			Player player = getWorld().getPlayerByUUID(id);
 			if (player == null || player.isRemoved()
 				|| player.getSkills().getLevel(Skill.HITS.id()) <= 0
 				|| !sharesSpatialDomain(player)) {
@@ -528,7 +502,7 @@ public class Npc extends Mob {
 
 			int playerCombatLevel = player.getCombatLevel();
 			int bestCombatLevel = bestPlayer == null ? Integer.MAX_VALUE : bestPlayer.getCombatLevel();
-			int damage = Math.min(getTotalDamageBy(entry.getKey()), getDef().getHits());
+			int damage = Math.min(getTotalDamageBy(id), getDef().getHits());
 			if (bestPlayer == null
 				|| playerCombatLevel < bestCombatLevel
 				|| (playerCombatLevel == bestCombatLevel && damage > bestDamage)) {
@@ -541,10 +515,14 @@ public class Npc extends Mob {
 
 	private Player getLowestCombatLevelThreat(final boolean requireMeleeRange) {
 		Player bestPlayer = null;
-		bestPlayer = selectPreferredThreat(bestPlayer, combatDamagers, requireMeleeRange);
-		bestPlayer = selectPreferredThreat(bestPlayer, rangeDamagers, requireMeleeRange);
-		bestPlayer = selectPreferredThreat(bestPlayer, mageDamagers, requireMeleeRange);
-		return selectPreferredThreat(bestPlayer, summonDamagers, requireMeleeRange);
+		bestPlayer = selectPreferredThreat(bestPlayer, NpcContributionRole.MELEE,
+			requireMeleeRange);
+		bestPlayer = selectPreferredThreat(bestPlayer, NpcContributionRole.RANGED,
+			requireMeleeRange);
+		bestPlayer = selectPreferredThreat(bestPlayer, NpcContributionRole.MAGIC,
+			requireMeleeRange);
+		return selectPreferredThreat(bestPlayer, NpcContributionRole.SUMMON,
+			requireMeleeRange);
 	}
 
 	public Player getPreferredThreatTarget() {
@@ -1597,10 +1575,7 @@ public class Npc extends Mob {
 						tryResyncHitEvent();
 
 						running = false;
-						mageDamagers.clear();
-						rangeDamagers.clear();
-						combatDamagers.clear();
-						summonDamagers.clear();
+						contributionLedger.clear();
 						if (deathContext != null) {
 							n.completeDeathLifecycleRespawn(deathContext);
 						}

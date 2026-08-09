@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import sys
 from pathlib import Path
 
@@ -64,11 +65,12 @@ def main() -> None:
     require(npc, "public boolean hasDamageBy(final Player player)", "damage participation guard")
     require(npc, "player.incExp(Skill.SUMMONING.id(), pending.experience, true);", "pending XP payout")
     require(npc, "awardPendingSummoningExperience();", "pending XP payout on NPC death")
-    require(
+    if re.search(
+        r"Summoning\.recordCombatSummonEngagement\(\s*"
+        r"getPlayer\(\),\s*\(Npc\) getMob\(\)\s*\);",
         attack_handler,
-        "Summoning.recordCombatSummonEngagement(player, (Npc) target);",
-        "combat initiation hook",
-    )
+    ) is None:
+        fail("Missing combat initiation hook")
 
     print("PASS: summoning experience rewards are wired")
 

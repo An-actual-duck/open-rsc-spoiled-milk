@@ -858,10 +858,16 @@ generic burn or infer policy from either Elder implementation.
 
 ### A09 — contribution and kill-credit roles
 
-Create one ledger and explicit final/primary/drop/XP/summon roles. Preserve
-current damage-share XP, Hits focus, personal loot, contribution scaling,
-hidden drops, pending summon XP, tie policy, offline eligibility, and cleanup.
-Do not adopt Classic's XP formula or tie policy by default.
+Implemented: `NpcContributionLedger` now owns typed factual melee, ranged,
+Magic, and summon contribution per NPC lifetime. It preserves current
+damage-share XP, Hits focus, personal loot, contribution scaling, hidden drops,
+pending summon XP, tie behavior, offline eligibility, and respawn cleanup.
+The causal plugin source, top-damage reward owner, drop recipients, style XP,
+and summon XP remain explicit separate roles; see
+`docs/combat/combat-a09-contribution-ledger.md`. Do not adopt Classic's XP
+formula or tie policy by default. The documented tie, plugin-contract, pending
+summon despawn, and global-cap questions require owner decisions before a
+later A10/A11 change.
 
 ### A10 — NPC profile/state modernization
 

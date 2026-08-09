@@ -46,11 +46,12 @@ def main() -> None:
     require(client, "projectile.id == PROJECTILE_TYPES.SUMMON_BAT_VAMPIRISM.id()", "bat vampirism projectile size guard")
     require(client, "return SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE;", "bat vampirism projectile size")
 
-    require(npc, "private Map<UUID, Pair<Integer, Long>> summonDamagers", "summon damage bucket")
+    require(npc, "private final NpcContributionLedger contributionLedger", "typed summon damage ledger")
+    require(npc, "NpcContributionRole.SUMMON", "typed summon damage role")
     require(npc, "public void addSummonDamage(final Player mob, final int damage)", "summon damage recorder")
     require(npc, "getSummonDamageInfoBy(id).getLeft()", "summon damage participates in total damage")
     require(npc, "addPersonalLootRecipients(recipients, getSummonDamagers());", "summon damage gets loot participation")
-    require(npc, "return selectPreferredThreat(bestPlayer, summonDamagers, requireMeleeRange);", "summon damage contributes to threat")
+    require(npc, "return selectPreferredThreat(bestPlayer, NpcContributionRole.SUMMON,", "summon damage contributes to threat")
     xp_distribution = npc[npc.index("private ArrayList<UUID> getAllDamageDealerIds()"):npc.index("private void addMissingDamageDealerIds")]
     if "getSummonDamagers()" in xp_distribution:
         fail("summon damage should not be included in combat XP distribution")
