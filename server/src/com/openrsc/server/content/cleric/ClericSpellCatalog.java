@@ -148,7 +148,7 @@ public final class ClericSpellCatalog {
 		}
 		int[] thresholds = definition.getHolyPowerThresholds();
 		if (thresholds[thresholds.length - 1] > MAX_LAUNCH_HOLY_POWER) {
-			throw new IllegalStateException("Cleric Holy Power threshold exceeds the launch staff scale");
+			throw new IllegalStateException("Cleric Holy Power threshold exceeds the launch progression scale");
 		}
 		ClericSigilCost expectedCost = ClericSigilCost.forLaunchTier(definition.getSpellTier());
 		if (!expectedCost.equals(definition.getPrimarySigilCost())) {

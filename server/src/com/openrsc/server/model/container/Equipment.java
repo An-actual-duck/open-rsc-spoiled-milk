@@ -1651,9 +1651,10 @@ public class Equipment {
 	}
 
 	/**
-	 * Returns the strongest equipped Cleric staff's Holy Power. Holy Power is
-	 * derived rather than persisted, and is bounded even if legacy wield state
-	 * contains more than one main-hand item.
+	 * Returns current Worship plus the strongest equipped Cleric staff's Holy
+	 * Power. Worship remains {@code Skill.PRAYER} internally for save/protocol
+	 * compatibility. The result is derived rather than persisted, and staff
+	 * selection remains bounded even if legacy wield state has multiple hands.
 	 */
 	public int getHolyPower() {
 		int strongest = 0;
@@ -1672,7 +1673,8 @@ public class Equipment {
 				}
 			}
 		}
-		return strongest;
+		return EquipmentStatCalculator.combinedHolyPower(
+			player.getSkills().getLevel(Skill.PRAYER.id()), strongest);
 	}
 
 	private int getHolyPower(final Item item) {

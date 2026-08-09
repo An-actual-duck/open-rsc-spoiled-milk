@@ -45,6 +45,15 @@ final class EquipmentStatCalculator {
 		}
 	}
 
+	/**
+	 * Holy Power follows the same current-skill-plus-equipment model as the
+	 * other combat power values. Worship is internally retained as Prayer for
+	 * skill/protocol compatibility.
+	 */
+	static int combinedHolyPower(final int worshipLevel, final int staffHolyPower) {
+		return Math.max(0, worshipLevel) + Math.max(0, staffHolyPower);
+	}
+
 	private static int blessedStaffHolyPower(final int tierIndex) {
 		return tierIndex >= 0 && tierIndex < BLESSED_STAFF_HOLY_POWER.length
 			? BLESSED_STAFF_HOLY_POWER[tierIndex] : 0;

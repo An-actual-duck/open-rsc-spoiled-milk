@@ -110,6 +110,8 @@ def verify_source_boundaries() -> None:
         "if (item.isWielded())",
         "Math.max(strongest, getHolyPower(item))",
         "EquipmentStatCalculator.holyPowerForItem(item.getCatalogId())",
+		"player.getSkills().getLevel(Skill.PRAYER.id())",
+		"EquipmentStatCalculator.combinedHolyPower(",
     ):
         require(snippet in equipment, f"equipment-mode Holy Power boundary missing: {snippet}")
     require(", ".join(str(value) for value in BLESSED_HOLY) in stat_calculator,
@@ -239,6 +241,11 @@ public final class ClericHolyPowerEquipmentFixture {
 		check(EquipmentStatCalculator.holyPowerForItem(0) == 0, "empty ID gained Holy Power");
 		check(EquipmentStatCalculator.holyPowerForItem(2227) == 0, "lower range boundary leaked");
 		check(EquipmentStatCalculator.holyPowerForItem(2238) == 0, "upper range boundary leaked");
+		check(EquipmentStatCalculator.combinedHolyPower(0, 0) == 0, "zero Worship/gear Holy Power drift");
+		check(EquipmentStatCalculator.combinedHolyPower(64, 0) == 64, "Worship should reach the top launch threshold without a staff");
+		check(EquipmentStatCalculator.combinedHolyPower(30, 12) == 42, "Worship and staff Holy Power should add");
+		check(EquipmentStatCalculator.combinedHolyPower(8, 64) == 72, "current Worship should add to god-staff Holy Power");
+		check(EquipmentStatCalculator.combinedHolyPower(-5, -1) == 0, "drained/invalid values must not create negative Holy Power");
 
 		EquipmentStatsStruct stats = stats();
 		checkExtended("custom", new PayloadCustomGenerator(), stats);
