@@ -425,14 +425,13 @@ public class ServerConfiguration {
 	 */
 	private final YMLReader serverProps = new YMLReader();
 
-	void initConfig(String defaultFile) throws IOException {
+	public void initConfig(String defaultFile) throws IOException {
 		// Try to load the connections.conf
 		try {
 			serverProps.loadFromYML("connections.conf");
 			LOGGER.info("Loaded connections.conf");
 		} catch (Exception e) {
-			LOGGER.info("Properties file connections.conf not found, terminating server.");
-			SystemUtil.exit(1);
+			throw new IOException("Properties file connections.conf not found", e);
 		}
 
 		configFile = ServerConfiguration.loadServerProps(serverProps, defaultFile);
@@ -1004,7 +1003,8 @@ public class ServerConfiguration {
 		catch (NumberFormatException ex) {
 			LOGGER.error("Error reading value for key \"" + key + "\" " + ex.getMessage() +
 				". Should be an integer. Terminating server.");
-			SystemUtil.exit(1);
+			throw new com.openrsc.server.config.ConfigurationLoadException(
+				"integer configuration value is invalid for " + key, ex);
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
 		return Optional.empty();
@@ -1022,7 +1022,8 @@ public class ServerConfiguration {
 		catch (NumberFormatException ex) {
 			LOGGER.error("Error reading value for key \"" + key + "\" " + ex.getMessage() +
 				". Should be a double. Terminating server.");
-			SystemUtil.exit(1);
+			throw new com.openrsc.server.config.ConfigurationLoadException(
+				"double configuration value is invalid for " + key, ex);
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
 		return Optional.empty();
@@ -1043,7 +1044,8 @@ public class ServerConfiguration {
 				LOGGER.error("Error reading value for key \"" + key + "\" for input string \"" +
 					serverProps.getAttribute(key) + ".\"" +
 					" Should be true or false. Terminating server.");
-				SystemUtil.exit(1);
+				throw new com.openrsc.server.config.ConfigurationLoadException(
+					"boolean configuration value is invalid for " + key, null);
 			}
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
