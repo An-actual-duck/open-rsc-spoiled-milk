@@ -22,9 +22,11 @@ public final class ExtensionOwnershipReceipt {
 		if (cleanup == null) {
 			throw new IllegalArgumentException("resource cleanup must not be null");
 		}
-		if (resources.put(resourceId.trim(), cleanup) != null) {
+		final String normalizedResourceId = resourceId.trim();
+		if (resources.containsKey(normalizedResourceId)) {
 			throw new IllegalArgumentException("duplicate extension resource: " + resourceId);
 		}
+		resources.put(normalizedResourceId, cleanup);
 	}
 
 	public synchronized List<String> getResourceIds() {
