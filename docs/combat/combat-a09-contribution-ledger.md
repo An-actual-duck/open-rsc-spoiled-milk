@@ -117,12 +117,14 @@ compiled combat gate and proves:
 - separate style-XP versus summon factual roles;
 - cross-role top-damage credit and minimum personal-drop scaling;
 - offline exclusion and stable-UUID relog restoration;
+- pending Summoning XP's live-contribution, offline exclusion, and exactly-once
+  settlement boundaries;
 - and fresh contribution state for a replacement NPC lifetime.
 
 Existing gate scenarios continue to cover exact-once NPC listeners/death,
 damage-share XP and Hits focus, summon credit, primary/secondary damage
 attribution, poison source loss, and projectile lifecycle replacement. The
-combined gate now has 128 scenarios.
+combined gate now has 129 scenarios.
 
 ## Explicitly deferred owner decisions
 

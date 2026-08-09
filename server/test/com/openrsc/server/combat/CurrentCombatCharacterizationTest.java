@@ -252,6 +252,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "npc_settlement_roles_preserve_ties_offline_relog_and_lifetime_boundaries",
 				CurrentCombatContributionLedgerCharacterization
 					::settlementRolesPreserveTieOfflineAndLifecyclePolicy);
+			run(harness, "pending_summon_xp_requires_live_contribution_and_settles_once",
+				CurrentCombatContributionLedgerCharacterization
+					::pendingSummonExperienceSettlementPolicy);
 			run(harness, "scythe_cleave_selects_adjacent_secondary_npcs",
 				CurrentCombatCharacterizationTest::scytheCleaveSelection);
 			run(harness, "scythe_damage_and_lifesteal_settle_in_current_order",

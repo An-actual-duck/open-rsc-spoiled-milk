@@ -126,6 +126,41 @@ final class CurrentCombatContributionLedgerCharacterization {
 			"replacement NPC lifetime starts without predecessor contribution");
 	}
 
+	static void pendingSummonExperienceSettlementPolicy(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player owner = harness.player("ledger summon xp", 420, 420);
+		final Npc target = harness.npc(NpcId.GREATER_DEMON.id(), 421, 420);
+		target.addCombatDamage(owner, 1);
+		final int before = owner.getSkills().getExperience(Skill.SUMMONING.id());
+		target.recordPendingSummoningExperience(owner, 17,
+			harness.server().getCurrentTick() + 1L);
+		CurrentCombatHarness.invokePrivate(target, "awardPendingSummoningExperience",
+			new Class<?>[0]);
+		assertEquals(before + 17,
+			owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"live factual contributor receives pending summon XP");
+		CurrentCombatHarness.invokePrivate(target, "awardPendingSummoningExperience",
+			new Class<?>[0]);
+		assertEquals(before + 17,
+			owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"pending summon XP clears after exactly one settlement");
+
+		final Npc offlineTarget = harness.npc(NpcId.GREATER_DEMON.id(), 422, 420);
+		offlineTarget.addCombatDamage(owner, 1);
+		offlineTarget.recordPendingSummoningExperience(owner, 19,
+			harness.server().getCurrentTick() + 1L);
+		harness.logout(owner);
+		CurrentCombatHarness.invokePrivate(offlineTarget,
+			"awardPendingSummoningExperience", new Class<?>[0]);
+		assertEquals(before + 17,
+			owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"offline owner cannot receive pending summon XP");
+		final Player reloggedOwner = harness.player("ledger summon xp", 420, 420);
+		assertEquals(0,
+			reloggedOwner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"offline pending summon XP does not replay after relog");
+	}
+
 	private static void assertTrue(final boolean condition, final String message) {
 		if (!condition) {
 			throw new AssertionError(message);
