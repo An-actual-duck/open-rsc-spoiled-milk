@@ -4,6 +4,14 @@ The current Spoiled Milk combat characterization suite is an executable Java
 regression gate over the current server implementation. It records behavior;
 it does not define new balance, formulas, timing, or combat authority.
 
+## Current closeout status
+
+The A01–A11 closeout baseline executes 134 scenarios. Its completion and
+remaining-work record is in
+[`combat-a01-a11-program-closeout.md`](combat-a01-a11-program-closeout.md).
+The cumulative sections below are historical branch records; their intermediate
+scenario counts are not the current total.
+
 ## Authoritative entry point
 
 Run the Linux/macOS launcher from the repository root:
@@ -23,7 +31,7 @@ Both launchers use the tracked Ant 1.10.5 distribution at
 `server/build.xml`. `test_combat_strict` is an equivalent Ant alias for tools
 that expect a strict target name. The CI Java 8 build runs the Linux launcher.
 
-The test target compiles production server sources and the ten combat fixture
+The test target compiles production server sources and the tracked combat fixture
 sources into isolated directories under `output/combat-test`. It never adds the
 fixture source root to `compile_core` or `compile_plugins`. A successful run
 removes those class directories and leaves this machine-readable receipt:

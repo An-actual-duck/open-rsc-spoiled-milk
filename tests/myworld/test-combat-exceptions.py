@@ -21,6 +21,7 @@ ALLOWED_KILLED_BY_FILES = {
     "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
     "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+    "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
     "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
     "server/src/com/openrsc/server/model/entity/Mob.java",
     "server/src/com/openrsc/server/model/entity/npc/Npc.java",

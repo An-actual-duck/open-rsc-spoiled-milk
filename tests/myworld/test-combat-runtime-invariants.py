@@ -16,6 +16,7 @@ NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity
 NPC_DROPS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "constants" / "NpcDrops.java"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
+NPC_COMBAT_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcCombatProfile.java"
 COMBAT_FORMULA = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "CombatFormula.java"
 PVM_MELEE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "PvmMeleeEvent.java"
 PROJECTILE_EVENT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
@@ -116,19 +117,19 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_RANGED || this == MELEE_RANGED;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return this == PURE_MAGIC || this == MELEE_FREQUENT_MAGIC || this == MELEE_MAGIC || this == MELEE_RARE_MAGIC;")
 
-    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(npc, distance)")
+    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
     require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
-    require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange(npc))")
+    require_contains(NPC_BEHAVIOR, "!npc.withinRange(target, profile.getProjectileRange())")
     require_contains(NPC_BEHAVIOR, "PathValidation.checkHostileProjectilePath(")
     require_contains(NPC_BEHAVIOR, "npc.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "target.getWorldLocation()")
-    require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
-    require_contains(NPC_BEHAVIOR, "profile.getMagicProjectileVisual(npc, magicElement)")
+    require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual()")
+    require_contains(NPC_BEHAVIOR, "magicAttack.getProjectileVisual()")
     require_contains(NPC_BEHAVIOR, "ProjectileLaunchSpecification.Producer.NPC_MAGIC")
     require_contains(NPC_BEHAVIOR, ".elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)")
-    require_contains(NPC_BEHAVIOR, ".magicElement(magicElement)")
+    require_contains(NPC_BEHAVIOR, ".magicElement(magicAttack.getElement())")
     require_contains(NPC_BEHAVIOR, ".dualElementProcs(startleProcChancePercent,")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.HOLY_MAGIC;")
 
@@ -136,13 +137,16 @@ def main() -> None:
     require_contains(COMBAT_FORMULA, "applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()))")
     require_contains(COMBAT_FORMULA, "int defenseMax = defenseToMitigation(victim.getMagicDefense());")
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
-    require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
+    require_contains(NPC_BEHAVIOR, "profile.getMagicSpellPower())")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1, Math.max(npc.getDef().getAtt(), npc.getDef().getStr()));")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Math.max(1.0D, npc.getMagicOffense() / 12.0D);")
     require_contains(NPC, "int explicitOffense = getDef().getMeleeOffense();")
     require_contains(NPC, "int explicitOffense = getDef().getRangedOffense();")
     require_contains(NPC, "int explicitOffense = getDef().getMagicOffense();")
-    require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")
+    require_contains(NPC, "return NpcCombatProfile.resolve(this).getMagicOffense();")
+    require_contains(NPC_COMBAT_PROFILE, "return style.prefersProjectileAtDistance(npc, distance);")
+    require_contains(NPC_COMBAT_PROFILE, "return style.getMagicSpellPower(npc);")
+    require_contains(NPC_COMBAT_PROFILE, "new NpcMagicAttack(npc, style, style.getMagicElement(npc))")
     require_contains(NPC, "return applyFireDefenseDebuffToValue(defense);")
     require_contains(MYWORLD_CONF, "osrs_combat_ranged: false")
     require_contains(MYWORLD_HOST_CONF, "osrs_combat_ranged: false")
