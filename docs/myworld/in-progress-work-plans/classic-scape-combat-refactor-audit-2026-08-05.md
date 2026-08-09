@@ -882,10 +882,18 @@ despawn question and future plugin adapters are A11-only owner decisions.
 
 ### A11 — extensions, configuration, observability
 
-Coordinate with Server R2. Add compatible plugin adapters, transactional
-reload, bounded reason-coded traces, redaction, and opt-in validated profiles.
-Do not make missing custom content or retained compatibility modes abort
-startup without a reviewed distribution contract.
+Combat foundation completed: `CombatTraceObserver` provides bounded,
+reason-coded, redacted, opt-in profiles through the existing read-only damage
+observer seam. It records settled damage and immediate terminal-Hits lifecycle
+facts only; no player identity, coordinate, snapshot, or gameplay authority is
+retained. The executable contract and the exact remaining R2-2 configuration/
+extension integration requirements are in
+`docs/combat/combat-a11-observability-profiles.md`.
+
+Remaining Server R2 work owns compatible plugin adapters, transactional
+configuration/reload, observer construction, and startup/shutdown lifecycle
+coverage. Missing custom content or retained compatibility modes must not
+abort startup without a reviewed distribution contract.
 
 ## Program Acceptance Gates
 
