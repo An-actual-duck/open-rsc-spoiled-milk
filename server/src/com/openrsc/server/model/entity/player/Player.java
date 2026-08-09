@@ -4115,11 +4115,11 @@ public final class Player extends Mob {
 			} else if (getCache().hasKey("poisoned_max")) {
 				getCache().remove("poisoned_max");
 			}
-			if (getCache().hasKey("burn_pulses") && getCache().hasKey("burn_damage")) {
-				setBurnDamage(getCache().getInt("burn_damage"));
-				setBurnPulseCount(getCache().getInt("burn_pulses"));
-				startBurnEvent();
-			}
+			// Generic burn was retired in A08.5. Its old optional cache rows do
+			// not represent either Elder burn family, so discard them rather than
+			// restoring an unrelated damage-over-time effect on login.
+			getCache().remove("burn_damage");
+			getCache().remove("burn_pulses");
 			if (!getConfig().LACKS_PRAYERS) {
 				prayerStatePoints = getSkills().getLevel(Skill.PRAYER.id()) * 120;
 				prayerDrainEvent = new PrayerDrainEvent(getWorld(), this);

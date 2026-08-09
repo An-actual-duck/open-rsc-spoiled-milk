@@ -4,7 +4,6 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.custom.NpcLootEvent;
-import com.openrsc.server.event.rsc.impl.BurnEvent;
 import com.openrsc.server.event.rsc.impl.PoisonEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
@@ -72,16 +71,6 @@ final class CurrentCombatSecondaryDamageCharacterization {
 		assertEquals(37, poisoned.getPoisonDamage(),
 			"poison power drains before damage settlement");
 
-		final Player burning = harness.player("burn victim", 626, 620);
-		new BurnEvent(harness.world(), burning, 3, 2).run();
-		assertEquals(37, burning.getLevel(Skill.HITS.id()),
-			"burn pulse damage");
-		assertHit(burning, 3, HitSplat.TYPE_STANDARD,
-			"burn remains a standard compatibility-helper hitsplat");
-		assertEquals(3, burning.getCache().getInt("burn_damage"),
-			"burn cache is updated before helper settlement");
-		assertEquals(1, burning.getCache().getInt("burn_pulses"),
-			"burn pulse count is decremented before helper settlement");
 	}
 
 	static void projectileSecondaryContributionPolicies(

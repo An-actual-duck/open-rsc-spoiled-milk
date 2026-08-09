@@ -216,15 +216,15 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "dot_durable_poison_survives_server_restart",
 				CurrentCombatDotLifecycleCharacterization
 					::durablePoisonSurvivesServerRestart);
-			run(harness, "dot_duplicate_scheduler_and_mixed_burn_boundaries_are_characterized",
+			run(harness, "dot_duplicate_scheduler_and_retired_burn_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
-					::duplicateSchedulerAndMixedBurnBoundaries);
-			run(harness, "dot_legacy_pvp_poison_and_positive_burn_boundaries_are_characterized",
+					::duplicateSchedulerAndRetiredBurnBoundaries);
+			run(harness, "dot_legacy_pvp_poison_and_retired_burn_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
-					::legacyPvpPoisonAndPositiveBurnBoundaries);
-			run(harness, "generic_burn_replacement_restore_and_cleanup_are_characterized",
+					::legacyPvpPoisonAndRetiredBurnBoundaries);
+			run(harness, "generic_burn_retirement_and_cleanup_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
-					::burnReplacementPersistenceAndCleanup);
+					::genericBurnRetirementAndCleanup);
 			run(harness, "elder_burns_stop_when_their_required_sources_leave",
 				CurrentCombatDotLifecycleCharacterization
 					::elderBurnSourceAvailability);
