@@ -192,8 +192,8 @@ def main() -> None:
     require(npc_profile, "if (isDragon(npc))", "dragon profile selection")
     require(npc_profile, "return MELEE_MAGIC;", "dragon melee/magic profile")
     require(npc_behavior, "Math.max(Math.abs(npc.getX() - target.getX())", "NPC Chebyshev distance")
-    require(npc_behavior, "profile.prefersProjectileAtDistance(npc, distance)", "NPC distance preference gate")
-    require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange(npc))", "NPC firing-range gate")
+    require(npc_behavior, "profile.prefersProjectileAtDistance(distance)", "NPC distance preference gate")
+    require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange())", "NPC firing-range gate")
     require(
         npc_behavior,
         "PathValidation.checkHostileProjectilePath(",
@@ -222,9 +222,13 @@ def main() -> None:
         projectile_event,
         "protected final ProjectileImpactDecision beginProjectileImpact",
     )
-    require(impact_gate, "caster.withinRange(opponent, 15)", "delayed projectile delivery cap")
+    require(
+        impact_gate,
+        "ProjectileImpactValidator.validate(",
+        "typed delayed projectile delivery validation",
+    )
     if "PathValidation" in impact_gate or "getProjectileRange" in impact_gate:
-        fail("Projectile delivery unexpectedly rechecks launch collision or attack range")
+        fail("Projectile delivery unexpectedly duplicates typed impact validation")
     assert_boundary("delayed projectile delivery", 15)
 
     require(
