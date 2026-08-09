@@ -26,7 +26,7 @@ would require a gameplay/authority decision to cross.
 | Descriptor group | Retained owner | Why A07 does not extract it further |
 | --- | --- | --- |
 | Compatibility poison/tutorial scripts | combat script loader | Dynamic script order and compatibility callbacks are data/content authority. |
-| Poison, armor poison, dragon-poison marker state, and periodic pulses | A08 poison provenance | A08 owns durable source, replacement, lifecycle, and tick authority. |
+| Poison, armor poison, dragon-poison marker state, and periodic pulses | A08 complete | A08 owns durable provenance, replacement, lifecycle, tick authority, generic-burn retirement, and the separate Elder burn boundaries. |
 | Cleric protection, Rally, Thorns, and status effects | Cleric runtime | Party/status lifecycle and direct-damage ordering are C08–C12 authority. |
 | Summon mitigation, assist, lifesteal, and traits | `Summoning` | Summon ownership, friendly-fire, and lifecycle policies differ from actor hits. |
 | Recoil, Frostbite, Divine Retribution, Ring of Life | A05.4 reflection owners | Their pending-hit reduction, recursion, ranged reset, and death adapters are deliberately distinct. |

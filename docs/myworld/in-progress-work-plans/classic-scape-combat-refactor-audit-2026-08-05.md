@@ -819,7 +819,7 @@ capacity from current and planned effects rather than importing Classic's cap.
 Stop if unrelated effect families must be changed together or if order cannot
 be characterized.
 
-### A08 — DoT provenance and lifecycle
+### A08 — DoT provenance and lifecycle — complete
 
 A08.1 is complete on published main. The implementation inventory, lifecycle
 risks, policy decisions, and staged test plan are recorded in
@@ -848,10 +848,13 @@ one versioned record replaces legacy writes, login normalizes or clears legacy
 state, and exactly one event is restored. Actual save/restart and save-failure
 atomicity remain the next provenance gates.
 
-Move poison/burn ownership behind typed state only after exact current
-strength, stacking, replacement, feedback, persistence, death/respawn, logout,
-offline owner, and kill-credit rules are fixtures. Preserve `ad02e5aec` and
-fail closed on corrupt restored state.
+A08 is complete: generic poison has typed durable provenance, generic burn is
+retired, and the active Elder armor and Elder boss burn clocks have separate
+typed target-owned lifecycle state. The final fixtures preserve the armor
+five-pulse/countdown-reset contract and the boss five-second wall-clock
+contract, with source identity/lifecycle validation and bounded cleanup.
+Future DoT families need their own owner-specific plan; they must not revive
+generic burn or infer policy from either Elder implementation.
 
 ### A09 — contribution and kill-credit roles
 

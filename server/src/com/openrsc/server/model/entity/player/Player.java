@@ -3,6 +3,7 @@ package com.openrsc.server.model.entity.player;
 import com.openrsc.server.constants.Skills;
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.EnchantingItemEffects;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.Leach;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.achievement.Achievement;
@@ -25,6 +26,7 @@ import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.impl.DesertHeatEvent;
 import com.openrsc.server.event.rsc.impl.PoisonEvent;
 import com.openrsc.server.event.rsc.impl.PrayerDrainEvent;
+import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.event.rsc.impl.projectile.*;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.login.LoginRequest;
@@ -4077,6 +4079,9 @@ public final class Player extends Mob {
 
 	public void setLoggedIn(final boolean loggedIn) {
 		if (this.loggedIn && !loggedIn) {
+			// Elder burns are session-bound target effects, not durable poison.
+			ElderGreenDragonArmorEffect.clearBurn(this);
+			ElderGreenDragonSpecialAttacks.clearBurn(this);
 			attackTransaction.cancelCurrent(
 				AttackTransactionResult.Reason.PARTICIPANT_CHANGED);
 			advanceCombatLifecycle(

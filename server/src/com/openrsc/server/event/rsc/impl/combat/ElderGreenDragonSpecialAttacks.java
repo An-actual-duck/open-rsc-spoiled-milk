@@ -15,6 +15,8 @@ import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
+import com.openrsc.server.model.combat.dot.ElderGreenDragonBurnState;
+import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -37,9 +39,8 @@ public final class ElderGreenDragonSpecialAttacks {
 	private static final int MELEE_SWEEP_PROC_PERCENT = 25;
 	private static final int FIRESHOT_PROC_PERCENT = 22;
 	private static final int BURN_PROC_PERCENT = 14;
-	private static final String BURN_ACTIVE_KEY = "elder_green_dragon_burn_active";
-	private static final String BURN_END_AT_KEY = "elder_green_dragon_burn_end_at";
-	private static final String BURN_SOURCE_KEY = "elder_green_dragon_burn_source";
+	private static final String BURN_EVENT_KEY = "elder_green_dragon_burn_event";
+	private static final String BURN_STATE_KEY = "elder_green_dragon_burn_state";
 
 	private ElderGreenDragonSpecialAttacks() {
 	}
@@ -139,13 +140,57 @@ public final class ElderGreenDragonSpecialAttacks {
 	}
 
 	private static void applyBurn(final World world, final Npc dragon, final Player player) {
-		player.setAttribute(BURN_END_AT_KEY, System.currentTimeMillis() + BURN_DURATION_MILLIS);
-		player.setAttribute(BURN_SOURCE_KEY, dragon);
-		if (player.getAttribute(BURN_ACTIVE_KEY, false)) {
-			return;
+		synchronized (player) {
+			final ElderGreenDragonBurnState state = ElderGreenDragonBurnState.of(
+				PeriodicEffectProvenance.npc(dragon.getUUID(),
+					Math.max(1L, dragon.getCombatLifecycle())),
+				System.currentTimeMillis() + BURN_DURATION_MILLIS);
+			final Object eventAttribute = player.getAttribute(BURN_EVENT_KEY, null);
+			ElderGreenDragonBurnEvent existing = eventAttribute instanceof ElderGreenDragonBurnEvent
+				? (ElderGreenDragonBurnEvent) eventAttribute : null;
+			if (eventAttribute != null && existing == null) {
+				player.removeAttribute(BURN_EVENT_KEY);
+				existing = findRunningBurnEvent(player);
+				if (existing != null) {
+					player.setAttribute(BURN_EVENT_KEY, existing);
+				}
+			}
+			player.setAttribute(BURN_STATE_KEY, state);
+			if (existing != null && existing.isRunning()) {
+				return;
+			}
+			player.removeAttribute(BURN_EVENT_KEY);
+			final ElderGreenDragonBurnEvent burn = new ElderGreenDragonBurnEvent(world, player);
+			if (!world.getServer().getGameEventHandler().add(burn)) {
+				player.removeAttribute(BURN_STATE_KEY);
+				return;
+			}
+			player.setAttribute(BURN_EVENT_KEY, burn);
 		}
-		player.setAttribute(BURN_ACTIVE_KEY, true);
-		world.getServer().getGameEventHandler().add(new ElderGreenDragonBurnEvent(world, player));
+	}
+
+	private static ElderGreenDragonBurnEvent findRunningBurnEvent(final Player player) {
+		for (GameTickEvent event : player.getWorld().getServer()
+				.getGameEventHandler().getEvents()) {
+			if (event instanceof ElderGreenDragonBurnEvent && event.isRunning()
+					&& event.getOwner() == player) {
+				return (ElderGreenDragonBurnEvent) event;
+			}
+		}
+		return null;
+	}
+
+	/** Clears only the boss-owned Elder burn on this target. */
+	public static void clearBurn(final Player player) {
+		if (player == null) return;
+		synchronized (player) {
+			final Object attribute = player.getAttribute(BURN_EVENT_KEY, null);
+			if (attribute instanceof ElderGreenDragonBurnEvent) {
+				((ElderGreenDragonBurnEvent) attribute).stop();
+			}
+			player.removeAttribute(BURN_EVENT_KEY);
+			player.removeAttribute(BURN_STATE_KEY);
+		}
 	}
 
 	private static boolean isValidPlayerTarget(final Npc dragon, final Player player, final int radius) {
@@ -293,13 +338,15 @@ public final class ElderGreenDragonSpecialAttacks {
 				clearBurn(player);
 				return;
 			}
-			final long burnEndAt = player.getAttribute(BURN_END_AT_KEY, 0L);
-			if (System.currentTimeMillis() >= burnEndAt) {
+			final ElderGreenDragonBurnState state = player.getAttribute(BURN_STATE_KEY, null);
+			if (state == null || System.currentTimeMillis() >= state.getEndAtMillis()) {
 				clearBurn(player);
 				return;
 			}
-			final Npc dragon = player.getAttribute(BURN_SOURCE_KEY, null);
-			if (dragon == null || dragon.isRemoved()) {
+			final Npc dragon = getWorld().getNpcByUUID(state.getProvenance().getSourceId());
+			if (!isElderGreenDragon(dragon) || dragon.isRemoved()
+					|| dragon.getCombatLifecycle() != state.getProvenance().getSourceLifecycle()
+					|| dragon.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				clearBurn(player);
 				return;
 			}
@@ -312,11 +359,7 @@ public final class ElderGreenDragonSpecialAttacks {
 		}
 
 		private void clearBurn(final Player player) {
-			if (player != null) {
-				player.removeAttribute(BURN_ACTIVE_KEY);
-				player.removeAttribute(BURN_END_AT_KEY);
-				player.removeAttribute(BURN_SOURCE_KEY);
-			}
+			ElderGreenDragonSpecialAttacks.clearBurn(player);
 			stop();
 		}
 	}

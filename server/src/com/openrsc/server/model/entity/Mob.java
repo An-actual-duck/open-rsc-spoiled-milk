@@ -2,7 +2,9 @@ package com.openrsc.server.model.entity;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.PoisonPowerReduction;
+import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.handler.GameEventHandler;
@@ -1565,6 +1567,10 @@ public abstract class Mob extends Entity {
 	public void cure() {
 		curePoison();
 		extinguish();
+		ElderGreenDragonArmorEffect.clearBurn(this);
+		if (isPlayer()) {
+			ElderGreenDragonSpecialAttacks.clearBurn((Player) this);
+		}
 	}
 
 	public void curePoison() {
