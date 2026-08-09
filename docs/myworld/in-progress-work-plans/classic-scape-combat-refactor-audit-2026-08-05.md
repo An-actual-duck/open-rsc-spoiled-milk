@@ -728,7 +728,7 @@ recovery, damage, animation, or authentic-client packet order.
 
 ### A07 — current-specific secondary, AoE, and on-hit policies
 
-Status: A07.1 and A07.2 are implemented on published main. A07.1
+Status: complete. A07.1 and A07.2 are implemented on published main. A07.1
 adds a typed, exact-size catalog for all 39 current secondary-damage settlement
 identities and replaces duplicated key literals without moving behavior. The
 compiled fixture proves that 32 cannot be used as a total catalog capacity;
@@ -782,6 +782,11 @@ Earth/Water/Fire precedence, and A07.5S Death Robe's identical suppression,
 floor-with-minimum payload, and NPC-radius selection. In every Death Robe
 owner, style-specific damage transaction, contribution, KillType, and child
 death order remain local.
+The final A07.5T extraction centralizes Chain Lightning's common gate, chance
+draw, traversal loop, child-payload decay, and visual cycle while retaining all
+three owners' style-specific settlement and death adapters. The full retained
+owner-boundary inventory and stop decision are recorded in
+[`combat-a07-completion-inventory.md`](../../combat/combat-a07-completion-inventory.md).
 Exact current policies are recorded in
 [`combat-a07-secondary-effect-policy-foundation.md`](../../combat/combat-a07-secondary-effect-policy-foundation.md)
 and

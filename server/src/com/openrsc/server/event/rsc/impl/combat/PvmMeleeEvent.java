@@ -33,6 +33,7 @@ import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
+import com.openrsc.server.model.combat.ChaosChainLightningProc;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
@@ -814,40 +815,16 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (!hitter.isPlayer() || baseDamage <= 0 || !target.isNpc()) {
 			return;
 		}
-		final Player player = (Player) hitter;
-		if (Summoning.isPlayerAreaEffectSuppressed(player)) {
-			return;
-		}
-		final double chainChance = player.getCarriedItems().getEquipment().getChaosNecklaceChainLightningChance();
-		if (chainChance <= 0.0D) {
-			return;
-		}
-		Mob anchor = target;
-		int chainDamage = Math.max(1, (int) Math.ceil(baseDamage / 2.0D));
-		for (int hop = 0; hop < ChainLightningTraversalPolicy.MAX_HOPS; hop++) {
-			if (combatRandom().nextDouble() >= chainChance) {
-				break;
-			}
-			final Mob chainTarget = selectChaosChainLightningTarget(player, anchor);
-			if (chainTarget == null) {
-				break;
-			}
-			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop)));
-			inflictChainLightningDamage(hitter, chainTarget, chainDamage);
-			anchor = chainTarget;
-			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
-		}
+		ChaosChainLightningProc.tryApply((Player) hitter, target, baseDamage,
+			combatRandom(), anchor -> selectChaosChainLightningTarget(
+				(Player) hitter, anchor), (chainTarget, chainDamage) ->
+				inflictChainLightningDamage(hitter, chainTarget, chainDamage));
 	}
 
-	private int getChaosChainLightningProjectile(final int hop) {
-		switch (hop % 3) {
-			case 0:
-				return Projectile.CHAIN_LIGHTNING_A;
-			case 1:
-				return Projectile.CHAIN_LIGHTNING_B;
-			default:
-				return Projectile.CHAIN_LIGHTNING_C;
-		}
+	private Mob selectChaosChainLightningTarget(final Player player,
+			final Mob primaryTarget) {
+		return ChainLightningTraversalPolicy.selectNext(
+			player, primaryTarget, combatRandom());
 	}
 
 	private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage) {
@@ -912,11 +889,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			onDeath(target, source);
 		}
-	}
-
-	private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget) {
-		return ChainLightningTraversalPolicy.selectNext(
-			player, primaryTarget, combatRandom());
 	}
 
 	private void applyWeaponPoison(final Mob hitter, final Mob target, final int damage) {

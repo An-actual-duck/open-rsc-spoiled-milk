@@ -19,6 +19,7 @@ import com.openrsc.server.model.combat.BlueDragonWaterProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
+import com.openrsc.server.model.combat.ChaosChainLightningProc;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
@@ -446,41 +447,17 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (!caster.isPlayer() || secondaryEffectDamage <= 0 || !opponent.isNpc()) {
 			return;
 		}
-		final Player casterPlayer = (Player) caster;
-		if (Summoning.isPlayerAreaEffectSuppressed(casterPlayer)) {
-			return;
-		}
-		final double chainChance = casterPlayer.getCarriedItems().getEquipment().getChaosNecklaceChainLightningChance();
-		if (chainChance <= 0.0D) {
-			return;
-		}
-
-		Mob anchor = opponent;
-		int chainDamage = Math.max(1, (int) Math.ceil(secondaryEffectDamage / 2.0D));
-		for (int hop = 0; hop < ChainLightningTraversalPolicy.MAX_HOPS; hop++) {
-			if (DataConversions.getRandom().nextDouble() >= chainChance) {
-				break;
-			}
-			final Mob chainTarget = selectChaosChainLightningTarget(casterPlayer, anchor);
-			if (chainTarget == null) {
-				break;
-			}
-			chainTarget.getUpdateFlags().setProjectile(new Projectile(anchor, chainTarget, getChaosChainLightningProjectile(hop)));
-			inflictChainLightningDamage(casterPlayer, chainTarget, chainDamage);
-			anchor = chainTarget;
-			chainDamage = Math.max(1, (int) Math.ceil(chainDamage / 2.0D));
-		}
+		ChaosChainLightningProc.tryApply((Player) caster, opponent,
+			secondaryEffectDamage, ProductionGameRandom.INSTANCE,
+			anchor -> selectChaosChainLightningTarget((Player) caster, anchor),
+			(chainTarget, chainDamage) -> inflictChainLightningDamage(
+				(Player) caster, chainTarget, chainDamage));
 	}
 
-	private int getChaosChainLightningProjectile(final int hop) {
-		switch (hop % 3) {
-			case 0:
-				return Projectile.CHAIN_LIGHTNING_A;
-			case 1:
-				return Projectile.CHAIN_LIGHTNING_B;
-			default:
-				return Projectile.CHAIN_LIGHTNING_C;
-		}
+	private Mob selectChaosChainLightningTarget(final Player player,
+			final Mob anchor) {
+		return ChainLightningTraversalPolicy.selectNext(
+			player, anchor, ProductionGameRandom.INSTANCE);
 	}
 
 	private void inflictChainLightningDamage(final Player casterPlayer, final Mob chainTarget, int chainDamage) {
@@ -525,11 +502,6 @@ public class ProjectileEvent extends SingleTickEvent {
 		} else if (chainTarget.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			chainTarget.killedBy(caster);
 		}
-	}
-
-	private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor) {
-		return ChainLightningTraversalPolicy.selectNext(
-			player, anchor, ProductionGameRandom.INSTANCE);
 	}
 
 	private void recoilDamage(Player opponent, Mob caster, int damage) {
