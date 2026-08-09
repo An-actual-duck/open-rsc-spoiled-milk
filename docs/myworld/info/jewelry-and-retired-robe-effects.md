@@ -78,7 +78,7 @@ Implementation status:
 - Death: Ring of Reckoning; Necklace of Reaping; Amulet of Ruin.
 - Blood: Ring of Vitality; Necklace of Leach; Amulet of Siphoning.
 - Soul: Ring of Lifesaving; Necklace of Preservation; Amulet of Renewal.
-- Life: Ring of Endurance; Necklace of Vigor; Amulet of Command.
+- Life: Ring of Combat Command; Necklace of Support Command; Bangle of Utility Command.
 
 ### Air
 

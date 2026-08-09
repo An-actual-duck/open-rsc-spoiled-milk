@@ -120,8 +120,8 @@ public final class Summoning {
 	private static final int PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP = 5;
 	private static final int PACK_RAT_UTILITY_MAX_DISPLAYED_XP = 150;
 	private static final int DELIVERY_CAMEL_UTILITY_DISPLAYED_XP = 225;
-	private static final int PACK_RAT_UTILITY_USES = 4;
-	private static final int DELIVERY_CAMEL_UTILITY_USES = 2;
+	private static final int PACK_RAT_UTILITY_USES = 1;
+	private static final int DELIVERY_CAMEL_UTILITY_USES = 1;
 	private static final int MIN_COMBAT_SUMMON_DISPLAYED_XP = 5;
 	private static final int COMBAT_SUMMON_CREDIT_TIMEOUT_MS = 120000;
 	private static final SummonProfile GIANT_SPIDER_PROFILE = combatProfile(
@@ -1226,7 +1226,8 @@ public final class Summoning {
 		summon.setAttribute(SUMMON_TRAIT_KEY, profile.trait);
 		summon.setAttribute(SUMMON_PRAYER_BONUS_KEY, profile.prayerBonus);
 		if (profile.role == SummonRole.UTILITY) {
-			summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY, profile.utilityUses);
+			summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY,
+				profile.utilityUses + owner.getCarriedItems().getEquipment().getLifeBangleUtilityChargeBonus());
 		}
 		applySummonProfile(owner, summon, profile);
 		summon.getUpdateFlags().setCombatEffect(new CombatEffect(summon, getSummonArrivalEffect(profile)));
@@ -1311,7 +1312,7 @@ public final class Summoning {
 	private static int getScaledHits(final Player owner, final SummonProfile profile) {
 		int hits = scaleFromSummoningLevel(owner, profile, profile.baseHits, profile.hitsGrowthInterval);
 		if (profile.role == SummonRole.COMBAT) {
-			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSummonHealthPercent()
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingCombatSummonHealthPercent()
 				+ owner.getLifeRobeSummonBonusPercent();
 			if (bonusPercent > 0) {
 				hits += Math.max(1, (int) Math.ceil(hits * (bonusPercent / 100.0D)));
@@ -1323,7 +1324,10 @@ public final class Summoning {
 	private static int getScaledMaxHit(final Player owner, final SummonProfile profile) {
 		int maxHit = scaleFromSummoningLevel(owner, profile, profile.baseMaxHit, profile.maxHitGrowthInterval);
 		if (profile.role == SummonRole.COMBAT) {
-			maxHit += owner.getCarriedItems().getEquipment().getLifeAmuletSummonMaxDamageBonus();
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingCombatSummonDamagePercent();
+			if (bonusPercent > 0) {
+				maxHit += Math.max(1, (int) Math.ceil(maxHit * (bonusPercent / 100.0D)));
+			}
 		}
 		return maxHit;
 	}
@@ -1994,9 +1998,15 @@ public final class Summoning {
 		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), amount), false) != -1;
 		if (consumed) {
 			ActionSender.sendInventory(owner);
-			awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);
+			awardDisplayedSummoningExperience(owner, getSupportUpkeepDisplayedExperience(owner));
 		}
 		return consumed;
+	}
+
+	private static int getSupportUpkeepDisplayedExperience(final Player owner) {
+		final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSupportUpkeepXpBonusPercent();
+		return SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP
+			+ (int) Math.ceil(SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP * (bonusPercent / 100.0D));
 	}
 
 	private static boolean hasBlackUnicorn(final Player player) {
@@ -2044,7 +2054,7 @@ public final class Summoning {
 	private static int getDurationTicks(final Player owner, final SummonProfile profile) {
 		int durationSeconds = profile.durationTicks;
 		if (profile.role == SummonRole.SUPPORT) {
-			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingSupportDurationPercent()
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSupportDurationPercent()
 				+ owner.getLifeRobeSummonBonusPercent();
 			if (bonusPercent > 0) {
 				durationSeconds += Math.max(1, (int) Math.ceil(durationSeconds * (bonusPercent / 100.0D)));

@@ -130,7 +130,7 @@ def ensure_bangle_lines(items: dict[int, dict[str, Any]]) -> None:
         "Alchemy": range(1744, 1749),
         "Bounty": range(1749, 1754),
         "Renewal": range(1754, 1759),
-        "Command": range(3106, 3111),
+        "Utility Command": range(3106, 3111),
     }
     tiers = ["Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"]
     for effect_name, ids in lines.items():
@@ -175,7 +175,7 @@ def ensure_necklace_lines(items: dict[int, dict[str, Any]]) -> None:
         "Reaping": range(1663, 1668),
         "Leach": range(1668, 1673),
         "Preservation": range(1759, 1764),
-        "Vigor": range(3101, 3106),
+        "Support Command": range(3101, 3106),
     }
     tiers = ["Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"]
     for effect_name, ids in necklace_lines.items():
@@ -226,7 +226,7 @@ def ensure_ring_lines(items: dict[int, dict[str, Any]]) -> None:
         3081: "Sapphire Ring of Gains",
         3086: "Sapphire Ring of Reckoning",
         3091: "Sapphire Ring of Vitality",
-        3096: "Sapphire Ring of Endurance",
+        3096: "Sapphire Ring of Combat Command",
         3111: "Dragonstone Ring of Fortune",
     }
     for item_id, name in special_rings.items():
@@ -351,7 +351,7 @@ def ensure_source_mappings_exist() -> None:
         'addLawAmuletLine(1709, tiers, lawAmuletPrices, gemMasks);',
         '"Teleport,Check"',
         'addGatheringAmuletLine(1593, tiers, "Woodcutter\'s", "Boosts woodcutting log yield by %d%%.", amuletPrices, gemMasks);',
-        'addGatheringAmuletLine(1598, tiers, "Angler\'s", "Boosts fishing catch yield by %d%%.", amuletPrices, gemMasks);',
+        'addGatheringAmuletLine(1598, tiers, "Angler\'s", "Increases best catch chance by %d%%.", amuletPrices, gemMasks);',
         'addNecklaceLine(1613, tiers, "Evasion", "Adds +%d ranged defense.", 3, necklacePrices, gemMasks);',
         'addNecklaceLine(1623, tiers, "Equilibrium", "Adds +%d melee, ranged, and magic defense.", 2, necklacePrices, gemMasks);',
         'addNecklaceLine(1628, tiers, "Bulwark", "Adds +%d melee defense.", 3, necklacePrices, gemMasks);',

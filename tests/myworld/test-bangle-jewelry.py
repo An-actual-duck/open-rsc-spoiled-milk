@@ -1035,7 +1035,7 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
         "getDeathAmuletBurstRadius",
         "getDeathAmuletBurstMinDamage",
         "getDeathAmuletBurstMaxDamage",
-        "getLifeAmuletSummonMaxDamageBonus",
+		"getLifeBangleUtilityChargeBonus",
         "getMindAmuletPotionDurationBonus",
         "getBodyAmuletRegenSpeedBonus",
         "getMindCombatAmuletXpBonus",
@@ -1061,7 +1061,8 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
         "getChaosNecklaceChainLightningChance",
         "getBloodNecklaceLeachPercent",
         "rollDeathNecklaceGuaranteedDropBonus",
-        "getLifeNecklaceSummonHealthPercent",
+		"getLifeNecklaceSupportDurationPercent",
+		"getLifeNecklaceSupportUpkeepXpBonusPercent",
         "getNatureCleansingPoisonDecayBonus",
         "getCosmicNecklaceStandardDropChance",
         "tryBankMonsterLootWithLawNecklace",
@@ -1077,7 +1078,8 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
 
     ring_effect_getters = (
         "getChaosRecoilChance",
-        "getLifeRingSupportDurationPercent",
+		"getLifeRingCombatSummonHealthPercent",
+		"getLifeRingCombatSummonDamagePercent",
         "getBloodRingHitsBonus",
         "getNatureFoodHealingBonus",
         "bankSkillingDropWithLawRing",

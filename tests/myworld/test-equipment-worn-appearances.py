@@ -22,7 +22,7 @@ TIERS = ("Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone")
 JEWELRY_FAMILIES = {
     "Bangle of Teleportation": range(1709, 1714),
     "Necklace of Preservation": range(1759, 1764),
-    "Bangle of Command": range(3106, 3111),
+    "Bangle of Utility Command": range(3106, 3111),
 }
 POISONED_KNIFE_PAIRS = {
     2200: 1996,

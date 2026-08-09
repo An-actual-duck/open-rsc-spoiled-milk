@@ -368,6 +368,11 @@ public final class EnchantingItemEffects {
 	private static final int[] LIFE_RINGS = {
 		3096, 3097, 3098, 3099, 3100
 	};
+	private static final int[] LIFE_COMBAT_HEALTH_BONUS_PERCENTS = {10, 20, 30, 50, 100};
+	private static final int[] LIFE_COMBAT_DAMAGE_BONUS_PERCENTS = {3, 6, 9, 15, 25};
+	private static final int[] LIFE_SUPPORT_DURATION_BONUS_PERCENTS = {10, 20, 30, 50, 100};
+	private static final int[] LIFE_SUPPORT_UPKEEP_XP_BONUS_PERCENTS = {50, 100, 150, 250, 400};
+	private static final int[] LIFE_UTILITY_CHARGE_BONUSES = {1, 2, 3, 5, 8};
 	private static final TieredLine[] SPECIAL_AMULET_LINES = {
 		new TieredLine(LAW_ALTAR, LAW_AMULETS),
 		new TieredLine(CHAOS_ALTAR, CHAOS_AMULETS),
@@ -1607,19 +1612,30 @@ public final class EnchantingItemEffects {
 		return getTierArrayValue(tier, SOUL_AMULET_BURST_MAX_HEAL);
 	}
 
-	public static int getLifeNecklaceSummonHealthPercent(final int itemId) {
-		final int tier = getTierForAltar(itemId, new TieredLine[] {new TieredLine(LIFE_ALTAR, LIFE_NECKLACES)}, LIFE_ALTAR);
-		return tier == -1 ? 0 : tier * 10;
-	}
-
-	public static int getLifeRingSupportDurationPercent(final int itemId) {
+	public static int getLifeRingCombatSummonHealthPercent(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, LIFE_ALTAR);
-		return tier == -1 ? 0 : tier * 20;
+		return getTierArrayValue(tier, LIFE_COMBAT_HEALTH_BONUS_PERCENTS);
 	}
 
-	public static int getLifeAmuletSummonMaxDamageBonus(final int itemId) {
+	public static int getLifeRingCombatSummonDamagePercent(final int itemId) {
+		final int tier = getTierForAltar(itemId, SPECIAL_RING_LINES, LIFE_ALTAR);
+		return getTierArrayValue(tier, LIFE_COMBAT_DAMAGE_BONUS_PERCENTS);
+	}
+
+	public static int getLifeNecklaceSupportDurationPercent(final int itemId) {
+		final int tier = getTierForAltar(itemId, new TieredLine[] {new TieredLine(LIFE_ALTAR, LIFE_NECKLACES)}, LIFE_ALTAR);
+		return getTierArrayValue(tier, LIFE_SUPPORT_DURATION_BONUS_PERCENTS);
+	}
+
+	public static int getLifeNecklaceSupportUpkeepXpBonusPercent(final int itemId) {
+		final int tier = getTierForAltar(itemId, new TieredLine[] {new TieredLine(LIFE_ALTAR, LIFE_NECKLACES)}, LIFE_ALTAR);
+		return getTierArrayValue(tier, LIFE_SUPPORT_UPKEEP_XP_BONUS_PERCENTS);
+	}
+
+	/** Compatibility name retained because the wrist line was previously called Amulets. */
+	public static int getLifeBangleUtilityChargeBonus(final int itemId) {
 		final int tier = getTierForAltar(itemId, SPECIAL_AMULET_LINES, LIFE_ALTAR);
-		return tier == -1 ? 0 : tier;
+		return getTierArrayValue(tier, LIFE_UTILITY_CHARGE_BONUSES);
 	}
 
 	public static boolean isMindCombatAmuletXpSkill(final int skillId) {

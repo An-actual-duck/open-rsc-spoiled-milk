@@ -2193,19 +2193,29 @@ public class Equipment {
 		return wristItem == null ? 0 : EnchantingItemEffects.getDeathAmuletBurstMaxDamage(wristItem.getCatalogId());
 	}
 
-	public int getLifeNecklaceSummonHealthPercent() {
-		Item neckItem = getEquippedNeckItem();
-		return neckItem == null ? 0 : EnchantingItemEffects.getLifeNecklaceSummonHealthPercent(neckItem.getCatalogId());
-	}
-
-	public int getLifeRingSupportDurationPercent() {
+	public int getLifeRingCombatSummonHealthPercent() {
 		Item ringItem = getEquippedRingItem();
-		return ringItem == null ? 0 : EnchantingItemEffects.getLifeRingSupportDurationPercent(ringItem.getCatalogId());
+		return ringItem == null ? 0 : EnchantingItemEffects.getLifeRingCombatSummonHealthPercent(ringItem.getCatalogId());
 	}
 
-	public int getLifeAmuletSummonMaxDamageBonus() {
+	public int getLifeRingCombatSummonDamagePercent() {
+		Item ringItem = getEquippedRingItem();
+		return ringItem == null ? 0 : EnchantingItemEffects.getLifeRingCombatSummonDamagePercent(ringItem.getCatalogId());
+	}
+
+	public int getLifeNecklaceSupportDurationPercent() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getLifeNecklaceSupportDurationPercent(neckItem.getCatalogId());
+	}
+
+	public int getLifeNecklaceSupportUpkeepXpBonusPercent() {
+		Item neckItem = getEquippedNeckItem();
+		return neckItem == null ? 0 : EnchantingItemEffects.getLifeNecklaceSupportUpkeepXpBonusPercent(neckItem.getCatalogId());
+	}
+
+	public int getLifeBangleUtilityChargeBonus() {
 		Item wristItem = getEquippedWristItem();
-		return wristItem == null ? 0 : EnchantingItemEffects.getLifeAmuletSummonMaxDamageBonus(wristItem.getCatalogId());
+		return wristItem == null ? 0 : EnchantingItemEffects.getLifeBangleUtilityChargeBonus(wristItem.getCatalogId());
 	}
 
 	public int getBloodRingHitsBonus() {
