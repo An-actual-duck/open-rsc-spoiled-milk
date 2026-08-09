@@ -9,8 +9,8 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.constants.SpellDamages;
 import com.openrsc.server.constants.Spells;
 import com.openrsc.server.constants.custom.MyWorldItemId;
-import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.content.FoundryDragonSmeltingCost;
+import com.openrsc.server.content.RuneCostPreservation;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.database.impl.mysql.queries.logging.GenericLog;
@@ -168,7 +168,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			return null;
 		}
 		Set<Entry<Integer, Integer>> runesToConsume = new HashSet<>();
-		Item equippedStaff = getEquippedStaff(player);
 
 		for (Entry<Integer, Integer> e : spell.getRunesRequired()) {
 			int availableRunes = player.getCarriedItems().getInventory().countId(e.getKey());
@@ -180,7 +179,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				throw new SpellFailureException("Player does not have all the reagents you need for this spell");
 			}
 			int amountToConsume = e.getValue();
-			double preservationChance = getRuneNegationChance(player, equippedStaff, e.getKey());
+			double preservationChance = getRuneNegationChance(player, e.getKey());
 			if (preservationChance > 0.0D && DataConversions.getRandom().nextDouble() < preservationChance) {
 				amountToConsume = 0;
 			}
@@ -269,13 +268,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		handleMobCast(player, affectedMob, spellEnum, spell.getSpellType(), false);
 	}
 
-	private static double getRuneNegationChance(final Player player, final Item equippedStaff, final int runeId) {
-		double preservationChance = 0.0D;
-		preservationChance += player.getCarriedItems().getEquipment().getWoolRobeRunePreservationChance(runeId);
-		if (equippedStaff != null) {
-			preservationChance += EnchantingItemEffects.getStaffRunePreservationChance(equippedStaff.getCatalogId(), runeId);
-		}
-		return Math.min(1.0D, preservationChance);
+	private static double getRuneNegationChance(final Player player, final int runeId) {
+		return RuneCostPreservation.getChance(player, runeId);
 	}
 
 	private static Item getEquippedNecklace(Player player) {
@@ -412,24 +406,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			player.getSkills().getExperience(skillId) - experienceBefore,
 			ProjectileResourceLedger.ExperienceBasis.MAGIC_BASE_CAST);
 		resourceLedger.seal();
-	}
-
-	private static Item getEquippedStaff(final Player player) {
-		if (player.getConfig().WANT_EQUIPMENT_TAB) {
-			return player.getCarriedItems().getEquipment().get(Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex());
-		}
-		synchronized (player.getCarriedItems().getInventory().getItems()) {
-			for (Item item : player.getCarriedItems().getInventory().getItems()) {
-				if (!item.isWielded()) {
-					continue;
-				}
-				if (item.getDef(player.getWorld()).getWieldPosition() != Equipment.EquipmentSlot.SLOT_MAINHAND.getIndex()) {
-					continue;
-				}
-				return item;
-			}
-		}
-		return null;
 	}
 
 	// Check all prohibiting factors that would prevent spell from being cast
@@ -1305,6 +1281,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 
 		final Map<Integer, Integer> completeCost = new LinkedHashMap<>();
+		final Map<Integer, Integer> foundryFuelCost = new LinkedHashMap<>();
 		if (spellRunes != null) {
 			for (Entry<Integer, Integer> rune : spellRunes) {
 				addSuperheatCost(completeCost, rune.getKey(), rune.getValue());
@@ -1320,14 +1297,20 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				smithingCapeSavedCoal = true;
 			}
 			if (foundryDragonActive && reqOre.getId() == ItemId.COAL.id()) {
-				addSuperheatCost(completeCost, ItemId.FIRE_RUNE.id(),
+				addFoundryDragonSuperheatFuelCost(completeCost, foundryFuelCost, ItemId.FIRE_RUNE.id(),
 					FoundryDragonSmeltingCost.fireRunesForCoal(amount));
-				addSuperheatCost(completeCost, ItemId.NATURE_RUNE.id(),
+				addFoundryDragonSuperheatFuelCost(completeCost, foundryFuelCost, ItemId.NATURE_RUNE.id(),
 					FoundryDragonSmeltingCost.natureRunesForCoal(amount));
 			} else {
 				addSuperheatCost(completeCost, reqOre.getId(), amount);
 			}
 		}
+		if (!hasSuperheatCosts(player, completeCost)) {
+			player.playerServerMessage(MessageType.QUEST,
+				"You don't have all the reagents and smelting materials you need");
+			return;
+		}
+		applyFoundryDragonSuperheatRunePreservation(player, completeCost, foundryFuelCost);
 		Item[] completeCostItems = new Item[completeCost.size()];
 		int costIndex = 0;
 		for (Entry<Integer, Integer> cost : completeCost.entrySet()) {
@@ -1351,6 +1334,36 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		player.getCarriedItems().getInventory().add(bar);
 		player.incExp(Skill.SMITHING.id(), smeltingDef.getExp(), true);
 		finalizeSpellNoMessage(player, spell);
+	}
+
+	private static void addFoundryDragonSuperheatFuelCost(final Map<Integer, Integer> completeCost,
+			final Map<Integer, Integer> foundryFuelCost, final int runeId, final int fullAmount) {
+		addSuperheatCost(completeCost, runeId, fullAmount);
+		addSuperheatCost(foundryFuelCost, runeId, fullAmount);
+	}
+
+	private static boolean hasSuperheatCosts(final Player player, final Map<Integer, Integer> costs) {
+		for (Entry<Integer, Integer> cost : costs.entrySet()) {
+			if (player.getCarriedItems().getInventory().countId(cost.getKey()) < cost.getValue()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static void applyFoundryDragonSuperheatRunePreservation(final Player player,
+			final Map<Integer, Integer> completeCost, final Map<Integer, Integer> foundryFuelCost) {
+		for (Entry<Integer, Integer> fuel : foundryFuelCost.entrySet()) {
+			if (FoundryDragonSmeltingCost.costAfterRunePreservation(player, fuel.getKey(), fuel.getValue()) != 0) {
+				continue;
+			}
+			final int remainingCost = completeCost.get(fuel.getKey()) - fuel.getValue();
+			if (remainingCost > 0) {
+				completeCost.put(fuel.getKey(), remainingCost);
+			} else {
+				completeCost.remove(fuel.getKey());
+			}
+		}
 	}
 
 	private static void addSuperheatCost(Map<Integer, Integer> costs, int itemId, int amount) {

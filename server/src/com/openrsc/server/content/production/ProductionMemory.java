@@ -25,8 +25,11 @@ public final class ProductionMemory {
 	public static final int UI_FLAG_REMEMBER_SUPPORTED = 1;
 	public static final int UI_FLAG_REMEMBER_ENABLED = 2;
 	public static final int UI_FLAG_CAN_GO_BACK = 4;
+	public static final int UI_FLAG_KEEP_OPEN_SUPPORTED = 8;
+	public static final int UI_FLAG_KEEP_OPEN_ENABLED = 16;
 
 	static final String PREFERENCE_CACHE_KEY = "prod_remember_v1";
+	static final String KEEP_OPEN_PREFERENCE_CACHE_KEY = "prod_keep_open_v1";
 	static final String ROUTE_CACHE_PREFIX = "prod_route_v1_";
 	private static final int PLAYER_CACHE_KEY_LIMIT = 32;
 	private static final String NAVIGATION_ATTRIBUTE = "production_navigation_v1";
@@ -54,12 +57,12 @@ public final class ProductionMemory {
 			}
 			navigation.frames.add(new Frame(session, starter, session.getDefaultRecipeId()));
 			navigation.transitionRecipeId = -1;
-			return display(navigation, isEnabled(context.getCache()), navigation.restoring);
+			return display(navigation, isEnabled(context.getCache()), isKeepOpenEnabled(context.getCache()), navigation.restoring);
 		}
 
 		if (navigation != null && navigation.redisplaying) {
 			navigation.redisplaying = false;
-			return display(navigation, isEnabled(context.getCache()), false);
+			return display(navigation, isEnabled(context.getCache()), isKeepOpenEnabled(context.getCache()), false);
 		}
 
 		navigation = new Navigation(activityKey(session));
@@ -69,7 +72,7 @@ public final class ProductionMemory {
 			restoreRoute(context, callbackPlayer, navigation,
 				loadRoute(context.getCache(), navigation.activityKey));
 		}
-		return display(navigation, isEnabled(context.getCache()), false);
+		return display(navigation, isEnabled(context.getCache()), isKeepOpenEnabled(context.getCache()), false);
 	}
 
 	public static void beginStart(Player player, ProductionSession session, int itemId) {
@@ -143,6 +146,25 @@ public final class ProductionMemory {
 
 	public static void setEnabled(Player player, boolean enabled) {
 		player.getCache().store(PREFERENCE_CACHE_KEY, enabled);
+	}
+
+	public static boolean isKeepOpenEnabled(Player player) {
+		return isKeepOpenEnabled(player.getCache());
+	}
+
+	static boolean isKeepOpenEnabled(Cache cache) {
+		if (!cache.hasKey(KEEP_OPEN_PREFERENCE_CACHE_KEY)) {
+			return false;
+		}
+		try {
+			return cache.getBoolean(KEEP_OPEN_PREFERENCE_CACHE_KEY);
+		} catch (RuntimeException ignored) {
+			return false;
+		}
+	}
+
+	public static void setKeepOpenEnabled(Player player, boolean enabled) {
+		player.getCache().store(KEEP_OPEN_PREFERENCE_CACHE_KEY, enabled);
 	}
 
 	public static void clearNavigation(Player player) {
@@ -350,11 +372,14 @@ public final class ProductionMemory {
 		}
 	}
 
-	private static Display display(Navigation navigation, boolean enabled, boolean suppress) {
+	private static Display display(Navigation navigation, boolean enabled, boolean keepOpenEnabled, boolean suppress) {
 		Frame current = navigation.current();
-		int flags = UI_FLAG_REMEMBER_SUPPORTED;
+		int flags = UI_FLAG_REMEMBER_SUPPORTED | UI_FLAG_KEEP_OPEN_SUPPORTED;
 		if (enabled) {
 			flags |= UI_FLAG_REMEMBER_ENABLED;
+		}
+		if (keepOpenEnabled) {
+			flags |= UI_FLAG_KEEP_OPEN_ENABLED;
 		}
 		if (navigation.frames.size() > 1) {
 			flags |= UI_FLAG_CAN_GO_BACK;

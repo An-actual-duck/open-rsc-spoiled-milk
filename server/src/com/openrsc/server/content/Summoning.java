@@ -120,8 +120,8 @@ public final class Summoning {
 	private static final int PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP = 5;
 	private static final int PACK_RAT_UTILITY_MAX_DISPLAYED_XP = 150;
 	private static final int DELIVERY_CAMEL_UTILITY_DISPLAYED_XP = 225;
-	private static final int PACK_RAT_UTILITY_USES = 4;
-	private static final int DELIVERY_CAMEL_UTILITY_USES = 2;
+	private static final int PACK_RAT_UTILITY_USES = 1;
+	private static final int DELIVERY_CAMEL_UTILITY_USES = 1;
 	private static final int MIN_COMBAT_SUMMON_DISPLAYED_XP = 5;
 	private static final int COMBAT_SUMMON_CREDIT_TIMEOUT_MS = 120000;
 	private static final SummonProfile GIANT_SPIDER_PROFILE = combatProfile(
@@ -404,17 +404,7 @@ public final class Summoning {
 	}
 
 	private static boolean shouldPreserveRuneCost(final Player owner, final int runeId) {
-		final double chance = getRunePreservationChance(owner, runeId);
-		return chance > 0.0D && DataConversions.getRandom().nextDouble() < chance;
-	}
-
-	private static double getRunePreservationChance(final Player owner, final int runeId) {
-		double chance = owner.getCarriedItems().getEquipment().getWoolRobeRunePreservationChance(runeId);
-		final Item equippedStaff = getEquippedMainHand(owner);
-		if (equippedStaff != null) {
-			chance += EnchantingItemEffects.getStaffRunePreservationChance(equippedStaff.getCatalogId(), runeId);
-		}
-		return Math.min(1.0D, chance);
+		return RuneCostPreservation.shouldPreserve(owner, runeId);
 	}
 
 	private static Item getEquippedMainHand(final Player owner) {
@@ -833,10 +823,10 @@ public final class Summoning {
 		if (owner == null || amount <= 0 || !hasBlackUnicorn(owner) || !isPrayerDrop(itemId)) {
 			return false;
 		}
-		final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, amount);
-		final int xp = getPrayerDropExperience(itemId) * amount * 2;
+		final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, itemId, amount);
+		final int xp = OfferingExperience.getInternalExperience(itemId) * amount;
 		if (xp > 0) {
-			owner.incExp(Skill.PRAYER.id(), xp, true);
+			Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), xp);
 			Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), devotionBonusXp);
 			BlackUnicornOfferingHealing.apply(owner, itemId, amount);
 			owner.message("@gre@Your black unicorn sanctifies the " + getPrayerDropName(owner, itemId, amount) + ".");
@@ -879,10 +869,10 @@ public final class Summoning {
 		return inventory.add(item, true);
 	}
 
-	private static int recordAutoBuryDevotionBonus(final Player owner, final int amount) {
+	private static int recordAutoBuryDevotionBonus(final Player owner, final int itemId, final int amount) {
 		int bonusXp = 0;
 		for (int i = 0; i < amount; i++) {
-			bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner);
+			bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner, itemId);
 		}
 		return bonusXp;
 	}
@@ -1226,7 +1216,8 @@ public final class Summoning {
 		summon.setAttribute(SUMMON_TRAIT_KEY, profile.trait);
 		summon.setAttribute(SUMMON_PRAYER_BONUS_KEY, profile.prayerBonus);
 		if (profile.role == SummonRole.UTILITY) {
-			summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY, profile.utilityUses);
+			summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY,
+				profile.utilityUses + owner.getCarriedItems().getEquipment().getLifeBangleUtilityChargeBonus());
 		}
 		applySummonProfile(owner, summon, profile);
 		summon.getUpdateFlags().setCombatEffect(new CombatEffect(summon, getSummonArrivalEffect(profile)));
@@ -1311,7 +1302,7 @@ public final class Summoning {
 	private static int getScaledHits(final Player owner, final SummonProfile profile) {
 		int hits = scaleFromSummoningLevel(owner, profile, profile.baseHits, profile.hitsGrowthInterval);
 		if (profile.role == SummonRole.COMBAT) {
-			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSummonHealthPercent()
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingCombatSummonHealthPercent()
 				+ owner.getLifeRobeSummonBonusPercent();
 			if (bonusPercent > 0) {
 				hits += Math.max(1, (int) Math.ceil(hits * (bonusPercent / 100.0D)));
@@ -1323,7 +1314,10 @@ public final class Summoning {
 	private static int getScaledMaxHit(final Player owner, final SummonProfile profile) {
 		int maxHit = scaleFromSummoningLevel(owner, profile, profile.baseMaxHit, profile.maxHitGrowthInterval);
 		if (profile.role == SummonRole.COMBAT) {
-			maxHit += owner.getCarriedItems().getEquipment().getLifeAmuletSummonMaxDamageBonus();
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingCombatSummonDamagePercent();
+			if (bonusPercent > 0) {
+				maxHit += Math.max(1, (int) Math.ceil(maxHit * (bonusPercent / 100.0D)));
+			}
 		}
 		return maxHit;
 	}
@@ -1994,9 +1988,15 @@ public final class Summoning {
 		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), amount), false) != -1;
 		if (consumed) {
 			ActionSender.sendInventory(owner);
-			awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);
+			awardDisplayedSummoningExperience(owner, getSupportUpkeepDisplayedExperience(owner));
 		}
 		return consumed;
+	}
+
+	private static int getSupportUpkeepDisplayedExperience(final Player owner) {
+		final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSupportUpkeepXpBonusPercent();
+		return SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP
+			+ (int) Math.ceil(SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP * (bonusPercent / 100.0D));
 	}
 
 	private static boolean hasBlackUnicorn(final Player player) {
@@ -2025,27 +2025,6 @@ public final class Summoning {
 		}
 	}
 
-	private static int getPrayerDropExperience(final int itemId) {
-		final ItemId item = ItemId.getById(itemId);
-		if (item == null) {
-			return 0;
-		}
-		switch (item) {
-			case BONES:
-			case ASHES:
-				return 15;
-			case DEMON_ASH:
-				return 80;
-			case BAT_BONES:
-				return 18;
-			case BIG_BONES:
-				return 50;
-			case DRAGON_BONES:
-				return 240;
-			default:
-				return 0;
-		}
-	}
 
 	private static String getPrayerDropName(final Player owner, final int itemId, final int amount) {
 		final ItemDefinition def = owner.getWorld().getServer().getEntityHandler().getItemDef(itemId);
@@ -2065,7 +2044,7 @@ public final class Summoning {
 	private static int getDurationTicks(final Player owner, final SummonProfile profile) {
 		int durationSeconds = profile.durationTicks;
 		if (profile.role == SummonRole.SUPPORT) {
-			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeRingSupportDurationPercent()
+			final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSupportDurationPercent()
 				+ owner.getLifeRobeSummonBonusPercent();
 			if (bonusPercent > 0) {
 				durationSeconds += Math.max(1, (int) Math.ceil(durationSeconds * (bonusPercent / 100.0D)));

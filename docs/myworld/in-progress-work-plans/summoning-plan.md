@@ -205,12 +205,14 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 - level: `33`
 - role: utility
 - cost: `1 Life rune`, `2 Law runes`, `1 Body rune`, `1 Nature rune`
-- services: `4`
+- services: `1` base, plus `+1/+2/+3/+5/+8` from the equipped Life Utility
+  Command Bangle
 - effect: each successful service converts all matching selected unnoted
   inventory items into certs
 - service XP: `75 + 5` per converted item, capped at `150` displayed XP
-- maximum: `600` displayed service XP, or `745` including the `145` cast XP
-  (`1,800` and `2,235` respectively at the normal `3x` My World rate)
+- maximum with the Dragonstone Utility Command Bangle: `1,350` displayed
+  service XP across `9` services, or `1,495` including the `145` cast XP
+  (`4,050` and `4,485` respectively at the normal `3x` My World rate)
 
 ### Bound Battleaxe
 
@@ -269,12 +271,14 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 - level: `58`
 - role: utility
 - cost: `1 Life rune`, `2 Body runes`, `2 Law runes`, `2 Nature runes`
-- services: `2`
+- services: `1` base, plus `+1/+2/+3/+5/+8` from the equipped Life Utility
+  Command Bangle
 - effect: each successful service deposits one selected inventory slot or stack
   into the owner's bank
 - service XP: `225` displayed XP
-- maximum: `450` displayed service XP, or `785` including the `335` cast XP
-  (`1,350` and `2,355` respectively at the normal `3x` My World rate)
+- maximum with the Dragonstone Utility Command Bangle: `2,025` displayed
+  service XP across `9` services, or `2,360` including the `335` cast XP
+  (`6,075` and `7,080` respectively at the normal `3x` My World rate)
 
 ### Foundry Dragon
 
@@ -283,6 +287,10 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 - cast XP: `365`
 - cost: `2 Life runes`, `5 Fire runes`, `1 Nature rune`, `1 Soul rune`,
   `1 Dragon bones`
+- replacement fuel: Fire/Nature robe and matching-staff preservation applies
+  independently to the Foundry Dragon's Fire/Nature fuel. The complete
+  unmitigated fuel must still be in inventory; a full matching robe set plus
+  staff preserves that rune type at `100%`.
 - upkeep: standard support-summon Life-rune upkeep
 - effect: while its active summon NPC remains owned by the player, every coal
   in a bar-smelting recipe is replaced by `5 Fire runes` and `1 Nature rune`
@@ -555,11 +563,12 @@ the set is broken.
 - Keep new summon additions narrow and testable; avoid adding broad summon
   content before the first catalog has enough field-test data.
 
-The charged utility model deliberately preserves the existing XP paid per
-successful service. This raises the maximum service XP per cast to four times
-the old Pack Rat maximum and twice the old Delivery Camel maximum. That is a
-balance concern to field-test; this change does not silently introduce a new XP
-formula or reduce the established reward.
+The charged utility model deliberately preserves XP paid per successful
+service. Utility summons now begin with one charge, while the Life Utility
+Command Bangle adds `1/2/3/5/8` charges. At Dragonstone tier this enables nine
+successful services, so the resulting maximum XP remains a balance concern to
+field-test; this change does not silently introduce a new XP formula or reduce
+the established reward.
 
 ## Open Design Decisions
 

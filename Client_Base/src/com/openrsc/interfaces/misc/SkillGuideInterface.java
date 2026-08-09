@@ -1252,12 +1252,12 @@ public final class SkillGuideInterface {
 			addSummonGuide(8, "14", "Tank - absorbs 60% of incoming damage");
 			addSummonGuide(0, "20", "Divine - grants +10 prayer points");
 			addSummonGuide(43, "26", "Vampirism - heals owner for damage dealt");
-			addSummonGuide(241, "33", "Hoarder - 4 uses; certs matching selected items");
+			addSummonGuide(241, "33", "Hoarder - 1 base use; certs matching selected items");
 			addSummonGuide(295, "39", "Relentless - 15% chance for bonus damage");
 			addSummonGuide(296, "45", "Reverent - double XP, +50% Devotion, and full-set healing from auto-offerings");
 			addSummonGuide(53, "51", "Fear - 20% chance to stop enemy attacks");
 			addSummonGuide(748, "55", "Watchful - one enemy; suppresses area attacks");
-			addSummonGuide(13, "58", "Beast of Burden - 2 uses; banks one stack");
+			addSummonGuide(13, "58", "Beast of Burden - 1 base use; banks one stack");
 			addSummonGuide(845, "61", "Foundry - each coal costs 5 fire and 1 nature rune");
 			addSummonGuide(298, "64", "Spell Echo - 15% chance for magic bonus damage");
 			addSummonGuide(184, "70", "Hellfire - 10% chance for Hell's Fire damage");
@@ -1268,7 +1268,7 @@ public final class SkillGuideInterface {
 			addSummonGuide(0, "", "Support upkeep rises every 3 minutes active");
 			addSummonGuide(0, "", "Upkeep recovers 1 step per minute inactive");
 			addSummonGuide(241, "", "Utility uses are spent only on successful tasks");
-			addSummonGuide(13, "", "Pack Rat has 4 uses; Delivery Camel has 2");
+			addSummonGuide(13, "", "Utility Bangels add +1, +2, +3, +5, or +8 uses");
 			addSummonGuide(114, "", "Only one manual summon can be active");
 			addSummonGuide(53, "", "Summoning has a 5 second interruptible charge");
 		}
@@ -1467,6 +1467,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(3138, "400", "Wool robe tops can be blessed"));
 		} else if (curTab == 4) {
 			skillMenuEntries.add(new SkillMenuEntry("", "Bury bones or scatter ashes to make offerings"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Offerings give 10/12/13/14/16 Worship XP by tier"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Every 10 offerings gives +1 devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Matching blessed symbols give 2x devotion from offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Mourning Unicorn and its full hide set each add 50%"));

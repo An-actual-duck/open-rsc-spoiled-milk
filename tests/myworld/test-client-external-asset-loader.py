@@ -359,16 +359,19 @@ public final class ClientExternalAssetLoaderFixture {
 		File source = root.resolve(
 			"dev/myworld/assets/sprites/npcs/foundry-dragon/foundry-dragon-sprite-sheet.png")
 			.toFile();
-		Entry entry = loader.loadExternalNpcDirectionSheet(source, "foundrydragon", 6, 3);
+		int[] widths = {228, 203, 263, 215, 218, 338};
+		Entry entry = loader.loadExternalNpcDirectionSheet(source, "foundrydragon", widths, 3);
 		assertTrue(entry != null, "tracked Foundry Dragon sheet decodes");
 		assertEquals(18, entry.getFrames().length, "tracked Foundry Dragon frame count");
 		for (int frame = 0; frame < entry.getFrames().length; frame++) {
-			int expectedWidth = frame >= 15 ? 245 : 244;
+			int expectedWidth = widths[frame / 3];
 			assertSpriteMetadata(entry.getFrames()[frame].getSprite(), expectedWidth, 163,
 				"tracked Foundry Dragon native frame " + frame);
 			assertTrue(nonzeroPixels(entry.getFrames()[frame].getSprite()) > 0,
 				"tracked Foundry Dragon frame contains artwork " + frame);
 		}
+		assertEquals(0, count(entry.getFrames()[0].getSprite(), 0x6bee36),
+			"tracked Foundry Dragon sheet must not include green guide marks");
 	}
 
 	private static void packagedJarInventoryAndReads(Path root) throws Exception {

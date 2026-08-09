@@ -34,12 +34,12 @@ def main() -> None:
     )
     require(
         summoning,
-        "final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, amount);",
+        "final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, itemId, amount);",
         "Black unicorn auto-offerings should calculate devotion bonus XP",
     )
     require(
         summoning,
-        "bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner);",
+        "bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner, itemId);",
         "Black unicorn auto-offerings should advance devotion with the unicorn bonus",
     )
     require(
@@ -54,8 +54,8 @@ def main() -> None:
     )
     require(
         summoning,
-        "final int xp = getPrayerDropExperience(itemId) * amount * 2;",
-        "Black unicorn auto-offerings should keep normal Worship XP separate",
+        "final int xp = OfferingExperience.getInternalExperience(itemId) * amount;",
+        "Black unicorn auto-offerings should use the same normal Worship XP table",
     )
     require(
         summoning,
@@ -69,7 +69,7 @@ def main() -> None:
     )
     require(
         summoning,
-        "recordAutoBuryDevotionBonus(owner, amount)",
+        "recordAutoBuryDevotionBonus(owner, itemId, amount)",
         "Black unicorn auto-offerings should record devotion for the whole stack",
     )
     require(

@@ -5691,7 +5691,8 @@ public class EntityHandler {
 		final int[] lawBankCharges = {100, 200, 300, 500, 1000};
 
 		addGatheringAmuletLine(1593, tiers, "Woodcutter's", "Boosts woodcutting log yield by %d%%.", amuletPrices, gemMasks);
-		addGatheringAmuletLine(1598, tiers, "Angler's", "Boosts fishing catch yield by %d%%.", amuletPrices, gemMasks);
+		addExplicitGatheringAmuletLine(1598, tiers, "Angler's", "Has a %d%% chance to catch the best eligible fish.",
+			new int[] {10, 20, 30, 60, 100}, amuletPrices, gemMasks);
 		addGatheringAmuletLine(1603, tiers, "Harvester's", "Boosts harvesting produce yield by %d%%.", amuletPrices, gemMasks);
 		addGatheringAmuletLine(1608, tiers, "Miner's", "Boosts mining ore yield by %d%%.", amuletPrices, gemMasks);
 
@@ -5953,7 +5954,12 @@ public class EntityHandler {
 
 	private static void addGatheringAmuletLine(int startId, String[] tiers, String amuletName,
 		String descriptionFormat, int[] prices, int[] pictureMasks) {
-		final int[] bonuses = {10, 20, 30, 50, 100};
+		addExplicitGatheringAmuletLine(startId, tiers, amuletName, descriptionFormat,
+			new int[] {10, 20, 30, 50, 100}, prices, pictureMasks);
+	}
+
+	private static void addExplicitGatheringAmuletLine(int startId, String[] tiers, String amuletName,
+		String descriptionFormat, int[] bonuses, int[] prices, int[] pictureMasks) {
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
 				new ItemDef(tiers[i] + " " + amuletName + " Bangle",
@@ -6383,10 +6389,12 @@ public class EntityHandler {
 	}
 
 	private static void addLifeRingLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] healthBonuses = {10, 20, 30, 50, 100};
+		final int[] damageBonuses = {3, 6, 9, 15, 25};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Ring of Endurance",
-					"Extends support summons " + ((i + 1) * 20) + "% longer.",
+				new ItemDef(tiers[i] + " Ring of Combat Command",
+					"Raises combat summon health by " + healthBonuses[i] + "% and damage by " + damageBonuses[i] + "%.",
 					"",
 					prices[i],
 					123,
@@ -6403,10 +6411,12 @@ public class EntityHandler {
 	}
 
 	private static void addLifeNecklaceLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] durationBonuses = {10, 20, 30, 50, 100};
+		final int[] upkeepXpBonuses = {50, 100, 150, 250, 400};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Necklace of Vigor",
-					"Raises combat summon health by " + ((i + 1) * 10) + "%.",
+				new ItemDef(tiers[i] + " Necklace of Support Command",
+					"Extends support upkeep by " + durationBonuses[i] + "%; Life-rune upkeep grants +" + upkeepXpBonuses[i] + "% Summoning XP.",
 					"",
 					prices[i],
 					57,
@@ -6423,10 +6433,11 @@ public class EntityHandler {
 	}
 
 	private static void addLifeAmuletLine(int startId, String[] tiers, int[] prices, int[] pictureMasks) {
+		final int[] chargeBonuses = {1, 2, 3, 5, 8};
 		for (int i = 0; i < tiers.length; i++) {
 			setCustomItemDefinition(startId + i,
-				new ItemDef(tiers[i] + " Bangle of Command",
-					"Raises combat summon max damage by +" + (i + 1) + ".",
+				new ItemDef(tiers[i] + " Bangle of Utility Command",
+					"Adds +" + chargeBonuses[i] + " utility summon charges.",
 					"",
 					prices[i],
 					125,

@@ -2,8 +2,8 @@ package com.openrsc.server.plugins.authentic.skills.fishing;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.FishingBestCatchSelector;
 import com.openrsc.server.constants.Skills;
-import com.openrsc.server.content.EnchantingItemEffects;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.ObjectFishDef;
@@ -374,13 +374,23 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 	private FishEntry rollMyWorldFish(Player player, List<FishEntry> eligibleFish, int rodTier) {
 		int effectiveLevel = Formulae.calcGatheringEffectiveLevel(player.getSkills().getLevel(Skill.FISHING.id()), rodTier);
 		int[] weights = new int[eligibleFish.size()];
+		int[] tiers = new int[eligibleFish.size()];
 		int totalWeight = 0;
 		for (int index = 0; index < eligibleFish.size(); index++) {
 			FishEntry fish = eligibleFish.get(index);
 			int levelWeight = Math.max(1, effectiveLevel - fish.legacyLevel + 10);
 			int tierWeight = fish.tier * fish.tier;
-			int weight = levelWeight * tierWeight;
-			weights[index] = weight;
+			weights[index] = levelWeight * tierWeight;
+			tiers[index] = fish.tier;
+		}
+		final int bestCatchChance = player.getCarriedItems().getEquipment()
+			.getAnglerBangleBestCatchChanceBonusPercent();
+		if (FishingBestCatchSelector.shouldSelectBestCatch(bestCatchChance, DataConversions.random(1, 100))) {
+			final int bestCatchCount = FishingBestCatchSelector.countHighestTierEntries(tiers);
+			return eligibleFish.get(FishingBestCatchSelector.selectHighestTierIndex(tiers,
+				DataConversions.random(0, bestCatchCount - 1)));
+		}
+		for (int weight : weights) {
 			totalWeight += weight;
 		}
 		int roll = DataConversions.random(1, totalWeight);
@@ -565,11 +575,10 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private void awardFishingCatch(Player player, GameObject object, Item fish, boolean bankWithLawRing) {
-		final int rewardQuantity = 1 + addGatheringAmuletBonusFish(player, fish.getCatalogId(), 1);
 		final int bankedQuantity = bankWithLawRing
-			? player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(fish.getCatalogId(), rewardQuantity))
+			? player.getCarriedItems().getEquipment().bankSkillingDropWithLawRing(new Item(fish.getCatalogId(), 1))
 			: 0;
-		final int remainingQuantity = rewardQuantity - bankedQuantity;
+		final int remainingQuantity = 1 - bankedQuantity;
 		final int storedQuantity = Math.min(remainingQuantity, player.getCarriedItems().getInventory().getFreeSlots());
 		if (storedQuantity > 0) {
 			give(player, fish.getCatalogId(), storedQuantity);
@@ -579,16 +588,6 @@ public class Fishing implements OpLocTrigger, UseLocTrigger {
 			dropOverflow(player, object, fish.getCatalogId(), overflowQuantity);
 			player.playerServerMessage(MessageType.QUEST, "Any excess falls to the ground because you have no room");
 		}
-	}
-
-	private int addGatheringAmuletBonusFish(Player player, int fishId, int fishCount) {
-		final int bonusFish = EnchantingItemEffects.consumeGatheringAmuletBonusItems(player,
-			Skill.FISHING.id(), fishId, fishCount);
-		if (bonusFish > 0) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your angler's Bangle produces "
-				+ bonusFish + " extra catch" + (bonusFish == 1 ? "." : "es."));
-		}
-		return bonusFish;
 	}
 
 	private FishingLocation getMyWorldFishingLocation(GameObject object) {

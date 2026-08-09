@@ -1,7 +1,8 @@
 # Production UI Remember Last Input
 
 Status: implementation and focused automated validation complete; live visual
-acceptance pending
+acceptance pending. The companion Keep open preference is implemented with the
+same account-scoped production UI protocol.
 
 ## Goal
 
@@ -33,6 +34,11 @@ repeating intermediate category choices.
 - Nested eligible production screens expose a server-driven `Back` button.
 - Teleport destinations and both Rangers Guild redemption screens neither show
   the setting nor participate in route memory.
+- `Keep open` is a separate, off-by-default account preference. When enabled,
+  a successfully started final production batch keeps its existing screen open
+  after the start request so the player can choose a different recipe when the
+  batch is finished. A second start while busy is refused; the close button
+  still clears the session immediately.
 
 ## Implementation map
 

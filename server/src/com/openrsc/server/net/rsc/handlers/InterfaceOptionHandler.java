@@ -131,6 +131,9 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			case PRODUCTION_REMEMBER_TOGGLE:
 				handleProductionRememberToggle(player, payload);
 				break;
+			case PRODUCTION_KEEP_OPEN_TOGGLE:
+				handleProductionKeepOpenToggle(player, payload);
+				break;
 			case PRODUCTION_BACK:
 				handleProductionBack(player);
 				break;
@@ -224,6 +227,10 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			player.message("That production option is no longer available");
 			return;
 		}
+		if (player.isBusy()) {
+			player.message("Finish your current production first");
+			return;
+		}
 		ProductionStarter starter = player.getAttribute("production_starter", null);
 		if (starter == null) {
 			player.message("That production option is no longer available");
@@ -284,9 +291,9 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 					return 1;
 				}
 
-				if (started) {
+				if (started && !ProductionMemory.isKeepOpenEnabled(player)) {
 					clearProductionState(player, session);
-				} else {
+				} else if (!started) {
 					player.message("Unable to start production");
 				}
 				return started ? 1 : 0;
@@ -317,6 +324,18 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			return;
 		}
 		ProductionMemory.setEnabled(player, payload.value == 1);
+	}
+
+	private void handleProductionKeepOpenToggle(Player player, OptionsStruct payload) {
+		ProductionSession session = player.getAttribute("production_session", null);
+		if (!ProductionMemory.isRememberable(session)) {
+			return;
+		}
+		if (payload.value != 0 && payload.value != 1) {
+			player.setSuspiciousPlayer(true, "invalid production keep-open preference");
+			return;
+		}
+		ProductionMemory.setKeepOpenEnabled(player, payload.value == 1);
 	}
 
 	private void handleProductionBack(Player player) {

@@ -78,7 +78,7 @@ Implementation status:
 - Death: Ring of Reckoning; Necklace of Reaping; Amulet of Ruin.
 - Blood: Ring of Vitality; Necklace of Leach; Amulet of Siphoning.
 - Soul: Ring of Lifesaving; Necklace of Preservation; Amulet of Renewal.
-- Life: Ring of Endurance; Necklace of Vigor; Amulet of Command.
+- Life: Ring of Combat Command; Necklace of Support Command; Bangle of Utility Command.
 
 ### Air
 
@@ -122,6 +122,16 @@ Amulet:
 
 - Flat mixed defense bonus.
 - `+2` melee, ranged, and magic defense per tier.
+
+Bangel:
+
+- Angler's Bangle improves selection of the highest-tier eligible catch at a
+  multi-fish My World fishing spot.
+- Tiers 1–5 have a direct `10%`, `20%`, `30%`, `60%`, and `100%` chance to
+  select the best eligible catch. Dragonstone therefore guarantees the best
+  eligible fish.
+- It does not add catch quantity or Fishing XP, and a spot with only one
+  eligible tier has no alternative outcome to favor.
 
 ### Earth
 

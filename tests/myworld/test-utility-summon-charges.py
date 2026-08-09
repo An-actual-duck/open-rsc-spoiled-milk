@@ -32,8 +32,8 @@ def main() -> None:
     plan = PLAN.read_text(encoding="utf-8")
     guide = GUIDE.read_text(encoding="utf-8")
 
-    require(summoning, "PACK_RAT_UTILITY_USES = 4", "Pack Rat service count")
-    require(summoning, "DELIVERY_CAMEL_UTILITY_USES = 2", "Delivery Camel service count")
+    require(summoning, "PACK_RAT_UTILITY_USES = 1", "Pack Rat base service count")
+    require(summoning, "DELIVERY_CAMEL_UTILITY_USES = 1", "Delivery Camel base service count")
     require(
         summoning,
         'SUMMON_UTILITY_USES_REMAINING_KEY = "myworld_summon_utility_uses_remaining"',
@@ -55,8 +55,8 @@ def main() -> None:
     spawn = between(summoning, "private static void spawnManualSummon", "private static int getSummonArrivalEffect")
     require(
         spawn,
-        "summon.setAttribute(SUMMON_UTILITY_USES_REMAINING_KEY, profile.utilityUses);",
-        "service initialization on the active summon",
+        "profile.utilityUses + owner.getCarriedItems().getEquipment().getLifeBangleUtilityChargeBonus()",
+        "Bangle-adjusted service initialization on the active summon",
     )
 
     rat_menu = between(summoning, "public static boolean handleRatMenuReply", "public static boolean handleRatItemSelection")
@@ -93,15 +93,15 @@ def main() -> None:
     for key in ("RAT_AWAITING_ITEM_KEY", "RAT_NPC_KEY", "CAMEL_AWAITING_ITEM_KEY", "CAMEL_NPC_KEY"):
         require(cleanup, f"removeAttribute({key})", f"stale selection cleanup for {key}")
 
-    require(plan, "maximum: `600` displayed service XP", "Pack Rat maximum service XP")
-    require(plan, "or `745` including the `145` cast XP", "Pack Rat total summon XP")
-    require(plan, "maximum: `450` displayed service XP", "Delivery Camel maximum service XP")
-    require(plan, "or `785` including the `335` cast XP", "Delivery Camel total summon XP")
-    require(plan, "balance concern to field-test", "utility XP balance warning")
-    require(guide, "Hoarder - 4 uses; certs matching selected items", "Pack Rat guide service count")
-    require(guide, "Beast of Burden - 2 uses; banks one stack", "Delivery Camel guide service count")
+    require(plan, "maximum with the Dragonstone Utility Command Bangle: `1,350` displayed", "Pack Rat maximum service XP")
+    require(plan, "or `1,495` including the `145` cast XP", "Pack Rat total summon XP")
+    require(plan, "maximum with the Dragonstone Utility Command Bangle: `2,025` displayed", "Delivery Camel maximum service XP")
+    require(plan, "or `2,360` including the `335` cast XP", "Delivery Camel total summon XP")
+    require(plan, "maximum XP remains a balance concern to\nfield-test", "utility XP balance warning")
+    require(guide, "Hoarder - 1 base use; certs matching selected items", "Pack Rat base service count")
+    require(guide, "Beast of Burden - 1 base use; banks one stack", "Delivery Camel base service count")
     require(guide, "Utility uses are spent only on successful tasks", "utility success-only guide rule")
-    require(guide, "Pack Rat has 4 uses; Delivery Camel has 2", "utility guide service totals")
+    require(guide, "Utility Bangels add +1, +2, +3, +5, or +8 uses", "utility Bangle guide rule")
     if "Utility summons time out after 1 minute" in guide:
         fail("Utility guide must not advertise the retired timeout")
 

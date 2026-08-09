@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DEVOTION = ROOT / "server/src/com/openrsc/server/content/Devotion.java"
 BONES = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java"
+OFFERING_EXPERIENCE = ROOT / "server/src/com/openrsc/server/content/OfferingExperience.java"
 GUIDE = ROOT / "Client_Base/src/com/openrsc/interfaces/misc/SkillGuideInterface.java"
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 PACKET_HANDLER = ROOT / "Client_Base/src/orsc/PacketHandler.java"
@@ -19,6 +20,7 @@ def require(condition: bool, message: str) -> None:
 def main() -> None:
     devotion = DEVOTION.read_text(encoding="utf-8")
     bones = BONES.read_text(encoding="utf-8")
+    offering_experience = OFFERING_EXPERIENCE.read_text(encoding="utf-8")
     guide = GUIDE.read_text(encoding="utf-8")
     client = CLIENT.read_text(encoding="utf-8")
     packet_handler = PACKET_HANDLER.read_text(encoding="utf-8")
@@ -73,16 +75,25 @@ def main() -> None:
     require("player.getPrayerBook()" in devotion, "devotion should track against the active worshipped god")
     require("safeGodLine.name().toLowerCase()" in devotion, "devotion cache keys should be per god")
     require("recordOfferingAndGetPrayerXpBonus" in bones, "bones and ashes should record devotion offerings")
-    require("return bonusXp * 4;" in devotion,
-            "devotion bonus should convert displayed XP to internal quarter-XP units")
+    require("OfferingExperience.scaleDisplayedExperience(bonusXp, offeringItemId)" in devotion
+            and "OfferingExperience.INTERNAL_XP_UNITS_PER_XP" in devotion,
+            "devotion bonus should use the matching offering multiplier before quarter-XP conversion")
     require("awardOfferingPrayerXpBonus" in devotion,
             "devotion bonus should have a flat unmodified XP award helper")
     require("player.getFatigue() >= player.MAX_FATIGUE" in devotion,
             "flat devotion XP should respect max fatigue")
+    require("OfferingExperience.getInternalExperience(item.getCatalogId())" in bones,
+            "manual offerings should use the shared fixed-point base XP table")
+    require("BASE_XP = 10" in offering_experience and "return 160;" in offering_experience,
+            "offering XP should remain capped at the Dragon bones 1.6x tier")
+    require("Devotion.recordOfferingAndGetPrayerXpBonus(player, item.getCatalogId())" in bones,
+            "manual offerings should apply their own multiplier to the Devotion bonus")
     require("Devotion.awardOfferingPrayerXpBonus(player, praySkillId, devotionBonusXp);" in bones,
             "devotion bonus should be awarded separately from normal Worship XP modifiers")
     require("Every 10 offerings gives +1 devotion" in guide,
             "Worship skill guide should explain devotion levels")
+    require("Offerings give 10/12/13/14/16 Worship XP by tier" in guide,
+            "Worship skill guide should explain the tiered offering XP table")
     require("Devotion ranges from -1000 to 1000" in guide,
             "Worship skill guide should explain negative devotion range")
     require("Matching blessed symbols give 2x devotion from offerings" in guide,

@@ -237,6 +237,7 @@ CHAOS_AMULET_BONUS_RUNE_WEIGHTS = parse_int_matrix("CHAOS_AMULET_BONUS_RUNE_WEIG
 LAW_BANKING_CHARGES = parse_int_array("LAW_BANKING_CHARGES")
 NATURE_ALCHEMY_AMULET_CHARGES = parse_int_array("NATURE_ALCHEMY_AMULET_CHARGES")
 GATHERING_AMULET_YIELD_BONUSES = parse_int_array("GATHERING_AMULET_YIELD_BONUSES")
+ANGLER_BANGLE_BEST_CATCH_CHANCES = parse_int_array("ANGLER_BANGLE_BEST_CATCH_CHANCES")
 
 
 def tier(item_id: int, line: list[int]) -> int:
@@ -405,6 +406,8 @@ def ensure_formula_source_matches_design() -> None:
             "Nature alchemy amulets should use the requested charge ladder")
     require(GATHERING_AMULET_YIELD_BONUSES == [10, 20, 30, 50, 100],
             "Gathering amulets should use the requested non-linear yield curve")
+    require(ANGLER_BANGLE_BEST_CATCH_CHANCES == [10, 20, 30, 60, 100],
+            "Angler Bangles should directly select the best catch at 10/20/30/60/100%")
 
     require(SOUL_RING_SURVIVAL_CHANCES == [0.10, 0.20, 0.30, 0.50, 0.90],
             "Soul rings should use the requested lifesaving survival ladder")
@@ -423,9 +426,16 @@ def ensure_formula_source_matches_design() -> None:
     require(SOUL_AMULET_BURST_MAX_HEAL == [2, 3, 4, 6, 10],
             "Soul amulets should use the requested Burst maximum healing ladder")
 
-    require(tier(3105, LIFE_NECKLACES) * 10 == 50, "Dragonstone life necklace should add 50% summon health")
-    require(tier_for(3100, SPECIAL_RINGS, LIFE) * 20 == 100, "Dragonstone life ring should double support-summon duration")
-    require(tier_for(3110, SPECIAL_AMULETS, LIFE) == 5, "Dragonstone life amulet should add +5 summon max damage")
+    require([10, 20, 30, 50, 100] == parse_int_array("LIFE_COMBAT_HEALTH_BONUS_PERCENTS"),
+            "Life combat summon health should use the requested tier ladder")
+    require([3, 6, 9, 15, 25] == parse_int_array("LIFE_COMBAT_DAMAGE_BONUS_PERCENTS"),
+            "Life combat summon damage should use the requested tier ladder")
+    require([10, 20, 30, 50, 100] == parse_int_array("LIFE_SUPPORT_DURATION_BONUS_PERCENTS"),
+            "Life support duration should use the requested tier ladder")
+    require([50, 100, 150, 250, 400] == parse_int_array("LIFE_SUPPORT_UPKEEP_XP_BONUS_PERCENTS"),
+            "Life support upkeep XP should use the requested tier ladder")
+    require([1, 2, 3, 5, 8] == parse_int_array("LIFE_UTILITY_CHARGE_BONUSES"),
+            "Life utility charges should use the requested tier ladder")
 
 
 def ensure_leach_calculation_behavior() -> None:
@@ -702,7 +712,6 @@ def ensure_runtime_paths_are_wired() -> None:
         "itemCount * bonusPercent * GATHERING_AMULET_YIELD_POINTS_PER_PERCENT",
         "totalPoints / GATHERING_AMULET_YIELD_POINTS_PER_ITEM",
         "Skill.WOODCUTTING.id()",
-        "Skill.FISHING.id()",
         "Skill.HARVESTING.id()",
         "Skill.MINING.id()",
     ):
@@ -719,8 +728,9 @@ def ensure_runtime_paths_are_wired() -> None:
             "bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), rewardQuantity))",
         ), "mining"),
         (fishing, (
-            "final int rewardQuantity = 1 + addGatheringAmuletBonusFish(player, fish.getCatalogId(), 1);",
-            "Skill.FISHING.id(), fishId, fishCount",
+            "FishingBestCatchSelector.shouldSelectBestCatch(bestCatchChance, DataConversions.random(1, 100))",
+            "FishingBestCatchSelector.selectHighestTierIndex(tiers,",
+            "getAnglerBangleBestCatchChanceBonusPercent()",
             "awardFishingCatch(player, object, fish, true);",
         ), "fishing"),
         (harvesting, (
@@ -885,12 +895,16 @@ def ensure_runtime_paths_are_wired() -> None:
             and "owner.applySoulAmuletBurst(this);" in npc,
             "Soul amulet should charge persistently from NPC kills and fire Renewal healing")
 
-    require("getLifeNecklaceSummonHealthPercent" in summoning,
-            "Life necklace should increase combat summon health")
-    require("getLifeRingSupportDurationPercent" in summoning,
-            "Life ring should extend support summon duration")
-    require("getLifeAmuletSummonMaxDamageBonus" in summoning,
-            "Life amulet should increase combat summon max damage")
+    require("getLifeRingCombatSummonHealthPercent" in summoning,
+            "Life ring should increase combat summon health")
+    require("getLifeRingCombatSummonDamagePercent" in summoning,
+            "Life ring should increase combat summon damage")
+    require("getLifeNecklaceSupportDurationPercent" in summoning,
+            "Life necklace should extend support duration")
+    require("getLifeNecklaceSupportUpkeepXpBonusPercent" in summoning,
+            "Life necklace should increase support upkeep XP")
+    require("getLifeBangleUtilityChargeBonus" in summoning,
+            "Life Bangle should add utility charges")
 
     chain_paths = (
         (

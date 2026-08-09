@@ -13999,49 +13999,69 @@
     },
     {
       "id": 3096,
+      "name": "Sapphire Ring of Combat Command",
+      "description": "Raises combat summon health by 10% and damage by 3%.",
       "basePrice": 1800
     },
     {
       "id": 3097,
+      "name": "Emerald Ring of Combat Command",
+      "description": "Raises combat summon health by 20% and damage by 6%.",
       "basePrice": 3000
     },
     {
       "id": 3098,
+      "name": "Ruby Ring of Combat Command",
+      "description": "Raises combat summon health by 30% and damage by 9%.",
       "basePrice": 6000
     },
     {
       "id": 3099,
+      "name": "Diamond Ring of Combat Command",
+      "description": "Raises combat summon health by 50% and damage by 15%.",
       "basePrice": 12000
     },
     {
       "id": 3100,
+      "name": "Dragonstone Ring of Combat Command",
+      "description": "Raises combat summon health by 100% and damage by 25%.",
       "basePrice": 35000
     },
     {
       "id": 3101,
+      "name": "Sapphire Necklace of Support Command",
+      "description": "Extends support upkeep by 10%; Life-rune upkeep grants +50% Summoning XP.",
       "basePrice": 2000
     },
     {
       "id": 3102,
+      "name": "Emerald Necklace of Support Command",
+      "description": "Extends support upkeep by 20%; Life-rune upkeep grants +100% Summoning XP.",
       "basePrice": 3300
     },
     {
       "id": 3103,
+      "name": "Ruby Necklace of Support Command",
+      "description": "Extends support upkeep by 30%; Life-rune upkeep grants +150% Summoning XP.",
       "basePrice": 6400
     },
     {
       "id": 3104,
+      "name": "Diamond Necklace of Support Command",
+      "description": "Extends support upkeep by 50%; Life-rune upkeep grants +250% Summoning XP.",
       "basePrice": 13000
     },
     {
       "id": 3105,
+      "name": "Dragonstone Necklace of Support Command",
+      "description": "Extends support upkeep by 100%; Life-rune upkeep grants +400% Summoning XP.",
       "basePrice": 38000
     },
     {
       "id": 3106,
       "basePrice": 1800,
-      "name": "Sapphire Bangle of Command",
-      "description": "Raises combat summon max damage by +1.",
+      "name": "Sapphire Bangle of Utility Command",
+      "description": "Adds +1 utility summon charges.",
       "isWearable": 1,
       "appearanceID": 0,
       "wearableID": 0,
@@ -14050,8 +14070,8 @@
     {
       "id": 3107,
       "basePrice": 3000,
-      "name": "Emerald Bangle of Command",
-      "description": "Raises combat summon max damage by +2.",
+      "name": "Emerald Bangle of Utility Command",
+      "description": "Adds +2 utility summon charges.",
       "isWearable": 1,
       "appearanceID": 0,
       "wearableID": 0,
@@ -14060,8 +14080,8 @@
     {
       "id": 3108,
       "basePrice": 6000,
-      "name": "Ruby Bangle of Command",
-      "description": "Raises combat summon max damage by +3.",
+      "name": "Ruby Bangle of Utility Command",
+      "description": "Adds +3 utility summon charges.",
       "isWearable": 1,
       "appearanceID": 0,
       "wearableID": 0,
@@ -14070,8 +14090,8 @@
     {
       "id": 3109,
       "basePrice": 12000,
-      "name": "Diamond Bangle of Command",
-      "description": "Raises combat summon max damage by +4.",
+      "name": "Diamond Bangle of Utility Command",
+      "description": "Adds +5 utility summon charges.",
       "isWearable": 1,
       "appearanceID": 0,
       "wearableID": 0,
@@ -14080,8 +14100,8 @@
     {
       "id": 3110,
       "basePrice": 35000,
-      "name": "Dragonstone Bangle of Command",
-      "description": "Raises combat summon max damage by +5.",
+      "name": "Dragonstone Bangle of Utility Command",
+      "description": "Adds +8 utility summon charges.",
       "isWearable": 1,
       "appearanceID": 0,
       "wearableID": 0,

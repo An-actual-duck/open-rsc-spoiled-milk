@@ -717,10 +717,13 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 		}
 
 		private boolean consumeMaterials(Player player) {
+			// Verify the full fuel first; 100% preservation still requires every
+			// Fire/Nature rune to be present before the smelt can begin.
 			Map<Integer, Integer> costs = resolvedCosts(player);
 			if (costs == null || costs.isEmpty()) {
 				return false;
 			}
+			costs = applyFoundryDragonRunePreservation(player, costs);
 			Item[] items = new Item[costs.size()];
 			int index = 0;
 			for (Map.Entry<Integer, Integer> entry : costs.entrySet()) {
@@ -778,6 +781,22 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 				costs.merge(selectedItemId, ingredient.amount, Math::addExact);
 			}
 			return costs;
+		}
+
+		private Map<Integer, Integer> applyFoundryDragonRunePreservation(Player player,
+				Map<Integer, Integer> fullCosts) {
+			if (!Summoning.isFoundryDragonActive(player)) {
+				return fullCosts;
+			}
+			Map<Integer, Integer> adjustedCosts = new LinkedHashMap<>(fullCosts);
+			for (int runeId : new int[] {ItemId.FIRE_RUNE.id(), ItemId.NATURE_RUNE.id()}) {
+				Integer amount = adjustedCosts.get(runeId);
+				if (amount != null && amount > 0
+					&& FoundryDragonSmeltingCost.costAfterRunePreservation(player, runeId, amount) == 0) {
+					adjustedCosts.remove(runeId);
+				}
+			}
+			return adjustedCosts;
 		}
 	}
 

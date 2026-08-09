@@ -120,7 +120,7 @@ actual damage, and the separation from Siphoning.
 | Death, Reaping | `1663-1667`; guaranteed-drop `+1` chance `25/40/60/90/100%`; tier 5 has another `+1` at `10%` | `getDeathNecklaceGuaranteedDropBonusChance/ExtraChance`; `Equipment.rollDeathNecklaceGuaranteedDropBonus`; NPC bones/invariable drops | Complete. data/runtime. |
 | Blood, Leach | `1668-1672`; poison Leach `10/20/30/50/100%` | Blood section above | Actual-damage defect fixed. data/runtime plus new edge coverage. |
 | Soul, Preservation | `1759-1763`; keep `+1/+2/+3/+5/+8` items on death | `getSoulNecklaceExtraKeptItems`; `Inventory` death-item retention | Complete. data/runtime. |
-| Life, Vigor | `3101-3105`; combat summon health `+10/+20/+30/+40/+50%` | `getLifeNecklaceSummonHealthPercent`; combat summon creation in `Summoning` | Utility/support summons unaffected. Complete. data/runtime. |
+| Life, Support Command | `3101-3105`; support upkeep waits `+10/+20/+30/+50/+100%` longer and grants `+50/+100/+150/+250/+400%` Summoning XP | `getLifeNecklaceSupportDurationPercent/getLifeNecklaceSupportUpkeepXpBonusPercent`; support upkeep in `Summoning` | Applies only when a Life rune is actually consumed. Complete. data/runtime. |
 
 ### Rings
 
@@ -139,7 +139,7 @@ actual damage, and the separation from Siphoning.
 | Body, Gains | `3081-3085`; Melee/Attack/Defense/Strength/Hits XP `5/10/15/25/50%` | `getBodyRingXpBonus`; central XP path | Complete. data/runtime. |
 | Death, Reckoning | `3086-3090`; charge caps `20/30/40/60/100`, `+1` yellow NPC damage per 10 charge | Death-ring charge/damage getters; NPC kills charge; `StatRestorationEvent` decays; melee, scythe, and projectile direct-hit paths spend no charge but apply current bonus | NPCs and non-summons only. Complete. data/runtime. |
 | Blood, Vitality | `3091-3095`; see Blood section | Blood section above | Complete. |
-| Life, Endurance | `3096-3100`; support summon duration `+20/+40/+60/+80/+100%` | `getLifeRingSupportDurationPercent`; support summon lifetime calculation in `Summoning` | Utility summons unaffected. Complete. data/runtime. |
+| Life, Combat Command | `3096-3100`; combat summon health `+10/+20/+30/+50/+100%`, damage `+3/+6/+9/+15/+25%` | `getLifeRingCombatSummonHealthPercent/getLifeRingCombatSummonDamagePercent`; combat summon construction in `Summoning` | Utility/support summons unaffected. Complete. data/runtime. |
 
 ### Special amulets
 
@@ -154,7 +154,7 @@ actual damage, and the separation from Siphoning.
 | Nature, Alchemy | `1744-1748`; auto-alch monster drops worth at least 1000 gp; `100/200/300/500/1000` charges | Nature Alchemy charge getters; all NPC drop routes call `Equipment.tryAlchemyMonsterLootWithNatureAmulet`; `NatureAlchemyAmulet` checks/recharges | Requires inventory room for coins; one charge per successful item conversion. Complete. data/runtime. |
 | Cosmic, Bounty | `1749-1753`; rare gathering duplication `10/20/30/40/50%` | `getCosmicAmuletRareGatheringDoubleChance`; Fishing/Mining/Woodcutting/Harvesting rare-reward paths | Does not duplicate ordinary base resources. Complete. data/runtime. |
 | Soul, Renewal | `1754-1758`; at 200 charge, 2-tile healing `1-2/1-3/2-4/3-6/5-10` | Soul Burst charge/radius/heal getters; `Npc.killedBy` → `Player.applySoulAmuletBurst` | NPC kills charge at 10% combat level; heals owner and nearby players, capped to max Hits. Complete. data/runtime. |
-| Life, Command | `3106-3110`; combat summon max damage `+1/+2/+3/+4/+5` | `getLifeAmuletSummonMaxDamageBonus`; combat summon max-hit calculation in `Summoning` | Complete. data/runtime. |
+| Life, Utility Command | `3106-3110`; utility charges `+1/+2/+3/+5/+8` | `getLifeBangleUtilityChargeBonus`; utility summon construction in `Summoning` | Pack Rat and Delivery Camel start with one base charge. Complete. data/runtime. |
 
 ## Enchanted staves and wool robes
 
