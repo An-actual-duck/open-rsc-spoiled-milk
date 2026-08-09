@@ -48,6 +48,20 @@ class NativeTerrainResidencyTest(unittest.TestCase):
                     first.commit();
                     require(residency.size() == 9, "initial commit size");
 
+                    /* v0.2.68: stage 213 predicted (7,11), then context 85
+                     * activated (7,10) in the same tick. A superseded
+                     * prediction is deliberately not committed, so the new
+                     * authoritative context must carry a payload. */
+                    NativeLayeredTerrainClientResidency.Transaction predicted =
+                        residency.begin();
+                    require(predicted.requiresPayload("prediction-7,11"),
+                        "stage 213 prediction payload");
+                    NativeLayeredTerrainClientResidency.Transaction context85 =
+                        residency.begin();
+                    require(context85.requiresPayload("context-7,10"),
+                        "context 85 cannot reference superseded prediction");
+                    context85.commit();
+
                     NativeLayeredTerrainClientResidency.Transaction overlap =
                         residency.begin();
                     for (int index = 3; index < 9; index++) {
@@ -340,7 +354,11 @@ class NativeTerrainResidencyTest(unittest.TestCase):
             configuration,
         )
         self.assertIn("residencyTransaction.requiresPayload(", updater)
-        self.assertIn("nativeTerrain.commitResidency();", updater)
+        self.assertIn("acknowledgedTerrain.commitResidency();", updater)
+        self.assertIn(
+            "NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE", updater
+        )
+        self.assertIn("receipt.protocolVersion == 2", updater)
         self.assertIn("tryFinalizeAndSendPacketChecked(", updater)
         self.assertIn(
             "public static boolean tryFinalizeAndSendPacketChecked(",
@@ -353,6 +371,8 @@ class NativeTerrainResidencyTest(unittest.TestCase):
         self.assertIn(
             "nativeLayeredTerrainResidentCache.clear();", packet_handler
         )
+        self.assertIn("requestNativeTerrainResynchronization(", packet_handler)
+        self.assertIn("MissingReferenceException", packet_handler)
         self.assertIn(
             "NativeLayeredTerrainPacketDecoder.decodeV6(", packet_handler
         )

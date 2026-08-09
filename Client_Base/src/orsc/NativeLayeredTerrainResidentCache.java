@@ -145,7 +145,7 @@ public final class NativeLayeredTerrainResidentCache {
 			NativeLayeredTerrainChunk chunk =
 				staged.get(requireIdentity(contentIdentity));
 			if (chunk == null) {
-				throw new IllegalStateException(
+				throw new MissingReferenceException(
 					"Native terrain receipt references a missing resident sector");
 			}
 			references = Math.addExact(references, 1);
@@ -162,6 +162,16 @@ public final class NativeLayeredTerrainResidentCache {
 				throw new IllegalStateException(
 					"Native terrain resident transaction is already committed");
 			}
+		}
+	}
+
+	/** A recoverable peer-residency disagreement, not a client-fatal decode error. */
+	public static final class MissingReferenceException
+		extends IllegalStateException {
+		private static final long serialVersionUID = 1L;
+
+		private MissingReferenceException(final String message) {
+			super(message);
 		}
 	}
 }

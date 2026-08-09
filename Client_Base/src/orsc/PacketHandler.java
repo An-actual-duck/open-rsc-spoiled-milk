@@ -677,6 +677,7 @@ public class PacketHandler {
 				? 0L : System.nanoTime() - phaseStartedNanos);
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		NativeLayeredTerrainSnapshot nativeTerrain = null;
+		try {
 		if (protocolVersion
 				== LayeredSceneContextState.UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION) {
 			nativeTerrain = new NativeLayeredTerrainSnapshot(
@@ -751,6 +752,12 @@ public class PacketHandler {
 					logicalLevel,
 					nativeLayeredTerrainResidentCache);
 			}
+		}
+		} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
+			requestNativeTerrainResynchronization(
+				worldSpace, logicalLevel, "context", missing);
+			packetsIncoming.packetEnd = length;
+			return;
 		}
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
@@ -895,6 +902,36 @@ public class PacketHandler {
 		layeredTerrainReadyReceipts++;
 	}
 
+	private void requestNativeTerrainResynchronization(
+		final String worldSpace,
+		final int logicalLevel,
+		final String source,
+		final RuntimeException missing) {
+		nativeLayeredTerrainResidentCache.clear();
+		cancelPendingLayeredTerrainPrebuild();
+		clearReadyPredictedLayeredTerrainHalo();
+		layeredTerrainStageAssembler.reset();
+		final NativeLayeredTerrainSnapshot activeTerrain =
+			layeredSceneContextState.getNativeTerrainSnapshot();
+		if (clientStream != null && activeTerrain != null) {
+			clientStream.newPacket(
+				Opcodes.Out.LAYERED_TERRAIN_READY.getOpcode());
+			clientStream.bufferBits.putByte(2);
+			clientStream.bufferBits.putInt(
+				layeredSceneContextState.getSequence());
+			clientStream.bufferBits.putString(worldSpace);
+			clientStream.bufferBits.putInt(logicalLevel);
+			clientStream.bufferBits.putInt(activeTerrain.getCurrentChunkX());
+			clientStream.bufferBits.putInt(activeTerrain.getCurrentChunkY());
+			clientStream.bufferBits.putString(activeTerrain.getManifestSha256());
+			clientStream.finishPacket();
+		}
+		final String summary = "NATIVE_TERRAIN_RESYNC source=" + source
+			+ " reason=" + missing.getMessage();
+		System.out.println(summary);
+		ClientRuntimeLogger.log(summary);
+	}
+
 	private void refreshLayeredSceneActivationCover() {
 		if (mc != null) {
 			mc.setLayeredSceneActivationPending(
@@ -1028,7 +1065,9 @@ public class PacketHandler {
 			layeredSceneContextState.getNativeTerrainSnapshot();
 		final long decodeStartedNanos =
 			BoundaryLoadingDiagnostics.now();
-		final NativeLayeredTerrainSnapshot stagedTerrain =
+		final NativeLayeredTerrainSnapshot stagedTerrain;
+		try {
+		stagedTerrain =
 			protocolVersion == 1
 				? NativeLayeredTerrainPacketDecoder.decodeV7Stage(
 					body,
@@ -1065,6 +1104,12 @@ public class PacketHandler {
 						logicalLevel,
 						nativeLayeredTerrainResidentCache,
 						activeTerrain);
+		} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
+			requestNativeTerrainResynchronization(
+				worldSpace, logicalLevel, "stage", missing);
+			input.packetEnd = length;
+			return;
+		}
 		final long decodeNanos =
 			decodeStartedNanos == 0L
 				? 0L : System.nanoTime() - decodeStartedNanos;
