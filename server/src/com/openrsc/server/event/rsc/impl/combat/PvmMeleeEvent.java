@@ -38,11 +38,13 @@ import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.DemonPitchforkHellBlazeProc;
+import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
 import com.openrsc.server.model.combat.PlayerMeleeDamageBuff;
 import com.openrsc.server.model.combat.ElementalSwordProc;
 import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
+import com.openrsc.server.model.combat.KolodionFireClawProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
@@ -423,14 +425,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
-		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
-		if (Summoning.isPlayerAreaEffectSuppressed(player)
-			|| overkillDamage <= 0 || splashPercent <= 0.0D) {
-			return;
-		}
-		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
-		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
-				player, primaryTarget, 2)) {
+		DeathRobeOverkillSplash.apply(player, primaryTarget, overkillDamage,
+			(npc, splashDamage) -> {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
 				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
@@ -448,7 +444,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				player.setKillType(KillType.COMBAT);
 				npc.killedBy(player);
 			}
-		}
+		});
 	}
 
 	private void tryAutoRetaliateAfterIncomingAttack(final Mob hitter, final Mob target) {
@@ -605,12 +601,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void applyNpcMeleeSpecialProc(final Mob hitter, final Mob target, final int damage) {
-		if (!hitter.isNpc() || damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			return;
-		}
-		final Npc npc = (Npc) hitter;
-		if (npc.getID() != NpcId.KOLODION_DEMON.id()
-			|| combatRandom().nextDouble() >= KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE) {
+		if (!KolodionFireClawProc.tryApply(hitter, target, damage,
+			KOLODION_DEMON_FIRE_CLAW_PROC_CHANCE, combatRandom())) {
 			return;
 		}
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.FIRE_CLAW));

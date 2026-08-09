@@ -25,6 +25,8 @@ import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
 import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
+import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
+import com.openrsc.server.model.combat.PlayerProjectileDamageBuff;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
@@ -1040,21 +1042,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private int applyPlayerProjectileDamageBuff(final Player player, final int damage) {
-		if (damage <= 0) {
-			return damage;
-		}
-		if (type == 1 || type == 4) {
-			if (earthAttackSpeedDebuffPercent > 0) {
-				return Math.max(0, (int) Math.floor(damage * player.getEarthMagicDamageMultiplier()));
-			}
-			if (waterMaxHitDebuffPercent > 0) {
-				return Math.max(0, (int) Math.floor(damage * player.getWaterMagicDamageMultiplier()));
-			}
-			if (fireDefenseDebuffPercent > 0) {
-				return Math.max(0, (int) Math.floor(damage * player.getFireMagicDamageMultiplier()));
-			}
-		}
-		return damage;
+		return PlayerProjectileDamageBuff.apply(player, damage,
+			type == 1 || type == 4, earthAttackSpeedDebuffPercent,
+			waterMaxHitDebuffPercent, fireDefenseDebuffPercent);
 	}
 
 	private void applyBloodRobeSplash(final Player casterPlayer, final int damageDealt) {
@@ -1094,14 +1084,8 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
-		final double splashPercent = player.getDeathRobeOverkillSplashPercent();
-		if (Summoning.isPlayerAreaEffectSuppressed(player)
-			|| overkillDamage <= 0 || splashPercent <= 0.0D) {
-			return;
-		}
-		final int splashDamage = Math.max(1, (int) Math.floor(overkillDamage * splashPercent));
-		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundPrimary(
-				player, primaryTarget, 2)) {
+		DeathRobeOverkillSplash.apply(player, primaryTarget, overkillDamage,
+			(npc, splashDamage) -> {
 			final CombatStyle splashStyle = type == 1 || type == 4
 				? CombatStyle.MAGIC : CombatStyle.RANGED;
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
@@ -1125,7 +1109,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				player.setKillType(type == 1 || type == 4 ? KillType.MAGIC : KillType.RANGED);
 				npc.killedBy(player);
 			}
-		}
+		});
 	}
 
 	private void applyBalrogMagicSplash(final Npc balrog, final Player primaryTarget, final int primaryDamageDealt) {
