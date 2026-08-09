@@ -847,6 +847,33 @@ Gate:
 - package registration can be completely attributed and rolled back; and
 - no content package requires a new direct foundation import.
 
+#### R2-2 completion record: extension registry and legacy adapter
+
+Status: **COMPLETE — 2026-08-08.**
+
+Core now owns immutable extension descriptors (identity, owner receipt,
+dependencies, and capabilities), a narrow `ExtensionContext`, and a
+deterministic `ExtensionRegistry`. Discovery rejects duplicate identities;
+resolution is lexically deterministic and rejects missing dependencies and
+cycles before activation. Activation is transactional: a failed package
+deactivates the successfully activated prefix in reverse order, and normal
+deactivation/reset is idempotent.
+
+The shipped `plugins.jar` remains unsplit and is registered as the single
+`legacy-plugins-jar` compatibility package. Its existing reflection scan,
+default handler, commands, quests, minigames, triggers, shops, restock events,
+and plugin executor remain inside `PluginHandler`'s legacy adapter. Unload
+therefore follows the existing cleanup path (executor termination, registries,
+quest/minigame/shop collections, and classloader close) while the registry
+owns the activation/deactivation transaction. No content package receives a
+new direct foundation import.
+
+Compiled headless coverage proves deterministic ordering, duplicate/missing/
+cycle rejection, partial registration rollback, reverse cleanup, and a second
+extension using only the narrow API. Existing default-handler and MyWorld
+layout fixtures preserve compatibility behavior. R2-3 may now introduce
+declared definition/population packages without splitting `plugins.jar` first.
+
 ### R2-3: Target definitions, population, and world-package boundary
 
 Goal: remove target/content selection from foundation loaders.

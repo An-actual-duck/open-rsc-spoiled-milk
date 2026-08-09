@@ -11,6 +11,10 @@ import com.openrsc.server.Server;
 import com.openrsc.server.event.custom.ShopRestockEvent;
 import com.openrsc.server.event.rsc.PluginTask;
 import com.openrsc.server.event.rsc.PluginTickEvent;
+import com.openrsc.server.extensions.ExtensionContext;
+import com.openrsc.server.extensions.ExtensionDescriptor;
+import com.openrsc.server.extensions.ExtensionRegistry;
+import com.openrsc.server.extensions.ServerExtension;
 import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.action.WalkToAction;
 import com.openrsc.server.model.entity.player.Player;
@@ -45,6 +49,7 @@ public final class PluginHandler implements IPluginHandler {
     private final Set<Class<?>> triggerTypes = new HashSet<>();
     private final ClassToInstanceMap<Object> pluginInstances = MutableClassToInstanceMap.create();
     private final PluginJarLoader loader = new PluginJarLoader();
+    private final ExtensionRegistry extensionRegistry = new ExtensionRegistry();
     private final Injector injector;
     private ThreadPoolExecutor executor;
     private boolean reloading = true;
@@ -147,18 +152,30 @@ public final class PluginHandler implements IPluginHandler {
     }
 
     public void load() throws Exception {
-        // TODO: Separate static loading from class based loading.
-        reloading = false;
-
-        defaultHandler = null;
-        executor = (ThreadPoolExecutor) Executors.newCachedThreadPool(threadFactory);
-
-        loader.loadJar();
-        initPlugins();
+		// plugins.jar remains one declared compatibility package until artifact parity
+		// exists; discovery/activation now have a transactional owner boundary.
+		reloading = true;
+		extensionRegistry.reset();
+		extensionRegistry.discover(Collections.singletonList(new LegacyPluginsJarExtension()));
+		extensionRegistry.activate(new ExtensionContext(server));
+		reloading = false;
     }
 
     public void unload() throws IOException {
         reloading = true;
+		extensionRegistry.deactivate();
+		extensionRegistry.reset();
+	}
+
+	private void loadLegacyPlugins() throws Exception {
+		defaultHandler = null;
+		executor = (ThreadPoolExecutor) Executors.newCachedThreadPool(threadFactory);
+		loader.loadJar();
+		initPlugins();
+	}
+
+	private void unloadLegacyPlugins() throws IOException {
+		if (executor == null) return;
 
         getExecutor().shutdown();
         try {
@@ -181,6 +198,20 @@ public final class PluginHandler implements IPluginHandler {
         executor = null;
         defaultHandler = null;
     }
+
+	/** Compatibility adapter: all existing reflected plugins.jar content is one package. */
+	private final class LegacyPluginsJarExtension implements ServerExtension {
+		private final ExtensionDescriptor descriptor = new ExtensionDescriptor(
+			"legacy-plugins-jar", "plugins.jar compatibility adapter",
+			Collections.<String>emptySet(), new LinkedHashSet<String>(Arrays.asList(
+				"commands", "quests", "minigames", "triggers", "shops", "scheduled-events")));
+		@Override public ExtensionDescriptor descriptor() { return descriptor; }
+		@Override public void activate(final ExtensionContext context) throws Exception {
+			if (context.getServer() != server) throw new IllegalArgumentException("foreign plugin runtime context");
+			loadLegacyPlugins();
+		}
+		@Override public void deactivate() throws Exception { unloadLegacyPlugins(); }
+	}
 
     public boolean handlePlugin(Class<?> triggerType, Player owner, Object[] data, WalkToAction walkToAction) {
         final String simpleName = triggerType.getSimpleName();
