@@ -615,7 +615,7 @@ public class Npc extends Mob {
 		if (explicitOffense > 0) {
 			return explicitOffense;
 		}
-		int profileOffense = NpcAttackStyleProfile.forNpc(this).getRangedOffense(this);
+		int profileOffense = NpcCombatProfile.resolve(this).getRangedOffense();
 		if (profileOffense > 0) {
 			return profileOffense;
 		}
@@ -628,7 +628,7 @@ public class Npc extends Mob {
 		if (explicitOffense > 0) {
 			return explicitOffense;
 		}
-		return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);
+		return NpcCombatProfile.resolve(this).getMagicOffense();
 	}
 
 	@Override
