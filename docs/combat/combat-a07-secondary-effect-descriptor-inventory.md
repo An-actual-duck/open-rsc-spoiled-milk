@@ -166,7 +166,7 @@ are not interchangeable:
 - deterministic debuffs do not gain a registry draw merely because nearby
   effects have one.
 
-The 86-scenario compiled combat gate continues to execute the current event
+The 126-scenario compiled combat gate continues to execute the current event
 owners. Its A05.4 families prove reflection, chain, Splinter, robe, Scythe,
 jewelry, boss, summon, and delayed ordering. Existing Cleric, poison, leather,
 jewelry, prayer, and summoning fixtures provide the remaining source evidence.
@@ -216,4 +216,5 @@ by the separately characterized Baby Dragon smoke proc recorded in
 The third bounded family is the separately characterized Blue Dragon water proc
 recorded in
 [`combat-a07-blue-dragon-water-proc.md`](combat-a07-blue-dragon-water-proc.md).
-Later families still require separate characterization and branches.
+A07 is complete; the retained owner boundaries and their rationale are recorded
+in [`combat-a07-completion-inventory.md`](combat-a07-completion-inventory.md).

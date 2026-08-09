@@ -230,13 +230,16 @@ separate branch proves a common contract. DoT ownership remains A08.
 - Existing A05 fixtures continue to execute the production call sites and
   assert unchanged stable keys, styles, contribution, mitigation, ordering,
   death, and callback behavior.
-- The authoritative combined combat gate passes 119 scenarios, including the
-  A07.3 view/filter/revalidation, A07.4 traversal/RNG, and first thirteen A07.5
+
+- The authoritative combined combat gate passes 126 scenarios, including the
+	A07.3 view/filter/revalidation, A07.4 traversal/RNG, and completed A07.5
   shared proc contracts for Ogre Stagger, Baby Dragon smoke, Blue Dragon water,
   Earth Dragon slow, Red Dragon fire, Black Dragon breath, and the King Black
   Dragon payload/element follow-up, Infernal Fire, Elder Green's armor trigger,
   Bear Maul's second-hit eligibility, Dragon melee breath follow-up, and
-  Elemental Sword sequencing, and Demon Pitchfork Hell's Blaze.
+	Elemental Sword sequencing, Demon Pitchfork Hell's Blaze, Kolodion Fire
+	Claw, projectile elemental damage composition, Death Robe terminal payload,
+	and Chain Lightning shared sequencing.
 - No test class enters production artifacts; core/plugin builds and changed-code
   analysis remain required before handoff.
 - This server-only identity refactor changes no packet, visual, animation,
