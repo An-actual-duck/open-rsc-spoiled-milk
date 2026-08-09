@@ -124,7 +124,7 @@ def ensure_spell_runtime_cost_path() -> None:
         "Spell rune checks should produce an explicit consume set",
     )
     require(
-        "getRuneNegationChance(player, equippedStaff, e.getKey())" in source,
+        "getRuneNegationChance(player, e.getKey())" in source,
         "Spell rune costs should use cloth/staff rune preservation",
     )
     rune_check_start = source.index("public static Set<Entry<Integer, Integer>> checkSpellRunes")
@@ -136,7 +136,7 @@ def ensure_spell_runtime_cost_path() -> None:
     )
     require(
         rune_check_body.index("availableRunes < e.getValue()")
-        < rune_check_body.index("getRuneNegationChance(player, equippedStaff, e.getKey())"),
+        < rune_check_body.index("getRuneNegationChance(player, e.getKey())"),
         "Spell rune preservation should be rolled only after rune availability is confirmed",
     )
     auto_cast_start = source.index("public static boolean hasRequiredRunesForAutoCast")

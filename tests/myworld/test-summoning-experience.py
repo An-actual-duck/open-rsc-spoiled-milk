@@ -44,7 +44,7 @@ def main() -> None:
     )
     require(
         summoning,
-        "awardDisplayedSummoningExperience(owner, SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP);",
+        "awardDisplayedSummoningExperience(owner, getSupportUpkeepDisplayedExperience(owner));",
         "support upkeep XP only after life rune consumption",
     )
     require(

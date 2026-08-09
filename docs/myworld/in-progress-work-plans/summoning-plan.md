@@ -287,6 +287,10 @@ by Atelier Pixerelia. Foundry Dragon uses its purpose-made
 - cast XP: `365`
 - cost: `2 Life runes`, `5 Fire runes`, `1 Nature rune`, `1 Soul rune`,
   `1 Dragon bones`
+- replacement fuel: Fire/Nature robe and matching-staff preservation applies
+  independently to the Foundry Dragon's Fire/Nature fuel. The complete
+  unmitigated fuel must still be in inventory; a full matching robe set plus
+  staff preserves that rune type at `100%`.
 - upkeep: standard support-summon Life-rune upkeep
 - effect: while its active summon NPC remains owned by the player, every coal
   in a bar-smelting recipe is replaced by `5 Fire runes` and `1 Nature rune`

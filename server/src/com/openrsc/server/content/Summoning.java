@@ -404,17 +404,7 @@ public final class Summoning {
 	}
 
 	private static boolean shouldPreserveRuneCost(final Player owner, final int runeId) {
-		final double chance = getRunePreservationChance(owner, runeId);
-		return chance > 0.0D && DataConversions.getRandom().nextDouble() < chance;
-	}
-
-	private static double getRunePreservationChance(final Player owner, final int runeId) {
-		double chance = owner.getCarriedItems().getEquipment().getWoolRobeRunePreservationChance(runeId);
-		final Item equippedStaff = getEquippedMainHand(owner);
-		if (equippedStaff != null) {
-			chance += EnchantingItemEffects.getStaffRunePreservationChance(equippedStaff.getCatalogId(), runeId);
-		}
-		return Math.min(1.0D, chance);
+		return RuneCostPreservation.shouldPreserve(owner, runeId);
 	}
 
 	private static Item getEquippedMainHand(final Player owner) {
