@@ -4,6 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.openrsc.server.database.DatabaseType;
 import com.openrsc.server.config.DiagnosticsConfiguration;
 import com.openrsc.server.config.ProcessNetworkConfiguration;
+import com.openrsc.server.config.PersistenceConfiguration;
+import com.openrsc.server.config.WorldRuntimeConfiguration;
+import com.openrsc.server.config.CompatibilityConfiguration;
+import com.openrsc.server.config.ToolsConfiguration;
+import com.openrsc.server.config.ContentConfiguration;
 import com.openrsc.server.util.EntityList;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.YMLReader;
@@ -425,14 +430,13 @@ public class ServerConfiguration {
 	 */
 	private final YMLReader serverProps = new YMLReader();
 
-	void initConfig(String defaultFile) throws IOException {
+	public void initConfig(String defaultFile) throws IOException {
 		// Try to load the connections.conf
 		try {
 			serverProps.loadFromYML("connections.conf");
 			LOGGER.info("Loaded connections.conf");
 		} catch (Exception e) {
-			LOGGER.info("Properties file connections.conf not found, terminating server.");
-			SystemUtil.exit(1);
+			throw new IOException("Properties file connections.conf not found", e);
 		}
 
 		configFile = ServerConfiguration.loadServerProps(serverProps, defaultFile);
@@ -1004,7 +1008,8 @@ public class ServerConfiguration {
 		catch (NumberFormatException ex) {
 			LOGGER.error("Error reading value for key \"" + key + "\" " + ex.getMessage() +
 				". Should be an integer. Terminating server.");
-			SystemUtil.exit(1);
+			throw new com.openrsc.server.config.ConfigurationLoadException(
+				"integer configuration value is invalid for " + key, ex);
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
 		return Optional.empty();
@@ -1022,7 +1027,8 @@ public class ServerConfiguration {
 		catch (NumberFormatException ex) {
 			LOGGER.error("Error reading value for key \"" + key + "\" " + ex.getMessage() +
 				". Should be a double. Terminating server.");
-			SystemUtil.exit(1);
+			throw new com.openrsc.server.config.ConfigurationLoadException(
+				"double configuration value is invalid for " + key, ex);
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
 		return Optional.empty();
@@ -1043,7 +1049,8 @@ public class ServerConfiguration {
 				LOGGER.error("Error reading value for key \"" + key + "\" for input string \"" +
 					serverProps.getAttribute(key) + ".\"" +
 					" Should be true or false. Terminating server.");
-				SystemUtil.exit(1);
+				throw new com.openrsc.server.config.ConfigurationLoadException(
+					"boolean configuration value is invalid for " + key, null);
 			}
 		}
 		LOGGER.info("Key: \"" + key + "\" does not exist in the provided conf file. Using default.");
@@ -1170,6 +1177,26 @@ public class ServerConfiguration {
 			MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS,
 			MOVEMENT_STUTTER_POLL_OUTLIER_MS,
 			MOVEMENT_STUTTER_TICK_OUTLIER_MS);
+	}
+
+	public PersistenceConfiguration persistenceConfiguration() {
+		return new PersistenceConfiguration(DB_TYPE, DB_NAME, DB_HOST, DB_TABLE_PREFIX);
+	}
+	public WorldRuntimeConfiguration worldRuntimeConfiguration() {
+		return new WorldRuntimeConfiguration(GAME_TICK, WALKING_TICK, VIEW_DISTANCE,
+			OBJECT_VIEW_DISTANCE, RESPAWN_LOCATION_X, RESPAWN_LOCATION_Y);
+	}
+	public CompatibilityConfiguration compatibilityConfiguration() {
+		return new CompatibilityConfiguration(CLIENT_VERSION, ENFORCE_CUSTOM_CLIENT_VERSION,
+			MEMBER_WORLD, BASED_MAP_DATA, BASED_CONFIG_DATA);
+	}
+	public ToolsConfiguration toolsConfiguration() {
+		return new ToolsConfiguration(CONFIG_DIR, ALLOW_IN_GAME_WORLD_EDITOR,
+			WORLD_BUILDER_MODE, WORLD_BUILDER_LAYERED_REVIEW_MODE);
+	}
+	public ContentConfiguration contentConfiguration() {
+		return new ContentConfiguration(WANT_MYWORLD, WANT_CUSTOM_QUESTS,
+			WANT_CUSTOM_SPRITES, WANT_CUSTOM_UI, WANT_PVP);
 	}
 
 	private void readGlobalRules(final String fileName) {

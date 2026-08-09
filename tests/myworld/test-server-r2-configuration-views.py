@@ -22,6 +22,8 @@ package com.openrsc.server;
 import com.openrsc.server.config.ConfigurationValidationException;
 import com.openrsc.server.config.DiagnosticsConfiguration;
 import com.openrsc.server.config.ProcessNetworkConfiguration;
+import com.openrsc.server.config.ServerConfigurationLoadResult;
+import com.openrsc.server.config.ServerConfigurationLoader;
 import java.util.Collections;
 
 public final class ConfigurationViewProbe {
@@ -76,6 +78,21 @@ public final class ConfigurationViewProbe {
     }
 
     public static void main(String[] args) throws Exception {
+		if ("loader".equals(args[0])) {
+			ServerConfigurationLoadResult loaded = ServerConfigurationLoader.load(args[1]);
+			ServerBootstrapComposition composition = ServerBootstrapComposition.prepare(loaded);
+			out("loaderConfig", loaded.getLegacyConfiguration().configFile);
+			out("persistenceParity", loaded.getPersistence().getDatabaseName().equals(loaded.getLegacyConfiguration().DB_NAME));
+			out("worldParity", loaded.getWorldRuntime().getGameTick() == loaded.getLegacyConfiguration().GAME_TICK);
+			out("compatibilityParity", loaded.getCompatibility().getClientVersion() == loaded.getLegacyConfiguration().CLIENT_VERSION);
+			out("toolsParity", loaded.getTools().isWorldBuilderMode() == loaded.getLegacyConfiguration().WORLD_BUILDER_MODE);
+			out("contentParity", loaded.getContent().isMyWorld() == loaded.getLegacyConfiguration().WANT_MYWORLD);
+			out("noResources", !composition.ownsRuntimeResources());
+			composition.close();
+			composition.close();
+			out("closed", composition.isClosed());
+			return;
+		}
         if ("invalid-process".equals(args[0])) {
             invalidProcess();
             return;
@@ -247,6 +264,24 @@ class ServerR2ConfigurationViewsTest(unittest.TestCase):
         )
         self.assertNotEqual(0, result.returncode, result.stdout + result.stderr)
 
+    def test_loader_composes_configuration_without_runtime_resources_and_closes_idempotently(self):
+        case = Path(tempfile.mkdtemp(prefix="loader-", dir=str(self.root)))
+        shutil.copy2(SERVER / "connections.conf", case / "connections.conf")
+        shutil.copy2(SERVER / "myworld.conf", case / "myworld.conf")
+        result = subprocess.run(
+            ["java", "-cp", os.pathsep.join((str(self.root), str(CORE))),
+             "com.openrsc.server.ConfigurationViewProbe", "loader", "myworld.conf"],
+            cwd=str(case), text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        )
+        values = dict(line[len("PROBE:"):].split("=", 1)
+                      for line in result.stdout.splitlines() if line.startswith("PROBE:"))
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual("myworld.conf", values["loaderConfig"])
+        self.assertEqual(("true", "true", "true", "true", "true"),
+                         tuple(values[key] for key in ("persistenceParity", "worldParity", "compatibilityParity", "toolsParity", "contentParity")))
+        self.assertEqual("true", values["noResources"])
+        self.assertEqual("true", values["closed"])
+
     def test_incompatible_typed_values_are_rejected_and_errors_are_immutable(self):
         result, values = self.run_probe("invalid-process")
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
@@ -262,9 +297,9 @@ class ServerR2ConfigurationViewsTest(unittest.TestCase):
 
     def test_validation_precedes_resources_and_listener_uses_frozen_endpoint_view(self):
         source = SERVER_SOURCE.read_text(encoding="utf-8")
-        parsed = source.index("getConfig().initConfig(configFile)")
-        projected = source.index("processNetworkConfiguration = getConfig().processNetworkConfiguration()")
-        validated = source.index("processNetworkConfiguration.requireValid()")
+        parsed = source.index("ServerConfigurationLoader.load(configFile)")
+        projected = source.index("processNetworkConfiguration = loadedConfiguration.getProcessNetwork()")
+        validated = source.index("WorldBuilderMode.validate(getConfig())")
         storage = source.index("WorldEditStorageContext.create(getConfig())")
         bind = source.index("bootstrap.bind(new InetSocketAddress")
         self.assertLess(parsed, projected)

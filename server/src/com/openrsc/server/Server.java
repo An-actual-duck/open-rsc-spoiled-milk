@@ -7,6 +7,8 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.config.DiagnosticsConfiguration;
 import com.openrsc.server.config.ProcessNetworkConfiguration;
+import com.openrsc.server.config.ServerConfigurationLoadResult;
+import com.openrsc.server.config.ServerConfigurationLoader;
 import com.openrsc.server.content.achievement.AchievementSystem;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditStorageContext;
@@ -500,12 +502,11 @@ public class Server implements Runnable {
 		this.combatDamageObserver = Objects.requireNonNull(
 			combatDamageObserver, "combatDamageObserver");
 		this.resolvedDamageTransaction = new ResolvedDamageTransaction();
-		config = new ServerConfiguration();
-		getConfig().initConfig(configFile);
-		processNetworkConfiguration = getConfig().processNetworkConfiguration();
-		diagnosticsConfiguration = getConfig().diagnosticsConfiguration();
-		processNetworkConfiguration.requireValid();
-		diagnosticsConfiguration.requireValid();
+		final ServerConfigurationLoadResult loadedConfiguration =
+			ServerConfigurationLoader.load(configFile);
+		config = loadedConfiguration.getLegacyConfiguration();
+		processNetworkConfiguration = loadedConfiguration.getProcessNetwork();
+		diagnosticsConfiguration = loadedConfiguration.getDiagnostics();
 		WorldBuilderMode.validate(getConfig());
 		worldEditStorage = WorldEditStorageContext.create(getConfig());
 		LOGGER.info("Server configuration loaded: " + getConfig().configFile);
@@ -977,9 +978,53 @@ public class Server implements Runnable {
 				WorldBuilderRuntimeControl.start(this);
 			} catch (final Throwable t) {
 				LOGGER.error("Exception in server start", t);
-				SystemUtil.exit(1);
+				rollbackPartialStart();
+				throw new IllegalStateException("Server startup failed", t);
 			}
 		}
+	}
+
+	/**
+	 * Best-effort reverse-order cleanup for a failed startup. This deliberately
+	 * avoids the normal stop path: a failed start has not yet set {@code running}
+	 * and may own only a prefix of the normal resources.
+	 */
+	private void rollbackPartialStart() {
+		shutdownExecutor(scheduledExecutor);
+		scheduledExecutor = null;
+		closeChannel(serverChannel);
+		closeChannel(serverChannelWs);
+		serverChannel = null;
+		serverChannelWs = null;
+		shutdownEventLoop(workerGroupWs);
+		shutdownEventLoop(bossGroupWs);
+		shutdownEventLoop(workerGroup);
+		shutdownEventLoop(bossGroup);
+		workerGroupWs = null;
+		bossGroupWs = null;
+		workerGroup = null;
+		bossGroup = null;
+		if (database != null) {
+			try {
+				database.close();
+			} catch (final Throwable cleanupFailure) {
+				LOGGER.warn("Failed to close database during startup rollback", cleanupFailure);
+			}
+		}
+		serversList.remove(getName());
+		running.set(false);
+	}
+
+	private static void shutdownExecutor(final ScheduledExecutorService executor) {
+		if (executor != null) executor.shutdownNow();
+	}
+
+	private static void closeChannel(final ChannelFuture channel) {
+		if (channel != null && channel.channel() != null) channel.channel().close();
+	}
+
+	private static void shutdownEventLoop(final EventLoopGroup eventLoop) {
+		if (eventLoop != null) eventLoop.shutdownGracefully();
 	}
 
 	public void stop() {
