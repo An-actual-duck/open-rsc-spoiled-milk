@@ -6,7 +6,6 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.handler.GameEventHandler;
-import com.openrsc.server.event.rsc.impl.BurnEvent;
 import com.openrsc.server.event.rsc.impl.PoisonEvent;
 import com.openrsc.server.event.rsc.impl.StatRestorationEvent;
 import com.openrsc.server.event.rsc.impl.WaterSlowEvent;
@@ -79,8 +78,6 @@ public abstract class Mob extends Entity {
 	private KillType killType = KillType.COMBAT;
 	public boolean killed = false;
 	private int combatStyle = com.openrsc.server.constants.Skills.CONTROLLED_MODE;
-	private int burnDamage = 0;
-	private int burnPulseCount = 0;
 	private int windLowRollBiasPercent = 0;
 	private int windDebuffAttacksRemaining = 0;
 	private int bearIntimidatePercent = 0;
@@ -1593,16 +1590,17 @@ public abstract class Mob extends Entity {
 	}
 
 	public void extinguish() {
-		final Mob me = this;
-		final BurnEvent burnEvent = getAttribute("burnEvent", null);
-		if (burnEvent != null) {
-			burnEvent.stop();
+		// Generic burn is retired. Remove any legacy runtime marker defensively:
+		// old cache data or an invalid marker must never survive a lifecycle end.
+		final Object marker = getAttribute("burnEvent", null);
+		if (marker instanceof GameTickEvent) {
+			((GameTickEvent) marker).stop();
+		}
+		if (marker != null) {
 			removeAttribute("burnEvent");
 		}
-		burnDamage = 0;
-		burnPulseCount = 0;
-		if (me.isPlayer()) {
-			Player player = (Player) me;
+		if (isPlayer()) {
+			final Player player = (Player) this;
 			player.getCache().remove("burn_damage");
 			player.getCache().remove("burn_pulses");
 		}
@@ -1912,21 +1910,6 @@ public abstract class Mob extends Entity {
 		synchronized (poisonStateLock()) {
 			ensurePoisonEvent(getPoisonDamage(), poisonProvenance);
 		}
-	}
-
-	public void startBurnEvent() {
-		if (getAttribute("burnEvent", null) != null) {
-			extinguish();
-		}
-		final BurnEvent burnEvent = new BurnEvent(getWorld(), this, getBurnDamage(), getBurnPulseCount());
-		setAttribute("burnEvent", burnEvent);
-		getWorld().getServer().getGameEventHandler().add(burnEvent);
-	}
-
-	public void applyBurn(int burnDamage, int burnPulses) {
-		setBurnDamage(burnDamage);
-		setBurnPulseCount(burnPulses);
-		startBurnEvent();
 	}
 
 	public void consumeAttackBasedDebuffs() {
@@ -2613,22 +2596,6 @@ public abstract class Mob extends Entity {
 	public void setPoisonDamage(int poisonDamage) {
 		this.poisonDamage = poisonDamage;
 		persistPoisonState();
-	}
-
-	public int getBurnDamage() {
-		return burnDamage;
-	}
-
-	public void setBurnDamage(int burnDamage) {
-		this.burnDamage = burnDamage;
-	}
-
-	public int getBurnPulseCount() {
-		return burnPulseCount;
-	}
-
-	public void setBurnPulseCount(int burnPulseCount) {
-		this.burnPulseCount = burnPulseCount;
 	}
 
 	public int getWaterSlowPercent() {

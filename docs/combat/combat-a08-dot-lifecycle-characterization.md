@@ -402,14 +402,24 @@ The lifecycle batch additionally proves that a poisoned target can log out and
 relog repeatedly from its own durable record without retaining or duplicating
 the prior scheduler event. Player death removes the v1 record before respawn,
 and authoritative NPC removal clears generic poison before any late callback
-can deal damage. Generic burn remains explicitly outside this bounded generic-
-poison correction and is retained for its later A08.5 migration work.
+can deal damage.
+
+## A08.5 generic-burn retirement
+
+Generic burn is now retired rather than migrated into an active effect family.
+`BurnEvent`, its public `Mob` application API, and its mutable target fields
+are removed. Login always discards the legacy `burn_damage` and `burn_pulses`
+cache rows—whether complete, partial, malformed, or negative—without creating
+an event or blocking the session. `Mob.extinguish()` remains as a tolerant
+cleanup boundary for old runtime markers and cache rows, including a malformed
+marker type. It does not touch the independently owned Elder boss or Elder
+armor burn event keys.
 
 ## Verification
 
-- `./server/test_combat` — PASS, 122/122 scenarios on the durable-provenance,
-  failed-save-atomicity, server-restart, source-relog, and target-lifecycle
-  branches.
+- `./server/test_combat` — PASS, 125/125 scenarios on the durable-provenance,
+  failed-save-atomicity, server-restart, source-relog, target-lifecycle, and
+  generic-burn retirement branches.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.
 - `python3 tests/myworld/test-npc-poison-death-lifecycle.py` — PASS.
 - `python3 tests/myworld/test-jewelry-runtime-effects.py` — PASS.

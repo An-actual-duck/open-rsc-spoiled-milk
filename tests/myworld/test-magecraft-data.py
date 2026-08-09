@@ -203,7 +203,6 @@ def ensure_source_support(items: dict[int, dict]) -> None:
     spell_text = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
     mage_arena_text = MAGE_ARENA_PATH.read_text(encoding="utf-8")
     mob_text = MOB_PATH.read_text(encoding="utf-8")
-    burn_event_text = BURN_EVENT_PATH.read_text(encoding="utf-8")
     water_slow_event_text = WATER_SLOW_EVENT_PATH.read_text(encoding="utf-8")
     elemental_debuff_event_text = ELEMENTAL_DEBUFF_EVENT_PATH.read_text(encoding="utf-8")
     combat_event_text = COMBAT_EVENT_PATH.read_text(encoding="utf-8")
@@ -265,8 +264,6 @@ def ensure_source_support(items: dict[int, dict]) -> None:
     for snippet in (
         "public void curePoison()",
         "public void extinguish()",
-        "public void applyBurn(int burnDamage, int burnPulses)",
-        "public void startBurnEvent()",
         "public void applyWindDebuff(int percent)",
         "public void applyWaterMaxHitDebuff(int percent)",
         "public void applyEarthAttackSpeedDebuff(int percent)",
@@ -294,15 +291,17 @@ def ensure_source_support(items: dict[int, dict]) -> None:
     ):
         if snippet not in elemental_debuff_event_text:
             fail(f"ElementalDebuffEvent.java missing expected snippet: {snippet}")
+    burn_event_text = BURN_EVENT_PATH.read_text(encoding="utf-8")
+    if "Generic BurnEvent retired in A08.5." not in burn_event_text:
+        fail("BurnEvent.java must retain the generic-burn retirement tombstone")
+    if "class BurnEvent" in burn_event_text:
+        fail("retired generic BurnEvent.java must not declare a runtime class")
     for snippet in (
-        "class BurnEvent",
-        "super(world, owner, 8, \"Burn Event\"",
-        "You are burning! You lose",
-        "player.getCache().set(\"burn_damage\", burnDamage);",
-        "player.getCache().set(\"burn_pulses\", pulsesRemaining);",
+        "public void applyBurn(int burnDamage, int burnPulses)",
+        "public void startBurnEvent()",
     ):
-        if snippet not in burn_event_text:
-            fail(f"BurnEvent.java missing expected snippet: {snippet}")
+        if snippet in mob_text:
+            fail(f"Mob.java still exposes retired generic burn API: {snippet}")
     for snippet in (
         "class WaterSlowEvent",
         "super(world, owner, 24, \"Water Slow Event\"",

@@ -6,7 +6,6 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.ElderGreenDragonArmorEffect;
 import com.openrsc.server.event.rsc.GameTickEvent;
-import com.openrsc.server.event.rsc.impl.BurnEvent;
 import com.openrsc.server.event.rsc.impl.PoisonEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatEvent;
 import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
@@ -525,22 +524,25 @@ final class CurrentCombatDotLifecycleCharacterization {
 		assertNull(wrongPoisonAttribute.getAttribute("poisonEvent", null),
 			"wrong poison attribute type is removed by fail-closed cleanup");
 
-		final Player nonnumericBurn = harness.player("dot bad burn", 672, 680);
-		harness.logout(nonnumericBurn);
-		nonnumericBurn.getCache().store("burn_damage", "not-a-number");
-		nonnumericBurn.getCache().set("burn_pulses", 3);
-		assertThrows(NumberFormatException.class,
-			() -> nonnumericBurn.setLoggedIn(true),
-			"nonnumeric burn currently aborts session restoration");
-		assertNull(nonnumericBurn.getAttribute("burnEvent", null),
-			"failed burn parsing occurs before event registration");
+		final Player retiredBurn = harness.player("dot retired burn", 672, 680,
+			player -> {
+				player.getCache().store("burn_damage", "not-a-number");
+				player.getCache().set("burn_pulses", 3);
+			});
+		assertTrue(retiredBurn.loggedIn(),
+			"retired malformed burn data cannot abort account login");
+		assertNull(retiredBurn.getAttribute("burnEvent", null),
+			"retired burn data cannot restore a generic burn event");
+		assertFalse(retiredBurn.getCache().hasKey("burn_damage"),
+			"retired burn cleanup removes malformed damage cache");
+		assertFalse(retiredBurn.getCache().hasKey("burn_pulses"),
+			"retired burn cleanup removes pulse cache");
 
 		final Npc wrongBurnAttribute = npcWithHits(harness, 674, 680, 20);
 		wrongBurnAttribute.setAttribute("burnEvent", "wrong-type");
-		assertThrows(ClassCastException.class, wrongBurnAttribute::extinguish,
-			"wrong burn attribute type currently aborts cleanup");
-		wrongBurnAttribute.removeAttribute("burnEvent");
 		wrongBurnAttribute.extinguish();
+		assertNull(wrongBurnAttribute.getAttribute("burnEvent", null),
+			"retired wrong-type burn marker is removed safely");
 	}
 
 	static void failedLogoutSaveBoundary(
@@ -591,7 +593,6 @@ final class CurrentCombatDotLifecycleCharacterization {
 			final CurrentCombatHarness harness) {
 		final String name = "dot relog";
 		PoisonEvent priorPoison = null;
-		BurnEvent priorBurn = null;
 		for (int session = 0; session < 3; session++) {
 			final Player player = harness.player(name, 676, 680, restored -> {
 				restored.getCache().set("poisoned", 40);
@@ -600,34 +601,27 @@ final class CurrentCombatDotLifecycleCharacterization {
 				restored.getCache().set("burn_pulses", 3);
 			});
 			final PoisonEvent poison = player.getAttribute("poisonEvent", null);
-			final BurnEvent burn = player.getAttribute("burnEvent", null);
 			assertNotNull(poison, "relog poison event session " + session);
-			assertNotNull(burn, "relog burn event session " + session);
 			assertEquals(1, eventCount(harness, player, "Poison Event"),
 				"one poison event in relog session " + session);
-			assertEquals(1, eventCount(harness, player, "Burn Event"),
-				"one burn event in relog session " + session);
 			assertEquals(8L, poison.getTicksBeforeRun(),
 				"poison relog resets full countdown in session " + session);
-			assertEquals(8L, burn.getTicksBeforeRun(),
-				"burn relog resets full countdown in session " + session);
+			assertNull(player.getAttribute("burnEvent", null),
+				"retired burn never restores in relog session " + session);
+			assertFalse(player.getCache().hasKey("burn_damage"),
+				"retired burn damage is removed in relog session " + session);
+			assertFalse(player.getCache().hasKey("burn_pulses"),
+				"retired burn pulses are removed in relog session " + session);
 			if (priorPoison != null) {
 				assertNotSame(priorPoison, poison,
 					"fresh session creates a new poison event");
-				assertNotSame(priorBurn, burn,
-					"fresh session creates a new burn event");
 			}
 			priorPoison = poison;
-			priorBurn = burn;
 			harness.logout(player);
 			assertFalse(poison.isRunning(),
 				"logout stops poison event in session " + session);
-			assertFalse(burn.isRunning(),
-				"logout stops burn event in session " + session);
 			assertEquals(0, eventCount(harness, player, "Poison Event"),
 				"logout removes poison scheduler entry in session " + session);
-			assertEquals(0, eventCount(harness, player, "Burn Event"),
-				"logout removes burn scheduler entry in session " + session);
 		}
 	}
 
@@ -780,7 +774,7 @@ final class CurrentCombatDotLifecycleCharacterization {
 		}
 	}
 
-	static void duplicateSchedulerAndMixedBurnBoundaries(
+	static void duplicateSchedulerAndRetiredBurnBoundaries(
 			final CurrentCombatHarness harness) {
 		final Npc poisoned = npcWithHits(harness, 718, 680, 40);
 		poisoned.applyPoison(40, 40);
@@ -801,64 +795,22 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"canonical poison power remains the target state");
 		poisoned.curePoison();
 
-		final Player burning = harness.player("dot duplicate burn", 720, 680);
-		burning.applyBurn(3, 2);
-		final BurnEvent canonicalBurn = burning.getAttribute("burnEvent", null);
-		final BurnEvent duplicateBurn = new BurnEvent(
-			harness.world(), burning, 7, 4);
-		assertFalse(harness.server().getGameEventHandler().add(duplicateBurn),
-			"burn scheduler rejects a second stream for the same target");
-		assertEquals(1, eventCount(harness, burning, "Burn Event"),
-			"duplicate burn scheduler cardinality");
-		assertSame(canonicalBurn, burning.getAttribute("burnEvent", null),
-			"rejected duplicate burn cannot replace canonical attribute");
-		burning.extinguish();
-
-		final Player zeroDamage = harness.player(
-			"dot zero burn damage", 722, 680, player -> {
-				player.getCache().set("burn_damage", 0);
+		final Player retired = harness.player("dot retired scheduler", 720, 680,
+			player -> {
+				player.getCache().set("burn_damage", -7);
 				player.getCache().set("burn_pulses", 3);
 			});
-		final BurnEvent zeroDamageEvent = zeroDamage.getAttribute(
-			"burnEvent", null);
-		assertNotNull(zeroDamageEvent,
-			"zero-damage mixed burn cache schedules before validation");
-		zeroDamageEvent.run();
-		assertNull(zeroDamage.getAttribute("burnEvent", null),
-			"zero-damage mixed burn clears on first pulse");
-		assertFalse(zeroDamage.getCache().hasKey("burn_damage"),
-			"zero-damage mixed burn clears damage cache");
-		assertFalse(zeroDamage.getCache().hasKey("burn_pulses"),
-			"zero-damage mixed burn clears pulse cache");
-
-		final Player zeroPulses = harness.player(
-			"dot zero burn pulses", 724, 680, player -> {
-				player.getCache().set("burn_damage", 7);
-				player.getCache().set("burn_pulses", 0);
-			});
-		final BurnEvent zeroPulseEvent = zeroPulses.getAttribute(
-			"burnEvent", null);
-		assertNotNull(zeroPulseEvent,
-			"zero-pulse mixed burn cache schedules before validation");
-		zeroPulseEvent.run();
-		assertNull(zeroPulses.getAttribute("burnEvent", null),
-			"zero-pulse mixed burn clears on first pulse");
-
-		final Player negativeBurn = harness.player(
-			"dot negative burn", 726, 680, player -> {
-				player.getCache().set("burn_damage", -7);
-				player.getCache().set("burn_pulses", -3);
-			});
-		final BurnEvent negativeBurnEvent = negativeBurn.getAttribute(
-			"burnEvent", null);
-		assertNotNull(negativeBurnEvent,
-			"negative burn cache schedules before validation");
-		negativeBurnEvent.run();
-		assertNull(negativeBurn.getAttribute("burnEvent", null),
-			"negative burn clears on first pulse without damage");
+		assertNull(retired.getAttribute("burnEvent", null),
+			"retired generic burn cannot register a scheduler event");
+		assertEquals(0, eventCount(harness, retired, "Burn Event"),
+			"retired generic burn owns no scheduler entry");
+		assertFalse(retired.getCache().hasKey("burn_damage"),
+			"retired generic burn clears legacy damage state");
+		assertFalse(retired.getCache().hasKey("burn_pulses"),
+			"retired generic burn clears legacy pulse state");
 	}
 
-	static void legacyPvpPoisonAndPositiveBurnBoundaries(
+	static void legacyPvpPoisonAndRetiredBurnBoundaries(
 			final CurrentCombatHarness harness) throws Exception {
 		final PlayerPoisonScript legacyPvp = new PlayerPoisonScript();
 		final Player attacker = harness.player("dot legacy attacker", 728, 680);
@@ -895,135 +847,37 @@ final class CurrentCombatDotLifecycleCharacterization {
 			harness.server().getConfig().WANT_MYWORLD = true;
 		}
 
-		final Player largePulseTarget = harness.player(
-			"dot large burn target", 732, 680);
-		setHits(largePulseTarget, 40, 40);
-		largePulseTarget.applyBurn(39, Integer.MAX_VALUE);
-		final BurnEvent largePulse = largePulseTarget.getAttribute(
-			"burnEvent", null);
-		largePulse.run();
-		assertEquals(1, largePulseTarget.getLevel(Skill.HITS.id()),
-			"large valid burn pulse applies its configured positive damage");
-		assertEquals(Integer.MAX_VALUE - 1,
-			largePulseTarget.getCache().getInt("burn_pulses"),
-			"large valid burn pulse decrements without overflow");
-		assertEquals(39, largePulseTarget.getCache().getInt("burn_damage"),
-			"large valid burn pulse persists its configured damage");
-		largePulseTarget.extinguish();
-
-		final Player maxDamageTarget = harness.player(
-			"dot max burn target", 734, 680);
-		harness.recordOutgoingPackets(maxDamageTarget);
-		final Npc maxDamageOpponent = harness.npc(
-			NpcId.GREATER_DEMON.id(), 735, 680);
-		maxDamageTarget.setOpponent(maxDamageOpponent);
-		maxDamageTarget.applyBurn(Integer.MAX_VALUE, 1);
-		final BurnEvent maxDamage = maxDamageTarget.getAttribute("burnEvent", null);
-		maxDamage.run();
-		assertEquals(255,
-			maxDamageTarget.getUpdateFlags().getHitSplats().get(0).getAmount(),
-			"maximum positive burn damage clamps its visible hitsplat");
-		assertTrue(maxDamageTarget.killed,
-			"maximum positive burn damage reaches ordinary player death handling");
-		assertNull(maxDamageTarget.getAttribute("burnEvent", null),
-			"terminal maximum burn cleanup clears its event");
 	}
 
-	static void burnReplacementPersistenceAndCleanup(
-			final CurrentCombatHarness harness) throws Exception {
-		final Player target = harness.player("dot burn replace", 630, 680);
-		setHits(target, 40, 40);
-		target.applyBurn(3, 2);
-		final BurnEvent first = target.getAttribute("burnEvent", null);
-		assertNotNull(first, "generic burn application schedules an event");
-		assertEquals(8L, first.getTicksBeforeRun(),
-			"generic burn initial countdown");
-		harness.advanceOneCombatTick();
-		assertEquals(7L, first.getTicksBeforeRun(),
-			"generic burn countdown advances normally");
-
-		target.applyBurn(5, 4);
-		final BurnEvent replacement = target.getAttribute("burnEvent", null);
-		assertNotSame(first, replacement,
-			"generic burn reapplication replaces the event");
-		assertFalse(first.isRunning(),
-			"generic burn reapplication stops the prior event");
-		assertEquals(8L, replacement.getTicksBeforeRun(),
-			"generic burn replacement resets countdown");
-		assertEquals(0, target.getBurnDamage(),
-			"current replacement ordering clears the new burn damage");
-		assertEquals(0, target.getBurnPulseCount(),
-			"current replacement ordering clears the new burn pulses");
-		assertTrue(replacement.isRunning(),
-			"zero-state replacement marker reports itself running");
-		assertEquals(0, eventCount(harness, target, "Burn Event"),
-			"ONE_PER_MOB rejects replacement while stopped prior event awaits cleanup");
-		assertEquals(40, target.getLevel(Skill.HITS.id()),
-			"unregistered zero-state replacement deals no damage");
-		target.extinguish();
-		assertFalse(replacement.isRunning(), "extinguish stops generic burn");
-		assertNull(target.getAttribute("burnEvent", null),
-			"explicit extinguish clears the orphan replacement marker");
-		assertFalse(target.getCache().hasKey("burn_damage"),
-			"extinguish clears persisted burn damage");
-		assertFalse(target.getCache().hasKey("burn_pulses"),
-			"extinguish clears persisted burn pulses");
-
-		final Player pulseTarget = harness.player("dot burn pulse", 631, 680);
-		setHits(pulseTarget, 40, 40);
-		pulseTarget.applyBurn(5, 4);
-		final BurnEvent pulseEvent = pulseTarget.getAttribute("burnEvent", null);
-		pulseEvent.run();
-		assertEquals(35, pulseTarget.getLevel(Skill.HITS.id()),
-			"first generic burn pulse deals configured damage");
-		assertEquals(3, pulseTarget.getCache().getInt("burn_pulses"),
-			"generic burn cache decrements before settlement");
-		assertEquals(5, pulseTarget.getCache().getInt("burn_damage"),
-			"generic burn cache retains configured damage");
-		assertHit(pulseTarget, 5, HitSplat.TYPE_STANDARD,
-			"generic burn uses compatibility standard presentation");
-		pulseTarget.extinguish();
-
-		final Player restored = harness.player(
-			"dot burn restore", 632, 680, player -> {
+	static void genericBurnRetirementAndCleanup(
+			final CurrentCombatHarness harness) {
+		final Player complete = harness.player("dot burn complete", 630, 680,
+			player -> {
 				player.getCache().set("burn_damage", 4);
 				player.getCache().set("burn_pulses", 3);
 			});
-		final BurnEvent restoredEvent = restored.getAttribute("burnEvent", null);
-		assertNotNull(restoredEvent,
-			"complete legacy burn pair restores one event");
-		assertEquals(8L, restoredEvent.getTicksBeforeRun(),
-			"restored generic burn starts a full countdown");
-		assertEquals(1, eventCount(harness, restored, "Burn Event"),
-			"restored generic burn event cardinality");
-		restoredEvent.run();
-		assertEquals(36, restored.getLevel(Skill.HITS.id()),
-			"restored generic burn deals cached damage");
-		assertEquals(2, restored.getCache().getInt("burn_pulses"),
-			"restored burn persists decremented pulses");
+		assertNull(complete.getAttribute("burnEvent", null),
+			"complete legacy burn pair is retired rather than restored");
+		assertFalse(complete.getCache().hasKey("burn_damage"),
+			"complete legacy burn cleanup removes damage cache");
+		assertFalse(complete.getCache().hasKey("burn_pulses"),
+			"complete legacy burn cleanup removes pulse cache");
 
-		final Player partial = harness.player(
-			"dot burn partial", 634, 680,
+		final Player partial = harness.player("dot burn partial", 632, 680,
 			player -> player.getCache().set("burn_damage", 7));
-		assertNull(partial.getAttribute("burnEvent", null),
-			"partial legacy burn pair does not schedule an event");
-		assertTrue(partial.getCache().hasKey("burn_damage"),
-			"current partial legacy burn cache remains stale");
+		assertFalse(partial.getCache().hasKey("burn_damage"),
+			"partial legacy burn cleanup removes damage-only cache");
 
-		final Npc removed = npcWithHits(harness, 636, 680, 20);
-		removed.setShouldRespawn(false);
-		removed.applyBurn(5, 2);
-		final BurnEvent removedEvent = removed.getAttribute("burnEvent", null);
-		removed.remove();
-		assertTrue(removed.isUnregistering(),
-			"NPC removal fixture reaches terminal unregistering state");
-		assertSame(removedEvent, removed.getAttribute("burnEvent", null),
-			"current NPC removal leaves generic burn attached");
-		removedEvent.run();
-		assertEquals(15, removed.getLevel(Skill.HITS.id()),
-			"generic burn can tick after NPC removal begins");
-		assertTrue(removedEvent.isRunning(),
-			"removed-NPC generic burn retains remaining pulses");
+		complete.getCache().set("burn_damage", 9);
+		complete.getCache().set("burn_pulses", 2);
+		complete.setAttribute("burnEvent", "legacy-marker");
+		complete.extinguish();
+		assertNull(complete.getAttribute("burnEvent", null),
+			"retirement cleanup removes a malformed runtime marker");
+		assertFalse(complete.getCache().hasKey("burn_damage"),
+			"retirement cleanup remains idempotent for damage cache");
+		assertFalse(complete.getCache().hasKey("burn_pulses"),
+			"retirement cleanup remains idempotent for pulse cache");
 	}
 
 	static void elderBurnSourceAvailability(
@@ -1076,13 +930,15 @@ final class CurrentCombatDotLifecycleCharacterization {
 		final Npc killer = harness.npc(NpcId.GREATER_DEMON.id(), 641, 680);
 		harness.recordOutgoingPackets(victim);
 		victim.applyPoison(40, 40, killer);
-		victim.applyBurn(3, 2);
+		victim.getCache().set("burn_damage", 3);
+		victim.getCache().set("burn_pulses", 2);
+		victim.setAttribute("burnEvent", "legacy-marker");
 		victim.getSkills().setLevel(Skill.HITS.id(), 0);
 		victim.killedBy(killer);
 		assertNull(victim.getAttribute("poisonEvent", null),
 			"player death clears poison event");
 		assertNull(victim.getAttribute("burnEvent", null),
-			"player death clears generic burn event");
+			"player death clears a retired generic burn marker");
 		assertFalse(victim.getCache().hasKey("poisoned"),
 			"player death clears poison cache");
 		assertFalse(victim.getCache().hasKey("poisoned_max"),
@@ -1090,9 +946,9 @@ final class CurrentCombatDotLifecycleCharacterization {
 		assertFalse(victim.getCache().hasKey(PoisonDurableRecord.CACHE_KEY),
 			"player death clears the durable poison record before respawn");
 		assertFalse(victim.getCache().hasKey("burn_damage"),
-			"player death clears generic burn damage cache");
+			"player death clears retired generic burn damage cache");
 		assertFalse(victim.getCache().hasKey("burn_pulses"),
-			"player death clears generic burn pulse cache");
+			"player death clears retired generic burn pulse cache");
 
 		final Player poisonOwner = harness.player("dot toxin", 644, 680);
 		harness.equip(poisonOwner, DRAGONSTONE_NECKLACE_OF_LEACH, 1);

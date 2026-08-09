@@ -634,8 +634,12 @@ environment concern rather than a second poison-state format.
 
 ### A08.5 — burn disposition
 
-- Decide whether generic burn remains a compatibility family or is retired
-  after its persisted rows are migrated/cleared.
+Status: implemented for the dormant generic-burn family. The generic
+`BurnEvent`, `Mob.applyBurn`, and `Mob.startBurnEvent` paths are retired.
+Login discards all legacy `burn_damage`/`burn_pulses` rows without parsing or
+restoring them, and `Mob.extinguish()` safely clears legacy runtime markers and
+cache rows. No legacy generic-burn state is mapped into either Elder family.
+
 - Move the two Elder burn clocks behind the typed lifecycle boundary one at a
   time without forcing them into a shared refresh or source-validity policy.
 - Retain existing A05 settlement keys and A07 semantic keys unless an explicit
