@@ -871,12 +871,14 @@ later A10/A11 change.
 
 ### A10 — NPC profile/state modernization
 
-Reconcile `NpcAttackStyleProfile`, definitions, boss scripts, devotion/summon
-gates, projectile visuals, current layered movement, and every special NPC
-before generating profile data. Characterize ordinary fight-end, run-away,
-re-engagement, leash, healing, poison, contribution retention, target death,
-and exact home behavior. Explicitly reject the Classic watchdog reset as a
-default.
+Implemented: `NpcCombatProfile` and `NpcMagicAttack` provide a typed resolved
+view of the existing `NpcAttackStyleProfile` and bind one selected element to
+its per-cast payload without creating a second profile table. The complete
+inventory and lifecycle characterization are in
+`docs/combat/combat-a10-npc-profile-state-modernization.md`. Boss, quest,
+devotion, summon, poison, contribution, and lifecycle owners remain explicit;
+the Classic watchdog reset remains rejected as a default. A09's pending summon
+despawn question and future plugin adapters are A11-only owner decisions.
 
 ### A11 — extensions, configuration, observability
 

@@ -8,6 +8,8 @@ from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parents[2]
 NPC_PROFILE = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcAttackStyleProfile.java"
+NPC_COMBAT_PROFILE = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcCombatProfile.java"
+NPC_MAGIC_ATTACK = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcMagicAttack.java"
 NPC_ELEMENT = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcMagicElement.java"
 NPC_BEHAVIOR = ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
@@ -37,6 +39,8 @@ def require_regex(text: str, pattern: str, label: str) -> None:
 
 def main() -> None:
 	profile = NPC_PROFILE.read_text(encoding="utf-8")
+	combat_profile = NPC_COMBAT_PROFILE.read_text(encoding="utf-8")
+	magic_attack = NPC_MAGIC_ATTACK.read_text(encoding="utf-8")
 	element = NPC_ELEMENT.read_text(encoding="utf-8")
 	behavior = NPC_BEHAVIOR.read_text(encoding="utf-8")
 	projectile = PROJECTILE_EVENT.read_text(encoding="utf-8")
@@ -115,12 +119,13 @@ def main() -> None:
 	require(profile, "case 203: // BABY_BLUE_DRAGON", "Baby blue dragons should be water magic")
 	require(profile, "return NpcMagicElement.FIRE;", "Other dragons should default to fire magic")
 
-	require(behavior, "NpcMagicElement magicElement = profile.getMagicElement(npc);", "NPC behavior should choose one element per cast")
-	require(behavior, "profile.getMagicProjectileVisual(npc, magicElement)", "NPC projectile visual should match selected element")
-	require(behavior, "profile.getMagicImpactEffect(npc, magicElement)", "NPC impact effect should match selected element")
-	require(behavior, "int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);", "NPC projectile should carry selected fire debuff")
+	require(behavior, "final NpcMagicAttack magicAttack = profile.selectMagicAttack();", "NPC behavior should choose one element per cast")
+	require(combat_profile, "style.getMagicElement(npc)", "NPC profile should select the existing element once")
+	require(magic_attack, "style.getMagicProjectileVisual(npc, element)", "NPC projectile visual should match selected element")
+	require(magic_attack, "style.getMagicImpactEffect(npc, element)", "NPC impact effect should match selected element")
+	require(behavior, "int fireDefenseDebuffPercent = magicAttack.getFireDefenseDebuffPercent();", "NPC projectile should carry selected fire debuff")
 	require(behavior, ".elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)", "NPC projectile fire debuff should match selected element")
-	require(behavior, ".magicElement(magicElement)", "NPC projectile should carry selected element")
+	require(behavior, ".magicElement(magicAttack.getElement())", "NPC projectile should carry selected element")
 	require(behavior, ".dualElementProcs(startleProcChancePercent,\n\t\t\t\t\t\tacidPoisonPower, 0, splinterProcChancePercent)", "NPC projectile should carry selected dual-element procs")
 
 	require(projectile, "protected NpcMagicElement magicElement = NpcMagicElement.NONE;", "Projectile should default to untyped magic")

@@ -119,6 +119,12 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatCharacterizationTest::deterministicFormulaReplay);
 			run(harness, "npc_projectile_style_and_element_rolls_are_replayable",
 				CurrentCombatCharacterizationTest::deterministicNpcProjectileProfile);
+			run(harness, "resolved_npc_magic_payload_selects_one_element_per_cast",
+				CurrentNpcProfileLifecycleCharacterization
+					::resolvedMagicPayloadUsesOneSelectedElement);
+			run(harness, "npc_behavior_preserves_logout_layered_and_leash_boundaries",
+				CurrentNpcProfileLifecycleCharacterization
+					::npcBehaviorLifecycleBoundaries);
 			run(harness, "ranged_and_throwing_cooldowns_remain_whole_tick_boundaries",
 				CurrentCombatCharacterizationTest::rangedCooldownBoundaries);
 			run(harness, "ranged_and_magic_projectiles_settle_on_current_tick_boundary",

@@ -12,6 +12,8 @@ MYWORLD_NPC_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefsMyWorl
 NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "Npc.java"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
 NPC_ATTACK_STYLE_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcAttackStyleProfile.java"
+NPC_COMBAT_PROFILE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcCombatProfile.java"
+NPC_MAGIC_ATTACK = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcMagicAttack.java"
 COMBAT_EFFECT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "update" / "CombatEffect.java"
 
 EXPECTED_PROFILES = {
@@ -178,11 +180,13 @@ def main() -> None:
     require_contains(NPC, "int explicitOffense = getDef().getMeleeOffense();")
     require_contains(NPC, "int explicitOffense = getDef().getRangedOffense();")
     require_contains(NPC, "int explicitOffense = getDef().getMagicOffense();")
-    require_contains(NPC, "NpcAttackStyleProfile.forNpc(this).getRangedOffense(this)")
+    require_contains(NPC, "NpcCombatProfile.resolve(this).getRangedOffense()")
     require_contains(NPC, "return getDef().getRanged();")
-    require_contains(NPC, "return NpcAttackStyleProfile.forNpc(this).getMagicOffense(this);")
+    require_contains(NPC, "return NpcCombatProfile.resolve(this).getMagicOffense();")
 
-    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(npc, distance)")
+    require_contains(NPC_COMBAT_PROFILE, "NpcAttackStyleProfile.forNpc(npc)")
+    require_contains(NPC_BEHAVIOR, "final NpcCombatProfile profile = NpcCombatProfile.resolve(npc);")
+    require_contains(NPC_BEHAVIOR, "profile.prefersProjectileAtDistance(distance)")
     require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
@@ -190,7 +194,7 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "npc.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "target.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")
-    require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual(npc)")
+    require_contains(NPC_BEHAVIOR, "profile.getRangedProjectileVisual()")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.THROWING_KNIFE;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.THROWING_DART;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "return Projectile.BOLT;")
@@ -206,15 +210,17 @@ def main() -> None:
     require_contains(NPC_ATTACK_STYLE_PROFILE, 'name.contains("grey knight")')
     require_contains(NPC_ATTACK_STYLE_PROFILE, '"monk".equals(name)')
     require_not_contains(NPC_ATTACK_STYLE_PROFILE, 'case "gnome baller":')
-    require_contains(NPC_BEHAVIOR, "CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc))")
+    require_contains(NPC_BEHAVIOR, "profile.getMagicSpellPower())")
     require_contains(NPC_BEHAVIOR, "ProjectileLaunchSpecification.Producer.NPC_RANGED")
-    require_contains(NPC_BEHAVIOR, ".presentation(profile.getRangedProjectileVisual(npc), 0, true)")
-    require_contains(NPC_BEHAVIOR, "NpcMagicElement magicElement = profile.getMagicElement(npc);")
+    require_contains(NPC_BEHAVIOR, ".presentation(profile.getRangedProjectileVisual(), 0, true)")
+    require_contains(NPC_BEHAVIOR, "final NpcMagicAttack magicAttack = profile.selectMagicAttack();")
+    require_contains(NPC_COMBAT_PROFILE, "style.getMagicElement(npc)")
+    require_contains(NPC_MAGIC_ATTACK, "private final NpcMagicElement element;")
     require_contains(NPC_ATTACK_STYLE_PROFILE, "CombatEffect.enemyMagicAttackEffect(name)")
-    require_contains(NPC_BEHAVIOR, "int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);")
+    require_contains(NPC_BEHAVIOR, "int fireDefenseDebuffPercent = magicAttack.getFireDefenseDebuffPercent();")
     require_contains(NPC_BEHAVIOR, "ProjectileLaunchSpecification.Producer.NPC_MAGIC")
     require_contains(NPC_BEHAVIOR, ".elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)")
-    require_contains(NPC_BEHAVIOR, ".magicElement(magicElement)")
+    require_contains(NPC_BEHAVIOR, ".magicElement(magicAttack.getElement())")
     require_contains(COMBAT_EFFECT, 'case "lesser demon":')
     require_contains(COMBAT_EFFECT, "return DEMON_EXPLOSION;")
     require_contains(COMBAT_EFFECT, 'case "greater demon":')

@@ -506,17 +506,17 @@ public class NpcBehavior {
 	}
 
 	private boolean tryProjectileAttack(final long now) {
-		final NpcAttackStyleProfile profile = NpcAttackStyleProfile.forNpc(npc);
-		if (profile == NpcAttackStyleProfile.MELEE || target == null || target.isRemoved()) {
+		final NpcCombatProfile profile = NpcCombatProfile.resolve(npc);
+		if (profile.isMeleeOnly() || target == null || target.isRemoved()) {
 			return false;
 		}
 
 		final int distance = Math.max(Math.abs(npc.getX() - target.getX()), Math.abs(npc.getY() - target.getY()));
-		if (!profile.prefersProjectileAtDistance(npc, distance)) {
+		if (!profile.prefersProjectileAtDistance(distance)) {
 			return false;
 		}
 
-			if (!npc.withinRange(target, profile.getProjectileRange(npc))
+			if (!npc.withinRange(target, profile.getProjectileRange())
 				|| !PathValidation.checkHostileProjectilePath(
 					npc.getWorld(),
 					npc.getWorldLocation(),
@@ -545,19 +545,20 @@ public class NpcBehavior {
 					ProjectileLaunchSpecification.Producer.NPC_RANGED,
 					damage, 2)
 					.chase(true)
-					.presentation(profile.getRangedProjectileVisual(npc), 0, true)
+					.presentation(profile.getRangedProjectileVisual(), 0, true)
 					.build()));
 			return true;
 		}
 
 		if (profile.usesMagicProjectiles()) {
-			NpcMagicElement magicElement = profile.getMagicElement(npc);
-			int damage = CombatFormula.calculateMagicDamage(npc, target, profile.getMagicSpellPower(npc));
-			int impactEffectType = profile.getMagicImpactEffect(npc, magicElement);
-			int startleProcChancePercent = profile.getMagicStartleProcChancePercent(npc, magicElement);
-			int acidPoisonPower = profile.getMagicAcidPoisonPower(npc, magicElement);
-			int fireDefenseDebuffPercent = profile.getMagicFireDefenseDebuffPercent(npc, magicElement);
-			int splinterProcChancePercent = profile.getMagicSplinterProcChancePercent(npc, magicElement);
+			final NpcMagicAttack magicAttack = profile.selectMagicAttack();
+			int damage = CombatFormula.calculateMagicDamage(npc, target,
+				profile.getMagicSpellPower());
+			int impactEffectType = magicAttack.getImpactEffect();
+			int startleProcChancePercent = magicAttack.getStartleProcChancePercent();
+			int acidPoisonPower = magicAttack.getAcidPoisonPower();
+			int fireDefenseDebuffPercent = magicAttack.getFireDefenseDebuffPercent();
+			int splinterProcChancePercent = magicAttack.getSplinterProcChancePercent();
 			npc.setKillType(KillType.MAGIC);
 			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
 				npc.getWorld(), npc, target,
@@ -567,9 +568,9 @@ public class NpcBehavior {
 					.chase(true)
 					.elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)
 					.presentation(
-						profile.getMagicProjectileVisual(npc, magicElement),
+						magicAttack.getProjectileVisual(),
 						impactEffectType, true)
-					.magicElement(magicElement)
+					.magicElement(magicAttack.getElement())
 					.dualElementProcs(startleProcChancePercent,
 						acidPoisonPower, 0, splinterProcChancePercent)
 					.build()));
