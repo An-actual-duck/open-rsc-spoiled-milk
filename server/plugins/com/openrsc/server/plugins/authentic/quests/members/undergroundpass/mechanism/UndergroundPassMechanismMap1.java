@@ -7,6 +7,8 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.plugins.triggers.UseInvTrigger;
 import com.openrsc.server.plugins.triggers.UseLocTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -22,6 +24,9 @@ public class UndergroundPassMechanismMap1 implements UseInvTrigger, UseLocTrigge
 	private static int STALACTITE_1 = 771;
 	private static int STALACTITE_2 = 798;
 	private static int SWAMP_CROSS = 754;
+	private static int BLESSED_SPIDER_SWAMP_CROSS = 795;
+	private static final int UNDERGROUND_PASS_LEVEL = -1;
+	private static final int BLESSED_SPIDER_SWAMP_CROSSING_Y = 586;
 
 
 	@Override
@@ -51,7 +56,7 @@ public class UndergroundPassMechanismMap1 implements UseInvTrigger, UseLocTrigge
 		return (item.getCatalogId() == ItemId.ARROW.id() && obj.getID() == 97)
 				|| (item.getCatalogId() == ItemId.LIT_ARROW.id() && obj.getID() == OLD_BRIDGE)
 				|| (item.getCatalogId() == ItemId.ROPE.id() && (obj.getID() == STALACTITE_1 || obj.getID() == STALACTITE_2 || obj.getID() == STALACTITE_2 + 1))
-				|| (item.getCatalogId() == ItemId.ROCKS.id() && (obj.getID() == SWAMP_CROSS || obj.getID() == 795));
+				|| (item.getCatalogId() == ItemId.ROCKS.id() && (obj.getID() == SWAMP_CROSS || isBlessedSpiderSwampCrossing(obj)));
 	}
 
 	@Override
@@ -119,33 +124,57 @@ public class UndergroundPassMechanismMap1 implements UseInvTrigger, UseLocTrigge
 			delay(3);
 			player.message("and carefully tread from one to another");
 			player.getCarriedItems().remove(new Item(ItemId.ROCKS.id()));
-			GameObject object = new GameObject(player.getWorld(), Point.location(697, 3441), 774, 2, 0);
-			player.getWorld().registerGameObject(object);
-			player.getWorld().delayedRemoveObject(object, 10000);
+			registerLegacySteppingStone(player, Point.location(697, 3441), 2);
 			if (player.getX() <= 695) {
-				player.teleport(698, 3441);
+				teleportUnderground(player, 698, 609);
 				delay(2);
-				player.teleport(700, 3441);
+				teleportUnderground(player, 700, 609);
 			} else {
-				player.teleport(698, 3441);
+				teleportUnderground(player, 698, 609);
 				delay(2);
-				player.teleport(695, 3441);
+				teleportUnderground(player, 695, 609);
 			}
 		}
-		else if (item.getCatalogId() == ItemId.ROCKS.id() && obj.getID() == 795) {
+		else if (item.getCatalogId() == ItemId.ROCKS.id() && isBlessedSpiderSwampCrossing(obj)) {
 			mes("you throw the rocks onto the swamp");
 			delay(3);
 			player.message("and carefully tread from one to another");
 			player.getCarriedItems().remove(new Item(ItemId.ROCKS.id()));
-			GameObject object = new GameObject(player.getWorld(), Point.location(714, 3418), 774, 0, 0);
-			player.getWorld().registerGameObject(object);
-			player.getWorld().delayedRemoveObject(object, 10000);
-			if (player.getY() >= 3418) {
-				player.teleport(715, 3416);
+			registerLegacySteppingStone(player, Point.location(714, 3418), 0);
+			if (player.getWorldLocation().getCoordinate().getY() >= BLESSED_SPIDER_SWAMP_CROSSING_Y) {
+				teleportUnderground(player, 715, 584);
 			} else {
-				player.teleport(713, 3420);
+				teleportUnderground(player, 713, 588);
 			}
 		}
+	}
+
+	private static boolean isBlessedSpiderSwampCrossing(final GameObject obj) {
+		if (obj.getID() != BLESSED_SPIDER_SWAMP_CROSS) {
+			return false;
+		}
+		final WorldCoordinate coordinate = obj.getWorldLocation().getCoordinate();
+		return coordinate.getLevel() == UNDERGROUND_PASS_LEVEL
+			&& coordinate.getY() == BLESSED_SPIDER_SWAMP_CROSSING_Y
+			&& (coordinate.getX() == 714 || coordinate.getX() == 715);
+	}
+
+	private static void teleportUnderground(final Player player, final int x, final int y) {
+		player.teleport(x, y, UNDERGROUND_PASS_LEVEL, false);
+	}
+
+	/**
+	 * The temporary stepping stone has only ever been a legacy visual. Native
+	 * layered packages must not register a packed-Y object into a separate
+	 * legacy region; the traversal itself uses explicit layered destinations.
+	 */
+	private static void registerLegacySteppingStone(final Player player, final Point location, final int direction) {
+		if (player.getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return;
+		}
+		final GameObject object = new GameObject(player.getWorld(), location, 774, direction, 0);
+		player.getWorld().registerGameObject(object);
+		player.getWorld().delayedRemoveObject(object, 10000);
 	}
 
 	private boolean hasABow(Player player) {
