@@ -26,6 +26,7 @@ COMBAT_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/Comba
 PVM_MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 CHAIN_TRAVERSAL = ROOT / "server/src/com/openrsc/server/model/combat/ChainLightningTraversalPolicy.java"
+CHAIN_PROC = ROOT / "server/src/com/openrsc/server/model/combat/ChaosChainLightningProc.java"
 FISHING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/fishing/Fishing.java"
 MINING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/mining/Mining.java"
 WOODCUTTING = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/skills/woodcutting/Woodcutting.java"
@@ -896,7 +897,7 @@ def ensure_runtime_paths_are_wired() -> None:
             combat_event,
             "melee",
             "private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage)",
-            "private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget)",
+            "private Mob selectChaosChainLightningTarget(final Player player,",
             "private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage)",
             (
                 r"!\s*hitter\s*\.\s*isPlayer\s*\(\s*\)",
@@ -908,7 +909,7 @@ def ensure_runtime_paths_are_wired() -> None:
             pvm_melee,
             "PvM melee",
             "private void applyChaosAmuletChainLightning(final Mob hitter, final Mob target, final int baseDamage)",
-            "private Mob selectChaosChainLightningTarget(final Player player, final Mob primaryTarget)",
+            "private Mob selectChaosChainLightningTarget(final Player player,",
             "private void inflictChainLightningDamage(final Mob hitter, final Mob target, final int damage)",
             (
                 r"!\s*hitter\s*\.\s*isPlayer\s*\(\s*\)",
@@ -920,7 +921,7 @@ def ensure_runtime_paths_are_wired() -> None:
             projectile_event,
             "projectile",
             "private void applyChaosAmuletChainLightning()",
-            "private Mob selectChaosChainLightningTarget(final Player player, final Mob anchor)",
+            "private Mob selectChaosChainLightningTarget(final Player player,",
             "private void inflictChainLightningDamage(final Player casterPlayer, final Mob chainTarget, int chainDamage)",
             (
                 r"!\s*caster\s*\.\s*isPlayer\s*\(\s*\)",
@@ -929,44 +930,18 @@ def ensure_runtime_paths_are_wired() -> None:
             ),
         ),
     )
+    chain_proc = CHAIN_PROC.read_text(encoding="utf-8")
     for text, label, apply_signature, select_signature, damage_signature, eligibility_guards in chain_paths:
         apply_chain = java_method_body(text, apply_signature)
         select_chain = java_method_body(text, select_signature)
-        chain_projectile = java_method_body(
-            text,
-            "private int getChaosChainLightningProjectile(final int hop)",
-        )
         inflict_chain = java_method_body(text, damage_signature)
         for pattern, guard_label in (
-            *((pattern, "primary attack eligibility") for pattern in eligibility_guards),
-            (r"Summoning\s*\.\s*isPlayerAreaEffectSuppressed\s*\(", "Guard Dog AoE suppression"),
-            (r"chainChance\s*<=\s*0(?:\.0+)?D?\b", "non-positive proc chance"),
-            (
-                r"(?:DataConversions\s*\.\s*getRandom|combatRandom)\s*\(\s*\)\s*"
-                r"\.\s*nextDouble\s*\(\s*\)\s*>=\s*chainChance\b",
-                "per-hop chance roll",
-            ),
-            (r"chainTarget\s*==\s*null", "missing-target rejection"),
+            (pattern, "primary attack eligibility") for pattern in eligibility_guards
         ):
             require_regex(apply_chain, pattern,
                           f"Chaos necklace {label} chain lightning {guard_label} is missing")
-        require_regex(
-            apply_chain,
-            r"new\s+Projectile\s*\(\s*anchor\s*,\s*chainTarget\s*,\s*"
-            r"getChaosChainLightningProjectile\s*\(\s*hop\s*\)\s*\)",
-            f"Chaos necklace {label} chain lightning projectile launch is missing",
-        )
-        require_regex(
-            apply_chain,
-            r"Math\s*\.\s*ceil\s*\(\s*chainDamage\s*/\s*2(?:\.0+)?D?\s*\)",
-            f"Chaos necklace {label} chain lightning damage falloff is missing",
-        )
-        for projectile_name in ("A", "B", "C"):
-            require_regex(
-                chain_projectile,
-                rf"Projectile\s*\.\s*CHAIN_LIGHTNING_{projectile_name}\b",
-                f"Chaos necklace {label} chain lightning projectile {projectile_name} is missing",
-            )
+        require("ChaosChainLightningProc.tryApply" in apply_chain,
+                f"Chaos necklace {label} must delegate its shared proc policy")
         require(
             "ChainLightningTraversalPolicy.selectNext" in select_chain,
             f"Chaos necklace {label} must use the shared traversal policy",
@@ -976,9 +951,25 @@ def ensure_runtime_paths_are_wired() -> None:
             r"HitSplat\s*\.\s*TYPE_ARMOR_PROC\b",
             f"Chaos necklace {label} chain lightning yellow hitsplat is missing",
         )
-        require(
-            "ChainLightningTraversalPolicy.MAX_HOPS" in apply_chain,
-            f"Chaos necklace {label} chain lightning should use the shared hop cap",
+    for pattern, label in (
+        (r"Summoning\s*\.\s*isPlayerAreaEffectSuppressed\s*\(", "Guard Dog AoE suppression"),
+        (r"chance\s*<=\s*0(?:\.0+)?D?\b", "non-positive proc chance"),
+        (r"random\s*\.\s*nextDouble\s*\(\s*\)\s*>=\s*chance\b", "per-hop chance roll"),
+        (r"target\s*==\s*null", "missing-target rejection"),
+        (r"ChainLightningTraversalPolicy\s*\.\s*MAX_HOPS", "shared hop cap"),
+        (r"new\s+Projectile\s*\(\s*anchor\s*,\s*target\s*,\s*projectileForHop\s*\(\s*hop\s*\)",
+         "projectile presentation"),
+        (r"childDamage\s*\.\s*apply\s*\(\s*target\s*,\s*damage\s*\)", "owner damage callback"),
+        (r"Math\s*\.\s*ceil\s*\(\s*primaryDamage\s*/\s*2(?:\.0+)?D?\s*\)", "initial damage falloff"),
+        (r"Math\s*\.\s*ceil\s*\(\s*priorDamage\s*/\s*2(?:\.0+)?D?\s*\)", "per-hop damage falloff"),
+    ):
+        require_regex(chain_proc, pattern,
+                      f"Shared Chaos necklace chain lightning {label} is missing")
+    for projectile_name in ("A", "B", "C"):
+        require_regex(
+            chain_proc,
+            rf"Projectile\s*\.\s*CHAIN_LIGHTNING_{projectile_name}\b",
+            f"Shared Chaos necklace chain lightning projectile {projectile_name} is missing",
         )
     require_regex(
         chain_traversal,
