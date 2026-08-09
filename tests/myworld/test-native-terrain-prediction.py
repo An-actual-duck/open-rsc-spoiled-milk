@@ -180,8 +180,8 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                             && predicted.getCurrentChunkY() == 12,
                         "predicted center");
                     require(predicted.getChunkRadius() == 2
-                            && cache.size() == 25,
-                        "predicted residency");
+                            && cache.size() == 0,
+                        "predicted receipt does not alter canonical residency");
 
                     NativeLayeredTerrainSnapshot inner =
                         predicted.toAtomicActivationInnerWindow();
@@ -230,8 +230,15 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                                 .ATOMIC_ACTIVATION_PROTOCOL_VERSION
                             && completeInner.getChunkSlotCount() == 9,
                         "complete inner product");
-                    require(cache.size() == 41,
-                        "predicted visual and structure residency");
+                    require(cache.size() == 0,
+                        "predicted visual and structure leave residency unchanged");
+
+                    NativeLayeredTerrainPacketDecoder
+                        .decodePredictedSymmetricHalo(
+                            halo(9, 12, MANIFEST), "global", 0,
+                            cache, active);
+                    require(cache.size() == 0,
+                        "reversed prediction leaves canonical residency unchanged");
 
                     int stableSize = cache.size();
                     expectFailure(
@@ -778,6 +785,8 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                 "playerWasWalking = true;", hold_call
             ),
         )
+        self.assertIn("commitResidentTransaction", decoder)
+        self.assertIn("true,\n\t\t\tfalse);", decoder)
         accept_method = updater.split(
             "public void acceptLayeredTerrainStageReady", 1
         )[1].split(

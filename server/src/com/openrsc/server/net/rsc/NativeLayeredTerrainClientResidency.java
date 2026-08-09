@@ -1,6 +1,9 @@
 package com.openrsc.server.net.rsc;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -44,6 +47,16 @@ public final class NativeLayeredTerrainClientResidency {
 
 	public synchronized int size() {
 		return resident.size();
+	}
+
+	/**
+	 * Returns a read-only least-recently-used to most-recently-used snapshot of
+	 * the server's model of the client cache. This supports diagnostics and
+	 * parity tests without exposing mutable residency state.
+	 */
+	public synchronized List<String> getAccessOrder() {
+		return Collections.unmodifiableList(
+			new ArrayList<String>(resident.keySet()));
 	}
 
 	public synchronized void clear() {

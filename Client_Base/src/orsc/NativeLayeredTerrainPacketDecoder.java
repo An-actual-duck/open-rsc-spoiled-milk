@@ -149,7 +149,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 				.SYMMETRIC_RESIDENCY_PROTOCOL_VERSION,
 			residentCache,
 			activeTerrain,
-			true);
+			true,
+			false);
 	}
 
 	public static NativeLayeredTerrainSnapshot
@@ -171,7 +172,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 				.SYMMETRIC_STRUCTURE_PROTOCOL_VERSION,
 			residentCache,
 			activeTerrain,
-			true);
+			true,
+			false);
 	}
 
 	public static NativeLayeredTerrainSnapshot decodeV10Structure(
@@ -208,7 +210,8 @@ public final class NativeLayeredTerrainPacketDecoder {
 			protocolVersion,
 			residentCache,
 			activeTerrain,
-			false);
+			false,
+			true);
 	}
 
 	private static NativeLayeredTerrainSnapshot decodeChunked(
@@ -219,6 +222,19 @@ public final class NativeLayeredTerrainPacketDecoder {
 		NativeLayeredTerrainResidentCache residentCache,
 		NativeLayeredTerrainSnapshot activeTerrain,
 		boolean predictedSymmetric) {
+		return decodeChunked(payload, worldSpace, level, protocolVersion,
+			residentCache, activeTerrain, predictedSymmetric, true);
+	}
+
+	private static NativeLayeredTerrainSnapshot decodeChunked(
+		byte[] payload,
+		String worldSpace,
+		int level,
+		int protocolVersion,
+		NativeLayeredTerrainResidentCache residentCache,
+		NativeLayeredTerrainSnapshot activeTerrain,
+		boolean predictedSymmetric,
+		boolean commitResidentTransaction) {
 		if (payload == null) {
 			throw new IllegalArgumentException(
 				"Native terrain packet body is required");
@@ -433,7 +449,7 @@ public final class NativeLayeredTerrainPacketDecoder {
 					requireAdjacentStage(activeTerrain, result);
 				}
 			}
-			if (residentTransaction != null) {
+			if (residentTransaction != null && commitResidentTransaction) {
 				residentTransaction.commit();
 			}
 			return result;

@@ -151,6 +151,8 @@ public final class GameStateUpdater {
 		"native_terrain_pending_readiness";
 	private static final String NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE =
 		"native_terrain_accepted_readiness";
+	private static final String NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE =
+		"native_terrain_readiness_transaction";
 	private static final String NATIVE_TERRAIN_SELF_APPEARANCE_PENDING_ATTRIBUTE =
 		"native_terrain_self_appearance_pending";
 	private static final String NATIVE_TERRAIN_STAGE_SEQUENCE_ATTRIBUTE =
@@ -318,7 +320,16 @@ public final class GameStateUpdater {
 			final boolean ready = nativeTerrain == null
 				|| !nativeTerrain.requiresBlockingReadiness()
 				|| hasAcceptedNativeTerrainReadiness(player);
-			if (ready && nativeTerrain != null) {
+			/*
+			 * The initial context and its symmetric halo are separate residency
+			 * transactions. Do not construct the halo from the context's old
+			 * cache version: wait until the matching readiness receipt commits
+			 * that authoritative context first.
+			 */
+			final boolean residencyAcknowledged = nativeTerrain == null
+				|| !nativeTerrain.requiresReadiness()
+				|| hasAcceptedNativeTerrainReadiness(player);
+			if (ready && residencyAcknowledged && nativeTerrain != null) {
 				if (nativeTerrainSymmetricResidencyEnabled()) {
 					maybeSendNativeTerrainSymmetricResidency(
 						player, location, nativeTerrain);
@@ -386,10 +397,18 @@ public final class GameStateUpdater {
 				OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, context, player)) {
 			return false;
 		}
-		if (nativeTerrain != null) {
-			nativeTerrain.commitResidency();
-		}
 		clearNativeTerrainStage(player);
+		/*
+		 * A queued packet is not proof of client residency. Keep its exact LRU
+		 * transaction private until the matching readiness receipt arrives.
+		 * This also means a superseded prediction can never make a later
+		 * authoritative receipt reference data the client discarded.
+		 */
+		if (nativeTerrain != null && nativeTerrain.requiresReadiness()) {
+			player.setAttribute(
+				NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE,
+				nativeTerrain);
+		}
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE, nextScope);
 		player.setAttribute(LAYERED_SCENE_CONTEXT_SEQUENCE_ATTRIBUTE, sequence);
 		player.setAttribute(
@@ -419,21 +438,17 @@ public final class GameStateUpdater {
 			player.removeAttribute(
 				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 			/*
-			 * Protocol-v8 activation may send Player/static-scene packets in
-			 * this same update. Put the cheap visual-only radius-two stage on
-			 * the wire first so the client can publish the full terrain field
-			 * before it uncovers that atomic scene. The structural halo stays
-			 * asynchronous and follows its normal acknowledgement.
+			 * The initial symmetric halo is deliberately deferred until this
+			 * context's readiness receipt commits its residency transaction.
+			 * Sending both packets now would derive two transactions from one
+			 * cache version, so acknowledgement ordering could make the second
+			 * commit stale or reference an entry the client has already evicted.
 			 */
-			if (nativeTerrain.usesAtomicActivation()
-				&& nativeTerrainSymmetricResidencyEnabled()) {
-				maybeSendNativeTerrainSymmetricResidency(
-					player, location, nativeTerrain);
-			}
 			return !nativeTerrain.requiresBlockingReadiness();
 		}
 		player.removeAttribute(NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
+		player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 		return true;
 	}
 
@@ -442,9 +457,21 @@ public final class GameStateUpdater {
 		final LayeredTerrainReadyStruct receipt) {
 		if (!getServer().getConfig().WANT_LAYERED_NATIVE_TERRAIN_READINESS
 			|| !player.isUsingCustomClient()
-			|| receipt == null
-			|| receipt.protocolVersion
-				!= LAYERED_TERRAIN_READY_PROTOCOL_VERSION) {
+			|| receipt == null) {
+			return;
+		}
+		if (receipt.protocolVersion == 2) {
+			/* Client detected an impossible reference. Drop all optimistic state
+			 * and let the next update establish a full, acknowledged context. */
+			player.removeAttribute(NATIVE_TERRAIN_CLIENT_RESIDENCY_ATTRIBUTE);
+			clearNativeTerrainStage(player);
+			player.removeAttribute(NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE);
+			player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
+			player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
+			player.removeAttribute(LAYERED_SCENE_CONTEXT_SCOPE_ATTRIBUTE);
+			return;
+		}
+		if (receipt.protocolVersion != LAYERED_TERRAIN_READY_PROTOCOL_VERSION) {
 			return;
 		}
 		final NativeLayeredTerrainReadiness pending =
@@ -466,6 +493,13 @@ public final class GameStateUpdater {
 		}
 		if (LAYERED_TERRAIN_PROTOCOL_DIAGNOSTICS) {
 			LOGGER.info("LAYERED_TERRAIN_READY_ACCEPTED pending={}", pending);
+		}
+		final NativeLayeredSceneTerrain acknowledgedTerrain =
+			player.getAttribute(
+				NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE, null);
+		if (acknowledgedTerrain != null) {
+			acknowledgedTerrain.commitResidency();
+			player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 		}
 		player.setAttribute(
 			NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE, pending);
@@ -544,7 +578,12 @@ public final class GameStateUpdater {
 				pending,
 				terrainStageReceiptSummary(receipt));
 		}
-		stagedTerrain.commitResidency();
+		if (receipt.protocolVersion
+				!= LAYERED_TERRAIN_PREDICTED_SYMMETRIC_PROTOCOL_VERSION
+			&& receipt.protocolVersion
+				!= LAYERED_TERRAIN_PREDICTED_SYMMETRIC_STRUCTURE_PROTOCOL_VERSION) {
+			stagedTerrain.commitResidency();
+		}
 		player.removeAttribute(
 			NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE);
 		player.setAttribute(
@@ -1019,6 +1058,7 @@ public final class GameStateUpdater {
 		player.removeAttribute(NATIVE_TERRAIN_PENDING_STAGE_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_ACCEPTED_STAGE_ATTRIBUTE);
 		player.removeAttribute(NATIVE_TERRAIN_STAGE_TRANSACTION_ATTRIBUTE);
+		player.removeAttribute(NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE);
 		player.removeAttribute(
 			NATIVE_TERRAIN_SYMMETRIC_VISUAL_CONTEXT_ATTRIBUTE);
 		player.removeAttribute(

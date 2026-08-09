@@ -333,8 +333,15 @@ class NativeTerrainAtomicActivationTest(unittest.TestCase):
             "an atomic scene context",
         )
         self.assertIn(
-            "maybeSendNativeTerrainSymmetricResidency(\n"
-            "\t\t\t\t\tplayer, location, nativeTerrain);",
+            "final boolean residencyAcknowledged", updater
+        )
+        self.assertIn(
+            "if (ready && residencyAcknowledged && nativeTerrain != null)",
+            updater,
+            "the initial halo must wait for the context residency receipt",
+        )
+        self.assertIn(
+            "initial symmetric halo is deliberately deferred until this",
             updater,
         )
         self.assertIn(
