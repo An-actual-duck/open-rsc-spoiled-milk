@@ -107,6 +107,12 @@ public final class CurrentCombatCharacterizationTest {
 			new RecordingDamageObserver();
 		try (CurrentCombatHarness harness = new CurrentCombatHarness(
 				damageObserver)) {
+			run(harness, "combat_trace_profiles_are_validated_bounded_and_redacted",
+				CurrentCombatObservabilityCharacterization
+					::profilesRedactionAndBoundedRetention);
+			run(harness, "combat_trace_lifecycle_profile_is_read_only",
+				CurrentCombatObservabilityCharacterization
+					::lifecycleProfileAndInstalledObserverRemainReadOnly);
 			run(harness, "secondary_effect_semantics_have_stable_phase_sized_inventory",
 				CurrentCombatSecondaryEffectDescriptorCharacterization::stableSemanticInventory);
 			run(harness, "secondary_effect_policies_have_stable_exact_sized_catalog",
@@ -2654,6 +2660,11 @@ public final class CurrentCombatCharacterizationTest {
 		damageObserver(harness).reset();
 	}
 
+	static void setDiagnosticObserver(final CurrentCombatHarness harness,
+			final CombatDamageObserver observer) {
+		damageObserver(harness).setDiagnosticDelegate(observer);
+	}
+
 	static List<DamageResult> observedDamageResults(
 			final CurrentCombatHarness harness) {
 		return new ArrayList<DamageResult>(damageObserver(harness).results);
@@ -2894,6 +2905,7 @@ public final class CurrentCombatCharacterizationTest {
 		private boolean throwOnEnableCheck;
 		private boolean enabled;
 		private int calls;
+		private CombatDamageObserver diagnosticDelegate = CombatDamageObserver.NONE;
 
 		@Override
 		public boolean isEnabled() {
@@ -2901,7 +2913,7 @@ public final class CurrentCombatCharacterizationTest {
 				throw new IllegalStateException(
 					"deliberate observer enable-check failure");
 			}
-			return enabled;
+			return enabled || diagnosticDelegate.isEnabled();
 		}
 
 		@Override
@@ -2911,6 +2923,9 @@ public final class CurrentCombatCharacterizationTest {
 				throw new IllegalStateException("deliberate observer failure");
 			}
 			results.add(result);
+			if (diagnosticDelegate.isEnabled()) {
+				diagnosticDelegate.onDamageObserved(result);
+			}
 		}
 
 		void reset() {
@@ -2918,6 +2933,10 @@ public final class CurrentCombatCharacterizationTest {
 			calls = 0;
 			throwOnObservation = false;
 			throwOnEnableCheck = false;
+		}
+
+		void setDiagnosticDelegate(final CombatDamageObserver observer) {
+			diagnosticDelegate = observer == null ? CombatDamageObserver.NONE : observer;
 		}
 	}
 
