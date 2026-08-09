@@ -166,6 +166,11 @@ def compile_and_run_policy() -> None:
 
 def main() -> None:
     items_by_id = load_items()
+    for item_id, label in ((2794, "unenchanted wool gloves"), (2795, "unenchanted wool boots")):
+        entry = items_by_id.get(item_id)
+        if entry is None:
+            fail(f"{label} missing override for item {item_id}")
+        require_exact(entry, "magicDefense", 2, label)
     check_matrix(items_by_id, "WOOL_HAT_PRODUCTS", "hat")
     check_matrix(items_by_id, "WOOL_TOP_PRODUCTS", "top")
     check_matrix(items_by_id, "WOOL_SKIRT_PRODUCTS", "skirt")

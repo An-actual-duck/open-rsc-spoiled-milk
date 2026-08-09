@@ -255,10 +255,12 @@
     },
     {
       "id": 2794,
+      "magicDefense": 2,
       "basePrice": 45
     },
     {
       "id": 2795,
+      "magicDefense": 2,
       "basePrice": 45
     },
     {

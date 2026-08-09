@@ -173,10 +173,8 @@ baseline and therefore receives one magic-defense point per resource used.
 - hat baseline magic defense: `1`
 - top baseline magic defense: `4`
 - bottom baseline magic defense: `3`
-- gloves baseline magic defense: follows the standard glove recipe/resource
-  cost once wool gloves are added
-- boots baseline magic defense: follows the standard boot recipe/resource cost
-  once wool boots are added
+- gloves baseline magic defense: `2`
+- boots baseline magic defense: `2`
 
 Enchanted wool clothing follows the same tier path as other enchanted gear.
 All active wool lines are magic-defense-only and use the same full budget:
