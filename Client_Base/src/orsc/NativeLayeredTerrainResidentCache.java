@@ -1,6 +1,9 @@
 package orsc;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -46,6 +49,15 @@ public final class NativeLayeredTerrainResidentCache {
 
 	public synchronized int getLastReferences() {
 		return lastReferences;
+	}
+
+	/**
+	 * Returns a read-only least-recently-used to most-recently-used snapshot.
+	 * This is intentionally diagnostic-only: callers cannot alter residency.
+	 */
+	public synchronized List<String> getAccessOrder() {
+		return Collections.unmodifiableList(
+			new ArrayList<String>(resident.keySet()));
 	}
 
 	public synchronized void clear() {

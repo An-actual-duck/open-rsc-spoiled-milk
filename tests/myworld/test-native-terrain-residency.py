@@ -116,6 +116,168 @@ class NativeTerrainResidencyTest(unittest.TestCase):
             [SERVER_RESIDENCY],
         )
 
+    def test_full_cache_prediction_context_halo_order_stays_in_lockstep(self):
+        harness = textwrap.dedent(
+            """
+            import com.openrsc.server.net.rsc
+                .NativeLayeredTerrainClientResidency;
+            import java.util.Arrays;
+            import orsc.NativeLayeredTerrainChunk;
+            import orsc.NativeLayeredTerrainResidentCache;
+
+            /**
+             * End-to-end cache ordering model for the v0.2.68 failure:
+             * stage 213 predicts (7,11), context 85 supersedes it with
+             * (7,10), then the acknowledged context is followed by its halo.
+             */
+            public final class NativeTerrainFullCacheOrderingHarness {
+                private static final String SHA =
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+                public static void main(String[] arguments) {
+                    NativeLayeredTerrainClientResidency server =
+                        new NativeLayeredTerrainClientResidency(64);
+                    NativeLayeredTerrainResidentCache client =
+                        new NativeLayeredTerrainResidentCache(64);
+
+                    deliver(server, client, range("context-0-", 0, 64),
+                        "initial authoritative context");
+                    require(server.size() == 64 && client.size() == 64,
+                        "initial full cache capacity");
+
+                    /* Stage 213 predicts (7,11), but it is superseded. The
+                     * new entries and LRU touches stay transaction-private on
+                     * both peers, so canonical residency remains identical. */
+                    predict(server, client, concat(
+                        range("context-0-", 48, 64),
+                        range("prediction-7,11-", 0, 16)),
+                        "stage 213 prediction (7,11)");
+
+                    /* Context 85 for (7,10) is delivered and acknowledged.
+                     * Its commit is the only canonical change before halo. */
+                    deliver(server, client, concat(
+                        range("context-0-", 16, 64),
+                        range("context-7,10-", 0, 16)),
+                        "context 85 acknowledgement (7,10)");
+
+                    /* The initial 5x5 symmetric halo is created only after
+                     * context acknowledgement, therefore from this committed
+                     * cache version rather than the earlier one. */
+                    deliver(server, client, concat(
+                        range("context-0-", 40, 64),
+                        new String[] {"halo-7,10"}),
+                        "initial symmetric halo delivery");
+
+                    /* A later prediction must again leave canonical order
+                     * untouched, including after 64-entry capacity churn. */
+                    predict(server, client, concat(
+                        new String[] {"halo-7,10"},
+                        range("subsequent-prediction-", 0, 24)),
+                        "subsequent prediction");
+                }
+
+                private static void deliver(
+                        NativeLayeredTerrainClientResidency server,
+                        NativeLayeredTerrainResidentCache client,
+                        String[] identities, String label) {
+                    NativeLayeredTerrainClientResidency.Transaction serverTx =
+                        server.begin();
+                    NativeLayeredTerrainResidentCache.Transaction clientTx =
+                        client.begin();
+                    for (String identity : identities) {
+                        if (serverTx.requiresPayload(identity)) {
+                            clientTx.acceptPayload(identity, chunk());
+                        } else {
+                            clientTx.resolveReference(identity);
+                        }
+                    }
+                    /* Client decode commits on receipt; server commits only
+                     * when that receipt is acknowledged. */
+                    clientTx.commit();
+                    serverTx.commit();
+                    assertParity(server, client, label);
+                }
+
+                private static void predict(
+                        NativeLayeredTerrainClientResidency server,
+                        NativeLayeredTerrainResidentCache client,
+                        String[] identities, String label) {
+                    NativeLayeredTerrainClientResidency.Transaction serverTx =
+                        server.begin();
+                    NativeLayeredTerrainResidentCache.Transaction clientTx =
+                        client.begin();
+                    for (String identity : identities) {
+                        if (serverTx.requiresPayload(identity)) {
+                            clientTx.acceptPayload(identity, chunk());
+                        } else {
+                            clientTx.resolveReference(identity);
+                        }
+                    }
+                    /* Predictions have no authoritative receipt. Deliberately
+                     * discard both staged transactions without committing. */
+                    assertParity(server, client, label);
+                }
+
+                private static void assertParity(
+                        NativeLayeredTerrainClientResidency server,
+                        NativeLayeredTerrainResidentCache client,
+                        String label) {
+                    require(server.size() == client.size(),
+                        label + " size parity");
+                    require(server.getAccessOrder().equals(
+                            client.getAccessOrder()),
+                        label + " access-order parity: server="
+                            + server.getAccessOrder() + " client="
+                            + client.getAccessOrder());
+                }
+
+                private static String[] range(
+                        String prefix, int first, int endExclusive) {
+                    String[] values = new String[endExclusive - first];
+                    for (int index = first; index < endExclusive; index++) {
+                        values[index - first] = prefix + index;
+                    }
+                    return values;
+                }
+
+                private static String[] concat(
+                        String[] left, String[] right) {
+                    String[] result = Arrays.copyOf(
+                        left, left.length + right.length);
+                    System.arraycopy(right, 0, result, left.length,
+                        right.length);
+                    return result;
+                }
+
+                private static NativeLayeredTerrainChunk chunk() {
+                    return NativeLayeredTerrainChunk.available(
+                        1, 0, 0, 0, 0,
+                        NativeLayeredTerrainChunk.UNIFORM_ENCODING,
+                        SHA, new byte[10]);
+                }
+
+                private static void require(
+                        boolean condition, String label) {
+                    if (!condition) {
+                        throw new AssertionError(label);
+                    }
+                }
+            }
+            """
+        )
+        self._compile_and_run(
+            "NativeTerrainFullCacheOrderingHarness",
+            harness,
+            [
+                SERVER_RESIDENCY,
+                CLIENT_TILE,
+                CLIENT_CHUNK,
+                CLIENT_SNAPSHOT,
+                CLIENT_RESIDENCY,
+            ],
+        )
+
     def test_client_v6_decodes_overlap_and_rejects_missing_references(self):
         harness = textwrap.dedent(
             """
@@ -359,6 +521,15 @@ class NativeTerrainResidencyTest(unittest.TestCase):
             "NATIVE_TERRAIN_READINESS_TRANSACTION_ATTRIBUTE", updater
         )
         self.assertIn("receipt.protocolVersion == 2", updater)
+        self.assertIn("final boolean residencyAcknowledged", updater)
+        self.assertIn(
+            "if (ready && residencyAcknowledged && nativeTerrain != null)",
+            updater,
+        )
+        self.assertIn(
+            "initial symmetric halo is deliberately deferred until this",
+            updater,
+        )
         self.assertIn("tryFinalizeAndSendPacketChecked(", updater)
         self.assertIn(
             "public static boolean tryFinalizeAndSendPacketChecked(",

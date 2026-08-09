@@ -320,7 +320,16 @@ public final class GameStateUpdater {
 			final boolean ready = nativeTerrain == null
 				|| !nativeTerrain.requiresBlockingReadiness()
 				|| hasAcceptedNativeTerrainReadiness(player);
-			if (ready && nativeTerrain != null) {
+			/*
+			 * The initial context and its symmetric halo are separate residency
+			 * transactions. Do not construct the halo from the context's old
+			 * cache version: wait until the matching readiness receipt commits
+			 * that authoritative context first.
+			 */
+			final boolean residencyAcknowledged = nativeTerrain == null
+				|| !nativeTerrain.requiresReadiness()
+				|| hasAcceptedNativeTerrainReadiness(player);
+			if (ready && residencyAcknowledged && nativeTerrain != null) {
 				if (nativeTerrainSymmetricResidencyEnabled()) {
 					maybeSendNativeTerrainSymmetricResidency(
 						player, location, nativeTerrain);
@@ -429,17 +438,12 @@ public final class GameStateUpdater {
 			player.removeAttribute(
 				NATIVE_TERRAIN_ACCEPTED_READINESS_ATTRIBUTE);
 			/*
-			 * Protocol-v8 activation may send Player/static-scene packets in
-			 * this same update. Put the cheap visual-only radius-two stage on
-			 * the wire first so the client can publish the full terrain field
-			 * before it uncovers that atomic scene. The structural halo stays
-			 * asynchronous and follows its normal acknowledgement.
+			 * The initial symmetric halo is deliberately deferred until this
+			 * context's readiness receipt commits its residency transaction.
+			 * Sending both packets now would derive two transactions from one
+			 * cache version, so acknowledgement ordering could make the second
+			 * commit stale or reference an entry the client has already evicted.
 			 */
-			if (nativeTerrain.usesAtomicActivation()
-				&& nativeTerrainSymmetricResidencyEnabled()) {
-				maybeSendNativeTerrainSymmetricResidency(
-					player, location, nativeTerrain);
-			}
 			return !nativeTerrain.requiresBlockingReadiness();
 		}
 		player.removeAttribute(NATIVE_TERRAIN_PENDING_READINESS_ATTRIBUTE);
