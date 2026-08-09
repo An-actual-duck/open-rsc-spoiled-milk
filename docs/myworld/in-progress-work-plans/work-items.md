@@ -58,9 +58,9 @@ deferred until the limited release has testers and observed play data.
   - gloves and boots can be enchanted at every altar and upgraded through the
     same tier path as hats/tops/bottoms
   - cloth defense is magic-defense-only
-  - new Life cloth uses the intended `0.6x` defense budget while older altar
-    cloth rows retain their current full tier-scaled magic-defense values;
-    normalize those rows only as an explicit balance decision
+  - all enchanted wool cloth uses the full `tier * resource cost` budget as
+    magic defense; the earlier Life-only `0.6x` penalty was retired after
+    gameplay testing
   - robe-specific runtime effects have been retired from cloth armor
   - enchanted cloth preserves matching rune costs at `10%` per piece
   - matching enchanted staves preserve matching rune costs at `50%`

@@ -27,7 +27,7 @@ EXPECTED: dict[str, tuple[int, str]] = {
     "getGodEquipmentTargetMagicDefense": (4002, "c5c1191ba4e98a0982f7f519c9b65069ef4ec0e6c2af6c497058e7fabe32ab7a"),
     "getGodEquipmentTargetMagic": (4002, "0867364c350ce6dc8914b26d66599601db02d95b3c6695bbc99aff90b8bfaa76"),
     "getBlessedWoolBaseMagicDefense": (4002, "c7783840877a575d0a8e9df84956b6c4f68d9ccaeeae04218633ddd8d2647ea9"),
-    "getBlessedWoolTargetMagicDefense": (4002, "b3c9d60a4b3160a1b3885d5cd64e807b6e16d6101befded0f7f6e3f5ca26976c"),
+    "getBlessedWoolTargetMagicDefense": (4002, "78752b34c7f6a65b64b2e1cbac33b9860ff4e8a40efbf2aa4c6fc4738d36ebe3"),
     "getLegacyRangedOffense": (2431, "e9f8f428252a0fc738c819e16721b314736fd4e4bac8b1a11e7e74dfc1633499"),
 }
 
@@ -259,7 +259,7 @@ def main() -> None:
             f"missing={sorted(set(EXPECTED) - set(observed))} "
             f"extra={sorted(set(observed) - set(EXPECTED))} changed={changed}"
         )
-    print("PASS: equipment calculation tables preserve published-main values")
+    print("PASS: equipment calculation tables match the approved fingerprints")
 
 
 if __name__ == "__main__":

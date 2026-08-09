@@ -63,7 +63,8 @@ family multiplier:
 
 - `Metal`: `1.0x`
 - `Leather`: `0.9x`, rounded up
-- `Cloth`: `0.6x`, rounded up
+- `Cloth`: `1.0x` for the active crafted wool progression; older non-wool
+  cloth remains governed by its explicitly maintained item data
 
 ### Example
 
@@ -72,7 +73,7 @@ For a chest piece costing `4` resources:
 - tier `1` metal budget: `4`
 - tier `10` metal budget: `40`
 - tier `10` leather budget: `ceil(40 * 0.9) = 36`
-- tier `10` cloth budget: `ceil(40 * 0.6) = 24`
+- tier `10` crafted wool budget: `40`
 
 ## Metal Armor Rule
 
@@ -164,9 +165,10 @@ Cloth must not become the strongest overall armor type.
 
 ### Cloth / Robe Budget Rule
 
-Cloth uses the family-level `0.6x` multiplier as the broader balance target,
-but unenchanted wool clothing uses a fixed tier-1 baseline floor that must not
-drop below one defense point per resource cost.
+Crafted wool clothing uses the full `tier * resource_cost` budget. The earlier
+`0.6x` cloth penalty was retired after gameplay testing showed that the full
+magic-defense amount is reasonable. Unenchanted wool clothing is the tier-1
+baseline and therefore receives one magic-defense point per resource used.
 
 - hat baseline magic defense: `1`
 - top baseline magic defense: `4`
@@ -177,22 +179,22 @@ drop below one defense point per resource cost.
   once wool boots are added
 
 Enchanted wool clothing follows the same tier path as other enchanted gear.
-All active cloth lines are magic-defense-only in current item data, but their
-budget conversion is not yet uniform:
+All active wool lines are magic-defense-only and use the same full budget:
 
-- Life cloth uses the intended `ceil(tier x resource cost x 0.6)` budget,
-  subject to the baseline floor
-- existing Air through Soul cloth rows retain the prior full tier-scaled
-  magic-defense values in the current data
+- `magic defense = tier * resource cost`
+- hat cost: `1`
+- top cost: `4`
+- bottom cost: `3`
+- gloves cost: `2`
+- boots cost: `2`
 - tier `1` enchanted cloth must match the unenchanted wool baseline for that
   slot
 - baseline magic defense is always preserved as a floor
 - altar identity must not restructure cloth defense into melee or ranged
 
-This retires the current altar-based defense redistribution model. Air, Water,
-and Earth cloth no longer add ranged or melee defense. Normalizing all older
-cloth rows to the Life budget is a balance change, not a documentation fix,
-and must be decided separately.
+This retires both the earlier altar-based defense redistribution model and the
+Life-only `0.6x` penalty. Air, Water, Earth, and every other altar family place
+their complete defense budget into magic defense.
 
 ### Cloth Rune Preservation
 

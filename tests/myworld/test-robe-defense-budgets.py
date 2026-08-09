@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import json
-import math
 import re
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -17,6 +18,27 @@ EFFECTS_PATH = (
     / "server"
     / "content"
     / "EnchantingItemEffects.java"
+)
+POLICY_PATH = (
+    ROOT
+    / "server"
+    / "src"
+    / "com"
+    / "openrsc"
+    / "server"
+    / "content"
+    / "WoolRobeDefense.java"
+)
+STAT_CALCULATOR_PATH = (
+    ROOT
+    / "server"
+    / "src"
+    / "com"
+    / "openrsc"
+    / "server"
+    / "model"
+    / "container"
+    / "EquipmentStatCalculator.java"
 )
 
 ALTAR_NAMES = [
@@ -62,45 +84,12 @@ def parse_matrix(name: str) -> list[list[int]]:
     return rows
 
 
-def allocate_with_priority(total: int, channels: list[str]) -> dict[str, int]:
-    base = total // len(channels)
-    remainder = total % len(channels)
-    result = {channel: base for channel in channels}
-    for channel in channels[:remainder]:
-        result[channel] += 1
-    return result
-
-
-def expected_defenses(altar_index: int, tier: int, slot: str) -> dict[str, int]:
-    baseline = {"hat": 1, "top": 4, "skirt": 3}[slot]
-    cost = {"hat": 1, "top": 4, "skirt": 3}[slot]
-    remaining = tier * cost - baseline
-    magic = baseline
-    melee = 0
-    ranged = 0
-
-    if altar_index == 0:  # Air
-        split = allocate_with_priority(remaining, ["magic", "ranged"])
-        magic += split["magic"]
-        ranged = split["ranged"]
-    elif altar_index == 2:  # Water
-        split = allocate_with_priority(remaining, ["magic", "ranged", "melee"])
-        magic += split["magic"]
-        ranged = split["ranged"]
-        melee = split["melee"]
-    elif altar_index == 3:  # Earth
-        split = allocate_with_priority(remaining, ["magic", "melee"])
-        magic += split["magic"]
-        melee = split["melee"]
-    elif altar_index == 13:  # Life: new cloth line uses intended 0.6x budget
-        magic = max(baseline, math.ceil(tier * cost * 0.6))
-    else:
-        magic += remaining
-
+def expected_defenses(tier: int, slot: str) -> dict[str, int]:
+    cost = {"hat": 1, "top": 4, "skirt": 3, "gloves": 2, "boots": 2}[slot]
     return {
-        "meleeDefense": melee,
-        "rangedDefense": ranged,
-        "magicDefense": magic,
+        "meleeDefense": 0,
+        "rangedDefense": 0,
+        "magicDefense": tier * cost,
     }
 
 
@@ -118,7 +107,7 @@ def check_matrix(items_by_id: dict[int, dict], matrix_name: str, slot: str) -> N
             entry = items_by_id.get(item_id)
             if entry is None:
                 fail(f"{altar_name} {slot} tier {tier} missing override for item {item_id}")
-            expected = expected_defenses(altar_index, tier, slot)
+            expected = expected_defenses(tier, slot)
             label = f"{altar_name} {slot} tier {tier} item {item_id}"
             require_exact(entry, "meleeDefense", expected["meleeDefense"], label)
             require_exact(entry, "rangedDefense", expected["rangedDefense"], label)
@@ -127,12 +116,71 @@ def check_matrix(items_by_id: dict[int, dict], matrix_name: str, slot: str) -> N
             require_exact(entry, "requiredSkillID", -1, label)
 
 
+HARNESS = r"""
+package com.openrsc.server.content;
+
+public final class WoolRobeDefenseHarness {
+    private static void equal(int actual, int expected, String label) {
+        if (actual != expected) {
+            throw new AssertionError(label + ": expected " + expected + ", got " + actual);
+        }
+    }
+
+    public static void main(String[] args) {
+        equal(WoolRobeDefense.budget(2, 1), 2, "novice hat");
+        equal(WoolRobeDefense.budget(2, 4), 8, "novice top");
+        equal(WoolRobeDefense.budget(2, 3), 6, "novice bottom");
+        equal(WoolRobeDefense.budget(2, 2), 4, "novice gloves or boots");
+        equal(WoolRobeDefense.budget(10, 4), 40, "mythic top");
+        equal(WoolRobeDefense.budget(-1, 4), 0, "negative tier");
+        equal(WoolRobeDefense.budget(Integer.MAX_VALUE, Integer.MAX_VALUE),
+            Integer.MAX_VALUE, "overflow");
+    }
+}
+"""
+
+
+def compile_and_run_policy() -> None:
+    with tempfile.TemporaryDirectory(prefix="wool-robe-defense-") as temp:
+        harness = Path(temp) / "WoolRobeDefenseHarness.java"
+        harness.write_text(HARNESS, encoding="utf-8")
+        subprocess.run(
+            [
+                "javac",
+                "-source",
+                "8",
+                "-target",
+                "8",
+                "-d",
+                temp,
+                str(POLICY_PATH),
+                str(harness),
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ["java", "-cp", temp, "com.openrsc.server.content.WoolRobeDefenseHarness"],
+            check=True,
+        )
+
+
 def main() -> None:
     items_by_id = load_items()
     check_matrix(items_by_id, "WOOL_HAT_PRODUCTS", "hat")
     check_matrix(items_by_id, "WOOL_TOP_PRODUCTS", "top")
     check_matrix(items_by_id, "WOOL_SKIRT_PRODUCTS", "skirt")
-    print("PASS: enchanted robe defense overrides cover all robe products")
+    check_matrix(items_by_id, "WOOL_GLOVE_PRODUCTS", "gloves")
+    check_matrix(items_by_id, "WOOL_BOOT_PRODUCTS", "boots")
+    compile_and_run_policy()
+
+    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+    calculator = STAT_CALCULATOR_PATH.read_text(encoding="utf-8")
+    if "WoolRobeDefense.budget(tier, resourceCost)" not in effects:
+        fail("enchanted wool runtime does not use the shared full defense budget")
+    if "WoolRobeDefense.budget(9, resourceCost)" not in calculator:
+        fail("blessed wool scaling does not use the shared full defense budget")
+
+    print("PASS: full enchanted wool defense budgets cover all 700 robe products")
 
 
 if __name__ == "__main__":
