@@ -833,10 +833,10 @@ public final class Summoning {
 		if (owner == null || amount <= 0 || !hasBlackUnicorn(owner) || !isPrayerDrop(itemId)) {
 			return false;
 		}
-		final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, amount);
-		final int xp = getPrayerDropExperience(itemId) * amount * 2;
+		final int devotionBonusXp = recordAutoBuryDevotionBonus(owner, itemId, amount);
+		final int xp = OfferingExperience.getInternalExperience(itemId) * amount;
 		if (xp > 0) {
-			owner.incExp(Skill.PRAYER.id(), xp, true);
+			Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), xp);
 			Devotion.awardOfferingPrayerXpBonus(owner, Skill.PRAYER.id(), devotionBonusXp);
 			BlackUnicornOfferingHealing.apply(owner, itemId, amount);
 			owner.message("@gre@Your black unicorn sanctifies the " + getPrayerDropName(owner, itemId, amount) + ".");
@@ -879,10 +879,10 @@ public final class Summoning {
 		return inventory.add(item, true);
 	}
 
-	private static int recordAutoBuryDevotionBonus(final Player owner, final int amount) {
+	private static int recordAutoBuryDevotionBonus(final Player owner, final int itemId, final int amount) {
 		int bonusXp = 0;
 		for (int i = 0; i < amount; i++) {
-			bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner);
+			bonusXp += Devotion.recordBlackUnicornOfferingAndGetPrayerXpBonus(owner, itemId);
 		}
 		return bonusXp;
 	}
@@ -2025,27 +2025,6 @@ public final class Summoning {
 		}
 	}
 
-	private static int getPrayerDropExperience(final int itemId) {
-		final ItemId item = ItemId.getById(itemId);
-		if (item == null) {
-			return 0;
-		}
-		switch (item) {
-			case BONES:
-			case ASHES:
-				return 15;
-			case DEMON_ASH:
-				return 80;
-			case BAT_BONES:
-				return 18;
-			case BIG_BONES:
-				return 50;
-			case DRAGON_BONES:
-				return 240;
-			default:
-				return 0;
-		}
-	}
 
 	private static String getPrayerDropName(final Player owner, final int itemId, final int amount) {
 		final ItemDefinition def = owner.getWorld().getServer().getEntityHandler().getItemDef(itemId);

@@ -1002,6 +1002,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 						//nothing
 						break;
 					case PRODUCTION_REMEMBER_TOGGLE:
+					case PRODUCTION_KEEP_OPEN_TOGGLE:
 						os.value = packet.readByte();
 						break;
 					case IRONMAN_MODE:

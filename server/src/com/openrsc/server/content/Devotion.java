@@ -27,11 +27,19 @@ public final class Devotion {
 	}
 
 	public static int recordOfferingAndGetPrayerXpBonus(final Player player) {
-		return recordOfferingAndGetPrayerXpBonus(player, false);
+		return recordOfferingAndGetPrayerXpBonus(player, ItemId.BONES.id(), false);
 	}
 
 	public static int recordBlackUnicornOfferingAndGetPrayerXpBonus(final Player player) {
-		return recordOfferingAndGetPrayerXpBonus(player, true);
+		return recordOfferingAndGetPrayerXpBonus(player, ItemId.BONES.id(), true);
+	}
+
+	public static int recordOfferingAndGetPrayerXpBonus(final Player player, final int offeringItemId) {
+		return recordOfferingAndGetPrayerXpBonus(player, offeringItemId, false);
+	}
+
+	public static int recordBlackUnicornOfferingAndGetPrayerXpBonus(final Player player, final int offeringItemId) {
+		return recordOfferingAndGetPrayerXpBonus(player, offeringItemId, true);
 	}
 
 	public static void awardOfferingPrayerXpBonus(final Player player, final int skillId, final int devotionBonusXp) {
@@ -48,7 +56,8 @@ public final class Devotion {
 		player.getSkills().addExperience(skillId, devotionBonusXp);
 	}
 
-	private static int recordOfferingAndGetPrayerXpBonus(final Player player, final boolean blackUnicornBonus) {
+	private static int recordOfferingAndGetPrayerXpBonus(final Player player, final int offeringItemId,
+		final boolean blackUnicornBonus) {
 		if (player == null || !player.getConfig().WANT_MYWORLD) {
 			return 0;
 		}
@@ -72,7 +81,8 @@ public final class Devotion {
 		if (newDevotion > previousDevotion) {
 			sendDevotionIncreaseMessage(player, godLine, newDevotion);
 		}
-		return bonusXp * 4;
+		return OfferingExperience.scaleDisplayedExperience(bonusXp, offeringItemId)
+			* OfferingExperience.INTERNAL_XP_UNITS_PER_XP;
 	}
 
 	public static int getOfferings(final Player player, final PrayerCatalog.GodLine godLine) {

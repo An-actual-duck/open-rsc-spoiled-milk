@@ -1467,6 +1467,7 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(3138, "400", "Wool robe tops can be blessed"));
 		} else if (curTab == 4) {
 			skillMenuEntries.add(new SkillMenuEntry("", "Bury bones or scatter ashes to make offerings"));
+			skillMenuEntries.add(new SkillMenuEntry("", "Offerings give 10/12/13/14/16 Worship XP by tier"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Every 10 offerings gives +1 devotion"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Matching blessed symbols give 2x devotion from offerings"));
 			skillMenuEntries.add(new SkillMenuEntry("", "Mourning Unicorn and its full hide set each add 50%"));

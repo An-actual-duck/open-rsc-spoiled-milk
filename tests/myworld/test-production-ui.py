@@ -192,6 +192,42 @@ def main() -> None:
         "case PRODUCTION_BACK:",
         "Production Back navigation should be handled server-side",
     )
+    # Keep-open is a separate persistent preference, not a client-only toggle.
+    require(
+        memory_text,
+        'KEEP_OPEN_PREFERENCE_CACHE_KEY = "prod_keep_open_v1"',
+        "Production keep-open should use a versioned per-account preference key",
+    )
+    require(
+        memory_text,
+        "UI_FLAG_KEEP_OPEN_SUPPORTED = 8" and "UI_FLAG_KEEP_OPEN_ENABLED = 16",
+        "Production keep-open should use additive protocol flags",
+    )
+    require(
+        handler_text,
+        "case PRODUCTION_KEEP_OPEN_TOGGLE:",
+        "Production keep-open preference changes should be handled server-side",
+    )
+    require(
+        handler_text,
+        "if (started && !ProductionMemory.isKeepOpenEnabled(player))",
+        "Production should close only when the keep-open preference is disabled",
+    )
+    require(
+        handler_text,
+        'player.message("Finish your current production first")',
+        "Keep-open must reject a second production start while the batch is active",
+    )
+    require(
+        do_skill_interface_text,
+        '"Keep open"' and "sendProductionKeepOpenPreference()",
+        "Client production UI should expose and send the Keep open preference",
+    )
+    require(
+        do_skill_interface_text,
+        "PRODUCTION_UI_KEEP_OPEN_SUPPORTED = 8" and "PRODUCTION_UI_KEEP_OPEN_ENABLED = 16",
+        "Client should parse the additive keep-open UI flags",
+    )
     require(
         crafting_text,
         "!session.isType(ProductionSession.TYPE_CRAFTING)",
@@ -294,7 +330,7 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        'drawString("Remember last input"',
+        '"Remember last input"',
         "Eligible production interfaces should expose the remembered-input checkbox",
     )
     require(

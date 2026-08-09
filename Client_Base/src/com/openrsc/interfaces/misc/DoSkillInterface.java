@@ -28,12 +28,16 @@ public final class DoSkillInterface {
 	private int productionInterfaceId = -1;
 	private boolean productionRememberSupported = false;
 	private boolean productionRememberEnabled = false;
+	private boolean productionKeepOpenSupported = false;
+	private boolean productionKeepOpenEnabled = false;
 	private boolean productionCanGoBack = false;
 	private static final int PRODUCTION_CONTENT_HEIGHT = 292;
-	private static final int PRODUCTION_REMEMBER_HEIGHT = 316;
+	private static final int PRODUCTION_PREFERENCES_HEIGHT = 340;
 	private static final int PRODUCTION_UI_REMEMBER_SUPPORTED = 1;
 	private static final int PRODUCTION_UI_REMEMBER_ENABLED = 2;
 	private static final int PRODUCTION_UI_CAN_GO_BACK = 4;
+	private static final int PRODUCTION_UI_KEEP_OPEN_SUPPORTED = 8;
+	private static final int PRODUCTION_UI_KEEP_OPEN_ENABLED = 16;
 	private static final int PRODUCTION_SMITHING_MATERIAL = 4;
 	private static final int PRODUCTION_FURNACE_CATEGORY = 5;
 	private static final int PRODUCTION_FURNACE_MATERIAL = 6;
@@ -268,7 +272,8 @@ public final class DoSkillInterface {
 
 	private void renderProductionInterface() {
 		width = 430;
-		height = productionRememberSupported ? PRODUCTION_REMEMBER_HEIGHT : PRODUCTION_CONTENT_HEIGHT;
+		height = productionRememberSupported || productionKeepOpenSupported
+			? PRODUCTION_PREFERENCES_HEIGHT : PRODUCTION_CONTENT_HEIGHT;
 		autoHeight = 0;
 		reposition();
 		mc.getSurface().drawBoxAlpha(x, y, width, height, panelColour, 160);
@@ -467,29 +472,53 @@ public final class DoSkillInterface {
 			mc.getSurface().drawBoxAlpha(x + width - 92, quantityY - 1, 76, 22, 0, 128);
 		}
 
-		if (productionRememberSupported) {
-			drawProductionRememberCheckbox();
+		if (productionRememberSupported || productionKeepOpenSupported) {
+			drawProductionPreferenceCheckboxes();
 		}
 	}
 
-	private void drawProductionRememberCheckbox() {
+	private void drawProductionPreferenceCheckboxes() {
 		final int checkboxX = x + 14;
 		final int checkboxY = y + PRODUCTION_CONTENT_HEIGHT + 5;
 		final int checkboxSize = 14;
+		if (productionRememberSupported) {
+			drawProductionPreferenceCheckbox(checkboxX, checkboxY, checkboxSize, "Remember last input",
+				productionRememberEnabled, new ButtonHandler() {
+					@Override
+					void handle() {
+						productionRememberEnabled = !productionRememberEnabled;
+						sendProductionRememberPreference();
+					}
+				});
+		}
+		if (productionKeepOpenSupported) {
+			final int keepOpenY = checkboxY + (productionRememberSupported ? 20 : 0);
+			drawProductionPreferenceCheckbox(checkboxX, keepOpenY, checkboxSize, "Keep open",
+				productionKeepOpenEnabled, new ButtonHandler() {
+					@Override
+					void handle() {
+						productionKeepOpenEnabled = !productionKeepOpenEnabled;
+						sendProductionKeepOpenPreference();
+					}
+				});
+		}
+	}
+
+	private void drawProductionPreferenceCheckbox(final int checkboxX, final int checkboxY, final int checkboxSize,
+		final String label, final boolean enabled, final ButtonHandler handler) {
 		final int rowRight = checkboxX + 185;
 		boolean hovered = mc.getMouseX() >= checkboxX && mc.getMouseX() <= rowRight
 			&& mc.getMouseY() >= checkboxY && mc.getMouseY() <= checkboxY + checkboxSize;
 		int background = hovered ? 0x52463B : 0x222222;
 		mc.getSurface().drawBoxAlpha(checkboxX, checkboxY, checkboxSize, checkboxSize, background, 192);
 		mc.getSurface().drawBoxBorder(checkboxX, checkboxSize, checkboxY, checkboxSize,
-			productionRememberEnabled ? 0xC1B575 : 0x777775);
-		if (productionRememberEnabled) {
+			enabled ? 0xC1B575 : 0x777775);
+		if (enabled) {
 			drawString("X", checkboxX + 3, checkboxY + 11, 2, 0xF0D8A8);
 		}
-		drawString("Remember last input", checkboxX + checkboxSize + 6, checkboxY + 11, 2, textColour);
+		drawString(label, checkboxX + checkboxSize + 6, checkboxY + 11, 2, textColour);
 		if (hovered && mc.getMouseClick() == 1) {
-			productionRememberEnabled = !productionRememberEnabled;
-			sendProductionRememberPreference();
+			handler.handle();
 			mc.setMouseClick(0);
 		}
 	}
@@ -728,6 +757,13 @@ public final class DoSkillInterface {
 		mc.packetHandler.getClientStream().finishPacket();
 	}
 
+	private void sendProductionKeepOpenPreference() {
+		mc.packetHandler.getClientStream().newPacket(199);
+		mc.packetHandler.getClientStream().bufferBits.putByte(27);
+		mc.packetHandler.getClientStream().bufferBits.putByte(productionKeepOpenEnabled ? 1 : 0);
+		mc.packetHandler.getClientStream().finishPacket();
+	}
+
 	private void sendProductionBack() {
 		mc.packetHandler.getClientStream().newPacket(199);
 		mc.packetHandler.getClientStream().bufferBits.putByte(25);
@@ -757,6 +793,8 @@ public final class DoSkillInterface {
 		this.productionRememberSupported = (uiFlags & PRODUCTION_UI_REMEMBER_SUPPORTED) != 0;
 		this.productionRememberEnabled = (uiFlags & PRODUCTION_UI_REMEMBER_ENABLED) != 0;
 		this.productionCanGoBack = (uiFlags & PRODUCTION_UI_CAN_GO_BACK) != 0;
+		this.productionKeepOpenSupported = (uiFlags & PRODUCTION_UI_KEEP_OPEN_SUPPORTED) != 0;
+		this.productionKeepOpenEnabled = (uiFlags & PRODUCTION_UI_KEEP_OPEN_ENABLED) != 0;
 		for (int i = 0; i < itemIds.length; i++) {
 			ProductionRecipeView recipe = new ProductionRecipeView(itemIds[i], requiredLevels[i], inputAmounts[i],
 				outputAmounts[i], flags[i], ingredientItemIds[i], ingredientFallbackItemIds[i], ingredientAmounts[i]);
@@ -781,6 +819,8 @@ public final class DoSkillInterface {
 		this.productionInterfaceId = -1;
 		this.productionRememberSupported = false;
 		this.productionRememberEnabled = false;
+		this.productionKeepOpenSupported = false;
+		this.productionKeepOpenEnabled = false;
 		this.productionCanGoBack = false;
 		setVisible(false);
 	}

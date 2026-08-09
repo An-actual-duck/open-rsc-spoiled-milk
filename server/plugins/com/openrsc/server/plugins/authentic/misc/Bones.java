@@ -4,6 +4,7 @@ import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.BlackUnicornOfferingHealing;
 import com.openrsc.server.content.Devotion;
+import com.openrsc.server.content.OfferingExperience;
 import com.openrsc.server.content.SkillCapes;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
@@ -96,37 +97,17 @@ public class Bones implements OpInvTrigger, UseInvTrigger {
 		} else {
 			prayerSkillIds = new int[]{Skill.PRAYER.id()};
 		}
-		int factor = player.getConfig().OLD_PRAY_XP ? 3 : 2; // factor to divide by modern is 2 / 2 or 1
-
-		int skillXP = 0;
-		switch (ItemId.getById(item.getCatalogId())) {
-			case BONES:
-				skillXP = 2 * 15; // divided by factor below for 3.75
-				break;
-			case DEMON_ASH:
-				skillXP = 2 * 80; // divided by factor below for 20
-				break;
-			case BAT_BONES:
-				skillXP = 2 * 18; // divided by factor below for 4.5
-				break;
-			case BIG_BONES:
-				skillXP = 2 * 50; // divided by factor below for 12.5
-				break;
-			case DRAGON_BONES:
-				skillXP = 2 * 240; // divided by factor below for 60
-				break;
-			default:
-				player.message("Nothing interesting happens");
-				break;
-		}
-		if (skillXP > 0) {
-			final int devotionBonusXp = Devotion.recordOfferingAndGetPrayerXpBonus(player);
+		final int offeringXp = OfferingExperience.getInternalExperience(item.getCatalogId());
+		if (offeringXp > 0) {
+			final int devotionBonusXp = Devotion.recordOfferingAndGetPrayerXpBonus(player, item.getCatalogId());
 			for (int praySkillId : prayerSkillIds) {
-				int xpToGive = skillXP / factor;
+				int xpToGive = offeringXp;
 				if (bonecrusher) xpToGive /= 2;
-				player.incExp(praySkillId, xpToGive, true);
+				Devotion.awardOfferingPrayerXpBonus(player, praySkillId, xpToGive);
 				Devotion.awardOfferingPrayerXpBonus(player, praySkillId, devotionBonusXp);
 			}
+		} else {
+			player.message("Nothing interesting happens");
 		}
 	}
 
