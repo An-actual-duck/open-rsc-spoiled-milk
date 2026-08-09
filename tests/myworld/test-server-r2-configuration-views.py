@@ -82,6 +82,11 @@ public final class ConfigurationViewProbe {
 			ServerConfigurationLoadResult loaded = ServerConfigurationLoader.load(args[1]);
 			ServerBootstrapComposition composition = ServerBootstrapComposition.prepare(loaded);
 			out("loaderConfig", loaded.getLegacyConfiguration().configFile);
+			out("persistenceParity", loaded.getPersistence().getDatabaseName().equals(loaded.getLegacyConfiguration().DB_NAME));
+			out("worldParity", loaded.getWorldRuntime().getGameTick() == loaded.getLegacyConfiguration().GAME_TICK);
+			out("compatibilityParity", loaded.getCompatibility().getClientVersion() == loaded.getLegacyConfiguration().CLIENT_VERSION);
+			out("toolsParity", loaded.getTools().isWorldBuilderMode() == loaded.getLegacyConfiguration().WORLD_BUILDER_MODE);
+			out("contentParity", loaded.getContent().isMyWorld() == loaded.getLegacyConfiguration().WANT_MYWORLD);
 			out("noResources", !composition.ownsRuntimeResources());
 			composition.close();
 			composition.close();
@@ -272,6 +277,8 @@ class ServerR2ConfigurationViewsTest(unittest.TestCase):
                       for line in result.stdout.splitlines() if line.startswith("PROBE:"))
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
         self.assertEqual("myworld.conf", values["loaderConfig"])
+        self.assertEqual(("true", "true", "true", "true", "true"),
+                         tuple(values[key] for key in ("persistenceParity", "worldParity", "compatibilityParity", "toolsParity", "contentParity")))
         self.assertEqual("true", values["noResources"])
         self.assertEqual("true", values["closed"])
 

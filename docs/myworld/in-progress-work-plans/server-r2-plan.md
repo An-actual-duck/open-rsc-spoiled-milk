@@ -778,6 +778,36 @@ use that boundary as the seam for later startup-stage extraction. Keep typed
 persistence/world/content views and partial-start rollback out of that one
 slice.
 
+#### R2-1 completion record: bootstrap, configuration, and lifecycle composition
+
+Status: **COMPLETE — 2026-08-08.**
+
+`ServerConfigurationLoader` now owns the side-effect-free load/parse/typed-
+validation boundary. It returns `ServerConfigurationLoadResult`, retaining the
+mutable `ServerConfiguration` solely as the compatibility facade while exposing
+immutable process/network, diagnostics, persistence, world-runtime,
+compatibility, tools, and content startup projections. Existing keys, defaults,
+precedence, profile selection, and mutable administrator paths are unchanged.
+Malformed scalar values and missing `connections.conf` now become typed load
+failures; `Server.main` still catches startup failure and retains its existing
+non-zero command-line exit contract.
+
+`ServerBootstrapComposition` is the compiled no-resource composition fixture:
+it owns no database, service thread, scheduler, plugin activation, socket, or
+listener and has an idempotent close boundary. `Server` consumes the validated
+load result before World Builder storage or any runtime resource is created.
+If a later real startup stage fails, `rollbackPartialStart()` closes the created
+executor, channels, Netty groups, database, and registry entry in reverse
+resource order and leaves `running` false. Normal startup order remains
+unchanged.
+
+Headless verification: copied `myworld.conf` and `myworld-host.conf` retain
+legacy/view parity; missing, malformed, and invalid typed profiles are covered;
+the composition fixture proves no-resource/idempotent-close behavior; R2
+ownership/dependency receipts are current; and the authoritative core/plugin
+build passes. R2-2 may now begin extension-registry work without depending on
+raw process exits or unvalidated configuration construction.
+
 ### R2-2: Extension registry and legacy plugin adapter
 
 Goal: make content registration explicit and reversible while preserving all
