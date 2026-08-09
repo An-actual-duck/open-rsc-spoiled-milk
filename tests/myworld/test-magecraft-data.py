@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -10,6 +11,7 @@ CUSTOM_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCust
 MYWORLD_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
 EFFECTS_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "EnchantingItemEffects.java"
 SPELL_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
+SPELL_CLASSIFICATION_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellClassification.java"
 MAGE_ARENA_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "minigames" / "mage_arena" / "MageArena.java"
 MOB_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "Mob.java"
 BURN_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "BurnEvent.java"
@@ -18,6 +20,7 @@ ELEMENTAL_DEBUFF_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "ser
 COMBAT_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "CombatEvent.java"
 PVM_MELEE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
+SPLINTER_SELECTION_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "combat" / "SplinterTargetSelectionPolicy.java"
 RANGE_UTILS_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeUtils.java"
 
 
@@ -201,6 +204,7 @@ def ensure_special_staff_notes(items: dict[int, dict], overrides: dict[int, dict
 def ensure_source_support(items: dict[int, dict]) -> None:
     effects_text = EFFECTS_PATH.read_text(encoding="utf-8")
     spell_text = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
+    spell_classification_text = SPELL_CLASSIFICATION_PATH.read_text(encoding="utf-8")
     mage_arena_text = MAGE_ARENA_PATH.read_text(encoding="utf-8")
     mob_text = MOB_PATH.read_text(encoding="utf-8")
     water_slow_event_text = WATER_SLOW_EVENT_PATH.read_text(encoding="utf-8")
@@ -208,6 +212,7 @@ def ensure_source_support(items: dict[int, dict]) -> None:
     combat_event_text = COMBAT_EVENT_PATH.read_text(encoding="utf-8")
     pvm_melee_event_text = PVM_MELEE_EVENT_PATH.read_text(encoding="utf-8")
     projectile_event_text = PROJECTILE_EVENT_PATH.read_text(encoding="utf-8")
+    splinter_selection_text = SPLINTER_SELECTION_PATH.read_text(encoding="utf-8")
     range_utils_text = RANGE_UTILS_PATH.read_text(encoding="utf-8")
     for snippet in (
         "private static final int[] BASE_STAFFS = {",
@@ -230,11 +235,27 @@ def ensure_source_support(items: dict[int, dict]) -> None:
         "getEarthAttackSpeedDebuffPercent",
         "getFireDefenseDebuffPercent",
         "getSplinterProcChancePercent",
-        "SpellClassification.shouldShowSpellProjectile(spellEnum, impactEffect)",
-        "splinterProcChancePercent, SpellClassification.isBloodSpell(spell))",
     ):
         if snippet not in spell_text:
             fail(f"SpellHandler.java missing expected snippet: {snippet}")
+    if "static boolean shouldShowSpellProjectile" not in spell_classification_text:
+        fail("SpellClassification.java missing spell-projectile presentation authority")
+    if not re.search(
+        r"SpellClassification\.shouldShowSpellProjectile\s*\(\s*spellEnum\s*,\s*impactEffect\s*\)",
+        spell_text,
+    ):
+        fail("SpellHandler.java must delegate spell-projectile presentation to SpellClassification")
+    if not re.search(
+        r"\.dualElementProcs\s*\(\s*startleProcChancePercent\s*,\s*acidPoisonPower\s*,"
+        r"\s*frostbiteProcChancePercent\s*,\s*splinterProcChancePercent\s*\)",
+        spell_text,
+    ):
+        fail("SpellHandler.java must preserve all dual-element projectile proc inputs")
+    if not re.search(
+        r"\.bloodSpell\s*\(\s*SpellClassification\.isBloodSpell\s*\(\s*spell\s*\)\s*\)",
+        spell_text,
+    ):
+        fail("SpellHandler.java must preserve blood-spell classification in its launch specification")
     for snippet in (
         "BATTLESTAFF_OF_FIRE",
         "BATTLESTAFF_OF_WATER",
@@ -320,14 +341,25 @@ def ensure_source_support(items: dict[int, dict]) -> None:
         "applySplinter()",
         "applySplinterOnHitEffect();",
         "selectSplinterTarget",
-        "npc != primaryTarget",
-        "npc.getDef().isAttackable()",
-        "primaryTarget.getLocation(), 2",
+        "SplinterTargetSelectionPolicy.select(",
         "Math.ceil(secondaryEffectDamage / 2.0D)",
-        "splinterTarget.addMageDamage(casterPlayer",
     ):
         if snippet not in projectile_event_text:
             fail(f"ProjectileEvent.java missing expected Wood Splinter snippet: {snippet}")
+    if not re.search(
+        r"splinterTarget\.addMageDamage\s*\(\s*casterPlayer\s*,"
+        r"\s*damageResult\.getLegacyDamageDealt\s*\(\s*\)\s*\)",
+        projectile_event_text,
+    ):
+        fail("ProjectileEvent.java must credit factual Splinter magic damage to its caster")
+    for snippet in (
+        "public static final int RADIUS = 2;",
+        "npc != primaryTarget",
+        "npc.getDef().isAttackable()",
+        "primaryTarget.getLocation(), RADIUS",
+    ):
+        if snippet not in splinter_selection_text:
+            fail(f"SplinterTargetSelectionPolicy.java missing expected selection rule: {snippet}")
     retired_bind_text = "\n".join((spell_text, mob_text, combat_event_text, pvm_melee_event_text, projectile_event_text))
     for snippet in ("getBindProcChancePercent", "applyBindDebuff", "consumeBindDebuff", "applyBindReduction"):
         if snippet in retired_bind_text:
