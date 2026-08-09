@@ -32,7 +32,7 @@ public final class CombatDamageObservation {
 		} catch (final RuntimeException observerFailure) {
 			LOGGER.warn(
 				"Combat damage observation setup failed for effect {}; gameplay result remains authoritative",
-				effectKey, observerFailure);
+				CombatTraceRedaction.effectKey(effectKey), observerFailure);
 			return null;
 		}
 	}
@@ -60,7 +60,8 @@ public final class CombatDamageObservation {
 		} catch (final RuntimeException observerFailure) {
 			LOGGER.warn(
 				"Combat damage observation failed for effect {}; gameplay result remains authoritative",
-				result.getRequest().getEffectKey(), observerFailure);
+				CombatTraceRedaction.effectKey(result.getRequest().getEffectKey()),
+				observerFailure);
 		}
 	}
 
