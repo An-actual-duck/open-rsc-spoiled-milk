@@ -6,6 +6,8 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
+import com.openrsc.server.model.combat.dot.ElderArmorBurnState;
+import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -26,6 +28,8 @@ public final class ElderGreenDragonArmorEffect {
 
 	private static final String BURN_EVENT_KEY =
 		"elder_green_dragon_armor_burn_event";
+	private static final String BURN_STATE_KEY =
+		"elder_green_dragon_armor_burn_state";
 
 	private ElderGreenDragonArmorEffect() {
 	}
@@ -78,18 +82,60 @@ public final class ElderGreenDragonArmorEffect {
 		if (!isValidSource(source) || !isValidTarget(target)) {
 			return;
 		}
-		final ElderArmorBurnEvent existing = target.getAttribute(BURN_EVENT_KEY, null);
-		if (existing != null && existing.isRunning()) {
-			existing.refresh(source);
-			target.getUpdateFlags().setCombatEffect(
-				new CombatEffect(target, CombatEffect.ELDER_DRAGON_BURN));
-			return;
+		synchronized (target) {
+			final PeriodicEffectProvenance provenance =
+				PeriodicEffectProvenance.player(source.getUUID());
+			final Object eventAttribute = target.getAttribute(BURN_EVENT_KEY, null);
+			ElderArmorBurnEvent existing = eventAttribute instanceof ElderArmorBurnEvent
+				? (ElderArmorBurnEvent) eventAttribute : null;
+			if (eventAttribute != null && existing == null) {
+				target.removeAttribute(BURN_EVENT_KEY);
+				existing = findRunningBurnEvent(target);
+				if (existing != null) {
+					target.setAttribute(BURN_EVENT_KEY, existing);
+				}
+			}
+			if (existing != null && existing.isRunning()) {
+				target.setAttribute(BURN_STATE_KEY, ElderArmorBurnState.of(
+					provenance, BURN_PULSES));
+				existing.refresh();
+			} else {
+				target.removeAttribute(BURN_EVENT_KEY);
+				final ElderArmorBurnEvent burn = new ElderArmorBurnEvent(target);
+				if (!target.getWorld().getServer().getGameEventHandler().add(burn)) {
+					return;
+				}
+				target.setAttribute(BURN_STATE_KEY, ElderArmorBurnState.of(
+					provenance, BURN_PULSES));
+				target.setAttribute(BURN_EVENT_KEY, burn);
+			}
 		}
-		final ElderArmorBurnEvent burn = new ElderArmorBurnEvent(source, target);
-		target.setAttribute(BURN_EVENT_KEY, burn);
 		target.getUpdateFlags().setCombatEffect(
 			new CombatEffect(target, CombatEffect.ELDER_DRAGON_BURN));
-		target.getWorld().getServer().getGameEventHandler().add(burn);
+	}
+
+	private static ElderArmorBurnEvent findRunningBurnEvent(final Mob target) {
+		for (GameTickEvent event : target.getWorld().getServer()
+				.getGameEventHandler().getEvents()) {
+			if (event instanceof ElderArmorBurnEvent && event.isRunning()
+					&& event.getOwner() == target) {
+				return (ElderArmorBurnEvent) event;
+			}
+		}
+		return null;
+	}
+
+	/** Clears only this armor-owned burn; generic burn remains retired. */
+	public static void clearBurn(final Mob target) {
+		if (target == null) return;
+		synchronized (target) {
+			final Object attribute = target.getAttribute(BURN_EVENT_KEY, null);
+			if (attribute instanceof ElderArmorBurnEvent) {
+				((ElderArmorBurnEvent) attribute).stop();
+			}
+			target.removeAttribute(BURN_EVENT_KEY);
+			target.removeAttribute(BURN_STATE_KEY);
+		}
 	}
 
 	private static void applySecondary(final Player source, final Mob target,
@@ -139,41 +185,33 @@ public final class ElderGreenDragonArmorEffect {
 
 	private static final class ElderArmorBurnEvent extends GameTickEvent {
 		private final Mob target;
-		private Player source;
-		private int pulsesRemaining;
 
-		private ElderArmorBurnEvent(final Player source, final Mob target) {
+		private ElderArmorBurnEvent(final Mob target) {
 			super(target.getWorld(), target, 1, "Elder Green Dragon Armor Burn",
 				DuplicationStrategy.ONE_PER_MOB);
 			this.target = target;
-			this.source = source;
-			this.pulsesRemaining = BURN_PULSES;
 		}
 
-		private synchronized void refresh(final Player newSource) {
-			this.source = newSource;
-			this.pulsesRemaining = BURN_PULSES;
+		private void refresh() {
 			resetCountdown();
 		}
 
 		@Override
 		public void run() {
-			final Player currentSource;
-			synchronized (this) {
-				currentSource = source;
-			}
+			final ElderArmorBurnState state = target.getAttribute(BURN_STATE_KEY, null);
+			final Player currentSource = state == null ? null
+				: target.getWorld().getPlayerByUUID(state.getProvenance().getSourceId());
 			if (!isValidSource(currentSource) || !isValidTarget(target)) {
 				clear();
 				return;
 			}
 			inflictOwnedDamage(currentSource, target, BURN_DAMAGE,
 				SecondaryEffectPolicy.ELDER_GREEN_DRAGON_ARMOR_BURN);
-			synchronized (this) {
-				pulsesRemaining--;
-				if (pulsesRemaining <= 0
-						|| target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-					clear();
-				}
+			final ElderArmorBurnState next = state.afterPulse();
+			if (next == null || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				clear();
+			} else {
+				target.setAttribute(BURN_STATE_KEY, next);
 			}
 		}
 
@@ -181,6 +219,7 @@ public final class ElderGreenDragonArmorEffect {
 			if (target.getAttribute(BURN_EVENT_KEY, null) == this) {
 				target.removeAttribute(BURN_EVENT_KEY);
 			}
+			target.removeAttribute(BURN_STATE_KEY);
 			stop();
 		}
 	}

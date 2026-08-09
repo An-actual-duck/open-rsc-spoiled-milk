@@ -23,6 +23,8 @@ import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind;
+import com.openrsc.server.model.combat.dot.ElderArmorBurnState;
+import com.openrsc.server.model.combat.dot.ElderGreenDragonBurnState;
 import com.openrsc.server.model.combat.dot.PoisonDurableRecord;
 import com.openrsc.server.model.combat.dot.PoisonTargetPolicy;
 import com.openrsc.server.model.world.World;
@@ -916,12 +918,85 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"Elder boss burn deals no pulse after source removal");
 		assertFalse(bossBurn.isRunning(),
 			"Elder boss burn stops after source removal");
-		assertFalse(bossTarget.getAttribute(
-			"elder_green_dragon_burn_active", false),
-			"Elder boss burn clears active marker after source removal");
 		assertNull(bossTarget.getAttribute(
-			"elder_green_dragon_burn_source", null),
-			"Elder boss burn clears source after source removal");
+			"elder_green_dragon_burn_state", null),
+			"Elder boss burn clears typed target state after source removal");
+		assertNull(bossTarget.getAttribute(
+			"elder_green_dragon_burn_event", null),
+			"Elder boss burn clears its scheduler marker after source removal");
+	}
+
+	static void elderBurnTypedTargetStateAndLifecycle(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player firstArmorSource = harness.player("typed armor one", 670, 680);
+		final Player secondArmorSource = harness.player("typed armor two", 671, 680);
+		final Npc armorTarget = npcWithHits(harness, 672, 680, 20);
+		ElderGreenDragonArmorEffect.applyBurn(firstArmorSource, armorTarget);
+		final GameTickEvent armorEvent = armorTarget.getAttribute(
+			"elder_green_dragon_armor_burn_event", null);
+		assertNotNull(armorEvent, "armor burn owns exactly one scheduler event");
+		assertEquals(1, eventCount(harness, armorTarget,
+			"Elder Green Dragon Armor Burn"),
+			"armor burn has one event after first application");
+		final ElderArmorBurnState firstArmorState = armorTarget.getAttribute(
+			"elder_green_dragon_armor_burn_state", null);
+		assertEquals(firstArmorSource.getUUID(), firstArmorState.getProvenance().getSourceId(),
+			"armor burn state stores player identity rather than a live player");
+		armorEvent.run();
+		ElderGreenDragonArmorEffect.applyBurn(secondArmorSource, armorTarget);
+		final ElderArmorBurnState refreshedArmorState = armorTarget.getAttribute(
+			"elder_green_dragon_armor_burn_state", null);
+		assertEquals(secondArmorSource.getUUID(), refreshedArmorState.getProvenance().getSourceId(),
+			"armor refresh transfers ownership to the new successful source");
+		assertEquals(ElderGreenDragonArmorEffect.BURN_PULSES,
+			refreshedArmorState.getPulsesRemaining(),
+			"armor refresh restores its full five-pulse duration");
+		assertTrue(armorEvent == armorTarget.getAttribute(
+			"elder_green_dragon_armor_burn_event", null),
+			"armor refresh retains the one active scheduler");
+		assertEquals(1, eventCount(harness, armorTarget,
+			"Elder Green Dragon Armor Burn"),
+			"armor refresh never stacks scheduler events");
+		armorTarget.setAttribute("elder_green_dragon_armor_burn_event", "corrupt");
+		ElderGreenDragonArmorEffect.applyBurn(secondArmorSource, armorTarget);
+		assertNotNull(armorTarget.getAttribute(
+			"elder_green_dragon_armor_burn_event", null),
+			"malformed armor scheduler marker is repaired on reapplication");
+		armorTarget.remove();
+		assertNull(armorTarget.getAttribute("elder_green_dragon_armor_burn_state", null),
+			"NPC removal immediately clears armor burn state");
+
+		final Npc firstDragon = harness.npc(NpcId.ELDER_GREEN_DRAGON.id(), 674, 680);
+		final Npc secondDragon = harness.npc(NpcId.ELDER_GREEN_DRAGON.id(), 675, 680);
+		final Player bossTarget = harness.player("typed boss target", 676, 680);
+		applyElderBossBurn(harness.world(), firstDragon, bossTarget);
+		final GameTickEvent bossEvent = bossTarget.getAttribute(
+			"elder_green_dragon_burn_event", null);
+		assertNotNull(bossEvent, "boss burn owns exactly one scheduler event");
+		final ElderGreenDragonBurnState firstBossState = bossTarget.getAttribute(
+			"elder_green_dragon_burn_state", null);
+		assertEquals(firstDragon.getUUID(), firstBossState.getProvenance().getSourceId(),
+			"boss burn state stores dragon identity and lifecycle");
+		assertEquals(firstDragon.getCombatLifecycle(),
+			firstBossState.getProvenance().getSourceLifecycle(),
+			"boss state is bound to the dragon's present lifecycle");
+		applyElderBossBurn(harness.world(), secondDragon, bossTarget);
+		final ElderGreenDragonBurnState refreshedBossState = bossTarget.getAttribute(
+			"elder_green_dragon_burn_state", null);
+		assertEquals(secondDragon.getUUID(), refreshedBossState.getProvenance().getSourceId(),
+			"boss reapplication updates only the current source and expiry state");
+		assertTrue(refreshedBossState.getEndAtMillis() >= firstBossState.getEndAtMillis(),
+			"boss reapplication preserves its wall-clock refresh contract");
+		assertTrue(bossEvent == bossTarget.getAttribute(
+			"elder_green_dragon_burn_event", null),
+			"boss refresh retains the one active scheduler");
+		assertEquals(1, eventCount(harness, bossTarget, "Elder Green Dragon Burn"),
+			"boss reapplication never stacks scheduler events");
+		harness.logout(bossTarget);
+		assertNull(bossTarget.getAttribute("elder_green_dragon_burn_state", null),
+			"target logout immediately clears boss burn state");
+		assertNull(bossTarget.getAttribute("elder_green_dragon_burn_event", null),
+			"target logout immediately clears boss scheduler state");
 	}
 
 	static void targetDeathAndLethalAttributionBoundaries(

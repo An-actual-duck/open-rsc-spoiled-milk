@@ -415,9 +415,26 @@ cleanup boundary for old runtime markers and cache rows, including a malformed
 marker type. It does not touch the independently owned Elder boss or Elder
 armor burn event keys.
 
+## A08.6 Elder burn lifecycle completion
+
+The final A08 slice moves both active Elder burn clocks behind typed,
+target-owned state while preserving their deliberately different contracts.
+The armor burn records a player UUID and remaining pulses; every successful
+reapplication resets five pulses and its tick countdown. The boss burn records
+an NPC UUID, NPC combat-lifecycle generation, and absolute expiry; reapplication
+extends only the five-second wall-clock expiry and retains its existing clock.
+Neither state stores a live source object. Source lookup therefore requires a
+matching current session/lifecycle before a pulse can settle.
+
+Compiled coverage verifies one scheduler per target, reapplication semantics,
+typed provenance, malformed scheduler repair, armor-target NPC removal,
+boss-target logout, source departure, exact existing pulse behavior, and the
+retired-generic-burn boundary. Generic poison retains its separate durable
+relog behavior; neither Elder family persists through logout or restart.
+
 ## Verification
 
-- `./server/test_combat` — PASS, 125/125 scenarios on the durable-provenance,
+- `./server/test_combat` — PASS, 127/127 scenarios on the durable-provenance,
   failed-save-atomicity, server-restart, source-relog, target-lifecycle, and
   generic-burn retirement branches.
 - `python3 tests/myworld/test-poison-balance.py` — PASS.

@@ -228,6 +228,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "elder_burns_stop_when_their_required_sources_leave",
 				CurrentCombatDotLifecycleCharacterization
 					::elderBurnSourceAvailability);
+			run(harness, "elder_burns_use_typed_target_owned_lifecycle_state",
+				CurrentCombatDotLifecycleCharacterization
+					::elderBurnTypedTargetStateAndLifecycle);
 			run(harness, "dot_target_death_and_poison_lethal_attribution_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::targetDeathAndLethalAttributionBoundaries);

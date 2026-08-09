@@ -122,8 +122,8 @@ def validate_lifecycle_wiring() -> None:
     removal = npc.split("private void removeWithinLayeredOwnerLifecycle()", 1)[1].split(
         "public boolean isInvisibleTo", 1
     )[0]
-    require(removal.index("curePoison();") < removal.index("this.killed = true;"),
-            "NPC removal does not clear poison before ending the lifetime")
+    require(removal.index("cure();") < removal.index("this.killed = true;"),
+            "NPC removal does not clear poison and target-owned effects before ending the lifetime")
     require(removal.index("n.curePoison();") < removal.index("n.killed = false;"),
             "NPC respawn exposes the new lifetime before defensive poison cleanup")
 

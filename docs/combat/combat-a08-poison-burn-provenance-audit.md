@@ -770,7 +770,31 @@ Audit-branch verification:
   on the audited published baseline. This document-only branch did not repair
   that unrelated brittle assertion.
 
-## A08.1 handoff boundary
+## A08 completion — 2026-08-08
+
+A08 is complete. Generic poison uses typed, target-owned durable provenance;
+generic burn remains retired. The two active Elder families now also use
+separate typed target-owned states, intentionally preserving their distinct
+contracts:
+
+| Family | Typed state | Refresh/source policy | Cleanup |
+| --- | --- | --- | --- |
+| Elder armor | player UUID plus remaining pulses | successful reapply resets five pulses and countdown; only a live, logged-in, living matching player may pulse | target death/removal, source unavailability on tick, explicit cure/logout |
+| Elder boss | NPC UUID plus combat-lifecycle generation and wall-clock expiry | reapply replaces source and extends expiry; it does not reset the scheduler countdown | target logout/death, expiry, dragon removal/death/lifecycle change |
+
+Both states retain no live source object or event reference. Reapplication
+repairs a malformed scheduler attribute by reattaching the one live owner event
+when present; a new event is registered only when no such clock exists. NPC
+removal now executes `cure()` rather than poison-only cleanup, so no armor burn
+crosses a despawn boundary. Existing damage transactions, RNG, mitigation,
+summon absorption, hitsplats, contribution, lethal settlement, XP/drop paths,
+and stable effect keys remain owned by their existing content implementations.
+
+Later work is not A08: any new DoT family needs its own owner-specific policy
+and fixtures; it must not revive generic burn or reuse an Elder state by
+default.
+
+## A08.1 handoff boundary (historical)
 
 A08.1 is complete when this document is reviewed. The next branch should be
 A08.2 characterization and policy decisions, not an immediate generic DoT
