@@ -702,7 +702,6 @@ def ensure_runtime_paths_are_wired() -> None:
         "itemCount * bonusPercent * GATHERING_AMULET_YIELD_POINTS_PER_PERCENT",
         "totalPoints / GATHERING_AMULET_YIELD_POINTS_PER_ITEM",
         "Skill.WOODCUTTING.id()",
-        "Skill.FISHING.id()",
         "Skill.HARVESTING.id()",
         "Skill.MINING.id()",
     ):
@@ -719,8 +718,8 @@ def ensure_runtime_paths_are_wired() -> None:
             "bankSkillingDropWithLawRing(new Item(ore.getCatalogId(), rewardQuantity))",
         ), "mining"),
         (fishing, (
-            "final int rewardQuantity = 1 + addGatheringAmuletBonusFish(player, fish.getCatalogId(), 1);",
-            "Skill.FISHING.id(), fishId, fishCount",
+            "FishingBestCatchWeights.applyBonus(weights, tiers,",
+            "getAnglerBangleBestCatchChanceBonusPercent()",
             "awardFishingCatch(player, object, fish, true);",
         ), "fishing"),
         (harvesting, (

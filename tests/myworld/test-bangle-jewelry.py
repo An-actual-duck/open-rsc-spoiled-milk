@@ -1041,6 +1041,7 @@ def ensure_effect_slot_contract(items: dict[int, dict[str, Any]]) -> None:
         "getMindCombatAmuletXpBonus",
         "getBodyDisciplineAmuletXpBonus",
         "getGatheringAmuletYieldBonusPercent",
+		"getAnglerBangleBestCatchChanceBonusPercent",
         "getCosmicAmuletExtraResourceChance",
         "getCosmicAmuletRareGatheringDoubleChance",
         "getCosmicAmuletGemChanceMultiplier",

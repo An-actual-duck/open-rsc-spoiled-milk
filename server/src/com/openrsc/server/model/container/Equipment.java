@@ -2412,6 +2412,12 @@ public class Equipment {
 		return wristItem == null ? 0 : EnchantingItemEffects.getGatheringAmuletYieldBonusPercent(wristItem.getCatalogId(), skillId);
 	}
 
+	public int getAnglerBangleBestCatchChanceBonusPercent() {
+		Item wristItem = getEquippedWristItem();
+		return wristItem == null ? 0
+			: EnchantingItemEffects.getAnglerBangleBestCatchChanceBonusPercent(wristItem.getCatalogId());
+	}
+
 	public double getCosmicAmuletExtraResourceChance() {
 		Item wristItem = getEquippedWristItem();
 		return wristItem == null ? 0.0D : EnchantingItemEffects.getCosmicAmuletExtraResourceChance(wristItem.getCatalogId());

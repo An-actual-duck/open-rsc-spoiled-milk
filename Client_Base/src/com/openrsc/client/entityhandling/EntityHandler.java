@@ -5691,7 +5691,7 @@ public class EntityHandler {
 		final int[] lawBankCharges = {100, 200, 300, 500, 1000};
 
 		addGatheringAmuletLine(1593, tiers, "Woodcutter's", "Boosts woodcutting log yield by %d%%.", amuletPrices, gemMasks);
-		addGatheringAmuletLine(1598, tiers, "Angler's", "Boosts fishing catch yield by %d%%.", amuletPrices, gemMasks);
+		addGatheringAmuletLine(1598, tiers, "Angler's", "Increases best catch chance by %d%%.", amuletPrices, gemMasks);
 		addGatheringAmuletLine(1603, tiers, "Harvester's", "Boosts harvesting produce yield by %d%%.", amuletPrices, gemMasks);
 		addGatheringAmuletLine(1608, tiers, "Miner's", "Boosts mining ore yield by %d%%.", amuletPrices, gemMasks);
 

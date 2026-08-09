@@ -1526,6 +1526,12 @@ public final class EnchantingItemEffects {
 		return tier == -1 ? 0 : GATHERING_AMULET_YIELD_BONUSES[tier - 1];
 	}
 
+	/** Angler's Bangels increase weighted selection of the best available fish. */
+	public static int getAnglerBangleBestCatchChanceBonusPercent(final int itemId) {
+		final int tier = getTierForAltar(itemId, ELEMENTAL_AMULET_LINES, WATER_ALTAR);
+		return tier == -1 ? 0 : GATHERING_AMULET_YIELD_BONUSES[tier - 1];
+	}
+
 	public static int consumeGatheringAmuletBonusItems(final Player player, final int skillId, final int itemId,
 		final int itemCount) {
 		if (player == null || itemCount <= 0) {
@@ -1554,9 +1560,6 @@ public final class EnchantingItemEffects {
 	private static int getGatheringAmuletAltarForSkill(final int skillId) {
 		if (skillId == Skill.WOODCUTTING.id()) {
 			return AIR_ALTAR;
-		}
-		if (skillId == Skill.FISHING.id()) {
-			return WATER_ALTAR;
 		}
 		if (skillId == Skill.HARVESTING.id()) {
 			return EARTH_ALTAR;

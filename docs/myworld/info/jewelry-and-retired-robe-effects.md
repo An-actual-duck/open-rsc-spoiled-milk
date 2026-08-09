@@ -123,6 +123,15 @@ Amulet:
 - Flat mixed defense bonus.
 - `+2` melee, ranged, and magic defense per tier.
 
+Bangel:
+
+- Angler's Bangle improves selection of the highest-tier eligible catch at a
+  multi-fish My World fishing spot.
+- Tiers 1–5 multiply the best catch's existing roll weight by
+  `1.1x`, `1.2x`, `1.3x`, `1.5x`, and `2.0x` respectively.
+- It does not add catch quantity or Fishing XP, and a spot with only one
+  eligible tier has no alternative outcome to favor.
+
 ### Earth
 
 Ring/necklace:
