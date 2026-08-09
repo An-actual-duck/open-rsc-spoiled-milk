@@ -10,6 +10,8 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.MiniGameInterface;
 import com.openrsc.server.plugins.RuneScript;
@@ -26,6 +28,11 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 	public static final int POWER_STONE = 1153;
 	public static final int ENLIGHTENMENT_STONE = 1154;
 	private static final String MAGE_ARENA_STAFF_REWARD_CACHE = "mage_arena_staff_reward";
+	private static final WorldLocation ARENA_ENTRY = location(229, 130, 0);
+	private static final WorldLocation KOLODION_COMBAT_SPAWN = location(227, 130, 0);
+	private static final WorldLocation ARENA_EXIT = location(228, 118, 0);
+	private static final WorldLocation ARENA_REENTRY = location(228, 120, 0);
+	private static final WorldLocation KOLODION_CAVE_RETURN = location(446, 538, -1);
 	private static final int[] MAGE_ARENA_REWARD_STAFFS = {
 		ItemId.STAFF_OF_ELEMENTS.id(),
 		ItemId.STAFF_OF_POWER.id(),
@@ -71,7 +78,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 					cantGoMessage(player);
 					return;
 				}
-				teleport(player, 229, 130);
+				teleport(player, ARENA_ENTRY);
 				delay();
 				clampMageArenaCombatStats(player);
 				spawnKolodion(player, player.getCache().getInt("kolodion_stage"), true);
@@ -178,7 +185,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				if (!player.getCache().hasKey("mage_arena")) {
 					player.getCache().set("mage_arena", 1);
 				}
-				teleport(player, 229, 130);
+				teleport(player, ARENA_ENTRY);
 				delay();
 				clampMageArenaCombatStats(player);
 
@@ -241,7 +248,8 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 
 	// kolodion from new attempt
 	public void spawnKolodion(Player player, int id, boolean isContinue) {
-		Npc kolodion = addnpc(id, 227, 130, (int)TimeUnit.SECONDS.toMillis(516), player);
+		Npc kolodion = addnpc(id, KOLODION_COMBAT_SPAWN,
+			(int)TimeUnit.SECONDS.toMillis(516), player);
 		player.setAttribute("spawned_kolodion", kolodion);
 		if (!isContinue) {
 			player.getCache().set("kolodion_stage", id);
@@ -492,7 +500,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 				mes("@yel@Kolodion: \"you truly are a worthy battle mage\"");
 				delay(3);
 				player.message("kolodion teleports you to his cave");
-				player.teleport(446, 3370);
+				teleport(player, KOLODION_CAVE_RETURN);
 				Npc kolodion = ifnearvisnpc(player, NpcId.KOLODION.id(), 8);
 				if (kolodion == null) {
 					player.message("kolodion is currently busy, but his reward waits for you");
@@ -552,7 +560,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 		} else if (obj.getID() == 1027) {
 			if (player.getY() >= 120) {
 				player.message("you pass through the mystical barrier");
-				teleport(player, 228, 118);
+				teleport(player, ARENA_EXIT);
 				Npc kolodion = player.getAttribute("spawned_kolodion", null);
 				if (kolodion != null) {
 					kolodion.remove();
@@ -563,7 +571,7 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 					delay(3);
 					if (!cantGo(player)) {
 						clampMageArenaCombatStats(player);
-						teleport(player, 228, 120);
+						teleport(player, ARENA_REENTRY);
 					} else {
 						cantGoMessage(player);
 					}
@@ -695,5 +703,18 @@ public class MageArena implements MiniGameInterface, TalkNpcTrigger, KillNpcTrig
 
 	@Override
 	public void onTakeObj(Player player, GroundItem i) {
+	}
+
+	private static WorldLocation location(final int x, final int y, final int level) {
+		return WorldLocation.global(new WorldCoordinate(x, y, level));
+	}
+
+	/**
+	 * Uses Player's explicit-level compatibility overload, keeping the named
+	 * layered destination correct in both native and legacy map runtimes.
+	 */
+	private static void teleport(final Player player, final WorldLocation destination) {
+		WorldCoordinate coordinate = destination.getCoordinate();
+		player.teleport(coordinate.getX(), coordinate.getY(), coordinate.getLevel(), false);
 	}
 }

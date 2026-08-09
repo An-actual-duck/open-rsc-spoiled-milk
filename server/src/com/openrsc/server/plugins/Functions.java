@@ -512,6 +512,25 @@ public class Functions {
 		return npc;
 	}
 
+	/** Creates a timed player-owned NPC at an explicit layered destination. */
+	public static Npc addnpc(
+		final int id,
+		final WorldLocation location,
+		final int time,
+		final Player spawnedFor) {
+		final Npc npc = new Npc(spawnedFor.getWorld(), id, location);
+		npc.setShouldRespawn(false);
+		npc.setAttribute("spawnedFor", spawnedFor);
+		spawnedFor.getWorld().registerNpc(npc);
+		spawnedFor.getWorld().getServer().getGameEventHandler().add(
+			new SingleEvent(spawnedFor.getWorld(), null, time, "Spawn Pet NPC Timed") {
+				public void action() {
+					npc.remove();
+				}
+			});
+		return npc;
+	}
+
 	public static Npc addnpc(World world, int id, int x, int y) {
 		final Npc npc = new Npc(world, id, x, y);
 		npc.setShouldRespawn(false);
