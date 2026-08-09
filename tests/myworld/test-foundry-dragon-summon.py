@@ -145,9 +145,10 @@ def main() -> int:
         require(client_defs, text, f"Foundry Dragon external definition missing {text}")
     for text in (
         "loadExternalNpcDirectionSheet(",
-        "direction * framesPerDirection + frameIndex",
-        "trailingWidth > 1",
-        "direction == directionColumns - 1 ? trailingWidth : 0",
+		"int[] directionColumnWidths",
+		"totalWidth != source.getWidth()",
+		"sourceX += frameWidth",
+		"direction * framesPerDirection + frameIndex",
     ):
         require(client_asset_loader, text, f"Foundry Dragon native sheet loader missing {text}")
     for text in (
@@ -164,7 +165,7 @@ def main() -> int:
         require(client_direction_mapping, text, f"NPC direction mapping missing {text}")
     for text in (
         "getExternalFoundryDragonSpriteSheet()",
-        "NpcDirectionalAnimationMapping.COMBAT_COLUMN + 1",
+		"final int[] foundryDragonColumnWidths = {228, 203, 263, 215, 218, 338};",
         "EntityHandler.activateFoundryDragonExternalVisual();",
         'npcSprites.put("foundrydragon", spriteEntry);',
         'if ("foundrydragon".equalsIgnoreCase(s))',

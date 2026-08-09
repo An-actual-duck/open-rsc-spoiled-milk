@@ -21919,10 +21919,11 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalFoundryDragonNpcSprite() {
+		final int[] foundryDragonColumnWidths = {228, 203, 263, 215, 218, 338};
 		orsc.graphics.two.SpriteArchive.Entry spriteEntry =
 			this.externalAssetLoader.loadExternalNpcDirectionSheet(
 				getExternalFoundryDragonSpriteSheet(), "foundrydragon",
-				NpcDirectionalAnimationMapping.COMBAT_COLUMN + 1,
+				foundryDragonColumnWidths,
 				NpcDirectionalAnimationMapping.FRAMES_PER_DIRECTION);
 		if (spriteEntry == null) {
 			System.out.println("Missing or invalid Foundry Dragon NPC sprite sheet");
