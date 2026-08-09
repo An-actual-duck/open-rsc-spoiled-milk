@@ -780,7 +780,7 @@ slice.
 
 #### R2-1 completion record: bootstrap, configuration, and lifecycle composition
 
-Status: **COMPLETE — 2026-08-08, strengthened after lifecycle review.**
+Status: **COMPLETE — 2026-08-08, acceptance matrix refreshed after review.**
 
 `ServerConfigurationLoader` now owns the side-effect-free load/parse/typed-
 validation boundary. It returns `ServerConfigurationLoadResult`, retaining the
@@ -876,6 +876,18 @@ their ownership receipts cover all registrations, schedules, and threads.
 Health receipts are bounded and contain no exception messages. No content
 package receives a new direct foundation import.
 
+The narrowed `ExtensionContext` intentionally exposes neither `Server` nor
+other foundation objects. It supplies ownership cleanup only at this milestone;
+typed world, scheduling, persistence, presentation, and diagnostic services
+will be added as independently reviewed R2 contracts. This prevents a newly
+compiled package from bypassing the registry through unrestricted server access.
+Cleanup is never silently discarded: `deactivate()` returns all accumulated
+extension/resource failures, the legacy caller logs each bounded failure, and a
+failed hot reload returns an explicit failed result after its failed activation
+has been cleaned up. Capability requirements induce resolver edges, so their
+providers activate before consumers even where lexical package IDs would put the
+consumer first.
+
 Compiled headless coverage proves deterministic ordering, duplicate/missing/
 cycle rejection, versioned capability compatibility/conflicts, partial
 registration rollback including the failing package's resource receipt,
@@ -883,6 +895,12 @@ reverse cleanup, health reporting, restart-required rejection, hot reload, and
 a second extension using only the narrow API. Existing default-handler and
 MyWorld layout fixtures preserve compatibility behavior. R2-3 may now introduce
 declared definition/population packages without splitting `plugins.jar` first.
+
+The acceptance suite also loads the built, current `plugins.jar` through the
+same `PluginJarLoader` used by the compatibility adapter and proves default,
+quest, minigame, and custom trigger discovery plus classloader cleanup. Its
+teardown guard verifies the adapter registers its ownership cleanup, stops and
+removes each scheduled shop-restock event, and waits for plugin worker shutdown.
 
 ### R2-3: Target definitions, population, and world-package boundary
 

@@ -32,17 +32,17 @@ public final class ExtensionRegistry {
 	}
 
 	public synchronized List<ServerExtension> resolve() {
-		validateCapabilities();
+		final Map<String, String> capabilityProviders = validateCapabilities();
 		final List<ServerExtension> ordered = new ArrayList<ServerExtension>();
 		final Set<String> visiting = new LinkedHashSet<String>();
 		final Set<String> visited = new LinkedHashSet<String>();
 		final List<String> ids = new ArrayList<String>(discovered.keySet());
 		Collections.sort(ids);
-		for (String id : ids) visit(id, visiting, visited, ordered);
+		for (String id : ids) visit(id, visiting, visited, ordered, capabilityProviders);
 		return Collections.unmodifiableList(ordered);
 	}
 
-	private void validateCapabilities() {
+	private Map<String, String> validateCapabilities() {
 		final Map<String, ExtensionCapability> providers = new LinkedHashMap<String, ExtensionCapability>();
 		final Map<String, String> providerOwners = new LinkedHashMap<String, String>();
 		for (ServerExtension extension : discovered.values()) {
@@ -62,17 +62,25 @@ public final class ExtensionRegistry {
 					+ provider + " does not satisfy " + requirement + " required by " + extension.descriptor().getId());
 			}
 		}
+		return providerOwners;
 	}
 
 	private void visit(final String id, final Set<String> visiting, final Set<String> visited,
-			final List<ServerExtension> ordered) {
+			final List<ServerExtension> ordered, final Map<String, String> capabilityProviders) {
 		if (visited.contains(id)) return;
 		if (!visiting.add(id)) throw new IllegalStateException("extension dependency cycle: " + visiting);
 		final ServerExtension extension = discovered.get(id);
 		if (extension == null) throw new IllegalStateException("missing extension dependency: " + id);
 		final List<String> dependencies = new ArrayList<String>(extension.descriptor().getDependencies());
 		Collections.sort(dependencies);
-		for (String dependency : dependencies) visit(dependency, visiting, visited, ordered);
+		for (String dependency : dependencies) visit(dependency, visiting, visited, ordered, capabilityProviders);
+		final List<String> capabilityIds = new ArrayList<String>(extension.descriptor()
+			.getRequiredCapabilities().keySet());
+		Collections.sort(capabilityIds);
+		for (String capabilityId : capabilityIds) {
+			String providerId = capabilityProviders.get(capabilityId);
+			if (!id.equals(providerId)) visit(providerId, visiting, visited, ordered, capabilityProviders);
+		}
 		visiting.remove(id);
 		visited.add(id);
 		ordered.add(extension);
@@ -108,43 +116,48 @@ public final class ExtensionRegistry {
 		} catch (Throwable cleanupFailure) {
 			failure.addSuppressed(cleanupFailure);
 		}
-		Throwable cleanupFailure = release(receipt, null);
-		if (cleanupFailure != null) failure.addSuppressed(cleanupFailure);
+		ExtensionCleanupReport report = new ExtensionCleanupReport();
+		release(extension.descriptor().getId(), receipt, report);
+		for (ExtensionCleanupFailure cleanupFailure : report.getFailures()) {
+			failure.addSuppressed(new IllegalStateException(cleanupFailure.getExtensionId()
+				+ " cleanup failed during " + cleanupFailure.getPhase() + ": "
+				+ cleanupFailure.getExceptionType()));
+		}
 	}
 
 	/** Deactivation continues through all packages, then reports the first cleanup failure. */
-	public synchronized void deactivate() {
-		deactivateInternal(null);
+	public synchronized ExtensionCleanupReport deactivate() {
+		return deactivateInternal(null);
 	}
 
-	private void deactivateInternal(final Throwable activationFailure) {
-		Throwable cleanupFailure = null;
+	private ExtensionCleanupReport deactivateInternal(final Throwable activationFailure) {
+		ExtensionCleanupReport report = new ExtensionCleanupReport();
 		for (int index = active.size() - 1; index >= 0; index--) {
 			ActiveExtension extension = active.get(index);
 			try {
 				extension.extension.deactivate();
 			} catch (Throwable failure) {
-				cleanupFailure = append(cleanupFailure, failure);
+				report.record(extension.extension.descriptor().getId(), "deactivate", failure);
 			}
-			cleanupFailure = release(extension.ownershipReceipt, cleanupFailure);
+			release(extension.extension.descriptor().getId(), extension.ownershipReceipt, report);
 		}
 		active.clear();
-		if (activationFailure != null && cleanupFailure != null) activationFailure.addSuppressed(cleanupFailure);
+		if (activationFailure != null) {
+			for (ExtensionCleanupFailure failure : report.getFailures()) {
+				activationFailure.addSuppressed(new IllegalStateException(failure.getExtensionId()
+					+ " cleanup failed during " + failure.getPhase() + ": " + failure.getExceptionType()));
+			}
+		}
+		return report;
 	}
 
-	private static Throwable release(final ExtensionOwnershipReceipt receipt, final Throwable existing) {
+	private static void release(final String extensionId, final ExtensionOwnershipReceipt receipt,
+			final ExtensionCleanupReport report) {
 		try {
 			receipt.release();
-			return existing;
 		} catch (Throwable failure) {
-			return append(existing, failure);
+			report.record(extensionId, "owned-resource", failure);
 		}
-	}
-
-	private static Throwable append(final Throwable existing, final Throwable next) {
-		if (existing == null) return next;
-		existing.addSuppressed(next);
-		return existing;
 	}
 
 	/** Reloads only packages that declared a truthful hot-reload lifecycle. */
@@ -155,9 +168,18 @@ public final class ExtensionRegistry {
 					+ extension.extension.descriptor().getId());
 			}
 		}
-		deactivate();
-		activate(context);
-		return ExtensionReloadResult.reloaded();
+		ExtensionCleanupReport cleanup = deactivate();
+		if (!cleanup.isSuccessful()) {
+			return ExtensionReloadResult.cleanupFailed("reload stopped after "
+				+ cleanup.getFailures().size() + " cleanup failure(s)");
+		}
+		try {
+			activate(context);
+			return ExtensionReloadResult.reloaded();
+		} catch (Throwable failure) {
+			return ExtensionReloadResult.failed("reload activation failed: "
+				+ failure.getClass().getSimpleName());
+		}
 	}
 
 	/** Clears discovery only after all active extensions have been deactivated. */
