@@ -6,6 +6,7 @@ import com.openrsc.client.entityhandling.instances.Item;
 import com.openrsc.client.model.Sprite;
 import orsc.Config;
 import orsc.enumerations.InputXAction;
+import orsc.enumerations.MessageType;
 import orsc.graphics.gui.InputXPrompt;
 import orsc.mudclient;
 import orsc.util.BankUtil;
@@ -789,6 +790,9 @@ public final class CustomBankInterface extends BankInterface {
 				&& lastXAmount > 1 && lastXAmount != 5 && lastXAmount != 10 && lastXAmount != 50) {
 				offset++;
 			}
+			if (selectedBankItem != null && !selectedBankItem.isPlaceholder()) {
+				offset++;
+			}
 			if (selectedBankItem != null && !selectedBankItem.isPlaceholder() && !equipmentMode
 				&& selectedBankItem.getItem().getItemDef().isWieldable()) {
 				offset++;
@@ -797,7 +801,7 @@ public final class CustomBankInterface extends BankInterface {
 			int menuWidth = mc.getSurface().stringWidth(fontSize, "Withdraw-All-But-1") + 8;
 			menuWidth = Math.max(menuWidth, mc.getSurface().stringWidth(fontSize, "Unpin") + 8);
 			if (equipmentMode)
-				menuHeight = fontSizeHeight + 5;
+				menuHeight = fontSizeHeight * (selectedBankItem != null && !selectedBankItem.isPlaceholder() ? 2 : 1) + 5;
 			if (selectedBankSlot > -1 && selectedBankSlot < bankItems.size()) {
 				int checkMenuWidth = mc.getSurface().stringWidth(fontSize, bankItems.get(selectedBankSlot).getItem().getItemDef().getName()) + 8;
 				if (menuWidth < checkMenuWidth) {
@@ -842,6 +846,9 @@ public final class CustomBankInterface extends BankInterface {
 								i = 0xFDFF21;
 						}
 						drawString("Wield", rightClickMenuX + 4, rightClickMenuY + fontSizeHeight + 20, fontSize, i);
+						if (!selectedBankItem.isPlaceholder()) {
+							drawBankExamineAction(selectedBankItem, 1, menuWidth);
+						}
 					} else if (selectedBankItem.isPlaceholder()) {
 						drawBankPinAction(selectedBankItem, 0, menuWidth);
 					} else {
@@ -1004,6 +1011,7 @@ public final class CustomBankInterface extends BankInterface {
 						final int pinRow = (selectedBankItem.getItem().getItemDef().isWieldable() ? 1 : 0)
 							+ (lastXAmount > 1 && lastXAmount != 5 && lastXAmount != 10 && lastXAmount != 50 ? 8 : 7);
 						drawBankPinAction(selectedBankItem, pinRow, menuWidth);
+						drawBankExamineAction(selectedBankItem, pinRow + 1, menuWidth);
 					}
 
 				} else {
@@ -1225,6 +1233,27 @@ public final class CustomBankInterface extends BankInterface {
 			rightClickMenuY + fontSizeHeight * (row + 1) + 20,
 			fontSize,
 			colour);
+	}
+
+	/** Mirrors the ordinary inventory Examine action without withdrawing the bank item. */
+	private void drawBankExamineAction(BankItem bankItem, int row, int menuWidth) {
+		int colour = 0xFFFFFF;
+		if (mc.getMouseX() > rightClickMenuX
+			&& mc.getMouseY() >= rightClickMenuY + fontSizeHeight * row + 20
+			&& mc.getMouseX() < rightClickMenuX + menuWidth
+			&& mc.getMouseY() < rightClickMenuY + fontSizeHeight * (row + 1) + 20) {
+			colour = 0xFDFF21;
+			if (mc.getMouseClick() == 1) {
+				mc.showMessage(false, null, bankItem.getItem().getItemDef().getDescription(),
+					MessageType.GAME, 0, null);
+				rightClickMenu = false;
+				selectedBankSlot = -1;
+				mc.setMouseClick(0);
+				return;
+			}
+		}
+		drawString("Examine", rightClickMenuX + 4,
+			rightClickMenuY + fontSizeHeight * (row + 1) + 20, fontSize, colour);
 	}
 
 	private void sendBankPinAction(BankItem bankItem) {
