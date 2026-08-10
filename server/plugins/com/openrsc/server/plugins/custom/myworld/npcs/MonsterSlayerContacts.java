@@ -2,6 +2,7 @@ package com.openrsc.server.plugins.custom.myworld.npcs;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAccess;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
@@ -14,6 +15,7 @@ import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.npcsay;
+import static com.openrsc.server.plugins.Functions.say;
 
 /** Player-facing contact shell; all rank/task state remains in typed Slayer services. */
 public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger {
@@ -49,7 +51,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (state.getRank().isAtLeast(data.getContact(CONTACTS[index]).getAwardedRank())
 			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()) {
 			if (!state.isPromotionAcknowledged(CONTACTS[index], data)) {
-				npcsay(player, npc, promotion(index));
+				if (!renderPromotion(player, npc, index)) return;
 				if (!service.acknowledgePromotion(player, CONTACTS[index]).isAccepted()) { player.message("Your Monster Slayer promotion could not be recorded."); return; }
 			}
 		}
@@ -85,7 +87,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch the beer first.", "I need to see an Initiate sticker before I can put your name on my list.", "A Veteran button gets you a proper job from me.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
 	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "You've got the look of someone after a dangerous job.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Do you want another contract?", "Another contract?"}; return lines[index]; }
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
-	private static String promotion(int index) { String[] lines = {"Excellent work! You've done a fine job culling those monsters. There seem to be just as many as before. Imagine how many there would be if you hadn't helped. For your efforts, I promote you to Initiate. Hold still while I apply your official rank sticker. A sticker? What happened to the stamp? Stamps have been retired. Far too impermanent. And stickers are better? Infinitely. You may proudly display it wherever you choose. You've been earning Fledgling Slayer Points while you worked. My associate nearby can trade them for useful supplies.", "You did what you said you would. That's worth more than loud talk. You're a Veteran now. Wear this button somewhere it won't fall in the drink. The trader beside me deals in Initiate Slayer Points. He's cleared to serve Veterans.", "Hah. I knew you had it in you. You're Elite now; take the badge. Listen, though. You're off to play with the big boys now. Not all adventurers survive the big leagues. I didn't. That's why I'm here telling stories instead of making them. My associate will trade Veteran Slayer Points with an Elite. Spend them on something that keeps you alive.", "Splendid work! You faced the test and did not blink. You are a Champion now. Take this medal, and try not to polish it on your sleeve. The quartermaster nearby takes Elite Slayer Points. Tell them I said a Champion has earned a look at the good stock.", "You completed the work, even when it was hard. That is the part people remember. You are a Hero. Carry this crest with care. The supplier nearby accepts Champion Slayer Points. A Hero has earned access.", "You've completed your journey for now. You've done well. And what's my new rank? And what use would you make of it? ...Legend, then? If you continue to earn it."}; return lines[index]; }
+	private static boolean renderPromotion(Player player, Npc npc, int index) { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) { if (step.getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC) npcsay(player, npc, step.getText()); else say(player, npc, step.getText()); } return true; }
 	private static String associateGreeting(int index) { String[] lines = {"An Initiate has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Initiate supplies are available.", "An Elite hunter knows what to pack. Your Veteran supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
 	private static String warning(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) { if (task.getHazards().isEmpty()) return null; StringBuilder text = new StringBuilder("Take care: "); for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard : task.getHazards()) { if (text.length() > 11) text.append("; "); if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT) text.append("bring desert heat protection"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS) text.append("this work is in the Wilderness"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN) text.append("expect Prayer drain"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON) text.append("bring an antidote for poison"); else text.append("prepare for dragon fire"); } return text.append('.').toString(); }
 	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "I have done the work. I do not hand out contracts."}; return lines[index]; }
