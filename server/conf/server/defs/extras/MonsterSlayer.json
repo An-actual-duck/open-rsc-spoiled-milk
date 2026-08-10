@@ -36,7 +36,7 @@
   ],
   "contacts": [
     {
-      "key":"falador","npcId":142,"challenge":"FLEDGLING","requiredRank":"FLEDGLING","awardedRank":"INITIATE",
+      "key":"falador","npcId":846,"challenge":"FLEDGLING","requiredRank":"FLEDGLING","awardedRank":"INITIATE",
       "mandatoryTasks":[
         {"key":"falador.rats","familyKey":"rat","requiredKills":100,"pointReward":5},
         {"key":"falador.goblins","familyKey":"goblin","requiredKills":100,"pointReward":5},
@@ -53,7 +53,7 @@
       ]
     },
     {
-      "key":"port_sarim","npcId":150,"challenge":"INITIATE","requiredRank":"INITIATE","awardedRank":"VETERAN",
+      "key":"port_sarim","npcId":847,"challenge":"INITIATE","requiredRank":"INITIATE","awardedRank":"VETERAN",
       "mandatoryTasks":[
         {"key":"port_sarim.pirates","familyKey":"pirate","requiredKills":125,"pointReward":8},
         {"key":"port_sarim.muggers","familyKey":"mugger","requiredKills":50,"pointReward":8},
@@ -70,7 +70,7 @@
       ]
     },
     {
-      "key":"brimhaven","npcId":279,"challenge":"VETERAN","requiredRank":"VETERAN","awardedRank":"ELITE",
+      "key":"brimhaven","npcId":848,"challenge":"VETERAN","requiredRank":"VETERAN","awardedRank":"ELITE",
       "mandatoryTasks":[
         {"key":"brimhaven.jungle_spiders","familyKey":"jungle_spider","requiredKills":200,"pointReward":12},
         {"key":"brimhaven.scorpions","familyKey":"scorpion","requiredKills":150,"pointReward":12},
@@ -87,7 +87,7 @@
       ]
     },
     {
-      "key":"champions","npcId":111,"challenge":"ELITE","requiredRank":"ELITE","awardedRank":"CHAMPION",
+      "key":"champions","npcId":849,"challenge":"ELITE","requiredRank":"ELITE","awardedRank":"CHAMPION",
       "mandatoryTasks":[
         {"key":"champions.giants","familyKey":"giant","requiredKills":250,"pointReward":18},
         {"key":"champions.dark_warriors","familyKey":"dark_warrior","requiredKills":200,"pointReward":18},
@@ -104,7 +104,7 @@
       ]
     },
     {
-      "key":"heroes","npcId":253,"challenge":"CHAMPION","requiredRank":"CHAMPION","awardedRank":"HERO",
+      "key":"heroes","npcId":850,"challenge":"CHAMPION","requiredRank":"CHAMPION","awardedRank":"HERO",
       "mandatoryTasks":[
         {"key":"heroes.baby_blue_dragons","familyKey":"baby_blue_dragon","requiredKills":150,"pointReward":25},
         {"key":"heroes.blue_dragons","familyKey":"blue_dragon","requiredKills":100,"pointReward":25},
@@ -123,7 +123,7 @@
       ]
     },
     {
-      "key":"legends","npcId":785,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
+      "key":"legends","npcId":851,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
       "mandatoryTasks":[
         {"key":"legends.death_wings","familyKey":"death_wing","requiredKills":150,"pointReward":35},
         {"key":"legends.fire_giants","familyKey":"fire_giant","requiredKills":250,"pointReward":35},

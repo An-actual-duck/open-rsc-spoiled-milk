@@ -175,6 +175,30 @@ public final class MonsterSlayerState {
 		return snapshot;
 	}
 
+	/** Begins the one-time beer introduction without granting standing or currency. */
+	public static Snapshot beginIntroduction(Snapshot current, MonsterSlayerData data) {
+		validate(current, data);
+		if (current.rank != MonsterSlayerRank.UNSTAMPED || current.introStage != 0) {
+			throw new ValidationException("Monster Slayer introduction is not available");
+		}
+		return new Snapshot(current.stateVersion, 1, current.rank, current.balances,
+			current.mandatoryCursors, current.activeTaskKey, current.activeKills,
+			current.tasksCompleted, current.inventoryUpgrades, current.migrationVersion,
+			current.legacyStatus, current.legacyPrestige);
+	}
+
+	/** Completes the beer introduction and awards the first rank exactly once. */
+	public static Snapshot completeIntroduction(Snapshot current, MonsterSlayerData data) {
+		validate(current, data);
+		if (current.rank != MonsterSlayerRank.UNSTAMPED || current.introStage != 1) {
+			throw new ValidationException("Monster Slayer beer introduction is not pending");
+		}
+		return new Snapshot(current.stateVersion, 2, MonsterSlayerRank.FLEDGLING,
+			current.balances, current.mandatoryCursors, null, 0, current.tasksCompleted,
+			current.inventoryUpgrades, current.migrationVersion, current.legacyStatus,
+			current.legacyPrestige);
+	}
+
 	public static void validate(Snapshot snapshot, MonsterSlayerData data) {
 		if (snapshot == null || data == null) {
 			throw new ValidationException("Monster Slayer snapshot and definitions are required");

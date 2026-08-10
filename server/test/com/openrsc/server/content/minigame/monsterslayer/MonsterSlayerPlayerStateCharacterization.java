@@ -24,6 +24,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		beerIntroductionIsOneTimeAndRankSafe(data);
 		approvedShopDefinitionsHaveStableLaunchShape(data);
 		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
@@ -178,6 +179,19 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
 			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
 			"eligible repeatable assignment");
+	}
+
+	private static void beerIntroductionIsOneTimeAndRankSafe(MonsterSlayerData data) {
+		MonsterSlayerState.Snapshot fresh = MonsterSlayerState.defaults(data);
+		MonsterSlayerState.Snapshot pending = MonsterSlayerState.beginIntroduction(fresh, data);
+		equals(1, pending.getIntroStage(), "beer introduction begins without rank");
+		equals(MonsterSlayerRank.UNSTAMPED, pending.getRank(), "beer introduction rank remains unstamped");
+		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.completeIntroduction(pending, data);
+		equals(2, fledgling.getIntroStage(), "beer introduction completes once");
+		equals(MonsterSlayerRank.FLEDGLING, fledgling.getRank(), "beer awards Fledgling");
+		boolean rejected = false;
+		try { MonsterSlayerState.completeIntroduction(fledgling, data); } catch (MonsterSlayerState.ValidationException expected) { rejected = true; }
+		assertTrue(rejected, "duplicate beer completion is rejected");
 	}
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
