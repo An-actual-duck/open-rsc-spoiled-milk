@@ -349,10 +349,6 @@ public final class mudclient implements Runnable {
 		{2, 4, 1, 1},
 		{3, 1, 1, 1}
 	};
-	private static final int MINIMAP_POSITION_TOP_RIGHT = 0;
-	private static final int MINIMAP_POSITION_BOTTOM_RIGHT = 1;
-	private static final int MINIMAP_POSITION_TOP_LEFT = 2;
-	private static final int MINIMAP_POSITION_BOTTOM_LEFT = 3;
 	private static final int MINIMAP_WIDTH = 156;
 	private static final int MINIMAP_HEIGHT = 152;
 	private static final int MINIMAP_FLOATING_BORDER = 2;
@@ -363,8 +359,12 @@ public final class mudclient implements Runnable {
 	private static final int HEALTH_HUD_COORDINATE_GAP = 16;
 	private static final int AUTO_ATTACK_HUD_SIZE = 16;
 	private static final int AUTO_ATTACK_HUD_GAP = 4;
-	private static final int POTION_HUD_X = 7;
-	private static final int POTION_HUD_Y = 36;
+	private static final int COMBAT_XP_ALLOCATION_X = 7;
+	private static final int COMBAT_XP_ALLOCATION_Y = 15;
+	private static final int COMBAT_XP_ALLOCATION_HEIGHT = 100;
+	private static final int POTION_HUD_X = COMBAT_XP_ALLOCATION_X;
+	private static final int POTION_HUD_Y = COMBAT_XP_ALLOCATION_Y
+		+ COMBAT_XP_ALLOCATION_HEIGHT + 8;
 	private static final int POTION_HUD_WIDTH = 76;
 	private static final int POTION_HUD_ROW_HEIGHT = 24;
 	private static final int POTION_HUD_ROWS_PER_COLUMN = 8;
@@ -380,9 +380,6 @@ public final class mudclient implements Runnable {
 	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
 	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
 	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
-	private static final String[] MINIMAP_POSITION_LABELS = new String[] {
-		"Top right", "Bottom right", "Top left", "Bottom left"
-	};
 	private static final int HIT_SPLAT_VISIBLE_THRESHOLD = 150;
 	private static final int HIT_SPLAT_WIDTH = 24;
 	private static final int HIT_SPLAT_HEIGHT = 14;
@@ -803,7 +800,8 @@ public final class mudclient implements Runnable {
 		"What is your favourite movie?"};
 	boolean drawMinimap = false;
 	private boolean minimapPinned = false;
-	private int minimapPosition = MINIMAP_POSITION_TOP_RIGHT;
+	/** A clicked non-map side-menu icon remains open until clicked again. */
+	private int pinnedSideMenuTab = 0;
 	private boolean showCoordinatesOverlay = true;
 	//private final int[] duelOpponentConfirmItemCount = new int[8];
 	//private final int[] duelOpponentItemId = new int[8];
@@ -1449,14 +1447,10 @@ public final class mudclient implements Runnable {
 
 	private void loadMinimapSettings() {
 		Properties props = loadClientSettings();
-		String position = props.getProperty("minimap_position");
-		if (position != null) {
-			try {
-				this.minimapPosition = normalizeMinimapPosition(Integer.parseInt(position));
-			} catch (NumberFormatException ignored) {
-				this.minimapPosition = MINIMAP_POSITION_TOP_RIGHT;
-			}
-		}
+		// Map relocation was retired. Discard an old value instead of allowing
+		// a hidden off-corner minimap to remain after an upgrade.
+		if (props.remove("minimap_position") != null)
+			saveClientSettings(props);
 		this.minimapPinned = Boolean.parseBoolean(props.getProperty("minimap_pinned", "false"));
 		this.drawMinimap = this.minimapPinned;
 		this.showCoordinatesOverlay = Boolean.parseBoolean(props.getProperty("show_coordinates", "true"));
@@ -1464,7 +1458,7 @@ public final class mudclient implements Runnable {
 
 	private void saveMinimapSettings() {
 		Properties props = loadClientSettings();
-		props.setProperty("minimap_position", String.valueOf(this.minimapPosition));
+		props.remove("minimap_position");
 		props.setProperty("minimap_pinned", String.valueOf(this.minimapPinned));
 		saveClientSettings(props);
 	}
@@ -6282,8 +6276,8 @@ public final class mudclient implements Runnable {
 	private void drawDialogCombatStyle() {
 		try {
 
-			byte sx = 7;
-			byte sy = 15;
+			int sx = COMBAT_XP_ALLOCATION_X;
+			int sy = COMBAT_XP_ALLOCATION_Y;
 			short width;
 			if (isAndroid()) {
 				width = 140;
@@ -15105,17 +15099,16 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean isTopRightMinimapOverridden() {
-		return this.minimapPosition == MINIMAP_POSITION_TOP_RIGHT
-			&& this.showUiTab != 0
+		return this.showUiTab != 0
 			&& this.showUiTab != Config.MINIMAP_AND_COMPASS_TAB;
 	}
 
 	private boolean isFloatingMinimap() {
-		return C_CUSTOM_UI || this.minimapPinned || this.minimapPosition != MINIMAP_POSITION_TOP_RIGHT;
+		return C_CUSTOM_UI || this.minimapPinned;
 	}
 
 	private int[] getMinimapContentBounds(boolean floatingMinimap) {
-		if (!floatingMinimap && this.minimapPosition == MINIMAP_POSITION_TOP_RIGHT) {
+		if (!floatingMinimap) {
 			return new int[] {this.getSurface().width2 - 159, 36};
 		}
 		int margin = 8;
@@ -15123,38 +15116,12 @@ public final class mudclient implements Runnable {
 		int bottomY = C_CUSTOM_UI
 			? Math.max(topY, getUITabsY() - MINIMAP_HEIGHT - margin)
 			: Math.max(topY, this.getGameHeight() - MINIMAP_HEIGHT - margin);
-		int leftX = margin;
 		int rightX = this.getSurface().width2 - MINIMAP_WIDTH - margin;
-		switch (normalizeMinimapPosition(this.minimapPosition)) {
-			case MINIMAP_POSITION_BOTTOM_RIGHT:
-				return new int[] {rightX, bottomY};
-			case MINIMAP_POSITION_TOP_LEFT:
-				return new int[] {leftX, topY};
-			case MINIMAP_POSITION_BOTTOM_LEFT:
-				return new int[] {leftX, bottomY};
-			case MINIMAP_POSITION_TOP_RIGHT:
-			default:
-				return new int[] {rightX, topY};
-		}
-	}
-
-	private int normalizeMinimapPosition(int position) {
-		if (position < MINIMAP_POSITION_TOP_RIGHT || position > MINIMAP_POSITION_BOTTOM_LEFT) {
-			return MINIMAP_POSITION_TOP_RIGHT;
-		}
-		return position;
-	}
-
-	private String getMinimapPositionLabel() {
-		return MINIMAP_POSITION_LABELS[normalizeMinimapPosition(this.minimapPosition)];
-	}
-
-	private void cycleMinimapPosition() {
-		this.minimapPosition = normalizeMinimapPosition(this.minimapPosition + 1);
-		this.saveMinimapSettings();
+		return new int[] {rightX, topY};
 	}
 
 	private void togglePinnedMinimap() {
+		this.pinnedSideMenuTab = 0;
 		this.minimapPinned = !this.minimapPinned;
 		if (C_CUSTOM_UI) {
 			this.drawMinimap = this.minimapPinned;
@@ -15168,6 +15135,60 @@ public final class mudclient implements Runnable {
 	private void toggleCoordinatesOverlay() {
 		this.showCoordinatesOverlay = !this.showCoordinatesOverlay;
 		this.saveCoordinatesOverlaySetting();
+	}
+
+	private int getSideMenuTabAt(final int x, final int y, final int minY, final int maxY) {
+		if (this.getSurface() == null || y < minY || y >= maxY) {
+			return 0;
+		}
+		final int right = this.getSurface().width2;
+		if (x >= right - 35 && x < right - 3) {
+			return Config.INVENTORY_TAB;
+		}
+		if (x >= right - 68 && x < right - 36) {
+			return Config.MINIMAP_AND_COMPASS_TAB;
+		}
+		if (x >= right - 101 && x < right - 69) {
+			return Config.SKILLS_AND_QUESTS_TAB;
+		}
+		if (x >= right - 134 && x < right - 102) {
+			return Config.MAGIC_AND_PRAYER_TAB;
+		}
+		if (x >= right - 167 && x < right - 135) {
+			return Config.FRIENDS_TAB;
+		}
+		if (x >= right - 200 && x < right - 168) {
+			return Config.OPTIONS_TAB;
+		}
+		return 0;
+	}
+
+	private boolean handleSideMenuTabInteraction(final int tab) {
+		if (tab == 0) {
+			return false;
+		}
+		// The minimap retains its existing dedicated pin behavior.  A pinned
+		// side panel should not be replaced merely by hovering the map icon;
+		// clicking it still switches to the map's pin toggle below.
+		if (tab == Config.MINIMAP_AND_COMPASS_TAB) {
+			return this.mouseButtonClick != 1 && this.pinnedSideMenuTab != 0;
+		}
+		if (this.mouseButtonClick == 1) {
+			if (this.pinnedSideMenuTab == tab) {
+				this.pinnedSideMenuTab = 0;
+				this.showUiTab = 0;
+			} else {
+				this.pinnedSideMenuTab = tab;
+				this.showUiTab = tab;
+			}
+		} else if (this.pinnedSideMenuTab == 0) {
+			this.showUiTab = tab;
+		}
+		return true;
+	}
+
+	private boolean isSideMenuTabPinned(final int tab) {
+		return this.pinnedSideMenuTab == tab;
 	}
 
 	private void cycleSpellbookLayoutMode() {
@@ -15581,8 +15602,6 @@ public final class mudclient implements Runnable {
 		} else {
 			index = addSettingsRow(index, "@whi@Mouse buttons - @gre@Two", 1);
 		}
-
-		index = addSettingsRow(index, "@whi@Minimap position - @gre@" + this.getMinimapPositionLabel(), 50);
 
 		index = addSettingsRow(index,
 			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
@@ -16136,10 +16155,6 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 50 && this.mouseButtonClick == 1) {
-			this.cycleMinimapPosition();
-		}
-
 		if (settingIndex == 51 && this.mouseButtonClick == 1) {
 			this.toggleCoordinatesOverlay();
 		}
@@ -16670,10 +16685,6 @@ public final class mudclient implements Runnable {
 		}
 
 		y += 15;
-		this.getSurface().drawString("@whi@Minimap position - @gre@" + this.getMinimapPositionLabel(),
-			3 + baseX, y, 0, 1);
-
-		y += 15;
 		this.getSurface().drawString("@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"),
 			3 + baseX, y, 0, 1);
 
@@ -16822,12 +16833,6 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().bufferBits.putByte(2);
 			this.packetHandler.getClientStream().bufferBits.putByte(optionSoundDisabled ? 1 : 0);
 			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12
-			&& 4 + yFromTopDistance > this.mouseY && this.mouseButtonClick == 1) {
-			this.cycleMinimapPosition();
 		}
 
 		yFromTopDistance += 15;
@@ -20551,6 +20556,10 @@ public final class mudclient implements Runnable {
 			&& this.mouseY >= 3
 			&& this.mouseY < 35;
 		try {
+			int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35);
+			if (this.handleSideMenuTabInteraction(requestedTab)) {
+				return clickedMenuBar;
+			}
 			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= 3
 				&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < 35) {
 				this.showUiTab = Config.INVENTORY_TAB;
@@ -20632,26 +20641,26 @@ public final class mudclient implements Runnable {
 			}
 
 			if (!S_WANT_EQUIPMENT_TAB) {
-				if (this.showUiTab == Config.INVENTORY_TAB
+				if (this.showUiTab == Config.INVENTORY_TAB && !this.isSideMenuTabPinned(Config.INVENTORY_TAB)
 					&& (this.mouseX < this.getSurface().width2 - 248 || 36 + this.m_cl / 5 * 34 < this.mouseY)) {
 					this.showUiTab = 0;
 				}
 			} else {
-				if (this.showUiTab == Config.INVENTORY_TAB && this.tabEquipmentIndex == 0
+				if (this.showUiTab == Config.INVENTORY_TAB && !this.isSideMenuTabPinned(Config.INVENTORY_TAB) && this.tabEquipmentIndex == 0
 					&& (this.mouseX < this.getSurface().width2 - 248 || 90 + this.m_cl / 5 * 34 < this.mouseY)) {
 					this.showUiTab = 0;
-				} else if (this.showUiTab == Config.INVENTORY_TAB && this.tabEquipmentIndex == 1
+				} else if (this.showUiTab == Config.INVENTORY_TAB && !this.isSideMenuTabPinned(Config.INVENTORY_TAB) && this.tabEquipmentIndex == 1
 					&& (this.mouseX < this.getSurface().width2 - 248 || 90 + this.m_cl / 5 * 34 < this.mouseY)) {
 					this.showUiTab = 0;
 				}
 			}
 
-			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
+			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isSideMenuTabPinned(Config.SKILLS_AND_QUESTS_TAB) && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
 				this.showUiTab = 0;
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
-			if (this.showUiTab == MAGIC_AND_PRAYER_TAB) {
+			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isSideMenuTabPinned(MAGIC_AND_PRAYER_TAB)) {
 				if (isAndroid()) {
 					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 300) {
 						this.showUiTab = 0;
@@ -20663,12 +20672,12 @@ public final class mudclient implements Runnable {
 				}
 			}
 
-			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || this.showUiTab == Config.FRIENDS_TAB)
+			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isSideMenuTabPinned(Config.FRIENDS_TAB)))
 				&& (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > (this.panelSocialTab == 1 ? 307 : 240))) {
 				this.showUiTab = 0;
 			}
 
-			if (this.showUiTab == Config.OPTIONS_TAB && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
+			if (this.showUiTab == Config.OPTIONS_TAB && !this.isSideMenuTabPinned(Config.OPTIONS_TAB) && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
 				this.showUiTab = 0;
 			}
 
@@ -20685,6 +20694,10 @@ public final class mudclient implements Runnable {
 		if (!clicked)
 			return false;
 		try {
+			int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, minY, maxY);
+			if (this.handleSideMenuTabInteraction(requestedTab)) {
+				return true;
+			}
 			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= minY
 				&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < maxY) {
 				this.showUiTab = Config.INVENTORY_TAB;
