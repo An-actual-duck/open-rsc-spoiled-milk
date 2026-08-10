@@ -315,9 +315,11 @@ lost on death, refunded, or purchased more than once. A purchase does not need
 a free inventory slot. It atomically validates the shop unlock, confirms that
 the corresponding upgrade is not already owned, deducts its native-currency
 price, records the entitlement, and then refreshes the inventory UI. Failure
-at any stage leaves both points and capacity unchanged. An already owned
-upgrade is not stocked or restocked: it cannot be bought again and reports
-`You already have this.`
+at any stage leaves both points and capacity unchanged. The entitlement is
+strictly per player: each player may successfully buy each shop's upgrade once
+and only once. The implementation may retain a normal visible/restocking shop
+entry if that is the least intrusive integration, provided an already owning
+player cannot buy it again and receives `You already have this.`
 
 Persist the six purchases as a stable six-bit entitlement mask owned by
 `MonsterSlayerState`, with bits mapped explicitly by stable shop key rather
@@ -369,9 +371,11 @@ Implement and validate the player-visible system in this dependency order:
    one-time capacity purchases.
 4. Deliver the dynamic 30-to-40 inventory protocol and client UI together,
    then test all capacity boundaries and inventory-bearing systems.
-5. Add the twelve unique armored task/shop NPCs, three generic one-line bar
-   members, dialogue, shortcuts, rank gates, and world placements; finish with
-   end-to-end task, promotion, shop, reconnect, and migration tests.
+5. Add eleven new unique armored task/shop NPCs plus either the twelfth new
+   Legends contact or the approved Radimus task-route rework, then add the
+   three generic one-line bar members, dialogue, shortcuts, rank gates, and
+   world placements. Finish with end-to-end task, promotion, shop, reconnect,
+   and migration tests.
 
 Playtesting follows each economy-bearing slice. Initial numerical estimates
 are intentionally adjustable; the contracts for typed currency, stock,
@@ -429,11 +433,13 @@ or a capacity upgrade.
 
 ### Unresolved Recruitment And First-Shop Details
 
-- Choose the twelve unique task-giver/shop-associate names, exact IDs, and
-  placement tiles. Their visual direction is settled: new unique humanoids in
-  armor that improves with rank. Do not repurpose Barmaid `142`, bartenders,
-  guildmasters, or quest NPCs, and keep the three generic bar members to their
-  one-line ambient role.
+- Choose the twelve contact identities, exact IDs, and placement tiles. This
+  means eleven new unique task-giver/shop-associate NPCs plus either a new
+  Legends task giver or the approved reuse of Sir Radimus `785`. New NPCs are
+  unique humanoids in armor that improves with rank. Do not repurpose Barmaid
+  `142`, bartenders, guildmasters, or quest NPCs except for the explicitly
+  approved Radimus task-route option; keep the three generic bar members to
+  their one-line ambient role.
 - Choose the formal quest name, quest-list presentation, journal text, and any
   quest-point treatment. Calling the mandatory path one quest settles its
   lifecycle, but not those presentation details.
@@ -636,11 +642,13 @@ giver and one nearby shop associate. The task giver owns only rank, mandatory,
 and repeatable-task dialogue; the associate owns only the rank-gated challenge
 shop dialogue. They must never be combined merely because a location reuses an
 existing bartender or guild official. Every task giver and shop associate is a
-newly authored, unique humanoid NPC. Their initial identity, name, ID, and
-exact placement are a focused content pass; their appearance should visibly
-progress from simple early equipment to better armor at the higher ranks.
-Existing bartenders, guildmasters, and quest NPCs retain their original
-responsibilities and are not repurposed as Slayer contacts.
+newly authored, unique humanoid NPC, except that the Legends task giver may
+reuse Sir Radimus `785`, the original borrowed-system task giver. Their initial
+identity, name, ID, and exact placement are a focused content pass; their
+appearance should visibly progress from simple early equipment to better armor
+at the higher ranks. Existing bartenders, guildmasters, and quest NPCs retain
+their original responsibilities and are not repurposed as Slayer contacts,
+apart from the explicitly selected Radimus Slayer-route rework.
 
 | Contact key | New task-giver location | Integration boundary |
 | --- | --- | --- |
@@ -649,7 +657,7 @@ responsibilities and are not repurposed as Slayer contacts.
 | `brimhaven` | Dead Man's Chest, near the existing bartender | Add a separate task giver without replacing drink or bar-crawl service. |
 | `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
-| `legends` | Legends Guild, near Sir Radimus `785` | Preserve Legends Quest reward/training behavior on Sir Radimus and replace the hidden Odyssey route during activation. |
+| `legends` | Legends Guild, near Sir Radimus `785` | Default to a new task giver, but Sir Radimus `785` may instead be selected and reworked as the task giver because he owned the borrowed system. Preserve his Legends Quest reward/training routes and replace only the old Odyssey task route during activation. |
 
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
@@ -759,7 +767,10 @@ validation server-side.
 
 Names remain implementation choices. These sheets identify the voice, the
 required branch points, and dialogue for the new unique contacts at each
-location. Bracketed text is runtime data, never player-controlled text.
+location. A contact name may take light inspiration from a recognizable OSRS
+Slayer giver, but that does not require a matching visual, personality, or
+one-to-one adaptation. Bracketed text is runtime data, never player-controlled
+text.
 
 #### 1. Rising Sun Recruiter — Fledgling Stamp And Initiate Sticker
 
@@ -927,9 +938,10 @@ Heroes Guild contract.`
 
 #### 6. Legends Guild Contact — Hero Crest To Legend
 
-Tone: stoic, economical, and matter-of-fact. Use a separate Legends Guild
-contact; Sir Radimus `785` and house Radimus `735` retain their existing
-Legends Quest behavior.
+Tone: stoic, economical, and matter-of-fact. Default to a separate Legends
+Guild contact. If Sir Radimus `785` is selected instead, preserve his Legends
+Quest behavior and replace only his borrowed Odyssey task route; house Radimus
+`735` is never a Slayer contact.
 
 **Below rank**
 
