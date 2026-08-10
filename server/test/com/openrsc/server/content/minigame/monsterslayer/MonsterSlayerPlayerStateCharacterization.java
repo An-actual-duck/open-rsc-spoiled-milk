@@ -24,6 +24,8 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
+		failureDiagnosticsAreDuplicateSuppressedAndBounded();
 
 		System.out.println("Monster Slayer player-state characterization: PASS");
 	}
@@ -176,6 +178,37 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			"eligible repeatable assignment");
 	}
 
+	private static void cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(MonsterSlayerData data) {
+		FailingCache cache = new FailingCache();
+		cache.store("unrelated_key", "must-survive");
+		MonsterSlayerState.write(cache, data, MonsterSlayerState.defaults(data));
+		Map<String, Object> before = new LinkedHashMap<String, Object>(cache.getCacheMap());
+		cache.failAfterWrites(5);
+		boolean failed = false;
+		try {
+			MonsterSlayerState.write(cache, data, MonsterSlayerState.defaults(data));
+		} catch (IllegalStateException expected) {
+			failed = true;
+		}
+		assertTrue(failed, "injected cache write failure propagates to optional caller");
+		equals(before, cache.getCacheMap(), "failed write restores exact owned cache snapshot");
+		equals("must-survive", cache.getString("unrelated_key"), "failed write preserves unrelated key");
+	}
+
+	private static void failureDiagnosticsAreDuplicateSuppressedAndBounded() {
+		MonsterSlayerFailureDiagnostics.resetForTests();
+		java.util.UUID first = new java.util.UUID(0L, 1L);
+		assertTrue(MonsterSlayerFailureDiagnostics.shouldLog(first, 19, "invalid-state"),
+			"first diagnostic is retained");
+		assertFalse(MonsterSlayerFailureDiagnostics.shouldLog(first, 19, "invalid-state"),
+			"duplicate diagnostic is suppressed");
+		for (int index = 0; index < 300; index++) {
+			MonsterSlayerFailureDiagnostics.shouldLog(new java.util.UUID(1L, index), 19, "runtime-failure");
+		}
+		assertTrue(MonsterSlayerFailureDiagnostics.retainedEntryCount() <= 256,
+			"diagnostic retention remains bounded");
+	}
+
 	private static Map<String, Integer> zeroCursors(MonsterSlayerData data) {
 		Map<String, Integer> result = new LinkedHashMap<String, Integer>();
 		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) result.put(contact.getKey(), 0);
@@ -202,5 +235,33 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		if (expected == null ? actual != null : !expected.equals(actual)) {
 			throw new AssertionError(label + ": expected " + expected + " but was " + actual);
 		}
+	}
+
+	private static void assertTrue(boolean value, String label) {
+		if (!value) throw new AssertionError(label);
+	}
+
+	private static void assertFalse(boolean value, String label) {
+		assertTrue(!value, label);
+	}
+
+	private static final class FailingCache extends Cache {
+		private int failAfter = Integer.MAX_VALUE;
+		private int writes;
+
+		private void failAfterWrites(int count) {
+			writes = 0;
+			failAfter = count;
+		}
+
+		private void beforeWrite() {
+			if (++writes == failAfter) throw new IllegalStateException("injected cache failure");
+		}
+
+		@Override public void set(String key, int value) { beforeWrite(); super.set(key, value); }
+		@Override public void store(String key, int value) { beforeWrite(); super.store(key, value); }
+		@Override public void store(String key, long value) { beforeWrite(); super.store(key, value); }
+		@Override public void store(String key, String value) { beforeWrite(); super.store(key, value); }
+		@Override public void remove(String key) { beforeWrite(); super.remove(key); }
 	}
 }

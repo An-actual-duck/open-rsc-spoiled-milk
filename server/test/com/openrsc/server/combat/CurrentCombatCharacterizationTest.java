@@ -418,6 +418,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatDeathLifecycleCharacterization::ordinaryNpcDeathPolicies);
 			run(harness, "failed_npc_death_callback_cannot_replay_rewards_or_listeners",
 				CurrentCombatDeathLifecycleCharacterization::failedNpcDeathCannotReplay);
+			run(harness, "monster_slayer_credit_failure_isolated_from_real_npc_death",
+				CurrentCombatDeathLifecycleCharacterization::monsterSlayerCreditFailureIsolation);
 			run(harness, "player_death_preserves_cleanup_duplicate_and_respawn_reset",
 				CurrentCombatDeathLifecycleCharacterization::playerDeathPolicies);
 			run(harness, "plugin_owned_npc_death_remains_an_explicit_compatibility_path",

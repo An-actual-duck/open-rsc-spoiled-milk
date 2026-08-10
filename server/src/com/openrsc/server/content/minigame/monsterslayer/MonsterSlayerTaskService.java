@@ -40,7 +40,14 @@ public final class MonsterSlayerTaskService {
 		} catch (ArithmeticException ex) {
 			return CreditResult.failure("arithmetic-overflow");
 		} catch (IllegalArgumentException ex) {
+			if (ex.getMessage() != null && ex.getMessage().contains(" balance outside")) {
+				return CreditResult.failure("balance-cap");
+			}
 			return CreditResult.failure("invalid-transition");
+		} catch (RuntimeException ex) {
+			// Slayer is optional at this lifecycle boundary. Never let an
+			// unexpected cache/runtime failure abort an otherwise valid death.
+			return CreditResult.failure("runtime-failure");
 		}
 	}
 

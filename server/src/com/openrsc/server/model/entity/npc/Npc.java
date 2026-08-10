@@ -4,6 +4,7 @@ import com.openrsc.server.constants.*;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerFailureDiagnostics;
 import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.custom.NpcLootEvent;
@@ -41,9 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.Set;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Npc extends Mob {
 	private static final double DEFAULT_MELEE_DEFENSE_MULTIPLIER = 1.0D;
@@ -56,8 +54,6 @@ public class Npc extends Mob {
 	 * The asynchronous logger.
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
-	private static final Set<String> MONSTER_SLAYER_FAILURE_DIAGNOSTICS =
-		Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 	public static final String DEATH_VISUAL_TICK_ATTRIBUTE = "npc_death_visual_tick";
 
 	private long healTimer = 0;
@@ -861,8 +857,7 @@ public class Npc extends Mob {
 	}
 
 	private void logMonsterSlayerCreditFailure(Player player, String reason) {
-		String key = player.getUUID() + ":" + reason;
-		if (MONSTER_SLAYER_FAILURE_DIAGNOSTICS.add(key)) {
+		if (MonsterSlayerFailureDiagnostics.shouldLog(player.getUUID(), getID(), reason)) {
 			LOGGER.warn("Monster Slayer credit skipped: player={} npc={} reason={}",
 				player.getUsername(), getID(), reason);
 		}

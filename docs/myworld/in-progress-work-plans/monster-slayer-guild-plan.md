@@ -1597,8 +1597,21 @@ Slayer cache keys.
   reward shop, capacity purchase, inventory-size change, client packet, or UI
   behavior is exposed by this slice.
 - Slayer credit is an optional fail-closed boundary inside NPC death handling.
-  Quarantined/malformed state, arithmetic overflow, invalid transitions, and
-  failed Slayer writes grant no progress and are logged once with safe
-  player/NPC/reason context; they cannot interrupt XP, loot, listeners,
-  removal/respawn, or other eligible contributors. Raw corrupt cache evidence
-  remains untouched.
+  Every ordinary `RuntimeException` from Slayer state reading, proposal, or
+  writing is contained (never `Error`), grants no progress, and is reported
+  with a safe known or generic reason. A 256-entry access-ordered transient
+  suppression window prevents repeated corrupt kills from spamming logs or
+  retaining unbounded process memory.
+- `MonsterSlayerState.write` validates the complete candidate before mutating
+  cache and snapshots only the Slayer-owned keys. If an individual cache
+  mutator fails, those keys are restored exactly while unrelated keys and
+  quarantined raw evidence remain untouched; no partial completion, cursor, or
+  balance can escape.
+- Production death-path coverage executes `Npc.killedBy`/`processLegacyDeath`
+  with corrupt and valid contributors in both contribution orders, plus
+  balance-cap, lifetime-count-overflow, wrong-family, no-task, and duplicate
+  cases. It proves the valid contributor progresses exactly once while failed
+  contributors cannot interrupt XP, loot listeners, removal, or respawn.
+- Focused state coverage also injects a mid-write cache failure and verifies
+  exact owned-key rollback/unrelated-key preservation, then verifies bounded
+  duplicate-diagnostic suppression.

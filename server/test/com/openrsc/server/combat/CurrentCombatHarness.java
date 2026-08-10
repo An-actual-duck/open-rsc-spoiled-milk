@@ -11,6 +11,7 @@ import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -76,6 +77,14 @@ final class CurrentCombatHarness implements AutoCloseable {
 
 	World world() {
 		return world;
+	}
+
+	/** Installs only the optional Slayer service used by NPC death integration tests. */
+	void installMonsterSlayerTaskService(final MonsterSlayerTaskService service)
+			throws ReflectiveOperationException {
+		final Field field = World.class.getDeclaredField("monsterSlayerTaskService");
+		field.setAccessible(true);
+		field.set(world, service);
 	}
 
 	MutableGameClock clock() {

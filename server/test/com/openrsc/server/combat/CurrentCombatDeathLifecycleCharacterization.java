@@ -3,6 +3,13 @@ package com.openrsc.server.combat;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions;
 import com.openrsc.server.event.custom.NpcLootEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -15,6 +22,10 @@ import com.openrsc.server.plugins.triggers.KillNpcTrigger;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.List;
+import java.nio.file.Paths;
 
 /** Executable A05.5 death-lifecycle and compatibility policies. */
 final class CurrentCombatDeathLifecycleCharacterization {
@@ -161,6 +172,161 @@ final class CurrentCombatDeathLifecycleCharacterization {
 			"later lethal request cannot replay a failed listener");
 		assertEquals(killsBefore + 1, killer.getNpcKills(),
 			"later lethal request cannot replay preceding rewards");
+	}
+
+	/**
+	 * Exercises the production Npc.killedBy -> processLegacyDeath Slayer hook,
+	 * including both contributor orders and failures that must not alter the
+	 * existing XP/drop/listener/removal/respawn lifecycle.
+	 */
+	static void monsterSlayerCreditFailureIsolation(final CurrentCombatHarness harness)
+			throws Exception {
+		final MonsterSlayerData data = MonsterSlayerData.load(Paths.get(
+			"conf", "server", "defs", "extras", "MonsterSlayer.json"),
+			acceptingSlayerCatalog());
+		harness.installMonsterSlayerTaskService(new MonsterSlayerTaskService(data));
+		assertCorruptAndValidContributors(harness, data, true);
+		assertCorruptAndValidContributors(harness, data, false);
+		assertOverflowDoesNotAbortDeath(harness, data, false);
+		assertOverflowDoesNotAbortDeath(harness, data, true);
+		assertRejectedCallbacksRemainHarmless(harness, data);
+	}
+
+	private static void assertCorruptAndValidContributors(final CurrentCombatHarness harness,
+			final MonsterSlayerData data, final boolean corruptFirst) throws Exception {
+		final int x = corruptFirst ? 700 : 710;
+		final Player valid = harness.player("msv" + x, x, 790);
+		final Player corrupt = harness.player("msc" + x, x + 1, 790);
+		assertFalse(valid.getUUID().equals(corrupt.getUUID()), "fixture contributors have distinct identities");
+		MonsterSlayerState.write(valid.getCache(), data, activeRatState(data,
+			MonsterSlayerBalances.zero(), 99, 0L));
+		assertEquals(MonsterSlayerState.TaskResult.Reason.COMPLETED,
+			MonsterSlayerState.recordEligibleKill(MonsterSlayerState.read(valid.getCache(), data), data, 19)
+				.getReason(), "fixture task accepts a rat before the NPC lifecycle");
+		corrupt.getCache().store("monster_slayer_balance_fledgling", "corrupt-evidence");
+		corrupt.getCache().store("unrelated_corrupt_evidence", "retain");
+		final Map<String, Object> rawCorrupt = new LinkedHashMap<String, Object>(
+			corrupt.getCache().getCacheMap());
+		final Npc rat = harness.npc(19, x + 2, 790);
+		final int hits = Math.max(1, rat.getDef().getHits());
+		if (corruptFirst) {
+			rat.addCombatDamage(corrupt, hits);
+			rat.addCombatDamage(valid, hits);
+		} else {
+			rat.addCombatDamage(valid, hits);
+			rat.addCombatDamage(corrupt, hits);
+		}
+		@SuppressWarnings("unchecked")
+		final List<java.util.UUID> contributors = (List<java.util.UUID>) CurrentCombatHarness.invokePrivate(
+			rat, "getAllDamageDealerIds", new Class<?>[0]);
+		assertTrue(contributors.contains(valid.getUUID()), "fixture records valid contributor");
+		assertTrue(contributors.contains(corrupt.getUUID()), "fixture records corrupt contributor");
+		assertTrue(harness.world().getPlayers().contains(valid), "valid contributor is present in world list");
+		assertTrue(harness.world().getPlayerByUUID(valid.getUUID()) == valid, "valid contributor resolves from world");
+		assertFalse(valid.isRemoved(), "valid contributor is live");
+		assertTrue(valid.getSkills().getLevel(Skill.HITS.id()) > 0, "valid contributor has hits");
+		assertTrue(rat.sharesSpatialDomain(valid), "valid fixture contributor shares spatial domain");
+		assertTrue(rat.getLocation().withinRange(valid.getLocation(), 16), "valid fixture contributor is nearby");
+		rat.getSkills().setLevel(Skill.HITS.id(), 0);
+		final int validXp = valid.getSkills().getExperience(Skill.MELEE.id());
+		final AtomicInteger listeners = new AtomicInteger();
+		rat.addDeathListener(new NpcLootEvent(harness.world(), rat.getLocation(), rat.getID(),
+			1, ItemId.COINS.id()) {
+			@Override public void onLootNpcDeath(Player player, Npc npc) { listeners.incrementAndGet(); }
+		});
+		rat.killedBy(valid);
+		final MonsterSlayerState.Snapshot completed = MonsterSlayerState.read(valid.getCache(), data);
+		assertEquals(1L, completed.getTasksCompleted(), "valid contributor completes once active="
+			+ completed.getActiveTaskKey() + " kills=" + completed.getActiveKills());
+		assertEquals(5L, completed.getBalances().get(MonsterSlayerChallenge.FLEDGLING),
+			"valid contributor receives native points");
+		assertEquals(rawCorrupt, corrupt.getCache().getCacheMap(),
+			"quarantined contributor raw cache remains exact");
+		assertTrue(valid.getSkills().getExperience(Skill.MELEE.id()) > validXp,
+			"Slayer corruption cannot interrupt XP");
+		assertEquals(1, listeners.get(), "Slayer corruption cannot interrupt loot listener");
+		assertTrue(rat.isRespawning(), "Slayer corruption cannot interrupt respawn scheduling");
+		assertNotNull(harness.findEvent("Respawn NPC"), "production respawn event remains scheduled");
+	}
+
+	private static void assertOverflowDoesNotAbortDeath(final CurrentCombatHarness harness,
+			final MonsterSlayerData data, final boolean lifetimeOverflow) throws Exception {
+		final int x = lifetimeOverflow ? 720 : 730;
+		final Player player = harness.player("mso" + x, x, 790);
+		final MonsterSlayerBalances balances = lifetimeOverflow
+			? MonsterSlayerBalances.zero() : balancesAtCap();
+		MonsterSlayerState.write(player.getCache(), data, activeRatState(data, balances, 99,
+			lifetimeOverflow ? Long.MAX_VALUE : 0L));
+		final Map<String, Object> before = new LinkedHashMap<String, Object>(player.getCache().getCacheMap());
+		final Npc rat = harness.npc(19, x + 1, 790);
+		final int hits = Math.max(1, rat.getDef().getHits());
+		rat.addCombatDamage(player, hits);
+		rat.getSkills().setLevel(Skill.HITS.id(), 0);
+		final AtomicInteger listeners = new AtomicInteger();
+		rat.addDeathListener(new NpcLootEvent(harness.world(), rat.getLocation(), rat.getID(),
+			1, ItemId.COINS.id()) {
+			@Override public void onLootNpcDeath(Player ignored, Npc npc) { listeners.incrementAndGet(); }
+		});
+		final int xp = player.getSkills().getExperience(Skill.MELEE.id());
+		rat.killedBy(player);
+		assertEquals(before, player.getCache().getCacheMap(), "overflow writes are atomic");
+		assertTrue(player.getSkills().getExperience(Skill.MELEE.id()) > xp,
+			"overflow cannot interrupt XP");
+		assertEquals(1, listeners.get(), "overflow cannot interrupt listener");
+		assertTrue(rat.isRespawning(), "overflow cannot interrupt respawn");
+	}
+
+	private static void assertRejectedCallbacksRemainHarmless(final CurrentCombatHarness harness,
+			final MonsterSlayerData data) throws Exception {
+		final Player player = harness.player("msreject", 740, 790);
+		MonsterSlayerState.write(player.getCache(), data, activeRatState(data,
+			MonsterSlayerBalances.zero(), 0, 0L));
+		final Npc goblin = harness.npc(4, 741, 790);
+		goblin.setShouldRespawn(false);
+		goblin.addCombatDamage(player, Math.max(1, goblin.getDef().getHits()));
+		goblin.getSkills().setLevel(Skill.HITS.id(), 0);
+		goblin.killedBy(player);
+		assertEquals(0, MonsterSlayerState.read(player.getCache(), data).getActiveKills(),
+			"wrong family is harmless");
+		goblin.killedBy(player);
+		assertEquals(0, MonsterSlayerState.read(player.getCache(), data).getActiveKills(),
+			"duplicate callback is harmless");
+		final Player noTask = harness.player("msnotask", 745, 790);
+		final Npc rat = harness.npc(19, 746, 790);
+		rat.setShouldRespawn(false);
+		rat.addCombatDamage(noTask, Math.max(1, rat.getDef().getHits()));
+		rat.getSkills().setLevel(Skill.HITS.id(), 0);
+		rat.killedBy(noTask);
+		assertFalse(noTask.getCache().hasKey("monster_slayer_active_kills"),
+			"no task writes no Slayer progression");
+	}
+
+	private static MonsterSlayerState.Snapshot activeRatState(final MonsterSlayerData data,
+			final MonsterSlayerBalances balances, final int kills, final long completions) {
+		final Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			cursors.put(contact.getKey(), 0);
+		}
+		return MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING, balances, cursors,
+			"falador.rats", kills, completions, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+	}
+
+	private static MonsterSlayerBalances balancesAtCap() {
+		final Map<MonsterSlayerChallenge, Long> amounts =
+			new LinkedHashMap<MonsterSlayerChallenge, Long>();
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
+		amounts.put(MonsterSlayerChallenge.FLEDGLING, MonsterSlayerBalances.MAX_BALANCE);
+		return MonsterSlayerBalances.of(amounts);
+	}
+
+	private static MonsterSlayerData.ReferenceCatalog acceptingSlayerCatalog() {
+		return new MonsterSlayerData.ReferenceCatalog() {
+			public boolean npcExists(int npcId) { return true; }
+			public boolean npcAttackable(int npcId) { return true; }
+			public boolean npcSpawned(int npcId) { return true; }
+			public boolean itemExists(int itemId) { return true; }
+		};
 	}
 
 	static void playerDeathPolicies(final CurrentCombatHarness harness)

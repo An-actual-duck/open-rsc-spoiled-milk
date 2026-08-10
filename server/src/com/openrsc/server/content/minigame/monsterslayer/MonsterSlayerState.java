@@ -3,6 +3,7 @@ package com.openrsc.server.content.minigame.monsterslayer;
 import com.openrsc.server.model.Cache;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,26 +72,53 @@ public final class MonsterSlayerState {
 			throw new IllegalArgumentException("Player cache is required");
 		}
 		validate(snapshot, data);
-		cache.set(STATE_VERSION_KEY, snapshot.stateVersion);
-		cache.set(INTRO_STAGE_KEY, snapshot.introStage);
-		cache.set(RANK_KEY, snapshot.rank.getCode());
-		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
-			cache.store(balanceKey(challenge), snapshot.balances.get(challenge));
+		Map<String, Object> values = cache.getCacheMap();
+		Map<String, Object> before = new LinkedHashMap<String, Object>();
+		List<String> keys = ownedKeys(data);
+		for (String key : keys) {
+			if (values.containsKey(key)) before.put(key, values.get(key));
 		}
-		if (snapshot.activeTaskKey == null) {
-			cache.remove(ACTIVE_TASK_KEY);
-		} else {
-			cache.store(ACTIVE_TASK_KEY, snapshot.activeTaskKey);
+		try {
+			cache.set(STATE_VERSION_KEY, snapshot.stateVersion);
+			cache.set(INTRO_STAGE_KEY, snapshot.introStage);
+			cache.set(RANK_KEY, snapshot.rank.getCode());
+			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+				cache.store(balanceKey(challenge), snapshot.balances.get(challenge));
+			}
+			if (snapshot.activeTaskKey == null) {
+				cache.remove(ACTIVE_TASK_KEY);
+			} else {
+				cache.store(ACTIVE_TASK_KEY, snapshot.activeTaskKey);
+			}
+			cache.set(ACTIVE_KILLS_KEY, snapshot.activeKills);
+			for (Contact contact : data.getContactsInChallengeOrder()) {
+				cache.set(cursorKey(contact.getKey()), snapshot.mandatoryCursors.get(contact.getKey()));
+			}
+			cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
+			cache.set(INVENTORY_UPGRADES_KEY, snapshot.inventoryUpgrades);
+			cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
+			cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
+			cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
+		} catch (RuntimeException failure) {
+			// Cache mutators are individually atomic, not a transaction. Restore
+			// only our owned keys directly so unrelated cache evidence survives.
+			for (String key : keys) {
+				if (before.containsKey(key)) values.put(key, before.get(key));
+				else values.remove(key);
+			}
+			throw failure;
 		}
-		cache.set(ACTIVE_KILLS_KEY, snapshot.activeKills);
-		for (Contact contact : data.getContactsInChallengeOrder()) {
-			cache.set(cursorKey(contact.getKey()), snapshot.mandatoryCursors.get(contact.getKey()));
-		}
-		cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
-		cache.set(INVENTORY_UPGRADES_KEY, snapshot.inventoryUpgrades);
-		cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
-		cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
-		cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
+	}
+
+	private static List<String> ownedKeys(MonsterSlayerData data) {
+		List<String> keys = new ArrayList<String>();
+		Collections.addAll(keys, STATE_VERSION_KEY, INTRO_STAGE_KEY, RANK_KEY,
+			ACTIVE_TASK_KEY, ACTIVE_KILLS_KEY, TASKS_COMPLETED_KEY,
+			INVENTORY_UPGRADES_KEY, MIGRATION_VERSION_KEY, LEGACY_STATUS_KEY,
+			LEGACY_PRESTIGE_KEY);
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) keys.add(balanceKey(challenge));
+		for (Contact contact : data.getContactsInChallengeOrder()) keys.add(cursorKey(contact.getKey()));
+		return keys;
 	}
 
 	public static Snapshot defaults(MonsterSlayerData data) {
