@@ -46,6 +46,15 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			assertTrue(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact assignment " + contact.getKey());
 			assertFalse(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact duplicate assignment " + contact.getKey());
 		}
+		for (int pick = 0; pick < data.getContact("falador").getRepeatableTasks().size(); pick++) {
+			final int selected = pick;
+			MonsterSlayerContactService randomized = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return selected; }});
+			Player repeatable = h.player("mssrepeat" + pick, 870 + pick, 790); state(repeatable, data, 0L, 0, 1);
+			MonsterSlayerDefinitions.Task preview = randomized.previewTask(repeatable, "falador");
+			assertEquals(data.getContact("falador").getRepeatableTasks().get(pick).getKey(), preview.getKey(), "injectable repeatable pick " + pick);
+			assertTrue(randomized.requestTask(repeatable, "falador").isAccepted(), "previewed repeatable assigns " + pick);
+			assertEquals(preview.getKey(), MonsterSlayerState.read(repeatable.getCache(), data).getActiveTaskKey(), "preview equals committed repeatable " + pick);
+		}
 	}
 
 	private static void basicRedemptionAndRollback(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
