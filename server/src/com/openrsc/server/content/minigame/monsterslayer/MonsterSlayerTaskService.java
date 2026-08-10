@@ -27,6 +27,23 @@ public final class MonsterSlayerTaskService {
 			MonsterSlayerState.read(requirePlayer(player).getCache(), data), data, npcId));
 	}
 
+	/**
+	 * Optional progression must not be allowed to escape into the authoritative
+	 * NPC death lifecycle. The caller still owns diagnostics and continues with
+	 * other contributors after a failed credit.
+	 */
+	public CreditResult tryCreditEligibleKill(Player player, int npcId) {
+		try {
+			return CreditResult.success(creditEligibleKill(player, npcId));
+		} catch (MonsterSlayerState.ValidationException ex) {
+			return CreditResult.failure("invalid-state");
+		} catch (ArithmeticException ex) {
+			return CreditResult.failure("arithmetic-overflow");
+		} catch (IllegalArgumentException ex) {
+			return CreditResult.failure("invalid-transition");
+		}
+	}
+
 	private MonsterSlayerState.TaskResult apply(Player player, MonsterSlayerState.TaskResult result) {
 		if (result.isAccepted()) MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
 		return result;
@@ -35,5 +52,21 @@ public final class MonsterSlayerTaskService {
 	private static Player requirePlayer(Player player) {
 		if (player == null || player.isRemoved()) throw new IllegalArgumentException("Active player is required");
 		return player;
+	}
+
+	public static final class CreditResult {
+		private final MonsterSlayerState.TaskResult taskResult;
+		private final String failureReason;
+		private CreditResult(MonsterSlayerState.TaskResult taskResult, String failureReason) {
+			this.taskResult = taskResult;
+			this.failureReason = failureReason;
+		}
+		private static CreditResult success(MonsterSlayerState.TaskResult result) {
+			return new CreditResult(result, null);
+		}
+		private static CreditResult failure(String reason) { return new CreditResult(null, reason); }
+		public boolean isSuccessful() { return failureReason == null; }
+		public MonsterSlayerState.TaskResult getTaskResult() { return taskResult; }
+		public String getFailureReason() { return failureReason; }
 	}
 }

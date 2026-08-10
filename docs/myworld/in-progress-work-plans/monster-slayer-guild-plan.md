@@ -1596,3 +1596,9 @@ Slayer cache keys.
 - This remains intentionally headless: no NPC placement/dialogue, menu,
   reward shop, capacity purchase, inventory-size change, client packet, or UI
   behavior is exposed by this slice.
+- Slayer credit is an optional fail-closed boundary inside NPC death handling.
+  Quarantined/malformed state, arithmetic overflow, invalid transitions, and
+  failed Slayer writes grant no progress and are logged once with safe
+  player/NPC/reason context; they cannot interrupt XP, loot, listeners,
+  removal/respawn, or other eligible contributors. Raw corrupt cache evidence
+  remains untouched.
