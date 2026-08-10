@@ -81,8 +81,16 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. I require beer!"); service.beginBeerIntroduction(player); return; }
 		if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) { npcsay(player, npc, "You haven't got the beer yet."); return; }
 		if (multi(player, "Offer the beer.", "Not yet.") != 0) return;
-		if (!service.completeBeerIntroductionWithBeer(player).isAccepted()) { player.message("Your rank record could not be updated."); return; }
+		MonsterSlayerContactService.Result result = service.completeBeerIntroductionWithBeer(player);
+		if (!result.isAccepted()) { player.message(beerFailureMessage(result.getReason())); return; }
 		npcsay(player, npc, "Excellent, I dub thee an official fledgling Monster Slayer. Hold out your hand for your official stamp", "Nope, just the stamp.", "It's an honor. Return to me any time you wish to continue hunting monsters!");
+	}
+	/** Keeps transaction outcomes truthful without exposing persistence details to players. */
+	public static String beerFailureMessage(String reason) {
+		if ("missing-beer".equals(reason)) return "You haven't got the beer yet. Visit the barmaid and come back.";
+		if ("state-write-failed".equals(reason)) return "Your beer was returned, but your Monster Slayer rank could not be recorded. Please try again.";
+		if ("refund-failed".equals(reason)) return "Your rank record failed and your beer could not be returned. Please contact staff.";
+		return "Your Monster Slayer record needs staff attention.";
 	}
 	private void associate(Player player, Npc npc) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } npcsay(player, npc, associateGreeting(index)); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
 	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }

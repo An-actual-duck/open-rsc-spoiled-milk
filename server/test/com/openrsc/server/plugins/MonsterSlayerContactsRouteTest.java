@@ -50,7 +50,15 @@ public final class MonsterSlayerContactsRouteTest {
 		promotionRenderingIsExactForEveryRank(server);
 		guildAccessModesAndQuestStates(server);
 		associateAmbientAndOwnershipBoundaries(server, routes);
+		beerFailureMessagesRemainTruthful();
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void beerFailureMessagesRemainTruthful() {
+		assertEquals("You haven't got the beer yet. Visit the barmaid and come back.", MonsterSlayerContacts.beerFailureMessage("missing-beer"), "missing beer message");
+		assertEquals("Your beer was returned, but your Monster Slayer rank could not be recorded. Please try again.", MonsterSlayerContacts.beerFailureMessage("state-write-failed"), "state-write refund message");
+		assertEquals("Your rank record failed and your beer could not be returned. Please contact staff.", MonsterSlayerContacts.beerFailureMessage("refund-failed"), "refund failure message");
+		assertEquals("Your Monster Slayer record needs staff attention.", MonsterSlayerContacts.beerFailureMessage("invalid-state"), "invalid state message");
 	}
 
 	private static void guildAccessModesAndQuestStates(Server server) {
@@ -60,9 +68,6 @@ public final class MonsterSlayerContactsRouteTest {
 		assertFalse(MonsterSlayerGuildAccess.allows(player, 3), "Champions quest-point lock");
 		player.setQuestPoints(32);
 		assertTrue(MonsterSlayerGuildAccess.allows(player, 3), "Champions quest-point access");
-		server.getConfig().INFLUENCE_INSTEAD_QP = true;
-		assertFalse(MonsterSlayerGuildAccess.allows(player, 3), "Champions Influence mode fails closed without enabled Influence skill");
-		server.getConfig().INFLUENCE_INSTEAD_QP = false;
 		player.setQuestStage(Quests.HEROS_QUEST, 1);
 		assertFalse(MonsterSlayerGuildAccess.allows(player, 4), "Heroes incomplete lock");
 		player.setQuestStage(Quests.HEROS_QUEST, -1);

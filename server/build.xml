@@ -70,11 +70,18 @@
         <delete dir="../output/monster-slayer-contact-test"/>
         <mkdir dir="../output/monster-slayer-contact-test"/>
         <javac srcdir="${test.src}" destdir="../output/monster-slayer-contact-test" debug="on"
-               includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"
+               includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java,com/openrsc/server/plugins/MonsterSlayerInfluenceGuildAccessTest.java"
                includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest" fork="true" failonerror="true" dir="${basedir}">
+            <classpath><pathelement location="../output/monster-slayer-contact-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+        <copy file="myworld.conf" tofile="../output/monster-slayer-contact-test/influence-myworld.conf"/>
+        <copy file="connections.conf" tofile="../output/monster-slayer-contact-test/connections.conf"/>
+        <copy todir="../output/monster-slayer-contact-test/database"><fileset dir="database"/></copy>
+        <copy todir="../output/monster-slayer-contact-test/conf"><fileset dir="conf"/></copy>
+        <java classname="com.openrsc.server.plugins.MonsterSlayerInfluenceGuildAccessTest" fork="true" failonerror="true" dir="../output/monster-slayer-contact-test">
             <classpath><pathelement location="../output/monster-slayer-contact-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
