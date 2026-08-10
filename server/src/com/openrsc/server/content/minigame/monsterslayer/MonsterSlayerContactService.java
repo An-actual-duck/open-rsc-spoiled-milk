@@ -26,13 +26,32 @@ public final class MonsterSlayerContactService {
 			MonsterSlayerState.TaskResult result = snapshot.getRank() == contact.getRequiredRank()
 				? tasks.assignMandatory(player, contactKey) : null;
 			if (result == null || result.getReason() == MonsterSlayerState.TaskResult.Reason.MANDATORY_COMPLETE) {
-				for (MonsterSlayerDefinitions.Task repeatable : contact.getRepeatableTasks()) {
-					result = tasks.assignRepeatable(player, contactKey, repeatable.getKey());
-					if (result.isAccepted()) break;
-				}
+				MonsterSlayerDefinitions.Task repeatable = selectRepeatable(player, snapshot, contact);
+				result = repeatable == null ? result : tasks.assignRepeatable(player, contactKey, repeatable.getKey());
 			}
 			return result.isAccepted() ? Result.accepted(result) : Result.rejected(result.getReason().name().toLowerCase());
 		} catch (RuntimeException failure) { return Result.rejected("invalid-state"); }
+	}
+
+	/** Uses the same selection as assignment so callers can present warnings first. */
+	public MonsterSlayerDefinitions.Task previewTask(Player player, String contactKey) {
+		try {
+			MonsterSlayerState.Snapshot snapshot = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerDefinitions.Contact contact = data.getContact(contactKey);
+			if (contact == null || !snapshot.getRank().isAtLeast(contact.getRequiredRank())) return null;
+			int cursor = snapshot.getMandatoryCursors().get(contactKey).intValue();
+			if (snapshot.getRank() == contact.getRequiredRank() && cursor < contact.getMandatoryTasks().size()) return contact.getMandatoryTasks().get(cursor);
+			return selectRepeatable(player, snapshot, contact);
+		} catch (RuntimeException failure) { return null; }
+	}
+
+	private MonsterSlayerDefinitions.Task selectRepeatable(Player player, MonsterSlayerState.Snapshot snapshot, MonsterSlayerDefinitions.Contact contact) {
+		int total = 0; for (MonsterSlayerDefinitions.Task task : contact.getRepeatableTasks()) total += task.getWeight();
+		if (total <= 0) return null;
+		long seed = player.getUUID().getMostSignificantBits() ^ player.getUUID().getLeastSignificantBits() ^ snapshot.getTasksCompleted();
+		int pick = (int) Math.floorMod(seed, (long) total);
+		for (MonsterSlayerDefinitions.Task task : contact.getRepeatableTasks()) { pick -= task.getWeight(); if (pick < 0) return task; }
+		return null;
 	}
 
 	private Result changeIntroduction(Player player, boolean complete) {
