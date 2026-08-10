@@ -35,6 +35,18 @@ public final class RSCProtocolDecoder extends ByteToMessageDecoder implements At
 			if (authenticClient == null) {
 				// Not known yet if connection is to authentic client or not yet.
 				// We can find out pretty quickly if it's inauthentic, because the inauthentic Open RSC Client should ask for server configs immediately.
+				/*
+				 * A custom client prefixes every packet with an unsigned short.  Its
+				 * login opcode is zero, so a 278-byte login starts 01 16 00.  The
+				 * legacy decoder used to consume that as a one-byte packet (length 1,
+				 * opcode 22) before it had made a framing decision.  Do not mutate the
+				 * reader index or client classification until this two-byte candidate is
+				 * complete; a fragmented login must remain undecided, not become legacy
+				 * traffic part way through its header.
+				 */
+				if (decodeUndecidedCustomLoginFrame(buffer, out, att)) {
+					return;
+				}
 				if (buffer.readableBytes() > 2) {
 					buffer.markReaderIndex();
 					int length = buffer.readUnsignedByte();
@@ -46,7 +58,6 @@ public final class RSCProtocolDecoder extends ByteToMessageDecoder implements At
 						lengthLength = 1;
 					}
 
-					System.out.println("Buffer readable bytes: " + buffer.readableBytes() + " len: " + length);
 					if (buffer.readableBytes() >= length && length > 0) {
 						int opcode;
 
@@ -103,7 +114,7 @@ public final class RSCProtocolDecoder extends ByteToMessageDecoder implements At
 					} else {
 						if (buffer.readableBytes() > 0) {
 							byte bLength = buffer.readByte();
-							if (bLength == 1) {
+							if (bLength == 1 && buffer.readableBytes() > 0) {
 								att.authenticClient.set((short)-1);
 								byte theOnlyByte = buffer.readByte();
 								if (theOnlyByte == (byte) 19) {
@@ -340,6 +351,34 @@ public final class RSCProtocolDecoder extends ByteToMessageDecoder implements At
 				}
 			}
 		}
+	}
+
+	/**
+	 * Decodes an initial custom-client login which cannot safely be interpreted
+	 * using legacy one-byte framing.  Returns {@code true} both after delivery
+	 * and while a recognized frame is awaiting more bytes.
+	 */
+	private boolean decodeUndecidedCustomLoginFrame(
+		ByteBuf buffer, List<Object> out, ConnectionAttachment att) {
+		if (buffer.readableBytes() < 3) {
+			return false;
+		}
+		int readerIndex = buffer.readerIndex();
+		int length = buffer.getUnsignedShort(readerIndex);
+		int opcode = buffer.getUnsignedByte(readerIndex + 2);
+		if (length < 256 || (opcode != 0 && opcode != 19)) {
+			return false;
+		}
+		if (buffer.readableBytes() < length + 2) {
+			return true;
+		}
+		buffer.skipBytes(2);
+		opcode = buffer.readUnsignedByte();
+		ByteBuf data = Unpooled.buffer(length - 1);
+		buffer.readBytes(data, length - 1);
+		att.authenticClient.set((short)-1);
+		addPacketToIncoming(out, att, new Packet(opcode, data));
+		return true;
 	}
 
 	private void addPacketToIncoming(List<Object> out, ConnectionAttachment att, Packet packet) {
