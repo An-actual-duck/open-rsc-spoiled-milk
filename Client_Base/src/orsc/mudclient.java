@@ -13276,15 +13276,9 @@ public final class mudclient implements Runnable {
 			return;
 		}
 
-		final String partyName = this.party.getPartyName() == null || this.party.getPartyName().isEmpty()
-			? "Party" : this.party.getPartyName();
-		final String leader = this.party.getPartyLeaderUsername() == null ? "Unknown" : this.party.getPartyLeaderUsername();
-		this.getSurface().drawString("Party: @cla@" + partyName, contentX, panelY + 39, 0xFFFFFF, 1);
-		this.getSurface().drawString("Leader: @yel@" + leader, contentX, panelY + 52, 0xFFFFFF, 1);
-
 		final int memberCount = Math.min(5, SocialLists.partyListCount);
 		for (int member = 0; member < memberCount; member++) {
-			final int rowY = panelY + 58 + member * 16;
+			final int rowY = panelY + 43 + member * 16;
 			final boolean hover = this.mouseX >= panelX + 3 && this.mouseX < panelX + panelWidth - 3
 				&& this.mouseY >= rowY - 11 && this.mouseY < rowY + 5;
 			this.getSurface().drawBoxAlpha(panelX + 3, rowY - 11, panelWidth - 6, 15,

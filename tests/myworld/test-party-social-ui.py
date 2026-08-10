@@ -37,6 +37,11 @@ def main() -> None:
         raise SystemExit("FAIL: retired Ignore Social tab remains")
     require(social, "this.drawPartySocialTab(var3, var4, var5, var6, var1);", "Party Social content")
     require(CLIENT, "private void drawPartySocialTab", "compact Party renderer")
+    party_renderer = method(CLIENT, "\tprivate void drawPartySocialTab", "\n\tprivate void drawPartySocialButton")
+    for retired_header in ('"Party: @cla@"', '"Leader: @yel@"'):
+        if retired_header in party_renderer:
+            raise SystemExit(f"FAIL: redundant party header remains: {retired_header}")
+    require(party_renderer, "final int rowY = panelY + 43 + member * 16;", "top-aligned party rows")
     for label in ('"Invite"', '"Manage"', '"Leave"'):
         require(CLIENT, label, f"Party action {label}")
     require(CLIENT, 'this.showIgnoredList();', "ignored-list Social setting")
