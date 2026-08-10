@@ -1,8 +1,9 @@
 # Monster Slayer Guild Plan
 
-Status: **definition foundation, durable player state, and server-authoritative
-task progression implemented and verified; shops, dialogue, placement,
-inventory-capacity, UI, and protocol activation remain pending**
+Status: **definition foundation, durable player state, task progression, and
+the first contact/placement activation slice implemented; full dialogue
+branching, multi-currency shop UI, and inventory-capacity activation remain
+pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -290,6 +291,18 @@ rebuild affected family definitions and stable task keys before activation,
 recalculate kill/point totals, and update data/state/migration fixtures. It
 must not change live Combat Odyssey behavior while performing that sync.
 
+### Implemented roster synchronization (2026-08-10)
+
+The approved initial kill-count and point-reward pass is now represented by the
+35-task `MonsterSlayer.json` ladder: Fledgling `38` total points, Initiate
+`67`, Veteran `62`, Elite `50`, Champion `121`, and Hero `128`. These remain
+playtest baseline values, not a permanent economy lock. Repeatables use equal
+launch weight `1` and an injected random source; a per-contact preview is
+reserved only long enough to make the warning and committed assignment
+identical, without making an account's first choice predictable. Hazards are
+typed definition metadata (desert heat, Wilderness, Prayer drain, poison, and
+dragon fire), never inferred from task-key text.
+
 ### Confirmed: Permanent Inventory-Capacity Shop Upgrades
 
 Every challenge shop contains exactly one one-time inventory-capacity upgrade.
@@ -297,6 +310,12 @@ The upgrade becomes available when that shop is unlocked, but it is not an
 automatic rank reward: the player must purchase it with that shop's approved
 native-challenge price. Initial prices and task rewards are implementation
 estimates to be tuned through playtesting, not inherited from Odyssey data.
+
+The accepted price baseline is Fledgling `42` (mandatory `38`, margin `4`),
+Initiate `75` (`67`, `8`), Veteran `70` (`62`, `8`), Elite `58` (`50`, `8`),
+Champion `135` (`121`, `14`), and Hero `140` (`128`, `12`). Every capacity
+price is native to its own tier and exceeds that tier's actual mandatory total
+by only a small repeatable-task margin.
 
 The six increments and cumulative capacities are fixed:
 
@@ -659,6 +678,12 @@ apart from the explicitly selected Radimus Slayer-route rework.
 | `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
 | `legends` | Legends Guild, near Sir Radimus `785` | Default to a new task giver, but Sir Radimus `785` may instead be selected and reworked as the task giver because he owned the borrowed system. Preserve his Legends Quest reward/training routes and replace only the old Odyssey task route during activation. |
+
+Initial activation content uses the unused stable NPC range `846..860`: task
+givers `846..851` in contact order, their nearby associates `852..857`, and
+the three bar ambient members `858..860`. The exact start tiles are recorded
+in `MyWorldNpcLocs.json`; all are separate from existing bartenders, guild
+officials, Achetties, and Sir Radimus.
 
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required

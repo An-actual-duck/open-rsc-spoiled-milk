@@ -24,7 +24,11 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		beerIntroductionIsOneTimeAndRankSafe(data);
+		promotionAcknowledgementIsTypedAndIdempotent(data);
+		typedPromotionPlansAreBoundedAndOrdered();
 		approvedShopDefinitionsHaveStableLaunchShape(data);
+		repeatablesAndHazardsUseDeclaredLaunchPolicy(data);
 		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
@@ -154,15 +158,15 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(MonsterSlayerState.TaskResult.Reason.RANK, rejected.getReason(), "wrong contact rank");
 		MonsterSlayerState.TaskResult assigned = MonsterSlayerState.assignMandatory(fledgling, data, "falador");
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED, assigned.getReason(), "mandatory assignment");
-		equals("falador.rats", assigned.getSnapshot().getActiveTaskKey(), "first deterministic task");
+		equals("falador.goblins", assigned.getSnapshot().getActiveTaskKey(), "first deterministic task");
 		equals(MonsterSlayerState.TaskResult.Reason.WRONG_NPC,
-			MonsterSlayerState.recordEligibleKill(assigned.getSnapshot(), data, 4).getReason(), "wrong family");
+			MonsterSlayerState.recordEligibleKill(assigned.getSnapshot(), data, 19).getReason(), "wrong family");
 		MonsterSlayerState.Snapshot progressing = assigned.getSnapshot();
-		for (int kill = 0; kill < 99; kill++) progressing = MonsterSlayerState.recordEligibleKill(progressing, data, 19).getSnapshot();
-		equals(99, progressing.getActiveKills(), "bounded progress");
-		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(progressing, data, 19);
+		for (int kill = 0; kill < 39; kill++) progressing = MonsterSlayerState.recordEligibleKill(progressing, data, 62).getSnapshot();
+		equals(39, progressing.getActiveKills(), "bounded progress");
+		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(progressing, data, 62);
 		equals(MonsterSlayerState.TaskResult.Reason.COMPLETED, completion.getReason(), "completion");
-		equals(5L, completion.getSnapshot().getBalances().get(MonsterSlayerChallenge.FLEDGLING), "native award only");
+		equals(2L, completion.getSnapshot().getBalances().get(MonsterSlayerChallenge.FLEDGLING), "native award only");
 		equals(1, completion.getSnapshot().getMandatoryCursors().get("falador"), "cursor advanced once");
 		equals(MonsterSlayerState.TaskResult.Reason.NO_ACTIVE_TASK,
 			MonsterSlayerState.recordEligibleKill(completion.getSnapshot(), data, 19).getReason(), "duplicate callback rejected");
@@ -176,13 +180,49 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "port_sarim.pirates.repeatable").getReason(),
 			"cross-contact repeatable rejected");
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
-			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
+			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.goblins.repeatable").getReason(),
 			"eligible repeatable assignment");
+	}
+
+	private static void beerIntroductionIsOneTimeAndRankSafe(MonsterSlayerData data) {
+		MonsterSlayerState.Snapshot fresh = MonsterSlayerState.defaults(data);
+		MonsterSlayerState.Snapshot pending = MonsterSlayerState.beginIntroduction(fresh, data);
+		equals(1, pending.getIntroStage(), "beer introduction begins without rank");
+		equals(MonsterSlayerRank.UNSTAMPED, pending.getRank(), "beer introduction rank remains unstamped");
+		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.completeIntroduction(pending, data);
+		equals(2, fledgling.getIntroStage(), "beer introduction completes once");
+		equals(MonsterSlayerRank.FLEDGLING, fledgling.getRank(), "beer awards Fledgling");
+		boolean rejected = false;
+		try { MonsterSlayerState.completeIntroduction(fledgling, data); } catch (MonsterSlayerState.ValidationException expected) { rejected = true; }
+		assertTrue(rejected, "duplicate beer completion is rejected");
+	}
+
+	private static void promotionAcknowledgementIsTypedAndIdempotent(MonsterSlayerData data) {
+		Map<String, Integer> cursors = zeroCursors(data);
+		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		MonsterSlayerState.Snapshot promoted = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE,
+			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerState.Snapshot acknowledged = MonsterSlayerState.acknowledgePromotion(promoted, data, "falador");
+		assertTrue(acknowledged.isPromotionAcknowledged("falador", data), "promotion acknowledgement persisted in typed state");
+		equals(acknowledged, MonsterSlayerState.acknowledgePromotion(acknowledged, data, "falador"), "promotion acknowledgement is idempotent");
+	}
+
+	private static void typedPromotionPlansAreBoundedAndOrdered() {
+		String[][] required = {{"Excellent work! You've done a fine job culling those monsters.", "There seem to be just as many as before."}, {"You did what you said you would. That's worth more than loud talk."}, {"Hah. I knew you had it in you. You're Elite now; take the badge."}, {"Splendid work! You faced the test and did not blink."}, {"You completed the work, even when it was hard. That is the part people remember."}, {"You've completed your journey for now. You've done well.", "And what's my new rank?", "And what use would you make of it?", "...Legend, then?", "If you continue to earn it."}};
+		for (int tier = 0; tier < 6; tier++) {
+			java.util.List<MonsterSlayerDialoguePlan.Step> plan = MonsterSlayerDialoguePlan.promotion(tier);
+			assertTrue(!plan.isEmpty(), "promotion plan exists " + tier);
+			for (MonsterSlayerDialoguePlan.Step step : plan) { assertTrue(step.getText().length() <= 255, "promotion line bounded " + tier); assertTrue(step.getSpeaker() != null, "promotion speaker typed " + tier); }
+			for (String text : required[tier]) { boolean found = false; for (MonsterSlayerDialoguePlan.Step step : plan) if (text.equals(step.getText())) found = true; assertTrue(found, "promotion exact line " + text); }
+		}
+		equals(MonsterSlayerDialoguePlan.Speaker.NPC, MonsterSlayerDialoguePlan.promotion(5).get(0).getSpeaker(), "Legend NPC first");
+		equals(MonsterSlayerDialoguePlan.Speaker.PLAYER, MonsterSlayerDialoguePlan.promotion(5).get(1).getSpeaker(), "Legend player reply");
 	}
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
 		equals(6, data.getShops().size(), "six Slayer shops");
-		long[] capacityPrices = {30L, 48L, 72L, 108L, 180L, 300L};
+		long[] capacityPrices = {42L, 75L, 70L, 58L, 135L, 140L};
 		for (int index = 0; index < data.getShops().size(); index++) {
 			MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
 			equals(capacityPrices[index], shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
@@ -197,11 +237,23 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		}
 	}
 
+	private static void repeatablesAndHazardsUseDeclaredLaunchPolicy(MonsterSlayerData data) {
+		java.util.EnumSet<MonsterSlayerHazard> hazards = java.util.EnumSet.noneOf(MonsterSlayerHazard.class);
+		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			for (MonsterSlayerDefinitions.Task task : contact.getRepeatableTasks()) {
+				equals(1, task.getWeight(), "equal repeatable weight " + task.getKey());
+				hazards.addAll(task.getHazards());
+			}
+			for (MonsterSlayerDefinitions.Task task : contact.getMandatoryTasks()) hazards.addAll(task.getHazards());
+		}
+		for (MonsterSlayerHazard hazard : MonsterSlayerHazard.values()) assertTrue(hazards.contains(hazard), "declared hazard coverage " + hazard);
+	}
+
 	private static void headlessShopPreflightKeepsTypedCostsAndStockBounded(MonsterSlayerData data) {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data);
 		Map<MonsterSlayerChallenge, Long> amounts = new LinkedHashMap<MonsterSlayerChallenge, Long>();
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
-		amounts.put(MonsterSlayerChallenge.FLEDGLING, 30L);
+		amounts.put(MonsterSlayerChallenge.FLEDGLING, 42L);
 		MonsterSlayerState.Snapshot player = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
 			MonsterSlayerBalances.of(amounts), zeroCursors(data), null, 0, 0L, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);

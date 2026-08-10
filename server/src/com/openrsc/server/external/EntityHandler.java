@@ -246,6 +246,9 @@ public final class EntityHandler {
 		LOGGER.info("Loading npc definitions...");
 		loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefs.json");
 		loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsCustom.json");
+		if (getServer().getConfig().WANT_MYWORLD) {
+			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MonsterSlayerNpcDefs.json");
+		}
 		//loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsExpansion.json");
 		patchNpcs();
 		if (getServer().getConfig().WANT_MYWORLD) {

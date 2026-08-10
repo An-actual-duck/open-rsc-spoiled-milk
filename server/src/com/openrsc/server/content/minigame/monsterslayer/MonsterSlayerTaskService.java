@@ -12,19 +12,22 @@ public final class MonsterSlayerTaskService {
 	}
 
 	public MonsterSlayerState.TaskResult assignMandatory(Player player, String contactKey) {
-		return apply(player, MonsterSlayerState.assignMandatory(
-			MonsterSlayerState.read(requirePlayer(player).getCache(), data), data, contactKey));
+		player = requirePlayer(player);
+		synchronized (player) { return apply(player, MonsterSlayerState.assignMandatory(
+			MonsterSlayerState.read(player.getCache(), data), data, contactKey)); }
 	}
 
 	public MonsterSlayerState.TaskResult assignRepeatable(Player player, String contactKey, String taskKey) {
-		return apply(player, MonsterSlayerState.assignRepeatable(
-			MonsterSlayerState.read(requirePlayer(player).getCache(), data), data, contactKey, taskKey));
+		player = requirePlayer(player);
+		synchronized (player) { return apply(player, MonsterSlayerState.assignRepeatable(
+			MonsterSlayerState.read(player.getCache(), data), data, contactKey, taskKey)); }
 	}
 
 	/** Invoked only after NPC lifecycle code has established player eligibility. */
 	public MonsterSlayerState.TaskResult creditEligibleKill(Player player, int npcId) {
-		return apply(player, MonsterSlayerState.recordEligibleKill(
-			MonsterSlayerState.read(requirePlayer(player).getCache(), data), data, npcId));
+		player = requirePlayer(player);
+		synchronized (player) { return apply(player, MonsterSlayerState.recordEligibleKill(
+			MonsterSlayerState.read(player.getCache(), data), data, npcId)); }
 	}
 
 	/**
