@@ -30,15 +30,15 @@ def main() -> None:
         "private boolean handleSideMenuTabInteraction(final int tab)",
         "if (this.pinnedSideMenuTab == tab)",
         "this.pinnedSideMenuTab = tab;",
-        "else if (this.pinnedSideMenuTab == 0)",
-        "return this.mouseButtonClick != 1 && this.pinnedSideMenuTab != 0;",
+		"if (tab == Config.MINIMAP_AND_COMPASS_TAB) {\n\t\t\treturn false;",
+		"} else {\n\t\t\tthis.showUiTab = tab;",
+		"private boolean isCurrentSideMenuHomeTab()",
+		"private void closeOrRestorePinnedSideMenu()",
+		"this.showUiTab = this.pinnedSideMenuTab != 0 ? this.pinnedSideMenuTab : 0;",
         "this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35)",
         "this.getSideMenuTabAt(this.mouseX, this.mouseY, minY, maxY)",
-        "!this.isSideMenuTabPinned(Config.INVENTORY_TAB)",
-        "!this.isSideMenuTabPinned(Config.SKILLS_AND_QUESTS_TAB)",
-        "!this.isSideMenuTabPinned(MAGIC_AND_PRAYER_TAB)",
-        "!this.isSideMenuTabPinned(Config.FRIENDS_TAB)",
-        "!this.isSideMenuTabPinned(Config.OPTIONS_TAB)",
+		"!this.isCurrentSideMenuHomeTab()",
+		"this.closeOrRestorePinnedSideMenu();",
     ):
         require(text, snippet, "side-menu pin/hover behavior")
 

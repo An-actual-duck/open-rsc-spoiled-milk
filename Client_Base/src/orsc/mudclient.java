@@ -15184,11 +15184,11 @@ public final class mudclient implements Runnable {
 		if (tab == 0) {
 			return false;
 		}
-		// The minimap retains its existing dedicated pin behavior.  A pinned
-		// side panel should not be replaced merely by hovering the map icon;
-		// clicking it still switches to the map's pin toggle below.
+		// The minimap retains its dedicated pin behavior below. Hovering it is
+		// still allowed to temporarily replace a pinned side tab, just like every
+		// other icon; clicking it switches to the minimap's own pin toggle.
 		if (tab == Config.MINIMAP_AND_COMPASS_TAB) {
-			return this.mouseButtonClick != 1 && this.pinnedSideMenuTab != 0;
+			return false;
 		}
 		if (this.mouseButtonClick == 1) {
 			if (this.pinnedSideMenuTab == tab) {
@@ -15198,14 +15198,18 @@ public final class mudclient implements Runnable {
 				this.pinnedSideMenuTab = tab;
 				this.showUiTab = tab;
 			}
-		} else if (this.pinnedSideMenuTab == 0) {
+		} else {
 			this.showUiTab = tab;
 		}
 		return true;
 	}
 
-	private boolean isSideMenuTabPinned(final int tab) {
-		return this.pinnedSideMenuTab == tab;
+	private boolean isCurrentSideMenuHomeTab() {
+		return this.pinnedSideMenuTab != 0 && this.showUiTab == this.pinnedSideMenuTab;
+	}
+
+	private void closeOrRestorePinnedSideMenu() {
+		this.showUiTab = this.pinnedSideMenuTab != 0 ? this.pinnedSideMenuTab : 0;
 	}
 
 	private void cycleSpellbookLayoutMode() {
@@ -20654,44 +20658,44 @@ public final class mudclient implements Runnable {
 			}
 
 			if (!S_WANT_EQUIPMENT_TAB) {
-				if (this.showUiTab == Config.INVENTORY_TAB && !this.isSideMenuTabPinned(Config.INVENTORY_TAB)
+				if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab()
 					&& (this.mouseX < this.getSurface().width2 - 248 || 36 + this.m_cl / 5 * 34 < this.mouseY)) {
-					this.showUiTab = 0;
+					this.closeOrRestorePinnedSideMenu();
 				}
 			} else {
-				if (this.showUiTab == Config.INVENTORY_TAB && !this.isSideMenuTabPinned(Config.INVENTORY_TAB) && this.tabEquipmentIndex == 0
+				if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab() && this.tabEquipmentIndex == 0
 					&& (this.mouseX < this.getSurface().width2 - 248 || 90 + this.m_cl / 5 * 34 < this.mouseY)) {
-					this.showUiTab = 0;
-				} else if (this.showUiTab == Config.INVENTORY_TAB && !this.isSideMenuTabPinned(Config.INVENTORY_TAB) && this.tabEquipmentIndex == 1
+					this.closeOrRestorePinnedSideMenu();
+				} else if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab() && this.tabEquipmentIndex == 1
 					&& (this.mouseX < this.getSurface().width2 - 248 || 90 + this.m_cl / 5 * 34 < this.mouseY)) {
-					this.showUiTab = 0;
+					this.closeOrRestorePinnedSideMenu();
 				}
 			}
 
-			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isSideMenuTabPinned(Config.SKILLS_AND_QUESTS_TAB) && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
-				this.showUiTab = 0;
+			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
+				this.closeOrRestorePinnedSideMenu();
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
-			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isSideMenuTabPinned(MAGIC_AND_PRAYER_TAB)) {
+			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
 				if (isAndroid()) {
 					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 300) {
-						this.showUiTab = 0;
+						this.closeOrRestorePinnedSideMenu();
 					}
 				} else {
 					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 240) {
-						this.showUiTab = 0;
+						this.closeOrRestorePinnedSideMenu();
 					}
 				}
 			}
 
-			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isSideMenuTabPinned(Config.FRIENDS_TAB)))
+			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
 				&& (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > (this.panelSocialTab == 1 ? 307 : 240))) {
-				this.showUiTab = 0;
+				this.closeOrRestorePinnedSideMenu();
 			}
 
-			if (this.showUiTab == Config.OPTIONS_TAB && !this.isSideMenuTabPinned(Config.OPTIONS_TAB) && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
-				this.showUiTab = 0;
+			if (this.showUiTab == Config.OPTIONS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
+				this.closeOrRestorePinnedSideMenu();
 			}
 
 		} catch (RuntimeException var3) {
