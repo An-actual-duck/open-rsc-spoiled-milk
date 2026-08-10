@@ -42,12 +42,14 @@ public final class MonsterSlayerContactService {
 	/** Atomically couples beer consumption with the one-time Fledgling promotion. */
 	public Result completeBeerIntroductionWithBeer(Player player) {
 		try { synchronized (player) {
-			if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) return Result.rejected("missing-beer");
 			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 			MonsterSlayerState.Snapshot next = MonsterSlayerState.completeIntroduction(current, data);
 			if (!beer.consume(player)) return Result.rejected("missing-beer");
 			try { MonsterSlayerState.write(player.getCache(), data, next); }
-			catch (RuntimeException failure) { return beer.refund(player) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
+			catch (RuntimeException failure) {
+				try { return beer.refund(player) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
+				catch (RuntimeException refundFailure) { return Result.rejected("refund-failed"); }
+			}
 			return Result.accepted(null);
 		} } catch (RuntimeException failure) { return Result.rejected("invalid-state"); }
 	}

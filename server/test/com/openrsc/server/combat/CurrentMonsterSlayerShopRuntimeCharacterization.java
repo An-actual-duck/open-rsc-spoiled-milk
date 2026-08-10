@@ -24,11 +24,37 @@ import java.util.concurrent.atomic.AtomicReference;
 final class CurrentMonsterSlayerShopRuntimeCharacterization {
 	static void runtimeTransactionsAreAtomic(CurrentCombatHarness h) throws Exception {
 		MonsterSlayerData data = data();
+		beerTransactionOutcomes(h, data);
 		basicRedemptionAndRollback(h, data);
 		everyShopDeductsItsTypedCost(h, data);
 		capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(h, data);
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
+	}
+
+	private static void beerTransactionOutcomes(CurrentCombatHarness h, MonsterSlayerData data) {
+		final AtomicInteger consumed = new AtomicInteger();
+		final AtomicInteger refunded = new AtomicInteger();
+		MonsterSlayerContactService.BeerTransaction transaction = new MonsterSlayerContactService.BeerTransaction() {
+			public boolean consume(Player player) { consumed.incrementAndGet(); return true; }
+			public boolean refund(Player player) { refunded.incrementAndGet(); return true; }
+		};
+		MonsterSlayerContactService contacts = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, transaction);
+		Player missing = h.player("mssmissingbeer", 840, 790);
+		MonsterSlayerState.write(missing.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		MonsterSlayerContactService missingBeer = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, new MonsterSlayerContactService.BeerTransaction() { public boolean consume(Player player) { return false; } public boolean refund(Player player) { return true; }});
+		assertEquals("missing-beer", missingBeer.completeBeerIntroductionWithBeer(missing).getReason(), "missing beer result");
+		assertEquals(0, consumed.get(), "missing beer does not consume");
+		Player recruit = h.player("mssbeertransaction", 841, 790);
+		MonsterSlayerState.write(recruit.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		recruit.getCache().store("unrelated_beer_fixture", "preserved");
+		MonsterSlayerContactService.Result beerResult = contacts.completeBeerIntroductionWithBeer(recruit);
+		assertTrue(beerResult.isAccepted(), "beer transaction succeeds: " + beerResult.getReason());
+		assertEquals(1, consumed.get(), "beer consumes exactly once");
+		assertFalse(contacts.completeBeerIntroductionWithBeer(recruit).isAccepted(), "duplicate beer submission rejected");
+		assertEquals(1, consumed.get(), "duplicate does not consume again");
+		assertEquals("preserved", recruit.getCache().getString("unrelated_beer_fixture"), "unrelated cache preserved");
+		assertEquals(0, refunded.get(), "successful transaction does not refund");
 	}
 
 	static void contactRoutesAreRankedAndSingleAssignment(CurrentCombatHarness h) throws Exception {
