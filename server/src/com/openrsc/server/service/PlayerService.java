@@ -9,6 +9,8 @@ import com.openrsc.server.database.struct.*;
 import com.openrsc.server.event.rsc.impl.DesertHeatEvent;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.content.LegacyAmuletCompatibility;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.login.LoginRequest;
 import com.openrsc.server.model.PlayerAppearance;
 import com.openrsc.server.model.Point;
@@ -72,6 +74,7 @@ public class PlayerService implements IPlayerService {
                 loadPlayerQuests(loaded);
                 //loadPlayerAchievements(loaded);
                 loadPlayerCache(loaded);
+				initializeMonsterSlayerState(loaded);
                 loaded.getBank().loadPinnedSlotsFromCache();
                 restorePlayerLayeredLocation(loaded);
                 loadPlayerLastSpellCast(loaded);
@@ -176,6 +179,24 @@ public class PlayerService implements IPlayerService {
             }
         }
     }
+
+	/**
+	 * Keeps this activation slice limited to durable state preparation. No task,
+	 * reward, inventory-capacity, dialogue, or protocol behavior reads this
+	 * result yet.
+	 */
+	private void initializeMonsterSlayerState(final Player player) {
+		MonsterSlayerData data = world.getMonsterSlayerData();
+		if (data == null || world.getMonsterSlayerLegacyData() == null) {
+			return;
+		}
+		MonsterSlayerState.LoadResult result = MonsterSlayerState.initialize(
+			player.getCache(), data, world.getMonsterSlayerLegacyData());
+		if (result.getStatus() == MonsterSlayerState.LoadResult.Status.QUARANTINED) {
+			LOGGER.warn("Monster Slayer state quarantined for player {}: {}",
+				player.getUsername(), result.getDiagnostic());
+		}
+	}
 
 	private void restorePlayerLayeredLocation(final Player player) {
 		if (!configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {

@@ -23,6 +23,7 @@ public final class MonsterSlayerState {
 	private static final String ACTIVE_KILLS_KEY = "monster_slayer_active_kills";
 	private static final String MANDATORY_PREFIX = "monster_slayer_mandatory_";
 	private static final String TASKS_COMPLETED_KEY = "monster_slayer_tasks_completed";
+	private static final String INVENTORY_UPGRADES_KEY = "monster_slayer_inventory_upgrades";
 	private static final String MIGRATION_VERSION_KEY = "monster_slayer_migration_version";
 	private static final String LEGACY_STATUS_KEY = "monster_slayer_legacy_status";
 	private static final String LEGACY_PRESTIGE_KEY = "monster_slayer_legacy_prestige";
@@ -54,6 +55,7 @@ public final class MonsterSlayerState {
 			activeTask,
 			readInteger(values, ACTIVE_KILLS_KEY, 0),
 			readLong(values, TASKS_COMPLETED_KEY, 0L),
+			readInteger(values, INVENTORY_UPGRADES_KEY, 0),
 			readInteger(values, MIGRATION_VERSION_KEY, 0),
 			LegacyStatus.fromCode(readInteger(values, LEGACY_STATUS_KEY, LegacyStatus.NONE.getCode())),
 			readInteger(values, LEGACY_PRESTIGE_KEY, 0)
@@ -84,6 +86,7 @@ public final class MonsterSlayerState {
 			cache.set(cursorKey(contact.getKey()), snapshot.mandatoryCursors.get(contact.getKey()));
 		}
 		cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
+		cache.set(INVENTORY_UPGRADES_KEY, snapshot.inventoryUpgrades);
 		cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
 		cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
 		cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
@@ -95,15 +98,50 @@ public final class MonsterSlayerState {
 			cursors.put(contact.getKey(), 0);
 		}
 		return new Snapshot(STATE_VERSION, 0, MonsterSlayerRank.UNSTAMPED,
-			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, LegacyStatus.NONE, 0);
+			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 0,
+			LegacyStatus.NONE, 0);
+	}
+
+	/**
+	 * Performs the only runtime cache integration for this foundation slice.
+	 * A valid completed migration is read-only; malformed state remains in place
+	 * for diagnosis instead of being silently replaced with progression.
+	 */
+	public static LoadResult initialize(Cache cache, MonsterSlayerData data,
+			CombatOdysseyMigration.LegacyData legacyData) {
+		if (cache == null || data == null || legacyData == null) {
+			throw new IllegalArgumentException("Monster Slayer load inputs are required");
+		}
+		final Snapshot current;
+		try {
+			current = read(cache, data);
+		} catch (ValidationException ex) {
+			return LoadResult.quarantined(ex.getMessage());
+		}
+		if (current.getMigrationVersion() == MIGRATION_VERSION) {
+			return LoadResult.loaded(current);
+		}
+		Map<String, Object> values = cache.getCacheMap();
+		CombatOdysseyMigration.Result migration = CombatOdysseyMigration.propose(
+			CombatOdysseyMigration.LegacySnapshot.of(
+				values.get("combat_odyssey"), values.get("co_tier_progress"),
+				values.get("co_prestige")),
+			legacyData, data, current);
+		if (!migration.isSuccessful()) {
+			return LoadResult.quarantined(migration.getFailure() + ": " + migration.getDiagnostic());
+		}
+		write(cache, data, migration.getProposal());
+		return LoadResult.migrated(migration.getProposal(), migration.getClassification());
 	}
 
 	public static Snapshot create(int introStage, MonsterSlayerRank rank,
 			MonsterSlayerBalances balances, Map<String, Integer> mandatoryCursors,
-			String activeTaskKey, int activeKills, long tasksCompleted, int migrationVersion,
+			String activeTaskKey, int activeKills, long tasksCompleted, int inventoryUpgrades,
+			int migrationVersion,
 			LegacyStatus legacyStatus, int legacyPrestige, MonsterSlayerData data) {
 		Snapshot snapshot = new Snapshot(STATE_VERSION, introStage, rank, balances, mandatoryCursors,
-			activeTaskKey, activeKills, tasksCompleted, migrationVersion, legacyStatus, legacyPrestige);
+			activeTaskKey, activeKills, tasksCompleted, inventoryUpgrades, migrationVersion,
+			legacyStatus, legacyPrestige);
 		validate(snapshot, data);
 		return snapshot;
 	}
@@ -127,6 +165,7 @@ public final class MonsterSlayerState {
 		if (snapshot.tasksCompleted < 0L) {
 			throw new ValidationException("Monster Slayer lifetime completion count is negative");
 		}
+		InventoryUpgrade.validateMask(snapshot.inventoryUpgrades);
 		if (snapshot.migrationVersion < 0 || snapshot.migrationVersion > MIGRATION_VERSION) {
 			throw new ValidationException("Monster Slayer migration version is unsupported");
 		}
@@ -259,6 +298,68 @@ public final class MonsterSlayerState {
 		return MANDATORY_PREFIX + contactKey;
 	}
 
+	/**
+	 * Stable entitlement mapping. Bits are explicit contact identities, never
+	 * enum ordinals or JSON array positions. Inventory behavior remains unchanged
+	 * until the later capacity-activation slice consumes this derived value.
+	 */
+	public enum InventoryUpgrade {
+		FALADOR("falador", 0x01, 1),
+		PORT_SARIM("port_sarim", 0x02, 1),
+		BRIMHAVEN("brimhaven", 0x04, 1),
+		CHAMPIONS("champions", 0x08, 2),
+		HEROES("heroes", 0x10, 2),
+		LEGENDS("legends", 0x20, 3);
+
+		private final String contactKey;
+		private final int bit;
+		private final int capacityIncrease;
+
+		InventoryUpgrade(String contactKey, int bit, int capacityIncrease) {
+			this.contactKey = contactKey;
+			this.bit = bit;
+			this.capacityIncrease = capacityIncrease;
+		}
+
+		public String getContactKey() { return contactKey; }
+		public int getBit() { return bit; }
+		public int getCapacityIncrease() { return capacityIncrease; }
+
+		public static void validateMask(int mask) {
+			if ((mask & ~allowedMask()) != 0) {
+				throw new ValidationException("Monster Slayer inventory upgrades contain unknown bits");
+			}
+			boolean missingEarlier = false;
+			for (InventoryUpgrade upgrade : values()) {
+				boolean present = (mask & upgrade.bit) != 0;
+				if (!present) {
+					missingEarlier = true;
+				} else if (missingEarlier) {
+					throw new ValidationException("Monster Slayer inventory upgrades are not a prefix");
+				}
+			}
+		}
+
+		public static int derivedCapacity(int mask) {
+			validateMask(mask);
+			int capacity = 30;
+			for (InventoryUpgrade upgrade : values()) {
+				if ((mask & upgrade.bit) != 0) {
+					capacity += upgrade.capacityIncrease;
+				}
+			}
+			return capacity;
+		}
+
+		private static int allowedMask() {
+			int result = 0;
+			for (InventoryUpgrade upgrade : values()) {
+				result |= upgrade.bit;
+			}
+			return result;
+		}
+	}
+
 	public enum LegacyStatus {
 		NONE(0),
 		PARTIAL(1),
@@ -285,6 +386,42 @@ public final class MonsterSlayerState {
 		}
 	}
 
+	public static final class LoadResult {
+		public enum Status { LOADED, MIGRATED, QUARANTINED }
+
+		private final Status status;
+		private final Snapshot snapshot;
+		private final CombatOdysseyMigration.Classification classification;
+		private final String diagnostic;
+
+		private LoadResult(Status status, Snapshot snapshot,
+				CombatOdysseyMigration.Classification classification, String diagnostic) {
+			this.status = status;
+			this.snapshot = snapshot;
+			this.classification = classification;
+			this.diagnostic = diagnostic;
+		}
+
+		private static LoadResult loaded(Snapshot snapshot) {
+			return new LoadResult(Status.LOADED, snapshot,
+				CombatOdysseyMigration.Classification.ALREADY_MIGRATED, null);
+		}
+
+		private static LoadResult migrated(Snapshot snapshot,
+				CombatOdysseyMigration.Classification classification) {
+			return new LoadResult(Status.MIGRATED, snapshot, classification, null);
+		}
+
+		private static LoadResult quarantined(String diagnostic) {
+			return new LoadResult(Status.QUARANTINED, null, null, diagnostic);
+		}
+
+		public Status getStatus() { return status; }
+		public Snapshot getSnapshot() { return snapshot; }
+		public CombatOdysseyMigration.Classification getClassification() { return classification; }
+		public String getDiagnostic() { return diagnostic; }
+	}
+
 	public static final class Snapshot {
 		private final int stateVersion;
 		private final int introStage;
@@ -294,13 +431,15 @@ public final class MonsterSlayerState {
 		private final String activeTaskKey;
 		private final int activeKills;
 		private final long tasksCompleted;
+		private final int inventoryUpgrades;
 		private final int migrationVersion;
 		private final LegacyStatus legacyStatus;
 		private final int legacyPrestige;
 
 		private Snapshot(int stateVersion, int introStage, MonsterSlayerRank rank,
 				MonsterSlayerBalances balances, Map<String, Integer> mandatoryCursors,
-				String activeTaskKey, int activeKills, long tasksCompleted, int migrationVersion,
+				String activeTaskKey, int activeKills, long tasksCompleted, int inventoryUpgrades,
+				int migrationVersion,
 				LegacyStatus legacyStatus, int legacyPrestige) {
 			this.stateVersion = stateVersion;
 			this.introStage = introStage;
@@ -312,6 +451,7 @@ public final class MonsterSlayerState {
 			this.activeTaskKey = activeTaskKey;
 			this.activeKills = activeKills;
 			this.tasksCompleted = tasksCompleted;
+			this.inventoryUpgrades = inventoryUpgrades;
 			this.migrationVersion = migrationVersion;
 			this.legacyStatus = legacyStatus;
 			this.legacyPrestige = legacyPrestige;
@@ -319,7 +459,8 @@ public final class MonsterSlayerState {
 
 		private Snapshot withBalances(MonsterSlayerBalances updated) {
 			return new Snapshot(stateVersion, introStage, rank, updated, mandatoryCursors,
-				activeTaskKey, activeKills, tasksCompleted, migrationVersion, legacyStatus, legacyPrestige);
+				activeTaskKey, activeKills, tasksCompleted, inventoryUpgrades, migrationVersion,
+				legacyStatus, legacyPrestige);
 		}
 
 		public int getIntroStage() { return introStage; }
@@ -329,6 +470,10 @@ public final class MonsterSlayerState {
 		public String getActiveTaskKey() { return activeTaskKey; }
 		public int getActiveKills() { return activeKills; }
 		public long getTasksCompleted() { return tasksCompleted; }
+		public int getInventoryUpgrades() { return inventoryUpgrades; }
+		public int getDerivedInventoryCapacity() {
+			return InventoryUpgrade.derivedCapacity(inventoryUpgrades);
+		}
 		public int getMigrationVersion() { return migrationVersion; }
 		public LegacyStatus getLegacyStatus() { return legacyStatus; }
 		public int getLegacyPrestige() { return legacyPrestige; }

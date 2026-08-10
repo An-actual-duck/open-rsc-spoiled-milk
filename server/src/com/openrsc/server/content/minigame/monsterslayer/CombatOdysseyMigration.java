@@ -17,7 +17,6 @@ import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDef
 /** Pure, non-writing proposal for preserving bounded Combat Odyssey accomplishments. */
 public final class CombatOdysseyMigration {
 	public static final long LEGACY_TOTAL_KILLS = 40_906L;
-	private static final int MAX_EXTRA_PRESTIGE_COMPLETIONS = 12;
 
 	private CombatOdysseyMigration() {
 	}
@@ -36,8 +35,6 @@ public final class CombatOdysseyMigration {
 			ParsedLegacy parsed = parseLegacy(legacy, legacyData);
 			Classification classification = classify(parsed);
 			long creditedKills = parsed.active == null ? 0L : creditedKills(parsed, legacyData);
-			MonsterSlayerBalances award = migrationAward(classification, parsed.prestige,
-				creditedKills, parsed.active != null);
 			MonsterSlayerRank rank = classification == Classification.COMPLETED_CLAIMED
 				|| classification == Classification.COMPLETED_UNCLAIMED
 				? MonsterSlayerRank.LEGEND
@@ -51,7 +48,7 @@ public final class CombatOdysseyMigration {
 			}
 			MonsterSlayerState.LegacyStatus status = legacyStatus(classification);
 			MonsterSlayerState.Snapshot proposal = MonsterSlayerState.create(
-				introStage, rank, award, cursors, null, 0, 0L,
+				introStage, rank, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0,
 				MonsterSlayerState.MIGRATION_VERSION, status, parsed.prestige, monsterSlayerData);
 			return Result.success(classification, creditedKills, proposal);
 		} catch (MigrationValidationException ex) {
@@ -178,47 +175,6 @@ public final class CombatOdysseyMigration {
 			credited = Math.addExact(credited, active.kills);
 		}
 		return Math.min(LEGACY_TOTAL_KILLS, credited);
-	}
-
-	private static MonsterSlayerBalances migrationAward(Classification classification, int prestige,
-			long creditedKills, boolean hasActiveRepeat) {
-		Map<MonsterSlayerChallenge, Long> values = new LinkedHashMap<MonsterSlayerChallenge, Long>();
-		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
-			long base = fullBase(challenge);
-			long amount;
-			if (classification == Classification.PARTIAL) {
-				amount = proportional(creditedKills, base);
-			} else if (classification == Classification.COMPLETED_UNCLAIMED) {
-				amount = base;
-			} else if (classification == Classification.COMPLETED_CLAIMED) {
-				int extraCompletions = Math.min(MAX_EXTRA_PRESTIGE_COMPLETIONS, Math.max(0, prestige - 1));
-				amount = Math.addExact(base, Math.multiplyExact(base / 4L, extraCompletions));
-				if (hasActiveRepeat) {
-					amount = Math.addExact(amount, proportional(creditedKills, base) / 4L);
-				}
-				amount = Math.min(Math.multiplyExact(base, 4L), amount);
-			} else {
-				amount = 0L;
-			}
-			values.put(challenge, amount);
-		}
-		return MonsterSlayerBalances.of(values);
-	}
-
-	private static long proportional(long creditedKills, long base) {
-		return Math.multiplyExact(creditedKills, base) / LEGACY_TOTAL_KILLS;
-	}
-
-	private static long fullBase(MonsterSlayerChallenge challenge) {
-		switch (challenge) {
-			case FLEDGLING: return 50L;
-			case INITIATE: return 80L;
-			case VETERAN: return 120L;
-			case ELITE: return 180L;
-			case CHAMPION: return 300L;
-			case HERO: return 520L;
-			default: throw new IllegalArgumentException("Unknown migration challenge");
-		}
 	}
 
 	private static MonsterSlayerState.LegacyStatus legacyStatus(Classification classification) {

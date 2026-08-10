@@ -10,6 +10,7 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.content.clan.ClanManager;
 import com.openrsc.server.content.market.Market;
 import com.openrsc.server.content.minigame.combatodyssey.CombatOdysseyData;
+import com.openrsc.server.content.minigame.monsterslayer.CombatOdysseyMigration;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler.TrawlerBoat;
@@ -78,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
+import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -128,6 +130,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private final WorldLoader worldLoader;
 	private final CombatOdysseyData combatOdysseyData;
 	private MonsterSlayerData monsterSlayerData;
+	private CombatOdysseyMigration.LegacyData monsterSlayerLegacyData;
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
 	private final AuthoredGroundItemRegistry<GroundItem> authoredGroundItems;
@@ -497,6 +500,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			}
 			if (getServer().getConfig().WANT_MYWORLD) {
 				setMonsterSlayerData(MonsterSlayerData.loadForWorld(this));
+				setMonsterSlayerLegacyData(CombatOdysseyMigration.LegacyData.load(Paths.get(
+					getServer().getConfig().CONFIG_DIR, "defs", "extras", "CombatOdyssey.json")));
 			}
 		} catch (final Exception e) {
 			LOGGER.error("Error in World load()", e);
@@ -1237,8 +1242,18 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		return monsterSlayerData;
 	}
 
+	/** Immutable legacy decoder data paired with the validated Slayer definitions. */
+	public synchronized CombatOdysseyMigration.LegacyData getMonsterSlayerLegacyData() {
+		return monsterSlayerLegacyData;
+	}
+
 	private synchronized void setMonsterSlayerData(MonsterSlayerData data) {
 		monsterSlayerData = data;
+	}
+
+	private synchronized void setMonsterSlayerLegacyData(
+			CombatOdysseyMigration.LegacyData data) {
+		monsterSlayerLegacyData = data;
 	}
 
 	public synchronized Market getMarket() {
