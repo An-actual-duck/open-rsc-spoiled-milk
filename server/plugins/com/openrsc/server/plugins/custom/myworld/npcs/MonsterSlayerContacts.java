@@ -5,13 +5,13 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactSer
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
-import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
+import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.npcsay;
 
 /** Player-facing contact shell; all rank/task state remains in typed Slayer services. */
@@ -40,15 +40,27 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		try { state = MonsterSlayerState.read(player.getCache(), data); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); return; }
 		MonsterSlayerContactService service = new MonsterSlayerContactService(data, player.getWorld().getMonsterSlayerTaskService());
 		if (index == 0 && state.getRank() == MonsterSlayerRank.UNSTAMPED) { introduction(player, npc, service, state, shortcut); return; }
-		if (state.getRank() != REQUIRED[index]) { npcsay(player, npc, refusal(index)); return; }
+		if (!state.getRank().isAtLeast(REQUIRED[index])) { npcsay(player, npc, refusal(index)); return; }
+		if (state.getRank() == data.getContact(CONTACTS[index]).getAwardedRank()
+			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()) {
+			npcsay(player, npc, promotion(index));
+		}
+		if (!shortcut) {
+			npcsay(player, npc, greeting(index));
+			if (multi(player, "Yes please.", "Not now.") != 0) return;
+			npcsay(player, npc, proof(index));
+		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
 		if (!result.isAccepted()) { npcsay(player, npc, result.getReason().equals("active-task") ? "Finish your current task first." : "Not yet. Your record is not ready for another task."); return; }
-		npcsay(player, npc, "Your next task has been recorded. Be prepared before you leave.");
+		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
+		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + data.getFamily(task.getFamilyKey()).getDisplayName() + ".", warning(taskKey));
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch the beer first."); return; }
-		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there.", "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. I require beer!"); service.beginBeerIntroduction(player); return; }
+		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. I require beer!"); service.beginBeerIntroduction(player); return; }
 		if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) { npcsay(player, npc, "You haven't got the beer yet."); return; }
+		if (multi(player, "Offer the beer.", "Not yet.") != 0) return;
 		if (player.getCarriedItems().remove(new Item(ItemId.BEER.id())) == -1) { npcsay(player, npc, "You haven't got the beer yet."); return; }
 		if (!service.completeBeerIntroduction(player).isAccepted()) { player.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); player.message("Your rank record could not be updated."); return; }
 		npcsay(player, npc, "Excellent, I dub thee an official fledgling Monster Slayer. Hold out your hand for your official stamp", "Nope, just the stamp.", "It's an honor. Return to me any time you wish to continue hunting monsters!");
@@ -59,4 +71,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
 	private static boolean isAmbient(Npc npc) { return npc.getID() >= FIRST_AMBIENT && npc.getID() < FIRST_AMBIENT + 3; }
 	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch the beer first.", "I need to see an Initiate sticker before I can put your name on my list.", "A Veteran button gets you a proper job from me.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
+	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "You've got the look of someone after a dangerous job.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Do you want another contract?", "Another contract?"}; return lines[index]; }
+	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
+	private static String promotion(int index) { String[] lines = {"Excellent work! You are an Initiate now. My associate nearby can trade Fledgling Slayer Points.", "You did what you said you would. You're a Veteran now; the trader beside me serves Veterans.", "You're Elite now; take the badge. The big leagues are dangerous, so spend your points on staying alive.", "You are a Champion now. The quartermaster nearby takes Elite Slayer Points.", "You are a Hero. Carry this crest with care; the supplier nearby accepts Champion Slayer Points.", "You've completed your journey for now. You've done well. And what use would you make of the rank?"}; return lines[index]; }
+	private static String warning(String taskKey) { if (taskKey.contains("desert") || taskKey.contains("red_dragon") || taskKey.contains("black_dragon")) return "Take care: this work may demand wilderness or travel preparation."; if (taskKey.contains("poison")) return "Take an antidote; poison is part of this contract."; if (taskKey.contains("dragon")) return "Prepare for dragon fire before you leave."; return "Be prepared before you leave."; }
 }

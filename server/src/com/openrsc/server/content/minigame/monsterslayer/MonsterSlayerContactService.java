@@ -22,9 +22,10 @@ public final class MonsterSlayerContactService {
 			MonsterSlayerDefinitions.Contact contact = data.getContact(contactKey);
 			if (contact == null) return Result.rejected("unknown-contact");
 			if (snapshot.getActiveTaskKey() != null) return Result.rejected("active-task");
-			if (snapshot.getRank() != contact.getRequiredRank()) return Result.rejected("rank");
-			MonsterSlayerState.TaskResult result = tasks.assignMandatory(player, contactKey);
-			if (result.getReason() == MonsterSlayerState.TaskResult.Reason.MANDATORY_COMPLETE) {
+			if (!snapshot.getRank().isAtLeast(contact.getRequiredRank())) return Result.rejected("rank");
+			MonsterSlayerState.TaskResult result = snapshot.getRank() == contact.getRequiredRank()
+				? tasks.assignMandatory(player, contactKey) : null;
+			if (result == null || result.getReason() == MonsterSlayerState.TaskResult.Reason.MANDATORY_COMPLETE) {
 				for (MonsterSlayerDefinitions.Task repeatable : contact.getRepeatableTasks()) {
 					result = tasks.assignRepeatable(player, contactKey, repeatable.getKey());
 					if (result.isAccepted()) break;
