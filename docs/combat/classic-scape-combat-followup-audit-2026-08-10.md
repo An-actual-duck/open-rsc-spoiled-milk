@@ -104,3 +104,29 @@ player follows the first result into the ordinary terminal lifecycle. Existing
 poison factual-damage coverage continues to verify post-Tenacity Hits,
 lifesteal, and presentation compatibility. `./server/test_combat` passed all
 135 scenarios after the change.
+
+### #20 — Raw Hits mutation inventory — completed for confirmed gameplay damage
+
+The complete `Skill.HITS` mutation inventory separates ordinary healing,
+boost/restore, NPC scripted regeneration, summon state synchronization, and
+test/setup utilities from damage. The only ordinary player-facing raw damage
+outside the resolved-damage path was the Army of Obscurity Necronomicon: one
+non-lethal scripted self-hit, a damage update, a stat packet, and no hitsplat.
+It now uses a `SCRIPT` resolved-damage request with `DAMAGE_ONLY` presentation,
+preserving that exact presentation and avoiding invented contribution,
+lifesteal, or death policy.
+
+`ResetCrystal`, `Admins.damagePlayer`, `Admins.damageNpc`, Development kill
+commands, and the signed `ProjectileEvent` admin hook remain intentional
+privileged compatibility operations. In particular, the signed projectile
+hook can heal above the ordinary maximum and therefore cannot use the
+non-negative damage transaction. Quest NPC resurrection/regeneration and
+summon state synchronization are likewise not damage paths. They are recorded
+as explicit follow-up candidates only if their individual administrative or
+quest semantics are redesigned; this branch makes no generic raw-Hits rewrite.
+
+The compiled `necronomicon_self_damage_uses_resolved_sparse_settlement`
+scenario verifies the script-category transaction’s one-Hit settlement,
+damage update, and no-hitsplat policy. `./server/test_combat` passed all 136
+scenarios; the full server/plugin build remains required before final handoff
+to compile the changed plugin artifact.

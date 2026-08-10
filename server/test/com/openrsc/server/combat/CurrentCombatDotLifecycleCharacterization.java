@@ -24,6 +24,7 @@ import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.combat.dot.PeriodicEffectProvenance;
 import com.openrsc.server.model.combat.dot.PeriodicEffectSourceKind;
+import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.dot.ElderArmorBurnState;
 import com.openrsc.server.model.combat.dot.ElderGreenDragonBurnState;
 import com.openrsc.server.model.combat.dot.PoisonDurableRecord;
@@ -493,6 +494,25 @@ final class CurrentCombatDotLifecycleCharacterization {
 
 		assertTrue(target.killed,
 			"a missed Tenacity roll cannot receive a second poison settlement roll");
+	}
+
+	static void necronomiconDamageSettlement(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player player = harness.player("necronomicon settlement", 631, 680);
+		setHits(player, 5, 40);
+		player.getWorld().getServer().getResolvedDamageTransaction().apply(
+			DamageRequest.resolvedLegacy(null, player,
+				DamageRequest.SourceCategory.SCRIPT,
+				"army-of-obscurity-necronomicon", 1)
+				.presentation(DamageRequest.Presentation.DAMAGE_ONLY)
+				.build());
+
+		assertEquals(4, player.getLevel(Skill.HITS.id()),
+			"Necronomicon retains its one-Hit non-lethal damage");
+		assertEquals(1, player.getUpdateFlags().getDamage().get().getDamage(),
+			"Necronomicon retains its damage update");
+		assertEquals(0, player.getUpdateFlags().getHitSplats().size(),
+			"Necronomicon retains its historical no-hitsplat presentation");
 	}
 
 	static void corruptLegacyAndRuntimeStateBoundaries(

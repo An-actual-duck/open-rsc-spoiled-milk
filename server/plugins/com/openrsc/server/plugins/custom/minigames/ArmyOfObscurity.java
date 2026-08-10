@@ -7,7 +7,7 @@ import com.openrsc.server.model.Point;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.entity.update.Damage;
+import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.OpInvTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
@@ -621,12 +621,25 @@ public class ArmyOfObscurity implements OpInvTrigger, UseInvTrigger, TalkNpcTrig
 		mes("You try to read the Necronomicon...");
 		delay(5);
 		if (player.getSkills().getLevel(Skill.HITS.id()) > 3) {
-			player.getUpdateFlags().setDamage(new Damage(player, 1));
-			player.getSkills().subtractLevel(Skill.HITS.id(), 1);
+			harmFromNecronomicon(player);
 			mes("The contents are so vile that it physically harms you");
 		} else {
 			mes("but you cannot find the strength...");
 		}
+	}
+
+	/**
+	 * The quest's non-lethal self-damage retains its sparse damage-only update
+	 * while using the authoritative resolved-Hits settlement.
+	 */
+	private static void harmFromNecronomicon(final Player player) {
+		player.getWorld().getServer().getResolvedDamageTransaction().apply(
+			DamageRequest.resolvedLegacy(null, player,
+				DamageRequest.SourceCategory.SCRIPT,
+				"army-of-obscurity-necronomicon", 1)
+				.presentation(DamageRequest.Presentation.DAMAGE_ONLY)
+				.build());
+		ActionSender.sendStat(player, Skill.HITS.id());
 	}
 
 	@Override

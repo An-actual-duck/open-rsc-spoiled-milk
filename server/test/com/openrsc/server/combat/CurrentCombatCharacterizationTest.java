@@ -213,6 +213,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_applies_goblin_tenacity_once_at_settlement",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonGoblinTenacityHasOneSettlementRoll);
+			run(harness, "necronomicon_self_damage_uses_resolved_sparse_settlement",
+				CurrentCombatDotLifecycleCharacterization
+					::necronomiconDamageSettlement);
 			run(harness, "dot_corrupt_legacy_and_runtime_state_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::corruptLegacyAndRuntimeStateBoundaries);
