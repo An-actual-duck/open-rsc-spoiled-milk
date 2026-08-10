@@ -83,3 +83,24 @@ This report does not authorize balance changes, Classic-Scape controller/
 pipeline imports, PvP enablement, Server R2 changes, plugin reload changes, or
 any public-server operation. Each recommended follow-up needs its own branch,
 owner decision, and executable parity scope.
+
+## Follow-up hardening record
+
+### #4 — Goblin’s Tenacity settlement ownership — completed
+
+`PoisonEvent.settleTypedPoisonDamage` had applied Goblin’s Tenacity before
+creating a resolved-damage request, while `Skills.subtractLevel` applied it
+again when `ResolvedDamageTransaction` settled that request. A first failed
+roll could therefore receive a second survival opportunity. Poison now records
+the one compatibility roll needed to retain its historical post-mitigation
+damage update and hitsplat, and explicitly marks that request as already
+mitigated. The shared transaction passes that narrow fact to `Skills` so it
+does not replay the roll.
+
+The compiled scenario
+`generic_poison_applies_goblin_tenacity_once_at_settlement` scripts a missed
+first roll followed by a would-be successful second roll and verifies that the
+player follows the first result into the ordinary terminal lifecycle. Existing
+poison factual-damage coverage continues to verify post-Tenacity Hits,
+lifesteal, and presentation compatibility. `./server/test_combat` passed all
+135 scenarios after the change.

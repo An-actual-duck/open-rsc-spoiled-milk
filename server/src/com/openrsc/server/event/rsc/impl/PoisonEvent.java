@@ -84,6 +84,7 @@ public class PoisonEvent extends GameTickEvent {
 			DamageRequest.SourceCategory.DOT, "generic-poison", resolvedDamage)
 			.eventId(getUUID())
 			.hitSplatType(HitSplat.TYPE_POISON)
+			.goblinTenacityAlreadyApplied()
 			.build();
 		final DamageResult result = getWorld().getServer()
 			.getResolvedDamageTransaction().apply(request);

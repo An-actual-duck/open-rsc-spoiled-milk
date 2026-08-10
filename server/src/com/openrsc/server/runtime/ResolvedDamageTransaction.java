@@ -28,7 +28,8 @@ public final class ResolvedDamageTransaction {
 		final int hitsBefore = target.getLevel(Skill.HITS.id());
 
 		target.getSkills().subtractLevel(Skill.HITS.id(),
-			checkedRequest.getResolvedDamage(), false);
+			checkedRequest.getResolvedDamage(), false,
+			checkedRequest.shouldApplyGoblinTenacity());
 		target.getUpdateFlags().setDamage(new Damage(
 			target, checkedRequest.getResolvedDamage()));
 		if (checkedRequest.getPresentation()

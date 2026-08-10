@@ -285,10 +285,21 @@ public class Skills {
 	}
 
 	public void subtractLevel(int skill, int amount, boolean update) {
+		subtractLevel(skill, amount, update, true);
+	}
+
+	/**
+	 * Applies a level loss while allowing the resolved-damage compatibility
+	 * boundary to avoid replaying a mitigation roll already represented in its
+	 * request value.
+	 */
+	public void subtractLevel(int skill, int amount, boolean update,
+			boolean applyGoblinTenacity) {
 		if (isHiddenAutoMaxedSkill(skill)) {
 			return;
 		}
-		if (skill == Skill.HITS.id() && amount > 0 && mob instanceof Player) {
+		if (applyGoblinTenacity && skill == Skill.HITS.id() && amount > 0
+				&& mob instanceof Player) {
 			amount = ((Player) mob).applyGoblinTenacity(amount);
 		}
 		levels[skill] = levels[skill] - amount;

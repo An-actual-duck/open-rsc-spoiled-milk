@@ -18,6 +18,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.HitSplat;
@@ -462,6 +463,36 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"zero factual poison damage provides no Leach");
 		assertEquals(0, zero.getCurrentPoisonPower(),
 			"zero-Hits opponentless poison is cured by lethal compatibility path");
+	}
+
+	/**
+	 * Poison must leave Goblin Tenacity to the authoritative Hits settlement.
+	 * The scripted legacy sequence deliberately misses its first Tenacity roll
+	 * and succeeds its second: two rolls would incorrectly save the player.
+	 */
+	static void poisonGoblinTenacityHasOneSettlementRoll(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player target = harness.player("dot one tenacity roll", 630, 680);
+		for (ItemId item : new ItemId[] {
+			ItemId.GOBLIN_HIDE_COIF,
+			ItemId.GOBLIN_HIDE_GLOVES,
+			ItemId.GOBLIN_HIDE_BOOTS,
+			ItemId.GOBLIN_HIDE_CHAPS,
+			ItemId.GOBLIN_HIDE_CUIRASS
+		}) {
+			harness.equip(target, item.id(), 1);
+		}
+		setHits(target, 5, 40);
+		// The fixture equips the set directly, so retain it through this deliberate
+		// terminal-hit characterization rather than entering inventory drop setup.
+		target.setGroupID(Group.ADMIN);
+		forceLegacyRandomFirstAtLeastThenBelow(0.05D);
+		target.applyPoison(70, 70, null);
+		final PoisonEvent event = target.getAttribute("poisonEvent", null);
+		event.run();
+
+		assertTrue(target.killed,
+			"a missed Tenacity roll cannot receive a second poison settlement roll");
 	}
 
 	static void corruptLegacyAndRuntimeStateBoundaries(
@@ -1364,6 +1395,19 @@ final class CurrentCombatDotLifecycleCharacterization {
 			}
 		}
 		throw new AssertionError("No deterministic legacy random seed found");
+	}
+
+	private static void forceLegacyRandomFirstAtLeastThenBelow(
+			final double threshold) {
+		for (long seed = 0L; seed < 100_000L; seed++) {
+			final java.util.Random candidate = new java.util.Random(seed);
+			if (candidate.nextDouble() >= threshold
+					&& candidate.nextDouble() < threshold) {
+				DataConversions.getRandom().setSeed(seed);
+				return;
+			}
+		}
+		throw new AssertionError("No deterministic two-roll legacy seed found");
 	}
 
 	private static void forceNextLegacyIntAtLeast(final int threshold) {
