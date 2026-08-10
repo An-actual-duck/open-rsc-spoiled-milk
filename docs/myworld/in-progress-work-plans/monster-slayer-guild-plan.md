@@ -1,7 +1,8 @@
 # Monster Slayer Guild Plan
 
-Status: **non-player data/state/migration foundation implemented and verified;
-player-visible activation and reward decisions remain pending**
+Status: **definition foundation and durable player-state activation implemented
+and verified; task, reward, shop, dialogue, placement, inventory-capacity, UI,
+and protocol activation remain pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -1536,3 +1537,36 @@ Stop conditions:
 - Hand off the tested data/state/vector-cost/migration foundation before
   starting the Falador introduction, redemption UI/stock, or
   contribution-aware kill-credit branch.
+
+## Player-State Activation Slice
+
+Branch: `feat/monster-slayer-player-state-activation`.
+
+This slice wires `MonsterSlayerState` into the authoritative player cache load
+lifecycle after the database cache rows have been decoded. It loads the
+validated Monster Slayer data and immutable Combat Odyssey decoder data once at
+world startup, then performs an idempotent one-time migration before any later
+Slayer handler could mutate state.
+
+- New accounts persist schema version, six typed zero balances, the explicit
+  zero entitlement mask, and the other valid default state fields.
+- Existing valid Odyssey states preserve their original cache keys and receive
+  the documented rank/legacy-status recognition, but every Monster Slayer
+  balance and capacity entitlement starts at zero.
+- The capacity mask uses explicit contact-key bits (`falador` through
+  `legends`) and derives only the future `30..40` capacity. This slice does
+  not alter live inventory admission, packets, UI, or equipment offsets.
+- A completed migration is read-only on reconnect. Malformed Slayer state,
+  malformed Odyssey state, unknown entitlement bits, and non-prefix masks are
+  quarantined with a bounded player-scoped diagnostic; their raw cache evidence
+  is left untouched and no replacement state is written.
+- No task assignment/completion, NPC kill credit, shop, currency presentation,
+  dialogue, NPC/world placement, client/protocol behavior, or Combat Odyssey
+  gameplay behavior is activated here.
+
+Focused executable coverage is
+`server/test/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerPlayerStateCharacterization.java`,
+run through `ant test_monster_slayer_player_state`. It covers new-account and
+cache-round-trip defaults, reconnect no-write idempotence, all meaningful
+legacy classifications, zero-balance migration, unrelated-key preservation,
+unknown/non-prefix masks, malformed state, and the derived-capacity boundaries.
