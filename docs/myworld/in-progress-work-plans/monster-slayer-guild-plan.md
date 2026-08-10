@@ -291,6 +291,15 @@ rebuild affected family definitions and stable task keys before activation,
 recalculate kill/point totals, and update data/state/migration fixtures. It
 must not change live Combat Odyssey behavior while performing that sync.
 
+### Implemented roster synchronization (2026-08-10)
+
+The approved initial kill-count and point-reward pass is now represented by the
+35-task `MonsterSlayer.json` ladder: Fledgling `38` total points, Initiate
+`67`, Veteran `62`, Elite `50`, Champion `121`, and Hero `128`. These remain
+playtest baseline values, not a permanent economy lock. Repeatables use their
+contact's approved target families and weighted deterministic selection; a
+contact previews the selected task's warning before it writes assignment state.
+
 ### Confirmed: Permanent Inventory-Capacity Shop Upgrades
 
 Every challenge shop contains exactly one one-time inventory-capacity upgrade.
