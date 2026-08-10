@@ -130,3 +130,20 @@ scenario verifies the script-category transaction’s one-Hit settlement,
 damage update, and no-hitsplat policy. `./server/test_combat` passed all 136
 scenarios; the full server/plugin build remains required before final handoff
 to compile the changed plugin artifact.
+
+### #19 — Combat-clock domain reconciliation — completed
+
+`Mob.setCombatTimer` has always written the server `GameClock`, but six active
+cooldown consumers compared that value with JVM wall time: player logout,
+NPC-talk busy grace, both OpenPK stat-change checks, the wilderness Magical
+Pool, and A Bone To Pick eligibility. They now compare the combat timestamp to
+the same authoritative `GameClock`. Real-time client activity, exchange,
+movement, report, and shot timestamps intentionally remain on wall time; only
+the combat-timer clause moved.
+
+The compiled `combat_cooldown_uses_authoritative_game_clock` fixture freezes
+wall time implicitly through the deterministic harness, proves a fresh combat
+timestamp blocks the cooldown, then advances exactly 10,001 game-clock
+milliseconds and proves it opens. `./server/test_combat` passed all 137
+scenarios. Plugin-only callers are included in the final full server/plugin
+build gate.

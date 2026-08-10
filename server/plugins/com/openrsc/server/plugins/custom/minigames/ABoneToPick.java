@@ -598,7 +598,8 @@ public class ABoneToPick implements TimedEventTrigger, TalkNpcTrigger, KillNpcTr
 			return false;
 		}
 
-		if (player.inCombat() || System.currentTimeMillis() - player.getCombatTimer() < 10000) {
+		if (player.inCombat() || player.getWorld().getServer().getGameClock()
+				.currentTimeMillis() - player.getCombatTimer() < 10000) {
 			return false;
 		}
 

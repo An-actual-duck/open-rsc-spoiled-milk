@@ -515,6 +515,33 @@ final class CurrentCombatDotLifecycleCharacterization {
 			"Necronomicon retains its historical no-hitsplat presentation");
 	}
 
+	static void combatCooldownUsesGameClock(
+			final CurrentCombatHarness harness) throws Exception {
+		final Player player = harness.player("game clock cooldown", 632, 680);
+		setPrivateLong(player, "lastExchangeTime", 0L);
+		player.setCombatTimer();
+		assertFalse(hasSatisfiedCombatCooldown(player),
+			"a fresh game-clock combat timestamp blocks logout in a deterministic fixture");
+		harness.clock().advanceMillis(10_001L);
+		assertTrue(hasSatisfiedCombatCooldown(player),
+			"the same cooldown opens after ten game-clock seconds");
+	}
+
+	private static boolean hasSatisfiedCombatCooldown(final Player player)
+			throws Exception {
+		final Method method = Player.class.getDeclaredMethod("hasSatisfiedCooldown");
+		method.setAccessible(true);
+		return ((Boolean) method.invoke(player)).booleanValue();
+	}
+
+	private static void setPrivateLong(final Object target, final String name,
+			final long value) throws Exception {
+		final java.lang.reflect.Field field = target.getClass()
+			.getDeclaredField(name);
+		field.setAccessible(true);
+		field.setLong(target, value);
+	}
+
 	static void corruptLegacyAndRuntimeStateBoundaries(
 			final CurrentCombatHarness harness) {
 		final Player nonnumericPoison = harness.player(
