@@ -63,13 +63,18 @@ public final class MonsterSlayerShopService {
 					if (!player.getCarriedItems().getInventory().canHold(proposal.reward.getItemId(), proposal.output)) return Result.rejected("inventory");
 					MonsterSlayerState.SpendProposal spent = proposal.spend;
 					MonsterSlayerState.write(player.getCache(), data, spent.getSnapshot()); stock.put(rewardKey, getStock(rewardKey) - (int) quantity);
-					if (!itemGrant.grant(player, proposal.reward.getItemId(), proposal.output)) {
-						stock.put(rewardKey, getStock(rewardKey) + (int) quantity); MonsterSlayerState.write(player.getCache(), data, spent.getReceipt().refund(spent.getSnapshot(), data)); return Result.rejected("grant");
-					}
+					try {
+						if (!itemGrant.grant(player, proposal.reward.getItemId(), proposal.output)) return rollback(player, rewardKey, quantity, spent);
+					} catch (RuntimeException failure) { return rollback(player, rewardKey, quantity, spent); }
 					return Result.success();
 				}
 			}
 		} catch (RuntimeException failure) { return Result.rejected("failure"); }
+	}
+	private Result rollback(Player player, String rewardKey, long quantity, MonsterSlayerState.SpendProposal spent) {
+		stock.put(rewardKey, getStock(rewardKey) + (int) quantity);
+		MonsterSlayerState.write(player.getCache(), data, spent.getReceipt().refund(spent.getSnapshot(), data));
+		return Result.rejected("grant");
 	}
 	public Result purchaseCapacity(Player player, String shopKey) {
 		try {
