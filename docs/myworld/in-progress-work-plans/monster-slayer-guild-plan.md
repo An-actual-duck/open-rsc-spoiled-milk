@@ -605,8 +605,12 @@ Stable rank codes are part of the save contract and must never be reordered:
 | 6 | Hero | Heroes chain complete; Legends Guild available |
 | 7 | Legend | Legends chain complete; all rank shops available |
 
-The opening contact is a new dedicated NPC. Later-rank candidates are existing,
-actively spawned NPCs and need no new placement:
+Every Monster Slayer location has at least two distinct NPC roles: one task
+giver and one nearby shop associate. The task giver owns only rank, mandatory,
+and repeatable-task dialogue; the associate owns only the rank-gated challenge
+shop dialogue. They must never be combined merely because a location reuses an
+existing bartender or guild official. The opening contact is a new dedicated
+NPC. Later-rank task-giver candidates are existing, actively spawned NPCs:
 
 | Contact key | Candidate and exact active location | Existing owner | Integration boundary |
 | --- | --- | --- | --- |
@@ -620,6 +624,32 @@ actively spawned NPCs and need no new placement:
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.
+
+### Location Staffing And Ambient Members
+
+The activation branch must add one dedicated shop-associate definition and
+placement near each task giver. Exact NPC IDs, names, appearances, and tiles
+remain a focused world/content pass, but every placement must be visibly close
+enough that promotion dialogue such as `my associate nearby` remains true.
+Existing bartenders and guild officials retain their current roles; a new
+associate is not a reason to remove ordinary drinks, guild access, quests, or
+training dialogue.
+
+The three bar locations should additionally receive one generic ambient member
+each. These are deliberately non-authoritative world-fill NPCs: they have no
+`Task`, `Trade`, or `Shop` shortcut, grant no task/currency/rank state, and
+only provide brief optional flavour dialogue. The proposed initial roster is:
+
+| Location | Ambient member display name | World role and voice |
+| --- | --- | --- |
+| Rising Sun / Falador | `Fledgling Monster Slayer` | An eager recruit comparing a fresh hand stamp and boasting about very small monsters. |
+| Rusty Anchor / Port Sarim | `Initiate Monster Slayer` | A practical hunter checking supplies and talking about keeping a task journal dry at sea. |
+| Dead Man's Chest / Brimhaven | `Veteran Monster Slayer` | A scarred, guarded regular who acknowledges the work but avoids giving a contract. |
+
+This produces three NPCs at each bar—task giver, shop associate, and ambient
+member—while every guild location retains the mandatory two-role minimum. More
+ambient members may be added later, but they must remain separate from the
+stable task/contact IDs and all state-changing dialogue routes.
 
 ## Player-Facing Contact, Task, And Shop Dialogue Contract
 
