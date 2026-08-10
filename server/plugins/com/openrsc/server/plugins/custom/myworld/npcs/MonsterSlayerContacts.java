@@ -25,7 +25,10 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static final MonsterSlayerRank[] REQUIRED = {MonsterSlayerRank.FLEDGLING, MonsterSlayerRank.INITIATE, MonsterSlayerRank.VETERAN, MonsterSlayerRank.ELITE, MonsterSlayerRank.CHAMPION, MonsterSlayerRank.HERO};
 
 	@Override public boolean blockTalkNpc(Player player, Npc npc) { return managed(npc); }
-	@Override public boolean blockOpNpc(Player player, Npc npc, String command) { return managed(npc) && ("Task".equalsIgnoreCase(command) || "Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command)); }
+	@Override public boolean blockOpNpc(Player player, Npc npc, String command) {
+		return isContact(npc) ? "Task".equalsIgnoreCase(command)
+			: isAssociate(npc) && ("Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command));
+	}
 	@Override public void onTalkNpc(Player player, Npc npc) {
 		if (isAmbient(npc)) { npcsay(player, npc, ambient(npc.getID() - FIRST_AMBIENT)); return; }
 		if (isAssociate(npc)) { associate(player, npc); return; }
