@@ -1,8 +1,9 @@
 # Monster Slayer Guild Plan
 
-Status: **definition foundation, durable player state, and server-authoritative
-task progression implemented and verified; shops, dialogue, placement,
-inventory-capacity, UI, and protocol activation remain pending**
+Status: **definition foundation, durable player state, task progression, and
+the first contact/placement activation slice implemented; full dialogue
+branching, multi-currency shop UI, and inventory-capacity activation remain
+pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -659,6 +660,12 @@ apart from the explicitly selected Radimus Slayer-route rework.
 | `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
 | `legends` | Legends Guild, near Sir Radimus `785` | Default to a new task giver, but Sir Radimus `785` may instead be selected and reworked as the task giver because he owned the borrowed system. Preserve his Legends Quest reward/training routes and replace only the old Odyssey task route during activation. |
+
+Initial activation content uses the unused stable NPC range `846..860`: task
+givers `846..851` in contact order, their nearby associates `852..857`, and
+the three bar ambient members `858..860`. The exact start tiles are recorded
+in `MyWorldNpcLocs.json`; all are separate from existing bartenders, guild
+officials, Achetties, and Sir Radimus.
 
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
