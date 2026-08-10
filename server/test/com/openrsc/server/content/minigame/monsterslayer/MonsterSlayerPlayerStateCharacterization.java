@@ -155,15 +155,15 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(MonsterSlayerState.TaskResult.Reason.RANK, rejected.getReason(), "wrong contact rank");
 		MonsterSlayerState.TaskResult assigned = MonsterSlayerState.assignMandatory(fledgling, data, "falador");
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED, assigned.getReason(), "mandatory assignment");
-		equals("falador.rats", assigned.getSnapshot().getActiveTaskKey(), "first deterministic task");
+		equals("falador.goblins", assigned.getSnapshot().getActiveTaskKey(), "first deterministic task");
 		equals(MonsterSlayerState.TaskResult.Reason.WRONG_NPC,
-			MonsterSlayerState.recordEligibleKill(assigned.getSnapshot(), data, 4).getReason(), "wrong family");
+			MonsterSlayerState.recordEligibleKill(assigned.getSnapshot(), data, 19).getReason(), "wrong family");
 		MonsterSlayerState.Snapshot progressing = assigned.getSnapshot();
-		for (int kill = 0; kill < 99; kill++) progressing = MonsterSlayerState.recordEligibleKill(progressing, data, 19).getSnapshot();
-		equals(99, progressing.getActiveKills(), "bounded progress");
-		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(progressing, data, 19);
+		for (int kill = 0; kill < 39; kill++) progressing = MonsterSlayerState.recordEligibleKill(progressing, data, 62).getSnapshot();
+		equals(39, progressing.getActiveKills(), "bounded progress");
+		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(progressing, data, 62);
 		equals(MonsterSlayerState.TaskResult.Reason.COMPLETED, completion.getReason(), "completion");
-		equals(5L, completion.getSnapshot().getBalances().get(MonsterSlayerChallenge.FLEDGLING), "native award only");
+		equals(2L, completion.getSnapshot().getBalances().get(MonsterSlayerChallenge.FLEDGLING), "native award only");
 		equals(1, completion.getSnapshot().getMandatoryCursors().get("falador"), "cursor advanced once");
 		equals(MonsterSlayerState.TaskResult.Reason.NO_ACTIVE_TASK,
 			MonsterSlayerState.recordEligibleKill(completion.getSnapshot(), data, 19).getReason(), "duplicate callback rejected");
@@ -177,7 +177,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "port_sarim.pirates.repeatable").getReason(),
 			"cross-contact repeatable rejected");
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
-			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
+			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.goblins.repeatable").getReason(),
 			"eligible repeatable assignment");
 	}
 
