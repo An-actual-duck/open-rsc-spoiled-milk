@@ -116,15 +116,22 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			assertTrue(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact assignment " + contact.getKey());
 			assertFalse(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact duplicate assignment " + contact.getKey());
 		}
-		for (int pick = 0; pick < data.getContact("falador").getRepeatableTasks().size(); pick++) {
-			final int selected = pick;
+		int fixture = 0;
+		for (int tier = 0; tier < data.getContacts().size(); tier++) for (int pick = 0; pick < data.getContacts().get(tier).getRepeatableTasks().size(); pick++) {
+			final int selected = pick; final MonsterSlayerDefinitions.Contact contact = data.getContacts().get(tier);
 			MonsterSlayerContactService randomized = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return selected; }});
-			Player repeatable = h.player("mssrepeat" + pick, 870 + pick, 790); state(repeatable, data, 0L, 0, 1);
-			MonsterSlayerDefinitions.Task preview = randomized.previewTask(repeatable, "falador");
-			assertEquals(data.getContact("falador").getRepeatableTasks().get(pick).getKey(), preview.getKey(), "injectable repeatable pick " + pick);
-			assertTrue(randomized.requestTask(repeatable, "falador").isAccepted(), "previewed repeatable assigns " + pick);
-			assertEquals(preview.getKey(), MonsterSlayerState.read(repeatable.getCache(), data).getActiveTaskKey(), "preview equals committed repeatable " + pick);
+			Player repeatable = h.player("mssrepeat" + fixture, 870 + fixture++, 790); state(repeatable, data, 0L, 0, tier + 1);
+			Map<String, Object> beforePreview = new LinkedHashMap<String, Object>(repeatable.getCache().getCacheMap());
+			MonsterSlayerDefinitions.Task preview = randomized.previewTask(repeatable, contact.getKey());
+			assertEquals(contact.getRepeatableTasks().get(pick).getKey(), preview.getKey(), "injectable repeatable pick " + contact.getKey() + " " + pick);
+			assertEquals(beforePreview, repeatable.getCache().getCacheMap(), "warning preview is before state write " + contact.getKey() + " " + pick);
+			assertTrue(randomized.requestTask(repeatable, contact.getKey()).isAccepted(), "previewed repeatable assigns " + contact.getKey() + " " + pick);
+			assertEquals(preview.getKey(), MonsterSlayerState.read(repeatable.getCache(), data).getActiveTaskKey(), "preview equals committed repeatable " + contact.getKey() + " " + pick);
 		}
+		Player corrupt = h.player("msscontactcorrupt", 895, 790); state(corrupt, data, 0L, 0, 0);
+		corrupt.getCache().store("monster_slayer_rank", "corrupt"); Map<String, Object> corruptBefore = new LinkedHashMap<String, Object>(corrupt.getCache().getCacheMap());
+		assertFalse(contacts.requestTask(corrupt, "falador").isAccepted(), "corrupt assignment state rejected");
+		assertEquals(corruptBefore, corrupt.getCache().getCacheMap(), "corrupt assignment leaves state untouched");
 	}
 
 	private static void basicRedemptionAndRollback(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {

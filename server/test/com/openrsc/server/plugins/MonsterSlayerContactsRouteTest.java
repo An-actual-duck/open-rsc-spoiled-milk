@@ -49,6 +49,7 @@ public final class MonsterSlayerContactsRouteTest {
 		shortcutAssignmentAndPromotionAreRealInteractions(server, routes);
 		promotionRenderingIsExactForEveryRank(server);
 		guildAccessModesAndQuestStates(server);
+		associateAmbientAndOwnershipBoundaries(server, routes);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
 
@@ -128,6 +129,36 @@ public final class MonsterSlayerContactsRouteTest {
 		}
 	}
 
+	private static void associateAmbientAndOwnershipBoundaries(Server server, MonsterSlayerContacts routes) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		Player player = player(server, "slayerassociate", 240, 600);
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
+		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		Map<String, Object> before = new LinkedHashMap<String, Object>(player.getCache().getCacheMap());
+		routes.onOpNpc(player, new Npc(server.getWorld(), 852, 241, 600), "Trade");
+		assertEquals(before, player.getCache().getCacheMap(), "unlocked associate has no progression authority");
+		routes.onTalkNpc(player, new Npc(server.getWorld(), 858, 242, 600));
+		assertEquals(before, player.getCache().getCacheMap(), "ambient NPC has no progression authority");
+
+		Player denied = player(server, "slayerassociatedenied", 243, 600);
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+		MonsterSlayerState.write(denied.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.LEGEND, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		Map<String, Object> deniedBefore = new LinkedHashMap<String, Object>(denied.getCache().getCacheMap());
+		server.getConfig().INFLUENCE_INSTEAD_QP = false; denied.setQuestPoints(0);
+		routes.onOpNpc(denied, new Npc(server.getWorld(), 855, 244, 600), "Trade");
+		assertEquals(deniedBefore, denied.getCache().getCacheMap(), "guild-denied associate has no progression authority");
+
+		for (int id : new int[] {111, 253, 735, 785}) {
+			Npc npc = new Npc(server.getWorld(), id, 245, 600);
+			assertFalse(routes.blockTalkNpc(player, npc), "unrelated NPC talk ownership " + id);
+			assertFalse(routes.blockOpNpc(player, npc, "Task"), "unrelated NPC task ownership " + id);
+			routes.onOpNpc(player, npc, "Task");
+			assertEquals(before, player.getCache().getCacheMap(), "unrelated NPC cannot mutate Slayer state " + id);
+		}
+	}
+
 	private static void install(Server server, String name, Object value) throws Exception { Field field = server.getWorld().getClass().getDeclaredField(name); field.setAccessible(true); field.set(server.getWorld(), value); }
 
 	private static Player player(Server server, String name, int x, int y) {
@@ -143,5 +174,6 @@ public final class MonsterSlayerContactsRouteTest {
 	private static void assertFalse(boolean value, String label) { assertTrue(!value, label); }
 	private static void assertEquals(int expected, int actual, String label) { if (expected != actual) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 	private static void assertEquals(String expected, String actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
+	private static void assertEquals(Map<String, Object> expected, Map<String, Object> actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 	private static void assertEquals(Object expected, Object actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 }
