@@ -76,7 +76,9 @@ Core rules:
   automatically when the shop unlocks.
 - Higher contacts refuse assignment/shop access until the required rank and the
   host guild's normal access requirements are satisfied.
-- Existing Combat Odyssey state is migrated once without deleting its keys.
+- Existing Combat Odyssey state is migrated once without deleting its keys, but
+  it never grants Monster Slayer currency; every account begins its new typed
+  balances at zero.
 
 Non-goals:
 
@@ -198,8 +200,9 @@ After the ninth kill task, the contact:
 - opens the first challenge shop and explains that randomized assignments will
   always be available from this contact for earning more Fledgling Slayer
   Points; and
-- introduces the first shop as a source of low-level food and potions. Exact
-  stock, quantities, and prices remain a separate economy decision.
+- introduces the first shop as a source of low-level food and potions. Its
+  approved stock and normal ten-unit restock behavior are documented below;
+  prices remain a playtest-tuned economy pass.
 
 The Initiate promotion and sticker exchange is locked as:
 
@@ -291,8 +294,8 @@ must not change live Combat Odyssey behavior while performing that sync.
 Every challenge shop contains exactly one one-time inventory-capacity upgrade.
 The upgrade becomes available when that shop is unlocked, but it is not an
 automatic rank reward: the player must purchase it with that shop's approved
-challenge-point cost vector. Exact prices remain part of the later shop-economy
-pass.
+native-challenge price. Initial prices and task rewards are implementation
+estimates to be tuned through playtesting, not inherited from Odyssey data.
 
 The six increments and cumulative capacities are fixed:
 
@@ -310,9 +313,11 @@ independent permanent entitlements and must be purchased in shop order because
 higher shops are rank-gated. They are not items, cannot be traded, dropped,
 lost on death, refunded, or purchased more than once. A purchase does not need
 a free inventory slot. It atomically validates the shop unlock, confirms that
-the corresponding upgrade is not already owned, deducts the complete typed
-cost vector, records the entitlement, and then refreshes the inventory UI.
-Failure at any stage leaves both points and capacity unchanged.
+the corresponding upgrade is not already owned, deducts its native-currency
+price, records the entitlement, and then refreshes the inventory UI. Failure
+at any stage leaves both points and capacity unchanged. An already owned
+upgrade is not stocked or restocked: it cannot be bought again and reports
+`You already have this.`
 
 Persist the six purchases as a stable six-bit entitlement mask owned by
 `MonsterSlayerState`, with bits mapped explicitly by stable shop key rather
@@ -349,6 +354,28 @@ and 40 slots; locked-slot visuals and input rejection; layout at supported
 window/UI scales; and no item loss when a newer client observes an expanded
 inventory. A downgrade to a client or server that cannot represent the saved
 capacity must fail safely rather than truncate items.
+
+### Confirmed: Initial Activation And Test Order
+
+Implement and validate the player-visible system in this dependency order:
+
+1. Persist and validate six zero-default typed balances plus the capacity
+   entitlement mask; migrate every existing account with zero balances.
+2. Wire authoritative mandatory/repeatable task completion to the appropriate
+   single balance, using initial AI-authored estimates for rewards and focused
+   reward/overflow tests.
+3. Add the six rank-gated shops with their approved consumables, normal stock
+   of 10/restock behavior, typed two-tier consumable costs, and native-only
+   one-time capacity purchases.
+4. Deliver the dynamic 30-to-40 inventory protocol and client UI together,
+   then test all capacity boundaries and inventory-bearing systems.
+5. Add the twelve unique armored task/shop NPCs, three generic one-line bar
+   members, dialogue, shortcuts, rank gates, and world placements; finish with
+   end-to-end task, promotion, shop, reconnect, and migration tests.
+
+Playtesting follows each economy-bearing slice. Initial numerical estimates
+are intentionally adjustable; the contracts for typed currency, stock,
+one-time purchases, rank gates, and capacity are not.
 
 ### Dynamic Inventory Capacity Implementation Boundary
 
@@ -402,9 +429,11 @@ or a capacity upgrade.
 
 ### Unresolved Recruitment And First-Shop Details
 
-- Choose the dedicated contact's name, appearance, exact Rising Sun tile, and
-  whether the NPC needs ambient dialogue before recruitment. Do not repurpose
-  Barmaid `142` or disturb her existing drink, bar-crawl, and holiday behavior.
+- Choose the twelve unique task-giver/shop-associate names, exact IDs, and
+  placement tiles. Their visual direction is settled: new unique humanoids in
+  armor that improves with rank. Do not repurpose Barmaid `142`, bartenders,
+  guildmasters, or quest NPCs, and keep the three generic bar members to their
+  one-line ambient role.
 - Choose the formal quest name, quest-list presentation, journal text, and any
   quest-point treatment. Calling the mandatory path one quest settles its
   lifecycle, but not those presentation details.
@@ -412,13 +441,10 @@ or a capacity upgrade.
   inventory item, or a displayable cosmetic. If it is an item, tradeability,
   death behavior, duplicate prevention, storage, reclaim, and whether it is
   consumed when displayed all require explicit contracts.
-- Set the nine mandatory-task point awards and resulting first revealed balance.
-  Retaining the foundation's 25-point Fledgling total is the current
-  recommendation, but has not been approved merely by confirming invisible
-  accrual.
-- Choose the exact low-level food and potion stock, quantities, and Fledgling
-  Slayer Point costs. Evaluate each against normal Cooking and Herblaw effort
-  before approval.
+- Author initial mandatory/repeatable task rewards and all consumable/native
+  currency prices as evidence-backed starting estimates, then tune them through
+  owner playtesting. The consumable lines, stock quantity of 10, normal
+  restock behavior, and capacity-upgrade rules are already settled.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -609,17 +635,21 @@ Every Monster Slayer location has at least two distinct NPC roles: one task
 giver and one nearby shop associate. The task giver owns only rank, mandatory,
 and repeatable-task dialogue; the associate owns only the rank-gated challenge
 shop dialogue. They must never be combined merely because a location reuses an
-existing bartender or guild official. The opening contact is a new dedicated
-NPC. Later-rank task-giver candidates are existing, actively spawned NPCs:
+existing bartender or guild official. Every task giver and shop associate is a
+newly authored, unique humanoid NPC. Their initial identity, name, ID, and
+exact placement are a focused content pass; their appearance should visibly
+progress from simple early equipment to better armor at the higher ranks.
+Existing bartenders, guildmasters, and quest NPCs retain their original
+responsibilities and are not repurposed as Slayer contacts.
 
-| Contact key | Candidate and exact active location | Existing owner | Integration boundary |
-| --- | --- | --- | --- |
-| `falador` | New Monster Slayer contact, Rising Sun ground floor; exact ID/tile/name pending | New focused dialogue owner required | Add a dedicated definition and spawn. The contact directs the player to Barmaid `142` for beer; do not replace or intercept the Barmaid's existing dialogue. Update the current foundation contact ID after the new stable NPC ID is approved. |
-| `port_sarim` | Bartender `150`, Rusty Anchor `257,626` | `npcs/portsarim/Bartender.java` | Add guild options after quest/bar-crawl priority; do not replace drink service. |
-| `brimhaven` | Bartender `279`, Dead Man's Chest `451,705` | `npcs/brimhaven/BrimHavenBartender.java` | Add guild options after bar-crawl/drink behavior. |
-| `champions` | Guildmaster `111`, Champions Guild `149,557` | `npcs/varrock/Guildmaster.java` | Preserve Dragon Slayer and normal guild-access dialogue before Monster Slayer options. |
-| `heroes` | Achetties `253`, Heroes Guild `372,443` | `quests/members/HerosQuest.java` | Preserve Heroes Quest/cape behavior; remove the old Odyssey tier transition only in the coordinated activation branch. |
-| `legends` | Sir Radimus `785`, Legends Guild `514,535` | `LegendsQuestSirRadimusErkle.java` | Use only the guild NPC, not house Radimus `735`; preserve Legends Quest reward/training behavior and replace the hidden Odyssey route during activation. |
+| Contact key | New task-giver location | Integration boundary |
+| --- | --- | --- |
+| `falador` | Rising Sun ground floor | Add a dedicated definition and spawn. The contact directs the player to Barmaid `142` for beer; do not replace or intercept the Barmaid's existing dialogue. |
+| `port_sarim` | Rusty Anchor, near the existing bartender | Add a separate task giver without replacing drink or bar-crawl service. |
+| `brimhaven` | Dead Man's Chest, near the existing bartender | Add a separate task giver without replacing drink or bar-crawl service. |
+| `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
+| `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
+| `legends` | Legends Guild, near Sir Radimus `785` | Preserve Legends Quest reward/training behavior on Sir Radimus and replace the hidden Odyssey route during activation. |
 
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
@@ -627,18 +657,20 @@ without bypassing Champions, Heroes, or Legends Guild entry requirements.
 
 ### Location Staffing And Ambient Members
 
-The activation branch must add one dedicated shop-associate definition and
-placement near each task giver. Exact NPC IDs, names, appearances, and tiles
-remain a focused world/content pass, but every placement must be visibly close
-enough that promotion dialogue such as `my associate nearby` remains true.
-Existing bartenders and guild officials retain their current roles; a new
-associate is not a reason to remove ordinary drinks, guild access, quests, or
-training dialogue.
+The activation branch must add one dedicated unique-humanoid shop-associate
+definition and placement near each task giver. Their armor quality follows the
+same rising-rank visual progression as the task givers. Exact NPC IDs, names,
+and tiles remain a focused world/content pass, but every placement must be
+visibly close enough that promotion dialogue such as `my associate nearby`
+remains true. Existing bartenders and guild officials retain their current
+roles; a new associate is not a reason to remove ordinary drinks, guild access,
+quests, or training dialogue.
 
 The three bar locations should additionally receive one generic ambient member
-each. These are deliberately non-authoritative world-fill NPCs: they have no
-`Task`, `Trade`, or `Shop` shortcut, grant no task/currency/rank state, and
-only provide brief optional flavour dialogue. The proposed initial roster is:
+each. These are deliberately non-authoritative, non-unique humanoid world-fill
+NPCs: they have no `Task`, `Trade`, or `Shop` shortcut, grant no
+task/currency/rank state, and provide one brief optional flavour line only.
+The proposed initial roster is:
 
 | Location | Ambient member display name | World role and voice |
 | --- | --- | --- |
@@ -726,8 +758,8 @@ validation server-side.
 ### Contact Dialogue Sheets
 
 Names remain implementation choices. These sheets identify the voice, the
-required branch points, and dialogue suitable for the current contact
-candidates. Bracketed text is runtime data, never player-controlled text.
+required branch points, and dialogue for the new unique contacts at each
+location. Bracketed text is runtime data, never player-controlled text.
 
 #### 1. Rising Sun Recruiter — Fledgling Stamp And Initiate Sticker
 
@@ -803,7 +835,7 @@ Initiate sticker, no Port Sarim work.`
 
 #### 3. Dead Man's Chest Contact — Veteran Button To Elite Badge
 
-Tone: the bartender who acts tougher than he is. His bluster falls away at the
+Tone: a self-styled tough hunter. His bluster falls away at the
 promotion, revealing that he has seen what the next step costs.
 
 **Below rank**
@@ -832,23 +864,24 @@ Veteran button if you want Brimhaven work.`
 > Contact: `My associate will trade Veteran Slayer Points with an Elite. Spend
 > them on something that keeps you alive.`
 
-#### 4. Champions Guildmaster — Elite Badge To Champion Medal
+#### 4. Champions Guild Contact — Elite Badge To Champion Medal
 
 Tone: tough, boisterous, friendly, and jovial. Preserve Dragon Slayer and
-ordinary Champions Guild dialogue before presenting this optional guild route.
+ordinary Champions Guild dialogue on the existing Guildmaster before
+presenting this optional guild route.
 
 **Below rank**
 
-> Guildmaster: `An Elite badge is the price of a Champion's contract! Earn one
+> Contact: `An Elite badge is the price of a Champion's contract! Earn one
 > first, then we'll see what you're made of.`
 
 **Normal task route**
 
-> Guildmaster: `Ah! An Elite hunter. Here for a real challenge?`
+> Contact: `Ah! An Elite hunter. Here for a real challenge?`
 > Player: `Yes please.` / `Not now.`
-> Guildmaster (if yes): `Badge, if you please!`
+> Contact (if yes): `Badge, if you please!`
 > Player: `Here you go.`
-> Guildmaster: `Your next task is to slay [count] [family]! Make the Guild
+> Contact: `Your next task is to slay [count] [family]! Make the Guild
 > proud!`
 
 `Task` shortcut begins at the assignment. Below rank: `Bring me an Elite badge
@@ -856,10 +889,10 @@ before you ask for Champion work!`
 
 **Champion promotion / shop reveal**
 
-> Guildmaster: `Splendid work! You faced the test and did not blink.`
-> Guildmaster: `You are a Champion now. Take this medal, and try not to polish
+> Contact: `Splendid work! You faced the test and did not blink.`
+> Contact: `You are a Champion now. Take this medal, and try not to polish
 > it on your sleeve.`
-> Guildmaster: `The quartermaster nearby takes Elite Slayer Points. Tell them
+> Contact: `The quartermaster nearby takes Elite Slayer Points. Tell them
 > I said a Champion has earned a look at the good stock.`
 
 #### 5. Heroes Guild Contact — Champion Medal To Hero Crest
@@ -894,32 +927,32 @@ Heroes Guild contract.`
 
 #### 6. Legends Guild Contact — Hero Crest To Legend
 
-Tone: stoic, economical, and matter-of-fact. Use only guild Sir Radimus `785`,
-not house Radimus `735`, and preserve Legends Quest behavior before this
-route.
+Tone: stoic, economical, and matter-of-fact. Use a separate Legends Guild
+contact; Sir Radimus `785` and house Radimus `735` retain their existing
+Legends Quest behavior.
 
 **Below rank**
 
-> Radimus: `Hero's crest required. Return when you have earned it.`
+> Contact: `Hero's crest required. Return when you have earned it.`
 
 **Normal task route**
 
-> Radimus: `Another contract?`
+> Contact: `Another contract?`
 > Player: `Yes please.` / `Not now.`
-> Radimus (if yes): `Crest.`
+> Contact (if yes): `Crest.`
 > Player: `Here.`
-> Radimus: `Your next task is to slay [count] [family]. Be ready.`
+> Contact: `Your next task is to slay [count] [family]. Be ready.`
 
 `Task` shortcut begins at the assignment. Below rank: `No Hero's crest. No
 Legend contract.`
 
 **Legend completion / final open ending**
 
-> Radimus: `You've completed your journey for now. You've done well.`
+> Contact: `You've completed your journey for now. You've done well.`
 > Player: `And what's my new rank?`
-> Radimus: `And what use would you make of it?`
+> Contact: `And what use would you make of it?`
 > Player: `...Legend, then?`
-> Radimus: `If you continue to earn it.`
+> Contact: `If you continue to earn it.`
 
 After this exchange, the Legends associate opens the Hero-point shop. Their
 pre-unlock refusal is `Sorry, can't show you my wares till you're a Legend.`
@@ -1251,53 +1284,17 @@ the independently authored ladder a disguised Odyssey translation.
 | Intro stage `1`/`2` or any valid partial active run | Fledgling | none |
 | Completed-unclaimed or `co_prestige > 0` | Legend | all six |
 
-A partial player receives bounded challenge balances for aggregate effort but
-starts the new mandatory path at Falador. A completed player receives full
-rank recognition because completion itself is the legacy accomplishment; the
-old sequence and rewards are not recreated.
+Every migrated account, including a previously completed or prestiged Odyssey
+account, begins with all six Monster Slayer challenge balances at `0`. Legacy
+kill totals, active-task progress, prestige count, inventory, and bank contents
+do not produce a currency conversion. This keeps the new economy legible and
+means any player who wants supplies or capacity upgrades earns their balances
+through the new task system.
 
-### Bounded Challenge-Balance Vector
-
-Compute aggregate legacy credited kills only as migration evidence:
-
-1. Sum every task's required kills in tiers below the active legacy tier.
-2. In the active tier, sum required kills for valid completed mask bits.
-3. If the current task's bit is not complete, add its active kill count clamped
-   to `0..requiredKills`. Do not count a completed current task twice.
-4. Clamp the result to the Odyssey total `40,906` and calculate one overall
-   completion ratio. Do not expose tier/task identities to new progression.
-
-The base full-completion migration vector is deliberately bounded at twice the
-new mandatory-path earnings:
-
-| Challenge balance | Mandatory-path earnings | Full legacy base credit |
-| --- | ---: | ---: |
-| Fledgling | 25 | 50 |
-| Initiate | 40 | 80 |
-| Veteran | 60 | 120 |
-| Elite | 90 | 180 |
-| Champion | 150 | 300 |
-| Hero | 260 | 520 |
-
-For a partial, noncompleted Odyssey, each component is:
-
-`floor(creditedKills * fullLegacyBase[challenge] / 40,906)`.
-
-For completed-unclaimed, award the exact full base vector. For claimed
-completion, begin with that vector and add, per component, one quarter of the
-base for each additional `co_prestige` completion. Count at most twelve extra
-completions, so no component can exceed four times its full base. If a claimed
-player also has a valid active repeat Odyssey, add one quarter of that repeat's
-partial vector before applying the same four-times-base component caps.
-
-All multiplication/division uses checked `long` arithmetic and floors only at
-the final component calculation. The proposal is one immutable six-component
-vector; it is not summed, normalized, exchanged, or shifted between challenge
-types.
-
-The conversion records no new active task. It never grants old intermediate
-items, a final dragon item, material credit, a recreated Odyssey reward, or a
-new prestige count.
+The conversion records no new active task and initializes the six balance keys
+to zero. It never grants old intermediate items, a final dragon item, material
+credit, a recreated Odyssey reward, a currency conversion, or a new prestige
+count.
 
 ### Cutover Rules
 
@@ -1373,8 +1370,9 @@ Each inventory capacity upgrade must cost slightly more native currency than
 the total a player should earn by completing that contact's full mandatory
 chain. Consequently, completing the main path unlocks the right to buy the
 upgrade but does not usually fund it; the player must finish a small number of
-repeatable tasks from that same contact. Exact prices must be authored only
-after the final mandatory task reward totals are set, and CI must verify:
+repeatable tasks from that same contact. The implementing AI should propose
+the initial task rewards and prices from task difficulty and this margin, then
+adjust them after owner playtesting. CI must verify:
 
 - `capacityPrice[contact] > mandatoryCurrencyTotal[contact]`;
 - the margin is documented as a small repeatable-task requirement rather than
@@ -1407,11 +1405,12 @@ is the existing full three-dose item. Food is deliberately ordered by total
 healing in clean two-point steps from 8 through 20, and every choice is a
 crafted pie, cake, or pizza that is consumed over multiple bites.
 
-The default reward unit is one full potion or one whole food item. The existing
-quantity selector may sell more than one unit only after the cost vector and
-output multiplication are verified atomically. No line above authorizes an
-unbounded shop stock, a certificate substitute, or a change to the underlying
-Cooking/Herblaw recipes.
+The default reward unit is one full potion or one whole food item. Each initial
+consumable line starts with normal shop stock of `10` and uses the ordinary shop
+restock behavior already used by standard stores. The existing quantity selector
+may sell more than one unit only after the cost vector and output multiplication
+are verified atomically. No line above authorizes an unbounded shop stock, a
+certificate substitute, or a change to the underlying Cooking/Herblaw recipes.
 
 The current production interface cannot represent this faithfully:
 `ProductionSession` carries one scalar point value and each `ProductionRecipe`
@@ -1506,11 +1505,10 @@ Tests:
   keys, wrong types, and corrupt values. Assert the old scalar cache key is
   neither read nor written.
 - Compiled migration fixture: no-state, intro stages, every tier boundary,
-  partial current task, completed current-task bit without double count,
-  malformed masks/strings/types, completed-unclaimed KBD, claimed completion,
-  active prestige repeat, all six proportional components, per-component caps,
-  no partial rank/cursor translation, legacy-key preservation, and repeated
-  migration idempotence.
+  partial current task, malformed masks/strings/types, completed-unclaimed
+  KBD, claimed completion, active prestige repeat, zero initialization of all
+  six balances for every migration class, no partial rank/cursor translation,
+  legacy-key preservation, and repeated migration idempotence.
 - Run the existing dragon-production/removal guard, NPC location cleanup test,
   full server build, plugin build (even though plugins should be unchanged),
   and changed-code static analysis.
