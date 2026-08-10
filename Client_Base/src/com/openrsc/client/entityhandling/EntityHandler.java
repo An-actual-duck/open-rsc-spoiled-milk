@@ -100,7 +100,13 @@ public class EntityHandler {
 	private static final int FOUNDRY_DRAGON_NPC_ID = 845;
 	private static final int FOUNDRY_DRAGON_FRAME_WIDTH = 244;
 	private static final int FOUNDRY_DRAGON_FRAME_HEIGHT = 163;
+	private static final int KING_BLACK_DRAGON_NPC_ID = 477;
+	// Preserve the legacy boss-sized world footprint. The external source frames
+	// remain native; these values are the scene presentation bounds.
+	private static final int KING_BLACK_DRAGON_FRAME_WIDTH = 542;
+	private static final int KING_BLACK_DRAGON_FRAME_HEIGHT = 391;
 	private static int foundryDragonAnimationId = -1;
+	private static int kingBlackDragonAnimationId = -1;
 
 	public static int getModelCount() {
 		return REGISTRY.modelCount();
@@ -166,6 +172,24 @@ public class EntityHandler {
 		foundryDragon.sprites[0] = foundryDragonAnimationId;
 		foundryDragon.camera1 = FOUNDRY_DRAGON_FRAME_WIDTH;
 		foundryDragon.camera2 = FOUNDRY_DRAGON_FRAME_HEIGHT;
+	}
+
+	public static int getKingBlackDragonAnimationId() {
+		return kingBlackDragonAnimationId;
+	}
+
+	/**
+	 * Applies the optional external KBD visual only after its frames have loaded.
+	 * Callers leave the generated legacy definition untouched on any load error.
+	 */
+	public static void activateKingBlackDragonExternalVisual() {
+		if (kingBlackDragonAnimationId < 0 || KING_BLACK_DRAGON_NPC_ID >= npcs.size()) {
+			throw new IllegalStateException("King Black Dragon animation is not registered");
+		}
+		NPCDef kingBlackDragon = npcs.get(KING_BLACK_DRAGON_NPC_ID);
+		kingBlackDragon.sprites[0] = kingBlackDragonAnimationId;
+		kingBlackDragon.camera1 = KING_BLACK_DRAGON_FRAME_WIDTH;
+		kingBlackDragon.camera2 = KING_BLACK_DRAGON_FRAME_HEIGHT;
 	}
 
 	public static int spellCount() {
@@ -7692,6 +7716,8 @@ public class EntityHandler {
 		}
 		foundryDragonAnimationId = animations.size();
 		animations.add(new AnimationDef("foundrydragon", "npc", 0, 0, true, false, 0));
+		kingBlackDragonAnimationId = animations.size();
+		animations.add(new AnimationDef("kingblackdragon", "npc", 0, 0, true, false, 0));
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

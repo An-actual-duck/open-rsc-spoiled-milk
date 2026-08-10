@@ -71,6 +71,8 @@ public final class ClientExternalAssetLoaderFixture {
 			npcDirectionSheetAndMirroring(root);
 		} else if ("foundry-asset".equals(scenario)) {
 			actualFoundryDragonAsset(root);
+		} else if ("king-black-dragon-asset".equals(scenario)) {
+			actualKingBlackDragonAsset(root);
 		} else if ("jar".equals(scenario)) {
 			packagedJarInventoryAndReads(root);
 		} else if ("diagnostics".equals(scenario)) {
@@ -372,6 +374,27 @@ public final class ClientExternalAssetLoaderFixture {
 		}
 		assertEquals(0, count(entry.getFrames()[0].getSprite(), 0x6bee36),
 			"tracked Foundry Dragon sheet must not include green guide marks");
+	}
+
+	private static void actualKingBlackDragonAsset(Path root) throws Exception {
+		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(
+			root, ClientExternalAssetLoaderFixture.class);
+		File source = root.resolve(
+			"dev/myworld/assets/sprites/npcs/king-black-dragon/king-black-dragon-sprite-sheet.png")
+			.toFile();
+		int[] widths = {230, 209, 263, 222, 208, 333};
+		Entry entry = loader.loadExternalNpcDirectionSheet(source, "kingblackdragon", widths, 3, 0x6BEE36);
+		assertTrue(entry != null, "tracked King Black Dragon sheet decodes");
+		assertEquals(18, entry.getFrames().length, "tracked King Black Dragon frame count");
+		for (int frame = 0; frame < entry.getFrames().length; frame++) {
+			int expectedWidth = widths[frame / 3];
+			assertSpriteMetadata(entry.getFrames()[frame].getSprite(), expectedWidth, 163,
+				"tracked King Black Dragon native frame " + frame);
+			assertTrue(nonzeroPixels(entry.getFrames()[frame].getSprite()) > 0,
+				"tracked King Black Dragon frame contains artwork " + frame);
+			assertEquals(0, count(entry.getFrames()[frame].getSprite(), 0x6BEE36),
+				"tracked King Black Dragon guide pixels must be transparent " + frame);
+		}
 	}
 
 	private static void packagedJarInventoryAndReads(Path root) throws Exception {
@@ -748,6 +771,19 @@ def main() -> None:
                 "orsc.ClientExternalAssetLoaderFixture",
                 str(ROOT),
                 "foundry-asset",
+            ],
+            cwd=ROOT,
+            check=True,
+        )
+        subprocess.run(
+            [
+                "java",
+                "-Djava.awt.headless=true",
+                "-cp",
+                f"{temp}:{CLIENT_JAR}",
+                "orsc.ClientExternalAssetLoaderFixture",
+                str(ROOT),
+                "king-black-dragon-asset",
             ],
             cwd=ROOT,
             check=True,
