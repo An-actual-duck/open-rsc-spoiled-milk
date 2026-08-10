@@ -936,14 +936,14 @@ public final class Player extends Mob {
 	}
 
 	public boolean canLogout() {
-		if (menuHandler != null) {
-			return true;
-		}
 		if (denyAllLogoutRequests && System.currentTimeMillis() - getLastClientActivity() < 30000) {
 			return false;
 		}
 		if (inCombat() || getDuel().isDuelActive()) {
 			return false;
+		}
+		if (menuHandler != null) {
+			return true;
 		}
 		return !isBusy() && hasSatisfiedCooldown();
 	}

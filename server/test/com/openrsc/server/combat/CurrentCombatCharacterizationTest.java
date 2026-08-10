@@ -219,6 +219,9 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "combat_cooldown_uses_authoritative_game_clock",
 				CurrentCombatDotLifecycleCharacterization
 					::combatCooldownUsesGameClock);
+			run(harness, "menu_open_logout_cannot_bypass_active_combat",
+				CurrentCombatDotLifecycleCharacterization
+					::menuOpenLogoutRetainsCombatGate);
 			run(harness, "dot_corrupt_legacy_and_runtime_state_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::corruptLegacyAndRuntimeStateBoundaries);

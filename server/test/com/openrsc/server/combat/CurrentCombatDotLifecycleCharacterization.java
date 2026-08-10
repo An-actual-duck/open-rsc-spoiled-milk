@@ -18,6 +18,7 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.death.DeathLifecycleSnapshot;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.MenuOptionListener;
 import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.model.entity.player.PrayerCatalog;
 import com.openrsc.server.model.entity.player.Prayers;
@@ -525,6 +526,23 @@ final class CurrentCombatDotLifecycleCharacterization {
 		harness.clock().advanceMillis(10_001L);
 		assertTrue(hasSatisfiedCombatCooldown(player),
 			"the same cooldown opens after ten game-clock seconds");
+	}
+
+	static void menuOpenLogoutRetainsCombatGate(
+			final CurrentCombatHarness harness) {
+		final Player player = harness.player("menu combat logout", 633, 680);
+		final Npc attacker = harness.npc(NpcId.GREATER_DEMON.id(), 634, 680);
+		player.setOpponent(attacker);
+		player.setSprite(8);
+		player.setPvmMeleeEvent(new PvmMeleeEvent(
+			harness.world(), player, attacker));
+		player.setMenuHandler(new MenuOptionListener(new String[] { "Continue" }));
+		assertFalse(player.canLogout(),
+			"an open dialogue cannot bypass the active-combat logout denial");
+		player.resetCombatEvent();
+		player.setOpponent(null);
+		assertTrue(player.canLogout(),
+			"an open dialogue retains its ordinary out-of-combat logout behavior");
 	}
 
 	private static boolean hasSatisfiedCombatCooldown(final Player player)
