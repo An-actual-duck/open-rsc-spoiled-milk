@@ -25,7 +25,9 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
 		beerIntroductionIsOneTimeAndRankSafe(data);
+		promotionAcknowledgementIsTypedAndIdempotent(data);
 		approvedShopDefinitionsHaveStableLaunchShape(data);
+		repeatablesAndHazardsUseDeclaredLaunchPolicy(data);
 		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
@@ -194,6 +196,17 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		assertTrue(rejected, "duplicate beer completion is rejected");
 	}
 
+	private static void promotionAcknowledgementIsTypedAndIdempotent(MonsterSlayerData data) {
+		Map<String, Integer> cursors = zeroCursors(data);
+		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		MonsterSlayerState.Snapshot promoted = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE,
+			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerState.Snapshot acknowledged = MonsterSlayerState.acknowledgePromotion(promoted, data, "falador");
+		assertTrue(acknowledged.isPromotionAcknowledged("falador", data), "promotion acknowledgement persisted in typed state");
+		equals(acknowledged, MonsterSlayerState.acknowledgePromotion(acknowledged, data, "falador"), "promotion acknowledgement is idempotent");
+	}
+
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
 		equals(6, data.getShops().size(), "six Slayer shops");
 		long[] capacityPrices = {42L, 75L, 70L, 58L, 135L, 140L};
@@ -209,6 +222,18 @@ public final class MonsterSlayerPlayerStateCharacterization {
 				reward.getCost().validateForShop(shop.getChallenge(), true);
 			}
 		}
+	}
+
+	private static void repeatablesAndHazardsUseDeclaredLaunchPolicy(MonsterSlayerData data) {
+		java.util.EnumSet<MonsterSlayerHazard> hazards = java.util.EnumSet.noneOf(MonsterSlayerHazard.class);
+		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			for (MonsterSlayerDefinitions.Task task : contact.getRepeatableTasks()) {
+				equals(1, task.getWeight(), "equal repeatable weight " + task.getKey());
+				hazards.addAll(task.getHazards());
+			}
+			for (MonsterSlayerDefinitions.Task task : contact.getMandatoryTasks()) hazards.addAll(task.getHazards());
+		}
+		for (MonsterSlayerHazard hazard : MonsterSlayerHazard.values()) assertTrue(hazards.contains(hazard), "declared hazard coverage " + hazard);
 	}
 
 	private static void headlessShopPreflightKeepsTypedCostsAndStockBounded(MonsterSlayerData data) {

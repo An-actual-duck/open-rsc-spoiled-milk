@@ -296,9 +296,12 @@ must not change live Combat Odyssey behavior while performing that sync.
 The approved initial kill-count and point-reward pass is now represented by the
 35-task `MonsterSlayer.json` ladder: Fledgling `38` total points, Initiate
 `67`, Veteran `62`, Elite `50`, Champion `121`, and Hero `128`. These remain
-playtest baseline values, not a permanent economy lock. Repeatables use their
-contact's approved target families and weighted deterministic selection; a
-contact previews the selected task's warning before it writes assignment state.
+playtest baseline values, not a permanent economy lock. Repeatables use equal
+launch weight `1` and an injected random source; a per-contact preview is
+reserved only long enough to make the warning and committed assignment
+identical, without making an account's first choice predictable. Hazards are
+typed definition metadata (desert heat, Wilderness, Prayer drain, poison, and
+dragon fire), never inferred from task-key text.
 
 ### Confirmed: Permanent Inventory-Capacity Shop Upgrades
 
@@ -307,6 +310,12 @@ The upgrade becomes available when that shop is unlocked, but it is not an
 automatic rank reward: the player must purchase it with that shop's approved
 native-challenge price. Initial prices and task rewards are implementation
 estimates to be tuned through playtesting, not inherited from Odyssey data.
+
+The accepted price baseline is Fledgling `42` (mandatory `38`, margin `4`),
+Initiate `75` (`67`, `8`), Veteran `70` (`62`, `8`), Elite `58` (`50`, `8`),
+Champion `135` (`121`, `14`), and Hero `140` (`128`, `12`). Every capacity
+price is native to its own tier and exceeds that tier's actual mandatory total
+by only a small repeatable-task margin.
 
 The six increments and cumulative capacities are fixed:
 
