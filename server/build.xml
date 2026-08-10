@@ -146,6 +146,34 @@
     <target name="test_combat_strict" depends="run_combat_characterization"
             description="Alias for the current-state combat characterization gate"/>
 
+    <target name="compile_monster_slayer_state_tests" depends="compile_combat_core">
+        <mkdir dir="${combat.build.test}"/>
+        <javac srcdir="${test.src}" destdir="${combat.build.test}" debug="on"
+               includes="com/openrsc/server/content/minigame/monsterslayer/**/*.java"
+               includeantruntime="false" target="${javac.target}"
+               source="${javac.source}" encoding="UTF-8">
+            <classpath>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+            <compilerarg line="${javac.lint} -Xmaxwarns ${javac.maxwarns}"/>
+        </javac>
+    </target>
+
+    <target name="test_monster_slayer_player_state" depends="compile_monster_slayer_state_tests"
+            description="Run Monster Slayer durable player-state characterization coverage">
+        <java classname="com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerPlayerStateCharacterization"
+              fork="true" failonerror="true" dir="${basedir}">
+            <classpath>
+                <pathelement location="${combat.build.test}"/>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+        <delete dir="${combat.build.core}"/>
+        <delete dir="${combat.build.test}"/>
+    </target>
+
     <property name="confFile" value="myworld" />
     <property name="coloredLogging" value="false" />
     <property name="benchmarkJvmArgs" value="" />
