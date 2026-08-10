@@ -26,6 +26,7 @@ public final class MonsterSlayerState {
 	private static final String MANDATORY_PREFIX = "monster_slayer_mandatory_";
 	private static final String TASKS_COMPLETED_KEY = "monster_slayer_tasks_completed";
 	private static final String INVENTORY_UPGRADES_KEY = "monster_slayer_inventory_upgrades";
+	private static final String PROMOTION_ACKNOWLEDGEMENTS_KEY = "monster_slayer_promotion_acknowledgements";
 	private static final String MIGRATION_VERSION_KEY = "monster_slayer_migration_version";
 	private static final String LEGACY_STATUS_KEY = "monster_slayer_legacy_status";
 	private static final String LEGACY_PRESTIGE_KEY = "monster_slayer_legacy_prestige";
@@ -58,6 +59,7 @@ public final class MonsterSlayerState {
 			readInteger(values, ACTIVE_KILLS_KEY, 0),
 			readLong(values, TASKS_COMPLETED_KEY, 0L),
 			readInteger(values, INVENTORY_UPGRADES_KEY, 0),
+			readInteger(values, PROMOTION_ACKNOWLEDGEMENTS_KEY, 0),
 			readInteger(values, MIGRATION_VERSION_KEY, 0),
 			LegacyStatus.fromCode(readInteger(values, LEGACY_STATUS_KEY, LegacyStatus.NONE.getCode())),
 			readInteger(values, LEGACY_PRESTIGE_KEY, 0)
@@ -96,6 +98,7 @@ public final class MonsterSlayerState {
 			}
 			cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
 			cache.set(INVENTORY_UPGRADES_KEY, snapshot.inventoryUpgrades);
+			cache.set(PROMOTION_ACKNOWLEDGEMENTS_KEY, snapshot.promotionAcknowledgements);
 			cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
 			cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
 			cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
@@ -114,7 +117,7 @@ public final class MonsterSlayerState {
 		List<String> keys = new ArrayList<String>();
 		Collections.addAll(keys, STATE_VERSION_KEY, INTRO_STAGE_KEY, RANK_KEY,
 			ACTIVE_TASK_KEY, ACTIVE_KILLS_KEY, TASKS_COMPLETED_KEY,
-			INVENTORY_UPGRADES_KEY, MIGRATION_VERSION_KEY, LEGACY_STATUS_KEY,
+			INVENTORY_UPGRADES_KEY, PROMOTION_ACKNOWLEDGEMENTS_KEY, MIGRATION_VERSION_KEY, LEGACY_STATUS_KEY,
 			LEGACY_PRESTIGE_KEY);
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) keys.add(balanceKey(challenge));
 		for (Contact contact : data.getContactsInChallengeOrder()) keys.add(cursorKey(contact.getKey()));
@@ -129,6 +132,19 @@ public final class MonsterSlayerState {
 		return new Snapshot(STATE_VERSION, 0, MonsterSlayerRank.UNSTAMPED,
 			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 0,
 			LegacyStatus.NONE, 0);
+	}
+
+	/** Records one promotion ceremony after the contact's mandatory route completed. */
+	public static Snapshot acknowledgePromotion(Snapshot current, MonsterSlayerData data, String contactKey) {
+		validate(current, data);
+		Contact contact = data.getContact(contactKey);
+		if (contact == null || !current.rank.isAtLeast(contact.getAwardedRank())
+			|| current.mandatoryCursors.get(contactKey).intValue() != contact.getMandatoryTasks().size()) {
+			throw new ValidationException("Monster Slayer promotion is not available");
+		}
+		int bit = 1 << contact.getChallenge().getCode();
+		if ((current.promotionAcknowledgements & bit) != 0) return current;
+		return current.withPromotionAcknowledged(bit);
 	}
 
 	/**
@@ -183,7 +199,7 @@ public final class MonsterSlayerState {
 		}
 		return new Snapshot(current.stateVersion, 1, current.rank, current.balances,
 			current.mandatoryCursors, current.activeTaskKey, current.activeKills,
-			current.tasksCompleted, current.inventoryUpgrades, current.migrationVersion,
+			current.tasksCompleted, current.inventoryUpgrades, current.promotionAcknowledgements, current.migrationVersion,
 			current.legacyStatus, current.legacyPrestige);
 	}
 
@@ -195,7 +211,7 @@ public final class MonsterSlayerState {
 		}
 		return new Snapshot(current.stateVersion, 2, MonsterSlayerRank.FLEDGLING,
 			current.balances, current.mandatoryCursors, null, 0, current.tasksCompleted,
-			current.inventoryUpgrades, current.migrationVersion, current.legacyStatus,
+			current.inventoryUpgrades, current.promotionAcknowledgements, current.migrationVersion, current.legacyStatus,
 			current.legacyPrestige);
 	}
 
@@ -219,6 +235,9 @@ public final class MonsterSlayerState {
 			throw new ValidationException("Monster Slayer lifetime completion count is negative");
 		}
 		InventoryUpgrade.validateMask(snapshot.inventoryUpgrades);
+		if ((snapshot.promotionAcknowledgements & ~0x3f) != 0) {
+			throw new ValidationException("Monster Slayer promotion acknowledgements contain unknown bits");
+		}
 		if (snapshot.migrationVersion < 0 || snapshot.migrationVersion > MIGRATION_VERSION) {
 			throw new ValidationException("Monster Slayer migration version is unsupported");
 		}
@@ -325,7 +344,7 @@ public final class MonsterSlayerState {
 		if (!spent.isSuccessful()) return spent;
 		Snapshot upgraded = new Snapshot(current.stateVersion, current.introStage, current.rank,
 			spent.snapshot.balances, current.mandatoryCursors, current.activeTaskKey, current.activeKills,
-			current.tasksCompleted, current.inventoryUpgrades | upgrade.bit, current.migrationVersion,
+			current.tasksCompleted, current.inventoryUpgrades | upgrade.bit, current.promotionAcknowledgements, current.migrationVersion,
 			current.legacyStatus, current.legacyPrestige);
 		validate(upgraded, data);
 		return SpendProposal.success(upgraded, spent.getReceipt());
@@ -395,7 +414,7 @@ public final class MonsterSlayerState {
 		}
 		Snapshot completed = new Snapshot(current.stateVersion, current.introStage, rank, balances,
 			cursors, null, 0, Math.addExact(current.tasksCompleted, 1L), current.inventoryUpgrades,
-			current.migrationVersion, current.legacyStatus, current.legacyPrestige);
+			current.promotionAcknowledgements, current.migrationVersion, current.legacyStatus, current.legacyPrestige);
 		validate(completed, data);
 		return TaskResult.completed(completed, task.getPointReward(), owner.contact.getChallenge());
 	}
@@ -618,6 +637,7 @@ public final class MonsterSlayerState {
 		private final int activeKills;
 		private final long tasksCompleted;
 		private final int inventoryUpgrades;
+		private final int promotionAcknowledgements;
 		private final int migrationVersion;
 		private final LegacyStatus legacyStatus;
 		private final int legacyPrestige;
@@ -638,20 +658,41 @@ public final class MonsterSlayerState {
 			this.activeKills = activeKills;
 			this.tasksCompleted = tasksCompleted;
 			this.inventoryUpgrades = inventoryUpgrades;
+			this.promotionAcknowledgements = 0;
 			this.migrationVersion = migrationVersion;
 			this.legacyStatus = legacyStatus;
 			this.legacyPrestige = legacyPrestige;
 		}
 
+		private Snapshot(int stateVersion, int introStage, MonsterSlayerRank rank,
+				MonsterSlayerBalances balances, Map<String, Integer> mandatoryCursors,
+				String activeTaskKey, int activeKills, long tasksCompleted, int inventoryUpgrades,
+				int promotionAcknowledgements, int migrationVersion,
+				LegacyStatus legacyStatus, int legacyPrestige) {
+			this.stateVersion = stateVersion; this.introStage = introStage; this.rank = rank;
+			this.balances = balances;
+			this.mandatoryCursors = mandatoryCursors == null ? Collections.<String, Integer>emptyMap()
+				: Collections.unmodifiableMap(new LinkedHashMap<String, Integer>(mandatoryCursors));
+			this.activeTaskKey = activeTaskKey; this.activeKills = activeKills; this.tasksCompleted = tasksCompleted;
+			this.inventoryUpgrades = inventoryUpgrades; this.promotionAcknowledgements = promotionAcknowledgements;
+			this.migrationVersion = migrationVersion; this.legacyStatus = legacyStatus; this.legacyPrestige = legacyPrestige;
+		}
+
 		private Snapshot withBalances(MonsterSlayerBalances updated) {
 			return new Snapshot(stateVersion, introStage, rank, updated, mandatoryCursors,
-				activeTaskKey, activeKills, tasksCompleted, inventoryUpgrades, migrationVersion,
+				activeTaskKey, activeKills, tasksCompleted, inventoryUpgrades, promotionAcknowledgements, migrationVersion,
 				legacyStatus, legacyPrestige);
+		}
+
+		private Snapshot withPromotionAcknowledged(int bit) {
+			return new Snapshot(stateVersion, introStage, rank, balances, mandatoryCursors,
+				activeTaskKey, activeKills, tasksCompleted, inventoryUpgrades,
+				promotionAcknowledgements | bit, migrationVersion, legacyStatus, legacyPrestige);
 		}
 
 		private Snapshot withActiveTask(String taskKey, int kills) {
 			return new Snapshot(stateVersion, introStage, rank, balances, mandatoryCursors,
-				taskKey, kills, tasksCompleted, inventoryUpgrades, migrationVersion,
+				taskKey, kills, tasksCompleted, inventoryUpgrades, promotionAcknowledgements, migrationVersion,
 				legacyStatus, legacyPrestige);
 		}
 
@@ -663,6 +704,10 @@ public final class MonsterSlayerState {
 		public int getActiveKills() { return activeKills; }
 		public long getTasksCompleted() { return tasksCompleted; }
 		public int getInventoryUpgrades() { return inventoryUpgrades; }
+		public boolean isPromotionAcknowledged(String contactKey, MonsterSlayerData data) {
+			Contact contact = data.getContact(contactKey);
+			return contact != null && (promotionAcknowledgements & (1 << contact.getChallenge().getCode())) != 0;
+		}
 		public int getDerivedInventoryCapacity() {
 			return InventoryUpgrade.derivedCapacity(inventoryUpgrades);
 		}

@@ -56,28 +56,28 @@
     {
       "key":"falador","npcId":846,"challenge":"FLEDGLING","requiredRank":"FLEDGLING","awardedRank":"INITIATE",
       "mandatoryTasks":[
-        {"key":"falador.goblins","familyKey":"goblin","requiredKills":40,"pointReward":2},{"key":"falador.young_giant_spiders","familyKey":"young_giant_spider","requiredKills":40,"pointReward":2},{"key":"falador.tougher_goblins","familyKey":"goblin","requiredKills":50,"pointReward":3},{"key":"falador.large_rats","familyKey":"rat","requiredKills":50,"pointReward":3},{"key":"falador.scorpions","familyKey":"scorpion","requiredKills":45,"pointReward":4},{"key":"falador.bears","familyKey":"bear","requiredKills":45,"pointReward":4},{"key":"falador.desert_wolves","familyKey":"desert_wolf","requiredKills":15,"pointReward":6},{"key":"falador.black_unicorns","familyKey":"black_unicorn","requiredKills":12,"pointReward":7},{"key":"falador.giant_spiders","familyKey":"giant_spider","requiredKills":10,"pointReward":7}
+        {"key":"falador.goblins","familyKey":"goblin","requiredKills":40,"pointReward":2},{"key":"falador.young_giant_spiders","familyKey":"young_giant_spider","requiredKills":40,"pointReward":2},{"key":"falador.tougher_goblins","familyKey":"goblin","requiredKills":50,"pointReward":3},{"key":"falador.large_rats","familyKey":"rat","requiredKills":50,"pointReward":3},{"key":"falador.scorpions","familyKey":"scorpion","requiredKills":45,"pointReward":4},{"key":"falador.bears","familyKey":"bear","requiredKills":45,"pointReward":4},{"key":"falador.desert_wolves","familyKey":"desert_wolf","requiredKills":15,"pointReward":6,"hazards":["DESERT_HEAT"]},{"key":"falador.black_unicorns","familyKey":"black_unicorn","requiredKills":12,"pointReward":7,"hazards":["WILDERNESS"]},{"key":"falador.giant_spiders","familyKey":"giant_spider","requiredKills":10,"pointReward":7,"hazards":["WILDERNESS"]}
       ],
       "repeatableTasks":[
-        {"key":"falador.goblins.repeatable","familyKey":"goblin","requiredKills":50,"pointReward":3,"weight":4},{"key":"falador.giant_spiders.repeatable","familyKey":"giant_spider","requiredKills":25,"pointReward":7,"weight":1}
+        {"key":"falador.goblins.repeatable","familyKey":"goblin","requiredKills":50,"pointReward":3,"weight":1},{"key":"falador.giant_spiders.repeatable","familyKey":"giant_spider","requiredKills":25,"pointReward":7,"weight":1,"hazards":["WILDERNESS"]}
       ]
     },
     {
       "key":"port_sarim","npcId":847,"challenge":"INITIATE","requiredRank":"INITIATE","awardedRank":"VETERAN",
       "mandatoryTasks":[
-        {"key":"port_sarim.giant_bats","familyKey":"giant_bat","requiredKills":55,"pointReward":5},{"key":"port_sarim.deadly_red_spiders","familyKey":"deadly_red_spider","requiredKills":50,"pointReward":6},{"key":"port_sarim.king_scorpions","familyKey":"king_scorpion","requiredKills":45,"pointReward":6},{"key":"port_sarim.white_wolves","familyKey":"white_wolf","requiredKills":45,"pointReward":7},{"key":"port_sarim.ugthankis","familyKey":"ugthanki","requiredKills":40,"pointReward":7},{"key":"port_sarim.animated_axes","familyKey":"animated_axe","requiredKills":35,"pointReward":8},{"key":"port_sarim.jungle_spiders","familyKey":"jungle_spider","requiredKills":35,"pointReward":8},{"key":"port_sarim.baby_blue_dragons","familyKey":"baby_blue_dragon","requiredKills":20,"pointReward":10},{"key":"port_sarim.shadow_spiders","familyKey":"shadow_spider","requiredKills":25,"pointReward":10}
+        {"key":"port_sarim.giant_bats","familyKey":"giant_bat","requiredKills":55,"pointReward":5},{"key":"port_sarim.deadly_red_spiders","familyKey":"deadly_red_spider","requiredKills":50,"pointReward":6},{"key":"port_sarim.king_scorpions","familyKey":"king_scorpion","requiredKills":45,"pointReward":6},{"key":"port_sarim.white_wolves","familyKey":"white_wolf","requiredKills":45,"pointReward":7},{"key":"port_sarim.ugthankis","familyKey":"ugthanki","requiredKills":40,"pointReward":7,"hazards":["DESERT_HEAT"]},{"key":"port_sarim.animated_axes","familyKey":"animated_axe","requiredKills":35,"pointReward":8,"hazards":["WILDERNESS"]},{"key":"port_sarim.jungle_spiders","familyKey":"jungle_spider","requiredKills":35,"pointReward":8},{"key":"port_sarim.baby_blue_dragons","familyKey":"baby_blue_dragon","requiredKills":20,"pointReward":10,"hazards":["DRAGON_FIRE"]},{"key":"port_sarim.shadow_spiders","familyKey":"shadow_spider","requiredKills":25,"pointReward":10,"hazards":["PRAYER_DRAIN"]}
       ],
       "repeatableTasks":[
-        {"key":"port_sarim.giant_bats.repeatable","familyKey":"giant_bat","requiredKills":50,"pointReward":5,"weight":3},{"key":"port_sarim.baby_blue_dragons.repeatable","familyKey":"baby_blue_dragon","requiredKills":15,"pointReward":10,"weight":1}
+        {"key":"port_sarim.giant_bats.repeatable","familyKey":"giant_bat","requiredKills":50,"pointReward":5,"weight":1},{"key":"port_sarim.baby_blue_dragons.repeatable","familyKey":"baby_blue_dragon","requiredKills":15,"pointReward":10,"weight":1,"hazards":["DRAGON_FIRE"]}
       ]
     },
     {
       "key":"brimhaven","npcId":848,"challenge":"VETERAN","requiredRank":"VETERAN","awardedRank":"ELITE",
       "mandatoryTasks":[
-        {"key":"brimhaven.jogres","familyKey":"jogre","requiredKills":45,"pointReward":9},{"key":"brimhaven.karamja_wolves","familyKey":"karamja_wolf","requiredKills":40,"pointReward":10},{"key":"brimhaven.moss_giants","familyKey":"moss_giant","requiredKills":40,"pointReward":10},{"key":"brimhaven.poison_spiders","familyKey":"poison_spider","requiredKills":35,"pointReward":11},{"key":"brimhaven.grey_wolves","familyKey":"grey_wolf","requiredKills":35,"pointReward":11},{"key":"brimhaven.ice_spiders","familyKey":"ice_spider","requiredKills":35,"pointReward":11}
+        {"key":"brimhaven.jogres","familyKey":"jogre","requiredKills":45,"pointReward":9},{"key":"brimhaven.karamja_wolves","familyKey":"karamja_wolf","requiredKills":40,"pointReward":10},{"key":"brimhaven.moss_giants","familyKey":"moss_giant","requiredKills":40,"pointReward":10},{"key":"brimhaven.poison_spiders","familyKey":"poison_spider","requiredKills":35,"pointReward":11,"hazards":["POISON"]},{"key":"brimhaven.grey_wolves","familyKey":"grey_wolf","requiredKills":35,"pointReward":11},{"key":"brimhaven.ice_spiders","familyKey":"ice_spider","requiredKills":35,"pointReward":11}
       ],
       "repeatableTasks":[
-        {"key":"brimhaven.jogres.repeatable","familyKey":"jogre","requiredKills":45,"pointReward":9,"weight":2},{"key":"brimhaven.poison_spiders.repeatable","familyKey":"poison_spider","requiredKills":30,"pointReward":11,"weight":1}
+        {"key":"brimhaven.jogres.repeatable","familyKey":"jogre","requiredKills":45,"pointReward":9,"weight":1},{"key":"brimhaven.poison_spiders.repeatable","familyKey":"poison_spider","requiredKills":30,"pointReward":11,"weight":1,"hazards":["POISON"]}
       ]
     },
     {
@@ -86,25 +86,25 @@
         {"key":"champions.ice_giants","familyKey":"ice_giant","requiredKills":40,"pointReward":14},{"key":"champions.lesser_demons","familyKey":"lesser_demon","requiredKills":30,"pointReward":16},{"key":"champions.greater_demons","familyKey":"greater_demon","requiredKills":20,"pointReward":20}
       ],
       "repeatableTasks":[
-        {"key":"champions.ice_giants.repeatable","familyKey":"ice_giant","requiredKills":35,"pointReward":14,"weight":2},{"key":"champions.greater_demons.repeatable","familyKey":"greater_demon","requiredKills":15,"pointReward":20,"weight":1}
+        {"key":"champions.ice_giants.repeatable","familyKey":"ice_giant","requiredKills":35,"pointReward":14,"weight":1},{"key":"champions.greater_demons.repeatable","familyKey":"greater_demon","requiredKills":15,"pointReward":20,"weight":1}
       ]
     },
     {
       "key":"heroes","npcId":850,"challenge":"CHAMPION","requiredRank":"CHAMPION","awardedRank":"HERO",
       "mandatoryTasks":[
-        {"key":"heroes.blue_dragons","familyKey":"blue_dragon","requiredKills":20,"pointReward":20},{"key":"heroes.fire_giants","familyKey":"fire_giant","requiredKills":30,"pointReward":22},{"key":"heroes.green_dragons","familyKey":"green_dragon","requiredKills":18,"pointReward":24},{"key":"heroes.hellhounds","familyKey":"hellhound","requiredKills":25,"pointReward":25},{"key":"heroes.red_dragons","familyKey":"red_dragon","requiredKills":12,"pointReward":30}
+        {"key":"heroes.blue_dragons","familyKey":"blue_dragon","requiredKills":20,"pointReward":20,"hazards":["DRAGON_FIRE"]},{"key":"heroes.fire_giants","familyKey":"fire_giant","requiredKills":30,"pointReward":22},{"key":"heroes.green_dragons","familyKey":"green_dragon","requiredKills":18,"pointReward":24,"hazards":["WILDERNESS","DRAGON_FIRE"]},{"key":"heroes.hellhounds","familyKey":"hellhound","requiredKills":25,"pointReward":25},{"key":"heroes.red_dragons","familyKey":"red_dragon","requiredKills":12,"pointReward":30,"hazards":["WILDERNESS","DRAGON_FIRE"]}
       ],
       "repeatableTasks":[
-        {"key":"heroes.blue_dragons.repeatable","familyKey":"blue_dragon","requiredKills":15,"pointReward":20,"weight":2},{"key":"heroes.red_dragons.repeatable","familyKey":"red_dragon","requiredKills":10,"pointReward":30,"weight":1}
+        {"key":"heroes.blue_dragons.repeatable","familyKey":"blue_dragon","requiredKills":15,"pointReward":20,"weight":1,"hazards":["DRAGON_FIRE"]},{"key":"heroes.red_dragons.repeatable","familyKey":"red_dragon","requiredKills":10,"pointReward":30,"weight":1,"hazards":["WILDERNESS","DRAGON_FIRE"]}
       ]
     },
     {
       "key":"legends","npcId":851,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
       "mandatoryTasks":[
-        {"key":"legends.black_demons","familyKey":"black_demon","requiredKills":20,"pointReward":30},{"key":"legends.black_dragons","familyKey":"black_dragon","requiredKills":10,"pointReward":38},{"key":"legends.king_black_dragon","familyKey":"king_black_dragon","requiredKills":1,"pointReward":60}
+        {"key":"legends.black_demons","familyKey":"black_demon","requiredKills":20,"pointReward":30},{"key":"legends.black_dragons","familyKey":"black_dragon","requiredKills":10,"pointReward":38,"hazards":["DRAGON_FIRE"]},{"key":"legends.king_black_dragon","familyKey":"king_black_dragon","requiredKills":1,"pointReward":60,"hazards":["DRAGON_FIRE"]}
       ],
       "repeatableTasks":[
-        {"key":"legends.black_demons.repeatable","familyKey":"black_demon","requiredKills":15,"pointReward":30,"weight":2},{"key":"legends.black_dragons.repeatable","familyKey":"black_dragon","requiredKills":8,"pointReward":38,"weight":1}
+        {"key":"legends.black_demons.repeatable","familyKey":"black_demon","requiredKills":15,"pointReward":30,"weight":1},{"key":"legends.black_dragons.repeatable","familyKey":"black_dragon","requiredKills":8,"pointReward":38,"weight":1,"hazards":["DRAGON_FIRE"]}
       ]
     }
   ],

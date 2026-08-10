@@ -40,15 +40,17 @@ public final class MonsterSlayerDefinitions {
 		private final long pointReward;
 		private final int weight;
 		private final boolean repeatable;
+		private final List<MonsterSlayerHazard> hazards;
 
 		Task(String key, String familyKey, int requiredKills, long pointReward,
-			 int weight, boolean repeatable) {
+			 int weight, boolean repeatable, List<MonsterSlayerHazard> hazards) {
 			this.key = key;
 			this.familyKey = familyKey;
 			this.requiredKills = requiredKills;
 			this.pointReward = pointReward;
 			this.weight = weight;
 			this.repeatable = repeatable;
+			this.hazards = immutableCopy(hazards);
 		}
 
 		public String getKey() {
@@ -74,6 +76,8 @@ public final class MonsterSlayerDefinitions {
 		public boolean isRepeatable() {
 			return repeatable;
 		}
+
+		public List<MonsterSlayerHazard> getHazards() { return hazards; }
 	}
 
 	public static final class Contact {

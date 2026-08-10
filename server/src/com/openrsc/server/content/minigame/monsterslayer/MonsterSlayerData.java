@@ -214,10 +214,11 @@ public final class MonsterSlayerData {
 		for (int index = 0; index < array.length(); index++) {
 			JSONObject object = array.getJSONObject(index);
 			if (repeatable) {
-				requireFields(object, "repeatable task", "key", "familyKey", "requiredKills",
-					"pointReward", "weight");
+				if (object.has("hazards")) requireFields(object, "repeatable task", "key", "familyKey", "requiredKills", "pointReward", "weight", "hazards");
+				else requireFields(object, "repeatable task", "key", "familyKey", "requiredKills", "pointReward", "weight");
 			} else {
-				requireFields(object, "mandatory task", "key", "familyKey", "requiredKills", "pointReward");
+				if (object.has("hazards")) requireFields(object, "mandatory task", "key", "familyKey", "requiredKills", "pointReward", "hazards");
+				else requireFields(object, "mandatory task", "key", "familyKey", "requiredKills", "pointReward");
 			}
 			String key = stableKey(object.getString("key"), "task");
 			if (!key.startsWith(contactKey + ".")) {
@@ -234,7 +235,17 @@ public final class MonsterSlayerData {
 			int weight = repeatable
 				? positiveBounded(object.getInt("weight"), MAX_TASK_WEIGHT, "weight for " + key)
 				: 0;
-			Task task = new Task(key, familyKey, requiredKills, pointReward, weight, repeatable);
+			if (repeatable && weight != 1) {
+				throw new IllegalArgumentException("Repeatable task " + key + " must use equal launch weight 1");
+			}
+			List<MonsterSlayerHazard> hazards = new ArrayList<MonsterSlayerHazard>();
+			JSONArray hazardArray = object.has("hazards") ? object.getJSONArray("hazards") : new JSONArray();
+			for (int hazardIndex = 0; hazardIndex < hazardArray.length(); hazardIndex++) {
+				MonsterSlayerHazard hazard = MonsterSlayerHazard.fromKey(hazardArray.getString(hazardIndex));
+				if (hazards.contains(hazard)) throw new IllegalArgumentException("Task " + key + " repeats hazard " + hazard);
+				hazards.add(hazard);
+			}
+			Task task = new Task(key, familyKey, requiredKills, pointReward, weight, repeatable, hazards);
 			putUnique(allTasks, key, task, "task");
 			result.add(task);
 		}
