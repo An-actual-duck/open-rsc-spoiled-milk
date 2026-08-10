@@ -162,6 +162,18 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(1, completion.getSnapshot().getMandatoryCursors().get("falador"), "cursor advanced once");
 		equals(MonsterSlayerState.TaskResult.Reason.NO_ACTIVE_TASK,
 			MonsterSlayerState.recordEligibleKill(completion.getSnapshot(), data, 19).getReason(), "duplicate callback rejected");
+
+		Map<String, Integer> repeatableCursors = zeroCursors(data);
+		repeatableCursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		MonsterSlayerState.Snapshot initiate = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE,
+			MonsterSlayerBalances.zero(), repeatableCursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		equals(MonsterSlayerState.TaskResult.Reason.INVALID_REPEATABLE,
+			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "port_sarim.pirates.repeatable").getReason(),
+			"cross-contact repeatable rejected");
+		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
+			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
+			"eligible repeatable assignment");
 	}
 
 	private static Map<String, Integer> zeroCursors(MonsterSlayerData data) {
