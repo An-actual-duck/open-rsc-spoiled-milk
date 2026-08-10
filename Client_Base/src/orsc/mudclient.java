@@ -21019,6 +21019,7 @@ public final class mudclient implements Runnable {
 		}
 		if (S_WANT_CUSTOM_SPRITES) {
 			loadExternalFoundryDragonNpcSprite();
+			loadExternalKingBlackDragonNpcSprite();
 			loadExternalEquipmentSprites();
 		}
 	}
@@ -21038,7 +21039,7 @@ public final class mudclient implements Runnable {
 					.getNumber();
 				continue label0;
 			}
-			if ("foundrydragon".equalsIgnoreCase(s)) {
+			if ("foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)) {
 				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
 				animationNumber += 27;
 				continue;
@@ -21948,6 +21949,12 @@ public final class mudclient implements Runnable {
 		}, "foundry-dragon-sprite-sheet.png");
 	}
 
+	private File getExternalKingBlackDragonSpriteSheet() {
+		return this.externalAssetLoader.findFirstFile(new String[] {
+			"dev/myworld/assets/sprites/npcs/king-black-dragon"
+		}, "king-black-dragon-sprite-sheet.png");
+	}
+
 	private void loadExternalFoundryDragonNpcSprite() {
 		final int[] foundryDragonColumnWidths = {228, 203, 263, 215, 218, 338};
 		orsc.graphics.two.SpriteArchive.Entry spriteEntry =
@@ -21970,6 +21977,37 @@ public final class mudclient implements Runnable {
 		}
 		AnimationDef animation = EntityHandler.getAnimationDef(
 			EntityHandler.getFoundryDragonAnimationId());
+		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
+			getSurface().sprites[animation.getNumber() + frame] =
+				spriteEntry.getFrames()[frame].getSprite();
+		}
+	}
+
+	private void loadExternalKingBlackDragonNpcSprite() {
+		// The supplied native sheet has six deliberately uneven columns. The
+		// bright-green dividers are source-layout guides, not KBD pixels.
+		final int[] kingBlackDragonColumnWidths = {230, 209, 263, 222, 208, 333};
+		final int greenGuideRgb = 0x6BEE36;
+		orsc.graphics.two.SpriteArchive.Entry spriteEntry =
+			this.externalAssetLoader.loadExternalNpcDirectionSheet(
+				getExternalKingBlackDragonSpriteSheet(), "kingblackdragon",
+				kingBlackDragonColumnWidths,
+				NpcDirectionalAnimationMapping.FRAMES_PER_DIRECTION, greenGuideRgb);
+		if (spriteEntry == null) {
+			System.out.println("Missing or invalid King Black Dragon NPC sprite sheet; using legacy sprite");
+			return;
+		}
+		EntityHandler.activateKingBlackDragonExternalVisual();
+		if (S_WANT_CUSTOM_SPRITES) {
+			Map<String, orsc.graphics.two.SpriteArchive.Entry> npcSprites =
+				getSurface().spriteTree.get("npc");
+			if (npcSprites != null) {
+				npcSprites.put("kingblackdragon", spriteEntry);
+			}
+			return;
+		}
+		AnimationDef animation = EntityHandler.getAnimationDef(
+			EntityHandler.getKingBlackDragonAnimationId());
 		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
 			getSurface().sprites[animation.getNumber() + frame] =
 				spriteEntry.getFrames()[frame].getSprite();
@@ -27707,6 +27745,7 @@ public final class mudclient implements Runnable {
 						this.loadEntitiesAuthentic();
 						if (!this.errorLoadingData) {
 							this.loadExternalFoundryDragonNpcSprite();
+							this.loadExternalKingBlackDragonNpcSprite();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
 							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
