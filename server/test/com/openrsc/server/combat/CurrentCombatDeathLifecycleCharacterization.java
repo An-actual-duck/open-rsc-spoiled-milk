@@ -199,15 +199,15 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		final Player corrupt = harness.player("msc" + x, x + 1, 790);
 		assertFalse(valid.getUUID().equals(corrupt.getUUID()), "fixture contributors have distinct identities");
 		MonsterSlayerState.write(valid.getCache(), data, activeRatState(data,
-			MonsterSlayerBalances.zero(), 99, 0L));
+			MonsterSlayerBalances.zero(), 39, 0L));
 		assertEquals(MonsterSlayerState.TaskResult.Reason.COMPLETED,
-			MonsterSlayerState.recordEligibleKill(MonsterSlayerState.read(valid.getCache(), data), data, 19)
-				.getReason(), "fixture task accepts a rat before the NPC lifecycle");
+			MonsterSlayerState.recordEligibleKill(MonsterSlayerState.read(valid.getCache(), data), data, 62)
+				.getReason(), "fixture task accepts a goblin before the NPC lifecycle");
 		corrupt.getCache().store("monster_slayer_balance_fledgling", "corrupt-evidence");
 		corrupt.getCache().store("unrelated_corrupt_evidence", "retain");
 		final Map<String, Object> rawCorrupt = new LinkedHashMap<String, Object>(
 			corrupt.getCache().getCacheMap());
-		final Npc rat = harness.npc(19, x + 2, 790);
+		final Npc rat = harness.npc(62, x + 2, 790);
 		final int hits = Math.max(1, rat.getDef().getHits());
 		if (corruptFirst) {
 			rat.addCombatDamage(corrupt, hits);
@@ -238,7 +238,7 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		final MonsterSlayerState.Snapshot completed = MonsterSlayerState.read(valid.getCache(), data);
 		assertEquals(1L, completed.getTasksCompleted(), "valid contributor completes once active="
 			+ completed.getActiveTaskKey() + " kills=" + completed.getActiveKills());
-		assertEquals(5L, completed.getBalances().get(MonsterSlayerChallenge.FLEDGLING),
+		assertEquals(2L, completed.getBalances().get(MonsterSlayerChallenge.FLEDGLING),
 			"valid contributor receives native points");
 		assertEquals(rawCorrupt, corrupt.getCache().getCacheMap(),
 			"quarantined contributor raw cache remains exact");
@@ -255,10 +255,10 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		final Player player = harness.player("mso" + x, x, 790);
 		final MonsterSlayerBalances balances = lifetimeOverflow
 			? MonsterSlayerBalances.zero() : balancesAtCap();
-		MonsterSlayerState.write(player.getCache(), data, activeRatState(data, balances, 99,
+		MonsterSlayerState.write(player.getCache(), data, activeRatState(data, balances, 39,
 			lifetimeOverflow ? Long.MAX_VALUE : 0L));
 		final Map<String, Object> before = new LinkedHashMap<String, Object>(player.getCache().getCacheMap());
-		final Npc rat = harness.npc(19, x + 1, 790);
+		final Npc rat = harness.npc(62, x + 1, 790);
 		final int hits = Math.max(1, rat.getDef().getHits());
 		rat.addCombatDamage(player, hits);
 		rat.getSkills().setLevel(Skill.HITS.id(), 0);
@@ -281,7 +281,7 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		final Player player = harness.player("msreject", 740, 790);
 		MonsterSlayerState.write(player.getCache(), data, activeRatState(data,
 			MonsterSlayerBalances.zero(), 0, 0L));
-		final Npc goblin = harness.npc(4, 741, 790);
+		final Npc goblin = harness.npc(19, 741, 790);
 		goblin.setShouldRespawn(false);
 		goblin.addCombatDamage(player, Math.max(1, goblin.getDef().getHits()));
 		goblin.getSkills().setLevel(Skill.HITS.id(), 0);
@@ -308,7 +308,7 @@ final class CurrentCombatDeathLifecycleCharacterization {
 			cursors.put(contact.getKey(), 0);
 		}
 		return MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING, balances, cursors,
-			"falador.rats", kills, completions, 0, 1,
+			"falador.goblins", kills, completions, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 	}
 
