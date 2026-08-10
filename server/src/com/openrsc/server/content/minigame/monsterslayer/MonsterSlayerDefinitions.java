@@ -130,11 +130,13 @@ public final class MonsterSlayerDefinitions {
 		private final String key;
 		private final MonsterSlayerChallenge challenge;
 		private final List<Category> categories;
+		private final CapacityUpgrade capacityUpgrade;
 
-		Shop(String key, MonsterSlayerChallenge challenge, List<Category> categories) {
+		Shop(String key, MonsterSlayerChallenge challenge, List<Category> categories, CapacityUpgrade capacityUpgrade) {
 			this.key = key;
 			this.challenge = challenge;
 			this.categories = immutableCopy(categories);
+			this.capacityUpgrade = capacityUpgrade;
 		}
 
 		public String getKey() {
@@ -148,6 +150,7 @@ public final class MonsterSlayerDefinitions {
 		public List<Category> getCategories() {
 			return categories;
 		}
+		public CapacityUpgrade getCapacityUpgrade() { return capacityUpgrade; }
 	}
 
 	public static final class Category {
@@ -185,12 +188,16 @@ public final class MonsterSlayerDefinitions {
 		private final int itemId;
 		private final int amount;
 		private final MonsterSlayerCost cost;
+		private final int stock;
+		private final int restockAmount;
 
-		Reward(String key, int itemId, int amount, MonsterSlayerCost cost) {
+		Reward(String key, int itemId, int amount, MonsterSlayerCost cost, int stock, int restockAmount) {
 			this.key = key;
 			this.itemId = itemId;
 			this.amount = amount;
 			this.cost = cost;
+			this.stock = stock;
+			this.restockAmount = restockAmount;
 		}
 
 		public String getKey() {
@@ -208,6 +215,8 @@ public final class MonsterSlayerDefinitions {
 		public MonsterSlayerCost getCost() {
 			return cost;
 		}
+		public int getStock() { return stock; }
+		public int getRestockAmount() { return restockAmount; }
 
 		public MonsterSlayerCost costFor(long quantity) {
 			return cost.multiply(quantity);
@@ -223,6 +232,14 @@ public final class MonsterSlayerDefinitions {
 				throw new IllegalArgumentException("Monster Slayer reward output overflow", ex);
 			}
 		}
+	}
+
+	public static final class CapacityUpgrade {
+		private final String key;
+		private final MonsterSlayerCost cost;
+		CapacityUpgrade(String key, MonsterSlayerCost cost) { this.key = key; this.cost = cost; }
+		public String getKey() { return key; }
+		public MonsterSlayerCost getCost() { return cost; }
 	}
 
 	private static <T> List<T> immutableCopy(List<T> values) {

@@ -24,6 +24,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		approvedShopDefinitionsHaveStableLaunchShape(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
 
@@ -176,6 +177,23 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
 			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
 			"eligible repeatable assignment");
+	}
+
+	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
+		equals(6, data.getShops().size(), "six Slayer shops");
+		long[] capacityPrices = {30L, 48L, 72L, 108L, 180L, 300L};
+		for (int index = 0; index < data.getShops().size(); index++) {
+			MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
+			equals(capacityPrices[index], shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
+				"capacity price " + shop.getKey());
+			equals(1, shop.getCategories().size(), "one approved category " + shop.getKey());
+			equals(4, shop.getCategories().get(0).getRewards().size(), "four consumables " + shop.getKey());
+			for (MonsterSlayerDefinitions.Reward reward : shop.getCategories().get(0).getRewards()) {
+				equals(10, reward.getStock(), "launch stock " + reward.getKey());
+				equals(1, reward.getRestockAmount(), "restock amount " + reward.getKey());
+				reward.getCost().validateForShop(shop.getChallenge(), true);
+			}
+		}
 	}
 
 	private static void cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(MonsterSlayerData data) {
