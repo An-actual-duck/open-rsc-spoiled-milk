@@ -132,6 +132,9 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
 
         f.run("ai-workspace.sh", "start", "ai-1", "fix/fixture-task")
         self.assertEqual(f.git("branch", "--show-current", cwd=slot).stdout.strip(), "fix/fixture-task")
+        guide = (slot / "AI_WORKSPACE.md").read_text(encoding="utf-8")
+        self.assertIn("Never accept World Editor, World Builder", guide)
+        self.assertIn("/home/justin/rsc-world-editor-runtime", guide)
         (slot / "untracked-preserved.txt").write_text("checkpoint me\n", encoding="utf-8")
 
         f.run("ai-workspace.sh", "checkpoint", "-m", "Checkpoint fixture", cwd=slot)

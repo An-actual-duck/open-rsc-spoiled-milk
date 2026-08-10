@@ -461,6 +461,7 @@ ai_generate_workspace_guide() {
     printf -- '- Phase: `%s`\n' "$phase"
     printf -- '- Branch: `%s`\n' "$branch"
     printf -- '- Checkpoint: `%s`\n\n' "$head"
+    printf 'Project boundary: this slot belongs only to Spoiled Milk/Core-Framework. Never accept World Editor, World Builder, runtime-provider, or provider-lock work here. Those tasks belong to `/home/justin/rsc-world-editor` or `/home/justin/rsc-world-editor-runtime` and their independent workers.\n\n'
     if [[ "$phase" == IDLE ]]; then
       printf 'This slot is idle. Do not edit files while HEAD is detached. From the manager checkout, assign a focused topic branch first:\n\n'
       printf '```bash\n./scripts/ai-workspace.sh start %s TYPE/short-task-name\n```\n' "$slot"

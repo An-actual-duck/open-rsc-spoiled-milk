@@ -45,6 +45,21 @@ build releases, or deploy. If work is dirty or confusing, preserve it with the
 contributor rescue command before cleanup. The beginner-safe workflow is in
 [`docs/workspaces/external-contributor.md`](docs/workspaces/external-contributor.md).
 
+## World Editor Project Boundary
+
+- RSC World Editor and its embedded client/server runtime are independent
+  projects. Their managers are `/home/justin/rsc-world-editor` and
+  `/home/justin/rsc-world-editor-runtime`; their workers use those names with
+  `-ai-1` through `-ai-3`.
+- Never activate a Core worker for a World Builder/Editor task, runtime-provider
+  correction, provider-lock request, or instruction originating from the World
+  Editor repository. Route it to the appropriate independent manager instead.
+- Never inspect or merge World Editor runtime work into Core `main`. The old
+  `world-builder/runtime/adaptive-v1` branch is migration history, not a Core
+  integration branch or a source of future assignments.
+- World Editor releases, candidates, dependency locks, provider tests, and
+  runtime workers are outside this manager's status and handoff duties.
+
 ## Public Server Shutdown Gate
 
 - Building, tagging, uploading, publishing, or being asked to "release" or
@@ -105,6 +120,8 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 7. For live activation, follow the Public Server Shutdown Gate above and
    `docs/workspaces/live-deployment.md`. `deploy-live-main.sh` refuses to change
    tracked live files while the public port is occupied.
+8. Reject World Editor and runtime-provider work at intake; do not borrow a
+   Core worker as a temporary provider worker.
 
 ## Preservation Rules
 

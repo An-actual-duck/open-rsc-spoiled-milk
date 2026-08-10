@@ -14,6 +14,19 @@ is an AI seat; it is not a category of work.
 Three workers plus the manager match the usual four concurrent AI sessions.
 Use fewer slots if fewer sessions are needed.
 
+## Project boundary
+
+These slots belong only to Spoiled Milk/Core-Framework. World Editor tooling
+uses `/home/justin/rsc-world-editor` and its own workers. Embedded World Editor
+client/server runtime work uses `/home/justin/rsc-world-editor-runtime` and its
+own workers. A World Editor provider-lock request, correction document, or
+handoff must be handled by those managers; it must never be assigned to or
+merged from a `Core-Framework-ai-*` slot.
+
+The historical `world-builder/runtime/adaptive-v1` branch is retained only as
+migration evidence. It is not part of Core `main`, not an active provider
+route, and not a reason for this manager to monitor World Editor work.
+
 For a single end-to-end explanation of the model, including why it works and
 how a remote co-developer fits into it, read
 [manager-worker-overview.md](manager-worker-overview.md).
