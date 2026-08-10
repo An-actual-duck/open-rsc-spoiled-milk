@@ -67,7 +67,7 @@ Core rules:
   reward's shop tier.
 - Each of the six challenge shops contains one permanent inventory-capacity
   upgrade. Buying all six grows the player's inventory from 30 slots to a
-  7-by-7, 49-slot inventory; the upgrade is purchased rather than granted
+  5-by-8, 40-slot inventory; the upgrade is purchased rather than granted
   automatically when the shop unlocks.
 - Higher contacts refuse assignment/shop access until the required rank and the
   host guild's normal access requirements are satisfied.
@@ -293,14 +293,14 @@ The six increments and cumulative capacities are fixed:
 
 | Shop/contact | Native challenge | Slots added | Resulting capacity |
 | --- | --- | ---: | ---: |
-| Rising Sun/Falador | Fledgling | 2 | 32 |
-| Port Sarim | Initiate | 2 | 34 |
-| Brimhaven | Veteran | 3 | 37 |
-| Champions Guild | Elite | 3 | 40 |
-| Heroes Guild | Champion | 4 | 44 |
-| Legends Guild | Hero | 5 | 49 |
+| Rising Sun/Falador | Fledgling | 1 | 31 |
+| Port Sarim | Initiate | 1 | 32 |
+| Brimhaven | Veteran | 1 | 33 |
+| Champions Guild | Elite | 2 | 35 |
+| Heroes Guild | Champion | 2 | 37 |
+| Legends Guild | Hero | 3 | 40 |
 
-The base capacity remains 30 and the final capacity is exactly 49. Upgrades are
+The base capacity remains 30 and the final capacity is exactly 40. Upgrades are
 independent permanent entitlements and must be purchased in shop order because
 higher shops are rank-gated. They are not items, cannot be traded, dropped,
 lost on death, refunded, or purchased more than once. A purchase does not need
@@ -317,7 +317,7 @@ an upgrade whose prerequisite shop is not unlocked, or a non-prefix purchase
 sequence are invalid state and must be diagnosed rather than silently granting
 space.
 
-The client inventory panel must expand to a 7-by-7 grid containing all 49 slot
+The client inventory panel must expand to a 5-by-8 grid containing all 40 slot
 positions. The first `current capacity` positions are active in deterministic
 display order. Every remaining position is drawn as a greyed-out locked slot
 so the player can see future capacity but cannot place, receive, select, drag,
@@ -331,7 +331,7 @@ including item grants, stack splitting, bank withdrawal, trading, shops,
 production, ground-item pickup, equipment removal, death/Ante handling,
 teleports or quest rewards that require space, persistence, and admin tools.
 The client/server inventory packets and release clients must accept and render
-up to 49 entries while remaining safe for a normal 30-slot player. A client UI
+up to 40 entries while remaining safe for a normal 30-slot player. A client UI
 change and a server capacity change must ship together; do not activate the
 shop reward while either side still truncates or assumes 30.
 
@@ -339,7 +339,7 @@ Required coverage includes every cumulative capacity above; one-time and
 out-of-order purchase rejection; atomic multi-balance deduction; reconnect and
 save/load persistence; full-inventory purchase; insertion at the new boundary;
 rejection beyond the current boundary; bank/trade/equipment/death flows at 30
-and 49 slots; locked-slot visuals and input rejection; layout at supported
+and 40 slots; locked-slot visuals and input rejection; layout at supported
 window/UI scales; and no item loss when a newer client observes an expanded
 inventory. A downgrade to a client or server that cannot represent the saved
 capacity must fail safely rather than truncate items.
@@ -1081,7 +1081,7 @@ Dialogue and kill handlers must not manipulate raw keys.
 | `monster_slayer_active_kills` | Integer | Bounded `0..requiredKills`; absent/zero when no active task. |
 | `monster_slayer_mandatory_<contact>` | Integer | Six keys storing the number of fixed tasks completed for that contact, bounded by that chain's data length. |
 | `monster_slayer_tasks_completed` | Long | Lifetime mandatory plus repeatable completion statistic; no rank authority. |
-| `monster_slayer_inventory_upgrades` | Integer | Stable six-bit entitlement mask for the ordered Fledgling through Hero shop upgrades. Capacity is derived from explicit shop-key bits and the fixed `2/2/3/3/4/5` increment table; no separate capacity cache is stored. |
+| `monster_slayer_inventory_upgrades` | Integer | Stable six-bit entitlement mask for the ordered Fledgling through Hero shop upgrades. Capacity is derived from explicit shop-key bits and the fixed `1/1/1/2/2/3` increment table; no separate capacity cache is stored. |
 | `monster_slayer_migration_version` | Integer | One-time Odyssey migration marker; version `1` for the rules below. |
 | `monster_slayer_legacy_status` | Integer | `0` none, `1` partial, `2` completed-unclaimed, `3` completed-claimed. Preserves future commemorative eligibility. |
 | `monster_slayer_legacy_prestige` | Integer | Nonnegative snapshot of `co_prestige`; historical statistic only. |
@@ -1102,7 +1102,7 @@ Invariants:
 - Task completion credits only the active definition's contact challenge. It
   cannot credit a caller-selected or higher balance.
 - Inventory capacity is derived from the validated shop-upgrade entitlement
-  mask and is bounded to `30..49`. Purchases are monotonic, one-time, and
+  mask and is bounded to `30..40`. Purchases are monotonic, one-time, and
   sequential by unlocked shop; rank alone never grants an upgrade.
 - Multi-cost spending first validates the reward/shop tier, quantity, checked
   component multiplication, and all six available balances against an
@@ -1254,6 +1254,37 @@ the scalar assumptions:
   validation and exact refund guarantees as an item reward, but its grant is a
   one-time entitlement mutation rather than an inventory item and therefore
   does not perform the ordinary free-slot check.
+
+### Confirmed: Initial Consumable Shop Stock
+
+The initial rollout has one full three-dose potion from each of the three
+Herblaw potion families and one crafted, non-fish, multi-stage food per shop.
+These are ordinary existing items, not certificates, and are intentionally
+useful alternatives to making the same supplies through Herblaw or Cooking.
+Their inclusion is approved; point-cost vectors and any future secondary stock
+remain a separate economy pass.
+
+| Shop/contact | Native currency | Full potion stock | Food stock | Food total healing |
+| --- | --- | --- | --- | ---: |
+| Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) |
+| Port Sarim | Initiate | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) |
+| Brimhaven | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) |
+| Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) |
+| Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) |
+| Legends Guild | Hero | Brawn v6 `3198`; Deftness v6 `3201`; Insight v6 `3204` | Pineapple pizza `750` | 20 (two halves) |
+
+`Brawn` supports Melee, Mining, Smithing, Woodcutting, and Hits; `Deftness`
+supports Ranged, Thieving, Crafting, Agility, and Fishing; and `Insight`
+supports Magic, Runecraft, Summoning, Cooking, and Prayer. Each listed potion
+is the existing full three-dose item. Food is deliberately ordered by total
+healing in clean two-point steps from 8 through 20, and every choice is a
+crafted pie, cake, or pizza that is consumed over multiple bites.
+
+The default reward unit is one full potion or one whole food item. The existing
+quantity selector may sell more than one unit only after the cost vector and
+output multiplication are verified atomically. No line above authorizes an
+unbounded shop stock, a certificate substitute, or a change to the underlying
+Cooking/Herblaw recipes.
 
 The current production interface cannot represent this faithfully:
 `ProductionSession` carries one scalar point value and each `ProductionRecipe`
