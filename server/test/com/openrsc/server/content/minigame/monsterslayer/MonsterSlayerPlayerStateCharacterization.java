@@ -25,6 +25,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
 		approvedShopDefinitionsHaveStableLaunchShape(data);
+		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
 
@@ -194,6 +195,26 @@ public final class MonsterSlayerPlayerStateCharacterization {
 				reward.getCost().validateForShop(shop.getChallenge(), true);
 			}
 		}
+	}
+
+	private static void headlessShopPreflightKeepsTypedCostsAndStockBounded(MonsterSlayerData data) {
+		MonsterSlayerShopService shops = new MonsterSlayerShopService(data);
+		Map<MonsterSlayerChallenge, Long> amounts = new LinkedHashMap<MonsterSlayerChallenge, Long>();
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
+		amounts.put(MonsterSlayerChallenge.FLEDGLING, 30L);
+		MonsterSlayerState.Snapshot player = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerBalances.of(amounts), zeroCursors(data), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerShopService.RedemptionProposal accepted = shops.proposeRedemption(player,
+			"falador", "falador.brawn", 2L);
+		assertTrue(accepted.isSuccessful(), "Fledgling typed redemption preflight");
+		equals(2, accepted.getOutput(), "typed output multiplication");
+		assertFalse(shops.proposeRedemption(player, "falador", "falador.brawn", 11L).isSuccessful(),
+			"stock rejects oversized quantity");
+		assertFalse(shops.proposeRedemption(player, "port_sarim", "port_sarim.brawn", 1L).isSuccessful(),
+			"rank gate rejects later shop");
+		shops.restock();
+		equals(10, shops.getStock("falador.brawn"), "restock keeps initial maximum");
 	}
 
 	private static void cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(MonsterSlayerData data) {
