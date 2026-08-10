@@ -3,6 +3,7 @@ package com.openrsc.server.plugins;
 import com.openrsc.server.Server;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
@@ -61,12 +62,18 @@ public final class MonsterSlayerContactsRouteTest {
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
 		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
 		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
-		new MonsterSlayerTaskService(data); // dialogue rendering requires a live client channel; exercise the acknowledged Task route here.
-		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.acknowledgePromotion(MonsterSlayerState.read(promoted.getCache(), data), data, "falador"));
+		final java.util.List<MonsterSlayerDialoguePlan.Step> rendered = new java.util.ArrayList<MonsterSlayerDialoguePlan.Step>();
+		routes = new MonsterSlayerContacts(new MonsterSlayerContacts.DialogueRenderer() { public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { rendered.add(step); return true; }});
 		routes.onOpNpc(promoted, new Npc(server.getWorld(), 846, 203, 600), "Task");
 		MonsterSlayerState.Snapshot after = MonsterSlayerState.read(promoted.getCache(), data);
 		assertTrue(after.isPromotionAcknowledged("falador", data), "promotion dialogue interaction is acknowledged once");
 		assertTrue(after.getActiveTaskKey() != null, "promotion resumes with a repeatable task");
+		assertEquals(MonsterSlayerDialoguePlan.promotion(0).size(), rendered.size(), "promotion renders every planned step");
+		for (int step = 0; step < rendered.size(); step++) assertTrue(rendered.get(step).getText().length() <= 255, "promotion line bound " + step);
+		Player aborted = player(server, "slayerrouteabort", 204, 600);
+		MonsterSlayerState.write(aborted.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		new MonsterSlayerContacts(new MonsterSlayerContacts.DialogueRenderer() { public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { return false; }}).onOpNpc(aborted, new Npc(server.getWorld(), 846, 205, 600), "Task");
+		assertFalse(MonsterSlayerState.read(aborted.getCache(), data).isPromotionAcknowledged("falador", data), "aborted promotion is never acknowledged");
 	}
 
 	private static void install(Server server, String name, Object value) throws Exception { Field field = server.getWorld().getClass().getDeclaredField(name); field.setAccessible(true); field.set(server.getWorld(), value); }
@@ -82,4 +89,5 @@ public final class MonsterSlayerContactsRouteTest {
 
 	private static void assertTrue(boolean value, String label) { if (!value) throw new AssertionError(label); }
 	private static void assertFalse(boolean value, String label) { assertTrue(!value, label); }
+	private static void assertEquals(int expected, int actual, String label) { if (expected != actual) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 }

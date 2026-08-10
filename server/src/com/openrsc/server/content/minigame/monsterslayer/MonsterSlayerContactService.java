@@ -29,7 +29,7 @@ public final class MonsterSlayerContactService {
 		this(data, tasks, random, new BeerTransaction() { public boolean consume(Player p) { return p.getCarriedItems().remove(new Item(ItemId.BEER.id())) != -1; } public boolean refund(Player p) { return p.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); }});
 	}
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, BeerTransaction beer) {
-		if (data == null || tasks == null || random == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
+		if (data == null || tasks == null || random == null || beer == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
 		this.data = data;
 		this.tasks = tasks;
 		this.random = random;
