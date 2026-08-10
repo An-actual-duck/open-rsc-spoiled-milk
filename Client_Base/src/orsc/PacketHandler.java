@@ -2145,13 +2145,10 @@ public class PacketHandler {
 					mc.party.expShared[id] = packetsIncoming.getLong(0);
 				}
 				mc.party.putParty(true);
-				mc.showPartyMenu();
-
 				break;
 			case 1: // Leave party
 				mc.party.putParty(false);
 				mc.party.update();
-				mc.hidePartyMenu();
 				break;
 			case 2: // Sent invitation
 				mc.party.getPartyInterface().initializeInvite(packetsIncoming.readString(), packetsIncoming.readString());

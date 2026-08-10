@@ -2,8 +2,6 @@ package com.openrsc.server.plugins.authentic.commands;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.clan.ClanInvite;
-import com.openrsc.server.content.party.PartyPlayer;
-import com.openrsc.server.content.party.PartyRank;
 import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.database.impl.mysql.queries.logging.ChatLog;
 import com.openrsc.server.event.custom.HolidayDropEvent;
@@ -88,8 +86,6 @@ public final class RegularPlayer implements CommandTrigger {
 			player.getParty().removePlayer(player.getUsername());
 		} else if (command.equalsIgnoreCase("joinclan")) {
 			sendClanRequest(player, args);
-		} else if (command.equalsIgnoreCase("shareexp")) {
-			toggleExperienceShare(player);
 		} else if (command.equalsIgnoreCase("onlinelist")) {
 			queryOnlinePlayers(player, args, false);
 		} else if (command.equalsIgnoreCase("onlinelistlocs")) {
@@ -713,23 +709,6 @@ public final class RegularPlayer implements CommandTrigger {
 				ClanInvite.createClanJoinRequest(player.getWorld().getClanManager().getClan(clanToJoin), player);
 			} else {
 				player.message(messagePrefix + "This clan is not accepting join requests");
-			}
-		}
-	}
-
-	private void toggleExperienceShare(Player player) {
-		if (player.getParty().getPlayer(player.getUsername()).getRank().equals(PartyRank.LEADER)) {
-			for (PartyPlayer m : player.getParty().getPlayers()) {
-				if (m.getShareExp() > 0) {
-					m.setShareExp(0);
-					m.getPlayerReference().message("@whi@[@blu@Party@whi@] - @whi@Exp Sharing has been @red@Disabled");
-					ActionSender.sendParty(m.getPlayerReference());
-				} else {
-					m.setShareExp(1);
-					ActionSender.sendParty(m.getPlayerReference());
-					m.getPlayerReference().message("@whi@[@blu@Party@whi@] - @whi@Exp Sharing has been @gre@Enabled");
-
-				}
 			}
 		}
 	}

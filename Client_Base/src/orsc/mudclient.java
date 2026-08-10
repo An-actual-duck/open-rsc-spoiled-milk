@@ -349,10 +349,6 @@ public final class mudclient implements Runnable {
 		{2, 4, 1, 1},
 		{3, 1, 1, 1}
 	};
-	private static final int MINIMAP_POSITION_TOP_RIGHT = 0;
-	private static final int MINIMAP_POSITION_BOTTOM_RIGHT = 1;
-	private static final int MINIMAP_POSITION_TOP_LEFT = 2;
-	private static final int MINIMAP_POSITION_BOTTOM_LEFT = 3;
 	private static final int MINIMAP_WIDTH = 156;
 	private static final int MINIMAP_HEIGHT = 152;
 	private static final int MINIMAP_FLOATING_BORDER = 2;
@@ -363,8 +359,12 @@ public final class mudclient implements Runnable {
 	private static final int HEALTH_HUD_COORDINATE_GAP = 16;
 	private static final int AUTO_ATTACK_HUD_SIZE = 16;
 	private static final int AUTO_ATTACK_HUD_GAP = 4;
-	private static final int POTION_HUD_X = 7;
-	private static final int POTION_HUD_Y = 36;
+	private static final int COMBAT_XP_ALLOCATION_X = 7;
+	private static final int COMBAT_XP_ALLOCATION_Y = 15;
+	private static final int COMBAT_XP_ALLOCATION_HEIGHT = 100;
+	private static final int POTION_HUD_X = COMBAT_XP_ALLOCATION_X;
+	private static final int POTION_HUD_Y = COMBAT_XP_ALLOCATION_Y
+		+ COMBAT_XP_ALLOCATION_HEIGHT + 8;
 	private static final int POTION_HUD_WIDTH = 76;
 	private static final int POTION_HUD_ROW_HEIGHT = 24;
 	private static final int POTION_HUD_ROWS_PER_COLUMN = 8;
@@ -380,9 +380,6 @@ public final class mudclient implements Runnable {
 	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
 	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
 	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
-	private static final String[] MINIMAP_POSITION_LABELS = new String[] {
-		"Top right", "Bottom right", "Top left", "Bottom left"
-	};
 	private static final int HIT_SPLAT_VISIBLE_THRESHOLD = 150;
 	private static final int HIT_SPLAT_WIDTH = 24;
 	private static final int HIT_SPLAT_HEIGHT = 14;
@@ -803,7 +800,8 @@ public final class mudclient implements Runnable {
 		"What is your favourite movie?"};
 	boolean drawMinimap = false;
 	private boolean minimapPinned = false;
-	private int minimapPosition = MINIMAP_POSITION_TOP_RIGHT;
+	/** A clicked non-map side-menu icon remains open until clicked again. */
+	private int pinnedSideMenuTab = 0;
 	private boolean showCoordinatesOverlay = true;
 	//private final int[] duelOpponentConfirmItemCount = new int[8];
 	//private final int[] duelOpponentItemId = new int[8];
@@ -989,7 +987,6 @@ public final class mudclient implements Runnable {
 	private int appearanceHairColour = 2;
 	private int characterBottomColour = 14;
 	private int controlButtonAppearanceSkin2;
-	private int m_nj = -1;
 	private int controlButtonAppearanceGender2;
 	private int cameraAutoMoveFrameCount = 0;
 	private int m_Oj = 0;
@@ -1095,6 +1092,7 @@ public final class mudclient implements Runnable {
 	private Panel panelClan;
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
 	private int panelSocialTab = 0;
+	private int socialPartySelectedMember = -1;
 	private PasswordChangeMode panelPasswordChange_Mode = PasswordChangeMode.NONE;
 	private String oldPassword;
 	private String newPassword;
@@ -1325,7 +1323,6 @@ public final class mudclient implements Runnable {
 	private NComponent mainComponent;
 	private NCustomComponent experienceOverlay;
 	private ProgressBarInterface batchProgressBar;
-	private PartyGUI partyMenu;
 	private BankPinInterface bankPinInterface;
 	private FishingTrawlerInterface fishingTrawlerInterface;
 	private String skillGuideChosen;
@@ -1449,14 +1446,10 @@ public final class mudclient implements Runnable {
 
 	private void loadMinimapSettings() {
 		Properties props = loadClientSettings();
-		String position = props.getProperty("minimap_position");
-		if (position != null) {
-			try {
-				this.minimapPosition = normalizeMinimapPosition(Integer.parseInt(position));
-			} catch (NumberFormatException ignored) {
-				this.minimapPosition = MINIMAP_POSITION_TOP_RIGHT;
-			}
-		}
+		// Map relocation was retired. Discard an old value instead of allowing
+		// a hidden off-corner minimap to remain after an upgrade.
+		if (props.remove("minimap_position") != null)
+			saveClientSettings(props);
 		this.minimapPinned = Boolean.parseBoolean(props.getProperty("minimap_pinned", "false"));
 		this.drawMinimap = this.minimapPinned;
 		this.showCoordinatesOverlay = Boolean.parseBoolean(props.getProperty("show_coordinates", "true"));
@@ -1464,7 +1457,7 @@ public final class mudclient implements Runnable {
 
 	private void saveMinimapSettings() {
 		Properties props = loadClientSettings();
-		props.setProperty("minimap_position", String.valueOf(this.minimapPosition));
+		props.remove("minimap_position");
 		props.setProperty("minimap_pinned", String.valueOf(this.minimapPinned));
 		saveClientSettings(props);
 	}
@@ -3438,24 +3431,6 @@ public final class mudclient implements Runnable {
 							if (null != SocialLists.friendListOld[var4]
 								&& SocialLists.friendListOld[var4].length() > 0) {
 								var9 = var9 + " (formerly " + SocialLists.friendListOld[var4] + ")";
-							}
-						}
-					}
-
-					if (this.panelSocialTab == 2 && this.m_nj != -1) {
-						if (this.m_nj >= 0) {
-							var4 = this.m_nj;
-							var9 = "Ignoring " + SocialLists.ignoreListArg0[var4];
-							if (SocialLists.ignoreListArg1[var4] != null
-								&& SocialLists.ignoreListArg1[var4].length() > 0) {
-								var9 = var9 + " (formerly " + SocialLists.ignoreListArg1[var4] + ")";
-							}
-						} else {
-							var4 = -(2 + this.m_nj);
-							var9 = "Click to remove " + SocialLists.ignoreListArg0[var4];
-							if (SocialLists.ignoreListArg1[var4] != null
-								&& SocialLists.ignoreListArg1[var4].length() > 0) {
-								var9 = var9 + " (formerly " + SocialLists.ignoreListArg1[var4] + ")";
 							}
 						}
 					}
@@ -6282,8 +6257,8 @@ public final class mudclient implements Runnable {
 	private void drawDialogCombatStyle() {
 		try {
 
-			byte sx = 7;
-			byte sy = 15;
+			int sx = COMBAT_XP_ALLOCATION_X;
+			int sy = COMBAT_XP_ALLOCATION_Y;
 			short width;
 			if (isAndroid()) {
 				width = 140;
@@ -12907,8 +12882,8 @@ public final class mudclient implements Runnable {
 			// if clans are enabled
 			if (S_WANT_CLANS) {
 				int clanTab;
-				int colorB;
-				int colorA = colorB = clanTab = GenUtil.buildColor(160, 160, 160);
+				int partyTab;
+				int colorA = clanTab = partyTab = GenUtil.buildColor(160, 160, 160);
 				if (this.panelSocialTab == 1) {
 					clanTab = GenUtil.buildColor(220, 220, 220);
 					if (C_CUSTOM_UI)
@@ -12923,12 +12898,12 @@ public final class mudclient implements Runnable {
 				} else if (this.panelSocialTab == 0) {
 					colorA = GenUtil.buildColor(220, 220, 220);
 				} else {
-					colorB = GenUtil.buildColor(220, 220, 220);
+					partyTab = GenUtil.buildColor(220, 220, 220);
 				}
 
 				this.getSurface().drawBoxAlpha(var3, var4, 65, 24, colorA, 128);
 				this.getSurface().drawBoxAlpha(var3 + var5 / 2 - 32, var4, 65, 24, clanTab, 128);
-				this.getSurface().drawBoxAlpha(var3 + var5 / 2 + 33, var4, 65, 24, colorB, 128);
+				this.getSurface().drawBoxAlpha(var3 + var5 / 2 + 33, var4, 65, 24, partyTab, 128);
 				this.getSurface().drawBoxAlpha(var3, (this.panelSocialTab == 1 && clan.inClan() ? 49 : 0) + 24 + var4, var5, (this.panelSocialTab == 1 ? 127 : var6 - 24), GenUtil.buildColor(220, 220, 220), 128);
 				this.getSurface().drawLineHoriz(var3, var4 + 24, var5, 0);
 				this.getSurface().drawLineVert(var5 / 2 + var3 - 33, 0 + var4, 0, 24);
@@ -12936,7 +12911,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawLineHoriz(var3, var4 + var6 - 16 + (this.panelSocialTab == 1 ? clan.inClan() ? 34 : -15 : 0), var5, 0);
 				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 - 16, "Friends", 0, 0, 4, 16 + var4);
 				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 + var5 / 2 - 33 - 16, "Clan", 0, 0, 4, var4 + 16);
-				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 + var5 / 2 + 16, "Ignore", 0, 0, 4, var4 + 16);
+				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 + var5 / 2 + 16, "Party", 0, 0, 4, var4 + 16);
 				this.panelSocial.clearList(this.controlSocialPanel);
 				this.panelClan.clearList(this.controlClanPanel);
 			} else { // clans disabled
@@ -12953,7 +12928,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawLineVert(var3 + var5 / 2, var4, 0, 24);
 				this.getSurface().drawLineHoriz(var3, var4 + var6 - 16, var5, 0);
 				this.getSurface().drawColoredStringCentered(var3 + var5 / 4, "Friends", 0, 0, 4, var4 + 16);
-				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2, "Ignore", 0, 0, 4, var4 + 16);
+				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2, "Party", 0, 0, 4, var4 + 16);
 				this.panelSocial.clearList(this.controlSocialPanel);
 			}
 
@@ -12986,26 +12961,6 @@ public final class mudclient implements Runnable {
 						colorKey + var11 + "~" + (getGameWidth() - 73) + "~" + "@whi@Remove         WWWWWWWWWW", 0,
 						null, null);
 				}
-				this.panelSocial.drawPanel();
-			}
-
-			// ignore tab
-			if (this.panelSocialTab == 2) {
-				for (index = 0; index < SocialLists.ignoreListCount; ++index) {
-					colorKey = SocialLists.ignoreListArg0[index];
-					int var16 = 0;
-
-					for (var12 = SocialLists.ignoreListArg0[index].length(); this.getSurface().stringWidth(1,
-						colorKey) > 120; colorKey = SocialLists.ignoreListArg0[index].substring(0, var12 - var16)
-						+ "...") {
-						++var16;
-					}
-
-					this.panelSocial.setListEntry(this.controlSocialPanel, index,
-						"@yel@" + colorKey + "~" + (getGameWidth() - 73) + "~" + "@whi@Remove         WWWWWWWWWW",
-						0, null, null);
-				}
-
 				this.panelSocial.drawPanel();
 			}
 
@@ -13112,7 +13067,10 @@ public final class mudclient implements Runnable {
 				this.panelClan.drawPanel();
 			}
 
-			this.m_nj = -1;
+			if (this.panelSocialTab == 2) {
+				this.drawPartySocialTab(var3, var4, var5, var6, var1);
+			}
+
 			this.m_wk = -1;
 			int var17;
 			if (this.panelSocialTab == 0) {
@@ -13138,29 +13096,6 @@ public final class mudclient implements Runnable {
 					var6 + var4 - 3);
 			}
 
-			if (this.panelSocialTab == 2) {
-				index = this.panelSocial.getControlSelectedListIndex(this.controlSocialPanel);
-				if (index >= 0 && this.mouseX < maxWidth) {
-					if (this.mouseX <= minWidth) {
-						this.m_nj = index;
-					} else {
-						this.m_nj = -(index + 2);
-					}
-				}
-
-				this.getSurface().drawColoredStringCentered(var3 + var5 / 2, "Blocking messages from:", 0xFFFFFF, 0, 1,
-					35 + var4);
-				if (this.mouseX > var3 && var3 + var5 > this.mouseX && var6 + var4 - 16 < this.mouseY
-					&& var6 + var4 > this.mouseY) {
-					var17 = 0xFFFF00;
-				} else {
-					var17 = 0xFFFFFF;
-				}
-
-				this.getSurface().drawColoredStringCentered(var5 / 2 + var3, "Click here to add a name", var17, 0, 1,
-					var4 + (var6 - 3));
-			}
-
 			/*
 			 int maxY = getUITabsY();
 				panelSettings.reposition(controlSettingPanel, var3 + 1, (maxY-240) + 16, 195, 184);
@@ -13176,7 +13111,7 @@ public final class mudclient implements Runnable {
 				if (C_CUSTOM_UI)
 					var15 = this.mouseY - var4;
 				var3 = 199 + this.mouseX - this.getSurface().width2;
-				// handle friends and ignores tab
+				// handle Friends tab
 				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 26) {
 					this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
@@ -13186,16 +13121,14 @@ public final class mudclient implements Runnable {
 								this.panelSocialTab = 0; // Show Friends Tab (Clicked)
 								this.panelSocial.resetList(this.controlSocialPanel);
 							} else if (var3 > 132 && var3 < 196 && (this.panelSocialTab == 1 || this.panelSocialTab == 0)) {
-								this.panelSocialTab = 2; // Show Ignore Tab (Clicked)
-								this.panelSocial.resetList(this.controlSocialPanel);
+								this.panelSocialTab = 2; // Show Party Tab (Clicked)
 							}
 						} else {
 							if (var3 < 98 && (this.panelSocialTab == 2 || this.panelSocialTab == 1)) {
 								this.panelSocialTab = 0; // Show Friends Tab (Clicked)
 								this.panelSocial.resetList(this.controlSocialPanel);
 							} else if (var3 > 98 && (this.panelSocialTab == 1 || this.panelSocialTab == 0)) {
-								this.panelSocialTab = 2; // Show Ignore Tab (Clicked)
-								this.panelSocial.resetList(this.controlSocialPanel);
+								this.panelSocialTab = 2; // Show Party Tab (Clicked)
 							}
 						}
 					}
@@ -13215,7 +13148,7 @@ public final class mudclient implements Runnable {
 				}
 
 				// interactions within the panels
-				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && (this.panelSocialTab == 0 || this.panelSocialTab == 2)) {
+				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && this.panelSocialTab == 0) {
 					if (C_CUSTOM_UI)
 						this.panelSocial.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 					else
@@ -13238,13 +13171,6 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					if (this.mouseButtonClick == 1 && this.panelSocialTab == 2) {
-						index = this.panelSocial.getControlSelectedListIndex(this.controlSocialPanel);
-						if (index >= 0 && this.mouseX < maxWidth && this.mouseX > minWidth) {
-							this.removeIgnore(SocialLists.ignoreList[index]); // Remove Ignore
-						}
-					}
-
 					// add friend
 					if (var15 > 166 && this.mouseButtonClick == 1 && this.panelSocialTab == 0) {
 						this.inputTextFinal = "";
@@ -13255,17 +13181,24 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					// add ignore
-					if (var15 > 166 && this.mouseButtonClick == 1 && this.panelSocialTab == 2) {
-						this.panelSocialPopup_Mode = SocialPopupMode.ADD_IGNORE;
-						this.inputTextCurrent = "";
-						this.inputTextFinal = "";
-						if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-							clientPort.drawKeyboard();
+					this.mouseButtonClick = 0;
+				}
+
+				// party interactions
+				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && this.panelSocialTab == 2) {
+					if (this.mouseButtonClick == 2 && this.socialPartySelectedMember >= 0
+						&& this.socialPartySelectedMember < SocialLists.partyListCount) {
+						final String memberName = this.party.username[this.socialPartySelectedMember];
+						if (memberName != null && !StringUtil.displayNameToKey(memberName)
+							.equals(StringUtil.displayNameToKey(this.localPlayer.accountName))) {
+							if (this.party.isAllowed(0)) {
+								this.menuCommon.addItem_With2Strings("Kick user", "@whi@" + memberName, memberName,
+									MenuItemAction.PARTY_MENU_KICK, memberName);
+							}
+							this.menuCommon.addItem_With2Strings("Message", "@whi@" + memberName, memberName,
+								MenuItemAction.CHAT_MESSAGE, memberName);
 						}
 					}
-
-					this.mouseButtonClick = 0;
 				}
 
 				// clan interactions
@@ -13313,6 +13246,84 @@ public final class mudclient implements Runnable {
 			}
 		} catch (RuntimeException npcLevel) {
 			throw GenUtil.makeThrowable(npcLevel, "client.VD(" + var1 + ',' + var2 + ')');
+		}
+	}
+
+	/** Compact party status and administration entry point in the Social tab. */
+	private void drawPartySocialTab(final int panelX, final int panelY, final int panelWidth,
+		final int panelHeight, final boolean acceptInput) {
+		this.socialPartySelectedMember = -1;
+		final int contentX = panelX + 6;
+		if (!this.party.inParty()) {
+			this.getSurface().drawString("You are not currently in a party", contentX, panelY + 50, 0xFFFFFF, 1);
+			this.getSurface().drawWrappedCenteredString(
+				"Create a party to invite up to four other players.", panelX + panelWidth / 2,
+				panelY + 74, panelWidth - 20, 1, 0xF38F30, true);
+			final int buttonX = panelX + 43;
+			final int buttonY = panelY + 116;
+			final boolean hover = this.mouseX >= buttonX && this.mouseX < buttonX + 110
+				&& this.mouseY >= buttonY && this.mouseY < buttonY + 26;
+			this.getSurface().drawBoxAlpha(buttonX, buttonY, 110, 26, hover ? 0x263751 : 0x0A2B56, 192);
+			this.getSurface().drawBoxBorder(buttonX, 110, buttonY, 26, 0xBFA086);
+			this.getSurface().drawString("Create Party", buttonX + 25, buttonY + 17, 0xFFFFFF, 1);
+			if (acceptInput && hover && this.mouseButtonClick == 1) {
+				this.party.showPartySetupInterface(false);
+				if (!C_CUSTOM_UI) {
+					this.showUiTab = 0;
+				}
+				this.mouseButtonClick = 0;
+			}
+			return;
+		}
+
+		final int memberCount = Math.min(5, SocialLists.partyListCount);
+		for (int member = 0; member < memberCount; member++) {
+			final int rowY = panelY + 43 + member * 16;
+			final boolean hover = this.mouseX >= panelX + 3 && this.mouseX < panelX + panelWidth - 3
+				&& this.mouseY >= rowY - 11 && this.mouseY < rowY + 5;
+			this.getSurface().drawBoxAlpha(panelX + 3, rowY - 11, panelWidth - 6, 15,
+				hover ? 0x263751 : 0x202020, 128);
+			final String name = this.party.username[member] == null ? "Unknown" : this.party.username[member];
+			final String color = this.party.onlinePartyMember[member] != 0 ? "@gre@" : "@red@";
+			this.getSurface().drawString(color + name + " @whi@-" + this.party.cbLvl[member], contentX, rowY, 0xFFFFFF, 1);
+			final int maximumHits = Math.max(1, this.party.maxHp[member]);
+			final int currentHits = Math.max(0, Math.min(maximumHits, this.party.curHp[member]));
+			final int healthWidth = currentHits * 52 / maximumHits;
+			this.getSurface().drawBox(panelX + 136, rowY - 9, 52, 5, 0xAA0000);
+			this.getSurface().drawBox(panelX + 136, rowY - 9, healthWidth, 5, 0x00AA00);
+			if (hover) {
+				this.socialPartySelectedMember = member;
+			}
+		}
+
+		final int buttonY = panelY + panelHeight - 40;
+		this.drawPartySocialButton(panelX + 4, buttonY, 58, "Invite", acceptInput, () -> {
+			this.showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+			if (!C_CUSTOM_UI) {
+				this.showUiTab = 0;
+			}
+		});
+		this.drawPartySocialButton(panelX + 69, buttonY, 58, "Manage", acceptInput, () -> {
+			this.party.showPartySetupInterface(true);
+			if (!C_CUSTOM_UI) {
+				this.showUiTab = 0;
+			}
+		});
+		this.drawPartySocialButton(panelX + 134, buttonY, 58, "Leave", acceptInput, () ->
+			this.party.getPartyInterface().sendPartyLeave());
+	}
+
+	private void drawPartySocialButton(final int x, final int y, final int width, final String label,
+		final boolean acceptInput, final Runnable action) {
+		final boolean hover = this.mouseX >= x && this.mouseX < x + width
+			&& this.mouseY >= y && this.mouseY < y + 24;
+		this.getSurface().drawBoxAlpha(x, y, width, 24, hover ? 0x263751 : 0x0A2B56, 192);
+		this.getSurface().drawBoxBorder(x, width, y, 24, 0xBFA086);
+		this.getSurface().drawString(label, x + (width - this.getSurface().stringWidth(1, label)) / 2, y + 16,
+			0xFFFFFF, 1);
+		if (acceptInput && hover && this.mouseButtonClick == 1) {
+			action.run();
+			this.mouseButtonClick = 0;
 		}
 	}
 
@@ -15105,17 +15116,16 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean isTopRightMinimapOverridden() {
-		return this.minimapPosition == MINIMAP_POSITION_TOP_RIGHT
-			&& this.showUiTab != 0
+		return this.showUiTab != 0
 			&& this.showUiTab != Config.MINIMAP_AND_COMPASS_TAB;
 	}
 
 	private boolean isFloatingMinimap() {
-		return C_CUSTOM_UI || this.minimapPinned || this.minimapPosition != MINIMAP_POSITION_TOP_RIGHT;
+		return C_CUSTOM_UI || this.minimapPinned;
 	}
 
 	private int[] getMinimapContentBounds(boolean floatingMinimap) {
-		if (!floatingMinimap && this.minimapPosition == MINIMAP_POSITION_TOP_RIGHT) {
+		if (!floatingMinimap) {
 			return new int[] {this.getSurface().width2 - 159, 36};
 		}
 		int margin = 8;
@@ -15123,38 +15133,12 @@ public final class mudclient implements Runnable {
 		int bottomY = C_CUSTOM_UI
 			? Math.max(topY, getUITabsY() - MINIMAP_HEIGHT - margin)
 			: Math.max(topY, this.getGameHeight() - MINIMAP_HEIGHT - margin);
-		int leftX = margin;
 		int rightX = this.getSurface().width2 - MINIMAP_WIDTH - margin;
-		switch (normalizeMinimapPosition(this.minimapPosition)) {
-			case MINIMAP_POSITION_BOTTOM_RIGHT:
-				return new int[] {rightX, bottomY};
-			case MINIMAP_POSITION_TOP_LEFT:
-				return new int[] {leftX, topY};
-			case MINIMAP_POSITION_BOTTOM_LEFT:
-				return new int[] {leftX, bottomY};
-			case MINIMAP_POSITION_TOP_RIGHT:
-			default:
-				return new int[] {rightX, topY};
-		}
-	}
-
-	private int normalizeMinimapPosition(int position) {
-		if (position < MINIMAP_POSITION_TOP_RIGHT || position > MINIMAP_POSITION_BOTTOM_LEFT) {
-			return MINIMAP_POSITION_TOP_RIGHT;
-		}
-		return position;
-	}
-
-	private String getMinimapPositionLabel() {
-		return MINIMAP_POSITION_LABELS[normalizeMinimapPosition(this.minimapPosition)];
-	}
-
-	private void cycleMinimapPosition() {
-		this.minimapPosition = normalizeMinimapPosition(this.minimapPosition + 1);
-		this.saveMinimapSettings();
+		return new int[] {rightX, topY};
 	}
 
 	private void togglePinnedMinimap() {
+		this.pinnedSideMenuTab = 0;
 		this.minimapPinned = !this.minimapPinned;
 		if (C_CUSTOM_UI) {
 			this.drawMinimap = this.minimapPinned;
@@ -15168,6 +15152,64 @@ public final class mudclient implements Runnable {
 	private void toggleCoordinatesOverlay() {
 		this.showCoordinatesOverlay = !this.showCoordinatesOverlay;
 		this.saveCoordinatesOverlaySetting();
+	}
+
+	private int getSideMenuTabAt(final int x, final int y, final int minY, final int maxY) {
+		if (this.getSurface() == null || y < minY || y >= maxY) {
+			return 0;
+		}
+		final int right = this.getSurface().width2;
+		if (x >= right - 35 && x < right - 3) {
+			return Config.INVENTORY_TAB;
+		}
+		if (x >= right - 68 && x < right - 36) {
+			return Config.MINIMAP_AND_COMPASS_TAB;
+		}
+		if (x >= right - 101 && x < right - 69) {
+			return Config.SKILLS_AND_QUESTS_TAB;
+		}
+		if (x >= right - 134 && x < right - 102) {
+			return Config.MAGIC_AND_PRAYER_TAB;
+		}
+		if (x >= right - 167 && x < right - 135) {
+			return Config.FRIENDS_TAB;
+		}
+		if (x >= right - 200 && x < right - 168) {
+			return Config.OPTIONS_TAB;
+		}
+		return 0;
+	}
+
+	private boolean handleSideMenuTabInteraction(final int tab) {
+		if (tab == 0) {
+			return false;
+		}
+		// The minimap retains its dedicated pin behavior below. Hovering it is
+		// still allowed to temporarily replace a pinned side tab, just like every
+		// other icon; clicking it switches to the minimap's own pin toggle.
+		if (tab == Config.MINIMAP_AND_COMPASS_TAB) {
+			return false;
+		}
+		if (this.mouseButtonClick == 1) {
+			if (this.pinnedSideMenuTab == tab) {
+				this.pinnedSideMenuTab = 0;
+				this.showUiTab = 0;
+			} else {
+				this.pinnedSideMenuTab = tab;
+				this.showUiTab = tab;
+			}
+		} else {
+			this.showUiTab = tab;
+		}
+		return true;
+	}
+
+	private boolean isCurrentSideMenuHomeTab() {
+		return this.pinnedSideMenuTab != 0 && this.showUiTab == this.pinnedSideMenuTab;
+	}
+
+	private void closeOrRestorePinnedSideMenu() {
+		this.showUiTab = this.pinnedSideMenuTab != 0 ? this.pinnedSideMenuTab : 0;
 	}
 
 	private void cycleSpellbookLayoutMode() {
@@ -15470,7 +15512,7 @@ public final class mudclient implements Runnable {
 			this.getSurface().drawString("Allow trade requests: @gre@<on>", 3 + baseX, y, 0xFFFFFF, 1);
 		}
 
-		//Display Online List
+		// Social lists
 		if (!this.insideTutorial) {
 			y += 25;
 			int textColor = 0xFFFFFF;
@@ -15480,15 +15522,13 @@ public final class mudclient implements Runnable {
 			}
 			if (S_WANT_PLAYER_COMMANDS)
 				this.getSurface().drawString("Display online list", (baseX + 3), y, textColor, 1);
-		}
-		if (party.inParty()) {
 			y += 14;
-			int textColor = 0xFFFFFF;
+			textColor = 0xFFFFFF;
 			if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12
 				&& this.mouseY < y + 4) {
 				textColor = 0xFFFF00;
 			}
-			this.getSurface().drawString("Leave Party", (baseX + 3), y, textColor, 1);
+			this.getSurface().drawString("View ignored list", (baseX + 3), y, textColor, 1);
 		}
 
 		// skip tutorial or exit the black hole menu option
@@ -15581,8 +15621,6 @@ public final class mudclient implements Runnable {
 		} else {
 			index = addSettingsRow(index, "@whi@Mouse buttons - @gre@Two", 1);
 		}
-
-		index = addSettingsRow(index, "@whi@Minimap position - @gre@" + this.getMinimapPositionLabel(), 50);
 
 		index = addSettingsRow(index,
 			"@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"), 51);
@@ -16136,10 +16174,6 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().finishPacket();
 		}
 
-		if (settingIndex == 50 && this.mouseButtonClick == 1) {
-			this.cycleMinimapPosition();
-		}
-
 		if (settingIndex == 51 && this.mouseButtonClick == 1) {
 			this.toggleCoordinatesOverlay();
 		}
@@ -16488,22 +16522,20 @@ public final class mudclient implements Runnable {
 		}
 
 		// handle online list click
-		if (S_WANT_PLAYER_COMMANDS && !this.insideTutorial) {
+		if (!this.insideTutorial) {
 			yFromTopDistance += 25;
-			if (this.mouseX > var6 && this.mouseX < var6 + var5
+			if (S_WANT_PLAYER_COMMANDS && this.mouseX > var6 && this.mouseX < var6 + var5
 				&& yFromTopDistance - 18 < this.mouseY && this.mouseY < yFromTopDistance + 7 && this.mouseButtonClick == 1) {
 				this.sendCommandString("onlinelist");
 			}
 		}
 
-		// handle leave party click
-		if (S_WANT_PARTIES) {
-			if (party.inParty()) {
-				yFromTopDistance += 14;
-				if (this.mouseX > var6 && this.mouseX < var6 + var5
-					&& yFromTopDistance - 5 < this.mouseY && this.mouseY < yFromTopDistance + 10 && this.mouseButtonClick == 1) {
-					this.sendCommandString("leaveparty");
-				}
+		if (!this.insideTutorial) {
+			yFromTopDistance += 14;
+			if (this.mouseX > var6 && this.mouseX < var6 + var5
+				&& yFromTopDistance - 12 < this.mouseY && this.mouseY < yFromTopDistance + 4
+				&& this.mouseButtonClick == 1) {
+				this.showIgnoredList();
 			}
 		}
 
@@ -16670,10 +16702,6 @@ public final class mudclient implements Runnable {
 		}
 
 		y += 15;
-		this.getSurface().drawString("@whi@Minimap position - @gre@" + this.getMinimapPositionLabel(),
-			3 + baseX, y, 0, 1);
-
-		y += 15;
 		this.getSurface().drawString("@whi@Coordinates - " + (this.showCoordinatesOverlay ? "@gre@On" : "@red@Off"),
 			3 + baseX, y, 0, 1);
 
@@ -16822,12 +16850,6 @@ public final class mudclient implements Runnable {
 			this.packetHandler.getClientStream().bufferBits.putByte(2);
 			this.packetHandler.getClientStream().bufferBits.putByte(optionSoundDisabled ? 1 : 0);
 			this.packetHandler.getClientStream().finishPacket();
-		}
-
-		yFromTopDistance += 15;
-		if (this.mouseX > var6 && this.mouseX < var5 + var6 && this.mouseY > yFromTopDistance - 12
-			&& 4 + yFromTopDistance > this.mouseY && this.mouseButtonClick == 1) {
-			this.cycleMinimapPosition();
 		}
 
 		yFromTopDistance += 15;
@@ -20551,6 +20573,10 @@ public final class mudclient implements Runnable {
 			&& this.mouseY >= 3
 			&& this.mouseY < 35;
 		try {
+			int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35);
+			if (this.handleSideMenuTabInteraction(requestedTab)) {
+				return clickedMenuBar;
+			}
 			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= 3
 				&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < 35) {
 				this.showUiTab = Config.INVENTORY_TAB;
@@ -20632,44 +20658,44 @@ public final class mudclient implements Runnable {
 			}
 
 			if (!S_WANT_EQUIPMENT_TAB) {
-				if (this.showUiTab == Config.INVENTORY_TAB
+				if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab()
 					&& (this.mouseX < this.getSurface().width2 - 248 || 36 + this.m_cl / 5 * 34 < this.mouseY)) {
-					this.showUiTab = 0;
+					this.closeOrRestorePinnedSideMenu();
 				}
 			} else {
-				if (this.showUiTab == Config.INVENTORY_TAB && this.tabEquipmentIndex == 0
+				if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab() && this.tabEquipmentIndex == 0
 					&& (this.mouseX < this.getSurface().width2 - 248 || 90 + this.m_cl / 5 * 34 < this.mouseY)) {
-					this.showUiTab = 0;
-				} else if (this.showUiTab == Config.INVENTORY_TAB && this.tabEquipmentIndex == 1
+					this.closeOrRestorePinnedSideMenu();
+				} else if (this.showUiTab == Config.INVENTORY_TAB && !this.isCurrentSideMenuHomeTab() && this.tabEquipmentIndex == 1
 					&& (this.mouseX < this.getSurface().width2 - 248 || 90 + this.m_cl / 5 * 34 < this.mouseY)) {
-					this.showUiTab = 0;
+					this.closeOrRestorePinnedSideMenu();
 				}
 			}
 
-			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
-				this.showUiTab = 0;
+			if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 324)) {
+				this.closeOrRestorePinnedSideMenu();
 			}
 
 			// If we are on Android, this area needs to be larger in the Y direction for the "cast last spell" box
-			if (this.showUiTab == MAGIC_AND_PRAYER_TAB) {
+			if (this.showUiTab == MAGIC_AND_PRAYER_TAB && !this.isCurrentSideMenuHomeTab()) {
 				if (isAndroid()) {
 					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 300) {
-						this.showUiTab = 0;
+						this.closeOrRestorePinnedSideMenu();
 					}
 				} else {
 					if (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 240) {
-						this.showUiTab = 0;
+						this.closeOrRestorePinnedSideMenu();
 					}
 				}
 			}
 
-			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || this.showUiTab == Config.FRIENDS_TAB)
+			if ((this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB || (this.showUiTab == Config.FRIENDS_TAB && !this.isCurrentSideMenuHomeTab()))
 				&& (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > (this.panelSocialTab == 1 ? 307 : 240))) {
-				this.showUiTab = 0;
+				this.closeOrRestorePinnedSideMenu();
 			}
 
-			if (this.showUiTab == Config.OPTIONS_TAB && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
-				this.showUiTab = 0;
+			if (this.showUiTab == Config.OPTIONS_TAB && !this.isCurrentSideMenuHomeTab() && (this.getSurface().width2 - 199 > this.mouseX || this.mouseY > 325)) {
+				this.closeOrRestorePinnedSideMenu();
 			}
 
 		} catch (RuntimeException var3) {
@@ -20685,6 +20711,10 @@ public final class mudclient implements Runnable {
 		if (!clicked)
 			return false;
 		try {
+			int requestedTab = this.getSideMenuTabAt(this.mouseX, this.mouseY, minY, maxY);
+			if (this.handleSideMenuTabInteraction(requestedTab)) {
+				return true;
+			}
 			if (this.showUiTab == 0 && this.mouseX >= this.getSurface().width2 - 35 && this.mouseY >= minY
 				&& this.mouseX < this.getSurface().width2 - 3 && this.mouseY < maxY) {
 				this.showUiTab = Config.INVENTORY_TAB;
@@ -23767,7 +23797,7 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void removeIgnore(String name) {
+	public void removeIgnore(String name) {
 		try {
 
 			String findKey = StringUtil.displayNameToKey(name);
@@ -24785,14 +24815,6 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	public final void hidePartyMenu() {
-		partyMenu.hide();
-	}
-
-	public final void showPartyMenu() {
-		partyMenu.show();
-	}
-
 	public final void initializeBatchProgressVariables(int repeatFor, int delay) {
 		batchProgressBar.initVariables(repeatFor, delay);
 	}
@@ -24815,6 +24837,11 @@ public final class mudclient implements Runnable {
 
 	public OnlineListInterface getOnlineList() {
 		return onlineList;
+	}
+
+	/** Opens the same compact list presentation used for online players. */
+	public void showIgnoredList() {
+		this.onlineList.showIgnoredUsers(SocialLists.ignoreListArg0, SocialLists.ignoreListCount);
 	}
 
 	public FishingTrawlerInterface getFishingTrawlerInterface() {
@@ -27558,9 +27585,6 @@ public final class mudclient implements Runnable {
 
 				fishingTrawlerInterface = new FishingTrawlerInterface(this);
 				mainComponent.addComponent(fishingTrawlerInterface);
-
-				partyMenu = new PartyGUI(this);
-				mainComponent.addComponent(partyMenu.getComponent());
 
 				if (S_BATCH_PROGRESSION) {
 					batchProgressBar = new ProgressBarInterface(this);

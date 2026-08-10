@@ -41,7 +41,7 @@ public final class PartyInterface {
 	private boolean visible;
 	private boolean menu_visible = false;
 	private String invitationBy = null;
-	private String[] partyMateTable = {"Username", "Rank", "HP", "Cb Lvl", "XP Shared"};
+	private String[] partyMateTable = {"Username", "Rank", "HP", "Cb Lvl"};
 	private Menu rightClickMenu;
 
 	PartyInterface(mudclient mc) {
@@ -114,7 +114,7 @@ public final class PartyInterface {
 			graphics.drawBoxBorder(x + 3, leftBoxW, y + 48 + 11, leftBoxH + 59, 0x5F5147);
 		}
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < partyMateTable.length; i++) {
 			if (i == 0) {
 				graphics.drawBoxAlpha(tableBox, y + 48 + 11 + 2, tableBoxW + 69, 20, 0x432C26, 192); //5F5147
 				graphics.drawBoxBorder(tableBox, tableBoxW + 69, y + 48 + 11 + 2, 20, 0x4C4445);
@@ -169,17 +169,11 @@ public final class PartyInterface {
 			graphics.drawColoredString(newX + 3 + 137, newY + 16, "" + mc.party.getPartyRankNames(mc.party.partyRank[i]), 2, 0xffffff, 0);
 			graphics.drawColoredString(newX + 3 + 135 + 67, newY + 16, "" + mc.party.curHp[i] + "/" + mc.party.maxHp[i], 2, 0xffffff, 0);
 			graphics.drawColoredString(newX + 3 + 135 + 67 + 67, newY + 16, "" + mc.party.getCbLvl(i), 2, 0xffffff, 0);
-			graphics.drawColoredString(newX + 3 + 135 + 67 + 67 + 67, newY + 16, "" + mc.party.getExpShared(i), 2, 0xffffff, 0);
 			newY += boxHeight - 1;
 		}
 
 
 		graphics.drawString("Total partymates: (" + showing + " / 5)", newX, y + 55, 0xEFB063, 0);
-		if (mc.party.shareExp[0] == 0) {
-			graphics.drawString("Share Exp: @red@OFF", newX + 175, y + 55, 0xEFB063, 0);
-		} else {
-			graphics.drawString("Share Exp: @gre@ON", newX + 175, y + 55, 0xEFB063, 0);
-		}
 		if (selectedPartyMate != -1 && mc.party.isAllowed(0)) {
 			graphics.drawString("Settings for: " + mc.party.username[selectedPartyMate], newX, y + 180, 0xB39684, 0);
 			drawSubmitButton(graphics, newX + 250, y + 194, 130, 28, 18, 1, "Kick user", false, new ButtonHandler() {
@@ -268,29 +262,13 @@ public final class PartyInterface {
 		graphics.drawColoredStringCentered(width / 2 + x, "Party Settings", 0xE5D8C0, 0, 1, y + 12);
 		graphics.drawLineHoriz(x, y + 43, width, 0x6E5D4E);
 		// CONTENT
-		if (!mc.party.inParty()) {
-			drawButton(graphics, x + 3, y + 18, 125, 22, "Party Search", this.partyActivePanel == 3, new ButtonHandler() {
-				@Override
-				void handle() {
-					partyActivePanel = 3;
-					resetAll();
-					sendPartySearch();
-				}
-			});
-		} else {
+		if (mc.party.inParty()) {
 			if (mc.party.inParty()) {
 				drawButton(graphics, x + 3, y + 18, 125, 22, "Partymates", partyActivePanel == 2, new ButtonHandler() {
 					@Override
 					void handle() {
 						partyActivePanel = 2;
 						resetAll();
-					}
-				});
-				drawButton(graphics, x + 3 + (mc.party.isPartyLeader() ? 256 : 128), y + 18, (mc.party.isPartyLeader() ? 146 : 146), 22, "Party Stats / Challenges", false, new ButtonHandler() {
-					@Override
-					void handle() {
-						// not yet implemented...
-						setVisible(false);
 					}
 				});
 				if (mc.party.isAllowed(1) && !mc.party.isPartyLeader()) {
@@ -538,19 +516,7 @@ public final class PartyInterface {
 						"General+", 2);
 				}
 			});
-			drawSubmitButton(graphics, x + 9, y + 170, 184, 32, 14, 1, "Share Exp", false, new ButtonHandler() {
-				@Override
-				void handle() {
-					getClient().sendCommandString("shareexp");
-				}
-			});
-			if (mc.party.shareExp[0] > 0) {
-				graphics.drawWrappedCenteredString("Yes ", x + 98, y + 197, 184, 1, 0xD9CD98, false);
-			} else {
-				graphics.drawWrappedCenteredString("No", x + 98, y + 197, 184, 1, 0xD9CD98, false);
-			}
-
-			graphics.drawWrappedCenteredString("Right-click on a box to change options.", x + 101, y + 214, 175, 0, 0xD9CD98, false);
+			graphics.drawWrappedCenteredString("Right-click on a box to change options.", x + 101, y + 190, 175, 0, 0xD9CD98, false);
 
 			drawSubmitButton(graphics, x + 235, y + 54, 146, 28, 18, 1, "Invite to Party", false, new ButtonHandler() {
 				@Override

@@ -16,7 +16,6 @@
 - `::p message` - Send a party chat message.
 - `::partyaccept` - Accept a party invite.
 - `::leaveparty` - Leave your current party.
-- `::shareexp` - Toggle shared experience for the party.
 - `::c message` - Send a clan chat message.
 - `::claninvite player` - Invite a player to your clan.
 - `::clanaccept` - Accept a clan invite.
@@ -62,5 +61,4 @@
 
 - NPC drops are personal.
 - Everyone who deals damage to an NPC can receive their own drop roll.
-- Party loot sharing does not need to be toggled on.
 - Summon damage counts toward the summon owner's damage credit.

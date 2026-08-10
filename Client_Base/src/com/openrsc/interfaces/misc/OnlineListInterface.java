@@ -19,6 +19,7 @@ public class OnlineListInterface extends NComponent {
 	private NRightClickMenu rightClickMenu;
 	private NComponent userListContainer;
 	private NComponent titleText;
+	private boolean ignoredList;
 
 	public OnlineListInterface(mudclient client) {
 		super(client);
@@ -84,6 +85,14 @@ public class OnlineListInterface extends NComponent {
 	}
 
 	public void addOnlineUser(final String user, final int crownID, String location, boolean isLast) {
+		addUser(user, crownID, location);
+	}
+
+	public void addIgnoredUser(final String user) {
+		addUser(user, 0, "");
+	}
+
+	private void addUser(final String user, final int crownID, String location) {
 		String text = user;
 		if (!location.equals("")) {
 			text += " (" + location + ")";
@@ -131,6 +140,17 @@ public class OnlineListInterface extends NComponent {
 							.replace(", ", "")
 							.replaceAll("\\(.*\\)", "")
 							.replaceAll(" ", "_");
+						if (ignoredList) {
+							rightClickMenu.createOption("Remove from list", new MenuAction() {
+								@Override
+								public void action() {
+									getClient().removeIgnore(username);
+									getClient().showIgnoredList();
+								}
+							});
+							rightClickMenu.show(userComp.x, userComp.y);
+							return true;
+						}
 						NRightClickMenu staffMenu = new NRightClickMenu(OnlineListInterface.this);
 
 						// Moderator menu options
@@ -282,13 +302,26 @@ public class OnlineListInterface extends NComponent {
 
 			currentY += textHeight;
 		}
-		titleText.setText("Online Players: " + userListContainer.subComponents().size());
+		titleText.setText((ignoredList ? "Ignored Players: " : "Online Players: ")
+			+ userListContainer.subComponents().size());
 
 		panel.drawPanel();
 	}
 
 	public void reset() {
 		userListContainer.subComponents().clear();
+		ignoredList = false;
+	}
+
+	public void showIgnoredUsers(final String[] ignoredUsers, final int count) {
+		reset();
+		ignoredList = true;
+		for (int i = 0; i < count; i++) {
+			if (ignoredUsers[i] != null && !ignoredUsers[i].isEmpty()) {
+				addIgnoredUser(ignoredUsers[i]);
+			}
+		}
+		setVisible(true);
 	}
 
 	private void anchorToBottomRight() {

@@ -118,12 +118,8 @@ public class PartyInvite {
 				+ " %"
 				+ "You have successfully invited " + invited.getUsername() + " to the Party %"
 			, true);
-		PartyPlayer p3 = player.getParty().getLeader();
-		if(p3.getShareExp() > 0){
-			invited.message("@whi@[@gre@Party@whi@]@yel@" + player.getParty().getPlayers().size() + " @whi@members. (Exp Sharing) - @gre@YES");
-		} else {
-			invited.message("@whi@[@gre@Party@whi@]@yel@" + player.getParty().getPlayers().size() + " @whi@members. (Exp Sharing) - @red@NO");
-		}
+		invited.message("@whi@[@gre@Party@whi@]@yel@" + player.getParty().getPlayers().size()
+			+ " @whi@members.");
 		for (Player p : player.getWorld().getPlayers()) {
 			if (p.getParty() == player.getParty()) {
 				invited.message("@gre@[Party]@whi@" + p + "");

@@ -121,7 +121,7 @@ def main() -> None:
             "Android underground-flicker compatibility guard")
 
     for label in (
-        "Camera angle mode", "Sound effects", "Mouse buttons", "Minimap position", "Coordinates",
+        "Camera angle mode", "Sound effects", "Mouse buttons", "Coordinates",
         "Spellbook layout", "Batch Progress Bar", "Tool Focus Menu", "Hits XP Focus Menu",
         "Summon Health Bars", "Experience Drops",
     ):
