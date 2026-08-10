@@ -98,6 +98,12 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		Thread two = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); second.set(contacts.completeBeerIntroductionWithBeer(player)); }}, "monster-slayer-beer-second");
 		one.start(); two.start(); await(ready); start.countDown(); join(one); join(two); return new MonsterSlayerContactService.Result[] {first.get(), second.get()};
 	}
+	private static MonsterSlayerContactService.Result[] concurrentAssignments(final MonsterSlayerContactService contacts, final Player player, final String contactKey) {
+		final CountDownLatch ready = new CountDownLatch(2); final CountDownLatch start = new CountDownLatch(1); final AtomicReference<MonsterSlayerContactService.Result> first = new AtomicReference<MonsterSlayerContactService.Result>(); final AtomicReference<MonsterSlayerContactService.Result> second = new AtomicReference<MonsterSlayerContactService.Result>();
+		Thread one = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); first.set(contacts.requestTask(player, contactKey)); }}, "monster-slayer-task-first");
+		Thread two = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); second.set(contacts.requestTask(player, contactKey)); }}, "monster-slayer-task-second");
+		one.start(); two.start(); await(ready); start.countDown(); join(one); join(two); return new MonsterSlayerContactService.Result[] {first.get(), second.get()};
+	}
 	private static void await(CountDownLatch latch) { try { latch.await(); } catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new AssertionError("interrupted fixture", failure); } }
 	private static void join(Thread thread) { try { thread.join(); } catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new AssertionError("interrupted fixture", failure); } }
 
@@ -116,6 +122,10 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			assertTrue(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact assignment " + contact.getKey());
 			assertFalse(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact duplicate assignment " + contact.getKey());
 		}
+		final Player contended = h.player("msscontactconcurrent", 868, 790); state(contended, data, 0L, 0, 0);
+		MonsterSlayerContactService.Result[] contendedResults = concurrentAssignments(contacts, contended, "falador");
+		assertEquals(1, successful(contendedResults[0], contendedResults[1]), "one concurrent task assignment succeeds");
+		assertTrue(MonsterSlayerState.read(contended.getCache(), data).getActiveTaskKey() != null, "concurrent task assignment leaves one active task");
 		int fixture = 0;
 		for (int tier = 0; tier < data.getContacts().size(); tier++) for (int pick = 0; pick < data.getContacts().get(tier).getRepeatableTasks().size(); pick++) {
 			final int selected = pick; final MonsterSlayerDefinitions.Contact contact = data.getContacts().get(tier);
