@@ -57,14 +57,19 @@ Core rules:
 - One active Monster Slayer task across all contacts.
 - The beer is a one-time introduction, not a repeatable material turn-in.
 - Mandatory chains are fixed and cannot be cancelled or rerolled.
-- Repeatables use rank-appropriate family pools and award the currency assigned
-  to their contact/challenge level without advancing rank.
+- Every mandatory or repeatable task awards the currency assigned to its
+  contact/challenge level without advancing rank merely by paying currency.
+  Its authored `pointReward` reflects the task's expected combat difficulty,
+  danger, and effort; harder task families in the same tier earn more of that
+  tier's currency.
 - Challenge points are awarded on task completion, not per kill. They are six
-  non-interchangeable balances, not one scalar balance. This bounds cache
-  writes, avoids partial-task farming, and makes the economy auditable.
-- Reward costs are vectors. A higher challenge shop may require its native
-  currency plus selected lower currencies, but never a currency above the
-  reward's shop tier.
+  non-interchangeable player-saved balances, not inventory items or one scalar
+  balance. This bounds cache writes, avoids partial-task farming, and makes the
+  economy auditable.
+- Shop items use a two-component cost vector: their native tier currency plus
+  the immediately preceding tier currency. The Fledgling shop is the sole
+  exception and costs only Fledgling currency. No item may consume an older
+  lower tier, a higher tier, or an interchangeable total.
 - Each of the six challenge shops contains one permanent inventory-capacity
   upgrade. Buying all six grows the player's inventory from 30 slots to a
   5-by-8, 40-slot inventory; the upgrade is purchased rather than granted
@@ -922,9 +927,8 @@ until a later approved reward branch):
           "itemId": 0,
           "amount": 1,
           "cost": {
-            "FLEDGLING": 5,
-            "INITIATE": 3,
-            "HERO": 1
+            "CHAMPION": 3,
+            "HERO": 5
           }
         }
       ]
@@ -933,9 +937,11 @@ until a later approved reward branch):
 }
 ```
 
-The example cost means five Fledgling points, three Initiate points, and one
-Hero point per reward unit. It does not mean nine interchangeable points. Cost
-vectors omit zero entries and are multiplied component-by-component for a
+The example Legends cost means three Champion points and five Hero points per
+reward unit. It does not mean eight interchangeable points. The Fledgling shop
+has exactly one positive Fledgling component; every other shop has exactly two
+positive components: its own challenge and the challenge immediately below it.
+Cost vectors omit zero entries and are multiplied component-by-component for a
 requested quantity using checked `long` arithmetic.
 
 Stable identity rules:
@@ -968,8 +974,12 @@ Load-time/CI validation must reject:
 - an unknown/duplicate shop, category, or reward key, unknown item ID,
   nonpositive item amount, empty/negative/overflowing cost vector, or cost in a
   challenge above the shop's challenge tier;
-- a launch reward with no positive native-currency cost. Higher-tier launch
-  rewards may additionally require any selected lower-tier balances.
+- a Fledgling reward with any component other than a positive Fledgling cost,
+  or any higher-shop reward that does not contain exactly positive native and
+  immediately-lower challenge components;
+- an inventory-capacity upgrade with any lower-tier component, a cost not
+  greater than its own mandatory-chain currency total, or a missing preceding
+  capacity-upgrade prerequisite.
 
 ### Current Foundation Family Inventory And Tuning
 
@@ -1076,7 +1086,7 @@ Dialogue and kill handlers must not manipulate raw keys.
 | `monster_slayer_state_version` | Integer | Current state schema; starts at `1`. |
 | `monster_slayer_intro_stage` | Integer | `0` not started, `1` beer requested, `2` beer completed. Stage 2 requires rank at least Fledgling. |
 | `monster_slayer_rank` | Integer | Stable rank code `0..7`; never a display/string ordinal. |
-| `monster_slayer_balance_<challenge>` | Long | Six keys: `fledgling`, `initiate`, `veteran`, `elite`, `champion`, and `hero`. Each is independently nonnegative with checked additions/deductions and a `2,000,000,000` cap. No scalar total is persisted or spendable. |
+| `monster_slayer_balance_<challenge>` | Long | Six keys: `fledgling`, `initiate`, `veteran`, `elite`, `champion`, and `hero`. They are the sole player-saved currency authority: independently nonnegative, checked on additions/deductions, capped at `2,000,000,000`, and never materialized as an inventory item. No scalar total is persisted or spendable. |
 | `monster_slayer_active_task` | String | Stable task key; absent means no task. Contact/family/type derive from definitions. |
 | `monster_slayer_active_kills` | Integer | Bounded `0..requiredKills`; absent/zero when no active task. |
 | `monster_slayer_mandatory_<contact>` | Integer | Six keys storing the number of fixed tasks completed for that contact, bounded by that chain's data length. |
@@ -1100,13 +1110,18 @@ Invariants:
 - Task completion updates progress, cursor/rank, points, lifetime count, and
   active-task clearing through one state-owner method on the game thread.
 - Task completion credits only the active definition's contact challenge. It
-  cannot credit a caller-selected or higher balance.
+  cannot credit a caller-selected, lower, or higher balance. Mandatory tasks
+  credit normally even before their shop is unlocked; the balance merely cannot
+  be spent until its shop gate is met.
 - Inventory capacity is derived from the validated shop-upgrade entitlement
   mask and is bounded to `30..40`. Purchases are monotonic, one-time, and
-  sequential by unlocked shop; rank alone never grants an upgrade.
-- Multi-cost spending first validates the reward/shop tier, quantity, checked
-  component multiplication, and all six available balances against an
-  immutable snapshot. It computes the complete post-spend vector before
+  sequential by unlocked shop; rank alone never grants an upgrade. Each upgrade
+  requires every preceding upgrade and spends only its own native challenge
+  balance, never a lower balance.
+- Multi-cost spending first validates the reward/shop tier, exact allowed
+  component set, quantity, checked component multiplication, and the required
+  available balances against an immutable snapshot. It computes the complete
+  post-spend vector before
   writing any balance. Insufficient currency changes nothing.
 - A successful deduction returns the exact typed cost vector as a one-use
   receipt. A later item-grant failure refunds every receipt component; callers
@@ -1241,9 +1256,10 @@ the scalar assumptions:
   supplies category, output amount, shop tier, and a typed cost vector.
 - Quantity multiplies every cost component and output amount using checked
   arithmetic. Affordability requires every component, not the vector sum.
-- A reward at tier `T` may require its native `T` balance and any selected
-  lower-tier balances. It must never reference a challenge currency higher
-  than `T`. Launch rewards require a positive native component.
+- A Fledgling reward costs only a positive Fledgling balance. A reward at every
+  later tier `T` costs exactly positive native `T` and immediately-preceding
+  `T - 1` balances. It must never reference an older lower currency, a higher
+  currency, or a scalar total.
 - Capacity is checked before deduction. Deduction validates and applies the
   whole vector atomically. If item grant fails, refund the exact one-use receipt
   vector before reporting failure.
@@ -1251,9 +1267,39 @@ the scalar assumptions:
   or fallback to a lower balance is allowed.
 - Each shop also exposes its one permanent inventory-capacity upgrade in a
   dedicated permanent-unlocks category. It uses the same typed vector-cost
-  validation and exact refund guarantees as an item reward, but its grant is a
-  one-time entitlement mutation rather than an inventory item and therefore
-  does not perform the ordinary free-slot check.
+  refund guarantees as an item reward, but costs only its own native currency,
+  requires every preceding capacity upgrade, and is a one-time entitlement
+  mutation rather than an inventory item. It therefore does not perform the
+  ordinary free-slot check.
+
+### Confirmed: Currency Presentation, Earnings, And Capacity Prices
+
+Monster Slayer currency is held only in the six saved balances owned by
+`MonsterSlayerState`; players never receive, trade, bank, drop, lose, or pick
+up a physical coin item. A future UI pass should use one unique coin silhouette
+recolored per challenge tier so the balances are visually distinct without
+creating six item definitions or a second inventory authority.
+
+Every task stores one positive `pointReward` on its definition and credits only
+its contact's challenge balance on successful completion. The opening and all
+later mandatory tasks earn their normal tier currency immediately, even when
+the player has not yet unlocked that tier's shop. Repeatables use the same rule.
+Point rewards are intentionally task-specific: a harder, more dangerous, or
+less accessible family in a tier earns more than an easier family in that same
+tier. No task awards a mix of challenge balances.
+
+Each inventory capacity upgrade must cost slightly more native currency than
+the total a player should earn by completing that contact's full mandatory
+chain. Consequently, completing the main path unlocks the right to buy the
+upgrade but does not usually fund it; the player must finish a small number of
+repeatable tasks from that same contact. Exact prices must be authored only
+after the final mandatory task reward totals are set, and CI must verify:
+
+- `capacityPrice[contact] > mandatoryCurrencyTotal[contact]`;
+- the margin is documented as a small repeatable-task requirement rather than
+  an accidental grind; and
+- the price vector contains exactly one positive component, the contact's
+  native challenge currency.
 
 ### Confirmed: Initial Consumable Shop Stock
 
@@ -1313,7 +1359,7 @@ the following choices are required before adding the affected unique:
 | Legacy completion recognition | Give claimed and completed-unclaimed Odyssey players the same noncombat commemorative entitlement; decide title versus cosmetic item. | Migration preserves an entitlement class but must not improvise a reward. |
 | Unique reclaim model | Decide tradeability, death behavior, duplicate ownership, and lost-item reclaim separately for each unique. | These are economy and duplication contracts, not UI details. |
 | Convenience unlocks | Decide whether paid rerolls/task blocks become rewards or only the direct cancellation fee remains. Recommended launch: cancellation fee only. | Permanent blocks materially change assignment probability and state. |
-| Unique cost vectors | Approve every required component and quantity. Recommended: positive native currency plus deliberately selected lower currencies, never all six by habit. | A scalar price band cannot express challenge-specific effort. |
+| Unique cost vectors | Approve the native and immediately-lower components and quantity for each shop item; Fledgling uniques use only Fledgling currency. | The two-tier rule keeps the prior challenge relevant without creating arbitrary all-tier costs. |
 
 Hard exclusions requiring no further decision: dragon armor and dragon skirts
 are not rewards; material/certificate turn-ins are not progression; old item
