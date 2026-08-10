@@ -26,6 +26,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		taskAssignmentAndCompletionAreExactOnce(data);
 		beerIntroductionIsOneTimeAndRankSafe(data);
 		promotionAcknowledgementIsTypedAndIdempotent(data);
+		typedPromotionPlansAreBoundedAndOrdered();
 		approvedShopDefinitionsHaveStableLaunchShape(data);
 		repeatablesAndHazardsUseDeclaredLaunchPolicy(data);
 		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
@@ -205,6 +206,18 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		MonsterSlayerState.Snapshot acknowledged = MonsterSlayerState.acknowledgePromotion(promoted, data, "falador");
 		assertTrue(acknowledged.isPromotionAcknowledged("falador", data), "promotion acknowledgement persisted in typed state");
 		equals(acknowledged, MonsterSlayerState.acknowledgePromotion(acknowledged, data, "falador"), "promotion acknowledgement is idempotent");
+	}
+
+	private static void typedPromotionPlansAreBoundedAndOrdered() {
+		String[][] required = {{"Excellent work! You've done a fine job culling those monsters.", "There seem to be just as many as before."}, {"You did what you said you would. That's worth more than loud talk."}, {"Hah. I knew you had it in you. You're Elite now; take the badge."}, {"Splendid work! You faced the test and did not blink."}, {"You completed the work, even when it was hard. That is the part people remember."}, {"You've completed your journey for now. You've done well.", "And what's my new rank?", "And what use would you make of it?", "...Legend, then?", "If you continue to earn it."}};
+		for (int tier = 0; tier < 6; tier++) {
+			java.util.List<MonsterSlayerDialoguePlan.Step> plan = MonsterSlayerDialoguePlan.promotion(tier);
+			assertTrue(!plan.isEmpty(), "promotion plan exists " + tier);
+			for (MonsterSlayerDialoguePlan.Step step : plan) { assertTrue(step.getText().length() <= 255, "promotion line bounded " + tier); assertTrue(step.getSpeaker() != null, "promotion speaker typed " + tier); }
+			for (String text : required[tier]) { boolean found = false; for (MonsterSlayerDialoguePlan.Step step : plan) if (text.equals(step.getText())) found = true; assertTrue(found, "promotion exact line " + text); }
+		}
+		equals(MonsterSlayerDialoguePlan.Speaker.NPC, MonsterSlayerDialoguePlan.promotion(5).get(0).getSpeaker(), "Legend NPC first");
+		equals(MonsterSlayerDialoguePlan.Speaker.PLAYER, MonsterSlayerDialoguePlan.promotion(5).get(1).getSpeaker(), "Legend player reply");
 	}
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
