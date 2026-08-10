@@ -35,8 +35,8 @@ def main() -> None:
     defs = DEFS.read_text(encoding="utf-8")
     for expected in (
         "private static final int KING_BLACK_DRAGON_NPC_ID = 477;",
-        "private static final int KING_BLACK_DRAGON_FRAME_WIDTH = 333;",
-        "private static final int KING_BLACK_DRAGON_FRAME_HEIGHT = 163;",
+        "private static final int KING_BLACK_DRAGON_FRAME_WIDTH = 542;",
+        "private static final int KING_BLACK_DRAGON_FRAME_HEIGHT = 391;",
         'animations.add(new AnimationDef("kingblackdragon", "npc", 0, 0, true, false, 0));',
         "public static void activateKingBlackDragonExternalVisual()",
         "kingBlackDragon.sprites[0] = kingBlackDragonAnimationId;",
