@@ -1,6 +1,7 @@
 package com.openrsc.server.plugins.custom.myworld.npcs;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.constants.Quests;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
@@ -40,6 +41,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		try { state = MonsterSlayerState.read(player.getCache(), data); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); return; }
 		MonsterSlayerContactService service = new MonsterSlayerContactService(data, player.getWorld().getMonsterSlayerTaskService());
 		if (index == 0 && state.getRank() == MonsterSlayerRank.UNSTAMPED) { introduction(player, npc, service, state, shortcut); return; }
+		if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 		if (!state.getRank().isAtLeast(REQUIRED[index])) { npcsay(player, npc, refusal(index)); return; }
 		if (state.getRank() == data.getContact(CONTACTS[index]).getAwardedRank()
 			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()) {
@@ -77,4 +79,5 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	private static String promotion(int index) { String[] lines = {"Excellent work! You are an Initiate now. My associate nearby can trade Fledgling Slayer Points.", "You did what you said you would. You're a Veteran now; the trader beside me serves Veterans.", "You're Elite now; take the badge. The big leagues are dangerous, so spend your points on staying alive.", "You are a Champion now. The quartermaster nearby takes Elite Slayer Points.", "You are a Hero. Carry this crest with care; the supplier nearby accepts Champion Slayer Points.", "You've completed your journey for now. You've done well. And what use would you make of the rank?"}; return lines[index]; }
 	private static String warning(String taskKey) { if (taskKey.contains("desert") || taskKey.contains("red_dragon") || taskKey.contains("black_dragon")) return "Take care: this work may demand wilderness or travel preparation."; if (taskKey.contains("poison")) return "Take an antidote; poison is part of this contract."; if (taskKey.contains("dragon")) return "Prepare for dragon fire before you leave."; return "Be prepared before you leave."; }
+	private static boolean hostGuildAllows(Player player, int index) { return index != 5 || player.getQuestStage(Quests.LEGENDS_QUEST) >= 11 || player.getQuestStage(Quests.LEGENDS_QUEST) == -1; }
 }
