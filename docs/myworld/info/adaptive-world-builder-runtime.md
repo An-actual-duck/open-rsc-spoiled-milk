@@ -136,6 +136,12 @@ reaching one fails with the entry-point name instead of falling back. Normal
 preservation and Spoiled Milk clients retain the same legacy archive choice,
 open, and hash behavior.
 
+The decorative legacy login-world is also disabled before it can load its
+Lumbridge terrain/models. A strict Builder client auto-authenticates into the
+verified package instead; any accidental direct login-world load fails closed.
+An unrecoverable strict-runtime loop failure closes the local client with exit
+status `1` rather than leaving a detached UI process alive.
+
 World state is withheld on both sides until the private binding handshake is
 complete. The server does not send scene context, terrain, or scene entities
 to an adaptive player before `builderbind` succeeds. The client accepts the

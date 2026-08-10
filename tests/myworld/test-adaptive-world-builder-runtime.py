@@ -444,6 +444,7 @@ import orsc.Config;
 import orsc.NativeLayeredTerrainChunk;
 import orsc.NativeLayeredTerrainSnapshot;
 import orsc.WorldBuilderClientProfile;
+import orsc.mudclient;
 import orsc.graphics.three.World;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -529,6 +530,8 @@ public final class AdaptiveWorldBuilderClientStartupHarness {
         System.setProperty(WorldBuilderClientProfile.ENABLED_PROPERTY, "false");
         require(!WorldBuilderClientProfile.initializeFromSystemProperties()
             .isStrictAdaptiveTerrain(), "adaptive property alone activated bypass");
+        require(mudclient.adaptiveRuntimeFatalExitStatus() == 0,
+            "disabled adaptive profile claimed a fatal exit status");
 
         System.setProperty(WorldBuilderClientProfile.ADAPTIVE_PROPERTY, "false");
         System.setProperty(WorldBuilderClientProfile.ENABLED_PROPERTY, "true");
@@ -545,6 +548,13 @@ public final class AdaptiveWorldBuilderClientStartupHarness {
         WorldBuilderClientProfile profile =
             WorldBuilderClientProfile.initializeFromSystemProperties();
         require(profile.isStrictAdaptiveTerrain(), "strict adaptive profile missing");
+        require(mudclient.adaptiveRuntimeFatalExitStatus() == 1,
+            "strict adaptive profile has no fatal exit status");
+        Method legacyLoginWorld = mudclient.class.getDeclaredMethod(
+            "shouldRenderLegacyLoginWorld");
+        legacyLoginWorld.setAccessible(true);
+        require(!((Boolean) legacyLoginWorld.invoke(null)).booleanValue(),
+            "strict startup enabled decorative legacy login-world rendering");
         Config.F_CACHE_DIR = args[4];
 
         Method reset = worldMethod("resetLegacyLandscapeReadAttemptCount");
@@ -1150,7 +1160,7 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
             )
             self.assertNotEqual(0, mismatch.returncode)
 
-    def test_strict_startup_skips_legacy_archives_and_gates_native_readiness(self):
+    def test_strict_startup_skips_legacy_archives_login_world_and_gates_native_readiness(self):
         for empty in (False, True):
             with self.subTest(empty=empty), tempfile.TemporaryDirectory(
                 prefix="adaptive-client-startup-"
@@ -1207,6 +1217,32 @@ class AdaptiveWorldBuilderRuntimeTest(unittest.TestCase):
         scene_accept = packets.index("layeredSceneContextState.accept(")
         self.assertLess(context_accept, scene_accept)
         self.assertIn("acceptAdaptiveServerBinding()", packets)
+        login_render = client.split(
+            "private void renderLoginScreenViewports", 1
+        )[1].split("private void resetGame", 1)[0]
+        self.assertLess(
+            login_render.index("if (!shouldRenderLegacyLoginWorld())"),
+            login_render.index("this.loadWorldComponents();"),
+            "strict startup must bypass the legacy login-world before it loads",
+        )
+        adaptive_login = client.split(
+            "private void renderAdaptiveLoginScreenViewports", 1
+        )[1].split("private static boolean shouldRenderLegacyLoginWorld", 1)[0]
+        self.assertIn("storeSpriteVert(", adaptive_login)
+        self.assertNotIn("this.world", adaptive_login)
+        self.assertIn(
+            "requireLegacyLoginWorldRenderingAllowed();", client
+        )
+        self.assertIn(
+            "Strict adaptive World Builder forbids legacy login-world rendering",
+            client,
+        )
+        self.assertIn(
+            "static int adaptiveRuntimeFatalExitStatus()", client
+        )
+        self.assertIn(
+            "System.exit(ADAPTIVE_RUNTIME_FATAL_EXIT_STATUS);", client
+        )
         self.assertIn("if (!isAdaptiveWorldStateReadyForEditor()) {", client)
         self.assertIn("drawLoadingPleaseWaitFrame();", client)
         self.assertIn("!isAdaptiveWorldStateReadyForEditor())return", client)

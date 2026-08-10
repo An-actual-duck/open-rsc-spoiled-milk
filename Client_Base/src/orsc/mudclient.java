@@ -116,6 +116,9 @@ public final class mudclient implements Runnable {
 	private static final String MODERN_CLIENT_LOOP_ENV = "SPOILED_MILK_MODERN_CLIENT_LOOP";
 	private static final int OPENGL_PRIMARY_TARGET_FPS = 60;
 	private static final int MODERN_LOOP_MAX_CATCH_UP_UPDATES = 5;
+	/* A strict adaptive runtime cannot safely continue after a client-loop
+	 * failure: its only terrain authority is the verified native package. */
+	private static final int ADAPTIVE_RUNTIME_FATAL_EXIT_STATUS = 1;
 	private static final long NANOS_PER_MILLI = 1_000_000L;
 	private static final long NANOS_PER_SECOND = 1_000_000_000L;
 	private static final boolean MODERN_CLIENT_LOOP_ENABLED =
@@ -1518,6 +1521,15 @@ public final class mudclient implements Runnable {
 		} catch (RuntimeException e) {
 			ClientRuntimeLogger.logThrowable("Failed to close client port after client loop failure", e);
 		}
+		if (adaptiveRuntimeFatalExitStatus() != 0) {
+			System.exit(ADAPTIVE_RUNTIME_FATAL_EXIT_STATUS);
+		}
+	}
+
+	/** Returns the process status required for an unrecoverable adaptive failure. */
+	public static int adaptiveRuntimeFatalExitStatus() {
+		return WorldBuilderClientProfile.current().isStrictAdaptiveTerrain()
+			? ADAPTIVE_RUNTIME_FATAL_EXIT_STATUS : 0;
 	}
 
 	private void closeProgram() {
@@ -23402,6 +23414,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadWorldComponents() {
+		requireLegacyLoginWorldRenderingAllowed();
 		byte sector_h = 0; // sector h
 		byte sector_x = 50; // sector x
 		byte sector_y = 50; // sector y    (h0x50y50 - Lumbridge sector) (h0x50y39 - deep wilderness sector)
@@ -23413,6 +23426,16 @@ public final class mudclient implements Runnable {
 
 	private void renderLoginScreenViewports(int var1) {
 		try {
+			/*
+			 * A Builder session authenticates directly into its verified native
+			 * package. The decorative legacy login world is neither an authority
+			 * nor a permissible fallback, and attempting to build it would open
+			 * the legacy terrain archive before builderbind.
+			 */
+			if (!shouldRenderLegacyLoginWorld()) {
+				renderAdaptiveLoginScreenViewports();
+				return;
+			}
 
 			if (!this.worldComponentsLoaded) {
 				this.loadWorldComponents();
@@ -23529,6 +23552,30 @@ public final class mudclient implements Runnable {
 			throw GenUtil.makeThrowable(var10, "client.HC(" + var1 + ')');
 		}
 
+	}
+
+	/**
+	 * Supplies the login panels with intentionally blank captured frames while
+	 * the isolated Builder authenticates. This avoids a null sprite fallback
+	 * without constructing or rendering the legacy login world.
+	 */
+	private void renderAdaptiveLoginScreenViewports() {
+		this.getSurface().blackScreen(true);
+		for (int index = 0; index < 3; index++) {
+			this.getSurface().storeSpriteVert(
+				index, 0, 0, getGameWidth(), halfGameHeight() + 33);
+		}
+	}
+
+	private static boolean shouldRenderLegacyLoginWorld() {
+		return !WorldBuilderClientProfile.current().isStrictAdaptiveTerrain();
+	}
+
+	private static void requireLegacyLoginWorldRenderingAllowed() {
+		if (!shouldRenderLegacyLoginWorld()) {
+			throw new IllegalStateException(
+				"Strict adaptive World Builder forbids legacy login-world rendering");
+		}
 	}
 
 	private void resetGame(int var1) {
