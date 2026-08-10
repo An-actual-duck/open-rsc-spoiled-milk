@@ -10,10 +10,17 @@ import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDef
 /** Headless typed-currency shop boundary; dialogue/UI callers remain future work. */
 public final class MonsterSlayerShopService {
 	private final MonsterSlayerData data;
+	private final ItemGrant itemGrant;
 	private final Map<String, Integer> stock = new HashMap<String, Integer>();
 	public MonsterSlayerShopService(MonsterSlayerData data) {
+		this(data, new InventoryItemGrant());
+	}
+	/** Injection point permits deterministic transaction verification without a database item-id allocator. */
+	public MonsterSlayerShopService(MonsterSlayerData data, ItemGrant itemGrant) {
 		if (data == null) throw new IllegalArgumentException("Monster Slayer data is required");
+		if (itemGrant == null) throw new IllegalArgumentException("Monster Slayer item grant is required");
 		this.data = data;
+		this.itemGrant = itemGrant;
 		for (Shop shop : data.getShops()) for (MonsterSlayerDefinitions.Category category : shop.getCategories())
 			for (Reward reward : category.getRewards()) stock.put(reward.getKey(), reward.getStock());
 	}
@@ -48,15 +55,15 @@ public final class MonsterSlayerShopService {
 	public Result redeem(Player player, String shopKey, String rewardKey, long quantity) {
 		try {
 			if (player == null) return Result.rejected("unavailable");
-			synchronized (this) {
-				synchronized (player.getCarriedItems().getInventory().getItems()) {
+			synchronized (player) {
+				synchronized (this) {
 					MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 					RedemptionProposal proposal = proposeRedemption(current, shopKey, rewardKey, quantity);
 					if (!proposal.isSuccessful()) return Result.rejected(proposal.getReason());
 					if (!player.getCarriedItems().getInventory().canHold(proposal.reward.getItemId(), proposal.output)) return Result.rejected("inventory");
 					MonsterSlayerState.SpendProposal spent = proposal.spend;
 					MonsterSlayerState.write(player.getCache(), data, spent.getSnapshot()); stock.put(rewardKey, getStock(rewardKey) - (int) quantity);
-					if (!player.getCarriedItems().getInventory().add(new Item(proposal.reward.getItemId(), proposal.output), false)) {
+					if (!itemGrant.grant(player, proposal.reward.getItemId(), proposal.output)) {
 						stock.put(rewardKey, getStock(rewardKey) + (int) quantity); MonsterSlayerState.write(player.getCache(), data, spent.getReceipt().refund(spent.getSnapshot(), data)); return Result.rejected("grant");
 					}
 					return Result.success();
@@ -66,15 +73,20 @@ public final class MonsterSlayerShopService {
 	}
 	public Result purchaseCapacity(Player player, String shopKey) {
 		try {
+			if (player == null) return Result.rejected("unavailable");
+			synchronized (player) {
 			Shop shop = data.getShop(shopKey); if (shop == null || !rankAllows(player, shop)) return Result.rejected("unavailable");
 			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 			CapacityProposal proposal = proposeCapacityPurchase(current, shopKey);
 			if (!proposal.isSuccessful()) return Result.rejected(proposal.getReason()); MonsterSlayerState.write(player.getCache(), data, proposal.spend.getSnapshot()); return Result.success();
+			}
 		} catch (RuntimeException failure) { return Result.rejected("failure"); }
 	}
 	private Reward reward(Shop shop, String key) { if (shop == null) return null; for (MonsterSlayerDefinitions.Category c : shop.getCategories()) for (Reward r : c.getRewards()) if (r.getKey().equals(key)) return r; return null; }
 	private boolean rankAllows(Player p, Shop shop) { return p != null && MonsterSlayerState.read(p.getCache(), data).getRank().isAtLeast(MonsterSlayerRank.fromCode(shop.getChallenge().getCode() + 1)); }
 	public static final class RedemptionProposal { private final Reward reward; private final int output; private final MonsterSlayerState.SpendProposal spend; private final String reason; private RedemptionProposal(Reward r,int o,MonsterSlayerState.SpendProposal s,String why){reward=r;output=o;spend=s;reason=why;} static RedemptionProposal accepted(Reward r,int o,MonsterSlayerState.SpendProposal s){return new RedemptionProposal(r,o,s,null);} static RedemptionProposal rejected(String why){return new RedemptionProposal(null,0,null,why);} public boolean isSuccessful(){return reason==null;} public String getReason(){return reason;} public int getOutput(){return output;} }
 	public static final class CapacityProposal { private final MonsterSlayerState.SpendProposal spend; private final String reason; private CapacityProposal(MonsterSlayerState.SpendProposal s,String why){spend=s;reason=why;} static CapacityProposal accepted(MonsterSlayerState.SpendProposal s){return new CapacityProposal(s,null);} static CapacityProposal rejected(String why){return new CapacityProposal(null,why);} public boolean isSuccessful(){return reason==null;} public String getReason(){return reason;} public MonsterSlayerState.Snapshot getSnapshot(){return spend == null ? null : spend.getSnapshot();} }
+	public interface ItemGrant { boolean grant(Player player, int itemId, int amount); }
+	private static final class InventoryItemGrant implements ItemGrant { public boolean grant(Player player, int itemId, int amount) { return player.getCarriedItems().getInventory().add(new Item(itemId, amount), false); } }
 	public static final class Result { private final boolean success; private final String reason; private Result(boolean ok,String why){success=ok;reason=why;} static Result success(){return new Result(true,null);} static Result rejected(String why){return new Result(false,why);} public boolean isSuccessful(){return success;} public String getReason(){return reason;} }
 }
