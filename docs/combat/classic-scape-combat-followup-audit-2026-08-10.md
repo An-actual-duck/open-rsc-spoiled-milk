@@ -147,3 +147,23 @@ timestamp blocks the cooldown, then advances exactly 10,001 game-clock
 milliseconds and proves it opens. `./server/test_combat` passed all 137
 scenarios. Plugin-only callers are included in the final full server/plugin
 build gate.
+
+### #16 — Projectile launch/escape lifecycle — characterized; no change justified
+
+The existing A06 executable lifecycle suite already exercises real typed bow,
+thrown, magic, NPC, scripted, and benign projectile producers, immutable launch
+snapshots, source/target logout-and-reconnect session changes, source and target
+movement, paired teleports, layer/world-domain changes, terminal source policy,
+removed targets, and respawned NPC lifetimes. It records the current deliberate
+policy: a source that merely moves may leave an already launched projectile
+valid, whereas a replaced login session, target replacement/removal, launch
+domain departure, blocked path, or range departure invalidates it. The
+`current_projectile_impact_lifecycle_policy_is_characterized` and
+`projectile_impact_policy_decision_evidence_is_executable` scenarios execute
+in the combat gate and passed in this branch.
+
+No Spoiled Milk defect equivalent to the upstream launch-escape issue was
+reproduced. Adding a second launch record or changing lifecycle policy would
+duplicate `ProjectileLaunchSnapshot`/`ProjectileImpactValidator` authority and
+risk an intentional source-terminal compatibility rule, so this focused branch
+makes no projectile runtime change.
