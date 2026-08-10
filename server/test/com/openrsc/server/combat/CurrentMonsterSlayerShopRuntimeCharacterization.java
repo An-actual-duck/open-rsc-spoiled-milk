@@ -1,6 +1,7 @@
 package com.openrsc.server.combat;
 
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerCost;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions;
@@ -28,6 +29,23 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(h, data);
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
+	}
+
+	static void contactRoutesAreRankedAndSingleAssignment(CurrentCombatHarness h) throws Exception {
+		MonsterSlayerData data = data();
+		MonsterSlayerContactService contacts = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data));
+		Player recruit = h.player("mssbeer", 850, 790);
+		MonsterSlayerState.write(recruit.getCache(), data, MonsterSlayerState.defaults(data));
+		assertTrue(contacts.beginBeerIntroduction(recruit).isAccepted(), "beer introduction begins");
+		assertTrue(contacts.completeBeerIntroduction(recruit).isAccepted(), "beer introduction completes");
+		assertFalse(contacts.completeBeerIntroduction(recruit).isAccepted(), "beer introduction cannot complete twice");
+		for (int tier = 0; tier < data.getContacts().size(); tier++) {
+			MonsterSlayerDefinitions.Contact contact = data.getContacts().get(tier);
+			Player player = h.player("msscontact" + tier, 860 + tier, 790);
+			state(player, data, 0L, prefixMask(tier), tier);
+			assertTrue(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact assignment " + contact.getKey());
+			assertFalse(contacts.requestTask(player, contact.getKey()).isAccepted(), "contact duplicate assignment " + contact.getKey());
+		}
 	}
 
 	private static void basicRedemptionAndRollback(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {

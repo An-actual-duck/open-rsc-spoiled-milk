@@ -422,6 +422,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatDeathLifecycleCharacterization::monsterSlayerCreditFailureIsolation);
 			run(harness, "monster_slayer_shop_runtime_transactions_are_atomic",
 				CurrentMonsterSlayerShopRuntimeCharacterization::runtimeTransactionsAreAtomic);
+			run(harness, "monster_slayer_contact_routes_are_ranked_and_single_assignment",
+				CurrentMonsterSlayerShopRuntimeCharacterization::contactRoutesAreRankedAndSingleAssignment);
 			run(harness, "player_death_preserves_cleanup_duplicate_and_respawn_reset",
 				CurrentCombatDeathLifecycleCharacterization::playerDeathPolicies);
 			run(harness, "plugin_owned_npc_death_remains_an_explicit_compatibility_path",
