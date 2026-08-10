@@ -1,8 +1,7 @@
 package com.openrsc.server.plugins.custom.myworld.npcs;
 
 import com.openrsc.server.constants.ItemId;
-import com.openrsc.server.constants.Quests;
-import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAccess;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
@@ -75,8 +74,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. I require beer!"); service.beginBeerIntroduction(player); return; }
 		if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) { npcsay(player, npc, "You haven't got the beer yet."); return; }
 		if (multi(player, "Offer the beer.", "Not yet.") != 0) return;
-		if (player.getCarriedItems().remove(new Item(ItemId.BEER.id())) == -1) { npcsay(player, npc, "You haven't got the beer yet."); return; }
-		if (!service.completeBeerIntroduction(player).isAccepted()) { player.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); player.message("Your rank record could not be updated."); return; }
+		if (!service.completeBeerIntroductionWithBeer(player).isAccepted()) { player.message("Your rank record could not be updated."); return; }
 		npcsay(player, npc, "Excellent, I dub thee an official fledgling Monster Slayer. Hold out your hand for your official stamp", "Nope, just the stamp.", "It's an honor. Return to me any time you wish to continue hunting monsters!");
 	}
 	private void associate(Player player, Npc npc) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } npcsay(player, npc, associateGreeting(index)); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
@@ -91,9 +89,5 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static String associateGreeting(int index) { String[] lines = {"An Initiate has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Initiate supplies are available.", "An Elite hunter knows what to pack. Your Veteran supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
 	private static String warning(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) { if (task.getHazards().isEmpty()) return null; StringBuilder text = new StringBuilder("Take care: "); for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard : task.getHazards()) { if (text.length() > 11) text.append("; "); if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT) text.append("bring desert heat protection"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS) text.append("this work is in the Wilderness"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN) text.append("expect Prayer drain"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON) text.append("bring an antidote for poison"); else text.append("prepare for dragon fire"); } return text.append('.').toString(); }
 	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "I have done the work. I do not hand out contracts."}; return lines[index]; }
-	private static boolean hostGuildAllows(Player player, int index) {
-		if (index == 3) return player.getConfig().INFLUENCE_INSTEAD_QP ? player.getSkills().getLevel(Skill.INFLUENCE.id()) >= 20 : player.getQuestPoints() >= 32;
-		if (index == 4) return player.getQuestStage(Quests.HEROS_QUEST) == -1;
-		return index != 5 || player.getQuestStage(Quests.LEGENDS_QUEST) >= 11 || player.getQuestStage(Quests.LEGENDS_QUEST) == -1;
-	}
+	private static boolean hostGuildAllows(Player player, int index) { return MonsterSlayerGuildAccess.allows(player, index); }
 }

@@ -1,6 +1,8 @@
 package com.openrsc.server.content.minigame.monsterslayer;
 
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.container.Item;
+import com.openrsc.server.constants.ItemId;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,6 +29,19 @@ public final class MonsterSlayerContactService {
 
 	public Result beginBeerIntroduction(Player player) { return changeIntroduction(player, false); }
 	public Result completeBeerIntroduction(Player player) { return changeIntroduction(player, true); }
+
+	/** Atomically couples beer consumption with the one-time Fledgling promotion. */
+	public Result completeBeerIntroductionWithBeer(Player player) {
+		try { synchronized (player) {
+			if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) return Result.rejected("missing-beer");
+			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerState.Snapshot next = MonsterSlayerState.completeIntroduction(current, data);
+			if (player.getCarriedItems().remove(new Item(ItemId.BEER.id())) == -1) return Result.rejected("missing-beer");
+			try { MonsterSlayerState.write(player.getCache(), data, next); }
+			catch (RuntimeException failure) { player.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); throw failure; }
+			return Result.accepted(null);
+		} } catch (RuntimeException failure) { return Result.rejected("invalid-state"); }
+	}
 
 	public Result requestTask(Player player, String contactKey) {
 		try {
