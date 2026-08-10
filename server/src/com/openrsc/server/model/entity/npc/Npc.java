@@ -778,6 +778,7 @@ public class Npc extends Mob {
 		}
 
 		owner.setLastNpcKilledId(this.getID());
+		creditMonsterSlayerEligibleContributors();
 
 		Player killCreditOwner = owner;
 		Map<Player, Double> personalLootRecipients = getPersonalLootRecipients();
@@ -825,6 +826,30 @@ public class Npc extends Mob {
 
 		deathListeners.clear();
 		remove();
+	}
+
+	/** Snapshot Slayer eligibility before XP settlement clears contribution evidence. */
+	private void creditMonsterSlayerEligibleContributors() {
+		if (getWorld().getMonsterSlayerTaskService() == null) return;
+		int threshold = Math.max(1, (int) Math.ceil(getDef().getHits() * 0.05D));
+		ArrayList<UUID> contributors = getAllDamageDealerIds();
+		UUID topContributor = null;
+		int topDamage = 0;
+		for (UUID id : contributors) {
+			int damage = getTotalDamageBy(id);
+			if (damage > topDamage) {
+				topDamage = damage;
+				topContributor = id;
+			}
+		}
+		for (UUID id : contributors) {
+			Player player = getWorld().getPlayerByUUID(id);
+			if (player == null || player.isRemoved() || player.getSkills().getLevel(Skill.HITS.id()) <= 0
+				|| !sharesSpatialDomain(player)
+				|| !getLocation().withinRange(player.getLocation(), 16)
+				|| (getTotalDamageBy(id) < threshold && !id.equals(topContributor))) continue;
+			getWorld().getMonsterSlayerTaskService().creditEligibleKill(player, getID());
+		}
 	}
 
 	private boolean isPluginOwnedDeathCompatibility() {

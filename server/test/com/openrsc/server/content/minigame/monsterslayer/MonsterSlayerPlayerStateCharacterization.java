@@ -23,6 +23,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		invalidEntitlementsQuarantineWithoutWrites(data, legacyData);
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
+		taskAssignmentAndCompletionAreExactOnce(data);
 
 		System.out.println("Monster Slayer player-state characterization: PASS");
 	}
@@ -138,6 +139,35 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(30, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0), "capacity at no entitlements");
 		equals(31, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0x01), "Falador capacity");
 		equals(40, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0x3f), "full capacity");
+	}
+
+	private static void taskAssignmentAndCompletionAreExactOnce(MonsterSlayerData data) {
+		Map<String, Integer> cursors = zeroCursors(data);
+		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerState.TaskResult rejected = MonsterSlayerState.assignMandatory(fledgling, data, "port_sarim");
+		equals(MonsterSlayerState.TaskResult.Reason.RANK, rejected.getReason(), "wrong contact rank");
+		MonsterSlayerState.TaskResult assigned = MonsterSlayerState.assignMandatory(fledgling, data, "falador");
+		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED, assigned.getReason(), "mandatory assignment");
+		equals("falador.rats", assigned.getSnapshot().getActiveTaskKey(), "first deterministic task");
+		equals(MonsterSlayerState.TaskResult.Reason.WRONG_NPC,
+			MonsterSlayerState.recordEligibleKill(assigned.getSnapshot(), data, 4).getReason(), "wrong family");
+		MonsterSlayerState.Snapshot progressing = assigned.getSnapshot();
+		for (int kill = 0; kill < 99; kill++) progressing = MonsterSlayerState.recordEligibleKill(progressing, data, 19).getSnapshot();
+		equals(99, progressing.getActiveKills(), "bounded progress");
+		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(progressing, data, 19);
+		equals(MonsterSlayerState.TaskResult.Reason.COMPLETED, completion.getReason(), "completion");
+		equals(5L, completion.getSnapshot().getBalances().get(MonsterSlayerChallenge.FLEDGLING), "native award only");
+		equals(1, completion.getSnapshot().getMandatoryCursors().get("falador"), "cursor advanced once");
+		equals(MonsterSlayerState.TaskResult.Reason.NO_ACTIVE_TASK,
+			MonsterSlayerState.recordEligibleKill(completion.getSnapshot(), data, 19).getReason(), "duplicate callback rejected");
+	}
+
+	private static Map<String, Integer> zeroCursors(MonsterSlayerData data) {
+		Map<String, Integer> result = new LinkedHashMap<String, Integer>();
+		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) result.put(contact.getKey(), 0);
+		return result;
 	}
 
 	private static void assertZeroBalances(MonsterSlayerState.Snapshot snapshot) {
