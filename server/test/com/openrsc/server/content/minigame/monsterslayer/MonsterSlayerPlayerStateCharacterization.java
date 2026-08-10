@@ -196,7 +196,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
 		equals(6, data.getShops().size(), "six Slayer shops");
-		long[] capacityPrices = {30L, 48L, 72L, 108L, 180L, 300L};
+		long[] capacityPrices = {42L, 75L, 70L, 58L, 135L, 140L};
 		for (int index = 0; index < data.getShops().size(); index++) {
 			MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
 			equals(capacityPrices[index], shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
@@ -215,7 +215,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data);
 		Map<MonsterSlayerChallenge, Long> amounts = new LinkedHashMap<MonsterSlayerChallenge, Long>();
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
-		amounts.put(MonsterSlayerChallenge.FLEDGLING, 30L);
+		amounts.put(MonsterSlayerChallenge.FLEDGLING, 42L);
 		MonsterSlayerState.Snapshot player = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
 			MonsterSlayerBalances.of(amounts), zeroCursors(data), null, 0, 0L, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);

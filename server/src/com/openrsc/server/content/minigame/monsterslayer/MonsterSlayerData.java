@@ -119,7 +119,7 @@ public final class MonsterSlayerData {
 		LinkedHashMap<String, Task> tasks = new LinkedHashMap<String, Task>();
 		LinkedHashMap<String, Contact> contacts = parseContacts(
 			root.getJSONArray("contacts"), catalog, families, tasks);
-		LinkedHashMap<String, Shop> shops = parseShops(root.getJSONArray("shops"), catalog);
+		LinkedHashMap<String, Shop> shops = parseShops(root.getJSONArray("shops"), catalog, contacts);
 		return new MonsterSlayerData(families, contacts, tasks, shops);
 	}
 
@@ -241,7 +241,7 @@ public final class MonsterSlayerData {
 		return result;
 	}
 
-	private static LinkedHashMap<String, Shop> parseShops(JSONArray array, ReferenceCatalog catalog) {
+	private static LinkedHashMap<String, Shop> parseShops(JSONArray array, ReferenceCatalog catalog, Map<String, Contact> contacts) {
 		if (array.length() != MonsterSlayerChallenge.values().length) {
 			throw new IllegalArgumentException("Monster Slayer requires exactly six shops");
 		}
@@ -305,7 +305,7 @@ public final class MonsterSlayerData {
 			requireFields(upgrade, "capacity upgrade", "key", "cost");
 			MonsterSlayerCost upgradeCost = parseCost(upgrade.getJSONObject("cost"));
 			if (upgradeCost.get(challenge) <= 0L || !hasOnly(upgradeCost, challenge)
-				|| upgradeCost.get(challenge) <= mandatoryTotalFor(challenge)) {
+				|| upgradeCost.get(challenge) <= mandatoryTotalFor(challenge, contacts)) {
 				throw new IllegalArgumentException("Invalid capacity upgrade cost for " + key);
 			}
 			String capacityKey = stableKey(upgrade.getString("key"), "capacity upgrade");
@@ -325,9 +325,11 @@ public final class MonsterSlayerData {
 		return true;
 	}
 
-	private static long mandatoryTotalFor(MonsterSlayerChallenge challenge) {
-		long[] totals = {25L, 40L, 60L, 90L, 150L, 260L};
-		return totals[challenge.getCode()];
+	private static long mandatoryTotalFor(MonsterSlayerChallenge challenge, Map<String, Contact> contacts) {
+		for (Contact contact : contacts.values()) if (contact.getChallenge() == challenge) {
+			long total = 0L; for (Task task : contact.getMandatoryTasks()) total = Math.addExact(total, task.getPointReward()); return total;
+		}
+		throw new IllegalArgumentException("Missing mandatory contact for " + challenge);
 	}
 
 	private static MonsterSlayerCost parseCost(JSONObject object) {
