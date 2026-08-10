@@ -242,13 +242,17 @@ public final class MonsterSlayerData {
 	}
 
 	private static LinkedHashMap<String, Shop> parseShops(JSONArray array, ReferenceCatalog catalog) {
+		if (array.length() != MonsterSlayerChallenge.values().length) {
+			throw new IllegalArgumentException("Monster Slayer requires exactly six shops");
+		}
 		LinkedHashMap<String, Shop> result = new LinkedHashMap<String, Shop>();
 		Set<MonsterSlayerChallenge> challengeOwners = new HashSet<MonsterSlayerChallenge>();
 		Set<String> categoryKeys = new HashSet<String>();
 		Set<String> rewardKeys = new HashSet<String>();
+		Set<String> capacityKeys = new HashSet<String>();
 		for (int shopIndex = 0; shopIndex < array.length(); shopIndex++) {
 			JSONObject object = array.getJSONObject(shopIndex);
-			requireFields(object, "shop", "key", "challenge", "categories");
+			requireFields(object, "shop", "key", "challenge", "categories", "capacityUpgrade");
 			String key = stableKey(object.getString("key"), "shop");
 			MonsterSlayerChallenge challenge = MonsterSlayerChallenge.fromKey(object.getString("challenge"));
 			if (!challengeOwners.add(challenge)) {
@@ -278,7 +282,7 @@ public final class MonsterSlayerData {
 				List<Reward> rewards = new ArrayList<Reward>();
 				for (int rewardIndex = 0; rewardIndex < rewardArray.length(); rewardIndex++) {
 					JSONObject reward = rewardArray.getJSONObject(rewardIndex);
-					requireFields(reward, "reward", "key", "itemId", "amount", "cost");
+				requireFields(reward, "reward", "key", "itemId", "amount", "cost", "stock", "restockAmount");
 					String rewardKey = stableKey(reward.getString("key"), "reward");
 					if (!rewardKeys.add(rewardKey)) {
 						throw new IllegalArgumentException("Duplicate reward " + rewardKey);
@@ -291,13 +295,39 @@ public final class MonsterSlayerData {
 						"amount for " + rewardKey);
 					MonsterSlayerCost cost = parseCost(reward.getJSONObject("cost"));
 					cost.validateForShop(challenge, true);
-					rewards.add(new Reward(rewardKey, itemId, amount, cost));
+					int stock = positiveBounded(reward.getInt("stock"), 10_000, "stock for " + rewardKey);
+					int restock = positiveBounded(reward.getInt("restockAmount"), stock, "restock for " + rewardKey);
+					rewards.add(new Reward(rewardKey, itemId, amount, cost, stock, restock));
 				}
 				categories.add(new Category(categoryKey, label, iconItemId, rewards));
 			}
-			putUnique(result, key, new Shop(key, challenge, categories), "shop");
+			JSONObject upgrade = object.getJSONObject("capacityUpgrade");
+			requireFields(upgrade, "capacity upgrade", "key", "cost");
+			MonsterSlayerCost upgradeCost = parseCost(upgrade.getJSONObject("cost"));
+			if (upgradeCost.get(challenge) <= 0L || !hasOnly(upgradeCost, challenge)
+				|| upgradeCost.get(challenge) <= mandatoryTotalFor(challenge)) {
+				throw new IllegalArgumentException("Invalid capacity upgrade cost for " + key);
+			}
+			String capacityKey = stableKey(upgrade.getString("key"), "capacity upgrade");
+			if (!capacityKeys.add(capacityKey) || !capacityKey.equals(key + ".capacity")) {
+				throw new IllegalArgumentException("Invalid/duplicate capacity upgrade key " + capacityKey);
+			}
+			putUnique(result, key, new Shop(key, challenge, categories,
+				new MonsterSlayerDefinitions.CapacityUpgrade(capacityKey, upgradeCost)), "shop");
 		}
 		return result;
+	}
+
+	private static boolean hasOnly(MonsterSlayerCost cost, MonsterSlayerChallenge required) {
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+			if (challenge != required && cost.get(challenge) != 0L) return false;
+		}
+		return true;
+	}
+
+	private static long mandatoryTotalFor(MonsterSlayerChallenge challenge) {
+		long[] totals = {25L, 40L, 60L, 90L, 150L, 260L};
+		return totals[challenge.getCode()];
 	}
 
 	private static MonsterSlayerCost parseCost(JSONObject object) {

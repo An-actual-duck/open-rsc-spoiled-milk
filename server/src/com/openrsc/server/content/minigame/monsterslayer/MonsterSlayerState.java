@@ -286,6 +286,27 @@ public final class MonsterSlayerState {
 		return SpendProposal.success(spent, new RefundReceipt(result.getReceipt()));
 	}
 
+	/** Records one ordered permanent entitlement after its native-only cost is spent. */
+	public static SpendProposal proposeInventoryUpgrade(Snapshot current, MonsterSlayerData data,
+			InventoryUpgrade upgrade, MonsterSlayerCost cost) {
+		validate(current, data);
+		if (upgrade == null || cost == null) throw new IllegalArgumentException("Monster Slayer upgrade inputs are required");
+		int expected = 0;
+		for (InventoryUpgrade candidate : InventoryUpgrade.values()) {
+			if (candidate == upgrade) break;
+			expected |= candidate.bit;
+		}
+		if (current.inventoryUpgrades != expected) return SpendProposal.insufficient(current);
+		SpendProposal spent = proposeSpend(current, data, cost, 1L);
+		if (!spent.isSuccessful()) return spent;
+		Snapshot upgraded = new Snapshot(current.stateVersion, current.introStage, current.rank,
+			spent.snapshot.balances, current.mandatoryCursors, current.activeTaskKey, current.activeKills,
+			current.tasksCompleted, current.inventoryUpgrades | upgrade.bit, current.migrationVersion,
+			current.legacyStatus, current.legacyPrestige);
+		validate(upgraded, data);
+		return SpendProposal.success(upgraded, spent.getReceipt());
+	}
+
 	/** Assigns only the deterministic next task for an eligible contact. */
 	public static TaskResult assignMandatory(Snapshot current, MonsterSlayerData data,
 			String contactKey) {

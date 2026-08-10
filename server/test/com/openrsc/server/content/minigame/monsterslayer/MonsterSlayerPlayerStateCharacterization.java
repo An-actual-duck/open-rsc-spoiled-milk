@@ -24,6 +24,8 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		approvedShopDefinitionsHaveStableLaunchShape(data);
+		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
 
@@ -176,6 +178,50 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
 			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
 			"eligible repeatable assignment");
+	}
+
+	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
+		equals(6, data.getShops().size(), "six Slayer shops");
+		long[] capacityPrices = {30L, 48L, 72L, 108L, 180L, 300L};
+		for (int index = 0; index < data.getShops().size(); index++) {
+			MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
+			equals(capacityPrices[index], shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
+				"capacity price " + shop.getKey());
+			equals(1, shop.getCategories().size(), "one approved category " + shop.getKey());
+			equals(4, shop.getCategories().get(0).getRewards().size(), "four consumables " + shop.getKey());
+			for (MonsterSlayerDefinitions.Reward reward : shop.getCategories().get(0).getRewards()) {
+				equals(10, reward.getStock(), "launch stock " + reward.getKey());
+				equals(1, reward.getRestockAmount(), "restock amount " + reward.getKey());
+				reward.getCost().validateForShop(shop.getChallenge(), true);
+			}
+		}
+	}
+
+	private static void headlessShopPreflightKeepsTypedCostsAndStockBounded(MonsterSlayerData data) {
+		MonsterSlayerShopService shops = new MonsterSlayerShopService(data);
+		Map<MonsterSlayerChallenge, Long> amounts = new LinkedHashMap<MonsterSlayerChallenge, Long>();
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
+		amounts.put(MonsterSlayerChallenge.FLEDGLING, 30L);
+		MonsterSlayerState.Snapshot player = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerBalances.of(amounts), zeroCursors(data), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerShopService.RedemptionProposal accepted = shops.proposeRedemption(player,
+			"falador", "falador.brawn", 2L);
+		assertTrue(accepted.isSuccessful(), "Fledgling typed redemption preflight");
+		equals(2, accepted.getOutput(), "typed output multiplication");
+		assertFalse(shops.proposeRedemption(player, "falador", "falador.brawn", 11L).isSuccessful(),
+			"stock rejects oversized quantity");
+		assertFalse(shops.proposeRedemption(player, "port_sarim", "port_sarim.brawn", 1L).isSuccessful(),
+			"rank gate rejects later shop");
+		MonsterSlayerShopService.CapacityProposal capacity = shops.proposeCapacityPurchase(player, "falador");
+		assertTrue(capacity.isSuccessful(), "first capacity entitlement proposal");
+		equals(31, capacity.getSnapshot().getDerivedInventoryCapacity(), "proposal adds only Falador entitlement");
+		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "falador").isSuccessful(),
+			"duplicate capacity entitlement is rejected");
+		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "port_sarim").isSuccessful(),
+			"rank gate remains authoritative for later entitlement");
+		shops.restock();
+		equals(10, shops.getStock("falador.brawn"), "restock keeps initial maximum");
 	}
 
 	private static void cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(MonsterSlayerData data) {

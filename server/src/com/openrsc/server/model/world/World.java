@@ -13,6 +13,7 @@ import com.openrsc.server.content.minigame.combatodyssey.CombatOdysseyData;
 import com.openrsc.server.content.minigame.monsterslayer.CombatOdysseyMigration;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler;
 import com.openrsc.server.content.minigame.fishingtrawler.FishingTrawler.TrawlerBoat;
 import com.openrsc.server.content.party.PartyManager;
@@ -132,6 +133,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private final CombatOdysseyData combatOdysseyData;
 	private MonsterSlayerData monsterSlayerData;
 	private MonsterSlayerTaskService monsterSlayerTaskService;
+	private MonsterSlayerShopService monsterSlayerShopService;
 	private CombatOdysseyMigration.LegacyData monsterSlayerLegacyData;
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
@@ -503,6 +505,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			if (getServer().getConfig().WANT_MYWORLD) {
 				setMonsterSlayerData(MonsterSlayerData.loadForWorld(this));
 				setMonsterSlayerTaskService(new MonsterSlayerTaskService(getMonsterSlayerData()));
+				setMonsterSlayerShopService(new MonsterSlayerShopService(getMonsterSlayerData()));
 				setMonsterSlayerLegacyData(CombatOdysseyMigration.LegacyData.load(Paths.get(
 					getServer().getConfig().CONFIG_DIR, "defs", "extras", "CombatOdyssey.json")));
 			}
@@ -1254,6 +1257,9 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		return monsterSlayerTaskService;
 	}
 
+	/** Headless typed reward economy; no dialogue/UI route opens it in this slice. */
+	public synchronized MonsterSlayerShopService getMonsterSlayerShopService() { return monsterSlayerShopService; }
+
 	private synchronized void setMonsterSlayerData(MonsterSlayerData data) {
 		monsterSlayerData = data;
 	}
@@ -1266,6 +1272,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private synchronized void setMonsterSlayerTaskService(MonsterSlayerTaskService service) {
 		monsterSlayerTaskService = service;
 	}
+
+	private synchronized void setMonsterSlayerShopService(MonsterSlayerShopService service) { monsterSlayerShopService = service; }
 
 	public synchronized Market getMarket() {
 		return market;

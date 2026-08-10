@@ -87,6 +87,7 @@ final class CurrentCombatHarness implements AutoCloseable {
 		field.set(world, service);
 	}
 
+
 	MutableGameClock clock() {
 		return clock;
 	}
