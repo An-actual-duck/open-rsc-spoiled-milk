@@ -72,7 +72,7 @@ Core rules:
   lower tier, a higher tier, or an interchangeable total.
 - Each of the six challenge shops contains one permanent inventory-capacity
   upgrade. Buying all six grows the player's inventory from 30 slots to a
-  5-by-8, 40-slot inventory; the upgrade is purchased rather than granted
+  8-by-5, 40-slot inventory; the upgrade is purchased rather than granted
   automatically when the shop unlocks.
 - Higher contacts refuse assignment/shop access until the required rank and the
   host guild's normal access requirements are satisfied.
@@ -322,7 +322,8 @@ an upgrade whose prerequisite shop is not unlocked, or a non-prefix purchase
 sequence are invalid state and must be diagnosed rather than silently granting
 space.
 
-The client inventory panel must expand to a 5-by-8 grid containing all 40 slot
+The client inventory panel must expand from its current 6-by-5 grid to an
+8-by-5 grid containing all 40 slot
 positions. The first `current capacity` positions are active in deterministic
 display order. Every remaining position is drawn as a greyed-out locked slot
 so the player can see future capacity but cannot place, receive, select, drag,
@@ -348,6 +349,56 @@ and 40 slots; locked-slot visuals and input rejection; layout at supported
 window/UI scales; and no item loss when a newer client observes an expanded
 inventory. A downgrade to a client or server that cannot represent the saved
 capacity must fail safely rather than truncate items.
+
+### Dynamic Inventory Capacity Implementation Boundary
+
+The existing code cannot achieve this by changing one constant. Server
+`Inventory.MAX_SIZE` is a global 30-slot admission limit; the client allocates
+30 inventory entries and its inventory tab draws a fixed six rows by five
+columns; several server handlers also use the same constant as the boundary
+between inventory and equipment packet slots. The capacity-upgrade branch must
+therefore introduce one shared dynamic-capacity contract rather than widening
+all players to 40.
+
+The recommended design is:
+
+1. Define `BASE_CAPACITY = 30` and `MAX_SUPPORTED_CAPACITY = 40`. Resolve an
+   individual player's active capacity from their validated Monster Slayer
+   entitlement mask. Ordinary players always resolve to 30.
+2. Replace every admission, free-slot, full-inventory, grant, trade, bank,
+   death, equipment-removal, and preset check that currently uses the global
+   limit with the owning player's active capacity. The server remains the only
+   authority; the client never claims an unlocked slot.
+3. Keep `MAX_SUPPORTED_CAPACITY` as the fixed protocol boundary for custom
+   client arrays and equipment-slot offsets. A 30-slot player has locked
+   inventory positions `30..39`; equipment begins after the maximum inventory
+   range, not after that player's current capacity. This prevents an expanded
+   inventory from colliding with equipment packet indexes.
+4. Add a custom-client, authoritative inventory-capacity receipt sent before
+   the first full inventory packet on login and immediately after a successful
+   upgrade. Do not reuse the legacy-only `SEND_INVENTORY_SIZE` behavior as the
+   new per-player contract. The receipt must be version/capability-gated so an
+   older client cannot accept a 31-to-40-slot player and silently truncate
+   their items.
+5. Allocate the custom client inventory storage to the fixed supported maximum
+   of 40, retain a runtime `inventoryCapacity`, and replace the fixed
+   six-row/five-column draw and hit-test limits with `5` columns and
+   `ceil(inventoryCapacity / 5)` active rows. The panel grows from 6-by-5 to
+   8-by-5; partially unlocked rows show inactive positions as locked. The
+   count label displays `[count]/[active capacity]`, never `/30`.
+6. Anchor the expanded custom UI panel so all eight rows remain usable at the
+   fixed classic viewport and supported widescreen scales. If the normal tab
+   area cannot fit them, use an explicit expanded-inventory presentation or
+   scroll behavior; never leave lower slots drawn but unreachable.
+
+Before implementation, inventory indices, full/update packet ordering,
+equipment offsets, bank preset arrays, bank withdrawal, trade, production,
+ground-item pickup, death/Ante, drop/use/equip handlers, and client input
+paths must be inventoried against this contract. Required tests include each
+capacity boundary `30, 31, 32, 33, 35, 37, 40`; reconnect/load with 31-to-40
+items; older-client refusal; locked-slot input rejection; equipment index
+separation; full-inventory rollback; and no loss through bank, trade, death,
+or a capacity upgrade.
 
 ### Unresolved Recruitment And First-Shop Details
 
