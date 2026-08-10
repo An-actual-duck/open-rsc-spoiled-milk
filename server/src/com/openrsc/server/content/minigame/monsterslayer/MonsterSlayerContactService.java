@@ -11,20 +11,29 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Typed, fail-closed contact boundary shared by Talk-to and Task shortcuts. */
 public final class MonsterSlayerContactService {
+	public interface BeerTransaction {
+		boolean consume(Player player);
+		boolean refund(Player player);
+	}
 	private final MonsterSlayerData data;
 	private final MonsterSlayerTaskService tasks;
 	private final RandomSource random;
+	private final BeerTransaction beer;
 	private final Map<UUID, PendingSelection> previews = new HashMap<UUID, PendingSelection>();
 
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks) {
-		this(data, tasks, new RandomSource() { @Override public int nextInt(int bound) { return ThreadLocalRandom.current().nextInt(bound); }});
+		this(data, tasks, new RandomSource() { @Override public int nextInt(int bound) { return ThreadLocalRandom.current().nextInt(bound); }}, new BeerTransaction() { public boolean consume(Player p) { return p.getCarriedItems().remove(new Item(ItemId.BEER.id())) != -1; } public boolean refund(Player p) { return p.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); }});
 	}
 
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random) {
+		this(data, tasks, random, new BeerTransaction() { public boolean consume(Player p) { return p.getCarriedItems().remove(new Item(ItemId.BEER.id())) != -1; } public boolean refund(Player p) { return p.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); }});
+	}
+	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, BeerTransaction beer) {
 		if (data == null || tasks == null || random == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
 		this.data = data;
 		this.tasks = tasks;
 		this.random = random;
+		this.beer = beer;
 	}
 
 	public Result beginBeerIntroduction(Player player) { return changeIntroduction(player, false); }
@@ -36,9 +45,9 @@ public final class MonsterSlayerContactService {
 			if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) return Result.rejected("missing-beer");
 			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 			MonsterSlayerState.Snapshot next = MonsterSlayerState.completeIntroduction(current, data);
-			if (player.getCarriedItems().remove(new Item(ItemId.BEER.id())) == -1) return Result.rejected("missing-beer");
+			if (!beer.consume(player)) return Result.rejected("missing-beer");
 			try { MonsterSlayerState.write(player.getCache(), data, next); }
-			catch (RuntimeException failure) { player.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); throw failure; }
+			catch (RuntimeException failure) { return beer.refund(player) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
 			return Result.accepted(null);
 		} } catch (RuntimeException failure) { return Result.rejected("invalid-state"); }
 	}
