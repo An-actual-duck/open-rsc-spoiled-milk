@@ -167,3 +167,42 @@ reproduced. Adding a second launch record or changing lifecycle policy would
 duplicate `ProjectileLaunchSnapshot`/`ProjectileImpactValidator` authority and
 risk an intentional source-terminal compatibility rule, so this focused branch
 makes no projectile runtime change.
+
+## P2 action and retreat follow-up — 2026-08-10
+
+### #2 / #11 — NPC disengagement and scripted retreat — already correct and covered
+
+The existing compiled retreat scenario exercises the ordinary one-tick retreat
+gate and the intentional exception for an already-hostile target to re-engage.
+`CurrentNpcProfileLifecycleCharacterization` additionally covers logout,
+layer/world-domain separation, and leash reset while preserving poison cleanup
+and skill normalization. NPC death/respawn poison lifetime coverage and the
+typed contribution ledger fixtures cover the remaining lifecycle boundaries.
+
+There is no separate, duration-bearing scripted-retreat controller contract in
+Spoiled Milk to port from Classic-Scape: `NpcBehavior.retreat(int)` uses its
+argument as a bounded retreat-walk displacement, while retreat completion
+remains the existing fifteen-tick combat-timer policy. Replacing that with the
+upstream controller state would be a behavior change without a local failure,
+so it is intentionally deferred. The retained action is to add a dedicated
+runtime fixture only if a specific content script demonstrates an incorrect
+completion duration.
+
+### #9 / #15 / #18 — handler action-state matrix — one confirmed fix
+
+The matrix review found that `Player.canLogout()` returned true for an open
+menu before examining active combat. A dialogue opened during combat could
+therefore bypass the real `Logout`/`LogoutRequest` handler gate. The predicate
+now evaluates combat and dueling first; an open menu still permits normal
+out-of-combat logout before busy/cooldown checks. The compiled
+`menu_open_logout_cannot_bypass_active_combat` scenario uses a live PvM melee
+event and `MenuOptionListener` to prove both sides of that rule.
+
+Existing handler-level fixtures cover combat ownership teardown on walk,
+teleport, logout, death, and expiry; the projectile lifecycle matrix covers
+launch, logout/reconnect, movement, teleport, domain change, and target
+removal. Banking, trading, and object interaction retain their own current
+handler/session predicates and no concrete combat bypass was reproduced in the
+bounded review. A generic action-policy rewrite is not justified: it would
+conflate intentional menu, bank, trade, and activity policies with combat
+ownership.
