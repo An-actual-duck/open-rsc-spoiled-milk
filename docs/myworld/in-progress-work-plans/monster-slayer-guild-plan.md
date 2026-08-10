@@ -97,17 +97,18 @@ later decision has not replaced it.
   one long Monster Slayer Guild quest, not six unrelated miniquests. Contact
   changes and rank awards are stages within that quest. Repeatable assignments
   and challenge-shop purchases are not additional mandatory quest stages.
-- The initial contact opens with: `Are you my new recruit?`
-- The player responses are:
-  - `Yes, of course I am!`
-  - `New recruit? No idea what you're talking about`
-- Choosing the second response ends the dialogue without starting the quest or
-  changing Monster Slayer state.
-- Choosing the first response begins the quest and leads into the opening joke
-  assignment:
+- The initial contact opens with the Rising Sun exchange:
 
-  `Your first task is one of the most difficult monsters of all. You must slay
-  my thirst. Quickly, to the barmaid and fetch me a beer!`
+  - Contact: `'ello there.`
+  - Player: `I hear you give Monster Slayer tasks?`
+  - Contact: `I sure do! Show me your stamp first.`
+  - Player: `Stamp?`
+  - Contact: `Blimey! You're not even a member! Right, your first task is...
+    Slay my thirst. I require beer!`
+
+- The player may instead choose `Hi. And, uh... bye!`; that ends the dialogue
+  without starting the quest or changing Monster Slayer state. Choosing the
+  Monster Slayer conversation begins the quest and the beer assignment.
 
 - The speaker is a new dedicated male Monster Slayer NPC placed in the Rising
   Sun, not Barmaid `142`. The existing Barmaid remains the person from whom the
@@ -563,6 +564,282 @@ actively spawned NPCs and need no new placement:
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.
+
+## Player-Facing Contact, Task, And Shop Dialogue Contract
+
+This section is the implementation-ready dialogue contract for the six
+contacts. It supplements the fixed monster ladder; it does not change task
+families, kill counts, point values, normal host-guild access, or the existing
+non-Monster-Slayer dialogue that each reused NPC already owns.
+
+### Shared Interaction Rules
+
+- A contact recognizes a player who has reached that contact's entry rank. A
+  player below that rank is not silently offered a task, a repeatable, or a
+  shop route. The contact explains the missing proof/rank and ends the
+  conversation.
+- The normal Talk-to route is intentionally social: it gives the player a
+  chance to accept or decline the next assignment, then asks to see their
+  current proof before assigning it. The proof check is dialogue flavor; the
+  server still validates rank, normal guild access, the one-active-task rule,
+  and every mandatory/repeatable state transition.
+- Once a player is eligible, the `Task` right-click option is a shortcut. It
+  skips the greeting and the `Yes please / Not now` choice and begins at the
+  contact's `Your next task is...` line. It must use the same authoritative
+  assignment path as Talk-to. If the player is ineligible, the shortcut must
+  not assign anything and should show a brief NPC line where possible (for
+  example, `Not yet. You need an Initiate sticker before I can give you work.`)
+  or the equivalent game message when the client cannot open dialogue.
+- A player with an active task is shown its current objective and progress
+  rather than being given a second task. A player who has finished an
+  assignment is sent through completion/promotion handling before another is
+  chosen. This preserves the existing one-active-task invariant across all six
+  contacts.
+- Assignment text uses the deterministic current entry from the mandatory
+  chain, or a chosen family/count from that contact's repeatable pool:
+  `Your next task is to slay <count> <family>.` Before an assignment whose
+  roster notes poison, Prayer drain, dragon fire, desert preparation, or
+  Wilderness exposure, append the mandated risk warning before task state is
+  written. The shortcut does not suppress a required warning.
+- Each completed mandatory chain promotes the player at its own contact. The
+  promotion unlocks that contact's nearby associate shop and its corresponding
+  challenge-point balance. The associate, not the task giver, opens the shop.
+  This gives each location two clear roles and avoids overloading an existing
+  bartender or guild NPC's normal service dialogue.
+- An eligible associate opens with a short, rank-appropriate acknowledgement
+  and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
+  that location's existing typed-currency shop; it never spends points or
+  grants an item as part of dialogue. Ineligible use—Talk-to or a right-click
+  `Trade`/`Shop` shortcut—uses the table's refusal and never opens an empty or
+  partially locked shop interface.
+
+### Rank Proofs And Shop Gates
+
+The proof progression deliberately starts silly and becomes ceremonial. A
+proof is rank flavor unless a later presentation decision explicitly makes it
+an item or cosmetic; it is not a second authority beside the persisted rank.
+There are six proof changes for the six promotions before the final standing:
+
+| Player rank after promotion | Proof shown in dialogue | Shop newly unlocked | Associate refusal before unlock |
+| --- | --- | --- | --- |
+| Fledgling | hand stamp | none; the player is beginning the first chain | `You need to earn your Initiate sticker first.` |
+| Initiate | sticker | Rising Sun / Fledgling point shop | `Sorry, can't show you my wares till you're an Initiate.` |
+| Veteran | button | Port Sarim / Initiate point shop | `Sorry, can't show you my wares till you're a Veteran.` |
+| Elite | badge | Brimhaven / Veteran point shop | `Sorry, can't show you my wares till you're an Elite.` |
+| Champion | medal | Champions Guild / Elite point shop | `Sorry, can't show you my wares till you're a Champion.` |
+| Hero | crest | Heroes Guild / Champion point shop | `Sorry, can't show you my wares till you're a Hero.` |
+| Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, can't show you my wares till you're a Legend.` |
+
+The final `Legend` promotion intentionally does not add a seventh trinket. It
+ends the escalating stamp/sticker/button/badge/medal/crest joke with the
+Legends contact treating status as something demonstrated rather than worn.
+Every associate shop spends only the already-defined typed Monster Slayer
+currency and must retain its rank, point-vector, and normal host-guild access
+validation server-side.
+
+### Contact Dialogue Sheets
+
+Names remain implementation choices. These sheets identify the voice, the
+required branch points, and dialogue suitable for the current contact
+candidates. Bracketed text is runtime data, never player-controlled text.
+
+#### 1. Rising Sun Recruiter — Fledgling Stamp And Initiate Sticker
+
+Tone: quaint, chummy, and a little absurd. This is the dedicated new Rising
+Sun contact, not Barmaid `142`.
+
+**Unstamped introduction**
+
+> Contact: `'ello there.`
+> Player: `I hear you give Monster Slayer tasks?`
+> Contact: `I sure do! Show me your stamp first.`
+> Player: `Stamp?`
+> Contact: `Blimey! You're not even a member! Right, your first task is...`
+> `Slay my thirst. I require beer!`
+
+The player may instead choose `Hi. And, uh... bye!`; that ends the dialogue
+without starting the guild quest. The beer route, Barmaid handoff, carried-beer
+validation, consumption, and confirmed Fledgling stamp exchange remain exactly
+as specified in **Confirmed: One Continuous Mandatory Quest And Beer Opening**.
+
+**Fledgling task route**
+
+> Contact: `Oh, it's you again. Another task then?`
+> Player: `Yes please.` / `Not now.`
+> Contact (if yes): `Stamp?`
+> Player: `Here ya go.`
+> Contact: `Your next task is to slay [count] [family].`
+
+`Task` shortcut: `Your next task is to slay [count] [family].` If the player
+is unstamped, it instead says `No stamp, no task. Fetch the beer first.` and
+does not begin an assignment.
+
+**Fledgling completion / Initiate promotion**
+
+Use the already-confirmed sticker exchange verbatim, then add:
+
+> Contact: `You've been earning Fledgling Slayer Points while you worked.`
+> Contact: `My associate nearby can trade them for useful supplies. And if you
+> fancy more points, I can always find more monsters needing culling.`
+
+The nearby associate opens only after `Initiate`; before then they use the
+Fledgling row in the shop-gate table.
+
+#### 2. Rusty Anchor Contact — Initiate Sticker To Veteran Button
+
+Tone: friendly and capable, but no longer quaint; a working-port regular who
+treats the guild as honest employment.
+
+**Below rank**
+
+> Contact: `I need to see an Initiate sticker before I can put your name on my
+> list. Earn one at the Rising Sun, then come back.`
+
+**Normal task route**
+
+> Contact: `Back for work, are you?`
+> Player: `Yes please.` / `Not now.`
+> Contact (if yes): `Let's see that sticker.`
+> Player: `Here you are.`
+> Contact: `Your next task is to slay [count] [family]. Keep your kit dry and
+> your head on.`
+
+`Task` shortcut begins at `Your next task is...`; below-rank use says `No
+Initiate sticker, no Port Sarim work.`
+
+**Veteran promotion / shop reveal**
+
+> Contact: `You did what you said you would. That's worth more than loud talk.`
+> Contact: `You're a Veteran now. Wear this button somewhere it won't fall in
+> the drink.`
+> Contact: `The trader beside me deals in Initiate Slayer Points. He's cleared
+> to serve Veterans.`
+
+#### 3. Dead Man's Chest Contact — Veteran Button To Elite Badge
+
+Tone: the bartender who acts tougher than he is. His bluster falls away at the
+promotion, revealing that he has seen what the next step costs.
+
+**Below rank**
+
+> Contact: `A Veteran button gets you a proper job from me. Until then, you're
+> drinking in the shallow end.`
+
+**Normal task route**
+
+> Contact: `You've got the look of someone after a dangerous job.`
+> Player: `Yes please.` / `Not now.`
+> Contact (if yes): `Button.`
+> Player: `Here.`
+> Contact: `Your next task is to slay [count] [family]. Don't make me regret
+> picking you.`
+
+`Task` shortcut begins at the assignment. Below rank: `Come back with a
+Veteran button if you want Brimhaven work.`
+
+**Elite promotion / shop reveal**
+
+> Contact: `Hah. I knew you had it in you. You're Elite now; take the badge.`
+> Contact: `Listen, though. You're off to play with the big boys now.`
+> Contact: `Not all adventurers survive the big leagues. I didn't. That's why
+> I'm here telling stories instead of making them.`
+> Contact: `My associate will trade Veteran Slayer Points with an Elite. Spend
+> them on something that keeps you alive.`
+
+#### 4. Champions Guildmaster — Elite Badge To Champion Medal
+
+Tone: tough, boisterous, friendly, and jovial. Preserve Dragon Slayer and
+ordinary Champions Guild dialogue before presenting this optional guild route.
+
+**Below rank**
+
+> Guildmaster: `An Elite badge is the price of a Champion's contract! Earn one
+> first, then we'll see what you're made of.`
+
+**Normal task route**
+
+> Guildmaster: `Ah! An Elite hunter. Here for a real challenge?`
+> Player: `Yes please.` / `Not now.`
+> Guildmaster (if yes): `Badge, if you please!`
+> Player: `Here you go.`
+> Guildmaster: `Your next task is to slay [count] [family]! Make the Guild
+> proud!`
+
+`Task` shortcut begins at the assignment. Below rank: `Bring me an Elite badge
+before you ask for Champion work!`
+
+**Champion promotion / shop reveal**
+
+> Guildmaster: `Splendid work! You faced the test and did not blink.`
+> Guildmaster: `You are a Champion now. Take this medal, and try not to polish
+> it on your sleeve.`
+> Guildmaster: `The quartermaster nearby takes Elite Slayer Points. Tell them
+> I said a Champion has earned a look at the good stock.`
+
+#### 5. Heroes Guild Contact — Champion Medal To Hero Crest
+
+Tone: a hardened veteran. Respectful rather than theatrical; they know the
+cost of the creatures now being assigned. Preserve Heroes Quest and cape
+behavior before this route.
+
+**Below rank**
+
+> Contact: `Champion's medal first. These contracts are not lessons.`
+
+**Normal task route**
+
+> Contact: `You came back. Do you want another contract?`
+> Player: `Yes please.` / `Not now.`
+> Contact (if yes): `Your medal.`
+> Player: `Here.`
+> Contact: `Your next task is to slay [count] [family]. Prepare before you
+> leave; preparation is what brings people home.`
+
+`Task` shortcut begins at the assignment. Below rank: `No Champion medal. No
+Heroes Guild contract.`
+
+**Hero promotion / shop reveal**
+
+> Contact: `You completed the work, even when it was hard. That is the part
+> people remember.`
+> Contact: `You are a Hero. Carry this crest with care.`
+> Contact: `The supplier nearby accepts Champion Slayer Points. A Hero has
+> earned access.`
+
+#### 6. Legends Guild Contact — Hero Crest To Legend
+
+Tone: stoic, economical, and matter-of-fact. Use only guild Sir Radimus `785`,
+not house Radimus `735`, and preserve Legends Quest behavior before this
+route.
+
+**Below rank**
+
+> Radimus: `Hero's crest required. Return when you have earned it.`
+
+**Normal task route**
+
+> Radimus: `Another contract?`
+> Player: `Yes please.` / `Not now.`
+> Radimus (if yes): `Crest.`
+> Player: `Here.`
+> Radimus: `Your next task is to slay [count] [family]. Be ready.`
+
+`Task` shortcut begins at the assignment. Below rank: `No Hero's crest. No
+Legend contract.`
+
+**Legend completion / final open ending**
+
+> Radimus: `You've completed your journey for now. You've done well.`
+> Player: `And what's my new rank?`
+> Radimus: `And what use would you make of it?`
+> Player: `...Legend, then?`
+> Radimus: `If you continue to earn it.`
+
+After this exchange, the Legends associate opens the Hero-point shop. Their
+pre-unlock refusal is `Sorry, can't show you my wares till you're a Legend.`
+Legend repeatable tasks remain available, but the mandatory quest is complete;
+the ending must not promise a further required rank or a finite completion of
+all monster content.
 
 ## Data Design
 
