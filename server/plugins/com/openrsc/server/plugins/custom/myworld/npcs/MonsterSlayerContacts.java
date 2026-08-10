@@ -51,7 +51,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			npcsay(player, npc, proof(index));
 		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
-		if (!result.isAccepted()) { npcsay(player, npc, result.getReason().equals("active-task") ? "Finish your current task first." : "Not yet. Your record is not ready for another task."); return; }
+		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); npcsay(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + data.getFamily(active.getFamilyKey()).getDisplayName() + "."); } else npcsay(player, npc, "Not yet. Your record is not ready for another task."); return; }
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
 		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + data.getFamily(task.getFamilyKey()).getDisplayName() + ".", warning(taskKey));
