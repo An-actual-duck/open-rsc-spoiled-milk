@@ -213,6 +213,13 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			"stock rejects oversized quantity");
 		assertFalse(shops.proposeRedemption(player, "port_sarim", "port_sarim.brawn", 1L).isSuccessful(),
 			"rank gate rejects later shop");
+		MonsterSlayerShopService.CapacityProposal capacity = shops.proposeCapacityPurchase(player, "falador");
+		assertTrue(capacity.isSuccessful(), "first capacity entitlement proposal");
+		equals(31, capacity.getSnapshot().getDerivedInventoryCapacity(), "proposal adds only Falador entitlement");
+		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "falador").isSuccessful(),
+			"duplicate capacity entitlement is rejected");
+		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "port_sarim").isSuccessful(),
+			"rank gate remains authoritative for later entitlement");
 		shops.restock();
 		equals(10, shops.getStock("falador.brawn"), "restock keeps initial maximum");
 	}

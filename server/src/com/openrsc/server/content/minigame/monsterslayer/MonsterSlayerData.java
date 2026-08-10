@@ -242,10 +242,14 @@ public final class MonsterSlayerData {
 	}
 
 	private static LinkedHashMap<String, Shop> parseShops(JSONArray array, ReferenceCatalog catalog) {
+		if (array.length() != MonsterSlayerChallenge.values().length) {
+			throw new IllegalArgumentException("Monster Slayer requires exactly six shops");
+		}
 		LinkedHashMap<String, Shop> result = new LinkedHashMap<String, Shop>();
 		Set<MonsterSlayerChallenge> challengeOwners = new HashSet<MonsterSlayerChallenge>();
 		Set<String> categoryKeys = new HashSet<String>();
 		Set<String> rewardKeys = new HashSet<String>();
+		Set<String> capacityKeys = new HashSet<String>();
 		for (int shopIndex = 0; shopIndex < array.length(); shopIndex++) {
 			JSONObject object = array.getJSONObject(shopIndex);
 			requireFields(object, "shop", "key", "challenge", "categories", "capacityUpgrade");
@@ -304,8 +308,12 @@ public final class MonsterSlayerData {
 				|| upgradeCost.get(challenge) <= mandatoryTotalFor(challenge)) {
 				throw new IllegalArgumentException("Invalid capacity upgrade cost for " + key);
 			}
+			String capacityKey = stableKey(upgrade.getString("key"), "capacity upgrade");
+			if (!capacityKeys.add(capacityKey) || !capacityKey.equals(key + ".capacity")) {
+				throw new IllegalArgumentException("Invalid/duplicate capacity upgrade key " + capacityKey);
+			}
 			putUnique(result, key, new Shop(key, challenge, categories,
-				new MonsterSlayerDefinitions.CapacityUpgrade(stableKey(upgrade.getString("key"), "capacity upgrade"), upgradeCost)), "shop");
+				new MonsterSlayerDefinitions.CapacityUpgrade(capacityKey, upgradeCost)), "shop");
 		}
 		return result;
 	}

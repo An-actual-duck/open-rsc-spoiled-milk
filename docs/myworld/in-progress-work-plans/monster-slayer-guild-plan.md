@@ -1425,6 +1425,22 @@ may sell more than one unit only after the cost vector and output multiplication
 are verified atomically. No line above authorizes an unbounded shop stock, a
 certificate substitute, or a change to the underlying Cooking/Herblaw recipes.
 
+### Shop Slice Initial Prices (Playtest Baseline)
+
+The first headless shop slice uses these deliberately conservative point prices:
+
+- Potions cost native `2/3/4/5/7/9` points from Fledgling through Hero; each
+  later potion also costs `1/2/3/4/5` immediately-lower-tier points.
+- Food costs native `3/5/6/8/10/13` and immediately-lower `0/2/3/4/6/8`.
+- Capacity entitlements cost native-only `30/48/72/108/180/300`. Against the
+  mandatory totals `25/40/60/90/150/260`, the margin is one small repeatable
+  task at each tier (with Hero leaving a 40-point, roughly one-to-two-task
+  margin because its final mandatory schedule is more variable).
+
+These are balance estimates rather than permanent economy promises. They are
+stored as independent typed components and must be adjusted only after owner
+playtesting; no scalar conversion or cross-tier substitution is permitted.
+
 The current production interface cannot represent this faithfully:
 `ProductionSession` carries one scalar point value and each `ProductionRecipe`
 has one scalar cost/enabled flag. Monster Slayer therefore needs either a
