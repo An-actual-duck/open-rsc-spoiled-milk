@@ -61,6 +61,8 @@ public final class MonsterSlayerContactsRouteTest {
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
 		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
 		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		new MonsterSlayerTaskService(data); // dialogue rendering requires a live client channel; exercise the acknowledged Task route here.
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.acknowledgePromotion(MonsterSlayerState.read(promoted.getCache(), data), data, "falador"));
 		routes.onOpNpc(promoted, new Npc(server.getWorld(), 846, 203, 600), "Task");
 		MonsterSlayerState.Snapshot after = MonsterSlayerState.read(promoted.getCache(), data);
 		assertTrue(after.isPromotionAcknowledged("falador", data), "promotion dialogue interaction is acknowledged once");
