@@ -83,3 +83,87 @@ This report does not authorize balance changes, Classic-Scape controller/
 pipeline imports, PvP enablement, Server R2 changes, plugin reload changes, or
 any public-server operation. Each recommended follow-up needs its own branch,
 owner decision, and executable parity scope.
+
+## Follow-up hardening record
+
+### #4 — Goblin’s Tenacity settlement ownership — completed
+
+`PoisonEvent.settleTypedPoisonDamage` had applied Goblin’s Tenacity before
+creating a resolved-damage request, while `Skills.subtractLevel` applied it
+again when `ResolvedDamageTransaction` settled that request. A first failed
+roll could therefore receive a second survival opportunity. Poison now records
+the one compatibility roll needed to retain its historical post-mitigation
+damage update and hitsplat, and explicitly marks that request as already
+mitigated. The shared transaction passes that narrow fact to `Skills` so it
+does not replay the roll.
+
+The compiled scenario
+`generic_poison_applies_goblin_tenacity_once_at_settlement` scripts a missed
+first roll followed by a would-be successful second roll and verifies that the
+player follows the first result into the ordinary terminal lifecycle. Existing
+poison factual-damage coverage continues to verify post-Tenacity Hits,
+lifesteal, and presentation compatibility. `./server/test_combat` passed all
+135 scenarios after the change.
+
+### #20 — Raw Hits mutation inventory — completed for confirmed gameplay damage
+
+The complete `Skill.HITS` mutation inventory separates ordinary healing,
+boost/restore, NPC scripted regeneration, summon state synchronization, and
+test/setup utilities from damage. The only ordinary player-facing raw damage
+outside the resolved-damage path was the Army of Obscurity Necronomicon: one
+non-lethal scripted self-hit, a damage update, a stat packet, and no hitsplat.
+It now uses a `SCRIPT` resolved-damage request with `DAMAGE_ONLY` presentation,
+preserving that exact presentation and avoiding invented contribution,
+lifesteal, or death policy.
+
+`ResetCrystal`, `Admins.damagePlayer`, `Admins.damageNpc`, Development kill
+commands, and the signed `ProjectileEvent` admin hook remain intentional
+privileged compatibility operations. In particular, the signed projectile
+hook can heal above the ordinary maximum and therefore cannot use the
+non-negative damage transaction. Quest NPC resurrection/regeneration and
+summon state synchronization are likewise not damage paths. They are recorded
+as explicit follow-up candidates only if their individual administrative or
+quest semantics are redesigned; this branch makes no generic raw-Hits rewrite.
+
+The compiled `necronomicon_self_damage_uses_resolved_sparse_settlement`
+scenario verifies the script-category transaction’s one-Hit settlement,
+damage update, and no-hitsplat policy. `./server/test_combat` passed all 136
+scenarios; the full server/plugin build remains required before final handoff
+to compile the changed plugin artifact.
+
+### #19 — Combat-clock domain reconciliation — completed
+
+`Mob.setCombatTimer` has always written the server `GameClock`, but six active
+cooldown consumers compared that value with JVM wall time: player logout,
+NPC-talk busy grace, both OpenPK stat-change checks, the wilderness Magical
+Pool, and A Bone To Pick eligibility. They now compare the combat timestamp to
+the same authoritative `GameClock`. Real-time client activity, exchange,
+movement, report, and shot timestamps intentionally remain on wall time; only
+the combat-timer clause moved.
+
+The compiled `combat_cooldown_uses_authoritative_game_clock` fixture freezes
+wall time implicitly through the deterministic harness, proves a fresh combat
+timestamp blocks the cooldown, then advances exactly 10,001 game-clock
+milliseconds and proves it opens. `./server/test_combat` passed all 137
+scenarios. Plugin-only callers are included in the final full server/plugin
+build gate.
+
+### #16 — Projectile launch/escape lifecycle — characterized; no change justified
+
+The existing A06 executable lifecycle suite already exercises real typed bow,
+thrown, magic, NPC, scripted, and benign projectile producers, immutable launch
+snapshots, source/target logout-and-reconnect session changes, source and target
+movement, paired teleports, layer/world-domain changes, terminal source policy,
+removed targets, and respawned NPC lifetimes. It records the current deliberate
+policy: a source that merely moves may leave an already launched projectile
+valid, whereas a replaced login session, target replacement/removal, launch
+domain departure, blocked path, or range departure invalidates it. The
+`current_projectile_impact_lifecycle_policy_is_characterized` and
+`projectile_impact_policy_decision_evidence_is_executable` scenarios execute
+in the combat gate and passed in this branch.
+
+No Spoiled Milk defect equivalent to the upstream launch-escape issue was
+reproduced. Adding a second launch record or changing lifecycle policy would
+duplicate `ProjectileLaunchSnapshot`/`ProjectileImpactValidator` authority and
+risk an intentional source-terminal compatibility rule, so this focused branch
+makes no projectile runtime change.

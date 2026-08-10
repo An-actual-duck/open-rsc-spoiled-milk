@@ -949,7 +949,9 @@ public final class Player extends Mob {
 	}
 
 	private boolean hasSatisfiedCooldown() {
-		return (System.currentTimeMillis() - getLastClientActivity() > 30000 || System.currentTimeMillis() - getCombatTimer() > 10000)
+		return (System.currentTimeMillis() - getLastClientActivity() > 30000
+			|| getWorld().getServer().getGameClock().currentTimeMillis()
+				- getCombatTimer() > 10000)
 			&& System.currentTimeMillis() - getAttribute("last_shot", (long) 0) > 10000
 			&& System.currentTimeMillis() - getLastExchangeTime() > 3000;
 	}

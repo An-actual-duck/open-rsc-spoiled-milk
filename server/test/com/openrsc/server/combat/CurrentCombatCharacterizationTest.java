@@ -210,6 +210,15 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "generic_poison_leach_uses_factual_overkill_and_tenacity_damage",
 				CurrentCombatDotLifecycleCharacterization
 					::poisonFactualDamageBoundaries);
+			run(harness, "generic_poison_applies_goblin_tenacity_once_at_settlement",
+				CurrentCombatDotLifecycleCharacterization
+					::poisonGoblinTenacityHasOneSettlementRoll);
+			run(harness, "necronomicon_self_damage_uses_resolved_sparse_settlement",
+				CurrentCombatDotLifecycleCharacterization
+					::necronomiconDamageSettlement);
+			run(harness, "combat_cooldown_uses_authoritative_game_clock",
+				CurrentCombatDotLifecycleCharacterization
+					::combatCooldownUsesGameClock);
 			run(harness, "dot_corrupt_legacy_and_runtime_state_boundaries_are_characterized",
 				CurrentCombatDotLifecycleCharacterization
 					::corruptLegacyAndRuntimeStateBoundaries);

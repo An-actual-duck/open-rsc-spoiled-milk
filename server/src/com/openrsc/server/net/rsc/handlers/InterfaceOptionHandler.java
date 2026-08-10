@@ -1259,7 +1259,8 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			player.message("You cannot do that whilst fighting");
 			return false;
 		}
-		if (System.currentTimeMillis() - player.getCombatTimer() < 10000){
+		if (player.getWorld().getServer().getGameClock().currentTimeMillis()
+				- player.getCombatTimer() < 10000){
 			player.message("You must be out of combat for 10 seconds before changing stats");
 			return false;
 		}
@@ -1286,7 +1287,8 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			player.message("You cannot do that whilst fighting");
 			return false;
 		}
-		if (System.currentTimeMillis() - player.getCombatTimer() < 10000){
+		if (player.getWorld().getServer().getGameClock().currentTimeMillis()
+				- player.getCombatTimer() < 10000){
 			player.message("You must be out of combat for 10 seconds before changing stats");
 			return false;
 		}

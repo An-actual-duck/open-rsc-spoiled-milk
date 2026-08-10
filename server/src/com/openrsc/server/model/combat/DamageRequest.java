@@ -51,6 +51,7 @@ public final class DamageRequest {
 	private final int resolvedDamage;
 	private final int hitSplatType;
 	private final Presentation presentation;
+	private final boolean applyGoblinTenacity;
 
 	private DamageRequest(final Builder builder) {
 		requestId = builder.requestId;
@@ -70,6 +71,7 @@ public final class DamageRequest {
 		resolvedDamage = builder.resolvedDamage;
 		hitSplatType = builder.hitSplatType;
 		presentation = builder.presentation;
+		applyGoblinTenacity = builder.applyGoblinTenacity;
 	}
 
 	public static Builder resolvedLegacy(final Mob source, final Mob target,
@@ -95,6 +97,8 @@ public final class DamageRequest {
 	public int getResolvedDamage() { return resolvedDamage; }
 	public int getHitSplatType() { return hitSplatType; }
 	public Presentation getPresentation() { return presentation; }
+	/** Whether the shared Hits settlement owns the Goblin Tenacity roll. */
+	public boolean shouldApplyGoblinTenacity() { return applyGoblinTenacity; }
 
 	@Override
 	public boolean equals(final Object value) {
@@ -121,6 +125,7 @@ public final class DamageRequest {
 		private final int resolvedDamage;
 		private int hitSplatType;
 		private Presentation presentation = Presentation.DAMAGE_AND_HITSPLAT;
+		private boolean applyGoblinTenacity = true;
 
 		private Builder(final Mob source, final Mob target,
 				final SourceCategory sourceCategory, final String effectKey,
@@ -177,6 +182,16 @@ public final class DamageRequest {
 
 		public Builder presentation(final Presentation value) {
 			presentation = Objects.requireNonNull(value, "presentation");
+			return this;
+		}
+
+		/**
+		 * Marks the request's value as already settled through Goblin Tenacity.
+		 * Only compatibility paths that preserve a post-mitigation presentation
+		 * may opt out of the shared settlement roll.
+		 */
+		public Builder goblinTenacityAlreadyApplied() {
+			applyGoblinTenacity = false;
 			return this;
 		}
 

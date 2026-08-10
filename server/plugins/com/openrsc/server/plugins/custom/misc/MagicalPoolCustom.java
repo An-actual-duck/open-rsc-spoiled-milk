@@ -28,7 +28,7 @@ public class MagicalPoolCustom implements OpLocTrigger {
 					player.message("You must stand still for 10 seconds before using portal");
 					return;
 				}
-				while (System.currentTimeMillis()
+				while (player.getWorld().getServer().getGameClock().currentTimeMillis()
 					- player.getCombatTimer() < 10000
 					&& player.getLocation().inWilderness()) {
 					player.message("You must be out of combat for 10 seconds before using portal");
