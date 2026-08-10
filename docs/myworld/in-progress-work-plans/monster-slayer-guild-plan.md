@@ -1,8 +1,8 @@
 # Monster Slayer Guild Plan
 
-Status: **definition foundation and durable player-state activation implemented
-and verified; task, reward, shop, dialogue, placement, inventory-capacity, UI,
-and protocol activation remain pending**
+Status: **definition foundation, durable player state, and server-authoritative
+task progression implemented and verified; shops, dialogue, placement,
+inventory-capacity, UI, and protocol activation remain pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -1570,3 +1570,48 @@ run through `ant test_monster_slayer_player_state`. It covers new-account and
 cache-round-trip defaults, reconnect no-write idempotence, all meaningful
 legacy classifications, zero-balance migration, unrelated-key preservation,
 unknown/non-prefix masks, malformed state, and the derived-capacity boundaries.
+
+## Task Progression Slice
+
+Branch: `feat/monster-slayer-task-progression`.
+
+`MonsterSlayerTaskService` is the narrow typed server boundary for future
+dialogue and death lifecycle integrations. It persists only validated state
+transitions through `MonsterSlayerState`; no plugin or caller accesses raw
+Slayer cache keys.
+
+- Mandatory assignment selects only the current contact cursor's deterministic
+  task and requires the exact contact rank. Repeatables require that contact's
+  completed mandatory chain and an explicit repeatable task key owned by the
+  same contact.
+- The NPC death lifecycle snapshots Slayer credit before XP settlement clears
+  contribution evidence. It credits each online, living, same-world/layer
+  contributor within 16 tiles who dealt at least `max(1, ceil(maxHits * .05))`
+  damage, while preserving the positive-damage top contributor exception.
+- Wrong family, no active task, invalid contact/rank, duplicate callbacks, and
+  invalid repeatable selections leave cache state unchanged. Completion clears
+  the task exactly once, increments the lifetime total, advances only the
+  owning mandatory cursor/rank when appropriate, and credits only that task's
+  native challenge balance.
+- This remains intentionally headless: no NPC placement/dialogue, menu,
+  reward shop, capacity purchase, inventory-size change, client packet, or UI
+  behavior is exposed by this slice.
+- Slayer credit is an optional fail-closed boundary inside NPC death handling.
+  Every ordinary `RuntimeException` from Slayer state reading, proposal, or
+  writing is contained (never `Error`), grants no progress, and is reported
+  with a safe known or generic reason. A 256-entry access-ordered transient
+  suppression window prevents repeated corrupt kills from spamming logs or
+  retaining unbounded process memory.
+- `MonsterSlayerState.write` validates the complete candidate before mutating
+  cache and snapshots only the Slayer-owned keys. If an individual cache
+  mutator fails, those keys are restored exactly while unrelated keys and
+  quarantined raw evidence remain untouched; no partial completion, cursor, or
+  balance can escape.
+- Production death-path coverage executes `Npc.killedBy`/`processLegacyDeath`
+  with corrupt and valid contributors in both contribution orders, plus
+  balance-cap, lifetime-count-overflow, wrong-family, no-task, and duplicate
+  cases. It proves the valid contributor progresses exactly once while failed
+  contributors cannot interrupt XP, loot listeners, removal, or respawn.
+- Focused state coverage also injects a mid-write cache failure and verifies
+  exact owned-key rollback/unrelated-key preservation, then verifies bounded
+  duplicate-diagnostic suppression.

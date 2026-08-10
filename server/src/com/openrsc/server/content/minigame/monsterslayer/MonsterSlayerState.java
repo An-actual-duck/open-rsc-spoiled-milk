@@ -3,11 +3,13 @@ package com.openrsc.server.content.minigame.monsterslayer;
 import com.openrsc.server.model.Cache;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact;
+import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Family;
 import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task;
 
 /** Sole owner of Monster Slayer cache keys and validation of their typed snapshot. */
@@ -70,26 +72,53 @@ public final class MonsterSlayerState {
 			throw new IllegalArgumentException("Player cache is required");
 		}
 		validate(snapshot, data);
-		cache.set(STATE_VERSION_KEY, snapshot.stateVersion);
-		cache.set(INTRO_STAGE_KEY, snapshot.introStage);
-		cache.set(RANK_KEY, snapshot.rank.getCode());
-		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
-			cache.store(balanceKey(challenge), snapshot.balances.get(challenge));
+		Map<String, Object> values = cache.getCacheMap();
+		Map<String, Object> before = new LinkedHashMap<String, Object>();
+		List<String> keys = ownedKeys(data);
+		for (String key : keys) {
+			if (values.containsKey(key)) before.put(key, values.get(key));
 		}
-		if (snapshot.activeTaskKey == null) {
-			cache.remove(ACTIVE_TASK_KEY);
-		} else {
-			cache.store(ACTIVE_TASK_KEY, snapshot.activeTaskKey);
+		try {
+			cache.set(STATE_VERSION_KEY, snapshot.stateVersion);
+			cache.set(INTRO_STAGE_KEY, snapshot.introStage);
+			cache.set(RANK_KEY, snapshot.rank.getCode());
+			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+				cache.store(balanceKey(challenge), snapshot.balances.get(challenge));
+			}
+			if (snapshot.activeTaskKey == null) {
+				cache.remove(ACTIVE_TASK_KEY);
+			} else {
+				cache.store(ACTIVE_TASK_KEY, snapshot.activeTaskKey);
+			}
+			cache.set(ACTIVE_KILLS_KEY, snapshot.activeKills);
+			for (Contact contact : data.getContactsInChallengeOrder()) {
+				cache.set(cursorKey(contact.getKey()), snapshot.mandatoryCursors.get(contact.getKey()));
+			}
+			cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
+			cache.set(INVENTORY_UPGRADES_KEY, snapshot.inventoryUpgrades);
+			cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
+			cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
+			cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
+		} catch (RuntimeException failure) {
+			// Cache mutators are individually atomic, not a transaction. Restore
+			// only our owned keys directly so unrelated cache evidence survives.
+			for (String key : keys) {
+				if (before.containsKey(key)) values.put(key, before.get(key));
+				else values.remove(key);
+			}
+			throw failure;
 		}
-		cache.set(ACTIVE_KILLS_KEY, snapshot.activeKills);
-		for (Contact contact : data.getContactsInChallengeOrder()) {
-			cache.set(cursorKey(contact.getKey()), snapshot.mandatoryCursors.get(contact.getKey()));
-		}
-		cache.store(TASKS_COMPLETED_KEY, snapshot.tasksCompleted);
-		cache.set(INVENTORY_UPGRADES_KEY, snapshot.inventoryUpgrades);
-		cache.set(MIGRATION_VERSION_KEY, snapshot.migrationVersion);
-		cache.set(LEGACY_STATUS_KEY, snapshot.legacyStatus.getCode());
-		cache.set(LEGACY_PRESTIGE_KEY, snapshot.legacyPrestige);
+	}
+
+	private static List<String> ownedKeys(MonsterSlayerData data) {
+		List<String> keys = new ArrayList<String>();
+		Collections.addAll(keys, STATE_VERSION_KEY, INTRO_STAGE_KEY, RANK_KEY,
+			ACTIVE_TASK_KEY, ACTIVE_KILLS_KEY, TASKS_COMPLETED_KEY,
+			INVENTORY_UPGRADES_KEY, MIGRATION_VERSION_KEY, LEGACY_STATUS_KEY,
+			LEGACY_PRESTIGE_KEY);
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) keys.add(balanceKey(challenge));
+		for (Contact contact : data.getContactsInChallengeOrder()) keys.add(cursorKey(contact.getKey()));
+		return keys;
 	}
 
 	public static Snapshot defaults(MonsterSlayerData data) {
@@ -257,6 +286,89 @@ public final class MonsterSlayerState {
 		return SpendProposal.success(spent, new RefundReceipt(result.getReceipt()));
 	}
 
+	/** Assigns only the deterministic next task for an eligible contact. */
+	public static TaskResult assignMandatory(Snapshot current, MonsterSlayerData data,
+			String contactKey) {
+		validate(current, data);
+		Contact contact = data.getContact(contactKey);
+		if (contact == null) return TaskResult.rejected(current, TaskResult.Reason.UNKNOWN_CONTACT);
+		if (current.activeTaskKey != null) return TaskResult.rejected(current, TaskResult.Reason.ACTIVE_TASK);
+		if (current.rank != contact.getRequiredRank()) return TaskResult.rejected(current, TaskResult.Reason.RANK);
+		int cursor = current.mandatoryCursors.get(contact.getKey());
+		if (cursor >= contact.getMandatoryTasks().size()) {
+			return TaskResult.rejected(current, TaskResult.Reason.MANDATORY_COMPLETE);
+		}
+		Snapshot assigned = current.withActiveTask(contact.getMandatoryTasks().get(cursor).getKey(), 0);
+		validate(assigned, data);
+		return TaskResult.assigned(assigned);
+	}
+
+	/** Assigns a caller-selected stable repeatable key after contact/rank validation. */
+	public static TaskResult assignRepeatable(Snapshot current, MonsterSlayerData data,
+			String contactKey, String taskKey) {
+		validate(current, data);
+		Contact contact = data.getContact(contactKey);
+		if (contact == null) return TaskResult.rejected(current, TaskResult.Reason.UNKNOWN_CONTACT);
+		if (current.activeTaskKey != null) return TaskResult.rejected(current, TaskResult.Reason.ACTIVE_TASK);
+		if (!current.rank.isAtLeast(contact.getAwardedRank())) {
+			return TaskResult.rejected(current, TaskResult.Reason.RANK);
+		}
+		for (Task task : contact.getRepeatableTasks()) {
+			if (task.getKey().equals(taskKey)) {
+				Snapshot assigned = current.withActiveTask(task.getKey(), 0);
+				validate(assigned, data);
+				return TaskResult.assigned(assigned);
+			}
+		}
+		return TaskResult.rejected(current, TaskResult.Reason.INVALID_REPEATABLE);
+	}
+
+	/** Applies one already-validated eligible death. It is safe to call repeatedly. */
+	public static TaskResult recordEligibleKill(Snapshot current, MonsterSlayerData data, int npcId) {
+		validate(current, data);
+		if (current.activeTaskKey == null) return TaskResult.rejected(current, TaskResult.Reason.NO_ACTIVE_TASK);
+		Task task = data.getTask(current.activeTaskKey);
+		FamilyOwner owner = findOwner(data, task);
+		if (owner == null) return TaskResult.rejected(current, TaskResult.Reason.INVALID_STATE);
+		Family family = data.getFamily(task.getFamilyKey());
+		if (family == null || !family.getNpcIds().contains(npcId)) {
+			return TaskResult.rejected(current, TaskResult.Reason.WRONG_NPC);
+		}
+		int kills = current.activeKills + 1;
+		if (kills < task.getRequiredKills()) {
+			Snapshot progressed = current.withActiveTask(task.getKey(), kills);
+			validate(progressed, data);
+			return TaskResult.progressed(progressed);
+		}
+		MonsterSlayerBalances balances = current.balances.credit(owner.contact.getChallenge(), task.getPointReward());
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>(current.mandatoryCursors);
+		MonsterSlayerRank rank = current.rank;
+		if (!task.isRepeatable()) {
+			int nextCursor = cursors.get(owner.contact.getKey()) + 1;
+			cursors.put(owner.contact.getKey(), nextCursor);
+			if (nextCursor == owner.contact.getMandatoryTasks().size()) rank = owner.contact.getAwardedRank();
+		}
+		Snapshot completed = new Snapshot(current.stateVersion, current.introStage, rank, balances,
+			cursors, null, 0, Math.addExact(current.tasksCompleted, 1L), current.inventoryUpgrades,
+			current.migrationVersion, current.legacyStatus, current.legacyPrestige);
+		validate(completed, data);
+		return TaskResult.completed(completed, task.getPointReward(), owner.contact.getChallenge());
+	}
+
+	private static FamilyOwner findOwner(MonsterSlayerData data, Task task) {
+		for (Contact contact : data.getContactsInChallengeOrder()) {
+			for (Task candidate : task.isRepeatable() ? contact.getRepeatableTasks() : contact.getMandatoryTasks()) {
+				if (candidate.getKey().equals(task.getKey())) return new FamilyOwner(contact);
+			}
+		}
+		return null;
+	}
+
+	private static final class FamilyOwner {
+		private final Contact contact;
+		private FamilyOwner(Contact contact) { this.contact = contact; }
+	}
+
 	private static int readInteger(Map<String, Object> values, String key, int defaultValue) {
 		Object value = values.get(key);
 		if (value == null) {
@@ -422,6 +534,35 @@ public final class MonsterSlayerState {
 		public String getDiagnostic() { return diagnostic; }
 	}
 
+	public static final class TaskResult {
+		public enum Reason {
+			ASSIGNED, PROGRESSED, COMPLETED, UNKNOWN_CONTACT, ACTIVE_TASK, RANK,
+			MANDATORY_COMPLETE, INVALID_REPEATABLE, NO_ACTIVE_TASK, WRONG_NPC, INVALID_STATE
+		}
+		private final Snapshot snapshot;
+		private final Reason reason;
+		private final long awardedPoints;
+		private final MonsterSlayerChallenge awardedChallenge;
+		private TaskResult(Snapshot snapshot, Reason reason, long awardedPoints,
+				MonsterSlayerChallenge awardedChallenge) {
+			this.snapshot = snapshot;
+			this.reason = reason;
+			this.awardedPoints = awardedPoints;
+			this.awardedChallenge = awardedChallenge;
+		}
+		private static TaskResult assigned(Snapshot snapshot) { return new TaskResult(snapshot, Reason.ASSIGNED, 0L, null); }
+		private static TaskResult progressed(Snapshot snapshot) { return new TaskResult(snapshot, Reason.PROGRESSED, 0L, null); }
+		private static TaskResult completed(Snapshot snapshot, long points, MonsterSlayerChallenge challenge) {
+			return new TaskResult(snapshot, Reason.COMPLETED, points, challenge);
+		}
+		private static TaskResult rejected(Snapshot snapshot, Reason reason) { return new TaskResult(snapshot, reason, 0L, null); }
+		public Snapshot getSnapshot() { return snapshot; }
+		public Reason getReason() { return reason; }
+		public long getAwardedPoints() { return awardedPoints; }
+		public MonsterSlayerChallenge getAwardedChallenge() { return awardedChallenge; }
+		public boolean isAccepted() { return reason == Reason.ASSIGNED || reason == Reason.PROGRESSED || reason == Reason.COMPLETED; }
+	}
+
 	public static final class Snapshot {
 		private final int stateVersion;
 		private final int introStage;
@@ -460,6 +601,12 @@ public final class MonsterSlayerState {
 		private Snapshot withBalances(MonsterSlayerBalances updated) {
 			return new Snapshot(stateVersion, introStage, rank, updated, mandatoryCursors,
 				activeTaskKey, activeKills, tasksCompleted, inventoryUpgrades, migrationVersion,
+				legacyStatus, legacyPrestige);
+		}
+
+		private Snapshot withActiveTask(String taskKey, int kills) {
+			return new Snapshot(stateVersion, introStage, rank, balances, mandatoryCursors,
+				taskKey, kills, tasksCompleted, inventoryUpgrades, migrationVersion,
 				legacyStatus, legacyPrestige);
 		}
 

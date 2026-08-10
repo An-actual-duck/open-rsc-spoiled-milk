@@ -23,6 +23,9 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		invalidEntitlementsQuarantineWithoutWrites(data, legacyData);
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
+		taskAssignmentAndCompletionAreExactOnce(data);
+		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
+		failureDiagnosticsAreDuplicateSuppressedAndBounded();
 
 		System.out.println("Monster Slayer player-state characterization: PASS");
 	}
@@ -140,6 +143,78 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(40, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0x3f), "full capacity");
 	}
 
+	private static void taskAssignmentAndCompletionAreExactOnce(MonsterSlayerData data) {
+		Map<String, Integer> cursors = zeroCursors(data);
+		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerState.TaskResult rejected = MonsterSlayerState.assignMandatory(fledgling, data, "port_sarim");
+		equals(MonsterSlayerState.TaskResult.Reason.RANK, rejected.getReason(), "wrong contact rank");
+		MonsterSlayerState.TaskResult assigned = MonsterSlayerState.assignMandatory(fledgling, data, "falador");
+		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED, assigned.getReason(), "mandatory assignment");
+		equals("falador.rats", assigned.getSnapshot().getActiveTaskKey(), "first deterministic task");
+		equals(MonsterSlayerState.TaskResult.Reason.WRONG_NPC,
+			MonsterSlayerState.recordEligibleKill(assigned.getSnapshot(), data, 4).getReason(), "wrong family");
+		MonsterSlayerState.Snapshot progressing = assigned.getSnapshot();
+		for (int kill = 0; kill < 99; kill++) progressing = MonsterSlayerState.recordEligibleKill(progressing, data, 19).getSnapshot();
+		equals(99, progressing.getActiveKills(), "bounded progress");
+		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(progressing, data, 19);
+		equals(MonsterSlayerState.TaskResult.Reason.COMPLETED, completion.getReason(), "completion");
+		equals(5L, completion.getSnapshot().getBalances().get(MonsterSlayerChallenge.FLEDGLING), "native award only");
+		equals(1, completion.getSnapshot().getMandatoryCursors().get("falador"), "cursor advanced once");
+		equals(MonsterSlayerState.TaskResult.Reason.NO_ACTIVE_TASK,
+			MonsterSlayerState.recordEligibleKill(completion.getSnapshot(), data, 19).getReason(), "duplicate callback rejected");
+
+		Map<String, Integer> repeatableCursors = zeroCursors(data);
+		repeatableCursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		MonsterSlayerState.Snapshot initiate = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE,
+			MonsterSlayerBalances.zero(), repeatableCursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		equals(MonsterSlayerState.TaskResult.Reason.INVALID_REPEATABLE,
+			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "port_sarim.pirates.repeatable").getReason(),
+			"cross-contact repeatable rejected");
+		equals(MonsterSlayerState.TaskResult.Reason.ASSIGNED,
+			MonsterSlayerState.assignRepeatable(initiate, data, "falador", "falador.rats.repeatable").getReason(),
+			"eligible repeatable assignment");
+	}
+
+	private static void cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(MonsterSlayerData data) {
+		FailingCache cache = new FailingCache();
+		cache.store("unrelated_key", "must-survive");
+		MonsterSlayerState.write(cache, data, MonsterSlayerState.defaults(data));
+		Map<String, Object> before = new LinkedHashMap<String, Object>(cache.getCacheMap());
+		cache.failAfterWrites(5);
+		boolean failed = false;
+		try {
+			MonsterSlayerState.write(cache, data, MonsterSlayerState.defaults(data));
+		} catch (IllegalStateException expected) {
+			failed = true;
+		}
+		assertTrue(failed, "injected cache write failure propagates to optional caller");
+		equals(before, cache.getCacheMap(), "failed write restores exact owned cache snapshot");
+		equals("must-survive", cache.getString("unrelated_key"), "failed write preserves unrelated key");
+	}
+
+	private static void failureDiagnosticsAreDuplicateSuppressedAndBounded() {
+		MonsterSlayerFailureDiagnostics.resetForTests();
+		java.util.UUID first = new java.util.UUID(0L, 1L);
+		assertTrue(MonsterSlayerFailureDiagnostics.shouldLog(first, 19, "invalid-state"),
+			"first diagnostic is retained");
+		assertFalse(MonsterSlayerFailureDiagnostics.shouldLog(first, 19, "invalid-state"),
+			"duplicate diagnostic is suppressed");
+		for (int index = 0; index < 300; index++) {
+			MonsterSlayerFailureDiagnostics.shouldLog(new java.util.UUID(1L, index), 19, "runtime-failure");
+		}
+		assertTrue(MonsterSlayerFailureDiagnostics.retainedEntryCount() <= 256,
+			"diagnostic retention remains bounded");
+	}
+
+	private static Map<String, Integer> zeroCursors(MonsterSlayerData data) {
+		Map<String, Integer> result = new LinkedHashMap<String, Integer>();
+		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) result.put(contact.getKey(), 0);
+		return result;
+	}
+
 	private static void assertZeroBalances(MonsterSlayerState.Snapshot snapshot) {
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
 			equals(0L, snapshot.getBalances().get(challenge), "zero migrated balance " + challenge);
@@ -160,5 +235,33 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		if (expected == null ? actual != null : !expected.equals(actual)) {
 			throw new AssertionError(label + ": expected " + expected + " but was " + actual);
 		}
+	}
+
+	private static void assertTrue(boolean value, String label) {
+		if (!value) throw new AssertionError(label);
+	}
+
+	private static void assertFalse(boolean value, String label) {
+		assertTrue(!value, label);
+	}
+
+	private static final class FailingCache extends Cache {
+		private int failAfter = Integer.MAX_VALUE;
+		private int writes;
+
+		private void failAfterWrites(int count) {
+			writes = 0;
+			failAfter = count;
+		}
+
+		private void beforeWrite() {
+			if (++writes == failAfter) throw new IllegalStateException("injected cache failure");
+		}
+
+		@Override public void set(String key, int value) { beforeWrite(); super.set(key, value); }
+		@Override public void store(String key, int value) { beforeWrite(); super.store(key, value); }
+		@Override public void store(String key, long value) { beforeWrite(); super.store(key, value); }
+		@Override public void store(String key, String value) { beforeWrite(); super.store(key, value); }
+		@Override public void remove(String key) { beforeWrite(); super.remove(key); }
 	}
 }
