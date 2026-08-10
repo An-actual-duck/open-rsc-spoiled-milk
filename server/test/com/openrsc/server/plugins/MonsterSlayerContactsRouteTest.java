@@ -4,6 +4,8 @@ import com.openrsc.server.Server;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAccess;
+import com.openrsc.server.constants.Quests;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
@@ -45,7 +47,30 @@ public final class MonsterSlayerContactsRouteTest {
 			assertFalse(routes.blockOpNpc(null, npc, "Trade"), "ambient trade isolation " + id);
 		}
 		shortcutAssignmentAndPromotionAreRealInteractions(server, routes);
+		guildAccessModesAndQuestStates(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void guildAccessModesAndQuestStates(Server server) {
+		Player player = player(server, "slayerguildaccess", 206, 600);
+		player.setQuestPoints(31);
+		server.getConfig().INFLUENCE_INSTEAD_QP = false;
+		assertFalse(MonsterSlayerGuildAccess.allows(player, 3), "Champions quest-point lock");
+		player.setQuestPoints(32);
+		assertTrue(MonsterSlayerGuildAccess.allows(player, 3), "Champions quest-point access");
+		server.getConfig().INFLUENCE_INSTEAD_QP = true;
+		assertFalse(MonsterSlayerGuildAccess.allows(player, 3), "Champions Influence mode fails closed without enabled Influence skill");
+		server.getConfig().INFLUENCE_INSTEAD_QP = false;
+		player.setQuestStage(Quests.HEROS_QUEST, 1);
+		assertFalse(MonsterSlayerGuildAccess.allows(player, 4), "Heroes incomplete lock");
+		player.setQuestStage(Quests.HEROS_QUEST, -1);
+		assertTrue(MonsterSlayerGuildAccess.allows(player, 4), "Heroes complete access");
+		player.setQuestStage(Quests.LEGENDS_QUEST, 10);
+		assertFalse(MonsterSlayerGuildAccess.allows(player, 5), "Legends incomplete lock");
+		player.setQuestStage(Quests.LEGENDS_QUEST, 11);
+		assertTrue(MonsterSlayerGuildAccess.allows(player, 5), "Legends in-progress access");
+		player.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		assertTrue(MonsterSlayerGuildAccess.allows(player, 5), "Legends complete access");
 	}
 
 	private static void shortcutAssignmentAndPromotionAreRealInteractions(Server server, MonsterSlayerContacts routes) throws Exception {
