@@ -1065,11 +1065,34 @@ def main() -> None:
         '\t\t\t"Loading... Please wait",',
         "loading wait text uses the active viewport center",
     )
-    if mudclient.count("this.drawLoadingPleaseWaitFrame();") != 2:
-        raise AssertionError(
-            "initial-region and layered-pending loading paths must share "
-            "the single presentation owner"
-        )
+    # These paths have different authority boundaries. Assert each semantic
+    # guard rather than freezing a call count: strict adaptive startup must
+    # hold the frame until its authenticated native world is ready, alongside
+    # ordinary initial-region and layered-scene activation loading.
+    initial_region_load = mudclient.split(
+        "public final boolean loadNextRegion", 1
+    )[1].split("private void drawLoadingPleaseWaitFrame", 1)[0]
+    require(
+        initial_region_load,
+        "if (hardAreaLoad || !this.hasCompletedInitialRegionLoad) {\n"
+        "\t\t\t\t\t\tthis.drawLoadingPleaseWaitFrame();",
+        "initial-region loading wait path",
+    )
+    draw_game = mudclient.split("private void drawGame", 1)[1].split(
+        "private void drawDialogBank", 1
+    )[0]
+    require(
+        draw_game,
+        "if (!isAdaptiveWorldStateReadyForEditor()) {\n"
+        "\t\t\t\tthis.drawLoadingPleaseWaitFrame();",
+        "strict adaptive readiness wait path",
+    )
+    require(
+        draw_game,
+        "} else if (this.layeredSceneActivationPending) {\n"
+        "\t\t\t\t\t\tthis.drawLoadingPleaseWaitFrame();",
+        "layered-scene activation wait path",
+    )
     forbid(
         mudclient,
         'drawColoredStringCentered(256, "Loading... Please wait"',
