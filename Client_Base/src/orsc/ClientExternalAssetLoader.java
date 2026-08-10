@@ -380,6 +380,17 @@ final class ClientExternalAssetLoader {
 	 */
 	Entry loadExternalNpcDirectionSheet(File sourceFile, String spriteName,
 			int[] directionColumnWidths, int framesPerDirection) {
+		return loadExternalNpcDirectionSheet(sourceFile, spriteName, directionColumnWidths,
+			framesPerDirection, -1);
+	}
+
+	/**
+	 * Loads an intentionally uneven NPC direction sheet while removing one exact
+	 * RGB guide colour. This is for source sheets that retain column-divider
+	 * guides in their native canvas; it neither crops nor rescales the artwork.
+	 */
+	Entry loadExternalNpcDirectionSheet(File sourceFile, String spriteName,
+			int[] directionColumnWidths, int framesPerDirection, int transparentGuideRgb) {
 		if (spriteName == null || spriteName.length() == 0 || directionColumnWidths == null
 			|| directionColumnWidths.length == 0 || framesPerDirection <= 0) {
 			return null;
@@ -411,6 +422,9 @@ final class ClientExternalAssetLoader {
 					Frame frame = new Frame(frameWidth, frameHeight, false, 0, 0,
 						frameWidth, frameHeight);
 					sourceFrame.getRGB(0, 0, frameWidth, frameHeight, frame.getPixels(), 0, frameWidth);
+					if (transparentGuideRgb >= 0) {
+						clearExactRgb(frame.getPixels(), transparentGuideRgb);
+					}
 					normalizePixels(frame.getPixels(), 64);
 					entry.getFrames()[direction * framesPerDirection + frameIndex] = frame;
 				}
@@ -946,6 +960,14 @@ final class ClientExternalAssetLoader {
 	private void normalizePixels(int[] pixels, int alphaThreshold) {
 		for (int i = 0; i < pixels.length; i++) {
 			pixels[i] = getExternalSpritePixel(pixels[i], alphaThreshold);
+		}
+	}
+
+	private void clearExactRgb(int[] pixels, int rgb) {
+		for (int i = 0; i < pixels.length; i++) {
+			if ((pixels[i] & 0xFFFFFF) == rgb) {
+				pixels[i] = 0;
+			}
 		}
 	}
 
