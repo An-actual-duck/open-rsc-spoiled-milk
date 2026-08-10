@@ -1,6 +1,7 @@
 package com.openrsc.server.content.minigame.monsterslayer;
 
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.Cache;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.constants.ItemId;
 
@@ -15,10 +16,16 @@ public final class MonsterSlayerContactService {
 		boolean consume(Player player);
 		boolean refund(Player player);
 	}
+	/** Narrow persistence boundary for transaction-failure characterization. */
+	public interface StateStore {
+		MonsterSlayerState.Snapshot read(Cache cache, MonsterSlayerData data);
+		void write(Cache cache, MonsterSlayerData data, MonsterSlayerState.Snapshot snapshot);
+	}
 	private final MonsterSlayerData data;
 	private final MonsterSlayerTaskService tasks;
 	private final RandomSource random;
 	private final BeerTransaction beer;
+	private final StateStore stateStore;
 	private final Map<UUID, PendingSelection> previews = new HashMap<UUID, PendingSelection>();
 
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks) {
@@ -29,11 +36,15 @@ public final class MonsterSlayerContactService {
 		this(data, tasks, random, new BeerTransaction() { public boolean consume(Player p) { return p.getCarriedItems().remove(new Item(ItemId.BEER.id())) != -1; } public boolean refund(Player p) { return p.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); }});
 	}
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, BeerTransaction beer) {
-		if (data == null || tasks == null || random == null || beer == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
+		this(data, tasks, random, beer, new StateStore() { public MonsterSlayerState.Snapshot read(Cache cache, MonsterSlayerData definitions) { return MonsterSlayerState.read(cache, definitions); } public void write(Cache cache, MonsterSlayerData definitions, MonsterSlayerState.Snapshot snapshot) { MonsterSlayerState.write(cache, definitions, snapshot); }});
+	}
+	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, BeerTransaction beer, StateStore stateStore) {
+		if (data == null || tasks == null || random == null || beer == null || stateStore == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
 		this.data = data;
 		this.tasks = tasks;
 		this.random = random;
 		this.beer = beer;
+		this.stateStore = stateStore;
 	}
 
 	public Result beginBeerIntroduction(Player player) { return changeIntroduction(player, false); }
@@ -42,10 +53,10 @@ public final class MonsterSlayerContactService {
 	/** Atomically couples beer consumption with the one-time Fledgling promotion. */
 	public Result completeBeerIntroductionWithBeer(Player player) {
 		try { synchronized (player) {
-			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerState.Snapshot current = stateStore.read(player.getCache(), data);
 			MonsterSlayerState.Snapshot next = MonsterSlayerState.completeIntroduction(current, data);
 			if (!beer.consume(player)) return Result.rejected("missing-beer");
-			try { MonsterSlayerState.write(player.getCache(), data, next); }
+			try { stateStore.write(player.getCache(), data, next); }
 			catch (RuntimeException failure) {
 				try { return beer.refund(player) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
 				catch (RuntimeException refundFailure) { return Result.rejected("refund-failed"); }
@@ -56,7 +67,7 @@ public final class MonsterSlayerContactService {
 
 	public Result requestTask(Player player, String contactKey) {
 		try {
-			MonsterSlayerState.Snapshot snapshot = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerState.Snapshot snapshot = stateStore.read(player.getCache(), data);
 			MonsterSlayerDefinitions.Contact contact = data.getContact(contactKey);
 			if (contact == null) return Result.rejected("unknown-contact");
 			if (snapshot.getActiveTaskKey() != null) return Result.rejected("active-task");
@@ -74,7 +85,7 @@ public final class MonsterSlayerContactService {
 	/** Uses the same selection as assignment so callers can present warnings first. */
 	public MonsterSlayerDefinitions.Task previewTask(Player player, String contactKey) {
 		try {
-			MonsterSlayerState.Snapshot snapshot = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerState.Snapshot snapshot = stateStore.read(player.getCache(), data);
 			MonsterSlayerDefinitions.Contact contact = data.getContact(contactKey);
 			if (contact == null || !snapshot.getRank().isAtLeast(contact.getRequiredRank())) return null;
 			int cursor = snapshot.getMandatoryCursors().get(contactKey).intValue();
@@ -100,9 +111,9 @@ public final class MonsterSlayerContactService {
 
 	public Result acknowledgePromotion(Player player, String contactKey) {
 		try { synchronized (player) {
-			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerState.Snapshot current = stateStore.read(player.getCache(), data);
 			MonsterSlayerState.Snapshot next = MonsterSlayerState.acknowledgePromotion(current, data, contactKey);
-			MonsterSlayerState.write(player.getCache(), data, next); return Result.accepted(null);
+			stateStore.write(player.getCache(), data, next); return Result.accepted(null);
 		} } catch (RuntimeException failure) { return Result.rejected("invalid-state"); }
 	}
 
@@ -115,11 +126,11 @@ public final class MonsterSlayerContactService {
 	private Result changeIntroduction(Player player, boolean complete) {
 		try {
 			synchronized (player) {
-				MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+				MonsterSlayerState.Snapshot current = stateStore.read(player.getCache(), data);
 				MonsterSlayerState.Snapshot next = complete
 					? MonsterSlayerState.completeIntroduction(current, data)
 					: MonsterSlayerState.beginIntroduction(current, data);
-				MonsterSlayerState.write(player.getCache(), data, next);
+				stateStore.write(player.getCache(), data, next);
 				return Result.accepted(null);
 			}
 		} catch (RuntimeException failure) { return Result.rejected("invalid-state"); }

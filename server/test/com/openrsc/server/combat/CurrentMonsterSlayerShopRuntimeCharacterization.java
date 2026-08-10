@@ -55,7 +55,51 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		assertEquals(1, consumed.get(), "duplicate does not consume again");
 		assertEquals("preserved", recruit.getCache().getString("unrelated_beer_fixture"), "unrelated cache preserved");
 		assertEquals(0, refunded.get(), "successful transaction does not refund");
+
+		Player writeFailure = h.player("mssbeerwritefailure", 842, 790);
+		MonsterSlayerState.write(writeFailure.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		final AtomicInteger writeRefunds = new AtomicInteger();
+		MonsterSlayerContactService.Result failedWrite = contacts(data, new MonsterSlayerContactService.BeerTransaction() {
+			public boolean consume(Player player) { return true; }
+			public boolean refund(Player player) { writeRefunds.incrementAndGet(); return true; }
+		}, failingWrites()).completeBeerIntroductionWithBeer(writeFailure);
+		assertEquals("state-write-failed", failedWrite.getReason(), "failed cache write gives truthful result");
+		assertEquals(1, writeRefunds.get(), "failed cache write refunds exactly once");
+		assertEquals(1, MonsterSlayerState.read(writeFailure.getCache(), data).getIntroStage(), "failed cache write preserves introduction state");
+
+		Player refundFailure = h.player("mssbeerrefundfailure", 843, 790);
+		MonsterSlayerState.write(refundFailure.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		MonsterSlayerContactService.Result failedRefund = contacts(data, new MonsterSlayerContactService.BeerTransaction() {
+			public boolean consume(Player player) { return true; }
+			public boolean refund(Player player) { return false; }
+		}, failingWrites()).completeBeerIntroductionWithBeer(refundFailure);
+		assertEquals("refund-failed", failedRefund.getReason(), "failed refund is explicit");
+
+		final Player concurrent = h.player("mssbeerconcurrent", 844, 790);
+		MonsterSlayerState.write(concurrent.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		final AtomicInteger concurrentConsumes = new AtomicInteger();
+		final MonsterSlayerContactService concurrentContacts = contacts(data, new MonsterSlayerContactService.BeerTransaction() {
+			public boolean consume(Player player) { concurrentConsumes.incrementAndGet(); return true; }
+			public boolean refund(Player player) { return true; }
+		}, normalStore());
+		MonsterSlayerContactService.Result[] submissions = concurrentBeerSubmissions(concurrentContacts, concurrent);
+		assertEquals(1, successful(submissions[0], submissions[1]), "one simultaneous beer submission succeeds");
+		assertEquals(1, concurrentConsumes.get(), "simultaneous duplicate consumes once");
 	}
+
+	private static MonsterSlayerContactService contacts(MonsterSlayerData data, MonsterSlayerContactService.BeerTransaction beer, MonsterSlayerContactService.StateStore store) {
+		return new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, beer, store);
+	}
+	private static MonsterSlayerContactService.StateStore normalStore() { return new MonsterSlayerContactService.StateStore() { public MonsterSlayerState.Snapshot read(com.openrsc.server.model.Cache cache, MonsterSlayerData data) { return MonsterSlayerState.read(cache, data); } public void write(com.openrsc.server.model.Cache cache, MonsterSlayerData data, MonsterSlayerState.Snapshot snapshot) { MonsterSlayerState.write(cache, data, snapshot); }}; }
+	private static MonsterSlayerContactService.StateStore failingWrites() { return new MonsterSlayerContactService.StateStore() { public MonsterSlayerState.Snapshot read(com.openrsc.server.model.Cache cache, MonsterSlayerData data) { return MonsterSlayerState.read(cache, data); } public void write(com.openrsc.server.model.Cache cache, MonsterSlayerData data, MonsterSlayerState.Snapshot snapshot) { throw new IllegalStateException("fixture write failure"); }}; }
+	private static MonsterSlayerContactService.Result[] concurrentBeerSubmissions(final MonsterSlayerContactService contacts, final Player player) {
+		final CountDownLatch ready = new CountDownLatch(2); final CountDownLatch start = new CountDownLatch(1); final AtomicReference<MonsterSlayerContactService.Result> first = new AtomicReference<MonsterSlayerContactService.Result>(); final AtomicReference<MonsterSlayerContactService.Result> second = new AtomicReference<MonsterSlayerContactService.Result>();
+		Thread one = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); first.set(contacts.completeBeerIntroductionWithBeer(player)); }}, "monster-slayer-beer-first");
+		Thread two = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); second.set(contacts.completeBeerIntroductionWithBeer(player)); }}, "monster-slayer-beer-second");
+		one.start(); two.start(); await(ready); start.countDown(); join(one); join(two); return new MonsterSlayerContactService.Result[] {first.get(), second.get()};
+	}
+	private static void await(CountDownLatch latch) { try { latch.await(); } catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new AssertionError("interrupted fixture", failure); } }
+	private static void join(Thread thread) { try { thread.join(); } catch (InterruptedException failure) { Thread.currentThread().interrupt(); throw new AssertionError("interrupted fixture", failure); } }
 
 	static void contactRoutesAreRankedAndSingleAssignment(CurrentCombatHarness h) throws Exception {
 		MonsterSlayerData data = data();
@@ -190,6 +234,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 	private static void executeConcurrent(Callable<MonsterSlayerShopService.Result> operation, CountDownLatch ready, CountDownLatch start, AtomicReference<MonsterSlayerShopService.Result> result, AtomicReference<Throwable> failure) { try { ready.countDown(); start.await(); result.set(operation.call()); } catch (Throwable thrown) { failure.compareAndSet(null, thrown); } }
 	private static MonsterSlayerBalances balances(Player player, MonsterSlayerData data) { return MonsterSlayerState.read(player.getCache(), data).getBalances(); }
 	private static int successful(MonsterSlayerShopService.Result first, MonsterSlayerShopService.Result second) { return (first.isSuccessful() ? 1 : 0) + (second.isSuccessful() ? 1 : 0); }
+	private static int successful(MonsterSlayerContactService.Result first, MonsterSlayerContactService.Result second) { return (first.isAccepted() ? 1 : 0) + (second.isAccepted() ? 1 : 0); }
 	private static int prefixMask(int tier) { return tier == 0 ? 0 : (1 << tier) - 1; }
 	private static int capacityBonusThrough(int tier) { int[] gains = {1, 1, 1, 2, 2, 3}; int total = 0; for (int i = 0; i <= tier; i++) total += gains[i]; return total; }
 	private static void assertTypedDeduction(Map<MonsterSlayerChallenge, Long> before, Map<MonsterSlayerChallenge, Long> after, MonsterSlayerCost cost, String message) { for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) assertEquals(before.get(challenge).longValue() - cost.get(challenge), after.get(challenge).longValue(), message + " " + challenge); }

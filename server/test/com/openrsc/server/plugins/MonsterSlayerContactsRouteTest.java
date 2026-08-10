@@ -47,6 +47,7 @@ public final class MonsterSlayerContactsRouteTest {
 			assertFalse(routes.blockOpNpc(null, npc, "Trade"), "ambient trade isolation " + id);
 		}
 		shortcutAssignmentAndPromotionAreRealInteractions(server, routes);
+		promotionRenderingIsExactForEveryRank(server);
 		guildAccessModesAndQuestStates(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
@@ -101,6 +102,32 @@ public final class MonsterSlayerContactsRouteTest {
 		assertFalse(MonsterSlayerState.read(aborted.getCache(), data).isPromotionAcknowledged("falador", data), "aborted promotion is never acknowledged");
 	}
 
+	private static void promotionRenderingIsExactForEveryRank(Server server) throws Exception {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		for (int index = 0; index < data.getContactsInChallengeOrder().size(); index++) {
+			final java.util.List<MonsterSlayerDialoguePlan.Step> rendered = new java.util.ArrayList<MonsterSlayerDialoguePlan.Step>();
+			MonsterSlayerContacts routes = new MonsterSlayerContacts(new MonsterSlayerContacts.DialogueRenderer() { public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { rendered.add(step); return true; }});
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact = data.getContactsInChallengeOrder().get(index);
+			Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+			for (int cursor = 0; cursor < data.getContactsInChallengeOrder().size(); cursor++) {
+				com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact candidate = data.getContactsInChallengeOrder().get(cursor);
+				cursors.put(candidate.getKey(), cursor <= index ? candidate.getMandatoryTasks().size() : 0);
+			}
+			Player player = player(server, "slayerpromotion" + index, 220 + index, 600);
+			player.setQuestPoints(32); player.setQuestStage(Quests.HEROS_QUEST, -1); player.setQuestStage(Quests.LEGENDS_QUEST, -1);
+			MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2, contact.getAwardedRank(), MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+			routes.onOpNpc(player, new Npc(server.getWorld(), 846 + index, 220 + index, 600), "Task");
+			java.util.List<MonsterSlayerDialoguePlan.Step> expected = MonsterSlayerDialoguePlan.promotion(index);
+			assertEquals(expected.size(), rendered.size(), "promotion renders exact step count " + contact.getKey());
+			for (int step = 0; step < expected.size(); step++) {
+				assertEquals(expected.get(step).getText(), rendered.get(step).getText(), "promotion exact text " + contact.getKey() + " step " + step);
+				assertEquals(expected.get(step).getSpeaker(), rendered.get(step).getSpeaker(), "promotion exact speaker " + contact.getKey() + " step " + step);
+				assertTrue(rendered.get(step).getText().length() <= 255, "promotion bounded line " + contact.getKey() + " step " + step);
+			}
+			assertTrue(MonsterSlayerState.read(player.getCache(), data).isPromotionAcknowledged(contact.getKey(), data), "promotion acknowledged after complete render " + contact.getKey());
+		}
+	}
+
 	private static void install(Server server, String name, Object value) throws Exception { Field field = server.getWorld().getClass().getDeclaredField(name); field.setAccessible(true); field.set(server.getWorld(), value); }
 
 	private static Player player(Server server, String name, int x, int y) {
@@ -115,4 +142,6 @@ public final class MonsterSlayerContactsRouteTest {
 	private static void assertTrue(boolean value, String label) { if (!value) throw new AssertionError(label); }
 	private static void assertFalse(boolean value, String label) { assertTrue(!value, label); }
 	private static void assertEquals(int expected, int actual, String label) { if (expected != actual) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
+	private static void assertEquals(String expected, String actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
+	private static void assertEquals(Object expected, Object actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 }
