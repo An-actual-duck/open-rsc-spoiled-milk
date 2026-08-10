@@ -987,7 +987,6 @@ public final class mudclient implements Runnable {
 	private int appearanceHairColour = 2;
 	private int characterBottomColour = 14;
 	private int controlButtonAppearanceSkin2;
-	private int m_nj = -1;
 	private int controlButtonAppearanceGender2;
 	private int cameraAutoMoveFrameCount = 0;
 	private int m_Oj = 0;
@@ -1093,6 +1092,7 @@ public final class mudclient implements Runnable {
 	private Panel panelClan;
 	private SocialPopupMode panelSocialPopup_Mode = SocialPopupMode.NONE;
 	private int panelSocialTab = 0;
+	private int socialPartySelectedMember = -1;
 	private PasswordChangeMode panelPasswordChange_Mode = PasswordChangeMode.NONE;
 	private String oldPassword;
 	private String newPassword;
@@ -1323,7 +1323,6 @@ public final class mudclient implements Runnable {
 	private NComponent mainComponent;
 	private NCustomComponent experienceOverlay;
 	private ProgressBarInterface batchProgressBar;
-	private PartyGUI partyMenu;
 	private BankPinInterface bankPinInterface;
 	private FishingTrawlerInterface fishingTrawlerInterface;
 	private String skillGuideChosen;
@@ -3432,24 +3431,6 @@ public final class mudclient implements Runnable {
 							if (null != SocialLists.friendListOld[var4]
 								&& SocialLists.friendListOld[var4].length() > 0) {
 								var9 = var9 + " (formerly " + SocialLists.friendListOld[var4] + ")";
-							}
-						}
-					}
-
-					if (this.panelSocialTab == 2 && this.m_nj != -1) {
-						if (this.m_nj >= 0) {
-							var4 = this.m_nj;
-							var9 = "Ignoring " + SocialLists.ignoreListArg0[var4];
-							if (SocialLists.ignoreListArg1[var4] != null
-								&& SocialLists.ignoreListArg1[var4].length() > 0) {
-								var9 = var9 + " (formerly " + SocialLists.ignoreListArg1[var4] + ")";
-							}
-						} else {
-							var4 = -(2 + this.m_nj);
-							var9 = "Click to remove " + SocialLists.ignoreListArg0[var4];
-							if (SocialLists.ignoreListArg1[var4] != null
-								&& SocialLists.ignoreListArg1[var4].length() > 0) {
-								var9 = var9 + " (formerly " + SocialLists.ignoreListArg1[var4] + ")";
 							}
 						}
 					}
@@ -12901,8 +12882,8 @@ public final class mudclient implements Runnable {
 			// if clans are enabled
 			if (S_WANT_CLANS) {
 				int clanTab;
-				int colorB;
-				int colorA = colorB = clanTab = GenUtil.buildColor(160, 160, 160);
+				int partyTab;
+				int colorA = clanTab = partyTab = GenUtil.buildColor(160, 160, 160);
 				if (this.panelSocialTab == 1) {
 					clanTab = GenUtil.buildColor(220, 220, 220);
 					if (C_CUSTOM_UI)
@@ -12917,12 +12898,12 @@ public final class mudclient implements Runnable {
 				} else if (this.panelSocialTab == 0) {
 					colorA = GenUtil.buildColor(220, 220, 220);
 				} else {
-					colorB = GenUtil.buildColor(220, 220, 220);
+					partyTab = GenUtil.buildColor(220, 220, 220);
 				}
 
 				this.getSurface().drawBoxAlpha(var3, var4, 65, 24, colorA, 128);
 				this.getSurface().drawBoxAlpha(var3 + var5 / 2 - 32, var4, 65, 24, clanTab, 128);
-				this.getSurface().drawBoxAlpha(var3 + var5 / 2 + 33, var4, 65, 24, colorB, 128);
+				this.getSurface().drawBoxAlpha(var3 + var5 / 2 + 33, var4, 65, 24, partyTab, 128);
 				this.getSurface().drawBoxAlpha(var3, (this.panelSocialTab == 1 && clan.inClan() ? 49 : 0) + 24 + var4, var5, (this.panelSocialTab == 1 ? 127 : var6 - 24), GenUtil.buildColor(220, 220, 220), 128);
 				this.getSurface().drawLineHoriz(var3, var4 + 24, var5, 0);
 				this.getSurface().drawLineVert(var5 / 2 + var3 - 33, 0 + var4, 0, 24);
@@ -12930,7 +12911,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawLineHoriz(var3, var4 + var6 - 16 + (this.panelSocialTab == 1 ? clan.inClan() ? 34 : -15 : 0), var5, 0);
 				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 - 16, "Friends", 0, 0, 4, 16 + var4);
 				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 + var5 / 2 - 33 - 16, "Clan", 0, 0, 4, var4 + 16);
-				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 + var5 / 2 + 16, "Ignore", 0, 0, 4, var4 + 16);
+				this.getSurface().drawColoredStringCentered(var5 / 4 + var3 + var5 / 2 + 16, "Party", 0, 0, 4, var4 + 16);
 				this.panelSocial.clearList(this.controlSocialPanel);
 				this.panelClan.clearList(this.controlClanPanel);
 			} else { // clans disabled
@@ -12947,7 +12928,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawLineVert(var3 + var5 / 2, var4, 0, 24);
 				this.getSurface().drawLineHoriz(var3, var4 + var6 - 16, var5, 0);
 				this.getSurface().drawColoredStringCentered(var3 + var5 / 4, "Friends", 0, 0, 4, var4 + 16);
-				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2, "Ignore", 0, 0, 4, var4 + 16);
+				this.getSurface().drawColoredStringCentered(var3 + var5 / 4 + var5 / 2, "Party", 0, 0, 4, var4 + 16);
 				this.panelSocial.clearList(this.controlSocialPanel);
 			}
 
@@ -12980,26 +12961,6 @@ public final class mudclient implements Runnable {
 						colorKey + var11 + "~" + (getGameWidth() - 73) + "~" + "@whi@Remove         WWWWWWWWWW", 0,
 						null, null);
 				}
-				this.panelSocial.drawPanel();
-			}
-
-			// ignore tab
-			if (this.panelSocialTab == 2) {
-				for (index = 0; index < SocialLists.ignoreListCount; ++index) {
-					colorKey = SocialLists.ignoreListArg0[index];
-					int var16 = 0;
-
-					for (var12 = SocialLists.ignoreListArg0[index].length(); this.getSurface().stringWidth(1,
-						colorKey) > 120; colorKey = SocialLists.ignoreListArg0[index].substring(0, var12 - var16)
-						+ "...") {
-						++var16;
-					}
-
-					this.panelSocial.setListEntry(this.controlSocialPanel, index,
-						"@yel@" + colorKey + "~" + (getGameWidth() - 73) + "~" + "@whi@Remove         WWWWWWWWWW",
-						0, null, null);
-				}
-
 				this.panelSocial.drawPanel();
 			}
 
@@ -13106,7 +13067,10 @@ public final class mudclient implements Runnable {
 				this.panelClan.drawPanel();
 			}
 
-			this.m_nj = -1;
+			if (this.panelSocialTab == 2) {
+				this.drawPartySocialTab(var3, var4, var5, var6, var1);
+			}
+
 			this.m_wk = -1;
 			int var17;
 			if (this.panelSocialTab == 0) {
@@ -13132,29 +13096,6 @@ public final class mudclient implements Runnable {
 					var6 + var4 - 3);
 			}
 
-			if (this.panelSocialTab == 2) {
-				index = this.panelSocial.getControlSelectedListIndex(this.controlSocialPanel);
-				if (index >= 0 && this.mouseX < maxWidth) {
-					if (this.mouseX <= minWidth) {
-						this.m_nj = index;
-					} else {
-						this.m_nj = -(index + 2);
-					}
-				}
-
-				this.getSurface().drawColoredStringCentered(var3 + var5 / 2, "Blocking messages from:", 0xFFFFFF, 0, 1,
-					35 + var4);
-				if (this.mouseX > var3 && var3 + var5 > this.mouseX && var6 + var4 - 16 < this.mouseY
-					&& var6 + var4 > this.mouseY) {
-					var17 = 0xFFFF00;
-				} else {
-					var17 = 0xFFFFFF;
-				}
-
-				this.getSurface().drawColoredStringCentered(var5 / 2 + var3, "Click here to add a name", var17, 0, 1,
-					var4 + (var6 - 3));
-			}
-
 			/*
 			 int maxY = getUITabsY();
 				panelSettings.reposition(controlSettingPanel, var3 + 1, (maxY-240) + 16, 195, 184);
@@ -13170,7 +13111,7 @@ public final class mudclient implements Runnable {
 				if (C_CUSTOM_UI)
 					var15 = this.mouseY - var4;
 				var3 = 199 + this.mouseX - this.getSurface().width2;
-				// handle friends and ignores tab
+				// handle Friends tab
 				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 26) {
 					this.panelSocial.handleMouse(var3 - 199 + this.getSurface().width2, var15 + 36,
 						this.currentMouseButtonDown, this.lastMouseButtonDown);
@@ -13180,16 +13121,14 @@ public final class mudclient implements Runnable {
 								this.panelSocialTab = 0; // Show Friends Tab (Clicked)
 								this.panelSocial.resetList(this.controlSocialPanel);
 							} else if (var3 > 132 && var3 < 196 && (this.panelSocialTab == 1 || this.panelSocialTab == 0)) {
-								this.panelSocialTab = 2; // Show Ignore Tab (Clicked)
-								this.panelSocial.resetList(this.controlSocialPanel);
+								this.panelSocialTab = 2; // Show Party Tab (Clicked)
 							}
 						} else {
 							if (var3 < 98 && (this.panelSocialTab == 2 || this.panelSocialTab == 1)) {
 								this.panelSocialTab = 0; // Show Friends Tab (Clicked)
 								this.panelSocial.resetList(this.controlSocialPanel);
 							} else if (var3 > 98 && (this.panelSocialTab == 1 || this.panelSocialTab == 0)) {
-								this.panelSocialTab = 2; // Show Ignore Tab (Clicked)
-								this.panelSocial.resetList(this.controlSocialPanel);
+								this.panelSocialTab = 2; // Show Party Tab (Clicked)
 							}
 						}
 					}
@@ -13209,7 +13148,7 @@ public final class mudclient implements Runnable {
 				}
 
 				// interactions within the panels
-				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && (this.panelSocialTab == 0 || this.panelSocialTab == 2)) {
+				if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && this.panelSocialTab == 0) {
 					if (C_CUSTOM_UI)
 						this.panelSocial.handleMouse(this.getMouseX(), this.getMouseY(), this.getMouseButtonDown(), this.getLastMouseDown());
 					else
@@ -13232,13 +13171,6 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					if (this.mouseButtonClick == 1 && this.panelSocialTab == 2) {
-						index = this.panelSocial.getControlSelectedListIndex(this.controlSocialPanel);
-						if (index >= 0 && this.mouseX < maxWidth && this.mouseX > minWidth) {
-							this.removeIgnore(SocialLists.ignoreList[index]); // Remove Ignore
-						}
-					}
-
 					// add friend
 					if (var15 > 166 && this.mouseButtonClick == 1 && this.panelSocialTab == 0) {
 						this.inputTextFinal = "";
@@ -13249,17 +13181,24 @@ public final class mudclient implements Runnable {
 						}
 					}
 
-					// add ignore
-					if (var15 > 166 && this.mouseButtonClick == 1 && this.panelSocialTab == 2) {
-						this.panelSocialPopup_Mode = SocialPopupMode.ADD_IGNORE;
-						this.inputTextCurrent = "";
-						this.inputTextFinal = "";
-						if (isAndroid() && !osConfig.F_SHOWING_KEYBOARD) {
-							clientPort.drawKeyboard();
+					this.mouseButtonClick = 0;
+				}
+
+				// party interactions
+				else if (var3 >= 0 && var15 >= 0 && var3 < 196 && var15 < 225 && this.panelSocialTab == 2) {
+					if (this.mouseButtonClick == 2 && this.socialPartySelectedMember >= 0
+						&& this.socialPartySelectedMember < SocialLists.partyListCount) {
+						final String memberName = this.party.username[this.socialPartySelectedMember];
+						if (memberName != null && !StringUtil.displayNameToKey(memberName)
+							.equals(StringUtil.displayNameToKey(this.localPlayer.accountName))) {
+							if (this.party.isAllowed(0)) {
+								this.menuCommon.addItem_With2Strings("Kick user", "@whi@" + memberName, memberName,
+									MenuItemAction.PARTY_MENU_KICK, memberName);
+							}
+							this.menuCommon.addItem_With2Strings("Message", "@whi@" + memberName, memberName,
+								MenuItemAction.CHAT_MESSAGE, memberName);
 						}
 					}
-
-					this.mouseButtonClick = 0;
 				}
 
 				// clan interactions
@@ -13307,6 +13246,90 @@ public final class mudclient implements Runnable {
 			}
 		} catch (RuntimeException npcLevel) {
 			throw GenUtil.makeThrowable(npcLevel, "client.VD(" + var1 + ',' + var2 + ')');
+		}
+	}
+
+	/** Compact party status and administration entry point in the Social tab. */
+	private void drawPartySocialTab(final int panelX, final int panelY, final int panelWidth,
+		final int panelHeight, final boolean acceptInput) {
+		this.socialPartySelectedMember = -1;
+		final int contentX = panelX + 6;
+		if (!this.party.inParty()) {
+			this.getSurface().drawString("You are not currently in a party", contentX, panelY + 50, 0xFFFFFF, 1);
+			this.getSurface().drawWrappedCenteredString(
+				"Create a party to invite up to four other players.", panelX + panelWidth / 2,
+				panelY + 74, panelWidth - 20, 1, 0xF38F30, true);
+			final int buttonX = panelX + 43;
+			final int buttonY = panelY + 116;
+			final boolean hover = this.mouseX >= buttonX && this.mouseX < buttonX + 110
+				&& this.mouseY >= buttonY && this.mouseY < buttonY + 26;
+			this.getSurface().drawBoxAlpha(buttonX, buttonY, 110, 26, hover ? 0x263751 : 0x0A2B56, 192);
+			this.getSurface().drawBoxBorder(buttonX, 110, buttonY, 26, 0xBFA086);
+			this.getSurface().drawString("Create Party", buttonX + 25, buttonY + 17, 0xFFFFFF, 1);
+			if (acceptInput && hover && this.mouseButtonClick == 1) {
+				this.party.showPartySetupInterface(false);
+				if (!C_CUSTOM_UI) {
+					this.showUiTab = 0;
+				}
+				this.mouseButtonClick = 0;
+			}
+			return;
+		}
+
+		final String partyName = this.party.getPartyName() == null || this.party.getPartyName().isEmpty()
+			? "Party" : this.party.getPartyName();
+		final String leader = this.party.getPartyLeaderUsername() == null ? "Unknown" : this.party.getPartyLeaderUsername();
+		this.getSurface().drawString("Party: @cla@" + partyName, contentX, panelY + 39, 0xFFFFFF, 1);
+		this.getSurface().drawString("Leader: @yel@" + leader, contentX, panelY + 52, 0xFFFFFF, 1);
+
+		final int memberCount = Math.min(5, SocialLists.partyListCount);
+		for (int member = 0; member < memberCount; member++) {
+			final int rowY = panelY + 58 + member * 16;
+			final boolean hover = this.mouseX >= panelX + 3 && this.mouseX < panelX + panelWidth - 3
+				&& this.mouseY >= rowY - 11 && this.mouseY < rowY + 5;
+			this.getSurface().drawBoxAlpha(panelX + 3, rowY - 11, panelWidth - 6, 15,
+				hover ? 0x263751 : 0x202020, 128);
+			final String name = this.party.username[member] == null ? "Unknown" : this.party.username[member];
+			final String color = this.party.onlinePartyMember[member] != 0 ? "@gre@" : "@red@";
+			this.getSurface().drawString(color + name + " @whi@-" + this.party.cbLvl[member], contentX, rowY, 0xFFFFFF, 1);
+			final int maximumHits = Math.max(1, this.party.maxHp[member]);
+			final int currentHits = Math.max(0, Math.min(maximumHits, this.party.curHp[member]));
+			final int healthWidth = currentHits * 52 / maximumHits;
+			this.getSurface().drawBox(panelX + 136, rowY - 9, 52, 5, 0xAA0000);
+			this.getSurface().drawBox(panelX + 136, rowY - 9, healthWidth, 5, 0x00AA00);
+			if (hover) {
+				this.socialPartySelectedMember = member;
+			}
+		}
+
+		final int buttonY = panelY + panelHeight - 40;
+		this.drawPartySocialButton(panelX + 4, buttonY, 58, "Invite", acceptInput, () -> {
+			this.showItemModX(InputXPrompt.partyInvite, InputXAction.INVITE_PARTY_PLAYER, true);
+			if (!C_CUSTOM_UI) {
+				this.showUiTab = 0;
+			}
+		});
+		this.drawPartySocialButton(panelX + 69, buttonY, 58, "Manage", acceptInput, () -> {
+			this.party.showPartySetupInterface(true);
+			if (!C_CUSTOM_UI) {
+				this.showUiTab = 0;
+			}
+		});
+		this.drawPartySocialButton(panelX + 134, buttonY, 58, "Leave", acceptInput, () ->
+			this.party.getPartyInterface().sendPartyLeave());
+	}
+
+	private void drawPartySocialButton(final int x, final int y, final int width, final String label,
+		final boolean acceptInput, final Runnable action) {
+		final boolean hover = this.mouseX >= x && this.mouseX < x + width
+			&& this.mouseY >= y && this.mouseY < y + 24;
+		this.getSurface().drawBoxAlpha(x, y, width, 24, hover ? 0x263751 : 0x0A2B56, 192);
+		this.getSurface().drawBoxBorder(x, width, y, 24, 0xBFA086);
+		this.getSurface().drawString(label, x + (width - this.getSurface().stringWidth(1, label)) / 2, y + 16,
+			0xFFFFFF, 1);
+		if (acceptInput && hover && this.mouseButtonClick == 1) {
+			action.run();
+			this.mouseButtonClick = 0;
 		}
 	}
 
@@ -15491,7 +15514,7 @@ public final class mudclient implements Runnable {
 			this.getSurface().drawString("Allow trade requests: @gre@<on>", 3 + baseX, y, 0xFFFFFF, 1);
 		}
 
-		//Display Online List
+		// Social lists
 		if (!this.insideTutorial) {
 			y += 25;
 			int textColor = 0xFFFFFF;
@@ -15501,15 +15524,13 @@ public final class mudclient implements Runnable {
 			}
 			if (S_WANT_PLAYER_COMMANDS)
 				this.getSurface().drawString("Display online list", (baseX + 3), y, textColor, 1);
-		}
-		if (party.inParty()) {
 			y += 14;
-			int textColor = 0xFFFFFF;
+			textColor = 0xFFFFFF;
 			if (this.mouseX > x && this.mouseX < x + boxWidth && this.mouseY > y - 12
 				&& this.mouseY < y + 4) {
 				textColor = 0xFFFF00;
 			}
-			this.getSurface().drawString("Leave Party", (baseX + 3), y, textColor, 1);
+			this.getSurface().drawString("View ignored list", (baseX + 3), y, textColor, 1);
 		}
 
 		// skip tutorial or exit the black hole menu option
@@ -16503,22 +16524,20 @@ public final class mudclient implements Runnable {
 		}
 
 		// handle online list click
-		if (S_WANT_PLAYER_COMMANDS && !this.insideTutorial) {
+		if (!this.insideTutorial) {
 			yFromTopDistance += 25;
-			if (this.mouseX > var6 && this.mouseX < var6 + var5
+			if (S_WANT_PLAYER_COMMANDS && this.mouseX > var6 && this.mouseX < var6 + var5
 				&& yFromTopDistance - 18 < this.mouseY && this.mouseY < yFromTopDistance + 7 && this.mouseButtonClick == 1) {
 				this.sendCommandString("onlinelist");
 			}
 		}
 
-		// handle leave party click
-		if (S_WANT_PARTIES) {
-			if (party.inParty()) {
-				yFromTopDistance += 14;
-				if (this.mouseX > var6 && this.mouseX < var6 + var5
-					&& yFromTopDistance - 5 < this.mouseY && this.mouseY < yFromTopDistance + 10 && this.mouseButtonClick == 1) {
-					this.sendCommandString("leaveparty");
-				}
+		if (!this.insideTutorial) {
+			yFromTopDistance += 14;
+			if (this.mouseX > var6 && this.mouseX < var6 + var5
+				&& yFromTopDistance - 12 < this.mouseY && this.mouseY < yFromTopDistance + 4
+				&& this.mouseButtonClick == 1) {
+				this.showIgnoredList();
 			}
 		}
 
@@ -23780,7 +23799,7 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void removeIgnore(String name) {
+	public void removeIgnore(String name) {
 		try {
 
 			String findKey = StringUtil.displayNameToKey(name);
@@ -24798,14 +24817,6 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	public final void hidePartyMenu() {
-		partyMenu.hide();
-	}
-
-	public final void showPartyMenu() {
-		partyMenu.show();
-	}
-
 	public final void initializeBatchProgressVariables(int repeatFor, int delay) {
 		batchProgressBar.initVariables(repeatFor, delay);
 	}
@@ -24828,6 +24839,11 @@ public final class mudclient implements Runnable {
 
 	public OnlineListInterface getOnlineList() {
 		return onlineList;
+	}
+
+	/** Opens the same compact list presentation used for online players. */
+	public void showIgnoredList() {
+		this.onlineList.showIgnoredUsers(SocialLists.ignoreListArg0, SocialLists.ignoreListCount);
 	}
 
 	public FishingTrawlerInterface getFishingTrawlerInterface() {
@@ -27571,9 +27587,6 @@ public final class mudclient implements Runnable {
 
 				fishingTrawlerInterface = new FishingTrawlerInterface(this);
 				mainComponent.addComponent(fishingTrawlerInterface);
-
-				partyMenu = new PartyGUI(this);
-				mainComponent.addComponent(partyMenu.getComponent());
 
 				if (S_BATCH_PROGRESSION) {
 					batchProgressBar = new ProgressBarInterface(this);

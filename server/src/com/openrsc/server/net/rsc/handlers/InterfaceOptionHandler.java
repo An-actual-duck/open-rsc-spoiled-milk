@@ -869,10 +869,10 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 			case KICK_PLAYER:
 				if (player.getParty() != null) {
 					String playerToKick = payload.player;
-							/*if (!player.getParty().isAllowed(0, player)) {
-								player.message("You are not allowed to kick from this party.");
-								return;
-							}*/
+					if (!player.getParty().isAllowed(0, player)) {
+						player.message("You are not allowed to kick from this party.");
+						return;
+					}
 					if (player.getParty().getLeader().getUsername().equals(playerToKick)) {
 						player.message("You can't kick the leader of the party.");
 						return;

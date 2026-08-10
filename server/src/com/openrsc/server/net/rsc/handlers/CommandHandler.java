@@ -42,7 +42,6 @@ public final class CommandHandler implements PayloadProcessor<CommandStruct, Opc
 				"uniqueonline",
 				"leaveparty",
 				"joinclan",
-				"shareexp",
 				"onlinelist",
 				"onlinelistlocs",
 				"groups",
