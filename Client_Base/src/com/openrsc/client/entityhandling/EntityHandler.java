@@ -6621,6 +6621,62 @@ public class EntityHandler {
 			new int[]{165, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 0, 0, 0, 271, 196, 10, 7, 30, 845
 		));
+		// Keep this client-side presentation catalog in exact parity with the
+		// My World server's MonsterSlayerNpcDefs.json. The server remains the
+		// authority for combat, membership, and respawn metadata.
+		addMonsterSlayerNpcDefinition(846, "Hobart", "A cheery Monster Slayer recruiter", "Task",
+			new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 16711680, 16711680, 15523536);
+		addMonsterSlayerNpcDefinition(847, "Mara", "A practical Monster Slayer contact", "Task",
+			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
+			0, 255, 255, 15523536);
+		addMonsterSlayerNpcDefinition(848, "Bran", "A hardened Monster Slayer contact", "Task",
+			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
+			0, 8421504, 8421504, 15523536);
+		addMonsterSlayerNpcDefinition(849, "Doran", "A Champions Guild Monster Slayer contact", "Task",
+			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
+			0, 10066329, 10066329, 15523536);
+		addMonsterSlayerNpcDefinition(850, "Sella", "A veteran Monster Slayer contact", "Task",
+			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
+			0, 8421376, 8421376, 15523536);
+		addMonsterSlayerNpcDefinition(851, "Orin", "A stoic Monster Slayer contact", "Task",
+			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 16776960, 16776960, 15523536);
+		addMonsterSlayerNpcDefinition(852, "Slayer Associate", "A Fledgling Slayer supplier", "Trade",
+			new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 16711680, 16711680, 15523536);
+		addMonsterSlayerNpcDefinition(853, "Slayer Associate", "An Initiate Slayer supplier", "Trade",
+			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
+			0, 255, 255, 15523536);
+		addMonsterSlayerNpcDefinition(854, "Slayer Associate", "A Veteran Slayer supplier", "Trade",
+			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
+			0, 8421504, 8421504, 15523536);
+		addMonsterSlayerNpcDefinition(855, "Slayer Associate", "An Elite Slayer quartermaster", "Trade",
+			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
+			0, 10066329, 10066329, 15523536);
+		addMonsterSlayerNpcDefinition(856, "Slayer Associate", "A Champion Slayer supplier", "Trade",
+			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
+			0, 8421376, 8421376, 15523536);
+		addMonsterSlayerNpcDefinition(857, "Slayer Associate", "A Hero Slayer supplier", "Trade",
+			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 16776960, 16776960, 15523536);
+		addMonsterSlayerNpcDefinition(858, "Fledgling Monster Slayer", "An eager recruit", "",
+			new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 16711680, 16711680, 15523536);
+		addMonsterSlayerNpcDefinition(859, "Initiate Monster Slayer", "A practical hunter", "",
+			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
+			0, 255, 255, 15523536);
+		addMonsterSlayerNpcDefinition(860, "Veteran Monster Slayer", "A scarred regular", "",
+			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
+			0, 8421504, 8421504, 15523536);
+	}
+
+	private static void addMonsterSlayerNpcDefinition(int id, String name, String description,
+		String command, int[] sprites, int hairColour, int topColour, int bottomColour,
+		int skinColour) {
+		setCustomNpcDefinition(id, new NPCDef(name, description, command,
+			1, 1, 1, 1, false, sprites, hairColour, topColour, bottomColour, skinColour,
+			145, 220, 6, 6, 5, id));
 	}
 
 	private static ItemDef createUnobtaniumPlaceholder(int id) {
