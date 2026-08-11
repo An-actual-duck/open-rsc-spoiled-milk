@@ -419,6 +419,35 @@ public final class MonsterSlayerState {
 		return TaskResult.completed(completed, task.getPointReward(), owner.contact.getChallenge());
 	}
 
+	/**
+	 * Replays the remaining eligible kills for an active task without inventing a
+	 * second reward path. It exists solely for the dev-command service seam.
+	 */
+	public static TaskResult completeActiveTaskForDevelopment(Snapshot current,
+			MonsterSlayerData data) {
+		validate(current, data);
+		if (current.activeTaskKey == null) {
+			return TaskResult.rejected(current, TaskResult.Reason.NO_ACTIVE_TASK);
+		}
+		Task task = data.getTask(current.activeTaskKey);
+		Family family = task == null ? null : data.getFamily(task.getFamilyKey());
+		if (family == null || family.getNpcIds().isEmpty()) {
+			return TaskResult.rejected(current, TaskResult.Reason.INVALID_STATE);
+		}
+		TaskResult result = null;
+		Snapshot progressed = current;
+		int remaining = task.getRequiredKills() - current.activeKills;
+		if (remaining <= 0) {
+			return TaskResult.rejected(current, TaskResult.Reason.INVALID_STATE);
+		}
+		for (int kill = 0; kill < remaining; kill++) {
+			result = recordEligibleKill(progressed, data, family.getNpcIds().get(0));
+			if (!result.isAccepted()) return result;
+			progressed = result.getSnapshot();
+		}
+		return result;
+	}
+
 	private static FamilyOwner findOwner(MonsterSlayerData data, Task task) {
 		for (Contact contact : data.getContactsInChallengeOrder()) {
 			for (Task candidate : task.isRepeatable() ? contact.getRepeatableTasks() : contact.getMandatoryTasks()) {

@@ -31,6 +31,21 @@ public final class MonsterSlayerTaskService {
 	}
 
 	/**
+	 * Development-only completion seam. The command caller is responsible for
+	 * privilege gating; this service deliberately replays the normal typed kill
+	 * transition so rewards, mandatory cursors, rank changes, and exact-once
+	 * completion retain their production semantics.
+	 */
+	public MonsterSlayerState.TaskResult completeActiveTaskForDevelopment(Player player) {
+		player = requirePlayer(player);
+		synchronized (player) {
+			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
+			MonsterSlayerState.TaskResult result = MonsterSlayerState.completeActiveTaskForDevelopment(current, data);
+			return apply(player, result);
+		}
+	}
+
+	/**
 	 * Optional progression must not be allowed to escape into the authoritative
 	 * NPC death lifecycle. The caller still owns diagnostics and continues with
 	 * other contributors after a failed credit.

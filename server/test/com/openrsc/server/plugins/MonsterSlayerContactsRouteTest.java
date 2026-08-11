@@ -14,7 +14,9 @@ import com.openrsc.server.event.custom.MonsterSlayerShopRestockEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.net.rsc.ClientLimitations;
+import com.openrsc.server.plugins.authentic.commands.Development;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerContacts;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerChallengeShops;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -58,7 +60,32 @@ public final class MonsterSlayerContactsRouteTest {
 		aleFailureMessagesRemainTruthful();
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
+		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void developmentCompletionUsesNormalSlayerProgression(Server server) throws Exception {
+		MonsterSlayerData data = MonsterSlayerData.load(Paths.get("conf", "server", "defs", "extras", "MonsterSlayer.json"), new MonsterSlayerData.ReferenceCatalog() { public boolean npcExists(int id) { return true; } public boolean npcAttackable(int id) { return true; } public boolean npcSpawned(int id) { return true; } public boolean itemExists(int id) { return true; }});
+		MonsterSlayerTaskService tasks = new MonsterSlayerTaskService(data);
+		install(server, "monsterSlayerData", data); install(server, "monsterSlayerTaskService", tasks);
+		Player developer = player(server, "slayerdevcomplete", 260, 600);
+		developer.setGroupID(Group.DEV);
+		MonsterSlayerState.Snapshot enrolled = MonsterSlayerState.completeIntroduction(MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data), data);
+		MonsterSlayerState.write(developer.getCache(), data, enrolled);
+		assertTrue(tasks.assignMandatory(developer, "falador").isAccepted(), "developer fixture task assigns");
+		Development.completeMonsterSlayerTaskForDevelopment(developer);
+		MonsterSlayerState.Snapshot completed = MonsterSlayerState.read(developer.getCache(), data);
+		assertTrue(completed.getActiveTaskKey() == null, "developer command clears active task through normal completion");
+		assertEquals(1L, completed.getTasksCompleted(), "developer command counts exactly one completion");
+		assertEquals(2L, completed.getBalances().get(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.FLEDGLING), "developer command awards declared points");
+		Development.completeMonsterSlayerTaskForDevelopment(developer);
+		assertEquals(1L, MonsterSlayerState.read(developer.getCache(), data).getTasksCompleted(), "developer command cannot duplicate an inactive task");
+
+		Player ordinary = player(server, "slayernocommand", 261, 600);
+		MonsterSlayerState.write(ordinary.getCache(), data, enrolled);
+		assertTrue(tasks.assignMandatory(ordinary, "falador").isAccepted(), "ordinary fixture task assigns");
+		Development.completeMonsterSlayerTaskForDevelopment(ordinary);
+		assertTrue(MonsterSlayerState.read(ordinary.getCache(), data).getActiveTaskKey() != null, "non-developer command cannot mutate Slayer task state");
 	}
 
 	private static void associateOperationsAndWorldRestockAreBounded(Server server) {

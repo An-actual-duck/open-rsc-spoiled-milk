@@ -9,6 +9,7 @@ import com.openrsc.server.constants.Skills;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
@@ -296,6 +297,30 @@ public final class Development implements CommandTrigger {
 		}
 		else if (command.equalsIgnoreCase("killnearnpcs") || command.equalsIgnoreCase("killnearcombat") || command.equalsIgnoreCase("killcombatnear")) {
 			killNearbyCombatNpcs(player, command, args);
+		}
+		else if (command.equalsIgnoreCase("completetask")) {
+			if (args.length != 0) { player.message(badSyntaxPrefix + command.toUpperCase()); return; }
+			completeMonsterSlayerTaskForDevelopment(player);
+		}
+	}
+
+	/** Completes the caller's active Monster Slayer task without bypassing typed state transitions. */
+	public static void completeMonsterSlayerTaskForDevelopment(Player player) {
+		if (!player.isDev()) { player.message("This command is available to developers only."); return; }
+		try {
+			MonsterSlayerState.TaskResult result = player.getWorld().getMonsterSlayerTaskService()
+				.completeActiveTaskForDevelopment(player);
+			if (result.getReason() == MonsterSlayerState.TaskResult.Reason.COMPLETED) {
+				player.message("Monster Slayer task completed. Awarded " + result.getAwardedPoints()
+					+ " " + result.getAwardedChallenge().name().toLowerCase(java.util.Locale.ROOT)
+					+ " points.");
+			} else if (result.getReason() == MonsterSlayerState.TaskResult.Reason.NO_ACTIVE_TASK) {
+				player.message("You do not have an active Monster Slayer task.");
+			} else {
+				player.message("Your active Monster Slayer task could not be completed.");
+			}
+		} catch (RuntimeException failure) {
+			player.message("Your Monster Slayer record needs staff attention.");
 		}
 	}
 
