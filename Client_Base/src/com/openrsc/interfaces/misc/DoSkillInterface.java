@@ -654,24 +654,23 @@ public final class DoSkillInterface {
 			drawPointLine("Earned:", selected, true, selectedDetailRightX, footerY + 20, textColour);
 			return;
 		}
-		int labelWidth = Math.max(mc.getSurface().stringWidth(1, "Cost:"), mc.getSurface().stringWidth(1, "Earned:"));
 		int pointColumnWidth = Math.max(pointLineWidth(selected, false), pointLineWidth(selected, true));
-		int labelX = selectedDetailRightX - pointColumnWidth - labelWidth - pointDigitPadding();
-		drawPointLine("Cost:", selected, false, labelX, labelX + labelWidth + pointDigitPadding(), footerY + 5,
+		int pointsX = selectedDetailRightX - pointColumnWidth;
+		int labelRightX = pointsX - pointDigitPadding();
+		drawPointLine("Cost:", selected, false, labelRightX, pointsX, footerY + 5,
 			canAffordPointCost(selected) ? textColour : 0xFFAA55);
-		drawPointLine("Earned:", selected, true, labelX, labelX + labelWidth + pointDigitPadding(), footerY + 20, textColour);
+		drawPointLine("Earned:", selected, true, labelRightX, pointsX, footerY + 20, textColour);
 	}
 	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int rightX, int y, int color) {
 		if (!isMonsterSlayerRedemptionInterface()) {
 			drawStringRightAligned(label + " " + (earned ? formatPointCount(productionResourceAmount) + " pts" : formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"), rightX, y, 1, color);
 			return;
 		}
-		int width = mc.getSurface().stringWidth(1, label + " ") + pointLineWidth(selected, earned);
-		int x = rightX - width;
-		drawPointLine(label, selected, earned, x, x + mc.getSurface().stringWidth(1, label + " "), y, color);
+		int pointsX = rightX - pointLineWidth(selected, earned);
+		drawPointLine(label, selected, earned, pointsX - pointDigitPadding(), pointsX, y, color);
 	}
-	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int labelX, int pointsX, int y, int color) {
-		drawString(label, labelX, y, 1, color);
+	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int labelRightX, int pointsX, int y, int color) {
+		drawStringRightAligned(label, labelRightX, y, 1, color);
 		int x = pointsX;
 		Sprite coin = slayerPointCoin();
 		for (int i = 0; i < selected.getPointCostCount(); i++) {
