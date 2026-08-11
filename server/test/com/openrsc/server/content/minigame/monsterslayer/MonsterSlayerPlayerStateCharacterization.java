@@ -24,6 +24,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		taskProgressMessagesAreExactAndBounded(data);
 		beerIntroductionIsOneTimeAndRankSafe(data);
 		promotionAcknowledgementIsTypedAndIdempotent(data);
 		typedPromotionPlansAreBoundedAndOrdered();
@@ -195,6 +196,32 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		boolean rejected = false;
 		try { MonsterSlayerState.completeIntroduction(fledgling, data); } catch (MonsterSlayerState.ValidationException expected) { rejected = true; }
 		assertTrue(rejected, "duplicate beer completion is rejected");
+	}
+
+	private static void taskProgressMessagesAreExactAndBounded(MonsterSlayerData data) {
+		MonsterSlayerTaskService tasks = new MonsterSlayerTaskService(data);
+		MonsterSlayerState.Snapshot assigned = MonsterSlayerState.assignMandatory(
+			MonsterSlayerState.completeIntroduction(MonsterSlayerState.beginIntroduction(
+				MonsterSlayerState.defaults(data), data), data), data, "falador").getSnapshot();
+		MonsterSlayerState.TaskResult firstKill = MonsterSlayerState.recordEligibleKill(assigned, data, 62);
+		equals("You have 39 Goblins left to kill.", tasks.progressMessage(firstKill),
+			"plural task progress message");
+		equals(null, tasks.progressMessage(MonsterSlayerState.recordEligibleKill(assigned, data, 19)),
+			"unrelated kill has no task progress message");
+
+		MonsterSlayerState.Snapshot oneRemaining = assigned;
+		for (int kill = 0; kill < 38; kill++) {
+			oneRemaining = MonsterSlayerState.recordEligibleKill(oneRemaining, data, 62).getSnapshot();
+		}
+		MonsterSlayerState.TaskResult singular = MonsterSlayerState.recordEligibleKill(oneRemaining, data, 62);
+		equals("You have 1 Goblin left to kill.", tasks.progressMessage(singular),
+			"singular task progress message");
+		MonsterSlayerState.TaskResult completion = MonsterSlayerState.recordEligibleKill(
+			singular.getSnapshot(), data, 62);
+		equals(MonsterSlayerState.TaskResult.Reason.COMPLETED, completion.getReason(),
+			"final target completes task");
+		equals(null, tasks.progressMessage(completion),
+			"completion keeps its existing message path");
 	}
 
 	private static void promotionAcknowledgementIsTypedAndIdempotent(MonsterSlayerData data) {
