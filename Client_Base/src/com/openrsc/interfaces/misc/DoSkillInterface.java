@@ -53,6 +53,9 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
 	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
+	/** The source mark is 59x41; preserve that proportion without clipping it. */
+	private static final int POINT_COIN_WIDTH = 18;
+	private static final int POINT_COIN_HEIGHT = 13;
 	/* Standard sprite-mask shades: bronze, iron, steel, mithril, adamant, rune. */
 	private static final int[] SLAYER_POINT_COIN_TINTS = {0x996633, 0xA8A8A8, 0x666666, 0x4F7F7F, 0x3F6F3F, 0x4A5FB5};
 	private static Sprite slayerPointCoin;
@@ -645,11 +648,57 @@ public final class DoSkillInterface {
 	}
 
 	private void drawPointRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
-		drawPointLine("Cost:", selected, false, selectedDetailRightX, footerY + 5,
+		if (!isMonsterSlayerRedemptionInterface()) {
+			drawPointLine("Cost:", selected, false, selectedDetailRightX, footerY + 5,
+				canAffordPointCost(selected) ? textColour : 0xFFAA55);
+			drawPointLine("Earned:", selected, true, selectedDetailRightX, footerY + 20, textColour);
+			return;
+		}
+		int labelWidth = Math.max(mc.getSurface().stringWidth(1, "Cost:"), mc.getSurface().stringWidth(1, "Earned:"));
+		int pointColumnWidth = Math.max(pointLineWidth(selected, false), pointLineWidth(selected, true));
+		int labelX = selectedDetailRightX - pointColumnWidth - labelWidth - pointDigitPadding();
+		drawPointLine("Cost:", selected, false, labelX, labelX + labelWidth + pointDigitPadding(), footerY + 5,
 			canAffordPointCost(selected) ? textColour : 0xFFAA55);
-		drawPointLine("Earned:", selected, true, selectedDetailRightX, footerY + 20, textColour);
+		drawPointLine("Earned:", selected, true, labelX, labelX + labelWidth + pointDigitPadding(), footerY + 20, textColour);
 	}
-	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int rightX, int y, int color) { if (!isMonsterSlayerRedemptionInterface()) { drawStringRightAligned(label + " " + (earned ? formatPointCount(productionResourceAmount) + " pts" : formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"), rightX, y, 1, color); return; } int width = mc.getSurface().stringWidth(1, label + " "); for (int i = 0; i < selected.getPointCostCount(); i++) width += 18 + mc.getSurface().stringWidth(1, Long.toString(earned ? pointBalance(selected.getPointCostCode(i)) : (long) selected.getPointCostAmount(i) * productionQuantity)) + (i == 0 ? 0 : 10); int x = rightX - width; drawString(label, x, y, 1, color); x += mc.getSurface().stringWidth(1, label + " "); Sprite coin = slayerPointCoin(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) { drawString("|", x, y, 1, color); x += 10; } int code = selected.getPointCostCode(i); long amount = earned ? pointBalance(code) : (long) selected.getPointCostAmount(i) * productionQuantity; if (coin != null) mc.getSurface().drawSpriteClipping(coin, x, y - 11, 16, 11, pointCoinTint(code), 0, 0, false, 0, 1); if (mc.getMouseX() >= x && mc.getMouseX() <= x + 16 && mc.getMouseY() >= y - 11 && mc.getMouseY() <= y) pointCoinHover = earned ? pointLabel(code) + " points: " + amount : "Costs " + amount + " " + pointLabel(code) + " points"; x += 18; String value = Long.toString(amount); drawString(value, x, y, 1, color); x += mc.getSurface().stringWidth(1, value); } }
+	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int rightX, int y, int color) {
+		if (!isMonsterSlayerRedemptionInterface()) {
+			drawStringRightAligned(label + " " + (earned ? formatPointCount(productionResourceAmount) + " pts" : formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"), rightX, y, 1, color);
+			return;
+		}
+		int width = mc.getSurface().stringWidth(1, label + " ") + pointLineWidth(selected, earned);
+		int x = rightX - width;
+		drawPointLine(label, selected, earned, x, x + mc.getSurface().stringWidth(1, label + " "), y, color);
+	}
+	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int labelX, int pointsX, int y, int color) {
+		drawString(label, labelX, y, 1, color);
+		int x = pointsX;
+		Sprite coin = slayerPointCoin();
+		for (int i = 0; i < selected.getPointCostCount(); i++) {
+			if (i > 0) {
+				drawString("|", x, y, 1, color);
+				x += mc.getSurface().stringWidth(1, "|") + pointDigitPadding();
+			}
+			int code = selected.getPointCostCode(i);
+			long amount = earned ? pointBalance(code) : (long) selected.getPointCostAmount(i) * productionQuantity;
+			if (coin != null) mc.getSurface().drawSpriteClipping(coin, x, y - POINT_COIN_HEIGHT, POINT_COIN_WIDTH, POINT_COIN_HEIGHT, pointCoinTint(code), 0, 0, false, 0, 1);
+			if (mc.getMouseX() >= x && mc.getMouseX() <= x + POINT_COIN_WIDTH && mc.getMouseY() >= y - POINT_COIN_HEIGHT && mc.getMouseY() <= y) pointCoinHover = earned ? pointLabel(code) + " points: " + amount : "Costs " + amount + " " + pointLabel(code) + " points";
+			x += POINT_COIN_WIDTH + pointDigitPadding();
+			String value = Long.toString(amount);
+			drawString(value, x, y, 1, color);
+			x += mc.getSurface().stringWidth(1, value);
+		}
+	}
+	private int pointLineWidth(ProductionRecipeView selected, boolean earned) {
+		int width = 0;
+		for (int i = 0; i < selected.getPointCostCount(); i++) {
+			if (i > 0) width += mc.getSurface().stringWidth(1, "|") + pointDigitPadding();
+			long amount = earned ? pointBalance(selected.getPointCostCode(i)) : (long) selected.getPointCostAmount(i) * productionQuantity;
+			width += POINT_COIN_WIDTH + pointDigitPadding() + mc.getSurface().stringWidth(1, Long.toString(amount));
+		}
+		return width;
+	}
+	private int pointDigitPadding() { return mc.getSurface().stringWidth(1, "0"); }
 
 	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
 	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
@@ -658,7 +707,30 @@ public final class DoSkillInterface {
 	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
 	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
 	private int pointCoinTint(int code) { return code >= 0 && code < SLAYER_POINT_COIN_TINTS.length ? SLAYER_POINT_COIN_TINTS[code] : 0; }
-	private Sprite slayerPointCoin() { if (slayerPointCoin != null) return slayerPointCoin; try (InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("res/myworld/slayer-points-coin.png")) { BufferedImage image = in == null ? null : ImageIO.read(in); if (image == null) return null; int[] pixels = new int[image.getWidth() * image.getHeight()]; image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth()); slayerPointCoin = new Sprite(pixels, image.getWidth(), image.getHeight()); return slayerPointCoin; } catch (Exception ignored) { return null; } }
+	private Sprite slayerPointCoin() {
+		if (slayerPointCoin != null) return slayerPointCoin;
+		try (InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("res/myworld/slayer-points-coin.png")) {
+			BufferedImage image = in == null ? null : ImageIO.read(in);
+			if (image == null) return null;
+			// The legacy and AWT nearest-neighbour scalers both omit the final
+			// source interval. Scale explicitly with endpoint mapping instead, so
+			// the final destination column/row is the authored right/bottom edge.
+			int[] source = new int[image.getWidth() * image.getHeight()];
+			image.getRGB(0, 0, image.getWidth(), image.getHeight(), source, 0, image.getWidth());
+			int[] pixels = new int[POINT_COIN_WIDTH * POINT_COIN_HEIGHT];
+			for (int targetY = 0; targetY < POINT_COIN_HEIGHT; targetY++) {
+				int sourceY = targetY * (image.getHeight() - 1) / (POINT_COIN_HEIGHT - 1);
+				for (int targetX = 0; targetX < POINT_COIN_WIDTH; targetX++) {
+					int sourceX = targetX * (image.getWidth() - 1) / (POINT_COIN_WIDTH - 1);
+					pixels[targetY * POINT_COIN_WIDTH + targetX] = source[sourceY * image.getWidth() + sourceX];
+				}
+			}
+			slayerPointCoin = new Sprite(pixels, POINT_COIN_WIDTH, POINT_COIN_HEIGHT);
+			return slayerPointCoin;
+		} catch (Exception ignored) {
+			return null;
+		}
+	}
 	private String stockText(ProductionRecipeView selected) { return selected.getStockAmount() >= 0 ? "  Stock: " + selected.getStockAmount() : ""; }
 	private String pointShopHoverName(String name, int output) {
 		if (output <= 1) return name;
