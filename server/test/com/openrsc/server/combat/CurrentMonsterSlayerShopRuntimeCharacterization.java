@@ -11,6 +11,7 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.model.entity.player.Player;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 final class CurrentMonsterSlayerShopRuntimeCharacterization {
 	static void runtimeTransactionsAreAtomic(CurrentCombatHarness h) throws Exception {
 		MonsterSlayerData data = data();
-		beerTransactionOutcomes(h, data);
+		risingSunAleTransactionOutcomes(h, data);
 		basicRedemptionAndRollback(h, data);
 		everyShopDeductsItsTypedCost(h, data);
 		capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(h, data);
@@ -32,70 +33,95 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		fullAndMalformedPlayersRemainUntouched(h, data);
 	}
 
-	private static void beerTransactionOutcomes(CurrentCombatHarness h, MonsterSlayerData data) {
+	private static void risingSunAleTransactionOutcomes(CurrentCombatHarness h, MonsterSlayerData data) {
+		defaultTransactionAcceptsEveryRisingSunAle(h, data);
 		final AtomicInteger consumed = new AtomicInteger();
 		final AtomicInteger refunded = new AtomicInteger();
-		MonsterSlayerContactService.BeerTransaction transaction = new MonsterSlayerContactService.BeerTransaction() {
-			public boolean consume(Player player) { consumed.incrementAndGet(); return true; }
-			public boolean refund(Player player) { refunded.incrementAndGet(); return true; }
+		MonsterSlayerContactService.RisingSunAleTransaction transaction = new MonsterSlayerContactService.RisingSunAleTransaction() {
+			public Item consume(Player player) { consumed.incrementAndGet(); return new Item(ItemId.DWARVEN_STOUT.id()); }
+			public boolean refund(Player player, Item ale) { refunded.incrementAndGet(); assertEquals(ItemId.DWARVEN_STOUT.id(), ale.getCatalogId(), "rollback preserves exact ale"); return true; }
 		};
 		MonsterSlayerContactService contacts = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, transaction);
-		Player missing = h.player("mssmissingbeer", 840, 790);
+		Player missing = h.player("mssmissingale", 840, 790);
 		MonsterSlayerState.write(missing.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
-		MonsterSlayerContactService missingBeer = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, new MonsterSlayerContactService.BeerTransaction() { public boolean consume(Player player) { return false; } public boolean refund(Player player) { return true; }});
-		assertEquals("missing-beer", missingBeer.completeBeerIntroductionWithBeer(missing).getReason(), "missing beer result");
-		assertEquals(0, consumed.get(), "missing beer does not consume");
-		Player recruit = h.player("mssbeertransaction", 841, 790);
+		MonsterSlayerContactService missingAle = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, new MonsterSlayerContactService.RisingSunAleTransaction() { public Item consume(Player player) { return null; } public boolean refund(Player player, Item ale) { return true; }});
+		assertEquals("missing-rising-sun-ale", missingAle.completeIntroductionWithRisingSunAle(missing).getReason(), "missing Rising Sun ale result");
+		assertEquals(0, consumed.get(), "missing Rising Sun ale does not consume");
+		Player recruit = h.player("mssaletransaction", 841, 790);
 		MonsterSlayerState.write(recruit.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
-		recruit.getCache().store("unrelated_beer_fixture", "preserved");
-		MonsterSlayerContactService.Result beerResult = contacts.completeBeerIntroductionWithBeer(recruit);
-		assertTrue(beerResult.isAccepted(), "beer transaction succeeds: " + beerResult.getReason());
-		assertEquals(1, consumed.get(), "beer consumes exactly once");
-		assertFalse(contacts.completeBeerIntroductionWithBeer(recruit).isAccepted(), "duplicate beer submission rejected");
+		recruit.getCache().store("unrelated_ale_fixture", "preserved");
+		MonsterSlayerContactService.Result aleResult = contacts.completeIntroductionWithRisingSunAle(recruit);
+		assertTrue(aleResult.isAccepted(), "Rising Sun ale transaction succeeds: " + aleResult.getReason());
+		assertEquals(1, consumed.get(), "Rising Sun ale consumes exactly once");
+		assertFalse(contacts.completeIntroductionWithRisingSunAle(recruit).isAccepted(), "duplicate Rising Sun ale submission rejected");
 		assertEquals(1, consumed.get(), "duplicate does not consume again");
-		assertEquals("preserved", recruit.getCache().getString("unrelated_beer_fixture"), "unrelated cache preserved");
+		assertEquals("preserved", recruit.getCache().getString("unrelated_ale_fixture"), "unrelated cache preserved");
 		assertEquals(0, refunded.get(), "successful transaction does not refund");
 
-		Player writeFailure = h.player("mssbeerwritefailure", 842, 790);
+		Player writeFailure = h.player("mssalewritefailure", 842, 790);
 		MonsterSlayerState.write(writeFailure.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
 		final AtomicInteger writeRefunds = new AtomicInteger();
-		MonsterSlayerContactService.Result failedWrite = contacts(data, new MonsterSlayerContactService.BeerTransaction() {
-			public boolean consume(Player player) { return true; }
-			public boolean refund(Player player) { writeRefunds.incrementAndGet(); return true; }
-		}, failingWrites()).completeBeerIntroductionWithBeer(writeFailure);
+		MonsterSlayerContactService.Result failedWrite = contacts(data, new MonsterSlayerContactService.RisingSunAleTransaction() {
+			public Item consume(Player player) { return new Item(ItemId.WIZARDS_MIND_BOMB.id()); }
+			public boolean refund(Player player, Item ale) { writeRefunds.incrementAndGet(); assertEquals(ItemId.WIZARDS_MIND_BOMB.id(), ale.getCatalogId(), "Mind Bomb rollback preserves exact ale"); return true; }
+		}, failingWrites()).completeIntroductionWithRisingSunAle(writeFailure);
 		assertEquals("state-write-failed", failedWrite.getReason(), "failed cache write gives truthful result");
 		assertEquals(1, writeRefunds.get(), "failed cache write refunds exactly once");
 		assertEquals(1, MonsterSlayerState.read(writeFailure.getCache(), data).getIntroStage(), "failed cache write preserves introduction state");
 
-		Player refundFailure = h.player("mssbeerrefundfailure", 843, 790);
+		Player refundFailure = h.player("mssalerefundfailure", 843, 790);
 		MonsterSlayerState.write(refundFailure.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
-		MonsterSlayerContactService.Result failedRefund = contacts(data, new MonsterSlayerContactService.BeerTransaction() {
-			public boolean consume(Player player) { return true; }
-			public boolean refund(Player player) { return false; }
-		}, failingWrites()).completeBeerIntroductionWithBeer(refundFailure);
+		MonsterSlayerContactService.Result failedRefund = contacts(data, new MonsterSlayerContactService.RisingSunAleTransaction() {
+			public Item consume(Player player) { return new Item(ItemId.ASGARNIAN_ALE.id()); }
+			public boolean refund(Player player, Item ale) { return false; }
+		}, failingWrites()).completeIntroductionWithRisingSunAle(refundFailure);
 		assertEquals("refund-failed", failedRefund.getReason(), "failed refund is explicit");
 
-		final Player concurrent = h.player("mssbeerconcurrent", 844, 790);
+		final Player concurrent = h.player("mssaleconcurrent", 844, 790);
 		MonsterSlayerState.write(concurrent.getCache(), data, MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
 		final AtomicInteger concurrentConsumes = new AtomicInteger();
-		final MonsterSlayerContactService concurrentContacts = contacts(data, new MonsterSlayerContactService.BeerTransaction() {
-			public boolean consume(Player player) { concurrentConsumes.incrementAndGet(); return true; }
-			public boolean refund(Player player) { return true; }
+		final MonsterSlayerContactService concurrentContacts = contacts(data, new MonsterSlayerContactService.RisingSunAleTransaction() {
+			public Item consume(Player player) { concurrentConsumes.incrementAndGet(); return new Item(ItemId.ASGARNIAN_ALE.id()); }
+			public boolean refund(Player player, Item ale) { return true; }
 		}, normalStore());
-		MonsterSlayerContactService.Result[] submissions = concurrentBeerSubmissions(concurrentContacts, concurrent);
-		assertEquals(1, successful(submissions[0], submissions[1]), "one simultaneous beer submission succeeds");
+		MonsterSlayerContactService.Result[] submissions = concurrentAleSubmissions(concurrentContacts, concurrent);
+		assertEquals(1, successful(submissions[0], submissions[1]), "one simultaneous Rising Sun ale submission succeeds");
 		assertEquals(1, concurrentConsumes.get(), "simultaneous duplicate consumes once");
 	}
 
-	private static MonsterSlayerContactService contacts(MonsterSlayerData data, MonsterSlayerContactService.BeerTransaction beer, MonsterSlayerContactService.StateStore store) {
-		return new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, beer, store);
+	private static void defaultTransactionAcceptsEveryRisingSunAle(CurrentCombatHarness h,
+		MonsterSlayerData data) {
+		int[] acceptedAles = {ItemId.ASGARNIAN_ALE.id(), ItemId.WIZARDS_MIND_BOMB.id(), ItemId.DWARVEN_STOUT.id()};
+		for (int index = 0; index < acceptedAles.length; index++) {
+			int aleId = acceptedAles[index];
+			Player player = h.player("mssale" + aleId, 840 + index, 790);
+			MonsterSlayerState.write(player.getCache(), data,
+				MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+			// Harness players deliberately bypass the normal login registry. Seed the
+			// fixture container directly; production additions require that registry.
+			player.getCarriedItems().getInventory().getItems().add(new Item(ItemId.BEER.id(), 1, false, 20_000_000L + index * 10L));
+			player.getCarriedItems().getInventory().getItems().add(new Item(aleId, 1, false, 20_000_001L + index * 10L));
+			assertTrue(MonsterSlayerContactService.hasRisingSunAle(player), "accepted Rising Sun ale is recognized " + aleId);
+			MonsterSlayerContactService service = new MonsterSlayerContactService(data,
+				new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data));
+			assertTrue(service.completeIntroductionWithRisingSunAle(player).isAccepted(), "accepted Rising Sun ale completes introduction " + aleId);
+			assertEquals(0, player.getCarriedItems().getInventory().countId(aleId), "consumes exact Rising Sun ale " + aleId);
+			assertEquals(1, player.getCarriedItems().getInventory().countId(ItemId.BEER.id()), "ordinary Beer is not consumed " + aleId);
+		}
+		Player beerOnly = h.player("mssbeeronly", 844, 790);
+		beerOnly.getCarriedItems().getInventory().getItems().add(new Item(ItemId.BEER.id(), 1, false, 20_000_100L));
+		assertFalse(MonsterSlayerContactService.hasRisingSunAle(beerOnly), "ordinary Beer is not a Rising Sun ale");
+	}
+
+	private static MonsterSlayerContactService contacts(MonsterSlayerData data, MonsterSlayerContactService.RisingSunAleTransaction ale, MonsterSlayerContactService.StateStore store) {
+		return new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return 0; }}, ale, store);
 	}
 	private static MonsterSlayerContactService.StateStore normalStore() { return new MonsterSlayerContactService.StateStore() { public MonsterSlayerState.Snapshot read(com.openrsc.server.model.Cache cache, MonsterSlayerData data) { return MonsterSlayerState.read(cache, data); } public void write(com.openrsc.server.model.Cache cache, MonsterSlayerData data, MonsterSlayerState.Snapshot snapshot) { MonsterSlayerState.write(cache, data, snapshot); }}; }
 	private static MonsterSlayerContactService.StateStore failingWrites() { return new MonsterSlayerContactService.StateStore() { public MonsterSlayerState.Snapshot read(com.openrsc.server.model.Cache cache, MonsterSlayerData data) { return MonsterSlayerState.read(cache, data); } public void write(com.openrsc.server.model.Cache cache, MonsterSlayerData data, MonsterSlayerState.Snapshot snapshot) { throw new IllegalStateException("fixture write failure"); }}; }
-	private static MonsterSlayerContactService.Result[] concurrentBeerSubmissions(final MonsterSlayerContactService contacts, final Player player) {
+	private static MonsterSlayerContactService.Result[] concurrentAleSubmissions(final MonsterSlayerContactService contacts, final Player player) {
 		final CountDownLatch ready = new CountDownLatch(2); final CountDownLatch start = new CountDownLatch(1); final AtomicReference<MonsterSlayerContactService.Result> first = new AtomicReference<MonsterSlayerContactService.Result>(); final AtomicReference<MonsterSlayerContactService.Result> second = new AtomicReference<MonsterSlayerContactService.Result>();
-		Thread one = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); first.set(contacts.completeBeerIntroductionWithBeer(player)); }}, "monster-slayer-beer-first");
-		Thread two = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); second.set(contacts.completeBeerIntroductionWithBeer(player)); }}, "monster-slayer-beer-second");
+		Thread one = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); first.set(contacts.completeIntroductionWithRisingSunAle(player)); }}, "monster-slayer-ale-first");
+		Thread two = new Thread(new Runnable() { public void run() { ready.countDown(); await(start); second.set(contacts.completeIntroductionWithRisingSunAle(player)); }}, "monster-slayer-ale-second");
 		one.start(); two.start(); await(ready); start.countDown(); join(one); join(two); return new MonsterSlayerContactService.Result[] {first.get(), second.get()};
 	}
 	private static MonsterSlayerContactService.Result[] concurrentAssignments(final MonsterSlayerContactService contacts, final Player player, final String contactKey) {
@@ -112,9 +138,9 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		MonsterSlayerContactService contacts = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data));
 		Player recruit = h.player("mssbeer", 850, 790);
 		MonsterSlayerState.write(recruit.getCache(), data, MonsterSlayerState.defaults(data));
-		assertTrue(contacts.beginBeerIntroduction(recruit).isAccepted(), "beer introduction begins");
-		assertTrue(contacts.completeBeerIntroduction(recruit).isAccepted(), "beer introduction completes");
-		assertFalse(contacts.completeBeerIntroduction(recruit).isAccepted(), "beer introduction cannot complete twice");
+		assertTrue(contacts.beginIntroduction(recruit).isAccepted(), "introduction begins");
+		assertTrue(contacts.completeIntroduction(recruit).isAccepted(), "introduction completes");
+		assertFalse(contacts.completeIntroduction(recruit).isAccepted(), "introduction cannot complete twice");
 		for (int tier = 0; tier < data.getContacts().size(); tier++) {
 			MonsterSlayerDefinitions.Contact contact = data.getContacts().get(tier);
 			Player player = h.player("msscontact" + tier, 860 + tier, 790);
