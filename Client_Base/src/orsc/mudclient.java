@@ -374,6 +374,11 @@ public final class mudclient implements Runnable {
 	private static final int TOP_MENU_BAR_WIDTH = 199;
 	private static final int CUSTOM_UI_INVENTORY_PANEL_WIDTH = 248;
 	private static final int CUSTOM_UI_INVENTORY_PANEL_HEIGHT = 308;
+	private static final int INVENTORY_COLUMNS = 5;
+	private static final int INVENTORY_SLOT_WIDTH = 49;
+	private static final int INVENTORY_SLOT_HEIGHT = 34;
+	private static final int INVENTORY_TAB_HEIGHT = 24;
+	private static final int EQUIPMENT_PANEL_HEIGHT = 286;
 	private static final int CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT = 273;
 	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
 	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 200;
@@ -12554,18 +12559,20 @@ public final class mudclient implements Runnable {
 			if (!C_CUSTOM_UI)
 				this.getSurface().drawSprite(spriteSelect(GUIPARTS.BAGTAB.getDef()), var3, 3);
 
+			final int inventoryPanelY = C_CUSTOM_UI
+				? maxY - CUSTOM_UI_INVENTORY_PANEL_HEIGHT : 36;
+			final int inventoryGridHeight = (this.m_cl / INVENTORY_COLUMNS) * INVENTORY_SLOT_HEIGHT;
+			final int inventoryTabsY = inventoryPanelY + inventoryGridHeight;
 			int var4;
 			int var5;
 			int id;
-			int yOffset = 36;
-			if (C_CUSTOM_UI)
-				yOffset = maxY - CUSTOM_UI_INVENTORY_PANEL_HEIGHT;
+			int yOffset = inventoryPanelY;
 
 			if (this.tabEquipmentIndex == 0) //inventory tab
 			{
 				for (var4 = 0; this.m_cl > var4; ++var4) {
-					var5 = var3 + var4 % 5 * 49;
-					id = var4 / 5 * 34 + yOffset;
+					var5 = var3 + var4 % INVENTORY_COLUMNS * INVENTORY_SLOT_WIDTH;
+					id = var4 / INVENTORY_COLUMNS * INVENTORY_SLOT_HEIGHT + yOffset;
 					if (var4 >= this.inventoryCapacity) {
 						this.getSurface().drawBoxAlpha(var5, id, 49, 34, GenUtil.buildColor(74, 74, 74), 170);
 					} else if (!S_WANT_EQUIPMENT_TAB && this.inventoryItemCount > var4 && getInventoryItemEquippedID(var4) == 1) {
@@ -12608,18 +12615,18 @@ public final class mudclient implements Runnable {
 					}
 				}
 
-				for (var4 = 1; var4 <= 4; ++var4) {
-					this.getSurface().drawLineVert(var3 + var4 * 49, yOffset, 0, this.m_cl / 5 * 34);
+				for (var4 = 1; var4 < INVENTORY_COLUMNS; ++var4) {
+					this.getSurface().drawLineVert(var3 + var4 * INVENTORY_SLOT_WIDTH, yOffset, 0, inventoryGridHeight);
 				}
 
-				for (var4 = 1; this.m_cl / 5 - 1 >= var4; ++var4) {
-					this.getSurface().drawLineHoriz(var3, yOffset + var4 * 34, 245, 0);
+				for (var4 = 1; this.m_cl / INVENTORY_COLUMNS - 1 >= var4; ++var4) {
+					this.getSurface().drawLineHoriz(var3, yOffset + var4 * INVENTORY_SLOT_HEIGHT, 245, 0);
 				}
 				if (var2) {
 					var3 = 248 + (this.mouseX - this.getSurface().width2);
 					var4 = this.mouseY - yOffset;
-					if (var3 >= 0 && var4 >= 0 && var3 < 248 && this.m_cl / 5 * 34 > var4) {
-						var5 = var4 / 34 * 5 + var3 / 49;
+					if (var3 >= 0 && var4 >= 0 && var3 < 248 && inventoryGridHeight > var4) {
+						var5 = var4 / INVENTORY_SLOT_HEIGHT * INVENTORY_COLUMNS + var3 / INVENTORY_SLOT_WIDTH;
 						if (var5 < this.inventoryCapacity && this.inventoryItemCount > var5) {
 							id = getInventoryItemID(var5);
 							Item item = getInventoryItem(var5);
@@ -12701,8 +12708,9 @@ public final class mudclient implements Runnable {
 				}
 			} else if (this.tabEquipmentIndex == 1) //equipment tab
 			{
-				if (C_CUSTOM_UI)
-					yOffset -= 45;
+				// Keep both views attached to the same tab bar. The equipment pane
+				// grows upward so it never overlaps the tabs below the 8x5 inventory.
+				yOffset = inventoryTabsY - EQUIPMENT_PANEL_HEIGHT;
 				this.getSurface().drawBoxAlpha(xOffset, yOffset, 245, 204, this.clearBox, 128);
 				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 58, this.clearBox, 128);
 				Sprite todraw = null;
@@ -12829,20 +12837,19 @@ public final class mudclient implements Runnable {
 
 			if (S_WANT_EQUIPMENT_TAB) {
 
-				yOffset += 228;
-				this.getSurface().drawBoxAlpha(xOffset, yOffset - 24, 122, 24, this.tabEquipmentIndex == 1 ? selectedBox : clearBox, 128);
-				this.getSurface().drawBoxAlpha(xOffset + 122, yOffset - 24, 123, 24, this.tabEquipmentIndex == 0 ? selectedBox : clearBox, 128);
-				this.getSurface().drawColoredStringCentered(xOffset + 60, "Equipment", 0, 0, 4, yOffset - 7);
-				this.getSurface().drawColoredStringCentered(xOffset + 183, "Inventory", 0, 0, 4, yOffset - 7);
+				this.getSurface().drawBoxAlpha(xOffset, inventoryTabsY, 122, INVENTORY_TAB_HEIGHT, this.tabEquipmentIndex == 1 ? selectedBox : clearBox, 128);
+				this.getSurface().drawBoxAlpha(xOffset + 122, inventoryTabsY, 123, INVENTORY_TAB_HEIGHT, this.tabEquipmentIndex == 0 ? selectedBox : clearBox, 128);
+				this.getSurface().drawColoredStringCentered(xOffset + 60, "Equipment", 0, 0, 4, inventoryTabsY + 17);
+				this.getSurface().drawColoredStringCentered(xOffset + 183, "Inventory", 0, 0, 4, inventoryTabsY + 17);
 
-				this.getSurface().drawLineHoriz(xOffset, yOffset - 24, 245, 0);
-				this.getSurface().drawLineVert(xOffset + 122, yOffset - 24, 0, 24);
+				this.getSurface().drawLineHoriz(xOffset, inventoryTabsY, 245, 0);
+				this.getSurface().drawLineVert(xOffset + 122, inventoryTabsY, 0, INVENTORY_TAB_HEIGHT);
 
 				//Handle ui clicks
 				if (this.mouseButtonClick == 1 && !this.topMouseMenuVisible) {
 					if (this.mouseX >= xOffset) {
-						if (this.mouseY <= yOffset) {
-							if (this.mouseY >= yOffset - 24) {
+						if (this.mouseY < inventoryTabsY + INVENTORY_TAB_HEIGHT) {
+							if (this.mouseY >= inventoryTabsY) {
 								if (this.mouseX <= xOffset + 245) {
 									if (this.tabEquipmentIndex == 0) {
 										if (this.mouseX < xOffset + 122)

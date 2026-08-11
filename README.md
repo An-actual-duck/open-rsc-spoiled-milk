@@ -255,6 +255,7 @@ New visual assets use the following source breakdown:
   and spell-effect icons.
 - **COLEVID-19**: modified Mourning Unicorn and Sacred Unicorn icons.
 - **Game-icons.net**: Prayer icons.
+- **Free Icon Repository**: Monster Slayer point-coin artwork.
 - **Shutterstock royalty-free listing**: Pack Rat icon.
 - **Original work by the project author**: sprite additions including the
   fishing rod equipment sprites.
