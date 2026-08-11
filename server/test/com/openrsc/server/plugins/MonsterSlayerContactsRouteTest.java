@@ -14,6 +14,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerContacts;
+import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerChallengeShops;
 import com.openrsc.server.util.rsc.DataConversions;
 
 import java.util.LinkedHashMap;
@@ -51,6 +52,7 @@ public final class MonsterSlayerContactsRouteTest {
 		guildAccessModesAndQuestStates(server);
 		associateAmbientAndOwnershipBoundaries(server, routes);
 		beerFailureMessagesRemainTruthful();
+		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
 
@@ -60,6 +62,28 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("Your rank record failed and your beer could not be returned. Please contact staff.", MonsterSlayerContacts.beerFailureMessage("refund-failed"), "refund failure message");
 		assertEquals("Your Monster Slayer record needs staff attention.", MonsterSlayerContacts.beerFailureMessage("invalid-state"), "invalid state message");
 	}
+
+	private static void shopPresentationUsesTypedCostsAndTruthfulFailures(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		MonsterSlayerState.Snapshot state = MonsterSlayerState.defaults(data);
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop : data.getShops()) {
+			for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Category category : shop.getCategories()) {
+				for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Reward reward : category.getRewards()) {
+					String summary = MonsterSlayerChallengeShops.costSummary(reward, 2L, state);
+					for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge challenge : com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.values()) {
+						long component = reward.getCost().get(challenge);
+						if (component > 0L) assertTrue(summary.contains((component * 2L) + " " + title(challenge.name()) + " points (you: 0)"), "typed double cost " + reward.getKey() + " " + challenge);
+					}
+				}
+			}
+		}
+		assertEquals("You do not have all of the required challenge points for that.", MonsterSlayerChallengeShops.redemptionFailureMessage("points"), "typed point failure");
+		assertEquals("That reward is sold out or its stock changed.", MonsterSlayerChallengeShops.redemptionFailureMessage("stock"), "stale stock failure");
+		assertEquals("You do not have enough inventory space for that.", MonsterSlayerChallengeShops.redemptionFailureMessage("inventory"), "inventory failure");
+		assertEquals("Choose a valid smaller quantity.", MonsterSlayerChallengeShops.redemptionFailureMessage("quantity"), "quantity failure");
+		assertEquals("The reward could not be delivered. Your points and stock were restored.", MonsterSlayerChallengeShops.redemptionFailureMessage("grant"), "rollback failure");
+	}
+	private static String title(String value) { return value.substring(0, 1) + value.substring(1).toLowerCase(); }
 
 	private static void guildAccessModesAndQuestStates(Server server) {
 		Player player = player(server, "slayerguildaccess", 206, 600);
