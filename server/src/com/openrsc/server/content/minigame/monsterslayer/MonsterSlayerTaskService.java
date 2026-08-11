@@ -54,6 +54,38 @@ public final class MonsterSlayerTaskService {
 		}
 	}
 
+	/**
+	 * Returns the player-facing remaining-target message only for a persisted,
+	 * non-final task credit. Completion keeps its existing presentation path.
+	 */
+	public String progressMessage(MonsterSlayerState.TaskResult result) {
+		if (result == null || result.getReason() != MonsterSlayerState.TaskResult.Reason.PROGRESSED) {
+			return null;
+		}
+		MonsterSlayerState.Snapshot snapshot = result.getSnapshot();
+		MonsterSlayerDefinitions.Task task = snapshot == null
+			? null : data.getTask(snapshot.getActiveTaskKey());
+		if (task == null) return null;
+		MonsterSlayerDefinitions.Family family = data.getFamily(task.getFamilyKey());
+		int remaining = task.getRequiredKills() - snapshot.getActiveKills();
+		if (family == null || remaining <= 0) return null;
+		return "You have " + remaining + " "
+			+ displayNameForRemaining(family.getDisplayName(), remaining) + " left to kill.";
+	}
+
+	private static String displayNameForRemaining(String displayName, int remaining) {
+		if (remaining != 1 || displayName == null || !displayName.endsWith("s")) {
+			return displayName;
+		}
+		if (displayName.endsWith("ves")) {
+			return displayName.substring(0, displayName.length() - 3) + "f";
+		}
+		if (displayName.endsWith("ies")) {
+			return displayName.substring(0, displayName.length() - 3) + "y";
+		}
+		return displayName.substring(0, displayName.length() - 1);
+	}
+
 	private MonsterSlayerState.TaskResult apply(Player player, MonsterSlayerState.TaskResult result) {
 		if (result.isAccepted()) MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
 		return result;

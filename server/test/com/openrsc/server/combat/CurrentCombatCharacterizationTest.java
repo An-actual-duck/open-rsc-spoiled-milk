@@ -420,6 +420,8 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatDeathLifecycleCharacterization::failedNpcDeathCannotReplay);
 			run(harness, "monster_slayer_credit_failure_isolated_from_real_npc_death",
 				CurrentCombatDeathLifecycleCharacterization::monsterSlayerCreditFailureIsolation);
+			run(harness, "monster_slayer_progress_messages_follow_credited_kills",
+				CurrentCombatDeathLifecycleCharacterization::monsterSlayerProgressMessagesFollowCreditedKills);
 			run(harness, "monster_slayer_shop_runtime_transactions_are_atomic",
 				CurrentMonsterSlayerShopRuntimeCharacterization::runtimeTransactionsAreAtomic);
 			run(harness, "monster_slayer_contact_routes_are_ranked_and_single_assignment",

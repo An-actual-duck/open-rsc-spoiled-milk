@@ -852,7 +852,13 @@ public class Npc extends Mob {
 				|| (getTotalDamageBy(id) < threshold && !id.equals(topContributor))) continue;
 			MonsterSlayerTaskService.CreditResult credit = getWorld()
 				.getMonsterSlayerTaskService().tryCreditEligibleKill(player, getID());
-			if (!credit.isSuccessful()) logMonsterSlayerCreditFailure(player, credit.getFailureReason());
+			if (!credit.isSuccessful()) {
+				logMonsterSlayerCreditFailure(player, credit.getFailureReason());
+				continue;
+			}
+			String progressMessage = getWorld().getMonsterSlayerTaskService()
+				.progressMessage(credit.getTaskResult());
+			if (progressMessage != null) player.message(progressMessage);
 		}
 	}
 

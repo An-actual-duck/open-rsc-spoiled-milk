@@ -76,7 +76,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
-		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. Bring me an ale from the Rising Sun.", "An Asgarnian Ale, Wizard's Mind Bomb, or Dwarven Stout will do."); service.beginIntroduction(player); return; }
+		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Bring me a drink from that barmaid over there."); service.beginIntroduction(player); return; }
 		if (!MonsterSlayerContactService.hasRisingSunAle(player)) { npcsay(player, npc, "You haven't got a Rising Sun ale yet."); return; }
 		if (multi(player, "Offer a Rising Sun ale.", "Not yet.") != 0) return;
 		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player);

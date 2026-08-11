@@ -192,6 +192,48 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		assertRejectedCallbacksRemainHarmless(harness, data);
 	}
 
+	/** Verifies only an accepted non-final Slayer credit emits a progress message. */
+	static void monsterSlayerProgressMessagesFollowCreditedKills(
+			final CurrentCombatHarness harness) throws Exception {
+		final MonsterSlayerData data = MonsterSlayerData.load(Paths.get(
+			"conf", "server", "defs", "extras", "MonsterSlayer.json"),
+			acceptingSlayerCatalog());
+		harness.installMonsterSlayerTaskService(new MonsterSlayerTaskService(data));
+
+		final Player progressing = harness.player("msprogress", 760, 790);
+		MonsterSlayerState.write(progressing.getCache(), data, activeRatState(data,
+			MonsterSlayerBalances.zero(), 38, 0L));
+		harness.recordOutgoingPackets(progressing);
+		killForSlayerProgress(harness, progressing, 62, 761);
+		assertEquals(39, MonsterSlayerState.read(progressing.getCache(), data).getActiveKills(),
+			"credited kill records non-final task progress");
+		assertEquals(1, harness.countOutgoingPackets(progressing,
+			OpcodeOut.SEND_SERVER_MESSAGE), "non-final credited kill emits one progress message");
+
+		killForSlayerProgress(harness, progressing, 62, 762);
+		assertEquals(1L, MonsterSlayerState.read(progressing.getCache(), data).getTasksCompleted(),
+			"final credited kill completes the task");
+		assertEquals(1, harness.countOutgoingPackets(progressing,
+			OpcodeOut.SEND_SERVER_MESSAGE), "final completion does not replace its existing message path");
+
+		final Player unrelated = harness.player("msunrelated", 764, 790);
+		MonsterSlayerState.write(unrelated.getCache(), data, activeRatState(data,
+			MonsterSlayerBalances.zero(), 0, 0L));
+		harness.recordOutgoingPackets(unrelated);
+		killForSlayerProgress(harness, unrelated, 19, 765);
+		assertEquals(0, harness.countOutgoingPackets(unrelated,
+			OpcodeOut.SEND_SERVER_MESSAGE), "unrelated kill emits no Slayer progress message");
+	}
+
+	private static void killForSlayerProgress(final CurrentCombatHarness harness,
+			final Player player, final int npcId, final int x) {
+		final Npc target = harness.npc(npcId, x, 790);
+		target.setShouldRespawn(false);
+		target.addCombatDamage(player, Math.max(1, target.getDef().getHits()));
+		target.getSkills().setLevel(Skill.HITS.id(), 0);
+		target.killedBy(player);
+	}
+
 	private static void assertCorruptAndValidContributors(final CurrentCombatHarness harness,
 			final MonsterSlayerData data, final boolean corruptFirst) throws Exception {
 		final int x = corruptFirst ? 700 : 710;
