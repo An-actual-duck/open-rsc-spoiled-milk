@@ -176,10 +176,10 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		Player player = h.player("msshoptx", 780, 790); state(player, data, 40L, 0, 0);
 		assertTrue(shops.redeem(player, "falador", "falador.brawn", 2).isSuccessful(), "real redeem");
 		assertEquals(1, grants.get(), "one output grant");
-		assertEquals(8, shops.getStock("falador.brawn"), "stock decremented");
+		assertEquals(-1, shops.getStock("falador.brawn"), "infinite reward stock");
 		assertEquals(36L, balances(player, data).get(MonsterSlayerChallenge.FLEDGLING), "exact point deduction");
 		shops.restock();
-		assertEquals(9, shops.getStock("falador.brawn"), "bounded one-step restock");
+		assertEquals(-1, shops.getStock("falador.brawn"), "restock is irrelevant for infinite rewards");
 		assertEquals("quantity", shops.redeem(player, "falador", "falador.brawn", 0).getReason(), "zero quantity is explicit");
 		assertEquals("quantity", shops.redeem(player, "falador", "falador.brawn", -1).getReason(), "negative quantity is explicit");
 		assertFalse(shops.redeem(player, "falador", "falador.brawn", Long.MAX_VALUE).isSuccessful(), "quantity overflow");
@@ -190,11 +190,11 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		MonsterSlayerShopService rejecting = new MonsterSlayerShopService(data, rejectingGrant());
 		assertFalse(rejecting.redeem(failed, "falador", "falador.brawn", 1).isSuccessful(), "false grant");
 		assertEquals(before, failed.getCache().getCacheMap(), "false grant rollback preserves cache");
-		assertEquals(10, rejecting.getStock("falador.brawn"), "false grant rollback preserves stock");
+		assertEquals(-1, rejecting.getStock("falador.brawn"), "false grant retains infinite stock");
 		MonsterSlayerShopService throwing = new MonsterSlayerShopService(data, throwingGrant());
 		assertFalse(throwing.redeem(failed, "falador", "falador.brawn", 1).isSuccessful(), "throwing grant");
 		assertEquals(before, failed.getCache().getCacheMap(), "throwing grant rollback preserves cache");
-		assertEquals(10, throwing.getStock("falador.brawn"), "throwing grant rollback preserves stock");
+		assertEquals(-1, throwing.getStock("falador.brawn"), "throwing grant retains infinite stock");
 	}
 
 	private static void everyShopDeductsItsTypedCost(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
@@ -208,7 +208,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			Map<MonsterSlayerChallenge, Long> before = balances(player, data).asMap();
 			assertTrue(shops.redeem(player, shop.getKey(), reward.getKey(), 1).isSuccessful(), "runtime redemption tier " + tier);
 			assertTypedDeduction(before, balances(player, data).asMap(), reward.getCost(), "shop tier " + tier);
-			assertEquals(reward.getStock() - 1, shops.getStock(reward.getKey()), "shop tier stock " + tier);
+			assertEquals(-1, shops.getStock(reward.getKey()), "shop tier has infinite stock " + tier);
 		}
 		assertEquals(6, grants.get(), "one output per shop redemption");
 	}
@@ -228,8 +228,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			MonsterSlayerState.Snapshot after = MonsterSlayerState.read(player.getCache(), data);
 			assertTypedDeduction(before.getBalances().asMap(), after.getBalances().asMap(), shop.getCapacityUpgrade().getCost(), "capacity tier " + tier);
 			assertEquals((1 << (tier + 1)) - 1, after.getInventoryUpgrades(), "capacity mask tier " + tier);
-			assertEquals(Inventory.MAX_SIZE, player.getCarriedItems().getInventory().getFreeSlots(), "active inventory remains thirty slots " + tier);
-			assertEquals(30 + capacityBonusThrough(tier), after.getDerivedInventoryCapacity(), "future capacity entitlement " + tier);
+			assertEquals(30 + capacityBonusThrough(tier), after.getDerivedInventoryCapacity(), "active capacity entitlement " + tier);
 		}
 		assertEquals(63, MonsterSlayerState.read(player.getCache(), data).getInventoryUpgrades(), "reloaded ordered capacity mask");
 		assertFalse(shops.purchaseCapacity(player, data.getShops().get(5).getKey()).isSuccessful(), "duplicate capacity purchase");
@@ -243,7 +242,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		assertEquals(1, successful(redemptions[0], redemptions[1]), "one concurrent redemption succeeds");
 		assertEquals(1, grants.get(), "no duplicate concurrent output");
 		assertEquals(0L, balances(buyer, data).get(MonsterSlayerChallenge.FLEDGLING), "no concurrent double spend");
-		assertEquals(9, shops.getStock("falador.brawn"), "no negative concurrent stock");
+		assertEquals(-1, shops.getStock("falador.brawn"), "concurrent purchases retain infinite stock");
 
 		final Player capacityBuyer = h.player("mssconcurrentcapacity", 831, 790); state(capacityBuyer, data, 1000L, 0, 5);
 		MonsterSlayerShopService.Result[] purchases = concurrently(new Callable<MonsterSlayerShopService.Result>() { public MonsterSlayerShopService.Result call() { return shops.purchaseCapacity(capacityBuyer, "falador"); }}, new Callable<MonsterSlayerShopService.Result>() { public MonsterSlayerShopService.Result call() { return shops.purchaseCapacity(capacityBuyer, "falador"); }});
@@ -260,7 +259,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		Map<String, Object> fullBefore = new LinkedHashMap<String, Object>(full.getCache().getCacheMap());
 		assertFalse(shops.redeem(full, "falador", fullInventoryReward, 1).isSuccessful(), "full inventory redemption rejected");
 		assertEquals(fullBefore, full.getCache().getCacheMap(), "full inventory leaves points untouched");
-		assertEquals(10, shops.getStock(fullInventoryReward), "full inventory leaves stock untouched");
+		assertEquals(-1, shops.getStock(fullInventoryReward), "full inventory retains infinite stock");
 		assertEquals(Inventory.MAX_SIZE, full.getCarriedItems().getInventory().size(), "full inventory leaves items untouched");
 		assertEquals(0, fullGrants.get(), "full inventory never invokes item grant");
 
@@ -269,7 +268,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		Map<String, Object> malformedBefore = new LinkedHashMap<String, Object>(malformed.getCache().getCacheMap());
 		assertFalse(shops.redeem(malformed, "falador", "falador.brawn", 1).isSuccessful(), "malformed persisted state rejected");
 		assertEquals(malformedBefore, malformed.getCache().getCacheMap(), "malformed persisted state remains untouched");
-		assertEquals(10, shops.getStock("falador.brawn"), "malformed state leaves stock untouched");
+		assertEquals(-1, shops.getStock("falador.brawn"), "malformed state retains infinite stock");
 	}
 
 	private static MonsterSlayerShopService.ItemGrant countingGrant(final AtomicInteger grants) { return new MonsterSlayerShopService.ItemGrant() { public boolean grant(Player player, int itemId, int amount) { grants.incrementAndGet(); return true; }}; }
@@ -281,7 +280,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 	private static int successful(MonsterSlayerShopService.Result first, MonsterSlayerShopService.Result second) { return (first.isSuccessful() ? 1 : 0) + (second.isSuccessful() ? 1 : 0); }
 	private static int successful(MonsterSlayerContactService.Result first, MonsterSlayerContactService.Result second) { return (first.isAccepted() ? 1 : 0) + (second.isAccepted() ? 1 : 0); }
 	private static int prefixMask(int tier) { return tier == 0 ? 0 : (1 << tier) - 1; }
-	private static int capacityBonusThrough(int tier) { int[] gains = {1, 1, 1, 2, 2, 3}; int total = 0; for (int i = 0; i <= tier; i++) total += gains[i]; return total; }
+	private static int capacityBonusThrough(int tier) { int[] gains = {2, 2, 3, 3, 4, 5}; int total = 0; for (int i = 0; i <= tier; i++) total += gains[i]; return total; }
 	private static void assertTypedDeduction(Map<MonsterSlayerChallenge, Long> before, Map<MonsterSlayerChallenge, Long> after, MonsterSlayerCost cost, String message) { for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) assertEquals(before.get(challenge).longValue() - cost.get(challenge), after.get(challenge).longValue(), message + " " + challenge); }
 	private static MonsterSlayerData data() { return MonsterSlayerData.load(Paths.get("conf", "server", "defs", "extras", "MonsterSlayer.json"), new MonsterSlayerData.ReferenceCatalog() { public boolean npcExists(int id) { return true; } public boolean npcAttackable(int id) { return true; } public boolean npcSpawned(int id) { return true; } public boolean itemExists(int id) { return true; }}); }
 	private static void state(Player player, MonsterSlayerData data, long points, int upgrades, int tier) { Map<MonsterSlayerChallenge, Long> balances = new LinkedHashMap<MonsterSlayerChallenge, Long>(); for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) balances.put(challenge, points); Map<String, Integer> cursors = new LinkedHashMap<String, Integer>(); int index = 0; for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), index++ < tier ? contact.getMandatoryTasks().size() : 0); MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.fromCode(tier + 1), MonsterSlayerBalances.of(balances), cursors, null, 0, 0L, upgrades, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data)); }

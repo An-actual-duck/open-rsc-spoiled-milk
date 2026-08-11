@@ -557,12 +557,12 @@ public final class MonsterSlayerState {
 	 * until the later capacity-activation slice consumes this derived value.
 	 */
 	public enum InventoryUpgrade {
-		FALADOR("falador", 0x01, 1),
-		PORT_SARIM("port_sarim", 0x02, 1),
-		BRIMHAVEN("brimhaven", 0x04, 1),
-		CHAMPIONS("champions", 0x08, 2),
-		HEROES("heroes", 0x10, 2),
-		LEGENDS("legends", 0x20, 3);
+		FALADOR("falador", 0x01, 2),
+		PORT_SARIM("port_sarim", 0x02, 2),
+		BRIMHAVEN("brimhaven", 0x04, 3),
+		CHAMPIONS("champions", 0x08, 3),
+		HEROES("heroes", 0x10, 4),
+		LEGENDS("legends", 0x20, 5);
 
 		private final String contactKey;
 		private final int bit;

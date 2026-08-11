@@ -330,6 +330,10 @@ public final class DoSkillInterface {
 			mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
 				boxX + 1, boxY + 1, 48, 32, def.getPictureMask(), 0,
 				def.getBlueMask(), false, 0, 1);
+			if (isMonsterSlayerRedemptionInterface() && recipe.getOutputAmount() > 1) {
+				String amount = "x" + recipe.getOutputAmount();
+				drawString(amount, boxX + 31, boxY + 30, 1, 0xFFFF00);
+			}
 			if (!recipe.isCraftable()) {
 				mc.getSurface().drawBoxAlpha(boxX + 1, boxY + 1, itemBoxWidth - 2, itemBoxHeight - 2, 0x000000, 128);
 			}
@@ -348,8 +352,7 @@ public final class DoSkillInterface {
 				} else if (isMetalPicker()) {
 					hoverText = metalName(def);
 				} else if (isPointRedemptionInterface()) {
-					hoverText = def.getName() + " - " + recipe.getInputAmount()
-						+ " pts each - receive " + recipe.getOutputAmount();
+					hoverText = pointShopHoverName(def.getName(), recipe.getOutputAmount());
 				} else {
 					hoverText = def.getName() + " - lvl " + recipe.getRequiredLevel()
 						+ " - produces " + recipe.getOutputAmount() + " "
@@ -646,6 +649,13 @@ public final class DoSkillInterface {
 	private int pointBalance(int code) { for (int i = 0; i < productionPointCodes.length; i++) if (productionPointCodes[i] == code) return productionPointBalances[i]; return 0; }
 	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
 	private String stockText(ProductionRecipeView selected) { return selected.getStockAmount() >= 0 ? "  Stock: " + selected.getStockAmount() : ""; }
+	private String pointShopHoverName(String name, int output) {
+		if (output <= 1) return name;
+		String[] words = {"", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"};
+		String quantity = output < words.length ? words[output] : Integer.toString(output);
+		String lower = name.toLowerCase();
+		return quantity + " " + (lower.endsWith("s") ? lower : lower + "s");
+	}
 
 	private String formatPointCount(long value) {
 		return Long.toString(Math.max(0, value));

@@ -9,6 +9,7 @@ import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -166,7 +167,7 @@ public class Inventory {
 			if (existingStack == null) {
 
 				// Make sure they have room in the inventory
-				if (list.size() >= MAX_SIZE) {
+				if (list.size() >= capacity()) {
 					if (player.getConfig().MESSAGE_FULL_INVENTORY) {
 						player.message("Your Inventory is full, the " + itemToAdd.getDef(player.getWorld()).getName() + " drops to the ground!");
 					}
@@ -214,7 +215,7 @@ public class Inventory {
 					itemToAdd.setAmount(itemToAdd.getAmount() - remainingSize);
 
 					// Make sure they have room in the inventory for the second stack.
-					if (list.size() >= MAX_SIZE) {
+					if (list.size() >= capacity()) {
 						if (player.getConfig().MESSAGE_FULL_INVENTORY) {
 							player.message("Your Inventory is full, the " + itemToAdd.getDef(player.getWorld()).getName() + " drops to the ground!");
 						}
@@ -843,25 +844,25 @@ public class Inventory {
 	//Methods that check the list-------------------------------------
 	public boolean canHold(int itemCatelogId, int amount) {
 		synchronized (list) {
-			return (MAX_SIZE - list.size()) >= getRequiredSlots(itemCatelogId, amount, false);
+			return (capacity() - list.size()) >= getRequiredSlots(itemCatelogId, amount, false);
 		}
 	}
 
 	public boolean canHold(Item item) {
 		synchronized (list) {
-			return (MAX_SIZE - list.size()) >= getRequiredSlots(item);
+			return (capacity() - list.size()) >= getRequiredSlots(item);
 		}
 	}
 
 	public boolean canHold(Item item, int addition) {
 		synchronized (list) {
-			return (MAX_SIZE - list.size() + addition) >= getRequiredSlots(item);
+			return (capacity() - list.size() + addition) >= getRequiredSlots(item);
 		}
 	}
 
 	public boolean full() {
 		synchronized (list) {
-			return list.size() >= MAX_SIZE;
+			return list.size() >= capacity();
 		}
 	}
 
@@ -925,7 +926,13 @@ public class Inventory {
 	}
 
 	public int getFreeSlots() {
-		return MAX_SIZE - size();
+		return capacity() - size();
+	}
+
+	private int capacity() {
+		if (player.getWorld().getMonsterSlayerData() == null) return MAX_SIZE;
+		try { return MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getDerivedInventoryCapacity(); }
+		catch (RuntimeException ignored) { return MAX_SIZE; }
 	}
 	//----------------------------------------------------------------
 	//Various methods-------------------------------------------------

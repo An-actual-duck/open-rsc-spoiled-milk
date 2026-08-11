@@ -83,7 +83,7 @@ public final class MonsterSlayerChallengeShops {
 			}
 			costCodes[i] = ints(codes);
 			costAmounts[i] = ints(amounts);
-			stock[i] = service.getStock(reward.getKey());
+			stock[i] = -1; // Slayer reward stock is intentionally infinite.
 		}
 		int[] codes = new int[MonsterSlayerChallenge.values().length];
 		int[] balances = new int[codes.length];
@@ -105,7 +105,7 @@ public final class MonsterSlayerChallengeShops {
 			balances[challenge.getCode()] = clamp(state.getBalances().get(challenge));
 		List<MonsterSlayerDefinitions.Reward> rewards = rewards(shop);
 		int[] stock = new int[rewards.size()];
-		for (int i = 0; i < rewards.size(); i++) stock[i] = service.getStock(rewards.get(i).getKey());
+		for (int i = 0; i < rewards.size(); i++) stock[i] = -1;
 		session.getPointShopDetails().refresh(balances, stock);
 	}
 

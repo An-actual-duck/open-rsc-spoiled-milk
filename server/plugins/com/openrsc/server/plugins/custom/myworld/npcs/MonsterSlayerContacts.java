@@ -100,7 +100,16 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if ("refund-failed".equals(reason)) return "Your rank record failed and your Rising Sun ale could not be returned. Please contact staff.";
 		return "Your Monster Slayer record needs staff attention.";
 	}
-	private void associate(Player player, Npc npc, boolean trade) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } if (trade) MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); else npcsay(player, npc, associateGreeting(index)); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
+	private void associate(Player player, Npc npc, boolean trade) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; } npcsay(player, npc, associateGreeting(index)); if (multi(player, "Tell me about the supplies.", "Purchase an inventory upgrade.", "Never mind.") != 1) return; purchaseInventoryUpgrade(player, npc, CONTACTS[index]); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
+	private void purchaseInventoryUpgrade(Player player, Npc npc, String shopKey) {
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService shops = player.getWorld().getMonsterSlayerShopService();
+		if (shops == null) { player.message("This upgrade is not available right now."); return; }
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService.Result result = shops.purchaseCapacity(player, shopKey);
+		if (!result.isSuccessful()) { npcsay(player, npc, "You either already have that upgrade, need an earlier one, or lack the required points."); return; }
+		int capacity = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getDerivedInventoryCapacity();
+		com.openrsc.server.net.rsc.ActionSender.sendMaxInventorySpaces(player, capacity);
+		npcsay(player, npc, "Done. You can now carry " + capacity + " items.");
+	}
 	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
