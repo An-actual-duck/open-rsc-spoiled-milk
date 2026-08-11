@@ -215,6 +215,54 @@ public final class MonsterSlayerState {
 			current.legacyPrestige);
 	}
 
+	/**
+	 * Developer-only rank advance which preserves a state that ordinary task
+	 * progression would recognise. Skipped mandatory tasks deliberately award no
+	 * points and an active task is discarded rather than partially credited.
+	 */
+	public static DevelopmentResult advanceOneRankForDevelopment(Snapshot current,
+			MonsterSlayerData data) {
+		validate(current, data);
+		if (current.rank == MonsterSlayerRank.LEGEND) return DevelopmentResult.rejected("maximum-rank", current);
+		if (current.rank == MonsterSlayerRank.UNSTAMPED) {
+			Snapshot enrolled = new Snapshot(current.stateVersion, 2, MonsterSlayerRank.FLEDGLING,
+				current.balances, current.mandatoryCursors, null, 0, current.tasksCompleted,
+				current.inventoryUpgrades, current.promotionAcknowledgements, current.migrationVersion,
+				current.legacyStatus, current.legacyPrestige);
+			validate(enrolled, data);
+			return DevelopmentResult.accepted(enrolled);
+		}
+		int contactIndex = current.rank.getCode() - 1;
+		List<Contact> contacts = data.getContactsInChallengeOrder();
+		if (contactIndex < 0 || contactIndex >= contacts.size()) return DevelopmentResult.rejected("invalid-progression", current);
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>(current.mandatoryCursors);
+		Contact contact = contacts.get(contactIndex);
+		cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+		Snapshot advanced = new Snapshot(current.stateVersion, current.introStage,
+			MonsterSlayerRank.fromCode(current.rank.getCode() + 1), current.balances, cursors,
+			null, 0, current.tasksCompleted, current.inventoryUpgrades,
+			current.promotionAcknowledgements, current.migrationVersion, current.legacyStatus,
+			current.legacyPrestige);
+		validate(advanced, data);
+		return DevelopmentResult.accepted(advanced);
+	}
+
+	/** Developer-only exact balance setter; every other state field is retained. */
+	public static DevelopmentResult setBalanceForDevelopment(Snapshot current,
+			MonsterSlayerData data, MonsterSlayerChallenge challenge, long amount) {
+		validate(current, data);
+		if (challenge == null) return DevelopmentResult.rejected("invalid-challenge", current);
+		Map<MonsterSlayerChallenge, Long> balances = new LinkedHashMap<MonsterSlayerChallenge, Long>(current.balances.asMap());
+		try {
+			balances.put(challenge, amount);
+			Snapshot updated = current.withBalances(MonsterSlayerBalances.of(balances));
+			validate(updated, data);
+			return DevelopmentResult.accepted(updated);
+		} catch (IllegalArgumentException failure) {
+			return DevelopmentResult.rejected("invalid-amount", current);
+		}
+	}
+
 	public static void validate(Snapshot snapshot, MonsterSlayerData data) {
 		if (snapshot == null || data == null) {
 			throw new ValidationException("Monster Slayer snapshot and definitions are required");
@@ -654,6 +702,19 @@ public final class MonsterSlayerState {
 		public long getAwardedPoints() { return awardedPoints; }
 		public MonsterSlayerChallenge getAwardedChallenge() { return awardedChallenge; }
 		public boolean isAccepted() { return reason == Reason.ASSIGNED || reason == Reason.PROGRESSED || reason == Reason.COMPLETED; }
+	}
+
+	/** Narrow response used by developer-only state tools. */
+	public static final class DevelopmentResult {
+		private final boolean accepted;
+		private final String reason;
+		private final Snapshot snapshot;
+		private DevelopmentResult(boolean accepted, String reason, Snapshot snapshot) { this.accepted = accepted; this.reason = reason; this.snapshot = snapshot; }
+		private static DevelopmentResult accepted(Snapshot snapshot) { return new DevelopmentResult(true, null, snapshot); }
+		private static DevelopmentResult rejected(String reason, Snapshot snapshot) { return new DevelopmentResult(false, reason, snapshot); }
+		public boolean isAccepted() { return accepted; }
+		public String getReason() { return reason; }
+		public Snapshot getSnapshot() { return snapshot; }
 	}
 
 	public static final class Snapshot {

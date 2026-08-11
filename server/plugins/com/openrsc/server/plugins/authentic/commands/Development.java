@@ -10,6 +10,8 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
 import com.openrsc.server.content.worldedit.WorldEditorSessionManager;
 import com.openrsc.server.content.worldedit.WorldEditorAccessService;
 import com.openrsc.server.diagnostics.LayeredCoordinateParityObserver;
@@ -302,6 +304,13 @@ public final class Development implements CommandTrigger {
 			if (args.length != 0) { player.message(badSyntaxPrefix + command.toUpperCase()); return; }
 			completeMonsterSlayerTaskForDevelopment(player);
 		}
+		else if (command.equalsIgnoreCase("slayerrankup")) {
+			if (args.length != 0) { player.message(badSyntaxPrefix + command.toUpperCase()); return; }
+			advanceMonsterSlayerRankForDevelopment(player);
+		}
+		else if (command.equalsIgnoreCase("setslayerpoints")) {
+			setMonsterSlayerPointsForDevelopment(player, command, args);
+		}
 	}
 
 	/** Completes the caller's active Monster Slayer task without bypassing typed state transitions. */
@@ -322,6 +331,29 @@ public final class Development implements CommandTrigger {
 		} catch (RuntimeException failure) {
 			player.message("Your Monster Slayer record needs staff attention.");
 		}
+	}
+
+	public static void advanceMonsterSlayerRankForDevelopment(Player player) {
+		if (!player.isDev()) { player.message("This command is available to developers only."); return; }
+		try {
+			MonsterSlayerState.DevelopmentResult result = player.getWorld().getMonsterSlayerTaskService().advanceOneRankForDevelopment(player);
+			if (result.isAccepted()) player.message("Monster Slayer rank advanced to " + result.getSnapshot().getRank().name().toLowerCase(java.util.Locale.ROOT) + ".");
+			else if ("maximum-rank".equals(result.getReason())) player.message("You are already at the maximum Monster Slayer rank.");
+			else player.message("Your Monster Slayer rank could not be advanced coherently.");
+		} catch (RuntimeException failure) { player.message("Your Monster Slayer record needs staff attention."); }
+	}
+
+	public static void setMonsterSlayerPointsForDevelopment(Player player, String command, String[] args) {
+		if (!player.isDev()) { player.message("This command is available to developers only."); return; }
+		if (args == null || args.length != 2) { player.message(badSyntaxPrefix + command.toUpperCase() + " [rank] [amount]"); return; }
+		try {
+			MonsterSlayerChallenge challenge = MonsterSlayerChallenge.fromKey(args[0]);
+			long amount = Long.parseLong(args[1]);
+			if (amount < 0L || amount > MonsterSlayerBalances.MAX_BALANCE) throw new IllegalArgumentException("amount");
+			MonsterSlayerState.DevelopmentResult result = player.getWorld().getMonsterSlayerTaskService().setBalanceForDevelopment(player, challenge, amount);
+			if (!result.isAccepted()) { player.message("Choose a valid Slayer point amount."); return; }
+			player.message("Set " + challenge.name().toLowerCase(java.util.Locale.ROOT) + " Slayer points to " + amount + ".");
+		} catch (RuntimeException failure) { player.message("Usage: ::setslayerpoints <fledgling|initiate|veteran|elite|champion|hero> <0-" + MonsterSlayerBalances.MAX_BALANCE + ">"); }
 	}
 
 	private static boolean isLayeredBuilderMutationCommand(String command) {

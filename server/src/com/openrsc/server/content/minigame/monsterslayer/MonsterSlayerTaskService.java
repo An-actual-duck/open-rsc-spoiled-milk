@@ -45,6 +45,27 @@ public final class MonsterSlayerTaskService {
 		}
 	}
 
+	public MonsterSlayerState.DevelopmentResult advanceOneRankForDevelopment(Player player) {
+		player = requirePlayer(player);
+		synchronized (player) {
+			MonsterSlayerState.DevelopmentResult result = MonsterSlayerState.advanceOneRankForDevelopment(
+				MonsterSlayerState.read(player.getCache(), data), data);
+			if (result.isAccepted()) MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
+			return result;
+		}
+	}
+
+	public MonsterSlayerState.DevelopmentResult setBalanceForDevelopment(Player player,
+			MonsterSlayerChallenge challenge, long amount) {
+		player = requirePlayer(player);
+		synchronized (player) {
+			MonsterSlayerState.DevelopmentResult result = MonsterSlayerState.setBalanceForDevelopment(
+				MonsterSlayerState.read(player.getCache(), data), data, challenge, amount);
+			if (result.isAccepted()) MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
+			return result;
+		}
+	}
+
 	/**
 	 * Optional progression must not be allowed to escape into the authoritative
 	 * NPC death lifecycle. The caller still owns diagnostics and continues with
