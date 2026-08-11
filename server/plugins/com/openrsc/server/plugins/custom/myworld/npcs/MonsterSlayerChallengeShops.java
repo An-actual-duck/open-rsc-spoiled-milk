@@ -142,7 +142,7 @@ public final class MonsterSlayerChallengeShops {
 			long cost = reward.getCost().multiply(quantity).get(challenge);
 			if (cost <= 0L) continue;
 			if (text.length() > 6) text.append("; ");
-			text.append(cost).append(' ').append(title(challenge)).append(" (you: ")
+			text.append(cost).append(' ').append(title(challenge)).append(" points (you: ")
 				.append(state.getBalances().get(challenge)).append(')');
 		}
 		return text.append('.').toString();
