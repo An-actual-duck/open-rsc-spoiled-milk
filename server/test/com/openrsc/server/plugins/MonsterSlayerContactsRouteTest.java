@@ -125,16 +125,16 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
 		MonsterSlayerShopService service = new MonsterSlayerShopService(data);
 		String reward = "falador.brawn";
-		assertEquals(10, service.getStock(reward), "initial shared stock");
+		assertEquals(-1, service.getStock(reward), "Slayer reward stock is infinite");
 		try {
 			Field serviceField = server.getWorld().getClass().getDeclaredField("monsterSlayerShopService");
 			serviceField.setAccessible(true); serviceField.set(server.getWorld(), service);
 		} catch (Exception failure) { throw new AssertionError("install world-owned shop service", failure); }
-		service.restock(); // proves the scheduled tick remains capped even at full stock
-		assertEquals(10, service.getStock(reward), "bounded restock at cap");
+		service.restock(); // compatibility event has no stock work for infinite rewards
+		assertEquals(-1, service.getStock(reward), "restock preserves infinite stock");
 		MonsterSlayerShopRestockEvent event = new MonsterSlayerShopRestockEvent(server.getWorld());
 		event.run();
-		assertEquals(10, service.getStock(reward), "world event owns the shared restock ledger");
+		assertEquals(-1, service.getStock(reward), "world event preserves infinite stock");
 		assertEquals(MonsterSlayerShopRestockEvent.INTERVAL_MS, 60000L, "stable world restock interval");
 	}
 

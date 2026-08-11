@@ -2,8 +2,13 @@ package com.openrsc.interfaces.misc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
+import com.openrsc.client.model.Sprite;
 import orsc.graphics.gui.Panel;
 import orsc.mudclient;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 
@@ -48,6 +53,10 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
 	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
+	/* Standard sprite-mask shades: bronze, iron, steel, mithril, adamant, rune. */
+	private static final int[] SLAYER_POINT_COIN_TINTS = {0x996633, 0xA8A8A8, 0x666666, 0x4F7F7F, 0x3F6F3F, 0x4A5FB5};
+	private static Sprite slayerPointCoin;
+	private String pointCoinHover = "";
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -308,6 +317,7 @@ public final class DoSkillInterface {
 		int startX = x + 18;
 		int startY = y + 56;
 		String hoverText = "";
+		pointCoinHover = "";
 
 		for (int i = 0; i < productionRecipes.size(); i++) {
 			ProductionRecipeView recipe = productionRecipes.get(i);
@@ -330,6 +340,10 @@ public final class DoSkillInterface {
 			mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
 				boxX + 1, boxY + 1, 48, 32, def.getPictureMask(), 0,
 				def.getBlueMask(), false, 0, 1);
+			if (isMonsterSlayerRedemptionInterface() && recipe.getOutputAmount() > 1) {
+				String amount = "x" + recipe.getOutputAmount();
+				drawString(amount, boxX + 31, boxY + 30, 1, 0xFFFF00);
+			}
 			if (!recipe.isCraftable()) {
 				mc.getSurface().drawBoxAlpha(boxX + 1, boxY + 1, itemBoxWidth - 2, itemBoxHeight - 2, 0x000000, 128);
 			}
@@ -348,8 +362,7 @@ public final class DoSkillInterface {
 				} else if (isMetalPicker()) {
 					hoverText = metalName(def);
 				} else if (isPointRedemptionInterface()) {
-					hoverText = def.getName() + " - " + recipe.getInputAmount()
-						+ " pts each - receive " + recipe.getOutputAmount();
+					hoverText = pointShopHoverName(def.getName(), recipe.getOutputAmount());
 				} else {
 					hoverText = def.getName() + " - lvl " + recipe.getRequiredLevel()
 						+ " - produces " + recipe.getOutputAmount() + " "
@@ -391,6 +404,7 @@ public final class DoSkillInterface {
 				drawStringRightAligned("Choose this category", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isPointRedemptionInterface()) {
 				drawPointRedemptionDetails(selected, selectedDetailRightX, footerY);
+				if (!pointCoinHover.isEmpty()) hoverText = pointCoinHover;
 			} else if (selected.hasIngredientDetails()) {
 				String ingredientHoverText = drawProductionIngredientCosts(selected, materialDetailX, footerY + 4);
 				if (!ingredientHoverText.isEmpty()) {
@@ -631,21 +645,28 @@ public final class DoSkillInterface {
 	}
 
 	private void drawPointRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
-		long totalOutput = (long) selected.getOutputAmount() * (long) productionQuantity;
-		String owned = pointBalancesText(selected);
-		String cost = pointCostText(selected);
-		drawStringRightAligned("Owned: " + owned, selectedDetailRightX, footerY + 5, 1, textColour);
-		drawStringRightAligned("Cost: " + cost, selectedDetailRightX, footerY + 20, 1,
+		drawPointLine("Cost:", selected, false, selectedDetailRightX, footerY + 5,
 			canAffordPointCost(selected) ? textColour : 0xFFAA55);
-		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total" + stockText(selected), selectedDetailRightX, footerY + 35, 1, textColour);
+		drawPointLine("Earned:", selected, true, selectedDetailRightX, footerY + 20, textColour);
 	}
+	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int rightX, int y, int color) { if (!isMonsterSlayerRedemptionInterface()) { drawStringRightAligned(label + " " + (earned ? formatPointCount(productionResourceAmount) + " pts" : formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"), rightX, y, 1, color); return; } int width = mc.getSurface().stringWidth(1, label + " "); for (int i = 0; i < selected.getPointCostCount(); i++) width += 18 + mc.getSurface().stringWidth(1, Long.toString(earned ? pointBalance(selected.getPointCostCode(i)) : (long) selected.getPointCostAmount(i) * productionQuantity)) + (i == 0 ? 0 : 10); int x = rightX - width; drawString(label, x, y, 1, color); x += mc.getSurface().stringWidth(1, label + " "); Sprite coin = slayerPointCoin(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) { drawString("|", x, y, 1, color); x += 10; } int code = selected.getPointCostCode(i); long amount = earned ? pointBalance(code) : (long) selected.getPointCostAmount(i) * productionQuantity; if (coin != null) mc.getSurface().drawSpriteClipping(coin, x, y - 11, 16, 11, pointCoinTint(code), 0, 0, false, 0, 1); if (mc.getMouseX() >= x && mc.getMouseX() <= x + 16 && mc.getMouseY() >= y - 11 && mc.getMouseY() <= y) pointCoinHover = earned ? pointLabel(code) + " points: " + amount : "Costs " + amount + " " + pointLabel(code) + " points"; x += 18; String value = Long.toString(amount); drawString(value, x, y, 1, color); x += mc.getSurface().stringWidth(1, value); } }
 
 	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
 	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
 	private boolean canAffordPointCost(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return (long) selected.getInputAmount() * productionQuantity <= productionResourceAmount; for (int i = 0; i < selected.getPointCostCount(); i++) { if (pointBalance(selected.getPointCostCode(i)) < (long) selected.getPointCostAmount(i) * productionQuantity) return false; } return true; }
 	private int pointBalance(int code) { for (int i = 0; i < productionPointCodes.length; i++) if (productionPointCodes[i] == code) return productionPointBalances[i]; return 0; }
 	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
+	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
+	private int pointCoinTint(int code) { return code >= 0 && code < SLAYER_POINT_COIN_TINTS.length ? SLAYER_POINT_COIN_TINTS[code] : 0; }
+	private Sprite slayerPointCoin() { if (slayerPointCoin != null) return slayerPointCoin; try (InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("res/myworld/slayer-points-coin.png")) { BufferedImage image = in == null ? null : ImageIO.read(in); if (image == null) return null; int[] pixels = new int[image.getWidth() * image.getHeight()]; image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth()); slayerPointCoin = new Sprite(pixels, image.getWidth(), image.getHeight()); return slayerPointCoin; } catch (Exception ignored) { return null; } }
 	private String stockText(ProductionRecipeView selected) { return selected.getStockAmount() >= 0 ? "  Stock: " + selected.getStockAmount() : ""; }
+	private String pointShopHoverName(String name, int output) {
+		if (output <= 1) return name;
+		String[] words = {"", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"};
+		String quantity = output < words.length ? words[output] : Integer.toString(output);
+		String lower = name.toLowerCase();
+		return quantity + " " + (lower.endsWith("s") ? lower : lower + "s");
+	}
 
 	private String formatPointCount(long value) {
 		return Long.toString(Math.max(0, value));
