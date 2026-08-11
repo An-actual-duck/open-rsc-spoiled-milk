@@ -738,15 +738,15 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 report["reportType"],
             )
             self.assertEqual("spoiled-milk", report["contentTarget"])
-            self.assertEqual(33512, report["sourcePlacementRecords"])
-            self.assertEqual(33512, report["convertedPlacementRecords"])
+            self.assertEqual(33527, report["sourcePlacementRecords"])
+            self.assertEqual(33527, report["convertedPlacementRecords"])
             self.assertEqual(0, report["excludedSourcePlacementRecords"])
             self.assertEqual(0, report["unconvertedPlacementRecords"])
             self.assertEqual(
                 {
                     "boundaries": 971,
                     "groundItems": 879,
-                    "npcs": 3775,
+                    "npcs": 3790,
                     "scenery": 27887,
                 },
                 report["convertedPlacementRecordsByFamily"],
@@ -757,13 +757,13 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 "myworld-config-effective-world-v1",
                 composition["policy"],
             )
-            self.assertEqual(33624, composition["rawInputPlacementRecords"])
-            self.assertEqual(33512, composition["effectivePlacementRecords"])
+            self.assertEqual(33639, composition["rawInputPlacementRecords"])
+            self.assertEqual(33527, composition["effectivePlacementRecords"])
             self.assertEqual(
                 {
                     "boundaries": 972,
                     "groundItems": 1022,
-                    "npcs": 3857,
+                    "npcs": 3872,
                     "scenery": 27773,
                 },
                 composition["rawInputRecordsByFamily"],
@@ -772,7 +772,7 @@ class LayeredNativePackageFoundationTest(unittest.TestCase):
                 {
                     "boundaries": 971,
                     "groundItems": 879,
-                    "npcs": 3775,
+                    "npcs": 3790,
                     "scenery": 27887,
                 },
                 composition["effectiveRecordsByFamily"],

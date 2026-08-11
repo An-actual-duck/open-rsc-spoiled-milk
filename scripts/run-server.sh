@@ -28,9 +28,11 @@ SERVER_CONF="myworld"
 myworld_require_private_dev_conf "$SERVER_CONF"
 myworld_require_port_free "$(myworld_conf_value "$SERVER_CONF" server_port)"
 if [[ "$LAYERED_PRODUCTION_PROFILE" == true ]]; then
-  PRIVATE_LAYERED_WORKSPACE="$ROOT_DIR/tools/layered-maps/workspace/private-production"
-  PRIVATE_LAYERED_PACKAGE="$(layered_world_generate_package \
-    "$ROOT_DIR" "$PRIVATE_LAYERED_WORKSPACE")"
+  PRIVATE_LAYERED_WORKSPACE="$(mktemp -d "$ROOT_DIR/tools/layered-maps/workspace/private-production.XXXXXX")"
+  if ! PRIVATE_LAYERED_PACKAGE="$(layered_world_generate_package \
+    "$ROOT_DIR" "$PRIVATE_LAYERED_WORKSPACE")"; then
+    myworld_fail "Private layered package generation failed; refusing to launch with a stale package"
+  fi
   layered_world_enable_private_production_profile "$PRIVATE_LAYERED_PACKAGE"
 fi
 myworld_print_server_launch_banner "PRIVATE SPOILED MILK DEV SERVER - NOT PUBLIC HOSTED ALPHA" "$SERVER_CONF"
