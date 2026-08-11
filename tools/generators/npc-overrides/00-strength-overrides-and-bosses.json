@@ -10,6 +10,7 @@
     },
     {
       "id": 4,
+      "name": "Tough Goblin",
       "strength": 7,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.5,
@@ -66,6 +67,7 @@
     },
     {
       "id": 177,
+      "name": "Large Rat",
       "strength": 7,
       "meleeDefenseMultiplier": 0.1,
       "rangedDefenseMultiplier": 1.0,

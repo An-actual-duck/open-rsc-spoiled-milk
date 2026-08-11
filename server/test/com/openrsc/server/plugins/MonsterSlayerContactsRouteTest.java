@@ -58,6 +58,7 @@ public final class MonsterSlayerContactsRouteTest {
 		guildAccessModesAndQuestStates(server);
 		associateAmbientAndOwnershipBoundaries(server, routes);
 		aleFailureMessagesRemainTruthful();
+		hobartFollowUpDialogueIsBoundedAndTaskIndependent();
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
@@ -116,6 +117,30 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("Your Rising Sun ale was returned, but your Monster Slayer rank could not be recorded. Please try again.", MonsterSlayerContacts.aleFailureMessage("state-write-failed"), "state-write refund message");
 		assertEquals("Your rank record failed and your Rising Sun ale could not be returned. Please contact staff.", MonsterSlayerContacts.aleFailureMessage("refund-failed"), "refund failure message");
 		assertEquals("Your Monster Slayer record needs staff attention.", MonsterSlayerContacts.aleFailureMessage("invalid-state"), "invalid state message");
+	}
+
+	private static void hobartFollowUpDialogueIsBoundedAndTaskIndependent() {
+		String[] expected = {
+			"Right then, back to it. Try not to make a spectacle of yourself.",
+			"Good. I was starting to think you'd gone soft.",
+			"Keep your blade sharp and your excuses shorter.",
+			"There's always another mess needing a capable pair of hands.",
+			"That's the spirit. Don't keep the monsters waiting."
+		};
+		for (int index = 0; index < expected.length; index++) {
+			assertEquals(expected[index], MonsterSlayerContacts.hobartFollowUpRemark(index),
+				"bounded Hobart follow-up line " + index);
+			assertTrue(expected[index].length() <= 255, "Hobart follow-up line protocol bound " + index);
+		}
+		assertThrows(new Runnable() { public void run() {
+			MonsterSlayerContacts.hobartFollowUpRemark(expected.length);
+		}}, "out-of-range Hobart dialogue is rejected");
+		assertFalse(MonsterSlayerContacts.shouldUseHobartFollowUpRemark(0, 0L),
+			"first Hobart task remains fully deterministic");
+		assertTrue(MonsterSlayerContacts.shouldUseHobartFollowUpRemark(0, 1L),
+			"completed Hobart work enables a bounded follow-up remark");
+		assertFalse(MonsterSlayerContacts.shouldUseHobartFollowUpRemark(1, 10L),
+			"other contacts keep their existing dialogue");
 	}
 
 	private static void shopPresentationUsesTypedCostsAndTruthfulFailures(Server server) {
@@ -256,6 +281,10 @@ public final class MonsterSlayerContactsRouteTest {
 
 	private static void assertTrue(boolean value, String label) { if (!value) throw new AssertionError(label); }
 	private static void assertFalse(boolean value, String label) { assertTrue(!value, label); }
+	private static void assertThrows(Runnable action, String label) {
+		try { action.run(); } catch (IllegalArgumentException expected) { return; }
+		throw new AssertionError(label);
+	}
 	private static void assertEquals(int expected, int actual, String label) { if (expected != actual) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 	private static void assertEquals(String expected, String actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }
 	private static void assertEquals(Map<String, Object> expected, Map<String, Object> actual, String label) { if (!expected.equals(actual)) throw new AssertionError(label + ": expected " + expected + ", got " + actual); }

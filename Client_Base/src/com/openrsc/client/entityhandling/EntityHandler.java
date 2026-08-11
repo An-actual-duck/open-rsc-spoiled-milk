@@ -6547,6 +6547,12 @@ public class EntityHandler {
 	}
 
 	private static void applyMyWorldNpcDefinitionOverrides() {
+		renameMyWorldNpcDefinition(4, "Tough Goblin");
+		renameMyWorldNpcDefinition(23, "Young Giant Spider");
+		renameMyWorldNpcDefinition(47, "Large Rat");
+		renameMyWorldNpcDefinition(153, "Tough Goblin");
+		renameMyWorldNpcDefinition(154, "Tough Goblin");
+		renameMyWorldNpcDefinition(177, "Large Rat");
 		setCustomNpcDefinition(833, new NPCDef(
 			"Forester", "He looks after McGrubor's wood", "", 24, 22, 17, 23, false,
 			new int[]{6, 1, 2, -1, 107, -1, 45, -1, -1, 11, -1, -1},
@@ -6669,6 +6675,15 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(860, "Veteran Monster Slayer", "A scarred regular", "",
 			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			0, 8421504, 8421504, 15523536);
+	}
+
+	/** Applies a presentation-only My World NPC rename without changing its combat definition. */
+	private static void renameMyWorldNpcDefinition(int id, String name) {
+		NPCDef npc = getNpcDef(id);
+		if (npc == null || npc.id != id) {
+			throw new IllegalArgumentException("Missing base NPC definition for My World rename: " + id);
+		}
+		npc.name = name;
 	}
 
 	private static void addMonsterSlayerNpcDefinition(int id, String name, String description,

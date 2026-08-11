@@ -24,6 +24,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
 		derivedCapacityUsesStableExplicitBits();
 		taskAssignmentAndCompletionAreExactOnce(data);
+		taskSelectorsRemainIdBasedWhilePresentationIsClear(data);
 		taskProgressMessagesAreExactAndBounded(data);
 		beerIntroductionIsOneTimeAndRankSafe(data);
 		promotionAcknowledgementIsTypedAndIdempotent(data);
@@ -196,6 +197,31 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		boolean rejected = false;
 		try { MonsterSlayerState.completeIntroduction(fledgling, data); } catch (MonsterSlayerState.ValidationException expected) { rejected = true; }
 		assertTrue(rejected, "duplicate beer completion is rejected");
+	}
+
+	private static void taskSelectorsRemainIdBasedWhilePresentationIsClear(MonsterSlayerData data) {
+		MonsterSlayerDefinitions.Family goblins = data.getFamily("goblin");
+		MonsterSlayerDefinitions.Family rats = data.getFamily("rat");
+		equals(java.util.Arrays.asList(4, 62, 153, 154, 660), goblins.getNpcIds(),
+			"Goblin eligibility IDs remain unchanged");
+		equals(java.util.Arrays.asList(19, 29, 47, 177), rats.getNpcIds(),
+			"Rat eligibility IDs remain unchanged");
+		equals("Tough Goblins", data.getTask("falador.tougher_goblins")
+			.getDisplayName(goblins.getDisplayName()), "Tough Goblin task presentation");
+		equals("Large Rats", data.getTask("falador.large_rats")
+			.getDisplayName(rats.getDisplayName()), "Large Rat task presentation");
+		equals("Young Giant Spiders", data.getTask("falador.young_giant_spiders")
+			.getDisplayName(data.getFamily("young_giant_spider").getDisplayName()),
+			"Young Giant Spider task presentation");
+
+		Map<String, Integer> tougherGoblinCursor = zeroCursors(data);
+		tougherGoblinCursor.put("falador", 2);
+		MonsterSlayerState.Snapshot toughTask = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerBalances.zero(), tougherGoblinCursor, "falador.tougher_goblins", 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		equals(MonsterSlayerState.TaskResult.Reason.PROGRESSED,
+			MonsterSlayerState.recordEligibleKill(toughTask, data, 62).getReason(),
+			"presentation rename never changes ID-based Goblin credit");
 	}
 
 	private static void taskProgressMessagesAreExactAndBounded(MonsterSlayerData data) {

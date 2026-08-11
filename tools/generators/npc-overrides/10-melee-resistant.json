@@ -179,12 +179,14 @@
     },
     {
       "id": 153,
+      "name": "Tough Goblin",
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.5,
       "magicDefenseMultiplier": 0.1
     },
     {
       "id": 154,
+      "name": "Tough Goblin",
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.5,
       "magicDefenseMultiplier": 0.1

@@ -213,13 +213,7 @@ public final class MonsterSlayerData {
 		List<Task> result = new ArrayList<Task>();
 		for (int index = 0; index < array.length(); index++) {
 			JSONObject object = array.getJSONObject(index);
-			if (repeatable) {
-				if (object.has("hazards")) requireFields(object, "repeatable task", "key", "familyKey", "requiredKills", "pointReward", "weight", "hazards");
-				else requireFields(object, "repeatable task", "key", "familyKey", "requiredKills", "pointReward", "weight");
-			} else {
-				if (object.has("hazards")) requireFields(object, "mandatory task", "key", "familyKey", "requiredKills", "pointReward", "hazards");
-				else requireFields(object, "mandatory task", "key", "familyKey", "requiredKills", "pointReward");
-			}
+			requireTaskFields(object, repeatable);
 			String key = stableKey(object.getString("key"), "task");
 			if (!key.startsWith(contactKey + ".")) {
 				throw new IllegalArgumentException("Task " + key + " is not namespaced to " + contactKey);
@@ -228,6 +222,8 @@ public final class MonsterSlayerData {
 			if (!families.containsKey(familyKey)) {
 				throw new IllegalArgumentException("Task " + key + " references unknown family " + familyKey);
 			}
+			String displayName = object.has("displayName")
+				? nonempty(object.getString("displayName"), "task displayName") : null;
 			int requiredKills = positiveBounded(object.getInt("requiredKills"), MAX_TASK_KILLS,
 				"requiredKills for " + key);
 			long pointReward = positiveBounded(object.getLong("pointReward"), MAX_TASK_POINTS,
@@ -245,11 +241,24 @@ public final class MonsterSlayerData {
 				if (hazards.contains(hazard)) throw new IllegalArgumentException("Task " + key + " repeats hazard " + hazard);
 				hazards.add(hazard);
 			}
-			Task task = new Task(key, familyKey, requiredKills, pointReward, weight, repeatable, hazards);
+			Task task = new Task(key, familyKey, displayName, requiredKills, pointReward, weight, repeatable, hazards);
 			putUnique(allTasks, key, task, "task");
 			result.add(task);
 		}
 		return result;
+	}
+
+	private static void requireTaskFields(JSONObject object, boolean repeatable) {
+		List<String> fields = new ArrayList<String>();
+		fields.add("key");
+		fields.add("familyKey");
+		if (object.has("displayName")) fields.add("displayName");
+		fields.add("requiredKills");
+		fields.add("pointReward");
+		if (repeatable) fields.add("weight");
+		if (object.has("hazards")) fields.add("hazards");
+		requireFields(object, repeatable ? "repeatable task" : "mandatory task",
+			fields.toArray(new String[fields.size()]));
 	}
 
 	private static LinkedHashMap<String, Shop> parseShops(JSONArray array, ReferenceCatalog catalog, Map<String, Contact> contacts) {

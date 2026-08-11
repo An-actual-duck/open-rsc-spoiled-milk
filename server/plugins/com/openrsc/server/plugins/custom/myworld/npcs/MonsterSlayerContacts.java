@@ -11,6 +11,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.npcsay;
 import static com.openrsc.server.plugins.Functions.say;
@@ -24,6 +26,13 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static final int FIRST_AMBIENT = 858;
 	private static final String[] CONTACTS = {"falador", "port_sarim", "brimhaven", "champions", "heroes", "legends"};
 	private static final MonsterSlayerRank[] REQUIRED = {MonsterSlayerRank.FLEDGLING, MonsterSlayerRank.INITIATE, MonsterSlayerRank.VETERAN, MonsterSlayerRank.ELITE, MonsterSlayerRank.CHAMPION, MonsterSlayerRank.HERO};
+	private static final String[] HOBART_FOLLOW_UP_REMARKS = {
+		"Right then, back to it. Try not to make a spectacle of yourself.",
+		"Good. I was starting to think you'd gone soft.",
+		"Keep your blade sharp and your excuses shorter.",
+		"There's always another mess needing a capable pair of hands.",
+		"That's the spirit. Don't keep the monsters waiting."
+	};
 	private final DialogueRenderer dialogue;
 	public MonsterSlayerContacts() { this(new DialogueRenderer() { public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { if (step.getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC) npcsay(player, npc, step.getText()); else say(player, npc, step.getText()); return true; }}); }
 	public MonsterSlayerContacts(DialogueRenderer dialogue) { if (dialogue == null) throw new IllegalArgumentException("dialogue renderer is required"); this.dialogue = dialogue; }
@@ -69,10 +78,11 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (warning != null) npcsay(player, npc, warning);
 		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
-		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); npcsay(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + data.getFamily(active.getFamilyKey()).getDisplayName() + "."); } else npcsay(player, npc, "Not yet. Your record is not ready for another task."); return; }
+		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); npcsay(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else npcsay(player, npc, "Not yet. Your record is not ready for another task."); return; }
+		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) npcsay(player, npc, hobartFollowUpRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
-		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + data.getFamily(task.getFamilyKey()).getDisplayName() + ".");
+		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
@@ -96,6 +106,15 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
 	private static boolean isAmbient(Npc npc) { return npc.getID() >= FIRST_AMBIENT && npc.getID() < FIRST_AMBIENT + 3; }
 	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "I need to see an Initiate sticker before I can put your name on my list.", "A Veteran button gets you a proper job from me.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
+	private static String hobartFollowUpRemark() { return hobartFollowUpRemark(ThreadLocalRandom.current().nextInt(HOBART_FOLLOW_UP_REMARKS.length)); }
+	/** Test seam for bounded, task-independent Hobart flavour dialogue. */
+	public static String hobartFollowUpRemark(int index) {
+		if (index < 0 || index >= HOBART_FOLLOW_UP_REMARKS.length) throw new IllegalArgumentException("Hobart dialogue index is out of range");
+		return HOBART_FOLLOW_UP_REMARKS[index];
+	}
+	public static boolean shouldUseHobartFollowUpRemark(int contactIndex, long tasksCompleted) {
+		return contactIndex == 0 && tasksCompleted > 0L;
+	}
 	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "You've got the look of someone after a dangerous job.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Do you want another contract?", "Another contract?"}; return lines[index]; }
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }

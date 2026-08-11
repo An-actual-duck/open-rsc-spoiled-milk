@@ -33,7 +33,7 @@
     {"key":"black_demon","displayName":"Black demons","npcIds":[290]},
     {"key":"black_dragon","displayName":"Black dragons","npcIds":[291]},
     {"key":"king_black_dragon","displayName":"King Black Dragon","npcIds":[477]},
-    {"key":"young_giant_spider","displayName":"Young giant spiders","npcIds":[23]},
+    {"key":"young_giant_spider","displayName":"Young Giant Spiders","npcIds":[23]},
     {"key":"giant_spider","displayName":"Giant spiders","npcIds":[74]},
     {"key":"desert_wolf","displayName":"Desert wolves","npcIds":[721]},
     {"key":"black_unicorn","displayName":"Black unicorns","npcIds":[296]},
@@ -56,7 +56,7 @@
     {
       "key":"falador","npcId":846,"challenge":"FLEDGLING","requiredRank":"FLEDGLING","awardedRank":"INITIATE",
       "mandatoryTasks":[
-        {"key":"falador.goblins","familyKey":"goblin","requiredKills":40,"pointReward":2},{"key":"falador.young_giant_spiders","familyKey":"young_giant_spider","requiredKills":40,"pointReward":2},{"key":"falador.tougher_goblins","familyKey":"goblin","requiredKills":50,"pointReward":3},{"key":"falador.large_rats","familyKey":"rat","requiredKills":50,"pointReward":3},{"key":"falador.scorpions","familyKey":"scorpion","requiredKills":45,"pointReward":4},{"key":"falador.bears","familyKey":"bear","requiredKills":45,"pointReward":4},{"key":"falador.desert_wolves","familyKey":"desert_wolf","requiredKills":15,"pointReward":6,"hazards":["DESERT_HEAT"]},{"key":"falador.black_unicorns","familyKey":"black_unicorn","requiredKills":12,"pointReward":7,"hazards":["WILDERNESS"]},{"key":"falador.giant_spiders","familyKey":"giant_spider","requiredKills":10,"pointReward":7,"hazards":["WILDERNESS"]}
+        {"key":"falador.goblins","familyKey":"goblin","requiredKills":40,"pointReward":2},{"key":"falador.young_giant_spiders","familyKey":"young_giant_spider","requiredKills":40,"pointReward":2},{"key":"falador.tougher_goblins","familyKey":"goblin","displayName":"Tough Goblins","requiredKills":50,"pointReward":3},{"key":"falador.large_rats","familyKey":"rat","displayName":"Large Rats","requiredKills":50,"pointReward":3},{"key":"falador.scorpions","familyKey":"scorpion","requiredKills":45,"pointReward":4},{"key":"falador.bears","familyKey":"bear","requiredKills":45,"pointReward":4},{"key":"falador.desert_wolves","familyKey":"desert_wolf","requiredKills":15,"pointReward":6,"hazards":["DESERT_HEAT"]},{"key":"falador.black_unicorns","familyKey":"black_unicorn","requiredKills":12,"pointReward":7,"hazards":["WILDERNESS"]},{"key":"falador.giant_spiders","familyKey":"giant_spider","requiredKills":10,"pointReward":7,"hazards":["WILDERNESS"]}
       ],
       "repeatableTasks":[
         {"key":"falador.goblins.repeatable","familyKey":"goblin","requiredKills":50,"pointReward":3,"weight":1},{"key":"falador.giant_spiders.repeatable","familyKey":"giant_spider","requiredKills":25,"pointReward":7,"weight":1,"hazards":["WILDERNESS"]}

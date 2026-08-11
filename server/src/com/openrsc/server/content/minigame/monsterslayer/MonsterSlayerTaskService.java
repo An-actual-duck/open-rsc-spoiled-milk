@@ -85,7 +85,7 @@ public final class MonsterSlayerTaskService {
 		int remaining = task.getRequiredKills() - snapshot.getActiveKills();
 		if (family == null || remaining <= 0) return null;
 		return "You have " + remaining + " "
-			+ displayNameForRemaining(family.getDisplayName(), remaining) + " left to kill.";
+			+ displayNameForRemaining(task.getDisplayName(family.getDisplayName()), remaining) + " left to kill.";
 	}
 
 	private static String displayNameForRemaining(String displayName, int remaining) {
