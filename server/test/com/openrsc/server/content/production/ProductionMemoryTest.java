@@ -54,10 +54,12 @@ class ProductionMemoryTest {
 		}
 		assertFalse(ProductionMemory.isRememberable(session(
 			ProductionSession.TYPE_TELEPORT_DESTINATION, "Teleport", 1)));
-		assertFalse(ProductionMemory.isRememberable(session(
+		assertTrue(ProductionMemory.isRememberable(session(
 			ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY, "Redeem category", 1)));
-		assertFalse(ProductionMemory.isRememberable(session(
+		assertTrue(ProductionMemory.isRememberable(session(
 			ProductionSession.TYPE_RANGERS_REDEMPTION, "Redeem", 1)));
+		assertTrue(ProductionMemory.isRememberable(session(
+			ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION, "Slayer", 1)));
 	}
 
 	@Test
@@ -70,6 +72,22 @@ class ProductionMemoryTest {
 			ProductionSession.TYPE_CRAFTING, "Cut the gem", 160))
 			.equals(ProductionMemory.activityKey(session(
 				ProductionSession.TYPE_CRAFTING, "Shape the leather", 160))));
+	}
+
+	@Test
+	void pointShopKeysKeepRangersAndEachSlayerAssociateIndependent() {
+		ProductionSession rangers = new ProductionSession(ProductionSession.TYPE_RANGERS_REDEMPTION,
+			"Redeem", -1, 0, Collections.singletonList(new ProductionRecipe(10, 1, 1, 1, true, true)),
+			"rangers-guild-points", null);
+		ProductionSession falador = new ProductionSession(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION,
+			"Slayer", -1, 0, Collections.singletonList(new ProductionRecipe(10, 1, 1, 1, true, true)),
+			"monster-slayer-shop:falador", null);
+		ProductionSession portSarim = new ProductionSession(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION,
+			"Slayer", -1, 0, Collections.singletonList(new ProductionRecipe(10, 1, 1, 1, true, true)),
+			"monster-slayer-shop:port_sarim", null);
+		assertEquals("rangers-guild-points", ProductionMemory.activityKey(rangers));
+		assertEquals("monster-slayer-shop:falador", ProductionMemory.activityKey(falador));
+		assertFalse(ProductionMemory.activityKey(falador).equals(ProductionMemory.activityKey(portSarim)));
 	}
 
 	@Test
@@ -123,7 +141,8 @@ class ProductionMemoryTest {
 		assertEquals(20, restored.getSelectedRecipeId());
 		assertEquals(ProductionMemory.UI_FLAG_REMEMBER_SUPPORTED
 			| ProductionMemory.UI_FLAG_REMEMBER_ENABLED
-			| ProductionMemory.UI_FLAG_CAN_GO_BACK, restored.getUiFlags());
+			| ProductionMemory.UI_FLAG_CAN_GO_BACK
+			| ProductionMemory.UI_FLAG_KEEP_OPEN_SUPPORTED, restored.getUiFlags());
 
 		assertEquals(anvil, ProductionMemory.back(context));
 		ProductionMemory.Display parent = ProductionMemory.prepareDisplay(context, null, anvil);

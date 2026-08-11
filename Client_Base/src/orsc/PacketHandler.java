@@ -2003,9 +2003,30 @@ public class PacketHandler {
 		}
 		int uiFlags = packetsIncoming.packetEnd < packetLength
 			? packetsIncoming.getByte() & 0xff : 0;
+		int pointCount = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getByte() & 0xff : 0;
+		int[] pointCodes = new int[pointCount];
+		int[] pointBalances = new int[pointCount];
+		for (int i = 0; i < pointCount; i++) {
+			pointCodes[i] = packetsIncoming.getByte() & 0xff;
+			pointBalances[i] = packetsIncoming.get32();
+		}
+		int[][] pointCostCodes = new int[count][];
+		int[][] pointCostAmounts = new int[count][];
+		int[] stockAmounts = new int[count];
+		for (int i = 0; i < count; i++) {
+			int pointCostCount = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getByte() & 0xff : 0;
+			pointCostCodes[i] = new int[pointCostCount];
+			pointCostAmounts[i] = new int[pointCostCount];
+			for (int j = 0; j < pointCostCount; j++) {
+				pointCostCodes[i][j] = packetsIncoming.getByte() & 0xff;
+				pointCostAmounts[i][j] = packetsIncoming.get32();
+			}
+			stockAmounts[i] = packetsIncoming.packetEnd < packetLength ? packetsIncoming.getShort() : -1;
+		}
 		mc.doSkillInterface.openProductionInterface(interfaceId, title, inputItemId, resourceAmount, selectedRecipeId, quantity,
 			itemIds, requiredLevels, inputAmounts, outputAmounts, flags,
-			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts, uiFlags);
+			ingredientItemIds, ingredientFallbackItemIds, ingredientAmounts, uiFlags,
+			pointCodes, pointBalances, pointCostCodes, pointCostAmounts, stockAmounts);
 	}
 
 	private void setIronmanOptions() {

@@ -291,7 +291,9 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 					return 1;
 				}
 
-				if (started && !ProductionMemory.isKeepOpenEnabled(player)) {
+				if (started && ProductionMemory.isKeepOpenEnabled(player) && isPointShop(session)) {
+					ActionSender.showProductionInterface(player, session);
+				} else if (started && !ProductionMemory.isKeepOpenEnabled(player)) {
 					clearProductionState(player, session);
 				} else if (!started) {
 					player.message("Unable to start production");
@@ -304,6 +306,11 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		if (!player.getWorld().getServer().getGameEventHandler().add(event)) {
 			player.message("Production is already starting");
 		}
+	}
+
+	private boolean isPointShop(ProductionSession session) {
+		return session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION)
+			|| session.isType(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION);
 	}
 
 	private void handleProductionClose(Player player) {

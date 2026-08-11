@@ -1103,6 +1103,22 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						}
 						// Additive trailer: older custom clients safely ignore it.
 						builder.writeByte((byte) production.uiFlags);
+						int pointCount = production.pointCodes != null ? production.pointCodes.length : 0;
+						builder.writeByte((byte) pointCount);
+						for (int i = 0; i < pointCount; i++) {
+							builder.writeByte((byte) production.pointCodes[i]);
+							builder.writeInt(production.pointBalances[i]);
+						}
+						for (int i = 0; i < recipeCount; i++) {
+							int costCount = production.pointCostCodes != null && production.pointCostCodes[i] != null
+								? production.pointCostCodes[i].length : 0;
+							builder.writeByte((byte) costCount);
+							for (int j = 0; j < costCount; j++) {
+								builder.writeByte((byte) production.pointCostCodes[i][j]);
+								builder.writeInt(production.pointCostAmounts[i][j]);
+							}
+							builder.writeShort((short) (production.stockAmounts == null ? -1 : production.stockAmounts[i]));
+						}
 					}
 					break;
 

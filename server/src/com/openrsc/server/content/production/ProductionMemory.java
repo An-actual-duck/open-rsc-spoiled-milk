@@ -50,6 +50,9 @@ public final class ProductionMemory {
 
 		ProductionStarter starter = attribute(context, "production_starter");
 		Navigation navigation = attribute(context, NAVIGATION_ATTRIBUTE);
+		if (navigation != null && navigation.current() != null && navigation.current().session == session) {
+			return display(navigation, isEnabled(context.getCache()), isKeepOpenEnabled(context.getCache()), false);
+		}
 		if (navigation != null && navigation.transitionRecipeId >= 0) {
 			Frame parent = navigation.current();
 			if (parent != null) {
@@ -176,17 +179,24 @@ public final class ProductionMemory {
 	}
 
 	public static boolean isRememberable(ProductionSession session) {
-		return session != null && session.getType() >= ProductionSession.TYPE_SMITHING
-			&& session.getType() <= ProductionSession.TYPE_FURNACE_MATERIAL;
+		return session != null && ((session.getType() >= ProductionSession.TYPE_SMITHING
+			&& session.getType() <= ProductionSession.TYPE_FURNACE_MATERIAL)
+			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY)
+			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION)
+			|| session.isType(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION));
 	}
 
 	static boolean isPicker(ProductionSession session) {
 		return session != null && (session.isType(ProductionSession.TYPE_SMITHING_MATERIAL)
 			|| session.isType(ProductionSession.TYPE_FURNACE_CATEGORY)
-			|| session.isType(ProductionSession.TYPE_FURNACE_MATERIAL));
+			|| session.isType(ProductionSession.TYPE_FURNACE_MATERIAL)
+			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY));
 	}
 
 	static String activityKey(ProductionSession session) {
+		if (session.getMemoryKey() != null && !session.getMemoryKey().isEmpty()) {
+			return session.getMemoryKey();
+		}
 		if (session.isType(ProductionSession.TYPE_SMITHING_MATERIAL)) {
 			return "anvil";
 		}
