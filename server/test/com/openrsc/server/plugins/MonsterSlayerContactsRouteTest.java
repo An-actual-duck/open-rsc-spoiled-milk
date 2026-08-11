@@ -81,12 +81,38 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals(2L, completed.getBalances().get(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.FLEDGLING), "developer command awards declared points");
 		Development.completeMonsterSlayerTaskForDevelopment(developer);
 		assertEquals(1L, MonsterSlayerState.read(developer.getCache(), data).getTasksCompleted(), "developer command cannot duplicate an inactive task");
+		Map<com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge, Long> pointsBeforeRankUp = MonsterSlayerState.read(developer.getCache(), data).getBalances().asMap();
+		Development.advanceMonsterSlayerRankForDevelopment(developer);
+		MonsterSlayerState.Snapshot initiate = MonsterSlayerState.read(developer.getCache(), data);
+		assertEquals(MonsterSlayerRank.INITIATE, initiate.getRank(), "rankup advances exactly one rank");
+		assertEquals(data.getContact("falador").getMandatoryTasks().size(), initiate.getMandatoryCursors().get("falador").intValue(), "rankup completes only skipped contact cursor");
+		assertEquals(pointsBeforeRankUp, initiate.getBalances().asMap(), "rankup awards no skipped task points");
+		for (int rank = MonsterSlayerRank.INITIATE.getCode(); rank < MonsterSlayerRank.LEGEND.getCode(); rank++) Development.advanceMonsterSlayerRankForDevelopment(developer);
+		MonsterSlayerState.Snapshot legend = MonsterSlayerState.read(developer.getCache(), data);
+		assertEquals(MonsterSlayerRank.LEGEND, legend.getRank(), "repeated rankup reaches legend coherently");
+		Map<String, Object> legendBefore = new LinkedHashMap<String, Object>(developer.getCache().getCacheMap());
+		Development.advanceMonsterSlayerRankForDevelopment(developer);
+		assertEquals(legendBefore, developer.getCache().getCacheMap(), "maximum rankup leaves state untouched");
+		Map<com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge, Long> balancesBeforeSet = MonsterSlayerState.read(developer.getCache(), data).getBalances().asMap();
+		Development.setMonsterSlayerPointsForDevelopment(developer, "setslayerpoints", new String[] {"hero", "123"});
+		Map<com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge, Long> balancesAfterSet = MonsterSlayerState.read(developer.getCache(), data).getBalances().asMap();
+		assertEquals(123L, balancesAfterSet.get(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.HERO), "point command sets exact selected balance");
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge challenge : com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.values()) if (challenge != com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.HERO) assertEquals(balancesBeforeSet.get(challenge), balancesAfterSet.get(challenge), "point command preserves balance " + challenge);
+		Map<String, Object> validPointState = new LinkedHashMap<String, Object>(developer.getCache().getCacheMap());
+		Development.setMonsterSlayerPointsForDevelopment(developer, "setslayerpoints", new String[] {"hero", "-1"});
+		Development.setMonsterSlayerPointsForDevelopment(developer, "setslayerpoints", new String[] {"unknown", "1"});
+		Development.setMonsterSlayerPointsForDevelopment(developer, "setslayerpoints", new String[] {"hero", "2000000001"});
+		assertEquals(validPointState, developer.getCache().getCacheMap(), "invalid point commands leave all state untouched");
 
 		Player ordinary = player(server, "slayernocommand", 261, 600);
 		MonsterSlayerState.write(ordinary.getCache(), data, enrolled);
 		assertTrue(tasks.assignMandatory(ordinary, "falador").isAccepted(), "ordinary fixture task assigns");
 		Development.completeMonsterSlayerTaskForDevelopment(ordinary);
 		assertTrue(MonsterSlayerState.read(ordinary.getCache(), data).getActiveTaskKey() != null, "non-developer command cannot mutate Slayer task state");
+		Map<String, Object> ordinaryBefore = new LinkedHashMap<String, Object>(ordinary.getCache().getCacheMap());
+		Development.advanceMonsterSlayerRankForDevelopment(ordinary);
+		Development.setMonsterSlayerPointsForDevelopment(ordinary, "setslayerpoints", new String[] {"fledgling", "999"});
+		assertEquals(ordinaryBefore, ordinary.getCache().getCacheMap(), "non-developer economy commands cannot mutate Slayer state");
 	}
 
 	private static void associateOperationsAndWorldRestockAreBounded(Server server) {
