@@ -48,7 +48,7 @@ public final class ItemUseOnItem implements PayloadProcessor<ItemOnItemStruct, O
 			return;
 		}
 
-		if (player.getConfig().WANT_EQUIPMENT_TAB && (itemIndex1 > Inventory.MAX_SIZE || itemIndex2 > Inventory.MAX_SIZE)) {
+		if (player.getConfig().WANT_EQUIPMENT_TAB && (itemIndex1 > Inventory.MAX_SUPPORTED_SIZE || itemIndex2 > Inventory.MAX_SUPPORTED_SIZE)) {
 			player.message("Please unequip your item and try again.");
 			return;
 		}

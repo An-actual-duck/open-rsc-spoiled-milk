@@ -35,7 +35,7 @@ public class ItemUseOnNpc implements PayloadProcessor<ItemOnMobStruct, OpcodeIn>
 		int npcIndex = payload.serverIndex;
 		final Npc affectedNpc = player.getWorld().getNpc(npcIndex);
 		int slotIndex = payload.slotIndex;
-		if (player.getConfig().WANT_EQUIPMENT_TAB && slotIndex > Inventory.MAX_SIZE) {
+		if (player.getConfig().WANT_EQUIPMENT_TAB && slotIndex > Inventory.MAX_SUPPORTED_SIZE) {
 			player.message("Please unequip your item and try again.");
 			return;
 		}

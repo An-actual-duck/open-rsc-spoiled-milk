@@ -116,4 +116,5 @@ public enum OpcodeOut {
 	SEND_WORLD_EDITOR, // custom, versioned editor envelope
 	SEND_LAYERED_SCENE_CONTEXT, // custom, versioned layered scene scope
 	SEND_LAYERED_TERRAIN_STAGE, // custom, cache-only predicted terrain
+	SEND_INVENTORY_CAPACITY, // custom, per-player 30..40 inventory capacity
 }

@@ -26,6 +26,7 @@ import com.openrsc.server.model.Shop;
 import com.openrsc.server.model.container.Bank;
 import com.openrsc.server.model.container.BankPreset;
 import com.openrsc.server.model.container.Equipment;
+import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.PlayerSettings;
@@ -281,6 +282,15 @@ public class ActionSender {
 		InventoryStruct struct = new InventoryStruct();
 		struct.inventorySize = size;
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_INVENTORY_SIZE, struct, player);
+	}
+
+	/** Custom, per-player capacity receipt. This is intentionally separate from
+	 * the historical mudclient-69 inventory-size packet. */
+	public static void sendInventoryCapacity(Player player) {
+		if (player == null || !player.supportsExpandedInventory()) return;
+		InventoryStruct struct = new InventoryStruct();
+		struct.inventorySize = player.getCarriedItems().getInventory().getCapacity();
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_INVENTORY_CAPACITY, struct, player);
 	}
 
 	public static void sendRecoveryScreen(Player player) {
@@ -1100,6 +1110,13 @@ public class ActionSender {
 	public static void sendInventory(Player player) {
 		if (player == null)
 			return; /* In this case, it is a trade offer */
+		if (player.getCarriedItems().getInventory().getCapacity() > Inventory.BASE_SIZE
+			&& !player.supportsExpandedInventory()) {
+			player.message("This character requires a newer Spoiled Milk client before its expanded inventory can be loaded.");
+			sendLogout(player);
+			return;
+		}
+		sendInventoryCapacity(player);
 		if (player.isUsing69CompatibleClient()) {
 			// TODO: implement if user is Yoptin enabled
 			boolean yoptinEnabled = true;

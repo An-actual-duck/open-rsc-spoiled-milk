@@ -18,7 +18,7 @@ public class Config {
 	public static String WELCOME_TEXT = "You need a members account to use this server";
 	public static String SERVER_IP = null; // Modify this to override "Cache/ip.txt"
 	public static int SERVER_PORT; // Modify SERVER_IP above to override "Cache/port.txt" with this value
-	public static final int CLIENT_VERSION = 10051;
+	public static final int CLIENT_VERSION = 10052;
 	private static final int CACHE_VERSION = 4;
 	public static boolean MEMBER_WORLD = false;
 	public static boolean DISPLAY_LOGO_SPRITE = false;
@@ -72,7 +72,9 @@ public class Config {
 	/* Server Defined: DOUBLE CHECK THESE ON SERVER */
 	public static int S_PLAYER_LEVEL_LIMIT = 99;
 	public static int S_PLAYER_SLOT_COUNT = 12;
-	public static int S_PLAYER_INVENTORY_SLOTS = 30;
+	/** Fixed custom-client storage and equipment-offset reservation. */
+	public static final int S_PLAYER_INVENTORY_SLOTS = 40;
+	public static final int S_PLAYER_INVENTORY_BASE_SLOTS = 30;
 	public static boolean S_SPAWN_AUCTION_NPCS = false;
 	public static boolean S_SPAWN_IRON_MAN_NPCS = false;
 	public static boolean S_SHOW_FLOATING_NAMETAGS = false;

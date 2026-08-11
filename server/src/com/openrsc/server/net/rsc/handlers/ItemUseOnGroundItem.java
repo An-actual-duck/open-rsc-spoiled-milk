@@ -37,7 +37,7 @@ public class ItemUseOnGroundItem implements PayloadProcessor<ItemOnGroundItemStr
 
 		groundItemId = payload.groundItemId;
 		inventorySlot = payload.slotIndex;
-		if (player.getConfig().WANT_EQUIPMENT_TAB && inventorySlot > Inventory.MAX_SIZE) {
+		if (player.getConfig().WANT_EQUIPMENT_TAB && inventorySlot > Inventory.MAX_SUPPORTED_SIZE) {
 			player.message("Please unequip your item and try again.");
 			return;
 		}

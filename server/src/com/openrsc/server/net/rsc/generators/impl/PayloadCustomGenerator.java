@@ -106,6 +106,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 		put(OpcodeOut.SEND_HISCORES, 155); // custom
 		put(OpcodeOut.SEND_STATS, 156);
 		put(OpcodeOut.SEND_STAT, 159);
+		put(OpcodeOut.SEND_INVENTORY_CAPACITY, 160); // custom, negotiated by client version
 		put(OpcodeOut.SEND_TRADE_OTHER_ACCEPTED, 162);
 		put(OpcodeOut.SEND_LOGOUT, 165);
 		put(OpcodeOut.SEND_DUEL_CONFIRMWINDOW, 172);
@@ -808,6 +809,11 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 							builder.writeInt(is.amount[i]);
 						}
 					}
+					break;
+
+				case SEND_INVENTORY_CAPACITY:
+					InventoryStruct capacity = (InventoryStruct) payload;
+					builder.writeByte((byte) capacity.inventorySize);
 					break;
 
 				case SEND_INVENTORY_REMOVE_ITEM:

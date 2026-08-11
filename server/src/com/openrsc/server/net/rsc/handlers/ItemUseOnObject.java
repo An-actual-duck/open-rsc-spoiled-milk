@@ -137,8 +137,8 @@ public class ItemUseOnObject implements PayloadProcessor<ItemOnObjectStruct, Opc
 				return;
 			}
 			int slotID = payload.slotID;
-			if (player.getConfig().WANT_EQUIPMENT_TAB && slotID > Inventory.MAX_SIZE) {
-				item = player.getCarriedItems().getEquipment().get(slotID - Inventory.MAX_SIZE);
+			if (player.getConfig().WANT_EQUIPMENT_TAB && slotID > Inventory.MAX_SUPPORTED_SIZE) {
+				item = player.getCarriedItems().getEquipment().get(slotID - Inventory.MAX_SUPPORTED_SIZE);
 			} else
 				item = player.getCarriedItems().getInventory().get(slotID);
 			if (object.getType() == 1 || item == null) { // This

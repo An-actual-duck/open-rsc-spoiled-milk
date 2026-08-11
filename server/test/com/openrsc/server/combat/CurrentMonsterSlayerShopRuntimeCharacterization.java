@@ -28,7 +28,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		risingSunAleTransactionOutcomes(h, data);
 		basicRedemptionAndRollback(h, data);
 		everyShopDeductsItsTypedCost(h, data);
-		capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(h, data);
+		capacityEntitlementsAreOrderedAndPersistCapacity(h, data);
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
 	}
@@ -213,7 +213,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		assertEquals(6, grants.get(), "one output per shop redemption");
 	}
 
-	private static void capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
+	private static void capacityEntitlementsAreOrderedAndPersistCapacity(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data, rejectingGrant());
 		Player outOfOrder = h.player("mssorder", 820, 790); state(outOfOrder, data, 1000L, 0, 5);
 		Map<String, Object> outOfOrderBefore = new LinkedHashMap<String, Object>(outOfOrder.getCache().getCacheMap());
@@ -255,12 +255,12 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data, countingGrant(fullGrants));
 		Player full = h.player("mssfull", 840, 790); state(full, data, 40L, 0, 0);
 		String fullInventoryReward = data.getShop("falador").getCategories().get(0).getRewards().get(0).getKey();
-		for (int i = 0; i < Inventory.MAX_SIZE; i++) full.getCarriedItems().getInventory().getItems().add(new Item(259, 1));
+		for (int i = 0; i < Inventory.BASE_SIZE; i++) full.getCarriedItems().getInventory().getItems().add(new Item(259, 1));
 		Map<String, Object> fullBefore = new LinkedHashMap<String, Object>(full.getCache().getCacheMap());
 		assertFalse(shops.redeem(full, "falador", fullInventoryReward, 1).isSuccessful(), "full inventory redemption rejected");
 		assertEquals(fullBefore, full.getCache().getCacheMap(), "full inventory leaves points untouched");
 		assertEquals(-1, shops.getStock(fullInventoryReward), "full inventory retains infinite stock");
-		assertEquals(Inventory.MAX_SIZE, full.getCarriedItems().getInventory().size(), "full inventory leaves items untouched");
+		assertEquals(Inventory.BASE_SIZE, full.getCarriedItems().getInventory().size(), "full inventory leaves items untouched");
 		assertEquals(0, fullGrants.get(), "full inventory never invokes item grant");
 
 		Player malformed = h.player("mssmalformed", 841, 790); state(malformed, data, 40L, 0, 0);

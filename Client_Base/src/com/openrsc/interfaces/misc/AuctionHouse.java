@@ -274,7 +274,7 @@ public final class AuctionHouse {
 					myAuctions.hide(textField_amount);
 				}
 			});
-			for (int verticalSlots = 0; verticalSlots < 6; verticalSlots++) {
+			for (int verticalSlots = 0; verticalSlots < 8; verticalSlots++) {
 				for (int horizonalSlots = 0; horizonalSlots < 5; horizonalSlots++) {
 					int drawX = inventoryDrawX + 7 + horizonalSlots * boxWidth;
 					int drawY = inventoryDrawY + 28 + verticalSlots * boxHeight;

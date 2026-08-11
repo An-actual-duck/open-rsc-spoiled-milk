@@ -35,7 +35,7 @@ public class BankPreset {
 
 	public BankPreset(Player player) {
 		this.player = player;
-		this.inventory = new Item[Inventory.MAX_SIZE];
+		this.inventory = new Item[Inventory.MAX_SUPPORTED_SIZE];
 		this.equipment = new Item[Equipment.SLOT_COUNT];
 
 		for (int i = 0; i < inventory.length; ++i) {
@@ -53,7 +53,7 @@ public class BankPreset {
 	public void loadFromByteData(byte[] inventoryItems, byte[] equipmentItems) {
 		ByteBuffer blobData = ByteBuffer.wrap(inventoryItems);
 		byte[] itemID = new byte[2];
-		for (int i = 0; i < Inventory.MAX_SIZE; i++) {
+		for (int i = 0; i < Inventory.MAX_SUPPORTED_SIZE; i++) {
 			if (!blobData.hasRemaining()) {
 				break;
 			}

@@ -372,6 +372,7 @@ public class PacketHandler {
 		put(153, "SET_EQUIP_STATS");
 		put(156, "SET_STATS");
 		put(159, "UPDATE_STAT");
+		put(160, "SET_INVENTORY_CAPACITY");
 		put(162, "UPDATE_TRADE_RECIPIENT_ACCEPTANCE");
 		put(165, "CLOSE_CONNECTION");
 		put(172, "SHOW_CONFIRM_DUEL");
@@ -1740,6 +1741,10 @@ public class PacketHandler {
 
 				// Experience Updates & Notification
 			else if (opcode == 159) updateExperience();
+
+			// Custom per-player receipt; expanded inventory never relies on the
+			// historical mudclient-69 size packet.
+			else if (opcode == 160) updateInventoryCapacity();
 
 				// Duel confirm / deny
 			else if (opcode == 210) duelDecision();
@@ -3754,6 +3759,9 @@ public class PacketHandler {
 
 	private void updateInventoryItem() {
 		int slot = packetsIncoming.getUnsignedByte();
+		if (slot >= mc.getInventoryCapacity()) {
+			throw new IllegalStateException("Inventory slot update exceeds negotiated capacity");
+		}
 		int itemID = packetsIncoming.getShort();
 		boolean noted = packetsIncoming.getUnsignedByte() == 1;
 		int stackSize = 1;
@@ -3780,7 +3788,11 @@ public class PacketHandler {
 			item.setCharges(0);
 			item.setDurability(0);
 		}
-		mc.setInventoryItemCount(packetsIncoming.getUnsignedByte());
+		int count = packetsIncoming.getUnsignedByte();
+		if (count > mc.getInventoryCapacity()) {
+			throw new IllegalStateException("Inventory packet exceeds negotiated capacity");
+		}
+		mc.setInventoryItemCount(count);
 		for (int i = 0; i < mc.getInventoryItemCount(); ++i) {
 			int itemID = packetsIncoming.getShort();
 			mc.setInventoryItemID(i, itemID);
@@ -3797,6 +3809,10 @@ public class PacketHandler {
 			}
 			logThrownAmmoAmount("inventory_full", i, itemID, noted, mc.getInventoryItemSize(i));
 		}
+	}
+
+	private void updateInventoryCapacity() {
+		mc.setInventoryCapacity(packetsIncoming.getUnsignedByte());
 	}
 
 	private void removeInventoryItem() {

@@ -373,7 +373,7 @@ public final class mudclient implements Runnable {
 	private static final int POTION_HUD_ICON_HEIGHT = 16;
 	private static final int TOP_MENU_BAR_WIDTH = 199;
 	private static final int CUSTOM_UI_INVENTORY_PANEL_WIDTH = 248;
-	private static final int CUSTOM_UI_INVENTORY_PANEL_HEIGHT = 228;
+	private static final int CUSTOM_UI_INVENTORY_PANEL_HEIGHT = 308;
 	private static final int CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT = 273;
 	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
 	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 200;
@@ -507,6 +507,7 @@ public final class mudclient implements Runnable {
 	private final int[] groundItemRenderCountByTile = new int[World.LOCAL_TILE_COUNT * World.LOCAL_TILE_COUNT];
 	private int[] groundItemRenderStackIndex = new int[GROUND_ITEM_INITIAL_CAPACITY];
 	private final Item[] inventory = new Item[S_PLAYER_INVENTORY_SLOTS];
+	private int inventoryCapacity = S_PLAYER_INVENTORY_BASE_SLOTS;
 	private ORSCharacter[] knownPlayers = new ORSCharacter[500];
 	private final String[] optionsMenuText = new String[20];
 	private int[] groundItemHeight = new int[GROUND_ITEM_INITIAL_CAPACITY];
@@ -965,7 +966,8 @@ public final class mudclient implements Runnable {
 	private int m_be;
 	private int m_Ce = 0;
 	private int m_Cg;
-	private final int m_cl = 30;
+	/** Always draw the full 5 by 8 backpack; locked positions are non-interactive. */
+	private final int m_cl = S_PLAYER_INVENTORY_SLOTS;
 	private int appearanceBodyGender = 1;
 	private int controlButtonAppearanceHair2;
 	private int cameraAutoMoveAmountX = 2;
@@ -11901,7 +11903,7 @@ public final class mudclient implements Runnable {
 				}
 
 				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
-					this.getSurface().drawShadowText(this.inventoryItemCount + "/30", this.getGameWidth() - 19, getUITabsY() + 14, (0x00FFFFFF << (int) Math.floor((this.inventoryItemCount / 15)) * 8) & 0x00FFFFFF, 1, true);
+					this.getSurface().drawShadowText(this.inventoryItemCount + "/" + this.inventoryCapacity, this.getGameWidth() - 19, getUITabsY() + 14, (0x00FFFFFF << (int) Math.floor((this.inventoryItemCount / 15)) * 8) & 0x00FFFFFF, 1, true);
 				}
 
 				if (this.shouldDrawMinimapPanel()) {
@@ -12557,20 +12559,22 @@ public final class mudclient implements Runnable {
 			int id;
 			int yOffset = 36;
 			if (C_CUSTOM_UI)
-				yOffset = maxY - 228;
+				yOffset = maxY - CUSTOM_UI_INVENTORY_PANEL_HEIGHT;
 
 			if (this.tabEquipmentIndex == 0) //inventory tab
 			{
 				for (var4 = 0; this.m_cl > var4; ++var4) {
 					var5 = var3 + var4 % 5 * 49;
 					id = var4 / 5 * 34 + yOffset;
-					if (!S_WANT_EQUIPMENT_TAB && this.inventoryItemCount > var4 && getInventoryItemEquippedID(var4) == 1) {
+					if (var4 >= this.inventoryCapacity) {
+						this.getSurface().drawBoxAlpha(var5, id, 49, 34, GenUtil.buildColor(74, 74, 74), 170);
+					} else if (!S_WANT_EQUIPMENT_TAB && this.inventoryItemCount > var4 && getInventoryItemEquippedID(var4) == 1) {
 						this.getSurface().drawBoxAlpha(var5, id, 49, 34, 0xFF0000, 128);
 					} else {
 						this.getSurface().drawBoxAlpha(var5, id, 49, 34, GenUtil.buildColor(181, 181, 181), 128);
 					}
 
-					if (var4 < this.inventoryItemCount) {
+					if (var4 < this.inventoryCapacity && var4 < this.inventoryItemCount) {
 						Item item = getInventoryItem(var4);
 						ItemDef def = item.getItemDef();
 
@@ -12616,7 +12620,7 @@ public final class mudclient implements Runnable {
 					var4 = this.mouseY - yOffset;
 					if (var3 >= 0 && var4 >= 0 && var3 < 248 && this.m_cl / 5 * 34 > var4) {
 						var5 = var4 / 34 * 5 + var3 / 49;
-						if (this.inventoryItemCount > var5) {
+						if (var5 < this.inventoryCapacity && this.inventoryItemCount > var5) {
 							id = getInventoryItemID(var5);
 							Item item = getInventoryItem(var5);
 							ItemDef def = item.getItemDef();
@@ -17754,7 +17758,7 @@ public final class mudclient implements Runnable {
 			return matchingItems;
 		}
 
-		int availableSlots = Math.max(0, S_PLAYER_INVENTORY_SLOTS - this.inventoryItemCount);
+		int availableSlots = Math.max(0, this.inventoryCapacity - this.inventoryItemCount);
 		return Math.max(1, Math.min(matchingItems, availableSlots));
 	}
 
@@ -19588,7 +19592,9 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_USE_EQUIPTAB:
-					this.selectedItemInventoryIndex = indexOrX + S_PLAYER_INVENTORY_SLOTS;
+					// Slot zero is historically reserved by the equipment action
+					// protocol; keep the entire 0..39 inventory range disjoint.
+					this.selectedItemInventoryIndex = indexOrX + S_PLAYER_INVENTORY_SLOTS + 1;
 					this.showUiTab = 0;
 					this.m_ig = equippedItems[indexOrX].getName();
 					break;
@@ -28408,7 +28414,21 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setInventoryItemCount(int i) {
-		this.inventoryItemCount = i;
+		this.inventoryItemCount = Math.max(0, Math.min(i, this.inventoryCapacity));
+	}
+
+	public int getInventoryCapacity() { return inventoryCapacity; }
+
+	/** Accepts only the negotiated server range and never accepts a capacity
+	 * below currently received items. */
+	public void setInventoryCapacity(int capacity) {
+		if (capacity < S_PLAYER_INVENTORY_BASE_SLOTS || capacity > S_PLAYER_INVENTORY_SLOTS) {
+			throw new IllegalArgumentException("Invalid inventory capacity: " + capacity);
+		}
+		if (inventoryItemCount > capacity) {
+			throw new IllegalStateException("Server reduced inventory below received items");
+		}
+		this.inventoryCapacity = capacity;
 	}
 
 	public int getInventoryItemEquippedID(int i) {

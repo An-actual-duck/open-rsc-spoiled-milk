@@ -6,8 +6,10 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactSer
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
@@ -100,7 +102,46 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if ("refund-failed".equals(reason)) return "Your rank record failed and your Rising Sun ale could not be returned. Please contact staff.";
 		return "Your Monster Slayer record needs staff attention.";
 	}
-	private void associate(Player player, Npc npc, boolean trade) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } if (trade) MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); else npcsay(player, npc, associateGreeting(index)); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
+	private void associate(Player player, Npc npc, boolean trade) {
+		int index = npc.getID() - FIRST_ASSOCIATE;
+		try {
+			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
+			MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank();
+			if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; }
+			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
+			npcsay(player, npc, associateGreeting(index));
+			if (multi(player, "Tell me about the supplies.", "I'd like to improve my backpack.", "Not now.") != 1) return;
+			purchaseBackpackUpgrade(player, npc, index);
+		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }
+	}
+
+	/** One permanent, ordered entitlement per associate. This does not need a
+	 * free inventory slot because the server expands admission capacity itself. */
+	private void purchaseBackpackUpgrade(Player player, Npc npc, int index) {
+		if (!player.supportsExpandedInventory()) {
+			npcsay(player, npc, "Your client must be updated before I can expand this backpack safely.");
+			return;
+		}
+		MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
+		MonsterSlayerShopService service = player.getWorld().getMonsterSlayerShopService();
+		if (data == null || service == null) { player.message("Your Monster Slayer record needs staff attention."); return; }
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop = data.getShop(CONTACTS[index]);
+		MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), data);
+		MonsterSlayerShopService.CapacityProposal proposal = service.proposeCapacityPurchase(state, shop.getKey());
+		if (!proposal.isSuccessful()) { npcsay(player, npc, "That backpack upgrade is locked until you have the earlier Slayer promotions, upgrades, and points."); return; }
+		long price = shop.getCapacityUpgrade().getCost().get(shop.getChallenge());
+		int before = state.getDerivedInventoryCapacity();
+		int after = proposal.getSnapshot().getDerivedInventoryCapacity();
+		npcsay(player, npc, "I can expand your backpack from " + before + " to " + after + " slots for " + price + " " + shop.getChallenge().name().toLowerCase() + " Slayer Points.");
+		if (multi(player, "Buy the backpack upgrade.", "Back.") != 0) return;
+		MonsterSlayerShopService.Result result = service.purchaseCapacity(player, shop.getKey());
+		if (result.isSuccessful()) {
+			ActionSender.sendInventory(player); // capacity receipt precedes this refresh
+			npcsay(player, npc, "Done. Your backpack now holds " + after + " slots.");
+		}
+		else if ("locked-or-points".equals(result.getReason())) npcsay(player, npc, "You do not have the required points or prior backpack upgrades.");
+		else npcsay(player, npc, "That backpack upgrade could not be completed. Nothing was spent.");
+	}
 	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
