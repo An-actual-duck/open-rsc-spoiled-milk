@@ -102,9 +102,9 @@ The corrective release candidate now requires:
   protocol, package, residency, readiness, prediction, symmetric-residency,
   and atomic-activation gates through `spoiled-milk-replacement`;
 - hosted startup refusal when the installed package is absent or differs from
-  manifest `f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`,
+  manifest `7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38`,
   package fingerprint
-  `add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`,
+  `761afa1d56363d6ac5005a812accbe134ac50976c6627febf80b515eb94041be`,
   the reviewed counts, or the pinned server runtime identity; and
 - one final end-to-end private rehearsal using the same production profile and
   artifact before public activation.
@@ -120,9 +120,9 @@ rehearsal corrected native border-transition cadence and complete minimap
 coverage. The accepted endpoint also retains the independently accepted
 direct-ground-item renderer path. Package
 `rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest
-`f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`,
+`7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38`,
 and fingerprint
-`add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`
+`761afa1d56363d6ac5005a812accbe134ac50976c6627febf80b515eb94041be`
 are now `production-approved` with `runtimePromotionApproved=true`. This
 approval permits guarded release packaging and deployment; it does not bypass
 the public-server shutdown permission, warning, backup, or restart gates.
@@ -495,12 +495,12 @@ logout/login persistence, and a clean former level-`-1` footprint after the
 
 Package `rsc-remastered.spoiled-milk-layered-world@0.5.0` adds the first
 authored deep-underground content at global level `-2`. Its manifest SHA-256 is
-`f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`
+`7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38`
 and its package fingerprint is
-`add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`.
+`761afa1d56363d6ac5005a812accbe134ac50976c6627febf80b515eb94041be`.
 The two accepted manual transforms add 11 target sectors to the unchanged
 1,771-sector authored source, producing 1,782 native sectors and six placement
-sets while retaining all 33,512 effective placements.
+sets while retaining all 33,527 effective placements.
 
 The converter derives the lava-forge/demon miniquest area from seed
 `(329,587,-1)` using exact non-void connectivity. The reviewed positive

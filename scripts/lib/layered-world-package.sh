@@ -6,10 +6,10 @@
 # identity before the server can consume the package.
 SPOILED_MILK_LAYERED_PACKAGE_ID="rsc-remastered.spoiled-milk-layered-world"
 SPOILED_MILK_LAYERED_PACKAGE_VERSION="0.5.0"
-SPOILED_MILK_LAYERED_MANIFEST_SHA256="f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306"
-SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT="add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b"
+SPOILED_MILK_LAYERED_MANIFEST_SHA256="7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38"
+SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT="761afa1d56363d6ac5005a812accbe134ac50976c6627febf80b515eb94041be"
 SPOILED_MILK_LAYERED_TERRAIN_SECTORS="1782"
-SPOILED_MILK_LAYERED_PLACEMENTS="33512"
+SPOILED_MILK_LAYERED_PLACEMENTS="33527"
 
 layered_world_fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -94,9 +94,19 @@ layered_world_generate_package() {
   local workspace="$2"
   local package_root="$workspace/package"
 
-  LAYERED_MAPS_WORKSPACE="$workspace" \
+  if [[ -e "$package_root" ]]; then
+    layered_world_fail "Layered-world generation requires a fresh workspace; refusing existing package: $package_root"
+    return 1
+  fi
+
+  # A failed generator must never validate or return an incomplete package
+  # emitted before that failed run stopped.
+  if ! LAYERED_MAPS_WORKSPACE="$workspace" \
     "$repository_root/tools/layered-maps/layered-maps.sh" \
-      spoiled-milk-package >&2
+      spoiled-milk-package >&2; then
+    layered_world_fail "Layered-world generation failed; refusing all package output in $workspace"
+    return 1
+  fi
   layered_world_validate_package \
     "$repository_root" \
     "$package_root" \

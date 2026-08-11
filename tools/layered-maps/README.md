@@ -39,14 +39,14 @@ the repository to reproduce its frozen source set; active Spoiled Milk
 generation uses its separately pinned current terrain and content composition.
 It converts the exact matching
 server/client `Custom_Landscape.orsc` pair (1,771 source sectors), inventories all
-33,624 placement inputs selected from base, feature, and MyWorld sources, and
+33,639 placement inputs selected from base, feature, and MyWorld sources, and
 applies the same removal, cleanup, same-slot replacement, and Harvesting rules
 as legacy population. The current conversion then applies the reviewed
 Zanaris and lava-forge relocations described below, producing 1,782 native
 terrain sectors.
 
-The resulting six level-qualified sets contain 33,512 effective placements:
-971 boundaries, 27,887 scenery objects, 3,775 NPCs, and 879 ordinary ground
+The resulting six level-qualified sets contain 33,527 effective placements:
+971 boundaries, 27,887 scenery objects, 3,790 NPCs, and 879 ordinary ground
 items. The scenery count includes 143 ground-item locations reclassified as
 their configured harvestable scenery. The one existing Hobgoblin maximum-Y
 correction remains necessary for the legacy record to decode and retains its
@@ -75,9 +75,9 @@ unchanged on level `-1`, or generation refuses.
 
 The active package is
 `rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest SHA-256
-`f914d93e7abcf40dc281c06df5010269c7a9ce4fe4a16aaa6ae11f0d90a14306`
+`7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38`
 and package fingerprint
-`add42670f99f1f43465a86fd03857febdb053763ec22485746b58ba06ed6661b`.
+`761afa1d56363d6ac5005a812accbe134ac50976c6627febf80b515eb94041be`.
 After the accepted 2026-07-30 production-profile rehearsal it is
 `production-approved` with `runtimePromotionApproved=true`.
 It is consumed by the `spoiled-milk-replacement` runtime profile. The server

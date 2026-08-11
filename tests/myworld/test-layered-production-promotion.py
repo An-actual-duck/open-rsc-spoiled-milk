@@ -158,6 +158,12 @@ def test_release_and_deployment_are_fail_closed() -> None:
         "private final rehearsal cannot select the production profile",
     )
     require(
+        'mktemp -d "$ROOT_DIR/tools/layered-maps/workspace/private-production.XXXXXX"'
+        in private
+        and "refusing to launch with a stale package" in private,
+        "private layered launch must generate into a fresh workspace and fail closed",
+    )
+    require(
         "export OPENRSC_SYNC_SCENE_BASELINE=true" in layered_library
         and "export OPENRSC_SYNC_SCENE_BASELINE=false" in layered_library,
         "layered production and rollback profiles must explicitly select the "
@@ -239,6 +245,57 @@ def test_generated_package_matches_runtime_pin() -> None:
     )
 
 
+def test_failed_generation_never_reuses_a_stale_package() -> None:
+    with tempfile.TemporaryDirectory(prefix="layered-stale-generation-") as temp:
+        root = Path(temp) / "repository"
+        generator = root / "tools/layered-maps/layered-maps.sh"
+        generator.parent.mkdir(parents=True)
+        generator.write_text(
+            "#!/usr/bin/env bash\n"
+            "mkdir -p \"$LAYERED_MAPS_WORKSPACE/package\"\n"
+            "printf '{}\\n' > \"$LAYERED_MAPS_WORKSPACE/package/manifest.json\"\n"
+            "exit 3\n",
+            encoding="utf-8",
+        )
+        generator.chmod(0o755)
+        workspace = Path(temp) / "workspace"
+        (workspace / "package").mkdir(parents=True)
+        (workspace / "package/manifest.json").write_text("{}\n", encoding="utf-8")
+        stale_result = subprocess.run(
+            [
+                "bash",
+                "-c",
+                f'source "{LAYERED_LIBRARY}"; '
+                f'layered_world_generate_package "{root}" "{workspace}"',
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+        fresh_workspace = Path(temp) / "fresh-workspace"
+        fresh_result = subprocess.run(
+            [
+                "bash",
+                "-c",
+                f'source "{LAYERED_LIBRARY}"; '
+                f'layered_world_generate_package "{root}" "{fresh_workspace}"',
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+        )
+    require(stale_result.returncode != 0, "stale package workspace was accepted")
+    require(
+        "requires a fresh workspace" in stale_result.stderr,
+        "existing package did not trigger an explicit stale-workspace refusal",
+    )
+    require(fresh_result.returncode != 0, "failed generator unexpectedly succeeded")
+    require(
+        "refusing all package output" in fresh_result.stderr,
+        "failed generator did not explicitly refuse failed-run package output",
+    )
+
+
 def test_shell_syntax() -> None:
     result = subprocess.run(
         [
@@ -268,6 +325,7 @@ def main() -> None:
     test_package_identity_has_one_source_of_release_truth()
     test_release_and_deployment_are_fail_closed()
     test_generated_package_matches_runtime_pin()
+    test_failed_generation_never_reuses_a_stale_package()
     test_shell_syntax()
     print("PASS: layered-world production promotion is explicit and fail-closed")
 
