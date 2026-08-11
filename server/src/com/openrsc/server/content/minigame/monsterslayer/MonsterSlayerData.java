@@ -324,8 +324,9 @@ public final class MonsterSlayerData {
 			JSONObject upgrade = object.getJSONObject("capacityUpgrade");
 			requireFields(upgrade, "capacity upgrade", "key", "cost");
 			MonsterSlayerCost upgradeCost = parseCost(upgrade.getJSONObject("cost"));
-			if (upgradeCost.get(challenge) <= 0L || !hasOnly(upgradeCost, challenge)
-				|| upgradeCost.get(challenge) <= mandatoryTotalFor(challenge, contacts)) {
+			long requiredCapacityCost = mandatoryCapacityUpgradeCost(challenge, contacts);
+			if (!hasOnly(upgradeCost, challenge)
+				|| upgradeCost.get(challenge) != requiredCapacityCost) {
 				throw new IllegalArgumentException("Invalid capacity upgrade cost for " + key);
 			}
 			String capacityKey = stableKey(upgrade.getString("key"), "capacity upgrade");
@@ -345,9 +346,16 @@ public final class MonsterSlayerData {
 		return true;
 	}
 
-	private static long mandatoryTotalFor(MonsterSlayerChallenge challenge, Map<String, Contact> contacts) {
+	/**
+	 * Backpack upgrades cost 110% of the mandatory work for their own contact,
+	 * rounded upward. Keeping this at definition-load time makes reward edits
+	 * fail closed instead of quietly changing the intended economy.
+	 */
+	static long mandatoryCapacityUpgradeCost(MonsterSlayerChallenge challenge, Map<String, Contact> contacts) {
 		for (Contact contact : contacts.values()) if (contact.getChallenge() == challenge) {
-			long total = 0L; for (Task task : contact.getMandatoryTasks()) total = Math.addExact(total, task.getPointReward()); return total;
+			long total = 0L;
+			for (Task task : contact.getMandatoryTasks()) total = Math.addExact(total, task.getPointReward());
+			return Math.addExact(total, total / 10L + (total % 10L == 0L ? 0L : 1L));
 		}
 		throw new IllegalArgumentException("Missing mandatory contact for " + challenge);
 	}

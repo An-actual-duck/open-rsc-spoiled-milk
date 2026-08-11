@@ -264,6 +264,13 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 
 	private static void capacityEntitlementsAreOrderedAndPersistCapacity(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data, rejectingGrant());
+		Player insufficient = h.player("mssinsufficientcapacity", 819, 790);
+		long firstPrice = data.getShop("falador").getCapacityUpgrade().getCost().get(MonsterSlayerChallenge.FLEDGLING);
+		state(insufficient, data, firstPrice - 1L, 0, 0);
+		Map<String, Object> insufficientBefore = new LinkedHashMap<String, Object>(insufficient.getCache().getCacheMap());
+		assertFalse(shops.purchaseCapacity(insufficient, "falador").isSuccessful(), "insufficient points reject capacity purchase");
+		assertEquals(insufficientBefore, insufficient.getCache().getCacheMap(), "insufficient capacity purchase leaves state unchanged");
+
 		Player outOfOrder = h.player("mssorder", 820, 790); state(outOfOrder, data, 1000L, 0, 5);
 		Map<String, Object> outOfOrderBefore = new LinkedHashMap<String, Object>(outOfOrder.getCache().getCacheMap());
 		assertFalse(shops.purchaseCapacity(outOfOrder, data.getShops().get(1).getKey()).isSuccessful(), "out-of-order capacity purchase");
@@ -273,11 +280,22 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		for (int tier = 0; tier < data.getShops().size(); tier++) {
 			MonsterSlayerDefinitions.Shop shop = data.getShops().get(tier);
 			MonsterSlayerState.Snapshot before = MonsterSlayerState.read(player.getCache(), data);
+			Map<String, Object> declinedBefore = new LinkedHashMap<String, Object>(player.getCache().getCacheMap());
+			assertTrue(shops.proposeCapacityPurchase(before, shop.getKey()).isSuccessful(), "capacity confirmation proposal " + tier);
+			assertEquals(declinedBefore, player.getCache().getCacheMap(), "declined capacity confirmation leaves state unchanged " + tier);
 			assertTrue(shops.purchaseCapacity(player, shop.getKey()).isSuccessful(), "ordered capacity purchase " + tier);
 			MonsterSlayerState.Snapshot after = MonsterSlayerState.read(player.getCache(), data);
 			assertTypedDeduction(before.getBalances().asMap(), after.getBalances().asMap(), shop.getCapacityUpgrade().getCost(), "capacity tier " + tier);
 			assertEquals((1 << (tier + 1)) - 1, after.getInventoryUpgrades(), "capacity mask tier " + tier);
 			assertEquals(30 + capacityBonusThrough(tier), after.getDerivedInventoryCapacity(), "active capacity entitlement " + tier);
+			assertEquals(after.getDerivedInventoryCapacity(), player.getCarriedItems().getInventory().getCapacity(), "live capacity follows entitlement " + tier);
+			if (tier == 0) {
+				for (int slot = 0; slot < Inventory.BASE_SIZE; slot++) player.getCarriedItems().getInventory().getItems().add(new Item(259, 1));
+				assertTrue(player.getCarriedItems().getInventory().canHold(new Item(259, 1)), "newly unlocked slot accepts an item");
+				player.getCarriedItems().getInventory().getItems().add(new Item(259, 1));
+				assertEquals(31, player.getCarriedItems().getInventory().size(), "newly unlocked item remains in inventory");
+				assertEquals(31, MonsterSlayerState.read(player.getCache(), data).getDerivedInventoryCapacity(), "newly unlocked slot persists across state reload");
+			}
 		}
 		assertEquals(63, MonsterSlayerState.read(player.getCache(), data).getInventoryUpgrades(), "reloaded ordered capacity mask");
 		assertFalse(shops.purchaseCapacity(player, data.getShops().get(5).getKey()).isSuccessful(), "duplicate capacity purchase");

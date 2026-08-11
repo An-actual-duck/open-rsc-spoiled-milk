@@ -339,10 +339,10 @@ native-challenge price. Initial prices and task rewards are implementation
 estimates to be tuned through playtesting, not inherited from Odyssey data.
 
 The accepted price baseline is Fledgling `42` (mandatory `38`, margin `4`),
-Initiate `75` (`67`, `8`), Veteran `70` (`62`, `8`), Elite `58` (`50`, `8`),
-Champion `135` (`121`, `14`), and Hero `140` (`128`, `12`). Every capacity
-price is native to its own tier and exceeds that tier's actual mandatory total
-by only a small repeatable-task margin.
+Initiate `74` (`67`, `7`), Veteran `69` (`62`, `7`), Elite `55` (`50`, `5`),
+Champion `134` (`121`, `13`), and Hero `141` (`128`, `13`). Each price is
+exactly 110% of its contact's mandatory-task rewards, rounded upward; every
+capacity price is native to its own tier only.
 
 The six increments and cumulative capacities are fixed:
 
@@ -1150,9 +1150,9 @@ Load-time/CI validation must reject:
 - a Fledgling reward with any component other than a positive Fledgling cost,
   or any higher-shop reward that does not contain exactly positive native and
   immediately-lower challenge components;
-- an inventory-capacity upgrade with any lower-tier component, a cost not
-  greater than its own mandatory-chain currency total, or a missing preceding
-  capacity-upgrade prerequisite.
+- an inventory-capacity upgrade with any lower-tier component, a cost other
+  than 110% of its own mandatory-chain currency total rounded upward, or a
+  missing preceding capacity-upgrade prerequisite.
 
 ### Historical Foundation Family Inventory And Tuning
 
@@ -1423,15 +1423,13 @@ Point rewards are intentionally task-specific: a harder, more dangerous, or
 less accessible family in a tier earns more than an easier family in that same
 tier. No task awards a mix of challenge balances.
 
-Each inventory capacity upgrade must cost slightly more native currency than
-the total a player should earn by completing that contact's full mandatory
-chain. Consequently, completing the main path unlocks the right to buy the
-upgrade but does not usually fund it; the player must finish a small number of
-repeatable tasks from that same contact. The implementing AI should propose
-the initial task rewards and prices from task difficulty and this margin, then
-adjust them after owner playtesting. CI must verify:
+Each inventory capacity upgrade costs exactly 110% of the native currency a
+player earns from that contact's full mandatory chain, rounded upward.
+Consequently, completing the main path unlocks the right to buy the upgrade
+but does not fully fund it; the player must finish a small number of
+repeatable tasks from that same contact. Definition loading and CI must verify:
 
-- `capacityPrice[contact] > mandatoryCurrencyTotal[contact]`;
+- `capacityPrice[contact] == ceil(mandatoryCurrencyTotal[contact] * 1.10)`;
 - the margin is documented as a small repeatable-task requirement rather than
   an accidental grind; and
 - the price vector contains exactly one positive component, the contact's
@@ -1476,9 +1474,9 @@ The first headless shop slice uses these deliberately conservative point prices:
 - Potions cost native `2/3/4/5/7/9` points from Fledgling through Hero; each
   later potion also costs `1/2/3/4/5` immediately-lower-tier points.
 - Food costs native `3/5/6/8/10/13` and immediately-lower `0/2/3/4/6/8`.
-- Capacity entitlements cost native-only `42/75/70/58/135/140`. Against the
-  implemented mandatory totals `38/67/62/50/121/128`, each price leaves the
-  approved small repeatable-task margin `4/8/8/8/14/12`.
+- Capacity entitlements cost native-only `42/74/69/55/134/141`. Against the
+  implemented mandatory totals `38/67/62/50/121/128`, each is exactly 110%,
+  rounded upward, leaving a repeatable-task margin of `4/7/7/5/13/13`.
 
 These are balance estimates rather than permanent economy promises. They are
 stored as independent typed components and must be adjusted only after owner

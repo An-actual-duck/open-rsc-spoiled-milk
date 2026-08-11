@@ -123,6 +123,16 @@ public final class MonsterSlayerContactsRouteTest {
 			assertTrue(MonsterSlayerContacts.associateGreeting(index).length() > 0, "associate talk dialogue " + index);
 		}
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		int[] capacities = {31, 32, 33, 35, 37, 40};
+		for (int index = 0; index < data.getShops().size(); index++) {
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
+			long price = shop.getCapacityUpgrade().getCost().get(shop.getChallenge());
+			String quote = MonsterSlayerContacts.backpackUpgradeQuote(index == 0 ? 30 : capacities[index - 1],
+				capacities[index], price, shop.getChallenge());
+			assertTrue(quote.contains(" " + price + " "), "associate quote uses exact own-tier price " + shop.getKey());
+			assertTrue(quote.contains(" to " + capacities[index] + " slots"), "associate quote names resulting capacity " + shop.getKey());
+			assertTrue(quote.contains(shop.getChallenge().name().substring(0, 1)), "associate quote names own tier " + shop.getKey());
+		}
 		MonsterSlayerShopService service = new MonsterSlayerShopService(data);
 		String reward = "falador.brawn";
 		assertEquals(-1, service.getStock(reward), "Slayer reward stock is infinite");
