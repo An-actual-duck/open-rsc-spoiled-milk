@@ -42,7 +42,8 @@ public final class MonsterSlayerShopService {
 	public synchronized RedemptionProposal proposeRedemption(MonsterSlayerState.Snapshot current,
 			String shopKey, String rewardKey, long quantity) {
 		Shop shop = data.getShop(shopKey); Reward reward = reward(shop, rewardKey);
-		if (shop == null || reward == null || quantity <= 0L || current == null
+		if (quantity <= 0L) return RedemptionProposal.rejected("quantity");
+		if (shop == null || reward == null || current == null
 			|| !current.getRank().isAtLeast(MonsterSlayerRank.fromCode(shop.getChallenge().getCode() + 1))) return RedemptionProposal.rejected("unavailable");
 		if (getStock(rewardKey) < quantity) return RedemptionProposal.rejected("stock");
 		try {

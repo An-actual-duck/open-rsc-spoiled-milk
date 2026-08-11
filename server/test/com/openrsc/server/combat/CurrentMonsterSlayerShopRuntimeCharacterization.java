@@ -154,6 +154,8 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		assertEquals(36L, balances(player, data).get(MonsterSlayerChallenge.FLEDGLING), "exact point deduction");
 		shops.restock();
 		assertEquals(9, shops.getStock("falador.brawn"), "bounded one-step restock");
+		assertEquals("quantity", shops.redeem(player, "falador", "falador.brawn", 0).getReason(), "zero quantity is explicit");
+		assertEquals("quantity", shops.redeem(player, "falador", "falador.brawn", -1).getReason(), "negative quantity is explicit");
 		assertFalse(shops.redeem(player, "falador", "falador.brawn", Long.MAX_VALUE).isSuccessful(), "quantity overflow");
 
 		Player failed = h.player("msshopfail", 790, 790); state(failed, data, 40L, 0, 0);
