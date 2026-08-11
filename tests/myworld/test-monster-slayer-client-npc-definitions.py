@@ -15,6 +15,14 @@ CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 SERVER_DEFINITIONS = ROOT / "server/conf/server/defs/MonsterSlayerNpcDefs.json"
 CLIENT_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 EXPECTED_IDS = tuple(range(846, 861))
+RENAMED_WORLD_NPCS = {
+    4: "Tough Goblin",
+    23: "Young Giant Spider",
+    47: "Large Rat",
+    153: "Tough Goblin",
+    154: "Tough Goblin",
+    177: "Large Rat",
+}
 
 
 def require(condition: bool, message: str) -> None:
@@ -41,6 +49,10 @@ def client_assertion(entry: dict) -> str:
 
 def fixture(entries: list[dict]) -> str:
     assertions = "\n        ".join(client_assertion(entry) for entry in entries)
+    world_name_assertions = "\n        ".join(
+        f"assertNpcName({npc_id}, {java_string(name)});"
+        for npc_id, name in RENAMED_WORLD_NPCS.items()
+    )
     return textwrap.dedent(
         f"""
         package com.openrsc.client.entityhandling;
@@ -57,6 +69,7 @@ def fixture(entries: list[dict]) -> str:
                     throw new AssertionError("Monster Slayer NPC definitions did not extend the client catalog");
                 }}
                 {assertions}
+                {world_name_assertions}
             }}
 
             private static void assertNpc(int id, String name, String description, String command,
@@ -73,6 +86,13 @@ def fixture(entries: list[dict]) -> str:
                     || npc.getCamera2() != camera2 || npc.getWalkModel() != walkModel
                     || npc.getCombatModel() != combatModel || npc.getCombatSprite() != combatSprite) {{
                     throw new AssertionError("Client/server definition mismatch for Monster Slayer NPC " + id);
+                }}
+            }}
+
+            private static void assertNpcName(int id, String expectedName) {{
+                NPCDef npc = EntityHandler.getNpcDef(id);
+                if (npc.id != id || !expectedName.equals(npc.getName())) {{
+                    throw new AssertionError("Client world NPC name mismatch for " + id);
                 }}
             }}
         }}
@@ -110,7 +130,7 @@ def main() -> None:
         require(result.returncode == 0,
                 "client Monster Slayer NPC parity fixture failed:\n"
                 f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}")
-    print("PASS: all Monster Slayer NPC client definitions match server presentation data")
+    print("PASS: Monster Slayer contacts and renamed world NPCs match client presentation data")
 
 
 if __name__ == "__main__":

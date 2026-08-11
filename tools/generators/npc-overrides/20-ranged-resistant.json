@@ -9,6 +9,7 @@
     },
     {
       "id": 23,
+      "name": "Young Giant Spider",
       "meleeDefenseMultiplier": 0.25,
       "rangedDefenseMultiplier": 1.0,
       "magicDefenseMultiplier": 0.1
@@ -45,6 +46,7 @@
     },
     {
       "id": 47,
+      "name": "Large Rat",
       "meleeDefenseMultiplier": 0.1,
       "rangedDefenseMultiplier": 1.0,
       "magicDefenseMultiplier": 0.1

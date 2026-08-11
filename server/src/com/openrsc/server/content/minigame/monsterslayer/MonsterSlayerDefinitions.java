@@ -36,16 +36,18 @@ public final class MonsterSlayerDefinitions {
 	public static final class Task {
 		private final String key;
 		private final String familyKey;
+		private final String displayName;
 		private final int requiredKills;
 		private final long pointReward;
 		private final int weight;
 		private final boolean repeatable;
 		private final List<MonsterSlayerHazard> hazards;
 
-		Task(String key, String familyKey, int requiredKills, long pointReward,
+		Task(String key, String familyKey, String displayName, int requiredKills, long pointReward,
 			 int weight, boolean repeatable, List<MonsterSlayerHazard> hazards) {
 			this.key = key;
 			this.familyKey = familyKey;
+			this.displayName = displayName;
 			this.requiredKills = requiredKills;
 			this.pointReward = pointReward;
 			this.weight = weight;
@@ -59,6 +61,14 @@ public final class MonsterSlayerDefinitions {
 
 		public String getFamilyKey() {
 			return familyKey;
+		}
+
+		/**
+		 * Presentation may narrow a broad legacy ID family, but task eligibility
+		 * always remains defined solely by {@link #getFamilyKey()} and its NPC IDs.
+		 */
+		public String getDisplayName(String familyDisplayName) {
+			return displayName == null ? familyDisplayName : displayName;
 		}
 
 		public int getRequiredKills() {

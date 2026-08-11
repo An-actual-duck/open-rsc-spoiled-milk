@@ -78,11 +78,11 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (warning != null) npcsay(player, npc, warning);
 		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
-		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); npcsay(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + data.getFamily(active.getFamilyKey()).getDisplayName() + "."); } else npcsay(player, npc, "Not yet. Your record is not ready for another task."); return; }
+		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); npcsay(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else npcsay(player, npc, "Not yet. Your record is not ready for another task."); return; }
 		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) npcsay(player, npc, hobartFollowUpRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
-		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + data.getFamily(task.getFamilyKey()).getDisplayName() + ".");
+		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
