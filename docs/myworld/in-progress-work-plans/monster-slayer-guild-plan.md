@@ -1,9 +1,10 @@
 # Monster Slayer Guild Plan
 
-Status: **definition foundation, durable player state, task progression, and
-the first contact/placement activation slice implemented; full dialogue
-branching, multi-currency shop UI, and inventory-capacity activation remain
-pending**
+Status: **definition/state/migration, authoritative task progression and kill
+credit, the approved 35-task roster, all six contact routes and promotions,
+NPC placement, and the headless six-shop economy are implemented; the
+player-facing multi-currency shop UI is next, while dynamic inventory capacity
+and its capacity purchases remain pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -23,6 +24,32 @@ Source policy:
 - Do not restore its dragon plate-leg, dragon-skirt, or other finished dragon
   armor rewards. Finished dragon equipment remains owned by the dragon gear
   crafting plan.
+
+## Current Implementation Checkpoint (2026-08-10)
+
+Published `main` now contains the complete typed definition and persistence
+foundation, idempotent Combat Odyssey recognition, authoritative mandatory and
+repeatable assignment/completion, contribution-aware NPC-death credit, all six
+challenge balances, the approved 35-task roster, and the headless shop
+transaction service. Contacts `846..851`, associates `852..857`, and ambient
+members `858..860` are defined and placed. The beer introduction, rank proof
+checks, host-guild gates, promotion dialogue, warnings, active-task reporting,
+random repeatables, and transaction/concurrency failure paths have focused
+executable coverage.
+
+The next bounded implementation slice is the player-facing challenge-shop
+interface described below. The associates currently enforce access and speak,
+but do not open a reward menu. The shop definitions already contain the three
+approved potions and one crafted food per tier, typed costs, stock `10`, and
+restock amount `1`; `MonsterSlayerShopService` already owns checked quantity,
+multi-balance deduction, item-grant rollback, stock, and capacity-entitlement
+transactions.
+
+Do not expose capacity purchases during the shop-interface slice. A purchased
+entitlement can already be represented in durable state, but the live server
+and client still enforce a fixed 30-slot inventory. Capacity purchases become
+player-visible only when the separate dynamic 30-to-40 server/protocol/client
+slice is complete and tested.
 
 ## Product Contract
 
@@ -451,15 +478,8 @@ items; older-client refusal; locked-slot input rejection; equipment index
 separation; full-inventory rollback; and no loss through bank, trade, death,
 or a capacity upgrade.
 
-### Unresolved Recruitment And First-Shop Details
+### Remaining Presentation Decisions
 
-- Choose the twelve contact identities, exact IDs, and placement tiles. This
-  means eleven new unique task-giver/shop-associate NPCs plus either a new
-  Legends task giver or the approved reuse of Sir Radimus `785`. New NPCs are
-  unique humanoids in armor that improves with rank. Do not repurpose Barmaid
-  `142`, bartenders, guildmasters, or quest NPCs except for the explicitly
-  approved Radimus task-route option; keep the three generic bar members to
-  their one-line ambient role.
 - Choose the formal quest name, quest-list presentation, journal text, and any
   quest-point treatment. Calling the mandatory path one quest settles its
   lifecycle, but not those presentation details.
@@ -467,10 +487,11 @@ or a capacity upgrade.
   inventory item, or a displayable cosmetic. If it is an item, tradeability,
   death behavior, duplicate prevention, storage, reclaim, and whether it is
   consumed when displayed all require explicit contracts.
-- Author initial mandatory/repeatable task rewards and all consumable/native
-  currency prices as evidence-backed starting estimates, then tune them through
-  owner playtesting. The consumable lines, stock quantity of 10, normal
-  restock behavior, and capacity-upgrade rules are already settled.
+- Initial mandatory/repeatable rewards and consumable/native currency prices
+  are implemented as playtest baselines. Tune them only from owner/player
+  evidence while preserving typed currencies and cost-vector rules. The
+  consumable lines, stock quantity `10`, restock amount `1`, and capacity
+  upgrade rules are settled.
 
 ## Evidence-Backed Combat Odyssey Audit
 
@@ -691,14 +712,14 @@ without bypassing Champions, Heroes, or Legends Guild entry requirements.
 
 ### Location Staffing And Ambient Members
 
-The activation branch must add one dedicated unique-humanoid shop-associate
-definition and placement near each task giver. Their armor quality follows the
-same rising-rank visual progression as the task givers. Exact NPC IDs, names,
-and tiles remain a focused world/content pass, but every placement must be
-visibly close enough that promotion dialogue such as `my associate nearby`
-remains true. Existing bartenders and guild officials retain their current
-roles; a new associate is not a reason to remove ordinary drinks, guild access,
-quests, or training dialogue.
+The activation is implemented with one dedicated unique-humanoid
+shop-associate beside each task giver. Their armor quality follows the same
+rising-rank visual progression as the task givers. Contact IDs `846..851`,
+associate IDs `852..857`, ambient IDs `858..860`, names, and start tiles are
+authoritative in `MonsterSlayerNpcDefs.json` and `MyWorldNpcLocs.json`.
+Existing bartenders and guild officials retain their current roles; the new
+associates do not replace ordinary drinks, guild access, quests, or training
+dialogue.
 
 The three bar locations should additionally receive one generic ambient member
 each. These are deliberately non-authoritative, non-unique humanoid world-fill
@@ -1133,14 +1154,12 @@ Load-time/CI validation must reject:
   greater than its own mandatory-chain currency total, or a missing preceding
   capacity-upgrade prerequisite.
 
-### Current Foundation Family Inventory And Tuning
+### Historical Foundation Family Inventory And Tuning
 
-The table in this subsection records the merged foundation baseline. Every
-mandatory roster and its aggregate totals is superseded by the confirmed
-35-task ladder above and requires a later implementation sync. Its randomized
-pools also require redesign wherever they conflict with the confirmed monster
-taxonomy; none of the foundation repeatable pools is approved merely by being
-listed here.
+The table in this subsection records the superseded merged foundation baseline
+for audit history only. The confirmed 35-task ladder is now synchronized in
+`MonsterSlayer.json`; do not implement or restore the historical roster,
+aggregate totals, or repeatable pools below.
 
 Spawn counts below are active location records for the current MyWorld load set:
 base `NpcLocs.json`, enabled discontinued/mod-room/runecraft/auction/harvesting/
@@ -1457,10 +1476,9 @@ The first headless shop slice uses these deliberately conservative point prices:
 - Potions cost native `2/3/4/5/7/9` points from Fledgling through Hero; each
   later potion also costs `1/2/3/4/5` immediately-lower-tier points.
 - Food costs native `3/5/6/8/10/13` and immediately-lower `0/2/3/4/6/8`.
-- Capacity entitlements cost native-only `30/48/72/108/180/300`. Against the
-  mandatory totals `25/40/60/90/150/260`, the margin is one small repeatable
-  task at each tier (with Hero leaving a 40-point, roughly one-to-two-task
-  margin because its final mandatory schedule is more variable).
+- Capacity entitlements cost native-only `42/75/70/58/135/140`. Against the
+  implemented mandatory totals `38/67/62/50/121/128`, each price leaves the
+  approved small repeatable-task margin `4/8/8/8/14/12`.
 
 These are balance estimates rather than permanent economy promises. They are
 stored as independent typed components and must be adjusted only after owner
@@ -1474,6 +1492,42 @@ balance and the player's corresponding balances. Do not put a summed number in
 the existing scalar field or pretend the challenge currencies are
 interchangeable. Redemption UI and protocol/presentation changes are explicitly
 outside the foundation branch.
+
+### Next Implementation Slice: Player-Facing Challenge Shops
+
+Activate `Trade`/`Shop` on associates `852..857` as the sole player-facing
+entry to their corresponding shop. Reuse the existing validated definitions
+and `MonsterSlayerShopService`; do not create a second cost, stock, balance, or
+grant authority in plugin code.
+
+The interface must:
+
+- preserve the shared rank and host-guild access policy already used by the
+  contact and associate dialogue routes;
+- show the shop's categories and rewards, current stock, output quantity,
+  every required typed cost component, and the player's corresponding balance;
+- support checked quantities without summing or converting currencies;
+- make cancellation and Back paths state-free;
+- report insufficient typed points, sold-out stock, full inventory, invalid
+  quantity, stale/changed stock, grant rollback, and corrupt Slayer state
+  truthfully without spending points or stock on failure;
+- use the existing shop service's atomic redemption result as authority and
+  refresh the presented stock/balance after a successful purchase; and
+- keep capacity upgrades absent or visibly unavailable with an explicit
+  `Inventory expansion is not available yet.` explanation.
+
+Focused coverage must exercise all six associates and guild/rank gates, every
+reward/cost vector, quantity `1` and a valid multi-buy, overflow/zero/negative
+quantities, cancellation/Back, insufficient individual cost components,
+sold-out and stale-stock races, full inventory, successful delivery, rollback,
+unrelated-cache preservation, and duplicate/concurrent submissions. Compile
+core and plugins and retain the existing Monster Slayer state, contact-route,
+and combat transaction gates.
+
+Stop this slice before changing inventory packet layouts, equipment offsets,
+client inventory arrays, bank/trade/death capacity behavior, or enabling a
+capacity entitlement purchase. Those belong exclusively to the following
+dynamic-inventory slice and must ship together.
 
 The old Odyssey rewards are neither default stock nor price anchors. Existing
 combat supplies may be selected from current item definitions in a later stock
