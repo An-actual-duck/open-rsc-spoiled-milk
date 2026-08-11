@@ -22,6 +22,7 @@ import com.openrsc.server.database.impl.mysql.queries.logging.PMLog;
 import com.openrsc.server.database.impl.mysql.queries.player.login.PlayerOnlineFlagQuery;
 import com.openrsc.server.event.DelayedEvent;
 import com.openrsc.server.event.SingleEvent;
+import com.openrsc.server.event.custom.MonsterSlayerShopRestockEvent;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.ConstructorState;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition;
@@ -134,6 +135,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	private MonsterSlayerData monsterSlayerData;
 	private MonsterSlayerTaskService monsterSlayerTaskService;
 	private MonsterSlayerShopService monsterSlayerShopService;
+	private MonsterSlayerShopRestockEvent monsterSlayerShopRestockEvent;
 	private CombatOdysseyMigration.LegacyData monsterSlayerLegacyData;
 	private final HashMap<Point, Integer> sceneryLocs;
 	private final ConcurrentMap<TrawlerBoat, FishingTrawler> fishingTrawler;
@@ -506,6 +508,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				setMonsterSlayerData(MonsterSlayerData.loadForWorld(this));
 				setMonsterSlayerTaskService(new MonsterSlayerTaskService(getMonsterSlayerData()));
 				setMonsterSlayerShopService(new MonsterSlayerShopService(getMonsterSlayerData()));
+				setMonsterSlayerShopRestockEvent(new MonsterSlayerShopRestockEvent(this));
+				getServer().getGameEventHandler().add(getMonsterSlayerShopRestockEvent());
 				setMonsterSlayerLegacyData(CombatOdysseyMigration.LegacyData.load(Paths.get(
 					getServer().getConfig().CONFIG_DIR, "defs", "extras", "CombatOdyssey.json")));
 			}
@@ -1260,6 +1264,9 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	/** Headless typed reward economy; no dialogue/UI route opens it in this slice. */
 	public synchronized MonsterSlayerShopService getMonsterSlayerShopService() { return monsterSlayerShopService; }
 
+	/** Shared, world-owned schedule; exposed for deterministic event verification. */
+	public synchronized MonsterSlayerShopRestockEvent getMonsterSlayerShopRestockEvent() { return monsterSlayerShopRestockEvent; }
+
 	private synchronized void setMonsterSlayerData(MonsterSlayerData data) {
 		monsterSlayerData = data;
 	}
@@ -1274,6 +1281,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	private synchronized void setMonsterSlayerShopService(MonsterSlayerShopService service) { monsterSlayerShopService = service; }
+
+	private synchronized void setMonsterSlayerShopRestockEvent(MonsterSlayerShopRestockEvent event) { monsterSlayerShopRestockEvent = event; }
 
 	public synchronized Market getMarket() {
 		return market;

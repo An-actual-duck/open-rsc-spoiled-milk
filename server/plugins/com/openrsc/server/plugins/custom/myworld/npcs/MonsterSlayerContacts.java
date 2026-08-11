@@ -33,15 +33,15 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	@Override public boolean blockTalkNpc(Player player, Npc npc) { return managed(npc); }
 	@Override public boolean blockOpNpc(Player player, Npc npc, String command) {
 		return isContact(npc) ? "Task".equalsIgnoreCase(command)
-			: isAssociate(npc) && ("Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command));
+			: isAssociate(npc) && isAssociateShopOperation(command);
 	}
 	@Override public void onTalkNpc(Player player, Npc npc) {
 		if (isAmbient(npc)) { npcsay(player, npc, ambient(npc.getID() - FIRST_AMBIENT)); return; }
-		if (isAssociate(npc)) { associate(player, npc); return; }
+		if (isAssociate(npc)) { associate(player, npc, false); return; }
 		contact(player, npc, false);
 	}
 	@Override public void onOpNpc(Player player, Npc npc, String command) {
-		if (isAssociate(npc)) { associate(player, npc); return; }
+		if (isAssociate(npc) && isAssociateShopOperation(command)) { associate(player, npc, true); return; }
 		if (isContact(npc)) contact(player, npc, true);
 	}
 	private void contact(Player player, Npc npc, boolean shortcut) {
@@ -92,7 +92,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if ("refund-failed".equals(reason)) return "Your rank record failed and your beer could not be returned. Please contact staff.";
 		return "Your Monster Slayer record needs staff attention.";
 	}
-	private void associate(Player player, Npc npc) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
+	private void associate(Player player, Npc npc, boolean trade) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } if (trade) MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); else npcsay(player, npc, associateGreeting(index)); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
 	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
@@ -101,7 +101,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "You've got the look of someone after a dangerous job.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Do you want another contract?", "Another contract?"}; return lines[index]; }
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }
-	private static String associateGreeting(int index) { String[] lines = {"An Initiate has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Initiate supplies are available.", "An Elite hunter knows what to pack. Your Veteran supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
+	/** Read-only dialogue seam: Talk-to must not enter the shop state machine. */
+	public static String associateGreeting(int index) { String[] lines = {"An Initiate has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Initiate supplies are available.", "An Elite hunter knows what to pack. Your Veteran supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
+	public static boolean isAssociateShopOperation(String command) { return "Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command); }
 	private static String warning(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) { if (task.getHazards().isEmpty()) return null; StringBuilder text = new StringBuilder("Take care: "); for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard : task.getHazards()) { if (text.length() > 11) text.append("; "); if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT) text.append("bring desert heat protection"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS) text.append("this work is in the Wilderness"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN) text.append("expect Prayer drain"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON) text.append("bring an antidote for poison"); else text.append("prepare for dragon fire"); } return text.append('.').toString(); }
 	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "I have done the work. I do not hand out contracts."}; return lines[index]; }
 	private static boolean hostGuildAllows(Player player, int index) { return MonsterSlayerGuildAccess.allows(player, index); }

@@ -27,45 +27,57 @@ public final class MonsterSlayerChallengeShops {
 			if (shop == null || service == null) { player.message("This challenge shop is not available right now."); return; }
 		npcsay(player, npc, "Welcome to the " + challengeName(shop.getChallenge()) + " Challenge Shop.",
 			"Inventory expansion is not available yet.");
-			chooseCategory(player, npc, shop, service);
+			browse(player, npc, shop, service);
 		} catch (RuntimeException failure) { player.message("Your Monster Slayer record needs staff attention."); }
 	}
 
-	private static void chooseCategory(Player player, Npc npc, MonsterSlayerDefinitions.Shop shop, MonsterSlayerShopService service) {
+	/** A bounded, iterative dialogue state machine.  The old recursive menu could
+	 * grow one Java frame for every Back, cancel, or successful purchase. */
+	private static void browse(Player player, Npc npc, MonsterSlayerDefinitions.Shop shop, MonsterSlayerShopService service) {
 		List<MonsterSlayerDefinitions.Category> categories = shop.getCategories();
 		if (categories.isEmpty()) { npcsay(player, npc, "There is nothing in this shop yet."); return; }
-		if (categories.size() == 1) { chooseReward(player, npc, shop, categories.get(0), service); return; }
-		String[] options = new String[categories.size() + 1];
-		for (int index = 0; index < categories.size(); index++) options[index] = categories.get(index).getLabel();
-		options[options.length - 1] = "Never mind.";
-		int choice = multi(player, options);
-		if (choice >= 0 && choice < categories.size()) chooseReward(player, npc, shop, categories.get(choice), service);
-	}
-
-	private static void chooseReward(Player player, Npc npc, MonsterSlayerDefinitions.Shop shop, MonsterSlayerDefinitions.Category category, MonsterSlayerShopService service) {
-		List<MonsterSlayerDefinitions.Reward> rewards = category.getRewards();
-		String[] options = new String[rewards.size() + 2];
-		for (int index = 0; index < rewards.size(); index++) options[index] = itemName(player, rewards.get(index)) + " (" + service.getStock(rewards.get(index).getKey()) + " in stock)";
-		options[rewards.size()] = "Back";
-		options[rewards.size() + 1] = "Cancel";
-		int choice = multi(player, options);
-		if (choice >= 0 && choice < rewards.size()) chooseQuantity(player, npc, shop, category, rewards.get(choice), service);
-		else if (choice == rewards.size()) chooseCategory(player, npc, shop, service);
-	}
-
-	private static void chooseQuantity(Player player, Npc npc, MonsterSlayerDefinitions.Shop shop, MonsterSlayerDefinitions.Category category, MonsterSlayerDefinitions.Reward reward, MonsterSlayerShopService service) {
-		MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData());
-		npcsay(player, npc, itemName(player, reward) + ": " + reward.getAmount() + " per purchase; " + service.getStock(reward.getKey()) + " in stock.",
-			costSummary(reward, 1L, state));
-		int choice = multi(player, "Buy 1", "Buy 5", "Buy 10", "Back", "Cancel");
-		if (choice == 3) { chooseReward(player, npc, shop, category, service); return; }
-		if (choice < 0 || choice == 4) return;
-		long quantity = choice == 0 ? 1L : choice == 1 ? 5L : 10L;
-		MonsterSlayerShopService.Result result = service.redeem(player, shop.getKey(), reward.getKey(), quantity);
-		if (!result.isSuccessful()) { player.message(redemptionFailureMessage(result.getReason())); chooseReward(player, npc, shop, category, service); return; }
-		MonsterSlayerState.Snapshot refreshed = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData());
-		npcsay(player, npc, "Purchase complete. " + service.getStock(reward.getKey()) + " remain in stock.", costSummary(reward, 1L, refreshed));
-		chooseReward(player, npc, shop, category, service);
+		int screen = 0;
+		MonsterSlayerDefinitions.Category category = null;
+		MonsterSlayerDefinitions.Reward reward = null;
+		for (int steps = 0; steps < 128; steps++) {
+			if (screen == 0) {
+				if (categories.size() == 1) { category = categories.get(0); screen = 1; continue; }
+				String[] options = new String[categories.size() + 1];
+				for (int index = 0; index < categories.size(); index++) options[index] = categories.get(index).getLabel();
+				options[options.length - 1] = "Never mind.";
+				int choice = multi(player, options);
+				if (choice < 0 || choice >= categories.size()) return;
+				category = categories.get(choice); screen = 1; continue;
+			}
+			if (screen == 1) {
+				List<MonsterSlayerDefinitions.Reward> rewards = category.getRewards();
+				String[] options = new String[rewards.size() + 2];
+				for (int index = 0; index < rewards.size(); index++) options[index] = itemName(player, rewards.get(index)) + " (" + service.getStock(rewards.get(index).getKey()) + " in stock)";
+				options[rewards.size()] = "Back"; options[rewards.size() + 1] = "Cancel";
+				int choice = multi(player, options);
+				if (choice < 0 || choice == rewards.size() + 1) return;
+				if (choice == rewards.size()) { screen = 0; continue; }
+				reward = rewards.get(choice); screen = 2; continue;
+			}
+			MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData());
+			npcsay(player, npc, itemName(player, reward) + ": " + reward.getAmount() + " per purchase; " + service.getStock(reward.getKey()) + " in stock.", costSummary(reward, 1L, state));
+			int choice = multi(player, "Buy 1", "Buy 5", "Buy 10", "Back", "Cancel");
+			if (choice < 0 || choice == 4) return;
+			if (choice == 3) { screen = 1; continue; }
+			long quantity = choice == 0 ? 1L : choice == 1 ? 5L : 10L;
+			if (quantity > 1L) {
+				npcsay(player, npc, "Buy " + quantity + " purchases?", costSummary(reward, quantity, state));
+				if (multi(player, "Confirm purchase", "Cancel") != 0) { screen = 1; continue; }
+			}
+			MonsterSlayerShopService.Result result = service.redeem(player, shop.getKey(), reward.getKey(), quantity);
+			if (!result.isSuccessful()) player.message(redemptionFailureMessage(result.getReason()));
+			else {
+				MonsterSlayerState.Snapshot refreshed = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData());
+				npcsay(player, npc, "Purchase complete. " + service.getStock(reward.getKey()) + " remain in stock.", costSummary(reward, quantity, refreshed));
+			}
+			screen = 1;
+		}
+		player.message("The challenge shop menu has been safely closed.");
 	}
 
 	public static String costSummary(MonsterSlayerDefinitions.Reward reward, long quantity, MonsterSlayerState.Snapshot state) {

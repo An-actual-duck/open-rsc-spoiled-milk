@@ -9,6 +9,8 @@ import com.openrsc.server.constants.Quests;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
+import com.openrsc.server.event.custom.MonsterSlayerShopRestockEvent;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -40,6 +42,8 @@ public final class MonsterSlayerContactsRouteTest {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
 			assertTrue(routes.blockTalkNpc(null, npc), "Talk-to associate " + id);
 			assertTrue(routes.blockOpNpc(null, npc, "Trade"), "Trade associate " + id);
+			assertTrue(routes.blockOpNpc(null, npc, "Shop"), "Shop associate " + id);
+			assertFalse(routes.blockOpNpc(null, npc, "Task"), "associate Task must retain dialogue " + id);
 		}
 		for (int id = 858; id <= 860; id++) {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
@@ -53,7 +57,31 @@ public final class MonsterSlayerContactsRouteTest {
 		associateAmbientAndOwnershipBoundaries(server, routes);
 		beerFailureMessagesRemainTruthful();
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
+		associateOperationsAndWorldRestockAreBounded(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void associateOperationsAndWorldRestockAreBounded(Server server) {
+		for (int index = 0; index < 6; index++) {
+			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Trade"), "associate trade operation " + index);
+			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Shop"), "associate shop operation " + index);
+			assertFalse(MonsterSlayerContacts.isAssociateShopOperation("Task"), "associate task is not shop operation " + index);
+			assertTrue(MonsterSlayerContacts.associateGreeting(index).length() > 0, "associate talk dialogue " + index);
+		}
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		MonsterSlayerShopService service = new MonsterSlayerShopService(data);
+		String reward = "falador.brawn";
+		assertEquals(10, service.getStock(reward), "initial shared stock");
+		try {
+			Field serviceField = server.getWorld().getClass().getDeclaredField("monsterSlayerShopService");
+			serviceField.setAccessible(true); serviceField.set(server.getWorld(), service);
+		} catch (Exception failure) { throw new AssertionError("install world-owned shop service", failure); }
+		service.restock(); // proves the scheduled tick remains capped even at full stock
+		assertEquals(10, service.getStock(reward), "bounded restock at cap");
+		MonsterSlayerShopRestockEvent event = new MonsterSlayerShopRestockEvent(server.getWorld());
+		event.run();
+		assertEquals(10, service.getStock(reward), "world event owns the shared restock ledger");
+		assertEquals(MonsterSlayerShopRestockEvent.INTERVAL_MS, 60000L, "stable world restock interval");
 	}
 
 	private static void beerFailureMessagesRemainTruthful() {
