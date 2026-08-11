@@ -294,11 +294,20 @@ public final class MonsterSlayerPlayerStateCharacterization {
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
 		equals(6, data.getShops().size(), "six Slayer shops");
-		long[] capacityPrices = {42L, 75L, 70L, 58L, 135L, 140L};
+		long[] capacityPrices = {42L, 74L, 69L, 55L, 134L, 141L};
 		for (int index = 0; index < data.getShops().size(); index++) {
 			MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
 			equals(capacityPrices[index], shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
 				"capacity price " + shop.getKey());
+			long mandatoryTotal = 0L;
+			for (MonsterSlayerDefinitions.Task task : data.getContact(shop.getKey()).getMandatoryTasks()) mandatoryTotal += task.getPointReward();
+			long expected = mandatoryTotal + (mandatoryTotal / 10L) + (mandatoryTotal % 10L == 0L ? 0L : 1L);
+			equals(expected, shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
+				"capacity price tracks mandatory rewards " + shop.getKey());
+			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+				equals(challenge == shop.getChallenge() ? expected : 0L,
+					shop.getCapacityUpgrade().getCost().get(challenge), "capacity is single-tier " + shop.getKey() + " " + challenge);
+			}
 			equals(1, shop.getCategories().size(), "one approved category " + shop.getKey());
 			equals(4, shop.getCategories().get(0).getRewards().size(), "four consumables " + shop.getKey());
 			for (MonsterSlayerDefinitions.Reward reward : shop.getCategories().get(0).getRewards()) {

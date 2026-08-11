@@ -132,15 +132,25 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		long price = shop.getCapacityUpgrade().getCost().get(shop.getChallenge());
 		int before = state.getDerivedInventoryCapacity();
 		int after = proposal.getSnapshot().getDerivedInventoryCapacity();
-		npcsay(player, npc, "I can expand your backpack from " + before + " to " + after + " slots for " + price + " " + shop.getChallenge().name().toLowerCase() + " Slayer Points.");
+		npcsay(player, npc, backpackUpgradeQuote(before, after, price, shop.getChallenge()));
 		if (multi(player, "Buy the backpack upgrade.", "Back.") != 0) return;
 		MonsterSlayerShopService.Result result = service.purchaseCapacity(player, shop.getKey());
 		if (result.isSuccessful()) {
-			ActionSender.sendInventory(player); // capacity receipt precedes this refresh
+			ActionSender.sendInventory(player); // sends capacity before refreshed inventory contents
 			npcsay(player, npc, "Done. Your backpack now holds " + after + " slots.");
 		}
 		else if ("locked-or-points".equals(result.getReason())) npcsay(player, npc, "You do not have the required points or prior backpack upgrades.");
 		else npcsay(player, npc, "That backpack upgrade could not be completed. Nothing was spent.");
+	}
+	/** Exact confirmation text is kept deterministic so the quote always matches the typed server cost. */
+	public static String backpackUpgradeQuote(int before, int after, long price,
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge challenge) {
+		if (before < 0 || after <= before || price <= 0L || challenge == null) {
+			throw new IllegalArgumentException("Invalid backpack-upgrade quote");
+		}
+		String tier = challenge.name().substring(0, 1) + challenge.name().substring(1).toLowerCase();
+		return "I can expand your backpack from " + before + " to " + after + " slots for "
+			+ price + " " + tier + " Slayer Points.";
 	}
 	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
