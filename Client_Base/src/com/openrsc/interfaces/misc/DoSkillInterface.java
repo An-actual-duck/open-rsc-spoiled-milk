@@ -31,6 +31,8 @@ public final class DoSkillInterface {
 	private boolean productionKeepOpenSupported = false;
 	private boolean productionKeepOpenEnabled = false;
 	private boolean productionCanGoBack = false;
+	private int[] productionPointCodes = new int[0];
+	private int[] productionPointBalances = new int[0];
 	private static final int PRODUCTION_CONTENT_HEIGHT = 292;
 	private static final int PRODUCTION_PREFERENCES_HEIGHT = 340;
 	private static final int PRODUCTION_UI_REMEMBER_SUPPORTED = 1;
@@ -44,6 +46,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_TELEPORT_DESTINATION = 7;
 	private static final int PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8;
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
+	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
 	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
 
 	public DoSkillInterface(mudclient mc) {
@@ -344,7 +347,7 @@ public final class DoSkillInterface {
 					hoverText = altarDestinationName(recipe.getItemId());
 				} else if (isMetalPicker()) {
 					hoverText = metalName(def);
-				} else if (isRangersRedemptionInterface()) {
+				} else if (isPointRedemptionInterface()) {
 					hoverText = def.getName() + " - " + recipe.getInputAmount()
 						+ " pts each - receive " + recipe.getOutputAmount();
 				} else {
@@ -376,18 +379,18 @@ public final class DoSkillInterface {
 				selectedHeader = rangersRedemptionCategoryName(selected.getItemId());
 			} else if (isTeleportDestinationPicker()) {
 				selectedHeader = altarDestinationName(selected.getItemId());
-			} else if (isRangersRedemptionInterface()) {
+			} else if (isPointRedemptionInterface()) {
 				selectedHeader = def.getName();
 			} else {
 				selectedHeader = (isMetalPicker() ? metalName(def) : def.getName())
 					+ " - Level " + selected.getRequiredLevel();
 			}
-			int selectedHeaderY = isRangersRedemptionInterface() ? footerY - 10 : footerY + 2;
+			int selectedHeaderY = isPointRedemptionInterface() ? footerY - 10 : footerY + 2;
 			drawStringRightAligned(selectedHeader, selectedDetailRightX, selectedHeaderY, 3, selected.isLevelMet() ? textColour : 0xFF5555);
 			if (isRangersRedemptionCategoryPicker()) {
 				drawStringRightAligned("Choose this category", selectedDetailRightX, footerY + 20, 1, textColour);
-			} else if (isRangersRedemptionInterface()) {
-				drawRangersRedemptionDetails(selected, selectedDetailRightX, footerY);
+			} else if (isPointRedemptionInterface()) {
+				drawPointRedemptionDetails(selected, selectedDetailRightX, footerY);
 			} else if (selected.hasIngredientDetails()) {
 				String ingredientHoverText = drawProductionIngredientCosts(selected, materialDetailX, footerY + 4);
 				if (!ingredientHoverText.isEmpty()) {
@@ -415,7 +418,7 @@ public final class DoSkillInterface {
 		}
 
 		if (showQuantityControls) {
-			if (isRangersRedemptionInterface()) {
+			if (isPointRedemptionInterface()) {
 				int redemptionQuantityX = x + ((width - 234) / 2);
 				drawQuantityButton(redemptionQuantityX, quantityY, 30, 20, "-100", -100);
 				drawQuantityButton(redemptionQuantityX + 34, quantityY, 26, 20, "-50", -50);
@@ -452,13 +455,13 @@ public final class DoSkillInterface {
 		}
 
 		boolean startEnabled = selected != null && selected.isCraftable();
-		if (isRangersRedemptionInterface()) {
-			startEnabled = selected != null && selected.isLevelMet()
-				&& getRangersRedemptionTotalCost(selected) <= productionResourceAmount;
+		if (isPointRedemptionInterface()) {
+			startEnabled = selected != null && selected.isLevelMet() && (selected.getStockAmount() < 0 || selected.getStockAmount() >= productionQuantity)
+				&& canAffordPointCost(selected);
 		}
 		String actionLabel = isTeleportDestinationPicker() ? "Teleport"
 			: isRangersRedemptionCategoryPicker() ? "Next"
-			: isRangersRedemptionInterface() ? "Redeem" : "Start";
+			: isPointRedemptionInterface() ? "Redeem" : "Start";
 		final boolean canStart = startEnabled;
 		this.drawButton(x + width - 92, quantityY - 1, 76, 22, actionLabel, 3, false, new ButtonHandler() {
 			@Override
@@ -547,6 +550,14 @@ public final class DoSkillInterface {
 		return productionInterfaceId == PRODUCTION_RANGERS_REDEMPTION;
 	}
 
+	private boolean isMonsterSlayerRedemptionInterface() {
+		return productionInterfaceId == PRODUCTION_MONSTER_SLAYER_REDEMPTION;
+	}
+
+	private boolean isPointRedemptionInterface() {
+		return isRangersRedemptionInterface() || isMonsterSlayerRedemptionInterface();
+	}
+
 	private boolean isPickerInterface() {
 		return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()
 			|| isTeleportDestinationPicker() || isRangersRedemptionCategoryPicker();
@@ -619,21 +630,22 @@ public final class DoSkillInterface {
 		}
 	}
 
-	private void drawRangersRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
-		long totalCost = getRangersRedemptionTotalCost(selected);
+	private void drawPointRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
 		long totalOutput = (long) selected.getOutputAmount() * (long) productionQuantity;
-		drawStringRightAligned("Owned: " + formatPointCount(productionResourceAmount) + " pts", selectedDetailRightX, footerY + 5, 1, textColour);
-		drawStringRightAligned("Cost: " + formatPointCount(totalCost) + " pts", selectedDetailRightX, footerY + 20, 1,
-			totalCost <= productionResourceAmount ? textColour : 0xFFAA55);
-		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total", selectedDetailRightX, footerY + 35, 1, textColour);
+		String owned = pointBalancesText(selected);
+		String cost = pointCostText(selected);
+		drawStringRightAligned("Owned: " + owned, selectedDetailRightX, footerY + 5, 1, textColour);
+		drawStringRightAligned("Cost: " + cost, selectedDetailRightX, footerY + 20, 1,
+			canAffordPointCost(selected) ? textColour : 0xFFAA55);
+		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total" + stockText(selected), selectedDetailRightX, footerY + 35, 1, textColour);
 	}
 
-	private long getRangersRedemptionTotalCost(ProductionRecipeView selected) {
-		if (selected == null) {
-			return 0;
-		}
-		return (long) selected.getInputAmount() * (long) productionQuantity;
-	}
+	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
+	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
+	private boolean canAffordPointCost(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return (long) selected.getInputAmount() * productionQuantity <= productionResourceAmount; for (int i = 0; i < selected.getPointCostCount(); i++) { if (pointBalance(selected.getPointCostCode(i)) < (long) selected.getPointCostAmount(i) * productionQuantity) return false; } return true; }
+	private int pointBalance(int code) { for (int i = 0; i < productionPointCodes.length; i++) if (productionPointCodes[i] == code) return productionPointBalances[i]; return 0; }
+	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
+	private String stockText(ProductionRecipeView selected) { return selected.getStockAmount() >= 0 ? "  Stock: " + selected.getStockAmount() : ""; }
 
 	private String formatPointCount(long value) {
 		return Long.toString(Math.max(0, value));
@@ -779,7 +791,8 @@ public final class DoSkillInterface {
 
 	public void openProductionInterface(int interfaceId, String title, int inputItemId, int resourceAmount, int selectedRecipeId, int quantity,
 		int[] itemIds, int[] requiredLevels, int[] inputAmounts, int[] outputAmounts, int[] flags,
-		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts, int uiFlags) {
+		int[][] ingredientItemIds, int[][] ingredientFallbackItemIds, int[][] ingredientAmounts, int uiFlags,
+		int[] pointCodes, int[] pointBalances, int[][] pointCostCodes, int[][] pointCostAmounts, int[] stockAmounts) {
 		this.title = title;
 		this.productionInterfaceId = interfaceId;
 		this.inputItemId = inputItemId;
@@ -795,9 +808,12 @@ public final class DoSkillInterface {
 		this.productionCanGoBack = (uiFlags & PRODUCTION_UI_CAN_GO_BACK) != 0;
 		this.productionKeepOpenSupported = (uiFlags & PRODUCTION_UI_KEEP_OPEN_SUPPORTED) != 0;
 		this.productionKeepOpenEnabled = (uiFlags & PRODUCTION_UI_KEEP_OPEN_ENABLED) != 0;
+		this.productionPointCodes = pointCodes == null ? new int[0] : pointCodes.clone();
+		this.productionPointBalances = pointBalances == null ? new int[0] : pointBalances.clone();
 		for (int i = 0; i < itemIds.length; i++) {
 			ProductionRecipeView recipe = new ProductionRecipeView(itemIds[i], requiredLevels[i], inputAmounts[i],
-				outputAmounts[i], flags[i], ingredientItemIds[i], ingredientFallbackItemIds[i], ingredientAmounts[i]);
+				outputAmounts[i], flags[i], ingredientItemIds[i], ingredientFallbackItemIds[i], ingredientAmounts[i],
+				pointCostCodes[i], pointCostAmounts[i], stockAmounts[i]);
 			this.productionRecipes.add(recipe);
 			if (itemIds[i] == selectedRecipeId) {
 				this.selectedRecipeIndex = i;
@@ -822,6 +838,8 @@ public final class DoSkillInterface {
 		this.productionKeepOpenSupported = false;
 		this.productionKeepOpenEnabled = false;
 		this.productionCanGoBack = false;
+		this.productionPointCodes = new int[0];
+		this.productionPointBalances = new int[0];
 		setVisible(false);
 	}
 
@@ -1390,9 +1408,13 @@ class ProductionRecipeView {
 	private final int[] ingredientItemIds;
 	private final int[] ingredientFallbackItemIds;
 	private final int[] ingredientAmounts;
+	private final int[] pointCostCodes;
+	private final int[] pointCostAmounts;
+	private final int stockAmount;
 
 	ProductionRecipeView(int itemId, int requiredLevel, int inputAmount, int outputAmount, int flags,
-		int[] ingredientItemIds, int[] ingredientFallbackItemIds, int[] ingredientAmounts) {
+		int[] ingredientItemIds, int[] ingredientFallbackItemIds, int[] ingredientAmounts,
+		int[] pointCostCodes, int[] pointCostAmounts, int stockAmount) {
 		this.itemId = itemId;
 		this.requiredLevel = requiredLevel;
 		this.inputAmount = inputAmount;
@@ -1401,6 +1423,9 @@ class ProductionRecipeView {
 		this.ingredientItemIds = ingredientItemIds == null ? new int[0] : ingredientItemIds;
 		this.ingredientFallbackItemIds = ingredientFallbackItemIds == null ? new int[0] : ingredientFallbackItemIds;
 		this.ingredientAmounts = ingredientAmounts == null ? new int[0] : ingredientAmounts;
+		this.pointCostCodes = pointCostCodes == null ? new int[0] : pointCostCodes;
+		this.pointCostAmounts = pointCostAmounts == null ? new int[0] : pointCostAmounts;
+		this.stockAmount = stockAmount;
 	}
 
 	public int getItemId() {
@@ -1418,6 +1443,11 @@ class ProductionRecipeView {
 	public int getOutputAmount() {
 		return outputAmount;
 	}
+
+	public int getPointCostCount() { return pointCostCodes.length; }
+	public int getPointCostCode(int index) { return pointCostCodes[index]; }
+	public int getPointCostAmount(int index) { return pointCostAmounts[index]; }
+	public int getStockAmount() { return stockAmount; }
 
 	public boolean hasIngredientDetails() {
 		return ingredientItemIds.length > 0;

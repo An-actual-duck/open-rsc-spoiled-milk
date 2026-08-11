@@ -165,7 +165,7 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 		if (reward == null) {
 			return false;
 		}
-		return redeem(player, reward, quantity);
+		return redeem(player, session, reward, quantity);
 	}
 
 	private static void openCategoryInterface(Player player) {
@@ -178,7 +178,7 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 			"Redeem Rangers Guild points",
 			-1,
 			RangersGuildPoints.getPoints(player),
-			recipes);
+			recipes, "rangers-guild-points", null);
 		player.setAttribute("production_session", session);
 		player.setAttribute("production_starter", (ProductionStarter) RangersGuildPointsVendor::beginRedemptionFromInterface);
 		ActionSender.showProductionInterface(player, session);
@@ -201,13 +201,13 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 			"Redeem points - " + category.label,
 			-1,
 			points,
-			recipes);
+			recipes, "rangers-guild-points", null);
 		player.setAttribute("production_session", session);
 		player.setAttribute("production_starter", (ProductionStarter) RangersGuildPointsVendor::beginRedemptionFromInterface);
 		ActionSender.showProductionInterface(player, session);
 	}
 
-	private static boolean redeem(Player player, Reward reward, int quantity) {
+	private static boolean redeem(Player player, ProductionSession session, Reward reward, int quantity) {
 		if (quantity < 1) {
 			return false;
 		}
@@ -242,6 +242,7 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 
 		player.message("You redeem " + pointsLabel((int) totalCost) + " for " + item.getAmount()
 			+ " x " + item.getDef(player.getWorld()).getName() + ".");
+		session.setResourceAmount(RangersGuildPoints.getPoints(player));
 		return true;
 	}
 

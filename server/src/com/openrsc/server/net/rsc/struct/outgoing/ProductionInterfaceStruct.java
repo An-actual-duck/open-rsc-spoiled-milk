@@ -27,6 +27,12 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 	public int[][] ingredientItemIds;
 	public int[][] ingredientFallbackItemIds;
 	public int[][] ingredientAmounts;
+	/** Optional additive trailer for graphical non-inventory point shops. */
+	public int[] pointCodes;
+	public int[] pointBalances;
+	public int[][] pointCostCodes;
+	public int[][] pointCostAmounts;
+	public int[] stockAmounts;
 
 	public static ProductionInterfaceStruct open(ProductionSession session) {
 		return open(session, session.getDefaultRecipeId(), 0);
@@ -62,6 +68,13 @@ public class ProductionInterfaceStruct extends AbstractStruct<OpcodeOut> {
 			struct.ingredientItemIds[i] = recipe.getIngredientItemIds();
 			struct.ingredientFallbackItemIds[i] = recipe.getIngredientFallbackItemIds();
 			struct.ingredientAmounts[i] = recipe.getIngredientAmounts();
+		}
+		if (session.getPointShopDetails() != null) {
+			struct.pointCodes = session.getPointShopDetails().getPointCodes();
+			struct.pointBalances = session.getPointShopDetails().getBalances();
+			struct.pointCostCodes = session.getPointShopDetails().getRecipeCostCodes();
+			struct.pointCostAmounts = session.getPointShopDetails().getRecipeCostAmounts();
+			struct.stockAmounts = session.getPointShopDetails().getRecipeStock();
 		}
 		return struct;
 	}
