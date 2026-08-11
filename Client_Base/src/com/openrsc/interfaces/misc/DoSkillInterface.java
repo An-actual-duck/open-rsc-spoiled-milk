@@ -48,6 +48,8 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
 	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
+	/* Standard sprite-mask shades: bronze, iron, steel, mithril, adamant, rune. */
+	private static final int[] SLAYER_POINT_COIN_TINTS = {0x996633, 0xA8A8A8, 0x666666, 0x4F7F7F, 0x3F6F3F, 0x4A5FB5};
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -648,6 +650,8 @@ public final class DoSkillInterface {
 	private boolean canAffordPointCost(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return (long) selected.getInputAmount() * productionQuantity <= productionResourceAmount; for (int i = 0; i < selected.getPointCostCount(); i++) { if (pointBalance(selected.getPointCostCode(i)) < (long) selected.getPointCostAmount(i) * productionQuantity) return false; } return true; }
 	private int pointBalance(int code) { for (int i = 0; i < productionPointCodes.length; i++) if (productionPointCodes[i] == code) return productionPointBalances[i]; return 0; }
 	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
+	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
+	private int pointCoinTint(int code) { return code >= 0 && code < SLAYER_POINT_COIN_TINTS.length ? SLAYER_POINT_COIN_TINTS[code] : 0; }
 	private String stockText(ProductionRecipeView selected) { return selected.getStockAmount() >= 0 ? "  Stock: " + selected.getStockAmount() : ""; }
 	private String pointShopHoverName(String name, int output) {
 		if (output <= 1) return name;
