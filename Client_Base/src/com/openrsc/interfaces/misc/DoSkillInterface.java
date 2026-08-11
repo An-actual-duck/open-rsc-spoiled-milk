@@ -2,8 +2,13 @@ package com.openrsc.interfaces.misc;
 
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
+import com.openrsc.client.model.Sprite;
 import orsc.graphics.gui.Panel;
 import orsc.mudclient;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 
@@ -50,6 +55,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
 	/* Standard sprite-mask shades: bronze, iron, steel, mithril, adamant, rune. */
 	private static final int[] SLAYER_POINT_COIN_TINTS = {0x996633, 0xA8A8A8, 0x666666, 0x4F7F7F, 0x3F6F3F, 0x4A5FB5};
+	private static Sprite slayerPointCoin;
 
 	public DoSkillInterface(mudclient mc) {
 		this.mc = mc;
@@ -637,13 +643,12 @@ public final class DoSkillInterface {
 
 	private void drawPointRedemptionDetails(ProductionRecipeView selected, int selectedDetailRightX, int footerY) {
 		long totalOutput = (long) selected.getOutputAmount() * (long) productionQuantity;
-		String owned = pointBalancesText(selected);
-		String cost = pointCostText(selected);
-		drawStringRightAligned("Owned: " + owned, selectedDetailRightX, footerY + 5, 1, textColour);
-		drawStringRightAligned("Cost: " + cost, selectedDetailRightX, footerY + 20, 1,
+		drawPointLine("Cost:", selected, false, selectedDetailRightX, footerY + 5,
 			canAffordPointCost(selected) ? textColour : 0xFFAA55);
-		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total" + stockText(selected), selectedDetailRightX, footerY + 35, 1, textColour);
+		drawPointLine("Earned:", selected, true, selectedDetailRightX, footerY + 20, textColour);
+		drawStringRightAligned("Receive: " + formatPointCount(totalOutput) + " total", selectedDetailRightX, footerY + 35, 1, textColour);
 	}
+	private void drawPointLine(String label, ProductionRecipeView selected, boolean earned, int rightX, int y, int color) { String text = earned ? pointBalancesText(selected) : pointCostText(selected); drawStringRightAligned(label + " " + text, rightX, y, 1, color); Sprite coin = slayerPointCoin(); if (coin != null && isMonsterSlayerRedemptionInterface() && selected.getPointCostCount() > 0) mc.getSurface().drawSpriteClipping(coin, rightX - mc.getSurface().stringWidth(1, label + " " + text) + 38, y - 11, 16, 11, pointCoinTint(selected.getPointCostCode(0)), 0, 0, false, 0, 1); }
 
 	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
 	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
@@ -652,6 +657,7 @@ public final class DoSkillInterface {
 	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
 	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
 	private int pointCoinTint(int code) { return code >= 0 && code < SLAYER_POINT_COIN_TINTS.length ? SLAYER_POINT_COIN_TINTS[code] : 0; }
+	private Sprite slayerPointCoin() { if (slayerPointCoin != null) return slayerPointCoin; try { InputStream in = DoSkillInterface.class.getClassLoader().getResourceAsStream("res/myworld/slayer-points-coin.png"); BufferedImage image = in == null ? null : ImageIO.read(in); if (image == null) return null; int[] pixels = new int[image.getWidth() * image.getHeight()]; image.getRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth()); slayerPointCoin = new Sprite(pixels, image.getWidth(), image.getHeight()); return slayerPointCoin; } catch (Exception ignored) { return null; } }
 	private String stockText(ProductionRecipeView selected) { return selected.getStockAmount() >= 0 ? "  Stock: " + selected.getStockAmount() : ""; }
 	private String pointShopHoverName(String name, int output) {
 		if (output <= 1) return name;
