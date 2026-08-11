@@ -19377,7 +19377,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case GROUND_ITEM_USE_ITEM: {
-					if (S_WANT_EQUIPMENT_TAB && tileID > S_PLAYER_INVENTORY_SLOTS) {
+					if (S_WANT_EQUIPMENT_TAB && tileID >= S_PLAYER_INVENTORY_SLOTS) {
 						//they used an item from the equiptab on the ground item - we don't want to handle this yet.
 						this.showMessage(false, null, "Please unequip your item and try again.",
 							MessageType.GAME, 0, null);
@@ -19435,7 +19435,7 @@ public final class mudclient implements Runnable {
 					this.packetHandler.getClientStream().bufferBits.putShort(indexOrX + this.midRegionBaseX);
 					this.packetHandler.getClientStream().bufferBits.putShort(idOrZ + this.midRegionBaseZ);
 					this.packetHandler.getClientStream().bufferBits.putByte(dir);
-					if (tileID > S_PLAYER_INVENTORY_SLOTS) {
+					if (tileID >= S_PLAYER_INVENTORY_SLOTS) {
 						this.packetHandler.getClientStream().bufferBits.putShort(0xFFFF);
 						this.packetHandler.getClientStream().bufferBits.putShort(equippedItems[tileID - S_PLAYER_INVENTORY_SLOTS].id);
 					} else
@@ -19520,7 +19520,7 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_USE_ITEM: {
-					if (S_WANT_EQUIPMENT_TAB && (indexOrX > S_PLAYER_INVENTORY_SLOTS || idOrZ > S_PLAYER_INVENTORY_SLOTS)) {
+					if (S_WANT_EQUIPMENT_TAB && (indexOrX >= S_PLAYER_INVENTORY_SLOTS || idOrZ >= S_PLAYER_INVENTORY_SLOTS)) {
 						//they used an item from the equiptab on the item - we don't want to handle this yet.
 						this.showMessage(false, null, "Please unequip your item and try again.",
 							MessageType.GAME, 0, null);
@@ -19592,9 +19592,9 @@ public final class mudclient implements Runnable {
 					break;
 				}
 				case ITEM_USE_EQUIPTAB:
-					// Slot zero is historically reserved by the equipment action
-					// protocol; keep the entire 0..39 inventory range disjoint.
-					this.selectedItemInventoryIndex = indexOrX + S_PLAYER_INVENTORY_SLOTS + 1;
+					// Encoded equipment actions begin immediately after inventory slot
+					// 39, so each equipment slot round-trips without a collision.
+					this.selectedItemInventoryIndex = indexOrX + S_PLAYER_INVENTORY_SLOTS;
 					this.showUiTab = 0;
 					this.m_ig = equippedItems[indexOrX].getName();
 					break;
@@ -19669,7 +19669,7 @@ public final class mudclient implements Runnable {
 					if (character == null) {
 						return;
 					}
-					if (S_WANT_EQUIPMENT_TAB && idOrZ > S_PLAYER_INVENTORY_SLOTS) {
+					if (S_WANT_EQUIPMENT_TAB && idOrZ >= S_PLAYER_INVENTORY_SLOTS) {
 						//they used an item from the equiptab on the npc - we don't want to handle this yet.
 						this.showMessage(false, null, "Please unequip your item and try again.",
 							MessageType.GAME, 0, null);
@@ -19776,7 +19776,7 @@ public final class mudclient implements Runnable {
 					if (character == null) {
 						return;
 					}
-					if (S_WANT_EQUIPMENT_TAB && idOrZ > S_PLAYER_INVENTORY_SLOTS) {
+					if (S_WANT_EQUIPMENT_TAB && idOrZ >= S_PLAYER_INVENTORY_SLOTS) {
 						//they used an item from their equipment tab on a player- don't handle this yet
 						this.showMessage(false, null, "Please unequip your item and try again.",
 							MessageType.GAME, 0, null);

@@ -1,6 +1,7 @@
 package com.openrsc.server.content.market.task;
 
 import com.openrsc.server.content.market.MarketItem;
+import com.openrsc.server.content.market.MarketInventoryAdmission;
 import com.openrsc.server.database.GameDatabaseException;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Item;
@@ -41,7 +42,8 @@ public class CancelMarketItemTask extends MarketTask {
 					return;
 				}
 				ItemDefinition def = owner.getWorld().getServer().getEntityHandler().getItemDef(itemIndex);
-				if (!owner.getCarriedItems().getInventory().full() && (!def.isStackable() && owner.getCarriedItems().getInventory().size() + amount <= 30)) {
+				if (MarketInventoryAdmission.canReceive(owner.getCarriedItems().getInventory(),
+					itemIndex, amount, def.isStackable())) {
 					owner.getWorld().getServer().getDatabase().cancelAuction(item.getAuctionID());
 					if (!def.isStackable() && amount == 1)
 						owner.getCarriedItems().getInventory().add(new Item(itemIndex, 1));

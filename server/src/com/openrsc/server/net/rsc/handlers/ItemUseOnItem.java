@@ -27,6 +27,13 @@ public final class ItemUseOnItem implements PayloadProcessor<ItemOnItemStruct, O
 		}
 		final int itemIndex1 = payload.slotIndex1;
 		final int itemIndex2 = payload.slotIndex2;
+		if (player.getConfig().WANT_EQUIPMENT_TAB
+			&& (Inventory.isEquipmentActionSlot(itemIndex1) || Inventory.isEquipmentActionSlot(itemIndex2))) {
+			player.message("Please unequip your item and try again.");
+			return;
+		}
+		if (!player.getCarriedItems().getInventory().isValidSlot(itemIndex1)
+			|| !player.getCarriedItems().getInventory().isValidSlot(itemIndex2)) return;
 		Item item1 = player.getCarriedItems().getInventory().get(itemIndex1);
 		Item item2 = player.getCarriedItems().getInventory().get(itemIndex2);
 
@@ -48,10 +55,6 @@ public final class ItemUseOnItem implements PayloadProcessor<ItemOnItemStruct, O
 			return;
 		}
 
-		if (player.getConfig().WANT_EQUIPMENT_TAB && (itemIndex1 > Inventory.MAX_SUPPORTED_SIZE || itemIndex2 > Inventory.MAX_SUPPORTED_SIZE)) {
-			player.message("Please unequip your item and try again.");
-			return;
-		}
 		if (item1.getDef(player.getWorld()).isMembersOnly() || item2.getDef(player.getWorld()).isMembersOnly()) {
 			if (!player.getConfig().MEMBER_WORLD) {
 				player.sendMemberErrorMessage();

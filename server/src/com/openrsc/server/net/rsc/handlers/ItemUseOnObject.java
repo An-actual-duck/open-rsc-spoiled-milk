@@ -122,6 +122,9 @@ public class ItemUseOnObject implements PayloadProcessor<ItemOnObjectStruct, Opc
 					player.message("only custom clients can use items from the equipment slots.");
 					return;
 				}
+			} else if (!player.getCarriedItems().getInventory().isValidSlot(slotID)) {
+				player.setSuspiciousPlayer(true, "item use slot is outside active capacity");
+				return;
 			} else
 				item = player.getCarriedItems().getInventory().get(slotID);
 			if (object.getType() == 0 || item == null || item.getItemStatus().getNoted()) { // This
@@ -137,8 +140,11 @@ public class ItemUseOnObject implements PayloadProcessor<ItemOnObjectStruct, Opc
 				return;
 			}
 			int slotID = payload.slotID;
-			if (player.getConfig().WANT_EQUIPMENT_TAB && slotID > Inventory.MAX_SUPPORTED_SIZE) {
-				item = player.getCarriedItems().getEquipment().get(slotID - Inventory.MAX_SUPPORTED_SIZE);
+			if (player.getConfig().WANT_EQUIPMENT_TAB && Inventory.isEquipmentActionSlot(slotID)) {
+				item = player.getCarriedItems().getEquipment().get(Inventory.equipmentSlotFromActionSlot(slotID));
+			} else if (!player.getCarriedItems().getInventory().isValidSlot(slotID)) {
+				player.setSuspiciousPlayer(true, "item use slot is outside active capacity");
+				return;
 			} else
 				item = player.getCarriedItems().getInventory().get(slotID);
 			if (object.getType() == 1 || item == null) { // This

@@ -40,6 +40,13 @@ public class Inventory {
 	/** Fixed storage/protocol boundary. Equipment slots begin after this range. */
 	public static final int MAX_SUPPORTED_SIZE = 40;
 	/**
+	 * Item-use packets encode equipment immediately after the fixed protocol
+	 * inventory range.  Keep this independent of a player's active capacity:
+	 * a 30-slot account must still never be able to confuse slot 30 with an
+	 * equipment action, and a 40-slot account owns the complete 0..39 range.
+	 */
+	public static final int EQUIPMENT_ACTION_SLOT_OFFSET = MAX_SUPPORTED_SIZE;
+	/**
 	 * Legacy callers which need a fixed array bound must reserve the full custom
 	 * inventory range. Admission decisions must use {@link #getCapacity()}.
 	 */
@@ -107,6 +114,22 @@ public class Inventory {
 		} catch (RuntimeException ignored) {
 			return BASE_SIZE;
 		}
+	}
+
+	/** True only for a currently usable, server-authoritative inventory slot. */
+	public boolean isValidSlot(int slot) {
+		return slot >= 0 && slot < getCapacity();
+	}
+
+	/** True for the separate encoded range used by custom-client equipment use. */
+	public static boolean isEquipmentActionSlot(int slot) {
+		return slot >= EQUIPMENT_ACTION_SLOT_OFFSET
+			&& slot < EQUIPMENT_ACTION_SLOT_OFFSET + Equipment.SLOT_COUNT;
+	}
+
+	/** Converts an encoded equipment action slot to its 0-based equipment slot. */
+	public static int equipmentSlotFromActionSlot(int slot) {
+		return slot - EQUIPMENT_ACTION_SLOT_OFFSET;
 	}
 
 	//----------------------------------------------------------------
