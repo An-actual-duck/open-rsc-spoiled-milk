@@ -55,7 +55,7 @@ public final class MonsterSlayerContactsRouteTest {
 		promotionRenderingIsExactForEveryRank(server);
 		guildAccessModesAndQuestStates(server);
 		associateAmbientAndOwnershipBoundaries(server, routes);
-		beerFailureMessagesRemainTruthful();
+		aleFailureMessagesRemainTruthful();
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -84,11 +84,11 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals(MonsterSlayerShopRestockEvent.INTERVAL_MS, 60000L, "stable world restock interval");
 	}
 
-	private static void beerFailureMessagesRemainTruthful() {
-		assertEquals("You haven't got the beer yet. Visit the barmaid and come back.", MonsterSlayerContacts.beerFailureMessage("missing-beer"), "missing beer message");
-		assertEquals("Your beer was returned, but your Monster Slayer rank could not be recorded. Please try again.", MonsterSlayerContacts.beerFailureMessage("state-write-failed"), "state-write refund message");
-		assertEquals("Your rank record failed and your beer could not be returned. Please contact staff.", MonsterSlayerContacts.beerFailureMessage("refund-failed"), "refund failure message");
-		assertEquals("Your Monster Slayer record needs staff attention.", MonsterSlayerContacts.beerFailureMessage("invalid-state"), "invalid state message");
+	private static void aleFailureMessagesRemainTruthful() {
+		assertEquals("You haven't got a Rising Sun ale yet. Visit the barmaid and come back.", MonsterSlayerContacts.aleFailureMessage("missing-rising-sun-ale"), "missing Rising Sun ale message");
+		assertEquals("Your Rising Sun ale was returned, but your Monster Slayer rank could not be recorded. Please try again.", MonsterSlayerContacts.aleFailureMessage("state-write-failed"), "state-write refund message");
+		assertEquals("Your rank record failed and your Rising Sun ale could not be returned. Please contact staff.", MonsterSlayerContacts.aleFailureMessage("refund-failed"), "refund failure message");
+		assertEquals("Your Monster Slayer record needs staff attention.", MonsterSlayerContacts.aleFailureMessage("invalid-state"), "invalid state message");
 	}
 
 	private static void shopPresentationUsesTypedCostsAndTruthfulFailures(Server server) {

@@ -12,9 +12,13 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /** Typed, fail-closed contact boundary shared by Talk-to and Task shortcuts. */
 public final class MonsterSlayerContactService {
-	public interface BeerTransaction {
-		boolean consume(Player player);
-		boolean refund(Player player);
+	private static final int[] RISING_SUN_ALE_IDS = {
+		ItemId.ASGARNIAN_ALE.id(), ItemId.WIZARDS_MIND_BOMB.id(), ItemId.DWARVEN_STOUT.id()
+	};
+
+	public interface RisingSunAleTransaction {
+		Item consume(Player player);
+		boolean refund(Player player, Item consumedAle);
 	}
 	/** Narrow persistence boundary for transaction-failure characterization. */
 	public interface StateStore {
@@ -24,45 +28,69 @@ public final class MonsterSlayerContactService {
 	private final MonsterSlayerData data;
 	private final MonsterSlayerTaskService tasks;
 	private final RandomSource random;
-	private final BeerTransaction beer;
+	private final RisingSunAleTransaction ale;
 	private final StateStore stateStore;
 	private final Map<UUID, PendingSelection> previews = new HashMap<UUID, PendingSelection>();
 
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks) {
-		this(data, tasks, new RandomSource() { @Override public int nextInt(int bound) { return ThreadLocalRandom.current().nextInt(bound); }}, new BeerTransaction() { public boolean consume(Player p) { return p.getCarriedItems().remove(new Item(ItemId.BEER.id())) != -1; } public boolean refund(Player p) { return p.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); }});
+		this(data, tasks, new RandomSource() { @Override public int nextInt(int bound) { return ThreadLocalRandom.current().nextInt(bound); }}, defaultRisingSunAleTransaction());
 	}
 
 	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random) {
-		this(data, tasks, random, new BeerTransaction() { public boolean consume(Player p) { return p.getCarriedItems().remove(new Item(ItemId.BEER.id())) != -1; } public boolean refund(Player p) { return p.getCarriedItems().getInventory().add(new Item(ItemId.BEER.id()), false); }});
+		this(data, tasks, random, defaultRisingSunAleTransaction());
 	}
-	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, BeerTransaction beer) {
-		this(data, tasks, random, beer, new StateStore() { public MonsterSlayerState.Snapshot read(Cache cache, MonsterSlayerData definitions) { return MonsterSlayerState.read(cache, definitions); } public void write(Cache cache, MonsterSlayerData definitions, MonsterSlayerState.Snapshot snapshot) { MonsterSlayerState.write(cache, definitions, snapshot); }});
+	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, RisingSunAleTransaction ale) {
+		this(data, tasks, random, ale, new StateStore() { public MonsterSlayerState.Snapshot read(Cache cache, MonsterSlayerData definitions) { return MonsterSlayerState.read(cache, definitions); } public void write(Cache cache, MonsterSlayerData definitions, MonsterSlayerState.Snapshot snapshot) { MonsterSlayerState.write(cache, definitions, snapshot); }});
 	}
-	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, BeerTransaction beer, StateStore stateStore) {
-		if (data == null || tasks == null || random == null || beer == null || stateStore == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
+	public MonsterSlayerContactService(MonsterSlayerData data, MonsterSlayerTaskService tasks, RandomSource random, RisingSunAleTransaction ale, StateStore stateStore) {
+		if (data == null || tasks == null || random == null || ale == null || stateStore == null) throw new IllegalArgumentException("Monster Slayer contact dependencies are required");
 		this.data = data;
 		this.tasks = tasks;
 		this.random = random;
-		this.beer = beer;
+		this.ale = ale;
 		this.stateStore = stateStore;
 	}
 
-	public Result beginBeerIntroduction(Player player) { return changeIntroduction(player, false); }
-	public Result completeBeerIntroduction(Player player) { return changeIntroduction(player, true); }
+	public Result beginIntroduction(Player player) { return changeIntroduction(player, false); }
+	public Result completeIntroduction(Player player) { return changeIntroduction(player, true); }
 
-	/** Atomically couples beer consumption with the one-time Fledgling promotion. */
-	public Result completeBeerIntroductionWithBeer(Player player) {
+	/** Atomically couples a Rising Sun ale with the one-time Fledgling promotion. */
+	public Result completeIntroductionWithRisingSunAle(Player player) {
 		try { synchronized (player) {
 			MonsterSlayerState.Snapshot current = stateStore.read(player.getCache(), data);
 			MonsterSlayerState.Snapshot next = MonsterSlayerState.completeIntroduction(current, data);
-			if (!beer.consume(player)) return Result.rejected("missing-beer");
+			Item consumedAle = ale.consume(player);
+			if (consumedAle == null) return Result.rejected("missing-rising-sun-ale");
 			try { stateStore.write(player.getCache(), data, next); }
 			catch (RuntimeException failure) {
-				try { return beer.refund(player) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
+				try { return ale.refund(player, consumedAle) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
 				catch (RuntimeException refundFailure) { return Result.rejected("refund-failed"); }
 			}
 			return Result.accepted(null);
 		} } catch (RuntimeException failure) { return Result.rejected("invalid-state"); }
+	}
+
+	public static boolean hasRisingSunAle(Player player) {
+		if (player == null) return false;
+		for (int id : RISING_SUN_ALE_IDS) {
+			if (player.getCarriedItems().getInventory().countId(id) > 0) return true;
+		}
+		return false;
+	}
+
+	private static RisingSunAleTransaction defaultRisingSunAleTransaction() {
+		return new RisingSunAleTransaction() {
+			@Override public Item consume(Player player) {
+				for (int id : RISING_SUN_ALE_IDS) {
+					Item ale = new Item(id);
+					if (player.getCarriedItems().remove(ale) != -1) return ale;
+				}
+				return null;
+			}
+			@Override public boolean refund(Player player, Item consumedAle) {
+				return consumedAle != null && player.getCarriedItems().getInventory().add(consumedAle, false);
+			}
+		};
 	}
 
 	public Result requestTask(Player player, String contactKey) {

@@ -1,13 +1,11 @@
 package com.openrsc.server.plugins.custom.myworld.npcs;
 
-import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAccess;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
-import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
@@ -77,19 +75,19 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		npcsay(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + data.getFamily(task.getFamilyKey()).getDisplayName() + ".");
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
-		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch the beer first."); return; }
-		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. I require beer!"); service.beginBeerIntroduction(player); return; }
-		if (!player.getCarriedItems().getInventory().contains(new Item(ItemId.BEER.id()))) { npcsay(player, npc, "You haven't got the beer yet."); return; }
-		if (multi(player, "Offer the beer.", "Not yet.") != 0) return;
-		MonsterSlayerContactService.Result result = service.completeBeerIntroductionWithBeer(player);
-		if (!result.isAccepted()) { player.message(beerFailureMessage(result.getReason())); return; }
+		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
+		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Blimey! You're not even a member! Slay my thirst. Bring me an ale from the Rising Sun.", "An Asgarnian Ale, Wizard's Mind Bomb, or Dwarven Stout will do."); service.beginIntroduction(player); return; }
+		if (!MonsterSlayerContactService.hasRisingSunAle(player)) { npcsay(player, npc, "You haven't got a Rising Sun ale yet."); return; }
+		if (multi(player, "Offer a Rising Sun ale.", "Not yet.") != 0) return;
+		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player);
+		if (!result.isAccepted()) { player.message(aleFailureMessage(result.getReason())); return; }
 		npcsay(player, npc, "Excellent, I dub thee an official fledgling Monster Slayer. Hold out your hand for your official stamp", "Nope, just the stamp.", "It's an honor. Return to me any time you wish to continue hunting monsters!");
 	}
 	/** Keeps transaction outcomes truthful without exposing persistence details to players. */
-	public static String beerFailureMessage(String reason) {
-		if ("missing-beer".equals(reason)) return "You haven't got the beer yet. Visit the barmaid and come back.";
-		if ("state-write-failed".equals(reason)) return "Your beer was returned, but your Monster Slayer rank could not be recorded. Please try again.";
-		if ("refund-failed".equals(reason)) return "Your rank record failed and your beer could not be returned. Please contact staff.";
+	public static String aleFailureMessage(String reason) {
+		if ("missing-rising-sun-ale".equals(reason)) return "You haven't got a Rising Sun ale yet. Visit the barmaid and come back.";
+		if ("state-write-failed".equals(reason)) return "Your Rising Sun ale was returned, but your Monster Slayer rank could not be recorded. Please try again.";
+		if ("refund-failed".equals(reason)) return "Your rank record failed and your Rising Sun ale could not be returned. Please contact staff.";
 		return "Your Monster Slayer record needs staff attention.";
 	}
 	private void associate(Player player, Npc npc, boolean trade) { int index = npc.getID() - FIRST_ASSOCIATE; try { if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; } MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank(); if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; } if (trade) MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); else npcsay(player, npc, associateGreeting(index)); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); } }
@@ -97,7 +95,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
 	private static boolean isAmbient(Npc npc) { return npc.getID() >= FIRST_AMBIENT && npc.getID() < FIRST_AMBIENT + 3; }
-	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch the beer first.", "I need to see an Initiate sticker before I can put your name on my list.", "A Veteran button gets you a proper job from me.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
+	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "I need to see an Initiate sticker before I can put your name on my list.", "A Veteran button gets you a proper job from me.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
 	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "You've got the look of someone after a dangerous job.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Do you want another contract?", "Another contract?"}; return lines[index]; }
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }
