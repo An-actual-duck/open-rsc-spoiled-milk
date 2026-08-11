@@ -2,9 +2,9 @@
 
 Status: **definition/state/migration, authoritative task progression and kill
 credit, the approved 35-task roster, all six contact routes and promotions,
-NPC placement, and the headless six-shop economy are implemented; the
-player-facing multi-currency shop UI is next, while dynamic inventory capacity
-and its capacity purchases remain pending**
+NPC placement, player-facing multi-currency shops, and the dynamic 30-to-40
+Slayer inventory-capacity contract are implemented; final private-client
+validation remains pending**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -45,11 +45,11 @@ restock amount `1`; `MonsterSlayerShopService` already owns checked quantity,
 multi-balance deduction, item-grant rollback, stock, and capacity-entitlement
 transactions.
 
-Do not expose capacity purchases during the shop-interface slice. A purchased
-entitlement can already be represented in durable state, but the live server
-and client still enforce a fixed 30-slot inventory. Capacity purchases become
-player-visible only when the separate dynamic 30-to-40 server/protocol/client
-slice is complete and tested.
+The six permanent capacity entitlements are now active. The server derives a
+player's authoritative capacity from the validated mask, custom-client storage
+reserves all 40 positions, and the associate dialogue sells each upgrade only
+in order. The custom capacity receipt is sent before a full inventory packet;
+accounts above 30 slots refuse an older client rather than truncating items.
 
 ## Product Contract
 

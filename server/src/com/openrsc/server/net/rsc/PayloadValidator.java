@@ -123,6 +123,7 @@ public class PayloadValidator {
 		put(OpcodeOut.RUNESCAPE_UPDATED, NoPayloadStruct.class); // TODO: might be relevant at some custom 2001scape ?
 		put(OpcodeOut.SEND_YOPTIN, NoPayloadStruct.class); // retro rsc
 		put(OpcodeOut.SEND_INVENTORY_SIZE, InventoryStruct.class); // retro rsc
+		put(OpcodeOut.SEND_INVENTORY_CAPACITY, InventoryStruct.class); // custom
 		put(OpcodeOut.SEND_UNLOCKED_APPEARANCES, UnlockedAppearancesStruct.class);
 		put(OpcodeOut.SEND_WORLD_EDITOR, WorldEditorStruct.class);
 		put(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT, LayeredSceneContextStruct.class);

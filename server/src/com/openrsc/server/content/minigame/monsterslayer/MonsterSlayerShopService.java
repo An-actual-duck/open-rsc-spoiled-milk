@@ -79,7 +79,9 @@ public final class MonsterSlayerShopService {
 			Shop shop = data.getShop(shopKey); if (shop == null || !rankAllows(player, shop)) return Result.rejected("unavailable");
 			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 			CapacityProposal proposal = proposeCapacityPurchase(current, shopKey);
-			if (!proposal.isSuccessful()) return Result.rejected(proposal.getReason()); MonsterSlayerState.write(player.getCache(), data, proposal.spend.getSnapshot()); return Result.success();
+			if (!proposal.isSuccessful()) return Result.rejected(proposal.getReason());
+			MonsterSlayerState.write(player.getCache(), data, proposal.spend.getSnapshot());
+			return Result.success();
 			}
 		} catch (RuntimeException failure) { return Result.rejected("failure"); }
 	}

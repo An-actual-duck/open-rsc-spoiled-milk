@@ -149,7 +149,7 @@ public final class BankHandler implements PayloadProcessor<BankStruct, OpcodeIn>
 					player.setSuspiciousPlayer(true, "packet six bank preset slot < 0 or preset slot >= preset count");
 					return;
 				}
-				for (int k = 0; k < Inventory.MAX_SIZE; k++) {
+				for (int k = 0; k < Inventory.MAX_SUPPORTED_SIZE; k++) {
 					if (k < player.getCarriedItems().getInventory().size()) {
 						Item inventoryItem = player.getCarriedItems().getInventory().get(k);
 						player.getBank().getBankPreset(presetSlot).getInventory()[k] = new Item(

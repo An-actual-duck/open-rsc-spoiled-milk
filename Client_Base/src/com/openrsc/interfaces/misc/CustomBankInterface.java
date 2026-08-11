@@ -652,7 +652,9 @@ public final class CustomBankInterface extends BankInterface {
 			}
 
 		} else {
-			for (int verticalSlots = 0; verticalSlots < 3; verticalSlots++) {
+			// Reserve all 40 custom-client inventory positions so a Slayer
+			// backpack cannot hide slots 30..39 while banking.
+			for (int verticalSlots = 0; verticalSlots < 4; verticalSlots++) {
 				for (int horizonalSlots = 0; horizonalSlots < 10; horizonalSlots++) {
 
 					int drawX = inventoryDrawX + 6 + horizonalSlots * 49;

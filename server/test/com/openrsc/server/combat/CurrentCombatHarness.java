@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
 import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -85,6 +86,14 @@ final class CurrentCombatHarness implements AutoCloseable {
 		final Field field = World.class.getDeclaredField("monsterSlayerTaskService");
 		field.setAccessible(true);
 		field.set(world, service);
+	}
+
+	/** Installs validated Slayer definitions without starting a full world profile. */
+	void installMonsterSlayerData(final MonsterSlayerData data)
+			throws ReflectiveOperationException {
+		final Field field = World.class.getDeclaredField("monsterSlayerData");
+		field.setAccessible(true);
+		field.set(world, data);
 	}
 
 

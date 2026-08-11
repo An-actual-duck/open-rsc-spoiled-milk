@@ -30,8 +30,8 @@ public final class ItemEquip implements PayloadProcessor<EquipStruct, OpcodeIn> 
 			player.resetAllExceptDueling();
 
 			int inventorySlot = payload.slotIndex;
-			if (inventorySlot < 0 || inventorySlot >= 30) {
-				player.setSuspiciousPlayer(true, "inventorySlot < 0 or inventorySlot >= 30");
+			if (!player.getCarriedItems().getInventory().isValidSlot(inventorySlot)) {
+				player.setSuspiciousPlayer(true, "inventory slot is outside active capacity");
 				return;
 			}
 

@@ -6678,6 +6678,11 @@ public final class Player extends Mob {
 		return this.clientVersion > 10000 && this.clientVersion < 20000;
 	}
 
+	/** The first custom protocol version with the explicit 30..40 capacity receipt. */
+	public boolean supportsExpandedInventory() {
+		return isUsingCustomClient() && this.clientVersion >= 10052;
+	}
+
 	public boolean supportsPlayerUnlockedAppearancesPacket() {
 		return this.clientVersion >= 10009 && this.clientVersion < 20000;
 	}

@@ -553,8 +553,8 @@ public final class MonsterSlayerState {
 
 	/**
 	 * Stable entitlement mapping. Bits are explicit contact identities, never
-	 * enum ordinals or JSON array positions. Inventory behavior remains unchanged
-	 * until the later capacity-activation slice consumes this derived value.
+	 * enum ordinals or JSON array positions. Inventory admission consumes this
+	 * derived value; no second mutable capacity is persisted.
 	 */
 	public enum InventoryUpgrade {
 		FALADOR("falador", 0x01, 1),

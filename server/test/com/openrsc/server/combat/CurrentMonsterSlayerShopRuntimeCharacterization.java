@@ -11,6 +11,8 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.content.market.MarketInventoryAdmission;
+import com.openrsc.server.net.rsc.handlers.PlayerTradeHandler;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.model.entity.player.Player;
 import java.nio.file.Paths;
@@ -25,12 +27,59 @@ import java.util.concurrent.atomic.AtomicReference;
 final class CurrentMonsterSlayerShopRuntimeCharacterization {
 	static void runtimeTransactionsAreAtomic(CurrentCombatHarness h) throws Exception {
 		MonsterSlayerData data = data();
+		h.installMonsterSlayerData(data);
 		risingSunAleTransactionOutcomes(h, data);
 		basicRedemptionAndRollback(h, data);
 		everyShopDeductsItsTypedCost(h, data);
-		capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(h, data);
+		capacityEntitlementsAreOrderedAndPersistCapacity(h, data);
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
+		capacityAwareAdmissionPreservesItems(h, data);
+	}
+
+	/** Exercises the exact capacity seams used by bank, trade, market, and item actions. */
+	private static void capacityAwareAdmissionPreservesItems(CurrentCombatHarness h,
+			MonsterSlayerData data) {
+		int[] upgrades = {0, 0x3f};
+		int[] capacities = {Inventory.BASE_SIZE, Inventory.MAX_SUPPORTED_SIZE};
+		for (int fixture = 0; fixture < capacities.length; fixture++) {
+			final int capacity = capacities[fixture];
+			Player player = h.player("msscapacityadmission" + fixture, 900 + fixture, 790);
+			state(player, data, 0L, upgrades[fixture], 5);
+			Inventory inventory = player.getCarriedItems().getInventory();
+			assertEquals(capacity, inventory.getCapacity(), "authoritative active capacity " + capacity);
+			for (int slot = 0; slot < capacity; slot++) {
+				assertTrue(inventory.isValidSlot(slot), "active inventory slot " + capacity + ":" + slot);
+			}
+			assertFalse(inventory.isValidSlot(capacity), "locked inventory slot " + capacity);
+
+			for (int slot = 0; slot < capacity - 1; slot++) inventory.getItems().add(new Item(259, 1));
+			assertTrue(inventory.canHold(new Item(259, 1)), "one remaining banking slot " + capacity);
+			assertTrue(MarketInventoryAdmission.canReceive(inventory, 259, 1, false),
+				"market purchase/return fits final slot " + capacity);
+			inventory.getItems().add(new Item(259, 1));
+			assertTrue(inventory.full(), "full inventory " + capacity);
+			assertFalse(inventory.canHold(new Item(259, 1)), "banking rejects overflow " + capacity);
+			assertFalse(MarketInventoryAdmission.canReceive(inventory, 259, 1, false),
+				"market purchase/return rejects overflow " + capacity);
+
+			Item outgoing = inventory.getItems().get(0);
+			java.util.List<Item> offer = java.util.Collections.singletonList(new Item(
+				outgoing.getCatalogId(), outgoing.getAmount(), outgoing.getNoted()));
+			assertEquals(1, PlayerTradeHandler.availableSlotsAfterOffer(inventory, offer),
+				"trade reclaims offered slot " + capacity);
+			for (int equipmentSlot = 0; equipmentSlot < 15; equipmentSlot++) {
+				int encoded = Inventory.EQUIPMENT_ACTION_SLOT_OFFSET + equipmentSlot;
+				assertTrue(Inventory.isEquipmentActionSlot(encoded),
+					"encoded equipment slot " + equipmentSlot);
+				assertEquals(equipmentSlot, Inventory.equipmentSlotFromActionSlot(encoded),
+					"equipment action round-trip " + equipmentSlot);
+			}
+			assertFalse(Inventory.isEquipmentActionSlot(Inventory.EQUIPMENT_ACTION_SLOT_OFFSET - 1),
+				"inventory slot 39 never aliases equipment");
+			assertFalse(Inventory.isEquipmentActionSlot(Inventory.EQUIPMENT_ACTION_SLOT_OFFSET + 15),
+				"equipment action upper bound");
+		}
 	}
 
 	private static void risingSunAleTransactionOutcomes(CurrentCombatHarness h, MonsterSlayerData data) {
@@ -213,7 +262,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		assertEquals(6, grants.get(), "one output per shop redemption");
 	}
 
-	private static void capacityEntitlementsAreOrderedAndDoNotChangeActiveInventory(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
+	private static void capacityEntitlementsAreOrderedAndPersistCapacity(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data, rejectingGrant());
 		Player outOfOrder = h.player("mssorder", 820, 790); state(outOfOrder, data, 1000L, 0, 5);
 		Map<String, Object> outOfOrderBefore = new LinkedHashMap<String, Object>(outOfOrder.getCache().getCacheMap());
@@ -255,12 +304,12 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data, countingGrant(fullGrants));
 		Player full = h.player("mssfull", 840, 790); state(full, data, 40L, 0, 0);
 		String fullInventoryReward = data.getShop("falador").getCategories().get(0).getRewards().get(0).getKey();
-		for (int i = 0; i < Inventory.MAX_SIZE; i++) full.getCarriedItems().getInventory().getItems().add(new Item(259, 1));
+		for (int i = 0; i < Inventory.BASE_SIZE; i++) full.getCarriedItems().getInventory().getItems().add(new Item(259, 1));
 		Map<String, Object> fullBefore = new LinkedHashMap<String, Object>(full.getCache().getCacheMap());
 		assertFalse(shops.redeem(full, "falador", fullInventoryReward, 1).isSuccessful(), "full inventory redemption rejected");
 		assertEquals(fullBefore, full.getCache().getCacheMap(), "full inventory leaves points untouched");
 		assertEquals(-1, shops.getStock(fullInventoryReward), "full inventory retains infinite stock");
-		assertEquals(Inventory.MAX_SIZE, full.getCarriedItems().getInventory().size(), "full inventory leaves items untouched");
+		assertEquals(Inventory.BASE_SIZE, full.getCarriedItems().getInventory().size(), "full inventory leaves items untouched");
 		assertEquals(0, fullGrants.get(), "full inventory never invokes item grant");
 
 		Player malformed = h.player("mssmalformed", 841, 790); state(malformed, data, 40L, 0, 0);

@@ -12,6 +12,8 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.struct.UnequipRequest;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,7 +35,22 @@ public class Inventory {
 	/**
 	 * The number of inventory slots per player
 	 */
-	public static final int MAX_SIZE = 30;
+	/** The capacity every account has before Slayer backpack entitlements. */
+	public static final int BASE_SIZE = 30;
+	/** Fixed storage/protocol boundary. Equipment slots begin after this range. */
+	public static final int MAX_SUPPORTED_SIZE = 40;
+	/**
+	 * Item-use packets encode equipment immediately after the fixed protocol
+	 * inventory range.  Keep this independent of a player's active capacity:
+	 * a 30-slot account must still never be able to confuse slot 30 with an
+	 * equipment action, and a 40-slot account owns the complete 0..39 range.
+	 */
+	public static final int EQUIPMENT_ACTION_SLOT_OFFSET = MAX_SUPPORTED_SIZE;
+	/**
+	 * Legacy callers which need a fixed array bound must reserve the full custom
+	 * inventory range. Admission decisions must use {@link #getCapacity()}.
+	 */
+	public static final int MAX_SIZE = MAX_SUPPORTED_SIZE;
 
 	// TODO: Use an ItemContainer rather than a list here.
 	/**
@@ -80,6 +97,39 @@ public class Inventory {
 		synchronized (list) {
 			return list.listIterator();
 		}
+	}
+
+	/** Server-authoritative active capacity; corrupt/unavailable Slayer state
+	 * deliberately falls back to the safe legacy boundary rather than granting
+	 * space. It never alters persisted items. */
+	public int getCapacity() {
+		MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
+		// The world only publishes this data for the MyWorld profile. Checking
+		// the loaded authoritative definition instead of a mutable profile flag
+		// also keeps test/reload worlds coherent.
+		if (data == null) return BASE_SIZE;
+		try {
+			int capacity = MonsterSlayerState.read(player.getCache(), data).getDerivedInventoryCapacity();
+			return capacity >= BASE_SIZE && capacity <= MAX_SUPPORTED_SIZE ? capacity : BASE_SIZE;
+		} catch (RuntimeException ignored) {
+			return BASE_SIZE;
+		}
+	}
+
+	/** True only for a currently usable, server-authoritative inventory slot. */
+	public boolean isValidSlot(int slot) {
+		return slot >= 0 && slot < getCapacity();
+	}
+
+	/** True for the separate encoded range used by custom-client equipment use. */
+	public static boolean isEquipmentActionSlot(int slot) {
+		return slot >= EQUIPMENT_ACTION_SLOT_OFFSET
+			&& slot < EQUIPMENT_ACTION_SLOT_OFFSET + Equipment.SLOT_COUNT;
+	}
+
+	/** Converts an encoded equipment action slot to its 0-based equipment slot. */
+	public static int equipmentSlotFromActionSlot(int slot) {
+		return slot - EQUIPMENT_ACTION_SLOT_OFFSET;
 	}
 
 	//----------------------------------------------------------------
@@ -166,7 +216,7 @@ public class Inventory {
 			if (existingStack == null) {
 
 				// Make sure they have room in the inventory
-				if (list.size() >= MAX_SIZE) {
+				if (list.size() >= getCapacity()) {
 					if (player.getConfig().MESSAGE_FULL_INVENTORY) {
 						player.message("Your Inventory is full, the " + itemToAdd.getDef(player.getWorld()).getName() + " drops to the ground!");
 					}
@@ -214,7 +264,7 @@ public class Inventory {
 					itemToAdd.setAmount(itemToAdd.getAmount() - remainingSize);
 
 					// Make sure they have room in the inventory for the second stack.
-					if (list.size() >= MAX_SIZE) {
+					if (list.size() >= getCapacity()) {
 						if (player.getConfig().MESSAGE_FULL_INVENTORY) {
 							player.message("Your Inventory is full, the " + itemToAdd.getDef(player.getWorld()).getName() + " drops to the ground!");
 						}
@@ -843,25 +893,25 @@ public class Inventory {
 	//Methods that check the list-------------------------------------
 	public boolean canHold(int itemCatelogId, int amount) {
 		synchronized (list) {
-			return (MAX_SIZE - list.size()) >= getRequiredSlots(itemCatelogId, amount, false);
+			return (getCapacity() - list.size()) >= getRequiredSlots(itemCatelogId, amount, false);
 		}
 	}
 
 	public boolean canHold(Item item) {
 		synchronized (list) {
-			return (MAX_SIZE - list.size()) >= getRequiredSlots(item);
+			return (getCapacity() - list.size()) >= getRequiredSlots(item);
 		}
 	}
 
 	public boolean canHold(Item item, int addition) {
 		synchronized (list) {
-			return (MAX_SIZE - list.size() + addition) >= getRequiredSlots(item);
+			return (getCapacity() - list.size() + addition) >= getRequiredSlots(item);
 		}
 	}
 
 	public boolean full() {
 		synchronized (list) {
-			return list.size() >= MAX_SIZE;
+			return list.size() >= getCapacity();
 		}
 	}
 
@@ -925,7 +975,7 @@ public class Inventory {
 	}
 
 	public int getFreeSlots() {
-		return MAX_SIZE - size();
+		return Math.max(0, getCapacity() - size());
 	}
 	//----------------------------------------------------------------
 	//Various methods-------------------------------------------------

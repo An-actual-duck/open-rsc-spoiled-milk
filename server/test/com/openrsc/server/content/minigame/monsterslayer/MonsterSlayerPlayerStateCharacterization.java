@@ -22,7 +22,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		legacyVariantsAndFailuresRemainSafe(data, legacyData);
 		invalidEntitlementsQuarantineWithoutWrites(data, legacyData);
 		malformedStateQuarantinesWithoutWrites(data, legacyData);
-		derivedCapacityUsesStableExplicitBits();
+		derivedCapacityUsesStableExplicitBitsAndReconnects(data);
 		taskAssignmentAndCompletionAreExactOnce(data);
 		taskSelectorsRemainIdBasedWhilePresentationIsClear(data);
 		taskProgressMessagesAreExactAndBounded(data);
@@ -145,10 +145,29 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(before, cache.getCacheMap(), "malformed balance preserves evidence");
 	}
 
-	private static void derivedCapacityUsesStableExplicitBits() {
-		equals(30, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0), "capacity at no entitlements");
-		equals(31, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0x01), "Falador capacity");
-		equals(40, MonsterSlayerState.InventoryUpgrade.derivedCapacity(0x3f), "full capacity");
+	private static void derivedCapacityUsesStableExplicitBitsAndReconnects(MonsterSlayerData data) {
+		int[] masks = {0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f};
+		int[] capacities = {30, 31, 32, 33, 35, 37, 40};
+		for (int index = 0; index < masks.length; index++) {
+			equals(capacities[index], MonsterSlayerState.InventoryUpgrade.derivedCapacity(masks[index]),
+				"derived capacity boundary " + capacities[index]);
+			Cache cache = new Cache();
+			MonsterSlayerState.Snapshot snapshot = MonsterSlayerState.create(2, MonsterSlayerRank.LEGEND,
+				MonsterSlayerBalances.zero(), completedCursors(data), null, 0, 0L, masks[index], 1,
+				MonsterSlayerState.LegacyStatus.NONE, 0, data);
+			MonsterSlayerState.write(cache, data, snapshot);
+			MonsterSlayerState.Snapshot reloaded = MonsterSlayerState.read(cache, data);
+			equals(capacities[index], reloaded.getDerivedInventoryCapacity(),
+				"save-load capacity boundary " + capacities[index]);
+		}
+	}
+
+	private static Map<String, Integer> completedCursors(MonsterSlayerData data) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+		}
+		return cursors;
 	}
 
 	private static void taskAssignmentAndCompletionAreExactOnce(MonsterSlayerData data) {
@@ -314,8 +333,8 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			"falador", "falador.brawn", 2L);
 		assertTrue(accepted.isSuccessful(), "Fledgling typed redemption preflight");
 		equals(2, accepted.getOutput(), "typed output multiplication");
-		assertFalse(shops.proposeRedemption(player, "falador", "falador.brawn", 11L).isSuccessful(),
-			"stock rejects oversized quantity");
+		assertTrue(shops.proposeRedemption(player, "falador", "falador.brawn", 11L).isSuccessful(),
+			"infinite reward stock accepts an otherwise affordable quantity");
 		assertFalse(shops.proposeRedemption(player, "port_sarim", "port_sarim.brawn", 1L).isSuccessful(),
 			"rank gate rejects later shop");
 		MonsterSlayerShopService.CapacityProposal capacity = shops.proposeCapacityPurchase(player, "falador");
@@ -326,7 +345,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "port_sarim").isSuccessful(),
 			"rank gate remains authoritative for later entitlement");
 		shops.restock();
-		equals(10, shops.getStock("falador.brawn"), "restock keeps initial maximum");
+		equals(-1, shops.getStock("falador.brawn"), "infinite stock remains unbounded");
 	}
 
 	private static void cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(MonsterSlayerData data) {

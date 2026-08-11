@@ -349,12 +349,10 @@ public class PlayerTradeHandler implements PayloadProcessor<PlayerTradeStruct, O
 		synchronized(myOffer) {
 			synchronized(theirOffer) {
 				int myRequiredSlots = player.getCarriedItems().getInventory().getRequiredSlots(theirOffer);
-				int myAvailableSlots = (30 - player.getCarriedItems().getInventory().size())
-					+ player.getCarriedItems().getInventory().getFreedSlots(myOffer);
+				int myAvailableSlots = availableSlotsAfterOffer(player.getCarriedItems().getInventory(), myOffer);
 
 				int theirRequiredSlots = affectedPlayer.getCarriedItems().getInventory().getRequiredSlots(myOffer);
-				int theirAvailableSlots = (30 - affectedPlayer.getCarriedItems().getInventory().size())
-					+ affectedPlayer.getCarriedItems().getInventory().getFreedSlots(theirOffer);
+				int theirAvailableSlots = availableSlotsAfterOffer(affectedPlayer.getCarriedItems().getInventory(), theirOffer);
 
 				if (theirRequiredSlots > theirAvailableSlots) {
 					player.message("Other player doesn't have enough inventory space to receive the objects");
@@ -471,6 +469,12 @@ public class PlayerTradeHandler implements PayloadProcessor<PlayerTradeStruct, O
 				affectedPlayer.getTrade().resetAll();
 			}
 		}
+	}
+
+	/** Capacity-aware offer settlement seam shared by the live transaction and tests. */
+	public static int availableSlotsAfterOffer(com.openrsc.server.model.container.Inventory inventory,
+			List<Item> outgoingOffer) {
+		return (inventory.getCapacity() - inventory.size()) + inventory.getFreedSlots(outgoingOffer);
 	}
 
 }
