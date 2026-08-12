@@ -38,12 +38,18 @@ public final class MonsterSlayerContactsRouteTest {
 		Server server = new Server("myworld.conf");
 		server.getEntityHandler().load();
 		MonsterSlayerContacts routes = new MonsterSlayerContacts();
-		for (int id = 846; id <= 851; id++) {
+		for (int id = 846; id <= 850; id++) {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
 			assertTrue(routes.blockTalkNpc(null, npc), "Talk-to contact " + id);
 			assertTrue(routes.blockOpNpc(null, npc, "Task"), "Task contact " + id);
 			assertFalse(routes.blockOpNpc(null, npc, "Trade"), "contact trade " + id);
 		}
+		Npc radimus = new Npc(server.getWorld(), 785, 885, 600);
+		assertFalse(routes.blockTalkNpc(null, radimus), "authentic quest plugin retains Radimus Talk-to ownership");
+		assertTrue(routes.blockOpNpc(null, radimus, "Task"), "Radimus exposes the Slayer Task shortcut");
+		Npc reserved = new Npc(server.getWorld(), 851, 951, 600);
+		assertFalse(routes.blockTalkNpc(null, reserved), "retired Orin slot has no Talk-to ownership");
+		assertFalse(routes.blockOpNpc(null, reserved, "Task"), "retired Orin slot has no Task ownership");
 		for (int id = 852; id <= 857; id++) {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
 			assertTrue(routes.blockTalkNpc(null, npc), "Talk-to associate " + id);
@@ -68,6 +74,7 @@ public final class MonsterSlayerContactsRouteTest {
 		fledglingAssociateSatchelDialogueAndPurchase(server);
 		veteranHeadquartersUsesBlueMoonInnPlacement(server);
 		championsSectUsesTwoDistinctMithrilNpcs();
+		heroesGuildSectUsesClearInteriorAdamantNpcs(server);
 		fledglingPresentationAndRoamingContractIsValid(server);
 		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
@@ -75,6 +82,9 @@ public final class MonsterSlayerContactsRouteTest {
 		maraAssignmentDialogueUsesAuthoritativeProgression(server);
 		branDialogueUsesAuthoritativeVeteranProgression(server);
 		doranDialogueUsesAuthoritativeEliteProgression(server);
+		sellaDialogueUsesAuthoritativeChampionProgression(server);
+		radimusDialogueUsesAuthoritativeHeroProgression(server);
+		legendsSectReusesRadimusAndRuneAssociate(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -203,6 +213,154 @@ public final class MonsterSlayerContactsRouteTest {
 			"new AnimationDef(\"fplatemailtop\", \"equipment\", 10072780",
 			"new AnimationDef(\"battleaxe\", \"equipment\", 10072780"
 		}) assertTrue(clientDefinitions.contains(identity), "proven mithril animation identity " + identity);
+	}
+
+	private static void heroesGuildSectUsesClearInteriorAdamantNpcs(Server server) throws Exception {
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		int[][] expected = {
+			{850, 16, 58, 40, 101, 51}, // full helm, female adamant plate, legs, shield, sword
+			{856, 7, 31, 2, -1, 112} // head, adamant plate, ordinary legs, no shield, battleaxe
+		};
+		int[][] placement = {
+			{850, 372, 1381, 371, 1380, 372, 1382},
+			{856, 374, 1381, 373, 1380, 374, 1382}
+		};
+		java.util.Set<String> appearances = new java.util.HashSet<String>();
+		java.util.Set<String> starts = new java.util.HashSet<String>();
+		for (int[] fixture : expected) {
+			JSONObject definition = location(definitions, fixture[0]);
+			for (int layer = 1; layer <= 5; layer++) assertEquals(fixture[layer],
+				definition.getInt("sprites" + layer), "Heroes adamant layer " + fixture[0] + "/" + layer);
+			assertTrue(appearances.add(definition.getInt("sprites1") + ":" + definition.getInt("sprites2")
+				+ ":" + definition.getInt("sprites3") + ":" + definition.getInt("sprites4")
+				+ ":" + definition.getInt("sprites5")), "Heroes NPCs have distinct silhouettes " + fixture[0]);
+			assertEquals(0, definition.getInt("attackable"), "Heroes Slayer NPC remains non-attackable " + fixture[0]);
+		}
+		for (int[] fixture : placement) {
+			JSONObject spawn = location(locations.getJSONArray("npclocs"), fixture[0]);
+			JSONObject start = spawn.getJSONObject("start"), min = spawn.getJSONObject("min"), max = spawn.getJSONObject("max");
+			assertEquals(fixture[1], start.getInt("X"), "Heroes interior start X " + fixture[0]);
+			assertEquals(fixture[2], start.getInt("Y"), "Heroes interior start Y " + fixture[0]);
+			assertEquals(fixture[3], min.getInt("X"), "Heroes roam min X " + fixture[0]);
+			assertEquals(fixture[4], min.getInt("Y"), "Heroes roam min Y " + fixture[0]);
+			assertEquals(fixture[5], max.getInt("X"), "Heroes roam max X " + fixture[0]);
+			assertEquals(fixture[6], max.getInt("Y"), "Heroes roam max Y " + fixture[0]);
+			assertTrue(starts.add(start.getInt("X") + "," + start.getInt("Y")),
+				"Heroes Slayer starts remain unique " + fixture[0]);
+			assertTrue(min.getInt("X") >= 371 && max.getInt("X") <= 374
+				&& min.getInt("Y") >= 1380 && max.getInt("Y") <= 1382,
+				"Heroes roaming stays inside the clear upper room " + fixture[0]);
+		}
+		assertTrue(rangesAreDisjoint(location(locations.getJSONArray("npclocs"), 850),
+			location(locations.getJSONArray("npclocs"), 856)),
+			"Heroes Slayer NPC roaming pockets do not overlap");
+		assertEquals("Champion Slayer Associate", location(definitions, 856).getString("name"),
+			"Heroes associate has rank-specific identity");
+
+		int heroesSpawns = 0;
+		for (Object value : locations.getJSONArray("npclocs")) {
+			JSONObject spawn = (JSONObject) value;
+			int id = spawn.getInt("id");
+			if (id < 846 || id > 860) continue;
+			JSONObject start = spawn.getJSONObject("start");
+			if (start.getInt("X") >= 369 && start.getInt("X") <= 376
+					&& start.getInt("Y") >= 1380 && start.getInt("Y") <= 1383) heroesSpawns++;
+		}
+		assertEquals(2, heroesSpawns, "Heroes Guild retains exactly two placed Slayer NPCs");
+		assertHeroesRangeDoesNotIntersectWorldPlacements(server, locations, "conf/server/defs/locs");
+
+		server.getWorld().getRegionManager().load();
+		for (int[] fixture : placement) {
+			for (int x = fixture[3]; x <= fixture[5]; x++) {
+				for (int y = fixture[4]; y <= fixture[6]; y++) {
+					assertTrue((server.getWorld().getTile(x, y).traversalMask
+						& com.openrsc.server.util.rsc.CollisionFlag.FULL_BLOCK) == 0,
+						"Heroes roam tile is walkable in authoritative terrain " + fixture[0] + " @ " + x + "," + y);
+					assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
+						Point.location(fixture[1], fixture[2]), Point.location(x, y), true),
+						"Heroes roam tile is connected to its start " + fixture[0] + " @ " + x + "," + y);
+				}
+			}
+		}
+		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
+			Point.location(374, 1382), Point.location(372, 1381), true),
+			"clear tile beside the guild ladder reaches Sella without crossing a wall");
+
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com",
+			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("new int[]{16, 58, 40, 101, 51, -1, -1, -1"),
+			"client Sella uses full adamant composition");
+		assertEquals("An inspiring Heroes Guild Monster Slayer contact", location(definitions, 850).getString("description"),
+			"Sella description does not collide with the formal Veteran rank");
+		assertTrue(clientDefinitions.contains("\"Sella\", \"An inspiring Heroes Guild Monster Slayer contact\""),
+			"client/server Sella description is synchronized");
+		assertTrue(clientDefinitions.contains("new int[]{7, 31, 2, -1, 112, -1, -1, -1"),
+			"client associate uses partial adamant composition");
+		assertTrue(clientDefinitions.contains("\"Champion Slayer Associate\", \"A Champion Slayer supplier\""),
+			"client/server Heroes associate identity is synchronized");
+		assertEquals("Hero Slayer Associate", location(definitions, 857).getString("name"),
+			"server names the final supplier for the Hero point tier");
+		assertTrue(clientDefinitions.contains("\"Hero Slayer Associate\", \"A rune-clad Hero Slayer supplier\""),
+			"client/server Hero associate identity is synchronized");
+		for (String identity : new String[] {
+			"new AnimationDef(\"fullhelm\", \"equipment\", 11717785",
+			"new AnimationDef(\"fplatemailtop\", \"equipment\", 11717785",
+			"new AnimationDef(\"platemailtop\", \"equipment\", 11717785",
+			"new AnimationDef(\"platemaillegs\", \"equipment\", 11717785",
+			"new AnimationDef(\"squareshield\", \"equipment\", 11717785",
+			"new AnimationDef(\"sword\", \"equipment\", 11717785",
+			"new AnimationDef(\"battleaxe\", \"equipment\", 11717785"
+		}) assertTrue(clientDefinitions.contains(identity), "proven adamant animation identity " + identity);
+	}
+
+	private static void assertHeroesRangeDoesNotIntersectWorldPlacements(Server server,
+			JSONObject locations, String directory) throws Exception {
+		for (String pattern : new String[] {"*SceneryLocs*.json", "*BoundaryLocs*.json"}) {
+			try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), pattern)) {
+				for (java.nio.file.Path file : files) {
+					JSONObject objects = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+					String collection = pattern.startsWith("*Scenery") ? "sceneries" : "boundaries";
+					for (Object value : objects.getJSONArray(collection)) {
+						JSONObject entry = (JSONObject) value;
+						int width = 1, height = 1;
+						if ("sceneries".equals(collection)) {
+							com.openrsc.server.external.GameObjectDef object = server.getEntityHandler().getGameObjectDef(entry.getInt("id"));
+							if (object == null) throw new AssertionError("Unknown scenery definition " + entry.getInt("id"));
+							int direction = entry.getInt("direction");
+							width = direction == 0 || direction == 4 ? object.getWidth() : object.getHeight();
+							height = direction == 0 || direction == 4 ? object.getHeight() : object.getWidth();
+						}
+						assertRangesDoNotIntersect(locations, new int[] {850, 856},
+							entry.getJSONObject("pos").getInt("X"), entry.getJSONObject("pos").getInt("Y"),
+							width, height, "Heroes roam intersects " + file + " id=" + entry.getInt("id"));
+					}
+				}
+			}
+		}
+		for (String pattern : new String[] {"NpcLocs*.json", "MyWorldNpcLocs.json"}) {
+			try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), pattern)) {
+				for (java.nio.file.Path file : files) {
+					JSONObject npcs = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+					for (Object value : npcs.getJSONArray("npclocs")) {
+						JSONObject other = (JSONObject) value;
+						if (other.getInt("id") == 850 || other.getInt("id") == 856) continue;
+						for (int hero : new int[] {850, 856}) assertTrue(rangesAreDisjoint(
+							location(locations.getJSONArray("npclocs"), hero), other),
+							"Heroes roam avoids existing NPC " + other.getInt("id") + " in " + file + " npc=" + hero);
+					}
+				}
+			}
+		}
+	}
+
+	private static boolean rangesAreDisjoint(JSONObject left, JSONObject right) {
+		JSONObject leftMin = left.getJSONObject("min"), leftMax = left.getJSONObject("max");
+		JSONObject rightMin = right.getJSONObject("min"), rightMax = right.getJSONObject("max");
+		return leftMax.getInt("X") < rightMin.getInt("X") || leftMin.getInt("X") > rightMax.getInt("X")
+			|| leftMax.getInt("Y") < rightMin.getInt("Y") || leftMin.getInt("Y") > rightMax.getInt("Y");
 	}
 
 	private static void menuResponsesRemainVisiblePlayerSpeech() {
@@ -450,8 +608,37 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("No, not today.", MonsterSlayerContacts.contactChoices(1)[1], "Mara no response ends naturally");
 		assertEquals("Let's see that Adept sticker.", MonsterSlayerContacts.contactProof(1), "Mara requests the Adept proof");
 		assertEquals("Oh, I don't have one.", MonsterSlayerContacts.missingProofResponse(1), "Mara proof refusal includes the player's missing-sticker reply");
-		assertEquals("You need an Adept sticker first. Hobart in Falador can help.", MonsterSlayerContacts.contactRefusal(1), "Mara directs ineligible players to Hobart");
-		assertTrue(MonsterSlayerContacts.contactRefusal(2).contains("Mara in Port Sarim"), "later contacts direct players to the previous giver");
+		assertEquals("You're not ready for my work yet. Find Hobart at the Rising Sun in Falador first.",
+			MonsterSlayerContacts.contactRefusal(1, MonsterSlayerRank.FLEDGLING),
+			"Mara directs an ineligible Fledgling to their authoritative contact");
+		assertEquals("Not ready for Veteran work! Find Mara at the Rusty Anchor in Port Sarim first!",
+			MonsterSlayerContacts.contactRefusal(2, MonsterSlayerRank.INITIATE),
+			"Bran keeps his voice while routing an Adept to Mara");
+		assertEquals("Your standing is insufficient. Continue under Sella at the Heroes Guild.",
+			MonsterSlayerContacts.contactRefusal(5, MonsterSlayerRank.CHAMPION),
+			"Radimus keeps his voice while routing a Champion to Sella");
+		String[] destinations = {
+			"Hobart at the Rising Sun in Falador", "Hobart at the Rising Sun in Falador",
+			"Mara at the Rusty Anchor in Port Sarim", "Bran at the Blue Moon Inn in Varrock",
+			"Doran at the Champions Guild", "Sella at the Heroes Guild",
+			"Sir Radimus at the Legends Guild", "Sir Radimus at the Legends Guild"
+		};
+		MonsterSlayerRank[] ranks = MonsterSlayerRank.values();
+		for (int index = 0; index < ranks.length; index++)
+			assertEquals(destinations[index], MonsterSlayerContacts.rankDestination(ranks[index]),
+				"rank-aware refusal destination " + ranks[index]);
+		String[] fledglingRefusals = {
+			"Not quite ready for my work yet. Go see Hobart at the Rising Sun in Falador first.",
+			"You're not ready for my work yet. Find Hobart at the Rising Sun in Falador first.",
+			"Not ready for Veteran work! Find Hobart at the Rising Sun in Falador first!",
+			"Not yet! Report to Hobart at the Rising Sun in Falador first!",
+			"Your path continues elsewhere. Seek Hobart at the Rising Sun in Falador before returning.",
+			"Your standing is insufficient. Continue under Hobart at the Rising Sun in Falador."
+		};
+		for (int index = 0; index < fledglingRefusals.length; index++)
+			assertEquals(fledglingRefusals[index],
+				MonsterSlayerContacts.contactRefusal(index, MonsterSlayerRank.FLEDGLING),
+				"task giver keeps personality in rank-aware refusal " + index);
 		assertEquals("That was your final Fledgling task.", MonsterSlayerDialoguePlan.promotion(0).get(0).getText(), "Fledgling final-task dialogue is unique");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You are now an Adept."), "promotion states Adept rank");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Here is your official Adept sticker."), "promotion gives official sticker");
@@ -467,7 +654,16 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(ineligible.getCache(), data, fledgling);
 		RecordingDialogue deniedDialogue = new RecordingDialogue(0);
 		new MonsterSlayerContacts(deniedDialogue).onTalkNpc(ineligible, new Npc(server.getWorld(), 847, 271, 600));
-		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Oh, I don't have one.", "N:You need an Adept sticker first. Hobart in Falador can help."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, player acknowledgement, then refusal");
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Oh, I don't have one.", "N:You're not ready for my work yet. Find Hobart at the Rising Sun in Falador first."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, player acknowledgement, then rank-aware refusal");
+		Player distant = player(server, "slayerrankroute", 271, 601);
+		MonsterSlayerState.write(distant.getCache(), data, fledgling);
+		RecordingDialogue distantDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(distantDialogue).onOpNpc(distant,
+			new Npc(server.getWorld(), 785, 272, 601), "Task");
+		assertEquals(java.util.Arrays.asList(
+			"N:Your standing is insufficient. Continue under Hobart at the Rising Sun in Falador."),
+			distantDialogue.events,
+			"rank refusal precedes host-guild gating and routes from the player's actual rank");
 		Player declining = player(server, "maraproofno", 272, 600);
 		MonsterSlayerState.write(declining.getCache(), data, fledgling);
 		RecordingDialogue noDialogue = new RecordingDialogue(1);
@@ -957,7 +1153,8 @@ public final class MonsterSlayerContactsRouteTest {
 			"N:I knew you had it in you.",
 			"P:Than-",
 			"N:Best not keep the Heroes' sect waiting.",
-			"N:I present to you the latest and greatest.",
+			"N:You've earned Champion rank!",
+			"N:And I present to you the latest and greatest.",
 			"N:Monster Slayer Guild Medal!",
 			"P:...",
 			"N:Well, aren't you going to say thank you?",
@@ -996,6 +1193,312 @@ public final class MonsterSlayerContactsRouteTest {
 			else cursors.put(contact.getKey(), 0);
 		}
 		return cursors;
+	}
+
+	private static void sellaDialogueUsesAuthoritativeChampionProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		java.util.List<MonsterSlayerDialoguePlan.Step> welcome = MonsterSlayerDialoguePlan.sellaFirstTaskWelcome();
+		assertDialoguePlan(welcome, new MonsterSlayerDialoguePlan.Speaker[] {
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.PLAYER
+		}, new String[] {
+			"I see by your medal a true hero stands before me.",
+			"But I'll put that medal to the test.",
+			"A hero defends the people of this world.",
+			"And to do that you need to defeat some mighty foes.",
+			"I hope you're ready!",
+			"I've never been more ready!"
+		}, "Sella first-task welcome");
+
+		MonsterSlayerState.Snapshot firstState = MonsterSlayerState.create(2, MonsterSlayerRank.CHAMPION,
+			MonsterSlayerBalances.zero(), championCursors(data, 0), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseSellaFirstTaskWelcome(4, firstState),
+			"authoritative Heroes cursor zero enables Sella welcome");
+		assertFalse(MonsterSlayerContacts.shouldUseSellaAssignmentRemark(4, firstState),
+			"Sella first assignment does not add random flavour to its welcome");
+		Player first = player(server, "slayersellafirst", 305, 600);
+		first.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(first.getCache(), data, firstState);
+		RecordingDialogue firstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(firstDialogue).onTalkNpc(first,
+			new Npc(server.getWorld(), 850, 305, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Do you stand ready to defend this world?",
+			"P:Yes please.",
+			"N:Your medal.",
+			"P:Right here!",
+			"N:I see by your medal a true hero stands before me.",
+			"N:But I'll put that medal to the test.",
+			"N:A hero defends the people of this world.",
+			"N:And to do that you need to defeat some mighty foes.",
+			"N:I hope you're ready!",
+			"P:I've never been more ready!",
+			"N:You should prepare for dragon fire.",
+			"N:Your next task is to slay 20 Blue dragons."), firstDialogue.events,
+			"Sella welcome follows medal proof and preserves first assignment");
+		assertEquals("heroes.blue_dragons",
+			MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+			"Sella welcome preserves authoritative Heroes progression");
+
+		String[] remarks = {
+			"Stand firm. Every foe defeated leaves someone safer.",
+			"Fight with courage, and remember who you fight for.",
+			"Let the people of this world sleep easier tonight.",
+			"A hero's strength is measured by whom they protect.",
+			"Go boldly. The people of this world are counting on us."
+		};
+		for (int index = 0; index < remarks.length; index++) {
+			assertEquals(remarks[index], MonsterSlayerContacts.sellaAssignmentRemark(index),
+				"bounded Sella heroic remark " + index);
+			assertTrue(remarks[index].length() <= 64, "Sella remark remains concise " + index);
+		}
+		assertThrows(new Runnable() { public void run() {
+			MonsterSlayerContacts.sellaAssignmentRemark(remarks.length);
+		}}, "out-of-range Sella dialogue selection is rejected");
+
+		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.CHAMPION,
+			MonsterSlayerBalances.zero(), championCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseSellaAssignmentRemark(4, laterState),
+			"later Heroes work enables Sella assignment flavour");
+		Player later = player(server, "slayersellalater", 306, 600);
+		later.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(later.getCache(), data, laterState);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later,
+			new Npc(server.getWorld(), 850, 306, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events,
+			new String[] {"I see by your medal a true hero stands before me."}),
+			"later Sella assignment does not repeat first-task welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, remarks),
+			"later Sella assignment uses one bounded heroic remark");
+		assertEquals("N:Your next task is to slay 30 Fire giants.",
+			laterDialogue.events.get(laterDialogue.events.size() - 1),
+			"Sella flavour preserves authoritative later assignment");
+
+		Map<String, Integer> promotedCursors = championCursors(data,
+			data.getContact("heroes").getMandatoryTasks().size());
+		Player promoted = player(server, "slayersellapromotion", 307, 600);
+		promoted.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.HERO, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 5L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(promoted,
+			new Npc(server.getWorld(), 850, 307, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:You've fought and slain giants, dragons,",
+			"N:And beasts from the depths of hell.",
+			"N:You've done well to protect the world",
+			"N:From all manner of evil.",
+			"N:I grant you this crest and the rank of Hero.",
+			"N:May your name carry the same weight.",
+			"N:And your foes shudder when they hear it.",
+			"P:It's been an honor and I won't let you down."), promotion.events,
+			"Sella promotion uses the exact heroic speaker order");
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data)
+			.isPromotionAcknowledged("heroes", data),
+			"Sella promotion is acknowledged after exact dialogue");
+
+		Player associatePlayer = player(server, "slayersellaassociate", 308, 600);
+		associatePlayer.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(associatePlayer.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.HERO, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 5L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue associate = new RecordingDialogue(2);
+		new MonsterSlayerContacts(associate).onTalkNpc(associatePlayer,
+			new Npc(server.getWorld(), 856, 308, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Sella sure knows how to inspire a person.",
+			"N:A Hero has earned access to Champion supplies.",
+			"P:No thanks."), associate.events,
+			"Champion associate prepends the approved Sella observation");
+	}
+
+	private static Map<String, Integer> championCursors(MonsterSlayerData data, int championCursor) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if ("falador".equals(contact.getKey()) || "port_sarim".equals(contact.getKey())
+					|| "brimhaven".equals(contact.getKey()) || "champions".equals(contact.getKey()))
+				cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else if ("heroes".equals(contact.getKey())) cursors.put(contact.getKey(), championCursor);
+			else cursors.put(contact.getKey(), 0);
+		}
+		return cursors;
+	}
+
+	private static void radimusDialogueUsesAuthoritativeHeroProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		java.util.List<MonsterSlayerDialoguePlan.Step> welcome = MonsterSlayerDialoguePlan.radimusFirstTaskWelcome();
+		assertDialoguePlan(welcome, new MonsterSlayerDialoguePlan.Speaker[] {
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.PLAYER
+		}, new String[] {
+			"Excellent. Your reputation has brought you far.",
+			"But reputation alone does not make a legend.",
+			"The Legends Guild remembers deeds, not promises.",
+			"Complete the trials I set before you.",
+			"And your name may yet earn its place in these halls.",
+			"I'm ready to make history."
+		}, "Radimus first-task welcome");
+
+		MonsterSlayerState.Snapshot firstState = MonsterSlayerState.create(2, MonsterSlayerRank.HERO,
+			MonsterSlayerBalances.zero(), heroCursors(data, 0), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseRadimusFirstTaskWelcome(5, firstState),
+			"authoritative Legends cursor zero enables Radimus welcome");
+		assertFalse(MonsterSlayerContacts.shouldUseRadimusAssignmentRemark(5, firstState),
+			"Radimus first assignment does not add random flavour to its welcome");
+		Player first = player(server, "slayerradimusfirst", 309, 600);
+		first.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		MonsterSlayerState.write(first.getCache(), data, firstState);
+		RecordingDialogue firstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(firstDialogue).onTalkNpc(first,
+			new Npc(server.getWorld(), 785, 309, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Have you come seeking a task worthy of a legend?",
+			"P:I have.",
+			"N:Then let me see your Hero's crest.",
+			"P:Right here!",
+			"N:Excellent. Your reputation has brought you far.",
+			"N:But reputation alone does not make a legend.",
+			"N:The Legends Guild remembers deeds, not promises.",
+			"N:Complete the trials I set before you.",
+			"N:And your name may yet earn its place in these halls.",
+			"P:I'm ready to make history.",
+			"N:Your next task is to slay 20 Black demons."), firstDialogue.events,
+			"Radimus welcome follows crest proof and preserves first assignment");
+		assertEquals("legends.black_demons",
+			MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+			"Radimus welcome preserves authoritative Legends progression");
+
+		String[] remarks = {
+			"Very well. Let us see whether your reputation is deserved.",
+			"The Guild remembers deeds, not excuses.",
+			"Do be proactive. Greatness rarely waits to be instructed.",
+			"Another trial awaits. I trust you came prepared.",
+			"History favors those who finish what they begin."
+		};
+		for (int index = 0; index < remarks.length; index++) {
+			assertEquals(remarks[index], MonsterSlayerContacts.radimusAssignmentRemark(index),
+				"bounded Radimus guildmaster remark " + index);
+			assertTrue(remarks[index].length() <= 64, "Radimus remark remains concise " + index);
+		}
+		assertThrows(new Runnable() { public void run() {
+			MonsterSlayerContacts.radimusAssignmentRemark(remarks.length);
+		}}, "out-of-range Radimus dialogue selection is rejected");
+
+		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.HERO,
+			MonsterSlayerBalances.zero(), heroCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseRadimusAssignmentRemark(5, laterState),
+			"later Legends work enables Radimus assignment flavour");
+		Player later = player(server, "slayerradimuslater", 310, 600);
+		later.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		MonsterSlayerState.write(later.getCache(), data, laterState);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later,
+			new Npc(server.getWorld(), 785, 310, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events,
+			new String[] {"Excellent. Your reputation has brought you far."}),
+			"later Radimus assignment does not repeat first-task welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, remarks),
+			"later Radimus assignment uses one bounded guildmaster remark");
+		assertTrue(laterDialogue.events.contains("N:You should prepare for dragon fire."),
+			"Radimus preserves authoritative hazard advice");
+		assertEquals("N:Your next task is to slay 10 Black dragons.",
+			laterDialogue.events.get(laterDialogue.events.size() - 1),
+			"Radimus flavour preserves authoritative later assignment");
+
+		Map<String, Integer> promotedCursors = heroCursors(data,
+			data.getContact("legends").getMandatoryTasks().size());
+		Player promoted = player(server, "slayerradimuspromotion", 311, 600);
+		promoted.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.LEGEND, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 3L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(promoted,
+			new Npc(server.getWorld(), 785, 311, 600));
+		java.util.List<MonsterSlayerDialoguePlan.Step> expectedPromotion = MonsterSlayerDialoguePlan.promotion(5);
+		assertEquals(expectedPromotion.size(), promotion.events.size(), "Radimus renders the complete final promotion");
+		for (int index = 0; index < expectedPromotion.size(); index++) {
+			String prefix = expectedPromotion.get(index).getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC ? "N:" : "P:";
+			assertEquals(prefix + expectedPromotion.get(index).getText(), promotion.events.get(index),
+				"Radimus final promotion speaker order " + index);
+		}
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data)
+			.isPromotionAcknowledged("legends", data),
+			"Radimus promotion is acknowledged after exact dialogue");
+	}
+
+	private static Map<String, Integer> heroCursors(MonsterSlayerData data, int heroCursor) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if (!"legends".equals(contact.getKey())) cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else cursors.put(contact.getKey(), heroCursor);
+		}
+		return cursors;
+	}
+
+	private static void legendsSectReusesRadimusAndRuneAssociate(Server server) throws Exception {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		assertEquals(785, data.getContact("legends").getNpcId(), "Legends contact reuses guild Radimus");
+		assertEquals("Sir Radimus Erkle", server.getEntityHandler().getNpcDef(785).getName(),
+			"authentic Radimus identity remains intact");
+
+		JSONObject customLocations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		int orinSpawns = 0;
+		for (Object value : customLocations.getJSONArray("npclocs"))
+			if (((JSONObject) value).getInt("id") == 851) orinSpawns++;
+		assertEquals(0, orinSpawns, "retired Orin has no world spawn");
+		JSONObject associateSpawn = location(customLocations.getJSONArray("npclocs"), 857);
+		assertEquals(511, associateSpawn.getJSONObject("start").getInt("X"), "Hero associate remains beside Radimus X");
+		assertEquals(534, associateSpawn.getJSONObject("start").getInt("Y"), "Hero associate remains beside Radimus Y");
+
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject reserved = location(definitions, 851);
+		assertEquals("Reserved Monster Slayer contact", reserved.getString("name"),
+			"retired slot is retained only to preserve appended definition IDs");
+		assertEquals("", reserved.getString("command"), "retired slot exposes no interaction");
+		JSONObject associate = location(definitions, 857);
+		int[] runeLayers = {4, 59, 3, -1, 113};
+		for (int layer = 1; layer <= runeLayers.length; layer++)
+			assertEquals(runeLayers[layer - 1], associate.getInt("sprites" + layer),
+				"Hero associate rune layer " + layer);
+		assertEquals(65535, associate.getInt("topColour"), "Hero associate uses rune plate colour");
+		assertEquals(0, associate.getInt("attackable"), "Hero associate remains non-attackable");
+
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("getNpcDef(785).updateCommand1(\"Task\")"),
+			"client exposes Task on authentic guild Radimus");
+		assertFalse(clientDefinitions.contains("addMonsterSlayerNpcDefinition(851, \"Orin\""),
+			"client no longer authors Orin");
+		assertTrue(clientDefinitions.contains("new int[]{4, 59, 3, -1, 113, -1, -1, -1"),
+			"client Hero associate uses partial rune composition");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 65535"),
+			"female rune plate sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"battleaxe\", \"equipment\", 65535"),
+			"rune battleaxe sprite identity is proven");
+
+		String authenticRoute = new String(Files.readAllBytes(Paths.get("plugins", "com", "openrsc", "server", "plugins", "authentic", "quests", "members", "legendsquest", "npcs", "LegendsQuestSirRadimusErkle.java")), StandardCharsets.UTF_8);
+		int compatibility = authenticRoute.indexOf("if (doCombatOdyssey(player, n))");
+		int slayerDelegation = authenticRoute.indexOf("new MonsterSlayerContacts().onTalkNpc(player, n)");
+		assertTrue(compatibility >= 0 && slayerDelegation > compatibility,
+			"Radimus preserves legacy recovery before Slayer delegation");
 	}
 
 	private static void assertDialoguePlan(java.util.List<MonsterSlayerDialoguePlan.Step> actual,
@@ -1041,13 +1544,26 @@ public final class MonsterSlayerContactsRouteTest {
 	}
 
 	private static void associateOperationsAndWorldRestockAreBounded(Server server) {
+		String[] refusals = {
+			"Sorry, Adepts only.", "Sorry, Veterans only.", "Sorry, Elites only.",
+			"Sorry, Champions only.", "Sorry, Heroes only.", "Sorry, Legends only."
+		};
 		for (int index = 0; index < 6; index++) {
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Trade"), "associate trade operation " + index);
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Shop"), "associate shop operation " + index);
 			assertFalse(MonsterSlayerContacts.isAssociateShopOperation("Task"), "associate task is not shop operation " + index);
 			assertTrue(MonsterSlayerContacts.associateGreeting(index).length() > 0, "associate talk dialogue " + index);
 			assertTrue(MonsterSlayerContacts.associateSupplyLine(index).length() > 0, "associate supply dialogue " + index);
+			assertEquals(java.util.Arrays.asList(refusals[index]),
+				java.util.Arrays.asList(MonsterSlayerContacts.associateRefusal(index)),
+				"associate shop gate is one concise rank line " + index);
 		}
+		assertEquals("Sorry, you don't have the required prior upgrades to get this one.",
+			MonsterSlayerContacts.missingPriorSatchelUpgradesLine(),
+			"satchel ordering failure names the missing prerequisite");
+		assertEquals("You don't have enough Slayer coins to afford it.",
+			MonsterSlayerContacts.insufficientSatchelCoinsLine(),
+			"satchel balance failure names the missing currency");
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
 		for (int index = 0; index < data.getShops().size(); index++) {
 			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
@@ -1080,9 +1596,12 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(locked.getCache(), data, fledgling);
 		RecordingDialogue lockedDialogue = new RecordingDialogue();
 		new MonsterSlayerContacts(lockedDialogue).onTalkNpc(locked, associate);
-		assertEquals(java.util.Arrays.asList(
-			"N:Sorry, you gotta get a promotion before I can sell you anything.",
-			"N:Them's the rules."), lockedDialogue.events, "Fledgling associate promotion gate is concise");
+		assertEquals(java.util.Arrays.asList("N:Sorry, Adepts only."), lockedDialogue.events,
+			"Fledgling associate uses the concise rank gate");
+		RecordingDialogue lockedTradeDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(lockedTradeDialogue).onOpNpc(locked, associate, "Trade");
+		assertEquals(java.util.Arrays.asList("N:Sorry, Adepts only."), lockedTradeDialogue.events,
+			"right-click shop route uses the same concise rank gate");
 
 		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
@@ -1108,7 +1627,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"N:I can, but it'll cost you 84 fledgling coins.",
 			"N:I can only do one upgrade per satchel as well.",
 			"P:Totally worth it.",
-			"N:Sorry, but you don't have enough to cover the cost."), insufficientDialogue.events,
+			"N:You don't have enough Slayer coins to afford it."), insufficientDialogue.events,
 			"insufficient Fledgling satchel flow quotes before authoritative rejection");
 
 		MonsterSlayerBalances exactPrice = MonsterSlayerBalances.zero().credit(
@@ -1144,6 +1663,26 @@ public final class MonsterSlayerContactsRouteTest {
 		new MonsterSlayerContacts(duplicateDialogue).onTalkNpc(buyer, associate);
 		assertTrue(duplicateDialogue.events.contains("N:Looks like I already did this upgrade."), "duplicate satchel purchase is identified before confirmation");
 		assertEquals(31, MonsterSlayerState.read(buyer.getCache(), data).getDerivedInventoryCapacity(), "duplicate satchel inquiry changes nothing");
+
+		Map<String, Integer> veteranCursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if ("falador".equals(contact.getKey()) || "port_sarim".equals(contact.getKey()))
+				veteranCursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else veteranCursors.put(contact.getKey(), 0);
+		}
+		Player missingPrior = player(server, "slayersatchelprior", 246, 600);
+		MonsterSlayerState.write(missingPrior.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.VETERAN, MonsterSlayerBalances.zero(), veteranCursors,
+			null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue missingPriorDialogue = new RecordingDialogue(1);
+		new MonsterSlayerContacts(missingPriorDialogue).onTalkNpc(missingPrior,
+			new Npc(server.getWorld(), 853, 246, 600));
+		assertTrue(missingPriorDialogue.events.contains(
+			"N:Sorry, you don't have the required prior upgrades to get this one."),
+			"runtime satchel route reports a skipped prerequisite without quoting or spending");
+		assertEquals(30, MonsterSlayerState.read(missingPrior.getCache(), data).getDerivedInventoryCapacity(),
+			"missing prior upgrade leaves capacity unchanged");
 	}
 
 	private static Player adeptPlayer(Server server, MonsterSlayerData data, String name, int x,
@@ -1267,7 +1806,7 @@ public final class MonsterSlayerContactsRouteTest {
 			Player player = player(server, "slayerpromotion" + index, 220 + index, 600);
 			player.setQuestPoints(32); player.setQuestStage(Quests.HEROS_QUEST, -1); player.setQuestStage(Quests.LEGENDS_QUEST, -1);
 			MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2, contact.getAwardedRank(), MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
-			routes.onOpNpc(player, new Npc(server.getWorld(), 846 + index, 220 + index, 600), "Task");
+			routes.onOpNpc(player, new Npc(server.getWorld(), contact.getNpcId(), 220 + index, 600), "Task");
 			java.util.List<MonsterSlayerDialoguePlan.Step> expected = MonsterSlayerDialoguePlan.promotion(index);
 			assertEquals(expected.size(), rendered.size(), "promotion renders exact step count " + contact.getKey());
 			for (int step = 0; step < expected.size(); step++) {
@@ -1300,7 +1839,7 @@ public final class MonsterSlayerContactsRouteTest {
 		routes.onOpNpc(denied, new Npc(server.getWorld(), 855, 244, 600), "Trade");
 		assertEquals(deniedBefore, denied.getCache().getCacheMap(), "guild-denied associate has no progression authority");
 
-		for (int id : new int[] {111, 253, 735, 785}) {
+		for (int id : new int[] {111, 253, 735, 851}) {
 			Npc npc = new Npc(server.getWorld(), id, 245, 600);
 			assertFalse(routes.blockTalkNpc(player, npc), "unrelated NPC talk ownership " + id);
 			assertFalse(routes.blockOpNpc(player, npc, "Task"), "unrelated NPC task ownership " + id);

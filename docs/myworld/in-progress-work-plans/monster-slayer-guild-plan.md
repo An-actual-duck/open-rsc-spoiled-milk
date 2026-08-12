@@ -61,14 +61,17 @@ Source policy:
   Hero rune. Within a headquarters, the contact, associate, and ambient member
   must remain visibly distinct while retaining their role-specific equipment.
 
-## Current Implementation Checkpoint (2026-08-10)
+## Current Implementation Checkpoint (2026-08-12)
 
 Published `main` now contains the complete typed definition and persistence
 foundation, idempotent Combat Odyssey recognition, authoritative mandatory and
 repeatable assignment/completion, contribution-aware NPC-death credit, all six
 challenge balances, the approved 35-task roster, and the headless shop
-transaction service. Contacts `846..851`, associates `852..857`, and ambient
-members `858..860` are defined and placed. The beer introduction, rank proof
+transaction service. Contacts `846..850` plus reused guild Sir Radimus `785`,
+associates `852..857`, and ambient members `858..860` are defined and placed.
+The retired Orin slot `851` remains an unspawned compatibility definition only,
+because removing that appended definition would renumber later custom NPCs.
+The beer introduction, rank proof
 checks, host-guild gates, promotion dialogue, warnings, active-task reporting,
 random repeatables, and transaction/concurrency failure paths have focused
 executable coverage.
@@ -730,9 +733,8 @@ giver and one nearby shop associate. The task giver owns only rank, mandatory,
 and repeatable-task dialogue; the associate owns only the rank-gated challenge
 shop dialogue. They must never be combined merely because a location reuses an
 existing bartender or guild official. Every task giver and shop associate is a
-newly authored, unique humanoid NPC, except that the Legends task giver may
-reuse Sir Radimus `785`, the original borrowed-system task giver. Their initial
-identity, name, ID, and exact placement are a focused content pass; their
+newly authored, unique humanoid NPC, except that the Legends task giver reuses
+Sir Radimus `785`, the original borrowed-system task giver. Their
 appearance should visibly progress from simple early equipment to better armor
 at the higher ranks. Existing bartenders, guildmasters, and quest NPCs retain
 their original responsibilities and are not repurposed as Slayer contacts,
@@ -745,13 +747,14 @@ apart from the explicitly selected Radimus Slayer-route rework.
 | `brimhaven` (legacy internal key) | Blue Moon Inn, Varrock, near the existing bartender | Bran and the Veteran associate are dedicated Slayer NPCs; preserve the inn's bartender and all normal service. |
 | `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
-| `legends` | Legends Guild, near Sir Radimus `785` | Default to a new task giver, but Sir Radimus `785` may instead be selected and reworked as the task giver because he owned the borrowed system. Preserve his Legends Quest reward/training routes and replace only the old Odyssey task route during activation. |
+| `legends` | Legends Guild, Sir Radimus `785` | Reuse guild Radimus as the selected Monster Slayer closer. His authentic Legends Quest reward/training route retains Talk-to ownership; after that work and any recoverable legacy Odyssey state are resolved, it delegates to Monster Slayer. No new Odyssey progression is activated. House Radimus `735` remains quest-only. |
 
-Initial activation content uses the unused stable NPC range `846..860`: task
-givers `846..851` in contact order, their nearby associates `852..857`, and
-the three bar ambient members `858..860`. The exact start tiles are recorded
-in `MyWorldNpcLocs.json`; all are separate from existing bartenders, guild
-officials, Achetties, and Sir Radimus.
+Initial activation content uses task givers `846..850`, reused Radimus `785`,
+nearby associates `852..857`, and bar ambient members `858..860`. Slot `851`
+is deliberately retained but unspawned so the append-only server definition
+loader keeps all following IDs stable. The exact custom start tiles are
+recorded in `MyWorldNpcLocs.json`; Radimus retains his authentic `NpcLocs.json`
+placement at `514,535`.
 
 ### Presentation And Roaming Contract
 
@@ -811,6 +814,31 @@ shield. The ambient Veteran uses head `5`, steel plate body `29`, ordinary legs
 `2`, and steel mace `117`, with no shield. These distinct silhouettes preserve
 the role hierarchy while keeping all three within the steel tier.
 
+#### Champion Heroes Guild Interior Correction
+
+The Heroes Guild sect remains exactly two Slayer NPCs: Sella `850` and the
+Champion Slayer Associate `856`. Both have moved from the exterior entrance
+into the guild's upper interior room. Sella starts at legacy packed coordinate
+`(372,1381)` and roams only `(371..372,1380..1382)`. The associate starts at
+`(374,1381)` and roams only `(373..374,1380..1382)`. These non-overlapping
+pockets sit inside the room's authored walls and remain clear of the Guthix
+altar at the west side and the down ladder at `(375,1382)`. They also avoid
+Achetties and Helemos rather than competing with either NPC's existing route.
+
+Both effective definition catalogs use proven adamant animation identities.
+Sella is visually dominant in full adamant equipment: full helm `16`, female
+plate body `58`, plate legs `40`, square shield `101`, and sword `51`. The
+associate uses head `7`, adamant plate body `31`, ordinary legs `2`, and
+adamant battleaxe `112`, with no shield. The client and server both present the
+associate as `Champion Slayer Associate`.
+
+Automated coverage verifies exact client/server sprite parity, two-NPC sect
+staffing, separate starts and roaming pockets, no overlap with checked-in
+scenery, boundary, or NPC placements, walkable authoritative terrain, a clear
+path from beside the ladder, and the existing Heroes Quest access gate. A
+private visual pass should still confirm that the adamant silhouettes read
+clearly and both NPCs roam naturally without obstructing the ladder.
+
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.
@@ -819,9 +847,11 @@ without bypassing Champions, Heroes, or Legends Guild entry requirements.
 
 The activation is implemented with one dedicated unique-humanoid
 shop-associate beside each task giver. Their armor quality follows the same
-rising-rank visual progression as the task givers. Contact IDs `846..851`,
-associate IDs `852..857`, ambient IDs `858..860`, names, and start tiles are
-authoritative in `MonsterSlayerNpcDefs.json` and `MyWorldNpcLocs.json`.
+rising-rank visual progression as the task givers. Contact IDs `846..850` and
+`785`, associate IDs `852..857`, ambient IDs `858..860`, names, and start tiles
+are authoritative in the base and Monster Slayer definitions and location
+files. The Legends associate wears proven female rune plate with ordinary legs,
+no shield, and a rune battleaxe so the supplier remains distinct from Radimus.
 Existing bartenders and guild officials retain their current roles; the new
 associates do not replace ordinary drinks, guild access, quests, or training
 dialogue.
@@ -866,8 +896,10 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   access, the one-active-task rule, and every mandatory/repeatable state
   transition.
 - The contact-proof pattern is reusable across the ladder: every task giver
-  asks for the preceding proof, and an ineligible player is directed to the
-  immediately preceding giver rather than being given a vague refusal. Mara
+  asks for the preceding proof, and an ineligible player is directed according
+  to the player's **actual current rank**, not merely to the giver immediately
+  below the NPC they clicked. This safely sends a severely under-ranked player
+  all the way back to their real progression contact. Mara
   specifically asks, `Are you here to slay monsters?` Her natural yes/no
   choices are spoken by the player; on yes she asks for the Adept sticker, and
   a player without one is directed to Hobart in Falador.
@@ -880,9 +912,8 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   skips the greeting and the `Yes please / Not now` choice and begins at the
   contact's `Your next task is...` line. It must use the same authoritative
   assignment path as Talk-to. If the player is ineligible, the shortcut must
-  not assign anything and should show a brief NPC line where possible (for
-  example, `Not yet. You need an Adept sticker before I can give you work.`)
-  or the equivalent game message when the client cannot open dialogue.
+  not assign anything and renders the same rank-aware, personality-specific
+  direction used by Talk-to.
 - A player with an active task is shown its current objective and progress
   rather than being given a second task. A player who has finished an
   assignment is sent through completion/promotion handling before another is
@@ -915,8 +946,38 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
   that location's existing typed-currency shop; it never spends points or
   grants an item as part of dialogue. Ineligible use—Talk-to or a right-click
-  `Trade`/`Shop` shortcut—uses the table's refusal and never opens an empty or
+  `Trade`/`Shop` shortcut—uses the table's concise rank refusal and never opens an empty or
   partially locked shop interface.
+
+#### Rank-Aware Task Refusals
+
+The authoritative current-rank destinations are:
+
+| Current rank | Required progression contact |
+| --- | --- |
+| Unstamped or Fledgling | Hobart at the Rising Sun in Falador |
+| Adept | Mara at the Rusty Anchor in Port Sarim |
+| Veteran | Bran at the Blue Moon Inn in Varrock |
+| Elite | Doran at the Champions Guild |
+| Champion | Sella at the Heroes Guild |
+| Hero or Legend | Sir Radimus at the Legends Guild |
+
+Each contacted task giver inserts that destination into one short line in their
+own voice:
+
+- Hobart: `Not quite ready for my work yet. Go see [destination] first.`
+- Mara: `You're not ready for my work yet. Find [destination] first.`
+- Bran: `Not ready for Veteran work! Find [destination] first!`
+- Doran: `Not yet! Report to [destination] first!`
+- Sella: `Your path continues elsewhere. Seek [destination] before returning.`
+- Radimus: `Your standing is insufficient. Continue under [destination].`
+
+Normal Talk-to still shows the missing-proof player response before this line.
+The right-click `Task` shortcut omits the social proof exchange but uses the
+same authoritative destination and cannot assign a task. Rank refusal is
+evaluated before the separate host-guild gate, so an under-ranked player always
+receives useful progression direction; an otherwise eligible player must still
+meet the Champions, Heroes, or Legends Guild's normal access requirements.
 
 ### Developer Test Preparation
 
@@ -939,13 +1000,13 @@ There are six proof changes for the six promotions before the final standing:
 
 | Player rank after promotion | Proof shown in dialogue | Shop newly unlocked | Associate refusal before unlock |
 | --- | --- | --- | --- |
-| Fledgling | hand stamp | none; the player is beginning the first chain | `You need to earn your Adept sticker first.` |
-| Adept | sticker | Rising Sun / Fledgling point shop | `Sorry, can't show you my wares till you're an Adept.` |
-| Veteran | button | Port Sarim / Adept point shop | `Sorry, can't show you my wares till you're a Veteran.` |
-| Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, can't show you my wares till you're an Elite.` |
-| Champion | medal | Champions Guild / Elite point shop | `Sorry, can't show you my wares till you're a Champion.` |
-| Hero | crest | Heroes Guild / Champion point shop | `Sorry, can't show you my wares till you're a Hero.` |
-| Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, can't show you my wares till you're a Legend.` |
+| Fledgling | hand stamp | none; the player is beginning the first chain | `Sorry, Adepts only.` |
+| Adept | sticker | Rising Sun / Fledgling point shop | `Sorry, Adepts only.` |
+| Veteran | button | Port Sarim / Adept point shop | `Sorry, Veterans only.` |
+| Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, Elites only.` |
+| Champion | medal | Champions Guild / Elite point shop | `Sorry, Champions only.` |
+| Hero | crest | Heroes Guild / Champion point shop | `Sorry, Heroes only.` |
+| Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, Legends only.` |
 
 The final `Legend` promotion intentionally does not add a seventh trinket. It
 ends the escalating stamp/sticker/button/badge/medal/crest joke with the
@@ -956,10 +1017,8 @@ validation server-side.
 
 #### Fledgling Associate And Satchel Upgrade
 
-Before the player earns Adept rank, the Fledgling associate says:
-
-> `Sorry, you gotta get a promotion before I can sell you anything.`
-> `Them's the rules.`
+Before the player earns Adept rank, the Fledgling associate uses the shared
+shop gate: `Sorry, Adepts only.`
 
 Once Adept rank unlocks the associate, Talk-to begins with three short lines:
 
@@ -974,9 +1033,10 @@ warns `I can only do one upgrade per satchel as well.` The spoken choices are
 opens the graphical reward store; Talk-to remains dialogue.
 
 The server revalidates and atomically purchases the entitlement only after the
-affirmative response. Insufficient funds produce `Sorry, but you don't have
-enough to cover the cost.` An already-owned entitlement produces `Looks like I
-already did this upgrade.` On success the associate says `Okay, hold on while I
+affirmative response. Insufficient funds produce `You don't have enough Slayer
+coins to afford it.` Missing earlier entitlements produce `Sorry, you don't have
+the required prior upgrades to get this one.` An already-owned entitlement
+produces `Looks like I already did this upgrade.` On success the associate says `Okay, hold on while I
 stitch this.`, pauses briefly, then says `Done! I'm sure you can fit at least
 one more thing now.` The authoritative capacity packet/inventory refresh is
 unchanged. All player-facing Slayer capacity dialogue uses **satchel**, not
@@ -1039,11 +1099,6 @@ Mara is a gruff but kind working woman: practical, sturdy, modest, and quietly
 supportive. Her voice should suggest someone accustomed to hard physical work,
 without becoming cruel, theatrical, aristocratic, or excessively jokey.
 
-**Below rank**
-
-> Contact: `I need to see an Adept sticker before I can put your name on my
-> list. Earn one at the Rising Sun, then come back.`
-
 **Normal task route**
 
 > Mara: `Are you here to slay monsters?`
@@ -1096,10 +1151,6 @@ that interaction, and does not repeat.
 Tone: a self-styled tough hunter. His bluster falls away at the
 promotion, revealing that he has seen what the next step costs.
 
-**Below rank**
-
-> Contact: `No Veteran button, no Blue Moon work. Earn one, then come back.`
-
 **Normal task route**
 
 > Contact: `Back for another hard job? The Blue Moon has seen worse.`
@@ -1143,8 +1194,8 @@ declare. Bran's first-task welcome remains unchanged and receives no extra
 random remark. Active-task reminders, refusal paths, and pending promotion
 interception also receive none.
 
-`Task` shortcut begins at the assignment. Below rank: `No Veteran button, no
-Blue Moon work.`
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Elite promotion / shop reveal**
 
@@ -1175,11 +1226,6 @@ Elite Slayer Associate wears a visibly distinct partial mithril outfit with a
 weapon, ordinary legs, and no shield. This is the first of the three formal
 guild headquarters and follows the confirmed visual progression from Veteran
 steel into Elite mithril.
-
-**Below rank**
-
-> Contact: `An Elite badge is the price of a Champion's contract! Earn one
-> first, then we'll see what you're made of.`
 
 **Normal task route**
 
@@ -1214,8 +1260,8 @@ The existing natural hazard warning remains before this flavor and the final
 authoritative `Your next task...` assignment line. This prevents personality
 text from presenting invented mechanical claims as fact.
 
-`Task` shortcut begins at the assignment. Below rank: `Bring me an Elite badge
-before you ask for Champion work!`
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Champion promotion / shop reveal**
 
@@ -1223,7 +1269,8 @@ before you ask for Champion work!`
 > Doran: `I knew you had it in you.`
 > Player: `Than-`
 > Doran: `Best not keep the Heroes' sect waiting.`
-> Doran: `I present to you the latest and greatest.`
+> Doran: `You've earned Champion rank!`
+> Doran: `And I present to you the latest and greatest.`
 > Doran: `Monster Slayer Guild Medal!`
 > Player: `...`
 > Doran: `Well, aren't you going to say thank you?`
@@ -1242,66 +1289,117 @@ Shop access, satchel upgrades, rank gates, and all costs remain unchanged.
 
 #### 5. Heroes Guild Contact — Champion Medal To Hero Crest
 
-Tone: a hardened veteran. Respectful rather than theatrical; they know the
-cost of the creatures now being assigned. Preserve Heroes Quest and cape
-behavior before this route.
-
-**Below rank**
-
-> Contact: `Champion's medal first. These contracts are not lessons.`
+Sella is an altruistic, grandiose hero. She frames Monster Slayer work around
+protecting other people and inspires Champions to see each contract as service,
+not sport. Preserve Heroes Quest and cape behavior before this route.
 
 **Normal task route**
 
-> Contact: `You came back. Do you want another contract?`
+> Sella: `Do you stand ready to defend this world?`
 > Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Your medal.`
-> Player: `Here.`
-> Contact: `Your next task is to slay [count] [family]. Prepare before you
-> leave; preparation is what brings people home.`
+> Sella (if yes): `Your medal.`
+> Player: `Right here!`
 
-`Task` shortcut begins at the assignment. Below rank: `No Champion medal. No
-Heroes Guild contract.`
+Before the first authoritative Heroes assignment only:
+
+> Sella: `I see by your medal a true hero stands before me.`
+> Sella: `But I'll put that medal to the test.`
+> Sella: `A hero defends the people of this world.`
+> Sella: `And to do that you need to defeat some mighty foes.`
+> Sella: `I hope you're ready!`
+> Player: `I've never been more ready!`
+
+Later mandatory and repeatable assignments select one bounded Sella remark:
+
+- `Stand firm. Every foe defeated leaves someone safer.`
+- `Fight with courage, and remember who you fight for.`
+- `Let the people of this world sleep easier tonight.`
+- `A hero's strength is measured by whom they protect.`
+- `Go boldly. The people of this world are counting on us.`
+
+Definition-driven hazard warnings remain separate and precede assignment. The
+usual authoritative `Your next task is to slay [count] [family].` line follows
+the welcome or remark.
+
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Hero promotion / shop reveal**
 
-> Contact: `You completed the work, even when it was hard. That is the part
-> people remember.`
-> Contact: `You are a Hero. Carry this crest with care.`
-> Contact: `The supplier nearby accepts Champion Slayer Points. A Hero has
-> earned access.`
+Sella awards Hero rather than Legend; the Legends Guild contact retains the
+subsequent Hero-to-Legend step.
 
-#### 6. Legends Guild Contact — Hero Crest To Legend
+> Sella: `You've fought and slain giants, dragons,`
+> Sella: `And beasts from the depths of hell.`
+> Sella: `You've done well to protect the world`
+> Sella: `From all manner of evil.`
+> Sella: `I grant you this crest and the rank of Hero.`
+> Sella: `May your name carry the same weight.`
+> Sella: `And your foes shudder when they hear it.`
+> Player: `It's been an honor and I won't let you down.`
 
-Tone: stoic, economical, and matter-of-fact. Default to a separate Legends
-Guild contact. If Sir Radimus `785` is selected instead, preserve his Legends
-Quest behavior and replace only his borrowed Odyssey task route; house Radimus
-`735` is never a Slayer contact.
+The Champion associate prepends `Sella sure knows how to inspire a person.` to
+their usual unlocked supply and satchel conversation.
 
-**Below rank**
+#### 6. Sir Radimus — Hero Crest To Legend
 
-> Contact: `Hero's crest required. Return when you have earned it.`
+Sir Radimus `785` is the selected final task giver; Orin is retired. His voice
+follows the established Legends material: formal, exacting, proud of the Guild
+and its history, mildly pompous, and occasionally playful. He sees diplomacy,
+judgment, and resolve as part of becoming a legend rather than treating combat
+alone as sufficient. Preserve his Legends Quest behavior and any bounded legacy
+Odyssey recovery, but never begin the Cabbage extended task quest for this
+route. House Radimus `735` is never a Slayer contact.
 
 **Normal task route**
 
-> Contact: `Another contract?`
-> Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Crest.`
-> Player: `Here.`
-> Contact: `Your next task is to slay [count] [family]. Be ready.`
+> Radimus: `Have you come seeking a task worthy of a legend?`
+> Player: `I have.` / `Not today.`
+> Radimus (if yes): `Then let me see your Hero's crest.`
+> Player: `Right here!`
 
-`Task` shortcut begins at the assignment. Below rank: `No Hero's crest. No
-Legend contract.`
+Before the first authoritative Legends assignment only:
+
+> Radimus: `Excellent. Your reputation has brought you far.`
+> Radimus: `But reputation alone does not make a legend.`
+> Radimus: `The Legends Guild remembers deeds, not promises.`
+> Radimus: `Complete the trials I set before you.`
+> Radimus: `And your name may yet earn its place in these halls.`
+> Player: `I'm ready to make history.`
+
+Later mandatory and repeatable assignments select one bounded Radimus remark:
+
+- `Very well. Let us see whether your reputation is deserved.`
+- `The Guild remembers deeds, not excuses.`
+- `Do be proactive. Greatness rarely waits to be instructed.`
+- `Another trial awaits. I trust you came prepared.`
+- `History favors those who finish what they begin.`
+
+Definition-driven hazard warnings remain separate and precede assignment. The
+authoritative task line follows the welcome or remark.
+
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Legend completion / final open ending**
 
-> Contact: `You've completed your journey for now. You've done well.`
+> Radimus: `Well done. Very well done.`
+> Radimus: `You have overcome every trial set before you.`
+> Radimus: `You have proven your strength, your resolve,`
+> Radimus: `And your place among the greatest adventurers of this age.`
+> Radimus: `You've completed your journey for now.`
+> Radimus: `You've done well.`
 > Player: `And what's my new rank?`
-> Contact: `And what use would you make of it?`
-> Player: `...Legend, then?`
-> Contact: `If you continue to earn it.`
+> Radimus: `And what use would you make of it?`
+> Player: `Whatever is required of me.`
+> Radimus: `A suitable answer.`
+> Radimus: `Then rise as a Legend of the Monster Slayer Guild.`
+> Player: `It's an honor.`
+> Radimus: `See that it remains one.`
 
-After this exchange, the Legends associate opens the Hero-point shop. Their
-pre-unlock refusal is `Sorry, can't show you my wares till you're a Legend.`
+After this exchange, the nearby rune-clad associate opens the Hero-point shop.
+Their greeting recognizes Radimus's standards and offers Hero supplies. Their
+pre-unlock refusal is `Sorry, Legends only.`
 Legend repeatable tasks remain available, but the mandatory quest is complete;
 the ending must not promise a further required rank or a finite completion of
 all monster content.
@@ -1723,23 +1821,23 @@ repeatable tasks from that same contact. Definition loading and CI must verify:
 - the price vector contains exactly one positive component, the contact's
   native challenge currency.
 
-### Confirmed: Initial Consumable Shop Stock
+### Confirmed: Initial Shop Stock
 
 The initial rollout has one full three-dose potion from each of the three
 Herblaw potion families and one crafted, non-fish, multi-stage food per shop.
 These are ordinary existing items, not certificates, and are intentionally
 useful alternatives to making the same supplies through Herblaw or Cooking.
-Their inclusion is approved; point-cost vectors and any future secondary stock
-remain a separate economy pass.
+The Hero shop additionally sells dragon metal scrap as an approved high-value
+Smithing material.
 
-| Shop/contact | Native currency | Full potion stock | Food stock | Food total healing |
-| --- | --- | --- | --- | ---: |
-| Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) |
-| Port Sarim | Adept | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) |
-| Blue Moon Inn, Varrock | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) |
-| Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) |
-| Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) |
-| Legends Guild | Hero | Brawn v6 `3198`; Deftness v6 `3201`; Insight v6 `3204` | Pineapple pizza `750` | 20 (two halves) |
+| Shop/contact | Native currency | Full potion stock | Food stock | Food total healing | Additional stock |
+| --- | --- | --- | --- | ---: | --- |
+| Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) | — |
+| Port Sarim | Adept | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) | — |
+| Blue Moon Inn, Varrock | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) | — |
+| Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) | — |
+| Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) | — |
+| Legends Guild | Hero | Brawn v6 `3198`; Deftness v6 `3201`; Insight v6 `3204` | Pineapple pizza `750` | 20 (two halves) | Dragon metal scrap `3228` |
 
 `Brawn` supports Melee, Mining, Smithing, Woodcutting, and Hits; `Deftness`
 supports Ranged, Thieving, Crafting, Agility, and Fishing; and `Insight`
@@ -1748,12 +1846,11 @@ is the existing full three-dose item. Food is deliberately ordered by total
 healing in clean two-point steps from 8 through 20, and every choice is a
 crafted pie, cake, or pizza that is consumed over multiple bites.
 
-The default reward unit is one full potion or one whole food item. Each initial
-consumable line starts with normal shop stock of `10` and uses the ordinary shop
-restock behavior already used by standard stores. The existing quantity selector
-may sell more than one unit only after the cost vector and output multiplication
-are verified atomically. No line above authorizes an unbounded shop stock, a
-certificate substitute, or a change to the underlying Cooking/Herblaw recipes.
+The default reward unit is one full potion, one whole food item, or one dragon
+metal scrap. Slayer point-shop rewards use the implemented infinite-stock model
+shared with the Rangers Guild point shop. The retained JSON stock fields are
+compatibility metadata and do not impose ordinary-store depletion. Quantity
+multiplication and every typed cost component remain atomically validated.
 
 ### Shop Slice Initial Prices (Playtest Baseline)
 
@@ -1762,6 +1859,8 @@ The first headless shop slice uses these deliberately conservative point prices:
 - Potions cost native `2/3/4/5/7/9` points from Fledgling through Hero; each
   later potion also costs `1/2/3/4/5` immediately-lower-tier points.
 - Food costs native `3/5/6/8/10/13` and immediately-lower `0/2/3/4/6/8`.
+- One dragon metal scrap in the Hero shop costs `24` Champion and `32` Hero
+  coins.
 - Capacity entitlements cost native-only `84/148/138/110/268/282`. Against the
   implemented mandatory totals `38/67/62/50/121/128`, each is twice the prior
   110%-rounded baseline; repeatable-task tuning remains subject to playtest.

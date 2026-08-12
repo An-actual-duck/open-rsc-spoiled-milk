@@ -10,6 +10,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.QuestInterface;
 import com.openrsc.server.plugins.custom.quests.MyWorldQuestShortcuts;
 import com.openrsc.server.plugins.custom.minigames.CombatOdyssey;
+import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerContacts;
 import com.openrsc.server.plugins.shared.constants.Quest;
 import com.openrsc.server.plugins.shared.model.QuestReward;
 import com.openrsc.server.plugins.shared.model.XPReward;
@@ -120,12 +121,7 @@ public class LegendsQuestSirRadimusErkle implements QuestInterface, TalkNpcTrigg
 						if (doCombatOdyssey(player, n)) {
 							return;
 						}
-
-						npcsay(player, n, "Hello there! How are you enjoying the Legends Guild?");
-						mes(n, "Radimus looks busy...");
-						delay(2);
-						npcsay(player, n, "Excuse me a moment won't you.",
-							"Do feel free to explore the rest of the building.");
+						new MonsterSlayerContacts().onTalkNpc(player, n);
 						break;
 				}
 			}

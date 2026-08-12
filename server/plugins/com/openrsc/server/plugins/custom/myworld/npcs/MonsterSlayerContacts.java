@@ -32,9 +32,10 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		default int choose(Player player, String... choices) { return multi(player, choices); }
 		default void pause() { delay(); }
 	}
-	private static final int FIRST_CONTACT = 846;
 	private static final int FIRST_ASSOCIATE = 852;
 	private static final int FIRST_AMBIENT = 858;
+	private static final int RADIMUS_GUILD = 785;
+	private static final int[] CONTACT_NPC_IDS = {846, 847, 848, 849, 850, RADIMUS_GUILD};
 	private static final String[] CONTACTS = {"falador", "port_sarim", "brimhaven", "champions", "heroes", "legends"};
 	private static final MonsterSlayerRank[] REQUIRED = {MonsterSlayerRank.FLEDGLING, MonsterSlayerRank.INITIATE, MonsterSlayerRank.VETERAN, MonsterSlayerRank.ELITE, MonsterSlayerRank.CHAMPION, MonsterSlayerRank.HERO};
 	private static final String[] HOBART_FOLLOW_UP_REMARKS = {
@@ -76,6 +77,20 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"No need for speeches! You know the work!",
 		"Off you go! We'll celebrate when it's done!"
 	};
+	private static final String[] SELLA_ASSIGNMENT_REMARKS = {
+		"Stand firm. Every foe defeated leaves someone safer.",
+		"Fight with courage, and remember who you fight for.",
+		"Let the people of this world sleep easier tonight.",
+		"A hero's strength is measured by whom they protect.",
+		"Go boldly. The people of this world are counting on us."
+	};
+	private static final String[] RADIMUS_ASSIGNMENT_REMARKS = {
+		"Very well. Let us see whether your reputation is deserved.",
+		"The Guild remembers deeds, not excuses.",
+		"Do be proactive. Greatness rarely waits to be instructed.",
+		"Another trial awaits. I trust you came prepared.",
+		"History favors those who finish what they begin."
+	};
 	private static final String[] HOBART_MEMBERSHIP_PROOF = {
 		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
 		"Well this won't do. Hm...", "Right, I got it!", "I can think of no fouler beast to slay for your first task.",
@@ -88,7 +103,11 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public MonsterSlayerContacts() { this(new DialogueRenderer() { public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { if (step.getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC) npcsay(player, npc, step.getText()); else say(player, npc, step.getText()); return true; }}); }
 	public MonsterSlayerContacts(DialogueRenderer dialogue) { if (dialogue == null) throw new IllegalArgumentException("dialogue renderer is required"); this.dialogue = dialogue; }
 
-	@Override public boolean blockTalkNpc(Player player, Npc npc) { return managed(npc); }
+	@Override public boolean blockTalkNpc(Player player, Npc npc) {
+		// Radimus's authentic quest plugin delegates completed-quest Talk-to here
+		// after preserving pending quest rewards and legacy Odyssey recovery.
+		return (isContact(npc) && npc.getID() != RADIMUS_GUILD) || isAssociate(npc) || isAmbient(npc);
+	}
 	@Override public boolean blockOpNpc(Player player, Npc npc, String command) {
 		return isContact(npc) ? "Task".equalsIgnoreCase(command)
 			: isAssociate(npc) && isAssociateShopOperation(command);
@@ -103,34 +122,43 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (isContact(npc)) contact(player, npc, true);
 	}
 	private void contact(Player player, Npc npc, boolean shortcut) {
-		int index = npc.getID() - FIRST_CONTACT;
+		int index = contactIndex(npc);
+		if (index < 0) return;
 		MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
 		MonsterSlayerState.Snapshot state;
 		try { state = MonsterSlayerState.read(player.getCache(), data); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); return; }
 		MonsterSlayerContactService service = new MonsterSlayerContactService(data, player.getWorld().getMonsterSlayerTaskService());
 		if (index == 0 && state.getRank() == MonsterSlayerRank.UNSTAMPED) { introduction(player, npc, service, state, shortcut); return; }
-		if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 		if (state.getRank().isAtLeast(data.getContact(CONTACTS[index]).getAwardedRank())
 			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()
 			&& !state.isPromotionAcknowledged(CONTACTS[index], data)) {
+			if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			if (!renderPromotion(player, npc, index)) return;
 			if (!service.acknowledgePromotion(player, CONTACTS[index]).isAccepted()) player.message("Your Monster Slayer promotion could not be recorded.");
 			return;
 		}
-		if (shortcut && !state.getRank().isAtLeast(REQUIRED[index])) { dialogue.npc(player, npc, contactRefusal(index)); return; }
+		if (shortcut && !state.getRank().isAtLeast(REQUIRED[index])) { dialogue.npc(player, npc, contactRefusal(index, state.getRank())); return; }
+		if (shortcut && !hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 		if (!shortcut) {
 			dialogue.npc(player, npc, contactGreeting(index));
 			if (speakChoice(player, npc, contactChoices(index)) != 0) return;
 			dialogue.npc(player, npc, contactProof(index));
-			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index)); return; }
+			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index, state.getRank())); return; }
+			if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			dialogue.player(player, npc, "Right here!");
 			if (shouldUseMaraFirstTaskWelcome(index, state)) dialogue.npc(player, npc, maraFirstTaskWelcome());
 			if (shouldUseBranFirstTaskWelcome(index, state)) dialogue.npc(player, npc, branFirstTaskWelcome());
 			if (shouldUseDoranFirstTaskWelcome(index, state)
 				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.doranFirstTaskWelcome())) return;
+			if (shouldUseSellaFirstTaskWelcome(index, state)
+				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.sellaFirstTaskWelcome())) return;
+			if (shouldUseRadimusFirstTaskWelcome(index, state)
+				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.radimusFirstTaskWelcome())) return;
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
+			if (!shortcut && shouldUseSellaAssignmentRemark(index, state)) dialogue.npc(player, npc, sellaAssignmentRemark());
+			if (!shortcut && shouldUseRadimusAssignmentRemark(index, state)) dialogue.npc(player, npc, radimusAssignmentRemark());
 			String[] warnings = hazardWarningLines(preview);
 			if (warnings.length > 0) dialogue.npc(player, npc, warnings);
 		}
@@ -181,9 +209,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private void associate(Player player, Npc npc, boolean trade) {
 		int index = npc.getID() - FIRST_ASSOCIATE;
 		try {
-			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank();
 			if (rank.getCode() < index + 2) { dialogue.npc(player, npc, associateRefusal(index)); return; }
+			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			dialogue.npc(player, npc, associateGreetingLines(index));
 			int choice = speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
@@ -210,7 +238,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			return;
 		}
 		if (state.getInventoryUpgrades() != precedingUpgradeMask(upgrade)) {
-			dialogue.npc(player, npc, "You'll need the earlier satchel upgrades first.");
+			dialogue.npc(player, npc, missingPriorSatchelUpgradesLine());
 			return;
 		}
 		long price = shop.getCapacityUpgrade().getCost().get(shop.getChallenge());
@@ -227,8 +255,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		else if ("locked-or-points".equals(result.getReason())) {
 			MonsterSlayerState.Snapshot latest = MonsterSlayerState.read(player.getCache(), data);
 			if ((latest.getInventoryUpgrades() & upgrade.getBit()) != 0) dialogue.npc(player, npc, "Looks like I already did this upgrade.");
-			else if (latest.getBalances().get(shop.getChallenge()) < price) dialogue.npc(player, npc, "Sorry, but you don't have enough to cover the cost.");
-			else dialogue.npc(player, npc, "You'll need the earlier satchel upgrades first.");
+			else if (latest.getBalances().get(shop.getChallenge()) < price) dialogue.npc(player, npc, insufficientSatchelCoinsLine());
+			else dialogue.npc(player, npc, missingPriorSatchelUpgradesLine());
 		}
 		else dialogue.npc(player, npc, "That satchel upgrade could not be completed. Nothing was spent.");
 	}
@@ -260,11 +288,15 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static String selectedChoice(int selected, String... choices) {
 		return selected >= 0 && selected < choices.length ? choices[selected] : null;
 	}
-	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }
-	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
+	private static boolean isContact(Npc npc) { return contactIndex(npc) >= 0; }
+	private static int contactIndex(Npc npc) {
+		if (npc == null) return -1;
+		for (int index = 0; index < CONTACT_NPC_IDS.length; index++)
+			if (CONTACT_NPC_IDS[index] == npc.getID()) return index;
+		return -1;
+	}
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
 	private static boolean isAmbient(Npc npc) { return npc.getID() >= FIRST_AMBIENT && npc.getID() < FIRST_AMBIENT + 3; }
-	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "I need an Adept sticker before I can put you on my Port Sarim list.", "No Veteran button, no Blue Moon work. Earn one, then come back.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
 	private static String hobartFollowUpRemark() { return hobartFollowUpRemark(ThreadLocalRandom.current().nextInt(HOBART_FOLLOW_UP_REMARKS.length)); }
 	/** Test seam for bounded, task-independent Hobart flavour dialogue. */
 	public static String hobartFollowUpRemark(int index) {
@@ -377,6 +409,42 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		String[] remarks = doranHazardRemarks(task.getHazards().get(hazardIndex));
 		return remarks[(selection / task.getHazards().size()) % remarks.length];
 	}
+	/** Authoritative Champion cursor zero identifies Sella's one-time welcome. */
+	public static boolean shouldUseSellaFirstTaskWelcome(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 4 && state != null && state.getRank() == MonsterSlayerRank.CHAMPION
+			&& state.getActiveTaskKey() == null && state.getMandatoryCursors().get(CONTACTS[4]).intValue() == 0;
+	}
+	/** Later mandatory and repeatable Heroes assignments receive Sella's bounded flavour. */
+	public static boolean shouldUseSellaAssignmentRemark(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 4 && state != null && !shouldUseSellaFirstTaskWelcome(contactIndex, state);
+	}
+	private static String sellaAssignmentRemark() {
+		return sellaAssignmentRemark(ThreadLocalRandom.current().nextInt(SELLA_ASSIGNMENT_REMARKS.length));
+	}
+	/** Deterministic test/review seam for Sella's altruistic assignment voice. */
+	public static String sellaAssignmentRemark(int index) {
+		if (index < 0 || index >= SELLA_ASSIGNMENT_REMARKS.length)
+			throw new IllegalArgumentException("Sella dialogue index is out of range");
+		return SELLA_ASSIGNMENT_REMARKS[index];
+	}
+	/** Authoritative Hero cursor zero identifies Radimus's one-time welcome. */
+	public static boolean shouldUseRadimusFirstTaskWelcome(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 5 && state != null && state.getRank() == MonsterSlayerRank.HERO
+			&& state.getActiveTaskKey() == null && state.getMandatoryCursors().get(CONTACTS[5]).intValue() == 0;
+	}
+	/** Later mandatory and repeatable Legends assignments receive Radimus's bounded flavour. */
+	public static boolean shouldUseRadimusAssignmentRemark(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 5 && state != null && !shouldUseRadimusFirstTaskWelcome(contactIndex, state);
+	}
+	private static String radimusAssignmentRemark() {
+		return radimusAssignmentRemark(ThreadLocalRandom.current().nextInt(RADIMUS_ASSIGNMENT_REMARKS.length));
+	}
+	/** Deterministic test/review seam for Radimus's established guildmaster voice. */
+	public static String radimusAssignmentRemark(int index) {
+		if (index < 0 || index >= RADIMUS_ASSIGNMENT_REMARKS.length)
+			throw new IllegalArgumentException("Radimus dialogue index is out of range");
+		return RADIMUS_ASSIGNMENT_REMARKS[index];
+	}
 	private static String[] doranHazardRemarks(MonsterSlayerHazard hazard) {
 		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
 		switch (hazard) {
@@ -408,15 +476,46 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	/** Exact short lines spoken after a selected eligible drink is accepted. */
 	public static String[] hobartDrinkReturnLines() { return HOBART_DRINK_RETURN.clone(); }
 	/** Contact-specific greeting seam; every later contact follows the same proof-first pattern. */
-	public static String contactGreeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Are you here to slay monsters?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Ready for another contract?", "Another contract?"}; return lines[index]; }
+	public static String contactGreeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Are you here to slay monsters?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "Do you stand ready to defend this world?", "Have you come seeking a task worthy of a legend?"}; return lines[index]; }
 	/** Natural yes/no responses; menu text is repeated as player speech before continuing. */
-	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}}; return choices[index].clone(); }
+	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"I have.", "Not today."}}; return choices[index].clone(); }
 	/** The rank proof required before normal assignment is attempted. */
-	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button?", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
+	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button?", "Badge, if you please!", "Your medal.", "Then let me see your Hero's crest."}; return lines[index]; }
 	/** Player acknowledgement after a proof request but before a proof-gated refusal. */
 	public static String missingProofResponse(int index) { String[] lines = {"Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one."}; return lines[index]; }
-	/** Ineligible contacts direct the player to the immediately preceding task giver. */
-	public static String contactRefusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "You need an Adept sticker first. Hobart in Falador can help.", "I need a Veteran button. Earn it from Mara in Port Sarim.", "I need an Elite badge. Earn it from Bran at the Blue Moon Inn.", "Champion's medal first. Doran at the Champions Guild can help.", "Hero's crest required. Sella at the Heroes Guild can help."}; return lines[index]; }
+	/**
+	 * Rank-aware refusal: the contacted NPC keeps their own voice while the
+	 * destination follows the player's authoritative current progression.
+	 */
+	public static String contactRefusal(int contactIndex, MonsterSlayerRank playerRank) {
+		if (contactIndex < 0 || contactIndex >= CONTACTS.length || playerRank == null)
+			throw new IllegalArgumentException("Invalid Monster Slayer refusal context");
+		String destination = rankDestination(playerRank);
+		String[] lines = {
+			"Not quite ready for my work yet. Go see " + destination + " first.",
+			"You're not ready for my work yet. Find " + destination + " first.",
+			"Not ready for Veteran work! Find " + destination + " first!",
+			"Not yet! Report to " + destination + " first!",
+			"Your path continues elsewhere. Seek " + destination + " before returning.",
+			"Your standing is insufficient. Continue under " + destination + "."
+		};
+		return lines[contactIndex];
+	}
+	/** Current rank identifies the contact whose mandatory work advances the player. */
+	public static String rankDestination(MonsterSlayerRank rank) {
+		if (rank == null) throw new IllegalArgumentException("Monster Slayer rank is required");
+		switch (rank) {
+		case UNSTAMPED:
+		case FLEDGLING: return "Hobart at the Rising Sun in Falador";
+		case INITIATE: return "Mara at the Rusty Anchor in Port Sarim";
+		case VETERAN: return "Bran at the Blue Moon Inn in Varrock";
+		case ELITE: return "Doran at the Champions Guild";
+		case CHAMPION: return "Sella at the Heroes Guild";
+		case HERO:
+		case LEGEND: return "Sir Radimus at the Legends Guild";
+		default: throw new IllegalArgumentException("Unsupported Monster Slayer rank");
+		}
+	}
 	private boolean renderPromotion(Player player, Npc npc, int index) {
 		return renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.promotion(index));
 	}
@@ -431,21 +530,27 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			{"A Veteran's button carries weight here. Your Adept supplies are available."},
 			{"An Elite hunter knows what to pack. Your Blue Moon supplies are available."},
 			{"Doran is a nice guy, but you can never get a word in edgewise.", "A Champion is welcome at this quartermaster's counter."},
-			{"A Hero has earned access to Champion supplies."},
-			{"Legend is not a title we sell. Your Hero supplies are available."}
+			{"Sella sure knows how to inspire a person.", "A Hero has earned access to Champion supplies."},
+			{"Sir Radimus expects much from those he calls legends.", "Fortunately, he expects them to be well supplied.", "Your Hero supplies are available."}
 		};
 		return lines[index].clone();
 	}
 	public static String[] associateRefusal(int index) {
-		String[][] lines = {
-			{"Sorry, you gotta get a promotion before I can sell you anything.", "Them's the rules."},
-			{"Sorry, can't show you my wares till you're a Veteran."},
-			{"Sorry, can't show you my wares till you're an Elite."},
-			{"Sorry, can't show you my wares till you're a Champion."},
-			{"Sorry, can't show you my wares till you're a Hero."},
-			{"Sorry, can't show you my wares till you're a Legend."}
+		String[] lines = {
+			"Sorry, Adepts only.",
+			"Sorry, Veterans only.",
+			"Sorry, Elites only.",
+			"Sorry, Champions only.",
+			"Sorry, Heroes only.",
+			"Sorry, Legends only."
 		};
-		return lines[index].clone();
+		return new String[] {lines[index]};
+	}
+	public static String missingPriorSatchelUpgradesLine() {
+		return "Sorry, you don't have the required prior upgrades to get this one.";
+	}
+	public static String insufficientSatchelCoinsLine() {
+		return "You don't have enough Slayer coins to afford it.";
 	}
 	/** Compatibility seam retained for callers that only need the opening line. */
 	public static String associateGreeting(int index) { return associateGreetingLines(index)[0]; }

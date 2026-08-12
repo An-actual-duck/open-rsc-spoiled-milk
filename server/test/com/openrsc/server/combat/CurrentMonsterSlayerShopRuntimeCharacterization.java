@@ -31,6 +31,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		risingSunAleTransactionOutcomes(h, data);
 		basicRedemptionAndRollback(h, data);
 		everyShopDeductsItsTypedCost(h, data);
+		heroShopDragonMetalScrapUsesApprovedTypedCost(h, data);
 		capacityEntitlementsAreOrderedAndPersistCapacity(h, data);
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
@@ -350,6 +351,50 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			assertEquals(-1, shops.getStock(reward.getKey()), "shop tier has infinite stock " + tier);
 		}
 		assertEquals(6, grants.get(), "one output per shop redemption");
+	}
+
+	private static void heroShopDragonMetalScrapUsesApprovedTypedCost(CurrentCombatHarness h,
+			MonsterSlayerData data) throws Exception {
+		MonsterSlayerDefinitions.Reward scrap = null;
+		for (MonsterSlayerDefinitions.Category category : data.getShop("legends").getCategories()) {
+			for (MonsterSlayerDefinitions.Reward reward : category.getRewards()) {
+				if ("legends.dragon_metal_scrap".equals(reward.getKey())) scrap = reward;
+			}
+		}
+		assertTrue(scrap != null, "Hero shop defines dragon metal scrap");
+		assertEquals(ItemId.RAW_DRAGON_METAL.id(), scrap.getItemId(), "Hero shop grants dragon metal scrap item");
+		assertEquals(1, scrap.getAmount(), "Hero shop grants one scrap per unit");
+		assertEquals(24L, scrap.getCost().get(MonsterSlayerChallenge.CHAMPION),
+			"dragon metal scrap costs exact Champion coins");
+		assertEquals(32L, scrap.getCost().get(MonsterSlayerChallenge.HERO),
+			"dragon metal scrap costs exact Hero coins");
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
+			if (challenge != MonsterSlayerChallenge.CHAMPION && challenge != MonsterSlayerChallenge.HERO)
+				assertEquals(0L, scrap.getCost().get(challenge),
+					"dragon metal scrap has no unintended " + challenge + " cost");
+		}
+
+		final AtomicInteger grantedItem = new AtomicInteger(-1);
+		final AtomicInteger grantedAmount = new AtomicInteger(-1);
+		MonsterSlayerShopService shops = new MonsterSlayerShopService(data,
+			new MonsterSlayerShopService.ItemGrant() {
+				public boolean grant(Player player, int itemId, int amount) {
+					grantedItem.set(itemId);
+					grantedAmount.set(amount);
+					return true;
+				}
+			});
+		Player buyer = h.player("mssdragonscrap", 807, 790);
+		state(buyer, data, 1000L, prefixMask(5), 5);
+		Map<MonsterSlayerChallenge, Long> before = balances(buyer, data).asMap();
+		assertTrue(shops.redeem(buyer, "legends", "legends.dragon_metal_scrap", 1).isSuccessful(),
+			"Hero shop redeems dragon metal scrap");
+		assertTypedDeduction(before, balances(buyer, data).asMap(), scrap.getCost(),
+			"dragon metal scrap typed deduction");
+		assertEquals(ItemId.RAW_DRAGON_METAL.id(), grantedItem.get(), "redemption grants exact scrap item");
+		assertEquals(1, grantedAmount.get(), "redemption grants exact scrap quantity");
+		assertEquals(-1, shops.getStock("legends.dragon_metal_scrap"),
+			"dragon metal scrap follows infinite point-shop stock");
 	}
 
 	private static void capacityEntitlementsAreOrderedAndPersistCapacity(CurrentCombatHarness h, MonsterSlayerData data) throws Exception {

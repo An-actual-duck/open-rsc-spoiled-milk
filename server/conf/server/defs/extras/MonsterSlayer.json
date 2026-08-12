@@ -99,7 +99,7 @@
       ]
     },
     {
-      "key":"legends","npcId":851,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
+      "key":"legends","npcId":785,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
       "mandatoryTasks":[
         {"key":"legends.black_demons","familyKey":"black_demon","requiredKills":20,"pointReward":30},{"key":"legends.black_dragons","familyKey":"black_dragon","requiredKills":10,"pointReward":38,"hazards":["DRAGON_FIRE"]},{"key":"legends.king_black_dragon","familyKey":"king_black_dragon","requiredKills":1,"pointReward":60,"hazards":["DRAGON_FIRE"]}
       ],
@@ -120,6 +120,6 @@
     {"key":"heroes","challenge":"CHAMPION","capacityUpgrade":{"key":"heroes.capacity","cost":{"CHAMPION":268}},"categories":[{"key":"heroes.supplies","label":"Combat supplies","iconItemId":486,"rewards":[
       {"key":"heroes.brawn","itemId":486,"amount":1,"stock":10,"restockAmount":1,"cost":{"ELITE":4,"CHAMPION":7}}, {"key":"heroes.deftness","itemId":566,"amount":1,"stock":10,"restockAmount":1,"cost":{"ELITE":4,"CHAMPION":7}}, {"key":"heroes.insight","itemId":1468,"amount":1,"stock":10,"restockAmount":1,"cost":{"ELITE":4,"CHAMPION":7}}, {"key":"heroes.anchovie_pizza","itemId":327,"amount":1,"stock":10,"restockAmount":1,"cost":{"ELITE":6,"CHAMPION":10}}]}]},
     {"key":"legends","challenge":"HERO","capacityUpgrade":{"key":"legends.capacity","cost":{"HERO":282}},"categories":[{"key":"legends.supplies","label":"Combat supplies","iconItemId":3198,"rewards":[
-      {"key":"legends.brawn","itemId":3198,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":5,"HERO":9}}, {"key":"legends.deftness","itemId":3201,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":5,"HERO":9}}, {"key":"legends.insight","itemId":3204,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":5,"HERO":9}}, {"key":"legends.pineapple_pizza","itemId":750,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":8,"HERO":13}}]}]}
+      {"key":"legends.brawn","itemId":3198,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":5,"HERO":9}}, {"key":"legends.deftness","itemId":3201,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":5,"HERO":9}}, {"key":"legends.insight","itemId":3204,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":5,"HERO":9}}, {"key":"legends.pineapple_pizza","itemId":750,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":8,"HERO":13}}, {"key":"legends.dragon_metal_scrap","itemId":3228,"amount":1,"stock":10,"restockAmount":1,"cost":{"CHAMPION":24,"HERO":32}}]}]}
   ]
 }
