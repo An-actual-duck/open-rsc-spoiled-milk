@@ -6631,8 +6631,8 @@ public class EntityHandler {
 		// My World server's MonsterSlayerNpcDefs.json. The server remains the
 		// authority for combat, membership, and respawn metadata.
 		addMonsterSlayerNpcDefinition(846, "Hobart", "A cheery Monster Slayer recruiter", "Task",
-			new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			0, 16711680, 16711680, 15523536);
+			new int[]{1, -1, -1, 98, 48, -1, 28, 37, -1, -1, -1, -1},
+			6307872, 8421504, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(847, "Mara", "A practical Monster Slayer contact", "Task",
 			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
 			0, 255, 255, 15523536);
@@ -6649,8 +6649,8 @@ public class EntityHandler {
 			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 16776960, 16776960, 15523536);
 		addMonsterSlayerNpcDefinition(852, "Slayer Associate", "A Fledgling Slayer supplier", "Trade",
-			new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			0, 16711680, 16711680, 15523536);
+			new int[]{4, -1, 3, -1, 109, -1, 28, -1, -1, -1, -1, -1},
+			16753488, 16737817, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(853, "Slayer Associate", "An Initiate Slayer supplier", "Trade",
 			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
 			0, 255, 255, 15523536);
@@ -6667,8 +6667,8 @@ public class EntityHandler {
 			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 16776960, 16776960, 15523536);
 		addMonsterSlayerNpcDefinition(858, "Fledgling Monster Slayer", "An eager recruit", "",
-			new int[]{6, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			0, 16711680, 16711680, 15523536);
+			new int[]{7, -1, 2, -1, 116, -1, 28, -1, -1, -1, -1, -1},
+			16753488, 15654365, 8409120, 15523536);
 		addMonsterSlayerNpcDefinition(859, "Initiate Monster Slayer", "A practical hunter", "",
 			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
 			0, 255, 255, 15523536);
