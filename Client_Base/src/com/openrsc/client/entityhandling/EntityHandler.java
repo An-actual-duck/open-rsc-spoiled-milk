@@ -6634,8 +6634,8 @@ public class EntityHandler {
 			new int[]{6, 28, 37, 98, 48, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 8421504, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(847, "Mara", "A practical Monster Slayer contact", "Task",
-			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
-			0, 255, 255, 15523536);
+			new int[]{4, 56, 38, 99, 49, -1, -1, -1, -1, -1, -1, -1},
+			16753488, 15654365, 15654365, 15523536);
 		addMonsterSlayerNpcDefinition(848, "Bran", "A hardened Monster Slayer contact", "Task",
 			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			0, 8421504, 8421504, 15523536);
@@ -6651,9 +6651,9 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(852, "Fledgling Slayer Associate", "A Fledgling Slayer supplier", "Trade",
 			new int[]{3, 55, 2, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 16737817, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(853, "Slayer Associate", "An Initiate Slayer supplier", "Trade",
-			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
-			0, 255, 255, 15523536);
+		addMonsterSlayerNpcDefinition(853, "Adept Slayer Associate", "An Adept Slayer supplier", "Trade",
+			new int[]{6, 29, 3, -1, 110, -1, -1, -1, -1, -1, -1, -1},
+			6307872, 15654365, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(854, "Slayer Associate", "A Veteran Slayer supplier", "Trade",
 			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			0, 8421504, 8421504, 15523536);
@@ -6667,11 +6667,11 @@ public class EntityHandler {
 			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 16776960, 16776960, 15523536);
 		addMonsterSlayerNpcDefinition(858, "Fledgling Monster Slayer", "An eager recruit", "",
-			new int[]{7, -1, 2, -1, 116, -1, 28, -1, -1, -1, -1, -1},
+			new int[]{7, 28, 2, -1, 116, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15654365, 8409120, 15523536);
-		addMonsterSlayerNpcDefinition(859, "Initiate Monster Slayer", "A practical hunter", "",
-			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
-			0, 255, 255, 15523536);
+		addMonsterSlayerNpcDefinition(859, "Adept Monster Slayer", "A practical hunter", "",
+			new int[]{7, 29, 2, -1, 117, -1, -1, -1, -1, -1, -1, -1},
+			16753488, 15654365, 8409120, 15523536);
 		addMonsterSlayerNpcDefinition(860, "Veteran Monster Slayer", "A scarred regular", "",
 			new int[]{3, 56, 38, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			0, 8421504, 8421504, 15523536);

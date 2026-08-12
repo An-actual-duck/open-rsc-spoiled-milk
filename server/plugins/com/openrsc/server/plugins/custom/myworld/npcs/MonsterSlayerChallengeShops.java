@@ -121,7 +121,7 @@ public final class MonsterSlayerChallengeShops {
 	}
 	private static int[] ints(List<Integer> values) { int[] result = new int[values.size()]; for (int i = 0; i < result.length; i++) result[i] = values.get(i); return result; }
 	private static int clamp(long value) { return value > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) Math.max(0L, value); }
-	private static String title(MonsterSlayerChallenge challenge) { String value = challenge.name().toLowerCase(java.util.Locale.ROOT); return Character.toUpperCase(value.charAt(0)) + value.substring(1); }
+	private static String title(MonsterSlayerChallenge challenge) { return challenge.getDisplayName(); }
 
 	public static String redemptionFailureMessage(String reason) {
 		if ("points".equals(reason)) return "You do not have all of the required challenge points for that.";

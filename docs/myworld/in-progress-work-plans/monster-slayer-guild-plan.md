@@ -26,7 +26,7 @@ Source policy:
   dialogue flavour only: they are not items, cosmetics, or another authority.
 - Unique Slayer rewards are explicitly deferred; this pass does not add or
   design them.
-- Backpack prices are the doubled approved baseline: Fledgling `84`, Initiate
+- Backpack prices are the doubled approved baseline: Fledgling `84`, Adept
   `148`, Veteran `138`, Elite `110`, Champion `268`, and Hero `282`. Each is
   exactly twice the prior `ceil(mandatory rewards * 1.10)` price, paid only in
   its own challenge currency.
@@ -46,6 +46,20 @@ Source policy:
 - Do not restore its dragon plate-leg, dragon-skirt, or other finished dragon
   armor rewards. Finished dragon equipment remains owned by the dragon gear
   crafting plan.
+
+## Adept Terminology and Visual Progression (2026-08-11)
+
+- **Adept** is the player-facing name for the second Monster Slayer rank and
+  its point currency. Dialogue, shop text, NPC names and descriptions, UI, and
+  developer command help must use `Adept` / `Adept points`.
+- `INITIATE`, `initiate`, and rank code `2` remain the established internal
+  enum, JSON, and player-cache identifiers. They are compatibility keys, not
+  player-facing terminology. Definition parsing accepts both `adept` and the
+  legacy `initiate` spelling; existing accounts therefore need no migration.
+- The visual equipment ladder is a standing presentation contract: Fledgling
+  uses bronze, Adept iron, Veteran steel, Elite mithril, Champion adamant, and
+  Hero rune. Within a headquarters, the contact, associate, and ambient member
+  must remain visibly distinct while retaining their role-specific equipment.
 
 ## Current Implementation Checkpoint (2026-08-10)
 
@@ -90,10 +104,10 @@ The intended tone and progression remain:
 - An unstamped player brings a beer from the Rising Sun Barmaid to a dedicated
   Monster Slayer contact in the pub and receives a deliberately silly
   `Fledgling` hand stamp.
-- Six fixed task chains advance the player through `Initiate`, `Veteran`,
+- Six fixed task chains advance the player through `Adept`, `Veteran`,
   `Elite`, `Champion`, `Hero`, and `Legend`.
 - Completed contacts offer repeatable random kill tasks for that contact's
-  typed challenge currency: Fledgling, Initiate, Veteran, Elite, Champion, or
+  typed challenge currency: Fledgling, Adept, Veteran, Elite, Champion, or
   Hero points.
 - Biggum Flodrot's personality and the idea of a legendary capstone survive,
   but the 101-task Odyssey is no longer a required 40,906-kill reward wall.
@@ -202,7 +216,7 @@ later decision has not replaced it.
   spawn and replace the foundation JSON's current Falador contact ID `142` with
   that NPC's stable ID.
 
-### Confirmed: Fledgling Assignments And Initiate Reveal
+### Confirmed: Fledgling Assignments And Adept Reveal
 
 The first monster batch deliberately stays with creatures rather than people.
 Goblins are the opening exception to the non-humanoid preference. Exact NPC IDs
@@ -240,7 +254,7 @@ After the ninth kill task, the contact:
 
 - congratulates the player for doing a fine job culling the monsters, despite
   there appearing to be just as many monsters as before;
-- advances the player from `Fledgling` to `Initiate` and presents proof of the
+- advances the player from `Fledgling` to `Adept` and presents proof of the
   new rank as a sticker that can supposedly be displayed wherever the player
   chooses;
 - explains through comedic banter that hand stamps have been retired because
@@ -254,12 +268,12 @@ After the ninth kill task, the contact:
   approved stock and normal ten-unit restock behavior are documented below;
   prices remain a playtest-tuned economy pass.
 
-The Initiate promotion and sticker exchange is locked as:
+The Adept promotion and sticker exchange is locked as:
 
 - Contact: `Excellent work! You've done a fine job culling those monsters.`
 - Player: `There seem to be just as many as before.`
 - Contact: `Imagine how many there would be if you hadn't helped.`
-- Contact: `For your efforts, I promote you to Initiate. Hold still while I
+- Contact: `For your efforts, I promote you to Adept. Hold still while I
   apply your official rank sticker.`
 - Player: `A sticker? What happened to the stamp?`
 - Contact: `Stamps have been retired. Far too impermanent.`
@@ -288,7 +302,7 @@ slower, more dangerous, and more preparation-intensive.
 
 | Challenge rank and promotion | Ordered mandatory monster sequence |
 | --- | --- |
-| `Initiate -> Veteran` | Giant Bat `43` (level 32) -> Deadly Red Spider `99` (36) -> King Scorpion `136` (36) -> White Wolf `248` (41) -> Ugthanki `653` (45) -> Animated Axe `295` (46) -> Jungle Spider `521` (47) -> Baby Blue Dragon `203` (50) -> Shadow Spider `343` (53) |
+| `Adept -> Veteran` | Giant Bat `43` (level 32) -> Deadly Red Spider `99` (36) -> King Scorpion `136` (36) -> White Wolf `248` (41) -> Ugthanki `653` (45) -> Animated Axe `295` (46) -> Jungle Spider `521` (47) -> Baby Blue Dragon `203` (50) -> Shadow Spider `343` (53) |
 | `Veteran -> Elite` | Jogre `523` (58) -> Karamja Wolf `775` (61) -> Moss Giants `104,594` (62) -> Poison Spider `292` (63) -> Grey Wolf `243` (64) -> Ice Spider `263` (64) |
 | `Elite -> Champion` | Ice Giant `135` (68) -> Lesser Demons `22,181` (79) -> Greater Demon `184` (87) |
 | `Champion -> Hero` | Blue Dragon `202` (105) -> Fire Giant `344` (109) -> Green Dragon `196` (110) -> Hellhound `294` (114) -> Red Dragon `201` (140) |
@@ -317,7 +331,7 @@ Repository density and behavior impose these tuning constraints:
   begin only at `Champion`, where dialogue must explicitly warn about dragon
   fire and preparation rather than assuming the player knows the mechanic.
 - Shadow Spiders drain Prayer and Poison Spiders introduce poison. These are
-  intentional mechanic steps at Initiate and Veteran, respectively, and their
+  intentional mechanic steps at Adept and Veteran, respectively, and their
   assignment dialogue must warn the player.
 - Wilderness travel is an accepted part of this quest, but every mandatory
   Wilderness-heavy task requires an explicit risk warning before assignment.
@@ -342,7 +356,7 @@ must not change live Combat Odyssey behavior while performing that sync.
 ### Implemented roster synchronization (2026-08-10)
 
 The approved initial kill-count and point-reward pass is now represented by the
-35-task `MonsterSlayer.json` ladder: Fledgling `38` total points, Initiate
+35-task `MonsterSlayer.json` ladder: Fledgling `38` total points, Adept
 `67`, Veteran `62`, Elite `50`, Champion `121`, and Hero `128`. These remain
 playtest baseline values, not a permanent economy lock. Repeatables use equal
 launch weight `1` and an injected random source; a per-contact preview is
@@ -359,7 +373,7 @@ automatic rank reward: the player must purchase it with that shop's approved
 native-challenge price. Initial prices and task rewards are implementation
 estimates to be tuned through playtesting, not inherited from Odyssey data.
 
-The accepted release baseline is Fledgling `84` (mandatory `38`), Initiate
+The accepted release baseline is Fledgling `84` (mandatory `38`), Adept
 `148` (`67`), Veteran `138` (`62`), Elite `110` (`50`), Champion `268`
 (`121`), and Hero `282` (`128`). Each is twice the previously approved
 110%-rounded mandatory-task price, and every capacity price is native to its
@@ -370,7 +384,7 @@ The six increments and cumulative capacities are fixed:
 | Shop/contact | Native challenge | Slots added | Resulting capacity |
 | --- | --- | ---: | ---: |
 | Rising Sun/Falador | Fledgling | 1 | 31 |
-| Port Sarim | Initiate | 1 | 32 |
+| Port Sarim | Adept | 1 | 32 |
 | Blue Moon Inn, Varrock | Veteran | 1 | 33 |
 | Champions Guild | Elite | 2 | 35 |
 | Heroes Guild | Champion | 2 | 37 |
@@ -504,7 +518,7 @@ or a capacity upgrade.
 - Choose the formal quest name, quest-list presentation, journal text, and any
   quest-point treatment. Calling the mandatory path one quest settles its
   lifecycle, but not those presentation details.
-- Decide whether the Initiate sticker is dialogue-only rank flavor, a physical
+- Decide whether the Adept sticker is dialogue-only rank flavor, a physical
   inventory item, or a displayable cosmetic. If it is an item, tradeability,
   death behavior, duplicate prevention, storage, reclaim, and whether it is
   consumed when displayed all require explicit contracts.
@@ -692,7 +706,7 @@ Stable rank codes are part of the save contract and must never be reordered:
 | ---: | --- | --- |
 | 0 | Unstamped | Recruit prompt and beer assignment begin the guild quest |
 | 1 | Fledgling | Beer completed; first monster assignment available |
-| 2 | Initiate | Falador chain complete; Port Sarim available |
+| 2 | Adept | Falador chain complete; Port Sarim available |
 | 3 | Veteran | Port Sarim chain complete; Blue Moon Inn, Varrock available |
 | 4 | Elite | Blue Moon Inn chain complete; Champions Guild available |
 | 5 | Champion | Champions chain complete; Heroes Guild available |
@@ -793,7 +807,7 @@ The proposed initial roster is:
 | Location | Ambient member display name | World role and voice |
 | --- | --- | --- |
 | Rising Sun / Falador | `Fledgling Monster Slayer` | An eager recruit comparing a fresh hand stamp and boasting about very small monsters. |
-| Rusty Anchor / Port Sarim | `Initiate Monster Slayer` | A practical hunter checking supplies and talking about keeping a task journal dry at sea. |
+| Rusty Anchor / Port Sarim | `Adept Monster Slayer` | A practical hunter checking supplies and talking about keeping a task journal dry at sea. |
 | Blue Moon Inn / Varrock | `Veteran Monster Slayer` | A scarred, guarded regular who acknowledges the work but avoids giving a contract. |
 
 This produces three NPCs at each bar—task giver, shop associate, and ambient
@@ -824,7 +838,7 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   contact's `Your next task is...` line. It must use the same authoritative
   assignment path as Talk-to. If the player is ineligible, the shortcut must
   not assign anything and should show a brief NPC line where possible (for
-  example, `Not yet. You need an Initiate sticker before I can give you work.`)
+  example, `Not yet. You need an Adept sticker before I can give you work.`)
   or the equivalent game message when the client cannot open dialogue.
 - A player with an active task is shown its current objective and progress
   rather than being given a second task. A player who has finished an
@@ -858,9 +872,9 @@ There are six proof changes for the six promotions before the final standing:
 
 | Player rank after promotion | Proof shown in dialogue | Shop newly unlocked | Associate refusal before unlock |
 | --- | --- | --- | --- |
-| Fledgling | hand stamp | none; the player is beginning the first chain | `You need to earn your Initiate sticker first.` |
-| Initiate | sticker | Rising Sun / Fledgling point shop | `Sorry, can't show you my wares till you're an Initiate.` |
-| Veteran | button | Port Sarim / Initiate point shop | `Sorry, can't show you my wares till you're a Veteran.` |
+| Fledgling | hand stamp | none; the player is beginning the first chain | `You need to earn your Adept sticker first.` |
+| Adept | sticker | Rising Sun / Fledgling point shop | `Sorry, can't show you my wares till you're an Adept.` |
+| Veteran | button | Port Sarim / Adept point shop | `Sorry, can't show you my wares till you're a Veteran.` |
 | Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, can't show you my wares till you're an Elite.` |
 | Champion | medal | Champions Guild / Elite point shop | `Sorry, can't show you my wares till you're a Champion.` |
 | Hero | crest | Heroes Guild / Champion point shop | `Sorry, can't show you my wares till you're a Hero.` |
@@ -882,7 +896,7 @@ Slayer giver, but that does not require a matching visual, personality, or
 one-to-one adaptation. Bracketed text is runtime data, never player-controlled
 text.
 
-#### 1. Rising Sun Recruiter — Fledgling Stamp And Initiate Sticker
+#### 1. Rising Sun Recruiter — Fledgling Stamp And Adept Sticker
 
 Tone: quaint, chummy, and a little absurd. This is the dedicated new Rising
 Sun contact, not Barmaid `142`.
@@ -913,7 +927,7 @@ as specified in **Confirmed: One Continuous Mandatory Quest And Beer Opening**.
 is unstamped, it instead says `No stamp, no task. Fetch the beer first.` and
 does not begin an assignment.
 
-**Fledgling completion / Initiate promotion**
+**Fledgling completion / Adept promotion**
 
 Use the already-confirmed sticker exchange verbatim, then add:
 
@@ -921,17 +935,17 @@ Use the already-confirmed sticker exchange verbatim, then add:
 > Contact: `My associate nearby can trade them for useful supplies. And if you
 > fancy more points, I can always find more monsters needing culling.`
 
-The nearby associate opens only after `Initiate`; before then they use the
+The nearby associate opens only after `Adept`; before then they use the
 Fledgling row in the shop-gate table.
 
-#### 2. Rusty Anchor Contact — Initiate Sticker To Veteran Button
+#### 2. Rusty Anchor Contact — Adept Sticker To Veteran Button
 
 Tone: friendly and capable, but no longer quaint; a working-port regular who
 treats the guild as honest employment.
 
 **Below rank**
 
-> Contact: `I need to see an Initiate sticker before I can put your name on my
+> Contact: `I need to see an Adept sticker before I can put your name on my
 > list. Earn one at the Rising Sun, then come back.`
 
 **Normal task route**
@@ -944,14 +958,14 @@ treats the guild as honest employment.
 > your head on.`
 
 `Task` shortcut begins at `Your next task is...`; below-rank use says `No
-Initiate sticker, no Port Sarim work.`
+Adept sticker, no Port Sarim work.`
 
 **Veteran promotion / shop reveal**
 
 > Contact: `You did what you said you would. That's worth more than loud talk.`
 > Contact: `You're a Veteran now. Wear this button somewhere it won't fall in
 > the drink.`
-> Contact: `The trader beside me deals in Initiate Slayer Points. He's cleared
+> Contact: `The trader beside me deals in Adept Slayer Points. He's cleared
 > to serve Veterans.`
 
 #### 3. Blue Moon Inn Contact — Veteran Button To Elite Badge
@@ -1187,7 +1201,8 @@ Stable identity rules:
 - A family owns NPC membership. Multiple contacts may reference the same family
   key; do not duplicate its ID list.
 - Challenge codes are `FLEDGLING`, `INITIATE`, `VETERAN`, `ELITE`, `CHAMPION`,
-  and `HERO`. There is no global or `LEGEND` point balance: the Legends contact
+  and `HERO`; `INITIATE` is the legacy internal code whose player-facing name
+  is Adept. There is no global or `LEGEND` point balance: the Legends contact
   awards and spends Hero points.
 - Mandatory array order is authored progression order, but an active save stores
   the stable task key. Reordering future display data cannot retarget a player.
@@ -1270,13 +1285,13 @@ Merged foundation totals, retained as synchronization evidence:
 
 | Band/challenge currency | Mandatory tasks | Mandatory kills | Native currency awarded | Random repeatable pool |
 | --- | ---: | ---: | ---: | ---: |
-| Fledgling -> Initiate | 5 | 500 | 25 | 5 |
-| Initiate -> Veteran | 5 | 600 | 40 | 5 |
+| Fledgling -> Adept | 5 | 500 | 25 | 5 |
+| Adept -> Veteran | 5 | 600 | 40 | 5 |
 | Veteran -> Elite | 5 | 850 | 60 | 5 |
 | Elite -> Champion | 5 | 1,100 | 90 | 5 |
 | Champion -> Hero | 6 | 850 | 150 | 6 |
 | Hero -> Legend | 7 | 1,126 | 260 | 6; KBD remains a capstone only |
-| **Vector total** | **33** | **5,026** | **Fledgling 25; Initiate 40; Veteran 60; Elite 90; Champion 150; Hero 260** | **32** |
+| **Vector total** | **33** | **5,026** | **Fledgling 25; Adept 40; Veteran 60; Elite 90; Champion 150; Hero 260** | **32** |
 
 This cuts the mandatory wall to about 12 percent of the old 40,906 kills while
 keeping a substantial rank path. The six values form a balance vector, not a
@@ -1319,7 +1334,7 @@ Dialogue and kill handlers must not manipulate raw keys.
 | `monster_slayer_state_version` | Integer | Current state schema; starts at `1`. |
 | `monster_slayer_intro_stage` | Integer | `0` not started, `1` beer requested, `2` beer completed. Stage 2 requires rank at least Fledgling. |
 | `monster_slayer_rank` | Integer | Stable rank code `0..7`; never a display/string ordinal. |
-| `monster_slayer_balance_<challenge>` | Long | Six keys: `fledgling`, `initiate`, `veteran`, `elite`, `champion`, and `hero`. They are the sole player-saved currency authority: independently nonnegative, checked on additions/deductions, capped at `2,000,000,000`, and never materialized as an inventory item. No scalar total is persisted or spendable. |
+| `monster_slayer_balance_<challenge>` | Long | Six keys: `fledgling`, `initiate`, `veteran`, `elite`, `champion`, and `hero`. `initiate` is the legacy storage key displayed to players as Adept. They are the sole player-saved currency authority: independently nonnegative, checked on additions/deductions, capped at `2,000,000,000`, and never materialized as an inventory item. No scalar total is persisted or spendable. |
 | `monster_slayer_active_task` | String | Stable task key; absent means no task. Contact/family/type derive from definitions. |
 | `monster_slayer_active_kills` | Integer | Bounded `0..requiredKills`; absent/zero when no active task. |
 | `monster_slayer_mandatory_<contact>` | Integer | Six keys storing the number of fixed tasks completed for that contact, bounded by that chain's data length. |
@@ -1509,7 +1524,7 @@ remain a separate economy pass.
 | Shop/contact | Native currency | Full potion stock | Food stock | Food total healing |
 | --- | --- | --- | --- | ---: |
 | Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) |
-| Port Sarim | Initiate | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) |
+| Port Sarim | Adept | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) |
 | Blue Moon Inn, Varrock | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) |
 | Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) |
 | Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) |
@@ -1663,7 +1678,7 @@ Tests:
   order; reject duplicates, missing families, bad ranks, nonattackable IDs,
   zero-spawn families, invalid counts, broken contact chains, task/contact
   challenge mismatches, unknown reward components, and costs above shop tier.
-- Compiled vector-cost fixture: the `5 Fledgling / 3 Initiate / 1 Hero`
+- Compiled vector-cost fixture: the `5 Fledgling / 3 Adept / 1 Hero`
   example, quantity multiplication/overflow, all-component affordability,
   no-partial deduction, exact refund, double-refund rejection, balance caps,
   no scalar sum spending, and each shop-tier boundary.

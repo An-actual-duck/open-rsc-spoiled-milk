@@ -27,6 +27,11 @@ public enum MonsterSlayerChallenge {
 		return cacheSuffix;
 	}
 
+	/** Player-facing rank name; INITIATE remains the stable cache/data key. */
+	public String getDisplayName() {
+		return this == INITIATE ? "Adept" : name().substring(0, 1) + name().substring(1).toLowerCase(Locale.ROOT);
+	}
+
 	public boolean isAtOrBelow(MonsterSlayerChallenge shopTier) {
 		return code <= shopTier.code;
 	}
@@ -43,6 +48,9 @@ public enum MonsterSlayerChallenge {
 	public static MonsterSlayerChallenge fromKey(String key) {
 		if (key == null) {
 			throw new IllegalArgumentException("Monster Slayer challenge is required");
+		}
+		if ("adept".equalsIgnoreCase(key)) {
+			return INITIATE;
 		}
 		try {
 			return valueOf(key.toUpperCase(Locale.ROOT));

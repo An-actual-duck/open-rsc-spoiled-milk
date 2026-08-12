@@ -122,7 +122,7 @@ Possible first structure:
 
 | Rank | Typical location | Assignment examples | Reward direction |
 | --- | --- | --- | --- |
-| Initiate | Small bars/taverns | bones, goblin hides, rat tails, spider parts | Basic guild access |
+| Adept | Small bars/taverns | bones, goblin hides, rat tails, spider parts | Basic guild access |
 | Fledgling | Varrock/Falador contacts | goblins, skeletons, zombies, guards | First point shop |
 | Hunter | Champions' Guild area | giants, darkwizards, hobgoblins, ogres | Stronger supplies, task tools |
 | Stalker | Heroes' Guild area | demons, dragons, shadow warriors, paladins | Better shop, special tasks |

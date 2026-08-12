@@ -67,9 +67,23 @@ public final class MonsterSlayerContactsRouteTest {
 		associateOperationsAndWorldRestockAreBounded(server);
 		veteranHeadquartersUsesBlueMoonInnPlacement();
 		fledglingPresentationAndRoamingContractIsValid(server);
+		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void adeptRankKeepsLegacyPersistenceCompatibility() {
+		assertEquals(MonsterSlayerRank.INITIATE, MonsterSlayerRank.fromCode(2), "persisted rank code two remains stable");
+		assertEquals(MonsterSlayerRank.INITIATE, MonsterSlayerRank.fromKey("initiate"), "legacy rank key remains readable");
+		assertEquals(MonsterSlayerRank.INITIATE, MonsterSlayerRank.fromKey("adept"), "Adept rank alias is accepted");
+		assertEquals("Adept", MonsterSlayerRank.INITIATE.getDisplayName(), "rank display name changes without state migration");
+		assertEquals(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.INITIATE,
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.fromKey("initiate"), "legacy points key remains readable");
+		assertEquals(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.INITIATE,
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.fromKey("adept"), "Adept points alias is accepted");
+		assertEquals("initiate", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.INITIATE.getCacheSuffix(), "legacy points cache key remains stable");
+		assertEquals("Adept", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.INITIATE.getDisplayName(), "points display name is Adept");
 	}
 
 	/** Third-tier save keys remain legacy-compatible, but the live headquarters is Varrock's Blue Moon Inn. */
@@ -110,8 +124,9 @@ public final class MonsterSlayerContactsRouteTest {
 		int[][] expectedSprites = {
 			{846, 6, 28, 37, 98, 48, -1, -1, -1}, // proven NPC order: head, shirt/body, pants/legs, shield, weapon
 			{852, 3, 55, 2, -1, 109, -1, -1, -1},
-			{858, 7, -1, 2, -1, 116, -1, 28, -1}
+			{858, 7, 28, 2, -1, 116, -1, -1, -1}
 		};
+		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		for (int[] expected : expectedSprites) {
 			int id = expected[0];
 			JSONObject spawn = location(locations.getJSONArray("npclocs"), id);
@@ -123,8 +138,10 @@ public final class MonsterSlayerContactsRouteTest {
 			JSONObject definition = location(definitions, id);
 			assertEquals(0, definition.getInt("attackable"), "Slayer NPC stays non-attackable " + id);
 			for (int layer = 1; layer <= 8; layer++) assertEquals(expected[layer], definition.getInt("sprites" + layer), "server effective layer " + id + "/" + layer);
+			assertTrue(appearances.add(definition.getInt("sprites1") + ":" + definition.getInt("sprites2") + ":" + definition.getInt("sprites3") + ":" + definition.getInt("sprites4") + ":" + definition.getInt("sprites5")), "distinct Fledgling appearance " + id);
 		}
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		String clientShopInterface = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "interfaces", "misc", "DoSkillInterface.java")), StandardCharsets.UTF_8);
 		assertTrue(clientDefinitions.contains("new int[]{6, 1, 2, -1, 109, 70, 45"), "existing Dwarf proves head sprite 6 in slot zero");
 		assertTrue(clientDefinitions.contains("new int[]{19, 34, 43, -1, 49"), "existing White Knight proves plate body and legs in shirt/pants slots");
 		assertTrue(clientDefinitions.contains("new int[]{6, 28, 37, 98, 48, -1, -1, -1"), "client Hobart proven plate composition");
@@ -132,7 +149,14 @@ public final class MonsterSlayerContactsRouteTest {
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 15654365"), "female iron plate-top animation exists");
 		assertTrue(clientDefinitions.contains("new int[]{3, 55, 2, -1, 109, -1, -1, -1"), "client associate female plate composition");
 		assertTrue(clientDefinitions.contains("\"Fledgling Slayer Associate\", \"A Fledgling Slayer supplier\""), "client associate display name");
-		assertTrue(clientDefinitions.contains("new int[]{7, -1, 2, -1, 116, -1, 28, -1"), "client ambient plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{7, 28, 2, -1, 116, -1, -1, -1"), "client ambient plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{4, 56, 38, 99, 49, -1, -1, -1"), "client female Adept leader composition");
+		assertTrue(clientDefinitions.contains("new int[]{6, 29, 3, -1, 110, -1, -1, -1"), "client Adept associate composition");
+		assertTrue(clientDefinitions.contains("new int[]{7, 29, 2, -1, 117, -1, -1, -1"), "client Adept ambient composition");
+		assertTrue(clientDefinitions.contains("\"Adept Slayer Associate\", \"An Adept Slayer supplier\""), "client Adept associate display name");
+		assertTrue(clientDefinitions.contains("\"Adept Monster Slayer\", \"A practical hunter\""), "client Adept ambient display name");
+		assertTrue(clientShopInterface.contains("{\"Fledgling\", \"Adept\", \"Veteran\", \"Elite\", \"Champion\", \"Hero\"}"), "client point-shop labels present Adept");
+		assertAdeptPresentationParity(definitions);
 		assertNoFledglingRoamAreaIntersectsWorldGeometry(server, locations, "conf/server/defs/locs");
 		for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(0)) assertTrue(step.getText().length() <= 48, "short Hobart promotion line: " + step.getText());
 		assertEquals("I brought you an Asgarnian ale.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(267), "natural Asgarnian response");
@@ -143,6 +167,22 @@ public final class MonsterSlayerContactsRouteTest {
 		for (String line : MonsterSlayerContacts.hobartMembershipProofLines()) assertTrue(line.length() <= 80, "single-thought Hobart membership line: " + line);
 		assertEquals("Splendid! Now hold out your hand.", MonsterSlayerContacts.hobartDrinkReturnLines()[0], "Hobart receives drink");
 		assertEquals("The most official of stamps. Welcome aboard.", MonsterSlayerContacts.hobartDrinkReturnLines()[1], "Hobart enrolls recruit");
+	}
+
+	private static void assertAdeptPresentationParity(JSONArray definitions) {
+		int[][] expected = {
+			{847, 4, 56, 38, 99, 49}, // female iron plate, iron legs, shield, sword
+			{853, 6, 29, 3, -1, 110}, // male iron plate, normal legs, battleaxe
+			{859, 7, 29, 2, -1, 117} // bearded iron plate, normal legs, mace
+		};
+		java.util.Set<String> appearances = new java.util.HashSet<String>();
+		for (int[] fixture : expected) {
+			JSONObject npc = location(definitions, fixture[0]);
+			for (int layer = 1; layer <= 5; layer++) assertEquals(fixture[layer], npc.getInt("sprites" + layer), "Adept effective layer " + fixture[0] + "/" + layer);
+			assertTrue(appearances.add(npc.getInt("sprites1") + ":" + npc.getInt("sprites2") + ":" + npc.getInt("sprites3") + ":" + npc.getInt("sprites4") + ":" + npc.getInt("sprites5")), "distinct Adept appearance " + fixture[0]);
+		}
+		assertEquals("Adept Slayer Associate", location(definitions, 853).getString("name"), "server Adept associate display name");
+		assertEquals("Adept Monster Slayer", location(definitions, 859).getString("name"), "server Adept ambient display name");
 	}
 
 	private static void assertNoFledglingRoamAreaIntersectsWorldGeometry(Server server, JSONObject locations, String directory) throws Exception {
@@ -314,7 +354,7 @@ public final class MonsterSlayerContactsRouteTest {
 					String summary = MonsterSlayerChallengeShops.costSummary(reward, 2L, state);
 					for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge challenge : com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.values()) {
 						long component = reward.getCost().get(challenge);
-						if (component > 0L) assertTrue(summary.contains((component * 2L) + " " + title(challenge.name()) + " points (you: 0)"), "typed double cost " + reward.getKey() + " " + challenge);
+						if (component > 0L) assertTrue(summary.contains((component * 2L) + " " + challenge.getDisplayName() + " points (you: 0)"), "typed double cost " + reward.getKey() + " " + challenge);
 					}
 				}
 			}
@@ -325,8 +365,6 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("Choose a valid smaller quantity.", MonsterSlayerChallengeShops.redemptionFailureMessage("quantity"), "quantity failure");
 		assertEquals("The reward could not be delivered. Your points and stock were restored.", MonsterSlayerChallengeShops.redemptionFailureMessage("grant"), "rollback failure");
 	}
-	private static String title(String value) { return value.substring(0, 1) + value.substring(1).toLowerCase(); }
-
 	private static void guildAccessModesAndQuestStates(Server server) {
 		Player player = player(server, "slayerguildaccess", 206, 600);
 		player.setQuestPoints(31);
