@@ -108,7 +108,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
 		java.util.Set<String> starts = new java.util.HashSet<String>();
 		int[][] expectedSprites = {
-			{846, 1, -1, -1, 98, 48, -1, 28, 37}, // head, shirt, pants, shield, weapon, hat, body, legs
+			{846, 6, 28, 37, 98, 48, -1, -1, -1}, // proven NPC order: head, shirt/body, pants/legs, shield, weapon
 			{852, 4, -1, 3, -1, 109, -1, 28, -1},
 			{858, 7, -1, 2, -1, 116, -1, 28, -1}
 		};
@@ -125,14 +125,21 @@ public final class MonsterSlayerContactsRouteTest {
 			for (int layer = 1; layer <= 8; layer++) assertEquals(expected[layer], definition.getInt("sprites" + layer), "server effective layer " + id + "/" + layer);
 		}
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
-		assertTrue(clientDefinitions.contains("new int[]{1, -1, -1, 98, 48, -1, 28, 37"), "client Hobart plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{6, 1, 2, -1, 109, 70, 45"), "existing Dwarf proves head sprite 6 in slot zero");
+		assertTrue(clientDefinitions.contains("new int[]{19, 34, 43, -1, 49"), "existing White Knight proves plate body and legs in shirt/pants slots");
+		assertTrue(clientDefinitions.contains("new int[]{6, 28, 37, 98, 48, -1, -1, -1"), "client Hobart proven plate composition");
 		assertTrue(clientDefinitions.contains("new int[]{4, -1, 3, -1, 109, -1, 28, -1"), "client associate plate composition");
 		assertTrue(clientDefinitions.contains("new int[]{7, -1, 2, -1, 116, -1, 28, -1"), "client ambient plate composition");
 		assertNoFledglingRoamAreaIntersectsWorldGeometry(server, locations, "conf/server/defs/locs");
 		for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(0)) assertTrue(step.getText().length() <= 48, "short Hobart promotion line: " + step.getText());
-		assertEquals("Here's your Asgarnian ale.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(267), "natural Asgarnian response");
-		assertEquals("Here's your Wizard's mind bomb.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(268), "natural Wizard response");
-		assertEquals("Here's your Dwarven stout.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(269), "natural Dwarven response");
+		assertEquals("I brought you an Asgarnian ale.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(267), "natural Asgarnian response");
+		assertEquals("I brought you a Wizard's mind bomb.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(268), "natural Wizard response");
+		assertEquals("I brought you a Dwarven stout.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(269), "natural Dwarven response");
+		assertEquals("Right, show me your stamp then to prove your membership.", MonsterSlayerContacts.hobartMembershipProofLines()[0], "Hobart requests proof");
+		assertEquals("My thirst! Quickly! A drink!", MonsterSlayerContacts.hobartMembershipProofLines()[5], "Hobart gives first task");
+		for (String line : MonsterSlayerContacts.hobartMembershipProofLines()) assertTrue(line.length() <= 80, "single-thought Hobart membership line: " + line);
+		assertEquals("Splendid! Now hold out your hand.", MonsterSlayerContacts.hobartDrinkReturnLines()[0], "Hobart receives drink");
+		assertEquals("The most official of stamps. Welcome aboard.", MonsterSlayerContacts.hobartDrinkReturnLines()[1], "Hobart enrolls recruit");
 	}
 
 	private static void assertNoFledglingRoamAreaIntersectsWorldGeometry(Server server, JSONObject locations, String directory) throws Exception {

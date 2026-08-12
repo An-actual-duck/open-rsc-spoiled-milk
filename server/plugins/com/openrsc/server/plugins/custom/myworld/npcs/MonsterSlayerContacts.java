@@ -35,6 +35,14 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"There's always another mess needing a capable pair of hands.",
 		"That's the spirit. Don't keep the monsters waiting."
 	};
+	private static final String[] HOBART_MEMBERSHIP_PROOF = {
+		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
+		"Well this won't do. Hm...", "Right, I got it!", "I can think of no fouler beast to slay for your first task.",
+		"My thirst! Quickly! A drink!"
+	};
+	private static final String[] HOBART_DRINK_RETURN = {
+		"Splendid! Now hold out your hand.", "The most official of stamps. Welcome aboard."
+	};
 	private final DialogueRenderer dialogue;
 	public MonsterSlayerContacts() { this(new DialogueRenderer() { public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { if (step.getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC) npcsay(player, npc, step.getText()); else say(player, npc, step.getText()); return true; }}); }
 	public MonsterSlayerContacts(DialogueRenderer dialogue) { if (dialogue == null) throw new IllegalArgumentException("dialogue renderer is required"); this.dialogue = dialogue; }
@@ -90,8 +98,11 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
 		if (state.getIntroStage() == 0) {
 			npcsay(player, npc, "'Ello there! Looking for Monster Slayer work?");
-			if (speakChoice(player, npc, "I'm looking to join The Monster Slayer's Guild.", "Not today, thanks.") != 0) return;
-			npcsay(player, npc, "Splendid!", "First, I need proof you're serious.", "Bring me a drink from the barmaid.", "Then I'll stamp you into the guild.");
+			if (speakChoice(player, npc, "You bet I want to slay some monsters.", "Not today, thanks.") != 0) return;
+			npcsay(player, npc, HOBART_MEMBERSHIP_PROOF[0]);
+			say(player, npc, "Stamp?");
+			npcsay(player, npc, HOBART_MEMBERSHIP_PROOF[1], HOBART_MEMBERSHIP_PROOF[2], HOBART_MEMBERSHIP_PROOF[3], HOBART_MEMBERSHIP_PROOF[4], HOBART_MEMBERSHIP_PROOF[5]);
+			say(player, npc, "You can count on me!");
 			service.beginIntroduction(player); return;
 		}
 		int[] offeredAles = MonsterSlayerContactService.eligibleRisingSunAleIds(player);
@@ -105,9 +116,10 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (selectedAleId == -1) return;
 		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player, selectedAleId);
 		if (!result.isAccepted()) { player.message(aleFailureMessage(result.getReason())); return; }
-		npcsay(player, npc, "Excellent choice.", "That is much better than paperwork.", "Hold still while I stamp you in.");
-		say(player, npc, "That doesn't sound very official.");
-		npcsay(player, npc, "Official enough!", "You're a Fledgling Monster Slayer now.", "Return when you're ready for work.");
+		npcsay(player, npc, HOBART_DRINK_RETURN[0]);
+		say(player, npc, "Oh, you weren't kidding. This is like... a stamp.");
+		npcsay(player, npc, HOBART_DRINK_RETURN[1]);
+		npcsay(player, npc, "You're a Fledgling Monster Slayer now.", "Return when you're ready for work.");
 	}
 	/** Keeps transaction outcomes truthful without exposing persistence details to players. */
 	public static String aleFailureMessage(String reason) {
@@ -192,6 +204,10 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static boolean shouldUseHobartFollowUpRemark(int contactIndex, long tasksCompleted) {
 		return contactIndex == 0 && tasksCompleted > 0L;
 	}
+	/** Exact short lines for the pre-membership flow; callers receive a defensive copy. */
+	public static String[] hobartMembershipProofLines() { return HOBART_MEMBERSHIP_PROOF.clone(); }
+	/** Exact short lines spoken after a selected eligible drink is accepted. */
+	public static String[] hobartDrinkReturnLines() { return HOBART_DRINK_RETURN.clone(); }
 	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Ready for another contract?", "Another contract?"}; return lines[index]; }
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }

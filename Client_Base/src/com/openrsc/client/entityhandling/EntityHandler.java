@@ -6631,7 +6631,7 @@ public class EntityHandler {
 		// My World server's MonsterSlayerNpcDefs.json. The server remains the
 		// authority for combat, membership, and respawn metadata.
 		addMonsterSlayerNpcDefinition(846, "Hobart", "A cheery Monster Slayer recruiter", "Task",
-			new int[]{1, -1, -1, 98, 48, -1, 28, 37, -1, -1, -1, -1},
+			new int[]{6, 28, 37, 98, 48, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 8421504, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(847, "Mara", "A practical Monster Slayer contact", "Task",
 			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
