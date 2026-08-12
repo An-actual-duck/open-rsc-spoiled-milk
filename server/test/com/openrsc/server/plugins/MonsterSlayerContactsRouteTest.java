@@ -68,6 +68,7 @@ public final class MonsterSlayerContactsRouteTest {
 		fledglingAssociateSatchelDialogueAndPurchase(server);
 		veteranHeadquartersUsesBlueMoonInnPlacement(server);
 		championsSectUsesTwoDistinctMithrilNpcs();
+		heroesGuildSectUsesClearInteriorAdamantNpcs(server);
 		fledglingPresentationAndRoamingContractIsValid(server);
 		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
@@ -203,6 +204,146 @@ public final class MonsterSlayerContactsRouteTest {
 			"new AnimationDef(\"fplatemailtop\", \"equipment\", 10072780",
 			"new AnimationDef(\"battleaxe\", \"equipment\", 10072780"
 		}) assertTrue(clientDefinitions.contains(identity), "proven mithril animation identity " + identity);
+	}
+
+	private static void heroesGuildSectUsesClearInteriorAdamantNpcs(Server server) throws Exception {
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		int[][] expected = {
+			{850, 16, 58, 40, 101, 51}, // full helm, female adamant plate, legs, shield, sword
+			{856, 7, 31, 2, -1, 112} // head, adamant plate, ordinary legs, no shield, battleaxe
+		};
+		int[][] placement = {
+			{850, 372, 1381, 371, 1380, 372, 1382},
+			{856, 374, 1381, 373, 1380, 374, 1382}
+		};
+		java.util.Set<String> appearances = new java.util.HashSet<String>();
+		java.util.Set<String> starts = new java.util.HashSet<String>();
+		for (int[] fixture : expected) {
+			JSONObject definition = location(definitions, fixture[0]);
+			for (int layer = 1; layer <= 5; layer++) assertEquals(fixture[layer],
+				definition.getInt("sprites" + layer), "Heroes adamant layer " + fixture[0] + "/" + layer);
+			assertTrue(appearances.add(definition.getInt("sprites1") + ":" + definition.getInt("sprites2")
+				+ ":" + definition.getInt("sprites3") + ":" + definition.getInt("sprites4")
+				+ ":" + definition.getInt("sprites5")), "Heroes NPCs have distinct silhouettes " + fixture[0]);
+			assertEquals(0, definition.getInt("attackable"), "Heroes Slayer NPC remains non-attackable " + fixture[0]);
+		}
+		for (int[] fixture : placement) {
+			JSONObject spawn = location(locations.getJSONArray("npclocs"), fixture[0]);
+			JSONObject start = spawn.getJSONObject("start"), min = spawn.getJSONObject("min"), max = spawn.getJSONObject("max");
+			assertEquals(fixture[1], start.getInt("X"), "Heroes interior start X " + fixture[0]);
+			assertEquals(fixture[2], start.getInt("Y"), "Heroes interior start Y " + fixture[0]);
+			assertEquals(fixture[3], min.getInt("X"), "Heroes roam min X " + fixture[0]);
+			assertEquals(fixture[4], min.getInt("Y"), "Heroes roam min Y " + fixture[0]);
+			assertEquals(fixture[5], max.getInt("X"), "Heroes roam max X " + fixture[0]);
+			assertEquals(fixture[6], max.getInt("Y"), "Heroes roam max Y " + fixture[0]);
+			assertTrue(starts.add(start.getInt("X") + "," + start.getInt("Y")),
+				"Heroes Slayer starts remain unique " + fixture[0]);
+			assertTrue(min.getInt("X") >= 371 && max.getInt("X") <= 374
+				&& min.getInt("Y") >= 1380 && max.getInt("Y") <= 1382,
+				"Heroes roaming stays inside the clear upper room " + fixture[0]);
+		}
+		assertTrue(rangesAreDisjoint(location(locations.getJSONArray("npclocs"), 850),
+			location(locations.getJSONArray("npclocs"), 856)),
+			"Heroes Slayer NPC roaming pockets do not overlap");
+		assertEquals("Champion Slayer Associate", location(definitions, 856).getString("name"),
+			"Heroes associate has rank-specific identity");
+
+		int heroesSpawns = 0;
+		for (Object value : locations.getJSONArray("npclocs")) {
+			JSONObject spawn = (JSONObject) value;
+			int id = spawn.getInt("id");
+			if (id < 846 || id > 860) continue;
+			JSONObject start = spawn.getJSONObject("start");
+			if (start.getInt("X") >= 369 && start.getInt("X") <= 376
+					&& start.getInt("Y") >= 1380 && start.getInt("Y") <= 1383) heroesSpawns++;
+		}
+		assertEquals(2, heroesSpawns, "Heroes Guild retains exactly two placed Slayer NPCs");
+		assertHeroesRangeDoesNotIntersectWorldPlacements(server, locations, "conf/server/defs/locs");
+
+		server.getWorld().getRegionManager().load();
+		for (int[] fixture : placement) {
+			for (int x = fixture[3]; x <= fixture[5]; x++) {
+				for (int y = fixture[4]; y <= fixture[6]; y++) {
+					assertTrue((server.getWorld().getTile(x, y).traversalMask
+						& com.openrsc.server.util.rsc.CollisionFlag.FULL_BLOCK) == 0,
+						"Heroes roam tile is walkable in authoritative terrain " + fixture[0] + " @ " + x + "," + y);
+					assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
+						Point.location(fixture[1], fixture[2]), Point.location(x, y), true),
+						"Heroes roam tile is connected to its start " + fixture[0] + " @ " + x + "," + y);
+				}
+			}
+		}
+		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
+			Point.location(374, 1382), Point.location(372, 1381), true),
+			"clear tile beside the guild ladder reaches Sella without crossing a wall");
+
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com",
+			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("new int[]{16, 58, 40, 101, 51, -1, -1, -1"),
+			"client Sella uses full adamant composition");
+		assertTrue(clientDefinitions.contains("new int[]{7, 31, 2, -1, 112, -1, -1, -1"),
+			"client associate uses partial adamant composition");
+		assertTrue(clientDefinitions.contains("\"Champion Slayer Associate\", \"A Champion Slayer supplier\""),
+			"client/server Heroes associate identity is synchronized");
+		for (String identity : new String[] {
+			"new AnimationDef(\"fullhelm\", \"equipment\", 11717785",
+			"new AnimationDef(\"fplatemailtop\", \"equipment\", 11717785",
+			"new AnimationDef(\"platemailtop\", \"equipment\", 11717785",
+			"new AnimationDef(\"platemaillegs\", \"equipment\", 11717785",
+			"new AnimationDef(\"squareshield\", \"equipment\", 11717785",
+			"new AnimationDef(\"sword\", \"equipment\", 11717785",
+			"new AnimationDef(\"battleaxe\", \"equipment\", 11717785"
+		}) assertTrue(clientDefinitions.contains(identity), "proven adamant animation identity " + identity);
+	}
+
+	private static void assertHeroesRangeDoesNotIntersectWorldPlacements(Server server,
+			JSONObject locations, String directory) throws Exception {
+		for (String pattern : new String[] {"*SceneryLocs*.json", "*BoundaryLocs*.json"}) {
+			try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), pattern)) {
+				for (java.nio.file.Path file : files) {
+					JSONObject objects = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+					String collection = pattern.startsWith("*Scenery") ? "sceneries" : "boundaries";
+					for (Object value : objects.getJSONArray(collection)) {
+						JSONObject entry = (JSONObject) value;
+						int width = 1, height = 1;
+						if ("sceneries".equals(collection)) {
+							com.openrsc.server.external.GameObjectDef object = server.getEntityHandler().getGameObjectDef(entry.getInt("id"));
+							if (object == null) throw new AssertionError("Unknown scenery definition " + entry.getInt("id"));
+							int direction = entry.getInt("direction");
+							width = direction == 0 || direction == 4 ? object.getWidth() : object.getHeight();
+							height = direction == 0 || direction == 4 ? object.getHeight() : object.getWidth();
+						}
+						assertRangesDoNotIntersect(locations, new int[] {850, 856},
+							entry.getJSONObject("pos").getInt("X"), entry.getJSONObject("pos").getInt("Y"),
+							width, height, "Heroes roam intersects " + file + " id=" + entry.getInt("id"));
+					}
+				}
+			}
+		}
+		for (String pattern : new String[] {"NpcLocs*.json", "MyWorldNpcLocs.json"}) {
+			try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), pattern)) {
+				for (java.nio.file.Path file : files) {
+					JSONObject npcs = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+					for (Object value : npcs.getJSONArray("npclocs")) {
+						JSONObject other = (JSONObject) value;
+						if (other.getInt("id") == 850 || other.getInt("id") == 856) continue;
+						for (int hero : new int[] {850, 856}) assertTrue(rangesAreDisjoint(
+							location(locations.getJSONArray("npclocs"), hero), other),
+							"Heroes roam avoids existing NPC " + other.getInt("id") + " in " + file + " npc=" + hero);
+					}
+				}
+			}
+		}
+	}
+
+	private static boolean rangesAreDisjoint(JSONObject left, JSONObject right) {
+		JSONObject leftMin = left.getJSONObject("min"), leftMax = left.getJSONObject("max");
+		JSONObject rightMin = right.getJSONObject("min"), rightMax = right.getJSONObject("max");
+		return leftMax.getInt("X") < rightMin.getInt("X") || leftMin.getInt("X") > rightMax.getInt("X")
+			|| leftMax.getInt("Y") < rightMin.getInt("Y") || leftMin.getInt("Y") > rightMax.getInt("Y");
 	}
 
 	private static void menuResponsesRemainVisiblePlayerSpeech() {

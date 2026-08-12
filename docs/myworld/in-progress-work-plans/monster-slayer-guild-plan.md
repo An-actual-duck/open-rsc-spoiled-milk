@@ -811,6 +811,31 @@ shield. The ambient Veteran uses head `5`, steel plate body `29`, ordinary legs
 `2`, and steel mace `117`, with no shield. These distinct silhouettes preserve
 the role hierarchy while keeping all three within the steel tier.
 
+#### Champion Heroes Guild Interior Correction
+
+The Heroes Guild sect remains exactly two Slayer NPCs: Sella `850` and the
+Champion Slayer Associate `856`. Both have moved from the exterior entrance
+into the guild's upper interior room. Sella starts at legacy packed coordinate
+`(372,1381)` and roams only `(371..372,1380..1382)`. The associate starts at
+`(374,1381)` and roams only `(373..374,1380..1382)`. These non-overlapping
+pockets sit inside the room's authored walls and remain clear of the Guthix
+altar at the west side and the down ladder at `(375,1382)`. They also avoid
+Achetties and Helemos rather than competing with either NPC's existing route.
+
+Both effective definition catalogs use proven adamant animation identities.
+Sella is visually dominant in full adamant equipment: full helm `16`, female
+plate body `58`, plate legs `40`, square shield `101`, and sword `51`. The
+associate uses head `7`, adamant plate body `31`, ordinary legs `2`, and
+adamant battleaxe `112`, with no shield. The client and server both present the
+associate as `Champion Slayer Associate`.
+
+Automated coverage verifies exact client/server sprite parity, two-NPC sect
+staffing, separate starts and roaming pockets, no overlap with checked-in
+scenery, boundary, or NPC placements, walkable authoritative terrain, a clear
+path from beside the ladder, and the existing Heroes Quest access gate. A
+private visual pass should still confirm that the adamant silhouettes read
+clearly and both NPCs roam naturally without obstructing the ladder.
+
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.
