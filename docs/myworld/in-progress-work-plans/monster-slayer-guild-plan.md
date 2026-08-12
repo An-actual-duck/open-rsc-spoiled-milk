@@ -1,10 +1,10 @@
-# Monster Slayer Guild Plan
+# The Monster Slayer's Guild Plan
 
 Status: **definition/state/migration, authoritative task progression and kill
 credit, the approved 35-task roster, all six contact routes and promotions,
 NPC placement, player-facing multi-currency shops, and the dynamic 30-to-40
-Slayer inventory-capacity contract are implemented; final private-client
-validation remains pending**
+Slayer inventory-capacity contract are implemented; private-client validation
+has passed; release integration remains pending manager approval**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -18,6 +18,28 @@ Related active plans:
 Source policy:
 
 - This is the only official Monster Slayer implementation plan.
+
+## Release-Readiness Owner Decisions (2026-08-11)
+
+- The formal player-facing quest and guild name is **The Monster Slayer's
+  Guild**. Rank proofs (stamp, sticker, button, badge, medal, and crest) are
+  dialogue flavour only: they are not items, cosmetics, or another authority.
+- Unique Slayer rewards are explicitly deferred; this pass does not add or
+  design them.
+- Backpack prices are the doubled approved baseline: Fledgling `84`, Initiate
+  `148`, Veteran `138`, Elite `110`, Champion `268`, and Hero `282`. Each is
+  exactly twice the prior `ceil(mandatory rewards * 1.10)` price, paid only in
+  its own challenge currency.
+- The Veteran headquarters is the **Blue Moon Inn, Varrock**. Its persisted
+  contact/shop/task key remains `brimhaven`, including the established
+  entitlement bit, solely for save compatibility; it must never be presented
+  to players as the location name. Bran `848`, the associate `854`, and the
+  ambient Veteran `860` occupy fixed Blue Moon Inn tiles `(117,521)`,
+  `(118,521)`, and `(119,521)` respectively.
+- Private validation has passed for the implemented contacts, typed shops,
+  point UI, 30-to-40 inventory expansion, and ordered backpack purchases.
+  Release integration remains a manager decision; no release is authorized by
+  this plan update.
 - `docs/myworld/rough-drafts/slayer-guild-rough-draft-plan.md` is superseded
   historical context, not an implementation source.
 - Do not restore the rough draft's monster-drop/certificate turn-ins.
@@ -37,18 +59,17 @@ checks, host-guild gates, promotion dialogue, warnings, active-task reporting,
 random repeatables, and transaction/concurrency failure paths have focused
 executable coverage.
 
-The next bounded implementation slice is the player-facing challenge-shop
-interface described below. The associates currently enforce access and speak,
-but do not open a reward menu. The shop definitions already contain the three
-approved potions and one crafted food per tier, typed costs, stock `10`, and
-restock amount `1`; `MonsterSlayerShopService` already owns checked quantity,
-multi-balance deduction, item-grant rollback, stock, and capacity-entitlement
-transactions.
+The player-facing challenge-shop interface is implemented. Trade/Shop opens
+the graphical typed-currency shop while Talk-to remains dialogue; reward stock
+is intentionally infinite, quantities multiply every component safely, and
+the server owns multi-balance deduction, item-grant rollback, and all access
+checks. The selected-item footer uses the tier-tinted coin presentation,
+tooltips, and the saved Keep open / Remember last selected controls.
 
-The six permanent capacity entitlements are now active. The server derives a
-player's authoritative capacity from the validated mask, custom-client storage
-reserves all 40 positions, and the associate dialogue sells each upgrade only
-in order. The custom capacity receipt is sent before a full inventory packet;
+The six permanent capacity entitlements are active. The server derives a
+player's authoritative capacity from the validated mask, the custom client
+renders 40 positions in an 8x5 layout, and associate dialogue sells each
+upgrade only in order. The capacity receipt precedes the refreshed inventory;
 accounts above 30 slots refuse an older client rather than truncating items.
 
 ## Product Contract
@@ -130,7 +151,7 @@ later decision has not replaced it.
 ### Confirmed: One Continuous Mandatory Quest And Beer Opening
 
 - The entire mandatory path from recruitment through the top `Legend` rank is
-  one long Monster Slayer Guild quest, not six unrelated miniquests. Contact
+  one long The Monster Slayer's Guild quest, not six unrelated miniquests. Contact
   changes and rank awards are stages within that quest. Repeatable assignments
   and challenge-shop purchases are not additional mandatory quest stages.
 - The initial contact opens with the Rising Sun exchange:
@@ -338,11 +359,11 @@ automatic rank reward: the player must purchase it with that shop's approved
 native-challenge price. Initial prices and task rewards are implementation
 estimates to be tuned through playtesting, not inherited from Odyssey data.
 
-The accepted price baseline is Fledgling `42` (mandatory `38`, margin `4`),
-Initiate `74` (`67`, `7`), Veteran `69` (`62`, `7`), Elite `55` (`50`, `5`),
-Champion `134` (`121`, `13`), and Hero `141` (`128`, `13`). Each price is
-exactly 110% of its contact's mandatory-task rewards, rounded upward; every
-capacity price is native to its own tier only.
+The accepted release baseline is Fledgling `84` (mandatory `38`), Initiate
+`148` (`67`), Veteran `138` (`62`), Elite `110` (`50`), Champion `268`
+(`121`), and Hero `282` (`128`). Each is twice the previously approved
+110%-rounded mandatory-task price, and every capacity price is native to its
+own tier only.
 
 The six increments and cumulative capacities are fixed:
 
@@ -350,7 +371,7 @@ The six increments and cumulative capacities are fixed:
 | --- | --- | ---: | ---: |
 | Rising Sun/Falador | Fledgling | 1 | 31 |
 | Port Sarim | Initiate | 1 | 32 |
-| Brimhaven | Veteran | 1 | 33 |
+| Blue Moon Inn, Varrock | Veteran | 1 | 33 |
 | Champions Guild | Elite | 2 | 35 |
 | Heroes Guild | Champion | 2 | 37 |
 | Legends Guild | Hero | 3 | 40 |
@@ -672,8 +693,8 @@ Stable rank codes are part of the save contract and must never be reordered:
 | 0 | Unstamped | Recruit prompt and beer assignment begin the guild quest |
 | 1 | Fledgling | Beer completed; first monster assignment available |
 | 2 | Initiate | Falador chain complete; Port Sarim available |
-| 3 | Veteran | Port Sarim chain complete; Brimhaven available |
-| 4 | Elite | Brimhaven chain complete; Champions Guild available |
+| 3 | Veteran | Port Sarim chain complete; Blue Moon Inn, Varrock available |
+| 4 | Elite | Blue Moon Inn chain complete; Champions Guild available |
 | 5 | Champion | Champions chain complete; Heroes Guild available |
 | 6 | Hero | Heroes chain complete; Legends Guild available |
 | 7 | Legend | Legends chain complete; all rank shops available |
@@ -695,7 +716,7 @@ apart from the explicitly selected Radimus Slayer-route rework.
 | --- | --- | --- |
 | `falador` | Rising Sun ground floor | Add a dedicated definition and spawn. The contact directs the player to Barmaid `142` for beer; do not replace or intercept the Barmaid's existing dialogue. |
 | `port_sarim` | Rusty Anchor, near the existing bartender | Add a separate task giver without replacing drink or bar-crawl service. |
-| `brimhaven` | Dead Man's Chest, near the existing bartender | Add a separate task giver without replacing drink or bar-crawl service. |
+| `brimhaven` (legacy internal key) | Blue Moon Inn, Varrock, near the existing bartender | Bran and the Veteran associate are dedicated Slayer NPCs; preserve the inn's bartender and all normal service. |
 | `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
 | `legends` | Legends Guild, near Sir Radimus `785` | Default to a new task giver, but Sir Radimus `785` may instead be selected and reworked as the task giver because he owned the borrowed system. Preserve his Legends Quest reward/training routes and replace only the old Odyssey task route during activation. |
@@ -731,7 +752,7 @@ The proposed initial roster is:
 | --- | --- | --- |
 | Rising Sun / Falador | `Fledgling Monster Slayer` | An eager recruit comparing a fresh hand stamp and boasting about very small monsters. |
 | Rusty Anchor / Port Sarim | `Initiate Monster Slayer` | A practical hunter checking supplies and talking about keeping a task journal dry at sea. |
-| Dead Man's Chest / Brimhaven | `Veteran Monster Slayer` | A scarred, guarded regular who acknowledges the work but avoids giving a contract. |
+| Blue Moon Inn / Varrock | `Veteran Monster Slayer` | A scarred, guarded regular who acknowledges the work but avoids giving a contract. |
 
 This produces three NPCs at each bar—task giver, shop associate, and ambient
 member—while every guild location retains the mandatory two-role minimum. More
@@ -798,7 +819,7 @@ There are six proof changes for the six promotions before the final standing:
 | Fledgling | hand stamp | none; the player is beginning the first chain | `You need to earn your Initiate sticker first.` |
 | Initiate | sticker | Rising Sun / Fledgling point shop | `Sorry, can't show you my wares till you're an Initiate.` |
 | Veteran | button | Port Sarim / Initiate point shop | `Sorry, can't show you my wares till you're a Veteran.` |
-| Elite | badge | Brimhaven / Veteran point shop | `Sorry, can't show you my wares till you're an Elite.` |
+| Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, can't show you my wares till you're an Elite.` |
 | Champion | medal | Champions Guild / Elite point shop | `Sorry, can't show you my wares till you're a Champion.` |
 | Hero | crest | Heroes Guild / Champion point shop | `Sorry, can't show you my wares till you're a Hero.` |
 | Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, can't show you my wares till you're a Legend.` |
@@ -891,27 +912,26 @@ Initiate sticker, no Port Sarim work.`
 > Contact: `The trader beside me deals in Initiate Slayer Points. He's cleared
 > to serve Veterans.`
 
-#### 3. Dead Man's Chest Contact — Veteran Button To Elite Badge
+#### 3. Blue Moon Inn Contact — Veteran Button To Elite Badge
 
 Tone: a self-styled tough hunter. His bluster falls away at the
 promotion, revealing that he has seen what the next step costs.
 
 **Below rank**
 
-> Contact: `A Veteran button gets you a proper job from me. Until then, you're
-> drinking in the shallow end.`
+> Contact: `No Veteran button, no Blue Moon work. Earn one, then come back.`
 
 **Normal task route**
 
-> Contact: `You've got the look of someone after a dangerous job.`
+> Contact: `Back for another hard job? The Blue Moon has seen worse.`
 > Player: `Yes please.` / `Not now.`
 > Contact (if yes): `Button.`
 > Player: `Here.`
 > Contact: `Your next task is to slay [count] [family]. Don't make me regret
 > picking you.`
 
-`Task` shortcut begins at the assignment. Below rank: `Come back with a
-Veteran button if you want Brimhaven work.`
+`Task` shortcut begins at the assignment. Below rank: `No Veteran button, no
+Blue Moon work.`
 
 **Elite promotion / shop reveal**
 
@@ -1151,7 +1171,7 @@ Load-time/CI validation must reject:
   or any higher-shop reward that does not contain exactly positive native and
   immediately-lower challenge components;
 - an inventory-capacity upgrade with any lower-tier component, a cost other
-  than 110% of its own mandatory-chain currency total rounded upward, or a
+  than twice `ceil(110% of its own mandatory-chain currency total)`, or a
   missing preceding capacity-upgrade prerequisite.
 
 ### Historical Foundation Family Inventory And Tuning
@@ -1180,11 +1200,11 @@ one active static spawn.
 | Port Sarim | `port_sarim.skeletons` / `skeleton` | `40,45,46,179,195` | 175 | 150 | 100 | 8 |
 | Port Sarim | `port_sarim.zombies` / `zombie` | `41,52,68,180,214` | 72 | 150 | 100 | 8 |
 | Port Sarim | `port_sarim.hobgoblins` / `hobgoblin` | `67,311` | 51 | 125 | 100 | 8 |
-| Brimhaven | `brimhaven.jungle_spiders` / `jungle_spider` | `521` | 70 | 200 | 125 | 12 |
-| Brimhaven | `brimhaven.scorpions` / `scorpion` | `70` | 36 | 150 | 100 | 12 |
-| Brimhaven | `brimhaven.jogres` / `jogre` | `523` | 21 | 150 | 100 | 12 |
-| Brimhaven | `brimhaven.moss_giants` / `moss_giant` | `104,594` | 17 | 200 | 100 | 12 |
-| Brimhaven | `brimhaven.lesser_demons` / `lesser_demon` | `22,181` | 37 | 150 | 75 | 12 |
+| Blue Moon Inn, Varrock (legacy `brimhaven` key) | `brimhaven.jungle_spiders` / `jungle_spider` | `521` | 70 | 200 | 125 | 12 |
+| Blue Moon Inn, Varrock (legacy `brimhaven` key) | `brimhaven.scorpions` / `scorpion` | `70` | 36 | 150 | 100 | 12 |
+| Blue Moon Inn, Varrock (legacy `brimhaven` key) | `brimhaven.jogres` / `jogre` | `523` | 21 | 150 | 100 | 12 |
+| Blue Moon Inn, Varrock (legacy `brimhaven` key) | `brimhaven.moss_giants` / `moss_giant` | `104,594` | 17 | 200 | 100 | 12 |
+| Blue Moon Inn, Varrock (legacy `brimhaven` key) | `brimhaven.lesser_demons` / `lesser_demon` | `22,181` | 37 | 150 | 75 | 12 |
 | Champions | `champions.giants` / `giant` | `61` | 24 | 250 | 150 | 18 |
 | Champions | `champions.dark_warriors` / `dark_warrior` | `199` | 13 | 200 | 125 | 18 |
 | Champions | `champions.black_knights` / `black_knight` | `66,108,189` | 45 | 250 | 150 | 18 |
@@ -1423,13 +1443,13 @@ Point rewards are intentionally task-specific: a harder, more dangerous, or
 less accessible family in a tier earns more than an easier family in that same
 tier. No task awards a mix of challenge balances.
 
-Each inventory capacity upgrade costs exactly 110% of the native currency a
-player earns from that contact's full mandatory chain, rounded upward.
+Each inventory capacity upgrade costs exactly twice `ceil(110%)` of the native
+currency a player earns from that contact's full mandatory chain.
 Consequently, completing the main path unlocks the right to buy the upgrade
 but does not fully fund it; the player must finish a small number of
 repeatable tasks from that same contact. Definition loading and CI must verify:
 
-- `capacityPrice[contact] == ceil(mandatoryCurrencyTotal[contact] * 1.10)`;
+- `capacityPrice[contact] == 2 * ceil(mandatoryCurrencyTotal[contact] * 1.10)`;
 - the margin is documented as a small repeatable-task requirement rather than
   an accidental grind; and
 - the price vector contains exactly one positive component, the contact's
@@ -1448,7 +1468,7 @@ remain a separate economy pass.
 | --- | --- | --- | --- | ---: |
 | Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) |
 | Port Sarim | Initiate | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) |
-| Brimhaven | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) |
+| Blue Moon Inn, Varrock | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) |
 | Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) |
 | Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) |
 | Legends Guild | Hero | Brawn v6 `3198`; Deftness v6 `3201`; Insight v6 `3204` | Pineapple pizza `750` | 20 (two halves) |
@@ -1474,9 +1494,9 @@ The first headless shop slice uses these deliberately conservative point prices:
 - Potions cost native `2/3/4/5/7/9` points from Fledgling through Hero; each
   later potion also costs `1/2/3/4/5` immediately-lower-tier points.
 - Food costs native `3/5/6/8/10/13` and immediately-lower `0/2/3/4/6/8`.
-- Capacity entitlements cost native-only `42/74/69/55/134/141`. Against the
-  implemented mandatory totals `38/67/62/50/121/128`, each is exactly 110%,
-  rounded upward, leaving a repeatable-task margin of `4/7/7/5/13/13`.
+- Capacity entitlements cost native-only `84/148/138/110/268/282`. Against the
+  implemented mandatory totals `38/67/62/50/121/128`, each is twice the prior
+  110%-rounded baseline; repeatable-task tuning remains subject to playtest.
 
 These are balance estimates rather than permanent economy promises. They are
 stored as independent typed components and must be adjusted only after owner

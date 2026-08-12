@@ -20,10 +20,14 @@ import com.openrsc.server.plugins.authentic.commands.Development;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerContacts;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerChallengeShops;
 import com.openrsc.server.util.rsc.DataConversions;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /** Plugin-jar route guard for the six contacts, associates, and ambient NPCs. */
@@ -61,8 +65,38 @@ public final class MonsterSlayerContactsRouteTest {
 		hobartFollowUpDialogueIsBoundedAndTaskIndependent();
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
+		veteranHeadquartersUsesBlueMoonInnPlacement();
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	/** Third-tier save keys remain legacy-compatible, but the live headquarters is Varrock's Blue Moon Inn. */
+	private static void veteranHeadquartersUsesBlueMoonInnPlacement() throws Exception {
+		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		int[][] expected = {{848, 117, 521}, {854, 118, 521}, {860, 119, 521}};
+		for (int[] fixture : expected) {
+			JSONObject entry = location(locations.getJSONArray("npclocs"), fixture[0]);
+			JSONObject start = entry.getJSONObject("start");
+			assertEquals(fixture[1], start.getInt("X"), "Blue Moon X " + fixture[0]);
+			assertEquals(fixture[2], start.getInt("Y"), "Blue Moon Y " + fixture[0]);
+			assertEquals(start.toString(), entry.getJSONObject("min").toString(), "fixed Blue Moon minimum " + fixture[0]);
+			assertEquals(start.toString(), entry.getJSONObject("max").toString(), "fixed Blue Moon maximum " + fixture[0]);
+		}
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		for (int id : new int[] {848, 854, 860}) assertTrue(location(definitions, id).getString("description").contains("Blue Moon"),
+			"Blue Moon NPC description " + id);
+		assertEquals("Veteran Slayer Associate", location(definitions, 854).getString("name"),
+			"Veteran associate is identifiable at Blue Moon");
+	}
+
+	private static JSONObject location(JSONArray entries, int id) {
+		for (int index = 0; index < entries.length(); index++) {
+			JSONObject entry = entries.getJSONObject(index);
+			if (entry.getInt("id") == id) return entry;
+		}
+		throw new AssertionError("Missing Monster Slayer location " + id);
 	}
 
 	private static void developmentCompletionUsesNormalSlayerProgression(Server server) throws Exception {
@@ -121,6 +155,7 @@ public final class MonsterSlayerContactsRouteTest {
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Shop"), "associate shop operation " + index);
 			assertFalse(MonsterSlayerContacts.isAssociateShopOperation("Task"), "associate task is not shop operation " + index);
 			assertTrue(MonsterSlayerContacts.associateGreeting(index).length() > 0, "associate talk dialogue " + index);
+			assertTrue(MonsterSlayerContacts.associateSupplyLine(index).length() > 0, "associate supply dialogue " + index);
 		}
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
 		int[] capacities = {31, 32, 33, 35, 37, 40};

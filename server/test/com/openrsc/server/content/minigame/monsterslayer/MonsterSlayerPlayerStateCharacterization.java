@@ -294,14 +294,16 @@ public final class MonsterSlayerPlayerStateCharacterization {
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
 		equals(6, data.getShops().size(), "six Slayer shops");
-		long[] capacityPrices = {42L, 74L, 69L, 55L, 134L, 141L};
+		long[] capacityPrices = {84L, 148L, 138L, 110L, 268L, 282L};
 		for (int index = 0; index < data.getShops().size(); index++) {
 			MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
 			equals(capacityPrices[index], shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
 				"capacity price " + shop.getKey());
 			long mandatoryTotal = 0L;
 			for (MonsterSlayerDefinitions.Task task : data.getContact(shop.getKey()).getMandatoryTasks()) mandatoryTotal += task.getPointReward();
-			long expected = mandatoryTotal + (mandatoryTotal / 10L) + (mandatoryTotal % 10L == 0L ? 0L : 1L);
+			long originalPrice = mandatoryTotal + mandatoryTotal / 10L
+				+ (mandatoryTotal % 10L == 0L ? 0L : 1L);
+			long expected = originalPrice * 2L;
 			equals(expected, shop.getCapacityUpgrade().getCost().get(shop.getChallenge()),
 				"capacity price tracks mandatory rewards " + shop.getKey());
 			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
@@ -334,7 +336,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data);
 		Map<MonsterSlayerChallenge, Long> amounts = new LinkedHashMap<MonsterSlayerChallenge, Long>();
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
-		amounts.put(MonsterSlayerChallenge.FLEDGLING, 42L);
+		amounts.put(MonsterSlayerChallenge.FLEDGLING, 84L);
 		MonsterSlayerState.Snapshot player = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
 			MonsterSlayerBalances.of(amounts), zeroCursors(data), null, 0, 0L, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);

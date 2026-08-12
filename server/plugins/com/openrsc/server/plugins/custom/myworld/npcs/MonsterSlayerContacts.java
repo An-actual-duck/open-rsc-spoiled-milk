@@ -90,7 +90,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
 		if (state.getIntroStage() == 0) {
 			npcsay(player, npc, "'Ello there! You look like someone after monster work, or someone who has mistaken me for a decorative barrel.");
-			if (multi(player, "I'm looking for Monster Slayer work.", "Sorry, I was looking for a decorative barrel.") != 0) return;
+			if (multi(player, "I'm looking to join The Monster Slayer's Guild.", "Sorry, I was looking for a decorative barrel.") != 0) return;
 			npcsay(player, npc, "Splendid! Every proper Monster Slayer needs my official stamp. Mine is very official, despite the jam on it.", "Bring me a drink from that barmaid over there.", "Then I shall stamp you in. That is how all the finest guild business is conducted.");
 			service.beginIntroduction(player); return;
 		}
@@ -123,8 +123,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; }
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			npcsay(player, npc, associateGreeting(index));
-			if (multi(player, "Tell me about the supplies.", "I'd like to improve my backpack.", "Not now.") != 1) return;
-			purchaseBackpackUpgrade(player, npc, index);
+			int choice = multi(player, "Tell me about the supplies.", "I'd like to improve my backpack.", "Not now.");
+			if (choice == 0) { npcsay(player, npc, associateSupplyLine(index)); return; }
+			if (choice == 1) purchaseBackpackUpgrade(player, npc, index);
 		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }
 	}
 
@@ -169,7 +170,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
 	private static boolean isAmbient(Npc npc) { return npc.getID() >= FIRST_AMBIENT && npc.getID() < FIRST_AMBIENT + 3; }
-	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "I need to see an Initiate sticker before I can put your name on my list.", "A Veteran button gets you a proper job from me.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
+	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "I need an Initiate sticker before I can put you on my Port Sarim list.", "No Veteran button, no Blue Moon work. Earn one, then come back.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
 	private static String hobartFollowUpRemark() { return hobartFollowUpRemark(ThreadLocalRandom.current().nextInt(HOBART_FOLLOW_UP_REMARKS.length)); }
 	/** Test seam for bounded, task-independent Hobart flavour dialogue. */
 	public static String hobartFollowUpRemark(int index) {
@@ -179,13 +180,14 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static boolean shouldUseHobartFollowUpRemark(int contactIndex, long tasksCompleted) {
 		return contactIndex == 0 && tasksCompleted > 0L;
 	}
-	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "You've got the look of someone after a dangerous job.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Do you want another contract?", "Another contract?"}; return lines[index]; }
+	private static String greeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Back for work, are you?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Ready for another contract?", "Another contract?"}; return lines[index]; }
 	private static String proof(int index) { String[] lines = {"Stamp?", "Let's see that sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }
 	/** Read-only dialogue seam: Talk-to must not enter the shop state machine. */
-	public static String associateGreeting(int index) { String[] lines = {"An Initiate has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Initiate supplies are available.", "An Elite hunter knows what to pack. Your Veteran supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
+	public static String associateGreeting(int index) { String[] lines = {"An Initiate has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Initiate supplies are available.", "An Elite hunter knows what to pack. Your Blue Moon supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
+	public static String associateSupplyLine(int index) { String[] lines = {"Use Trade when you are ready. Spend carefully; your Fledgling points are hard won.", "Use Trade when you are ready. Salt water ruins gear, not good preparation.", "Use Trade when you are ready. Pack for the job, not the story afterward.", "Use Trade when you are ready. A Champion brings the right kit.", "Use Trade when you are ready. A Hero knows that preparation saves lives.", "Use Trade when you are ready. That is all."}; return lines[index]; }
 	public static boolean isAssociateShopOperation(String command) { return "Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command); }
 	private static String warning(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) { if (task.getHazards().isEmpty()) return null; StringBuilder text = new StringBuilder("Take care: "); for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard : task.getHazards()) { if (text.length() > 11) text.append("; "); if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT) text.append("bring desert heat protection"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS) text.append("this work is in the Wilderness"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN) text.append("expect Prayer drain"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON) text.append("bring an antidote for poison"); else text.append("prepare for dragon fire"); } return text.append('.').toString(); }
-	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "I have done the work. I do not hand out contracts."}; return lines[index]; }
+	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "The Blue Moon is quiet. The work outside it is not."}; return lines[index]; }
 	private static boolean hostGuildAllows(Player player, int index) { return MonsterSlayerGuildAccess.allows(player, index); }
 }
