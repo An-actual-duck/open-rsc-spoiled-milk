@@ -599,6 +599,8 @@ public final class MonsterSlayerContactsRouteTest {
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		assertTrue(MonsterSlayerContacts.shouldUseBranFirstTaskWelcome(2, firstState),
 			"authoritative Veteran cursor zero enables Bran welcome");
+		assertFalse(MonsterSlayerContacts.shouldUseBranAssignmentRemark(2, firstState),
+			"first Veteran assignment keeps its established welcome without an extra random remark");
 		Player first = player(server, "slayerbranfirst", 288, 600);
 		MonsterSlayerState.write(first.getCache(), data, firstState);
 		RecordingDialogue firstDialogue = new RecordingDialogue(0);
@@ -634,6 +636,93 @@ public final class MonsterSlayerContactsRouteTest {
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		assertFalse(MonsterSlayerContacts.shouldUseBranFirstTaskWelcome(2, laterState),
 			"later Veteran cursor suppresses Bran welcome");
+		assertTrue(MonsterSlayerContacts.shouldUseBranAssignmentRemark(2, laterState),
+			"later Veteran work enables Bran assignment flavour");
+		assertFalse(MonsterSlayerContacts.shouldUseBranAssignmentRemark(1, laterState),
+			"Bran assignment flavour remains contact-specific");
+
+		String[] generalRemarks = {
+			"Now that's work worthy of a Veteran!",
+			"Ha! Show them why we're the best!",
+			"Make it loud enough to hear from the Blue Moon!",
+			"A proper hunt! I almost envy you!",
+			"Go on! Give me something worth boasting about!"
+		};
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task jogres =
+			data.getTask("brimhaven.jogres");
+		for (int selection = 0; selection < generalRemarks.length; selection++) {
+			assertEquals(generalRemarks[selection], MonsterSlayerContacts.branAssignmentRemark(jogres, selection),
+				"hazard-free Bran remark remains in the bounded personality set " + selection);
+			String normalized = generalRemarks[selection].toLowerCase();
+			for (String unsupportedFact : new String[] {"antidote", "desert heat", "wilderness", "worship drain", "dragon fire"}) {
+				assertFalse(normalized.contains(unsupportedFact),
+					"hazard-free Bran flavour does not invent preparation facts " + unsupportedFact);
+			}
+			assertTrue(generalRemarks[selection].length() <= 64,
+				"Bran personality line remains concise " + selection);
+		}
+		assertEquals(generalRemarks[0], MonsterSlayerContacts.branAssignmentRemark(jogres, generalRemarks.length),
+			"Bran personality selection wraps within its bounded set");
+		assertThrows(new Runnable() { public void run() { MonsterSlayerContacts.branAssignmentRemark(jogres, -1); }},
+			"negative Bran dialogue selection is rejected");
+
+		String[] hazardTaskKeys = {
+			"falador.desert_wolves", "falador.black_unicorns", "port_sarim.shadow_spiders",
+			"brimhaven.poison_spiders", "port_sarim.baby_blue_dragons"
+		};
+		String[][] hazardRemarks = {
+			{"Hot work! Prepare for the desert heat!", "The desert heat is part of the fight! Prepare for it!"},
+			{"Wilderness work! Keep your wits about you!", "You're headed into the Wilderness! Go prepared!"},
+			{"They drain Worship! Plan your supplies around it!", "Expect Worship drain! Don't rely on full Worship points!"},
+			{"Poison on this one! Bring an antidote and keep swinging!", "Pack an antidote! Be ready before the poison sets in!"},
+			{"Dragon fire! Take the right protection!", "Expect dragon fire! Prepare before you face it!"}
+		};
+		for (int taskIndex = 0; taskIndex < hazardTaskKeys.length; taskIndex++) {
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task =
+				data.getTask(hazardTaskKeys[taskIndex]);
+			for (int selection = 0; selection < hazardRemarks[taskIndex].length; selection++) {
+				assertEquals(hazardRemarks[taskIndex][selection],
+					MonsterSlayerContacts.branAssignmentRemark(task, selection),
+					"Bran advice derives from authoritative hazard metadata " + hazardTaskKeys[taskIndex] + "/" + selection);
+				assertTrue(hazardRemarks[taskIndex][selection].length() <= 64,
+					"Bran preparation advice remains concise " + hazardTaskKeys[taskIndex] + "/" + selection);
+			}
+		}
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task multipleHazards =
+			data.getTask("heroes.green_dragons");
+		assertEquals(hazardRemarks[1][0], MonsterSlayerContacts.branAssignmentRemark(multipleHazards, 0),
+			"first declared hazard selects Wilderness advice");
+		assertEquals(hazardRemarks[4][0], MonsterSlayerContacts.branAssignmentRemark(multipleHazards, 1),
+			"second declared hazard selects dragon-fire advice");
+		assertEquals(hazardRemarks[1][1], MonsterSlayerContacts.branAssignmentRemark(multipleHazards, 2),
+			"multi-hazard random selection remains bounded across advice variants");
+
+		Player later = player(server, "slayerbranlater", 293, 600);
+		MonsterSlayerState.write(later.getCache(), data, laterState);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later, new Npc(server.getWorld(), 848, 293, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events, welcome),
+			"later Bran assignment does not repeat the first-task welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, generalRemarks),
+			"later hazard-free Bran assignment uses exactly one bounded personality remark");
+		assertEquals("N:Your next task is to slay 40 Karamja wolves.",
+			laterDialogue.events.get(laterDialogue.events.size() - 1),
+			"Bran flavour preserves the authoritative task assignment line");
+
+		MonsterSlayerState.Snapshot poisonState = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN,
+			MonsterSlayerBalances.zero(), veteranCursors(data, 3), null, 0, 3L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		Player poison = player(server, "slayerbranpoison", 294, 600);
+		MonsterSlayerState.write(poison.getCache(), data, poisonState);
+		RecordingDialogue poisonDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(poisonDialogue).onTalkNpc(poison, new Npc(server.getWorld(), 848, 294, 600));
+		int warningIndex = poisonDialogue.events.indexOf("N:You should bring an antidote for poison.");
+		int assignmentIndex = poisonDialogue.events.indexOf("N:Your next task is to slay 35 Poison spiders.");
+		assertTrue(warningIndex >= 0 && assignmentIndex == warningIndex + 2,
+			"authoritative poison warning, Bran advice, and assignment retain their order");
+		assertTrue(poisonDialogue.events.get(warningIndex + 1).equals("N:" + hazardRemarks[3][0])
+			|| poisonDialogue.events.get(warningIndex + 1).equals("N:" + hazardRemarks[3][1]),
+			"poison metadata selects only accurate antidote advice");
 
 		Map<String, Integer> promotedCursors = veteranCursors(data,
 			data.getContact("brimhaven").getMandatoryTasks().size());
