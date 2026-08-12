@@ -76,6 +76,13 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"No need for speeches! You know the work!",
 		"Off you go! We'll celebrate when it's done!"
 	};
+	private static final String[] SELLA_ASSIGNMENT_REMARKS = {
+		"Stand firm. Every foe defeated leaves someone safer.",
+		"Fight with courage, and remember who you fight for.",
+		"Let the people of this world sleep easier tonight.",
+		"A hero's strength is measured by whom they protect.",
+		"Go boldly. The people of this world are counting on us."
+	};
 	private static final String[] HOBART_MEMBERSHIP_PROOF = {
 		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
 		"Well this won't do. Hm...", "Right, I got it!", "I can think of no fouler beast to slay for your first task.",
@@ -128,9 +135,12 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (shouldUseBranFirstTaskWelcome(index, state)) dialogue.npc(player, npc, branFirstTaskWelcome());
 			if (shouldUseDoranFirstTaskWelcome(index, state)
 				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.doranFirstTaskWelcome())) return;
+			if (shouldUseSellaFirstTaskWelcome(index, state)
+				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.sellaFirstTaskWelcome())) return;
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
+			if (!shortcut && shouldUseSellaAssignmentRemark(index, state)) dialogue.npc(player, npc, sellaAssignmentRemark());
 			String[] warnings = hazardWarningLines(preview);
 			if (warnings.length > 0) dialogue.npc(player, npc, warnings);
 		}
@@ -377,6 +387,24 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		String[] remarks = doranHazardRemarks(task.getHazards().get(hazardIndex));
 		return remarks[(selection / task.getHazards().size()) % remarks.length];
 	}
+	/** Authoritative Champion cursor zero identifies Sella's one-time welcome. */
+	public static boolean shouldUseSellaFirstTaskWelcome(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 4 && state != null && state.getRank() == MonsterSlayerRank.CHAMPION
+			&& state.getActiveTaskKey() == null && state.getMandatoryCursors().get(CONTACTS[4]).intValue() == 0;
+	}
+	/** Later mandatory and repeatable Heroes assignments receive Sella's bounded flavour. */
+	public static boolean shouldUseSellaAssignmentRemark(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 4 && state != null && !shouldUseSellaFirstTaskWelcome(contactIndex, state);
+	}
+	private static String sellaAssignmentRemark() {
+		return sellaAssignmentRemark(ThreadLocalRandom.current().nextInt(SELLA_ASSIGNMENT_REMARKS.length));
+	}
+	/** Deterministic test/review seam for Sella's altruistic assignment voice. */
+	public static String sellaAssignmentRemark(int index) {
+		if (index < 0 || index >= SELLA_ASSIGNMENT_REMARKS.length)
+			throw new IllegalArgumentException("Sella dialogue index is out of range");
+		return SELLA_ASSIGNMENT_REMARKS[index];
+	}
 	private static String[] doranHazardRemarks(MonsterSlayerHazard hazard) {
 		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
 		switch (hazard) {
@@ -408,7 +436,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	/** Exact short lines spoken after a selected eligible drink is accepted. */
 	public static String[] hobartDrinkReturnLines() { return HOBART_DRINK_RETURN.clone(); }
 	/** Contact-specific greeting seam; every later contact follows the same proof-first pattern. */
-	public static String contactGreeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Are you here to slay monsters?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "You came back. Ready for another contract?", "Another contract?"}; return lines[index]; }
+	public static String contactGreeting(int index) { String[] lines = {"Oh, it's you again. Another task then?", "Are you here to slay monsters?", "Back for another hard job? The Blue Moon has seen worse.", "Ah! An Elite hunter. Here for a real challenge?", "Do you stand ready to defend this world?", "Another contract?"}; return lines[index]; }
 	/** Natural yes/no responses; menu text is repeated as player speech before continuing. */
 	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}}; return choices[index].clone(); }
 	/** The rank proof required before normal assignment is attempted. */
@@ -431,7 +459,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			{"A Veteran's button carries weight here. Your Adept supplies are available."},
 			{"An Elite hunter knows what to pack. Your Blue Moon supplies are available."},
 			{"Doran is a nice guy, but you can never get a word in edgewise.", "A Champion is welcome at this quartermaster's counter."},
-			{"A Hero has earned access to Champion supplies."},
+			{"Sella sure knows how to inspire a person.", "A Hero has earned access to Champion supplies."},
 			{"Legend is not a title we sell. Your Hero supplies are available."}
 		};
 		return lines[index].clone();

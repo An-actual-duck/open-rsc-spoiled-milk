@@ -1267,33 +1267,61 @@ Shop access, satchel upgrades, rank gates, and all costs remain unchanged.
 
 #### 5. Heroes Guild Contact — Champion Medal To Hero Crest
 
-Tone: a hardened veteran. Respectful rather than theatrical; they know the
-cost of the creatures now being assigned. Preserve Heroes Quest and cape
-behavior before this route.
+Sella is an altruistic, grandiose hero. She frames Monster Slayer work around
+protecting other people and inspires Champions to see each contract as service,
+not sport. Preserve Heroes Quest and cape behavior before this route.
 
 **Below rank**
 
-> Contact: `Champion's medal first. These contracts are not lessons.`
+> Sella: `Champion's medal first. Doran at the Champions Guild can help.`
 
 **Normal task route**
 
-> Contact: `You came back. Do you want another contract?`
+> Sella: `Do you stand ready to defend this world?`
 > Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Your medal.`
-> Player: `Here.`
-> Contact: `Your next task is to slay [count] [family]. Prepare before you
-> leave; preparation is what brings people home.`
+> Sella (if yes): `Your medal.`
+> Player: `Right here!`
+
+Before the first authoritative Heroes assignment only:
+
+> Sella: `I see by your medal a true hero stands before me.`
+> Sella: `But I'll put that medal to the test.`
+> Sella: `A hero defends the people of this world.`
+> Sella: `And to do that you need to defeat some mighty foes.`
+> Sella: `I hope you're ready!`
+> Player: `I've never been more ready!`
+
+Later mandatory and repeatable assignments select one bounded Sella remark:
+
+- `Stand firm. Every foe defeated leaves someone safer.`
+- `Fight with courage, and remember who you fight for.`
+- `Let the people of this world sleep easier tonight.`
+- `A hero's strength is measured by whom they protect.`
+- `Go boldly. The people of this world are counting on us.`
+
+Definition-driven hazard warnings remain separate and precede assignment. The
+usual authoritative `Your next task is to slay [count] [family].` line follows
+the welcome or remark.
 
 `Task` shortcut begins at the assignment. Below rank: `No Champion medal. No
 Heroes Guild contract.`
 
 **Hero promotion / shop reveal**
 
-> Contact: `You completed the work, even when it was hard. That is the part
-> people remember.`
-> Contact: `You are a Hero. Carry this crest with care.`
-> Contact: `The supplier nearby accepts Champion Slayer Points. A Hero has
-> earned access.`
+Sella awards Hero rather than Legend; the Legends Guild contact retains the
+subsequent Hero-to-Legend step.
+
+> Sella: `You've fought and slain giants, dragons,`
+> Sella: `And beasts from the depths of hell.`
+> Sella: `You've done well to protect the world`
+> Sella: `From all manner of evil.`
+> Sella: `I grant you this crest and the rank of Hero.`
+> Sella: `May your name carry the same weight.`
+> Sella: `And your foes shudder when they hear it.`
+> Player: `It's been an honor and I won't let you down.`
+
+The Champion associate prepends `Sella sure knows how to inspire a person.` to
+their usual unlocked supply and satchel conversation.
 
 #### 6. Legends Guild Contact — Hero Crest To Legend
 

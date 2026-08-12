@@ -76,6 +76,7 @@ public final class MonsterSlayerContactsRouteTest {
 		maraAssignmentDialogueUsesAuthoritativeProgression(server);
 		branDialogueUsesAuthoritativeVeteranProgression(server);
 		doranDialogueUsesAuthoritativeEliteProgression(server);
+		sellaDialogueUsesAuthoritativeChampionProgression(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -1134,6 +1135,144 @@ public final class MonsterSlayerContactsRouteTest {
 					|| "brimhaven".equals(contact.getKey()))
 				cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
 			else if ("champions".equals(contact.getKey())) cursors.put(contact.getKey(), eliteCursor);
+			else cursors.put(contact.getKey(), 0);
+		}
+		return cursors;
+	}
+
+	private static void sellaDialogueUsesAuthoritativeChampionProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		java.util.List<MonsterSlayerDialoguePlan.Step> welcome = MonsterSlayerDialoguePlan.sellaFirstTaskWelcome();
+		assertDialoguePlan(welcome, new MonsterSlayerDialoguePlan.Speaker[] {
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.PLAYER
+		}, new String[] {
+			"I see by your medal a true hero stands before me.",
+			"But I'll put that medal to the test.",
+			"A hero defends the people of this world.",
+			"And to do that you need to defeat some mighty foes.",
+			"I hope you're ready!",
+			"I've never been more ready!"
+		}, "Sella first-task welcome");
+
+		MonsterSlayerState.Snapshot firstState = MonsterSlayerState.create(2, MonsterSlayerRank.CHAMPION,
+			MonsterSlayerBalances.zero(), championCursors(data, 0), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseSellaFirstTaskWelcome(4, firstState),
+			"authoritative Heroes cursor zero enables Sella welcome");
+		assertFalse(MonsterSlayerContacts.shouldUseSellaAssignmentRemark(4, firstState),
+			"Sella first assignment does not add random flavour to its welcome");
+		Player first = player(server, "slayersellafirst", 305, 600);
+		first.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(first.getCache(), data, firstState);
+		RecordingDialogue firstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(firstDialogue).onTalkNpc(first,
+			new Npc(server.getWorld(), 850, 305, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Do you stand ready to defend this world?",
+			"P:Yes please.",
+			"N:Your medal.",
+			"P:Right here!",
+			"N:I see by your medal a true hero stands before me.",
+			"N:But I'll put that medal to the test.",
+			"N:A hero defends the people of this world.",
+			"N:And to do that you need to defeat some mighty foes.",
+			"N:I hope you're ready!",
+			"P:I've never been more ready!",
+			"N:You should prepare for dragon fire.",
+			"N:Your next task is to slay 20 Blue dragons."), firstDialogue.events,
+			"Sella welcome follows medal proof and preserves first assignment");
+		assertEquals("heroes.blue_dragons",
+			MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+			"Sella welcome preserves authoritative Heroes progression");
+
+		String[] remarks = {
+			"Stand firm. Every foe defeated leaves someone safer.",
+			"Fight with courage, and remember who you fight for.",
+			"Let the people of this world sleep easier tonight.",
+			"A hero's strength is measured by whom they protect.",
+			"Go boldly. The people of this world are counting on us."
+		};
+		for (int index = 0; index < remarks.length; index++) {
+			assertEquals(remarks[index], MonsterSlayerContacts.sellaAssignmentRemark(index),
+				"bounded Sella heroic remark " + index);
+			assertTrue(remarks[index].length() <= 64, "Sella remark remains concise " + index);
+		}
+		assertThrows(new Runnable() { public void run() {
+			MonsterSlayerContacts.sellaAssignmentRemark(remarks.length);
+		}}, "out-of-range Sella dialogue selection is rejected");
+
+		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.CHAMPION,
+			MonsterSlayerBalances.zero(), championCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseSellaAssignmentRemark(4, laterState),
+			"later Heroes work enables Sella assignment flavour");
+		Player later = player(server, "slayersellalater", 306, 600);
+		later.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(later.getCache(), data, laterState);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later,
+			new Npc(server.getWorld(), 850, 306, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events,
+			new String[] {"I see by your medal a true hero stands before me."}),
+			"later Sella assignment does not repeat first-task welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, remarks),
+			"later Sella assignment uses one bounded heroic remark");
+		assertEquals("N:Your next task is to slay 30 Fire giants.",
+			laterDialogue.events.get(laterDialogue.events.size() - 1),
+			"Sella flavour preserves authoritative later assignment");
+
+		Map<String, Integer> promotedCursors = championCursors(data,
+			data.getContact("heroes").getMandatoryTasks().size());
+		Player promoted = player(server, "slayersellapromotion", 307, 600);
+		promoted.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.HERO, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 5L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(promoted,
+			new Npc(server.getWorld(), 850, 307, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:You've fought and slain giants, dragons,",
+			"N:And beasts from the depths of hell.",
+			"N:You've done well to protect the world",
+			"N:From all manner of evil.",
+			"N:I grant you this crest and the rank of Hero.",
+			"N:May your name carry the same weight.",
+			"N:And your foes shudder when they hear it.",
+			"P:It's been an honor and I won't let you down."), promotion.events,
+			"Sella promotion uses the exact heroic speaker order");
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data)
+			.isPromotionAcknowledged("heroes", data),
+			"Sella promotion is acknowledged after exact dialogue");
+
+		Player associatePlayer = player(server, "slayersellaassociate", 308, 600);
+		associatePlayer.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(associatePlayer.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.HERO, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 5L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue associate = new RecordingDialogue(2);
+		new MonsterSlayerContacts(associate).onTalkNpc(associatePlayer,
+			new Npc(server.getWorld(), 856, 308, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Sella sure knows how to inspire a person.",
+			"N:A Hero has earned access to Champion supplies.",
+			"P:No thanks."), associate.events,
+			"Champion associate prepends the approved Sella observation");
+	}
+
+	private static Map<String, Integer> championCursors(MonsterSlayerData data, int championCursor) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if ("falador".equals(contact.getKey()) || "port_sarim".equals(contact.getKey())
+					|| "brimhaven".equals(contact.getKey()) || "champions".equals(contact.getKey()))
+				cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else if ("heroes".equals(contact.getKey())) cursors.put(contact.getKey(), championCursor);
 			else cursors.put(contact.getKey(), 0);
 		}
 		return cursors;
