@@ -109,7 +109,7 @@ public final class MonsterSlayerContactsRouteTest {
 		java.util.Set<String> starts = new java.util.HashSet<String>();
 		int[][] expectedSprites = {
 			{846, 6, 28, 37, 98, 48, -1, -1, -1}, // proven NPC order: head, shirt/body, pants/legs, shield, weapon
-			{852, 4, 28, 3, -1, 109, -1, -1, -1},
+			{852, 3, 28, 2, -1, 109, -1, -1, -1},
 			{858, 7, -1, 2, -1, 116, -1, 28, -1}
 		};
 		for (int[] expected : expectedSprites) {
@@ -128,7 +128,8 @@ public final class MonsterSlayerContactsRouteTest {
 		assertTrue(clientDefinitions.contains("new int[]{6, 1, 2, -1, 109, 70, 45"), "existing Dwarf proves head sprite 6 in slot zero");
 		assertTrue(clientDefinitions.contains("new int[]{19, 34, 43, -1, 49"), "existing White Knight proves plate body and legs in shirt/pants slots");
 		assertTrue(clientDefinitions.contains("new int[]{6, 28, 37, 98, 48, -1, -1, -1"), "client Hobart proven plate composition");
-		assertTrue(clientDefinitions.contains("new int[]{4, 28, 3, -1, 109, -1, -1, -1"), "client associate plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 4, 2, -1, -1, -1, -1, 87"), "existing Gardener proves female head, body, and legs slots");
+		assertTrue(clientDefinitions.contains("new int[]{3, 28, 2, -1, 109, -1, -1, -1"), "client associate female plate composition");
 		assertTrue(clientDefinitions.contains("\"Fledgling Slayer Associate\", \"A Fledgling Slayer supplier\""), "client associate display name");
 		assertTrue(clientDefinitions.contains("new int[]{7, -1, 2, -1, 116, -1, 28, -1"), "client ambient plate composition");
 		assertNoFledglingRoamAreaIntersectsWorldGeometry(server, locations, "conf/server/defs/locs");
