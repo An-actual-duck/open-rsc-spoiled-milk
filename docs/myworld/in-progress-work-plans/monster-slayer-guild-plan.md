@@ -1118,6 +1118,31 @@ The normal `Your next task is to slay [count] [family].` line then follows.
 An active assignment, every later mandatory cursor, and repeatable state
 suppress this welcome. The `Task` shortcut remains concise and skips it.
 
+Every later Bran assignment receives one bounded randomized remark after any
+authoritative hazard warning and immediately before the unchanged assignment
+line. Hazard-free work draws only from personality lines; these make no claims
+about monster weaknesses, locations, drops, or required equipment:
+
+> Bran: `Now that's work worthy of a Veteran!`
+> Bran: `Ha! Show them why we're the best!`
+> Bran: `Make it loud enough to hear from the Blue Moon!`
+> Bran: `A proper hunt! I almost envy you!`
+> Bran: `Go on! Give me something worth boasting about!`
+
+Preparation advice is selected only from the assigned task's typed hazard
+metadata. The current Veteran roster uses this for poison spiders, producing
+one of:
+
+> Bran: `Poison on this one! Bring an antidote and keep swinging!`
+> Bran: `Pack an antidote! Be ready before the poison sets in!`
+
+The same typed formatter has bounded lines for `DESERT_HEAT`, `WILDERNESS`,
+`PRAYER_DRAIN` (presented as Worship drain), and `DRAGON_FIRE`, so a future
+data-authored Veteran task cannot receive advice for a hazard it does not
+declare. Bran's first-task welcome remains unchanged and receives no extra
+random remark. Active-task reminders, refusal paths, and pending promotion
+interception also receive none.
+
 `Task` shortcut begins at the assignment. Below rank: `No Veteran button, no
 Blue Moon work.`
 

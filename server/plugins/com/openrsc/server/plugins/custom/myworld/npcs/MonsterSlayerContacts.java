@@ -4,6 +4,8 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAcces
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
@@ -59,6 +61,13 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"Hah! A new Veteran!",
 		"Veterans are the best of the best!",
 		"Let's see if you can prove it."
+	};
+	private static final String[] BRAN_ASSIGNMENT_REMARKS = {
+		"Now that's work worthy of a Veteran!",
+		"Ha! Show them why we're the best!",
+		"Make it loud enough to hear from the Blue Moon!",
+		"A proper hunt! I almost envy you!",
+		"Go on! Give me something worth boasting about!"
 	};
 	private static final String[] HOBART_MEMBERSHIP_PROOF = {
 		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
@@ -121,7 +130,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) dialogue.npc(player, npc, hobartFollowUpRemark());
 		if (shouldUseMaraAssignmentRemark(index, state)) dialogue.npc(player, npc, maraAssignmentRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
-		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
+		MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
+		if (shouldUseBranAssignmentRemark(index, state)) dialogue.npc(player, npc, branAssignmentRemark(task));
 		dialogue.npc(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
@@ -279,6 +289,57 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	/** Defensive copy of Bran's first Blue Moon assignment welcome. */
 	public static String[] branFirstTaskWelcome() { return BRAN_FIRST_TASK_WELCOME.clone(); }
+	/** First-task ceremony remains unchanged; later mandatory and repeatable work receives Bran's flavour. */
+	public static boolean shouldUseBranAssignmentRemark(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 2 && state != null && !shouldUseBranFirstTaskWelcome(contactIndex, state);
+	}
+	private static String branAssignmentRemark(MonsterSlayerDefinitions.Task task) {
+		if (task == null) throw new IllegalArgumentException("Bran task is required");
+		if (task.getHazards().isEmpty()) {
+			return branAssignmentRemark(task, ThreadLocalRandom.current().nextInt(BRAN_ASSIGNMENT_REMARKS.length));
+		}
+		int hazardIndex = ThreadLocalRandom.current().nextInt(task.getHazards().size());
+		String[] remarks = branHazardRemarks(task.getHazards().get(hazardIndex));
+		return remarks[ThreadLocalRandom.current().nextInt(remarks.length)];
+	}
+	/**
+	 * Deterministic test/review seam. Advice is selected only from hazards on the
+	 * authoritative task definition; hazard-free work receives personality only.
+	 */
+	public static String branAssignmentRemark(MonsterSlayerDefinitions.Task task, int selection) {
+		if (task == null) throw new IllegalArgumentException("Bran task is required");
+		if (selection < 0) throw new IllegalArgumentException("Bran dialogue selection is out of range");
+		if (task.getHazards().isEmpty()) return BRAN_ASSIGNMENT_REMARKS[selection % BRAN_ASSIGNMENT_REMARKS.length];
+		int hazardIndex = selection % task.getHazards().size();
+		String[] remarks = branHazardRemarks(task.getHazards().get(hazardIndex));
+		return remarks[(selection / task.getHazards().size()) % remarks.length];
+	}
+	private static String[] branHazardRemarks(MonsterSlayerHazard hazard) {
+		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
+		switch (hazard) {
+		case DESERT_HEAT: return new String[] {
+			"Hot work! Prepare for the desert heat!",
+			"The desert heat is part of the fight! Prepare for it!"
+		};
+		case WILDERNESS: return new String[] {
+			"Wilderness work! Keep your wits about you!",
+			"You're headed into the Wilderness! Go prepared!"
+		};
+		case PRAYER_DRAIN: return new String[] {
+			"They drain Worship! Plan your supplies around it!",
+			"Expect Worship drain! Don't rely on full Worship points!"
+		};
+		case POISON: return new String[] {
+			"Poison on this one! Bring an antidote and keep swinging!",
+			"Pack an antidote! Be ready before the poison sets in!"
+		};
+		case DRAGON_FIRE: return new String[] {
+			"Dragon fire! Take the right protection!",
+			"Expect dragon fire! Prepare before you face it!"
+		};
+		default: throw new IllegalArgumentException("Unsupported Monster Slayer hazard");
+		}
+	}
 	/** Exact short lines for the pre-membership flow; callers receive a defensive copy. */
 	public static String[] hobartMembershipProofLines() { return HOBART_MEMBERSHIP_PROOF.clone(); }
 	/** Exact short lines spoken after a selected eligible drink is accepted. */
