@@ -281,7 +281,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 	}
 
 	private static void typedPromotionPlansAreBoundedAndOrdered() {
-		String[][] required = {{"That was your final Fledgling task.", "You are now an Adept.", "Here is your official Adept sticker."}, {"Well that was it, the last one.", "I award you Veteran status.", "Why does it say 'I heart PS'?", "To show your Port Sarim pride!"}, {"Hah! You did it! Every last task!", "You've earned Elite rank.", "The fun is over now.", "Elite work begins inside the true guilds.", "Not everyone comes back from that work.", "And come back any time to slay more with", "The best of the best!"}, {"'Grats on making it this far!", "I knew you had it in you.", "Than-", "Best not keep the Heroes' sect waiting.", "Monster Slayer Guild Medal!", "Well, aren't you going to say thank you?", "Th-", "Off you go!"}, {"You completed the work, even when it was hard. That is the part people remember."}, {"You've completed your journey for now. You've done well.", "And what's my new rank?", "And what use would you make of it?", "...Legend, then?", "If you continue to earn it."}};
+		String[][] required = {{"That was your final Fledgling task.", "You are now an Adept.", "Here is your official Adept sticker."}, {"Well that was it, the last one.", "I award you Veteran status.", "Why does it say 'I heart PS'?", "To show your Port Sarim pride!"}, {"Hah! You did it! Every last task!", "You've earned Elite rank.", "The fun is over now.", "Elite work begins inside the true guilds.", "Not everyone comes back from that work.", "And come back any time to slay more with", "The best of the best!"}, {"'Grats on making it this far!", "I knew you had it in you.", "Than-", "Best not keep the Heroes' sect waiting.", "Monster Slayer Guild Medal!", "Well, aren't you going to say thank you?", "Th-", "Off you go!"}, {"You've fought and slain giants, dragons,", "I grant you this crest and the rank of Hero.", "It's been an honor and I won't let you down."}, {"Well done. Very well done.", "You've completed your journey for now.", "And what's my new rank?", "Whatever is required of me.", "Then rise as a Legend of the Monster Slayer Guild.", "See that it remains one."}};
 		for (int tier = 0; tier < 6; tier++) {
 			java.util.List<MonsterSlayerDialoguePlan.Step> plan = MonsterSlayerDialoguePlan.promotion(tier);
 			assertTrue(!plan.isEmpty(), "promotion plan exists " + tier);
@@ -289,7 +289,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			for (String text : required[tier]) { boolean found = false; for (MonsterSlayerDialoguePlan.Step step : plan) if (text.equals(step.getText())) found = true; assertTrue(found, "promotion exact line " + text); }
 		}
 		equals(MonsterSlayerDialoguePlan.Speaker.NPC, MonsterSlayerDialoguePlan.promotion(5).get(0).getSpeaker(), "Legend NPC first");
-		equals(MonsterSlayerDialoguePlan.Speaker.PLAYER, MonsterSlayerDialoguePlan.promotion(5).get(1).getSpeaker(), "Legend player reply");
+		equals(MonsterSlayerDialoguePlan.Speaker.PLAYER, MonsterSlayerDialoguePlan.promotion(5).get(6).getSpeaker(), "Legend player reply");
 	}
 
 	private static void approvedShopDefinitionsHaveStableLaunchShape(MonsterSlayerData data) {
@@ -311,7 +311,8 @@ public final class MonsterSlayerPlayerStateCharacterization {
 					shop.getCapacityUpgrade().getCost().get(challenge), "capacity is single-tier " + shop.getKey() + " " + challenge);
 			}
 			equals(1, shop.getCategories().size(), "one approved category " + shop.getKey());
-			equals(4, shop.getCategories().get(0).getRewards().size(), "four consumables " + shop.getKey());
+			int expectedRewards = "legends".equals(shop.getKey()) ? 5 : 4;
+			equals(expectedRewards, shop.getCategories().get(0).getRewards().size(), "approved rewards " + shop.getKey());
 			for (MonsterSlayerDefinitions.Reward reward : shop.getCategories().get(0).getRewards()) {
 				equals(10, reward.getStock(), "launch stock " + reward.getKey());
 				equals(1, reward.getRestockAmount(), "restock amount " + reward.getKey());
