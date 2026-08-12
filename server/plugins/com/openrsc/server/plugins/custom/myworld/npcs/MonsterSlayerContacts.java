@@ -91,12 +91,12 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (state.getIntroStage() == 0) {
 			npcsay(player, npc, "'Ello there! Looking for Monster Slayer work?");
 			if (speakChoice(player, npc, "I'm looking to join The Monster Slayer's Guild.", "Not today, thanks.") != 0) return;
-			npcsay(player, npc, "Splendid! First, I need proof you're serious.", "Bring me a drink from that barmaid.", "Then I'll stamp you into the guild.");
+			npcsay(player, npc, "Splendid!", "First, I need proof you're serious.", "Bring me a drink from the barmaid.", "Then I'll stamp you into the guild.");
 			service.beginIntroduction(player); return;
 		}
 		int[] offeredAles = MonsterSlayerContactService.eligibleRisingSunAleIds(player);
-		if (offeredAles.length == 0) { npcsay(player, npc, "Still dry? A fledgling Slayer needs bravery, preparedness, and a drink from that barmaid over there."); return; }
-		npcsay(player, npc, "Ah, you've returned with refreshments. A proper administrative matter at last!");
+		if (offeredAles.length == 0) { npcsay(player, npc, "Still dry?", "Bring me a drink from the barmaid."); return; }
+		npcsay(player, npc, "Ah, refreshments!", "A proper guild matter at last.");
 		String[] choices = new String[offeredAles.length + 1];
 		for (int choice = 0; choice < offeredAles.length; choice++) choices[choice] = MonsterSlayerContactService.risingSunAleOfferLabel(offeredAles[choice]);
 		choices[choices.length - 1] = "Not yet";
@@ -105,9 +105,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (selectedAleId == -1) return;
 		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player, selectedAleId);
 		if (!result.isAccepted()) { player.message(aleFailureMessage(result.getReason())); return; }
-		npcsay(player, npc, "Excellent choice. That goes down much more neatly than a form.", "Hold still while I stamp you in. If it smudges, tell people it's a badge.");
+		npcsay(player, npc, "Excellent choice.", "That is much better than paperwork.", "Hold still while I stamp you in.");
 		say(player, npc, "That doesn't sound very official.");
-		npcsay(player, npc, "Official enough! You're a Fledgling Monster Slayer now. Return to me whenever you're ready for honest work and questionable paperwork.");
+		npcsay(player, npc, "Official enough!", "You're a Fledgling Monster Slayer now.", "Return when you're ready for work.");
 	}
 	/** Keeps transaction outcomes truthful without exposing persistence details to players. */
 	public static String aleFailureMessage(String reason) {

@@ -158,7 +158,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			for (int index = 0; index < offered.length; index++) {
 				assertEquals(acceptedAles[indexOf(acceptedAles, offered[index])], MonsterSlayerContactService.selectedRisingSunAleId(offered, index),
 					"explicit menu selection maps to offered drink " + mask + ":" + index);
-				assertTrue(MonsterSlayerContactService.risingSunAleOfferLabel(offered[index]).startsWith("Offer "),
+				assertTrue(MonsterSlayerContactService.risingSunAleOfferLabel(offered[index]).startsWith("Here's your "),
 					"offered drink has player-facing label " + offered[index]);
 			}
 			assertEquals(-1, MonsterSlayerContactService.selectedRisingSunAleId(offered, offered.length),

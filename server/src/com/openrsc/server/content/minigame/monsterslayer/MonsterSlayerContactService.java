@@ -111,9 +111,9 @@ public final class MonsterSlayerContactService {
 	}
 
 	public static String risingSunAleOfferLabel(int itemId) {
-		if (itemId == ItemId.ASGARNIAN_ALE.id()) return "Offer Asgarnian Ale";
-		if (itemId == ItemId.WIZARDS_MIND_BOMB.id()) return "Offer Wizard's Mind Bomb";
-		if (itemId == ItemId.DWARVEN_STOUT.id()) return "Offer Dwarven Stout";
+		if (itemId == ItemId.ASGARNIAN_ALE.id()) return "Here's your Asgarnian ale.";
+		if (itemId == ItemId.WIZARDS_MIND_BOMB.id()) return "Here's your Wizard's mind bomb.";
+		if (itemId == ItemId.DWARVEN_STOUT.id()) return "Here's your Dwarven stout.";
 		throw new IllegalArgumentException("Not an accepted Hobart drink: " + itemId);
 	}
 

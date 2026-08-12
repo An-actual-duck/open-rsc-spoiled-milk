@@ -748,6 +748,27 @@ walk-through remains the final confirmation that natural roaming stays within
 each rendered room as maps evolve; it must cover the Rising Sun, Rusty Anchor,
 Blue Moon Inn, Champions, Heroes, and Legends headquarters.
 
+#### Fledgling Effective-Client Correction
+
+The Rising Sun trio has one extra presentation constraint: NPC IDs `846`
+(Hobart), `852` (Fledgling Slayer Associate), and `858` (Fledgling Monster
+Slayer) are rendered from the desktop client's hard-coded NPC catalogue, not
+from the server definition packet. Their server JSON and client catalogue must
+therefore use the same layer order: head, shirt, pants, shield, weapon, hat,
+body, legs, gloves, boots, amulet, cape. Hobart's proven bronze composition is
+head `1`, bronze square shield `98`, bronze sword `48`, bronze plate body `28`,
+and bronze plate legs `37`. The associate uses head `4`, bronze battleaxe
+`109`, and plate body `28`; the ambient member uses head `7`, bronze mace
+`116`, and plate body `28`. The latter two intentionally have no shield or
+plate legs. These are client-supported animation layers, not guessed server
+sprite fields.
+
+Their Rising Sun roam rectangles are limited to the clear upper interior tiles
+around `(318..321,545..546)`. Validation checks every tile in each rectangle
+against authored scenery footprints and boundary anchors across the checked-in
+map profiles. The bartender retains its existing route; private validation must
+confirm the three members remain visually clear of its active movement path.
+
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.

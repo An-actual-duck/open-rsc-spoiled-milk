@@ -66,7 +66,7 @@ public final class MonsterSlayerContactsRouteTest {
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
 		veteranHeadquartersUsesBlueMoonInnPlacement();
-		presentationAndRoamingContractIsValid();
+		fledglingPresentationAndRoamingContractIsValid(server);
 		menuResponsesRemainVisiblePlayerSpeech();
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -100,14 +100,20 @@ public final class MonsterSlayerContactsRouteTest {
 		assertTrue(MonsterSlayerContacts.selectedChoice(2, "Yes please.") == null, "out-of-range choice is silent");
 	}
 
-	/** Definitions use established appearance layers; spawn points are distinct, roam, and avoid scenery anchors. */
-	private static void presentationAndRoamingContractIsValid() throws Exception {
+	/** Fledgling NPCs must agree with the hard-coded client definition layer order. */
+	private static void fledglingPresentationAndRoamingContractIsValid(Server server) throws Exception {
 		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
 		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
 		java.util.Set<String> starts = new java.util.HashSet<String>();
-		for (int id = 846; id <= 860; id++) {
+		int[][] expectedSprites = {
+			{846, 1, -1, -1, 98, 48, -1, 28, 37}, // head, shirt, pants, shield, weapon, hat, body, legs
+			{852, 4, -1, 3, -1, 109, -1, 28, -1},
+			{858, 7, -1, 2, -1, 116, -1, 28, -1}
+		};
+		for (int[] expected : expectedSprites) {
+			int id = expected[0];
 			JSONObject spawn = location(locations.getJSONArray("npclocs"), id);
 			JSONObject start = spawn.getJSONObject("start");
 			String coordinate = start.getInt("X") + "," + start.getInt("Y");
@@ -116,34 +122,53 @@ public final class MonsterSlayerContactsRouteTest {
 				|| spawn.getJSONObject("min").getInt("Y") < spawn.getJSONObject("max").getInt("Y"), "bounded roaming " + id);
 			JSONObject definition = location(definitions, id);
 			assertEquals(0, definition.getInt("attackable"), "Slayer NPC stays non-attackable " + id);
-			assertTrue(definition.getInt("sprites2") >= 28, "rank body sprite " + id);
-			assertTrue(definition.getInt("sprites4") >= 48, "rank weapon sprite " + id);
-			if (id <= 851) {
-				assertTrue(definition.getInt("sprites3") >= 37, "contact plate legs " + id);
-				assertTrue(definition.getInt("sprites5") >= 98, "contact shield " + id);
-			} else {
-				assertEquals(3, definition.getInt("sprites3"), "non-contact keeps ordinary legs " + id);
-				assertEquals(-1, definition.getInt("sprites5"), "non-contact has no shield " + id);
-			}
+			for (int layer = 1; layer <= 8; layer++) assertEquals(expected[layer], definition.getInt("sprites" + layer), "server effective layer " + id + "/" + layer);
 		}
-		assertNoSlayerStartIsScenery(locations, "conf/server/defs/locs");
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("new int[]{1, -1, -1, 98, 48, -1, 28, 37"), "client Hobart plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{4, -1, 3, -1, 109, -1, 28, -1"), "client associate plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{7, -1, 2, -1, 116, -1, 28, -1"), "client ambient plate composition");
+		assertNoFledglingRoamAreaIntersectsWorldGeometry(server, locations, "conf/server/defs/locs");
+		for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(0)) assertTrue(step.getText().length() <= 48, "short Hobart promotion line: " + step.getText());
+		assertEquals("Here's your Asgarnian ale.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(267), "natural Asgarnian response");
+		assertEquals("Here's your Wizard's mind bomb.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(268), "natural Wizard response");
+		assertEquals("Here's your Dwarven stout.", com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService.risingSunAleOfferLabel(269), "natural Dwarven response");
 	}
 
-	private static void assertNoSlayerStartIsScenery(JSONObject locations, String directory) throws Exception {
-		java.util.Set<String> starts = new java.util.HashSet<String>();
-		for (int id = 846; id <= 860; id++) {
-			JSONObject start = location(locations.getJSONArray("npclocs"), id).getJSONObject("start");
-			starts.add(start.getInt("X") + "," + start.getInt("Y"));
-		}
+	private static void assertNoFledglingRoamAreaIntersectsWorldGeometry(Server server, JSONObject locations, String directory) throws Exception {
 		try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), "*SceneryLocs*.json")) {
 			for (java.nio.file.Path file : files) {
 				JSONObject scenery = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
 				for (Object value : scenery.getJSONArray("sceneries")) {
 					JSONObject entry = (JSONObject) value;
-					JSONObject pos = entry.getJSONObject("pos");
-					assertFalse(starts.contains(pos.getInt("X") + "," + pos.getInt("Y")), "Slayer start intersects scenery " + file + " " + entry.getInt("id"));
+					assertFledglingRangeDoesNotIntersect(locations, entry.getJSONObject("pos").getInt("X"), entry.getJSONObject("pos").getInt("Y"), entry.getInt("id"), entry.getInt("direction"), server, "scenery " + file);
 				}
 			}
+		}
+		try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), "*BoundaryLocs*.json")) {
+			for (java.nio.file.Path file : files) {
+				JSONObject boundaries = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+				for (Object value : boundaries.getJSONArray("boundaries")) {
+					JSONObject entry = (JSONObject) value;
+					assertFledglingRangeDoesNotIntersect(locations, entry.getJSONObject("pos").getInt("X"), entry.getJSONObject("pos").getInt("Y"), entry.getInt("id"), entry.getInt("direction"), null, "boundary " + file);
+				}
+			}
+		}
+	}
+
+	private static void assertFledglingRangeDoesNotIntersect(JSONObject locations, int x, int y, int id, int direction, Server server, String source) {
+		int width = 1, height = 1;
+		if (server != null) {
+			com.openrsc.server.external.GameObjectDef object = server.getEntityHandler().getGameObjectDef(id);
+			if (object == null) throw new AssertionError("Unknown scenery definition " + id);
+			width = direction == 0 || direction == 4 ? object.getWidth() : object.getHeight();
+			height = direction == 0 || direction == 4 ? object.getHeight() : object.getWidth();
+		}
+		for (int fledgling : new int[] {846, 852, 858}) {
+			JSONObject range = location(locations.getJSONArray("npclocs"), fledgling);
+			JSONObject min = range.getJSONObject("min"), max = range.getJSONObject("max");
+			assertTrue(max.getInt("X") < x || min.getInt("X") >= x + width || max.getInt("Y") < y || min.getInt("Y") >= y + height,
+				"Fledgling roam intersects " + source + " id=" + id);
 		}
 	}
 
