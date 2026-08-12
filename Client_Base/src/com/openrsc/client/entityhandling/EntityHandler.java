@@ -6648,8 +6648,8 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(851, "Orin", "A stoic Monster Slayer contact", "Task",
 			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 16776960, 16776960, 15523536);
-		addMonsterSlayerNpcDefinition(852, "Slayer Associate", "A Fledgling Slayer supplier", "Trade",
-			new int[]{4, -1, 3, -1, 109, -1, 28, -1, -1, -1, -1, -1},
+		addMonsterSlayerNpcDefinition(852, "Fledgling Slayer Associate", "A Fledgling Slayer supplier", "Trade",
+			new int[]{4, 28, 3, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 16737817, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(853, "Slayer Associate", "An Initiate Slayer supplier", "Trade",
 			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
