@@ -281,7 +281,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 	}
 
 	private static void typedPromotionPlansAreBoundedAndOrdered() {
-		String[][] required = {{"Excellent work! You've done a fine job culling those monsters.", "There seem to be just as many as before."}, {"You did what you said you would. That's worth more than loud talk."}, {"Hah. I knew you had it in you. You're Elite now; take the badge."}, {"Splendid work! You faced the test and did not blink."}, {"You completed the work, even when it was hard. That is the part people remember."}, {"You've completed your journey for now. You've done well.", "And what's my new rank?", "And what use would you make of it?", "...Legend, then?", "If you continue to earn it."}};
+		String[][] required = {{"Excellent work!", "You've done a fine job culling those monsters.", "There seem to be just as many as before."}, {"You did what you said you would. That's worth more than loud talk."}, {"Hah. I knew you had it in you. You're Elite now; take the badge."}, {"Splendid work! You faced the test and did not blink."}, {"You completed the work, even when it was hard. That is the part people remember."}, {"You've completed your journey for now. You've done well.", "And what's my new rank?", "And what use would you make of it?", "...Legend, then?", "If you continue to earn it."}};
 		for (int tier = 0; tier < 6; tier++) {
 			java.util.List<MonsterSlayerDialoguePlan.Step> plan = MonsterSlayerDialoguePlan.promotion(tier);
 			assertTrue(!plan.isEmpty(), "promotion plan exists " + tier);
