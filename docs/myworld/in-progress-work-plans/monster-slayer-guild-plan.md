@@ -830,9 +830,13 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   conversation.
 - The normal Talk-to route is intentionally social: it gives the player a
   chance to accept or decline the next assignment, then asks to see their
-  current proof before assigning it. The proof check is dialogue flavor; the
-  server still validates rank, normal guild access, the one-active-task rule,
-  and every mandatory/repeatable state transition.
+  current proof before assigning it. For Talk-to, rank eligibility is checked
+  **after** the accepted response and proof request so an ineligible player
+  still receives the full social refusal; `Task` right-click retains its early
+  authoritative gate because it intentionally skips this conversation. The
+  proof check is dialogue flavor; the server still validates rank, normal guild
+  access, the one-active-task rule, and every mandatory/repeatable state
+  transition.
 - The contact-proof pattern is reusable across the ladder: every task giver
   asks for the preceding proof, and an ineligible player is directed to the
   immediately preceding giver rather than being given a vague refusal. Mara

@@ -310,11 +310,38 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
 		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.completeIntroduction(MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data), data);
 		assertEquals(MonsterSlayerState.TaskResult.Reason.RANK, MonsterSlayerState.assignMandatory(fledgling, data, "port_sarim").getReason(), "Fledgling cannot receive Adept work");
+		Player ineligible = player(server, "maraproofdenied", 270, 600);
+		MonsterSlayerState.write(ineligible.getCache(), data, fledgling);
+		RecordingDialogue deniedDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(deniedDialogue).onTalkNpc(ineligible, new Npc(server.getWorld(), 847, 271, 600));
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "N:You need an Adept sticker first. Hobart in Falador can help."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, then refusal");
+		Player declining = player(server, "maraproofno", 272, 600);
+		MonsterSlayerState.write(declining.getCache(), data, fledgling);
+		RecordingDialogue noDialogue = new RecordingDialogue(1);
+		new MonsterSlayerContacts(noDialogue).onTalkNpc(declining, new Npc(server.getWorld(), 847, 273, 600));
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:No, not today."), noDialogue.events, "Mara no response ends before proof or refusal");
 		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
 		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
 		MonsterSlayerState.Snapshot adept = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		assertEquals(MonsterSlayerState.TaskResult.Reason.ASSIGNED, MonsterSlayerState.assignMandatory(adept, data, "port_sarim").getReason(), "eligible Adept receives normal Port Sarim assignment");
+		Player eligible = player(server, "maraproofyes", 274, 600);
+		MonsterSlayerState.write(eligible.getCache(), data, adept);
+		RecordingDialogue eligibleDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(eligibleDialogue).onTalkNpc(eligible, new Npc(server.getWorld(), 847, 275, 600));
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker."), eligibleDialogue.events.subList(0, 3), "eligible Mara Talk-to verifies proof before assignment");
+		assertTrue(MonsterSlayerState.read(eligible.getCache(), data).getActiveTaskKey() != null, "eligible Mara Talk-to proceeds into normal assignment");
+	}
+
+	private static final class RecordingDialogue implements MonsterSlayerContacts.DialogueRenderer {
+		private final java.util.List<String> events = new java.util.ArrayList<String>();
+		private final int[] selections;
+		private int selectionIndex;
+		private RecordingDialogue(int... selections) { this.selections = selections; }
+		public boolean render(Player player, Npc npc, MonsterSlayerDialoguePlan.Step step) { events.add((step.getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC ? "N:" : "P:") + step.getText()); return true; }
+		public void npc(Player player, Npc npc, String... text) { for (String line : text) events.add("N:" + line); }
+		public void player(Player player, Npc npc, String text) { events.add("P:" + text); }
+		public int choose(Player player, String... choices) { return selections[selectionIndex++]; }
 	}
 
 	private static boolean containsDialogue(java.util.List<MonsterSlayerDialoguePlan.Step> steps, String expected) {
