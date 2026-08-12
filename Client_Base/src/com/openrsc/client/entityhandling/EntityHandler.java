@@ -6649,7 +6649,7 @@ public class EntityHandler {
 			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 16776960, 16776960, 15523536);
 		addMonsterSlayerNpcDefinition(852, "Fledgling Slayer Associate", "A Fledgling Slayer supplier", "Trade",
-			new int[]{3, 28, 2, -1, 109, -1, -1, -1, -1, -1, -1, -1},
+			new int[]{3, 55, 2, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 16737817, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(853, "Slayer Associate", "An Initiate Slayer supplier", "Trade",
 			new int[]{6, 1, 2, 98, 48, -1, -1, -1, -1, -1, -1, -1},
