@@ -1821,23 +1821,23 @@ repeatable tasks from that same contact. Definition loading and CI must verify:
 - the price vector contains exactly one positive component, the contact's
   native challenge currency.
 
-### Confirmed: Initial Consumable Shop Stock
+### Confirmed: Initial Shop Stock
 
 The initial rollout has one full three-dose potion from each of the three
 Herblaw potion families and one crafted, non-fish, multi-stage food per shop.
 These are ordinary existing items, not certificates, and are intentionally
 useful alternatives to making the same supplies through Herblaw or Cooking.
-Their inclusion is approved; point-cost vectors and any future secondary stock
-remain a separate economy pass.
+The Hero shop additionally sells dragon metal scrap as an approved high-value
+Smithing material.
 
-| Shop/contact | Native currency | Full potion stock | Food stock | Food total healing |
-| --- | --- | --- | --- | ---: |
-| Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) |
-| Port Sarim | Adept | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) |
-| Blue Moon Inn, Varrock | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) |
-| Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) |
-| Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) |
-| Legends Guild | Hero | Brawn v6 `3198`; Deftness v6 `3201`; Insight v6 `3204` | Pineapple pizza `750` | 20 (two halves) |
+| Shop/contact | Native currency | Full potion stock | Food stock | Food total healing | Additional stock |
+| --- | --- | --- | --- | ---: | --- |
+| Rising Sun/Falador | Fledgling | Brawn v1 `474`; Deftness v1 `489`; Insight v1 `569` | Meat pie `259` | 8 (two bites) | — |
+| Port Sarim | Adept | Brawn v2 `477`; Deftness v2 `492`; Insight v2 `963` | Apple pie `257` | 10 (two bites) | — |
+| Blue Moon Inn, Varrock | Veteran | Brawn v3 `480`; Deftness v3 `495`; Insight v3 `1411` | Cake `330` | 12 (three slices) | — |
+| Champions Guild | Elite | Brawn v4 `483`; Deftness v4 `498`; Insight v4 `1414` | Meat pizza `326` | 14 (two halves) | — |
+| Heroes Guild | Champion | Brawn v5 `486`; Deftness v5 `566`; Insight v5 `1468` | Anchovie pizza `327` | 16 (two halves) | — |
+| Legends Guild | Hero | Brawn v6 `3198`; Deftness v6 `3201`; Insight v6 `3204` | Pineapple pizza `750` | 20 (two halves) | Dragon metal scrap `3228` |
 
 `Brawn` supports Melee, Mining, Smithing, Woodcutting, and Hits; `Deftness`
 supports Ranged, Thieving, Crafting, Agility, and Fishing; and `Insight`
@@ -1846,12 +1846,11 @@ is the existing full three-dose item. Food is deliberately ordered by total
 healing in clean two-point steps from 8 through 20, and every choice is a
 crafted pie, cake, or pizza that is consumed over multiple bites.
 
-The default reward unit is one full potion or one whole food item. Each initial
-consumable line starts with normal shop stock of `10` and uses the ordinary shop
-restock behavior already used by standard stores. The existing quantity selector
-may sell more than one unit only after the cost vector and output multiplication
-are verified atomically. No line above authorizes an unbounded shop stock, a
-certificate substitute, or a change to the underlying Cooking/Herblaw recipes.
+The default reward unit is one full potion, one whole food item, or one dragon
+metal scrap. Slayer point-shop rewards use the implemented infinite-stock model
+shared with the Rangers Guild point shop. The retained JSON stock fields are
+compatibility metadata and do not impose ordinary-store depletion. Quantity
+multiplication and every typed cost component remain atomically validated.
 
 ### Shop Slice Initial Prices (Playtest Baseline)
 
@@ -1860,6 +1859,8 @@ The first headless shop slice uses these deliberately conservative point prices:
 - Potions cost native `2/3/4/5/7/9` points from Fledgling through Hero; each
   later potion also costs `1/2/3/4/5` immediately-lower-tier points.
 - Food costs native `3/5/6/8/10/13` and immediately-lower `0/2/3/4/6/8`.
+- One dragon metal scrap in the Hero shop costs `24` Champion and `32` Hero
+  coins.
 - Capacity entitlements cost native-only `84/148/138/110/268/282`. Against the
   implemented mandatory totals `38/67/62/50/121/128`, each is twice the prior
   110%-rounded baseline; repeatable-task tuning remains subject to playtest.
