@@ -122,9 +122,9 @@ public final class MonsterSlayerContactsRouteTest {
 			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
 		java.util.Set<String> starts = new java.util.HashSet<String>();
 		int[][] expectedSprites = {
-			{846, 6, 28, 37, 98, 48, -1, -1, -1}, // proven NPC order: head, shirt/body, pants/legs, shield, weapon
-			{852, 3, 55, 2, -1, 109, -1, -1, -1},
-			{858, 7, 28, 2, -1, 116, -1, -1, -1}
+			{846, 6, 27, 36, 97, 47, -1, -1, -1}, // head, bronze plate body, bronze legs, bronze shield, bronze sword
+			{852, 3, 54, 2, -1, 108, -1, -1, -1}, // female head, female bronze plate body, legs, no shield, bronze weapon
+			{858, 7, 27, 2, -1, 115, -1, -1, -1} // bearded head, bronze plate body, legs, no shield, bronze weapon
 		};
 		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		for (int[] expected : expectedSprites) {
@@ -144,15 +144,15 @@ public final class MonsterSlayerContactsRouteTest {
 		String clientShopInterface = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "interfaces", "misc", "DoSkillInterface.java")), StandardCharsets.UTF_8);
 		assertTrue(clientDefinitions.contains("new int[]{6, 1, 2, -1, 109, 70, 45"), "existing Dwarf proves head sprite 6 in slot zero");
 		assertTrue(clientDefinitions.contains("new int[]{19, 34, 43, -1, 49"), "existing White Knight proves plate body and legs in shirt/pants slots");
-		assertTrue(clientDefinitions.contains("new int[]{6, 28, 37, 98, 48, -1, -1, -1"), "client Hobart proven plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{6, 27, 36, 97, 47, -1, -1, -1"), "client Hobart bronze plate composition");
 		assertTrue(clientDefinitions.contains("new int[]{3, 4, 2, -1, -1, -1, -1, 87"), "existing Gardener proves female head, body, and legs slots");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 15654365"), "female iron plate-top animation exists");
-		assertTrue(clientDefinitions.contains("new int[]{3, 55, 2, -1, 109, -1, -1, -1"), "client associate female plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 54, 2, -1, 108, -1, -1, -1"), "client Fledgling associate female bronze plate composition");
 		assertTrue(clientDefinitions.contains("\"Fledgling Slayer Associate\", \"A Fledgling Slayer supplier\""), "client associate display name");
-		assertTrue(clientDefinitions.contains("new int[]{7, 28, 2, -1, 116, -1, -1, -1"), "client ambient plate composition");
-		assertTrue(clientDefinitions.contains("new int[]{4, 56, 38, 99, 49, -1, -1, -1"), "client female Adept leader composition");
-		assertTrue(clientDefinitions.contains("new int[]{6, 29, 3, -1, 110, -1, -1, -1"), "client Adept associate composition");
-		assertTrue(clientDefinitions.contains("new int[]{7, 29, 2, -1, 117, -1, -1, -1"), "client Adept ambient composition");
+		assertTrue(clientDefinitions.contains("new int[]{7, 27, 2, -1, 115, -1, -1, -1"), "client Fledgling ambient bronze plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 55, 37, 98, 48, -1, -1, -1"), "client female Adept leader iron plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{6, 28, 2, -1, 109, -1, -1, -1"), "client Adept associate iron plate composition");
+		assertTrue(clientDefinitions.contains("new int[]{7, 28, 2, -1, 116, -1, -1, -1"), "client Adept ambient iron plate composition");
 		assertTrue(clientDefinitions.contains("\"Adept Slayer Associate\", \"An Adept Slayer supplier\""), "client Adept associate display name");
 		assertTrue(clientDefinitions.contains("\"Adept Monster Slayer\", \"A practical hunter\""), "client Adept ambient display name");
 		assertTrue(clientShopInterface.contains("{\"Fledgling\", \"Adept\", \"Veteran\", \"Elite\", \"Champion\", \"Hero\"}"), "client point-shop labels present Adept");
@@ -171,9 +171,9 @@ public final class MonsterSlayerContactsRouteTest {
 
 	private static void assertAdeptPresentationParity(JSONArray definitions) {
 		int[][] expected = {
-			{847, 4, 56, 38, 99, 49}, // female iron plate, iron legs, shield, sword
-			{853, 6, 29, 3, -1, 110}, // male iron plate, normal legs, battleaxe
-			{859, 7, 29, 2, -1, 117} // bearded iron plate, normal legs, mace
+			{847, 3, 55, 37, 98, 48}, // female head, female iron plate, iron legs, shield, sword
+			{853, 6, 28, 2, -1, 109}, // male head, iron plate, legs, no shield, iron weapon
+			{859, 7, 28, 2, -1, 116} // bearded head, iron plate, legs, no shield, iron weapon
 		};
 		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		for (int[] fixture : expected) {
