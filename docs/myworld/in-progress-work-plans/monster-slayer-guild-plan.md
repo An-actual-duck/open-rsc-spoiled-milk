@@ -26,7 +26,7 @@ Source policy:
   dialogue flavour only: they are not items, cosmetics, or another authority.
 - Unique Slayer rewards are explicitly deferred; this pass does not add or
   design them.
-- Backpack prices are the doubled approved baseline: Fledgling `84`, Adept
+- Satchel-upgrade prices are the doubled approved baseline: Fledgling `84`, Adept
   `148`, Veteran `138`, Elite `110`, Champion `268`, and Hero `282`. Each is
   exactly twice the prior `ceil(mandatory rewards * 1.10)` price, paid only in
   its own challenge currency.
@@ -37,7 +37,7 @@ Source policy:
   ambient Veteran `860` occupy fixed Blue Moon Inn tiles `(117,521)`,
   `(118,521)`, and `(119,521)` respectively.
 - Private validation has passed for the implemented contacts, typed shops,
-  point UI, 30-to-40 inventory expansion, and ordered backpack purchases.
+  point UI, 30-to-40 inventory expansion, and ordered satchel purchases.
   Release integration remains a manager decision; no release is authorized by
   this plan update.
 - `docs/myworld/rough-drafts/slayer-guild-rough-draft-plan.md` is superseded
@@ -83,7 +83,7 @@ tooltips, and the saved Keep open / Remember last selected controls.
 The six permanent capacity entitlements are active. The server derives a
 player's authoritative capacity from the validated mask, the custom client
 renders 40 positions in an 8x5 layout, and associate dialogue sells each
-upgrade only in order. The capacity receipt precedes the refreshed inventory;
+satchel upgrade only in order. The capacity receipt precedes the refreshed inventory;
 accounts above 30 slots refuse an older client rather than truncating items.
 
 ## Product Contract
@@ -925,6 +925,34 @@ Every associate shop spends only the already-defined typed Monster Slayer
 currency and must retain its rank, point-vector, and normal host-guild access
 validation server-side.
 
+#### Fledgling Associate And Satchel Upgrade
+
+Before the player earns Adept rank, the Fledgling associate says:
+
+> `Sorry, you gotta get a promotion before I can sell you anything.`
+> `Them's the rules.`
+
+Once Adept rank unlocks the associate, Talk-to begins with three short lines:
+
+> `Congratulations on becoming an Adept.`
+> `I can show you my wares now.`
+> `Or perhaps you'd like an upgrade to your satchel?`
+
+The player asks `Can you upgrade my satchel?` The associate quotes the exact
+authoritative price as `I can, but it'll cost you 84 fledgling coins.`, then
+warns `I can only do one upgrade per satchel as well.` The spoken choices are
+`Totally worth it.` and `No thanks.` Trade/Shop remains the only route that
+opens the graphical reward store; Talk-to remains dialogue.
+
+The server revalidates and atomically purchases the entitlement only after the
+affirmative response. Insufficient funds produce `Sorry, but you don't have
+enough to cover the cost.` An already-owned entitlement produces `Looks like I
+already did this upgrade.` On success the associate says `Okay, hold on while I
+stitch this.`, pauses briefly, then says `Done! I'm sure you can fit at least
+one more thing now.` The authoritative capacity packet/inventory refresh is
+unchanged. All player-facing Slayer capacity dialogue uses **satchel**, not
+backpack; established internal entitlement names remain compatibility details.
+
 ### Contact Dialogue Sheets
 
 Names remain implementation choices. These sheets identify the voice, the
@@ -978,8 +1006,9 @@ Fledgling row in the shop-gate table.
 
 #### 2. Rusty Anchor Contact — Adept Sticker To Veteran Button
 
-Tone: friendly and capable, but no longer quaint; a working-port regular who
-treats the guild as honest employment.
+Mara is a gruff but kind working woman: practical, sturdy, modest, and quietly
+supportive. Her voice should suggest someone accustomed to hard physical work,
+without becoming cruel, theatrical, aristocratic, or excessively jokey.
 
 **Below rank**
 
@@ -988,23 +1017,50 @@ treats the guild as honest employment.
 
 **Normal task route**
 
-> Contact: `Back for work, are you?`
-> Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Let's see that sticker.`
-> Player: `Here you are.`
-> Contact: `Your next task is to slay [count] [family]. Keep your kit dry and
-> your head on.`
+> Mara: `Are you here to slay monsters?`
+> Player: `Yes, I am.` / `No, not today.`
+> Mara (if yes): `Let's see that Adept sticker.`
+> Player (if eligible): `Right here!`
+> Player (if ineligible): `Oh, I don't have one.`
 
-`Task` shortcut begins at `Your next task is...`; below-rank use says `No
-Adept sticker, no Port Sarim work.`
+On the first Port Sarim mandatory assignment only, authoritative cursor zero
+and the absence of an active task add this welcome after `Right here!`:
+
+> Mara: `Right, you must be the newest among the Adepts.`
+> Mara: `Getting here means you can swing a sword.`
+> Mara: `Better than a goblin can stab a spear.`
+> Mara: `Glad to have you.`
+
+The normal task preview, warning, and assignment then continue. An assigned
+first task, every later mandatory cursor, and repeatable state suppress this
+welcome. Later successfully accepted Mara assignments may use exactly one of
+these bounded remarks:
+
+- `Steady hands make lighter work.`
+- `Take your time and do the job properly.`
+- `Keep your footing. Strength is no use flat on your back.`
+- `A hard day's work is still just a day. You'll manage.`
+- `Pack what you need, and mind yourself out there.`
+
+`Task` shortcut begins at `Your next task is...`; below-rank use says `You need
+an Adept sticker first. Hobart in Falador can help.` It skips the social proof
+exchange and the first-task welcome.
 
 **Veteran promotion / shop reveal**
 
-> Contact: `You did what you said you would. That's worth more than loud talk.`
-> Contact: `You're a Veteran now. Wear this button somewhere it won't fall in
-> the drink.`
-> Contact: `The trader beside me deals in Adept Slayer Points. He's cleared
-> to serve Veterans.`
+> Mara: `Well that was it, the last one.`
+> Mara: `At this point I'd say you've proven yourself.`
+> Mara: `I award you Veteran status.`
+> Mara: `Please accept this button as proof of your rank.`
+> Player: `I'm honored. Thank you.`
+> Player: `But um...`
+> Player: `Why does it say 'I heart PS'?`
+> Mara: `To show your Port Sarim pride!`
+> Player: `Right, of course.`
+
+This is the standard pending-promotion interception: it replaces the next Mara
+interaction, acknowledges only after every line renders, assigns no task in
+that interaction, and does not repeat.
 
 #### 3. Blue Moon Inn Contact — Veteran Button To Elite Badge
 
