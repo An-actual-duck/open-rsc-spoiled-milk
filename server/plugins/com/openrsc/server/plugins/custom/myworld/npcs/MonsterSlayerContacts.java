@@ -36,7 +36,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private static final String[] HOBART_FOLLOW_UP_REMARKS = {
 		"Right then, back to it. Try not to make a spectacle of yourself.",
 		"Good. I was starting to think you'd gone soft.",
-		"Keep your blade sharp and your excuses shorter.",
+		"Come back for more work anytime.",
 		"There's always another mess needing a capable pair of hands.",
 		"That's the spirit. Don't keep the monsters waiting."
 	};
@@ -74,19 +74,19 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		MonsterSlayerContactService service = new MonsterSlayerContactService(data, player.getWorld().getMonsterSlayerTaskService());
 		if (index == 0 && state.getRank() == MonsterSlayerRank.UNSTAMPED) { introduction(player, npc, service, state, shortcut); return; }
 		if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
+		if (state.getRank().isAtLeast(data.getContact(CONTACTS[index]).getAwardedRank())
+			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()
+			&& !state.isPromotionAcknowledged(CONTACTS[index], data)) {
+			if (!renderPromotion(player, npc, index)) return;
+			if (!service.acknowledgePromotion(player, CONTACTS[index]).isAccepted()) player.message("Your Monster Slayer promotion could not be recorded.");
+			return;
+		}
 		if (shortcut && !state.getRank().isAtLeast(REQUIRED[index])) { dialogue.npc(player, npc, contactRefusal(index)); return; }
 		if (!shortcut) {
 			dialogue.npc(player, npc, contactGreeting(index));
 			if (speakChoice(player, npc, contactChoices(index)) != 0) return;
 			dialogue.npc(player, npc, contactProof(index));
-			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.npc(player, npc, contactRefusal(index)); return; }
-		}
-		if (state.getRank().isAtLeast(data.getContact(CONTACTS[index]).getAwardedRank())
-			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()) {
-			if (!state.isPromotionAcknowledged(CONTACTS[index], data)) {
-				if (!renderPromotion(player, npc, index)) return;
-				if (!service.acknowledgePromotion(player, CONTACTS[index]).isAccepted()) { player.message("Your Monster Slayer promotion could not be recorded."); return; }
-			}
+			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index)); return; }
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
@@ -220,6 +220,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}}; return choices[index].clone(); }
 	/** The rank proof required before normal assignment is attempted. */
 	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
+	/** Player acknowledgement after a proof request but before a proof-gated refusal. */
+	public static String missingProofResponse(int index) { String[] lines = {"Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one."}; return lines[index]; }
 	/** Ineligible contacts direct the player to the immediately preceding task giver. */
 	public static String contactRefusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "You need an Adept sticker first. Hobart in Falador can help.", "I need a Veteran button. Earn it from Mara in Port Sarim.", "I need an Elite badge. Earn it from Bran at the Blue Moon Inn.", "Champion's medal first. Doran at the Champions Guild can help.", "Hero's crest required. Sella at the Heroes Guild can help."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }

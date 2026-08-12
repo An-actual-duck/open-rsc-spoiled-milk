@@ -302,11 +302,16 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("Yes, I am.", MonsterSlayerContacts.contactChoices(1)[0], "Mara yes response is natural player speech");
 		assertEquals("No, not today.", MonsterSlayerContacts.contactChoices(1)[1], "Mara no response ends naturally");
 		assertEquals("Let's see that Adept sticker.", MonsterSlayerContacts.contactProof(1), "Mara requests the Adept proof");
+		assertEquals("Oh, I don't have one.", MonsterSlayerContacts.missingProofResponse(1), "Mara proof refusal includes the player's missing-sticker reply");
 		assertEquals("You need an Adept sticker first. Hobart in Falador can help.", MonsterSlayerContacts.contactRefusal(1), "Mara directs ineligible players to Hobart");
 		assertTrue(MonsterSlayerContacts.contactRefusal(2).contains("Mara in Port Sarim"), "later contacts direct players to the previous giver");
 		assertEquals("That was your final Fledgling task.", MonsterSlayerDialoguePlan.promotion(0).get(0).getText(), "Fledgling final-task dialogue is unique");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You are now an Adept."), "promotion states Adept rank");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Here is your official Adept sticker."), "promotion gives official sticker");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You can now access the Fledgling shop."), "promotion identifies the unlocked shop");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Just speak with my associate over there."), "promotion directs the player to the associate");
+		assertFalse(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You've earned Fledgling Slayer Points."), "promotion does not repeat the removed point line");
+		assertFalse(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "My associate can trade them for supplies."), "promotion does not repeat the removed associate line");
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
 		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.completeIntroduction(MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data), data);
 		assertEquals(MonsterSlayerState.TaskResult.Reason.RANK, MonsterSlayerState.assignMandatory(fledgling, data, "port_sarim").getReason(), "Fledgling cannot receive Adept work");
@@ -314,7 +319,7 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(ineligible.getCache(), data, fledgling);
 		RecordingDialogue deniedDialogue = new RecordingDialogue(0);
 		new MonsterSlayerContacts(deniedDialogue).onTalkNpc(ineligible, new Npc(server.getWorld(), 847, 271, 600));
-		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "N:You need an Adept sticker first. Hobart in Falador can help."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, then refusal");
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Oh, I don't have one.", "N:You need an Adept sticker first. Hobart in Falador can help."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, player acknowledgement, then refusal");
 		Player declining = player(server, "maraproofno", 272, 600);
 		MonsterSlayerState.write(declining.getCache(), data, fledgling);
 		RecordingDialogue noDialogue = new RecordingDialogue(1);
@@ -331,6 +336,17 @@ public final class MonsterSlayerContactsRouteTest {
 		new MonsterSlayerContacts(eligibleDialogue).onTalkNpc(eligible, new Npc(server.getWorld(), 847, 275, 600));
 		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker."), eligibleDialogue.events.subList(0, 3), "eligible Mara Talk-to verifies proof before assignment");
 		assertTrue(MonsterSlayerState.read(eligible.getCache(), data).getActiveTaskKey() != null, "eligible Mara Talk-to proceeds into normal assignment");
+		Player pendingPromotion = player(server, "hobartpromotionfirst", 276, 600);
+		MonsterSlayerState.write(pendingPromotion.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotionDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(promotionDialogue).onTalkNpc(pendingPromotion, new Npc(server.getWorld(), 846, 277, 600));
+		assertEquals("N:That was your final Fledgling task.", promotionDialogue.events.get(0), "pending promotion starts before normal greeting");
+		assertFalse(promotionDialogue.events.contains("N:" + MonsterSlayerContacts.contactGreeting(0)), "pending promotion suppresses normal greeting");
+		assertTrue(MonsterSlayerState.read(pendingPromotion.getCache(), data).isPromotionAcknowledged("falador", data), "promotion is acknowledged after its one interaction");
+		assertTrue(MonsterSlayerState.read(pendingPromotion.getCache(), data).getActiveTaskKey() == null, "promotion interaction does not assign another task");
+		RecordingDialogue afterPromotion = new RecordingDialogue(1);
+		new MonsterSlayerContacts(afterPromotion).onTalkNpc(pendingPromotion, new Npc(server.getWorld(), 846, 278, 600));
+		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(0), "P:Not now."), afterPromotion.events, "acknowledged promotion does not repeat and normal dialogue resumes");
 	}
 
 	private static final class RecordingDialogue implements MonsterSlayerContacts.DialogueRenderer {
@@ -394,7 +410,7 @@ public final class MonsterSlayerContactsRouteTest {
 		String[] expected = {
 			"Right then, back to it. Try not to make a spectacle of yourself.",
 			"Good. I was starting to think you'd gone soft.",
-			"Keep your blade sharp and your excuses shorter.",
+			"Come back for more work anytime.",
 			"There's always another mess needing a capable pair of hands.",
 			"That's the spirit. Don't keep the monsters waiting."
 		};
@@ -472,7 +488,7 @@ public final class MonsterSlayerContactsRouteTest {
 		routes.onOpNpc(promoted, new Npc(server.getWorld(), 846, 203, 600), "Task");
 		MonsterSlayerState.Snapshot after = MonsterSlayerState.read(promoted.getCache(), data);
 		assertTrue(after.isPromotionAcknowledged("falador", data), "promotion dialogue interaction is acknowledged once");
-		assertTrue(after.getActiveTaskKey() != null, "promotion resumes with a repeatable task");
+		assertTrue(after.getActiveTaskKey() == null, "promotion acknowledgement ends the interaction without assigning work");
 		assertEquals(MonsterSlayerDialoguePlan.promotion(0).size(), rendered.size(), "promotion renders every planned step");
 		for (int step = 0; step < rendered.size(); step++) assertTrue(rendered.get(step).getText().length() <= 255, "promotion line bound " + step);
 		Player aborted = player(server, "slayerrouteabort", 204, 600);
