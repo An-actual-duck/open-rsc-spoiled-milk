@@ -72,6 +72,7 @@ public final class MonsterSlayerContactsRouteTest {
 		menuResponsesRemainVisiblePlayerSpeech();
 		contactProofDialogueIsClearAndRankGated(server);
 		maraAssignmentDialogueUsesAuthoritativeProgression(server);
+		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
@@ -424,6 +425,70 @@ public final class MonsterSlayerContactsRouteTest {
 		RecordingDialogue afterPromotion = new RecordingDialogue(1);
 		new MonsterSlayerContacts(afterPromotion).onTalkNpc(pending, new Npc(server.getWorld(), 847, 286, 600));
 		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:No, not today."), afterPromotion.events, "acknowledged Mara promotion does not repeat");
+	}
+
+	private static void hazardWarningsAreNaturalOrderedDialogue(Server server) {
+		assertEquals("You should expect Worship drain.", MonsterSlayerContacts.hazardWarningLine(
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN),
+			"Prayer-drain compatibility key is presented as Worship drain");
+		assertEquals("You should prepare for the desert heat.", MonsterSlayerContacts.hazardWarningLine(
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT),
+			"desert heat warning");
+		assertEquals("You should know this work is in the Wilderness.", MonsterSlayerContacts.hazardWarningLine(
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS),
+			"Wilderness warning");
+		assertEquals("You should bring an antidote for poison.", MonsterSlayerContacts.hazardWarningLine(
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON),
+			"poison warning");
+		assertEquals("You should prepare for dragon fire.", MonsterSlayerContacts.hazardWarningLine(
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DRAGON_FIRE),
+			"dragon-fire warning");
+
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task multiHazard =
+			data.getTask("heroes.green_dragons");
+		assertEquals(java.util.Arrays.asList(
+			"You should know this work is in the Wilderness.",
+			"You should prepare for dragon fire."),
+			java.util.Arrays.asList(MonsterSlayerContacts.hazardWarningLines(multiHazard)),
+			"multiple hazards remain separate and preserve definition order");
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task : data.getTasks()) {
+			for (String warning : MonsterSlayerContacts.hazardWarningLines(task)) {
+				assertFalse(warning.contains(":"), "generated Slayer warning has no colon for " + task.getKey());
+				assertFalse(warning.contains(";"), "generated Slayer warning has no semicolon for " + task.getKey());
+			}
+		}
+
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		int contactIndex = 0;
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			cursors.put(contact.getKey(), contactIndex < 4 ? contact.getMandatoryTasks().size()
+				: contactIndex == 4 ? 2 : 0);
+			contactIndex++;
+		}
+		Player player = player(server, "slayermultiwarning", 287, 600);
+		player.setQuestStage(Quests.HEROS_QUEST, -1);
+		MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.CHAMPION, MonsterSlayerBalances.zero(), cursors, null, 0,
+			0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue dialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(dialogue).onOpNpc(player,
+			new Npc(server.getWorld(), 850, 287, 600), "Task");
+		assertEquals("N:You should know this work is in the Wilderness.", dialogue.events.get(0),
+			"first hazard renders before assignment");
+		assertEquals("N:You should prepare for dragon fire.", dialogue.events.get(1),
+			"second hazard renders separately before assignment");
+		assertEquals("N:Your next task is to slay 18 Green dragons.", dialogue.events.get(2),
+			"task assignment follows every hazard warning");
+		assertEquals("heroes.green_dragons", MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey(),
+			"warning presentation preserves authoritative assignment");
+
+		for (int index = 0; index < 6; index++) {
+			for (String line : MonsterSlayerContacts.associateSupplyLines(index)) {
+				assertFalse(line.contains(":"), "associate supply dialogue has no list formatting " + index);
+				assertFalse(line.contains(";"), "associate supply dialogue has no joined thoughts " + index);
+			}
+		}
 	}
 
 	private static boolean containsAnyNpcLine(java.util.List<String> events, String[] lines) {
