@@ -608,8 +608,37 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("No, not today.", MonsterSlayerContacts.contactChoices(1)[1], "Mara no response ends naturally");
 		assertEquals("Let's see that Adept sticker.", MonsterSlayerContacts.contactProof(1), "Mara requests the Adept proof");
 		assertEquals("Oh, I don't have one.", MonsterSlayerContacts.missingProofResponse(1), "Mara proof refusal includes the player's missing-sticker reply");
-		assertEquals("You need an Adept sticker first. Hobart in Falador can help.", MonsterSlayerContacts.contactRefusal(1), "Mara directs ineligible players to Hobart");
-		assertTrue(MonsterSlayerContacts.contactRefusal(2).contains("Mara in Port Sarim"), "later contacts direct players to the previous giver");
+		assertEquals("You're not ready for my work yet. Find Hobart at the Rising Sun in Falador first.",
+			MonsterSlayerContacts.contactRefusal(1, MonsterSlayerRank.FLEDGLING),
+			"Mara directs an ineligible Fledgling to their authoritative contact");
+		assertEquals("Not ready for Veteran work! Find Mara at the Rusty Anchor in Port Sarim first!",
+			MonsterSlayerContacts.contactRefusal(2, MonsterSlayerRank.INITIATE),
+			"Bran keeps his voice while routing an Adept to Mara");
+		assertEquals("Your standing is insufficient. Continue under Sella at the Heroes Guild.",
+			MonsterSlayerContacts.contactRefusal(5, MonsterSlayerRank.CHAMPION),
+			"Radimus keeps his voice while routing a Champion to Sella");
+		String[] destinations = {
+			"Hobart at the Rising Sun in Falador", "Hobart at the Rising Sun in Falador",
+			"Mara at the Rusty Anchor in Port Sarim", "Bran at the Blue Moon Inn in Varrock",
+			"Doran at the Champions Guild", "Sella at the Heroes Guild",
+			"Sir Radimus at the Legends Guild", "Sir Radimus at the Legends Guild"
+		};
+		MonsterSlayerRank[] ranks = MonsterSlayerRank.values();
+		for (int index = 0; index < ranks.length; index++)
+			assertEquals(destinations[index], MonsterSlayerContacts.rankDestination(ranks[index]),
+				"rank-aware refusal destination " + ranks[index]);
+		String[] fledglingRefusals = {
+			"Not quite ready for my work yet. Go see Hobart at the Rising Sun in Falador first.",
+			"You're not ready for my work yet. Find Hobart at the Rising Sun in Falador first.",
+			"Not ready for Veteran work! Find Hobart at the Rising Sun in Falador first!",
+			"Not yet! Report to Hobart at the Rising Sun in Falador first!",
+			"Your path continues elsewhere. Seek Hobart at the Rising Sun in Falador before returning.",
+			"Your standing is insufficient. Continue under Hobart at the Rising Sun in Falador."
+		};
+		for (int index = 0; index < fledglingRefusals.length; index++)
+			assertEquals(fledglingRefusals[index],
+				MonsterSlayerContacts.contactRefusal(index, MonsterSlayerRank.FLEDGLING),
+				"task giver keeps personality in rank-aware refusal " + index);
 		assertEquals("That was your final Fledgling task.", MonsterSlayerDialoguePlan.promotion(0).get(0).getText(), "Fledgling final-task dialogue is unique");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You are now an Adept."), "promotion states Adept rank");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Here is your official Adept sticker."), "promotion gives official sticker");
@@ -625,7 +654,16 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(ineligible.getCache(), data, fledgling);
 		RecordingDialogue deniedDialogue = new RecordingDialogue(0);
 		new MonsterSlayerContacts(deniedDialogue).onTalkNpc(ineligible, new Npc(server.getWorld(), 847, 271, 600));
-		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Oh, I don't have one.", "N:You need an Adept sticker first. Hobart in Falador can help."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, player acknowledgement, then refusal");
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Oh, I don't have one.", "N:You're not ready for my work yet. Find Hobart at the Rising Sun in Falador first."), deniedDialogue.events, "ineligible Mara Talk-to is greeting, response, proof, player acknowledgement, then rank-aware refusal");
+		Player distant = player(server, "slayerrankroute", 271, 601);
+		MonsterSlayerState.write(distant.getCache(), data, fledgling);
+		RecordingDialogue distantDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(distantDialogue).onOpNpc(distant,
+			new Npc(server.getWorld(), 785, 272, 601), "Task");
+		assertEquals(java.util.Arrays.asList(
+			"N:Your standing is insufficient. Continue under Hobart at the Rising Sun in Falador."),
+			distantDialogue.events,
+			"rank refusal precedes host-guild gating and routes from the player's actual rank");
 		Player declining = player(server, "maraproofno", 272, 600);
 		MonsterSlayerState.write(declining.getCache(), data, fledgling);
 		RecordingDialogue noDialogue = new RecordingDialogue(1);
@@ -1506,13 +1544,26 @@ public final class MonsterSlayerContactsRouteTest {
 	}
 
 	private static void associateOperationsAndWorldRestockAreBounded(Server server) {
+		String[] refusals = {
+			"Sorry, Adepts only.", "Sorry, Veterans only.", "Sorry, Elites only.",
+			"Sorry, Champions only.", "Sorry, Heroes only.", "Sorry, Legends only."
+		};
 		for (int index = 0; index < 6; index++) {
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Trade"), "associate trade operation " + index);
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Shop"), "associate shop operation " + index);
 			assertFalse(MonsterSlayerContacts.isAssociateShopOperation("Task"), "associate task is not shop operation " + index);
 			assertTrue(MonsterSlayerContacts.associateGreeting(index).length() > 0, "associate talk dialogue " + index);
 			assertTrue(MonsterSlayerContacts.associateSupplyLine(index).length() > 0, "associate supply dialogue " + index);
+			assertEquals(java.util.Arrays.asList(refusals[index]),
+				java.util.Arrays.asList(MonsterSlayerContacts.associateRefusal(index)),
+				"associate shop gate is one concise rank line " + index);
 		}
+		assertEquals("Sorry, you don't have the required prior upgrades to get this one.",
+			MonsterSlayerContacts.missingPriorSatchelUpgradesLine(),
+			"satchel ordering failure names the missing prerequisite");
+		assertEquals("You don't have enough Slayer coins to afford it.",
+			MonsterSlayerContacts.insufficientSatchelCoinsLine(),
+			"satchel balance failure names the missing currency");
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
 		for (int index = 0; index < data.getShops().size(); index++) {
 			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop = data.getShops().get(index);
@@ -1545,9 +1596,12 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(locked.getCache(), data, fledgling);
 		RecordingDialogue lockedDialogue = new RecordingDialogue();
 		new MonsterSlayerContacts(lockedDialogue).onTalkNpc(locked, associate);
-		assertEquals(java.util.Arrays.asList(
-			"N:Sorry, you gotta get a promotion before I can sell you anything.",
-			"N:Them's the rules."), lockedDialogue.events, "Fledgling associate promotion gate is concise");
+		assertEquals(java.util.Arrays.asList("N:Sorry, Adepts only."), lockedDialogue.events,
+			"Fledgling associate uses the concise rank gate");
+		RecordingDialogue lockedTradeDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(lockedTradeDialogue).onOpNpc(locked, associate, "Trade");
+		assertEquals(java.util.Arrays.asList("N:Sorry, Adepts only."), lockedTradeDialogue.events,
+			"right-click shop route uses the same concise rank gate");
 
 		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
@@ -1573,7 +1627,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"N:I can, but it'll cost you 84 fledgling coins.",
 			"N:I can only do one upgrade per satchel as well.",
 			"P:Totally worth it.",
-			"N:Sorry, but you don't have enough to cover the cost."), insufficientDialogue.events,
+			"N:You don't have enough Slayer coins to afford it."), insufficientDialogue.events,
 			"insufficient Fledgling satchel flow quotes before authoritative rejection");
 
 		MonsterSlayerBalances exactPrice = MonsterSlayerBalances.zero().credit(
@@ -1609,6 +1663,26 @@ public final class MonsterSlayerContactsRouteTest {
 		new MonsterSlayerContacts(duplicateDialogue).onTalkNpc(buyer, associate);
 		assertTrue(duplicateDialogue.events.contains("N:Looks like I already did this upgrade."), "duplicate satchel purchase is identified before confirmation");
 		assertEquals(31, MonsterSlayerState.read(buyer.getCache(), data).getDerivedInventoryCapacity(), "duplicate satchel inquiry changes nothing");
+
+		Map<String, Integer> veteranCursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if ("falador".equals(contact.getKey()) || "port_sarim".equals(contact.getKey()))
+				veteranCursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else veteranCursors.put(contact.getKey(), 0);
+		}
+		Player missingPrior = player(server, "slayersatchelprior", 246, 600);
+		MonsterSlayerState.write(missingPrior.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.VETERAN, MonsterSlayerBalances.zero(), veteranCursors,
+			null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue missingPriorDialogue = new RecordingDialogue(1);
+		new MonsterSlayerContacts(missingPriorDialogue).onTalkNpc(missingPrior,
+			new Npc(server.getWorld(), 853, 246, 600));
+		assertTrue(missingPriorDialogue.events.contains(
+			"N:Sorry, you don't have the required prior upgrades to get this one."),
+			"runtime satchel route reports a skipped prerequisite without quoting or spending");
+		assertEquals(30, MonsterSlayerState.read(missingPrior.getCache(), data).getDerivedInventoryCapacity(),
+			"missing prior upgrade leaves capacity unchanged");
 	}
 
 	private static Player adeptPlayer(Server server, MonsterSlayerData data, String name, int x,

@@ -129,20 +129,22 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		try { state = MonsterSlayerState.read(player.getCache(), data); } catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); return; }
 		MonsterSlayerContactService service = new MonsterSlayerContactService(data, player.getWorld().getMonsterSlayerTaskService());
 		if (index == 0 && state.getRank() == MonsterSlayerRank.UNSTAMPED) { introduction(player, npc, service, state, shortcut); return; }
-		if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 		if (state.getRank().isAtLeast(data.getContact(CONTACTS[index]).getAwardedRank())
 			&& state.getMandatoryCursors().get(CONTACTS[index]).intValue() == data.getContact(CONTACTS[index]).getMandatoryTasks().size()
 			&& !state.isPromotionAcknowledged(CONTACTS[index], data)) {
+			if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			if (!renderPromotion(player, npc, index)) return;
 			if (!service.acknowledgePromotion(player, CONTACTS[index]).isAccepted()) player.message("Your Monster Slayer promotion could not be recorded.");
 			return;
 		}
-		if (shortcut && !state.getRank().isAtLeast(REQUIRED[index])) { dialogue.npc(player, npc, contactRefusal(index)); return; }
+		if (shortcut && !state.getRank().isAtLeast(REQUIRED[index])) { dialogue.npc(player, npc, contactRefusal(index, state.getRank())); return; }
+		if (shortcut && !hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 		if (!shortcut) {
 			dialogue.npc(player, npc, contactGreeting(index));
 			if (speakChoice(player, npc, contactChoices(index)) != 0) return;
 			dialogue.npc(player, npc, contactProof(index));
-			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index)); return; }
+			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index, state.getRank())); return; }
+			if (!hostGuildAllows(player, index)) { dialogue.npc(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			dialogue.player(player, npc, "Right here!");
 			if (shouldUseMaraFirstTaskWelcome(index, state)) dialogue.npc(player, npc, maraFirstTaskWelcome());
 			if (shouldUseBranFirstTaskWelcome(index, state)) dialogue.npc(player, npc, branFirstTaskWelcome());
@@ -207,9 +209,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private void associate(Player player, Npc npc, boolean trade) {
 		int index = npc.getID() - FIRST_ASSOCIATE;
 		try {
-			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank();
 			if (rank.getCode() < index + 2) { dialogue.npc(player, npc, associateRefusal(index)); return; }
+			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			dialogue.npc(player, npc, associateGreetingLines(index));
 			int choice = speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
@@ -236,7 +238,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			return;
 		}
 		if (state.getInventoryUpgrades() != precedingUpgradeMask(upgrade)) {
-			dialogue.npc(player, npc, "You'll need the earlier satchel upgrades first.");
+			dialogue.npc(player, npc, missingPriorSatchelUpgradesLine());
 			return;
 		}
 		long price = shop.getCapacityUpgrade().getCost().get(shop.getChallenge());
@@ -253,8 +255,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		else if ("locked-or-points".equals(result.getReason())) {
 			MonsterSlayerState.Snapshot latest = MonsterSlayerState.read(player.getCache(), data);
 			if ((latest.getInventoryUpgrades() & upgrade.getBit()) != 0) dialogue.npc(player, npc, "Looks like I already did this upgrade.");
-			else if (latest.getBalances().get(shop.getChallenge()) < price) dialogue.npc(player, npc, "Sorry, but you don't have enough to cover the cost.");
-			else dialogue.npc(player, npc, "You'll need the earlier satchel upgrades first.");
+			else if (latest.getBalances().get(shop.getChallenge()) < price) dialogue.npc(player, npc, insufficientSatchelCoinsLine());
+			else dialogue.npc(player, npc, missingPriorSatchelUpgradesLine());
 		}
 		else dialogue.npc(player, npc, "That satchel upgrade could not be completed. Nothing was spent.");
 	}
@@ -295,7 +297,6 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	private static boolean isAssociate(Npc npc) { return npc.getID() >= FIRST_ASSOCIATE && npc.getID() < FIRST_AMBIENT; }
 	private static boolean isAmbient(Npc npc) { return npc.getID() >= FIRST_AMBIENT && npc.getID() < FIRST_AMBIENT + 3; }
-	private static String refusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "I need an Adept sticker before I can put you on my Port Sarim list.", "No Veteran button, no Blue Moon work. Earn one, then come back.", "An Elite badge is the price of a Champion's contract!", "Champion's medal first. These contracts are not lessons.", "Hero's crest required. Return when you have earned it."}; return lines[index]; }
 	private static String hobartFollowUpRemark() { return hobartFollowUpRemark(ThreadLocalRandom.current().nextInt(HOBART_FOLLOW_UP_REMARKS.length)); }
 	/** Test seam for bounded, task-independent Hobart flavour dialogue. */
 	public static String hobartFollowUpRemark(int index) {
@@ -482,8 +483,39 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button?", "Badge, if you please!", "Your medal.", "Then let me see your Hero's crest."}; return lines[index]; }
 	/** Player acknowledgement after a proof request but before a proof-gated refusal. */
 	public static String missingProofResponse(int index) { String[] lines = {"Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one."}; return lines[index]; }
-	/** Ineligible contacts direct the player to the immediately preceding task giver. */
-	public static String contactRefusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "You need an Adept sticker first. Hobart in Falador can help.", "I need a Veteran button. Earn it from Mara in Port Sarim.", "I need an Elite badge. Earn it from Bran at the Blue Moon Inn.", "Champion's medal first. Doran at the Champions Guild can help.", "Hero's crest required. Sella at the Heroes Guild can help."}; return lines[index]; }
+	/**
+	 * Rank-aware refusal: the contacted NPC keeps their own voice while the
+	 * destination follows the player's authoritative current progression.
+	 */
+	public static String contactRefusal(int contactIndex, MonsterSlayerRank playerRank) {
+		if (contactIndex < 0 || contactIndex >= CONTACTS.length || playerRank == null)
+			throw new IllegalArgumentException("Invalid Monster Slayer refusal context");
+		String destination = rankDestination(playerRank);
+		String[] lines = {
+			"Not quite ready for my work yet. Go see " + destination + " first.",
+			"You're not ready for my work yet. Find " + destination + " first.",
+			"Not ready for Veteran work! Find " + destination + " first!",
+			"Not yet! Report to " + destination + " first!",
+			"Your path continues elsewhere. Seek " + destination + " before returning.",
+			"Your standing is insufficient. Continue under " + destination + "."
+		};
+		return lines[contactIndex];
+	}
+	/** Current rank identifies the contact whose mandatory work advances the player. */
+	public static String rankDestination(MonsterSlayerRank rank) {
+		if (rank == null) throw new IllegalArgumentException("Monster Slayer rank is required");
+		switch (rank) {
+		case UNSTAMPED:
+		case FLEDGLING: return "Hobart at the Rising Sun in Falador";
+		case INITIATE: return "Mara at the Rusty Anchor in Port Sarim";
+		case VETERAN: return "Bran at the Blue Moon Inn in Varrock";
+		case ELITE: return "Doran at the Champions Guild";
+		case CHAMPION: return "Sella at the Heroes Guild";
+		case HERO:
+		case LEGEND: return "Sir Radimus at the Legends Guild";
+		default: throw new IllegalArgumentException("Unsupported Monster Slayer rank");
+		}
+	}
 	private boolean renderPromotion(Player player, Npc npc, int index) {
 		return renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.promotion(index));
 	}
@@ -504,15 +536,21 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		return lines[index].clone();
 	}
 	public static String[] associateRefusal(int index) {
-		String[][] lines = {
-			{"Sorry, you gotta get a promotion before I can sell you anything.", "Them's the rules."},
-			{"Sorry, can't show you my wares till you're a Veteran."},
-			{"Sorry, can't show you my wares till you're an Elite."},
-			{"Sorry, can't show you my wares till you're a Champion."},
-			{"Sorry, can't show you my wares till you're a Hero."},
-			{"Sorry, can't show you my wares till you're a Legend."}
+		String[] lines = {
+			"Sorry, Adepts only.",
+			"Sorry, Veterans only.",
+			"Sorry, Elites only.",
+			"Sorry, Champions only.",
+			"Sorry, Heroes only.",
+			"Sorry, Legends only."
 		};
-		return lines[index].clone();
+		return new String[] {lines[index]};
+	}
+	public static String missingPriorSatchelUpgradesLine() {
+		return "Sorry, you don't have the required prior upgrades to get this one.";
+	}
+	public static String insufficientSatchelCoinsLine() {
+		return "You don't have enough Slayer coins to afford it.";
 	}
 	/** Compatibility seam retained for callers that only need the opening line. */
 	public static String associateGreeting(int index) { return associateGreetingLines(index)[0]; }

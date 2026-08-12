@@ -896,8 +896,10 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   access, the one-active-task rule, and every mandatory/repeatable state
   transition.
 - The contact-proof pattern is reusable across the ladder: every task giver
-  asks for the preceding proof, and an ineligible player is directed to the
-  immediately preceding giver rather than being given a vague refusal. Mara
+  asks for the preceding proof, and an ineligible player is directed according
+  to the player's **actual current rank**, not merely to the giver immediately
+  below the NPC they clicked. This safely sends a severely under-ranked player
+  all the way back to their real progression contact. Mara
   specifically asks, `Are you here to slay monsters?` Her natural yes/no
   choices are spoken by the player; on yes she asks for the Adept sticker, and
   a player without one is directed to Hobart in Falador.
@@ -910,9 +912,8 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   skips the greeting and the `Yes please / Not now` choice and begins at the
   contact's `Your next task is...` line. It must use the same authoritative
   assignment path as Talk-to. If the player is ineligible, the shortcut must
-  not assign anything and should show a brief NPC line where possible (for
-  example, `Not yet. You need an Adept sticker before I can give you work.`)
-  or the equivalent game message when the client cannot open dialogue.
+  not assign anything and renders the same rank-aware, personality-specific
+  direction used by Talk-to.
 - A player with an active task is shown its current objective and progress
   rather than being given a second task. A player who has finished an
   assignment is sent through completion/promotion handling before another is
@@ -945,8 +946,38 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
   that location's existing typed-currency shop; it never spends points or
   grants an item as part of dialogue. Ineligible use—Talk-to or a right-click
-  `Trade`/`Shop` shortcut—uses the table's refusal and never opens an empty or
+  `Trade`/`Shop` shortcut—uses the table's concise rank refusal and never opens an empty or
   partially locked shop interface.
+
+#### Rank-Aware Task Refusals
+
+The authoritative current-rank destinations are:
+
+| Current rank | Required progression contact |
+| --- | --- |
+| Unstamped or Fledgling | Hobart at the Rising Sun in Falador |
+| Adept | Mara at the Rusty Anchor in Port Sarim |
+| Veteran | Bran at the Blue Moon Inn in Varrock |
+| Elite | Doran at the Champions Guild |
+| Champion | Sella at the Heroes Guild |
+| Hero or Legend | Sir Radimus at the Legends Guild |
+
+Each contacted task giver inserts that destination into one short line in their
+own voice:
+
+- Hobart: `Not quite ready for my work yet. Go see [destination] first.`
+- Mara: `You're not ready for my work yet. Find [destination] first.`
+- Bran: `Not ready for Veteran work! Find [destination] first!`
+- Doran: `Not yet! Report to [destination] first!`
+- Sella: `Your path continues elsewhere. Seek [destination] before returning.`
+- Radimus: `Your standing is insufficient. Continue under [destination].`
+
+Normal Talk-to still shows the missing-proof player response before this line.
+The right-click `Task` shortcut omits the social proof exchange but uses the
+same authoritative destination and cannot assign a task. Rank refusal is
+evaluated before the separate host-guild gate, so an under-ranked player always
+receives useful progression direction; an otherwise eligible player must still
+meet the Champions, Heroes, or Legends Guild's normal access requirements.
 
 ### Developer Test Preparation
 
@@ -969,13 +1000,13 @@ There are six proof changes for the six promotions before the final standing:
 
 | Player rank after promotion | Proof shown in dialogue | Shop newly unlocked | Associate refusal before unlock |
 | --- | --- | --- | --- |
-| Fledgling | hand stamp | none; the player is beginning the first chain | `You need to earn your Adept sticker first.` |
-| Adept | sticker | Rising Sun / Fledgling point shop | `Sorry, can't show you my wares till you're an Adept.` |
-| Veteran | button | Port Sarim / Adept point shop | `Sorry, can't show you my wares till you're a Veteran.` |
-| Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, can't show you my wares till you're an Elite.` |
-| Champion | medal | Champions Guild / Elite point shop | `Sorry, can't show you my wares till you're a Champion.` |
-| Hero | crest | Heroes Guild / Champion point shop | `Sorry, can't show you my wares till you're a Hero.` |
-| Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, can't show you my wares till you're a Legend.` |
+| Fledgling | hand stamp | none; the player is beginning the first chain | `Sorry, Adepts only.` |
+| Adept | sticker | Rising Sun / Fledgling point shop | `Sorry, Adepts only.` |
+| Veteran | button | Port Sarim / Adept point shop | `Sorry, Veterans only.` |
+| Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, Elites only.` |
+| Champion | medal | Champions Guild / Elite point shop | `Sorry, Champions only.` |
+| Hero | crest | Heroes Guild / Champion point shop | `Sorry, Heroes only.` |
+| Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, Legends only.` |
 
 The final `Legend` promotion intentionally does not add a seventh trinket. It
 ends the escalating stamp/sticker/button/badge/medal/crest joke with the
@@ -986,10 +1017,8 @@ validation server-side.
 
 #### Fledgling Associate And Satchel Upgrade
 
-Before the player earns Adept rank, the Fledgling associate says:
-
-> `Sorry, you gotta get a promotion before I can sell you anything.`
-> `Them's the rules.`
+Before the player earns Adept rank, the Fledgling associate uses the shared
+shop gate: `Sorry, Adepts only.`
 
 Once Adept rank unlocks the associate, Talk-to begins with three short lines:
 
@@ -1004,9 +1033,10 @@ warns `I can only do one upgrade per satchel as well.` The spoken choices are
 opens the graphical reward store; Talk-to remains dialogue.
 
 The server revalidates and atomically purchases the entitlement only after the
-affirmative response. Insufficient funds produce `Sorry, but you don't have
-enough to cover the cost.` An already-owned entitlement produces `Looks like I
-already did this upgrade.` On success the associate says `Okay, hold on while I
+affirmative response. Insufficient funds produce `You don't have enough Slayer
+coins to afford it.` Missing earlier entitlements produce `Sorry, you don't have
+the required prior upgrades to get this one.` An already-owned entitlement
+produces `Looks like I already did this upgrade.` On success the associate says `Okay, hold on while I
 stitch this.`, pauses briefly, then says `Done! I'm sure you can fit at least
 one more thing now.` The authoritative capacity packet/inventory refresh is
 unchanged. All player-facing Slayer capacity dialogue uses **satchel**, not
@@ -1069,11 +1099,6 @@ Mara is a gruff but kind working woman: practical, sturdy, modest, and quietly
 supportive. Her voice should suggest someone accustomed to hard physical work,
 without becoming cruel, theatrical, aristocratic, or excessively jokey.
 
-**Below rank**
-
-> Contact: `I need to see an Adept sticker before I can put your name on my
-> list. Earn one at the Rising Sun, then come back.`
-
 **Normal task route**
 
 > Mara: `Are you here to slay monsters?`
@@ -1126,10 +1151,6 @@ that interaction, and does not repeat.
 Tone: a self-styled tough hunter. His bluster falls away at the
 promotion, revealing that he has seen what the next step costs.
 
-**Below rank**
-
-> Contact: `No Veteran button, no Blue Moon work. Earn one, then come back.`
-
 **Normal task route**
 
 > Contact: `Back for another hard job? The Blue Moon has seen worse.`
@@ -1173,8 +1194,8 @@ declare. Bran's first-task welcome remains unchanged and receives no extra
 random remark. Active-task reminders, refusal paths, and pending promotion
 interception also receive none.
 
-`Task` shortcut begins at the assignment. Below rank: `No Veteran button, no
-Blue Moon work.`
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Elite promotion / shop reveal**
 
@@ -1205,11 +1226,6 @@ Elite Slayer Associate wears a visibly distinct partial mithril outfit with a
 weapon, ordinary legs, and no shield. This is the first of the three formal
 guild headquarters and follows the confirmed visual progression from Veteran
 steel into Elite mithril.
-
-**Below rank**
-
-> Contact: `An Elite badge is the price of a Champion's contract! Earn one
-> first, then we'll see what you're made of.`
 
 **Normal task route**
 
@@ -1244,8 +1260,8 @@ The existing natural hazard warning remains before this flavor and the final
 authoritative `Your next task...` assignment line. This prevents personality
 text from presenting invented mechanical claims as fact.
 
-`Task` shortcut begins at the assignment. Below rank: `Bring me an Elite badge
-before you ask for Champion work!`
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Champion promotion / shop reveal**
 
@@ -1277,10 +1293,6 @@ Sella is an altruistic, grandiose hero. She frames Monster Slayer work around
 protecting other people and inspires Champions to see each contract as service,
 not sport. Preserve Heroes Quest and cape behavior before this route.
 
-**Below rank**
-
-> Sella: `Champion's medal first. Doran at the Champions Guild can help.`
-
 **Normal task route**
 
 > Sella: `Do you stand ready to defend this world?`
@@ -1309,8 +1321,8 @@ Definition-driven hazard warnings remain separate and precede assignment. The
 usual authoritative `Your next task is to slay [count] [family].` line follows
 the welcome or remark.
 
-`Task` shortcut begins at the assignment. Below rank: `No Champion medal. No
-Heroes Guild contract.`
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Hero promotion / shop reveal**
 
@@ -1339,10 +1351,6 @@ alone as sufficient. Preserve his Legends Quest behavior and any bounded legacy
 Odyssey recovery, but never begin the Cabbage extended task quest for this
 route. House Radimus `735` is never a Slayer contact.
 
-**Below rank**
-
-> Radimus: `Hero's crest required. Sella at the Heroes Guild can help.`
-
 **Normal task route**
 
 > Radimus: `Have you come seeking a task worthy of a legend?`
@@ -1370,8 +1378,8 @@ Later mandatory and repeatable assignments select one bounded Radimus remark:
 Definition-driven hazard warnings remain separate and precede assignment. The
 authoritative task line follows the welcome or remark.
 
-`Task` shortcut begins at the assignment. Below rank it retains the authoritative
-refusal: `Hero's crest required. Sella at the Heroes Guild can help.`
+`Task` shortcut begins at the assignment and uses the shared rank-aware refusal
+when the player is ineligible.
 
 **Legend completion / final open ending**
 
@@ -1391,7 +1399,7 @@ refusal: `Hero's crest required. Sella at the Heroes Guild can help.`
 
 After this exchange, the nearby rune-clad associate opens the Hero-point shop.
 Their greeting recognizes Radimus's standards and offers Hero supplies. Their
-pre-unlock refusal is `Sorry, can't show you my wares till you're a Legend.`
+pre-unlock refusal is `Sorry, Legends only.`
 Legend repeatable tasks remain available, but the mandatory quest is complete;
 the ending must not promise a further required rank or a finite completion of
 all monster content.
