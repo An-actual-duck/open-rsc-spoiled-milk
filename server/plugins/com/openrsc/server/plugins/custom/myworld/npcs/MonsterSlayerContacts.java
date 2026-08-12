@@ -71,7 +71,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		}
 		if (!shortcut) {
 			npcsay(player, npc, greeting(index));
-			if (multi(player, "Yes please.", "Not now.") != 0) return;
+			if (speakChoice(player, npc, "Yes please.", "Not now.") != 0) return;
 			npcsay(player, npc, proof(index));
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
@@ -89,9 +89,9 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
 		if (state.getIntroStage() == 0) {
-			npcsay(player, npc, "'Ello there! You look like someone after monster work, or someone who has mistaken me for a decorative barrel.");
-			if (multi(player, "I'm looking to join The Monster Slayer's Guild.", "Sorry, I was looking for a decorative barrel.") != 0) return;
-			npcsay(player, npc, "Splendid! Every proper Monster Slayer needs my official stamp. Mine is very official, despite the jam on it.", "Bring me a drink from that barmaid over there.", "Then I shall stamp you in. That is how all the finest guild business is conducted.");
+			npcsay(player, npc, "'Ello there! Looking for Monster Slayer work?");
+			if (speakChoice(player, npc, "I'm looking to join The Monster Slayer's Guild.", "Not today, thanks.") != 0) return;
+			npcsay(player, npc, "Splendid! First, I need proof you're serious.", "Bring me a drink from that barmaid.", "Then I'll stamp you into the guild.");
 			service.beginIntroduction(player); return;
 		}
 		int[] offeredAles = MonsterSlayerContactService.eligibleRisingSunAleIds(player);
@@ -100,7 +100,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		String[] choices = new String[offeredAles.length + 1];
 		for (int choice = 0; choice < offeredAles.length; choice++) choices[choice] = MonsterSlayerContactService.risingSunAleOfferLabel(offeredAles[choice]);
 		choices[choices.length - 1] = "Not yet";
-		int selectedAleId = MonsterSlayerContactService.selectedRisingSunAleId(offeredAles, multi(player, choices));
+		int selected = speakChoice(player, npc, choices);
+		int selectedAleId = MonsterSlayerContactService.selectedRisingSunAleId(offeredAles, selected);
 		if (selectedAleId == -1) return;
 		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player, selectedAleId);
 		if (!result.isAccepted()) { player.message(aleFailureMessage(result.getReason())); return; }
@@ -123,7 +124,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (rank.getCode() < index + 2) { npcsay(player, npc, "Sorry, can't show you my wares till you're a " + MonsterSlayerRank.fromCode(index + 2).name().toLowerCase() + "."); return; }
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			npcsay(player, npc, associateGreeting(index));
-			int choice = multi(player, "Tell me about the supplies.", "I'd like to improve my backpack.", "Not now.");
+			int choice = speakChoice(player, npc, "Tell me about the supplies.", "I'd like to improve my backpack.", "Not now.");
 			if (choice == 0) { npcsay(player, npc, associateSupplyLine(index)); return; }
 			if (choice == 1) purchaseBackpackUpgrade(player, npc, index);
 		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }
@@ -147,7 +148,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		int before = state.getDerivedInventoryCapacity();
 		int after = proposal.getSnapshot().getDerivedInventoryCapacity();
 		npcsay(player, npc, backpackUpgradeQuote(before, after, price, shop.getChallenge()));
-		if (multi(player, "Buy the backpack upgrade.", "Back.") != 0) return;
+		if (speakChoice(player, npc, "Buy the backpack upgrade.", "Back.") != 0) return;
 		MonsterSlayerShopService.Result result = service.purchaseCapacity(player, shop.getKey());
 		if (result.isSuccessful()) {
 			ActionSender.sendInventory(player); // sends capacity before refreshed inventory contents
@@ -165,6 +166,17 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		String tier = challenge.name().substring(0, 1) + challenge.name().substring(1).toLowerCase();
 		return "I can expand your backpack from " + before + " to " + after + " slots for "
 			+ price + " " + tier + " Slayer Points.";
+	}
+	/** Echoes a menu selection through normal player speech before its branch acts. */
+	private static int speakChoice(Player player, Npc npc, String... choices) {
+		int selected = multi(player, choices);
+		String response = selectedChoice(selected, choices);
+		if (response != null) say(player, npc, response);
+		return selected;
+	}
+	/** Read-only seam: menu choices must be rendered as player speech before a branch advances. */
+	public static String selectedChoice(int selected, String... choices) {
+		return selected >= 0 && selected < choices.length ? choices[selected] : null;
 	}
 	private static boolean managed(Npc npc) { return isContact(npc) || isAssociate(npc) || isAmbient(npc); }
 	private static boolean isContact(Npc npc) { return npc.getID() >= FIRST_CONTACT && npc.getID() < FIRST_ASSOCIATE; }
