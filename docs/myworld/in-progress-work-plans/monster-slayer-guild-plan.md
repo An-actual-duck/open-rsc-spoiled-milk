@@ -830,9 +830,19 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   conversation.
 - The normal Talk-to route is intentionally social: it gives the player a
   chance to accept or decline the next assignment, then asks to see their
-  current proof before assigning it. The proof check is dialogue flavor; the
-  server still validates rank, normal guild access, the one-active-task rule,
-  and every mandatory/repeatable state transition.
+  current proof before assigning it. For Talk-to, rank eligibility is checked
+  **after** the accepted response and proof request so an ineligible player
+  still receives the full social refusal; `Task` right-click retains its early
+  authoritative gate because it intentionally skips this conversation. The
+  proof check is dialogue flavor; the server still validates rank, normal guild
+  access, the one-active-task rule, and every mandatory/repeatable state
+  transition.
+- The contact-proof pattern is reusable across the ladder: every task giver
+  asks for the preceding proof, and an ineligible player is directed to the
+  immediately preceding giver rather than being given a vague refusal. Mara
+  specifically asks, `Are you here to slay monsters?` Her natural yes/no
+  choices are spoken by the player; on yes she asks for the Adept sticker, and
+  a player without one is directed to Hobart in Falador.
 - Once a player is eligible, the `Task` right-click option is a shortcut. It
   skips the greeting and the `Yes please / Not now` choice and begins at the
   contact's `Your next task is...` line. It must use the same authoritative
@@ -856,12 +866,28 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   challenge-point balance. The associate, not the task giver, opens the shop.
   This gives each location two clear roles and avoids overloading an existing
   bartender or guild NPC's normal service dialogue.
+- The final Fledgling task has a distinct completion lead-in. Hobart confirms
+  that it was the player's final Fledgling work, awards the **Adept** rank, and
+  explicitly presents the official Adept sticker before the existing light
+  banter and Fledgling-point/shop explanation.
 - An eligible associate opens with a short, rank-appropriate acknowledgement
   and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
   that location's existing typed-currency shop; it never spends points or
   grants an item as part of dialogue. Ineligible use—Talk-to or a right-click
   `Trade`/`Shop` shortcut—uses the table's refusal and never opens an empty or
   partially locked shop interface.
+
+### Developer Test Preparation
+
+`::completeranktasks` is developer-only. It prepares the mandatory chain for
+the player's current rank/contact by clearing an incompatible active task and
+setting that contact to its final unassigned mandatory task. It does **not**
+promote the player, grant points, alter balances, or award skipped task
+rewards. The developer must still speak to the appropriate contact, receive
+the ordinary final assignment, and complete it through the normal kill-credit
+path before the existing promotion dialogue appears. The command reports the
+prepared rank and stable contact key; it safely refuses unstamped and Legend
+states, which have no current mandatory contact.
 
 ### Rank Proofs And Shop Gates
 

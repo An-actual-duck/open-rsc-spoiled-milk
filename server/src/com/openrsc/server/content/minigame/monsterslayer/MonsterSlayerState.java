@@ -496,6 +496,31 @@ public final class MonsterSlayerState {
 		return result;
 	}
 
+	/**
+	 * Prepares the contact matching the caller's current standing for its last
+	 * mandatory assignment. This is deliberately not a completion shortcut:
+	 * it keeps the rank and balances intact, clears any incompatible assignment,
+	 * and leaves the normal contact/kill/promotion route to do the final work.
+	 */
+	public static DevelopmentPreparation prepareCurrentMandatoryContactForDevelopment(
+			Snapshot current, MonsterSlayerData data) {
+		validate(current, data);
+		for (Contact contact : data.getContactsInChallengeOrder()) {
+			if (contact.getRequiredRank() != current.rank) continue;
+			int finalCursor = contact.getMandatoryTasks().size() - 1;
+			if (finalCursor < 0) return DevelopmentPreparation.rejected("empty-contact", current);
+			Map<String, Integer> cursors = new LinkedHashMap<String, Integer>(current.mandatoryCursors);
+			cursors.put(contact.getKey(), finalCursor);
+			Snapshot prepared = new Snapshot(current.stateVersion, current.introStage, current.rank,
+				current.balances, cursors, null, 0, current.tasksCompleted, current.inventoryUpgrades,
+				current.promotionAcknowledgements, current.migrationVersion, current.legacyStatus, current.legacyPrestige);
+			validate(prepared, data);
+			return DevelopmentPreparation.prepared(contact.getKey(),
+				contact.getMandatoryTasks().get(finalCursor).getKey(), prepared);
+		}
+		return DevelopmentPreparation.rejected("no-current-contact", current);
+	}
+
 	private static FamilyOwner findOwner(MonsterSlayerData data, Task task) {
 		for (Contact contact : data.getContactsInChallengeOrder()) {
 			for (Task candidate : task.isRepeatable() ? contact.getRepeatableTasks() : contact.getMandatoryTasks()) {
@@ -714,6 +739,31 @@ public final class MonsterSlayerState {
 		private static DevelopmentResult rejected(String reason, Snapshot snapshot) { return new DevelopmentResult(false, reason, snapshot); }
 		public boolean isAccepted() { return accepted; }
 		public String getReason() { return reason; }
+		public Snapshot getSnapshot() { return snapshot; }
+	}
+
+	/** Result for the dev-only final-mandatory-task preparation seam. */
+	public static final class DevelopmentPreparation {
+		private final boolean accepted;
+		private final String reason;
+		private final String contactKey;
+		private final String finalTaskKey;
+		private final Snapshot snapshot;
+		private DevelopmentPreparation(boolean accepted, String reason, String contactKey,
+				String finalTaskKey, Snapshot snapshot) {
+			this.accepted = accepted; this.reason = reason; this.contactKey = contactKey;
+			this.finalTaskKey = finalTaskKey; this.snapshot = snapshot;
+		}
+		private static DevelopmentPreparation prepared(String contactKey, String finalTaskKey, Snapshot snapshot) {
+			return new DevelopmentPreparation(true, null, contactKey, finalTaskKey, snapshot);
+		}
+		private static DevelopmentPreparation rejected(String reason, Snapshot snapshot) {
+			return new DevelopmentPreparation(false, reason, null, null, snapshot);
+		}
+		public boolean isAccepted() { return accepted; }
+		public String getReason() { return reason; }
+		public String getContactKey() { return contactKey; }
+		public String getFinalTaskKey() { return finalTaskKey; }
 		public Snapshot getSnapshot() { return snapshot; }
 	}
 
