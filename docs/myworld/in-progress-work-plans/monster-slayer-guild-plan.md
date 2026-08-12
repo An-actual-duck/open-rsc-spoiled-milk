@@ -26,7 +26,7 @@ Source policy:
   dialogue flavour only: they are not items, cosmetics, or another authority.
 - Unique Slayer rewards are explicitly deferred; this pass does not add or
   design them.
-- Backpack prices are the doubled approved baseline: Fledgling `84`, Adept
+- Satchel-upgrade prices are the doubled approved baseline: Fledgling `84`, Adept
   `148`, Veteran `138`, Elite `110`, Champion `268`, and Hero `282`. Each is
   exactly twice the prior `ceil(mandatory rewards * 1.10)` price, paid only in
   its own challenge currency.
@@ -37,7 +37,7 @@ Source policy:
   ambient Veteran `860` occupy fixed Blue Moon Inn tiles `(117,521)`,
   `(118,521)`, and `(119,521)` respectively.
 - Private validation has passed for the implemented contacts, typed shops,
-  point UI, 30-to-40 inventory expansion, and ordered backpack purchases.
+  point UI, 30-to-40 inventory expansion, and ordered satchel purchases.
   Release integration remains a manager decision; no release is authorized by
   this plan update.
 - `docs/myworld/rough-drafts/slayer-guild-rough-draft-plan.md` is superseded
@@ -83,7 +83,7 @@ tooltips, and the saved Keep open / Remember last selected controls.
 The six permanent capacity entitlements are active. The server derives a
 player's authoritative capacity from the validated mask, the custom client
 renders 40 positions in an 8x5 layout, and associate dialogue sells each
-upgrade only in order. The capacity receipt precedes the refreshed inventory;
+satchel upgrade only in order. The capacity receipt precedes the refreshed inventory;
 accounts above 30 slots refuse an older client rather than truncating items.
 
 ## Product Contract
@@ -924,6 +924,34 @@ Legends contact treating status as something demonstrated rather than worn.
 Every associate shop spends only the already-defined typed Monster Slayer
 currency and must retain its rank, point-vector, and normal host-guild access
 validation server-side.
+
+#### Fledgling Associate And Satchel Upgrade
+
+Before the player earns Adept rank, the Fledgling associate says:
+
+> `Sorry, you gotta get a promotion before I can sell you anything.`
+> `Them's the rules.`
+
+Once Adept rank unlocks the associate, Talk-to begins with three short lines:
+
+> `Congratulations on becoming an Adept.`
+> `I can show you my wares now.`
+> `Or perhaps you'd like an upgrade to your satchel?`
+
+The player asks `Can you upgrade my satchel?` The associate quotes the exact
+authoritative price as `I can, but it'll cost you 84 fledgling coins.`, then
+warns `I can only do one upgrade per satchel as well.` The spoken choices are
+`Totally worth it.` and `No thanks.` Trade/Shop remains the only route that
+opens the graphical reward store; Talk-to remains dialogue.
+
+The server revalidates and atomically purchases the entitlement only after the
+affirmative response. Insufficient funds produce `Sorry, but you don't have
+enough to cover the cost.` An already-owned entitlement produces `Looks like I
+already did this upgrade.` On success the associate says `Okay, hold on while I
+stitch this.`, pauses briefly, then says `Done! I'm sure you can fit at least
+one more thing now.` The authoritative capacity packet/inventory refresh is
+unchanged. All player-facing Slayer capacity dialogue uses **satchel**, not
+backpack; established internal entitlement names remain compatibility details.
 
 ### Contact Dialogue Sheets
 

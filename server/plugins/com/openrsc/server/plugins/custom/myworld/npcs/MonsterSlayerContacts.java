@@ -15,6 +15,7 @@ import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import static com.openrsc.server.plugins.Functions.delay;
 import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.npcsay;
 import static com.openrsc.server.plugins.Functions.say;
@@ -27,6 +28,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		default void npc(Player player, Npc npc, String... text) { npcsay(player, npc, text); }
 		default void player(Player player, Npc npc, String text) { say(player, npc, text); }
 		default int choose(Player player, String... choices) { return multi(player, choices); }
+		default void pause() { delay(); }
 	}
 	private static final int FIRST_CONTACT = 846;
 	private static final int FIRST_ASSOCIATE = 852;
@@ -155,20 +157,20 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		try {
 			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank();
-			if (rank.getCode() < index + 2) { MonsterSlayerRank required = MonsterSlayerRank.fromCode(index + 2); npcsay(player, npc, "Sorry, can't show you my wares till you're " + rankArticle(required) + " " + required.getDisplayName().toLowerCase() + "."); return; }
+			if (rank.getCode() < index + 2) { dialogue.npc(player, npc, associateRefusal(index)); return; }
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
-			npcsay(player, npc, associateGreeting(index));
-			int choice = speakChoice(player, npc, "Tell me about the supplies.", "I'd like to improve my backpack.", "Not now.");
-			if (choice == 0) { npcsay(player, npc, associateSupplyLine(index)); return; }
-			if (choice == 1) purchaseBackpackUpgrade(player, npc, index);
+			dialogue.npc(player, npc, associateGreetingLines(index));
+			int choice = speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
+			if (choice == 0) { dialogue.npc(player, npc, associateSupplyLine(index)); return; }
+			if (choice == 1) purchaseSatchelUpgrade(player, npc, index);
 		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }
 	}
 
 	/** One permanent, ordered entitlement per associate. This does not need a
 	 * free inventory slot because the server expands admission capacity itself. */
-	private void purchaseBackpackUpgrade(Player player, Npc npc, int index) {
+	private void purchaseSatchelUpgrade(Player player, Npc npc, int index) {
 		if (!player.supportsExpandedInventory()) {
-			npcsay(player, npc, "Your client must be updated before I can expand this backpack safely.");
+			dialogue.npc(player, npc, "Your client must be updated before I can expand this satchel safely.");
 			return;
 		}
 		MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
@@ -176,30 +178,50 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (data == null || service == null) { player.message("Your Monster Slayer record needs staff attention."); return; }
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop = data.getShop(CONTACTS[index]);
 		MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), data);
-		MonsterSlayerShopService.CapacityProposal proposal = service.proposeCapacityPurchase(state, shop.getKey());
-		if (!proposal.isSuccessful()) { npcsay(player, npc, "That backpack upgrade is locked until you have the earlier Slayer promotions, upgrades, and points."); return; }
+		MonsterSlayerState.InventoryUpgrade upgrade = MonsterSlayerState.InventoryUpgrade.valueOf(shop.getKey().toUpperCase());
+		if ((state.getInventoryUpgrades() & upgrade.getBit()) != 0) {
+			dialogue.npc(player, npc, "Looks like I already did this upgrade.");
+			return;
+		}
+		if (state.getInventoryUpgrades() != precedingUpgradeMask(upgrade)) {
+			dialogue.npc(player, npc, "You'll need the earlier satchel upgrades first.");
+			return;
+		}
 		long price = shop.getCapacityUpgrade().getCost().get(shop.getChallenge());
-		int before = state.getDerivedInventoryCapacity();
-		int after = proposal.getSnapshot().getDerivedInventoryCapacity();
-		npcsay(player, npc, backpackUpgradeQuote(before, after, price, shop.getChallenge()));
-		if (speakChoice(player, npc, "Buy the backpack upgrade.", "Back.") != 0) return;
+		dialogue.npc(player, npc, satchelUpgradeCostLine(price, shop.getChallenge()),
+			"I can only do one upgrade per satchel as well.");
+		if (speakChoice(player, npc, "Totally worth it.", "No thanks.") != 0) return;
 		MonsterSlayerShopService.Result result = service.purchaseCapacity(player, shop.getKey());
 		if (result.isSuccessful()) {
 			ActionSender.sendInventory(player); // sends capacity before refreshed inventory contents
-			npcsay(player, npc, "Done. Your backpack now holds " + after + " slots.");
+			dialogue.npc(player, npc, "Okay, hold on while I stitch this.");
+			dialogue.pause();
+			dialogue.npc(player, npc, "Done! I'm sure you can fit at least one more thing now.");
 		}
-		else if ("locked-or-points".equals(result.getReason())) npcsay(player, npc, "You do not have the required points or prior backpack upgrades.");
-		else npcsay(player, npc, "That backpack upgrade could not be completed. Nothing was spent.");
+		else if ("locked-or-points".equals(result.getReason())) {
+			MonsterSlayerState.Snapshot latest = MonsterSlayerState.read(player.getCache(), data);
+			if ((latest.getInventoryUpgrades() & upgrade.getBit()) != 0) dialogue.npc(player, npc, "Looks like I already did this upgrade.");
+			else if (latest.getBalances().get(shop.getChallenge()) < price) dialogue.npc(player, npc, "Sorry, but you don't have enough to cover the cost.");
+			else dialogue.npc(player, npc, "You'll need the earlier satchel upgrades first.");
+		}
+		else dialogue.npc(player, npc, "That satchel upgrade could not be completed. Nothing was spent.");
 	}
-	/** Exact confirmation text is kept deterministic so the quote always matches the typed server cost. */
-	public static String backpackUpgradeQuote(int before, int after, long price,
-			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge challenge) {
-		if (before < 0 || after <= before || price <= 0L || challenge == null) {
-			throw new IllegalArgumentException("Invalid backpack-upgrade quote");
+	private static int precedingUpgradeMask(MonsterSlayerState.InventoryUpgrade target) {
+		int mask = 0;
+		for (MonsterSlayerState.InventoryUpgrade upgrade : MonsterSlayerState.InventoryUpgrade.values()) {
+			if (upgrade == target) return mask;
+			mask |= upgrade.getBit();
 		}
-		String tier = challenge.getDisplayName();
-		return "I can expand your backpack from " + before + " to " + after + " slots for "
-			+ price + " " + tier + " Slayer Points.";
+		throw new IllegalArgumentException("Unknown satchel upgrade");
+	}
+	/** Exact dialogue text is derived from the typed server cost. */
+	public static String satchelUpgradeCostLine(long price,
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge challenge) {
+		if (price <= 0L || challenge == null) {
+			throw new IllegalArgumentException("Invalid satchel-upgrade quote");
+		}
+		return "I can, but it'll cost you " + price + " "
+			+ challenge.getDisplayName().toLowerCase() + " coins.";
 	}
 	/** Echoes a menu selection through normal player speech before its branch acts. */
 	private int speakChoice(Player player, Npc npc, String... choices) {
@@ -260,11 +282,33 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static String contactRefusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "You need an Adept sticker first. Hobart in Falador can help.", "I need a Veteran button. Earn it from Mara in Port Sarim.", "I need an Elite badge. Earn it from Bran at the Blue Moon Inn.", "Champion's medal first. Doran at the Champions Guild can help.", "Hero's crest required. Sella at the Heroes Guild can help."}; return lines[index]; }
 	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }
 	/** Read-only dialogue seam: Talk-to must not enter the shop state machine. */
-	public static String associateGreeting(int index) { String[] lines = {"An Adept has earned a look at the Fledgling supplies.", "A Veteran's button carries weight here. Your Adept supplies are available.", "An Elite hunter knows what to pack. Your Blue Moon supplies are available.", "A Champion is welcome at this quartermaster's counter.", "A Hero has earned access to Champion supplies.", "Legend is not a title we sell. Your Hero supplies are available."}; return lines[index]; }
+	public static String[] associateGreetingLines(int index) {
+		String[][] lines = {
+			{"Congratulations on becoming an Adept.", "I can show you my wares now.", "Or perhaps you'd like an upgrade to your satchel?"},
+			{"A Veteran's button carries weight here. Your Adept supplies are available."},
+			{"An Elite hunter knows what to pack. Your Blue Moon supplies are available."},
+			{"A Champion is welcome at this quartermaster's counter."},
+			{"A Hero has earned access to Champion supplies."},
+			{"Legend is not a title we sell. Your Hero supplies are available."}
+		};
+		return lines[index].clone();
+	}
+	public static String[] associateRefusal(int index) {
+		String[][] lines = {
+			{"Sorry, you gotta get a promotion before I can sell you anything.", "Them's the rules."},
+			{"Sorry, can't show you my wares till you're a Veteran."},
+			{"Sorry, can't show you my wares till you're an Elite."},
+			{"Sorry, can't show you my wares till you're a Champion."},
+			{"Sorry, can't show you my wares till you're a Hero."},
+			{"Sorry, can't show you my wares till you're a Legend."}
+		};
+		return lines[index].clone();
+	}
+	/** Compatibility seam retained for callers that only need the opening line. */
+	public static String associateGreeting(int index) { return associateGreetingLines(index)[0]; }
 	public static String associateSupplyLine(int index) { String[] lines = {"Use Trade when you are ready. Spend carefully; your Fledgling points are hard won.", "Use Trade when you are ready. Salt water ruins gear, not good preparation.", "Use Trade when you are ready. Pack for the job, not the story afterward.", "Use Trade when you are ready. A Champion brings the right kit.", "Use Trade when you are ready. A Hero knows that preparation saves lives.", "Use Trade when you are ready. That is all."}; return lines[index]; }
 	public static boolean isAssociateShopOperation(String command) { return "Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command); }
 	private static String warning(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) { if (task.getHazards().isEmpty()) return null; StringBuilder text = new StringBuilder("Take care: "); for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard : task.getHazards()) { if (text.length() > 11) text.append("; "); if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT) text.append("bring desert heat protection"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS) text.append("this work is in the Wilderness"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN) text.append("expect Prayer drain"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON) text.append("bring an antidote for poison"); else text.append("prepare for dragon fire"); } return text.append('.').toString(); }
 	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "The Blue Moon is quiet. The work outside it is not."}; return lines[index]; }
 	private static boolean hostGuildAllows(Player player, int index) { return MonsterSlayerGuildAccess.allows(player, index); }
-	private static String rankArticle(MonsterSlayerRank rank) { return rank == MonsterSlayerRank.INITIATE ? "an" : "a"; }
 }

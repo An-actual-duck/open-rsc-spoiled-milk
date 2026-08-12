@@ -347,7 +347,7 @@ public final class MonsterSlayerData {
 	}
 
 	/**
-	 * Backpack upgrades cost twice the original 110%-rounded mandatory total for
+	 * Satchel upgrades cost twice the original 110%-rounded mandatory total for
 	 * their own contact. Keeping this at definition-load time makes reward edits
 	 * fail closed instead of quietly changing the intended economy.
 	 */
