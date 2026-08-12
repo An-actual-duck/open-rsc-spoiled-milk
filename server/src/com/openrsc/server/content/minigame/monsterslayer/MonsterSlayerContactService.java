@@ -18,6 +18,8 @@ public final class MonsterSlayerContactService {
 
 	public interface RisingSunAleTransaction {
 		Item consume(Player player);
+		/** Explicit selections must consume the exact drink the player chose. */
+		default Item consume(Player player, int itemId) { return consume(player); }
 		boolean refund(Player player, Item consumedAle);
 	}
 	/** Narrow persistence boundary for transaction-failure characterization. */
@@ -56,11 +58,27 @@ public final class MonsterSlayerContactService {
 
 	/** Atomically couples a Rising Sun ale with the one-time Fledgling promotion. */
 	public Result completeIntroductionWithRisingSunAle(Player player) {
+		return completeIntroductionWithRisingSunAle(player, -1);
+	}
+
+	/**
+	 * Atomically exchanges one explicitly selected accepted drink for the first
+	 * Slayer rank. A vanished/stale selection never consumes another drink.
+	 */
+	public Result completeIntroductionWithRisingSunAle(Player player, int selectedAleId) {
 		try { synchronized (player) {
 			MonsterSlayerState.Snapshot current = stateStore.read(player.getCache(), data);
 			MonsterSlayerState.Snapshot next = MonsterSlayerState.completeIntroduction(current, data);
-			Item consumedAle = ale.consume(player);
+			if (selectedAleId != -1 && !hasRisingSunAle(player, selectedAleId)) {
+				return Result.rejected("missing-rising-sun-ale");
+			}
+			Item consumedAle = selectedAleId == -1 ? ale.consume(player) : ale.consume(player, selectedAleId);
 			if (consumedAle == null) return Result.rejected("missing-rising-sun-ale");
+			if (!isRisingSunAle(consumedAle.getCatalogId())
+				|| (selectedAleId != -1 && consumedAle.getCatalogId() != selectedAleId)) {
+				try { ale.refund(player, consumedAle); } catch (RuntimeException ignored) { }
+				return Result.rejected("missing-rising-sun-ale");
+			}
 			try { stateStore.write(player.getCache(), data, next); }
 			catch (RuntimeException failure) {
 				try { return ale.refund(player, consumedAle) ? Result.rejected("state-write-failed") : Result.rejected("refund-failed"); }
@@ -72,9 +90,39 @@ public final class MonsterSlayerContactService {
 
 	public static boolean hasRisingSunAle(Player player) {
 		if (player == null) return false;
-		for (int id : RISING_SUN_ALE_IDS) {
-			if (player.getCarriedItems().getInventory().countId(id) > 0) return true;
-		}
+		return eligibleRisingSunAleIds(player).length > 0;
+	}
+
+	/** Returns each carried accepted drink once, in stable player-facing order. */
+	public static int[] eligibleRisingSunAleIds(Player player) {
+		if (player == null) return new int[0];
+		int count = 0;
+		for (int id : RISING_SUN_ALE_IDS) if (hasRisingSunAle(player, id)) count++;
+		int[] result = new int[count];
+		int index = 0;
+		for (int id : RISING_SUN_ALE_IDS) if (hasRisingSunAle(player, id)) result[index++] = id;
+		return result;
+	}
+
+	/** Maps an offered menu index to its selected item, or -1 for decline/stale input. */
+	public static int selectedRisingSunAleId(int[] offeredAleIds, int menuSelection) {
+		return offeredAleIds != null && menuSelection >= 0 && menuSelection < offeredAleIds.length
+			? offeredAleIds[menuSelection] : -1;
+	}
+
+	public static String risingSunAleOfferLabel(int itemId) {
+		if (itemId == ItemId.ASGARNIAN_ALE.id()) return "Offer Asgarnian Ale";
+		if (itemId == ItemId.WIZARDS_MIND_BOMB.id()) return "Offer Wizard's Mind Bomb";
+		if (itemId == ItemId.DWARVEN_STOUT.id()) return "Offer Dwarven Stout";
+		throw new IllegalArgumentException("Not an accepted Hobart drink: " + itemId);
+	}
+
+	private static boolean hasRisingSunAle(Player player, int itemId) {
+		return isRisingSunAle(itemId) && player.getCarriedItems().getInventory().countId(itemId) > 0;
+	}
+
+	private static boolean isRisingSunAle(int itemId) {
+		for (int id : RISING_SUN_ALE_IDS) if (id == itemId) return true;
 		return false;
 	}
 
@@ -86,6 +134,11 @@ public final class MonsterSlayerContactService {
 					if (player.getCarriedItems().remove(ale) != -1) return ale;
 				}
 				return null;
+			}
+			@Override public Item consume(Player player, int itemId) {
+				if (!isRisingSunAle(itemId)) return null;
+				Item ale = new Item(itemId);
+				return player.getCarriedItems().remove(ale) != -1 ? ale : null;
 			}
 			@Override public boolean refund(Player player, Item consumedAle) {
 				return consumedAle != null && player.getCarriedItems().getInventory().add(consumedAle, false);

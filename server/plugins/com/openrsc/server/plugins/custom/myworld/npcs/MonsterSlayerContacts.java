@@ -88,12 +88,25 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
 		if (shortcut) { npcsay(player, npc, "No stamp, no task. Fetch a Rising Sun ale first."); return; }
-		if (state.getIntroStage() == 0) { npcsay(player, npc, "'ello there."); if (multi(player, "I hear you give Monster Slayer tasks?", "Hi. And, uh... bye!") != 0) return; npcsay(player, npc, "I sure do! Show me your stamp first.", "Bring me a drink from that barmaid over there."); service.beginIntroduction(player); return; }
-		if (!MonsterSlayerContactService.hasRisingSunAle(player)) { npcsay(player, npc, "You haven't got a Rising Sun ale yet."); return; }
-		if (multi(player, "Offer a Rising Sun ale.", "Not yet.") != 0) return;
-		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player);
+		if (state.getIntroStage() == 0) {
+			npcsay(player, npc, "'Ello there! You look like someone after monster work, or someone who has mistaken me for a decorative barrel.");
+			if (multi(player, "I'm looking for Monster Slayer work.", "Sorry, I was looking for a decorative barrel.") != 0) return;
+			npcsay(player, npc, "Splendid! Every proper Monster Slayer needs my official stamp. Mine is very official, despite the jam on it.", "Bring me a drink from that barmaid over there.", "Then I shall stamp you in. That is how all the finest guild business is conducted.");
+			service.beginIntroduction(player); return;
+		}
+		int[] offeredAles = MonsterSlayerContactService.eligibleRisingSunAleIds(player);
+		if (offeredAles.length == 0) { npcsay(player, npc, "Still dry? A fledgling Slayer needs bravery, preparedness, and a drink from that barmaid over there."); return; }
+		npcsay(player, npc, "Ah, you've returned with refreshments. A proper administrative matter at last!");
+		String[] choices = new String[offeredAles.length + 1];
+		for (int choice = 0; choice < offeredAles.length; choice++) choices[choice] = MonsterSlayerContactService.risingSunAleOfferLabel(offeredAles[choice]);
+		choices[choices.length - 1] = "Not yet";
+		int selectedAleId = MonsterSlayerContactService.selectedRisingSunAleId(offeredAles, multi(player, choices));
+		if (selectedAleId == -1) return;
+		MonsterSlayerContactService.Result result = service.completeIntroductionWithRisingSunAle(player, selectedAleId);
 		if (!result.isAccepted()) { player.message(aleFailureMessage(result.getReason())); return; }
-		npcsay(player, npc, "Excellent, I dub thee an official fledgling Monster Slayer. Hold out your hand for your official stamp", "Nope, just the stamp.", "It's an honor. Return to me any time you wish to continue hunting monsters!");
+		npcsay(player, npc, "Excellent choice. That goes down much more neatly than a form.", "Hold still while I stamp you in. If it smudges, tell people it's a badge.");
+		say(player, npc, "That doesn't sound very official.");
+		npcsay(player, npc, "Official enough! You're a Fledgling Monster Slayer now. Return to me whenever you're ready for honest work and questionable paperwork.");
 	}
 	/** Keeps transaction outcomes truthful without exposing persistence details to players. */
 	public static String aleFailureMessage(String reason) {

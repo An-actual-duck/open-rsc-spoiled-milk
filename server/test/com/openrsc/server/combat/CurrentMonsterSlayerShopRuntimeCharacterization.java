@@ -84,6 +84,8 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 
 	private static void risingSunAleTransactionOutcomes(CurrentCombatHarness h, MonsterSlayerData data) {
 		defaultTransactionAcceptsEveryRisingSunAle(h, data);
+		offeredDrinkMenusAreCompleteAndBounded(h);
+		explicitDrinkSelectionAndRollbackAreExact(h, data);
 		final AtomicInteger consumed = new AtomicInteger();
 		final AtomicInteger refunded = new AtomicInteger();
 		MonsterSlayerContactService.RisingSunAleTransaction transaction = new MonsterSlayerContactService.RisingSunAleTransaction() {
@@ -136,6 +138,94 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		MonsterSlayerContactService.Result[] submissions = concurrentAleSubmissions(concurrentContacts, concurrent);
 		assertEquals(1, successful(submissions[0], submissions[1]), "one simultaneous Rising Sun ale submission succeeds");
 		assertEquals(1, concurrentConsumes.get(), "simultaneous duplicate consumes once");
+	}
+
+	private static void offeredDrinkMenusAreCompleteAndBounded(CurrentCombatHarness h) {
+		int[] acceptedAles = {ItemId.ASGARNIAN_ALE.id(), ItemId.WIZARDS_MIND_BOMB.id(), ItemId.DWARVEN_STOUT.id()};
+		for (int mask = 0; mask < 8; mask++) {
+			Player player = h.player("mssalemenu" + mask, 850 + mask, 790);
+			for (int index = 0; index < acceptedAles.length; index++) {
+				if ((mask & (1 << index)) != 0) {
+					player.getCarriedItems().getInventory().getItems().add(new Item(acceptedAles[index], 2, false,
+						20_000_500L + mask * 10L + index));
+				}
+			}
+			int[] offered = MonsterSlayerContactService.eligibleRisingSunAleIds(player);
+			int[] expected = new int[Integer.bitCount(mask)];
+			int output = 0;
+			for (int index = 0; index < acceptedAles.length; index++) if ((mask & (1 << index)) != 0) expected[output++] = acceptedAles[index];
+			assertEquals(java.util.Arrays.toString(expected), java.util.Arrays.toString(offered), "every drink subset is offered once " + mask);
+			for (int index = 0; index < offered.length; index++) {
+				assertEquals(acceptedAles[indexOf(acceptedAles, offered[index])], MonsterSlayerContactService.selectedRisingSunAleId(offered, index),
+					"explicit menu selection maps to offered drink " + mask + ":" + index);
+				assertTrue(MonsterSlayerContactService.risingSunAleOfferLabel(offered[index]).startsWith("Offer "),
+					"offered drink has player-facing label " + offered[index]);
+			}
+			assertEquals(-1, MonsterSlayerContactService.selectedRisingSunAleId(offered, offered.length),
+				"Not yet declines without selecting a drink " + mask);
+		}
+	}
+
+	private static void explicitDrinkSelectionAndRollbackAreExact(CurrentCombatHarness h, MonsterSlayerData data) {
+		int[] acceptedAles = {ItemId.ASGARNIAN_ALE.id(), ItemId.WIZARDS_MIND_BOMB.id(), ItemId.DWARVEN_STOUT.id()};
+		for (int selected : acceptedAles) {
+			Player player = h.player("mssaleselected" + selected, 870 + selected % 10, 790);
+			MonsterSlayerState.write(player.getCache(), data,
+				MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+			for (int index = 0; index < acceptedAles.length; index++) player.getCarriedItems().getInventory().getItems().add(
+				new Item(acceptedAles[index], 1, false, 20_000_700L + selected * 10L + index));
+			MonsterSlayerContactService service = new MonsterSlayerContactService(data,
+				new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data));
+			assertTrue(service.completeIntroductionWithRisingSunAle(player, selected).isAccepted(),
+				"selected drink completes introduction " + selected);
+			for (int id : acceptedAles) assertEquals(id == selected ? 0 : 1,
+				player.getCarriedItems().getInventory().countId(id), "only selected drink is consumed " + selected + ":" + id);
+		}
+
+		Player stale = h.player("mssalestale", 881, 790);
+		MonsterSlayerState.write(stale.getCache(), data,
+			MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		stale.getCarriedItems().getInventory().getItems().add(new Item(ItemId.ASGARNIAN_ALE.id(), 1, false, 20_000_900L));
+		stale.getCarriedItems().getInventory().getItems().add(new Item(ItemId.DWARVEN_STOUT.id(), 1, false, 20_000_901L));
+		int[] offered = MonsterSlayerContactService.eligibleRisingSunAleIds(stale);
+		int selected = MonsterSlayerContactService.selectedRisingSunAleId(offered, 0);
+		stale.getCarriedItems().remove(new Item(selected));
+		MonsterSlayerContactService service = new MonsterSlayerContactService(data,
+			new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data));
+		assertEquals("missing-rising-sun-ale", service.completeIntroductionWithRisingSunAle(stale, selected).getReason(),
+			"stale menu selection does not substitute another drink");
+		assertEquals(1, stale.getCarriedItems().getInventory().countId(ItemId.DWARVEN_STOUT.id()),
+			"stale selection preserves other offered drink");
+		assertEquals(1, MonsterSlayerState.read(stale.getCache(), data).getIntroStage(),
+			"stale selection preserves pending introduction");
+
+		final AtomicInteger refunded = new AtomicInteger();
+		Player rollback = h.player("mssaleselectedrollback", 882, 790);
+		MonsterSlayerState.write(rollback.getCache(), data,
+			MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data));
+		MonsterSlayerContactService transactional = contacts(data, new MonsterSlayerContactService.RisingSunAleTransaction() {
+			public Item consume(Player player) { throw new AssertionError("explicit selection must use selected consume path"); }
+			public Item consume(Player player, int itemId) {
+				Item selected = new Item(itemId);
+				return player.getCarriedItems().remove(selected) != -1 ? selected : null;
+			}
+			public boolean refund(Player player, Item item) {
+				refunded.incrementAndGet(); assertEquals(ItemId.WIZARDS_MIND_BOMB.id(), item.getCatalogId(), "rollback refunds selected drink");
+				player.getCarriedItems().getInventory().getItems().add(item);
+				return true;
+			}
+		}, failingWrites());
+		rollback.getCarriedItems().getInventory().getItems().add(new Item(ItemId.WIZARDS_MIND_BOMB.id(), 1, false, 20_000_902L));
+		assertEquals("state-write-failed", transactional.completeIntroductionWithRisingSunAle(rollback, ItemId.WIZARDS_MIND_BOMB.id()).getReason(),
+			"selected drink rollback is reported");
+		assertEquals(1, refunded.get(), "selected drink is refunded exactly once");
+		assertEquals(1, rollback.getCarriedItems().getInventory().countId(ItemId.WIZARDS_MIND_BOMB.id()),
+			"selected drink is restored after persistence failure");
+	}
+
+	private static int indexOf(int[] values, int value) {
+		for (int index = 0; index < values.length; index++) if (values[index] == value) return index;
+		throw new AssertionError("missing accepted drink " + value);
 	}
 
 	private static void defaultTransactionAcceptsEveryRisingSunAle(CurrentCombatHarness h,
