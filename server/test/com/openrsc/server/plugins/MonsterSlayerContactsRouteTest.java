@@ -118,7 +118,7 @@ public final class MonsterSlayerContactsRouteTest {
 		int[][] sprites = {
 			{848, 7, 29, 38, 99, 49}, // steel plate, legs, square shield, and sword
 			{854, 3, 56, 2, -1, 110}, // female steel plate and battleaxe, no plate legs/shield
-			{860, 4, 22, 3, -1, 117} // steel chainmail and mace, no plate legs/shield
+			{860, 5, 29, 2, -1, 117} // steel plate body, ordinary legs, and mace; no plate legs/shield
 		};
 		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		for (int[] fixture : sprites) {
@@ -133,7 +133,7 @@ public final class MonsterSlayerContactsRouteTest {
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
 		assertTrue(clientDefinitions.contains("new int[]{7, 29, 38, 99, 49, -1, -1, -1"), "client Bran uses full steel composition");
 		assertTrue(clientDefinitions.contains("new int[]{3, 56, 2, -1, 110, -1, -1, -1"), "client Veteran associate uses lighter steel composition");
-		assertTrue(clientDefinitions.contains("new int[]{4, 22, 3, -1, 117, -1, -1, -1"), "client ambient Veteran uses steel chain and mace");
+		assertTrue(clientDefinitions.contains("new int[]{5, 29, 2, -1, 117, -1, -1, -1"), "client ambient Veteran uses a valid head, steel plate body, ordinary legs, and mace");
 		for (int id : new int[] {848, 854, 860}) {
 			JSONObject definition = location(definitions, id);
 			assertTrue(clientDefinitions.contains("\"" + definition.getString("name") + "\", \"" + definition.getString("description") + "\""),
@@ -141,7 +141,9 @@ public final class MonsterSlayerContactsRouteTest {
 		}
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"platemailtop\", \"equipment\", 15658734"), "steel plate sprite identity is proven");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 15658734"), "female steel plate sprite identity is proven");
-		assertTrue(clientDefinitions.contains("new AnimationDef(\"chainmail\", \"equipment\", 15658734"), "steel chainmail sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"head2\", \"player\""), "ambient Veteran head sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"legs1\", \"player\""), "ambient Veteran ordinary-leg sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"mace\", \"equipment\", 15658734"), "ambient Veteran steel mace sprite identity is proven");
 		assertVeteranRangeDoesNotIntersectWorldGeometry(server, locations, "conf/server/defs/locs");
 	}
 
@@ -649,7 +651,8 @@ public final class MonsterSlayerContactsRouteTest {
 			"N:The fun is over now.",
 			"N:Elite work begins inside the true guilds.",
 			"N:Not everyone comes back from that work.",
-			"N:My associate will trade Veteran Slayer Points with an Elite."), promotion.events,
+			"N:And come back any time to slay more with",
+			"N:The best of the best!"), promotion.events,
 			"Bran promotion drops the bluster and warns about inner-guild work");
 		assertTrue(MonsterSlayerState.read(promoted.getCache(), data).isPromotionAcknowledged("brimhaven", data),
 			"Bran promotion is acknowledged after exact dialogue");

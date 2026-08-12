@@ -6673,7 +6673,7 @@ public class EntityHandler {
 			new int[]{7, 28, 2, -1, 116, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15654365, 8409120, 15523536);
 		addMonsterSlayerNpcDefinition(860, "Veteran Monster Slayer", "A scarred Blue Moon regular", "",
-			new int[]{4, 22, 3, -1, 117, -1, -1, -1, -1, -1, -1, -1},
+			new int[]{5, 29, 2, -1, 117, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15658734, 8421504, 15523536);
 	}
 
