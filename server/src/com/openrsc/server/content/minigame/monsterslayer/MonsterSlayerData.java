@@ -347,15 +347,17 @@ public final class MonsterSlayerData {
 	}
 
 	/**
-	 * Backpack upgrades cost 110% of the mandatory work for their own contact,
-	 * rounded upward. Keeping this at definition-load time makes reward edits
+	 * Backpack upgrades cost twice the original 110%-rounded mandatory total for
+	 * their own contact. Keeping this at definition-load time makes reward edits
 	 * fail closed instead of quietly changing the intended economy.
 	 */
 	static long mandatoryCapacityUpgradeCost(MonsterSlayerChallenge challenge, Map<String, Contact> contacts) {
 		for (Contact contact : contacts.values()) if (contact.getChallenge() == challenge) {
 			long total = 0L;
 			for (Task task : contact.getMandatoryTasks()) total = Math.addExact(total, task.getPointReward());
-			return Math.addExact(total, total / 10L + (total % 10L == 0L ? 0L : 1L));
+			long originalPrice = Math.addExact(total,
+				total / 10L + (total % 10L == 0L ? 0L : 1L));
+			return Math.multiplyExact(originalPrice, 2L);
 		}
 		throw new IllegalArgumentException("Missing mandatory contact for " + challenge);
 	}
