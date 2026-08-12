@@ -20,7 +20,19 @@ public final class MonsterSlayerDialoguePlan {
 		case 2: return steps(n("Hah! You did it! Every last task!"), n("You've earned Elite rank."), n("Take this badge."), n("But listen."), n("The fun is over now."), n("Elite work begins inside the true guilds."), n("Not everyone comes back from that work."), n("And come back any time to slay more with"), n("The best of the best!"));
 		case 3: return steps(n("'Grats on making it this far!"), n("I knew you had it in you."), p("Than-"), n("Best not keep the Heroes' sect waiting."), n("You've earned Champion rank!"), n("And I present to you the latest and greatest."), n("Monster Slayer Guild Medal!"), p("..."), n("Well, aren't you going to say thank you?"), p("Th-"), n("Off you go!"));
 		case 4: return steps(n("You've fought and slain giants, dragons,"), n("And beasts from the depths of hell."), n("You've done well to protect the world"), n("From all manner of evil."), n("I grant you this crest and the rank of Hero."), n("May your name carry the same weight."), n("And your foes shudder when they hear it."), p("It's been an honor and I won't let you down."));
-		case 5: return steps(n("You've completed your journey for now. You've done well."), p("And what's my new rank?"), n("And what use would you make of it?"), p("...Legend, then?"), n("If you continue to earn it."));
+		case 5: return steps(n("Well done. Very well done."),
+			n("You have overcome every trial set before you."),
+			n("You have proven your strength, your resolve,"),
+			n("And your place among the greatest adventurers of this age."),
+			n("You've completed your journey for now."),
+			n("You've done well."),
+			p("And what's my new rank?"),
+			n("And what use would you make of it?"),
+			p("Whatever is required of me."),
+			n("A suitable answer."),
+			n("Then rise as a Legend of the Monster Slayer Guild."),
+			p("It's an honor."),
+			n("See that it remains one."));
 		default: throw new IllegalArgumentException("Unknown promotion tier: " + tier);
 		}
 	}
@@ -38,6 +50,15 @@ public final class MonsterSlayerDialoguePlan {
 			n("A hero defends the people of this world."),
 			n("And to do that you need to defeat some mighty foes."),
 			n("I hope you're ready!"), p("I've never been more ready!"));
+	}
+	/** One-time, speaker-typed welcome before Radimus's first authoritative assignment. */
+	public static List<Step> radimusFirstTaskWelcome() {
+		return steps(n("Excellent. Your reputation has brought you far."),
+			n("But reputation alone does not make a legend."),
+			n("The Legends Guild remembers deeds, not promises."),
+			n("Complete the trials I set before you."),
+			n("And your name may yet earn its place in these halls."),
+			p("I'm ready to make history."));
 	}
 	private static Step n(String text) { return new Step(Speaker.NPC, text); } private static Step p(String text) { return new Step(Speaker.PLAYER, text); }
 	private static List<Step> steps(Step... values) { return Collections.unmodifiableList(Arrays.asList(values)); }

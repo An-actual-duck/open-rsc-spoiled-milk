@@ -99,7 +99,7 @@
       ]
     },
     {
-      "key":"legends","npcId":851,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
+      "key":"legends","npcId":785,"challenge":"HERO","requiredRank":"HERO","awardedRank":"LEGEND",
       "mandatoryTasks":[
         {"key":"legends.black_demons","familyKey":"black_demon","requiredKills":20,"pointReward":30},{"key":"legends.black_dragons","familyKey":"black_dragon","requiredKills":10,"pointReward":38,"hazards":["DRAGON_FIRE"]},{"key":"legends.king_black_dragon","familyKey":"king_black_dragon","requiredKills":1,"pointReward":60,"hazards":["DRAGON_FIRE"]}
       ],

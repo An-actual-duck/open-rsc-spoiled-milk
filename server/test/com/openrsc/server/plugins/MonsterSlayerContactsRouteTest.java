@@ -38,12 +38,18 @@ public final class MonsterSlayerContactsRouteTest {
 		Server server = new Server("myworld.conf");
 		server.getEntityHandler().load();
 		MonsterSlayerContacts routes = new MonsterSlayerContacts();
-		for (int id = 846; id <= 851; id++) {
+		for (int id = 846; id <= 850; id++) {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
 			assertTrue(routes.blockTalkNpc(null, npc), "Talk-to contact " + id);
 			assertTrue(routes.blockOpNpc(null, npc, "Task"), "Task contact " + id);
 			assertFalse(routes.blockOpNpc(null, npc, "Trade"), "contact trade " + id);
 		}
+		Npc radimus = new Npc(server.getWorld(), 785, 885, 600);
+		assertFalse(routes.blockTalkNpc(null, radimus), "authentic quest plugin retains Radimus Talk-to ownership");
+		assertTrue(routes.blockOpNpc(null, radimus, "Task"), "Radimus exposes the Slayer Task shortcut");
+		Npc reserved = new Npc(server.getWorld(), 851, 951, 600);
+		assertFalse(routes.blockTalkNpc(null, reserved), "retired Orin slot has no Talk-to ownership");
+		assertFalse(routes.blockOpNpc(null, reserved, "Task"), "retired Orin slot has no Task ownership");
 		for (int id = 852; id <= 857; id++) {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
 			assertTrue(routes.blockTalkNpc(null, npc), "Talk-to associate " + id);
@@ -77,6 +83,8 @@ public final class MonsterSlayerContactsRouteTest {
 		branDialogueUsesAuthoritativeVeteranProgression(server);
 		doranDialogueUsesAuthoritativeEliteProgression(server);
 		sellaDialogueUsesAuthoritativeChampionProgression(server);
+		radimusDialogueUsesAuthoritativeHeroProgression(server);
+		legendsSectReusesRadimusAndRuneAssociate(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -295,7 +303,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"client/server Heroes associate identity is synchronized");
 		assertEquals("Hero Slayer Associate", location(definitions, 857).getString("name"),
 			"server names the final supplier for the Hero point tier");
-		assertTrue(clientDefinitions.contains("\"Hero Slayer Associate\", \"A Hero Slayer supplier\""),
+		assertTrue(clientDefinitions.contains("\"Hero Slayer Associate\", \"A rune-clad Hero Slayer supplier\""),
 			"client/server Hero associate identity is synchronized");
 		for (String identity : new String[] {
 			"new AnimationDef(\"fullhelm\", \"equipment\", 11717785",
@@ -1287,6 +1295,174 @@ public final class MonsterSlayerContactsRouteTest {
 		return cursors;
 	}
 
+	private static void radimusDialogueUsesAuthoritativeHeroProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		java.util.List<MonsterSlayerDialoguePlan.Step> welcome = MonsterSlayerDialoguePlan.radimusFirstTaskWelcome();
+		assertDialoguePlan(welcome, new MonsterSlayerDialoguePlan.Speaker[] {
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.PLAYER
+		}, new String[] {
+			"Excellent. Your reputation has brought you far.",
+			"But reputation alone does not make a legend.",
+			"The Legends Guild remembers deeds, not promises.",
+			"Complete the trials I set before you.",
+			"And your name may yet earn its place in these halls.",
+			"I'm ready to make history."
+		}, "Radimus first-task welcome");
+
+		MonsterSlayerState.Snapshot firstState = MonsterSlayerState.create(2, MonsterSlayerRank.HERO,
+			MonsterSlayerBalances.zero(), heroCursors(data, 0), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseRadimusFirstTaskWelcome(5, firstState),
+			"authoritative Legends cursor zero enables Radimus welcome");
+		assertFalse(MonsterSlayerContacts.shouldUseRadimusAssignmentRemark(5, firstState),
+			"Radimus first assignment does not add random flavour to its welcome");
+		Player first = player(server, "slayerradimusfirst", 309, 600);
+		first.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		MonsterSlayerState.write(first.getCache(), data, firstState);
+		RecordingDialogue firstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(firstDialogue).onTalkNpc(first,
+			new Npc(server.getWorld(), 785, 309, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Have you come seeking a task worthy of a legend?",
+			"P:I have.",
+			"N:Then let me see your Hero's crest.",
+			"P:Right here!",
+			"N:Excellent. Your reputation has brought you far.",
+			"N:But reputation alone does not make a legend.",
+			"N:The Legends Guild remembers deeds, not promises.",
+			"N:Complete the trials I set before you.",
+			"N:And your name may yet earn its place in these halls.",
+			"P:I'm ready to make history.",
+			"N:Your next task is to slay 20 Black demons."), firstDialogue.events,
+			"Radimus welcome follows crest proof and preserves first assignment");
+		assertEquals("legends.black_demons",
+			MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+			"Radimus welcome preserves authoritative Legends progression");
+
+		String[] remarks = {
+			"Very well. Let us see whether your reputation is deserved.",
+			"The Guild remembers deeds, not excuses.",
+			"Do be proactive. Greatness rarely waits to be instructed.",
+			"Another trial awaits. I trust you came prepared.",
+			"History favors those who finish what they begin."
+		};
+		for (int index = 0; index < remarks.length; index++) {
+			assertEquals(remarks[index], MonsterSlayerContacts.radimusAssignmentRemark(index),
+				"bounded Radimus guildmaster remark " + index);
+			assertTrue(remarks[index].length() <= 64, "Radimus remark remains concise " + index);
+		}
+		assertThrows(new Runnable() { public void run() {
+			MonsterSlayerContacts.radimusAssignmentRemark(remarks.length);
+		}}, "out-of-range Radimus dialogue selection is rejected");
+
+		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.HERO,
+			MonsterSlayerBalances.zero(), heroCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseRadimusAssignmentRemark(5, laterState),
+			"later Legends work enables Radimus assignment flavour");
+		Player later = player(server, "slayerradimuslater", 310, 600);
+		later.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		MonsterSlayerState.write(later.getCache(), data, laterState);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later,
+			new Npc(server.getWorld(), 785, 310, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events,
+			new String[] {"Excellent. Your reputation has brought you far."}),
+			"later Radimus assignment does not repeat first-task welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, remarks),
+			"later Radimus assignment uses one bounded guildmaster remark");
+		assertTrue(laterDialogue.events.contains("N:You should prepare for dragon fire."),
+			"Radimus preserves authoritative hazard advice");
+		assertEquals("N:Your next task is to slay 10 Black dragons.",
+			laterDialogue.events.get(laterDialogue.events.size() - 1),
+			"Radimus flavour preserves authoritative later assignment");
+
+		Map<String, Integer> promotedCursors = heroCursors(data,
+			data.getContact("legends").getMandatoryTasks().size());
+		Player promoted = player(server, "slayerradimuspromotion", 311, 600);
+		promoted.setQuestStage(Quests.LEGENDS_QUEST, -1);
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.LEGEND, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 3L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(promoted,
+			new Npc(server.getWorld(), 785, 311, 600));
+		java.util.List<MonsterSlayerDialoguePlan.Step> expectedPromotion = MonsterSlayerDialoguePlan.promotion(5);
+		assertEquals(expectedPromotion.size(), promotion.events.size(), "Radimus renders the complete final promotion");
+		for (int index = 0; index < expectedPromotion.size(); index++) {
+			String prefix = expectedPromotion.get(index).getSpeaker() == MonsterSlayerDialoguePlan.Speaker.NPC ? "N:" : "P:";
+			assertEquals(prefix + expectedPromotion.get(index).getText(), promotion.events.get(index),
+				"Radimus final promotion speaker order " + index);
+		}
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data)
+			.isPromotionAcknowledged("legends", data),
+			"Radimus promotion is acknowledged after exact dialogue");
+	}
+
+	private static Map<String, Integer> heroCursors(MonsterSlayerData data, int heroCursor) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if (!"legends".equals(contact.getKey())) cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else cursors.put(contact.getKey(), heroCursor);
+		}
+		return cursors;
+	}
+
+	private static void legendsSectReusesRadimusAndRuneAssociate(Server server) throws Exception {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		assertEquals(785, data.getContact("legends").getNpcId(), "Legends contact reuses guild Radimus");
+		assertEquals("Sir Radimus Erkle", server.getEntityHandler().getNpcDef(785).getName(),
+			"authentic Radimus identity remains intact");
+
+		JSONObject customLocations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		int orinSpawns = 0;
+		for (Object value : customLocations.getJSONArray("npclocs"))
+			if (((JSONObject) value).getInt("id") == 851) orinSpawns++;
+		assertEquals(0, orinSpawns, "retired Orin has no world spawn");
+		JSONObject associateSpawn = location(customLocations.getJSONArray("npclocs"), 857);
+		assertEquals(511, associateSpawn.getJSONObject("start").getInt("X"), "Hero associate remains beside Radimus X");
+		assertEquals(534, associateSpawn.getJSONObject("start").getInt("Y"), "Hero associate remains beside Radimus Y");
+
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject reserved = location(definitions, 851);
+		assertEquals("Reserved Monster Slayer contact", reserved.getString("name"),
+			"retired slot is retained only to preserve appended definition IDs");
+		assertEquals("", reserved.getString("command"), "retired slot exposes no interaction");
+		JSONObject associate = location(definitions, 857);
+		int[] runeLayers = {4, 59, 3, -1, 113};
+		for (int layer = 1; layer <= runeLayers.length; layer++)
+			assertEquals(runeLayers[layer - 1], associate.getInt("sprites" + layer),
+				"Hero associate rune layer " + layer);
+		assertEquals(65535, associate.getInt("topColour"), "Hero associate uses rune plate colour");
+		assertEquals(0, associate.getInt("attackable"), "Hero associate remains non-attackable");
+
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("getNpcDef(785).updateCommand1(\"Task\")"),
+			"client exposes Task on authentic guild Radimus");
+		assertFalse(clientDefinitions.contains("addMonsterSlayerNpcDefinition(851, \"Orin\""),
+			"client no longer authors Orin");
+		assertTrue(clientDefinitions.contains("new int[]{4, 59, 3, -1, 113, -1, -1, -1"),
+			"client Hero associate uses partial rune composition");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 65535"),
+			"female rune plate sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"battleaxe\", \"equipment\", 65535"),
+			"rune battleaxe sprite identity is proven");
+
+		String authenticRoute = new String(Files.readAllBytes(Paths.get("plugins", "com", "openrsc", "server", "plugins", "authentic", "quests", "members", "legendsquest", "npcs", "LegendsQuestSirRadimusErkle.java")), StandardCharsets.UTF_8);
+		int compatibility = authenticRoute.indexOf("if (doCombatOdyssey(player, n))");
+		int slayerDelegation = authenticRoute.indexOf("new MonsterSlayerContacts().onTalkNpc(player, n)");
+		assertTrue(compatibility >= 0 && slayerDelegation > compatibility,
+			"Radimus preserves legacy recovery before Slayer delegation");
+	}
+
 	private static void assertDialoguePlan(java.util.List<MonsterSlayerDialoguePlan.Step> actual,
 			MonsterSlayerDialoguePlan.Speaker[] speakers, String[] text, String context) {
 		assertEquals(speakers.length, actual.size(), context + " step count");
@@ -1556,7 +1732,7 @@ public final class MonsterSlayerContactsRouteTest {
 			Player player = player(server, "slayerpromotion" + index, 220 + index, 600);
 			player.setQuestPoints(32); player.setQuestStage(Quests.HEROS_QUEST, -1); player.setQuestStage(Quests.LEGENDS_QUEST, -1);
 			MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2, contact.getAwardedRank(), MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
-			routes.onOpNpc(player, new Npc(server.getWorld(), 846 + index, 220 + index, 600), "Task");
+			routes.onOpNpc(player, new Npc(server.getWorld(), contact.getNpcId(), 220 + index, 600), "Task");
 			java.util.List<MonsterSlayerDialoguePlan.Step> expected = MonsterSlayerDialoguePlan.promotion(index);
 			assertEquals(expected.size(), rendered.size(), "promotion renders exact step count " + contact.getKey());
 			for (int step = 0; step < expected.size(); step++) {
@@ -1589,7 +1765,7 @@ public final class MonsterSlayerContactsRouteTest {
 		routes.onOpNpc(denied, new Npc(server.getWorld(), 855, 244, 600), "Trade");
 		assertEquals(deniedBefore, denied.getCache().getCacheMap(), "guild-denied associate has no progression authority");
 
-		for (int id : new int[] {111, 253, 735, 785}) {
+		for (int id : new int[] {111, 253, 735, 851}) {
 			Npc npc = new Npc(server.getWorld(), id, 245, 600);
 			assertFalse(routes.blockTalkNpc(player, npc), "unrelated NPC talk ownership " + id);
 			assertFalse(routes.blockOpNpc(player, npc, "Task"), "unrelated NPC task ownership " + id);

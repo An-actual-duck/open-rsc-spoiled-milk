@@ -61,14 +61,17 @@ Source policy:
   Hero rune. Within a headquarters, the contact, associate, and ambient member
   must remain visibly distinct while retaining their role-specific equipment.
 
-## Current Implementation Checkpoint (2026-08-10)
+## Current Implementation Checkpoint (2026-08-12)
 
 Published `main` now contains the complete typed definition and persistence
 foundation, idempotent Combat Odyssey recognition, authoritative mandatory and
 repeatable assignment/completion, contribution-aware NPC-death credit, all six
 challenge balances, the approved 35-task roster, and the headless shop
-transaction service. Contacts `846..851`, associates `852..857`, and ambient
-members `858..860` are defined and placed. The beer introduction, rank proof
+transaction service. Contacts `846..850` plus reused guild Sir Radimus `785`,
+associates `852..857`, and ambient members `858..860` are defined and placed.
+The retired Orin slot `851` remains an unspawned compatibility definition only,
+because removing that appended definition would renumber later custom NPCs.
+The beer introduction, rank proof
 checks, host-guild gates, promotion dialogue, warnings, active-task reporting,
 random repeatables, and transaction/concurrency failure paths have focused
 executable coverage.
@@ -730,9 +733,8 @@ giver and one nearby shop associate. The task giver owns only rank, mandatory,
 and repeatable-task dialogue; the associate owns only the rank-gated challenge
 shop dialogue. They must never be combined merely because a location reuses an
 existing bartender or guild official. Every task giver and shop associate is a
-newly authored, unique humanoid NPC, except that the Legends task giver may
-reuse Sir Radimus `785`, the original borrowed-system task giver. Their initial
-identity, name, ID, and exact placement are a focused content pass; their
+newly authored, unique humanoid NPC, except that the Legends task giver reuses
+Sir Radimus `785`, the original borrowed-system task giver. Their
 appearance should visibly progress from simple early equipment to better armor
 at the higher ranks. Existing bartenders, guildmasters, and quest NPCs retain
 their original responsibilities and are not repurposed as Slayer contacts,
@@ -745,13 +747,14 @@ apart from the explicitly selected Radimus Slayer-route rework.
 | `brimhaven` (legacy internal key) | Blue Moon Inn, Varrock, near the existing bartender | Bran and the Veteran associate are dedicated Slayer NPCs; preserve the inn's bartender and all normal service. |
 | `champions` | Champions Guild, near Guildmaster `111` | Preserve Dragon Slayer and normal guild-access dialogue on the Guildmaster. |
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
-| `legends` | Legends Guild, near Sir Radimus `785` | Default to a new task giver, but Sir Radimus `785` may instead be selected and reworked as the task giver because he owned the borrowed system. Preserve his Legends Quest reward/training routes and replace only the old Odyssey task route during activation. |
+| `legends` | Legends Guild, Sir Radimus `785` | Reuse guild Radimus as the selected Monster Slayer closer. His authentic Legends Quest reward/training route retains Talk-to ownership; after that work and any recoverable legacy Odyssey state are resolved, it delegates to Monster Slayer. No new Odyssey progression is activated. House Radimus `735` remains quest-only. |
 
-Initial activation content uses the unused stable NPC range `846..860`: task
-givers `846..851` in contact order, their nearby associates `852..857`, and
-the three bar ambient members `858..860`. The exact start tiles are recorded
-in `MyWorldNpcLocs.json`; all are separate from existing bartenders, guild
-officials, Achetties, and Sir Radimus.
+Initial activation content uses task givers `846..850`, reused Radimus `785`,
+nearby associates `852..857`, and bar ambient members `858..860`. Slot `851`
+is deliberately retained but unspawned so the append-only server definition
+loader keeps all following IDs stable. The exact custom start tiles are
+recorded in `MyWorldNpcLocs.json`; Radimus retains his authentic `NpcLocs.json`
+placement at `514,535`.
 
 ### Presentation And Roaming Contract
 
@@ -844,9 +847,11 @@ without bypassing Champions, Heroes, or Legends Guild entry requirements.
 
 The activation is implemented with one dedicated unique-humanoid
 shop-associate beside each task giver. Their armor quality follows the same
-rising-rank visual progression as the task givers. Contact IDs `846..851`,
-associate IDs `852..857`, ambient IDs `858..860`, names, and start tiles are
-authoritative in `MonsterSlayerNpcDefs.json` and `MyWorldNpcLocs.json`.
+rising-rank visual progression as the task givers. Contact IDs `846..850` and
+`785`, associate IDs `852..857`, ambient IDs `858..860`, names, and start tiles
+are authoritative in the base and Monster Slayer definitions and location
+files. The Legends associate wears proven female rune plate with ordinary legs,
+no shield, and a rune battleaxe so the supplier remains distinct from Radimus.
 Existing bartenders and guild officials retain their current roles; the new
 associates do not replace ordinary drinks, guild access, quests, or training
 dialogue.
@@ -1324,37 +1329,68 @@ subsequent Hero-to-Legend step.
 The Champion associate prepends `Sella sure knows how to inspire a person.` to
 their usual unlocked supply and satchel conversation.
 
-#### 6. Legends Guild Contact — Hero Crest To Legend
+#### 6. Sir Radimus — Hero Crest To Legend
 
-Tone: stoic, economical, and matter-of-fact. Default to a separate Legends
-Guild contact. If Sir Radimus `785` is selected instead, preserve his Legends
-Quest behavior and replace only his borrowed Odyssey task route; house Radimus
-`735` is never a Slayer contact.
+Sir Radimus `785` is the selected final task giver; Orin is retired. His voice
+follows the established Legends material: formal, exacting, proud of the Guild
+and its history, mildly pompous, and occasionally playful. He sees diplomacy,
+judgment, and resolve as part of becoming a legend rather than treating combat
+alone as sufficient. Preserve his Legends Quest behavior and any bounded legacy
+Odyssey recovery, but never begin the Cabbage extended task quest for this
+route. House Radimus `735` is never a Slayer contact.
 
 **Below rank**
 
-> Contact: `Hero's crest required. Return when you have earned it.`
+> Radimus: `Hero's crest required. Sella at the Heroes Guild can help.`
 
 **Normal task route**
 
-> Contact: `Another contract?`
-> Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Crest.`
-> Player: `Here.`
-> Contact: `Your next task is to slay [count] [family]. Be ready.`
+> Radimus: `Have you come seeking a task worthy of a legend?`
+> Player: `I have.` / `Not today.`
+> Radimus (if yes): `Then let me see your Hero's crest.`
+> Player: `Right here!`
 
-`Task` shortcut begins at the assignment. Below rank: `No Hero's crest. No
-Legend contract.`
+Before the first authoritative Legends assignment only:
+
+> Radimus: `Excellent. Your reputation has brought you far.`
+> Radimus: `But reputation alone does not make a legend.`
+> Radimus: `The Legends Guild remembers deeds, not promises.`
+> Radimus: `Complete the trials I set before you.`
+> Radimus: `And your name may yet earn its place in these halls.`
+> Player: `I'm ready to make history.`
+
+Later mandatory and repeatable assignments select one bounded Radimus remark:
+
+- `Very well. Let us see whether your reputation is deserved.`
+- `The Guild remembers deeds, not excuses.`
+- `Do be proactive. Greatness rarely waits to be instructed.`
+- `Another trial awaits. I trust you came prepared.`
+- `History favors those who finish what they begin.`
+
+Definition-driven hazard warnings remain separate and precede assignment. The
+authoritative task line follows the welcome or remark.
+
+`Task` shortcut begins at the assignment. Below rank it retains the authoritative
+refusal: `Hero's crest required. Sella at the Heroes Guild can help.`
 
 **Legend completion / final open ending**
 
-> Contact: `You've completed your journey for now. You've done well.`
+> Radimus: `Well done. Very well done.`
+> Radimus: `You have overcome every trial set before you.`
+> Radimus: `You have proven your strength, your resolve,`
+> Radimus: `And your place among the greatest adventurers of this age.`
+> Radimus: `You've completed your journey for now.`
+> Radimus: `You've done well.`
 > Player: `And what's my new rank?`
-> Contact: `And what use would you make of it?`
-> Player: `...Legend, then?`
-> Contact: `If you continue to earn it.`
+> Radimus: `And what use would you make of it?`
+> Player: `Whatever is required of me.`
+> Radimus: `A suitable answer.`
+> Radimus: `Then rise as a Legend of the Monster Slayer Guild.`
+> Player: `It's an honor.`
+> Radimus: `See that it remains one.`
 
-After this exchange, the Legends associate opens the Hero-point shop. Their
+After this exchange, the nearby rune-clad associate opens the Hero-point shop.
+Their greeting recognizes Radimus's standards and offers Hero supplies. Their
 pre-unlock refusal is `Sorry, can't show you my wares till you're a Legend.`
 Legend repeatable tasks remain available, but the mandatory quest is complete;
 the ending must not promise a further required rank or a finite completion of

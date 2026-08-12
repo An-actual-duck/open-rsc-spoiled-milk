@@ -6645,9 +6645,9 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(850, "Sella", "An inspiring Heroes Guild Monster Slayer contact", "Task",
 			new int[]{16, 58, 40, 101, 51, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 11717785, 11717785, 15523536);
-		addMonsterSlayerNpcDefinition(851, "Orin", "A stoic Monster Slayer contact", "Task",
-			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			0, 16776960, 16776960, 15523536);
+		// Guild Radimus keeps his authentic definition and quest presentation;
+		// only the additional Monster Slayer shortcut is presentation-specific.
+		getNpcDef(785).updateCommand1("Task");
 		addMonsterSlayerNpcDefinition(852, "Fledgling Slayer Associate", "A Fledgling Slayer supplier", "Trade",
 			new int[]{3, 54, 2, -1, 108, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 16737817, 8421504, 15523536);
@@ -6663,9 +6663,9 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(856, "Champion Slayer Associate", "A Champion Slayer supplier", "Trade",
 			new int[]{7, 31, 2, -1, 112, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 11717785, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(857, "Hero Slayer Associate", "A Hero Slayer supplier", "Trade",
-			new int[]{18, 32, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			0, 16776960, 16776960, 15523536);
+		addMonsterSlayerNpcDefinition(857, "Hero Slayer Associate", "A rune-clad Hero Slayer supplier", "Trade",
+			new int[]{4, 59, 3, -1, 113, -1, -1, -1, -1, -1, -1, -1},
+			16753488, 65535, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(858, "Fledgling Monster Slayer", "An eager recruit", "",
 			new int[]{7, 27, 2, -1, 115, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15654365, 8409120, 15523536);
