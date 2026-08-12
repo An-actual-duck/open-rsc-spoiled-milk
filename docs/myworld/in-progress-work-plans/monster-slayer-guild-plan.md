@@ -843,6 +843,11 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   specifically asks, `Are you here to slay monsters?` Her natural yes/no
   choices are spoken by the player; on yes she asks for the Adept sticker, and
   a player without one is directed to Hobart in Falador.
+- After an eligible player has been asked for their current proof, they answer
+  `Right here!` before the preview or assignment continues. An ineligible
+  player instead says `Oh, I don't have one.` before the contact's direction
+  to the preceding giver. The right-click task shortcut keeps skipping this
+  social proof exchange.
 - Once a player is eligible, the `Task` right-click option is a shortcut. It
   skips the greeting and the `Yes please / Not now` choice and begins at the
   contact's `Your next task is...` line. It must use the same authoritative
@@ -875,7 +880,8 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
 - The final Fledgling task has a distinct completion lead-in. Hobart confirms
   that it was the player's final Fledgling work, awards the **Adept** rank, and
   explicitly presents the official Adept sticker before directing the player
-  to the now-unlocked Fledgling shop and his associate.
+  to the now-unlocked Fledgling shop and his associate, adding that the
+  associate knows a thing or two about satchels.
 - An eligible associate opens with a short, rank-appropriate acknowledgement
   and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
   that location's existing typed-currency shop; it never spends points or

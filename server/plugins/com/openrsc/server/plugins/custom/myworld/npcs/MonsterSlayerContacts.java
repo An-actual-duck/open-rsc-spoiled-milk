@@ -87,6 +87,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (speakChoice(player, npc, contactChoices(index)) != 0) return;
 			dialogue.npc(player, npc, contactProof(index));
 			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index)); return; }
+			dialogue.player(player, npc, "Right here!");
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
