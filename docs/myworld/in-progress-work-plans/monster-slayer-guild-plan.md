@@ -330,7 +330,7 @@ Repository density and behavior impose these tuning constraints:
 - Baby Blue Dragons provide the first bounded dragon-fire lesson. Full dragons
   begin only at `Champion`, where dialogue must explicitly warn about dragon
   fire and preparation rather than assuming the player knows the mechanic.
-- Shadow Spiders drain Prayer and Poison Spiders introduce poison. These are
+- Shadow Spiders drain Worship and Poison Spiders introduce poison. These are
   intentional mechanic steps at Adept and Veteran, respectively, and their
   assignment dialogue must warn the player.
 - Wilderness travel is an accepted part of this quest, but every mandatory
@@ -362,8 +362,20 @@ playtest baseline values, not a permanent economy lock. Repeatables use equal
 launch weight `1` and an injected random source; a per-contact preview is
 reserved only long enough to make the warning and committed assignment
 identical, without making an account's first choice predictable. Hazards are
-typed definition metadata (desert heat, Wilderness, Prayer drain, poison, and
-dragon fire), never inferred from task-key text.
+typed definition metadata (desert heat, Wilderness, Worship drain, poison, and
+dragon fire), never inferred from task-key text. `PRAYER_DRAIN` remains the
+stable internal definition key for compatibility; only its player-facing skill
+name is Worship.
+
+Hazard warnings are short NPC dialogue lines rendered before task assignment.
+Each hazard is its own line, in definition order; multiple hazards are never
+joined with a colon, semicolon, or list punctuation:
+
+- `PRAYER_DRAIN`: `You should expect Worship drain.`
+- `DESERT_HEAT`: `You should prepare for the desert heat.`
+- `WILDERNESS`: `You should know this work is in the Wilderness.`
+- `POISON`: `You should bring an antidote for poison.`
+- `DRAGON_FIRE`: `You should prepare for dragon fire.`
 
 ### Confirmed: Permanent Inventory-Capacity Shop Upgrades
 
@@ -869,9 +881,10 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
 - Assignment text uses the deterministic current entry from the mandatory
   chain, or a chosen family/count from that contact's repeatable pool:
   `Your next task is to slay <count> <family>.` Before an assignment whose
-  roster notes poison, Prayer drain, dragon fire, desert preparation, or
-  Wilderness exposure, append the mandated risk warning before task state is
-  written. The shortcut does not suppress a required warning.
+  roster notes poison, Worship drain, dragon fire, desert preparation, or
+  Wilderness exposure, render each mandated risk warning as a separate NPC
+  line before task state is written. The shortcut does not suppress a required
+  warning. The internal `PRAYER_DRAIN` key remains unchanged.
 - Each completed mandatory chain promotes the player at its own contact. The
   promotion unlocks that contact's nearby associate shop and its corresponding
   challenge-point balance. The associate, not the task giver, opens the shop.
@@ -1085,7 +1098,7 @@ Blue Moon work.`
 
 **Elite promotion / shop reveal**
 
-> Contact: `Hah. I knew you had it in you. You're Elite now; take the badge.`
+> Contact: `Hah. I knew you had it in you. You're Elite now. Take the badge.`
 > Contact: `Listen, though. You're off to play with the big boys now.`
 > Contact: `Not all adventurers survive the big leagues. I didn't. That's why
 > I'm here telling stories instead of making them.`

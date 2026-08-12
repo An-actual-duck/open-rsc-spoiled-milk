@@ -107,8 +107,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
-			String warning = warning(preview);
-			if (warning != null) dialogue.npc(player, npc, warning);
+			String[] warnings = hazardWarningLines(preview);
+			if (warnings.length > 0) dialogue.npc(player, npc, warnings);
 		}
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
 		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); dialogue.npc(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else dialogue.npc(player, npc, "Not yet. Your record is not ready for another task."); return; }
@@ -161,7 +161,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			dialogue.npc(player, npc, associateGreetingLines(index));
 			int choice = speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
-			if (choice == 0) { dialogue.npc(player, npc, associateSupplyLine(index)); return; }
+			if (choice == 0) { dialogue.npc(player, npc, associateSupplyLines(index)); return; }
 			if (choice == 1) purchaseSatchelUpgrade(player, npc, index);
 		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }
 	}
@@ -306,9 +306,39 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	/** Compatibility seam retained for callers that only need the opening line. */
 	public static String associateGreeting(int index) { return associateGreetingLines(index)[0]; }
-	public static String associateSupplyLine(int index) { String[] lines = {"Use Trade when you are ready. Spend carefully; your Fledgling points are hard won.", "Use Trade when you are ready. Salt water ruins gear, not good preparation.", "Use Trade when you are ready. Pack for the job, not the story afterward.", "Use Trade when you are ready. A Champion brings the right kit.", "Use Trade when you are ready. A Hero knows that preparation saves lives.", "Use Trade when you are ready. That is all."}; return lines[index]; }
+	public static String[] associateSupplyLines(int index) {
+		String[][] lines = {
+			{"Use Trade when you are ready.", "Spend carefully. Your Fledgling points are hard won."},
+			{"Use Trade when you are ready.", "Salt water ruins gear, not good preparation."},
+			{"Use Trade when you are ready.", "Pack for the job, not the story afterward."},
+			{"Use Trade when you are ready.", "A Champion brings the right kit."},
+			{"Use Trade when you are ready.", "A Hero knows that preparation saves lives."},
+			{"Use Trade when you are ready.", "That is all."}
+		};
+		return lines[index].clone();
+	}
+	/** Compatibility seam retained for callers that only need the opening supply line. */
+	public static String associateSupplyLine(int index) { return associateSupplyLines(index)[0]; }
 	public static boolean isAssociateShopOperation(String command) { return "Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command); }
-	private static String warning(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) { if (task.getHazards().isEmpty()) return null; StringBuilder text = new StringBuilder("Take care: "); for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard : task.getHazards()) { if (text.length() > 11) text.append("; "); if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.DESERT_HEAT) text.append("bring desert heat protection"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.WILDERNESS) text.append("this work is in the Wilderness"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.PRAYER_DRAIN) text.append("expect Prayer drain"); else if (hazard == com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard.POISON) text.append("bring an antidote for poison"); else text.append("prepare for dragon fire"); } return text.append('.').toString(); }
+	/** One short NPC sentence per hazard, preserving definition order. */
+	public static String[] hazardWarningLines(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) {
+		if (task == null || task.getHazards().isEmpty()) return new String[0];
+		String[] lines = new String[task.getHazards().size()];
+		for (int index = 0; index < lines.length; index++) lines[index] = hazardWarningLine(task.getHazards().get(index));
+		return lines;
+	}
+	/** Player-facing wording; enum names remain stable definition compatibility keys. */
+	public static String hazardWarningLine(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard) {
+		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
+		switch (hazard) {
+		case PRAYER_DRAIN: return "You should expect Worship drain.";
+		case DESERT_HEAT: return "You should prepare for the desert heat.";
+		case WILDERNESS: return "You should know this work is in the Wilderness.";
+		case POISON: return "You should bring an antidote for poison.";
+		case DRAGON_FIRE: return "You should prepare for dragon fire.";
+		default: throw new IllegalArgumentException("Unsupported Monster Slayer hazard");
+		}
+	}
 	private static String ambient(int index) { String[] lines = {"Fresh stamp, fresh start. I could take on a goblin with one hand!", "I keep my supplies packed and my journal dry. Sea air ruins both.", "The Blue Moon is quiet. The work outside it is not."}; return lines[index]; }
 	private static boolean hostGuildAllows(Player player, int index) { return MonsterSlayerGuildAccess.allows(player, index); }
 }
