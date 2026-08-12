@@ -55,6 +55,11 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"Better than a goblin can stab a spear.",
 		"Glad to have you."
 	};
+	private static final String[] BRAN_FIRST_TASK_WELCOME = {
+		"Hah! A new Veteran!",
+		"Veterans are the best of the best!",
+		"Let's see if you can prove it."
+	};
 	private static final String[] HOBART_MEMBERSHIP_PROOF = {
 		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
 		"Well this won't do. Hm...", "Right, I got it!", "I can think of no fouler beast to slay for your first task.",
@@ -104,6 +109,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index)); return; }
 			dialogue.player(player, npc, "Right here!");
 			if (shouldUseMaraFirstTaskWelcome(index, state)) dialogue.npc(player, npc, maraFirstTaskWelcome());
+			if (shouldUseBranFirstTaskWelcome(index, state)) dialogue.npc(player, npc, branFirstTaskWelcome());
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
@@ -266,6 +272,13 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	/** Defensive copy of Mara's first Port Sarim assignment welcome. */
 	public static String[] maraFirstTaskWelcome() { return MARA_FIRST_TASK_WELCOME.clone(); }
+	/** Authoritative Veteran cursor zero identifies Bran's one-time first-task welcome. */
+	public static boolean shouldUseBranFirstTaskWelcome(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 2 && state != null && state.getRank() == MonsterSlayerRank.VETERAN
+			&& state.getActiveTaskKey() == null && state.getMandatoryCursors().get(CONTACTS[2]).intValue() == 0;
+	}
+	/** Defensive copy of Bran's first Blue Moon assignment welcome. */
+	public static String[] branFirstTaskWelcome() { return BRAN_FIRST_TASK_WELCOME.clone(); }
 	/** Exact short lines for the pre-membership flow; callers receive a defensive copy. */
 	public static String[] hobartMembershipProofLines() { return HOBART_MEMBERSHIP_PROOF.clone(); }
 	/** Exact short lines spoken after a selected eligible drink is accepted. */
@@ -275,7 +288,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	/** Natural yes/no responses; menu text is repeated as player speech before continuing. */
 	public static String[] contactChoices(int index) { String[][] choices = {{"Yes please.", "Not now."}, {"Yes, I am.", "No, not today."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}, {"Yes please.", "Not now."}}; return choices[index].clone(); }
 	/** The rank proof required before normal assignment is attempted. */
-	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button.", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
+	public static String contactProof(int index) { String[] lines = {"Stamp?", "Let's see that Adept sticker.", "Button?", "Badge, if you please!", "Your medal.", "Crest."}; return lines[index]; }
 	/** Player acknowledgement after a proof request but before a proof-gated refusal. */
 	public static String missingProofResponse(int index) { String[] lines = {"Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one."}; return lines[index]; }
 	/** Ineligible contacts direct the player to the immediately preceding task giver. */

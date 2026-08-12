@@ -34,8 +34,8 @@ Source policy:
   contact/shop/task key remains `brimhaven`, including the established
   entitlement bit, solely for save compatibility; it must never be presented
   to players as the location name. Bran `848`, the associate `854`, and the
-  ambient Veteran `860` occupy fixed Blue Moon Inn tiles `(117,521)`,
-  `(118,521)`, and `(119,521)` respectively.
+  ambient Veteran `860` occupy fixed Blue Moon Inn tiles `(122,524)`,
+  `(120,524)`, and `(123,525)` respectively.
 - Private validation has passed for the implemented contacts, typed shops,
   point UI, 30-to-40 inventory expansion, and ordered satchel purchases.
   Release integration remains a manager decision; no release is authorized by
@@ -795,6 +795,22 @@ against authored scenery footprints and boundary anchors across the checked-in
 map profiles. The bartender retains its existing route; private validation must
 confirm the three members remain visually clear of its active movement path.
 
+#### Veteran Blue Moon Correction
+
+The Veteran trio is centered on the Blue Moon Inn's clear floor around
+`(122,524)`. Bran `848` roams `(121..123,524)`, the Veteran associate `854`
+roams `(120,524..525)`, and ambient Veteran `860` roams `(122..123,525)`.
+Their starts are unique and their full bounds avoid checked-in scenery and
+boundary footprints, as well as the existing bartender's start tile.
+
+Both effective definition catalogs use proven steel animation identities.
+Bran uses head `7`, steel plate body `29`, steel plate legs `38`, steel square
+shield `99`, and steel sword `49`. The female associate uses head `3`, female
+steel plate body `56`, ordinary legs `2`, and steel battleaxe `110`, with no
+shield. The ambient Veteran uses head `4`, steel chainmail `22`, ordinary legs
+`3`, and steel mace `117`, with no shield. These distinct silhouettes preserve
+the role hierarchy while keeping all three within the steel tier.
+
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.
@@ -1088,22 +1104,37 @@ promotion, revealing that he has seen what the next step costs.
 
 > Contact: `Back for another hard job? The Blue Moon has seen worse.`
 > Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Button.`
-> Player: `Here.`
-> Contact: `Your next task is to slay [count] [family]. Don't make me regret
-> picking you.`
+> Contact (if yes): `Button?`
+> Player: `Right here!`
+
+On the first Veteran mandatory assignment only, authoritative Blue Moon cursor
+zero and the absence of an active task add:
+
+> Bran: `Hah! A new Veteran!`
+> Bran: `Veterans are the best of the best!`
+> Bran: `Let's see if you can prove it.`
+
+The normal `Your next task is to slay [count] [family].` line then follows.
+An active assignment, every later mandatory cursor, and repeatable state
+suppress this welcome. The `Task` shortcut remains concise and skips it.
 
 `Task` shortcut begins at the assignment. Below rank: `No Veteran button, no
 Blue Moon work.`
 
 **Elite promotion / shop reveal**
 
-> Contact: `Hah. I knew you had it in you. You're Elite now. Take the badge.`
-> Contact: `Listen, though. You're off to play with the big boys now.`
-> Contact: `Not all adventurers survive the big leagues. I didn't. That's why
-> I'm here telling stories instead of making them.`
-> Contact: `My associate will trade Veteran Slayer Points with an Elite. Spend
-> them on something that keeps you alive.`
+> Bran: `Hah! You did it! Every last task!`
+> Bran: `You've earned Elite rank.`
+> Bran: `Take this badge.`
+> Bran: `But listen.`
+> Bran: `The fun is over now.`
+> Bran: `Elite work begins inside the true guilds.`
+> Bran: `Not everyone comes back from that work.`
+> Bran: `My associate will trade Veteran Slayer Points with an Elite.`
+
+This remains the persisted one-time promotion interception. Bran's boisterous
+front briefly drops for the warning; the interaction ends without assigning a
+new task, and later interactions return to the normal route.
 
 #### 4. Champions Guild Contact — Elite Badge To Champion Medal
 

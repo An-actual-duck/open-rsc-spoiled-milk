@@ -66,12 +66,13 @@ public final class MonsterSlayerContactsRouteTest {
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
 		fledglingAssociateSatchelDialogueAndPurchase(server);
-		veteranHeadquartersUsesBlueMoonInnPlacement();
+		veteranHeadquartersUsesBlueMoonInnPlacement(server);
 		fledglingPresentationAndRoamingContractIsValid(server);
 		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
 		contactProofDialogueIsClearAndRankGated(server);
 		maraAssignmentDialogueUsesAuthoritativeProgression(server);
+		branDialogueUsesAuthoritativeVeteranProgression(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -91,17 +92,22 @@ public final class MonsterSlayerContactsRouteTest {
 	}
 
 	/** Third-tier save keys remain legacy-compatible, but the live headquarters is Varrock's Blue Moon Inn. */
-	private static void veteranHeadquartersUsesBlueMoonInnPlacement() throws Exception {
+	private static void veteranHeadquartersUsesBlueMoonInnPlacement(Server server) throws Exception {
 		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
-		int[][] expected = {{848, 118, 517}, {854, 120, 517}, {860, 122, 517}};
+		int[][] expected = {{848, 122, 524}, {854, 120, 524}, {860, 123, 525}};
+		java.util.Set<String> starts = new java.util.HashSet<String>();
 		for (int[] fixture : expected) {
 			JSONObject entry = location(locations.getJSONArray("npclocs"), fixture[0]);
 			JSONObject start = entry.getJSONObject("start");
 			assertEquals(fixture[1], start.getInt("X"), "Blue Moon X " + fixture[0]);
 			assertEquals(fixture[2], start.getInt("Y"), "Blue Moon Y " + fixture[0]);
+			assertTrue(starts.add(fixture[1] + "," + fixture[2]), "unique Blue Moon start " + fixture[0]);
 			assertTrue(entry.getJSONObject("min").getInt("X") < entry.getJSONObject("max").getInt("X")
 				|| entry.getJSONObject("min").getInt("Y") < entry.getJSONObject("max").getInt("Y"), "Blue Moon NPC roams " + fixture[0]);
+			assertTrue(entry.getJSONObject("min").getInt("X") >= 120 && entry.getJSONObject("max").getInt("X") <= 123
+				&& entry.getJSONObject("min").getInt("Y") >= 524 && entry.getJSONObject("max").getInt("Y") <= 525,
+				"Blue Moon roam remains in clear central floor " + fixture[0]);
 		}
 		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
@@ -109,6 +115,34 @@ public final class MonsterSlayerContactsRouteTest {
 			"Blue Moon NPC description " + id);
 		assertEquals("Veteran Slayer Associate", location(definitions, 854).getString("name"),
 			"Veteran associate is identifiable at Blue Moon");
+		int[][] sprites = {
+			{848, 7, 29, 38, 99, 49}, // steel plate, legs, square shield, and sword
+			{854, 3, 56, 2, -1, 110}, // female steel plate and battleaxe, no plate legs/shield
+			{860, 4, 22, 3, -1, 117} // steel chainmail and mace, no plate legs/shield
+		};
+		java.util.Set<String> appearances = new java.util.HashSet<String>();
+		for (int[] fixture : sprites) {
+			JSONObject definition = location(definitions, fixture[0]);
+			for (int layer = 1; layer <= 5; layer++) assertEquals(fixture[layer], definition.getInt("sprites" + layer),
+				"Veteran steel layer " + fixture[0] + "/" + layer);
+			assertTrue(appearances.add(definition.getInt("sprites1") + ":" + definition.getInt("sprites2") + ":"
+				+ definition.getInt("sprites3") + ":" + definition.getInt("sprites4") + ":" + definition.getInt("sprites5")),
+				"distinct Veteran appearance " + fixture[0]);
+			assertEquals(0, definition.getInt("attackable"), "Veteran NPC remains non-attackable " + fixture[0]);
+		}
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("new int[]{7, 29, 38, 99, 49, -1, -1, -1"), "client Bran uses full steel composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 56, 2, -1, 110, -1, -1, -1"), "client Veteran associate uses lighter steel composition");
+		assertTrue(clientDefinitions.contains("new int[]{4, 22, 3, -1, 117, -1, -1, -1"), "client ambient Veteran uses steel chain and mace");
+		for (int id : new int[] {848, 854, 860}) {
+			JSONObject definition = location(definitions, id);
+			assertTrue(clientDefinitions.contains("\"" + definition.getString("name") + "\", \"" + definition.getString("description") + "\""),
+				"client/server Veteran identity parity " + id);
+		}
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"platemailtop\", \"equipment\", 15658734"), "steel plate sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 15658734"), "female steel plate sprite identity is proven");
+		assertTrue(clientDefinitions.contains("new AnimationDef(\"chainmail\", \"equipment\", 15658734"), "steel chainmail sprite identity is proven");
+		assertVeteranRangeDoesNotIntersectWorldGeometry(server, locations, "conf/server/defs/locs");
 	}
 
 	private static void menuResponsesRemainVisiblePlayerSpeech() {
@@ -207,6 +241,56 @@ public final class MonsterSlayerContactsRouteTest {
 					assertFledglingRangeDoesNotIntersect(locations, entry.getJSONObject("pos").getInt("X"), entry.getJSONObject("pos").getInt("Y"), entry.getInt("id"), entry.getInt("direction"), null, "boundary " + file);
 				}
 			}
+		}
+	}
+
+	private static void assertVeteranRangeDoesNotIntersectWorldGeometry(Server server, JSONObject locations, String directory) throws Exception {
+		for (String pattern : new String[] {"*SceneryLocs*.json", "*BoundaryLocs*.json"}) {
+			try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), pattern)) {
+				for (java.nio.file.Path file : files) {
+					JSONObject objects = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+					String collection = pattern.startsWith("*Scenery") ? "sceneries" : "boundaries";
+					for (Object value : objects.getJSONArray(collection)) {
+						JSONObject entry = (JSONObject) value;
+						int width = 1, height = 1;
+						if ("sceneries".equals(collection)) {
+							com.openrsc.server.external.GameObjectDef object = server.getEntityHandler().getGameObjectDef(entry.getInt("id"));
+							if (object == null) throw new AssertionError("Unknown scenery definition " + entry.getInt("id"));
+							int direction = entry.getInt("direction");
+							width = direction == 0 || direction == 4 ? object.getWidth() : object.getHeight();
+							height = direction == 0 || direction == 4 ? object.getHeight() : object.getWidth();
+						}
+						assertRangesDoNotIntersect(locations, new int[] {848, 854, 860},
+							entry.getJSONObject("pos").getInt("X"), entry.getJSONObject("pos").getInt("Y"),
+							width, height, "Veteran roam intersects " + file + " id=" + entry.getInt("id"));
+					}
+				}
+			}
+		}
+		java.util.Set<String> veteranStarts = new java.util.HashSet<String>();
+		for (int id : new int[] {848, 854, 860}) {
+			JSONObject start = location(locations.getJSONArray("npclocs"), id).getJSONObject("start");
+			veteranStarts.add(start.getInt("X") + "," + start.getInt("Y"));
+		}
+		try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), "NpcLocs*.json")) {
+			for (java.nio.file.Path file : files) {
+				JSONObject npcs = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+				for (Object value : npcs.getJSONArray("npclocs")) {
+					JSONObject entry = (JSONObject) value, start = entry.getJSONObject("start");
+					assertFalse(veteranStarts.contains(start.getInt("X") + "," + start.getInt("Y")),
+						"Veteran start does not overlap existing NPC " + entry.getInt("id") + " in " + file);
+				}
+			}
+		}
+	}
+
+	private static void assertRangesDoNotIntersect(JSONObject locations, int[] npcIds,
+			int x, int y, int width, int height, String label) {
+		for (int npcId : npcIds) {
+			JSONObject range = location(locations.getJSONArray("npclocs"), npcId);
+			JSONObject min = range.getJSONObject("min"), max = range.getJSONObject("max");
+			assertTrue(max.getInt("X") < x || min.getInt("X") >= x + width
+				|| max.getInt("Y") < y || min.getInt("Y") >= y + height, label + " npc=" + npcId);
 		}
 	}
 
@@ -489,6 +573,105 @@ public final class MonsterSlayerContactsRouteTest {
 				assertFalse(line.contains(";"), "associate supply dialogue has no joined thoughts " + index);
 			}
 		}
+	}
+
+	private static void branDialogueUsesAuthoritativeVeteranProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		assertEquals("Button?", MonsterSlayerContacts.contactProof(2), "Bran restores natural proof punctuation");
+		assertTrue(MonsterSlayerContacts.contactProof(2).endsWith("?"), "question marks remain valid dialogue punctuation");
+		String[] welcome = MonsterSlayerContacts.branFirstTaskWelcome();
+		assertEquals(java.util.Arrays.asList(
+			"Hah! A new Veteran!",
+			"Veterans are the best of the best!",
+			"Let's see if you can prove it."), java.util.Arrays.asList(welcome),
+			"Bran first-task welcome is exact and boisterous");
+		for (String line : welcome) {
+			assertFalse(line.contains(":"), "Bran welcome avoids list-like colon formatting");
+			assertFalse(line.contains(";"), "Bran welcome avoids joined semicolon formatting");
+		}
+		assertTrue(welcome[0].contains("!"), "natural exclamation punctuation remains valid");
+
+		Map<String, Integer> firstCursors = veteranCursors(data, 0);
+		MonsterSlayerState.Snapshot firstState = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN,
+			MonsterSlayerBalances.zero(), firstCursors, null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseBranFirstTaskWelcome(2, firstState),
+			"authoritative Veteran cursor zero enables Bran welcome");
+		Player first = player(server, "slayerbranfirst", 288, 600);
+		MonsterSlayerState.write(first.getCache(), data, firstState);
+		RecordingDialogue firstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(firstDialogue).onTalkNpc(first, new Npc(server.getWorld(), 848, 288, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:" + MonsterSlayerContacts.contactGreeting(2),
+			"P:Yes please.",
+			"N:Button?",
+			"P:Right here!",
+			"N:Hah! A new Veteran!",
+			"N:Veterans are the best of the best!",
+			"N:Let's see if you can prove it."), firstDialogue.events.subList(0, 7),
+			"Bran welcome follows proof and precedes first assignment");
+		assertEquals("N:Your next task is to slay 45 Jogres.", firstDialogue.events.get(7),
+			"Bran first assignment follows welcome");
+		assertEquals("brimhaven.jogres", MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+			"Bran welcome preserves authoritative first assignment");
+
+		RecordingDialogue activeDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(activeDialogue).onTalkNpc(first, new Npc(server.getWorld(), 848, 289, 600));
+		assertFalse(containsAnyNpcLine(activeDialogue.events, welcome), "active first task suppresses Bran welcome repeat");
+
+		Player shortcut = player(server, "slayerbranshortcut", 290, 600);
+		MonsterSlayerState.write(shortcut.getCache(), data, firstState);
+		RecordingDialogue shortcutDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(shortcutDialogue).onOpNpc(shortcut, new Npc(server.getWorld(), 848, 290, 600), "Task");
+		assertFalse(containsAnyNpcLine(shortcutDialogue.events, welcome), "Bran Task shortcut skips first-task social welcome");
+		assertTrue(MonsterSlayerState.read(shortcut.getCache(), data).getActiveTaskKey() != null,
+			"Bran shortcut retains authoritative assignment");
+
+		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN,
+			MonsterSlayerBalances.zero(), veteranCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertFalse(MonsterSlayerContacts.shouldUseBranFirstTaskWelcome(2, laterState),
+			"later Veteran cursor suppresses Bran welcome");
+
+		Map<String, Integer> promotedCursors = veteranCursors(data,
+			data.getContact("brimhaven").getMandatoryTasks().size());
+		Player promoted = player(server, "slayerbranpromotion", 291, 600);
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.ELITE, MonsterSlayerBalances.zero(), promotedCursors, null, 0,
+			6L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(promoted, new Npc(server.getWorld(), 848, 291, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Hah! You did it! Every last task!",
+			"N:You've earned Elite rank.",
+			"N:Take this badge.",
+			"N:But listen.",
+			"N:The fun is over now.",
+			"N:Elite work begins inside the true guilds.",
+			"N:Not everyone comes back from that work.",
+			"N:My associate will trade Veteran Slayer Points with an Elite."), promotion.events,
+			"Bran promotion drops the bluster and warns about inner-guild work");
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data).isPromotionAcknowledged("brimhaven", data),
+			"Bran promotion is acknowledged after exact dialogue");
+		assertFalse(promotion.events.contains("N:" + MonsterSlayerContacts.contactGreeting(2)),
+			"pending Bran promotion intercepts normal greeting");
+		MonsterSlayerState.Snapshot acknowledged = MonsterSlayerState.read(promoted.getCache(), data);
+		assertFalse(MonsterSlayerContacts.shouldUseBranFirstTaskWelcome(2, acknowledged),
+			"completed Veteran chain cannot repeat first-task welcome");
+		RecordingDialogue afterPromotion = new RecordingDialogue(1);
+		new MonsterSlayerContacts(afterPromotion).onTalkNpc(promoted, new Npc(server.getWorld(), 848, 292, 600));
+		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(2), "P:Not now."),
+			afterPromotion.events, "acknowledged Bran promotion does not repeat and normal route resumes");
+	}
+
+	private static Map<String, Integer> veteranCursors(MonsterSlayerData data, int veteranCursor) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+			if ("falador".equals(contact.getKey()) || "port_sarim".equals(contact.getKey())) cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else if ("brimhaven".equals(contact.getKey())) cursors.put(contact.getKey(), veteranCursor);
+			else cursors.put(contact.getKey(), 0);
+		}
+		return cursors;
 	}
 
 	private static boolean containsAnyNpcLine(java.util.List<String> events, String[] lines) {
