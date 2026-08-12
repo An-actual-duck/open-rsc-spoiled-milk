@@ -69,6 +69,7 @@ public final class MonsterSlayerContactsRouteTest {
 		fledglingPresentationAndRoamingContractIsValid(server);
 		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
+		contactProofDialogueIsClearAndRankGated(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
@@ -238,6 +239,21 @@ public final class MonsterSlayerContactsRouteTest {
 		developer.setGroupID(Group.DEV);
 		MonsterSlayerState.Snapshot enrolled = MonsterSlayerState.completeIntroduction(MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data), data);
 		MonsterSlayerState.write(developer.getCache(), data, enrolled);
+		Map<com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge, Long> startingBalances = MonsterSlayerState.read(developer.getCache(), data).getBalances().asMap();
+		assertTrue(tasks.assignMandatory(developer, "falador").isAccepted(), "preparation fixture has an incompatible active task");
+		Development.prepareMonsterSlayerRankTasksForDevelopment(developer);
+		MonsterSlayerState.Snapshot prepared = MonsterSlayerState.read(developer.getCache(), data);
+		assertEquals(MonsterSlayerRank.FLEDGLING, prepared.getRank(), "prepare command never promotes Fledgling");
+		assertEquals(data.getContact("falador").getMandatoryTasks().size() - 1, prepared.getMandatoryCursors().get("falador").intValue(), "prepare command leaves only final Fledgling task");
+		assertTrue(prepared.getActiveTaskKey() == null, "prepare command clears incompatible active task");
+		assertEquals(startingBalances, prepared.getBalances().asMap(), "prepare command grants no points");
+		assertTrue(tasks.assignMandatory(developer, "falador").isAccepted(), "prepared Fledgling contact assigns final mandatory task normally");
+		MonsterSlayerState.Snapshot finalAssigned = MonsterSlayerState.read(developer.getCache(), data);
+		assertEquals(data.getContact("falador").getMandatoryTasks().get(data.getContact("falador").getMandatoryTasks().size() - 1).getKey(), finalAssigned.getActiveTaskKey(), "prepared contact chooses exact final task");
+		MonsterSlayerState.TaskResult finalCompletion = tasks.completeActiveTaskForDevelopment(developer);
+		assertEquals(MonsterSlayerState.TaskResult.Reason.COMPLETED, finalCompletion.getReason(), "normal final-task completion remains available after preparation");
+		assertEquals(MonsterSlayerRank.INITIATE, MonsterSlayerState.read(developer.getCache(), data).getRank(), "only final normal completion promotes to Adept");
+		MonsterSlayerState.write(developer.getCache(), data, enrolled);
 		assertTrue(tasks.assignMandatory(developer, "falador").isAccepted(), "developer fixture task assigns");
 		Development.completeMonsterSlayerTaskForDevelopment(developer);
 		MonsterSlayerState.Snapshot completed = MonsterSlayerState.read(developer.getCache(), data);
@@ -277,7 +293,33 @@ public final class MonsterSlayerContactsRouteTest {
 		Map<String, Object> ordinaryBefore = new LinkedHashMap<String, Object>(ordinary.getCache().getCacheMap());
 		Development.advanceMonsterSlayerRankForDevelopment(ordinary);
 		Development.setMonsterSlayerPointsForDevelopment(ordinary, "setslayerpoints", new String[] {"fledgling", "999"});
+		Development.prepareMonsterSlayerRankTasksForDevelopment(ordinary);
 		assertEquals(ordinaryBefore, ordinary.getCache().getCacheMap(), "non-developer economy commands cannot mutate Slayer state");
+	}
+
+	private static void contactProofDialogueIsClearAndRankGated(Server server) {
+		assertEquals("Are you here to slay monsters?", MonsterSlayerContacts.contactGreeting(1), "Mara asks why the player came");
+		assertEquals("Yes, I am.", MonsterSlayerContacts.contactChoices(1)[0], "Mara yes response is natural player speech");
+		assertEquals("No, not today.", MonsterSlayerContacts.contactChoices(1)[1], "Mara no response ends naturally");
+		assertEquals("Let's see that Adept sticker.", MonsterSlayerContacts.contactProof(1), "Mara requests the Adept proof");
+		assertEquals("You need an Adept sticker first. Hobart in Falador can help.", MonsterSlayerContacts.contactRefusal(1), "Mara directs ineligible players to Hobart");
+		assertTrue(MonsterSlayerContacts.contactRefusal(2).contains("Mara in Port Sarim"), "later contacts direct players to the previous giver");
+		assertEquals("That was your final Fledgling task.", MonsterSlayerDialoguePlan.promotion(0).get(0).getText(), "Fledgling final-task dialogue is unique");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You are now an Adept."), "promotion states Adept rank");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Here is your official Adept sticker."), "promotion gives official sticker");
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.completeIntroduction(MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data), data);
+		assertEquals(MonsterSlayerState.TaskResult.Reason.RANK, MonsterSlayerState.assignMandatory(fledgling, data, "port_sarim").getReason(), "Fledgling cannot receive Adept work");
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
+		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		MonsterSlayerState.Snapshot adept = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertEquals(MonsterSlayerState.TaskResult.Reason.ASSIGNED, MonsterSlayerState.assignMandatory(adept, data, "port_sarim").getReason(), "eligible Adept receives normal Port Sarim assignment");
+	}
+
+	private static boolean containsDialogue(java.util.List<MonsterSlayerDialoguePlan.Step> steps, String expected) {
+		for (MonsterSlayerDialoguePlan.Step step : steps) if (expected.equals(step.getText())) return true;
+		return false;
 	}
 
 	private static void associateOperationsAndWorldRestockAreBounded(Server server) {

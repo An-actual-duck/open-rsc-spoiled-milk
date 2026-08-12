@@ -304,6 +304,10 @@ public final class Development implements CommandTrigger {
 			if (args.length != 0) { player.message(badSyntaxPrefix + command.toUpperCase()); return; }
 			completeMonsterSlayerTaskForDevelopment(player);
 		}
+		else if (command.equalsIgnoreCase("completeranktasks")) {
+			if (args.length != 0) { player.message(badSyntaxPrefix + command.toUpperCase()); return; }
+			prepareMonsterSlayerRankTasksForDevelopment(player);
+		}
 		else if (command.equalsIgnoreCase("slayerrankup")) {
 			if (args.length != 0) { player.message(badSyntaxPrefix + command.toUpperCase()); return; }
 			advanceMonsterSlayerRankForDevelopment(player);
@@ -340,6 +344,21 @@ public final class Development implements CommandTrigger {
 			if (result.isAccepted()) player.message("Monster Slayer rank advanced to " + result.getSnapshot().getRank().getDisplayName().toLowerCase(java.util.Locale.ROOT) + ".");
 			else if ("maximum-rank".equals(result.getReason())) player.message("You are already at the maximum Monster Slayer rank.");
 			else player.message("Your Monster Slayer rank could not be advanced coherently.");
+		} catch (RuntimeException failure) { player.message("Your Monster Slayer record needs staff attention."); }
+	}
+
+	/** Prepares only the final mandatory task for the caller's current Slayer rank. */
+	public static void prepareMonsterSlayerRankTasksForDevelopment(Player player) {
+		if (!player.isDev()) { player.message("This command is available to developers only."); return; }
+		try {
+			MonsterSlayerState.DevelopmentPreparation result = player.getWorld().getMonsterSlayerTaskService()
+				.prepareCurrentMandatoryContactForDevelopment(player);
+			if (result.isAccepted()) {
+				player.message("Prepared " + result.getSnapshot().getRank().getDisplayName()
+					+ " contact " + result.getContactKey() + " for its final mandatory task.");
+				return;
+			}
+			player.message("Your current Monster Slayer rank has no mandatory contact to prepare.");
 		} catch (RuntimeException failure) { player.message("Your Monster Slayer record needs staff attention."); }
 	}
 

@@ -66,6 +66,17 @@ public final class MonsterSlayerTaskService {
 		}
 	}
 
+	/** Prepares the current rank's final mandatory task without granting rewards or rank. */
+	public MonsterSlayerState.DevelopmentPreparation prepareCurrentMandatoryContactForDevelopment(Player player) {
+		player = requirePlayer(player);
+		synchronized (player) {
+			MonsterSlayerState.DevelopmentPreparation result = MonsterSlayerState.prepareCurrentMandatoryContactForDevelopment(
+				MonsterSlayerState.read(player.getCache(), data), data);
+			if (result.isAccepted()) MonsterSlayerState.write(player.getCache(), data, result.getSnapshot());
+			return result;
+		}
+	}
+
 	/**
 	 * Optional progression must not be allowed to escape into the authoritative
 	 * NPC death lifecycle. The caller still owns diagnostics and continues with
