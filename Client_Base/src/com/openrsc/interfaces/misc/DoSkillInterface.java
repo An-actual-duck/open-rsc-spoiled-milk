@@ -703,7 +703,7 @@ public final class DoSkillInterface {
 	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
 	private boolean canAffordPointCost(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return (long) selected.getInputAmount() * productionQuantity <= productionResourceAmount; for (int i = 0; i < selected.getPointCostCount(); i++) { if (pointBalance(selected.getPointCostCode(i)) < (long) selected.getPointCostAmount(i) * productionQuantity) return false; } return true; }
 	private int pointBalance(int code) { for (int i = 0; i < productionPointCodes.length; i++) if (productionPointCodes[i] == code) return productionPointBalances[i]; return 0; }
-	private String pointLabel(int code) { String[] labels = {"Fledgling", "Initiate", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
+	private String pointLabel(int code) { String[] labels = {"Fledgling", "Adept", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
 	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
 	private int pointCoinTint(int code) { return code >= 0 && code < SLAYER_POINT_COIN_TINTS.length ? SLAYER_POINT_COIN_TINTS[code] : 0; }
 	private Sprite slayerPointCoin() {

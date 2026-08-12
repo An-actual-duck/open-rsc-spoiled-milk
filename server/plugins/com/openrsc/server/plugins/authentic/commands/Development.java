@@ -337,7 +337,7 @@ public final class Development implements CommandTrigger {
 		if (!player.isDev()) { player.message("This command is available to developers only."); return; }
 		try {
 			MonsterSlayerState.DevelopmentResult result = player.getWorld().getMonsterSlayerTaskService().advanceOneRankForDevelopment(player);
-			if (result.isAccepted()) player.message("Monster Slayer rank advanced to " + result.getSnapshot().getRank().name().toLowerCase(java.util.Locale.ROOT) + ".");
+			if (result.isAccepted()) player.message("Monster Slayer rank advanced to " + result.getSnapshot().getRank().getDisplayName().toLowerCase(java.util.Locale.ROOT) + ".");
 			else if ("maximum-rank".equals(result.getReason())) player.message("You are already at the maximum Monster Slayer rank.");
 			else player.message("Your Monster Slayer rank could not be advanced coherently.");
 		} catch (RuntimeException failure) { player.message("Your Monster Slayer record needs staff attention."); }
@@ -352,8 +352,8 @@ public final class Development implements CommandTrigger {
 			if (amount < 0L || amount > MonsterSlayerBalances.MAX_BALANCE) throw new IllegalArgumentException("amount");
 			MonsterSlayerState.DevelopmentResult result = player.getWorld().getMonsterSlayerTaskService().setBalanceForDevelopment(player, challenge, amount);
 			if (!result.isAccepted()) { player.message("Choose a valid Slayer point amount."); return; }
-			player.message("Set " + challenge.name().toLowerCase(java.util.Locale.ROOT) + " Slayer points to " + amount + ".");
-		} catch (RuntimeException failure) { player.message("Usage: ::setslayerpoints <fledgling|initiate|veteran|elite|champion|hero> <0-" + MonsterSlayerBalances.MAX_BALANCE + ">"); }
+			player.message("Set " + challenge.getDisplayName().toLowerCase(java.util.Locale.ROOT) + " Slayer points to " + amount + ".");
+		} catch (RuntimeException failure) { player.message("Usage: ::setslayerpoints <fledgling|adept|veteran|elite|champion|hero> <0-" + MonsterSlayerBalances.MAX_BALANCE + ">"); }
 	}
 
 	private static boolean isLayeredBuilderMutationCommand(String command) {
