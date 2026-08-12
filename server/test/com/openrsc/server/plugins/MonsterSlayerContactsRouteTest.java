@@ -310,6 +310,7 @@ public final class MonsterSlayerContactsRouteTest {
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Here is your official Adept sticker."), "promotion gives official sticker");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You can now access the Fledgling shop."), "promotion identifies the unlocked shop");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Just speak with my associate over there."), "promotion directs the player to the associate");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "He knows a thing or two about satchels as well."), "promotion explains associate satchel expertise");
 		assertFalse(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You've earned Fledgling Slayer Points."), "promotion does not repeat the removed point line");
 		assertFalse(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "My associate can trade them for supplies."), "promotion does not repeat the removed associate line");
 		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
@@ -334,8 +335,13 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(eligible.getCache(), data, adept);
 		RecordingDialogue eligibleDialogue = new RecordingDialogue(0);
 		new MonsterSlayerContacts(eligibleDialogue).onTalkNpc(eligible, new Npc(server.getWorld(), 847, 275, 600));
-		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker."), eligibleDialogue.events.subList(0, 3), "eligible Mara Talk-to verifies proof before assignment");
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Right here!"), eligibleDialogue.events.subList(0, 4), "eligible Mara Talk-to acknowledges proof before assignment");
 		assertTrue(MonsterSlayerState.read(eligible.getCache(), data).getActiveTaskKey() != null, "eligible Mara Talk-to proceeds into normal assignment");
+		Player eligibleHobart = player(server, "hobartproofyes", 275, 600);
+		MonsterSlayerState.write(eligibleHobart.getCache(), data, fledgling);
+		RecordingDialogue hobartDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(hobartDialogue).onTalkNpc(eligibleHobart, new Npc(server.getWorld(), 846, 276, 600));
+		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(0), "P:Yes please.", "N:" + MonsterSlayerContacts.contactProof(0), "P:Right here!"), hobartDialogue.events.subList(0, 4), "eligible Hobart Talk-to acknowledges proof before assignment");
 		Player pendingPromotion = player(server, "hobartpromotionfirst", 276, 600);
 		MonsterSlayerState.write(pendingPromotion.getCache(), data, MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 0L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
 		RecordingDialogue promotionDialogue = new RecordingDialogue();
