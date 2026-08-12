@@ -855,6 +855,12 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   assignment is sent through completion/promotion handling before another is
   chosen. This preserves the existing one-active-task invariant across all six
   contacts.
+- A pending promotion takes over the next interaction with its own task giver,
+  including a right-click `Task` interaction: render and acknowledge the
+  promotion first, then end that interaction. Do not show the ordinary
+  greeting/menu or assign a repeatable in the same interaction. The persisted
+  acknowledgement makes this a one-time takeover; later interactions return to
+  the ordinary route.
 - Assignment text uses the deterministic current entry from the mandatory
   chain, or a chosen family/count from that contact's repeatable pool:
   `Your next task is to slay <count> <family>.` Before an assignment whose
@@ -868,8 +874,8 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   bartender or guild NPC's normal service dialogue.
 - The final Fledgling task has a distinct completion lead-in. Hobart confirms
   that it was the player's final Fledgling work, awards the **Adept** rank, and
-  explicitly presents the official Adept sticker before the existing light
-  banter and Fledgling-point/shop explanation.
+  explicitly presents the official Adept sticker before directing the player
+  to the now-unlocked Fledgling shop and his associate.
 - An eligible associate opens with a short, rank-appropriate acknowledgement
   and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
   that location's existing typed-currency shop; it never spends points or
