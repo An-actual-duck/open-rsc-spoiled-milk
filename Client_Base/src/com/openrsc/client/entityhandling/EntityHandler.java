@@ -6640,8 +6640,8 @@ public class EntityHandler {
 			new int[]{7, 29, 38, 99, 49, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15658734, 15658734, 15523536);
 		addMonsterSlayerNpcDefinition(849, "Doran", "A Champions Guild Monster Slayer contact", "Task",
-			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
-			0, 10066329, 10066329, 15523536);
+			new int[]{15, 30, 39, 100, 50, -1, -1, -1, -1, -1, -1, -1},
+			8421504, 10072780, 10072780, 15523536);
 		addMonsterSlayerNpcDefinition(850, "Sella", "A veteran Monster Slayer contact", "Task",
 			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
 			0, 8421376, 8421376, 15523536);
@@ -6657,9 +6657,9 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(854, "Veteran Slayer Associate", "A Blue Moon Veteran Slayer supplier", "Trade",
 			new int[]{3, 56, 2, -1, 110, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 15658734, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(855, "Slayer Associate", "An Elite Slayer quartermaster", "Trade",
-			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
-			0, 10066329, 10066329, 15523536);
+		addMonsterSlayerNpcDefinition(855, "Elite Slayer Associate", "An Elite Slayer quartermaster", "Trade",
+			new int[]{3, 57, 2, -1, 111, -1, -1, -1, -1, -1, -1, -1},
+			16753488, 10072780, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(856, "Slayer Associate", "A Champion Slayer supplier", "Trade",
 			new int[]{19, 34, 43, -1, 49, -1, -1, -1, -1, -1, -1, -1},
 			0, 8421376, 8421376, 15523536);

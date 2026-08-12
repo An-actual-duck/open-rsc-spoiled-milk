@@ -67,12 +67,14 @@ public final class MonsterSlayerContactsRouteTest {
 		associateOperationsAndWorldRestockAreBounded(server);
 		fledglingAssociateSatchelDialogueAndPurchase(server);
 		veteranHeadquartersUsesBlueMoonInnPlacement(server);
+		championsSectUsesTwoDistinctMithrilNpcs();
 		fledglingPresentationAndRoamingContractIsValid(server);
 		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
 		contactProofDialogueIsClearAndRankGated(server);
 		maraAssignmentDialogueUsesAuthoritativeProgression(server);
 		branDialogueUsesAuthoritativeVeteranProgression(server);
+		doranDialogueUsesAuthoritativeEliteProgression(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
@@ -145,6 +147,62 @@ public final class MonsterSlayerContactsRouteTest {
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"legs1\", \"player\""), "ambient Veteran ordinary-leg sprite identity is proven");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"mace\", \"equipment\", 15658734"), "ambient Veteran steel mace sprite identity is proven");
 		assertVeteranRangeDoesNotIntersectWorldGeometry(server, locations, "conf/server/defs/locs");
+	}
+
+	private static void championsSectUsesTwoDistinctMithrilNpcs() throws Exception {
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		int[][] expected = {
+			{849, 15, 30, 39, 100, 50}, // full helm, mithril plate/legs, square shield, sword
+			{855, 3, 57, 2, -1, 111} // female head/plate, ordinary legs, no shield, battleaxe
+		};
+		java.util.Set<String> appearances = new java.util.HashSet<String>();
+		int championsDefinitions = 0;
+		for (Object value : definitions) {
+			JSONObject definition = (JSONObject) value;
+			if (definition.getInt("id") == 849 || definition.getInt("id") == 855) championsDefinitions++;
+		}
+		assertEquals(2, championsDefinitions, "Champions sect remains exactly Doran and one associate");
+		int championsSpawns = 0;
+		for (Object value : locations.getJSONArray("npclocs")) {
+			JSONObject spawn = (JSONObject) value;
+			int id = spawn.getInt("id");
+			if (id < 846 || id > 860) continue;
+			JSONObject start = spawn.getJSONObject("start");
+			if (start.getInt("X") >= 145 && start.getInt("X") <= 155
+					&& start.getInt("Y") >= 550 && start.getInt("Y") <= 560) championsSpawns++;
+		}
+		assertEquals(2, championsSpawns, "Champions Guild retains exactly two placed Slayer NPCs");
+		for (int[] fixture : expected) {
+			JSONObject definition = location(definitions, fixture[0]);
+			for (int layer = 1; layer <= 5; layer++) assertEquals(fixture[layer], definition.getInt("sprites" + layer),
+				"Champions mithril layer " + fixture[0] + "/" + layer);
+			assertTrue(appearances.add(definition.getInt("sprites1") + ":" + definition.getInt("sprites2") + ":"
+				+ definition.getInt("sprites3") + ":" + definition.getInt("sprites4") + ":" + definition.getInt("sprites5")),
+				"Champions NPCs have distinct silhouettes " + fixture[0]);
+			assertEquals(0, definition.getInt("attackable"), "Champions Slayer NPC remains non-attackable " + fixture[0]);
+			location(locations.getJSONArray("npclocs"), fixture[0]);
+		}
+		assertEquals("Elite Slayer Associate", location(definitions, 855).getString("name"),
+			"Champions associate has rank-specific identity");
+		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
+		assertTrue(clientDefinitions.contains("new int[]{15, 30, 39, 100, 50, -1, -1, -1"),
+			"client Doran uses full mithril composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 57, 2, -1, 111, -1, -1, -1"),
+			"client associate uses partial mithril composition");
+		assertTrue(clientDefinitions.contains("\"Elite Slayer Associate\", \"An Elite Slayer quartermaster\""),
+			"client/server associate identity is synchronized");
+		for (String identity : new String[] {
+			"new AnimationDef(\"fullhelm\", \"equipment\", 10072780",
+			"new AnimationDef(\"platemailtop\", \"equipment\", 10072780",
+			"new AnimationDef(\"platemaillegs\", \"equipment\", 10072780",
+			"new AnimationDef(\"squareshield\", \"equipment\", 10072780",
+			"new AnimationDef(\"sword\", \"equipment\", 10072780",
+			"new AnimationDef(\"fplatemailtop\", \"equipment\", 10072780",
+			"new AnimationDef(\"battleaxe\", \"equipment\", 10072780"
+		}) assertTrue(clientDefinitions.contains(identity), "proven mithril animation identity " + identity);
 	}
 
 	private static void menuResponsesRemainVisiblePlayerSpeech() {
@@ -754,6 +812,200 @@ public final class MonsterSlayerContactsRouteTest {
 		new MonsterSlayerContacts(afterPromotion).onTalkNpc(promoted, new Npc(server.getWorld(), 848, 292, 600));
 		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(2), "P:Not now."),
 			afterPromotion.events, "acknowledged Bran promotion does not repeat and normal route resumes");
+	}
+
+	private static void doranDialogueUsesAuthoritativeEliteProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		java.util.List<MonsterSlayerDialoguePlan.Step> welcome = MonsterSlayerDialoguePlan.doranFirstTaskWelcome();
+		assertDialoguePlan(welcome, new MonsterSlayerDialoguePlan.Speaker[] {
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.PLAYER,
+			MonsterSlayerDialoguePlan.Speaker.NPC,
+			MonsterSlayerDialoguePlan.Speaker.NPC
+		}, new String[] {
+			"Welcome to your first true stint in a guild sect.",
+			"You're part of the Champions now!",
+			"Than-",
+			"You're welcome! Best not dilly-dally.",
+			"Monsters won't be slaying themselves."
+		}, "Doran first-task welcome");
+
+		MonsterSlayerState.Snapshot firstState = MonsterSlayerState.create(2, MonsterSlayerRank.ELITE,
+			MonsterSlayerBalances.zero(), eliteCursors(data, 0), null, 0, 0L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertTrue(MonsterSlayerContacts.shouldUseDoranFirstTaskWelcome(3, firstState),
+			"authoritative Champions cursor zero enables Doran welcome");
+		assertFalse(MonsterSlayerContacts.shouldUseDoranAssignmentRemark(3, firstState),
+			"Doran first assignment does not add a random remark to its welcome");
+		Player first = player(server, "slayerdoranfirst", 300, 600);
+		first.setQuestPoints(32);
+		MonsterSlayerState.write(first.getCache(), data, firstState);
+		RecordingDialogue firstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(firstDialogue).onTalkNpc(first,
+			new Npc(server.getWorld(), 849, 300, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:" + MonsterSlayerContacts.contactGreeting(3),
+			"P:Yes please.",
+			"N:Badge, if you please!",
+			"P:Right here!",
+			"N:Welcome to your first true stint in a guild sect.",
+			"N:You're part of the Champions now!",
+			"P:Than-",
+			"N:You're welcome! Best not dilly-dally.",
+			"N:Monsters won't be slaying themselves.",
+			"N:Your next task is to slay 40 Ice giants."), firstDialogue.events,
+			"Doran typed welcome follows proof and preserves first assignment");
+		assertEquals("champions.ice_giants",
+			MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+			"Doran welcome preserves authoritative Champions progression");
+
+		Player shortcut = player(server, "slayerdoranshortcut", 301, 600);
+		shortcut.setQuestPoints(32);
+		MonsterSlayerState.write(shortcut.getCache(), data, firstState);
+		RecordingDialogue shortcutDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(shortcutDialogue).onOpNpc(shortcut,
+			new Npc(server.getWorld(), 849, 301, 600), "Task");
+		assertEquals(java.util.Arrays.asList("N:Your next task is to slay 40 Ice giants."),
+			shortcutDialogue.events, "Doran Task shortcut skips the social welcome and random flavour");
+
+		String[] generalRemarks = {
+			"Right! Keep steady, finish the job, and report back!",
+			"Good! Straight to it, then straight back!",
+			"Ha! A fine assignment for an Elite!",
+			"No need for speeches! You know the work!",
+			"Off you go! We'll celebrate when it's done!"
+		};
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task iceGiants =
+			data.getTask("champions.ice_giants");
+		for (int selection = 0; selection < generalRemarks.length; selection++) {
+			assertEquals(generalRemarks[selection],
+				MonsterSlayerContacts.doranAssignmentRemark(iceGiants, selection),
+				"bounded Doran personality remark " + selection);
+			assertTrue(generalRemarks[selection].length() <= 64,
+				"Doran personality remark remains concise " + selection);
+			String normalized = generalRemarks[selection].toLowerCase();
+			for (String unsupportedFact : new String[] {
+				"antidote", "desert heat", "wilderness", "worship drain", "dragon fire"
+			}) assertFalse(normalized.contains(unsupportedFact),
+				"hazard-free Doran flavour does not invent preparation advice " + unsupportedFact);
+		}
+		assertEquals(generalRemarks[0],
+			MonsterSlayerContacts.doranAssignmentRemark(iceGiants, generalRemarks.length),
+			"Doran personality selection wraps within its bounded set");
+		assertThrows(new Runnable() { public void run() {
+			MonsterSlayerContacts.doranAssignmentRemark(iceGiants, -1);
+		}}, "negative Doran dialogue selection is rejected");
+
+		String[] hazardTaskKeys = {
+			"falador.desert_wolves", "falador.black_unicorns", "port_sarim.shadow_spiders",
+			"brimhaven.poison_spiders", "port_sarim.baby_blue_dragons"
+		};
+		String[][] hazardRemarks = {
+			{"Desert heat! Prepare for it, then get moving!", "Hot work ahead! Pack for the desert heat!"},
+			{"Wilderness work! Stay sharp and get it done!", "Into the Wilderness! Keep your wits about you!"},
+			{"Worship drain! Plan your supplies around it!", "Expect Worship drain! Prepare, then press on!"},
+			{"Poison! Bring an antidote and you'll manage!", "Pack an antidote! No sense losing to poison!"},
+			{"Dragon fire! Take the right protection!", "Expect dragon fire! Prepare before you charge in!"}
+		};
+		for (int taskIndex = 0; taskIndex < hazardTaskKeys.length; taskIndex++) {
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task =
+				data.getTask(hazardTaskKeys[taskIndex]);
+			for (int selection = 0; selection < hazardRemarks[taskIndex].length; selection++)
+				assertEquals(hazardRemarks[taskIndex][selection],
+					MonsterSlayerContacts.doranAssignmentRemark(task, selection),
+					"Doran advice derives from authoritative hazard metadata "
+						+ hazardTaskKeys[taskIndex] + "/" + selection);
+		}
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task multipleHazards =
+			data.getTask("heroes.green_dragons");
+		assertEquals(hazardRemarks[1][0], MonsterSlayerContacts.doranAssignmentRemark(multipleHazards, 0),
+			"Doran uses the first declared hazard for the first deterministic selection");
+		assertEquals(hazardRemarks[4][0], MonsterSlayerContacts.doranAssignmentRemark(multipleHazards, 1),
+			"Doran uses the second declared hazard for the second deterministic selection");
+
+		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.ELITE,
+			MonsterSlayerBalances.zero(), eliteCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		Player later = player(server, "slayerdoranlater", 302, 600);
+		later.setQuestPoints(32);
+		MonsterSlayerState.write(later.getCache(), data, laterState);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later,
+			new Npc(server.getWorld(), 849, 302, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events,
+			new String[] {"Welcome to your first true stint in a guild sect."}),
+			"later Doran assignment does not repeat the first-task welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, generalRemarks),
+			"later Doran assignment uses one bounded personality remark");
+		assertEquals("N:Your next task is to slay 30 Lesser demons.",
+			laterDialogue.events.get(laterDialogue.events.size() - 1),
+			"Doran flavour preserves authoritative later assignment");
+
+		Map<String, Integer> promotedCursors = eliteCursors(data,
+			data.getContact("champions").getMandatoryTasks().size());
+		Player promoted = player(server, "slayerdoranpromotion", 303, 600);
+		promoted.setQuestPoints(32);
+		MonsterSlayerState.write(promoted.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.CHAMPION, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 3L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(promoted,
+			new Npc(server.getWorld(), 849, 303, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:'Grats on making it this far!",
+			"N:I knew you had it in you.",
+			"P:Than-",
+			"N:Best not keep the Heroes' sect waiting.",
+			"N:I present to you the latest and greatest.",
+			"N:Monster Slayer Guild Medal!",
+			"P:...",
+			"N:Well, aren't you going to say thank you?",
+			"P:Th-",
+			"N:Off you go!"), promotion.events,
+			"Doran promotion preserves exact interruption speakers and order");
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data)
+			.isPromotionAcknowledged("champions", data),
+			"Doran promotion is acknowledged after exact dialogue");
+		assertTrue(MonsterSlayerState.read(promoted.getCache(), data).getActiveTaskKey() == null,
+			"Doran promotion interaction assigns no task");
+
+		Player associatePlayer = player(server, "slayerdoranassociate", 304, 600);
+		associatePlayer.setQuestPoints(32);
+		MonsterSlayerState.write(associatePlayer.getCache(), data, MonsterSlayerState.create(2,
+			MonsterSlayerRank.CHAMPION, MonsterSlayerBalances.zero(), promotedCursors,
+			null, 0, 3L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data));
+		RecordingDialogue associate = new RecordingDialogue(2);
+		new MonsterSlayerContacts(associate).onTalkNpc(associatePlayer,
+			new Npc(server.getWorld(), 855, 304, 600));
+		assertEquals(java.util.Arrays.asList(
+			"N:Doran is a nice guy, but you can never get a word in edgewise.",
+			"N:A Champion is welcome at this quartermaster's counter.",
+			"P:No thanks."), associate.events,
+			"Elite associate prepends the approved Doran observation");
+	}
+
+	private static Map<String, Integer> eliteCursors(MonsterSlayerData data, int eliteCursor) {
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact
+				: data.getContactsInChallengeOrder()) {
+			if ("falador".equals(contact.getKey()) || "port_sarim".equals(contact.getKey())
+					|| "brimhaven".equals(contact.getKey()))
+				cursors.put(contact.getKey(), contact.getMandatoryTasks().size());
+			else if ("champions".equals(contact.getKey())) cursors.put(contact.getKey(), eliteCursor);
+			else cursors.put(contact.getKey(), 0);
+		}
+		return cursors;
+	}
+
+	private static void assertDialoguePlan(java.util.List<MonsterSlayerDialoguePlan.Step> actual,
+			MonsterSlayerDialoguePlan.Speaker[] speakers, String[] text, String context) {
+		assertEquals(speakers.length, actual.size(), context + " step count");
+		assertEquals(speakers.length, text.length, context + " fixture count");
+		for (int index = 0; index < speakers.length; index++) {
+			assertEquals(speakers[index], actual.get(index).getSpeaker(), context + " speaker " + index);
+			assertEquals(text[index], actual.get(index).getText(), context + " text " + index);
+		}
 	}
 
 	private static Map<String, Integer> veteranCursors(MonsterSlayerData data, int veteranCursor) {

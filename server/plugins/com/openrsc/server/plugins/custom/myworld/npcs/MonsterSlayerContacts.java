@@ -69,6 +69,13 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"A proper hunt! I almost envy you!",
 		"Go on! Give me something worth boasting about!"
 	};
+	private static final String[] DORAN_ASSIGNMENT_REMARKS = {
+		"Right! Keep steady, finish the job, and report back!",
+		"Good! Straight to it, then straight back!",
+		"Ha! A fine assignment for an Elite!",
+		"No need for speeches! You know the work!",
+		"Off you go! We'll celebrate when it's done!"
+	};
 	private static final String[] HOBART_MEMBERSHIP_PROOF = {
 		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
 		"Well this won't do. Hm...", "Right, I got it!", "I can think of no fouler beast to slay for your first task.",
@@ -119,6 +126,8 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			dialogue.player(player, npc, "Right here!");
 			if (shouldUseMaraFirstTaskWelcome(index, state)) dialogue.npc(player, npc, maraFirstTaskWelcome());
 			if (shouldUseBranFirstTaskWelcome(index, state)) dialogue.npc(player, npc, branFirstTaskWelcome());
+			if (shouldUseDoranFirstTaskWelcome(index, state)
+				&& !renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.doranFirstTaskWelcome())) return;
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
@@ -132,6 +141,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
 		MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
 		if (shouldUseBranAssignmentRemark(index, state)) dialogue.npc(player, npc, branAssignmentRemark(task));
+		if (shouldUseDoranAssignmentRemark(index, state)) dialogue.npc(player, npc, doranAssignmentRemark(task));
 		dialogue.npc(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
 	}
 	private void introduction(Player player, Npc npc, MonsterSlayerContactService service, MonsterSlayerState.Snapshot state, boolean shortcut) {
@@ -340,6 +350,59 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		default: throw new IllegalArgumentException("Unsupported Monster Slayer hazard");
 		}
 	}
+	/** Authoritative Elite cursor zero identifies Doran's one-time typed welcome. */
+	public static boolean shouldUseDoranFirstTaskWelcome(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 3 && state != null && state.getRank() == MonsterSlayerRank.ELITE
+			&& state.getActiveTaskKey() == null && state.getMandatoryCursors().get(CONTACTS[3]).intValue() == 0;
+	}
+	/** Later mandatory and repeatable Champions assignments receive Doran's bounded flavour. */
+	public static boolean shouldUseDoranAssignmentRemark(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 3 && state != null && !shouldUseDoranFirstTaskWelcome(contactIndex, state);
+	}
+	private static String doranAssignmentRemark(MonsterSlayerDefinitions.Task task) {
+		if (task == null) throw new IllegalArgumentException("Doran task is required");
+		if (task.getHazards().isEmpty()) {
+			return doranAssignmentRemark(task, ThreadLocalRandom.current().nextInt(DORAN_ASSIGNMENT_REMARKS.length));
+		}
+		int hazardIndex = ThreadLocalRandom.current().nextInt(task.getHazards().size());
+		String[] remarks = doranHazardRemarks(task.getHazards().get(hazardIndex));
+		return remarks[ThreadLocalRandom.current().nextInt(remarks.length)];
+	}
+	/** Deterministic seam proving that Doran's mechanical advice comes only from task hazards. */
+	public static String doranAssignmentRemark(MonsterSlayerDefinitions.Task task, int selection) {
+		if (task == null) throw new IllegalArgumentException("Doran task is required");
+		if (selection < 0) throw new IllegalArgumentException("Doran dialogue selection is out of range");
+		if (task.getHazards().isEmpty()) return DORAN_ASSIGNMENT_REMARKS[selection % DORAN_ASSIGNMENT_REMARKS.length];
+		int hazardIndex = selection % task.getHazards().size();
+		String[] remarks = doranHazardRemarks(task.getHazards().get(hazardIndex));
+		return remarks[(selection / task.getHazards().size()) % remarks.length];
+	}
+	private static String[] doranHazardRemarks(MonsterSlayerHazard hazard) {
+		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
+		switch (hazard) {
+		case DESERT_HEAT: return new String[] {
+			"Desert heat! Prepare for it, then get moving!",
+			"Hot work ahead! Pack for the desert heat!"
+		};
+		case WILDERNESS: return new String[] {
+			"Wilderness work! Stay sharp and get it done!",
+			"Into the Wilderness! Keep your wits about you!"
+		};
+		case PRAYER_DRAIN: return new String[] {
+			"Worship drain! Plan your supplies around it!",
+			"Expect Worship drain! Prepare, then press on!"
+		};
+		case POISON: return new String[] {
+			"Poison! Bring an antidote and you'll manage!",
+			"Pack an antidote! No sense losing to poison!"
+		};
+		case DRAGON_FIRE: return new String[] {
+			"Dragon fire! Take the right protection!",
+			"Expect dragon fire! Prepare before you charge in!"
+		};
+		default: throw new IllegalArgumentException("Unsupported Monster Slayer hazard");
+		}
+	}
 	/** Exact short lines for the pre-membership flow; callers receive a defensive copy. */
 	public static String[] hobartMembershipProofLines() { return HOBART_MEMBERSHIP_PROOF.clone(); }
 	/** Exact short lines spoken after a selected eligible drink is accepted. */
@@ -354,14 +417,20 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static String missingProofResponse(int index) { String[] lines = {"Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one.", "Oh, I don't have one."}; return lines[index]; }
 	/** Ineligible contacts direct the player to the immediately preceding task giver. */
 	public static String contactRefusal(int index) { String[] lines = {"No stamp, no task. Fetch a Rising Sun ale first.", "You need an Adept sticker first. Hobart in Falador can help.", "I need a Veteran button. Earn it from Mara in Port Sarim.", "I need an Elite badge. Earn it from Bran at the Blue Moon Inn.", "Champion's medal first. Doran at the Champions Guild can help.", "Hero's crest required. Sella at the Heroes Guild can help."}; return lines[index]; }
-	private boolean renderPromotion(Player player, Npc npc, int index) { try { for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(index)) if (!dialogue.render(player, npc, step)) return false; return true; } catch (RuntimeException failure) { return false; } }
+	private boolean renderPromotion(Player player, Npc npc, int index) {
+		return renderDialoguePlan(player, npc, MonsterSlayerDialoguePlan.promotion(index));
+	}
+	private boolean renderDialoguePlan(Player player, Npc npc, java.util.List<MonsterSlayerDialoguePlan.Step> plan) {
+		try { for (MonsterSlayerDialoguePlan.Step step : plan) if (!dialogue.render(player, npc, step)) return false; return true; }
+		catch (RuntimeException failure) { return false; }
+	}
 	/** Read-only dialogue seam: Talk-to must not enter the shop state machine. */
 	public static String[] associateGreetingLines(int index) {
 		String[][] lines = {
 			{"Congratulations on becoming an Adept.", "I can show you my wares now.", "Or perhaps you'd like an upgrade to your satchel?"},
 			{"A Veteran's button carries weight here. Your Adept supplies are available."},
 			{"An Elite hunter knows what to pack. Your Blue Moon supplies are available."},
-			{"A Champion is welcome at this quartermaster's counter."},
+			{"Doran is a nice guy, but you can never get a word in edgewise.", "A Champion is welcome at this quartermaster's counter."},
 			{"A Hero has earned access to Champion supplies."},
 			{"Legend is not a title we sell. Your Hero supplies are available."}
 		};

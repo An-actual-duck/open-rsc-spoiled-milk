@@ -1164,9 +1164,17 @@ new task, and later interactions return to the normal route.
 
 #### 4. Champions Guild Contact — Elite Badge To Champion Medal
 
-Tone: tough, boisterous, friendly, and jovial. Preserve Dragon Slayer and
-ordinary Champions Guild dialogue on the existing Guildmaster before
-presenting this optional guild route.
+Tone: tough, boisterous, friendly, and jovial. Doran talks quickly enough to
+interrupt even a grateful player, but remains reassuring rather than cruel.
+Preserve Dragon Slayer and ordinary Champions Guild dialogue on the existing
+Guildmaster before presenting this optional guild route.
+
+The Champions sect intentionally has only two Slayer NPCs. Doran wears a full
+mithril plate composition with mithril plate legs, weapon, and shield. The
+Elite Slayer Associate wears a visibly distinct partial mithril outfit with a
+weapon, ordinary legs, and no shield. This is the first of the three formal
+guild headquarters and follows the confirmed visual progression from Veteran
+steel into Elite mithril.
 
 **Below rank**
 
@@ -1178,20 +1186,59 @@ presenting this optional guild route.
 > Contact: `Ah! An Elite hunter. Here for a real challenge?`
 > Player: `Yes please.` / `Not now.`
 > Contact (if yes): `Badge, if you please!`
-> Player: `Here you go.`
-> Contact: `Your next task is to slay [count] [family]! Make the Guild
-> proud!`
+> Player: `Right here!`
+
+On the first authoritative Champions mandatory assignment, Doran adds this
+one-time typed exchange before assigning the task:
+
+> Doran: `Welcome to your first true stint in a guild sect.`
+> Doran: `You're part of the Champions now!`
+> Player: `Than-`
+> Doran: `You're welcome! Best not dilly-dally.`
+> Doran: `Monsters won't be slaying themselves.`
+
+Later mandatory and repeatable assignments select one short Doran-specific
+remark from this bounded, hazard-free set:
+
+- `Right! Keep steady, finish the job, and report back!`
+- `Good! Straight to it, then straight back!`
+- `Ha! A fine assignment for an Elite!`
+- `No need for speeches! You know the work!`
+- `Off you go! We'll celebrate when it's done!`
+
+When authoritative task metadata declares a hazard, the selected remark is
+instead drawn only from that hazard's bounded preparation lines. Advice may
+mention desert heat, Wilderness work, Worship drain, poison antidotes, or
+dragon-fire protection only when the corresponding typed hazard is present.
+The existing natural hazard warning remains before this flavor and the final
+authoritative `Your next task...` assignment line. This prevents personality
+text from presenting invented mechanical claims as fact.
 
 `Task` shortcut begins at the assignment. Below rank: `Bring me an Elite badge
 before you ask for Champion work!`
 
 **Champion promotion / shop reveal**
 
-> Contact: `Splendid work! You faced the test and did not blink.`
-> Contact: `You are a Champion now. Take this medal, and try not to polish
-> it on your sleeve.`
-> Contact: `The quartermaster nearby takes Elite Slayer Points. Tell them
-> I said a Champion has earned a look at the good stock.`
+> Doran: `'Grats on making it this far!`
+> Doran: `I knew you had it in you.`
+> Player: `Than-`
+> Doran: `Best not keep the Heroes' sect waiting.`
+> Doran: `I present to you the latest and greatest.`
+> Doran: `Monster Slayer Guild Medal!`
+> Player: `...`
+> Doran: `Well, aren't you going to say thank you?`
+> Player: `Th-`
+> Doran: `Off you go!`
+
+The pending promotion continues to intercept and replace the next ordinary
+interaction, acknowledges only after every typed step renders, assigns no new
+task during that interaction, and never repeats after acknowledgement.
+
+The Elite associate prepends this line to the usual unlocked conversation:
+
+> Associate: `Doran is a nice guy, but you can never get a word in edgewise.`
+
+Shop access, satchel upgrades, rank gates, and all costs remain unchanged.
 
 #### 5. Heroes Guild Contact — Champion Medal To Hero Crest
 
