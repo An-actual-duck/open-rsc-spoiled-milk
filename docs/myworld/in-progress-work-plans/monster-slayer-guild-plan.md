@@ -817,13 +817,15 @@ the role hierarchy while keeping all three within the steel tier.
 #### Champion Heroes Guild Interior Correction
 
 The Heroes Guild sect remains exactly two Slayer NPCs: Sella `850` and the
-Champion Slayer Associate `856`. Both have moved from the exterior entrance
-into the guild's upper interior room. Sella starts at legacy packed coordinate
-`(372,1381)` and roams only `(371..372,1380..1382)`. The associate starts at
-`(374,1381)` and roams only `(373..374,1380..1382)`. These non-overlapping
-pockets sit inside the room's authored walls and remain clear of the Guthix
-altar at the west side and the down ladder at `(375,1382)`. They also avoid
-Achetties and Helemos rather than competing with either NPC's existing route.
+Champion Slayer Associate `856`. Both use the occupied ground-floor interior,
+rather than the former legacy-packed upper/exterior projection around Y `1381`.
+Sella starts at `(374,443)` and roams only `(373..374,442..443)`. The associate
+starts at `(374,445)` and roams only `(373..374,444..445)`. These non-overlapping
+pockets are inside the established guild interior anchored by Achetties at
+`(372,443)` and behind the northern boundary at Y `441`. Their full rectangles
+remain clear of authored scenery and boundaries. Achetties already roams across
+the whole room, so the new pockets intentionally share the common interior but
+do not reuse his start tile.
 
 Both effective definition catalogs use proven adamant animation identities.
 Sella is visually dominant in full adamant equipment: full helm `16`, female
@@ -833,11 +835,12 @@ adamant battleaxe `112`, with no shield. The client and server both present the
 associate as `Champion Slayer Associate`.
 
 Automated coverage verifies exact client/server sprite parity, two-NPC sect
-staffing, separate starts and roaming pockets, no overlap with checked-in
-scenery, boundary, or NPC placements, walkable authoritative terrain, a clear
-path from beside the ladder, and the existing Heroes Quest access gate. A
-private visual pass should still confirm that the adamant silhouettes read
-clearly and both NPCs roam naturally without obstructing the ladder.
+staffing, separate starts and roaming pockets, containment within the established
+resident's interior bounds, no overlap with checked-in scenery or boundaries,
+walkable authoritative terrain, connected paths from Achetties' interior tile,
+and the existing Heroes Quest access gate. A private visual pass should still
+confirm that the adamant silhouettes read clearly and the shared room roaming
+with Achetties feels natural.
 
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
@@ -850,8 +853,12 @@ shop-associate beside each task giver. Their armor quality follows the same
 rising-rank visual progression as the task givers. Contact IDs `846..850` and
 `785`, associate IDs `852..857`, ambient IDs `858..860`, names, and start tiles
 are authoritative in the base and Monster Slayer definitions and location
-files. The Legends associate wears proven female rune plate with ordinary legs,
-no shield, and a rune battleaxe so the supplier remains distinct from Radimus.
+files. The Legends associate wears the proven female rune body and rune
+battleaxe used by Achetties, paired with the ordinary legs layer used by the
+other partial-armour associates. The semantic composition is head `3`, body
+`59`, legs `2`, no shield, and battleaxe `113`; the previous `4,59,3` anatomy
+ordering incorrectly placed body/head assets into the head/legs slots. This
+keeps visible legs and rune armor while remaining distinct from Radimus.
 Existing bartenders and guild officials retain their current roles; the new
 associates do not replace ordinary drinks, guild access, quests, or training
 dialogue.

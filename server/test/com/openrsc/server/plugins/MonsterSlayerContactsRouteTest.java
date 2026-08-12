@@ -225,8 +225,8 @@ public final class MonsterSlayerContactsRouteTest {
 			{856, 7, 31, 2, -1, 112} // head, adamant plate, ordinary legs, no shield, battleaxe
 		};
 		int[][] placement = {
-			{850, 372, 1381, 371, 1380, 372, 1382},
-			{856, 374, 1381, 373, 1380, 374, 1382}
+			{850, 374, 443, 373, 442, 374, 443},
+			{856, 374, 445, 373, 444, 374, 445}
 		};
 		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		java.util.Set<String> starts = new java.util.HashSet<String>();
@@ -250,9 +250,9 @@ public final class MonsterSlayerContactsRouteTest {
 			assertEquals(fixture[6], max.getInt("Y"), "Heroes roam max Y " + fixture[0]);
 			assertTrue(starts.add(start.getInt("X") + "," + start.getInt("Y")),
 				"Heroes Slayer starts remain unique " + fixture[0]);
-			assertTrue(min.getInt("X") >= 371 && max.getInt("X") <= 374
-				&& min.getInt("Y") >= 1380 && max.getInt("Y") <= 1382,
-				"Heroes roaming stays inside the clear upper room " + fixture[0]);
+			assertTrue(min.getInt("X") >= 373 && max.getInt("X") <= 374
+				&& min.getInt("Y") >= 442 && max.getInt("Y") <= 445,
+				"Heroes roaming stays inside the occupied ground-floor guild room " + fixture[0]);
 		}
 		assertTrue(rangesAreDisjoint(location(locations.getJSONArray("npclocs"), 850),
 			location(locations.getJSONArray("npclocs"), 856)),
@@ -266,10 +266,23 @@ public final class MonsterSlayerContactsRouteTest {
 			int id = spawn.getInt("id");
 			if (id < 846 || id > 860) continue;
 			JSONObject start = spawn.getJSONObject("start");
-			if (start.getInt("X") >= 369 && start.getInt("X") <= 376
-					&& start.getInt("Y") >= 1380 && start.getInt("Y") <= 1383) heroesSpawns++;
+			if (start.getInt("X") >= 368 && start.getInt("X") <= 375
+					&& start.getInt("Y") >= 441 && start.getInt("Y") <= 445) heroesSpawns++;
 		}
 		assertEquals(2, heroesSpawns, "Heroes Guild retains exactly two placed Slayer NPCs");
+		JSONObject establishedInterior = location(new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "NpcLocs.json")), StandardCharsets.UTF_8)).getJSONArray("npclocs"), 253);
+		assertEquals(372, establishedInterior.getJSONObject("start").getInt("X"),
+			"Achetties anchors the established Heroes Guild interior X");
+		assertEquals(443, establishedInterior.getJSONObject("start").getInt("Y"),
+			"Achetties anchors the established Heroes Guild interior Y");
+		for (int[] fixture : placement) {
+			assertTrue(fixture[3] >= establishedInterior.getJSONObject("min").getInt("X")
+				&& fixture[5] <= establishedInterior.getJSONObject("max").getInt("X")
+				&& fixture[4] >= establishedInterior.getJSONObject("min").getInt("Y")
+				&& fixture[6] <= establishedInterior.getJSONObject("max").getInt("Y"),
+				"Heroes Slayer roam is inside the established resident's guild-interior bounds " + fixture[0]);
+		}
 		assertHeroesRangeDoesNotIntersectWorldPlacements(server, locations, "conf/server/defs/locs");
 
 		server.getWorld().getRegionManager().load();
@@ -286,8 +299,11 @@ public final class MonsterSlayerContactsRouteTest {
 			}
 		}
 		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-			Point.location(374, 1382), Point.location(372, 1381), true),
-			"clear tile beside the guild ladder reaches Sella without crossing a wall");
+			Point.location(372, 443), Point.location(374, 443), true),
+			"established interior resident tile reaches Sella without crossing a wall");
+		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
+			Point.location(372, 443), Point.location(374, 445), true),
+			"established interior resident tile reaches the associate without crossing a wall");
 
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com",
 			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
@@ -303,6 +319,23 @@ public final class MonsterSlayerContactsRouteTest {
 			"client/server Heroes associate identity is synchronized");
 		assertEquals("Hero Slayer Associate", location(definitions, 857).getString("name"),
 			"server names the final supplier for the Hero point tier");
+		JSONObject heroAssociate = location(definitions, 857);
+		int[] heroLayers = {3, 59, 2, -1, 113};
+		for (int layer = 1; layer <= heroLayers.length; layer++) assertEquals(heroLayers[layer - 1],
+			heroAssociate.getInt("sprites" + layer), "Hero associate known-valid rune layer " + layer);
+		JSONArray baseDefinitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "NpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject achetties = location(baseDefinitions, 253);
+		assertEquals(achetties.getInt("sprites1"), heroAssociate.getInt("sprites1"),
+			"Hero associate reuses Achetties' proven female head slot");
+		assertEquals(achetties.getInt("sprites2"), heroAssociate.getInt("sprites2"),
+			"Hero associate reuses Achetties' visibly rendered female rune body");
+		assertEquals(2, heroAssociate.getInt("sprites3"),
+			"Hero associate uses the proven ordinary legs layer for a partial-armour supplier");
+		assertEquals(achetties.getInt("sprites5"), heroAssociate.getInt("sprites5"),
+			"Hero associate reuses Achetties' visibly rendered rune battleaxe");
+		assertTrue(clientDefinitions.contains("new int[]{3, 59, 2, -1, 113, -1, -1, -1"),
+			"client Hero associate uses valid female head, rune body, legs, and battleaxe slots");
 		assertTrue(clientDefinitions.contains("\"Hero Slayer Associate\", \"A rune-clad Hero Slayer supplier\""),
 			"client/server Hero associate identity is synchronized");
 		for (String identity : new String[] {
@@ -346,7 +379,8 @@ public final class MonsterSlayerContactsRouteTest {
 					JSONObject npcs = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
 					for (Object value : npcs.getJSONArray("npclocs")) {
 						JSONObject other = (JSONObject) value;
-						if (other.getInt("id") == 850 || other.getInt("id") == 856) continue;
+						if (other.getInt("id") == 850 || other.getInt("id") == 856
+								|| other.getInt("id") == 253) continue;
 						for (int hero : new int[] {850, 856}) assertTrue(rangesAreDisjoint(
 							location(locations.getJSONArray("npclocs"), hero), other),
 							"Heroes roam avoids existing NPC " + other.getInt("id") + " in " + file + " npc=" + hero);
@@ -1475,7 +1509,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"retired slot is retained only to preserve appended definition IDs");
 		assertEquals("", reserved.getString("command"), "retired slot exposes no interaction");
 		JSONObject associate = location(definitions, 857);
-		int[] runeLayers = {4, 59, 3, -1, 113};
+		int[] runeLayers = {3, 59, 2, -1, 113};
 		for (int layer = 1; layer <= runeLayers.length; layer++)
 			assertEquals(runeLayers[layer - 1], associate.getInt("sprites" + layer),
 				"Hero associate rune layer " + layer);
@@ -1487,8 +1521,12 @@ public final class MonsterSlayerContactsRouteTest {
 			"client exposes Task on authentic guild Radimus");
 		assertFalse(clientDefinitions.contains("addMonsterSlayerNpcDefinition(851, \"Orin\""),
 			"client no longer authors Orin");
-		assertTrue(clientDefinitions.contains("new int[]{4, 59, 3, -1, 113, -1, -1, -1"),
+		assertTrue(clientDefinitions.contains("new int[]{3, 59, 2, -1, 113, -1, -1, -1"),
 			"client Hero associate uses partial rune composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 59, 41, 102, 113"),
+			"existing Achetties definition proves the selected female rune body and battleaxe render");
+		assertTrue(clientDefinitions.contains("new int[]{3, 56, 2, -1, 110"),
+			"existing Veteran associate proves ordinary legs render under female plate without a shield");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 65535"),
 			"female rune plate sprite identity is proven");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"battleaxe\", \"equipment\", 65535"),
