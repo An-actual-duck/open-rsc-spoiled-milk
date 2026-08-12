@@ -66,6 +66,8 @@ public final class MonsterSlayerContactsRouteTest {
 		shopPresentationUsesTypedCostsAndTruthfulFailures(server);
 		associateOperationsAndWorldRestockAreBounded(server);
 		veteranHeadquartersUsesBlueMoonInnPlacement();
+		presentationAndRoamingContractIsValid();
+		menuResponsesRemainVisiblePlayerSpeech();
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
@@ -74,14 +76,14 @@ public final class MonsterSlayerContactsRouteTest {
 	private static void veteranHeadquartersUsesBlueMoonInnPlacement() throws Exception {
 		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
-		int[][] expected = {{848, 117, 521}, {854, 118, 521}, {860, 119, 521}};
+		int[][] expected = {{848, 118, 517}, {854, 120, 517}, {860, 122, 517}};
 		for (int[] fixture : expected) {
 			JSONObject entry = location(locations.getJSONArray("npclocs"), fixture[0]);
 			JSONObject start = entry.getJSONObject("start");
 			assertEquals(fixture[1], start.getInt("X"), "Blue Moon X " + fixture[0]);
 			assertEquals(fixture[2], start.getInt("Y"), "Blue Moon Y " + fixture[0]);
-			assertEquals(start.toString(), entry.getJSONObject("min").toString(), "fixed Blue Moon minimum " + fixture[0]);
-			assertEquals(start.toString(), entry.getJSONObject("max").toString(), "fixed Blue Moon maximum " + fixture[0]);
+			assertTrue(entry.getJSONObject("min").getInt("X") < entry.getJSONObject("max").getInt("X")
+				|| entry.getJSONObject("min").getInt("Y") < entry.getJSONObject("max").getInt("Y"), "Blue Moon NPC roams " + fixture[0]);
 		}
 		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
@@ -89,6 +91,60 @@ public final class MonsterSlayerContactsRouteTest {
 			"Blue Moon NPC description " + id);
 		assertEquals("Veteran Slayer Associate", location(definitions, 854).getString("name"),
 			"Veteran associate is identifiable at Blue Moon");
+	}
+
+	private static void menuResponsesRemainVisiblePlayerSpeech() {
+		assertEquals("Yes please.", MonsterSlayerContacts.selectedChoice(0, "Yes please.", "Not now."), "acceptance choice is spoken");
+		assertEquals("Not now.", MonsterSlayerContacts.selectedChoice(1, "Yes please.", "Not now."), "decline choice is spoken");
+		assertTrue(MonsterSlayerContacts.selectedChoice(-1, "Yes please.") == null, "cancelled choice is silent");
+		assertTrue(MonsterSlayerContacts.selectedChoice(2, "Yes please.") == null, "out-of-range choice is silent");
+	}
+
+	/** Definitions use established appearance layers; spawn points are distinct, roam, and avoid scenery anchors. */
+	private static void presentationAndRoamingContractIsValid() throws Exception {
+		JSONObject locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8));
+		JSONArray definitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		java.util.Set<String> starts = new java.util.HashSet<String>();
+		for (int id = 846; id <= 860; id++) {
+			JSONObject spawn = location(locations.getJSONArray("npclocs"), id);
+			JSONObject start = spawn.getJSONObject("start");
+			String coordinate = start.getInt("X") + "," + start.getInt("Y");
+			assertTrue(starts.add(coordinate), "unique Slayer NPC start " + id);
+			assertTrue(spawn.getJSONObject("min").getInt("X") < spawn.getJSONObject("max").getInt("X")
+				|| spawn.getJSONObject("min").getInt("Y") < spawn.getJSONObject("max").getInt("Y"), "bounded roaming " + id);
+			JSONObject definition = location(definitions, id);
+			assertEquals(0, definition.getInt("attackable"), "Slayer NPC stays non-attackable " + id);
+			assertTrue(definition.getInt("sprites2") >= 28, "rank body sprite " + id);
+			assertTrue(definition.getInt("sprites4") >= 48, "rank weapon sprite " + id);
+			if (id <= 851) {
+				assertTrue(definition.getInt("sprites3") >= 37, "contact plate legs " + id);
+				assertTrue(definition.getInt("sprites5") >= 98, "contact shield " + id);
+			} else {
+				assertEquals(3, definition.getInt("sprites3"), "non-contact keeps ordinary legs " + id);
+				assertEquals(-1, definition.getInt("sprites5"), "non-contact has no shield " + id);
+			}
+		}
+		assertNoSlayerStartIsScenery(locations, "conf/server/defs/locs");
+	}
+
+	private static void assertNoSlayerStartIsScenery(JSONObject locations, String directory) throws Exception {
+		java.util.Set<String> starts = new java.util.HashSet<String>();
+		for (int id = 846; id <= 860; id++) {
+			JSONObject start = location(locations.getJSONArray("npclocs"), id).getJSONObject("start");
+			starts.add(start.getInt("X") + "," + start.getInt("Y"));
+		}
+		try (java.nio.file.DirectoryStream<java.nio.file.Path> files = Files.newDirectoryStream(Paths.get(directory), "*SceneryLocs*.json")) {
+			for (java.nio.file.Path file : files) {
+				JSONObject scenery = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+				for (Object value : scenery.getJSONArray("sceneries")) {
+					JSONObject entry = (JSONObject) value;
+					JSONObject pos = entry.getJSONObject("pos");
+					assertFalse(starts.contains(pos.getInt("X") + "," + pos.getInt("Y")), "Slayer start intersects scenery " + file + " " + entry.getInt("id"));
+				}
+			}
+		}
 	}
 
 	private static JSONObject location(JSONArray entries, int id) {

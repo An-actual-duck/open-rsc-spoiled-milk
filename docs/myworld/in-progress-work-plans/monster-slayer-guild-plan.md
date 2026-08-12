@@ -727,6 +727,27 @@ the three bar ambient members `858..860`. The exact start tiles are recorded
 in `MyWorldNpcLocs.json`; all are separate from existing bartenders, guild
 officials, Achetties, and Sir Radimus.
 
+### Presentation And Roaming Contract
+
+The current Slayer presentation pass keeps the stable IDs and contact keys but
+makes the roster legible at a glance. Every contact wears its tier's plate body
+and plate legs, carries the matching sword and square shield, and has a distinct
+head/hair/colour combination. Associates and ambient members use the same
+bronze-to-rune body-and-weapon progression, but deliberately retain ordinary
+legs and no shield so that they read as suppliers and members rather than task
+givers. All appearance layers are existing worn-sprite IDs; these NPCs remain
+non-attackable visual definitions only.
+
+Every Slayer spawn has a unique clear start tile and a small non-zero indoor
+roaming rectangle. The bounds are deliberately local to each headquarters and
+avoid the known scenery anchors, doors, counters, stairs, and bartender routes
+used by the previous fixed placements. Automated coverage checks unique starts,
+non-zero bounds, lack of scenery intersections across checked-in scenery sets,
+role-specific equipment layers, and non-attackable definitions. A private
+walk-through remains the final confirmation that natural roaming stays within
+each rendered room as maps evolve; it must cover the Rising Sun, Rusty Anchor,
+Blue Moon Inn, Champions, Heroes, and Legends headquarters.
+
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required
 without bypassing Champions, Heroes, or Legends Guild entry requirements.
