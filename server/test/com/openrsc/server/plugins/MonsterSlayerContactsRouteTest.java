@@ -70,6 +70,7 @@ public final class MonsterSlayerContactsRouteTest {
 		adeptRankKeepsLegacyPersistenceCompatibility();
 		menuResponsesRemainVisiblePlayerSpeech();
 		contactProofDialogueIsClearAndRankGated(server);
+		maraAssignmentDialogueUsesAuthoritativeProgression(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
 	}
@@ -335,8 +336,18 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.write(eligible.getCache(), data, adept);
 		RecordingDialogue eligibleDialogue = new RecordingDialogue(0);
 		new MonsterSlayerContacts(eligibleDialogue).onTalkNpc(eligible, new Npc(server.getWorld(), 847, 275, 600));
-		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Right here!"), eligibleDialogue.events.subList(0, 4), "eligible Mara Talk-to acknowledges proof before assignment");
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:Yes, I am.", "N:Let's see that Adept sticker.", "P:Right here!", "N:Right, you must be the newest among the Adepts.", "N:Getting here means you can swing a sword.", "N:Better than a goblin can stab a spear.", "N:Glad to have you."), eligibleDialogue.events.subList(0, 8), "Mara first task welcome follows proof acknowledgement in exact order");
+		assertTrue(eligibleDialogue.events.get(8).startsWith("N:Your next task is to slay "), "Mara welcome flows directly into first assignment text");
 		assertTrue(MonsterSlayerState.read(eligible.getCache(), data).getActiveTaskKey() != null, "eligible Mara Talk-to proceeds into normal assignment");
+		RecordingDialogue activeFirstDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(activeFirstDialogue).onTalkNpc(eligible, new Npc(server.getWorld(), 847, 275, 600));
+		assertFalse(containsAnyNpcLine(activeFirstDialogue.events, MonsterSlayerContacts.maraFirstTaskWelcome()), "assigned first task prevents Mara welcome from repeating");
+		Player shortcutFirst = player(server, "marafirstshortcut", 274, 601);
+		MonsterSlayerState.write(shortcutFirst.getCache(), data, adept);
+		RecordingDialogue shortcutDialogue = new RecordingDialogue();
+		new MonsterSlayerContacts(shortcutDialogue).onOpNpc(shortcutFirst, new Npc(server.getWorld(), 847, 275, 601), "Task");
+		assertFalse(containsAnyNpcLine(shortcutDialogue.events, MonsterSlayerContacts.maraFirstTaskWelcome()), "Mara Task shortcut skips first-task social welcome");
+		assertTrue(MonsterSlayerState.read(shortcutFirst.getCache(), data).getActiveTaskKey() != null, "Mara Task shortcut retains authoritative assignment");
 		Player eligibleHobart = player(server, "hobartproofyes", 275, 600);
 		MonsterSlayerState.write(eligibleHobart.getCache(), data, fledgling);
 		RecordingDialogue hobartDialogue = new RecordingDialogue(0);
@@ -353,6 +364,70 @@ public final class MonsterSlayerContactsRouteTest {
 		RecordingDialogue afterPromotion = new RecordingDialogue(1);
 		new MonsterSlayerContacts(afterPromotion).onTalkNpc(pendingPromotion, new Npc(server.getWorld(), 846, 278, 600));
 		assertEquals(java.util.Arrays.asList("N:" + MonsterSlayerContacts.contactGreeting(0), "P:Not now."), afterPromotion.events, "acknowledged promotion does not repeat and normal dialogue resumes");
+	}
+
+	private static void maraAssignmentDialogueUsesAuthoritativeProgression(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		String[] welcome = MonsterSlayerContacts.maraFirstTaskWelcome();
+		assertEquals(4, welcome.length, "Mara first-task welcome has exact bounded length");
+		String[] expectedRemarks = {
+			"Steady hands make lighter work.",
+			"Take your time and do the job properly.",
+			"Keep your footing. Strength is no use flat on your back.",
+			"A hard day's work is still just a day. You'll manage.",
+			"Pack what you need, and mind yourself out there."
+		};
+		for (int index = 0; index < expectedRemarks.length; index++) {
+			String remark = MonsterSlayerContacts.maraAssignmentRemark(index);
+			assertEquals(expectedRemarks[index], remark, "approved Mara assignment remark " + index);
+			assertTrue(remark.length() <= 64, "Mara assignment remark fits dialogue " + index);
+			for (int hobart = 0; hobart < 5; hobart++) assertFalse(remark.equals(MonsterSlayerContacts.hobartFollowUpRemark(hobart)), "Mara remark remains distinct from Hobart " + index + "/" + hobart);
+		}
+		assertThrows(new Runnable() { public void run() { MonsterSlayerContacts.maraAssignmentRemark(expectedRemarks.length); }}, "Mara remark selection is bounded");
+
+		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
+		cursors.put("falador", data.getContact("falador").getMandatoryTasks().size());
+		cursors.put("port_sarim", 1);
+		MonsterSlayerState.Snapshot laterAdept = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE, MonsterSlayerBalances.zero(), cursors, null, 0, 1L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		assertFalse(MonsterSlayerContacts.shouldUseMaraFirstTaskWelcome(1, laterAdept), "later mandatory cursor suppresses Mara welcome");
+		assertTrue(MonsterSlayerContacts.shouldUseMaraAssignmentRemark(1, laterAdept), "later mandatory cursor enables Mara remark");
+		Player later = player(server, "maralatermandatory", 280, 600);
+		MonsterSlayerState.write(later.getCache(), data, laterAdept);
+		RecordingDialogue laterDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(laterDialogue).onTalkNpc(later, new Npc(server.getWorld(), 847, 281, 600));
+		assertFalse(containsAnyNpcLine(laterDialogue.events, welcome), "later mandatory assignment never repeats Mara welcome");
+		assertTrue(containsAnyNpcLine(laterDialogue.events, expectedRemarks), "later mandatory assignment includes one Mara remark");
+
+		cursors.put("port_sarim", data.getContact("port_sarim").getMandatoryTasks().size());
+		MonsterSlayerState.Snapshot repeatable = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN, MonsterSlayerBalances.zero(), cursors, null, 0, 9L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		repeatable = MonsterSlayerState.acknowledgePromotion(repeatable, data, "port_sarim");
+		assertFalse(MonsterSlayerContacts.shouldUseMaraFirstTaskWelcome(1, repeatable), "repeatable state suppresses Mara welcome");
+		assertTrue(MonsterSlayerContacts.shouldUseMaraAssignmentRemark(1, repeatable), "repeatable state enables Mara remark");
+		Player repeatPlayer = player(server, "mararepeatable", 282, 600);
+		MonsterSlayerState.write(repeatPlayer.getCache(), data, repeatable);
+		RecordingDialogue repeatDialogue = new RecordingDialogue(0);
+		new MonsterSlayerContacts(repeatDialogue).onTalkNpc(repeatPlayer, new Npc(server.getWorld(), 847, 283, 600));
+		assertFalse(containsAnyNpcLine(repeatDialogue.events, welcome), "repeatable assignment never uses Mara welcome");
+		assertTrue(containsAnyNpcLine(repeatDialogue.events, expectedRemarks), "repeatable assignment includes one Mara remark");
+
+		Player pending = player(server, "maraveteranpromotion", 284, 600);
+		MonsterSlayerState.Snapshot pendingState = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN, MonsterSlayerBalances.zero(), cursors, null, 0, 9L, 0, 1, MonsterSlayerState.LegacyStatus.NONE, 0, data);
+		MonsterSlayerState.write(pending.getCache(), data, pendingState);
+		RecordingDialogue promotion = new RecordingDialogue();
+		new MonsterSlayerContacts(promotion).onTalkNpc(pending, new Npc(server.getWorld(), 847, 285, 600));
+		assertEquals(java.util.Arrays.asList("N:Well that was it, the last one.", "N:At this point I'd say you've proven yourself.", "N:I award you Veteran status.", "N:Please accept this button as proof of your rank.", "P:I'm honored. Thank you.", "P:But um...", "P:Why does it say 'I heart PS'?", "N:To show your Port Sarim pride!", "P:Right, of course."), promotion.events, "Mara Veteran promotion has exact speaker and line order");
+		MonsterSlayerState.Snapshot promoted = MonsterSlayerState.read(pending.getCache(), data);
+		assertTrue(promoted.isPromotionAcknowledged("port_sarim", data), "Mara promotion is acknowledged after rendering");
+		assertTrue(promoted.getActiveTaskKey() == null, "Mara promotion interception assigns no task");
+		RecordingDialogue afterPromotion = new RecordingDialogue(1);
+		new MonsterSlayerContacts(afterPromotion).onTalkNpc(pending, new Npc(server.getWorld(), 847, 286, 600));
+		assertEquals(java.util.Arrays.asList("N:Are you here to slay monsters?", "P:No, not today."), afterPromotion.events, "acknowledged Mara promotion does not repeat");
+	}
+
+	private static boolean containsAnyNpcLine(java.util.List<String> events, String[] lines) {
+		for (String line : lines) if (events.contains("N:" + line)) return true;
+		return false;
 	}
 
 	private static final class RecordingDialogue implements MonsterSlayerContacts.DialogueRenderer {

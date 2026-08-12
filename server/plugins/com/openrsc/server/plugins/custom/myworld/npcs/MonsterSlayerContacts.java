@@ -40,6 +40,19 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		"There's always another mess needing a capable pair of hands.",
 		"That's the spirit. Don't keep the monsters waiting."
 	};
+	private static final String[] MARA_ASSIGNMENT_REMARKS = {
+		"Steady hands make lighter work.",
+		"Take your time and do the job properly.",
+		"Keep your footing. Strength is no use flat on your back.",
+		"A hard day's work is still just a day. You'll manage.",
+		"Pack what you need, and mind yourself out there."
+	};
+	private static final String[] MARA_FIRST_TASK_WELCOME = {
+		"Right, you must be the newest among the Adepts.",
+		"Getting here means you can swing a sword.",
+		"Better than a goblin can stab a spear.",
+		"Glad to have you."
+	};
 	private static final String[] HOBART_MEMBERSHIP_PROOF = {
 		"Right, show me your stamp then to prove your membership.", "You mean you aren't even a fledgling?!",
 		"Well this won't do. Hm...", "Right, I got it!", "I can think of no fouler beast to slay for your first task.",
@@ -88,6 +101,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			dialogue.npc(player, npc, contactProof(index));
 			if (!state.getRank().isAtLeast(REQUIRED[index])) { dialogue.player(player, npc, missingProofResponse(index)); dialogue.npc(player, npc, contactRefusal(index)); return; }
 			dialogue.player(player, npc, "Right here!");
+			if (shouldUseMaraFirstTaskWelcome(index, state)) dialogue.npc(player, npc, maraFirstTaskWelcome());
 		}
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task preview = service.previewTask(player, CONTACTS[index]);
 		if (preview != null) {
@@ -97,6 +111,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		MonsterSlayerContactService.Result result = service.requestTask(player, CONTACTS[index]);
 		if (!result.isAccepted()) { if (result.getReason().equals("active-task")) { com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task active = data.getTask(state.getActiveTaskKey()); dialogue.npc(player, npc, "Your current task is " + state.getActiveKills() + " of " + active.getRequiredKills() + " " + active.getDisplayName(data.getFamily(active.getFamilyKey()).getDisplayName()) + "."); } else dialogue.npc(player, npc, "Not yet. Your record is not ready for another task."); return; }
 		if (shouldUseHobartFollowUpRemark(index, state.getTasksCompleted())) dialogue.npc(player, npc, hobartFollowUpRemark());
+		if (shouldUseMaraAssignmentRemark(index, state)) dialogue.npc(player, npc, maraAssignmentRemark());
 		String taskKey = MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey();
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = data.getTask(taskKey);
 		dialogue.npc(player, npc, "Your next task is to slay " + task.getRequiredKills() + " " + task.getDisplayName(data.getFamily(task.getFamilyKey()).getDisplayName()) + ".");
@@ -211,6 +226,24 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	public static boolean shouldUseHobartFollowUpRemark(int contactIndex, long tasksCompleted) {
 		return contactIndex == 0 && tasksCompleted > 0L;
 	}
+	/** Authoritative cursor zero plus no assignment identifies Mara's one-time first-task welcome. */
+	public static boolean shouldUseMaraFirstTaskWelcome(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 1 && state != null && state.getRank() == MonsterSlayerRank.INITIATE
+			&& state.getActiveTaskKey() == null && state.getMandatoryCursors().get(CONTACTS[1]).intValue() == 0;
+	}
+	/** Later mandatory and repeatable assignments receive Mara-specific bounded flavour. */
+	public static boolean shouldUseMaraAssignmentRemark(int contactIndex, MonsterSlayerState.Snapshot state) {
+		return contactIndex == 1 && state != null && state.getActiveTaskKey() == null
+			&& state.getMandatoryCursors().get(CONTACTS[1]).intValue() > 0;
+	}
+	private static String maraAssignmentRemark() { return maraAssignmentRemark(ThreadLocalRandom.current().nextInt(MARA_ASSIGNMENT_REMARKS.length)); }
+	/** Test seam for Mara's bounded, assignment-only flavour. */
+	public static String maraAssignmentRemark(int index) {
+		if (index < 0 || index >= MARA_ASSIGNMENT_REMARKS.length) throw new IllegalArgumentException("Mara dialogue index is out of range");
+		return MARA_ASSIGNMENT_REMARKS[index];
+	}
+	/** Defensive copy of Mara's first Port Sarim assignment welcome. */
+	public static String[] maraFirstTaskWelcome() { return MARA_FIRST_TASK_WELCOME.clone(); }
 	/** Exact short lines for the pre-membership flow; callers receive a defensive copy. */
 	public static String[] hobartMembershipProofLines() { return HOBART_MEMBERSHIP_PROOF.clone(); }
 	/** Exact short lines spoken after a selected eligible drink is accepted. */

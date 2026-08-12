@@ -978,8 +978,9 @@ Fledgling row in the shop-gate table.
 
 #### 2. Rusty Anchor Contact — Adept Sticker To Veteran Button
 
-Tone: friendly and capable, but no longer quaint; a working-port regular who
-treats the guild as honest employment.
+Mara is a gruff but kind working woman: practical, sturdy, modest, and quietly
+supportive. Her voice should suggest someone accustomed to hard physical work,
+without becoming cruel, theatrical, aristocratic, or excessively jokey.
 
 **Below rank**
 
@@ -988,23 +989,50 @@ treats the guild as honest employment.
 
 **Normal task route**
 
-> Contact: `Back for work, are you?`
-> Player: `Yes please.` / `Not now.`
-> Contact (if yes): `Let's see that sticker.`
-> Player: `Here you are.`
-> Contact: `Your next task is to slay [count] [family]. Keep your kit dry and
-> your head on.`
+> Mara: `Are you here to slay monsters?`
+> Player: `Yes, I am.` / `No, not today.`
+> Mara (if yes): `Let's see that Adept sticker.`
+> Player (if eligible): `Right here!`
+> Player (if ineligible): `Oh, I don't have one.`
 
-`Task` shortcut begins at `Your next task is...`; below-rank use says `No
-Adept sticker, no Port Sarim work.`
+On the first Port Sarim mandatory assignment only, authoritative cursor zero
+and the absence of an active task add this welcome after `Right here!`:
+
+> Mara: `Right, you must be the newest among the Adepts.`
+> Mara: `Getting here means you can swing a sword.`
+> Mara: `Better than a goblin can stab a spear.`
+> Mara: `Glad to have you.`
+
+The normal task preview, warning, and assignment then continue. An assigned
+first task, every later mandatory cursor, and repeatable state suppress this
+welcome. Later successfully accepted Mara assignments may use exactly one of
+these bounded remarks:
+
+- `Steady hands make lighter work.`
+- `Take your time and do the job properly.`
+- `Keep your footing. Strength is no use flat on your back.`
+- `A hard day's work is still just a day. You'll manage.`
+- `Pack what you need, and mind yourself out there.`
+
+`Task` shortcut begins at `Your next task is...`; below-rank use says `You need
+an Adept sticker first. Hobart in Falador can help.` It skips the social proof
+exchange and the first-task welcome.
 
 **Veteran promotion / shop reveal**
 
-> Contact: `You did what you said you would. That's worth more than loud talk.`
-> Contact: `You're a Veteran now. Wear this button somewhere it won't fall in
-> the drink.`
-> Contact: `The trader beside me deals in Adept Slayer Points. He's cleared
-> to serve Veterans.`
+> Mara: `Well that was it, the last one.`
+> Mara: `At this point I'd say you've proven yourself.`
+> Mara: `I award you Veteran status.`
+> Mara: `Please accept this button as proof of your rank.`
+> Player: `I'm honored. Thank you.`
+> Player: `But um...`
+> Player: `Why does it say 'I heart PS'?`
+> Mara: `To show your Port Sarim pride!`
+> Player: `Right, of course.`
+
+This is the standard pending-promotion interception: it replaces the next Mara
+interaction, acknowledges only after every line renders, assigns no task in
+that interaction, and does not repeat.
 
 #### 3. Blue Moon Inn Contact — Veteran Button To Elite Badge
 
