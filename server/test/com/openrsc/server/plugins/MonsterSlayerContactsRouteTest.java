@@ -285,10 +285,18 @@ public final class MonsterSlayerContactsRouteTest {
 			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
 		assertTrue(clientDefinitions.contains("new int[]{16, 58, 40, 101, 51, -1, -1, -1"),
 			"client Sella uses full adamant composition");
+		assertEquals("An inspiring Heroes Guild Monster Slayer contact", location(definitions, 850).getString("description"),
+			"Sella description does not collide with the formal Veteran rank");
+		assertTrue(clientDefinitions.contains("\"Sella\", \"An inspiring Heroes Guild Monster Slayer contact\""),
+			"client/server Sella description is synchronized");
 		assertTrue(clientDefinitions.contains("new int[]{7, 31, 2, -1, 112, -1, -1, -1"),
 			"client associate uses partial adamant composition");
 		assertTrue(clientDefinitions.contains("\"Champion Slayer Associate\", \"A Champion Slayer supplier\""),
 			"client/server Heroes associate identity is synchronized");
+		assertEquals("Hero Slayer Associate", location(definitions, 857).getString("name"),
+			"server names the final supplier for the Hero point tier");
+		assertTrue(clientDefinitions.contains("\"Hero Slayer Associate\", \"A Hero Slayer supplier\""),
+			"client/server Hero associate identity is synchronized");
 		for (String identity : new String[] {
 			"new AnimationDef(\"fullhelm\", \"equipment\", 11717785",
 			"new AnimationDef(\"fplatemailtop\", \"equipment\", 11717785",
@@ -1099,7 +1107,8 @@ public final class MonsterSlayerContactsRouteTest {
 			"N:I knew you had it in you.",
 			"P:Than-",
 			"N:Best not keep the Heroes' sect waiting.",
-			"N:I present to you the latest and greatest.",
+			"N:You've earned Champion rank!",
+			"N:And I present to you the latest and greatest.",
 			"N:Monster Slayer Guild Medal!",
 			"P:...",
 			"N:Well, aren't you going to say thank you?",

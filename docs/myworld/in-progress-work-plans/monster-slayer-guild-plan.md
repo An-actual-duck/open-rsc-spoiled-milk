@@ -1248,7 +1248,8 @@ before you ask for Champion work!`
 > Doran: `I knew you had it in you.`
 > Player: `Than-`
 > Doran: `Best not keep the Heroes' sect waiting.`
-> Doran: `I present to you the latest and greatest.`
+> Doran: `You've earned Champion rank!`
+> Doran: `And I present to you the latest and greatest.`
 > Doran: `Monster Slayer Guild Medal!`
 > Player: `...`
 > Doran: `Well, aren't you going to say thank you?`
