@@ -807,8 +807,8 @@ Both effective definition catalogs use proven steel animation identities.
 Bran uses head `7`, steel plate body `29`, steel plate legs `38`, steel square
 shield `99`, and steel sword `49`. The female associate uses head `3`, female
 steel plate body `56`, ordinary legs `2`, and steel battleaxe `110`, with no
-shield. The ambient Veteran uses head `4`, steel chainmail `22`, ordinary legs
-`3`, and steel mace `117`, with no shield. These distinct silhouettes preserve
+shield. The ambient Veteran uses head `5`, steel plate body `29`, ordinary legs
+`2`, and steel mace `117`, with no shield. These distinct silhouettes preserve
 the role hierarchy while keeping all three within the steel tier.
 
 Higher contacts require both the previous Monster Slayer rank and their normal
@@ -1130,7 +1130,8 @@ Blue Moon work.`
 > Bran: `The fun is over now.`
 > Bran: `Elite work begins inside the true guilds.`
 > Bran: `Not everyone comes back from that work.`
-> Bran: `My associate will trade Veteran Slayer Points with an Elite.`
+> Bran: `And come back any time to slay more with`
+> Bran: `The best of the best!`
 
 This remains the persisted one-time promotion interception. Bran's boisterous
 front briefly drops for the warning; the interaction ends without assigning a
