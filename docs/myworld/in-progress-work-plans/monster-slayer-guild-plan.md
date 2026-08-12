@@ -817,15 +817,14 @@ the role hierarchy while keeping all three within the steel tier.
 #### Champion Heroes Guild Interior Correction
 
 The Heroes Guild sect remains exactly two Slayer NPCs: Sella `850` and the
-Champion Slayer Associate `856`. Both use the occupied ground-floor interior,
-rather than the former legacy-packed upper/exterior projection around Y `1381`.
-Sella starts at `(374,443)` and roams only `(373..374,442..443)`. The associate
-starts at `(374,445)` and roams only `(373..374,444..445)`. These non-overlapping
-pockets are inside the established guild interior anchored by Achetties at
-`(372,443)` and behind the northern boundary at Y `441`. Their full rectangles
-remain clear of authored scenery and boundaries. Achetties already roams across
-the whole room, so the new pockets intentionally share the common interior but
-do not reuse his start tile.
+Champion Slayer Associate `856`. Both use the visually confirmed interior around
+`(369,436)`, rather than either former exterior placement around packed Y `1381`
+or the separate southern room around Y `443`. Sella starts at `(369,436)` and
+roams only `(369..370,435..436)`. The associate starts at `(370,437)` and roams
+only `(370..371,437)`. These non-overlapping pockets remain clear of authored
+scenery and boundaries, including the 2-by-3 staircase footprint beginning at
+`(368,438)`. Helemos already roams across part of this interior, so both pockets
+may share his broad room route while neither Slayer NPC reuses his start tile.
 
 Both effective definition catalogs use proven adamant animation identities.
 Sella is visually dominant in full adamant equipment: full helm `16`, female
@@ -835,12 +834,12 @@ adamant battleaxe `112`, with no shield. The client and server both present the
 associate as `Champion Slayer Associate`.
 
 Automated coverage verifies exact client/server sprite parity, two-NPC sect
-staffing, separate starts and roaming pockets, containment within the established
-resident's interior bounds, no overlap with checked-in scenery or boundaries,
-walkable authoritative terrain, connected paths from Achetties' interior tile,
-and the existing Heroes Quest access gate. A private visual pass should still
-confirm that the adamant silhouettes read clearly and the shared room roaming
-with Achetties feels natural.
+staffing, separate starts and roaming pockets, containment around the visually
+confirmed `(369,436)` interior anchor, no overlap with checked-in scenery or
+boundaries, walkable authoritative terrain, connected paths from that interior
+tile, and the existing Heroes Quest access gate. A private visual pass should
+still confirm that the adamant silhouettes read clearly and the shared room
+roaming with Helemos feels natural.
 
 Higher contacts require both the previous Monster Slayer rank and their normal
 host-guild access. Early conversation should explain which stamp is required

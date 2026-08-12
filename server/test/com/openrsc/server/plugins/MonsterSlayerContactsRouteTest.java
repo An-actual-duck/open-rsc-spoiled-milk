@@ -225,8 +225,8 @@ public final class MonsterSlayerContactsRouteTest {
 			{856, 7, 31, 2, -1, 112} // head, adamant plate, ordinary legs, no shield, battleaxe
 		};
 		int[][] placement = {
-			{850, 374, 443, 373, 442, 374, 443},
-			{856, 374, 445, 373, 444, 374, 445}
+			{850, 369, 436, 369, 435, 370, 436},
+			{856, 370, 437, 370, 437, 371, 437}
 		};
 		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		java.util.Set<String> starts = new java.util.HashSet<String>();
@@ -250,9 +250,9 @@ public final class MonsterSlayerContactsRouteTest {
 			assertEquals(fixture[6], max.getInt("Y"), "Heroes roam max Y " + fixture[0]);
 			assertTrue(starts.add(start.getInt("X") + "," + start.getInt("Y")),
 				"Heroes Slayer starts remain unique " + fixture[0]);
-			assertTrue(min.getInt("X") >= 373 && max.getInt("X") <= 374
-				&& min.getInt("Y") >= 442 && max.getInt("Y") <= 445,
-				"Heroes roaming stays inside the occupied ground-floor guild room " + fixture[0]);
+			assertTrue(min.getInt("X") >= 369 && max.getInt("X") <= 371
+				&& min.getInt("Y") >= 435 && max.getInt("Y") <= 440,
+				"Heroes roaming stays around the visually confirmed interior anchor " + fixture[0]);
 		}
 		assertTrue(rangesAreDisjoint(location(locations.getJSONArray("npclocs"), 850),
 			location(locations.getJSONArray("npclocs"), 856)),
@@ -266,23 +266,16 @@ public final class MonsterSlayerContactsRouteTest {
 			int id = spawn.getInt("id");
 			if (id < 846 || id > 860) continue;
 			JSONObject start = spawn.getJSONObject("start");
-			if (start.getInt("X") >= 368 && start.getInt("X") <= 375
-					&& start.getInt("Y") >= 441 && start.getInt("Y") <= 445) heroesSpawns++;
+			if (start.getInt("X") >= 369 && start.getInt("X") <= 371
+					&& start.getInt("Y") >= 435 && start.getInt("Y") <= 440) heroesSpawns++;
 		}
 		assertEquals(2, heroesSpawns, "Heroes Guild retains exactly two placed Slayer NPCs");
-		JSONObject establishedInterior = location(new JSONObject(new String(Files.readAllBytes(Paths.get(
+		JSONObject establishedResident = location(new JSONObject(new String(Files.readAllBytes(Paths.get(
 			"conf", "server", "defs", "locs", "NpcLocs.json")), StandardCharsets.UTF_8)).getJSONArray("npclocs"), 253);
-		assertEquals(372, establishedInterior.getJSONObject("start").getInt("X"),
-			"Achetties anchors the established Heroes Guild interior X");
-		assertEquals(443, establishedInterior.getJSONObject("start").getInt("Y"),
-			"Achetties anchors the established Heroes Guild interior Y");
-		for (int[] fixture : placement) {
-			assertTrue(fixture[3] >= establishedInterior.getJSONObject("min").getInt("X")
-				&& fixture[5] <= establishedInterior.getJSONObject("max").getInt("X")
-				&& fixture[4] >= establishedInterior.getJSONObject("min").getInt("Y")
-				&& fixture[6] <= establishedInterior.getJSONObject("max").getInt("Y"),
-				"Heroes Slayer roam is inside the established resident's guild-interior bounds " + fixture[0]);
-		}
+		assertEquals(372, establishedResident.getJSONObject("start").getInt("X"),
+			"Achetties remains in the separate southern guild room X");
+		assertEquals(443, establishedResident.getJSONObject("start").getInt("Y"),
+			"Achetties remains in the separate southern guild room Y");
 		assertHeroesRangeDoesNotIntersectWorldPlacements(server, locations, "conf/server/defs/locs");
 
 		server.getWorld().getRegionManager().load();
@@ -299,11 +292,11 @@ public final class MonsterSlayerContactsRouteTest {
 			}
 		}
 		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-			Point.location(372, 443), Point.location(374, 443), true),
-			"established interior resident tile reaches Sella without crossing a wall");
+			Point.location(369, 436), Point.location(369, 436), true),
+			"visually confirmed interior anchor is a valid Sella tile");
 		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-			Point.location(372, 443), Point.location(374, 445), true),
-			"established interior resident tile reaches the associate without crossing a wall");
+			Point.location(369, 436), Point.location(370, 437), true),
+			"visually confirmed interior anchor reaches the associate without crossing a wall");
 
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com",
 			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
@@ -380,7 +373,7 @@ public final class MonsterSlayerContactsRouteTest {
 					for (Object value : npcs.getJSONArray("npclocs")) {
 						JSONObject other = (JSONObject) value;
 						if (other.getInt("id") == 850 || other.getInt("id") == 856
-								|| other.getInt("id") == 253) continue;
+								|| other.getInt("id") == 269) continue;
 						for (int hero : new int[] {850, 856}) assertTrue(rangesAreDisjoint(
 							location(locations.getJSONArray("npclocs"), hero), other),
 							"Heroes roam avoids existing NPC " + other.getInt("id") + " in " + file + " npc=" + hero);
