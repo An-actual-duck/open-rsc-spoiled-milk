@@ -43,6 +43,9 @@ proved. See [server build source of truth](server-build-source-of-truth.md).
 - [Combat refactor audit](../in-progress-work-plans/classic-scape-combat-refactor-audit-2026-08-05.md): combat authority and characterization constraints.
 - [Compatibility/prune proof](compatibility-and-prune-proof-b11.md): retained compatibility surfaces and proof-before-removal rules.
 - [Testing quick reference](testing-quick-reference.md): routine focused and product gates.
+- [AI operability routing audit](ai-operability-routing-audit-2026-08-13.md):
+  task-owner and source-test routing matrices, duplicate-name hazards, and
+  documented AI-friction priorities.
 
 ## Limits of text navigation
 

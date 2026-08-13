@@ -77,6 +77,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-navigation.md](info/code-navigation.md): maintained source/build/
   ownership map, dynamic-reference caveats, practical `rg` examples, and the
   optional local Ctags helper.
+- [AI operability routing audit](info/ai-operability-routing-audit-2026-08-13.md):
+  task-owner and source-test matrices, dynamic-surface inventory, duplicate-name
+  hazards, and AI-safe change-routing guidance.
 - [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
   active collaborative concept for a Worship-tiered support spellbook, carved
   and blessed sigils, Holy Power, and an expanded Devotion economy.
@@ -195,6 +198,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 
 ## Info
 
+- [ai-operability-routing-audit-2026-08-13.md](info/ai-operability-routing-audit-2026-08-13.md):
+  AI navigation and change-safety audit with task routing and verification
+  matrices.
 - [change-history.md](info/change-history.md): consolidated major-change record.
 - [client-sprite-reference.md](info/client-sprite-reference.md): custom sprite
   reference, authentic item icon offsets, and equipment palette export notes.
