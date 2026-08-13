@@ -74,6 +74,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-size-and-indexing-audit-2026-08-13.md](in-progress-work-plans/code-size-and-indexing-audit-2026-08-13.md):
   current maintained-source size/churn review, extraction priorities, and a
   lightweight code-navigation/indexing recommendation.
+- [code-navigation.md](info/code-navigation.md): maintained source/build/
+  ownership map, dynamic-reference caveats, practical `rg` examples, and the
+  optional local Ctags helper.
 - [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
   active collaborative concept for a Worship-tiered support spellbook, carved
   and blessed sigils, Holy Power, and an expanded Devotion economy.
