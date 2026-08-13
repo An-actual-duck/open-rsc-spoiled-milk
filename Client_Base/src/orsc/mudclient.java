@@ -805,7 +805,7 @@ public final class mudclient implements Runnable {
 		"What is your favourite movie?"};
 	boolean drawMinimap = false;
 	private boolean minimapPinned = false;
-	/** A clicked non-map side-menu icon remains open until clicked again. */
+	/** A detached non-map side panel, independent of the transient tab state. */
 	private int pinnedSideMenuTab = 0;
 	private boolean showCoordinatesOverlay = true;
 	//private final int[] duelOpponentConfirmItemCount = new int[8];
@@ -3409,7 +3409,7 @@ public final class mudclient implements Runnable {
 
 				int var4;
 				int var5;
-				if (this.showUiTab == Config.FRIENDS_TAB) {
+				if (this.getVisibleSideMenuTab() == Config.FRIENDS_TAB) {
 					String var9 = null;
 					if (this.panelSocialTab == 0 && this.m_wk != -1) {
 						if (this.m_wk >= 0) {
@@ -9200,24 +9200,25 @@ public final class mudclient implements Runnable {
 					if (C_CUSTOM_UI) {
 						int maxY = getUITabsY();
 						int x = this.getSurface().width2 - 199 - 1;
-						if (this.showUiTab == Config.OPTIONS_TAB) {
+						int visibleSideMenuTab = this.getVisibleSideMenuTab();
+						if (visibleSideMenuTab == Config.OPTIONS_TAB) {
 							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
 						}
 						x += 33;
-						if (this.showUiTab == Config.FRIENDS_TAB) {
+						if (visibleSideMenuTab == Config.FRIENDS_TAB) {
 							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
 						}
 						x += 33;
-						if (this.showUiTab == Config.MAGIC_AND_PRAYER_TAB) {
+						if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
 							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
 						}
 						x += 33;
-						if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB) {
+						if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
 							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
 						}
 						x += 33;
 						x += 33;
-						if (this.showUiTab == Config.INVENTORY_TAB) {
+						if (visibleSideMenuTab == Config.INVENTORY_TAB) {
 							this.getSurface().drawBox(x, maxY, 32, 32, GenUtil.buildColor(255, 0, 0));
 						}
 					}
@@ -11852,6 +11853,7 @@ public final class mudclient implements Runnable {
 
 				boolean clickedTab = this.handleTabUIClick();
 				boolean mouseInTabArea = mouseInTabArea_CUSTOM();
+				int visibleSideMenuTab = this.getVisibleSideMenuTab();
 				boolean interfaceOpen = false;
 
 				if (clickedTab) {
@@ -11902,11 +11904,11 @@ public final class mudclient implements Runnable {
 				// consume a click merely because a tab remains open.
 				boolean acceptTabInput = mustDrawMenu && mouseInTabArea;
 
-				if ((this.showUiTab == 0 && mustDrawMenu && !C_CUSTOM_UI) || (!mouseInTabArea && !interfaceOpen && C_CUSTOM_UI && mustDrawMenu)) {
+				if (!mouseInTabArea && !interfaceOpen && mustDrawMenu) {
 					this.drawUiTab0(var1 ^ 2);
 				}
 
-				if (this.showUiTab == Config.INVENTORY_TAB) {
+				if (visibleSideMenuTab == Config.INVENTORY_TAB) {
 					this.drawUiTab1(-15252, acceptTabInput);
 				}
 
@@ -11918,19 +11920,19 @@ public final class mudclient implements Runnable {
 					this.drawUiTabMinimap(mustDrawMenu, (byte) 125);
 				}
 
-				if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB) {
+				if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) {
 					this.drawUiTabPlayerInfo(acceptTabInput, var1 ^ 0);
 				}
 
-				if (this.showUiTab == Config.MAGIC_AND_PRAYER_TAB) {
+				if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) {
 					this.drawUiTabMagic(acceptTabInput, (byte) -74);
 				}
 
-				if (this.showUiTab == Config.FRIENDS_TAB) {
+				if (visibleSideMenuTab == Config.FRIENDS_TAB) {
 					this.drawUiTab5(acceptTabInput, false);
 				}
 
-				if (this.showUiTab == Config.OPTIONS_TAB) {
+				if (visibleSideMenuTab == Config.OPTIONS_TAB) {
 					this.drawUiTabOptions(15, acceptTabInput);
 				}
 
@@ -15119,7 +15121,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean shouldDrawMinimapPanel() {
-		if (this.showUiTab == Config.MINIMAP_AND_COMPASS_TAB) {
+		if (this.getVisibleSideMenuTab() == Config.MINIMAP_AND_COMPASS_TAB) {
 			return true;
 		}
 		if (!isPinnedMinimapVisible()) {
@@ -15133,8 +15135,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean isTopRightMinimapOverridden() {
-		return this.showUiTab != 0
-			&& this.showUiTab != Config.MINIMAP_AND_COMPASS_TAB;
+		int visibleSideMenuTab = this.getVisibleSideMenuTab();
+		return visibleSideMenuTab != 0
+			&& visibleSideMenuTab != Config.MINIMAP_AND_COMPASS_TAB;
 	}
 
 	private boolean isFloatingMinimap() {
@@ -15208,25 +15211,29 @@ public final class mudclient implements Runnable {
 			return false;
 		}
 		if (this.mouseButtonClick == 1) {
-			if (this.pinnedSideMenuTab == tab) {
-				this.pinnedSideMenuTab = 0;
-				this.showUiTab = 0;
-			} else {
-				this.pinnedSideMenuTab = tab;
-				this.showUiTab = tab;
-			}
+			this.pinnedSideMenuTab = SideMenuPinPolicy.pinnedTabAfterPrimaryClick(
+				this.pinnedSideMenuTab, tab);
+			// Match the minimap: pinning creates a detached panel and returns
+			// ordinary gameplay to the no-transient-tab state.
+			this.showUiTab = SideMenuPinPolicy.transientTabAfterIconInteraction(
+				this.pinnedSideMenuTab, tab, true);
 		} else {
-			this.showUiTab = tab;
+			this.showUiTab = SideMenuPinPolicy.transientTabAfterIconInteraction(
+				this.pinnedSideMenuTab, tab, false);
 		}
 		return true;
 	}
 
+	private int getVisibleSideMenuTab() {
+		return SideMenuPinPolicy.visibleTab(this.showUiTab, this.pinnedSideMenuTab);
+	}
+
 	private boolean isCurrentSideMenuHomeTab() {
-		return this.pinnedSideMenuTab != 0 && this.showUiTab == this.pinnedSideMenuTab;
+		return this.pinnedSideMenuTab != 0 && this.showUiTab == 0;
 	}
 
 	private void closeOrRestorePinnedSideMenu() {
-		this.showUiTab = this.pinnedSideMenuTab != 0 ? this.pinnedSideMenuTab : 0;
+		this.showUiTab = SideMenuPinPolicy.transientTabAfterPointerLeaves();
 	}
 
 	private void cycleSpellbookLayoutMode() {
@@ -20517,19 +20524,19 @@ public final class mudclient implements Runnable {
 	}
 
 	public boolean isMouseOverOpenUiTabPanel(int x, int y) {
-		if (this.showUiTab == 0 || this.getSurface() == null) {
+		if (this.getVisibleSideMenuTab() == 0 || this.getSurface() == null) {
 			return false;
 		}
 
-		int width = this.getSurface().width2;
 		if (C_CUSTOM_UI) {
 			return this.isMouseOverCustomOpenTabPanel(x, y);
 		}
-		return x >= width - 250 && x < width && y >= 0 && y < getGameHeight();
+		return this.isMouseOverAuthenticOpenTabPanel(x, y);
 	}
 
 	private boolean isMouseOverCustomOpenTabPanel(int x, int y) {
-		if (this.showUiTab == 0 || this.getSurface() == null) {
+		int visibleSideMenuTab = this.getVisibleSideMenuTab();
+		if (visibleSideMenuTab == 0 || this.getSurface() == null) {
 			return false;
 		}
 
@@ -20538,7 +20545,7 @@ public final class mudclient implements Runnable {
 		int panelLeft = panelRight - TOP_MENU_BAR_WIDTH;
 		int panelTop;
 		int panelBottom = tabBarY;
-		switch (this.showUiTab) {
+		switch (visibleSideMenuTab) {
 			case Config.INVENTORY_TAB:
 				panelLeft = panelRight - CUSTOM_UI_INVENTORY_PANEL_WIDTH;
 				panelTop = this.tabEquipmentIndex == 1
@@ -20562,6 +20569,49 @@ public final class mudclient implements Runnable {
 				break;
 			case Config.OPTIONS_TAB:
 				panelTop = tabBarY - CUSTOM_UI_OPTIONS_PANEL_HEIGHT;
+				break;
+			case Config.MINIMAP_AND_COMPASS_TAB:
+			default:
+				return false;
+		}
+		return x >= panelLeft && x < panelRight
+			&& y >= Math.max(0, panelTop) && y < panelBottom;
+	}
+
+	private boolean isMouseOverAuthenticOpenTabPanel(int x, int y) {
+		int visibleSideMenuTab = this.getVisibleSideMenuTab();
+		if (visibleSideMenuTab == 0 || this.getSurface() == null) {
+			return false;
+		}
+
+		int panelRight = this.getSurface().width2;
+		int panelLeft = panelRight - TOP_MENU_BAR_WIDTH;
+		int panelTop = 36;
+		int panelBottom;
+		switch (visibleSideMenuTab) {
+			case Config.INVENTORY_TAB:
+				panelLeft = panelRight - CUSTOM_UI_INVENTORY_PANEL_WIDTH;
+				int inventoryGridHeight = getCustomInventoryGridHeight();
+				int inventoryTabsY = panelTop + inventoryGridHeight;
+				panelTop = this.tabEquipmentIndex == 1
+					? inventoryTabsY - EQUIPMENT_PANEL_HEIGHT
+					: panelTop;
+				panelBottom = inventoryTabsY + INVENTORY_TAB_HEIGHT;
+				break;
+			case Config.SKILLS_AND_QUESTS_TAB:
+				int playerInfoHeight = Config.S_WANT_OPENPK_POINTS
+					? 186
+					: S_WANT_EXP_INFO ? 275 : 262;
+				panelBottom = 36 + playerInfoHeight + 12;
+				break;
+			case Config.MAGIC_AND_PRAYER_TAB:
+				panelBottom = 36 + CUSTOM_UI_MAGIC_PANEL_HEIGHT;
+				break;
+			case Config.FRIENDS_TAB:
+				panelBottom = this.panelSocialTab == 1 ? 307 : 240;
+				break;
+			case Config.OPTIONS_TAB:
+				panelBottom = 325;
 				break;
 			case Config.MINIMAP_AND_COMPASS_TAB:
 			default:
@@ -20604,6 +20654,13 @@ public final class mudclient implements Runnable {
 			&& y < getGameHeight();
 	}
 
+	private boolean isMouseOverAuthenticTabBar(int x, int y) {
+		return this.getSurface() != null
+			&& x >= this.getSurface().width2 - TOP_MENU_BAR_WIDTH
+			&& x < this.getSurface().width2
+			&& y >= 3 && y < 35;
+	}
+
 	private boolean handleTabUIClick() {
 		if (C_CUSTOM_UI) {
 			repositionCustomUI();
@@ -20632,7 +20689,7 @@ public final class mudclient implements Runnable {
 				if (this.mouseButtonClick == 1) {
 					this.togglePinnedMinimap();
 					this.showUiTab = 0;
-				} else if (!this.minimapPinned) {
+				} else {
 					this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
 					if (!Config.S_DISABLE_MINIMAP_ROTATION) {
 						this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6; // random rotation of the minimap as anti-bot?
@@ -20671,14 +20728,12 @@ public final class mudclient implements Runnable {
 				if (this.mouseButtonClick == 1) {
 					this.togglePinnedMinimap();
 					this.showUiTab = 0;
-				} else if (!this.minimapPinned) {
+				} else {
 					this.showUiTab = Config.MINIMAP_AND_COMPASS_TAB;
 					if (!Config.S_DISABLE_MINIMAP_ROTATION) {
 						this.minimapRandom_2 = (int) (23.0D * Math.random()) - 11; // random rotation of the minimap as anti-bot?
 						this.minimapRandom_1 = (int) (13.0D * Math.random()) - 6;
 					}
-				} else {
-					this.showUiTab = 0;
 				}
 			}
 
@@ -20894,11 +20949,11 @@ public final class mudclient implements Runnable {
 
 	private boolean mouseInTabArea_CUSTOM() {
 		try {
-			if (!C_CUSTOM_UI) {
-				return false;
-			}
-			if (this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
-				|| this.isMouseOverCustomOpenTabPanel(this.mouseX, this.mouseY)) {
+			boolean mouseOverTabBar = C_CUSTOM_UI
+				? this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)
+				: this.isMouseOverAuthenticTabBar(this.mouseX, this.mouseY);
+			if (mouseOverTabBar
+				|| this.isMouseOverOpenUiTabPanel(this.mouseX, this.mouseY)) {
 				return true;
 			}
 			if (this.shouldDrawMinimapPanel()) {
@@ -28881,13 +28936,14 @@ public final class mudclient implements Runnable {
 		if (worldEditorInterface != null && worldEditorInterface.scrollDefinitionBrowser(x)) {
 			return;
 		}
-		if (showUiTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
+		int visibleSideMenuTab = getVisibleSideMenuTab();
+		if (visibleSideMenuTab == Config.SKILLS_AND_QUESTS_TAB) { // Quest list.
 			if (uiTabPlayerInfoSubTab == 1) {
 				panelQuestInfo.scrollMethodList(controlQuestInfoPanel, x);
 			}
-		} else if (showUiTab == Config.OPTIONS_TAB) { // Settings wrench menu
+		} else if (visibleSideMenuTab == Config.OPTIONS_TAB) { // Settings wrench menu
 			panelSettings.scrollMethodCustomList(controlSettingPanel, x, 1);
-		} else if (showUiTab == Config.MAGIC_AND_PRAYER_TAB) { // Magic and prayer book list.
+		} else if (visibleSideMenuTab == Config.MAGIC_AND_PRAYER_TAB) { // Magic and prayer book list.
 			if (SpellbookLayoutSettings.usesTextLayout()) {
 				this.panelMagic.scrollMethodList(this.controlMagicPanel, x);
 			} else if (this.magicOrPrayerList == 0) {
@@ -28901,7 +28957,7 @@ public final class mudclient implements Runnable {
 			} else {
 				this.scrollSummoningIconMenu(x);
 			}
-		} else if (showUiTab == Config.FRIENDS_TAB) { // Friend list and ignore list.
+		} else if (visibleSideMenuTab == Config.FRIENDS_TAB) { // Friend list and ignore list.
 			if (this.panelSocialTab == 2 || this.panelSocialTab == 0) {
 				panelSocial.scrollMethodList(controlSocialPanel, x);
 			} else if (this.panelSocialTab == 1) {

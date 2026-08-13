@@ -106,7 +106,11 @@ def main() -> None:
     require(client, 'normalizedLabel.equals("shop") || normalizedLabel.equals("trade")', "NPC shop/trade shortcut label")
     require(client, 'equalsIgnoreCase("Travel")', "object travel shortcut label")
     require(client, "public boolean isMouseOverOpenUiTabPanel(int x, int y)", "open tab hover helper")
-    require(client, "if (this.showUiTab == 0 || this.getSurface() == null)", "open tab hover ignores closed tabs")
+    require(
+        client,
+        "if (this.getVisibleSideMenuTab() == 0 || this.getSurface() == null)",
+        "open tab hover ignores closed and unpinned tabs",
+    )
 
     print("PASS: OpenGL input bridge preserves legacy Ctrl-click shortcut modifiers")
 

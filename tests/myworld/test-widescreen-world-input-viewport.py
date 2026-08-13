@@ -24,19 +24,23 @@ def custom_panel_bounds(
     exp_info: bool = True,
     openpk: bool = False,
     clan: bool = False,
+    inventory_slots: int = 40,
 ) -> tuple[int, int, int, int] | None:
     right = surface_width
     left = right - 199
     bottom = tab_bar_y
     if tab == "inventory":
         left = right - 248
-        top = tab_bar_y - (273 if equipment else 228)
+        inventory_top = tab_bar_y - 308
+        inventory_tabs_y = inventory_top + (inventory_slots // 5) * 34
+        top = inventory_tabs_y - 286 if equipment else inventory_top
+        bottom = inventory_tabs_y + 24
     elif tab == "skills":
         top = tab_bar_y - 287
         height = 186 if openpk else 275 if exp_info else 262
         bottom = min(tab_bar_y, top + height + 12)
     elif tab == "magic":
-        top = tab_bar_y - 182
+        top = tab_bar_y - 200
     elif tab == "friends":
         top = tab_bar_y - 182 - (19 if clan else 0)
     elif tab == "options":
@@ -61,21 +65,13 @@ def main() -> None:
     )
     require(
         client,
-        "if (!C_CUSTOM_UI) {\n"
-        "\t\t\t\treturn false;\n"
-        "\t\t\t}",
-        "custom tab occlusion disabled for the authentic top-right UI",
+        "return this.isMouseOverAuthenticOpenTabPanel(x, y);",
+        "authentic UI using bounded panel geometry",
     )
     require(
         client,
-        "return this.isMouseOverCustomOpenTabPanel(x, y);",
-        "scroll and drag input sharing the tab occlusion owner",
-    )
-    require(
-        client,
-        "this.isMouseOverCustomTabBar(this.mouseX, this.mouseY)\n"
-        "\t\t\t\t|| this.isMouseOverCustomOpenTabPanel(this.mouseX, this.mouseY)",
-        "world menu using the same exact custom UI occlusion",
+        "|| this.isMouseOverOpenUiTabPanel(this.mouseX, this.mouseY)",
+        "world menu using the same bounded UI occlusion",
     )
     require(
         client,
@@ -135,7 +131,7 @@ def main() -> None:
     inventory = custom_panel_bounds("inventory")
     if not contains(inventory, 800, 300):
         fail("visible inventory body must occlude world input")
-    if contains(inventory, 800, 200):
+    if contains(inventory, 800, 150):
         fail("visible world above inventory must remain interactive")
     if contains(inventory, 700, 300):
         fail("world left of inventory must remain interactive")
@@ -146,7 +142,7 @@ def main() -> None:
 
     magic = custom_panel_bounds("magic")
     if contains(magic, 800, 250) or not contains(magic, 800, 350):
-        fail("magic occlusion must match its lower-right 182-pixel panel")
+        fail("magic occlusion must match its lower-right 200-pixel panel")
 
     options = custom_panel_bounds("options")
     if contains(options, 800, 200) or not contains(options, 800, 250):
