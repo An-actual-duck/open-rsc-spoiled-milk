@@ -71,6 +71,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-health-audit-2026-07-12.md](in-progress-work-plans/code-health-audit-2026-07-12.md):
   evidence-backed size/churn, band-aid, compatibility, dead-code, and static-
   analysis audit with prioritized follow-up branches.
+- [code-size-and-indexing-audit-2026-08-13.md](in-progress-work-plans/code-size-and-indexing-audit-2026-08-13.md):
+  current maintained-source size/churn review, extraction priorities, and a
+  lightweight code-navigation/indexing recommendation.
 - [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
   active collaborative concept for a Worship-tiered support spellbook, carved
   and blessed sigils, Holy Power, and an expanded Devotion economy.

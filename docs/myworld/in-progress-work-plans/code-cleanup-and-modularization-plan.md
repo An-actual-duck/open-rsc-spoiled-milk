@@ -8,6 +8,11 @@ branch measurements are labeled separately below. Resume structural work only
 when feature pressure exposes a specific ownership boundary or a fresh review
 justifies one.
 
+Current size/churn measurements and the code-navigation recommendation are in
+[`code-size-and-indexing-audit-2026-08-13.md`](code-size-and-indexing-audit-2026-08-13.md).
+That audit supersedes this plan's historical line-count prioritization, while
+this document retains the completed extraction contracts and stop conditions.
+
 This is the AI-facing cleanup roadmap for Spoiled Milk code structure. It is
 not a feature plan. Its job is to keep future work from getting lost inside
 large inherited files, half-retired options, and renderer bridge code that was
