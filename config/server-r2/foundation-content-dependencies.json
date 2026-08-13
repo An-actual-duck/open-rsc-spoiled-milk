@@ -301,6 +301,16 @@
       "target": "server/src/com/openrsc/server/content/Summoning.java"
     },
     {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData",
+      "source": "server/src/com/openrsc/server/model/container/Inventory.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState",
+      "source": "server/src/com/openrsc/server/model/container/Inventory.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerState.java"
+    },
+    {
       "import": "com.openrsc.server.content.EnchantingItemEffects",
       "source": "server/src/com/openrsc/server/model/container/Item.java",
       "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
@@ -314,6 +324,16 @@
       "import": "com.openrsc.server.content.Summoning",
       "source": "server/src/com/openrsc/server/model/entity/npc/Npc.java",
       "target": "server/src/com/openrsc/server/content/Summoning.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerFailureDiagnostics",
+      "source": "server/src/com/openrsc/server/model/entity/npc/Npc.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerFailureDiagnostics.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService",
+      "source": "server/src/com/openrsc/server/model/entity/npc/Npc.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTaskService.java"
     },
     {
       "import": "com.openrsc.server.content.Devotion",
@@ -351,9 +371,24 @@
       "target": "server/src/com/openrsc/server/content/minigame/combatodyssey/CombatOdysseyData.java"
     },
     {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.CombatOdysseyMigration",
+      "source": "server/src/com/openrsc/server/model/world/World.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/CombatOdysseyMigration.java"
+    },
+    {
       "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData",
       "source": "server/src/com/openrsc/server/model/world/World.java",
       "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService",
+      "source": "server/src/com/openrsc/server/model/world/World.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService",
+      "source": "server/src/com/openrsc/server/model/world/World.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTaskService.java"
     },
     {
       "import": "com.openrsc.server.constants.custom.MyWorldItemId",
@@ -471,11 +506,6 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     },
     {
-      "import": "com.openrsc.server.content.EnchantingItemEffects",
-      "source": "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
-      "target": "server/src/com/openrsc/server/content/EnchantingItemEffects.java"
-    },
-    {
       "import": "com.openrsc.server.content.SkillCapes",
       "source": "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
       "target": "server/src/com/openrsc/server/content/SkillCapes.java"
@@ -489,6 +519,16 @@
       "import": "com.openrsc.server.content.cleric.ClericSpellDefinition",
       "source": "server/src/com/openrsc/server/net/rsc/struct/outgoing/ClericSpellbookStruct.java",
       "target": "server/src/com/openrsc/server/content/cleric/ClericSpellDefinition.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData",
+      "source": "server/src/com/openrsc/server/service/PlayerService.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
+    },
+    {
+      "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState",
+      "source": "server/src/com/openrsc/server/service/PlayerService.java",
+      "target": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerState.java"
     },
     {
       "import": "com.openrsc.server.content.Summoning",
