@@ -190,6 +190,84 @@ final class CurrentCombatDeathLifecycleCharacterization {
 		assertOverflowDoesNotAbortDeath(harness, data, false);
 		assertOverflowDoesNotAbortDeath(harness, data, true);
 		assertRejectedCallbacksRemainHarmless(harness, data);
+		monsterSlayerSingleWinnerSelection(harness, data);
+	}
+
+	/** Covers the Slayer-only single-winner policy without changing XP or loot ownership. */
+	private static void monsterSlayerSingleWinnerSelection(final CurrentCombatHarness harness,
+			final MonsterSlayerData data) throws Exception {
+		final Player lower = slayerTaskHolder(harness, data, "msslower", 780, 790);
+		final Player higher = slayerTaskHolder(harness, data, "msshigher", 781, 790);
+		Npc higherWins = harness.npc(62, 782, 790);
+		higherWins.setShouldRespawn(false);
+		higherWins.addCombatDamage(lower, 3);
+		higherWins.addRangeDamage(higher, 5);
+		higherWins.getSkills().setLevel(Skill.HITS.id(), 0);
+		higherWins.killedBy(higher);
+		assertEquals(0, slayerKills(lower, data), "lower-damage eligible player receives no Slayer credit");
+		assertEquals(1, slayerKills(higher, data), "higher-damage eligible player receives Slayer credit");
+
+		final Player eligible = slayerTaskHolder(harness, data, "msseligible", 790, 790);
+		final Player ineligible = harness.player("mssineligible", 791, 790);
+		Npc eligibleWins = harness.npc(62, 792, 790);
+		eligibleWins.setShouldRespawn(false);
+		eligibleWins.addMageDamage(eligible, 2);
+		eligibleWins.addCombatDamage(ineligible, 9);
+		eligibleWins.getSkills().setLevel(Skill.HITS.id(), 0);
+		eligibleWins.killedBy(ineligible);
+		assertEquals(1, slayerKills(eligible, data), "eligible task holder defeats ineligible high-damage owner");
+		assertFalse(ineligible.getCache().hasKey("monster_slayer_active_kills"),
+			"ineligible high-damage owner receives no Slayer state");
+
+		final Player tieA = slayerTaskHolder(harness, data, "msstiea", 800, 790);
+		final Player tieB = slayerTaskHolder(harness, data, "msstieb", 801, 790);
+		Npc tie = harness.npc(62, 802, 790);
+		tie.setShouldRespawn(false);
+		tie.addSummonDamage(tieA, 4);
+		tie.addCombatDamage(tieB, 4);
+		tie.getSkills().setLevel(Skill.HITS.id(), 0);
+		tie.killedBy(tieA);
+		Player tieWinner = tieA.getUUID().compareTo(tieB.getUUID()) < 0 ? tieA : tieB;
+		Player tieLoser = tieWinner == tieA ? tieB : tieA;
+		assertEquals(1, slayerKills(tieWinner, data), "UUID ordering resolves equal Slayer damage deterministically");
+		assertEquals(0, slayerKills(tieLoser, data), "equal-damage Slayer tie has exactly one winner");
+
+		final Player solo = slayerTaskHolder(harness, data, "msssolo", 810, 790);
+		Npc soloTarget = harness.npc(62, 811, 790);
+		soloTarget.setShouldRespawn(false);
+		soloTarget.addSummonDamage(solo, 1);
+		soloTarget.getSkills().setLevel(Skill.HITS.id(), 0);
+		soloTarget.killedBy(solo);
+		assertEquals(1, slayerKills(solo, data), "one eligible summon contributor behaves normally");
+
+		final Player nearby = slayerTaskHolder(harness, data, "mssnearby", 820, 790);
+		final Player zeroDamage = slayerTaskHolder(harness, data, "msszero", 821, 790);
+		final Player tooFar = slayerTaskHolder(harness, data, "mssfar", 850, 790);
+		final Player offline = slayerTaskHolder(harness, data, "mssoffline", 822, 790);
+		Npc guarded = harness.npc(62, 823, 790);
+		guarded.setShouldRespawn(false);
+		guarded.addCombatDamage(nearby, 3);
+		guarded.addCombatDamage(tooFar, 9);
+		guarded.addRangeDamage(offline, 8);
+		harness.logout(offline);
+		guarded.getSkills().setLevel(Skill.HITS.id(), 0);
+		guarded.killedBy(nearby);
+		assertEquals(1, slayerKills(nearby, data), "nearby valid contributor remains sole Slayer winner");
+		assertEquals(0, slayerKills(zeroDamage, data), "eligible non-contributor receives no Slayer credit");
+		assertEquals(0, slayerKills(tooFar, data), "out-of-range contributor receives no Slayer credit");
+		assertEquals(0, slayerKills(offline, data), "offline contributor receives no Slayer credit");
+	}
+
+	private static Player slayerTaskHolder(final CurrentCombatHarness harness,
+			final MonsterSlayerData data, final String name, final int x, final int y) {
+		Player player = harness.player(name, x, y);
+		MonsterSlayerState.write(player.getCache(), data,
+			activeRatState(data, MonsterSlayerBalances.zero(), 0, 0L));
+		return player;
+	}
+
+	private static int slayerKills(final Player player, final MonsterSlayerData data) {
+		return MonsterSlayerState.read(player.getCache(), data).getActiveKills();
 	}
 
 	/** Verifies only an accepted non-final Slayer credit emits a progress message. */
