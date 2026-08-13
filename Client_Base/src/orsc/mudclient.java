@@ -379,7 +379,6 @@ public final class mudclient implements Runnable {
 	private static final int INVENTORY_SLOT_HEIGHT = 34;
 	private static final int INVENTORY_TAB_HEIGHT = 24;
 	private static final int EQUIPMENT_PANEL_HEIGHT = 286;
-	private static final int CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT = 273;
 	private static final int CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET = 287;
 	private static final int CUSTOM_UI_MAGIC_PANEL_HEIGHT = 200;
 	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
@@ -11898,13 +11897,17 @@ public final class mudclient implements Runnable {
 				if (mustDrawMenu) {
 					this.menuCommon.recalculateSize(0);
 				}
+				// A pinned side tab is visual-only outside its own rendered panel. Keep
+				// gameplay input available there instead of letting a tab-specific handler
+				// consume a click merely because a tab remains open.
+				boolean acceptTabInput = mustDrawMenu && mouseInTabArea;
 
 				if ((this.showUiTab == 0 && mustDrawMenu && !C_CUSTOM_UI) || (!mouseInTabArea && !interfaceOpen && C_CUSTOM_UI && mustDrawMenu)) {
 					this.drawUiTab0(var1 ^ 2);
 				}
 
 				if (this.showUiTab == Config.INVENTORY_TAB) {
-					this.drawUiTab1(-15252, mustDrawMenu);
+					this.drawUiTab1(-15252, acceptTabInput);
 				}
 
 				if (S_INVENTORY_COUNT_TOGGLE && C_INV_COUNT) {
@@ -11916,19 +11919,19 @@ public final class mudclient implements Runnable {
 				}
 
 				if (this.showUiTab == Config.SKILLS_AND_QUESTS_TAB) {
-					this.drawUiTabPlayerInfo(mustDrawMenu, var1 ^ 0);
+					this.drawUiTabPlayerInfo(acceptTabInput, var1 ^ 0);
 				}
 
 				if (this.showUiTab == Config.MAGIC_AND_PRAYER_TAB) {
-					this.drawUiTabMagic(mustDrawMenu, (byte) -74);
+					this.drawUiTabMagic(acceptTabInput, (byte) -74);
 				}
 
 				if (this.showUiTab == Config.FRIENDS_TAB) {
-					this.drawUiTab5(mustDrawMenu, false);
+					this.drawUiTab5(acceptTabInput, false);
 				}
 
 				if (this.showUiTab == Config.OPTIONS_TAB) {
-					this.drawUiTabOptions(15, mustDrawMenu);
+					this.drawUiTabOptions(15, acceptTabInput);
 				}
 
 				if (!this.topMouseMenuVisible && !this.optionsMenuShow) {
@@ -12560,9 +12563,10 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawSprite(spriteSelect(GUIPARTS.BAGTAB.getDef()), var3, 3);
 
 			final int inventoryPanelY = C_CUSTOM_UI
-				? maxY - CUSTOM_UI_INVENTORY_PANEL_HEIGHT : 36;
-			final int inventoryGridHeight = (this.m_cl / INVENTORY_COLUMNS) * INVENTORY_SLOT_HEIGHT;
-			final int inventoryTabsY = inventoryPanelY + inventoryGridHeight;
+				? getCustomInventoryPanelTop() : 36;
+			final int inventoryGridHeight = getCustomInventoryGridHeight();
+			final int inventoryTabsY = C_CUSTOM_UI
+				? getCustomInventoryTabsY() : inventoryPanelY + inventoryGridHeight;
 			int var4;
 			int var5;
 			int id;
@@ -12710,7 +12714,9 @@ public final class mudclient implements Runnable {
 			{
 				// Keep both views attached to the same tab bar. The equipment pane
 				// grows upward so it never overlaps the tabs below the 8x5 inventory.
-				yOffset = inventoryTabsY - EQUIPMENT_PANEL_HEIGHT;
+				yOffset = C_CUSTOM_UI
+					? getCustomEquipmentPanelTop()
+					: inventoryTabsY - EQUIPMENT_PANEL_HEIGHT;
 				this.getSurface().drawBoxAlpha(xOffset, yOffset, 245, 204, this.clearBox, 128);
 				this.getSurface().drawBoxAlpha(xOffset, yOffset + 228, 245, 58, this.clearBox, 128);
 				Sprite todraw = null;
@@ -20535,9 +20541,10 @@ public final class mudclient implements Runnable {
 		switch (this.showUiTab) {
 			case Config.INVENTORY_TAB:
 				panelLeft = panelRight - CUSTOM_UI_INVENTORY_PANEL_WIDTH;
-				panelTop = tabBarY - (this.tabEquipmentIndex == 1
-					? CUSTOM_UI_EQUIPMENT_PANEL_HEIGHT
-					: CUSTOM_UI_INVENTORY_PANEL_HEIGHT);
+				panelTop = this.tabEquipmentIndex == 1
+					? getCustomEquipmentPanelTop()
+					: getCustomInventoryPanelTop();
+				panelBottom = getCustomInventoryPanelBottom();
 				break;
 			case Config.SKILLS_AND_QUESTS_TAB:
 				panelTop = tabBarY - CUSTOM_UI_PLAYER_INFO_PANEL_OFFSET;
@@ -20562,6 +20569,31 @@ public final class mudclient implements Runnable {
 		}
 		return x >= panelLeft && x < panelRight
 			&& y >= Math.max(0, panelTop) && y < panelBottom;
+	}
+
+	/**
+	 * The inventory and equipment panes share the inventory tab strip. Keep the
+	 * draw and hit-test geometry together: a pinned pane must not create an
+	 * invisible input region above or below its rendered controls.
+	 */
+	private int getCustomInventoryPanelTop() {
+		return getUITabsY() - CUSTOM_UI_INVENTORY_PANEL_HEIGHT;
+	}
+
+	private int getCustomInventoryGridHeight() {
+		return (this.m_cl / INVENTORY_COLUMNS) * INVENTORY_SLOT_HEIGHT;
+	}
+
+	private int getCustomInventoryTabsY() {
+		return getCustomInventoryPanelTop() + getCustomInventoryGridHeight();
+	}
+
+	private int getCustomInventoryPanelBottom() {
+		return getCustomInventoryTabsY() + INVENTORY_TAB_HEIGHT;
+	}
+
+	private int getCustomEquipmentPanelTop() {
+		return getCustomInventoryTabsY() - EQUIPMENT_PANEL_HEIGHT;
 	}
 
 	private boolean isMouseOverCustomTabBar(int x, int y) {
