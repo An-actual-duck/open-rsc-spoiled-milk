@@ -76,8 +76,8 @@ The lightweight navigation map and optional helper are now provided by
 1. List the authoritative source roots, Ant targets/artifacts, plugin roots,
    generated/definition boundaries, and the key ownership maps already in
    plans. Link it from `docs/myworld/README.md` and workspace guidance.
-2. The non-committed helper checks for Universal Ctags and runs `ctags
-   --languages=Java --fields=+n
+2. The committed helper generates a non-committed local index. It checks for
+   Universal Ctags and runs `ctags --languages=Java --fields=+n
    --extras=+q -R` over maintained Java roots into `output/navigation/tags`.
    Rebuild it on demand; never consume it as authority for reflection,
    configuration, JSON/XML definitions, or plugin discovery.
