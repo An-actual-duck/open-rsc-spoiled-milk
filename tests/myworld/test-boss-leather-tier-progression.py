@@ -151,10 +151,18 @@ def main() -> int:
             '"king_black".equals(dragonBreathProc)',
             "KingBlackDragonBreathFollowup.tryApply",
             "applyHellsInfernoSplash",
-            "CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt)",
-            "CombatEffectUtil.findPlayerOwnedNpcSplashTargets(",
+            "HellsInfernoNpcSplash.apply(",
             "ElderGreenDragonArmorEffect.applyProc",
         ))
+    inferno_splash = read(
+        "server/src/com/openrsc/server/model/combat/HellsInfernoNpcSplash.java"
+    )
+    require_all(inferno_splash, (
+        "CombatEffectUtil.hellsInfernoSplashDamage(primaryDamageDealt)",
+        "CombatEffectUtil.findPlayerOwnedNpcSplashTargets(",
+        "CombatEffect.HELLS_INFERNO",
+        "auxiliaryMagicDamage.apply(target, splashDamage)",
+    ))
     elder_armor = read("server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java")
     require_all(elder_armor, (
         "PROC_CHANCE = 0.60D",
@@ -164,7 +172,9 @@ def main() -> int:
         "BURN_PULSES = 5",
         "findPlayerOwnedNpcSplashTargets",
         "findPlayerOwnedPvpSplashTargets",
-        "existing.refresh(source)",
+        "PeriodicEffectProvenance.player(source.getUUID())",
+        "ElderArmorBurnState.of(",
+        "existing.refresh()",
     ))
     assert 'return "elder_green"' not in equipment
     for event_path in (
@@ -180,14 +190,10 @@ def main() -> int:
         < legacy_melee.index("inflictDamage(hitter, target, damage);")
     assert modern_melee.index("applyWeaponPoison(attackerMob, targetMob, damage);") \
         < modern_melee.index("inflictDamage(attackerMob, targetMob, damage);")
-    for event_path in (
-        "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
-        "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
-    ):
-        require_all(read(event_path), (
-            "new CombatEffect(npc, CombatEffect.HELLS_INFERNO)",
-            "inflictAuxiliaryMagicDamage(player, npc, splashDamage)",
-        ))
+    require_all(inferno_splash, (
+        "new CombatEffect(target, CombatEffect.HELLS_INFERNO)",
+        "auxiliaryMagicDamage.apply(target, splashDamage)",
+    ))
     reciprocal = read("server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java")
     require_all(reciprocal, (
         "applyHellsInfernoFollowup(player, target,",

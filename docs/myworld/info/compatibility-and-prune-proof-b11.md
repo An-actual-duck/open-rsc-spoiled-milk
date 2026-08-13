@@ -20,9 +20,12 @@ OpenGL remains optional, so `ScaledWindow` and the persisted `scaling_type`,
 `RenderSurfaceSettings.Mode` values remain accepted migration aliases for old
 saved settings even though the current selector exposes only 4:3 and 16:9.
 
-The server compatibility flags `old_pray_xp`, `old_quest_mechanics`, and
-`old_skill_defs` remain active in plugins or definition loading. Their public
-Java fields and configuration keys are retained. The inverted
+The server compatibility flags `old_quest_mechanics` and `old_skill_defs`
+remain active in plugins or definition loading. Their public Java fields and
+configuration keys are retained. The former `old_pray_xp` flag was retired
+after offering experience moved to the authoritative tier-and-devotion model;
+it no longer had an active consumer. Regression coverage keeps the dead field
+and configuration key from returning. The inverted
 `BREAK_NPC_LOCATION_CACHE` label now has the semantic internal replacement
 `DISABLE_NPC_LOCATION_CACHE`; the original public field and the
 `break_npc_location_cache` key remain as compatibility aliases. The default is

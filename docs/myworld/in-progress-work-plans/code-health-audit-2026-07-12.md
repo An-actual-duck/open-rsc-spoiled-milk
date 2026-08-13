@@ -393,10 +393,11 @@ promoted.
 - **MySQL code is not automatically dead because the hosted alpha uses
   SQLite.** Both database implementations and configs must be checked against
   supported deployment policy before removal.
-- `OLD_PRAY_XP`, `OLD_QUEST_MECHANICS`, and `OLD_SKILL_DEFS` default false in
-  MyWorld configs but are referenced by active plugin/definition code. Rename
-  toward semantic modes or group under an explicit compatibility config; do
-  not delete based on the `OLD_` prefix.
+- At audit time, `OLD_PRAY_XP`, `OLD_QUEST_MECHANICS`, and `OLD_SKILL_DEFS`
+  defaulted false in MyWorld configs but were referenced by active
+  plugin/definition code. `OLD_PRAY_XP` was later retired only after its final
+  consumer moved to the authoritative offering tier-and-devotion model. The
+  remaining flags must not be deleted based on the `OLD_` prefix alone.
 
 #### Explicit archive — non-runtime but retained by policy
 

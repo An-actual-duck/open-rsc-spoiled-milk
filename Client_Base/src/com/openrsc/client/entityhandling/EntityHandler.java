@@ -5517,6 +5517,25 @@ public class EntityHandler {
 			52000, 283, "items:283", false, true, 16, EXALTED_RUNE_COLOR, true, false, true, 3310));
 	}
 
+	private static void addKingBlackDragonLeatherDefinitions() {
+		final int colour = 0x2B2A1A;
+		final String setDescription = "Full KBD-hide set: 40% chance for True Dragon's Breath: up to 10 bonus damage, 20 poison (max 40), and one elemental debuff.";
+		setCustomItemDefinition(3311, new ItemDef("King black dragon hide", "A heavy hide from the king black dragon", "",
+			36, 69, "items:69", false, false, 0, colour, false, false, true, 3311));
+		setCustomItemDefinition(3312, new ItemDef("King black dragon leather", "Processed king black dragon hide", "",
+			72, 69, "items:69", false, false, 0, colour, false, false, true, 3312));
+		setCustomItemDefinition(3313, new ItemDef("King-black-dragon-hide coif", setDescription, "",
+			72, 5, "items:5", false, true, 32, colour, false, false, true, 3313));
+		setCustomItemDefinition(3314, new ItemDef("King-black-dragon-hide gloves", setDescription, "",
+			144, 17, "items:17", false, true, 256, colour, false, false, true, 3314));
+		setCustomItemDefinition(3315, new ItemDef("King-black-dragon-hide boots", setDescription, "",
+			144, 223, "items:223", false, true, 512, colour, false, false, true, 3315));
+		setCustomItemDefinition(3316, new ItemDef("King-black-dragon-hide chaps", setDescription, "",
+			216, 590, "items:590", false, true, 128, colour, false, false, true, 3316));
+		setCustomItemDefinition(3317, new ItemDef("King-black-dragon-hide cuirass", setDescription, "",
+			288, 7, "items:7", false, true, 64, colour, false, false, true, 3317));
+	}
+
 	private static void addBangleJewelryDefinitions() {
 		final String[] gems = {"Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"};
 		final int[] banglePrices = {1800, 3000, 6000, 12000, 35000};
@@ -5826,6 +5845,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3259, new ItemDef("Red flower", "A red flower used as a potion ingredient", "", 24, -1, "external-png:red-flower@15x18", false, false, 0, 0, false, false, true, 3259));
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addExaltedRuneDefinitions();
+		addKingBlackDragonLeatherDefinitions();
 		addBangleJewelryDefinitions();
 		addClericSigilDefinitions();
 		addScytheLineDefinitions();
@@ -6645,6 +6665,9 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(850, "Sella", "An inspiring Heroes Guild Monster Slayer contact", "Task",
 			new int[]{16, 58, 40, 101, 51, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 11717785, 11717785, 15523536);
+		addMonsterSlayerNpcDefinition(851, "Reserved Monster Slayer contact", "An unused compatibility definition", "",
+			new int[]{0, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 15523536);
 		// Guild Radimus keeps his authentic definition and quest presentation;
 		// only the additional Monster Slayer shortcut is presentation-specific.
 		getNpcDef(785).updateCommand1("Task");

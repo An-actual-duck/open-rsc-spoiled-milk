@@ -18,7 +18,7 @@ JAVA_ROOT = ROOT / "server/src/com/openrsc/server/content/minigame/monsterslayer
 
 EXPECTED_CHALLENGES = ["FLEDGLING", "INITIATE", "VETERAN", "ELITE", "CHAMPION", "HERO"]
 EXPECTED_RANKS = ["FLEDGLING", "INITIATE", "VETERAN", "ELITE", "CHAMPION", "HERO", "LEGEND"]
-EXPECTED_POINTS = [25, 40, 60, 90, 150, 260]
+EXPECTED_POINTS = [38, 67, 62, 50, 121, 128]
 FORBIDDEN_NPCS = {
     473, 583, 694, 50, 359, 710, 375, 376, 252, 192, 109, 182, 78,
     567, 518, 704, 630,
@@ -33,7 +33,7 @@ def require(condition: bool, message: str) -> None:
 
 def load_npc_definitions() -> dict[int, dict]:
     definitions: dict[int, dict] = {}
-    for name in ("NpcDefs.json", "NpcDefsCustom.json"):
+    for name in ("NpcDefs.json", "NpcDefsCustom.json", "MonsterSlayerNpcDefs.json"):
         entries = json.loads((ROOT / "server/conf/server/defs" / name).read_text())["npcs"]
         definitions.update({entry["id"]: entry for entry in entries})
     for patch in json.loads((ROOT / "server/conf/server/defs/NpcDefsMyWorld.json").read_text())["npcs"]:
@@ -87,12 +87,12 @@ def validate_json() -> None:
     data = json.loads(DATA.read_text())
     require(set(data) == {"schemaVersion", "families", "contacts", "shops"}, "schema root drift")
     require(data["schemaVersion"] == 1, "schema version drift")
-    require(data["shops"] == [], "foundation must not commit shop stock")
 
     families = data["families"]
     contacts = data["contacts"]
+    shops = data["shops"]
     family_keys = [family["key"] for family in families]
-    require(len(family_keys) == len(set(family_keys)) == 32, "family key inventory drift")
+    require(len(family_keys) == len(set(family_keys)) == 50, "family key inventory drift")
     all_npc_ids = [npc_id for family in families for npc_id in family["npcIds"]]
     require(len(all_npc_ids) == len(set(all_npc_ids)), "NPC IDs overlap between families")
     require(not FORBIDDEN_NPCS.intersection(all_npc_ids), "unsafe Odyssey NPC entered launch families")
@@ -103,11 +103,30 @@ def validate_json() -> None:
     require([contact["awardedRank"] for contact in contacts] == EXPECTED_RANKS[1:], "awarded rank ladder drift")
     require(len({contact["key"] for contact in contacts}) == 6, "duplicate contact key")
 
+    require(len(shops) == 6, "shop count drift")
+    require([shop["key"] for shop in shops] == [contact["key"] for contact in contacts],
+            "shop/contact order drift")
+    require([shop["challenge"] for shop in shops] == EXPECTED_CHALLENGES,
+            "shop challenge ladder drift")
+    reward_keys = []
+    for shop in shops:
+        upgrade = shop["capacityUpgrade"]
+        require(upgrade["key"] == f'{shop["key"]}.capacity', "capacity upgrade key drift")
+        require(upgrade["cost"].get(shop["challenge"], 0) > 0,
+                "capacity upgrade must cost its challenge currency")
+        require(shop["categories"], "shop must retain at least one category")
+        rewards = [reward for category in shop["categories"] for reward in category["rewards"]]
+        require(rewards, "shop must retain at least one reward")
+        require(all(reward["itemId"] >= 0 and reward["amount"] > 0 and reward["cost"]
+                    for reward in rewards), "shop reward bounds drift")
+        reward_keys.extend(reward["key"] for reward in rewards)
+    require(len(reward_keys) == len(set(reward_keys)), "duplicate shop reward key")
+
     mandatory = [task for contact in contacts for task in contact["mandatoryTasks"]]
     repeatable = [task for contact in contacts for task in contact["repeatableTasks"]]
-    require(len(mandatory) == 33, "mandatory task count drift")
-    require(sum(task["requiredKills"] for task in mandatory) == 5_026, "mandatory kill total drift")
-    require(len(repeatable) == 32, "repeatable task count drift")
+    require(len(mandatory) == 35, "mandatory task count drift")
+    require(sum(task["requiredKills"] for task in mandatory) == 1_113, "mandatory kill total drift")
+    require(len(repeatable) == 12, "repeatable task count drift")
     require([sum(task["pointReward"] for task in contact["mandatoryTasks"])
              for contact in contacts] == EXPECTED_POINTS, "typed challenge earnings drift")
     task_keys = [task["key"] for task in mandatory + repeatable]
@@ -118,7 +137,7 @@ def validate_json() -> None:
     require(all(task["familyKey"] in set(family_keys) for task in mandatory + repeatable),
             "task references unknown family")
 
-    keys = recursively_collect_keys(data)
+    keys = recursively_collect_keys({"families": families, "contacts": contacts})
     require(keys.isdisjoint({"materials", "certificates", "taskId", "tierId", "itemReward", "rewards"}),
             "forbidden material/reward/positional field entered schema")
     serialized = DATA.read_text()
@@ -189,9 +208,9 @@ public final class MonsterSlayerFoundationFixture {
 		JSONObject root = new JSONObject(new String(Files.readAllBytes(Paths.get(args[0])), StandardCharsets.UTF_8));
 		Catalog catalog = new Catalog();
 		MonsterSlayerData data = MonsterSlayerData.parse(copy(root), catalog);
-		check(data.getFamilies().size() == 32 && data.getContacts().size() == 6
-			&& data.getTasks().size() == 65 && data.getShops().isEmpty(), "real data inventory drift");
-		check(data.getTask("falador.rats") != null && data.getFamily("rat") != null,
+		check(data.getFamilies().size() == 50 && data.getContacts().size() == 6
+			&& data.getTasks().size() == 47 && data.getShops().size() == 6, "real data inventory drift");
+		check(data.getTask("falador.goblins") != null && data.getFamily("rat") != null,
 			"stable key resolution failed");
 		assertOrderIndependence(root, catalog);
 		assertDataRejections(root);
@@ -248,35 +267,27 @@ public final class MonsterSlayerFoundationFixture {
 			MonsterSlayerData.parse(copy(root), badCatalog);
 		}}, "zero-spawn family");
 
-		JSONObject validShop = copy(root);
-		JSONObject cost = new JSONObject().put("FLEDGLING", 5).put("INITIATE", 3).put("HERO", 1);
-		JSONObject reward = new JSONObject().put("key", "legends.supply").put("itemId", 10)
-			.put("amount", 2).put("cost", cost);
-		JSONObject category = new JSONObject().put("key", "legends.supplies").put("label", "Supplies")
-			.put("iconItemId", 10).put("rewards", new JSONArray().put(reward));
-		JSONObject shop = new JSONObject().put("key", "legends").put("challenge", "HERO")
-			.put("categories", new JSONArray().put(category));
-		validShop.put("shops", new JSONArray().put(shop));
-		MonsterSlayerData shopData = MonsterSlayerData.parse(validShop, new Catalog());
-		check(shopData.getShops().size() == 1,
+		MonsterSlayerData shopData = MonsterSlayerData.parse(copy(root), new Catalog());
+		check(shopData.getShops().size() == 6,
 			"multi-cost shop schema did not load");
 		final MonsterSlayerDefinitions.Reward loadedReward = shopData.getShop("legends")
 			.getCategories().get(0).getRewards().get(0);
-		check(loadedReward.outputAmountFor(3) == 6L
-			&& loadedReward.costFor(3).get(MonsterSlayerChallenge.HERO) == 3L,
+		check(loadedReward.outputAmountFor(3) == 3L
+			&& loadedReward.costFor(3).get(MonsterSlayerChallenge.HERO) == 27L,
 			"reward quantity quote did not multiply output and every cost component");
 		reject(new Action() { public void run() {
-			loadedReward.outputAmountFor(Long.MAX_VALUE);
-		}}, "reward output multiplication overflow");
+			loadedReward.costFor(Long.MAX_VALUE);
+		}}, "reward cost multiplication overflow");
 		reject(new Action() { public void run() {
-			JSONObject bad = copy(validShop); bad.getJSONArray("shops").getJSONObject(0)
+			JSONObject bad = copy(root); bad.getJSONArray("shops").getJSONObject(0)
 				.getJSONArray("categories").getJSONObject(0).getJSONArray("rewards").getJSONObject(0)
 				.getJSONObject("cost").put("LEGEND", 1);
 			MonsterSlayerData.parse(bad, new Catalog());
 		}}, "unknown cost component");
 		reject(new Action() { public void run() {
-			JSONObject bad = copy(validShop); JSONObject firstShop = bad.getJSONArray("shops").getJSONObject(0);
-			firstShop.put("challenge", "FLEDGLING");
+			JSONObject bad = copy(root); bad.getJSONArray("shops").getJSONObject(0)
+				.getJSONArray("categories").getJSONObject(0).getJSONArray("rewards").getJSONObject(0)
+				.getJSONObject("cost").put("HERO", 1);
 			MonsterSlayerData.parse(bad, new Catalog());
 		}}, "cost above shop tier");
 	}
@@ -340,7 +351,7 @@ public final class MonsterSlayerFoundationFixture {
 
 	private static MonsterSlayerState.Snapshot rankSnapshot(MonsterSlayerData data, MonsterSlayerRank rank) {
 		return MonsterSlayerState.create(rank == MonsterSlayerRank.UNSTAMPED ? 0 : 2, rank,
-			MonsterSlayerBalances.zero(), cursorsForRank(data, rank), null, 0, 0L, 0,
+			MonsterSlayerBalances.zero(), cursorsForRank(data, rank), null, 0, 0L, 0, 0,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 	}
 
@@ -356,25 +367,25 @@ public final class MonsterSlayerFoundationFixture {
 
 		Map<String, Integer> fledgling = cursorsForRank(data, MonsterSlayerRank.FLEDGLING);
 		MonsterSlayerState.Snapshot mandatory = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
-			MonsterSlayerBalances.zero(), fledgling, "falador.rats", 50, 0L, 0,
+			MonsterSlayerBalances.zero(), fledgling, "falador.goblins", 40, 0L, 0, 0,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
-		check("falador.rats".equals(mandatory.getActiveTaskKey()), "mandatory active task validation failed");
+		check("falador.goblins".equals(mandatory.getActiveTaskKey()), "mandatory active task validation failed");
 		Map<String, Integer> initiate = cursorsForRank(data, MonsterSlayerRank.INITIATE);
 		MonsterSlayerState.Snapshot repeatable = MonsterSlayerState.create(2, MonsterSlayerRank.INITIATE,
-			MonsterSlayerBalances.zero(), initiate, "falador.rats.repeatable", 1, 1L, 0,
+			MonsterSlayerBalances.zero(), initiate, "falador.goblins.repeatable", 1, 1L, 0, 0,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		check(repeatable.getActiveKills() == 1, "repeatable active task validation failed");
 		reject(new Action() { public void run() {
-			Map<String, Integer> bad = cursorsForRank(data, MonsterSlayerRank.FLEDGLING); bad.put("falador", 5);
+			Map<String, Integer> bad = cursorsForRank(data, MonsterSlayerRank.FLEDGLING); bad.put("falador", 99);
 			MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING, MonsterSlayerBalances.zero(), bad,
-				null, 0, 0L, 0, MonsterSlayerState.LegacyStatus.NONE, 0, data);
+				null, 0, 0L, 0, 0, MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		}}, "cursor/rank contradiction");
 
 		EnumMap<MonsterSlayerChallenge, Long> amounts = new EnumMap<MonsterSlayerChallenge, Long>(MonsterSlayerChallenge.class);
 		long value = 10L;
 		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, value++);
 		MonsterSlayerState.Snapshot funded = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
-			MonsterSlayerBalances.of(amounts), fledgling, null, 0, 0L, 0,
+			MonsterSlayerBalances.of(amounts), fledgling, null, 0, 0L, 0, 0,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		Cache cache = new Cache();
 		cache.store("monster_slayer_points", 999L);
@@ -431,7 +442,7 @@ public final class MonsterSlayerFoundationFixture {
 		}
 		CombatOdysseyMigration.Result partial = migrate("0:0:100", 0L, 0, legacyData, data, empty);
 		check(partial.isSuccessful() && partial.getCreditedKills() == 100L
-			&& partial.getProposal().getBalances().get(MonsterSlayerChallenge.HERO) == 1L,
+			&& partial.getProposal().getBalances().get(MonsterSlayerChallenge.HERO) == 0L,
 			"partial current-task vector failed");
 		CombatOdysseyMigration.Result completedBit = migrate("0:0:500", 1L, 0, legacyData, data, empty);
 		check(completedBit.isSuccessful() && completedBit.getCreditedKills() == 500L,
@@ -441,7 +452,7 @@ public final class MonsterSlayerFoundationFixture {
 		check(unclaimed.isSuccessful()
 			&& unclaimed.getClassification() == CombatOdysseyMigration.Classification.COMPLETED_UNCLAIMED
 			&& unclaimed.getProposal().getRank() == MonsterSlayerRank.LEGEND
-			&& unclaimed.getProposal().getBalances().get(MonsterSlayerChallenge.HERO) == 520L,
+			&& unclaimed.getProposal().getBalances().get(MonsterSlayerChallenge.HERO) == 0L,
 			"completed-unclaimed migration failed");
 		CombatOdysseyMigration.Result unclaimedBit = migrate("13:0:0", 1L, 0, legacyData, data, empty);
 		check(unclaimedBit.isSuccessful()
@@ -450,19 +461,17 @@ public final class MonsterSlayerFoundationFixture {
 		CombatOdysseyMigration.Result claimed = migrate(null, null, 1, legacyData, data, empty);
 		check(claimed.isSuccessful()
 			&& claimed.getClassification() == CombatOdysseyMigration.Classification.COMPLETED_CLAIMED
-			&& claimed.getProposal().getBalances().get(MonsterSlayerChallenge.FLEDGLING) == 50L,
+			&& claimed.getProposal().getBalances().get(MonsterSlayerChallenge.FLEDGLING) == 0L,
 			"claimed completion migration failed");
 		CombatOdysseyMigration.Result activeRepeat = migrate("0:0:500", 0L, 2, legacyData, data, empty);
 		check(activeRepeat.isSuccessful()
-			&& activeRepeat.getProposal().getBalances().get(MonsterSlayerChallenge.HERO)
-			> claimed.getProposal().getBalances().get(MonsterSlayerChallenge.HERO),
-			"active prestige repeat did not add bounded vector credit");
+			&& activeRepeat.getProposal().getBalances().get(MonsterSlayerChallenge.HERO) == 0L,
+			"active prestige repeat unexpectedly granted shop currency");
 		CombatOdysseyMigration.Result capped = migrate(null, null, 1000, legacyData, data, empty);
 		check(capped.isSuccessful(), "high prestige migration failed");
-		long[] caps = {200L, 320L, 480L, 720L, 1200L, 2080L};
 		for (int code = 0; code < 6; code++) {
-			check(capped.getProposal().getBalances().get(MonsterSlayerChallenge.fromCode(code)) <= caps[code],
-				"migration component cap failed");
+			check(capped.getProposal().getBalances().get(MonsterSlayerChallenge.fromCode(code)) == 0L,
+				"migration unexpectedly granted shop currency");
 		}
 
 		check(!migrate("broken", null, 0, legacyData, data, empty).isSuccessful(), "malformed string accepted");

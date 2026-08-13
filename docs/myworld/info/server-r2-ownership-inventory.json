@@ -805,7 +805,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "3b1962aca0f4ddc36c612b5e7e8670c12655b8e8ca2684259ef90b8f62181804",
+  "inputTreeSha256": "eea8cc40de4c40954afa3a4b6acf033d271e0b9277f8084f396284f7c80a8999",
   "inputs": [
     {
       "brandSignals": [
@@ -4491,7 +4491,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 22797,
+      "bytes": 22725,
       "category": "target-profile",
       "classificationReason": "Spoiled Milk distribution composition profile",
       "classificationRule": "server/myworld*.conf",
@@ -4500,7 +4500,7 @@
       "kind": "configuration",
       "path": "server/myworld-host.conf",
       "reverseDependencies": [],
-      "sha256": "6bbbe8bacb3936e2fb39411af1ba872620d7d0a149018b16a32b4faae696afc0"
+      "sha256": "3005c9021eda6682d259051c6c5158333ef7018e5827d97f3d62c93a36270bf6"
     },
     {
       "brandSignals": [
@@ -4508,7 +4508,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 21682,
+      "bytes": 21610,
       "category": "target-profile",
       "classificationReason": "Spoiled Milk distribution composition profile",
       "classificationRule": "server/myworld*.conf",
@@ -4517,7 +4517,7 @@
       "kind": "configuration",
       "path": "server/myworld.conf",
       "reverseDependencies": [],
-      "sha256": "eb00e021803b94e6383b4db67b804f831c9cdfb53e7f48681ef38ffefc88dc41"
+      "sha256": "7e94564bf53b149f5cf7d866f4d09974fbacf16de5ca8525bf169b75b0669077"
     },
     {
       "brandSignals": [
@@ -31380,7 +31380,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 58290,
+      "bytes": 58121,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -31452,7 +31452,7 @@
         "server/src/com/openrsc/server/util/NamedThreadFactory.java",
         "server/src/com/openrsc/server/util/ServerAwareThreadFactory.java"
       ],
-      "sha256": "03a613e862ffe4eaf4b5f17f8541d53a54d20e8c7e9e78b31be9701405500caf"
+      "sha256": "2f6c431ad5f4c4dbd5cf934938b5f3a9bd1dbe83837ed03555312a020b283621"
     },
     {
       "brandSignals": [],

@@ -16,8 +16,8 @@ PRAYER_BOOKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/PrayerB
 FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefinitionFallbackDiagnostics.java"
 
 EXPECTED: dict[str, tuple[int, str]] = {
-    "npcs": (861, "9851a72d326fd4c84683b8847ff9e365915bdce1f7334081a5444516e2d9583a"),
-    "items": (3311, "f79830af30746a6e0048a567c0abb693b81106ffc6593adbfff8ac8041d9dab0"),
+    "npcs": (861, "51c339da660b1ddc7525429a50eaeb23ae854ebae3198cd232eb51d7b163bfc6"),
+    "items": (3318, "b5c098b0b5cb9b13fc666d2db900a7a2f8c44233549ec67cf8f1fbeb9b4e0310"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
     "animations": (1083, "5e83313f17e1bf5a82bb97d75cc14ba553700b6f865c1f2ba3a51797893c6730"),
     "projectiles": (41, "c79c74303e8ce5c5c345640227a0023ccbc63285f0a652f404794c35c1d5385f"),
@@ -201,7 +201,7 @@ public final class ClientDefinitionRegistryFixture {
 		}
 		for (String line : lines) {
 			if (!line.startsWith("CLIENT_ITEM_DEF_FALLBACK requestedId=")
-				|| !line.contains(" reason=out-of-range itemCount=3311")) {
+				|| !line.contains(" reason=out-of-range itemCount=3318")) {
 				throw new AssertionError("Malformed fallback diagnostic: " + line);
 			}
 		}

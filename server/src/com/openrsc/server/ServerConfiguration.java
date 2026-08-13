@@ -356,8 +356,6 @@ public class ServerConfiguration {
 	public boolean USES_PK_MODE;
 	public boolean ARRIVE_LUMBRIDGE;
 	public boolean SCALED_WOODCUT_XP;
-	/** Active compatibility mode selected by the {@code old_pray_xp} config key. */
-	public boolean OLD_PRAY_XP;
 	public boolean DIVIDED_GOOD_EVIL;
 	public boolean LACKS_PRAYERS;
 	public boolean HAS_FEAR_SPELL;
@@ -733,7 +731,6 @@ public class ServerConfiguration {
 		USES_PK_MODE = tryReadBool("uses_pk_mode").orElse(false);
 		ARRIVE_LUMBRIDGE = tryReadBool("arrive_lumbridge").orElse(false);
 		SCALED_WOODCUT_XP = tryReadBool("scaled_woodcut_xp").orElse(false);
-		OLD_PRAY_XP = tryReadBool("old_pray_xp").orElse(false);
 		DIVIDED_GOOD_EVIL = tryReadBool("divided_good_evil").orElse(false);
 		LACKS_PRAYERS = tryReadBool("lacks_prayers").orElse(false);
 		HAS_FEAR_SPELL = tryReadBool("has_fear_spell").orElse(false);

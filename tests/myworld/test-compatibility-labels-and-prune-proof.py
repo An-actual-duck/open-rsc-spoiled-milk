@@ -122,7 +122,6 @@ def main() -> None:
     require("getConfig().BREAK_NPC_LOCATION_CACHE" not in updater, "Internal code reused the misleading NPC-cache alias")
 
     compatibility_consumers = {
-        "OLD_PRAY_XP": ("server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java",),
         "OLD_QUEST_MECHANICS": (
             "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/ManPhoenix.java",
             "server/plugins/com/openrsc/server/plugins/authentic/quests/free/ShieldOfArrav.java",
@@ -135,6 +134,11 @@ def main() -> None:
     for field, paths in compatibility_consumers.items():
         require(f"public boolean {field};" in server_config, f"Active compatibility field was removed: {field}")
         require(any(field in read(path) for path in paths), f"No active consumer remains for {field}")
+
+    require("public boolean OLD_PRAY_XP;" not in server_config, "Retired prayer-XP compatibility field returned")
+    require('tryReadBool("old_pray_xp")' not in server_config, "Retired prayer-XP config reader returned")
+    for config_path in ("server/myworld.conf", "server/myworld-host.conf"):
+        require("old_pray_xp:" not in read(config_path), f"Retired prayer-XP key returned: {config_path}")
 
     open_rsc = read("PC_Client/src/orsc/OpenRSC.java")
     legacy_scaling = read("Client_Base/src/orsc/LegacySoftwareScalingSettings.java")
