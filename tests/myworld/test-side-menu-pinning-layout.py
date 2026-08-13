@@ -54,6 +54,10 @@ def main() -> None:
             raise SystemExit(f"FAIL: retired map relocation control remains: {retired}")
     require(text, 'props.remove("minimap_position");', "legacy map-position migration")
     require(text, "return new int[] {rightX, topY};", "fixed floating map anchor")
+    require(text, "private boolean isFloatingMinimap()", "minimap layout policy")
+    require(text, "return C_CUSTOM_UI;", "pinning does not detach the authentic minimap")
+    if "return C_CUSTOM_UI || this.minimapPinned;" in text:
+        raise SystemExit("FAIL: pinning must not switch the minimap to floating geometry")
 
     for snippet in (
         "private static final int COMBAT_XP_ALLOCATION_X = 7;",

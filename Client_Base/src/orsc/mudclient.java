@@ -15141,7 +15141,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private boolean isFloatingMinimap() {
-		return C_CUSTOM_UI || this.minimapPinned;
+		// Pinning controls persistence only. The removed corner-relocation feature
+		// used to detach a pinned authentic minimap from its tab frame; keep the
+		// minimap attached to the same UI geometry before and after it is pinned.
+		return C_CUSTOM_UI;
 	}
 
 	private int[] getMinimapContentBounds(boolean floatingMinimap) {
