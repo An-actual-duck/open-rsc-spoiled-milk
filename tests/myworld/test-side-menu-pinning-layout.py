@@ -28,13 +28,14 @@ def main() -> None:
     for snippet in (
         "private int pinnedSideMenuTab = 0;",
         "private boolean handleSideMenuTabInteraction(final int tab)",
-        "if (this.pinnedSideMenuTab == tab)",
-        "this.pinnedSideMenuTab = tab;",
+		"SideMenuPinPolicy.pinnedTabAfterPrimaryClick(",
+		"SideMenuPinPolicy.transientTabAfterIconInteraction(",
 		"if (tab == Config.MINIMAP_AND_COMPASS_TAB) {\n\t\t\treturn false;",
-		"} else {\n\t\t\tthis.showUiTab = tab;",
+		"private int getVisibleSideMenuTab()",
+		"SideMenuPinPolicy.visibleTab(this.showUiTab, this.pinnedSideMenuTab)",
 		"private boolean isCurrentSideMenuHomeTab()",
 		"private void closeOrRestorePinnedSideMenu()",
-		"this.showUiTab = this.pinnedSideMenuTab != 0 ? this.pinnedSideMenuTab : 0;",
+		"SideMenuPinPolicy.transientTabAfterPointerLeaves();",
         "this.getSideMenuTabAt(this.mouseX, this.mouseY, 3, 35)",
         "this.getSideMenuTabAt(this.mouseX, this.mouseY, minY, maxY)",
 		"!this.isCurrentSideMenuHomeTab()",
@@ -53,6 +54,10 @@ def main() -> None:
             raise SystemExit(f"FAIL: retired map relocation control remains: {retired}")
     require(text, 'props.remove("minimap_position");', "legacy map-position migration")
     require(text, "return new int[] {rightX, topY};", "fixed floating map anchor")
+    require(text, "private boolean isFloatingMinimap()", "minimap layout policy")
+    require(text, "return C_CUSTOM_UI;", "pinning does not detach the authentic minimap")
+    if "return C_CUSTOM_UI || this.minimapPinned;" in text:
+        raise SystemExit("FAIL: pinning must not switch the minimap to floating geometry")
 
     for snippet in (
         "private static final int COMBAT_XP_ALLOCATION_X = 7;",
