@@ -681,22 +681,21 @@ and summon-owner damage. Its personal-loot path accepts online, living players
 with positive damage and applies a contribution scale with a `0.05` floor.
 Those maps are private and cleared after XP/drop processing.
 
-Monster Slayer should not change `KillNpcTrigger`, because many quests depend
-on its existing final-blow semantics. Its later kill-credit branch should add a
-focused contribution snapshot/hook at the NPC-death layer and use this rule:
+Monster Slayer does not change `KillNpcTrigger`, because many quests depend on
+its existing final-blow semantics. Its later kill-credit branch uses this rule:
 
 - Aggregate melee, ranged, magic, and owned-summon damage by player UUID.
-- Credit each online, living contributor still within 16 tiles who dealt at
-  least `max(1, ceil(npcMaxHits * 0.05))` damage; always credit the top-damage
-  contributor when their damage is positive.
-- Credit a player at most once per NPC death even if several damage styles or a
-  summon contributed.
+- Consider only online, living, same-world/layer contributors within 16 tiles
+  who have positive attributed damage and whose active task accepts that NPC.
+- Credit exactly one such task holder: the largest total damage wins. A
+  higher-damage player without a matching task is ignored for Slayer selection.
+- Equal total damage resolves by the repository's stable UUID ordering (lowest
+  UUID first), so contributor-map iteration cannot choose the winner.
 - Match only the active task's validated family IDs.
 - Do not grant points per kill; only advance the bounded active count.
 
-The five-percent recommendation aligns with the existing personal-loot scale
-floor while preventing a one-hit tag on larger monsters. It is a Monster
-Slayer rule, not authorization to change XP, loot, or existing quest credit.
+This is a Monster Slayer rule, not authorization to change XP, loot, existing
+quest credit, personal loot, party behavior, or general NPC kill ownership.
 
 ### Dialogue And Compatibility Integrations
 
@@ -2070,9 +2069,11 @@ Slayer cache keys.
   completed mandatory chain and an explicit repeatable task key owned by the
   same contact.
 - The NPC death lifecycle snapshots Slayer credit before XP settlement clears
-  contribution evidence. It credits each online, living, same-world/layer
-  contributor within 16 tiles who dealt at least `max(1, ceil(maxHits * .05))`
-  damage, while preserving the positive-damage top contributor exception.
+  contribution evidence. It credits exactly one online, living, same-world/layer
+  task holder within 16 tiles: the positive-damage matching-task contributor
+  with the highest total melee/ranged/magic/owned-summon damage. Equal damage
+  resolves by stable UUID ordering. A non-matching top-damage player never
+  blocks an eligible task holder.
 - Wrong family, no active task, invalid contact/rank, duplicate callbacks, and
   invalid repeatable selections leave cache state unchanged. Completion clears
   the task exactly once, increments the lifetime total, advances only the

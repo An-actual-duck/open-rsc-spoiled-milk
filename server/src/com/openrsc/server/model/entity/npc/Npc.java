@@ -830,36 +830,38 @@ public class Npc extends Mob {
 		remove();
 	}
 
-	/** Snapshot Slayer eligibility before XP settlement clears contribution evidence. */
+	/**
+	 * Snapshot one Slayer winner before XP settlement clears contribution evidence.
+	 * Slayer is intentionally separate from generic kill, loot, and XP ownership.
+	 */
 	private void creditMonsterSlayerEligibleContributors() {
 		if (getWorld().getMonsterSlayerTaskService() == null) return;
-		int threshold = Math.max(1, (int) Math.ceil(getDef().getHits() * 0.05D));
-		ArrayList<UUID> contributors = getAllDamageDealerIds();
-		UUID topContributor = null;
-		int topDamage = 0;
-		for (UUID id : contributors) {
-			int damage = getTotalDamageBy(id);
-			if (damage > topDamage) {
-				topDamage = damage;
-				topContributor = id;
-			}
-		}
-		for (UUID id : contributors) {
+		Player winner = null;
+		int winnerDamage = 0;
+		for (UUID id : getSlayerDamageDealerIds()) {
 			Player player = getWorld().getPlayerByUUID(id);
-			if (player == null || player.isRemoved() || player.getSkills().getLevel(Skill.HITS.id()) <= 0
+			if (player == null || !player.isLoggedIn() || player.isRemoved() || player.getSkills().getLevel(Skill.HITS.id()) <= 0
 				|| !sharesSpatialDomain(player)
-				|| !getLocation().withinRange(player.getLocation(), 16)
-				|| (getTotalDamageBy(id) < threshold && !id.equals(topContributor))) continue;
-			MonsterSlayerTaskService.CreditResult credit = getWorld()
-				.getMonsterSlayerTaskService().tryCreditEligibleKill(player, getID());
-			if (!credit.isSuccessful()) {
-				logMonsterSlayerCreditFailure(player, credit.getFailureReason());
-				continue;
+				|| !getLocation().withinRange(player.getLocation(), 16)) continue;
+			int damage = getTotalDamageBy(id);
+			if (damage <= 0 || !getWorld().getMonsterSlayerTaskService()
+				.hasActiveTaskAcceptingNpc(player, getID())) continue;
+			if (winner == null || damage > winnerDamage
+				|| (damage == winnerDamage && player.getUUID().compareTo(winner.getUUID()) < 0)) {
+				winner = player;
+				winnerDamage = damage;
 			}
-			String progressMessage = getWorld().getMonsterSlayerTaskService()
-				.progressMessage(credit.getTaskResult());
-			if (progressMessage != null) player.message(progressMessage);
 		}
+		if (winner == null) return;
+		MonsterSlayerTaskService.CreditResult credit = getWorld()
+			.getMonsterSlayerTaskService().tryCreditEligibleKill(winner, getID());
+		if (!credit.isSuccessful()) {
+			logMonsterSlayerCreditFailure(winner, credit.getFailureReason());
+			return;
+		}
+		String progressMessage = getWorld().getMonsterSlayerTaskService()
+			.progressMessage(credit.getTaskResult());
+		if (progressMessage != null) winner.message(progressMessage);
 	}
 
 	private void logMonsterSlayerCreditFailure(Player player, String reason) {
@@ -1299,6 +1301,13 @@ public class Npc extends Mob {
 		addMissingDamageDealerIds(ids, getCombatDamagers());
 		addMissingDamageDealerIds(ids, getRangeDamagers());
 		addMissingDamageDealerIds(ids, getMageDamagers());
+		return ids;
+	}
+
+	/** Slayer selection includes player-owned summon damage without changing XP ownership. */
+	private ArrayList<UUID> getSlayerDamageDealerIds() {
+		ArrayList<UUID> ids = getAllDamageDealerIds();
+		addMissingDamageDealerIds(ids, getSummonDamagers());
 		return ids;
 	}
 

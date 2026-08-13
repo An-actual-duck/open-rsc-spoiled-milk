@@ -31,6 +31,25 @@ public final class MonsterSlayerTaskService {
 	}
 
 	/**
+	 * Read-only selection predicate for the NPC death lifecycle. It deliberately
+	 * checks the same typed transition that credit would use, but never writes a
+	 * player cache or emits progression.
+	 */
+	public boolean hasActiveTaskAcceptingNpc(Player player, int npcId) {
+		try {
+			player = requirePlayer(player);
+			synchronized (player) {
+				MonsterSlayerState.TaskResult candidate = MonsterSlayerState.recordEligibleKill(
+					MonsterSlayerState.read(player.getCache(), data), data, npcId);
+				return candidate.getReason() == MonsterSlayerState.TaskResult.Reason.PROGRESSED
+					|| candidate.getReason() == MonsterSlayerState.TaskResult.Reason.COMPLETED;
+			}
+		} catch (RuntimeException ex) {
+			return false;
+		}
+	}
+
+	/**
 	 * Development-only completion seam. The command caller is responsible for
 	 * privilege gating; this service deliberately replays the normal typed kill
 	 * transition so rewards, mandatory cursors, rank changes, and exact-once
