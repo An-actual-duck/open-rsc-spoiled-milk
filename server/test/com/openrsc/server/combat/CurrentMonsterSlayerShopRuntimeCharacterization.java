@@ -9,12 +9,15 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerState;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBalances;
+import com.openrsc.server.content.Summoning;
+import com.openrsc.server.constants.Skill;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.content.market.MarketInventoryAdmission;
 import com.openrsc.server.net.rsc.handlers.PlayerTradeHandler;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.model.entity.player.Player;
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -29,6 +32,7 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		MonsterSlayerData data = data();
 		h.installMonsterSlayerData(data);
 		risingSunAleTransactionOutcomes(h, data);
+		supportCommandExperienceUsesActiveMinutePulses(h);
 		basicRedemptionAndRollback(h, data);
 		rankIndependentShopAndOrderedCapacityAccess(h, data);
 		everyShopDeductsItsTypedCost(h, data);
@@ -37,6 +41,52 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
 		capacityAwareAdmissionPreservesItems(h, data);
+	}
+
+	private static void supportCommandExperienceUsesActiveMinutePulses(CurrentCombatHarness h)
+		throws Exception {
+		final int sapphireSupportCommand = 3101;
+		final String nextKey = "myworld_support_command_xp_next_pulse";
+		final String remainingKey = "myworld_support_command_xp_remaining";
+		Player owner = h.player("support command pulse", 890, 790);
+		h.equip(owner, sapphireSupportCommand, 1);
+		Summoning.summonTestUnicorn(owner);
+		int before = owner.getSkills().getExperience(Skill.SUMMONING.id());
+		owner.getCache().store(nextKey, System.currentTimeMillis() - 1L);
+		invokeSupportCommandPulse(owner);
+		assertEquals(before + 60, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"Sapphire Support Command grants 15 displayed XP on an independent minute pulse");
+		int afterFirstPulse = owner.getSkills().getExperience(Skill.SUMMONING.id());
+		invokeSupportCommandPulse(owner);
+		assertEquals(afterFirstPulse, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"a command pulse cannot be reset for repeated XP");
+
+		Summoning.dismissManualSummon(owner);
+		assertTrue(owner.getCache().hasKey(remainingKey) && !owner.getCache().hasKey(nextKey),
+			"dismissal pauses the command timer instead of resetting it");
+		long pausedRemaining = owner.getCache().getLong(remainingKey);
+		Summoning.summonTestUnicorn(owner);
+		assertTrue(owner.getCache().hasKey(nextKey), "replacement support summon resumes command timer");
+		long resumedRemaining = owner.getCache().getLong(nextKey) - System.currentTimeMillis();
+		assertTrue(resumedRemaining > 0L && resumedRemaining <= pausedRemaining,
+			"re-summoning cannot grant a fresh command minute");
+
+		h.equip(owner, ItemId.AMULET_OF_ACCURACY.id(), 1);
+		invokeSupportCommandPulse(owner);
+		assertTrue(owner.getCache().hasKey(remainingKey) && !owner.getCache().hasKey(nextKey),
+			"unequipping the Necklace pauses rather than accrues command XP");
+		int afterUnequip = owner.getSkills().getExperience(Skill.SUMMONING.id());
+		h.equip(owner, sapphireSupportCommand, 1);
+		invokeSupportCommandPulse(owner);
+		assertEquals(afterUnequip, owner.getSkills().getExperience(Skill.SUMMONING.id()),
+			"re-equipping cannot immediately reset or award command XP");
+		Summoning.dismissManualSummon(owner);
+	}
+
+	private static void invokeSupportCommandPulse(Player owner) throws Exception {
+		Method method = Summoning.class.getDeclaredMethod("pulseSupportCommandExperience", Player.class);
+		method.setAccessible(true);
+		method.invoke(null, owner);
 	}
 
 	private static void rankIndependentShopAndOrderedCapacityAccess(CurrentCombatHarness h,

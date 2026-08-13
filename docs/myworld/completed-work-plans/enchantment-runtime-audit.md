@@ -120,7 +120,7 @@ actual damage, and the separation from Siphoning.
 | Death, Reaping | `1663-1667`; guaranteed-drop `+1` chance `25/40/60/90/100%`; tier 5 has another `+1` at `10%` | `getDeathNecklaceGuaranteedDropBonusChance/ExtraChance`; `Equipment.rollDeathNecklaceGuaranteedDropBonus`; NPC bones/invariable drops | Complete. data/runtime. |
 | Blood, Leach | `1668-1672`; poison Leach `10/20/30/50/100%` | Blood section above | Actual-damage defect fixed. data/runtime plus new edge coverage. |
 | Soul, Preservation | `1759-1763`; keep `+1/+2/+3/+5/+8` items on death | `getSoulNecklaceExtraKeptItems`; `Inventory` death-item retention | Complete. data/runtime. |
-| Life, Support Command | `3101-3105`; support upkeep waits `+10/+20/+30/+50/+100%` longer and grants `+50/+100/+150/+250/+400%` Summoning XP | `getLifeNecklaceSupportDurationPercent/getLifeNecklaceSupportUpkeepXpBonusPercent`; support upkeep in `Summoning` | Applies only when a Life rune is actually consumed. Complete. data/runtime. |
+| Life, Support Command | `3101-3105`; support upkeep waits `+10/+20/+30/+50/+100%` longer and a one-minute active-time command pulse grants `+50/+100/+150/+250/+400%` Summoning XP | `getLifeNecklaceSupportDurationPercent/getLifeNecklaceSupportUpkeepXpBonusPercent`; `pulseSupportCommandExperience` in `Summoning` | Requires both an active support summon and the necklace. Rune preservation/duration do not alter cadence; logout, dismissal, and unequip pause remaining time. Complete. data/runtime. |
 
 ### Rings
 

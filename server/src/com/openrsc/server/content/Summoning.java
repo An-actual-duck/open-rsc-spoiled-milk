@@ -66,6 +66,8 @@ public final class Summoning {
 	private static final String SUPPORT_UPKEEP_SURCHARGE_KEY = "myworld_support_upkeep_surcharge";
 	private static final String SUPPORT_UPKEEP_RECOVERY_STARTED_KEY = "myworld_support_upkeep_recovery_started";
 	private static final String SUPPORT_UPKEEP_NEXT_INCREASE_KEY = "myworld_support_upkeep_next_increase";
+	private static final String SUPPORT_COMMAND_XP_NEXT_PULSE_KEY = "myworld_support_command_xp_next_pulse";
+	private static final String SUPPORT_COMMAND_XP_REMAINING_KEY = "myworld_support_command_xp_remaining";
 	private static final String FOUNDRY_DRAGON_ANIMATION_TICKS_KEY = "myworld_foundry_dragon_animation_ticks";
 	private static final String SOURCE_MANUAL = "manual";
 	private static final String SOURCE_ARMOR = "armor";
@@ -116,6 +118,7 @@ public final class Summoning {
 	private static final int SUPPORT_UPKEEP_RECOVERY_MS = SUPPORT_UPKEEP_MS;
 	private static final int SUMMON_CHARGE_MS = 5000;
 	private static final int SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP = 10;
+	private static final int SUPPORT_COMMAND_XP_PULSE_MS = 60000;
 	private static final int PACK_RAT_UTILITY_BASE_DISPLAYED_XP = 75;
 	private static final int PACK_RAT_UTILITY_PER_ITEM_DISPLAYED_XP = 5;
 	private static final int PACK_RAT_UTILITY_MAX_DISPLAYED_XP = 150;
@@ -449,6 +452,9 @@ public final class Summoning {
 		}
 		final Npc activeSummon = owner.getAttribute(MANUAL_SUMMON_KEY, null);
 		if (activeSummon == summon) {
+			if (wasSupportSummon) {
+				pauseSupportCommandExperience(owner);
+			}
 			clearManualSummonState(owner);
 			if (wasSupportSummon) {
 				startSupportUpkeepRecovery(owner);
@@ -1202,6 +1208,9 @@ public final class Summoning {
 				owner.getCache().store(SUPPORT_UPKEEP_NEXT_INCREASE_KEY,
 					System.currentTimeMillis() + SUPPORT_UPKEEP_INCREASE_MS);
 			}
+			if (owner.getCarriedItems().getEquipment().getLifeNecklaceSupportUpkeepXpBonusPercent() > 0) {
+				resumeSupportCommandExperience(owner);
+			}
 		}
 		final WorldLocation spawnLocation = adjacentWorldLocation(owner);
 		final Npc summon = new Npc(owner.getWorld(), profile.npcId, spawnLocation);
@@ -1366,6 +1375,7 @@ public final class Summoning {
 				}
 				if (profile.role == SummonRole.SUPPORT) {
 					updateSupportUpkeepEscalation(owner);
+					pulseSupportCommandExperience(owner);
 				}
 				if (profile.durationTicks > 0 && --ticksRemaining <= 0) {
 					final int upkeepCost = getSupportUpkeepCost(owner);
@@ -1408,6 +1418,51 @@ public final class Summoning {
 			nextIncrease + ((long) increases * SUPPORT_UPKEEP_INCREASE_MS));
 		owner.message("@yel@Your support summon upkeep increases to "
 			+ formatLifeRunes(SUPPORT_UPKEEP_BASE_COST + surcharge) + " per minute.");
+	}
+
+	/**
+	 * Support Command XP is active-time based: rune preservation and a longer
+	 * upkeep duration must not change its once-per-minute cadence. The deadline
+	 * is cache-backed so changing equipment cannot reset an active pulse.
+	 */
+	private static void resumeSupportCommandExperience(final Player owner) {
+		if (owner.getCache().hasKey(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY)) {
+			return;
+		}
+		final long remaining = owner.getCache().hasKey(SUPPORT_COMMAND_XP_REMAINING_KEY)
+			? Math.max(1L, owner.getCache().getLong(SUPPORT_COMMAND_XP_REMAINING_KEY))
+			: SUPPORT_COMMAND_XP_PULSE_MS;
+		owner.getCache().remove(SUPPORT_COMMAND_XP_REMAINING_KEY);
+		owner.getCache().store(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY, System.currentTimeMillis() + remaining);
+	}
+
+	private static void pauseSupportCommandExperience(final Player owner) {
+		if (!owner.getCache().hasKey(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY)) {
+			return;
+		}
+		final long remaining = Math.max(1L,
+			owner.getCache().getLong(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY) - System.currentTimeMillis());
+		owner.getCache().store(SUPPORT_COMMAND_XP_REMAINING_KEY, remaining);
+		owner.getCache().remove(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY);
+	}
+
+	private static void pulseSupportCommandExperience(final Player owner) {
+		if (!hasActiveSupportSummon(owner)) {
+			return;
+		}
+		if (owner.getCarriedItems().getEquipment().getLifeNecklaceSupportUpkeepXpBonusPercent() <= 0) {
+			pauseSupportCommandExperience(owner);
+			return;
+		}
+		resumeSupportCommandExperience(owner);
+		final long now = System.currentTimeMillis();
+		if (now < owner.getCache().getLong(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY)) {
+			return;
+		}
+		awardDisplayedSummoningExperience(owner, getSupportCommandDisplayedExperience(owner));
+		owner.getCache().store(SUPPORT_COMMAND_XP_NEXT_PULSE_KEY, now + SUPPORT_COMMAND_XP_PULSE_MS);
+		owner.message("@gre@Your Necklace of Support Command grants "
+			+ getSupportCommandDisplayedExperience(owner) + " Summoning experience.");
 	}
 
 	private static void startSupportUpkeepRecovery(final Player owner) {
@@ -1988,12 +2043,11 @@ public final class Summoning {
 		final boolean consumed = owner.getCarriedItems().remove(new Item(ItemId.LIFE_RUNE.id(), amount), false) != -1;
 		if (consumed) {
 			ActionSender.sendInventory(owner);
-			awardDisplayedSummoningExperience(owner, getSupportUpkeepDisplayedExperience(owner));
 		}
 		return consumed;
 	}
 
-	private static int getSupportUpkeepDisplayedExperience(final Player owner) {
+	private static int getSupportCommandDisplayedExperience(final Player owner) {
 		final int bonusPercent = owner.getCarriedItems().getEquipment().getLifeNecklaceSupportUpkeepXpBonusPercent();
 		return SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP
 			+ (int) Math.ceil(SUPPORT_LIFE_RUNE_UPKEEP_DISPLAYED_XP * (bonusPercent / 100.0D));
