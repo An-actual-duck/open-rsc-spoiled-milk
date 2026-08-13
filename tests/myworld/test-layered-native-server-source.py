@@ -364,7 +364,7 @@ SPOILED_MILK_REVIEW_HARNESS = (
     .replace("world.getLevelCount() == 4", "world.getLevelCount() == 6")
     .replace("world.getPlacementSetCount() == 4",
              "world.getPlacementSetCount() == 6")
-    .replace("== 3610", "== 3790")
+    .replace("== 3610", "== 3789")
     .replace("== 1010", "== 879")
     .replace("== 26765", "== 27887")
     .replace("== 966", "== 971")

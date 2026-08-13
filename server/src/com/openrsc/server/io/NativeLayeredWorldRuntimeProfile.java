@@ -35,7 +35,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"rsc-remastered.spoiled-milk-layered-world";
 	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.5.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38";
+		"f5a79233700fa753a010e21bb5f697977c44d5385715b4d7cb69b2d0770280ae";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -183,7 +183,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			SPOILED_MILK_PACKAGE_VERSION,
 			SPOILED_MILK_MANIFEST_SHA256,
 				1782,
-				3790,
+				3789,
 				879,
 				27887,
 			971,
@@ -203,7 +203,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			|| loaded.getLevelCount() < 6
 			|| loaded.getTerrainSectorCount() < 1782
 			|| loaded.getPlacementSetCount() != loaded.getLevelCount()
-			|| loaded.getNpcPlacementCount() < 3790
+			|| loaded.getNpcPlacementCount() < 3789
 			|| loaded.getGroundItemPlacementCount() < 879
 			|| loaded.getSceneryPlacementCount() < 27887
 			|| loaded.getBoundaryPlacementCount() != 971) {
@@ -233,7 +233,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 			} else if (set.getLevel() == -2) {
 				requireBuilderSourcePlacementCounts(set, 20, 1, 3, 0);
 			} else if (set.getLevel() == 0) {
-				requireBuilderSourcePlacementCounts(set, 2401, 534, 22235, 676);
+				requireBuilderSourcePlacementCounts(set, 2400, 534, 22235, 676);
 			} else if (set.getLevel() == 1) {
 				requireBuilderSourcePlacementCounts(set, 164, 61, 1079, 94);
 			} else if (set.getLevel() == 2) {
