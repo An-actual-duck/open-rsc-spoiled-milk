@@ -167,7 +167,7 @@ public class StrangeBarrels implements OpLocTrigger {
 						int reduceAttack = DataConversions.random(1, 3);
 						boolean sendUpdate = player.getClientLimitations().supportsSkillUpdate;
 						player.message("Your attack is reduced by " + reduceAttack + ".");
-						player.getSkills().setLevel(Skill.ATTACK.id(), player.getSkills().getLevel(Skill.ATTACK.id()) - reduceAttack, sendUpdate);
+						player.getSkills().setLevelFromStatReduction(Skill.ATTACK.id(), player.getSkills().getLevel(Skill.ATTACK.id()) - reduceAttack, sendUpdate);
 						if (!sendUpdate) {
 							player.getSkills().sendUpdateAll();
 						}

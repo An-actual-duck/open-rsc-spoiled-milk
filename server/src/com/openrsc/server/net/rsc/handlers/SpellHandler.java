@@ -1742,7 +1742,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							//reduce ranged level (case for KBD)
 							if (n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
 								int newLevel = getCurrentLevel(getPlayer(), Skill.RANGED.id()) - Formulae.getLevelsToReduceAttackKBD(getPlayer());
-								getPlayer().getSkills().setLevel(Skill.RANGED.id(), newLevel);
+								getPlayer().getSkills().setLevelFromStatReduction(Skill.RANGED.id(), newLevel);
 							}
 						}
 					}
@@ -1848,14 +1848,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								.build(), confuseResources) {
 							@Override
 							public void doSpell() {
+								boolean reduced = false;
 								for (int stat : stats) {
 									int lowerBy = (int) Math.ceil((affectedMob.getSkills().getLevel(stat) * reduceBy));
 									int newStat = affectedMob.getSkills().getLevel(stat) - lowerBy;
-									affectedMob.getSkills().setLevel(stat, newStat);
+									reduced |= affectedMob.getSkills().setLevelFromStatReduction(stat, newStat);
 								}
 
 								// https://web.archive.org/web/20010410193705/http://www.geocities.com:80/ngrunescape/magic.html
-								if (affectedMob.isPlayer()) {
+								if (affectedMob.isPlayer() && reduced) {
 									((Player) affectedMob).message("Your Attack and Defense have been lowered from a confuse spell!");
 								}
 							}
@@ -1955,11 +1956,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								ProjectileLaunchSpecification.Producer.MAGIC_SCRIPTED_EFFECT,
 								0, 1)
 								.chase(setChasing)
-								.build(), debuffResources) {
+							.build(), debuffResources) {
 							@Override
 							public void doSpell() {
-								affectedMob.getSkills().setLevel(stat, newStat);
-								if (affectedMob.isPlayer()) {
+								if (affectedMob.getSkills().setLevelFromStatReduction(stat, newStat)
+										&& affectedMob.isPlayer()) {
 									((Player) affectedMob).message(playerMessage);
 								}
 							}

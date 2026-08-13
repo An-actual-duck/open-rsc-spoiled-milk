@@ -24,19 +24,19 @@ public class ElvargPrayerDrain implements OnCombatStartScript {
 	public void executeScript(Mob attacker, Mob defender) {
 		if (attacker.isPlayer()) {
 			if (attacker.getSkills().getLevel(Skill.PRAYER.id()) >= 30)
-				attacker.getSkills().setLevel(Skill.PRAYER.id(), (int) Math.ceil((double) attacker.getSkills().getLevel(Skill.PRAYER.id()) * 0.2));
+				attacker.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), (int) Math.ceil((double) attacker.getSkills().getLevel(Skill.PRAYER.id()) * 0.2));
 			else if (attacker.getSkills().getLevel(Skill.PRAYER.id()) > 2)
-				attacker.getSkills().setLevel(Skill.PRAYER.id(), 2);
+				attacker.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), 2);
 			else if (attacker.getSkills().getLevel(Skill.PRAYER.id()) == 2)
-				attacker.getSkills().setLevel(Skill.PRAYER.id(), 1);
+				attacker.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), 1);
 
 		} else if (defender.isPlayer()) {
 			if (defender.getSkills().getLevel(Skill.PRAYER.id()) >= 30)
-				defender.getSkills().setLevel(Skill.PRAYER.id(), (int) Math.ceil((double) defender.getSkills().getLevel(Skill.PRAYER.id()) * 0.2));
+				defender.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), (int) Math.ceil((double) defender.getSkills().getLevel(Skill.PRAYER.id()) * 0.2));
 			else if (defender.getSkills().getLevel(Skill.PRAYER.id()) > 2)
-				defender.getSkills().setLevel(Skill.PRAYER.id(), 2);
+				defender.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), 2);
 			else if (defender.getSkills().getLevel(Skill.PRAYER.id()) == 2)
-				defender.getSkills().setLevel(Skill.PRAYER.id(), 1);
+				defender.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), 1);
 		}
 
 	}

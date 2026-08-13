@@ -77,7 +77,7 @@ public class LegendsQuestEchnedZekin implements TalkNpcTrigger {
 					mes("You feel a great sense of loss...");
 					delay(2);
 				}
-				player.getSkills().setLevel(Skill.PRAYER.id(), newPray);
+				player.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), newPray);
 
 				delay(11);
 				mes("The Demon takes out a dark dagger and throws it at you...");
@@ -95,7 +95,7 @@ public class LegendsQuestEchnedZekin implements TalkNpcTrigger {
 				delay(2);
 				mes("You feel a terrible sense of loss...");
 				delay(2);
-				player.getSkills().setLevel(Skill.PRAYER.id(), 0);
+				player.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), 0);
 			}
 		}
 	}
@@ -161,7 +161,7 @@ public class LegendsQuestEchnedZekin implements TalkNpcTrigger {
 								delay();
 								second_nezikchened.startCombat(player);
 								player.message("You feel a terrible sense of loss...");
-								player.getSkills().setLevel(Skill.PRAYER.id(), 0);
+								player.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), 0);
 							}
 						}
 						/**

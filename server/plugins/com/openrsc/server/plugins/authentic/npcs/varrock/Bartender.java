@@ -121,10 +121,10 @@ public class Bartender implements TalkNpcTrigger {
 			maxStat < 85 ? 8 : 9;
 		currentStat = player.getSkills().getLevel(skillId);
 		if (currentStat <= 9) {
-			player.getSkills().setLevel(skillId, Math.max(currentStat - reduction, 0));
+			player.getSkills().setLevelFromStatReduction(skillId, Math.max(currentStat - reduction, 0));
 		}
 		else {
-			player.getSkills().setLevel(skillId, currentStat - reduction);
+			player.getSkills().setLevelFromStatReduction(skillId, currentStat - reduction);
 		}
 	}
 

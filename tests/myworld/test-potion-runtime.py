@@ -9,6 +9,35 @@ PLAYER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "ent
 CACHE = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "Cache.java"
 DRINKABLES = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "itemactions" / "Drinkables.java"
 FUNCTIONS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "plugins" / "Functions.java"
+SKILLS = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "Skills.java"
+RUNESCRIPT = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "plugins" / "RuneScript.java"
+
+PROTECTED_DRAIN_SOURCES = (
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/ElvargPrayerDrain.java",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/KingBlackDragonPrayerDrain.java",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/MonkZamorak.java",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/SalarinTheTwistedDrain.java",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/ShadowSpiderPrayerDrain.java",
+    "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/SkeletonMage.java",
+    "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeUtils.java",
+    "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/misc/SalarinTheTwistedMageAI.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/misc/StrangeBarrels.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/misc/Zamorak.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/npcs/brimhaven/BrimHavenBartender.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/npcs/falador/Barmaid.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/npcs/seers/SeersBartender.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/Bartender.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/JollyBoarInnBartender.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/WitchesHouse.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/mechanism/LegendsQuestInvAction.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestEchnedZekin.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestGujuo.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestNezikchened.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestUngadulu.java",
+    "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestGameObjects.java",
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -26,6 +55,8 @@ def main() -> None:
     cache_text = CACHE.read_text(encoding="utf-8")
     drinkables_text = DRINKABLES.read_text(encoding="utf-8")
     functions_text = FUNCTIONS.read_text(encoding="utf-8")
+    skills_text = SKILLS.read_text(encoding="utf-8")
+    runescript_text = RUNESCRIPT.read_text(encoding="utf-8")
 
     for snippet in (
         "POTION_BRAWN_SKILLS",
@@ -77,11 +108,36 @@ def main() -> None:
     ):
         require(drinkables_text, snippet, f"Drinkables missing new Herblaw behavior: {snippet}")
 
-    require(
-        functions_text,
-        "player.hasStatReductionProtection()",
-        "Shared stat reduction helper should respect stat restore immunity",
-    )
+    for snippet in (
+        "setLevelFromStatReduction",
+        "subtractLevelFromStatReduction",
+        "((Player) mob).hasStatReductionProtection()",
+        "skill != Skill.HITS.id()",
+    ):
+        require(skills_text, snippet, f"Skills missing protected reduction boundary: {snippet}")
+
+    require(functions_text, "setLevelFromStatReduction",
+            "Shared substat helper should use protected reduction boundary")
+    require(runescript_text, "setLevelFromStatReduction",
+            "RuneScript subplaystat should use protected reduction boundary")
+
+    for relative_path in PROTECTED_DRAIN_SOURCES:
+        source = (ROOT / relative_path).read_text(encoding="utf-8")
+        require(source, "LevelFromStatReduction",
+                f"Temporary drain source bypasses stat protection: {relative_path}")
+
+    # These are deliberately not temporary debuffs: active-prayer upkeep,
+    # restoration/boost decay, and player-authorized resource costs must remain
+    # able to lower a stat while protection is active.
+    for relative_path in (
+        "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java",
+        "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/misc/GrapeEmpowerment.java",
+        "server/plugins/com/openrsc/server/plugins/authentic/quests/members/shilovillage/ShiloVillageUtils.java",
+    ):
+        source = (ROOT / relative_path).read_text(encoding="utf-8")
+        if "LevelFromStatReduction" in source:
+            fail(f"Non-debuff stat cost was accidentally protected: {relative_path}")
 
     require(
         cache_text,

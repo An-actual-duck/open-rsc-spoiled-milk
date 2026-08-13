@@ -104,7 +104,7 @@ public class LegendsQuestInvAction implements OpInvTrigger, UseInvTrigger {
 						mes("You feel a great sense of loss...");
 						delay(2);
 					}
-					player.getSkills().setLevel(Skill.PRAYER.id(), newPray);
+					player.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), newPray);
 					if (player.getCache().hasKey("ran_from_2nd_nezi")) {
 						delay(11);
 						mes("The Demon takes out a dark dagger and throws it at you...");

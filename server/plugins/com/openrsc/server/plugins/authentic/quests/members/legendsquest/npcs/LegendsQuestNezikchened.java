@@ -65,7 +65,7 @@ public class LegendsQuestNezikchened implements SpellNpcTrigger, EscapeNpcTrigge
 					"I'll kill you myself !");
 				third_nezikchened.startCombat(player);
 				player.message("You feel a great sense of loss...");
-				player.getSkills().setLevel(Skill.PRAYER.id(), (int) Math.ceil((double) player.getSkills().getLevel(Skill.PRAYER.id()) / 4));
+				player.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), (int) Math.ceil((double) player.getSkills().getLevel(Skill.PRAYER.id()) / 4));
 				npcsay(player, third_nezikchened, "Your faith will help you little here.");
 			} else {
 				third_nezikchened.startCombat(player);

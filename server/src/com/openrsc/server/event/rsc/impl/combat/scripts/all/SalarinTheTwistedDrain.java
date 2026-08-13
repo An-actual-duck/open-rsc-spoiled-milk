@@ -41,7 +41,7 @@ public class SalarinTheTwistedDrain implements CombatAggroScript, OnCombatStartS
 				int lowerBy = (int) Math.floor(((player.getSkills().getLevel(affectedStat) + 20) * 0.5));
 				/* New current level */
 				final int newStat = Math.max(0, player.getSkills().getLevel(affectedStat) - lowerBy);
-				player.getSkills().setLevel(affectedStat, newStat, sendUpdate);
+				player.getSkills().setLevelFromStatReduction(affectedStat, newStat, sendUpdate);
 			}
 			if (!sendUpdate) {
 				player.getSkills().sendUpdateAll();

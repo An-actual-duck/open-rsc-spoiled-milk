@@ -465,7 +465,7 @@ public class WitchesHouse implements QuestInterface, TalkNpcTrigger,
 			int lowerBy = (int) Math.ceil(((player.getSkills().getMaxStat(affectedStat) - 4) / 15.0));
 			/* New current level */
 			final int newStat = Math.max(0, player.getSkills().getLevel(affectedStat) - lowerBy);
-			player.getSkills().setLevel(affectedStat, newStat, sendUpdate);
+			player.getSkills().setLevelFromStatReduction(affectedStat, newStat, sendUpdate);
 		}
 		if (!sendUpdate) {
 			player.getSkills().sendUpdateAll();
