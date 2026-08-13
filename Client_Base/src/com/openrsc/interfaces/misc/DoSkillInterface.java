@@ -52,6 +52,7 @@ public final class DoSkillInterface {
 	private static final int PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8;
 	private static final int PRODUCTION_RANGERS_REDEMPTION = 9;
 	private static final int PRODUCTION_MONSTER_SLAYER_REDEMPTION = 10;
+	private static final int PRODUCTION_MONSTER_SLAYER_SHOP_CATEGORY = 11;
 	private static final int PRODUCTION_ALL_QUANTITY = 1000000;
 	/** The source mark is 59x41; preserve that proportion without clipping it. */
 	private static final int POINT_COIN_WIDTH = 18;
@@ -340,9 +341,17 @@ public final class DoSkillInterface {
 			}
 			mc.getSurface().drawBoxAlpha(boxX, boxY, itemBoxWidth, itemBoxHeight, boxColour, 192);
 			mc.getSurface().drawBoxBorder(boxX, itemBoxWidth, boxY, itemBoxHeight, selected ? 0xC1B575 : (recipe.isCraftable() ? 0x777775 : 0x444444));
-			mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
-				boxX + 1, boxY + 1, 48, 32, def.getPictureMask(), 0,
-				def.getBlueMask(), false, 0, 1);
+			if (isMonsterSlayerShopPicker()) {
+				Sprite coin = slayerPointCoin();
+				if (coin != null) mc.getSurface().drawSpriteClipping(coin,
+					boxX + (itemBoxWidth - POINT_COIN_WIDTH) / 2,
+					boxY + (itemBoxHeight - POINT_COIN_HEIGHT) / 2,
+					POINT_COIN_WIDTH, POINT_COIN_HEIGHT, pointCoinTint(recipe.getItemId()), 0, 0, false, 0, 1);
+			} else {
+				mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
+					boxX + 1, boxY + 1, 48, 32, def.getPictureMask(), 0,
+					def.getBlueMask(), false, 0, 1);
+			}
 			if (isMonsterSlayerRedemptionInterface() && recipe.getOutputAmount() > 1) {
 				String amount = "x" + recipe.getOutputAmount();
 				drawString(amount, boxX + 31, boxY + 30, 1, 0xFFFF00);
@@ -360,6 +369,8 @@ public final class DoSkillInterface {
 					hoverText = furnaceCategoryName(recipe.getItemId());
 				} else if (isRangersRedemptionCategoryPicker()) {
 					hoverText = rangersRedemptionCategoryName(recipe.getItemId());
+				} else if (isMonsterSlayerShopPicker()) {
+					hoverText = pointLabel(recipe.getItemId()) + " shop";
 				} else if (isTeleportDestinationPicker()) {
 					hoverText = altarDestinationName(recipe.getItemId());
 				} else if (isMetalPicker()) {
@@ -393,6 +404,8 @@ public final class DoSkillInterface {
 				selectedHeader = furnaceCategoryName(selected.getItemId());
 			} else if (isRangersRedemptionCategoryPicker()) {
 				selectedHeader = rangersRedemptionCategoryName(selected.getItemId());
+			} else if (isMonsterSlayerShopPicker()) {
+				selectedHeader = pointLabel(selected.getItemId()) + " shop";
 			} else if (isTeleportDestinationPicker()) {
 				selectedHeader = altarDestinationName(selected.getItemId());
 			} else if (isPointRedemptionInterface()) {
@@ -403,7 +416,7 @@ public final class DoSkillInterface {
 			}
 			int selectedHeaderY = isPointRedemptionInterface() ? footerY - 10 : footerY + 2;
 			drawStringRightAligned(selectedHeader, selectedDetailRightX, selectedHeaderY, 3, selected.isLevelMet() ? textColour : 0xFF5555);
-			if (isRangersRedemptionCategoryPicker()) {
+			if (isRangersRedemptionCategoryPicker() || isMonsterSlayerShopPicker()) {
 				drawStringRightAligned("Choose this category", selectedDetailRightX, footerY + 20, 1, textColour);
 			} else if (isPointRedemptionInterface()) {
 				drawPointRedemptionDetails(selected, selectedDetailRightX, footerY);
@@ -477,7 +490,7 @@ public final class DoSkillInterface {
 				&& canAffordPointCost(selected);
 		}
 		String actionLabel = isTeleportDestinationPicker() ? "Teleport"
-			: isRangersRedemptionCategoryPicker() ? "Next"
+			: isRangersRedemptionCategoryPicker() || isMonsterSlayerShopPicker() ? "Next"
 			: isPointRedemptionInterface() ? "Redeem" : "Start";
 		final boolean canStart = startEnabled;
 		this.drawButton(x + width - 92, quantityY - 1, 76, 22, actionLabel, 3, false, new ButtonHandler() {
@@ -571,13 +584,18 @@ public final class DoSkillInterface {
 		return productionInterfaceId == PRODUCTION_MONSTER_SLAYER_REDEMPTION;
 	}
 
+	private boolean isMonsterSlayerShopPicker() {
+		return productionInterfaceId == PRODUCTION_MONSTER_SLAYER_SHOP_CATEGORY;
+	}
+
 	private boolean isPointRedemptionInterface() {
 		return isRangersRedemptionInterface() || isMonsterSlayerRedemptionInterface();
 	}
 
 	private boolean isPickerInterface() {
 		return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()
-			|| isTeleportDestinationPicker() || isRangersRedemptionCategoryPicker();
+			|| isTeleportDestinationPicker() || isRangersRedemptionCategoryPicker()
+			|| isMonsterSlayerShopPicker();
 	}
 
 	private boolean isMetalPicker() {

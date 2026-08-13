@@ -76,12 +76,17 @@ checks, host-guild gates, promotion dialogue, warnings, active-task reporting,
 random repeatables, and transaction/concurrency failure paths have focused
 executable coverage.
 
-The player-facing challenge-shop interface is implemented. Trade/Shop opens
-the graphical typed-currency shop while Talk-to remains dialogue; reward stock
-is intentionally infinite, quantities multiply every component safely, and
-the server owns multi-balance deduction, item-grant rollback, and all access
-checks. The selected-item footer uses the tier-tinted coin presentation,
-tooltips, and the saved Keep open / Remember last selected controls.
+The player-facing challenge-shop interface is implemented. Every NPC `852..857`
+is presented as `Slayer shop associate`; their appearances, locations, and
+dialogue personalities remain distinct, but Trade/Shop on any one of them opens
+the same six-rank coin picker. Selecting a rank and pressing Next opens that
+rank's existing typed-currency reward panel, and Back returns to the picker.
+Reward stock is intentionally infinite, quantities multiply every component
+safely, and the server owns multi-balance deduction and item-grant rollback.
+Shop entry and redemption have no rank, promotion, or host-guild software gate:
+the required typed balances are the authority. The selected-item footer uses
+the tier-tinted coin presentation, tooltips, and the saved Keep open / Remember
+last selected controls.
 
 The six permanent capacity entitlements are active. The server derives a
 player's authoritative capacity from the validated mask, the custom client
@@ -98,7 +103,7 @@ blueprint and must not be translated one-to-one. Monster Slayer is not a
 visible skill and does not award Slayer XP. Players advance through seven named
 ranks through one continuous mandatory guild quest, complete deterministic
 assignment chains at six contacts, and then use those contacts for repeatable
-tasks and rank-gated challenge shops. The opening assignment is deliberately
+tasks and six typed-currency challenge shops. The opening assignment is deliberately
 not a monster kill: it is the joke beer errand that starts the quest and awards
 the first rank.
 
@@ -137,12 +142,13 @@ Core rules:
   the immediately preceding tier currency. The Fledgling shop is the sole
   exception and costs only Fledgling currency. No item may consume an older
   lower tier, a higher tier, or an interchangeable total.
-- Each of the six challenge shops contains one permanent inventory-capacity
+- Each of the six challenge tiers contains one permanent inventory-capacity
   upgrade. Buying all six grows the player's inventory from 30 slots to a
   8-by-5, 40-slot inventory; the upgrade is purchased rather than granted
-  automatically when the shop unlocks.
-- Higher contacts refuse assignment/shop access until the required rank and the
-  host guild's normal access requirements are satisfied.
+  automatically. Its own tier coins and every preceding upgrade are required.
+- Higher task contacts refuse assignments until the required rank and the host
+  guild's normal access requirements are satisfied. Those task gates do not
+  limit the universal reward-shop picker.
 - Existing Combat Odyssey state is migrated once without deleting its keys, but
   it never grants Monster Slayer currency; every account begins its new typed
   balances at zero.
@@ -382,10 +388,9 @@ joined with a colon, semicolon, or list punctuation:
 
 ### Confirmed: Permanent Inventory-Capacity Shop Upgrades
 
-Every challenge shop contains exactly one one-time inventory-capacity upgrade.
-The upgrade becomes available when that shop is unlocked, but it is not an
-automatic rank reward: the player must purchase it with that shop's approved
-native-challenge price. Initial prices and task rewards are implementation
+Every challenge tier contains exactly one one-time inventory-capacity upgrade.
+The upgrade is not an automatic rank reward: the player must purchase it with
+that tier's approved native-challenge price. Initial prices and task rewards are implementation
 estimates to be tuned through playtesting, not inherited from Odyssey data.
 
 The accepted release baseline is Fledgling `84` (mandatory `38`), Adept
@@ -406,11 +411,11 @@ The six increments and cumulative capacities are fixed:
 | Legends Guild | Hero | 3 | 40 |
 
 The base capacity remains 30 and the final capacity is exactly 40. Upgrades are
-independent permanent entitlements and must be purchased in shop order because
-higher shops are rank-gated. They are not items, cannot be traded, dropped,
+independent permanent entitlements and must be purchased in tier order. They
+are not items, cannot be traded, dropped,
 lost on death, refunded, or purchased more than once. A purchase does not need
-a free inventory slot. It atomically validates the shop unlock, confirms that
-the corresponding upgrade is not already owned, deducts its native-currency
+a free inventory slot. It atomically validates every preceding entitlement,
+confirms that the corresponding upgrade is not already owned, deducts its native-currency
 price, records the entitlement, and then refreshes the inventory UI. Failure
 at any stage leaves both points and capacity unchanged. The entitlement is
 strictly per player: each player may successfully buy each shop's upgrade once
@@ -421,10 +426,10 @@ player cannot buy it again and receives `You already have this.`
 Persist the six purchases as a stable six-bit entitlement mask owned by
 `MonsterSlayerState`, with bits mapped explicitly by stable shop key rather
 than JSON order or enum ordinal. Derive capacity as `30 +` the sum of the
-owned increments; do not persist a second mutable capacity value. Unknown bits,
-an upgrade whose prerequisite shop is not unlocked, or a non-prefix purchase
-sequence are invalid state and must be diagnosed rather than silently granting
-space.
+owned increments; do not persist a second mutable capacity value. Unknown bits
+or a non-prefix purchase sequence are invalid state and must be diagnosed rather
+than silently granting space. Rank and host-guild access are not entitlement
+prerequisites.
 
 The client inventory panel must expand from its current 6-by-5 grid to an
 8-by-5 grid containing all 40 slot
@@ -463,9 +468,10 @@ Implement and validate the player-visible system in this dependency order:
 2. Wire authoritative mandatory/repeatable task completion to the appropriate
    single balance, using initial AI-authored estimates for rewards and focused
    reward/overflow tests.
-3. Add the six rank-gated shops with their approved consumables, normal stock
-   of 10/restock behavior, typed two-tier consumable costs, and native-only
-   one-time capacity purchases.
+3. Add the six typed-currency shops with their approved consumables and
+   native-only one-time capacity purchases. The later graphical pass replaced
+   location/rank entry gates and finite stock with a universal rank picker and
+   infinite point-shop stock.
 4. Deliver the dynamic 30-to-40 inventory protocol and client UI together,
    then test all capacity boundaries and inventory-bearing systems.
 5. Add eleven new unique armored task/shop NPCs plus either the twelfth new
@@ -475,8 +481,8 @@ Implement and validate the player-visible system in this dependency order:
    and migration tests.
 
 Playtesting follows each economy-bearing slice. Initial numerical estimates
-are intentionally adjustable; the contracts for typed currency, stock,
-one-time purchases, rank gates, and capacity are not.
+are intentionally adjustable; the contracts for typed currency, infinite
+reward stock, sequential one-time purchases, and capacity are not.
 
 ### Dynamic Inventory Capacity Implementation Boundary
 
@@ -726,12 +732,13 @@ Stable rank codes are part of the save contract and must never be reordered:
 | 4 | Elite | Blue Moon Inn chain complete; Champions Guild available |
 | 5 | Champion | Champions chain complete; Heroes Guild available |
 | 6 | Hero | Heroes chain complete; Legends Guild available |
-| 7 | Legend | Legends chain complete; all rank shops available |
+| 7 | Legend | Legends chain complete; Hero repeatables available |
 
 Every Monster Slayer location has at least two distinct NPC roles: one task
-giver and one nearby shop associate. The task giver owns only rank, mandatory,
-and repeatable-task dialogue; the associate owns only the rank-gated challenge
-shop dialogue. They must never be combined merely because a location reuses an
+giver and one nearby Slayer shop associate. The task giver owns only rank,
+mandatory, and repeatable-task dialogue; every associate is a universal entry
+to the same six-rank shop picker while retaining location-specific flavor and
+satchel service. They must never be combined merely because a location reuses an
 existing bartender or guild official. Every task giver and shop associate is a
 newly authored, unique humanoid NPC, except that the Legends task giver reuses
 Sir Radimus `785`, the original borrowed-system task giver. Their
@@ -780,7 +787,7 @@ Blue Moon Inn, Champions, Heroes, and Legends headquarters.
 #### Fledgling Effective-Client Correction
 
 The Rising Sun trio has one extra presentation constraint: NPC IDs `846`
-(Hobart), `852` (Fledgling Slayer Associate), and `858` (Fledgling Monster
+(Hobart), `852` (Slayer shop associate), and `858` (Fledgling Monster
 Slayer) are rendered from the desktop client's hard-coded NPC catalogue, not
 from the server definition packet. Their server JSON and client catalogue must
 therefore use the same layer order: head, shirt, pants, shield, weapon, hat,
@@ -817,7 +824,7 @@ the role hierarchy while keeping all three within the steel tier.
 #### Champion Heroes Guild Interior Correction
 
 The Heroes Guild sect remains exactly two Slayer NPCs: Sella `850` and the
-Champion Slayer Associate `856`. Both use the visually confirmed interior around
+Slayer shop associate `856`. Both use the visually confirmed interior around
 `(369,436)`, rather than either former exterior placement around packed Y `1381`
 or the separate southern room around Y `443`. Sella starts at `(369,436)` and
 roams only `(369..370,435..436)`. The associate starts at `(370,437)` and roams
@@ -831,7 +838,7 @@ Sella is visually dominant in full adamant equipment: full helm `16`, female
 plate body `58`, plate legs `40`, square shield `101`, and sword `51`. The
 associate uses head `7`, adamant plate body `31`, ordinary legs `2`, and
 adamant battleaxe `112`, with no shield. The client and server both present the
-associate as `Champion Slayer Associate`.
+associate as `Slayer shop associate`.
 
 Automated coverage verifies exact client/server sprite parity, two-NPC sect
 staffing, separate starts and roaming pockets, containment around the visually
@@ -938,22 +945,21 @@ non-Monster-Slayer dialogue that each reused NPC already owns.
   Wilderness exposure, render each mandated risk warning as a separate NPC
   line before task state is written. The shortcut does not suppress a required
   warning. The internal `PRAYER_DRAIN` key remains unchanged.
-- Each completed mandatory chain promotes the player at its own contact. The
-  promotion unlocks that contact's nearby associate shop and its corresponding
-  challenge-point balance. The associate, not the task giver, opens the shop.
+- Each completed mandatory chain promotes the player at its own contact. Task
+  completion earns that contact's challenge-point balance, but shop visibility
+  is universal. The associate, not the task giver, opens the shop picker.
   This gives each location two clear roles and avoids overloading an existing
   bartender or guild NPC's normal service dialogue.
 - The final Fledgling task has a distinct completion lead-in. Hobart confirms
   that it was the player's final Fledgling work, awards the **Adept** rank, and
-  explicitly presents the official Adept sticker before directing the player
-  to the now-unlocked Fledgling shop and his associate, adding that the
-  associate knows a thing or two about satchels.
-- An eligible associate opens with a short, rank-appropriate acknowledgement
-  and a `Show me your wares.` / `Not now.` choice. `Show me your wares.` opens
-  that location's existing typed-currency shop; it never spends points or
-  grants an item as part of dialogue. Ineligible use—Talk-to or a right-click
-  `Trade`/`Shop` shortcut—uses the table's concise rank refusal and never opens an empty or
-  partially locked shop interface.
+  explicitly presents the official Adept sticker before reminding the player
+  that his associate presents every shop and knows a thing or two about
+  satchels.
+- Talk-to remains short, associate-specific dialogue and offers the local tier's
+  sequential satchel upgrade. Trade/Shop always opens the universal six-rank
+  picker. Choosing a coin tier and pressing Next opens that tier's existing
+  typed-currency panel; insufficient balances disable or reject a purchase
+  without hiding future rewards. Back returns to the rank picker.
 
 #### Rank-Aware Task Refusals
 
@@ -997,39 +1003,37 @@ path before the existing promotion dialogue appears. The command reports the
 prepared rank and stable contact key; it safely refuses unstamped and Legend
 states, which have no current mandatory contact.
 
-### Rank Proofs And Shop Gates
+### Rank Proofs And Universal Shops
 
 The proof progression deliberately starts silly and becomes ceremonial. A
 proof is rank flavor unless a later presentation decision explicitly makes it
 an item or cosmetic; it is not a second authority beside the persisted rank.
 There are six proof changes for the six promotions before the final standing:
 
-| Player rank after promotion | Proof shown in dialogue | Shop newly unlocked | Associate refusal before unlock |
-| --- | --- | --- | --- |
-| Fledgling | hand stamp | none; the player is beginning the first chain | `Sorry, Adepts only.` |
-| Adept | sticker | Rising Sun / Fledgling point shop | `Sorry, Adepts only.` |
-| Veteran | button | Port Sarim / Adept point shop | `Sorry, Veterans only.` |
-| Elite | badge | Blue Moon Inn / Veteran point shop | `Sorry, Elites only.` |
-| Champion | medal | Champions Guild / Elite point shop | `Sorry, Champions only.` |
-| Hero | crest | Heroes Guild / Champion point shop | `Sorry, Heroes only.` |
-| Legend | no additional trinket; the rank itself is the final recognition | Legends Guild / Hero point shop | `Sorry, Legends only.` |
+| Player rank after promotion | Proof shown in dialogue | Currency progression reached |
+| --- | --- | --- |
+| Fledgling | hand stamp | Fledgling tasks begin |
+| Adept | sticker | Fledgling repeatables available |
+| Veteran | button | Adept repeatables available |
+| Elite | badge | Veteran repeatables available |
+| Champion | medal | Elite repeatables available |
+| Hero | crest | Champion repeatables available |
+| Legend | no additional trinket; the rank itself is the final recognition | Hero repeatables available |
 
 The final `Legend` promotion intentionally does not add a seventh trinket. It
 ends the escalating stamp/sticker/button/badge/medal/crest joke with the
 Legends contact treating status as something demonstrated rather than worn.
-Every associate shop spends only the already-defined typed Monster Slayer
-currency and must retain its rank, point-vector, and normal host-guild access
-validation server-side.
+Every associate presents all six shops. Purchases spend only the already-defined
+typed Monster Slayer currency and retain exact point-vector validation
+server-side; rank, promotion flags, and host-guild membership do not authorize
+or block shop entry or redemption.
 
 #### Fledgling Associate And Satchel Upgrade
 
-Before the player earns Adept rank, the Fledgling associate uses the shared
-shop gate: `Sorry, Adepts only.`
+The Fledgling associate's Trade/Shop route is available at every rank and opens
+the universal picker. Talk-to begins with two short lines:
 
-Once Adept rank unlocks the associate, Talk-to begins with three short lines:
-
-> `Congratulations on becoming an Adept.`
-> `I can show you my wares now.`
+> `I can show you every Slayer shop.`
 > `Or perhaps you'd like an upgrade to your satchel?`
 
 The player asks `Can you upgrade my satchel?` The associate quotes the exact
@@ -1228,7 +1232,7 @@ Guildmaster before presenting this optional guild route.
 
 The Champions sect intentionally has only two Slayer NPCs. Doran wears a full
 mithril plate composition with mithril plate legs, weapon, and shield. The
-Elite Slayer Associate wears a visibly distinct partial mithril outfit with a
+Slayer shop associate wears a visibly distinct partial mithril outfit with a
 weapon, ordinary legs, and no shield. This is the first of the three formal
 guild headquarters and follows the confirmed visual progression from Veteran
 steel into Elite mithril.
@@ -1287,11 +1291,12 @@ The pending promotion continues to intercept and replace the next ordinary
 interaction, acknowledges only after every typed step renders, assigns no new
 task during that interaction, and never repeats after acknowledgement.
 
-The Elite associate prepends this line to the usual unlocked conversation:
+The Elite associate prepends this line to the usual universal-shop conversation:
 
 > Associate: `Doran is a nice guy, but you can never get a word in edgewise.`
 
-Shop access, satchel upgrades, rank gates, and all costs remain unchanged.
+Task rank gates and all approved costs remain unchanged. Shop access is
+universal, while satchel upgrades retain their ordered prior-upgrade rule.
 
 #### 5. Heroes Guild Contact — Champion Medal To Hero Crest
 
@@ -1403,9 +1408,9 @@ when the player is ineligible.
 > Player: `It's an honor.`
 > Radimus: `See that it remains one.`
 
-After this exchange, the nearby rune-clad associate opens the Hero-point shop.
-Their greeting recognizes Radimus's standards and offers Hero supplies. Their
-pre-unlock refusal is `Sorry, Legends only.`
+After this exchange, the nearby rune-clad associate continues to offer the
+universal rank picker and the local Hero-tier satchel upgrade. Their greeting
+recognizes Radimus's standards and offers supplies.
 Legend repeatable tasks remain available, but the mandatory quest is complete;
 the ending must not promise a further required rank or a finite completion of
 all monster content.
@@ -1674,11 +1679,11 @@ Invariants:
   active-task clearing through one state-owner method on the game thread.
 - Task completion credits only the active definition's contact challenge. It
   cannot credit a caller-selected, lower, or higher balance. Mandatory tasks
-  credit normally even before their shop is unlocked; the balance merely cannot
-  be spent until its shop gate is met.
+  credit normally and any existing typed balance may be spent through the
+  universal shop picker.
 - Inventory capacity is derived from the validated shop-upgrade entitlement
   mask and is bounded to `30..40`. Purchases are monotonic, one-time, and
-  sequential by unlocked shop; rank alone never grants an upgrade. Each upgrade
+  sequential by tier; rank neither gates nor grants an upgrade. Each upgrade
   requires every preceding upgrade and spends only its own native challenge
   balance, never a lower balance.
 - Multi-cost spending first validates the reward/shop tier, exact allowed
@@ -1809,8 +1814,9 @@ creating six item definitions or a second inventory authority.
 
 Every task stores one positive `pointReward` on its definition and credits only
 its contact's challenge balance on successful completion. The opening and all
-later mandatory tasks earn their normal tier currency immediately, even when
-the player has not yet unlocked that tier's shop. Repeatables use the same rule.
+later mandatory tasks earn their normal tier currency immediately. Repeatables
+use the same rule, and any earned balance can be spent without a separate shop
+unlock flag.
 Point rewards are intentionally task-specific: a harder, more dangerous, or
 less accessible family in a tier earns more than an easier family in that same
 tier. No task awards a mix of challenge balances.
@@ -1875,50 +1881,43 @@ These are balance estimates rather than permanent economy promises. They are
 stored as independent typed components and must be adjusted only after owner
 playtesting; no scalar conversion or cross-tier substitution is permitted.
 
-The current production interface cannot represent this faithfully:
-`ProductionSession` carries one scalar point value and each `ProductionRecipe`
-has one scalar cost/enabled flag. Monster Slayer therefore needs either a
-multi-cost reward display or a confirmation step that lists every required
-balance and the player's corresponding balances. Do not put a summed number in
-the existing scalar field or pretend the challenge currencies are
-interchangeable. Redemption UI and protocol/presentation changes are explicitly
-outside the foundation branch.
+The production interface now carries typed point-shop details alongside each
+recipe. It renders every required balance as its own tinted coin and amount;
+it never sums or converts the six currencies.
 
-### Next Implementation Slice: Player-Facing Challenge Shops
+### Implemented Player-Facing Challenge Shops
 
-Activate `Trade`/`Shop` on associates `852..857` as the sole player-facing
-entry to their corresponding shop. Reuse the existing validated definitions
-and `MonsterSlayerShopService`; do not create a second cost, stock, balance, or
-grant authority in plugin code.
+`Trade`/`Shop` on any associate `852..857` is a player-facing entry to the
+universal six-rank picker. The existing validated definitions and
+`MonsterSlayerShopService` remain the sole cost, balance, and grant authority.
 
-The interface must:
+The implemented interface:
 
-- preserve the shared rank and host-guild access policy already used by the
-  contact and associate dialogue routes;
-- show the shop's categories and rewards, current stock, output quantity,
+- shows all six coin-tier choices without rank or host-guild software gates;
+- shows the selected rank's rewards, output quantity,
   every required typed cost component, and the player's corresponding balance;
-- support checked quantities without summing or converting currencies;
-- make cancellation and Back paths state-free;
-- report insufficient typed points, sold-out stock, full inventory, invalid
-  quantity, stale/changed stock, grant rollback, and corrupt Slayer state
-  truthfully without spending points or stock on failure;
-- use the existing shop service's atomic redemption result as authority and
-  refresh the presented stock/balance after a successful purchase; and
-- keep capacity upgrades absent or visibly unavailable with an explicit
-  `Inventory expansion is not available yet.` explanation.
+- supports checked quantities without summing or converting currencies;
+- keeps reward stock infinite, matching the Rangers Guild point shop;
+- makes cancellation and Back paths state-free;
+- reports insufficient typed points, full inventory, invalid quantity, grant
+  rollback, and corrupt Slayer state truthfully without spending points on
+  failure; and
+- uses the existing shop service's atomic redemption result as authority and
+  refreshes presented balances after a successful purchase.
 
-Focused coverage must exercise all six associates and guild/rank gates, every
+Satchel upgrades remain dialogue purchases rather than reward-grid entries.
+They use the same authoritative service and are available without a rank flag,
+but still require the exact native-tier price, every prior entitlement, and a
+compatible expanded-inventory client.
+
+Focused coverage must exercise all six associates, universal picker navigation,
+rank-independent redemption and ordered satchel purchases, every
 reward/cost vector, quantity `1` and a valid multi-buy, overflow/zero/negative
 quantities, cancellation/Back, insufficient individual cost components,
-sold-out and stale-stock races, full inventory, successful delivery, rollback,
+full inventory, successful delivery, rollback,
 unrelated-cache preservation, and duplicate/concurrent submissions. Compile
 core and plugins and retain the existing Monster Slayer state, contact-route,
 and combat transaction gates.
-
-Stop this slice before changing inventory packet layouts, equipment offsets,
-client inventory arrays, bank/trade/death capacity behavior, or enabling a
-capacity entitlement purchase. Those belong exclusively to the following
-dynamic-inventory slice and must ship together.
 
 The old Odyssey rewards are neither default stock nor price anchors. Existing
 combat supplies may be selected from current item definitions in a later stock

@@ -23,8 +23,7 @@ public final class MonsterSlayerShopService {
 	public CapacityProposal proposeCapacityPurchase(MonsterSlayerState.Snapshot current, String shopKey) {
 		try {
 			Shop shop = data.getShop(shopKey);
-			if (shop == null || current == null || !current.getRank().isAtLeast(
-				MonsterSlayerRank.fromCode(shop.getChallenge().getCode() + 1))) return CapacityProposal.rejected("unavailable");
+			if (shop == null || current == null) return CapacityProposal.rejected("unavailable");
 			MonsterSlayerState.InventoryUpgrade upgrade = MonsterSlayerState.InventoryUpgrade.valueOf(shopKey.toUpperCase());
 			MonsterSlayerState.SpendProposal spend = MonsterSlayerState.proposeInventoryUpgrade(current, data,
 				upgrade, shop.getCapacityUpgrade().getCost());
@@ -40,8 +39,7 @@ public final class MonsterSlayerShopService {
 			String shopKey, String rewardKey, long quantity) {
 		Shop shop = data.getShop(shopKey); Reward reward = reward(shop, rewardKey);
 		if (quantity <= 0L) return RedemptionProposal.rejected("quantity");
-		if (shop == null || reward == null || current == null
-			|| !current.getRank().isAtLeast(MonsterSlayerRank.fromCode(shop.getChallenge().getCode() + 1))) return RedemptionProposal.rejected("unavailable");
+		if (shop == null || reward == null || current == null) return RedemptionProposal.rejected("unavailable");
 		try {
 			long output = reward.outputAmountFor(quantity);
 			if (output > Integer.MAX_VALUE) return RedemptionProposal.rejected("quantity");
@@ -76,7 +74,7 @@ public final class MonsterSlayerShopService {
 		try {
 			if (player == null) return Result.rejected("unavailable");
 			synchronized (player) {
-			Shop shop = data.getShop(shopKey); if (shop == null || !rankAllows(player, shop)) return Result.rejected("unavailable");
+			Shop shop = data.getShop(shopKey); if (shop == null) return Result.rejected("unavailable");
 			MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 			CapacityProposal proposal = proposeCapacityPurchase(current, shopKey);
 			if (!proposal.isSuccessful()) return Result.rejected(proposal.getReason());
@@ -86,7 +84,6 @@ public final class MonsterSlayerShopService {
 		} catch (RuntimeException failure) { return Result.rejected("failure"); }
 	}
 	private Reward reward(Shop shop, String key) { if (shop == null) return null; for (MonsterSlayerDefinitions.Category c : shop.getCategories()) for (Reward r : c.getRewards()) if (r.getKey().equals(key)) return r; return null; }
-	private boolean rankAllows(Player p, Shop shop) { return p != null && MonsterSlayerState.read(p.getCache(), data).getRank().isAtLeast(MonsterSlayerRank.fromCode(shop.getChallenge().getCode() + 1)); }
 	public static final class RedemptionProposal { private final Reward reward; private final int output; private final MonsterSlayerState.SpendProposal spend; private final String reason; private RedemptionProposal(Reward r,int o,MonsterSlayerState.SpendProposal s,String why){reward=r;output=o;spend=s;reason=why;} static RedemptionProposal accepted(Reward r,int o,MonsterSlayerState.SpendProposal s){return new RedemptionProposal(r,o,s,null);} static RedemptionProposal rejected(String why){return new RedemptionProposal(null,0,null,why);} public boolean isSuccessful(){return reason==null;} public String getReason(){return reason;} public int getOutput(){return output;} }
 	public static final class CapacityProposal { private final MonsterSlayerState.SpendProposal spend; private final String reason; private CapacityProposal(MonsterSlayerState.SpendProposal s,String why){spend=s;reason=why;} static CapacityProposal accepted(MonsterSlayerState.SpendProposal s){return new CapacityProposal(s,null);} static CapacityProposal rejected(String why){return new CapacityProposal(null,why);} public boolean isSuccessful(){return reason==null;} public String getReason(){return reason;} public MonsterSlayerState.Snapshot getSnapshot(){return spend == null ? null : spend.getSnapshot();} }
 	public interface ItemGrant { boolean grant(Player player, int itemId, int amount); }

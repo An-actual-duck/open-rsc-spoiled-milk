@@ -6648,22 +6648,22 @@ public class EntityHandler {
 		// Guild Radimus keeps his authentic definition and quest presentation;
 		// only the additional Monster Slayer shortcut is presentation-specific.
 		getNpcDef(785).updateCommand1("Task");
-		addMonsterSlayerNpcDefinition(852, "Fledgling Slayer Associate", "A Fledgling Slayer supplier", "Trade",
+		addMonsterSlayerNpcDefinition(852, "Slayer shop associate", "A Fledgling Slayer supplier", "Trade",
 			new int[]{3, 54, 2, -1, 108, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 16737817, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(853, "Adept Slayer Associate", "An Adept Slayer supplier", "Trade",
+		addMonsterSlayerNpcDefinition(853, "Slayer shop associate", "An Adept Slayer supplier", "Trade",
 			new int[]{6, 28, 2, -1, 109, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 15654365, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(854, "Veteran Slayer Associate", "A Blue Moon Veteran Slayer supplier", "Trade",
+		addMonsterSlayerNpcDefinition(854, "Slayer shop associate", "A Blue Moon Veteran Slayer supplier", "Trade",
 			new int[]{3, 56, 2, -1, 110, -1, -1, -1, -1, -1, -1, -1},
 			6307872, 15658734, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(855, "Elite Slayer Associate", "An Elite Slayer quartermaster", "Trade",
+		addMonsterSlayerNpcDefinition(855, "Slayer shop associate", "An Elite Slayer quartermaster", "Trade",
 			new int[]{3, 57, 2, -1, 111, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 10072780, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(856, "Champion Slayer Associate", "A Champion Slayer supplier", "Trade",
+		addMonsterSlayerNpcDefinition(856, "Slayer shop associate", "A Champion Slayer supplier", "Trade",
 			new int[]{7, 31, 2, -1, 112, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 11717785, 8421504, 15523536);
-		addMonsterSlayerNpcDefinition(857, "Hero Slayer Associate", "A rune-clad Hero Slayer supplier", "Trade",
+		addMonsterSlayerNpcDefinition(857, "Slayer shop associate", "A rune-clad Hero Slayer supplier", "Trade",
 			new int[]{3, 59, 2, -1, 113, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 65535, 8421504, 15523536);
 		addMonsterSlayerNpcDefinition(858, "Fledgling Monster Slayer", "An eager recruit", "",

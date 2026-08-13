@@ -183,6 +183,7 @@ public final class ProductionMemory {
 			&& session.getType() <= ProductionSession.TYPE_FURNACE_MATERIAL)
 			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY)
 			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION)
+			|| session.isType(ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY)
 			|| session.isType(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION));
 	}
 
@@ -190,7 +191,8 @@ public final class ProductionMemory {
 		return session != null && (session.isType(ProductionSession.TYPE_SMITHING_MATERIAL)
 			|| session.isType(ProductionSession.TYPE_FURNACE_CATEGORY)
 			|| session.isType(ProductionSession.TYPE_FURNACE_MATERIAL)
-			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY));
+			|| session.isType(ProductionSession.TYPE_RANGERS_REDEMPTION_CATEGORY)
+			|| session.isType(ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY));
 	}
 
 	static String activityKey(ProductionSession session) {
