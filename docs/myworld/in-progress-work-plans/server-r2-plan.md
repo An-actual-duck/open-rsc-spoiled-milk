@@ -175,8 +175,8 @@ The current `NativeLayeredWorldRuntimeProfile` contains distinct fixture,
 Preservation, Spoiled Milk replacement, and Spoiled Milk Builder policies. The
 active reviewed Spoiled Milk replacement is
 `rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest
-`7c81e2af899fe7bec2f66dc38eaee72df546e4446d15b9e3b78895618c669c38`,
-with 1,782 native sectors and 33,527 effective placements.
+`f5a79233700fa753a010e21bb5f697977c44d5385715b4d7cb69b2d0770280ae`,
+with 1,782 native sectors and 33,526 effective placements.
 
 The generic package parser/catalog is foundation code. Exact Preservation and
 Spoiled Milk package IDs, versions, hashes, counts, definition ceilings, and
