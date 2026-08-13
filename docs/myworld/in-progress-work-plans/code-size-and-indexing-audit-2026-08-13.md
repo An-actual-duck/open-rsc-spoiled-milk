@@ -69,14 +69,15 @@ switching. A binary or large generated index would be stale across workers,
 create merge noise, and falsely imply semantic completeness around reflection,
 plugin discovery, definitions, and configuration.
 
-Instead, add one small maintained text navigation map in a later documentation
-branch (not this audit implementation):
+The lightweight navigation map and optional helper are now provided by
+[`docs/myworld/info/code-navigation.md`](../info/code-navigation.md) and
+`scripts/generate-code-tags.sh`. Their remaining operating rules are:
 
 1. List the authoritative source roots, Ant targets/artifacts, plugin roots,
    generated/definition boundaries, and the key ownership maps already in
    plans. Link it from `docs/myworld/README.md` and workspace guidance.
-2. Optionally install Universal Ctags, then provide a non-committed helper
-   that checks for it and runs `ctags --languages=Java --fields=+n
+2. The non-committed helper checks for Universal Ctags and runs `ctags
+   --languages=Java --fields=+n
    --extras=+q -R` over maintained Java roots into `output/navigation/tags`.
    Rebuild it on demand; never consume it as authority for reflection,
    configuration, JSON/XML definitions, or plugin discovery.
