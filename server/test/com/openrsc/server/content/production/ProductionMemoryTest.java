@@ -60,6 +60,8 @@ class ProductionMemoryTest {
 			ProductionSession.TYPE_RANGERS_REDEMPTION, "Redeem", 1)));
 		assertTrue(ProductionMemory.isRememberable(session(
 			ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION, "Slayer", 1)));
+		assertTrue(ProductionMemory.isRememberable(session(
+			ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY, "Slayer shops", 1)));
 	}
 
 	@Test
@@ -75,7 +77,7 @@ class ProductionMemoryTest {
 	}
 
 	@Test
-	void pointShopKeysKeepRangersAndEachSlayerAssociateIndependent() {
+	void pointShopKeysKeepRangersSeparateAndSlayerPickerStable() {
 		ProductionSession rangers = new ProductionSession(ProductionSession.TYPE_RANGERS_REDEMPTION,
 			"Redeem", -1, 0, Collections.singletonList(new ProductionRecipe(10, 1, 1, 1, true, true)),
 			"rangers-guild-points", null);
@@ -88,6 +90,42 @@ class ProductionMemoryTest {
 		assertEquals("rangers-guild-points", ProductionMemory.activityKey(rangers));
 		assertEquals("monster-slayer-shop:falador", ProductionMemory.activityKey(falador));
 		assertFalse(ProductionMemory.activityKey(falador).equals(ProductionMemory.activityKey(portSarim)));
+		ProductionSession picker = new ProductionSession(ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY,
+			"Monster Slayer rewards", -1, 0,
+			Collections.singletonList(new ProductionRecipe(0, 1, 1, 1, true, true)),
+			"monster-slayer-shops", null);
+		assertEquals("monster-slayer-shops", ProductionMemory.activityKey(picker));
+		assertTrue(ProductionMemory.isPicker(picker));
+	}
+
+	@Test
+	void slayerRankPickerRestoresDeepestShopAndBackReturnsToPicker() {
+		FakeContext context = new FakeContext();
+		ProductionSession picker = singleRecipeSession(
+			ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY, "Monster Slayer rewards", -1, 5, true, true);
+		ProductionSession heroShop = singleRecipeSession(
+			ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION, "Monster Slayer Hero Shop", -1, 3206, true, true);
+		ProductionStarter finalStarter = (p, session, itemId, quantity) -> true;
+		ProductionStarter pickerStarter = (p, session, itemId, quantity) -> {
+			context.setAttribute("production_session", heroShop);
+			context.setAttribute("production_starter", finalStarter);
+			assertTrue(ProductionMemory.prepareDisplay(context, null, heroShop).isSuppressed());
+			return true;
+		};
+		context.getCache().store(ProductionMemory.PREFERENCE_CACHE_KEY, true);
+		ProductionMemory.storeRoute(context.getCache(), ProductionMemory.activityKey(picker),
+			Arrays.asList(5, 3206));
+		context.setAttribute("production_session", picker);
+		context.setAttribute("production_starter", pickerStarter);
+
+		ProductionMemory.Display restored = ProductionMemory.prepareDisplay(context, null, picker);
+		assertEquals(heroShop, restored.getSession());
+		assertEquals(3206, restored.getSelectedRecipeId());
+		assertTrue((restored.getUiFlags() & ProductionMemory.UI_FLAG_CAN_GO_BACK) != 0);
+		assertEquals(picker, ProductionMemory.back(context));
+		ProductionMemory.Display parent = ProductionMemory.prepareDisplay(context, null, picker);
+		assertEquals(picker, parent.getSession());
+		assertEquals(5, parent.getSelectedRecipeId());
 	}
 
 	@Test

@@ -336,8 +336,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 	private static void headlessShopPreflightKeepsTypedCostsAndStockBounded(MonsterSlayerData data) {
 		MonsterSlayerShopService shops = new MonsterSlayerShopService(data);
 		Map<MonsterSlayerChallenge, Long> amounts = new LinkedHashMap<MonsterSlayerChallenge, Long>();
-		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 0L);
-		amounts.put(MonsterSlayerChallenge.FLEDGLING, 84L);
+		for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) amounts.put(challenge, 1000L);
 		MonsterSlayerState.Snapshot player = MonsterSlayerState.create(2, MonsterSlayerRank.FLEDGLING,
 			MonsterSlayerBalances.of(amounts), zeroCursors(data), null, 0, 0L, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
@@ -347,15 +346,17 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		equals(2, accepted.getOutput(), "typed output multiplication");
 		assertTrue(shops.proposeRedemption(player, "falador", "falador.brawn", 11L).isSuccessful(),
 			"infinite reward stock accepts an otherwise affordable quantity");
-		assertFalse(shops.proposeRedemption(player, "port_sarim", "port_sarim.brawn", 1L).isSuccessful(),
-			"rank gate rejects later shop");
+		assertTrue(shops.proposeRedemption(player, "legends", "legends.brawn", 1L).isSuccessful(),
+			"reward access depends on typed coins rather than player rank");
 		MonsterSlayerShopService.CapacityProposal capacity = shops.proposeCapacityPurchase(player, "falador");
 		assertTrue(capacity.isSuccessful(), "first capacity entitlement proposal");
 		equals(31, capacity.getSnapshot().getDerivedInventoryCapacity(), "proposal adds only Falador entitlement");
 		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "falador").isSuccessful(),
 			"duplicate capacity entitlement is rejected");
-		assertFalse(shops.proposeCapacityPurchase(capacity.getSnapshot(), "port_sarim").isSuccessful(),
-			"rank gate remains authoritative for later entitlement");
+		assertTrue(shops.proposeCapacityPurchase(capacity.getSnapshot(), "port_sarim").isSuccessful(),
+			"next ordered entitlement depends on coins and prior upgrade rather than rank");
+		assertFalse(shops.proposeCapacityPurchase(player, "port_sarim").isSuccessful(),
+			"satchel upgrade ordering remains authoritative");
 		shops.restock();
 		equals(-1, shops.getStock("falador.brawn"), "infinite stock remains unbounded");
 	}

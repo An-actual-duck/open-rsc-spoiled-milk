@@ -125,7 +125,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"conf", "server", "defs", "MonsterSlayerNpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
 		for (int id : new int[] {848, 854, 860}) assertTrue(location(definitions, id).getString("description").contains("Blue Moon"),
 			"Blue Moon NPC description " + id);
-		assertEquals("Veteran Slayer Associate", location(definitions, 854).getString("name"),
+		assertEquals("Slayer shop associate", location(definitions, 854).getString("name"),
 			"Veteran associate is identifiable at Blue Moon");
 		int[][] sprites = {
 			{848, 7, 29, 38, 99, 49}, // steel plate, legs, square shield, and sword
@@ -195,14 +195,14 @@ public final class MonsterSlayerContactsRouteTest {
 			assertEquals(0, definition.getInt("attackable"), "Champions Slayer NPC remains non-attackable " + fixture[0]);
 			location(locations.getJSONArray("npclocs"), fixture[0]);
 		}
-		assertEquals("Elite Slayer Associate", location(definitions, 855).getString("name"),
+		assertEquals("Slayer shop associate", location(definitions, 855).getString("name"),
 			"Champions associate has rank-specific identity");
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com", "openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
 		assertTrue(clientDefinitions.contains("new int[]{15, 30, 39, 100, 50, -1, -1, -1"),
 			"client Doran uses full mithril composition");
 		assertTrue(clientDefinitions.contains("new int[]{3, 57, 2, -1, 111, -1, -1, -1"),
 			"client associate uses partial mithril composition");
-		assertTrue(clientDefinitions.contains("\"Elite Slayer Associate\", \"An Elite Slayer quartermaster\""),
+		assertTrue(clientDefinitions.contains("\"Slayer shop associate\", \"An Elite Slayer quartermaster\""),
 			"client/server associate identity is synchronized");
 		for (String identity : new String[] {
 			"new AnimationDef(\"fullhelm\", \"equipment\", 10072780",
@@ -225,8 +225,8 @@ public final class MonsterSlayerContactsRouteTest {
 			{856, 7, 31, 2, -1, 112} // head, adamant plate, ordinary legs, no shield, battleaxe
 		};
 		int[][] placement = {
-			{850, 372, 1381, 371, 1380, 372, 1382},
-			{856, 374, 1381, 373, 1380, 374, 1382}
+			{850, 369, 436, 369, 435, 370, 436},
+			{856, 370, 437, 370, 437, 371, 437}
 		};
 		java.util.Set<String> appearances = new java.util.HashSet<String>();
 		java.util.Set<String> starts = new java.util.HashSet<String>();
@@ -250,14 +250,14 @@ public final class MonsterSlayerContactsRouteTest {
 			assertEquals(fixture[6], max.getInt("Y"), "Heroes roam max Y " + fixture[0]);
 			assertTrue(starts.add(start.getInt("X") + "," + start.getInt("Y")),
 				"Heroes Slayer starts remain unique " + fixture[0]);
-			assertTrue(min.getInt("X") >= 371 && max.getInt("X") <= 374
-				&& min.getInt("Y") >= 1380 && max.getInt("Y") <= 1382,
-				"Heroes roaming stays inside the clear upper room " + fixture[0]);
+			assertTrue(min.getInt("X") >= 369 && max.getInt("X") <= 371
+				&& min.getInt("Y") >= 435 && max.getInt("Y") <= 440,
+				"Heroes roaming stays around the visually confirmed interior anchor " + fixture[0]);
 		}
 		assertTrue(rangesAreDisjoint(location(locations.getJSONArray("npclocs"), 850),
 			location(locations.getJSONArray("npclocs"), 856)),
 			"Heroes Slayer NPC roaming pockets do not overlap");
-		assertEquals("Champion Slayer Associate", location(definitions, 856).getString("name"),
+		assertEquals("Slayer shop associate", location(definitions, 856).getString("name"),
 			"Heroes associate has rank-specific identity");
 
 		int heroesSpawns = 0;
@@ -266,10 +266,16 @@ public final class MonsterSlayerContactsRouteTest {
 			int id = spawn.getInt("id");
 			if (id < 846 || id > 860) continue;
 			JSONObject start = spawn.getJSONObject("start");
-			if (start.getInt("X") >= 369 && start.getInt("X") <= 376
-					&& start.getInt("Y") >= 1380 && start.getInt("Y") <= 1383) heroesSpawns++;
+			if (start.getInt("X") >= 369 && start.getInt("X") <= 371
+					&& start.getInt("Y") >= 435 && start.getInt("Y") <= 440) heroesSpawns++;
 		}
 		assertEquals(2, heroesSpawns, "Heroes Guild retains exactly two placed Slayer NPCs");
+		JSONObject establishedResident = location(new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "NpcLocs.json")), StandardCharsets.UTF_8)).getJSONArray("npclocs"), 253);
+		assertEquals(372, establishedResident.getJSONObject("start").getInt("X"),
+			"Achetties remains in the separate southern guild room X");
+		assertEquals(443, establishedResident.getJSONObject("start").getInt("Y"),
+			"Achetties remains in the separate southern guild room Y");
 		assertHeroesRangeDoesNotIntersectWorldPlacements(server, locations, "conf/server/defs/locs");
 
 		server.getWorld().getRegionManager().load();
@@ -286,8 +292,11 @@ public final class MonsterSlayerContactsRouteTest {
 			}
 		}
 		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-			Point.location(374, 1382), Point.location(372, 1381), true),
-			"clear tile beside the guild ladder reaches Sella without crossing a wall");
+			Point.location(369, 436), Point.location(369, 436), true),
+			"visually confirmed interior anchor is a valid Sella tile");
+		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
+			Point.location(369, 436), Point.location(370, 437), true),
+			"visually confirmed interior anchor reaches the associate without crossing a wall");
 
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com",
 			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
@@ -299,11 +308,28 @@ public final class MonsterSlayerContactsRouteTest {
 			"client/server Sella description is synchronized");
 		assertTrue(clientDefinitions.contains("new int[]{7, 31, 2, -1, 112, -1, -1, -1"),
 			"client associate uses partial adamant composition");
-		assertTrue(clientDefinitions.contains("\"Champion Slayer Associate\", \"A Champion Slayer supplier\""),
+		assertTrue(clientDefinitions.contains("\"Slayer shop associate\", \"A Champion Slayer supplier\""),
 			"client/server Heroes associate identity is synchronized");
-		assertEquals("Hero Slayer Associate", location(definitions, 857).getString("name"),
+		assertEquals("Slayer shop associate", location(definitions, 857).getString("name"),
 			"server names the final supplier for the Hero point tier");
-		assertTrue(clientDefinitions.contains("\"Hero Slayer Associate\", \"A rune-clad Hero Slayer supplier\""),
+		JSONObject heroAssociate = location(definitions, 857);
+		int[] heroLayers = {3, 59, 2, -1, 113};
+		for (int layer = 1; layer <= heroLayers.length; layer++) assertEquals(heroLayers[layer - 1],
+			heroAssociate.getInt("sprites" + layer), "Hero associate known-valid rune layer " + layer);
+		JSONArray baseDefinitions = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "NpcDefs.json")), StandardCharsets.UTF_8)).getJSONArray("npcs");
+		JSONObject achetties = location(baseDefinitions, 253);
+		assertEquals(achetties.getInt("sprites1"), heroAssociate.getInt("sprites1"),
+			"Hero associate reuses Achetties' proven female head slot");
+		assertEquals(achetties.getInt("sprites2"), heroAssociate.getInt("sprites2"),
+			"Hero associate reuses Achetties' visibly rendered female rune body");
+		assertEquals(2, heroAssociate.getInt("sprites3"),
+			"Hero associate uses the proven ordinary legs layer for a partial-armour supplier");
+		assertEquals(achetties.getInt("sprites5"), heroAssociate.getInt("sprites5"),
+			"Hero associate reuses Achetties' visibly rendered rune battleaxe");
+		assertTrue(clientDefinitions.contains("new int[]{3, 59, 2, -1, 113, -1, -1, -1"),
+			"client Hero associate uses valid female head, rune body, legs, and battleaxe slots");
+		assertTrue(clientDefinitions.contains("\"Slayer shop associate\", \"A rune-clad Hero Slayer supplier\""),
 			"client/server Hero associate identity is synchronized");
 		for (String identity : new String[] {
 			"new AnimationDef(\"fullhelm\", \"equipment\", 11717785",
@@ -346,7 +372,8 @@ public final class MonsterSlayerContactsRouteTest {
 					JSONObject npcs = new JSONObject(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
 					for (Object value : npcs.getJSONArray("npclocs")) {
 						JSONObject other = (JSONObject) value;
-						if (other.getInt("id") == 850 || other.getInt("id") == 856) continue;
+						if (other.getInt("id") == 850 || other.getInt("id") == 856
+								|| other.getInt("id") == 269) continue;
 						for (int hero : new int[] {850, 856}) assertTrue(rangesAreDisjoint(
 							location(locations.getJSONArray("npclocs"), hero), other),
 							"Heroes roam avoids existing NPC " + other.getInt("id") + " in " + file + " npc=" + hero);
@@ -404,14 +431,22 @@ public final class MonsterSlayerContactsRouteTest {
 		assertTrue(clientDefinitions.contains("new int[]{3, 4, 2, -1, -1, -1, -1, 87"), "existing Gardener proves female head, body, and legs slots");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 15654365"), "female iron plate-top animation exists");
 		assertTrue(clientDefinitions.contains("new int[]{3, 54, 2, -1, 108, -1, -1, -1"), "client Fledgling associate female bronze plate composition");
-		assertTrue(clientDefinitions.contains("\"Fledgling Slayer Associate\", \"A Fledgling Slayer supplier\""), "client associate display name");
+		assertTrue(clientDefinitions.contains("\"Slayer shop associate\", \"A Fledgling Slayer supplier\""), "client associate display name");
 		assertTrue(clientDefinitions.contains("new int[]{7, 27, 2, -1, 115, -1, -1, -1"), "client Fledgling ambient bronze plate composition");
 		assertTrue(clientDefinitions.contains("new int[]{3, 55, 37, 98, 48, -1, -1, -1"), "client female Adept leader iron plate composition");
 		assertTrue(clientDefinitions.contains("new int[]{6, 28, 2, -1, 109, -1, -1, -1"), "client Adept associate iron plate composition");
 		assertTrue(clientDefinitions.contains("new int[]{7, 28, 2, -1, 116, -1, -1, -1"), "client Adept ambient iron plate composition");
-		assertTrue(clientDefinitions.contains("\"Adept Slayer Associate\", \"An Adept Slayer supplier\""), "client Adept associate display name");
+		assertTrue(clientDefinitions.contains("\"Slayer shop associate\", \"An Adept Slayer supplier\""), "client Adept associate display name");
 		assertTrue(clientDefinitions.contains("\"Adept Monster Slayer\", \"A practical hunter\""), "client Adept ambient display name");
 		assertTrue(clientShopInterface.contains("{\"Fledgling\", \"Adept\", \"Veteran\", \"Elite\", \"Champion\", \"Hero\"}"), "client point-shop labels present Adept");
+		assertTrue(clientShopInterface.contains("PRODUCTION_MONSTER_SLAYER_SHOP_CATEGORY = 11"),
+			"client recognizes the universal Slayer rank picker");
+		assertTrue(clientShopInterface.contains("pointLabel(recipe.getItemId()) + \" shop\""),
+			"rank picker labels each coin as its Slayer shop");
+		assertTrue(clientShopInterface.contains("pointCoinTint(recipe.getItemId())"),
+			"rank picker tints each category from its own Slayer coin code");
+		for (int id = 852; id <= 857; id++) assertEquals("Slayer shop associate",
+			location(definitions, id).getString("name"), "universal associate display name " + id);
 		assertAdeptPresentationParity(definitions);
 		assertNoFledglingRoamAreaIntersectsWorldGeometry(server, locations, "conf/server/defs/locs");
 		for (MonsterSlayerDialoguePlan.Step step : MonsterSlayerDialoguePlan.promotion(0)) assertTrue(step.getText().length() <= 48, "short Hobart promotion line: " + step.getText());
@@ -437,7 +472,7 @@ public final class MonsterSlayerContactsRouteTest {
 			for (int layer = 1; layer <= 5; layer++) assertEquals(fixture[layer], npc.getInt("sprites" + layer), "Adept effective layer " + fixture[0] + "/" + layer);
 			assertTrue(appearances.add(npc.getInt("sprites1") + ":" + npc.getInt("sprites2") + ":" + npc.getInt("sprites3") + ":" + npc.getInt("sprites4") + ":" + npc.getInt("sprites5")), "distinct Adept appearance " + fixture[0]);
 		}
-		assertEquals("Adept Slayer Associate", location(definitions, 853).getString("name"), "server Adept associate display name");
+		assertEquals("Slayer shop associate", location(definitions, 853).getString("name"), "server Adept associate display name");
 		assertEquals("Adept Monster Slayer", location(definitions, 859).getString("name"), "server Adept ambient display name");
 	}
 
@@ -642,8 +677,7 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("That was your final Fledgling task.", MonsterSlayerDialoguePlan.promotion(0).get(0).getText(), "Fledgling final-task dialogue is unique");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You are now an Adept."), "promotion states Adept rank");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Here is your official Adept sticker."), "promotion gives official sticker");
-		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You can now access the Fledgling shop."), "promotion identifies the unlocked shop");
-		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "Just speak with my associate over there."), "promotion directs the player to the associate");
+		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "My associate can show you every Slayer shop."), "promotion identifies universal shop access");
 		assertTrue(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "He knows a thing or two about satchels as well."), "promotion explains associate satchel expertise");
 		assertFalse(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "You've earned Fledgling Slayer Points."), "promotion does not repeat the removed point line");
 		assertFalse(containsDialogue(MonsterSlayerDialoguePlan.promotion(0), "My associate can trade them for supplies."), "promotion does not repeat the removed associate line");
@@ -1177,7 +1211,7 @@ public final class MonsterSlayerContactsRouteTest {
 			new Npc(server.getWorld(), 855, 304, 600));
 		assertEquals(java.util.Arrays.asList(
 			"N:Doran is a nice guy, but you can never get a word in edgewise.",
-			"N:A Champion is welcome at this quartermaster's counter.",
+			"N:I can show you every Slayer shop.",
 			"P:No thanks."), associate.events,
 			"Elite associate prepends the approved Doran observation");
 	}
@@ -1315,7 +1349,7 @@ public final class MonsterSlayerContactsRouteTest {
 			new Npc(server.getWorld(), 856, 308, 600));
 		assertEquals(java.util.Arrays.asList(
 			"N:Sella sure knows how to inspire a person.",
-			"N:A Hero has earned access to Champion supplies.",
+			"N:I can show you every Slayer shop.",
 			"P:No thanks."), associate.events,
 			"Champion associate prepends the approved Sella observation");
 	}
@@ -1475,7 +1509,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"retired slot is retained only to preserve appended definition IDs");
 		assertEquals("", reserved.getString("command"), "retired slot exposes no interaction");
 		JSONObject associate = location(definitions, 857);
-		int[] runeLayers = {4, 59, 3, -1, 113};
+		int[] runeLayers = {3, 59, 2, -1, 113};
 		for (int layer = 1; layer <= runeLayers.length; layer++)
 			assertEquals(runeLayers[layer - 1], associate.getInt("sprites" + layer),
 				"Hero associate rune layer " + layer);
@@ -1487,8 +1521,12 @@ public final class MonsterSlayerContactsRouteTest {
 			"client exposes Task on authentic guild Radimus");
 		assertFalse(clientDefinitions.contains("addMonsterSlayerNpcDefinition(851, \"Orin\""),
 			"client no longer authors Orin");
-		assertTrue(clientDefinitions.contains("new int[]{4, 59, 3, -1, 113, -1, -1, -1"),
+		assertTrue(clientDefinitions.contains("new int[]{3, 59, 2, -1, 113, -1, -1, -1"),
 			"client Hero associate uses partial rune composition");
+		assertTrue(clientDefinitions.contains("new int[]{3, 59, 41, 102, 113"),
+			"existing Achetties definition proves the selected female rune body and battleaxe render");
+		assertTrue(clientDefinitions.contains("new int[]{3, 56, 2, -1, 110"),
+			"existing Veteran associate proves ordinary legs render under female plate without a shield");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"fplatemailtop\", \"equipment\", 65535"),
 			"female rune plate sprite identity is proven");
 		assertTrue(clientDefinitions.contains("new AnimationDef(\"battleaxe\", \"equipment\", 65535"),
@@ -1544,19 +1582,12 @@ public final class MonsterSlayerContactsRouteTest {
 	}
 
 	private static void associateOperationsAndWorldRestockAreBounded(Server server) {
-		String[] refusals = {
-			"Sorry, Adepts only.", "Sorry, Veterans only.", "Sorry, Elites only.",
-			"Sorry, Champions only.", "Sorry, Heroes only.", "Sorry, Legends only."
-		};
 		for (int index = 0; index < 6; index++) {
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Trade"), "associate trade operation " + index);
 			assertTrue(MonsterSlayerContacts.isAssociateShopOperation("Shop"), "associate shop operation " + index);
 			assertFalse(MonsterSlayerContacts.isAssociateShopOperation("Task"), "associate task is not shop operation " + index);
 			assertTrue(MonsterSlayerContacts.associateGreeting(index).length() > 0, "associate talk dialogue " + index);
 			assertTrue(MonsterSlayerContacts.associateSupplyLine(index).length() > 0, "associate supply dialogue " + index);
-			assertEquals(java.util.Arrays.asList(refusals[index]),
-				java.util.Arrays.asList(MonsterSlayerContacts.associateRefusal(index)),
-				"associate shop gate is one concise rank line " + index);
 		}
 		assertEquals("Sorry, you don't have the required prior upgrades to get this one.",
 			MonsterSlayerContacts.missingPriorSatchelUpgradesLine(),
@@ -1594,14 +1625,35 @@ public final class MonsterSlayerContactsRouteTest {
 		MonsterSlayerState.Snapshot fledgling = MonsterSlayerState.completeIntroduction(
 			MonsterSlayerState.beginIntroduction(MonsterSlayerState.defaults(data), data), data);
 		MonsterSlayerState.write(locked.getCache(), data, fledgling);
-		RecordingDialogue lockedDialogue = new RecordingDialogue();
+		RecordingDialogue lockedDialogue = new RecordingDialogue(2);
 		new MonsterSlayerContacts(lockedDialogue).onTalkNpc(locked, associate);
-		assertEquals(java.util.Arrays.asList("N:Sorry, Adepts only."), lockedDialogue.events,
-			"Fledgling associate uses the concise rank gate");
+		assertEquals(java.util.Arrays.asList(
+			"N:I can show you every Slayer shop.",
+			"N:Or perhaps you'd like an upgrade to your satchel?",
+			"P:No thanks."), lockedDialogue.events,
+			"unranked associate talk offers universal shops and satchel service");
 		RecordingDialogue lockedTradeDialogue = new RecordingDialogue();
 		new MonsterSlayerContacts(lockedTradeDialogue).onOpNpc(locked, associate, "Trade");
-		assertEquals(java.util.Arrays.asList("N:Sorry, Adepts only."), lockedTradeDialogue.events,
-			"right-click shop route uses the same concise rank gate");
+		assertTrue(lockedTradeDialogue.events.isEmpty(),
+			"right-click shop route has no rank refusal dialogue");
+		com.openrsc.server.content.production.ProductionSession picker = locked.getAttribute("production_session", null);
+		assertTrue(picker != null && picker.isType(
+			com.openrsc.server.content.production.ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY),
+			"right-click Trade opens the universal six-rank picker");
+		assertEquals(6, picker.getRecipes().size(), "rank picker exposes all six shops immediately");
+		for (int code = 0; code < 6; code++) assertEquals(code, picker.getRecipes().get(code).getItemId(),
+			"rank picker uses the matching Slayer coin code " + code);
+		com.openrsc.server.content.production.ProductionStarter pickerStarter = locked.getAttribute("production_starter", null);
+		com.openrsc.server.content.production.ProductionMemory.beginStart(locked, picker, 5);
+		assertTrue(pickerStarter.start(locked, picker, 5, 1),
+			"unranked player can select the Hero shop from any associate");
+		com.openrsc.server.content.production.ProductionSession heroShop = locked.getAttribute("production_session", null);
+		assertTrue(heroShop != null && heroShop.isType(
+			com.openrsc.server.content.production.ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION),
+			"rank selection opens the existing reward screen");
+		assertTrue(heroShop.getTitle().contains("Hero Shop"), "selected Hero coin opens Hero stock");
+		assertTrue(com.openrsc.server.content.production.ProductionMemory.back(locked) == picker,
+			"reward screen returns to the six-rank picker through bounded navigation");
 
 		Map<String, Integer> cursors = new LinkedHashMap<String, Integer>();
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) cursors.put(contact.getKey(), 0);
@@ -1610,8 +1662,7 @@ public final class MonsterSlayerContactsRouteTest {
 		RecordingDialogue greetingDialogue = new RecordingDialogue(2);
 		new MonsterSlayerContacts(greetingDialogue).onTalkNpc(greeting, associate);
 		assertEquals(java.util.Arrays.asList(
-			"N:Congratulations on becoming an Adept.",
-			"N:I can show you my wares now.",
+			"N:I can show you every Slayer shop.",
 			"N:Or perhaps you'd like an upgrade to your satchel?",
 			"P:No thanks."), greetingDialogue.events, "unlocked Fledgling associate greeting and spoken decline");
 
@@ -1620,8 +1671,7 @@ public final class MonsterSlayerContactsRouteTest {
 		new MonsterSlayerContacts(insufficientDialogue).onTalkNpc(insufficient, associate);
 		assertEquals(30, MonsterSlayerState.read(insufficient.getCache(), data).getDerivedInventoryCapacity(), "insufficient purchase keeps base capacity");
 		assertEquals(java.util.Arrays.asList(
-			"N:Congratulations on becoming an Adept.",
-			"N:I can show you my wares now.",
+			"N:I can show you every Slayer shop.",
 			"N:Or perhaps you'd like an upgrade to your satchel?",
 			"P:Can you upgrade my satchel?",
 			"N:I can, but it'll cost you 84 fledgling coins.",
@@ -1647,8 +1697,7 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals(31, purchased.getDerivedInventoryCapacity(), "successful Fledgling satchel purchase adds one slot");
 		assertEquals(0L, purchased.getBalances().get(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerChallenge.FLEDGLING), "successful Fledgling satchel purchase deducts exact price");
 		assertEquals(java.util.Arrays.asList(
-			"N:Congratulations on becoming an Adept.",
-			"N:I can show you my wares now.",
+			"N:I can show you every Slayer shop.",
 			"N:Or perhaps you'd like an upgrade to your satchel?",
 			"P:Can you upgrade my satchel?",
 			"N:I can, but it'll cost you 84 fledgling coins.",

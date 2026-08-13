@@ -209,9 +209,6 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	private void associate(Player player, Npc npc, boolean trade) {
 		int index = npc.getID() - FIRST_ASSOCIATE;
 		try {
-			MonsterSlayerRank rank = MonsterSlayerState.read(player.getCache(), player.getWorld().getMonsterSlayerData()).getRank();
-			if (rank.getCode() < index + 2) { dialogue.npc(player, npc, associateRefusal(index)); return; }
-			if (!hostGuildAllows(player, index)) { npcsay(player, npc, "You need to meet this guild's normal entry requirements first."); return; }
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			dialogue.npc(player, npc, associateGreetingLines(index));
 			int choice = speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
@@ -526,25 +523,14 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	/** Read-only dialogue seam: Talk-to must not enter the shop state machine. */
 	public static String[] associateGreetingLines(int index) {
 		String[][] lines = {
-			{"Congratulations on becoming an Adept.", "I can show you my wares now.", "Or perhaps you'd like an upgrade to your satchel?"},
-			{"A Veteran's button carries weight here. Your Adept supplies are available."},
-			{"An Elite hunter knows what to pack. Your Blue Moon supplies are available."},
-			{"Doran is a nice guy, but you can never get a word in edgewise.", "A Champion is welcome at this quartermaster's counter."},
-			{"Sella sure knows how to inspire a person.", "A Hero has earned access to Champion supplies."},
-			{"Sir Radimus expects much from those he calls legends.", "Fortunately, he expects them to be well supplied.", "Your Hero supplies are available."}
+			{"I can show you every Slayer shop.", "Or perhaps you'd like an upgrade to your satchel?"},
+			{"Every Slayer shop is available here.", "I also handle this sect's satchel upgrade."},
+			{"Pack for the job, not the story afterward.", "I can open any Slayer shop for you."},
+			{"Doran is a nice guy, but you can never get a word in edgewise.", "I can show you every Slayer shop."},
+			{"Sella sure knows how to inspire a person.", "I can show you every Slayer shop."},
+			{"Sir Radimus expects much from those he calls legends.", "Fortunately, every Slayer shop is available here."}
 		};
 		return lines[index].clone();
-	}
-	public static String[] associateRefusal(int index) {
-		String[] lines = {
-			"Sorry, Adepts only.",
-			"Sorry, Veterans only.",
-			"Sorry, Elites only.",
-			"Sorry, Champions only.",
-			"Sorry, Heroes only.",
-			"Sorry, Legends only."
-		};
-		return new String[] {lines[index]};
 	}
 	public static String missingPriorSatchelUpgradesLine() {
 		return "Sorry, you don't have the required prior upgrades to get this one.";

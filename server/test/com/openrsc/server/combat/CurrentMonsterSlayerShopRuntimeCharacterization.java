@@ -30,12 +30,37 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 		h.installMonsterSlayerData(data);
 		risingSunAleTransactionOutcomes(h, data);
 		basicRedemptionAndRollback(h, data);
+		rankIndependentShopAndOrderedCapacityAccess(h, data);
 		everyShopDeductsItsTypedCost(h, data);
 		heroShopDragonMetalScrapUsesApprovedTypedCost(h, data);
 		capacityEntitlementsAreOrderedAndPersistCapacity(h, data);
 		concurrentRedemptionAndEntitlementPurchasesAreAtomic(h, data);
 		fullAndMalformedPlayersRemainUntouched(h, data);
 		capacityAwareAdmissionPreservesItems(h, data);
+	}
+
+	private static void rankIndependentShopAndOrderedCapacityAccess(CurrentCombatHarness h,
+			MonsterSlayerData data) {
+		AtomicInteger grants = new AtomicInteger();
+		MonsterSlayerShopService shops = new MonsterSlayerShopService(data, countingGrant(grants));
+		Player fledgling = h.player("mssuniversalshops", 799, 790);
+		state(fledgling, data, 1000L, 0, 0);
+		assertEquals(MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerState.read(fledgling.getCache(), data).getRank(),
+			"universal-shop fixture remains Fledgling");
+		assertTrue(shops.redeem(fledgling, "legends", "legends.brawn", 1).isSuccessful(),
+			"Fledgling may spend existing Hero coins in the Hero shop");
+		assertEquals(1, grants.get(), "rank-independent redemption grants exactly once");
+
+		Player ordered = h.player("mssuniversalcapacity", 798, 790);
+		state(ordered, data, 1000L, 0x01, 0);
+		assertEquals(MonsterSlayerRank.FLEDGLING,
+			MonsterSlayerState.read(ordered.getCache(), data).getRank(),
+			"ordered-upgrade fixture remains Fledgling");
+		assertTrue(shops.purchaseCapacity(ordered, "port_sarim").isSuccessful(),
+			"next satchel tier uses coins and prior entitlement without a rank gate");
+		assertEquals(0x03, MonsterSlayerState.read(ordered.getCache(), data).getInventoryUpgrades(),
+			"rank-independent satchel purchase preserves ordered entitlement mask");
 	}
 
 	/** Exercises the exact capacity seams used by bank, trade, market, and item actions. */

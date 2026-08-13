@@ -18,24 +18,27 @@ import java.util.List;
 
 /** Graphical, server-authoritative presentation for the six Slayer shops. */
 public final class MonsterSlayerChallengeShops {
+	private static final String[] SHOP_KEYS = {"falador", "port_sarim", "brimhaven", "champions", "heroes", "legends"};
 	private MonsterSlayerChallengeShops() { }
 
 	public static void open(Player player, Npc npc, String shopKey) {
-		open(player, shopKey);
+		open(player);
 	}
 
-	public static void open(Player player, String shopKey) {
+	/** Every associate exposes the same rank picker; the source NPC no longer limits stock. */
+	public static void open(Player player) {
 		try {
 			MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
-			MonsterSlayerDefinitions.Shop shop = data.getShop(shopKey);
-			MonsterSlayerShopService service = player.getWorld().getMonsterSlayerShopService();
-			MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), data);
-			if (shop == null || service == null || !state.getRank().isAtLeast(
-				com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank.fromCode(shop.getChallenge().getCode() + 1))) {
-				player.message("You aren't high enough rank to use this shop.");
+			if (data == null || player.getWorld().getMonsterSlayerShopService() == null) {
+				player.message("Your Monster Slayer record needs staff attention.");
 				return;
 			}
-			ProductionSession session = session(player, shop, service, state);
+			List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
+			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values())
+				recipes.add(new ProductionRecipe(challenge.getCode(), 1, 1, 1, true, true));
+			ProductionSession session = new ProductionSession(
+				ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY,
+				"Monster Slayer rewards", -1, 0, recipes, "monster-slayer-shops", null);
 			player.setAttribute("production_session", session);
 			player.setAttribute("production_starter", (ProductionStarter) MonsterSlayerChallengeShops::redeemFromInterface);
 			ActionSender.showProductionInterface(player, session);
@@ -45,8 +48,12 @@ public final class MonsterSlayerChallengeShops {
 	}
 
 	public static boolean redeemFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
-		if (session == null || !session.isType(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION)
-			|| quantity < 1 || session.getRecipeByItemId(itemId) == null) return false;
+		if (session == null || quantity < 1 || session.getRecipeByItemId(itemId) == null) return false;
+		if (session.isType(ProductionSession.TYPE_MONSTER_SLAYER_SHOP_CATEGORY)) {
+			if (itemId < 0 || itemId >= SHOP_KEYS.length) return false;
+			return openRewardInterface(player, SHOP_KEYS[itemId]);
+		}
+		if (!session.isType(ProductionSession.TYPE_MONSTER_SLAYER_REDEMPTION)) return false;
 		String shopKey = session.getMemoryKey();
 		if (shopKey == null || !shopKey.startsWith("monster-slayer-shop:")) return false;
 		shopKey = shopKey.substring("monster-slayer-shop:".length());
@@ -62,6 +69,19 @@ public final class MonsterSlayerChallengeShops {
 		}
 		refreshDetails(player, session, shop, service);
 		player.message("Purchase complete.");
+		return true;
+	}
+
+	private static boolean openRewardInterface(Player player, String shopKey) {
+		MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
+		MonsterSlayerDefinitions.Shop shop = data == null ? null : data.getShop(shopKey);
+		MonsterSlayerShopService service = player.getWorld().getMonsterSlayerShopService();
+		if (shop == null || service == null) return false;
+		MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), data);
+		ProductionSession rewardSession = session(player, shop, service, state);
+		player.setAttribute("production_session", rewardSession);
+		player.setAttribute("production_starter", (ProductionStarter) MonsterSlayerChallengeShops::redeemFromInterface);
+		ActionSender.showProductionInterface(player, rewardSession);
 		return true;
 	}
 

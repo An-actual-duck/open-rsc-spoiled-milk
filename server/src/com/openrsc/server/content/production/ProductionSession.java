@@ -15,6 +15,7 @@ public class ProductionSession {
 	public static final int TYPE_RANGERS_REDEMPTION_CATEGORY = 8;
 	public static final int TYPE_RANGERS_REDEMPTION = 9;
 	public static final int TYPE_MONSTER_SLAYER_REDEMPTION = 10;
+	public static final int TYPE_MONSTER_SLAYER_SHOP_CATEGORY = 11;
 
 	private final int type;
 	private final String title;
@@ -39,7 +40,8 @@ public class ProductionSession {
 			&& type != TYPE_SMITHING_MATERIAL && type != TYPE_FURNACE_CATEGORY
 			&& type != TYPE_FURNACE_MATERIAL && type != TYPE_TELEPORT_DESTINATION
 			&& type != TYPE_RANGERS_REDEMPTION_CATEGORY && type != TYPE_RANGERS_REDEMPTION
-			&& type != TYPE_MONSTER_SLAYER_REDEMPTION) {
+			&& type != TYPE_MONSTER_SLAYER_REDEMPTION
+			&& type != TYPE_MONSTER_SLAYER_SHOP_CATEGORY) {
 			throw new IllegalArgumentException("Unknown production session type: " + type);
 		}
 		if (title == null || title.isEmpty()) {
