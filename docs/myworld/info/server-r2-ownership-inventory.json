@@ -805,7 +805,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "36db570fcfea0a487290f7b3ac000c315eaacf0a73eef2d594b1355f4ff8ba95",
+  "inputTreeSha256": "3b1962aca0f4ddc36c612b5e7e8670c12655b8e8ca2684259ef90b8f62181804",
   "inputs": [
     {
       "brandSignals": [
@@ -1040,7 +1040,7 @@
       "kind": "build-launch-or-operator-script",
       "path": "scripts/lib/layered-world-package.sh",
       "reverseDependencies": [],
-      "sha256": "93a6bbb569ae8546464c426f49e9e547be488cffafbd29937fcf8f25babc6006"
+      "sha256": "a0c270982e22b5c8e3baf9b2f9275a5b74143c60ea30ec83ffb125714a292629"
     },
     {
       "brandSignals": [
@@ -1742,7 +1742,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 285355,
+      "bytes": 285340,
       "category": "spoiled-milk-content",
       "classificationReason": "Named Spoiled Milk definition override",
       "classificationRule": "server/conf/server/defs/*{MyWorld,Custom}*",
@@ -1751,7 +1751,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/ItemDefsMyWorld.json",
       "reverseDependencies": [],
-      "sha256": "e40a477beb6ee0c35cd7d5607989a96f27681fd7c3b4b95c2ce5f49b1bb8bf35"
+      "sha256": "565a44b59a335824ca6a18718e324858319b2b2ffe02e0ec711f52fd3e8ec264"
     },
     {
       "brandSignals": [],
@@ -8457,7 +8457,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 1554,
+      "bytes": 1571,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -8499,7 +8499,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/misc/SalarinTheTwistedMageAI.java",
       "reverseDependencies": [],
-      "sha256": "6d77602b28563322a8fe88039bb90d32de97a1651656ce7ec23165c4f1122a6d"
+      "sha256": "487ce19dc9a93c03ff8a4cf081ee4b4f7868a97082a56ae8602334012625d08a"
     },
     {
       "brandSignals": [],
@@ -8716,7 +8716,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7591,
+      "bytes": 7608,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -8766,11 +8766,11 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/misc/StrangeBarrels.java",
       "reverseDependencies": [],
-      "sha256": "04f32cf054e838097f19fb7a71972d5614b975ab337fad469e0136885f245c71"
+      "sha256": "28ccb2eddc94fa971a399665a66ad0ace7c733619fa6fc4b50b5a0965c333b80"
     },
     {
       "brandSignals": [],
-      "bytes": 4109,
+      "bytes": 4126,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -8816,7 +8816,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/misc/Zamorak.java",
       "reverseDependencies": [],
-      "sha256": "b4b764efc7b55cbd2109e89973f064feb82804507409a598036465c84195d7aa"
+      "sha256": "9095f7a76c00babf5b22f3e0dde6e91ed817c6c574b84137e5cc2259018d63c3"
     },
     {
       "brandSignals": [],
@@ -10955,7 +10955,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 3517,
+      "bytes": 3551,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -10993,7 +10993,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/brimhaven/BrimHavenBartender.java",
       "reverseDependencies": [],
-      "sha256": "051f3f02ef05f199b9860bc67a3e5f7905a890036050651f52233b6584ddb41a"
+      "sha256": "9ce0fe8fe4d6448a0188c2e0ec3e81d80fea9dea2ea28cde60916c6619eef96d"
     },
     {
       "brandSignals": [],
@@ -11812,7 +11812,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4564,
+      "bytes": 4598,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -11854,7 +11854,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/falador/Barmaid.java",
       "reverseDependencies": [],
-      "sha256": "44f2ae38a5576f8bc974dbe2176729c761065e62af5f5c392c9327efc10e5a5f"
+      "sha256": "47a1a166a9fe1fbfaa19f12cbacdf84b565545df2466fbf529427555af9408ec"
     },
     {
       "brandSignals": [],
@@ -14061,7 +14061,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4682,
+      "bytes": 4716,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -14099,7 +14099,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/seers/SeersBartender.java",
       "reverseDependencies": [],
-      "sha256": "7ced4df3ca8209cf05c289a2c8e3c6891192d1a056593c1c4ac2821df020d462"
+      "sha256": "01bbe4fafad4d212ae2ea311291d1c7108ce8b77f8a173a296780e65c47e6b0b"
     },
     {
       "brandSignals": [],
@@ -15489,7 +15489,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4649,
+      "bytes": 4683,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -15531,7 +15531,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/Bartender.java",
       "reverseDependencies": [],
-      "sha256": "1fb007d20ec97ad23b858c3af914de79381b07bd0badc361563a64c33f4fe904"
+      "sha256": "97ee6f609129c9e7efce2e332f5b89357263df4d7c8375c0830c76c5eafdd4b7"
     },
     {
       "brandSignals": [],
@@ -15765,7 +15765,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4297,
+      "bytes": 4331,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -15803,7 +15803,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/JollyBoarInnBartender.java",
       "reverseDependencies": [],
-      "sha256": "637806e2a7ef8fcf465a4f6331058168081f56af813e084f33fdef2958996a02"
+      "sha256": "2268823f9bc3d7eaff4e03a42f31779a322c84cad269c7a8eb2a58699dbb2bbf"
     },
     {
       "brandSignals": [],
@@ -20370,7 +20370,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 18395,
+      "bytes": 18412,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -20452,7 +20452,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/quests/members/WitchesHouse.java",
       "reverseDependencies": [],
-      "sha256": "58188907c2190f78f29e59099151758234cbea243553b98e23df54082f12e43c"
+      "sha256": "5ba6aeb106b5e74c9ce7c60c88668af1a38d553361ef48325b2a949ebcf96222"
     },
     {
       "brandSignals": [],
@@ -21166,7 +21166,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 11979,
+      "bytes": 11996,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -21224,7 +21224,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/mechanism/LegendsQuestInvAction.java",
       "reverseDependencies": [],
-      "sha256": "cc90d85cfe4b8d6e502339fb55a51faf574aaddb2e8e4c481bfaac7cfa7f6c4d"
+      "sha256": "0470ad70f0e7e0fd4c00a90c032002c1b5a52a423ce4f4b4b5815602f3e0e3c2"
     },
     {
       "brandSignals": [],
@@ -21300,7 +21300,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 20754,
+      "bytes": 20805,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -21346,7 +21346,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestEchnedZekin.java",
       "reverseDependencies": [],
-      "sha256": "4758cf37c0086cc9633f5cd94744c521c778ae9a0628e33d268db71926f8385a"
+      "sha256": "4e86ce095dc961dceef698011d7f9a40d5a27fef5d4ab3242c1482b5cf56283f"
     },
     {
       "brandSignals": [],
@@ -21396,7 +21396,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 59928,
+      "bytes": 59901,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -21454,7 +21454,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestGujuo.java",
       "reverseDependencies": [],
-      "sha256": "f4e204e652ecbe78d8c48b64672fab5dc7a30adb3499e6e12f11179548a23fe6"
+      "sha256": "e3e3b52e2fa67652740de937fb3769cac15253bbc5febfb66e0ed174d67687f4"
     },
     {
       "brandSignals": [],
@@ -21492,7 +21492,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 9522,
+      "bytes": 9539,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -21532,7 +21532,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestGameObjects.java"
       ],
-      "sha256": "0fd664b323facd7365b72c284999fe659096003210a23229106be54bd2181b63"
+      "sha256": "188dc5606858a36c6860787db75b3576fd8f8f95f6e3d396ce520c5a69c09b9f"
     },
     {
       "brandSignals": [],
@@ -21689,7 +21689,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 45971,
+      "bytes": 46006,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -21729,7 +21729,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestWallObjects.java"
       ],
-      "sha256": "5020fa322a5e80cbe0664e786b96baf4424cf8d02706619757c70b68927ecda9"
+      "sha256": "b31fb570c35e9d5e6320f582c74a5e4713fec6ce5a9341abd102f32d3558715a"
     },
     {
       "brandSignals": [],
@@ -21967,7 +21967,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 52498,
+      "bytes": 52553,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -22053,7 +22053,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestGameObjects.java",
       "reverseDependencies": [],
-      "sha256": "db5b2fddc4e93fe235cc4d966739ac17e9889180e50b4be23734c6d3ec05f459"
+      "sha256": "31c82488f2d86f007bb3904203f0eb49265c5063690ad2cb6004f1192d628919"
     },
     {
       "brandSignals": [],
@@ -34449,7 +34449,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 84493,
+      "bytes": 86912,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -34633,7 +34633,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "b0eb943a92bff1eee47d8aa44c5998fd91f0ceea9f6419ba075ad00af17f0078"
+      "sha256": "eb83c3185038b7fed261b90a28d324578afdb0904fcae9f48414c21cff0a0a4b"
     },
     {
       "brandSignals": [],
@@ -36703,7 +36703,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7127,
+      "bytes": 7857,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -36720,7 +36720,7 @@
         "server/src/com/openrsc/server/model/entity/npc/Npc.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "2cd65f6b56551c7f5dc4f9be8b77e90ab11f1f95c108d07c58f57be3eac6b036"
+      "sha256": "e083bd4736db7f61e5cc42772ad1d3fcf7a986d01650883f5de96ab0e614a185"
     },
     {
       "brandSignals": [],
@@ -42872,7 +42872,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7027,
+      "bytes": 7037,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42926,11 +42926,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
       "reverseDependencies": [],
-      "sha256": "4a896fc68d442b3c581947b84ecad5c7cbe0c4bd70e69678b7d2319b45f39e8a"
+      "sha256": "10460001de279d076b358836e3ad3759c52ccd6d9f353660213060823d8fd7cd"
     },
     {
       "brandSignals": [],
-      "bytes": 1757,
+      "bytes": 1859,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42960,11 +42960,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/ElvargPrayerDrain.java",
       "reverseDependencies": [],
-      "sha256": "40b4e772eef0bcb6f61957f9a2cf196ca908ebaee27dfa3729b5c0684845dc52"
+      "sha256": "476b3b416bb5cffc3ac214c9ce053a1eaf4865c48f30db7cb098dbd3e2fc4c7f"
     },
     {
       "brandSignals": [],
-      "bytes": 1292,
+      "bytes": 1326,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42994,11 +42994,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/KingBlackDragonPrayerDrain.java",
       "reverseDependencies": [],
-      "sha256": "8f4382004efae93829645348c8d8328e42b0b3de8e647478c46ae75fd05d8f50"
+      "sha256": "4b03eb50efa0d4535c008f7bc1c4a9aeda49c1cdcb25468a41c95f29bbafc50f"
     },
     {
       "brandSignals": [],
-      "bytes": 1789,
+      "bytes": 1806,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43044,7 +43044,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/MonkZamorak.java",
       "reverseDependencies": [],
-      "sha256": "0d2f747eca5db2c5da5d7b24c6fcf7ec50790a3bf6007de25691ad7f0318ed3d"
+      "sha256": "8c8780ab4803bf9caee76a32f8755e58d77bd2287fb9ef5a38bc91de464b1364"
     },
     {
       "brandSignals": [],
@@ -43165,7 +43165,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2022,
+      "bytes": 2039,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43211,11 +43211,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/SalarinTheTwistedDrain.java",
       "reverseDependencies": [],
-      "sha256": "6eed8a96389067bb2a156af048bb30a049ceba74e042d451a7554717008362e0"
+      "sha256": "9175328f2bd531f12ae77ec0597d0c45c54ab927aaa2b7842c404be3cff422cb"
     },
     {
       "brandSignals": [],
-      "bytes": 1388,
+      "bytes": 1446,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43249,7 +43249,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/ShadowSpiderPrayerDrain.java",
       "reverseDependencies": [],
-      "sha256": "d7650f16d5e7b05a60315a28bb29f403765f5457154a14a0f84f819a8c7cb331"
+      "sha256": "e5859bbd77c4e60dc0c646b567b2449a20a9515af9dca3f1c00a6887a74c3a77"
     },
     {
       "brandSignals": [],
@@ -43295,7 +43295,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 1785,
+      "bytes": 1802,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43341,7 +43341,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/SkeletonMage.java",
       "reverseDependencies": [],
-      "sha256": "78237244486f9ba1d57e308390322a313fe8b068f0f4bf3c11c4a586b6a24e0d"
+      "sha256": "4a956324f79cc3b53103aea3e7582e14491ef7323d0a1fbba49529c6e4ac6c52"
     },
     {
       "brandSignals": [],
@@ -44164,7 +44164,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 25459,
+      "bytes": 25476,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44251,7 +44251,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "063d6808479caceb7d83873d8a0df6ec95778ec9fd49a8c9107c24e0802bbb73"
+      "sha256": "024c802ab6da6017a9ac272c23257f43bee5092f92708df51523709b62ca7c2c"
     },
     {
       "brandSignals": [
@@ -45728,7 +45728,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "35fef383227907b57af353040033ab1fae11beb77709ac8a05d3f03c54516d29"
+      "sha256": "848fba337de98b9d5f56b71b5285edafb636877f2a8c4689412e826d0e2ae506"
     },
     {
       "brandSignals": [],
@@ -47012,7 +47012,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 20221,
+      "bytes": 21478,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -47078,7 +47078,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/Skills.java",
       "reverseDependencies": [],
-      "sha256": "ac4e2234e25524692b69cd5786a59c4727d2d73fa517717b4ec4b11526a03437"
+      "sha256": "c86aea1c865fccf9055cae3b674c95dac293dc41dfd381d07ad0fa847e68d766"
     },
     {
       "brandSignals": [],
@@ -50798,7 +50798,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 65836,
+      "bytes": 66227,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -51365,7 +51365,7 @@
         "server/src/com/openrsc/server/util/PathfindingDebug.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "568fa576e13773c46db0894e2f80a1ab76ea569b9bc8a199099aa1628920d3fb"
+      "sha256": "7a5b16c565e92baba0a6f1fe5d23ea7c1d15cd4f7649dde5d5e6089d3151d42e"
     },
     {
       "brandSignals": [],
@@ -62141,7 +62141,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 115825,
+      "bytes": 115934,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -62462,7 +62462,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestDarkMetalGate.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
       ],
-      "sha256": "b41301d5d9916569fbafd8f329ad5163a96db750bcb24fac8115847be4501eb9"
+      "sha256": "ffabc1f1b33c0d856fa2aed996e59dd3b48f849a772242aa38c15bac15752549"
     },
     {
       "brandSignals": [],
@@ -66637,7 +66637,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 65674,
+      "bytes": 65522,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -66825,7 +66825,7 @@
         "server/src/com/openrsc/server/plugins/menu/Menu.java",
         "server/src/com/openrsc/server/util/rsc/Formulae.java"
       ],
-      "sha256": "a12ae40a6d38ca45b14f74a99b6d3a4ab7baab78cf6d0fb22bd01e702a5e2e24"
+      "sha256": "ded385646f0aa82cece9e05659764237c87f1f6661292d42a2dd5a2c3b195d72"
     },
     {
       "brandSignals": [],
@@ -66964,7 +66964,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 60666,
+      "bytes": 60683,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -67052,7 +67052,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/misc/PeelingTheOnionItems/LeatherVestCrafting.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/misc/PeelingTheOnionItems/YellowgreenClay.java"
       ],
-      "sha256": "0772c92eae7a8e445cf45a512eb9a7049919e6e7bd04eb5124259ec3cff2d510"
+      "sha256": "3e23c055b3159dd19a548658a262476e62a35d6eb9eaf7d56e4625e465d17a41"
     },
     {
       "brandSignals": [],
@@ -72192,7 +72192,7 @@
       "kind": "layered-tool-input",
       "path": "tools/layered-maps/src/com/openrsc/layeredmaps/SpoiledMilkWorldComposition.java",
       "reverseDependencies": [],
-      "sha256": "36f1903a44501c4a09da057caf0ca562934e0418f9adc09690543afd4a7a8dab"
+      "sha256": "88029e946dc0f677d2c2435e9200dc3cd96e343444b654b9d22aaf478be4597a"
     },
     {
       "brandSignals": [
