@@ -130,10 +130,10 @@ public final class Barmaid implements
 			maxStat < 75 ? 7 : 8;
 		currentStat = player.getSkills().getLevel(skillId);
 		if (currentStat <= 8) {
-			player.getSkills().setLevel(skillId, Math.max(currentStat - reduction, 0));
+			player.getSkills().setLevelFromStatReduction(skillId, Math.max(currentStat - reduction, 0));
 		}
 		else {
-			player.getSkills().setLevel(skillId, currentStat - reduction);
+			player.getSkills().setLevelFromStatReduction(skillId, currentStat - reduction);
 		}
 	}
 

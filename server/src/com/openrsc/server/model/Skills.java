@@ -204,6 +204,42 @@ public class Skills {
 		setLevel(skill, level, true);
 	}
 
+	/**
+	 * Applies a temporary stat reduction through the player-facing protection
+	 * boundary. Direct level setters intentionally remain unguarded for normal
+	 * prayer use, restoration/boost decay, permanent level changes, and
+	 * administrative operations.
+	 *
+	 * @return {@code true} when the current level was reduced
+	 */
+	public boolean setLevelFromStatReduction(int skill, int level, boolean sendUpdate) {
+		if (isHiddenAutoMaxedSkill(skill) || level >= levels[skill]) {
+			return false;
+		}
+		if (skill != Skill.HITS.id() && mob instanceof Player
+				&& ((Player) mob).hasStatReductionProtection()) {
+			((Player) mob).message("Your stat restore protects you from the reduction.");
+			return false;
+		}
+		setLevel(skill, level, sendUpdate, false);
+		return true;
+	}
+
+	public boolean setLevelFromStatReduction(int skill, int level) {
+		return setLevelFromStatReduction(skill, level, true);
+	}
+
+	public boolean subtractLevelFromStatReduction(int skill, int amount, boolean sendUpdate) {
+		if (amount <= 0) {
+			return false;
+		}
+		return setLevelFromStatReduction(skill, levels[skill] - amount, sendUpdate);
+	}
+
+	public boolean subtractLevelFromStatReduction(int skill, int amount) {
+		return subtractLevelFromStatReduction(skill, amount, true);
+	}
+
 	public void setExperience(int skill, int exp) {
 		if (isHiddenAutoMaxedSkill(skill)) {
 			applyHiddenSkillDefaults();

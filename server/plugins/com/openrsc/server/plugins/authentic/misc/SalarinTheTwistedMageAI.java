@@ -32,7 +32,7 @@ public class SalarinTheTwistedMageAI implements SpellNpcTrigger {
 			delay();
 			player.message("You suddenly feel much weaker");
 			boolean sendUpdate = player.getClientLimitations().supportsSkillUpdate;
-			player.getSkills().setLevel(meleeStat, 0, sendUpdate);
+			player.getSkills().setLevelFromStatReduction(meleeStat, 0, sendUpdate);
 			if (!sendUpdate) {
 				player.getSkills().sendUpdateAll();
 			}

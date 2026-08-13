@@ -104,7 +104,7 @@ public class DragonFireBreath implements OnCombatStartScript {
 			//reduce ranged level (case for KBD if engaging with melee or ranging)
 			if (dragon.getID() == NpcId.KING_BLACK_DRAGON.id() && (player.isRanging() || attacker.isPlayer())) {
 				int newLevel = getCurrentLevel(player, Skill.RANGED.id()) - Formulae.getLevelsToReduceAttackKBD(player);
-				player.getSkills().setLevel(Skill.RANGED.id(), newLevel, true, false);
+				player.getSkills().setLevelFromStatReduction(Skill.RANGED.id(), newLevel, true);
 			}
 		}
 	}

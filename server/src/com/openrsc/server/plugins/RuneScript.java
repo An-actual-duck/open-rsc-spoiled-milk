@@ -1549,7 +1549,7 @@ public class RuneScript {
 
 		final int currentLevel = player.getSkills().getLevel(statId);
 		final int newLevel = currentLevel - (int)(constant + (currentLevel * percent) / 100.0);
-		player.getSkills().setLevel(statId, newLevel);
+		player.getSkills().setLevelFromStatReduction(statId, newLevel);
 	}
 
 	/**

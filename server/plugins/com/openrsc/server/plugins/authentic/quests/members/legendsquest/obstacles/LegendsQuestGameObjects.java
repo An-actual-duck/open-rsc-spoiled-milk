@@ -383,7 +383,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 						mes("but run out of steam before you're able to force the gates open.");
 						delay(2);
 						player.message("The effort of trying to force the gates reduces your strength temporarily");
-						player.getSkills().decrementLevel(Skill.STRENGTH.id());
+						player.getSkills().subtractLevelFromStatReduction(Skill.STRENGTH.id(), 1);
 					}
 				} else if (menu == 1) {
 					player.message("You decide against forcing the gates.");
@@ -442,7 +442,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 					player.message("You fail to make a mark on the rocks.");
 					player.message("You miss hit the rock and the vibration shakes your bones.");
 					player.message("Your mining ability suffers...");
-					player.getSkills().decrementLevel(Skill.MINING.id());
+					player.getSkills().subtractLevelFromStatReduction(Skill.MINING.id(), 1);
 				}
 			} else {
 				mes("You'll need a pickaxe to smash your way through these boulders.");
@@ -766,7 +766,7 @@ public class LegendsQuestGameObjects implements TakeObjTrigger, OpLocTrigger, Us
 					player.getCache().store("crafted_totem_pole", true);
 				}
 				player.message("Carrying this totem pole saps your strength...");
-				player.getSkills().setLevel(Skill.STRENGTH.id(), (int) (player.getSkills().getLevel(Skill.STRENGTH.id()) * 0.9));
+				player.getSkills().setLevelFromStatReduction(Skill.STRENGTH.id(), (int) (player.getSkills().getLevel(Skill.STRENGTH.id()) * 0.9));
 			} else {
 				player.message("This is not your totem pole to carry.");
 			}

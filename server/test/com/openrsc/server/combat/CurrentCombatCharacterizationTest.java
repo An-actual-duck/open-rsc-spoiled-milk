@@ -107,6 +107,9 @@ public final class CurrentCombatCharacterizationTest {
 			new RecordingDamageObserver();
 		try (CurrentCombatHarness harness = new CurrentCombatHarness(
 				damageObserver)) {
+			run(harness, "stat_restore_protects_all_temporary_drains_until_expiry",
+				CurrentStatReductionProtectionCharacterization
+					::protectedDrainPathsAndExpiry);
 			run(harness, "combat_trace_profiles_are_validated_bounded_and_redacted",
 				CurrentCombatObservabilityCharacterization
 					::profilesRedactionAndBoundedRetention);

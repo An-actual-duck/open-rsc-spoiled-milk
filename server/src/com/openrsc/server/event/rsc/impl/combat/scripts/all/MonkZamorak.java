@@ -29,7 +29,7 @@ public class MonkZamorak implements CombatAggroScript, OnCombatStartScript {
 				int lowerBy = (int) Math.ceil(((player.getSkills().getMaxStat(affectedStat) + 20) * 0.05));
 				/* New current level */
 				final int newStat = Math.max(0, player.getSkills().getLevel(affectedStat) - lowerBy);
-				player.getSkills().setLevel(affectedStat, newStat, sendUpdate);
+				player.getSkills().setLevelFromStatReduction(affectedStat, newStat, sendUpdate);
 			}
 			if (!sendUpdate) {
 				player.getSkills().sendUpdateAll();

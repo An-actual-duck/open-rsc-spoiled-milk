@@ -1174,7 +1174,7 @@ public class LegendsQuestGujuo implements TalkNpcTrigger, UseNpcTrigger {
 				delay(2);
 				mes("You lose some prayer...");
 				delay(2);
-				player.getSkills().setLevel(Skill.PRAYER.id(), player.getSkills().getLevel(Skill.PRAYER.id()) - 5);
+				player.getSkills().subtractLevelFromStatReduction(Skill.PRAYER.id(), 5);
 				npcsay(player, npc, "Would you like to try again.");
 				int failMenu = multi(player, npc, false, //do not send over
 					"Yes, I'd like to bless my golden bowl.",

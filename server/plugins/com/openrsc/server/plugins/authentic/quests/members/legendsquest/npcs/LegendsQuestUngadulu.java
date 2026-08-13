@@ -665,9 +665,9 @@ public class LegendsQuestUngadulu implements TalkNpcTrigger, AttackNpcTrigger, S
 		mes(n, "You feel a strange power coming over you...");
 		delay(2);
 		player.damage(5);
-		player.getSkills().setLevel(Skill.ATTACK.id(), player.getSkills().getLevel(Skill.ATTACK.id()) - 5);
-		player.getSkills().setLevel(Skill.DEFENSE.id(), player.getSkills().getLevel(Skill.DEFENSE.id()) - 5);
-		player.getSkills().setLevel(Skill.STRENGTH.id(), player.getSkills().getLevel(Skill.STRENGTH.id()) - 5);
+		player.getSkills().subtractLevelFromStatReduction(Skill.ATTACK.id(), 5);
+		player.getSkills().subtractLevelFromStatReduction(Skill.DEFENSE.id(), 5);
+		player.getSkills().subtractLevelFromStatReduction(Skill.STRENGTH.id(), 5);
 		mes(n, "The Shaman seems to get stronger...");
 		delay(2);
 		mes(n, "The Shaman seems to return to normal...");
@@ -785,8 +785,8 @@ public class LegendsQuestUngadulu implements TalkNpcTrigger, AttackNpcTrigger, S
 		if (affectedmob.getID() == NpcId.UNGADULU.id()) {
 			player.message("You feel a strange force coming over you...");
 			player.message("You feel weakened....");
-			player.getSkills().setLevel(Skill.ATTACK.id(), 0);
-			player.getSkills().setLevel(Skill.STRENGTH.id(), 0);
+			player.getSkills().setLevelFromStatReduction(Skill.ATTACK.id(), 0);
+			player.getSkills().setLevelFromStatReduction(Skill.STRENGTH.id(), 0);
 			if (player.getQuestStage(Quests.LEGENDS_QUEST) >= 9 || player.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
 				mes("The Shaman casts a debilitating spell on you..");
 				delay(2);
@@ -816,8 +816,8 @@ public class LegendsQuestUngadulu implements TalkNpcTrigger, AttackNpcTrigger, S
 		if (affectedmob.getID() == NpcId.UNGADULU.id()) {
 			player.message("You feel a strange force coming over you...");
 			player.message("You feel weakened....");
-			player.getSkills().setLevel(Skill.ATTACK.id(), 0);
-			player.getSkills().setLevel(Skill.STRENGTH.id(), 0);
+			player.getSkills().setLevelFromStatReduction(Skill.ATTACK.id(), 0);
+			player.getSkills().setLevelFromStatReduction(Skill.STRENGTH.id(), 0);
 			if (player.getQuestStage(Quests.LEGENDS_QUEST) >= 9 || player.getQuestStage(Quests.LEGENDS_QUEST) == -1) {
 				mes("The Shaman casts a debilitating spell on you..");
 				delay(2);
@@ -847,8 +847,8 @@ public class LegendsQuestUngadulu implements TalkNpcTrigger, AttackNpcTrigger, S
 		if (affectedmob.getID() == NpcId.UNGADULU.id()) {
 			player.message("You feel a strange force coming over you...");
 			player.message("You feel weakened....");
-			player.getSkills().setLevel(Skill.ATTACK.id(), 0);
-			player.getSkills().setLevel(Skill.STRENGTH.id(), 0);
+			player.getSkills().setLevelFromStatReduction(Skill.ATTACK.id(), 0);
+			player.getSkills().setLevelFromStatReduction(Skill.STRENGTH.id(), 0);
 			player.message("The spell fizzles and dies...");
 			player.message("Some sort of magical effect seems to be protecting the Shaman.");
 			return;
@@ -970,7 +970,7 @@ public class LegendsQuestUngadulu implements TalkNpcTrigger, AttackNpcTrigger, S
 				if (nez != null) {
 					npcsay(player, nez, "Curse you foul intruder...your faith will help you little here.");
 					nez.startCombat(player);
-					player.getSkills().setLevel(Skill.PRAYER.id(), (int) Math.ceil((double) player.getSkills().getLevel(Skill.PRAYER.id()) / 4));
+					player.getSkills().setLevelFromStatReduction(Skill.PRAYER.id(), (int) Math.ceil((double) player.getSkills().getLevel(Skill.PRAYER.id()) / 4));
 					mes("A sense of hopelessness fills your body...");
 					delay(2);
 					npcsay(player, nez, "'Ere near to death ye comes now that ye has meddled in my dealings..");

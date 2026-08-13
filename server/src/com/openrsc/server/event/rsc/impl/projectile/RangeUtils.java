@@ -331,7 +331,7 @@ public class RangeUtils {
                 //reduce ranged level (case for KBD)
                 if (npc.getID() == NpcId.KING_BLACK_DRAGON.id()) {
                     int newLevel = getCurrentLevel(player, Skill.RANGED.id()) - Formulae.getLevelsToReduceAttackKBD(player);
-                    player.getSkills().setLevel(Skill.RANGED.id(), newLevel);
+                    player.getSkills().setLevelFromStatReduction(Skill.RANGED.id(), newLevel);
                 }
             }
         }
