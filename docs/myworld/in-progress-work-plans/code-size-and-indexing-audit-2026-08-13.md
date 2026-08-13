@@ -55,10 +55,10 @@ Churn signals feature pressure, not code quality.
 - Documentation indexes (`docs/myworld/README.md`) and focused ownership/
   build records provide useful human navigation, but no generated source-symbol
   or dependency graph is maintained.
-- Universal Ctags is installed locally. No repository tags file, JDT language
-  server configuration, SCIP index, cscope database, Maven project, or IDE
-  project metadata for the maintained Java products exists. `jdtls`, `scip`,
-  and `scip-java` are not installed.
+- No Ctags executable, repository tags file, JDT language-server
+  configuration, SCIP index, cscope database, Maven project, or IDE project
+  metadata for the maintained Java products exists. `ctags`, `jdtls`, `scip`,
+  and `scip-java` are not installed in the manager environment.
 
 ### Recommendation: committed navigation map + optional local Ctags
 
@@ -75,7 +75,8 @@ branch (not this audit implementation):
 1. List the authoritative source roots, Ant targets/artifacts, plugin roots,
    generated/definition boundaries, and the key ownership maps already in
    plans. Link it from `docs/myworld/README.md` and workspace guidance.
-2. Provide a non-committed helper that runs `ctags --languages=Java --fields=+n
+2. Optionally install Universal Ctags, then provide a non-committed helper
+   that checks for it and runs `ctags --languages=Java --fields=+n
    --extras=+q -R` over maintained Java roots into `output/navigation/tags`.
    Rebuild it on demand; never consume it as authority for reflection,
    configuration, JSON/XML definitions, or plugin discovery.
