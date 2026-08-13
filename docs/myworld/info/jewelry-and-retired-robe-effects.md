@@ -80,6 +80,12 @@ Implementation status:
 - Soul: Ring of Lifesaving; Necklace of Preservation; Amulet of Renewal.
 - Life: Ring of Combat Command; Necklace of Support Command; Bangle of Utility Command.
 
+Life Necklace of Support Command: while an eligible support summon is active,
+it grants its tiered Summoning XP on an independent one-minute active-time
+pulse. Rune preservation and longer upkeep do not alter this cadence. Removing
+the necklace, dismissing the summon, or logging out pauses the remaining time;
+re-equipping or re-summoning resumes it without a fresh pulse.
+
 ### Air
 
 Ring/necklace:
