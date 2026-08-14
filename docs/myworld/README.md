@@ -201,6 +201,9 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [ai-operability-routing-audit-2026-08-13.md](info/ai-operability-routing-audit-2026-08-13.md):
   AI navigation and change-safety audit with task routing and verification
   matrices.
+- [classic-scape-model-to-sprite-tool-audit.md](info/classic-scape-model-to-sprite-tool-audit.md):
+  full-history audit of Classic-Scape's alleged 3D-model-to-RSC-sprite tool,
+  its actual Sprite Studio and frame-capture utilities, and adoption needs.
 - [change-history.md](info/change-history.md): consolidated major-change record.
 - [client-sprite-reference.md](info/client-sprite-reference.md): custom sprite
   reference, authentic item icon offsets, and equipment palette export notes.
