@@ -60,6 +60,26 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 - World Editor releases, candidates, dependency locks, provider tests, and
   runtime workers are outside this manager's status and handoff duties.
 
+## Core-Managed RSC Sprite Baker
+
+- RSC Sprite Baker is a separate ancillary repository at
+  `/home/justin/rsc-sprite-baker`, with one exclusive worker at
+  `/home/justin/rsc-sprite-baker-ai-1`.
+- The Core manager AI may enter the Sprite Baker manager checkout to activate,
+  review, merge, test, publish, and recycle its worker. This is a deliberate
+  single-manager exception; it does not combine the repositories or authorize
+  Sprite Baker changes in Core worktrees.
+- Never activate `Core-Framework-ai-1` through `-ai-3` for Sprite Baker work,
+  and never merge or cherry-pick Sprite Baker topic branches into Core `main`.
+  Commands for that project run from its own manager or worker checkout and
+  follow its `AGENTS.md`.
+- `/home/justin/2009scape` is a read-only compatibility input. Do not copy its
+  cache, models, textures, animations, or generated derivative assets into
+  either repository. A later Core integration task may deliberately import
+  reviewed exported sprites without importing the tool's Git history.
+- See [`docs/workspaces/rsc-sprite-baker.md`](docs/workspaces/rsc-sprite-baker.md)
+  for routing and lifecycle commands.
+
 ## Public Server Shutdown Gate
 
 - Building, tagging, uploading, publishing, or being asked to "release" or
