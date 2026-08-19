@@ -9,19 +9,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ENTITY_DEF = ROOT / "server/src/com/openrsc/server/external/EntityDef.java"
 OBJECT_DEF = ROOT / "server/src/com/openrsc/server/external/GameObjectDef.java"
-CLASSIFIER = ROOT / "server/src/com/openrsc/server/model/HostileProjectileCollision.java"
+CLASSIFIER = ROOT / "server/src/com/openrsc/server/model/CombatProjectileCollision.java"
 TILE = ROOT / "server/src/com/openrsc/server/model/world/region/TileValue.java"
 FLAGS = ROOT / "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
 PATH_VALIDATION = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
 WORLD = ROOT / "server/src/com/openrsc/server/model/world/World.java"
+IMPACT_POLICY = ROOT / "server/src/com/openrsc/server/model/combat/ProjectileImpactPolicy.java"
+IMPACT_VALIDATOR = ROOT / "server/src/com/openrsc/server/model/combat/ProjectileImpactValidator.java"
+MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
+WALK_TO_MOB = ROOT / "server/src/com/openrsc/server/model/action/WalkToMobAction.java"
 CORE = ROOT / "server/core.jar"
 LIB = ROOT / "server/lib/*"
 
-HOSTILE_CALL_SITES = (
+COMBAT_CALL_SITES = (
     ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEventNpc.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
     ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
+    ROOT / "server/src/com/openrsc/server/content/Summoning.java",
 )
 ELDER_SPECIALS = (
     ROOT
@@ -31,6 +36,7 @@ PLAYER_PROJECTILES = (
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
+    ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/FireCannonEvent.java",
 )
 
 
@@ -71,7 +77,7 @@ def fixture(object_id, expected):
     return f"""
         {{
         {java_definition(definitions[object_id])}
-        require(HostileProjectileCollision.blocksScenery(definition) == {str(expected).lower()},
+        require(CombatProjectileCollision.blocksScenery(definition) == {str(expected).lower()},
             "object {object_id} ({field(definitions[object_id], 'name')}) classification changed");
         }}
 """
@@ -133,70 +139,70 @@ classification_fixtures = "".join(
 
 HARNESS = f"""
 import com.openrsc.server.external.GameObjectDef;
-import com.openrsc.server.model.HostileProjectileCollision;
+import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
-public final class HostileProjectileCollisionHarness {{
+public final class CombatProjectileCollisionHarness {{
     private static void require(boolean value, String message) {{
         if (!value) throw new AssertionError(message);
     }}
 
     public static void main(String[] args) {{
         TileValue uninitialized = new TileValue();
-        require((uninitialized.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
-            "uninitialized terrain must be hostile-projectile void");
+        require((uninitialized.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
+            "uninitialized terrain must be combat-projectile void");
 
         TileValue tile = new TileValue();
         tile.initializeTerrainCollision();
-        require(tile.getHostileProjectileCollisionMask() == 0,
+        require(tile.getCombatProjectileCollisionMask() == 0,
             "initialized ordinary ground must start transparent");
 
         tile.overlay = 11;
         tile.setTerrainBlocked(true);
         tile.setTerrainOverlayProjectileBlocked(true);
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
-            "lava movement collision must not become hostile projectile cover");
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
+            "lava movement collision must not become combat projectile cover");
 
         tile.overlay = 2;
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
-            "water movement collision must not become hostile projectile cover");
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
+            "water movement collision must not become combat projectile cover");
 
         tile.overlay = 1;
         tile.addBlockingScenery();
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
-            "ordinary solid scenery must not become hostile projectile cover");
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
+            "ordinary solid scenery must not become combat projectile cover");
 
         tile.addTerrainCollision(CollisionFlag.WALL_NORTH);
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.WALL_NORTH) != 0,
-            "authored terrain wall must block hostile projectiles");
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.WALL_NORTH) != 0,
+            "authored terrain wall must block combat projectiles");
         tile.removeTerrainCollision(CollisionFlag.WALL_NORTH);
 
-        tile.addHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
-        tile.addHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
-        tile.removeHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
+        tile.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        tile.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        tile.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
             "overlapping hard-cover ownership was removed too early");
-        tile.removeHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
-            "removed hard cover remained in hostile projectile collision");
+        tile.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
+            "removed hard cover remained in combat projectile collision");
 
         tile.overlay = 10;
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
-            "void overlay must block hostile projectiles");
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
+            "void overlay must block combat projectiles");
 
         TileValue copied = tile.copy();
-        require(copied.equals(tile), "hostile projectile ownership was not copied");
+        require(copied.equals(tile), "combat projectile ownership was not copied");
         copied.overlay = 1;
-        require((tile.getHostileProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
             "mutating a copied tile changed the original void tile");
 {classification_fixtures}
     }}
 }}
 """
 
-with tempfile.TemporaryDirectory(prefix="hostile-projectile-collision-") as temp:
-    harness = Path(temp) / "HostileProjectileCollisionHarness.java"
+with tempfile.TemporaryDirectory(prefix="combat-projectile-collision-") as temp:
+    harness = Path(temp) / "CombatProjectileCollisionHarness.java"
     harness.write_text(HARNESS, encoding="utf-8")
     subprocess.run(
         [
@@ -213,7 +219,7 @@ with tempfile.TemporaryDirectory(prefix="hostile-projectile-collision-") as temp
         check=True,
     )
     subprocess.run(
-        ["java", "-cp", temp, "HostileProjectileCollisionHarness"], check=True
+        ["java", "-cp", temp, "CombatProjectileCollisionHarness"], check=True
     )
 
 require(CORE.exists(), "Missing server/core.jar; run ./scripts/build-server.sh first")
@@ -297,9 +303,17 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
-public final class HostileProjectilePathHarness {
+public final class CombatProjectilePathHarness {
     private static void require(boolean value, String message) {
         if (!value) throw new AssertionError(message);
+    }
+
+    private static void requireSymmetric(World world, Point first, Point second,
+            boolean expected, String message) {
+        require(PathValidation.checkCombatProjectilePath(world, first, second)
+                == expected, message + " (forward)");
+        require(PathValidation.checkCombatProjectilePath(world, second, first)
+                == expected, message + " (reverse)");
     }
 
     public static void main(String[] args) {
@@ -308,14 +322,14 @@ public final class HostileProjectilePathHarness {
         Point target = Point.location(4, 1);
         TileValue middle = world.getTile(2, 1);
 
-        require(PathValidation.checkHostileProjectilePath(world, source, target),
-            "clear hostile projectile path was blocked");
+        requireSymmetric(world, source, target, true,
+            "clear combat projectile path was blocked");
 
         middle.overlay = 11;
         middle.setTerrainBlocked(true);
         middle.setTerrainOverlayProjectileBlocked(true);
-        require(PathValidation.checkHostileProjectilePath(world, source, target),
-            "lava blocked semantic hostile projectile path");
+        requireSymmetric(world, source, target, true,
+            "lava blocked semantic combat projectile path");
         require(!PathValidation.checkPath(world, source, target, true),
             "legacy strict traversal fixture no longer demonstrates the lava safe spot");
         require(PathValidation.checkPath(world, source, target),
@@ -323,36 +337,63 @@ public final class HostileProjectilePathHarness {
 
         middle.overlay = 1;
         middle.addBlockingScenery();
-        require(PathValidation.checkHostileProjectilePath(world, source, target),
-            "ordinary solid scenery blocked semantic hostile projectile path");
+        requireSymmetric(world, source, target, true,
+            "ordinary solid scenery blocked semantic combat projectile path");
 
-        middle.addHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
-        require(!PathValidation.checkHostileProjectilePath(world, source, target),
-            "fence/full hard cover did not block hostile projectile path");
-        middle.removeHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
-        require(PathValidation.checkHostileProjectilePath(world, source, target),
-            "removed hard cover continued blocking hostile projectile path");
+        // The same semantic gate represents player/NPC ranged and magic launch.
+        middle.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        requireSymmetric(world, source, target, false,
+            "fence/full hard cover did not block either combat direction");
+        middle.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        requireSymmetric(world, source, target, true,
+            "open door continued blocking either combat direction");
+
+        // Launch clear, close before delayed impact: the fresh impact check blocks.
+        require(PathValidation.checkCombatProjectilePath(world, source, target),
+            "clear launch fixture was blocked");
+        middle.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        require(!PathValidation.checkCombatProjectilePath(world, source, target),
+            "door closed before impact did not block delivery");
+        // Launch blocked, open before the next validation: current state is clear.
+        middle.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        require(PathValidation.checkCombatProjectilePath(world, source, target),
+            "door opened before validation remained blocked");
+
+        middle.overlay = 2;
+        requireSymmetric(world, source, target, true,
+            "water blocked semantic combat projectile path");
 
         middle.overlay = 10;
-        require(!PathValidation.checkHostileProjectilePath(world, source, target),
-            "void did not block hostile projectile path");
+        requireSymmetric(world, source, target, false,
+            "void did not block combat projectile path");
 
         middle.overlay = 11;
         middle.addTerrainCollision(CollisionFlag.WALL_WEST);
-        require(!PathValidation.checkHostileProjectilePath(world, source, target),
-            "wall sharing transparent lava did not block hostile projectile path");
+        requireSymmetric(world, source, target, false,
+            "wall sharing transparent lava did not block combat projectile path");
         middle.removeTerrainCollision(CollisionFlag.WALL_WEST);
-        require(PathValidation.checkHostileProjectilePath(world, source, target),
+        requireSymmetric(world, source, target, true,
             "lava remained blocked after its wall owner was removed");
 
+        World diagonalWorld = new World();
+        Point diagonalSource = Point.location(1, 1);
+        Point diagonalTarget = Point.location(3, 3);
+        TileValue diagonalMiddle = diagonalWorld.getTile(2, 2);
+        diagonalMiddle.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_A);
+        requireSymmetric(diagonalWorld, diagonalSource, diagonalTarget, false,
+            "diagonal barrier did not block both directions");
+        diagonalMiddle.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_A);
+        requireSymmetric(diagonalWorld, diagonalSource, diagonalTarget, true,
+            "removed diagonal barrier remained blocked");
+
         world.setTile(2, 1, new TileValue());
-        require(!PathValidation.checkHostileProjectilePath(world, source, target),
-            "uninitialized terrain did not block hostile projectile path");
+        requireSymmetric(world, source, target, false,
+            "uninitialized terrain did not block combat projectile path");
     }
 }
 """
 
-with tempfile.TemporaryDirectory(prefix="hostile-projectile-path-") as temp:
+with tempfile.TemporaryDirectory(prefix="combat-projectile-path-") as temp:
     temp_path = Path(temp)
     configuration_stub = temp_path / "com/openrsc/server/ServerConfiguration.java"
     configuration_stub.parent.mkdir(parents=True)
@@ -362,7 +403,7 @@ with tempfile.TemporaryDirectory(prefix="hostile-projectile-path-") as temp:
     stub = temp_path / "com/openrsc/server/model/world/World.java"
     stub.parent.mkdir(parents=True)
     stub.write_text(WORLD_STUB, encoding="utf-8")
-    harness = temp_path / "HostileProjectilePathHarness.java"
+    harness = temp_path / "CombatProjectilePathHarness.java"
     harness.write_text(PATH_HARNESS, encoding="utf-8")
     classpath = f"{CORE}:{LIB}"
     subprocess.run(
@@ -387,37 +428,37 @@ with tempfile.TemporaryDirectory(prefix="hostile-projectile-path-") as temp:
             "java",
             "-cp",
             f"{temp}:{classpath}",
-            "HostileProjectilePathHarness",
+            "CombatProjectilePathHarness",
         ],
         check=True,
     )
 
 path_source = PATH_VALIDATION.read_text(encoding="utf-8")
 require(
-    "public static boolean checkHostileProjectilePath" in path_source
-    and "t.getHostileProjectileCollisionMask()" in path_source,
-    "hostile projectile path API must consume the dedicated semantic collision mask",
+    "public static boolean checkCombatProjectilePath" in path_source
+    and "t.getCombatProjectileCollisionMask()" in path_source,
+    "combat projectile path API must consume the dedicated semantic collision mask",
 )
 
 world_source = WORLD.read_text(encoding="utf-8")
 require(
-    "HostileProjectileCollision.blocksScenery" in world_source
-    and "addHostileProjectileCollision" in world_source
-    and "removeHostileProjectileCollision" in world_source,
+    "CombatProjectileCollision.blocksScenery" in world_source
+    and "addCombatProjectileCollision" in world_source
+    and "removeCombatProjectileCollision" in world_source,
     "world object registration must own reversible hard-cover collision",
 )
 require(
-    "applyHostileProjectileCollision(oldObject, false);" in world_source
-    and "applyHostileProjectileCollision(newObject, true);" in world_source
-    and "updateHostileProjectileBoundaryCollision(" in world_source,
+    "applyCombatProjectileCollision(oldObject, false);" in world_source
+    and "applyCombatProjectileCollision(newObject, true);" in world_source
+    and "updateCombatProjectileBoundaryCollision(" in world_source,
     "boundary walls and closed doors must register and unregister hard cover",
 )
 
-for call_site in HOSTILE_CALL_SITES:
+for call_site in COMBAT_CALL_SITES:
     source = call_site.read_text(encoding="utf-8")
     require(
-        "PathValidation.checkHostileProjectilePath(" in source,
-        f"{call_site.name} bypasses semantic hostile projectile collision",
+        "PathValidation.checkCombatProjectilePath(" in source,
+        f"{call_site.name} bypasses semantic combat projectile collision",
     )
 
 elder_source = ELDER_SPECIALS.read_text(encoding="utf-8")
@@ -427,8 +468,8 @@ require(
     "Elder fireshot and burn must each validate every AOE target at launch",
 )
 require(
-    "PathValidation.checkHostileProjectilePath(" in elder_source,
-    "Elder AOE target validation bypasses semantic hostile collision",
+    "PathValidation.checkCombatProjectilePath(" in elder_source,
+    "Elder AOE target validation bypasses semantic combat collision",
 )
 require(
     "if (!isValidPlayerTarget(dragon, player, AOE_RADIUS)" in elder_source,
@@ -438,9 +479,28 @@ require(
 for player_projectile in PLAYER_PROJECTILES:
     source = player_projectile.read_text(encoding="utf-8")
     require(
-        "PathValidation.checkPath(" in source
-        and "PathValidation.checkHostileProjectilePath(" not in source,
-        f"{player_projectile.name} must retain existing player projectile behavior",
+        "PathValidation.checkCombatProjectilePath(" in source,
+        f"{player_projectile.name} bypasses shared combat projectile collision",
     )
 
-print("PASS: hostile projectile hard-cover ownership and attack-path policy validated")
+impact_policy = IMPACT_POLICY.read_text(encoding="utf-8")
+impact_validator = IMPACT_VALIDATOR.read_text(encoding="utf-8")
+require(
+    "GENERAL_PROJECTILE" not in impact_policy
+    and "HOSTILE_PROJECTILE" not in impact_policy
+    and impact_policy.count("Collision.COMBAT_PROJECTILE") == 6,
+    "damaging projectile impact policies diverged from shared hard cover",
+)
+require(
+    "case COMBAT_PROJECTILE:" in impact_validator
+    and "PathValidation.checkCombatProjectilePath(" in impact_validator
+    and "PathValidation.checkPath(" not in impact_validator,
+    "delayed projectile impact validation bypasses current hard-cover state",
+)
+for unaffected in (MELEE_EVENT, WALK_TO_MOB):
+    require(
+        "checkCombatProjectilePath(" not in unaffected.read_text(encoding="utf-8"),
+        f"{unaffected.name} unexpectedly adopted combat projectile collision",
+    )
+
+print("PASS: combat projectile hard-cover ownership and attack-path policy validated")

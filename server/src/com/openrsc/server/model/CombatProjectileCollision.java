@@ -5,14 +5,14 @@ import com.openrsc.server.external.GameObjectDef;
 import java.util.Locale;
 
 /**
- * Classifies scenery that is hard cover for hostile NPC projectiles.
+ * Classifies scenery that is hard cover for combat projectiles.
  *
  * <p>Movement-blocking scenery is intentionally not hard cover by default:
- * rocks, trees, and similar objects must not create NPC safe spots. Structural
+ * rocks, trees, and similar objects are transparent. Structural
  * walls, closed doors/gates, and every fence form are hard cover.</p>
  */
-public final class HostileProjectileCollision {
-	private HostileProjectileCollision() {
+public final class CombatProjectileCollision {
+	private CombatProjectileCollision() {
 	}
 
 	public static boolean blocksScenery(final GameObjectDef definition) {

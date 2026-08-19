@@ -163,11 +163,11 @@ def main() -> None:
         "throwing-family range selection",
     )
     require(read(RANGE_EVENT), "player.withinRange(target, radius)", "bow per-tick range check")
-    require(read(RANGE_EVENT), "PathValidation.checkPath(", "bow launch collision check")
+    require(read(RANGE_EVENT), "PathValidation.checkCombatProjectilePath(", "bow launch collision check")
     require(read(THROWING_EVENT), "player.withinRange(target, attackRadius)", "thrown per-tick range check")
-    require(read(THROWING_EVENT), "PathValidation.checkPath(", "thrown launch collision check")
+    require(read(THROWING_EVENT), "PathValidation.checkCombatProjectilePath(", "thrown launch collision check")
     require(read(MAGIC_EVENT), "player.withinRange(target, spellRange)", "magic per-tick range check")
-    require(read(MAGIC_EVENT), "PathValidation.checkPath(", "magic launch collision check")
+    require(read(MAGIC_EVENT), "PathValidation.checkCombatProjectilePath(", "magic launch collision check")
 
     require(read(NPC_DEF), "public int projectileRange;", "NPC projectile range field")
     require(read(NPC_DEF), "public int getProjectileRange()", "NPC projectile range getter")
@@ -196,7 +196,7 @@ def main() -> None:
     require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange())", "NPC firing-range gate")
     require(
         npc_behavior,
-        "PathValidation.checkHostileProjectilePath(",
+        "PathValidation.checkCombatProjectilePath(",
         "modern hostile launch collision gate",
     )
     require(
@@ -209,13 +209,13 @@ def main() -> None:
     require(legacy_body, "int radius = 5;", "legacy NPC range boundary")
     require(
         read(LEGACY_NPC_RANGE),
-        "PathValidation.checkHostileProjectilePath(",
+        "PathValidation.checkCombatProjectilePath(",
         "legacy hostile launch collision gate",
     )
     require(
         read(HOSTILE_PATH),
-        "public static boolean checkHostileProjectilePath",
-        "semantic hostile-projectile collision API",
+        "public static boolean checkCombatProjectilePath",
+        "semantic combat-projectile collision API",
     )
 
     impact_gate = method_body(

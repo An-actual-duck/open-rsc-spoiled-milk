@@ -1789,9 +1789,9 @@ public final class Summoning {
 			moveSummonTowardAssistTarget(summon, target);
 			return !ATTACK_STYLE_MELEE_MAGIC.equals(style);
 		}
-		if (!PathValidation.checkPath(
+		if (!PathValidation.checkCombatProjectilePath(
 			summon.getWorld(), summon.getWorldLocation(),
-			target.getWorldLocation(), false)
+			target.getWorldLocation())
 			&& !canSummonUseCrowdedAssistReach(summon, target)) {
 			moveSummonTowardAssistTarget(summon, target);
 			return !ATTACK_STYLE_MELEE_MAGIC.equals(style);

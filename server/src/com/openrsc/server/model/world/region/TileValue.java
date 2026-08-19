@@ -22,7 +22,7 @@ public class TileValue {
 	private int terrainWallProjectileCount = 0;
 	private int dynamicProjectileCount = 0;
 	private boolean terrainInitialized = false;
-	private final int[] hostileProjectileCollisionCounts = new int[7];
+	private final int[] combatProjectileCollisionCounts = new int[7];
 
 	public TileValue() {
 	}
@@ -86,8 +86,8 @@ public class TileValue {
 		copy.terrainWallProjectileCount = terrainWallProjectileCount;
 		copy.dynamicProjectileCount = dynamicProjectileCount;
 		copy.terrainInitialized = terrainInitialized;
-		System.arraycopy(hostileProjectileCollisionCounts, 0, copy.hostileProjectileCollisionCounts, 0,
-			hostileProjectileCollisionCounts.length);
+		System.arraycopy(combatProjectileCollisionCounts, 0, copy.combatProjectileCollisionCounts, 0,
+			combatProjectileCollisionCounts.length);
 		return copy;
 	}
 
@@ -129,11 +129,11 @@ public class TileValue {
 	public void removeTerrainWallProjectileBlock(){if(terrainWallProjectileCount>0)terrainWallProjectileCount--;refreshProjectile();}
 	public void addDynamicProjectileBlock(){dynamicProjectileCount++;refreshProjectile();}
 	public void removeDynamicProjectileBlock(){if(dynamicProjectileCount>0)dynamicProjectileCount--;refreshProjectile();}
-	public void addHostileProjectileCollision(int flags){for(int bit=0;bit<hostileProjectileCollisionCounts.length;bit++)if((flags&(1<<bit))!=0)hostileProjectileCollisionCounts[bit]++;}
-	public void removeHostileProjectileCollision(int flags){for(int bit=0;bit<hostileProjectileCollisionCounts.length;bit++)if((flags&(1<<bit))!=0&&hostileProjectileCollisionCounts[bit]>0)hostileProjectileCollisionCounts[bit]--;}
-	public int getHostileProjectileCollisionMask(){
+	public void addCombatProjectileCollision(int flags){for(int bit=0;bit<combatProjectileCollisionCounts.length;bit++)if((flags&(1<<bit))!=0)combatProjectileCollisionCounts[bit]++;}
+	public void removeCombatProjectileCollision(int flags){for(int bit=0;bit<combatProjectileCollisionCounts.length;bit++)if((flags&(1<<bit))!=0&&combatProjectileCollisionCounts[bit]>0)combatProjectileCollisionCounts[bit]--;}
+	public int getCombatProjectileCollisionMask(){
 		int mask=terrainCollisionMask;
-		for(int bit=0;bit<hostileProjectileCollisionCounts.length;bit++)if(hostileProjectileCollisionCounts[bit]>0)mask|=1<<bit;
+		for(int bit=0;bit<combatProjectileCollisionCounts.length;bit++)if(combatProjectileCollisionCounts[bit]>0)mask|=1<<bit;
 		if(!terrainInitialized||(overlay&0xff)==VOID_OVERLAY_ID)mask|=CollisionFlag.FULL_BLOCK_C;
 		return mask;
 	}
@@ -159,7 +159,7 @@ public class TileValue {
 				", terrainCollisionMask=" + terrainCollisionMask +
 				", dynamicCollisionCounts=" + Arrays.toString(dynamicCollisionCounts) +
 				", terrainInitialized=" + terrainInitialized +
-				", hostileProjectileCollisionCounts=" + Arrays.toString(hostileProjectileCollisionCounts) +
+				", combatProjectileCollisionCounts=" + Arrays.toString(combatProjectileCollisionCounts) +
 				'}';
 	}
 
@@ -180,6 +180,6 @@ public class TileValue {
 					this.terrainWallProjectileCount == other.terrainWallProjectileCount &&
 					this.dynamicProjectileCount == other.dynamicProjectileCount &&
 					this.terrainInitialized == other.terrainInitialized &&
-					Arrays.equals(this.hostileProjectileCollisionCounts,other.hostileProjectileCollisionCounts);
+					Arrays.equals(this.combatProjectileCollisionCounts,other.combatProjectileCollisionCounts);
 	}
 }

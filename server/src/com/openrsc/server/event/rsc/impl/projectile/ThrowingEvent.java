@@ -126,9 +126,9 @@ public class ThrowingEvent extends GameTickEvent {
 
 
 		player.resetPath();
-		if (!PathValidation.checkPath(
+		if (!PathValidation.checkCombatProjectilePath(
 			getWorld(), player.getWorldLocation(),
-			target.getWorldLocation(), false)) {
+			target.getWorldLocation())) {
 			player.message("I can't get a clear shot from here");
 			terminateCurrent(player);
 			return;
@@ -385,9 +385,9 @@ public class ThrowingEvent extends GameTickEvent {
 				|| Summoning.isSummon(npc)
 				|| !npc.getDef().isAttackable()
 				|| !player.withinRange(npc, attackRadius)
-				|| !PathValidation.checkPath(
+				|| !PathValidation.checkCombatProjectilePath(
 					getWorld(), player.getWorldLocation(),
-					npc.getWorldLocation(), false)
+					npc.getWorldLocation())
 				|| !player.checkAttack(npc, true)) {
 				continue;
 			}

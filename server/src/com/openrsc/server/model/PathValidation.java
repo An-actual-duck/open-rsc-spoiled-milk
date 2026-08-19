@@ -38,7 +38,7 @@ public class PathValidation {
 	private enum DistanceCollisionMode {
 		DEFAULT,
 		STRICT_TRAVERSAL,
-		HOSTILE_PROJECTILE
+		COMBAT_PROJECTILE
 	}
 
 	private interface DistanceTileLookup {
@@ -71,29 +71,29 @@ public class PathValidation {
 	}
 
 	/**
-	 * Checks hostile NPC line of fire using semantic hard-cover collision.
+	 * Checks combat line of fire using the shared semantic hard-cover contract.
 	 * Movement-only blockers such as lava, water, rocks, and trees remain
 	 * transparent; walls, closed doors, fences, and void block.
 	 */
-	public static boolean checkHostileProjectilePath(World world, Point src, Point dest) {
+	public static boolean checkCombatProjectilePath(World world, Point src, Point dest) {
 		if (world.getServer().getConfig()
 				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
 			return checkPath(
 				world,
 				LegacyPackedPointAdapter.fromLegacyPoint(src),
 				LegacyPackedPointAdapter.fromLegacyPoint(dest),
-				DistanceCollisionMode.HOSTILE_PROJECTILE);
+				DistanceCollisionMode.COMBAT_PROJECTILE);
 		}
 		return checkLegacyPath(
-			world, src, dest, DistanceCollisionMode.HOSTILE_PROJECTILE);
+			world, src, dest, DistanceCollisionMode.COMBAT_PROJECTILE);
 	}
 
-	public static boolean checkHostileProjectilePath(
+	public static boolean checkCombatProjectilePath(
 		final World world,
 		final WorldLocation src,
 		final WorldLocation dest) {
 		return checkPath(
-			world, src, dest, DistanceCollisionMode.HOSTILE_PROJECTILE);
+			world, src, dest, DistanceCollisionMode.COMBAT_PROJECTILE);
 	}
 
 	public static boolean checkPath(
@@ -551,8 +551,8 @@ public class PathValidation {
 		if (t == null) {
 			return true;
 		}
-		if (collisionMode == DistanceCollisionMode.HOSTILE_PROJECTILE) {
-			return isBlocking(t.getHostileProjectileCollisionMask(), (byte) bit, isCurrentTile);
+		if (collisionMode == DistanceCollisionMode.COMBAT_PROJECTILE) {
+			return isBlocking(t.getCombatProjectileCollisionMask(), (byte) bit, isCurrentTile);
 		}
 		if (collisionMode == DistanceCollisionMode.DEFAULT && t.projectileAllowed) {
 			return false;

@@ -70,6 +70,7 @@ import com.openrsc.server.runtime.ProductionGameRandom;
 import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.runtime.SystemGameClock;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.CollisionFlag;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
@@ -595,6 +596,17 @@ public final class CurrentCombatCharacterizationTest {
 
 	private static void projectileImpactBoundary(
 			final CurrentCombatHarness harness) throws Exception {
+		for (int y : new int[] {94, 96}) {
+			for (int x = 94; x <= 95; x++) {
+				harness.world().getTile(x, y).removeTerrainCollision(
+					CollisionFlag.FULL_BLOCK
+						| CollisionFlag.WALL_NORTH
+						| CollisionFlag.WALL_EAST
+						| CollisionFlag.WALL_SOUTH
+						| CollisionFlag.WALL_WEST);
+				harness.world().getTile(x, y).initializeTerrainCollision();
+			}
+		}
 		final Player rangedCaster = harness.player("ranged impact", 94, 94);
 		final Player magicCaster = harness.player("magic impact", 94, 96);
 		final Npc rangedTarget = harness.npc(3, 95, 94);
@@ -997,6 +1009,7 @@ public final class CurrentCombatCharacterizationTest {
 
 	private static void attackStyleTransactions(
 			final CurrentCombatHarness harness) throws Exception {
+		harness.openCombatProjectileRectangle(126, 139, 126, 126);
 		final Player ranger = harness.player("range tx", 126, 126);
 		final Npc rangeTarget = harness.npc(3, 127, 126);
 		harness.equip(ranger, ItemId.SHORTBOW.id(), 1);
@@ -1386,7 +1399,7 @@ public final class CurrentCombatCharacterizationTest {
 				3, 161, LegacyPackedPointAdapter.LEVEL_STRIDE + 160);
 			assertFalse(player.sharesSpatialDomain(npc),
 				"same packed geography on another signed level must be a different domain");
-			assertFalse(PathValidation.checkHostileProjectilePath(
+			assertFalse(PathValidation.checkCombatProjectilePath(
 				harness.world(), player.getWorldLocation(), npc.getWorldLocation()),
 				"hostile line of effect must reject cross-level targets");
 
@@ -1604,7 +1617,7 @@ public final class CurrentCombatCharacterizationTest {
 	@SuppressWarnings("unchecked")
 	private static void shurikenSelection(final CurrentCombatHarness harness)
 			throws Exception {
-		harness.openRectangle(338, 344, 338, 344);
+		harness.openCombatProjectileRectangle(338, 344, 338, 344);
 		final Player player = harness.player("shuriken user", 340, 340);
 		final Npc primary = harness.npc(3, 341, 340);
 		harness.npc(3, 340, 341);
@@ -1651,7 +1664,7 @@ public final class CurrentCombatCharacterizationTest {
 	@SuppressWarnings("unchecked")
 	private static void shurikenDamageAndLifesteal(
 			final CurrentCombatHarness harness) throws Exception {
-		harness.openRectangle(382, 388, 382, 388);
+		harness.openCombatProjectileRectangle(382, 388, 382, 388);
 		final Player player = harness.player("shuriken settlement", 385, 385);
 		final Npc primary = harness.npc(NpcId.GREATER_DEMON.id(), 386, 385);
 		harness.npc(NpcId.GREATER_DEMON.id(), 385, 386);

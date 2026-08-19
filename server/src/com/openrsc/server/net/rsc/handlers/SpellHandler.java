@@ -1567,9 +1567,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 		}
 		if (player.withinRange(affectedMob, spellRange)
-			&& !PathValidation.checkPath(
+			&& !PathValidation.checkCombatProjectilePath(
 				player.getWorld(), player.getWorldLocation(),
-				affectedMob.getWorldLocation(), false)) {
+				affectedMob.getWorldLocation())) {
 			magicDebug(player, "mobcast_reject reason=no_clear_path playerLoc=" + player.getLocation()
 				+ " targetLoc=" + affectedMob.getLocation());
 			player.playerServerMessage(MessageType.QUEST, "I can't get a clear shot from here");
@@ -1647,9 +1647,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					.prepare(intent).isReadyToCommit()) {
 					return;
 				}
-				if (!PathValidation.checkPath(
+				if (!PathValidation.checkCombatProjectilePath(
 					getPlayer().getWorld(), getPlayer().getWorldLocation(),
-					affectedMob.getWorldLocation(), false)) {
+					affectedMob.getWorldLocation())) {
 					magicDebug(getPlayer(), "walk_action_reject reason=no_clear_path playerLoc=" + getPlayer().getLocation()
 						+ " targetLoc=" + affectedMob.getLocation());
 					getPlayer().playerServerMessage(MessageType.QUEST, "I can't get a clear shot from here");
@@ -1719,7 +1719,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					Npc n = (Npc) affectedMob;
 
 						if (n.getID() == NpcId.DRAGON.id() || n.getID() == NpcId.KING_BLACK_DRAGON.id()) {
-							if (PathValidation.checkHostileProjectilePath(
+							if (PathValidation.checkCombatProjectilePath(
 								getPlayer().getWorld(),
 								n.getWorldLocation(),
 								getPlayer().getWorldLocation())) {

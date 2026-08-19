@@ -190,7 +190,7 @@ def main() -> None:
     require_contains(NPC_BEHAVIOR, "else if (npc.inCombat())")
     require_contains(NPC_BEHAVIOR, "target = npc.getOpponent();")
     require_contains(NPC_BEHAVIOR, "tryProjectileAttack(now);")
-    require_contains(NPC_BEHAVIOR, "PathValidation.checkHostileProjectilePath(")
+    require_contains(NPC_BEHAVIOR, "PathValidation.checkCombatProjectilePath(")
     require_contains(NPC_BEHAVIOR, "npc.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "target.getWorldLocation()")
     require_contains(NPC_BEHAVIOR, "CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false)")

@@ -140,6 +140,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 
 	static void specificationAndFacadeParity(
 			final CurrentCombatHarness harness) {
+		openCombatProjectileRectangle(harness, 995, 1001, 750, 750);
 		final Player source = harness.player("pj facade source", 995, 750);
 		final Npc positionalTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 996, 750);
@@ -630,7 +631,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 
 	private static void sourceFamilyLifetimeEvidence(
 			final CurrentCombatHarness harness) {
-		openHostileProjectileRectangle(harness, 740, 751, 780, 780);
+		openCombatProjectileRectangle(harness, 740, 751, 780, 780);
 		final Npc deadNpcSource = harness.npc(
 			NpcId.GREATER_DEMON.id(), 740, 780);
 		final Npc deadNpcTarget = harness.npc(
@@ -770,7 +771,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			stationaryTarget.getLevel(Skill.HITS.id()),
 			"source-only movement does not move the frozen range origin");
 
-		harness.openRectangle(860, 866, 790, 790);
+		openCombatProjectileRectangle(harness, 860, 866, 790, 790);
 		final Player shortMoveSource = harness.player(
 			"pj short move source", 860, 790);
 		final Npc shortMoveTarget = harness.npc(
@@ -874,16 +875,18 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		harness.world().getTile(952, 780).projectileAllowed = false;
 		harness.world().getTile(952, 780).traversalMask =
 			(byte) CollisionFlag.FULL_BLOCK;
-		assertFalse(PathValidation.checkPath(harness.world(),
-			collisionSource.getWorldLocation(), collisionTarget.getWorldLocation(),
-			false), "a barrier appearing during flight blocks the path authority");
+		harness.world().getTile(952, 780)
+			.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK);
+		assertFalse(PathValidation.checkCombatProjectilePath(harness.world(),
+			collisionSource.getWorldLocation(), collisionTarget.getWorldLocation()),
+			"hard cover appearing during flight blocks the path authority");
 		collisionChanged.action();
 		assertEquals(collisionHits,
 			collisionTarget.getLevel(Skill.HITS.id()),
-			"impact rechecks a general-projectile barrier");
+			"player impact rechecks combat-projectile hard cover");
 		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
 			collisionChanged.getInitialProjectileImpactDecision().getReason(),
-			"general-projectile collision reason");
+			"player combat-projectile collision reason");
 
 		final Npc compatibilityTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 954, 780);
@@ -897,12 +900,12 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			compatibilityTarget.getLevel(Skill.HITS.id()),
 			"positional compatibility retains its explicit no-recheck semantic");
 
-		openHostileProjectileRectangle(harness, 700, 704, 780, 780);
+		openCombatProjectileRectangle(harness, 700, 704, 780, 780);
 		final Npc hostileSource = harness.npc(
 			NpcId.GREATER_DEMON.id(), 700, 780);
 		final Player hostileTarget = harness.player(
 			"pj hostile collision target", 704, 780);
-		assertTrue(PathValidation.checkHostileProjectilePath(harness.world(),
+		assertTrue(PathValidation.checkCombatProjectilePath(harness.world(),
 			hostileSource.getWorldLocation(), hostileTarget.getWorldLocation()),
 			"hostile collision fixture begins with clear hard cover");
 		final int hostileHits = hostileTarget.getLevel(Skill.HITS.id());
@@ -910,8 +913,8 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			harness, hostileSource, hostileTarget, 3,
 			ProjectileLaunchSpecification.Producer.NPC_RANGED, 2);
 		harness.world().getTile(702, 780)
-			.addHostileProjectileCollision(CollisionFlag.FULL_BLOCK);
-		assertFalse(PathValidation.checkHostileProjectilePath(harness.world(),
+			.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK);
+		assertFalse(PathValidation.checkCombatProjectilePath(harness.world(),
 			hostileSource.getWorldLocation(), hostileTarget.getWorldLocation()),
 			"new hard cover blocks the hostile-projectile semantic");
 		hostileChanged.action();
@@ -1031,7 +1034,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		assertTrue(ballTarget.getAttribute("benignprojectile") == null,
 			"base benign cleanup clears the target compatibility attribute");
 
-		harness.openRectangle(720, 724, 810, 810);
+		openCombatProjectileRectangle(harness, 720, 724, 810, 810);
 		final Player validHolySource = harness.player(
 			"pj valid holy source", 720, 810);
 		final Npc validHolyTarget = harness.npc(
@@ -1151,6 +1154,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			"pj custom source", 960, 700);
 		final Npc customTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 961, 700);
+		openCombatProjectilePath(harness, customSource, customTarget);
 		final AtomicInteger customCalls = new AtomicInteger();
 		final RecordingCustomProjectile custom =
 			new RecordingCustomProjectile(
@@ -1192,6 +1196,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		final Player source = harness.player("pj failed source", 980, 720);
 		final Npc target = harness.npc(
 			NpcId.GREATER_DEMON.id(), 981, 720);
+		openCombatProjectilePath(harness, source, target);
 		final AtomicInteger calls = new AtomicInteger();
 		final RecordingCustomProjectile event = new RecordingCustomProjectile(
 			harness.world(), source, target, calls, true);
@@ -1215,6 +1220,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 	private static ProjectileEvent projectile(
 			final CurrentCombatHarness harness, final Mob source,
 			final Mob target, final int damage) {
+		openCombatProjectilePath(harness, source, target);
 		return new ProjectileEvent(
 			harness.world(), source, target, damage, 2, true,
 			DuplicationStrategy.ALLOW_MULTIPLE);
@@ -1225,6 +1231,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			final Mob target, final int damage,
 			final ProjectileLaunchSpecification.Producer producer,
 			final int attackType) {
+		openCombatProjectilePath(harness, source, target);
 		return new ProjectileEvent(harness.world(), source, target,
 			ProjectileLaunchSpecification.builder(producer, damage, attackType)
 				.chase(true)
@@ -1246,15 +1253,35 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		return null;
 	}
 
-	private static void openHostileProjectileRectangle(
+	private static void openCombatProjectileRectangle(
 			final CurrentCombatHarness harness, final int minX, final int maxX,
 			final int minY, final int maxY) {
 		harness.openRectangle(minX, maxX, minY, maxY);
 		for (int x = minX; x <= maxX; x++) {
 			for (int y = minY; y <= maxY; y++) {
+				harness.world().getTile(x, y).removeTerrainCollision(
+					CollisionFlag.FULL_BLOCK
+						| CollisionFlag.WALL_NORTH
+						| CollisionFlag.WALL_EAST
+						| CollisionFlag.WALL_SOUTH
+						| CollisionFlag.WALL_WEST);
 				harness.world().getTile(x, y).initializeTerrainCollision();
 			}
 		}
+	}
+
+	private static void openCombatProjectilePath(
+			final CurrentCombatHarness harness, final Mob source,
+			final Mob target) {
+		if (!source.sharesSpatialDomain(target)) {
+			return;
+		}
+		openCombatProjectileRectangle(
+			harness,
+			Math.min(source.getX(), target.getX()),
+			Math.max(source.getX(), target.getX()),
+			Math.min(source.getY(), target.getY()),
+			Math.max(source.getY(), target.getY()));
 	}
 
 	private static int countProjectileEvents(
