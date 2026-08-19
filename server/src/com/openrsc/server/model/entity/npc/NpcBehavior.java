@@ -517,7 +517,7 @@ public class NpcBehavior {
 		}
 
 			if (!npc.withinRange(target, profile.getProjectileRange())
-				|| !PathValidation.checkHostileProjectilePath(
+				|| !PathValidation.checkCombatProjectilePath(
 					npc.getWorld(),
 					npc.getWorldLocation(),
 					target.getWorldLocation())

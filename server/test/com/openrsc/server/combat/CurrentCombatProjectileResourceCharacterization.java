@@ -102,6 +102,7 @@ final class CurrentCombatProjectileResourceCharacterization {
 
 	static void rangedAndThrownLaunchSettlement(
 			final CurrentCombatHarness harness) throws Exception {
+		harness.openCombatProjectileRectangle(620, 621, 760, 760);
 		final Player ranger = harness.player("resource bow", 620, 760);
 		final Npc rangedTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 621, 760);
@@ -148,7 +149,7 @@ final class CurrentCombatProjectileResourceCharacterization {
 		ranger.setLoggedIn(true);
 
 		final Player thrower = harness.player("resource shuriken", 630, 760);
-		harness.openRectangle(628, 632, 758, 762);
+		harness.openCombatProjectileRectangle(628, 632, 758, 762);
 		final Npc primary = harness.npc(
 			NpcId.GREATER_DEMON.id(), 631, 760);
 		harness.npc(NpcId.GREATER_DEMON.id(), 630, 761);
@@ -212,6 +213,7 @@ final class CurrentCombatProjectileResourceCharacterization {
 			.getExperience(Skill.RANGED.id()),
 			"source death and duplicate sibling callbacks do not alter XP");
 
+		harness.openCombatProjectileRectangle(635, 636, 760, 760);
 		final Player dartUser = harness.player("resource dart", 635, 760);
 		final Npc dartTarget = harness.npc(
 			NpcId.GREATER_DEMON.id(), 636, 760);
@@ -238,6 +240,7 @@ final class CurrentCombatProjectileResourceCharacterization {
 
 	static void inventoryModeAndRecoverySettlement(
 			final CurrentCombatHarness harness) throws Exception {
+		harness.openCombatProjectileRectangle(640, 641, 760, 760);
 		final boolean equipmentMode =
 			harness.server().getConfig().WANT_EQUIPMENT_TAB;
 		try {
@@ -367,6 +370,7 @@ final class CurrentCombatProjectileResourceCharacterization {
 
 	static void magicLaunchSettlement(
 			final CurrentCombatHarness harness) throws Exception {
+		harness.openCombatProjectileRectangle(670, 681, 760, 760);
 		final Player ordinary = spellCaster(
 			harness, "resource magic", 670, 760, Spells.WIND_STRIKE);
 		final Npc ordinaryTarget = harness.npc(
@@ -452,6 +456,7 @@ final class CurrentCombatProjectileResourceCharacterization {
 
 	static void cannonAndShutdownSettlement(
 			final CurrentCombatHarness harness) throws Exception {
+		harness.openCombatProjectileRectangle(690, 696, 760, 760);
 		final Player owner = harness.player("resource cannon", 690, 760);
 		owner.getClientLimitations().maxItemId = Integer.MAX_VALUE;
 		assertTrue(owner.getCarriedItems().getInventory().add(

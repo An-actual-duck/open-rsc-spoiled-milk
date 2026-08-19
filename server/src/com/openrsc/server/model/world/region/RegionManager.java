@@ -26,6 +26,7 @@ import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.model.entity.GameObjectCollisionRegistrationState;
@@ -4369,7 +4370,8 @@ public class RegionManager {
 			object,
 			footprint,
 			nativeLayeredNpcBlockingSceneryFootprint(
-				object, location, placementId)) == null) {
+				object, location, placementId),
+			isCombatProjectileHardCover(object)) == null) {
 			throw new IllegalStateException(
 				"Native layered object population generation became stale");
 		}
@@ -4649,7 +4651,8 @@ public class RegionManager {
 					identity.getLocation(), newObject.getType(),
 					newObject.getDirection(), newObject,
 					newRegisterFootprint,
-					newNpcBlockingScenery) == null) {
+					newNpcBlockingScenery,
+					isCombatProjectileHardCover(newObject)) == null) {
 				return;
 			}
 			try {
@@ -4675,7 +4678,8 @@ public class RegionManager {
 					identity.getLocation(), oldObject.getType(),
 					oldObject.getDirection(), oldObject,
 					oldRollbackRegisterFootprint,
-					oldNpcBlockingScenery);
+					oldNpcBlockingScenery,
+					isCombatProjectileHardCover(oldObject));
 				throw failure;
 			}
 		} else {
@@ -4684,7 +4688,8 @@ public class RegionManager {
 					identity.getLocation(), newObject.getType(),
 					newObject.getDirection(), newObject,
 					newRegisterFootprint,
-					newNpcBlockingScenery) == null) {
+					newNpcBlockingScenery,
+					isCombatProjectileHardCover(newObject)) == null) {
 				return;
 			}
 			try {
@@ -4696,7 +4701,8 @@ public class RegionManager {
 					identity.getLocation(), oldObject.getType(),
 					oldObject.getDirection(), oldObject,
 					oldRollbackRegisterFootprint,
-					oldNpcBlockingScenery);
+					oldNpcBlockingScenery,
+					isCombatProjectileHardCover(oldObject));
 				throw failure;
 			}
 		}
@@ -4708,6 +4714,19 @@ public class RegionManager {
 			newObject.attachNativeLayeredCollisionRegistrationState(
 				newCollision);
 		}
+	}
+
+	private static boolean isCombatProjectileHardCover(
+			final GameObject object) {
+		if (object == null || object.getID() == 1147) {
+			return false;
+		}
+		if (object.isScenery()) {
+			return CombatProjectileCollision.blocksScenery(
+				object.getGameObjectDef());
+		}
+		return object.getDoorDef() != null
+			&& object.getDoorDef().getDoorType() == 1;
 	}
 
 	public int getNativeLayeredSceneryCount() {

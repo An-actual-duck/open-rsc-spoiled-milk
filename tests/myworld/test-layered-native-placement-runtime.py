@@ -211,11 +211,14 @@ public final class NativeLayeredPlacementRegistryFixture {
         objects.register(
             objectGeneration, "deep-fence", fenceLocation,
             1, 0, fenceObject, fence,
-            java.util.Collections.<WorldLocation>emptyList());
+            java.util.Collections.<WorldLocation>emptyList(), true);
         TileValue fenceNorth = emptyTile();
         objects.applyCollision(fenceLocation, fenceNorth);
         check((fenceNorth.traversalMask & CollisionFlag.WALL_NORTH) != 0,
             "boundary north collision composed");
+        check((fenceNorth.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_NORTH) != 0,
+            "native fence composes combat hard cover");
         TileValue fenceSouth = emptyTile();
         objects.applyCollision(
             new WorldLocation(
@@ -223,6 +226,9 @@ public final class NativeLayeredPlacementRegistryFixture {
             fenceSouth);
         check((fenceSouth.traversalMask & CollisionFlag.WALL_SOUTH) != 0,
             "boundary reciprocal collision composed");
+        check((fenceSouth.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_SOUTH) != 0,
+            "native fence hard cover is reciprocal");
         TileValue fenceProjectile = emptyTile();
         objects.applyCollision(
             new WorldLocation(
@@ -250,7 +256,7 @@ public final class NativeLayeredPlacementRegistryFixture {
         check(objects.register(
                 objectGeneration, "deep-door", doorLocation,
                 1, 0, closedDoor, door,
-                java.util.Collections.<WorldLocation>emptyList())
+                java.util.Collections.<WorldLocation>emptyList(), true)
                 == closedDoor,
             "register package door");
         check(objects.size() == 3 && objects.countType(0) == 1
@@ -270,7 +276,7 @@ public final class NativeLayeredPlacementRegistryFixture {
         check(objects.replace(
                 objectGeneration, "deep-door", closedDoor,
                 doorLocation, 1, 0, openDoorframe, doorframe,
-                java.util.Collections.<WorldLocation>emptyList())
+                java.util.Collections.<WorldLocation>emptyList(), false)
                 == openDoorframe,
             "replace package boundary");
         check(objects.find("deep-door") == openDoorframe
@@ -280,6 +286,9 @@ public final class NativeLayeredPlacementRegistryFixture {
         objects.applyCollision(doorLocation, openedNorth);
         check((openedNorth.traversalMask & CollisionFlag.WALL_NORTH) == 0,
             "replacement removes closed boundary collision");
+        check((openedNorth.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_NORTH) == 0,
+            "opening native door removes combat hard cover");
         TileValue openedSouth = emptyTile();
         objects.applyCollision(
             new WorldLocation(
@@ -299,9 +308,14 @@ public final class NativeLayeredPlacementRegistryFixture {
         check(objects.register(
                 objectGeneration, "deep-door", doorLocation,
                 1, 0, closedDoor, door,
-                java.util.Collections.<WorldLocation>emptyList())
+                java.util.Collections.<WorldLocation>emptyList(), true)
                 == closedDoor,
             "same-generation delayed restoration");
+        TileValue reclosedDoor = emptyTile();
+        objects.applyCollision(doorLocation, reclosedDoor);
+        check((reclosedDoor.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_NORTH) != 0,
+            "closing native door restores combat hard cover");
         check(objects.getCollisionTileCount() == 6,
             "restoration reinstates exact collision");
 

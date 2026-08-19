@@ -20,6 +20,7 @@ import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.plugins.handler.PluginHandler;
 import com.openrsc.server.runtime.CombatDamageObserver;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.CollisionFlag;
 import io.netty.channel.Channel;
 
 import java.io.IOException;
@@ -246,6 +247,22 @@ final class CurrentCombatHarness implements AutoCloseable {
 		for (int x = minX; x <= maxX; x++) {
 			for (int y = minY; y <= maxY; y++) {
 				openTile(x, y);
+			}
+		}
+	}
+
+	void openCombatProjectileRectangle(final int minX, final int maxX,
+			final int minY, final int maxY) {
+		openRectangle(minX, maxX, minY, maxY);
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				world.getTile(x, y).removeTerrainCollision(
+					CollisionFlag.FULL_BLOCK
+						| CollisionFlag.WALL_NORTH
+						| CollisionFlag.WALL_EAST
+						| CollisionFlag.WALL_SOUTH
+						| CollisionFlag.WALL_WEST);
+				world.getTile(x, y).initializeTerrainCollision();
 			}
 		}
 	}

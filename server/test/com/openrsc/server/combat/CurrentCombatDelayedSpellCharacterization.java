@@ -64,7 +64,7 @@ final class CurrentCombatDelayedSpellCharacterization {
 		harness.random().reset(0xA054E01L);
 		harness.random().scriptInts(repeat(Integer.valueOf(-1), 24));
 
-		castOnNpc(caster, primary, Spells.SARADOMIN_STRIKE);
+		castOnNpc(harness, caster, primary, Spells.SARADOMIN_STRIKE);
 		final GameTickEvent areaEvent = harness.findEvent("God spell area effect");
 		assertNotNull(areaEvent, "God spell schedules its delayed area event");
 		assertEquals(100, child.getLevel(Skill.HITS.id()),
@@ -128,7 +128,7 @@ final class CurrentCombatDelayedSpellCharacterization {
 		harness.random().reset(0xA054E02L);
 		harness.random().scriptInts(repeat(Integer.valueOf(-1), 24));
 
-		castOnNpc(caster, primary, Spells.IBAN_BLAST);
+		castOnNpc(harness, caster, primary, Spells.IBAN_BLAST);
 		final GameTickEvent areaEvent = harness.findEvent("Iban blast area effect");
 		assertNotNull(areaEvent, "Iban Blast schedules its delayed area event");
 		assertEquals(100, child.getLevel(Skill.HITS.id()),
@@ -177,7 +177,7 @@ final class CurrentCombatDelayedSpellCharacterization {
 			.getExperience(Skill.MAGIC.id());
 		forceNextLegacyInt(5, 4);
 
-		castOnNpc(caster, salarin, Spells.FIRE_STRIKE);
+		castOnNpc(harness, caster, salarin, Spells.FIRE_STRIKE);
 		final GameTickEvent secondHit = harness.findEvent(
 			"Salarin the Twisted Strike");
 		assertNotNull(secondHit, "Salarin schedules its delayed second hit");
@@ -276,8 +276,14 @@ final class CurrentCombatDelayedSpellCharacterization {
 		return caster;
 	}
 
-	private static void castOnNpc(final Player caster, final Npc target,
-			final Spells spell) throws Exception {
+	private static void castOnNpc(final CurrentCombatHarness harness,
+			final Player caster, final Npc target, final Spells spell)
+			throws Exception {
+		harness.openCombatProjectileRectangle(
+			Math.min(caster.getX(), target.getX()),
+			Math.max(caster.getX(), target.getX()),
+			Math.min(caster.getY(), target.getY()),
+			Math.max(caster.getY(), target.getY()));
 		final SpellStruct payload = new SpellStruct();
 		payload.setOpcode(OpcodeIn.CAST_ON_NPC);
 		payload.spell = spell;

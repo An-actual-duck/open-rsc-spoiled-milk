@@ -367,6 +367,9 @@ public final class LayeredLocationFollowupsHarness {
         require(!PathValidation.checkPath(
                 world, surfaceStart, upperEnd, false),
             "cross-level path was accepted");
+        require(!PathValidation.checkCombatProjectilePath(
+                world, surfaceStart, upperEnd),
+            "cross-level combat projectile path was accepted");
         require(!PathValidation.checkPath(
                 world,
                 surfaceStart,
@@ -375,11 +378,18 @@ public final class LayeredLocationFollowupsHarness {
                     new WorldCoordinate(4, 1, 0)),
                 false),
             "cross-space path was accepted");
+        require(!PathValidation.checkCombatProjectilePath(
+                world,
+                surfaceStart,
+                new WorldLocation(
+                    new WorldSpaceId("instance-test"),
+                    new WorldCoordinate(4, 1, 0))),
+            "cross-space combat projectile path was accepted");
 
         WorldLocation upperMiddle = location(2, 1, 1);
         TileValue upperBlocker = world.getTile(upperMiddle);
         upperBlocker.setTerrainBlocked(true);
-        upperBlocker.addHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        upperBlocker.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
         require(!PathValidation.checkPath(world, upperStart, upperEnd, false),
             "upper-layer wall did not block its own path");
         require(PathValidation.checkPath(
@@ -388,12 +398,12 @@ public final class LayeredLocationFollowupsHarness {
         require(PathValidation.checkPath(
                 world, undergroundStart, undergroundEnd, false),
             "upper-layer wall leaked underground");
-        require(!PathValidation.checkHostileProjectilePath(
+        require(!PathValidation.checkCombatProjectilePath(
                 world, upperStart, upperEnd),
             "upper-layer wall did not block hostile line of fire");
 
         upperBlocker.setTerrainBlocked(false);
-        upperBlocker.removeHostileProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        upperBlocker.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
         world.removeTile(upperMiddle);
         require(!PathValidation.checkPath(world, upperStart, upperEnd, false),
             "missing native tile did not fail closed");
@@ -418,14 +428,14 @@ public final class LayeredLocationFollowupsHarness {
 
         require(PathValidation.checkPath(world, start, end, false),
             "clear legacy path was rejected");
-        require(PathValidation.checkHostileProjectilePath(world, start, end),
+        require(PathValidation.checkCombatProjectilePath(world, start, end),
             "clear legacy projectile path was rejected");
 
         world.removeTile(location(2, 1, 0));
         require(!PathValidation.checkPath(world, start, end, false),
             "missing legacy tile allowed line travel");
-        require(!PathValidation.checkHostileProjectilePath(world, start, end),
-            "missing legacy tile allowed hostile projectile travel");
+        require(!PathValidation.checkCombatProjectilePath(world, start, end),
+            "missing legacy tile allowed combat projectile travel");
         require(!PathValidation.checkAdjacentDistance(
                 world, 1, 1, 2, 1, false, true),
             "missing legacy tile allowed adjacent movement");
@@ -580,7 +590,7 @@ def check_integration_contracts() -> None:
         source = path.read_text(encoding="utf-8")
         require(
             "getWorldLocation()" in source
-            and "PathValidation.checkPath(" in source,
+            and "PathValidation.checkCombatProjectilePath(" in source,
             f"{path.name} discarded layer identity during path validation",
         )
 

@@ -20,22 +20,18 @@ def require(condition, message):
 
 path_validation = PATH_VALIDATION.read_text()
 require(
-    "return checkPath(world, src, dest, false);" in path_validation,
-    "Default projectile path validation must retain player-transparent barriers",
-)
-require(
-    "DistanceCollisionMode.HOSTILE_PROJECTILE"
+    "DistanceCollisionMode.COMBAT_PROJECTILE"
     in path_validation,
-    "Hostile projectile path validation must use its semantic collision mode",
+    "Combat projectile path validation must use its semantic collision mode",
 )
 
 require(
-    "PathValidation.checkHostileProjectilePath("
+    "PathValidation.checkCombatProjectilePath("
     in NPC_BEHAVIOR.read_text(),
     "Modern hostile NPC projectiles must use semantic hostile collision",
 )
 require(
-    "PathValidation.checkHostileProjectilePath("
+    "PathValidation.checkCombatProjectilePath("
     in NPC_RANGE.read_text(),
     "Legacy hostile NPC ranged attacks must use semantic hostile collision",
 )
@@ -43,10 +39,8 @@ require(
 for path in PLAYER_PROJECTILES:
     source = path.read_text()
     require(
-        "PathValidation.checkPath(" in source
-        and "PathValidation.checkPath(player.getWorld(), player.getLocation(), target.getLocation(), true)"
-        not in source,
-        f"{path.name} must retain player projectile transparency",
+        "PathValidation.checkCombatProjectilePath(" in source,
+        f"{path.name} must share semantic combat projectile collision",
     )
 
-print("NPC projectile clipping checks passed")
+print("Combat projectile clipping checks passed")

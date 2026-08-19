@@ -39,7 +39,7 @@ import com.openrsc.server.external.NPCLoc;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
 import com.openrsc.server.io.WorldLoader;
 import com.openrsc.server.model.GlobalMessage;
-import com.openrsc.server.model.HostileProjectileCollision;
+import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.Shop;
@@ -613,7 +613,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			collidingObject, o, forceFullBlock);
 	}
 
-	private void applyHostileProjectileCollision(
+	private void applyCombatProjectileCollision(
 		final GameObject object,
 		final boolean add) {
 		if (object == null || object.getID() == 1147) {
@@ -621,7 +621,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		}
 		final int direction = object.getDirection();
 		if (object.isScenery()) {
-			if (!HostileProjectileCollision.blocksScenery(
+			if (!CombatProjectileCollision.blocksScenery(
 					object.getGameObjectDef())) {
 				return;
 			}
@@ -636,7 +636,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			}
 			for (int x = object.getX(); x < object.getX() + width; x++) {
 				for (int y = object.getY(); y < object.getY() + height; y++) {
-					updateHostileProjectileSceneryCollision(
+					updateCombatProjectileSceneryCollision(
 						x,
 						y,
 						direction,
@@ -647,66 +647,66 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			return;
 		}
 		if (object.getDoorDef().getDoorType() == 1) {
-			updateHostileProjectileBoundaryCollision(
+			updateCombatProjectileBoundaryCollision(
 				object.getX(), object.getY(), direction, add);
 		}
 	}
 
-	private void updateHostileProjectileSceneryCollision(final int x, final int y, final int dir,
+	private void updateCombatProjectileSceneryCollision(final int x, final int y, final int dir,
 														 final int objectType, final boolean add) {
 		if (objectType != 2) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_C, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_C, add);
 			return;
 		}
 		if (dir == 0) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
 			if (getTile(x - 1, y) != null) {
-				updateHostileProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
+				updateCombatProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
 			}
 		} else if (dir == 2) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_SOUTH, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_SOUTH, add);
 			if (getTile(x, y + 1) != null) {
-				updateHostileProjectileCollision(x, y + 1, CollisionFlag.WALL_NORTH, add);
+				updateCombatProjectileCollision(x, y + 1, CollisionFlag.WALL_NORTH, add);
 			}
 		} else if (dir == 4) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_WEST, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_WEST, add);
 			if (getTile(x + 1, y) != null) {
-				updateHostileProjectileCollision(x + 1, y, CollisionFlag.WALL_EAST, add);
+				updateCombatProjectileCollision(x + 1, y, CollisionFlag.WALL_EAST, add);
 			}
 		} else if (dir == 6) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
 			if (getTile(x, y - 1) != null) {
-				updateHostileProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
+				updateCombatProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
 			}
 		}
 	}
 
-	private void updateHostileProjectileBoundaryCollision(final int x, final int y, final int dir,
+	private void updateCombatProjectileBoundaryCollision(final int x, final int y, final int dir,
 														  final boolean add) {
 		if (dir == 0) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
 			if (getTile(x, y - 1) != null) {
-				updateHostileProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
+				updateCombatProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
 			}
 		} else if (dir == 1) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
 			if (getTile(x - 1, y) != null) {
-				updateHostileProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
+				updateCombatProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
 			}
 		} else if (dir == 2) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_A, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_A, add);
 		} else if (dir == 3) {
-			updateHostileProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_B, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_B, add);
 		}
 	}
 
-	private void updateHostileProjectileCollision(final int x, final int y, final int flags,
+	private void updateCombatProjectileCollision(final int x, final int y, final int flags,
 												  final boolean add) {
 		final TileValue tile = getMutableTile(x, y);
 		if (add) {
-			tile.addHostileProjectileCollision(flags);
+			tile.addCombatProjectileCollision(flags);
 		} else {
-			tile.removeHostileProjectileCollision(flags);
+			tile.removeCombatProjectileCollision(flags);
 		}
 	}
 
@@ -785,8 +785,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		getRegionManager().applyObjectMembershipAndCollisionTransaction(
 			oldObject, oldUnregister, oldRollbackRegister,
 			newObject, newRegister);
-		applyHostileProjectileCollision(oldObject, false);
-		applyHostileProjectileCollision(newObject, true);
+		applyCombatProjectileCollision(oldObject, false);
+		applyCombatProjectileCollision(newObject, true);
 	}
 
 	public void registerItem(final GroundItem i) {

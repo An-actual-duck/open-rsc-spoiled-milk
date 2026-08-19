@@ -805,7 +805,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "eea8cc40de4c40954afa3a4b6acf033d271e0b9277f8084f396284f7c80a8999",
+  "inputTreeSha256": "b193bb8ebc6093e70e1a8fbd15c80c51184830cd660f85c36797dcfd5c4d09cf",
   "inputs": [
     {
       "brandSignals": [
@@ -34449,7 +34449,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 86912,
+      "bytes": 86921,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -34633,7 +34633,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "eb83c3185038b7fed261b90a28d324578afdb0904fcae9f48414c21cff0a0a4b"
+      "sha256": "6a44aeca57e11ff4cc4c94354b128b5ffbb316f6f334439f0c73c9f2564c3cf3"
     },
     {
       "brandSignals": [],
@@ -42210,7 +42210,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 14267,
+      "bytes": 14266,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42336,7 +42336,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "942586f3c4fff10affdd9c41513c39002eb56492534b46a167f8e41a99a77fbc"
+      "sha256": "7825c31aad064fb9f1476f623b6f5804a103446a82bdd95f0904f2f31d99741b"
     },
     {
       "brandSignals": [],
@@ -42872,7 +42872,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7037,
+      "bytes": 7036,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42926,7 +42926,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
       "reverseDependencies": [],
-      "sha256": "10460001de279d076b358836e3ad3759c52ccd6d9f353660213060823d8fd7cd"
+      "sha256": "6a030cd60e45beff269d2978a0ac629175a398a9476735da84f68f9ec0c5bd31"
     },
     {
       "brandSignals": [],
@@ -43519,7 +43519,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5734,
+      "bytes": 5743,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43591,11 +43591,11 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/misc/Cannon.java"
       ],
-      "sha256": "d82218152244745d1510cf3446e14d9aa8a60f2708aa45683e0ddba667d82a0e"
+      "sha256": "812ff29f7b0d47152687b96994534c8c746f6d880af9ee63b6f1925f9ec703da"
     },
     {
       "brandSignals": [],
-      "bytes": 6839,
+      "bytes": 6848,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43694,7 +43694,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
-      "sha256": "d6782713e9d07823fef201a5ceb729be7148c80c7afafc9a02b099e0b4aa1c43"
+      "sha256": "4c1da0f979cf8d081cd4edb08757b6cd0d1d098d8fbf2d60fbb21c53171388d5"
     },
     {
       "brandSignals": [],
@@ -43954,7 +43954,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 11008,
+      "bytes": 11017,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44076,14 +44076,14 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
-      "sha256": "629cbf51da0b169faab8c4bf84612b04049806cbefad3b1fa4a4b1d2e012a7cd"
+      "sha256": "d5c10f2a01e5c97fe258b0dcc999cd69aca8f634b49c1956d24d6c0c9a96c26a"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 7471,
+      "bytes": 7470,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44160,7 +44160,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java",
         "server/src/com/openrsc/server/model/entity/Mob.java"
       ],
-      "sha256": "74f30bc53aaf01a265cce3b4dbcb5d6f832ccdfd302399cc522293dcca02b8b5"
+      "sha256": "4971a73be512cf87ec47e3e5a307e0fbd1088802300a66dba6cb04b69a573d1b"
     },
     {
       "brandSignals": [],
@@ -44258,7 +44258,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 18988,
+      "bytes": 19006,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44364,7 +44364,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
-      "sha256": "a3ef99f797f71aa3085af2b36301b6668f62ab9bd73df7bbde1b86dd800b0625"
+      "sha256": "eee43a726e2279626c558903a9617aa752b07358b46a2c63debcc6a2e6f188a3"
     },
     {
       "brandSignals": [],
@@ -44732,7 +44732,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/skills/fishing/Fishing.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/mining/Mining.java",
-        "server/src/com/openrsc/server/model/HostileProjectileCollision.java",
+        "server/src/com/openrsc/server/model/CombatProjectileCollision.java",
         "server/src/com/openrsc/server/model/entity/GameObject.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java",
         "server/src/com/openrsc/server/net/rsc/handlers/GameObjectAction.java"
@@ -46340,6 +46340,27 @@
     },
     {
       "brandSignals": [],
+      "bytes": 2382,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.external.GameObjectDef",
+          "path": "server/src/com/openrsc/server/external/GameObjectDef.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.model.CombatProjectileCollision",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/model/CombatProjectileCollision.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/model/world/World.java",
+        "server/src/com/openrsc/server/model/world/region/RegionManager.java"
+      ],
+      "sha256": "70688d5e90619191e8a9a6e27848e2d872ad4322a5d461e4098c5cfe1c3a94df"
+    },
+    {
+      "brandSignals": [],
       "bytes": 982,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
@@ -46374,26 +46395,6 @@
         "server/src/com/openrsc/server/net/rsc/handlers/FriendHandler.java"
       ],
       "sha256": "0f6c357f23ca5f6664c4c37e8802443136acbea6eb7824fc91fd30b3a84c6044"
-    },
-    {
-      "brandSignals": [],
-      "bytes": 2404,
-      "category": "foundation",
-      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
-      "classificationRule": "server/src/**",
-      "dependencies": [
-        {
-          "import": "com.openrsc.server.external.GameObjectDef",
-          "path": "server/src/com/openrsc/server/external/GameObjectDef.java"
-        }
-      ],
-      "javaFqn": "com.openrsc.server.model.HostileProjectileCollision",
-      "kind": "ant-core-source",
-      "path": "server/src/com/openrsc/server/model/HostileProjectileCollision.java",
-      "reverseDependencies": [
-        "server/src/com/openrsc/server/model/world/World.java"
-      ],
-      "sha256": "6719ad458e7ea64f75e549ea2e21b168b322072b337cabdd280bb424f29643c6"
     },
     {
       "brandSignals": [],
@@ -46477,7 +46478,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 39230,
+      "bytes": 39227,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -46557,7 +46558,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerTradeHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "0f4dae84f522424d09c48961b6d5243ed9f46e93481de6b00f29ea0f18a42ed0"
+      "sha256": "a8d1626aeebb2a945f82846dc6c31844d741a9e667407f5d4eb5c1ebbf755999"
     },
     {
       "brandSignals": [],
@@ -48449,7 +48450,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 3152,
+      "bytes": 3123,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48458,11 +48459,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/ProjectileImpactPolicy.java",
       "reverseDependencies": [],
-      "sha256": "60d7c553b3d139fbf4a52469f8c247c5a7a3bbe23c6edf2e69d7a5c6d24321c3"
+      "sha256": "366db03471878c6ddb42e32f0d5081ed58edbbd609e9605a5db40cbd4631b104"
     },
     {
       "brandSignals": [],
-      "bytes": 7263,
+      "bytes": 7136,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48503,7 +48504,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/projectile/BenignProjectileEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
       ],
-      "sha256": "3aec66bfa620ad34b696e1d8ba04a0fa725e60194478bb370d85f24004423a78"
+      "sha256": "ab3621eb485348368cd01011650f40548ee8848e83b3e0425ed30dbd20f03fdd"
     },
     {
       "brandSignals": [],
@@ -51400,7 +51401,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 28106,
+      "bytes": 28105,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -51502,7 +51503,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
       "reverseDependencies": [],
-      "sha256": "a8fe71d1d90c7bb05ba3cf6cbfeb1bf38b507fc4b9ca0ab05db3b301e847a3c2"
+      "sha256": "57b9a66d2405b96f61b0ff4f2c808d2d4854ecdee2f978e133c2c8e0d254d241"
     },
     {
       "brandSignals": [],
@@ -53868,7 +53869,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 18115,
+      "bytes": 21438,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53896,6 +53897,10 @@
         {
           "import": "com.openrsc.server.model.world.region.TileValue",
           "path": "server/src/com/openrsc/server/model/world/region/TileValue.java"
+        },
+        {
+          "import": "com.openrsc.server.util.rsc.CollisionFlag",
+          "path": "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
         }
       ],
       "javaFqn": "com.openrsc.server.model.world.NativeLayeredGameObjectRegistry",
@@ -53904,14 +53909,14 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "75622196114fa6640f52ca070f6cb1ec7e471610172ec3068433a712da9f4f4a"
+      "sha256": "9e7dce2de8d5f2ef69046b15a51027e1bb4b290ea8d5b0f390b1dff65b271182"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 45962,
+      "bytes": 45935,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -54069,12 +54074,12 @@
           "path": "server/src/com/openrsc/server/io/WorldLoader.java"
         },
         {
-          "import": "com.openrsc.server.model.GlobalMessage",
-          "path": "server/src/com/openrsc/server/model/GlobalMessage.java"
+          "import": "com.openrsc.server.model.CombatProjectileCollision",
+          "path": "server/src/com/openrsc/server/model/CombatProjectileCollision.java"
         },
         {
-          "import": "com.openrsc.server.model.HostileProjectileCollision",
-          "path": "server/src/com/openrsc/server/model/HostileProjectileCollision.java"
+          "import": "com.openrsc.server.model.GlobalMessage",
+          "path": "server/src/com/openrsc/server/model/GlobalMessage.java"
         },
         {
           "import": "com.openrsc.server.model.PathValidation",
@@ -54376,7 +54381,7 @@
         "server/src/com/openrsc/server/service/PlayerService.java",
         "server/src/com/openrsc/server/util/PathfindingDebug.java"
       ],
-      "sha256": "edd4da05630c9e413905e2e94de4a3e7f1f73617c10a9b63d099bea0cae73a87"
+      "sha256": "c30cf529eca84e6aa332b01380075046f95bdd1025e4e0fd943e44f043f38008"
     },
     {
       "brandSignals": [],
@@ -56734,7 +56739,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 197428,
+      "bytes": 198063,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -56846,6 +56851,10 @@
         {
           "import": "com.openrsc.server.io.WorldLoader",
           "path": "server/src/com/openrsc/server/io/WorldLoader.java"
+        },
+        {
+          "import": "com.openrsc.server.model.CombatProjectileCollision",
+          "path": "server/src/com/openrsc/server/model/CombatProjectileCollision.java"
         },
         {
           "import": "com.openrsc.server.model.Point",
@@ -57058,7 +57067,7 @@
         "server/src/com/openrsc/server/io/WorldLoader.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "775bc9120c842ad640f4ad83a0ca4f7292a274b6be6cd8dd4cf38f0158181bbe"
+      "sha256": "3cf1d8cbf0c7ae17b80e133a94ad337b595979aefbe8a2186596df59acb6ca0e"
     },
     {
       "brandSignals": [],
@@ -57152,7 +57161,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 9356,
+      "bytes": 9338,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57185,7 +57194,7 @@
         "server/src/com/openrsc/server/service/PlayerService.java",
         "server/src/com/openrsc/server/util/PathfindingDebug.java"
       ],
-      "sha256": "5d06d7f0fcc4b2469bd2109315b72374639b2e2e85278e63b2594c337f94fff0"
+      "sha256": "47a6a42bb752257c785c1c9d3ccb341afc256e749c6a26ee316a07cc7d8c91b4"
     },
     {
       "brandSignals": [],
@@ -62141,7 +62150,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 115934,
+      "bytes": 115951,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -62462,7 +62471,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestDarkMetalGate.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
       ],
-      "sha256": "ffabc1f1b33c0d856fa2aed996e59dd3b48f849a772242aa38c15bac15752549"
+      "sha256": "02a7affe6270e012bc5fd59f88b46bb893000f04aaa1456fa6bfa5aae2d86482"
     },
     {
       "brandSignals": [],
@@ -69787,6 +69796,7 @@
         "server/src/com/openrsc/server/model/AStarPathfinder.java",
         "server/src/com/openrsc/server/model/PathValidation.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
+        "server/src/com/openrsc/server/model/world/NativeLayeredGameObjectRegistry.java",
         "server/src/com/openrsc/server/model/world/World.java",
         "server/src/com/openrsc/server/model/world/region/LayeredAdjacentStepCollisionComparison.java",
         "server/src/com/openrsc/server/model/world/region/LayeredPackedRegionBlankContainerPlan.java",

@@ -204,7 +204,7 @@ public final class ElderGreenDragonSpecialAttacks {
 
 	private static boolean isValidProjectilePlayerTarget(final Npc dragon, final Player player, final int radius) {
 			return isValidPlayerTarget(dragon, player, radius)
-				&& PathValidation.checkHostileProjectilePath(
+				&& PathValidation.checkCombatProjectilePath(
 					dragon.getWorld(),
 					dragon.getWorldLocation(),
 					player.getWorldLocation());
