@@ -1,0 +1,9 @@
+{
+  "description": "MyWorld-only NPC shortcuts whose server opcode command must match the client presentation.",
+  "npcs": [
+    {
+      "id": 785,
+      "command": "Task"
+    }
+  ]
+}

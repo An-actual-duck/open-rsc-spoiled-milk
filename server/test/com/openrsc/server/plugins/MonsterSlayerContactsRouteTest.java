@@ -17,8 +17,11 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Group;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.plugins.authentic.commands.Development;
+import com.openrsc.server.plugins.authentic.quests.members.legendsquest.npcs.LegendsQuestSirRadimusErkle;
+import com.openrsc.server.plugins.custom.minigames.CombatOdyssey;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerContacts;
 import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerChallengeShops;
+import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.util.rsc.DataConversions;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -38,6 +41,7 @@ public final class MonsterSlayerContactsRouteTest {
 		Server server = new Server("myworld.conf");
 		server.getEntityHandler().load();
 		MonsterSlayerContacts routes = new MonsterSlayerContacts();
+		radimusShortcutDefinitionAndOwnership(server, routes);
 		for (int id = 846; id <= 850; id++) {
 			Npc npc = new Npc(server.getWorld(), id, 100 + id, 600);
 			assertTrue(routes.blockTalkNpc(null, npc), "Talk-to contact " + id);
@@ -88,6 +92,29 @@ public final class MonsterSlayerContactsRouteTest {
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void radimusShortcutDefinitionAndOwnership(Server server, MonsterSlayerContacts routes) {
+		Npc house = new Npc(server.getWorld(), 735, 884, 600);
+		Npc guild = new Npc(server.getWorld(), 785, 885, 600);
+		assertEquals("", house.getDef().getCommand1(), "house Radimus has no visible Task shortcut");
+		assertEquals("Task", guild.getDef().getCommand1(), "guild Radimus advertises the Task opcode");
+		assertEquals("", house.getDef().getCommand2(), "house Radimus has no secondary shortcut");
+		assertEquals("", guild.getDef().getCommand2(), "guild Radimus has no unrelated secondary shortcut");
+		assertFalse(routes.blockOpNpc(null, house, house.getDef().getCommand1()),
+			"house Radimus command cannot route into Monster Slayer");
+		assertTrue(routes.blockOpNpc(null, guild, guild.getDef().getCommand1()),
+			"guild Radimus definition routes its exact opcode to Monster Slayer");
+
+		LegendsQuestSirRadimusErkle authentic = new LegendsQuestSirRadimusErkle();
+		assertTrue(authentic.blockTalkNpc(null, house), "authentic quest owns house Radimus Talk-to");
+		assertTrue(authentic.blockTalkNpc(null, guild), "authentic quest owns guild Radimus Talk-to");
+		assertFalse(routes.blockTalkNpc(null, house), "Monster Slayer never owns house Radimus Talk-to");
+		assertFalse(routes.blockTalkNpc(null, guild), "Monster Slayer receives guild Talk-to only by quest delegation");
+		assertFalse(OpNpcTrigger.class.isAssignableFrom(LegendsQuestSirRadimusErkle.class),
+			"authentic Legends Quest cannot capture the Task opcode");
+		assertFalse(OpNpcTrigger.class.isAssignableFrom(CombatOdyssey.class),
+			"legacy Combat Odyssey cannot capture the Task opcode");
 	}
 
 	private static void adeptRankKeepsLegacyPersistenceCompatibility() {

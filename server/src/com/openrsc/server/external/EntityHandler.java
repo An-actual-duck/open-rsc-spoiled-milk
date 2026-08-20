@@ -44,7 +44,7 @@ public final class EntityHandler {
 	 */
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Set<String> MYWORLD_NPC_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
-		"id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+		"id", "name", "description", "command", "attack", "strength", "hits", "defense", "ranged",
 		"projectileRange",
 		"meleeOffense", "rangedOffense", "magicOffense",
 		"meleeDefense", "rangedDefense", "magicDefense",
@@ -479,6 +479,7 @@ public final class EntityHandler {
 				NPCDef staged = new NPCDef(npcs.get(npcId));
 				if (npc.has("name")) staged.name = npc.getString("name");
 				if (npc.has("description")) staged.description = npc.getString("description");
+				if (npc.has("command")) staged.command1 = npc.getString("command");
 				if (npc.has("attack")) staged.attack = (int) ifZeroReserve(npc.getInt("attack"));
 				if (npc.has("strength")) staged.strength = (int) ifZeroReserve(npc.getInt("strength"));
 				if (npc.has("hits")) staged.hits = (int) ifZeroReserve(npc.getInt("hits"));

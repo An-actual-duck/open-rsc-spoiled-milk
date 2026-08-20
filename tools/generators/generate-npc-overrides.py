@@ -21,6 +21,7 @@ ALLOWED_NPC_FIELDS = {
     "id",
     "name",
     "description",
+    "command",
     "hits",
     "attack",
     "defense",
@@ -80,7 +81,7 @@ def validate_npc_entry(entry: object, source_path: Path) -> dict[str, Any]:
     for field, value in typed_entry.items():
         if field == "id":
             continue
-        if field in {"name", "description"}:
+        if field in {"name", "description", "command"}:
             if not isinstance(value, str) or not value.strip():
                 fail(
                     f"{source_path.name} entry {npc_id} field {field} "
