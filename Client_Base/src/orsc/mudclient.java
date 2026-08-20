@@ -21123,6 +21123,7 @@ public final class mudclient implements Runnable {
 		if (S_WANT_CUSTOM_SPRITES) {
 			loadExternalFoundryDragonNpcSprite();
 			loadExternalKingBlackDragonNpcSprite();
+			loadExternalGorakNpcSprite();
 			loadExternalEquipmentSprites();
 		}
 	}
@@ -21142,7 +21143,8 @@ public final class mudclient implements Runnable {
 					.getNumber();
 				continue label0;
 			}
-			if ("foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)) {
+			if ("foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)
+				|| "gorak".equalsIgnoreCase(s)) {
 				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
 				animationNumber += 27;
 				continue;
@@ -22058,6 +22060,12 @@ public final class mudclient implements Runnable {
 		}, "king-black-dragon-sprite-sheet.png");
 	}
 
+	private File getExternalGorakSpriteSheet() {
+		return this.externalAssetLoader.findFirstFile(new String[] {
+			"dev/myworld/assets/sprites/npcs/gorak"
+		}, "gorak-sprite-sheet.png");
+	}
+
 	private void loadExternalFoundryDragonNpcSprite() {
 		final int[] foundryDragonColumnWidths = {228, 203, 263, 215, 218, 338};
 		orsc.graphics.two.SpriteArchive.Entry spriteEntry =
@@ -22111,6 +22119,32 @@ public final class mudclient implements Runnable {
 		}
 		AnimationDef animation = EntityHandler.getAnimationDef(
 			EntityHandler.getKingBlackDragonAnimationId());
+		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
+			getSurface().sprites[animation.getNumber() + frame] =
+				spriteEntry.getFrames()[frame].getSprite();
+		}
+	}
+
+	private void loadExternalGorakNpcSprite() {
+		orsc.graphics.two.SpriteArchive.Entry spriteEntry =
+			this.externalAssetLoader.loadExternalNpcDirectionSheet(
+				getExternalGorakSpriteSheet(), "gorak", 6,
+				NpcDirectionalAnimationMapping.FRAMES_PER_DIRECTION);
+		if (spriteEntry == null) {
+			System.out.println("Missing or invalid Gorak NPC sprite sheet");
+			return;
+		}
+		EntityHandler.activateGorakExternalVisual();
+		if (S_WANT_CUSTOM_SPRITES) {
+			Map<String, orsc.graphics.two.SpriteArchive.Entry> npcSprites =
+				getSurface().spriteTree.get("npc");
+			if (npcSprites != null) {
+				npcSprites.put("gorak", spriteEntry);
+			}
+			return;
+		}
+		AnimationDef animation = EntityHandler.getAnimationDef(
+			EntityHandler.getGorakAnimationId());
 		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
 			getSurface().sprites[animation.getNumber() + frame] =
 				spriteEntry.getFrames()[frame].getSprite();
@@ -27849,6 +27883,7 @@ public final class mudclient implements Runnable {
 						if (!this.errorLoadingData) {
 							this.loadExternalFoundryDragonNpcSprite();
 							this.loadExternalKingBlackDragonNpcSprite();
+							this.loadExternalGorakNpcSprite();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
 							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),

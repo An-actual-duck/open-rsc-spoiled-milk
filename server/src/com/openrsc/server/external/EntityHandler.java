@@ -248,6 +248,9 @@ public final class EntityHandler {
 		loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsCustom.json");
 		if (getServer().getConfig().WANT_MYWORLD) {
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MonsterSlayerNpcDefs.json");
+			// Developer-spawnable visual fixtures follow every production NPC so
+			// append-order loading preserves all published definition IDs.
+			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/VisualTestNpcDefs.json");
 		}
 		//loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsExpansion.json");
 		patchNpcs();
