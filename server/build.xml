@@ -86,6 +86,19 @@
         </java>
     </target>
 
+	<target name="test_legends_guild_gate_shortcut" depends="compile_core,compile_plugins">
+		<delete dir="../output/legends-guild-gate-test"/>
+		<mkdir dir="../output/legends-guild-gate-test"/>
+		<javac srcdir="${test.src}" destdir="../output/legends-guild-gate-test" debug="on"
+			includes="com/openrsc/server/plugins/LegendsGuildGateShortcutTest.java"
+			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+			<classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</javac>
+		<java classname="com.openrsc.server.plugins.LegendsGuildGateShortcutTest" fork="true" failonerror="true" dir="${basedir}">
+			<classpath><pathelement location="../output/legends-guild-gate-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</java>
+	</target>
+
     <target name="compile_core">
         <delete file="${jar}"/>
         <delete dir="${build}"/>
