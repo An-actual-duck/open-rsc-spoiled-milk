@@ -1975,6 +1975,10 @@
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.1,
       "magicDefenseMultiplier": 0.1
+    },
+    {
+      "id": 785,
+      "command": "Task"
     }
   ]
 }

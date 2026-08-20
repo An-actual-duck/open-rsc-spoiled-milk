@@ -9,7 +9,7 @@ DEFS = ROOT / "server" / "conf" / "server" / "defs"
 ENTITY_HANDLER = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "external" / "EntityHandler.java"
 
 NPC_FIELDS = {
-    "id", "name", "description", "attack", "strength", "hits", "defense", "ranged",
+    "id", "name", "description", "command", "attack", "strength", "hits", "defense", "ranged",
     "projectileRange",
     "meleeOffense", "rangedOffense", "magicOffense",
     "meleeDefense", "rangedDefense", "magicDefense", "meleeDefenseMultiplier",
@@ -81,6 +81,7 @@ def main() -> None:
     require(source, '"meleeOffense", "rangedOffense", "magicOffense"', "NPC power override whitelist")
     require(source, '"projectileRange"', "NPC projectile range override whitelist")
     require(source, 'if (npc.has("projectileRange"))', "NPC projectile range override")
+    require(source, 'if (npc.has("command")) staged.command1', "NPC primary command override")
     require(source, 'if (npc.has("meleeOffense")) staged.meleeOffense', "NPC melee power override")
     require(source, 'if (npc.has("rangedOffense")) staged.rangedOffense', "NPC ranged power override")
     require(source, 'if (npc.has("magicOffense")) staged.magicOffense', "NPC magic power override")

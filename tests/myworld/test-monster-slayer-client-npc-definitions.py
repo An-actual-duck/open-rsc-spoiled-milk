@@ -70,6 +70,8 @@ def fixture(entries: list[dict]) -> str:
                 }}
                 {assertions}
                 {world_name_assertions}
+                assertNpcCommand(735, "");
+                assertNpcCommand(785, "Task");
             }}
 
             private static void assertNpc(int id, String name, String description, String command,
@@ -93,6 +95,13 @@ def fixture(entries: list[dict]) -> str:
                 NPCDef npc = EntityHandler.getNpcDef(id);
                 if (npc.id != id || !expectedName.equals(npc.getName())) {{
                     throw new AssertionError("Client world NPC name mismatch for " + id);
+                }}
+            }}
+
+            private static void assertNpcCommand(int id, String expectedCommand) {{
+                NPCDef npc = EntityHandler.getNpcDef(id);
+                if (!expectedCommand.equals(npc.getCommand1()) || npc.getCommand2() != null) {{
+                    throw new AssertionError("Client Radimus command mismatch for " + id);
                 }}
             }}
         }}

@@ -755,6 +755,13 @@ apart from the explicitly selected Radimus Slayer-route rework.
 | `heroes` | Heroes Guild, near Achetties `253` | Preserve Heroes Quest/cape behavior on Achetties; remove the old Odyssey tier transition only in the coordinated activation branch. |
 | `legends` | Legends Guild, Sir Radimus `785` | Reuse guild Radimus as the selected Monster Slayer closer. His authentic Legends Quest reward/training route retains Talk-to ownership; after that work and any recoverable legacy Odyssey state are resolved, it delegates to Monster Slayer. No new Odyssey progression is activated. House Radimus `735` remains quest-only. |
 
+The `Task` shortcut is a MyWorld-only primary NPC command override authored in
+`tools/generators/npc-overrides/50-interaction-commands.json`. Both client and
+server must resolve that primary opcode as `Task` for guild Radimus `785`;
+house Radimus `735` keeps an empty command. Combat Odyssey and the authentic
+Legends Quest handler retain Talk-to/use-item responsibilities and do not own
+`OpNpcTrigger`, so shortcut dispatch goes only to `MonsterSlayerContacts`.
+
 Initial activation content uses task givers `846..850`, reused Radimus `785`,
 nearby associates `852..857`, and bar ambient members `858..860`. Slot `851`
 is deliberately retained but unspawned so the append-only server definition
