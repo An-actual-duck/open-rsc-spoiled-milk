@@ -490,6 +490,28 @@ projectile mode. Typed impact policies select the same contract as their
 launch producer, including NPC specials as enemy attacks and summons/cannons
 as player-allied attacks.
 
+#### Live regression reassessment
+
+Commit `09eeeac2a` split dynamically registered scenery and boundary-object
+cover, but its tests constructed only those new counters. Authored legacy and
+native terrain walls still entered `terrainCollisionMask`, and the
+player-allied combat mask copied that ordinary traversal product wholesale.
+Consequently an authored fence continued blocking players before the new
+enemy-only counter could make any difference. The live Heroes' Guild cage
+edge is raw wall ID `6`, definition ID `5`, named `railings`; that fence form
+was also absent from the original classifier inventory and was classified as
+structural cover.
+
+The follow-up correction derives combat cover from every authored boundary
+definition during both legacy sector loading and native layered terrain
+materialization. Traversal collision remains independent. Fence, palisade,
+railing, and railings forms enter only enemy cover, while walls and closed
+doors enter structural cover. The player-allied mask no longer inherits raw
+traversal flags. Regression coverage now uses the Heroes' Guild railing
+coordinates `(367,3265)` through `(371,3265)` for a production `RangeEvent`
+and reverse `RangeEventNpc`, plus current-state delayed impact validation and
+native layered terrain derivation.
+
 ### Option D: Elder-area or boss-only exception
 
 Permit Elder projectiles over lava in its arena while keeping global strict

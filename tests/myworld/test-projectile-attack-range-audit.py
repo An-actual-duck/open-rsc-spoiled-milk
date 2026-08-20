@@ -196,7 +196,7 @@ def main() -> None:
     require(npc_behavior, "npc.withinRange(target, profile.getProjectileRange())", "NPC firing-range gate")
     require(
         npc_behavior,
-        "PathValidation.checkCombatProjectilePath(",
+        "PathValidation.checkEnemyCombatProjectilePath(",
         "modern hostile launch collision gate",
     )
     require(
@@ -209,12 +209,12 @@ def main() -> None:
     require(legacy_body, "int radius = 5;", "legacy NPC range boundary")
     require(
         read(LEGACY_NPC_RANGE),
-        "PathValidation.checkCombatProjectilePath(",
+        "PathValidation.checkEnemyCombatProjectilePath(",
         "legacy hostile launch collision gate",
     )
     require(
         read(HOSTILE_PATH),
-        "public static boolean checkCombatProjectilePath",
+        "public static boolean checkEnemyCombatProjectilePath",
         "semantic combat-projectile collision API",
     )
 

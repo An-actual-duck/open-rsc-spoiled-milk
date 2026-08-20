@@ -125,6 +125,16 @@ public class TileValue {
 				return true;
 			}
 		}
+		for (int count : combatProjectileCollisionCounts) {
+			if (count > 0) {
+				return true;
+			}
+		}
+		for (int count : enemyProjectileFenceCollisionCounts) {
+			if (count > 0) {
+				return true;
+			}
+		}
 		return false;
 	}
 	public void setTerrainOverlayProjectileBlocked(boolean blocked){terrainOverlayProjectileBlocked=blocked;refreshProjectile();}
@@ -135,7 +145,7 @@ public class TileValue {
 	public void addCombatProjectileCollision(int flags){for(int bit=0;bit<combatProjectileCollisionCounts.length;bit++)if((flags&(1<<bit))!=0)combatProjectileCollisionCounts[bit]++;}
 	public void removeCombatProjectileCollision(int flags){for(int bit=0;bit<combatProjectileCollisionCounts.length;bit++)if((flags&(1<<bit))!=0&&combatProjectileCollisionCounts[bit]>0)combatProjectileCollisionCounts[bit]--;}
 	public int getCombatProjectileCollisionMask(){
-		int mask=terrainCollisionMask;
+		int mask=0;
 		for(int bit=0;bit<combatProjectileCollisionCounts.length;bit++)if(combatProjectileCollisionCounts[bit]>0)mask|=1<<bit;
 		if(!terrainInitialized||(overlay&0xff)==VOID_OVERLAY_ID)mask|=CollisionFlag.FULL_BLOCK_C;
 		return mask;

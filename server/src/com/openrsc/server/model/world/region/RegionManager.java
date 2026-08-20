@@ -4144,7 +4144,9 @@ public class RegionManager {
 			nativeLayeredNeighbor(owner, location, 0, 1),
 			this::nativeTerrainOverlayBlocks,
 			this::nativeTerrainWallBlocks,
-			WorldLoader::projectileClipAllowed)
+			WorldLoader::projectileClipAllowed,
+			this::nativeTerrainStructuralCombatProjectileWall,
+			this::nativeTerrainEnemyProjectileFenceWall)
 			.applyTo(tile);
 		return nativeLayeredGameObjects.applyCollision(location, tile);
 	}
@@ -4184,6 +4186,28 @@ public class RegionManager {
 		return definition != null
 			&& definition.getUnknown() == 0
 			&& definition.getDoorType() != 0;
+	}
+
+	private CombatProjectileCollision.Cover nativeTerrainCombatProjectileCover(
+			final int wallId) {
+		if (!nativeTerrainWallBlocks(wallId)) {
+			return CombatProjectileCollision.Cover.NONE;
+		}
+		return CombatProjectileCollision.boundaryCover(
+			getWorld().getServer().getEntityHandler()
+				.getDoorDef(wallId - 1));
+	}
+
+	private boolean nativeTerrainStructuralCombatProjectileWall(
+			final int wallId) {
+		return nativeTerrainCombatProjectileCover(wallId)
+			== CombatProjectileCollision.Cover.STRUCTURAL;
+	}
+
+	private boolean nativeTerrainEnemyProjectileFenceWall(
+			final int wallId) {
+		return nativeTerrainCombatProjectileCover(wallId)
+			== CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE;
 	}
 
 	public NativeLayeredWorldPackage getNativeLayeredWorldPackage() {

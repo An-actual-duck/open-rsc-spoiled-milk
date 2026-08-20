@@ -94,7 +94,9 @@ public final class LayeredPreservationRuntimeParityFixture {
                 positiveY,
                 overlayId -> overlayId == 2,
                 wallId -> true,
-                wallId -> wallId % 2 == 0);
+                wallId -> wallId % 2 == 0,
+                wallId -> wallId != 2,
+                wallId -> wallId == 2);
         int expectedTerrainMask =
             CollisionFlag.WALL_NORTH
                 | CollisionFlag.WALL_EAST
@@ -119,6 +121,15 @@ public final class LayeredPreservationRuntimeParityFixture {
             "derived native overlay block reaches runtime tile");
         check(runtimeTile.getTerrainWallProjectileCount() == 2,
             "derived projectile count reaches runtime tile");
+        check((runtimeTile.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_EAST) == 0,
+            "native terrain fence remains player-projectile transparent");
+        check((runtimeTile.getEnemyProjectileCollisionMask()
+                & CollisionFlag.WALL_EAST) != 0,
+            "native terrain fence blocks enemy projectiles");
+        check((runtimeTile.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_NORTH) != 0,
+            "native structural terrain wall blocks player projectiles");
     }
 
     private static WorldLocation location(int x, int y, int level) {
