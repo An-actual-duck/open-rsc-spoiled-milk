@@ -106,8 +106,10 @@ public class EntityHandler {
 	private static final int KING_BLACK_DRAGON_FRAME_WIDTH = 542;
 	private static final int KING_BLACK_DRAGON_FRAME_HEIGHT = 391;
 	private static final int GORAK_VISUAL_TEST_NPC_ID = 861;
-	private static final int GORAK_FRAME_WIDTH = 128;
-	private static final int GORAK_FRAME_HEIGHT = 128;
+	// Keep the 128x128 exported cells untouched, including their shared alignment
+	// padding, while presenting the visible creature at the established cow scale.
+	private static final int GORAK_FRAME_WIDTH = 327;
+	private static final int GORAK_FRAME_HEIGHT = 240;
 	private static int foundryDragonAnimationId = -1;
 	private static int kingBlackDragonAnimationId = -1;
 	private static int gorakAnimationId = -1;
@@ -6721,7 +6723,7 @@ public class EntityHandler {
 			"Gorak", "A harmless visual test creature", "",
 			1, 1, 1, 1, false,
 			new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
-			0, 0, 0, 0, 128, 128, 10, 7, 5, 861
+			0, 0, 0, 0, 327, 240, 10, 7, 5, 861
 		));
 	}
 

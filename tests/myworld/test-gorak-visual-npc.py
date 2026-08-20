@@ -54,8 +54,8 @@ def main() -> None:
         "combatlvl": 1,
         "attackable": 0,
         "aggressive": 0,
-        "camera1": 128,
-        "camera2": 128,
+        "camera1": 327,
+        "camera2": 240,
         "walkModel": 10,
         "combatModel": 7,
     }
@@ -95,7 +95,10 @@ def main() -> None:
     client_defs = CLIENT_DEFS.read_text(encoding="utf-8")
     for expected in (
         "private static final int GORAK_VISUAL_TEST_NPC_ID = 861;",
+        "private static final int GORAK_FRAME_WIDTH = 327;",
+        "private static final int GORAK_FRAME_HEIGHT = 240;",
         "setCustomNpcDefinition(861, new NPCDef(",
+        "0, 0, 0, 0, 327, 240, 10, 7, 5, 861",
         'animations.add(new AnimationDef("gorak", "npc", 0, 0, true, false, 0));',
         "public static void activateGorakExternalVisual()",
         "gorak.sprites[0] = gorakAnimationId;",
