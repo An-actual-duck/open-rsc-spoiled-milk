@@ -53,7 +53,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			footprint,
 		final Collection<WorldLocation> npcBlockingSceneryTiles) {
 		return register(expectedGeneration, placementId, location, type,
-			direction, instance, footprint, npcBlockingSceneryTiles, false);
+			direction, instance, footprint, npcBlockingSceneryTiles, false, false);
 	}
 
 	public T register(
@@ -67,9 +67,27 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			footprint,
 		final Collection<WorldLocation> npcBlockingSceneryTiles,
 		final boolean combatProjectileHardCover) {
+		return register(
+			expectedGeneration, placementId, location, type, direction,
+			instance, footprint, npcBlockingSceneryTiles,
+			combatProjectileHardCover, false);
+	}
+
+	public T register(
+		final long expectedGeneration,
+		final String placementId,
+		final WorldLocation location,
+		final int type,
+		final int direction,
+		final T instance,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result footprint,
+		final Collection<WorldLocation> npcBlockingSceneryTiles,
+		final boolean combatProjectileHardCover,
+		final boolean enemyProjectileFenceCover) {
 		Entry<T> proposed = entry(
 			placementId, location, type, direction, instance, footprint,
-			npcBlockingSceneryTiles, combatProjectileHardCover);
+			npcBlockingSceneryTiles, combatProjectileHardCover,
+			enemyProjectileFenceCover);
 		synchronized (lock) {
 			if (expectedGeneration != generation) {
 				return null;
@@ -109,7 +127,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		final Collection<WorldLocation> npcBlockingSceneryTiles) {
 		return replace(expectedGeneration, placementId, expectedInstance,
 			location, type, direction, replacement, footprint,
-			npcBlockingSceneryTiles, false);
+			npcBlockingSceneryTiles, false, false);
 	}
 
 	public T replace(
@@ -124,9 +142,27 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			footprint,
 		final Collection<WorldLocation> npcBlockingSceneryTiles,
 		final boolean combatProjectileHardCover) {
+		return replace(expectedGeneration, placementId, expectedInstance, location,
+			type, direction, replacement, footprint, npcBlockingSceneryTiles,
+			combatProjectileHardCover, false);
+	}
+
+	public T replace(
+		final long expectedGeneration,
+		final String placementId,
+		final T expectedInstance,
+		final WorldLocation location,
+		final int type,
+		final int direction,
+		final T replacement,
+		final GameTickEventRestorationCollisionFootprintPlanner.Result footprint,
+		final Collection<WorldLocation> npcBlockingSceneryTiles,
+		final boolean combatProjectileHardCover,
+		final boolean enemyProjectileFenceCover) {
 		Entry<T> proposed = entry(
 			placementId, location, type, direction, replacement, footprint,
-			npcBlockingSceneryTiles, combatProjectileHardCover);
+			npcBlockingSceneryTiles, combatProjectileHardCover,
+			enemyProjectileFenceCover);
 		T checkedExpected = Objects.requireNonNull(
 			expectedInstance, "expectedInstance");
 		synchronized (lock) {
@@ -287,7 +323,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		final GameTickEventRestorationCollisionFootprintPlanner.Result
 			footprint,
 		final Collection<WorldLocation> npcBlockingSceneryTiles,
-		final boolean combatProjectileHardCover) {
+		final boolean combatProjectileHardCover,
+		final boolean enemyProjectileFenceCover) {
 		String checkedId = Objects.requireNonNull(
 			placementId, "placementId");
 		WorldLocation checkedLocation = Objects.requireNonNull(
@@ -323,7 +360,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		return new Entry<T>(
 			checkedId, checkedLocation, type, direction,
 			checkedInstance, checkedFootprint,
-			checkedNpcBlockingSceneryTiles, combatProjectileHardCover);
+			checkedNpcBlockingSceneryTiles, combatProjectileHardCover,
+			enemyProjectileFenceCover);
 	}
 
 	private Map<WorldLocation, CollisionAggregate> stageCollision(
@@ -350,12 +388,12 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		if (removed != null) {
 			mutateCollision(
 				removed.location, removed.footprint, staged, false,
-				removed.combatProjectileHardCover);
+				removed.combatProjectileHardCover, removed.enemyProjectileFenceCover);
 		}
 		if (added != null) {
 			mutateCollision(
 				added.location, added.footprint, staged, true,
-				added.combatProjectileHardCover);
+				added.combatProjectileHardCover, added.enemyProjectileFenceCover);
 		}
 		return staged;
 	}
@@ -377,7 +415,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			footprint,
 		final Map<WorldLocation, CollisionAggregate> staged,
 		final boolean add,
-		final boolean combatProjectileHardCover) {
+		final boolean combatProjectileHardCover,
+		final boolean enemyProjectileFenceCover) {
 		for (CollisionContribution contribution
 			: footprint.getContributions()) {
 			WorldLocation location = collisionLocation(origin, contribution);
@@ -387,9 +426,9 @@ public final class NativeLayeredGameObjectRegistry<T> {
 					"Native layered collision staging is incomplete");
 			}
 			if (add) {
-				aggregate.add(contribution, combatProjectileHardCover);
+				aggregate.add(contribution, combatProjectileHardCover, enemyProjectileFenceCover);
 			} else {
-				aggregate.remove(contribution, combatProjectileHardCover);
+				aggregate.remove(contribution, combatProjectileHardCover, enemyProjectileFenceCover);
 			}
 		}
 	}
@@ -488,6 +527,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			footprint;
 		private final Set<WorldLocation> npcBlockingSceneryTiles;
 		private final boolean combatProjectileHardCover;
+		private final boolean enemyProjectileFenceCover;
 
 		private Entry(
 			final String placementId,
@@ -498,7 +538,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			final GameTickEventRestorationCollisionFootprintPlanner.Result
 				footprint,
 			final Set<WorldLocation> npcBlockingSceneryTiles,
-			final boolean combatProjectileHardCover) {
+			final boolean combatProjectileHardCover,
+			final boolean enemyProjectileFenceCover) {
 			this.placementId = placementId;
 			this.location = location;
 			this.type = type;
@@ -509,6 +550,7 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				new LinkedHashSet<WorldLocation>(
 					npcBlockingSceneryTiles));
 			this.combatProjectileHardCover = combatProjectileHardCover;
+			this.enemyProjectileFenceCover = enemyProjectileFenceCover;
 		}
 	}
 
@@ -554,6 +596,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 		private int dynamicProjectileCount;
 		private int blockingCombatProjectileCount;
 		private final int[] combatProjectileCollisionCounts = new int[6];
+		private int blockingEnemyProjectileFenceCount;
+		private final int[] enemyProjectileFenceCollisionCounts = new int[6];
 
 		private CollisionAggregate copy() {
 			CollisionAggregate copy = new CollisionAggregate();
@@ -568,11 +612,18 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				combatProjectileCollisionCounts, 0,
 				copy.combatProjectileCollisionCounts, 0,
 				combatProjectileCollisionCounts.length);
+			copy.blockingEnemyProjectileFenceCount =
+				blockingEnemyProjectileFenceCount;
+			System.arraycopy(enemyProjectileFenceCollisionCounts, 0,
+				copy.enemyProjectileFenceCollisionCounts, 0,
+				enemyProjectileFenceCollisionCounts.length);
 			return copy;
 		}
 
-		private void add(final CollisionContribution contribution,
-				final boolean combatProjectileHardCover) {
+		private void add(
+			final CollisionContribution contribution,
+			final boolean combatProjectileHardCover,
+			final boolean enemyProjectileFenceCover) {
 			blockingSceneryCount = Math.addExact(
 				blockingSceneryCount,
 				contribution.getBlockingSceneryCount());
@@ -580,6 +631,18 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				dynamicCollisionCounts[bit] = Math.addExact(
 					dynamicCollisionCounts[bit],
 					contribution.getDynamicCollisionCount(bit));
+			}
+			if (enemyProjectileFenceCover) {
+				blockingEnemyProjectileFenceCount = Math.addExact(
+					blockingEnemyProjectileFenceCount,
+					contribution.getBlockingSceneryCount());
+				for (int bit = 0;
+						bit < enemyProjectileFenceCollisionCounts.length;
+						bit++) {
+					enemyProjectileFenceCollisionCounts[bit] = Math.addExact(
+						enemyProjectileFenceCollisionCounts[bit],
+						contribution.getDynamicCollisionCount(bit));
+				}
 			}
 			dynamicProjectileCount = Math.addExact(
 				dynamicProjectileCount,
@@ -597,8 +660,10 @@ public final class NativeLayeredGameObjectRegistry<T> {
 			}
 		}
 
-		private void remove(final CollisionContribution contribution,
-				final boolean combatProjectileHardCover) {
+		private void remove(
+			final CollisionContribution contribution,
+			final boolean combatProjectileHardCover,
+			final boolean enemyProjectileFenceCover) {
 			blockingSceneryCount = subtract(
 				blockingSceneryCount,
 				contribution.getBlockingSceneryCount());
@@ -606,6 +671,18 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				dynamicCollisionCounts[bit] = subtract(
 					dynamicCollisionCounts[bit],
 					contribution.getDynamicCollisionCount(bit));
+			}
+			if (enemyProjectileFenceCover) {
+				blockingEnemyProjectileFenceCount = subtract(
+					blockingEnemyProjectileFenceCount,
+					contribution.getBlockingSceneryCount());
+				for (int bit = 0;
+						bit < enemyProjectileFenceCollisionCounts.length;
+						bit++) {
+					enemyProjectileFenceCollisionCounts[bit] = subtract(
+						enemyProjectileFenceCollisionCounts[bit],
+						contribution.getDynamicCollisionCount(bit));
+				}
 			}
 			dynamicProjectileCount = subtract(
 				dynamicProjectileCount,
@@ -634,7 +711,8 @@ public final class NativeLayeredGameObjectRegistry<T> {
 
 		private boolean isEmpty() {
 			if (blockingSceneryCount != 0 || dynamicProjectileCount != 0
-					|| blockingCombatProjectileCount != 0) {
+					|| blockingCombatProjectileCount != 0
+					|| blockingEnemyProjectileFenceCount != 0) {
 				return false;
 			}
 			for (int count : dynamicCollisionCounts) {
@@ -643,6 +721,11 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				}
 			}
 			for (int count : combatProjectileCollisionCounts) {
+				if (count != 0) {
+					return false;
+				}
+			}
+			for (int count : enemyProjectileFenceCollisionCounts) {
 				if (count != 0) {
 					return false;
 				}
@@ -671,6 +754,20 @@ public final class NativeLayeredGameObjectRegistry<T> {
 				for (int count = 0;
 						count < combatProjectileCollisionCounts[bit]; count++) {
 					tile.addCombatProjectileCollision(1 << bit);
+				}
+			}
+			for (int count = 0;
+					count < blockingEnemyProjectileFenceCount;
+					count++) {
+				tile.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK_C);
+			}
+			for (int bit = 0;
+					bit < enemyProjectileFenceCollisionCounts.length;
+					bit++) {
+				for (int count = 0;
+						count < enemyProjectileFenceCollisionCounts[bit];
+						count++) {
+					tile.addEnemyProjectileFenceCollision(1 << bit);
 				}
 			}
 		}

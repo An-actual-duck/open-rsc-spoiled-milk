@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ENTITY_DEF = ROOT / "server/src/com/openrsc/server/external/EntityDef.java"
 OBJECT_DEF = ROOT / "server/src/com/openrsc/server/external/GameObjectDef.java"
+DOOR_DEF = ROOT / "server/src/com/openrsc/server/external/DoorDef.java"
 CLASSIFIER = ROOT / "server/src/com/openrsc/server/model/CombatProjectileCollision.java"
 TILE = ROOT / "server/src/com/openrsc/server/model/world/region/TileValue.java"
 FLAGS = ROOT / "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
@@ -21,18 +22,15 @@ WALK_TO_MOB = ROOT / "server/src/com/openrsc/server/model/action/WalkToMobAction
 CORE = ROOT / "server/core.jar"
 LIB = ROOT / "server/lib/*"
 
-COMBAT_CALL_SITES = (
+ENEMY_CALL_SITES = (
     ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEventNpc.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
+    ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
+)
+PLAYER_ALLIED_CALL_SITES = (
     ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
     ROOT / "server/src/com/openrsc/server/content/Summoning.java",
-)
-ELDER_SPECIALS = (
-    ROOT
-    / "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java"
-)
-PLAYER_PROJECTILES = (
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
@@ -77,8 +75,24 @@ def fixture(object_id, expected):
     return f"""
         {{
         {java_definition(definitions[object_id])}
-        require(CombatProjectileCollision.blocksScenery(definition) == {str(expected).lower()},
+        require(CombatProjectileCollision.sceneryCover(definition)
+                == CombatProjectileCollision.Cover.{expected},
             "object {object_id} ({field(definitions[object_id], 'name')}) classification changed");
+        }}
+"""
+
+
+def boundary_fixture(object_id, expected):
+    definition = boundary_definitions[object_id]
+    return f"""
+        {{
+        DoorDef definition = new DoorDef();
+        definition.name = {json.dumps(field(definition, 'name'))};
+        definition.description = {json.dumps(field(definition, 'description'))};
+        definition.doorType = {int(field(definition, 'doorType'))};
+        require(CombatProjectileCollision.boundaryCover(definition)
+                == CombatProjectileCollision.Cover.{expected},
+            "boundary {object_id} ({field(definition, 'name')}) classification changed");
         }}
 """
 
@@ -122,23 +136,28 @@ require(
 
 classification_fixtures = "".join(
     [
-        fixture(0, False),  # solid pine tree
-        fixture(179, False),  # solid pottery wheel
-        fixture(366, False),  # wallclockface is not a structural wall
-        fixture(57, True),  # closed gate
-        fixture(58, False),  # open gate
-        fixture(180, True),  # closed Lumbridge/Al Kharid gate
-        fixture(393, True),  # structural wall
-        fixture(597, True),  # type-1 fence
-        fixture(691, True),  # fence named Bridge Blockade
-        fixture(718, True),  # second fence visual
-        fixture(951, True),  # type-0 fence
-        fixture(1000, False),  # open chest is ordinary scenery
+        fixture(0, "NONE"),  # solid pine tree
+        fixture(179, "NONE"),  # solid pottery wheel
+        fixture(366, "NONE"),  # wallclockface is not a structural wall
+        fixture(57, "STRUCTURAL"),  # closed gate
+        fixture(58, "NONE"),  # open gate
+        fixture(180, "STRUCTURAL"),  # closed Lumbridge/Al Kharid gate
+        fixture(393, "STRUCTURAL"),  # structural wall
+        fixture(597, "ENEMY_ONLY_FENCE"),  # type-1 fence
+        fixture(691, "ENEMY_ONLY_FENCE"),  # fence named Bridge Blockade
+        fixture(718, "ENEMY_ONLY_FENCE"),  # second fence visual
+        fixture(951, "ENEMY_ONLY_FENCE"),  # type-0 fence
+        fixture(1000, "NONE"),  # open chest is ordinary scenery
     ]
 )
+boundary_classification_fixtures = "".join(
+    boundary_fixture(object_id, "ENEMY_ONLY_FENCE")
+    for object_id in sorted(boundary_fence_ids)
+) + boundary_fixture(0, "STRUCTURAL")
 
 HARNESS = f"""
 import com.openrsc.server.external.GameObjectDef;
+import com.openrsc.server.external.DoorDef;
 import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
@@ -187,6 +206,15 @@ public final class CombatProjectileCollisionHarness {{
         require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
             "removed hard cover remained in combat projectile collision");
 
+        tile.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK_C);
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
+            "enemy-only fence leaked into player-allied structural cover");
+        require((tile.getEnemyProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
+            "enemy-only fence did not enter hostile projectile cover");
+        tile.removeEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK_C);
+        require((tile.getEnemyProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
+            "removed enemy-only fence remained in hostile projectile cover");
+
         tile.overlay = 10;
         require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
             "void overlay must block combat projectiles");
@@ -197,6 +225,7 @@ public final class CombatProjectileCollisionHarness {{
         require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) != 0,
             "mutating a copied tile changed the original void tile");
 {classification_fixtures}
+{boundary_classification_fixtures}
     }}
 }}
 """
@@ -211,6 +240,7 @@ with tempfile.TemporaryDirectory(prefix="combat-projectile-collision-") as temp:
             temp,
             str(ENTITY_DEF),
             str(OBJECT_DEF),
+            str(DOOR_DEF),
             str(CLASSIFIER),
             str(FLAGS),
             str(TILE),
@@ -316,6 +346,14 @@ public final class CombatProjectilePathHarness {
                 == expected, message + " (reverse)");
     }
 
+    private static void requireEnemySymmetric(World world, Point first, Point second,
+            boolean expected, String message) {
+        require(PathValidation.checkEnemyCombatProjectilePath(world, first, second)
+                == expected, message + " (forward)");
+        require(PathValidation.checkEnemyCombatProjectilePath(world, second, first)
+                == expected, message + " (reverse)");
+    }
+
     public static void main(String[] args) {
         World world = new World();
         Point source = Point.location(1, 1);
@@ -340,10 +378,21 @@ public final class CombatProjectilePathHarness {
         requireSymmetric(world, source, target, true,
             "ordinary solid scenery blocked semantic combat projectile path");
 
-        // The same semantic gate represents player/NPC ranged and magic launch.
+        middle.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK_C);
+        requireSymmetric(world, source, target, true,
+            "fence blocked a player-allied projectile");
+        requireEnemySymmetric(world, source, target, false,
+            "fence did not block an enemy projectile");
+        middle.removeEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK_C);
+        requireEnemySymmetric(world, source, target, true,
+            "removed fence remained hostile projectile cover");
+
+        // Structural hard cover represents walls and closed doors for both sides.
         middle.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
         requireSymmetric(world, source, target, false,
-            "fence/full hard cover did not block either combat direction");
+            "wall/closed door did not block player-allied projectiles");
+        requireEnemySymmetric(world, source, target, false,
+            "wall/closed door did not block enemy projectiles");
         middle.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
         requireSymmetric(world, source, target, true,
             "open door continued blocking either combat direction");
@@ -385,6 +434,11 @@ public final class CombatProjectilePathHarness {
         diagonalMiddle.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_A);
         requireSymmetric(diagonalWorld, diagonalSource, diagonalTarget, true,
             "removed diagonal barrier remained blocked");
+        diagonalMiddle.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK_A);
+        requireSymmetric(diagonalWorld, diagonalSource, diagonalTarget, true,
+            "diagonal fence blocked player-allied projectiles");
+        requireEnemySymmetric(diagonalWorld, diagonalSource, diagonalTarget, false,
+            "diagonal fence did not block enemy projectiles");
 
         world.setTile(2, 1, new TileValue());
         requireSymmetric(world, source, target, false,
@@ -436,16 +490,19 @@ with tempfile.TemporaryDirectory(prefix="combat-projectile-path-") as temp:
 path_source = PATH_VALIDATION.read_text(encoding="utf-8")
 require(
     "public static boolean checkCombatProjectilePath" in path_source
-    and "t.getCombatProjectileCollisionMask()" in path_source,
-    "combat projectile path API must consume the dedicated semantic collision mask",
+    and "public static boolean checkEnemyCombatProjectilePath" in path_source
+    and "t.getCombatProjectileCollisionMask()" in path_source
+    and "t.getEnemyProjectileCollisionMask()" in path_source,
+    "projectile path APIs must consume structural and enemy-fence masks",
 )
 
 world_source = WORLD.read_text(encoding="utf-8")
 require(
-    "CombatProjectileCollision.blocksScenery" in world_source
+    "CombatProjectileCollision.sceneryCover" in world_source
+    and "CombatProjectileCollision.boundaryCover" in world_source
     and "addCombatProjectileCollision" in world_source
-    and "removeCombatProjectileCollision" in world_source,
-    "world object registration must own reversible hard-cover collision",
+    and "addEnemyProjectileFenceCollision" in world_source,
+    "world object registration must own both reversible cover classes",
 )
 require(
     "applyCombatProjectileCollision(oldObject, false);" in world_source
@@ -454,21 +511,21 @@ require(
     "boundary walls and closed doors must register and unregister hard cover",
 )
 
-for call_site in COMBAT_CALL_SITES:
+for call_site in ENEMY_CALL_SITES:
     source = call_site.read_text(encoding="utf-8")
     require(
-        "PathValidation.checkCombatProjectilePath(" in source,
-        f"{call_site.name} bypasses semantic combat projectile collision",
+        "PathValidation.checkEnemyCombatProjectilePath(" in source,
+        f"{call_site.name} bypasses enemy projectile collision",
     )
 
-elder_source = ELDER_SPECIALS.read_text(encoding="utf-8")
+elder_source = ENEMY_CALL_SITES[-1].read_text(encoding="utf-8")
 require(
     elder_source.count("if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS))")
     == 2,
     "Elder fireshot and burn must each validate every AOE target at launch",
 )
 require(
-    "PathValidation.checkCombatProjectilePath(" in elder_source,
+    "PathValidation.checkEnemyCombatProjectilePath(" in elder_source,
     "Elder AOE target validation bypasses semantic combat collision",
 )
 require(
@@ -476,7 +533,7 @@ require(
     "Elder fireshot delivery should retain lifecycle checks without a second line-of-fire check",
 )
 
-for player_projectile in PLAYER_PROJECTILES:
+for player_projectile in PLAYER_ALLIED_CALL_SITES:
     source = player_projectile.read_text(encoding="utf-8")
     require(
         "PathValidation.checkCombatProjectilePath(" in source,
@@ -488,12 +545,15 @@ impact_validator = IMPACT_VALIDATOR.read_text(encoding="utf-8")
 require(
     "GENERAL_PROJECTILE" not in impact_policy
     and "HOSTILE_PROJECTILE" not in impact_policy
-    and impact_policy.count("Collision.COMBAT_PROJECTILE") == 6,
-    "damaging projectile impact policies diverged from shared hard cover",
+    and impact_policy.count("Collision.PLAYER_ALLIED_PROJECTILE") == 5
+    and impact_policy.count("Collision.ENEMY_PROJECTILE") == 1,
+    "damaging projectile impact policies lost their explicit allegiance",
 )
 require(
-    "case COMBAT_PROJECTILE:" in impact_validator
+    "case PLAYER_ALLIED_PROJECTILE:" in impact_validator
+    and "case ENEMY_PROJECTILE:" in impact_validator
     and "PathValidation.checkCombatProjectilePath(" in impact_validator
+    and "PathValidation.checkEnemyCombatProjectilePath(" in impact_validator
     and "PathValidation.checkPath(" not in impact_validator,
     "delayed projectile impact validation bypasses current hard-cover state",
 )
@@ -503,4 +563,4 @@ for unaffected in (MELEE_EVENT, WALK_TO_MOB):
         f"{unaffected.name} unexpectedly adopted combat projectile collision",
     )
 
-print("PASS: combat projectile hard-cover ownership and attack-path policy validated")
+print("PASS: asymmetric combat projectile cover and attack-path policy validated")

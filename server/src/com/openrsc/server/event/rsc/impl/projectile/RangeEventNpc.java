@@ -79,7 +79,7 @@ public class RangeEventNpc extends GameTickEvent {
             terminate(CombatEngagementTerminalReason.LEASH);
         } else {
             owner.resetPath();
-			if (!PathValidation.checkCombatProjectilePath(
+			if (!PathValidation.checkEnemyCombatProjectilePath(
 				getWorld(),
 				owner.getWorldLocation(),
 				victim.getWorldLocation())) {

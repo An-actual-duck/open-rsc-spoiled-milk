@@ -38,7 +38,8 @@ public class PathValidation {
 	private enum DistanceCollisionMode {
 		DEFAULT,
 		STRICT_TRAVERSAL,
-		COMBAT_PROJECTILE
+		COMBAT_PROJECTILE,
+		ENEMY_COMBAT_PROJECTILE
 	}
 
 	private interface DistanceTileLookup {
@@ -71,9 +72,9 @@ public class PathValidation {
 	}
 
 	/**
-	 * Checks combat line of fire using the shared semantic hard-cover contract.
+	 * Checks player-allied line of fire using the structural-cover contract.
 	 * Movement-only blockers such as lava, water, rocks, and trees remain
-	 * transparent; walls, closed doors, fences, and void block.
+	 * transparent, as do fences; walls, closed doors, and void block.
 	 */
 	public static boolean checkCombatProjectilePath(World world, Point src, Point dest) {
 		if (world.getServer().getConfig()
@@ -94,6 +95,27 @@ public class PathValidation {
 		final WorldLocation dest) {
 		return checkPath(
 			world, src, dest, DistanceCollisionMode.COMBAT_PROJECTILE);
+	}
+
+	/** Checks enemy line of fire through structural and enemy-only fence cover. */
+	public static boolean checkEnemyCombatProjectilePath(
+			final World world, final Point src, final Point dest) {
+		if (world.getServer().getConfig()
+				.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY) {
+			return checkPath(
+				world,
+				LegacyPackedPointAdapter.fromLegacyPoint(src),
+				LegacyPackedPointAdapter.fromLegacyPoint(dest),
+				DistanceCollisionMode.ENEMY_COMBAT_PROJECTILE);
+		}
+		return checkLegacyPath(
+			world, src, dest, DistanceCollisionMode.ENEMY_COMBAT_PROJECTILE);
+	}
+
+	public static boolean checkEnemyCombatProjectilePath(final World world,
+			final WorldLocation src, final WorldLocation dest) {
+		return checkPath(
+			world, src, dest, DistanceCollisionMode.ENEMY_COMBAT_PROJECTILE);
 	}
 
 	public static boolean checkPath(
@@ -553,6 +575,9 @@ public class PathValidation {
 		}
 		if (collisionMode == DistanceCollisionMode.COMBAT_PROJECTILE) {
 			return isBlocking(t.getCombatProjectileCollisionMask(), (byte) bit, isCurrentTile);
+		}
+		if (collisionMode == DistanceCollisionMode.ENEMY_COMBAT_PROJECTILE) {
+			return isBlocking(t.getEnemyProjectileCollisionMask(), (byte) bit, isCurrentTile);
 		}
 		if (collisionMode == DistanceCollisionMode.DEFAULT && t.projectileAllowed) {
 			return false;
