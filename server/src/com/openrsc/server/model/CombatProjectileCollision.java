@@ -1,23 +1,29 @@
 package com.openrsc.server.model;
 
 import com.openrsc.server.external.GameObjectDef;
+import com.openrsc.server.external.DoorDef;
 
 import java.util.Locale;
 
 /**
- * Classifies scenery that is hard cover for combat projectiles.
+ * Classifies scenery under the combat-projectile cover contract.
  *
- * <p>Movement-blocking scenery is intentionally not hard cover by default:
- * rocks, trees, and similar objects are transparent. Structural
- * walls, closed doors/gates, and every fence form are hard cover.</p>
+ * <p>Movement-blocking scenery is transparent by default. Structural walls
+ * and closed doors/gates block every combat projectile; fence and palisade
+ * forms block enemy projectiles but are transparent to player-allied attacks.</p>
  */
 public final class CombatProjectileCollision {
+	public enum Cover { NONE, STRUCTURAL, ENEMY_ONLY_FENCE }
 	private CombatProjectileCollision() {
 	}
 
 	public static boolean blocksScenery(final GameObjectDef definition) {
+		return sceneryCover(definition) != Cover.NONE;
+	}
+
+	public static Cover sceneryCover(final GameObjectDef definition) {
 		if (definition == null) {
-			return false;
+			return Cover.NONE;
 		}
 
 		final String name = normalize(definition.getName());
@@ -28,18 +34,30 @@ public final class CombatProjectileCollision {
 			|| containsWord(description, "fence")
 			|| containsWord(name, "palisade")
 			|| containsWord(description, "palisade")) {
-			return true;
+			return Cover.ENEMY_ONLY_FENCE;
 		}
 
 		if (isStructuralWallName(name)) {
-			return true;
+			return Cover.STRUCTURAL;
 		}
 
 		if (!isDoorOrGate(name, model)) {
-			return false;
+			return Cover.NONE;
 		}
 
-		return !isOpenDoorOrGate(definition, description, model);
+		return isOpenDoorOrGate(definition, description, model)
+			? Cover.NONE : Cover.STRUCTURAL;
+	}
+
+	public static Cover boundaryCover(final DoorDef definition) {
+		if (definition == null || definition.getDoorType() != 1) {
+			return Cover.NONE;
+		}
+		final String name = normalize(definition.getName());
+		final String description = normalize(definition.getDescription());
+		return containsWord(name, "fence") || containsWord(description, "fence")
+			|| containsWord(name, "palisade") || containsWord(description, "palisade")
+			? Cover.ENEMY_ONLY_FENCE : Cover.STRUCTURAL;
 	}
 
 	private static boolean isStructuralWallName(final String name) {

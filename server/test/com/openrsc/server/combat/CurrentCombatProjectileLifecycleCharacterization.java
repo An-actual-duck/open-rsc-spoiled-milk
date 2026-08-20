@@ -113,6 +113,9 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			assertEquals(expectedImpactPolicy(producer),
 				producer.getImpactPolicy(),
 				producer + " approved impact policy mapping");
+			assertEquals(expectedCollision(producer),
+				producer.getImpactPolicy().getCollision(),
+				producer + " approved projectile-cover allegiance");
 			if (producer.getKind()
 					== ProjectileLaunchSnapshot.Kind.BENIGN_EFFECT) {
 				assertEquals(sourceVisualsBefore + 1,
@@ -334,6 +337,23 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			default:
 				throw new IllegalStateException(
 					"Unhandled projectile producer: " + producer);
+		}
+	}
+
+	private static ProjectileImpactPolicy.Collision expectedCollision(
+			final ProjectileLaunchSpecification.Producer producer) {
+		switch (producer) {
+			case NPC_RANGED:
+			case NPC_MAGIC:
+			case NPC_COMPATIBILITY:
+			case LEGACY_NPC_RANGED:
+				return ProjectileImpactPolicy.Collision.ENEMY_PROJECTILE;
+			case COMPATIBILITY:
+			case GNOME_BALL:
+			case BENIGN_COMPATIBILITY:
+				return ProjectileImpactPolicy.Collision.NONE;
+			default:
+				return ProjectileImpactPolicy.Collision.PLAYER_ALLIED_PROJECTILE;
 		}
 	}
 
@@ -923,6 +943,52 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
 			hostileChanged.getInitialProjectileImpactDecision().getReason(),
 			"hostile-projectile collision reason");
+
+		openCombatProjectileRectangle(harness, 710, 714, 780, 780);
+		final Player alliedFenceSource = harness.player(
+			"pj allied fence source", 710, 780);
+		final Npc alliedFenceTarget = harness.npc(
+			NpcId.GREATER_DEMON.id(), 714, 780);
+		harness.world().getTile(712, 780)
+			.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK);
+		assertTrue(PathValidation.checkCombatProjectilePath(harness.world(),
+			alliedFenceSource.getWorldLocation(), alliedFenceTarget.getWorldLocation()),
+			"player-allied launch passes through enemy-only fence cover");
+		assertFalse(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
+			alliedFenceSource.getWorldLocation(), alliedFenceTarget.getWorldLocation()),
+			"enemy launch is blocked by enemy-only fence cover");
+		final int alliedFenceHits = alliedFenceTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent alliedFenceImpact = projectile(
+			harness, alliedFenceSource, alliedFenceTarget, 3);
+		alliedFenceImpact.action();
+		assertEquals(alliedFenceHits - 3,
+			alliedFenceTarget.getLevel(Skill.HITS.id()),
+			"player-allied delayed impact passes through an existing fence");
+
+		openCombatProjectileRectangle(harness, 710, 714, 790, 790);
+		final Npc enemyFenceSource = harness.npc(
+			NpcId.GREATER_DEMON.id(), 710, 790);
+		final Player enemyFenceTarget = harness.player(
+			"pj enemy fence target", 714, 790);
+		final int enemyFenceHits = enemyFenceTarget.getLevel(Skill.HITS.id());
+		final ProjectileEvent enemyFenceImpact = typedProjectile(
+			harness, enemyFenceSource, enemyFenceTarget, 3,
+			ProjectileLaunchSpecification.Producer.NPC_MAGIC, 1);
+		assertTrue(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
+			enemyFenceSource.getWorldLocation(), enemyFenceTarget.getWorldLocation()),
+			"enemy delayed-impact fence fixture launches clear");
+		harness.world().getTile(712, 790)
+			.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK);
+		assertFalse(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
+			enemyFenceSource.getWorldLocation(), enemyFenceTarget.getWorldLocation()),
+			"fence appearing during flight blocks the enemy path authority");
+		enemyFenceImpact.action();
+		assertEquals(enemyFenceHits,
+			enemyFenceTarget.getLevel(Skill.HITS.id()),
+			"enemy delayed impact rechecks enemy-only fence cover");
+		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
+			enemyFenceImpact.getInitialProjectileImpactDecision().getReason(),
+			"enemy fence impact collision reason");
 
 		final Player retargetedSource = harness.player(
 			"pj retarget source", 960, 780);

@@ -4371,7 +4371,8 @@ public class RegionManager {
 			footprint,
 			nativeLayeredNpcBlockingSceneryFootprint(
 				object, location, placementId),
-			isCombatProjectileHardCover(object)) == null) {
+			isCombatProjectileStructuralCover(object),
+			isEnemyProjectileFenceCover(object)) == null) {
 			throw new IllegalStateException(
 				"Native layered object population generation became stale");
 		}
@@ -4652,7 +4653,8 @@ public class RegionManager {
 					newObject.getDirection(), newObject,
 					newRegisterFootprint,
 					newNpcBlockingScenery,
-					isCombatProjectileHardCover(newObject)) == null) {
+					isCombatProjectileStructuralCover(newObject),
+					isEnemyProjectileFenceCover(newObject)) == null) {
 				return;
 			}
 			try {
@@ -4679,7 +4681,8 @@ public class RegionManager {
 					oldObject.getDirection(), oldObject,
 					oldRollbackRegisterFootprint,
 					oldNpcBlockingScenery,
-					isCombatProjectileHardCover(oldObject));
+					isCombatProjectileStructuralCover(oldObject),
+					isEnemyProjectileFenceCover(oldObject));
 				throw failure;
 			}
 		} else {
@@ -4689,7 +4692,8 @@ public class RegionManager {
 					newObject.getDirection(), newObject,
 					newRegisterFootprint,
 					newNpcBlockingScenery,
-					isCombatProjectileHardCover(newObject)) == null) {
+					isCombatProjectileStructuralCover(newObject),
+					isEnemyProjectileFenceCover(newObject)) == null) {
 				return;
 			}
 			try {
@@ -4702,7 +4706,8 @@ public class RegionManager {
 					oldObject.getDirection(), oldObject,
 					oldRollbackRegisterFootprint,
 					oldNpcBlockingScenery,
-					isCombatProjectileHardCover(oldObject));
+					isCombatProjectileStructuralCover(oldObject),
+					isEnemyProjectileFenceCover(oldObject));
 				throw failure;
 			}
 		}
@@ -4716,17 +4721,22 @@ public class RegionManager {
 		}
 	}
 
-	private static boolean isCombatProjectileHardCover(
-			final GameObject object) {
+	private static CombatProjectileCollision.Cover combatProjectileCover(final GameObject object) {
 		if (object == null || object.getID() == 1147) {
-			return false;
+			return CombatProjectileCollision.Cover.NONE;
 		}
 		if (object.isScenery()) {
-			return CombatProjectileCollision.blocksScenery(
-				object.getGameObjectDef());
+			return CombatProjectileCollision.sceneryCover(object.getGameObjectDef());
 		}
-		return object.getDoorDef() != null
-			&& object.getDoorDef().getDoorType() == 1;
+		return CombatProjectileCollision.boundaryCover(object.getDoorDef());
+	}
+
+	private static boolean isCombatProjectileStructuralCover(final GameObject object) {
+		return combatProjectileCover(object) == CombatProjectileCollision.Cover.STRUCTURAL;
+	}
+
+	private static boolean isEnemyProjectileFenceCover(final GameObject object) {
+		return combatProjectileCover(object) == CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE;
 	}
 
 	public int getNativeLayeredSceneryCount() {

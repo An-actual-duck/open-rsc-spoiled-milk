@@ -183,8 +183,11 @@ public final class ProjectileImpactValidator {
 			final Mob source, final WorldLocation sourceLaunch,
 			final WorldLocation targetCurrent) {
 		switch (collision) {
-			case COMBAT_PROJECTILE:
+			case PLAYER_ALLIED_PROJECTILE:
 				return PathValidation.checkCombatProjectilePath(
+					source.getWorld(), sourceLaunch, targetCurrent);
+			case ENEMY_PROJECTILE:
+				return PathValidation.checkEnemyCombatProjectilePath(
 					source.getWorld(), sourceLaunch, targetCurrent);
 			case NONE:
 				return true;

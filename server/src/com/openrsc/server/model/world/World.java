@@ -620,9 +620,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 			return;
 		}
 		final int direction = object.getDirection();
+		final CombatProjectileCollision.Cover cover;
 		if (object.isScenery()) {
-			if (!CombatProjectileCollision.blocksScenery(
-					object.getGameObjectDef())) {
+			cover = CombatProjectileCollision.sceneryCover(object.getGameObjectDef());
+			if (cover == CombatProjectileCollision.Cover.NONE) {
 				return;
 			}
 			final int width;
@@ -641,69 +642,76 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 						y,
 						direction,
 						object.getGameObjectDef().getType(),
+						cover == CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE,
 						add);
 				}
 			}
 			return;
 		}
-		if (object.getDoorDef().getDoorType() == 1) {
+		cover = CombatProjectileCollision.boundaryCover(object.getDoorDef());
+		if (cover != CombatProjectileCollision.Cover.NONE) {
 			updateCombatProjectileBoundaryCollision(
-				object.getX(), object.getY(), direction, add);
+				object.getX(), object.getY(), direction,
+				cover == CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE, add);
 		}
 	}
 
 	private void updateCombatProjectileSceneryCollision(final int x, final int y, final int dir,
-														 final int objectType, final boolean add) {
+												 final int objectType, final boolean enemyFence, final boolean add) {
 		if (objectType != 2) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_C, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_C, enemyFence, add);
 			return;
 		}
 		if (dir == 0) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_EAST, enemyFence, add);
 			if (getTile(x - 1, y) != null) {
-				updateCombatProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
+				updateCombatProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, enemyFence, add);
 			}
 		} else if (dir == 2) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_SOUTH, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_SOUTH, enemyFence, add);
 			if (getTile(x, y + 1) != null) {
-				updateCombatProjectileCollision(x, y + 1, CollisionFlag.WALL_NORTH, add);
+				updateCombatProjectileCollision(x, y + 1, CollisionFlag.WALL_NORTH, enemyFence, add);
 			}
 		} else if (dir == 4) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_WEST, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_WEST, enemyFence, add);
 			if (getTile(x + 1, y) != null) {
-				updateCombatProjectileCollision(x + 1, y, CollisionFlag.WALL_EAST, add);
+				updateCombatProjectileCollision(x + 1, y, CollisionFlag.WALL_EAST, enemyFence, add);
 			}
 		} else if (dir == 6) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_NORTH, enemyFence, add);
 			if (getTile(x, y - 1) != null) {
-				updateCombatProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
+				updateCombatProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, enemyFence, add);
 			}
 		}
 	}
 
 	private void updateCombatProjectileBoundaryCollision(final int x, final int y, final int dir,
-														  final boolean add) {
+												  final boolean enemyFence, final boolean add) {
 		if (dir == 0) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_NORTH, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_NORTH, enemyFence, add);
 			if (getTile(x, y - 1) != null) {
-				updateCombatProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, add);
+				updateCombatProjectileCollision(x, y - 1, CollisionFlag.WALL_SOUTH, enemyFence, add);
 			}
 		} else if (dir == 1) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_EAST, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.WALL_EAST, enemyFence, add);
 			if (getTile(x - 1, y) != null) {
-				updateCombatProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, add);
+				updateCombatProjectileCollision(x - 1, y, CollisionFlag.WALL_WEST, enemyFence, add);
 			}
 		} else if (dir == 2) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_A, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_A, enemyFence, add);
 		} else if (dir == 3) {
-			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_B, add);
+			updateCombatProjectileCollision(x, y, CollisionFlag.FULL_BLOCK_B, enemyFence, add);
 		}
 	}
 
 	private void updateCombatProjectileCollision(final int x, final int y, final int flags,
-												  final boolean add) {
+												  final boolean enemyFence, final boolean add) {
 		final TileValue tile = getMutableTile(x, y);
-		if (add) {
+		if (add && enemyFence) {
+			tile.addEnemyProjectileFenceCollision(flags);
+		} else if (!add && enemyFence) {
+			tile.removeEnemyProjectileFenceCollision(flags);
+		} else if (add) {
 			tile.addCombatProjectileCollision(flags);
 		} else {
 			tile.removeCombatProjectileCollision(flags);

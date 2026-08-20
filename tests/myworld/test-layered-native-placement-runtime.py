@@ -211,14 +211,17 @@ public final class NativeLayeredPlacementRegistryFixture {
         objects.register(
             objectGeneration, "deep-fence", fenceLocation,
             1, 0, fenceObject, fence,
-            java.util.Collections.<WorldLocation>emptyList(), true);
+            java.util.Collections.<WorldLocation>emptyList(), false, true);
         TileValue fenceNorth = emptyTile();
         objects.applyCollision(fenceLocation, fenceNorth);
         check((fenceNorth.traversalMask & CollisionFlag.WALL_NORTH) != 0,
             "boundary north collision composed");
         check((fenceNorth.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_NORTH) == 0,
+            "native fence remains transparent to player-allied projectiles");
+        check((fenceNorth.getEnemyProjectileCollisionMask()
                 & CollisionFlag.WALL_NORTH) != 0,
-            "native fence composes combat hard cover");
+            "native fence composes enemy-only cover");
         TileValue fenceSouth = emptyTile();
         objects.applyCollision(
             new WorldLocation(
@@ -227,8 +230,11 @@ public final class NativeLayeredPlacementRegistryFixture {
         check((fenceSouth.traversalMask & CollisionFlag.WALL_SOUTH) != 0,
             "boundary reciprocal collision composed");
         check((fenceSouth.getCombatProjectileCollisionMask()
+                & CollisionFlag.WALL_SOUTH) == 0,
+            "native fence is player-allied transparent reciprocally");
+        check((fenceSouth.getEnemyProjectileCollisionMask()
                 & CollisionFlag.WALL_SOUTH) != 0,
-            "native fence hard cover is reciprocal");
+            "native enemy-only fence cover is reciprocal");
         TileValue fenceProjectile = emptyTile();
         objects.applyCollision(
             new WorldLocation(

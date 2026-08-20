@@ -454,15 +454,15 @@ This is simple but is not recommended as a global fix.
 Separate movement blocking from projectile opacity and use an explicit policy,
 for example:
 
-| Collision source | Selected hostile projectile policy |
-| --- | --- |
-| lava and water surface | transparent; blocks walking only |
-| cardinal/diagonal structural wall | opaque |
-| closed door/gate | opaque |
-| open/removed door | transparent |
-| fence of any kind | opaque, regardless of location or visual subtype |
-| ordinary solid scenery, including rocks and trees | transparent; still blocks walking where applicable |
-| void/unloaded tile | opaque |
+| Collision source | Player-allied policy | Enemy projectile policy |
+| --- | --- | --- |
+| lava and water surface | transparent; blocks walking only | transparent; blocks walking only |
+| cardinal/diagonal structural wall | opaque | opaque |
+| closed door/gate | opaque | opaque |
+| open/removed door | transparent | transparent |
+| fence or palisade, scenery or boundary form | transparent | opaque |
+| ordinary solid scenery, including rocks and trees | transparent; still blocks walking where applicable | transparent; still blocks walking where applicable |
+| void/unloaded tile | opaque | opaque |
 
 This would let the Elder attack over lava without reopening the Heroes Guild
 fence case or allowing rocks to become Elder safe spots. It should use an enum
@@ -472,6 +472,23 @@ a lava tile while allowing ordinary solid scenery to remain projectile
 transparent.
 
 This is the selected implementation direction.
+
+### Implemented cause and contract
+
+At correction time, the unreliable legacy `GENERAL_PROJECTILE` versus
+`HOSTILE_PROJECTILE` traversal split was no longer the active cause. The
+semantic replacement had collapsed structural cover and every fence into one
+combat-projectile collision mask, and player, NPC, summon, and cannon launch
+and impact paths all consumed that same mask. That made fence behavior
+necessarily symmetric.
+
+The corrected model keeps two independently reference-counted products:
+shared structural cover and enemy-only fence cover. The enemy mask is their
+union; the player-allied mask contains structural cover only. This preserves
+ordinary traversal collision unchanged and avoids reviving either legacy
+projectile mode. Typed impact policies select the same contract as their
+launch producer, including NPC specials as enemy attacks and summons/cannons
+as player-allied attacks.
 
 ### Option D: Elder-area or boss-only exception
 
@@ -493,17 +510,24 @@ The implementation decisions are:
   do not block hostile ranged/magic line of fire;
 - rocks, trees, and other ordinary scenery must not create hostile-NPC safe
   spots;
-- walls, diagonal walls, closed doors, void, and fences of every kind remain
-  opaque;
-- fence opacity is a global semantic rule, not a Heroes Guild coordinate or
-  object-ID exception;
-- validate collision at launch and commit the ordinary hit after launch;
+- walls, diagonal walls, closed doors, and void remain opaque to every combat
+  projectile;
+- fences of every kind are transparent to player and player-allied attacks,
+  including summons and cannons, but remain opaque to enemy/NPC projectiles;
+- fence opacity is an enemy-projectile semantic rule, not a Heroes Guild
+  coordinate or object-ID exception;
+- validate collision at launch and again against current cover before delayed
+  impact settlement;
 - validate each Elder AOE target at AOE launch, then allow a legally applied
   burn to finish;
 - keep raw elevation visual-only until the renderer/world format has an
   intentional height-aware LOS model;
-- route autonomous, legacy, dragonfire, and boss launch decisions through one
-  explicit server API, while clearly labeling administrator bypasses.
+- route autonomous, legacy, dragonfire, and boss launch decisions through the
+  explicit enemy-projectile API; route player ranged, magic, throwing,
+  summons, and cannons through the player-allied API;
+- select the same allegiance-specific contract again from the typed producer
+  policy during delayed-impact validation, so a fence opening or closing while
+  a projectile is in flight uses current cover state.
 
 The implementation must inventory all fence forms in the definitions,
 including fence scenery, fence boundaries, and fence-like gates. It should use

@@ -9,25 +9,25 @@ package com.openrsc.server.model.combat;
 public enum ProjectileImpactPolicy {
 	PLAYER_DAMAGE(
 		SourceLifetime.ALLOW_LAUNCHED_DAMAGE_AFTER_DEATH,
-		true, true, 15, Collision.COMBAT_PROJECTILE, true, false),
+		true, true, 15, Collision.PLAYER_ALLIED_PROJECTILE, true, false),
 	NPC_DAMAGE(
 		SourceLifetime.ALLOW_LAUNCHED_DAMAGE_AFTER_DEATH,
-		true, true, 15, Collision.COMBAT_PROJECTILE, true, false),
+		true, true, 15, Collision.ENEMY_PROJECTILE, true, false),
 	SUMMON_DAMAGE(
 		SourceLifetime.REQUIRE_EXACT_LIVE,
-		true, true, 15, Collision.COMBAT_PROJECTILE, true, true),
+		true, true, 15, Collision.PLAYER_ALLIED_PROJECTILE, true, true),
 	ADMIN_DAMAGE(
 		SourceLifetime.REQUIRE_EXACT_LIVE,
-		true, true, 15, Collision.COMBAT_PROJECTILE, true, false),
+		true, true, 15, Collision.PLAYER_ALLIED_PROJECTILE, true, false),
 	POSITIONAL_COMPATIBILITY_DAMAGE(
 		SourceLifetime.ALLOW_LAUNCHED_DAMAGE_AFTER_DEATH,
 		true, true, 15, Collision.NONE, true, false),
 	SCRIPTED_MAGIC(
 		SourceLifetime.REQUIRE_EXACT_LIVE,
-		true, true, 15, Collision.COMBAT_PROJECTILE, true, false),
+		true, true, 15, Collision.PLAYER_ALLIED_PROJECTILE, true, false),
 	LEGENDS_HOLY_WATER(
 		SourceLifetime.REQUIRE_EXACT_LIVE,
-		true, true, 4, Collision.COMBAT_PROJECTILE, true, false),
+		true, true, 4, Collision.PLAYER_ALLIED_PROJECTILE, true, false),
 	GNOME_BALL(
 		SourceLifetime.REQUIRE_EXACT_LIVE,
 		true, true, -1, Collision.NONE, true, false),
@@ -42,7 +42,8 @@ public enum ProjectileImpactPolicy {
 	}
 
 	public enum Collision {
-		COMBAT_PROJECTILE,
+		PLAYER_ALLIED_PROJECTILE,
+		ENEMY_PROJECTILE,
 		NONE
 	}
 
