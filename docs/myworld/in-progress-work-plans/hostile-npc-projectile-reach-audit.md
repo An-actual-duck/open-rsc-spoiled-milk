@@ -597,54 +597,53 @@ source-string guards.
 
 ## Implementation
 
-The selected policy is now implemented through an explicit
-`PathValidation.checkHostileProjectilePath` API. It consumes a dedicated
-semantic mask from `TileValue` instead of either reusing all walking collision
-or honoring the old tile-wide transparency exemption.
+The selected policy is implemented through the explicit
+`PathValidation.checkCombatProjectilePath` player-allied route and
+`PathValidation.checkEnemyCombatProjectilePath` hostile route. `TileValue`
+keeps independently reference-counted structural cover and enemy-only fence
+cover; the hostile mask is their union. Neither route reuses walking collision
+or the old tile-wide transparency exemption.
 
 Collision ownership is derived as follows:
 
-- loaded cardinal and diagonal terrain walls remain hostile-projectile
-  collision;
+- loaded cardinal and diagonal terrain walls remain structural collision for
+  both routes;
 - uninitialized tiles and raw overlay `10` are opaque void;
-- registered boundary walls and closed doors own counted dynamic collision;
-- a central scenery classifier makes walls, closed doors/gates, and every
-  inventoried fence form opaque;
+- registered boundary walls and closed doors own counted structural collision;
+- a central classifier assigns walls and closed doors/gates to structural
+  cover and every inventoried fence or palisade form to enemy-only cover;
 - open doors/gates, water, lava, rocks, trees, and other ordinary scenery do
   not add hostile-projectile collision;
 - registration and removal use counts, so overlapping hard-cover owners cannot
   erase each other.
 
-The four pre-existing hostile launch paths now use the named API:
+The hostile launch paths use the enemy API:
 
 1. autonomous ranged/magic attacks in `NpcBehavior`;
 2. legacy `RangeEventNpc`;
 3. combat-start dragon breath;
 4. legacy spell-triggered dragon breath.
 
-Elder fireshot and burn validate each prospective player through the same API
-before submitting their projectile visual or damage. Fireshot deliberately
-does not recheck collision at delayed delivery, and a legally started burn
-continues, preserving the selected launch-commit policy. The Elder melee sweep
-is not a projectile and remains unchanged. Administrator direct-projectile
-commands remain documented bypasses.
+Elder fireshot and burn validate each prospective player through the same enemy
+API before submitting their projectile visual or damage. Typed projectile
+impact policies revalidate current structural plus fence cover for NPC damage,
+and structural cover alone for player, summon, cannon, administrator, and other
+player-allied damage. The Elder melee sweep is not a projectile and remains
+unchanged.
 
 ### Implemented behavior matrix
 
-| Collision source | Walk | Hostile NPC projectile |
-| --- | --- | --- |
-| cardinal/diagonal terrain wall | blocked | blocked |
-| boundary wall or closed door/gate | blocked | blocked |
-| open/removed door or gate | open if no other owner blocks | transparent |
-| fence scenery, including type `0` | definition-dependent | blocked |
-| ordinary solid scenery such as rock/tree | blocked | transparent |
-| water overlay `2` | blocked | transparent |
-| lava overlay `11` | blocked | transparent |
-| void overlay `10` or uninitialized tile | blocked | blocked |
-| raw elevation change | unchanged | transparent |
-
-Player-originated projectiles retain the existing default path API and were
-not changed.
+| Collision source | Walk | Player-allied projectile | Hostile NPC projectile |
+| --- | --- | --- | --- |
+| cardinal/diagonal terrain wall | blocked | blocked | blocked |
+| boundary wall or closed door/gate | blocked | blocked | blocked |
+| open/removed door or gate | open if no other owner blocks | transparent | transparent |
+| fence or palisade, scenery or boundary form | definition-dependent | transparent | blocked |
+| ordinary solid scenery such as rock/tree | blocked | transparent | transparent |
+| water overlay `2` | blocked | transparent | transparent |
+| lava overlay `11` | blocked | transparent | transparent |
+| void overlay `10` or uninitialized tile | blocked | blocked | blocked |
+| raw elevation change | unchanged | transparent | transparent |
 
 ## Verification
 
@@ -657,22 +656,25 @@ The following existing tests are relevant to this audit:
 - `tests/myworld/test-summoning-combat-assist.py`
 
 Focused implementation coverage is in
-`tests/myworld/test-hostile-projectile-collision-policy.py`. Its executable
-Java harness verifies terrain, void, ordinary-scenery, counted hard-cover,
-copy-on-write, open/closed gate, structural-wall, and all current fence
-definition fixtures. It also guards every known hostile call site, both Elder
-AOE launch loops, launch-versus-delivery timing, and unchanged player
-projectile routing.
+`tests/myworld/test-combat-projectile-collision-policy.py`. Its executable Java
+harness verifies terrain, void, ordinary scenery, counted structural and
+enemy-only cover, copy-on-write, open/closed gates, walls, and all current
+fence-definition fixtures. It also guards player-allied and hostile launch
+sites and their typed delayed-impact policies.
 
 The following regression tests pass:
 
-- `tests/myworld/test-hostile-projectile-collision-policy.py`
+- `tests/myworld/test-combat-projectile-collision-policy.py`
+- `tests/myworld/test-layered-native-placement-runtime.py`
 - `tests/myworld/test-npc-projectile-clipping.py`
 - `tests/myworld/test-combat-runtime-invariants.py`
-- `tests/myworld/test-combat-data.py`
 - `tests/myworld/test-npc-attack-styles.py`
 - `tests/myworld/test-world-editor-tile-collision.py`
 - `tests/myworld/test-world-editor-region-collision.py`
+
+The relevant NPC-command schema and dragon-breath call-site expectations in
+`tests/myworld/test-combat-data.py` are current. Its complete run remains
+blocked by a separate, pre-existing item `2794` equip-requirement assertion.
 
 The authoritative server and plugin build passes through
 `./scripts/build-server.sh`.

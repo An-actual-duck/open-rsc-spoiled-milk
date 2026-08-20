@@ -288,7 +288,7 @@ def ensure_dragon_fire_breath_respects_obstructions() -> None:
     dragon_fire_breath = DRAGON_FIRE_BREATH_PATH.read_text(encoding="utf-8")
     spell_handler = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
 
-    require_text(dragon_fire_breath, "PathValidation.checkCombatProjectilePath(",
+    require_text(dragon_fire_breath, "PathValidation.checkEnemyCombatProjectilePath(",
                  "Dragon fire breath combat-start obstruction check")
     require_text(dragon_fire_breath, "if (!canDragonBreathReachPlayer(dragon, player))",
                  "Dragon fire breath should skip damage when blocked by fences or walls")
@@ -347,7 +347,7 @@ def main() -> None:
         "bottomColour",
         "skinColour",
     }
-    npc_string_fields = {"name", "description"}
+    npc_string_fields = {"name", "description", "command"}
 
     ensure_unique_ids(item_entries, "ItemDefsMyWorld.json")
     ensure_unique_ids(npc_entries, "NpcDefsMyWorld.json")
