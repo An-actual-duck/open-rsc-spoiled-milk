@@ -20,7 +20,7 @@ ADMIN_COMMANDS = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/com
 CLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 CLIENT_DEFS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_BUILD = ROOT / "Client_Base/build.xml"
-EXPECTED_HASH = "b0fc60f30e055e68b88a4bb194c545de3ba61201a45483f4ca7e360608595e0f"
+EXPECTED_HASH = "6696db79071e175c039fbcb13b3584ab54f279a6f403bd0115a3fcc3eecf4e10"
 
 
 def require(source: str, expected: str, message: str) -> None:
@@ -119,7 +119,13 @@ def main() -> None:
         require(client, expected, "client Gorak sprite loading")
 
     readme = ASSET_README.read_text(encoding="utf-8")
-    for expected in ("2009Scape", "AGPL-3.0", "NPC `4418`", EXPECTED_HASH):
+    for expected in (
+        "2009Scape",
+        "AGPL-3.0",
+        "NPC `4418`",
+        "faces right",
+        EXPECTED_HASH,
+    ):
         require(readme, expected, "Gorak attribution")
 
     require(

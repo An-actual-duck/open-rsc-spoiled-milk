@@ -11,7 +11,9 @@ is distributed with Spoiled Milk under the repository's AGPL-3.0 terms.
 Runtime contract:
 
 - 768x384 RGBA PNG, SHA-256
-  `b0fc60f30e055e68b88a4bb194c545de3ba61201a45483f4ca7e360608595e0f`;
+  `6696db79071e175c039fbcb13b3584ab54f279a6f403bd0115a3fcc3eecf4e10`;
+- horizontally inverted at export so the base orientation faces right, matching
+  RSC sprites;
 - six 128-pixel columns: facing camera, diagonal, side, diagonal away, away,
   and side combat;
 - three 128-pixel rows: the three animation frames for each column; and
