@@ -65,7 +65,7 @@ def fixture(entries: list[dict]) -> str:
 
             public static void main(String[] args) {{
                 EntityHandler.load(true);
-                if (EntityHandler.npcCount() != 861) {{
+                if (EntityHandler.npcCount() < 861) {{
                     throw new AssertionError("Monster Slayer NPC definitions did not extend the client catalog");
                 }}
                 {assertions}

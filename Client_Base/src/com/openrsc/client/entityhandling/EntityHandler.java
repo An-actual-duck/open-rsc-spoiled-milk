@@ -105,8 +105,12 @@ public class EntityHandler {
 	// remain native; these values are the scene presentation bounds.
 	private static final int KING_BLACK_DRAGON_FRAME_WIDTH = 542;
 	private static final int KING_BLACK_DRAGON_FRAME_HEIGHT = 391;
+	private static final int GORAK_VISUAL_TEST_NPC_ID = 861;
+	private static final int GORAK_FRAME_WIDTH = 128;
+	private static final int GORAK_FRAME_HEIGHT = 128;
 	private static int foundryDragonAnimationId = -1;
 	private static int kingBlackDragonAnimationId = -1;
+	private static int gorakAnimationId = -1;
 
 	public static int getModelCount() {
 		return REGISTRY.modelCount();
@@ -190,6 +194,21 @@ public class EntityHandler {
 		kingBlackDragon.sprites[0] = kingBlackDragonAnimationId;
 		kingBlackDragon.camera1 = KING_BLACK_DRAGON_FRAME_WIDTH;
 		kingBlackDragon.camera2 = KING_BLACK_DRAGON_FRAME_HEIGHT;
+	}
+
+	public static int getGorakAnimationId() {
+		return gorakAnimationId;
+	}
+
+	/** Activates the developer-spawned Gorak visual only after its sheet loads. */
+	public static void activateGorakExternalVisual() {
+		if (gorakAnimationId < 0 || GORAK_VISUAL_TEST_NPC_ID >= npcs.size()) {
+			throw new IllegalStateException("Gorak animation is not registered");
+		}
+		NPCDef gorak = npcs.get(GORAK_VISUAL_TEST_NPC_ID);
+		gorak.sprites[0] = gorakAnimationId;
+		gorak.camera1 = GORAK_FRAME_WIDTH;
+		gorak.camera2 = GORAK_FRAME_HEIGHT;
 	}
 
 	public static int spellCount() {
@@ -6698,6 +6717,12 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(860, "Veteran Monster Slayer", "A scarred Blue Moon regular", "",
 			new int[]{5, 29, 2, -1, 117, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15658734, 8421504, 15523536);
+		setCustomNpcDefinition(861, new NPCDef(
+			"Gorak", "A harmless visual test creature", "",
+			1, 1, 1, 1, false,
+			new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 0, 128, 128, 10, 7, 5, 861
+		));
 	}
 
 	/** Applies a presentation-only My World NPC rename without changing its combat definition. */
@@ -7812,6 +7837,8 @@ public class EntityHandler {
 		animations.add(new AnimationDef("foundrydragon", "npc", 0, 0, true, false, 0));
 		kingBlackDragonAnimationId = animations.size();
 		animations.add(new AnimationDef("kingblackdragon", "npc", 0, 0, true, false, 0));
+		gorakAnimationId = animations.size();
+		animations.add(new AnimationDef("gorak", "npc", 0, 0, true, false, 0));
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {
