@@ -10,7 +10,9 @@ import com.openrsc.server.event.rsc.impl.projectile.BenignProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.CustomProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
 import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeEventNpc;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
@@ -55,6 +57,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		participantTerminationEvidence(harness);
 		sourceFamilyLifetimeEvidence(harness);
 		movementAndDomainEvidence(harness);
+		authoredFenceEndToEndEvidence(harness);
 		collisionRetargetAndProtectionEvidence(harness);
 		familyAndSiblingEvidence(harness);
 	}
@@ -1047,6 +1050,101 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		}
 	}
 
+	private static void authoredFenceEndToEndEvidence(
+			final CurrentCombatHarness harness) throws Exception {
+		final int westX = 367;
+		final int fenceX = 369;
+		final int eastX = 371;
+		final int y = 3265;
+		openCombatProjectileRectangle(
+			harness, westX, eastX, y, y);
+		assertEquals(CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE,
+			CombatProjectileCollision.boundaryCover(
+				harness.server().getEntityHandler().getDoorDef(5)),
+			"Heroes Guild raw wall ID 6 railings retain fence semantics");
+		addAuthoredHeroesRailing(harness, fenceX, y);
+
+		final Player player = harness.player(
+			"heroes railing ranger", westX, y);
+		final Npc npc = harness.npc(
+			NpcId.GREATER_DEMON.id(), eastX, y);
+		harness.equip(player, ItemId.SHORTBOW.id(), 1);
+		harness.equip(player, ItemId.TIN_ARROWS.id(), 3);
+
+		assertTrue(PathValidation.checkCombatProjectilePath(harness.world(),
+			player.getWorldLocation(), npc.getWorldLocation()),
+			"authored Heroes Guild railing permits player launch");
+		assertFalse(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
+			npc.getWorldLocation(), player.getWorldLocation()),
+			"authored Heroes Guild railing blocks enemy launch");
+
+		final RangeEvent playerLaunch = new RangeEvent(
+			harness.world(), player, 1L, npc);
+		player.setRangeEvent(playerLaunch);
+		playerLaunch.run();
+		final ProjectileEvent playerProjectile = findProjectileEvent(
+			harness, player,
+			ProjectileLaunchSpecification.Producer.PLAYER_BOW);
+		assertNotNull(playerProjectile,
+			"real player range eligibility launches through authored railing");
+		final int hitSplatsBefore = npc.getUpdateFlags().getHitSplats().size();
+		playerProjectile.action();
+		assertEquals(ProjectileImpactDecision.Reason.CURRENT_POLICY_ACCEPTED,
+			playerProjectile.getInitialProjectileImpactDecision().getReason(),
+			"player delayed impact remains valid through authored railing");
+		assertEquals(ProjectileImpactLedger.State.SETTLED,
+			playerProjectile.getProjectileImpactState(),
+			"player projectile settles through authored railing");
+		assertEquals(hitSplatsBefore + 1,
+			npc.getUpdateFlags().getHitSplats().size(),
+			"player damage settlement publishes its hit through authored railing");
+
+		final int projectileCountBeforeNpc = countProjectileEvents(harness);
+		final RangeEventNpc npcLaunch = new RangeEventNpc(
+			harness.world(), npc, player);
+		npc.setRangeEventNpc(npcLaunch);
+		npcLaunch.run();
+		assertEquals(projectileCountBeforeNpc, countProjectileEvents(harness),
+			"real NPC range eligibility cannot launch through authored railing");
+
+		removeAuthoredHeroesRailing(harness, fenceX, y);
+		final ProjectileEvent npcInFlight = new ProjectileEvent(
+			harness.world(), npc, player,
+			ProjectileLaunchSpecification.builder(
+				ProjectileLaunchSpecification.Producer.NPC_MAGIC, 3, 1)
+				.build());
+		assertTrue(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
+			npc.getWorldLocation(), player.getWorldLocation()),
+			"NPC delayed-impact fixture launches while railing is absent");
+		addAuthoredHeroesRailing(harness, fenceX, y);
+		npcInFlight.action();
+		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
+			npcInFlight.getInitialProjectileImpactDecision().getReason(),
+			"NPC delayed impact observes restored authored railing");
+	}
+
+	private static void addAuthoredHeroesRailing(
+			final CurrentCombatHarness harness,
+			final int fenceX, final int y) {
+		harness.world().getTile(fenceX, y)
+			.addTerrainCollision(CollisionFlag.WALL_EAST);
+		harness.world().getTile(fenceX - 1, y)
+			.addTerrainCollision(CollisionFlag.WALL_WEST);
+		harness.world().getTile(fenceX, y)
+			.addEnemyProjectileFenceCollision(CollisionFlag.WALL_EAST);
+		harness.world().getTile(fenceX - 1, y)
+			.addEnemyProjectileFenceCollision(CollisionFlag.WALL_WEST);
+	}
+
+	private static void removeAuthoredHeroesRailing(
+			final CurrentCombatHarness harness,
+			final int fenceX, final int y) {
+		harness.world().getTile(fenceX, y)
+			.removeEnemyProjectileFenceCollision(CollisionFlag.WALL_EAST);
+		harness.world().getTile(fenceX - 1, y)
+			.removeEnemyProjectileFenceCollision(CollisionFlag.WALL_WEST);
+	}
+
 	private static void familyAndSiblingEvidence(
 			final CurrentCombatHarness harness) throws Exception {
 		final Player scriptedSource = harness.player(
@@ -1360,6 +1458,29 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			}
 		}
 		return count;
+	}
+
+	private static ProjectileEvent findProjectileEvent(
+			final CurrentCombatHarness harness, final Mob source,
+			final ProjectileLaunchSpecification.Producer producer) {
+		for (GameTickEvent event
+				: harness.server().getGameEventHandler().getEvents()) {
+			if (event instanceof ProjectileEvent) {
+				final ProjectileEvent projectile = (ProjectileEvent) event;
+				if (projectile.getLaunchSnapshot().getSourceSnapshot()
+						.matchesIdentityAndSession(source)
+						&& projectile.getLaunchSnapshot().getSpecification()
+							.getProducer() == producer) {
+					return projectile;
+				}
+			}
+		}
+		return null;
+	}
+
+	private static void assertNotNull(
+			final Object value, final String message) {
+		assertTrue(value != null, message);
 	}
 
 	private static void assertTrue(final boolean condition,

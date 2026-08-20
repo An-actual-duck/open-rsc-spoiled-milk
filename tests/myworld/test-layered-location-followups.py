@@ -404,6 +404,18 @@ public final class LayeredLocationFollowupsHarness {
 
         upperBlocker.setTerrainBlocked(false);
         upperBlocker.removeCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
+        upperBlocker.addTerrainCollision(CollisionFlag.FULL_BLOCK_C);
+        upperBlocker.addEnemyProjectileFenceCollision(
+            CollisionFlag.FULL_BLOCK_C);
+        require(PathValidation.checkCombatProjectilePath(
+                world, upperStart, upperEnd),
+            "layered authored fence blocked a player-allied projectile");
+        require(!PathValidation.checkEnemyCombatProjectilePath(
+                world, upperStart, upperEnd),
+            "layered authored fence allowed an enemy projectile");
+        upperBlocker.removeEnemyProjectileFenceCollision(
+            CollisionFlag.FULL_BLOCK_C);
+        upperBlocker.removeTerrainCollision(CollisionFlag.FULL_BLOCK_C);
         world.removeTile(upperMiddle);
         require(!PathValidation.checkPath(world, upperStart, upperEnd, false),
             "missing native tile did not fail closed");

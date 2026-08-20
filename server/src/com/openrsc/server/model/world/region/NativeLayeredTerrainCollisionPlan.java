@@ -24,7 +24,9 @@ public final class NativeLayeredTerrainCollisionPlan {
 		final NativeLayeredTerrainTile positiveY,
 		final IntPredicate blockingOverlay,
 		final IntPredicate blockingWall,
-		final IntPredicate projectileBlockingWall) {
+		final IntPredicate projectileBlockingWall,
+		final IntPredicate structuralCombatProjectileWall,
+		final IntPredicate enemyProjectileFenceWall) {
 		NativeLayeredTerrainTile checkedCurrent =
 			Objects.requireNonNull(current, "current");
 		IntPredicate checkedOverlay =
@@ -33,15 +35,28 @@ public final class NativeLayeredTerrainCollisionPlan {
 			Objects.requireNonNull(blockingWall, "blockingWall");
 		IntPredicate checkedProjectile = Objects.requireNonNull(
 			projectileBlockingWall, "projectileBlockingWall");
+		IntPredicate checkedStructuralCombatProjectile = Objects.requireNonNull(
+			structuralCombatProjectileWall,
+			"structuralCombatProjectileWall");
+		IntPredicate checkedEnemyProjectileFence = Objects.requireNonNull(
+			enemyProjectileFenceWall, "enemyProjectileFenceWall");
 
 		int mask = 0;
 		int projectileWallCount = 0;
+		int structuralCombatProjectileMask = 0;
+		int enemyProjectileFenceMask = 0;
 
 		int currentVertical = checkedCurrent.getVerticalWall();
 		if (wallBlocks(currentVertical, checkedWall)) {
 			mask |= CollisionFlag.WALL_NORTH;
 			projectileWallCount += projectileBlocks(
 				currentVertical, checkedProjectile);
+			structuralCombatProjectileMask |= coverMask(
+				currentVertical, CollisionFlag.WALL_NORTH,
+				checkedStructuralCombatProjectile);
+			enemyProjectileFenceMask |= coverMask(
+				currentVertical, CollisionFlag.WALL_NORTH,
+				checkedEnemyProjectileFence);
 		}
 		int positiveYVertical =
 			positiveY == null ? 0 : positiveY.getVerticalWall();
@@ -49,6 +64,12 @@ public final class NativeLayeredTerrainCollisionPlan {
 			mask |= CollisionFlag.WALL_SOUTH;
 			projectileWallCount += projectileBlocks(
 				positiveYVertical, checkedProjectile);
+			structuralCombatProjectileMask |= coverMask(
+				positiveYVertical, CollisionFlag.WALL_SOUTH,
+				checkedStructuralCombatProjectile);
+			enemyProjectileFenceMask |= coverMask(
+				positiveYVertical, CollisionFlag.WALL_SOUTH,
+				checkedEnemyProjectileFence);
 		}
 
 		int currentHorizontal = checkedCurrent.getHorizontalWall();
@@ -56,6 +77,12 @@ public final class NativeLayeredTerrainCollisionPlan {
 			mask |= CollisionFlag.WALL_EAST;
 			projectileWallCount += projectileBlocks(
 				currentHorizontal, checkedProjectile);
+			structuralCombatProjectileMask |= coverMask(
+				currentHorizontal, CollisionFlag.WALL_EAST,
+				checkedStructuralCombatProjectile);
+			enemyProjectileFenceMask |= coverMask(
+				currentHorizontal, CollisionFlag.WALL_EAST,
+				checkedEnemyProjectileFence);
 		}
 		int positiveXHorizontal =
 			positiveX == null ? 0 : positiveX.getHorizontalWall();
@@ -63,6 +90,12 @@ public final class NativeLayeredTerrainCollisionPlan {
 			mask |= CollisionFlag.WALL_WEST;
 			projectileWallCount += projectileBlocks(
 				positiveXHorizontal, checkedProjectile);
+			structuralCombatProjectileMask |= coverMask(
+				positiveXHorizontal, CollisionFlag.WALL_WEST,
+				checkedStructuralCombatProjectile);
+			enemyProjectileFenceMask |= coverMask(
+				positiveXHorizontal, CollisionFlag.WALL_WEST,
+				checkedEnemyProjectileFence);
 		}
 
 		int diagonal = checkedCurrent.getDiagonalWall();
@@ -79,6 +112,12 @@ public final class NativeLayeredTerrainCollisionPlan {
 			mask |= diagonalFlag;
 			projectileWallCount += projectileBlocks(
 				diagonal & 0xff, checkedProjectile);
+			structuralCombatProjectileMask |= coverMask(
+				diagonalWallId, diagonalFlag,
+				checkedStructuralCombatProjectile);
+			enemyProjectileFenceMask |= coverMask(
+				diagonalWallId, diagonalFlag,
+				checkedEnemyProjectileFence);
 		}
 
 		int rawOverlay = checkedCurrent.getOverlay();
@@ -91,7 +130,15 @@ public final class NativeLayeredTerrainCollisionPlan {
 			mask,
 			terrainBlocked,
 			overlayProjectileBlocked,
-			projectileWallCount);
+			projectileWallCount,
+			structuralCombatProjectileMask,
+			enemyProjectileFenceMask);
+	}
+
+	private static int coverMask(
+			final int wallId, final int flag,
+			final IntPredicate coverPredicate) {
+		return wallId > 0 && coverPredicate.test(wallId) ? flag : 0;
 	}
 
 	private static boolean wallBlocks(
@@ -111,16 +158,23 @@ public final class NativeLayeredTerrainCollisionPlan {
 		private final boolean terrainBlocked;
 		private final boolean overlayProjectileBlocked;
 		private final int projectileWallCount;
+		private final int structuralCombatProjectileMask;
+		private final int enemyProjectileFenceMask;
 
 		private Result(
 			final int traversalMask,
 			final boolean terrainBlocked,
 			final boolean overlayProjectileBlocked,
-			final int projectileWallCount) {
+			final int projectileWallCount,
+			final int structuralCombatProjectileMask,
+			final int enemyProjectileFenceMask) {
 			this.traversalMask = traversalMask;
 			this.terrainBlocked = terrainBlocked;
 			this.overlayProjectileBlocked = overlayProjectileBlocked;
 			this.projectileWallCount = projectileWallCount;
+			this.structuralCombatProjectileMask =
+				structuralCombatProjectileMask;
+			this.enemyProjectileFenceMask = enemyProjectileFenceMask;
 		}
 
 		public int getTraversalMask() {
@@ -139,6 +193,14 @@ public final class NativeLayeredTerrainCollisionPlan {
 			return projectileWallCount;
 		}
 
+		public int getStructuralCombatProjectileMask() {
+			return structuralCombatProjectileMask;
+		}
+
+		public int getEnemyProjectileFenceMask() {
+			return enemyProjectileFenceMask;
+		}
+
 		public void applyTo(final TileValue tile) {
 			TileValue target = Objects.requireNonNull(tile, "tile");
 			target.addTerrainCollision(traversalMask);
@@ -148,6 +210,10 @@ public final class NativeLayeredTerrainCollisionPlan {
 			for (int i = 0; i < projectileWallCount; i++) {
 				target.addTerrainWallProjectileBlock();
 			}
+			target.addCombatProjectileCollision(
+				structuralCombatProjectileMask);
+			target.addEnemyProjectileFenceCollision(
+				enemyProjectileFenceMask);
 		}
 	}
 }

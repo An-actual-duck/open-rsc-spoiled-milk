@@ -15,6 +15,7 @@ TILE = ROOT / "server/src/com/openrsc/server/model/world/region/TileValue.java"
 FLAGS = ROOT / "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
 PATH_VALIDATION = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
 WORLD = ROOT / "server/src/com/openrsc/server/model/world/World.java"
+WORLD_LOADER = ROOT / "server/src/com/openrsc/server/io/WorldLoader.java"
 IMPACT_POLICY = ROOT / "server/src/com/openrsc/server/model/combat/ProjectileImpactPolicy.java"
 IMPACT_VALIDATOR = ROOT / "server/src/com/openrsc/server/model/combat/ProjectileImpactValidator.java"
 MELEE_EVENT = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
@@ -103,12 +104,12 @@ fence_ids = {
     if "fence" in (
         f"{field(definition, 'name')} {field(definition, 'description')}".lower()
     )
-    or "palisade" in (
+    or any(word in (
         f"{field(definition, 'name')} {field(definition, 'description')}".lower()
-    )
+    ) for word in ("palisade", "railing"))
 }
 require(
-    fence_ids == {597, 691, 718, 951},
+    fence_ids == {45, 597, 691, 718, 951},
     f"Fence definition inventory changed; review classifier fixtures: {sorted(fence_ids)}",
 )
 boundary_fence_ids = {
@@ -117,12 +118,14 @@ boundary_fence_ids = {
     if "fence" in (
         f"{field(definition, 'name')} {field(definition, 'description')}".lower()
     )
-    or "palisade" in (
+    or any(word in (
         f"{field(definition, 'name')} {field(definition, 'description')}".lower()
-    )
+    ) for word in ("palisade", "railing"))
 }
 require(
-    boundary_fence_ids == {4, 101, 127, 199},
+    boundary_fence_ids
+    == {4, 5, 62, 101, 127, 166, 167, 168, 169, 170, 171, 172,
+        181, 182, 183, 184, 185, 186, 193, 199},
     "Boundary-fence definition inventory changed; review hard-cover ownership: "
     f"{sorted(boundary_fence_ids)}",
 )
@@ -143,6 +146,7 @@ classification_fixtures = "".join(
         fixture(58, "NONE"),  # open gate
         fixture(180, "STRUCTURAL"),  # closed Lumbridge/Al Kharid gate
         fixture(393, "STRUCTURAL"),  # structural wall
+        fixture(45, "ENEMY_ONLY_FENCE"),  # scenery railing
         fixture(597, "ENEMY_ONLY_FENCE"),  # type-1 fence
         fixture(691, "ENEMY_ONLY_FENCE"),  # fence named Bridge Blockade
         fixture(718, "ENEMY_ONLY_FENCE"),  # second fence visual
@@ -193,8 +197,12 @@ public final class CombatProjectileCollisionHarness {{
             "ordinary solid scenery must not become combat projectile cover");
 
         tile.addTerrainCollision(CollisionFlag.WALL_NORTH);
+        require((tile.getCombatProjectileCollisionMask() & CollisionFlag.WALL_NORTH) == 0,
+            "ordinary traversal collision leaked into semantic projectile cover");
+        tile.addCombatProjectileCollision(CollisionFlag.WALL_NORTH);
         require((tile.getCombatProjectileCollisionMask() & CollisionFlag.WALL_NORTH) != 0,
-            "authored terrain wall must block combat projectiles");
+            "semantic authored wall did not block combat projectiles");
+        tile.removeCombatProjectileCollision(CollisionFlag.WALL_NORTH);
         tile.removeTerrainCollision(CollisionFlag.WALL_NORTH);
 
         tile.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK_C);
@@ -418,8 +426,10 @@ public final class CombatProjectilePathHarness {
 
         middle.overlay = 11;
         middle.addTerrainCollision(CollisionFlag.WALL_WEST);
+        middle.addCombatProjectileCollision(CollisionFlag.WALL_WEST);
         requireSymmetric(world, source, target, false,
             "wall sharing transparent lava did not block combat projectile path");
+        middle.removeCombatProjectileCollision(CollisionFlag.WALL_WEST);
         middle.removeTerrainCollision(CollisionFlag.WALL_WEST);
         requireSymmetric(world, source, target, true,
             "lava remained blocked after its wall owner was removed");
@@ -497,6 +507,7 @@ require(
 )
 
 world_source = WORLD.read_text(encoding="utf-8")
+world_loader_source = WORLD_LOADER.read_text(encoding="utf-8")
 require(
     "CombatProjectileCollision.sceneryCover" in world_source
     and "CombatProjectileCollision.boundaryCover" in world_source
@@ -509,6 +520,12 @@ require(
     and "applyCombatProjectileCollision(newObject, true);" in world_source
     and "updateCombatProjectileBoundaryCollision(" in world_source,
     "boundary walls and closed doors must register and unregister hard cover",
+)
+require(
+    "applyCombatProjectileBoundaryCollision(" in world_loader_source
+    and "addEnemyProjectileFenceCollision" in world_loader_source
+    and "addCombatProjectileCollision" in world_loader_source,
+    "legacy authored terrain must derive semantic cover from boundary definitions",
 )
 
 for call_site in ENEMY_CALL_SITES:

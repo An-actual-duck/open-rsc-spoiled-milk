@@ -9,8 +9,9 @@ import java.util.Locale;
  * Classifies scenery under the combat-projectile cover contract.
  *
  * <p>Movement-blocking scenery is transparent by default. Structural walls
- * and closed doors/gates block every combat projectile; fence and palisade
- * forms block enemy projectiles but are transparent to player-allied attacks.</p>
+ * and closed doors/gates block every combat projectile; fence, palisade, and
+ * railing forms block enemy projectiles but are transparent to player-allied
+ * attacks.</p>
  */
 public final class CombatProjectileCollision {
 	public enum Cover { NONE, STRUCTURAL, ENEMY_ONLY_FENCE }
@@ -30,10 +31,7 @@ public final class CombatProjectileCollision {
 		final String description = normalize(definition.getDescription());
 		final String model = normalize(definition.getObjectModel());
 
-		if (containsWord(name, "fence")
-			|| containsWord(description, "fence")
-			|| containsWord(name, "palisade")
-			|| containsWord(description, "palisade")) {
+		if (isFence(name, description)) {
 			return Cover.ENEMY_ONLY_FENCE;
 		}
 
@@ -55,9 +53,18 @@ public final class CombatProjectileCollision {
 		}
 		final String name = normalize(definition.getName());
 		final String description = normalize(definition.getDescription());
-		return containsWord(name, "fence") || containsWord(description, "fence")
-			|| containsWord(name, "palisade") || containsWord(description, "palisade")
+		return isFence(name, description)
 			? Cover.ENEMY_ONLY_FENCE : Cover.STRUCTURAL;
+	}
+
+	private static boolean isFence(
+			final String name, final String description) {
+		return containsWord(name, "fence")
+			|| containsWord(description, "fence")
+			|| containsWord(name, "palisade")
+			|| containsWord(description, "palisade")
+			|| name.contains("railing")
+			|| description.contains("railing");
 	}
 
 	private static boolean isStructuralWallName(final String name) {

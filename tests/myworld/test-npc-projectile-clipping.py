@@ -26,12 +26,12 @@ require(
 )
 
 require(
-    "PathValidation.checkCombatProjectilePath("
+    "PathValidation.checkEnemyCombatProjectilePath("
     in NPC_BEHAVIOR.read_text(),
     "Modern hostile NPC projectiles must use semantic hostile collision",
 )
 require(
-    "PathValidation.checkCombatProjectilePath("
+    "PathValidation.checkEnemyCombatProjectilePath("
     in NPC_RANGE.read_text(),
     "Legacy hostile NPC ranged attacks must use semantic hostile collision",
 )

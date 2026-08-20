@@ -3,11 +3,13 @@ package com.openrsc.server.io;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.constants.Constants;
 import com.openrsc.server.database.WorldPopulator;
+import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.region.Region;
 import com.openrsc.server.model.world.region.RegionManager;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.DataConversions;
+import com.openrsc.server.util.rsc.CollisionFlag;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,6 +47,20 @@ public class WorldLoader {
 			}
 		}
 		return false;
+	}
+
+	private void applyCombatProjectileBoundaryCollision(
+			final int wallId, final TileValue tile, final int flag) {
+		final CombatProjectileCollision.Cover cover =
+			CombatProjectileCollision.boundaryCover(
+				getWorld().getServer().getEntityHandler()
+					.getDoorDef(wallId - 1));
+		if (cover == CombatProjectileCollision.Cover.STRUCTURAL) {
+			tile.addCombatProjectileCollision(flag);
+		} else if (cover
+				== CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE) {
+			tile.addEnemyProjectileFenceCollision(flag);
+		}
 	}
 
 	private Sector loadJAGSector(final int sectionX, final int sectionY, final int height, boolean altFormat)
@@ -392,6 +408,11 @@ public class WorldLoader {
 					&& getWorld().getServer().getEntityHandler().getDoorDef(verticalWall - 1).getDoorType() != 0) {
 					getWorld().getTile(bx, by).addTerrainCollision(1);
 					getWorld().getTile(bx, by - 1).addTerrainCollision(4);
+					applyCombatProjectileBoundaryCollision(
+						verticalWall, tile, CollisionFlag.WALL_NORTH);
+					applyCombatProjectileBoundaryCollision(
+						verticalWall, getWorld().getTile(bx, by - 1),
+						CollisionFlag.WALL_SOUTH);
 
 					if (projectileClipAllowed(verticalWall)) {
 						tile.addTerrainWallProjectileBlock();
@@ -405,6 +426,11 @@ public class WorldLoader {
 					&& getWorld().getServer().getEntityHandler().getDoorDef(horizontalWall - 1).getDoorType() != 0) {
 					tile.addTerrainCollision(2);
 					getWorld().getTile(bx - 1, by).addTerrainCollision(8);
+					applyCombatProjectileBoundaryCollision(
+						horizontalWall, tile, CollisionFlag.WALL_EAST);
+					applyCombatProjectileBoundaryCollision(
+						horizontalWall, getWorld().getTile(bx - 1, by),
+						CollisionFlag.WALL_WEST);
 					if (projectileClipAllowed(horizontalWall)) {
 						tile.addTerrainWallProjectileBlock();
 						getWorld().getTile(bx - 1, by).addTerrainWallProjectileBlock();
@@ -417,6 +443,8 @@ public class WorldLoader {
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 1).getUnknown() == 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 1).getDoorType() != 0) {
 					tile.addTerrainCollision(0x20);
+					applyCombatProjectileBoundaryCollision(
+						diagonalWalls, tile, CollisionFlag.FULL_BLOCK_B);
 					if (projectileClipAllowed(diagonalWalls & 0xFF)) {
 						tile.addTerrainWallProjectileBlock();
 					}
@@ -426,6 +454,9 @@ public class WorldLoader {
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 12001).getUnknown() == 0
 					&& getWorld().getServer().getEntityHandler().getDoorDef(diagonalWalls - 12001).getDoorType() != 0) {
 					tile.addTerrainCollision(0x10);
+					applyCombatProjectileBoundaryCollision(
+						diagonalWalls - 12000, tile,
+						CollisionFlag.FULL_BLOCK_A);
 
 					if (projectileClipAllowed(diagonalWalls & 0xFF)) {
 						tile.addTerrainWallProjectileBlock();
