@@ -14,6 +14,33 @@ import static com.openrsc.server.plugins.Functions.*;
 public class LegendsQuestGuildGuard implements TalkNpcTrigger, OpLocTrigger {
 
 	private static final int MITHRIL_GATES = 1079;
+	public enum OuterGateRoute { ENTER, EXIT, SPEAK_TO_GUARD }
+
+	/** The authentic quest-start requirements shared by guard dialogue and direct gate entry. */
+	public static boolean isEligibleToBeginLegendsQuest(Player player) {
+		return player.getQuestPoints() >= 107
+			&& player.getQuestStage(Quests.HEROS_QUEST) == -1
+			&& player.getQuestStage(Quests.FAMILY_CREST) == -1
+			&& player.getQuestStage(Quests.SHILO_VILLAGE) == -1
+			&& player.getQuestStage(Quests.UNDERGROUND_PASS) == -1
+			&& player.getQuestStage(Quests.WATERFALL_QUEST) == -1;
+	}
+
+	/** Pure route decision keeps direct clicks free of dialogue and quest-state side effects. */
+	public static OuterGateRoute outerGateRoute(Player player) {
+		if (player.getY() <= 550) return OuterGateRoute.EXIT;
+		int stage = player.getQuestStage(Quests.LEGENDS_QUEST);
+		if ((stage >= 1 && stage <= 11) || stage == -1 || isEligibleToBeginLegendsQuest(player)) {
+			return OuterGateRoute.ENTER;
+		}
+		return OuterGateRoute.SPEAK_TO_GUARD;
+	}
+
+	public static int outerGateDestinationY(OuterGateRoute route) {
+		if (route == OuterGateRoute.ENTER) return 549;
+		if (route == OuterGateRoute.EXIT) return 552;
+		throw new IllegalArgumentException("A denied outer-gate route has no destination");
+	}
 
 	private void legendsGuardDialogue(Player player, Npc n, int cID) {
 		if (n.getID() == NpcId.LEGENDS_GUILD_GUARD.id()) {
@@ -111,12 +138,7 @@ public class LegendsQuestGuildGuard implements TalkNpcTrigger, OpLocTrigger {
 				case LegendsGuard.CAN_I_GO_ON_THE_QUEST:
 					mes("The guard gets out a scroll of paper and starts looking through it.");
 					delay(3);
-					if (player.getQuestPoints() >= 107
-						&& player.getQuestStage(Quests.HEROS_QUEST) == -1
-						&& player.getQuestStage(Quests.FAMILY_CREST) == -1
-						&& player.getQuestStage(Quests.SHILO_VILLAGE) == -1
-						&& player.getQuestStage(Quests.UNDERGROUND_PASS) == -1
-						&& player.getQuestStage(Quests.WATERFALL_QUEST) == -1) {
+					if (isEligibleToBeginLegendsQuest(player)) {
 						npcsay(player, n, "Well, it looks as if you are eligable for the quest.",
 							"Grand Vizier Erkle will give you the details about the quest.",
 							"You can go and talk to him about it if you like?");
@@ -238,48 +260,13 @@ public class LegendsQuestGuildGuard implements TalkNpcTrigger, OpLocTrigger {
 	public void onOpLoc(Player player, GameObject obj, String command) {
 		if (obj.getID() == MITHRIL_GATES) {
 			if (command.equals("open")) {
-				if (player.getY() <= 550) {
-					changeloc(obj, config().GAME_TICK * 4, 181);
-					player.teleport(513, 552);
+				OuterGateRoute route = outerGateRoute(player);
+				if (route == OuterGateRoute.SPEAK_TO_GUARD) {
+					player.message("Speak with a Legends Guild guard to learn how to qualify.");
 					return;
 				}
-				Npc legends_guard = ifnearvisnpc(player, NpcId.LEGENDS_GUILD_GUARD.id(), 5);
-				switch (player.getQuestStage(Quests.LEGENDS_QUEST)) {
-					case 0:
-						if (legends_guard != null) {
-							mes("A nearby guard approaches you...");
-							delay(2);
-							legends_guard.initializeTalkScript(player);
-						} else {
-							player.message("The guards is currently busy.");
-						}
-						break;
-					case 1:
-					case 2:
-					case 3:
-					case 4:
-					case 5:
-					case 6:
-					case 7:
-					case 8:
-					case 9:
-					case 10:
-						if (legends_guard != null) {
-							player.message("A guard nods at you as you walk past.");
-							npcsay(player, legends_guard, player.getText("LegendsQuestGuildGuardHopeTheQuestIsGoingWell"));
-						}
-						openGates(player);
-						break;
-					case 11:
-					case -1:
-						if (legends_guard != null) {
-							player.message("The guards Salute you as you walk past.");
-							npcsay(player, legends_guard, "! ! ! Attention ! ! !",
-								"Legends Guild Member Approaching");
-						}
-						openGates(player);
-						break;
-				}
+				changeloc(obj, config().GAME_TICK * 4, 181);
+				player.teleport(513, outerGateDestinationY(route));
 
 			} else if (command.equals("search")) {
 				mes("The gates to the Legends Guild are made from wrought Mithril.");
