@@ -17,6 +17,11 @@ Runtime contract:
 - three 128-pixel rows: the three animation frames for each column; and
 - client NPC key `gorak`, assigned only to developer-spawnable NPC ID `861`.
 
+The 128x128 cells deliberately retain shared transparent padding so every
+direction and animation stays aligned. Runtime presentation bounds are
+327x240, matching the existing cow baseline; the PNG is not resampled or
+rewritten to achieve the larger in-game appearance.
+
 The full local Sprite Baker provenance export contains machine-specific cache
 paths and renderer diagnostics and is intentionally not shipped. The stable
 source identity, layout, attribution, and content hash needed to audit this
