@@ -29,8 +29,18 @@ public final class VisibilitySnapshot {
 		final Collection<GroundItem> groundItems,
 		final int mobRegionCount,
 		final int objectRegionCount) {
-		this(players, npcs, gameObjects, splitGameObjects(gameObjects, 0), splitGameObjects(gameObjects, 1),
-			groundItems, mobRegionCount, objectRegionCount, 0L, null, 0L);
+		GameObjectTypes types = splitGameObjects(gameObjects);
+		this.players = players;
+		this.npcs = npcs;
+		this.gameObjects = gameObjects;
+		this.sceneryObjects = types.scenery;
+		this.wallObjects = types.walls;
+		this.groundItems = groundItems;
+		this.mobRegionCount = mobRegionCount;
+		this.objectRegionCount = objectRegionCount;
+		this.objectSnapshotKey = 0L;
+		this.layeredObjectSnapshotKey = null;
+		this.objectSnapshotVersion = 0L;
 	}
 
 	public VisibilitySnapshot(
@@ -103,14 +113,30 @@ public final class VisibilitySnapshot {
 		this.objectSnapshotVersion = objectSnapshotVersion;
 	}
 
-	private static Collection<GameObject> splitGameObjects(final Collection<GameObject> gameObjects, final int type) {
-		final ArrayList<GameObject> objects = new ArrayList<>();
+	private static GameObjectTypes splitGameObjects(
+		final Collection<GameObject> gameObjects) {
+		final ArrayList<GameObject> scenery = new ArrayList<>();
+		final ArrayList<GameObject> walls = new ArrayList<>();
 		for (final GameObject gameObject : gameObjects) {
-			if (gameObject.getType() == type) {
-				objects.add(gameObject);
+			if (gameObject.getType() == 0) {
+				scenery.add(gameObject);
+			} else if (gameObject.getType() == 1) {
+				walls.add(gameObject);
 			}
 		}
-		return objects;
+		return new GameObjectTypes(scenery, walls);
+	}
+
+	private static final class GameObjectTypes {
+		private final Collection<GameObject> scenery;
+		private final Collection<GameObject> walls;
+
+		private GameObjectTypes(
+			final Collection<GameObject> scenery,
+			final Collection<GameObject> walls) {
+			this.scenery = scenery;
+			this.walls = walls;
+		}
 	}
 
 	public Collection<Player> getPlayers() {
