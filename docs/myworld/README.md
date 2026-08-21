@@ -52,6 +52,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   completed project changes.
 - [Testing quick reference](info/testing-quick-reference.md): compact field
   testing commands, IDs, and targeted fixture notes.
+- [Documentation audit — 2026-08-21](info/documentation-audit-2026-08-21.md):
+  shipped baseline, corrected plan classifications, known documentation debt,
+  and recommended next work order.
 
 ## In Progress Work Plans
 
@@ -68,12 +71,6 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [code-cleanup-and-modularization-plan.md](in-progress-work-plans/code-cleanup-and-modularization-plan.md):
   codebase cleanup roadmap for oversized files, stale options, and renderer
   ownership boundaries.
-- [code-health-audit-2026-07-12.md](in-progress-work-plans/code-health-audit-2026-07-12.md):
-  evidence-backed size/churn, band-aid, compatibility, dead-code, and static-
-  analysis audit with prioritized follow-up branches.
-- [code-size-and-indexing-audit-2026-08-13.md](in-progress-work-plans/code-size-and-indexing-audit-2026-08-13.md):
-  current maintained-source size/churn review, extraction priorities, and a
-  lightweight code-navigation/indexing recommendation.
 - [code-navigation.md](info/code-navigation.md): maintained source/build/
   ownership map, dynamic-reference caveats, practical `rg` examples, and the
   optional local Ctags helper.
@@ -83,9 +80,6 @@ into one of the category folders, not directly into `docs/myworld/`.
 - [cleric-spellbook-concept.md](in-progress-work-plans/cleric-spellbook-concept.md):
   active collaborative concept for a Worship-tiered support spellbook, carved
   and blessed sigils, Holy Power, and an expanded Devotion economy.
-- [cleric-spellbook-implementation-plan.md](in-progress-work-plans/cleric-spellbook-implementation-plan.md):
-  ordered implementation slices, compatibility boundaries, verification gates,
-  and explicit stop conditions for unresolved Cleric design decisions.
 - [ante-risk-reward-plan.md](in-progress-work-plans/ante-risk-reward-plan.md):
   confirmed player-authored PvM death risk, combat-scaled common/rare reward
   rates, personal-loot composition, dedicated UI, and economy-safe rollout.
@@ -94,9 +88,6 @@ into one of the category folders, not directly into `docs/myworld/`.
   metal drops, and purified rune forge relocation.
 - [god-relic-reward-plan.md](in-progress-work-plans/god-relic-reward-plan.md):
   prayer/devotion god relic rewards, relic pools, and Mage Arena separation.
-- [devotion-destruction-blessing-audit.md](in-progress-work-plans/devotion-destruction-blessing-audit.md):
-  current Devotion, altar blessing, opposing-item destruction, persistence,
-  exploit, and balance audit with a complete item matrix.
 - [herblaw-brawn-harvestable-ingredients-plan.md](in-progress-work-plans/herblaw-brawn-harvestable-ingredients-plan.md):
   implemented Brawn harvestable ingredient pass awaiting manual field testing.
 - [herblaw-side-ingredient-expansion-plan.md](in-progress-work-plans/herblaw-side-ingredient-expansion-plan.md):
@@ -110,8 +101,8 @@ into one of the category folders, not directly into `docs/myworld/`.
   Mining Guild expansion with an `80` Mining sulfur gate, purified rune, and
   dragon-rune Smithing progression.
 - [monster-slayer-guild-plan.md](in-progress-work-plans/monster-slayer-guild-plan.md):
-  Monster Slayer rank, task, point-shop, Combat Odyssey migration, and dragon
-  armor reward replacement direction.
+  shipped Monster Slayer ranks, tasks, point shops, satchels, and guild contacts
+  plus deferred unique rewards and post-release tuning work.
 - [movement-pathing-release-plan.md](in-progress-work-plans/movement-pathing-release-plan.md):
   movement smoothness, NPC roaming, and pathfinding follow-up plan.
 - [ogg-audio-support-plan.md](in-progress-work-plans/ogg-audio-support-plan.md):
@@ -149,9 +140,6 @@ into one of the category folders, not directly into `docs/myworld/`.
   comparison switches and future terrain-skirt notes.
 - [summoning-plan.md](in-progress-work-plans/summoning-plan.md):
   current Summoning implementation source of truth and tuning notes.
-- [standalone-world-builder-plan.md](in-progress-work-plans/standalone-world-builder-plan.md):
-  isolated single-player-style World Builder runtime, safe project exports,
-  transactional private-server imports, rollback, and separate releases.
 - [terrain-expansion-plan.md](in-progress-work-plans/terrain-expansion-plan.md):
   staged terrain expansion process and map-editor workflow.
 - [tier-11-magic-gear-plan.md](in-progress-work-plans/tier-11-magic-gear-plan.md):
@@ -179,8 +167,33 @@ into one of the category folders, not directly into `docs/myworld/`.
   completed migration recovery record and guardrail notes.
 - [pvm-population-and-cluster-plan.md](completed-work-plans/pvm-population-and-cluster-plan.md):
   implemented pre-release PvM population passes and remaining expansion notes.
+- [cleric-spellbook-implementation-plan.md](completed-work-plans/cleric-spellbook-implementation-plan.md):
+  completed twelve-spell Cleric and Blessing launch implementation released in
+  `v0.2.64`.
+- [devotion-destruction-blessing-audit.md](completed-work-plans/devotion-destruction-blessing-audit.md):
+  implemented Devotion, blessing, destruction, and Bonecrusher corrections
+  released in `v0.2.55`.
+- [production-ui-remember-input-plan.md](completed-work-plans/production-ui-remember-input-plan.md):
+  implemented Remember last input and Keep open production preferences.
+- [rune-crafting-xp-redesign-analysis.md](completed-work-plans/rune-crafting-xp-redesign-analysis.md):
+  implemented diminishing-return Enchanting rune XP model.
+- [hostile-npc-projectile-reach-audit.md](completed-work-plans/hostile-npc-projectile-reach-audit.md):
+  implemented projectile cover policy, including player-permeable and
+  hostile-blocking fences.
+- [soul-altar-layered-map-gap-investigation.md](completed-work-plans/soul-altar-layered-map-gap-investigation.md):
+  completed layered Soul Altar visual-coordinate correction.
+- [classic-scape-combat-refactor-audit-2026-08-05.md](completed-work-plans/classic-scape-combat-refactor-audit-2026-08-05.md):
+  completed source audit that led to the closed A01-A11 combat modernization
+  program.
+- [code-health-audit-2026-07-12.md](completed-work-plans/code-health-audit-2026-07-12.md):
+  completed code-health audit and B01-B11 follow-up record.
+- [renderer-material-family-foundation-plan.md](completed-work-plans/renderer-material-family-foundation-plan.md)
+  and [renderer-retention-characterization-plan.md](completed-work-plans/renderer-retention-characterization-plan.md):
+  accepted renderer sub-milestones retained as implementation history.
 - [archive/](completed-work-plans/archive/):
-  older historical plans, completed tasklists, migration notes, and audits.
+  older historical plans, completed tasklists, migration notes, audits, and the
+  former Core World Editor/World Builder plans. Active editor work belongs to
+  the independent RSC World Editor repositories.
 
 ## Rough Drafts
 
@@ -205,6 +218,9 @@ into one of the category folders, not directly into `docs/myworld/`.
   full-history audit of Classic-Scape's alleged 3D-model-to-RSC-sprite tool,
   its actual Sprite Studio and frame-capture utilities, and adoption needs.
 - [change-history.md](info/change-history.md): consolidated major-change record.
+- [code-size-and-indexing-audit-2026-08-13.md](info/code-size-and-indexing-audit-2026-08-13.md):
+  completed sizing/navigation audit and current extract-only-when-needed
+  guidance.
 - [client-sprite-reference.md](info/client-sprite-reference.md): custom sprite
   reference, authentic item icon offsets, and equipment palette export notes.
 - [combat-equipment-spec.md](info/combat-equipment-spec.md): combat stat,
@@ -215,6 +231,8 @@ into one of the category folders, not directly into `docs/myworld/`.
   and practical command reference.
 - [dual-element-spells.md](info/dual-element-spells.md): current dual-element
   spell implementation and effect identities.
+- [documentation-audit-2026-08-21.md](info/documentation-audit-2026-08-21.md):
+  documentation-to-runtime reconciliation and active-work priorities.
 - [enemy-ids.md](info/enemy-ids.md): builder-facing attackable NPC ID reference.
 - [fishing-spot-map.md](info/fishing-spot-map.md): live fishing spot coordinate
   source list.

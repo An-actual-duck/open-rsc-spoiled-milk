@@ -1,7 +1,8 @@
 # Classic-Scape Combat Refactor Audit — 2026-08-05
 
-Status: AUDIT COMPLETE; implementation requires separate focused branches and
-manager approval.
+Status: AUDIT AND A01-A11 FOLLOW-UP PROGRAM COMPLETE. The adopted
+behavior-preserving work shipped in `v0.2.67`; the definitive closeout is
+[`../../combat/combat-a01-a11-program-closeout.md`](../../combat/combat-a01-a11-program-closeout.md).
 
 ## Executive Decision
 

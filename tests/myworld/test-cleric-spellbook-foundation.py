@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 JAVA_ROOT = ROOT / "server/src/com/openrsc/server/content/cleric"
 LEGACY_SPELLS = ROOT / "server/src/com/openrsc/server/constants/Spells.java"
-IMPLEMENTATION_PLAN = ROOT / "docs/myworld/in-progress-work-plans/cleric-spellbook-implementation-plan.md"
+IMPLEMENTATION_PLAN = ROOT / "docs/myworld/completed-work-plans/cleric-spellbook-implementation-plan.md"
 
 
 def require(condition: bool, message: str) -> None:

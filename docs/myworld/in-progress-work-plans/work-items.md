@@ -4,14 +4,25 @@ This is the active planning list. Scope labels describe implementation size, not
 
 ## Recommended Next Work Order
 
-Field-testing and balance tuning items in this document are intentionally
-deferred until the limited release has testers and observed play data.
+This order was reconciled against published `main` and release `v0.2.75` on
+2026-08-21. Field-testing and balance changes should continue to be driven by
+observed play data rather than speculative rewrites.
 
-1. Finish documentation and guardrail alignment against the current runtime.
-2. Keep the official root README aligned when player-facing feature behavior
-   changes; art source attribution is recorded there.
-3. Keep additional population, balance, and combat-presentation tuning for
-   limited-release observations unless a concrete regression appears first.
+1. Stabilize the newly shipped Monster Slayer progression and layered-runtime
+   behavior. Concrete task, shop, satchel, location, collision, and transition
+   regressions take precedence over new systems.
+2. Continue the renderer-performance investigation with emphasis on boundary
+   hitches and reported CPU spikes. Prefer measurements and bounded fixes over
+   additional renderer architecture.
+3. Keep player-facing documentation current for Monster Slayer,
+   Cleric/Blessing, production controls, layered maps, and projectile cover.
+4. Resume Server R2 through its existing acceptance gates when no live-game
+   regression is waiting. It is the highest-value strategic backend stream,
+   but not a reason to delay player-impacting fixes.
+5. Refine Ante's unresolved thresholds, caps, death/recovery transaction, and
+   LootShare math before authorizing implementation.
+6. Defer Monster Slayer unique rewards, broad content expansion, and another
+   large terrain project until live progression/economy feedback is available.
 
 ## Implemented State
 

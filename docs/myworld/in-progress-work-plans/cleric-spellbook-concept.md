@@ -5,8 +5,13 @@
 This is the governing design document for a Worship-tiered Cleric spellbook.
 Confirmed direction is recorded separately from unresolved design questions.
 Ordered implementation work is tracked in
-[`cleric-spellbook-implementation-plan.md`](cleric-spellbook-implementation-plan.md),
+[`cleric-spellbook-implementation-plan.md`](../completed-work-plans/cleric-spellbook-implementation-plan.md),
 which may not invent answers to the unresolved sections below.
+
+The twelve-spell launch book and Blessing production foundation are complete
+and shipped in `v0.2.64`. This concept remains active only for later expansion,
+especially the planned Fountain of Ichor, Unholy sigils, and enemy-facing
+debuff spells.
 
 No spell list, numerical effect, production level, experience award, or
 resource quantity is settled unless it appears under **Confirmed Direction**.

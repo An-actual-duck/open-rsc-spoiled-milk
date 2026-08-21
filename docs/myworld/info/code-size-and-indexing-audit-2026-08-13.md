@@ -1,10 +1,11 @@
 # Code Size And Navigation Audit — 2026-08-13
 
-Status: **planning/inventory only.** No production refactor is authorized by
-this audit.
+Status: **completed navigation and sizing audit.** No production refactor is
+authorized by this reference; current guidance is to proceed normally and
+extract only when an actual ownership or navigation problem appears.
 
 This refresh supersedes the size/churn measurements in
-`code-health-audit-2026-07-12.md` and the paused-next-work list in
+`../completed-work-plans/code-health-audit-2026-07-12.md` and the paused-next-work list in
 `code-cleanup-and-modularization-plan.md`. B01–B11 and the six documented
 client ownership extractions remain complete; this is not a proposal to reopen
 them wholesale.

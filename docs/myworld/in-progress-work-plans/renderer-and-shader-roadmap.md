@@ -565,7 +565,7 @@ come from one of these areas unless a concrete shadow regression appears:
    terrain, water, foliage, ore, walls, roofs, scenery, sprites, projectiles,
    and effects should get explicit material families instead of one generic
    response. The proposed first metadata/telemetry slice is tracked in
-   [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
+   [renderer-material-family-foundation-plan.md](../completed-work-plans/renderer-material-family-foundation-plan.md).
 4. Treat the completed first terrain-variation and tile-edge blending pass as
    the baseline; revisit it only with a specific captured visual regression.
 5. Treat the 16-cycle steady-state allocation campaign as complete. Preserve

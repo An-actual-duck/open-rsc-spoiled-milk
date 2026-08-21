@@ -10,7 +10,7 @@ Governing direction:
 - [Phase 4 of the Remaster Suite Roadmap](remaster-suite-roadmap.md#phase-4-server-module-productization)
 - [Server build source of truth](../info/server-build-source-of-truth.md)
 - [Project structure refactor plan](project-structure-refactor-plan.md)
-- [Code-health audit](code-health-audit-2026-07-12.md)
+- [Code-health audit](../completed-work-plans/code-health-audit-2026-07-12.md)
 - [Layered-world capacity and loader plan](world-layer-capacity-exploration-plan.md)
 - [Live deployment safeguards](../../workspaces/live-deployment.md)
 

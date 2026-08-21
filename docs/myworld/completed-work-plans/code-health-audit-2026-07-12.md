@@ -1,5 +1,9 @@
 # Repository Code-Health Audit — 2026-07-12
 
+Status: **audit and B01-B11 follow-up sequence complete.** Future structural
+changes require a new focused justification; this file is retained as the
+historical evidence and acceptance record.
+
 ## Purpose And Scope
 
 This audit records the current code-health risks in Spoiled Milk and turns them
@@ -11,7 +15,7 @@ The audit was reconciled against published `main` commit `f84bd6664` on
 `docs/code-health-audit-plan`. It covers the active desktop client, shared
 client, server core, dynamically loaded server plugins, scripts, tests, build
 definitions, and explicitly archived material. It complements the earlier
-[`code-cleanup-and-modularization-plan.md`](code-cleanup-and-modularization-plan.md)
+[`code-cleanup-and-modularization-plan.md`](../in-progress-work-plans/code-cleanup-and-modularization-plan.md)
 with current measurements, band-aid and dead-code analysis, static-analysis
 recommendations, and an ordered implementation plan.
 
@@ -49,9 +53,9 @@ All eleven ordered follow-up branches are complete. Further analyzer-rule
 expansion, warning-family burn-down, or large-class decomposition requires a
 new focused plan rather than extending this completed sequence implicitly.
 The post-B11 ownership sequence is defined in
-[`code-cleanup-and-modularization-plan.md`](code-cleanup-and-modularization-plan.md#ordered-post-b11-implementation-branches);
+[`code-cleanup-and-modularization-plan.md`](../in-progress-work-plans/code-cleanup-and-modularization-plan.md#ordered-post-b11-implementation-branches);
 package and source-root moves remain gated by
-[`project-structure-refactor-plan.md`](project-structure-refactor-plan.md).
+[`project-structure-refactor-plan.md`](../in-progress-work-plans/project-structure-refactor-plan.md).
 
 ## Rating Method
 
@@ -572,7 +576,7 @@ or editor suites, so a general test-suite invocation must not be recorded as
 World Builder coverage. At minimum, baseline verification builds the tools jar
 and runs the static-analysis contract test; future Builder behavior changes
 continue to run the focused suites named in
-`standalone-world-builder-plan.md`.
+the archived `completed-work-plans/archive/standalone-world-builder-plan.md`.
 
 1. Add `scripts/lint.sh` with pinned tool versions/checksums and explicit
    includes/excludes. Exclude `legacy/`, generated Java catalogs, build output,

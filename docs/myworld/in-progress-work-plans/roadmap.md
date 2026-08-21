@@ -13,7 +13,7 @@ Current version progression:
 
 - The current release line is `v0.2.x`; normal updates advance the patch
   version from the latest published tag. The latest release checked during this
-  doc cleanup was `v0.2.9`.
+  audit was `v0.2.75` on 2026-08-20.
 - The `v0.1.x` line has already advanced through the `v0.2.0` minor milestone.
 - Patch versions are used for fixes, balancing, polish, and incremental work
   within the current milestone.
@@ -31,20 +31,27 @@ The packager, updater scripts, release tests, fixtures, and artifact naming now
 support the normal semantic-version release sequence. GitHub updates use normal
 releases so the auto-updater can resolve the latest published tag.
 
-## Current Phase: Stabilization And Minor Terrain
+## Current Phase: Post-Monster-Slayer Stabilization And Runtime Refinement
 
-The immediate work continues to improve existing systems and finish smaller
-world edits before another large area overhaul begins.
+The Monster Slayer foundation, Cleric/Blessing launch, combat A01-A11
+modernization, and production layered-world loader are now shipped. The
+immediate phase is to stabilize those large additions, improve the remaining
+renderer/world-boundary hitch behavior, and keep documentation aligned before
+starting another large gameplay system.
 
 Current priorities:
 
-- Field-test the bank filter system and refine item classification where
-  necessary.
-- Continue balance, launch, item-definition, and content-integrity fixes.
-- Finish minor terrain changes that do not require a new region.
-- Complete the Cosmic Altar approach and its ethereal path treatment.
-- Keep the existing Heroes' Guild basement expansion stable while terrain
-  editing practices are refined.
+- Treat concrete regressions in the layered loader, combat, or Monster Slayer
+  progression as the first priority and add focused regression coverage with
+  each correction.
+- Gather Monster Slayer task, point-economy, satchel-cost, and shop feedback;
+  keep unique reward design deferred until that evidence exists.
+- Continue renderer and boundary-transition profiling, especially CPU spikes
+  and the remaining visible hitch during residency changes.
+- Keep Server R2 moving as a separately gated productization effort without
+  letting it displace live-game reliability work.
+- Finish smaller terrain and Cosmic Altar polish after the higher-impact
+  stabilization work, without reopening the accepted layered-loader design.
 
 This phase is continuing through the `v0.2.x` patch releases. Its completion
 should coincide with the next minor-version milestone.

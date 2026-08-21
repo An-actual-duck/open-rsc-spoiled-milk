@@ -1,7 +1,9 @@
 # Project Structure Refactor Plan
 
-Plan status: **active; Phase 0 guardrails and code-health B01-B11 reconciled on
-2026-07-16** against published `main` commit `ecfc3b35d`.
+Plan status: **paused reference; Phase 0 guardrails, code-health B01-B11, the
+documented client ownership extractions, and the follow-up navigation audit are
+complete.** Resume only for a concrete ownership/navigation problem, not as a
+standing cleanup campaign.
 
 This is the AI-facing plan for rebuilding Spoiled Milk's folder and package
 structure safely. The project is inherited from OpenRSC, which inherited from
@@ -16,23 +18,21 @@ the workspace safety rules and the intended ownership layout.
 ## Current Refactor Scope
 
 The project/workflow safety refactor created after branch and launch confusion
-is now established and remains a non-negotiable contract. The completed B01-B11
-code-health sequence then added build/static-analysis foundations and extracted
-the first renderer, packet, definition, equipment, and spell ownership
-boundaries. The active structure work can now continue with narrow
-behavior-preserving `mudclient` ownership extractions; this is not authority for
-a mass package or folder move.
+is established and remains a non-negotiable contract. The completed B01-B11
+code-health sequence and later ownership passes added build/static-analysis
+foundations and extracted renderer, packet, definition, equipment, spell,
+settings, external-asset, scene-store, and predictive-preload boundaries. No
+further extraction is currently required for normal AI navigation.
 
 Current priority order:
 
 1. Preserve the completed hosted/private launch and physical-worktree
    guardrails; never weaken them for refactor convenience.
-2. Complete `RendererSettingsPanel`, `RendererProfileApplier`,
-   `LegacySoftwareScalingSettings`, `ClientExternalAssetLoader`, and
-   `ClientSceneInstanceStore` in that order.
-3. Reconcile the resulting dependency/facade map before choosing any further
-   `mudclient`, presenter, world, graphics, or telemetry extraction.
-4. Move packages only after those owners are stable and a package move can be
+2. Use `docs/myworld/info/code-navigation.md` and the optional local Ctags
+   helper before proposing another ownership extraction.
+3. Extract only when a real feature or bug exposes mixed authority, repeated
+   navigation failure, or an untestable boundary.
+4. Move packages only after affected owners are stable and a package move can be
    mechanical.
 5. Defer `Client_Base`/`PC_Client` top-level renames until ownership extraction
    and package boundaries are complete and build/release impact is separately

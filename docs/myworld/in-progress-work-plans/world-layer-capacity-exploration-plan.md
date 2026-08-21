@@ -19361,8 +19361,8 @@ private environment should validate at least:
 
 - `docs/myworld/info/in-game-world-editor-foundation.md`
 - `docs/myworld/in-progress-work-plans/terrain-expansion-plan.md`
-- `docs/myworld/in-progress-work-plans/in-game-world-editor-plan.md`
-- `docs/myworld/in-progress-work-plans/standalone-world-builder-plan.md`
+- `docs/myworld/completed-work-plans/archive/in-game-world-editor-plan.md`
+- `docs/myworld/completed-work-plans/archive/standalone-world-builder-plan.md`
 - `docs/myworld/in-progress-work-plans/remaster-suite-roadmap.md`
 - `docs/myworld/in-progress-work-plans/legacy-limits-audit.md`
 - `docs/workspaces/README.md`

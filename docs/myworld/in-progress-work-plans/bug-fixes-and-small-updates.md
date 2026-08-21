@@ -43,10 +43,10 @@ docs/player-command-list
       focused branches. The preserved backlog, dependency audit, execution
       order, and implementation-ready first camera task live in
       [fixes-and-changes-plan.md](fixes-and-changes-plan.md).
-- [ ] Add the active-potion HUD, safe direct-travel interactions, and Shilo
-      furnace unlock described in the AI-2 brief below.
+- [x] Add the active-potion HUD, safe direct-travel interactions, and Shilo
+      furnace unlock described in the completed AI-2 record below.
 
-## AI-2 Task Brief: Potion Timers And Shilo Travel Quality Of Life
+## Completed Record: Potion Timers And Shilo Travel Quality Of Life
 
 Recommended branch: `feat/potion-timers-and-shilo-travel-qol`
 

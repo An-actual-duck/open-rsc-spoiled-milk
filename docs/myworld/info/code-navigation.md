@@ -38,9 +38,9 @@ proved. See [server build source of truth](server-build-source-of-truth.md).
 ## Ownership maps worth opening first
 
 - [Code cleanup and modularization plan](../in-progress-work-plans/code-cleanup-and-modularization-plan.md): completed B01–B11 and client extraction boundaries.
-- [Code-size and indexing audit](../in-progress-work-plans/code-size-and-indexing-audit-2026-08-13.md): current large-file priorities and stop conditions.
+- [Code-size and indexing audit](code-size-and-indexing-audit-2026-08-13.md): current large-file priorities and stop conditions.
 - [Server R2 plan](../in-progress-work-plans/server-r2-plan.md): server composition, layered-map, build, diagnostics, persistence, and plugin boundaries.
-- [Combat refactor audit](../in-progress-work-plans/classic-scape-combat-refactor-audit-2026-08-05.md): combat authority and characterization constraints.
+- [Combat refactor audit](../completed-work-plans/classic-scape-combat-refactor-audit-2026-08-05.md): combat authority and characterization constraints.
 - [Compatibility/prune proof](compatibility-and-prune-proof-b11.md): retained compatibility surfaces and proof-before-removal rules.
 - [Testing quick reference](testing-quick-reference.md): routine focused and product gates.
 - [AI operability routing audit](ai-operability-routing-audit-2026-08-13.md):

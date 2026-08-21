@@ -34,7 +34,9 @@ This is the consolidated record of major MyWorld changes made so far. Detailed l
   retired, Fletching cape remains a compatibility item with no normal
   acquisition path, and the Firemaking cape keeps its effects but no longer has
   the old NPC purchase path.
-- Prayer has a god-line allocation model with current-book UI behavior and skilling XP bonuses.
+- Worship has a god-line allocation model with current-book UI behavior and
+  skilling XP bonuses. `Prayer` remains only in compatibility identifiers and
+  in ordinary references to prayers as actions/effects.
 - Runecrafting was simplified around rune essence and altar use, with talisman/tiara-style progression retired from normal flow.
 - Overworld rune altars now use direct altar interaction and themed altar
   presentation instead of the old mysterious-ruins entry model.
@@ -84,7 +86,62 @@ This is the consolidated record of major MyWorld changes made so far. Detailed l
 - Production behavior tests cover default selection, disabled-state truth, batching, resource exhaustion, and former fletchery routing.
 - The custom bank supports `Ctrl` plus left-click to withdraw the available
   bank quantity or deposit all inventory copies of the selected item.
+- Production windows can remember the last successfully started recipe and can
+  remain open between completed batches through separate opt-in preferences.
+- Pinned inventory, skills, spellbook, social, and options panels remain visible
+  without blocking game-world input outside their rendered bounds.
 - Remaining UI work is mostly player-facing text, clipped labels, production polish, and magic/combat explanation surfaces. Skill guides passed the current field-test pass.
+
+## Layered World And Runtime
+
+- The signed layered-world loader is the production map path. Player/entity
+  location, scene context, collision, interactions, persistence, and client
+  residency use explicit world space and signed level identity.
+- The custom client keeps a wider visual residency field around the smaller
+  authoritative gameplay window and renders the complete loaded area on the
+  minimap.
+- Later regression work corrected restricted passages, guild-area checks,
+  arena placement, scenery reachability, and projectile cover that still
+  depended on legacy packed coordinates.
+- RSC World Editor and its embedded runtime are now independent repositories.
+  Their former Core plans remain archived only as migration history.
+
+## Cleric, Blessing, And Devotion
+
+- Blessing is a level 1-99 production skill with stone and silver sigils,
+  altar blessing, every-ten-level duplicate production, and diminishing XP
+  returns.
+- The Spells interface contains separate Mage and Cleric tabs. The launch
+  Cleric book has twelve party-support spells with Holy Power, atomic sigil
+  spending, typed timed effects, status HUD presentation, and PvP exclusion.
+- Devotion blessing/destruction transactions, costs, hourly limits, alignment,
+  cleanup, and Bonecrusher behavior use the accepted audited rules.
+- Unholy sigils and enemy-facing Cleric debuffs remain future concept work, not
+  missing launch implementation.
+
+## Monster Slayer's Guild
+
+- Six progressive guild tiers provide mandatory/repeatable tasks, promotions,
+  typed point currencies, graphical reward shops, and rank-themed contacts.
+- Six ordered satchel purchases permanently expand inventory capacity from 30
+  to 40 slots.
+- When multiple eligible players share a task and target, only the highest
+  damage contributor receives Slayer task credit, with deterministic tie
+  handling.
+- Unique Slayer rewards remain deliberately deferred until the shipped task
+  and point economy has stronger field evidence.
+
+## Combat Modernization
+
+- The A01-A11 behavior-preserving program established deterministic seams,
+  reasoned eligibility, engagement/event ownership, damage facts, exact death
+  lifecycle boundaries, projectile resource/impact ledgers, typed poison and
+  burn lifecycles, contribution profiles, NPC combat profiles, and bounded
+  tracing without importing Classic-Scape balance or formulas.
+- Projectile cover now distinguishes allegiance: solid walls and closed doors
+  block both sides, ordinary scenery and unwalkable terrain can be attacked
+  across, and fences block hostile NPC projectiles while allowing player and
+  player-allied projectiles.
 
 ## Agility Rewards
 
@@ -114,28 +171,14 @@ This is the consolidated record of major MyWorld changes made so far. Detailed l
 
 ## Documentation Consolidation
 
-- Active MyWorld docs were reduced to:
-  - `README.md`
-  - `work-items.md`
-  - `change-history.md`
-  - `combat-equipment-spec.md`
-  - `altar-enchantment-and-conversion-plan.md`
-  - `god-knight-equipment-audit.md`
-  - `pvm-population-and-cluster-plan.md`
-  - `pvm-npc-cluster-audit.md`
-  - `dual-element-spells.md`
-  - `jewelry-and-retired-robe-effects.md`
-  - `compatibility-only-content.md`
-  - `migration-regression-audit.md`
-  - `summoning-plan.md`
-  - `fishing-spot-map.md`
-  - `fishing-rework-plan.md`
-  - `resource-seed-plan.md`
-  - `dev-admin-commands.md`
-  - `testing-quick-reference.md`
+- `docs/myworld/README.md` is the authoritative category index.
+- Active implementation direction lives in `in-progress-work-plans/`; completed
+  records move to `completed-work-plans/`; stable audits and references live in
+  `info/`; early ideas remain in `rough-drafts/`.
 - Detailed historical plans and audits were archived under `docs/myworld/completed-work-plans/archive/`.
-- A focused `summoning-plan.md` now tracks the first real summon-system build
-  instead of leaving summon-backed armor concepts as loose notes.
+- The 2026-08-21 documentation audit reconciled the index and roadmap through
+  release `v0.2.75`, moved closed implementation records out of the active
+  queue, and archived former Core World Editor plans after project separation.
 
 ## Combat Follow-Up
 

@@ -16,7 +16,7 @@ HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOption
 RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
 NATURAL_REGEN = ROOT / "server/src/com/openrsc/server/event/rsc/impl/NaturalHitsRegeneration.java"
 CARRIED_ITEMS = ROOT / "server/src/com/openrsc/server/model/container/CarriedItems.java"
-PLAN = ROOT / "docs/myworld/in-progress-work-plans/cleric-spellbook-implementation-plan.md"
+PLAN = ROOT / "docs/myworld/completed-work-plans/cleric-spellbook-implementation-plan.md"
 
 
 def require(condition: bool, message: str) -> None:

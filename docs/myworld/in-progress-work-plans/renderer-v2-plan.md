@@ -625,7 +625,7 @@ current alpha baseline:
     ore, and effect surfaces so shader work is data-driven.
   - The proposed parity-preserving resident-world metadata, shader-input, and
     diagnostic foundation is specified in
-    [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
+    [renderer-material-family-foundation-plan.md](../completed-work-plans/renderer-material-family-foundation-plan.md).
 - **Camera, zoom, and render-surface expansion**
   - Stress test larger render surfaces and mouse-wheel zoom limits now that the
     OpenGL world can draw a wider scene.
@@ -1285,7 +1285,7 @@ they are not visual requirements for the baseline.
         post-collection old-generation, per-collector, direct-buffer, and
         account-free login-epoch telemetry. Run the approved no-capture
         idle/route/logout/relogin procedure in
-        [renderer-retention-characterization-plan.md](renderer-retention-characterization-plan.md)
+        [renderer-retention-characterization-plan.md](../completed-work-plans/renderer-retention-characterization-plan.md)
         before considering heap/cache changes or focused heap profiling. The
         `444.6s` two-epoch route showed `PS Old Gen` settle at exactly
         `398,790,048` bytes through logout/relogin and the complete second
@@ -1800,7 +1800,7 @@ they are not visual requirements for the baseline.
 - [ ] Add material metadata for terrain, water, walls, roofs, foliage, ore,
       objects, sprites, and effects so shader behavior is data-driven.
   - [x] Establish the parity-preserving resident static-world foundation in
-        [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md):
+        [renderer-material-family-foundation-plan.md](../completed-work-plans/renderer-material-family-foundation-plan.md):
         explicit stable ids, centralized terrain/object classification,
         per-triangle chunk/signature/VBO/shader propagation, F6/session
         telemetry, and strict `Ctrl+F9` coverage analysis are implemented and

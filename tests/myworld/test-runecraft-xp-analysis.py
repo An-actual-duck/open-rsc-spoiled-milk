@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RUNECRAFT = ROOT / "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/runecraft/Runecraft.java"
 ALTARS = ROOT / "server/conf/server/defs/extras/ObjectRunecraft.xml"
-ANALYSIS = ROOT / "docs/myworld/in-progress-work-plans/rune-crafting-xp-redesign-analysis.md"
+ANALYSIS = ROOT / "docs/myworld/completed-work-plans/rune-crafting-xp-redesign-analysis.md"
 
 # name: (unlock level, configured internal quarter-XP per base rune, level-99 multiplier)
 RUNE_CONFIG = {
@@ -311,7 +311,7 @@ def main() -> None:
     ensure_route_progression()
 
     for snippet in (
-        "Status: implemented on the active topic branch; awaiting manager review.",
+        "Status: implemented, reviewed, and released in `v0.2.50`.",
         "14 route-normalized optimal regimes",
         "13 actual method",
         "`562,240 XP/hour`",

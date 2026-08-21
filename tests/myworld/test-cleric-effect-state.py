@@ -19,7 +19,7 @@ PARTY_MANAGER = ROOT / "server/src/com/openrsc/server/content/party/PartyManager
 CASTING = CLERIC_ROOT / "runtime/ClericSupportCasting.java"
 HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java"
 ORIGINS = EFFECT_ROOT / "ClericEffectOrigins.java"
-PLAN = ROOT / "docs/myworld/in-progress-work-plans/cleric-spellbook-implementation-plan.md"
+PLAN = ROOT / "docs/myworld/completed-work-plans/cleric-spellbook-implementation-plan.md"
 
 
 def require(condition: bool, message: str) -> None:

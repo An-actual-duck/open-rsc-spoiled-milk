@@ -1,7 +1,7 @@
 # Renderer Material-Family Foundation Plan
 
-Status: complete and live-accepted on `feat/renderer-v2-refinement`; the parent
-renderer-v2 refinement workstream remains active.
+Status: complete, merged to `main`, and live-accepted; the parent renderer-v2
+refinement workstream remains active.
 
 This is the next milestone in the ongoing renderer-v2 refinement workstream on
 `feat/renderer-v2-refinement`. It follows the accepted visual/performance,
@@ -14,9 +14,11 @@ parity-preserving by default: it may add metadata, a shader input, diagnostics,
 and an opt-in inspection view, but it must not tune the normal material
 response yet.
 
-The parent ledgers are [renderer-v2-plan.md](renderer-v2-plan.md),
-[renderer-and-shader-roadmap.md](renderer-and-shader-roadmap.md), and
-[remaster-lighting-and-shadow-plan.md](remaster-lighting-and-shadow-plan.md).
+The parent ledgers are
+[renderer-v2-plan.md](../in-progress-work-plans/renderer-v2-plan.md),
+[renderer-and-shader-roadmap.md](../in-progress-work-plans/renderer-and-shader-roadmap.md),
+and
+[remaster-lighting-and-shadow-plan.md](../in-progress-work-plans/remaster-lighting-and-shadow-plan.md).
 
 ## Current Ownership
 

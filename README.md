@@ -180,6 +180,9 @@ the short version.
   at every rune altar, among other things.
 - Worship is split into three devotions. Devotion is its own mechanic, can be
   built per god, and each god has its own set of prayers.
+- Blessing is a level 1-99 production skill for carving and blessing sigils.
+  The Cleric spellbook uses those sigils for twelve party-focused support
+  spells, with Mage and Cleric presented as separate spell tabs.
 - Herblaw has new potions for the updated mechanics.
 - Gathering skills have new rare drop tables.
 - Gathering mechanics have been given a make-over and may at first glance seem
@@ -190,6 +193,15 @@ the short version.
   are still experimental, but Agility needed something more satisfying.
 - Combat has Magic and Ranged enemy styles, AoE options, summons, always-hit
   attacks, defensive armor identities, and more build choices.
+- The Monster Slayer's Guild provides six progressive task tiers, separate
+  point currencies, graphical reward shops, promotions, and permanent satchel
+  upgrades that expand inventory capacity from 30 to 40 slots.
+- The production interface can remember the last successful recipe and remain
+  open between batches when those options are enabled.
+- Pinned side panels remain visible while allowing interaction with the world
+  outside their rendered bounds.
+- The live game uses the signed layered-world loader and its wider resident
+  terrain window rather than the former packed-map boundary presentation.
 
 Check the in-game guides for more details. I am trying to keep them up to date
 as I add things, but I am also intentionally not listing everything here.

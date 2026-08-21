@@ -1,14 +1,15 @@
 # In-Game World Editor Plan
 
-Status: active; the foundation, terrain painting, durable save, void picking,
-and editor collision isolation are implemented. The next active phase is the
-compact icon toolbar, followed by measured editing-performance work.
+Status: **historical Core implementation plan.** The foundation described here
+was completed before RSC World Editor became an independent project. Current
+editor work belongs to `/home/justin/rsc-world-editor` and its independent
+runtime provider; this file must not be used to activate a Core worker.
 
 Owner: Spoiled Milk project owner
 
 Initial branch: `feat/in-game-world-editor-foundation`
 
-Next branch: `feat/world-editor-compact-toolbar`
+Former next branch: `feat/world-editor-compact-toolbar` (historical only)
 
 Related standalone product plan:
 [`standalone-world-builder-plan.md`](standalone-world-builder-plan.md). The

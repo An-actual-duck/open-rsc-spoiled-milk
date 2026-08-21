@@ -9,7 +9,7 @@ when feature pressure exposes a specific ownership boundary or a fresh review
 justifies one.
 
 Current size/churn measurements and the code-navigation recommendation are in
-[`code-size-and-indexing-audit-2026-08-13.md`](code-size-and-indexing-audit-2026-08-13.md).
+[`code-size-and-indexing-audit-2026-08-13.md`](../info/code-size-and-indexing-audit-2026-08-13.md).
 That audit supersedes this plan's historical line-count prioritization, while
 this document retains the completed extraction contracts and stop conditions.
 

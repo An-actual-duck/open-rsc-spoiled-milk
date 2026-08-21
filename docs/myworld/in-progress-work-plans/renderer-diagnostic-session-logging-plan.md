@@ -304,7 +304,7 @@ For each manager-reported visual test:
 The first accepted session's sampled heap floor rose during a long route and
 rose sharply around the intentionally intrusive full capture burst. This is
 not leak proof. The approved
-[renderer-retention-characterization-plan.md](renderer-retention-characterization-plan.md)
+[renderer-retention-characterization-plan.md](../completed-work-plans/renderer-retention-characterization-plan.md)
 adds post-collection old-generation, per-collector, direct-buffer, and
 account-free login-epoch evidence, then uses a no-capture idle/route/relogin
 test to decide whether focused retention profiling is warranted.

@@ -1,10 +1,11 @@
 # The Monster Slayer's Guild Plan
 
-Status: **definition/state/migration, authoritative task progression and kill
-credit, the approved 35-task roster, all six contact routes and promotions,
-NPC placement, player-facing multi-currency shops, and the dynamic 30-to-40
-Slayer inventory-capacity contract are implemented; private-client validation
-has passed; release integration remains pending manager approval**
+Status: **the playable guild foundation is implemented and shipped. Rank/state
+migration, authoritative task progression and top-damage kill credit, the
+approved 35-task roster, six contact routes and promotions, NPC placement,
+multi-currency shops, and the dynamic 30-to-40 Slayer inventory-capacity
+contract are live. Unique Slayer rewards remain deliberately deferred; future
+work is post-release balance, content expansion, and player-facing guidance.**
 Owner: An-actual-duck
 Audit baseline: published `main` `4be5b9fc5` on 2026-07-16
 Audit integration: merged into `main` as `8ec90a4d6`
@@ -19,7 +20,7 @@ Source policy:
 
 - This is the only official Monster Slayer implementation plan.
 
-## Release-Readiness Owner Decisions (2026-08-11)
+## Launch Decisions And Shipped State (2026-08-11 through 2026-08-20)
 
 - The formal player-facing quest and guild name is **The Monster Slayer's
   Guild**. Rank proofs (stamp, sticker, button, badge, medal, and crest) are
@@ -36,10 +37,11 @@ Source policy:
   to players as the location name. Bran `848`, the associate `854`, and the
   ambient Veteran `860` occupy fixed Blue Moon Inn tiles `(122,524)`,
   `(120,524)`, and `(123,525)` respectively.
-- Private validation has passed for the implemented contacts, typed shops,
-  point UI, 30-to-40 inventory expansion, and ordered satchel purchases.
-  Release integration remains a manager decision; no release is authorized by
-  this plan update.
+- Private validation passed for the implemented contacts, typed shops, point
+  UI, 30-to-40 inventory expansion, and ordered satchel purchases. The guild
+  shipped in `v0.2.70`; single-winner top-damage task credit followed in
+  `v0.2.71`, and Sir Radimus's direct Monster Slayer task shortcut shipped in
+  `v0.2.73`.
 - `docs/myworld/rough-drafts/slayer-guild-rough-draft-plan.md` is superseded
   historical context, not an implementation source.
 - Do not restore the rough draft's monster-drop/certificate turn-ins.

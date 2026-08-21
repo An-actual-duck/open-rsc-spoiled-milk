@@ -1,6 +1,6 @@
 # Enchanting Rune-Crafting XP Redesign Analysis
 
-Status: implemented on the active topic branch; awaiting manager review.
+Status: implemented, reviewed, and released in `v0.2.50`.
 
 ## Decision Summary
 

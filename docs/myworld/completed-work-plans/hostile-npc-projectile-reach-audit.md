@@ -1,7 +1,9 @@
 # Hostile NPC Projectile Reach Audit
 
 Status: implementation complete; automated and private visual verification
-passed
+passed. The final fence/railing correction shipped in `v0.2.74`: players and
+player-allied projectiles may pass through, while hostile NPC projectiles
+remain blocked.
 
 Date: 2026-07-23
 

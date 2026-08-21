@@ -513,7 +513,7 @@ default work queue:
   does not apply one generic response to every asset. The proposed first
   parity-preserving resident-world contract is now implemented and
   live-accepted in
-  [renderer-material-family-foundation-plan.md](renderer-material-family-foundation-plan.md).
+  [renderer-material-family-foundation-plan.md](../completed-work-plans/renderer-material-family-foundation-plan.md).
   It covers static resident triangles without changing normal fragment output;
   twelve strict capture frames and a two-epoch relog/section route retained
   complete classification. Sprites, projectiles, and effects remain explicitly

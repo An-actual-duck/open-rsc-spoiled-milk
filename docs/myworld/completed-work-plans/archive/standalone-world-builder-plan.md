@@ -1,7 +1,9 @@
 # Standalone World Builder 2 Plan
 
-Status: active; Phases 0-4 complete, Phase 5 standalone packaging and layered
-feature-completeness work active
+Status: **historical Core migration record.** RSC World Editor and its embedded
+runtime are independent projects managed from `/home/justin/rsc-world-editor`
+and `/home/justin/rsc-world-editor-runtime`. Their active packaging, provider,
+lock, and release work must not be assigned to Core workers.
 
 Owner: Spoiled Milk project owner
 
@@ -10,8 +12,8 @@ Initial branch: `feat/world-editor-standalone-builder`
 Related plans:
 
 - [`in-game-world-editor-plan.md`](in-game-world-editor-plan.md)
-- [`project-structure-refactor-plan.md`](project-structure-refactor-plan.md)
-- [`renderer-and-shader-roadmap.md`](renderer-and-shader-roadmap.md)
+- [`project-structure-refactor-plan.md`](../../in-progress-work-plans/project-structure-refactor-plan.md)
+- [`renderer-and-shader-roadmap.md`](../../in-progress-work-plans/renderer-and-shader-roadmap.md)
 
 ## Summary
 
@@ -259,7 +261,7 @@ The implementation sequence is:
 The first catalog covers all 1,332 scenery and 214 boundary IDs. It records
 canonical names, semantic display labels, provenance, tags, and search terms;
 the generated audit is
-[`../info/world-builder-definition-catalog.md`](../info/world-builder-definition-catalog.md).
+[`../../info/world-builder-definition-catalog.md`](../../info/world-builder-definition-catalog.md).
 Equivalent IDs may share a functional label (for example both tin-rock model
 variants are `Rock (tin)`), while the stable ID and future visual card retain
 their exact identity. This establishes the data foundation for an NEI-style

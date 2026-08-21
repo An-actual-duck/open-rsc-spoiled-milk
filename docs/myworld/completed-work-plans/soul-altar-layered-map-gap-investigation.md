@@ -1,6 +1,7 @@
 # Soul Altar layered-map visual investigation
 
-Status: approved implementation complete and privately validated
+Status: approved implementation complete, merged to `main`, and privately
+validated against the production layered loader.
 
 Branch: `fix/soul-altar-layered-map-gaps`
 

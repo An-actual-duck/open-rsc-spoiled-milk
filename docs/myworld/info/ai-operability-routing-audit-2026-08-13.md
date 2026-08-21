@@ -179,5 +179,5 @@ ownership checks above.
 - [Testing quick reference](testing-quick-reference.md)
 - [Server build source of truth](server-build-source-of-truth.md)
 - [Compatibility and prune proof](compatibility-and-prune-proof-b11.md)
-- [Code-size and indexing audit](../in-progress-work-plans/code-size-and-indexing-audit-2026-08-13.md)
+- [Code-size and indexing audit](code-size-and-indexing-audit-2026-08-13.md)
 - [Code cleanup and modularization plan](../in-progress-work-plans/code-cleanup-and-modularization-plan.md)

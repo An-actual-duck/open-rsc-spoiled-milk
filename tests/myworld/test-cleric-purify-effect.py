@@ -16,7 +16,7 @@ RUNTIME = CLERIC / "runtime/ClericSupportCasting.java"
 MOB = SERVER / "model/entity/Mob.java"
 POISON_EVENT = SERVER / "event/rsc/impl/PoisonEvent.java"
 POISON_REDUCTION = SERVER / "content/PoisonPowerReduction.java"
-PLAN = ROOT / "docs/myworld/in-progress-work-plans/cleric-spellbook-implementation-plan.md"
+PLAN = ROOT / "docs/myworld/completed-work-plans/cleric-spellbook-implementation-plan.md"
 
 
 def require(condition: bool, message: str) -> None:
@@ -199,10 +199,15 @@ def validate_runtime_wiring() -> None:
         "curePoison();",
         "poisonEvent.setPoisonPower(remainingPower);",
         "setPoisonDamage(remainingPower);",
-        'getCache().set("poisoned", remainingPower)',
     ):
         require(snippet in reduction_method,
                 f"shared poison reduction omits state boundary: {snippet}")
+    require(
+        "public void setPoisonDamage(int poisonDamage)" in mob
+        and "persistPoisonState();" in mob
+        and "PoisonDurableRecord.CACHE_KEY" in mob,
+        "partial Purify no longer reaches typed durable poison persistence",
+    )
     for forbidden in ("setPoisonMaxPower", "poisoned_max", "setPoisonOwnerId"):
         require(forbidden not in reduction_method,
                 f"partial Purify must preserve poison accumulation/source: {forbidden}")

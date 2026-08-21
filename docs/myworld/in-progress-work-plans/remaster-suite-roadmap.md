@@ -1706,7 +1706,7 @@ The RSC Remastered product roadmap is complete when:
 - [`code-cleanup-and-modularization-plan.md`](code-cleanup-and-modularization-plan.md)
 - [`renderer-and-shader-roadmap.md`](renderer-and-shader-roadmap.md)
 - [`renderer-v2-plan.md`](renderer-v2-plan.md)
-- [`standalone-world-builder-plan.md`](standalone-world-builder-plan.md)
+- [`standalone-world-builder-plan.md`](../completed-work-plans/archive/standalone-world-builder-plan.md)
 - [`terrain-expansion-plan.md`](terrain-expansion-plan.md)
 - [`legacy-limits-audit.md`](legacy-limits-audit.md)
 - [`../info/static-analysis.md`](../info/static-analysis.md)

@@ -1,14 +1,13 @@
 # Devotion, Destruction, and Blessing Audit
 
-Status: accepted implementation is complete on
-`feat/devotion-system-audit-implementation`.
+Status: accepted implementation is complete on `main` and released in
+`v0.2.55`.
 
 Date audited: 2026-07-24
 
 ## Implementation Status
 
-The accepted direction is implemented and validated on the active topic
-branch:
+The accepted direction is implemented, validated, and shipped:
 
 - The Bonecrusher correctness fix rejects noted inputs, removes the exact
   selected inventory instance, and awards nothing on failed removal.
@@ -25,6 +24,10 @@ branch:
   allocation.
 - Existing offering XP, blessing XP, destruction XP, hourly-limit, and artifact
   formulas remain unchanged.
+- A later shipped offering-tier change (`v0.2.69`) multiplies both baseline and
+  Devotion-derived Worship XP through `OfferingExperience`; historical flat-XP
+  examples below should be read as Bones (`1.0x`) examples unless they name a
+  different offering.
 
 The detailed “Current” sections below are retained as the pre-implementation
 audit snapshot that established the defects. The accepted rules and this

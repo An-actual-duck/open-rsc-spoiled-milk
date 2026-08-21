@@ -2,11 +2,14 @@
 
 ## Status
 
-- Branch: `main` (C12 integrated; Cleric launch implementation complete)
-- Governing design: [`cleric-spellbook-concept.md`](cleric-spellbook-concept.md)
+- Branch: `main` (C12 integrated; Cleric launch implementation complete and
+  released in `v0.2.64`)
+- Governing design: [`cleric-spellbook-concept.md`](../in-progress-work-plans/cleric-spellbook-concept.md)
 - Completed milestones: **C01 — definition catalog foundation; C02 — sigil item and asset identities; C03 — Holy Power equipment foundation; C04 — Blessing skill platform; C05 — sigil carving and altar blessing; C06 — Cleric spellbook transport and presentation; C07 — shared support targeting, atomic cast transaction, and Unify; C08A — typed transient effect state and lifecycle foundation; C08B — mixed status transport and HUD extension; C09 — Purify, Restore, Mend, Greater Mend, and Respite implementation and private acceptance; C10 — Fervor, Zeal, Ward/Aegis, Thorns, and Rally direct-combat effects and private acceptance; C12 — Devotion-source rebalance, Black Unicorn set replacement, compact launch animations, and private acceptance**
 - Current milestone: **C12 complete and integrated**
-- Next planned milestone: **Manager release verification and packaging; C11 remains retired into C07**
+- Post-launch direction: **ordinary balance/field feedback belongs in new
+  focused work; C11 remains retired into C07, while future Unholy sigils remain
+  concept work rather than part of this completed launch plan**
 - Runtime exposure: **All twelve launch Cleric spells are implemented on `main`, with party-only targeting, atomic sigil spending, typed transient state, mixed-status HUD presentation, and PvP exclusion**
 - Public-server work: **forbidden**
 

@@ -12,7 +12,7 @@ PRAYER_PLUGINS = (
 TRANSACTION = PRAYER_PLUGINS / "PrayerBlessingTransaction.java"
 AUDIT = (
     ROOT
-    / "docs/myworld/in-progress-work-plans/devotion-destruction-blessing-audit.md"
+    / "docs/myworld/completed-work-plans/devotion-destruction-blessing-audit.md"
 )
 
 
@@ -72,7 +72,8 @@ def main() -> None:
         "MIN_DEVOTION_LEVEL = DevotionHalfOfferingBalance.MIN_DEVOTION_LEVEL",
         "DEVOTION_REQUIREMENT_PER_RESOURCE = 100",
         "BLESSING_OFFERING_COST_PER_RESOURCE = OFFERINGS_PER_DEVOTION_LEVEL / 2",
-        "return bonusXp * 4;",
+        "OfferingExperience.scaleDisplayedExperience(bonusXp, offeringItemId)",
+        "* OfferingExperience.INTERNAL_XP_UNITS_PER_XP;",
         "100.0D + devotionLevel",
         "DevotionOfferingGain.getHalfOfferingUnits(",
     ):

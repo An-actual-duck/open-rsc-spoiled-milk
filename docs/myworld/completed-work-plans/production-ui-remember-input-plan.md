@@ -1,8 +1,9 @@
 # Production UI Remember Last Input
 
-Status: implementation and focused automated validation complete; live visual
-acceptance pending. The companion Keep open preference is implemented with the
-same account-scoped production UI protocol.
+Status: implementation, automated validation, and owner visual acceptance are
+complete. Remember-last-input shipped in `v0.2.64`; the companion Keep open
+preference shipped in `v0.2.69` through the same account-scoped production UI
+protocol.
 
 ## Goal
 

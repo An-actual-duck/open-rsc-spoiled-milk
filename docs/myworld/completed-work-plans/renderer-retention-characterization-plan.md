@@ -1,7 +1,7 @@
 # Renderer Retention Characterization Plan
 
-Status: implemented and live-validated on `feat/renderer-v2-refinement`;
-continued monitoring is part of ordinary renderer diagnostics.
+Status: implemented, merged to `main`, and live-validated; continued monitoring
+is part of ordinary renderer diagnostics rather than a separate active plan.
 
 This is a short measurement milestone inside the ongoing renderer-v2
 refinement workstream. It follows the accepted live visual/performance route
