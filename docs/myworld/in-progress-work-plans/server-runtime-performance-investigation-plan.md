@@ -295,7 +295,8 @@ wall-clock roaming variance from both sides:
 Polling runs were 36.674 and 33.538 ms/tick. Signaled runs were 34.024 and
 32.741 ms/tick. All four produced the exact same aggregate gameplay signature.
 A final equivalent JFR run measured 31.817 ms/tick, with 0.248 ms/tick in
-plugin events and about 0.502 ms/tick in `PvmMeleeEvent` execution.
+plugin events and about 0.502 ms/tick in `PvmMeleeEvent` execution. The exact
+handoff code was rerun at 34.209 and 31.073 ms/tick with the same signature.
 
 ## Investigation checkpoint
 
@@ -345,8 +346,13 @@ per tick in this stress workload.
 - `python3 tests/myworld/test-path-queue-regressions.py`
 - `python3 tests/myworld/test-movement-pathing-release-plan.py`
 - `python3 tests/myworld/test-combat-runtime-invariants.py`
+- `python3 tests/myworld/test-combat-interaction.py`
+- `python3 tests/myworld/test-client-custom-movement-stability.py`
+- `python3 tests/myworld/test-legacy-plugin-adapter-parity.py`
+- `python3 tests/myworld/test-plugin-default-fallback.py`
+- bundled Ant `test_combat` (143 scenarios)
 - `./scripts/build-server.sh` (authoritative Ant core and plugins)
-- `python3 scripts/lint.py report --base a13c9d58 --offline`: changed-code
+- `python3 scripts/lint.py report --base 24a40108c --offline`: changed-code
   compiler gate passed with no new gated warnings. The whole-program SpotBugs
   report still flags two pre-existing client findings in unchanged
   `DoSkillInterface` and `PartyInterface`; neither file differs from the branch

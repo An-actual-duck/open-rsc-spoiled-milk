@@ -267,7 +267,7 @@ public class Server implements Runnable {
 	private final boolean benchmarkDeepNpcProfiling;
 	private final int benchmarkActiveCombatPairs;
 	private final long benchmarkCombatSeed;
-	private ActiveCombatBenchmark activeCombatBenchmark;
+	private volatile ActiveCombatBenchmark activeCombatBenchmark;
 	private long benchmarkSamples = 0;
 	private long benchmarkTickTotal = 0;
 	private long benchmarkTickMax = 0;
