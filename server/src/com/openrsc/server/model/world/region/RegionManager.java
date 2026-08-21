@@ -873,19 +873,20 @@ public class RegionManager {
 
 	private Collection<Npc> getLayeredLocalNpcs(final Entity observer) {
 		LinkedHashSet<Npc> npcs = new LinkedHashSet<Npc>();
-		for (Entity candidate : layeredSpatialSnapshot(
-			observer, getWorld().getServer().getConfig().VIEW_DISTANCE)
-				.getEntities()) {
-			if (candidate instanceof Npc
-				&& ((Npc) candidate).withinRange(observer)) {
-				npcs.add((Npc) candidate);
+		Entity checked = Objects.requireNonNull(observer, "observer");
+		WorldLocation location = checked.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(checked, location);
+		for (Npc candidate : layeredSpatialEntityIndex.snapshotNpcs(
+			getLayeredVisibleRegionWindow(location))) {
+			if (candidate.withinRange(checked)) {
+				npcs.add(candidate);
 			}
 		}
 		return npcs;
 	}
 
 	private Collection<GameObject> getLayeredLocalObjects(final Mob observer) {
-		LinkedHashSet<GameObject> objects = new LinkedHashSet<GameObject>();
+		ArrayList<GameObject> objects = new ArrayList<GameObject>();
 		int distance = getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE;
 		WorldLocation observerLocation = observer.getWorldLocation();
 		layeredSpatialEntityIndex.requireMembership(
@@ -906,13 +907,14 @@ public class RegionManager {
 		final Mob observer) {
 		LinkedHashSet<GroundItem> items = new LinkedHashSet<GroundItem>();
 		int distance = getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE;
-		for (Entity candidate : layeredSpatialSnapshot(observer, distance)
-				.getEntities()) {
-			if (candidate instanceof GroundItem
-				&& candidate.sharesSpatialDomain(observer)
+		WorldLocation location = observer.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(observer, location);
+		for (GroundItem candidate : layeredSpatialEntityIndex.snapshotGroundItems(
+			getLayeredVisibleRegionWindow(location, distance))) {
+			if (candidate.sharesSpatialDomain(observer)
 				&& candidate.getLocation().withinGridRange(
 					observer.getLocation(), distance)) {
-				items.add((GroundItem) candidate);
+				items.add(candidate);
 			}
 		}
 		return items;

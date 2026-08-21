@@ -43,6 +43,22 @@ public final class GameObject extends Entity {
 }
 """
 
+NPC_STUB = r"""
+package com.openrsc.server.model.entity.npc;
+
+import com.openrsc.server.model.entity.Entity;
+
+public final class Npc extends Entity {
+}
+"""
+
+GROUND_ITEM_STUB = r"""
+package com.openrsc.server.model.entity;
+
+public final class GroundItem extends Entity {
+}
+"""
+
 PLAYER_STUB = r"""
 package com.openrsc.server.model.entity.player;
 
@@ -110,14 +126,21 @@ package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LayeredSpatialWindowKey;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.model.world.coordinate.WorldRegionKey;
 import com.openrsc.server.model.world.coordinate.WorldRegionWindow;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public final class LayeredSpatialRuntimeAuthorityFixture {
     public static void main(String[] args) {
+		assertLocalRegionHashesAreDistributed();
         LayeredSpatialEntityIndex index = new LayeredSpatialEntityIndex();
         Entity surface = new Entity();
         Entity upper = new Entity();
@@ -157,7 +180,7 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         check(index.hasPlayerWithinRange(
                 WorldRegionWindow.around(surfaceLocation, 15), surface),
             "player-only surface range hit");
-		check(index.snapshotPlayersWithinRange(
+        check(index.snapshotPlayersWithinRange(
 				WorldRegionWindow.around(surfaceLocation, 15), surface)
 				.size() == 1,
 			"player-only snapshot filters by range and level");
@@ -179,6 +202,27 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
 				WorldRegionWindow.around(deepLocation, 15), deep)
 				.isEmpty(),
 			"player-only snapshot preserves level isolation");
+
+        Npc surfaceNpc = new Npc();
+        Npc deepNpc = new Npc();
+        GroundItem surfaceItem = new GroundItem();
+        GroundItem deepItem = new GroundItem();
+        index.synchronize(surfaceNpc, null, surfaceLocation);
+        index.synchronize(deepNpc, null, deepLocation);
+        index.synchronize(surfaceItem, null, surfaceLocation);
+        index.synchronize(deepItem, null, deepLocation);
+        check(index.snapshotNpcs(
+                WorldRegionWindow.around(surfaceLocation, 15)).size() == 1
+                && index.snapshotNpcs(
+                    WorldRegionWindow.around(surfaceLocation, 15)).get(0)
+                    == surfaceNpc,
+            "NPC-only snapshot preserves identity and level");
+        check(index.snapshotGroundItems(
+                WorldRegionWindow.around(deepLocation, 15)).size() == 1
+                && index.snapshotGroundItems(
+                    WorldRegionWindow.around(deepLocation, 15)).get(0)
+                    == deepItem,
+            "ground-item-only snapshot preserves identity and level");
 
         WorldLocation boundaryOrigin = location(47, 943, 0);
         WorldLocation boundaryTarget = location(48, 942, 0);
@@ -278,7 +322,7 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         index.remove(nearbyPlayer, surfaceLocation);
         index.remove(outOfRangePlayer, upperLocation);
         index.remove(surface, boundaryTarget);
-        check(index.getMembershipCount() == 3, "removal count");
+        check(index.getMembershipCount() == 7, "removal count");
         expectState(() -> index.remove(surface, boundaryTarget));
         index.clear();
         check(index.getMembershipCount() == 0, "clear");
@@ -292,6 +336,19 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         WorldLocation center) {
         return index.snapshot(WorldRegionWindow.around(center, 15));
     }
+
+	private static void assertLocalRegionHashesAreDistributed() {
+		Set<Integer> hashes = new HashSet<Integer>();
+		for (int regionX = -32; regionX <= 32; regionX++) {
+			for (int regionY = -32; regionY <= 32; regionY++) {
+				hashes.add(new WorldRegionKey(
+					com.openrsc.server.model.world.coordinate.WorldSpaceId.GLOBAL,
+					-2, regionX, regionY).hashCode());
+			}
+		}
+		check(hashes.size() >= 4200,
+			"local region hashes avoid systematic grid collisions");
+	}
 
     private static WorldLocation location(int x, int y, int level) {
         return WorldLocation.global(new WorldCoordinate(x, y, level));
@@ -332,6 +389,12 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
                 "src/com/openrsc/server/model/entity/GameObject.java"
             ): GAME_OBJECT_STUB,
             (
+                "src/com/openrsc/server/model/entity/GroundItem.java"
+            ): GROUND_ITEM_STUB,
+            (
+                "src/com/openrsc/server/model/entity/npc/Npc.java"
+            ): NPC_STUB,
+            (
                 "src/com/openrsc/server/model/entity/player/Player.java"
             ): PLAYER_STUB,
             (
@@ -354,6 +417,8 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
             cls.temp / "src/com/openrsc/server/model/Point.java",
             cls.temp / "src/com/openrsc/server/model/entity/Entity.java",
             cls.temp / "src/com/openrsc/server/model/entity/GameObject.java",
+            cls.temp / "src/com/openrsc/server/model/entity/GroundItem.java",
+            cls.temp / "src/com/openrsc/server/model/entity/npc/Npc.java",
             cls.temp
             / "src/com/openrsc/server/model/entity/player/Player.java",
             cls.temp

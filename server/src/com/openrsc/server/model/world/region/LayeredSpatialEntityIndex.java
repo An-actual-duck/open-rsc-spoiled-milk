@@ -2,6 +2,8 @@ package com.openrsc.server.model.world.region;
 
 import com.openrsc.server.model.entity.Entity;
 import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.coordinate.WorldRegionKey;
@@ -240,6 +242,61 @@ public final class LayeredSpatialEntityIndex {
 				}
 			}
 			return players;
+		}
+	}
+
+	/** Copies only NPC membership while retaining region/insertion order. */
+	public List<Npc> snapshotNpcs(final WorldRegionWindow window) {
+		WorldRegionWindow checked = requireBoundedWindow(window);
+		synchronized (lock) {
+			List<Npc> npcs = new ArrayList<Npc>();
+			for (int regionX = checked.getMinRegionX();
+				regionX <= checked.getMaxRegionX(); regionX++) {
+				for (int regionY = checked.getMinRegionY();
+					regionY <= checked.getMaxRegionY(); regionY++) {
+					Collection<Entity> members = regions.get(
+						new WorldRegionKey(
+							checked.getWorldSpace(), checked.getLevel(),
+							regionX, regionY));
+					if (members == null) {
+						continue;
+					}
+					for (Entity member : members) {
+						if (member instanceof Npc) {
+							npcs.add((Npc) member);
+						}
+					}
+				}
+			}
+			return npcs;
+		}
+	}
+
+	/** Copies only ground-item membership while retaining region/insertion order. */
+	public List<GroundItem> snapshotGroundItems(
+		final WorldRegionWindow window) {
+		WorldRegionWindow checked = requireBoundedWindow(window);
+		synchronized (lock) {
+			List<GroundItem> items = new ArrayList<GroundItem>();
+			for (int regionX = checked.getMinRegionX();
+				regionX <= checked.getMaxRegionX(); regionX++) {
+				for (int regionY = checked.getMinRegionY();
+					regionY <= checked.getMaxRegionY(); regionY++) {
+					Collection<Entity> members = regions.get(
+						new WorldRegionKey(
+							checked.getWorldSpace(), checked.getLevel(),
+							regionX, regionY));
+					if (members == null) {
+						continue;
+					}
+					for (Entity member : members) {
+						if (member instanceof GroundItem) {
+							items.add((GroundItem) member);
+						}
+					}
+				}
+			}
+			return items;
 		}
 	}
 
@@ -633,8 +690,7 @@ public final class LayeredSpatialEntityIndex {
 			this.window = window;
 			this.version = version;
 			this.objectVersion = objectVersion;
-			this.entities = Collections.unmodifiableList(
-				new ArrayList<Entity>(entities));
+			this.entities = Collections.unmodifiableList(entities);
 		}
 
 		public WorldRegionWindow getWindow() {
@@ -665,8 +721,7 @@ public final class LayeredSpatialEntityIndex {
 			final List<GameObject> gameObjects) {
 			this.window = window;
 			this.objectVersion = objectVersion;
-			this.gameObjects = Collections.unmodifiableList(
-				new ArrayList<GameObject>(gameObjects));
+			this.gameObjects = Collections.unmodifiableList(gameObjects);
 		}
 
 		public WorldRegionWindow getWindow() {
