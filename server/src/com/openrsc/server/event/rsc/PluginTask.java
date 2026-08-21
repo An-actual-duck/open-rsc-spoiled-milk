@@ -142,16 +142,30 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 		return initialized.get();
 	}
 
-	private void setInitialized(final boolean started) {
+	private synchronized void setInitialized(final boolean started) {
 		initialized.getAndSet(started);
+		notifyAll();
 	}
 
 	public boolean isThreadRunning() {
 		return threadRunning.get();
 	}
 
-	private void setThreadRunning(final boolean threadRunning) {
+	private synchronized void setThreadRunning(final boolean threadRunning) {
 		this.threadRunning.getAndSet(threadRunning);
+		notifyAll();
+	}
+
+	/**
+	 * Waits until plugin code reaches its existing pause boundary or completes.
+	 * State transitions notify this condition so the game thread does not add a
+	 * fixed one-millisecond polling delay to every plugin dispatch.
+	 */
+	public synchronized void awaitPausePointOrCompletion()
+			throws InterruptedException {
+		while ((!isInitialized() || isThreadRunning()) && !isComplete()) {
+			wait();
+		}
 	}
 
 	public Thread getPluginThread() {
@@ -177,5 +191,6 @@ public abstract class PluginTask extends GameTickEvent implements Callable<Integ
 
 	private synchronized void setFuture(final Future<Integer> future) {
 		this.future = future;
+		notifyAll();
 	}
 }

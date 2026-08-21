@@ -14,7 +14,16 @@ EVENT_HANDLER = (
     ROOT
     / "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java"
 ).read_text()
+PLUGIN_TASK = (
+    ROOT / "server/src/com/openrsc/server/event/rsc/PluginTask.java"
+).read_text()
+PLUGIN_TICK_EVENT = (
+    ROOT / "server/src/com/openrsc/server/event/rsc/PluginTickEvent.java"
+).read_text()
 SCRIPT = (ROOT / "tools/benchmarks/benchmark-active-combat.sh").read_text()
+STATE_UPDATER = (
+    ROOT / "server/src/com/openrsc/server/GameStateUpdater.java"
+).read_text()
 
 
 class ActiveCombatBenchmarkContractTest(unittest.TestCase):
@@ -22,6 +31,9 @@ class ActiveCombatBenchmarkContractTest(unittest.TestCase):
         self.assertIn('"openrsc.benchmarkActiveCombatPairs", 0', SERVER)
         self.assertIn("Active combat workload requires foundation benchmark mode", SERVER)
         self.assertIn("Foundation benchmark mode: network listeners are disabled", SERVER)
+        self.assertIn("isolateBenchmarkNpcCohort();", FIXTURE)
+        self.assertIn("server.getWorld().unregisterNpc(npc);", FIXTURE)
+        self.assertIn("activeCombatBackgroundNpcsRemoved", FIXTURE)
 
     def test_combat_uses_authoritative_transaction_and_production_events(self):
         self.assertIn("player.getAttackTransaction().issue", FIXTURE)
@@ -50,6 +62,30 @@ class ActiveCombatBenchmarkContractTest(unittest.TestCase):
         self.assertIn("activeCombatInvariant=pass", SCRIPT)
         self.assertIn("activeCombatDeterminism", SCRIPT)
         self.assertIn("benchmark outcomes diverged between runs", SCRIPT)
+
+    def test_npc_priority_preserves_order_without_combat_lookup_in_comparator(self):
+        self.assertIn("final Mob playerOpponent = player.getOpponent();", STATE_UPDATER)
+        self.assertIn(
+            "switch (npcPriorityRank(player, playerOpponent, npc))",
+            STATE_UPDATER,
+        )
+        self.assertIn("directCombat.sort(withinPriority);", STATE_UPDATER)
+        self.assertIn("otherCombat.sort(withinPriority);", STATE_UPDATER)
+        self.assertIn("nonCombat.sort(withinPriority);", STATE_UPDATER)
+        comparator = STATE_UPDATER.split(
+            "final Comparator<Npc> withinPriority", 1
+        )[1].split("directCombat.sort", 1)[0]
+        self.assertNotIn("getOpponent()", comparator)
+
+    def test_plugin_tick_waits_on_state_transitions_without_polling_delay(self):
+        self.assertIn("awaitPausePointOrCompletion()", PLUGIN_TASK)
+        self.assertIn("wait();", PLUGIN_TASK)
+        self.assertIn("notifyAll();", PLUGIN_TASK)
+        self.assertIn(
+            "getPluginTask().awaitPausePointOrCompletion();",
+            PLUGIN_TICK_EVENT,
+        )
+        self.assertNotIn("Thread.sleep(1)", PLUGIN_TICK_EVENT)
 
 
 if __name__ == "__main__":

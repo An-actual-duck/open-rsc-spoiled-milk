@@ -3315,11 +3315,14 @@ public final class GameStateUpdater {
 		return Math.abs(npc.getX() - player.getX()) + Math.abs(npc.getY() - player.getY());
 	}
 
-	private static int npcPriorityRank(final Player player, final Npc npc) {
-		if (npc.equals(player.getOpponent()) || player.equals(npc.getOpponent())) {
+	private static int npcPriorityRank(final Player player,
+			final Mob playerOpponent, final Npc npc) {
+		final Mob npcOpponent = npc.getOpponent();
+		if (npc.equals(playerOpponent) || player.equals(npcOpponent)) {
 			return 0;
 		}
-		if (npc.inCombat()) {
+		if (npc.getSprite() >= 8 && npc.getSprite() <= 15
+				&& npcOpponent != null) {
 			return 1;
 		}
 		return 2;
@@ -3340,17 +3343,28 @@ public final class GameStateUpdater {
 	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
 		final int localNpcLimit = localMobLimit(player);
 		final HashSet<Npc> existingLocalNpcs = new HashSet<>(player.getLocalNpcs());
-		final ArrayList<Npc> prioritizedNpcs = new ArrayList<>(visibleNpcs.size());
+		final Mob playerOpponent = player.getOpponent();
+		final ArrayList<Npc> directCombat = new ArrayList<>(visibleNpcs.size());
+		final ArrayList<Npc> otherCombat = new ArrayList<>();
+		final ArrayList<Npc> nonCombat = new ArrayList<>();
 		for (final Npc npc : visibleNpcs) {
-			if (canSendNpcToPlayer(player, npc)) {
-				prioritizedNpcs.add(npc);
+			if (!canSendNpcToPlayer(player, npc)) {
+				continue;
+			}
+			switch (npcPriorityRank(player, playerOpponent, npc)) {
+				case 0:
+					directCombat.add(npc);
+					break;
+				case 1:
+					otherCombat.add(npc);
+					break;
+				default:
+					nonCombat.add(npc);
+					break;
 			}
 		}
-		prioritizedNpcs.sort((left, right) -> {
-			int comparison = Integer.compare(npcPriorityRank(player, left), npcPriorityRank(player, right));
-			if (comparison != 0) {
-				return comparison;
-			}
+		final Comparator<Npc> withinPriority = (left, right) -> {
+			int comparison;
 			comparison = Integer.compare(npcDistanceToPlayer(player, left), npcDistanceToPlayer(player, right));
 			if (comparison != 0) {
 				return comparison;
@@ -3360,7 +3374,13 @@ public final class GameStateUpdater {
 				return comparison;
 			}
 			return Integer.compare(left.getIndex(), right.getIndex());
-		});
+		};
+		directCombat.sort(withinPriority);
+		otherCombat.sort(withinPriority);
+		nonCombat.sort(withinPriority);
+		directCombat.addAll(otherCombat);
+		directCombat.addAll(nonCombat);
+		final List<Npc> prioritizedNpcs = directCombat;
 		if (prioritizedNpcs.size() > localNpcLimit) {
 			return prioritizedNpcs.subList(0, localNpcLimit);
 		}

@@ -41,6 +41,7 @@ public final class ActiveCombatBenchmark {
 	private final List<Pair> pairs = new ArrayList<Pair>();
 	private long pluginDispatches;
 	private int nextInteractionPlayer;
+	private int backgroundNpcsRemoved;
 
 	public ActiveCombatBenchmark(final Server server, final int requestedPairs,
 			final int clientVersion) {
@@ -54,6 +55,7 @@ public final class ActiveCombatBenchmark {
 	}
 
 	public void initialize() {
+		isolateBenchmarkNpcCohort();
 		// World population has completed. From this point onward, keep legacy
 		// random consumers (not yet migrated to GameRandom) replayable too.
 		DataConversions.getRandom().setSeed(
@@ -100,6 +102,15 @@ public final class ActiveCombatBenchmark {
 		}
 
 		server.getGameEventHandler().add(new DriverEvent());
+	}
+
+	private void isolateBenchmarkNpcCohort() {
+		final List<Npc> backgroundNpcs =
+			new ArrayList<Npc>(server.getWorld().getNpcs());
+		for (final Npc npc : backgroundNpcs) {
+			server.getWorld().unregisterNpc(npc);
+		}
+		backgroundNpcsRemoved = backgroundNpcs.size();
 	}
 
 	private void requestMeleeAttack(final Player player, final Npc npc) {
@@ -198,6 +209,7 @@ public final class ActiveCombatBenchmark {
 			+ "-" + engagedPairs + "-" + pluginDispatches + "-"
 			+ playerHits + "-" + npcHits + "-" + randomDraws;
 		return " activeCombatPairs=" + pairs.size()
+			+ " activeCombatBackgroundNpcsRemoved=" + backgroundNpcsRemoved
 			+ " activeCombatLivePairs=" + livePairs
 			+ " activeCombatEngagedPairs=" + engagedPairs
 			+ " activeCombatPluginDispatches=" + pluginDispatches
