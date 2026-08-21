@@ -1,6 +1,6 @@
 # Server Runtime Performance Investigation
 
-Status: ACTIVE
+Status: READY FOR MANAGER REVIEW
 
 Branch: `refactor/server-runtime-optimization`
 
@@ -11,8 +11,10 @@ architecture remains out of scope.
 
 - Rank work by game-thread tick contribution, sampled CPU stacks, allocation
   pressure, and GC pauses rather than source appearance.
-- Use the deterministic foundation benchmark with 64 synthetic custom-client
-  players, 20 warmup ticks, and 100 measured ticks for comparison runs.
+- Use the deterministic foundation benchmark with 64 synthetic players, 20
+  warmup ticks, and 100 measured ticks for comparison runs. Always state the
+  protocol: the fixture defaults to legacy-compatible version 235; the current
+  custom-client path is measured explicitly with version 10052.
 - Disable per-NPC/deep-NPC timers for end-to-end comparisons. Those timers are
   useful for attribution but add work at NPC frequency.
 - Use Java Flight Recorder `profile` settings with 128-frame stacks for CPU and
@@ -22,7 +24,8 @@ architecture remains out of scope.
   attempts.
 - Preserve player/NPC ordering, spatial-domain and level isolation, collision,
   task/plugin behavior, packet behavior, and checked-in configuration.
-- The synthetic players have no channels. This scenario measures update
+- The synthetic players have no channels. This scenario measures visibility,
+  packet construction, and update
   preparation but not socket writes, backpressure, encryption, or real payload
   throughput; networking needs a later bounded authenticated fixture.
 
@@ -34,9 +37,9 @@ configured listeners and is unchanged.
 
 ## Baseline and ranked hotspots
 
-Production-like layered authority was enabled through benchmark-only JVM
-overrides while retaining the local database and content profile. The first
-equivalent JFR baseline was:
+Layered authority was enabled through benchmark-only JVM overrides while
+retaining the local database and content profile. The first equivalent JFR
+baseline used the fixture's default protocol 235 compatibility path:
 
 | Metric | Baseline |
 | --- | ---: |
@@ -166,15 +169,71 @@ for a 28.828 ms mean—slightly worse than the uncached 28.175 ms mean. The cach
 was removed rather than retaining complexity for a result within measurement
 noise.
 
+## Current custom-client profile
+
+The initial fixture summary called version 235 a custom client even though
+`Player.isUsingCustomClient()` authoritatively requires versions 10001–19999.
+No conclusions were drawn from the misleading label. The hosted-style
+visibility input was rerun with explicit version 10052, layered player/spatial
+authority, and snapshot input enabled.
+
+Two equivalent custom-path runs measured 22.358 and 22.335 ms/tick. Their
+stage profile was approximately:
+
+| Stage | Custom path |
+| --- | ---: |
+| Average tick | 22.35 ms |
+| NPC processing | 6.30–6.61 ms |
+| Client updates | 12.17–12.47 ms |
+| Visibility preparation | 3–4 ms (rounded diagnostic) |
+| Events | 2.54–2.55 ms |
+
+The exact scene window exposed 64 players, roughly 109 NPCs, 802 scenery
+objects, 42 walls, and 58 ground items per synthetic player. Movement snapshot
+construction was exercised (roughly 1.5–1.8 MB over a run), but outgoing socket
+bytes remained zero because synthetic players have no channels.
+
+A deep attribution-only run measured 7.208 ms of NPC processing, including
+6.900 ms in behavior and 5.748 ms attributed to random-roam handling. These
+timers execute at NPC frequency and are intentionally excluded from comparison
+runs.
+
+## Rejected experiments after custom-path correction
+
+- Removing redundant spatial-domain checks from index-qualified visibility
+  snapshots was safe by construction, but two runs averaged 12.75 ms of client
+  update work versus the unchanged 12.32 ms mean. It was reverted.
+- Moving the NPC roam-cadence check ahead of local-player discovery reduced the
+  theoretical scan count, but two end-to-end runs averaged 22.64 ms/tick versus
+  the unchanged 22.35 ms mean. It was reverted.
+
+These are two consecutive attempts without a repeatable end-to-end gain. Per
+the investigation contract, visibility/NPC micro-tuning stops here.
+
+## Investigation checkpoint
+
+The equivalent protocol-235 JFR path fell from 58.214 ms/tick at baseline to
+27.206 ms/tick after the five accepted changes, a 53.3% reduction. The custom
+protocol-10052 endpoint is 22.35 ms/tick in the two-run baseline above; no
+pre-change custom-path recording exists, so no custom-path percentage is
+claimed.
+
+No release, public server launch, live-state access, or Server R2 redesign was
+performed. The branch is ready for manager review as a bounded performance
+milestone. Further work requires a deterministic active-combat/plugin fixture
+or authenticated network fixture rather than more idle synthetic micro-tuning.
+
 ## Next investigation
 
-1. Capture an equivalent post-hash JFR and rerank CPU and allocation stacks.
-2. Reprofile events/plugin dispatch now that layered spatial and visibility
-   costs are lower; do not optimize it unless the stack evidence identifies a
-   behavior-preserving target.
-3. Add a bounded authenticated network fixture before making networking claims.
-4. Run focused spatial/pathing tests, combat characterization, authoritative
-   core/plugin builds, and changed-code analysis before handoff.
+1. Build a bounded authenticated network fixture before optimizing socket
+   serialization, writes, or backpressure. The current benchmark cannot support
+   those claims.
+2. Profile a representative active-combat/plugin workload. The synthetic idle
+   profile holds event dispatch at about 2.5 ms/tick and does not justify a
+   speculative event-system rewrite.
+3. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
+   of controlling due timers and nearby-player distribution.
+4. Keep Server R2 architecture and configuration redesign outside this branch.
 
 ## Validation to date
 
@@ -182,3 +241,18 @@ noise.
 - `./scripts/build-server.sh`
 - repeated 100-tick production-like layered benchmark runs described above
 - JFR CPU/allocation/GC capture through the visibility-copy work
+- corrected custom-client version-10052 baseline and JFR capture
+- intrusive NPC stage attribution used only for hotspot ranking
+- `python3 tests/myworld/test-foundation-optimization-guards.py`
+- `python3 tests/myworld/test-layered-spatial-runtime-authority.py`
+- `python3 tests/myworld/test-layered-scene-visibility-rings.py`
+- `python3 tests/myworld/test-server-sync-modernization.py`
+- `python3 tests/myworld/test-path-queue-regressions.py`
+- `python3 tests/myworld/test-movement-pathing-release-plan.py`
+- `python3 tests/myworld/test-combat-runtime-invariants.py`
+- `./scripts/build-server.sh` (authoritative Ant core and plugins)
+- `python3 scripts/lint.py report --base a13c9d58 --offline`: changed-code
+  compiler gate passed with no new gated warnings. The whole-program SpotBugs
+  report still flags two pre-existing client findings in unchanged
+  `DoSkillInterface` and `PartyInterface`; neither file differs from the branch
+  starting commit, so this is baseline drift rather than a server regression.

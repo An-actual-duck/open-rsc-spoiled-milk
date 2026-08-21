@@ -549,7 +549,7 @@ def main() -> None:
         "private final Collection<GroundItem> groundItems;",
         "private final long objectSnapshotKey;",
         "private final long objectSnapshotVersion;",
-        "private static Collection<GameObject> splitGameObjects",
+        "private static GameObjectTypes splitGameObjects",
         "public Collection<Player> getPlayers()",
         "public Collection<Npc> getNpcs()",
         "public Collection<GameObject> getGameObjects()",
@@ -562,6 +562,11 @@ def main() -> None:
         "public long getObjectSnapshotVersion()",
     ):
         require(snippet in visibility_snapshot, f"visibility snapshot DTO missing: {snippet}")
+
+    require(
+        visibility_snapshot.count("splitGameObjects(gameObjects)") == 1,
+        "visibility snapshot should classify scenery and walls in one pass",
+    )
 
     require(
         "public boolean WANT_SYNC_VISIBILITY_SHADOW;" in server_config,
