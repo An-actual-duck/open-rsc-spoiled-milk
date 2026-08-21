@@ -2,6 +2,7 @@
 import subprocess
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -13,6 +14,7 @@ MOB = ROOT / "server/src/com/openrsc/server/model/entity/Mob.java"
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 REGION_MANAGER = REGION / "RegionManager.java"
 VISIBILITY = REGION / "VisibilitySnapshot.java"
+GAME_OBJECT_DEFINITIONS = ROOT / "server/conf/server/defs/GameObjectDef.xml"
 PATH_VALIDATION = ROOT / "server/src/com/openrsc/server/model/PathValidation.java"
 CONFIGURATION = ROOT / "server/src/com/openrsc/server/ServerConfiguration.java"
 DEVELOPMENT = (
@@ -155,12 +157,28 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
         check(index.hasPlayerWithinRange(
                 WorldRegionWindow.around(surfaceLocation, 15), surface),
             "player-only surface range hit");
+		check(index.snapshotPlayersWithinRange(
+				WorldRegionWindow.around(surfaceLocation, 15), surface)
+				.size() == 1,
+			"player-only snapshot filters by range and level");
+		check(index.snapshotPlayersWithinRange(
+				WorldRegionWindow.around(surfaceLocation, 15), surface)
+				.get(0) == nearbyPlayer,
+			"player-only snapshot preserves player identity");
         check(!index.hasPlayerWithinRange(
                 WorldRegionWindow.around(upperLocation, 15), upper),
             "player-only range predicate");
+		check(index.snapshotPlayersWithinRange(
+				WorldRegionWindow.around(upperLocation, 15), upper)
+				.isEmpty(),
+			"player-only snapshot applies range predicate");
         check(!index.hasPlayerWithinRange(
                 WorldRegionWindow.around(deepLocation, 15), deep),
             "player-only level isolation");
+		check(index.snapshotPlayersWithinRange(
+				WorldRegionWindow.around(deepLocation, 15), deep)
+				.isEmpty(),
+			"player-only snapshot preserves level isolation");
 
         WorldLocation boundaryOrigin = location(47, 943, 0);
         WorldLocation boundaryTarget = location(48, 942, 0);
@@ -231,6 +249,22 @@ public final class LayeredSpatialRuntimeAuthorityFixture {
                 942,
                 (candidate, tileX, tileY) -> true),
             "allocation-free game-object query preserves level isolation");
+        check(index.hasGameObjectAt(
+                WorldRegionWindow.around(boundaryTarget, 128),
+                48,
+                942,
+                48,
+                48,
+                (candidate, tileX, tileY) -> candidate == object),
+            "footprint-bounded query retains target-region object");
+        check(!index.hasGameObjectAt(
+                WorldRegionWindow.around(boundaryTarget, 128),
+                144,
+                942,
+                48,
+                48,
+                (candidate, tileX, tileY) -> candidate == object),
+            "footprint-bounded query excludes impossible origin region");
         long objectVersionAfter = snapshot(
             index, boundaryTarget).getObjectVersion();
         check(objectVersionAfter > objectVersionBefore,
@@ -405,6 +439,7 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
         )
         self.assertIn("buildLayeredVisibilitySnapshot", region_manager)
         self.assertIn("hasPlayerWithinRange", region_manager)
+        self.assertIn("snapshotPlayersWithinRange", region_manager)
         self.assertIn("requireLegacyTerrainProjection", region_manager)
         self.assertIn("LayeredSpatialWindowKey", visibility)
         self.assertIn("WorldLocation src", path_validation)
@@ -419,6 +454,16 @@ class LayeredSpatialRuntimeAuthorityTest(unittest.TestCase):
             "\t\t\t\t\t\ti.getWorld().unregisterItem(i);",
             functions,
         )
+
+    def test_shipped_scenery_footprints_fit_bounded_collision_query(self):
+        definitions = ET.parse(GAME_OBJECT_DEFINITIONS).getroot()
+        footprints = [
+            (int(definition.findtext("width")), int(definition.findtext("height")))
+            for definition in definitions.findall("GameObjectDef")
+        ]
+        self.assertTrue(footprints)
+        self.assertLessEqual(max(width for width, _ in footprints), 48)
+        self.assertLessEqual(max(height for _, height in footprints), 48)
 
     def test_plan_records_boundary_and_refusal_rules(self):
         plan = PLAN.read_text(encoding="utf-8")

@@ -422,6 +422,8 @@ public class RegionManager {
 					getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE),
 				tileX,
 				tileY,
+				WorldRegionKey.REGION_SIZE,
+				WorldRegionKey.REGION_SIZE,
 				NPC_BLOCKING_SCENERY_AT_TILE);
 		}
 		for (GameObject object : getLocalObjects(npc)) {
@@ -862,16 +864,11 @@ public class RegionManager {
 	}
 
 	private Collection<Player> getLayeredLocalPlayers(final Entity observer) {
-		LinkedHashSet<Player> players = new LinkedHashSet<Player>();
-		for (Entity candidate : layeredSpatialSnapshot(
-			observer, getWorld().getServer().getConfig().VIEW_DISTANCE)
-				.getEntities()) {
-			if (candidate instanceof Player
-				&& ((Player) candidate).withinRange(observer)) {
-				players.add((Player) candidate);
-			}
-		}
-		return players;
+		Entity checked = Objects.requireNonNull(observer, "observer");
+		WorldLocation location = checked.getWorldLocation();
+		layeredSpatialEntityIndex.requireMembership(checked, location);
+		return layeredSpatialEntityIndex.snapshotPlayersWithinRange(
+			getLayeredVisibleRegionWindow(location), checked);
 	}
 
 	private Collection<Npc> getLayeredLocalNpcs(final Entity observer) {

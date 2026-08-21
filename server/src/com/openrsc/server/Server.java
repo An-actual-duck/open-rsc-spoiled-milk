@@ -647,7 +647,10 @@ public class Server implements Runnable {
 				1,
 				2
 			));
-			player.setLocation(Point.location(baseX + offsetX, baseY + offsetY), true);
+			// Synthetic benchmark players have no login loader to establish their
+			// initial location authority. Use the same initialization boundary as
+			// authenticated players before publishing them to the world.
+			player.setInitialLocation(Point.location(baseX + offsetX, baseY + offsetY));
 			getWorld().getPlayers().add(player);
 			player.updateRegion();
 			player.setBusy(false);
@@ -911,14 +914,18 @@ public class Server implements Runnable {
 					bootstrap.childOption(ChannelOption.SO_KEEPALIVE, false);
 					bootstrap.childOption(ChannelOption.SO_RCVBUF, 10000);
 					bootstrap.childOption(ChannelOption.SO_SNDBUF, 10000);
-					try {
-						getPluginHandler().handlePlugin(StartupTrigger.class);
-						serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
-						LOGGER.info("Game world is now online on {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
-						LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
-						LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
-					} catch (final InterruptedException e) {
-						LOGGER.error(e);
+					getPluginHandler().handlePlugin(StartupTrigger.class);
+					if (isFoundationBenchmarkEnabled()) {
+						LOGGER.info("Foundation benchmark mode: network listeners are disabled");
+					} else {
+						try {
+							serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
+							LOGGER.info("Game world is now online on {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
+							LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
+							LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
+						} catch (final InterruptedException e) {
+							LOGGER.error(e);
+						}
 					}
 				} else {
 					final ServerBootstrap bootstrapWs = new ServerBootstrap();
@@ -955,16 +962,20 @@ public class Server implements Runnable {
 					bootstrapWs.childOption(ChannelOption.SO_RCVBUF, 10000);
 					bootstrapWs.childOption(ChannelOption.SO_SNDBUF, 10000);
 
-					try {
-						getPluginHandler().handlePlugin(StartupTrigger.class);
-						serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
-						LOGGER.info("Game world is now online on TCP {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
-						serverChannelWs = bootstrapWs.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getWebsocketPort())).sync();
-						LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getWebsocketPort()));
-						LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
-						LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
-					} catch (final InterruptedException e) {
-						LOGGER.error(e);
+					getPluginHandler().handlePlugin(StartupTrigger.class);
+					if (isFoundationBenchmarkEnabled()) {
+						LOGGER.info("Foundation benchmark mode: network listeners are disabled");
+					} else {
+						try {
+							serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
+							LOGGER.info("Game world is now online on TCP {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
+							serverChannelWs = bootstrapWs.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getWebsocketPort())).sync();
+							LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getWebsocketPort()));
+							LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
+							LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
+						} catch (final InterruptedException e) {
+							LOGGER.error(e);
+						}
 					}
 				}
 

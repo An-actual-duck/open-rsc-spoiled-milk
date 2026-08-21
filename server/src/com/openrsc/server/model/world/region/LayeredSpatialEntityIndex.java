@@ -207,6 +207,43 @@ public final class LayeredSpatialEntityIndex {
 	}
 
 	/**
+	 * Copies only players that are actually visible to the observer.
+	 *
+	 * <p>Aggressive NPC processing needs the complete ordered player set, not
+	 * merely the presence check above. Reading the player projection directly
+	 * avoids copying every NPC, object, and item in the same window before the
+	 * caller discards them.</p>
+	 */
+	public List<Player> snapshotPlayersWithinRange(
+		final WorldRegionWindow window,
+		final Entity observer) {
+		WorldRegionWindow checked = requireBoundedWindow(window);
+		Entity checkedObserver = Objects.requireNonNull(observer, "observer");
+		synchronized (lock) {
+			List<Player> players = new ArrayList<Player>();
+			for (int regionX = checked.getMinRegionX();
+				regionX <= checked.getMaxRegionX(); regionX++) {
+				for (int regionY = checked.getMinRegionY();
+					regionY <= checked.getMaxRegionY(); regionY++) {
+					Collection<Player> members = playerRegions.get(
+						new WorldRegionKey(
+							checked.getWorldSpace(), checked.getLevel(),
+							regionX, regionY));
+					if (members == null) {
+						continue;
+					}
+					for (Player player : members) {
+						if (player.withinRange(checkedObserver)) {
+							players.add(player);
+						}
+					}
+				}
+			}
+			return players;
+		}
+	}
+
+	/**
 	 * Copies only game-object membership from a bounded logical window.
 	 *
 	 * <p>NPC path validation performs several scenery checks for one movement
@@ -249,13 +286,83 @@ public final class LayeredSpatialEntityIndex {
 		final int tileY,
 		final GameObjectTilePredicate predicate) {
 		WorldRegionWindow checked = requireBoundedWindow(window);
+		return hasGameObjectAt(
+			checked,
+			checked.getMinRegionX(),
+			checked.getMinRegionY(),
+			checked.getMaxRegionX(),
+			checked.getMaxRegionY(),
+			tileX,
+			tileY,
+			predicate);
+	}
+
+	/**
+	 * Tests only origin regions whose objects can cover the requested tile.
+	 *
+	 * <p>The maximum footprint dimensions are an authoritative caller
+	 * invariant. This keeps adjacent NPC collision checks from scanning the
+	 * owner's entire visual interest window while retaining objects whose
+	 * positive-axis footprint begins in a preceding logical region.</p>
+	 */
+	public boolean hasGameObjectAt(
+		final WorldRegionWindow window,
+		final int tileX,
+		final int tileY,
+		final int maximumFootprintWidth,
+		final int maximumFootprintHeight,
+		final GameObjectTilePredicate predicate) {
+		WorldRegionWindow checked = requireBoundedWindow(window);
+		if (maximumFootprintWidth < 1 || maximumFootprintHeight < 1) {
+			throw new IllegalArgumentException(
+				"Game-object footprint dimensions must be positive");
+		}
+		int minRegionX = Math.max(
+			checked.getMinRegionX(),
+			Math.floorDiv(
+				Math.subtractExact(tileX, maximumFootprintWidth - 1),
+				WorldRegionKey.REGION_SIZE));
+		int minRegionY = Math.max(
+			checked.getMinRegionY(),
+			Math.floorDiv(
+				Math.subtractExact(tileY, maximumFootprintHeight - 1),
+				WorldRegionKey.REGION_SIZE));
+		int maxRegionX = Math.min(
+			checked.getMaxRegionX(),
+			Math.floorDiv(tileX, WorldRegionKey.REGION_SIZE));
+		int maxRegionY = Math.min(
+			checked.getMaxRegionY(),
+			Math.floorDiv(tileY, WorldRegionKey.REGION_SIZE));
+		if (minRegionX > maxRegionX || minRegionY > maxRegionY) {
+			return false;
+		}
+		return hasGameObjectAt(
+			checked,
+			minRegionX,
+			minRegionY,
+			maxRegionX,
+			maxRegionY,
+			tileX,
+			tileY,
+			predicate);
+	}
+
+	private boolean hasGameObjectAt(
+		final WorldRegionWindow checked,
+		final int minRegionX,
+		final int minRegionY,
+		final int maxRegionX,
+		final int maxRegionY,
+		final int tileX,
+		final int tileY,
+		final GameObjectTilePredicate predicate) {
 		GameObjectTilePredicate checkedPredicate =
 			Objects.requireNonNull(predicate, "predicate");
 		synchronized (lock) {
-			for (int regionX = checked.getMinRegionX();
-				regionX <= checked.getMaxRegionX(); regionX++) {
-				for (int regionY = checked.getMinRegionY();
-					regionY <= checked.getMaxRegionY(); regionY++) {
+			for (int regionX = minRegionX;
+				regionX <= maxRegionX; regionX++) {
+				for (int regionY = minRegionY;
+					regionY <= maxRegionY; regionY++) {
 					Collection<GameObject> members = gameObjectRegions.get(
 						new WorldRegionKey(
 							checked.getWorldSpace(), checked.getLevel(),
