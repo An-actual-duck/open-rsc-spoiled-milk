@@ -132,7 +132,7 @@ def main() -> None:
     )
     require(
         server_updater,
-        "npc.equals(player.getOpponent()) || player.equals(npc.getOpponent())",
+        "npc.equals(playerOpponent) || player.equals(npcOpponent)",
         "custom movement NPC combat target priority",
     )
     require(

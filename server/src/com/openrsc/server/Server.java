@@ -23,11 +23,14 @@ import com.openrsc.server.database.impl.sqlite.SqliteGameDatabase;
 import com.openrsc.server.database.patches.JDBCPatchApplier;
 import com.openrsc.server.database.patches.PatchApplier;
 import com.openrsc.server.diagnostics.MovementStutterDiagnostics;
+import com.openrsc.server.diagnostics.ActiveCombatBenchmark;
 import com.openrsc.server.event.custom.DailyShutdownEvent;
 import com.openrsc.server.event.custom.HourlyResetEvent;
 import com.openrsc.server.event.rsc.FinitePeriodicEvent;
 import com.openrsc.server.event.rsc.GameTickEvent;
+import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.event.rsc.handler.GameEventHandler;
+import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
 import com.openrsc.server.event.rsc.impl.combat.scripts.CombatScriptLoader;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.model.PlayerAppearance;
@@ -52,6 +55,7 @@ import com.openrsc.server.runtime.ResolvedDamageTransaction;
 import com.openrsc.server.runtime.GameClock;
 import com.openrsc.server.runtime.GameRandom;
 import com.openrsc.server.runtime.ProductionGameRandom;
+import com.openrsc.server.runtime.DeterministicGameRandom;
 import com.openrsc.server.runtime.SystemGameClock;
 import com.openrsc.server.service.IPlayerService;
 import com.openrsc.server.service.PcapLoggerService;
@@ -261,6 +265,9 @@ public class Server implements Runnable {
 	private final int benchmarkSyntheticClientVersion;
 	private final boolean benchmarkNpcProfiling;
 	private final boolean benchmarkDeepNpcProfiling;
+	private final int benchmarkActiveCombatPairs;
+	private final long benchmarkCombatSeed;
+	private volatile ActiveCombatBenchmark activeCombatBenchmark;
 	private long benchmarkSamples = 0;
 	private long benchmarkTickTotal = 0;
 	private long benchmarkTickMax = 0;
@@ -358,6 +365,12 @@ public class Server implements Runnable {
 	private int benchmarkMaxPlayers = 0;
 	private int benchmarkMaxNpcs = 0;
 	private int benchmarkMaxEvents = 0;
+	private long benchmarkPvmMeleeEventTotal = 0;
+	private long benchmarkPvmMeleeEventCalls = 0;
+	private long benchmarkPluginTickEventTotal = 0;
+	private long benchmarkPluginTickEventCalls = 0;
+	private long benchmarkOtherEventTotal = 0;
+	private long benchmarkOtherEventCalls = 0;
 
 	private final ListeningExecutorService sqlLoggingThreadPool;
 	private final ListeningExecutorService sqlThreadPool;
@@ -381,7 +394,13 @@ public class Server implements Runnable {
 
 	public static Server startServer(final String confName) throws IOException {
 		final long startTime = System.currentTimeMillis();
-		final Server server = new Server(confName);
+		final int activeCombatPairs = getIntegerSystemProperty(
+			"openrsc.benchmarkActiveCombatPairs", 0);
+		final Server server = activeCombatPairs > 0
+			? new Server(confName, SystemGameClock.INSTANCE,
+				new DeterministicGameRandom(getLongSystemProperty(
+					"openrsc.benchmarkCombatSeed", 0x5A17C0B4L)))
+			: new Server(confName);
 		if (!server.isRunning()) {
 			server.start();
 		}
@@ -595,6 +614,10 @@ public class Server implements Runnable {
 		benchmarkSyntheticClientVersion = getIntegerSystemProperty("openrsc.benchmarkSyntheticClientVersion", 235);
 		benchmarkNpcProfiling = getBooleanSystemProperty("openrsc.benchmarkNpcProfiling", true);
 		benchmarkDeepNpcProfiling = getBooleanSystemProperty("openrsc.benchmarkDeepNpcProfiling", true);
+		benchmarkActiveCombatPairs = getIntegerSystemProperty(
+			"openrsc.benchmarkActiveCombatPairs", 0);
+		benchmarkCombatSeed = getLongSystemProperty(
+			"openrsc.benchmarkCombatSeed", 0x5A17C0B4L);
 	}
 
 	private static int getIntegerSystemProperty(final String key, final int defaultValue) {
@@ -616,6 +639,19 @@ public class Server implements Runnable {
 			return defaultValue;
 		}
 		return Boolean.parseBoolean(configuredValue.trim());
+	}
+
+	private static long getLongSystemProperty(final String key, final long defaultValue) {
+		final String configuredValue = System.getProperty(key);
+		if (configuredValue == null || configuredValue.trim().isEmpty()) {
+			return defaultValue;
+		}
+		try {
+			return Long.decode(configuredValue.trim()).longValue();
+		} catch (final NumberFormatException e) {
+			LOGGER.warn("Ignoring invalid long system property {}={}", key, configuredValue);
+			return defaultValue;
+		}
 	}
 
 	private void initializeBenchmarkSyntheticPlayers() {
@@ -659,6 +695,27 @@ public class Server implements Runnable {
 
 		LOGGER.info("Registered {} benchmark synthetic players around {},{}",
 			box(benchmarkSyntheticPlayers), box(baseX), box(baseY));
+	}
+
+	private void initializeActiveCombatBenchmark() {
+		if (benchmarkActiveCombatPairs <= 0) {
+			return;
+		}
+		if (!isFoundationBenchmarkEnabled()) {
+			throw new IllegalStateException(
+				"Active combat workload requires foundation benchmark mode");
+		}
+		if (!(getCombatRandom() instanceof DeterministicGameRandom)
+				|| ((DeterministicGameRandom)getCombatRandom()).getSeed()
+					!= benchmarkCombatSeed) {
+			throw new IllegalStateException(
+				"Active combat workload requires its configured deterministic random source");
+		}
+		activeCombatBenchmark = new ActiveCombatBenchmark(
+			this, benchmarkActiveCombatPairs, benchmarkSyntheticClientVersion);
+		activeCombatBenchmark.initialize();
+		LOGGER.info("Registered {} deterministic active-combat pairs with seed {}",
+			box(benchmarkActiveCombatPairs), box(benchmarkCombatSeed));
 	}
 
 	private void auditPlayerOwnedItemIds() {
@@ -825,6 +882,7 @@ public class Server implements Runnable {
 				LOGGER.info("Plugins Completed");
 
 				initializeBenchmarkSyntheticPlayers();
+				initializeActiveCombatBenchmark();
 
 				/*LOGGER.info("Loading Achievements...");
 				getAchievementSystem().load();
@@ -1135,6 +1193,25 @@ public class Server implements Runnable {
 
 	public boolean isFoundationBenchmarkDeepNpcProfilingEnabled() {
 		return isFoundationBenchmarkNpcProfilingEnabled() && benchmarkDeepNpcProfiling;
+	}
+
+	/** Records scheduler cost only for explicitly enabled benchmark samples. */
+	public void recordFoundationBenchmarkEvent(final GameTickEvent event) {
+		if (!isFoundationBenchmarkEnabled() || event == null
+				|| getCurrentTick() <= benchmarkWarmupTicks) {
+			return;
+		}
+		final long duration = event.getLastEventDuration();
+		if (event instanceof PvmMeleeEvent) {
+			benchmarkPvmMeleeEventTotal += duration;
+			benchmarkPvmMeleeEventCalls++;
+		} else if (event instanceof PluginTickEvent) {
+			benchmarkPluginTickEventTotal += duration;
+			benchmarkPluginTickEventCalls++;
+		} else {
+			benchmarkOtherEventTotal += duration;
+			benchmarkOtherEventCalls++;
+		}
 	}
 
 	@Override
@@ -1709,6 +1786,7 @@ public class Server implements Runnable {
 			+ " syntheticClientVersion=" + benchmarkSyntheticClientVersion
 			+ " npcProfiling=" + benchmarkNpcProfiling
 			+ " deepNpcProfiling=" + benchmarkDeepNpcProfiling
+			+ " activeCombatConfiguredPairs=" + benchmarkActiveCombatPairs
 			+ " avgTickMs=" + nanosToMillis(benchmarkTickTotal / samples)
 			+ " maxTickMs=" + nanosToMillis(benchmarkTickMax)
 			+ " avgEventsMs=" + nanosToMillis(benchmarkEventsTotal / samples)
@@ -1824,7 +1902,16 @@ public class Server implements Runnable {
 			+ " maxSaveProcessMsPrecise=" + nanosToMillisPrecise(playerSaveProcessMaxDuration.get())
 			+ " maxPlayers=" + benchmarkMaxPlayers
 			+ " maxNpcs=" + benchmarkMaxNpcs
-			+ " maxEvents=" + benchmarkMaxEvents;
+			+ " maxEvents=" + benchmarkMaxEvents
+			+ " pvmMeleeEventCalls=" + benchmarkPvmMeleeEventCalls
+			+ " pvmMeleeEventMsPrecise=" + nanosToMillisPrecise(benchmarkPvmMeleeEventTotal)
+			+ " pluginTickEventCalls=" + benchmarkPluginTickEventCalls
+			+ " pluginTickEventMsPrecise=" + nanosToMillisPrecise(benchmarkPluginTickEventTotal)
+			+ " otherEventCalls=" + benchmarkOtherEventCalls
+			+ " otherEventMsPrecise=" + nanosToMillisPrecise(benchmarkOtherEventTotal)
+			+ (activeCombatBenchmark == null
+				? " activeCombatInvariant=disabled"
+				: activeCombatBenchmark.buildSummary());
 	}
 
 	public void recordPlayerSaveTiming(final boolean logout, final long queueDuration, final long processDuration) {

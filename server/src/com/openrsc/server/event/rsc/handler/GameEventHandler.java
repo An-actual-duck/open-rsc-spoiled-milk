@@ -198,6 +198,7 @@ public class GameEventHandler {
 		for (final GameTickEvent event : events) {
 			try {
 				event.call();
+				getServer().recordFoundationBenchmarkEvent(event);
 			} catch (final Exception e) {
 				LOGGER.error("Exception while executing GameEventHandler " + context, e);
 			}

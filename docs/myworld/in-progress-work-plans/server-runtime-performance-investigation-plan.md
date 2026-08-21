@@ -1,8 +1,8 @@
 # Server Runtime Performance Investigation
 
-Status: READY FOR MANAGER REVIEW
+Status: READY FOR MANAGER REVIEW — ACTIVE COMBAT/PLUGIN MILESTONE
 
-Branch: `refactor/server-runtime-optimization`
+Branch: `refactor/server-combat-runtime-optimization`
 
 Scope: measured, behavior-preserving runtime optimization only; Server R2
 architecture remains out of scope.
@@ -28,6 +28,15 @@ architecture remains out of scope.
   packet construction, and update
   preparation but not socket writes, backpressure, encryption, or real payload
   throughput; networking needs a later bounded authenticated fixture.
+
+The active workload is separately fixed at 64 player/giant melee pairs, 15
+warmup ticks, 60 measured ticks, custom protocol 10052, layered player/spatial
+authority, snapshot visibility input, and four real `TimedEventTrigger`
+dispatches per tick. It removes loaded background NPCs inside benchmark mode
+before constructing the fixed combat cohort. This retains a dense 64-player,
+64-NPC active scene plus the shipped scenery, walls, and ground items while
+excluding wall-clock-driven roaming by unrelated NPCs from the comparison.
+Production startup and world population are unchanged.
 
 Benchmark mode is listener-free so profiling cannot collide with a private
 server in another worker checkout. Synthetic players now enter through the
@@ -210,6 +219,85 @@ runs.
 These are two consecutive attempts without a repeatable end-to-end gain. Per
 the investigation contract, visibility/NPC micro-tuning stops here.
 
+## Active combat and plugin workload
+
+`ActiveCombatBenchmark` is an explicit, listener-free workload that enters
+combat through `PlayerAttackTransaction` and the production `PvmMeleeEvent`,
+uses a seeded `GameRandom`, seeds remaining legacy random consumers after world
+population, and dispatches the real timed-plugin trigger at a representative
+four players per tick. Players and NPCs have enlarged hit pools so no death or
+respawn changes the cohort during measurement. The runner requires two or more
+runs, a passing gameplay invariant, and an identical aggregate outcome and
+random-draw signature.
+
+The fixture intentionally reports the per-pair distribution hash as diagnostic
+information only. Scheduler UUID ordering can assign the same deterministic
+aggregate damage to different pairs. The acceptance signature instead pins the
+pair count, live and engaged counts, plugin dispatch count, aggregate player
+and NPC hits, and deterministic-random draw count. The accepted runs repeatedly
+produced `64-64-64-296-634499-637741-9613`.
+
+An early profiling run accidentally omitted layered spatial authority. It
+ranked legacy `RegionManager.getLocalObjects`, but that path is not the hosted
+target and no change was made from that evidence. Corrected layered runs ranked
+NPC visibility prioritization first: its sort comparator repeatedly called
+combat ownership validation for the same NPCs, accounting for roughly 27% of
+sampled game-thread stacks and about 15.3 ms/tick of NPC client updates.
+
+### Accepted optimization 6: single combat classification per visible NPC
+
+Visible NPCs are classified once into direct-combat, other-combat, and
+non-combat groups, then each group retains the existing distance, local-cache,
+and server-index ordering. This is equivalent to the former primary sort key
+without repeatedly pruning and validating the same combat engagement from the
+comparator.
+
+| Metric | Before mean | After mean | Change |
+| --- | ---: | ---: | ---: |
+| Average tick | 53.746 ms | 44.672 ms | -16.9% |
+| NPC client update | 15.257 ms | 4.626 ms | -69.7% |
+
+The individual post-change runs were 44.147 and 45.197 ms/tick. The aggregate
+combat/plugin signature remained identical.
+
+### Rejected active serialization experiments
+
+The post-priority JFR profile ranked generic custom payload serialization next.
+Two behavior-neutral attempts were tested and removed:
+
+- A compatibility fallback around primitive `BitUpdate` access averaged
+  45.289 ms/tick, 1.4% worse than the unchanged endpoint.
+- Converting the coordinate packet path to typed `BitUpdate` lists averaged
+  45.885 ms/tick, 2.7% worse than the unchanged endpoint.
+
+This is the required pair of consecutive non-gains. Packet/appearance
+serialization is closed for this milestone; a future change needs a measured,
+typed packet representation design rather than another loop micro-tuning.
+
+### Accepted optimization 7: signaled plugin pause boundaries
+
+`PluginTickEvent` previously polled asynchronous `PluginTask` state with a
+mandatory one-millisecond sleep. Four trivial timed-plugin callbacks therefore
+added about 4.3 ms to every measured game tick. `PluginTask` now signals its
+existing initialized, running, future, pause, and completion state transitions;
+the game thread waits on that condition and resumes at the same pause or
+completion boundary. Callback ordering, tick-bound startup, delays, cancellation,
+and plugin semantics remain unchanged.
+
+For this comparison, the benchmark-only fixed NPC cohort removed unrelated
+wall-clock roaming variance from both sides:
+
+| Metric | Polling mean | Signaled mean | Change |
+| --- | ---: | ---: | ---: |
+| Average tick | 35.106 ms | 33.383 ms | -4.9% |
+| Plugin events per tick | 4.262 ms | 0.261 ms | -93.9% |
+
+Polling runs were 36.674 and 33.538 ms/tick. Signaled runs were 34.024 and
+32.741 ms/tick. All four produced the exact same aggregate gameplay signature.
+A final equivalent JFR run measured 31.817 ms/tick, with 0.248 ms/tick in
+plugin events and about 0.502 ms/tick in `PvmMeleeEvent` execution. The exact
+handoff code was rerun at 34.209 and 31.073 ms/tick with the same signature.
+
 ## Investigation checkpoint
 
 The equivalent protocol-235 JFR path fell from 58.214 ms/tick at baseline to
@@ -219,21 +307,24 @@ pre-change custom-path recording exists, so no custom-path percentage is
 claimed.
 
 No release, public server launch, live-state access, or Server R2 redesign was
-performed. The branch is ready for manager review as a bounded performance
-milestone. Further work requires a deterministic active-combat/plugin fixture
-or authenticated network fixture rather than more idle synthetic micro-tuning.
+performed. The active combat/plugin branch adds the deterministic fixture and
+retains two material optimizations. The two-attempt rule stopped packet
+serialization work, and direct combat resolution is now below one millisecond
+per tick in this stress workload.
 
 ## Next investigation
 
 1. Build a bounded authenticated network fixture before optimizing socket
    serialization, writes, or backpressure. The current benchmark cannot support
    those claims.
-2. Profile a representative active-combat/plugin workload. The synthetic idle
-   profile holds event dispatch at about 2.5 ms/tick and does not justify a
-   speculative event-system rewrite.
-3. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
+2. Treat custom appearance/payload serialization as a future representation
+   design with packet byte-parity tests; two local loop changes failed here.
+3. Add a separately deterministic projectile/magic/multi-target combat workload
+   before optimizing those combat families. The current melee result does not
+   authorize extrapolation.
+4. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
    of controlling due timers and nearby-player distribution.
-4. Keep Server R2 architecture and configuration redesign outside this branch.
+5. Keep Server R2 architecture and configuration redesign outside this branch.
 
 ## Validation to date
 
@@ -242,6 +333,11 @@ or authenticated network fixture rather than more idle synthetic micro-tuning.
 - repeated 100-tick production-like layered benchmark runs described above
 - JFR CPU/allocation/GC capture through the visibility-copy work
 - corrected custom-client version-10052 baseline and JFR capture
+- repeated deterministic 64-pair active-combat/plugin runs
+- pre/post JFR captures with layered player and spatial authority enabled
+- exact aggregate combat outcome and random-draw signature checks
+- two rejected serialization comparisons and their removal
+- `python3 tests/myworld/test-active-combat-benchmark.py`
 - intrusive NPC stage attribution used only for hotspot ranking
 - `python3 tests/myworld/test-foundation-optimization-guards.py`
 - `python3 tests/myworld/test-layered-spatial-runtime-authority.py`
@@ -250,8 +346,13 @@ or authenticated network fixture rather than more idle synthetic micro-tuning.
 - `python3 tests/myworld/test-path-queue-regressions.py`
 - `python3 tests/myworld/test-movement-pathing-release-plan.py`
 - `python3 tests/myworld/test-combat-runtime-invariants.py`
+- `python3 tests/myworld/test-combat-interaction.py`
+- `python3 tests/myworld/test-client-custom-movement-stability.py`
+- `python3 tests/myworld/test-legacy-plugin-adapter-parity.py`
+- `python3 tests/myworld/test-plugin-default-fallback.py`
+- bundled Ant `test_combat` (143 scenarios)
 - `./scripts/build-server.sh` (authoritative Ant core and plugins)
-- `python3 scripts/lint.py report --base a13c9d58 --offline`: changed-code
+- `python3 scripts/lint.py report --base 24a40108c --offline`: changed-code
   compiler gate passed with no new gated warnings. The whole-program SpotBugs
   report still flags two pre-existing client findings in unchanged
   `DoSkillInterface` and `PartyInterface`; neither file differs from the branch
