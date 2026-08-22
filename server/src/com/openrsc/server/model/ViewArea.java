@@ -73,11 +73,12 @@ public class ViewArea {
 	}
 	
 	public GroundItem getVisibleGroundItem(final int id, final Point location, final Player player) {
-		for (final GroundItem o : getItemsInView()) {
-			if (!o.isInvisibleTo(player) && o.getID() == id && o.getLocation().equals(location)) {
-				return o;
-			}
+		if (location == null || !location.withinGridRange(
+				mob.getLocation(),
+				mob.getWorld().getServer().getConfig().OBJECT_VIEW_DISTANCE)) {
+			return null;
 		}
-		return null;
+		return mob.getWorld().getRegionManager().findInteractionGroundItem(
+			id, location, player);
 	}
 }
