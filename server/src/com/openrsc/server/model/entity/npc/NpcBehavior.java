@@ -33,7 +33,7 @@ public class NpcBehavior {
 	private static final int ROAM_BASE_TICKS = 4;
 	private static final int ROAM_JITTER_TICKS = 2;
 
-	private long nextRoamMovementAt;
+	private volatile long nextRoamMovementAt;
 	private long lastTackleAttempt;
 	private static final int[] TACKLING_XP = {7, 10, 15, 20};
 	private final long gameTickMillis;

@@ -183,7 +183,7 @@ public final class LayeredSpatialEntityIndex {
 			if (members == null) return null;
 			for (Entity candidate : members) {
 				if (candidate instanceof Npc
-					&& checkedTarget.equals(candidate.getWorldLocation())
+					&& checkedTarget.equals(memberships.get(candidate))
 					&& !candidate.isInvisibleTo(checkedObserver)) {
 					return (Npc)candidate;
 				}
@@ -204,7 +204,7 @@ public final class LayeredSpatialEntityIndex {
 				WorldRegionKey.from(checkedTarget));
 			if (members == null) return null;
 			for (Player candidate : members) {
-				if (checkedTarget.equals(candidate.getWorldLocation())
+				if (checkedTarget.equals(memberships.get(candidate))
 					&& !candidate.isInvisibleTo(checkedObserver)
 					&& (!includeSelf || candidate == checkedObserver)) {
 					return candidate;
