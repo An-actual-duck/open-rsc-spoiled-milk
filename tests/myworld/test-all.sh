@@ -142,6 +142,7 @@ python3 ./tests/myworld/test-client-fat-jar-archive.py
 python3 ./tests/myworld/test-player-release.py
 python3 ./tests/myworld/test-release-hotkey-guard.py
 python3 ./tests/myworld/test-foundation-optimization-guards.py
+python3 ./tests/myworld/test-authenticated-network-benchmark.py
 python3 ./tests/myworld/test-client-custom-movement-stability.py
 python3 ./tests/myworld/test-equipment-hover-tooltips.py
 python3 ./tests/myworld/test-movement-stutter-diagnostics.py
