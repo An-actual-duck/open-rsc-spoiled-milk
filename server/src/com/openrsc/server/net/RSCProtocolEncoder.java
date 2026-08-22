@@ -1,5 +1,6 @@
 package com.openrsc.server.net;
 
+import com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
@@ -12,7 +13,13 @@ public final class RSCProtocolEncoder extends MessageToByteEncoder<Packet> imple
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, Packet message, ByteBuf outBuffer) throws Exception {
-		outBuffer.writeBytes(encoder.encode(ctx, message));
+		final long start = AuthenticatedNetworkBenchmarkProbe.isEnabled()
+			? System.nanoTime() : 0L;
+		encoder.encode(ctx, message, outBuffer);
+		if (AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
+			AuthenticatedNetworkBenchmarkProbe.recordSerialization(
+				System.nanoTime() - start, outBuffer.readableBytes());
+		}
 	}
 
 	@Override

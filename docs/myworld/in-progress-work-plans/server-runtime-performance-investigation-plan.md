@@ -1,8 +1,8 @@
 # Server Runtime Performance Investigation
 
-Status: READY FOR MANAGER REVIEW — ACTIVE COMBAT/PLUGIN MILESTONE
+Status: READY FOR MANAGER REVIEW — AUTHENTICATED NETWORK MILESTONE
 
-Branch: `refactor/server-combat-runtime-optimization`
+Branch: `refactor/server-network-runtime-optimization`
 
 Scope: measured, behavior-preserving runtime optimization only; Server R2
 architecture remains out of scope.
@@ -27,7 +27,8 @@ architecture remains out of scope.
 - The synthetic players have no channels. This scenario measures visibility,
   packet construction, and update
   preparation but not socket writes, backpressure, encryption, or real payload
-  throughput; networking needs a later bounded authenticated fixture.
+  throughput. The authenticated-network fixture described below now covers
+  those costs separately without changing this synthetic comparison boundary.
 
 The active workload is separately fixed at 64 player/giant melee pairs, 15
 warmup ticks, 60 measured ticks, custom protocol 10052, layered player/spatial
@@ -298,6 +299,69 @@ A final equivalent JFR run measured 31.817 ms/tick, with 0.248 ms/tick in
 plugin events and about 0.502 ms/tick in `PvmMeleeEvent` execution. The exact
 handoff code was rerun at 34.209 and 31.073 ms/tick with the same signature.
 
+## Authenticated network workload
+
+The bounded authenticated-network fixture starts the foundation benchmark with
+its otherwise-disabled loopback TCP listener explicitly enabled. It copies the
+checked-in seed database and configuration to disposable ignored files, selects
+an ephemeral loopback port, registers eight disposable accounts, and logs all
+eight in through the production custom-client decoder and authentication lookup.
+Each connected client sends real heartbeat and single-step walk packets while
+fully parsing server frames. The client records ordered byte and opcode CRCs;
+the server records framed writes, bytes, serialization time, authentication,
+disconnects, and channel writability transitions without retaining credentials,
+addresses, or payloads.
+
+One named benchmark client pauses reads for four seconds and receives a lower
+benchmark-only write watermark. Both baseline and accepted runs observed one
+unwritable transition followed by one writable recovery. Ordinary channels keep
+their production watermarks. The runner requires at least two repetitions and
+fails unless every client authenticated, exchanged gameplay traffic, parsed
+complete frames, and the server observed backpressure and recovery. It cleans
+the disposable database and configuration after each run and does not contact a
+private or public server.
+
+### Network baseline and ranked costs
+
+The two-run baseline used 15 warmup and 15 measured ticks, eight authenticated
+clients, and 28 seconds of client traffic. It produced 3,015/3,519 framed writes
+and 270,733/293,845 serialized bytes. Framing took 11.373/11.562 ms in aggregate,
+or 42.01/39.35 ns per byte (40.68 ns/byte mean). Both server and client
+invariants passed.
+
+The observed network costs rank as follows:
+
+1. Every packet was framed into a new unpooled temporary buffer and then copied
+   into Netty's provided outbound buffer. This performed an allocation and a
+   complete extra copy at packet frequency.
+2. Per-write promise and channel bookkeeping remains measurable, but the entire
+   game-thread outgoing stage is only 0.058–0.062 ms/tick in the baseline.
+3. Incoming custom-frame parsing is smaller still at 0.136–0.153 ms/tick in the
+   accepted runs and is not a material tick-budget target.
+
+### Accepted optimization 8: direct packet framing
+
+The shared protocol encoder now writes directly into the Netty-provided TCP
+buffer. The WebSocket wrapper allocates its final frame content once, delegates
+the same framing routine into it, and releases that content if encoding fails.
+Framing branches, lengths, opcode order, ISAAC behavior, payload consumption,
+and raw writes are unchanged. An executable `EmbeddedChannel` regression pins
+the exact raw, legacy, custom TCP, and custom WebSocket bytes.
+
+Equivalent post-change runs produced 3,867/3,301 writes and
+281,631/287,693 serialized bytes. Aggregate framing time was 10.337/8.173 ms,
+or 36.70/28.41 ns per byte (32.56 ns/byte mean): a repeatable normalized
+reduction of 20.0%. The game-thread outgoing stage remained only
+0.054–0.055 ms/tick, all eight clients authenticated, client frame parsing and
+ordered CRC collection passed, and both runs again observed exactly one
+unwritable transition and one recovery.
+
+No per-write promise or inbound-decoder micro-tuning follows this change. Their
+end-to-end contribution is already far below one percent of the tick budget, so
+even removing all of it would not clear the investigation's materiality rule.
+This is an evidence-based stop for the current network area, not an assertion
+that those paths contain no measurable instructions.
+
 ## Investigation checkpoint
 
 The equivalent protocol-235 JFR path fell from 58.214 ms/tick at baseline to
@@ -314,16 +378,16 @@ per tick in this stress workload.
 
 ## Next investigation
 
-1. Build a bounded authenticated network fixture before optimizing socket
-   serialization, writes, or backpressure. The current benchmark cannot support
-   those claims.
-2. Treat custom appearance/payload serialization as a future representation
+1. Treat custom appearance/payload serialization as a future representation
    design with packet byte-parity tests; two local loop changes failed here.
-3. Add a separately deterministic projectile/magic/multi-target combat workload
+2. Add a separately deterministic projectile/magic/multi-target combat workload
    before optimizing those combat families. The current melee result does not
    authorize extrapolation.
-4. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
+3. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
    of controlling due timers and nearby-player distribution.
+4. Return to network work only when a larger connected-client fixture shows
+   socket writes, decoder cost, allocation, or GC pressure above the materiality
+   threshold; do not micro-tune the current 0.055 ms/tick outgoing stage.
 5. Keep Server R2 architecture and configuration redesign outside this branch.
 
 ## Validation to date
@@ -334,6 +398,11 @@ per tick in this stress workload.
 - JFR CPU/allocation/GC capture through the visibility-copy work
 - corrected custom-client version-10052 baseline and JFR capture
 - repeated deterministic 64-pair active-combat/plugin runs
+- repeated eight-client authenticated TCP runs with real registration, login,
+  heartbeat/walk parsing, socket writes, and forced backpressure recovery
+- pre/post framing results at 40.68 and 32.56 ns/byte respectively
+- bundled Ant `test_network_encoder` exact raw/TCP/WebSocket wire regression
+- `python3 tests/myworld/test-authenticated-network-benchmark.py`
 - pre/post JFR captures with layered player and spatial authority enabled
 - exact aggregate combat outcome and random-draw signature checks
 - two rejected serialization comparisons and their removal
@@ -352,7 +421,7 @@ per tick in this stress workload.
 - `python3 tests/myworld/test-plugin-default-fallback.py`
 - bundled Ant `test_combat` (143 scenarios)
 - `./scripts/build-server.sh` (authoritative Ant core and plugins)
-- `python3 scripts/lint.py report --base 24a40108c --offline`: changed-code
+- `python3 scripts/lint.py report --base b113c0eb9 --offline`: changed-code
   compiler gate passed with no new gated warnings. The whole-program SpotBugs
   report still flags two pre-existing client findings in unchanged
   `DoSkillInterface` and `PartyInterface`; neither file differs from the branch

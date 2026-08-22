@@ -24,6 +24,7 @@ import com.openrsc.server.database.patches.JDBCPatchApplier;
 import com.openrsc.server.database.patches.PatchApplier;
 import com.openrsc.server.diagnostics.MovementStutterDiagnostics;
 import com.openrsc.server.diagnostics.ActiveCombatBenchmark;
+import com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe;
 import com.openrsc.server.event.custom.DailyShutdownEvent;
 import com.openrsc.server.event.custom.HourlyResetEvent;
 import com.openrsc.server.event.rsc.FinitePeriodicEvent;
@@ -916,6 +917,14 @@ public class Server implements Runnable {
 				LOGGER.info("Set max item ID to : " + maxItemId);
 				auditPlayerOwnedItemIds();
 
+				if (AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
+					if (!isFoundationBenchmarkEnabled()) {
+						throw new IllegalStateException(
+							"Authenticated network workload requires foundation benchmark mode");
+					}
+					AuthenticatedNetworkBenchmarkProbe.reset();
+				}
+
 				bossGroup = new NioEventLoopGroup(
 						0,
 						new NamedThreadFactory(getName() + " : IOBossThread", getConfig())
@@ -962,6 +971,10 @@ public class Server implements Runnable {
 							@Override
 							protected void initChannel(final SocketChannel channel) {
 								final ChannelPipeline pipeline = channel.pipeline();
+								if (AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
+									pipeline.addLast("authenticated-network-benchmark",
+										new AuthenticatedNetworkBenchmarkProbe());
+								}
 								pipeline.addLast("decoder", new RSCMultiPortDecoder(RSCMultiPortDecoder.DecoderMode.TCP, serverOwner));
 								pipeline.addLast(rscConnectionHandlerId, new RSCConnectionHandler(serverOwner));
 							}
@@ -973,7 +986,8 @@ public class Server implements Runnable {
 					bootstrap.childOption(ChannelOption.SO_RCVBUF, 10000);
 					bootstrap.childOption(ChannelOption.SO_SNDBUF, 10000);
 					getPluginHandler().handlePlugin(StartupTrigger.class);
-					if (isFoundationBenchmarkEnabled()) {
+					if (isFoundationBenchmarkEnabled()
+						&& !AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
 						LOGGER.info("Foundation benchmark mode: network listeners are disabled");
 					} else {
 						try {
@@ -993,6 +1007,10 @@ public class Server implements Runnable {
 							@Override
 							protected void initChannel(final SocketChannel channel) {
 								final ChannelPipeline pipeline = channel.pipeline();
+								if (AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
+									pipeline.addLast("authenticated-network-benchmark",
+										new AuthenticatedNetworkBenchmarkProbe());
+								}
 								pipeline.addLast("decoder_tcp", new RSCMultiPortDecoder(RSCMultiPortDecoder.DecoderMode.TCP, serverOwner));
 								pipeline.addLast(rscConnectionHandlerId, new RSCConnectionHandler(serverOwner));
 							}
@@ -1021,14 +1039,17 @@ public class Server implements Runnable {
 					bootstrapWs.childOption(ChannelOption.SO_SNDBUF, 10000);
 
 					getPluginHandler().handlePlugin(StartupTrigger.class);
-					if (isFoundationBenchmarkEnabled()) {
+					if (isFoundationBenchmarkEnabled()
+						&& !AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
 						LOGGER.info("Foundation benchmark mode: network listeners are disabled");
 					} else {
 						try {
 							serverChannel = bootstrap.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getServerPort())).sync();
 							LOGGER.info("Game world is now online on TCP {}:{}!", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getServerPort()));
-							serverChannelWs = bootstrapWs.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getWebsocketPort())).sync();
-							LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getWebsocketPort()));
+							if (!AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
+								serverChannelWs = bootstrapWs.bind(new InetSocketAddress(processNetworkConfiguration.getServerBindAddress(), processNetworkConfiguration.getWebsocketPort())).sync();
+								LOGGER.info("Game world is now online on WS {}:{}! (webclient only)", processNetworkConfiguration.getServerBindAddress(), box(processNetworkConfiguration.getWebsocketPort()));
+							}
 							LOGGER.info("RSA exponent: " + Crypto.getPublicExponent());
 							LOGGER.info("RSA modulus: " + Crypto.getPublicModulus());
 						} catch (final InterruptedException e) {
@@ -1911,7 +1932,9 @@ public class Server implements Runnable {
 			+ " otherEventMsPrecise=" + nanosToMillisPrecise(benchmarkOtherEventTotal)
 			+ (activeCombatBenchmark == null
 				? " activeCombatInvariant=disabled"
-				: activeCombatBenchmark.buildSummary());
+				: activeCombatBenchmark.buildSummary())
+			+ (AuthenticatedNetworkBenchmarkProbe.isEnabled()
+				? AuthenticatedNetworkBenchmarkProbe.summary() : "");
 	}
 
 	public void recordPlayerSaveTiming(final boolean logout, final long queueDuration, final long processDuration) {
