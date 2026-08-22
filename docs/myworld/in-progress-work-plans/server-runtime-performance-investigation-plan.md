@@ -1,6 +1,6 @@
 # Server Runtime Performance Investigation
 
-Status: ACTIVE — PROJECTILE COMBAT MILESTONE
+Status: READY FOR MANAGER REVIEW — PROJECTILE COMBAT MILESTONE
 
 Branch: `refactor/server-projectile-runtime-optimization`
 
@@ -432,6 +432,15 @@ Both accepted runs retained the exact signature
 JFR runs averaged 8.459 ms/tick versus 9.574 ms/tick in the equivalent baseline;
 the non-JFR result above remains the acceptance measurement.
 
+The final complete three-family replay measured 7.808 ms/tick for ranged,
+6.943 ms/tick for magic, and 9.190 ms/tick for multi-target. Ranged therefore
+confirmed a 5.2% end-to-end reduction from its 8.233 ms baseline, with its
+launch/resource stage falling from 1.444 to 0.948 ms/tick. Magic retained its
+exact baseline gameplay signature; no performance gain is attributed to the
+ground-item change because magic has no recoverable projectile and its lower
+timing is treated as run variance. The final multi-target mean independently
+confirms the accepted result at 2.8% below baseline.
+
 ### Projectile experiments rejected by the materiality rule
 
 - Reusing one valid-shuriken candidate snapshot across selection and lock
@@ -514,7 +523,7 @@ per tick in this stress workload.
 - `python3 tests/myworld/test-plugin-default-fallback.py`
 - bundled Ant `test_combat` (143 scenarios)
 - `./scripts/build-server.sh` (authoritative Ant core and plugins)
-- `python3 scripts/lint.py report --base b113c0eb9 --offline`: changed-code
+- `python3 scripts/lint.py report --base e599f5494e0559aee3f10cdbe4a47c07eea4dbb0 --offline`: changed-code
   compiler gate passed with no new gated warnings. The whole-program SpotBugs
   report still flags two pre-existing client findings in unchanged
   `DoSkillInterface` and `PartyInterface`; neither file differs from the branch
