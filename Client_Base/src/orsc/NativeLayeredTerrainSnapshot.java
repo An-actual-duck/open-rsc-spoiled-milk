@@ -37,6 +37,7 @@ public final class NativeLayeredTerrainSnapshot {
 	private final String packageId;
 	private final String packageVersion;
 	private final String manifestSha256;
+	private final String packageIdentity;
 	private final int presentationChunkSize;
 	private final String worldSpace;
 	private final int level;
@@ -79,6 +80,8 @@ public final class NativeLayeredTerrainSnapshot {
 		this.packageVersion = matched(packageVersion, VERSION, "package version");
 		this.manifestSha256 = matched(
 			manifestSha256, SHA256, "manifest SHA-256");
+		this.packageIdentity = this.packageId + "@" + this.packageVersion
+			+ ":" + this.manifestSha256;
 		if (presentationChunkSize <= 0
 			|| presentationChunkSize > SECTOR_SIZE
 			|| SECTOR_SIZE % presentationChunkSize != 0) {
@@ -174,6 +177,8 @@ public final class NativeLayeredTerrainSnapshot {
 		this.packageVersion = matched(packageVersion, VERSION, "package version");
 		this.manifestSha256 = matched(
 			manifestSha256, SHA256, "manifest SHA-256");
+		this.packageIdentity = this.packageId + "@" + this.packageVersion
+			+ ":" + this.manifestSha256;
 		int expectedChunkSize =
 			protocolVersion == LEGACY_CHUNKED_PROTOCOL_VERSION
 				? LEGACY_STREAMING_CHUNK_SIZE : STREAMING_CHUNK_SIZE;
@@ -330,7 +335,7 @@ public final class NativeLayeredTerrainSnapshot {
 	}
 
 	public String packageIdentity() {
-		return packageId + "@" + packageVersion + ":" + manifestSha256;
+		return packageIdentity;
 	}
 
 	public String summary() {

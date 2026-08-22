@@ -154,6 +154,13 @@ public final class LayeredProtocolClientAuthorityFixture {
             "deep acceptance counters");
 
         NativeLayeredTerrainSnapshot nativeLeft = nativeTerrain(-2, 9, 12, 0);
+        check(("rsc-remastered.native-loader-lab@0.2.0:"
+                + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa").equals(
+                    nativeLeft.packageIdentity()),
+            "uniform package identity value");
+        check(nativeLeft.packageIdentity() == nativeLeft.packageIdentity(),
+            "uniform package identity is cached");
         check(nativeLeft.getPresentationChunkSize() == 24,
             "presentation size independent from storage page");
         check(nativeLeft.createUniformTile().groundOverlay == 0,
@@ -189,6 +196,8 @@ public final class LayeredProtocolClientAuthorityFixture {
         state.acceptLegacyPlayerPosition(450, 600);
 
         NativeLayeredTerrainSnapshot chunked = chunkTerrain(-2, 18, 25);
+        check(chunked.packageIdentity() == chunked.packageIdentity(),
+            "chunked package identity is cached");
         check(chunked.getProtocolVersion() == 4, "chunk protocol");
         check("global".equals(chunked.getWorldSpace()),
             "chunk world-space identity");

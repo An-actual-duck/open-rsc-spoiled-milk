@@ -1675,3 +1675,65 @@ Implementation checkpoint:
 | 2026-07-29 | `06110169b` | `snapidle`, `snapcombat` | Profile the accepted grouped-snapshot endpoint at maximum zoom and under actor/combat pressure. | Composite scene reconstruction recorded zero sampled allocation and compatibility fallback stayed zero. The new phases contained roughly three to five times as many sprite layers as their earlier namesakes, so their 59.06/66.11 MiB/s allocation and 0.645/0.649-core totals are not treated as a regression or a direct delta. New per-group list/wrapper storage measured about 0.37 MiB/s in idle; submission lookup was not a leading CPU cost. | Keep the architectural result, reject raw before/after attribution, and remove only the new snapshot container/iterator allocation before another broader boundary. |
 | 2026-07-29 | `87aed9cbf` | indexed snapshot storage | Replace each snapshot's list/read-only wrapper with compact growable command-reference storage and consume it by stable index in validation, capture, composition, and drawing. | Command identity/order and all-or-nothing fallback are unchanged. Client compile, focused ownership/capture fixtures, and the full renderer guardrail suite passed; owner visual review passed. All 12 strict capture frames passed with 6,158/6,158 exactly owned layers across 1,144 groups and zero fallback, invalid anchor/order, suspicious visibility, failed frames, or client exceptions. | Accept and checkpoint this measured cleanup; retain the broader allocation-only diminishing-returns gate. |
 | 2026-07-30 | `3ecedad86` | direct ground-item acceptance | Give each projected single-layer ground item an independently derived renderer-owned command, select it only after field-exact comparison with the retained legacy capture, and retain automatic fallback. | The owner accepted the ordinary, stacked, shifted/remastered, noted, pickup/right-click, and nameplate route. Session `session-20260730-150823-170397` passed all 12 strict frames; 72/72 item groups across six sources were direct-source, parity-exact, and directly presented, with zero mismatch, fallback, failed frame, or client exception. The earlier apparent command freeze was traced to a concurrent private-server port collision. | Accept the first direct world-space input slice; isolate and measure retained legacy item raster/capture and nameplate work as a separate guarded milestone before multipart characters. |
+
+## Current published-main ranked pass (2026-08-21)
+
+This pass started from published `main` revision
+`b113c0eb9b6385e0a2d05e7c6740b029be65943b`. It used a private layered
+production server and a repeatable cardinal crossing between `(335,541)` and
+`(336,541)`, whose presentation centers are `(6,11)` and `(7,11)`. Steady and
+crossing phases used the same camera state: zoom `142`, effective zoom `884`,
+pitch `912`, rotation `512`, fog disabled, and a 144-tile draw distance.
+Screenshots were used only for controlled navigation and final visual review;
+telemetry and JFR supplied the performance evidence.
+
+The baseline session was
+`output/renderer-diagnostics/session-20260821-194732-3127165`. Its two steady
+phases averaged 0.408 process cores and 279.03 MiB/s of Java allocation. The
+two warm crossing phases averaged 0.566 cores and 410.93 MiB/s; their OpenGL
+render p99 values were 12.619/12.021 ms and world p99 values were
+10.973/10.712 ms. Boundary correlation ranked context application
+(`packet.opcode-157`) at 11.078 ms p50, scenery delivery (`packet.opcode-48`)
+at 6.954 ms p50, and `scenery.mesh` at 5.640 ms p50. A first cold visit also
+paid a distinct 44.656 ms / 62.4 MB GPU upload and a 130.171 ms maximum frame
+interval.
+
+The bounded JFR profile
+`output/renderer-diagnostics/session-20260821-195531-3130763/client-profile.jfr`
+identified the dominant steady-state defect: every hot
+`NativeLayeredTerrainSnapshot.packageIdentity()` call rebuilt the same
+concatenated identity. Character arrays from that path accounted for roughly
+18.5 GB over 70.9 seconds and explained the telemetry's approximately
+299 MiB/s steady allocation. Caching the validated immutable value reduced
+steady allocation to 50.12/50.44 MiB/s (about 82%) and crossing allocation by
+about 40% in session
+`output/renderer-diagnostics/session-20260821-202416-3150757`. Steady CPU was
+effectively unchanged at 0.404 versus 0.408 cores, so no CPU improvement is
+claimed.
+
+After re-ranking, warm boundary shadow-mask rebuilds were the largest isolated
+renderer cost. Replacing per-pixel boxed `Long` hash lookups with an immutable
+rectangular primitive-index caster grid preserved caster order and mask bytes.
+In session `output/renderer-diagnostics/session-20260821-203639-3156000`, the
+mean observed shadow rebuild maximum fell from 7.306 to 5.670 ms (22.4%),
+OpenGL p99 from 13.156 to 12.700 ms (3.5%), and world p99 from 11.110 to
+10.623 ms (4.4%). CPU and allocation totals from this later wall-clock run are
+not compared because machine load and the live lighting cycle differed.
+Fixed-light regression coverage instead proves exact output with 10,285
+visible pixels and FNV-1a hash `250842434521131199`.
+
+The remaining ranked costs are scenery/context packet application and mesh
+construction, followed by the cold-only 48--51 ms / 62.4 MB resident GPU
+upload. Atomic presentation, layered terrain, minimap coverage, and scene
+residency were left unchanged. Contaminated intervals collected while unrelated
+desktop work raised server load were discarded and the private server was
+restarted before accepted measurements. The requested stopping rule was
+applied: identity caching was retained for its material allocation reduction,
+shadow lookup was retained for a greater-than-1% end-to-end tail improvement,
+and no sub-millisecond blur or raster micro-tuning was pursued afterward.
+
+Final session `output/renderer-diagnostics/session-20260821-204051-3163511`
+provided an in-world visual review at the profiled scene and two deliberate
+strict diagnostic capture frames. Both captures completed with all indexed
+artifacts present, zero failed frames, and zero client exceptions. This final
+session was a visual/capture acceptance run, not a performance comparison.
