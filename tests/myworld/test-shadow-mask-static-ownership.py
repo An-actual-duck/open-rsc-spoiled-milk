@@ -19,6 +19,7 @@ package orsc;
 import orsc.graphics.three.Renderer3DModelKind;
 import orsc.graphics.three.Renderer3DWorldChunkFrame;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public final class ShadowMaskStaticOwnershipFixture {
@@ -63,7 +64,20 @@ public final class ShadowMaskStaticOwnershipFixture {
 		assertFalse(returnBuild.rebuild, "return does not rebuild for animation state");
 		assertSame(firstBuild.mask, returnBuild.mask,
 			"return resolves the original static mask instance");
+		assertEquals(10285, firstBuild.mask.visiblePixels,
+			"shadow mask visible-pixel parity");
+		assertEquals(250842434521131199L, pixelHash(firstBuild.mask.pixels()),
+			"shadow mask byte parity");
 		System.out.println("PASS: terrain shadow masks have stable static ownership");
+	}
+
+	private static long pixelHash(ByteBuffer pixels) {
+		long hash = 0xcbf29ce484222325L;
+		while (pixels.hasRemaining()) {
+			hash ^= pixels.get() & 0xffL;
+			hash *= 0x100000001b3L;
+		}
+		return hash;
 	}
 
 	private static RemasterShadowMaskBuild build(
@@ -228,8 +242,12 @@ def main() -> None:
         "chunk.getShadowCasterInventorySignature()",
         "CHUNK_ROLE_ANIMATED_OBJECTS",
         "including them made every boundary return miss",
+        "RemasterTerrainShadowCasterGrid",
+        "casterGrid.get(remasterShadowMaskCell(x), remasterShadowMaskCell(z))",
     ):
         require(builder_source, fragment)
+    if "Map<Long, List<RemasterTerrainShadowCaster>> casterGrid" in builder_source:
+        raise AssertionError("shadow-mask raster lookup regressed to boxed map keys")
 
     with tempfile.TemporaryDirectory(prefix="shadow-mask-static-ownership-") as raw:
         temp = Path(raw)
@@ -265,6 +283,9 @@ def main() -> None:
         run_result = subprocess.run(
             [
                 "java",
+                "-Dspoiledmilk.remasterLightAzimuth=135",
+                "-Dspoiledmilk.remasterLightElevation=45",
+                "-Dspoiledmilk.remasterShadowLightSmoothingMillis=0",
                 "-cp",
                 f"{temp}:{CLIENT_JAR}",
                 "orsc.ShadowMaskStaticOwnershipFixture",

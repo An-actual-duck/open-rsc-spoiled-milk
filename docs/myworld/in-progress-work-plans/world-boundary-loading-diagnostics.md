@@ -1051,3 +1051,30 @@ prediction. A follow-up should begin from the remaining first-visit upload and
 warm shadow-refresh evidence, with separate dense-scenery cases, rather than
 adding more speculative prepared halos. The latter remains deferred until its
 memory cost is understood.
+
+### Published-main renderer reassessment (2026-08-21)
+
+A fresh ranked pass on published `main` revision `b113c0eb9b` repeated one
+cardinal layered crossing between `(335,541)` and `(336,541)` in both
+directions with a fixed camera. It confirmed that boundary handling remains
+atomic and that warm transitions do not upload resident chunks. The baseline's
+two warm phases placed OpenGL/world p99 at 12.619/10.973 ms and
+12.021/10.712 ms. First-visit upload remains a separate 44.656--51.086 ms,
+62.4 MB cost and must not be conflated with warm transition work.
+
+The first ranked defect was not boundary geometry itself: immutable layered
+package identity was reconstructed throughout the renderer hot path, causing
+roughly 18.5 GB of JFR-observed character-array allocation in 70.9 seconds.
+Caching that identity reduced steady Java allocation about 82% and crossing
+allocation about 40%, while CPU and frame tails remained within noise. The
+next ranked warm-boundary cost was shadow raster lookup. An immutable
+primitive-index caster grid reduced mean shadow rebuild maxima 22.4% and the
+measured end-to-end OpenGL/world p99 tails 3.5%/4.4%, with fixed-light exact
+pixel regression coverage.
+
+Residual work is now ranked as scenery/context application (opcode 48/157 and
+scenery mesh construction), then cold resident GPU upload. The run does not
+reopen prepared halos or change terrain, minimap, residency, or activation
+semantics. Forced cardinal teleports provide repeatable activation timing but
+report prediction as unmatched; earlier route-walking campaigns remain the
+authority for movement-prediction correctness.

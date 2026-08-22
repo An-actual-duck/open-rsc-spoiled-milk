@@ -6,7 +6,6 @@ import orsc.graphics.three.Renderer3DWorldChunkFrame;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -390,7 +389,7 @@ final class RemasterShadowMaskBuilder {
 		float[] stripBlurredAlpha = new float[width * height];
 		float[] sceneryBlurredAlpha = new float[width * height];
 		float[] contactBlurredAlpha = new float[width * height];
-		Map<Long, List<RemasterTerrainShadowCaster>> casterGrid =
+		RemasterTerrainShadowCasterGrid casterGrid =
 			buildRemasterTerrainShadowCasterGrid(casters);
 		forEachMaskRow(height, y -> {
 			float z = rasterBounds.zAt(y, height);
@@ -508,7 +507,7 @@ final class RemasterShadowMaskBuilder {
 
 	private void remasterTerrainShadowMaskAlphas(
 		RemasterShadowRoofCoverage roofCoverage,
-		Map<Long, List<RemasterTerrainShadowCaster>> casterGrid,
+		RemasterTerrainShadowCasterGrid casterGrid,
 		float x,
 		float z,
 		float[] stripAlpha,
@@ -516,7 +515,7 @@ final class RemasterShadowMaskBuilder {
 		float[] contactAlpha,
 		int index) {
 		List<RemasterTerrainShadowCaster> casters =
-			casterGrid.get(remasterShadowMaskCellKey(remasterShadowMaskCell(x), remasterShadowMaskCell(z)));
+			casterGrid.get(remasterShadowMaskCell(x), remasterShadowMaskCell(z));
 		if (casters == null || casters.isEmpty()) {
 			return;
 		}
@@ -685,10 +684,10 @@ final class RemasterShadowMaskBuilder {
 		return count;
 	}
 
-	private Map<Long, List<RemasterTerrainShadowCaster>> buildRemasterTerrainShadowCasterGrid(
+	private RemasterTerrainShadowCasterGrid buildRemasterTerrainShadowCasterGrid(
 		List<RemasterTerrainShadowCaster> casters) {
-		Map<Long, List<RemasterTerrainShadowCaster>> grid =
-			new HashMap<Long, List<RemasterTerrainShadowCaster>>();
+		RemasterTerrainShadowCasterGrid grid =
+			new RemasterTerrainShadowCasterGrid(casters);
 		for (RemasterTerrainShadowCaster caster : casters) {
 			int minCellX = remasterShadowMaskCell(caster.minX);
 			int maxCellX = remasterShadowMaskCell(caster.maxX);
@@ -696,13 +695,7 @@ final class RemasterShadowMaskBuilder {
 			int maxCellZ = remasterShadowMaskCell(caster.maxZ);
 			for (int cellX = minCellX; cellX <= maxCellX; cellX++) {
 				for (int cellZ = minCellZ; cellZ <= maxCellZ; cellZ++) {
-					long key = remasterShadowMaskCellKey(cellX, cellZ);
-					List<RemasterTerrainShadowCaster> cellCasters = grid.get(key);
-					if (cellCasters == null) {
-						cellCasters = new ArrayList<RemasterTerrainShadowCaster>();
-						grid.put(key, cellCasters);
-					}
-					cellCasters.add(caster);
+					grid.add(cellX, cellZ, caster);
 				}
 			}
 		}
@@ -713,8 +706,75 @@ final class RemasterShadowMaskBuilder {
 		return (int) Math.floor(value / REMASTER_SHADOW_MASK_GRID_SIZE);
 	}
 
-	private static long remasterShadowMaskCellKey(int cellX, int cellZ) {
-		return ((long) cellX << 32) ^ (cellZ & 0xffffffffL);
+	private static final class RemasterTerrainShadowCasterGrid {
+		private final int minCellX;
+		private final int minCellZ;
+		private final int width;
+		private final int height;
+		private final List<RemasterTerrainShadowCaster>[] values;
+
+		RemasterTerrainShadowCasterGrid(
+			List<RemasterTerrainShadowCaster> casters) {
+			int minimumX = Integer.MAX_VALUE;
+			int maximumX = Integer.MIN_VALUE;
+			int minimumZ = Integer.MAX_VALUE;
+			int maximumZ = Integer.MIN_VALUE;
+			for (RemasterTerrainShadowCaster caster : casters) {
+				minimumX = Math.min(minimumX, remasterShadowMaskCell(caster.minX));
+				maximumX = Math.max(maximumX, remasterShadowMaskCell(caster.maxX));
+				minimumZ = Math.min(minimumZ, remasterShadowMaskCell(caster.minZ));
+				maximumZ = Math.max(maximumZ, remasterShadowMaskCell(caster.maxZ));
+			}
+			if (casters.isEmpty()) {
+				minCellX = 0;
+				minCellZ = 0;
+				width = 0;
+				height = 0;
+				values = newValueArray(0);
+				return;
+			}
+			long gridWidth = (long) maximumX - minimumX + 1L;
+			long gridHeight = (long) maximumZ - minimumZ + 1L;
+			long gridSize = Math.multiplyExact(gridWidth, gridHeight);
+			if (gridSize > Integer.MAX_VALUE) {
+				throw new IllegalArgumentException(
+					"Terrain shadow caster grid is too large");
+			}
+			minCellX = minimumX;
+			minCellZ = minimumZ;
+			width = (int) gridWidth;
+			height = (int) gridHeight;
+			values = newValueArray((int) gridSize);
+		}
+
+		void add(int cellX, int cellZ, RemasterTerrainShadowCaster caster) {
+			int index = index(cellX, cellZ);
+			List<RemasterTerrainShadowCaster> cellCasters = values[index];
+			if (cellCasters == null) {
+				cellCasters = new ArrayList<RemasterTerrainShadowCaster>();
+				values[index] = cellCasters;
+			}
+			cellCasters.add(caster);
+		}
+
+		List<RemasterTerrainShadowCaster> get(int cellX, int cellZ) {
+			long offsetX = (long) cellX - minCellX;
+			long offsetZ = (long) cellZ - minCellZ;
+			if (offsetX < 0L || offsetZ < 0L
+				|| offsetX >= width || offsetZ >= height) {
+				return null;
+			}
+			return values[(int) (offsetX * height + offsetZ)];
+		}
+
+		private int index(int cellX, int cellZ) {
+			return (cellX - minCellX) * height + cellZ - minCellZ;
+		}
+
+		@SuppressWarnings("unchecked")
+		private static List<RemasterTerrainShadowCaster>[] newValueArray(int size) {
+			return (List<RemasterTerrainShadowCaster>[]) new List<?>[size];
+		}
 	}
 
 	static float remasterShadowMaskLightAzimuthDegrees() {
