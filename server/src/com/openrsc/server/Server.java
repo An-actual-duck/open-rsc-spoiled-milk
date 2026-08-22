@@ -26,6 +26,7 @@ import com.openrsc.server.diagnostics.MovementStutterDiagnostics;
 import com.openrsc.server.diagnostics.ActiveCombatBenchmark;
 import com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe;
 import com.openrsc.server.diagnostics.ProjectileCombatBenchmark;
+import com.openrsc.server.diagnostics.NpcRoamingBenchmark;
 import com.openrsc.server.event.custom.DailyShutdownEvent;
 import com.openrsc.server.event.custom.HourlyResetEvent;
 import com.openrsc.server.event.rsc.FinitePeriodicEvent;
@@ -273,10 +274,12 @@ public class Server implements Runnable {
 	private final boolean benchmarkDeepNpcProfiling;
 	private final int benchmarkActiveCombatPairs;
 	private final int benchmarkProjectileCombatGroups;
+	private final int benchmarkNpcRoamingCount;
 	private final String benchmarkProjectileCombatFamily;
 	private final long benchmarkCombatSeed;
 	private volatile ActiveCombatBenchmark activeCombatBenchmark;
 	private volatile ProjectileCombatBenchmark projectileCombatBenchmark;
+	private volatile NpcRoamingBenchmark npcRoamingBenchmark;
 	private long benchmarkSamples = 0;
 	private long benchmarkTickTotal = 0;
 	private long benchmarkTickMax = 0;
@@ -415,7 +418,10 @@ public class Server implements Runnable {
 			"openrsc.benchmarkActiveCombatPairs", 0);
 		final int projectileCombatGroups = getIntegerSystemProperty(
 			"openrsc.benchmarkProjectileCombatGroups", 0);
+		final int npcRoamingCount = getIntegerSystemProperty(
+			"openrsc.benchmarkNpcRoamingCount", 0);
 		final Server server = activeCombatPairs > 0 || projectileCombatGroups > 0
+			|| npcRoamingCount > 0
 			? new Server(confName, SystemGameClock.INSTANCE,
 				new DeterministicGameRandom(getLongSystemProperty(
 					"openrsc.benchmarkCombatSeed", 0x5A17C0B4L)))
@@ -637,6 +643,8 @@ public class Server implements Runnable {
 			"openrsc.benchmarkActiveCombatPairs", 0);
 		benchmarkProjectileCombatGroups = getIntegerSystemProperty(
 			"openrsc.benchmarkProjectileCombatGroups", 0);
+		benchmarkNpcRoamingCount = getIntegerSystemProperty(
+			"openrsc.benchmarkNpcRoamingCount", 0);
 		benchmarkProjectileCombatFamily = System.getProperty(
 			"openrsc.benchmarkProjectileCombatFamily", "ranged").trim();
 		benchmarkCombatSeed = getLongSystemProperty(
@@ -763,6 +771,27 @@ public class Server implements Runnable {
 		projectileCombatBenchmark.initialize();
 		LOGGER.info("Registered {} deterministic projectile-combat groups with seed {}",
 			box(benchmarkProjectileCombatGroups), box(benchmarkCombatSeed));
+	}
+
+	private void initializeNpcRoamingBenchmark() {
+		if (benchmarkNpcRoamingCount <= 0) return;
+		if (benchmarkActiveCombatPairs > 0 || benchmarkProjectileCombatGroups > 0) {
+			throw new IllegalStateException(
+				"NPC roaming and combat benchmarks are mutually exclusive");
+		}
+		if (!isFoundationBenchmarkEnabled()) {
+			throw new IllegalStateException(
+				"NPC roaming workload requires foundation benchmark mode");
+		}
+		if (!(combatRandom instanceof DeterministicGameRandom)) {
+			throw new IllegalStateException(
+				"NPC roaming workload requires deterministic random");
+		}
+		npcRoamingBenchmark = new NpcRoamingBenchmark(
+			this, benchmarkNpcRoamingCount, benchmarkSyntheticClientVersion);
+		npcRoamingBenchmark.initialize();
+		LOGGER.info("Initialized NPC roaming benchmark with {} NPCs and seed {}",
+			box(benchmarkNpcRoamingCount), box(benchmarkCombatSeed));
 	}
 
 	private void auditPlayerOwnedItemIds() {
@@ -931,6 +960,7 @@ public class Server implements Runnable {
 				initializeBenchmarkSyntheticPlayers();
 				initializeActiveCombatBenchmark();
 				initializeProjectileCombatBenchmark();
+				initializeNpcRoamingBenchmark();
 
 				/*LOGGER.info("Loading Achievements...");
 				getAchievementSystem().load();
@@ -1261,6 +1291,10 @@ public class Server implements Runnable {
 
 	public boolean isFoundationBenchmarkDeepNpcProfilingEnabled() {
 		return isFoundationBenchmarkNpcProfilingEnabled() && benchmarkDeepNpcProfiling;
+	}
+
+	public boolean isNpcRoamingBenchmarkEnabled() {
+		return benchmarkNpcRoamingCount > 0;
 	}
 
 	/** Records scheduler cost only for explicitly enabled benchmark samples. */
@@ -1868,6 +1902,7 @@ public class Server implements Runnable {
 			+ " deepNpcProfiling=" + benchmarkDeepNpcProfiling
 			+ " activeCombatConfiguredPairs=" + benchmarkActiveCombatPairs
 			+ " projectileCombatConfiguredGroups=" + benchmarkProjectileCombatGroups
+			+ " npcRoamingConfiguredCount=" + benchmarkNpcRoamingCount
 			+ " projectileCombatConfiguredFamily=" + benchmarkProjectileCombatFamily
 			+ " avgTickMs=" + nanosToMillis(benchmarkTickTotal / samples)
 			+ " maxTickMs=" + nanosToMillis(benchmarkTickMax)
@@ -2005,6 +2040,9 @@ public class Server implements Runnable {
 			+ (projectileCombatBenchmark == null
 				? " projectileCombatInvariant=disabled"
 				: projectileCombatBenchmark.buildSummary())
+			+ (npcRoamingBenchmark == null
+				? " npcRoamingInvariant=disabled"
+				: npcRoamingBenchmark.buildSummary())
 			+ (AuthenticatedNetworkBenchmarkProbe.isEnabled()
 				? AuthenticatedNetworkBenchmarkProbe.summary() : "");
 	}

@@ -33,6 +33,9 @@ ENTITY_STUB = r"""
 package com.openrsc.server.model.entity;
 
 public class Entity {
+    public boolean isInvisibleTo(Entity observer) {
+        return false;
+    }
 }
 """
 

@@ -1019,15 +1019,7 @@ public class RegionManager {
 		if (target == null) {
 			return null;
 		}
-		for (Entity candidate : layeredSpatialEntityIndex.snapshot(
-			WorldRegionWindow.around(target, 0)).getEntities()) {
-			if (candidate instanceof Npc
-				&& target.equals(candidate.getWorldLocation())
-				&& !candidate.isInvisibleTo(observer)) {
-				return (Npc) candidate;
-			}
-		}
-		return null;
+		return layeredSpatialEntityIndex.findNpcAt(target, observer);
 	}
 
 	Player findLayeredPlayer(
@@ -1039,16 +1031,8 @@ public class RegionManager {
 		if (target == null) {
 			return null;
 		}
-		for (Entity candidate : layeredSpatialEntityIndex.snapshot(
-			WorldRegionWindow.around(target, 0)).getEntities()) {
-			if (candidate instanceof Player
-				&& target.equals(candidate.getWorldLocation())
-				&& !candidate.isInvisibleTo(observer)
-				&& (!includeSelf || candidate == observer)) {
-				return (Player) candidate;
-			}
-		}
-		return null;
+		return layeredSpatialEntityIndex.findPlayerAt(
+			target, observer, includeSelf);
 	}
 
 	GroundItem findLayeredGroundItem(

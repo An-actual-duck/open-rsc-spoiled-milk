@@ -1,8 +1,8 @@
 # Server Runtime Performance Investigation
 
-Status: READY FOR MANAGER REVIEW — PROJECTILE COMBAT MILESTONE
+Status: READY FOR MANAGER REVIEW — NPC ROAMING MILESTONE
 
-Branch: `refactor/server-projectile-runtime-optimization`
+Branch: `refactor/server-npc-roam-runtime-optimization`
 
 Scope: measured, behavior-preserving runtime optimization only; Server R2
 architecture remains out of scope.
@@ -472,12 +472,73 @@ retains two material optimizations. The two-attempt rule stopped packet
 serialization work, and direct combat resolution is now below one millisecond
 per tick in this stress workload.
 
+## Deterministic NPC roaming workload
+
+`NpcRoamingBenchmark` now isolates 64 production NPCs in four controlled
+cohorts. Three quarters have a due roam timer and one quarter is explicitly not
+due. The scene includes dense and sparse nearby-player distributions, players
+at the same coordinates on level -1 that must not satisfy level-0 discovery,
+open movement areas, and one blocking scenery object per collision cohort NPC.
+The disposable runner disables the idle throttle and asynchronous custom walk
+cadence so every NPC and movement stage is processed in deterministic game-tick
+order. It uses custom protocol 10052, layered player/spatial authority, copied
+configuration and database state, and no network listener.
+
+The aggregate invariant fixes NPC/player/cohort/scenery counts, cadence
+preparations, and the legacy-random draw count. Two comparison runs both
+produced `64-11-48-16-16-3264-3853`. The sorted final-location hash is retained
+as diagnostic information rather than part of the invariant: UUID-based entity
+iteration can assign the same deterministic random sequence to different NPCs
+between JVM processes, as already documented for the projectile fixture.
+
+### Baseline and ranked roaming costs
+
+The fixed 40-measured/10-warmup comparison baseline measured 10.515 and 10.203
+ms/tick, a 10.359 ms mean. Independent deep attribution ranked the stages:
+
+| Stage | Baseline mean |
+| --- | ---: |
+| NPC behavior | 2.574 ms/tick |
+| Random-roam discovery, cadence, and path selection | 2.467 ms/tick |
+| NPC movement/collision | 1.105 ms/tick |
+| NPC movement publication | 0.291 ms/tick |
+| Aggro/player scan | 0.06 ms/tick |
+| Eligibility and tackle checks | under 0.01 ms/tick |
+
+JFR attributed the dominant roaming work to `PathValidation.checkAdjacent`,
+including exact-tile mob collision lookups which called
+`findLayeredNpc`/`findLayeredPlayer`. Those methods materialized a complete
+mixed-region snapshot even though collision needed only the first matching NPC
+or player on one exact tile. Player-presence discovery itself was not a CPU or
+allocation leader, so the closed broad visibility micro-tuning area remains
+closed.
+
+### Accepted roaming optimization: exact layered mob collision lookup
+
+`LayeredSpatialEntityIndex` now performs exact-tile NPC lookup directly over
+the existing insertion-ordered region membership and player lookup over the
+existing player-only projection. It retains exact world-space/level matching,
+observer visibility, self-inclusion behavior, and first-match order without
+allocating a mixed `Snapshot`. `RegionManager` delegates only its exact
+interaction/collision lookups; visibility snapshots and range policy are
+unchanged.
+
+The final equivalent post-change replay measured 8.405 and 9.954 ms/tick, a
+9.180 ms mean and a repeatable 11.4% end-to-end reduction. NPC processing fell
+from 3.699 to 3.140 ms/tick (15.1%); behavior fell 14.9%, movement/collision
+fell 16.1%, and the combined random-roam stage fell 15.7%. Both runs retained the
+exact aggregate invariant and 3,853 random draws. Publication remained about
+0.30 ms/tick and did not justify reopening prior visibility work. Aggro,
+eligibility, and tackle stages are far below the one-percent end-to-end
+materiality threshold and are closed for this workload.
+
 ## Next investigation
 
 1. Treat custom appearance/payload serialization as a future representation
    design with packet byte-parity tests; two local loop changes failed here.
-2. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
-   of controlling due timers and nearby-player distribution.
+2. Revisit NPC roaming only for a materially different workload, such as dense
+   aggressive-player discovery or scripted/A* movement. The deterministic
+   passive roaming and exact collision path are complete here.
 3. Return to network work only when a larger connected-client fixture shows
    socket writes, decoder cost, allocation, or GC pressure above the materiality
    threshold; do not micro-tune the current 0.055 ms/tick outgoing stage.
@@ -497,6 +558,17 @@ per tick in this stress workload.
 - repeated eight-client authenticated TCP runs with real registration, login,
   heartbeat/walk parsing, socket writes, and forced backpressure recovery
 - repeated deterministic 16-group ranged, magic, and three-target shuriken runs
+- repeated deterministic 64-NPC roaming runs with controlled cadence, player
+  density, layered isolation, scenery collision, and synchronous movement
+- pre-change roaming mean 10.359 ms/tick and final post-change mean 9.180 ms/tick
+- exact roaming aggregate/random signature `64-11-48-16-16-3264-3853`
+- `python3 tests/myworld/test-npc-roaming-benchmark.py`
+- bundled Ant `test_combat` (143 scenarios)
+- bundled Ant `test_network_encoder` (exact TCP/WebSocket bytes)
+- `./scripts/build-server.sh` (authoritative Ant core and plugins)
+- `python3 scripts/lint.py report --base 9d5d4d26f8e02f89646d952e1394e1b847a3a09e --offline`: changed-code
+  compiler gate passed. Whole-program SpotBugs retains the two pre-existing
+  client findings in unchanged `DoSkillInterface` and `PartyInterface`.
 - pre/post multi-target JFR CPU, allocation, and GC captures
 - exact aggregate projectile outcome, plugin-dispatch, and random-draw signatures
 - accepted exact visible-ground-item lookup at 3.0% end-to-end improvement

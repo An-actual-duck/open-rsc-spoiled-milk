@@ -33,7 +33,7 @@ public class NpcBehavior {
 	private static final int ROAM_BASE_TICKS = 4;
 	private static final int ROAM_JITTER_TICKS = 2;
 
-	private long nextRoamMovementAt;
+	private volatile long nextRoamMovementAt;
 	private long lastTackleAttempt;
 	private static final int[] TACKLING_XP = {7, 10, 15, 20};
 	private final long gameTickMillis;
@@ -344,6 +344,19 @@ public class NpcBehavior {
 	private void scheduleNextRoamMovement(final long now) {
 		int delayTicks = (ROAM_BASE_TICKS + DataConversions.random(0, ROAM_JITTER_TICKS)) * tickFactor;
 		nextRoamMovementAt = now + (long)delayTicks * gameTickMillis;
+	}
+
+	/**
+	 * Controls only the next cadence decision for the explicitly enabled NPC
+	 * roaming benchmark. Production callers must never alter the private roam
+	 * timer directly.
+	 */
+	public void prepareBenchmarkRoamCadence(final boolean due) {
+		if (!npc.getWorld().getServer().isNpcRoamingBenchmarkEnabled()) {
+			throw new IllegalStateException(
+				"NPC roam cadence control requires benchmark mode");
+		}
+		nextRoamMovementAt = due ? Long.MIN_VALUE : Long.MAX_VALUE;
 	}
 
 	private void handleAggro(final long now) {
