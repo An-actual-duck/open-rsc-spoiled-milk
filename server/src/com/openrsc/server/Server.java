@@ -25,6 +25,7 @@ import com.openrsc.server.database.patches.PatchApplier;
 import com.openrsc.server.diagnostics.MovementStutterDiagnostics;
 import com.openrsc.server.diagnostics.ActiveCombatBenchmark;
 import com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe;
+import com.openrsc.server.diagnostics.ProjectileCombatBenchmark;
 import com.openrsc.server.event.custom.DailyShutdownEvent;
 import com.openrsc.server.event.custom.HourlyResetEvent;
 import com.openrsc.server.event.rsc.FinitePeriodicEvent;
@@ -32,6 +33,10 @@ import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.PluginTickEvent;
 import com.openrsc.server.event.rsc.handler.GameEventHandler;
 import com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent;
+import com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent;
+import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
+import com.openrsc.server.event.rsc.impl.projectile.RangeEvent;
+import com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent;
 import com.openrsc.server.event.rsc.impl.combat.scripts.CombatScriptLoader;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.model.PlayerAppearance;
@@ -267,8 +272,11 @@ public class Server implements Runnable {
 	private final boolean benchmarkNpcProfiling;
 	private final boolean benchmarkDeepNpcProfiling;
 	private final int benchmarkActiveCombatPairs;
+	private final int benchmarkProjectileCombatGroups;
+	private final String benchmarkProjectileCombatFamily;
 	private final long benchmarkCombatSeed;
 	private volatile ActiveCombatBenchmark activeCombatBenchmark;
+	private volatile ProjectileCombatBenchmark projectileCombatBenchmark;
 	private long benchmarkSamples = 0;
 	private long benchmarkTickTotal = 0;
 	private long benchmarkTickMax = 0;
@@ -368,6 +376,14 @@ public class Server implements Runnable {
 	private int benchmarkMaxEvents = 0;
 	private long benchmarkPvmMeleeEventTotal = 0;
 	private long benchmarkPvmMeleeEventCalls = 0;
+	private long benchmarkRangeEventTotal = 0;
+	private long benchmarkRangeEventCalls = 0;
+	private long benchmarkMagicCombatEventTotal = 0;
+	private long benchmarkMagicCombatEventCalls = 0;
+	private long benchmarkThrowingEventTotal = 0;
+	private long benchmarkThrowingEventCalls = 0;
+	private long benchmarkProjectileEventTotal = 0;
+	private long benchmarkProjectileEventCalls = 0;
 	private long benchmarkPluginTickEventTotal = 0;
 	private long benchmarkPluginTickEventCalls = 0;
 	private long benchmarkOtherEventTotal = 0;
@@ -397,7 +413,9 @@ public class Server implements Runnable {
 		final long startTime = System.currentTimeMillis();
 		final int activeCombatPairs = getIntegerSystemProperty(
 			"openrsc.benchmarkActiveCombatPairs", 0);
-		final Server server = activeCombatPairs > 0
+		final int projectileCombatGroups = getIntegerSystemProperty(
+			"openrsc.benchmarkProjectileCombatGroups", 0);
+		final Server server = activeCombatPairs > 0 || projectileCombatGroups > 0
 			? new Server(confName, SystemGameClock.INSTANCE,
 				new DeterministicGameRandom(getLongSystemProperty(
 					"openrsc.benchmarkCombatSeed", 0x5A17C0B4L)))
@@ -617,6 +635,10 @@ public class Server implements Runnable {
 		benchmarkDeepNpcProfiling = getBooleanSystemProperty("openrsc.benchmarkDeepNpcProfiling", true);
 		benchmarkActiveCombatPairs = getIntegerSystemProperty(
 			"openrsc.benchmarkActiveCombatPairs", 0);
+		benchmarkProjectileCombatGroups = getIntegerSystemProperty(
+			"openrsc.benchmarkProjectileCombatGroups", 0);
+		benchmarkProjectileCombatFamily = System.getProperty(
+			"openrsc.benchmarkProjectileCombatFamily", "ranged").trim();
 		benchmarkCombatSeed = getLongSystemProperty(
 			"openrsc.benchmarkCombatSeed", 0x5A17C0B4L);
 	}
@@ -717,6 +739,30 @@ public class Server implements Runnable {
 		activeCombatBenchmark.initialize();
 		LOGGER.info("Registered {} deterministic active-combat pairs with seed {}",
 			box(benchmarkActiveCombatPairs), box(benchmarkCombatSeed));
+	}
+
+	private void initializeProjectileCombatBenchmark() {
+		if (benchmarkProjectileCombatGroups <= 0) return;
+		if (benchmarkActiveCombatPairs > 0) {
+			throw new IllegalStateException(
+				"Projectile and melee combat benchmarks are mutually exclusive");
+		}
+		if (!isFoundationBenchmarkEnabled()) {
+			throw new IllegalStateException(
+				"Projectile combat workload requires foundation benchmark mode");
+		}
+		if (!(getCombatRandom() instanceof DeterministicGameRandom)
+				|| ((DeterministicGameRandom)getCombatRandom()).getSeed()
+					!= benchmarkCombatSeed) {
+			throw new IllegalStateException(
+				"Projectile combat workload requires its configured deterministic random source");
+		}
+		projectileCombatBenchmark = new ProjectileCombatBenchmark(
+			this, benchmarkProjectileCombatGroups, benchmarkSyntheticClientVersion,
+			benchmarkProjectileCombatFamily);
+		projectileCombatBenchmark.initialize();
+		LOGGER.info("Registered {} deterministic projectile-combat groups with seed {}",
+			box(benchmarkProjectileCombatGroups), box(benchmarkCombatSeed));
 	}
 
 	private void auditPlayerOwnedItemIds() {
@@ -884,6 +930,7 @@ public class Server implements Runnable {
 
 				initializeBenchmarkSyntheticPlayers();
 				initializeActiveCombatBenchmark();
+				initializeProjectileCombatBenchmark();
 
 				/*LOGGER.info("Loading Achievements...");
 				getAchievementSystem().load();
@@ -1226,6 +1273,18 @@ public class Server implements Runnable {
 		if (event instanceof PvmMeleeEvent) {
 			benchmarkPvmMeleeEventTotal += duration;
 			benchmarkPvmMeleeEventCalls++;
+		} else if (event instanceof RangeEvent) {
+			benchmarkRangeEventTotal += duration;
+			benchmarkRangeEventCalls++;
+		} else if (event instanceof MagicCombatEvent) {
+			benchmarkMagicCombatEventTotal += duration;
+			benchmarkMagicCombatEventCalls++;
+		} else if (event instanceof ThrowingEvent) {
+			benchmarkThrowingEventTotal += duration;
+			benchmarkThrowingEventCalls++;
+		} else if (event instanceof ProjectileEvent) {
+			benchmarkProjectileEventTotal += duration;
+			benchmarkProjectileEventCalls++;
 		} else if (event instanceof PluginTickEvent) {
 			benchmarkPluginTickEventTotal += duration;
 			benchmarkPluginTickEventCalls++;
@@ -1808,6 +1867,8 @@ public class Server implements Runnable {
 			+ " npcProfiling=" + benchmarkNpcProfiling
 			+ " deepNpcProfiling=" + benchmarkDeepNpcProfiling
 			+ " activeCombatConfiguredPairs=" + benchmarkActiveCombatPairs
+			+ " projectileCombatConfiguredGroups=" + benchmarkProjectileCombatGroups
+			+ " projectileCombatConfiguredFamily=" + benchmarkProjectileCombatFamily
 			+ " avgTickMs=" + nanosToMillis(benchmarkTickTotal / samples)
 			+ " maxTickMs=" + nanosToMillis(benchmarkTickMax)
 			+ " avgEventsMs=" + nanosToMillis(benchmarkEventsTotal / samples)
@@ -1926,6 +1987,14 @@ public class Server implements Runnable {
 			+ " maxEvents=" + benchmarkMaxEvents
 			+ " pvmMeleeEventCalls=" + benchmarkPvmMeleeEventCalls
 			+ " pvmMeleeEventMsPrecise=" + nanosToMillisPrecise(benchmarkPvmMeleeEventTotal)
+			+ " rangeEventCalls=" + benchmarkRangeEventCalls
+			+ " rangeEventMsPrecise=" + nanosToMillisPrecise(benchmarkRangeEventTotal)
+			+ " magicCombatEventCalls=" + benchmarkMagicCombatEventCalls
+			+ " magicCombatEventMsPrecise=" + nanosToMillisPrecise(benchmarkMagicCombatEventTotal)
+			+ " throwingEventCalls=" + benchmarkThrowingEventCalls
+			+ " throwingEventMsPrecise=" + nanosToMillisPrecise(benchmarkThrowingEventTotal)
+			+ " projectileEventCalls=" + benchmarkProjectileEventCalls
+			+ " projectileEventMsPrecise=" + nanosToMillisPrecise(benchmarkProjectileEventTotal)
 			+ " pluginTickEventCalls=" + benchmarkPluginTickEventCalls
 			+ " pluginTickEventMsPrecise=" + nanosToMillisPrecise(benchmarkPluginTickEventTotal)
 			+ " otherEventCalls=" + benchmarkOtherEventCalls
@@ -1933,6 +2002,9 @@ public class Server implements Runnable {
 			+ (activeCombatBenchmark == null
 				? " activeCombatInvariant=disabled"
 				: activeCombatBenchmark.buildSummary())
+			+ (projectileCombatBenchmark == null
+				? " projectileCombatInvariant=disabled"
+				: projectileCombatBenchmark.buildSummary())
 			+ (AuthenticatedNetworkBenchmarkProbe.isEnabled()
 				? AuthenticatedNetworkBenchmarkProbe.summary() : "");
 	}
