@@ -346,6 +346,19 @@ public class NpcBehavior {
 		nextRoamMovementAt = now + (long)delayTicks * gameTickMillis;
 	}
 
+	/**
+	 * Controls only the next cadence decision for the explicitly enabled NPC
+	 * roaming benchmark. Production callers must never alter the private roam
+	 * timer directly.
+	 */
+	public void prepareBenchmarkRoamCadence(final boolean due) {
+		if (!npc.getWorld().getServer().isNpcRoamingBenchmarkEnabled()) {
+			throw new IllegalStateException(
+				"NPC roam cadence control requires benchmark mode");
+		}
+		nextRoamMovementAt = due ? Long.MIN_VALUE : Long.MAX_VALUE;
+	}
+
 	private void handleAggro(final long now) {
 		// There should not be hostility or aggro. Let's resume roaming.
 		if (target == null || target.isRemoved() || npc.isRespawning() || npc.isRemoved()) {

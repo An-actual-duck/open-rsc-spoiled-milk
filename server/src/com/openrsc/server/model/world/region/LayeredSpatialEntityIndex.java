@@ -171,6 +171,49 @@ public final class LayeredSpatialEntityIndex {
 		}
 	}
 
+	/** Exact-tile NPC lookup without materializing a mixed-region snapshot. */
+	public Npc findNpcAt(
+		final WorldLocation target,
+		final Entity observer) {
+		WorldLocation checkedTarget = Objects.requireNonNull(target, "target");
+		Entity checkedObserver = Objects.requireNonNull(observer, "observer");
+		synchronized (lock) {
+			Collection<Entity> members = regions.get(
+				WorldRegionKey.from(checkedTarget));
+			if (members == null) return null;
+			for (Entity candidate : members) {
+				if (candidate instanceof Npc
+					&& checkedTarget.equals(candidate.getWorldLocation())
+					&& !candidate.isInvisibleTo(checkedObserver)) {
+					return (Npc)candidate;
+				}
+			}
+			return null;
+		}
+	}
+
+	/** Exact-tile player lookup over the existing player-only projection. */
+	public Player findPlayerAt(
+		final WorldLocation target,
+		final Entity observer,
+		final boolean includeSelf) {
+		WorldLocation checkedTarget = Objects.requireNonNull(target, "target");
+		Entity checkedObserver = Objects.requireNonNull(observer, "observer");
+		synchronized (lock) {
+			Collection<Player> members = playerRegions.get(
+				WorldRegionKey.from(checkedTarget));
+			if (members == null) return null;
+			for (Player candidate : members) {
+				if (checkedTarget.equals(candidate.getWorldLocation())
+					&& !candidate.isInvisibleTo(checkedObserver)
+					&& (!includeSelf || candidate == checkedObserver)) {
+					return candidate;
+				}
+			}
+			return null;
+		}
+	}
+
 	/**
 	 * Checks the player-only membership projection without copying every entity
 	 * in the interest window.
