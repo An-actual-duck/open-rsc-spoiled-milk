@@ -1,5 +1,7 @@
 package com.openrsc.server.net;
 
+import com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -14,9 +16,20 @@ public final class RSCProtocolWebEncoder extends MessageToMessageEncoder<Packet>
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, Packet message, List<Object> out) throws Exception {
-		BinaryWebSocketFrame result = new BinaryWebSocketFrame();
-		result.content().writeBytes(encoder.encode(ctx, message));
-		out.add(result);
+		final long start = AuthenticatedNetworkBenchmarkProbe.isEnabled()
+			? System.nanoTime() : 0L;
+		final ByteBuf encoded = ctx.alloc().buffer();
+		try {
+			encoder.encode(ctx, message, encoded);
+			if (AuthenticatedNetworkBenchmarkProbe.isEnabled()) {
+				AuthenticatedNetworkBenchmarkProbe.recordSerialization(
+					System.nanoTime() - start, encoded.readableBytes());
+			}
+			out.add(new BinaryWebSocketFrame(encoded));
+		} catch (Exception failure) {
+			encoded.release();
+			throw failure;
+		}
 	}
 
 	@Override

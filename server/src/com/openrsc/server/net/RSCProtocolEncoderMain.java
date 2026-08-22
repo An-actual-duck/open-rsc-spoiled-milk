@@ -1,7 +1,6 @@
 package com.openrsc.server.net;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
@@ -24,10 +23,10 @@ public final class RSCProtocolEncoderMain {
 				return false;
 		}
 	}
-	public ByteBuf encode(ChannelHandlerContext ctx, Packet message) throws Exception {
+	public void encode(ChannelHandlerContext ctx, Packet message,
+			final ByteBuf outBuffer) throws Exception {
 		final Channel channel = ctx.channel();
 		ConnectionAttachment att = channel.attr(attachment).get();
-		ByteBuf outBuffer = null;
 		logLayeredPacketEncoding(channel, message);
 
 		if (att.player != null && att.player.get() != null) {
@@ -48,13 +47,12 @@ public final class RSCProtocolEncoderMain {
 				PacketFrameLengthGuard.requireSimplifiedPayloadLength(
 					packetLength);
 				int frameLength = Math.addExact(packetLength, 3);
-				ByteBuf buffer = Unpooled.buffer(frameLength);
+				ByteBuf buffer = outBuffer;
 
 				buffer.writeShort(frameLength);
 				buffer.writeByte(message.getID());
 
 				buffer.writeBytes(message.getBuffer());
-				outBuffer = buffer;
 			} else if (authenticClient >= 183) {
 				// Modern Authentic Packet Handling (With ISAAC)
 				// Don't know exactly when ISAAC started getting used, but mudclient 183 from 2004-02-04 uses opcode shuffling
@@ -72,7 +70,7 @@ public final class RSCProtocolEncoderMain {
 				ByteBuf buffer;
 				int encodedOpcode;
 				if (packetLength >= 160) {
-					buffer = Unpooled.buffer(packetLength + 2); // + 2 to hold length
+					buffer = outBuffer;
 					buffer.writeByte((byte) (packetLength / 256 + 160));
 					buffer.writeByte((byte) (packetLength & 0xFF));
 
@@ -82,7 +80,7 @@ public final class RSCProtocolEncoderMain {
 					buffer.writeBytes(message.getBuffer());
 
 				} else {
-					buffer = Unpooled.buffer(packetLength + 1); // + 1 to hold length
+					buffer = outBuffer;
 					buffer.writeByte((byte) packetLength);
 					int bufferLen = message.getBuffer().readableBytes();
 
@@ -111,7 +109,6 @@ public final class RSCProtocolEncoderMain {
 					}
 				}
 
-				outBuffer = buffer;
 			} else if (authenticClient >= 93) {
 				int packetLength = Math.addExact(
 					message.getBuffer().readableBytes(), 1); // + 1 for opcode
@@ -120,7 +117,7 @@ public final class RSCProtocolEncoderMain {
 
 				ByteBuf buffer;
 				if (packetLength >= 160) {
-					buffer = Unpooled.buffer(packetLength + 2); // + 2 to hold length
+					buffer = outBuffer;
 					buffer.writeByte((byte) (packetLength / 256 + 160));
 					buffer.writeByte((byte) (packetLength & 0xFF));
 
@@ -128,7 +125,7 @@ public final class RSCProtocolEncoderMain {
 					buffer.writeBytes(message.getBuffer());
 
 				} else {
-					buffer = Unpooled.buffer(packetLength + 1); // + 1 to hold length
+					buffer = outBuffer;
 					buffer.writeByte((byte) packetLength);
 					int bufferLen = message.getBuffer().readableBytes();
 
@@ -154,25 +151,20 @@ public final class RSCProtocolEncoderMain {
 					}
 				}
 
-				outBuffer = buffer;
 			} else if (authenticClient >= 14) {
 				//TODO: verify if always holds like this
 				int packetLength = message.getBuffer().readableBytes();
 				PacketFrameLengthGuard.requireLegacyPayloadLength(packetLength);
-				ByteBuf buffer = Unpooled.buffer(
-					Math.addExact(packetLength, 3));
+				ByteBuf buffer = outBuffer;
 
 				buffer.writeShort(packetLength + 1);
 				buffer.writeByte(message.getID());
 
 				buffer.writeBytes(message.getBuffer());
-				outBuffer = buffer;
 			}
 		} else {
-			outBuffer = message.getBuffer();
+			outBuffer.writeBytes(message.getBuffer());
 		}
-
-		return outBuffer;
 	}
 
 	/**

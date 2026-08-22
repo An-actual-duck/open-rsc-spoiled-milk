@@ -99,6 +99,20 @@
 		</java>
 	</target>
 
+	<target name="test_network_encoder" depends="compile_core">
+		<delete dir="../output/network-encoder-test"/>
+		<mkdir dir="../output/network-encoder-test"/>
+		<javac srcdir="${test.src}" destdir="../output/network-encoder-test" debug="on"
+			includes="com/openrsc/server/net/RSCProtocolEncoderWireTest.java"
+			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</javac>
+		<java classname="com.openrsc.server.net.RSCProtocolEncoderWireTest" fork="true"
+			failonerror="true" dir="${basedir}">
+			<classpath><pathelement location="../output/network-encoder-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</java>
+	</target>
+
     <target name="compile_core">
         <delete file="${jar}"/>
         <delete dir="${build}"/>
