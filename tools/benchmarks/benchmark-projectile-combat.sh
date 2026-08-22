@@ -13,6 +13,7 @@ BENCHMARK_GROUPS="${MYWORLD_PROJECTILE_BENCHMARK_GROUPS:-16}"
 BENCHMARK_COMBAT_SEED="${MYWORLD_PROJECTILE_BENCHMARK_SEED:-1511506148}"
 BENCHMARK_REPETITIONS="${MYWORLD_PROJECTILE_BENCHMARK_REPETITIONS:-2}"
 BENCHMARK_EXTRA_JVM_ARGS="${MYWORLD_PROJECTILE_BENCHMARK_EXTRA_JVM_ARGS:-}"
+BENCHMARK_FAMILIES="${MYWORLD_PROJECTILE_BENCHMARK_FAMILIES:-ranged magic multi}"
 
 (( BENCHMARK_GROUPS >= 3 )) || myworld_fail "projectile benchmark requires at least three groups"
 (( BENCHMARK_REPETITIONS >= 2 )) || myworld_fail "projectile benchmark repetitions must be at least two"
@@ -22,7 +23,11 @@ myworld_prepare_generated_artifacts "$GENERATOR_MODE"
 myworld_ant_build compile_core
 myworld_ant_build compile_plugins
 
-for family in ranged magic multi; do
+for family in $BENCHMARK_FAMILIES; do
+ case "$family" in
+  ranged|magic|multi) ;;
+  *) myworld_fail "unknown projectile benchmark family: $family" ;;
+ esac
  expected_signature=""
  for run in $(seq 1 "$BENCHMARK_REPETITIONS"); do
   token="projectile_benchmark_${family}_${$}_${run}"

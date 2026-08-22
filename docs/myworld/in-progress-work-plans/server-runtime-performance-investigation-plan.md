@@ -1,8 +1,8 @@
 # Server Runtime Performance Investigation
 
-Status: READY FOR MANAGER REVIEW — AUTHENTICATED NETWORK MILESTONE
+Status: ACTIVE — PROJECTILE COMBAT MILESTONE
 
-Branch: `refactor/server-network-runtime-optimization`
+Branch: `refactor/server-projectile-runtime-optimization`
 
 Scope: measured, behavior-preserving runtime optimization only; Server R2
 architecture remains out of scope.
@@ -362,6 +362,93 @@ even removing all of it would not clear the investigation's materiality rule.
 This is an evidence-based stop for the current network area, not an assertion
 that those paths contain no measurable instructions.
 
+## Projectile, magic, and multi-target workload
+
+`ProjectileCombatBenchmark` is a listener-free production-path fixture with
+separate deterministic ranged, magic, and three-target shuriken scenarios. Each
+scenario uses 16 synthetic custom-client players, 15 warmup ticks, 60 measured
+ticks, a seeded server combat source and seeded legacy random source, the real
+`RangeEvent`, `MagicCombatEvent`, `ThrowingEvent`, `ProjectileEvent`, damage
+transaction, launch/resource ledgers, visibility update, and timed-plugin
+trigger. Loaded background NPCs are removed only inside the disposable fixture.
+Its passive high-Hits targets suppress counter-melee so these measurements do
+not silently become another melee workload.
+
+The runner copies the checked-in seed database and configuration for every
+execution, never binds a listener, requires two or more repetitions, and checks
+an exact aggregate outcome/plugin-dispatch/random-draw signature per family.
+Per-target distribution hashes remain diagnostic because UUID scheduler order
+can assign the same deterministic aggregate damage among equivalent targets.
+The runner also permits one or more explicitly named families for equivalent
+focused profiling while its default remains the complete three-family suite.
+
+### Projectile-family baseline and ranking
+
+The first non-JFR baseline produced these two-run means:
+
+| Rank | Stage/family | Mean cost per tick | Evidence |
+| ---: | --- | ---: | --- |
+| 1 | Visibility/update and payload preparation | 2.63–3.49 ms | 16 custom clients; the 48-target multi scenario is the upper end |
+| 2 | Multi-target launch/selection/resource work | 1.812 ms | 960 `ThrowingEvent` calls per run |
+| 3 | Ranged launch/targeting/resource work | 1.444 ms | 960 `RangeEvent` calls per run |
+| 4 | Magic launch/targeting/rune/plugin work | 0.583 ms | 960 `MagicCombatEvent` calls per run |
+| 5 | Projectile lifecycle and damage resolution | 0.237–0.238 ms | 320–960 `ProjectileEvent` calls, family dependent |
+| 6 | Representative timed-plugin work | 0.142–0.156 ms | 120 real plugin tick events per run |
+
+End-to-end means were 8.233 ms for ranged, 7.569 ms for magic, and
+9.457 ms for multi-target. NPC processing was only 0.04–0.13 ms/tick after the
+fixture removed unrelated population, confirming that the ranking is not a
+pathing or counter-melee result. The synthetic channels still intentionally do
+not perform socket writes: update and payload generation are exercised, while
+wire framing/backpressure remain governed by the authenticated-network fixture
+and its byte-exact encoder tests.
+
+A 52-second JFR multi-target baseline attributed sampled game-thread allocation
+primarily to visibility (~42.9 MB sampled weight), then throwing (~4.2 MB),
+projectile settlement (~1.0 MB), and network payload generation (~1.0 MB).
+Twenty G1 collections across startup plus measurement accumulated 153.2 ms of
+pause time; the longest was 18.5 ms. This ranks allocation pressure, but does
+not make GC the primary steady tick cost. CPU samples also exposed full local
+ground-item snapshots during per-projectile recovery and repeated target/path
+work in shuriken selection.
+
+### Accepted optimization 9: exact visible ground-item lookup
+
+Projectile recovery asked for one exact item ID at one exact impact tile, but
+`ViewArea.getVisibleGroundItem` materialized the observer's complete ground-item
+window before filtering it. It now retains the authoritative object-view range
+check and delegates to the existing exact region/layer lookup, which retains ID,
+location, world/layer, insertion-order, and owner-visibility behavior. This also
+benefits the existing interaction callers without changing item admission,
+stacking, recovery decisions, random draws, or packets.
+
+| Metric | Before mean | After mean | Change |
+| --- | ---: | ---: | ---: |
+| Multi-target average tick | 9.457 ms | 9.170 ms | -3.0% |
+| Multi-target launch event | 1.812 ms/tick | 1.562 ms/tick | -13.8% |
+
+Both accepted runs retained the exact signature
+`multi-16-0-0-16-16-48-16-148-1600000-4793484-8413`. Equivalent post-change
+JFR runs averaged 8.459 ms/tick versus 9.574 ms/tick in the equivalent baseline;
+the non-JFR result above remains the acceptance measurement.
+
+### Projectile experiments rejected by the materiality rule
+
+- Reusing one valid-shuriken candidate snapshot across selection and lock
+  maintenance produced 9.464 ms/tick versus 9.457 ms/tick, a 0.07% regression
+  within noise. It was removed.
+- Caching each candidate's aggro classification within selection produced
+  9.366 ms/tick versus the accepted 9.170 ms/tick and increased launch-event
+  time. It was removed.
+
+These are two target-selection attempts without a repeatable gain. Selection
+micro-tuning stops here. Projectile damage, plugin dispatch, NPC processing,
+and socket serialization are each already too small in this workload to offer
+a one-percent end-to-end improvement; existing behavior and ordering are kept
+instead of pursuing micro-gains. Visibility remains the largest general stage,
+but its prior two-attempt stop and its non-projectile-specific representation
+cost remain authoritative for this branch.
+
 ## Investigation checkpoint
 
 The equivalent protocol-235 JFR path fell from 58.214 ms/tick at baseline to
@@ -380,14 +467,14 @@ per tick in this stress workload.
 
 1. Treat custom appearance/payload serialization as a future representation
    design with packet byte-parity tests; two local loop changes failed here.
-2. Add a separately deterministic projectile/magic/multi-target combat workload
-   before optimizing those combat families. The current melee result does not
-   authorize extrapolation.
-3. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
+2. Revisit NPC random-roam only with a deterministic NPC-state fixture capable
    of controlling due timers and nearby-player distribution.
-4. Return to network work only when a larger connected-client fixture shows
+3. Return to network work only when a larger connected-client fixture shows
    socket writes, decoder cost, allocation, or GC pressure above the materiality
    threshold; do not micro-tune the current 0.055 ms/tick outgoing stage.
+4. Reopen projectile combat only for a materially different representative
+   workload (for example, dense player-vs-player or effect-heavy spells), not
+   another micro-tuning pass over the accepted ranged/magic/shuriken scenarios.
 5. Keep Server R2 architecture and configuration redesign outside this branch.
 
 ## Validation to date
@@ -400,6 +487,12 @@ per tick in this stress workload.
 - repeated deterministic 64-pair active-combat/plugin runs
 - repeated eight-client authenticated TCP runs with real registration, login,
   heartbeat/walk parsing, socket writes, and forced backpressure recovery
+- repeated deterministic 16-group ranged, magic, and three-target shuriken runs
+- pre/post multi-target JFR CPU, allocation, and GC captures
+- exact aggregate projectile outcome, plugin-dispatch, and random-draw signatures
+- accepted exact visible-ground-item lookup at 3.0% end-to-end improvement
+- two rejected shuriken-selection experiments and their complete removal
+- `python3 tests/myworld/test-projectile-combat-benchmark.py`
 - pre/post framing results at 40.68 and 32.56 ns/byte respectively
 - bundled Ant `test_network_encoder` exact raw/TCP/WebSocket wire regression
 - `python3 tests/myworld/test-authenticated-network-benchmark.py`

@@ -11,6 +11,7 @@ FIXTURE = (
     ROOT / "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java"
 ).read_text()
 SCRIPT = (ROOT / "tools/benchmarks/benchmark-projectile-combat.sh").read_text()
+VIEW_AREA = (ROOT / "server/src/com/openrsc/server/model/ViewArea.java").read_text()
 
 
 class ProjectileCombatBenchmarkContractTest(unittest.TestCase):
@@ -42,7 +43,10 @@ class ProjectileCombatBenchmarkContractTest(unittest.TestCase):
         self.assertIn("projectileCombatRandomDraws", FIXTURE)
 
     def test_runner_repeats_each_family_with_disposable_state(self):
-        self.assertIn("for family in ranged magic multi", SCRIPT)
+        self.assertIn(
+            "MYWORLD_PROJECTILE_BENCHMARK_FAMILIES:-ranged magic multi", SCRIPT
+        )
+        self.assertIn("for family in $BENCHMARK_FAMILIES", SCRIPT)
         self.assertIn("BENCHMARK_REPETITIONS:-2", SCRIPT)
         self.assertIn("myworld_seed.db", SCRIPT)
         self.assertIn("rm -f \"$config\" \"$database\"", SCRIPT)
@@ -54,6 +58,13 @@ class ProjectileCombatBenchmarkContractTest(unittest.TestCase):
         self.assertIn("-Dopenrsc.layeredPlayerLocationAuthority=true", SCRIPT)
         self.assertIn("-Dopenrsc.layeredSpatialRuntimeAuthority=true", SCRIPT)
         self.assertIn("-Dopenrsc.benchmarkSyntheticClientVersion=10052", SCRIPT)
+
+    def test_exact_ground_item_lookup_retains_visibility_boundary(self):
+        method = VIEW_AREA.split("public GroundItem getVisibleGroundItem", 1)[1]
+        self.assertIn("location.withinGridRange", method)
+        self.assertIn("OBJECT_VIEW_DISTANCE", method)
+        self.assertIn("findInteractionGroundItem", method)
+        self.assertNotIn("for (final GroundItem", method)
 
 
 if __name__ == "__main__":
