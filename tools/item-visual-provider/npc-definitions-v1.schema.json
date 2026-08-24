@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://spoiled-milk.invalid/schemas/world-builder-npc-definitions-v1.json",
+  "title": "World Builder NPC definitions v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "manifestType", "provider", "assetProviders", "selection", "npcDefinitions", "animationDefinitions"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "manifestType": { "const": "world-builder-npc-definitions" },
+    "provider": { "$ref": "#/$defs/provider" },
+    "assetProviders": { "$ref": "#/$defs/assetProviders" },
+    "selection": { "$ref": "#/$defs/selection" },
+    "npcDefinitions": { "type": "array", "items": { "$ref": "#/$defs/npcDefinition" } },
+    "animationDefinitions": { "type": "array", "items": { "$ref": "#/$defs/animationDefinition" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[:\\\\]).+$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "identity", "sha256"],
+      "properties": {
+        "role": { "enum": ["declarative-npc-registry", "extension-npc-definitions", "authoritative-npc-placements", "final-client-definition-runtime"] },
+        "identity": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "definitionMode", "finalClientNpcCount", "finalClientNpcCatalogSha256", "sources"],
+      "properties": {
+        "identity": { "const": "spoiled-milk-core-final-client-npc-definitions" },
+        "definitionMode": { "const": "members-enabled-post-override" },
+        "finalClientNpcCount": { "type": "integer", "minimum": 1 },
+        "finalClientNpcCatalogSha256": { "$ref": "#/$defs/sha256" },
+        "sources": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/source" } }
+      }
+    },
+    "archiveProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/safeRelativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "entryCount": { "type": "integer", "minimum": 0 },
+        "numericEntryCount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "assetProviders": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["customSpriteArchive", "authenticSpriteArchive"],
+      "properties": {
+        "customSpriteArchive": { "$ref": "#/$defs/archiveProvider" },
+        "authenticSpriteArchive": { "$ref": "#/$defs/archiveProvider" }
+      }
+    },
+    "placementCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["npcId", "count"],
+      "properties": {
+        "npcId": { "type": "integer", "minimum": 0 },
+        "count": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "declarativeMaximumNpcId", "placementCount", "npcCount", "placedNpcIds", "placementCountByNpcId", "npcIdsSha256", "definitionsSha256", "animationsSha256"],
+      "properties": {
+        "kind": { "const": "placed-extension-beyond-declarative-registry" },
+        "declarativeMaximumNpcId": { "type": "integer", "minimum": 0 },
+        "placementCount": { "type": "integer", "minimum": 1 },
+        "npcCount": { "type": "integer", "minimum": 1 },
+        "placedNpcIds": { "type": "array", "minItems": 1, "items": { "type": "integer", "minimum": 0 } },
+        "placementCountByNpcId": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/placementCount" } },
+        "npcIdsSha256": { "$ref": "#/$defs/sha256" },
+        "definitionsSha256": { "$ref": "#/$defs/sha256" },
+        "animationsSha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "npcDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["npcId", "definitionId", "name", "description", "command1", "command2", "attack", "strength", "hits", "defense", "attackable", "spriteAnimationIds", "hairColour", "topColour", "bottomColour", "skinColour", "cameraWidth", "cameraHeight", "walkModel", "combatModel", "combatSprite"],
+      "properties": {
+        "npcId": { "type": "integer", "minimum": 0 },
+        "definitionId": { "type": "integer", "minimum": 0 },
+        "name": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "command1": { "type": ["string", "null"] },
+        "command2": { "type": ["string", "null"] },
+        "attack": { "type": "integer" },
+        "strength": { "type": "integer" },
+        "hits": { "type": "integer" },
+        "defense": { "type": "integer" },
+        "attackable": { "type": "boolean" },
+        "spriteAnimationIds": { "type": "array", "minItems": 12, "maxItems": 12, "items": { "type": "integer", "minimum": -1 } },
+        "hairColour": { "type": "integer" },
+        "topColour": { "type": "integer" },
+        "bottomColour": { "type": "integer" },
+        "skinColour": { "type": "integer" },
+        "cameraWidth": { "type": "integer", "minimum": 1 },
+        "cameraHeight": { "type": "integer", "minimum": 1 },
+        "walkModel": { "type": "integer" },
+        "combatModel": { "type": "integer" },
+        "combatSprite": { "type": "integer" }
+      }
+    },
+    "customAnimationVisual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subspace", "entry", "frameCount", "entrySha256", "spritepackOverrideKey"],
+      "properties": {
+        "subspace": { "type": "string", "minLength": 1 },
+        "entry": { "type": "string", "minLength": 1 },
+        "frameCount": { "type": "integer", "minimum": 1 },
+        "entrySha256": { "$ref": "#/$defs/sha256" },
+        "spritepackOverrideKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "authenticFrame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["spriteId", "entrySha256"],
+      "properties": {
+        "spriteId": { "type": "integer", "minimum": 0 },
+        "entrySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "authenticAnimationVisual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseSpriteId", "frames"],
+      "properties": {
+        "baseSpriteId": { "type": "integer", "minimum": 0 },
+        "frames": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/authenticFrame" } }
+      }
+    },
+    "animationDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["animationId", "name", "category", "charColour", "blueMask", "genderModel", "hasCombatFrames", "hasSpecialCombatFrames", "requiredFrameCount", "customArchive", "authenticArchive"],
+      "properties": {
+        "animationId": { "type": "integer", "minimum": 0 },
+        "name": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "minLength": 1 },
+        "charColour": { "type": "integer" },
+        "blueMask": { "type": "integer" },
+        "genderModel": { "type": "integer" },
+        "hasCombatFrames": { "type": "boolean" },
+        "hasSpecialCombatFrames": { "type": "boolean" },
+        "requiredFrameCount": { "type": "integer", "minimum": 1 },
+        "customArchive": { "$ref": "#/$defs/customAnimationVisual" },
+        "authenticArchive": { "$ref": "#/$defs/authenticAnimationVisual" }
+      }
+    }
+  }
+}

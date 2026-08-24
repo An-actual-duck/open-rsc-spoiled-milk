@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export Core's final client item-to-visual mapping for neutral consumers."""
+"""Export Core's final client item and placed extension-NPC provider data."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Iterable
@@ -26,11 +27,14 @@ CUSTOM_ARCHIVE = ROOT / "Client_Base/Cache/video/Custom_Sprites.osar"
 AUTHENTIC_ARCHIVE = ROOT / "Client_Base/Cache/video/Authentic_Sprites.orsc"
 DEFAULT_FULL_OUTPUT = TOOL_DIR / "generated/item-visuals-full-v1.json"
 DEFAULT_COMPAT_OUTPUT = TOOL_DIR / "generated/item-visuals-3309-3317-v1.json"
+DEFAULT_NPC_OUTPUT = TOOL_DIR / "generated/npc-definitions-v1.json"
 BUNDLE_DIRECTORY_NAME = "world-builder-provider"
 BUNDLE_PACKAGE_MANIFEST = "package-manifest-v1.json"
 BUNDLE_FULL_MANIFEST = "item-visuals-full-v1.json"
 BUNDLE_COMPAT_MANIFEST = "item-visuals-3309-3317-v1.json"
 BUNDLE_SCHEMA = "item-visual-mapping-v1.schema.json"
+BUNDLE_NPC_MANIFEST = "npc-definitions-v1.json"
+BUNDLE_NPC_SCHEMA = "npc-definitions-v1.schema.json"
 BUNDLE_CUSTOM_ARCHIVE = "assets/archives/Custom_Sprites.osar"
 BUNDLE_AUTHENTIC_ARCHIVE = "assets/archives/Authentic_Sprites.orsc"
 BUNDLE_EXTERNAL_ROOT = "assets/external-png"
@@ -52,6 +56,19 @@ PROVIDER_INPUTS = (
     "Client_Base/src/com/openrsc/client/entityhandling/defs/ItemDef.java",
     "Client_Base/src/orsc/Config.java",
 )
+NPC_DECLARATIVE_SOURCES = (
+    "server/conf/server/defs/NpcDefs.json",
+    "server/conf/server/defs/NpcDefsCustom.json",
+)
+NPC_EXTENSION_SOURCE = "server/conf/server/defs/MonsterSlayerNpcDefs.json"
+NPC_PLACEMENT_SOURCE = "server/conf/server/defs/locs/MyWorldNpcLocs.json"
+NPC_PROVIDER_INPUTS = (
+    "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
+    "Client_Base/src/com/openrsc/client/entityhandling/defs/NPCDef.java",
+    *NPC_DECLARATIVE_SOURCES,
+    NPC_EXTENSION_SOURCE,
+    NPC_PLACEMENT_SOURCE,
+)
 
 
 class ExportError(RuntimeError):
@@ -66,6 +83,50 @@ class FinalItem:
     sprite_id: int
     picture_mask: int
     blue_mask: int
+
+
+@dataclass(frozen=True)
+class FinalNpc:
+    npc_id: int
+    definition_id: int
+    name: str | None
+    description: str | None
+    command1: str | None
+    command2: str | None
+    attack: int
+    strength: int
+    hits: int
+    defense: int
+    attackable: bool
+    sprites: tuple[int, ...]
+    hair_colour: int
+    top_colour: int
+    bottom_colour: int
+    skin_colour: int
+    camera1: int
+    camera2: int
+    walk_model: int
+    combat_model: int
+    combat_sprite: int
+
+
+@dataclass(frozen=True)
+class FinalAnimation:
+    animation_id: int
+    name: str
+    category: str
+    char_colour: int
+    blue_mask: int
+    gender_model: int
+    has_a: bool
+    has_f: bool
+    authentic_base_sprite_id: int
+
+
+@dataclass(frozen=True)
+class CustomArchiveEntry:
+    sha256: str
+    frame_count: int
 
 
 @dataclass(frozen=True)
@@ -195,6 +256,107 @@ def extract_final_items() -> tuple[list[FinalItem], int]:
     return items, authentic_item_base
 
 
+def parse_probe_bool(value: str, context: str) -> bool:
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    raise ExportError(f"Final client probe emitted invalid boolean for {context}: {value!r}")
+
+
+def extract_final_npcs() -> tuple[list[FinalNpc], list[FinalAnimation]]:
+    require_file(CLIENT_JAR, "compiled client jar; run scripts/build-client.sh")
+    probe_source = TOOL_DIR / "FinalNpcDefinitionsProbe.java"
+    require_file(probe_source, "final NPC definition probe")
+    with tempfile.TemporaryDirectory(prefix="core-npc-definition-provider-") as temporary:
+        subprocess.run(
+            ["javac", "-cp", str(CLIENT_JAR), "-d", temporary, str(probe_source)],
+            cwd=ROOT,
+            check=True,
+        )
+        result = subprocess.run(
+            ["java", "-cp", f"{temporary}:{CLIENT_JAR}", "FinalNpcDefinitionsProbe"],
+            cwd=ROOT / "Client_Base",
+            capture_output=True,
+            text=True,
+        )
+    if result.returncode != 0:
+        raise ExportError(
+            "Final client NPC-definition probe failed. "
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+
+    expected_npcs: int | None = None
+    expected_animations: int | None = None
+    npcs: list[FinalNpc] = []
+    animations: list[FinalAnimation] = []
+    for line in result.stdout.splitlines():
+        fields = line.split("\t")
+        if fields[0] == "NPC_CATALOG" and len(fields) == 2:
+            expected_npcs = int(fields[1])
+        elif fields[0] == "ANIMATION_CATALOG" and len(fields) == 2:
+            expected_animations = int(fields[1])
+        elif fields[0] == "NPC" and len(fields) == 22:
+            index, npc_id = int(fields[1]), int(fields[2])
+            if index != len(npcs):
+                raise ExportError(f"Final client NPC catalog lost stable index ordering at {index}")
+            sprites = tuple(int(value) for value in fields[12].split(","))
+            if len(sprites) != 12:
+                raise ExportError(f"Final client NPC {npc_id} emitted {len(sprites)} sprite slots; expected 12")
+            npcs.append(FinalNpc(
+                npc_id=index,
+                definition_id=npc_id,
+                name=decode_probe_text(fields[3]),
+                description=decode_probe_text(fields[4]),
+                command1=decode_probe_text(fields[5]),
+                command2=decode_probe_text(fields[6]),
+                attack=int(fields[7]),
+                strength=int(fields[8]),
+                hits=int(fields[9]),
+                defense=int(fields[10]),
+                attackable=parse_probe_bool(fields[11], f"NPC {npc_id} attackable"),
+                sprites=sprites,
+                hair_colour=int(fields[13]),
+                top_colour=int(fields[14]),
+                bottom_colour=int(fields[15]),
+                skin_colour=int(fields[16]),
+                camera1=int(fields[17]),
+                camera2=int(fields[18]),
+                walk_model=int(fields[19]),
+                combat_model=int(fields[20]),
+                combat_sprite=int(fields[21]),
+            ))
+        elif fields[0] == "ANIMATION" and len(fields) == 10:
+            index = int(fields[1])
+            if index != len(animations):
+                raise ExportError(f"Final client animation catalog lost stable ordering at index {index}")
+            name = decode_probe_text(fields[2])
+            category = decode_probe_text(fields[3])
+            if name is None or category is None:
+                raise ExportError(f"Final client animation {index} has null name or category")
+            animations.append(FinalAnimation(
+                animation_id=index,
+                name=name,
+                category=category,
+                char_colour=int(fields[4]),
+                blue_mask=int(fields[5]),
+                gender_model=int(fields[6]),
+                has_a=parse_probe_bool(fields[7], f"animation {index} hasA"),
+                has_f=parse_probe_bool(fields[8], f"animation {index} hasF"),
+                authentic_base_sprite_id=int(fields[9]),
+            ))
+    if expected_npcs is None or len(npcs) != expected_npcs:
+        raise ExportError(
+            f"Final client NPC-definition probe reported {expected_npcs} NPCs but emitted {len(npcs)}"
+        )
+    if expected_animations is None or len(animations) != expected_animations:
+        raise ExportError(
+            "Final client NPC-definition probe reported "
+            f"{expected_animations} animations but emitted {len(animations)}"
+        )
+    return npcs, animations
+
+
 def read_null_string(data: bytes, position: int, context: str) -> tuple[str, int]:
     end = data.find(b"\0", position)
     if end < 0:
@@ -209,7 +371,7 @@ def require_bytes(data: bytes, position: int, count: int, context: str) -> None:
         )
 
 
-def load_custom_archive_entries(path: Path) -> dict[tuple[str, str], str]:
+def load_custom_archive_entries(path: Path) -> dict[tuple[str, str], CustomArchiveEntry]:
     require_file(path, "custom sprite archive")
     try:
         data = gzip.decompress(path.read_bytes())
@@ -219,7 +381,7 @@ def load_custom_archive_entries(path: Path) -> dict[tuple[str, str], str]:
     position = 0
     subspace_count = data[position]
     position += 1
-    entries: dict[tuple[str, str], str] = {}
+    entries: dict[tuple[str, str], CustomArchiveEntry] = {}
     for subspace_index in range(subspace_count):
         subspace, position = read_null_string(data, position, f"custom sprite subspace {subspace_index}")
         require_bytes(data, position, 2, f"entry count for custom sprite subspace {subspace!r}")
@@ -254,7 +416,7 @@ def load_custom_archive_entries(path: Path) -> dict[tuple[str, str], str]:
             key = (subspace, entry)
             if key in entries:
                 raise ExportError(f"Duplicate custom sprite archive entry {subspace}:{entry}")
-            entries[key] = sha256_bytes(data[entry_start:position])
+            entries[key] = CustomArchiveEntry(sha256_bytes(data[entry_start:position]), frame_count)
     if position != len(data):
         raise ExportError(
             f"Custom sprite archive parse ended at byte {position}, but decompressed size is {len(data)}"
@@ -383,9 +545,257 @@ def definition_catalog_identity(items: Iterable[FinalItem]) -> str:
     )
 
 
+def json_records(relative: str, key: str, purpose: str) -> list[dict[str, object]]:
+    payload = read_json_file(ROOT / relative, purpose)
+    records = payload.get(key)
+    if not isinstance(records, list) or not all(isinstance(record, dict) for record in records):
+        raise ExportError(f"Malformed {purpose}: expected an object array at {key!r}")
+    return records
+
+
+def unique_integer_ids(records: list[dict[str, object]], purpose: str) -> list[int]:
+    values: list[int] = []
+    for ordinal, record in enumerate(records):
+        value = record.get("id")
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ExportError(f"Malformed {purpose}: record {ordinal} has invalid NPC ID {value!r}")
+        values.append(value)
+    duplicates = sorted(value for value, count in Counter(values).items() if count > 1)
+    if duplicates:
+        raise ExportError(f"Duplicate NPC definitions in {purpose}: {duplicates}")
+    return values
+
+
+def npc_catalog_record(npc: FinalNpc) -> dict[str, object]:
+    return {
+        "npcId": npc.npc_id,
+        "definitionId": npc.definition_id,
+        "name": npc.name,
+        "description": npc.description,
+        "command1": npc.command1,
+        "command2": npc.command2,
+        "attack": npc.attack,
+        "strength": npc.strength,
+        "hits": npc.hits,
+        "defense": npc.defense,
+        "attackable": npc.attackable,
+        "spriteAnimationIds": list(npc.sprites),
+        "hairColour": npc.hair_colour,
+        "topColour": npc.top_colour,
+        "bottomColour": npc.bottom_colour,
+        "skinColour": npc.skin_colour,
+        "cameraWidth": npc.camera1,
+        "cameraHeight": npc.camera2,
+        "walkModel": npc.walk_model,
+        "combatModel": npc.combat_model,
+        "combatSprite": npc.combat_sprite,
+    }
+
+
+def build_npc_manifest(
+    all_npcs: list[FinalNpc],
+    all_animations: list[FinalAnimation],
+    custom_entries: dict[tuple[str, str], CustomArchiveEntry],
+    authentic_entries: dict[int, str],
+) -> dict[str, object]:
+    declarative_ids: list[int] = []
+    for relative in NPC_DECLARATIVE_SOURCES:
+        records = json_records(relative, "npcs", f"declarative NPC source {relative}")
+        ids = unique_integer_ids(records, f"declarative NPC source {relative}")
+        overlap = sorted(set(declarative_ids).intersection(ids))
+        if overlap:
+            raise ExportError(f"Duplicate declarative NPC definitions across sources: {overlap}")
+        declarative_ids.extend(ids)
+    if declarative_ids != list(range(len(declarative_ids))):
+        raise ExportError(
+            "Declarative NPC registry is no longer a contiguous ID sequence from zero; "
+            "cannot derive the extension boundary safely"
+        )
+    declarative_maximum = declarative_ids[-1]
+
+    extension_records = json_records(
+        NPC_EXTENSION_SOURCE, "npcs", f"extension NPC source {NPC_EXTENSION_SOURCE}"
+    )
+    extension_ids = unique_integer_ids(extension_records, f"extension NPC source {NPC_EXTENSION_SOURCE}")
+    invalid_extension = [npc_id for npc_id in extension_ids if npc_id <= declarative_maximum]
+    if invalid_extension:
+        raise ExportError(
+            f"Extension NPC source contains IDs inside the declarative registry (maximum "
+            f"{declarative_maximum}): {invalid_extension}"
+        )
+
+    placement_records = json_records(
+        NPC_PLACEMENT_SOURCE, "npclocs", f"authoritative NPC placements {NPC_PLACEMENT_SOURCE}"
+    )
+    placement_ids: list[int] = []
+    for ordinal, record in enumerate(placement_records):
+        value = record.get("id")
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ExportError(
+                f"Malformed authoritative NPC placement {ordinal} in {NPC_PLACEMENT_SOURCE}: "
+                f"invalid NPC ID {value!r}"
+            )
+        if value > declarative_maximum:
+            placement_ids.append(value)
+    placed_counts = Counter(placement_ids)
+    selected_ids = sorted(placed_counts)
+    undefined = sorted(set(selected_ids) - set(extension_ids))
+    if undefined:
+        raise ExportError(
+            "Placed extension NPCs have no authoritative extension definition in "
+            f"{NPC_EXTENSION_SOURCE}: {undefined}"
+        )
+    if not selected_ids:
+        raise ExportError(
+            f"No placed NPC IDs exist beyond declarative maximum {declarative_maximum} in "
+            f"{NPC_PLACEMENT_SOURCE}"
+        )
+
+    npcs_by_id = {npc.npc_id: npc for npc in all_npcs}
+    if len(npcs_by_id) != len(all_npcs):
+        raise ExportError("Final initialized client NPC catalog contains duplicate definition IDs")
+    missing_final = [npc_id for npc_id in selected_ids if npc_id not in npcs_by_id]
+    if missing_final:
+        raise ExportError(f"Placed extension NPCs are undefined in the final initialized client: {missing_final}")
+    mismatched_final = [
+        npc_id for npc_id in selected_ids if npcs_by_id[npc_id].definition_id != npc_id
+    ]
+    if mismatched_final:
+        raise ExportError(
+            "Placed extension NPCs resolve to mismatched final client definition identities: "
+            f"{[(npc_id, npcs_by_id[npc_id].definition_id) for npc_id in mismatched_final]}"
+        )
+
+    animations_by_id = {animation.animation_id: animation for animation in all_animations}
+    referenced_animation_ids = sorted({
+        animation_id
+        for npc_id in selected_ids
+        for animation_id in npcs_by_id[npc_id].sprites
+        if animation_id >= 0
+    })
+    missing_animations = [
+        animation_id for animation_id in referenced_animation_ids if animation_id not in animations_by_id
+    ]
+    if missing_animations:
+        raise ExportError(
+            f"Placed extension NPCs reference undefined final client animations: {missing_animations}"
+        )
+
+    animation_records: list[dict[str, object]] = []
+    for animation_id in referenced_animation_ids:
+        animation = animations_by_id[animation_id]
+        required_frame_count = 15 + (3 if animation.has_a else 0) + (9 if animation.has_f else 0)
+        custom_key = (animation.category, animation.name)
+        custom = custom_entries.get(custom_key)
+        if custom is None:
+            raise ExportError(
+                f"Animation {animation_id} ({animation.category}:{animation.name}) referenced by placed "
+                "extension NPCs has no custom archive visual"
+            )
+        if custom.frame_count < required_frame_count:
+            raise ExportError(
+                f"Animation {animation_id} ({animation.category}:{animation.name}) custom archive visual "
+                f"has {custom.frame_count} frames but rendering requires {required_frame_count}"
+            )
+        authentic_ids = list(range(
+            animation.authentic_base_sprite_id,
+            animation.authentic_base_sprite_id + required_frame_count,
+        ))
+        missing_frames = [sprite_id for sprite_id in authentic_ids if sprite_id not in authentic_entries]
+        if missing_frames:
+            raise ExportError(
+                f"Animation {animation_id} ({animation.category}:{animation.name}) referenced by placed "
+                f"extension NPCs has unresolved authentic sprite frames: {missing_frames}"
+            )
+        animation_records.append({
+            "animationId": animation.animation_id,
+            "name": animation.name,
+            "category": animation.category,
+            "charColour": animation.char_colour,
+            "blueMask": animation.blue_mask,
+            "genderModel": animation.gender_model,
+            "hasCombatFrames": animation.has_a,
+            "hasSpecialCombatFrames": animation.has_f,
+            "requiredFrameCount": required_frame_count,
+            "customArchive": {
+                "subspace": animation.category,
+                "entry": animation.name,
+                "frameCount": custom.frame_count,
+                "entrySha256": custom.sha256,
+                "spritepackOverrideKey": f"{animation.category}:{animation.name}",
+            },
+            "authenticArchive": {
+                "baseSpriteId": animation.authentic_base_sprite_id,
+                "frames": [
+                    {"spriteId": sprite_id, "entrySha256": authentic_entries[sprite_id]}
+                    for sprite_id in authentic_ids
+                ],
+            },
+        })
+
+    definitions = [npc_catalog_record(npcs_by_id[npc_id]) for npc_id in selected_ids]
+    sources = []
+    for relative in NPC_PROVIDER_INPUTS:
+        source = ROOT / relative
+        require_file(source, "NPC provider input")
+        sources.append({
+            "role": (
+                "declarative-npc-registry" if relative in NPC_DECLARATIVE_SOURCES
+                else "extension-npc-definitions" if relative == NPC_EXTENSION_SOURCE
+                else "authoritative-npc-placements" if relative == NPC_PLACEMENT_SOURCE
+                else "final-client-definition-runtime"
+            ),
+            "identity": Path(relative).name,
+            "sha256": sha256_file(source),
+        })
+    selection = {
+        "kind": "placed-extension-beyond-declarative-registry",
+        "declarativeMaximumNpcId": declarative_maximum,
+        "placementCount": len(placement_ids),
+        "npcCount": len(selected_ids),
+        "placedNpcIds": selected_ids,
+        "placementCountByNpcId": [
+            {"npcId": npc_id, "count": placed_counts[npc_id]} for npc_id in selected_ids
+        ],
+        "npcIdsSha256": canonical_hash(selected_ids),
+        "definitionsSha256": canonical_hash(definitions),
+        "animationsSha256": canonical_hash(animation_records),
+    }
+    if [record["npcId"] for record in definitions] != selected_ids:
+        raise ExportError("Internal error: placed extension NPC selection was omitted or reordered")
+    return {
+        "schemaVersion": 1,
+        "manifestType": "world-builder-npc-definitions",
+        "provider": {
+            "identity": "spoiled-milk-core-final-client-npc-definitions",
+            "definitionMode": "members-enabled-post-override",
+            "finalClientNpcCount": len(all_npcs),
+            "finalClientNpcCatalogSha256": canonical_hash([
+                npc_catalog_record(npc) for npc in all_npcs
+            ]),
+            "sources": sources,
+        },
+        "assetProviders": {
+            "customSpriteArchive": {
+                "path": BUNDLE_CUSTOM_ARCHIVE,
+                "sha256": sha256_file(CUSTOM_ARCHIVE),
+                "entryCount": len(custom_entries),
+            },
+            "authenticSpriteArchive": {
+                "path": BUNDLE_AUTHENTIC_ARCHIVE,
+                "sha256": sha256_file(AUTHENTIC_ARCHIVE),
+                "numericEntryCount": len(authentic_entries),
+            },
+        },
+        "selection": selection,
+        "npcDefinitions": definitions,
+        "animationDefinitions": animation_records,
+    }
+
+
 def map_item(
     item: FinalItem,
-    custom_entries: dict[tuple[str, str], str],
+    custom_entries: dict[tuple[str, str], CustomArchiveEntry],
     authentic_entries: dict[int, str],
     packaged_entries: dict[str, str],
     authentic_item_base: int,
@@ -415,12 +825,12 @@ def map_item(
         parts = location.split(":")
         if len(parts) >= 2:
             key = (parts[0], parts[1])
-            entry_hash = custom_entries.get(key)
-            if entry_hash is not None:
+            custom_entry = custom_entries.get(key)
+            if custom_entry is not None:
                 custom = {
                     "subspace": key[0],
                     "entry": key[1],
-                    "baseArchiveEntrySha256": entry_hash,
+                    "baseArchiveEntrySha256": custom_entry.sha256,
                     "spritepackOverrideKey": f"{key[0]}:{key[1]}",
                 }
                 role = "custom-sprite-archive"
@@ -457,7 +867,7 @@ def map_item(
 def build_manifest(
     all_items: list[FinalItem],
     selected_ids: Iterable[int] | None,
-    custom_entries: dict[tuple[str, str], str],
+    custom_entries: dict[tuple[str, str], CustomArchiveEntry],
     authentic_entries: dict[int, str],
     packaged_entries: dict[str, str],
     inputs: list[dict[str, str]],
@@ -662,6 +1072,129 @@ def validate_mapping_hashes(manifest: dict[str, object], purpose: str) -> None:
             raise ExportError(f"Stale {purpose}: catalog identity does not match its records")
 
 
+def validate_npc_manifest(
+    manifest: dict[str, object],
+    custom_entries: dict[tuple[str, str], CustomArchiveEntry],
+    authentic_entries: dict[int, str],
+) -> None:
+    if manifest.get("schemaVersion") != 1 \
+            or manifest.get("manifestType") != "world-builder-npc-definitions":
+        raise ExportError("Malformed NPC definition manifest identity")
+    provider = manifest.get("provider")
+    assets = manifest.get("assetProviders")
+    selection = manifest.get("selection")
+    definitions = manifest.get("npcDefinitions")
+    animations = manifest.get("animationDefinitions")
+    if not isinstance(provider, dict) or not isinstance(assets, dict) \
+            or not isinstance(selection, dict) or not isinstance(definitions, list) \
+            or not all(isinstance(record, dict) for record in definitions) \
+            or not isinstance(animations, list) or not all(isinstance(record, dict) for record in animations):
+        raise ExportError("Malformed NPC definition manifest object shapes")
+
+    npc_ids = [record.get("npcId") for record in definitions]
+    placed_ids = selection.get("placedNpcIds")
+    if npc_ids != sorted(npc_ids) or len(npc_ids) != len(set(npc_ids)):
+        raise ExportError("Malformed NPC definition manifest: NPC IDs are duplicate or out of order")
+    if not isinstance(placed_ids, list) or placed_ids != sorted(placed_ids) \
+            or len(placed_ids) != len(set(placed_ids)):
+        raise ExportError("Malformed NPC definition manifest: placed NPC IDs are duplicate or out of order")
+    if npc_ids != placed_ids:
+        missing = sorted(set(placed_ids or []) - set(npc_ids))
+        extra = sorted(set(npc_ids) - set(placed_ids or []))
+        raise ExportError(
+            f"Stale NPC definition manifest: placement coverage mismatch (missing={missing}, extra={extra})"
+        )
+    counts = selection.get("placementCountByNpcId")
+    if not isinstance(counts, list) or not all(isinstance(record, dict) for record in counts) \
+            or [record.get("npcId") for record in counts] != placed_ids \
+            or any(not isinstance(record.get("count"), int) or record["count"] < 1 for record in counts):
+        raise ExportError("Malformed NPC definition manifest: placement counts do not cover selected IDs")
+    if selection.get("kind") != "placed-extension-beyond-declarative-registry" \
+            or selection.get("npcCount") != len(npc_ids) \
+            or selection.get("placementCount") != sum(record["count"] for record in counts) \
+            or selection.get("npcIdsSha256") != canonical_hash(npc_ids) \
+            or selection.get("definitionsSha256") != canonical_hash(definitions) \
+            or selection.get("animationsSha256") != canonical_hash(animations):
+        raise ExportError("Stale NPC definition manifest: selection identity or hash mismatch")
+    maximum = selection.get("declarativeMaximumNpcId")
+    if not isinstance(maximum, int) or any(not isinstance(npc_id, int) or npc_id <= maximum for npc_id in npc_ids):
+        raise ExportError("Malformed NPC definition manifest: selected IDs do not exceed its declarative boundary")
+
+    animation_ids = [record.get("animationId") for record in animations]
+    if animation_ids != sorted(animation_ids) or len(animation_ids) != len(set(animation_ids)):
+        raise ExportError("Malformed NPC definition manifest: animation IDs are duplicate or out of order")
+    sprite_lists = [npc.get("spriteAnimationIds") for npc in definitions]
+    if any(not isinstance(sprites, list) for sprites in sprite_lists):
+        raise ExportError("Malformed NPC definition manifest: missing animation-reference arrays")
+    referenced = sorted({
+        animation_id
+        for sprites in sprite_lists
+        for animation_id in sprites
+        if isinstance(animation_id, int) and animation_id >= 0
+    })
+    if referenced != animation_ids:
+        missing = sorted(set(referenced) - set(animation_ids))
+        stale = sorted(set(animation_ids) - set(referenced))
+        raise ExportError(
+            f"Stale NPC definition manifest: animation coverage mismatch (missing={missing}, stale={stale})"
+        )
+    for npc in definitions:
+        sprites = npc.get("spriteAnimationIds")
+        if not isinstance(sprites, list) or len(sprites) != 12 \
+                or not all(isinstance(value, int) for value in sprites):
+            raise ExportError(f"Malformed NPC {npc.get('npcId')}: expected 12 animation references")
+        if npc.get("definitionId") != npc.get("npcId"):
+            raise ExportError(
+                f"Malformed NPC {npc.get('npcId')}: final definition identity is "
+                f"{npc.get('definitionId')!r}"
+            )
+
+    for animation in animations:
+        animation_id = animation.get("animationId")
+        custom = animation.get("customArchive")
+        authentic = animation.get("authenticArchive")
+        required = animation.get("requiredFrameCount")
+        if not isinstance(custom, dict) or not isinstance(authentic, dict) \
+                or not isinstance(required, int) or required < 1:
+            raise ExportError(f"Malformed animation definition {animation_id}: missing visual providers")
+        key = (custom.get("subspace"), custom.get("entry"))
+        archive_entry = custom_entries.get(key)
+        if archive_entry is None:
+            raise ExportError(
+                f"Animation {animation_id} references missing custom archive visual {key[0]}:{key[1]}"
+            )
+        if custom.get("entrySha256") != archive_entry.sha256 \
+                or custom.get("frameCount") != archive_entry.frame_count \
+                or archive_entry.frame_count < required:
+            raise ExportError(f"Animation {animation_id} custom archive visual is stale or incomplete")
+        frames = authentic.get("frames")
+        base = authentic.get("baseSpriteId")
+        if not isinstance(base, int) or not isinstance(frames, list) or len(frames) != required:
+            raise ExportError(f"Animation {animation_id} authentic archive frame range is malformed")
+        expected_ids = list(range(base, base + required))
+        if [frame.get("spriteId") for frame in frames if isinstance(frame, dict)] != expected_ids:
+            raise ExportError(f"Animation {animation_id} authentic archive frames are missing or out of order")
+        for frame in frames:
+            sprite_id = frame["spriteId"]
+            if authentic_entries.get(sprite_id) != frame.get("entrySha256"):
+                raise ExportError(
+                    f"Animation {animation_id} has unresolved authentic sprite visual {sprite_id}"
+                )
+
+    sources = provider.get("sources")
+    if not isinstance(sources, list) or not all(isinstance(source, dict) for source in sources) \
+            or any("path" in source for source in sources):
+        raise ExportError("Malformed NPC provider sources: paths must not escape the provider contract")
+    for asset_name, expected_path in (
+        ("customSpriteArchive", BUNDLE_CUSTOM_ARCHIVE),
+        ("authenticSpriteArchive", BUNDLE_AUTHENTIC_ARCHIVE),
+    ):
+        asset = assets.get(asset_name)
+        if not isinstance(asset, dict) or asset.get("path") != expected_path:
+            raise ExportError(f"Unexpected provider-relative NPC archive path for {asset_name}")
+        safe_provider_path(asset["path"], f"NPC {asset_name}")
+
+
 def inventory_bundle_files(root: Path) -> list[str]:
     if root.is_symlink():
         raise ExportError(f"Provider directory must not be a symlink: {root}")
@@ -729,6 +1262,8 @@ def validate_bundle(root: Path) -> None:
     full = read_json_file(root / BUNDLE_FULL_MANIFEST, "full item visual manifest")
     compatibility = read_json_file(root / BUNDLE_COMPAT_MANIFEST, "compatibility item visual manifest")
     schema = read_json_file(root / BUNDLE_SCHEMA, "item visual schema")
+    npc_manifest = read_json_file(root / BUNDLE_NPC_MANIFEST, "full NPC definition manifest")
+    npc_schema = read_json_file(root / BUNDLE_NPC_SCHEMA, "NPC definition schema")
     schema_properties = schema.get("properties")
     if not isinstance(schema_properties, dict) \
             or not isinstance(schema_properties.get("schemaVersion"), dict) \
@@ -738,6 +1273,15 @@ def validate_bundle(root: Path) -> None:
             or schema_properties["manifestType"].get("const") \
             != "world-builder-item-visual-mapping":
         raise ExportError("Bundled item visual schema is not the version 1 mapping schema")
+    npc_schema_properties = npc_schema.get("properties")
+    if not isinstance(npc_schema_properties, dict) \
+            or not isinstance(npc_schema_properties.get("schemaVersion"), dict) \
+            or not isinstance(npc_schema_properties.get("manifestType"), dict) \
+            or npc_schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema" \
+            or npc_schema_properties["schemaVersion"].get("const") != 1 \
+            or npc_schema_properties["manifestType"].get("const") \
+            != "world-builder-npc-definitions":
+        raise ExportError("Bundled NPC definition schema is not the version 1 provider schema")
     validate_mapping_hashes(full, "full item visual manifest")
     validate_mapping_hashes(compatibility, "compatibility item visual manifest")
     if full["selection"].get("kind") != "complete-final-catalog" \
@@ -788,6 +1332,8 @@ def validate_bundle(root: Path) -> None:
         BUNDLE_FULL_MANIFEST: "full-item-visual-manifest",
         BUNDLE_COMPAT_MANIFEST: "compatibility-item-visual-manifest",
         BUNDLE_SCHEMA: "item-visual-schema",
+        BUNDLE_NPC_MANIFEST: "full-npc-definition-manifest",
+        BUNDLE_NPC_SCHEMA: "npc-definition-schema",
         BUNDLE_CUSTOM_ARCHIVE: "custom-sprite-archive",
         BUNDLE_AUTHENTIC_ARCHIVE: "authentic-sprite-archive",
         **{path: "external-png" for path in packaged_external},
@@ -810,9 +1356,20 @@ def validate_bundle(root: Path) -> None:
         raise ExportError("Custom sprite archive entry count mismatch")
     if len(authentic_entries) != full["assetProviders"]["authenticSpriteArchive"].get("numericEntryCount"):
         raise ExportError("Authentic sprite archive entry count mismatch")
+    if npc_manifest.get("assetProviders", {}).get("customSpriteArchive", {}).get("sha256") \
+            != sha256_file(root / BUNDLE_CUSTOM_ARCHIVE) \
+            or npc_manifest.get("assetProviders", {}).get("authenticSpriteArchive", {}).get("sha256") \
+            != sha256_file(root / BUNDLE_AUTHENTIC_ARCHIVE):
+        raise ExportError("NPC definition manifest archive hashes do not match the bundle")
+    validate_npc_manifest(npc_manifest, custom_entries, authentic_entries)
 
 
-def export_bundle(output_parent: Path, full: dict[str, object], compatibility: dict[str, object]) -> Path:
+def export_bundle(
+    output_parent: Path,
+    full: dict[str, object],
+    compatibility: dict[str, object],
+    npc_manifest: dict[str, object],
+) -> Path:
     if output_parent.is_symlink():
         raise ExportError(f"Bundle output parent must not be a symlink: {output_parent}")
     output_parent.mkdir(parents=True, exist_ok=True)
@@ -829,7 +1386,9 @@ def export_bundle(output_parent: Path, full: dict[str, object], compatibility: d
         stage.mkdir()
         write_manifest(stage / BUNDLE_FULL_MANIFEST, portable_full)
         write_manifest(stage / BUNDLE_COMPAT_MANIFEST, portable_compatibility)
+        write_manifest(stage / BUNDLE_NPC_MANIFEST, npc_manifest)
         write_bytes(stage / BUNDLE_SCHEMA, (TOOL_DIR / BUNDLE_SCHEMA).read_bytes())
+        write_bytes(stage / BUNDLE_NPC_SCHEMA, (TOOL_DIR / BUNDLE_NPC_SCHEMA).read_bytes())
         write_bytes(stage / BUNDLE_CUSTOM_ARCHIVE, CUSTOM_ARCHIVE.read_bytes())
         write_bytes(stage / BUNDLE_AUTHENTIC_ARCHIVE, AUTHENTIC_ARCHIVE.read_bytes())
         for relative, source in sorted(external_sources.items()):
@@ -838,6 +1397,8 @@ def export_bundle(output_parent: Path, full: dict[str, object], compatibility: d
             BUNDLE_FULL_MANIFEST: "full-item-visual-manifest",
             BUNDLE_COMPAT_MANIFEST: "compatibility-item-visual-manifest",
             BUNDLE_SCHEMA: "item-visual-schema",
+            BUNDLE_NPC_MANIFEST: "full-npc-definition-manifest",
+            BUNDLE_NPC_SCHEMA: "npc-definition-schema",
             BUNDLE_CUSTOM_ARCHIVE: "custom-sprite-archive",
             BUNDLE_AUTHENTIC_ARCHIVE: "authentic-sprite-archive",
             **{path: "external-png" for path in external_sources},
@@ -854,10 +1415,12 @@ def export(
     compatibility_output: Path,
     skip_client_build: bool,
     bundle_output: Path | None = None,
-) -> tuple[int, int]:
+    npc_output: Path = DEFAULT_NPC_OUTPUT,
+) -> tuple[int, int, int]:
     if not skip_client_build:
         build_client()
     all_items, authentic_item_base = extract_final_items()
+    all_npcs, all_animations = extract_final_npcs()
     custom_entries = load_custom_archive_entries(CUSTOM_ARCHIVE)
     authentic_entries = load_authentic_archive_entries(AUTHENTIC_ARCHIVE)
     packaged_entries = load_packaged_assets(CLIENT_JAR)
@@ -870,17 +1433,24 @@ def export(
         all_items, COMPATIBILITY_IDS, custom_entries, authentic_entries, packaged_entries, inputs,
         authentic_item_base,
     )
+    npc_manifest = build_npc_manifest(all_npcs, all_animations, custom_entries, authentic_entries)
     write_manifest(full_output, full)
     write_manifest(compatibility_output, compatibility)
+    write_manifest(npc_output, npc_manifest)
     if bundle_output is not None:
-        export_bundle(bundle_output, full, compatibility)
-    return len(full["itemVisuals"]), len(compatibility["itemVisuals"])
+        export_bundle(bundle_output, full, compatibility, npc_manifest)
+    return (
+        len(full["itemVisuals"]),
+        len(compatibility["itemVisuals"]),
+        len(npc_manifest["npcDefinitions"]),
+    )
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--full-output", type=Path, default=DEFAULT_FULL_OUTPUT)
     parser.add_argument("--compatibility-output", type=Path, default=DEFAULT_COMPAT_OUTPUT)
+    parser.add_argument("--npc-output", type=Path, default=DEFAULT_NPC_OUTPUT)
     parser.add_argument(
         "--bundle-output",
         type=Path,
@@ -904,22 +1474,25 @@ def main() -> int:
     try:
         if args.verify_bundle is not None:
             if args.bundle_output is not None or args.full_output != DEFAULT_FULL_OUTPUT \
-                    or args.compatibility_output != DEFAULT_COMPAT_OUTPUT or args.skip_client_build:
+                    or args.compatibility_output != DEFAULT_COMPAT_OUTPUT \
+                    or args.npc_output != DEFAULT_NPC_OUTPUT or args.skip_client_build:
                 raise ExportError("--verify-bundle cannot be combined with export options")
             validate_bundle(args.verify_bundle.resolve())
             print(f"Verified portable item-visual provider bundle at {args.verify_bundle}")
             return 0
-        full_count, compatibility_count = export(
+        full_count, compatibility_count, npc_count = export(
             args.full_output.resolve(),
             args.compatibility_output.resolve(),
             args.skip_client_build,
             args.bundle_output.resolve() if args.bundle_output is not None else None,
+            args.npc_output.resolve(),
         )
     except (ExportError, subprocess.CalledProcessError) as failure:
         print(f"FAIL: {failure}", file=sys.stderr)
         return 1
     print(f"Wrote {full_count} final item visuals to {args.full_output}")
     print(f"Wrote {compatibility_count} compatibility item visuals to {args.compatibility_output}")
+    print(f"Wrote {npc_count} placed extension NPC definitions to {args.npc_output}")
     if args.bundle_output is not None:
         print(f"Wrote portable provider bundle to {args.bundle_output / BUNDLE_DIRECTORY_NAME}")
     return 0

@@ -21,6 +21,8 @@ TOOL = ROOT / "tools/item-visual-provider/export-item-visuals.py"
 FULL = ROOT / "tools/item-visual-provider/generated/item-visuals-full-v1.json"
 COMPATIBILITY = ROOT / "tools/item-visual-provider/generated/item-visuals-3309-3317-v1.json"
 SCHEMA = ROOT / "tools/item-visual-provider/item-visual-mapping-v1.schema.json"
+NPC = ROOT / "tools/item-visual-provider/generated/npc-definitions-v1.json"
+NPC_SCHEMA = ROOT / "tools/item-visual-provider/npc-definitions-v1.schema.json"
 
 
 def bundle_snapshot(root: Path) -> dict[str, bytes]:
@@ -105,18 +107,28 @@ def main() -> None:
         first_compatibility = temp / "first-compatibility.json"
         second_full = temp / "second-full.json"
         second_compatibility = temp / "second-compatibility.json"
+        first_npc = temp / "first-npc.json"
+        second_npc = temp / "second-npc.json"
         first_parent = temp / "first-bundle"
         second_parent = temp / "second-bundle"
-        tool.export(first_full, first_compatibility, skip_client_build=True, bundle_output=first_parent)
-        tool.export(second_full, second_compatibility, skip_client_build=True, bundle_output=second_parent)
+        tool.export(
+            first_full, first_compatibility, skip_client_build=True,
+            bundle_output=first_parent, npc_output=first_npc,
+        )
+        tool.export(
+            second_full, second_compatibility, skip_client_build=True,
+            bundle_output=second_parent, npc_output=second_npc,
+        )
         assert first_full.read_bytes() == second_full.read_bytes(), "full export is nondeterministic"
         assert first_compatibility.read_bytes() == second_compatibility.read_bytes(), (
             "compatibility export is nondeterministic"
         )
+        assert first_npc.read_bytes() == second_npc.read_bytes(), "NPC export is nondeterministic"
         assert first_full.read_bytes() == FULL.read_bytes(), "checked-in full artifact is stale"
         assert first_compatibility.read_bytes() == COMPATIBILITY.read_bytes(), (
             "checked-in compatibility artifact is stale"
         )
+        assert first_npc.read_bytes() == NPC.read_bytes(), "checked-in NPC artifact is stale"
         first_bundle = first_parent / tool.BUNDLE_DIRECTORY_NAME
         second_bundle = second_parent / tool.BUNDLE_DIRECTORY_NAME
         assert bundle_snapshot(first_bundle) == bundle_snapshot(second_bundle), (
@@ -138,8 +150,16 @@ def main() -> None:
             (first_bundle / tool.BUNDLE_COMPAT_MANIFEST).read_text(encoding="utf-8")
         )
         bundled_schema = json.loads((first_bundle / tool.BUNDLE_SCHEMA).read_text(encoding="utf-8"))
+        bundled_npc = json.loads((first_bundle / tool.BUNDLE_NPC_MANIFEST).read_text(encoding="utf-8"))
+        bundled_npc_schema = json.loads(
+            (first_bundle / tool.BUNDLE_NPC_SCHEMA).read_text(encoding="utf-8")
+        )
         Draft202012Validator(bundled_schema).validate(bundled_full)
         Draft202012Validator(bundled_schema).validate(bundled_compatibility)
+        Draft202012Validator(bundled_npc_schema).validate(bundled_npc)
+        assert next(
+            record for record in package["files"] if record["path"] == tool.BUNDLE_NPC_MANIFEST
+        )["role"] == "full-npc-definition-manifest"
         external_paths = {
             record["externalPng"]["providerPath"]
             for record in bundled_full["itemVisuals"]
@@ -211,6 +231,100 @@ def main() -> None:
         rewrite_package_record(stale, tool.BUNDLE_COMPAT_MANIFEST)
         expect_bundle_failure(tool, stale, "stale compatibility manifest")
 
+        stale_npc = invalid_root / "stale-npc" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, stale_npc)
+        stale_npc_path = stale_npc / tool.BUNDLE_NPC_MANIFEST
+        stale_npc_manifest = json.loads(stale_npc_path.read_text(encoding="utf-8"))
+        stale_npc_manifest["npcDefinitions"][0]["name"] = "stale fixture"
+        stale_npc_path.write_text(
+            json.dumps(stale_npc_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        rewrite_package_record(stale_npc, tool.BUNDLE_NPC_MANIFEST)
+        expect_bundle_failure(tool, stale_npc, "stale NPC definition manifest")
+
+        missing_npc = invalid_root / "missing-npc" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, missing_npc)
+        missing_npc_path = missing_npc / tool.BUNDLE_NPC_MANIFEST
+        missing_npc_manifest = json.loads(missing_npc_path.read_text(encoding="utf-8"))
+        missing_npc_manifest["npcDefinitions"].pop(0)
+        missing_npc_manifest["selection"]["definitionsSha256"] = tool.canonical_hash(
+            missing_npc_manifest["npcDefinitions"]
+        )
+        missing_npc_path.write_text(
+            json.dumps(missing_npc_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        rewrite_package_record(missing_npc, tool.BUNDLE_NPC_MANIFEST)
+        expect_bundle_failure(tool, missing_npc, "placement coverage mismatch")
+
+        duplicate_npc = invalid_root / "duplicate-npc" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, duplicate_npc)
+        duplicate_npc_path = duplicate_npc / tool.BUNDLE_NPC_MANIFEST
+        duplicate_npc_manifest = json.loads(duplicate_npc_path.read_text(encoding="utf-8"))
+        duplicate_npc_manifest["npcDefinitions"].append(
+            dict(duplicate_npc_manifest["npcDefinitions"][-1])
+        )
+        duplicate_npc_manifest["selection"]["definitionsSha256"] = tool.canonical_hash(
+            duplicate_npc_manifest["npcDefinitions"]
+        )
+        duplicate_npc_path.write_text(
+            json.dumps(duplicate_npc_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        rewrite_package_record(duplicate_npc, tool.BUNDLE_NPC_MANIFEST)
+        expect_bundle_failure(tool, duplicate_npc, "duplicate or out of order")
+
+        unresolved_visual = invalid_root / "unresolved-npc-visual" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, unresolved_visual)
+        unresolved_path = unresolved_visual / tool.BUNDLE_NPC_MANIFEST
+        unresolved_manifest = json.loads(unresolved_path.read_text(encoding="utf-8"))
+        unresolved_manifest["animationDefinitions"][0]["customArchive"]["entry"] = "absent"
+        unresolved_manifest["selection"]["animationsSha256"] = tool.canonical_hash(
+            unresolved_manifest["animationDefinitions"]
+        )
+        unresolved_path.write_text(
+            json.dumps(unresolved_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        rewrite_package_record(unresolved_visual, tool.BUNDLE_NPC_MANIFEST)
+        expect_bundle_failure(tool, unresolved_visual, "missing custom archive visual")
+
+        all_npcs, all_animations = tool.extract_final_npcs()
+        custom_entries = tool.load_custom_archive_entries(tool.CUSTOM_ARCHIVE)
+        authentic_entries = tool.load_authentic_archive_entries(tool.AUTHENTIC_ARCHIVE)
+        original_extension = tool.NPC_EXTENSION_SOURCE
+        original_placements = tool.NPC_PLACEMENT_SOURCE
+        try:
+            duplicate_source = temp / "duplicate-extension-definitions.json"
+            extension_payload = json.loads((ROOT / original_extension).read_text(encoding="utf-8"))
+            extension_payload["npcs"].append(dict(extension_payload["npcs"][0]))
+            duplicate_source.write_text(
+                json.dumps(extension_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+            )
+            tool.NPC_EXTENSION_SOURCE = str(duplicate_source)
+            try:
+                tool.build_npc_manifest(all_npcs, all_animations, custom_entries, authentic_entries)
+            except tool.ExportError as failure:
+                assert "Duplicate NPC definitions" in str(failure)
+            else:
+                raise AssertionError("duplicate authoritative extension definition was accepted")
+
+            undefined_placements = temp / "undefined-extension-placement.json"
+            placement_payload = json.loads((ROOT / original_placements).read_text(encoding="utf-8"))
+            placement_payload["npclocs"].append({"id": 9999})
+            undefined_placements.write_text(
+                json.dumps(placement_payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+            )
+            tool.NPC_EXTENSION_SOURCE = original_extension
+            tool.NPC_PLACEMENT_SOURCE = str(undefined_placements)
+            try:
+                tool.build_npc_manifest(all_npcs, all_animations, custom_entries, authentic_entries)
+            except tool.ExportError as failure:
+                assert "Placed extension NPCs have no authoritative extension definition" in str(failure)
+                assert "9999" in str(failure)
+            else:
+                raise AssertionError("undefined placed extension NPC was accepted")
+        finally:
+            tool.NPC_EXTENSION_SOURCE = original_extension
+            tool.NPC_PLACEMENT_SOURCE = original_placements
+
         corrupt_archive = invalid_root / "corrupt" / tool.BUNDLE_DIRECTORY_NAME
         shutil.copytree(first_bundle, corrupt_archive)
         corrupt_path = corrupt_archive / tool.BUNDLE_AUTHENTIC_ARCHIVE
@@ -237,14 +351,43 @@ def main() -> None:
     full = json.loads(FULL.read_text(encoding="utf-8"))
     compatibility = json.loads(COMPATIBILITY.read_text(encoding="utf-8"))
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    npc = json.loads(NPC.read_text(encoding="utf-8"))
+    npc_schema = json.loads(NPC_SCHEMA.read_text(encoding="utf-8"))
     assert schema["properties"]["schemaVersion"]["const"] == 1
     assert schema["properties"]["manifestType"]["const"] == full["manifestType"]
     Draft202012Validator(schema).validate(full)
     Draft202012Validator(schema).validate(compatibility)
+    Draft202012Validator(npc_schema).validate(npc)
     assert_manifest_shape(full, list(range(3318)), "complete-final-catalog")
     assert_manifest_shape(compatibility, list(range(3309, 3318)), "filtered-compatibility")
     assert full["provider"] == compatibility["provider"]
     assert full["assetProviders"] == compatibility["assetProviders"]
+
+    expected_npc_ids = [846, 847, 848, 849, 850, 852, 853, 854, 855, 856, 857, 858, 859, 860]
+    assert npc["selection"]["declarativeMaximumNpcId"] == 845
+    assert npc["selection"]["placedNpcIds"] == expected_npc_ids
+    assert [record["npcId"] for record in npc["npcDefinitions"]] == expected_npc_ids
+    assert all(record["definitionId"] == record["npcId"] for record in npc["npcDefinitions"])
+    assert npc["selection"]["placementCount"] == 14
+    assert 851 not in npc["selection"]["placedNpcIds"]
+    referenced_animations = sorted({
+        animation_id
+        for record in npc["npcDefinitions"]
+        for animation_id in record["spriteAnimationIds"]
+        if animation_id >= 0
+    })
+    assert [record["animationId"] for record in npc["animationDefinitions"]] == referenced_animations
+    for animation in npc["animationDefinitions"]:
+        assert animation["customArchive"]["frameCount"] >= animation["requiredFrameCount"]
+        frames = animation["authenticArchive"]["frames"]
+        assert len(frames) == animation["requiredFrameCount"]
+        assert [frame["spriteId"] for frame in frames] == list(range(
+            animation["authenticArchive"]["baseSpriteId"],
+            animation["authenticArchive"]["baseSpriteId"] + animation["requiredFrameCount"],
+        ))
+    assert all("path" not in source for source in npc["provider"]["sources"])
+    assert npc["assetProviders"]["customSpriteArchive"]["path"] == tool.BUNDLE_CUSTOM_ARCHIVE
+    assert npc["assetProviders"]["authenticSpriteArchive"]["path"] == tool.BUNDLE_AUTHENTIC_ARCHIVE
 
     compat_by_id = {entry["itemId"]: entry for entry in compatibility["itemVisuals"]}
     dagger = compat_by_id[3309]

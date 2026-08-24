@@ -16,10 +16,10 @@ PRAYER_BOOKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/PrayerB
 FALLBACKS = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/ClientDefinitionFallbackDiagnostics.java"
 
 EXPECTED: dict[str, tuple[int, str]] = {
-    "npcs": (861, "51c339da660b1ddc7525429a50eaeb23ae854ebae3198cd232eb51d7b163bfc6"),
+    "npcs": (862, "4de48162c2f04e603fe237ba5ec03b128225048b6c98dfccd3b414e95a363036"),
     "items": (3318, "b5c098b0b5cb9b13fc666d2db900a7a2f8c44233549ec67cf8f1fbeb9b4e0310"),
     "textures": (55, "f2641fe74967a839ad0c6121e5e67d4016cb05666aaf3e4774ed989ea3c8d951"),
-    "animations": (1083, "5e83313f17e1bf5a82bb97d75cc14ba553700b6f865c1f2ba3a51797893c6730"),
+    "animations": (1084, "145bed4c9d3912d3d3732a0969208facc4485078ac9b443146c57611ac3d6419"),
     "projectiles": (41, "c79c74303e8ce5c5c345640227a0023ccbc63285f0a652f404794c35c1d5385f"),
     "guiParts": (55, "fa64061ea784a19baf69fa49c11262e8a0294cb25858b45a1e1751a6ffbde408"),
     "crowns": (5, "cdfe0e9ccf0037bfbb4183f36795e2a2ca2603e8eeee2bcedcb97f8b8d11e774"),

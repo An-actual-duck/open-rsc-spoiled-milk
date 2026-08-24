@@ -1,0 +1,4635 @@
+{
+  "schemaVersion": 1,
+  "manifestType": "world-builder-npc-definitions",
+  "provider": {
+    "identity": "spoiled-milk-core-final-client-npc-definitions",
+    "definitionMode": "members-enabled-post-override",
+    "finalClientNpcCount": 862,
+    "finalClientNpcCatalogSha256": "2763a649f0973dd65502f64495415f16fd8b7011a2c8f64d326612d16d103154",
+    "sources": [
+      {
+        "role": "final-client-definition-runtime",
+        "identity": "EntityHandler.java",
+        "sha256": "4284b88eb36847ce432797e16dd6fe3996402c476469192b681e4c1b424e95f6"
+      },
+      {
+        "role": "final-client-definition-runtime",
+        "identity": "NPCDef.java",
+        "sha256": "fb8a191fca5beee5e697b52eb8fb2c8dd5b24115fb62e38a7dfbb506cb38f78c"
+      },
+      {
+        "role": "declarative-npc-registry",
+        "identity": "NpcDefs.json",
+        "sha256": "6067bf2bda56e40f568c8386c5e21786fa6ef6e963fae8b249b1ce149be4bbef"
+      },
+      {
+        "role": "declarative-npc-registry",
+        "identity": "NpcDefsCustom.json",
+        "sha256": "cff22b7a478b0b6c9a9ee56e0eecdc14bac65ef4197d03786f3e0ce139167438"
+      },
+      {
+        "role": "extension-npc-definitions",
+        "identity": "MonsterSlayerNpcDefs.json",
+        "sha256": "5e7e6e276d46d37e9572679518740d431f034e209f8bb64411bd58d53883c213"
+      },
+      {
+        "role": "authoritative-npc-placements",
+        "identity": "MyWorldNpcLocs.json",
+        "sha256": "7e89daa91521365ab0362894431eebd89edf4fcf07fc8c08fc71db78009cd93f"
+      }
+    ]
+  },
+  "assetProviders": {
+    "customSpriteArchive": {
+      "path": "assets/archives/Custom_Sprites.osar",
+      "sha256": "f334d99403c6db0b2baa629ddfbd959e741aaf62265650eacdc4db5d9a9c7a92",
+      "entryCount": 1002
+    },
+    "authenticSpriteArchive": {
+      "path": "assets/archives/Authentic_Sprites.orsc",
+      "sha256": "cf861efa7307556b5e5ba4c20b838f17753faba8b530f85dca38e8c2839d5e69",
+      "numericEntryCount": 2259
+    }
+  },
+  "selection": {
+    "kind": "placed-extension-beyond-declarative-registry",
+    "declarativeMaximumNpcId": 845,
+    "placementCount": 14,
+    "npcCount": 14,
+    "placedNpcIds": [
+      846,
+      847,
+      848,
+      849,
+      850,
+      852,
+      853,
+      854,
+      855,
+      856,
+      857,
+      858,
+      859,
+      860
+    ],
+    "placementCountByNpcId": [
+      {
+        "npcId": 846,
+        "count": 1
+      },
+      {
+        "npcId": 847,
+        "count": 1
+      },
+      {
+        "npcId": 848,
+        "count": 1
+      },
+      {
+        "npcId": 849,
+        "count": 1
+      },
+      {
+        "npcId": 850,
+        "count": 1
+      },
+      {
+        "npcId": 852,
+        "count": 1
+      },
+      {
+        "npcId": 853,
+        "count": 1
+      },
+      {
+        "npcId": 854,
+        "count": 1
+      },
+      {
+        "npcId": 855,
+        "count": 1
+      },
+      {
+        "npcId": 856,
+        "count": 1
+      },
+      {
+        "npcId": 857,
+        "count": 1
+      },
+      {
+        "npcId": 858,
+        "count": 1
+      },
+      {
+        "npcId": 859,
+        "count": 1
+      },
+      {
+        "npcId": 860,
+        "count": 1
+      }
+    ],
+    "npcIdsSha256": "21c68c1e0ab427aa5765b16d6c7c5d566c8c59843c47962f3794b08322a561b1",
+    "definitionsSha256": "d82055ac8cc599112dd5c15b4860ab24c753d9020c2b7f590f3b0e9995868f1f",
+    "animationsSha256": "a8abc2524ae34898b4f0be5eb133ead202f7313dba0887cc4e1dfb54b774dcc0"
+  },
+  "npcDefinitions": [
+    {
+      "npcId": 846,
+      "definitionId": 846,
+      "name": "Hobart",
+      "description": "A cheery Monster Slayer recruiter",
+      "command1": "Task",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        6,
+        27,
+        36,
+        97,
+        47,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 6307872,
+      "topColour": 8421504,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 847,
+      "definitionId": 847,
+      "name": "Mara",
+      "description": "A practical Monster Slayer contact",
+      "command1": "Task",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        3,
+        55,
+        37,
+        98,
+        48,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 15654365,
+      "bottomColour": 15654365,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 848,
+      "definitionId": 848,
+      "name": "Bran",
+      "description": "A hardened Blue Moon Monster Slayer contact",
+      "command1": "Task",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        7,
+        29,
+        38,
+        99,
+        49,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 15658734,
+      "bottomColour": 15658734,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 849,
+      "definitionId": 849,
+      "name": "Doran",
+      "description": "A Champions Guild Monster Slayer contact",
+      "command1": "Task",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        15,
+        30,
+        39,
+        100,
+        50,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 8421504,
+      "topColour": 10072780,
+      "bottomColour": 10072780,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 850,
+      "definitionId": 850,
+      "name": "Sella",
+      "description": "An inspiring Heroes Guild Monster Slayer contact",
+      "command1": "Task",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        16,
+        58,
+        40,
+        101,
+        51,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 6307872,
+      "topColour": 11717785,
+      "bottomColour": 11717785,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 852,
+      "definitionId": 852,
+      "name": "Slayer shop associate",
+      "description": "A Fledgling Slayer supplier",
+      "command1": "Trade",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        3,
+        54,
+        2,
+        -1,
+        108,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 16737817,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 853,
+      "definitionId": 853,
+      "name": "Slayer shop associate",
+      "description": "An Adept Slayer supplier",
+      "command1": "Trade",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        6,
+        28,
+        2,
+        -1,
+        109,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 6307872,
+      "topColour": 15654365,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 854,
+      "definitionId": 854,
+      "name": "Slayer shop associate",
+      "description": "A Blue Moon Veteran Slayer supplier",
+      "command1": "Trade",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        3,
+        56,
+        2,
+        -1,
+        110,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 6307872,
+      "topColour": 15658734,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 855,
+      "definitionId": 855,
+      "name": "Slayer shop associate",
+      "description": "An Elite Slayer quartermaster",
+      "command1": "Trade",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        3,
+        57,
+        2,
+        -1,
+        111,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 10072780,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 856,
+      "definitionId": 856,
+      "name": "Slayer shop associate",
+      "description": "A Champion Slayer supplier",
+      "command1": "Trade",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        7,
+        31,
+        2,
+        -1,
+        112,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 11717785,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 857,
+      "definitionId": 857,
+      "name": "Slayer shop associate",
+      "description": "A rune-clad Hero Slayer supplier",
+      "command1": "Trade",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        3,
+        59,
+        2,
+        -1,
+        113,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 65535,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 858,
+      "definitionId": 858,
+      "name": "Fledgling Monster Slayer",
+      "description": "An eager recruit",
+      "command1": "",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        7,
+        27,
+        2,
+        -1,
+        115,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 15654365,
+      "bottomColour": 8409120,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 859,
+      "definitionId": 859,
+      "name": "Adept Monster Slayer",
+      "description": "A practical hunter",
+      "command1": "",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        7,
+        28,
+        2,
+        -1,
+        116,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 15654365,
+      "bottomColour": 8409120,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    },
+    {
+      "npcId": 860,
+      "definitionId": 860,
+      "name": "Veteran Monster Slayer",
+      "description": "A scarred Blue Moon regular",
+      "command1": "",
+      "command2": null,
+      "attack": 1,
+      "strength": 1,
+      "hits": 1,
+      "defense": 1,
+      "attackable": false,
+      "spriteAnimationIds": [
+        5,
+        29,
+        2,
+        -1,
+        117,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 16753488,
+      "topColour": 15658734,
+      "bottomColour": 8421504,
+      "skinColour": 15523536,
+      "cameraWidth": 145,
+      "cameraHeight": 220,
+      "walkModel": 6,
+      "combatModel": 6,
+      "combatSprite": 5
+    }
+  ],
+  "animationDefinitions": [
+    {
+      "animationId": 2,
+      "name": "legs1",
+      "category": "player",
+      "charColour": 3,
+      "blueMask": 0,
+      "genderModel": 15,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "player",
+        "entry": "legs1",
+        "frameCount": 18,
+        "entrySha256": "cd4b4916196ce936059ecdf63a51454587bdc846310639a93c54bbb6843374e1",
+        "spritepackOverrideKey": "player:legs1"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 54,
+        "frames": [
+          {
+            "spriteId": 54,
+            "entrySha256": "c3020a1722cc76423bac671d08b19f803fba97ff2016ea6b12e1fe8e05e2c77c"
+          },
+          {
+            "spriteId": 55,
+            "entrySha256": "a885ae2147e28086495eacf0b2ab3465b17edf7579128898a2e51522e07894a5"
+          },
+          {
+            "spriteId": 56,
+            "entrySha256": "315ad881db1f472296e97f4c4164af7ef629411b87145516c80e6d2ffbf5bb3c"
+          },
+          {
+            "spriteId": 57,
+            "entrySha256": "fd8f0641e6b4f8f7769c609a9613825e135eac50942b594aaee5e06e3eeb01b6"
+          },
+          {
+            "spriteId": 58,
+            "entrySha256": "55ae34c4b156cc91df4d56bfad28a3a8fdaa79488235acec099edb4460214779"
+          },
+          {
+            "spriteId": 59,
+            "entrySha256": "577db5251cd9e5bdd4d6f95f202be532123f6d4e42172027454a9a8d9f9ee092"
+          },
+          {
+            "spriteId": 60,
+            "entrySha256": "00a95155dc38252a768fe3a6a02bc893a3fa31a3763770174e95ac0cd069b7d8"
+          },
+          {
+            "spriteId": 61,
+            "entrySha256": "843d3a07e32222b90feac93e7bc35719213f04ac167ed06ee906849dbaf73b05"
+          },
+          {
+            "spriteId": 62,
+            "entrySha256": "9a6e5b55513e9dac4825251ee471aa19aa5e8b1c2457340b64ac9df5e0c09cb1"
+          },
+          {
+            "spriteId": 63,
+            "entrySha256": "4423ba771586ed1e5d7869aad49b57f79621f4b6c5cdb7753c8907e1ab8d931f"
+          },
+          {
+            "spriteId": 64,
+            "entrySha256": "55435cf645b09f69f4a63bc6ec8cea27186e59c9ba430046f339d0ed0ec9c6fd"
+          },
+          {
+            "spriteId": 65,
+            "entrySha256": "0d80e7e453c76f07efb46c9fa6ceaa8d7dc2282094e1c11e92530a224d8f658e"
+          },
+          {
+            "spriteId": 66,
+            "entrySha256": "30f9c96d24f6ad1b68a7a1dde4745979d5463a528b3e4386a396624b48146719"
+          },
+          {
+            "spriteId": 67,
+            "entrySha256": "69274be59fd1a2288d07885d73e6dc208eb3b315bb51f7cd638dbc07ce8f5231"
+          },
+          {
+            "spriteId": 68,
+            "entrySha256": "b82f29de76d8d1cc39161ac77df2d44f1730d7aaf36f16834a7554659d52e241"
+          },
+          {
+            "spriteId": 69,
+            "entrySha256": "fb34df274887c2a4f1a3e9cebee3c8923fea8b901fe561194098c7ae3299422b"
+          },
+          {
+            "spriteId": 70,
+            "entrySha256": "02a2af0b62b68ed27299ef05c90a11e5dc0b23c6c2205f4d125b2474358d8400"
+          },
+          {
+            "spriteId": 71,
+            "entrySha256": "79edf9c20ccb05ca5b0bf00aebd3f1d1c010aef7b5cd688e3a6aba8481e81697"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 3,
+      "name": "fhead1",
+      "category": "player",
+      "charColour": 1,
+      "blueMask": 0,
+      "genderModel": 13,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "player",
+        "entry": "fhead1",
+        "frameCount": 18,
+        "entrySha256": "9f7d0b8502ca5072837bcc8cf6c7d36f544cbdfc6d8e4c32332805170c6eab09",
+        "spritepackOverrideKey": "player:fhead1"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 81,
+        "frames": [
+          {
+            "spriteId": 81,
+            "entrySha256": "82f66c08fbef2b3875bc58b0a986f2e245c0e66cf6615efd9f6c301aa629180a"
+          },
+          {
+            "spriteId": 82,
+            "entrySha256": "82f66c08fbef2b3875bc58b0a986f2e245c0e66cf6615efd9f6c301aa629180a"
+          },
+          {
+            "spriteId": 83,
+            "entrySha256": "82f66c08fbef2b3875bc58b0a986f2e245c0e66cf6615efd9f6c301aa629180a"
+          },
+          {
+            "spriteId": 84,
+            "entrySha256": "d4cecf06452b99811a2d16ac5e46480111db77708bd02faecd827dc168e9439e"
+          },
+          {
+            "spriteId": 85,
+            "entrySha256": "d4cecf06452b99811a2d16ac5e46480111db77708bd02faecd827dc168e9439e"
+          },
+          {
+            "spriteId": 86,
+            "entrySha256": "d4cecf06452b99811a2d16ac5e46480111db77708bd02faecd827dc168e9439e"
+          },
+          {
+            "spriteId": 87,
+            "entrySha256": "646383c52d25cf5489d59ef3527892ddfb28d964c9c1789a7d614201ce46c7e1"
+          },
+          {
+            "spriteId": 88,
+            "entrySha256": "646383c52d25cf5489d59ef3527892ddfb28d964c9c1789a7d614201ce46c7e1"
+          },
+          {
+            "spriteId": 89,
+            "entrySha256": "646383c52d25cf5489d59ef3527892ddfb28d964c9c1789a7d614201ce46c7e1"
+          },
+          {
+            "spriteId": 90,
+            "entrySha256": "7a9517da332806b1c6a45027a77cfdb816e113e0fcae0b1948d7c12f93b0d321"
+          },
+          {
+            "spriteId": 91,
+            "entrySha256": "7a9517da332806b1c6a45027a77cfdb816e113e0fcae0b1948d7c12f93b0d321"
+          },
+          {
+            "spriteId": 92,
+            "entrySha256": "7a9517da332806b1c6a45027a77cfdb816e113e0fcae0b1948d7c12f93b0d321"
+          },
+          {
+            "spriteId": 93,
+            "entrySha256": "dee2ba721d02e7d582978e7f2f4f3472e110164f3d5887fe572e1641c0af7939"
+          },
+          {
+            "spriteId": 94,
+            "entrySha256": "dee2ba721d02e7d582978e7f2f4f3472e110164f3d5887fe572e1641c0af7939"
+          },
+          {
+            "spriteId": 95,
+            "entrySha256": "dee2ba721d02e7d582978e7f2f4f3472e110164f3d5887fe572e1641c0af7939"
+          },
+          {
+            "spriteId": 96,
+            "entrySha256": "dc8789348e3d9204d1b10f8f055def3eb71561b7ed78eb8d57c7454aa869a894"
+          },
+          {
+            "spriteId": 97,
+            "entrySha256": "c209b41dc109c6021b867f19bfae78fa139c4e4067d00b8ce14d16989e175f56"
+          },
+          {
+            "spriteId": 98,
+            "entrySha256": "dc8f69dbc944fea5ea00afe0554806858c62f0c4ab61e7720fc8909b834e87b2"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 5,
+      "name": "head2",
+      "category": "player",
+      "charColour": 1,
+      "blueMask": 0,
+      "genderModel": 13,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "player",
+        "entry": "head2",
+        "frameCount": 18,
+        "entrySha256": "ffac937ee4c1d54bbc3687581c667a449e75ab3b5cdb3fa7e7d5a802cedd74a9",
+        "spritepackOverrideKey": "player:head2"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 135,
+        "frames": [
+          {
+            "spriteId": 135,
+            "entrySha256": "d699658c3d07cf0415799f5f51d30d07bd449ca9c46f892555351383622ced9a"
+          },
+          {
+            "spriteId": 136,
+            "entrySha256": "a7d8922345c82b3501c61fb53f0b6534436b0894aa49d8dc25c1dbdf3cf42a72"
+          },
+          {
+            "spriteId": 137,
+            "entrySha256": "a7d8922345c82b3501c61fb53f0b6534436b0894aa49d8dc25c1dbdf3cf42a72"
+          },
+          {
+            "spriteId": 138,
+            "entrySha256": "d0f465f18c6ece6ce225553d861ee3f0eaed4f43428ee62cf95bb4e8ff47360f"
+          },
+          {
+            "spriteId": 139,
+            "entrySha256": "f5b5c2fd18d82517be49a0add4d9fa69ca576a1f81b5298d205de4bd3a5c8ae8"
+          },
+          {
+            "spriteId": 140,
+            "entrySha256": "4b55b3234df96a00936a0df663b77b7e642e0856e92e2d43269b2c092fbc2819"
+          },
+          {
+            "spriteId": 141,
+            "entrySha256": "ff5ce4cdc2c0cfa4cde0417b67862ea4cfe7592c6db3ae07719f5c882b753adc"
+          },
+          {
+            "spriteId": 142,
+            "entrySha256": "4c2cf16a0f88b503adacae4d570c83c0df6f34295e4e99bdc1f75fe6173c56b8"
+          },
+          {
+            "spriteId": 143,
+            "entrySha256": "4c2cf16a0f88b503adacae4d570c83c0df6f34295e4e99bdc1f75fe6173c56b8"
+          },
+          {
+            "spriteId": 144,
+            "entrySha256": "ff3ba997987226f2515271bec3e5f8715a76ba09db409195b9c2acb6dd487039"
+          },
+          {
+            "spriteId": 145,
+            "entrySha256": "66c9d181a311a31e1d772949e84a870edee187fc2c9efd7e1c0fc270f2afca04"
+          },
+          {
+            "spriteId": 146,
+            "entrySha256": "66c9d181a311a31e1d772949e84a870edee187fc2c9efd7e1c0fc270f2afca04"
+          },
+          {
+            "spriteId": 147,
+            "entrySha256": "2209107f29ef67268dfe4acec5f56b31faf0bbf23c7b683f35a09940c8b1574f"
+          },
+          {
+            "spriteId": 148,
+            "entrySha256": "e41da719b5a33d63a7239471e4e26fbbae1af6a93d3ce1f41f47d08ee85f80cf"
+          },
+          {
+            "spriteId": 149,
+            "entrySha256": "2209107f29ef67268dfe4acec5f56b31faf0bbf23c7b683f35a09940c8b1574f"
+          },
+          {
+            "spriteId": 150,
+            "entrySha256": "81f14960f45eff58b286ffd3fdb289ef8df68caa8bb190fd2d7c03962bac0bf2"
+          },
+          {
+            "spriteId": 151,
+            "entrySha256": "1d530a6e76f3d099a0ea89a9cf79de914d96e8d2d057b744f4e336f461122ad0"
+          },
+          {
+            "spriteId": 152,
+            "entrySha256": "08fc530eb3acbe33b77d4b68fbc850d0d2607624517eb808b175382a0e32d1a6"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 6,
+      "name": "head3",
+      "category": "player",
+      "charColour": 1,
+      "blueMask": 0,
+      "genderModel": 5,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "player",
+        "entry": "head3",
+        "frameCount": 18,
+        "entrySha256": "8415a00dd6c37b3141c70347b3c42fc992f131c906242ef6d1f326e1ad16a3b9",
+        "spritepackOverrideKey": "player:head3"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 162,
+        "frames": [
+          {
+            "spriteId": 162,
+            "entrySha256": "ea4bfa14b85cbe92f56148c0fd9e7a732d6787b7a80167834c735342bf32549a"
+          },
+          {
+            "spriteId": 163,
+            "entrySha256": "ea4bfa14b85cbe92f56148c0fd9e7a732d6787b7a80167834c735342bf32549a"
+          },
+          {
+            "spriteId": 164,
+            "entrySha256": "ea4bfa14b85cbe92f56148c0fd9e7a732d6787b7a80167834c735342bf32549a"
+          },
+          {
+            "spriteId": 165,
+            "entrySha256": "fadd3870459b7bbfe2d40796be92b3bea7749ff300065c41eec083214d983327"
+          },
+          {
+            "spriteId": 166,
+            "entrySha256": "b8c7c991a4f7d9dd8147975d03165edd4ec23463f0df61499da373ac35a1bf72"
+          },
+          {
+            "spriteId": 167,
+            "entrySha256": "b8c7c991a4f7d9dd8147975d03165edd4ec23463f0df61499da373ac35a1bf72"
+          },
+          {
+            "spriteId": 168,
+            "entrySha256": "efd510bfbe1eca7dee93fdb1f2b7a0b9b865a6764eb845d39d120a8034a3450a"
+          },
+          {
+            "spriteId": 169,
+            "entrySha256": "efd510bfbe1eca7dee93fdb1f2b7a0b9b865a6764eb845d39d120a8034a3450a"
+          },
+          {
+            "spriteId": 170,
+            "entrySha256": "efd510bfbe1eca7dee93fdb1f2b7a0b9b865a6764eb845d39d120a8034a3450a"
+          },
+          {
+            "spriteId": 171,
+            "entrySha256": "10876244aaefa4378d796c95a521eea8a9d52b1e558b5f52b2f92402cec3e94c"
+          },
+          {
+            "spriteId": 172,
+            "entrySha256": "10876244aaefa4378d796c95a521eea8a9d52b1e558b5f52b2f92402cec3e94c"
+          },
+          {
+            "spriteId": 173,
+            "entrySha256": "10876244aaefa4378d796c95a521eea8a9d52b1e558b5f52b2f92402cec3e94c"
+          },
+          {
+            "spriteId": 174,
+            "entrySha256": "d2385e675476f0e10932bd5d9c1b0b7d79c9def8356977f2b960841b479321a8"
+          },
+          {
+            "spriteId": 175,
+            "entrySha256": "d2385e675476f0e10932bd5d9c1b0b7d79c9def8356977f2b960841b479321a8"
+          },
+          {
+            "spriteId": 176,
+            "entrySha256": "d2385e675476f0e10932bd5d9c1b0b7d79c9def8356977f2b960841b479321a8"
+          },
+          {
+            "spriteId": 177,
+            "entrySha256": "90d105f9bac3b9cc546be9ea770e867998d0a6567ca54c8a53aa29307c367ed3"
+          },
+          {
+            "spriteId": 178,
+            "entrySha256": "245194354c8451f00a50460c94e472f323347fb5b9fc5e810f2b70a27a0700c8"
+          },
+          {
+            "spriteId": 179,
+            "entrySha256": "82e00bb918f17c4c986659e69de5bdb8029d462eb70e4588d205c5d0f909587e"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 7,
+      "name": "head4",
+      "category": "player",
+      "charColour": 1,
+      "blueMask": 0,
+      "genderModel": 13,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "player",
+        "entry": "head4",
+        "frameCount": 18,
+        "entrySha256": "5365c3f5466ba629cb3b6c5dd0a2646ee56ef82e7a780fe74711603169ed5c8b",
+        "spritepackOverrideKey": "player:head4"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 189,
+        "frames": [
+          {
+            "spriteId": 189,
+            "entrySha256": "53492b79d2b2d8264046ea94974da73b6f484b2f53755f12458a1daebc252250"
+          },
+          {
+            "spriteId": 190,
+            "entrySha256": "53492b79d2b2d8264046ea94974da73b6f484b2f53755f12458a1daebc252250"
+          },
+          {
+            "spriteId": 191,
+            "entrySha256": "53492b79d2b2d8264046ea94974da73b6f484b2f53755f12458a1daebc252250"
+          },
+          {
+            "spriteId": 192,
+            "entrySha256": "316526ac50dda7c521be7b566aefaa178fd05083a53c412c27e5dc4f07dfd95b"
+          },
+          {
+            "spriteId": 193,
+            "entrySha256": "316526ac50dda7c521be7b566aefaa178fd05083a53c412c27e5dc4f07dfd95b"
+          },
+          {
+            "spriteId": 194,
+            "entrySha256": "316526ac50dda7c521be7b566aefaa178fd05083a53c412c27e5dc4f07dfd95b"
+          },
+          {
+            "spriteId": 195,
+            "entrySha256": "0a1a290d239be66d7b8c3742487d18fb09fa69e6145710ac77a059a54b11b7ae"
+          },
+          {
+            "spriteId": 196,
+            "entrySha256": "0a1a290d239be66d7b8c3742487d18fb09fa69e6145710ac77a059a54b11b7ae"
+          },
+          {
+            "spriteId": 197,
+            "entrySha256": "0a1a290d239be66d7b8c3742487d18fb09fa69e6145710ac77a059a54b11b7ae"
+          },
+          {
+            "spriteId": 198,
+            "entrySha256": "3dedf8e133fb1d285381802fd1ca85ad8ac16f9bd031d6c6de90e40f13b70211"
+          },
+          {
+            "spriteId": 199,
+            "entrySha256": "3dedf8e133fb1d285381802fd1ca85ad8ac16f9bd031d6c6de90e40f13b70211"
+          },
+          {
+            "spriteId": 200,
+            "entrySha256": "3dedf8e133fb1d285381802fd1ca85ad8ac16f9bd031d6c6de90e40f13b70211"
+          },
+          {
+            "spriteId": 201,
+            "entrySha256": "da58293a0f498908fa3e289ca5b12eada9b4e9205e247601cc6fffe4d9fa7d0e"
+          },
+          {
+            "spriteId": 202,
+            "entrySha256": "da58293a0f498908fa3e289ca5b12eada9b4e9205e247601cc6fffe4d9fa7d0e"
+          },
+          {
+            "spriteId": 203,
+            "entrySha256": "da58293a0f498908fa3e289ca5b12eada9b4e9205e247601cc6fffe4d9fa7d0e"
+          },
+          {
+            "spriteId": 204,
+            "entrySha256": "de3a8c4a05b092230c79265147a359e374f425c082cc19914858b372ef8cb699"
+          },
+          {
+            "spriteId": 205,
+            "entrySha256": "d046ef5507de9db4f47e5c03d101e81b3c4611844ccb0f1b5032382d242de3d1"
+          },
+          {
+            "spriteId": 206,
+            "entrySha256": "ac5f524467ba9d80cafd4a855a7ad1cf2de992496d8ec28582810641a4a18b7e"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 15,
+      "name": "fullhelm",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fullhelm",
+        "frameCount": 18,
+        "entrySha256": "48cc013131c951b91058bb84ff5b0ee68f9db55bb25ef674c275d188067b629d",
+        "spritepackOverrideKey": "equipment:fullhelm"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 297,
+        "frames": [
+          {
+            "spriteId": 297,
+            "entrySha256": "251e3830d96271c69eff18edf81eae9991184cce187d5a6d364f67e3c0c3b85c"
+          },
+          {
+            "spriteId": 298,
+            "entrySha256": "251e3830d96271c69eff18edf81eae9991184cce187d5a6d364f67e3c0c3b85c"
+          },
+          {
+            "spriteId": 299,
+            "entrySha256": "251e3830d96271c69eff18edf81eae9991184cce187d5a6d364f67e3c0c3b85c"
+          },
+          {
+            "spriteId": 300,
+            "entrySha256": "5f5027cbb4287264c688019be21b705d2f7081c1e7a20463e6f2b4dd828784b1"
+          },
+          {
+            "spriteId": 301,
+            "entrySha256": "5f5027cbb4287264c688019be21b705d2f7081c1e7a20463e6f2b4dd828784b1"
+          },
+          {
+            "spriteId": 302,
+            "entrySha256": "5f5027cbb4287264c688019be21b705d2f7081c1e7a20463e6f2b4dd828784b1"
+          },
+          {
+            "spriteId": 303,
+            "entrySha256": "c41cb5f4f20976b102799736796bff8598b5e707b6716edfaeab4fef9d0eb44f"
+          },
+          {
+            "spriteId": 304,
+            "entrySha256": "c41cb5f4f20976b102799736796bff8598b5e707b6716edfaeab4fef9d0eb44f"
+          },
+          {
+            "spriteId": 305,
+            "entrySha256": "c41cb5f4f20976b102799736796bff8598b5e707b6716edfaeab4fef9d0eb44f"
+          },
+          {
+            "spriteId": 306,
+            "entrySha256": "2502865be61ba2fddde0b8315e38fad4fb2b3f2f50aea52bcc87787806d629f5"
+          },
+          {
+            "spriteId": 307,
+            "entrySha256": "2502865be61ba2fddde0b8315e38fad4fb2b3f2f50aea52bcc87787806d629f5"
+          },
+          {
+            "spriteId": 308,
+            "entrySha256": "2502865be61ba2fddde0b8315e38fad4fb2b3f2f50aea52bcc87787806d629f5"
+          },
+          {
+            "spriteId": 309,
+            "entrySha256": "0199115c844f43881a4afad92bc3622191a2f447a0d652a272d516430665eddb"
+          },
+          {
+            "spriteId": 310,
+            "entrySha256": "0199115c844f43881a4afad92bc3622191a2f447a0d652a272d516430665eddb"
+          },
+          {
+            "spriteId": 311,
+            "entrySha256": "0199115c844f43881a4afad92bc3622191a2f447a0d652a272d516430665eddb"
+          },
+          {
+            "spriteId": 312,
+            "entrySha256": "160ed6cba9feee84a910681ae077deedf09b4388dd0449153560e4adc6769985"
+          },
+          {
+            "spriteId": 313,
+            "entrySha256": "a4b1b8e6dbaab861c1fc2e32ed19649d735da925190b4b75980a689540984005"
+          },
+          {
+            "spriteId": 314,
+            "entrySha256": "c2d55d152b04f5aecc34fb2ceea02e50ed54cbdb30685e6232d913da8b80ceeb"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 16,
+      "name": "fullhelm",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fullhelm",
+        "frameCount": 18,
+        "entrySha256": "48cc013131c951b91058bb84ff5b0ee68f9db55bb25ef674c275d188067b629d",
+        "spritepackOverrideKey": "equipment:fullhelm"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 297,
+        "frames": [
+          {
+            "spriteId": 297,
+            "entrySha256": "251e3830d96271c69eff18edf81eae9991184cce187d5a6d364f67e3c0c3b85c"
+          },
+          {
+            "spriteId": 298,
+            "entrySha256": "251e3830d96271c69eff18edf81eae9991184cce187d5a6d364f67e3c0c3b85c"
+          },
+          {
+            "spriteId": 299,
+            "entrySha256": "251e3830d96271c69eff18edf81eae9991184cce187d5a6d364f67e3c0c3b85c"
+          },
+          {
+            "spriteId": 300,
+            "entrySha256": "5f5027cbb4287264c688019be21b705d2f7081c1e7a20463e6f2b4dd828784b1"
+          },
+          {
+            "spriteId": 301,
+            "entrySha256": "5f5027cbb4287264c688019be21b705d2f7081c1e7a20463e6f2b4dd828784b1"
+          },
+          {
+            "spriteId": 302,
+            "entrySha256": "5f5027cbb4287264c688019be21b705d2f7081c1e7a20463e6f2b4dd828784b1"
+          },
+          {
+            "spriteId": 303,
+            "entrySha256": "c41cb5f4f20976b102799736796bff8598b5e707b6716edfaeab4fef9d0eb44f"
+          },
+          {
+            "spriteId": 304,
+            "entrySha256": "c41cb5f4f20976b102799736796bff8598b5e707b6716edfaeab4fef9d0eb44f"
+          },
+          {
+            "spriteId": 305,
+            "entrySha256": "c41cb5f4f20976b102799736796bff8598b5e707b6716edfaeab4fef9d0eb44f"
+          },
+          {
+            "spriteId": 306,
+            "entrySha256": "2502865be61ba2fddde0b8315e38fad4fb2b3f2f50aea52bcc87787806d629f5"
+          },
+          {
+            "spriteId": 307,
+            "entrySha256": "2502865be61ba2fddde0b8315e38fad4fb2b3f2f50aea52bcc87787806d629f5"
+          },
+          {
+            "spriteId": 308,
+            "entrySha256": "2502865be61ba2fddde0b8315e38fad4fb2b3f2f50aea52bcc87787806d629f5"
+          },
+          {
+            "spriteId": 309,
+            "entrySha256": "0199115c844f43881a4afad92bc3622191a2f447a0d652a272d516430665eddb"
+          },
+          {
+            "spriteId": 310,
+            "entrySha256": "0199115c844f43881a4afad92bc3622191a2f447a0d652a272d516430665eddb"
+          },
+          {
+            "spriteId": 311,
+            "entrySha256": "0199115c844f43881a4afad92bc3622191a2f447a0d652a272d516430665eddb"
+          },
+          {
+            "spriteId": 312,
+            "entrySha256": "160ed6cba9feee84a910681ae077deedf09b4388dd0449153560e4adc6769985"
+          },
+          {
+            "spriteId": 313,
+            "entrySha256": "a4b1b8e6dbaab861c1fc2e32ed19649d735da925190b4b75980a689540984005"
+          },
+          {
+            "spriteId": 314,
+            "entrySha256": "c2d55d152b04f5aecc34fb2ceea02e50ed54cbdb30685e6232d913da8b80ceeb"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 27,
+      "name": "platemailtop",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemailtop",
+        "frameCount": 18,
+        "entrySha256": "f33ea9f4943726e65c2b569c42d79d057b8753d15a9475932c984afa98696b85",
+        "spritepackOverrideKey": "equipment:platemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 351,
+        "frames": [
+          {
+            "spriteId": 351,
+            "entrySha256": "553e7b00e7a82c581f7288c8a5a63d42658a7f8bf113835c2703c814ee5d302e"
+          },
+          {
+            "spriteId": 352,
+            "entrySha256": "8a7389a09bf7f232fe22564da23e3f669e02b748edff162cca6e85df42794f66"
+          },
+          {
+            "spriteId": 353,
+            "entrySha256": "a7f61c7b6cf803a1daa104935a2a15fcc22491c77993b2b8256a5279b689816c"
+          },
+          {
+            "spriteId": 354,
+            "entrySha256": "92f11d344525aa045734291bddda8b46aecfea79779e94416145fe8d00072e9a"
+          },
+          {
+            "spriteId": 355,
+            "entrySha256": "f1f0aeaaaf07219c0bf8d324e30d01a98cbbad02875b75b20d236ba3d9da4598"
+          },
+          {
+            "spriteId": 356,
+            "entrySha256": "bf8806aa00fecd77787b0853cc3f582787d6adad567160ee895913f8e14ca0a0"
+          },
+          {
+            "spriteId": 357,
+            "entrySha256": "0c0fac6693bcc248136957fd886fc487d7a29721b5abe487566b554d7fc3a444"
+          },
+          {
+            "spriteId": 358,
+            "entrySha256": "0b24375f2ba368d34abb545e2622a6523e16f1f202b28918512f222cd541f649"
+          },
+          {
+            "spriteId": 359,
+            "entrySha256": "2ca08cfe6c169822de56d119b33e3a65a67ce3b423afcdb22e938545def8c7fa"
+          },
+          {
+            "spriteId": 360,
+            "entrySha256": "59c7e801faef6be60359fb1cabd33b6d027461400ce26b9b4b85b77e6c185f9b"
+          },
+          {
+            "spriteId": 361,
+            "entrySha256": "d9eff761370677d06984d3227fcb15b85f2ac138a18fd268d5643ed5fe6913da"
+          },
+          {
+            "spriteId": 362,
+            "entrySha256": "0b4228e89956c3744add7c8acc32f201501197e6129d909d952c7623b84a5724"
+          },
+          {
+            "spriteId": 363,
+            "entrySha256": "0ba284b77045999001b50bfbe67527644b0124b1a6659ea54a2c3980786dc434"
+          },
+          {
+            "spriteId": 364,
+            "entrySha256": "366b502ef7eb1bc8722975658bcc69a9be306cfe8d4dfd225daf473fc8e9b64e"
+          },
+          {
+            "spriteId": 365,
+            "entrySha256": "64ef0a16931b292e4fbb65f0d6cfb3fb4301a4736d991f3e55f88cf2acb50425"
+          },
+          {
+            "spriteId": 366,
+            "entrySha256": "44d7e997a5fea92e3298bcc3ce0498531d74b2622b9195f02eca74f03ccbe713"
+          },
+          {
+            "spriteId": 367,
+            "entrySha256": "1c088f882d11cf6f814768d5813eba88d46ca4bce6e192151a1195a26b4f423d"
+          },
+          {
+            "spriteId": 368,
+            "entrySha256": "bfd136cb05c765fc20606594b5eb554619133e593885bf632e72162762812ed2"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 28,
+      "name": "platemailtop",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemailtop",
+        "frameCount": 18,
+        "entrySha256": "f33ea9f4943726e65c2b569c42d79d057b8753d15a9475932c984afa98696b85",
+        "spritepackOverrideKey": "equipment:platemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 351,
+        "frames": [
+          {
+            "spriteId": 351,
+            "entrySha256": "553e7b00e7a82c581f7288c8a5a63d42658a7f8bf113835c2703c814ee5d302e"
+          },
+          {
+            "spriteId": 352,
+            "entrySha256": "8a7389a09bf7f232fe22564da23e3f669e02b748edff162cca6e85df42794f66"
+          },
+          {
+            "spriteId": 353,
+            "entrySha256": "a7f61c7b6cf803a1daa104935a2a15fcc22491c77993b2b8256a5279b689816c"
+          },
+          {
+            "spriteId": 354,
+            "entrySha256": "92f11d344525aa045734291bddda8b46aecfea79779e94416145fe8d00072e9a"
+          },
+          {
+            "spriteId": 355,
+            "entrySha256": "f1f0aeaaaf07219c0bf8d324e30d01a98cbbad02875b75b20d236ba3d9da4598"
+          },
+          {
+            "spriteId": 356,
+            "entrySha256": "bf8806aa00fecd77787b0853cc3f582787d6adad567160ee895913f8e14ca0a0"
+          },
+          {
+            "spriteId": 357,
+            "entrySha256": "0c0fac6693bcc248136957fd886fc487d7a29721b5abe487566b554d7fc3a444"
+          },
+          {
+            "spriteId": 358,
+            "entrySha256": "0b24375f2ba368d34abb545e2622a6523e16f1f202b28918512f222cd541f649"
+          },
+          {
+            "spriteId": 359,
+            "entrySha256": "2ca08cfe6c169822de56d119b33e3a65a67ce3b423afcdb22e938545def8c7fa"
+          },
+          {
+            "spriteId": 360,
+            "entrySha256": "59c7e801faef6be60359fb1cabd33b6d027461400ce26b9b4b85b77e6c185f9b"
+          },
+          {
+            "spriteId": 361,
+            "entrySha256": "d9eff761370677d06984d3227fcb15b85f2ac138a18fd268d5643ed5fe6913da"
+          },
+          {
+            "spriteId": 362,
+            "entrySha256": "0b4228e89956c3744add7c8acc32f201501197e6129d909d952c7623b84a5724"
+          },
+          {
+            "spriteId": 363,
+            "entrySha256": "0ba284b77045999001b50bfbe67527644b0124b1a6659ea54a2c3980786dc434"
+          },
+          {
+            "spriteId": 364,
+            "entrySha256": "366b502ef7eb1bc8722975658bcc69a9be306cfe8d4dfd225daf473fc8e9b64e"
+          },
+          {
+            "spriteId": 365,
+            "entrySha256": "64ef0a16931b292e4fbb65f0d6cfb3fb4301a4736d991f3e55f88cf2acb50425"
+          },
+          {
+            "spriteId": 366,
+            "entrySha256": "44d7e997a5fea92e3298bcc3ce0498531d74b2622b9195f02eca74f03ccbe713"
+          },
+          {
+            "spriteId": 367,
+            "entrySha256": "1c088f882d11cf6f814768d5813eba88d46ca4bce6e192151a1195a26b4f423d"
+          },
+          {
+            "spriteId": 368,
+            "entrySha256": "bfd136cb05c765fc20606594b5eb554619133e593885bf632e72162762812ed2"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 29,
+      "name": "platemailtop",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemailtop",
+        "frameCount": 18,
+        "entrySha256": "f33ea9f4943726e65c2b569c42d79d057b8753d15a9475932c984afa98696b85",
+        "spritepackOverrideKey": "equipment:platemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 351,
+        "frames": [
+          {
+            "spriteId": 351,
+            "entrySha256": "553e7b00e7a82c581f7288c8a5a63d42658a7f8bf113835c2703c814ee5d302e"
+          },
+          {
+            "spriteId": 352,
+            "entrySha256": "8a7389a09bf7f232fe22564da23e3f669e02b748edff162cca6e85df42794f66"
+          },
+          {
+            "spriteId": 353,
+            "entrySha256": "a7f61c7b6cf803a1daa104935a2a15fcc22491c77993b2b8256a5279b689816c"
+          },
+          {
+            "spriteId": 354,
+            "entrySha256": "92f11d344525aa045734291bddda8b46aecfea79779e94416145fe8d00072e9a"
+          },
+          {
+            "spriteId": 355,
+            "entrySha256": "f1f0aeaaaf07219c0bf8d324e30d01a98cbbad02875b75b20d236ba3d9da4598"
+          },
+          {
+            "spriteId": 356,
+            "entrySha256": "bf8806aa00fecd77787b0853cc3f582787d6adad567160ee895913f8e14ca0a0"
+          },
+          {
+            "spriteId": 357,
+            "entrySha256": "0c0fac6693bcc248136957fd886fc487d7a29721b5abe487566b554d7fc3a444"
+          },
+          {
+            "spriteId": 358,
+            "entrySha256": "0b24375f2ba368d34abb545e2622a6523e16f1f202b28918512f222cd541f649"
+          },
+          {
+            "spriteId": 359,
+            "entrySha256": "2ca08cfe6c169822de56d119b33e3a65a67ce3b423afcdb22e938545def8c7fa"
+          },
+          {
+            "spriteId": 360,
+            "entrySha256": "59c7e801faef6be60359fb1cabd33b6d027461400ce26b9b4b85b77e6c185f9b"
+          },
+          {
+            "spriteId": 361,
+            "entrySha256": "d9eff761370677d06984d3227fcb15b85f2ac138a18fd268d5643ed5fe6913da"
+          },
+          {
+            "spriteId": 362,
+            "entrySha256": "0b4228e89956c3744add7c8acc32f201501197e6129d909d952c7623b84a5724"
+          },
+          {
+            "spriteId": 363,
+            "entrySha256": "0ba284b77045999001b50bfbe67527644b0124b1a6659ea54a2c3980786dc434"
+          },
+          {
+            "spriteId": 364,
+            "entrySha256": "366b502ef7eb1bc8722975658bcc69a9be306cfe8d4dfd225daf473fc8e9b64e"
+          },
+          {
+            "spriteId": 365,
+            "entrySha256": "64ef0a16931b292e4fbb65f0d6cfb3fb4301a4736d991f3e55f88cf2acb50425"
+          },
+          {
+            "spriteId": 366,
+            "entrySha256": "44d7e997a5fea92e3298bcc3ce0498531d74b2622b9195f02eca74f03ccbe713"
+          },
+          {
+            "spriteId": 367,
+            "entrySha256": "1c088f882d11cf6f814768d5813eba88d46ca4bce6e192151a1195a26b4f423d"
+          },
+          {
+            "spriteId": 368,
+            "entrySha256": "bfd136cb05c765fc20606594b5eb554619133e593885bf632e72162762812ed2"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 30,
+      "name": "platemailtop",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemailtop",
+        "frameCount": 18,
+        "entrySha256": "f33ea9f4943726e65c2b569c42d79d057b8753d15a9475932c984afa98696b85",
+        "spritepackOverrideKey": "equipment:platemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 351,
+        "frames": [
+          {
+            "spriteId": 351,
+            "entrySha256": "553e7b00e7a82c581f7288c8a5a63d42658a7f8bf113835c2703c814ee5d302e"
+          },
+          {
+            "spriteId": 352,
+            "entrySha256": "8a7389a09bf7f232fe22564da23e3f669e02b748edff162cca6e85df42794f66"
+          },
+          {
+            "spriteId": 353,
+            "entrySha256": "a7f61c7b6cf803a1daa104935a2a15fcc22491c77993b2b8256a5279b689816c"
+          },
+          {
+            "spriteId": 354,
+            "entrySha256": "92f11d344525aa045734291bddda8b46aecfea79779e94416145fe8d00072e9a"
+          },
+          {
+            "spriteId": 355,
+            "entrySha256": "f1f0aeaaaf07219c0bf8d324e30d01a98cbbad02875b75b20d236ba3d9da4598"
+          },
+          {
+            "spriteId": 356,
+            "entrySha256": "bf8806aa00fecd77787b0853cc3f582787d6adad567160ee895913f8e14ca0a0"
+          },
+          {
+            "spriteId": 357,
+            "entrySha256": "0c0fac6693bcc248136957fd886fc487d7a29721b5abe487566b554d7fc3a444"
+          },
+          {
+            "spriteId": 358,
+            "entrySha256": "0b24375f2ba368d34abb545e2622a6523e16f1f202b28918512f222cd541f649"
+          },
+          {
+            "spriteId": 359,
+            "entrySha256": "2ca08cfe6c169822de56d119b33e3a65a67ce3b423afcdb22e938545def8c7fa"
+          },
+          {
+            "spriteId": 360,
+            "entrySha256": "59c7e801faef6be60359fb1cabd33b6d027461400ce26b9b4b85b77e6c185f9b"
+          },
+          {
+            "spriteId": 361,
+            "entrySha256": "d9eff761370677d06984d3227fcb15b85f2ac138a18fd268d5643ed5fe6913da"
+          },
+          {
+            "spriteId": 362,
+            "entrySha256": "0b4228e89956c3744add7c8acc32f201501197e6129d909d952c7623b84a5724"
+          },
+          {
+            "spriteId": 363,
+            "entrySha256": "0ba284b77045999001b50bfbe67527644b0124b1a6659ea54a2c3980786dc434"
+          },
+          {
+            "spriteId": 364,
+            "entrySha256": "366b502ef7eb1bc8722975658bcc69a9be306cfe8d4dfd225daf473fc8e9b64e"
+          },
+          {
+            "spriteId": 365,
+            "entrySha256": "64ef0a16931b292e4fbb65f0d6cfb3fb4301a4736d991f3e55f88cf2acb50425"
+          },
+          {
+            "spriteId": 366,
+            "entrySha256": "44d7e997a5fea92e3298bcc3ce0498531d74b2622b9195f02eca74f03ccbe713"
+          },
+          {
+            "spriteId": 367,
+            "entrySha256": "1c088f882d11cf6f814768d5813eba88d46ca4bce6e192151a1195a26b4f423d"
+          },
+          {
+            "spriteId": 368,
+            "entrySha256": "bfd136cb05c765fc20606594b5eb554619133e593885bf632e72162762812ed2"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 31,
+      "name": "platemailtop",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemailtop",
+        "frameCount": 18,
+        "entrySha256": "f33ea9f4943726e65c2b569c42d79d057b8753d15a9475932c984afa98696b85",
+        "spritepackOverrideKey": "equipment:platemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 351,
+        "frames": [
+          {
+            "spriteId": 351,
+            "entrySha256": "553e7b00e7a82c581f7288c8a5a63d42658a7f8bf113835c2703c814ee5d302e"
+          },
+          {
+            "spriteId": 352,
+            "entrySha256": "8a7389a09bf7f232fe22564da23e3f669e02b748edff162cca6e85df42794f66"
+          },
+          {
+            "spriteId": 353,
+            "entrySha256": "a7f61c7b6cf803a1daa104935a2a15fcc22491c77993b2b8256a5279b689816c"
+          },
+          {
+            "spriteId": 354,
+            "entrySha256": "92f11d344525aa045734291bddda8b46aecfea79779e94416145fe8d00072e9a"
+          },
+          {
+            "spriteId": 355,
+            "entrySha256": "f1f0aeaaaf07219c0bf8d324e30d01a98cbbad02875b75b20d236ba3d9da4598"
+          },
+          {
+            "spriteId": 356,
+            "entrySha256": "bf8806aa00fecd77787b0853cc3f582787d6adad567160ee895913f8e14ca0a0"
+          },
+          {
+            "spriteId": 357,
+            "entrySha256": "0c0fac6693bcc248136957fd886fc487d7a29721b5abe487566b554d7fc3a444"
+          },
+          {
+            "spriteId": 358,
+            "entrySha256": "0b24375f2ba368d34abb545e2622a6523e16f1f202b28918512f222cd541f649"
+          },
+          {
+            "spriteId": 359,
+            "entrySha256": "2ca08cfe6c169822de56d119b33e3a65a67ce3b423afcdb22e938545def8c7fa"
+          },
+          {
+            "spriteId": 360,
+            "entrySha256": "59c7e801faef6be60359fb1cabd33b6d027461400ce26b9b4b85b77e6c185f9b"
+          },
+          {
+            "spriteId": 361,
+            "entrySha256": "d9eff761370677d06984d3227fcb15b85f2ac138a18fd268d5643ed5fe6913da"
+          },
+          {
+            "spriteId": 362,
+            "entrySha256": "0b4228e89956c3744add7c8acc32f201501197e6129d909d952c7623b84a5724"
+          },
+          {
+            "spriteId": 363,
+            "entrySha256": "0ba284b77045999001b50bfbe67527644b0124b1a6659ea54a2c3980786dc434"
+          },
+          {
+            "spriteId": 364,
+            "entrySha256": "366b502ef7eb1bc8722975658bcc69a9be306cfe8d4dfd225daf473fc8e9b64e"
+          },
+          {
+            "spriteId": 365,
+            "entrySha256": "64ef0a16931b292e4fbb65f0d6cfb3fb4301a4736d991f3e55f88cf2acb50425"
+          },
+          {
+            "spriteId": 366,
+            "entrySha256": "44d7e997a5fea92e3298bcc3ce0498531d74b2622b9195f02eca74f03ccbe713"
+          },
+          {
+            "spriteId": 367,
+            "entrySha256": "1c088f882d11cf6f814768d5813eba88d46ca4bce6e192151a1195a26b4f423d"
+          },
+          {
+            "spriteId": 368,
+            "entrySha256": "bfd136cb05c765fc20606594b5eb554619133e593885bf632e72162762812ed2"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 36,
+      "name": "platemaillegs",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemaillegs",
+        "frameCount": 18,
+        "entrySha256": "9e5356204857742d5fa6a0f353e5d8e26cfee7f35787c7ee89375f783f0465f5",
+        "spritepackOverrideKey": "equipment:platemaillegs"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 378,
+        "frames": [
+          {
+            "spriteId": 378,
+            "entrySha256": "26bce363927876cf48884b80a5c6ff0073b634e37fc21ad33762329eb2746653"
+          },
+          {
+            "spriteId": 379,
+            "entrySha256": "c5f209af79906b3be1083a76b5e86a4cfcd8a9777c7f70787850759483cf6c28"
+          },
+          {
+            "spriteId": 380,
+            "entrySha256": "6d1b1e0be9c123440c55e515e302b246b632b4150733100d911f11dd4ea7d4ab"
+          },
+          {
+            "spriteId": 381,
+            "entrySha256": "a8486351e7bafd7b080404fcc8725ac85d2ca838f787ccd93a57c659f897d16e"
+          },
+          {
+            "spriteId": 382,
+            "entrySha256": "a3289676d06d2f1c74fbe28aaf779e8cad35bc645902d6907013e5081d3c4c65"
+          },
+          {
+            "spriteId": 383,
+            "entrySha256": "38f24b033bc1ead4703d1b4fab0ca6ebf014574f4b29465519c1b72b82a05c34"
+          },
+          {
+            "spriteId": 384,
+            "entrySha256": "c64fbc0fe3a9719b24de51db7738aab4973c38a22d44c51f75aed2105a4acbd8"
+          },
+          {
+            "spriteId": 385,
+            "entrySha256": "60377a163022c077884cf35dae64fe738d46ea905d69306438430eb80fe68716"
+          },
+          {
+            "spriteId": 386,
+            "entrySha256": "023a1cca0ae10d0123363a5cc5dd4f29391edb614eea5f973ffe5617dca092e0"
+          },
+          {
+            "spriteId": 387,
+            "entrySha256": "173203fbaea95248f9ecc441549d2686be08a540b655cca30627b7b9de11a047"
+          },
+          {
+            "spriteId": 388,
+            "entrySha256": "eb6e1b057f370903952088aa916bed9121ff7d6972c04b75d11a0588f1a2d077"
+          },
+          {
+            "spriteId": 389,
+            "entrySha256": "15800fb2a32760b0b284c5a8d1ef24f56b37722477cb5b156f1db5d2afd2a79f"
+          },
+          {
+            "spriteId": 390,
+            "entrySha256": "a8e182e4eaf7ddc72a01d6bb1491c947f965915ea4e1e89891de3d0de260d440"
+          },
+          {
+            "spriteId": 391,
+            "entrySha256": "1fe3c24b614fb58790a005303064ffedfec622a7e67b48dcab689f3ac57a0643"
+          },
+          {
+            "spriteId": 392,
+            "entrySha256": "8fa38f5afac8482cd4e1324e21502ca1b073dbd8166a023c567eb02276006767"
+          },
+          {
+            "spriteId": 393,
+            "entrySha256": "b6a8d151b4f89eaa22e825b81cf2d139308c10a50afef365096d8a3b5f0d773e"
+          },
+          {
+            "spriteId": 394,
+            "entrySha256": "8e84d37f264d3fff23983aac9c7181b87ad34050a6a06e01b7ef2c279dca5bf9"
+          },
+          {
+            "spriteId": 395,
+            "entrySha256": "d29f5a9935d8a2e81b58dbff718f933ad69f45715fe505f5d3b7970833c93152"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 37,
+      "name": "platemaillegs",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemaillegs",
+        "frameCount": 18,
+        "entrySha256": "9e5356204857742d5fa6a0f353e5d8e26cfee7f35787c7ee89375f783f0465f5",
+        "spritepackOverrideKey": "equipment:platemaillegs"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 378,
+        "frames": [
+          {
+            "spriteId": 378,
+            "entrySha256": "26bce363927876cf48884b80a5c6ff0073b634e37fc21ad33762329eb2746653"
+          },
+          {
+            "spriteId": 379,
+            "entrySha256": "c5f209af79906b3be1083a76b5e86a4cfcd8a9777c7f70787850759483cf6c28"
+          },
+          {
+            "spriteId": 380,
+            "entrySha256": "6d1b1e0be9c123440c55e515e302b246b632b4150733100d911f11dd4ea7d4ab"
+          },
+          {
+            "spriteId": 381,
+            "entrySha256": "a8486351e7bafd7b080404fcc8725ac85d2ca838f787ccd93a57c659f897d16e"
+          },
+          {
+            "spriteId": 382,
+            "entrySha256": "a3289676d06d2f1c74fbe28aaf779e8cad35bc645902d6907013e5081d3c4c65"
+          },
+          {
+            "spriteId": 383,
+            "entrySha256": "38f24b033bc1ead4703d1b4fab0ca6ebf014574f4b29465519c1b72b82a05c34"
+          },
+          {
+            "spriteId": 384,
+            "entrySha256": "c64fbc0fe3a9719b24de51db7738aab4973c38a22d44c51f75aed2105a4acbd8"
+          },
+          {
+            "spriteId": 385,
+            "entrySha256": "60377a163022c077884cf35dae64fe738d46ea905d69306438430eb80fe68716"
+          },
+          {
+            "spriteId": 386,
+            "entrySha256": "023a1cca0ae10d0123363a5cc5dd4f29391edb614eea5f973ffe5617dca092e0"
+          },
+          {
+            "spriteId": 387,
+            "entrySha256": "173203fbaea95248f9ecc441549d2686be08a540b655cca30627b7b9de11a047"
+          },
+          {
+            "spriteId": 388,
+            "entrySha256": "eb6e1b057f370903952088aa916bed9121ff7d6972c04b75d11a0588f1a2d077"
+          },
+          {
+            "spriteId": 389,
+            "entrySha256": "15800fb2a32760b0b284c5a8d1ef24f56b37722477cb5b156f1db5d2afd2a79f"
+          },
+          {
+            "spriteId": 390,
+            "entrySha256": "a8e182e4eaf7ddc72a01d6bb1491c947f965915ea4e1e89891de3d0de260d440"
+          },
+          {
+            "spriteId": 391,
+            "entrySha256": "1fe3c24b614fb58790a005303064ffedfec622a7e67b48dcab689f3ac57a0643"
+          },
+          {
+            "spriteId": 392,
+            "entrySha256": "8fa38f5afac8482cd4e1324e21502ca1b073dbd8166a023c567eb02276006767"
+          },
+          {
+            "spriteId": 393,
+            "entrySha256": "b6a8d151b4f89eaa22e825b81cf2d139308c10a50afef365096d8a3b5f0d773e"
+          },
+          {
+            "spriteId": 394,
+            "entrySha256": "8e84d37f264d3fff23983aac9c7181b87ad34050a6a06e01b7ef2c279dca5bf9"
+          },
+          {
+            "spriteId": 395,
+            "entrySha256": "d29f5a9935d8a2e81b58dbff718f933ad69f45715fe505f5d3b7970833c93152"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 38,
+      "name": "platemaillegs",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemaillegs",
+        "frameCount": 18,
+        "entrySha256": "9e5356204857742d5fa6a0f353e5d8e26cfee7f35787c7ee89375f783f0465f5",
+        "spritepackOverrideKey": "equipment:platemaillegs"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 378,
+        "frames": [
+          {
+            "spriteId": 378,
+            "entrySha256": "26bce363927876cf48884b80a5c6ff0073b634e37fc21ad33762329eb2746653"
+          },
+          {
+            "spriteId": 379,
+            "entrySha256": "c5f209af79906b3be1083a76b5e86a4cfcd8a9777c7f70787850759483cf6c28"
+          },
+          {
+            "spriteId": 380,
+            "entrySha256": "6d1b1e0be9c123440c55e515e302b246b632b4150733100d911f11dd4ea7d4ab"
+          },
+          {
+            "spriteId": 381,
+            "entrySha256": "a8486351e7bafd7b080404fcc8725ac85d2ca838f787ccd93a57c659f897d16e"
+          },
+          {
+            "spriteId": 382,
+            "entrySha256": "a3289676d06d2f1c74fbe28aaf779e8cad35bc645902d6907013e5081d3c4c65"
+          },
+          {
+            "spriteId": 383,
+            "entrySha256": "38f24b033bc1ead4703d1b4fab0ca6ebf014574f4b29465519c1b72b82a05c34"
+          },
+          {
+            "spriteId": 384,
+            "entrySha256": "c64fbc0fe3a9719b24de51db7738aab4973c38a22d44c51f75aed2105a4acbd8"
+          },
+          {
+            "spriteId": 385,
+            "entrySha256": "60377a163022c077884cf35dae64fe738d46ea905d69306438430eb80fe68716"
+          },
+          {
+            "spriteId": 386,
+            "entrySha256": "023a1cca0ae10d0123363a5cc5dd4f29391edb614eea5f973ffe5617dca092e0"
+          },
+          {
+            "spriteId": 387,
+            "entrySha256": "173203fbaea95248f9ecc441549d2686be08a540b655cca30627b7b9de11a047"
+          },
+          {
+            "spriteId": 388,
+            "entrySha256": "eb6e1b057f370903952088aa916bed9121ff7d6972c04b75d11a0588f1a2d077"
+          },
+          {
+            "spriteId": 389,
+            "entrySha256": "15800fb2a32760b0b284c5a8d1ef24f56b37722477cb5b156f1db5d2afd2a79f"
+          },
+          {
+            "spriteId": 390,
+            "entrySha256": "a8e182e4eaf7ddc72a01d6bb1491c947f965915ea4e1e89891de3d0de260d440"
+          },
+          {
+            "spriteId": 391,
+            "entrySha256": "1fe3c24b614fb58790a005303064ffedfec622a7e67b48dcab689f3ac57a0643"
+          },
+          {
+            "spriteId": 392,
+            "entrySha256": "8fa38f5afac8482cd4e1324e21502ca1b073dbd8166a023c567eb02276006767"
+          },
+          {
+            "spriteId": 393,
+            "entrySha256": "b6a8d151b4f89eaa22e825b81cf2d139308c10a50afef365096d8a3b5f0d773e"
+          },
+          {
+            "spriteId": 394,
+            "entrySha256": "8e84d37f264d3fff23983aac9c7181b87ad34050a6a06e01b7ef2c279dca5bf9"
+          },
+          {
+            "spriteId": 395,
+            "entrySha256": "d29f5a9935d8a2e81b58dbff718f933ad69f45715fe505f5d3b7970833c93152"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 39,
+      "name": "platemaillegs",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemaillegs",
+        "frameCount": 18,
+        "entrySha256": "9e5356204857742d5fa6a0f353e5d8e26cfee7f35787c7ee89375f783f0465f5",
+        "spritepackOverrideKey": "equipment:platemaillegs"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 378,
+        "frames": [
+          {
+            "spriteId": 378,
+            "entrySha256": "26bce363927876cf48884b80a5c6ff0073b634e37fc21ad33762329eb2746653"
+          },
+          {
+            "spriteId": 379,
+            "entrySha256": "c5f209af79906b3be1083a76b5e86a4cfcd8a9777c7f70787850759483cf6c28"
+          },
+          {
+            "spriteId": 380,
+            "entrySha256": "6d1b1e0be9c123440c55e515e302b246b632b4150733100d911f11dd4ea7d4ab"
+          },
+          {
+            "spriteId": 381,
+            "entrySha256": "a8486351e7bafd7b080404fcc8725ac85d2ca838f787ccd93a57c659f897d16e"
+          },
+          {
+            "spriteId": 382,
+            "entrySha256": "a3289676d06d2f1c74fbe28aaf779e8cad35bc645902d6907013e5081d3c4c65"
+          },
+          {
+            "spriteId": 383,
+            "entrySha256": "38f24b033bc1ead4703d1b4fab0ca6ebf014574f4b29465519c1b72b82a05c34"
+          },
+          {
+            "spriteId": 384,
+            "entrySha256": "c64fbc0fe3a9719b24de51db7738aab4973c38a22d44c51f75aed2105a4acbd8"
+          },
+          {
+            "spriteId": 385,
+            "entrySha256": "60377a163022c077884cf35dae64fe738d46ea905d69306438430eb80fe68716"
+          },
+          {
+            "spriteId": 386,
+            "entrySha256": "023a1cca0ae10d0123363a5cc5dd4f29391edb614eea5f973ffe5617dca092e0"
+          },
+          {
+            "spriteId": 387,
+            "entrySha256": "173203fbaea95248f9ecc441549d2686be08a540b655cca30627b7b9de11a047"
+          },
+          {
+            "spriteId": 388,
+            "entrySha256": "eb6e1b057f370903952088aa916bed9121ff7d6972c04b75d11a0588f1a2d077"
+          },
+          {
+            "spriteId": 389,
+            "entrySha256": "15800fb2a32760b0b284c5a8d1ef24f56b37722477cb5b156f1db5d2afd2a79f"
+          },
+          {
+            "spriteId": 390,
+            "entrySha256": "a8e182e4eaf7ddc72a01d6bb1491c947f965915ea4e1e89891de3d0de260d440"
+          },
+          {
+            "spriteId": 391,
+            "entrySha256": "1fe3c24b614fb58790a005303064ffedfec622a7e67b48dcab689f3ac57a0643"
+          },
+          {
+            "spriteId": 392,
+            "entrySha256": "8fa38f5afac8482cd4e1324e21502ca1b073dbd8166a023c567eb02276006767"
+          },
+          {
+            "spriteId": 393,
+            "entrySha256": "b6a8d151b4f89eaa22e825b81cf2d139308c10a50afef365096d8a3b5f0d773e"
+          },
+          {
+            "spriteId": 394,
+            "entrySha256": "8e84d37f264d3fff23983aac9c7181b87ad34050a6a06e01b7ef2c279dca5bf9"
+          },
+          {
+            "spriteId": 395,
+            "entrySha256": "d29f5a9935d8a2e81b58dbff718f933ad69f45715fe505f5d3b7970833c93152"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 40,
+      "name": "platemaillegs",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "platemaillegs",
+        "frameCount": 18,
+        "entrySha256": "9e5356204857742d5fa6a0f353e5d8e26cfee7f35787c7ee89375f783f0465f5",
+        "spritepackOverrideKey": "equipment:platemaillegs"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 378,
+        "frames": [
+          {
+            "spriteId": 378,
+            "entrySha256": "26bce363927876cf48884b80a5c6ff0073b634e37fc21ad33762329eb2746653"
+          },
+          {
+            "spriteId": 379,
+            "entrySha256": "c5f209af79906b3be1083a76b5e86a4cfcd8a9777c7f70787850759483cf6c28"
+          },
+          {
+            "spriteId": 380,
+            "entrySha256": "6d1b1e0be9c123440c55e515e302b246b632b4150733100d911f11dd4ea7d4ab"
+          },
+          {
+            "spriteId": 381,
+            "entrySha256": "a8486351e7bafd7b080404fcc8725ac85d2ca838f787ccd93a57c659f897d16e"
+          },
+          {
+            "spriteId": 382,
+            "entrySha256": "a3289676d06d2f1c74fbe28aaf779e8cad35bc645902d6907013e5081d3c4c65"
+          },
+          {
+            "spriteId": 383,
+            "entrySha256": "38f24b033bc1ead4703d1b4fab0ca6ebf014574f4b29465519c1b72b82a05c34"
+          },
+          {
+            "spriteId": 384,
+            "entrySha256": "c64fbc0fe3a9719b24de51db7738aab4973c38a22d44c51f75aed2105a4acbd8"
+          },
+          {
+            "spriteId": 385,
+            "entrySha256": "60377a163022c077884cf35dae64fe738d46ea905d69306438430eb80fe68716"
+          },
+          {
+            "spriteId": 386,
+            "entrySha256": "023a1cca0ae10d0123363a5cc5dd4f29391edb614eea5f973ffe5617dca092e0"
+          },
+          {
+            "spriteId": 387,
+            "entrySha256": "173203fbaea95248f9ecc441549d2686be08a540b655cca30627b7b9de11a047"
+          },
+          {
+            "spriteId": 388,
+            "entrySha256": "eb6e1b057f370903952088aa916bed9121ff7d6972c04b75d11a0588f1a2d077"
+          },
+          {
+            "spriteId": 389,
+            "entrySha256": "15800fb2a32760b0b284c5a8d1ef24f56b37722477cb5b156f1db5d2afd2a79f"
+          },
+          {
+            "spriteId": 390,
+            "entrySha256": "a8e182e4eaf7ddc72a01d6bb1491c947f965915ea4e1e89891de3d0de260d440"
+          },
+          {
+            "spriteId": 391,
+            "entrySha256": "1fe3c24b614fb58790a005303064ffedfec622a7e67b48dcab689f3ac57a0643"
+          },
+          {
+            "spriteId": 392,
+            "entrySha256": "8fa38f5afac8482cd4e1324e21502ca1b073dbd8166a023c567eb02276006767"
+          },
+          {
+            "spriteId": 393,
+            "entrySha256": "b6a8d151b4f89eaa22e825b81cf2d139308c10a50afef365096d8a3b5f0d773e"
+          },
+          {
+            "spriteId": 394,
+            "entrySha256": "8e84d37f264d3fff23983aac9c7181b87ad34050a6a06e01b7ef2c279dca5bf9"
+          },
+          {
+            "spriteId": 395,
+            "entrySha256": "d29f5a9935d8a2e81b58dbff718f933ad69f45715fe505f5d3b7970833c93152"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 47,
+      "name": "sword",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "sword",
+        "frameCount": 18,
+        "entrySha256": "60b1493bf4effcde48787553ce14548077d96602ec51164d5ad524f4da96128c",
+        "spritepackOverrideKey": "equipment:sword"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 459,
+        "frames": [
+          {
+            "spriteId": 459,
+            "entrySha256": "24eff0b3b3ac8baa9e0f39840d4f5c74d2a338af1c7a918f883afaa6a918c5dc"
+          },
+          {
+            "spriteId": 460,
+            "entrySha256": "d0539902cb4cff1a129cfbdad67d2d9eb6183829a8ebb32f018586f7ab89d4fe"
+          },
+          {
+            "spriteId": 461,
+            "entrySha256": "0e2d5c11bfd0879ef1122a189cb2e79a31f40021244654fe7c43b8d95ccbb95e"
+          },
+          {
+            "spriteId": 462,
+            "entrySha256": "9c4896fab163e0e6292d7bef77c7c19ce9f968d13e8be54b2a179b5196611cf7"
+          },
+          {
+            "spriteId": 463,
+            "entrySha256": "e9acab64966f3f381754447d8d511229ba141d86c90580c429d5df2d216c45c8"
+          },
+          {
+            "spriteId": 464,
+            "entrySha256": "9bd64cdbc1a1e388cd48a03def5f3f4d23e6be469033939f2c550f50c56451c7"
+          },
+          {
+            "spriteId": 465,
+            "entrySha256": "a8dc7e3c39b584ec9d187e58d6a6bd75b1f4f70414d6787ee0d286041ae4e9bf"
+          },
+          {
+            "spriteId": 466,
+            "entrySha256": "27610ea889e6f8303328790181bbb249ffab418cdce6e19f858c77b0f3c1d5c0"
+          },
+          {
+            "spriteId": 467,
+            "entrySha256": "f827c5510ca4b54276bd6726af761ef0bae4e1914b158b9532f7afd1ff51ff8d"
+          },
+          {
+            "spriteId": 468,
+            "entrySha256": "7092a7c582ff0160295c39d36685ff52314c92d78ec1dfa40a140f1b8084e146"
+          },
+          {
+            "spriteId": 469,
+            "entrySha256": "22c1249f8b4287ae69796c953ab98af83b724e91cc477f82ae7e344428fcc546"
+          },
+          {
+            "spriteId": 470,
+            "entrySha256": "11b324a8fa6482684314b1b5142a291e615e497f9929a1a9f8265a42d6b6458f"
+          },
+          {
+            "spriteId": 471,
+            "entrySha256": "4f05f8985c9961de29edbcead56c940cff51f5dda0480ab659491a489cdbf96c"
+          },
+          {
+            "spriteId": 472,
+            "entrySha256": "a6c5b2aaf88c7aca6d2318c344360ec8ac6ab670323535fd5c68d1ab8810df26"
+          },
+          {
+            "spriteId": 473,
+            "entrySha256": "1bc2a34c46882f973baeab6432d7c6d20898e6d74a92ca29bf5f9b6bd5eba81b"
+          },
+          {
+            "spriteId": 474,
+            "entrySha256": "c69cb1adf3774626dc53a9af2db1d8e11a0c7d86cc77b987f3fe5b0c35a99f96"
+          },
+          {
+            "spriteId": 475,
+            "entrySha256": "9c11cef4003a74ffd3fa3aa2725423a0933b8a2f10672f7bca3c063e7c66bc51"
+          },
+          {
+            "spriteId": 476,
+            "entrySha256": "4c438c9f6c44d72dc93196bcf0654a8702c714a28f0dceeab1930831f4460d5c"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 48,
+      "name": "sword",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "sword",
+        "frameCount": 18,
+        "entrySha256": "60b1493bf4effcde48787553ce14548077d96602ec51164d5ad524f4da96128c",
+        "spritepackOverrideKey": "equipment:sword"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 459,
+        "frames": [
+          {
+            "spriteId": 459,
+            "entrySha256": "24eff0b3b3ac8baa9e0f39840d4f5c74d2a338af1c7a918f883afaa6a918c5dc"
+          },
+          {
+            "spriteId": 460,
+            "entrySha256": "d0539902cb4cff1a129cfbdad67d2d9eb6183829a8ebb32f018586f7ab89d4fe"
+          },
+          {
+            "spriteId": 461,
+            "entrySha256": "0e2d5c11bfd0879ef1122a189cb2e79a31f40021244654fe7c43b8d95ccbb95e"
+          },
+          {
+            "spriteId": 462,
+            "entrySha256": "9c4896fab163e0e6292d7bef77c7c19ce9f968d13e8be54b2a179b5196611cf7"
+          },
+          {
+            "spriteId": 463,
+            "entrySha256": "e9acab64966f3f381754447d8d511229ba141d86c90580c429d5df2d216c45c8"
+          },
+          {
+            "spriteId": 464,
+            "entrySha256": "9bd64cdbc1a1e388cd48a03def5f3f4d23e6be469033939f2c550f50c56451c7"
+          },
+          {
+            "spriteId": 465,
+            "entrySha256": "a8dc7e3c39b584ec9d187e58d6a6bd75b1f4f70414d6787ee0d286041ae4e9bf"
+          },
+          {
+            "spriteId": 466,
+            "entrySha256": "27610ea889e6f8303328790181bbb249ffab418cdce6e19f858c77b0f3c1d5c0"
+          },
+          {
+            "spriteId": 467,
+            "entrySha256": "f827c5510ca4b54276bd6726af761ef0bae4e1914b158b9532f7afd1ff51ff8d"
+          },
+          {
+            "spriteId": 468,
+            "entrySha256": "7092a7c582ff0160295c39d36685ff52314c92d78ec1dfa40a140f1b8084e146"
+          },
+          {
+            "spriteId": 469,
+            "entrySha256": "22c1249f8b4287ae69796c953ab98af83b724e91cc477f82ae7e344428fcc546"
+          },
+          {
+            "spriteId": 470,
+            "entrySha256": "11b324a8fa6482684314b1b5142a291e615e497f9929a1a9f8265a42d6b6458f"
+          },
+          {
+            "spriteId": 471,
+            "entrySha256": "4f05f8985c9961de29edbcead56c940cff51f5dda0480ab659491a489cdbf96c"
+          },
+          {
+            "spriteId": 472,
+            "entrySha256": "a6c5b2aaf88c7aca6d2318c344360ec8ac6ab670323535fd5c68d1ab8810df26"
+          },
+          {
+            "spriteId": 473,
+            "entrySha256": "1bc2a34c46882f973baeab6432d7c6d20898e6d74a92ca29bf5f9b6bd5eba81b"
+          },
+          {
+            "spriteId": 474,
+            "entrySha256": "c69cb1adf3774626dc53a9af2db1d8e11a0c7d86cc77b987f3fe5b0c35a99f96"
+          },
+          {
+            "spriteId": 475,
+            "entrySha256": "9c11cef4003a74ffd3fa3aa2725423a0933b8a2f10672f7bca3c063e7c66bc51"
+          },
+          {
+            "spriteId": 476,
+            "entrySha256": "4c438c9f6c44d72dc93196bcf0654a8702c714a28f0dceeab1930831f4460d5c"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 49,
+      "name": "sword",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "sword",
+        "frameCount": 18,
+        "entrySha256": "60b1493bf4effcde48787553ce14548077d96602ec51164d5ad524f4da96128c",
+        "spritepackOverrideKey": "equipment:sword"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 459,
+        "frames": [
+          {
+            "spriteId": 459,
+            "entrySha256": "24eff0b3b3ac8baa9e0f39840d4f5c74d2a338af1c7a918f883afaa6a918c5dc"
+          },
+          {
+            "spriteId": 460,
+            "entrySha256": "d0539902cb4cff1a129cfbdad67d2d9eb6183829a8ebb32f018586f7ab89d4fe"
+          },
+          {
+            "spriteId": 461,
+            "entrySha256": "0e2d5c11bfd0879ef1122a189cb2e79a31f40021244654fe7c43b8d95ccbb95e"
+          },
+          {
+            "spriteId": 462,
+            "entrySha256": "9c4896fab163e0e6292d7bef77c7c19ce9f968d13e8be54b2a179b5196611cf7"
+          },
+          {
+            "spriteId": 463,
+            "entrySha256": "e9acab64966f3f381754447d8d511229ba141d86c90580c429d5df2d216c45c8"
+          },
+          {
+            "spriteId": 464,
+            "entrySha256": "9bd64cdbc1a1e388cd48a03def5f3f4d23e6be469033939f2c550f50c56451c7"
+          },
+          {
+            "spriteId": 465,
+            "entrySha256": "a8dc7e3c39b584ec9d187e58d6a6bd75b1f4f70414d6787ee0d286041ae4e9bf"
+          },
+          {
+            "spriteId": 466,
+            "entrySha256": "27610ea889e6f8303328790181bbb249ffab418cdce6e19f858c77b0f3c1d5c0"
+          },
+          {
+            "spriteId": 467,
+            "entrySha256": "f827c5510ca4b54276bd6726af761ef0bae4e1914b158b9532f7afd1ff51ff8d"
+          },
+          {
+            "spriteId": 468,
+            "entrySha256": "7092a7c582ff0160295c39d36685ff52314c92d78ec1dfa40a140f1b8084e146"
+          },
+          {
+            "spriteId": 469,
+            "entrySha256": "22c1249f8b4287ae69796c953ab98af83b724e91cc477f82ae7e344428fcc546"
+          },
+          {
+            "spriteId": 470,
+            "entrySha256": "11b324a8fa6482684314b1b5142a291e615e497f9929a1a9f8265a42d6b6458f"
+          },
+          {
+            "spriteId": 471,
+            "entrySha256": "4f05f8985c9961de29edbcead56c940cff51f5dda0480ab659491a489cdbf96c"
+          },
+          {
+            "spriteId": 472,
+            "entrySha256": "a6c5b2aaf88c7aca6d2318c344360ec8ac6ab670323535fd5c68d1ab8810df26"
+          },
+          {
+            "spriteId": 473,
+            "entrySha256": "1bc2a34c46882f973baeab6432d7c6d20898e6d74a92ca29bf5f9b6bd5eba81b"
+          },
+          {
+            "spriteId": 474,
+            "entrySha256": "c69cb1adf3774626dc53a9af2db1d8e11a0c7d86cc77b987f3fe5b0c35a99f96"
+          },
+          {
+            "spriteId": 475,
+            "entrySha256": "9c11cef4003a74ffd3fa3aa2725423a0933b8a2f10672f7bca3c063e7c66bc51"
+          },
+          {
+            "spriteId": 476,
+            "entrySha256": "4c438c9f6c44d72dc93196bcf0654a8702c714a28f0dceeab1930831f4460d5c"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 50,
+      "name": "sword",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "sword",
+        "frameCount": 18,
+        "entrySha256": "60b1493bf4effcde48787553ce14548077d96602ec51164d5ad524f4da96128c",
+        "spritepackOverrideKey": "equipment:sword"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 459,
+        "frames": [
+          {
+            "spriteId": 459,
+            "entrySha256": "24eff0b3b3ac8baa9e0f39840d4f5c74d2a338af1c7a918f883afaa6a918c5dc"
+          },
+          {
+            "spriteId": 460,
+            "entrySha256": "d0539902cb4cff1a129cfbdad67d2d9eb6183829a8ebb32f018586f7ab89d4fe"
+          },
+          {
+            "spriteId": 461,
+            "entrySha256": "0e2d5c11bfd0879ef1122a189cb2e79a31f40021244654fe7c43b8d95ccbb95e"
+          },
+          {
+            "spriteId": 462,
+            "entrySha256": "9c4896fab163e0e6292d7bef77c7c19ce9f968d13e8be54b2a179b5196611cf7"
+          },
+          {
+            "spriteId": 463,
+            "entrySha256": "e9acab64966f3f381754447d8d511229ba141d86c90580c429d5df2d216c45c8"
+          },
+          {
+            "spriteId": 464,
+            "entrySha256": "9bd64cdbc1a1e388cd48a03def5f3f4d23e6be469033939f2c550f50c56451c7"
+          },
+          {
+            "spriteId": 465,
+            "entrySha256": "a8dc7e3c39b584ec9d187e58d6a6bd75b1f4f70414d6787ee0d286041ae4e9bf"
+          },
+          {
+            "spriteId": 466,
+            "entrySha256": "27610ea889e6f8303328790181bbb249ffab418cdce6e19f858c77b0f3c1d5c0"
+          },
+          {
+            "spriteId": 467,
+            "entrySha256": "f827c5510ca4b54276bd6726af761ef0bae4e1914b158b9532f7afd1ff51ff8d"
+          },
+          {
+            "spriteId": 468,
+            "entrySha256": "7092a7c582ff0160295c39d36685ff52314c92d78ec1dfa40a140f1b8084e146"
+          },
+          {
+            "spriteId": 469,
+            "entrySha256": "22c1249f8b4287ae69796c953ab98af83b724e91cc477f82ae7e344428fcc546"
+          },
+          {
+            "spriteId": 470,
+            "entrySha256": "11b324a8fa6482684314b1b5142a291e615e497f9929a1a9f8265a42d6b6458f"
+          },
+          {
+            "spriteId": 471,
+            "entrySha256": "4f05f8985c9961de29edbcead56c940cff51f5dda0480ab659491a489cdbf96c"
+          },
+          {
+            "spriteId": 472,
+            "entrySha256": "a6c5b2aaf88c7aca6d2318c344360ec8ac6ab670323535fd5c68d1ab8810df26"
+          },
+          {
+            "spriteId": 473,
+            "entrySha256": "1bc2a34c46882f973baeab6432d7c6d20898e6d74a92ca29bf5f9b6bd5eba81b"
+          },
+          {
+            "spriteId": 474,
+            "entrySha256": "c69cb1adf3774626dc53a9af2db1d8e11a0c7d86cc77b987f3fe5b0c35a99f96"
+          },
+          {
+            "spriteId": 475,
+            "entrySha256": "9c11cef4003a74ffd3fa3aa2725423a0933b8a2f10672f7bca3c063e7c66bc51"
+          },
+          {
+            "spriteId": 476,
+            "entrySha256": "4c438c9f6c44d72dc93196bcf0654a8702c714a28f0dceeab1930831f4460d5c"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 51,
+      "name": "sword",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "sword",
+        "frameCount": 18,
+        "entrySha256": "60b1493bf4effcde48787553ce14548077d96602ec51164d5ad524f4da96128c",
+        "spritepackOverrideKey": "equipment:sword"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 459,
+        "frames": [
+          {
+            "spriteId": 459,
+            "entrySha256": "24eff0b3b3ac8baa9e0f39840d4f5c74d2a338af1c7a918f883afaa6a918c5dc"
+          },
+          {
+            "spriteId": 460,
+            "entrySha256": "d0539902cb4cff1a129cfbdad67d2d9eb6183829a8ebb32f018586f7ab89d4fe"
+          },
+          {
+            "spriteId": 461,
+            "entrySha256": "0e2d5c11bfd0879ef1122a189cb2e79a31f40021244654fe7c43b8d95ccbb95e"
+          },
+          {
+            "spriteId": 462,
+            "entrySha256": "9c4896fab163e0e6292d7bef77c7c19ce9f968d13e8be54b2a179b5196611cf7"
+          },
+          {
+            "spriteId": 463,
+            "entrySha256": "e9acab64966f3f381754447d8d511229ba141d86c90580c429d5df2d216c45c8"
+          },
+          {
+            "spriteId": 464,
+            "entrySha256": "9bd64cdbc1a1e388cd48a03def5f3f4d23e6be469033939f2c550f50c56451c7"
+          },
+          {
+            "spriteId": 465,
+            "entrySha256": "a8dc7e3c39b584ec9d187e58d6a6bd75b1f4f70414d6787ee0d286041ae4e9bf"
+          },
+          {
+            "spriteId": 466,
+            "entrySha256": "27610ea889e6f8303328790181bbb249ffab418cdce6e19f858c77b0f3c1d5c0"
+          },
+          {
+            "spriteId": 467,
+            "entrySha256": "f827c5510ca4b54276bd6726af761ef0bae4e1914b158b9532f7afd1ff51ff8d"
+          },
+          {
+            "spriteId": 468,
+            "entrySha256": "7092a7c582ff0160295c39d36685ff52314c92d78ec1dfa40a140f1b8084e146"
+          },
+          {
+            "spriteId": 469,
+            "entrySha256": "22c1249f8b4287ae69796c953ab98af83b724e91cc477f82ae7e344428fcc546"
+          },
+          {
+            "spriteId": 470,
+            "entrySha256": "11b324a8fa6482684314b1b5142a291e615e497f9929a1a9f8265a42d6b6458f"
+          },
+          {
+            "spriteId": 471,
+            "entrySha256": "4f05f8985c9961de29edbcead56c940cff51f5dda0480ab659491a489cdbf96c"
+          },
+          {
+            "spriteId": 472,
+            "entrySha256": "a6c5b2aaf88c7aca6d2318c344360ec8ac6ab670323535fd5c68d1ab8810df26"
+          },
+          {
+            "spriteId": 473,
+            "entrySha256": "1bc2a34c46882f973baeab6432d7c6d20898e6d74a92ca29bf5f9b6bd5eba81b"
+          },
+          {
+            "spriteId": 474,
+            "entrySha256": "c69cb1adf3774626dc53a9af2db1d8e11a0c7d86cc77b987f3fe5b0c35a99f96"
+          },
+          {
+            "spriteId": 475,
+            "entrySha256": "9c11cef4003a74ffd3fa3aa2725423a0933b8a2f10672f7bca3c063e7c66bc51"
+          },
+          {
+            "spriteId": 476,
+            "entrySha256": "4c438c9f6c44d72dc93196bcf0654a8702c714a28f0dceeab1930831f4460d5c"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 54,
+      "name": "fplatemailtop",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fplatemailtop",
+        "frameCount": 18,
+        "entrySha256": "e78126a24d1a1420f4e30341193ecbbd42ef2a4c22baee96982dd0a3abf9b5a7",
+        "spritepackOverrideKey": "equipment:fplatemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 486,
+        "frames": [
+          {
+            "spriteId": 486,
+            "entrySha256": "3476b5349c9c835064024382dba152c3e9be7f508f88085697c8186ef8276423"
+          },
+          {
+            "spriteId": 487,
+            "entrySha256": "e1a9616da540c77363a5ad5bf5b3c36b70929db2a5a7da08be8cd697f6e16eff"
+          },
+          {
+            "spriteId": 488,
+            "entrySha256": "268c867f8143b5d631e6731bef7a380471ce64e84bb2603f884c1a8cedade855"
+          },
+          {
+            "spriteId": 489,
+            "entrySha256": "6820bca21105d5fba47db27a40cef002d77a5067a819ce47c77b8ee9e0084741"
+          },
+          {
+            "spriteId": 490,
+            "entrySha256": "165ef7edfb0a22705dc1c7807343661338b5b20aadca8bbde6dbe728fce6abf7"
+          },
+          {
+            "spriteId": 491,
+            "entrySha256": "af1c62445ea848edafb7043eb92b34de5fc44293f1e2cab7f7f4e63c57927606"
+          },
+          {
+            "spriteId": 492,
+            "entrySha256": "6cb9f290e7ca1df0df36df310b5d97c441c35c2627ec920c5b48ef4d049ed0a4"
+          },
+          {
+            "spriteId": 493,
+            "entrySha256": "c72bff3928762e4797a314fb8dfd1e48e41f1bb54a43c101c19487662c96d65b"
+          },
+          {
+            "spriteId": 494,
+            "entrySha256": "ded2ca50c686c5b68d0430d11d6f6f3b1d6327a2ad08981ea8c58042d3836349"
+          },
+          {
+            "spriteId": 495,
+            "entrySha256": "f79b6de8bb732633275ed08aa59450557641c55bdcd4e035d593ba14c75fc10c"
+          },
+          {
+            "spriteId": 496,
+            "entrySha256": "9c8eacd52aa9b5c1969f10d723c74c5acfbaa632451da88d2ddf68225a76b3e8"
+          },
+          {
+            "spriteId": 497,
+            "entrySha256": "5b505895d62cba9f3460d1bdc031530a12094fa341cb449b9b06ab78d020b569"
+          },
+          {
+            "spriteId": 498,
+            "entrySha256": "30086dfdd08f2235b9cd6e4317ffba18d93e3cf48cc516320b64356d6c8223e4"
+          },
+          {
+            "spriteId": 499,
+            "entrySha256": "23740cd7018831a0fe78f753b2144c03d11130dc72c0263835620d66faa2d5f9"
+          },
+          {
+            "spriteId": 500,
+            "entrySha256": "40e736f6615cc7a0ddd6b1fdf0311c4e550759f0cfb3be195579fc5b5507ed54"
+          },
+          {
+            "spriteId": 501,
+            "entrySha256": "2f6b95a18ea325ee7fb8a7a27cf03f474885f6cb1b5b08512fe1fa3ab8b407f7"
+          },
+          {
+            "spriteId": 502,
+            "entrySha256": "a1975b1c542f4ddf1058796123d40af66f72c65bd57554d42d517bbd2a38cce0"
+          },
+          {
+            "spriteId": 503,
+            "entrySha256": "db6899c358c46de854db8e625e19cdedbaf7f6a559919a878069034610b29bdd"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 55,
+      "name": "fplatemailtop",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fplatemailtop",
+        "frameCount": 18,
+        "entrySha256": "e78126a24d1a1420f4e30341193ecbbd42ef2a4c22baee96982dd0a3abf9b5a7",
+        "spritepackOverrideKey": "equipment:fplatemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 486,
+        "frames": [
+          {
+            "spriteId": 486,
+            "entrySha256": "3476b5349c9c835064024382dba152c3e9be7f508f88085697c8186ef8276423"
+          },
+          {
+            "spriteId": 487,
+            "entrySha256": "e1a9616da540c77363a5ad5bf5b3c36b70929db2a5a7da08be8cd697f6e16eff"
+          },
+          {
+            "spriteId": 488,
+            "entrySha256": "268c867f8143b5d631e6731bef7a380471ce64e84bb2603f884c1a8cedade855"
+          },
+          {
+            "spriteId": 489,
+            "entrySha256": "6820bca21105d5fba47db27a40cef002d77a5067a819ce47c77b8ee9e0084741"
+          },
+          {
+            "spriteId": 490,
+            "entrySha256": "165ef7edfb0a22705dc1c7807343661338b5b20aadca8bbde6dbe728fce6abf7"
+          },
+          {
+            "spriteId": 491,
+            "entrySha256": "af1c62445ea848edafb7043eb92b34de5fc44293f1e2cab7f7f4e63c57927606"
+          },
+          {
+            "spriteId": 492,
+            "entrySha256": "6cb9f290e7ca1df0df36df310b5d97c441c35c2627ec920c5b48ef4d049ed0a4"
+          },
+          {
+            "spriteId": 493,
+            "entrySha256": "c72bff3928762e4797a314fb8dfd1e48e41f1bb54a43c101c19487662c96d65b"
+          },
+          {
+            "spriteId": 494,
+            "entrySha256": "ded2ca50c686c5b68d0430d11d6f6f3b1d6327a2ad08981ea8c58042d3836349"
+          },
+          {
+            "spriteId": 495,
+            "entrySha256": "f79b6de8bb732633275ed08aa59450557641c55bdcd4e035d593ba14c75fc10c"
+          },
+          {
+            "spriteId": 496,
+            "entrySha256": "9c8eacd52aa9b5c1969f10d723c74c5acfbaa632451da88d2ddf68225a76b3e8"
+          },
+          {
+            "spriteId": 497,
+            "entrySha256": "5b505895d62cba9f3460d1bdc031530a12094fa341cb449b9b06ab78d020b569"
+          },
+          {
+            "spriteId": 498,
+            "entrySha256": "30086dfdd08f2235b9cd6e4317ffba18d93e3cf48cc516320b64356d6c8223e4"
+          },
+          {
+            "spriteId": 499,
+            "entrySha256": "23740cd7018831a0fe78f753b2144c03d11130dc72c0263835620d66faa2d5f9"
+          },
+          {
+            "spriteId": 500,
+            "entrySha256": "40e736f6615cc7a0ddd6b1fdf0311c4e550759f0cfb3be195579fc5b5507ed54"
+          },
+          {
+            "spriteId": 501,
+            "entrySha256": "2f6b95a18ea325ee7fb8a7a27cf03f474885f6cb1b5b08512fe1fa3ab8b407f7"
+          },
+          {
+            "spriteId": 502,
+            "entrySha256": "a1975b1c542f4ddf1058796123d40af66f72c65bd57554d42d517bbd2a38cce0"
+          },
+          {
+            "spriteId": 503,
+            "entrySha256": "db6899c358c46de854db8e625e19cdedbaf7f6a559919a878069034610b29bdd"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 56,
+      "name": "fplatemailtop",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fplatemailtop",
+        "frameCount": 18,
+        "entrySha256": "e78126a24d1a1420f4e30341193ecbbd42ef2a4c22baee96982dd0a3abf9b5a7",
+        "spritepackOverrideKey": "equipment:fplatemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 486,
+        "frames": [
+          {
+            "spriteId": 486,
+            "entrySha256": "3476b5349c9c835064024382dba152c3e9be7f508f88085697c8186ef8276423"
+          },
+          {
+            "spriteId": 487,
+            "entrySha256": "e1a9616da540c77363a5ad5bf5b3c36b70929db2a5a7da08be8cd697f6e16eff"
+          },
+          {
+            "spriteId": 488,
+            "entrySha256": "268c867f8143b5d631e6731bef7a380471ce64e84bb2603f884c1a8cedade855"
+          },
+          {
+            "spriteId": 489,
+            "entrySha256": "6820bca21105d5fba47db27a40cef002d77a5067a819ce47c77b8ee9e0084741"
+          },
+          {
+            "spriteId": 490,
+            "entrySha256": "165ef7edfb0a22705dc1c7807343661338b5b20aadca8bbde6dbe728fce6abf7"
+          },
+          {
+            "spriteId": 491,
+            "entrySha256": "af1c62445ea848edafb7043eb92b34de5fc44293f1e2cab7f7f4e63c57927606"
+          },
+          {
+            "spriteId": 492,
+            "entrySha256": "6cb9f290e7ca1df0df36df310b5d97c441c35c2627ec920c5b48ef4d049ed0a4"
+          },
+          {
+            "spriteId": 493,
+            "entrySha256": "c72bff3928762e4797a314fb8dfd1e48e41f1bb54a43c101c19487662c96d65b"
+          },
+          {
+            "spriteId": 494,
+            "entrySha256": "ded2ca50c686c5b68d0430d11d6f6f3b1d6327a2ad08981ea8c58042d3836349"
+          },
+          {
+            "spriteId": 495,
+            "entrySha256": "f79b6de8bb732633275ed08aa59450557641c55bdcd4e035d593ba14c75fc10c"
+          },
+          {
+            "spriteId": 496,
+            "entrySha256": "9c8eacd52aa9b5c1969f10d723c74c5acfbaa632451da88d2ddf68225a76b3e8"
+          },
+          {
+            "spriteId": 497,
+            "entrySha256": "5b505895d62cba9f3460d1bdc031530a12094fa341cb449b9b06ab78d020b569"
+          },
+          {
+            "spriteId": 498,
+            "entrySha256": "30086dfdd08f2235b9cd6e4317ffba18d93e3cf48cc516320b64356d6c8223e4"
+          },
+          {
+            "spriteId": 499,
+            "entrySha256": "23740cd7018831a0fe78f753b2144c03d11130dc72c0263835620d66faa2d5f9"
+          },
+          {
+            "spriteId": 500,
+            "entrySha256": "40e736f6615cc7a0ddd6b1fdf0311c4e550759f0cfb3be195579fc5b5507ed54"
+          },
+          {
+            "spriteId": 501,
+            "entrySha256": "2f6b95a18ea325ee7fb8a7a27cf03f474885f6cb1b5b08512fe1fa3ab8b407f7"
+          },
+          {
+            "spriteId": 502,
+            "entrySha256": "a1975b1c542f4ddf1058796123d40af66f72c65bd57554d42d517bbd2a38cce0"
+          },
+          {
+            "spriteId": 503,
+            "entrySha256": "db6899c358c46de854db8e625e19cdedbaf7f6a559919a878069034610b29bdd"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 57,
+      "name": "fplatemailtop",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fplatemailtop",
+        "frameCount": 18,
+        "entrySha256": "e78126a24d1a1420f4e30341193ecbbd42ef2a4c22baee96982dd0a3abf9b5a7",
+        "spritepackOverrideKey": "equipment:fplatemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 486,
+        "frames": [
+          {
+            "spriteId": 486,
+            "entrySha256": "3476b5349c9c835064024382dba152c3e9be7f508f88085697c8186ef8276423"
+          },
+          {
+            "spriteId": 487,
+            "entrySha256": "e1a9616da540c77363a5ad5bf5b3c36b70929db2a5a7da08be8cd697f6e16eff"
+          },
+          {
+            "spriteId": 488,
+            "entrySha256": "268c867f8143b5d631e6731bef7a380471ce64e84bb2603f884c1a8cedade855"
+          },
+          {
+            "spriteId": 489,
+            "entrySha256": "6820bca21105d5fba47db27a40cef002d77a5067a819ce47c77b8ee9e0084741"
+          },
+          {
+            "spriteId": 490,
+            "entrySha256": "165ef7edfb0a22705dc1c7807343661338b5b20aadca8bbde6dbe728fce6abf7"
+          },
+          {
+            "spriteId": 491,
+            "entrySha256": "af1c62445ea848edafb7043eb92b34de5fc44293f1e2cab7f7f4e63c57927606"
+          },
+          {
+            "spriteId": 492,
+            "entrySha256": "6cb9f290e7ca1df0df36df310b5d97c441c35c2627ec920c5b48ef4d049ed0a4"
+          },
+          {
+            "spriteId": 493,
+            "entrySha256": "c72bff3928762e4797a314fb8dfd1e48e41f1bb54a43c101c19487662c96d65b"
+          },
+          {
+            "spriteId": 494,
+            "entrySha256": "ded2ca50c686c5b68d0430d11d6f6f3b1d6327a2ad08981ea8c58042d3836349"
+          },
+          {
+            "spriteId": 495,
+            "entrySha256": "f79b6de8bb732633275ed08aa59450557641c55bdcd4e035d593ba14c75fc10c"
+          },
+          {
+            "spriteId": 496,
+            "entrySha256": "9c8eacd52aa9b5c1969f10d723c74c5acfbaa632451da88d2ddf68225a76b3e8"
+          },
+          {
+            "spriteId": 497,
+            "entrySha256": "5b505895d62cba9f3460d1bdc031530a12094fa341cb449b9b06ab78d020b569"
+          },
+          {
+            "spriteId": 498,
+            "entrySha256": "30086dfdd08f2235b9cd6e4317ffba18d93e3cf48cc516320b64356d6c8223e4"
+          },
+          {
+            "spriteId": 499,
+            "entrySha256": "23740cd7018831a0fe78f753b2144c03d11130dc72c0263835620d66faa2d5f9"
+          },
+          {
+            "spriteId": 500,
+            "entrySha256": "40e736f6615cc7a0ddd6b1fdf0311c4e550759f0cfb3be195579fc5b5507ed54"
+          },
+          {
+            "spriteId": 501,
+            "entrySha256": "2f6b95a18ea325ee7fb8a7a27cf03f474885f6cb1b5b08512fe1fa3ab8b407f7"
+          },
+          {
+            "spriteId": 502,
+            "entrySha256": "a1975b1c542f4ddf1058796123d40af66f72c65bd57554d42d517bbd2a38cce0"
+          },
+          {
+            "spriteId": 503,
+            "entrySha256": "db6899c358c46de854db8e625e19cdedbaf7f6a559919a878069034610b29bdd"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 58,
+      "name": "fplatemailtop",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fplatemailtop",
+        "frameCount": 18,
+        "entrySha256": "e78126a24d1a1420f4e30341193ecbbd42ef2a4c22baee96982dd0a3abf9b5a7",
+        "spritepackOverrideKey": "equipment:fplatemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 486,
+        "frames": [
+          {
+            "spriteId": 486,
+            "entrySha256": "3476b5349c9c835064024382dba152c3e9be7f508f88085697c8186ef8276423"
+          },
+          {
+            "spriteId": 487,
+            "entrySha256": "e1a9616da540c77363a5ad5bf5b3c36b70929db2a5a7da08be8cd697f6e16eff"
+          },
+          {
+            "spriteId": 488,
+            "entrySha256": "268c867f8143b5d631e6731bef7a380471ce64e84bb2603f884c1a8cedade855"
+          },
+          {
+            "spriteId": 489,
+            "entrySha256": "6820bca21105d5fba47db27a40cef002d77a5067a819ce47c77b8ee9e0084741"
+          },
+          {
+            "spriteId": 490,
+            "entrySha256": "165ef7edfb0a22705dc1c7807343661338b5b20aadca8bbde6dbe728fce6abf7"
+          },
+          {
+            "spriteId": 491,
+            "entrySha256": "af1c62445ea848edafb7043eb92b34de5fc44293f1e2cab7f7f4e63c57927606"
+          },
+          {
+            "spriteId": 492,
+            "entrySha256": "6cb9f290e7ca1df0df36df310b5d97c441c35c2627ec920c5b48ef4d049ed0a4"
+          },
+          {
+            "spriteId": 493,
+            "entrySha256": "c72bff3928762e4797a314fb8dfd1e48e41f1bb54a43c101c19487662c96d65b"
+          },
+          {
+            "spriteId": 494,
+            "entrySha256": "ded2ca50c686c5b68d0430d11d6f6f3b1d6327a2ad08981ea8c58042d3836349"
+          },
+          {
+            "spriteId": 495,
+            "entrySha256": "f79b6de8bb732633275ed08aa59450557641c55bdcd4e035d593ba14c75fc10c"
+          },
+          {
+            "spriteId": 496,
+            "entrySha256": "9c8eacd52aa9b5c1969f10d723c74c5acfbaa632451da88d2ddf68225a76b3e8"
+          },
+          {
+            "spriteId": 497,
+            "entrySha256": "5b505895d62cba9f3460d1bdc031530a12094fa341cb449b9b06ab78d020b569"
+          },
+          {
+            "spriteId": 498,
+            "entrySha256": "30086dfdd08f2235b9cd6e4317ffba18d93e3cf48cc516320b64356d6c8223e4"
+          },
+          {
+            "spriteId": 499,
+            "entrySha256": "23740cd7018831a0fe78f753b2144c03d11130dc72c0263835620d66faa2d5f9"
+          },
+          {
+            "spriteId": 500,
+            "entrySha256": "40e736f6615cc7a0ddd6b1fdf0311c4e550759f0cfb3be195579fc5b5507ed54"
+          },
+          {
+            "spriteId": 501,
+            "entrySha256": "2f6b95a18ea325ee7fb8a7a27cf03f474885f6cb1b5b08512fe1fa3ab8b407f7"
+          },
+          {
+            "spriteId": 502,
+            "entrySha256": "a1975b1c542f4ddf1058796123d40af66f72c65bd57554d42d517bbd2a38cce0"
+          },
+          {
+            "spriteId": 503,
+            "entrySha256": "db6899c358c46de854db8e625e19cdedbaf7f6a559919a878069034610b29bdd"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 59,
+      "name": "fplatemailtop",
+      "category": "equipment",
+      "charColour": 65535,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "fplatemailtop",
+        "frameCount": 18,
+        "entrySha256": "e78126a24d1a1420f4e30341193ecbbd42ef2a4c22baee96982dd0a3abf9b5a7",
+        "spritepackOverrideKey": "equipment:fplatemailtop"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 486,
+        "frames": [
+          {
+            "spriteId": 486,
+            "entrySha256": "3476b5349c9c835064024382dba152c3e9be7f508f88085697c8186ef8276423"
+          },
+          {
+            "spriteId": 487,
+            "entrySha256": "e1a9616da540c77363a5ad5bf5b3c36b70929db2a5a7da08be8cd697f6e16eff"
+          },
+          {
+            "spriteId": 488,
+            "entrySha256": "268c867f8143b5d631e6731bef7a380471ce64e84bb2603f884c1a8cedade855"
+          },
+          {
+            "spriteId": 489,
+            "entrySha256": "6820bca21105d5fba47db27a40cef002d77a5067a819ce47c77b8ee9e0084741"
+          },
+          {
+            "spriteId": 490,
+            "entrySha256": "165ef7edfb0a22705dc1c7807343661338b5b20aadca8bbde6dbe728fce6abf7"
+          },
+          {
+            "spriteId": 491,
+            "entrySha256": "af1c62445ea848edafb7043eb92b34de5fc44293f1e2cab7f7f4e63c57927606"
+          },
+          {
+            "spriteId": 492,
+            "entrySha256": "6cb9f290e7ca1df0df36df310b5d97c441c35c2627ec920c5b48ef4d049ed0a4"
+          },
+          {
+            "spriteId": 493,
+            "entrySha256": "c72bff3928762e4797a314fb8dfd1e48e41f1bb54a43c101c19487662c96d65b"
+          },
+          {
+            "spriteId": 494,
+            "entrySha256": "ded2ca50c686c5b68d0430d11d6f6f3b1d6327a2ad08981ea8c58042d3836349"
+          },
+          {
+            "spriteId": 495,
+            "entrySha256": "f79b6de8bb732633275ed08aa59450557641c55bdcd4e035d593ba14c75fc10c"
+          },
+          {
+            "spriteId": 496,
+            "entrySha256": "9c8eacd52aa9b5c1969f10d723c74c5acfbaa632451da88d2ddf68225a76b3e8"
+          },
+          {
+            "spriteId": 497,
+            "entrySha256": "5b505895d62cba9f3460d1bdc031530a12094fa341cb449b9b06ab78d020b569"
+          },
+          {
+            "spriteId": 498,
+            "entrySha256": "30086dfdd08f2235b9cd6e4317ffba18d93e3cf48cc516320b64356d6c8223e4"
+          },
+          {
+            "spriteId": 499,
+            "entrySha256": "23740cd7018831a0fe78f753b2144c03d11130dc72c0263835620d66faa2d5f9"
+          },
+          {
+            "spriteId": 500,
+            "entrySha256": "40e736f6615cc7a0ddd6b1fdf0311c4e550759f0cfb3be195579fc5b5507ed54"
+          },
+          {
+            "spriteId": 501,
+            "entrySha256": "2f6b95a18ea325ee7fb8a7a27cf03f474885f6cb1b5b08512fe1fa3ab8b407f7"
+          },
+          {
+            "spriteId": 502,
+            "entrySha256": "a1975b1c542f4ddf1058796123d40af66f72c65bd57554d42d517bbd2a38cce0"
+          },
+          {
+            "spriteId": 503,
+            "entrySha256": "db6899c358c46de854db8e625e19cdedbaf7f6a559919a878069034610b29bdd"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 97,
+      "name": "squareshield",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "squareshield",
+        "frameCount": 18,
+        "entrySha256": "1a69abe571d1f79a7a3192c225aef7ce42e571c7643f256eabfd4d041b50dba4",
+        "spritepackOverrideKey": "equipment:squareshield"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 675,
+        "frames": [
+          {
+            "spriteId": 675,
+            "entrySha256": "d39b6ab5587dd79d0530d87ee0005939b093148aad58f84e592d9bfd4c5fd81d"
+          },
+          {
+            "spriteId": 676,
+            "entrySha256": "70d5f66eb5cd6d9653d6aa352f3f4d65a615173c2e7a56a8a3bf0f944a251ad6"
+          },
+          {
+            "spriteId": 677,
+            "entrySha256": "0042a61919b4d872cdd2d5e4961d448836e5aca8a81f63b30f9ff1b62edbe15f"
+          },
+          {
+            "spriteId": 678,
+            "entrySha256": "9147ab842a99f8b99fbadf3892ac41139ace2f1e630c512aaf98fa8dffefc80f"
+          },
+          {
+            "spriteId": 679,
+            "entrySha256": "1d872a13ba090d8664c2a411100092181f70f6be5652ad6233a0e05834a1d9a5"
+          },
+          {
+            "spriteId": 680,
+            "entrySha256": "f21faa4a38799c8d99d2da9eb788601712fa72754bbdd348057869af2d825483"
+          },
+          {
+            "spriteId": 681,
+            "entrySha256": "3006df8028873f483bd62a4aadeb5f0763ff74e760d6508f1092d7fa36c4c532"
+          },
+          {
+            "spriteId": 682,
+            "entrySha256": "44de6f50992f77769f35c044b5725f10b6da37eba293a4b38a542a326135c201"
+          },
+          {
+            "spriteId": 683,
+            "entrySha256": "2d7defe1fe700daf14ecd418c62c603188ac5741ae0001f3ce07ed70d9c3764f"
+          },
+          {
+            "spriteId": 684,
+            "entrySha256": "739b2981d57c7ed6bf143ca43bda186d50bf7e25dad88b71ba60160df1891c18"
+          },
+          {
+            "spriteId": 685,
+            "entrySha256": "14cd410fb3c390ecf1b9c3e777fc76c850f8f4181974d172eb67108abf6c4d5c"
+          },
+          {
+            "spriteId": 686,
+            "entrySha256": "072c9c63159f923ff8fed29fd3cefd8b3ac9ae31df813c741b4178c85d9e65c4"
+          },
+          {
+            "spriteId": 687,
+            "entrySha256": "1e87670a63dfd2ec33854fd11ae4000468b86c428185549c377f7304b54d687f"
+          },
+          {
+            "spriteId": 688,
+            "entrySha256": "0eb694094fa7de342d95c49c1e4833110c2ccbea06c7b0ceced58dab52a46173"
+          },
+          {
+            "spriteId": 689,
+            "entrySha256": "b30aeb66e8a630a48e1000e627d736b203df4baa19020211eba555091ac33da8"
+          },
+          {
+            "spriteId": 690,
+            "entrySha256": "94830681f441067d7b93471de45c9deb7c87b9b2b9a4907ddb6e4935692679e7"
+          },
+          {
+            "spriteId": 691,
+            "entrySha256": "41550076327db02742e554eddee96faa3733ccdbcb3977412241c101f6e4b573"
+          },
+          {
+            "spriteId": 692,
+            "entrySha256": "e09cdfea8d75bfdb51139a0cfe492bd5ca1d46dde8b2fc338f1baad310cea03d"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 98,
+      "name": "squareshield",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "squareshield",
+        "frameCount": 18,
+        "entrySha256": "1a69abe571d1f79a7a3192c225aef7ce42e571c7643f256eabfd4d041b50dba4",
+        "spritepackOverrideKey": "equipment:squareshield"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 675,
+        "frames": [
+          {
+            "spriteId": 675,
+            "entrySha256": "d39b6ab5587dd79d0530d87ee0005939b093148aad58f84e592d9bfd4c5fd81d"
+          },
+          {
+            "spriteId": 676,
+            "entrySha256": "70d5f66eb5cd6d9653d6aa352f3f4d65a615173c2e7a56a8a3bf0f944a251ad6"
+          },
+          {
+            "spriteId": 677,
+            "entrySha256": "0042a61919b4d872cdd2d5e4961d448836e5aca8a81f63b30f9ff1b62edbe15f"
+          },
+          {
+            "spriteId": 678,
+            "entrySha256": "9147ab842a99f8b99fbadf3892ac41139ace2f1e630c512aaf98fa8dffefc80f"
+          },
+          {
+            "spriteId": 679,
+            "entrySha256": "1d872a13ba090d8664c2a411100092181f70f6be5652ad6233a0e05834a1d9a5"
+          },
+          {
+            "spriteId": 680,
+            "entrySha256": "f21faa4a38799c8d99d2da9eb788601712fa72754bbdd348057869af2d825483"
+          },
+          {
+            "spriteId": 681,
+            "entrySha256": "3006df8028873f483bd62a4aadeb5f0763ff74e760d6508f1092d7fa36c4c532"
+          },
+          {
+            "spriteId": 682,
+            "entrySha256": "44de6f50992f77769f35c044b5725f10b6da37eba293a4b38a542a326135c201"
+          },
+          {
+            "spriteId": 683,
+            "entrySha256": "2d7defe1fe700daf14ecd418c62c603188ac5741ae0001f3ce07ed70d9c3764f"
+          },
+          {
+            "spriteId": 684,
+            "entrySha256": "739b2981d57c7ed6bf143ca43bda186d50bf7e25dad88b71ba60160df1891c18"
+          },
+          {
+            "spriteId": 685,
+            "entrySha256": "14cd410fb3c390ecf1b9c3e777fc76c850f8f4181974d172eb67108abf6c4d5c"
+          },
+          {
+            "spriteId": 686,
+            "entrySha256": "072c9c63159f923ff8fed29fd3cefd8b3ac9ae31df813c741b4178c85d9e65c4"
+          },
+          {
+            "spriteId": 687,
+            "entrySha256": "1e87670a63dfd2ec33854fd11ae4000468b86c428185549c377f7304b54d687f"
+          },
+          {
+            "spriteId": 688,
+            "entrySha256": "0eb694094fa7de342d95c49c1e4833110c2ccbea06c7b0ceced58dab52a46173"
+          },
+          {
+            "spriteId": 689,
+            "entrySha256": "b30aeb66e8a630a48e1000e627d736b203df4baa19020211eba555091ac33da8"
+          },
+          {
+            "spriteId": 690,
+            "entrySha256": "94830681f441067d7b93471de45c9deb7c87b9b2b9a4907ddb6e4935692679e7"
+          },
+          {
+            "spriteId": 691,
+            "entrySha256": "41550076327db02742e554eddee96faa3733ccdbcb3977412241c101f6e4b573"
+          },
+          {
+            "spriteId": 692,
+            "entrySha256": "e09cdfea8d75bfdb51139a0cfe492bd5ca1d46dde8b2fc338f1baad310cea03d"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 99,
+      "name": "squareshield",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "squareshield",
+        "frameCount": 18,
+        "entrySha256": "1a69abe571d1f79a7a3192c225aef7ce42e571c7643f256eabfd4d041b50dba4",
+        "spritepackOverrideKey": "equipment:squareshield"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 675,
+        "frames": [
+          {
+            "spriteId": 675,
+            "entrySha256": "d39b6ab5587dd79d0530d87ee0005939b093148aad58f84e592d9bfd4c5fd81d"
+          },
+          {
+            "spriteId": 676,
+            "entrySha256": "70d5f66eb5cd6d9653d6aa352f3f4d65a615173c2e7a56a8a3bf0f944a251ad6"
+          },
+          {
+            "spriteId": 677,
+            "entrySha256": "0042a61919b4d872cdd2d5e4961d448836e5aca8a81f63b30f9ff1b62edbe15f"
+          },
+          {
+            "spriteId": 678,
+            "entrySha256": "9147ab842a99f8b99fbadf3892ac41139ace2f1e630c512aaf98fa8dffefc80f"
+          },
+          {
+            "spriteId": 679,
+            "entrySha256": "1d872a13ba090d8664c2a411100092181f70f6be5652ad6233a0e05834a1d9a5"
+          },
+          {
+            "spriteId": 680,
+            "entrySha256": "f21faa4a38799c8d99d2da9eb788601712fa72754bbdd348057869af2d825483"
+          },
+          {
+            "spriteId": 681,
+            "entrySha256": "3006df8028873f483bd62a4aadeb5f0763ff74e760d6508f1092d7fa36c4c532"
+          },
+          {
+            "spriteId": 682,
+            "entrySha256": "44de6f50992f77769f35c044b5725f10b6da37eba293a4b38a542a326135c201"
+          },
+          {
+            "spriteId": 683,
+            "entrySha256": "2d7defe1fe700daf14ecd418c62c603188ac5741ae0001f3ce07ed70d9c3764f"
+          },
+          {
+            "spriteId": 684,
+            "entrySha256": "739b2981d57c7ed6bf143ca43bda186d50bf7e25dad88b71ba60160df1891c18"
+          },
+          {
+            "spriteId": 685,
+            "entrySha256": "14cd410fb3c390ecf1b9c3e777fc76c850f8f4181974d172eb67108abf6c4d5c"
+          },
+          {
+            "spriteId": 686,
+            "entrySha256": "072c9c63159f923ff8fed29fd3cefd8b3ac9ae31df813c741b4178c85d9e65c4"
+          },
+          {
+            "spriteId": 687,
+            "entrySha256": "1e87670a63dfd2ec33854fd11ae4000468b86c428185549c377f7304b54d687f"
+          },
+          {
+            "spriteId": 688,
+            "entrySha256": "0eb694094fa7de342d95c49c1e4833110c2ccbea06c7b0ceced58dab52a46173"
+          },
+          {
+            "spriteId": 689,
+            "entrySha256": "b30aeb66e8a630a48e1000e627d736b203df4baa19020211eba555091ac33da8"
+          },
+          {
+            "spriteId": 690,
+            "entrySha256": "94830681f441067d7b93471de45c9deb7c87b9b2b9a4907ddb6e4935692679e7"
+          },
+          {
+            "spriteId": 691,
+            "entrySha256": "41550076327db02742e554eddee96faa3733ccdbcb3977412241c101f6e4b573"
+          },
+          {
+            "spriteId": 692,
+            "entrySha256": "e09cdfea8d75bfdb51139a0cfe492bd5ca1d46dde8b2fc338f1baad310cea03d"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 100,
+      "name": "squareshield",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "squareshield",
+        "frameCount": 18,
+        "entrySha256": "1a69abe571d1f79a7a3192c225aef7ce42e571c7643f256eabfd4d041b50dba4",
+        "spritepackOverrideKey": "equipment:squareshield"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 675,
+        "frames": [
+          {
+            "spriteId": 675,
+            "entrySha256": "d39b6ab5587dd79d0530d87ee0005939b093148aad58f84e592d9bfd4c5fd81d"
+          },
+          {
+            "spriteId": 676,
+            "entrySha256": "70d5f66eb5cd6d9653d6aa352f3f4d65a615173c2e7a56a8a3bf0f944a251ad6"
+          },
+          {
+            "spriteId": 677,
+            "entrySha256": "0042a61919b4d872cdd2d5e4961d448836e5aca8a81f63b30f9ff1b62edbe15f"
+          },
+          {
+            "spriteId": 678,
+            "entrySha256": "9147ab842a99f8b99fbadf3892ac41139ace2f1e630c512aaf98fa8dffefc80f"
+          },
+          {
+            "spriteId": 679,
+            "entrySha256": "1d872a13ba090d8664c2a411100092181f70f6be5652ad6233a0e05834a1d9a5"
+          },
+          {
+            "spriteId": 680,
+            "entrySha256": "f21faa4a38799c8d99d2da9eb788601712fa72754bbdd348057869af2d825483"
+          },
+          {
+            "spriteId": 681,
+            "entrySha256": "3006df8028873f483bd62a4aadeb5f0763ff74e760d6508f1092d7fa36c4c532"
+          },
+          {
+            "spriteId": 682,
+            "entrySha256": "44de6f50992f77769f35c044b5725f10b6da37eba293a4b38a542a326135c201"
+          },
+          {
+            "spriteId": 683,
+            "entrySha256": "2d7defe1fe700daf14ecd418c62c603188ac5741ae0001f3ce07ed70d9c3764f"
+          },
+          {
+            "spriteId": 684,
+            "entrySha256": "739b2981d57c7ed6bf143ca43bda186d50bf7e25dad88b71ba60160df1891c18"
+          },
+          {
+            "spriteId": 685,
+            "entrySha256": "14cd410fb3c390ecf1b9c3e777fc76c850f8f4181974d172eb67108abf6c4d5c"
+          },
+          {
+            "spriteId": 686,
+            "entrySha256": "072c9c63159f923ff8fed29fd3cefd8b3ac9ae31df813c741b4178c85d9e65c4"
+          },
+          {
+            "spriteId": 687,
+            "entrySha256": "1e87670a63dfd2ec33854fd11ae4000468b86c428185549c377f7304b54d687f"
+          },
+          {
+            "spriteId": 688,
+            "entrySha256": "0eb694094fa7de342d95c49c1e4833110c2ccbea06c7b0ceced58dab52a46173"
+          },
+          {
+            "spriteId": 689,
+            "entrySha256": "b30aeb66e8a630a48e1000e627d736b203df4baa19020211eba555091ac33da8"
+          },
+          {
+            "spriteId": 690,
+            "entrySha256": "94830681f441067d7b93471de45c9deb7c87b9b2b9a4907ddb6e4935692679e7"
+          },
+          {
+            "spriteId": 691,
+            "entrySha256": "41550076327db02742e554eddee96faa3733ccdbcb3977412241c101f6e4b573"
+          },
+          {
+            "spriteId": 692,
+            "entrySha256": "e09cdfea8d75bfdb51139a0cfe492bd5ca1d46dde8b2fc338f1baad310cea03d"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 101,
+      "name": "squareshield",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "squareshield",
+        "frameCount": 18,
+        "entrySha256": "1a69abe571d1f79a7a3192c225aef7ce42e571c7643f256eabfd4d041b50dba4",
+        "spritepackOverrideKey": "equipment:squareshield"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 675,
+        "frames": [
+          {
+            "spriteId": 675,
+            "entrySha256": "d39b6ab5587dd79d0530d87ee0005939b093148aad58f84e592d9bfd4c5fd81d"
+          },
+          {
+            "spriteId": 676,
+            "entrySha256": "70d5f66eb5cd6d9653d6aa352f3f4d65a615173c2e7a56a8a3bf0f944a251ad6"
+          },
+          {
+            "spriteId": 677,
+            "entrySha256": "0042a61919b4d872cdd2d5e4961d448836e5aca8a81f63b30f9ff1b62edbe15f"
+          },
+          {
+            "spriteId": 678,
+            "entrySha256": "9147ab842a99f8b99fbadf3892ac41139ace2f1e630c512aaf98fa8dffefc80f"
+          },
+          {
+            "spriteId": 679,
+            "entrySha256": "1d872a13ba090d8664c2a411100092181f70f6be5652ad6233a0e05834a1d9a5"
+          },
+          {
+            "spriteId": 680,
+            "entrySha256": "f21faa4a38799c8d99d2da9eb788601712fa72754bbdd348057869af2d825483"
+          },
+          {
+            "spriteId": 681,
+            "entrySha256": "3006df8028873f483bd62a4aadeb5f0763ff74e760d6508f1092d7fa36c4c532"
+          },
+          {
+            "spriteId": 682,
+            "entrySha256": "44de6f50992f77769f35c044b5725f10b6da37eba293a4b38a542a326135c201"
+          },
+          {
+            "spriteId": 683,
+            "entrySha256": "2d7defe1fe700daf14ecd418c62c603188ac5741ae0001f3ce07ed70d9c3764f"
+          },
+          {
+            "spriteId": 684,
+            "entrySha256": "739b2981d57c7ed6bf143ca43bda186d50bf7e25dad88b71ba60160df1891c18"
+          },
+          {
+            "spriteId": 685,
+            "entrySha256": "14cd410fb3c390ecf1b9c3e777fc76c850f8f4181974d172eb67108abf6c4d5c"
+          },
+          {
+            "spriteId": 686,
+            "entrySha256": "072c9c63159f923ff8fed29fd3cefd8b3ac9ae31df813c741b4178c85d9e65c4"
+          },
+          {
+            "spriteId": 687,
+            "entrySha256": "1e87670a63dfd2ec33854fd11ae4000468b86c428185549c377f7304b54d687f"
+          },
+          {
+            "spriteId": 688,
+            "entrySha256": "0eb694094fa7de342d95c49c1e4833110c2ccbea06c7b0ceced58dab52a46173"
+          },
+          {
+            "spriteId": 689,
+            "entrySha256": "b30aeb66e8a630a48e1000e627d736b203df4baa19020211eba555091ac33da8"
+          },
+          {
+            "spriteId": 690,
+            "entrySha256": "94830681f441067d7b93471de45c9deb7c87b9b2b9a4907ddb6e4935692679e7"
+          },
+          {
+            "spriteId": 691,
+            "entrySha256": "41550076327db02742e554eddee96faa3733ccdbcb3977412241c101f6e4b573"
+          },
+          {
+            "spriteId": 692,
+            "entrySha256": "e09cdfea8d75bfdb51139a0cfe492bd5ca1d46dde8b2fc338f1baad310cea03d"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 108,
+      "name": "battleaxe",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "battleaxe",
+        "frameCount": 18,
+        "entrySha256": "600082afdcce07ed3b6d5e01b68373f20e029977bdbfde9078ce5df089b0a2df",
+        "spritepackOverrideKey": "equipment:battleaxe"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 756,
+        "frames": [
+          {
+            "spriteId": 756,
+            "entrySha256": "2f1a72bf30d3626be21b0fd1a96d114a911c3dd25bee89dfba8dc1ba637cba35"
+          },
+          {
+            "spriteId": 757,
+            "entrySha256": "43f4b3110c1e82fc8cd2a4f6376c43029ff7528f5a870732de665b8086f69ca5"
+          },
+          {
+            "spriteId": 758,
+            "entrySha256": "88e0f76938b15f5cfa2a003f93f3ac829f79f0ccc0d86d3a2ac1d36aa953d4a4"
+          },
+          {
+            "spriteId": 759,
+            "entrySha256": "5af7a7dafdb014e29f940ebfca6ff0df87dd307e23622dc78a5a6cb8ed722802"
+          },
+          {
+            "spriteId": 760,
+            "entrySha256": "7db4c2e8ca8d62a0491c4fd12a50247f132dda4c230fc6eeb7638b7544b71386"
+          },
+          {
+            "spriteId": 761,
+            "entrySha256": "898d66302dd7f6c7f611f11ddc47898ac69912610fe62ede9ffa7477dc5f2f00"
+          },
+          {
+            "spriteId": 762,
+            "entrySha256": "f4a113ad8a4639b8d25a0759f92beb55f969e68f0a63909d0a8cd582d506e50e"
+          },
+          {
+            "spriteId": 763,
+            "entrySha256": "7fe26f7ec9da4b8f3725a794e9f1cd1d5be34ed3fef37994b66e8e54cb5bd66d"
+          },
+          {
+            "spriteId": 764,
+            "entrySha256": "7f036383bc65dbe3d753836395f0365bb3f679b02ac2d5b1133c70f3e710a3b3"
+          },
+          {
+            "spriteId": 765,
+            "entrySha256": "28046c41eaeab64dce7eb817740fcc9842f33a09d08176e50918344d48e709fc"
+          },
+          {
+            "spriteId": 766,
+            "entrySha256": "bae18f1ac12ef49912070aa9171f96ea72e581c4652e9380741796e903e59baa"
+          },
+          {
+            "spriteId": 767,
+            "entrySha256": "df70451d4b5c696f2759dd0a1126be738eae360ef5e2f858402c7153667a7257"
+          },
+          {
+            "spriteId": 768,
+            "entrySha256": "0336a180c6c3d783e0747a54a1bac73e62fd9e90464cbc1baa1ce9e5748bc94c"
+          },
+          {
+            "spriteId": 769,
+            "entrySha256": "0b7176d93203ebde98598c23a37c8835b47bbba16297cdfed8a2b3b27c23dde2"
+          },
+          {
+            "spriteId": 770,
+            "entrySha256": "52e98eac179674025ea27e21be66212417c593a22ef03f1148867d82e2cac6d9"
+          },
+          {
+            "spriteId": 771,
+            "entrySha256": "8cfb9374bde95f4fbc946501d4c216a413b02b4fbe91b4608c61b0a5c2fcd4f7"
+          },
+          {
+            "spriteId": 772,
+            "entrySha256": "88bc5315635d4c56eeeaa836d4cc08cebfebe6bad331eb73b2b22be730a5ad93"
+          },
+          {
+            "spriteId": 773,
+            "entrySha256": "00910018ac2f46df493170f993fb13d908e1e0bede66a8e2e8eca80872bf7ff4"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 109,
+      "name": "battleaxe",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "battleaxe",
+        "frameCount": 18,
+        "entrySha256": "600082afdcce07ed3b6d5e01b68373f20e029977bdbfde9078ce5df089b0a2df",
+        "spritepackOverrideKey": "equipment:battleaxe"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 756,
+        "frames": [
+          {
+            "spriteId": 756,
+            "entrySha256": "2f1a72bf30d3626be21b0fd1a96d114a911c3dd25bee89dfba8dc1ba637cba35"
+          },
+          {
+            "spriteId": 757,
+            "entrySha256": "43f4b3110c1e82fc8cd2a4f6376c43029ff7528f5a870732de665b8086f69ca5"
+          },
+          {
+            "spriteId": 758,
+            "entrySha256": "88e0f76938b15f5cfa2a003f93f3ac829f79f0ccc0d86d3a2ac1d36aa953d4a4"
+          },
+          {
+            "spriteId": 759,
+            "entrySha256": "5af7a7dafdb014e29f940ebfca6ff0df87dd307e23622dc78a5a6cb8ed722802"
+          },
+          {
+            "spriteId": 760,
+            "entrySha256": "7db4c2e8ca8d62a0491c4fd12a50247f132dda4c230fc6eeb7638b7544b71386"
+          },
+          {
+            "spriteId": 761,
+            "entrySha256": "898d66302dd7f6c7f611f11ddc47898ac69912610fe62ede9ffa7477dc5f2f00"
+          },
+          {
+            "spriteId": 762,
+            "entrySha256": "f4a113ad8a4639b8d25a0759f92beb55f969e68f0a63909d0a8cd582d506e50e"
+          },
+          {
+            "spriteId": 763,
+            "entrySha256": "7fe26f7ec9da4b8f3725a794e9f1cd1d5be34ed3fef37994b66e8e54cb5bd66d"
+          },
+          {
+            "spriteId": 764,
+            "entrySha256": "7f036383bc65dbe3d753836395f0365bb3f679b02ac2d5b1133c70f3e710a3b3"
+          },
+          {
+            "spriteId": 765,
+            "entrySha256": "28046c41eaeab64dce7eb817740fcc9842f33a09d08176e50918344d48e709fc"
+          },
+          {
+            "spriteId": 766,
+            "entrySha256": "bae18f1ac12ef49912070aa9171f96ea72e581c4652e9380741796e903e59baa"
+          },
+          {
+            "spriteId": 767,
+            "entrySha256": "df70451d4b5c696f2759dd0a1126be738eae360ef5e2f858402c7153667a7257"
+          },
+          {
+            "spriteId": 768,
+            "entrySha256": "0336a180c6c3d783e0747a54a1bac73e62fd9e90464cbc1baa1ce9e5748bc94c"
+          },
+          {
+            "spriteId": 769,
+            "entrySha256": "0b7176d93203ebde98598c23a37c8835b47bbba16297cdfed8a2b3b27c23dde2"
+          },
+          {
+            "spriteId": 770,
+            "entrySha256": "52e98eac179674025ea27e21be66212417c593a22ef03f1148867d82e2cac6d9"
+          },
+          {
+            "spriteId": 771,
+            "entrySha256": "8cfb9374bde95f4fbc946501d4c216a413b02b4fbe91b4608c61b0a5c2fcd4f7"
+          },
+          {
+            "spriteId": 772,
+            "entrySha256": "88bc5315635d4c56eeeaa836d4cc08cebfebe6bad331eb73b2b22be730a5ad93"
+          },
+          {
+            "spriteId": 773,
+            "entrySha256": "00910018ac2f46df493170f993fb13d908e1e0bede66a8e2e8eca80872bf7ff4"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 110,
+      "name": "battleaxe",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "battleaxe",
+        "frameCount": 18,
+        "entrySha256": "600082afdcce07ed3b6d5e01b68373f20e029977bdbfde9078ce5df089b0a2df",
+        "spritepackOverrideKey": "equipment:battleaxe"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 756,
+        "frames": [
+          {
+            "spriteId": 756,
+            "entrySha256": "2f1a72bf30d3626be21b0fd1a96d114a911c3dd25bee89dfba8dc1ba637cba35"
+          },
+          {
+            "spriteId": 757,
+            "entrySha256": "43f4b3110c1e82fc8cd2a4f6376c43029ff7528f5a870732de665b8086f69ca5"
+          },
+          {
+            "spriteId": 758,
+            "entrySha256": "88e0f76938b15f5cfa2a003f93f3ac829f79f0ccc0d86d3a2ac1d36aa953d4a4"
+          },
+          {
+            "spriteId": 759,
+            "entrySha256": "5af7a7dafdb014e29f940ebfca6ff0df87dd307e23622dc78a5a6cb8ed722802"
+          },
+          {
+            "spriteId": 760,
+            "entrySha256": "7db4c2e8ca8d62a0491c4fd12a50247f132dda4c230fc6eeb7638b7544b71386"
+          },
+          {
+            "spriteId": 761,
+            "entrySha256": "898d66302dd7f6c7f611f11ddc47898ac69912610fe62ede9ffa7477dc5f2f00"
+          },
+          {
+            "spriteId": 762,
+            "entrySha256": "f4a113ad8a4639b8d25a0759f92beb55f969e68f0a63909d0a8cd582d506e50e"
+          },
+          {
+            "spriteId": 763,
+            "entrySha256": "7fe26f7ec9da4b8f3725a794e9f1cd1d5be34ed3fef37994b66e8e54cb5bd66d"
+          },
+          {
+            "spriteId": 764,
+            "entrySha256": "7f036383bc65dbe3d753836395f0365bb3f679b02ac2d5b1133c70f3e710a3b3"
+          },
+          {
+            "spriteId": 765,
+            "entrySha256": "28046c41eaeab64dce7eb817740fcc9842f33a09d08176e50918344d48e709fc"
+          },
+          {
+            "spriteId": 766,
+            "entrySha256": "bae18f1ac12ef49912070aa9171f96ea72e581c4652e9380741796e903e59baa"
+          },
+          {
+            "spriteId": 767,
+            "entrySha256": "df70451d4b5c696f2759dd0a1126be738eae360ef5e2f858402c7153667a7257"
+          },
+          {
+            "spriteId": 768,
+            "entrySha256": "0336a180c6c3d783e0747a54a1bac73e62fd9e90464cbc1baa1ce9e5748bc94c"
+          },
+          {
+            "spriteId": 769,
+            "entrySha256": "0b7176d93203ebde98598c23a37c8835b47bbba16297cdfed8a2b3b27c23dde2"
+          },
+          {
+            "spriteId": 770,
+            "entrySha256": "52e98eac179674025ea27e21be66212417c593a22ef03f1148867d82e2cac6d9"
+          },
+          {
+            "spriteId": 771,
+            "entrySha256": "8cfb9374bde95f4fbc946501d4c216a413b02b4fbe91b4608c61b0a5c2fcd4f7"
+          },
+          {
+            "spriteId": 772,
+            "entrySha256": "88bc5315635d4c56eeeaa836d4cc08cebfebe6bad331eb73b2b22be730a5ad93"
+          },
+          {
+            "spriteId": 773,
+            "entrySha256": "00910018ac2f46df493170f993fb13d908e1e0bede66a8e2e8eca80872bf7ff4"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 111,
+      "name": "battleaxe",
+      "category": "equipment",
+      "charColour": 10072780,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "battleaxe",
+        "frameCount": 18,
+        "entrySha256": "600082afdcce07ed3b6d5e01b68373f20e029977bdbfde9078ce5df089b0a2df",
+        "spritepackOverrideKey": "equipment:battleaxe"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 756,
+        "frames": [
+          {
+            "spriteId": 756,
+            "entrySha256": "2f1a72bf30d3626be21b0fd1a96d114a911c3dd25bee89dfba8dc1ba637cba35"
+          },
+          {
+            "spriteId": 757,
+            "entrySha256": "43f4b3110c1e82fc8cd2a4f6376c43029ff7528f5a870732de665b8086f69ca5"
+          },
+          {
+            "spriteId": 758,
+            "entrySha256": "88e0f76938b15f5cfa2a003f93f3ac829f79f0ccc0d86d3a2ac1d36aa953d4a4"
+          },
+          {
+            "spriteId": 759,
+            "entrySha256": "5af7a7dafdb014e29f940ebfca6ff0df87dd307e23622dc78a5a6cb8ed722802"
+          },
+          {
+            "spriteId": 760,
+            "entrySha256": "7db4c2e8ca8d62a0491c4fd12a50247f132dda4c230fc6eeb7638b7544b71386"
+          },
+          {
+            "spriteId": 761,
+            "entrySha256": "898d66302dd7f6c7f611f11ddc47898ac69912610fe62ede9ffa7477dc5f2f00"
+          },
+          {
+            "spriteId": 762,
+            "entrySha256": "f4a113ad8a4639b8d25a0759f92beb55f969e68f0a63909d0a8cd582d506e50e"
+          },
+          {
+            "spriteId": 763,
+            "entrySha256": "7fe26f7ec9da4b8f3725a794e9f1cd1d5be34ed3fef37994b66e8e54cb5bd66d"
+          },
+          {
+            "spriteId": 764,
+            "entrySha256": "7f036383bc65dbe3d753836395f0365bb3f679b02ac2d5b1133c70f3e710a3b3"
+          },
+          {
+            "spriteId": 765,
+            "entrySha256": "28046c41eaeab64dce7eb817740fcc9842f33a09d08176e50918344d48e709fc"
+          },
+          {
+            "spriteId": 766,
+            "entrySha256": "bae18f1ac12ef49912070aa9171f96ea72e581c4652e9380741796e903e59baa"
+          },
+          {
+            "spriteId": 767,
+            "entrySha256": "df70451d4b5c696f2759dd0a1126be738eae360ef5e2f858402c7153667a7257"
+          },
+          {
+            "spriteId": 768,
+            "entrySha256": "0336a180c6c3d783e0747a54a1bac73e62fd9e90464cbc1baa1ce9e5748bc94c"
+          },
+          {
+            "spriteId": 769,
+            "entrySha256": "0b7176d93203ebde98598c23a37c8835b47bbba16297cdfed8a2b3b27c23dde2"
+          },
+          {
+            "spriteId": 770,
+            "entrySha256": "52e98eac179674025ea27e21be66212417c593a22ef03f1148867d82e2cac6d9"
+          },
+          {
+            "spriteId": 771,
+            "entrySha256": "8cfb9374bde95f4fbc946501d4c216a413b02b4fbe91b4608c61b0a5c2fcd4f7"
+          },
+          {
+            "spriteId": 772,
+            "entrySha256": "88bc5315635d4c56eeeaa836d4cc08cebfebe6bad331eb73b2b22be730a5ad93"
+          },
+          {
+            "spriteId": 773,
+            "entrySha256": "00910018ac2f46df493170f993fb13d908e1e0bede66a8e2e8eca80872bf7ff4"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 112,
+      "name": "battleaxe",
+      "category": "equipment",
+      "charColour": 11717785,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "battleaxe",
+        "frameCount": 18,
+        "entrySha256": "600082afdcce07ed3b6d5e01b68373f20e029977bdbfde9078ce5df089b0a2df",
+        "spritepackOverrideKey": "equipment:battleaxe"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 756,
+        "frames": [
+          {
+            "spriteId": 756,
+            "entrySha256": "2f1a72bf30d3626be21b0fd1a96d114a911c3dd25bee89dfba8dc1ba637cba35"
+          },
+          {
+            "spriteId": 757,
+            "entrySha256": "43f4b3110c1e82fc8cd2a4f6376c43029ff7528f5a870732de665b8086f69ca5"
+          },
+          {
+            "spriteId": 758,
+            "entrySha256": "88e0f76938b15f5cfa2a003f93f3ac829f79f0ccc0d86d3a2ac1d36aa953d4a4"
+          },
+          {
+            "spriteId": 759,
+            "entrySha256": "5af7a7dafdb014e29f940ebfca6ff0df87dd307e23622dc78a5a6cb8ed722802"
+          },
+          {
+            "spriteId": 760,
+            "entrySha256": "7db4c2e8ca8d62a0491c4fd12a50247f132dda4c230fc6eeb7638b7544b71386"
+          },
+          {
+            "spriteId": 761,
+            "entrySha256": "898d66302dd7f6c7f611f11ddc47898ac69912610fe62ede9ffa7477dc5f2f00"
+          },
+          {
+            "spriteId": 762,
+            "entrySha256": "f4a113ad8a4639b8d25a0759f92beb55f969e68f0a63909d0a8cd582d506e50e"
+          },
+          {
+            "spriteId": 763,
+            "entrySha256": "7fe26f7ec9da4b8f3725a794e9f1cd1d5be34ed3fef37994b66e8e54cb5bd66d"
+          },
+          {
+            "spriteId": 764,
+            "entrySha256": "7f036383bc65dbe3d753836395f0365bb3f679b02ac2d5b1133c70f3e710a3b3"
+          },
+          {
+            "spriteId": 765,
+            "entrySha256": "28046c41eaeab64dce7eb817740fcc9842f33a09d08176e50918344d48e709fc"
+          },
+          {
+            "spriteId": 766,
+            "entrySha256": "bae18f1ac12ef49912070aa9171f96ea72e581c4652e9380741796e903e59baa"
+          },
+          {
+            "spriteId": 767,
+            "entrySha256": "df70451d4b5c696f2759dd0a1126be738eae360ef5e2f858402c7153667a7257"
+          },
+          {
+            "spriteId": 768,
+            "entrySha256": "0336a180c6c3d783e0747a54a1bac73e62fd9e90464cbc1baa1ce9e5748bc94c"
+          },
+          {
+            "spriteId": 769,
+            "entrySha256": "0b7176d93203ebde98598c23a37c8835b47bbba16297cdfed8a2b3b27c23dde2"
+          },
+          {
+            "spriteId": 770,
+            "entrySha256": "52e98eac179674025ea27e21be66212417c593a22ef03f1148867d82e2cac6d9"
+          },
+          {
+            "spriteId": 771,
+            "entrySha256": "8cfb9374bde95f4fbc946501d4c216a413b02b4fbe91b4608c61b0a5c2fcd4f7"
+          },
+          {
+            "spriteId": 772,
+            "entrySha256": "88bc5315635d4c56eeeaa836d4cc08cebfebe6bad331eb73b2b22be730a5ad93"
+          },
+          {
+            "spriteId": 773,
+            "entrySha256": "00910018ac2f46df493170f993fb13d908e1e0bede66a8e2e8eca80872bf7ff4"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 113,
+      "name": "battleaxe",
+      "category": "equipment",
+      "charColour": 65535,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "battleaxe",
+        "frameCount": 18,
+        "entrySha256": "600082afdcce07ed3b6d5e01b68373f20e029977bdbfde9078ce5df089b0a2df",
+        "spritepackOverrideKey": "equipment:battleaxe"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 756,
+        "frames": [
+          {
+            "spriteId": 756,
+            "entrySha256": "2f1a72bf30d3626be21b0fd1a96d114a911c3dd25bee89dfba8dc1ba637cba35"
+          },
+          {
+            "spriteId": 757,
+            "entrySha256": "43f4b3110c1e82fc8cd2a4f6376c43029ff7528f5a870732de665b8086f69ca5"
+          },
+          {
+            "spriteId": 758,
+            "entrySha256": "88e0f76938b15f5cfa2a003f93f3ac829f79f0ccc0d86d3a2ac1d36aa953d4a4"
+          },
+          {
+            "spriteId": 759,
+            "entrySha256": "5af7a7dafdb014e29f940ebfca6ff0df87dd307e23622dc78a5a6cb8ed722802"
+          },
+          {
+            "spriteId": 760,
+            "entrySha256": "7db4c2e8ca8d62a0491c4fd12a50247f132dda4c230fc6eeb7638b7544b71386"
+          },
+          {
+            "spriteId": 761,
+            "entrySha256": "898d66302dd7f6c7f611f11ddc47898ac69912610fe62ede9ffa7477dc5f2f00"
+          },
+          {
+            "spriteId": 762,
+            "entrySha256": "f4a113ad8a4639b8d25a0759f92beb55f969e68f0a63909d0a8cd582d506e50e"
+          },
+          {
+            "spriteId": 763,
+            "entrySha256": "7fe26f7ec9da4b8f3725a794e9f1cd1d5be34ed3fef37994b66e8e54cb5bd66d"
+          },
+          {
+            "spriteId": 764,
+            "entrySha256": "7f036383bc65dbe3d753836395f0365bb3f679b02ac2d5b1133c70f3e710a3b3"
+          },
+          {
+            "spriteId": 765,
+            "entrySha256": "28046c41eaeab64dce7eb817740fcc9842f33a09d08176e50918344d48e709fc"
+          },
+          {
+            "spriteId": 766,
+            "entrySha256": "bae18f1ac12ef49912070aa9171f96ea72e581c4652e9380741796e903e59baa"
+          },
+          {
+            "spriteId": 767,
+            "entrySha256": "df70451d4b5c696f2759dd0a1126be738eae360ef5e2f858402c7153667a7257"
+          },
+          {
+            "spriteId": 768,
+            "entrySha256": "0336a180c6c3d783e0747a54a1bac73e62fd9e90464cbc1baa1ce9e5748bc94c"
+          },
+          {
+            "spriteId": 769,
+            "entrySha256": "0b7176d93203ebde98598c23a37c8835b47bbba16297cdfed8a2b3b27c23dde2"
+          },
+          {
+            "spriteId": 770,
+            "entrySha256": "52e98eac179674025ea27e21be66212417c593a22ef03f1148867d82e2cac6d9"
+          },
+          {
+            "spriteId": 771,
+            "entrySha256": "8cfb9374bde95f4fbc946501d4c216a413b02b4fbe91b4608c61b0a5c2fcd4f7"
+          },
+          {
+            "spriteId": 772,
+            "entrySha256": "88bc5315635d4c56eeeaa836d4cc08cebfebe6bad331eb73b2b22be730a5ad93"
+          },
+          {
+            "spriteId": 773,
+            "entrySha256": "00910018ac2f46df493170f993fb13d908e1e0bede66a8e2e8eca80872bf7ff4"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 115,
+      "name": "mace",
+      "category": "equipment",
+      "charColour": 16737817,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "mace",
+        "frameCount": 18,
+        "entrySha256": "8be2763288ad12af1c0fc9e8fb69b743d5d17f09672d9f302f199a41d5897f02",
+        "spritepackOverrideKey": "equipment:mace"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 783,
+        "frames": [
+          {
+            "spriteId": 783,
+            "entrySha256": "18ce4504293fc1c786f7ce82e12e31ff132bf7cb36717c6b272538a8b6b1b867"
+          },
+          {
+            "spriteId": 784,
+            "entrySha256": "fbc5d48079b250198f4de20a648d1d146da731944d3aeb7c28663aafbc51358d"
+          },
+          {
+            "spriteId": 785,
+            "entrySha256": "0daf56750dcf7f84092a69809134a0b0fa3fdeb162728d92803fde03dcc3a946"
+          },
+          {
+            "spriteId": 786,
+            "entrySha256": "8708d50ec29cf65a5c3db1a870dc331ec6ee1fa44a74317c4593fe0bbc4747ad"
+          },
+          {
+            "spriteId": 787,
+            "entrySha256": "730d1c2a86732322697a27ff39f8a42d53508974cd458197ab19646273f705ee"
+          },
+          {
+            "spriteId": 788,
+            "entrySha256": "5f1d013381ef10ddd3d6ef28433ad71f740f2b87461cb2d1d298059d3758c2c9"
+          },
+          {
+            "spriteId": 789,
+            "entrySha256": "03f99601e0e1f3d1fdd72ff5346c4f3c4c636649a6a4fc6764dc4b6d452f5f41"
+          },
+          {
+            "spriteId": 790,
+            "entrySha256": "ec7e4b797a50a3cdc098ebe04c560970303086442d979b2b8d21a27fec93bd20"
+          },
+          {
+            "spriteId": 791,
+            "entrySha256": "385092fce23513c471ff1beb73165b5928ff6bb7db5055e809bdd7833d860f41"
+          },
+          {
+            "spriteId": 792,
+            "entrySha256": "f0209d0fc09bad86dc2bd3e35f8565825241bfd4d4ed7b3b5e00135ce8eee0c3"
+          },
+          {
+            "spriteId": 793,
+            "entrySha256": "cf4d0a92068e899ee9f652e27d72fc0bd03aaf8cc0839342d989aff608051c61"
+          },
+          {
+            "spriteId": 794,
+            "entrySha256": "ebf04994470c6916dda9baaee6515b8637a44f85392ff4f04e411072b8151ebc"
+          },
+          {
+            "spriteId": 795,
+            "entrySha256": "24b10ea4f9cecd5764b40fb92bccb3cfad476bc6ff908992f407f47504f66f26"
+          },
+          {
+            "spriteId": 796,
+            "entrySha256": "ad02e39ddd5c611f5705f77014c81245ccecb36d7d873bea45dfac32ec798003"
+          },
+          {
+            "spriteId": 797,
+            "entrySha256": "4479886a26e2097da4d145bf87b7daa3facb903e47a0b83363dfae4fe98a8cc6"
+          },
+          {
+            "spriteId": 798,
+            "entrySha256": "a33be5a0030a7f05e8ba0ae4a320b62e3af8badd7fc25dbcdc6b1e5660e9817a"
+          },
+          {
+            "spriteId": 799,
+            "entrySha256": "827c648976a97350eb3a93d367ab14f585cf74190bb9e683bab4b058feec4211"
+          },
+          {
+            "spriteId": 800,
+            "entrySha256": "01a8d44cff69582da06790097b2c9483c0ebcbc53fdfd76abf4b5ea964392d1e"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 116,
+      "name": "mace",
+      "category": "equipment",
+      "charColour": 15654365,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "mace",
+        "frameCount": 18,
+        "entrySha256": "8be2763288ad12af1c0fc9e8fb69b743d5d17f09672d9f302f199a41d5897f02",
+        "spritepackOverrideKey": "equipment:mace"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 783,
+        "frames": [
+          {
+            "spriteId": 783,
+            "entrySha256": "18ce4504293fc1c786f7ce82e12e31ff132bf7cb36717c6b272538a8b6b1b867"
+          },
+          {
+            "spriteId": 784,
+            "entrySha256": "fbc5d48079b250198f4de20a648d1d146da731944d3aeb7c28663aafbc51358d"
+          },
+          {
+            "spriteId": 785,
+            "entrySha256": "0daf56750dcf7f84092a69809134a0b0fa3fdeb162728d92803fde03dcc3a946"
+          },
+          {
+            "spriteId": 786,
+            "entrySha256": "8708d50ec29cf65a5c3db1a870dc331ec6ee1fa44a74317c4593fe0bbc4747ad"
+          },
+          {
+            "spriteId": 787,
+            "entrySha256": "730d1c2a86732322697a27ff39f8a42d53508974cd458197ab19646273f705ee"
+          },
+          {
+            "spriteId": 788,
+            "entrySha256": "5f1d013381ef10ddd3d6ef28433ad71f740f2b87461cb2d1d298059d3758c2c9"
+          },
+          {
+            "spriteId": 789,
+            "entrySha256": "03f99601e0e1f3d1fdd72ff5346c4f3c4c636649a6a4fc6764dc4b6d452f5f41"
+          },
+          {
+            "spriteId": 790,
+            "entrySha256": "ec7e4b797a50a3cdc098ebe04c560970303086442d979b2b8d21a27fec93bd20"
+          },
+          {
+            "spriteId": 791,
+            "entrySha256": "385092fce23513c471ff1beb73165b5928ff6bb7db5055e809bdd7833d860f41"
+          },
+          {
+            "spriteId": 792,
+            "entrySha256": "f0209d0fc09bad86dc2bd3e35f8565825241bfd4d4ed7b3b5e00135ce8eee0c3"
+          },
+          {
+            "spriteId": 793,
+            "entrySha256": "cf4d0a92068e899ee9f652e27d72fc0bd03aaf8cc0839342d989aff608051c61"
+          },
+          {
+            "spriteId": 794,
+            "entrySha256": "ebf04994470c6916dda9baaee6515b8637a44f85392ff4f04e411072b8151ebc"
+          },
+          {
+            "spriteId": 795,
+            "entrySha256": "24b10ea4f9cecd5764b40fb92bccb3cfad476bc6ff908992f407f47504f66f26"
+          },
+          {
+            "spriteId": 796,
+            "entrySha256": "ad02e39ddd5c611f5705f77014c81245ccecb36d7d873bea45dfac32ec798003"
+          },
+          {
+            "spriteId": 797,
+            "entrySha256": "4479886a26e2097da4d145bf87b7daa3facb903e47a0b83363dfae4fe98a8cc6"
+          },
+          {
+            "spriteId": 798,
+            "entrySha256": "a33be5a0030a7f05e8ba0ae4a320b62e3af8badd7fc25dbcdc6b1e5660e9817a"
+          },
+          {
+            "spriteId": 799,
+            "entrySha256": "827c648976a97350eb3a93d367ab14f585cf74190bb9e683bab4b058feec4211"
+          },
+          {
+            "spriteId": 800,
+            "entrySha256": "01a8d44cff69582da06790097b2c9483c0ebcbc53fdfd76abf4b5ea964392d1e"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 117,
+      "name": "mace",
+      "category": "equipment",
+      "charColour": 15658734,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "equipment",
+        "entry": "mace",
+        "frameCount": 18,
+        "entrySha256": "8be2763288ad12af1c0fc9e8fb69b743d5d17f09672d9f302f199a41d5897f02",
+        "spritepackOverrideKey": "equipment:mace"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 783,
+        "frames": [
+          {
+            "spriteId": 783,
+            "entrySha256": "18ce4504293fc1c786f7ce82e12e31ff132bf7cb36717c6b272538a8b6b1b867"
+          },
+          {
+            "spriteId": 784,
+            "entrySha256": "fbc5d48079b250198f4de20a648d1d146da731944d3aeb7c28663aafbc51358d"
+          },
+          {
+            "spriteId": 785,
+            "entrySha256": "0daf56750dcf7f84092a69809134a0b0fa3fdeb162728d92803fde03dcc3a946"
+          },
+          {
+            "spriteId": 786,
+            "entrySha256": "8708d50ec29cf65a5c3db1a870dc331ec6ee1fa44a74317c4593fe0bbc4747ad"
+          },
+          {
+            "spriteId": 787,
+            "entrySha256": "730d1c2a86732322697a27ff39f8a42d53508974cd458197ab19646273f705ee"
+          },
+          {
+            "spriteId": 788,
+            "entrySha256": "5f1d013381ef10ddd3d6ef28433ad71f740f2b87461cb2d1d298059d3758c2c9"
+          },
+          {
+            "spriteId": 789,
+            "entrySha256": "03f99601e0e1f3d1fdd72ff5346c4f3c4c636649a6a4fc6764dc4b6d452f5f41"
+          },
+          {
+            "spriteId": 790,
+            "entrySha256": "ec7e4b797a50a3cdc098ebe04c560970303086442d979b2b8d21a27fec93bd20"
+          },
+          {
+            "spriteId": 791,
+            "entrySha256": "385092fce23513c471ff1beb73165b5928ff6bb7db5055e809bdd7833d860f41"
+          },
+          {
+            "spriteId": 792,
+            "entrySha256": "f0209d0fc09bad86dc2bd3e35f8565825241bfd4d4ed7b3b5e00135ce8eee0c3"
+          },
+          {
+            "spriteId": 793,
+            "entrySha256": "cf4d0a92068e899ee9f652e27d72fc0bd03aaf8cc0839342d989aff608051c61"
+          },
+          {
+            "spriteId": 794,
+            "entrySha256": "ebf04994470c6916dda9baaee6515b8637a44f85392ff4f04e411072b8151ebc"
+          },
+          {
+            "spriteId": 795,
+            "entrySha256": "24b10ea4f9cecd5764b40fb92bccb3cfad476bc6ff908992f407f47504f66f26"
+          },
+          {
+            "spriteId": 796,
+            "entrySha256": "ad02e39ddd5c611f5705f77014c81245ccecb36d7d873bea45dfac32ec798003"
+          },
+          {
+            "spriteId": 797,
+            "entrySha256": "4479886a26e2097da4d145bf87b7daa3facb903e47a0b83363dfae4fe98a8cc6"
+          },
+          {
+            "spriteId": 798,
+            "entrySha256": "a33be5a0030a7f05e8ba0ae4a320b62e3af8badd7fc25dbcdc6b1e5660e9817a"
+          },
+          {
+            "spriteId": 799,
+            "entrySha256": "827c648976a97350eb3a93d367ab14f585cf74190bb9e683bab4b058feec4211"
+          },
+          {
+            "spriteId": 800,
+            "entrySha256": "01a8d44cff69582da06790097b2c9483c0ebcbc53fdfd76abf4b5ea964392d1e"
+          }
+        ]
+      }
+    }
+  ]
+}
