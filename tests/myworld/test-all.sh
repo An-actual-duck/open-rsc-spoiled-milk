@@ -37,6 +37,7 @@ python3 ./tests/myworld/test-monster-slayer-client-npc-definitions.py
 python3 ./tests/myworld/test-rangers-guild-layout.py
 python3 ./tests/myworld/test-rangers-guild-points-flow.py
 python3 ./tests/myworld/audit-client-sprite-references.py
+python3 ./tests/myworld/test-world-builder-item-visual-provider.py
 python3 ./tests/myworld/test-content-item-resolution.py
 python3 ./tests/myworld/test-magic-no-random-fail.py
 python3 ./tests/myworld/test-magic-enchanting-costs.py

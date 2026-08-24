@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "manifestType": "world-builder-item-visual-mapping",
+  "provider": {
+    "identity": "spoiled-milk-core-final-client-item-definitions",
+    "definitionMode": "members-enabled-post-override",
+    "catalogItemCount": 3318,
+    "catalogSha256": "baf08c6684751901458b113a9ff454bc6b8be73c4af348b0991964017f95c710",
+    "inputs": [
+      {
+        "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
+        "sha256": "4284b88eb36847ce432797e16dd6fe3996402c476469192b681e4c1b424e95f6"
+      },
+      {
+        "path": "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java",
+        "sha256": "8ce4c00ad166aab805a62c13bb4172c0c2c3214ad349ba4b4a1397ef83884b05"
+      },
+      {
+        "path": "Client_Base/src/com/openrsc/client/entityhandling/defs/ItemDef.java",
+        "sha256": "9c3ffb3c92d2a33ab3a1a38c0263cb55291d91134dfccac2914de64ae8f3dd02"
+      },
+      {
+        "path": "Client_Base/src/orsc/Config.java",
+        "sha256": "c5e849a25858c253db7d4cd10d0a2fa126ceb5fc4e27dafaa15487fbed6e25a4"
+      }
+    ]
+  },
+  "assetProviders": {
+    "customSpriteArchive": {
+      "path": "Client_Base/Cache/video/Custom_Sprites.osar",
+      "sha256": "f334d99403c6db0b2baa629ddfbd959e741aaf62265650eacdc4db5d9a9c7a92",
+      "entryCount": 1002
+    },
+    "authenticSpriteArchive": {
+      "path": "Client_Base/Cache/video/Authentic_Sprites.orsc",
+      "sha256": "cf861efa7307556b5e5ba4c20b838f17753faba8b530f85dca38e8c2839d5e69",
+      "numericEntryCount": 2259,
+      "itemArchiveBaseId": 2150
+    },
+    "externalPngPackaging": {
+      "clientJarPath": "Client_Base/Open_RSC_Client.jar",
+      "packagedPngCount": 2896,
+      "resourceRoot": "myworld-assets/"
+    }
+  },
+  "selection": {
+    "kind": "filtered-compatibility",
+    "itemCount": 9,
+    "itemIdsSha256": "f9b3bab27152bbe02bf7eb849bf2637f2020c8a528abe101ce563058d1dbd8df",
+    "mappingSha256": "e4d81f16e5e9d503003a7ded7bc0907823a20884de5faf00170a015a1c52a73b",
+    "minimumItemId": 3309,
+    "maximumItemId": 3317
+  },
+  "itemVisuals": [
+    {
+      "itemId": 3309,
+      "diagnosticName": "Poisoned Exalted Rune dagger",
+      "spriteLocation": "items:80",
+      "spriteId": 80,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2230,
+        "entrySha256": "59ce2de8a7d032b047be83a17fbb31f4f012789407138cf0a7e53ca133347175"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "80",
+        "baseArchiveEntrySha256": "b7c4b8f8964f160a437093590714a78625ed9d1d03751a2d4a77bcaa588f3f76",
+        "spritepackOverrideKey": "items:80"
+      },
+      "externalPng": null,
+      "pictureMask": 14221311,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3310,
+      "diagnosticName": "Poisoned Exalted Rune Spear",
+      "spriteLocation": "items:283",
+      "spriteId": 283,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2433,
+        "entrySha256": "56c9282640e955dc30f641faf8efcc9cfe477ebad545bae4799bc05d719e6401"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "283",
+        "baseArchiveEntrySha256": "c7e107d8c7a6ccbaefec89f6a305c5bcb7ed14116178c345a05a8420dcf3885c",
+        "spritepackOverrideKey": "items:283"
+      },
+      "externalPng": null,
+      "pictureMask": 14221311,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3311,
+      "diagnosticName": "King black dragon hide",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3312,
+      "diagnosticName": "King black dragon leather",
+      "spriteLocation": "items:69",
+      "spriteId": 69,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2219,
+        "entrySha256": "de1aae438fe3df854eed92094dc7e8f606593a2e37fdd7ce12096ebd9b8a36c1"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "69",
+        "baseArchiveEntrySha256": "d271cb6e9152f2c0e010c42799e93be8b6db4e7a933d80dc29baa88820279f0b",
+        "spritepackOverrideKey": "items:69"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3313,
+      "diagnosticName": "King-black-dragon-hide coif",
+      "spriteLocation": "items:5",
+      "spriteId": 5,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2155,
+        "entrySha256": "0de6d0b405d7d554e0bc8307fe08c7fc741f6b29384b6201c5f9fbbbf71e2aae"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "5",
+        "baseArchiveEntrySha256": "bc7f0055e5050621144fdec453fb72b49d8957b0949eb690f3fe4c69adc6c4a0",
+        "spritepackOverrideKey": "items:5"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3314,
+      "diagnosticName": "King-black-dragon-hide gloves",
+      "spriteLocation": "items:17",
+      "spriteId": 17,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2167,
+        "entrySha256": "074716fb306aa61b270ecc439527780e104708d2c16cf9df208e009808b272b9"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "17",
+        "baseArchiveEntrySha256": "0a6ba85a61d9e4eaa15f1644af36fd9548f8c81b202a1f6daa8dc1faae4beb14",
+        "spritepackOverrideKey": "items:17"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3315,
+      "diagnosticName": "King-black-dragon-hide boots",
+      "spriteLocation": "items:223",
+      "spriteId": 223,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2373,
+        "entrySha256": "0e73d65e739db8526de72667e620fdf650f7670d5e61ed16277ce1898071ca48"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "223",
+        "baseArchiveEntrySha256": "e04094fa1b2d08f25b758c986eb5a54a0d1dedadfc67c1b8948a075808346c1a",
+        "spritepackOverrideKey": "items:223"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3316,
+      "diagnosticName": "King-black-dragon-hide chaps",
+      "spriteLocation": "items:590",
+      "spriteId": 590,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": null,
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "590",
+        "baseArchiveEntrySha256": "eee89de7811beea711aa5c122e4233dd61663cc167430fe7d23b298e0ef00476",
+        "spritepackOverrideKey": "items:590"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    },
+    {
+      "itemId": 3317,
+      "diagnosticName": "King-black-dragon-hide cuirass",
+      "spriteLocation": "items:7",
+      "spriteId": 7,
+      "resolvedBaseSourceRole": "custom-sprite-archive",
+      "authenticArchive": {
+        "archiveId": 2157,
+        "entrySha256": "2c7692dc45119fc533f4b7860485797ddbe8a9183483ec1b6713fc200f6f539e"
+      },
+      "customOrSpritepack": {
+        "subspace": "items",
+        "entry": "7",
+        "baseArchiveEntrySha256": "2f1bf57591b1ae81bf98af6801ed87e45417acef4b22b6f92a0ed2183e7c7fd6",
+        "spritepackOverrideKey": "items:7"
+      },
+      "externalPng": null,
+      "pictureMask": 2828826,
+      "blueMask": 0
+    }
+  ]
+}
