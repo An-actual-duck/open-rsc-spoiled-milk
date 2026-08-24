@@ -1,5 +1,6 @@
 import com.openrsc.client.entityhandling.EntityHandler;
 import com.openrsc.client.entityhandling.defs.ItemDef;
+import orsc.mudclient;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -11,6 +12,7 @@ public final class FinalItemDefinitionsProbe {
 
 	public static void main(String[] args) {
 		EntityHandler.load(true);
+		System.out.println("AUTHENTIC_ITEM_BASE\t" + mudclient.spriteItem);
 		System.out.println("CATALOG\t" + EntityHandler.itemCount());
 		for (int index = 0; index < EntityHandler.itemCount(); index++) {
 			ItemDef item = EntityHandler.getItemDef(index);

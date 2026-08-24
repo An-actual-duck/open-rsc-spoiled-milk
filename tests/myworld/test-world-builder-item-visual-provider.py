@@ -118,7 +118,7 @@ def main() -> None:
 
     missing = tool.FinalItem(9999, "Missing visual fixture", "items:not-present", -1, 0, 0)
     try:
-        tool.map_item(missing, {}, {}, {})
+        tool.map_item(missing, {}, {}, {}, 2150)
     except tool.ExportError as failure:
         message = str(failure)
         assert "Item 9999" in message
@@ -127,6 +127,14 @@ def main() -> None:
         assert "no authentic entry" in message
     else:
         raise AssertionError("missing selected archive entry did not fail actionably")
+
+    malformed = tool.FinalItem(9998, "Malformed PNG fixture", "external-png:", 0, 0, 0)
+    try:
+        tool.map_item(malformed, {}, {2150: "authentic-would-exist"}, {}, 2150)
+    except tool.ExportError as failure:
+        assert "Item 9998" in str(failure) and "malformed external PNG" in str(failure)
+    else:
+        raise AssertionError("malformed external PNG silently fell back to authentic art")
 
     missing_png = tool.ExternalSpec("absent@12x12", "absent", "absent.png", 12, 12)
     try:

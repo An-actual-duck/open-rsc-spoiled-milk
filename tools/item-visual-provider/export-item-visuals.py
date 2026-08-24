@@ -26,7 +26,6 @@ AUTHENTIC_ARCHIVE = ROOT / "Client_Base/Cache/video/Authentic_Sprites.orsc"
 DEFAULT_FULL_OUTPUT = TOOL_DIR / "generated/item-visuals-full-v1.json"
 DEFAULT_COMPAT_OUTPUT = TOOL_DIR / "generated/item-visuals-3309-3317-v1.json"
 COMPATIBILITY_IDS = tuple(range(3309, 3318))
-AUTHENTIC_ITEM_BASE = 2150
 SUPPORTED_OSAR_TYPES_WITH_LAYER = {1, 2, 3}
 EXTERNAL_PREFIX = "external-png:"
 EXTERNAL_ASSET_DIRS = (
@@ -104,7 +103,7 @@ def build_client() -> None:
     subprocess.run([str(ROOT / "scripts/build-client.sh")], cwd=ROOT, check=True)
 
 
-def extract_final_items() -> list[FinalItem]:
+def extract_final_items() -> tuple[list[FinalItem], int]:
     require_file(CLIENT_JAR, "compiled client jar; run scripts/build-client.sh")
     probe_source = TOOL_DIR / "FinalItemDefinitionsProbe.java"
     require_file(probe_source, "final item definition probe")
@@ -127,10 +126,13 @@ def extract_final_items() -> list[FinalItem]:
         )
 
     expected_count: int | None = None
+    authentic_item_base: int | None = None
     items: list[FinalItem] = []
     for line in result.stdout.splitlines():
         fields = line.split("\t")
-        if fields[0] == "CATALOG" and len(fields) == 2:
+        if fields[0] == "AUTHENTIC_ITEM_BASE" and len(fields) == 2:
+            authentic_item_base = int(fields[1])
+        elif fields[0] == "CATALOG" and len(fields) == 2:
             expected_count = int(fields[1])
         elif fields[0] == "ITEM" and len(fields) == 8:
             index, item_id = int(fields[1]), int(fields[2])
@@ -150,9 +152,11 @@ def extract_final_items() -> list[FinalItem]:
             )
     if expected_count is None:
         raise ExportError("Final client item-definition probe did not report a catalog size")
+    if authentic_item_base is None or authentic_item_base < 0:
+        raise ExportError("Final client item-definition probe did not report a valid authentic item base")
     if len(items) != expected_count:
         raise ExportError(f"Final client item-definition probe reported {expected_count} items but emitted {len(items)}")
-    return items
+    return items, authentic_item_base
 
 
 def read_null_string(data: bytes, position: int, context: str) -> tuple[str, int]:
@@ -348,8 +352,9 @@ def map_item(
     custom_entries: dict[tuple[str, str], str],
     authentic_entries: dict[int, str],
     packaged_entries: dict[str, str],
+    authentic_item_base: int,
 ) -> dict[str, object]:
-    authentic_id = AUTHENTIC_ITEM_BASE + item.sprite_id
+    authentic_id = authentic_item_base + item.sprite_id
     authentic = None
     if item.sprite_id >= 0 and authentic_id in authentic_entries:
         authentic = {
@@ -362,6 +367,11 @@ def map_item(
     role: str | None = None
     location = item.sprite_location or ""
     external_spec = parse_external_spec(location)
+    if location.startswith(EXTERNAL_PREFIX) and external_spec is None:
+        raise ExportError(
+            f"Item {item.item_id} ({item.diagnostic_name!r}) has malformed external PNG "
+            f"spriteLocation {location!r}; expected external-png:<asset> or external-png:<asset>@<width>x<height>"
+        )
     if external_spec is not None:
         external = resolve_external_asset(external_spec, packaged_entries)
         role = "external-png"
@@ -415,6 +425,7 @@ def build_manifest(
     authentic_entries: dict[int, str],
     packaged_entries: dict[str, str],
     inputs: list[dict[str, str]],
+    authentic_item_base: int,
 ) -> dict[str, object]:
     catalog_by_id = {item.item_id: item for item in all_items}
     if selected_ids is None:
@@ -427,7 +438,10 @@ def build_manifest(
             raise ExportError(f"Requested item IDs are absent from the final client catalog: {missing}")
         selected = [catalog_by_id[item_id] for item_id in requested]
         selection_kind = "filtered-compatibility"
-    mapped = [map_item(item, custom_entries, authentic_entries, packaged_entries) for item in selected]
+    mapped = [
+        map_item(item, custom_entries, authentic_entries, packaged_entries, authentic_item_base)
+        for item in selected
+    ]
     selection: dict[str, object] = {
         "kind": selection_kind,
         "itemCount": len(mapped),
@@ -457,7 +471,7 @@ def build_manifest(
                 "path": repository_path(AUTHENTIC_ARCHIVE),
                 "sha256": sha256_file(AUTHENTIC_ARCHIVE),
                 "numericEntryCount": len(authentic_entries),
-                "itemArchiveBaseId": AUTHENTIC_ITEM_BASE,
+                "itemArchiveBaseId": authentic_item_base,
             },
             "externalPngPackaging": {
                 "clientJarPath": repository_path(CLIENT_JAR),
@@ -479,16 +493,18 @@ def write_manifest(path: Path, manifest: dict[str, object]) -> None:
 def export(full_output: Path, compatibility_output: Path, skip_client_build: bool) -> tuple[int, int]:
     if not skip_client_build:
         build_client()
-    all_items = extract_final_items()
+    all_items, authentic_item_base = extract_final_items()
     custom_entries = load_custom_archive_entries(CUSTOM_ARCHIVE)
     authentic_entries = load_authentic_archive_entries(AUTHENTIC_ARCHIVE)
     packaged_entries = load_packaged_assets(CLIENT_JAR)
     inputs = provider_inputs()
     full = build_manifest(
-        all_items, None, custom_entries, authentic_entries, packaged_entries, inputs
+        all_items, None, custom_entries, authentic_entries, packaged_entries, inputs,
+        authentic_item_base,
     )
     compatibility = build_manifest(
-        all_items, COMPATIBILITY_IDS, custom_entries, authentic_entries, packaged_entries, inputs
+        all_items, COMPATIBILITY_IDS, custom_entries, authentic_entries, packaged_entries, inputs,
+        authentic_item_base,
     )
     write_manifest(full_output, full)
     write_manifest(compatibility_output, compatibility)
