@@ -24,6 +24,39 @@ Both use schema version 1 and manifest type
 `world-builder-item-visual-mapping`. The companion schema is
 `tools/item-visual-provider/item-visual-mapping-v1.schema.json`.
 
+## Portable provider bundle
+
+Create the independent handoff beneath an output parent with:
+
+```bash
+python3 tools/item-visual-provider/export-item-visuals.py --bundle-output /absolute/handoff/parent
+```
+
+The stable top-level directory is
+`/absolute/handoff/parent/world-builder-provider`. The exporter refuses to
+overwrite an existing directory. The bundle contains the full and 3309–3317
+manifests, the version 1 schema, both authentic and custom sprite archives, and
+exactly the external PNG files referenced by the full catalog. Bundle manifests
+replace Core/JAR asset locations with safe paths relative to the provider root;
+consumption does not need the Core checkout or execute the client JAR.
+
+`package-manifest-v1.json` lists every other file in sorted provider-relative
+path order with its role, size, and SHA-256. It deliberately does not hash
+itself. Output contains no timestamp, absolute source path, branch, or temporary
+directory identity, so generation from identical inputs is byte-identical.
+
+Verify a copied bundle offline with:
+
+```bash
+python3 tools/item-visual-provider/export-item-visuals.py \
+  --verify-bundle /absolute/handoff/parent/world-builder-provider
+```
+
+Verification does not build or run the client. It rejects traversal, symlinks,
+duplicate and case-colliding paths, undeclared or missing files, size/hash
+mismatches, stale full/compatibility identities, unreferenced PNGs, invalid
+asset references, corrupt archives, and archive entry-count/hash drift.
+
 ## Resolution contract
 
 The mapping preserves `itemId` and `spriteId` separately. Consumers must never
@@ -43,7 +76,10 @@ entries retain both their base-archive entry hash and their spritepack override
 key. Authentic entries include their actual archive ID—not merely the logical
 sprite ID—and an entry hash when that archive entry exists. External PNGs
 include the unmodified specification, resolved dimensions, source path,
-packaged resource path, and byte hash.
+packaged resource path, and byte hash. In portable manifests, `providerPath`
+replaces the standalone `sourcePath` and `packagedResource` fields. Archive
+`path` values and the external `providerRoot` are likewise relative to
+`world-builder-provider/`.
 
 Top-level provider input hashes identify the definition sources used to build
 the final catalog. Archive hashes identify the two Core sprite providers. The

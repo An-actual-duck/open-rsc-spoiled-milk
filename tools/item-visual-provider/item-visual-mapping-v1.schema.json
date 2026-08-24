@@ -4,67 +4,154 @@
   "title": "World Builder item visual mapping v1",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "manifestType",
-    "provider",
-    "assetProviders",
-    "selection",
-    "itemVisuals"
-  ],
+  "required": ["schemaVersion", "manifestType", "provider", "assetProviders", "selection", "itemVisuals"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "manifestType": { "const": "world-builder-item-visual-mapping" },
+    "provider": { "$ref": "#/$defs/provider" },
+    "assetProviders": { "$ref": "#/$defs/assetProviders" },
+    "selection": { "$ref": "#/$defs/selection" },
+    "itemVisuals": { "type": "array", "items": { "$ref": "#/$defs/itemVisual" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*[:\\\\]).+$"
+    },
     "provider": {
       "type": "object",
-      "required": ["identity", "definitionMode", "catalogItemCount", "catalogSha256", "inputs"]
+      "additionalProperties": false,
+      "required": ["identity", "definitionMode", "catalogItemCount", "catalogSha256", "inputs"],
+      "properties": {
+        "identity": { "type": "string" },
+        "definitionMode": { "type": "string" },
+        "catalogItemCount": { "type": "integer", "minimum": 0 },
+        "catalogSha256": { "$ref": "#/$defs/sha256" },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256"],
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          }
+        }
+      }
+    },
+    "archiveProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/safeRelativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "entryCount": { "type": "integer", "minimum": 0 },
+        "numericEntryCount": { "type": "integer", "minimum": 0 },
+        "itemArchiveBaseId": { "type": "integer", "minimum": 0 }
+      }
     },
     "assetProviders": {
       "type": "object",
-      "required": ["customSpriteArchive", "authenticSpriteArchive", "externalPngPackaging"]
+      "additionalProperties": false,
+      "required": ["customSpriteArchive", "authenticSpriteArchive", "externalPngPackaging"],
+      "properties": {
+        "customSpriteArchive": { "$ref": "#/$defs/archiveProvider" },
+        "authenticSpriteArchive": { "$ref": "#/$defs/archiveProvider" },
+        "externalPngPackaging": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["clientJarPath", "packagedPngCount", "resourceRoot"],
+              "properties": {
+                "clientJarPath": { "type": "string", "minLength": 1 },
+                "packagedPngCount": { "type": "integer", "minimum": 0 },
+                "resourceRoot": { "type": "string", "minLength": 1 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["providerRoot", "referencedPngCount"],
+              "properties": {
+                "providerRoot": { "$ref": "#/$defs/safeRelativePath" },
+                "referencedPngCount": { "type": "integer", "minimum": 0 }
+              }
+            }
+          ]
+        }
+      }
     },
     "selection": {
       "type": "object",
-      "required": ["kind", "itemCount", "itemIdsSha256", "mappingSha256"]
+      "additionalProperties": false,
+      "required": ["kind", "itemCount", "itemIdsSha256", "mappingSha256"],
+      "properties": {
+        "kind": { "enum": ["complete-final-catalog", "filtered-compatibility"] },
+        "itemCount": { "type": "integer", "minimum": 0 },
+        "itemIdsSha256": { "$ref": "#/$defs/sha256" },
+        "mappingSha256": { "$ref": "#/$defs/sha256" },
+        "minimumItemId": { "type": "integer", "minimum": 0 },
+        "maximumItemId": { "type": "integer", "minimum": 0 }
+      }
     },
-    "itemVisuals": {
-      "type": "array",
-      "items": { "$ref": "#/$defs/itemVisual" }
-    }
-  },
-  "$defs": {
-    "nullableObject": {
+    "authenticArchive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["archiveId", "entrySha256"],
+      "properties": {
+        "archiveId": { "type": "integer", "minimum": 0 },
+        "entrySha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "customOrSpritepack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subspace", "entry", "baseArchiveEntrySha256", "spritepackOverrideKey"],
+      "properties": {
+        "subspace": { "type": "string" },
+        "entry": { "type": "string" },
+        "baseArchiveEntrySha256": { "$ref": "#/$defs/sha256" },
+        "spritepackOverrideKey": { "type": "string" }
+      }
+    },
+    "externalPng": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["specification", "assetName", "targetWidth", "targetHeight", "sha256"],
+      "properties": {
+        "specification": { "type": "string", "minLength": 1 },
+        "assetName": { "type": "string", "minLength": 1 },
+        "targetWidth": { "type": "integer", "minimum": 1, "maximum": 46 },
+        "targetHeight": { "type": "integer", "minimum": 1, "maximum": 30 },
+        "sourcePath": { "type": "string", "minLength": 1 },
+        "packagedResource": { "type": "string", "minLength": 1 },
+        "providerPath": { "$ref": "#/$defs/safeRelativePath" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      },
       "oneOf": [
-        { "type": "object" },
-        { "type": "null" }
+        { "required": ["sourcePath", "packagedResource"] },
+        { "required": ["providerPath"] }
       ]
     },
     "itemVisual": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "itemId",
-        "diagnosticName",
-        "spriteLocation",
-        "spriteId",
-        "resolvedBaseSourceRole",
-        "authenticArchive",
-        "customOrSpritepack",
-        "externalPng",
-        "pictureMask",
-        "blueMask"
-      ],
+      "required": ["itemId", "diagnosticName", "spriteLocation", "spriteId", "resolvedBaseSourceRole", "authenticArchive", "customOrSpritepack", "externalPng", "pictureMask", "blueMask"],
       "properties": {
         "itemId": { "type": "integer", "minimum": 0 },
         "diagnosticName": { "type": ["string", "null"] },
         "spriteLocation": { "type": ["string", "null"] },
         "spriteId": { "type": "integer" },
-        "resolvedBaseSourceRole": {
-          "enum": ["custom-sprite-archive", "external-png", "authentic-archive-fallback"]
-        },
-        "authenticArchive": { "$ref": "#/$defs/nullableObject" },
-        "customOrSpritepack": { "$ref": "#/$defs/nullableObject" },
-        "externalPng": { "$ref": "#/$defs/nullableObject" },
+        "resolvedBaseSourceRole": { "enum": ["custom-sprite-archive", "external-png", "authentic-archive-fallback"] },
+        "authenticArchive": { "oneOf": [{ "$ref": "#/$defs/authenticArchive" }, { "type": "null" }] },
+        "customOrSpritepack": { "oneOf": [{ "$ref": "#/$defs/customOrSpritepack" }, { "type": "null" }] },
+        "externalPng": { "oneOf": [{ "$ref": "#/$defs/externalPng" }, { "type": "null" }] },
         "pictureMask": { "type": "integer" },
         "blueMask": { "type": "integer" }
       }

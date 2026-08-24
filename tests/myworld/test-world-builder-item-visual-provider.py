@@ -4,11 +4,16 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
+import os
+import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+from jsonschema import Draft202012Validator
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +21,37 @@ TOOL = ROOT / "tools/item-visual-provider/export-item-visuals.py"
 FULL = ROOT / "tools/item-visual-provider/generated/item-visuals-full-v1.json"
 COMPATIBILITY = ROOT / "tools/item-visual-provider/generated/item-visuals-3309-3317-v1.json"
 SCHEMA = ROOT / "tools/item-visual-provider/item-visual-mapping-v1.schema.json"
+
+
+def bundle_snapshot(root: Path) -> dict[str, bytes]:
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in sorted(root.rglob("*"))
+        if path.is_file() and not path.is_symlink()
+    }
+
+
+def rewrite_package_record(bundle: Path, relative: str) -> None:
+    package_path = bundle / "package-manifest-v1.json"
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    payload = (bundle / relative).read_bytes()
+    for record in package["files"]:
+        if record["path"] == relative:
+            record["size"] = len(payload)
+            record["sha256"] = hashlib.sha256(payload).hexdigest()
+            break
+    else:
+        raise AssertionError(f"package record not found: {relative}")
+    package_path.write_text(json.dumps(package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def expect_bundle_failure(tool, bundle: Path, fragment: str) -> None:
+    try:
+        tool.validate_bundle(bundle)
+    except tool.ExportError as failure:
+        assert fragment.lower() in str(failure).lower(), str(failure)
+    else:
+        raise AssertionError(f"invalid bundle was accepted; expected {fragment!r}")
 
 
 def load_tool():
@@ -69,8 +105,10 @@ def main() -> None:
         first_compatibility = temp / "first-compatibility.json"
         second_full = temp / "second-full.json"
         second_compatibility = temp / "second-compatibility.json"
-        tool.export(first_full, first_compatibility, skip_client_build=True)
-        tool.export(second_full, second_compatibility, skip_client_build=True)
+        first_parent = temp / "first-bundle"
+        second_parent = temp / "second-bundle"
+        tool.export(first_full, first_compatibility, skip_client_build=True, bundle_output=first_parent)
+        tool.export(second_full, second_compatibility, skip_client_build=True, bundle_output=second_parent)
         assert first_full.read_bytes() == second_full.read_bytes(), "full export is nondeterministic"
         assert first_compatibility.read_bytes() == second_compatibility.read_bytes(), (
             "compatibility export is nondeterministic"
@@ -79,12 +117,130 @@ def main() -> None:
         assert first_compatibility.read_bytes() == COMPATIBILITY.read_bytes(), (
             "checked-in compatibility artifact is stale"
         )
+        first_bundle = first_parent / tool.BUNDLE_DIRECTORY_NAME
+        second_bundle = second_parent / tool.BUNDLE_DIRECTORY_NAME
+        assert bundle_snapshot(first_bundle) == bundle_snapshot(second_bundle), (
+            "portable bundle generation is not byte-identical"
+        )
+        tool.validate_bundle(first_bundle)
+        package = json.loads((first_bundle / tool.BUNDLE_PACKAGE_MANIFEST).read_text(encoding="utf-8"))
+        assert [record["path"] for record in package["files"]] == sorted(
+            record["path"] for record in package["files"]
+        )
+        assert len({record["path"].casefold() for record in package["files"]}) == len(package["files"])
+        for record in package["files"]:
+            asset = first_bundle / record["path"]
+            assert asset.resolve().is_relative_to(first_bundle.resolve())
+            assert asset.stat().st_size == record["size"]
+            assert hashlib.sha256(asset.read_bytes()).hexdigest() == record["sha256"]
+        bundled_full = json.loads((first_bundle / tool.BUNDLE_FULL_MANIFEST).read_text(encoding="utf-8"))
+        bundled_compatibility = json.loads(
+            (first_bundle / tool.BUNDLE_COMPAT_MANIFEST).read_text(encoding="utf-8")
+        )
+        bundled_schema = json.loads((first_bundle / tool.BUNDLE_SCHEMA).read_text(encoding="utf-8"))
+        Draft202012Validator(bundled_schema).validate(bundled_full)
+        Draft202012Validator(bundled_schema).validate(bundled_compatibility)
+        external_paths = {
+            record["externalPng"]["providerPath"]
+            for record in bundled_full["itemVisuals"]
+            if record["externalPng"] is not None
+        }
+        packaged_external_paths = {
+            record["path"] for record in package["files"] if record["role"] == "external-png"
+        }
+        assert external_paths == packaged_external_paths
+        for record in bundled_full["itemVisuals"]:
+            if record["externalPng"] is not None:
+                assert set(record["externalPng"]) == {
+                    "specification", "assetName", "targetWidth", "targetHeight", "providerPath", "sha256"
+                }
+        assert "clientJarPath" not in bundled_full["assetProviders"]["externalPngPackaging"]
+
+        invalid_root = temp / "invalid-cases"
+        invalid_root.mkdir()
+
+        traversal = invalid_root / "traversal" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, traversal)
+        traversal_package = json.loads((traversal / tool.BUNDLE_PACKAGE_MANIFEST).read_text(encoding="utf-8"))
+        traversal_package["files"][0]["path"] = "../escape"
+        (traversal / tool.BUNDLE_PACKAGE_MANIFEST).write_text(
+            json.dumps(traversal_package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        expect_bundle_failure(tool, traversal, "unsafe provider-relative path")
+
+        duplicate = invalid_root / "duplicate" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, duplicate)
+        duplicate_package = json.loads((duplicate / tool.BUNDLE_PACKAGE_MANIFEST).read_text(encoding="utf-8"))
+        duplicate_package["files"].append(dict(duplicate_package["files"][0]))
+        (duplicate / tool.BUNDLE_PACKAGE_MANIFEST).write_text(
+            json.dumps(duplicate_package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        expect_bundle_failure(tool, duplicate, "duplicate")
+
+        case_collision = invalid_root / "case" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, case_collision)
+        case_package = json.loads((case_collision / tool.BUNDLE_PACKAGE_MANIFEST).read_text(encoding="utf-8"))
+        collision = dict(case_package["files"][0])
+        collision["path"] = collision["path"].upper()
+        case_package["files"].append(collision)
+        (case_collision / tool.BUNDLE_PACKAGE_MANIFEST).write_text(
+            json.dumps(case_package, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        expect_bundle_failure(tool, case_collision, "case-colliding")
+
+        missing_asset = invalid_root / "missing" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, missing_asset)
+        first_external = sorted(external_paths)[0]
+        (missing_asset / first_external).unlink()
+        expect_bundle_failure(tool, missing_asset, "inventory mismatch")
+
+        hash_mismatch = invalid_root / "hash" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, hash_mismatch)
+        changed = bytearray((hash_mismatch / first_external).read_bytes())
+        changed[0] ^= 0x01
+        (hash_mismatch / first_external).write_bytes(changed)
+        expect_bundle_failure(tool, hash_mismatch, "sha-256 mismatch")
+
+        stale = invalid_root / "stale" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, stale)
+        stale_path = stale / tool.BUNDLE_COMPAT_MANIFEST
+        stale_manifest = json.loads(stale_path.read_text(encoding="utf-8"))
+        stale_manifest["itemVisuals"][0]["diagnosticName"] = "stale fixture"
+        stale_manifest["selection"]["mappingSha256"] = tool.canonical_hash(stale_manifest["itemVisuals"])
+        stale_path.write_text(json.dumps(stale_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        rewrite_package_record(stale, tool.BUNDLE_COMPAT_MANIFEST)
+        expect_bundle_failure(tool, stale, "stale compatibility manifest")
+
+        corrupt_archive = invalid_root / "corrupt" / tool.BUNDLE_DIRECTORY_NAME
+        shutil.copytree(first_bundle, corrupt_archive)
+        corrupt_path = corrupt_archive / tool.BUNDLE_AUTHENTIC_ARCHIVE
+        corrupt_path.write_bytes(b"not a zip archive")
+        for manifest_name in (tool.BUNDLE_FULL_MANIFEST, tool.BUNDLE_COMPAT_MANIFEST):
+            manifest_path = corrupt_archive / manifest_name
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["assetProviders"]["authenticSpriteArchive"]["sha256"] = hashlib.sha256(
+                corrupt_path.read_bytes()
+            ).hexdigest()
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            rewrite_package_record(corrupt_archive, manifest_name)
+        rewrite_package_record(corrupt_archive, tool.BUNDLE_AUTHENTIC_ARCHIVE)
+        expect_bundle_failure(tool, corrupt_archive, "cannot read authentic sprite archive")
+
+        if hasattr(os, "symlink"):
+            symlink_bundle = invalid_root / "symlink" / tool.BUNDLE_DIRECTORY_NAME
+            shutil.copytree(first_bundle, symlink_bundle)
+            linked = symlink_bundle / first_external
+            linked.unlink()
+            linked.symlink_to(FULL)
+            expect_bundle_failure(tool, symlink_bundle, "symlink")
 
     full = json.loads(FULL.read_text(encoding="utf-8"))
     compatibility = json.loads(COMPATIBILITY.read_text(encoding="utf-8"))
     schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
     assert schema["properties"]["schemaVersion"]["const"] == 1
     assert schema["properties"]["manifestType"]["const"] == full["manifestType"]
+    Draft202012Validator(schema).validate(full)
+    Draft202012Validator(schema).validate(compatibility)
     assert_manifest_shape(full, list(range(3318)), "complete-final-catalog")
     assert_manifest_shape(compatibility, list(range(3309, 3318)), "filtered-compatibility")
     assert full["provider"] == compatibility["provider"]
