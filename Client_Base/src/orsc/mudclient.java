@@ -3635,15 +3635,28 @@ public final class mudclient implements Runnable {
 	}
 
 	public void dematerializeGameObjectInstance(int index) {
+		dematerializeGameObjectInstance(index, false);
+	}
+
+	RSModel deferGameObjectSceneRemoval(int index) {
+		return dematerializeGameObjectInstance(index, true);
+	}
+
+	private RSModel dematerializeGameObjectInstance(
+			int index, boolean deferSceneRemoval) {
 		if (index < 0 || index >= this.sceneInstanceStore.getGameObjectCapacity()
 			|| !this.isGameObjectInstanceMaterialized(index)) {
-			return;
+			return null;
 		}
 		debugSceneGameObjectEvent("dematerialize", index, "");
-		this.scene.removeModel(this.getGameObjectInstanceModel(index));
+		RSModel model = this.getGameObjectInstanceModel(index);
+		if (!deferSceneRemoval) {
+			this.scene.removeModel(model);
+		}
 		this.world.removeGameObject_CollisonFlags(this.getGameObjectInstanceID(index),
 			this.getGameObjectInstanceX(index), this.getGameObjectInstanceZ(index));
 		this.setGameObjectInstanceMaterialized(index, false);
+		return model;
 	}
 
 	public void materializeWallObjectInstance(int index) {
@@ -3672,18 +3685,35 @@ public final class mudclient implements Runnable {
 	}
 
 	public void dematerializeWallObjectInstance(int index) {
+		dematerializeWallObjectInstance(index, false);
+	}
+
+	RSModel deferWallObjectSceneRemoval(int index) {
+		return dematerializeWallObjectInstance(index, true);
+	}
+
+	private RSModel dematerializeWallObjectInstance(
+			int index, boolean deferSceneRemoval) {
 		if (index < 0 || index >= this.sceneInstanceStore.getWallObjectCapacity()
 			|| !this.isWallObjectInstanceMaterialized(index)) {
-			return;
+			return null;
 		}
 		debugSceneWallObjectEvent("dematerialize", index, "");
-		this.scene.removeModel(this.getWallObjectInstanceModel(index));
+		RSModel model = this.getWallObjectInstanceModel(index);
+		if (!deferSceneRemoval) {
+			this.scene.removeModel(model);
+		}
 		this.world.removeWallObject_CollisionFlags(true,
 			this.getWallObjectInstanceDir(index),
 			this.getWallObjectInstanceZ(index),
 			this.getWallObjectInstanceX(index),
 			this.getWallObjectInstanceID(index));
 		this.setWallObjectInstanceMaterialized(index, false);
+		return model;
+	}
+
+	void removeSceneModels(RSModel[] removals, int removalCount) {
+		this.scene.removeModels(removals, removalCount);
 	}
 
 	private void materializeLoadedTerrainScenery() {

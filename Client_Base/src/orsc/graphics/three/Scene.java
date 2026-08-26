@@ -12,6 +12,7 @@ import orsc.util.GenUtil;
 
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 
 public final class Scene {
 	static final int TRANSPARENT = 12345678;
@@ -3658,6 +3659,55 @@ public final class Scene {
 		} catch (RuntimeException var5) {
 			throw GenUtil.makeThrowable(var5, "lb.W(" + (var1 != null ? "{...}" : "null") + ',' + "dummy" + ')');
 		}
+	}
+
+	/**
+	 * Removes a packet-sized group of models with one stable scene compaction.
+	 *
+	 * <p>Boundary scenery packets can retire hundreds of models together. Calling
+	 * {@link #removeModel(RSModel)} for each one repeatedly shifts the same
+	 * retained suffix. Identity membership preserves the existing reference-based
+	 * ownership rule while a single pass preserves model and parallel-metadata
+	 * order.</p>
+	 */
+	public final void removeModels(RSModel[] removals, int removalCount) {
+		if (removals == null) {
+			throw new NullPointerException("removals");
+		}
+		if (removalCount < 0 || removalCount > removals.length) {
+			throw new IllegalArgumentException(
+				"Removal count is outside the model array");
+		}
+		if (removalCount == 0 || this.modelCount == 0) {
+			return;
+		}
+		IdentityHashMap<RSModel, Boolean> removalSet =
+			new IdentityHashMap<RSModel, Boolean>(removalCount);
+		for (int index = 0; index < removalCount; index++) {
+			RSModel removal = removals[index];
+			if (removal != null) {
+				removalSet.put(removal, Boolean.TRUE);
+			}
+		}
+		if (removalSet.isEmpty()) {
+			return;
+		}
+
+		int retained = 0;
+		for (int index = 0; index < this.modelCount; index++) {
+			RSModel model = this.models[index];
+			if (removalSet.containsKey(model)) {
+				continue;
+			}
+			if (retained != index) {
+				this.models[retained] = model;
+				this.m_jb[retained] = this.m_jb[index];
+			}
+			retained++;
+		}
+		Arrays.fill(this.models, retained, this.modelCount, null);
+		Arrays.fill(this.m_jb, retained, this.modelCount, 0);
+		this.modelCount = retained;
 	}
 
 	public final void setCamera(int centerX, int centerY, int centerZ, int xRot, int yRot, int zRot, int offset) {

@@ -3577,6 +3577,9 @@ public class PacketHandler {
 
 	private void applyLegacyGameObjectBatch(
 			final LegacyStaticSceneDeltaBatch batch) {
+		RSModel[] sceneRemovals =
+			new RSModel[mc.getGameObjectInstanceCount()];
+		int sceneRemovalCount = 0;
 		int retained = 0;
 		for (int index = 0;
 				index < mc.getGameObjectInstanceCount(); index++) {
@@ -3584,7 +3587,10 @@ public class PacketHandler {
 					mc.getGameObjectInstanceX(index),
 					mc.getGameObjectInstanceZ(index),
 					mc.getGameObjectInstanceDir(index))) {
-				mc.dematerializeGameObjectInstance(index);
+				RSModel removed = mc.deferGameObjectSceneRemoval(index);
+				if (removed != null) {
+					sceneRemovals[sceneRemovalCount++] = removed;
+				}
 				continue;
 			}
 			if (retained != index) {
@@ -3605,6 +3611,7 @@ public class PacketHandler {
 			}
 			retained++;
 		}
+		mc.removeSceneModels(sceneRemovals, sceneRemovalCount);
 		mc.setGameObjectInstanceCount(retained);
 
 		for (LegacyStaticSceneDeltaBatch.Record record : batch.records()) {
@@ -3901,6 +3908,9 @@ public class PacketHandler {
 
 	private void applyLegacyWallObjectBatch(
 			final LegacyStaticSceneDeltaBatch batch) {
+		RSModel[] sceneRemovals =
+			new RSModel[mc.getWallObjectInstanceCount()];
+		int sceneRemovalCount = 0;
 		int retained = 0;
 		for (int index = 0;
 				index < mc.getWallObjectInstanceCount(); index++) {
@@ -3908,7 +3918,10 @@ public class PacketHandler {
 					mc.getWallObjectInstanceX(index),
 					mc.getWallObjectInstanceZ(index),
 					mc.getWallObjectInstanceDir(index))) {
-				mc.dematerializeWallObjectInstance(index);
+				RSModel removed = mc.deferWallObjectSceneRemoval(index);
+				if (removed != null) {
+					sceneRemovals[sceneRemovalCount++] = removed;
+				}
 				continue;
 			}
 			if (retained != index) {
@@ -3929,6 +3942,7 @@ public class PacketHandler {
 			}
 			retained++;
 		}
+		mc.removeSceneModels(sceneRemovals, sceneRemovalCount);
 		mc.setWallObjectInstanceCount(retained);
 
 		for (LegacyStaticSceneDeltaBatch.Record record :

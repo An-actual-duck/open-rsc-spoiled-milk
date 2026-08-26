@@ -237,6 +237,9 @@ def main() -> None:
         "applyLegacyGameObjectBatch(batch);",
         "applyLegacyWallObjectBatch(batch);",
         "batch.survivingAdds()",
+        "deferGameObjectSceneRemoval(index)",
+        "deferWallObjectSceneRemoval(index)",
+        "removeSceneModels(sceneRemovals, sceneRemovalCount)",
     )
     for snippet in required:
         if snippet not in handler:
