@@ -1103,3 +1103,29 @@ not claim a replacement live transition percentile. The next controlled
 private route should measure `opcode-48` and the end-to-end warm interval; if
 the scene application tail is no longer material, move to the independently
 ranked `context.scope-apply` path rather than micro-tuning removal further.
+
+### Integrated owner route and residual observations (2026-08-25)
+
+Production-equivalent private session
+`output/renderer-diagnostics/session-20260825-220623-2839085` exercised current
+`main` revision `0107fc11a` with the replacement layered package, prediction,
+symmetric residency, readiness, and atomic activation enabled. The owner
+accepted the route as good. Every inspected transition used native authority,
+and its atomic scenery/wall fence matched.
+
+Two low-severity follow-ups remain:
+
+- an unreproduced narrow terrain strip occasionally appears missing at extreme
+  distance, plausibly at an outer chunk boundary; fog hides it and it does not
+  affect ordinary gameplay; and
+- small non-intrusive transition hitches remain, with an owner-observed visual
+  correlation between the hitch and shadows appearing over newly visible
+  terrain.
+
+Neither observation establishes a cause. For the strip, capture the exact
+center and verify source coverage, mesh output, residency, draw-range culling,
+and final presentation separately. For the hitch, join frame-interval outliers
+to shadow-mask build/cache/upload and terrain-activation records under fixed
+lighting, separating cold visits from warm returns. Retain both as follow-up
+work; do not block the current release candidate or pursue sub-material shadow
+tuning without measured evidence.

@@ -1775,3 +1775,40 @@ micro-workload improvement is accepted without claiming a new live
 `opcode-48` or end-to-end transition percentile. A future controlled client
 run should compare those two values directly before ranking context
 `scope-apply`; further removal micro-tuning is at the diminishing-returns gate.
+
+## Integrated private acceptance and follow-ups (2026-08-25)
+
+The owner tested published `main` revision `0107fc11a` with the current server
+runtime optimizations and the production-equivalent
+`spoiled-milk-replacement` layered profile. The valid diagnostic record is
+`output/renderer-diagnostics/session-20260825-220623-2839085`; the earlier
+`session-20260825-220222-2828394` used the legacy-default private profile and
+is explicitly invalid for renderer/boundary acceptance.
+
+The accepted session remained on `native-authority-only` world construction
+and `native-authoritative` region transitions. Recorded atomic scene fences
+matched expected object/wall counts and hashes. The owner described the result
+as good and accepted it for continued release preparation, with two
+non-blocking follow-ups:
+
+1. **Intermittent distant terrain strip.** On rare occasions, a narrow strip of
+   terrain appears absent far in the distance, likely near an outer chunk or
+   presentation-field seam. It could not be reproduced on demand, does not
+   intrude on gameplay, and is effectively hidden when fog is enabled. Do not
+   assume the exact owner until a marker/capture identifies the affected
+   center, chunk, draw range, and whether the terrain is absent from source,
+   mesh, residency, culling, or only presentation.
+2. **Small residual transition hitches.** Remaining hitches are noticeable but
+   minor and non-intrusive. The owner's visual impression is that they coincide
+   with shadows appearing as a newly loaded area becomes visible. Treat this as
+   a hypothesis. A future bounded run should correlate frame spikes with
+   shadow-mask build/cache/upload telemetry and native terrain activation,
+   compare first visits with warm returns under fixed lighting, and determine
+   whether shadow work is material before changing it. Do not reopen broad
+   shadow micro-optimization if the measured contribution is below the
+   established materiality threshold.
+
+These observations do not invalidate the scene-removal optimization or the
+private acceptance result. The distant seam remains a visual-correctness
+backlog item, and shadow correlation is the preferred next renderer performance
+investigation after this release candidate rather than a prerequisite for it.

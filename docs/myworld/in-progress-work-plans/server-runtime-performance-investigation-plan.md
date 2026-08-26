@@ -600,3 +600,22 @@ materiality threshold and are closed for this workload.
   report still flags two pre-existing client findings in unchanged
   `DoSkillInterface` and `PartyInterface`; neither file differs from the branch
   starting commit, so this is baseline drift rather than a server regression.
+
+## Integrated private owner route (2026-08-25)
+
+Published `main` revision `0107fc11a` was launched on the private database and
+port with the production-equivalent `spoiled-milk-replacement` layered profile.
+This means all accepted server runtime optimizations in this plan were active
+during renderer session
+`output/renderer-diagnostics/session-20260825-220623-2839085`. The route
+exercised real client authentication, network framing, movement, layered scene
+delivery, visibility/world updates, and ordinary NPC presence without a
+reported server failure. Native scene activation completed with matching
+object and wall fences.
+
+This was primarily a renderer and boundary-loading acceptance route. It is
+useful integrated evidence, but it does not replace the deterministic combat,
+projectile, authenticated-network, or NPC-roaming fixtures above, nor does it
+constitute a complete owner gameplay matrix for those server paths. The server
+optimization code remains at its accepted coding boundary and is ready for
+broader release-candidate gameplay testing alongside the renderer.
