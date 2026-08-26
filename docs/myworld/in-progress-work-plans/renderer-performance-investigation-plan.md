@@ -1737,3 +1737,41 @@ provided an in-world visual review at the profiled scene and two deliberate
 strict diagnostic capture frames. Both captures completed with all indexed
 artifacts present, zero failed frames, and zero client exceptions. This final
 session was a visual/capture acceptance run, not a performance comparison.
+
+## Scene-application follow-up (2026-08-25)
+
+The next batch began from published `main` revision `17479f405`. Re-analysis
+of the preserved cardinal-crossing baseline
+`session-20260821-194732-3127165` fixed the player-visible reference point:
+warm return transitions had OpenGL intervals at 59.350/72.724/88.767 ms
+p95/p99/max, while `packet.opcode-48` scene-delta application measured
+6.939/8.795/9.895 ms p50/p95/max across 28 correlated traces. Context/scope
+application remained independently larger at 10.984 ms p50. The prior packet
+planner already eliminated record-by-record full-list scans, so another
+planner rewrite was rejected.
+
+Code review found a second-order cost below that accepted planner: every
+retired scenery or wall model still called `Scene.removeModel` independently.
+Each call shifted the complete retained model-array suffix and its parallel
+metadata. A deterministic 12,000-model / 3,000-removal workload measured
+31.340--34.033 ms for that repeated stable shifting (33.633 ms median over
+three pre-change runs).
+
+The accepted implementation defers only model-array removal while retaining
+the established per-instance collision removal, materialization flags,
+compaction, replacement order, and packet semantics. `Scene` resolves the
+requested models by identity and performs one stable compaction of both the
+model and metadata arrays. The same workload completed in 1.375--1.937 ms
+across three post-change runs, a 17.67x--24.48x speedup. The fixture proves
+exact retained model identity, order, metadata, count, and released tail
+slots; the existing seeded scene-delta oracle still proves 500 mixed scenery
+and directional-wall packets against sequential semantics.
+
+The batch compiles and passes boundary diagnostics, client region loading,
+layered protocol authority, minimap transitions, gameplay/outer presentation
+rings, upper-floor roof/wall coverage, and the full renderer guard suite. No
+private graphical session was launched for this worker batch, so the measured
+micro-workload improvement is accepted without claiming a new live
+`opcode-48` or end-to-end transition percentile. A future controlled client
+run should compare those two values directly before ranking context
+`scope-apply`; further removal micro-tuning is at the diminishing-returns gate.

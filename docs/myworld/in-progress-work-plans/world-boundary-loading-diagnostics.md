@@ -1078,3 +1078,28 @@ reopen prepared halos or change terrain, minimap, residency, or activation
 semantics. Forced cardinal teleports provide repeatable activation timing but
 report prediction as unmatched; earlier route-walking campaigns remain the
 authority for movement-prediction correctness.
+
+### Stable scene-model removal follow-up (2026-08-25)
+
+The preserved published-main cardinal baseline was re-analyzed before the next
+change. Its 28 correlated traces put `packet.opcode-48` at
+6.939/8.795/9.895 ms p50/p95/max and warm-return OpenGL frame intervals at
+59.350/72.724/88.767 ms p95/p99/max. The already accepted delta planner was
+linear in packet records, but applying its removals still shifted the `Scene`
+model and metadata arrays once per removed object or wall.
+
+The follow-up collects only the materialized model identities retired by one
+legacy delta packet, retains the existing collision and instance-state side
+effects, and removes those identities with one stable scene-array compaction.
+A deterministic boundary-sized probe reduced 3,000 removals from 12,000 scene
+models from a 33.633 ms median to 1.375--1.937 ms (17.67x--24.48x), with exact
+retained identity, order, metadata, count, and cleanup. The 500-seed packet
+oracle, boundary diagnostics, region-load, layered authority, minimap,
+visibility-ring, upper-floor, client compile, and complete renderer guard
+suites pass.
+
+No graphical client was launched in this worker checkout, so this result does
+not claim a replacement live transition percentile. The next controlled
+private route should measure `opcode-48` and the end-to-end warm interval; if
+the scene application tail is no longer material, move to the independently
+ranked `context.scope-apply` path rather than micro-tuning removal further.
