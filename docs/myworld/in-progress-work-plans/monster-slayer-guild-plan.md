@@ -96,6 +96,56 @@ renders 40 positions in an 8x5 layout, and associate dialogue sells each
 satchel upgrade only in order. The capacity receipt precedes the refreshed inventory;
 accounts above 30 slots refuse an older client rather than truncating items.
 
+## Post-Launch Target Availability And Name Reconciliation
+
+The next Monster Slayer polish pass should audit both how readily task monsters
+can be farmed and whether the world identifies those monsters with the same
+specific names used by the task UI.
+
+### Target availability
+
+- Audit every mandatory and repeatable family, prioritizing the Fledgling and
+  Adept chains where sparse targets turn introductory assignments into travel
+  and waiting rather than combat.
+- Giant Spiders are the first reported problem: relevant spawns are sparse and
+  do not currently provide a satisfying clustered farming area. Identify an
+  accessible, thematically sensible cluster or propose bounded additional
+  placements rather than merely reducing the task count.
+- Record active spawn count, useful cluster size, respawn cadence, travel and
+  access gates, layer, Wilderness or environmental hazards, and competition
+  pressure for each family. A global count is not sufficient when the spawns
+  are isolated from one another.
+- Preserve intentional preparation and danger steps, but distinguish those
+  from accidental scarcity. Do not make a late boss common merely to match an
+  early creature's kills-per-minute.
+- Prefer concentrated additions in sensible habitats over scattering more
+  isolated spawns. Keep new placements clear of scenery, traversal routes,
+  quests, and unrelated training areas, and validate them on the layered map.
+
+### World and task names
+
+Player-facing world names should be as specific as the Monster Slayer task
+when otherwise identical base names represent meaningfully different combat
+tiers. Examples include `Young Giant Spider`, `Tough Goblin`, `Large Rat`, and
+`Green Dragon`. NPCs may share the same specific name when they also share the
+same intended combat tier; an internal ID difference alone does not require a
+different player-facing name.
+
+This is a client/server definition reconciliation task, not just a task-label
+edit. Current source evidence already includes server MyWorld names and client
+presentation overrides for IDs `4`, `23`, `47`, `153`, `154`, and `177`, yet
+the reported in-world names do not consistently reflect them. Green Dragon ID
+`196` is named `Green Dragon` by the server MyWorld override while the client's
+built-in ID `196` definition still says `Dragon`. The implementation pass must
+therefore establish which definition owns overhead text, interaction menus,
+examine text, targeting, and task messages in the production client, then fix
+the authoritative final-definition/load-order path.
+
+Add coverage against the final client definitions actually packaged for a
+release, not only the server JSON or an intermediate registry. Validate each
+renamed family in-world and ensure Slayer matching continues to use stable NPC
+IDs/families rather than localized display strings.
+
 ## Product Contract
 
 Monster Slayer is an independently authored distributed guild-standing system.

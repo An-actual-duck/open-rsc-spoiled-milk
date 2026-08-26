@@ -43,6 +43,32 @@ docs/player-command-list
       focused branches. The preserved backlog, dependency audit, execution
       order, and implementation-ready first camera task live in
       [fixes-and-changes-plan.md](fixes-and-changes-plan.md).
+- [ ] Rework Wizard Frumscone's guild-basement Stone loop. Remove the Baby Blue
+      Dragons from this basement encounter, retain Magic Zombies, and make the
+      basement a deliberately dense Magic Zombie farming area. Frumscone should
+      keep a per-player tally of eligible Magic Zombie kills and spend one kill
+      credit to convert one noted Stone into one ordinary Stone. This is a
+      conversion entitlement, not a free Stone drop: a successful exchange
+      consumes the noted Stone and one earned kill. The intended result is a
+      fast, combat-supported way to prepare inventory-sized Stone batches for
+      the nearby Soul Altar. Replace the current zombie-eye/blue-scale Stone
+      redemption dialogue and actions rather than leaving two competing
+      systems. The implementation brief must settle persistence, exchange
+      quantity/menu behavior, inventory-space failure, and exactly which
+      basement Magic Zombie spawns award credit before editing.
+- [ ] Explore a compact floating-combat-number presentation to replace or
+      supplement overlapping hitsplats. Repeated damage should queue, rise or
+      drift, and fade without occupying the same screen position. Give distinct
+      damage-source families their own presentation instead of using the same
+      yellow alternate-damage number for unrelated effects, while keeping the
+      numbers smaller and less intrusive. Color must not be the only semantic
+      distinction. This is a client presentation project: server damage,
+      contribution, death, and effect authority remain unchanged. The renderer
+      detail and acceptance questions are preserved in
+      [renderer-v2-plan.md](renderer-v2-plan.md#floating-combat-numbers-and-hitsplat-presentation).
+- [ ] Complete the Monster Slayer post-launch target-availability and NPC-name
+      reconciliation audit described in
+      [monster-slayer-guild-plan.md](monster-slayer-guild-plan.md#post-launch-target-availability-and-name-reconciliation).
 - [x] Add the active-potion HUD, safe direct-travel interactions, and Shilo
       furnace unlock described in the completed AI-2 record below.
 

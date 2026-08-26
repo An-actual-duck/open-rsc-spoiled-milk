@@ -542,6 +542,42 @@ old renderer's applet-era assumptions without losing a known-good baseline.
 These are worthwhile renderer-v2 expansions that remain open beyond the
 current alpha baseline:
 
+### Floating Combat Numbers And Hitsplat Presentation
+
+The current hitsplats are readable in isolation but overlap quickly when
+primary attacks, damage-over-time pulses, auxiliary effects, reflection, area
+damage, and other sources settle close together. The alternate yellow number
+also represents too many unrelated damage families to communicate why damage
+occurred.
+
+Explore a modernized, compact floating-combat-number layer with these goals:
+
+- numbers originate above or immediately around the affected character, then
+  rise, drift, or advance through a short bounded queue before fading;
+- concurrent and rapid damage events do not occupy the same position, and a
+  sustained stream remains readable without covering the character or nearby
+  UI;
+- primary damage, poison, burn, reflection, auxiliary weapon effects, Cleric
+  effects, summon effects, and other materially distinct families can receive
+  stable presentation categories instead of sharing one alternate-yellow
+  bucket;
+- text is smaller and less intrusive than the current stacked hitsplats while
+  retaining a clear zero/miss presentation where gameplay needs one;
+- color is supported but is not the sole identifier: outline, motion lane,
+  glyph, prefix, or another compact cue must keep categories distinguishable
+  for color-vision accessibility and monochrome captures; and
+- server damage settlement, timing, contribution, XP, death ownership, and
+  effect formulas remain authoritative and unchanged.
+
+Before implementation, inventory every client hitsplat type and server damage
+source that reaches it. Decide whether the existing damage packet carries
+enough stable semantic information or needs a backward-compatible presentation
+category. Do not infer source type from damage amount or color. Define bounded
+queue length, merge/drop behavior under extreme AOE or DOT load, movement and
+camera anchoring, clipping, lifetime, and scaling behavior. Validate ordinary
+single hits, rapid weapon attacks, simultaneous DOT/proc damage, crowded combat,
+camera movement, pinned panels, and both Classic and renderer-v2 presentation.
+
 - **GPU sprite world pass**
   - Promote players, NPCs, ground items, projectiles, spell effects, and other
     billboard sprites into a real OpenGL world pass.
