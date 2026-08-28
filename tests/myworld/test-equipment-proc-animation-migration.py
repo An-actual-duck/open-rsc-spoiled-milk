@@ -100,21 +100,33 @@ def main() -> int:
         "source.getHeight() * boundedTargetSize",
     ), "ClientExternalAssetLoader.java")
 
-    for source, random_choice in (
-        ("server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
-         "combatRandom().nextIntInclusive(0, 1) == 0"),
-        ("server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
-         "DataConversions.random(0, 1) == 0"),
+    for source in (
+        "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
+        "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
     ):
         event = read(source)
         require(event, (
-            random_choice,
-            "CombatEffect.DRAGON_WEAPON_SLASH_2",
-            "new CombatEffect(target, slashEffect)",
-            "effectType == CombatEffect.ICE_SWORD",
-            "Projectile.ICE_SWORD_STAB",
+            "DragonMeleeBreathFollowup.tryApply",
+            "ElementalSwordProc.tryApply",
             "Projectile.ACID_ARMOR_PROC",
         ), source)
+
+    dragon_melee_breath = read(
+        "server/src/com/openrsc/server/model/combat/DragonMeleeBreathFollowup.java"
+    )
+    require(dragon_melee_breath, (
+        "random.nextIntInclusive(0, 1) == 0",
+        "CombatEffect.DRAGON_WEAPON_SLASH_2",
+        "new CombatEffect(target, effect)",
+    ), "DragonMeleeBreathFollowup.java")
+
+    elemental_sword = read(
+        "server/src/com/openrsc/server/model/combat/ElementalSwordProc.java"
+    )
+    require(elemental_sword, (
+        "effect == CombatEffect.ICE_SWORD",
+        "Projectile.ICE_SWORD_STAB",
+    ), "ElementalSwordProc.java")
 
     projectile_event = read("server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java")
     require(projectile_event, (

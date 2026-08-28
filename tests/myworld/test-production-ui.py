@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -257,12 +258,26 @@ def main() -> None:
         "boolean showQuantityControls = !isPickerInterface();",
         "Production picker pages should hide unused quantity controls",
     )
-    require(
+    picker_method = re.search(
+        r"private boolean isPickerInterface\(\) \{(?P<body>.*?)\n\t\}",
         do_skill_interface_text,
-        "return isSmithingMaterialPicker() || isFurnaceCategoryPicker() || isFurnaceMaterialPicker()\n"
-        "\t\t\t|| isTeleportDestinationPicker() || isRangersRedemptionCategoryPicker();",
-        "Production picker detection should include smithing, furnace, teleport, and Rangers redemption category pages",
+        re.S,
     )
+    if picker_method is None:
+        fail("Client production picker detection method is missing")
+    for picker in (
+        "isSmithingMaterialPicker()",
+        "isFurnaceCategoryPicker()",
+        "isFurnaceMaterialPicker()",
+        "isTeleportDestinationPicker()",
+        "isRangersRedemptionCategoryPicker()",
+        "isMonsterSlayerShopPicker()",
+    ):
+        require(
+            picker_method.group("body"),
+            picker,
+            f"Production picker detection should include {picker}",
+        )
     require(
         do_skill_interface_text,
         "PRODUCTION_RANGERS_REDEMPTION_CATEGORY = 8",
@@ -275,8 +290,8 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        "drawRangersRedemptionDetails(selected, selectedDetailRightX, footerY)",
-        "Rangers redemption UI should draw point-owned, total-cost, and receive details",
+        "drawPointRedemptionDetails(selected, selectedDetailRightX, footerY)",
+        "Point redemption UI should draw point-owned and total-cost details",
     )
     require(
         do_skill_interface_text,
@@ -295,8 +310,8 @@ def main() -> None:
     )
     require(
         do_skill_interface_text,
-        "int selectedHeaderY = isRangersRedemptionInterface() ? footerY - 10 : footerY + 2;",
-        "Rangers redemption selected-item details should move up one text line",
+        "int selectedHeaderY = isPointRedemptionInterface() ? footerY - 10 : footerY + 2;",
+        "Point redemption selected-item details should move up one text line",
     )
     require(
         do_skill_interface_text,

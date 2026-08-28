@@ -23,7 +23,9 @@ public enum NativeLayeredWorldRuntimeProfile {
 	SPOILED_MILK_REPLACEMENT("spoiled-milk-replacement", true),
 	SPOILED_MILK_BUILDER_DRAFT("spoiled-milk-builder-draft", true),
 	SPOILED_MILK_WORLD_BUILDER_EXPORT(
-		"spoiled-milk-world-builder-export", true);
+		"spoiled-milk-world-builder-export", true),
+	SPOILED_MILK_EDITOR_INSTALLED(
+		"spoiled-milk-editor-installed", true);
 
 	public static final String DEFAULT_ID = "fixture-additive";
 	public static final String PRESERVATION_PACKAGE_ID =
@@ -73,7 +75,8 @@ public enum NativeLayeredWorldRuntimeProfile {
 	}
 
 	public boolean requiresConfiguredManifestSha256() {
-		return this == SPOILED_MILK_WORLD_BUILDER_EXPORT;
+		return this == SPOILED_MILK_WORLD_BUILDER_EXPORT
+			|| this == SPOILED_MILK_EDITOR_INSTALLED;
 	}
 
 	public void validate(final NativeLayeredWorldPackageCatalog catalog) {
@@ -103,9 +106,51 @@ public enum NativeLayeredWorldRuntimeProfile {
 			case SPOILED_MILK_WORLD_BUILDER_EXPORT:
 				validateSpoiledMilkBuilderDraft(catalog);
 				return;
+			case SPOILED_MILK_EDITOR_INSTALLED:
+				validateSpoiledMilkEditorInstalled(catalog);
+				return;
 			default:
 				throw new IllegalStateException(
 					"Unhandled native layered world runtime profile: " + this);
+		}
+	}
+
+	private static void validateSpoiledMilkEditorInstalled(
+		final NativeLayeredWorldPackageCatalog catalog) {
+		if (catalog.size() != 1) {
+			throw new IllegalStateException(
+				"The spoiled-milk-editor-installed profile requires exactly one package");
+		}
+		final NativeLayeredWorldPackage loaded = catalog.getPrimaryPackage();
+		if (!SPOILED_MILK_PACKAGE_ID.equals(loaded.getPackageId())
+			|| !SPOILED_MILK_PACKAGE_VERSION.equals(loaded.getPackageVersion())
+			|| loaded.getWorldSpaceCount() != 1
+			|| loaded.getLevelCount() < 6
+			|| loaded.getTerrainSectorCount() < 1
+			|| loaded.getPlacementSetCount() != loaded.getLevelCount()) {
+			throw new IllegalStateException(
+				"The spoiled-milk-editor-installed profile requires a complete "
+					+ "content-addressed Spoiled Milk layered package");
+		}
+		for (int level : new int[] {-2, -1, 0, 1, 2, 10}) {
+			if (!loaded.declaresLevel(WorldSpaceId.GLOBAL, level)) {
+				throw new IllegalStateException(
+					"The installed Spoiled Milk package is missing global level " + level);
+			}
+		}
+		final Set<Integer> placementLevels = new HashSet<Integer>();
+		for (NativeLayeredPlacementSet set : loaded.getPlacementSets().values()) {
+			if (!WorldSpaceId.GLOBAL.equals(set.getWorldSpace())
+				|| !"layered-world-placements-v3".equals(set.getSourceEncoding())
+				|| !placementLevels.add(Integer.valueOf(set.getLevel()))) {
+				throw new IllegalStateException(
+					"The installed Spoiled Milk package requires one global v3 "
+						+ "placement set per declared level");
+			}
+		}
+		if (placementLevels.size() != loaded.getLevelCount()) {
+			throw new IllegalStateException(
+				"The installed Spoiled Milk package placement levels are incomplete");
 		}
 	}
 

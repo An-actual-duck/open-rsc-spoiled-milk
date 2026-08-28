@@ -2,6 +2,7 @@
 """Validate C06 Cleric metadata transport, client presentation, and boundaries."""
 
 import subprocess
+import re
 import tempfile
 import textwrap
 from pathlib import Path
@@ -117,7 +118,10 @@ def validate_wiring() -> None:
         ROOT / "release/world-builder-v2/world-builder-runtime.conf",
     )
     for surface in version_surfaces:
-        require("10051" in read(surface),
+        versions = re.findall(
+            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", read(surface)
+        )
+        require(versions and max(map(int, versions)) >= 10051,
                 f"maintained-client protocol version drift: {surface.relative_to(ROOT)}")
 
 

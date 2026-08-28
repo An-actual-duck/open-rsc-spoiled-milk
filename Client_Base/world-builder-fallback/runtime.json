@@ -1,0 +1,25 @@
+{
+  "authoring": {
+    "createLevels": true,
+    "editExistingLevels": true,
+    "placementFamilies": [
+      "boundary",
+      "ground-item",
+      "npc",
+      "scenery"
+    ]
+  },
+  "buildId": "spoiled-milk-client-native-layered-v1",
+  "definitionCatalogId": "spoiled-milk-definition-catalog-v1",
+  "definitionCatalogSha256": "3731c6f1fe4b23201056075638860ca119677102bbd9647984c26dd5f0933f84",
+  "encodingVersions": [
+    1
+  ],
+  "loaderId": "spoiled-milk-native-layered-loader-v1",
+  "manifestType": "world-builder-runtime-evidence",
+  "mapFormatId": "legacy-packed-orsc-v1",
+  "packageSchemaId": "layered-world-package-v1",
+  "protocolId": "native-layered-package-v1",
+  "schemaVersion": 1,
+  "side": "client"
+}

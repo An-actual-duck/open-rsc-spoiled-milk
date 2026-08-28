@@ -10,6 +10,13 @@ PLUGINS_ROOT = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plu
 MYWORLD_NAMESPACE = "com.openrsc.server.plugins.custom.myworld"
 ALLOWED_NON_MYWORLD_REFERENCES = {
     PLUGINS_ROOT / "custom" / "quests" / "free" / "PeelingTheOnion.java",
+    PLUGINS_ROOT
+    / "authentic"
+    / "quests"
+    / "members"
+    / "legendsquest"
+    / "npcs"
+    / "LegendsQuestSirRadimusErkle.java",
 }
 MYWORLD_PEELING_THE_ONION = (
     PLUGINS_ROOT / "custom" / "myworld" / "quests" / "free" / "PeelingTheOnion.java"
@@ -81,7 +88,6 @@ def validate_peeling_the_onion_bridge() -> None:
             "PeelingTheOnion bridge state constants drifted from the MyWorld quest "
             f"surface: bridge={bridge_states}, myworld={myworld_states}"
         )
-
     bridge_methods = parse_method_signatures(bridge_text)
     myworld_methods = parse_method_signatures(myworld_text)
     if bridge_methods != myworld_methods:
@@ -89,6 +95,23 @@ def validate_peeling_the_onion_bridge() -> None:
             "PeelingTheOnion bridge method surface drifted from the MyWorld quest "
             f"surface: bridge={bridge_methods}, myworld={myworld_methods}"
         )
+
+
+def validate_radimus_monster_slayer_bridge() -> None:
+    path = (
+        PLUGINS_ROOT
+        / "authentic"
+        / "quests"
+        / "members"
+        / "legendsquest"
+        / "npcs"
+        / "LegendsQuestSirRadimusErkle.java"
+    )
+    text = path.read_text(encoding="utf-8")
+    if "import com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerContacts;" not in text:
+        fail("Radimus bridge is missing the explicit Monster Slayer contact import")
+    if "new MonsterSlayerContacts().onTalkNpc(player, n);" not in text:
+        fail("Radimus bridge no longer delegates its Monster Slayer task shortcut")
 
 
 def main() -> None:
@@ -111,6 +134,7 @@ def main() -> None:
         )
 
     validate_peeling_the_onion_bridge()
+    validate_radimus_monster_slayer_bridge()
 
     print("PASS: MyWorld import boundary validated")
     print(f"Allowed bridge files: {len(ALLOWED_NON_MYWORLD_REFERENCES)}")

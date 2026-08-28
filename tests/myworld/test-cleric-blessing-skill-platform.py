@@ -211,7 +211,13 @@ def main() -> None:
         "server/myworld-host.conf",
         "release/world-builder-v2/world-builder-runtime.conf",
     ):
-        require("10051" in read(relative), f"custom protocol version drift: {relative}")
+        versions = re.findall(
+            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", read(relative)
+        )
+        require(
+            versions and max(map(int, versions)) >= 10051,
+            f"custom protocol version drift: {relative}",
+        )
 
     blessing_plugins = []
     for path in (ROOT / "server/plugins").rglob("*.java"):

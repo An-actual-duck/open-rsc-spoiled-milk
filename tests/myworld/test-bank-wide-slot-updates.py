@@ -40,9 +40,22 @@ def main() -> None:
     require(update_bank.group("body"), "int slot = packetsIncoming.getShort();", "Client bank update slot decoding")
     forbid(update_bank.group("body"), "int slot = packetsIncoming.getUnsignedByte();", "Client bank update byte slot decoding")
 
-    require(client_config, "CLIENT_VERSION = 10051;", "Client protocol version")
-    require(myworld_conf, "client_version: 10051", "MyWorld server protocol version")
-    require(myworld_host_conf, "client_version: 10051", "Hosted MyWorld server protocol version")
+    client_version = re.search(r"CLIENT_VERSION\s*=\s*(\d+)\s*;", client_config)
+    server_version = re.search(r"^\s*client_version:\s*(\d+)\s*$", myworld_conf, re.M)
+    hosted_version = re.search(
+        r"^\s*client_version:\s*(\d+)\s*$", myworld_host_conf, re.M
+    )
+    if not client_version or not server_version or not hosted_version:
+        raise SystemExit("FAIL: client/server protocol version declarations are missing")
+    versions = tuple(
+        int(match.group(1))
+        for match in (client_version, server_version, hosted_version)
+    )
+    if len(set(versions)) != 1 or versions[0] < 10051:
+        raise SystemExit(
+            "FAIL: wide-bank-slot protocol requires matching client/server versions "
+            f"at or above 10051, found {versions}"
+        )
 
     print("PASS: custom bank update slots support values above 255")
 

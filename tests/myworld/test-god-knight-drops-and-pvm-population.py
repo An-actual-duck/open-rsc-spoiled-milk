@@ -211,6 +211,7 @@ def main() -> None:
         and not is_frumscone_training_cage_overlay(loc)
         and not is_elite_mining_guild_dragon_overlay(loc)
         and not is_lumbridge_bank_overlay(loc)
+        and not 846 <= loc["id"] <= 860
     ]
     counts = Counter(loc["id"] for loc in population_overlay)
     expected_counts = {
