@@ -9,6 +9,7 @@ import com.openrsc.server.config.WorldRuntimeConfiguration;
 import com.openrsc.server.config.CompatibilityConfiguration;
 import com.openrsc.server.config.ToolsConfiguration;
 import com.openrsc.server.config.ContentConfiguration;
+import com.openrsc.server.io.WorldBuilderInstalledMapActivation;
 import com.openrsc.server.util.EntityList;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.YMLReader;
@@ -597,6 +598,7 @@ public class ServerConfiguration {
 			"OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE",
 			"layered_native_world_runtime_profile",
 			"fixture-additive");
+		applyInstalledWorldBuilderMap();
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",
 			"OPENRSC_MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS",
@@ -1129,6 +1131,33 @@ public class ServerConfiguration {
 		return webhookUrl != null
 			&& !webhookUrl.trim().isEmpty()
 			&& !webhookUrl.equals("null");
+	}
+
+	private void applyInstalledWorldBuilderMap() throws IOException {
+		Optional<WorldBuilderInstalledMapActivation.Activation> requested =
+			WorldBuilderInstalledMapActivation.discover();
+		if (!requested.isPresent()) {
+			return;
+		}
+		WorldBuilderInstalledMapActivation.Activation activation = requested.get();
+		WANT_LAYERED_PLAYER_LOCATION_AUTHORITY = true;
+		WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = true;
+		WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY = true;
+		WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = true;
+		WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY = true;
+		WANT_LAYERED_NATIVE_TERRAIN_READINESS = true;
+		WANT_LAYERED_NATIVE_TERRAIN_PREDICTION = true;
+		WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY = true;
+		WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION = true;
+		LAYERED_NATIVE_TERRAIN_PACKAGE_PATH =
+			activation.getServerPackageRoot().toString();
+		LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 =
+			activation.getManifestSha256();
+		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
+			WorldBuilderInstalledMapActivation.RUNTIME_PROFILE;
+		LOGGER.info(
+			"Activated verified World Builder layered package {} from primary configuration",
+			activation.getPackageFingerprintSha256());
 	}
 
 	/**

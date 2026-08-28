@@ -225,6 +225,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "resource-seed-plan.md",
             "roadmap.md",
             "server-r2-plan.md",
+            "server-runtime-performance-investigation-plan.md",
             "skybox-depth-and-horizon-rnd.md",
             "summoning-plan.md",
             "terrain-expansion-plan.md",
@@ -297,6 +298,8 @@ def test_myworld_docs_are_consolidated() -> None:
             "static-analysis.md",
             "testing-quick-reference.md",
             "world-builder-definition-catalog.md",
+            "world-builder-direct-import.md",
+            "world-builder-item-visual-provider.md",
             "worship-skill-compatibility.md",
         ],
     }

@@ -366,7 +366,7 @@ def main() -> None:
 
     for entry in item_entries:
         if any(field in entry for field in ("meleeDefense", "rangedDefense", "magicDefense")):
-            if entry.get("requiredLevel") != 0 or entry.get("requiredSkillID") != -1:
+            if entry.get("requiredLevel", 0) != 0 or entry.get("requiredSkillID", -1) != -1:
                 fail(f"Armor/defensive item override {entry['id']} must not have an equip requirement")
 
     missing_explicit_overrides = []

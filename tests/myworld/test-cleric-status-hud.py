@@ -2,6 +2,7 @@
 """Compile and validate the C08B mixed-status packet, model, and assets."""
 
 import subprocess
+import re
 import tempfile
 import textwrap
 from pathlib import Path
@@ -100,7 +101,10 @@ def validate_sources() -> None:
         ROOT / "server/myworld-host.conf",
         ROOT / "release/world-builder-v2/world-builder-runtime.conf",
     ):
-        require("10051" in read(surface),
+        versions = re.findall(
+            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", read(surface)
+        )
+        require(versions and max(map(int, versions)) >= 10051,
                 f"maintained protocol version drift: {surface.relative_to(ROOT)}")
 
 

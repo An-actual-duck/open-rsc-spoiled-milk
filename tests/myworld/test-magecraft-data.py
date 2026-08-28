@@ -10,6 +10,7 @@ ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefs.json"
 CUSTOM_ITEMS_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsCustom.json"
 MYWORLD_PATH = ROOT / "server" / "conf" / "server" / "defs" / "ItemDefsMyWorld.json"
 EFFECTS_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "EnchantingItemEffects.java"
+RUNE_PRESERVATION_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "content" / "RuneCostPreservation.java"
 SPELL_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
 SPELL_CLASSIFICATION_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellClassification.java"
 MAGE_ARENA_PATH = ROOT / "server" / "plugins" / "com" / "openrsc" / "server" / "plugins" / "authentic" / "minigames" / "mage_arena" / "MageArena.java"
@@ -203,6 +204,7 @@ def ensure_special_staff_notes(items: dict[int, dict], overrides: dict[int, dict
 
 def ensure_source_support(items: dict[int, dict]) -> None:
     effects_text = EFFECTS_PATH.read_text(encoding="utf-8")
+    rune_preservation_text = RUNE_PRESERVATION_PATH.read_text(encoding="utf-8")
     spell_text = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
     spell_classification_text = SPELL_CLASSIFICATION_PATH.read_text(encoding="utf-8")
     mage_arena_text = MAGE_ARENA_PATH.read_text(encoding="utf-8")
@@ -228,7 +230,7 @@ def ensure_source_support(items: dict[int, dict]) -> None:
             fail(f"EnchantingItemEffects.java missing expected snippet: {snippet}")
     for snippet in (
         "getRuneNegationChance",
-        "EnchantingItemEffects.getStaffRunePreservationChance",
+        "RuneCostPreservation.getChance(player, runeId)",
         "Orb charging has been retired. Use a staff on the matching altar through Enchanting instead.",
         "getWindAccuracyDebuffPercent",
         "getWaterMaxHitDebuffPercent",
@@ -238,6 +240,8 @@ def ensure_source_support(items: dict[int, dict]) -> None:
     ):
         if snippet not in spell_text:
             fail(f"SpellHandler.java missing expected snippet: {snippet}")
+    if "EnchantingItemEffects.getStaffRunePreservationChance" not in rune_preservation_text:
+        fail("RuneCostPreservation.java is missing staff rune preservation")
     if "static boolean shouldShowSpellProjectile" not in spell_classification_text:
         fail("SpellClassification.java missing spell-projectile presentation authority")
     if not re.search(

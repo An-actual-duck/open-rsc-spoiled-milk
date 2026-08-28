@@ -268,13 +268,13 @@ public class RegionManager {
 				if (configuredManifest == null
 					|| !configuredManifest.matches("[0-9a-f]{64}")) {
 					throw new IllegalStateException(
-						"The World Builder export profile requires an exact "
+						"The selected World Builder profile requires an exact "
 							+ "layered package manifest SHA-256");
 				}
 				if (!configuredManifest.equals(
 						loaded.getPrimaryPackage().getManifestSha256())) {
 					throw new IllegalStateException(
-						"The installed World Builder export does not match "
+						"The installed World Builder package does not match "
 							+ "the configured layered package manifest SHA-256");
 				}
 			}

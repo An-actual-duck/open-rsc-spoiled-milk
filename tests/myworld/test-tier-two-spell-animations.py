@@ -129,8 +129,11 @@ def main() -> int:
         "new CombatEffect(player, CombatEffect.ALCHEMY)",
         "new CombatEffect(player, CombatEffect.TELEPORT)",
         'TELEPORT_CHARGE_MS, "Teleport spell charge"',
-        "shouldShowSpellProjectile(spellEnum, impactEffect)",
     ), "SpellHandler.java")
+    assert re.search(
+        r"SpellClassification\.shouldShowSpellProjectile\s*\(\s*spellEnum\s*,\s*impactEffect\s*\)",
+        spell_handler,
+    ), "SpellHandler.java is missing the classified projectile-visibility call"
     for composite_spell in (
         "EARTH_BOLT", "FIRE_BOLT", "THUNDER_SPLASH", "ICE_BURST", "ACID_FROG", "WOOD_DRILL"
     ):
@@ -216,10 +219,13 @@ def main() -> int:
         "public boolean projectileMirrored = false;",
     ), "ORSCharacter.java")
 
-    assert "Projectile.SKULL, CombatEffect.IBAN_BLAST, true" in spell_handler, \
-        "Iban blast must render its projectile before its impact"
     assert re.search(
-        r"godSpellProjectile, godSpellImpact, true\);", spell_handler
+        r"\.presentation\s*\(\s*Projectile\.SKULL\s*,\s*CombatEffect\.IBAN_BLAST\s*,\s*true\s*\)",
+        spell_handler,
+    ), "Iban blast must render its projectile before its impact"
+    assert re.search(
+        r"\.presentation\s*\(\s*godSpellProjectile\s*,\s*godSpellImpact\s*,\s*true\s*\)",
+        spell_handler,
     ), "god spells must render their holy projectile before their impact"
     assert "godSpellEvent.deferClericRally();" in spell_handler, \
         "god spell impact must preserve deferred Rally settlement"

@@ -1,0 +1,89 @@
+{
+  "adapterId": "spoiled-milk-packed-v1",
+  "authoring": {
+    "createLevels": true,
+    "editExistingLevels": true,
+    "placementFamilies": [
+      "boundary",
+      "ground-item",
+      "npc",
+      "scenery"
+    ]
+  },
+  "capabilityId": "spoiled-milk-layered-install-capability-v1",
+  "client": {
+    "buildId": "spoiled-milk-client-native-layered-v1",
+    "loaderId": "spoiled-milk-native-layered-loader-v1",
+    "protocolId": "native-layered-package-v1"
+  },
+  "definitions": {
+    "catalogId": "spoiled-milk-definition-catalog-v1",
+    "catalogSha256": "3731c6f1fe4b23201056075638860ca119677102bbd9647984c26dd5f0933f84"
+  },
+  "discovery": {
+    "configurationRoles": [
+      "primary"
+    ],
+    "sourceRepresentations": [
+      "packed"
+    ],
+    "sourceRoles": [
+      "client-asset.library",
+      "client-definition-catalog",
+      "client-runtime",
+      "client-terrain",
+      "placement.boundary-base",
+      "placement.ground-item-base",
+      "placement.npc-base",
+      "placement.npc-overlay",
+      "placement.npc-removal",
+      "placement.scenery-auxiliary-custom-quest",
+      "placement.scenery-auxiliary-discontinued",
+      "placement.scenery-auxiliary-expansion",
+      "placement.scenery-auxiliary-harvesting",
+      "placement.scenery-auxiliary-mod-room",
+      "placement.scenery-auxiliary-other",
+      "placement.scenery-auxiliary-runecraft",
+      "placement.scenery-auxiliary-woodcutting-guild",
+      "placement.scenery-base",
+      "placement.scenery-overlay",
+      "placement.scenery-removal",
+      "server-asset.library",
+      "server-definition-catalog",
+      "server-runtime",
+      "server-terrain"
+    ]
+  },
+  "install": {
+    "clientRoles": [
+      "layered-package"
+    ],
+    "configurationRoles": [
+      "primary"
+    ],
+    "enabled": true,
+    "mutationProfileId": "spoiled-milk-layered-install-v1",
+    "offlineEvidence": [
+      "configuration-lock",
+      "pid-file",
+      "port-bind",
+      "process-scan"
+    ],
+    "serverRoles": [
+      "layered-package"
+    ]
+  },
+  "manifestType": "world-builder-target-capability",
+  "map": {
+    "encodingVersions": [
+      1
+    ],
+    "formatId": "legacy-packed-orsc-v1",
+    "packageSchemaId": "layered-world-package-v1"
+  },
+  "schemaVersion": 1,
+  "server": {
+    "buildId": "spoiled-milk-server-native-layered-v1",
+    "loaderId": "spoiled-milk-native-layered-loader-v1"
+  }
+}

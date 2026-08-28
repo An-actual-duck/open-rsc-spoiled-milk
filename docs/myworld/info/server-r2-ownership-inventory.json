@@ -805,7 +805,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "b193bb8ebc6093e70e1a8fbd15c80c51184830cd660f85c36797dcfd5c4d09cf",
+  "inputTreeSha256": "baec13fc6410c805dcbbe5aaf8abcfca6cff4209d19c9f40636e67f19fd9b0c4",
   "inputs": [
     {
       "brandSignals": [
@@ -1181,7 +1181,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 13898,
+      "bytes": 15659,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1190,7 +1190,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "780aa6c26af475c94f9b8ae3f71196719663ac03ecc8b3c155450c45f583e117"
+      "sha256": "fcb375ddfacc6a003414db51d4e244b2950efcf2fdc9723a0a6e618d32235652"
     },
     {
       "brandSignals": [],
@@ -1807,7 +1807,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 46555,
+      "bytes": 46609,
       "category": "spoiled-milk-content",
       "classificationReason": "Named Spoiled Milk definition override",
       "classificationRule": "server/conf/server/defs/*{MyWorld,Custom}*",
@@ -1816,7 +1816,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/NpcDefsMyWorld.json",
       "reverseDependencies": [],
-      "sha256": "ea7f7151829e9e9f179b13abd1b77c1810a8fa0292a96c89b1f5f7f04b8ef528"
+      "sha256": "bc16948d5fa1249d9f0e0d7426ad124928d399371cd25daa1e2800750b9d79dc"
     },
     {
       "brandSignals": [],
@@ -1882,6 +1882,19 @@
       "path": "server/conf/server/defs/TileDef.xml",
       "reverseDependencies": [],
       "sha256": "7b0d6bfeaafedd3d1b9a71d27432e7602cbaf4926a10abe370ec3fa960788734"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 582,
+      "category": "unresolved",
+      "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
+      "classificationRule": "server/conf/server/defs/**",
+      "dependencies": [],
+      "javaFqn": null,
+      "kind": "definition",
+      "path": "server/conf/server/defs/VisualTestNpcDefs.json",
+      "reverseDependencies": [],
+      "sha256": "d69a800599117d5ac40463501c972cc82fcfcdd21ba7333c0e9629a8d505e3e4"
     },
     {
       "brandSignals": [],
@@ -21350,7 +21363,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 11622,
+      "bytes": 11692,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -21392,7 +21405,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestGuildGuard.java",
       "reverseDependencies": [],
-      "sha256": "4eb231a9f03fb4df6bb31c7e067a6292070ddd602a549558d0eda749fd6fe2e5"
+      "sha256": "9044c8dddaa8234e240c035f58ed7fae7b8514b76f08e4b4250ead9c3d4f415d"
     },
     {
       "brandSignals": [],
@@ -30808,7 +30821,7 @@
       "brandSignals": [
         "spoiled-milk-name"
       ],
-      "bytes": 192947,
+      "bytes": 193536,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -31010,7 +31023,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/GameStateUpdater.java",
       "reverseDependencies": [],
-      "sha256": "89b068feec0911adae2adda598f5904ff18c5e1057df0dd45ce5f2d7b3bba8b6"
+      "sha256": "fb16d92174fb22a949978bb7532bf52e2067252a3cc564b9ffdc9a3ceaa66e95"
     },
     {
       "brandSignals": [],
@@ -31063,7 +31076,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 116061,
+      "bytes": 126680,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -31145,8 +31158,24 @@
           "path": "server/src/com/openrsc/server/database/patches/PatchApplier.java"
         },
         {
+          "import": "com.openrsc.server.diagnostics.ActiveCombatBenchmark",
+          "path": "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java"
+        },
+        {
+          "import": "com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe",
+          "path": "server/src/com/openrsc/server/diagnostics/AuthenticatedNetworkBenchmarkProbe.java"
+        },
+        {
           "import": "com.openrsc.server.diagnostics.MovementStutterDiagnostics",
           "path": "server/src/com/openrsc/server/diagnostics/MovementStutterDiagnostics.java"
+        },
+        {
+          "import": "com.openrsc.server.diagnostics.NpcRoamingBenchmark",
+          "path": "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java"
+        },
+        {
+          "import": "com.openrsc.server.diagnostics.ProjectileCombatBenchmark",
+          "path": "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java"
         },
         {
           "import": "com.openrsc.server.event.custom.DailyShutdownEvent",
@@ -31165,12 +31194,36 @@
           "path": "server/src/com/openrsc/server/event/rsc/GameTickEvent.java"
         },
         {
+          "import": "com.openrsc.server.event.rsc.PluginTickEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/PluginTickEvent.java"
+        },
+        {
           "import": "com.openrsc.server.event.rsc.handler.GameEventHandler",
           "path": "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java"
         },
         {
+          "import": "com.openrsc.server.event.rsc.impl.combat.PvmMeleeEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
+        },
+        {
           "import": "com.openrsc.server.event.rsc.impl.combat.scripts.CombatScriptLoader",
           "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/CombatScriptLoader.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.RangeEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java"
         },
         {
           "import": "com.openrsc.server.external.EntityHandler",
@@ -31249,6 +31302,10 @@
           "path": "server/src/com/openrsc/server/runtime/CombatDamageObserver.java"
         },
         {
+          "import": "com.openrsc.server.runtime.DeterministicGameRandom",
+          "path": "server/src/com/openrsc/server/runtime/DeterministicGameRandom.java"
+        },
+        {
           "import": "com.openrsc.server.runtime.GameClock",
           "path": "server/src/com/openrsc/server/runtime/GameClock.java"
         },
@@ -31325,6 +31382,9 @@
         "server/src/com/openrsc/server/database/impl/mysql/queries/player/login/PlayerOnlineFlagQuery.java",
         "server/src/com/openrsc/server/database/impl/sqlite/SqliteGameDatabase.java",
         "server/src/com/openrsc/server/database/impl/sqlite/SqliteGameDatabaseConnection.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/CombatScriptLoader.java",
         "server/src/com/openrsc/server/external/EntityHandler.java",
@@ -31354,7 +31414,7 @@
         "server/src/com/openrsc/server/util/UsernameChange.java",
         "server/src/com/openrsc/server/util/languages/I18NService.java"
       ],
-      "sha256": "327c4128379b51865eb41bc74ac99047cca8bf878361436e5d2f682b1dac641f"
+      "sha256": "0b193250536836f2a9dad55e331ab5b2f49e743bdd9471d50047497499e19f9e"
     },
     {
       "brandSignals": [],
@@ -31380,7 +31440,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 58121,
+      "bytes": 59398,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -31452,7 +31512,7 @@
         "server/src/com/openrsc/server/util/NamedThreadFactory.java",
         "server/src/com/openrsc/server/util/ServerAwareThreadFactory.java"
       ],
-      "sha256": "2f6c431ad5f4c4dbd5cf934938b5f3a9bd1dbe83837ed03555312a020b283621"
+      "sha256": "6046fded9accc109fcd14a74c2a6e4cf8ef783ae430943a94c752d7bf558074f"
     },
     {
       "brandSignals": [],
@@ -32312,6 +32372,7 @@
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerContactService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/custom/HolidayDropEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/DesertHeatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
@@ -32783,6 +32844,9 @@
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -33220,6 +33284,8 @@
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
         "server/src/com/openrsc/server/content/party/PartyPlayer.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java",
@@ -33332,6 +33398,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
         "server/plugins/com/openrsc/server/plugins/shared/MagePlayer.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
         "server/src/com/openrsc/server/external/EntityHandler.java",
@@ -39235,6 +39302,116 @@
     },
     {
       "brandSignals": [],
+      "bytes": 9361,
+      "category": "diagnostic-proof",
+      "classificationReason": "Bounded server diagnostics and parity evidence",
+      "classificationRule": "server/src/com/openrsc/server/diagnostics/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.Server",
+          "path": "server/src/com/openrsc/server/Server.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.NpcId",
+          "path": "server/src/com/openrsc/server/constants/NpcId.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.DuplicationStrategy",
+          "path": "server/src/com/openrsc/server/event/rsc/DuplicationStrategy.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.GameTickEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/GameTickEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.model.PlayerAppearance",
+          "path": "server/src/com/openrsc/server/model/PlayerAppearance.java"
+        },
+        {
+          "import": "com.openrsc.server.model.Point",
+          "path": "server/src/com/openrsc/server/model/Point.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.AttackIntent",
+          "path": "server/src/com/openrsc/server/model/combat/AttackIntent.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.AttackTransactionResult",
+          "path": "server/src/com/openrsc/server/model/combat/AttackTransactionResult.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.CombatStyle",
+          "path": "server/src/com/openrsc/server/model/combat/CombatStyle.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.PlayerAttackTransaction",
+          "path": "server/src/com/openrsc/server/model/combat/PlayerAttackTransaction.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ClientLimitations",
+          "path": "server/src/com/openrsc/server/net/rsc/ClientLimitations.java"
+        },
+        {
+          "import": "com.openrsc.server.plugins.triggers.TimedEventTrigger",
+          "path": "server/src/com/openrsc/server/plugins/triggers/TimedEventTrigger.java"
+        },
+        {
+          "import": "com.openrsc.server.runtime.DeterministicGameRandom",
+          "path": "server/src/com/openrsc/server/runtime/DeterministicGameRandom.java"
+        },
+        {
+          "import": "com.openrsc.server.util.rsc.DataConversions",
+          "path": "server/src/com/openrsc/server/util/rsc/DataConversions.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.diagnostics.ActiveCombatBenchmark",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java"
+      ],
+      "sha256": "3776d71c70f41032b0e9dfcacdf4c106269ed5674199a04b164ac75bcfde608e"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 6819,
+      "category": "diagnostic-proof",
+      "classificationReason": "Bounded server diagnostics and parity evidence",
+      "classificationRule": "server/src/com/openrsc/server/diagnostics/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.net.ConnectionAttachment",
+          "path": "server/src/com/openrsc/server/net/ConnectionAttachment.java"
+        },
+        {
+          "import": "com.openrsc.server.net.RSCConnectionHandler",
+          "path": "server/src/com/openrsc/server/net/RSCConnectionHandler.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/diagnostics/AuthenticatedNetworkBenchmarkProbe.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
+        "server/src/com/openrsc/server/net/RSCProtocolEncoder.java",
+        "server/src/com/openrsc/server/net/RSCProtocolWebEncoder.java"
+      ],
+      "sha256": "0b5e8e1102de553a00364a3c458fcf2630af0471fdbd23b4dc04359b7c45a363"
+    },
+    {
+      "brandSignals": [],
       "bytes": 523576,
       "category": "diagnostic-proof",
       "classificationReason": "Bounded server diagnostics and parity evidence",
@@ -39449,6 +39626,178 @@
         "server/src/com/openrsc/server/Server.java"
       ],
       "sha256": "c2f65ff98c6f680f2dfad4d66a2a342d81e95cfce23eedeec4c2b6491fd64dde"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 7064,
+      "category": "diagnostic-proof",
+      "classificationReason": "Bounded server diagnostics and parity evidence",
+      "classificationRule": "server/src/com/openrsc/server/diagnostics/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.Server",
+          "path": "server/src/com/openrsc/server/Server.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.NpcId",
+          "path": "server/src/com/openrsc/server/constants/NpcId.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.DuplicationStrategy",
+          "path": "server/src/com/openrsc/server/event/rsc/DuplicationStrategy.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.GameTickEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/GameTickEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.model.PlayerAppearance",
+          "path": "server/src/com/openrsc/server/model/PlayerAppearance.java"
+        },
+        {
+          "import": "com.openrsc.server.model.Point",
+          "path": "server/src/com/openrsc/server/model/Point.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.GameObject",
+          "path": "server/src/com/openrsc/server/model/entity/GameObject.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldCoordinate",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldCoordinate.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldLocation",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldLocation.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ClientLimitations",
+          "path": "server/src/com/openrsc/server/net/rsc/ClientLimitations.java"
+        },
+        {
+          "import": "com.openrsc.server.runtime.DeterministicGameRandom",
+          "path": "server/src/com/openrsc/server/runtime/DeterministicGameRandom.java"
+        },
+        {
+          "import": "com.openrsc.server.util.rsc.DataConversions",
+          "path": "server/src/com/openrsc/server/util/rsc/DataConversions.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.diagnostics.NpcRoamingBenchmark",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java"
+      ],
+      "sha256": "e269f93f8f6d076c3be91e154a94d5c11bfb9cad57123fb7ee3d2eaafb3c2959"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 14319,
+      "category": "diagnostic-proof",
+      "classificationReason": "Bounded server diagnostics and parity evidence",
+      "classificationRule": "server/src/com/openrsc/server/diagnostics/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.Server",
+          "path": "server/src/com/openrsc/server/Server.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.ItemId",
+          "path": "server/src/com/openrsc/server/constants/ItemId.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.NpcId",
+          "path": "server/src/com/openrsc/server/constants/NpcId.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.Spells",
+          "path": "server/src/com/openrsc/server/constants/Spells.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.DuplicationStrategy",
+          "path": "server/src/com/openrsc/server/event/rsc/DuplicationStrategy.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.GameTickEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/GameTickEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.MagicCombatEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.RangeEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.projectile.ThrowingEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.external.SpellDef",
+          "path": "server/src/com/openrsc/server/external/SpellDef.java"
+        },
+        {
+          "import": "com.openrsc.server.model.PlayerAppearance",
+          "path": "server/src/com/openrsc/server/model/PlayerAppearance.java"
+        },
+        {
+          "import": "com.openrsc.server.model.Point",
+          "path": "server/src/com/openrsc/server/model/Point.java"
+        },
+        {
+          "import": "com.openrsc.server.model.container.Item",
+          "path": "server/src/com/openrsc/server/model/container/Item.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ClientLimitations",
+          "path": "server/src/com/openrsc/server/net/rsc/ClientLimitations.java"
+        },
+        {
+          "import": "com.openrsc.server.plugins.triggers.TimedEventTrigger",
+          "path": "server/src/com/openrsc/server/plugins/triggers/TimedEventTrigger.java"
+        },
+        {
+          "import": "com.openrsc.server.runtime.DeterministicGameRandom",
+          "path": "server/src/com/openrsc/server/runtime/DeterministicGameRandom.java"
+        },
+        {
+          "import": "com.openrsc.server.util.rsc.DataConversions",
+          "path": "server/src/com/openrsc/server/util/rsc/DataConversions.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.diagnostics.ProjectileCombatBenchmark",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java"
+      ],
+      "sha256": "1e17eaef4e4cdb9f71fd9b4bd162ad7c2adb40380f9d2ec5012b43f7b13c8e58"
     },
     {
       "brandSignals": [],
@@ -40021,6 +40370,9 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/DelayedEvent.java",
         "server/src/com/openrsc/server/event/SingleEvent.java",
         "server/src/com/openrsc/server/event/custom/DailyEvent.java",
@@ -40156,6 +40508,9 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/DelayedEvent.java",
         "server/src/com/openrsc/server/event/custom/DailyShutdownEvent.java",
         "server/src/com/openrsc/server/event/custom/HolidayDropEvent.java",
@@ -40547,7 +40902,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5282,
+      "bytes": 5762,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -40588,11 +40943,11 @@
         "server/src/com/openrsc/server/plugins/RuneScript.java",
         "server/src/com/openrsc/server/plugins/handler/PluginHandler.java"
       ],
-      "sha256": "a3894985d5c4e5c6680ce7711a491d093654b8bc343dfb42bcaf875a0266875b"
+      "sha256": "c06070c0ad337a29c7188c7905f3829259e3173fb7b82902b3054950b3f3f517"
     },
     {
       "brandSignals": [],
-      "bytes": 3059,
+      "bytes": 2848,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -40614,12 +40969,13 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/PluginTickEvent.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java",
         "server/src/com/openrsc/server/event/rsc/handler/GameTickEventStore.java",
         "server/src/com/openrsc/server/net/rsc/handlers/InterfaceOptionHandler.java",
         "server/src/com/openrsc/server/plugins/handler/PluginHandler.java"
       ],
-      "sha256": "0c1f2828732e286ebe973b2b6c4550ecee807e59d35d74a8c0fcb845e1d3bb17"
+      "sha256": "b53088fa89acac921fb26956b6c2cedd5fe908fdb05d4f25ebba154b0fb096a6"
     },
     {
       "brandSignals": [],
@@ -40650,7 +41006,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 49869,
+      "bytes": 49924,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -40929,7 +41285,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
-      "sha256": "23d182076bee7634276bac97827d118a9adcd8b0ba1e36b88a04cb2b8d7f5f4a"
+      "sha256": "3def3b67c7fb0ea00258f09be338cd81634a3eb2a1da9d26e608225a79ec0f21"
     },
     {
       "brandSignals": [],
@@ -42210,7 +42566,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 14266,
+      "bytes": 14271,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42336,7 +42692,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "7825c31aad064fb9f1476f623b6f5804a103446a82bdd95f0904f2f31d99741b"
+      "sha256": "ebd8849e1de9f38cc2dd6d74c945eae8798c58daec7d56183adfe8e0ddbdc7f4"
     },
     {
       "brandSignals": [],
@@ -42661,6 +43017,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
@@ -42872,7 +43229,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7036,
+      "bytes": 7041,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42926,7 +43283,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
       "reverseDependencies": [],
-      "sha256": "6a030cd60e45beff269d2978a0ac629175a398a9476735da84f68f9ec0c5bd31"
+      "sha256": "0242c7e6d7f9f5ba103458208debde1c7d42bbbd59929c4b1661f2839af5a254"
     },
     {
       "brandSignals": [],
@@ -43689,7 +44046,9 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/Summoning.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
@@ -43929,6 +44288,7 @@
       "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java",
+        "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
@@ -44072,7 +44432,9 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/Summoning.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
@@ -44083,7 +44445,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 7470,
+      "bytes": 7475,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44160,7 +44522,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java",
         "server/src/com/openrsc/server/model/entity/Mob.java"
       ],
-      "sha256": "4971a73be512cf87ec47e3e5a307e0fbd1088802300a66dba6cb04b69a573d1b"
+      "sha256": "4006024c831305cb4744bb91f9809c1329003642f72065e689d38a8f47e560ff"
     },
     {
       "brandSignals": [],
@@ -44360,7 +44722,9 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/projectile/ThrowingEvent.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/Summoning.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java"
       ],
@@ -44595,6 +44959,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/external/DoorDef.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/model/CombatProjectileCollision.java",
         "server/src/com/openrsc/server/model/entity/GameObject.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java",
         "server/src/com/openrsc/server/net/rsc/handlers/GameObjectWallAction.java"
@@ -44619,7 +44984,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 61786,
+      "bytes": 62091,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44702,7 +45067,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "26927c85d51eb953c8a448a690ccec2769c680ddd9f1e06fcb1def027c6a5c64"
+      "sha256": "652f6e9315cac327ee979d558dfba6320e4819e31f423d3afeeef1e84b18a7be"
     },
     {
       "brandSignals": [],
@@ -45407,6 +45772,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestDarkMetalGate.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
@@ -45700,7 +46066,7 @@
       "brandSignals": [
         "spoiled-milk-name"
       ],
-      "bytes": 14401,
+      "bytes": 16326,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45728,7 +46094,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "848fba337de98b9d5f56b71b5285edafb636877f2a8c4689412e826d0e2ae506"
+      "sha256": "8d1dba6cf7f576f64ef88c37ab37b397f30bd2bec6afa40d9e18d8bc5fee8295"
     },
     {
       "brandSignals": [],
@@ -45804,7 +46170,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 17368,
+      "bytes": 18674,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45820,6 +46186,10 @@
         {
           "import": "com.openrsc.server.database.WorldPopulator",
           "path": "server/src/com/openrsc/server/database/WorldPopulator.java"
+        },
+        {
+          "import": "com.openrsc.server.model.CombatProjectileCollision",
+          "path": "server/src/com/openrsc/server/model/CombatProjectileCollision.java"
         },
         {
           "import": "com.openrsc.server.model.world.World",
@@ -45838,6 +46208,10 @@
           "path": "server/src/com/openrsc/server/model/world/region/TileValue.java"
         },
         {
+          "import": "com.openrsc.server.util.rsc.CollisionFlag",
+          "path": "server/src/com/openrsc/server/util/rsc/CollisionFlag.java"
+        },
+        {
           "import": "com.openrsc.server.util.rsc.DataConversions",
           "path": "server/src/com/openrsc/server/util/rsc/DataConversions.java"
         }
@@ -45850,7 +46224,7 @@
         "server/src/com/openrsc/server/model/world/region/RegionManager.java",
         "server/src/com/openrsc/server/net/rsc/handlers/WorldEditorHandler.java"
       ],
-      "sha256": "60aeb93543d1365f5b1d6dc0c122838c952fc935e44ec6ab0c0f8a0457f8721f"
+      "sha256": "45b9b853c6b6221e3c971608f1e5d2e0a08edb712b89a98607466dc49d5631bc"
     },
     {
       "brandSignals": [],
@@ -46340,11 +46714,15 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2382,
+      "bytes": 3271,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
       "dependencies": [
+        {
+          "import": "com.openrsc.server.external.DoorDef",
+          "path": "server/src/com/openrsc/server/external/DoorDef.java"
+        },
         {
           "import": "com.openrsc.server.external.GameObjectDef",
           "path": "server/src/com/openrsc/server/external/GameObjectDef.java"
@@ -46354,10 +46732,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/CombatProjectileCollision.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/io/WorldLoader.java",
         "server/src/com/openrsc/server/model/world/World.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "70688d5e90619191e8a9a6e27848e2d872ad4322a5d461e4098c5cfe1c3a94df"
+      "sha256": "85fbe89cd05f365c60a0a744bcb5d5c7dc8a322cbb6a05c223a007126603999d"
     },
     {
       "brandSignals": [],
@@ -46478,7 +46857,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 39227,
+      "bytes": 40209,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -46558,7 +46937,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerTradeHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "a8d1626aeebb2a945f82846dc6c31844d741a9e667407f5d4eb5c1ebbf755999"
+      "sha256": "2d0280e3b0871fb10a71c3d05178bd783c058cd3f7044651652f668c0ba2f9a6"
     },
     {
       "brandSignals": [],
@@ -46592,6 +46971,9 @@
         "server/src/com/openrsc/server/GameStateUpdater.java",
         "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/avatargenerator/AvatarGenerator.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/model/entity/player/PlayerSettings.java",
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerAppearanceUpdater.java",
         "server/src/com/openrsc/server/service/PlayerService.java"
@@ -46735,7 +47117,10 @@
         "server/src/com/openrsc/server/database/WorldPopulator.java",
         "server/src/com/openrsc/server/database/impl/mysql/MySqlGameDatabase.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/custom/HourlyNpcLootEvent.java",
         "server/src/com/openrsc/server/event/custom/HourlyResetEvent.java",
         "server/src/com/openrsc/server/event/custom/NpcLootEvent.java",
@@ -47114,7 +47499,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2186,
+      "bytes": 2270,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -47144,7 +47529,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/ViewArea.java",
       "reverseDependencies": [],
-      "sha256": "0eeabfde723d74661f5a0eb6ba788307e2d91a90d026e576a87feed6faab181a"
+      "sha256": "3a56fb5b30cd20f95840a73a0a0868895d07f3d7aa6461d5f8af5b4924bd68d5"
     },
     {
       "brandSignals": [],
@@ -47346,6 +47731,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/AttackIntent.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
@@ -47366,6 +47752,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/AttackTransactionResult.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java",
@@ -47845,6 +48232,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/content/DivineRetribution.java",
         "server/src/com/openrsc/server/content/Summoning.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -48311,6 +48699,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/PlayerAttackTransaction.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
@@ -48450,7 +48839,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 3123,
+      "bytes": 3184,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48459,11 +48848,11 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/ProjectileImpactPolicy.java",
       "reverseDependencies": [],
-      "sha256": "366db03471878c6ddb42e32f0d5081ed58edbbd609e9605a5db40cbd4631b104"
+      "sha256": "616e3b353e7fc98ab4c511cc0021c3e401143e344bd1eda83343b2e98846db1b"
     },
     {
       "brandSignals": [],
-      "bytes": 7136,
+      "bytes": 7281,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48504,7 +48893,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/projectile/BenignProjectileEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
       ],
-      "sha256": "ab3621eb485348368cd01011650f40548ee8848e83b3e0425ed30dbd20f03fdd"
+      "sha256": "1fb3551d517a187c312d90664258ba16439f56f55b9e1a6f106d652319fdc9b7"
     },
     {
       "brandSignals": [],
@@ -49653,6 +50042,7 @@
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/TradeLog.java",
         "server/src/com/openrsc/server/database/struct/PlayerInventory.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/DesertHeatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -50023,6 +50413,7 @@
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
         "server/src/com/openrsc/server/event/custom/HourlyResetEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/ObjectRemover.java",
         "server/src/com/openrsc/server/model/ViewArea.java",
@@ -50236,6 +50627,7 @@
         "server/src/com/openrsc/server/model/entity/player/Duel.java",
         "server/src/com/openrsc/server/model/entity/player/ScriptContext.java",
         "server/src/com/openrsc/server/model/world/World.java",
+        "server/src/com/openrsc/server/model/world/region/LayeredSpatialEntityIndex.java",
         "server/src/com/openrsc/server/model/world/region/Region.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java",
         "server/src/com/openrsc/server/model/world/region/VisibilitySnapshot.java",
@@ -50514,6 +50906,7 @@
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/FinitePeriodicEvent.java",
         "server/src/com/openrsc/server/event/rsc/GameNotifyEvent.java",
         "server/src/com/openrsc/server/event/rsc/GameStateEvent.java",
@@ -51290,6 +51683,9 @@
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/custom/NpcLootEvent.java",
         "server/src/com/openrsc/server/event/rsc/GameTickEvent.java",
         "server/src/com/openrsc/server/event/rsc/handler/GameEventHandler.java",
@@ -51339,6 +51735,7 @@
         "server/src/com/openrsc/server/model/entity/player/PlayerSettings.java",
         "server/src/com/openrsc/server/model/entity/player/ScriptContext.java",
         "server/src/com/openrsc/server/model/world/World.java",
+        "server/src/com/openrsc/server/model/world/region/LayeredSpatialEntityIndex.java",
         "server/src/com/openrsc/server/model/world/region/Region.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java",
         "server/src/com/openrsc/server/model/world/region/VisibilitySnapshot.java",
@@ -51401,7 +51798,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 28105,
+      "bytes": 28593,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -51503,7 +51900,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
       "reverseDependencies": [],
-      "sha256": "57b9a66d2405b96f61b0ff4f2c808d2d4854ecdee2f978e133c2c8e0d254d241"
+      "sha256": "0903a4c0b07acc6030ec327f22f146bbd96a936c738b7cf88a34dc2d3635c322"
     },
     {
       "brandSignals": [],
@@ -52704,6 +53101,9 @@
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/SecurityChangeLog.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/StaffLog.java",
         "server/src/com/openrsc/server/database/impl/sqlite/SqliteGameDatabase.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/DelayedEvent.java",
         "server/src/com/openrsc/server/event/MiniEvent.java",
         "server/src/com/openrsc/server/event/RestartableDelayedEvent.java",
@@ -53869,7 +54269,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 21438,
+      "bytes": 24999,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53909,14 +54309,14 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "9e7dce2de8d5f2ef69046b15a51027e1bb4b290ea8d5b0f390b1dff65b271182"
+      "sha256": "6840f6983358231f13b0599e232ea6b9ff4ec1a19fe4908df957bdf67fe86812"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 45935,
+      "bytes": 46663,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -54381,7 +54781,7 @@
         "server/src/com/openrsc/server/service/PlayerService.java",
         "server/src/com/openrsc/server/util/PathfindingDebug.java"
       ],
-      "sha256": "c30cf529eca84e6aa332b01380075046f95bdd1025e4e0fd943e44f043f38008"
+      "sha256": "b87a1ceeabdc755ba47c7df862359acd5de1a37638bae931a738843fd868b22b"
     },
     {
       "brandSignals": [],
@@ -55600,6 +56000,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
         "server/src/com/openrsc/server/io/NativeLayeredWorldPackage.java",
         "server/src/com/openrsc/server/io/NativeLayeredWorldRuntimeProfile.java",
         "server/src/com/openrsc/server/model/PathValidation.java",
@@ -55640,6 +56041,7 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
         "server/src/com/openrsc/server/external/EntityHandler.java",
         "server/src/com/openrsc/server/external/GameObjectLoc.java",
         "server/src/com/openrsc/server/external/ItemLoc.java",
@@ -55742,7 +56144,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2021,
+      "bytes": 2922,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -55764,7 +56166,7 @@
         "server/src/com/openrsc/server/model/world/region/LayeredTileStateParityComparison.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "29d378024c313167b2da1d81271a7fd17ef60832e58d157580e21eca0a48c97c"
+      "sha256": "151babdc04d366fcf1649a16fc1cd82b8590d171e0a142b9de96c889d4469dde"
     },
     {
       "brandSignals": [],
@@ -56485,7 +56887,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 17896,
+      "bytes": 24300,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -56497,6 +56899,14 @@
         {
           "import": "com.openrsc.server.model.entity.GameObject",
           "path": "server/src/com/openrsc/server/model/entity/GameObject.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.GroundItem",
+          "path": "server/src/com/openrsc/server/model/entity/GroundItem.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
         },
         {
           "import": "com.openrsc.server.model.entity.player.Player",
@@ -56519,7 +56929,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/world/region/LayeredSpatialEntityIndex.java",
       "reverseDependencies": [],
-      "sha256": "eeb4ce0263ed6d6121255499207859481cdb42af0032dcf9580b2bd16aa998c9"
+      "sha256": "c00e47824712c00d07d199cf2899f57d01592f3d338986fac26acb53824010da"
     },
     {
       "brandSignals": [],
@@ -56612,7 +57022,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4886,
+      "bytes": 7510,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -56630,7 +57040,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/world/region/NativeLayeredTerrainCollisionPlan.java",
       "reverseDependencies": [],
-      "sha256": "cc649402eca4148fc05b1da4ec30fa907ccd1b248282e8e1092ad352ef8ef1bb"
+      "sha256": "348c040ba6708d2325be5f7ef759b389581a5b630cae5efac68c6d31511c4417"
     },
     {
       "brandSignals": [],
@@ -56739,7 +57149,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 198063,
+      "bytes": 199234,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57067,7 +57477,7 @@
         "server/src/com/openrsc/server/io/WorldLoader.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "3cf1d8cbf0c7ae17b80e133a94ad337b595979aefbe8a2186596df59acb6ca0e"
+      "sha256": "bde5ca27d75cc895a522392a12293b88930a607e27d83203cebf25cb5c34f49b"
     },
     {
       "brandSignals": [],
@@ -57161,7 +57571,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 9338,
+      "bytes": 10758,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57194,11 +57604,11 @@
         "server/src/com/openrsc/server/service/PlayerService.java",
         "server/src/com/openrsc/server/util/PathfindingDebug.java"
       ],
-      "sha256": "47a6a42bb752257c785c1c9d3ccb341afc256e749c6a26ee316a07cc7d8c91b4"
+      "sha256": "0de382df89eb61c9cf7488fcd051cb1e1fc2bcc1b65d679a0344dbc184842789"
     },
     {
       "brandSignals": [],
-      "bytes": 5244,
+      "bytes": 5951,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57230,7 +57640,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/GameStateUpdater.java"
       ],
-      "sha256": "e09555b451cda90655f19c5e7fcef44881f170cfc958faf9baf7f0788316ea7a"
+      "sha256": "8bc1d5fde514ec7c92f30eea69c6f5ef321bc6cf5fae4bb3ecc27d4db83c8569"
     },
     {
       "brandSignals": [],
@@ -57252,6 +57662,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/ConnectionAttachment.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/diagnostics/AuthenticatedNetworkBenchmarkProbe.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
       "sha256": "bb36491dd8fb9de34dc11ba0dcebd249ed7d9d65dc6b41ac80517fb4ca6f8417"
@@ -57547,7 +57958,8 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/RSCConnectionHandler.java",
       "reverseDependencies": [
-        "server/src/com/openrsc/server/Server.java"
+        "server/src/com/openrsc/server/Server.java",
+        "server/src/com/openrsc/server/diagnostics/AuthenticatedNetworkBenchmarkProbe.java"
       ],
       "sha256": "321f0f2e6a9dc30ce07d76c9a0361edfcdd4ce3aef61b3ea11f9194bfbfffbcb"
     },
@@ -57656,22 +58068,27 @@
     },
     {
       "brandSignals": [],
-      "bytes": 804,
+      "bytes": 1142,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
-      "dependencies": [],
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe",
+          "path": "server/src/com/openrsc/server/diagnostics/AuthenticatedNetworkBenchmarkProbe.java"
+        }
+      ],
       "javaFqn": "com.openrsc.server.net.RSCProtocolEncoder",
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/RSCProtocolEncoder.java",
       "reverseDependencies": [],
-      "sha256": "2d10786eee5dc117622e82f0f2275d4a107e23a84a38eefe630a4a337d991a05"
+      "sha256": "0679f3c781ce5961919820de61c8e6ffbd38ef998f6ab2eef9150e0dec3a91ac"
     },
     {
       "brandSignals": [
         "spoiled-milk-name"
       ],
-      "bytes": 8897,
+      "bytes": 8507,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57680,20 +58097,25 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/RSCProtocolEncoderMain.java",
       "reverseDependencies": [],
-      "sha256": "ac1727b26d66bd1fccfb51cca645f772681039d4876ae69b2af573789ac0a5ff"
+      "sha256": "b4d28a0b452111ac781dc0b724a12bb945d3586a863b733b5e7e495525a5c7f0"
     },
     {
       "brandSignals": [],
-      "bytes": 958,
+      "bytes": 1422,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
-      "dependencies": [],
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.diagnostics.AuthenticatedNetworkBenchmarkProbe",
+          "path": "server/src/com/openrsc/server/diagnostics/AuthenticatedNetworkBenchmarkProbe.java"
+        }
+      ],
       "javaFqn": "com.openrsc.server.net.RSCProtocolWebEncoder",
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/RSCProtocolWebEncoder.java",
       "reverseDependencies": [],
-      "sha256": "714e351a9f95bd671a9a50bbf17096edf696c72c3093fcd52b50935d07343daf"
+      "sha256": "7e6708ec44b8ad00f0e0a305f199a03613cebc9e1a650698f8a5bc2aa153944c"
     },
     {
       "brandSignals": [],
@@ -58169,6 +58591,9 @@
       "path": "server/src/com/openrsc/server/net/rsc/ClientLimitations.java",
       "reverseDependencies": [
         "server/src/com/openrsc/server/Server.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/model/PlayerAppearance.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
@@ -68254,7 +68679,9 @@
       "path": "server/src/com/openrsc/server/plugins/triggers/TimedEventTrigger.java",
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/minigames/ABoneToPick.java",
-        "server/src/com/openrsc/server/GameStateUpdater.java"
+        "server/src/com/openrsc/server/GameStateUpdater.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java"
       ],
       "sha256": "1ffb79dbbfaec81bbb79167d552b75b3007fff4dbf5b92899b5756e2bf69d628"
     },
@@ -68722,6 +69149,24 @@
       "path": "server/src/com/openrsc/server/runtime/CombatTraceRedaction.java",
       "reverseDependencies": [],
       "sha256": "0902c32fbeb0e624fa65c5ba2d1059b279b07765d52668399616200e7cca6457"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1055,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [],
+      "javaFqn": "com.openrsc.server.runtime.DeterministicGameRandom",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/runtime/DeterministicGameRandom.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/Server.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java"
+      ],
+      "sha256": "077512080a2d3d9d122f2803e272b4fb713a8487362a422a9732865d0495c075"
     },
     {
       "brandSignals": [],
@@ -69793,6 +70238,7 @@
         "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/event/rsc/GameTickEventRestorationCollisionFootprintPlanner.java",
+        "server/src/com/openrsc/server/io/WorldLoader.java",
         "server/src/com/openrsc/server/model/AStarPathfinder.java",
         "server/src/com/openrsc/server/model/PathValidation.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
@@ -70044,6 +70490,9 @@
         "server/src/com/openrsc/server/database/impl/mysql/MySqlGameDatabase.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/GameReport.java",
+        "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
+        "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/custom/HolidayDropEvent.java",
         "server/src/com/openrsc/server/event/custom/NpcLootEvent.java",
         "server/src/com/openrsc/server/event/custom/UndergroundPassMessages.java",
@@ -72310,6 +72759,7 @@
       "fixture-additive",
       "preservation-r64-replacement",
       "spoiled-milk-builder-draft",
+      "spoiled-milk-editor-installed",
       "spoiled-milk-replacement",
       "spoiled-milk-world-builder-export"
     ]
@@ -72354,22 +72804,22 @@
   },
   "summary": {
     "categoryCounts": {
-      "diagnostic-proof": 10,
-      "foundation": 988,
+      "diagnostic-proof": 14,
+      "foundation": 989,
       "maintained-compatibility": 91,
       "spoiled-milk-content": 210,
       "target-profile": 412,
       "tool-only": 133,
-      "unresolved": 125
+      "unresolved": 126
     },
     "configurationInputs": 21,
-    "coreJavaFiles": 1072,
+    "coreJavaFiles": 1077,
     "databasePatchInputs": 27,
-    "definitionInputs": 43,
+    "definitionInputs": 44,
     "directBrandSignalFiles": 277,
     "foundationToSpoiledMilkDependencies": 108,
     "kindCounts": {
-      "ant-core-source": 1072,
+      "ant-core-source": 1077,
       "ant-library": 21,
       "ant-plugin-source": 494,
       "build-definition": 2,
@@ -72380,7 +72830,7 @@
       "database-query": 8,
       "database-schema-or-addon": 35,
       "database-seed": 1,
-      "definition": 43,
+      "definition": 44,
       "layered-proof-fixture": 8,
       "layered-tool-input": 110,
       "map-or-asset-archive": 33,
@@ -72397,7 +72847,7 @@
     },
     "pluginJavaFiles": 494,
     "populationInputs": 41,
-    "shippedInputs": 1969
+    "shippedInputs": 1975
   },
   "unresolvedInputs": [
     {
@@ -72414,6 +72864,10 @@
     },
     {
       "path": "server/conf/server/defs/SpellDefRetro.xml",
+      "reason": "Definition ownership is not encoded strongly enough to infer safely"
+    },
+    {
+      "path": "server/conf/server/defs/VisualTestNpcDefs.json",
       "reason": "Definition ownership is not encoded strongly enough to infer safely"
     },
     {

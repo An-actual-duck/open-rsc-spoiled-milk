@@ -57,9 +57,13 @@ def main() -> None:
         fail(f"Death obelisks were {sorted(obelisk_locations)}")
 
     client = CLIENT.read_text(encoding="utf-8")
-    if "{392, 3540}" not in client:
+    if "altarAnchor(392, 3540)" not in client:
         fail("Client Death Altar visual anchor is not at 392,3540")
-    if "{{390, 3543}, {395, 3543}, {395, 3538}, {390, 3538}}" not in client:
+    if (
+        "{altarAnchor(390, 3543), altarAnchor(395, 3543), "
+        "altarAnchor(395, 3538), altarAnchor(390, 3538)}"
+        not in client
+    ):
         fail("Client Death obelisk visual anchors do not match server locations")
     for obsolete in (
         "{151, 212}", "{149, 215}", "{154, 215}", "{154, 210}", "{150, 210}",

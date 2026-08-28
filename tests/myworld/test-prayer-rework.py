@@ -129,7 +129,8 @@ def main():
     require("Prayers.DIVINE_RETRIBUTION" in divine_retribution and "PrayerCatalog.GodLine.ZAMORAK" in divine_retribution,
             "Divine Retribution should be gated to Zamorak's special slot")
     require("MAX_PROC_CHANCE = 0.90D" in divine_retribution
-            and "Math.min(reflectedDamage, lastHits)" in divine_retribution,
+            and "getResolvedDamageTransaction().apply(damageRequest)" in divine_retribution
+            and "damageResult.getLegacyDamageDealt()" in divine_retribution,
             "Divine Retribution probability and actual-damage attribution bounds must remain")
     require("ItemId.ZAMORAK_MACE.id()" in divine_retribution,
             "Divine Retribution should require the Zamorak mace")

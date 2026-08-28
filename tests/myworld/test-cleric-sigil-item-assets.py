@@ -276,7 +276,7 @@ public final class ClericSigilItemAssetFixture {
 		Path root = Paths.get(args[0]);
 		Path assets = root.resolve("dev/myworld/assets/sprites/items/inventory-ground/resources/sigils");
 		EntityHandler.load(true);
-		check(EntityHandler.itemCount() == 3311, "client item count drift");
+		check(EntityHandler.itemCount() == 3318, "client item count drift");
 
 		ClientExternalAssetLoader local = new ClientExternalAssetLoader(root, mudclient.class);
 		ClientExternalAssetLoader packaged = new ClientExternalAssetLoader(

@@ -168,7 +168,7 @@ def main() -> int:
 		"final int[] foundryDragonColumnWidths = {228, 203, 263, 215, 218, 338};",
         "EntityHandler.activateFoundryDragonExternalVisual();",
         'npcSprites.put("foundrydragon", spriteEntry);',
-        'if ("foundrydragon".equalsIgnoreCase(s))',
+        '"foundrydragon".equalsIgnoreCase(s)',
     ):
         require(client, text, f"client Foundry Dragon registration missing {text}")
 

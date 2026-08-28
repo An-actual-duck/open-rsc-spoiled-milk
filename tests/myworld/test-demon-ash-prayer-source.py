@@ -15,6 +15,8 @@ NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
 NPC_DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
 BONES_PLUGIN = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/misc/Bones.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
+OFFERING_EXPERIENCE = ROOT / "server/src/com/openrsc/server/content/OfferingExperience.java"
+BLACK_UNICORN_EFFECT = ROOT / "server/src/com/openrsc/server/content/BlackUnicornOfferingEffect.java"
 WORK_ITEMS = ROOT / "docs/myworld/in-progress-work-plans/work-items.md"
 SUMMONING_PLAN = ROOT / "docs/myworld/in-progress-work-plans/summoning-plan.md"
 
@@ -35,6 +37,8 @@ def main() -> int:
     npc_drops = NPC_DROPS.read_text(encoding="utf-8")
     bones = BONES_PLUGIN.read_text(encoding="utf-8")
     summoning = SUMMONING.read_text(encoding="utf-8")
+    offering_experience = OFFERING_EXPERIENCE.read_text(encoding="utf-8")
+    black_unicorn_effect = BLACK_UNICORN_EFFECT.read_text(encoding="utf-8")
     work_items = WORK_ITEMS.read_text(encoding="utf-8")
     summoning_plan = SUMMONING_PLAN.read_text(encoding="utf-8")
 
@@ -57,15 +61,18 @@ def main() -> int:
     require("currentNpcDrops.addItemDrop(ItemId.ASHES.id(), 1, 6);" in npc_drops, "imp-style generic Ashes drops must remain generic", failures)
 
     require('command.equalsIgnoreCase("scatter")' in bones, "prayer plugin must accept scatter actions", failures)
-    require("case DEMON_ASH:" in bones, "Demon ash must award Worship XP through the bones plugin", failures)
-    require("skillXP = 2 * 80;" in bones, "Demon ash Worship XP should stay pinned at 80 before config division", failures)
+    require("OfferingExperience.getInternalExperience(item.getCatalogId())" in bones,
+            "Demon ash must award Worship XP through the shared offering table", failures)
+    require(re.search(r"case DEMON_ASH:\s*return 140;", offering_experience) is not None,
+            "Demon ash internal Worship XP should stay pinned at 140", failures)
 
     greater_demon = re.search(r"GREATER_DEMON_PROFILE\s*=.*?;\n", summoning, re.S)
     require(greater_demon is not None and "ItemId.DEMON_ASH.id()" in greater_demon.group(0), "Greater Demon summon must consume Demon ash", failures)
     require("{37, 619, 825, 3112}" in client_mudclient, "Abyssal Demon summon tooltip must count Demon ash", failures)
     require("Abyssal Demon - Combat; 3 life, blood, soul, demon ash" in skill_guide, "Summoning guide must list Demon ash for Abyssal Demon", failures)
     require("case DEMON_ASH:" in summoning, "Black Unicorn prayer-drop handling must include Demon ash", failures)
-    require("return 80;" in summoning, "Black Unicorn Demon ash XP must match the prayer plugin value", failures)
+    require(re.search(r"offering == ItemId\.DEMON_ASH\).*?return 3;", black_unicorn_effect, re.S) is not None,
+            "Black Unicorn Demon ash offering healing must stay at 3", failures)
 
     require("Demon ash prayer source is implemented" in work_items, "work-items doc must mark Demon ash as implemented", failures)
     require("1 Demon ash" in summoning_plan, "summoning plan must document Greater Demon Demon ash cost", failures)
