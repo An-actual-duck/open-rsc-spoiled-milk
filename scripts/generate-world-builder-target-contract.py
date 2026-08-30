@@ -323,7 +323,18 @@ def generate(root: Path) -> None:
         "serverMapRelativePath": "server/conf/server/data/Custom_Landscape.orsc",
         "serverRuntimeRelativePath": "server/world-builder-fallback/runtime.json",
     }
-    write_json(root / "server/world-builder-configs/primary.json", configuration)
+    configuration_path = root / "server/world-builder-configs/primary.json"
+    existing_configuration = None
+    if configuration_path.is_file():
+        existing_configuration = json.loads(
+            configuration_path.read_text(encoding="utf-8")
+        )
+    if not (
+        isinstance(existing_configuration, dict)
+        and existing_configuration.get("active") is True
+        and existing_configuration.get("representation") == "layered"
+    ):
+        write_json(configuration_path, configuration)
 
     source_roles = sorted(
         [

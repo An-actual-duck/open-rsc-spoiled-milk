@@ -73,6 +73,10 @@ public final class NativeLayeredTerrainChunk {
 		byte[] result = new byte[tiles.length * TILE_WIRE_BYTES];
 		int offset = 0;
 		for (NativeLayeredTerrainTile tile : tiles) {
+			if (tile.getElevation() > 255) {
+				throw new IllegalStateException(
+					"Wide native elevation is not supported by the current client protocol");
+			}
 			result[offset++] = (byte) tile.getElevation();
 			result[offset++] = (byte) tile.getTexture();
 			result[offset++] = (byte) tile.getOverlay();

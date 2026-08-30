@@ -182,6 +182,7 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
             public final class NativeTerrainMiningGuildWireHarness {
                 private static final int SIZE = 48;
                 private static final int TILE_BYTES = 10;
+				private static final int SOURCE_TILE_BYTES = 11;
 
                 public static void main(String[] arguments) throws Exception {
                     Path packageRoot = Paths.get(arguments[0]);
@@ -209,24 +210,46 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
                                 "terrain/global/lm1/xp" + sectorX
                                     + "-yp" + sectorY + ".raw");
                             byte[] raw = Files.readAllBytes(sectorPath);
-                            require(raw.length == SIZE * SIZE * TILE_BYTES,
+							boolean wide =
+								raw.length == SIZE * SIZE * SOURCE_TILE_BYTES;
+                            require(wide || raw.length == SIZE * SIZE * TILE_BYTES,
                                 "source byte count " + sectorX + ","
                                     + sectorY);
-                            source[index++] = raw;
+							byte[] wire;
+							if (wide) {
+								wire = new byte[SIZE * SIZE * TILE_BYTES];
+								for (int tile = 0; tile < SIZE * SIZE; tile++) {
+									int sourceOffset = tile * SOURCE_TILE_BYTES;
+									int targetOffset = tile * TILE_BYTES;
+									int elevation = (raw[sourceOffset] & 0xff) << 8
+										| raw[sourceOffset + 1] & 0xff;
+									require(elevation <= 255, "wire elevation range");
+									wire[targetOffset] = (byte) elevation;
+									System.arraycopy(
+										raw, sourceOffset + 2,
+										wire, targetOffset + 1,
+										TILE_BYTES - 1);
+								}
+							} else {
+								wire = raw;
+							}
+                            source[index++] = wire;
                             String contentSha = sha256(raw);
                             NativeLayeredTerrainWireCache.Lookup lookup =
                                 cache.getOrCompress(
                                     "package:global:-1:" + sectorX
                                         + ":" + sectorY,
                                     contentSha,
-                                    raw.length,
-                                    () -> raw);
+									wire.length,
+									() -> wire);
                             output.writeInt(sectorX);
                             output.writeInt(sectorY);
                             output.writeByte(1);
                             output.writeInt(sectorX);
                             output.writeInt(sectorY);
-                            line(output, "raw-layered-sector-v1");
+							line(output, wide
+								? "raw-layered-sector-v2-u16"
+								: "raw-layered-sector-v1");
                             line(output, contentSha);
                             output.writeShort(
                                 lookup.getCompressedByteCount());

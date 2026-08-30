@@ -58,6 +58,8 @@ public class Npc extends Mob {
 
 	private long healTimer = 0;
 	private boolean shouldRespawn = true;
+	/** -1 inherits the NPC definition, 0 disables respawn, positive values are seconds. */
+	private int authoredRespawnSeconds = -1;
 	private boolean isRespawning = false;
 	private boolean executedAggroScript = false;
 	private final NpcOwnerPreservationLifecycleGate
@@ -1598,11 +1600,13 @@ public class Npc extends Mob {
 			n.resetCombatEvent();
 		}
 		this.setLastOpponent(null);
-		if (!isRemoved() && shouldRespawn && def.respawnTime() > 0) {
+		int respawnSeconds = authoredRespawnSeconds >= 0
+			? authoredRespawnSeconds : def.respawnTime();
+		if (!isRemoved() && shouldRespawn && respawnSeconds > 0) {
 			super.remove();
 			startRespawning();
 			setRespawning(true);
-			getWorld().getServer().getGameEventHandler().add(new DelayedEvent(getWorld(), null, (long) (def.respawnTime() * respawnMult * 1000), "Respawn NPC", DuplicationStrategy.ONE_PER_MOB) {
+			getWorld().getServer().getGameEventHandler().add(new DelayedEvent(getWorld(), null, (long) (respawnSeconds * respawnMult * 1000), "Respawn NPC", DuplicationStrategy.ONE_PER_MOB) {
 				public void run() {
 					n.beginLayeredOwnerLifecycleOperation();
 					try {
@@ -1635,7 +1639,7 @@ public class Npc extends Mob {
 					}
 				}
 			});
-		} else if (!shouldRespawn) {
+		} else if (!shouldRespawn || authoredRespawnSeconds == 0) {
 			setUnregistering(true);
 		}
 	}
@@ -1685,6 +1689,18 @@ public class Npc extends Mob {
 
 	public boolean shouldRespawn() {
 		return shouldRespawn;
+	}
+
+	public void setAuthoredRespawnSeconds(final int seconds) {
+		if (seconds < -1 || seconds > 86400) {
+			throw new IllegalArgumentException(
+				"Authored NPC respawn must be -1..86400 seconds");
+		}
+		authoredRespawnSeconds = seconds;
+	}
+
+	public int getAuthoredRespawnSeconds() {
+		return authoredRespawnSeconds;
 	}
 
 	@Override

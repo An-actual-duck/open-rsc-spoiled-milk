@@ -73,12 +73,12 @@ dungeon is a separate protected component: all 2,955 of its terrain tiles and
 its exact 83 NPC, 10 item, 217 scenery, and 11 boundary placements must remain
 unchanged on level `-1`, or generation refuses.
 
-The active package is
+The active package is the reviewed World Builder export
 `rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest SHA-256
-`f5a79233700fa753a010e21bb5f697977c44d5385715b4d7cb69b2d0770280ae`
-and package fingerprint
-`16c2e77304a1d7ab49d41faaa9d6495cfba9af8d64fcb5bde034a69729f3c6fd`.
-After the accepted 2026-07-30 production-profile rehearsal it is
+`aed90ab3b94b3a86815db9a77b71f03a26b8cb134d09845860507896bc80b752`
+and content fingerprint
+`f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f`.
+After the accepted 2026-08-30 private server/client rehearsal it is
 `production-approved` with `runtimePromotionApproved=true`.
 It is consumed by the `spoiled-milk-replacement` runtime profile. The server
 configuration API still defaults every layered gate off, while the guarded

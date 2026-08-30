@@ -231,8 +231,9 @@ public final class LayeredWorldPackageManifest {
 				UniformLayeredTerrainSector.load(payload);
 			} else if (RleLayeredTerrainSector.ENCODING.equals(encoding)) {
 				RleLayeredTerrainSector.load(payload);
-			} else if (RawLayeredTerrainSector.ENCODING.equals(encoding)) {
-				RawLayeredTerrainSector.load(payload);
+			} else if (RawLayeredTerrainSector.ENCODING.equals(encoding)
+				|| RawLayeredTerrainSector.ENCODING_V2.equals(encoding)) {
+				RawLayeredTerrainSector.load(payload, encoding);
 			} else {
 				throw new PreflightException(
 					"Terrain payload encoding is unsupported by this loader: " + encoding);
@@ -288,7 +289,8 @@ public final class LayeredWorldPackageManifest {
 			String encoding = matchedString(value, "encoding", ID);
 			if (!LayeredEntityPlacements.ENCODING_V1.equals(encoding)
 				&& !LayeredEntityPlacements.ENCODING_V2.equals(encoding)
-				&& !LayeredEntityPlacements.ENCODING_V3.equals(encoding)) {
+				&& !LayeredEntityPlacements.ENCODING_V3.equals(encoding)
+				&& !LayeredEntityPlacements.ENCODING_V4.equals(encoding)) {
 				throw new PreflightException(
 					"Placement payload encoding is unsupported by this loader: "
 						+ encoding + ".");

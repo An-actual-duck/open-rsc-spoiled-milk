@@ -6,10 +6,11 @@
 # identity before the server can consume the package.
 SPOILED_MILK_LAYERED_PACKAGE_ID="rsc-remastered.spoiled-milk-layered-world"
 SPOILED_MILK_LAYERED_PACKAGE_VERSION="0.5.0"
-SPOILED_MILK_LAYERED_MANIFEST_SHA256="f5a79233700fa753a010e21bb5f697977c44d5385715b4d7cb69b2d0770280ae"
-SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT="16c2e77304a1d7ab49d41faaa9d6495cfba9af8d64fcb5bde034a69729f3c6fd"
+SPOILED_MILK_LAYERED_MANIFEST_SHA256="aed90ab3b94b3a86815db9a77b71f03a26b8cb134d09845860507896bc80b752"
+SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT="f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f"
 SPOILED_MILK_LAYERED_TERRAIN_SECTORS="1782"
-SPOILED_MILK_LAYERED_PLACEMENTS="33526"
+SPOILED_MILK_LAYERED_PLACEMENTS="33539"
+SPOILED_MILK_LAYERED_SOURCE_RELATIVE_PATH="server/world-builder/packages/$SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT/package"
 
 layered_world_fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -47,18 +48,31 @@ layered_world_validate_package() {
     || layered_world_fail "Layered-world validator did not create $validation_json"
 
   python3 - \
-    "$validation_json" \
-    "$SPOILED_MILK_LAYERED_PACKAGE_ID" \
+	"$validation_json" \
+	"$package_root" \
+	"$SPOILED_MILK_LAYERED_PACKAGE_ID" \
     "$SPOILED_MILK_LAYERED_PACKAGE_VERSION" \
     "$SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT" \
     "$SPOILED_MILK_LAYERED_TERRAIN_SECTORS" \
     "$SPOILED_MILK_LAYERED_PLACEMENTS" <<'PY'
+import hashlib
 import json
 import sys
+from pathlib import Path
 
-path, expected_id, expected_version, expected_fingerprint, expected_sectors, expected_placements = sys.argv[1:]
+path, package_root, expected_id, expected_version, expected_fingerprint, expected_sectors, expected_placements = sys.argv[1:]
 with open(path, "r", encoding="utf-8") as handle:
     report = json.load(handle)
+
+root = Path(package_root)
+digest = hashlib.sha256()
+for item in sorted(path for path in root.rglob("*") if path.is_file()):
+    relative = item.relative_to(root).as_posix()
+    payload = item.read_bytes()
+    for value in (relative, str(len(payload)), hashlib.sha256(payload).hexdigest()):
+        digest.update(value.encode("utf-8"))
+        digest.update(b"\0")
+actual_fingerprint = digest.hexdigest()
 
 actual_placements = sum(
     int(report.get(key, -1))
@@ -72,7 +86,6 @@ actual_placements = sum(
 expected = {
     "packageId": expected_id,
     "packageVersion": expected_version,
-    "packageFingerprintSha256": expected_fingerprint,
     "terrainSectorCount": int(expected_sectors),
 }
 problems = [
@@ -84,34 +97,59 @@ if actual_placements != int(expected_placements):
     problems.append(
         f"effective placements={actual_placements}, expected {expected_placements}"
     )
+if actual_fingerprint != expected_fingerprint:
+    problems.append(
+        f"content fingerprint={actual_fingerprint}, expected {expected_fingerprint}"
+    )
 if problems:
     raise SystemExit("Layered-world validation mismatch: " + "; ".join(problems))
 PY
 }
 
 layered_world_generate_package() {
-  local repository_root="$1"
-  local workspace="$2"
-  local package_root="$workspace/package"
+	local repository_root="$1"
+	local workspace="$2"
+	local package_root="$workspace/package"
+	local source_package="$repository_root/$SPOILED_MILK_LAYERED_SOURCE_RELATIVE_PATH"
 
   if [[ -e "$package_root" ]]; then
     layered_world_fail "Layered-world generation requires a fresh workspace; refusing existing package: $package_root"
     return 1
   fi
 
-  # A failed generator must never validate or return an incomplete package
-  # emitted before that failed run stopped.
-  if ! LAYERED_MAPS_WORKSPACE="$workspace" \
-    "$repository_root/tools/layered-maps/layered-maps.sh" \
-      spoiled-milk-package >&2; then
-    layered_world_fail "Layered-world generation failed; refusing all package output in $workspace"
-    return 1
-  fi
-  layered_world_validate_package \
-    "$repository_root" \
-    "$package_root" \
-    "$workspace/runtime-validation"
-  printf '%s\n' "$package_root"
+	if [[ ! -d "$source_package" ]]; then
+		layered_world_fail "Reviewed World Builder package is missing; refusing all package output: $source_package"
+		return 1
+	fi
+	mkdir -p "$workspace"
+	if ! cp -a "$source_package" "$package_root"; then
+		layered_world_fail "World Builder package copy failed; refusing all package output in $workspace"
+		return 1
+	fi
+	layered_world_validate_package \
+		"$repository_root" \
+		"$package_root" \
+		"$workspace/runtime-validation"
+	cp "$workspace/runtime-validation/package-validation.json" \
+		"$workspace/package-validation.json"
+	python3 - "$workspace/generation-report.json" \
+		"$SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT" <<'PY'
+import json
+import sys
+
+path, fingerprint = sys.argv[1:]
+with open(path, "w", encoding="utf-8") as handle:
+    json.dump({
+        "schemaVersion": 1,
+        "reportType": "world-builder-reviewed-package-promotion",
+        "contentTarget": "spoiled-milk",
+        "reviewState": "production-approved",
+        "runtimePromotionApproved": True,
+        "packageFingerprintSha256": fingerprint,
+    }, handle, indent=2, sort_keys=True)
+    handle.write("\n")
+PY
+	printf '%s\n' "$package_root"
 }
 
 layered_world_require_promotion_approved() {

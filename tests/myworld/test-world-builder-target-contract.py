@@ -53,7 +53,7 @@ def package_fingerprint(root: Path) -> str:
     for path in sorted(item for item in root.rglob("*") if item.is_file()):
         relative = path.relative_to(root).as_posix()
         sha256 = hashlib.sha256(path.read_bytes()).hexdigest()
-        for value in (relative, sha256, str(path.stat().st_size)):
+        for value in (relative, str(path.stat().st_size), sha256):
             digest.update(value.encode("utf-8"))
             digest.update(b"\0")
     return digest.hexdigest()
@@ -124,11 +124,15 @@ class WorldBuilderTargetContractTest(unittest.TestCase):
         self.assertEqual(["layered-package"], capability["install"]["serverRoles"])
         self.assertEqual(["layered-package"], capability["install"]["clientRoles"])
         self.assertEqual("primary", configuration["configurationId"])
-        self.assertEqual("packed", configuration["representation"])
-        self.assertEqual(
-            (ROOT / configuration["serverMapRelativePath"]).read_bytes(),
-            (ROOT / configuration["clientMapRelativePath"]).read_bytes(),
-        )
+        self.assertIn(configuration["representation"], ("packed", "layered"))
+        server_map = ROOT / configuration["serverMapRelativePath"]
+        client_map = ROOT / configuration["clientMapRelativePath"]
+        if configuration["representation"] == "packed":
+            self.assertEqual(server_map.read_bytes(), client_map.read_bytes())
+        else:
+            self.assertTrue(server_map.is_dir())
+            self.assertTrue(client_map.is_dir())
+            self.assertEqual(package_fingerprint(server_map), package_fingerprint(client_map))
         server_catalog = ROOT / configuration["serverDefinitionCatalogRelativePath"]
         client_catalog = ROOT / configuration["clientDefinitionCatalogRelativePath"]
         self.assertEqual(server_catalog.read_bytes(), client_catalog.read_bytes())
@@ -136,13 +140,18 @@ class WorldBuilderTargetContractTest(unittest.TestCase):
             hashlib.sha256(server_catalog.read_bytes()).hexdigest(),
             capability["definitions"]["catalogSha256"],
         )
-        self.assertEqual(
-            {"boundary", "ground-item", "npc", "scenery"},
-            {item["family"] for item in configuration["placements"]},
-        )
+        if configuration["representation"] == "packed":
+            self.assertEqual(
+                {"boundary", "ground-item", "npc", "scenery"},
+                {item["family"] for item in configuration["placements"]},
+            )
+        else:
+            self.assertEqual([], configuration["placements"])
 
-    def test_packed_configuration_is_inert(self):
-        result = self.run_harness(ROOT, False)
+    def test_current_configuration_matches_activation_state(self):
+        configuration = json.loads(CONFIGURATION.read_text(encoding="utf-8"))
+        expected = configuration["representation"] == "layered"
+        result = self.run_harness(ROOT, expected)
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
 
     def make_layered_target(self, base: Path) -> tuple[Path, str]:

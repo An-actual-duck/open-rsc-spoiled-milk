@@ -10,6 +10,8 @@ public final class NativeLayeredTerrainChunk {
 	public static final String UNIFORM_ENCODING = "uniform-layered-sector-v1";
 	public static final String RLE_ENCODING = "rle-layered-sector-v1";
 	public static final String RAW_ENCODING = "raw-layered-sector-v1";
+	public static final String RAW_ENCODING_V2 =
+		"raw-layered-sector-v2-u16";
 	public static final String VISUAL_ENCODING =
 		"visual-layered-sector-v1";
 	public static final String STRUCTURAL_ENCODING =
@@ -56,6 +58,7 @@ public final class NativeLayeredTerrainChunk {
 			if (!UNIFORM_ENCODING.equals(sourceEncoding)
 				&& !RLE_ENCODING.equals(sourceEncoding)
 				&& !RAW_ENCODING.equals(sourceEncoding)
+				&& !RAW_ENCODING_V2.equals(sourceEncoding)
 				&& !VISUAL_ENCODING.equals(sourceEncoding)
 				&& !STRUCTURAL_ENCODING.equals(sourceEncoding)
 				&& !PRESENTATION_ENCODING.equals(sourceEncoding)) {

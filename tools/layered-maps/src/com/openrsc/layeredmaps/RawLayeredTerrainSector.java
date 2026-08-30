@@ -12,18 +12,27 @@ import java.nio.file.Path;
  */
 public final class RawLayeredTerrainSector {
 	public static final String ENCODING = "raw-layered-sector-v1";
+	public static final String ENCODING_V2 = "raw-layered-sector-v2-u16";
 	public static final int SIZE = 48;
 	public static final int TILE_BYTES = 10;
+	public static final int TILE_BYTES_V2 = 11;
 	public static final int BYTE_COUNT = SIZE * SIZE * TILE_BYTES;
+	public static final int BYTE_COUNT_V2 = SIZE * SIZE * TILE_BYTES_V2;
 
 	private RawLayeredTerrainSector() {
 	}
 
 	public static void load(Path path) throws IOException, PreflightException {
+		load(path, ENCODING);
+	}
+
+	public static void load(Path path, String encoding)
+		throws IOException, PreflightException {
+		int expected = ENCODING_V2.equals(encoding) ? BYTE_COUNT_V2 : BYTE_COUNT;
 		long size = Files.size(path);
-		if (size != BYTE_COUNT) {
+		if (size != expected) {
 			throw new PreflightException(
-				"Raw sector must contain exactly " + BYTE_COUNT
+				"Raw sector must contain exactly " + expected
 					+ " bytes but contained " + size + ".");
 		}
 	}

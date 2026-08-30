@@ -20,7 +20,7 @@ public final class NativeLayeredTerrainTile {
 		int verticalWall,
 		int horizontalWall,
 		int diagonalWall) {
-		this.elevation = unsignedByte(elevation, "elevation");
+		this.elevation = unsignedShort(elevation, "elevation");
 		this.texture = unsignedByte(texture, "texture");
 		this.overlay = unsignedByte(overlay, "overlay");
 		this.roof = unsignedByte(roof, "roof");
@@ -36,7 +36,19 @@ public final class NativeLayeredTerrainTile {
 		return value;
 	}
 
+	private static int unsignedShort(int value, String label) {
+		if (value < 0 || value > 65535) {
+			throw new IllegalArgumentException(
+				label + " must be an unsigned 16-bit value");
+		}
+		return value;
+	}
+
 	Tile copyToLegacyTile() {
+		if (elevation > 255) {
+			throw new IllegalStateException(
+				"Wide native elevation cannot be represented by frozen legacy terrain");
+		}
 		Tile tile = new Tile();
 		tile.groundElevation = (byte) elevation;
 		tile.groundTexture = (byte) texture;

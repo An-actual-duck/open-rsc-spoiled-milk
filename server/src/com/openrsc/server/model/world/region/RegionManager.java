@@ -4250,6 +4250,8 @@ public class RegionManager {
 					placement.getMaxX(),
 					placement.getMinY(),
 					placement.getMaxY());
+				npc.setAuthoredRespawnSeconds(
+					placement.getRespawnSeconds());
 				markNativeLayeredPlacement(
 					npc,
 					worldPackage.getPackageId(),

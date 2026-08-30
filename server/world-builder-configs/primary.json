@@ -8,143 +8,14 @@
     }
   ],
   "clientDefinitionCatalogRelativePath": "Client_Base/world-builder-fallback/definitions.json",
-  "clientMapRelativePath": "Client_Base/Cache/video/Custom_Landscape.orsc",
+  "clientMapRelativePath": "Client_Base/world-builder/packages/f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f/package",
   "clientRuntimeRelativePath": "Client_Base/world-builder-fallback/runtime.json",
   "configurationId": "primary",
   "manifestType": "world-builder-map-configuration",
-  "placements": [
-    {
-      "compositionOrder": 0,
-      "encoding": "packed-boundary-locations-v1",
-      "family": "boundary",
-      "kind": "base",
-      "relativePath": "server/world-builder-fallback/boundaries.json",
-      "role": "boundary-base"
-    },
-    {
-      "compositionOrder": 1,
-      "encoding": "packed-ground-item-locations-v1",
-      "family": "ground-item",
-      "kind": "base",
-      "relativePath": "server/world-builder-fallback/ground-items.json",
-      "role": "ground-item-base"
-    },
-    {
-      "compositionOrder": 2,
-      "encoding": "packed-npc-locations-v1",
-      "family": "npc",
-      "kind": "base",
-      "relativePath": "server/world-builder-fallback/npcs.json",
-      "role": "npc-base"
-    },
-    {
-      "compositionOrder": 3,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "base",
-      "relativePath": "server/world-builder-fallback/scenery.json",
-      "role": "scenery-base"
-    },
-    {
-      "compositionOrder": 4,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsDiscontinued.json",
-      "role": "scenery-auxiliary-discontinued"
-    },
-    {
-      "compositionOrder": 5,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsModRoom.json",
-      "role": "scenery-auxiliary-mod-room"
-    },
-    {
-      "compositionOrder": 6,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsRunecraft.json",
-      "role": "scenery-auxiliary-runecraft"
-    },
-    {
-      "compositionOrder": 7,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsHarvesting.json",
-      "role": "scenery-auxiliary-harvesting"
-    },
-    {
-      "compositionOrder": 8,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsCustomQuest.json",
-      "role": "scenery-auxiliary-custom-quest"
-    },
-    {
-      "compositionOrder": 9,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsExpansion.json",
-      "role": "scenery-auxiliary-expansion"
-    },
-    {
-      "compositionOrder": 10,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsWoodcuttingGuild.json",
-      "role": "scenery-auxiliary-woodcutting-guild"
-    },
-    {
-      "compositionOrder": 11,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/SceneryLocsOther.json",
-      "role": "scenery-auxiliary-other"
-    },
-    {
-      "compositionOrder": 12,
-      "encoding": "packed-scenery-locations-v1",
-      "family": "scenery",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/MyWorldSceneryLocs.json",
-      "role": "scenery-overlay"
-    },
-    {
-      "compositionOrder": 13,
-      "encoding": "packed-scenery-removals-v1",
-      "family": "scenery",
-      "kind": "removal",
-      "relativePath": "server/world-builder-fallback/placements/MyWorldSceneryRemovals.json",
-      "role": "scenery-removal"
-    },
-    {
-      "compositionOrder": 14,
-      "encoding": "packed-npc-locations-v1",
-      "family": "npc",
-      "kind": "overlay",
-      "relativePath": "server/world-builder-fallback/placements/MyWorldNpcLocs.json",
-      "role": "npc-overlay"
-    },
-    {
-      "compositionOrder": 15,
-      "encoding": "packed-npc-removals-v1",
-      "family": "npc",
-      "kind": "removal",
-      "relativePath": "server/world-builder-fallback/placements/MyWorldNpcRemovals.json",
-      "role": "npc-removal"
-    }
-  ],
-  "representation": "packed",
+  "placements": [],
+  "representation": "layered",
   "schemaVersion": 1,
   "serverDefinitionCatalogRelativePath": "server/world-builder-fallback/definitions.json",
-  "serverMapRelativePath": "server/conf/server/data/Custom_Landscape.orsc",
+  "serverMapRelativePath": "server/world-builder/packages/f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f/package",
   "serverRuntimeRelativePath": "server/world-builder-fallback/runtime.json"
 }

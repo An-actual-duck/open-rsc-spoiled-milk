@@ -250,8 +250,8 @@ public final class WorldBuilderInstalledMapActivation {
 		MessageDigest digest = newDigest();
 		for (FileRecord file : files) {
 			updateText(digest, file.relativePath);
-			updateText(digest, file.sha256);
 			updateText(digest, Long.toString(file.size));
+			updateText(digest, file.sha256);
 		}
 		return hex(digest.digest());
 	}

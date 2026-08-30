@@ -37,7 +37,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"rsc-remastered.spoiled-milk-layered-world";
 	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.5.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"f5a79233700fa753a010e21bb5f697977c44d5385715b4d7cb69b2d0770280ae";
+		"aed90ab3b94b3a86815db9a77b71f03a26b8cb134d09845860507896bc80b752";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;
@@ -140,11 +140,13 @@ public enum NativeLayeredWorldRuntimeProfile {
 		}
 		final Set<Integer> placementLevels = new HashSet<Integer>();
 		for (NativeLayeredPlacementSet set : loaded.getPlacementSets().values()) {
+			String encoding = set.getSourceEncoding();
 			if (!WorldSpaceId.GLOBAL.equals(set.getWorldSpace())
-				|| !"layered-world-placements-v3".equals(set.getSourceEncoding())
+				|| !(NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V3.equals(encoding)
+					|| NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V4.equals(encoding))
 				|| !placementLevels.add(Integer.valueOf(set.getLevel()))) {
 				throw new IllegalStateException(
-					"The installed Spoiled Milk package requires one global v3 "
+					"The installed Spoiled Milk package requires one global v3/v4 "
 						+ "placement set per declared level");
 			}
 		}
