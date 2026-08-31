@@ -1,12 +1,14 @@
 package com.openrsc.server.content;
 
-import com.openrsc.server.constants.Skill;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 
 public final class RangersGuildPoints {
 	public static final String POINTS_CACHE_KEY = "rangers_guild_points";
-	public static final String REMAINDER_CACHE_KEY = "rangers_guild_point_remainder";
-	public static final int XP_PER_POINT = 10;
+	public static final int GIANT_POINTS = 7;
+	public static final int SKELETON_POINTS = 12;
+	public static final int LESSER_DEMON_POINTS = 16;
+	public static final int GREEN_DRAGON_POINTS = 22;
 
 	private RangersGuildPoints() {
 	}
@@ -17,20 +19,35 @@ public final class RangersGuildPoints {
 			&& RangersGuildArea.containsBasement(player.getWorldLocation());
 	}
 
-	public static void awardFromExperience(Player player, int skill, int experience) {
-		if (player == null || skill != Skill.RANGED.id() || experience <= 0 || !isInBasement(player)) {
+	public static int pointsForNpc(final int npcId) {
+		switch (npcId) {
+			case 61:
+				return GIANT_POINTS;
+			case 195:
+				return SKELETON_POINTS;
+			case 22:
+				return LESSER_DEMON_POINTS;
+			case 196:
+				return GREEN_DRAGON_POINTS;
+			default:
+				return 0;
+		}
+	}
+
+	public static boolean isEligibleBasementEnemy(final Player player, final Npc npc) {
+		return player != null
+			&& npc != null
+			&& player.getConfig().WANT_MYWORLD
+			&& pointsForNpc(npc.getID()) > 0
+			&& npc.getAuthoredPlacementIdentity() != null
+			&& RangersGuildArea.containsBasement(npc.getLoc().toWorldStartLocation());
+	}
+
+	public static void awardEligibleRangedKill(final Player player, final Npc npc) {
+		if (!isEligibleBasementEnemy(player, npc) || !npc.hasRangedDamageBy(player)) {
 			return;
 		}
-
-		int remainder = getRemainder(player);
-		long total = (long) remainder + experience;
-		int earnedPoints = (int) (total / XP_PER_POINT);
-		int newRemainder = (int) (total % XP_PER_POINT);
-
-		if (earnedPoints > 0) {
-			addPoints(player, earnedPoints);
-		}
-		player.getCache().set(REMAINDER_CACHE_KEY, newRemainder);
+		addPoints(player, pointsForNpc(npc.getID()));
 	}
 
 	public static int getPoints(Player player) {
@@ -57,10 +74,6 @@ public final class RangersGuildPoints {
 
 		setPoints(player, currentPoints - points);
 		return true;
-	}
-
-	private static int getRemainder(Player player) {
-		return getCacheInt(player, REMAINDER_CACHE_KEY);
 	}
 
 	private static void setPoints(Player player, int points) {

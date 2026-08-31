@@ -3,23 +3,22 @@ package com.openrsc.server.plugins.authentic.npcs.yanille;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.MageGuildStoneCredits;
 import com.openrsc.server.model.container.Item;
-import com.openrsc.server.model.entity.GroundItem;
+import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
+import java.util.Optional;
+
 import static com.openrsc.server.plugins.Functions.*;
 
 public class WizardFrumscone implements TalkNpcTrigger, OpNpcTrigger {
-
-	private static final String GIVE_ZOMBIE_EYES = "Give zombie eyes";
-	private static final String GIVE_SCALES = "Give scales";
+	private static final String CONVERT_OPTION = "Convert my noted Stone";
 	private static final String MAGIC_CAPE_OPTION = "Does your cape have any magical properties?";
-	private static final String BLUE_SCALE_OPTION = "I brought you blue dragon scales";
-	private static final String ZOMBIE_EYE_OPTION = "I brought you zombie eyes";
-	private static final String LEAVE_OPTION = "I was going to kill them with or without your permission";
+	private static final String LEAVE_OPTION = "Nothing right now";
 
 	@Override
 	public boolean blockTalkNpc(Player player, Npc n) {
@@ -29,75 +28,116 @@ public class WizardFrumscone implements TalkNpcTrigger, OpNpcTrigger {
 	@Override
 	public boolean blockOpNpc(Player player, Npc n, String command) {
 		return n.getID() == NpcId.WIZARD_FRUMSCONE.id()
-			&& (GIVE_ZOMBIE_EYES.equalsIgnoreCase(command) || GIVE_SCALES.equalsIgnoreCase(command));
+			&& "Convert Stone".equalsIgnoreCase(command);
 	}
 
 	@Override
 	public void onOpNpc(Player player, Npc n, String command) {
-		if (GIVE_ZOMBIE_EYES.equalsIgnoreCase(command)) {
-			tradeForStone(player, n, ItemId.ZOMBIE_EYE.id(), 2);
-		} else if (GIVE_SCALES.equalsIgnoreCase(command)) {
-			tradeForStone(player, n, ItemId.BLUE_DRAGON_SCALE.id(), 3);
-		}
+		openStoneConversion(player, n);
 	}
 
 	@Override
 	public void onTalkNpc(Player player, Npc n) {
-		if (n.getID() == NpcId.WIZARD_FRUMSCONE.id()) {
-			npcsay(player, n, "Do you like my magic zombies and baby blue dragons",
-				"Feel free to kill them",
-				"Theres plenty more where these came from",
-				"If you bring me blue dragon scales or zombie eyes",
-				"I'll trade each zombie eye for 2 stone",
-				"And each blue dragon scale for 3 stone");
+		npcsay(player, n,
+			"My Magic Zombies make excellent combat practice",
+			"For each one you defeat down here, I'll prepare one Stone",
+			"You must bring me the Stone in noted form");
 
-			boolean canBuyMagicCape = config().WANT_CUSTOM_SPRITES
-				&& getMaxLevel(player, Skill.MAGIC.id()) >= 99;
-			int option = canBuyMagicCape
-				? multi(player, n, MAGIC_CAPE_OPTION, BLUE_SCALE_OPTION, ZOMBIE_EYE_OPTION, LEAVE_OPTION)
-				: multi(player, n, BLUE_SCALE_OPTION, ZOMBIE_EYE_OPTION, LEAVE_OPTION);
-
-			if (option == -1 || LEAVE_OPTION.equals(getSelectedOption(canBuyMagicCape, option))) {
-				return;
-			}
-
-			String selectedOption = getSelectedOption(canBuyMagicCape, option);
-			if (MAGIC_CAPE_OPTION.equals(selectedOption)) {
-				handleMagicCape(player, n);
-			} else if (BLUE_SCALE_OPTION.equals(selectedOption)) {
-				tradeForStone(player, n, ItemId.BLUE_DRAGON_SCALE.id(), 3);
-			} else if (ZOMBIE_EYE_OPTION.equals(selectedOption)) {
-				tradeForStone(player, n, ItemId.ZOMBIE_EYE.id(), 2);
-			}
+		boolean canBuyMagicCape = config().WANT_CUSTOM_SPRITES
+			&& getMaxLevel(player, Skill.MAGIC.id()) >= 99;
+		int option = canBuyMagicCape
+			? multi(player, n, MAGIC_CAPE_OPTION, CONVERT_OPTION, LEAVE_OPTION)
+			: multi(player, n, CONVERT_OPTION, LEAVE_OPTION);
+		if (option < 0) {
+			return;
+		}
+		if (canBuyMagicCape && option == 0) {
+			handleMagicCape(player, n);
+		} else if ((!canBuyMagicCape && option == 0) || (canBuyMagicCape && option == 1)) {
+			openStoneConversion(player, n);
 		}
 	}
 
-	private String getSelectedOption(boolean canBuyMagicCape, int option) {
-		if (canBuyMagicCape) {
-			switch (option) {
-				case 0:
-					return MAGIC_CAPE_OPTION;
-				case 1:
-					return BLUE_SCALE_OPTION;
-				case 2:
-					return ZOMBIE_EYE_OPTION;
-				case 3:
-					return LEAVE_OPTION;
-				default:
-					return "";
-			}
+	private void openStoneConversion(Player player, Npc n) {
+		int credits = MageGuildStoneCredits.getCredits(player);
+		int notedStone = player.getCarriedItems().getInventory()
+			.countId(ItemId.RUNE_STONE.id(), Optional.of(true));
+		if (credits <= 0) {
+			npcsay(player, n, "You have no Magic Zombie kill credits yet");
+			return;
+		}
+		if (notedStone <= 0) {
+			npcsay(player, n, "Bring me noted Stone to use your " + creditLabel(credits));
+			return;
 		}
 
+		npcsay(player, n, "You have " + creditLabel(credits),
+			"How many noted Stone should I prepare?");
+		int option = multi(player, n, "Convert 1", "Convert 5", "Convert all I can", LEAVE_OPTION);
+		int requested;
 		switch (option) {
 			case 0:
-				return BLUE_SCALE_OPTION;
+				requested = 1;
+				break;
 			case 1:
-				return ZOMBIE_EYE_OPTION;
+				requested = 5;
+				break;
 			case 2:
-				return LEAVE_OPTION;
+				requested = Math.min(credits, notedStone);
+				break;
 			default:
-				return "";
+				return;
 		}
+		convertStone(player, n, requested);
+	}
+
+	private void convertStone(Player player, Npc n, int requested) {
+		Inventory inventory = player.getCarriedItems().getInventory();
+		int credits = MageGuildStoneCredits.getCredits(player);
+		int notedStone = inventory.countId(ItemId.RUNE_STONE.id(), Optional.of(true));
+		int quantity = Math.min(requested, Math.min(credits, notedStone));
+		if (quantity <= 0) {
+			npcsay(player, n, "You don't have both a credit and noted Stone for that");
+			return;
+		}
+
+		int usableSlots = inventory.getFreeSlots();
+		if (quantity == notedStone) {
+			usableSlots++;
+		}
+		if (quantity > usableSlots) {
+			npcsay(player, n, "You need " + quantity + " free inventory spaces",
+				"The noted Stone only frees its slot when the whole stack is used");
+			return;
+		}
+
+		Item notedInput = new Item(ItemId.RUNE_STONE.id(), quantity, true);
+		if (player.getCarriedItems().remove(notedInput) == -1) {
+			npcsay(player, n, "I couldn't take that noted Stone safely");
+			return;
+		}
+
+		int added = 0;
+		for (; added < quantity; added++) {
+			if (!inventory.add(new Item(ItemId.RUNE_STONE.id(), 1, false))) {
+				break;
+			}
+		}
+		if (added != quantity || !MageGuildStoneCredits.spendCredits(player, quantity)) {
+			for (int removed = 0; removed < added; removed++) {
+				player.getCarriedItems().remove(new Item(ItemId.RUNE_STONE.id(), 1, false));
+			}
+			inventory.add(notedInput);
+			npcsay(player, n, "The exchange could not be completed, so nothing was spent");
+			return;
+		}
+
+		npcsay(player, n, "I prepared " + quantity + " Stone for you",
+			"You have " + creditLabel(MageGuildStoneCredits.getCredits(player)) + " left");
+	}
+
+	private String creditLabel(int credits) {
+		return credits + " Magic Zombie kill credit" + (credits == 1 ? "" : "s");
 	}
 
 	private void handleMagicCape(Player player, Npc n) {
@@ -119,40 +159,6 @@ public class WizardFrumscone implements TalkNpcTrigger, OpNpcTrigger {
 			} else {
 				npcsay(player, n, "You do not have enough coins to unlock your full power");
 			}
-		}
-	}
-
-	private void tradeForStone(Player player, Npc n, int itemId, int stonePerItem) {
-		int itemCount = player.getCarriedItems().getInventory().countId(itemId);
-		if (itemCount <= 0) {
-			npcsay(player, n, "You don't have any of those for me");
-			return;
-		}
-
-		if (player.getCarriedItems().remove(new Item(itemId, itemCount)) == -1) {
-			npcsay(player, n, "Something went wrong while taking those");
-			return;
-		}
-
-		int stoneCount = itemCount * stonePerItem;
-		int carriedStone = Math.min(stoneCount, player.getCarriedItems().getInventory().getFreeSlots());
-		int droppedStone = stoneCount - carriedStone;
-		if (carriedStone > 0) {
-			give(player, ItemId.RUNE_STONE.id(), carriedStone);
-		}
-		dropStoneOverflow(player, droppedStone);
-
-		if (droppedStone > 0) {
-			npcsay(player, n, "Thank you, here's " + stoneCount + " stone in return",
-				"Some of it fell to the ground because you had no room");
-		} else {
-			npcsay(player, n, "Thank you, here's " + stoneCount + " stone in return");
-		}
-	}
-
-	private void dropStoneOverflow(Player player, int amount) {
-		for (int i = 0; i < amount; i++) {
-			player.getWorld().registerItem(new GroundItem(player.getWorld(), ItemId.RUNE_STONE.id(), player.getX(), player.getY(), 1, player));
 		}
 	}
 }

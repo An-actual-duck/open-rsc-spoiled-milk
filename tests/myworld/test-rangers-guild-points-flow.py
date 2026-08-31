@@ -85,12 +85,40 @@ public final class Skill {
 }
 """
 
+NPC_STUB = r"""
+package com.openrsc.server.model.entity.npc;
+
+import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.model.entity.player.Player;
+
+public final class Npc {
+    private final int id;
+    private final NPCLoc loc;
+    private final boolean authored;
+    private final boolean rangedDamage;
+
+    public Npc(int id, NPCLoc loc, boolean authored, boolean rangedDamage) {
+        this.id = id;
+        this.loc = loc;
+        this.authored = authored;
+        this.rangedDamage = rangedDamage;
+    }
+
+    public int getID() { return id; }
+    public NPCLoc getLoc() { return loc; }
+    public Object getAuthoredPlacementIdentity() { return authored ? this : null; }
+    public boolean hasRangedDamageBy(Player player) { return rangedDamage; }
+}
+"""
+
 
 HARNESS = r"""
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.RangersGuildArea;
 import com.openrsc.server.content.RangersGuildPoints;
 import com.openrsc.server.model.Cache;
+import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
@@ -107,18 +135,18 @@ public final class RangersGuildPointsHarness {
     }
 
     public static void main(String[] arguments) {
-        WorldLocation minimum = location(484, 449, -1);
-        WorldLocation maximum = location(515, 478, -1);
+        WorldLocation minimum = location(484, 456, -1);
+        WorldLocation maximum = location(515, 483, -1);
         check(RangersGuildArea.containsBasement(minimum),
             "logical basement minimum was rejected");
         check(RangersGuildArea.containsBasement(maximum),
             "logical basement maximum was rejected");
         check(RangersGuildArea.containsBasement(
-                LegacyPackedPointAdapter.fromPackedValues(484, 3281)),
+                LegacyPackedPointAdapter.fromPackedValues(484, 3288)),
             "legacy basement coordinate did not resolve to the activity");
         check(!RangersGuildArea.containsBasement(location(483, 449, -1)),
             "west-adjacent tile entered the activity");
-        check(!RangersGuildArea.containsBasement(location(484, 448, -1)),
+        check(!RangersGuildArea.containsBasement(location(484, 455, -1)),
             "north-adjacent tile entered the activity");
         check(!RangersGuildArea.containsBasement(location(484, 449, 0)),
             "surface tile with matching X/Y entered the basement activity");
@@ -135,40 +163,29 @@ public final class RangersGuildPointsHarness {
 
         Cache persisted = new Cache();
         Player player = new Player(persisted, minimum, true);
-        RangersGuildPoints.awardFromExperience(player, Skill.RANGED.id(), 9);
-        check(RangersGuildPoints.getPoints(player) == 0,
-            "partial XP awarded a point too early");
-        check(persisted.getInt(RangersGuildPoints.REMAINDER_CACHE_KEY) == 9,
-            "partial XP was not persisted");
-
-        RangersGuildPoints.awardFromExperience(player, Skill.RANGED.id(), 12);
-        check(RangersGuildPoints.getPoints(player) == 2,
-            "credited Ranged XP did not award points");
-        check(persisted.getInt(RangersGuildPoints.REMAINDER_CACHE_KEY) == 1,
-            "credited Ranged XP remainder was lost");
+        Npc giant = npc(61, 491, 464, true, true);
+        Npc skeleton = npc(195, 506, 466, true, true);
+        Npc demon = npc(22, 495, 477, true, true);
+        Npc dragon = npc(196, 497, 462, true, true);
+        RangersGuildPoints.awardEligibleRangedKill(player, giant);
+        RangersGuildPoints.awardEligibleRangedKill(player, skeleton);
+        RangersGuildPoints.awardEligibleRangedKill(player, demon);
+        RangersGuildPoints.awardEligibleRangedKill(player, dragon);
+        check(RangersGuildPoints.getPoints(player) == 57,
+            "weighted authored basement kills awarded the wrong total");
 
         Player reloaded = new Player(persisted, maximum, true);
-        check(RangersGuildPoints.getPoints(reloaded) == 2,
+        check(RangersGuildPoints.getPoints(reloaded) == 57,
             "cache-backed point balance did not survive player reconstruction");
-        RangersGuildPoints.awardFromExperience(
-            reloaded, Skill.MAGIC.id(), 1000);
-        check(RangersGuildPoints.getPoints(reloaded) == 2,
-            "non-Ranged XP awarded guild points");
-
-        reloaded.setWorldLocation(location(484, 449, 0));
-        RangersGuildPoints.awardFromExperience(
-            reloaded, Skill.RANGED.id(), 1000);
-        check(RangersGuildPoints.getPoints(reloaded) == 2,
-            "matching coordinates on the wrong layer awarded points");
-        reloaded.setWorldLocation(location(483, 449, -1));
-        RangersGuildPoints.awardFromExperience(
-            reloaded, Skill.RANGED.id(), 1000);
-        check(RangersGuildPoints.getPoints(reloaded) == 2,
-            "Ranged XP outside the activity awarded points");
+        RangersGuildPoints.awardEligibleRangedKill(reloaded, npc(61, 491, 464, false, true));
+        RangersGuildPoints.awardEligibleRangedKill(reloaded, npc(61, 491, 464, true, false));
+        RangersGuildPoints.awardEligibleRangedKill(reloaded, npc(61, 483, 464, true, true));
+        RangersGuildPoints.awardEligibleRangedKill(reloaded, npc(68, 491, 464, true, true));
+        check(RangersGuildPoints.getPoints(reloaded) == 57,
+            "ineligible source, style, location, or roster awarded points");
 
         Player disabled = new Player(new Cache(), minimum, false);
-        RangersGuildPoints.awardFromExperience(
-            disabled, Skill.RANGED.id(), 1000);
+        RangersGuildPoints.awardEligibleRangedKill(disabled, giant);
         check(RangersGuildPoints.getPoints(disabled) == 0,
             "non-MyWorld profile awarded guild points");
 
@@ -185,6 +202,12 @@ public final class RangersGuildPointsHarness {
         check(!RangersGuildPoints.spendPoints(reloaded, Integer.MAX_VALUE),
             "oversized spend succeeded");
     }
+
+    private static Npc npc(int id, int x, int y, boolean authored, boolean ranged) {
+        int packedY = y + 3 * 944;
+        return new Npc(id, new NPCLoc(id, x, packedY, x, x, packedY, packedY),
+            authored, ranged);
+    }
 }
 """
 
@@ -196,11 +219,14 @@ class RangersGuildPointsFlowTest(unittest.TestCase):
             temp_path = Path(temp)
             player_stub = temp_path / "com/openrsc/server/model/entity/player/Player.java"
             skill_stub = temp_path / "com/openrsc/server/constants/Skill.java"
+            npc_stub = temp_path / "com/openrsc/server/model/entity/npc/Npc.java"
             harness = temp_path / "RangersGuildPointsHarness.java"
             player_stub.parent.mkdir(parents=True)
             skill_stub.parent.mkdir(parents=True)
+            npc_stub.parent.mkdir(parents=True)
             player_stub.write_text(PLAYER_STUB, encoding="utf-8")
             skill_stub.write_text(SKILL_STUB, encoding="utf-8")
+            npc_stub.write_text(NPC_STUB, encoding="utf-8")
             harness.write_text(textwrap.dedent(HARNESS), encoding="utf-8")
 
             subprocess.run(
@@ -216,6 +242,7 @@ class RangersGuildPointsFlowTest(unittest.TestCase):
                     str(temp_path),
                     str(player_stub),
                     str(skill_stub),
+                    str(npc_stub),
                     str(AREA),
                     str(POINTS),
                     str(harness),
@@ -234,21 +261,14 @@ class RangersGuildPointsFlowTest(unittest.TestCase):
                 check=True,
             )
 
-    def test_final_credited_xp_attribution_path_is_preserved(self):
+    def test_final_kill_attribution_path_is_used(self):
         skills = SKILLS.read_text(encoding="utf-8")
         player = PLAYER.read_text(encoding="utf-8")
         npc = NPC.read_text(encoding="utf-8")
         range_event = RANGE_EVENT.read_text(encoding="utf-8")
         throwing_event = THROWING_EVENT.read_text(encoding="utf-8")
 
-        self.assertIn(
-            "int creditedExperience = Math.max(0, exps[skill] - oldExp);",
-            skills,
-        )
-        self.assertIn(
-            "RangersGuildPoints.awardFromExperience((Player) getMob(), skill, creditedExperience);",
-            skills,
-        )
+        self.assertNotIn("RangersGuildPoints", skills)
         self.assertIn("handleXpDistribution(mob)", npc)
         self.assertIn("awardRangedDamageShareXp(", npc)
         self.assertIn("player.incExp(primarySkill.id(),", npc)
@@ -259,6 +279,8 @@ class RangersGuildPointsFlowTest(unittest.TestCase):
         self.assertIn("getSkills().addExperience(skill, thisXp);", player)
         self.assertIn("player.incExp(Skill.RANGED.id()", range_event)
         self.assertIn("player.incExp(Skill.RANGED.id()", throwing_event)
+        self.assertIn("RangersGuildPoints.awardEligibleRangedKill(owner, this);", npc)
+        self.assertIn("public boolean hasRangedDamageBy", npc)
 
     def test_balance_display_redemption_and_persistence_integrations(self):
         vendor = VENDOR.read_text(encoding="utf-8")
