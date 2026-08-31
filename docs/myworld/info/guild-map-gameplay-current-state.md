@@ -50,6 +50,7 @@ credited kill of an eligible authored basement spawn. Melee/magic-only kills,
 other monsters, copies without authored provenance, and matching coordinates
 on another level award nothing.
 
-Both stair objects are now aligned at `x=499`, `y=469`. The down destination is
-the same signed X/Y on level `-1` (legacy packed `y=3301`), and the up
-destination is the same X/Y on level `0`; neither direction applies an offset.
+Both stair objects are aligned at `x=499`, `y=469`. Using the ground-floor down
+stair lands at signed `(499,472,-1)` (legacy packed `(499,3304)`), clear of the
+basement stair footprint. Using the basement up stair at packed `(499,3301)`
+lands at `(499,468,0)`, immediately north of the ground-floor stair opening.

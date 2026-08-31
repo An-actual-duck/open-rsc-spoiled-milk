@@ -49,6 +49,7 @@ BASEMENT_REQUIRED_WALKABLE_TILES = {
     (498, 3296),
     (499, 3295),
     (499, 3296),
+    (499, 3304),
 }
 GROUND_DOWN_STAIR_TILES = {
     (x, y)
@@ -211,6 +212,17 @@ def ensure_basement_terrain():
             == (152, 70, 5, 0, 0, 0, 0),
             f"Old ground-floor down-stair opening should be restored to floor at {x},{y}",
         )
+    require(
+        tile(
+            server_sector,
+            499,
+            468,
+            origin_x=GROUND_SECTOR_ORIGIN_X,
+            origin_y=GROUND_SECTOR_ORIGIN_Y,
+        )
+        == (152, 70, 5, 0, 0, 0, 0),
+        "Rangers Guild ground-floor up-stair landing should be walkable at 499,468",
+    )
 
 
 def ensure_scenery_layout():
@@ -275,16 +287,16 @@ def ensure_stair_telepoints():
         ] = (int(telepoint.findtext("x")), int(telepoint.findtext("y")))
 
     require(
-        telepoints.get((499, 469, "Go down")) == (499, 3301),
-        "Ground-floor Rangers Guild stairs should preserve X/Y on the basement layer",
+        telepoints.get((499, 469, "Go down")) == (499, 3304),
+        "Ground-floor Rangers Guild stairs should land at signed (499,472,-1)",
     )
     require(
         (498, 469, "Go down") not in telepoints,
         "Old ground-floor Rangers Guild stair telepoint should be removed",
     )
     require(
-        telepoints.get((499, 3301, "Go up")) == (499, 469),
-        "Basement Rangers Guild stairs should preserve X/Y on the ground layer",
+        telepoints.get((499, 3301, "Go up")) == (499, 468),
+        "Basement Rangers Guild stairs should land at (499,468,0)",
     )
     require(
         (498, 3296, "Go up") not in telepoints,

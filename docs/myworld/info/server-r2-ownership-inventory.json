@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "3c927a989f306d15c84f9732560b8fa961416c370d91e143a6dc8784921aa6f6",
+  "inputTreeSha256": "88785ac5d7f64d268a897092823759dc75f476f922ebc31e4bfb0a713b5ee223",
   "inputs": [
     {
       "brandSignals": [
@@ -2201,7 +2201,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/extras/ObjectTelePoints.xml",
       "reverseDependencies": [],
-      "sha256": "9bc3c9dc096083353761162a521082acbe202ba16416e24bc0530be8fad838e8"
+      "sha256": "318a2e334c958016b1c3c44e40e377197c52cde655c26dbe48d62125cc9d283f"
     },
     {
       "brandSignals": [],
