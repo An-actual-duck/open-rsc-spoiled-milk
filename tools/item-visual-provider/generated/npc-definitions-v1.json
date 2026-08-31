@@ -5,12 +5,12 @@
     "identity": "spoiled-milk-core-final-client-npc-definitions",
     "definitionMode": "members-enabled-post-override",
     "finalClientNpcCount": 862,
-    "finalClientNpcCatalogSha256": "2763a649f0973dd65502f64495415f16fd8b7011a2c8f64d326612d16d103154",
+    "finalClientNpcCatalogSha256": "2d17b90c005329a5446ca8e31a7970369adf14f202eda45b7802099e35fd4aa3",
     "sources": [
       {
         "role": "final-client-definition-runtime",
         "identity": "EntityHandler.java",
-        "sha256": "4284b88eb36847ce432797e16dd6fe3996402c476469192b681e4c1b424e95f6"
+        "sha256": "7f90864c8492b67df92d2d238b98030e7b837ad33016aaf8f14fdfb6ab92c013"
       },
       {
         "role": "final-client-definition-runtime",
