@@ -20,7 +20,9 @@ COMBAT_FORMULA_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "
 RANGE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "ProjectileEvent.java"
 DRAGON_FIRE_BREATH_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "scripts" / "all" / "DragonFireBreath.java"
+RANGE_UTILS_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "projectile" / "RangeUtils.java"
 SPELL_HANDLER_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "net" / "rsc" / "handlers" / "SpellHandler.java"
+ELDER_GREEN_DRAGON_PATH = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "event" / "rsc" / "impl" / "combat" / "ElderGreenDragonSpecialAttacks.java"
 
 
 def fail(message: str) -> None:
@@ -286,14 +288,22 @@ def ensure_dragon_weapon_breath_split() -> None:
 
 def ensure_dragon_fire_breath_respects_obstructions() -> None:
     dragon_fire_breath = DRAGON_FIRE_BREATH_PATH.read_text(encoding="utf-8")
+    range_utils = RANGE_UTILS_PATH.read_text(encoding="utf-8")
     spell_handler = SPELL_HANDLER_PATH.read_text(encoding="utf-8")
+    elder_green_dragon = ELDER_GREEN_DRAGON_PATH.read_text(encoding="utf-8")
 
-    require_text(dragon_fire_breath, "PathValidation.checkEnemyCombatProjectilePath(",
-                 "Dragon fire breath combat-start obstruction check")
+    for source, label in (
+        (dragon_fire_breath, "Dragon fire breath combat-start"),
+        (range_utils, "Ranged/throwing retaliatory dragon fire breath"),
+        (spell_handler, "Spell retaliatory dragon fire breath"),
+        (elder_green_dragon, "Elder dragon fire breath"),
+    ):
+        require_text(source, "PathValidation.checkNpcDragonFireBreathPath(",
+                     f"{label} obstruction check")
     require_text(dragon_fire_breath, "if (!canDragonBreathReachPlayer(dragon, player))",
                  "Dragon fire breath should skip damage when blocked by fences or walls")
-    require_text(spell_handler, "PathValidation.checkCombatProjectilePath(",
-                 "Legacy spell-triggered dragon fire breath obstruction check")
+    if elder_green_dragon.count("if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS)") != 3:
+        fail("Elder fireshot must validate at launch and impact, and burn at launch")
 
 
 def main() -> None:

@@ -118,6 +118,15 @@ public class PathValidation {
 			world, src, dest, DistanceCollisionMode.ENEMY_COMBAT_PROJECTILE);
 	}
 
+	/**
+	 * Checks NPC dragon-breath line of fire. Dragon breath is hostile even when
+	 * retaliating against a player attack, so enemy-only fence cover applies.
+	 */
+	public static boolean checkNpcDragonFireBreathPath(final World world,
+			final WorldLocation src, final WorldLocation dest) {
+		return checkEnemyCombatProjectilePath(world, src, dest);
+	}
+
 	public static boolean checkPath(
 		final World world,
 		final WorldLocation src,

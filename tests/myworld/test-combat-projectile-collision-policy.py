@@ -26,7 +26,11 @@ LIB = ROOT / "server/lib/*"
 ENEMY_CALL_SITES = (
     ROOT / "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEventNpc.java",
+)
+NPC_DRAGON_BREATH_CALL_SITES = (
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
+    ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeUtils.java",
+    ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
     ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
 )
 PLAYER_ALLIED_CALL_SITES = (
@@ -135,6 +139,10 @@ require(
         for object_id in boundary_fence_ids
     ),
     "Every boundary fence must remain a collision-registering doorType 1",
+)
+require(
+    field(boundary_definitions[5], "name").lower() == "railings",
+    "Rangers Guild railing boundary definition changed",
 )
 
 classification_fixtures = "".join(
@@ -501,6 +509,8 @@ path_source = PATH_VALIDATION.read_text(encoding="utf-8")
 require(
     "public static boolean checkCombatProjectilePath" in path_source
     and "public static boolean checkEnemyCombatProjectilePath" in path_source
+    and "public static boolean checkNpcDragonFireBreathPath" in path_source
+    and "return checkEnemyCombatProjectilePath(world, src, dest);" in path_source
     and "t.getCombatProjectileCollisionMask()" in path_source
     and "t.getEnemyProjectileCollisionMask()" in path_source,
     "projectile path APIs must consume structural and enemy-fence masks",
@@ -535,19 +545,22 @@ for call_site in ENEMY_CALL_SITES:
         f"{call_site.name} bypasses enemy projectile collision",
     )
 
-elder_source = ENEMY_CALL_SITES[-1].read_text(encoding="utf-8")
+for call_site in NPC_DRAGON_BREATH_CALL_SITES:
+    source = call_site.read_text(encoding="utf-8")
+    require(
+        "PathValidation.checkNpcDragonFireBreathPath(" in source,
+        f"{call_site.name} bypasses shared hostile dragon-breath collision",
+    )
+
+elder_source = NPC_DRAGON_BREATH_CALL_SITES[-1].read_text(encoding="utf-8")
 require(
-    elder_source.count("if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS))")
-    == 2,
-    "Elder fireshot and burn must each validate every AOE target at launch",
+    elder_source.count("if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS)")
+    == 3,
+    "Elder fireshot must validate at launch and impact, and burn at launch",
 )
 require(
-    "PathValidation.checkEnemyCombatProjectilePath(" in elder_source,
+    "PathValidation.checkNpcDragonFireBreathPath(" in elder_source,
     "Elder AOE target validation bypasses semantic combat collision",
-)
-require(
-    "if (!isValidPlayerTarget(dragon, player, AOE_RADIUS)" in elder_source,
-    "Elder fireshot delivery should retain lifecycle checks without a second line-of-fire check",
 )
 
 for player_projectile in PLAYER_ALLIED_CALL_SITES:
