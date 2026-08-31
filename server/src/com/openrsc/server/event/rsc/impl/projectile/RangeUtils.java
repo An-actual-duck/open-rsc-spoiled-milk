@@ -9,6 +9,7 @@ import com.openrsc.server.content.DropTable;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.OSRSCombatFormula;
+import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
@@ -311,7 +312,10 @@ public class RangeUtils {
     public static void applyDragonFireBreath(Player player, Mob target, boolean deliveredFirstProjectile) {
         if (target.isNpc()) {
             Npc npc = (Npc) target;
-            if (!deliveredFirstProjectile && (npc.getID() == NpcId.DRAGON.id() || npc.getID() == NpcId.KING_BLACK_DRAGON.id())) {
+            if (!deliveredFirstProjectile
+                    && (npc.getID() == NpcId.DRAGON.id() || npc.getID() == NpcId.KING_BLACK_DRAGON.id())
+                    && PathValidation.checkNpcDragonFireBreathPath(
+                        npc.getWorld(), npc.getWorldLocation(), player.getWorldLocation())) {
                 player.playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
                 int percentage = 20;
                 int fireDamage;

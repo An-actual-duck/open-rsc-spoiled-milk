@@ -116,7 +116,7 @@ public final class ElderGreenDragonSpecialAttacks {
 				"Elder Green Dragon Fireshot", DuplicationStrategy.ALLOW_MULTIPLE) {
 				@Override
 				public void action() {
-					if (!isValidPlayerTarget(dragon, player, AOE_RADIUS)
+					if (!isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS)
 						|| dragon.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 						return;
 					}
@@ -204,7 +204,7 @@ public final class ElderGreenDragonSpecialAttacks {
 
 	private static boolean isValidProjectilePlayerTarget(final Npc dragon, final Player player, final int radius) {
 			return isValidPlayerTarget(dragon, player, radius)
-				&& PathValidation.checkEnemyCombatProjectilePath(
+				&& PathValidation.checkNpcDragonFireBreathPath(
 					dragon.getWorld(),
 					dragon.getWorldLocation(),
 					player.getWorldLocation());
