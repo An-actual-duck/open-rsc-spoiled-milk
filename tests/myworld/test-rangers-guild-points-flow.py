@@ -24,6 +24,7 @@ VENDOR = (
     / "plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java"
 )
 DOOR = SERVER / "plugins/com/openrsc/server/plugins/custom/misc/RangersGuildDoor.java"
+DEFAULT = SERVER / "plugins/com/openrsc/server/plugins/authentic/defaults/Default.java"
 
 
 PLAYER_STUB = r"""
@@ -267,6 +268,7 @@ class RangersGuildPointsFlowTest(unittest.TestCase):
         npc = NPC.read_text(encoding="utf-8")
         range_event = RANGE_EVENT.read_text(encoding="utf-8")
         throwing_event = THROWING_EVENT.read_text(encoding="utf-8")
+        default = DEFAULT.read_text(encoding="utf-8")
 
         self.assertNotIn("RangersGuildPoints", skills)
         self.assertIn("handleXpDistribution(mob)", npc)
@@ -279,7 +281,7 @@ class RangersGuildPointsFlowTest(unittest.TestCase):
         self.assertIn("getSkills().addExperience(skill, thisXp);", player)
         self.assertIn("player.incExp(Skill.RANGED.id()", range_event)
         self.assertIn("player.incExp(Skill.RANGED.id()", throwing_event)
-        self.assertIn("RangersGuildPoints.awardEligibleRangedKill(owner, this);", npc)
+        self.assertIn("RangersGuildPoints.awardEligibleRangedKill(player, n);", default)
         self.assertIn("public boolean hasRangedDamageBy", npc)
 
     def test_balance_display_redemption_and_persistence_integrations(self):

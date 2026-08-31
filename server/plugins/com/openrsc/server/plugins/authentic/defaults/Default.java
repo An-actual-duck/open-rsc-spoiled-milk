@@ -1,6 +1,8 @@
 package com.openrsc.server.plugins.authentic.defaults;
 
 import com.openrsc.server.constants.Spells;
+import com.openrsc.server.content.MageGuildStoneCredits;
+import com.openrsc.server.content.RangersGuildPoints;
 import com.openrsc.server.external.SpellDef;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GameObject;
@@ -278,7 +280,8 @@ public class Default implements DefaultHandler,
 
 	@Override
 	public void onKillNpc(Player player, Npc n) {
-		// No default actions
+		MageGuildStoneCredits.awardEligibleKill(player, n);
+		RangersGuildPoints.awardEligibleRangedKill(player, n);
 	}
 
 	@Override

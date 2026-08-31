@@ -2,8 +2,6 @@ package com.openrsc.server.model.entity.npc;
 
 import com.openrsc.server.constants.*;
 import com.openrsc.server.content.DropTable;
-import com.openrsc.server.content.MageGuildStoneCredits;
-import com.openrsc.server.content.RangersGuildPoints;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerFailureDiagnostics;
@@ -808,9 +806,6 @@ public class Npc extends Mob {
 				owner = personalLootRecipients.keySet().iterator().next();
 			}
 		}
-
-		MageGuildStoneCredits.awardEligibleKill(owner, this);
-		RangersGuildPoints.awardEligibleRangedKill(owner, this);
 
 		ActionSender.sendSound(owner, "victory");
 		owner.getWorld().getServer().getAchievementSystem().checkAndIncSlayNpcTasks(owner, this);

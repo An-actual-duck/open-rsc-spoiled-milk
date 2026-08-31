@@ -510,11 +510,6 @@
       "target": "server/src/com/openrsc/server/content/Summoning.java"
     },
     {
-      "import": "com.openrsc.server.content.RangersGuildPoints",
-      "source": "server/src/com/openrsc/server/model/Skills.java",
-      "target": "server/src/com/openrsc/server/content/RangersGuildPoints.java"
-    },
-    {
       "import": "com.openrsc.server.content.Summoning",
       "source": "server/src/com/openrsc/server/model/combat/ChainLightningTraversalPolicy.java",
       "target": "server/src/com/openrsc/server/content/Summoning.java"
@@ -805,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "4c5f98e7dd0bfa654cc40ef2eb38b1df9359cc79d3fb6478dc233f4d099e5f2d",
+  "inputTreeSha256": "3c927a989f306d15c84f9732560b8fa961416c370d91e143a6dc8784921aa6f6",
   "inputs": [
     {
       "brandSignals": [
@@ -1781,7 +1776,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 772494,
+      "bytes": 772480,
       "category": "target-profile",
       "classificationReason": "Base target definition input",
       "classificationRule": "server/conf/server/defs/{ItemDefs,NpcDefs}.json",
@@ -1790,7 +1785,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/NpcDefs.json",
       "reverseDependencies": [],
-      "sha256": "6067bf2bda56e40f568c8386c5e21786fa6ef6e963fae8b249b1ce149be4bbef"
+      "sha256": "5a58059f3fb782ca87e38725ba676f9ee9b518ca4bf3a6bc8eae733ee8f67bf1"
     },
     {
       "brandSignals": [],
@@ -2206,7 +2201,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/extras/ObjectTelePoints.xml",
       "reverseDependencies": [],
-      "sha256": "957b32b927860170905460b9d2a5f6377256ce493503b62b738175fdda68f4ed"
+      "sha256": "9bc3c9dc096083353761162a521082acbe202ba16416e24bc0530be8fad838e8"
     },
     {
       "brandSignals": [],
@@ -5559,7 +5554,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 10799,
+      "bytes": 10997,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -5575,6 +5570,14 @@
         {
           "import": "com.openrsc.server.constants.Spells",
           "path": "server/src/com/openrsc/server/constants/Spells.java"
+        },
+        {
+          "import": "com.openrsc.server.content.MageGuildStoneCredits",
+          "path": "server/src/com/openrsc/server/content/MageGuildStoneCredits.java"
+        },
+        {
+          "import": "com.openrsc.server.content.RangersGuildPoints",
+          "path": "server/src/com/openrsc/server/content/RangersGuildPoints.java"
         },
         {
           "import": "com.openrsc.server.external.SpellDef",
@@ -5617,7 +5620,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
       "reverseDependencies": [],
-      "sha256": "2c0618a6194085addbd0b32f5bc942f8e4f661ffb0ad5dcb7c023fc5fa897a9a"
+      "sha256": "b23809bd4a9178a19a3a4661c367fed961716a0448b79fad50ab2fe455452435"
     },
     {
       "brandSignals": [],
@@ -15912,7 +15915,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 6107,
+      "bytes": 6157,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -15966,7 +15969,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/LowesArchery.java",
       "reverseDependencies": [],
-      "sha256": "98420395dfec284aa9bb3eb7bb5e6bf0595fa5b613dc14c9f4f514066410d3ac"
+      "sha256": "acafe48767d0f8c446ae83caccedf75bbe34a9a79325a0cf784b534a273d66c9"
     },
     {
       "brandSignals": [],
@@ -16928,7 +16931,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5630,
+      "bytes": 5637,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -16946,12 +16949,16 @@
           "path": "server/src/com/openrsc/server/constants/Skill.java"
         },
         {
-          "import": "com.openrsc.server.model.container.Item",
-          "path": "server/src/com/openrsc/server/model/container/Item.java"
+          "import": "com.openrsc.server.content.MageGuildStoneCredits",
+          "path": "server/src/com/openrsc/server/content/MageGuildStoneCredits.java"
         },
         {
-          "import": "com.openrsc.server.model.entity.GroundItem",
-          "path": "server/src/com/openrsc/server/model/entity/GroundItem.java"
+          "import": "com.openrsc.server.model.container.Inventory",
+          "path": "server/src/com/openrsc/server/model/container/Inventory.java"
+        },
+        {
+          "import": "com.openrsc.server.model.container.Item",
+          "path": "server/src/com/openrsc/server/model/container/Item.java"
         },
         {
           "import": "com.openrsc.server.model.entity.npc.Npc",
@@ -16974,7 +16981,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/yanille/WizardFrumscone.java",
       "reverseDependencies": [],
-      "sha256": "022838e4df45d03bac6f056d4417bb496e5912e3275acaacec11fc00504e92a9"
+      "sha256": "0081f7fe89083df8de7d0864afeb5e205bad856a91a0420ab60bf7a18885c603"
     },
     {
       "brandSignals": [
@@ -29458,7 +29465,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 10494,
+      "bytes": 10523,
       "category": "spoiled-milk-content",
       "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
@@ -29520,7 +29527,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java",
       "reverseDependencies": [],
-      "sha256": "888ae072aacacef0cfb0d1ba5359b3ab1c46dec9223f23548e31a346e55a4d63"
+      "sha256": "aa08d8e0ccf7f59e4ae43f95d5146c0a335eb40864f69a755bddb93605961b5a"
     },
     {
       "brandSignals": [],
@@ -33279,7 +33286,6 @@
         "server/src/com/openrsc/server/content/GodArtifacts.java",
         "server/src/com/openrsc/server/content/Leach.java",
         "server/src/com/openrsc/server/content/PlayerClass.java",
-        "server/src/com/openrsc/server/content/RangersGuildPoints.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/TrueDefense.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
@@ -34249,6 +34255,46 @@
       "sha256": "719a36736da18d7fe69c115efbb9169a63a6f8976286196a76661196e16543b0"
     },
     {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 1958,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldCoordinate",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldCoordinate.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldLocation",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldLocation.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldTileBounds",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldTileBounds.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.MageGuildStoneCredits",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
+      "reverseDependencies": [
+        "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
+        "server/plugins/com/openrsc/server/plugins/authentic/npcs/yanille/WizardFrumscone.java"
+      ],
+      "sha256": "62d40f19dccc12b34b4e4f2881562482cfa7ef670dfba13c157affcceca0af0c"
+    },
+    {
       "brandSignals": [],
       "bytes": 1503,
       "category": "unresolved",
@@ -34389,7 +34435,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 1180,
+      "bytes": 999,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -34397,6 +34443,10 @@
         {
           "import": "com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter",
           "path": "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldCoordinate",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldCoordinate.java"
         },
         {
           "import": "com.openrsc.server.model.world.coordinate.WorldLocation",
@@ -34413,21 +34463,21 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/misc/RangersGuildDoor.java"
       ],
-      "sha256": "3460837ec2f22bc0f2ef539bfcdedbe4247c6185c33c5f10c09e4ceae1969171"
+      "sha256": "67146cc5e4bc6c509dea30e7f19b33fbfb6d442c3ebf2e4d21114d1e3711df88"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 2169,
+      "bytes": 2450,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
       "dependencies": [
         {
-          "import": "com.openrsc.server.constants.Skill",
-          "path": "server/src/com/openrsc/server/constants/Skill.java"
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
         },
         {
           "import": "com.openrsc.server.model.entity.player.Player",
@@ -34438,10 +34488,10 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/RangersGuildPoints.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java",
-        "server/src/com/openrsc/server/model/Skills.java"
+        "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
+        "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java"
       ],
-      "sha256": "44a640afd36e3790112cd029a38544f4a4c45a19551a6c6444ee53c9f9a6ed88"
+      "sha256": "76bd3c4e02f2830f2729ee67590b1b15292a85fe3406dfe382bf82b5fe378470"
     },
     {
       "brandSignals": [],
@@ -47419,7 +47469,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 21478,
+      "bytes": 21214,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -47431,10 +47481,6 @@
         {
           "import": "com.openrsc.server.constants.Skill",
           "path": "server/src/com/openrsc/server/constants/Skill.java"
-        },
-        {
-          "import": "com.openrsc.server.content.RangersGuildPoints",
-          "path": "server/src/com/openrsc/server/content/RangersGuildPoints.java"
         },
         {
           "import": "com.openrsc.server.database.GameDatabaseException",
@@ -47485,7 +47531,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/Skills.java",
       "reverseDependencies": [],
-      "sha256": "c86aea1c865fccf9055cae3b674c95dac293dc41dfd381d07ad0fa847e68d766"
+      "sha256": "ed2f5af34c63ab0c118dd665b00b5628e8824c0d3ecc785e6c1723def1694c0a"
     },
     {
       "brandSignals": [],
@@ -49628,6 +49674,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java",
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Event.java",
+        "server/plugins/com/openrsc/server/plugins/authentic/npcs/yanille/WizardFrumscone.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/crafting/Crafting.java",
         "server/plugins/com/openrsc/server/plugins/authentic/skills/fishing/Fishing.java",
         "server/plugins/com/openrsc/server/plugins/custom/minigames/DwarfRescue.java",
@@ -50594,7 +50641,6 @@
         "server/plugins/com/openrsc/server/plugins/authentic/npcs/tutorial/IronMan.java",
         "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/TeaSeller.java",
         "server/plugins/com/openrsc/server/plugins/authentic/npcs/varrock/ThessaliasClothes.java",
-        "server/plugins/com/openrsc/server/plugins/authentic/npcs/yanille/WizardFrumscone.java",
         "server/plugins/com/openrsc/server/plugins/authentic/quests/free/DemonSlayer.java",
         "server/plugins/com/openrsc/server/plugins/authentic/quests/free/DragonSlayer.java",
         "server/plugins/com/openrsc/server/plugins/authentic/quests/free/TheRestlessGhost.java",
@@ -51213,7 +51259,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 66801,
+      "bytes": 66943,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -51696,7 +51742,9 @@
         "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/content/DivineRetribution.java",
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
+        "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
         "server/src/com/openrsc/server/content/PoisonProcChance.java",
+        "server/src/com/openrsc/server/content/RangersGuildPoints.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/achievement/AchievementSystem.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
@@ -51784,7 +51832,7 @@
         "server/src/com/openrsc/server/util/PathfindingDebug.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "580d64f341fe0dbe8f4cad441edf4c32ac3759000728ad42ec3b9d551087861b"
+      "sha256": "f5ac6440a0b26cdb56940133178c7f03084d77ca07fc479fb74bd3cb8739d13a"
     },
     {
       "brandSignals": [],
@@ -53074,6 +53122,7 @@
         "server/src/com/openrsc/server/content/FoundryDragonSmeltingCost.java",
         "server/src/com/openrsc/server/content/GodArtifacts.java",
         "server/src/com/openrsc/server/content/Leach.java",
+        "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
         "server/src/com/openrsc/server/content/PlayerClass.java",
         "server/src/com/openrsc/server/content/PoisonProcChance.java",
         "server/src/com/openrsc/server/content/RangersGuildPoints.java",
@@ -56019,6 +56068,8 @@
         "server/plugins/com/openrsc/server/plugins/authentic/minigames/mage_arena/MageArena.java",
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/undergroundpass/mechanism/UndergroundPassMechanismMap1.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java",
+        "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
+        "server/src/com/openrsc/server/content/RangersGuildArea.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
         "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
@@ -56057,6 +56108,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/undergroundpass/mechanism/UndergroundPassMechanismMap1.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java",
         "server/src/com/openrsc/server/GameStateUpdater.java",
+        "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
         "server/src/com/openrsc/server/content/RangersGuildArea.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
@@ -56240,6 +56292,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/world/coordinate/WorldTileBounds.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
         "server/src/com/openrsc/server/content/RangersGuildArea.java",
         "server/src/com/openrsc/server/external/NPCLoc.java",
         "server/src/com/openrsc/server/model/world/region/LayeredRegionTileSnapshot.java"
@@ -96400,16 +96453,16 @@
       "spoiled-milk-content": 210,
       "target-profile": 412,
       "tool-only": 154,
-      "unresolved": 126
+      "unresolved": 127
     },
     "configurationInputs": 21,
-    "coreJavaFiles": 1078,
+    "coreJavaFiles": 1079,
     "databasePatchInputs": 27,
     "definitionInputs": 44,
-    "directBrandSignalFiles": 289,
-    "foundationToSpoiledMilkDependencies": 108,
+    "directBrandSignalFiles": 290,
+    "foundationToSpoiledMilkDependencies": 107,
     "kindCounts": {
-      "ant-core-source": 1078,
+      "ant-core-source": 1079,
       "ant-library": 21,
       "ant-plugin-source": 494,
       "build-definition": 2,
@@ -96438,7 +96491,7 @@
     },
     "pluginJavaFiles": 494,
     "populationInputs": 41,
-    "shippedInputs": 3787
+    "shippedInputs": 3788
   },
   "unresolvedInputs": [
     {
@@ -96783,6 +96836,10 @@
     },
     {
       "path": "server/src/com/openrsc/server/content/FoundryDragonSmeltingCost.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/MageGuildStoneCredits.java",
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {

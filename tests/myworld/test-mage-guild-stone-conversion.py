@@ -13,6 +13,7 @@ CORE_JAR = ROOT / "server/core.jar"
 CREDITS = ROOT / "server/src/com/openrsc/server/content/MageGuildStoneCredits.java"
 FRUMSCONE = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/npcs/yanille/WizardFrumscone.java"
 NPC = ROOT / "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+DEFAULT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java"
 NPC_DEFS = ROOT / "server/conf/server/defs/NpcDefs.json"
 ACTIVE_PLACEMENTS = ROOT / (
     "server/world-builder/packages/"
@@ -139,7 +140,7 @@ class MageGuildStoneConversionTest(unittest.TestCase):
         frumscone = next(npc for npc in npc_defs if npc["id"] == 515)
         self.assertEqual(frumscone["command"], "Convert Stone")
         self.assertEqual(frumscone["command2"], "")
-        self.assertIn("MageGuildStoneCredits.awardEligibleKill(owner, this);", NPC.read_text(encoding="utf-8"))
+        self.assertIn("MageGuildStoneCredits.awardEligibleKill(player, n);", DEFAULT.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
