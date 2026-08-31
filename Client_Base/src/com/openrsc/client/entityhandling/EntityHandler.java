@@ -1821,7 +1821,7 @@ public class EntityHandler {
 		} else {
 			sprites = new int[]{6, 1, 2, -1, -1, 77, 76, 81, -1, -1, -1, -1};
 		}
-		npcs.add(new NPCDef("Wizard Frumscone", "A confused looking wizard", "Give zombie eyes", "Give scales", 20, 15, 3, 10, false, sprites, 1, 255, 255, 15523536, 145, 220, 6, 6, 5, i++));
+		npcs.add(new NPCDef("Wizard Frumscone", "A confused looking wizard", "Convert Stone", "", 20, 15, 3, 10, false, sprites, 1, 255, 255, 15523536, 145, 220, 6, 6, 5, i++));
 		sprites = new int[]{135, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 		npcs.add(new NPCDef("target practice zombie", "The living dead", "", 23, 28, 24, 23, true, sprites, 0, 0, 0, 0, 174, 259, 12, 12, 5, i++));
 		sprites = new int[]{6, 1, 2, 122, -1, -1, 83, 87, -1, -1, -1, -1};

@@ -205,18 +205,18 @@
 		<TelePoint>
 			<command>Go down</command>
 			<x>499</x>
-			<y>3295</y>
+			<y>3301</y>
 		</TelePoint>
 	</entry>
 	<entry>
 		<Point>
-			<x>498</x>
-			<y>3296</y>
+			<x>499</x>
+			<y>3301</y>
 		</Point>
 		<TelePoint>
 			<command>Go up</command>
 			<x>499</x>
-			<y>468</y>
+			<y>469</y>
 		</TelePoint>
 	</entry>
 </map>

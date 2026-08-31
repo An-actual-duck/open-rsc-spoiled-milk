@@ -127,7 +127,8 @@ public final class LowesArchery extends AbstractShop {
 		if (option == 0) {
 			say("What can I do here?");
 			npcsay("The basement is set up for ranged practice",
-				"You earn Rangers Guild points from ranged experience down there",
+				"You earn points by defeating its monsters with Ranged",
+				"The tougher basement creatures are worth more points",
 				"The upstairs vendors handle the specialist equipment",
 				"Keep your distance and make every shot count");
 		} else if (option == capeOption) {

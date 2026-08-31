@@ -43,7 +43,7 @@ docs/player-command-list
       focused branches. The preserved backlog, dependency audit, execution
       order, and implementation-ready first camera task live in
       [fixes-and-changes-plan.md](fixes-and-changes-plan.md).
-- [ ] Rework Wizard Frumscone's guild-basement Stone loop. Remove the Baby Blue
+- [x] Rework Wizard Frumscone's guild-basement Stone loop. Remove the Baby Blue
       Dragons from this basement encounter, retain Magic Zombies, and make the
       basement a deliberately dense Magic Zombie farming area. Frumscone should
       keep a per-player tally of eligible Magic Zombie kills and spend one kill
@@ -56,6 +56,17 @@ docs/player-command-list
       systems. The implementation brief must settle persistence, exchange
       quantity/menu behavior, inventory-space failure, and exactly which
       basement Magic Zombie spawns award credit before editing.
+
+      Implemented by `content/guild-map-gameplay-reconciliation`: the durable
+      cache key is `mage_guild_magic_zombie_credits`. One credit is awarded
+      only for NPC `516` from the 26 World Builder-authored starts at signed
+      level `-1`, `x=604..620`, `y=751..753`; legacy or dynamically created
+      lookalikes do not qualify. Frumscone accepts genuine noted `Stone`
+      (catalogue `1299` with its noted flag), not the separate five-item market
+      certificate. The `1`, `5`, and `all I can` menu clamps to notes, credits,
+      and final inventory capacity. Input removal, ordinary-Stone output, and
+      credit spending either all complete or restore the noted input and leave
+      the ledger unchanged. Zombie-eye and blue-scale redemption is retired.
 - [ ] Explore a compact floating-combat-number presentation to replace or
       supplement overlapping hitsplats. Repeated damage should queue, rise or
       drift, and fade without occupying the same screen position. Give distinct

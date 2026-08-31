@@ -129,8 +129,9 @@ public class RangersGuildPointsVendor implements TalkNpcTrigger, OpNpcTrigger {
 	@Override
 	public void onTalkNpc(Player player, Npc npc) {
 		npcsay(player, npc,
-			"Rangers Guild points come from ranged experience in the basement",
-			"The better your training, the more points you earn",
+			"Rangers Guild points come from ranged kills in the basement",
+			"Giants give 7, skeletons 12, lesser demons 16",
+			"And green dragons give 22 points",
 			"I can redeem them for ranged supplies");
 		openCategoryInterface(player);
 	}

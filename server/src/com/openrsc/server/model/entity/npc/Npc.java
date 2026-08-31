@@ -374,6 +374,10 @@ public class Npc extends Mob {
 		return player != null && getTotalDamageBy(player.getUUID()) > 0;
 	}
 
+	public boolean hasRangedDamageBy(final Player player) {
+		return player != null && getRangeDamageInfoBy(player.getUUID()).getLeft() > 0;
+	}
+
 	public void recordPendingSummoningExperience(final Player player, final int experience, final long expiresTick) {
 		if (player == null || experience <= 0 || expiresTick <= getWorld().getServer().getCurrentTick()) {
 			return;

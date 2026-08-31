@@ -32,6 +32,11 @@ RANGERS_GUILD_POINTS_VENDOR = ROOT / "server/plugins/com/openrsc/server/plugins/
 RANGERS_GUILD_AREA = ROOT / "server/src/com/openrsc/server/content/RangersGuildArea.java"
 RANGERS_GUILD_POINTS = ROOT / "server/src/com/openrsc/server/content/RangersGuildPoints.java"
 SKILLS = ROOT / "server/src/com/openrsc/server/model/Skills.java"
+ACTIVE_LAYERED_PLACEMENTS = ROOT / (
+    "server/world-builder/packages/"
+    "f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f/"
+    "package/placements/global/lm1.json"
+)
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 BASEMENT_SECTOR = "h3x58y46"
@@ -60,18 +65,10 @@ BASEMENT_STAIR_SQUARE_TILES = {
     for y in range(3292, 3302)
 }
 RANGERS_GUILD_BASEMENT_NPCS = {
-    68: 12,   # level-32 zombie
-    45: 12,   # level-31 skeleton
-    135: 4,   # ice giant
-    22: 4,    # lesser demon
-    190: 8,   # chaos dwarf
-}
-RANGERS_GUILD_BASEMENT_NPC_BOUNDS = {
-    68: (488, 3282, 509, 3290),
-    45: (488, 3303, 510, 3309),
-    135: (506, 3286, 514, 3295),
-    22: (506, 3297, 514, 3306),
-    190: (485, 3287, 492, 3306),
+    61: 8,    # giant
+    22: 3,    # lesser demon
+    196: 2,   # green dragon (base definition: Earth Dragon)
+    195: 6,   # skeleton
 }
 
 
@@ -278,57 +275,46 @@ def ensure_stair_telepoints():
         ] = (int(telepoint.findtext("x")), int(telepoint.findtext("y")))
 
     require(
-        telepoints.get((499, 469, "Go down")) == (499, 3295),
-        "Ground-floor Rangers Guild stairs should lead to the basement seed",
+        telepoints.get((499, 469, "Go down")) == (499, 3301),
+        "Ground-floor Rangers Guild stairs should preserve X/Y on the basement layer",
     )
     require(
         (498, 469, "Go down") not in telepoints,
         "Old ground-floor Rangers Guild stair telepoint should be removed",
     )
     require(
-        telepoints.get((498, 3296, "Go up")) == (499, 468),
-        "Basement Rangers Guild stairs should return to the ground floor",
+        telepoints.get((499, 3301, "Go up")) == (499, 469),
+        "Basement Rangers Guild stairs should preserve X/Y on the ground layer",
     )
     require(
-        (499, 3296, "Go up") not in telepoints,
+        (498, 3296, "Go up") not in telepoints,
         "Old basement Rangers Guild stair telepoint should be removed",
     )
 
 
 def ensure_basement_npcs():
-    server_sector = read_sector(SERVER_LANDSCAPE, BASEMENT_SECTOR)
+    package = json.loads(ACTIVE_LAYERED_PLACEMENTS.read_text(encoding="utf-8"))
     counts = {}
-    for loc in load_npcs(MYWORLD_NPC_LOCS):
+    for loc in package["npcs"]:
         start = loc["start"]
-        x = int(start["X"])
-        y = int(start["Y"])
-        if 484 <= x <= 515 and 3281 <= y <= 3310:
-            npc_id = int(loc["id"])
+        x = int(start["x"])
+        y = int(start["y"])
+        if 484 <= x <= 515 and 456 <= y <= 483:
+            npc_id = int(loc["npcId"])
             counts[npc_id] = counts.get(npc_id, 0) + 1
             require(
                 npc_id in RANGERS_GUILD_BASEMENT_NPCS,
                 f"Unexpected Rangers Guild basement NPC id {npc_id}",
             )
-            min_x, min_y, max_x, max_y = RANGERS_GUILD_BASEMENT_NPC_BOUNDS[npc_id]
+            roam = loc["roamBounds"]
             require(
-                min_x <= x <= max_x and min_y <= y <= max_y,
-                f"Rangers Guild basement NPC {npc_id} is in the wrong cage at {x},{y}",
-            )
-            require(
-                int(loc["min"]["X"]) <= x <= int(loc["max"]["X"])
-                and int(loc["min"]["Y"]) <= y <= int(loc["max"]["Y"]),
+                int(roam["minimum"]["x"]) <= x <= int(roam["maximum"]["x"])
+                and int(roam["minimum"]["y"]) <= y <= int(roam["maximum"]["y"]),
                 f"Rangers Guild basement NPC {npc_id} has start outside movement bounds",
             )
-            _, _, overlay, _, east_wall, north_wall, diagonal_wall = tile(
-                server_sector,
-                x,
-                y,
-                origin_x=BASEMENT_SECTOR_ORIGIN_X,
-                origin_y=BASEMENT_SECTOR_ORIGIN_Y,
-            )
             require(
-                overlay != 8 and not east_wall and not north_wall and not diagonal_wall,
-                f"Rangers Guild basement NPC {npc_id} starts on a blocked tile at {x},{y}",
+                loc["placementId"].startswith("world-builder.authored.npc.lm1."),
+                f"Rangers Guild basement NPC {npc_id} is not an authored World Builder spawn",
             )
 
     require(
@@ -437,7 +423,7 @@ def ensure_ranged_master_and_archery_shopkeeper():
         "talkRangedMaster(player);",
         "npc.getID() == NpcId.LOWES_ARCHERY_SHOPKEEPER.id()",
         "isDirectShopCommand(player, npc, command)",
-        "You earn Rangers Guild points from ranged experience down there",
+        "You earn points by defeating its monsters with Ranged",
     ):
         require(fragment in lowes_archery, f"LowesArchery split is missing: {fragment}")
 
@@ -573,7 +559,9 @@ def ensure_rangers_guild_points_vendor():
         "new Reward(ItemId.POISON_DRAGON_BOLTS, 30)",
         "new Reward(ItemId.ORICHALCUM_SHURIKEN, 14)",
         "new Reward(ItemId.RUNE_SHURIKEN, 20)",
-        "Rangers Guild points come from ranged experience in the basement",
+        "Rangers Guild points come from ranged kills in the basement",
+        "Giants give 7, skeletons 12, lesser demons 16",
+        "And green dragons give 22 points",
     ):
         require(fragment in points_vendor, f"Rangers Guild points vendor is missing: {fragment}")
     require("ItemId.DRAGON_LONGBOW" not in points_vendor, "Rangers Guild points vendor should not sell dragon longbows")
@@ -595,8 +583,9 @@ def ensure_rangers_guild_points_vendor():
 def ensure_rangers_guild_points_system():
     area = RANGERS_GUILD_AREA.read_text(encoding="utf-8")
     for fragment in (
-        "legacyPackedBounds(",
-        "484, 3281, 515, 3310",
+        "new WorldTileBounds(",
+        "WorldCoordinate(484, 456, -1)",
+        "WorldCoordinate(515, 483, -1)",
         "BASEMENT.contains(location)",
         "ENTRANCE_DOOR.equals(location)",
     ):
@@ -605,23 +594,19 @@ def ensure_rangers_guild_points_system():
     points = RANGERS_GUILD_POINTS.read_text(encoding="utf-8")
     for fragment in (
         'POINTS_CACHE_KEY = "rangers_guild_points"',
-        'REMAINDER_CACHE_KEY = "rangers_guild_point_remainder"',
-        "XP_PER_POINT = 10",
-        "RangersGuildArea.containsBasement(player.getWorldLocation())",
-        "skill != Skill.RANGED.id()",
-        "total / XP_PER_POINT",
-        "total % XP_PER_POINT",
-        "player.getCache().set(REMAINDER_CACHE_KEY, newRemainder)",
+        "GIANT_POINTS = 7",
+        "SKELETON_POINTS = 12",
+        "LESSER_DEMON_POINTS = 16",
+        "GREEN_DRAGON_POINTS = 22",
+        "npc.getAuthoredPlacementIdentity() != null",
+        "RangersGuildArea.containsBasement(npc.getLoc().toWorldStartLocation())",
+        "npc.hasRangedDamageBy(player)",
     ):
         require(fragment in points, f"Rangers Guild points system is missing: {fragment}")
 
     skills = SKILLS.read_text(encoding="utf-8")
-    for fragment in (
-        "import com.openrsc.server.content.RangersGuildPoints;",
-        "int creditedExperience = Math.max(0, exps[skill] - oldExp);",
-        "RangersGuildPoints.awardFromExperience((Player) getMob(), skill, creditedExperience);",
-    ):
-        require(fragment in skills, f"Skills XP hook is missing: {fragment}")
+    require("RangersGuildPoints.awardFromExperience" not in skills,
+            "Rangers Guild must not retain broad XP-area point awards")
 
 
 def main():
