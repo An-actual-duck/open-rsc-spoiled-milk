@@ -286,6 +286,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "exalted-rune-poisoned-weapons.md",
             "fishing-spot-map.md",
             "god-knight-equipment-audit.md",
+            "green-dragon-drop-expansion.md",
             "guild-map-gameplay-current-state.md",
             "in-game-world-editor-foundation.md",
             "jewelry-and-retired-robe-effects.md",
