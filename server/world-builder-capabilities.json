@@ -18,7 +18,7 @@
   },
   "definitions": {
     "catalogId": "spoiled-milk-definition-catalog-v1",
-    "catalogSha256": "3731c6f1fe4b23201056075638860ca119677102bbd9647984c26dd5f0933f84"
+    "catalogSha256": "7c19e84ef0683d6482703a25086ea8779e7e2cba9c5728c141777ade207948aa"
   },
   "discovery": {
     "configurationRoles": [

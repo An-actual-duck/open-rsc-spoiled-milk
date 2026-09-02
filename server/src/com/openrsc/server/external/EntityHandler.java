@@ -251,6 +251,7 @@ public final class EntityHandler {
 			// Developer-spawnable visual fixtures follow every production NPC so
 			// append-order loading preserves all published definition IDs.
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/VisualTestNpcDefs.json");
+			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MyWorldNpcDefs.json");
 		}
 		//loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsExpansion.json");
 		patchNpcs();

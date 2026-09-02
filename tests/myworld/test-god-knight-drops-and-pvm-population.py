@@ -55,7 +55,7 @@ def is_frumscone_training_cage_overlay(loc: dict) -> bool:
 def is_elite_mining_guild_dragon_overlay(loc: dict) -> bool:
     x = int(loc["start"]["X"])
     y = int(loc["start"]["Y"])
-    return int(loc["id"]) in (196, 844) and 248 <= x <= 280 and 3416 <= y <= 3444
+    return int(loc["id"]) in (862, 844) and 248 <= x <= 280 and 3416 <= y <= 3444
 
 
 def is_lumbridge_bank_overlay(loc: dict) -> bool:
@@ -187,7 +187,7 @@ def main() -> None:
     mining_guild_dragon_spawns = [loc for loc in overlay if is_elite_mining_guild_dragon_overlay(loc)]
     mining_guild_dragon_counts = Counter(loc["id"] for loc in mining_guild_dragon_spawns)
     require(
-        mining_guild_dragon_counts == {844: 1, 196: 4},
+        mining_guild_dragon_counts == {844: 1, 862: 4},
         f"Elite Mining Guild overlay should have 1 Elder Green Dragon and 4 Green Dragons: {dict(mining_guild_dragon_counts)}",
     )
     mining_guild_dragon_starts = {
@@ -197,10 +197,10 @@ def main() -> None:
     require(
         mining_guild_dragon_starts == {
             (844, 263, 3430),
-            (196, 259, 3431),
-            (196, 269, 3428),
-            (196, 254, 3427),
-            (196, 274, 3422),
+            (862, 259, 3431),
+            (862, 269, 3428),
+            (862, 254, 3427),
+            (862, 274, 3422),
         },
         "Elite Mining Guild dragon starts should guard the dragon sulfur field",
     )

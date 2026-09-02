@@ -136,7 +136,7 @@ def main() -> None:
         ("addHiddenUniqueDrop(NpcId.KING_BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 64);", "King Black Dragon should drop dragon metal scrap at 1/64"),
         ("addHiddenUniqueDrop(NpcId.BLACK_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 128);", "Black Dragon should drop dragon metal scrap at 1/128"),
         ("addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 512);", "Red Dragon should drop dragon metal scrap at 1/512"),
-        ("addHiddenUniqueDrop(NpcId.DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);", "Green Dragon should drop dragon metal scrap at 1/1024"),
+		("addHiddenUniqueDrop(NpcId.GREEN_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);", "Ordinary Green Dragon should drop dragon metal scrap at 1/1024"),
         ("addHiddenUniqueDrop(NpcId.BLUE_DRAGON.id(), ItemId.RAW_DRAGON_METAL.id(), 1, 1, 1024);", "Blue Dragon should drop dragon metal scrap at 1/1024"),
     ):
         require(hidden_unique, needle, message)

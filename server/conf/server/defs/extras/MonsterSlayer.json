@@ -49,7 +49,7 @@
     {"key":"grey_wolf","displayName":"Grey wolves","npcIds":[243]},
     {"key":"ice_spider","displayName":"Ice spiders","npcIds":[263]},
     {"key":"ice_giant","displayName":"Ice giants","npcIds":[135]},
-    {"key":"green_dragon","displayName":"Green dragons","npcIds":[196]},
+    {"key":"green_dragon","displayName":"Green dragons","npcIds":[862]},
     {"key":"bear","displayName":"Bears","npcIds":[8,188]}
   ],
   "contacts": [

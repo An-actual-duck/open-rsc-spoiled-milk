@@ -172,7 +172,7 @@ def main() -> None:
     ice_giant = re.search(r'DropTable\("Ice Giant \(135\)"\).*?npcDrops\.put\(NpcId\.ICE_GIANT\.id\(\)', drops, re.DOTALL)
     blue_dragon = re.search(r'DropTable\("Blue Dragon \(202\)"\).*?npcDrops\.put\(NpcId\.BLUE_DRAGON\.id\(\)', drops, re.DOTALL)
     moss_giant = re.search(r'DropTable\("Moss Giant \(104, 594\)"\).*?npcDrops\.put\(NpcId\.MOSS_GIANT2\.id\(\)', drops, re.DOTALL)
-    green_dragon = re.search(r'DropTable\("Green Dragon \(196\)"\).*?npcDrops\.put\(NpcId\.DRAGON\.id\(\)', drops, re.DOTALL)
+    green_dragon = re.search(r'DropTable\("Green Dragon \(862\)"\).*?npcDrops\.put\(NpcId\.GREEN_DRAGON\.id\(\)', drops, re.DOTALL)
     if fire_giant is None:
         fail("Fire Giant drop block not found")
     if red_dragon is None:
@@ -197,7 +197,7 @@ def main() -> None:
     require_hidden_unique(drops, "BLUE_DRAGON", "ICE_SWORD", "ULTRA_RARE_UNIQUE", "Blue Dragon Ice sword hidden unique")
     require_hidden_unique(drops, "MOSS_GIANT", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Moss Giant Earth sword hidden unique")
     require_hidden_unique(drops, "MOSS_GIANT2", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Moss Giant alternate Earth sword hidden unique")
-    require_hidden_unique(drops, "DRAGON", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Green Dragon Earth sword hidden unique")
+    require_hidden_unique(drops, "GREEN_DRAGON", "EARTH_SWORD", "ULTRA_RARE_UNIQUE", "Green Dragon Earth sword hidden unique")
     require_hidden_unique(drops, "FIRE_WARRIOR", "FIRE_SWORD", "MYTHIC_UNIQUE", "Fire Warrior Fire sword hidden unique")
     require_hidden_unique(drops, "ICE_WARRIOR", "ICE_SWORD", "MYTHIC_UNIQUE", "Ice Warrior Ice sword hidden unique")
     require_hidden_unique(drops, "EARTH_WARRIOR", "EARTH_SWORD", "MYTHIC_UNIQUE", "Earth Warrior Earth sword hidden unique")
@@ -226,10 +226,12 @@ def main() -> None:
     require_text(mob, "ATTACK_BASED_DEBUFF_ATTACKS = 5", "Elemental sword proc debuff duration")
     pvm_melee = (ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java").read_text(encoding="utf-8")
     combat_event = (ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java").read_text(encoding="utf-8")
+    elemental_proc = (ROOT / "server/src/com/openrsc/server/model/combat/ElementalSwordProc.java").read_text(encoding="utf-8")
     require_text(pvm_melee, "applyElementalSwordProc(attackerMob, targetMob)", "PvM elemental sword proc hook")
-    require_text(pvm_melee, "new CombatEffect(target, effectType)", "PvM elemental sword proc visual")
+    require_text(pvm_melee, "ElementalSwordProc.tryApply(hitter, target", "PvM shared elemental sword proc route")
     require_text(combat_event, "applyElementalSwordProc(hitter, target)", "PvP elemental sword proc hook")
-    require_text(combat_event, "new CombatEffect(target, effectType)", "PvP elemental sword proc visual")
+    require_text(combat_event, "ElementalSwordProc.tryApply(hitter, target", "PvP shared elemental sword proc route")
+    require_text(elemental_proc, "new CombatEffect(target, effect)", "Shared elemental sword proc visual")
 
 
 if __name__ == "__main__":

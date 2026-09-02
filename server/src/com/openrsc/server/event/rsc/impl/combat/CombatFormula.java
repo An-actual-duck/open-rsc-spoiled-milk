@@ -602,7 +602,8 @@ public class CombatFormula {
 
 	private static boolean isIceSwordVulnerable(final Npc victim) {
 		final int npcId = victim.getID();
-		if (npcId == NpcId.EARTH_WARRIOR.id() || npcId == NpcId.DRAGON.id()) {
+		if (npcId == NpcId.EARTH_WARRIOR.id()
+			|| npcId == NpcId.GREEN_DRAGON.id()) {
 			return true;
 		}
 		final String npcName = victim.getDef().getName().toLowerCase(Locale.ENGLISH);

@@ -337,7 +337,7 @@ public enum NpcAttackStyleProfile {
 
 	private static NpcMagicElement getDragonMagicElement(final Npc npc) {
 		switch (npc.getID()) {
-			case 196: // GREEN_DRAGON
+			case 862: // ORDINARY_GREEN_DRAGON
 				return NpcMagicElement.EARTH;
 			case 202: // BLUE_DRAGON
 			case 203: // BABY_BLUE_DRAGON

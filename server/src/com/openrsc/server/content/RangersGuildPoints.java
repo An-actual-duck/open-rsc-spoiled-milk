@@ -1,5 +1,6 @@
 package com.openrsc.server.content;
 
+import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 
@@ -27,10 +28,8 @@ public final class RangersGuildPoints {
 				return SKELETON_POINTS;
 			case 22:
 				return LESSER_DEMON_POINTS;
-			case 196:
-				return GREEN_DRAGON_POINTS;
 			default:
-				return 0;
+				return npcId == NpcId.GREEN_DRAGON.id() ? GREEN_DRAGON_POINTS : 0;
 		}
 	}
 

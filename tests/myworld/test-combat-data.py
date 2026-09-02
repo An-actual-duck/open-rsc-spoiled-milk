@@ -812,7 +812,7 @@ def main() -> None:
     require_exact(items_by_id, 1430, "magicDefense", 21, "Dragon scale mail legs all-style no-penalty line")
     require_no_equip_requirement(items_by_id, [795, 1278, 1368, 1537, 1425, 1426, 1427, 1428, 1429, 1430], "Dragon armor requirement removal")
 
-    important_npcs = [3, 6, 15, 40, 41, 22, 184, 196, 201, 202, 291, 477, 81, 789]
+    important_npcs = [3, 6, 15, 40, 41, 22, 184, 862, 201, 202, 291, 477, 81, 789]
     for npc_id in important_npcs:
         if npc_id not in npcs_by_id:
             fail(f"NpcDefsMyWorld.json missing expected npc override id {npc_id}")

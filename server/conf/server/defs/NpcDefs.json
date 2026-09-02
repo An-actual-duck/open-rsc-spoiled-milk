@@ -7645,8 +7645,8 @@
         "roundMode": -1
       },{
         "id": 196,
-        "name": "Earth Dragon",
-        "description": "A powerful and ancient earth dragon",
+        "name": "Dragon",
+        "description": "A powerful and ancient dragon",
         "command": "",
         "command2": "",
         "attack": 110,
