@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate the farmable ID-862 table without weakening Elvarg isolation."""
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DROPS = ROOT / "server/src/com/openrsc/server/constants/NpcDrops.java"
+DEFS = ROOT / "server/conf/server/defs"
 
 
 def require(condition: bool, message: str) -> None:
@@ -56,16 +58,51 @@ def main() -> None:
             "normal ordinary Green Dragon rewards must leave exactly weight 2 empty")
 
     intended = {
-        "ItemId.COINS.id(), 176, 20": "rebalanced 176-coin stack",
-        "ItemId.COINS.id(), 11, 3": "rebalanced 11-coin stack",
-        "ItemId.EARTH_TALISMAN.id(), 1, 3": "Earth talisman",
-        "ItemId.PINE_STAFF_OF_EARTH.id(), 1, 3": "Earth Pine Staff",
+        "ItemId.COINS.id(), 250, 17": "OpenPK 250-coin roll",
+        "ItemId.COINS.id(), 250, 27": "normal 250-coin roll",
+        "ItemId.COINS.id(), 500, 18": "500-coin roll",
+        "ItemId.COINS.id(), 1000, 8": "1,000-coin roll",
+        "ItemId.COINS.id(), 2500, 1": "2,500-coin roll",
+        "ItemId.EARTH_RUNE.id(), 250, 10": "250 earth runes",
+        "ItemId.EARTH_RUNE.id(), 500, 4": "500 earth runes",
+        "ItemId.CHAOS_RUNE.id(), 40, 9": "40 chaos runes",
+        "ItemId.CHAOS_RUNE.id(), 100, 3": "100 chaos runes",
+        "ItemId.DEATH_RUNE.id(), 15, 6": "15 death runes",
+        "ItemId.DEATH_RUNE.id(), 40, 2": "40 death runes",
+        "ItemId.BLOOD_RUNE.id(), 10, 4": "10 blood runes",
+        "ItemId.RUNE_PLATE_MAIL_LEGS.id(), 1, 1": "Rune plate legs",
+        "ItemId.LARGE_RUNE_HELMET.id(), 1, 1": "large Rune helmet",
+        "ItemId.PINE_STAFF_OF_EARTH.id(), 1, 2": "Earth Pine Staff",
         "ItemId.MAPLE_STAFF_OF_EARTH.id(), 1, 1": "Earth Maple Staff",
     }
     for snippet, label in intended.items():
         require(snippet in green, f"ordinary Green Dragon table missing {label}: {snippet}")
-    for retired in ("EARTH_ORB", "BATTLESTAFF_OF_EARTH"):
+    blue = between(drops, 'new DropTable("Blue Dragon (202)");', 'new DropTable("Zombie (Entrana) (214)");')
+    for retired in ("EARTH_TALISMAN", "WATER_TALISMAN", "EARTH_ORB", "BATTLESTAFF_OF_EARTH"):
         require(retired not in green, f"ordinary table must not use retired item {retired}")
+    require("WATER_TALISMAN" not in blue, "adult Blue Dragon must not be documented or treated as dropping Water talismans")
+
+    items: dict[int, dict] = {}
+    for filename in ("ItemDefs.json", "ItemDefsCustom.json"):
+        payload = json.loads((DEFS / filename).read_text(encoding="utf-8"))
+        entries = payload.get("item", payload.get("items"))
+        items.update({int(entry["id"]): entry for entry in entries})
+    active_rewards = {
+        34: ("Earth-Rune", 4),
+        38: ("Death-Rune", 20),
+        41: ("Chaos-Rune", 10),
+        619: ("Blood-Rune", 25),
+        112: ("Large Rune Helmet", 35200),
+        402: ("Rune Plate Mail Legs", 64000),
+        1777: ("Earth Maple Staff", 2500),
+        2134: ("Earth Pine Staff", 875),
+    }
+    for item_id, (name, price) in active_rewards.items():
+        entry = items.get(item_id)
+        require(entry is not None and entry.get("name") == name,
+                f"drop reward {item_id} must resolve to active item {name}")
+        require(entry.get("basePrice") == price and entry.get("isUntradable") == 0,
+                f"drop reward {name} must retain its reviewed active/tradable economy definition")
 
     hidden = between(drops, "private void createHiddenUniqueDrops()", "private void addHiddenUniqueDrop(final int npcId")
     require("addHiddenUniqueDrop(NpcId.GREEN_DRAGON.id(), ItemId.EARTH_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);" in hidden,

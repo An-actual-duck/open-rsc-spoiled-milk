@@ -84,9 +84,9 @@ def main() -> None:
             "Elvarg's weighted drop table must remain empty")
     green_drops = block(drops, 'new DropTable("Green Dragon (862)");', 'new DropTable("Dark Warrior (199)");')
     for expected in (
-        "addTableDrop(herbDropTable, 15)", "addTableDrop(rareDropTable, 5)",
-        "ItemId.COINS.id(), 176, 20", "ItemId.EARTH_RUNE.id(), 50, 8",
-        "ItemId.TITAN_STEEL_PLATE_MAIL_LEGS.id(), 1, 4",
+        "addTableDrop(herbDropTable, 10)", "addTableDrop(rareDropTable, 5)",
+        "ItemId.COINS.id(), 500, 18", "ItemId.EARTH_RUNE.id(), 250, 10",
+        "ItemId.RUNE_PLATE_MAIL_LEGS.id(), 1, 1",
         "addEmptyDrop(128 - currentNpcDrops.getTotalWeight())",
     ):
         require(expected in green_drops, f"ordinary drop table missing {expected}")
