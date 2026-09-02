@@ -85,7 +85,7 @@ def main() -> None:
     green_drops = block(drops, 'new DropTable("Green Dragon (862)");', 'new DropTable("Dark Warrior (199)");')
     for expected in (
         "addTableDrop(herbDropTable, 15)", "addTableDrop(rareDropTable, 5)",
-        "ItemId.COINS.id(), 176, 25", "ItemId.EARTH_RUNE.id(), 50, 8",
+        "ItemId.COINS.id(), 176, 20", "ItemId.EARTH_RUNE.id(), 50, 8",
         "ItemId.TITAN_STEEL_PLATE_MAIL_LEGS.id(), 1, 4",
         "addEmptyDrop(128 - currentNpcDrops.getTotalWeight())",
     ):
