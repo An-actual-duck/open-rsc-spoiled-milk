@@ -29037,9 +29037,11 @@ public final class mudclient implements Runnable {
 			questGuideInterface.questGuide.scrollMethodList(questGuideInterface.questGuideScroll, x);
 		} else if (onlineList.isVisible()) {
 			onlineList.panel.scrollMethodList(onlineList.scroll, x);
-		} else if (isShowDialogBank() && this.bankPage == 0)
-			bank.bank.scrollMethodList(bank.bankScroll, x);
-		else if (auctionHouse.isVisible()) {
+		} else if (isShowDialogBank()) {
+			if (!bank.scrollInventory(x) && this.bankPage == 0) {
+				bank.bank.scrollMethodList(bank.bankScroll, x);
+			}
+		} else if (auctionHouse.isVisible()) {
 			if (auctionHouse.activeInterface == 0) {
 				auctionHouse.auctionMenu.scrollMethodList(auctionHouse.auctionScrollHandle, x);
 			} else {
