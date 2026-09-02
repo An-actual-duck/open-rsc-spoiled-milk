@@ -61,12 +61,16 @@ NPC_DECLARATIVE_SOURCES = (
     "server/conf/server/defs/NpcDefsCustom.json",
 )
 NPC_EXTENSION_SOURCE = "server/conf/server/defs/MonsterSlayerNpcDefs.json"
+NPC_ADDITIONAL_EXTENSION_SOURCES = (
+    "server/conf/server/defs/MyWorldNpcDefs.json",
+)
 NPC_PLACEMENT_SOURCE = "server/conf/server/defs/locs/MyWorldNpcLocs.json"
 NPC_PROVIDER_INPUTS = (
     "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
     "Client_Base/src/com/openrsc/client/entityhandling/defs/NPCDef.java",
     *NPC_DECLARATIVE_SOURCES,
     NPC_EXTENSION_SOURCE,
+    *NPC_ADDITIONAL_EXTENSION_SOURCES,
     NPC_PLACEMENT_SOURCE,
 )
 
@@ -613,10 +617,15 @@ def build_npc_manifest(
         )
     declarative_maximum = declarative_ids[-1]
 
-    extension_records = json_records(
-        NPC_EXTENSION_SOURCE, "npcs", f"extension NPC source {NPC_EXTENSION_SOURCE}"
-    )
-    extension_ids = unique_integer_ids(extension_records, f"extension NPC source {NPC_EXTENSION_SOURCE}")
+    extension_ids: list[int] = []
+    extension_sources = (NPC_EXTENSION_SOURCE, *NPC_ADDITIONAL_EXTENSION_SOURCES)
+    for relative in extension_sources:
+        extension_records = json_records(relative, "npcs", f"extension NPC source {relative}")
+        ids = unique_integer_ids(extension_records, f"extension NPC source {relative}")
+        overlap = sorted(set(extension_ids).intersection(ids))
+        if overlap:
+            raise ExportError(f"Duplicate NPC definitions across extension sources: {overlap}")
+        extension_ids.extend(ids)
     invalid_extension = [npc_id for npc_id in extension_ids if npc_id <= declarative_maximum]
     if invalid_extension:
         raise ExportError(
@@ -643,7 +652,7 @@ def build_npc_manifest(
     if undefined:
         raise ExportError(
             "Placed extension NPCs have no authoritative extension definition in "
-            f"{NPC_EXTENSION_SOURCE}: {undefined}"
+            f"{', '.join(extension_sources)}: {undefined}"
         )
     if not selected_ids:
         raise ExportError(
@@ -741,7 +750,7 @@ def build_npc_manifest(
         sources.append({
             "role": (
                 "declarative-npc-registry" if relative in NPC_DECLARATIVE_SOURCES
-                else "extension-npc-definitions" if relative == NPC_EXTENSION_SOURCE
+                else "extension-npc-definitions" if relative in extension_sources
                 else "authoritative-npc-placements" if relative == NPC_PLACEMENT_SOURCE
                 else "final-client-definition-runtime"
             ),

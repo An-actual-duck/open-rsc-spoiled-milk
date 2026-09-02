@@ -9,7 +9,7 @@
     "inputs": [
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java",
-        "sha256": "7f90864c8492b67df92d2d238b98030e7b837ad33016aaf8f14fdfb6ab92c013"
+        "sha256": "52286567cd06c7c8626dfa5060d61c2beafd4eaccb2152d658724494de38411a"
       },
       {
         "path": "Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java",

@@ -33,7 +33,7 @@ def require(condition: bool, message: str) -> None:
 
 def load_npc_definitions() -> dict[int, dict]:
     definitions: dict[int, dict] = {}
-    for name in ("NpcDefs.json", "NpcDefsCustom.json", "MonsterSlayerNpcDefs.json"):
+    for name in ("NpcDefs.json", "NpcDefsCustom.json", "MonsterSlayerNpcDefs.json", "MyWorldNpcDefs.json"):
         entries = json.loads((ROOT / "server/conf/server/defs" / name).read_text())["npcs"]
         definitions.update({entry["id"]: entry for entry in entries})
     for patch in json.loads((ROOT / "server/conf/server/defs/NpcDefsMyWorld.json").read_text())["npcs"]:
