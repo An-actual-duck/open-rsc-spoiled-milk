@@ -64,7 +64,7 @@ def require(source: str, text: str, description: str) -> None:
 def main() -> None:
     validate_overrides(
         load_entries("NpcDefsMyWorld.json"),
-        definition_ids("NpcDefs.json", "NpcDefsCustom.json"),
+        definition_ids("NpcDefs.json", "NpcDefsCustom.json", "MyWorldNpcDefs.json"),
         NPC_FIELDS,
         "NpcDefsMyWorld.json",
     )
@@ -76,6 +76,9 @@ def main() -> None:
     )
 
     source = ENTITY_HANDLER.read_text(encoding="utf-8")
+    require(source, 'loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MyWorldNpcDefs.json")', "appended MyWorld NPC definitions")
+    if source.index('loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MyWorldNpcDefs.json")') > source.index("applyOptionalNpcOverrides"):
+        raise AssertionError("MyWorld NPC definitions must load before their overrides")
     require(source, "ArrayList<NPCDef> stagedNpcs = new ArrayList<>(npcs);", "staged NPC catalog")
     require(source, "npcs = stagedNpcs;", "atomic NPC catalog swap")
     require(source, '"meleeOffense", "rangedOffense", "magicOffense"', "NPC power override whitelist")
