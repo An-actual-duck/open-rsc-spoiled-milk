@@ -181,6 +181,9 @@ python3 ./tests/myworld/test-lumbridge-alkharid-stepping-stones.py
 python3 ./tests/myworld/test-armor-power-penalties.py
 python3 ./tests/myworld/test-demon-ash-prayer-source.py
 python3 ./tests/myworld/test-baby-blue-dragon-drops.py
+python3 ./tests/myworld/test-regular-green-dragon.py
+python3 ./tests/myworld/test-green-dragon-drop-expansion.py
+python3 ./tests/myworld/test-dragon-drop-sources.py
 python3 ./tests/myworld/test-zombie-eye-drops.py
 python3 ./tests/myworld/test-drop-redistribution.py
 python3 ./tests/myworld/test-paladin-dark-warrior-drop-balance.py

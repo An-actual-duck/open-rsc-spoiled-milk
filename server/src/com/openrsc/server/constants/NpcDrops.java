@@ -1401,11 +1401,11 @@ public class NpcDrops {
 		}
 		currentNpcDrops.addTableDrop(herbDropTable, 15);
 		currentNpcDrops.addTableDrop(rareDropTable, 5);
-		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 176, 25);
+		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 176, 20);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 264, 10);
 		currentNpcDrops.addItemDrop(ItemId.EARTH_RUNE.id(), 50, 8);
 		currentNpcDrops.addItemDrop(ItemId.NATURE_RUNE.id(), 10, 5);
-		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 11, 5);
+		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 11, 3);
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_PLATE_MAIL_LEGS.id(), 1, 4);
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_AXE.id(), 1, 3);
 		currentNpcDrops.addItemDrop(ItemId.TITAN_STEEL_BATTLE_AXE.id(), 1, 3);
@@ -1419,6 +1419,9 @@ public class NpcDrops {
 		currentNpcDrops.addItemDrop(ItemId.LARGE_ADAMANTITE_HELMET.id(), 1, 1);
 		currentNpcDrops.addItemDrop(ItemId.EARTH_RUNE.id(), 25, 1);
 		currentNpcDrops.addItemDrop(ItemId.COINS.id(), 440, 1);
+		currentNpcDrops.addItemDrop(ItemId.EARTH_TALISMAN.id(), 1, 3);
+		currentNpcDrops.addItemDrop(ItemId.PINE_STAFF_OF_EARTH.id(), 1, 3);
+		currentNpcDrops.addItemDrop(ItemId.MAPLE_STAFF_OF_EARTH.id(), 1, 1);
 		currentNpcDrops.addEmptyDrop(128 - currentNpcDrops.getTotalWeight());
 		this.npcDrops.put(NpcId.GREEN_DRAGON.id(), currentNpcDrops);
 
