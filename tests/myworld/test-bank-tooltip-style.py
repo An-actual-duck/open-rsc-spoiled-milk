@@ -15,7 +15,8 @@ def main() -> None:
 		'drawString((bankItem.isPinned() ? "Pinned: " : "")',
 		"x + 7, y + 15, HOVER_TOOLTIP_FONT,",
 		"drawString(mc.equippedItems[selectedEquipmentSlot].getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);",
-		"drawString(EntityHandler.getItemDef(mc.getInventoryItemID(inventorySlot), mc.getInventory()[inventorySlot].getNoted()).getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);",
+		"mc.getInventoryItemID(hoveredInventorySlot)",
+		"mc.getInventory()[hoveredInventorySlot].getNoted()).getName()",
 	]
 
 	missing = [snippet for snippet in required_snippets if snippet not in source]

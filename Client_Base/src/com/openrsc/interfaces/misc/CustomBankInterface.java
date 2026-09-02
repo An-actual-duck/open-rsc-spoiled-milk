@@ -28,6 +28,9 @@ public final class CustomBankInterface extends BankInterface {
 	private static final int FILTER_PANEL_GAP = 4;
 	private static final int FILTER_ROW_HEIGHT = 13;
 	private static final int INTERFACE_OPTION_BANK_ITEM_PIN = 23;
+	private static final int INVENTORY_SCROLLBAR_WIDTH = 12;
+	private static final int INVENTORY_VIEWPORT_X_OFFSET = 6;
+	private static final int INVENTORY_VIEWPORT_Y_OFFSET = 225;
 	private int[] equipmentViewOrder = new int[]{0, 1, 2, 7, 4, 3, 8, 9, 5, 6, 10, 11};
 	private final int presetCount = 2;
 	public Preset[] presets = new Preset[presetCount];
@@ -59,6 +62,8 @@ public final class CustomBankInterface extends BankInterface {
 	private boolean filterDrawerOpen;
 	private int filterPanelX;
 	private boolean filterPanelDocked;
+	private int inventoryScrollRow;
+	private boolean draggingInventoryScrollbar;
 
 	public CustomBankInterface(mudclient mc) {
 		super(mc);
@@ -88,6 +93,8 @@ public final class CustomBankInterface extends BankInterface {
 		y = (mc.getGameHeight() - height) / 2 - 3;
 		bank.reposition(bankSearch, filterPanelX + 8, y + 45, FILTER_PANEL_WIDTH - 16, 18);
 		bank.reposition(bankScroll, x + 4, y + 57, width - 5, 137);
+		inventoryScrollRow = BankInventoryViewport.clampScrollRow(
+			inventoryScrollRow, mc.getInventoryCapacity());
 		int tapPresetXOffset = x + 380 - presetCount * 17;
 		int tapPresetYOffset = y + 3;
 		fontSizeHeight = mc.getSurface().fontHeight(fontSize);
@@ -502,10 +509,7 @@ public final class CustomBankInterface extends BankInterface {
 		}
 		bank.drawPanel();
 
-		int inventorySlot = 0;
-
-		int inventoryDrawX = x;
-		int inventoryDrawY = y + 190;
+		int inventorySlot = inventoryScrollRow * BankInventoryViewport.COLUMNS;
 
 		int settingsY = y + 206;
 
@@ -652,44 +656,43 @@ public final class CustomBankInterface extends BankInterface {
 			}
 
 		} else {
-			// Reserve all 40 custom-client inventory positions so a Slayer
-			// backpack cannot hide slots 30..39 while banking.
-			for (int verticalSlots = 0; verticalSlots < 4; verticalSlots++) {
-				for (int horizonalSlots = 0; horizonalSlots < 10; horizonalSlots++) {
+			// Three rows fit below the bank controls. The negotiated fourth row is
+			// available through this viewport instead of escaping the bank window.
+			int inventoryViewportX = x + INVENTORY_VIEWPORT_X_OFFSET;
+			int inventoryViewportY = y + INVENTORY_VIEWPORT_Y_OFFSET;
+			int hoveredInventorySlot = -1;
+			handleInventoryScrollbar(inventoryViewportX, inventoryViewportY);
+			mc.getSurface().setClip(inventoryViewportX,
+				inventoryViewportX + BankInventoryViewport.CONTENT_WIDTH,
+				inventoryViewportY + BankInventoryViewport.VIEWPORT_HEIGHT,
+				inventoryViewportY);
+			for (int verticalSlots = 0;
+				 verticalSlots < BankInventoryViewport.VISIBLE_ROWS; verticalSlots++) {
+				for (int horizonalSlots = 0;
+					 horizonalSlots < BankInventoryViewport.COLUMNS; horizonalSlots++) {
 
-					int drawX = inventoryDrawX + 6 + horizonalSlots * 49;
-					int drawY = inventoryDrawY + 35 + verticalSlots * 34;
+					int drawX = inventoryViewportX
+						+ horizonalSlots * BankInventoryViewport.SLOT_WIDTH;
+					int drawY = inventoryViewportY
+						+ verticalSlots * BankInventoryViewport.SLOT_HEIGHT;
+					boolean slotAvailable = inventorySlot < mc.getInventoryCapacity();
+					boolean mouseOverSlot = BankInventoryViewport.slotAt(
+						mc.getMouseX(), mc.getMouseY(), inventoryViewportX,
+						inventoryViewportY, inventoryScrollRow,
+						mc.getInventoryCapacity()) == inventorySlot;
 
-					mc.getSurface().drawBoxAlpha(drawX, drawY, 49, 34, boxColour, 160);
-					mc.getSurface().drawBoxBorder(drawX, 50, drawY, 35, 0);
-
-					if (draggingInventoryID != -1
-						&& (mc.getInventoryItemAmount(draggingInventoryID) != -1)) {
-						ItemDef def = mc.getInventoryItem(draggingInventoryID).getItemDef();
-						if (mc.getInventoryItem(draggingInventoryID).getNoted()) {
-							if (S_WANT_CERT_AS_NOTES) {
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.noteDef),
-									mc.getMouseX(), mc.getMouseY(), 48, 32, EntityHandler.noteDef.getPictureMask(), 0,
-									EntityHandler.noteDef.getBlueMask(), false, 0, 1);
-
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
-									mc.getMouseX() + 7, mc.getMouseY() + 8, 29, 19,
-									def.getPictureMask(), 0,
-									def.getBlueMask(),false, 0, 1);
-							} else {
-								mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.certificateDef),
-									mc.getMouseX(), mc.getMouseY(), 48, 32, EntityHandler.certificateDef.getPictureMask(), 0,
-									EntityHandler.certificateDef.getBlueMask(), false, 0, 1);
-							}
-						} else {
-							mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
-								mc.getMouseX(), mc.getMouseY(), 48, 32, def.getPictureMask(), 0,
-								def.getBlueMask(), false, 0, 1);
-						}
+					if (slotAvailable) {
+						mc.getSurface().drawBoxAlpha(drawX, drawY,
+							BankInventoryViewport.SLOT_WIDTH,
+							BankInventoryViewport.SLOT_HEIGHT, boxColour, 160);
+						mc.getSurface().drawBoxBorder(drawX,
+							BankInventoryViewport.SLOT_WIDTH + 1, drawY,
+							BankInventoryViewport.SLOT_HEIGHT + 1, 0);
 					}
 
 					// Draw inventory-only items
-					if (inventorySlot < mc.getInventoryItemCount() && mc.getInventoryItemID(inventorySlot) != -1) {
+					if (slotAvailable && inventorySlot < mc.getInventoryItemCount()
+						&& mc.getInventoryItemID(inventorySlot) != -1) {
 						ItemDef def = mc.getInventoryItem(inventorySlot).getItemDef();
 
 						if (mc.getInventoryItem(inventorySlot).getNoted()) { // Noted items
@@ -715,8 +718,7 @@ public final class CustomBankInterface extends BankInterface {
 						}
 						if (def.isStackable()) { // Stack items
 							// If we hover over the stack, display the full amount
-							if (mc.getMouseX() >= drawX && mc.getMouseX() <=  drawX + 48
-								&& mc.getMouseY() >= drawY && mc.getMouseY() <= drawY + 32) {
+							if (mouseOverSlot) {
 								drawString("" + mc.getInventoryItemAmount(inventorySlot), drawX + 1, drawY + 10, 1, 0x00ff00);
 							} else {
 								drawString(mudclient.formatStackAmount(mc.getInventoryItemAmount(inventorySlot)),
@@ -725,13 +727,12 @@ public final class CustomBankInterface extends BankInterface {
 						}
 					}
 
-					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY
-						&& mc.getMouseY() < drawY + 34 && !rightClickMenu && mc.inputX_Action == InputXAction.ACT_0) {
+					if (mouseOverSlot && !rightClickMenu
+						&& mc.inputX_Action == InputXAction.ACT_0) {
 						// Right-click Inventory Item (Menu)
 
 						if (mc.getMouseClick() == 2) {
-							if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY
-								&& mc.getMouseY() < drawY + 34 && inventorySlot < mc.getInventoryItemCount()
+							if (inventorySlot < mc.getInventoryItemCount()
 								&& mc.getInventoryItemID(inventorySlot) != -1) {
 								selectedInventorySlot = inventorySlot;
 								rightClickMenuX = mc.getMouseX();
@@ -763,7 +764,9 @@ public final class CustomBankInterface extends BankInterface {
 							}
 
 							// Deposit Clicked Item
-						} else if (mc.getMouseClick() == 1 && !rightClickMenu) {
+						} else if (mc.getMouseClick() == 1 && !rightClickMenu
+							&& inventorySlot < mc.getInventoryItemCount()
+							&& mc.getInventoryItemID(inventorySlot) != -1) {
 							selectedInventorySlot = inventorySlot;
 							sendDeposit(1);
 						}
@@ -772,14 +775,23 @@ public final class CustomBankInterface extends BankInterface {
 					}
 
 					// Draw item name on hover
-					if (mc.getMouseX() > drawX && mc.getMouseX() < drawX + 49 && mc.getMouseY() > drawY && mc.getMouseY() < drawY + 34) {
+					if (mouseOverSlot && inventorySlot < mc.getInventoryItemCount()) {
 						if (mc.getInventoryItemID(inventorySlot) != -1) {
-							drawString(EntityHandler.getItemDef(mc.getInventoryItemID(inventorySlot), mc.getInventory()[inventorySlot].getNoted()).getName(), x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);
+							hoveredInventorySlot = inventorySlot;
 						}
 
 					}
 					inventorySlot++;
 				}
+			}
+			mc.getSurface().clearClip();
+			drawInventoryScrollbar(inventoryViewportX, inventoryViewportY);
+			drawDraggingInventoryItem();
+			if (hoveredInventorySlot >= 0) {
+				drawString(EntityHandler.getItemDef(
+					mc.getInventoryItemID(hoveredInventorySlot),
+					mc.getInventory()[hoveredInventorySlot].getNoted()).getName(),
+					x + 7, y + 15, HOVER_TOOLTIP_FONT, 0xFFFFFF);
 			}
 		}
 
@@ -1175,6 +1187,110 @@ public final class CustomBankInterface extends BankInterface {
 		return true;
 	}
 
+	public boolean scrollInventory(int delta) {
+		if (!Config.S_WANT_CUSTOM_BANKS || equipmentMode || delta == 0) return false;
+		int viewportX = x + INVENTORY_VIEWPORT_X_OFFSET;
+		int viewportY = y + INVENTORY_VIEWPORT_Y_OFFSET;
+		boolean insideViewport = mc.getMouseX() >= viewportX
+			&& mc.getMouseX() < x + width
+			&& mc.getMouseY() >= viewportY
+			&& mc.getMouseY() < viewportY + BankInventoryViewport.VIEWPORT_HEIGHT;
+		if (!insideViewport) return false;
+		inventoryScrollRow = BankInventoryViewport.scrollBy(
+			inventoryScrollRow, delta, mc.getInventoryCapacity());
+		return true;
+	}
+
+	private void handleInventoryScrollbar(int viewportX, int viewportY) {
+		int maxScroll = BankInventoryViewport.maxScrollRow(mc.getInventoryCapacity());
+		if (maxScroll == 0) {
+			draggingInventoryScrollbar = false;
+			inventoryScrollRow = 0;
+			return;
+		}
+		int scrollbarX = viewportX + BankInventoryViewport.CONTENT_WIDTH;
+		boolean overScrollbar = mc.getMouseX() >= scrollbarX
+			&& mc.getMouseX() < scrollbarX + INVENTORY_SCROLLBAR_WIDTH
+			&& mc.getMouseY() >= viewportY
+			&& mc.getMouseY() < viewportY + BankInventoryViewport.VIEWPORT_HEIGHT;
+		if (mc.getMouseButtonDown() != 1) draggingInventoryScrollbar = false;
+		if (mc.getMouseClick() == 1 && overScrollbar) {
+			if (mc.getMouseY() < viewportY + INVENTORY_SCROLLBAR_WIDTH) {
+				inventoryScrollRow = BankInventoryViewport.scrollBy(
+					inventoryScrollRow, -1, mc.getInventoryCapacity());
+			} else if (mc.getMouseY() >= viewportY
+				+ BankInventoryViewport.VIEWPORT_HEIGHT - INVENTORY_SCROLLBAR_WIDTH) {
+				inventoryScrollRow = BankInventoryViewport.scrollBy(
+					inventoryScrollRow, 1, mc.getInventoryCapacity());
+			} else {
+				draggingInventoryScrollbar = true;
+				setInventoryScrollFromScrollbar(viewportY, maxScroll);
+			}
+			mc.setMouseClick(0);
+		}
+		if (draggingInventoryScrollbar && mc.getMouseButtonDown() == 1) {
+			setInventoryScrollFromScrollbar(viewportY, maxScroll);
+		}
+	}
+
+	private void setInventoryScrollFromScrollbar(int viewportY, int maxScroll) {
+		int trackTop = viewportY + INVENTORY_SCROLLBAR_WIDTH;
+		int trackHeight = BankInventoryViewport.VIEWPORT_HEIGHT
+			- INVENTORY_SCROLLBAR_WIDTH * 2;
+		int relative = Math.max(0, Math.min(trackHeight - 1, mc.getMouseY() - trackTop));
+		inventoryScrollRow = (relative * (maxScroll + 1)) / trackHeight;
+		inventoryScrollRow = Math.min(maxScroll, inventoryScrollRow);
+	}
+
+	private void drawInventoryScrollbar(int viewportX, int viewportY) {
+		int maxScroll = BankInventoryViewport.maxScrollRow(mc.getInventoryCapacity());
+		if (maxScroll == 0) return;
+		int scrollbarX = viewportX + BankInventoryViewport.CONTENT_WIDTH;
+		int height = BankInventoryViewport.VIEWPORT_HEIGHT;
+		mc.getSurface().drawBoxBorder(scrollbarX, INVENTORY_SCROLLBAR_WIDTH,
+			viewportY, height, 0);
+		mc.getSurface().drawSprite(mc.getSurface().spriteSelect(
+			EntityHandler.GUIPARTS.MINIARROWUP.getDef()), scrollbarX + 1, viewportY + 1);
+		mc.getSurface().drawSprite(mc.getSurface().spriteSelect(
+			EntityHandler.GUIPARTS.MINIARROWDOWN.getDef()), scrollbarX + 1,
+			viewportY + height - INVENTORY_SCROLLBAR_WIDTH + 1);
+		int trackTop = viewportY + INVENTORY_SCROLLBAR_WIDTH;
+		int trackHeight = height - INVENTORY_SCROLLBAR_WIDTH * 2;
+		int thumbHeight = Math.max(16, trackHeight / (maxScroll + 1));
+		int thumbTravel = trackHeight - thumbHeight;
+		int thumbY = trackTop + thumbTravel * inventoryScrollRow / maxScroll;
+		mc.getSurface().drawBox(scrollbarX + 1, trackTop,
+			INVENTORY_SCROLLBAR_WIDTH - 2, trackHeight, 0x5A5A55);
+		mc.getSurface().drawBox(scrollbarX + 3, thumbY,
+			INVENTORY_SCROLLBAR_WIDTH - 6, thumbHeight, 0x989898);
+	}
+
+	private void drawDraggingInventoryItem() {
+		if (draggingInventoryID < 0
+			|| mc.getInventoryItemAmount(draggingInventoryID) == -1) return;
+		ItemDef def = mc.getInventoryItem(draggingInventoryID).getItemDef();
+		if (mc.getInventoryItem(draggingInventoryID).getNoted()) {
+			if (S_WANT_CERT_AS_NOTES) {
+				mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.noteDef),
+					mc.getMouseX(), mc.getMouseY(), 48, 32,
+					EntityHandler.noteDef.getPictureMask(), 0,
+					EntityHandler.noteDef.getBlueMask(), false, 0, 1);
+				mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
+					mc.getMouseX() + 7, mc.getMouseY() + 8, 29, 19,
+					def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1);
+			} else {
+				mc.getSurface().drawSpriteClipping(mc.spriteSelect(EntityHandler.certificateDef),
+					mc.getMouseX(), mc.getMouseY(), 48, 32,
+					EntityHandler.certificateDef.getPictureMask(), 0,
+					EntityHandler.certificateDef.getBlueMask(), false, 0, 1);
+			}
+		} else {
+			mc.getSurface().drawSpriteClipping(mc.spriteSelect(def),
+				mc.getMouseX(), mc.getMouseY(), 48, 32,
+				def.getPictureMask(), 0, def.getBlueMask(), false, 0, 1);
+		}
+	}
+
 	private void tryChangeCertMode(boolean mode) {
 		if (swapCertMode != mode) {
 			sendCertMode(mode);
@@ -1371,6 +1487,8 @@ public final class CustomBankInterface extends BankInterface {
 		bank.setFocus(-1);
 		swapNoteMode = false;
 		filterDrawerOpen = false;
+		inventoryScrollRow = 0;
+		draggingInventoryScrollbar = false;
 	}
 
 	private void drawFilterDrawerButton() {
