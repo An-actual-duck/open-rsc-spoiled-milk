@@ -17,7 +17,7 @@ DEFAULT = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/defaults/D
 NPC_DEFS = ROOT / "server/conf/server/defs/NpcDefs.json"
 ACTIVE_PLACEMENTS = ROOT / (
     "server/world-builder/packages/"
-    "f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f/"
+    "d037a81117d359bd1e92147ced077f566e2ce6fdaa424e949f8bf6f83e6c3b2b/"
     "package/placements/global/lm1.json"
 )
 

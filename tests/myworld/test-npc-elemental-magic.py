@@ -113,7 +113,9 @@ def main() -> None:
 	):
 		require(profile, snippet, f"Elemental assignment snippet {snippet}")
 
-	require(profile, "case 196: // GREEN_DRAGON", "Green dragons should be earth magic")
+	require(profile, "case 862: // ORDINARY_GREEN_DRAGON", "Ordinary Green Dragons should be earth magic")
+	if "case 196:" in profile:
+		fail("Vanilla Elvarg should not inherit the ordinary Green Dragon earth profile")
 	require(profile, "return NpcMagicElement.EARTH;", "Green dragons should use earth magic")
 	require(profile, "case 202: // BLUE_DRAGON", "Blue dragons should be water magic")
 	require(profile, "case 203: // BABY_BLUE_DRAGON", "Baby blue dragons should be water magic")

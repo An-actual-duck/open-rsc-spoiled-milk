@@ -87,10 +87,7 @@
       "magicDefenseMultiplier": 1.0
     },
     {
-      "id": 196,
-      "name": "Green Dragon",
-      "description": "A powerful and ancient green dragon",
-      "strength": 98,
+      "id": 862,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.75,
       "magicDefenseMultiplier": 1.0

@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASE_NPC_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefs.json"
 CUSTOM_NPC_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefsCustom.json"
+APPENDED_NPC_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "MyWorldNpcDefs.json"
 MYWORLD_NPC_DEFS = ROOT / "server" / "conf" / "server" / "defs" / "NpcDefsMyWorld.json"
 NPC = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "Npc.java"
 NPC_BEHAVIOR = ROOT / "server" / "src" / "com" / "openrsc" / "server" / "model" / "entity" / "npc" / "NpcBehavior.java"
@@ -117,6 +118,8 @@ def load_merged_npcs() -> dict[int, dict]:
     for entry in load_json_array(BASE_NPC_DEFS, "npcs"):
         merged[int(entry["id"])] = dict(entry)
     for entry in load_json_array(CUSTOM_NPC_DEFS, "npcs"):
+        merged[int(entry["id"])] = dict(entry)
+    for entry in load_json_array(APPENDED_NPC_DEFS, "npcs"):
         merged[int(entry["id"])] = dict(entry)
     for entry in load_json_array(MYWORLD_NPC_DEFS, "npcs"):
         npc_id = int(entry["id"])

@@ -37,7 +37,7 @@ public enum NativeLayeredWorldRuntimeProfile {
 		"rsc-remastered.spoiled-milk-layered-world";
 	public static final String SPOILED_MILK_PACKAGE_VERSION = "0.5.0";
 	public static final String SPOILED_MILK_MANIFEST_SHA256 =
-		"aed90ab3b94b3a86815db9a77b71f03a26b8cb134d09845860507896bc80b752";
+		"9d59b96ca5a615b6830507e627a262022ff56ac464b0b37a14ec5e2fcfaa761e";
 	private static final int VANILLA_MAX_BOUNDARY_ID = 213;
 	private static final int VANILLA_MAX_SCENERY_ID = 1189;
 	private static final int VANILLA_MAX_NPC_ID = 793;

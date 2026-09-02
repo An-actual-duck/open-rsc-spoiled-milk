@@ -4,13 +4,13 @@
   "provider": {
     "identity": "spoiled-milk-core-final-client-npc-definitions",
     "definitionMode": "members-enabled-post-override",
-    "finalClientNpcCount": 862,
-    "finalClientNpcCatalogSha256": "2d17b90c005329a5446ca8e31a7970369adf14f202eda45b7802099e35fd4aa3",
+    "finalClientNpcCount": 863,
+    "finalClientNpcCatalogSha256": "daf7184059ebbe1a7b39a47a93b68680d1a17e2851af30dbac95d46b8397ad27",
     "sources": [
       {
         "role": "final-client-definition-runtime",
         "identity": "EntityHandler.java",
-        "sha256": "7f90864c8492b67df92d2d238b98030e7b837ad33016aaf8f14fdfb6ab92c013"
+        "sha256": "52286567cd06c7c8626dfa5060d61c2beafd4eaccb2152d658724494de38411a"
       },
       {
         "role": "final-client-definition-runtime",
@@ -20,7 +20,7 @@
       {
         "role": "declarative-npc-registry",
         "identity": "NpcDefs.json",
-        "sha256": "5a58059f3fb782ca87e38725ba676f9ee9b518ca4bf3a6bc8eae733ee8f67bf1"
+        "sha256": "c9028ecb7307e1e508e80ba0f6f3c145554d7c729c24a5bc49ff0de2900f62f4"
       },
       {
         "role": "declarative-npc-registry",
@@ -33,9 +33,14 @@
         "sha256": "5e7e6e276d46d37e9572679518740d431f034e209f8bb64411bd58d53883c213"
       },
       {
+        "role": "extension-npc-definitions",
+        "identity": "MyWorldNpcDefs.json",
+        "sha256": "480808a928c8f8d6025ce1ba9db5e0094ee563079bd7ad710a0207f303fe017b"
+      },
+      {
         "role": "authoritative-npc-placements",
         "identity": "MyWorldNpcLocs.json",
-        "sha256": "7e89daa91521365ab0362894431eebd89edf4fcf07fc8c08fc71db78009cd93f"
+        "sha256": "de18c7f5c0bde5aa9e6d77639082b85077b1e4dd54f6ed5ec54b95f6ac694e4b"
       }
     ]
   },
@@ -54,8 +59,8 @@
   "selection": {
     "kind": "placed-extension-beyond-declarative-registry",
     "declarativeMaximumNpcId": 845,
-    "placementCount": 14,
-    "npcCount": 14,
+    "placementCount": 18,
+    "npcCount": 15,
     "placedNpcIds": [
       846,
       847,
@@ -70,7 +75,8 @@
       857,
       858,
       859,
-      860
+      860,
+      862
     ],
     "placementCountByNpcId": [
       {
@@ -128,11 +134,15 @@
       {
         "npcId": 860,
         "count": 1
+      },
+      {
+        "npcId": 862,
+        "count": 4
       }
     ],
-    "npcIdsSha256": "21c68c1e0ab427aa5765b16d6c7c5d566c8c59843c47962f3794b08322a561b1",
-    "definitionsSha256": "d82055ac8cc599112dd5c15b4860ab24c753d9020c2b7f590f3b0e9995868f1f",
-    "animationsSha256": "a8abc2524ae34898b4f0be5eb133ead202f7313dba0887cc4e1dfb54b774dcc0"
+    "npcIdsSha256": "afe72c38c2044a8640b9abc2a7d194f41fe9ca2f6ac29db80d2040b08574f222",
+    "definitionsSha256": "fa6d4684608f032fe111031d3630fe3a6191ca6e7636b0e5e1312b1216f08e51",
+    "animationsSha256": "429be821a4e545ac0024080a01fa36a6592d2f9805e2c31dc700ef728108fd85"
   },
   "npcDefinitions": [
     {
@@ -638,6 +648,42 @@
       "walkModel": 6,
       "combatModel": 6,
       "combatSprite": 5
+    },
+    {
+      "npcId": 862,
+      "definitionId": 862,
+      "name": "Green Dragon",
+      "description": "A powerful and ancient green dragon",
+      "command1": "",
+      "command2": null,
+      "attack": 110,
+      "strength": 98,
+      "hits": 110,
+      "defense": 110,
+      "attackable": true,
+      "spriteAnimationIds": [
+        144,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1,
+        -1
+      ],
+      "hairColour": 0,
+      "topColour": 0,
+      "bottomColour": 0,
+      "skinColour": 0,
+      "cameraWidth": 452,
+      "cameraHeight": 326,
+      "walkModel": 10,
+      "combatModel": 7,
+      "combatSprite": 70
     }
   ],
   "animationDefinitions": [
@@ -4627,6 +4673,101 @@
           {
             "spriteId": 800,
             "entrySha256": "01a8d44cff69582da06790097b2c9483c0ebcbc53fdfd76abf4b5ea964392d1e"
+          }
+        ]
+      }
+    },
+    {
+      "animationId": 144,
+      "name": "dragon",
+      "category": "npc",
+      "charColour": 65280,
+      "blueMask": 0,
+      "genderModel": 0,
+      "hasCombatFrames": true,
+      "hasSpecialCombatFrames": false,
+      "requiredFrameCount": 18,
+      "customArchive": {
+        "subspace": "npc",
+        "entry": "dragon",
+        "frameCount": 18,
+        "entrySha256": "e490051c82d48bf872220755f4247b22998579a674831a465af37e8ffd465f51",
+        "spritepackOverrideKey": "npc:dragon"
+      },
+      "authenticArchive": {
+        "baseSpriteId": 1323,
+        "frames": [
+          {
+            "spriteId": 1323,
+            "entrySha256": "029beabab4e6c1f6942d17d3a3b7d514843650139bad47d39c28be817dc1eca3"
+          },
+          {
+            "spriteId": 1324,
+            "entrySha256": "aa4b8628bd3bfc0f9522f3c99ba393728c3b2ad17ef716bc8a11e84c7f834ad6"
+          },
+          {
+            "spriteId": 1325,
+            "entrySha256": "799b049ccb10ea15c45af76f5e3dd65d93fbe6d85a35d756ad11a24339d1a3f9"
+          },
+          {
+            "spriteId": 1326,
+            "entrySha256": "be69289ff3d326033c7ce546e8c5554edb852ef19a41adf62e52b761628abd2f"
+          },
+          {
+            "spriteId": 1327,
+            "entrySha256": "a3c69c0fccf53e186e584e8ecfbeef5a81a67a6d4c84af6feb6992909a1d5890"
+          },
+          {
+            "spriteId": 1328,
+            "entrySha256": "90dd5b6e753a7c656e82ae3d0a64ef1850fefb10733481d1cf1bbe0fce3b4447"
+          },
+          {
+            "spriteId": 1329,
+            "entrySha256": "7d4d9247927c568a4b7d4c1806e4e3d6691a7e16b2e890e8727d335ce0f2812a"
+          },
+          {
+            "spriteId": 1330,
+            "entrySha256": "a9f76409778e77eabd6c29b0556de1fd5ad51efff3e037b7723b98c4687ce542"
+          },
+          {
+            "spriteId": 1331,
+            "entrySha256": "ab2f35c19d156e3628d3452b59545c6927f01a49dce3ec8de276ce5996eeef87"
+          },
+          {
+            "spriteId": 1332,
+            "entrySha256": "d5809124087a01396b517e68c65cf8d1fedf9a882e49f6d4aec2d9f32eb880d7"
+          },
+          {
+            "spriteId": 1333,
+            "entrySha256": "92061bebfe460cc73fffba62a29420da1e57484157f1b1ba796c63a81e1335e0"
+          },
+          {
+            "spriteId": 1334,
+            "entrySha256": "b3da1b3bbaeefece36c334bc68104ef7224328b8f73c00dbd37ddc20c3713134"
+          },
+          {
+            "spriteId": 1335,
+            "entrySha256": "8fdb6c38b1e6593fff2700d927fd155ddcb1ace755fb99380f99c614896053d2"
+          },
+          {
+            "spriteId": 1336,
+            "entrySha256": "8ab29a52608f39c16388e8b25c36ca0c821da6d453ebb0b268ade5edf2efdd8d"
+          },
+          {
+            "spriteId": 1337,
+            "entrySha256": "c82d93a4ecc40380f8e5b13349672db12db1b029c1d8ce9d05a2c00d4fd63649"
+          },
+          {
+            "spriteId": 1338,
+            "entrySha256": "67286adb70e6adcd9826013120e90e08bc2f5453f724a8b0a1cbbba633aed113"
+          },
+          {
+            "spriteId": 1339,
+            "entrySha256": "2ebc6b16e58278d61fe9e4e6c92a4d6f1f8fdbea84a82ba7d8b4ab639291b8a0"
+          },
+          {
+            "spriteId": 1340,
+            "entrySha256": "3c1ab6ca3a894314e024fdf4d9f7ac25b0e5bc323f4f9a59b1ca9e1d174c58eb"
           }
         ]
       }

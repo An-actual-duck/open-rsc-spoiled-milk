@@ -1,0 +1,3 @@
+{"npcs":[
+{"id":862,"name":"Green Dragon","description":"A powerful and ancient green dragon","command":"","command2":"","attack":110,"strength":98,"hits":110,"defense":110,"ranged":false,"combatlvl":110,"isMembers":0,"attackable":1,"aggressive":1,"respawnTime":75,"sprites1":144,"sprites2":-1,"sprites3":-1,"sprites4":-1,"sprites5":-1,"sprites6":-1,"sprites7":-1,"sprites8":-1,"sprites9":-1,"sprites10":-1,"sprites11":-1,"sprites12":-1,"hairColour":0,"topColour":0,"bottomColour":0,"skinColour":0,"camera1":452,"camera2":326,"walkModel":10,"combatModel":7,"combatSprite":70,"canEdit":0,"roundMode":-1}
+]}

@@ -167,7 +167,7 @@ public final class RangersGuildPointsHarness {
         Npc giant = npc(61, 491, 464, true, true);
         Npc skeleton = npc(195, 506, 466, true, true);
         Npc demon = npc(22, 495, 477, true, true);
-        Npc dragon = npc(196, 497, 462, true, true);
+        Npc dragon = npc(862, 497, 462, true, true);
         RangersGuildPoints.awardEligibleRangedKill(player, giant);
         RangersGuildPoints.awardEligibleRangedKill(player, skeleton);
         RangersGuildPoints.awardEligibleRangedKill(player, demon);

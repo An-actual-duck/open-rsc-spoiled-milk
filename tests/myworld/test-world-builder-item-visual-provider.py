@@ -363,12 +363,12 @@ def main() -> None:
     assert full["provider"] == compatibility["provider"]
     assert full["assetProviders"] == compatibility["assetProviders"]
 
-    expected_npc_ids = [846, 847, 848, 849, 850, 852, 853, 854, 855, 856, 857, 858, 859, 860]
+    expected_npc_ids = [846, 847, 848, 849, 850, 852, 853, 854, 855, 856, 857, 858, 859, 860, 862]
     assert npc["selection"]["declarativeMaximumNpcId"] == 845
     assert npc["selection"]["placedNpcIds"] == expected_npc_ids
     assert [record["npcId"] for record in npc["npcDefinitions"]] == expected_npc_ids
     assert all(record["definitionId"] == record["npcId"] for record in npc["npcDefinitions"])
-    assert npc["selection"]["placementCount"] == 14
+    assert npc["selection"]["placementCount"] == 18
     assert 851 not in npc["selection"]["placedNpcIds"]
     referenced_animations = sorted({
         animation_id

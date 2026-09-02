@@ -34,7 +34,7 @@ RANGERS_GUILD_POINTS = ROOT / "server/src/com/openrsc/server/content/RangersGuil
 SKILLS = ROOT / "server/src/com/openrsc/server/model/Skills.java"
 ACTIVE_LAYERED_PLACEMENTS = ROOT / (
     "server/world-builder/packages/"
-    "f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f/"
+    "d037a81117d359bd1e92147ced077f566e2ce6fdaa424e949f8bf6f83e6c3b2b/"
     "package/placements/global/lm1.json"
 )
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
@@ -68,7 +68,7 @@ BASEMENT_STAIR_SQUARE_TILES = {
 RANGERS_GUILD_BASEMENT_NPCS = {
     61: 8,    # giant
     22: 3,    # lesser demon
-    196: 2,   # green dragon (base definition: Earth Dragon)
+    862: 2,   # ordinary Green Dragon; ID 196 remains quest-only Elvarg
     195: 6,   # skeleton
 }
 

@@ -297,15 +297,9 @@ require(
     "Lower-left cage must contain two greater demons",
 )
 
-green_dragon = next(
-    entry
-    for entry in json.loads(MYWORLD_NPC_DEFS.read_text())["npcs"]
-    if entry["id"] == 196
-)
-require(green_dragon.get("name") == "Green Dragon", "Earth Dragon must be renamed")
 require(
-    green_dragon.get("description") == "A powerful and ancient green dragon",
-    "Green Dragon description must match its name",
+    all(entry["id"] != 196 for entry in json.loads(MYWORLD_NPC_DEFS.read_text())["npcs"]),
+    "Vanilla Elvarg must not receive a MyWorld combat override",
 )
 
 ladders = LADDERS.read_text()

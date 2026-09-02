@@ -75,9 +75,9 @@ unchanged on level `-1`, or generation refuses.
 
 The active package is the reviewed World Builder export
 `rsc-remastered.spoiled-milk-layered-world@0.5.0`, manifest SHA-256
-`aed90ab3b94b3a86815db9a77b71f03a26b8cb134d09845860507896bc80b752`
+`9d59b96ca5a615b6830507e627a262022ff56ac464b0b37a14ec5e2fcfaa761e`
 and content fingerprint
-`f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f`.
+`d037a81117d359bd1e92147ced077f566e2ce6fdaa424e949f8bf6f83e6c3b2b`.
 After the accepted 2026-08-30 private server/client rehearsal it is
 `production-approved` with `runtimePromotionApproved=true`.
 It is consumed by the `spoiled-milk-replacement` runtime profile. The server

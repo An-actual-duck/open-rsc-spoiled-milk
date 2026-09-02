@@ -4,9 +4,9 @@ Status: implemented on `content/guild-map-gameplay-reconciliation`
 
 This record binds guild gameplay to the production World Builder package with
 fingerprint
-`f07264aca7b93fc3bc27991daf9187c468611a7d636c98b10cf695814a2add7f`
+`d037a81117d359bd1e92147ced077f566e2ce6fdaa424e949f8bf6f83e6c3b2b`
 and manifest
-`aed90ab3b94b3a86815db9a77b71f03a26b8cb134d09845860507896bc80b752`.
+`9d59b96ca5a615b6830507e627a262022ff56ac464b0b37a14ec5e2fcfaa761e`.
 The signed package coordinates and authored placement identity are authority;
 the older packed JSON overlays are compatibility inputs, not activity rosters.
 
@@ -38,10 +38,11 @@ authored roster is:
 | Giant | 61 | 8 | 7 |
 | Skeleton | 195 | 6 | 12 |
 | Lesser Demon | 22 | 3 | 16 |
-| Green Dragon | 196 | 2 | 22 |
+| Green Dragon | 862 | 2 | 22 |
 
-NPC `196` is called Earth Dragon in the base definitions and Green Dragon by
-the active MyWorld definition. The balance is approximately one point per five
+NPC `862` is the enhanced ordinary Green Dragon. NPC `196` remains the vanilla
+Dragon Slayer/Elvarg dragon and is not part of this activity. The balance is
+approximately one point per five
 base hitpoints, rounded up, so tougher and slower targets pay more without
 changing the established reward prices. Existing
 `rangers_guild_points` balances remain valid. The obsolete XP remainder stops

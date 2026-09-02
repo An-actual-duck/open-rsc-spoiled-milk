@@ -6725,6 +6725,12 @@ public class EntityHandler {
 			new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 0, 0, 0, 327, 240, 10, 7, 5, 861
 		));
+		setCustomNpcDefinition(862, new NPCDef(
+			"Green Dragon", "A powerful and ancient green dragon", "",
+			110, 98, 110, 110, true,
+			new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+			0, 0, 0, 0, 452, 326, 10, 7, 70, 862
+		));
 	}
 
 	/** Applies a presentation-only My World NPC rename without changing its combat definition. */

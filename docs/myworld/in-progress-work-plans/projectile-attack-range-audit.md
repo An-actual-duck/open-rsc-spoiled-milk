@@ -175,7 +175,7 @@ Definitions are merged from `NpcDefs.json`, `NpcDefsCustom.json`, and
 | Black Knight titan | 401 | 146 | `MELEE_RARE_MAGIC` | **5** | +1/+2 |
 | Red Dragon | 201 | 140 | `MELEE_MAGIC` | **5** | +1/+2 |
 | Chronozon | 315 | 121 | `MELEE_MAGIC` | **5** | +1/+2 |
-| Green Dragon | 196 | 110 | `MELEE_MAGIC` | **5** | +1/+2 |
+| Green Dragon | 862 | 110 | `MELEE_MAGIC` | **5** | +1/+2 |
 | Fire Giant | 344 | 109 | `MELEE_MAGIC` | **5** | +1/+2 |
 | Blue Dragon | 202 | 105 | `MELEE_MAGIC` | **5** | +1/+2 |
 | Ice Queen | 254 | 103 | `MELEE_MAGIC` | **5** | +1/+2 |

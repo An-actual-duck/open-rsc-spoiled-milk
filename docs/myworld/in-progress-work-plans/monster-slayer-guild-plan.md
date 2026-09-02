@@ -135,8 +135,8 @@ This is a client/server definition reconciliation task, not just a task-label
 edit. Current source evidence already includes server MyWorld names and client
 presentation overrides for IDs `4`, `23`, `47`, `153`, `154`, and `177`, yet
 the reported in-world names do not consistently reflect them. Green Dragon ID
-`196` is named `Green Dragon` by the server MyWorld override while the client's
-built-in ID `196` definition still says `Dragon`. The implementation pass must
+`862` is the ordinary enhanced `Green Dragon`; ID `196` remains the vanilla
+Dragon/Elvarg used by Dragon Slayer. The implementation pass must
 therefore establish which definition owns overhead text, interaction menus,
 examine text, targeting, and task messages in the production client, then fix
 the authoritative final-definition/load-order path.
@@ -366,7 +366,7 @@ slower, more dangerous, and more preparation-intensive.
 | `Adept -> Veteran` | Giant Bat `43` (level 32) -> Deadly Red Spider `99` (36) -> King Scorpion `136` (36) -> White Wolf `248` (41) -> Ugthanki `653` (45) -> Animated Axe `295` (46) -> Jungle Spider `521` (47) -> Baby Blue Dragon `203` (50) -> Shadow Spider `343` (53) |
 | `Veteran -> Elite` | Jogre `523` (58) -> Karamja Wolf `775` (61) -> Moss Giants `104,594` (62) -> Poison Spider `292` (63) -> Grey Wolf `243` (64) -> Ice Spider `263` (64) |
 | `Elite -> Champion` | Ice Giant `135` (68) -> Lesser Demons `22,181` (79) -> Greater Demon `184` (87) |
-| `Champion -> Hero` | Blue Dragon `202` (105) -> Fire Giant `344` (109) -> Green Dragon `196` (110) -> Hellhound `294` (114) -> Red Dragon `201` (140) |
+| `Champion -> Hero` | Blue Dragon `202` (105) -> Fire Giant `344` (109) -> Green Dragon `862` (110) -> Hellhound `294` (114) -> Red Dragon `201` (140) |
 | `Hero -> Legend` | Black Demon `290` (156) -> Black Dragon `291` (200) -> King Black Dragon `477` (245) |
 
 Together with the confirmed nine-task Fledgling chain, this establishes 35

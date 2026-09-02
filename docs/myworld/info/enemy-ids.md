@@ -318,7 +318,8 @@ Combat levels `91-999`. Use these IDs with `::spawnnpc <id> <radius>`.
 | 254 | Ice queen | 103 | 104 | Yes | Yes | 72 |
 | 202 | Blue Dragon | 105 | 105 | Yes | Yes | 73 |
 | 344 | Fire Giant | 109 | 111 | Yes | Yes | 73 |
-| 196 | Earth Dragon | 110 | 110 | Yes | No | 75 |
+| 196 | Dragon (Elvarg) | 110 | 110 | Yes | No | 75 |
+| 862 | Green Dragon | 110 | 110 | Yes | No | 75 |
 | 294 | Hellhound | 114 | 116 | Yes | Yes | 75 |
 | 663 | San Tojalon | 120 | 120 | Yes | Yes | 53 |
 | 315 | Chronozon | 121 | 60 | Yes | No | 75 |
