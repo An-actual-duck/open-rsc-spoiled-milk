@@ -5,6 +5,8 @@ import textwrap
 import zipfile
 from pathlib import Path
 
+from installed_world_package import read_sector
+
 
 ROOT = Path(__file__).resolve().parents[2]
 ROOF_VISIBILITY = ROOT / "Client_Base/src/orsc/graphics/three/Renderer3DRoofVisibility.java"
@@ -15,7 +17,6 @@ CHUNK_RENDERER = ROOT / "PC_Client/src/orsc/OpenGLWorldChunkRenderer.java"
 FRAME_CAPTURE = ROOT / "PC_Client/src/orsc/OpenGLFrameCapture.java"
 WORLD = ROOT / "Client_Base/src/orsc/graphics/three/World.java"
 AUTHENTIC_LANDSCAPE = ROOT / "Client_Base/Cache/video/Authentic_Landscape.orsc"
-CUSTOM_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 
 
 def require(text: str, needle: str, label: str) -> None:
@@ -135,6 +136,14 @@ def roof_texture_at(archive: Path, plane: int, world_x: int, world_y: int) -> in
     return data[(local_x * 48 + local_y) * 10 + 3]
 
 
+def installed_roof_texture_at(plane: int, world_x: int, world_y: int) -> int:
+    data = read_sector("client", plane, world_x // 48, world_y // 48)
+    assert len(data) % 10 == 0, "installed terrain sector has invalid tile data"
+    local_x = world_x % 48
+    local_y = world_y % 48
+    return data[(local_x * 48 + local_y) * 10 + 3]
+
+
 def run_upper_floor_map_fixture_matrix() -> None:
     representative_roof_tiles = {
         "Lumbridge Castle": (118, 655),
@@ -143,11 +152,14 @@ def run_upper_floor_map_fixture_matrix() -> None:
         "Draynor Manor": (216, 450),
     }
     for location, (world_x, world_y) in representative_roof_tiles.items():
-        for archive in (AUTHENTIC_LANDSCAPE, CUSTOM_LANDSCAPE):
-            assert roof_texture_at(archive, 1, world_x, world_y) > 0, (
-                f"{location} has no upper-floor roof at ({world_x}, {world_y}) "
-                f"in {archive.name}"
-            )
+        assert roof_texture_at(AUTHENTIC_LANDSCAPE, 1, world_x, world_y) > 0, (
+            f"{location} has no upper-floor roof at ({world_x}, {world_y}) "
+            f"in {AUTHENTIC_LANDSCAPE.name}"
+        )
+        assert installed_roof_texture_at(1, world_x, world_y) > 0, (
+            f"{location} has no upper-floor roof at ({world_x}, {world_y}) "
+            "in the installed World Builder package"
+        )
 
 
 def run_active_region_reload_matrix() -> None:

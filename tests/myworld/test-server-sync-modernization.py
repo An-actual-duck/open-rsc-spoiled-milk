@@ -982,10 +982,10 @@ def main() -> None:
         "expanded client debug overlay should not read a stale static packet handler",
     )
     require(
-        "want_sync_scene_baseline: false" in myworld_conf
+        "want_sync_scene_baseline: true" in myworld_conf
         and "want_sync_scene_baseline: true" in myworld_host_conf,
-        "scene baseline should remain off for ordinary development and be "
-        "explicitly enabled by the accepted hosted layered profile",
+        "scene baseline should remain enabled in development and in the "
+        "accepted hosted installed-package profile",
     )
     require(
         "want_sync_movement_snapshot: true" in myworld_conf
