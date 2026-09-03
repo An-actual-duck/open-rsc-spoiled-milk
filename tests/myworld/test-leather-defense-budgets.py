@@ -28,7 +28,7 @@ FAMILY_NPC = {
     "hellhound": 294,
     "fire giant": 344,
     "blue dragon": 202,
-    "dragon": 196,
+    "dragon": 862,
     "red dragon": 201,
     "black demon": 290,
     "black dragon": 291,
@@ -114,7 +114,7 @@ def load_json_array(path: Path) -> list[dict]:
 
 def load_npcs() -> dict[int, dict]:
     npcs = {}
-    for filename in ("NpcDefs.json", "NpcDefsCustom.json"):
+    for filename in ("NpcDefs.json", "NpcDefsCustom.json", "MyWorldNpcDefs.json"):
         for npc in load_json_array(DEFS_DIR / filename):
             npcs[npc["id"]] = npc
     for npc in load_json_array(DEFS_DIR / "NpcDefsMyWorld.json"):
