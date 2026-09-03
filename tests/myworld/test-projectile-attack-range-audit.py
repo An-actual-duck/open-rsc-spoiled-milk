@@ -239,11 +239,11 @@ def main() -> None:
     fireshot_action = method_body(elder_specials, "public void action()")
     require(
         fireshot_action,
-        "isValidPlayerTarget(dragon, player, AOE_RADIUS)",
-        "Elder fireshot delayed range recheck",
+        "isValidProjectilePlayerTarget(dragon, player, AOE_RADIUS)",
+        "Elder fireshot delayed range/collision recheck",
     )
-    if "isValidProjectilePlayerTarget" in fireshot_action:
-        fail("Elder fireshot delivery unexpectedly rechecks launch collision")
+    if "!isValidPlayerTarget(dragon, player, AOE_RADIUS)" in fireshot_action:
+        fail("Elder fireshot delivery unexpectedly bypasses its impact collision recheck")
 
     elder = find_elder_location()
     expected_elder = {
