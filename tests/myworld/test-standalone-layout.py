@@ -301,6 +301,7 @@ def test_myworld_docs_are_consolidated() -> None:
             "testing-quick-reference.md",
             "world-builder-definition-catalog.md",
             "world-builder-direct-import.md",
+            "world-builder-import-runtime-shadowing-incident-2026-09-03.md",
             "world-builder-item-visual-provider.md",
             "worship-skill-compatibility.md",
         ],
