@@ -309,17 +309,29 @@ def build_report(require_artifacts: bool) -> tuple[dict, list[str]]:
             errors.append(f"{target_name} no longer includes core.jar")
         required_order = (
             "core-gameplay-overlay.jar",
-            str(WORLD_BUILDER_RUNTIME_JAR.relative_to(SERVER)),
             "core.jar",
         )
         ordered_paths = [entry["resolved"] for entry in ant["targets"].get(target_name, [])]
         if not all(path in ordered_paths for path in required_order):
-            errors.append(f"{target_name} lost the managed runtime gameplay-overlay boundary")
+            errors.append(f"{target_name} lost current Core gameplay authority")
         elif [ordered_paths.index(path) for path in required_order] != sorted(
                 ordered_paths.index(path) for path in required_order):
             errors.append(
-                f"{target_name} must load the gameplay overlay before the managed runtime and core.jar"
+                f"{target_name} must load the gameplay overlay before core.jar"
             )
+        if str(WORLD_BUILDER_RUNTIME_JAR.relative_to(SERVER)) in paths:
+            errors.append(
+                f"{target_name} must not load the stale managed server snapshot; "
+                "installed map support is compiled from current Core"
+            )
+
+    plugin_compile_paths = {
+        entry["resolved"] for entry in ant["targets"].get("compile_plugins", [])
+    }
+    if str(WORLD_BUILDER_RUNTIME_JAR.relative_to(SERVER)) in plugin_compile_paths:
+        errors.append(
+            "compile_plugins must use current core.jar without the stale managed server snapshot"
+        )
 
     loader = SERVER / "src/com/openrsc/server/plugins/io/PluginJarLoader.java"
     loader_text = loader.read_text(encoding="utf-8")

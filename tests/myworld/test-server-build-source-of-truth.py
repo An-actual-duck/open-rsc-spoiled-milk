@@ -62,9 +62,20 @@ def main() -> int:
         require(any(entry["resolved"] == "core.jar" for entry in entries), f"{target} lost core.jar")
         paths = [entry["resolved"] for entry in entries]
         overlay = paths.index("core-gameplay-overlay.jar")
-        runtime = paths.index("world-builder-runtime/world-builder-managed-runtime.jar")
         core = paths.index("core.jar")
-        require(overlay < runtime < core, f"{target} can let the imported runtime shadow current gameplay")
+        require(overlay < core, f"{target} lost current Core gameplay authority")
+        require(
+            "world-builder-runtime/world-builder-managed-runtime.jar" not in paths,
+            f"{target} can still load the stale managed server snapshot",
+        )
+
+    compile_plugin_paths = [
+        entry["resolved"] for entry in report["ant"]["targets"]["compile_plugins"]
+    ]
+    require(
+        "world-builder-runtime/world-builder-managed-runtime.jar" not in compile_plugin_paths,
+        "plugins can still compile against the stale managed server snapshot",
+    )
 
     build_xml = BUILD_XML.read_text(encoding="utf-8")
     for obsolete in (

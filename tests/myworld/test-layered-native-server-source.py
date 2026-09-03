@@ -395,6 +395,10 @@ public final class NativeLayeredRuntimeProfileFixture {
                 profile.replacesLegacyBasePopulation()
                     == Boolean.parseBoolean(args[3]),
                 "replacement ownership");
+            check(
+                profile.skipsLegacyTerrainArchive()
+                    == Boolean.parseBoolean(args[3]),
+                "legacy terrain ownership");
         } catch (IllegalStateException expected) {
             check(!expectAcceptance, "unexpected profile refusal");
         }
@@ -1566,6 +1570,14 @@ public final class WorldBuilderClientProfile {
         self.assertIn("VANILLA_MAX_BOUNDARY_ID", runtime_profile)
         self.assertIn(
             "replacesLegacyBasePopulation()", world_populator
+        )
+        self.assertIn(
+            "nativeLayeredWorldRuntimeProfile.skipsLegacyTerrainArchive()",
+            region_manager,
+        )
+        self.assertIn(
+            "Skipping legacy terrain archives for native layered replacement profile",
+            region_manager,
         )
         self.assertIn(
             "Suppressing legacy base placement population", world_populator

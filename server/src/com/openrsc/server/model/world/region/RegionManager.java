@@ -288,6 +288,12 @@ public class RegionManager {
 	}
 
 	public void load() {
+		if (nativeLayeredWorldRuntimeProfile.skipsLegacyTerrainArchive()) {
+			LOGGER.info(
+				"Skipping legacy terrain archives for native layered replacement profile {}",
+				nativeLayeredWorldRuntimeProfile.getId());
+			return;
+		}
 		// TODO: The WorldLoader.loadWorld() should accept a RegionManager as an argument and place regions there.
 		getWorld().getWorldLoader().loadWorld();
 	}

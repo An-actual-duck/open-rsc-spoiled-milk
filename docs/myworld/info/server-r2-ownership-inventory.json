@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "12262f13c84f4fb89ba84be97769b01045b2e9fc6682f8de834e571fff9bf656",
+  "inputTreeSha256": "9e412da556892d692ae17e9c85c45d446135a894d4b7aaaf39d221ada313e183",
   "inputs": [
     {
       "brandSignals": [
@@ -938,7 +938,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 17696,
+      "bytes": 18191,
       "category": "foundation",
       "classificationReason": "Server build, launch, audit, or operator-safety input",
       "classificationRule": "scripts/**",
@@ -947,7 +947,7 @@
       "kind": "build-launch-or-operator-script",
       "path": "scripts/audit-server-build.py",
       "reverseDependencies": [],
-      "sha256": "b5dff6cadfd97fdeea6452e59fe90b2e3a43a52db478bd991a76d60f5cab0ced"
+      "sha256": "4682cbb4e4153e2e586c6fb4608558ff279ac27e4476fa208294f5c817383154"
     },
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 20696,
+      "bytes": 20240,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "6430730f0813bafeda9ca8538872d95fea11bb093213a73149be79132f1f7051"
+      "sha256": "2552020cf70a9aa0531ea6d407191e58768d0b2315e9b6dfbdc5b710db1ee1d8"
     },
     {
       "brandSignals": [],
@@ -46150,7 +46150,7 @@
       "brandSignals": [
         "spoiled-milk-name"
       ],
-      "bytes": 16465,
+      "bytes": 16692,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -46178,7 +46178,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "1236a13940f0d0acd4e758584c20676764aa568ef062214a257fb9e6cd96c773"
+      "sha256": "88a73202a207e617202f1cb67286fb0fd04c9e4a10e6dd56250cfd04035bf931"
     },
     {
       "brandSignals": [],
@@ -57255,7 +57255,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 199306,
+      "bytes": 199536,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57583,7 +57583,7 @@
         "server/src/com/openrsc/server/io/WorldLoader.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "5594084b60b7c3470b2572561aad632d95a0ec6f3be6a1b312bf630ec2187c34"
+      "sha256": "58ea6cef2b602a69ebe57cf9bf3e98fa16dc5102eb6be665b314149d22e89c9e"
     },
     {
       "brandSignals": [],

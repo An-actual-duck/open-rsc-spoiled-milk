@@ -8,12 +8,12 @@ import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ClientLimitations;
 import com.openrsc.server.util.rsc.DataConversions;
 
-/** Exercises the stale Skills caller against current Core on production precedence. */
+/** Exercises current Skills and Rangers Guild behavior on production precedence. */
 public final class WorldBuilderRangersGuildLinkageTest {
 	private WorldBuilderRangersGuildLinkageTest() { }
 
 	public static void main(String[] arguments) throws Exception {
-		assertSource(Skills.class, "world-builder-managed-runtime.jar");
+		assertSource(Skills.class, "core.jar");
 		assertSource(RangersGuildPoints.class, "core.jar");
 
 		Server server = new Server("myworld.conf");
@@ -35,7 +35,7 @@ public final class WorldBuilderRangersGuildLinkageTest {
 		if (RangersGuildPoints.getPoints(player) != pointsBefore) {
 			throw new AssertionError("ordinary experience must not award Rangers Guild points");
 		}
-		System.out.println("PASS: managed-runtime Skills links to current kill-based Rangers Guild points");
+		System.out.println("PASS: current Skills retains kill-based Rangers Guild points");
 	}
 
 	private static void assertSource(Class<?> type, String expectedArchive) {
