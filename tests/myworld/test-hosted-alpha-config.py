@@ -28,10 +28,21 @@ def main() -> None:
     require(hosted, "want_feature_websockets: false", "websocket listener disabled")
     require(hosted, "max_players: 25", "limited alpha player cap")
     require(hosted, "max_players_per_ip: 3", "limited alpha per-IP player cap")
+    require(
+        hosted,
+        "layered_native_terrain_manifest_sha256: "
+        "eadf35cfd97a7a3c08b0e803ac4d137c19d97bf648247446489cb1dcaf23a39d",
+        "installed World Builder manifest identity",
+    )
 
     runner = RUN_HOSTED.read_text(encoding="utf-8")
     require(runner, "myworld_live_database_path", "hosted DB path resolution")
     require(runner, "myworld_require_live_database_link", "external hosted DB link guard")
+    require(
+        runner,
+        "OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256",
+        "hosted manifest environment handoff",
+    )
     require(runner, "Refusing to create a fresh hosted database during server startup.", "hosted DB startup reset guard")
     require(runner, "-DconfFile=myworld-host", "hosted config launch")
 

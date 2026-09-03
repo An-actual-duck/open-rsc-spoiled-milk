@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "d3a7cd2fc29cf1e496cad22dc93eef4ddde80ec4958cda3de06ddd1502cca053",
+  "inputTreeSha256": "907124837dc7fccc7340442e88586fc5621cab916723f15fee23d63f70c939ec",
   "inputs": [
     {
       "brandSignals": [
@@ -1026,7 +1026,7 @@
       "brandSignals": [
         "spoiled-milk-name"
       ],
-      "bytes": 10706,
+      "bytes": 10857,
       "category": "foundation",
       "classificationReason": "Server build, launch, audit, or operator-safety input",
       "classificationRule": "scripts/**",
@@ -1035,14 +1035,14 @@
       "kind": "build-launch-or-operator-script",
       "path": "scripts/lib/layered-world-package.sh",
       "reverseDependencies": [],
-      "sha256": "180a3db1be030cf3a2cc8b39b804ae7aa62e6665031121f9239bd8699a13ac66"
+      "sha256": "d4153741c5ecd3c4c8df3e3fb4b297a93dc326c712a6ca7dee9164a8dc02d666"
     },
     {
       "brandSignals": [
         "myworld-name",
         "spoiled-milk-name"
       ],
-      "bytes": 17758,
+      "bytes": 17879,
       "category": "foundation",
       "classificationReason": "Server build, launch, audit, or operator-safety input",
       "classificationRule": "scripts/**",
@@ -1051,7 +1051,7 @@
       "kind": "build-launch-or-operator-script",
       "path": "scripts/lib/myworld-common.sh",
       "reverseDependencies": [],
-      "sha256": "d8b3df13f64d6bf8dc3753fa3c8d6ee320967ce98845c638278bbd0ed3c9196b"
+      "sha256": "d80d85f7db4e7098bbd8bae0fc874862aab673c0a684a9e1a5fe70ec0885a425"
     },
     {
       "brandSignals": [
@@ -1074,7 +1074,7 @@
         "myworld-name",
         "spoiled-milk-name"
       ],
-      "bytes": 2355,
+      "bytes": 2451,
       "category": "foundation",
       "classificationReason": "Server build, launch, audit, or operator-safety input",
       "classificationRule": "scripts/**",
@@ -1083,7 +1083,7 @@
       "kind": "build-launch-or-operator-script",
       "path": "scripts/run-hosted-server.sh",
       "reverseDependencies": [],
-      "sha256": "6cea5ec27b4521fff80c3ab7f2308e8704b90d3ba6e7b7405ffa364499cf8da8"
+      "sha256": "ab3ab3ec5d8cf0e81bbf3e9760d79054cacc2c12436acf81c7df558011fd081f"
     },
     {
       "brandSignals": [
@@ -4512,7 +4512,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 22724,
+      "bytes": 22830,
       "category": "target-profile",
       "classificationReason": "Spoiled Milk distribution composition profile",
       "classificationRule": "server/myworld*.conf",
@@ -4521,7 +4521,7 @@
       "kind": "configuration",
       "path": "server/myworld-host.conf",
       "reverseDependencies": [],
-      "sha256": "796dbadceadd30942b59665fcf293d574224cae74454e4dbac7210fa257326ea"
+      "sha256": "acdc615805ebc0abf916da0f842eca2d5b9f9cb487d261a724a904905bfb085f"
     },
     {
       "brandSignals": [
