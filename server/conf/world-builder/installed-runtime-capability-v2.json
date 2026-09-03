@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "manifestType": "world-builder-installed-runtime-capability",
+  "capabilityId": "world-builder-installed-runtime-capability-v2",
+  "managedRuntimeBundleId": "world-builder-managed-runtime-current",
+  "profileId": "world-builder-installed",
+  "serverBuildId": "rsc-world-editor-runtime-installed-server-upgrade-v6",
+  "clientBuildId": "rsc-world-editor-runtime-installed-client-source-v7",
+  "clientBootstrapId": "world-builder-installed-client-profile-v1",
+  "loaderId": "generic-signed-layered-loader-v7-blocking-base-color",
+  "protocolId": "world-builder-native-layered-protocol-v2-u16-elevation",
+  "mapFormatId": "signed-layered-v1",
+  "packageSchemaId": "layered-world-package-v1",
+  "coordinateModel": "signed-layered-v1",
+  "encodingVersions": [1, 2, 3, 4],
+  "placementFamilies": ["boundary", "ground-item", "npc", "scenery"],
+  "runtimeArchives": {
+    "serverRelativePath": "server/world-builder-runtime/world-builder-managed-runtime.jar",
+    "targetFallbackRelativePath": "server/core.jar",
+    "clientNames": ["Client_Base/Open_RSC_Client.jar", "client/Open_RSC_Client.jar"]
+  },
+  "clientSourceUpgrade": {
+    "upgradeId": "world-builder-installed-client-source-upgrade-v5",
+    "manifestRelativePath": "server/conf/world-builder/installed-client-source-upgrade-v5.json",
+    "buildPolicy": "atomic-compile-target-client-before-run"
+  },
+  "activation": {
+    "runtimeProfile": "world-builder-installed",
+    "builderOnly": false,
+    "requiresExactManifestSha256": true,
+    "requiresExactInventorySha256": false,
+    "replacesLegacyTerrain": true,
+    "replacesLegacyPlacements": true,
+    "replacesLegacyClientBootstrap": true,
+    "requiredBooleanKeys": [
+      "want_layered_player_location_authority",
+      "want_layered_spatial_runtime_authority",
+      "want_layered_protocol_client_authority",
+      "want_layered_native_terrain_package",
+      "want_layered_native_terrain_residency",
+      "want_layered_native_terrain_readiness",
+      "want_layered_native_terrain_prediction",
+      "want_layered_native_terrain_symmetric_residency",
+      "want_layered_native_terrain_atomic_activation"
+    ],
+    "requiredStringKeys": [
+      "layered_native_terrain_package_path",
+      "layered_native_terrain_manifest_sha256",
+      "layered_native_world_runtime_profile"
+    ]
+  }
+}

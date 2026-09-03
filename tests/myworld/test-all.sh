@@ -86,9 +86,10 @@ cleanup_layered_test_workspace() {
   esac
 }
 trap cleanup_layered_test_workspace EXIT
-LAYERED_MAPS_WORKSPACE="$LAYERED_TEST_WORKSPACE" \
-  ./tools/layered-maps/layered-maps.sh spoiled-milk-package
-export SPOILED_MILK_LAYERED_PACKAGE="$ROOT_DIR/server/world-builder/packages/d037a81117d359bd1e92147ced077f566e2ce6fdaa424e949f8bf6f83e6c3b2b/package"
+source "$ROOT_DIR/scripts/lib/layered-world-package.sh"
+export SPOILED_MILK_LAYERED_PACKAGE="$(
+  layered_world_generate_package "$ROOT_DIR" "$LAYERED_TEST_WORKSPACE"
+)"
 python3 ./tests/myworld/test-layered-production-promotion.py
 env -u SPOILED_MILK_LAYERED_PACKAGE \
   python3 ./tests/myworld/test-world-builder-layered-import.py

@@ -90,7 +90,7 @@ Hosted startup refuses a missing, changed, wrong-version, wrong-count, or
 wrong-fingerprint package. The hosted configuration explicitly enables the
 accepted Player-location, spatial, protocol, native-package, residency,
 readiness, prediction, symmetric-residency, and atomic-activation gates using
-the `spoiled-milk-replacement` profile.
+the `world-builder-installed` profile.
 
 If the production-profile rehearsal or later live observation finds a
 layered-runtime regression, the guarded runner retains an explicit start-only

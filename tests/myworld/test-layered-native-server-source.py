@@ -11,6 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 CORE_JAR = SERVER / "core.jar"
+MANAGED_RUNTIME_JAR = (
+    SERVER / "world-builder-runtime/world-builder-managed-runtime.jar"
+)
 PACKAGE = ROOT / "tools/layered-maps/fixtures/native-package-v1"
 SOURCE = SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackage.java"
 CATALOG = (
@@ -364,9 +367,9 @@ SPOILED_MILK_REVIEW_HARNESS = (
     .replace("world.getLevelCount() == 4", "world.getLevelCount() == 6")
     .replace("world.getPlacementSetCount() == 4",
              "world.getPlacementSetCount() == 6")
-    .replace("== 3610", "== 3789")
+    .replace("== 3610", "== 3803")
     .replace("== 1010", "== 879")
-    .replace("== 26765", "== 27887")
+    .replace("== 26765", "== 27892")
     .replace("== 966", "== 971")
     .replace(
         '"preservation-r64.npc.000000"',
@@ -719,6 +722,26 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             prefix="layered-native-server-source-"
         )
         cls.classes = Path(cls.compile_temp.name)
+        profile_stub = cls.classes / "orsc" / "WorldBuilderClientProfile.java"
+        profile_stub.parent.mkdir(parents=True)
+        profile_stub.write_text(
+            """package orsc;
+
+public final class WorldBuilderClientProfile {
+    private static final WorldBuilderClientProfile CURRENT =
+        new WorldBuilderClientProfile();
+
+    public static WorldBuilderClientProfile current() {
+        return CURRENT;
+    }
+
+    public void requireNativePackageIdentity(
+        String packageId, String packageVersion, String manifestSha256) {
+    }
+}
+""",
+            encoding="utf-8",
+        )
         subprocess.run(
             [
                 "javac",
@@ -727,7 +750,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 "-target",
                 "8",
                 "-cp",
-                str(CORE_JAR),
+                f"{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "-d",
                 str(cls.classes),
                 str(CLIENT_TILE),
@@ -735,6 +758,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 str(CLIENT_NATIVE_SNAPSHOT),
                 str(CLIENT_NATIVE_RESIDENCY),
                 str(CLIENT_NATIVE_DECODER),
+                str(profile_stub),
             ],
             cwd=ROOT,
             check=True,
@@ -775,7 +799,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 "-target",
                 "8",
                 "-cp",
-                f"{cls.classes}:{CORE_JAR}",
+                f"{cls.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "-d",
                 str(cls.classes),
                 str(fixture),
@@ -798,7 +822,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             [
                 "java",
                 "-cp",
-                f"{self.classes}:{CORE_JAR}",
+                f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "NativeLayeredServerSourceFixture",
                 str(package),
             ],
@@ -906,7 +930,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                     "-target",
                     "8",
                     "-cp",
-                    str(CORE_JAR),
+                    f"{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "-d",
                     str(self.classes),
                     str(probe),
@@ -919,7 +943,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredServerV3Fixture",
                     str(package),
                 ],
@@ -950,7 +974,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredTerrainOnlyFixture",
                     str(package),
                 ],
@@ -1003,7 +1027,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredPreservationReviewFixture",
                     str(workspace / "package"),
                 ],
@@ -1018,12 +1042,12 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
                     "preservation-r64-replacement",
                     str(workspace / "package"),
-                    "true",
-                    "true",
+                    "false",
+                    "false",
                 ],
                 cwd=ROOT,
                 text=True,
@@ -1035,7 +1059,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
                     "fixture-additive",
                     str(workspace / "package"),
@@ -1051,40 +1075,23 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             )
 
     def test_server_accepts_complete_spoiled_milk_replacement_package(self):
-        subprocess.run(
-            [str(ROOT / "tools/layered-maps/layered-maps.sh"), "--help"],
-            cwd=ROOT,
-            check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
         with tempfile.TemporaryDirectory(
             prefix="native-server-spoiled-milk-"
         ) as temp:
             workspace = Path(temp) / "workspace"
-            generated = subprocess.run(
-                [
-                    "java",
-                    "-cp",
-                    str(ROOT / "tools/layered-maps/build/classes"),
-                    "com.openrsc.layeredmaps.LayeredMapsCli",
-                    "spoiled-milk-package",
-                    "--root",
-                    str(ROOT),
-                    "--workspace",
-                    str(workspace),
-                ],
-                cwd=ROOT,
-                text=True,
-                capture_output=True,
+            configuration = json.loads(
+                (ROOT / "server/world-builder-configs/primary.json").read_text(
+                    encoding="utf-8"
+                )
             )
-            self.assertEqual(0, generated.returncode, generated.stderr)
+            source_package = ROOT / configuration["serverMapRelativePath"]
+            shutil.copytree(source_package, workspace / "package")
 
             loaded = subprocess.run(
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredSpoiledMilkReviewFixture",
                     str(workspace / "package"),
                 ],
@@ -1098,9 +1105,9 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
-                    "spoiled-milk-replacement",
+                    "world-builder-installed",
                     str(workspace / "package"),
                     "true",
                     "true",
@@ -1115,7 +1122,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
                     "preservation-r64-replacement",
                     str(workspace / "package"),
@@ -1216,11 +1223,11 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
                     "spoiled-milk-builder-draft",
                     str(package),
-                    "true",
+                    "false",
                     "true",
                 ],
                 cwd=ROOT,
@@ -1235,11 +1242,11 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
                     "spoiled-milk-world-builder-export",
                     str(package),
-                    "true",
+                    "false",
                     "true",
                 ],
                 cwd=ROOT,
@@ -1254,9 +1261,9 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                 [
                     "java",
                     "-cp",
-                    f"{self.classes}:{CORE_JAR}",
+                    f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
-                    "spoiled-milk-replacement",
+                    "world-builder-installed",
                     str(package),
                     "false",
                     "true",
@@ -1276,7 +1283,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             [
                 "java",
                 "-cp",
-                f"{self.classes}:{CORE_JAR}",
+                f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "NativeLayeredRuntimeProfileFixture",
                 "fixture-additive",
                 str(PACKAGE),
@@ -1293,7 +1300,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             [
                 "java",
                 "-cp",
-                f"{self.classes}:{CORE_JAR}",
+                f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "NativeLayeredRuntimeProfileFixture",
                 "preservation-r64-replacement",
                 str(PACKAGE),
@@ -1310,9 +1317,9 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             [
                 "java",
                 "-cp",
-                f"{self.classes}:{CORE_JAR}",
+                f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "NativeLayeredRuntimeProfileFixture",
-                "spoiled-milk-replacement",
+                "world-builder-installed",
                 str(PACKAGE),
                 "false",
                 "true",
@@ -1372,7 +1379,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
             [
                 "java",
                 "-cp",
-                f"{self.classes}:{CORE_JAR}",
+                f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                 "NativeLayeredChunkWireFixture",
             ],
             cwd=ROOT,
@@ -1412,7 +1419,7 @@ class LayeredNativeServerSourceTest(unittest.TestCase):
                     "-target",
                     "8",
                     "-cp",
-                    str(CORE_JAR),
+                    f"{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "-d",
                     str(self.classes),
                     str(probe),

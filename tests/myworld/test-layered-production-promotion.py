@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import json
 import re
 import subprocess
 import sys
@@ -17,8 +18,8 @@ RUN_PRIVATE = ROOT / "scripts" / "run-server.sh"
 LIVE_STATUS = ROOT / "scripts" / "live-status.sh"
 MANAGER = ROOT / "scripts" / "ai-manager.sh"
 PACKAGER = ROOT / "scripts" / "package-layered-world-release.sh"
-RUNTIME_PROFILE = ROOT / (
-    "server/src/com/openrsc/server/io/NativeLayeredWorldRuntimeProfile.java"
+INSTALLED_CLIENT_PROFILE = ROOT / (
+    "Client_Base/world-builder-configs/installed-client.json"
 )
 GENERATOR = ROOT / (
     "tools/layered-maps/src/com/openrsc/layeredmaps/"
@@ -55,15 +56,6 @@ def shell_constant(contents: str, name: str) -> str:
     return match.group(1)
 
 
-def java_constant(contents: str, name: str) -> str:
-    match = re.search(
-        rf'{re.escape(name)}\s*=\s*\n?\s*"([^"]+)";',
-        contents,
-    )
-    require(match is not None, f"missing Java constant {name}")
-    return match.group(1)
-
-
 def test_hosted_profile_is_explicit() -> None:
     config = read(HOST_CONFIG)
     expected = {
@@ -78,7 +70,7 @@ def test_hosted_profile_is_explicit() -> None:
         "want_layered_native_terrain_symmetric_residency": "true",
         "want_layered_native_terrain_atomic_activation": "true",
         "want_sync_scene_baseline": "true",
-        "layered_native_world_runtime_profile": "spoiled-milk-replacement",
+        "layered_native_world_runtime_profile": "world-builder-installed",
     }
     for key, value in expected.items():
         require(
@@ -89,21 +81,26 @@ def test_hosted_profile_is_explicit() -> None:
 
 def test_package_identity_has_one_source_of_release_truth() -> None:
     library = read(LAYERED_LIBRARY)
-    runtime = read(RUNTIME_PROFILE)
+    profile = json.loads(read(INSTALLED_CLIENT_PROFILE))
     require(
         shell_constant(library, "SPOILED_MILK_LAYERED_PACKAGE_ID")
-        == java_constant(runtime, "SPOILED_MILK_PACKAGE_ID"),
-        "shell and server package IDs disagree",
+        == profile["packageId"],
+        "release and installed-client package IDs disagree",
     )
     require(
         shell_constant(library, "SPOILED_MILK_LAYERED_PACKAGE_VERSION")
-        == java_constant(runtime, "SPOILED_MILK_PACKAGE_VERSION"),
-        "shell and server package versions disagree",
+        == profile["packageVersion"],
+        "release and installed-client package versions disagree",
     )
     require(
         shell_constant(library, "SPOILED_MILK_LAYERED_MANIFEST_SHA256")
-        == java_constant(runtime, "SPOILED_MILK_MANIFEST_SHA256"),
-        "shell and server manifest pins disagree",
+        == profile["manifestSha256"],
+        "release and installed-client manifest pins disagree",
+    )
+    require(
+        shell_constant(library, "SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT")
+        == profile["packageFingerprintSha256"],
+        "release and installed-client package fingerprints disagree",
     )
 
 

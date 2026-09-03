@@ -92,7 +92,7 @@ if [[ "$SKIP_BUILD" == true && "${SPOILED_MILK_RELEASE_TEST_MODE:-}" != 1 ]]; th
   fail "--skip-build is restricted to packaging regression tests; manager releases must build the client"
 fi
 
-for command_name in git jar zip sha256sum; do
+for command_name in git jar zip sha256sum python3; do
   command -v "$command_name" >/dev/null 2>&1 || fail "Missing dependency: $command_name"
 done
 
@@ -177,7 +177,48 @@ require_release_git_state "$SOURCE_COMMIT"
 
 CLIENT_JAR="$ROOT_DIR/Client_Base/Open_RSC_Client.jar"
 CLIENT_CACHE="$ROOT_DIR/Client_Base/Cache"
+CLIENT_WORLD_BUILDER_PROFILE="$ROOT_DIR/Client_Base/world-builder-configs/installed-client.json"
 PACKAGE_ASSETS="$ROOT_DIR/release/player"
+
+mapfile -t CLIENT_WORLD_BUILDER_PROFILE_VALUES < <(
+  python3 - "$CLIENT_WORLD_BUILDER_PROFILE" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    profile = json.load(handle)
+if profile.get("manifestType") != "world-builder-installed-client-profile":
+    raise SystemExit("Installed client profile has the wrong manifest type")
+if profile.get("active") is not True:
+    raise SystemExit("Installed client profile is not active")
+for key in ("packageFingerprintSha256", "manifestSha256", "packageRelativePath"):
+    value = profile.get(key)
+    if not isinstance(value, str):
+        raise SystemExit(f"Installed client profile field {key} is missing")
+    print(value)
+PY
+)
+[[ ${#CLIENT_WORLD_BUILDER_PROFILE_VALUES[@]} -eq 3 ]] \
+  || fail "Unable to read the installed World Builder client profile"
+CLIENT_WORLD_BUILDER_FINGERPRINT="${CLIENT_WORLD_BUILDER_PROFILE_VALUES[0]}"
+CLIENT_WORLD_BUILDER_MANIFEST_SHA256="${CLIENT_WORLD_BUILDER_PROFILE_VALUES[1]}"
+CLIENT_WORLD_BUILDER_RELATIVE_PATH="${CLIENT_WORLD_BUILDER_PROFILE_VALUES[2]}"
+[[ "$CLIENT_WORLD_BUILDER_FINGERPRINT" =~ ^[0-9a-f]{64}$ ]] \
+  || fail "Installed client package fingerprint is invalid"
+[[ "$CLIENT_WORLD_BUILDER_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] \
+  || fail "Installed client manifest SHA-256 is invalid"
+[[ "$CLIENT_WORLD_BUILDER_RELATIVE_PATH" == \
+  "world-builder/packages/$CLIENT_WORLD_BUILDER_FINGERPRINT/package" ]] \
+  || fail "Installed client package path is not fingerprint-addressed"
+CLIENT_WORLD_BUILDER_PACKAGE="$ROOT_DIR/Client_Base/$CLIENT_WORLD_BUILDER_RELATIVE_PATH"
+[[ -d "$CLIENT_WORLD_BUILDER_PACKAGE" ]] \
+  || fail "Installed client package is missing: $CLIENT_WORLD_BUILDER_PACKAGE"
+CLIENT_WORLD_BUILDER_ACTUAL_MANIFEST_SHA256="$(
+  sha256sum "$CLIENT_WORLD_BUILDER_PACKAGE/manifest.json" | awk '{print $1}'
+)"
+[[ "$CLIENT_WORLD_BUILDER_ACTUAL_MANIFEST_SHA256" == \
+  "$CLIENT_WORLD_BUILDER_MANIFEST_SHA256" ]] \
+  || fail "Installed client package manifest does not match its profile"
 
 jar tf "$CLIENT_JAR" | grep -Fx "$RELEASE_MARKER_ENTRY" >/dev/null \
   || fail "Release client jar is missing the embedded release-build marker"
@@ -287,6 +328,13 @@ stage_payload_files() {
 	cp -R "$CLIENT_CACHE/audio" "$destination/Cache/audio"
 	cp -R "$CLIENT_CACHE/video" "$destination/Cache/video"
 	cp "$CLIENT_CACHE/config.txt" "$destination/Cache/config.txt"
+  mkdir -p "$destination/world-builder-configs"
+  cp "$CLIENT_WORLD_BUILDER_PROFILE" \
+    "$destination/world-builder-configs/installed-client.json"
+  mkdir -p \
+    "$destination/world-builder/packages/$CLIENT_WORLD_BUILDER_FINGERPRINT"
+  cp -R "$CLIENT_WORLD_BUILDER_PACKAGE" \
+    "$destination/world-builder/packages/$CLIENT_WORLD_BUILDER_FINGERPRINT/package"
   printf '%s\n' "$HOST" > "$destination/Cache/ip.txt"
 	printf '%s\n' "$PORT" > "$destination/Cache/port.txt"
 	cp "$ROOT_DIR/LICENSE" "$destination/LICENSE"

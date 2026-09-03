@@ -55,6 +55,7 @@
                source="${javac.source}" encoding="UTF-8">
             <classpath>
                 <pathelement location="core.jar"/>
+                <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement path="${java.class.path}/"/>
                 <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
                 <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
@@ -238,6 +239,7 @@
                 <pathelement location="${lib}/xpp3-1.1.4c.jar"/>
                 <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
+                <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement location="${lib}/*"/>
                 <pathelement location="${lib}/commons-codec-1.14.jar"/>
                 <pathelement path="${jar}/"/>
@@ -261,6 +263,7 @@
                 <pathelement location="${lib}/xpp3-1.1.4c.jar"/>
                 <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
+                <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement location="${lib}/*"/>
                 <pathelement location="${lib}/commons-codec-1.14.jar"/>
                 <pathelement path="${jar}/"/>

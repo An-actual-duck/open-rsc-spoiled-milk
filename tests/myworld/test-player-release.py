@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import hashlib
 import io
+import json
 import os
 import shutil
 import subprocess
@@ -116,6 +117,30 @@ def make_fixture(
     write(fixture / "Client_Base" / "Cache" / "uid.dat", "developer-state")
     write(fixture / "Client_Base" / "Cache" / "credentials.txt", "secret")
     write(fixture / "Client_Base" / "clientSettings.conf", "local-settings")
+    package_fingerprint = "a" * 64
+    package_manifest = '{"schemaVersion":1}\n'
+    package_relative = (
+        f"world-builder/packages/{package_fingerprint}/package"
+    )
+    write(
+        fixture / "Client_Base" / package_relative / "manifest.json",
+        package_manifest,
+    )
+    manifest_sha256 = hashlib.sha256(package_manifest.encode()).hexdigest()
+    write(
+        fixture / "Client_Base" / "world-builder-configs" / "installed-client.json",
+        json.dumps(
+            {
+                "active": True,
+                "manifestSha256": manifest_sha256,
+                "manifestType": "world-builder-installed-client-profile",
+                "packageFingerprintSha256": package_fingerprint,
+                "packageRelativePath": package_relative,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+    )
     write(fixture / "LICENSE", "AGPL fixture")
     shutil.copytree(ROOT / "release" / "player", fixture / "release" / "player")
 
@@ -248,6 +273,8 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     f"{package_name}/game-files/Cache/port.txt",
                     f"{package_name}/game-files/Cache/audio/audio.dat",
                     f"{package_name}/game-files/Cache/video/video.dat",
+                    f"{package_name}/game-files/world-builder-configs/installed-client.json",
+                    f"{package_name}/game-files/world-builder/packages/{'a' * 64}/package/manifest.json",
                     f"{package_name}/game-files/LICENSE",
                     f"{package_name}/README.txt",
                     f"{package_name}/game-files/ASSET-SOURCES.txt",

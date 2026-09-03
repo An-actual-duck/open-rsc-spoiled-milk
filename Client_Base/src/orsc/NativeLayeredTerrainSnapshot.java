@@ -266,7 +266,7 @@ public final class NativeLayeredTerrainSnapshot {
 				"Chunked native terrain has no uniform tile");
 		}
 		Tile tile = new Tile();
-		tile.groundElevation = (byte) elevation;
+		tile.groundElevation = elevation;
 		tile.groundTexture = (byte) texture;
 		tile.groundOverlay = (byte) overlay;
 		tile.roofTexture = (byte) roof;

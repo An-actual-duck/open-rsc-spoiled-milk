@@ -30,7 +30,7 @@
 
     <target name="compile">
         <echo message="Using Java version ${ant.java.version}."/>
-        <delete file="${jar}"/>
+        <delete file="${jar}.world-builder-new"/>
         <delete dir="${build}"/>
         <mkdir dir="${build}"/>
         <copy file="${release.marker.file}"
@@ -58,12 +58,13 @@
         <!-- LWJGL's code and native jars intentionally repeat identical archive
              metadata. Keep the first copy so the fat JAR has one record per
              path while retaining every unique class, asset, and native. -->
-        <jar basedir="${build}" destfile="${jar}" duplicate="preserve">
+        <jar basedir="${build}" destfile="${jar}.world-builder-new" duplicate="preserve">
             <zipgroupfileset dir="${lib}" includes="**/*.jar"/>
             <manifest>
                 <attribute name="Main-Class" value="orsc.OpenRSC"/>
             </manifest>
         </jar>
+        <move file="${jar}.world-builder-new" tofile="${jar}"/>
     </target>
 
     <target name="runclient">

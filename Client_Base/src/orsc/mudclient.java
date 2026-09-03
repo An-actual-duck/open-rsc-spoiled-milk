@@ -24043,6 +24043,14 @@ public final class mudclient implements Runnable {
 
 	private void renderLoginScreenViewports(int var1) {
 		try {
+		if (WorldBuilderTerrainBootstrap.isNativeOnly()) {
+			this.getSurface().blackScreen(true);
+			for (int index = 0; index < 3; index++) {
+				this.getSurface().storeSpriteVert(
+					index, 0, 0, getGameWidth(), halfGameHeight() + 33);
+			}
+			return;
+		}
 
 			if (!this.worldComponentsLoaded) {
 				this.loadWorldComponents();

@@ -10,7 +10,8 @@ public class Tile {
 	/**
 	 * The elevation of this tile
 	 */
-	public byte groundElevation = 0;
+	/** Elevation units; legacy archives decode their frozen unsigned byte losslessly. */
+	public int groundElevation = 0;
 
 	/**
 	 * The texture ID of this tile
@@ -53,7 +54,7 @@ public class Tile {
 		}
 		Tile tile = new Tile();
 
-		tile.groundElevation = in.get();
+		tile.groundElevation = in.get() & 0xff;
 		tile.groundTexture = in.get();
 		tile.groundOverlay = in.get();
 		tile.roofTexture = in.get();
@@ -83,7 +84,10 @@ public class Tile {
 	public ByteBuffer pack() throws IOException {
 		ByteBuffer out = ByteBuffer.allocate(10);
 
-		out.put(groundElevation);
+		if (groundElevation < 0 || groundElevation > 255) {
+			throw new IOException("Wide native elevation cannot be packed as legacy v1 terrain");
+		}
+		out.put((byte)groundElevation);
 		out.put(groundTexture);
 		out.put(groundOverlay);
 		out.put(roofTexture);

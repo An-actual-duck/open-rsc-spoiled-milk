@@ -8,6 +8,8 @@ import orsc.Config;
 import orsc.NativeLayeredTerrainSnapshot;
 import orsc.RenderTelemetry;
 import orsc.WorldBuilderClientProfile;
+import orsc.WorldBuilderTerrainBootstrap;
+import orsc.WorldBuilderTerrainOverlay;
 import orsc.WorldEditorBuildSettings;
 import orsc.graphics.two.GraphicsController;
 import orsc.util.FastMath;
@@ -74,6 +76,9 @@ public final class World {
 	private static final int LAVA_GLOW_RADIUS = 384;
 	private static final int LAVA_GLOW_INTENSITY = 96;
 	private static final int LAVA_GLOW_NON_OVERWORLD_INTENSITY = 72;
+	private static final int ROOF_ELEVATION_MARKER = 1_000_000_000;
+	private static final AtomicLong LEGACY_LANDSCAPE_READ_ATTEMPTS =
+		new AtomicLong();
 	private static final int SYNTHETIC_DEEP_MIN_X = 440;
 	private static final int SYNTHETIC_DEEP_MAX_X = 460;
 	private static final int SYNTHETIC_DEEP_MIN_Z = 590;
@@ -255,17 +260,27 @@ public final class World {
 
 			sectors = new Sector[ACTIVE_SECTION_COUNT];
 
-			try {
-				String path;
-				if (Config.S_WANT_CUSTOM_LANDSCAPE)
-					path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Custom_Landscape.orsc";
-				else
-					path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Authentic_Landscape.orsc";
-				tileArchive = new ZipFile(new File(path));
-				mapHash = generateMapHash(path);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.exit(1);
+			if (WorldBuilderTerrainBootstrap.isNativeOnly()) {
+				/*
+				 * The signed layered package is the sole terrain authority. Do not
+				 * resolve, probe, hash, or open a legacy landscape path here.
+				 */
+				tileArchive = null;
+				mapHash = WorldBuilderTerrainBootstrap.mapIdentity();
+			} else {
+				try {
+					String path;
+					if (Config.S_WANT_CUSTOM_LANDSCAPE)
+						path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Custom_Landscape.orsc";
+					else
+						path = Config.F_CACHE_DIR + File.separator + "video" + File.separator + "Authentic_Landscape.orsc";
+					requireLegacyLandscapeArchiveReadAllowed("archive-open");
+					tileArchive = new ZipFile(new File(path));
+					mapHash = generateMapHash(path);
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
 			}
 
 		} catch (RuntimeException var4) {
@@ -1656,11 +1671,30 @@ public final class World {
 	}
 
 	private String generateMapHash(String path) {
+		requireLegacyLandscapeArchiveReadAllowed("archive-hash");
 		try {
 			return GenUtil.getMD5Checksum(path);
 		} catch (Exception e) {
 			return "failed-" + path;
 		}
+	}
+
+	private static void requireLegacyLandscapeArchiveReadAllowed(
+		String entryPoint) {
+		if (WorldBuilderTerrainBootstrap.isNativeOnly()) {
+			LEGACY_LANDSCAPE_READ_ATTEMPTS.incrementAndGet();
+			throw new IllegalStateException(
+				"Strict adaptive World Builder forbids legacy landscape archive read at "
+					+ entryPoint);
+		}
+	}
+
+	private static long legacyLandscapeReadAttemptCount() {
+		return LEGACY_LANDSCAPE_READ_ATTEMPTS.get();
+	}
+
+	private static void resetLegacyLandscapeReadAttemptCount() {
+		LEGACY_LANDSCAPE_READ_ATTEMPTS.set(0L);
 	}
 
 	public static int worldTileToSection(int worldTile) {
@@ -1818,6 +1852,20 @@ public final class World {
 		int localTileZ,
 		NativeLayeredTerrainSnapshot active,
 		NativeLayeredTerrainSnapshot visual) {
+		/*
+		 * Loaded gameplay sectors include acknowledged editor patches and are the
+		 * surface rendered by the active terrain product. Scenery placement and
+		 * mouse picking must sample those same live values. Immutable snapshots
+		 * remain authoritative for the presentation halo outside this window.
+		 */
+		if (isLocalTile(localTileX, localTileZ)) {
+			Sector loaded = sectorForLocalTile(localTileX, localTileZ);
+			if (loaded != null && loaded.isLoaded()) {
+				return loaded.getTile(
+					tileInSector(localTileX),
+					tileInSector(localTileZ)).groundElevation * 3;
+			}
+		}
 		int worldTileX = Math.addExact(
 			Math.multiplyExact(
 				nativeLayeredTerrainAppliedSectionX
@@ -2021,11 +2069,11 @@ public final class World {
 
 			int height = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getWallObjectHeight();
 
-			if (elevations.get(x1, z1) < 80000)
-				elevations.set(x1, z1, elevations.get(x1, z1) + height + 80000);
+			if (elevations.get(x1, z1) < ROOF_ELEVATION_MARKER)
+				elevations.set(x1, z1, elevations.get(x1, z1) + height + ROOF_ELEVATION_MARKER);
 
-			if (elevations.get(x2, z2) < 80000)
-				elevations.set(x2, z2, elevations.get(x2, z2) + height + 80000);
+			if (elevations.get(x2, z2) < ROOF_ELEVATION_MARKER)
+				elevations.set(x2, z2, elevations.get(x2, z2) + height + ROOF_ELEVATION_MARKER);
 
 		} catch (RuntimeException var8) {
 			throw GenUtil.makeThrowable(var8,
@@ -3138,22 +3186,22 @@ public final class World {
 		for (int x = 0; x < LOCAL_TILE_COUNT; ++x) {
 			for (int z = 0; z < LOCAL_TILE_COUNT; ++z) {
 				int y = -source.tileElevation(x, z);
-				if (source.tileDecorationID(x, z) > 0 && Objects.requireNonNull(EntityHandler
-					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() == 4) {
+				if (source.tileDecorationID(x, z) > 0
+					&& tileDecorationType(source.tileDecorationID(x, z)) == 4) {
 					y = 0;
 				}
-				if (source.tileDecorationID(x - 1, z) > 0 && Objects.requireNonNull(EntityHandler
-					.getTileDef(source.tileDecorationID(x - 1, z) - 1)).getTileValue() == 4) {
-					y = 0;
-				}
-
-				if (source.tileDecorationID(x, z - 1) > 0 && Objects.requireNonNull(EntityHandler
-					.getTileDef(source.tileDecorationID(x, z - 1) - 1)).getTileValue() == 4) {
+				if (source.tileDecorationID(x - 1, z) > 0
+					&& tileDecorationType(source.tileDecorationID(x - 1, z)) == 4) {
 					y = 0;
 				}
 
-				if (source.tileDecorationID(x - 1, z - 1) > 0 && Objects.requireNonNull(EntityHandler
-					.getTileDef(source.tileDecorationID(x - 1, z - 1) - 1)).getTileValue() == 4) {
+				if (source.tileDecorationID(x, z - 1) > 0
+					&& tileDecorationType(source.tileDecorationID(x, z - 1)) == 4) {
+					y = 0;
+				}
+
+				if (source.tileDecorationID(x - 1, z - 1) > 0
+					&& tileDecorationType(source.tileDecorationID(x - 1, z - 1)) == 4) {
 					y = 0;
 				}
 
@@ -3191,7 +3239,8 @@ public final class World {
 				if (tileX < 0 || tileZ < 0 || tileX >= LOCAL_FACE_TILE_COUNT || tileZ >= LOCAL_FACE_TILE_COUNT) {
 					continue;
 				}
-				if (source.tileDecorationID(tileX, tileZ) != 0) {
+				if (!WorldBuilderTerrainOverlay.usesBaseColor(
+					source.tileDecorationID(tileX, tileZ))) {
 					continue;
 				}
 				int color = terrainRgbForTile(source, tileX, tileZ);
@@ -3218,6 +3267,14 @@ public final class World {
 
 	private int terrainRgbForTile(TerrainModelInputSource source, int tileX, int tileZ) {
 		return resourceToRgb(this.colorToResource[source.terrainColour(tileX, tileZ)]) & 0xffffff;
+	}
+
+	private static int tileDecorationType(int rawOverlay) {
+		if (WorldBuilderTerrainOverlay.isBlockingBaseColor(rawOverlay)) {
+			return 6;
+		}
+		return Objects.requireNonNull(
+			EntityHandler.getTileDef(rawOverlay - 1)).getTileValue();
 	}
 
 	private static int resourceToRgb(int resource) {
@@ -3254,9 +3311,12 @@ public final class World {
 				boolean collisionObject = false;
 				boolean waterLike = false;
 				int decorID = source.tileDecorationID(x, z);
-				boolean terrainVariationEligible = plane == 0 && decorID == 0;
+				boolean terrainVariationEligible = plane == 0
+					&& WorldBuilderTerrainOverlay.usesBaseColor(decorID);
 				boolean lavaGlowEmitter = decorID == LAVA_GLOW_OVERLAY_ID;
-				if (decorID > 0) {
+				if (WorldBuilderTerrainOverlay.isBlockingBaseColor(decorID)) {
+					collisionFullBlock = true;
+				} else if (decorID > 0) {
 					int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();
 					waterLike = decorType == 4;
 					int decorType2 = source.tileType2(x, z);
@@ -3272,22 +3332,22 @@ public final class World {
 
 					if (decorType == 5) {
 						if (source.wallDiagonal(x, z) > 0 && source.wallDiagonal(x, z) < 24000) {
-							if (source.tileDecorationCacheVal(x - 1, z, defaultVal) != Scene.TRANSPARENT
-								&& source.tileDecorationCacheVal(x, z - 1, defaultVal) != Scene.TRANSPARENT) {
+							if (source.tileDecorationCacheVal(x - 1, z, defaultVal, colorToResource) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z - 1, defaultVal, colorToResource) != Scene.TRANSPARENT) {
 								bridge00_11 = 0;
-								colorResource = source.tileDecorationCacheVal(x - 1, z, defaultVal);
-							} else if (source.tileDecorationCacheVal(x + 1, z, defaultVal) != Scene.TRANSPARENT
-								&& source.tileDecorationCacheVal(x, z + 1, defaultVal) != Scene.TRANSPARENT) {
-								res01 = source.tileDecorationCacheVal(x + 1, z, defaultVal);
+								colorResource = source.tileDecorationCacheVal(x - 1, z, defaultVal, colorToResource);
+							} else if (source.tileDecorationCacheVal(x + 1, z, defaultVal, colorToResource) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z + 1, defaultVal, colorToResource) != Scene.TRANSPARENT) {
+								res01 = source.tileDecorationCacheVal(x + 1, z, defaultVal, colorToResource);
 								bridge00_11 = 0;
-							} else if (source.tileDecorationCacheVal(x + 1, z, defaultVal) != Scene.TRANSPARENT
-								&& source.tileDecorationCacheVal(x, z - 1, defaultVal) != Scene.TRANSPARENT) {
-								res01 = source.tileDecorationCacheVal(x + 1, z, defaultVal);
+							} else if (source.tileDecorationCacheVal(x + 1, z, defaultVal, colorToResource) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z - 1, defaultVal, colorToResource) != Scene.TRANSPARENT) {
+								res01 = source.tileDecorationCacheVal(x + 1, z, defaultVal, colorToResource);
 								bridge00_11 = 1;
-							} else if (source.tileDecorationCacheVal(x - 1, z, defaultVal) != Scene.TRANSPARENT
-								&& source.tileDecorationCacheVal(x, z + 1, defaultVal) != Scene.TRANSPARENT) {
+							} else if (source.tileDecorationCacheVal(x - 1, z, defaultVal, colorToResource) != Scene.TRANSPARENT
+								&& source.tileDecorationCacheVal(x, z + 1, defaultVal, colorToResource) != Scene.TRANSPARENT) {
 								bridge00_11 = 1;
-								colorResource = source.tileDecorationCacheVal(x - 1, z, defaultVal);
+								colorResource = source.tileDecorationCacheVal(x - 1, z, defaultVal, colorToResource);
 							}
 						}
 					} else if (decorType != 2
@@ -3339,8 +3399,8 @@ public final class World {
 		List<TerrainOverlayFaceInput> overlays = new ArrayList<TerrainOverlayFaceInput>();
 		for (int x = 1; x < LOCAL_FACE_TILE_COUNT; ++x) {
 			for (int z = 1; z < LOCAL_FACE_TILE_COUNT; ++z) {
-				if (source.tileDecorationID(x, z) > 0 && Objects.requireNonNull(EntityHandler
-					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() == 4) {
+				if (source.tileDecorationID(x, z) > 0
+					&& tileDecorationType(source.tileDecorationID(x, z)) == 4) {
 
 					int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z) - 1))
 						.getColour();
@@ -3349,11 +3409,10 @@ public final class World {
 						(x + 1) * 128, -source.tileElevation(x + 1, z), z * 128,
 						(x + 1) * 128, -source.tileElevation(x + 1, z + 1), (z + 1) * 128,
 						x * 128, -source.tileElevation(x, z + 1), 128 + z * 128);
-				} else if (source.tileDecorationID(x, z) == 0 || Objects.requireNonNull(EntityHandler
-					.getTileDef(source.tileDecorationID(x, z) - 1)).getTileValue() != 3) {
+				} else if (source.tileDecorationID(x, z) == 0
+					|| tileDecorationType(source.tileDecorationID(x, z)) != 3) {
 					if (source.tileDecorationID(x, z + 1) > 0 && !source.editorPaintedOverlay(x,z+1)
-						&& Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z + 1) - 1))
-						.getTileValue() == 4) {
+						&& tileDecorationType(source.tileDecorationID(x, z + 1)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x, z + 1) - 1))
 							.getColour();
@@ -3365,8 +3424,7 @@ public final class World {
 					}
 
 					if (source.tileDecorationID(x, z - 1) > 0 && !source.editorPaintedOverlay(x,z-1)
-						&& Objects.requireNonNull(EntityHandler.getTileDef(source.tileDecorationID(x, z - 1) - 1))
-						.getTileValue() == 4) {
+						&& tileDecorationType(source.tileDecorationID(x, z - 1)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x, z - 1) - 1))
 							.getColour();
@@ -3377,9 +3435,8 @@ public final class World {
 							x * 128, -source.tileElevation(x, z + 1), 128 + z * 128);
 					}
 
-					if (source.tileDecorationID(x + 1, z) > 0 && !source.editorPaintedOverlay(x+1,z) && Objects.requireNonNull(EntityHandler
-						.getTileDef(source.tileDecorationID(x + 1, z) - 1))
-						.getTileValue() == 4) {
+					if (source.tileDecorationID(x + 1, z) > 0 && !source.editorPaintedOverlay(x+1,z)
+						&& tileDecorationType(source.tileDecorationID(x + 1, z)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x + 1, z) - 1))
 							.getColour();
@@ -3390,9 +3447,8 @@ public final class World {
 							x * 128, -source.tileElevation(x, z + 1), (z + 1) * 128);
 					}
 
-					if (source.tileDecorationID(x - 1, z) > 0 && !source.editorPaintedOverlay(x-1,z) && Objects.requireNonNull(EntityHandler
-						.getTileDef(source.tileDecorationID(x - 1, z) - 1))
-						.getTileValue() == 4) {
+					if (source.tileDecorationID(x - 1, z) > 0 && !source.editorPaintedOverlay(x-1,z)
+						&& tileDecorationType(source.tileDecorationID(x - 1, z)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler
 							.getTileDef(source.tileDecorationID(x - 1, z) - 1))
 							.getColour();
@@ -3993,17 +4049,17 @@ public final class World {
 					int ec11 = elevations.get(xp12, zp1);
 					int ec01 = elevations.get(x, zp12);
 
-					if (ec00 > 80000) {
-						ec00 -= 80000;
+					if (ec00 > ROOF_ELEVATION_MARKER) {
+						ec00 -= ROOF_ELEVATION_MARKER;
 					}
-					if (ec10 > 80000) {
-						ec10 -= 80000;
+					if (ec10 > ROOF_ELEVATION_MARKER) {
+						ec10 -= ROOF_ELEVATION_MARKER;
 					}
-					if (ec11 > 80000) {
-						ec11 -= 80000;
+					if (ec11 > ROOF_ELEVATION_MARKER) {
+						ec11 -= ROOF_ELEVATION_MARKER;
 					}
-					if (ec01 > 80000) {
-						ec01 -= 80000;
+					if (ec01 > ROOF_ELEVATION_MARKER) {
+						ec01 -= ROOF_ELEVATION_MARKER;
 					}
 
 					if (ec00 > max) {
@@ -4018,32 +4074,32 @@ public final class World {
 					if (max < ec01) {
 						max = ec01;
 					}
-					if (max >= 80000) {
-						max -= 80000;
+					if (max >= ROOF_ELEVATION_MARKER) {
+						max -= ROOF_ELEVATION_MARKER;
 					}
 
-					if (ec00 < 80000) {
+					if (ec00 < ROOF_ELEVATION_MARKER) {
 						elevations.set(x, z, max);
 					} else {
-						elevations.set(x, z, elevations.get(x, z) - 80000);
+						elevations.set(x, z, elevations.get(x, z) - ROOF_ELEVATION_MARKER);
 					}
 
-					if (ec10 < 80000) {
+					if (ec10 < ROOF_ELEVATION_MARKER) {
 						elevations.set(xp1, z, max);
 					} else {
-						elevations.set(xp1, z, elevations.get(xp1, z) - 80000);
+						elevations.set(xp1, z, elevations.get(xp1, z) - ROOF_ELEVATION_MARKER);
 					}
 
-					if (ec11 < 80000) {
+					if (ec11 < ROOF_ELEVATION_MARKER) {
 						elevations.set(xp12, zp1, max);
 					} else {
-						elevations.set(xp12, zp1, elevations.get(xp12, zp1) - 80000);
+						elevations.set(xp12, zp1, elevations.get(xp12, zp1) - ROOF_ELEVATION_MARKER);
 					}
 
-					if (ec01 < 80000) {
+					if (ec01 < ROOF_ELEVATION_MARKER) {
 						elevations.set(x, zp12, max);
 					} else {
-						elevations.set(x, zp12, elevations.get(x, zp12) - 80000);
+						elevations.set(x, zp12, elevations.get(x, zp12) - ROOF_ELEVATION_MARKER);
 					}
 				}
 			}
@@ -4076,40 +4132,40 @@ public final class World {
 					int ec11 = elevations.get(x11, z11);
 					int ec01 = elevations.get(x, z01);
 					int var32 = Objects.requireNonNull(EntityHandler.getElevationDef(roof - 1)).getUnknown1();
-					if (source.hasRoofTile(x, z) && ec00 < 80000) {
-						ec00 += var32 + 80000;
+					if (source.hasRoofTile(x, z) && ec00 < ROOF_ELEVATION_MARKER) {
+						ec00 += var32 + ROOF_ELEVATION_MARKER;
 						elevations.set(x, z, ec00);
 					}
 
-					if (source.hasRoofTile(x10, z) && ec10 < 80000) {
-						ec10 += var32 + 80000;
+					if (source.hasRoofTile(x10, z) && ec10 < ROOF_ELEVATION_MARKER) {
+						ec10 += var32 + ROOF_ELEVATION_MARKER;
 						elevations.set(x10, z, ec10);
 					}
 
-					if (source.hasRoofTile(x11, z11) && ec11 < 80000) {
-						ec11 += 80000 + var32;
+					if (source.hasRoofTile(x11, z11) && ec11 < ROOF_ELEVATION_MARKER) {
+						ec11 += ROOF_ELEVATION_MARKER + var32;
 						elevations.set(x11, z11, ec11);
 					}
 
-					if (ec10 >= 80000) {
-						ec10 -= 80000;
+					if (ec10 >= ROOF_ELEVATION_MARKER) {
+						ec10 -= ROOF_ELEVATION_MARKER;
 					}
 
-					if (ec11 >= 80000) {
-						ec11 -= 80000;
+					if (ec11 >= ROOF_ELEVATION_MARKER) {
+						ec11 -= ROOF_ELEVATION_MARKER;
 					}
 
-					if (source.hasRoofTile(x, z01) && ec01 < 80000) {
-						ec01 += var32 + 80000;
+					if (source.hasRoofTile(x, z01) && ec01 < ROOF_ELEVATION_MARKER) {
+						ec01 += var32 + ROOF_ELEVATION_MARKER;
 						elevations.set(x, z01, ec01);
 					}
 
-					if (ec00 >= 80000) {
-						ec00 -= 80000;
+					if (ec00 >= ROOF_ELEVATION_MARKER) {
+						ec00 -= ROOF_ELEVATION_MARKER;
 					}
 
-					if (ec01 >= 80000) {
-						ec01 -= 80000;
+					if (ec01 >= ROOF_ELEVATION_MARKER) {
+						ec01 -= ROOF_ELEVATION_MARKER;
 					}
 
 					final byte eaveSize = 16;
@@ -4343,6 +4399,9 @@ public final class World {
 			if (id == 0) {
 				return defaultVal;
 			}
+			if (WorldBuilderTerrainOverlay.isBlockingBaseColor(id)) {
+				return this.colorToResource[this.getTerrainColour(xTile, zTile)];
+			}
 			return Objects.requireNonNull(EntityHandler.getTileDef(id - 1)).getColour();
 		} catch (RuntimeException var7) {
 			throw GenUtil.makeThrowable(var7,
@@ -4386,7 +4445,7 @@ public final class World {
 
 			Sector sector = sectorForLocalTile(xTile, zTile);
 			if (sector != null) {
-				return (sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundElevation & 0xff) * 3;
+				return sector.getTile(tileInSector(xTile), tileInSector(zTile)).groundElevation * 3;
 				// return (255 & this.elevation[region][xTile * 48 + zTile]) *
 				// 3;
 			} else
@@ -4512,8 +4571,10 @@ public final class World {
 			int id = this.getTileDecorationID(xTile, zTile, plane);
 			if (id == 0)
 				return -1;
+			else if (WorldBuilderTerrainOverlay.isBlockingBaseColor(id))
+				return 0;
 			else {
-				int type = Objects.requireNonNull(EntityHandler.getTileDef(id - 1)).getTileValue();
+				int type = tileDecorationType(id);
 				return type != 2 ? 0 : 1;
 			}
 		} catch (RuntimeException var7) {
@@ -4645,6 +4706,7 @@ public final class World {
 
 	private boolean shouldLoadUpperPlaneModels(int presentationPlane) {
 		return presentationPlane == 0
+			&& !WorldBuilderTerrainBootstrap.isNativeOnly()
 			&& !syntheticDeepFixtureTerrain
 			&& (nativeLayeredTerrainSnapshot == null
 				|| nativeLayeredTerrainSnapshot.getLevel() == 0);
@@ -5098,7 +5160,7 @@ public final class World {
 		if (tile == null) {
 			return "missing";
 		}
-		return "e" + (tile.groundElevation & 0xff)
+		return "e" + tile.groundElevation
 			+ "/t" + (tile.groundTexture & 0xff)
 			+ "/o" + (tile.groundOverlay & 0xff)
 			+ "/r" + (tile.roofTexture & 0xff)
@@ -5545,9 +5607,12 @@ public final class World {
 					defaultVal = Scene.TRANSPARENT;
 				}
 				byte bridge00_11 = 0;
-				if (this.getTileDecorationID((int) x, z, plane) > 0) {
-					int decorID = this.getTileDecorationID((int) x, z, plane);
-					int decorType = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue();
+				int decorID = this.getTileDecorationID((int) x, z, plane);
+				if (WorldBuilderTerrainOverlay.isBlockingBaseColor(decorID)) {
+					this.collisionFlags[x][z] = FastMath.bitwiseOr(
+						this.collisionFlags[x][z], CollisionFlag.FULL_BLOCK_C);
+				} else if (decorID > 0) {
+					int decorType = tileDecorationType(decorID);
 					int decorType2 = this.isTileType2(x, z, plane, 15282);
 					colorResource = res01 = Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getColour();
 					if (decorType == 4) {
@@ -5604,7 +5669,7 @@ public final class World {
 						this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z],
 							CollisionFlag.FULL_BLOCK_C);
 
-					if (Objects.requireNonNull(EntityHandler.getTileDef(decorID - 1)).getTileValue() == 2)
+					if (tileDecorationType(decorID) == 2)
 						this.collisionFlags[x][z] = FastMath.bitwiseOr(this.collisionFlags[x][z], CollisionFlag.OBJECT);
 				}
 				this.drawMinimapTile(x, (int) z, bridge00_11, res01, colorResource);
@@ -5612,35 +5677,35 @@ public final class World {
 		}
 		for (int x = 1; x < LEGACY_MINIMAP_FACE_TILE_COUNT; ++x) {
 			for (int z = 1; z < LEGACY_MINIMAP_FACE_TILE_COUNT; ++z) {
-				if (this.getTileDecorationID((int) x, z, plane) > 0 && Objects.requireNonNull(EntityHandler
-					.getTileDef(this.getTileDecorationID((int) x, z, plane) - 1)).getTileValue() == 4) {
+				if (this.getTileDecorationID((int) x, z, plane) > 0
+					&& tileDecorationType(this.getTileDecorationID((int) x, z, plane)) == 4) {
 					int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID(x, z, plane) - 1)).getColour();
 					this.drawMinimapTile(x, z, 0, tileDecor, tileDecor);
 				} else if (this.getTileDecorationID((int) x, z, plane) == 0
-					|| Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID(x, z, plane) - 1)).getTileValue() != 3) {
-					if (this.getTileDecorationID(x, z + 1, plane) > 0 && Objects.requireNonNull(EntityHandler
-						.getTileDef(this.getTileDecorationID(x, 1 + z, plane) - 1)).getTileValue() == 4) {
+					|| tileDecorationType(this.getTileDecorationID(x, z, plane)) != 3) {
+					if (this.getTileDecorationID(x, z + 1, plane) > 0
+						&& tileDecorationType(this.getTileDecorationID(x, 1 + z, plane)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID((int) x, z + 1, plane) - 1))
 							.getColour();
 						this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
 					}
 
-					if (this.getTileDecorationID((int) x, z - 1, plane) > 0 && Objects.requireNonNull(EntityHandler
-						.getTileDef(this.getTileDecorationID((int) x, z - 1, plane) - 1)).getTileValue() == 4) {
+					if (this.getTileDecorationID((int) x, z - 1, plane) > 0
+						&& tileDecorationType(this.getTileDecorationID((int) x, z - 1, plane)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID((int) x, z - 1, plane) - 1))
 							.getColour();
 						this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
 					}
 
-					if (this.getTileDecorationID((int) (x + 1), z, plane) > 0 && Objects.requireNonNull(EntityHandler
-						.getTileDef(this.getTileDecorationID((int) (x + 1), z, plane) - 1)).getTileValue() == 4) {
+					if (this.getTileDecorationID((int) (x + 1), z, plane) > 0
+						&& tileDecorationType(this.getTileDecorationID((int) (x + 1), z, plane)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID((int) (1 + x), z, plane) - 1))
 							.getColour();
 						this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
 					}
 
-					if (this.getTileDecorationID((int) (x - 1), z, plane) > 0 && Objects.requireNonNull(EntityHandler
-						.getTileDef(this.getTileDecorationID((int) (x - 1), z, plane) - 1)).getTileValue() == 4) {
+					if (this.getTileDecorationID((int) (x - 1), z, plane) > 0
+						&& tileDecorationType(this.getTileDecorationID((int) (x - 1), z, plane)) == 4) {
 						int tileDecor = Objects.requireNonNull(EntityHandler.getTileDef(this.getTileDecorationID((int) (x - 1), z, plane) - 1))
 							.getColour();
 						this.drawMinimapTile(x, (int) z, 0, tileDecor, tileDecor);
@@ -5703,12 +5768,30 @@ public final class World {
 			worldEditorTerrainRevision.incrementAndGet();
 		}
 	}
+	/**
+	 * Drops client-side edit echoes after the server has supplied a complete new
+	 * authoritative terrain snapshot. Keeping them would replay pre-publication
+	 * elevations over a live Region Cut/Paste reload.
+	 */
+	public void clearWorldEditorTerrainPatchesForAuthoritativeReload(){
+		synchronized(worldEditorTerrainPatchLock){
+			if(worldEditorTerrainPatches.isEmpty())return;
+			worldEditorTerrainPatches.clear();
+			worldEditorTerrainRevision.incrementAndGet();
+		}
+	}
+	public int[] getWorldEditorTerrainTileState(int localX,int localZ){
+		Sector sector=sectorForLocalTile(localX,localZ);if(sector==null)return null;
+		com.openrsc.client.model.Tile tile=sector.getTile(tileInSector(localX),tileInSector(localZ));
+		return new int[]{tile.groundElevation,tile.groundTexture&0xff,tile.groundOverlay&0xff,tile.roofTexture&0xff,
+			tile.horizontalWall&0xff,tile.verticalWall&0xff,tile.diagonalWalls};
+	}
 	private void applyWorldEditorTerrainPatches(Sector sector,int plane,int sectionX,int sectionY){
 		if(sector==null)return;Map<Integer,TerrainPatch> snapshot;
 		synchronized(worldEditorTerrainPatchLock){Map<Integer,TerrainPatch> stored=worldEditorTerrainPatches.get(sectorFilename(plane,sectionX,sectionY));if(stored==null||stored.isEmpty())return;snapshot=new HashMap<Integer,TerrainPatch>(stored);}
 		for(TerrainPatch patch:snapshot.values()){
 			com.openrsc.client.model.Tile tile=sector.getTile(patch.localX,patch.localZ);
-			tile.groundElevation=(byte)patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;
+				tile.groundElevation=patch.elevation;tile.groundTexture=(byte)patch.groundTexture;tile.groundOverlay=(byte)patch.groundOverlay;
 			tile.roofTexture=(byte)patch.roofTexture;tile.horizontalWall=(byte)patch.horizontalWall;tile.verticalWall=(byte)patch.verticalWall;tile.diagonalWalls=patch.diagonal;tile.editorPaintedOverlay=patch.editorPaintedOverlay;
 		}
 	}
@@ -5745,6 +5828,7 @@ public final class World {
 	}
 
 	private Sector readSectorTemplate(String filename, int height) {
+		requireLegacyLandscapeArchiveReadAllowed("sector-entry-read");
 		try {
 			ZipEntry e;
 			ByteBuffer data = null;
@@ -7172,10 +7256,14 @@ public final class World {
 			return sector!=null&&sector.getTile(tileInSector(tileX),tileInSector(tileZ)).editorPaintedOverlay;
 		}
 
-		private int tileDecorationCacheVal(int tileX, int tileZ, int defaultVal) {
+		private int tileDecorationCacheVal(int tileX, int tileZ, int defaultVal,
+			int[] colorToResource) {
 			int id = tileDecorationID(tileX, tileZ);
 			if (id == 0) {
 				return defaultVal;
+			}
+			if (WorldBuilderTerrainOverlay.isBlockingBaseColor(id)) {
+				return colorToResource[terrainColour(tileX, tileZ)];
 			}
 			return Objects.requireNonNull(EntityHandler.getTileDef(id - 1)).getColour();
 		}
@@ -7184,7 +7272,7 @@ public final class World {
 			Sector sector = sectorForLocalTile(sectors, tileX, tileZ);
 			return sector == null
 				? 0
-				: (sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundElevation & 0xff) * 3;
+				: sector.getTile(tileInSector(tileX), tileInSector(tileZ)).groundElevation * 3;
 		}
 
 		private int tileType2(int tileX, int tileZ) {
@@ -7192,7 +7280,7 @@ public final class World {
 			if (id == 0) {
 				return -1;
 			}
-			return Objects.requireNonNull(EntityHandler.getTileDef(id - 1)).getTileValue() == 2 ? 1 : 0;
+			return tileDecorationType(id) == 2 ? 1 : 0;
 		}
 
 		private boolean pickableInvisibleOverlay(int tileX, int tileZ) {
@@ -7308,8 +7396,8 @@ public final class World {
 		private void clearRoofMarkers() {
 			for (int x = 0; x < LOCAL_TILE_COUNT; x++) {
 				for (int z = 0; z < LOCAL_TILE_COUNT; z++) {
-					if (elevations[x][z] >= 80000) {
-						elevations[x][z] -= 80000;
+					if (elevations[x][z] >= ROOF_ELEVATION_MARKER) {
+						elevations[x][z] -= ROOF_ELEVATION_MARKER;
 					}
 				}
 			}
