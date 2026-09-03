@@ -74,6 +74,14 @@ public enum NativeLayeredWorldRuntimeProfile {
 		return replacesLegacyBasePopulation;
 	}
 
+	/**
+	 * Replacement packages own every terrain sector and must not depend on a
+	 * retired legacy landscape archive during startup.
+	 */
+	public boolean skipsLegacyTerrainArchive() {
+		return replacesLegacyBasePopulation;
+	}
+
 	public boolean requiresConfiguredManifestSha256() {
 		return this == SPOILED_MILK_WORLD_BUILDER_EXPORT
 			|| this == SPOILED_MILK_EDITOR_INSTALLED;

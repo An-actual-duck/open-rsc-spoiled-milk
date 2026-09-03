@@ -1,6 +1,9 @@
 # World Builder import runtime-shadowing incident
 
-Status: diagnosed and contained in Spoiled Milk `v0.2.83`. The permanent
+Status: the first symptoms were contained in Spoiled Milk `v0.2.83` and
+`v0.2.84`; a subsequent audit found broad latent incompatibility. Core's
+restoration removes the imported server snapshot from active compile/runtime
+classpaths and runs the installed map from current Core source. The permanent
 importer/runtime-provider correction belongs to the independent RSC World
 Editor and RSC World Editor Runtime projects.
 
@@ -461,13 +464,53 @@ persisted experience still matched the pre-deployment backup when diagnosed.
 
 The immediate Core compatibility bridge retains the removed binary signature
 as an intentional no-op. This preserves the current kill-based reward design
-while allowing the stale managed-runtime caller to finish. A
-production-precedence regression test proves that `Skills` is loaded from the
-managed runtime, `RangersGuildPoints` is loaded from current Core, one
-experience award completes exactly once, and no Rangers Guild points are
-created. This is further evidence that eager linkage and duplicate-class
+while allowing the stale managed-runtime caller to finish. The v0.2.84
+production-precedence regression test proved that `Skills` was loaded from the
+managed runtime, `RangersGuildPoints` was loaded from current Core, one
+experience award completed exactly once, and no Rangers Guild points were
+created. This was further evidence that eager linkage and duplicate-class
 rejection are required in the importer rather than relying on successful
 startup.
+
+## Broad Core restoration after latent-linkage audit
+
+A later exact-classpath audit showed that the narrow overlay and Rangers bridge
+did not contain the full incident. The production winners still omitted at
+least 66 current project API symbols referenced by 138 current Core/plugin call
+sites. The affected surface included ordinary combat initiation, resolved
+damage, ranged/projectile validation, stat drains, poison, Summoning equipment
+bonuses, Cleric transient effects, Monster Slayer services, and development
+commands. Paired stale caller/callee classes also remained capable of silently
+disabling current behavior without a linkage exception.
+
+Core already contained the installed-package activation, manifest validation,
+native terrain, placement, collision, protocol, and client integration needed
+by the imported map. Its missing hosted-startup behavior was a small ownership
+gate: replacement packages still called the retired legacy terrain loader.
+
+The broad restoration therefore:
+
+1. removes `world-builder-managed-runtime.jar` from plugin compilation and both
+   production server run classpaths;
+2. keeps current `core.jar` authoritative for all Core-owned classes;
+3. makes native replacement profiles explicitly skip legacy terrain archives;
+4. retains and validates the exact imported content-addressed map package;
+5. changes class-origin tests to require current `World`, `Skills`, inventory,
+   and Rangers Guild behavior; and
+6. changes the build audit to reject reintroduction of the imported server
+   snapshot into Core compile/runtime paths.
+
+The provider archive remains tracked as import evidence but is inert in the
+Core server. Editor-embedded adaptive runtime behavior remains the independent
+runtime project's responsibility and is not borrowed into Core.
+
+Verification included the full Core suite and a maintained-launcher private
+boot. The private server activated the exact installed package, skipped the
+deleted legacy archive, populated 3,803 NPCs, 879 ground items, 27,892 scenery
+objects, and 971 boundaries, loaded all 469 plugin handlers, and reached both
+loopback ports. The full client compiled and all package/protocol/rendering and
+gameplay characterization gates passed without requiring another client source
+change.
 
 ## Reproduction and audit commands
 

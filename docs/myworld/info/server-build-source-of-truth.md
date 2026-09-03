@@ -51,13 +51,14 @@ Live deployment and player packaging have different roles:
 
 Ant compiles two active Java source roots separately. `compile_core` also
 selects the current inventory-capacity class families into a small precedence
-overlay so the full World Builder runtime snapshot cannot shadow newer Core
-gameplay behavior.
+overlay retained from incident containment. The imported World Builder server
+snapshot is no longer on Core's compile or runtime classpath; installed-map
+support is compiled from current Core source.
 
 | Source root | Current count | Ant target | Artifact | Shape |
 | --- | ---: | --- | --- | --- |
 | `server/src` | 940 Java files | `compile_core` | `server/core.jar` | Executable fat jar with `com.openrsc.server.Server` as `Main-Class` and every `server/lib/*.jar` merged into it |
-| selected `server/src` inventory classes | 10 class families | `compile_core` | `server/core-gameplay-overlay.jar` | Generated current-Core classes loaded before the installed World Builder runtime; audited byte-for-byte against `core.jar` |
+| selected `server/src` inventory classes | 10 class families | `compile_core` | `server/core-gameplay-overlay.jar` | Redundant incident-containment artifact audited byte-for-byte against `core.jar`; current Core is authoritative |
 | `server/plugins` | 492 Java files | `compile_plugins` | `server/plugins.jar` | Plugin-class jar compiled against `core.jar`; no dependency jars are merged |
 
 The one non-Java file under the plugin source root is a contributor README and
@@ -117,11 +118,13 @@ externally at runtime.
 | `xstream-1.4.18.jar` | yes | yes | yes |
 
 `compile_plugins` uses `core.jar`, the ambient Java classpath, Log4j API/core,
-and Commons Lang 2.6. Because `core.jar` is already the Ant-built fat jar, it
-also exposes the dependency classes needed while compiling plugins.
+and Commons Lang 2.6. It deliberately does not use the imported managed server
+snapshot. Because `core.jar` is already the Ant-built fat jar, it also exposes
+the dependency classes needed while compiling plugins.
 
-Both `runserver` and `runserverzgc` currently put selected jars first, then
-`server/lib/*`, and finally `core.jar`. The external jar copies therefore win
+Both `runserver` and `runserverzgc` put the current-Core gameplay overlay
+first, then `server/lib/*`, and finally current `core.jar`. The imported managed
+server snapshot is deliberately absent. External dependency copies still win
 normal class lookup, while the fat jar contains another copy. The inventory
 measured 14,070 unique external library classes that were also present in
 `core.jar`, plus 2,065 duplicate class inputs between the library jars
@@ -196,7 +199,9 @@ Add `--json` for machine-readable output. The audit:
   classpaths, wildcard coverage, and artifacts;
 - fails on missing explicit Ant jar entries;
 - inventories every shipped jar with size and SHA-256;
-- verifies the runtime targets retain `server/lib/*` and `core.jar`;
+- verifies the runtime targets retain `server/lib/*` and current `core.jar`;
+- rejects the imported managed server snapshot from plugin compilation and
+  production runtime classpaths;
 - verifies `core.jar` main/plugin-loader/dependency classes and the separate
   plugin artifact shape;
 - measures fat-jar/runtime class duplication;

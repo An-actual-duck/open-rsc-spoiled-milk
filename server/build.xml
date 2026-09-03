@@ -57,7 +57,6 @@
                source="${javac.source}" encoding="UTF-8">
             <classpath>
                 <pathelement location="core.jar"/>
-                <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement path="${java.class.path}/"/>
                 <pathelement location="${lib}/log4j-api-2.17.0.jar"/>
                 <pathelement location="${lib}/log4j-core-2.17.0.jar"/>
@@ -176,7 +175,7 @@
         </javac>
         <java classname="com.openrsc.server.net.rsc.WorldBuilderInventoryOverlayTest" fork="true"
               failonerror="true" dir="${basedir}">
-            <classpath><pathelement location="../output/world-builder-inventory-overlay-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+            <classpath><pathelement location="../output/world-builder-inventory-overlay-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>
 
@@ -190,7 +189,7 @@
 		</javac>
 		<java classname="com.openrsc.server.content.WorldBuilderRangersGuildLinkageTest" fork="true"
 			failonerror="true" dir="${basedir}">
-			<classpath><pathelement location="../output/world-builder-rangers-guild-linkage-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+			<classpath><pathelement location="../output/world-builder-rangers-guild-linkage-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
 		</java>
 	</target>
 
@@ -302,7 +301,6 @@
                 <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
                 <pathelement location="${gameplay.overlay.jar}"/>
-                <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement location="${lib}/*"/>
                 <pathelement location="${lib}/commons-codec-1.14.jar"/>
                 <pathelement path="${jar}/"/>
@@ -327,7 +325,6 @@
                 <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
                 <pathelement location="${gameplay.overlay.jar}"/>
-                <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement location="${lib}/*"/>
                 <pathelement location="${lib}/commons-codec-1.14.jar"/>
                 <pathelement path="${jar}/"/>

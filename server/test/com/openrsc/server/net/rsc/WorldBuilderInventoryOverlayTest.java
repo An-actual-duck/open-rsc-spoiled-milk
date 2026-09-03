@@ -30,7 +30,7 @@ public final class WorldBuilderInventoryOverlayTest {
 		for (String className : overlayClasses) {
 			assertSource(Class.forName(className), "core-gameplay-overlay.jar");
 		}
-		assertSource(World.class, "world-builder-managed-runtime.jar");
+		assertSource(World.class, "core.jar");
 
 		Server server = new Server("myworld.conf");
 		World world = server.getWorld();
@@ -48,7 +48,7 @@ public final class WorldBuilderInventoryOverlayTest {
 
 		assertCapacity(world, "overlaydevduck", 1, 31);
 		assertCapacity(world, "overlayfrankthetank", 63, 40);
-		System.out.println("PASS: World Builder runtime preserves 31-slot and 40-slot entitlements");
+		System.out.println("PASS: current Core preserves 31-slot and 40-slot entitlements");
 	}
 
 	private static void assertCapacity(World world, String username, int mask, int expected) {
