@@ -180,6 +180,20 @@
         </java>
     </target>
 
+	<target name="test_world_builder_rangers_guild_linkage" depends="compile_core">
+		<delete dir="../output/world-builder-rangers-guild-linkage-test"/>
+		<mkdir dir="../output/world-builder-rangers-guild-linkage-test"/>
+		<javac srcdir="${test.src}" destdir="../output/world-builder-rangers-guild-linkage-test" debug="on"
+			includes="com/openrsc/server/content/WorldBuilderRangersGuildLinkageTest.java"
+			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</javac>
+		<java classname="com.openrsc.server.content.WorldBuilderRangersGuildLinkageTest" fork="true"
+			failonerror="true" dir="${basedir}">
+			<classpath><pathelement location="../output/world-builder-rangers-guild-linkage-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</java>
+	</target>
+
     <target name="combat_gate_preflight" if="combat.failure.fixture.enabled">
         <fail message="Deliberate combat gate failure fixture requested (combat.injectFailure=true)."/>
     </target>
