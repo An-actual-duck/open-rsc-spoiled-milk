@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFS_DIR = ROOT / "server" / "conf" / "server" / "defs"
+QUEST_ONLY_NPC_IDS = {196}  # Elvarg; ordinary Green Dragons use ID 862.
 
 
 def fail(message: str) -> None:
@@ -76,7 +77,15 @@ def family_name(name: str) -> str:
 
 def main() -> None:
     npcs, overrides = load_npcs()
-    attackable = [npc for npc in npcs.values() if npc.get("attackable") == 1 and int(npc.get("combatlvl", 0)) > 0]
+    quest_overrides = sorted(QUEST_ONLY_NPC_IDS.intersection(overrides))
+    if quest_overrides:
+        fail(f"Quest-only NPCs must not receive global MyWorld combat overrides: {quest_overrides}")
+    attackable = [
+        npc for npc in npcs.values()
+        if npc.get("attackable") == 1
+        and int(npc.get("combatlvl", 0)) > 0
+        and npc["id"] not in QUEST_ONLY_NPC_IDS
+    ]
     missing_overrides = sorted((npc["id"], npc["name"]) for npc in attackable if npc["id"] not in overrides)
     if missing_overrides:
         fail(f"Attackable NPCs missing MyWorld overrides: {missing_overrides[:10]}")
