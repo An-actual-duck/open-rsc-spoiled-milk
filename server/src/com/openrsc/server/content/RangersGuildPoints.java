@@ -49,6 +49,21 @@ public final class RangersGuildPoints {
 		addPoints(player, pointsForNpc(npc.getID()));
 	}
 
+	/**
+	 * Binary-compatibility bridge for the installed World Builder runtime.
+	 *
+	 * <p>The provider's shadow copy of {@code Skills} predates the current
+	 * Rangers Guild design and still invokes this signature after every
+	 * experience award. Current gameplay awards points for eligible ranged
+	 * kills instead, so the compatible behavior is intentionally a no-op. Keep
+	 * this method until the provider no longer shadows target-owned server
+	 * classes.</p>
+	 */
+	@Deprecated
+	public static void awardFromExperience(Player player, int skill, int experience) {
+		// Intentionally empty: current Rangers Guild points are kill-based.
+	}
+
 	public static int getPoints(Player player) {
 		return getCacheInt(player, POINTS_CACHE_KEY);
 	}

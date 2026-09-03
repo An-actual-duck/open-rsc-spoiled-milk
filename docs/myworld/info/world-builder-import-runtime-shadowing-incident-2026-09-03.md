@@ -441,6 +441,34 @@ map still depends on other classes in the monolithic provider archive. The
 permanent fix is to eliminate host-class shadowing at the provider/importer
 boundary.
 
+## Second production linkage failure
+
+At 14:05 on the same day, `FrankTheTank` cast a teleport. The managed
+runtime's shadow copy of `Skills` still called the older
+`RangersGuildPoints.awardFromExperience(Player,int,int)` API. Core commit
+`829573b1e` had already replaced experience-based Rangers Guild points with
+eligible ranged-kill awards before the import, and the provider archive did
+not contain its own `RangersGuildPoints` class. The JVM therefore combined a
+stale caller from the provider with the current callee from Core and raised a
+`NoSuchMethodError`.
+
+The error occurred after the teleport event added Magic experience but before
+`SingleEvent.run()` marked the one-shot event stopped. `GameTickEvent.call()`
+caught `Exception`, not linkage `Error`, so the event remained runnable and
+retried every game tick. This produced continuous stack traces, repeatedly
+added in-memory Magic experience, and aborted the remaining tick work. The
+persisted experience still matched the pre-deployment backup when diagnosed.
+
+The immediate Core compatibility bridge retains the removed binary signature
+as an intentional no-op. This preserves the current kill-based reward design
+while allowing the stale managed-runtime caller to finish. A
+production-precedence regression test proves that `Skills` is loaded from the
+managed runtime, `RangersGuildPoints` is loaded from current Core, one
+experience award completes exactly once, and no Rangers Guild points are
+created. This is further evidence that eager linkage and duplicate-class
+rejection are required in the importer rather than relying on successful
+startup.
+
 ## Reproduction and audit commands
 
 From the Core manager checkout:
@@ -462,4 +490,3 @@ The pre-import backup supplied for this investigation is
 `/home/justin/Core-Framework (copy)`. Its recorded Git head is the `v0.2.80`
 baseline above, it has no managed-runtime archive, and its `core.jar` already
 contains the expanded-inventory implementation.
-
