@@ -581,6 +581,39 @@ class NativeTerrainResidencyTest(unittest.TestCase):
             work = Path(temporary)
             harness_path = work / f"{class_name}.java"
             harness_path.write_text(harness, encoding="utf-8")
+            compile_sources = list(sources)
+            if CLIENT_DECODER in compile_sources:
+                profile_stub = work / "orsc/WorldBuilderClientProfile.java"
+                profile_stub.parent.mkdir(parents=True)
+                profile_stub.write_text(
+                    textwrap.dedent(
+                        """
+                        package orsc;
+
+                        public final class WorldBuilderClientProfile {
+                            private static final WorldBuilderClientProfile CURRENT =
+                                new WorldBuilderClientProfile();
+
+                            public static WorldBuilderClientProfile current() {
+                                return CURRENT;
+                            }
+
+                            public void requireNativePackageIdentity(
+                                    String packageId,
+                                    String packageVersion,
+                                    String manifestSha256) {
+                                if (packageId == null || packageVersion == null
+                                        || manifestSha256 == null) {
+                                    throw new IllegalArgumentException(
+                                        "native package identity is required");
+                                }
+                            }
+                        }
+                        """
+                    ),
+                    encoding="utf-8",
+                )
+                compile_sources.append(profile_stub)
             subprocess.run(
                 [
                     "javac",
@@ -591,7 +624,7 @@ class NativeTerrainResidencyTest(unittest.TestCase):
                     "8",
                     "-d",
                     str(work),
-                    *[str(source) for source in sources],
+                    *[str(source) for source in compile_sources],
                     str(harness_path),
                 ],
                 check=True,
