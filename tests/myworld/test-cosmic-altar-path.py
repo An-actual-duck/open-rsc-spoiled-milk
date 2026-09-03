@@ -2,13 +2,12 @@
 import json
 import re
 import struct
-import zipfile
 from pathlib import Path
+
+from installed_world_package import read_legacy_sector
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SERVER_LANDSCAPE = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
-CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 SERVER_TILE_DEFS = ROOT / "server/conf/server/defs/TileDef.xml"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 RUNECRAFT_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocsRunecraft.json"
@@ -26,10 +25,11 @@ def require(condition, message):
         raise AssertionError(message)
 
 
-def read_sectors(path):
-    with zipfile.ZipFile(path) as archive:
-        require(archive.testzip() is None, f"{path} must be a valid landscape archive")
-        return {sector: archive.read(sector) for sector in SECTORS}
+def read_sectors(side):
+    return {
+        sector: read_legacy_sector(side, sector, level=10)
+        for sector in SECTORS
+    }
 
 
 def sector_origin(sector):
@@ -155,8 +155,8 @@ def ensure_object_locations():
 
 def main():
     ensure_transparent_walkable_tile_def()
-    server_sectors = read_sectors(SERVER_LANDSCAPE)
-    client_sectors = read_sectors(CLIENT_LANDSCAPE)
+    server_sectors = read_sectors("server")
+    client_sectors = read_sectors("client")
     require(client_sectors == server_sectors, "Client and server Cosmic Altar terrain must match")
     ensure_path_shape(server_sectors)
     ensure_object_locations()

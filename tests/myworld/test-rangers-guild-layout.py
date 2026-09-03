@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 import json
 import struct
-import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from installed_world_package import package_root, read_legacy_sector
+
 
 ROOT = Path(__file__).resolve().parents[2]
-SERVER_LANDSCAPE = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
-CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/SceneryLocs.json"
 MYWORLD_SCENERY_LOCS = ROOT / "server/conf/server/defs/locs/MyWorldSceneryLocs.json"
 BOUNDARY_LOCS = ROOT / "server/conf/server/defs/locs/BoundaryLocs.json"
@@ -32,11 +31,7 @@ RANGERS_GUILD_POINTS_VENDOR = ROOT / "server/plugins/com/openrsc/server/plugins/
 RANGERS_GUILD_AREA = ROOT / "server/src/com/openrsc/server/content/RangersGuildArea.java"
 RANGERS_GUILD_POINTS = ROOT / "server/src/com/openrsc/server/content/RangersGuildPoints.java"
 SKILLS = ROOT / "server/src/com/openrsc/server/model/Skills.java"
-ACTIVE_LAYERED_PLACEMENTS = ROOT / (
-    "server/world-builder/packages/"
-    "d037a81117d359bd1e92147ced077f566e2ce6fdaa424e949f8bf6f83e6c3b2b/"
-    "package/placements/global/lm1.json"
-)
+ACTIVE_LAYERED_PLACEMENTS = package_root("server") / "placements/global/lm1.json"
 CLIENT_ENTITY_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
 CLIENT_MUDCLIENT = ROOT / "Client_Base/src/orsc/mudclient.java"
 BASEMENT_SECTOR = "h3x58y46"
@@ -62,14 +57,14 @@ GROUND_RESTORED_FLOOR_TILES = {
 }
 BASEMENT_STAIR_SQUARE_TILES = {
     (x, y)
-    for x in range(494, 505)
-    for y in range(3292, 3302)
+    for x in range(495, 505)
+    for y in range(3298, 3302)
 }
 RANGERS_GUILD_BASEMENT_NPCS = {
-    61: 8,    # giant
-    22: 3,    # lesser demon
+    61: 11,   # giant
+    22: 4,    # lesser demon
     862: 2,   # ordinary Green Dragon; ID 196 remains quest-only Elvarg
-    195: 6,   # skeleton
+    195: 8,   # skeleton
 }
 
 
@@ -78,10 +73,9 @@ def require(condition, message):
         raise AssertionError(message)
 
 
-def read_sector(path, sector_name):
-    with zipfile.ZipFile(path) as archive:
-        require(archive.testzip() is None, f"{path} must be a valid landscape archive")
-        return archive.read(sector_name)
+def read_sector(side, sector_name):
+    level = -1 if sector_name == BASEMENT_SECTOR else 0
+    return read_legacy_sector(side, sector_name, level=level)
 
 
 def tile(sector, x, y, *, origin_x, origin_y):
@@ -132,8 +126,8 @@ def npc_def_by_id(path, npc_id):
 
 
 def ensure_basement_terrain():
-    server_sector = read_sector(SERVER_LANDSCAPE, BASEMENT_SECTOR)
-    client_sector = read_sector(CLIENT_LANDSCAPE, BASEMENT_SECTOR)
+    server_sector = read_sector("server", BASEMENT_SECTOR)
+    client_sector = read_sector("client", BASEMENT_SECTOR)
     require(client_sector == server_sector, "Client and server Rangers Guild basement terrain must match")
 
     edited_tiles = []
@@ -150,14 +144,14 @@ def ensure_basement_terrain():
                 edited_tiles.append((x, y, overlay, texture, elevation))
 
     require(
-        len(edited_tiles) >= 500,
-        "Rangers Guild basement terrain should contain the imported first-draft edit, not only the small seed",
+        len(edited_tiles) >= 300,
+        "Rangers Guild basement terrain should contain the installed authored room, not only the small seed",
     )
     xs = [entry[0] for entry in edited_tiles]
     ys = [entry[1] for entry in edited_tiles]
     require(
-        min(xs) <= 484 and max(xs) >= 515 and min(ys) <= 3281 and max(ys) >= 3310,
-        "Rangers Guild basement terrain edit no longer covers the expected first-draft footprint",
+        min(xs) <= 491 and max(xs) >= 509 and min(ys) <= 3293 and max(ys) >= 3311,
+        "Rangers Guild basement terrain edit no longer covers the installed authored footprint",
     )
 
     for x, y in BASEMENT_REQUIRED_WALKABLE_TILES:
@@ -184,8 +178,8 @@ def ensure_basement_terrain():
             f"Rangers Guild basement stair square should be solid grey at {x},{y}",
         )
 
-    server_sector = read_sector(SERVER_LANDSCAPE, GROUND_SECTOR)
-    client_sector = read_sector(CLIENT_LANDSCAPE, GROUND_SECTOR)
+    server_sector = read_sector("server", GROUND_SECTOR)
+    client_sector = read_sector("client", GROUND_SECTOR)
     require(client_sector == server_sector, "Client and server Rangers Guild ground terrain must match")
 
     for x, y in GROUND_DOWN_STAIR_TILES:

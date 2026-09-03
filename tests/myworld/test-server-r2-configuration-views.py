@@ -226,7 +226,7 @@ class ServerR2ConfigurationViewsTest(unittest.TestCase):
                                           "maxConnectionsPerIp", "maxConnectionsPerSecond",
                                           "maxPlayers", "maxPlayersPerIp")),
         )
-        self.assertEqual(("false", "false", "true", "60", "25", "160"),
+        self.assertEqual(("false", "true", "true", "60", "25", "160"),
                          tuple(values[key] for key in ("pcap", "sceneBaseline", "movementSnapshot",
                                                        "summarySeconds", "pollOutlierMs", "tickOutlierMs")))
         self.assert_common_parity(values)

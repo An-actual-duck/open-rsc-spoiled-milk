@@ -3,13 +3,12 @@
 
 import json
 import struct
-import zipfile
 from pathlib import Path
+
+from installed_world_package import read_legacy_sector
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SERVER_LANDSCAPE = ROOT / "server/conf/server/data/Custom_Landscape.orsc"
-CLIENT_LANDSCAPE = ROOT / "Client_Base/Cache/video/Custom_Landscape.orsc"
 BOUNDARY_LOCS = ROOT / "server/conf/server/defs/locs/BoundaryLocsCustomQuest.json"
 DOOR_ACTION = ROOT / "server/plugins/com/openrsc/server/plugins/authentic/defaults/DoorAction.java"
 PLAN = ROOT / "docs/myworld/in-progress-work-plans/mining-guild-and-smithing-expansion-plan.md"
@@ -20,15 +19,14 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def sector_tile(path: Path, sector: str, tile_id: int) -> tuple[int, int, int, int, int, int, int]:
-    with zipfile.ZipFile(path) as archive:
-        data = archive.read(sector)
+def sector_tile(side: str, sector: str, tile_id: int) -> tuple[int, int, int, int, int, int, int]:
+    data = read_legacy_sector(side, sector, level=-1)
     return struct.unpack_from(">BBBBBBI", data, tile_id * 10)
 
 
 def main() -> None:
-    server_tile = sector_tile(SERVER_LANDSCAPE, "h3x53y48", 1385)
-    client_tile = sector_tile(CLIENT_LANDSCAPE, "h3x53y48", 1385)
+    server_tile = sector_tile("server", "h3x53y48", 1385)
+    client_tile = sector_tile("client", "h3x53y48", 1385)
     expected_tile = (60, 180, 0, 0, 0, 0, 0)
     require(
         server_tile == expected_tile,
