@@ -42,6 +42,7 @@ def main() -> int:
     require(len(report["libraries"]) == 21, "Review the documented shipped-jar inventory")
     require(report["artifacts"]["core"]["main_class"] == "com.openrsc.server.Server", "core.jar is not executable")
     require(report["artifacts"]["plugins"]["class_entries"] > 0, "plugins.jar is empty")
+    require(report["artifacts"]["gameplay_overlay"]["class_entries"] >= 10, "gameplay overlay is incomplete")
     require(
         len(report["ant"]["targets"]["compile_core"]) == 20,
         "compile_core classpath reference is missing or changed unexpectedly",
@@ -59,6 +60,11 @@ def main() -> int:
         entries = report["ant"]["targets"][target]
         require(any(entry["kind"] == "jar-wildcard" for entry in entries), f"{target} lost server/lib wildcard")
         require(any(entry["resolved"] == "core.jar" for entry in entries), f"{target} lost core.jar")
+        paths = [entry["resolved"] for entry in entries]
+        overlay = paths.index("core-gameplay-overlay.jar")
+        runtime = paths.index("world-builder-runtime/world-builder-managed-runtime.jar")
+        core = paths.index("core.jar")
+        require(overlay < runtime < core, f"{target} can let the imported runtime shadow current gameplay")
 
     build_xml = BUILD_XML.read_text(encoding="utf-8")
     for obsolete in (
@@ -87,6 +93,7 @@ def main() -> int:
         "server/compile_server.sh` is an inherited, superseded helper",
         "14,070 unique external library classes",
         "MySQL runtime testing is optional",
+        "core-gameplay-overlay.jar",
         "scripts/audit-server-build.py --check --require-artifacts",
     ):
         require(statement in document, f"Server build authority documentation is missing: {statement}")

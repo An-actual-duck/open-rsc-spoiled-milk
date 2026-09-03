@@ -38,7 +38,7 @@ maintained or authoritative entry point. Use `scripts/build-server.sh` or
 Live deployment and player packaging have different roles:
 
 - `scripts/deploy-live-main.sh` deploys a clean detached source checkout. It
-  does not copy a prebuilt server jar. Hosted startup then rebuilds the two
+  does not copy a prebuilt server jar. Hosted startup then rebuilds the three
   server artifacts through Ant.
 - `scripts/ai-manager.sh release-check` verifies repository/workspace state;
   it does not build server artifacts.
@@ -49,11 +49,15 @@ Live deployment and player packaging have different roles:
 
 ## Active source roots and produced artifacts
 
-Ant compiles two active Java source roots separately:
+Ant compiles two active Java source roots separately. `compile_core` also
+selects the current inventory-capacity class families into a small precedence
+overlay so the full World Builder runtime snapshot cannot shadow newer Core
+gameplay behavior.
 
 | Source root | Current count | Ant target | Artifact | Shape |
 | --- | ---: | --- | --- | --- |
 | `server/src` | 940 Java files | `compile_core` | `server/core.jar` | Executable fat jar with `com.openrsc.server.Server` as `Main-Class` and every `server/lib/*.jar` merged into it |
+| selected `server/src` inventory classes | 10 class families | `compile_core` | `server/core-gameplay-overlay.jar` | Generated current-Core classes loaded before the installed World Builder runtime; audited byte-for-byte against `core.jar` |
 | `server/plugins` | 492 Java files | `compile_plugins` | `server/plugins.jar` | Plugin-class jar compiled against `core.jar`; no dependency jars are merged |
 
 The one non-Java file under the plugin source root is a contributor README and
@@ -74,6 +78,8 @@ After a clean authoritative build at the time of this inventory:
   server main class, plugin loader, and merged dependency classes.
 - `plugins.jar` contained 841 entries and 725 class entries, including the
   separately compiled gameplay plugins and no `Server.class`.
+- `core-gameplay-overlay.jar` contained only the reviewed inventory, bank,
+  item-action, and trade class families and no server main class.
 
 The reproducible check described below recalculates these properties rather
 than relying on the recorded counts.

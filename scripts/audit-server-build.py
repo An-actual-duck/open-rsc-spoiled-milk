@@ -23,6 +23,20 @@ BUILD_GRADLE = SERVER / "build.gradle"
 LIB = SERVER / "lib"
 CORE_JAR = SERVER / "core.jar"
 PLUGINS_JAR = SERVER / "plugins.jar"
+GAMEPLAY_OVERLAY_JAR = SERVER / "core-gameplay-overlay.jar"
+WORLD_BUILDER_RUNTIME_JAR = SERVER / "world-builder-runtime/world-builder-managed-runtime.jar"
+GAMEPLAY_OVERLAY_CLASS_STEMS = (
+    "com/openrsc/server/model/container/BankPreset",
+    "com/openrsc/server/model/container/Inventory",
+    "com/openrsc/server/net/rsc/handlers/BankHandler",
+    "com/openrsc/server/net/rsc/handlers/ItemEquip",
+    "com/openrsc/server/net/rsc/handlers/ItemUnequip",
+    "com/openrsc/server/net/rsc/handlers/ItemUseOnGroundItem",
+    "com/openrsc/server/net/rsc/handlers/ItemUseOnItem",
+    "com/openrsc/server/net/rsc/handlers/ItemUseOnNpc",
+    "com/openrsc/server/net/rsc/handlers/ItemUseOnObject",
+    "com/openrsc/server/net/rsc/handlers/PlayerTradeHandler",
+)
 TEST_ONLY_CLASS_PREFIXES = (
     "com/openrsc/server/combat/CurrentCombat",
 )
@@ -185,6 +199,49 @@ def artifact_inventory(require_artifacts: bool) -> tuple[dict, list[str]]:
             "main_class": "com.openrsc.server.Server" if "Main-Class: com.openrsc.server.Server" in manifest else None,
         }
 
+    if not GAMEPLAY_OVERLAY_JAR.is_file():
+        result["gameplay_overlay"] = {"file": GAMEPLAY_OVERLAY_JAR.name, "present": False}
+        if require_artifacts:
+            errors.append(
+                f"missing {GAMEPLAY_OVERLAY_JAR.relative_to(ROOT)}; run scripts/build-server.sh"
+            )
+    else:
+        with zipfile.ZipFile(GAMEPLAY_OVERLAY_JAR) as archive:
+            overlay_classes = {name for name in archive.namelist() if name.endswith(".class")}
+            manifest = archive.read("META-INF/MANIFEST.MF").decode("utf-8", errors="replace")
+        result["gameplay_overlay"] = {
+            "file": GAMEPLAY_OVERLAY_JAR.name,
+            "present": True,
+            "bytes": GAMEPLAY_OVERLAY_JAR.stat().st_size,
+            "sha256": sha256(GAMEPLAY_OVERLAY_JAR),
+            "class_entries": len(overlay_classes),
+            "main_class": "com.openrsc.server.Server" if "Main-Class: com.openrsc.server.Server" in manifest else None,
+        }
+
+        missing_stems = [
+            stem for stem in GAMEPLAY_OVERLAY_CLASS_STEMS
+            if stem + ".class" not in overlay_classes
+        ]
+        if missing_stems:
+            errors.append(f"gameplay overlay is missing current Core classes: {missing_stems}")
+        unexpected = sorted(
+            name for name in overlay_classes
+            if not any(
+                name == stem + ".class" or name.startswith(stem + "$")
+                for stem in GAMEPLAY_OVERLAY_CLASS_STEMS
+            )
+        )
+        if unexpected:
+            errors.append(f"gameplay overlay contains unreviewed classes: {unexpected}")
+        if CORE_JAR.is_file():
+            with zipfile.ZipFile(CORE_JAR) as core, zipfile.ZipFile(GAMEPLAY_OVERLAY_JAR) as overlay:
+                stale = sorted(
+                    name for name in overlay_classes
+                    if name not in core.namelist() or overlay.read(name) != core.read(name)
+                )
+            if stale:
+                errors.append(f"gameplay overlay does not match the current core.jar: {stale}")
+
     if result.get("core", {}).get("present"):
         core_classes = jar_classes(CORE_JAR)
         for prefix in TEST_ONLY_CLASS_PREFIXES:
@@ -250,6 +307,19 @@ def build_report(require_artifacts: bool) -> tuple[dict, list[str]]:
             errors.append(f"{target_name} no longer includes shipped server/lib jars")
         if "core.jar" not in paths:
             errors.append(f"{target_name} no longer includes core.jar")
+        required_order = (
+            "core-gameplay-overlay.jar",
+            str(WORLD_BUILDER_RUNTIME_JAR.relative_to(SERVER)),
+            "core.jar",
+        )
+        ordered_paths = [entry["resolved"] for entry in ant["targets"].get(target_name, [])]
+        if not all(path in ordered_paths for path in required_order):
+            errors.append(f"{target_name} lost the managed runtime gameplay-overlay boundary")
+        elif [ordered_paths.index(path) for path in required_order] != sorted(
+                ordered_paths.index(path) for path in required_order):
+            errors.append(
+                f"{target_name} must load the gameplay overlay before the managed runtime and core.jar"
+            )
 
     loader = SERVER / "src/com/openrsc/server/plugins/io/PluginJarLoader.java"
     loader_text = loader.read_text(encoding="utf-8")

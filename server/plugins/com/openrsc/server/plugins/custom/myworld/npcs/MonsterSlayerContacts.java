@@ -12,6 +12,7 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopServic
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.net.rsc.ActionSender;
+import com.openrsc.server.net.rsc.InventoryCapacityPackets;
 import com.openrsc.server.plugins.triggers.OpNpcTrigger;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
 
@@ -220,13 +221,15 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	/** One permanent, ordered entitlement per associate. This does not need a
 	 * free inventory slot because the server expands admission capacity itself. */
 	private void purchaseSatchelUpgrade(Player player, Npc npc, int index) {
-		if (!player.supportsExpandedInventory()) {
+		if (!InventoryCapacityPackets.isSupported(player)) {
 			dialogue.npc(player, npc, "Your client must be updated before I can expand this satchel safely.");
 			return;
 		}
 		MonsterSlayerData data = player.getWorld().getMonsterSlayerData();
-		MonsterSlayerShopService service = player.getWorld().getMonsterSlayerShopService();
-		if (data == null || service == null) { player.message("Your Monster Slayer record needs staff attention."); return; }
+		if (data == null) { player.message("Your Monster Slayer record needs staff attention."); return; }
+		// Capacity purchases have no shared stock. A local service keeps this
+		// transaction independent of the installed map runtime's World snapshot.
+		MonsterSlayerShopService service = new MonsterSlayerShopService(data);
 		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop shop = data.getShop(CONTACTS[index]);
 		MonsterSlayerState.Snapshot state = MonsterSlayerState.read(player.getCache(), data);
 		MonsterSlayerState.InventoryUpgrade upgrade = MonsterSlayerState.InventoryUpgrade.valueOf(shop.getKey().toUpperCase());
@@ -244,6 +247,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		if (speakChoice(player, npc, "Totally worth it.", "No thanks.") != 0) return;
 		MonsterSlayerShopService.Result result = service.purchaseCapacity(player, shop.getKey());
 		if (result.isSuccessful()) {
+			InventoryCapacityPackets.send(player);
 			ActionSender.sendInventory(player); // sends capacity before refreshed inventory contents
 			dialogue.npc(player, npc, "Okay, hold on while I stitch this.");
 			dialogue.pause();

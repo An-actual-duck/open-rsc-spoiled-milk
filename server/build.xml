@@ -4,6 +4,7 @@
     <property name="test.src" location="test"/>
     <property name="lib" location="lib"/>
     <property name="jar" location="core.jar"/>
+    <property name="gameplay.overlay.jar" location="core-gameplay-overlay.jar"/>
     <property name="combat.output.root" location="../output/combat-test"/>
     <property name="combat.build.core" location="${combat.output.root}/core-classes"/>
     <property name="combat.build.test" location="${combat.output.root}/test-classes"/>
@@ -45,6 +46,7 @@
     <target name="clean">
         <delete dir="${build}" />
         <delete file="${jar}" />
+        <delete file="${gameplay.overlay.jar}" />
     </target>
 
     <target name="compile_plugins">
@@ -129,7 +131,53 @@
                 <attribute name="Main-Class" value="com.openrsc.server.Server"/>
             </manifest>
         </jar>
+        <!--
+            The installed World Builder runtime is intentionally first for its
+            signed-layer map implementation, but it is a full server snapshot.
+            Keep the current Core inventory classes ahead of that snapshot so
+            imported maps cannot roll back live gameplay capacity semantics.
+        -->
+        <jar basedir="${build}" destfile="${gameplay.overlay.jar}">
+            <include name="com/openrsc/server/model/container/BankPreset.class"/>
+            <include name="com/openrsc/server/model/container/Inventory.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/BankHandler*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/ItemEquip*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/ItemUnequip*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/ItemUseOnGroundItem*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/ItemUseOnItem*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/ItemUseOnNpc*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/ItemUseOnObject*.class"/>
+            <include name="com/openrsc/server/net/rsc/handlers/PlayerTradeHandler*.class"/>
+        </jar>
         <delete dir="${build}"/>
+    </target>
+
+    <target name="test_inventory_capacity_packets" depends="compile_core">
+        <delete dir="../output/inventory-capacity-packet-test"/>
+        <mkdir dir="../output/inventory-capacity-packet-test"/>
+        <javac srcdir="${test.src}" destdir="../output/inventory-capacity-packet-test" debug="on"
+               includes="com/openrsc/server/net/rsc/InventoryCapacityPacketsTest.java"
+               includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.net.rsc.InventoryCapacityPacketsTest" fork="true"
+              failonerror="true" dir="${basedir}">
+            <classpath><pathelement location="../output/inventory-capacity-packet-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+    </target>
+
+    <target name="test_world_builder_inventory_overlay" depends="compile_core">
+        <delete dir="../output/world-builder-inventory-overlay-test"/>
+        <mkdir dir="../output/world-builder-inventory-overlay-test"/>
+        <javac srcdir="${test.src}" destdir="../output/world-builder-inventory-overlay-test" debug="on"
+               includes="com/openrsc/server/net/rsc/WorldBuilderInventoryOverlayTest.java"
+               includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.net.rsc.WorldBuilderInventoryOverlayTest" fork="true"
+              failonerror="true" dir="${basedir}">
+            <classpath><pathelement location="../output/world-builder-inventory-overlay-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
     </target>
 
     <target name="combat_gate_preflight" if="combat.failure.fixture.enabled">
@@ -239,6 +287,7 @@
                 <pathelement location="${lib}/xpp3-1.1.4c.jar"/>
                 <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
+                <pathelement location="${gameplay.overlay.jar}"/>
                 <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement location="${lib}/*"/>
                 <pathelement location="${lib}/commons-codec-1.14.jar"/>
@@ -263,6 +312,7 @@
                 <pathelement location="${lib}/xpp3-1.1.4c.jar"/>
                 <pathelement location="${lib}/mysql-connector-j-9.4.0.jar"/>
                 <pathelement location="${lib}/commons-lang-2.6.jar"/>
+                <pathelement location="${gameplay.overlay.jar}"/>
                 <pathelement location="world-builder-runtime/world-builder-managed-runtime.jar"/>
                 <pathelement location="${lib}/*"/>
                 <pathelement location="${lib}/commons-codec-1.14.jar"/>
