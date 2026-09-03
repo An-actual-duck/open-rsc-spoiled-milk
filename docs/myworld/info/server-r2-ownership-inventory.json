@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "907124837dc7fccc7340442e88586fc5621cab916723f15fee23d63f70c939ec",
+  "inputTreeSha256": "12262f13c84f4fb89ba84be97769b01045b2e9fc6682f8de834e571fff9bf656",
   "inputs": [
     {
       "brandSignals": [
@@ -938,7 +938,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 14172,
+      "bytes": 17696,
       "category": "foundation",
       "classificationReason": "Server build, launch, audit, or operator-safety input",
       "classificationRule": "scripts/**",
@@ -947,7 +947,7 @@
       "kind": "build-launch-or-operator-script",
       "path": "scripts/audit-server-build.py",
       "reverseDependencies": [],
-      "sha256": "299933f7abd0dfd49008e328ccd174a8c6233cfa1b392304666ece76ffd13787"
+      "sha256": "b5dff6cadfd97fdeea6452e59fe90b2e3a43a52db478bd991a76d60f5cab0ced"
     },
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 15953,
+      "bytes": 20696,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "cfc6f6b7bd1feb36ee157f82ecf6ed8f263b4bd4a8eed4a6e746a9cc3df1387d"
+      "sha256": "6430730f0813bafeda9ca8538872d95fea11bb093213a73149be79132f1f7051"
     },
     {
       "brandSignals": [],
@@ -27637,7 +27637,7 @@
         "myworld-name",
         "myworld-plugin-namespace"
       ],
-      "bytes": 37714,
+      "bytes": 37943,
       "category": "spoiled-milk-content",
       "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
@@ -27691,6 +27691,10 @@
           "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
         },
         {
+          "import": "com.openrsc.server.net.rsc.InventoryCapacityPackets",
+          "path": "server/src/com/openrsc/server/net/rsc/InventoryCapacityPackets.java"
+        },
+        {
           "import": "com.openrsc.server.plugins.Functions.delay",
           "path": "server/src/com/openrsc/server/plugins/Functions.java"
         },
@@ -27721,7 +27725,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestSirRadimusErkle.java"
       ],
-      "sha256": "c03e37f3a8bc934846c7c73d03519e81aebcea8e56ae37da5b7dab6a2b3b3072"
+      "sha256": "ee4450316eb953351067066d020f660d86ebc2d3b44022b3f687afe21799f25b"
     },
     {
       "brandSignals": [
@@ -30479,7 +30483,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 476,
+      "bytes": 577,
       "category": "maintained-compatibility",
       "classificationReason": "Shared legacy plugin triggers retained during extraction",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/shared/**",
@@ -30493,6 +30497,10 @@
           "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
         },
         {
+          "import": "com.openrsc.server.net.rsc.InventoryCapacityPackets",
+          "path": "server/src/com/openrsc/server/net/rsc/InventoryCapacityPackets.java"
+        },
+        {
           "import": "com.openrsc.server.plugins.triggers.PlayerLoginTrigger",
           "path": "server/src/com/openrsc/server/plugins/triggers/PlayerLoginTrigger.java"
         }
@@ -30501,7 +30509,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/shared/PlayerLogin.java",
       "reverseDependencies": [],
-      "sha256": "0476c655c4afc795bd88c72882abf8371745eda305a75e7c2f1bc4d68929be7f"
+      "sha256": "0aee4fadc0b66630a4eb3c51f425d803ca68998a497c00ad5ab92c2cfca3951d"
     },
     {
       "brandSignals": [],
@@ -34484,7 +34492,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 2505,
+      "bytes": 3147,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -34509,7 +34517,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
         "server/plugins/com/openrsc/server/plugins/custom/npcs/RangersGuildPointsVendor.java"
       ],
-      "sha256": "d791db6ac8028b651edce7e9d50500b2a6b55dcfa5ab5a7686debef5d89d677d"
+      "sha256": "ecf57fac813c41b2d8b6d300cf945e01b95b66a0f35894d7a207e82bf62bc95a"
     },
     {
       "brandSignals": [],
@@ -53316,6 +53324,7 @@
         "server/src/com/openrsc/server/net/RSCConnectionHandler.java",
         "server/src/com/openrsc/server/net/RSCPacketFilter.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+        "server/src/com/openrsc/server/net/rsc/InventoryCapacityPackets.java",
         "server/src/com/openrsc/server/net/rsc/LoginPacketHandler.java",
         "server/src/com/openrsc/server/net/rsc/PayloadProcessor.java",
         "server/src/com/openrsc/server/net/rsc/PayloadProcessorManager.java",
@@ -57912,6 +57921,7 @@
         "server/src/com/openrsc/server/content/market/task/OpenMarketTask.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
+        "server/src/com/openrsc/server/net/rsc/InventoryCapacityPackets.java",
         "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
         "server/src/com/openrsc/server/net/rsc/generators/PayloadGenerator.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/Payload115Generator.java",
@@ -57972,6 +57982,7 @@
         "server/src/com/openrsc/server/content/market/task/OpenMarketTask.java",
         "server/src/com/openrsc/server/login/CharacterCreateRequest.java",
         "server/src/com/openrsc/server/login/RecoveryAttemptRequest.java",
+        "server/src/com/openrsc/server/net/rsc/InventoryCapacityPackets.java",
         "server/src/com/openrsc/server/net/rsc/LayeredTerrainStagePacketPager.java",
         "server/src/com/openrsc/server/net/rsc/generators/PayloadGenerator.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/Payload115Generator.java",
@@ -58765,6 +58776,35 @@
         "server/src/com/openrsc/server/net/RSCProtocolDecoder.java"
       ],
       "sha256": "20598eed1d1576b9025823fd49a2e706bebe301bfff0d5b1a9a3e7de074a9b74"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 1187,
+      "category": "foundation",
+      "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
+      "classificationRule": "server/src/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.net.Packet",
+          "path": "server/src/com/openrsc/server/net/Packet.java"
+        },
+        {
+          "import": "com.openrsc.server.net.PacketBuilder",
+          "path": "server/src/com/openrsc/server/net/PacketBuilder.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.net.rsc.InventoryCapacityPackets",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/net/rsc/InventoryCapacityPackets.java",
+      "reverseDependencies": [
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
+        "server/plugins/com/openrsc/server/plugins/shared/PlayerLogin.java"
+      ],
+      "sha256": "13cbc01a14bb7410ccea56fb1a7aa5e2ccd3f129264b68d358edd91427ab5c29"
     },
     {
       "brandSignals": [],
@@ -119761,7 +119801,7 @@
   "summary": {
     "categoryCounts": {
       "diagnostic-proof": 14,
-      "foundation": 4570,
+      "foundation": 4571,
       "maintained-compatibility": 91,
       "spoiled-milk-content": 210,
       "target-profile": 412,
@@ -119769,13 +119809,13 @@
       "unresolved": 127
     },
     "configurationInputs": 22,
-    "coreJavaFiles": 1079,
+    "coreJavaFiles": 1080,
     "databasePatchInputs": 27,
     "definitionInputs": 45,
     "directBrandSignalFiles": 297,
     "foundationToSpoiledMilkDependencies": 107,
     "kindCounts": {
-      "ant-core-source": 1079,
+      "ant-core-source": 1080,
       "ant-library": 21,
       "ant-plugin-source": 494,
       "build-definition": 2,
@@ -119804,7 +119844,7 @@
     },
     "pluginJavaFiles": 494,
     "populationInputs": 41,
-    "shippedInputs": 5579
+    "shippedInputs": 5580
   },
   "unresolvedInputs": [
     {
