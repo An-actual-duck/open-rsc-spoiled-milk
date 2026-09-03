@@ -355,6 +355,36 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             work = Path(temporary)
             harness_path = work / "NativeTerrainMiningGuildWireHarness.java"
+            profile_stub = work / "orsc/WorldBuilderClientProfile.java"
+            profile_stub.parent.mkdir(parents=True)
+            profile_stub.write_text(
+                textwrap.dedent(
+                    """
+                    package orsc;
+
+                    public final class WorldBuilderClientProfile {
+                        private static final WorldBuilderClientProfile CURRENT =
+                            new WorldBuilderClientProfile();
+
+                        public static WorldBuilderClientProfile current() {
+                            return CURRENT;
+                        }
+
+                        public void requireNativePackageIdentity(
+                                String packageId,
+                                String packageVersion,
+                                String manifestSha256) {
+                            if (packageId == null || packageVersion == null
+                                    || manifestSha256 == null) {
+                                throw new IllegalArgumentException(
+                                    "native package identity is required");
+                            }
+                        }
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
             harness_path.write_text(harness, encoding="utf-8")
             subprocess.run(
                 [
@@ -372,6 +402,7 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
                     str(CLIENT_SNAPSHOT),
                     str(CLIENT_RESIDENCY),
                     str(CLIENT_DECODER),
+                    str(profile_stub),
                     str(harness_path),
                 ],
                 check=True,
