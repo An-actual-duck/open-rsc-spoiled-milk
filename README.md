@@ -19,7 +19,7 @@ know AI-assisted projects are contentious, so I would rather say that plainly.
 The new art assets were made by real people: some were commissioned or
 purchased, some were sourced from free repositories, and a few were made by me.
 
-Link to the discord: https://discord.gg/DVukZFBQv
+Link to the discord: https://discord.gg/6EFHzE5ee
 
 ## Contributing And Project Workflow
 
