@@ -31,7 +31,7 @@ def main() -> None:
     require(
         hosted,
         "layered_native_terrain_manifest_sha256: "
-        "eadf35cfd97a7a3c08b0e803ac4d137c19d97bf648247446489cb1dcaf23a39d",
+        "f3489503d2c323e669ab3004345271c6137a58698cc8c0bf0b0fb2587eb52b29",
         "installed World Builder manifest identity",
     )
 

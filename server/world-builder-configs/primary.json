@@ -8,7 +8,7 @@
     }
   ],
   "clientDefinitionCatalogRelativePath": "Client_Base/world-builder-fallback/definitions.json",
-  "clientMapRelativePath": "Client_Base/world-builder/packages/454ff2c10fd2b5a783b55ae143c1a61c355194c9d64f3d77bfff8d9134f07e9d/package",
+  "clientMapRelativePath": "Client_Base/world-builder/packages/f699e5a37709a0f127d676d91f07f64e256825bef6d65a7a4ccd13c8310f3b75/package",
   "clientRuntimeRelativePath": "Client_Base/world-builder-fallback/runtime.json",
   "configurationId": "primary",
   "manifestType": "world-builder-map-configuration",
@@ -16,6 +16,6 @@
   "representation": "layered",
   "schemaVersion": 1,
   "serverDefinitionCatalogRelativePath": "server/world-builder-fallback/definitions.json",
-  "serverMapRelativePath": "server/world-builder/packages/454ff2c10fd2b5a783b55ae143c1a61c355194c9d64f3d77bfff8d9134f07e9d/package",
+  "serverMapRelativePath": "server/world-builder/packages/f699e5a37709a0f127d676d91f07f64e256825bef6d65a7a4ccd13c8310f3b75/package",
   "serverRuntimeRelativePath": "server/world-builder-fallback/runtime.json"
 }
