@@ -115,6 +115,34 @@
 		</java>
 	</target>
 
+	<target name="test_network_decoder" depends="compile_core">
+		<delete dir="../output/network-decoder-test"/>
+		<mkdir dir="../output/network-decoder-test"/>
+		<javac srcdir="${test.src}" destdir="../output/network-decoder-test" debug="on"
+			includes="com/openrsc/server/net/RSCProtocolDecoderWireTest.java"
+			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</javac>
+		<java classname="com.openrsc.server.net.RSCProtocolDecoderWireTest" fork="true"
+			failonerror="true" dir="${basedir}">
+			<classpath><pathelement location="../output/network-decoder-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</java>
+	</target>
+
+	<target name="test_native_terrain_wire" depends="compile_core">
+		<delete dir="../output/native-terrain-wire-test"/>
+		<mkdir dir="../output/native-terrain-wire-test"/>
+		<javac srcdir="${test.src}" destdir="../output/native-terrain-wire-test" debug="on"
+			includes="com/openrsc/server/io/NativeLayeredTerrainWireTest.java"
+			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+			<classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</javac>
+		<java classname="com.openrsc.server.io.NativeLayeredTerrainWireTest" fork="true"
+			failonerror="true" dir="${basedir}">
+			<classpath><pathelement location="../output/native-terrain-wire-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</java>
+	</target>
+
     <target name="compile_core">
         <delete file="${jar}"/>
         <delete dir="${build}"/>

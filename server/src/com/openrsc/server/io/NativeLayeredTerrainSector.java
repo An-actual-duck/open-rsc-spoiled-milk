@@ -119,25 +119,15 @@ public final class NativeLayeredTerrainSector {
 	 * {@link NativeLayeredTerrainChunk#copyWireBytes()}.
 	 */
 	public byte[] copyWireBytes() {
-		byte[] result =
-			new byte[TILE_COUNT * NativeLayeredTerrainChunk.TILE_WIRE_BYTES];
+		final boolean wide =
+			NativeLayeredTerrainChunk.isWideEncoding(sourceEncoding);
+		byte[] result = new byte[
+			TILE_COUNT
+				* NativeLayeredTerrainChunk.wireBytesForEncoding(sourceEncoding)];
 		int offset = 0;
 		for (NativeLayeredTerrainTile tile : tiles) {
-			if (tile.getElevation() > 255) {
-				throw new IllegalStateException(
-					"Wide native elevation is not supported by the current client protocol");
-			}
-			result[offset++] = (byte) tile.getElevation();
-			result[offset++] = (byte) tile.getTexture();
-			result[offset++] = (byte) tile.getOverlay();
-			result[offset++] = (byte) tile.getRoof();
-			result[offset++] = (byte) tile.getVerticalWall();
-			result[offset++] = (byte) tile.getHorizontalWall();
-			int diagonal = tile.getDiagonalWall();
-			result[offset++] = (byte) (diagonal >>> 24);
-			result[offset++] = (byte) (diagonal >>> 16);
-			result[offset++] = (byte) (diagonal >>> 8);
-			result[offset++] = (byte) diagonal;
+			offset = NativeLayeredTerrainChunk.writeWireTile(
+				result, offset, tile, wide);
 		}
 		return result;
 	}
