@@ -588,8 +588,8 @@ public final class WorldEditorSessionManager {
 			location.getWorldSpace(), placementId);
 		captureNativeNpcBase(key, null);
 		Npc npc = new Npc(
-			player.getWorld(), npcId, x, y, minX, maxX, minY, maxY);
-		npc.setWorldLocation(location, true);
+			player.getWorld(), npcId, location,
+			minX, maxX, minY, maxY);
 		NativeLayeredWorldPackage owner = nativeOwner(player, location);
 		player.getWorld().getRegionManager().markNativeLayeredPlacement(
 			npc, owner.getPackageId(), placementId,

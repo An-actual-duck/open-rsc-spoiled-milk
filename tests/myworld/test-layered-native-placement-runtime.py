@@ -19,9 +19,14 @@ OBJECT_REGISTRY = (
 GAME_OBJECT_LOC = SERVER / "src/com/openrsc/server/external/GameObjectLoc.java"
 WORLD = SERVER / "src/com/openrsc/server/model/world/World.java"
 GROUND_ITEM = SERVER / "src/com/openrsc/server/model/entity/GroundItem.java"
+NPC = SERVER / "src/com/openrsc/server/model/entity/npc/Npc.java"
 REGION_MANAGER = (
     SERVER
     / "src/com/openrsc/server/model/world/region/RegionManager.java"
+)
+WORLD_EDITOR = (
+    SERVER
+    / "src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java"
 )
 DEVELOPMENT = (
     SERVER
@@ -503,9 +508,11 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
     def test_world_load_owns_population_and_layered_item_respawn(self):
         world = WORLD.read_text(encoding="utf-8")
         item = GROUND_ITEM.read_text(encoding="utf-8")
+        npc = NPC.read_text(encoding="utf-8")
         manager = REGION_MANAGER.read_text(encoding="utf-8")
         loc = GAME_OBJECT_LOC.read_text(encoding="utf-8")
         functions = FUNCTIONS.read_text(encoding="utf-8")
+        world_editor = WORLD_EDITOR.read_text(encoding="utf-8")
         self.assertIn(
             "getRegionManager().populateNativeLayeredPlacements()", world
         )
@@ -531,6 +538,18 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         self.assertIn("populateNativeLayeredPlacements()", manager)
         self.assertIn("new Npc(", manager)
         self.assertIn("placement.getStart()", manager)
+        self.assertIn("new WorldCoordinate(minX, minY, level)", npc)
+        self.assertIn("new WorldCoordinate(maxX, maxY, level)", npc)
+        self.assertIn("runtimeMinimum.getY(), runtimeMaximum.getY()", npc)
+        self.assertIn("placement.getNpcId(),\n\t\t\t\t\tlocation,", manager)
+        self.assertNotIn(
+            "location.getCoordinate().getY(),\n\t\t\t\t\tplacement.getMinX()",
+            manager,
+        )
+        self.assertIn(
+            "player.getWorld(), npcId, location,\n\t\t\tminX, maxX, minY, maxY",
+            world_editor,
+        )
         self.assertIn("NativeLayeredSceneryPlacement", manager)
         self.assertIn("NativeLayeredBoundaryPlacement", manager)
         self.assertIn("populateNativeLayeredGameObject(", manager)

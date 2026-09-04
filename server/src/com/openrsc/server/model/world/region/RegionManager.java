@@ -4250,8 +4250,7 @@ public class RegionManager {
 				Npc npc = new Npc(
 					world,
 					placement.getNpcId(),
-					location.getCoordinate().getX(),
-					location.getCoordinate().getY(),
+					location,
 					placement.getMinX(),
 					placement.getMaxX(),
 					placement.getMinY(),
@@ -4263,7 +4262,6 @@ public class RegionManager {
 					worldPackage.getPackageId(),
 					placement.getPlacementId(),
 					NATIVE_LAYERED_NPC_KIND);
-				npc.setWorldLocation(location, true);
 				world.registerNpc(npc);
 				npcCount++;
 			}
