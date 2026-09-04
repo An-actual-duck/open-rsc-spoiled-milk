@@ -110,11 +110,16 @@ public final class GameStateUpdater {
 	private static final int NATIVE_LAYERED_WIRE_CHUNK_SIZE =
 		NativeLayeredTerrainSector.SIZE;
 	private static final int NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES = 3;
+	private static final int NATIVE_LAYERED_WIDE_VISUAL_TILE_WIRE_BYTES = 4;
 	private static final int NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES = 7;
 	private static final String NATIVE_LAYERED_VISUAL_ENCODING =
 		"visual-layered-sector-v1";
 	private static final String NATIVE_LAYERED_STRUCTURAL_ENCODING =
 		"structural-layered-sector-v1";
+	private static final String NATIVE_LAYERED_WIDE_VISUAL_ENCODING =
+		"visual-layered-sector-v2-u16";
+	private static final String NATIVE_LAYERED_WIDE_STRUCTURAL_ENCODING =
+		"structural-layered-sector-v2-u16";
 	private static final int SCENE_BASELINE_PAGE_SIZE = 64;
 	private static final int SCENE_BASELINE_PAGE_BURST_LIMIT = 4;
 	private static final int LAYERED_PRESENTATION_SCENE_BASELINE_PAGE_SIZE = 512;
@@ -2669,14 +2674,27 @@ public final class GameStateUpdater {
 						final NativeLayeredTerrainSector chunk = source.get();
 						final boolean visualOnly =
 							symmetricOuter && !structuralOnly;
+						final boolean wide =
+							NativeLayeredTerrainChunk.isWideEncoding(
+								chunk.getSourceEncoding());
+						final int fullTileBytes =
+							NativeLayeredTerrainChunk.wireBytesForEncoding(
+								chunk.getSourceEncoding());
+						final int visualTileBytes = wide
+							? NATIVE_LAYERED_WIDE_VISUAL_TILE_WIRE_BYTES
+							: NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES;
 						output.sourceSectorX =
 							chunk.getIdentity().getSectorX();
 						output.sourceSectorY =
 							chunk.getIdentity().getSectorY();
 						output.sourceEncoding = structuralOnly
-							? NATIVE_LAYERED_STRUCTURAL_ENCODING
+							? wide
+								? NATIVE_LAYERED_WIDE_STRUCTURAL_ENCODING
+								: NATIVE_LAYERED_STRUCTURAL_ENCODING
 							: visualOnly
-								? NATIVE_LAYERED_VISUAL_ENCODING
+								? wide
+									? NATIVE_LAYERED_WIDE_VISUAL_ENCODING
+									: NATIVE_LAYERED_VISUAL_ENCODING
 								: chunk.getSourceEncoding();
 						if(server.getConfig().WORLD_BUILDER_MODE){
 							output.sourcePayloadSha256 =
@@ -2703,9 +2721,8 @@ public final class GameStateUpdater {
 									* (structuralOnly
 										? NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES
 										: visualOnly
-										? NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES
-										: NativeLayeredTerrainChunk
-											.TILE_WIRE_BYTES);
+										? visualTileBytes
+										: fullTileBytes);
 							if(server.getConfig().WORLD_BUILDER_MODE){
 								long buildStart = System.nanoTime();
 								byte[] rawImage =
@@ -2714,9 +2731,11 @@ public final class GameStateUpdater {
 								output.tileBytes =
 									compressNativeTerrain(
 										structuralOnly
-											? structuralTerrainWireBytes(rawImage)
+											? structuralTerrainWireBytes(
+												rawImage, fullTileBytes, visualTileBytes)
 											: visualOnly
-											? visualTerrainWireBytes(rawImage)
+											? visualTerrainWireBytes(
+												rawImage, fullTileBytes, visualTileBytes)
 											: rawImage);
 								wireBuildNanos +=
 									System.nanoTime() - buildStart;
@@ -2733,10 +2752,14 @@ public final class GameStateUpdater {
 										expectedRawBytes,
 										() -> structuralOnly
 											? structuralTerrainWireBytes(
-												chunk.copyWireBytes())
+												chunk.copyWireBytes(),
+												fullTileBytes,
+												visualTileBytes)
 											: visualOnly
 											? visualTerrainWireBytes(
-												chunk.copyWireBytes())
+												chunk.copyWireBytes(),
+												fullTileBytes,
+												visualTileBytes)
 											: chunk.copyWireBytes());
 								output.tileBytes = lookup.getCompressedBytes();
 								cacheRequests++;
@@ -2793,9 +2816,9 @@ public final class GameStateUpdater {
 	}
 
 	private static byte[] visualTerrainWireBytes(
-		final byte[] fullTerrainBytes) {
-		final int fullTileBytes =
-			NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+		final byte[] fullTerrainBytes,
+		final int fullTileBytes,
+		final int visualTileBytes) {
 		final int expectedFullBytes =
 			NativeLayeredTerrainSector.TILE_COUNT * fullTileBytes;
 		if (fullTerrainBytes == null
@@ -2805,22 +2828,22 @@ public final class GameStateUpdater {
 		}
 		final byte[] visual = new byte[
 			NativeLayeredTerrainSector.TILE_COUNT
-				* NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES];
+				* visualTileBytes];
 		int source = 0;
 		int target = 0;
 		while (source < fullTerrainBytes.length) {
-			visual[target++] = fullTerrainBytes[source];
-			visual[target++] = fullTerrainBytes[source + 1];
-			visual[target++] = fullTerrainBytes[source + 2];
+			System.arraycopy(
+				fullTerrainBytes, source, visual, target, visualTileBytes);
 			source += fullTileBytes;
+			target += visualTileBytes;
 		}
 		return visual;
 	}
 
 	private static byte[] structuralTerrainWireBytes(
-		final byte[] fullTerrainBytes) {
-		final int fullTileBytes =
-			NativeLayeredTerrainChunk.TILE_WIRE_BYTES;
+		final byte[] fullTerrainBytes,
+		final int fullTileBytes,
+		final int visualTileBytes) {
 		final int expectedFullBytes =
 			NativeLayeredTerrainSector.TILE_COUNT * fullTileBytes;
 		if (fullTerrainBytes == null
@@ -2836,7 +2859,7 @@ public final class GameStateUpdater {
 		while (source < fullTerrainBytes.length) {
 			System.arraycopy(
 				fullTerrainBytes,
-				source + NATIVE_LAYERED_VISUAL_TILE_WIRE_BYTES,
+				source + visualTileBytes,
 				structural,
 				target,
 				NATIVE_LAYERED_STRUCTURAL_TILE_WIRE_BYTES);

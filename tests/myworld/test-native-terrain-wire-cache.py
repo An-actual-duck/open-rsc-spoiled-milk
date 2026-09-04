@@ -181,8 +181,8 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
 
             public final class NativeTerrainMiningGuildWireHarness {
                 private static final int SIZE = 48;
-                private static final int TILE_BYTES = 10;
-				private static final int SOURCE_TILE_BYTES = 11;
+                    private static final int LEGACY_TILE_BYTES = 10;
+				private static final int WIDE_TILE_BYTES = 11;
 
                 public static void main(String[] arguments) throws Exception {
                     Path packageRoot = Paths.get(arguments[0]);
@@ -211,28 +211,11 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
                                     + "-yp" + sectorY + ".raw");
                             byte[] raw = Files.readAllBytes(sectorPath);
 							boolean wide =
-								raw.length == SIZE * SIZE * SOURCE_TILE_BYTES;
-                            require(wide || raw.length == SIZE * SIZE * TILE_BYTES,
+								raw.length == SIZE * SIZE * WIDE_TILE_BYTES;
+							require(wide || raw.length == SIZE * SIZE * LEGACY_TILE_BYTES,
                                 "source byte count " + sectorX + ","
                                     + sectorY);
-							byte[] wire;
-							if (wide) {
-								wire = new byte[SIZE * SIZE * TILE_BYTES];
-								for (int tile = 0; tile < SIZE * SIZE; tile++) {
-									int sourceOffset = tile * SOURCE_TILE_BYTES;
-									int targetOffset = tile * TILE_BYTES;
-									int elevation = (raw[sourceOffset] & 0xff) << 8
-										| raw[sourceOffset + 1] & 0xff;
-									require(elevation <= 255, "wire elevation range");
-									wire[targetOffset] = (byte) elevation;
-									System.arraycopy(
-										raw, sourceOffset + 2,
-										wire, targetOffset + 1,
-										TILE_BYTES - 1);
-								}
-							} else {
-								wire = raw;
-							}
+							byte[] wire = raw;
                             source[index++] = wire;
                             String contentSha = sha256(raw);
                             NativeLayeredTerrainWireCache.Lookup lookup =
@@ -272,40 +255,48 @@ class NativeTerrainWireCacheTest(unittest.TestCase):
                             for (int localX = 0; localX < SIZE; localX++) {
                                 for (int localY = 0;
                                         localY < SIZE; localY++) {
-                                    int offset =
-                                        (localX * SIZE + localY) * TILE_BYTES;
+                                    boolean wide =
+										raw.length == SIZE * SIZE * WIDE_TILE_BYTES;
+									int tileBytes = wide
+										? WIDE_TILE_BYTES : LEGACY_TILE_BYTES;
+									int offset =
+										(localX * SIZE + localY) * tileBytes;
                                     Tile tile = snapshot.createTile(
                                         sectorX * SIZE + localX,
                                         sectorY * SIZE + localY);
+									int elevation = wide
+										? (raw[offset] & 0xff) << 8
+											| raw[offset + 1] & 0xff
+										: raw[offset] & 0xff;
+									int fieldOffset = wide ? offset + 2 : offset + 1;
                                     require(
-                                        (tile.groundElevation & 0xff)
-                                            == (raw[offset] & 0xff),
+										tile.groundElevation == elevation,
                                         "elevation");
                                     require(
                                         (tile.groundTexture & 0xff)
-                                            == (raw[offset + 1] & 0xff),
+											== (raw[fieldOffset] & 0xff),
                                         "texture");
                                     require(
                                         (tile.groundOverlay & 0xff)
-                                            == (raw[offset + 2] & 0xff),
+											== (raw[fieldOffset + 1] & 0xff),
                                         "overlay");
                                     require(
                                         (tile.roofTexture & 0xff)
-                                            == (raw[offset + 3] & 0xff),
+											== (raw[fieldOffset + 2] & 0xff),
                                         "roof");
                                     require(
                                         (tile.verticalWall & 0xff)
-                                            == (raw[offset + 4] & 0xff),
+											== (raw[fieldOffset + 3] & 0xff),
                                         "vertical wall");
                                     require(
                                         (tile.horizontalWall & 0xff)
-                                            == (raw[offset + 5] & 0xff),
+											== (raw[fieldOffset + 4] & 0xff),
                                         "horizontal wall");
                                     int diagonal =
-                                        (raw[offset + 6] & 0xff) << 24
-                                            | (raw[offset + 7] & 0xff) << 16
-                                            | (raw[offset + 8] & 0xff) << 8
-                                            | raw[offset + 9] & 0xff;
+										(raw[fieldOffset + 5] & 0xff) << 24
+											| (raw[fieldOffset + 6] & 0xff) << 16
+											| (raw[fieldOffset + 7] & 0xff) << 8
+											| raw[fieldOffset + 8] & 0xff;
                                     require(
                                         tile.diagonalWalls == diagonal,
                                         "diagonal wall");

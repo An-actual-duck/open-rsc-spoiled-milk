@@ -3,6 +3,7 @@ package com.openrsc.server.content.worldedit;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.external.GameObjectLoc;
 import com.openrsc.server.external.NPCLoc;
+import com.openrsc.server.io.NativeLayeredTerrainChunk;
 import com.openrsc.server.io.NativeLayeredTerrainSector;
 import com.openrsc.server.io.NativeLayeredTerrainTile;
 import com.openrsc.server.io.NativeLayeredGroundItemPlacement;
@@ -282,6 +283,10 @@ public final class WorldEditorSessionManager {
 	public synchronized byte[] copyNativeTerrainSectorWireBytes(
 		NativeLayeredTerrainSector source) {
 		byte[] bytes = source.copyWireBytes();
+		boolean wide = NativeLayeredTerrainChunk.isWideEncoding(
+			source.getSourceEncoding());
+		int tileWireBytes = NativeLayeredTerrainChunk.wireBytesForEncoding(
+			source.getSourceEncoding());
 		WorldMapSectorId identity = source.getIdentity();
 		for (Map.Entry<NativeTileKey,NativeLayeredTerrainTile> entry
 			: nativeTerrainOverlay.entrySet()) {
@@ -296,8 +301,9 @@ public final class WorldEditorSessionManager {
 			}
 			int localX = Math.floorMod(key.x, NativeLayeredTerrainSector.SIZE);
 			int localY = Math.floorMod(key.y, NativeLayeredTerrainSector.SIZE);
-			int offset = (localX * NativeLayeredTerrainSector.SIZE + localY) * 10;
-			writeNativeTile(bytes, offset, entry.getValue());
+			int offset = (localX * NativeLayeredTerrainSector.SIZE + localY)
+				* tileWireBytes;
+			writeNativeTile(bytes, offset, entry.getValue(), wide);
 		}
 		return bytes;
 	}
@@ -1376,13 +1382,15 @@ public final class WorldEditorSessionManager {
 		if(current==null?saved==null:current.equals(saved))nativeTerrainDirty.remove(key);
 		else nativeTerrainDirty.add(key);
 	}
-	private static void writeNativeTile(byte[] bytes,int offset,NativeLayeredTerrainTile tile){
-		bytes[offset]=(byte)tile.getElevation();bytes[offset+1]=(byte)tile.getTexture();
-		bytes[offset+2]=(byte)tile.getOverlay();bytes[offset+3]=(byte)tile.getRoof();
-		bytes[offset+4]=(byte)tile.getVerticalWall();bytes[offset+5]=(byte)tile.getHorizontalWall();
-		int diagonal=tile.getDiagonalWall();bytes[offset+6]=(byte)(diagonal>>>24);
-		bytes[offset+7]=(byte)(diagonal>>>16);bytes[offset+8]=(byte)(diagonal>>>8);
-		bytes[offset+9]=(byte)diagonal;
+	private static void writeNativeTile(byte[] bytes,int offset,NativeLayeredTerrainTile tile,boolean wide){
+		if(wide)bytes[offset++]=(byte)(tile.getElevation()>>>8);
+		else if(tile.getElevation()>255)throw new IllegalStateException("Wide native elevation requires a v2-u16 source encoding");
+		bytes[offset++]=(byte)tile.getElevation();bytes[offset++]=(byte)tile.getTexture();
+		bytes[offset++]=(byte)tile.getOverlay();bytes[offset++]=(byte)tile.getRoof();
+		bytes[offset++]=(byte)tile.getVerticalWall();bytes[offset++]=(byte)tile.getHorizontalWall();
+		int diagonal=tile.getDiagonalWall();bytes[offset++]=(byte)(diagonal>>>24);
+		bytes[offset++]=(byte)(diagonal>>>16);bytes[offset++]=(byte)(diagonal>>>8);
+		bytes[offset]=(byte)diagonal;
 	}
 	private static String sha256(byte[] bytes){
 		try{
@@ -1394,8 +1402,8 @@ public final class WorldEditorSessionManager {
 	}
 	private static void validateTerrainPaint(int fieldMask,int elevation,int groundTexture,int groundOverlay,int roofTexture,int horizontalWall,int verticalWall){
 		if(fieldMask<=0||(fieldMask&~127)!=0)throw new IllegalArgumentException("Select at least one supported terrain field.");
-		if(!rawByte(elevation)||!rawByte(groundTexture)||!rawByte(groundOverlay)||!rawByte(roofTexture)
-			||!rawByte(horizontalWall)||!rawByte(verticalWall))throw new IllegalArgumentException("Terrain byte values must be from 0 to 255.");
+		if(elevation<0||elevation>65535||!rawByte(groundTexture)||!rawByte(groundOverlay)||!rawByte(roofTexture)
+			||!rawByte(horizontalWall)||!rawByte(verticalWall))throw new IllegalArgumentException("Elevation must be from 0 to 65535; other terrain values must be from 0 to 255.");
 	}
 	private WorldEditorTerrainArchive.Snapshot inspectArchivedTerrain(Player player, int x, int y, int plane) throws IOException {
 		if (terrainArchive == null) {

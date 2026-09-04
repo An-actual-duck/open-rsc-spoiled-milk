@@ -10,7 +10,10 @@ import java.util.Objects;
  * sector. Chunk coordinates are global and independent from storage pages.
  */
 public final class NativeLayeredTerrainChunk {
-	public static final int TILE_WIRE_BYTES = 10;
+	public static final int LEGACY_TILE_WIRE_BYTES = 10;
+	public static final int WIDE_TILE_WIRE_BYTES = 11;
+	/** Legacy compatibility alias. Use {@link #wireBytesForEncoding(String)}. */
+	public static final int TILE_WIRE_BYTES = LEGACY_TILE_WIRE_BYTES;
 
 	private final WorldSpaceId worldSpace;
 	private final int level;
@@ -70,26 +73,48 @@ public final class NativeLayeredTerrainChunk {
 	 * all 32 diagonal-wall bits in network byte order.
 	 */
 	public byte[] copyWireBytes() {
-		byte[] result = new byte[tiles.length * TILE_WIRE_BYTES];
+		final boolean wide = isWideEncoding(sourceEncoding);
+		byte[] result = new byte[
+			tiles.length * (wide ? WIDE_TILE_WIRE_BYTES : LEGACY_TILE_WIRE_BYTES)];
 		int offset = 0;
 		for (NativeLayeredTerrainTile tile : tiles) {
-			if (tile.getElevation() > 255) {
-				throw new IllegalStateException(
-					"Wide native elevation is not supported by the current client protocol");
-			}
-			result[offset++] = (byte) tile.getElevation();
-			result[offset++] = (byte) tile.getTexture();
-			result[offset++] = (byte) tile.getOverlay();
-			result[offset++] = (byte) tile.getRoof();
-			result[offset++] = (byte) tile.getVerticalWall();
-			result[offset++] = (byte) tile.getHorizontalWall();
-			int diagonal = tile.getDiagonalWall();
-			result[offset++] = (byte) (diagonal >>> 24);
-			result[offset++] = (byte) (diagonal >>> 16);
-			result[offset++] = (byte) (diagonal >>> 8);
-			result[offset++] = (byte) diagonal;
+			offset = writeWireTile(result, offset, tile, wide);
 		}
 		return result;
+	}
+
+	public static boolean isWideEncoding(String encoding) {
+		return NativeLayeredWorldPackage.RAW_ENCODING_V2.equals(encoding);
+	}
+
+	public static int wireBytesForEncoding(String encoding) {
+		return isWideEncoding(encoding)
+			? WIDE_TILE_WIRE_BYTES : LEGACY_TILE_WIRE_BYTES;
+	}
+
+	static int writeWireTile(
+		byte[] result,
+		int offset,
+		NativeLayeredTerrainTile tile,
+		boolean wide) {
+		if (wide) {
+			result[offset++] = (byte) (tile.getElevation() >>> 8);
+		} else if (tile.getElevation() > 255) {
+			throw new IllegalStateException(
+				"Wide native elevation requires a v2-u16 source encoding");
+		}
+		result[offset++] = (byte) tile.getElevation();
+		result[offset++] = (byte) tile.getTexture();
+		result[offset++] = (byte) tile.getOverlay();
+		result[offset++] = (byte) tile.getRoof();
+		result[offset++] = (byte) tile.getVerticalWall();
+		result[offset++] = (byte) tile.getHorizontalWall();
+		int diagonal = tile.getDiagonalWall();
+		result[offset++] = (byte) (diagonal >>> 24);
+		result[offset++] = (byte) (diagonal >>> 16);
+		result[offset++] = (byte) (diagonal >>> 8);
+		result[offset++] = (byte) diagonal;
+		return offset;
 	}
 
 	public WorldSpaceId getWorldSpace() {
