@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "2b3b08f834a8916396b3acdf13f9cf228fb1da590ba4c006256fa38f3e6b4bd4",
+  "inputTreeSha256": "04fe3fa086fa5a8e3d9abd070e08923a7cdd811a1f617cb823adb26bd752dfe5",
   "inputs": [
     {
       "brandSignals": [
@@ -37388,7 +37388,7 @@
       "brandSignals": [
         "spoiled-milk-name"
       ],
-      "bytes": 72787,
+      "bytes": 72754,
       "category": "tool-only",
       "classificationReason": "World Builder/editor-only runtime support",
       "classificationRule": "server/src/com/openrsc/server/content/worldedit/**",
@@ -37483,7 +37483,7 @@
         "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/net/rsc/handlers/WorldEditorHandler.java"
       ],
-      "sha256": "d5e9a185bf08d49f879692714977aec442d1b8ebf0b11a2a673fb4728b793a19"
+      "sha256": "a60fa724225fca9ad22f8e4b38e4168b0a9d4b48d62b04310f3286f5c976b7d7"
     },
     {
       "brandSignals": [],
@@ -51295,7 +51295,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 66943,
+      "bytes": 68948,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -51383,6 +51383,10 @@
         {
           "import": "com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter",
           "path": "server/src/com/openrsc/server/model/world/coordinate/LegacyPackedPointAdapter.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldCoordinate",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldCoordinate.java"
         },
         {
           "import": "com.openrsc.server.model.world.coordinate.WorldLocation",
@@ -51868,7 +51872,7 @@
         "server/src/com/openrsc/server/util/PathfindingDebug.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "f5ac6440a0b26cdb56940133178c7f03084d77ca07fc479fb74bd3cb8739d13a"
+      "sha256": "1a5faa8e9f3635ebe6809110d46132163ed246527fc67df9376b2ede7c50476e"
     },
     {
       "brandSignals": [],
@@ -56117,6 +56121,7 @@
         "server/src/com/openrsc/server/model/combat/ProjectileImpactValidator.java",
         "server/src/com/openrsc/server/model/entity/GroundItem.java",
         "server/src/com/openrsc/server/model/entity/Mob.java",
+        "server/src/com/openrsc/server/model/entity/npc/Npc.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/model/world/NativeLayeredGameObjectRegistry.java",
         "server/src/com/openrsc/server/model/world/region/LayeredTileNeighborhoodParityComparison.java",
@@ -57260,7 +57265,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 199536,
+      "bytes": 199433,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57588,7 +57593,7 @@
         "server/src/com/openrsc/server/io/WorldLoader.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "58ea6cef2b602a69ebe57cf9bf3e98fa16dc5102eb6be665b314149d22e89c9e"
+      "sha256": "c45bc1d4cc111c811c583d60b2256f3a9683e9accf1961cd683c17a84c1c91bb"
     },
     {
       "brandSignals": [],
