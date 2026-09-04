@@ -23,6 +23,7 @@ import com.openrsc.server.model.entity.death.DeathTransition;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.net.rsc.ActionSender;
@@ -135,6 +136,25 @@ public class Npc extends Mob {
 			location);
 	}
 
+	/**
+	 * Creates a runtime NPC at an exact signed location with authored roaming
+	 * bounds expressed in that same signed level.
+	 */
+	public Npc(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int minX,
+		final int maxX,
+		final int minY,
+		final int maxY) {
+		this(
+			world,
+			createRuntimeNpcLoc(
+				world, id, location, minX, maxX, minY, maxY),
+			location);
+	}
+
 	public Npc(final World world, final int id, final int x, final int y, final int radius) {
 		this(world, new NPCLoc(id, x, y, x - radius, x + radius, y - radius, y + radius));
 	}
@@ -199,20 +219,64 @@ public class Npc extends Mob {
 		final int id,
 		final WorldLocation location,
 		final int radius) {
+		WorldLocation checkedLocation = Objects.requireNonNull(
+			location, "location");
+		WorldCoordinate coordinate = checkedLocation.getCoordinate();
+		return createRuntimeNpcLoc(
+			world,
+			id,
+			checkedLocation,
+			Math.subtractExact(coordinate.getX(), radius),
+			Math.addExact(coordinate.getX(), radius),
+			Math.subtractExact(coordinate.getY(), radius),
+			Math.addExact(coordinate.getY(), radius));
+	}
+
+	private static NPCLoc createRuntimeNpcLoc(
+		final World world,
+		final int id,
+		final WorldLocation location,
+		final int minX,
+		final int maxX,
+		final int minY,
+		final int maxY) {
 		World checkedWorld = Objects.requireNonNull(world, "world");
 		WorldLocation checkedLocation = Objects.requireNonNull(
 			location, "location");
-		Point runtimePoint = checkedWorld.getServer().getConfig()
-			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
-			? checkedWorld.getRegionManager()
-				.toRuntimeCompatibilityPoint(checkedLocation)
-			: LegacyPackedPointAdapter.toLegacyPoint(checkedLocation);
-		int x = runtimePoint.getX();
-		int y = runtimePoint.getY();
+		WorldCoordinate coordinate = checkedLocation.getCoordinate();
+		if (minX > maxX || minY > maxY
+			|| coordinate.getX() < minX || coordinate.getX() > maxX
+			|| coordinate.getY() < minY || coordinate.getY() > maxY) {
+			throw new IllegalArgumentException(
+				"NPC start must be inside its authored roaming bounds");
+		}
+		int level = coordinate.getLevel();
+		WorldLocation minimum = new WorldLocation(
+			checkedLocation.getWorldSpace(),
+			new WorldCoordinate(minX, minY, level));
+		WorldLocation maximum = new WorldLocation(
+			checkedLocation.getWorldSpace(),
+			new WorldCoordinate(maxX, maxY, level));
+		Point runtimePoint = toRuntimeCompatibilityPoint(
+			checkedWorld, checkedLocation);
+		Point runtimeMinimum = toRuntimeCompatibilityPoint(
+			checkedWorld, minimum);
+		Point runtimeMaximum = toRuntimeCompatibilityPoint(
+			checkedWorld, maximum);
 		return new NPCLoc(
-			id, x, y,
-			x - radius, x + radius,
-			y - radius, y + radius);
+			id,
+			runtimePoint.getX(), runtimePoint.getY(),
+			runtimeMinimum.getX(), runtimeMaximum.getX(),
+			runtimeMinimum.getY(), runtimeMaximum.getY());
+	}
+
+	private static Point toRuntimeCompatibilityPoint(
+		final World world,
+		final WorldLocation location) {
+		return world.getServer().getConfig()
+			.WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY
+			? world.getRegionManager().toRuntimeCompatibilityPoint(location)
+			: LegacyPackedPointAdapter.toLegacyPoint(location);
 	}
 
 	/**
