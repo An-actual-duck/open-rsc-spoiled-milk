@@ -1159,7 +1159,14 @@ public class ProjectileEvent extends SingleTickEvent {
 			ActionSender.sendStat((Player) target, Skill.HITS.id());
 		}
 		if (target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
-			handleDeath();
+			if (target == opponent) {
+				handleDeath();
+			} else {
+				// Hell's Inferno can kill a secondary NPC while the primary
+				// opponent survives. Finalize the credited victim's lifecycle
+				// without ending the primary opponent's ranged engagement.
+				target.killedBy(hitter);
+			}
 		}
 		return damageDealt;
 	}

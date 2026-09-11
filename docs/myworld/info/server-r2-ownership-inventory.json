@@ -250,7 +250,13 @@
       "core": "src",
       "plugins": "plugins"
     },
-    "validationErrors": []
+    "validationErrors": [
+      "missing explicit Ant classpath entry compile_plugins: core.jar",
+      "missing explicit Ant classpath entry runserver: core-gameplay-overlay.jar",
+      "missing explicit Ant classpath entry runserver: core.jar",
+      "missing explicit Ant classpath entry runserverzgc: core-gameplay-overlay.jar",
+      "missing explicit Ant classpath entry runserverzgc: core.jar"
+    ]
   },
   "categories": [
     "foundation",
@@ -800,7 +806,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "04fe3fa086fa5a8e3d9abd070e08923a7cdd811a1f617cb823adb26bd752dfe5",
+  "inputTreeSha256": "528c38a8d8f0ccdcc1e6af27aa00ef8297f70058a84a4ed0f9f7c99a007f066d",
   "inputs": [
     {
       "brandSignals": [
@@ -44141,7 +44147,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 56441,
+      "bytes": 56713,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -44378,7 +44384,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/WalkRequest.java"
       ],
-      "sha256": "291b5398043033bb412a0b214ce7cf7455e90ee1f0f13f962241aa1d2c5f3e36"
+      "sha256": "385414d744e813062d258f3059174c5b459e5f0b6ebfcb4b91eedff85fd3f899"
     },
     {
       "brandSignals": [],
@@ -57138,7 +57144,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7510,
+      "bytes": 7680,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57156,7 +57162,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/world/region/NativeLayeredTerrainCollisionPlan.java",
       "reverseDependencies": [],
-      "sha256": "348c040ba6708d2325be5f7ef759b389581a5b630cae5efac68c6d31511c4417"
+      "sha256": "34ac1f8d42bf14c28983507a871d590003cad70ab6007b155af50417b4def082"
     },
     {
       "brandSignals": [],
