@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "04fe3fa086fa5a8e3d9abd070e08923a7cdd811a1f617cb823adb26bd752dfe5",
+  "inputTreeSha256": "fa6ab9c54ca1044097f3a200d43c78f903e8d44b8da3680ba1a4a85f47a12523",
   "inputs": [
     {
       "brandSignals": [
@@ -57138,7 +57138,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7510,
+      "bytes": 7680,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -57156,7 +57156,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/world/region/NativeLayeredTerrainCollisionPlan.java",
       "reverseDependencies": [],
-      "sha256": "348c040ba6708d2325be5f7ef759b389581a5b630cae5efac68c6d31511c4417"
+      "sha256": "34ac1f8d42bf14c28983507a871d590003cad70ab6007b155af50417b4def082"
     },
     {
       "brandSignals": [],

@@ -17,6 +17,7 @@ python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
 python3 ./tests/myworld/test-client-definition-registry-extraction.py
 python3 ./tests/myworld/test-client-server-object-collision-parity.py
+python3 ./tests/myworld/test-native-blocking-overlay.py
 python3 ./tests/myworld/test-directional-object-interactions.py
 python3 ./tests/myworld/test-restricted-door-layered-coordinates.py
 python3 ./tests/myworld/test-restricted-passage-interactions.py

@@ -265,6 +265,15 @@ Treat the reserved overlay as an explicit shared semantic; test server movement
 blocking and client appearance/prediction together. Null-checking alone would
 avoid the exception but could incorrectly make the blocking terrain walkable.
 
+Repair follow-up: worker commit `6d768898aa4a01f6cbcdfe7db94d6856812e71a3`
+handles overlay 255 directly in the server collision plan, blocking movement
+without a TileDef lookup and without adding projectile cover. Manager review
+confirmed a successful server/plugin rebuild and passing overlay, combat
+projectile, object-collision parity, native placement/server-source, Ranger
+Guild, and build-authority regressions. The new overlay test is wired into
+`test-all.sh`. This resolves E4 in source; it has not been deployed or tested
+in a live client/server session. Other findings remain open.
+
 ### E5. Terrain representation concern narrowed
 
 `WorldBuilderRawLayeredTerrainCodec` supports raw v1 and raw v2-u16; editable
