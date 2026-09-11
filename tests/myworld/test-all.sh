@@ -169,6 +169,7 @@ python3 ./tests/myworld/test-combat-interaction.py
 python3 ./tests/myworld/test-npc-movement-boundary.py
 python3 ./tests/myworld/test-npc-attack-styles.py
 python3 ./tests/myworld/test-combat-runtime-invariants.py
+python3 ./tests/myworld/test-balrog-zero-health-enemies.py
 python3 ./tests/myworld/test-projectile-combat-benchmark.py
 python3 ./tests/myworld/test-npc-roaming-benchmark.py
 python3 ./tests/myworld/test-projectile-attack-range-audit.py
