@@ -122,8 +122,11 @@ public final class NativeLayeredTerrainCollisionPlan {
 
 		int rawOverlay = checkedCurrent.getOverlay();
 		int collisionOverlay = rawOverlay == 250 ? 2 : rawOverlay;
+		// Client WorldBuilderTerrainOverlay reserves 255 for blocking base
+		// colour, outside the TileDef inventory. It adds no projectile cover.
 		boolean terrainBlocked =
-			collisionOverlay > 0 && checkedOverlay.test(collisionOverlay);
+			rawOverlay == 255
+				|| (collisionOverlay > 0 && checkedOverlay.test(collisionOverlay));
 		boolean overlayProjectileBlocked =
 			rawOverlay == 2 || rawOverlay == 11;
 		return new Result(
