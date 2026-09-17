@@ -20,6 +20,12 @@ Source policy:
 
 - This is the only official Monster Slayer implementation plan.
 
+Related expansion design notes (not implemented):
+
+- [Slayer Tower NPC integration and consumable gimmicks](../rough-drafts/slayer-tower-npc-integration.md)
+  records the owner's six-floor/eight-monster roster, initial combat targets,
+  and counter-consumable concepts. Undecided details remain draft proposals.
+
 ## Launch Decisions And Shipped State (2026-08-11 through 2026-08-20)
 
 - The formal player-facing quest and guild name is **The Monster Slayer's
