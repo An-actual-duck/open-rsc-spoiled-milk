@@ -33,6 +33,8 @@ public final class CombatEligibilityMessageAdapter {
 			return Collections.emptyList();
 		}
 		switch (reason) {
+			case SOURCE_SLIMED:
+				return Collections.singletonList("Slimy Spit prevents you from attacking.");
 			case PVP_DISABLED:
 				return Collections.singletonList(player.getConfig().WANT_MYWORLD
 					? "This is a PvM-only world"

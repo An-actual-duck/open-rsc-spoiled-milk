@@ -2363,6 +2363,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getNpcMenuCombatLevel(int npcId) {
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
 		NPCDef npcDef = EntityHandler.getNpcDef(npcId);
 		return (npcDef.getStr() + npcDef.getAtt() + npcDef.getDef() + npcDef.getHits()) / 4;
 	}
@@ -10710,7 +10711,7 @@ public final class mudclient implements Runnable {
 				boolean moving = (npc.waypointIndexCurrent + 1) % 10 != npc.waypointIndexNext;
 				var14 = preview.movementFrame(npc.stepFrame, def.getWalkModel(), moving) + var13 * 3;
 			}
-			if (isCombatDirection(npc.direction)) {
+			if (isCombatDirection(npc.direction) && preview != com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG) {
 				var12 = shouldMirrorCombatSprite(npc.direction);
 				var13 = 5;
 				x += getNpcCombatSpriteScreenOffset(npc.direction, def, overlayMovement);
@@ -10725,6 +10726,13 @@ public final class mudclient implements Runnable {
 
 			int var15;
 			int var16;
+			long spitElapsed = System.currentTimeMillis() - npc.frogSpitStartedMillis;
+			if (preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG
+				&& npc.frogSpitStartedMillis > 0 && spitElapsed >= 0 && spitElapsed < 600) {
+				var13 = 5;
+				var11 = 2;
+				var14 = 15 + (int) (spitElapsed / 200);
+			}
 			boolean hideSummonDuringArrival = shouldHideSummonDuringArrival(npc);
 			if (!hideSummonDuringArrival) {
 			for (var15 = 0; var15 < 12; ++var15) {
@@ -15046,6 +15054,7 @@ public final class mudclient implements Runnable {
 				int tooltipX = POTION_HUD_X + columns * (POTION_HUD_WIDTH + POTION_HUD_COLUMN_GAP) + 1;
 				String tooltip = status.isCleric()
 					? status.getClericHoverText() : itemDef.getName();
+				if (status.getSlayerHoverText() != null) tooltip = status.getSlayerHoverText();
 				getSurface().drawString(tooltip, tooltipX, y + 15, 0xFFFFFF, 1);
 			}
 		}
@@ -22208,7 +22217,8 @@ public final class mudclient implements Runnable {
 				if (sprites != null) sprites.put(preview.animationName(), entry);
 			} else {
 				AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getSlayerPreviewAnimationId(preview));
-				for (int frame = 0; frame < 15; frame++) {
+				int frameCount = preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG ? 18 : 15;
+				for (int frame = 0; frame < frameCount; frame++) {
 					getSurface().sprites[animation.getNumber() + frame] = entry.getFrames()[frame].getSprite();
 				}
 			}
@@ -25951,6 +25961,13 @@ public final class mudclient implements Runnable {
 			return null;
 		}
 		return this.npcsServer[i];
+	}
+
+	public void markNpcProjectileAttack(int serverIndex) {
+		ORSCharacter shooter = getNpcFromServer(serverIndex);
+		if (shooter != null && shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) {
+			shooter.frogSpitStartedMillis = System.currentTimeMillis();
+		}
 	}
 
 	public void setOptionsMenuShow(boolean show) {

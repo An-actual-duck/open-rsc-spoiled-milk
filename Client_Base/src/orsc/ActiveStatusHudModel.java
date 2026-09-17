@@ -38,7 +38,7 @@ public final class ActiveStatusHudModel {
 	private boolean validateCatalogEnrichment(List<ActiveStatusPacketDecoder.Entry> decoded,
 			ClericSpellbookCatalog catalog) {
 		for (ActiveStatusPacketDecoder.Entry entry : decoded) {
-			if (entry.getIdentityKind() == 0) {
+			if (entry.getIdentityKind() == 0 || entry.getIdentityKind() == 2) {
 				continue;
 			}
 			ClericSpellDef spell = catalog.get(entry.getStableIdentity());
@@ -166,6 +166,9 @@ public final class ActiveStatusHudModel {
 		public int getIconItemId() { return iconItemId; }
 		public long getRemainingSeconds() { return remainingSeconds; }
 		public boolean isCleric() { return identityKind == 1 && clericSpell != null; }
+		public String getSlayerHoverText() {
+			return identityKind == 2 && stableIdentity == 1 ? "Slimy Spit" : null;
+		}
 		public int getStableIdentity() { return stableIdentity; }
 		public int getRank() { return rank; }
 		public int getRemainingCounter() { return remainingCounter; }

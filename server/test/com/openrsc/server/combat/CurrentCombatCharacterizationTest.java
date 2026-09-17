@@ -108,6 +108,8 @@ public final class CurrentCombatCharacterizationTest {
 			new RecordingDamageObserver();
 		try (CurrentCombatHarness harness = new CurrentCombatHarness(
 				damageObserver)) {
+			run(harness, "giant_frog_explicit_stats_refresh_and_solvent_immunity",
+				CurrentGiantFrogCharacterization::effectsAndStats);
 			run(harness, "stat_restore_protects_all_temporary_drains_until_expiry",
 				CurrentStatReductionProtectionCharacterization
 					::protectedDrainPathsAndExpiry);

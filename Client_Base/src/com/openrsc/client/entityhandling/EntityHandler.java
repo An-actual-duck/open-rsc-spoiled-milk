@@ -5570,6 +5570,9 @@ public class EntityHandler {
 			216, 590, "items:590", false, true, 128, colour, false, false, true, 3316));
 		setCustomItemDefinition(3317, new ItemDef("King-black-dragon-hide cuirass", setDescription, "",
 			288, 7, "items:7", false, true, 64, colour, false, false, true, 3317));
+		setCustomItemDefinition(3318, new ItemDef("Slime Solvent",
+			"Blocks giant frog slime and poison for 10 minutes.", "Drink",
+			0, 48, "items:48", false, false, 0, 5289585, false, true, false, 3318));
 	}
 
 	private static void addBangleJewelryDefinitions() {
@@ -6748,8 +6751,10 @@ public class EntityHandler {
 		));
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			setCustomNpcDefinition(preview.npcId, new NPCDef(
-				preview.displayName, "A harmless movement-test creature", "",
-				1, 1, 1, 1, false,
+				preview.displayName, preview == SlayerMovementPreview.GIANT_FROG
+					? "A poisonous frog with exceptionally sticky saliva" : "A harmless movement-test creature", "",
+				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : 1, 1,
+				preview == SlayerMovementPreview.GIANT_FROG,
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));
 		}
@@ -7872,7 +7877,8 @@ public class EntityHandler {
 		slayerPreviewAnimations.clear();
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			slayerPreviewAnimations.put(preview, animations.size());
-			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0, false, false, 0));
+			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0,
+				preview == SlayerMovementPreview.GIANT_FROG, false, 0));
 		}
 	}
 

@@ -91,6 +91,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getRangedProjectileVisual(final Npc npc) {
+		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return Projectile.ACID_DROP;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.ARROW;
 		}
@@ -369,6 +370,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public static NpcAttackStyleProfile forNpc(final Npc npc) {
+		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return PURE_RANGED;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return MELEE;
 		}

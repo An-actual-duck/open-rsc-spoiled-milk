@@ -136,7 +136,7 @@ public final class ActiveStatusInventoryFixture {
 			"potion:deftness", "cleric:fervor", "cleric:rally",
 			"potion:stat_reduction_protection", "cleric:thorns", "cleric:zeal",
 			"potion:magic_resistance", "potion:melee_resistance",
-			"potion:poison_protection", "potion:ranged_resistance",
+			"potion:poison_protection", "slayer:slimy_spit", "slayer:slime_solvent", "potion:ranged_resistance",
 			"potion:regeneration", "cleric:respite", "potion:insight",
 			"potion:insight_skills", "potion:luck", "potion:notation",
 			"potion:skiller", "potion:speed", "potion:warrior");
@@ -300,6 +300,12 @@ public final class ActiveStatusHudFixture {
 	}
 	public static void main(String[] args) throws Exception {
 		ClericSpellbookCatalog catalog = catalog();
+		ActiveStatusHudModel frogModel = new ActiveStatusHudModel();
+		frogModel.replace(ActiveStatusPacketDecoder.decode(packet(
+			new int[][] {{3318, 10}}, 0, new int[][] {{2, 1, 0, 0, 0}})), catalog, 1_000L);
+		check("Slimy Spit".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()),
+			"Slayer debuff mislabeled as potion");
+		check(frogModel.snapshot(11_000L).getRows().isEmpty(), "frog status expiry");
 		int[][] prefix = {{50, 10}, {3302, 30}, {3305, 30}, {3300, 30}};
 		int[][] trailer = {{0, 50, 0, 0, 0}, {1, 2, 3, 0, 0},
 			{1, 5, 3, 1, 6}, {1, 0, 2, 2, 2}};

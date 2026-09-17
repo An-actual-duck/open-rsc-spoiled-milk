@@ -20,7 +20,7 @@ public final class SlayerMovementPreviewFixture {
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			NPCDef npc = EntityHandler.getNpcDef(preview.npcId);
 			require(npc.id == preview.npcId && npc.getName().equals(preview.displayName), "NPC identity");
-			require(!npc.isAttackable() && npc.getCamera1() == preview.cameraWidth()
+			require(npc.isAttackable() == (preview == SlayerMovementPreview.GIANT_FROG) && npc.getCamera1() == preview.cameraWidth()
 				&& npc.getCamera2() == preview.cameraHeight(), "NPC presentation and harmlessness");
 			File source = loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/slayer-movement-preview"}, preview.assetName + ".png");
 			BufferedImage image = loader.readAssetImage(source);
@@ -28,7 +28,7 @@ public final class SlayerMovementPreviewFixture {
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			EntityHandler.activateSlayerPreviewVisual(preview);
 			require(npc.sprites[0] == EntityHandler.getSlayerPreviewAnimationId(preview), "activation");
-			require(!EntityHandler.getAnimationDef(npc.sprites[0]).hasA(), "combat must remain disabled");
+			require(EntityHandler.getAnimationDef(npc.sprites[0]).hasA() == (preview == SlayerMovementPreview.GIANT_FROG), "only frog combat enabled");
 			int nativeWidth = preview.columnWidths()[0];
 			for (int direction = 0; direction < 8; direction++) {
 				int column = NpcDirectionalAnimationMapping.sourceDirection(direction);

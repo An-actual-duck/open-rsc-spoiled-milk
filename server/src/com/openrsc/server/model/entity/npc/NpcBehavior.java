@@ -529,12 +529,20 @@ public class NpcBehavior {
 			return false;
 		}
 
-			if (!npc.withinRange(target, profile.getProjectileRange())
-				|| !PathValidation.checkEnemyCombatProjectilePath(
-					npc.getWorld(),
-					npc.getWorldLocation(),
-					target.getWorldLocation())
-			|| !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
+		if (!npc.withinRange(target, profile.getProjectileRange())
+			|| !PathValidation.checkEnemyCombatProjectilePath(
+				npc.getWorld(),
+				npc.getWorldLocation(),
+				target.getWorldLocation())) {
+			return false;
+		}
+		if (!checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
+			// A clear ranged shot on cooldown is not a reason to approach melee.
+			if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) {
+				npc.resetPath();
+				npc.face(target);
+				return true;
+			}
 			return false;
 		}
 

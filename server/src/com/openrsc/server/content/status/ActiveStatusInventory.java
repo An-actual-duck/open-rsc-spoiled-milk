@@ -28,6 +28,8 @@ public final class ActiveStatusInventory {
 		"potion:magic_resistance",
 		"potion:melee_resistance",
 		"potion:poison_protection",
+		"slayer:slimy_spit",
+		"slayer:slime_solvent",
 		"potion:ranged_resistance",
 		"potion:regeneration",
 		"cleric:respite",

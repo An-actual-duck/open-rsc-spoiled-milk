@@ -2225,6 +2225,7 @@ public class ActionSender {
 		List<ActiveStatusEntry> statuses = new ArrayList<ActiveStatusEntry>(
 			player.getActivePotionEffectStatuses());
 		ClericActiveStatusCollector.append(player, statuses);
+		com.openrsc.server.content.monsterslayer.GiantFrogCombat.appendStatuses(player, statuses);
 		ActiveStatusInventory inventory = ActiveStatusInventory.select(statuses);
 		List<ActiveStatusEntry> visible = inventory.getVisible();
 		ActivePotionEffectsStruct struct = new ActivePotionEffectsStruct();

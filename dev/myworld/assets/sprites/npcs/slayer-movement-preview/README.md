@@ -12,8 +12,9 @@ SHA-256 identities. The source project remains unchanged.
 Columns 0–4 are front, diagonal front, right-facing side, diagonal rear and rear.
 Rows are idle, first step, opposite step. The frog instead has crouch, kick,
 landing. Existing opposite camera directions mirror the corresponding columns.
-Original additional attack columns are preserved in the files but not enabled
-as combat animations in this integration. Banshee has only five columns.
+Original additional attack columns are preserved. The subsequent giant frog
+combat pass enables its attack column; other attack columns remain disabled.
+Banshee has only five columns.
 
 The native pixels, transparency, padding and unequal attack-column widths are
 preserved. Presentation starts at 2.4 world units per native pixel, uniformly
@@ -45,10 +46,13 @@ checking idle. No persistent spawns are added and these creatures do not respawn
 | 869 | Dark beast | `::spawnnpc 869 4 10` |
 | 870 | Abyssal demon | `::spawnnpc 870 4 10` |
 
-These are harmless, non-attackable, non-aggressive fixtures with placeholder
+Except for giant frog 863, these are harmless, non-attackable, non-aggressive fixtures with placeholder
 level-one stats. No drops, Slayer credit, shop items, access gates or tower
 placements are supplied. Planned combat levels are not activated. Existing
 NPC IDs, including Gorak 861 and Green Dragon 862, remain unchanged.
+
+Giant frog now has a first ranged combat implementation; see
+[the combat test contract](../../../../../../docs/myworld/rough-drafts/giant-frog-combat-test.md).
 
 Acceptance: watch all directions and camera rotations; check facing, mirrored
 directions, ground alignment, size, clipping, leg alternation and the complete

@@ -20,12 +20,14 @@ for entry, npc in zip(manifest, defs):
     assert hashlib.sha256(data).hexdigest() == entry['sha256']
     assert struct.unpack('>II', data[16:24]) == (sum(entry['columns']), entry['height'])
     assert data[25] == 6, 'RGBA required'
-    assert npc['attackable'] == npc['aggressive'] == 0
+    assert npc['aggressive'] == 0
+    assert npc['attackable'] == (1 if npc['id'] == 863 else 0)
     assert npc['command'] == npc['command2'] == ''
     assert npc['roundMode'] == 1 and npc['walkModel'] == 10
     assert npc['camera1'] == entry['columns'][0] * 12 // 5
     assert npc['camera2'] == (entry['height'] // 3) * 12 // 5
-    assert all(npc[k] == 1 for k in ('attack', 'strength', 'hits', 'defense', 'combatlvl'))
+    assert all(npc[k] == 1 for k in ('attack', 'strength', 'defense'))
+    assert (npc['hits'], npc['combatlvl']) == ((30, 20) if npc['id'] == 863 else (1, 1))
     assert [npc['sprites' + str(i)] for i in range(1, 13)] == [0] + [-1] * 11
     with zipfile.ZipFile(JAR) as jar:
         assert jar.read('myworld-assets/sprites/npcs/slayer-movement-preview/' + entry['key'] + '.png') == data
