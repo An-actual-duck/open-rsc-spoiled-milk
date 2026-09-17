@@ -1,4 +1,4 @@
-# Slayer special drops and weapon assembly
+# Slayer special drops and unique equipment assembly
 
 Status: owner-directed design notes; not implemented.
 Updated: 2026-09-17.
@@ -64,6 +64,23 @@ drop-rate number or component quantity has been approved.
   independent versus shared roll, and any luck modifiers deliberately.
 - Other monsters' unique drops and weapon recipes remain to be designed;
   their existence as a goal does not authorize invented reward definitions.
+
+## Confirmed unique-reward equipment slots
+
+All task monsters supply hides or equivalent materials, and leather armor sets
+have set bonuses. Unique assembled rewards must complement those sets rather
+than force players to choose between a unique armor piece and their set bonus.
+
+- Available reward categories: **weapons, shields and jewelry**.
+- Do not design unique rewards for slots occupied by leather armor pieces.
+- Do not work around this rule by breaking, weakening or redesigning leather
+  set bonuses. No such change is authorized.
+- Check actual equipment-slot definitions and set membership before specifying
+  each reward. Exact jewelry subslots, stats and effects remain item-specific
+  decisions; this rule does not approve a particular new item or slot.
+
+The abyssal whip fits the weapon category. The component-plus-Slayer-currency
+assembly model may also produce shields and jewelry, not only weapons.
 
 ## Integration and acceptance goals
 
