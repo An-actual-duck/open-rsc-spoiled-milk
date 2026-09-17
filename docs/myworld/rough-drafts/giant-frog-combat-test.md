@@ -10,8 +10,9 @@ enabled by this change.
   through the attack cooldown. No retreat/kiting when the player approaches.
 - Slimy Spit prevents new melee, ranged, throwing and offensive magic attacks
   for ten seconds. A fresh application resets that deadline to ten seconds.
-- Slime Solvent protects against **both** frog slime and frog poison for ten
-  minutes. Both named statuses use the existing potion HUD and potion artwork.
+- Slime Solvent prevents and clears only Slimy Spit's attack lock for ten
+  minutes. Frog poison remains unaffected. Both named statuses use the existing
+  potion HUD and potion artwork.
 - Explicit modern offense and all three defenses; melee is the weakest defense,
   ranged intermediate, magic strongest.
 
@@ -25,9 +26,9 @@ placeholders of one; they do not supply the frog's used combat values.
 An admitted spit dealing positive damage applies both effects. Misses/zero damage
 do not. Poison uses power 10 (one Hit on its first normal poison tick), with the
 existing poison decay and cadence. Ordinary antidote prevents poison but not slime.
-Solvent leaves the spit damage intact and does not protect against other sources
-of poison. Drinking also removes current Slimy Spit and cures poison whose
-recorded source is the frog; it is not a general antipoison.
+Solvent leaves the spit damage and poison intact. Drinking removes current
+Slimy Spit but neither cures existing poison nor prevents new poison, including
+poison from the frog itself.
 
 Solvent is a single-use potion placeholder, item 3318, currently untradeable and
 unpriced pending the shop pass. Re-drinking refreshes ten minutes, not stacks.
@@ -53,7 +54,7 @@ Builds: `./scripts/build-server.sh`, `./scripts/build-client.sh`.
 HUD and art regressions: `python3 tests/myworld/test-cleric-status-hud.py` and
 `python3 tests/myworld/test-slayer-movement-preview.py`.
 Combat fixture: `CurrentGiantFrogCharacterization` in the existing Ant combat
-test classpath. It tests stats, timers, poison-source isolation, every attack
+test classpath. It tests stats, timers, poison remaining active under solvent, every attack
 style's admission/commit gate, ranged shooting and cooldown position holding.
 Its standalone runner additionally checks consuming one bottle and rejecting
 replayed inventory actions:

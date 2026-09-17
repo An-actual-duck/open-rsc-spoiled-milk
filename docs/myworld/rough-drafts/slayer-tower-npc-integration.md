@@ -95,7 +95,8 @@ existing guild NPCs.
 
 Ranged spit applies **Slimy Spit**, preventing attacks for ten seconds and
 refreshing on reapplication, plus a small poison. **Slime Solvent** protects
-against both frog effects for ten minutes. Both statuses use the potion HUD.
+against the attack lock only for ten minutes; poison remains unaffected.
+Both statuses use the potion HUD.
 The frog holds ranged distance without actively retreating. See the
 [initial combat test contract](giant-frog-combat-test.md) for tuning and scope.
 
