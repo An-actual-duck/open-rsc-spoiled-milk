@@ -47067,7 +47067,7 @@
     {
       "id": 3318,
       "name": "Slime Solvent",
-      "description": "Blocks giant frog slime and poison for 10 minutes.",
+      "description": "Prevents Slimy Spit's attack lock for 10 minutes. Does not protect against poison.",
       "command": "Drink",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

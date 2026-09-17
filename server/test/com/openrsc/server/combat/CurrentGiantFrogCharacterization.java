@@ -80,10 +80,11 @@ final class CurrentGiantFrogCharacterization {
 		check(!GiantFrogCombat.attacksBlocked(player), "exact expiry");
 		GiantFrogCombat.onSpitImpact(frog, player, 1);
 		GiantFrogCombat.applySolvent(player);
-		check(!GiantFrogCombat.attacksBlocked(player) && player.getCurrentPoisonPower() == 0, "solvent clears frog effects");
+		check(!GiantFrogCombat.attacksBlocked(player) && player.getCurrentPoisonPower() == 10, "solvent clears attack lock but preserves existing frog poison");
+		player.curePoison();
 		harness.server().getGameEventHandler().cleanupEvents();
 		GiantFrogCombat.onSpitImpact(frog, player, 1);
-		check(!GiantFrogCombat.attacksBlocked(player) && player.getCurrentPoisonPower() == 0, "impact-time immunity blocks both");
+		check(!GiantFrogCombat.attacksBlocked(player) && player.getCurrentPoisonPower() == 10, "solvent blocks attack lock but allows fresh frog poison");
 		statuses.clear();
 		GiantFrogCombat.appendStatuses(player, statuses);
 		check(statuses.size() == 1 && statuses.get(0).getRemainingSeconds() == 600, "600-second solvent HUD");
