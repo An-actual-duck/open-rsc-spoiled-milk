@@ -22,6 +22,9 @@ Source policy:
 
 Related expansion design notes (not implemented):
 
+- [Slayer hide and leather overhaul](../rough-drafts/slayer-hide-and-leather-overhaul.md)
+  records the universal task-monster hide-source goal, boss task additions,
+  access opt-outs and preservation of retired player-owned items as untradeable.
 - [Slayer Tower NPC integration and consumable gimmicks](../rough-drafts/slayer-tower-npc-integration.md)
   records the owner's six-floor/eight-monster roster, initial combat targets,
   and counter-consumable concepts. Undecided details remain draft proposals.

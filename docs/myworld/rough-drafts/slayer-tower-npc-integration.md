@@ -10,6 +10,10 @@ The [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-p
 remains authoritative for shipped progression, shops, currencies and kill credit.
 This draft is a proposed expansion, not a replacement for that implementation plan.
 
+The related [hide and leather overhaul](slayer-hide-and-leather-overhaul.md)
+also covers these new task monsters, existing hide sources, boss assignments,
+and grandfathering retired materials/equipment as untradeable.
+
 ## Goal and scope
 
 - Convert eight approved NPC sprite sets into working in-game creatures.
