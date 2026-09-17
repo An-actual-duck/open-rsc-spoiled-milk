@@ -30,13 +30,14 @@ final class CurrentGiantFrogCharacterization {
 			check(frog.finishedPath(), "shot must not path to melee");
 			System.out.println("PASS giant frog in-range shooting and cooldown positioning");
 			Player drinker = harness.player("frog drink", 446, 440);
+			drinker.getClientLimitations().maxItemId = Integer.MAX_VALUE;
 			com.openrsc.server.model.container.Item bottle = new com.openrsc.server.model.container.Item(3318);
 			Object plugin = Class.forName("com.openrsc.server.plugins.custom.myworld.itemactions.SlimeSolvent").newInstance();
 			java.lang.reflect.Method drink = plugin.getClass().getMethod("onOpInv", Player.class,
 				Integer.class, com.openrsc.server.model.container.Item.class, String.class);
 			drink.invoke(plugin, drinker, 0, bottle, "Drink");
 			check(!GiantFrogCombat.protectedBySolvent(drinker), "absent item cannot grant immunity");
-			drinker.getCarriedItems().getInventory().add(bottle);
+			check(drinker.getCarriedItems().getInventory().add(bottle), "fixture accepts solvent item");
 			drink.invoke(plugin, drinker, 0, bottle, "Drink");
 			check(GiantFrogCombat.protectedBySolvent(drinker), "owned bottle grants immunity");
 			check(drinker.getCarriedItems().getInventory().countId(3318) == 0, "bottle consumed exactly once");

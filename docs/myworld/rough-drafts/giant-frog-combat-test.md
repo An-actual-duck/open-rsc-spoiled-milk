@@ -55,6 +55,14 @@ HUD and art regressions: `python3 tests/myworld/test-cleric-status-hud.py` and
 Combat fixture: `CurrentGiantFrogCharacterization` in the existing Ant combat
 test classpath. It tests stats, timers, poison-source isolation, every attack
 style's admission/commit gate, ranged shooting and cooldown position holding.
+Its standalone runner additionally checks consuming one bottle and rejecting
+replayed inventory actions:
+
+```sh
+sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml compile_combat_tests
+cd server
+java -cp '../output/combat-test/test-classes:../output/combat-test/core-classes:plugins.jar:lib/*' com.openrsc.server.combat.CurrentGiantFrogCharacterization
+```
 
 The full combat characterization gate currently stops at the existing
 `current_projectile_impact_lifecycle_policy_is_characterized` terrain-boundary
