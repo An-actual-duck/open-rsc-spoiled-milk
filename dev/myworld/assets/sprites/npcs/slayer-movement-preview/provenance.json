@@ -1,0 +1,126 @@
+{
+  "sourceProject": "rsc-sprite-trainer",
+  "integration": "Owner requested eight approved NPCs for movement-only testing, 2026-09-17.",
+  "entries": [
+    {
+      "id": 863,
+      "key": "giant-frog",
+      "sourceOutput": "giant-frog-full-v1/full-sheet.png",
+      "sha256": "6f36d2fe740769770bcce613e2396e3b357f8493b484f8eeaf62897eb14c3e18",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "height": 300
+    },
+    {
+      "id": 864,
+      "key": "cockatrice",
+      "sourceOutput": "cockatrice-full-sheet-v4-clean/cockatrice-sheet.png",
+      "sha256": "f7182525bca9d3087545cea5393946dd6d7cad8e8f6e2a9c964dbf80f6d6a2f3",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "height": 300
+    },
+    {
+      "id": 865,
+      "key": "banshee",
+      "sourceOutput": "banshee-directions-v3-outline/banshee-sheet.png",
+      "sha256": "531d5630afa100b717a8f78d5c44bb8a4130f0ba6aeabe6668622006f92e36a6",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "height": 300
+    },
+    {
+      "id": 866,
+      "key": "naga",
+      "sourceOutput": "naga-throw-v3-back-cleanup/full-sheet.png",
+      "sha256": "64b89c6235d7b988deff66c0cd627f91f39254d22e2830458f03b01c894d52e6",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        128
+      ],
+      "height": 300
+    },
+    {
+      "id": 867,
+      "key": "terror-dog",
+      "sourceOutput": "terror-dog-full-sheet-v2-stride/terror-dog-sheet.png",
+      "sha256": "fb2a08e10cd9bfeba8234b34a2b380d97736632d46293ebfa81c54e717075255",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "height": 300
+    },
+    {
+      "id": 868,
+      "key": "bloodveld",
+      "sourceOutput": "bloodveld-full-sheet-v27-attack-texture/bloodveld-complete-sheet.png",
+      "sha256": "2aed9286673ba3340abc235a716c8c89f10dd3862d44f5c5cfae55ca8df18989",
+      "columns": [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120
+      ],
+      "height": 330
+    },
+    {
+      "id": 869,
+      "key": "dark-beast",
+      "sourceOutput": "dark-beast-full-sheet-v3-clean/dark-beast-sheet.png",
+      "sha256": "79016d1d0b9bb262b0cbd2eeeb0c67bb2dbaf410a6c5b63387c6bde2d5a7b989",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "height": 300
+    },
+    {
+      "id": 870,
+      "key": "abyssal-demon",
+      "sourceOutput": "abyssal-cosmic-demon-complete-v9-skin-patches/full-sheet.png",
+      "sha256": "4fcad6fe6d197fe5c1a95c4e0e9c8ba96c85de9c4dc830ab3a4a69fadb92e8c2",
+      "columns": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        112
+      ],
+      "height": 300
+    }
+  ]
+}

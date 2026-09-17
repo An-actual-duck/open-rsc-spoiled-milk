@@ -15,8 +15,10 @@ import orsc.Config;
 import orsc.mudclient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class EntityHandler {
 
@@ -113,6 +115,19 @@ public class EntityHandler {
 	private static int foundryDragonAnimationId = -1;
 	private static int kingBlackDragonAnimationId = -1;
 	private static int gorakAnimationId = -1;
+	private static final Map<SlayerMovementPreview, Integer> slayerPreviewAnimations = new HashMap<>();
+
+	public static int getSlayerPreviewAnimationId(SlayerMovementPreview preview) {
+		Integer id = slayerPreviewAnimations.get(preview);
+		if (id == null) throw new IllegalStateException("Preview animation not registered: " + preview);
+		return id;
+	}
+
+	public static void activateSlayerPreviewVisual(SlayerMovementPreview preview) {
+		NPCDef npc = getNpcDef(preview.npcId);
+		if (npc == null || !preview.displayName.equals(npc.getName())) return;
+		npc.sprites[0] = getSlayerPreviewAnimationId(preview);
+	}
 
 	public static int getModelCount() {
 		return REGISTRY.modelCount();
@@ -6731,6 +6746,13 @@ public class EntityHandler {
 			new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 0, 0, 0, 452, 326, 10, 7, 70, 862
 		));
+		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
+			setCustomNpcDefinition(preview.npcId, new NPCDef(
+				preview.displayName, "A harmless movement-test creature", "",
+				1, 1, 1, 1, false,
+				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
+				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));
+		}
 	}
 
 	/** Applies a presentation-only My World NPC rename without changing its combat definition. */
@@ -7847,6 +7869,11 @@ public class EntityHandler {
 		animations.add(new AnimationDef("kingblackdragon", "npc", 0, 0, true, false, 0));
 		gorakAnimationId = animations.size();
 		animations.add(new AnimationDef("gorak", "npc", 0, 0, true, false, 0));
+		slayerPreviewAnimations.clear();
+		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
+			slayerPreviewAnimations.put(preview, animations.size());
+			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0, false, false, 0));
+		}
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

@@ -10704,6 +10704,12 @@ public final class mudclient implements Runnable {
 			int var13 = NpcDirectionalAnimationMapping.sourceDirection(var11);
 
 			int var14 = this.animFrameToSprite_Walk[npc.stepFrame / def.getWalkModel() % 4] + var13 * 3;
+			com.openrsc.client.entityhandling.SlayerMovementPreview preview =
+				com.openrsc.client.entityhandling.SlayerMovementPreview.forNpc(npc.npcId);
+			if (preview != null && preview.displayName.equals(def.getName())) {
+				boolean moving = (npc.waypointIndexCurrent + 1) % 10 != npc.waypointIndexNext;
+				var14 = preview.movementFrame(npc.stepFrame, def.getWalkModel(), moving) + var13 * 3;
+			}
 			if (isCombatDirection(npc.direction)) {
 				var12 = shouldMirrorCombatSprite(npc.direction);
 				var13 = 5;
@@ -21154,6 +21160,7 @@ public final class mudclient implements Runnable {
 			loadExternalFoundryDragonNpcSprite();
 			loadExternalKingBlackDragonNpcSprite();
 			loadExternalGorakNpcSprite();
+			loadSlayerMovementPreviewSprites();
 			loadExternalEquipmentSprites();
 		}
 	}
@@ -21173,7 +21180,8 @@ public final class mudclient implements Runnable {
 					.getNumber();
 				continue label0;
 			}
-			if ("foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)
+			if (com.openrsc.client.entityhandling.SlayerMovementPreview.isAnimation(s)
+				|| "foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)
 				|| "gorak".equalsIgnoreCase(s)) {
 				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
 				animationNumber += 27;
@@ -22178,6 +22186,32 @@ public final class mudclient implements Runnable {
 		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
 			getSurface().sprites[animation.getNumber() + frame] =
 				spriteEntry.getFrames()[frame].getSprite();
+		}
+	}
+
+	private void loadSlayerMovementPreviewSprites() {
+		for (com.openrsc.client.entityhandling.SlayerMovementPreview preview
+				: com.openrsc.client.entityhandling.SlayerMovementPreview.values()) {
+			File source = this.externalAssetLoader.findFirstFile(new String[] {
+				"dev/myworld/assets/sprites/npcs/slayer-movement-preview"
+			}, preview.assetName + ".png");
+			orsc.graphics.two.SpriteArchive.Entry entry =
+				this.externalAssetLoader.loadExternalNpcDirectionSheet(source,
+					preview.animationName(), preview.columnWidths(), 3);
+			if (entry == null) {
+				System.out.println("Missing or invalid movement preview: " + preview.assetName);
+				continue;
+			}
+			EntityHandler.activateSlayerPreviewVisual(preview);
+			if (S_WANT_CUSTOM_SPRITES) {
+				Map<String, orsc.graphics.two.SpriteArchive.Entry> sprites = getSurface().spriteTree.get("npc");
+				if (sprites != null) sprites.put(preview.animationName(), entry);
+			} else {
+				AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getSlayerPreviewAnimationId(preview));
+				for (int frame = 0; frame < 15; frame++) {
+					getSurface().sprites[animation.getNumber() + frame] = entry.getFrames()[frame].getSprite();
+				}
+			}
 		}
 	}
 
@@ -27922,6 +27956,7 @@ public final class mudclient implements Runnable {
 							this.loadExternalFoundryDragonNpcSprite();
 							this.loadExternalKingBlackDragonNpcSprite();
 							this.loadExternalGorakNpcSprite();
+							this.loadSlayerMovementPreviewSprites();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);
 							this.scene.setMidpoints(this.halfGameHeight(), true, this.getGameWidth(),
