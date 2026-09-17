@@ -48,8 +48,46 @@ Levels describe prepared encounters, not the uncountered special's effective
 danger. Final stats, health, damage, accuracy, attack intervals and displayed
 combat-level calculation need a separate balance pass. In particular, terror
 dog's uncountered threat must not redefine its intended baseline as level 200.
-Floor access rules, tower coordinates/layout, spawn density, respawns, drops,
-task eligibility/counts and rewards have not yet been specified.
+Tower coordinates/layout, spawn density, respawns, drops, task eligibility/counts
+and rewards have not yet been specified. Floor access follows the rank gates below.
+
+## Owner-designed map and floor gatekeepers
+
+The owner will design the tower in the map editor. Do not generate a replacement
+layout or invent final gate/stair coordinates. Integrate NPC placements and access
+interactions with the owner's completed layout.
+
+Each floor is gated by a new NPC named **Monster Slayer Associate**. The
+associate requires the corresponding Slayer rank **or higher** to enter that
+floor. The gatekeeper role is distinct from existing shop associates; do not
+repurpose their IDs, shop behavior or current placements.
+
+| Floor | Minimum Slayer rank | Associate armor |
+| --- | --- | --- |
+| 1 | Fledgling | Bronze |
+| 2 | Adept | Iron |
+| 3 | Veteran | Steel |
+| 4 | Elite | Mithril |
+| 5 | Champion | Adamant |
+| 6 | Hero | Rune |
+
+Armor follows the guild's established visual tier ladder. Each associate must
+be clearly identifiable by that tier's equipment despite sharing the same name.
+Create the necessary new NPC definitions/variants with free IDs after an audit;
+exact outfits, dialogue and coordinates remain to be chosen.
+
+Access uses authoritative earned guild rank, not point balance, combat level,
+equipment worn, or possession of a flavor rank-proof item. Higher ranks retain
+access to lower floors. Rank names are player-facing: preserve existing internal
+compatibility keys rather than renaming persisted state for these gates.
+
+During integration, select the actual gate interaction (door, stairs, dialogue,
+or another mapped passage) with the owner. Enforce access server-side on the
+entry route, not just as dialogue flavor; audit alternate entrances and movement
+paths. Test below-rank rejection, exact-rank entry and higher-rank entry on every
+floor. Provide safe exit/backtracking without trapping a player behind a gate.
+New rank requirements do not implicitly authorize map edits or relocation of
+existing guild NPCs.
 
 ## Owner-selected encounter mechanics
 
