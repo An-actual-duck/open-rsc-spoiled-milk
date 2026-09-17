@@ -630,6 +630,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			((Player) opponent).updateDamageAndBlockedDamageTracking(
 				caster, damageDealt, clericPreventedDamage);
 			applyBalrogMagicSplash((Npc) caster, (Player) opponent, damageDealt);
+			if (type == 2 && !attackSuppressed) {
+				com.openrsc.server.content.monsterslayer.GiantFrogCombat.onSpitImpact(caster, (Player) opponent, damageDealt);
+			}
 		}
 
 		if (caster.isPlayer()) {

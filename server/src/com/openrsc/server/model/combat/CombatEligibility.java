@@ -19,6 +19,10 @@ public final class CombatEligibility {
 		final Mob source = request.getSource();
 		final Mob target = request.getTarget();
 		if (source == null) return denied(request, CombatEligibilityReason.SOURCE_MISSING);
+		if (request.getPhase() != CombatEligibilityPhase.COMPATIBILITY
+			&& com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(source)) {
+			return denied(request, CombatEligibilityReason.SOURCE_SLIMED);
+		}
 		if (target == null) return denied(request, CombatEligibilityReason.TARGET_MISSING);
 		if (source == target) return denied(request, CombatEligibilityReason.SELF_TARGET);
 		if (source.getWorld() != target.getWorld()) {

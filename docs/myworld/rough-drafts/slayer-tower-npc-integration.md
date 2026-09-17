@@ -93,10 +93,11 @@ existing guild NPCs.
 
 ### Giant frog — sticky attack
 
-The frog has a sticky attack. Its approved spit wind-up is an available visual;
-binding the sticky effect to that projectile is a natural proposal, not yet a
-specified rule. Exact movement restriction, duration, reapplication and counter
-consumable are undecided. This floor still needs its counter designed.
+Ranged spit applies **Slimy Spit**, preventing attacks for ten seconds and
+refreshing on reapplication, plus a small poison. **Slime Solvent** protects
+against both frog effects for ten minutes. Both statuses use the potion HUD.
+The frog holds ranged distance without actively retreating. See the
+[initial combat test contract](giant-frog-combat-test.md) for tuning and scope.
 
 ### Cockatrice — stony glare
 
@@ -198,7 +199,7 @@ credit. Naga must remain playable without any special consumable.
 
 ## Next design decisions
 
-1. Choose frog counter and define what sticky means mechanically.
+1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Choose banshee item and bloodveld retainer item.
 3. Design dark beast and abyssal demon gimmicks/counters.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.

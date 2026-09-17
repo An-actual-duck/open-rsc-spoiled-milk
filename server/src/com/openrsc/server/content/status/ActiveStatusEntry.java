@@ -4,7 +4,8 @@ package com.openrsc.server.content.status;
 public final class ActiveStatusEntry {
 	public enum IdentityKind {
 		ITEM(0),
-		CLERIC(1);
+		CLERIC(1),
+		SLAYER(2);
 
 		private final int code;
 
@@ -83,6 +84,13 @@ public final class ActiveStatusEntry {
 			CounterKind counterKind, int remainingCounter) {
 		return new ActiveStatusEntry(stableKey, IdentityKind.CLERIC, spellCode,
 			fallbackIconItemId, remainingSeconds, rank, counterKind, remainingCounter);
+	}
+
+	public static ActiveStatusEntry slayer(String stableKey, int effectCode,
+			int iconItemId, int remainingSeconds) {
+		if (effectCode != 1) throw new IllegalArgumentException("Unknown Slayer status");
+		return new ActiveStatusEntry(stableKey, IdentityKind.SLAYER, effectCode,
+			iconItemId, remainingSeconds, 0, CounterKind.NONE, 0);
 	}
 
 	public String getStableKey() {

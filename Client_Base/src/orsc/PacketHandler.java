@@ -4083,6 +4083,7 @@ public class PacketHandler {
 				int shooterServerIndex = packetsIncoming.getShort();
 				if (null != npc) {
 					npc.attackingNpcServerIndex = shooterServerIndex;
+					mc.markNpcProjectileAttack(shooterServerIndex);
 					npc.projectileRange = mc.getProjectileMaxRange();
 					npc.projectileMirrored = false;
 					npc.pendingCombatEffectType = 0;
@@ -4905,6 +4906,7 @@ public class PacketHandler {
 				int shooterServerIndex = packetsIncoming.getShort();
 				if (null != player) {
 					player.attackingNpcServerIndex = shooterServerIndex;
+					mc.markNpcProjectileAttack(shooterServerIndex);
 					player.projectileRange = mc.getProjectileMaxRange();
 					player.projectileMirrored = false;
 					player.pendingCombatEffectType = 0;

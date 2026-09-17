@@ -3,6 +3,7 @@ package com.openrsc.server.model.combat;
 /** First failed rule from the side-effect-free combat eligibility check. */
 public enum CombatEligibilityReason {
 	ALLOWED,
+	SOURCE_SLIMED,
 	SOURCE_MISSING,
 	TARGET_MISSING,
 	SELF_TARGET,

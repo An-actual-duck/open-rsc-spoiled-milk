@@ -96,6 +96,7 @@ public class RangeEvent extends GameTickEvent {
 		}
 
 		final int radius = RangeUtils.getBowAttackRadius(weaponId);
+		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(player)) return;
 		final int approachRadius = RangeUtils.getApproachRadius(radius);
 
 		if (!player.withinRange(target, radius)) {

@@ -140,7 +140,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private boolean isNpcMeleeDisabled() {
-		return attackerMob.isNpc() && ((Npc) attackerMob).getID() == NpcId.KOLODION_HUMAN.id();
+		return com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(attackerMob)
+			|| attackerMob.isNpc() && ((Npc) attackerMob).getID() == NpcId.KOLODION_HUMAN.id();
 	}
 
 	@Override
@@ -155,6 +156,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (isNpcMeleeDisabled()) {
 			attackerMob.faceCombat(targetMob);
 			setDelayTicks(3);
+			return;
+		}
+		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(attackerMob)) {
+			setDelayTicks(1);
 			return;
 		}
 
