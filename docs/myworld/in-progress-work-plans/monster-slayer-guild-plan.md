@@ -22,6 +22,9 @@ Source policy:
 
 Related expansion design notes (not implemented):
 
+- [Special drops and weapon assembly](../rough-drafts/slayer-special-drops-and-assembly.md)
+  records component-plus-currency shop purchases and the abyssal whip concept.
+  This is new reward design, not a return to progression material turn-ins.
 - [Slayer hide and leather overhaul](../rough-drafts/slayer-hide-and-leather-overhaul.md)
   records the universal task-monster hide-source goal, boss task additions,
   access opt-outs and preservation of retired player-owned items as untradeable.

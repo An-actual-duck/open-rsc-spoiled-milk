@@ -13,8 +13,11 @@ existing item definitions, drops or accounts have already changed.
 
 - Give leather armor a stronger Slayer identity while retaining Crafting as
   its production route.
-- Only monsters offered as Slayer tasks should drop hide, and every monster
-  offered as a Slayer task should drop hide.
+- Only monsters offered as Slayer tasks should drop hide. Every task monster
+  should supply hide or an owner-approved thematic substitute where appropriate.
+  The owner's subsequent exception is abyssal demon gooey residue in place of
+  hide; see [special drops and assembly](slayer-special-drops-and-assembly.md).
+  Substitute-material armor/Crafting uses are undecided, not automatic.
 - Audit existing hide sources and Slayer task families in both directions.
   Some current hide drops will be removed; some qualifying monsters should
   instead gain assignments so their hide production remains part of Slayer.
