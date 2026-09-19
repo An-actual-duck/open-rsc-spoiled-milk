@@ -18,6 +18,8 @@ public final class SlayerMovementPreviewFixture {
 		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
 			"Slime Solvent client examine matches approved flavor text");
 		for (int dose = 3; dose >= 1; dose--) {
+			require(("Wax earplugs (" + dose + ")").equals(EntityHandler.getItemDef(3327 - dose).getName()), "wax uses");
+			require("Desolve after 10 minutes".equals(EntityHandler.getItemDef(3327 - dose).getDescription()), "wax flavor text");
 			require(("Eye Drops (" + dose + ")").equals(EntityHandler.getItemDef(3324 - dose).getName()), "eye drop dose labels");
 			require(("Slime Solvent (" + dose + ")").equals(EntityHandler.getItemDef(3321 - dose).getName()),
 				"solvent dose labels");
@@ -35,17 +37,20 @@ public final class SlayerMovementPreviewFixture {
 			BufferedImage image = loader.readAssetImage(source);
 			Entry entry = loader.loadExternalNpcDirectionSheet(source, preview.animationName(), preview.columnWidths(), 3);
 			require(entry != null && image != null, "Missing " + preview.assetName);
+			entry = preview.withCombatFrames(entry);
 			EntityHandler.activateSlayerPreviewVisual(preview);
 			require(npc.sprites[0] == EntityHandler.getSlayerPreviewAnimationId(preview), "activation");
 			require(EntityHandler.getAnimationDef(npc.sprites[0]).hasA() == preview.combatEnabled(), "approved combat enabled");
 			if (preview.combatEnabled()) {
 				for (int row = 0; row < 3; row++) {
 					int[] pixels = entry.getFrames()[15 + row].getPixels();
-					for (int y = 0; y < preview.frameHeight(); y++) for (int x = 0; x < preview.columnWidths()[5]; x++) {
-						int argb = image.getRGB(500 + x, row * preview.frameHeight() + y);
+					int sourceColumn = preview == SlayerMovementPreview.BANSHEE ? 2 : 5;
+					int sourceWidth = preview.columnWidths()[sourceColumn];
+					for (int y = 0; y < preview.frameHeight(); y++) for (int x = 0; x < sourceWidth; x++) {
+						int argb = image.getRGB(sourceColumn * 100 + x, row * preview.frameHeight() + y);
 						int expected = (argb >>> 24) < 64 ? 0 : argb & 0xffffff;
 						if (expected == 0 && (argb >>> 24) >= 64) expected = 0x010101;
-						require(pixels[y * preview.columnWidths()[5] + x] == expected, "approved attack pixels");
+						require(pixels[y * sourceWidth + x] == expected, "approved attack pixels");
 					}
 				}
 			}

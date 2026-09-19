@@ -5,7 +5,7 @@ import com.openrsc.client.entityhandling.defs.SpriteDef;
 import orsc.enumerations.ORSCharacterDirection;
 
 public final class ORSCharacter {
-	public long frogSpitStartedMillis;
+	public long npcProjectileAttackStartedMillis;
 	public static final int HIT_SPLAT_STANDARD = 0;
 	public static final int HIT_SPLAT_POISON = 1;
 	public static final int HIT_SPLAT_ARMOR_PROC = 2;

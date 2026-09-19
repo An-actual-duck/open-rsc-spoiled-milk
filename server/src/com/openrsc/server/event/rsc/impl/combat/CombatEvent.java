@@ -202,6 +202,10 @@ public class CombatEvent extends GameTickEvent {
 			resetCombat();
 		} else {
 			hitter.faceCombat(target);
+			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(hitter)) {
+				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(hitter)) return;
+				com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(hitter, 2);
+			}
 			if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(hitter)
 				|| com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(hitter)) return;
 
@@ -227,7 +231,7 @@ public class CombatEvent extends GameTickEvent {
 			}
 
 			applyWeaponPoison(hitter, target, damage);
-			inflictDamage(hitter, target, damage);
+			inflictDamage(hitter, target, damage, attackSuppressed);
 			com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(hitter, target, attackSuppressed);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
@@ -488,6 +492,10 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage) {
+		inflictDamage(hitter, target, damage, false);
+	}
+
+	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -511,24 +519,29 @@ public class CombatEvent extends GameTickEvent {
 			}
 		}
 
-		if (target.isPlayer()) {
-			Player targetPlayer = (Player) target;
-			damage = targetPlayer.applyRobeDamageMitigation(damage);
-			damage = targetPlayer.applyPotionMeleeDamageReduction(damage);
-			if (hitter.isNpc()) {
-				damage = Summoning.applySummonDamageAbsorption(targetPlayer, hitter, damage);
+		final boolean wail = !attackSuppressed && com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(hitter, target);
+		if (wail) {
+			damage = com.openrsc.server.content.monsterslayer.BansheeCombat.rollWail(hitter, (Player) target);
+		} else {
+			if (target.isPlayer()) {
+				Player targetPlayer = (Player) target;
+				damage = targetPlayer.applyRobeDamageMitigation(damage);
+				damage = targetPlayer.applyPotionMeleeDamageReduction(damage);
+				if (hitter.isNpc()) {
+					damage = Summoning.applySummonDamageAbsorption(targetPlayer, hitter, damage);
+				}
 			}
-		}
-		damage = applyFrostbiteReflection(hitter, target, damage);
-		if (target.isPlayer()) {
-			damage = TrueDefense.apply((Player) target, damage);
-		}
-		final ClericDirectCombatRuntime.BeforeDamage clericDamage =
-			ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
-		damage = clericDamage.getDamage();
-		if (target.isPlayer() && clericDamage.getPreventedDamage() > 0) {
-			((Player) target).updateDamageAndBlockedDamageTracking(
-				hitter, 0, clericDamage.getPreventedDamage());
+			damage = applyFrostbiteReflection(hitter, target, damage);
+			if (target.isPlayer()) {
+				damage = TrueDefense.apply((Player) target, damage);
+			}
+			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
+				ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
+			damage = clericDamage.getDamage();
+			if (target.isPlayer() && clericDamage.getPreventedDamage() > 0) {
+				((Player) target).updateDamageAndBlockedDamageTracking(
+					hitter, 0, clericDamage.getPreventedDamage());
+			}
 		}
 
 		// Reduce targets hits by supplied damage amount.
@@ -550,6 +563,7 @@ public class CombatEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {
 			Npc n = (Npc) target;

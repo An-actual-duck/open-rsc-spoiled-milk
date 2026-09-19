@@ -518,6 +518,13 @@ public class NpcBehavior {
 		}
 	}
 
+	/** The melee event also uses this gate when its target moves out of reach. */
+	public boolean tryBansheeProjectileAttack(final Mob opponent) {
+		if (!com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return false;
+		target = opponent;
+		return tryProjectileAttack(currentTimeMillis());
+	}
+
 	private boolean tryProjectileAttack(final long now) {
 		final NpcCombatProfile profile = NpcCombatProfile.resolve(npc);
 		if (profile.isMeleeOnly() || target == null || target.isRemoved()) {
@@ -536,9 +543,11 @@ public class NpcBehavior {
 				target.getWorldLocation())) {
 			return false;
 		}
-		if (!checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
+		final boolean banshee = com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc);
+		if (banshee ? !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(npc)
+			: !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
 			// A clear ranged shot on cooldown is not a reason to approach melee.
-			if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) {
+			if (banshee || com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) {
 				npc.resetPath();
 				npc.face(target);
 				return true;
@@ -549,6 +558,7 @@ public class NpcBehavior {
 		npc.resetPath();
 		npc.face(target);
 		npc.setCombatTimer();
+		if (banshee) com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(npc, 3);
 
 		if (profile.usesRangedProjectiles()) {
 			if (target.isPlayer()
