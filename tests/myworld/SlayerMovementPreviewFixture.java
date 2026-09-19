@@ -15,6 +15,8 @@ public final class SlayerMovementPreviewFixture {
 	}
 	public static void main(String[] args) throws Exception {
 		EntityHandler.load(true);
+		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
+			"Slime Solvent client examine matches approved flavor text");
 		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(Paths.get(args[0]), SlayerMovementPreviewFixture.class);
 		int count = 0;
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {

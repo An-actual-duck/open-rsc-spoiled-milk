@@ -53,7 +53,7 @@ public final class GiantFrogCombat {
 	public static void applySolvent(Player player) {
 		player.getCache().store(SOLVENT, now(player) + SOLVENT_MILLIS);
 		player.getCache().remove(SPIT);
-		player.message("Slime Solvent prevents Slimy Spit from stopping your attacks for 10 minutes. It does not protect against poison.");
+		player.message("Slime Solvent prevents Slimy Spit from stopping your attacks for 10 minutes.");
 		ActionSender.sendActivePotionEffects(player);
 	}
 	public static void appendStatuses(Player player, List<ActiveStatusEntry> statuses) {

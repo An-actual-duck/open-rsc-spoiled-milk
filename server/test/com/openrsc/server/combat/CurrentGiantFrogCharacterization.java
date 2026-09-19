@@ -33,6 +33,17 @@ final class CurrentGiantFrogCharacterization {
 			drinker.getClientLimitations().maxItemId = Integer.MAX_VALUE;
 			com.openrsc.server.model.container.Item bottle = new com.openrsc.server.model.container.Item(3318);
 			Object plugin = Class.forName("com.openrsc.server.plugins.custom.myworld.itemactions.SlimeSolvent").newInstance();
+			com.openrsc.server.plugins.triggers.OpInvTrigger solventHandler =
+				(com.openrsc.server.plugins.triggers.OpInvTrigger) plugin;
+			com.openrsc.server.plugins.triggers.OpInvTrigger genericDrinkHandler =
+				(com.openrsc.server.plugins.triggers.OpInvTrigger) Class.forName(
+					"com.openrsc.server.plugins.authentic.itemactions.Drinkables").newInstance();
+			check(solventHandler.blockOpInv(drinker, 0, bottle, "Drink"), "solvent owns drink action");
+			check(!genericDrinkHandler.blockOpInv(drinker, 0, bottle, "Drink"), "generic drink handler must not also run for solvent");
+			check(genericDrinkHandler.blockOpInv(drinker, 0,
+				new com.openrsc.server.model.container.Item(com.openrsc.server.constants.ItemId.BEER.id()), "Drink"),
+				"ordinary drinks retain generic handler");
+			check("Slimy frog spit begone!".equals(bottle.getDef(harness.world()).getDescription()), "solvent examine flavor");
 			java.lang.reflect.Method drink = plugin.getClass().getMethod("onOpInv", Player.class,
 				Integer.class, com.openrsc.server.model.container.Item.class, String.class);
 			drink.invoke(plugin, drinker, 0, bottle, "Drink");

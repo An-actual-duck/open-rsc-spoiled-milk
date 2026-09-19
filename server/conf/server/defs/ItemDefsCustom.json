@@ -47067,7 +47067,7 @@
     {
       "id": 3318,
       "name": "Slime Solvent",
-      "description": "Prevents Slimy Spit's attack lock for 10 minutes. Does not protect against poison.",
+      "description": "Slimy frog spit begone!",
       "command": "Drink",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
