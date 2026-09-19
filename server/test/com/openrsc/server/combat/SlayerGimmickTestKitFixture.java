@@ -25,11 +25,11 @@ public final class SlayerGimmickTestKitFixture {
 			check(player.getCarriedItems().getInventory().size() == 0, "other worlds denied");
 			h.server().getConfig().WANT_MYWORLD = true;
 			SlayerGimmickTestKit.grant(player, new String[0]);
-			check(player.getCarriedItems().getInventory().countId(3318) == 5, "five solvents granted");
+			check(player.getCarriedItems().getInventory().countId(3318) == 1, "one full three-dose solvent granted");
 			check(!GiantFrogCombat.protectedBySolvent(player), "grant does not drink supplies");
 			SlayerGimmickTestKit.grant(player, new String[0]);
-			check(player.getCarriedItems().getInventory().countId(3318) == 10, "repeat command restocks");
-			while (player.getCarriedItems().getInventory().size() < player.getCarriedItems().getInventory().getCapacity() - 4) {
+			check(player.getCarriedItems().getInventory().countId(3318) == 2, "repeat command restocks one bottle");
+			while (player.getCarriedItems().getInventory().size() < player.getCarriedItems().getInventory().getCapacity()) {
 				check(player.getCarriedItems().getInventory().add(new Item(3318)), "fill fixture");
 			}
 			int before = player.getCarriedItems().getInventory().size();

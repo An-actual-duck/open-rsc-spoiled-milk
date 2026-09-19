@@ -10,6 +10,14 @@ import java.util.List;
 public final class GiantFrogCombat {
 	public static final int NPC_ID = 863;
 	public static final int SOLVENT_ITEM_ID = 3318;
+	public static final int SOLVENT_TWO_DOSE_ID = 3319;
+	public static final int SOLVENT_ONE_DOSE_ID = 3320;
+	public static int solventDoses(int itemId) {
+		if (itemId == SOLVENT_ITEM_ID) return 3;
+		if (itemId == SOLVENT_TWO_DOSE_ID) return 2;
+		if (itemId == SOLVENT_ONE_DOSE_ID) return 1;
+		return 0;
+	}
 	public static final long SPIT_MILLIS = 10_000L;
 	public static final long SOLVENT_MILLIS = 600_000L;
 	public static final int POISON_POWER = 10;

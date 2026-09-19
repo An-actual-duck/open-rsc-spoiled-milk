@@ -21,6 +21,9 @@ and grandfathering retired materials/equipment as untradeable.
 - Include at least one preparation-dependent Slayer gimmick on every floor.
 - Sell consumable counters through the Slayer shops. The owner's wording is
   "sold in each shop"; do not silently restrict supplies to a single contact.
+- Gimmick counters are nonstackable three-use items, following potion doses.
+  `::slayergimmicks` grants administrators one full item per implemented counter,
+  not multiple bottles. Add new counters to that test kit as they are implemented.
   Exact stock distribution, prices and payment currencies remain to be decided.
 - Without the appropriate counter, affected encounters should be impossible or
   nearly impossible at their intended progression point. With preparation,

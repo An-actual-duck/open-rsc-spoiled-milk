@@ -30,8 +30,11 @@ Solvent leaves the spit damage and poison intact. Drinking removes current
 Slimy Spit but neither cures existing poison nor prevents new poison, including
 poison from the frog itself.
 
-Solvent is a single-use potion placeholder, item 3318, currently untradeable and
-unpriced pending the shop pass. Re-drinking refreshes ten minutes, not stacks.
+Solvent is a nonstackable three-dose potion placeholder: 3318 (3 doses),
+3319 (2 doses), 3320 (1 dose), then an empty vial. Existing 3318 bottles count
+as full bottles. Each use replaces the exact bottle in its existing slot and
+refreshes ten minutes, not stacks. All variants retain the approved examine text
+and are currently untradeable and unpriced pending the shop pass.
 Dead players and noted/absent items cannot activate it. Effect deadlines live in
 persistent player cache and elapse in real time, including offline time; neither
 death nor logout refreshes them. Already-launched attacks are not cancelled.
@@ -56,7 +59,7 @@ attack style while slimed, refresh, drinking with spit in flight, and expiration
 Inspect animation facing and the HUD in game; automated checks cannot certify
 their appearance.
 
-`::slayergimmicks` grants five of each implemented Slayer counter to your
+`::slayergimmicks` grants one full three-use item for each implemented Slayer counter to your
 inventory, currently Slime Solvent only. It requires room for the entire kit and
 does not consume or activate the items. Future implemented counters belong in
 `SlayerGimmickTestKit.ITEM_IDS`. Ordinary players cannot use this test command.
@@ -67,8 +70,8 @@ HUD and art regressions: `python3 tests/myworld/test-cleric-status-hud.py` and
 Combat fixture: `CurrentGiantFrogCharacterization` in the existing Ant combat
 test classpath. It tests stats, timers, poison remaining active under solvent, every attack
 style's admission/commit gate, ranged shooting and cooldown position holding.
-Its standalone runner additionally checks consuming one bottle and rejecting
-replayed inventory actions:
+Its standalone runner additionally checks all three doses, full-inventory
+conversion, the final empty vial, and rejection of replayed inventory actions:
 
 ```sh
 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml compile_combat_tests
