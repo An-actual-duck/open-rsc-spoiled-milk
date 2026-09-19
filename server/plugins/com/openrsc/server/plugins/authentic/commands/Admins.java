@@ -161,6 +161,8 @@ public final class Admins implements CommandTrigger {
 			spawnItemInventory(player, command, args, true);
 		} else if (command.equalsIgnoreCase("bankitem") || command.equalsIgnoreCase("bitem") || command.equalsIgnoreCase("addbank")) {
 			spawnItemBank(player, command, args);
+		} else if (command.equalsIgnoreCase("slayergimmicks")) {
+			com.openrsc.server.content.monsterslayer.SlayerGimmickTestKit.grant(player, args);
 		} else if (command.equalsIgnoreCase("telejewelry") || command.equalsIgnoreCase("lawamulets")) {
 			spawnLawBangles(player, args);
 		} else if (command.equalsIgnoreCase("npctrace")) {
