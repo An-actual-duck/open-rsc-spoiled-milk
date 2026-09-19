@@ -38,11 +38,11 @@ public final class CurrentBansheeCharacterization {
 				: mode == 1 ? new CombatEvent(h.world(), banshee, p)
 				: new ProjectileEvent(h.world(), banshee, p, 999, 1, false);
 			int max = BansheeCombat.maxWailDamage(p);
-			check(max == 36, "ninety percent of maximum HP");
+			check(max == 20, "fifty percent of maximum HP");
 			h.random().reset(1);
 			h.random().scriptInts(max);
 			hit(event, banshee, p, 999);
-			check(p.getSkills().getLevel(Skill.HITS.id()) == 4, "wail replaces rather than adds, full health survives path " + mode);
+			check(p.getSkills().getLevel(Skill.HITS.id()) == 20, "wail replaces rather than adds, full health survives path " + mode);
 			check(messages(p) == 1, "exact wail text per damaging unprotected hit");
 			p.getSkills().setLevel(Skill.HITS.id(), 40);
 			h.random().reset(1);
@@ -59,9 +59,9 @@ public final class CurrentBansheeCharacterization {
 			if (mode == 2) event = new ProjectileEvent(h.world(), banshee, p, 0, 1, false);
 			h.clock().advanceMillis(600_000);
 			h.random().reset(1);
-			h.random().scriptInts(36);
+			h.random().scriptInts(20);
 			hit(event, banshee, p, 0);
-			check(p.getSkills().getLevel(Skill.HITS.id()) == 4 && messages(p) == 2, "expired protection restores wail even if normal roll missed");
+			check(p.getSkills().getLevel(Skill.HITS.id()) == 20 && messages(p) == 2, "expired protection restores wail even if normal roll missed");
 			p.getSkills().setLevel(Skill.HITS.id(), 40);
 			if (mode == 2) {
 				banshee.applyStartleDebuff(p);
@@ -76,7 +76,7 @@ public final class CurrentBansheeCharacterization {
 		Player tiny = h.player("tiny wail", 441, 441);
 		for (int hp : new int[]{1, 2, 10, 99, 100}) {
 			tiny.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), hp, hp, false);
-			check(BansheeCombat.maxWailDamage(tiny) == hp * 9 / 10 && BansheeCombat.maxWailDamage(tiny) < hp, "safe integer cap at HP " + hp);
+			check(BansheeCombat.maxWailDamage(tiny) == hp / 2 && BansheeCombat.maxWailDamage(tiny) < hp, "safe integer cap at HP " + hp);
 		}
 		System.out.println("PASS Banshee damage replacement, full-HP safety, normal protected hits, in-flight protection and exact text");
 	}

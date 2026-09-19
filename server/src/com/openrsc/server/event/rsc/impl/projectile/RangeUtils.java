@@ -225,6 +225,18 @@ public class RangeUtils {
 		return Math.max(1, attackRadius - PLAYER_POSITIONING_RANGE_REDUCTION);
 	}
 
+	/** Validate the route the walking queue will actually use, including axis slides
+	 * and native terrain. The legacy Mob.nextStep probe is not that route. */
+	static boolean queueRangedApproach(final Player player, final Mob target) {
+		player.walkToEntity(target.getX(), target.getY());
+		if (player.getWalkingQueue().getNextMovement().equals(player.getLocation())) {
+			// A failed attack must not leave its walk running toward the NPC.
+			player.resetPath();
+			return false;
+		}
+		return true;
+	}
+
     protected static final ImmutableSet<Integer> POISONED_ITEMS = ImmutableSet.of(
             ItemId.POISONED_TIN_THROWING_DART.id(),
             ItemId.POISONED_TIN_THROWING_KNIFE.id(),

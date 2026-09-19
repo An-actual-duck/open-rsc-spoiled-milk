@@ -113,8 +113,7 @@ public class ThrowingEvent extends GameTickEvent {
 		final int attackRadius = getAttackRadius(throwingID);
 		if (com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(player)) return;
 		if (!player.withinRange(target, attackRadius)) {
-			player.walkToEntity(target.getX(), target.getY());
-			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null && throwingID != -1) {
+			if (!RangeUtils.queueRangedApproach(player, target)) {
 				player.message("I can't get close enough");
 				terminateCurrent(player);
 			}

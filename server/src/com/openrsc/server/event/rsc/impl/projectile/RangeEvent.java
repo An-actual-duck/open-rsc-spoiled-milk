@@ -100,12 +100,10 @@ public class RangeEvent extends GameTickEvent {
 		final int approachRadius = RangeUtils.getApproachRadius(radius);
 
 		if (!player.withinRange(target, radius)) {
-			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null) {
+			if (!RangeUtils.queueRangedApproach(player, target)) {
 				reset(ProjectileFailureReason.CANT_GET_CLOSE_ENOUGH);
 				return;
 			}
-
-			player.walkToEntity(target.getX(), target.getY());
 			return;
 		}
 		if (!player.withinRange(target, approachRadius) && !player.finishedPath()) {
