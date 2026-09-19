@@ -4,6 +4,7 @@ package com.openrsc.server.model.combat;
 public enum CombatEligibilityReason {
 	ALLOWED,
 	SOURCE_SLIMED,
+	SOURCE_STONY_GLARE,
 	SOURCE_MISSING,
 	TARGET_MISSING,
 	SELF_TARGET,

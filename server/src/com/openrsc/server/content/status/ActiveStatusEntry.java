@@ -88,7 +88,7 @@ public final class ActiveStatusEntry {
 
 	public static ActiveStatusEntry slayer(String stableKey, int effectCode,
 			int iconItemId, int remainingSeconds) {
-		if (effectCode != 1) throw new IllegalArgumentException("Unknown Slayer status");
+		if (effectCode != 1 && effectCode != 2) throw new IllegalArgumentException("Unknown Slayer status");
 		return new ActiveStatusEntry(stableKey, IdentityKind.SLAYER, effectCode,
 			iconItemId, remainingSeconds, 0, CounterKind.NONE, 0);
 	}

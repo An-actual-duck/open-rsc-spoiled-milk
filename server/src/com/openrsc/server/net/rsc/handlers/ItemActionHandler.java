@@ -20,6 +20,8 @@ public class ItemActionHandler implements PayloadProcessor<ItemCommandStruct, Op
 	private static final Logger LOGGER = LogManager.getLogger();
 
 	private boolean isCombatConsumableAction(final Item item, final String command, final Player player) {
+		if (player.getConfig().WANT_MYWORLD && command.equalsIgnoreCase("apply")
+			&& com.openrsc.server.content.monsterslayer.CockatriceCombat.doses(item.getCatalogId()) > 0) return true;
 		if (command.equalsIgnoreCase("drink") || command.equalsIgnoreCase("eat")) {
 			return true;
 		}

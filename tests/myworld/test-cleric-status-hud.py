@@ -311,6 +311,10 @@ public final class ActiveStatusHudFixture {
 		check("Slime Solvent".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()),
 			"status name must not acquire bottle dose suffix");
 		int[][] prefix = {{50, 10}, {3302, 30}, {3305, 30}, {3300, 30}};
+		frogModel.replace(ActiveStatusPacketDecoder.decode(packet(
+			new int[][] {{3321, 10}, {3321, 600}}, 0, new int[][] {{2, 2, 0, 0, 0}, {0, 3321, 0, 0, 0}})), catalog, 1_000L);
+		check("Stony Glare".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()), "glare label");
+		check("Eye Drops".equals(frogModel.snapshot(1_000L).getRows().get(1).getSlayerHoverText()), "eye drops dose-free label");
 		int[][] trailer = {{0, 50, 0, 0, 0}, {1, 2, 3, 0, 0},
 			{1, 5, 3, 1, 6}, {1, 0, 2, 2, 2}};
 		byte[] valid = packet(prefix, 7, trailer);

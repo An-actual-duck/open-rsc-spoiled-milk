@@ -2364,6 +2364,7 @@ public final class mudclient implements Runnable {
 
 	private int getNpcMenuCombatLevel(int npcId) {
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.COCKATRICE.npcId) return 35;
 		NPCDef npcDef = EntityHandler.getNpcDef(npcId);
 		return (npcDef.getStr() + npcDef.getAtt() + npcDef.getDef() + npcDef.getHits()) / 4;
 	}
@@ -22217,7 +22218,7 @@ public final class mudclient implements Runnable {
 				if (sprites != null) sprites.put(preview.animationName(), entry);
 			} else {
 				AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getSlayerPreviewAnimationId(preview));
-				int frameCount = preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG ? 18 : 15;
+				int frameCount = preview.combatEnabled() ? 18 : 15;
 				for (int frame = 0; frame < frameCount; frame++) {
 					getSurface().sprites[animation.getNumber() + frame] = entry.getFrames()[frame].getSprite();
 				}

@@ -126,7 +126,7 @@ public class MagicCombatEvent extends GameTickEvent {
 		if (player.getWalkToAction() != null) {
 			return;
 		}
-		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(player)) return;
+		if (com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(player)) return;
 		if (!player.castTimer(player.getConfig().RAPID_CAST_SPELLS)) {
 			return;
 		}

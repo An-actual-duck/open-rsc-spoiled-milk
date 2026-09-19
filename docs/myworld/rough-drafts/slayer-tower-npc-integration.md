@@ -105,10 +105,17 @@ The frog holds ranged distance without actively retreating. See the
 
 ### Cockatrice — stony glare
 
-Stony glare paralyzes the player. Eye drops are the consumable solution.
-Protection duration, whether drops prevent or cure paralysis (or both), which
-actions paralysis blocks, and the attack trigger/cadence remain undecided.
-Do not assume a facing-direction check or invent a permanent immunity item.
+Melee-only attacker, level 35, with closely distributed defenses ordered
+ranged > melee > magic. Each unsuppressed melee swing applies **Stony Glare**,
+including misses: movement is frozen for one server tick, while attacks are
+blocked for ten seconds, refreshed on reapplication. On leg release, say exactly:
+"Your legs break free but you can't move your arms". Movement may resume while
+the attack lock persists, allowing escape. No facing-direction check.
+
+**Eye Drops** prevent and clear both parts for ten minutes per use. Three-use,
+nonstackable bottles use a potion placeholder and the inventory action Apply.
+Both named statuses appear in the status HUD. `::slayergimmicks` supplies one
+full bottle of each implemented counter. See [combat test contract](cockatrice-combat-test.md).
 
 ### Banshee — painful scream
 

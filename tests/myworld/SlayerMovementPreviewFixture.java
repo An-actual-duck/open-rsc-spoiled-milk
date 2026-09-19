@@ -18,6 +18,7 @@ public final class SlayerMovementPreviewFixture {
 		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
 			"Slime Solvent client examine matches approved flavor text");
 		for (int dose = 3; dose >= 1; dose--) {
+			require(("Eye Drops (" + dose + ")").equals(EntityHandler.getItemDef(3324 - dose).getName()), "eye drop dose labels");
 			require(("Slime Solvent (" + dose + ")").equals(EntityHandler.getItemDef(3321 - dose).getName()),
 				"solvent dose labels");
 			require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3321 - dose).getDescription()),
@@ -28,7 +29,7 @@ public final class SlayerMovementPreviewFixture {
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			NPCDef npc = EntityHandler.getNpcDef(preview.npcId);
 			require(npc.id == preview.npcId && npc.getName().equals(preview.displayName), "NPC identity");
-			require(npc.isAttackable() == (preview == SlayerMovementPreview.GIANT_FROG) && npc.getCamera1() == preview.cameraWidth()
+			require(npc.isAttackable() == preview.combatEnabled() && npc.getCamera1() == preview.cameraWidth()
 				&& npc.getCamera2() == preview.cameraHeight(), "NPC presentation and harmlessness");
 			File source = loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/slayer-movement-preview"}, preview.assetName + ".png");
 			BufferedImage image = loader.readAssetImage(source);
@@ -36,7 +37,18 @@ public final class SlayerMovementPreviewFixture {
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			EntityHandler.activateSlayerPreviewVisual(preview);
 			require(npc.sprites[0] == EntityHandler.getSlayerPreviewAnimationId(preview), "activation");
-			require(EntityHandler.getAnimationDef(npc.sprites[0]).hasA() == (preview == SlayerMovementPreview.GIANT_FROG), "only frog combat enabled");
+			require(EntityHandler.getAnimationDef(npc.sprites[0]).hasA() == preview.combatEnabled(), "approved combat enabled");
+			if (preview.combatEnabled()) {
+				for (int row = 0; row < 3; row++) {
+					int[] pixels = entry.getFrames()[15 + row].getPixels();
+					for (int y = 0; y < preview.frameHeight(); y++) for (int x = 0; x < preview.columnWidths()[5]; x++) {
+						int argb = image.getRGB(500 + x, row * preview.frameHeight() + y);
+						int expected = (argb >>> 24) < 64 ? 0 : argb & 0xffffff;
+						if (expected == 0 && (argb >>> 24) >= 64) expected = 0x010101;
+						require(pixels[y * preview.columnWidths()[5] + x] == expected, "approved attack pixels");
+					}
+				}
+			}
 			int nativeWidth = preview.columnWidths()[0];
 			for (int direction = 0; direction < 8; direction++) {
 				int column = NpcDirectionalAnimationMapping.sourceDirection(direction);

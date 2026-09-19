@@ -158,7 +158,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			setDelayTicks(3);
 			return;
 		}
-		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(attackerMob)) {
+		if (com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(attackerMob)) {
 			setDelayTicks(1);
 			return;
 		}
@@ -231,6 +231,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
 		inflictDamage(attackerMob, targetMob, damage);
+		com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(attackerMob, targetMob, attackSuppressed);
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
