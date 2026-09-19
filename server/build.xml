@@ -252,6 +252,17 @@
         </javac>
     </target>
 
+    <target name="test_ranged_approach" depends="compile_combat_tests">
+        <java classname="com.openrsc.server.combat.CurrentRangedApproachCharacterization"
+              fork="true" failonerror="true" dir="${basedir}">
+            <classpath>
+                <pathelement location="${combat.build.test}"/>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="run_combat_characterization" depends="compile_combat_tests">
         <java classname="com.openrsc.server.combat.CurrentCombatCharacterizationTest"
               fork="true" failonerror="true" dir="${basedir}">

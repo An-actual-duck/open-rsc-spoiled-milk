@@ -125,7 +125,7 @@ Level 50 positional hybrid: melee when adjacent, otherwise magic at casting
 range, holding distance without kiting. Holy projectile and reused side-pose
 attack animation. Both attacks carry the wail effect rather than casting a
 separate scream. Without **Wax earplugs**, damage is replaced by a uniform roll
-from zero through 90% of maximum HP, rounded down, bypassing ordinary defense.
+from zero through 50% of maximum HP, rounded down, bypassing ordinary defense.
 It does not add to normal damage, so one hit cannot kill from full health.
 Damaging unprotected hits say: "The Banshee's wail pierces your eardrums and
 ripples through your body". Protected attacks use normal melee/magic rolls.

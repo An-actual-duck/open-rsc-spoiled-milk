@@ -29,7 +29,7 @@ public final class BansheeCombat {
 		return isBanshee(source) && target != null && target.isPlayer() && !protectedByEarplugs((Player) target);
 	}
 	public static int maxWailDamage(Player player) {
-		return (int) (Math.max(0L, player.getHealingMaximumHits()) * 9L / 10L);
+		return (int) (Math.max(0L, player.getHealingMaximumHits()) / 2L);
 	}
 	public static int rollWail(Mob source, Player target) {
 		return source.getWorld().getServer().getCombatRandom().nextInt(maxWailDamage(target) + 1);

@@ -6582,6 +6582,9 @@ public final class Player extends Mob {
 	}
 
 	public int getProjectileRadius() {
+		if (getThrowingEquip() >= 0) {
+			return RangeUtils.getThrowingAttackRadius(getThrowingEquip());
+		}
 		return RangeUtils.getBowAttackRadius(getRangeEquip());
 	}
 

@@ -21,7 +21,7 @@ spawning; tower placement, task roster, shop prices and loot remain separate.
 
 Every primary melee/magic hit checks earplugs at damage application/impact time.
 Without protection, replace normal damage with a uniform integer roll from zero
-through `floor(maximum HP * 0.9)`, inclusive. Maximum HP includes active maximum-HP
+through `floor(maximum HP * 0.5)`, inclusive. Maximum HP includes active maximum-HP
 bonuses, not current remaining HP. Never add a second wail hit or normal damage.
 One attack therefore cannot kill a player who was at full maximum health.
 Injured players can still die; separate hits from multiple attackers still add up.
@@ -68,3 +68,19 @@ Focused fixtures and client checks pass. The broader combat suite still stops
 at the pre-existing `current_projectile_impact_lifecycle_policy_is_characterized`
 native-terrain fixture error: "Ordinary movement cannot leave native package
 terrain". This does not count as a full-suite pass.
+
+## Ranged approach regression
+
+The wail cap was reduced from 90% to 50% after the first private test.
+That test also exposed a general ranged approach issue worth retesting in game:
+the old `Mob.nextStep` probe can reject a diagonal route that the actual walking
+queue can traverse by sliding along an axis. Bow/throwing events now validate
+the queue's actual next step instead, and clear the queued walk on failure.
+Thrown weapons also use their own range for the initial attack approach,
+rather than inheriting the default bow range. No Banshee-specific exception is
+used and line-of-sight checks remain required before firing.
+
+Run `ant -f server/build.xml test_ranged_approach` (using the bundled Ant).
+The fixture reproduces the old rejected-route bug and checks bow and throwing
+attacks against Banshee and an ordinary NPC: approach, stop outside melee,
+actually fire, and leave no queued walk after a genuinely blocked approach.
