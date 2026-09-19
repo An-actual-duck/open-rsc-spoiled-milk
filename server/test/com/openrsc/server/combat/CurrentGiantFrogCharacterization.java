@@ -79,9 +79,10 @@ final class CurrentGiantFrogCharacterization {
 			System.out.println("PASS Slime Solvent inventory consumption and stale-action rejection");
 		}
 	}
-	static void effectsAndStats(CurrentCombatHarness harness) {
+	static void effectsAndStats(CurrentCombatHarness harness) throws Exception {
 		Npc frog = harness.npc(863, 440, 440);
 		Player player = harness.player("frog victim", 443, 440);
+		harness.recordOutgoingPackets(player);
 		check(NpcAttackStyleProfile.forNpc(frog) == NpcAttackStyleProfile.PURE_RANGED, "ranged-only profile");
 		check(frog.getRangedOffense() == 30, "explicit ranged offense");
 		check(frog.getMeleeDefense() == 10 && frog.getRangedDefense() == 20
@@ -103,12 +104,20 @@ final class CurrentGiantFrogCharacterization {
 		GiantFrogCombat.appendStatuses(player, statuses);
 		check(statuses.size() == 1 && statuses.get(0).getRemainingSeconds() == 10, "10-second HUD timer");
 		harness.clock().advanceMillis(9_000);
-		GiantFrogCombat.onSpitImpact(frog, player, 1);
-		harness.clock().advanceMillis(9_999);
-		check(GiantFrogCombat.attacksBlocked(player), "reapplication refreshes rather than stacks");
+		Npc secondFrog = harness.npc(863, 443, 441);
+		int messagesBefore = harness.countOutgoingPackets(player, com.openrsc.server.net.rsc.enums.OpcodeOut.SEND_SERVER_MESSAGE);
+		for (Npc source : new Npc[]{frog, secondFrog, frog}) GiantFrogCombat.onSpitImpact(source, player, 1);
+		check(harness.countOutgoingPackets(player, com.openrsc.server.net.rsc.enums.OpcodeOut.SEND_SERVER_MESSAGE) == messagesBefore,
+			"active spit from any frog emits no repeated application message");
+		statuses.clear();
+		GiantFrogCombat.appendStatuses(player, statuses);
+		check(statuses.size() == 1 && statuses.get(0).getRemainingSeconds() == 1, "active hits do not refresh spit HUD");
+		harness.clock().advanceMillis(999);
+		check(GiantFrogCombat.attacksBlocked(player), "original deadline retained");
 		harness.clock().advanceMillis(1);
 		check(!GiantFrogCombat.attacksBlocked(player), "exact expiry");
 		GiantFrogCombat.onSpitImpact(frog, player, 1);
+		check(GiantFrogCombat.attacksBlocked(player), "fresh spit can apply after expiry");
 		GiantFrogCombat.applySolvent(player);
 		check(!GiantFrogCombat.attacksBlocked(player) && player.getCurrentPoisonPower() == 10, "solvent clears attack lock but preserves existing frog poison");
 		player.curePoison();

@@ -96,8 +96,8 @@ existing guild NPCs.
 
 ### Giant frog — sticky attack
 
-Ranged spit applies **Slimy Spit**, preventing attacks for ten seconds and
-refreshing on reapplication, plus a small poison. **Slime Solvent** protects
+Ranged spit applies **Slimy Spit**, preventing attacks for ten seconds without
+refreshing or repeating its message while active, plus a small poison. **Slime Solvent** protects
 against the attack lock only for ten minutes; poison remains unaffected.
 Both statuses use the potion HUD.
 The frog holds ranged distance without actively retreating. See the
@@ -106,9 +106,11 @@ The frog holds ranged distance without actively retreating. See the
 ### Cockatrice — stony glare
 
 Melee-only attacker, level 35, with closely distributed defenses ordered
-ranged > melee > magic. Each unsuppressed melee swing applies **Stony Glare**,
-including misses: movement is frozen for one server tick, while attacks are
-blocked for ten seconds, refreshed on reapplication. On leg release, say exactly:
+ranged > melee > magic. Unsuppressed melee swings can apply **Stony Glare**,
+including misses: movement is frozen for three server ticks, while attacks are
+blocked for ten seconds. Active effects cannot refresh or reannounce, even from
+other cockatrices. One hidden immunity tick follows the ten-second effect's
+expiry to prevent immediate reapplication. On leg release, say exactly:
 "Your legs break free but you can't move your arms". Movement may resume while
 the attack lock persists, allowing escape. No facing-direction check.
 

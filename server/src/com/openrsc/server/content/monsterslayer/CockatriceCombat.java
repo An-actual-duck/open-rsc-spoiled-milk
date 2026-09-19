@@ -16,6 +16,7 @@ public final class CockatriceCombat {
 	public static final int EYE_DROPS_TWO_ID = 3322;
 	public static final int EYE_DROPS_ONE_ID = 3323;
 	public static final long GLARE_MILLIS = 10_000L;
+	public static final int LEG_FREEZE_TICKS = 3;
 	public static final long PROTECTION_MILLIS = 600_000L;
 	public static final String RELEASE_MESSAGE = "Your legs break free but you can't move your arms";
 	private static final String GLARE = "slayer_stony_glare_until";
@@ -47,16 +48,22 @@ public final class CockatriceCombat {
 	public static boolean movementBlocked(Mob mob) {
 		return attacksBlocked(mob) && mob.getWorld().getServer().getCurrentTick() < mob.getAttribute(LEGS, -1L);
 	}
-	/** Every admitted, unsuppressed melee swing glares, independently of damage. */
+	/** Shared across all attackers, including one hidden tick after the arm lock ends. */
+	private static boolean reapplicationBlocked(Player player) {
+		return player.getCache().hasKey(GLARE)
+			&& now(player) < player.getCache().getLong(GLARE) + player.getConfig().GAME_TICK;
+	}
+	/** Unsuppressed melee swings can glare only outside the existing effect/recovery window. */
 	public static void onMeleeSwing(Mob source, Mob target, boolean suppressed) {
 		if (!isCockatrice(source) || suppressed || target == null || !target.isPlayer()
 			|| source.killed || source.getSkills().getLevel(Skill.HITS.id()) <= 0) return;
 		final Player player = (Player) target;
-		if (player.killed || player.getSkills().getLevel(Skill.HITS.id()) <= 0 || protectedByEyeDrops(player)) return;
+		if (player.killed || player.getSkills().getLevel(Skill.HITS.id()) <= 0
+			|| protectedByEyeDrops(player) || reapplicationBlocked(player)) return;
 		player.getCache().store(GLARE, now(player) + GLARE_MILLIS);
-		// Simultaneous glares refresh the arm lock but cannot lengthen the one-tick freeze.
+		// Active glares never extend either timer, including hits from another cockatrice.
 		if (player.getAttribute(LEGS, -1L) < 0) {
-			player.setAttribute(LEGS, player.getWorld().getServer().getCurrentTick() + 1);
+			player.setAttribute(LEGS, player.getWorld().getServer().getCurrentTick() + LEG_FREEZE_TICKS);
 			player.getWorld().getServer().getGameEventHandler().add(new GameTickEvent(
 				player.getWorld(), player, 1, "Stony Glare leg release", DuplicationStrategy.ONE_PER_MOB) {
 				@Override public void run() {

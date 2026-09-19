@@ -9,7 +9,9 @@ enabled by this change.
 - Ranged-only spit; approach until a clear shot is possible, then hold position
   through the attack cooldown. No retreat/kiting when the player approaches.
 - Slimy Spit prevents new melee, ranged, throwing and offensive magic attacks
-  for ten seconds. A fresh application resets that deadline to ten seconds.
+  for ten seconds. Hits while it is active do not refresh its deadline or repeat
+  the application message, including hits from other frogs. A fresh application
+  is allowed after expiry. Damage and the separate poison mechanic continue.
 - Slime Solvent prevents and clears only Slimy Spit's attack lock for ten
   minutes. Frog poison remains unaffected. Both named statuses use the existing
   potion HUD and potion artwork.
@@ -55,7 +57,8 @@ also emit "Nothing interesting happens" after applying protection.
 Spawn with `::spawnnpc 863 4 10` and obtain supplies with `::slayergimmicks` on an
 administrator account in a private test world. Use matching updated
 client/server builds. Check range holding, close-range ranged attacks, each player
-attack style while slimed, refresh, drinking with spit in flight, and expiration.
+attack style while slimed, no refresh/message spam, drinking with spit in flight,
+and expiration.
 Inspect animation facing and the HUD in game; automated checks cannot certify
 their appearance.
 
