@@ -5571,7 +5571,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3317, new ItemDef("King-black-dragon-hide cuirass", setDescription, "",
 			288, 7, "items:7", false, true, 64, colour, false, false, true, 3317));
 		setCustomItemDefinition(3318, new ItemDef("Slime Solvent",
-			"Prevents Slimy Spit's attack lock for 10 minutes. Does not protect against poison.", "Drink",
+			"Slimy frog spit begone!", "Drink",
 			0, 48, "items:48", false, false, 0, 5289585, false, true, false, 3318));
 	}
 

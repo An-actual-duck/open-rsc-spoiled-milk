@@ -41,6 +41,12 @@ The frog's approved three attack frames play on NPC projectile notification;
 the existing acid-drop visual is the initial spit projectile. No art regenerated.
 Status names appear in the existing HUD tooltips with countdowns.
 
+Owner's first combat playtest passed: range behavior, effects and the selected
+attack animation worked as intended. Follow-up feedback cleanup gives solvent
+the examine text "Slimy frog spit begone!", removes the poison disclaimer from
+the use message, and delegates it out of the generic drink handler so it cannot
+also emit "Nothing interesting happens" after applying protection.
+
 ## Testing
 
 Spawn with `::spawnnpc 863 4 10` and obtain supplies with `::slayergimmicks` on an
