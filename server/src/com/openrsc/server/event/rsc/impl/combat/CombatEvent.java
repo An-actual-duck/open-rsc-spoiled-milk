@@ -203,7 +203,7 @@ public class CombatEvent extends GameTickEvent {
 		} else {
 			hitter.faceCombat(target);
 			if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(hitter)
-				|| com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(hitter)) return;
+				|| com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(hitter)) return;
 
 			if (hitter.isNpc() && ((Npc)hitter).getBehavior().shouldRetreat(((Npc)hitter)) && target.getHitsMade() >= 3) {
 				//Authentically, retreating enemies retreat on their turn but before they do damage.
@@ -228,6 +228,7 @@ public class CombatEvent extends GameTickEvent {
 
 			applyWeaponPoison(hitter, target, damage);
 			inflictDamage(hitter, target, damage);
+			com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(hitter, target, attackSuppressed);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}

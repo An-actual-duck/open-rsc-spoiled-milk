@@ -24,6 +24,10 @@ public final class CombatEligibility {
 			return denied(request, CombatEligibilityReason.SOURCE_SLIMED);
 		}
 		if (target == null) return denied(request, CombatEligibilityReason.TARGET_MISSING);
+		if (request.getPhase() != CombatEligibilityPhase.COMPATIBILITY
+			&& com.openrsc.server.content.monsterslayer.CockatriceCombat.attacksBlocked(source)) {
+			return denied(request, CombatEligibilityReason.SOURCE_STONY_GLARE);
+		}
 		if (source == target) return denied(request, CombatEligibilityReason.SELF_TARGET);
 		if (source.getWorld() != target.getWorld()) {
 			return denied(request, CombatEligibilityReason.DIFFERENT_WORLD);

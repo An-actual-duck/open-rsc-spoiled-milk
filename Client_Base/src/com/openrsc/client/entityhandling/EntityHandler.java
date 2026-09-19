@@ -5576,6 +5576,12 @@ public class EntityHandler {
 				"Slimy frog spit begone!", "Drink",
 				0, 48, "items:48", false, false, 0, 5289585, false, true, false, itemId));
 		}
+		for (int dose = 3; dose >= 1; dose--) {
+			int itemId = 3324 - dose;
+			setCustomItemDefinition(itemId, new ItemDef("Eye Drops (" + dose + ")",
+				"Keep a stony stare out of your eyes!", "Apply",
+				0, 48, "items:48", false, false, 0, 7976910, false, true, false, itemId));
+		}
 	}
 
 	private static void addBangleJewelryDefinitions() {
@@ -6755,9 +6761,10 @@ public class EntityHandler {
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			setCustomNpcDefinition(preview.npcId, new NPCDef(
 				preview.displayName, preview == SlayerMovementPreview.GIANT_FROG
-					? "A poisonous frog with exceptionally sticky saliva" : "A harmless movement-test creature", "",
-				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : 1, 1,
-				preview == SlayerMovementPreview.GIANT_FROG,
+					? "A poisonous frog with exceptionally sticky saliva" : preview == SlayerMovementPreview.COCKATRICE
+					? "A vicious bird with a petrifying stare" : "A harmless movement-test creature", "",
+				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45 : 1, 1,
+				preview.combatEnabled(),
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));
 		}
@@ -7881,7 +7888,7 @@ public class EntityHandler {
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			slayerPreviewAnimations.put(preview, animations.size());
 			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0,
-				preview == SlayerMovementPreview.GIANT_FROG, false, 0));
+				preview.combatEnabled(), false, 0));
 		}
 	}
 

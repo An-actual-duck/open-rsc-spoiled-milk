@@ -25,6 +25,7 @@ public enum SlayerMovementPreview {
 	}
 
 	public String animationName() { return "slayer-preview-" + assetName; }
+	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE; }
 	public int[] columnWidths() { return columns.clone(); }
 	public int frameHeight() { return this == BLOODVELD ? 110 : 100; }
 	// Uniform 2.4 world-unit scale per native pixel, including the Bloodveld's

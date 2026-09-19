@@ -111,7 +111,7 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 
 		final int attackRadius = getAttackRadius(throwingID);
-		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.attacksBlocked(player)) return;
+		if (com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(player)) return;
 		if (!player.withinRange(target, attackRadius)) {
 			player.walkToEntity(target.getX(), target.getY());
 			if (getOwner().nextStep(getOwner().getX(), getOwner().getY(), target) == null && throwingID != -1) {
