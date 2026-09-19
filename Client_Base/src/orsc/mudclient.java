@@ -2365,6 +2365,7 @@ public final class mudclient implements Runnable {
 	private int getNpcMenuCombatLevel(int npcId) {
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.COCKATRICE.npcId) return 35;
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE.npcId) return 50;
 		NPCDef npcDef = EntityHandler.getNpcDef(npcId);
 		return (npcDef.getStr() + npcDef.getAtt() + npcDef.getDef() + npcDef.getHits()) / 4;
 	}
@@ -10727,12 +10728,13 @@ public final class mudclient implements Runnable {
 
 			int var15;
 			int var16;
-			long spitElapsed = System.currentTimeMillis() - npc.frogSpitStartedMillis;
-			if (preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG
-				&& npc.frogSpitStartedMillis > 0 && spitElapsed >= 0 && spitElapsed < 600) {
+			long projectileElapsed = System.currentTimeMillis() - npc.npcProjectileAttackStartedMillis;
+			if ((preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG
+				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE)
+				&& npc.npcProjectileAttackStartedMillis > 0 && projectileElapsed >= 0 && projectileElapsed < 600) {
 				var13 = 5;
 				var11 = 2;
-				var14 = 15 + (int) (spitElapsed / 200);
+				var14 = 15 + (int) (projectileElapsed / 200);
 			}
 			boolean hideSummonDuringArrival = shouldHideSummonDuringArrival(npc);
 			if (!hideSummonDuringArrival) {
@@ -22212,6 +22214,7 @@ public final class mudclient implements Runnable {
 				System.out.println("Missing or invalid movement preview: " + preview.assetName);
 				continue;
 			}
+			entry = preview.withCombatFrames(entry);
 			EntityHandler.activateSlayerPreviewVisual(preview);
 			if (S_WANT_CUSTOM_SPRITES) {
 				Map<String, orsc.graphics.two.SpriteArchive.Entry> sprites = getSurface().spriteTree.get("npc");
@@ -25966,8 +25969,9 @@ public final class mudclient implements Runnable {
 
 	public void markNpcProjectileAttack(int serverIndex) {
 		ORSCharacter shooter = getNpcFromServer(serverIndex);
-		if (shooter != null && shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) {
-			shooter.frogSpitStartedMillis = System.currentTimeMillis();
+		if (shooter != null && (shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId
+			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE.npcId)) {
+			shooter.npcProjectileAttackStartedMillis = System.currentTimeMillis();
 		}
 	}
 

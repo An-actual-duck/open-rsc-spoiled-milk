@@ -121,12 +121,18 @@ full bottle of each implemented counter. See [combat test contract](cockatrice-c
 
 ### Banshee — painful scream
 
-The scream inflicts massive damage that ordinary prevention cannot solve,
-analogous to fighting a dragon without anti-fire protection. Its intended
-exception is the dedicated consumable: ear drops or temporary wax ear plugs.
-Choose the item later. Exact protection duration, residual damage, scream
-frequency, and interaction with each defensive mechanic need explicit rules;
-"unpreventable" must not accidentally bypass its own Slayer counter.
+Level 50 positional hybrid: melee when adjacent, otherwise magic at casting
+range, holding distance without kiting. Holy projectile and reused side-pose
+attack animation. Both attacks carry the wail effect rather than casting a
+separate scream. Without **Wax earplugs**, damage is replaced by a uniform roll
+from zero through 90% of maximum HP, rounded down, bypassing ordinary defense.
+It does not add to normal damage, so one hit cannot kill from full health.
+Damaging unprotected hits say: "The Banshee's wail pierces your eardrums and
+ripples through your body". Protected attacks use normal melee/magic rolls.
+
+Wax earplugs have three uses, each lasting ten minutes, and use **Insert**.
+Examine: "Desolve after 10 minutes". HUD: "Wax earplugs". The test kit grants
+one full item. See [combat test contract](banshee-combat-test.md).
 
 ### Naga — ordinary encounter
 
@@ -213,7 +219,7 @@ credit. Naga must remain playable without any special consumable.
 ## Next design decisions
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
-2. Choose banshee item and bloodveld retainer item.
+2. Choose the bloodveld retainer item; banshee Wax earplugs are selected.
 3. Design dark beast and abyssal demon gimmicks/counters.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.

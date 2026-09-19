@@ -178,6 +178,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 		boolean sameTile = attackerMob.sharesSpatialDomain(targetMob)
 			&& attackerMob.getX() == targetMob.getX()
 			&& attackerMob.getY() == targetMob.getY();
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(attackerMob)
+			&& !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(attackerMob)) {
+			attackerMob.resetPath();
+			setDelayTicks(1);
+			return;
+		}
 		boolean adjacent = !sameTile && PathValidation.checkAdjacentDistance(
 			attackerMob, targetMob, true, false);
 		boolean crowdedSummonAssistReach = Summoning.canSummonUseCrowdedAssistReach(attackerMob, targetMob);
@@ -199,6 +205,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 				resetCombat(false);
 				return;
 			}
+			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(attackerMob)
+				&& ((Npc) attackerMob).getBehavior().tryBansheeProjectileAttack(targetMob)) {
+				setDelayTicks(1);
+				return;
+			}
 			attackerMob.walkAdjacentToEntity(targetMob);
 			setDelayTicks(1);
 			return;
@@ -206,6 +217,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 
 		attackerMob.resetPath();
 		attackerMob.faceCombat(targetMob);
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(attackerMob))
+			com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(attackerMob, 2);
 
 		boolean attackSuppressed = attackerMob.consumeOgreStaggerDebuff() || attackerMob.consumeStartleDebuff();
 		if (ElderGreenDragonSpecialAttacks.shouldUseMeleeSweep(attackerMob, targetMob, attackSuppressed)) {
@@ -230,7 +243,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
-		inflictDamage(attackerMob, targetMob, damage);
+		inflictDamage(attackerMob, targetMob, damage, attackSuppressed);
 		com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(attackerMob, targetMob, attackSuppressed);
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
@@ -302,6 +315,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage) {
+		inflictDamage(hitter, target, damage, false);
+	}
+
+	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -323,26 +340,31 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 
 		int lastHits = target.getLevel(Skill.HITS.id());
-		if (target.isPlayer()) {
-			Player targetPlayer = (Player) target;
-			damage = targetPlayer.applyRobeDamageMitigation(damage);
-			damage = targetPlayer.applyPotionMeleeDamageReduction(damage);
-			if (hitter.isNpc()) {
-				damage = Summoning.applySummonDamageAbsorption(targetPlayer, hitter, damage);
+		final boolean wail = !attackSuppressed && com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(hitter, target);
+		if (wail) {
+			damage = com.openrsc.server.content.monsterslayer.BansheeCombat.rollWail(hitter, (Player) target);
+		} else {
+			if (target.isPlayer()) {
+				Player targetPlayer = (Player) target;
+				damage = targetPlayer.applyRobeDamageMitigation(damage);
+				damage = targetPlayer.applyPotionMeleeDamageReduction(damage);
+				if (hitter.isNpc()) {
+					damage = Summoning.applySummonDamageAbsorption(targetPlayer, hitter, damage);
+				}
+			}
+			damage = applyFrostbiteReflection(hitter, target, damage);
+			if (target.isPlayer()) {
+				damage = TrueDefense.apply((Player) target, damage);
+			}
+			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
+				ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
+			damage = clericDamage.getDamage();
+			if (target.isPlayer() && clericDamage.getPreventedDamage() > 0) {
+				((Player) target).updateDamageAndBlockedDamageTracking(
+					hitter, 0, clericDamage.getPreventedDamage());
 			}
 		}
-		damage = applyFrostbiteReflection(hitter, target, damage);
-		if (target.isPlayer()) {
-			damage = TrueDefense.apply((Player) target, damage);
-		}
-		final ClericDirectCombatRuntime.BeforeDamage clericDamage =
-			ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
-		damage = clericDamage.getDamage();
 		final int rawDamage = damage;
-		if (target.isPlayer() && clericDamage.getPreventedDamage() > 0) {
-			((Player) target).updateDamageAndBlockedDamageTracking(
-				hitter, 0, clericDamage.getPreventedDamage());
-		}
 		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
 		final java.util.UUID encounterId = engagement != null
@@ -359,6 +381,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {
 			Npc n = (Npc) target;

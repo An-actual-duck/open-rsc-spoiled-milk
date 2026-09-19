@@ -25,7 +25,15 @@ public enum SlayerMovementPreview {
 	}
 
 	public String animationName() { return "slayer-preview-" + assetName; }
-	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE; }
+	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE || this == BANSHEE; }
+	/** Banshee has fifteen approved frames: reuse its side poses for both attack modes. */
+	public orsc.graphics.two.SpriteArchive.Entry withCombatFrames(orsc.graphics.two.SpriteArchive.Entry source) {
+		if (this != BANSHEE || source == null || source.getFrames().length != 15) return source;
+		orsc.graphics.two.SpriteArchive.Entry result = new orsc.graphics.two.SpriteArchive.Entry(
+			source.getID(), source.getType(), source.getLayer(), 18);
+		for (int i = 0; i < 18; i++) result.getFrames()[i] = source.getFrames()[i < 15 ? i : i - 9].clone();
+		return result;
+	}
 	public int[] columnWidths() { return columns.clone(); }
 	public int frameHeight() { return this == BLOODVELD ? 110 : 100; }
 	// Uniform 2.4 world-unit scale per native pixel, including the Bloodveld's

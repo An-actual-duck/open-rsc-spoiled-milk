@@ -56,6 +56,8 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public boolean prefersProjectileAtDistance(final Npc npc, final int distance) {
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc))
+			return distance > 1 && distance <= getProjectileRange(npc);
 		if (distance > getProjectileRange(npc)) {
 			return false;
 		}
@@ -117,6 +119,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getMagicProjectileVisual(final Npc npc, final NpcMagicElement element) {
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return Projectile.HOLY_MAGIC;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.MAGIC;
 		}
@@ -267,6 +270,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public NpcMagicElement getMagicElement(final Npc npc) {
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return NpcMagicElement.NONE;
 		if (!usesMagicProjectiles() || npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return NpcMagicElement.NONE;
 		}
@@ -370,6 +374,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public static NpcAttackStyleProfile forNpc(final Npc npc) {
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return MELEE_MAGIC;
 		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return PURE_RANGED;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return MELEE;

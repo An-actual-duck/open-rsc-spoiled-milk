@@ -552,11 +552,13 @@ public class ProjectileEvent extends SingleTickEvent {
 			damage = applyPlayerProjectileDamageBuff((Player) caster, damage);
 		}
 		final boolean attackSuppressed = caster.consumeOgreStaggerDebuff() || caster.consumeStartleDebuff();
+		final boolean wail = !attackSuppressed && type == 1
+			&& com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(caster, opponent);
 		if (attackSuppressed) {
 			damage = 0;
 		}
 
-		if (opponent.isPlayer()) {
+		if (!wail && opponent.isPlayer()) {
 			Player opponentPlayer = (Player) opponent;
 			damage = opponentPlayer.applyRobeDamageMitigation(damage, magicElement);
 			if (type == 1 || type == 4) {
@@ -568,20 +570,21 @@ public class ProjectileEvent extends SingleTickEvent {
 				damage = Summoning.applySummonDamageAbsorption(opponentPlayer, caster, damage);
 			}
 		}
-		damage = applyFrostbiteReflection(caster, opponent, damage);
+		if (!wail) damage = applyFrostbiteReflection(caster, opponent, damage);
 		final int damageBeforeTrueDefense = damage;
-		if (opponent.isPlayer() && isPrimaryProjectileAttackType()) {
+		if (!wail && opponent.isPlayer() && isPrimaryProjectileAttackType()) {
 			damage = TrueDefense.apply((Player) opponent, damage);
 		}
 		final boolean trueDefenseBlocked = damageBeforeTrueDefense > 0 && damage == 0;
 		secondaryEffectDamage = damage;
 		int clericPreventedDamage = 0;
-		if (isClericEligibleProjectileType()) {
+		if (!wail && isClericEligibleProjectileType()) {
 			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
 				ClericDirectCombatRuntime.beforeDirectDamage(caster, opponent, damage);
 			damage = clericDamage.getDamage();
 			clericPreventedDamage = clericDamage.getPreventedDamage();
 		}
+		if (wail) damage = com.openrsc.server.content.monsterslayer.BansheeCombat.rollWail(caster, (Player) opponent);
 		int lastHits = opponent.getLevel(Skill.HITS.id());
 		final int hitSplatType = Summoning.getSummonDamageHitSplatType(caster);
 		final int damageDealt;
@@ -629,6 +632,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (caster.isNpc() && opponent.isPlayer()) {
 			((Player) opponent).updateDamageAndBlockedDamageTracking(
 				caster, damageDealt, clericPreventedDamage);
+			com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(opponent, damageDealt, wail);
 			applyBalrogMagicSplash((Npc) caster, (Player) opponent, damageDealt);
 			if (type == 2 && !attackSuppressed) {
 				com.openrsc.server.content.monsterslayer.GiantFrogCombat.onSpitImpact(caster, (Player) opponent, damageDealt);
