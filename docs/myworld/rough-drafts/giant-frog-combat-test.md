@@ -43,12 +43,17 @@ Status names appear in the existing HUD tooltips with countdowns.
 
 ## Testing
 
-Spawn with `::spawnnpc 863 4 10` and obtain solvent with `::item 3318 5` on an
+Spawn with `::spawnnpc 863 4 10` and obtain supplies with `::slayergimmicks` on an
 administrator account in a private test world. Use matching updated
 client/server builds. Check range holding, close-range ranged attacks, each player
 attack style while slimed, refresh, drinking with spit in flight, and expiration.
 Inspect animation facing and the HUD in game; automated checks cannot certify
 their appearance.
+
+`::slayergimmicks` grants five of each implemented Slayer counter to your
+inventory, currently Slime Solvent only. It requires room for the entire kit and
+does not consume or activate the items. Future implemented counters belong in
+`SlayerGimmickTestKit.ITEM_IDS`. Ordinary players cannot use this test command.
 
 Builds: `./scripts/build-server.sh`, `./scripts/build-client.sh`.
 HUD and art regressions: `python3 tests/myworld/test-cleric-status-hud.py` and
