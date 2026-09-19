@@ -20,6 +20,7 @@ public final class CurrentCockatriceCharacterization {
 		try (CurrentCombatHarness h = new CurrentCombatHarness()) {
 			Npc bird = h.npc(864, 440, 440);
 			Player p = h.player("glare victim", 441, 440);
+			Npc secondBird = h.npc(864, 440, 441);
 			h.recordOutgoingPackets(p);
 			check(bird.getMeleeOffense() == 40 && bird.getMeleeDefense() == 35
 				&& bird.getRangedDefense() == 40 && bird.getMagicDefense() == 30, "explicit modern stats");
@@ -32,7 +33,7 @@ public final class CurrentCockatriceCharacterization {
 			event.run();
 			check(CockatriceCombat.attacksBlocked(p), "real melee swing applies glare");
 			check(event.getDelayTicks() * h.server().getConfig().GAME_TICK < CockatriceCombat.GLARE_MILLIS,
-				"ordinary attack cadence refreshes before arm expiry");
+				"ordinary attacks continue during the arm lock");
 			check(CockatriceCombat.movementBlocked(p), "legs initially locked");
 			p.walk(442, 440);
 			p.getWalkingQueue().processNextMovement();
@@ -43,9 +44,13 @@ public final class CurrentCockatriceCharacterization {
 				check(CombatEligibility.evaluate(CombatEligibilityRequest.builder(p, bird, phase, style).build())
 					.getReason() == CombatEligibilityReason.SOURCE_STONY_GLARE, "all attack styles gated");
 			}
-			h.advanceOneCombatTick();
-			check(!CockatriceCombat.movementBlocked(p) && CockatriceCombat.attacksBlocked(p), "one tick releases only legs");
-			check(messages(p, CockatriceCombat.RELEASE_MESSAGE) == 0, "no early release in application tick");
+			for (int tick = 1; tick <= 3; tick++) {
+				h.advanceOneCombatTick();
+				CockatriceCombat.onMeleeSwing(secondBird, p, false);
+				check(CockatriceCombat.movementBlocked(p) == (tick < 3), "exact three-tick leg freeze despite staggered attackers");
+				check(CockatriceCombat.attacksBlocked(p), "arm lock remains");
+				check(messages(p, CockatriceCombat.RELEASE_MESSAGE) == 0, "no early release text");
+			}
 			h.advanceOneCombatTick();
 			check(messages(p, CockatriceCombat.RELEASE_MESSAGE) == 1, "exact flavor text once despite simultaneous glare");
 			h.advanceOneCombatTick();
@@ -53,14 +58,28 @@ public final class CurrentCockatriceCharacterization {
 			List<ActiveStatusEntry> rows = new ArrayList<>();
 			CockatriceCombat.onMeleeSwing(bird, p, false);
 			CockatriceCombat.appendStatuses(p, rows);
-			check(rows.size() == 1 && rows.get(0).getRemainingSeconds() == 10, "glare HUD timer");
-			h.clock().advanceMillis(9_000);
-			CockatriceCombat.onMeleeSwing(bird, p, false);
-			h.clock().advanceMillis(9_999);
-			check(CockatriceCombat.attacksBlocked(p), "refresh sustains lock");
+			check(rows.size() == 1 && rows.get(0).getRemainingSeconds() == 7, "glare HUD keeps original deadline");
+			check(!CockatriceCombat.movementBlocked(p), "staggered glare cannot refreeze released legs");
+			check(messages(p, "The cockatrice's Stony Glare stiffens your limbs!") == 1, "one application announcement");
+			h.clock().advanceMillis(10_000 - 5 * h.server().getConfig().GAME_TICK - 1);
+			CockatriceCombat.onMeleeSwing(secondBird, p, false);
+			check(CockatriceCombat.attacksBlocked(p), "lock lasts to original deadline");
 			h.clock().advanceMillis(1);
 			check(!CockatriceCombat.attacksBlocked(p) && !CockatriceCombat.movementBlocked(p), "exact expiry");
-			System.out.println("PASS Cockatrice melee integration, modern stats, one-tick release, refresh and attack admission");
+			CockatriceCombat.onMeleeSwing(secondBird, p, false);
+			check(!CockatriceCombat.attacksBlocked(p), "hidden immunity starts at glare expiry");
+			rows.clear();
+			CockatriceCombat.appendStatuses(p, rows);
+			check(rows.isEmpty(), "recovery immunity has no HUD row");
+			h.clock().advanceMillis(h.server().getConfig().GAME_TICK - 1);
+			CockatriceCombat.onMeleeSwing(bird, p, false);
+			check(!CockatriceCombat.attacksBlocked(p), "full tick immunity shared across attackers");
+			check(messages(p, "The cockatrice's Stony Glare stiffens your limbs!") == 1, "recovery hits are silent");
+			h.clock().advanceMillis(1);
+			CockatriceCombat.onMeleeSwing(secondBird, p, false);
+			check(CockatriceCombat.attacksBlocked(p) && CockatriceCombat.movementBlocked(p), "fresh glare after recovery");
+			check(messages(p, "The cockatrice's Stony Glare stiffens your limbs!") == 2, "fresh effect announces once");
+			System.out.println("PASS Cockatrice three-tick freeze, nonrefreshing effects, multi-attacker recovery and attack admission");
 			doses(h, bird);
 		}
 	}

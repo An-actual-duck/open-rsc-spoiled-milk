@@ -16,14 +16,20 @@ permanent tower spawns, shop placement, drops or Slayer roster changes yet.
 
 ## Stony Glare
 
-Every admitted, unsuppressed melee swing applies the glare to a living player,
-even on zero damage. It is not dependent on the player's facing direction.
-Movement freezes for **one game tick**. The queued path is preserved and may
-continue after release. Multiple glares in that tick do not extend the freeze.
+An admitted, unsuppressed melee swing can apply glare to a living player, even
+on zero damage. It is not dependent on the player's facing direction. Swings
+during an existing glare or its recovery window cannot reapply it or repeat its
+message. Damage continues normally.
+Movement freezes for **three game ticks** (1.92 seconds at the current 640 ms
+tick). The queued path is preserved and may continue after release.
 Release says exactly: **Your legs break free but you can't move your arms**.
 
-Melee, ranged, thrown and magic attacks are blocked for **10 seconds**, refreshed
-rather than stacked. Repeated normal attacks therefore sustain the attack lock.
+Melee, ranged, thrown and magic attacks are blocked for **10 seconds**, with no
+refresh while active, including hits from different cockatrices. Legs remain
+free after tick three for the rest of this window. After the ten-second effect
+expires, **one additional tick** of hidden immunity prevents a new glare from
+any cockatrice. This recovery uses one configured game-tick duration and has
+no HUD row or chat message. Both movement and attacks are free during recovery.
 Already-launched projectiles remain valid. Movement, food and counter usage
 remain possible after the brief freeze. The leg timer is independent of the arm
 timer and is not persisted across login; arm/protection expiry uses wall time,
@@ -45,9 +51,10 @@ two free slots, without activating either. Test spawn: `::spawnnpc 864 4 10`.
 ## Verification
 
 Focused fixture `CurrentCockatriceCharacterization` covers modern values, melee
-profile and actual swing integration, one-tick movement release and exact text,
-refresh/expiry, all attack styles, effect isolation, immunity and dose conversion.
+profile and actual swing integration, three-tick movement release and exact text,
+nonrefresh/expiry, staggered attackers, hidden recovery, all attack styles,
+effect isolation, immunity and dose conversion.
 Run it alongside `CurrentGiantFrogCharacterization`, `SlayerGimmickTestKitFixture`,
 `tests/myworld/test-slayer-movement-preview.py` and `test-cleric-status-hud.py`.
-In-game check: unprotected glare locks attacks but permits retreat after one tick;
+In-game check: unprotected glare locks attacks but permits retreat after three ticks;
 Apply Eye Drops and verify ordinary melee combat and the approved talon animation.
