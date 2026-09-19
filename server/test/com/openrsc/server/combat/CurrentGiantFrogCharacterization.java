@@ -49,14 +49,33 @@ final class CurrentGiantFrogCharacterization {
 			drink.invoke(plugin, drinker, 0, bottle, "Drink");
 			check(!GiantFrogCombat.protectedBySolvent(drinker), "absent item cannot grant immunity");
 			check(drinker.getCarriedItems().getInventory().add(bottle), "fixture accepts solvent item");
+			bottle = drinker.getCarriedItems().getInventory().get(0);
 			drink.invoke(plugin, drinker, 0, bottle, "Drink");
 			check(GiantFrogCombat.protectedBySolvent(drinker), "owned bottle grants immunity");
 			check(drinker.getCarriedItems().getInventory().countId(3318) == 0, "bottle consumed exactly once");
+			check(drinker.getCarriedItems().getInventory().get(0).getCatalogId() == 3319, "two-dose bottle remains in same slot");
 			harness.clock().advanceMillis(1_000);
 			drink.invoke(plugin, drinker, 0, bottle, "Drink");
 			List<ActiveStatusEntry> rows = new ArrayList<>();
 			GiantFrogCombat.appendStatuses(drinker, rows);
 			check(rows.get(0).getRemainingSeconds() == 599, "replayed stale action cannot refresh immunity");
+			while (drinker.getCarriedItems().getInventory().size() < drinker.getCarriedItems().getInventory().getCapacity()) {
+				check(drinker.getCarriedItems().getInventory().add(new com.openrsc.server.model.container.Item(3318)), "fill inventory");
+			}
+			long bottleId = drinker.getCarriedItems().getInventory().get(0).getItemId();
+			for (int expected : new int[] {3320, com.openrsc.server.constants.ItemId.EMPTY_VIAL.id()}) {
+				com.openrsc.server.model.container.Item current = drinker.getCarriedItems().getInventory().get(0);
+				check(solventHandler.blockOpInv(drinker, 0, current, "Drink"), "partial dose owned by solvent handler");
+				check(!genericDrinkHandler.blockOpInv(drinker, 0, current, "Drink"), "partial dose excluded from generic drinks");
+				drink.invoke(plugin, drinker, 0, current, "Drink");
+				check(drinker.getCarriedItems().getInventory().get(0).getCatalogId() == expected, "3 to 2 to 1 to empty vial");
+				check(drinker.getCarriedItems().getInventory().get(0).getItemId() == bottleId, "persistent bottle identity preserved");
+				check(drinker.getCarriedItems().getInventory().size() == drinker.getCarriedItems().getInventory().getCapacity(), "dose conversion works in full inventory");
+				rows.clear();
+				GiantFrogCombat.appendStatuses(drinker, rows);
+				check(rows.get(0).getRemainingSeconds() == 600, "each dose refreshes ten minutes");
+			}
+			check(!solventHandler.blockOpInv(drinker, 0, drinker.getCarriedItems().getInventory().get(0), "Drink"), "empty vial grants no fourth dose");
 			System.out.println("PASS Slime Solvent inventory consumption and stale-action rejection");
 		}
 	}

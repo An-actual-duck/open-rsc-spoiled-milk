@@ -167,6 +167,7 @@ public final class ActiveStatusHudModel {
 		public long getRemainingSeconds() { return remainingSeconds; }
 		public boolean isCleric() { return identityKind == 1 && clericSpell != null; }
 		public String getSlayerHoverText() {
+			if (identityKind == 0 && stableIdentity == 3318) return "Slime Solvent";
 			return identityKind == 2 && stableIdentity == 1 ? "Slimy Spit" : null;
 		}
 		public int getStableIdentity() { return stableIdentity; }

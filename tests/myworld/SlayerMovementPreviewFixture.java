@@ -17,6 +17,12 @@ public final class SlayerMovementPreviewFixture {
 		EntityHandler.load(true);
 		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
 			"Slime Solvent client examine matches approved flavor text");
+		for (int dose = 3; dose >= 1; dose--) {
+			require(("Slime Solvent (" + dose + ")").equals(EntityHandler.getItemDef(3321 - dose).getName()),
+				"solvent dose labels");
+			require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3321 - dose).getDescription()),
+				"partial solvent examine");
+		}
 		ClientExternalAssetLoader loader = new ClientExternalAssetLoader(Paths.get(args[0]), SlayerMovementPreviewFixture.class);
 		int count = 0;
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {

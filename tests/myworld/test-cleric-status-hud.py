@@ -306,6 +306,10 @@ public final class ActiveStatusHudFixture {
 		check("Slimy Spit".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()),
 			"Slayer debuff mislabeled as potion");
 		check(frogModel.snapshot(11_000L).getRows().isEmpty(), "frog status expiry");
+		frogModel.replace(ActiveStatusPacketDecoder.decode(packet(
+			new int[][] {{3318, 600}}, 0, new int[][] {{0, 3318, 0, 0, 0}})), catalog, 1_000L);
+		check("Slime Solvent".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()),
+			"status name must not acquire bottle dose suffix");
 		int[][] prefix = {{50, 10}, {3302, 30}, {3305, 30}, {3300, 30}};
 		int[][] trailer = {{0, 50, 0, 0, 0}, {1, 2, 3, 0, 0},
 			{1, 5, 3, 1, 6}, {1, 0, 2, 2, 2}};

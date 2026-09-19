@@ -5570,9 +5570,12 @@ public class EntityHandler {
 			216, 590, "items:590", false, true, 128, colour, false, false, true, 3316));
 		setCustomItemDefinition(3317, new ItemDef("King-black-dragon-hide cuirass", setDescription, "",
 			288, 7, "items:7", false, true, 64, colour, false, false, true, 3317));
-		setCustomItemDefinition(3318, new ItemDef("Slime Solvent",
-			"Slimy frog spit begone!", "Drink",
-			0, 48, "items:48", false, false, 0, 5289585, false, true, false, 3318));
+		for (int dose = 3; dose >= 1; dose--) {
+			int itemId = 3321 - dose;
+			setCustomItemDefinition(itemId, new ItemDef("Slime Solvent (" + dose + ")",
+				"Slimy frog spit begone!", "Drink",
+				0, 48, "items:48", false, false, 0, 5289585, false, true, false, itemId));
+		}
 	}
 
 	private static void addBangleJewelryDefinitions() {

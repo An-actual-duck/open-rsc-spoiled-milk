@@ -16,7 +16,9 @@ import static com.openrsc.server.plugins.Functions.*;
 
 public class Drinkables implements OpInvTrigger {
 	private static final int[] DELEGATED_DRINK_IDS = {
-		com.openrsc.server.content.monsterslayer.GiantFrogCombat.SOLVENT_ITEM_ID
+		com.openrsc.server.content.monsterslayer.GiantFrogCombat.SOLVENT_ITEM_ID,
+		com.openrsc.server.content.monsterslayer.GiantFrogCombat.SOLVENT_TWO_DOSE_ID,
+		com.openrsc.server.content.monsterslayer.GiantFrogCombat.SOLVENT_ONE_DOSE_ID
 	};
 
 	@Override
