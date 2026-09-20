@@ -114,17 +114,19 @@
     {
       "id": 870,
       "key": "abyssal-demon",
-      "sourceOutput": "abyssal-cosmic-demon-complete-v9-skin-patches/full-sheet.png",
-      "sha256": "4fcad6fe6d197fe5c1a95c4e0e9c8ba96c85de9c4dc830ab3a4a69fadb92e8c2",
+      "sourceOutput": "abyssal-cosmic-demon-attack-v6-sunken-abdomen/full-sheet.png",
+      "extension": "Owner-approved abyssal-cosmic-demon-aoe-v2-color-match/strip.png; PackAbyssalSpikes.java; base pixels unchanged, +6px vertical padding per 112px row",
+      "sha256": "bae344d2d888f94ece163639bc4831b2b9d272bfabab4c3d26ea27fdef7e07e8",
       "columns": [
         100,
         100,
         100,
         100,
         100,
-        112
+        112,
+        144
       ],
-      "height": 300
+      "height": 336
     }
   ]
 }

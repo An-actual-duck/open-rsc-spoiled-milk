@@ -223,6 +223,8 @@ public class PayloadProcessorManager {
 	}
 
 	public static boolean processed(AbstractStruct<OpcodeIn> payload, Player player) {
+		// Silently consume disallowed requests; do not queue them or classify them as malformed.
+		if (blockedByAbyssalTrap(payload.getOpcode(), player)) return true;
 		PayloadProcessor<? extends AbstractStruct<OpcodeIn>, OpcodeIn> processor = get(payload.getOpcode());
 		if (processor != null) {
 			try {
@@ -252,6 +254,15 @@ public class PayloadProcessorManager {
 			return true;
 		}
 		return false;
+	}
+
+	public static boolean blockedByAbyssalTrap(OpcodeIn opcode, Player player) {
+		if (!com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(player)) return false;
+		// Retain chat, connection, terrain receipts, and account/UI traffic, not gameplay.
+		return ACTION_OPCODES.contains(opcode) || opcode == OpcodeIn.COMMAND
+			|| opcode == OpcodeIn.QUESTION_DIALOG_ANSWER || opcode == OpcodeIn.SLEEPWORD_ENTERED
+			|| opcode == OpcodeIn.SKIP_TUTORIAL || opcode == OpcodeIn.WORLD_EDITOR_REQUEST
+			|| opcode == OpcodeIn.GAME_SETTINGS_CHANGED;
 	}
 
 	private static void checkIfShouldCancelMenu(Player player, OpcodeIn opcode) {

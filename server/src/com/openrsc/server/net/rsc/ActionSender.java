@@ -2226,6 +2226,7 @@ public class ActionSender {
 			player.getActivePotionEffectStatuses());
 		ClericActiveStatusCollector.append(player, statuses);
 		com.openrsc.server.content.monsterslayer.GiantFrogCombat.appendStatuses(player, statuses);
+		com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.CockatriceCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.BansheeCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.TerrorDogCombat.appendStatuses(player, statuses);

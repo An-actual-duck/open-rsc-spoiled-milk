@@ -7,6 +7,8 @@ import orsc.enumerations.ORSCharacterDirection;
 public final class ORSCharacter {
 	public long npcProjectileAttackStartedMillis;
 	public int darkBeastPose;
+	public int abyssalPoseCode;
+	public long abyssalPoseStartedMillis, abyssalPoseExpiresMillis;
 	public long darkBeastPoseExpiresMillis;
 	public static final int HIT_SPLAT_STANDARD = 0;
 	public static final int HIT_SPLAT_POISON = 1;

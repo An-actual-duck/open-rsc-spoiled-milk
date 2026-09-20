@@ -321,6 +321,10 @@ public final class ActiveStatusHudFixture {
 			new int[][] {{3321, 10}, {3321, 600}}, 0, new int[][] {{2, 2, 0, 0, 0}, {0, 3321, 0, 0, 0}})), catalog, 1_000L);
 		check("Stony Glare".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()), "glare label");
 		check("Eye Drops".equals(frogModel.snapshot(1_000L).getRows().get(1).getSlayerHoverText()), "eye drops dose-free label");
+		frogModel.replace(ActiveStatusPacketDecoder.decode(packet(
+			new int[][] {{3318, 3}}, 0, new int[][] {{2, 3, 0, 0, 0}})), catalog, 1_000L);
+		check("Sticky Flesh".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()), "Abyssal full-action trap label");
+		check(frogModel.snapshot(4_000L).getRows().isEmpty(), "Abyssal trap HUD expiry");
 		int[][] trailer = {{0, 50, 0, 0, 0}, {1, 2, 3, 0, 0},
 			{1, 5, 3, 1, 6}, {1, 0, 2, 2, 2}};
 		byte[] valid = packet(prefix, 7, trailer);

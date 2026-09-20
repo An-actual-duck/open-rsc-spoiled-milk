@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "c783e200a3feca8a90544817844f2743c09f8ac0e27ec1385e768261e1946b99",
+  "inputTreeSha256": "1a3e39e8c9eeed0e7addee13737cf5203332188b580bafc01a281aa90d9c5a07",
   "inputs": [
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 24478,
+      "bytes": 25050,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "0fe62a6f17e266952ddeda008ae8d0db6b343ddaa3b01b14ee03426a9f97c759"
+      "sha256": "ad8560962e97be5af7ee1e78907c602ec802e0958a9eb62f53bfc62ef56119d0"
     },
     {
       "brandSignals": [],
@@ -1841,7 +1841,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 8140,
+      "bytes": 8270,
       "category": "unresolved",
       "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
       "classificationRule": "server/conf/server/defs/**",
@@ -1850,7 +1850,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/SlayerMovementPreviewNpcDefs.json",
       "reverseDependencies": [],
-      "sha256": "9cef61a7947fa71d1b726a72b25d268e6e5017de61fc0b71a4ec818be16bc2e3"
+      "sha256": "4f2041e539b1c7d20a887da0a877cf8b41029aef0fc46f295a72e04f9d0cebf1"
     },
     {
       "brandSignals": [],
@@ -27400,7 +27400,7 @@
         "myworld-plugin-namespace",
         "want-myworld-flag"
       ],
-      "bytes": 1602,
+      "bytes": 1691,
       "category": "spoiled-milk-content",
       "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
@@ -27426,7 +27426,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/SlimeSolvent.java",
       "reverseDependencies": [],
-      "sha256": "c14f146d2cf34fa5354ea89aea0586225555786c9b547381daa1dd3b191dd47c"
+      "sha256": "7e7fc86a6fb47a68705f0b9e3b43bb042237f87d98453fa5fab25d300b9adca8"
     },
     {
       "brandSignals": [
@@ -37332,7 +37332,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 3548,
+      "bytes": 3915,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37360,7 +37360,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/SlimeSolvent.java"
       ],
-      "sha256": "dea47c95798c41eabdd2eb42ab8d7b21571a5b7d88285162c039bb1cda34fea4"
+      "sha256": "5c696dfb2454d041998aaba3667457c6f671d4a1bba1c5e869356b85f2713c91"
     },
     {
       "brandSignals": [
@@ -37393,7 +37393,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 394,
+      "bytes": 439,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37407,7 +37407,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerCombatEffects.java",
       "reverseDependencies": [],
-      "sha256": "b58ad8061a4071337f6b4eee6501e011f7dc98a160baec73b6482d87f71e8d35"
+      "sha256": "9871786b512ff6041d638ce0279d35833a415195aae44d3a0914a5bbe8de5934"
     },
     {
       "brandSignals": [
@@ -37761,7 +37761,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 3603,
+      "bytes": 3601,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37778,7 +37778,7 @@
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java"
       ],
-      "sha256": "a9653ef6f02b60b05fabd5d869da075a2310d616f425127f12c581cc8fae8c38"
+      "sha256": "25202fab7e32232936730ecbbd20c0100e31ce194ffcad056a5bfaef3ad3a7b1"
     },
     {
       "brandSignals": [],
@@ -42950,7 +42950,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 39426,
+      "bytes": 39899,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43187,7 +43187,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerDuelHandler.java"
       ],
-      "sha256": "2cd2095bf7ef163c4b239eb9f0a967da1d936bd5d7490fd04eba27978b11ac68"
+      "sha256": "b34ea40eee583278570384571ca3d2d0eb4a617d9257f22d8f4d6f1b60b8d259"
     },
     {
       "brandSignals": [
@@ -43472,7 +43472,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 45743,
+      "bytes": 46344,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43739,7 +43739,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "b9bab69485729a4f94d2ae23097f0c3be9a9e509c0f45a0b107e5954a4dccddf"
+      "sha256": "f935e79f75ed67cb6f9b9d2c974c426b89f2c639d03499270cb18049ba57fd65"
     },
     {
       "brandSignals": [],
@@ -48271,7 +48271,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4298,
+      "bytes": 4393,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48293,7 +48293,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/WalkingQueue.java",
       "reverseDependencies": [],
-      "sha256": "14199ea469fbb7acf1511b9156318cfa09238e14ddd099b0fe81fb744d0aef02"
+      "sha256": "845bfde1b95f1022158d4e63f06cdd93b8235041d4aee31ecdc2aa49c7a4cdef"
     },
     {
       "brandSignals": [],
@@ -48699,7 +48699,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 8266,
+      "bytes": 8499,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48736,7 +48736,7 @@
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "f55e8c6d336c7c6f7fb7ca2fa604c175b8641cf4207b99074abdfd8b9ad24a81"
+      "sha256": "facd3c041341e6fe53320f7b8bf9b9d852aa7ea26b56e4e8465861445186347f"
     },
     {
       "brandSignals": [],
@@ -48758,7 +48758,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 2691,
+      "bytes": 2804,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48774,7 +48774,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "d012ca39426c880afd7dc5cdd100165d77488a27d462dbd5417240b7fdcfee63"
+      "sha256": "30ad68839b3de96ed4e3882f15494449d8dcaa02433c058fff1e2a225b64d5fb"
     },
     {
       "brandSignals": [],
@@ -48794,7 +48794,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 951,
+      "bytes": 973,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48805,7 +48805,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "7e27e4c180acdb8bbf6bea44b691cf57d39ddb9763cab668df733ed84ab893de"
+      "sha256": "6eedc32879e4ed6fd621cf28b09485ef105d943c66171c7df69b138c3b3c15ab"
     },
     {
       "brandSignals": [],
@@ -52567,7 +52567,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 30168,
+      "bytes": 30259,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52669,7 +52669,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
       "reverseDependencies": [],
-      "sha256": "cef10800461960fd4be66b8ac383cd0ab2bc57cd9705efbbdd33a643a79b949b"
+      "sha256": "c0b4ff5bffd4ff80f8474b95059a7fcbe85c040d5205969514c66a9d3103e3ec"
     },
     {
       "brandSignals": [],
@@ -54536,7 +54536,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5102,
+      "bytes": 5282,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -54572,7 +54572,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "79e7299099c1a0d3639565c1cb6e5006f8970b43838ad9326dff8e2c9e0335d9"
+      "sha256": "3f367b265f0af9b112a6e575f036b185111af6e029e03735891b231e87dd8479"
     },
     {
       "brandSignals": [],
@@ -58950,7 +58950,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 116000,
+      "bytes": 116096,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -59379,7 +59379,7 @@
         "server/src/com/openrsc/server/plugins/menu/Menu.java",
         "server/src/com/openrsc/server/util/UsernameChange.java"
       ],
-      "sha256": "0ccac7f39857fab9193399813ec6bdb43534c9f80b8065c5c859e26bd4336adb"
+      "sha256": "fbcb5eeb8489fdb1b088ba1da8425e1f18f3754e879deedaaae2301a9d30f2f3"
     },
     {
       "brandSignals": [],
@@ -59749,7 +59749,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 10821,
+      "bytes": 11545,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -59773,7 +59773,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "7df92c0ca56709ed79f7346552dfbc174f3be62a2a758eb400e556be3e522926"
+      "sha256": "d214641a56a8e9df3b051ab507e22885949bfdc2e303c5927276f6030609b342"
     },
     {
       "brandSignals": [],

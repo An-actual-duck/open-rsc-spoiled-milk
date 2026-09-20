@@ -65,6 +65,7 @@ public class WalkingQueue {
 	 * Processes the next player's movement.
 	 */
 	public void processNextMovement() {
+		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(mob)) return;
 		if (com.openrsc.server.content.monsterslayer.CockatriceCombat.movementBlocked(mob)) return;
 		if (path == null) {
 			handlePlayerFinishedWalking();

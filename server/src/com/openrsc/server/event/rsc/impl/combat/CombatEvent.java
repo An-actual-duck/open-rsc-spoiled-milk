@@ -207,6 +207,7 @@ public class CombatEvent extends GameTickEvent {
 					com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
 			}
 			if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(hitter, target)) return;
+			if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.recovering(hitter)) return;
 			if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(hitter)) return;
 				com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(hitter, 2);
@@ -236,6 +237,9 @@ public class CombatEvent extends GameTickEvent {
 				damage = applyPlayerMeleeDamageBuff((Player) hitter, damage);
 			}
 			final boolean attackSuppressed = hitter.consumeOgreStaggerDebuff() || hitter.consumeStartleDebuff();
+			final Mob abyssalHitter = hitter;
+			if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.beforeMelee(
+				hitter, target, attackSuppressed, (victim, hit) -> inflictDamage(abyssalHitter, victim, hit, false))) return;
 			if (attackSuppressed) {
 				damage = 0;
 			}
@@ -582,6 +586,8 @@ public class CombatEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
+			hitter, target, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);

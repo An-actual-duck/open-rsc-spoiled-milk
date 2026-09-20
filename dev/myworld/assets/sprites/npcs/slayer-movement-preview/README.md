@@ -7,20 +7,22 @@ imported, byte-for-byte; no source caches, models, training data or other projec
 history are included. See `provenance.json` for source-relative export names and
 SHA-256 identities. The source project remains unchanged.
 
-## Movement-only runtime contract
+## Runtime contract
 
 Columns 0–4 are front, diagonal front, right-facing side, diagonal rear and rear.
 Rows are idle, first step, opposite step. The frog instead has crouch, kick,
 landing. Existing opposite camera directions mirror the corresponding columns.
-Original additional attack columns are preserved. The subsequent giant frog
-combat pass enables its attack column; other attack columns remain disabled.
-Banshee has only five columns.
+Approved attack columns are now enabled for all eight combat fixtures.
+Banshee has only five source columns and reuses side poses for combat.
 
 The native pixels, transparency, padding and unequal attack-column widths are
 preserved. Presentation starts at 2.4 world units per native pixel, uniformly
 across directions; this is a movement-test baseline subject to in-game scale
 review. Bloodveld's 120x110 cells preserve its approved 10-pixel walk padding.
-The remaining movement cells are 100x100. No recoloring or regenerated art.
+Dark beast also uses 120x110 cells. Abyssal demon uses 100x112 movement cells:
+six transparent pixels above and below its original frames accommodate the
+approved spike canvas without shrinking the body. Remaining cells are 100x100.
+No recoloring or regenerated art.
 
 The client supports these through both custom and authentic sprite loading,
 including PNG resources embedded in the client JAR. Ordinary NPCs keep their
@@ -46,10 +48,14 @@ checking idle. No persistent spawns are added and these creatures do not respawn
 | 869 | Dark beast | `::spawnnpc 869 4 10` |
 | 870 | Abyssal demon | `::spawnnpc 870 4 10` |
 
-NPCs 863–869 now have staged combat implementations. Abyssal demon 870 remains
-a harmless, non-attackable fixture with placeholder level-one stats. All are
+NPCs 863–870 now have staged combat implementations. All are
 non-aggressive. No tower placements, new drops or access gates are supplied.
 Existing NPC IDs, including Gorak 861 and Green Dragon 862, remain unchanged.
+
+Abyssal demon uses its final approved sunken-abdomen stab frames and approved
+color-matched spike strip. Sources are preserved in ../abyssal-spikes/ and
+packed losslessly by tools/myworld/PackAbyssalSpikes.java. See the
+[combat contract](../../../../../../docs/myworld/rough-drafts/abyssal-demon-combat-test.md).
 
 Dark beast uses the approved normalized 120×110 base and an added lightning
 column, packed by `tools/myworld/PackDarkBeastLightning.java`. Source art and

@@ -60,9 +60,17 @@ public final class GiantFrogCombat {
 		ActionSender.sendActivePotionEffects(victim);
 	}
 	public static void applySolvent(Player player) {
+		if (AbyssalDemonCombat.actionsBlocked(player)) return;
 		player.getCache().store(SOLVENT, now(player) + SOLVENT_MILLIS);
 		player.getCache().remove(SPIT);
-		player.message("Slime Solvent prevents Slimy Spit from stopping your attacks for 10 minutes.");
+		AbyssalDemonCombat.clearTrap(player);
+		player.message("Slime Solvent protects you from sticky flesh and saliva for 10 minutes.");
+		ActionSender.sendActivePotionEffects(player);
+	}
+	public static void drainSolvent(Player player, long millis) {
+		long left = remaining(player, SOLVENT, SOLVENT_MILLIS);
+		if (left <= 0) return;
+		player.getCache().store(SOLVENT, now(player) + Math.max(0, left - millis));
 		ActionSender.sendActivePotionEffects(player);
 	}
 	public static void appendStatuses(Player player, List<ActiveStatusEntry> statuses) {

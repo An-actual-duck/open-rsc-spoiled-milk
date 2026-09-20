@@ -6787,11 +6787,11 @@ public class EntityHandler {
 					? "A serpent warrior wielding two scimitars" : preview == SlayerMovementPreview.TERROR_DOG
 					? "A vicious hound driven into a feeding frenzy by its pack" : preview == SlayerMovementPreview.BLOODVELD
 					? "A ravenous creature with a grasping tongue" : preview == SlayerMovementPreview.DARK_BEAST
-					? "A horned beast crackling with dangerous static" : "A harmless movement-test creature", "",
+					? "A horned beast crackling with dangerous static" : "A shifting horror of sticky flesh and exposed bone", "",
 				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45
 					: preview == SlayerMovementPreview.BANSHEE ? 60 : preview == SlayerMovementPreview.NAGA ? 75
 					: preview == SlayerMovementPreview.TERROR_DOG ? 90 : preview == SlayerMovementPreview.BLOODVELD ? 150
-					: preview == SlayerMovementPreview.DARK_BEAST ? 200 : 1, 1,
+					: preview == SlayerMovementPreview.DARK_BEAST ? 200 : 250, 1,
 				preview.combatEnabled(),
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));
