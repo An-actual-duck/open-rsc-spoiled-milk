@@ -188,6 +188,19 @@ shared reapplication immunity. Traps do not refresh. The existing three-use
 removes five seconds of its remaining timer. It cannot be used while trapped.
 See [Abyssal demon combat test contract](abyssal-demon-combat-test.md).
 
+Owner accepted the private Abyssal combat test on 2026-09-20 with no notes.
+The next content pass is drops and assembly, not another combat redesign.
+
+## Current drop and icon planning
+
+The [special drops and assembly document](slayer-special-drops-and-assembly.md)
+is the reference for the confirmed eight-monster drop roster, material/remains
+exceptions, 1–3 residue/feather quantities, rare-component ordering and icon work.
+Default hide and bones plus level-appropriate existing ordinary loot are implied
+unless explicitly overridden. Exact rare rates and recipe counts remain open;
+"rare" does not automatically mean 1/128, and appropriate parts should reach
+1/1,000 or rarer. Do not infer implemented drops from accepted combat tests.
+
 ## Sprite-to-game integration checklist
 
 All eight creatures have owner-approved artwork. This does not establish that
@@ -230,7 +243,8 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Dark beast mechanics accepted; test Abyssal demon full-action traps and spikes.
+3. Dark beast and Abyssal mechanics accepted; define drop rates and assembly
+   quantities together using the confirmed component roster.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.
