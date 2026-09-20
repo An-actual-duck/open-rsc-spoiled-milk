@@ -137,8 +137,14 @@ one full item. See [combat test contract](banshee-combat-test.md).
 ### Naga — ordinary encounter
 
 No special Slayer-counter requirement. Approved sword cleave and sword throw
-remain available attacks; projectile integration is separate from sprite approval.
-It shares floor 3 with the gimmick-bearing banshee.
+are integrated as separate combat animations. At distance he throws a spinning
+iron scimitar (using its inventory/ground icon) and advances between throws.
+Adjacent attacks are melee only: simultaneous independent red main-hand and
+yellow off-hand rolls, the off-hand maximum halved before defense mitigation.
+Very high magic defense, high ranged defense, low melee defense encourage a
+choice between safer/slower ranged combat and riskier/faster melee. A shared
+cooldown prevents immediate extra swings when changing styles. He shares floor 3
+with Banshee. See [Naga combat test contract](naga-combat-test.md).
 
 ### Terror dog — rip apart
 

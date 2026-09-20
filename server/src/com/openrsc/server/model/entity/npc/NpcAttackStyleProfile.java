@@ -56,7 +56,8 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public boolean prefersProjectileAtDistance(final Npc npc, final int distance) {
-		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc))
+		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)
+			|| com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc))
 			return distance > 1 && distance <= getProjectileRange(npc);
 		if (distance > getProjectileRange(npc)) {
 			return false;
@@ -93,6 +94,7 @@ public enum NpcAttackStyleProfile {
 	}
 
 	public int getRangedProjectileVisual(final Npc npc) {
+		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc)) return Projectile.NAGA_SCIMITAR;
 		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return Projectile.ACID_DROP;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return Projectile.ARROW;
@@ -375,6 +377,7 @@ public enum NpcAttackStyleProfile {
 
 	public static NpcAttackStyleProfile forNpc(final Npc npc) {
 		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc)) return MELEE_MAGIC;
+		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc)) return MELEE_RANGED;
 		if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) return PURE_RANGED;
 		if (npc == null || npc.getDef() == null || npc.getDef().getName() == null) {
 			return MELEE;

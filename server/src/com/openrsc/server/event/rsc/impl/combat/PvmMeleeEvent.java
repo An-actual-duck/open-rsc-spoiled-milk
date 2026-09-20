@@ -210,12 +210,25 @@ public class PvmMeleeEvent extends GameTickEvent {
 				setDelayTicks(1);
 				return;
 			}
+			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)
+				&& ((Npc) attackerMob).getBehavior().tryNagaProjectileAttack(targetMob)) {
+				setDelayTicks(1);
+				return;
+			}
 			attackerMob.walkAdjacentToEntity(targetMob);
 			setDelayTicks(1);
 			return;
 		}
 
 		attackerMob.resetPath();
+		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)) {
+			if (!com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob)) {
+				setDelayTicks(1);
+				return;
+			}
+			com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(attackerMob,
+				com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
+		}
 		attackerMob.faceCombat(targetMob);
 		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(attackerMob))
 			com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(attackerMob, 2);
@@ -244,6 +257,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
 		inflictDamage(attackerMob, targetMob, damage, attackSuppressed);
+		if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(attackerMob, targetMob, attackSuppressed)) {
+			inflictDamage(attackerMob, targetMob,
+				CombatFormula.doOffhandMeleeDamage(attackerMob, targetMob), false, true);
+		}
 		com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(attackerMob, targetMob, attackSuppressed);
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
@@ -319,10 +336,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed) {
+		inflictDamage(hitter, target, damage, attackSuppressed, false);
+	}
+
+	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
-		hitter.incHitsMade();
+		if (!offhand) hitter.incHitsMade();
 		damage = Summoning.applySummonOutgoingDamage(hitter, damage);
 
 		if (target.isPlayer()) {
@@ -365,14 +386,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 		}
 		final int rawDamage = damage;
-		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
+		final int hitSplatType = offhand ? HitSplat.TYPE_ARMOR_PROC : Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
 		final java.util.UUID encounterId = engagement != null
 			&& engagement.peerOf(hitter) == target
 			? engagement.getEncounterId() : null;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.ACTOR,
-			"pvm-melee-primary", damage)
+			 offhand ? "naga-melee-offhand" : "pvm-melee-primary", damage)
 			.eventId(getUUID())
 			.encounterId(encounterId)
 			.style(CombatStyle.MELEE)

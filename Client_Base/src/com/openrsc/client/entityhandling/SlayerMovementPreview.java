@@ -25,7 +25,9 @@ public enum SlayerMovementPreview {
 	}
 
 	public String animationName() { return "slayer-preview-" + assetName; }
-	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE || this == BANSHEE; }
+	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE || this == BANSHEE || this == NAGA; }
+	public int loadedFrameCount() { return this == NAGA ? 21 : combatEnabled() ? 18 : 15; }
+	public int projectileAttackFrame(long elapsed) { return (this == NAGA ? 18 : 15) + (int) (elapsed / 200); }
 	/** Banshee has fifteen approved frames: reuse its side poses for both attack modes. */
 	public orsc.graphics.two.SpriteArchive.Entry withCombatFrames(orsc.graphics.two.SpriteArchive.Entry source) {
 		if (this != BANSHEE || source == null || source.getFrames().length != 15) return source;

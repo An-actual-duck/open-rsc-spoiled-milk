@@ -239,7 +239,17 @@ public class CombatFormula {
 
 	private static int doMeleeDamage(final Mob source, final Mob victim,
 			final boolean directAttack) {
-		final int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense()));
+		return doMeleeDamage(source, victim, directAttack, 1);
+	}
+
+	/** Independent normal melee roll with half the ordinary maximum, rounded down. */
+	public static int doOffhandMeleeDamage(final Mob source, final Mob victim) {
+		return doMeleeDamage(source, victim, true, 2);
+	}
+
+	private static int doMeleeDamage(final Mob source, final Mob victim,
+			final boolean directAttack, final int capDivisor) {
+		final int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense())) / capDivisor;
 		int damage = rollPlayerCrit(source, attackMax) ? attackMax
 			: applyMitigationRoll(source, victim, attackMax,
 				defenseToMitigation(victim.getMeleeDefense()), directAttack);

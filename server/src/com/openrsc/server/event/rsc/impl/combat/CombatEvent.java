@@ -201,6 +201,11 @@ public class CombatEvent extends GameTickEvent {
 			target.setLastCombatState(CombatState.ERROR);
 			resetCombat();
 		} else {
+			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(hitter)) {
+				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(hitter)) return;
+				com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(hitter,
+					com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
+			}
 			hitter.faceCombat(target);
 			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(hitter)) return;
@@ -232,6 +237,9 @@ public class CombatEvent extends GameTickEvent {
 
 			applyWeaponPoison(hitter, target, damage);
 			inflictDamage(hitter, target, damage, attackSuppressed);
+			if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(hitter, target, attackSuppressed)) {
+				inflictDamage(hitter, target, CombatFormula.doOffhandMeleeDamage(hitter, target), false, true);
+			}
 			com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(hitter, target, attackSuppressed);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
@@ -496,10 +504,14 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed) {
+		inflictDamage(hitter, target, damage, attackSuppressed, false);
+	}
+
+	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
-		hitter.incHitsMade();
+		if (!offhand) hitter.incHitsMade();
 		damage = Summoning.applySummonOutgoingDamage(hitter, damage);
 
 		if (target.isPlayer()) {
@@ -547,14 +559,14 @@ public class CombatEvent extends GameTickEvent {
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());
 		final int rawDamage = damage;
-		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
+		final int hitSplatType = offhand ? HitSplat.TYPE_ARMOR_PROC : Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
 		final java.util.UUID encounterId = engagement != null
 			&& engagement.peerOf(hitter) == target
 			? engagement.getEncounterId() : null;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.ACTOR,
-			"reciprocal-melee-primary", damage)
+			offhand ? "naga-melee-offhand" : "reciprocal-melee-primary", damage)
 			.eventId(getUUID())
 			.encounterId(encounterId)
 			.style(CombatStyle.MELEE)
