@@ -15,9 +15,9 @@ rarity policy, ordinary loot and assembly transaction requirements.
 - Assembly exchanges the listed components **plus Slayer currency**. The
   currency tier follows the monster supplying the parts, not the finished
   equipment's stat tier. The charge must be sizable but **less than that tier's
-  unchanged backpack-upgrade price**. Exact amounts and the proposed native-only
-  assembly exception are recorded for review in the
-  [pricing proposal](slayer-tower-task-expansion.md#proposed-assembly-prices-below-the-backpack-benchmark).
+  unchanged backpack-upgrade price**. Exact amounts and the source-tier-only
+  assembly exception are approved in the
+  [assembly price table](slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
   Currency is an additional effort gate even when the player buys components.
 - **All these components and finished rewards are tradable**, and purchased
   parts are valid for assembly. There is no personal-kill requirement. This
@@ -197,7 +197,7 @@ balancing can proceed without implementing this system.
 
 The [new monster task counts and payouts](slayer-tower-task-expansion.md) are
 approved, not implemented. That plan records unchanged backpack prices and
-proposed below-backpack assembly charges based on each source monster's tier.
+approved below-backpack, source-tier-only assembly charges for all six rewards.
 
 1. Follow the confirmed whip rates: **Abyssal Rib 1/2,000; single Abyssal
    Vertibrae 1/128**. These replace the earlier very-rare-vertebra direction;
@@ -205,8 +205,8 @@ proposed below-backpack assembly charges based on each source monster's tier.
    average rib acquisition from collecting all whip components. Balance the
    other equipment rates against **2,000 kills for staff/bow and 1,000 for
    pendant/dagger**.
-2. Approve the proposed Slayer-currency amounts and assembly price vector under
-   the confirmed below-backpack rule. The pendant requires one Frozen Tear. Feather
+2. Use the approved fixed Slayer-currency amounts and source-tier-only assembly
+   rule. The pendant requires one Frozen Tear. Feather
    quantities remain 1–3 per kill; their distribution affects the 500-feather
    shield's acquisition effort.
 3. Resolve the effect-policy questions above and inspect existing tier stats,

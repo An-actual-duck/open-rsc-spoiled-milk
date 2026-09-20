@@ -27,7 +27,8 @@ Related expansion design notes (not implemented):
   of all completed tiers, assignment preparation tips, and the decision to
   keep current backpack prices unchanged. New task counts/payouts are approved;
   equipment assembly costs must be sizable but below the source monster's tier
-  backpack price. Exact equipment currency amounts/vector remain proposals.
+  backpack price. All six exact equipment amounts and source-tier-only currency
+  vectors are approved in that document, but not implemented.
   The future implementation must replace the task-total-linked price check
   with validation of the approved fixed prices; no runtime change is made yet.
 - [Special drops and weapon assembly](../rough-drafts/slayer-special-drops-and-assembly.md)
@@ -214,6 +215,10 @@ Core rules:
   the immediately preceding tier currency. The Fledgling shop is the sole
   exception and costs only Fledgling currency. No item may consume an older
   lower tier, a higher tier, or an interchangeable total.
+  Approved expansion exception (not implemented): the six new monster-part
+  assembly rewards use only their source monster's tier currency at the fixed
+  prices in the [assembly price table](../rough-drafts/slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
+  This does not change ordinary shop-item prices or pool typed balances.
 - Each of the six challenge tiers contains one permanent inventory-capacity
   upgrade. Buying all six grows the player's inventory from 30 slots to a
   8-by-5, 40-slot inventory; the upgrade is purchased rather than granted

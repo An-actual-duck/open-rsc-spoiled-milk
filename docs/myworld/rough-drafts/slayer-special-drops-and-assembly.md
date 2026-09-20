@@ -77,9 +77,9 @@ The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
   both skeletal components should be very rare.
 - Other equipment-component rates remain proposals below, not finalized
   probabilities. Use the approved recipe counts in the equipment design,
-  including **one Frozen Tear** for the pendant. Exact currency amounts remain
-  open under the approved sizable-but-below-backpack rule, using the source
-  monster's tier; see the [pricing proposal](slayer-tower-task-expansion.md#proposed-assembly-prices-below-the-backpack-benchmark).
+  including **one Frozen Tear** for the pendant. The six fixed source-tier-only
+  currency prices are approved; see the
+  [assembly price table](slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
 - Choose component rates together with assembly quantities, expected kills per
   hour, encounter difficulty, repeat rewards and Slayer-currency costs.
 - Record numeric per-kill probabilities, not just rarity labels. Audit how the
@@ -142,11 +142,10 @@ old components alongside the new ones. Item IDs remain unallocated.
 The [Abyssal Whip design](slayer-unique-equipment-design.md#abyssal-whip)
 specifies the approved quantities, tier benchmarks, hit-delay effect and exact
 examine text. All three component types plus Slayer currency are required.
-Currency tier is Hero, based on the source monster. The proposed 210 Hero-only
-cost is not yet approved; it is below the unchanged 282 Hero backpack price.
-The exact price vector and shop stock/access rules remain open. The demon
-is planned for floor 6 / Hero challenge tier, but that does not itself approve
-a Hero-only price or override existing shop-cost rules.
+The approved currency cost is **210 Hero points only**, below the unchanged
+282 Hero backpack price, in addition to all required parts. This is an explicit
+assembly exception to ordinary shop-item two-tier prices. Shop stock/access
+rules remain open; no extra currency tier may be added to this recipe.
 
 ## Material and economy boundaries
 
@@ -198,7 +197,8 @@ that icons have been created, approved or imported.
   explicit approval if the existing limit prevents the requested result.
 
 Suggested sequence (not implementation approval): use the documented rewards
-and recipes to balance rarity and currency costs, then produce drop, equipment
+and recipes to finalize remaining rarity decisions under the approved currency
+costs, then produce drop, equipment
 and counter-item icons against those designs. The already-defined gimmick
 items can receive icons independently of unresolved reward balancing. Follow
 with item definitions, full drop tables, atomic shop assembly and effects.

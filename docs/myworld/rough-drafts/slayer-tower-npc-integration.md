@@ -197,7 +197,7 @@ The [task expansion and pricing comparison](slayer-tower-task-expansion.md)
 records the approved addition of all eight monsters to mandatory progression
 without removing existing tasks, preservation of every already-completed tier,
 draft assignment tips, approved task counts/payouts and unchanged backpack
-prices. Exact below-backpack equipment assembly charges remain proposals.
+prices. All six below-backpack, source-tier-only assembly prices are approved.
 Neither the task expansion nor the equipment prices are implemented yet.
 
 The [special drops and assembly document](slayer-special-drops-and-assembly.md)
@@ -212,7 +212,7 @@ intended rare component, and collecting the complete recipe can take longer
 than the average 2,000-kill rib wait. Other equipment acquisition targets are
 2,000 kills for staff/bow and 1,000 for pendant/dagger. The pendant requires
 one Frozen Tear, visually a crystallized tear on a string. Other equipment
-drop rates and Slayer-currency costs remain open;
+drop rates remain open; the six equipment assembly currency prices are approved;
 "rare" does not automatically mean 1/128, and appropriate parts should reach
 1/1,000 or rarer. Do not infer implemented drops from accepted combat tests.
 
@@ -258,8 +258,8 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Dark beast and Abyssal mechanics accepted; balance drop rates and currency
-   prices against the documented reward recipes and settle remaining counts.
+3. Dark beast and Abyssal mechanics accepted; finalize remaining drop rates
+   against the documented recipes and approved equipment currency prices.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.
