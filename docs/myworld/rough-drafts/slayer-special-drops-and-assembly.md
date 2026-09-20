@@ -34,8 +34,8 @@ definition work. Combat levels/floors follow the tower plan.
 
 | Floor | NPC (ID; combat level) | Baseline material/remains | Unique rare components |
 | --- | --- | --- | --- |
-| 1 | Giant frog (863; 20) | Hide + bones | Sticky Saliva Gland |
-| 2 | Cockatrice (864; 35) | **1–3 Cockatrice Feathers** instead of hide, plus bones | Cockatrice Eye |
+| 1 | Giant frog (863; 20) | Hide + bones | Sticky Saliva Gland (1/128) |
+| 2 | Cockatrice (864; 35) | **1–3 Cockatrice Feathers** instead of hide, plus bones | Cockatrice Eye (1/128) |
 | 3 | Banshee (865; 50) | Hide + bones | Frozen Tear |
 | 3 | Naga (866; 60) | Hide + bones | None for now; Serpant's Tail deferred and must not drop |
 | 4 | Terror dog (867; 75) | Hide + bones | Terror Fang |
@@ -69,10 +69,13 @@ The owner's use of "rare" is descriptive, not an instruction to select the
 game's named **Rare / 1 in 128** category. Use the less common rates available:
 **1 in 1,000 and rarer are intended for appropriate components**. This is a
 design range, not approval of 1/1,000 for every component or a universal floor.
+The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
+1/128 each**, with one of each required for their future potion.
 
 - Both Abyssal skeletal components are very rare; **Abyssal Rib is rarer than
   Abyssal Vertibrae**.
-- No exact component rate or rare-component drop quantity is approved yet.
+- Apart from those two herbalism ingredients, no exact component rate is
+  approved yet. Rare-component drop quantities also remain to be finalized.
   Use the approved recipe counts in the equipment design; the pendant's
   Frozen Tear count and currency costs remain open.
 - Choose component rates together with assembly quantities, expected kills per
@@ -86,6 +89,35 @@ design range, not approval of 1/1,000 for every component or a universal floor.
 - Decide independent versus shared rolls, simultaneous rare drops, luck
   modifiers, on-task restrictions and any duplicate/bad-luck rules explicitly.
   No pity system or guaranteed unique drop is implied.
+
+### Confirmed acquisition targets and candidate rates
+
+These targets answer the average kills-to-assemble question, not a guaranteed
+drop deadline or mandatory personal kill count. Trading remains allowed.
+Slayer currency and purchased logs are additional costs, not assumed to be
+earned in those same kills. Exact equipment-component rates below are
+**proposals**, not approved or implemented drop tables.
+
+| Reward | Target average monster kills | Candidate rate basis |
+| --- | --- | --- |
+| Abyssal Whip | 2,000 | Joint rib/ten-vertebra completion needs a separate calculation; see below |
+| Thunder Spire Staff | 2,000 | One Lightning Horn at 1/2,000 |
+| Leaching Bow | 2,000 | Two tongues, each dropped singly at 1/1,000 |
+| Dagger of Terror | 1,000 | One Terror Fang at 1/1,000 |
+| Sullen Pendant | 1,000 | Frozen Tear at 1/1,000 **if** the recipe is one tear; count still needs confirmation |
+
+No separate kill target has been assigned to the 500-feather shield. Its pace
+depends on the baseline 1–3 feather distribution plus the currency price.
+
+The whip's ten vertebrae require special care: at one vertebra per 1/1,000
+drop, those alone average 10,000 kills. Meeting approximately 2,000 kills
+requires more frequent vertebrae, multi-unit drops, or a recipe revision; none
+of those alternatives is selected yet. Preserve the ten-component recipe
+until the owner approves otherwise. Also, independently setting the rib and
+the complete vertebra requirement to each average 2,000 kills makes the
+average wait for **both** exceed 2,000. Evaluate their joint completion time,
+not just the slower component's mean. Reconcile the earlier "very rare"
+vertebra direction explicitly rather than hiding this tradeoff.
 
 ## Abyssal demon: abyssal whip
 
@@ -117,9 +149,11 @@ a Hero-only price or override existing shop-cost rules.
 - Do not classify a source as retired merely because its approved material
   replaces literal hide. Apply the grandfathering policy only to the final
   approved retired item families.
-- Decide whether parts and assembled weapons are tradeable, whether drops
-  require an active task, and whether bought parts are eligible. No personal
-  kill-proof or account-bound component restriction is implied.
+- **Parts and finished equipment are tradable; bought parts are eligible.**
+  Shop assembly still requires Slayer currency as an additional effort gate.
+  Active-task drop eligibility remains undecided; no personal kill-proof or
+  account-bound component restriction is implied. This approval concerns new
+  rewards, not the separate retired-hide/armor grandfathering policy.
 - Determine each rare component's drop chance, eligible NPC variants, quantity,
   independent versus shared roll, and any luck modifiers deliberately.
 - Six equipment rewards now have owner-directed designs in the linked
