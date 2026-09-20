@@ -37,6 +37,8 @@ public final class CombatEligibilityMessageAdapter {
 				return Collections.singletonList("Slimy Spit prevents you from attacking.");
 			case SOURCE_STONY_GLARE:
 				return Collections.singletonList("Stony Glare prevents you from attacking.");
+			case SOURCE_ABYSSAL_TRAP:
+				return Collections.singletonList("The sticky flesh prevents you from acting.");
 			case PVP_DISABLED:
 				return Collections.singletonList(player.getConfig().WANT_MYWORLD
 					? "This is a PvM-only world"

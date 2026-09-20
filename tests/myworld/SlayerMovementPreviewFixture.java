@@ -15,6 +15,22 @@ public final class SlayerMovementPreviewFixture {
 	}
 	public static void main(String[] args) throws Exception {
 		EntityHandler.load(true);
+		require(EntityHandler.getNpcDef(870).getHits()==250, "Abyssal client health");
+		ORSCharacter demon=new ORSCharacter(); demon.npcId=870;
+		require(AbyssalDemonPose.apply(demon,82,1000), "spikes accepted");
+		require(AbyssalDemonPose.frame(demon,1000)==18 && AbyssalDemonPose.frame(demon,1080)==19, "brief anticipation, immediate spike display");
+		require(AbyssalDemonPose.frame(demon,2279)==19, "extended spikes held");
+		AbyssalDemonPose.apply(demon,83,2280);
+		require(AbyssalDemonPose.frame(demon,2280)==20, "rising frame");
+		AbyssalDemonPose.apply(demon,84,3560);
+		require(AbyssalDemonPose.frame(demon,3560)==-1, "recovery ends");
+		for(int tick=0;tick<4;tick++) {
+			long start=4000+640*tick;
+			AbyssalDemonPose.apply(demon,85,start);
+			require(AbyssalDemonPose.frame(demon,start)==15 && AbyssalDemonPose.frame(demon,start+80)==16
+				&& AbyssalDemonPose.frame(demon,start+240)==17, "each stab uses windup, thrust, retract");
+		}
+		demon.npcId=869; require(!AbyssalDemonPose.apply(demon,82,8000), "pose isolated");
 		require(EntityHandler.getNpcDef(869).getHits()==200,"Dark beast client health matches server tuning");
 		// Exercise real rendering-size methods without starting the app/window.
 		java.lang.reflect.Field unsafeField=sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
@@ -76,6 +92,22 @@ public final class SlayerMovementPreviewFixture {
 			Entry entry = loader.loadExternalNpcDirectionSheet(source, preview.animationName(), preview.columnWidths(), 3);
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			entry = preview.withCombatFrames(entry);
+			if (preview == SlayerMovementPreview.ABYSSAL_DEMON) {
+				require(preview.loadedFrameCount()==21 && preview.frameHeight()==112, "both Abyssal attacks loaded");
+				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/abyssal-spikes"},"approved-base.png"));
+				BufferedImage strip=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/abyssal-spikes"},"approved-spikes-strip.png"));
+				for(int row=0;row<3;row++) {
+					for(int y=0;y<100;y++) for(int x=0;x<612;x++)
+						require(base.getRGB(x,row*100+y)==image.getRGB(x,row*112+6+y),"approved base pixels preserved");
+					for(int y=0;y<112;y++) for(int x=0;x<144;x++) {
+						int argb=strip.getRGB(row*144+x,y);
+						require(argb==image.getRGB(612+x,row*112+y),"approved spikes preserved");
+						int expected=(argb>>>24)<64?0:argb&0xffffff;
+						if(expected==0 && (argb>>>24)>=64) expected=0x010101;
+						require(entry.getFrames()[18+row].getPixels()[y*144+x]==expected,"spike decoding");
+					}
+				}
+			}
 			if (preview == SlayerMovementPreview.DARK_BEAST) {
 				require(preview.loadedFrameCount()==21 && preview.frameHeight()==110,"Dark beast two attack columns");
 				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/dark-beast-lightning"},"approved-base.png"));

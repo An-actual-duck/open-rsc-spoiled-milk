@@ -45,7 +45,7 @@ Floor assignment is owner-selected; combat levels are proposed balancing targets
 | 4 | Elite | Terror dog | 75 | Feeding Frenzy |
 | 4 | Elite | Bloodveld | 85 | No counter required; lifesteal and tongue pull |
 | 5 | Champion | Dark beast | 105 | Marked lightning / Static discharge wipe |
-| 6 | Hero | Abyssal demon | 125 | Undecided |
+| 6 | Hero | Abyssal demon | 125 | Sticky Flesh / shared Slime Solvent, eroded by hits |
 
 Levels describe prepared encounters, not the uncountered special's effective
 danger. Final stats, health, damage, accuracy, attack intervals and displayed
@@ -179,8 +179,14 @@ See [Dark beast combat test contract](dark-beast-combat-test.md).
 
 ### Abyssal demon
 
-Still needs an owner-selected gimmick and shop consumable. The blade stab and
-sinking/spike AoE are approved animations, not automatically its Slayer gimmick.
+Rapid one-tick melee stabs and an immediate radius-one sinking/spike AoE with
+four ticks of recovery. Very high ranged/magic defenses favor melee engagement.
+Unprotected damaging hits apply **Sticky Flesh**: three seconds unable to move
+or perform gameplay actions, then **You manage to break free** and two ticks of
+shared reapplication immunity. Traps do not refresh. The existing three-use
+**Slime Solvent** protects against this too, but each damaging Abyssal hit
+removes five seconds of its remaining timer. It cannot be used while trapped.
+See [Abyssal demon combat test contract](abyssal-demon-combat-test.md).
 
 ## Sprite-to-game integration checklist
 
@@ -224,7 +230,7 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Test Dark beast marked lightning; design the abyssal demon gimmick/counter.
+3. Dark beast mechanics accepted; test Abyssal demon full-action traps and spikes.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.

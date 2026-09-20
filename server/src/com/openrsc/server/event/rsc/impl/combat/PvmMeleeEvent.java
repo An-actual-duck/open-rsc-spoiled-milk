@@ -158,6 +158,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 			setDelayTicks(3);
 			return;
 		}
+		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.recovering(attackerMob)) {
+			setDelayTicks(1);
+			return;
+		}
 		if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(attackerMob, targetMob)) {
 			setDelayTicks(1);
 			return;
@@ -250,6 +254,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 			com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(attackerMob, 2);
 
 		boolean attackSuppressed = attackerMob.consumeOgreStaggerDebuff() || attackerMob.consumeStartleDebuff();
+		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.beforeMelee(
+			attackerMob, targetMob, attackSuppressed,
+			(victim, hit) -> inflictDamage(attackerMob, victim, hit, false))) {
+			setDelayTicks(1);
+			return;
+		}
 		if (ElderGreenDragonSpecialAttacks.shouldUseMeleeSweep(attackerMob, targetMob, attackSuppressed)) {
 			ElderGreenDragonSpecialAttacks.applyMeleeSweep(getWorld(), (Npc) attackerMob, targetMob, false);
 			if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
@@ -312,7 +322,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			((Player) attackerMob).consumeLeatherSetAttackBuffs();
 		}
 
-		int delayTicks = getAdjustedMeleeDelayTicks(attackerMob, attackerMob.isNpc() && targetMob.isPlayer() ? 2 : 3);
+		int delayTicks = getAdjustedMeleeDelayTicks(attackerMob,
+			com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.isDemon(attackerMob) ? 1
+				: attackerMob.isNpc() && targetMob.isPlayer() ? 2 : 3);
 		if (scytheTargetsHit > 1) {
 			delayTicks += scytheTargetsHit - 1;
 		}
@@ -420,6 +432,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
+			hitter, target, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);

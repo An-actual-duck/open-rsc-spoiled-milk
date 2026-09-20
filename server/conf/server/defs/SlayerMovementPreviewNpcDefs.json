@@ -317,17 +317,17 @@
     {
       "id": 870,
       "name": "Abyssal demon",
-      "description": "A harmless movement-test creature",
+      "description": "A shifting horror of sticky flesh and exposed bone",
       "command": "",
       "command2": "",
       "attack": 1,
       "strength": 1,
-      "hits": 1,
+      "hits": 250,
       "defense": 1,
       "ranged": false,
-      "combatlvl": 1,
+      "combatlvl": 125,
       "isMembers": 0,
-      "attackable": 0,
+      "attackable": 1,
       "aggressive": 0,
       "respawnTime": 30,
       "sprites1": 0,
@@ -347,12 +347,16 @@
       "bottomColour": 0,
       "skinColour": 0,
       "camera1": 240,
-      "camera2": 240,
+      "camera2": 268,
       "walkModel": 10,
       "combatModel": 7,
       "combatSprite": 5,
       "canEdit": 0,
-      "roundMode": 1
+      "roundMode": 1,
+      "meleeOffense": 125,
+      "meleeDefense": 110,
+      "rangedDefense": 220,
+      "magicDefense": 220
     }
   ]
 }

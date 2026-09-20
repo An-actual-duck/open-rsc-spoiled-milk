@@ -86,6 +86,10 @@ public class CombatEffect {
 	public static final int DARK_BEAST_PULSE_HIGH = 79;
 	public static final int DARK_BEAST_DISCHARGE = 80;
 	public static final int DARK_BEAST_CANCEL = 81;
+	public static final int ABYSSAL_SPIKES = 82;
+	public static final int ABYSSAL_RISE = 83;
+	public static final int ABYSSAL_CANCEL = 84;
+	public static final int ABYSSAL_STAB = 85;
 	public static final int DEMON_EXPLOSION = LESSER_DEMON_MAGIC;
 
 	public static final int HELLFIRE = HELLS_FIRE;

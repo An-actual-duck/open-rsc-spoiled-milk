@@ -13,6 +13,7 @@ public final class SlimeSolvent implements OpInvTrigger {
 	@Override
 	public void onOpInv(Player player, Integer invIndex, Item item, String command) {
 		if (!blockOpInv(player, invIndex, item, command) || !"Drink".equalsIgnoreCase(command)
+			|| com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(player)
 			|| item.getItemStatus().getNoted() || player.killed
 			|| player.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id()) <= 0) return;
 		int dosesLeft = GiantFrogCombat.solventDoses(item.getCatalogId()) - 1;
