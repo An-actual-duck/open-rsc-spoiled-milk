@@ -191,6 +191,11 @@ balancing can proceed without implementing this system.
 
 ## Next balance and implementation decisions
 
+First establish the [new monster tasks and payouts](slayer-tower-task-expansion.md),
+then compare assembly costs against backpack upgrades. That plan records the
+existing mandatory-payout/upgrade-price coupling and the owner's decision to
+keep all six current backpack prices unchanged while adding mandatory tasks.
+
 1. Follow the confirmed whip rates: **Abyssal Rib 1/2,000; single Abyssal
    Vertibrae 1/128**. These replace the earlier very-rare-vertebra direction;
    the rib is the intended rare component. The drop document distinguishes
