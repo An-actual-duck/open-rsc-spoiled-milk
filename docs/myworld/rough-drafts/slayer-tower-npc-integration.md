@@ -196,8 +196,9 @@ The next content pass is drops and assembly, not another combat redesign.
 The [task expansion and pricing comparison](slayer-tower-task-expansion.md)
 records the approved addition of all eight monsters to mandatory progression
 without removing existing tasks, preservation of every already-completed tier,
-draft assignment tips, proposed task payouts and backpack-price comparisons.
-Its proposed counts/prices are not implemented or approved balance values.
+draft assignment tips, approved task counts/payouts and unchanged backpack
+prices. Exact below-backpack equipment assembly charges remain proposals.
+Neither the task expansion nor the equipment prices are implemented yet.
 
 The [special drops and assembly document](slayer-special-drops-and-assembly.md)
 is the reference for the confirmed eight-monster drop roster, material/remains

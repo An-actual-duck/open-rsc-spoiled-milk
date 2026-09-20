@@ -12,9 +12,13 @@ This is the reference for reward behavior, component recipes and exact examine
 text. The linked drop document owns the monster roster, baseline materials,
 rarity policy, ordinary loot and assembly transaction requirements.
 
-- Assembly exchanges the listed components **plus Slayer currency**. Currency
-  amounts/types remain undecided. Currency is an intentional additional effort
-  gate even when the player buys the components.
+- Assembly exchanges the listed components **plus Slayer currency**. The
+  currency tier follows the monster supplying the parts, not the finished
+  equipment's stat tier. The charge must be sizable but **less than that tier's
+  unchanged backpack-upgrade price**. Exact amounts and the proposed native-only
+  assembly exception are recorded for review in the
+  [pricing proposal](slayer-tower-task-expansion.md#proposed-assembly-prices-below-the-backpack-benchmark).
+  Currency is an additional effort gate even when the player buys components.
 - **All these components and finished rewards are tradable**, and purchased
   parts are valid for assembly. There is no personal-kill requirement. This
   does not repeal the separate grandfathered retired-leather untradability rule.
@@ -191,10 +195,9 @@ balancing can proceed without implementing this system.
 
 ## Next balance and implementation decisions
 
-First establish the [new monster tasks and payouts](slayer-tower-task-expansion.md),
-then compare assembly costs against backpack upgrades. That plan records the
-existing mandatory-payout/upgrade-price coupling and the owner's decision to
-keep all six current backpack prices unchanged while adding mandatory tasks.
+The [new monster task counts and payouts](slayer-tower-task-expansion.md) are
+approved, not implemented. That plan records unchanged backpack prices and
+proposed below-backpack assembly charges based on each source monster's tier.
 
 1. Follow the confirmed whip rates: **Abyssal Rib 1/2,000; single Abyssal
    Vertibrae 1/128**. These replace the earlier very-rare-vertebra direction;
@@ -202,7 +205,8 @@ keep all six current backpack prices unchanged while adding mandatory tasks.
    average rib acquisition from collecting all whip components. Balance the
    other equipment rates against **2,000 kills for staff/bow and 1,000 for
    pendant/dagger**.
-2. Set Slayer-currency prices. The pendant requires one Frozen Tear. Feather
+2. Approve the proposed Slayer-currency amounts and assembly price vector under
+   the confirmed below-backpack rule. The pendant requires one Frozen Tear. Feather
    quantities remain 1–3 per kill; their distribution affects the 500-feather
    shield's acquisition effort.
 3. Resolve the effect-policy questions above and inspect existing tier stats,

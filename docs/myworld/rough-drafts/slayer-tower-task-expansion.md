@@ -1,6 +1,7 @@
 # Slayer tower assignments, grandfathering and backpack-price comparison
 
-Status: approved scope and grandfathering; proposed counts, payouts and prices.
+Status: approved scope, task counts/payouts, grandfathering and fixed backpack
+prices; equipment assembly amounts remain proposals.
 Updated: 2026-09-20. Documentation only; no runtime or player-state changes.
 
 Related: [tower roster](slayer-tower-npc-integration.md),
@@ -20,9 +21,11 @@ Related: [tower roster](slayer-tower-npc-integration.md),
   and future tiers. Fully completed players remain fully completed.
 - Give useful preparation tips when assigning the task, including what
   consumables to bring and how to use them.
-- Establish tasks and payouts first, then compare unique-item assembly prices
-  with the existing backpack upgrades. Similar pricing is a design direction,
-  not approval to reprice either system automatically.
+- Task counts/payouts in the table below are approved for both mandatory and
+  repeatable assignments. Compare unique-item assembly prices against backpack
+  upgrades: **a sizable currency charge, but strictly below the matching
+  backpack upgrade**, with tier determined by the component's source monster,
+  not the finished weapon's stat tier.
 - **Keep all six existing backpack prices unchanged** as mandatory tasks grow.
   The task expansion must deliberately decouple their pricing validation from
   the enlarged mandatory-payout totals.
@@ -53,9 +56,9 @@ an assertion about which build the public server currently runs.
   mandatory-task payouts)** at definition load time. It rejects mismatched
   prices; it does not silently recalculate the configured shop price.
 
-## Proposed new assignments and payouts
+## Approved new assignments and payouts
 
-**Numbers below are a starting proposal, not approved balance values.** Match
+**The owner approved these counts and payouts. They are not implemented yet.** Match
 each creature to its already approved tower challenge tier. Add one mandatory
 and one repeatable task definition for each, with distinct stable task keys.
 Initially use the same kill count/payout for both forms so the preparation
@@ -75,9 +78,9 @@ lesson and repeatable work are easy to compare. Existing tasks remain intact.
 Rationale: moderate introductory assignments at low tiers; shorter assignments
 for later enemies with longer fights, stronger mechanics or faster consumable
 use. Payouts sit near their tier's current repeatable rewards rather than
-making unprepared fights the baseline for compensation. Validate against
-measured prepared kill times, consumable costs, spawn density and travel before
-final approval; combat level alone is insufficient.
+making unprepared fights the baseline for compensation. Monitor prepared kill
+times, consumable costs, spawn density and travel during later playtesting;
+do not silently change these approved values based only on combat level.
 
 Proposal: keep existing repeatable choices and add each new choice at weight 1,
 matching current weights. This produces 3/3/4/4/3/3 choices by tier. Existing
@@ -91,7 +94,7 @@ final mandatory capstone**, so do not append the Abyssal demon after it. Mapping
 progress by stable completed-task identity must handle insertion, not merely
 increment an old numeric cursor.
 
-Under this proposal, the full mandatory path becomes **43 tasks / 1,283 kills**,
+With these approved additions, the full mandatory path becomes **43 tasks / 1,283 kills**,
 an addition of eight tasks and 170 kills. Currency totals are listed by type
 below; they must not be treated as one pooled spendable balance.
 
@@ -166,9 +169,9 @@ Recommended implementation constraints (not yet implemented):
 ## Backpack comparison before setting assembly prices
 
 Current prices are evidence, not a proposed change. The last column shows what
-the **existing formula would require** if the proposed payouts were adopted.
+the **existing formula would require** when the approved payouts are implemented.
 
-| Currency | Existing mandatory tasks / kills | Existing payout total | Proposed payout total | Current backpack price | Formula price after additions |
+| Currency | Existing mandatory tasks / kills | Existing payout total | Approved expanded payout total | Current backpack price | Formula price after additions |
 | --- | --- | ---: | ---: | ---: | ---: |
 | Fledgling | 9 / 307 | 38 | 43 | 84 | 96 |
 | Adept | 9 / 350 | 67 | 75 | 148 | 166 |
@@ -189,33 +192,49 @@ Backpack upgrades are permanent, sequential, untradable entitlements adding
 repeated, with monster parts and sometimes logs charged as well. Equal sticker
 prices therefore do not mean identical total acquisition effort.
 
-After counts/payouts are approved, a **one same-tier backpack-price starting
-comparison** would be:
+### Proposed assembly prices below the backpack benchmark
 
-| Reward | Source-tier currency | Current-price comparison, not approved cost |
-| --- | --- | ---: |
-| Cockatrice feather shield | Adept | 148 |
-| Sullen Pendant | Veteran | 138 |
-| Dagger of Terror | Elite | 110 |
-| Leaching Bow | Elite | 110 |
-| Thunder Spire Staff | Champion | 268 |
-| Abyssal Whip | Hero | 282 |
+**The below-backpack/source-monster-tier rule is approved; exact amounts below
+are recommendations awaiting approval.** Start near 75% of each unchanged
+backpack price, rounded to the nearest five (halfway values rounded upward).
+These are fixed proposed amounts, not a new runtime auto-pricing formula.
 
-This is a native-currency comparison, not an approved shop placement or price
-vector. Existing ordinary shop rewards may charge multiple lower/native
-currencies, while backpacks are native-only. Do not collapse typed balances
-or silently waive the native shop currency requirement for new equipment.
+| Reward | Source-tier currency | Backpack benchmark | Proposed assembly currency | Equivalent source-monster tasks from zero balance |
+| --- | --- | ---: | ---: | ---: |
+| Cockatrice feather shield | Adept | 148 | 110 | 14 at 8 each |
+| Sullen Pendant | Veteran | 138 | 105 | 9 at 12 each |
+| Dagger of Terror | Elite | 110 | 85 | 5 at 18 each |
+| Leaching Bow | Elite | 110 | 85 | 5 at 20 each |
+| Thunder Spire Staff | Champion | 268 | 200 | 8 at 28 each |
+| Abyssal Whip | Hero | 282 | 210 | 6 at 35 each |
 
-Compare task earnings, not just raw point numbers. With the proposed payouts,
-110 Elite is six completed 20-point Bloodveld tasks (120 points, 120 kills),
-whereas collecting two tongues at the proposed 1/1,000 rate averages 2,000
-kills. Random task selection, existing balances and buying parts change the
-player's actual path. Currency paid for assembly is work for the assembler;
-buyers of finished tradable equipment do not personally pay that shop cost.
+All components, feathers/residue and logs remain additional requirements; none
+of these currency prices replaces them. The two Elite items share a currency
+benchmark despite their different stat tiers. There is no new Fledgling
+assembled equipment or Naga reward to price in this pass. Gimmick consumables
+and future herbalism recipes are outside this six-equipment price proposal.
+
+Proposed price vector: **source-tier currency only**, following the backpack
+comparison. This would be a specific assembly-rule exception to the existing
+ordinary shop-item rule of native plus immediately preceding tier currency.
+Keep that ordinary shop rule unchanged; confirm the assembly exception along
+with these proposed prices rather than silently inventing an extra lower-tier
+charge or merging the six non-interchangeable balances. Final shop placement
+must support the source tier's native currency contract.
+
+Task equivalents illustrate earnings, not a requirement to complete that
+particular monster's assignments or a guaranteed sequence of random tasks.
+For example, the proposed 85 Elite bow cost takes five 20-point Bloodveld
+tasks (100 points, 100 kills) from zero balance, while two tongues at the
+proposed 1/1,000 rate average 2,000 kills. Random selection, mandatory payouts,
+other tasks, existing balances and bought parts alter the actual path. Currency
+is an additional substantial assembly charge, not necessarily the dominant
+time gate. Buyers of finished tradable equipment do not personally pay it.
 
 ## Implementation acceptance and decisions still needed
 
-- Approve task counts, payouts, insertion positions and repeatable weights.
+- Task counts and payouts are approved. Resolve insertion positions and
+  repeatable weights; approve exact assembly currency amounts/vector separately.
 - Implement the approved fixed backpack prices and corresponding loader/tests
   before modifying mandatory definitions; verify all six prices stay unchanged.
 - Verify existing old-task identity/order/count/payout preservation; test all
