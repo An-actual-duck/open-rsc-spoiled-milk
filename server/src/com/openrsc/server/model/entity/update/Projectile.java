@@ -44,6 +44,7 @@ public class Projectile {
 	public static final int WOOD_LEAD_2 = 38;
 	public static final int ACID_ARMOR_PROC = 39;
 	public static final int ICE_SWORD_STAB = 40;
+	public static final int NAGA_SCIMITAR = 41;
 
 	/**
 	 * Who fired the projectile

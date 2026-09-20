@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "bcd27558e95d084f1407b4be28e5a7347604820eaa5ccd15a53f65bbc0120ef6",
+  "inputTreeSha256": "ec6c63b02debc08b95494eb0aa739493a500a74ab42fe938aab6bc8e8419dc69",
   "inputs": [
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 22388,
+      "bytes": 22862,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "d972fe412d0260086fd4b605fceecddd0e52336b137aa378a019d7fee1a98c9d"
+      "sha256": "d03d9353f7d23f7b03d4408165e1bdc8ca0cd1ef4d5d0a7748423f71a4ad47e7"
     },
     {
       "brandSignals": [],
@@ -1841,7 +1841,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7572,
+      "bytes": 7740,
       "category": "unresolved",
       "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
       "classificationRule": "server/conf/server/defs/**",
@@ -1850,7 +1850,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/SlayerMovementPreviewNpcDefs.json",
       "reverseDependencies": [],
-      "sha256": "55b4beb96e5aa5346a515d14de283c9da74d1d84a2012670ab8f255573cacf88"
+      "sha256": "fa6448e98909a8d8d401e4eee4da32597f6666eebbddb3b6ba0b9279bff179ec"
     },
     {
       "brandSignals": [],
@@ -33450,6 +33450,7 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
         "server/src/com/openrsc/server/content/party/PartyPlayer.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
         "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
@@ -37121,6 +37122,35 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/SlimeSolvent.java"
       ],
       "sha256": "dea47c95798c41eabdd2eb42ab8d7b21571a5b7d88285162c039bb1cda34fea4"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 1237,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.NagaCombat",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
+      "reverseDependencies": [],
+      "sha256": "91873979f80f8f8d53602c3c0c46b21907a561f5e14f4059ec2a02756a98f103"
     },
     {
       "brandSignals": [],
@@ -42624,7 +42654,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 37149,
+      "bytes": 37990,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42861,14 +42891,14 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerDuelHandler.java"
       ],
-      "sha256": "24f09d0405cc9cb40f1f6d38369385358458ca232a0764ca3c5e4e37f136b837"
+      "sha256": "4d41150c20e4918247d9e29d4bf56be1ef2d6708c8dfefa573778d532bc1fb56"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 35398,
+      "bytes": 35812,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42951,7 +42981,7 @@
         "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "cf68fec6cfdce980598a6dca9aade175f08956d9f8c7a90ce7b6d6987f1207e2"
+      "sha256": "2a60a803f979314a72cec8030abdcfadcc4ff0af4b860740c795d138a38927bd"
     },
     {
       "brandSignals": [],
@@ -43144,7 +43174,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 42883,
+      "bytes": 43956,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43411,7 +43441,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "0829f92b9fe9d2c73f4e081b5d3f656853c83773e9101c1f6e1097f21f7b29ec"
+      "sha256": "56d8b7025486f48cf15c649a79782faad1c909cc8a6a56ba1c72b490bfcf5f27"
     },
     {
       "brandSignals": [],
@@ -51321,6 +51351,7 @@
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/SlayerCombatEffects.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
         "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
@@ -52103,6 +52134,7 @@
         "server/src/com/openrsc/server/content/achievement/AchievementSystem.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java",
+        "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
@@ -52190,7 +52222,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 13752,
+      "bytes": 14018,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52214,14 +52246,14 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/Mob.java"
       ],
-      "sha256": "5d9f1fc5e784fb83f29718b1bb67ffacf97d87f89c9d92b239d1e8f15acae881"
+      "sha256": "288309a860d97d2d73599fb51918929ba0415c4d51b0b1c9ed075f9a8c93d51f"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 29430,
+      "bytes": 29975,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52323,7 +52355,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
       "reverseDependencies": [],
-      "sha256": "b8d7781b2660dc7e09e4b3cf6a7e9adb16b6e4cf9074c1977f53a37851c9560c"
+      "sha256": "b7f1c6837004ea24bf8bb0fb387b6c7f85b1e1e76b67465513fff3e2e1346a14"
     },
     {
       "brandSignals": [],
@@ -54341,7 +54373,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 2351,
+      "bytes": 2396,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -54370,7 +54402,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "c9daecaefab954d53f41cdd3f3cc840a6cb53cfba764a4a5db0b91c44c75bd07"
+      "sha256": "7cb7b654be39f075cdf35ee5686d9e2237d79a9d3753b90b9a6aa3163af3c8af"
     },
     {
       "brandSignals": [],
@@ -143421,16 +143453,16 @@
       "spoiled-milk-content": 213,
       "target-profile": 412,
       "tool-only": 155,
-      "unresolved": 133
+      "unresolved": 134
     },
     "configurationInputs": 22,
-    "coreJavaFiles": 1085,
+    "coreJavaFiles": 1086,
     "databasePatchInputs": 27,
     "definitionInputs": 46,
-    "directBrandSignalFiles": 312,
+    "directBrandSignalFiles": 313,
     "foundationToSpoiledMilkDependencies": 107,
     "kindCounts": {
-      "ant-core-source": 1085,
+      "ant-core-source": 1086,
       "ant-library": 21,
       "ant-plugin-source": 497,
       "build-definition": 2,
@@ -143459,7 +143491,7 @@
     },
     "pluginJavaFiles": 497,
     "populationInputs": 41,
-    "shippedInputs": 7378
+    "shippedInputs": 7379
   },
   "unresolvedInputs": [
     {
@@ -143932,6 +143964,10 @@
     },
     {
       "path": "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {

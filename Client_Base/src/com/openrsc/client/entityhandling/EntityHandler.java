@@ -437,7 +437,8 @@ public class EntityHandler {
 		ACID_LEAD_2(37),
 		WOOD_LEAD_2(38),
 		ACID_ARMOR_PROC(39),
-		ICE_SWORD_STAB(40);
+		ICE_SWORD_STAB(40),
+		NAGA_SCIMITAR(41);
 
 		private final int value;
 
@@ -500,6 +501,7 @@ public class EntityHandler {
 		projectiles.add(new SpriteDef("wood tier 2 lead projectile", mudclient.spriteProjectile + 1, "projectiles:1", 38));
 		projectiles.add(new SpriteDef("acid armor proc projectile", mudclient.spriteProjectile + 1, "projectiles:1", 39));
 		projectiles.add(new SpriteDef("ice sword stab projectile", mudclient.spriteProjectile + 1, "projectiles:1", 40));
+		projectiles.add(new SpriteDef("naga scimitar projectile", mudclient.spriteProjectile + 6, "projectiles:6", 41));
 	}
 
 	public enum GUIPARTS {
@@ -6769,9 +6771,10 @@ public class EntityHandler {
 				preview.displayName, preview == SlayerMovementPreview.GIANT_FROG
 					? "A poisonous frog with exceptionally sticky saliva" : preview == SlayerMovementPreview.COCKATRICE
 					? "A vicious bird with a petrifying stare" : preview == SlayerMovementPreview.BANSHEE
-					? "A tormented spirit whose wail pierces the living" : "A harmless movement-test creature", "",
+					? "A tormented spirit whose wail pierces the living" : preview == SlayerMovementPreview.NAGA
+					? "A serpent warrior wielding two scimitars" : "A harmless movement-test creature", "",
 				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45
-					: preview == SlayerMovementPreview.BANSHEE ? 60 : 1, 1,
+					: preview == SlayerMovementPreview.BANSHEE ? 60 : preview == SlayerMovementPreview.NAGA ? 75 : 1, 1,
 				preview.combatEnabled(),
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));

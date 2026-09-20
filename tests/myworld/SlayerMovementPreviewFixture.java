@@ -15,6 +15,18 @@ public final class SlayerMovementPreviewFixture {
 	}
 	public static void main(String[] args) throws Exception {
 		EntityHandler.load(true);
+		require(EntityHandler.projectiles.get(41).id == EntityHandler.PROJECTILE_TYPES.NAGA_SCIMITAR.id(), "scimitar wire visual registered");
+		int[] iconPixels = new int[]{0, 0, 0x888888, 0, 0xabcdef, 0};
+		com.openrsc.client.model.Sprite icon = new com.openrsc.client.model.Sprite(iconPixels.clone(), 3, 2);
+		com.openrsc.client.model.Sprite[] spin = new com.openrsc.client.model.Sprite[32];
+		require(orsc.graphics.two.SpinningItemProjectile.fill(icon,
+			orsc.graphics.RendererSpriteTransform.IDENTITY, spin) == 16, "sixteen rotation frames");
+		require(java.util.Arrays.equals(icon.getPixels(), iconPixels), "item artwork unchanged");
+		require(!java.util.Arrays.equals(spin[0].getPixels(), spin[2].getPixels()), "visible projectile rotation");
+		for (int i = 0; i < 16; i++) {
+			require(spin[i].getWidth() == spin[0].getWidth(), "rotation canvas stable");
+			for (int pixel : spin[i].getPixels()) require(pixel == 0 || pixel == 0x888888 || pixel == 0xabcdef, "rotation preserves palette and transparency");
+		}
 		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
 			"Slime Solvent client examine matches approved flavor text");
 		for (int dose = 3; dose >= 1; dose--) {
@@ -38,6 +50,19 @@ public final class SlayerMovementPreviewFixture {
 			Entry entry = loader.loadExternalNpcDirectionSheet(source, preview.animationName(), preview.columnWidths(), 3);
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			entry = preview.withCombatFrames(entry);
+			if (preview == SlayerMovementPreview.NAGA) {
+				require(preview.loadedFrameCount() == 21, "Naga retains both attack columns");
+				for (int row = 0; row < 3; row++) {
+					require(preview.projectileAttackFrame(row * 200) == 18 + row, "throw uses second attack column");
+					int[] pixels = entry.getFrames()[18 + row].getPixels();
+					for (int y = 0; y < 100; y++) for (int x = 0; x < 128; x++) {
+						int argb = image.getRGB(600 + x, row * 100 + y);
+						int expected = (argb >>> 24) < 64 ? 0 : argb & 0xffffff;
+						if (expected == 0 && (argb >>> 24) >= 64) expected = 0x010101;
+						require(pixels[y * 128 + x] == expected, "approved throwing pixels");
+					}
+				}
+			}
 			EntityHandler.activateSlayerPreviewVisual(preview);
 			require(npc.sprites[0] == EntityHandler.getSlayerPreviewAnimationId(preview), "activation");
 			require(EntityHandler.getAnimationDef(npc.sprites[0]).hasA() == preview.combatEnabled(), "approved combat enabled");

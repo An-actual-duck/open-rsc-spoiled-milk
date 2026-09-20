@@ -251,7 +251,7 @@ public final class mudclient implements Runnable {
 	private static final int CHAIN_LIGHTNING_PROJECTILE_SCENE_SIZE = 96;
 	private static final int SUMMON_ARRIVAL_CIRCLE_Y_OFFSET_PERCENT = 34;
 	private static final int CUSTOM_PROJECTILE_FIRST = 7;
-	public static final int CUSTOM_PROJECTILE_COUNT = 34;
+	public static final int CUSTOM_PROJECTILE_COUNT = 35;
 	public static final int PROJECTILE_EFFECT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_SLOTS = 36;
 	private static final int PROJECTILE_IMPACT_FRAME_TICKS = 3;
@@ -1201,7 +1201,7 @@ public final class mudclient implements Runnable {
 		"summon-bat-vampirism-reverse", "shuriken", "enemy-air-basic", "enemy-water-basic", "blue-dragon-magic",
 		"chain-lightning/A", "chain-lightning/B", "chain-lightning/C", "wind-static-2", "water-static-2",
 		"thunder-bird", "earth-lead-2", "fire-lead-2", "ice-lead-2", "acid-lead-2", "wood-lead-2",
-		"acid-armor-proc", "ice-sword-stab"
+		"acid-armor-proc", "ice-sword-stab", "naga-scimitar"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
 	private final Sprite[] clericIconSprites =
@@ -2363,6 +2363,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getNpcMenuCombatLevel(int npcId) {
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId) return 60;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.COCKATRICE.npcId) return 35;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE.npcId) return 50;
@@ -10730,11 +10731,12 @@ public final class mudclient implements Runnable {
 			int var16;
 			long projectileElapsed = System.currentTimeMillis() - npc.npcProjectileAttackStartedMillis;
 			if ((preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG
-				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE)
+				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE
+				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA)
 				&& npc.npcProjectileAttackStartedMillis > 0 && projectileElapsed >= 0 && projectileElapsed < 600) {
-				var13 = 5;
+				var13 = preview == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA ? 6 : 5;
 				var11 = 2;
-				var14 = 15 + (int) (projectileElapsed / 200);
+				var14 = preview.projectileAttackFrame(projectileElapsed);
 			}
 			boolean hideSummonDuringArrival = shouldHideSummonDuringArrival(npc);
 			if (!hideSummonDuringArrival) {
@@ -22221,7 +22223,7 @@ public final class mudclient implements Runnable {
 				if (sprites != null) sprites.put(preview.animationName(), entry);
 			} else {
 				AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getSlayerPreviewAnimationId(preview));
-				int frameCount = preview.combatEnabled() ? 18 : 15;
+				int frameCount = preview.loadedFrameCount();
 				for (int frame = 0; frame < frameCount; frame++) {
 					getSurface().sprites[animation.getNumber() + frame] = entry.getFrames()[frame].getSprite();
 				}
@@ -22564,6 +22566,15 @@ public final class mudclient implements Runnable {
 			Arrays.fill(this.projectileImpactMirrorSprites[i], null);
 			this.projectileImpactFrameCounts[i] = 0;
 			int projectileId = CUSTOM_PROJECTILE_FIRST + i;
+			if (projectileId == PROJECTILE_TYPES.NAGA_SCIMITAR.id()) {
+				ItemDef scimitar = EntityHandler.getItemDef(83); // Iron scimitar, same source as inventory/ground.
+				this.projectileEffectFrameCounts[i] = orsc.graphics.two.SpinningItemProjectile.fill(
+					spriteSelect(scimitar), RendererSpriteTransform.legacyMasks(
+						scimitar.getPictureMask(), 0, scimitar.getBlueMask(), 0xFFFFFFFF),
+					this.projectileEffectSprites[i]);
+				Arrays.fill(this.projectileEffectMirrorSprites[i], null);
+				continue;
+			}
 			ProjectileStaticAnimationCatalog.Definition staticDefinition =
 				ProjectileStaticAnimationCatalog.getDefinition(projectileId);
 			if (staticDefinition != null) {
@@ -25970,7 +25981,8 @@ public final class mudclient implements Runnable {
 	public void markNpcProjectileAttack(int serverIndex) {
 		ORSCharacter shooter = getNpcFromServer(serverIndex);
 		if (shooter != null && (shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId
-			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE.npcId)) {
+			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE.npcId
+			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId)) {
 			shooter.npcProjectileAttackStartedMillis = System.currentTimeMillis();
 		}
 	}
@@ -27591,6 +27603,7 @@ public final class mudclient implements Runnable {
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.SHURIKEN.id()) {
 			return getProjectileSceneSizeForAnimatedEnemy(projectile, enemyProjectile, SHURIKEN_PROJECTILE_SCENE_SIZE);
 		}
+		if (projectile != null && projectile.id == PROJECTILE_TYPES.NAGA_SCIMITAR.id()) return 64;
 		if (projectile != null && projectile.id == PROJECTILE_TYPES.ENEMY_AIR_BASIC.id()) {
 			return 192;
 		}
