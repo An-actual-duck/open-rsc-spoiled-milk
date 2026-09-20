@@ -22,6 +22,12 @@ Source policy:
 
 Related expansion design notes (not implemented):
 
+- [Tower task expansion and backpack comparison](../rough-drafts/slayer-tower-task-expansion.md)
+  records the approved additive eight-monster mandatory expansion, preservation
+  of all completed tiers, assignment preparation tips, and the decision to
+  keep current backpack prices unchanged. Counts/payouts remain proposals.
+  The future implementation must replace the task-total-linked price check
+  with validation of the approved fixed prices; no runtime change is made yet.
 - [Special drops and weapon assembly](../rough-drafts/slayer-special-drops-and-assembly.md)
   records component-plus-currency shop purchases and the abyssal whip concept.
   This is new reward design, not a return to progression material turn-ins.

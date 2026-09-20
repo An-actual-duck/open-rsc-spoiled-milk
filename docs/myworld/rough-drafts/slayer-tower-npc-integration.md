@@ -193,6 +193,12 @@ The next content pass is drops and assembly, not another combat redesign.
 
 ## Current drop and icon planning
 
+The [task expansion and pricing comparison](slayer-tower-task-expansion.md)
+records the approved addition of all eight monsters to mandatory progression
+without removing existing tasks, preservation of every already-completed tier,
+draft assignment tips, proposed task payouts and backpack-price comparisons.
+Its proposed counts/prices are not implemented or approved balance values.
+
 The [special drops and assembly document](slayer-special-drops-and-assembly.md)
 is the reference for the confirmed eight-monster drop roster, material/remains
 exceptions, 1–3 residue/feather quantities, rare-component ordering and icon work.
