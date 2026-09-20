@@ -2467,9 +2467,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	}
 
 	private int applyGodSpellSecondaryDamage(final Player caster,
-			final Mob target, final int damage,
+			final Mob target, int damage,
 			final SecondaryEffectPolicy effectPolicy,
 			final UUID eventId) {
+		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}

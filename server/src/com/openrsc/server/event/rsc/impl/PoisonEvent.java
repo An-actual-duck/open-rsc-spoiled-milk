@@ -80,6 +80,7 @@ public class PoisonEvent extends GameTickEvent {
 			resolvedDamage = player.applyGoblinTenacity(resolvedDamage);
 		}
 		final Mob source = resolveLiveSource();
+		resolvedDamage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(mob, resolvedDamage);
 		final DamageRequest request = DamageRequest.resolvedLegacy(source, mob,
 			DamageRequest.SourceCategory.DOT, "generic-poison", resolvedDamage)
 			.eventId(getUUID())

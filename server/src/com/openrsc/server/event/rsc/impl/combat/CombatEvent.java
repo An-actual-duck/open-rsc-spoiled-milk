@@ -206,6 +206,7 @@ public class CombatEvent extends GameTickEvent {
 				com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(hitter,
 					com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
 			}
+			if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(hitter, target)) return;
 			if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(hitter)) return;
 				com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(hitter, 2);
@@ -299,7 +300,7 @@ public class CombatEvent extends GameTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			CHAIN_LIGHTNING_POLICY.getStableKey(), damage)
+			CHAIN_LIGHTNING_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -338,7 +339,7 @@ public class CombatEvent extends GameTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			effectPolicy.getStableKey(), damage)
+			effectPolicy.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -377,7 +378,7 @@ public class CombatEvent extends GameTickEvent {
 		final Mob creditedSource = source != null ? source : target;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			FROSTBITE_REFLECTION_POLICY.getStableKey(), damage)
+			FROSTBITE_REFLECTION_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -562,6 +563,7 @@ public class CombatEvent extends GameTickEvent {
 
 		// Reduce targets hits by supplied damage amount.
 		int lastHits = target.getLevel(Skill.HITS.id());
+		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		final int rawDamage = damage;
 		final int hitSplatType = offhand ? HitSplat.TYPE_ARMOR_PROC : Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
@@ -661,7 +663,7 @@ public class CombatEvent extends GameTickEvent {
 			(npc, splashDamage) -> {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
+				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(npc, splashDamage))
 				.eventId(getUUID())
 				.style(CombatStyle.MELEE)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -694,7 +696,7 @@ public class CombatEvent extends GameTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), damage)
+			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -727,7 +729,7 @@ public class CombatEvent extends GameTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), damage)
+			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)

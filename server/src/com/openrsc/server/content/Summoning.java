@@ -2013,7 +2013,7 @@ public final class Summoning {
 			magicDamage
 				? SecondaryEffectPolicy.SUMMON_BONUS_MAGIC.getStableKey()
 				: SecondaryEffectPolicy.SUMMON_BONUS_MELEE.getStableKey(),
-			damage)
+			com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.style(magicDamage ? CombatStyle.MAGIC : CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();

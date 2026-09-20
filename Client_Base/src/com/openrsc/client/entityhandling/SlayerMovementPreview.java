@@ -8,7 +8,7 @@ public enum SlayerMovementPreview {
 	NAGA(866, "Naga", "naga", 100, 100, 100, 100, 100, 100, 128),
 	TERROR_DOG(867, "Terror dog", "terror-dog", 100, 100, 100, 100, 100, 100),
 	BLOODVELD(868, "Bloodveld", "bloodveld", 120, 120, 120, 120, 120, 120, 220),
-	DARK_BEAST(869, "Dark beast", "dark-beast", 100, 100, 100, 100, 100, 100),
+	DARK_BEAST(869, "Dark beast", "dark-beast", 120, 120, 120, 120, 120, 120, 120),
 	ABYSSAL_DEMON(870, "Abyssal demon", "abyssal-demon", 100, 100, 100, 100, 100, 112);
 
 	public final int npcId;
@@ -25,8 +25,8 @@ public enum SlayerMovementPreview {
 	}
 
 	public String animationName() { return "slayer-preview-" + assetName; }
-	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE || this == BANSHEE || this == NAGA || this == TERROR_DOG || this == BLOODVELD; }
-	public int loadedFrameCount() { return this == NAGA || this == BLOODVELD ? 21 : combatEnabled() ? 18 : 15; }
+	public boolean combatEnabled() { return this != ABYSSAL_DEMON; }
+	public int loadedFrameCount() { return this == NAGA || this == BLOODVELD || this == DARK_BEAST ? 21 : combatEnabled() ? 18 : 15; }
 	public int projectileAttackFrame(long elapsed) { return (this == NAGA || this == BLOODVELD ? 18 : 15) + (int) (elapsed / 200); }
 	/** Banshee has fifteen approved frames: reuse its side poses for both attack modes. */
 	public orsc.graphics.two.SpriteArchive.Entry withCombatFrames(orsc.graphics.two.SpriteArchive.Entry source) {
@@ -37,7 +37,7 @@ public enum SlayerMovementPreview {
 		return result;
 	}
 	public int[] columnWidths() { return columns.clone(); }
-	public int frameHeight() { return this == BLOODVELD ? 110 : 100; }
+	public int frameHeight() { return this == BLOODVELD || this == DARK_BEAST ? 110 : 100; }
 	// Uniform 2.4 world-unit scale per native pixel, including the Bloodveld's
 	// larger presentation canvas. No per-direction rescaling or pixel rewriting.
 	public int cameraWidth() { return columns[0] * 12 / 5; }

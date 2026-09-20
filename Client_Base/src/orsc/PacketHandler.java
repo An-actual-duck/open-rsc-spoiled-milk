@@ -4122,7 +4122,7 @@ public class PacketHandler {
 			} else if (updateType == 10) {
 				int effectType = packetsIncoming.getUnsignedByte();
 					if (npc != null) {
-						if (effectType > 0) {
+						if (effectType > 0 && !DarkBeastChargePose.isPose(npc, effectType)) {
 							mc.detachNpcCombatEffect(npc);
 						}
 						mc.applyCombatEffectUpdate(npc, effectType);

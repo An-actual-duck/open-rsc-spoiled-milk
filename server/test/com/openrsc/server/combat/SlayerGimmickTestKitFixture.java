@@ -29,12 +29,14 @@ public final class SlayerGimmickTestKitFixture {
 			check(player.getCarriedItems().getInventory().countId(3321) == 1, "one full three-use eye drops granted");
 			check(player.getCarriedItems().getInventory().countId(3324) == 1, "one three-use wax earplugs granted");
 			check(player.getCarriedItems().getInventory().countId(3327) == 1, "one three-use Dog Treats granted");
+			check(player.getCarriedItems().getInventory().countId(3330) == 1, "one three-use Static discharge wipe granted");
 			check(!GiantFrogCombat.protectedBySolvent(player), "grant does not drink supplies");
 			SlayerGimmickTestKit.grant(player, new String[0]);
 			check(player.getCarriedItems().getInventory().countId(3318) == 2, "repeat command restocks one bottle");
 			check(player.getCarriedItems().getInventory().countId(3321) == 2, "repeat command restocks eye drops");
 			check(player.getCarriedItems().getInventory().countId(3324) == 2, "repeat command restocks earplugs");
 			check(player.getCarriedItems().getInventory().countId(3327) == 2, "repeat command restocks Dog Treats");
+			check(player.getCarriedItems().getInventory().countId(3330) == 2, "repeat command restocks wipe");
 			while (player.getCarriedItems().getInventory().size() < player.getCarriedItems().getInventory().getCapacity()) {
 				check(player.getCarriedItems().getInventory().add(new Item(3318)), "fill fixture");
 			}

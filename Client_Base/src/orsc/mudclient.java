@@ -2365,6 +2365,7 @@ public final class mudclient implements Runnable {
 	private int getNpcMenuCombatLevel(int npcId) {
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.TERROR_DOG.npcId) return 75;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD.npcId) return 85;
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.DARK_BEAST.npcId) return 105;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId) return 60;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.COCKATRICE.npcId) return 35;
@@ -10741,6 +10742,12 @@ public final class mudclient implements Runnable {
 					|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD ? 6 : 5;
 				var11 = 2;
 				var14 = preview.projectileAttackFrame(projectileElapsed);
+			}
+			if (preview == com.openrsc.client.entityhandling.SlayerMovementPreview.DARK_BEAST
+				&& npc.darkBeastPoseExpiresMillis > System.currentTimeMillis()) {
+				var13 = 6;
+				var11 = 2;
+				var14 = 18 + npc.darkBeastPose;
 			}
 			boolean hideSummonDuringArrival = shouldHideSummonDuringArrival(npc);
 			if (!hideSummonDuringArrival) {
@@ -27429,6 +27436,8 @@ public final class mudclient implements Runnable {
 		if (character == null) {
 			return;
 		}
+		// Server-authoritative per-tick charge poses; not a 600ms projectile pose.
+		if (DarkBeastChargePose.apply(character, effectType, System.currentTimeMillis())) return;
 		character.hasCombatEffectScreenAnchor = false;
 		if (effectType > 0 && shouldDeferCombatEffectUntilProjectileArrival(character, effectType)) {
 			character.combatEffectType = 0;

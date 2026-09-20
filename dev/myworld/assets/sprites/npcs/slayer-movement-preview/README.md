@@ -46,10 +46,15 @@ checking idle. No persistent spawns are added and these creatures do not respawn
 | 869 | Dark beast | `::spawnnpc 869 4 10` |
 | 870 | Abyssal demon | `::spawnnpc 870 4 10` |
 
-Except for giant frog 863, these are harmless, non-attackable, non-aggressive fixtures with placeholder
-level-one stats. No drops, Slayer credit, shop items, access gates or tower
-placements are supplied. Planned combat levels are not activated. Existing
-NPC IDs, including Gorak 861 and Green Dragon 862, remain unchanged.
+NPCs 863–869 now have staged combat implementations. Abyssal demon 870 remains
+a harmless, non-attackable fixture with placeholder level-one stats. All are
+non-aggressive. No tower placements, new drops or access gates are supplied.
+Existing NPC IDs, including Gorak 861 and Green Dragon 862, remain unchanged.
+
+Dark beast uses the approved normalized 120×110 base and an added lightning
+column, packed by `tools/myworld/PackDarkBeastLightning.java`. Source art and
+registration are preserved in `../dark-beast-lightning/` and described in the
+[combat contract](../../../../../../docs/myworld/rough-drafts/dark-beast-combat-test.md).
 
 Giant frog now has a first ranged combat implementation; see
 [the combat test contract](../../../../../../docs/myworld/rough-drafts/giant-frog-combat-test.md).

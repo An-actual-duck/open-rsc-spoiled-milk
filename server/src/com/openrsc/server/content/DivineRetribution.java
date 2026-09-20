@@ -38,7 +38,7 @@ public final class DivineRetribution {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			defender, attacker, DamageRequest.SourceCategory.OWNED_EFFECT,
 			SecondaryEffectPolicy.DIVINE_RETRIBUTION.getStableKey(),
-			reflectedDamage)
+			com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(attacker, reflectedDamage))
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
