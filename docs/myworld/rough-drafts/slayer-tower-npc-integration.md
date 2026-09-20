@@ -199,8 +199,10 @@ exceptions, 1–3 residue/feather quantities, rare-component ordering and icon w
 Default hide and bones plus level-appropriate existing ordinary loot are implied
 unless explicitly overridden. The [equipment design](slayer-unique-equipment-design.md)
 records six rewards, approved recipes and the deferred coating system. Naga's
-Serpant's Tail is on hold and must not drop. Exact rare rates, Slayer-currency
-costs and the pendant's component count remain open;
+Serpant's Tail is on hold and must not drop. Eye and gland are fixed at 1/128;
+equipment acquisition targets are 2,000 kills for whip/staff/bow and 1,000 for
+pendant/dagger. Exact equipment-component rates, Slayer-currency costs and the
+pendant's component count remain open;
 "rare" does not automatically mean 1/128, and appropriate parts should reach
 1/1,000 or rarer. Do not infer implemented drops from accepted combat tests.
 

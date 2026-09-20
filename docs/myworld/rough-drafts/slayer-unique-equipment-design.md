@@ -13,10 +13,13 @@ text. The linked drop document owns the monster roster, baseline materials,
 rarity policy, ordinary loot and assembly transaction requirements.
 
 - Assembly exchanges the listed components **plus Slayer currency**. Currency
-  amounts/types remain undecided; listing a component-only recipe below does
-  not remove the currency requirement.
+  amounts/types remain undecided. Currency is an intentional additional effort
+  gate even when the player buys the components.
+- **All these components and finished rewards are tradable**, and purchased
+  parts are valid for assembly. There is no personal-kill requirement. This
+  does not repeal the separate grandfathered retired-leather untradability rule.
 - Rewards occupy weapon, shield or jewelry slots, preserving leather set slots
-  and bonuses. Equipment requirements, IDs, tradeability, death behavior and
+  and bonuses. Equipment requirements, IDs, death behavior and
   exact numeric stat mappings remain undecided unless stated below.
 - Tier references identify the intended existing stat benchmark, not a newly
   invented item level. Resolve the actual tier 9/10 log items and weapon stats
@@ -26,12 +29,19 @@ rarity policy, ordinary loot and assembly transaction requirements.
 - Effects below are confirmed goals. Open implementation questions are not
   additional approved rules, and none of these rewards exists merely because
   this document describes it.
+- Whip/pendant hit-trigger effects require **actual positive damage from the
+  primary weapon/attack only**. Secondary/off-hand damage, poison ticks,
+  reflected damage and other secondary damage sources do not trigger them.
+  Pendant retaliation cannot trigger another retaliation. Map primary attack
+  events explicitly for NPCs and resolve direct-spell eligibility before coding;
+  do not treat every damage callback as an eligible weapon hit.
 
 ## Abyssal Whip
 
 - Recipe: **1 Abyssal Rib, 10 Abyssal Vertibrae, 50 Slimey Residue**.
 - Attack power: **tier 10 longsword**; attack speed: **dagger**.
-- On every hit, a **10% chance to delay the opponent's actions by one tick**.
+- On each eligible positive-damage primary hit, a **10% chance to delay the
+  opponent's actions by one tick**.
 - Visual construction: rib handle, spinal-column lash, sticky flesh binding.
   Slimey Residue is the baseline Abyssal material, not a second material item
   distinct from the previously written Slimey residue.
@@ -40,8 +50,7 @@ Exact examine text:
 
 > Made from an abyssal demon's rib and spinal column, and held together with it's gooey flesh. Disgusting
 
-Before implementation: define eligible hit events (including zero damage and
-secondary hits), affected action categories, repeated-proc scheduling and
+Before implementation: define affected action categories, repeated-proc scheduling and
 PvP applicability. Do not silently turn the one-tick delay into the demon's
 three-second full-action trap or the future stacking-slow system.
 
@@ -50,6 +59,9 @@ three-second full-action trap or the future stacking-slow system.
 - Recipe: **1 Lightning Horn and 1 tier 10 log**.
 - **Tier 10 magic staff stats**.
 - Makes **all thunder spells area-of-effect**.
+- The three thunder spell tiers gain **1-, 2- and 3-tile radii**, respectively,
+  around the target. This is radius, not diameter; identify actual spell IDs
+  in ascending tier order before implementation.
 - Removes the damage cap from **Thunder Strike**.
 - Visual: a staff with a Dark Beast's horn attached at its end.
 
@@ -58,7 +70,7 @@ Exact examine text:
 > A staff that conducts electricity using a Dark Beast's horn
 
 Before implementation: audit thunder spell membership and the existing Thunder
-Strike cap; define AoE radius, eligible targets and how spell damage is rolled
+Strike cap; define eligible targets, distance metric and how spell damage is rolled
 for additional targets. Removing this spell's damage cap does not authorize
 removing unrelated engine safety limits. Equip/cast/projectile timing and
 PvP/multi-combat interaction also need explicit handling.
@@ -97,27 +109,35 @@ future slow coating is not an instruction to implement that system now.
 
 - Recipe material: **Frozen Tear**; required count not explicitly specified.
 - Equipment slot: **neck**.
-- **10% chance each time the wearer is hit** to have the pendant
+- **10% chance each time the wearer takes eligible primary-hit damage** to have the pendant
   **"cry out in pain"** and retaliate against the offending enemy.
 - Retaliation rolls **1%–20% of that enemy's maximum HP**, displayed as
   **yellow damage**. This uses enemy maximum HP, not wearer HP, damage
   received or enemy remaining HP.
+- Against **bosses and players**, reduce the retaliation ceiling to **10% of
+  their maximum HP** (working interpretation: a 1%–10% roll). The activation
+  chance stays 10%; the owner changed the damage percentage, not proc chance.
+- Support **per-boss overrides**, potentially complete immunity with an
+  activation message such as **"The King Black Dragon is unaffected by the
+  Sullen Pendant"**. This is an example of an allowed override, not a finalized
+  King Black Dragon immunity assignment or a blanket boss exemption.
 - Concept: a smaller, reactive analogue of the Banshee's wail.
 
 Exact examine text:
 
 > You carry the Banshee's sorrows with you
 
-Before implementation: settle component count, eligible incoming hit sources
-and zero-damage hits, percentage-roll distribution/rounding, mitigation and
-boss/PvP behavior. Resolve retaliation chains explicitly so reflected or
-proc-generated damage cannot create an accidental infinite loop. These are
-open policy decisions, not approved hidden caps or exclusions.
+Before implementation: settle component count, percentage-roll distribution/
+rounding, mitigation and individual boss overrides. Use the shared primary-hit
+and positive-damage rules; retaliation chaining is excluded. No further hidden
+caps or exemptions are approved.
 
 ## Cockatrice feather shield (name pending)
 
 - Recipe: **500 Cockatrice Feathers**.
 - Approximately **tier 3 shield stats**; deliberately weak ordinary blocking.
+- **Prevention only while equipped**. Equipping does not clear an existing
+  debuff or bypass the demon trap's prohibition on equipment/other actions.
 - Nullifies the **frog's Slimy Spit, cockatrice's Stony Glare and Abyssal
   demon's sticky-flesh/slime debuffs**.
 - This includes frog attack prevention despite it not being a movement root,
@@ -129,9 +149,7 @@ Exact examine text:
 
 > A lightweight shield that doesn't block well but keeps you mobile
 
-Before implementation: choose the item name and exact stats; decide whether
-equipping clears an existing effect or only prevents new applications, respecting
-the demon trap's existing prohibition on equipment and other actions. Decide
+Before implementation: choose the item name and exact stats. Decide
 whether solvent duration still drains when this shield supplies immunity.
 Protection against the named debuffs does not establish poison, wail, lightning
 or Feeding Frenzy immunity.
@@ -145,10 +163,10 @@ or new armor set. No Tail reward or active icon requirement is established.
 
 ## Future coating: collectible ingredients now, system later
 
-**Cockatrice Eye** and **Sticky Saliva Gland** remain planned rare collectible
-drops. Their eventual use is a potion containing both ingredients and an
-**unspecified herb**, producing a new weapon coating. Recipe quantities, herb,
-names, production requirements and yields are undecided.
+**Cockatrice Eye** and **Sticky Saliva Gland** are each confirmed at **1/128 per
+kill of their respective monsters**. Their eventual potion uses **one of each**
+plus an **unspecified herb**, producing a new weapon coating. Herb identity/
+quantity, names, production requirements and yields are undecided.
 
 Long-term behavior:
 
@@ -172,9 +190,10 @@ balancing can proceed without implementing this system.
 
 ## Next balance and implementation decisions
 
-1. Set target acquisition effort and exact per-kill component rates against
-   these recipes. Ten vertebrae and two tongues must inform their respective
-   rates; both Abyssal parts remain very rare, with the rib rarer per kill.
+1. Balance equipment-component rates against the confirmed average targets in
+   the drop document: **2,000 kills for whip, staff and bow; 1,000 for pendant
+   and dagger**. Resolve the ten-vertebra recipe's rate/quantity tension rather
+   than silently promising a 2,000-kill assembly at incompatible rates.
 2. Set Slayer-currency prices and the pendant's Frozen Tear count. Feather
    quantities remain 1–3 per kill; their distribution affects the 500-feather
    shield's acquisition effort.
