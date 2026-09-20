@@ -206,6 +206,10 @@ public class CombatEvent extends GameTickEvent {
 				com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(hitter,
 					com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
 			}
+			if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(hitter)) {
+				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(hitter)) return;
+				com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(hitter, 2);
+			}
 			hitter.faceCombat(target);
 			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(hitter)) return;
@@ -576,6 +580,7 @@ public class CombatEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {

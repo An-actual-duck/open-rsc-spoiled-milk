@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "10535092eab2acacf0bdbce49e26115e1714734a6af48786bf65aa12dd27b7f0",
+  "inputTreeSha256": "7afc399ae7cce70698b8ba12eb859b1c59b95050dca08f2456617fc8ecf55082",
   "inputs": [
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 23428,
+      "bytes": 23912,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "54c577600c07add9c701fcdc97882fd0e96932193f45a7ae6cb8073b54692e3d"
+      "sha256": "f147b5882fe4f7c6c5024af8a559b42512137df9b3fd9f47000b6668374311d2"
     },
     {
       "brandSignals": [],
@@ -1841,7 +1841,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 7870,
+      "bytes": 7987,
       "category": "unresolved",
       "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
       "classificationRule": "server/conf/server/defs/**",
@@ -1850,7 +1850,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/SlayerMovementPreviewNpcDefs.json",
       "reverseDependencies": [],
-      "sha256": "96d835d35af396037c1a34b11846759dab7be8898891aa9381676409da4c2ed5"
+      "sha256": "edfeddaaf081d4a13b20d4bbc47eae74179aca188dc3b046bfa0a5ec3f0e37b1"
     },
     {
       "brandSignals": [],
@@ -33493,6 +33493,7 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
@@ -37085,6 +37086,71 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/WaxEarplugs.java"
       ],
       "sha256": "6b94d39367364fbc1eee3d08d97b9f08991fb8ef8aaca4b82d737ceead580111"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 4968,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.DuplicationStrategy",
+          "path": "server/src/com/openrsc/server/event/rsc/DuplicationStrategy.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.GameTickEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/GameTickEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.model.PathValidation",
+          "path": "server/src/com/openrsc/server/model/PathValidation.java"
+        },
+        {
+          "import": "com.openrsc.server.model.Point",
+          "path": "server/src/com/openrsc/server/model/Point.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.CombatParticipantSnapshot",
+          "path": "server/src/com/openrsc/server/model/combat/CombatParticipantSnapshot.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.update.HitSplat",
+          "path": "server/src/com/openrsc/server/model/entity/update/HitSplat.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.update.Projectile",
+          "path": "server/src/com/openrsc/server/model/entity/update/Projectile.java"
+        },
+        {
+          "import": "com.openrsc.server.model.world.coordinate.WorldLocation",
+          "path": "server/src/com/openrsc/server/model/world/coordinate/WorldLocation.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.BloodveldCombat",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
+      "reverseDependencies": [],
+      "sha256": "dccb5d17046b33ce33bc1d7491a1dba50a5b8618d458a89a6e208c1e5b4030c0"
     },
     {
       "brandSignals": [
@@ -40884,6 +40950,7 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
@@ -41023,6 +41090,7 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
@@ -42751,7 +42819,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 38369,
+      "bytes": 38786,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42988,7 +43056,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerDuelHandler.java"
       ],
-      "sha256": "faf66fa03cfd422dac88bd41539c857435de059dc279859bd8c1591e6a87b98c"
+      "sha256": "9029ea0a326b883494ae7bd7058ade6b1ed12430888b6a60efd66f139f34f4ed"
     },
     {
       "brandSignals": [
@@ -43272,7 +43340,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 44334,
+      "bytes": 44994,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43539,7 +43607,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "a17fbdccf88554a3546eaefa613b7b0c758680610112778e2ea0c0c55e757b2e"
+      "sha256": "5ddf54d6e2e573d492d019d1867f9f543bae6fc3a7eb4cb0f2a188ee8fc03c77"
     },
     {
       "brandSignals": [],
@@ -47458,6 +47526,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/scripts/all/DragonFireBreath.java",
@@ -47652,6 +47721,7 @@
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
@@ -48751,6 +48821,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/CombatParticipantSnapshot.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
       ],
@@ -51449,6 +51520,7 @@
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
@@ -52235,6 +52307,7 @@
         "server/src/com/openrsc/server/content/achievement/AchievementSystem.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
@@ -52355,7 +52428,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 29975,
+      "bytes": 30073,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52457,7 +52530,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
       "reverseDependencies": [],
-      "sha256": "b7f1c6837004ea24bf8bb0fb387b6c7f85b1e1e76b67465513fff3e2e1346a14"
+      "sha256": "cbbec2e1f888ca05f047ec8716dfd8bb4264564d889cbae3c82c7663b19d95c6"
     },
     {
       "brandSignals": [],
@@ -53646,6 +53719,7 @@
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTaskService.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/SlayerGimmickTestKit.java",
@@ -54438,6 +54512,7 @@
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -54492,6 +54567,7 @@
       "path": "server/src/com/openrsc/server/model/entity/update/Projectile.java",
       "reverseDependencies": [
         "server/src/com/openrsc/server/content/Summoning.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -56611,6 +56687,7 @@
         "server/src/com/openrsc/server/content/RangersGuildArea.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/diagnostics/LayeredCoordinateParityObserver.java",
         "server/src/com/openrsc/server/diagnostics/NpcRoamingBenchmark.java",
@@ -143559,16 +143636,16 @@
       "spoiled-milk-content": 214,
       "target-profile": 412,
       "tool-only": 155,
-      "unresolved": 135
+      "unresolved": 136
     },
     "configurationInputs": 22,
-    "coreJavaFiles": 1087,
+    "coreJavaFiles": 1088,
     "databasePatchInputs": 27,
     "definitionInputs": 46,
-    "directBrandSignalFiles": 315,
+    "directBrandSignalFiles": 316,
     "foundationToSpoiledMilkDependencies": 107,
     "kindCounts": {
-      "ant-core-source": 1087,
+      "ant-core-source": 1088,
       "ant-library": 21,
       "ant-plugin-source": 498,
       "build-definition": 2,
@@ -143597,7 +143674,7 @@
     },
     "pluginJavaFiles": 498,
     "populationInputs": 41,
-    "shippedInputs": 7381
+    "shippedInputs": 7382
   },
   "unresolvedInputs": [
     {
@@ -144062,6 +144139,10 @@
     },
     {
       "path": "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {

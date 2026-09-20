@@ -21,13 +21,13 @@ for entry, npc in zip(manifest, defs):
     assert struct.unpack('>II', data[16:24]) == (sum(entry['columns']), entry['height'])
     assert data[25] == 6, 'RGBA required'
     assert npc['aggressive'] == 0
-    assert npc['attackable'] == (1 if npc['id'] in (863, 864, 865, 866, 867) else 0)
+    assert npc['attackable'] == (1 if npc['id'] in (863, 864, 865, 866, 867, 868) else 0)
     assert npc['command'] == npc['command2'] == ''
     assert npc['roundMode'] == 1 and npc['walkModel'] == 10
     assert npc['camera1'] == entry['columns'][0] * 12 // 5
     assert npc['camera2'] == (entry['height'] // 3) * 12 // 5
     assert all(npc[k] == 1 for k in ('attack', 'strength', 'defense'))
-    assert (npc['hits'], npc['combatlvl']) == {863: (30, 20), 864: (45, 35), 865: (60, 50), 866: (75, 60), 867: (90, 75)}.get(npc['id'], (1, 1))
+    assert (npc['hits'], npc['combatlvl']) == {863: (30, 20), 864: (45, 35), 865: (60, 50), 866: (75, 60), 867: (90, 75), 868: (150, 85)}.get(npc['id'], (1, 1))
     assert [npc['sprites' + str(i)] for i in range(1, 13)] == [0] + [-1] * 11
     with zipfile.ZipFile(JAR) as jar:
         assert jar.read('myworld-assets/sprites/npcs/slayer-movement-preview/' + entry['key'] + '.png') == data

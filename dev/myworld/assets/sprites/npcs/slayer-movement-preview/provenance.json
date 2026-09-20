@@ -81,14 +81,16 @@
       "id": 868,
       "key": "bloodveld",
       "sourceOutput": "bloodveld-full-sheet-v27-attack-texture/bloodveld-complete-sheet.png",
-      "sha256": "2aed9286673ba3340abc235a716c8c89f10dd3862d44f5c5cfae55ca8df18989",
+      "extension": "Owner-approved tongue strip v3, 2026-09-20; tools/myworld/PackBloodveldTongue.java; original first 720 columns unchanged",
+      "sha256": "f43f8ce09a93eb8f6b2890f55efb6612a97c57aba92d4bd278eaccd83b31924d",
       "columns": [
         120,
         120,
         120,
         120,
         120,
-        120
+        120,
+        220
       ],
       "height": 330
     },
