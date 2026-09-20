@@ -20,13 +20,19 @@ final class CurrentBloodveldCharacterization {
 			check(n.getMeleeOffense() == 80 && n.getMeleeDefense() == 30 && n.getMagicDefense() == 30
 				&& n.getRangedDefense() == 30 && n.getLevel(Skill.HITS.id()) == 150, "modern stats");
 			check(BloodveldCombat.pullDestination(n,p) != null, "five-tile pull");
-			com.openrsc.server.model.world.region.TileValue blocker = h.world().getRegionManager().getMutableTile(
-				h.world().getRegionManager().fromRuntimeCompatibilityPoint(Point.location(443,440),p.getWorldLocation(),false));
-			byte oldMask=blocker.traversalMask;
-			blocker.traversalMask = CollisionFlag.FULL_BLOCK;
-			check(BloodveldCombat.pullDestination(n,p) == null, "blocked path never pulls through walls");
-			blocker.traversalMask=oldMask;
-			h.openCombatProjectileRectangle(440,449,440,443);
+			// Native terrain is immutable: find a real solid tile instead of changing
+			// the unrelated legacy compatibility tile behind the same coordinates.
+			boolean obstacleChecked=false;
+			for(int x=400;x<500 && !obstacleChecked;x++) for(int y=400;y<500 && !obstacleChecked;y++) {
+				com.openrsc.server.model.world.coordinate.WorldLocation at=h.world().getRegionManager()
+					.fromRuntimeCompatibilityPoint(Point.location(x,y),p.getWorldLocation(),false);
+				if((h.world().getTile(at).traversalMask & CollisionFlag.FULL_BLOCK)==0) continue;
+				n.setLocation(Point.location(x-2,y)); p.setLocation(Point.location(x+2,y));
+				check(BloodveldCombat.pullDestination(n,p)==null,"solid native terrain blocks pull");
+				obstacleChecked=true;
+			}
+			check(obstacleChecked,"native obstacle fixture found");
+			n.setLocation(Point.location(440,440)); p.setLocation(Point.location(445,440));
 			PvmMeleeEvent event = new PvmMeleeEvent(h.world(), n, p);
 			n.setPvmMeleeEvent(event);
 			event.run();
@@ -50,9 +56,9 @@ final class CurrentBloodveldCharacterization {
 			for (int i=0;i<3;i++) h.advanceOneCombatTick();
 			check(BloodveldCombat.tryPull(n,p), "third pull"); p.advanceCombatLifecycle();
 			h.advanceOneCombatTick(); check(p.getX()==445, "lifecycle cancels pull");
-			p.setLocation(Point.location(445,1384));
+			p.teleportLegacyPacked(445,1384,false);
 			check(BloodveldCombat.pullDestination(n,p)==null, "other plane excluded");
-			p.setLocation(Point.location(441,440));
+			p.teleportLegacyPacked(441,440,false);
 			for(int mode=0;mode<2;mode++) {
 				n.getSkills().setLevel(Skill.HITS.id(),100);
 				Object hit = mode==0 ? new PvmMeleeEvent(h.world(),n,p) : new CombatEvent(h.world(),n,p);
@@ -63,6 +69,11 @@ final class CurrentBloodveldCharacterization {
 			}
 			n.getSkills().setLevel(Skill.HITS.id(),149); BloodveldCombat.lifesteal(n,20);
 			check(n.getLevel(Skill.HITS.id())==150,"healing capped");
+			n.getSkills().setLevel(Skill.HITS.id(),100);
+			p.getSkills().setLevel(Skill.HITS.id(),3);
+			CurrentCombatHarness.invokePrivate(new PvmMeleeEvent(h.world(),n,p),"inflictDamage",
+				new Class<?>[]{Mob.class,Mob.class,int.class,boolean.class},n,p,100,false);
+			check(n.getLevel(Skill.HITS.id())==101,"lifesteal uses actual health lost, not overkill");
 			n.getSkills().setLevel(Skill.HITS.id(),0); BloodveldCombat.lifesteal(n,20);
 			check(n.getLevel(Skill.HITS.id())==0,"no resurrection");
 			System.out.println("PASS Bloodveld modern stats, range, hold/chase, delayed pull, melee switch, cooldown, cancellation and lifesteal");
