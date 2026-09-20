@@ -15,6 +15,17 @@ public final class SlayerMovementPreviewFixture {
 	}
 	public static void main(String[] args) throws Exception {
 		EntityHandler.load(true);
+		require(EntityHandler.getNpcDef(869).getHits()==200,"Dark beast client health matches server tuning");
+		// Exercise real rendering-size methods without starting the app/window.
+		java.lang.reflect.Field unsafeField=sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+		unsafeField.setAccessible(true);
+		mudclient client=(mudclient)((sun.misc.Unsafe)unsafeField.get(null)).allocateInstance(mudclient.class);
+		java.lang.reflect.Method sceneSize=mudclient.class.getDeclaredMethod("getCombatEffectSceneSize",int.class);
+		java.lang.reflect.Method screenSize=mudclient.class.getDeclaredMethod("getCombatEffectScreenSize",int.class,int.class);
+		sceneSize.setAccessible(true); screenSize.setAccessible(true);
+		require((Integer)sceneSize.invoke(client,34)==280,"thunder-3 world scale increased 25%");
+		require((Integer)screenSize.invoke(client,34,64)==80,"thunder-3 screen scale increased 25%");
+		require((Integer)sceneSize.invoke(client,35)==224 && (Integer)screenSize.invoke(client,35,64)==64,"other effects unchanged");
 		ORSCharacter beast=new ORSCharacter(); beast.npcId=869;
 		for(int tick=0;tick<10;tick++) {
 			require(DarkBeastChargePose.apply(beast,78+tick%2,1000+tick*640),"server pulse accepted");

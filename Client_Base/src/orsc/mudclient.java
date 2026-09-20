@@ -21943,6 +21943,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectSceneSize(int effectType) {
+		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
+			return 280; // thunder-3: 224 * 1.25, artwork/timing unchanged
+		}
 		if (effectType == COMBAT_EFFECT_HELLS_INFERNO) {
 			return 336;
 		}
@@ -21985,6 +21988,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getCombatEffectScreenSize(int effectType, int baseSize) {
+		if (effectType == COMBAT_EFFECT_THUNDER_STRIKE) {
+			return Math.max(1, (baseSize * 5) / 4);
+		}
 		if (effectType == COMBAT_EFFECT_HELLS_INFERNO) {
 			return Math.max(1, (baseSize * 3) / 2);
 		}
