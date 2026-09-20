@@ -1,7 +1,7 @@
 # Slayer hide sources and grandfathered leather equipment
 
 Status: owner-directed design notes; not implemented.
-Updated: 2026-09-17.
+Updated: 2026-09-20.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
 [Slayer Tower expansion](slayer-tower-npc-integration.md), and
@@ -15,8 +15,9 @@ existing item definitions, drops or accounts have already changed.
   its production route.
 - Only monsters offered as Slayer tasks should drop hide. Every task monster
   should supply hide or an owner-approved thematic substitute where appropriate.
-  The owner's subsequent exception is abyssal demon gooey residue in place of
-  hide; see [special drops and assembly](slayer-special-drops-and-assembly.md).
+  Confirmed exceptions are **Slimey residue (1–3 per kill)** for Abyssal demons
+  and **Cockatrice Feathers (1–3 per kill)** for cockatrices; see
+  [special drops and assembly](slayer-special-drops-and-assembly.md).
   Substitute-material armor/Crafting uses are undecided, not automatic.
 - Audit existing hide sources and Slayer task families in both directions.
   Some current hide drops will be removed; some qualifying monsters should
@@ -67,8 +68,9 @@ after the final affected item list is approved.
    sets, and classify each as retained, proposed task addition or proposed
    retirement. Review the eight new tower creatures as part of this coverage.
 3. Present exact NPC/item IDs, hide types and leather-tier impacts before
-   changing definitions. No hide type, drop quantity/chance, new armor set or
-   tier rebalance is implied merely by the universal hide-source rule.
+   changing definitions. Beyond the explicitly approved 1–3 residue/feather
+   quantities, no hide type, drop quantity/chance, new armor set or tier
+   rebalance is implied merely by the universal hide-source rule.
 4. Define Balrog/Elder assignment counts, tier, rewards and access handling.
    Suggested safeguard: filter inaccessible random assignments and provide a
    free replacement if an inaccessible assignment still occurs. These are

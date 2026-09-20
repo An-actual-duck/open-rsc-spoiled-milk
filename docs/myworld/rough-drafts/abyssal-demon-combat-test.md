@@ -1,6 +1,9 @@
 # Abyssal demon combat test contract
 
 Owner-approved encounter implemented for private testing, 2026-09-20.
+Private combat test accepted by the owner on 2026-09-20: working as intended,
+no notes. Drop planning continues in
+[Slayer special drops and assembly](slayer-special-drops-and-assembly.md).
 NPC **870**, tower floor **6 / Hero**, displayed combat level **125**.
 No permanent spawns, drops, task assignments, shops, gates or public deployment.
 
