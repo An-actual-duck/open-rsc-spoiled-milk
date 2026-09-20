@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "1a3e39e8c9eeed0e7addee13737cf5203332188b580bafc01a281aa90d9c5a07",
+  "inputTreeSha256": "1badd834ebc94f1fc97fde0b50bab7d79e0f18918378aeeacb810ba6841f74a9",
   "inputs": [
     {
       "brandSignals": [
@@ -33537,6 +33537,7 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
@@ -37102,6 +37103,71 @@
         "myworld-name",
         "want-myworld-flag"
       ],
+      "bytes": 8113,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.content.status.ActiveStatusEntry",
+          "path": "server/src/com/openrsc/server/content/status/ActiveStatusEntry.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.DuplicationStrategy",
+          "path": "server/src/com/openrsc/server/event/rsc/DuplicationStrategy.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.GameTickEvent",
+          "path": "server/src/com/openrsc/server/event/rsc/GameTickEvent.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.combat.CombatFormula",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
+        },
+        {
+          "import": "com.openrsc.server.model.PathValidation",
+          "path": "server/src/com/openrsc/server/model/PathValidation.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.CombatParticipantSnapshot",
+          "path": "server/src/com/openrsc/server/model/combat/CombatParticipantSnapshot.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.update.CombatEffect",
+          "path": "server/src/com/openrsc/server/model/entity/update/CombatEffect.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ActionSender",
+          "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.AbyssalDemonCombat",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
+      "reverseDependencies": [],
+      "sha256": "2883d48dbec96403002ae926984e844ccabd9d565e9abb05bc43a3fe53cbfa01"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
       "bytes": 2933,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
@@ -37770,6 +37836,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/status/ActiveStatusEntry.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
@@ -41079,6 +41146,7 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
@@ -41220,6 +41288,7 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
@@ -43272,6 +43341,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
@@ -47658,6 +47728,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -48953,6 +49024,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/combat/CombatParticipantSnapshot.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
@@ -51656,6 +51728,7 @@
         "server/src/com/openrsc/server/content/PoisonProcChance.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
@@ -52445,6 +52518,7 @@
         "server/src/com/openrsc/server/content/achievement/AchievementSystem.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
@@ -53860,6 +53934,7 @@
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTaskService.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
@@ -54557,6 +54632,7 @@
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/TrueDefense.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
@@ -59315,6 +59391,7 @@
         "server/src/com/openrsc/server/content/market/task/NewMarketItemTask.java",
         "server/src/com/openrsc/server/content/market/task/PlayerCollectItemsTask.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
+        "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
@@ -143783,16 +143860,16 @@
       "spoiled-milk-content": 215,
       "target-profile": 412,
       "tool-only": 155,
-      "unresolved": 137
+      "unresolved": 138
     },
     "configurationInputs": 22,
-    "coreJavaFiles": 1089,
+    "coreJavaFiles": 1090,
     "databasePatchInputs": 27,
     "definitionInputs": 46,
-    "directBrandSignalFiles": 318,
+    "directBrandSignalFiles": 319,
     "foundationToSpoiledMilkDependencies": 107,
     "kindCounts": {
-      "ant-core-source": 1089,
+      "ant-core-source": 1090,
       "ant-library": 21,
       "ant-plugin-source": 499,
       "build-definition": 2,
@@ -143821,7 +143898,7 @@
     },
     "pluginJavaFiles": 499,
     "populationInputs": 41,
-    "shippedInputs": 7384
+    "shippedInputs": 7385
   },
   "unresolvedInputs": [
     {
@@ -144282,6 +144359,10 @@
     },
     {
       "path": "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {
