@@ -170,6 +170,7 @@ public final class ActiveStatusHudModel {
 			if (identityKind == 0 && stableIdentity == 3318) return "Slime Solvent";
 			if (identityKind == 0 && stableIdentity == 3321) return "Eye Drops";
 			if (identityKind == 0 && stableIdentity == 3324) return "Wax earplugs";
+			if (identityKind == 0 && stableIdentity == 3327) return "Dog Treats";
 			if (identityKind == 2 && stableIdentity == 2) return "Stony Glare";
 			return identityKind == 2 && stableIdentity == 1 ? "Slimy Spit" : null;
 		}

@@ -315,6 +315,9 @@ public final class ActiveStatusHudFixture {
 			new int[][] {{3324, 600}}, 0, new int[][] {{0, 3324, 0, 0, 0}})), catalog, 1_000L);
 		check("Wax earplugs".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()), "earplugs dose-free name");
 		frogModel.replace(ActiveStatusPacketDecoder.decode(packet(
+			new int[][] {{3327, 600}}, 0, new int[][] {{0, 3327, 0, 0, 0}})), catalog, 1_000L);
+		check("Dog Treats".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()), "treats dose-free name");
+		frogModel.replace(ActiveStatusPacketDecoder.decode(packet(
 			new int[][] {{3321, 10}, {3321, 600}}, 0, new int[][] {{2, 2, 0, 0, 0}, {0, 3321, 0, 0, 0}})), catalog, 1_000L);
 		check("Stony Glare".equals(frogModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText()), "glare label");
 		check("Eye Drops".equals(frogModel.snapshot(1_000L).getRows().get(1).getSlayerHoverText()), "eye drops dose-free label");

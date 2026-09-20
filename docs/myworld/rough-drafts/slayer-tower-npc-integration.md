@@ -42,7 +42,7 @@ Floor assignment is owner-selected; combat levels are proposed balancing targets
 | 2 | Adept | Cockatrice | 35 | Paralyzing stony glare |
 | 3 | Veteran | Banshee | 50 | Painful scream |
 | 3 | Veteran | Naga | 60 | None; normal combat |
-| 4 | Elite | Terror dog | 75 | Rip apart |
+| 4 | Elite | Terror dog | 75 | Feeding Frenzy |
 | 4 | Elite | Bloodveld | 85 | Lifeforce drain |
 | 5 | Champion | Dark beast | 105 | Undecided |
 | 6 | Hero | Abyssal demon | 125 | Undecided |
@@ -146,15 +146,17 @@ choice between safer/slower ranged combat and riskier/faster melee. A shared
 cooldown prevents immediate extra swings when changing styles. He shares floor 3
 with Banshee. See [Naga combat test contract](naga-combat-test.md).
 
-### Terror dog — rip apart
+### Terror dog — Feeding Frenzy
 
-Without dog treats, attacks deal high damage at the fastest supported attack
-tick rate, making the creature comparable in danger to level 200 or higher.
-Using dog treats brings its combat threat back in line with the intended level.
-Determine the actual minimum supported interval from the combat system rather
-than assuming a number of milliseconds or allowing multiple attacks per tick.
-Treat delivery, effect duration, damage/stat reduction, restoration of ordinary
-attack speed, and per-player versus per-NPC scope remain to be settled.
+Terror dogs use ordinary melee speed. Each damaging direct hit adds one
+independent normal melee roll per other living Terror dog within two tiles of
+the attacker, including idle dogs and dogs fighting the player. Extra hits are
+yellow, resolve on the same tick, and never trigger another frenzy. Each attacking
+dog counts its own neighbors independently, making packs especially dangerous.
+
+Scattering Dog Treats grants ten minutes of player-specific protection from
+Feeding Frenzy without changing normal melee damage. Each consumable has three
+uses. See [Terror dog combat test contract](terror-dog-combat-test.md).
 
 ### Bloodveld — lifeforce drain
 
