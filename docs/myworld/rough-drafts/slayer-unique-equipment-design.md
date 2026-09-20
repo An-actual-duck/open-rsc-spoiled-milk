@@ -107,7 +107,8 @@ future slow coating is not an instruction to implement that system now.
 
 ## Sullen Pendant
 
-- Recipe material: **Frozen Tear**; required count not explicitly specified.
+- Recipe: **1 Frozen Tear**, plus the shared Slayer-currency assembly cost.
+- Visual: **a crystallized tear on a string**.
 - Equipment slot: **neck**.
 - **10% chance each time the wearer takes eligible primary-hit damage** to have the pendant
   **"cry out in pain"** and retaliate against the offending enemy.
@@ -127,7 +128,7 @@ Exact examine text:
 
 > You carry the Banshee's sorrows with you
 
-Before implementation: settle component count, percentage-roll distribution/
+Before implementation: settle percentage-roll distribution/
 rounding, mitigation and individual boss overrides. Use the shared primary-hit
 and positive-damage rules; retaliation chaining is excluded. No further hidden
 caps or exemptions are approved.
@@ -190,11 +191,13 @@ balancing can proceed without implementing this system.
 
 ## Next balance and implementation decisions
 
-1. Balance equipment-component rates against the confirmed average targets in
-   the drop document: **2,000 kills for whip, staff and bow; 1,000 for pendant
-   and dagger**. Resolve the ten-vertebra recipe's rate/quantity tension rather
-   than silently promising a 2,000-kill assembly at incompatible rates.
-2. Set Slayer-currency prices and the pendant's Frozen Tear count. Feather
+1. Follow the confirmed whip rates: **Abyssal Rib 1/2,000; single Abyssal
+   Vertibrae 1/128**. These replace the earlier very-rare-vertebra direction;
+   the rib is the intended rare component. The drop document distinguishes
+   average rib acquisition from collecting all whip components. Balance the
+   other equipment rates against **2,000 kills for staff/bow and 1,000 for
+   pendant/dagger**.
+2. Set Slayer-currency prices. The pendant requires one Frozen Tear. Feather
    quantities remain 1–3 per kill; their distribution affects the 500-feather
    shield's acquisition effort.
 3. Resolve the effect-policy questions above and inspect existing tier stats,

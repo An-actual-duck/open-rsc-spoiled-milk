@@ -200,9 +200,12 @@ Default hide and bones plus level-appropriate existing ordinary loot are implied
 unless explicitly overridden. The [equipment design](slayer-unique-equipment-design.md)
 records six rewards, approved recipes and the deferred coating system. Naga's
 Serpant's Tail is on hold and must not drop. Eye and gland are fixed at 1/128;
-equipment acquisition targets are 2,000 kills for whip/staff/bow and 1,000 for
-pendant/dagger. Exact equipment-component rates, Slayer-currency costs and the
-pendant's component count remain open;
+Abyssal Rib is 1/2,000 and single vertebrae are 1/128. The rib is the whip's
+intended rare component, and collecting the complete recipe can take longer
+than the average 2,000-kill rib wait. Other equipment acquisition targets are
+2,000 kills for staff/bow and 1,000 for pendant/dagger. The pendant requires
+one Frozen Tear, visually a crystallized tear on a string. Other equipment
+drop rates and Slayer-currency costs remain open;
 "rare" does not automatically mean 1/128, and appropriate parts should reach
 1/1,000 or rarer. Do not infer implemented drops from accepted combat tests.
 
