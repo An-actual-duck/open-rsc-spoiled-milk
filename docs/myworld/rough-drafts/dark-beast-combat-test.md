@@ -73,3 +73,17 @@ late, and try two beasts at once. Confirm pulse/release baseline against walking
 and melee from both mirrored facings. Check normal melee resumes and the first
 half-health crossing charges. Final damage/frequency tuning remains subject to
 owner playtesting.
+
+### Implementation verification (2026-09-20)
+
+Passed server core/plugins and client builds; Dark beast, Bloodveld, Terror dog,
+Naga, ranged-approach, Banshee, Cockatrice and Slayer gimmick-kit fixtures;
+sprite disk/JAR fidelity and fixed registration; Server R2 inventory audit.
+
+The full legacy `test_combat_strict` gate reaches a pre-existing native-terrain
+fixture error in `CurrentCombatProjectileLifecycleCharacterization:481`:
+`Ordinary movement cannot leave native package terrain`. Rebuilt the untouched
+`b1b4804e9` server sources into an isolated temporary directory and reproduced
+the same scenario, exception, stack and deterministic RNG trace against the
+same map. No terrain/runtime work is included in this NPC change. The full
+legacy gate is therefore not claimed as passing. In-game acceptance is pending.

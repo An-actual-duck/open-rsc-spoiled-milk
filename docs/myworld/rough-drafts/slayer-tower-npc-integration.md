@@ -44,7 +44,7 @@ Floor assignment is owner-selected; combat levels are proposed balancing targets
 | 3 | Veteran | Naga | 60 | None; normal combat |
 | 4 | Elite | Terror dog | 75 | Feeding Frenzy |
 | 4 | Elite | Bloodveld | 85 | No counter required; lifesteal and tongue pull |
-| 5 | Champion | Dark beast | 105 | Undecided |
+| 5 | Champion | Dark beast | 105 | Marked lightning / Static discharge wipe |
 | 6 | Hero | Abyssal demon | 125 | Undecided |
 
 Levels describe prepared encounters, not the uncountered special's effective

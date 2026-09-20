@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "4ec2ef03923b840e8231beabb0c95aacb82c6325622649cc5ee652500bff21e5",
+  "inputTreeSha256": "b8cc0721de0e4be43df427576041b41e0c60d5ee67b14ded135363a29577bb8f",
   "inputs": [
     {
       "brandSignals": [
@@ -37253,7 +37253,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 8919,
+      "bytes": 9045,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37325,7 +37325,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/StaticDischargeWipe.java"
       ],
-      "sha256": "6279c7ffabc4e12449cc6d319dd3eee99938a7e6985df693caa7c56514118c97"
+      "sha256": "699ab9421622c75546d47c099b2c07c78e6d7616e50b68909230402a621cd5c9"
     },
     {
       "brandSignals": [
@@ -54536,7 +54536,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4828,
+      "bytes": 5102,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -54572,7 +54572,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "be48bfe6ffaf01b6ef5a2d41beafe78d6c057507cc7e98b2e8aa371d4825db97"
+      "sha256": "79e7299099c1a0d3639565c1cb6e5006f8970b43838ad9326dff8e2c9e0335d9"
     },
     {
       "brandSignals": [],

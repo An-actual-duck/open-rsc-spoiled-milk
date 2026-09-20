@@ -24,7 +24,9 @@ import java.util.Map;
 public final class DarkBeastCombat {
 	public static final int NPC_ID = 869, WIPE_ID = 3330, RADIUS = 4, CHARGE_TICKS = 10;
 	// Pose-only messages carried by the existing NPC combat-effect update.
-	public static final int PULSE_LOW = 78, PULSE_HIGH = 79, DISCHARGE = 80, CANCEL = 81;
+	public static final int PULSE_LOW = CombatEffect.DARK_BEAST_PULSE_LOW,
+		PULSE_HIGH = CombatEffect.DARK_BEAST_PULSE_HIGH,
+		DISCHARGE = CombatEffect.DARK_BEAST_DISCHARGE, CANCEL = CombatEffect.DARK_BEAST_CANCEL;
 	private static final String STATE = "dark_beast_combat", MARKS = "dark_beast_marks";
 	private DarkBeastCombat() { }
 	private static final class State {
