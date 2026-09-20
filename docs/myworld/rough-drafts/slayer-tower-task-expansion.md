@@ -1,7 +1,7 @@
 # Slayer tower assignments, grandfathering and backpack-price comparison
 
-Status: approved scope, task counts/payouts, grandfathering and fixed backpack
-prices; equipment assembly amounts remain proposals.
+Status: approved scope, task counts/payouts, grandfathering, fixed backpack
+prices and six source-tier-only equipment assembly prices; not implemented.
 Updated: 2026-09-20. Documentation only; no runtime or player-state changes.
 
 Related: [tower roster](slayer-tower-npc-integration.md),
@@ -192,14 +192,14 @@ Backpack upgrades are permanent, sequential, untradable entitlements adding
 repeated, with monster parts and sometimes logs charged as well. Equal sticker
 prices therefore do not mean identical total acquisition effort.
 
-### Proposed assembly prices below the backpack benchmark
+### Approved assembly prices below the backpack benchmark
 
-**The below-backpack/source-monster-tier rule is approved; exact amounts below
-are recommendations awaiting approval.** Start near 75% of each unchanged
-backpack price, rounded to the nearest five (halfway values rounded upward).
-These are fixed proposed amounts, not a new runtime auto-pricing formula.
+**The owner approved all six amounts below and source-tier-only currency.**
+The amounts were chosen near 75% of each unchanged backpack price, rounded to
+the nearest five (halfway values rounded upward). These are fixed approved
+prices, not a new runtime auto-pricing formula. They are not implemented yet.
 
-| Reward | Source-tier currency | Backpack benchmark | Proposed assembly currency | Equivalent source-monster tasks from zero balance |
+| Reward | Source-tier currency | Backpack benchmark | Approved assembly currency | Equivalent source-monster tasks from zero balance |
 | --- | --- | ---: | ---: | ---: |
 | Cockatrice feather shield | Adept | 148 | 110 | 14 at 8 each |
 | Sullen Pendant | Veteran | 138 | 105 | 9 at 12 each |
@@ -212,19 +212,18 @@ All components, feathers/residue and logs remain additional requirements; none
 of these currency prices replaces them. The two Elite items share a currency
 benchmark despite their different stat tiers. There is no new Fledgling
 assembled equipment or Naga reward to price in this pass. Gimmick consumables
-and future herbalism recipes are outside this six-equipment price proposal.
+and future herbalism recipes are outside these six approved equipment prices.
 
-Proposed price vector: **source-tier currency only**, following the backpack
-comparison. This would be a specific assembly-rule exception to the existing
+Approved price vector: **source-tier currency only**, following the backpack
+comparison. This is a specific assembly-rule exception to the existing
 ordinary shop-item rule of native plus immediately preceding tier currency.
-Keep that ordinary shop rule unchanged; confirm the assembly exception along
-with these proposed prices rather than silently inventing an extra lower-tier
-charge or merging the six non-interchangeable balances. Final shop placement
+Keep that ordinary shop rule unchanged. Do not add an extra lower-tier charge
+to these six recipes or merge the six non-interchangeable balances. Final shop placement
 must support the source tier's native currency contract.
 
 Task equivalents illustrate earnings, not a requirement to complete that
 particular monster's assignments or a guaranteed sequence of random tasks.
-For example, the proposed 85 Elite bow cost takes five 20-point Bloodveld
+For example, the approved 85 Elite bow cost takes five 20-point Bloodveld
 tasks (100 points, 100 kills) from zero balance, while two tongues at the
 proposed 1/1,000 rate average 2,000 kills. Random selection, mandatory payouts,
 other tasks, existing balances and bought parts alter the actual path. Currency
@@ -233,8 +232,8 @@ time gate. Buyers of finished tradable equipment do not personally pay it.
 
 ## Implementation acceptance and decisions still needed
 
-- Task counts and payouts are approved. Resolve insertion positions and
-  repeatable weights; approve exact assembly currency amounts/vector separately.
+- Task counts/payouts and the six assembly currency amounts/vectors are approved.
+  Resolve task insertion positions and repeatable weights separately.
 - Implement the approved fixed backpack prices and corresponding loader/tests
   before modifying mandatory definitions; verify all six prices stay unchanged.
 - Verify existing old-task identity/order/count/payout preservation; test all
@@ -248,11 +247,12 @@ time gate. Buyers of finished tradable equipment do not personally pay it.
   preview and committed task must agree. Include all new metadata in hazard
   and dialogue tests.
 - Exercise definition-load price validation and compare actual task completion
-  times, counter consumption and earnings before approving assembly prices.
+  times, counter consumption and earnings during implementation/playtesting.
+  Any later price adjustment needs separate approval.
 - Relevant existing suites include MonsterSlayerPlayerStateCharacterization,
   MonsterSlayerContactsRouteTest, CurrentMonsterSlayerShopRuntimeCharacterization
   and `tests/myworld/test-monster-slayer-foundation.py`; add expansion-specific
   migration and pricing fixtures when implementation starts.
 
-This document is a plan and balance proposal. No task definitions, prices,
+This document records design approvals and remaining planning. No task definitions, prices,
 player records, map spawns, combat mechanics or servers were changed.
