@@ -277,7 +277,7 @@
       "command2": "",
       "attack": 1,
       "strength": 1,
-      "hits": 130,
+      "hits": 200,
       "defense": 1,
       "ranged": false,
       "combatlvl": 105,
@@ -310,9 +310,9 @@
       "roundMode": 1,
       "meleeOffense": 110,
       "magicOffense": 210,
-      "meleeDefense": 85,
-      "rangedDefense": 70,
-      "magicDefense": 85
+      "meleeDefense": 120,
+      "rangedDefense": 100,
+      "magicDefense": 120
     },
     {
       "id": 870,

@@ -6,8 +6,10 @@ shop, or activate a public deployment.
 
 ## Stats and cadence
 
-Initial tuning: combat level 105; 130 HP; melee offense 110; magic offense 210;
-melee/ranged/magic defenses 85/70/85. Legacy attack/strength/defense stay at 1:
+Current tuning after owner playtesting: combat level 105; 200 HP; melee offense
+110; magic offense 210; melee/ranged/magic defenses 120/100/120. This raises HP
+from 130 and defenses from 85/70/85, preserving a slight ranged weakness.
+Legacy attack/strength/defense stay at 1:
 the explicit modern offense/defense values are authoritative. Ordinary attacks
 use the established melee cadence. The creature approaches normally when not
 charging. No ordinary magic projectile attack is added.
@@ -33,7 +35,10 @@ an earlier random charge. A one-tick recovery preserves the discharge pose.
   6.4 seconds, not ten seconds.
 - Each uncleared mark resolves the standard NPC magic roll using offense 210
   and its normal spell-power derivation, plus ordinary player magic mitigation.
-  The visual is `thunder-3` / `CombatEffect.THUNDER_STRIKE` (34). Damage is not a
+  The visual is `thunder-3` / `CombatEffect.THUNDER_STRIKE` (34), rendered at 125%
+  of its former width and height in both world and screen paths. This changes
+  the shared thunder-3 presentation, not its frame timing or source artwork.
+  Damage is not a
   percentage of the player's HP, and can roll zero.
 - Distance, line of sight and movement after marking do not cancel the hit,
   including teleporting while the same player lifetime/session remains active.

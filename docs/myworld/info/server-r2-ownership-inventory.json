@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "b8cc0721de0e4be43df427576041b41e0c60d5ee67b14ded135363a29577bb8f",
+  "inputTreeSha256": "c783e200a3feca8a90544817844f2743c09f8ac0e27ec1385e768261e1946b99",
   "inputs": [
     {
       "brandSignals": [
@@ -1841,7 +1841,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 8137,
+      "bytes": 8140,
       "category": "unresolved",
       "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
       "classificationRule": "server/conf/server/defs/**",
@@ -1850,7 +1850,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/SlayerMovementPreviewNpcDefs.json",
       "reverseDependencies": [],
-      "sha256": "1eece1838d2500c8676f8ec24168b9d18a65cfc925571bfa5842ee7123297980"
+      "sha256": "9cef61a7947fa71d1b726a72b25d268e6e5017de61fc0b71a4ec818be16bc2e3"
     },
     {
       "brandSignals": [],

@@ -26,8 +26,8 @@ final class CurrentDarkBeastCharacterization {
 			Player p = player(h,"static target",441,440);
 			Player edge = player(h,"static edge",444,444);
 			Player late = player(h,"static late",445,440);
-			check(n.getLevel(Skill.HITS.id())==130 && n.getMeleeOffense()==110 && n.getMagicOffense()==210
-				&& n.getMeleeDefense()==85 && n.getMagicDefense()==85 && n.getRangedDefense()==70,"modern stats");
+			check(n.getLevel(Skill.HITS.id())==200 && n.getMeleeOffense()==110 && n.getMagicOffense()==210
+				&& n.getMeleeDefense()==120 && n.getMagicDefense()==120 && n.getRangedDefense()==100,"modern stats");
 			check(NpcCombatProfile.resolve(n).isMeleeOnly(),"lightning does not enable ordinary magic projectiles");
 			DarkBeastCombat.startCharge(n);
 			check(DarkBeastCombat.markCount(p)==1 && DarkBeastCombat.markCount(edge)==1
@@ -72,7 +72,7 @@ final class CurrentDarkBeastCharacterization {
 	private static void threshold(CurrentCombatHarness h) throws Exception {
 		Npc n=h.npc(869,480,480); Player p=player(h,"static half",481,480);
 		h.random().scriptInts(99); check(!DarkBeastCombat.tryAttack(n,p),"random non-charge decision");
-		n.getSkills().setLevel(Skill.HITS.id(),65);
+		n.getSkills().setLevel(Skill.HITS.id(),100);
 		check(DarkBeastCombat.tryAttack(n,p),"half health overrides random cooldown");
 		DarkBeastCombat.wipe(p); finish(h);
 		h.random().scriptInts(99); check(!DarkBeastCombat.tryAttack(n,p),"threshold once per lifetime");
