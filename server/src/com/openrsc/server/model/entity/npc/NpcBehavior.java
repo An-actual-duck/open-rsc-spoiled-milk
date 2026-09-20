@@ -89,6 +89,7 @@ public class NpcBehavior {
 	}
 
 	public void tick(final boolean hasPlayers) {
+		if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(npc, target)) return;
 		final long now = currentTimeMillis();
 		final Server server = npc.getWorld().getServer();
 		if (!server.isFoundationBenchmarkDeepNpcProfilingEnabled()) {

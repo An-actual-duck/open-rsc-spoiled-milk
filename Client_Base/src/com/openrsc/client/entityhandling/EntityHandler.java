@@ -5596,6 +5596,12 @@ public class EntityHandler {
 				"Something for your dog to chew on for awhile besides you", "Scatter",
 				0, 48, "items:48", false, false, 0, 11241806, false, true, false, itemId));
 		}
+		for (int uses = 3; uses >= 1; uses--) {
+			int itemId = 3333 - uses;
+			setCustomItemDefinition(itemId, new ItemDef("Static discharge wipe (" + uses + ")",
+				"Wipe away a dangerous static charge.", "Wipe",
+				0, 48, "items:48", false, false, 0, 14729344, false, true, false, itemId));
+		}
 	}
 
 	private static void addBangleJewelryDefinitions() {
@@ -6780,10 +6786,12 @@ public class EntityHandler {
 					? "A tormented spirit whose wail pierces the living" : preview == SlayerMovementPreview.NAGA
 					? "A serpent warrior wielding two scimitars" : preview == SlayerMovementPreview.TERROR_DOG
 					? "A vicious hound driven into a feeding frenzy by its pack" : preview == SlayerMovementPreview.BLOODVELD
-					? "A ravenous creature with a grasping tongue" : "A harmless movement-test creature", "",
+					? "A ravenous creature with a grasping tongue" : preview == SlayerMovementPreview.DARK_BEAST
+					? "A horned beast crackling with dangerous static" : "A harmless movement-test creature", "",
 				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45
 					: preview == SlayerMovementPreview.BANSHEE ? 60 : preview == SlayerMovementPreview.NAGA ? 75
-					: preview == SlayerMovementPreview.TERROR_DOG ? 90 : preview == SlayerMovementPreview.BLOODVELD ? 150 : 1, 1,
+					: preview == SlayerMovementPreview.TERROR_DOG ? 90 : preview == SlayerMovementPreview.BLOODVELD ? 150
+					: preview == SlayerMovementPreview.DARK_BEAST ? 130 : 1, 1,
 				preview.combatEnabled(),
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));

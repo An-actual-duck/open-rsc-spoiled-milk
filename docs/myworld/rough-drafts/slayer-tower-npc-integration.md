@@ -44,7 +44,7 @@ Floor assignment is owner-selected; combat levels are proposed balancing targets
 | 3 | Veteran | Naga | 60 | None; normal combat |
 | 4 | Elite | Terror dog | 75 | Feeding Frenzy |
 | 4 | Elite | Bloodveld | 85 | No counter required; lifesteal and tongue pull |
-| 5 | Champion | Dark beast | 105 | Undecided |
+| 5 | Champion | Dark beast | 105 | Marked lightning / Static discharge wipe |
 | 6 | Hero | Abyssal demon | 125 | Undecided |
 
 Levels describe prepared encounters, not the uncountered special's effective
@@ -168,12 +168,19 @@ Bloodveld holds range while preparing its pull and always bites when adjacent.
 The approved secondary animation uses a thin whip-like tongue.
 See [Bloodveld combat test contract](bloodveld-combat-test.md).
 
-### Dark beast and abyssal demon
+### Dark beast — marked lightning
 
-Both need an owner-selected gimmick and shop consumable. Leave these open.
-The dark beast's horn ram and the abyssal demon's blade stab and sinking/spike
-AoE are approved animation concepts, not automatically their Slayer gimmicks.
-Floors 5 and 6 are not design-complete until their counter mechanics are chosen.
+Level 105 melee encounter with a ten-tick lightning charge. Players within four
+tiles when charging begins are marked once; leaving does not escape the strike.
+One Static discharge wipe removes all current marks. Charging halves incoming
+damage and suspends attacks/movement. Lightning uses magic offense 210 and the
+`thunder-3` visual. The charge is random with one guaranteed at half health.
+See [Dark beast combat test contract](dark-beast-combat-test.md).
+
+### Abyssal demon
+
+Still needs an owner-selected gimmick and shop consumable. The blade stab and
+sinking/spike AoE are approved animations, not automatically its Slayer gimmick.
 
 ## Sprite-to-game integration checklist
 
@@ -217,7 +224,7 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Design dark beast and abyssal demon gimmicks/counters.
+3. Test Dark beast marked lightning; design the abyssal demon gimmick/counter.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.

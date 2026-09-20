@@ -2361,7 +2361,7 @@ public final class Player extends Mob {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				this, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
 				SecondaryEffectPolicy.PLAYER_DEATH_AMULET_BURST.getStableKey(),
-				damage)
+				com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(npc, damage))
 				.style(CombatStyle.MELEE)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 				.build();
@@ -2405,7 +2405,7 @@ public final class Player extends Mob {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			this, target, DamageRequest.SourceCategory.OWNED_EFFECT,
 			SecondaryEffectPolicy.PLAYER_DEATH_RING_CHARGE_HIT.getStableKey(),
-			bonusDamage)
+			com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, bonusDamage))
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();

@@ -81,6 +81,11 @@ public class CombatEffect {
 	public static final int CLERIC_AEGIS = 75;
 	public static final int CLERIC_RALLY = 76;
 	public static final int CLERIC_RESPITE = 77;
+	// Reserved NPC-only pose updates, not generic overlay animations.
+	public static final int DARK_BEAST_PULSE_LOW = 78;
+	public static final int DARK_BEAST_PULSE_HIGH = 79;
+	public static final int DARK_BEAST_DISCHARGE = 80;
+	public static final int DARK_BEAST_CANCEL = 81;
 	public static final int DEMON_EXPLOSION = LESSER_DEMON_MAGIC;
 
 	public static final int HELLFIRE = HELLS_FIRE;

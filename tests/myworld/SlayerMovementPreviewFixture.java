@@ -15,6 +15,16 @@ public final class SlayerMovementPreviewFixture {
 	}
 	public static void main(String[] args) throws Exception {
 		EntityHandler.load(true);
+		ORSCharacter beast=new ORSCharacter(); beast.npcId=869;
+		for(int tick=0;tick<10;tick++) {
+			require(DarkBeastChargePose.apply(beast,78+tick%2,1000+tick*640),"server pulse accepted");
+			require(beast.darkBeastPose==tick%2 && beast.darkBeastPoseExpiresMillis>1000+(tick+1)*640,"ten tick alternating pulses");
+		}
+		DarkBeastChargePose.apply(beast,80,7400);
+		require(beast.darkBeastPose==2 && beast.darkBeastPoseExpiresMillis==8040,"discharge holds one tick");
+		DarkBeastChargePose.apply(beast,81,7500);
+		require(beast.darkBeastPoseExpiresMillis==0,"cancel restores normal animation immediately");
+		beast.npcId=868; require(!DarkBeastChargePose.apply(beast,78,8000),"other NPCs unaffected");
 		require(EntityHandler.projectiles.get(41).id == EntityHandler.PROJECTILE_TYPES.NAGA_SCIMITAR.id(), "scimitar wire visual registered");
 		int[] iconPixels = new int[]{0, 0, 0x888888, 0, 0xabcdef, 0};
 		com.openrsc.client.model.Sprite icon = new com.openrsc.client.model.Sprite(iconPixels.clone(), 3, 2);
@@ -30,6 +40,8 @@ public final class SlayerMovementPreviewFixture {
 		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
 			"Slime Solvent client examine matches approved flavor text");
 		for (int dose = 3; dose >= 1; dose--) {
+			require(("Static discharge wipe (" + dose + ")").equals(EntityHandler.getItemDef(3333-dose).getName()), "wipe uses");
+			require(java.util.Arrays.asList(EntityHandler.getItemDef(3333-dose).getCommand()).contains("Wipe"), "wipe action");
 			require(("Dog Treats (" + dose + ")").equals(EntityHandler.getItemDef(3330 - dose).getName()), "treat uses");
 			require("Something for your dog to chew on for awhile besides you".equals(EntityHandler.getItemDef(3330 - dose).getDescription()), "treat examine");
 			require(java.util.Arrays.asList(EntityHandler.getItemDef(3330 - dose).getCommand()).contains("Scatter"), "treat action");
@@ -53,6 +65,17 @@ public final class SlayerMovementPreviewFixture {
 			Entry entry = loader.loadExternalNpcDirectionSheet(source, preview.animationName(), preview.columnWidths(), 3);
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			entry = preview.withCombatFrames(entry);
+			if (preview == SlayerMovementPreview.DARK_BEAST) {
+				require(preview.loadedFrameCount()==21 && preview.frameHeight()==110,"Dark beast two attack columns");
+				BufferedImage base=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/dark-beast-lightning"},"approved-base.png"));
+				BufferedImage strip=loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/dark-beast-lightning"},"approved-charge-strip.png"));
+				for(int y=0;y<330;y++) for(int x=0;x<720;x++) require(base.getRGB(x,y)==image.getRGB(x,y),"approved normalized base untouched");
+				for(int row=0;row<3;row++) for(int y=0;y<110;y++) for(int x=0;x<120;x++) {
+					int sx=(int)Math.floor((x+0.5)*7), sy=(int)Math.floor((y-8+0.5)*7);
+					int expected=sx<724 && sy>=0 && sy<724 ? strip.getRGB(row*724+sx,sy) : 0;
+					require(image.getRGB(720+x,row*110+y)==expected,"fixed charge scale, anchor and source pixels");
+				}
+			}
 			if (preview == SlayerMovementPreview.BLOODVELD) {
 				require(preview.loadedFrameCount() == 21, "Bloodveld retains bite and tongue");
 				BufferedImage base = loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/bloodveld-tongue"}, "approved-base.png"));

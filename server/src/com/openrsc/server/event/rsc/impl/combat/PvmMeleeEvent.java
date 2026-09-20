@@ -158,6 +158,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 			setDelayTicks(3);
 			return;
 		}
+		if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(attackerMob, targetMob)) {
+			setDelayTicks(1);
+			return;
+		}
 		if (com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(attackerMob)) {
 			setDelayTicks(1);
 			return;
@@ -397,6 +401,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 					hitter, 0, clericDamage.getPreventedDamage());
 			}
 		}
+		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		final int rawDamage = damage;
 		final int hitSplatType = offhand ? HitSplat.TYPE_ARMOR_PROC : Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
@@ -499,7 +504,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			(npc, splashDamage) -> {
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
+				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(npc, splashDamage))
 				.eventId(getUUID())
 				.style(CombatStyle.MELEE)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -561,7 +566,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final Mob creditedSource = source != null ? source : target;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			FROSTBITE_REFLECTION_POLICY.getStableKey(), damage)
+			FROSTBITE_REFLECTION_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -782,7 +787,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			final Npc npc, final int damage) {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-			SCYTHE_CLEAVE_POLICY.getStableKey(), damage)
+			SCYTHE_CLEAVE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(npc, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_STANDARD)
@@ -817,7 +822,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), damage)
+			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -850,7 +855,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), damage)
+			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -902,7 +907,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			CHAIN_LIGHTNING_POLICY.getStableKey(), damage)
+			CHAIN_LIGHTNING_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -941,7 +946,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			effectPolicy.getStableKey(), damage)
+			effectPolicy.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)

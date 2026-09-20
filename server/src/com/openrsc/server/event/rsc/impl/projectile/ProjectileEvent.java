@@ -478,7 +478,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			casterPlayer, chainTarget,
 			DamageRequest.SourceCategory.OWNED_EFFECT,
-			CHAIN_LIGHTNING_POLICY.getStableKey(), chainDamage)
+			CHAIN_LIGHTNING_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(chainTarget, chainDamage))
 			.eventId(getUUID())
 			.style(chainStyle)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -518,7 +518,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
-			JEWELRY_RECOIL_POLICY.getStableKey(), reflectedDamage)
+			JEWELRY_RECOIL_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(caster, reflectedDamage))
 			.eventId(getUUID())
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
@@ -585,6 +585,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			clericPreventedDamage = clericDamage.getPreventedDamage();
 		}
 		if (wail) damage = com.openrsc.server.content.monsterslayer.BansheeCombat.rollWail(caster, (Player) opponent);
+		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(opponent, damage);
 		int lastHits = opponent.getLevel(Skill.HITS.id());
 		final int hitSplatType = Summoning.getSummonDamageHitSplatType(caster);
 		final int damageDealt;
@@ -820,7 +821,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final Mob creditedSource = source != null ? source : target;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			creditedSource, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			FROSTBITE_REFLECTION_POLICY.getStableKey(), reflectedDamage)
+			FROSTBITE_REFLECTION_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, reflectedDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -856,7 +857,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			casterPlayer, splinterTarget,
 			DamageRequest.SourceCategory.OWNED_EFFECT,
-			SPLINTER_POLICY.getStableKey(), splinterDamage)
+			SPLINTER_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(splinterTarget, splinterDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1045,7 +1046,7 @@ public class ProjectileEvent extends SingleTickEvent {
 	private void inflictBloodRobeSplashDamage(final Player casterPlayer, final Npc npc, final int splashDamage) {
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			casterPlayer, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-			BLOOD_ROBE_SPLASH_POLICY.getStableKey(), splashDamage)
+			BLOOD_ROBE_SPLASH_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(npc, splashDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1069,7 +1070,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				? CombatStyle.MAGIC : CombatStyle.RANGED;
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				player, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
-				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), splashDamage)
+				DEATH_ROBE_OVERKILL_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(npc, splashDamage))
 				.eventId(getUUID())
 				.style(splashStyle)
 				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1151,7 +1152,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), bonusDamage)
+			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, bonusDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1184,7 +1185,7 @@ public class ProjectileEvent extends SingleTickEvent {
 
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), bonusDamage)
+			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, bonusDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
@@ -1344,7 +1345,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		}
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
-			CLERIC_THORNS_POLICY.getStableKey(), reflectedDamage)
+			CLERIC_THORNS_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(caster, reflectedDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
