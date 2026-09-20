@@ -22,6 +22,8 @@ item or addition to `::slayergimmicks`. No permanent spawns, shops or drops adde
 - Blank projectile presentation triggers the tongue animation without drawing
   a detached missile. The pull preserves combat ownership and authoritative
   layered player location, rather than calling ordinary teleport/disengage.
+  A world-info reset clears local-client waypoint interpolation so the player
+  snaps instantly at impact rather than visibly walking across the gap.
 
 ## Art
 

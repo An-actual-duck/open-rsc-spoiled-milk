@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "7afc399ae7cce70698b8ba12eb859b1c59b95050dca08f2456617fc8ecf55082",
+  "inputTreeSha256": "c7423312ca160b0c1870af0042d427f774e0e485ed8c1be2d4a662abed26facc",
   "inputs": [
     {
       "brandSignals": [
@@ -37092,7 +37092,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 4968,
+      "bytes": 5209,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37144,13 +37144,17 @@
         {
           "import": "com.openrsc.server.model.world.coordinate.WorldLocation",
           "path": "server/src/com/openrsc/server/model/world/coordinate/WorldLocation.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ActionSender",
+          "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
         }
       ],
       "javaFqn": "com.openrsc.server.content.monsterslayer.BloodveldCombat",
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
       "reverseDependencies": [],
-      "sha256": "dccb5d17046b33ce33bc1d7491a1dba50a5b8618d458a89a6e208c1e5b4030c0"
+      "sha256": "4880dfb9f220227209716185e92c20bd90d8cab81416081275f83a2dc6a18dd5"
     },
     {
       "brandSignals": [
@@ -59172,6 +59176,7 @@
         "server/src/com/openrsc/server/content/market/task/PlayerCollectItemsTask.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",

@@ -12,6 +12,7 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.HitSplat;
 import com.openrsc.server.model.entity.update.Projectile;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.net.rsc.ActionSender;
 
 /** Durable melee predator; its tongue repositions, never deals ranged damage. */
 public final class BloodveldCombat {
@@ -84,6 +85,9 @@ public final class BloodveldCombat {
 				player.resetPath();
 				if (player.getConfig().WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) player.setLayeredLocation(destination, true);
 				else player.setLocation(player.getWorld().getRegionManager().toRuntimeCompatibilityPoint(destination), true);
+				// Clear local-client waypoint interpolation, as an ordinary teleport does,
+				// but retain the encounter instead of terminating combat ownership.
+				ActionSender.sendWorldInfo(player);
 				player.message("The Bloodveld's tongue pulls you into reach!");
 			}
 		});
