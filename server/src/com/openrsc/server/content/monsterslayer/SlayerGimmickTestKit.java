@@ -7,7 +7,7 @@ import com.openrsc.server.model.entity.player.Player;
 /** Administrator testing supplies. Add counters here only once implemented. */
 public final class SlayerGimmickTestKit {
 	private static final int COPIES_PER_ITEM = 1;
-	private static final int[] ITEM_IDS = {GiantFrogCombat.SOLVENT_ITEM_ID, CockatriceCombat.EYE_DROPS_ID, BansheeCombat.EARPLUGS_ID};
+	private static final int[] ITEM_IDS = {GiantFrogCombat.SOLVENT_ITEM_ID, CockatriceCombat.EYE_DROPS_ID, BansheeCombat.EARPLUGS_ID, TerrorDogCombat.TREATS_ID};
 	private SlayerGimmickTestKit() { }
 
 	public static void grant(Player player, String[] args) {

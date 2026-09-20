@@ -2363,6 +2363,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getNpcMenuCombatLevel(int npcId) {
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.TERROR_DOG.npcId) return 75;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId) return 60;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.COCKATRICE.npcId) return 35;

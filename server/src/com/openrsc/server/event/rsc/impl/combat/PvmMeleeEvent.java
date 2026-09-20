@@ -393,7 +393,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			? engagement.getEncounterId() : null;
 		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 			hitter, target, DamageRequest.SourceCategory.ACTOR,
-			 offhand ? "naga-melee-offhand" : "pvm-melee-primary", damage)
+			offhand ? (com.openrsc.server.content.monsterslayer.TerrorDogCombat.isTerrorDog(hitter)
+				? "terror-dog-feeding-frenzy" : "naga-melee-offhand") : "pvm-melee-primary", damage)
 			.eventId(getUUID())
 			.encounterId(encounterId)
 			.style(CombatStyle.MELEE)
@@ -472,6 +473,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 				applyDeathRobeOverkillSplash((Player) hitter, (Npc) target, rawDamage - lastHits);
 			}
 			onDeath(target, hitter);
+		}
+		if (!offhand && !damageResult.isTargetTerminal()) {
+			com.openrsc.server.content.monsterslayer.TerrorDogCombat.applyFrenzy(
+				hitter, target, damageResult.getActualDamage(), attackSuppressed,
+				bite -> inflictDamage(hitter, target, bite, false, true));
 		}
 	}
 

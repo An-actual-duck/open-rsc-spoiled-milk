@@ -51,8 +51,8 @@ slot is occupied. Protection expiry is wall-clock based, including offline time.
 Inserting before projectile impact protects that hit; expiry before impact
 restores the dangerous roll. It does not protect against other Slayer gimmicks.
 
-`::slayergimmicks` grants one full bottle each of solvent, eye drops and wax
-earplugs, requiring three free slots. Test spawn: `::spawnnpc 865 4 10`.
+`::slayergimmicks` grants one full three-use counter each of solvent, eye drops,
+wax earplugs and Dog Treats, requiring four free slots. Test spawn: `::spawnnpc 865 4 10`.
 
 ## Verification
 

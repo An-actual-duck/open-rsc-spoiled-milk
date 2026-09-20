@@ -5590,6 +5590,12 @@ public class EntityHandler {
 				"Desolve after 10 minutes", "Insert",
 				0, 48, "items:48", false, false, 0, 14729344, false, true, false, itemId));
 		}
+		for (int uses = 3; uses >= 1; uses--) {
+			int itemId = 3330 - uses;
+			setCustomItemDefinition(itemId, new ItemDef("Dog Treats (" + uses + ")",
+				"Something for your dog to chew on for awhile besides you", "Scatter",
+				0, 48, "items:48", false, false, 0, 11241806, false, true, false, itemId));
+		}
 	}
 
 	private static void addBangleJewelryDefinitions() {
@@ -6772,9 +6778,11 @@ public class EntityHandler {
 					? "A poisonous frog with exceptionally sticky saliva" : preview == SlayerMovementPreview.COCKATRICE
 					? "A vicious bird with a petrifying stare" : preview == SlayerMovementPreview.BANSHEE
 					? "A tormented spirit whose wail pierces the living" : preview == SlayerMovementPreview.NAGA
-					? "A serpent warrior wielding two scimitars" : "A harmless movement-test creature", "",
+					? "A serpent warrior wielding two scimitars" : preview == SlayerMovementPreview.TERROR_DOG
+					? "A vicious hound driven into a feeding frenzy by its pack" : "A harmless movement-test creature", "",
 				1, 1, preview == SlayerMovementPreview.GIANT_FROG ? 30 : preview == SlayerMovementPreview.COCKATRICE ? 45
-					: preview == SlayerMovementPreview.BANSHEE ? 60 : preview == SlayerMovementPreview.NAGA ? 75 : 1, 1,
+					: preview == SlayerMovementPreview.BANSHEE ? 60 : preview == SlayerMovementPreview.NAGA ? 75
+					: preview == SlayerMovementPreview.TERROR_DOG ? 90 : 1, 1,
 				preview.combatEnabled(),
 				new int[]{0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 				0, 0, 0, 0, preview.cameraWidth(), preview.cameraHeight(), 10, 7, 5, preview.npcId));

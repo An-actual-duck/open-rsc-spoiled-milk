@@ -2228,6 +2228,7 @@ public class ActionSender {
 		com.openrsc.server.content.monsterslayer.GiantFrogCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.CockatriceCombat.appendStatuses(player, statuses);
 		com.openrsc.server.content.monsterslayer.BansheeCombat.appendStatuses(player, statuses);
+		com.openrsc.server.content.monsterslayer.TerrorDogCombat.appendStatuses(player, statuses);
 		ActiveStatusInventory inventory = ActiveStatusInventory.select(statuses);
 		List<ActiveStatusEntry> visible = inventory.getVisible();
 		ActivePotionEffectsStruct struct = new ActivePotionEffectsStruct();

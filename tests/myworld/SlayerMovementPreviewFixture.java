@@ -30,6 +30,9 @@ public final class SlayerMovementPreviewFixture {
 		require("Slimy frog spit begone!".equals(EntityHandler.getItemDef(3318).getDescription()),
 			"Slime Solvent client examine matches approved flavor text");
 		for (int dose = 3; dose >= 1; dose--) {
+			require(("Dog Treats (" + dose + ")").equals(EntityHandler.getItemDef(3330 - dose).getName()), "treat uses");
+			require("Something for your dog to chew on for awhile besides you".equals(EntityHandler.getItemDef(3330 - dose).getDescription()), "treat examine");
+			require(java.util.Arrays.asList(EntityHandler.getItemDef(3330 - dose).getCommand()).contains("Scatter"), "treat action");
 			require(("Wax earplugs (" + dose + ")").equals(EntityHandler.getItemDef(3327 - dose).getName()), "wax uses");
 			require("Desolve after 10 minutes".equals(EntityHandler.getItemDef(3327 - dose).getDescription()), "wax flavor text");
 			require(("Eye Drops (" + dose + ")").equals(EntityHandler.getItemDef(3324 - dose).getName()), "eye drop dose labels");
