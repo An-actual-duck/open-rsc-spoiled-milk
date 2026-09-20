@@ -41,7 +41,7 @@ definition work. Combat levels/floors follow the tower plan.
 | 4 | Terror dog (867; 75) | Hide + bones | Terror Fang |
 | 4 | Bloodveld (868; 85) | Hide + bones | Leach Tongue |
 | 5 | Dark beast (869; 105) | Hide + bones | Lightning Horn |
-| 6 | Abyssal demon (870; 125) | **1–3 Slimey residue** instead of hide, plus Demon ash; **no ordinary bones** | Abyssal Vertibrae; Abyssal Rib |
+| 6 | Abyssal demon (870; 125) | **1–3 Slimey residue** instead of hide, plus Demon ash; **no ordinary bones** | Abyssal Vertibrae (1/128, one per drop); Abyssal Rib (1/2,000) |
 
 Unless the owner specifies an exception, future monster discussions listing
 only unique rare drops still imply hide and bones. Do not infer another
@@ -72,12 +72,12 @@ design range, not approval of 1/1,000 for every component or a universal floor.
 The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
 1/128 each**, with one of each required for their future potion.
 
-- Both Abyssal skeletal components are very rare; **Abyssal Rib is rarer than
-  Abyssal Vertibrae**.
-- Apart from those two herbalism ingredients, no exact component rate is
-  approved yet. Rare-component drop quantities also remain to be finalized.
-  Use the approved recipe counts in the equipment design; the pendant's
-  Frozen Tear count and currency costs remain open.
+- **Abyssal Rib: 1/2,000. Abyssal Vertibrae: 1/128, one per drop.** The rib
+  is the intended rare component; this replaces the earlier direction that
+  both skeletal components should be very rare.
+- Other equipment-component rates remain proposals below, not finalized
+  probabilities. Use the approved recipe counts in the equipment design,
+  including **one Frozen Tear** for the pendant. Currency costs remain open.
 - Choose component rates together with assembly quantities, expected kills per
   hour, encounter difficulty, repeat rewards and Slayer-currency costs.
 - Record numeric per-kill probabilities, not just rarity labels. Audit how the
@@ -95,29 +95,32 @@ The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
 These targets answer the average kills-to-assemble question, not a guaranteed
 drop deadline or mandatory personal kill count. Trading remains allowed.
 Slayer currency and purchased logs are additional costs, not assumed to be
-earned in those same kills. Exact equipment-component rates below are
-**proposals**, not approved or implemented drop tables.
+earned in those same kills. The whip rates are **confirmed**; the other
+equipment-component rates below are **proposals**. None is implemented yet.
 
-| Reward | Target average monster kills | Candidate rate basis |
+| Reward | Target average monster kills | Rate basis and approval state |
 | --- | --- | --- |
-| Abyssal Whip | 2,000 | Joint rib/ten-vertebra completion needs a separate calculation; see below |
+| Abyssal Whip | Originally about 2,000; now 2,000 for the rib specifically | Confirmed: rib 1/2,000; single vertebra 1/128; full collection can take longer |
 | Thunder Spire Staff | 2,000 | One Lightning Horn at 1/2,000 |
 | Leaching Bow | 2,000 | Two tongues, each dropped singly at 1/1,000 |
 | Dagger of Terror | 1,000 | One Terror Fang at 1/1,000 |
-| Sullen Pendant | 1,000 | Frozen Tear at 1/1,000 **if** the recipe is one tear; count still needs confirmation |
+| Sullen Pendant | 1,000 | Proposed: one Frozen Tear at 1/1,000; one-tear recipe confirmed |
 
 No separate kill target has been assigned to the 500-feather shield. Its pace
 depends on the baseline 1–3 feather distribution plus the currency price.
 
-The whip's ten vertebrae require special care: at one vertebra per 1/1,000
-drop, those alone average 10,000 kills. Meeting approximately 2,000 kills
-requires more frequent vertebrae, multi-unit drops, or a recipe revision; none
-of those alternatives is selected yet. Preserve the ten-component recipe
-until the owner approves otherwise. Also, independently setting the rib and
-the complete vertebra requirement to each average 2,000 kills makes the
-average wait for **both** exceed 2,000. Evaluate their joint completion time,
-not just the slower component's mean. Reconcile the earlier "very rare"
-vertebra direction explicitly rather than hiding this tradeoff.
+The approved whip recipe remains **one rib, ten vertebrae and fifty residue**.
+At the chosen rates, ten vertebrae average 1,280 kills, and long-run production
+averages **15.625 vertebrae per rib**. The surplus is intentional and can support
+future uses. The owner will design those later; do not invent additional
+recipes, conversions or material sinks now.
+
+RNG can still produce an early rib before ten vertebrae. Assuming independent
+single-unit rolls, the mean wait to collect both one rib and ten vertebrae is
+approximately **2,355 kills**, not exactly 2,000. This is a balance calculation,
+not an approved independence rule or a guaranteed completion deadline. Keep the
+owner's specified rates rather than silently retuning them to force the earlier
+approximate target. Trading can cover an individual's missing components.
 
 ## Abyssal demon: abyssal whip
 
@@ -128,8 +131,8 @@ imply importing OSRS assets or copying its stats/requirements.
 | Component | Source and role | Rarity decision |
 | --- | --- | --- |
 | Slimey residue | Replaces this demon's hide; binds the whip together | Baseline 1–3 per kill |
-| Abyssal Rib | Forms the handle | Very rare; rarer than the vertebrae; exact rate undecided |
-| Abyssal Vertibrae | Supplies the spinal-column lash | Very rare; more common than the rib; exact rate undecided |
+| Abyssal Rib | Forms the handle | Confirmed 1/2,000; intended rare component |
+| Abyssal Vertibrae | Supplies the spinal-column lash | Confirmed 1/128, one per drop; surplus available for future uses |
 
 These are the current component names. The rib replaces the formerly planned
 horn; the vertebrae replaces the spinal-fragment working name. Do not add the
