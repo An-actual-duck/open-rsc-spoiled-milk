@@ -16,6 +16,7 @@ final class CurrentBloodveldCharacterization {
 			h.openCombatProjectileRectangle(440, 449, 440, 443);
 			Npc n = h.npc(868, 440, 440);
 			Player p = h.player("bloodveld target", 445, 440);
+			h.recordOutgoingPackets(p);
 			p.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 300, 300, false);
 			check(n.getMeleeOffense() == 80 && n.getMeleeDefense() == 30 && n.getMagicDefense() == 30
 				&& n.getRangedDefense() == 30 && n.getLevel(Skill.HITS.id()) == 150, "modern stats");
@@ -40,6 +41,10 @@ final class CurrentBloodveldCharacterization {
 			check(p.getX() == 445, "windup before displacement");
 			h.advanceOneCombatTick();
 			check(p.getX() == 441 && p.getY() == 440 && p.getLevel(Skill.HITS.id()) == 300, "pull adjacent without damage");
+			java.util.List<?> packets = (java.util.List<?>) CurrentCombatHarness.readPrivateField(p, "outgoingPackets");
+			check(packets.stream().anyMatch(packet -> ((com.openrsc.server.net.Packet)packet).getID() == 25),
+				"custom-client world-info reset snaps local player instead of interpolating a walk");
+			check(n.getPvmMeleeEvent() == event, "position snap preserves active combat");
 			int swings = n.getHitsMade(); event.run();
 			check(n.getHitsMade() == swings, "no immediate melee after pull");
 			check(!BloodveldCombat.tryPull(n,p), "adjacent uses melee only");
