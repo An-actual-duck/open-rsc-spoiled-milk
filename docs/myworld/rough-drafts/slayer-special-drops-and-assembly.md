@@ -7,6 +7,9 @@ Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-gu
 [tower roster](slayer-tower-npc-integration.md), and
 [hide/material overhaul](slayer-hide-and-leather-overhaul.md).
 
+Reward behavior, approved component recipes and exact examine text are recorded
+in [unique equipment design](slayer-unique-equipment-design.md).
+
 ## Owner direction
 
 - Expand monster-specific drops with distinctive body parts/materials, in the
@@ -34,7 +37,7 @@ definition work. Combat levels/floors follow the tower plan.
 | 1 | Giant frog (863; 20) | Hide + bones | Sticky Saliva Gland |
 | 2 | Cockatrice (864; 35) | **1–3 Cockatrice Feathers** instead of hide, plus bones | Cockatrice Eye |
 | 3 | Banshee (865; 50) | Hide + bones | Frozen Tear |
-| 3 | Naga (866; 60) | Hide + bones | Serpant's Tail |
+| 3 | Naga (866; 60) | Hide + bones | None for now; Serpant's Tail deferred and must not drop |
 | 4 | Terror dog (867; 75) | Hide + bones | Terror Fang |
 | 4 | Bloodveld (868; 85) | Hide + bones | Leach Tongue |
 | 5 | Dark beast (869; 105) | Hide + bones | Lightning Horn |
@@ -69,8 +72,9 @@ design range, not approval of 1/1,000 for every component or a universal floor.
 
 - Both Abyssal skeletal components are very rare; **Abyssal Rib is rarer than
   Abyssal Vertibrae**.
-- No exact component rate, rare-component drop quantity, or assembly count
-  is approved yet.
+- No exact component rate or rare-component drop quantity is approved yet.
+  Use the approved recipe counts in the equipment design; the pendant's
+  Frozen Tear count and currency costs remain open.
 - Choose component rates together with assembly quantities, expected kills per
   hour, encounter difficulty, repeat rewards and Slayer-currency costs.
 - Record numeric per-kill probabilities, not just rarity labels. Audit how the
@@ -98,20 +102,12 @@ imply importing OSRS assets or copying its stats/requirements.
 These are the current component names. The rib replaces the formerly planned
 horn; the vertebrae replaces the spinal-fragment working name. Do not add the
 old components alongside the new ones. Item IDs remain unallocated.
-Require the requisite quantity of **all three components**, plus Slayer
-currency, to purchase an assembled abyssal whip from the shop. Quantities,
-currency tier/cost vector, stock/access rules and output quantity are not yet
-specified. The demon is planned for floor 6 / Hero challenge tier, but that
-does not itself approve a Hero-only price or override existing shop-cost rules.
-
-Revised description draft reflecting the confirmed rib-handle change
-(final examine wording still subject to approval):
-
-> A whip made from the spinal column of an abyssal demon, with a handle made from one of its ribs. Its sticky flesh holds it together. Disgusting.
-
-Weapon stats, requirements, attack animation, effects, tradeability, death/reclaim
-behavior and equipment slot details need separate decisions. No special attack,
-exact rare-drop probability or assembly component quantity has been approved.
+The [Abyssal Whip design](slayer-unique-equipment-design.md#abyssal-whip)
+specifies the approved quantities, tier benchmarks, hit-delay effect and exact
+examine text. All three component types plus Slayer currency are required.
+Currency tier/cost vector and shop stock/access rules remain open. The demon
+is planned for floor 6 / Hero challenge tier, but that does not itself approve
+a Hero-only price or override existing shop-cost rules.
 
 ## Material and economy boundaries
 
@@ -126,8 +122,10 @@ exact rare-drop probability or assembly component quantity has been approved.
   kill-proof or account-bound component restriction is implied.
 - Determine each rare component's drop chance, eligible NPC variants, quantity,
   independent versus shared roll, and any luck modifiers deliberately.
-- The other monsters' components are confirmed above; their assembled rewards
-  and recipes remain to be designed. Do not invent reward definitions.
+- Six equipment rewards now have owner-directed designs in the linked
+  equipment document. Naga's component is deferred; Cockatrice Eye and Sticky
+  Saliva Gland are collectible ingredients for a future coating system, not
+  an instruction to implement that system with their drops.
 
 ## Icon work and visual reference
 
@@ -135,16 +133,19 @@ Icon artwork is needed for the new drops, the equipment they will produce,
 and the existing gimmick solutions. This is an artwork backlog, not a claim
 that icons have been created, approved or imported.
 
-- Drop icons: the nine rare components in the roster plus Slimey residue and
-  Cockatrice Feathers (eleven named new drop-icon subjects).
+- Active drop icons: the eight rare components in the roster plus Slimey
+  residue and Cockatrice Feathers (ten named drop-icon subjects). Serpant's
+  Tail is deferred with its drop; do not include it in the active backlog.
 - Review/reuse hide and bone icons once their actual item families are chosen;
   reuse existing Demon ash. Six hide-dropping monsters do not automatically
   imply six new hide icons.
 - Gimmick icons: **Slime Solvent, Eye Drops, Wax earplugs, Dog Treats, Static
   discharge wipe**. They currently borrow potion artwork. Solvent is shared
   by frog and Abyssal demon, not a second item/icon.
-- Equipment icons: Abyssal whip and later approved weapon/shield/jewelry
-  rewards. Define the remaining rewards before commissioning their icons.
+- Equipment icons: **Abyssal Whip, Thunder Spire Staff, Leaching Bow, Dagger
+  of Terror, Sullen Pendant and the unnamed Cockatrice feather shield**.
+  Use the linked reward descriptions and construction details. Future coating
+  potion/weapon-variant icons are deferred with that system.
 - Use established RSC inventory/ground icon styling and the existing item
   canvas constraints. Confirm the actual target canvas and scale in the
   item pipeline before generation; source asset sizes are not all identical.
@@ -155,9 +156,11 @@ that icons have been created, approved or imported.
   pass; do not rely only on the last generated attempt. Larger canvases need
   explicit approval if the existing limit prevents the requested result.
 
-Suggested sequence (not a new approval): establish drop/counter icons, define
-reward recipes and rarity together, then implement item definitions and full
-drop tables, followed by atomic shop assembly and finished-equipment visuals.
+Suggested sequence (not implementation approval): use the documented rewards
+and recipes to balance rarity and currency costs, then produce drop, equipment
+and counter-item icons against those designs. The already-defined gimmick
+items can receive icons independently of unresolved reward balancing. Follow
+with item definitions, full drop tables, atomic shop assembly and effects.
 
 ## Confirmed unique-reward equipment slots
 
@@ -180,7 +183,7 @@ assembly model may also produce shields and jewelry, not only weapons.
 
 Extend the existing authoritative shop transaction to validate both component
 counts and typed Slayer balances before consuming anything. Consume materials
-and currency and deliver the weapon atomically; missing parts, insufficient
+and currency and deliver the reward atomically; missing parts, insufficient
 currency, inventory failure, cancellation or duplicate submission must not
 partially charge the player or duplicate the reward. Quantity selection must
 use checked multiplication for all costs, respecting actual inventory/stack

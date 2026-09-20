@@ -197,7 +197,10 @@ The [special drops and assembly document](slayer-special-drops-and-assembly.md)
 is the reference for the confirmed eight-monster drop roster, material/remains
 exceptions, 1–3 residue/feather quantities, rare-component ordering and icon work.
 Default hide and bones plus level-appropriate existing ordinary loot are implied
-unless explicitly overridden. Exact rare rates and recipe counts remain open;
+unless explicitly overridden. The [equipment design](slayer-unique-equipment-design.md)
+records six rewards, approved recipes and the deferred coating system. Naga's
+Serpant's Tail is on hold and must not drop. Exact rare rates, Slayer-currency
+costs and the pendant's component count remain open;
 "rare" does not automatically mean 1/128, and appropriate parts should reach
 1/1,000 or rarer. Do not infer implemented drops from accepted combat tests.
 
@@ -243,8 +246,8 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Dark beast and Abyssal mechanics accepted; define drop rates and assembly
-   quantities together using the confirmed component roster.
+3. Dark beast and Abyssal mechanics accepted; balance drop rates and currency
+   prices against the documented reward recipes and settle remaining counts.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.
