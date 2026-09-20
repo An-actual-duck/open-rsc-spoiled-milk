@@ -215,12 +215,24 @@ public class PvmMeleeEvent extends GameTickEvent {
 				setDelayTicks(1);
 				return;
 			}
+			if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)
+				&& com.openrsc.server.content.monsterslayer.BloodveldCombat.tryPull((Npc) attackerMob, targetMob)) {
+				setDelayTicks(1);
+				return;
+			}
 			attackerMob.walkAdjacentToEntity(targetMob);
 			setDelayTicks(1);
 			return;
 		}
 
 		attackerMob.resetPath();
+		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)) {
+			if (!com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(attackerMob)) {
+				setDelayTicks(1);
+				return;
+			}
+			com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(attackerMob, 2);
+		}
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)) {
 			if (!com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob)) {
 				setDelayTicks(1);
@@ -403,6 +415,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(target, damageDealt, wail);
 		Summoning.applySummonLifesteal(hitter, target, damageDealt);
 		if (target.isNpc() && hitter.isPlayer()) {

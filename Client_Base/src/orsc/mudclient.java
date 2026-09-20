@@ -2364,6 +2364,7 @@ public final class mudclient implements Runnable {
 
 	private int getNpcMenuCombatLevel(int npcId) {
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.TERROR_DOG.npcId) return 75;
+		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD.npcId) return 85;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId) return 60;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId) return 20;
 		if (npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.COCKATRICE.npcId) return 35;
@@ -10733,9 +10734,11 @@ public final class mudclient implements Runnable {
 			long projectileElapsed = System.currentTimeMillis() - npc.npcProjectileAttackStartedMillis;
 			if ((preview == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG
 				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE
-				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA)
+				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA
+				|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD)
 				&& npc.npcProjectileAttackStartedMillis > 0 && projectileElapsed >= 0 && projectileElapsed < 600) {
-				var13 = preview == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA ? 6 : 5;
+				var13 = preview == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA
+					|| preview == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD ? 6 : 5;
 				var11 = 2;
 				var14 = preview.projectileAttackFrame(projectileElapsed);
 			}
@@ -25983,7 +25986,8 @@ public final class mudclient implements Runnable {
 		ORSCharacter shooter = getNpcFromServer(serverIndex);
 		if (shooter != null && (shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.GIANT_FROG.npcId
 			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BANSHEE.npcId
-			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId)) {
+			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.NAGA.npcId
+			|| shooter.npcId == com.openrsc.client.entityhandling.SlayerMovementPreview.BLOODVELD.npcId)) {
 			shooter.npcProjectileAttackStartedMillis = System.currentTimeMillis();
 		}
 	}

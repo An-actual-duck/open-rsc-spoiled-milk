@@ -43,7 +43,7 @@ Floor assignment is owner-selected; combat levels are proposed balancing targets
 | 3 | Veteran | Banshee | 50 | Painful scream |
 | 3 | Veteran | Naga | 60 | None; normal combat |
 | 4 | Elite | Terror dog | 75 | Feeding Frenzy |
-| 4 | Elite | Bloodveld | 85 | Lifeforce drain |
+| 4 | Elite | Bloodveld | 85 | No counter required; lifesteal and tongue pull |
 | 5 | Champion | Dark beast | 105 | Undecided |
 | 6 | Hero | Abyssal demon | 125 | Undecided |
 
@@ -158,26 +158,15 @@ Scattering Dog Treats grants ten minutes of player-specific protection from
 Feeding Frenzy without changing normal melee damage. Each consumable has three
 uses. See [Terror dog combat test contract](terror-dog-combat-test.md).
 
-### Bloodveld — lifeforce drain
+### Bloodveld — lifesteal and tongue pull
 
-The bloodveld has overwhelming lifesteal, with an intended tuning range of
-200–500% and a positive minimum heal even on a zero-damage hit. This should make
-an unprepared fight nearly impossible rather than merely a longer normal fight.
-The final multiplier, minimum, healing trigger, eligible attacks, damage basis,
-health cap and counter suppression amount remain undecided.
-
-A possible formula for later approval is:
-`heal = max(minimumHeal, multiplier * eligibleDamage)` on a qualifying attack,
-with rounding and maximum-health behavior explicitly defined. This is not an
-approved implementation formula; a miss versus a resolved zero hit also needs
-to be distinguished deliberately.
-
-The counter should retain the player's lifeforce. The owner's initial idea is
-a smudging stick; the item is not finalized. Suggested fiction: a consumable
-**binding incense stick** temporarily anchors the user's lifeforce, preventing
-the bloodveld from drawing sustenance. "Smudging stick" can remain the name if
-preferred. Alternative: a **soul-sealing draught**, if self-use and a timed buff
-read more clearly than burning incense. These are proposals, not new stock.
+An ordinary encounter requiring no counter item. Level 85, 150 HP, melee offense
+80, and 30 in each defense. Melee heals half actual damage dealt, rounded down
+and capped at missing HP; zero damage never heals. The five-tile tongue pull
+deals no damage and draws the player adjacent through a clear walkable path.
+Bloodveld holds range while preparing its pull and always bites when adjacent.
+The approved secondary animation uses a thin whip-like tongue.
+See [Bloodveld combat test contract](bloodveld-combat-test.md).
 
 ### Dark beast and abyssal demon
 
@@ -219,15 +208,15 @@ first counter. Respect existing multi-currency shop rules unless the owner
 explicitly approves a change.
 
 Proposed verification should cover prepared and unprepared fights at each tier,
-effect application/expiry, zero-hit bloodveld healing, treat-controlled damage
-and attack rate, prevention/cure of paralysis, scream-counter interaction,
+effect application/expiry, Bloodveld lifesteal and collision-safe pulling,
+treat-controlled Feeding Frenzy, prevention/cure of paralysis, scream-counter interaction,
 multiplayer/summon ownership, no double consumption, and ordinary Slayer task
-credit. Naga must remain playable without any special consumable.
+credit. Naga and Bloodveld require no special consumable.
 
 ## Next design decisions
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
-2. Choose the bloodveld retainer item; banshee Wax earplugs are selected.
+2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
 3. Design dark beast and abyssal demon gimmicks/counters.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.

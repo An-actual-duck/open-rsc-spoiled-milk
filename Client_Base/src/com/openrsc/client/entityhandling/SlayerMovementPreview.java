@@ -7,7 +7,7 @@ public enum SlayerMovementPreview {
 	BANSHEE(865, "Banshee", "banshee", 100, 100, 100, 100, 100),
 	NAGA(866, "Naga", "naga", 100, 100, 100, 100, 100, 100, 128),
 	TERROR_DOG(867, "Terror dog", "terror-dog", 100, 100, 100, 100, 100, 100),
-	BLOODVELD(868, "Bloodveld", "bloodveld", 120, 120, 120, 120, 120, 120),
+	BLOODVELD(868, "Bloodveld", "bloodveld", 120, 120, 120, 120, 120, 120, 220),
 	DARK_BEAST(869, "Dark beast", "dark-beast", 100, 100, 100, 100, 100, 100),
 	ABYSSAL_DEMON(870, "Abyssal demon", "abyssal-demon", 100, 100, 100, 100, 100, 112);
 
@@ -25,9 +25,9 @@ public enum SlayerMovementPreview {
 	}
 
 	public String animationName() { return "slayer-preview-" + assetName; }
-	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE || this == BANSHEE || this == NAGA || this == TERROR_DOG; }
-	public int loadedFrameCount() { return this == NAGA ? 21 : combatEnabled() ? 18 : 15; }
-	public int projectileAttackFrame(long elapsed) { return (this == NAGA ? 18 : 15) + (int) (elapsed / 200); }
+	public boolean combatEnabled() { return this == GIANT_FROG || this == COCKATRICE || this == BANSHEE || this == NAGA || this == TERROR_DOG || this == BLOODVELD; }
+	public int loadedFrameCount() { return this == NAGA || this == BLOODVELD ? 21 : combatEnabled() ? 18 : 15; }
+	public int projectileAttackFrame(long elapsed) { return (this == NAGA || this == BLOODVELD ? 18 : 15) + (int) (elapsed / 200); }
 	/** Banshee has fifteen approved frames: reuse its side poses for both attack modes. */
 	public orsc.graphics.two.SpriteArchive.Entry withCombatFrames(orsc.graphics.two.SpriteArchive.Entry source) {
 		if (this != BANSHEE || source == null || source.getFrames().length != 15) return source;

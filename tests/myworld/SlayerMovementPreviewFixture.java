@@ -53,6 +53,21 @@ public final class SlayerMovementPreviewFixture {
 			Entry entry = loader.loadExternalNpcDirectionSheet(source, preview.animationName(), preview.columnWidths(), 3);
 			require(entry != null && image != null, "Missing " + preview.assetName);
 			entry = preview.withCombatFrames(entry);
+			if (preview == SlayerMovementPreview.BLOODVELD) {
+				require(preview.loadedFrameCount() == 21, "Bloodveld retains bite and tongue");
+				BufferedImage base = loader.readAssetImage(loader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/bloodveld-tongue"}, "approved-base.png"));
+				for (int y=0;y<330;y++) for(int x=0;x<720;x++) require(base.getRGB(x,y)==image.getRGB(x,y), "approved base unchanged");
+				for (int row=0;row<3;row++) {
+					require(preview.projectileAttackFrame(row*200)==18+row, "tongue sequence");
+					int[] pixels=entry.getFrames()[18+row].getPixels();
+					for(int y=0;y<110;y++) for(int x=0;x<220;x++) {
+						int argb=image.getRGB(720+x,row*110+y);
+						int expected=(argb>>>24)<64?0:argb&0xffffff;
+						if(expected==0 && (argb>>>24)>=64) expected=0x010101;
+						require(pixels[y*220+x]==expected,"tongue pixels and wider canvas");
+					}
+				}
+			}
 			if (preview == SlayerMovementPreview.NAGA) {
 				require(preview.loadedFrameCount() == 21, "Naga retains both attack columns");
 				for (int row = 0; row < 3; row++) {
@@ -75,7 +90,7 @@ public final class SlayerMovementPreviewFixture {
 					int sourceColumn = preview == SlayerMovementPreview.BANSHEE ? 2 : 5;
 					int sourceWidth = preview.columnWidths()[sourceColumn];
 					for (int y = 0; y < preview.frameHeight(); y++) for (int x = 0; x < sourceWidth; x++) {
-						int argb = image.getRGB(sourceColumn * 100 + x, row * preview.frameHeight() + y);
+						int argb = image.getRGB(sourceColumn * preview.columnWidths()[0] + x, row * preview.frameHeight() + y);
 						int expected = (argb >>> 24) < 64 ? 0 : argb & 0xffffff;
 						if (expected == 0 && (argb >>> 24) >= 64) expected = 0x010101;
 						require(pixels[y * sourceWidth + x] == expected, "approved attack pixels");
