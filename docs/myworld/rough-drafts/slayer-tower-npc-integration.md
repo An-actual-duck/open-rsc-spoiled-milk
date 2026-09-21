@@ -257,14 +257,15 @@ their files have been imported, assigned IDs, or tested by the game runtime.
 
 ## Consumable and encounter integration decisions
 
-Before implementation, settle activation (self-use versus use on NPC), dose or
-charge consumption, duration, refresh/stacking, expiry warning, death/logout and
-region behavior, tradeability/stacking, shop quantities and typed-currency costs.
-Document whether counters affect only their user or the creature for everyone.
-Ensure stock/pricing lets players buy protection before attempting its required
-encounter; do not create a loop requiring kills of that creature to buy its
-first counter. Respect existing multi-currency shop rules unless the owner
-explicitly approves a change.
+Encounter activation, charges and effect behavior are implemented as described
+in the monster sections. [Shop access and prices](slayer-gimmick-shop-implementation.md)
+are now implemented: all five full three-use supplies appear in every shop,
+costing one corresponding task payout in that monster's currency only:
+5 Fledgling / 8 Adept / 12 Veteran / 18 Elite / 28 Champion. No tier-6 price.
+This is an owner-approved exception for these protection items, not a change
+to existing ordinary supplies or assembly. Existing unlimited stock remains;
+other same-tier tasks can fund the first purchase without killing an
+unprotected gimmick enemy.
 
 Proposed verification should cover prepared and unprepared fights at each tier,
 effect application/expiry, Bloodveld lifesteal and collision-safe pulling,
@@ -277,9 +278,9 @@ credit. Naga and Bloodveld require no special consumable.
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
 3. Dark beast and Abyssal mechanics accepted; component drops are implemented.
-   Implement assembly recipes/prices and settle ordinary loot. Component luck
+   Assembly recipes/prices and ordinary loot are implemented. Component luck
    modifiers now follow the existing rare-table rules.
-4. Set shared consumable lifecycle and shop rules, then per-monster values.
+4. Protection consumable lifecycle and single-tier shop pricing are implemented.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.
 

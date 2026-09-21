@@ -119,6 +119,6 @@ Retirement/source auditing and grandfathering are deferred until the eight
 new NPC additions and their sprite work are finished. Nothing in this pass
 removes old drops, alters old equipment, binds holdings or changes death rules.
 New armor bonuses still need designs. [Ordinary monster loot](slayer-ordinary-loot-implementation.md)
-is implemented. Consumable shop
-pricing/access, optional boss tasks and tower gatekeepers are separate remaining
+and [consumable shop access/pricing](slayer-gimmick-shop-implementation.md) are
+implemented. Optional boss tasks and tower gatekeepers are separate remaining
 content tasks; map placement remains the owner's job.

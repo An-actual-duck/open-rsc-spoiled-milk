@@ -1,6 +1,11 @@
 package com.openrsc.server.content.minigame.monsterslayer;
 
 import com.openrsc.server.constants.ItemId;
+import com.openrsc.server.content.monsterslayer.GiantFrogCombat;
+import com.openrsc.server.content.monsterslayer.CockatriceCombat;
+import com.openrsc.server.content.monsterslayer.BansheeCombat;
+import com.openrsc.server.content.monsterslayer.TerrorDogCombat;
+import com.openrsc.server.content.monsterslayer.DarkBeastCombat;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.external.NPCDef;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -371,7 +376,13 @@ public final class MonsterSlayerData {
 					int amount = positiveBounded(reward.getInt("amount"), MAX_REWARD_AMOUNT,
 						"amount for " + rewardKey);
 					MonsterSlayerCost cost = parseCost(reward.getJSONObject("cost"));
-					cost.validateForShop(challenge, true);
+					MonsterSlayerChallenge supplyTier = gimmickSupplyTier(itemId);
+					if (supplyTier != null) {
+						// The same full-charge protection is sold in every shop, paid
+						// only with its monster's currency, not the host shop's tier.
+						if (amount != 1 || reward.has("ingredients") || !hasOnly(cost, supplyTier))
+							throw new IllegalArgumentException("Gimmick supplies require one full item and source-tier currency only");
+					} else cost.validateForShop(challenge, true);
 					List<MonsterSlayerDefinitions.Ingredient> ingredients = new ArrayList<MonsterSlayerDefinitions.Ingredient>();
 					if (reward.has("ingredients")) {
 						JSONArray materials = reward.getJSONArray("ingredients");
@@ -410,6 +421,17 @@ public final class MonsterSlayerData {
 				new MonsterSlayerDefinitions.CapacityUpgrade(capacityKey, upgradeCost)), "shop");
 		}
 		return result;
+	}
+
+	private static MonsterSlayerChallenge gimmickSupplyTier(int itemId) {
+		switch (itemId) {
+			case GiantFrogCombat.SOLVENT_ITEM_ID: return MonsterSlayerChallenge.FLEDGLING;
+			case CockatriceCombat.EYE_DROPS_ID: return MonsterSlayerChallenge.INITIATE;
+			case BansheeCombat.EARPLUGS_ID: return MonsterSlayerChallenge.VETERAN;
+			case TerrorDogCombat.TREATS_ID: return MonsterSlayerChallenge.ELITE;
+			case DarkBeastCombat.WIPE_ID: return MonsterSlayerChallenge.CHAMPION;
+			default: return null;
+		}
 	}
 
 	private static boolean hasOnly(MonsterSlayerCost cost, MonsterSlayerChallenge required) {

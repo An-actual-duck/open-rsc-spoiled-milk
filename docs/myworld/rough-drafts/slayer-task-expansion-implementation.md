@@ -123,6 +123,8 @@ backpack test to reject the client before reaching that terrain assertion.
 The focused tower route gate avoids unrelated map-placement assumptions.
 Local configuration used for diagnosis was restored.
 
-Still out of scope: tower construction/access NPC placement, consumable shop
-pricing, equipment assembly/effects, optional Balrog/Elder Green Dragon tasks,
-leather audit and ordinary loot expansion. No server restart or deployment.
+Subsequent passes implemented [equipment assembly/effects](slayer-equipment-implementation.md),
+[ordinary loot](slayer-ordinary-loot-implementation.md) and
+[protection consumable shop pricing](slayer-gimmick-shop-implementation.md).
+Tower construction/access NPC placement, optional Balrog/Elder Green Dragon
+tasks and the deferred leather audit remain separate. No server restart or deployment.

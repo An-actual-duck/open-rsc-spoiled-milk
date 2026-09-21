@@ -267,4 +267,5 @@ time gate. Buyers of finished tradable equipment do not personally pay it.
 The task implementation preserves the original roster as the disabled/default
 configuration and adds an enabled-only overlay. No map spawns, combat mechanics,
 live player records or running servers were changed by this implementation.
-Equipment assembly and consumable-shop pricing remain separate work.
+Subsequent passes implement [equipment assembly](slayer-equipment-implementation.md)
+and [single-tier protection consumable pricing](slayer-gimmick-shop-implementation.md).
