@@ -1,7 +1,8 @@
 # Slayer Tower: approved sprites and encounter goals
 
-Status: owner-directed content design draft; documentation only, not implemented.
-Updated: 2026-09-17.
+Status: owner-directed design reference; implementation status is tracked in
+the linked feature notes. Tower placement and passage binding remain pending.
+Updated: 2026-09-21.
 
 This records the owner's tower roster and Slayer gimmick direction. Combat
 levels below are initial recommendations, not final stat definitions. Unresolved
@@ -24,7 +25,8 @@ and grandfathering retired materials/equipment as untradeable.
 - Gimmick counters are nonstackable three-use items, following potion doses.
   `::slayergimmicks` grants administrators one full item per implemented counter,
   not multiple bottles. Add new counters to that test kit as they are implemented.
-  Exact stock distribution, prices and payment currencies remain to be decided.
+  Shop availability and approved single-tier prices are implemented; see
+  [Slayer protection supplies](slayer-gimmick-shop-implementation.md).
 - Without the appropriate counter, affected encounters should be impossible or
   nearly impossible at their intended progression point. With preparation,
   they should become manageable at their ordinary intended combat level.
@@ -76,8 +78,9 @@ repurpose their IDs, shop behavior or current placements.
 
 Armor follows the guild's established visual tier ladder. Each associate must
 be clearly identifiable by that tier's equipment despite sharing the same name.
-Create the necessary new NPC definitions/variants with free IDs after an audit;
-exact outfits, dialogue and coordinates remain to be chosen.
+Definitions **871–876**, tiered outfits, approved dialogue and the shared rank
+policy are implemented; see [Slayer Tower associates](slayer-tower-associates.md).
+Coordinates and actual door/stair enforcement remain pending the owner's map.
 
 Access uses authoritative earned guild rank, not point balance, combat level,
 equipment worn, or possession of a flavor rank-proof item. Higher ranks retain

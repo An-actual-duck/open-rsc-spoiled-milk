@@ -6893,6 +6893,25 @@ public class EntityHandler {
 		addMonsterSlayerNpcDefinition(860, "Veteran Monster Slayer", "A scarred Blue Moon regular", "",
 			new int[]{5, 29, 2, -1, 117, -1, -1, -1, -1, -1, -1, -1},
 			16753488, 15658734, 8421504, 15523536);
+		// Tower gatekeepers: separate from shop associates; match MonsterSlayerTowerNpcDefs.json.
+		addMonsterSlayerNpcDefinition(871, "Monster Slayer Associate", "A friendly bronze-clad Fledgling tower associate", "",
+			new int[]{6, 27, 36, 97, 47, -1, -1, -1, -1, -1, -1, -1},
+			6307872, 16737817, 16737817, 15523536);
+		addMonsterSlayerNpcDefinition(872, "Monster Slayer Associate", "A protective iron-clad Adept tower associate", "",
+			new int[]{3, 55, 37, 98, 48, -1, -1, -1, -1, -1, -1, -1},
+			16753488, 15654365, 15654365, 15523536);
+		addMonsterSlayerNpcDefinition(873, "Monster Slayer Associate", "A meticulous steel-clad Veteran tower associate", "",
+			new int[]{7, 29, 38, 99, 49, -1, -1, -1, -1, -1, -1, -1},
+			6307872, 15658734, 15658734, 15523536);
+		addMonsterSlayerNpcDefinition(874, "Monster Slayer Associate", "A weary mithril-clad Elite tower associate", "",
+			new int[]{15, 30, 39, 100, 50, -1, -1, -1, -1, -1, -1, -1},
+			8421504, 10072780, 10072780, 15523536);
+		addMonsterSlayerNpcDefinition(875, "Monster Slayer Associate", "A morbid adamant-clad Champion tower associate", "",
+			new int[]{16, 58, 40, 101, 51, -1, -1, -1, -1, -1, -1, -1},
+			6307872, 11717785, 11717785, 15523536);
+		addMonsterSlayerNpcDefinition(876, "Monster Slayer Associate", "An unsettling rune-clad Hero tower associate", "",
+			new int[]{17, 33, 41, 102, 52, -1, -1, -1, -1, -1, -1, -1},
+			16753488, 65535, 65535, 15523536);
 		setCustomNpcDefinition(861, new NPCDef(
 			"Gorak", "A harmless visual test creature", "",
 			1, 1, 1, 1, false,
