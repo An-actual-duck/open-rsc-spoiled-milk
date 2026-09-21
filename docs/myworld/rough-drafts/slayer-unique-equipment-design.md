@@ -103,6 +103,12 @@ three-second full-action trap or the future stacking-slow system.
 - The three thunder spell tiers gain **1-, 2- and 3-tile radii**, respectively,
   around the target. This is radius, not diameter; identify actual spell IDs
   in ascending tier order before implementation.
+- Approved secondary splash power, in the same ascending tier order:
+  **15% at radius 1, 25% at radius 2, and 40% at radius 3**. Apply the
+  percentage to that thunder spell's maximum power before separate secondary
+  damage rolls, following the god-spell calculation pattern. Do not reduce
+  the primary hit or derive splash from its rolled damage. These percentages
+  replace the god spells' splash coefficients for this staff.
 - Removes the damage cap from **Thunder Strike**.
 - Otherwise follow existing **god-spell AoE rules** for NPC splash. See the
   implementation reference below; the thunder radii replace the god spells'
@@ -128,16 +134,19 @@ Implementation reference, inspected at `fc6d19a8d`:
   `withinRange` uses Pythagorean distance, not a square tile neighborhood.
 - Current god-spell secondary power is **25% of maximum for ordinary god
   spells and 50% for advanced god spells**, before the secondary magic damage
-  calculation. These are not guaranteed final-damage percentages. The mapping
-  of these two categories onto three thunder tiers is **still open**; do not
-  silently use full-strength splash. God-specific debuffs/lifesteal are not
+  calculation. These are not guaranteed final-damage percentages. The staff's
+  approved **15% / 25% / 40%** progression resolves the former open mapping;
+  do not use the god-spell coefficients or full-strength splash for thunder.
+  The design intent is to keep thunder splash below god-spell splash strength;
+  verify actual damage during balancing because base spell power also matters.
+  God-specific debuffs/lifesteal are not
   part of this staff's approved effects.
 - The target helper does not itself establish line-of-sight, single-combat or
   player relationship checks. Audit the authoritative permission/damage path
   during implementation rather than claiming these are already covered.
 
-Before implementation: resolve the splash-power mapping, actual thunder spell
-IDs and the existing Thunder Strike cap. Removing this cap does not authorize
+Before implementation: resolve actual thunder spell IDs and the existing
+Thunder Strike cap. Removing this cap does not authorize
 removing unrelated engine safety limits. Equip/cast/projectile timing and
 combat-permission handling need tests; this is not authorization to redesign
 shared god-spell behavior.
@@ -244,7 +253,8 @@ These are implementation/test requirements, not a claim that effects exist:
   not cure an active effect. Unrelated enemy damage/debuffs remain effective.
 - Staff: test radii 1/2/3, separate secondary rolls, primary exclusion,
   summons/dead/non-attackable exclusion, suppression and legal damage delivery.
-  Confirm the splash-power mapping before locking expected damage values.
+  Verify tier splash coefficients of 15%/25%/40% respectively, applied before
+  secondary rolls without reducing the primary hit.
 - Pendant: positive primary damage can activate once; secondary/zero damage
   and retaliation chains cannot. Verify normal-enemy 10% ceiling, defense
   bypass, boss immunity/feedback and no player damage while PvP is disabled.
