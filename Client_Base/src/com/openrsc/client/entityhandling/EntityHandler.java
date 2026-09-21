@@ -5656,6 +5656,20 @@ public class EntityHandler {
 	}
 
 	private static void addSlayerLeatherDefinitions() {
+		setCustomItemDefinition(3392, new ItemDef("Ugthanki hide", "A tough, sandy hide from an ugthanki.", "",
+			0, 69, "items:69", false, false, 0, 0xB99A70, false, false, true, 3392));
+		setCustomItemDefinition(3393, new ItemDef("Ugthanki leather", "Processed ugthanki hide", "",
+			250, 69, "items:69", false, false, 0, 0x947654, false, false, true, 3393));
+		setCustomItemDefinition(3394, new ItemDef("Ugthanki-hide coif", "Coif made from ugthanki leather.", "",
+			225, 5, "items:5", false, true, 32, 0x947654, false, false, true, 3394));
+		setCustomItemDefinition(3395, new ItemDef("Ugthanki-hide gloves", "Gloves made from ugthanki leather.", "",
+			450, 17, "items:17", false, true, 256, 0x947654, false, false, true, 3395));
+		setCustomItemDefinition(3396, new ItemDef("Ugthanki-hide boots", "Boots made from ugthanki leather.", "",
+			450, 223, "items:223", false, true, 512, 0x947654, false, false, true, 3396));
+		setCustomItemDefinition(3397, new ItemDef("Ugthanki-hide chaps", "Chaps made from ugthanki leather.", "",
+			675, 590, "items:590", false, true, 128, 0x947654, false, false, true, 3397));
+		setCustomItemDefinition(3398, new ItemDef("Ugthanki-hide cuirass", "Cuirass made from ugthanki leather.", "",
+			900, 7, "items:7", false, true, 64, 0x947654, false, false, true, 3398));
 		setCustomItemDefinition(3356, new ItemDef("Giant frog leather", "Processed giant frog hide", "",
 			50, 69, "items:69", false, false, 0, 0x378B83, false, false, true, 3356));
 		setCustomItemDefinition(3357, new ItemDef("Giant-frog-hide coif", "Coif made from giant frog leather.", "",

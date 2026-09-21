@@ -1610,6 +1610,11 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private HideArmorRecipe getHideArmorRecipe(int materialId) {
+		if (materialId == MyWorldItemId.UGTHANKI_LEATHER) {
+			return new HideArmorRecipe(materialId, "Ugthanki hide", 4, 22,
+				MyWorldItemId.UGTHANKI_COIF, MyWorldItemId.UGTHANKI_GLOVES,
+				MyWorldItemId.UGTHANKI_BOOTS, MyWorldItemId.UGTHANKI_CHAPS, MyWorldItemId.UGTHANKI_CUIRASS);
+		}
 		if (materialId == MyWorldItemId.GIANT_FROG_LEATHER) {
 			return new HideArmorRecipe(materialId, "Giant frog hide", 2, 8,
 				MyWorldItemId.GIANT_FROG_COIF, MyWorldItemId.GIANT_FROG_GLOVES,
