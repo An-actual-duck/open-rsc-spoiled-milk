@@ -48,6 +48,8 @@ public final class SlayerRewardsFixture {
 		check(h.server().getEntityHandler().getItemDef(3350).getWeaponSpeed() == 5, "whip dagger speed");
 		check(h.server().getEntityHandler().getItemDef(3351).getMagicOffense() == 56, "staff tier ten");
 		check(h.server().getEntityHandler().getItemDef(3352).getRangedOffense() == 44 && RangeUtils.isBow(3352), "bow tier nine and recognized");
+		for (int arrow = 0; arrow < h.server().getEntityHandler().items.size(); arrow++)
+			check(RangeUtils.canFire(3352, arrow) == RangeUtils.canFire(656, arrow), "bow arrow parity " + arrow);
 		check(h.server().getEntityHandler().getItemDef(3353).getMeleeOffense() == 9, "dagger tier five");
 	}
 	private static void shops(CurrentCombatHarness h) throws Exception {
@@ -98,6 +100,14 @@ public final class SlayerRewardsFixture {
 		SlayerRewardCombat.whipHit(b,n,1); check(SlayerRewardCombat.whipBlocked(n), "can proc after immunity");
 		n.advanceCombatLifecycle(); check(!SlayerRewardCombat.whipBlocked(n), "no lock inherited by new life");
 		check(!SlayerRewardCombat.legalSecondary(a,b), "PvP off");
+		Method hit = PvmMeleeEvent.class.getDeclaredMethod("inflictDamage",Mob.class,Mob.class,int.class,boolean.class,boolean.class);
+		hit.setAccessible(true);
+		n.getSkills().setTemporaryLevelAndMaxStat(3,100,100,false);
+		PvmMeleeEvent melee = new PvmMeleeEvent(h.world(),a,n);
+		h.random().reset(1); h.random().scriptInts(0);
+		hit.invoke(melee,a,n,1,false,true); check(!SlayerRewardCombat.whipBlocked(n),"offhand cannot proc whip");
+		h.random().reset(1); h.random().scriptInts(0);
+		hit.invoke(melee,a,n,1,false,false); check(SlayerRewardCombat.whipBlocked(n),"real primary melee procs whip");
 	}
 	private static void bow(CurrentCombatHarness h) throws Exception {
 		Player p = h.player("bow leach", 450,450); p.getSkills().setLevel(3,10);
@@ -144,6 +154,15 @@ public final class SlayerRewardsFixture {
 		h.random().reset(1); h.random().scriptInts(0,9); SlayerRewardCombat.pendantHit(p,boss,1); check(boss.getLevel(3)==before,"KBD immune");
 		Player other=h.player("pvp disabled",483,480); before=other.getLevel(3);
 		SlayerRewardCombat.pendantHit(p,other,1); check(other.getLevel(3)==before,"no PvP retaliation");
+		Method hit=PvmMeleeEvent.class.getDeclaredMethod("inflictDamage",Mob.class,Mob.class,int.class,boolean.class,boolean.class);
+		hit.setAccessible(true); PvmMeleeEvent melee=new PvmMeleeEvent(h.world(),n,p);
+		before=n.getLevel(3); h.random().reset(1); h.random().scriptInts(0,9);
+		hit.invoke(melee,n,p,1,false,true); check(n.getLevel(3)==before,"offhand cannot trigger pendant");
+		h.random().reset(1); h.random().scriptInts(0,9);
+		hit.invoke(melee,n,p,1,false,false); check(n.getLevel(3)==before-10,"real primary melee triggers pendant");
+		before=n.getLevel(3); h.random().reset(1); h.random().scriptInts(0,9);
+		new ProjectileEvent(h.world(),n,p,ProjectileLaunchSpecification.builder(ProjectileLaunchSpecification.Producer.NPC_MAGIC,1,1).presentation(1,0,false).build()).action();
+		check(n.getLevel(3)==before-10,"primary magic projectile triggers pendant");
 	}
 	private static void thunder(CurrentCombatHarness h) throws Exception {
 		Player p=h.player("spire caster",490,490); h.equip(p,3351,1);
@@ -160,6 +179,12 @@ public final class SlayerRewardsFixture {
 		check(!SlayerRewardCombat.thunderTarget(p,primary,h.npc(95,494,490),3),"unattackable NPC excluded");
 		ProjectileLaunchSpecification spec=ProjectileLaunchSpecification.builder(ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,5,1).thunderSpire(3,100).build();
 		check(spec.getThunderSpireTier()==3 && spec.getThunderSpirePower()==100,"launch spell snapshot");
+		for(Npc n:new Npc[]{primary,near,far,outside}) n.getSkills().setTemporaryLevelAndMaxStat(3,1000,1000,false);
+		h.random().reset(1); h.random().scriptInts(10,0,10,0,10,0,10,0);
+		new ProjectileEvent(h.world(),p,primary,spec).action();
+		check(primary.getLevel(3)==995,"staff primary not hit by splash again");
+		check(near.getLevel(3)<1000 && far.getLevel(3)<1000,"real thunder projectile splashes nearby NPCs");
+		check(outside.getLevel(3)==1000,"outside radius not damaged");
 	}
 	private static void check(boolean ok,String message) { if(!ok) throw new AssertionError(message); }
 }
