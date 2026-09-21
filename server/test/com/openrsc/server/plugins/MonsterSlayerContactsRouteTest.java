@@ -40,6 +40,11 @@ public final class MonsterSlayerContactsRouteTest {
 	public static void main(String[] args) throws Exception {
 		Server server = new Server("myworld.conf");
 		server.getEntityHandler().load();
+		if (args.length == 1 && "--tower".equals(args[0])) {
+			towerPreparationAndPreviewRoutes(server);
+			System.out.println("Monster Slayer tower contact routes: PASS");
+			return;
+		}
 		MonsterSlayerContacts routes = new MonsterSlayerContacts();
 		radimusShortcutDefinitionAndOwnership(server, routes);
 		for (int id = 846; id <= 850; id++) {
@@ -91,7 +96,83 @@ public final class MonsterSlayerContactsRouteTest {
 		legendsSectReusesRadimusAndRuneAssociate(server);
 		hazardWarningsAreNaturalOrderedDialogue(server);
 		developmentCompletionUsesNormalSlayerProgression(server);
+		towerPreparationAndPreviewRoutes(server);
 		System.out.println("Monster Slayer contact plugin routes: PASS");
+	}
+
+	private static void towerPreparationAndPreviewRoutes(Server server) throws Exception {
+		assertFalse(server.getConfig().WANT_SLAYER_TOWER_TASKS, "production rollout remains disabled");
+		MonsterSlayerData previous = server.getWorld().getMonsterSlayerData();
+		MonsterSlayerTaskService previousTasks = server.getWorld().getMonsterSlayerTaskService();
+		MonsterSlayerData data = MonsterSlayerData.load(Paths.get("conf/server/defs/extras/MonsterSlayer.json"),
+			new MonsterSlayerData.ReferenceCatalog() {
+				public boolean npcExists(int id) { return true; }
+				public boolean npcAttackable(int id) { return true; }
+				public boolean npcSpawned(int id) { return true; }
+				public boolean itemExists(int id) { return true; }
+			}, true);
+		MonsterSlayerTaskService tasks = new MonsterSlayerTaskService(data);
+		install(server, "monsterSlayerData", data); install(server, "monsterSlayerTaskService", tasks);
+		server.getConfig().INFLUENCE_INSTEAD_QP = false;
+		try {
+			int serial = 0;
+			for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
+				for (int cursor = 0; cursor < contact.getMandatoryTasks().size(); cursor++) {
+					com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task = contact.getMandatoryTasks().get(cursor);
+					if (data.getFamily(task.getFamilyKey()).getNpcIds().get(0) < 863) continue;
+					assertTrue(MonsterSlayerContacts.branAssignmentRemark(task, 0).length() > 0, "Bran handles tower metadata");
+					assertTrue(MonsterSlayerContacts.doranAssignmentRemark(task, 0).length() > 0, "Doran handles tower metadata");
+					for (boolean shortcut : new boolean[] {false, true}) {
+						Player player = player(server, "towertip" + serial++, 290, 600);
+						player.setQuestPoints(100); player.setQuestStage(Quests.HEROS_QUEST, -1);
+						player.setQuestStage(Quests.LEGENDS_QUEST, -1);
+						Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
+						for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact other : data.getContactsInChallengeOrder()) {
+							counts.put(other.getKey(), other.getChallenge().getCode() < contact.getChallenge().getCode()
+								? other.getMandatoryTasks().size() : other == contact ? cursor : 0);
+						}
+						MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2,
+							contact.getRequiredRank(), MonsterSlayerBalances.zero(), counts, null, 0, 50L, 0, 1,
+							MonsterSlayerState.LegacyStatus.NONE, 0, data));
+						RecordingDialogue dialogue = new RecordingDialogue(0);
+						Npc npc = new Npc(server.getWorld(), contact.getNpcId(), 290, 600);
+						MonsterSlayerContacts routes = new MonsterSlayerContacts(dialogue);
+						if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
+						assertEquals(task.getKey(), MonsterSlayerState.read(player.getCache(), data).getActiveTaskKey(), "tower committed assignment");
+						for (String line : MonsterSlayerContacts.hazardWarningLines(task)) {
+							assertTrue(dialogue.events.contains("N:" + line), "preparation on both routes");
+							assertTrue(line.length() <= 255, "wire text bound");
+						}
+						MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.recordEligibleKill(
+							MonsterSlayerState.read(player.getCache(), data), data,
+							data.getFamily(task.getFamilyKey()).getNpcIds().get(0)).getSnapshot());
+						dialogue = new RecordingDialogue(0); routes = new MonsterSlayerContacts(dialogue);
+						if (shortcut) routes.onOpNpc(player, npc, "Task"); else routes.onTalkNpc(player, npc);
+						assertEquals(1, MonsterSlayerState.read(player.getCache(), data).getActiveKills(), "reminder keeps progress");
+						for (String line : MonsterSlayerContacts.hazardWarningLines(task)) assertTrue(dialogue.events.contains("N:" + line), "active task preparation reminder");
+						assertTrue(dialogue.events.toString().contains("Your current task is 1 of"), "progress reminder remains");
+
+						// Deterministic repeatable preview must not be resampled when committed.
+						counts.put(contact.getKey(), contact.getMandatoryTasks().size());
+						MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.create(2,
+							contact.getAwardedRank(), MonsterSlayerBalances.zero(), counts, null, 0, 51L, 0, 1,
+							MonsterSlayerState.LegacyStatus.NONE, 0, data));
+						final int chosen = contact.getRepeatableTasks().indexOf(data.getTask(task.getKey() + ".repeatable"));
+						final int[] calls = {0};
+						com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService service =
+							new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService(data, tasks,
+								bound -> calls[0]++ == 0 ? chosen : 0);
+						assertEquals(task.getKey() + ".repeatable", service.previewTask(player, contact.getKey()).getKey(), "preview selects new repeatable");
+						assertTrue(service.requestTask(player, contact.getKey()).isAccepted(), "repeatable committed");
+						assertEquals(1, calls[0], "preview not rerolled");
+						assertEquals(task.getKey() + ".repeatable", service.previewTask(player, contact.getKey()).getKey(), "active repeatable preview is actual task");
+						assertEquals(1, calls[0], "active reminder does not roll another task");
+					}
+				}
+			}
+		} finally {
+			install(server, "monsterSlayerData", previous); install(server, "monsterSlayerTaskService", previousTasks);
+		}
 	}
 
 	private static void radimusShortcutDefinitionAndOwnership(Server server, MonsterSlayerContacts routes) {

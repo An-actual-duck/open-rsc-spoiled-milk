@@ -1,8 +1,9 @@
 # Slayer tower assignments, grandfathering and backpack-price comparison
 
-Status: approved scope, task counts/payouts, grandfathering, fixed backpack
-prices and six source-tier-only equipment assembly prices; not implemented.
-Updated: 2026-09-20. Documentation only; no runtime or player-state changes.
+Status: task expansion, preparation tips, grandfathering and fixed backpack
+prices implemented behind a **disabled** rollout setting. Equipment assembly
+prices remain approved design, not implemented.
+Updated: 2026-09-20. See [implementation and activation](slayer-task-expansion-implementation.md).
 
 Related: [tower roster](slayer-tower-npc-integration.md),
 [reward designs](slayer-unique-equipment-design.md),
@@ -58,7 +59,7 @@ an assertion about which build the public server currently runs.
 
 ## Approved new assignments and payouts
 
-**The owner approved these counts and payouts. They are not implemented yet.** Match
+**These approved counts and payouts are implemented, but not activated.** Match
 each creature to its already approved tower challenge tier. Add one mandatory
 and one repeatable task definition for each, with distinct stable task keys.
 Initially use the same kill count/payout for both forms so the preparation
@@ -150,7 +151,7 @@ quest completion, balances, purchased backpack entitlements and promotion
 acknowledgements. Fully completed players retain repeatable-task access without
 doing the additions. They may receive new monsters through repeatable tasks.
 
-Recommended implementation constraints (not yet implemented):
+Implemented migration contract (applies when the rollout is enabled):
 
 1. Add a versioned roster migration separate from the existing Combat Odyssey
    recognition. Decode and validate old snapshots against the old roster before
@@ -260,5 +261,7 @@ time gate. Buyers of finished tradable equipment do not personally pay it.
   and `tests/myworld/test-monster-slayer-foundation.py`; add expansion-specific
   migration and pricing fixtures when implementation starts.
 
-This document records design approvals and remaining planning. No task definitions, prices,
-player records, map spawns, combat mechanics or servers were changed.
+The task implementation preserves the original roster as the disabled/default
+configuration and adds an enabled-only overlay. No map spawns, combat mechanics,
+live player records or running servers were changed by this implementation.
+Equipment assembly and consumable-shop pricing remain separate work.

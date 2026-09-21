@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "additions": [
+    {
+      "contactKey": "falador",
+      "beforeTaskKey": "falador.desert_wolves",
+      "family": {
+        "key": "giant_frog",
+        "displayName": "Giant frogs",
+        "npcIds": [
+          863
+        ]
+      },
+      "task": {
+        "key": "falador.giant_frog",
+        "familyKey": "giant_frog",
+        "requiredKills": 25,
+        "pointReward": 5,
+        "hazards": [
+          "FROG_SPIT"
+        ]
+      }
+    },
+    {
+      "contactKey": "port_sarim",
+      "beforeTaskKey": "port_sarim.animated_axes",
+      "family": {
+        "key": "cockatrice",
+        "displayName": "Cockatrices",
+        "npcIds": [
+          864
+        ]
+      },
+      "task": {
+        "key": "port_sarim.cockatrice",
+        "familyKey": "cockatrice",
+        "requiredKills": 25,
+        "pointReward": 8,
+        "hazards": [
+          "STONY_GLARE"
+        ]
+      }
+    },
+    {
+      "contactKey": "brimhaven",
+      "beforeTaskKey": "brimhaven.ice_spiders",
+      "family": {
+        "key": "banshee",
+        "displayName": "Banshees",
+        "npcIds": [
+          865
+        ]
+      },
+      "task": {
+        "key": "brimhaven.banshee",
+        "familyKey": "banshee",
+        "requiredKills": 25,
+        "pointReward": 12,
+        "hazards": [
+          "BANSHEE_WAIL"
+        ]
+      }
+    },
+    {
+      "contactKey": "brimhaven",
+      "beforeTaskKey": "brimhaven.ice_spiders",
+      "family": {
+        "key": "naga",
+        "displayName": "Nagas",
+        "npcIds": [
+          866
+        ]
+      },
+      "task": {
+        "key": "brimhaven.naga",
+        "familyKey": "naga",
+        "requiredKills": 25,
+        "pointReward": 12,
+        "hazards": [
+          "NAGA_STRATEGY"
+        ]
+      }
+    },
+    {
+      "contactKey": "champions",
+      "beforeTaskKey": "champions.greater_demons",
+      "family": {
+        "key": "terror_dog",
+        "displayName": "Terror dogs",
+        "npcIds": [
+          867
+        ]
+      },
+      "task": {
+        "key": "champions.terror_dog",
+        "familyKey": "terror_dog",
+        "requiredKills": 20,
+        "pointReward": 18,
+        "hazards": [
+          "FEEDING_FRENZY"
+        ]
+      }
+    },
+    {
+      "contactKey": "champions",
+      "beforeTaskKey": "champions.greater_demons",
+      "family": {
+        "key": "bloodveld",
+        "displayName": "Bloodvelds",
+        "npcIds": [
+          868
+        ]
+      },
+      "task": {
+        "key": "champions.bloodveld",
+        "familyKey": "bloodveld",
+        "requiredKills": 20,
+        "pointReward": 20,
+        "hazards": [
+          "BLOODVELD_STRATEGY"
+        ]
+      }
+    },
+    {
+      "contactKey": "heroes",
+      "beforeTaskKey": "heroes.red_dragons",
+      "family": {
+        "key": "dark_beast",
+        "displayName": "Dark beasts",
+        "npcIds": [
+          869
+        ]
+      },
+      "task": {
+        "key": "heroes.dark_beast",
+        "familyKey": "dark_beast",
+        "requiredKills": 15,
+        "pointReward": 28,
+        "hazards": [
+          "MARKED_LIGHTNING"
+        ]
+      }
+    },
+    {
+      "contactKey": "legends",
+      "beforeTaskKey": "legends.king_black_dragon",
+      "family": {
+        "key": "abyssal_demon",
+        "displayName": "Abyssal demons",
+        "npcIds": [
+          870
+        ]
+      },
+      "task": {
+        "key": "legends.abyssal_demon",
+        "familyKey": "abyssal_demon",
+        "requiredKills": 15,
+        "pointReward": 35,
+        "hazards": [
+          "STICKY_FLESH"
+        ]
+      }
+    }
+  ]
+}

@@ -68,6 +68,20 @@
         <delete dir="buildplugins"/>
     </target>
 
+    <target name="test_monster_slayer_tower_routes" depends="compile_core,compile_plugins"
+            description="Test staged tower task advice/preview routes without map-placement assumptions">
+        <mkdir dir="../output/monster-slayer-tower-test"/>
+        <javac srcdir="${test.src}" destdir="../output/monster-slayer-tower-test" debug="on"
+               includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"
+               includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest" fork="true" failonerror="true" dir="${basedir}">
+            <arg value="--tower"/>
+            <classpath><pathelement location="../output/monster-slayer-tower-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+    </target>
+
     <target name="test_monster_slayer_contact_routes" depends="compile_core,compile_plugins">
         <delete dir="../output/monster-slayer-contact-test"/>
         <mkdir dir="../output/monster-slayer-contact-test"/>

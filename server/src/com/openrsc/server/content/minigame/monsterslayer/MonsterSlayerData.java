@@ -49,13 +49,23 @@ public final class MonsterSlayerData {
 	private final Map<String, Contact> contacts;
 	private final Map<String, Task> tasks;
 	private final Map<String, Shop> shops;
+	private final MonsterSlayerData legacyRoster;
+
+	public int getRosterVersion() { return legacyRoster == null ? 1 : 2; }
+	MonsterSlayerData getLegacyRoster() { return legacyRoster; }
 
 	private MonsterSlayerData(Map<String, Family> families, Map<String, Contact> contacts,
 						   Map<String, Task> tasks, Map<String, Shop> shops) {
+		this(families, contacts, tasks, shops, null);
+	}
+
+	private MonsterSlayerData(Map<String, Family> families, Map<String, Contact> contacts,
+			Map<String, Task> tasks, Map<String, Shop> shops, MonsterSlayerData legacyRoster) {
 		this.families = immutableMap(families);
 		this.contacts = immutableMap(contacts);
 		this.tasks = immutableMap(tasks);
 		this.shops = immutableMap(shops);
+		this.legacyRoster = legacyRoster;
 	}
 
 	public static MonsterSlayerData loadForWorld(final World world) {
@@ -88,19 +98,31 @@ public final class MonsterSlayerData {
 				ItemDefinition definition = world.getServer().getEntityHandler().getItemDef(itemId);
 				return definition != null;
 			}
-		});
+		}, world.getServer().getConfig().WANT_SLAYER_TOWER_TASKS);
 		LOGGER.info("Loaded {} Monster Slayer families, {} contacts, {} tasks, and {} shops from {}",
 			data.families.size(), data.contacts.size(), data.tasks.size(), data.shops.size(), path);
 		return data;
 	}
 
 	public static MonsterSlayerData load(Path path, ReferenceCatalog catalog) {
+		return load(path, catalog, false);
+	}
+
+	/** The disabled rollout never loads tower families or requires their spawns. */
+	public static MonsterSlayerData load(Path path, ReferenceCatalog catalog, boolean towerEnabled) {
 		if (path == null || catalog == null) {
 			throw new IllegalArgumentException("Monster Slayer path and reference catalog are required");
 		}
 		try {
 			String json = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-			return parse(new JSONObject(json), catalog);
+			JSONObject base = new JSONObject(json);
+			MonsterSlayerData legacy = parse(base, catalog);
+			if (!towerEnabled) return legacy;
+			JSONObject additions = new JSONObject(new String(Files.readAllBytes(
+				path.resolveSibling("MonsterSlayerTower.json")), StandardCharsets.UTF_8));
+			applyTowerAdditions(base, additions);
+			MonsterSlayerData expanded = parse(base, catalog);
+			return new MonsterSlayerData(expanded.families, expanded.contacts, expanded.tasks, expanded.shops, legacy);
 		} catch (RuntimeException ex) {
 			throw new IllegalArgumentException("Invalid Monster Slayer definitions at " + path + ": "
 				+ ex.getMessage(), ex);
@@ -121,6 +143,39 @@ public final class MonsterSlayerData {
 			root.getJSONArray("contacts"), catalog, families, tasks);
 		LinkedHashMap<String, Shop> shops = parseShops(root.getJSONArray("shops"), catalog, contacts);
 		return new MonsterSlayerData(families, contacts, tasks, shops);
+	}
+
+	private static void applyTowerAdditions(JSONObject base, JSONObject expansion) {
+		requireFields(expansion, "tower expansion", "schemaVersion", "additions");
+		if (expansion.getInt("schemaVersion") != 1) throw new IllegalArgumentException("Unsupported tower schema");
+		JSONArray additions = expansion.getJSONArray("additions");
+		for (int i = 0; i < additions.length(); i++) {
+			JSONObject addition = additions.getJSONObject(i);
+			requireFields(addition, "tower addition", "contactKey", "beforeTaskKey", "family", "task");
+			base.getJSONArray("families").put(addition.getJSONObject("family"));
+			JSONObject task = addition.getJSONObject("task");
+			String owner = addition.getString("contactKey");
+			boolean inserted = false;
+			JSONArray contacts = base.getJSONArray("contacts");
+			for (int c = 0; c < contacts.length(); c++) {
+				JSONObject contact = contacts.getJSONObject(c);
+				if (!owner.equals(contact.getString("key"))) continue;
+				JSONArray old = contact.getJSONArray("mandatoryTasks"), updated = new JSONArray();
+				for (int t = 0; t < old.length(); t++) {
+					JSONObject existing = old.getJSONObject(t);
+					if (addition.getString("beforeTaskKey").equals(existing.getString("key"))) {
+						updated.put(task); inserted = true;
+					}
+					updated.put(existing);
+				}
+				contact.put("mandatoryTasks", updated);
+				JSONObject repeatable = new JSONObject(task.toString());
+				repeatable.put("key", task.getString("key") + ".repeatable");
+				repeatable.put("weight", 1);
+				contact.getJSONArray("repeatableTasks").put(repeatable);
+			}
+			if (!inserted) throw new IllegalArgumentException("Unknown tower insertion point for " + owner);
+		}
 	}
 
 	private static LinkedHashMap<String, Family> parseFamilies(JSONArray array, ReferenceCatalog catalog) {
@@ -347,19 +402,18 @@ public final class MonsterSlayerData {
 	}
 
 	/**
-	 * Satchel upgrades cost twice the original 110%-rounded mandatory total for
-	 * their own contact. Keeping this at definition-load time makes reward edits
-	 * fail closed instead of quietly changing the intended economy.
+	 * Approved fixed prices: expanding the roster must not raise backpack costs.
 	 */
 	static long mandatoryCapacityUpgradeCost(MonsterSlayerChallenge challenge, Map<String, Contact> contacts) {
-		for (Contact contact : contacts.values()) if (contact.getChallenge() == challenge) {
-			long total = 0L;
-			for (Task task : contact.getMandatoryTasks()) total = Math.addExact(total, task.getPointReward());
-			long originalPrice = Math.addExact(total,
-				total / 10L + (total % 10L == 0L ? 0L : 1L));
-			return Math.multiplyExact(originalPrice, 2L);
+		switch (challenge) {
+		case FLEDGLING: return 84L;
+		case INITIATE: return 148L;
+		case VETERAN: return 138L;
+		case ELITE: return 110L;
+		case CHAMPION: return 268L;
+		case HERO: return 282L;
+		default: throw new IllegalArgumentException("Unknown backpack challenge " + challenge);
 		}
-		throw new IllegalArgumentException("Missing mandatory contact for " + challenge);
 	}
 
 	private static MonsterSlayerCost parseCost(JSONObject object) {

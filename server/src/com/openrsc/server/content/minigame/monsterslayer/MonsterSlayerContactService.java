@@ -169,8 +169,9 @@ public final class MonsterSlayerContactService {
 			MonsterSlayerState.Snapshot snapshot = stateStore.read(player.getCache(), data);
 			MonsterSlayerDefinitions.Contact contact = data.getContact(contactKey);
 			if (contact == null || !snapshot.getRank().isAtLeast(contact.getRequiredRank())) return null;
+			if (snapshot.getActiveTaskKey() != null) return data.getTask(snapshot.getActiveTaskKey());
 			int cursor = snapshot.getMandatoryCursors().get(contactKey).intValue();
-			if (snapshot.getRank() == contact.getRequiredRank() && cursor < contact.getMandatoryTasks().size()) return contact.getMandatoryTasks().get(cursor);
+			if (snapshot.getRank() == contact.getRequiredRank() && cursor < contact.getMandatoryTasks().size()) return snapshot.nextMandatoryTask(contact);
 			MonsterSlayerDefinitions.Task selected = selectRepeatable(contact);
 			if (selected != null) synchronized (previews) { previews.put(player.getUUID(), new PendingSelection(contactKey, snapshot.getTasksCompleted(), selected)); }
 			return selected;
