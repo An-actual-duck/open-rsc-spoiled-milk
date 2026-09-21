@@ -4,6 +4,11 @@ Updated: 2026-09-21. Baseline production and armor implemented; special set bonu
 await owner designs. No deployment, world placement, existing-family retirement
 or player-item migration.
 
+Subsequent audit addition: [Ugthanki's tier-4 leather set](ugthanki-leather-implementation.md)
+is now implemented with no bonus. There are **seven sets awaiting bonus design**:
+giant frog, banshee, naga, terror dog, bloodveld, dark beast and Ugthanki. That
+note also records the complete tier spread after the planned retirements.
+
 Design authority: [hide/leather scope](slayer-hide-and-leather-overhaul.md).
 This implements six leather families, not eight. Cockatrice Feathers and Slimey
 Residue remain their existing component drops and create no leather armor.

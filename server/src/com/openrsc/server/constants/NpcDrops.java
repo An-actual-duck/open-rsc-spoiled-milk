@@ -2181,6 +2181,7 @@ public class NpcDrops {
 	}
 
 	private void applyMyWorldMaterialDrops() {
+		addGuaranteedDrop(NpcId.UGTHANKI.id(), MyWorldItemId.UGTHANKI_HIDE, "Ugthanki hide");
 		addGuaranteedDrop(NpcId.GOBLIN_LVL7.id(), ItemId.GOBLIN_HIDE.id(), "Goblin Level 7 hide");
 		addGuaranteedDrop(NpcId.GOBLIN_LVL13.id(), ItemId.GOBLIN_HIDE.id(), "Goblin Level 13 hide");
 		addGuaranteedDrop(NpcId.GOBLIN_RED_ARMOUR_LVL13.id(), ItemId.GOBLIN_HIDE.id(), "Goblin Level 13 hide");

@@ -2998,6 +2998,9 @@ public class Equipment {
 	}
 
 	private int getDerivedMeleeDefense(Item item) {
+		if (isUgthankiArmor(item)) {
+			return item.getDef(player.getWorld()).getMeleeDefense();
+		}
 		if (EnchantingItemEffects.isBaseWoolRobePiece(item.getCatalogId())
 			|| EnchantingItemEffects.isEnchantedWoolRobePiece(item.getCatalogId())) {
 			return EnchantingItemEffects.getWoolRobeMeleeDefense(item);
@@ -3013,6 +3016,9 @@ public class Equipment {
 	}
 
 	private int getDerivedRangedDefense(Item item) {
+		if (isUgthankiArmor(item)) {
+			return item.getDef(player.getWorld()).getRangedDefense();
+		}
 		if (EnchantingItemEffects.isBaseWoolRobePiece(item.getCatalogId())
 			|| EnchantingItemEffects.isEnchantedWoolRobePiece(item.getCatalogId())) {
 			return EnchantingItemEffects.getWoolRobeRangedDefense(item);
@@ -3028,6 +3034,9 @@ public class Equipment {
 	}
 
 	private int getDerivedMagicDefense(Item item) {
+		if (isUgthankiArmor(item)) {
+			return item.getDef(player.getWorld()).getMagicDefense();
+		}
 		if (isBlessedWoolArmor(item.getCatalogId())) {
 			return getBlessedWoolMagicDefense(item);
 		}
@@ -3302,6 +3311,12 @@ public class Equipment {
 		}
 		return EquipmentSlotRules.allowsHandFootArmorOverlap(
 			requestedDef.getWieldPosition(), equippedDef.getWieldPosition());
+	}
+
+	// This modern set has intentional zero defenses; do not derive legacy bonuses for them.
+	private boolean isUgthankiArmor(Item item) {
+		return item.getCatalogId() >= MyWorldItemId.UGTHANKI_COIF
+			&& item.getCatalogId() <= MyWorldItemId.UGTHANKI_CUIRASS;
 	}
 
 	private boolean isRangedArmor(Item item) {

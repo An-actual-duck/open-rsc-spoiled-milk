@@ -102,6 +102,13 @@ public final class MyWorldItemId {
 	public static final int DARK_BEAST_BOOTS = 3389;
 	public static final int DARK_BEAST_CHAPS = 3390;
 	public static final int DARK_BEAST_CUIRASS = 3391;
+	public static final int UGTHANKI_HIDE = 3392;
+	public static final int UGTHANKI_LEATHER = 3393;
+	public static final int UGTHANKI_COIF = 3394;
+	public static final int UGTHANKI_GLOVES = 3395;
+	public static final int UGTHANKI_BOOTS = 3396;
+	public static final int UGTHANKI_CHAPS = 3397;
+	public static final int UGTHANKI_CUIRASS = 3398;
 
 	private MyWorldItemId() {
 	}

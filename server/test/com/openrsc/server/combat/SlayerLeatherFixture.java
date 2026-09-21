@@ -11,12 +11,24 @@ import java.util.*;
 
 /** Exercises existing tanning, production recipes, actual crafting and equipment with new materials. */
 public final class SlayerLeatherFixture {
-	private static final int[] BASE = {3356,3362,3368,3374,3380,3386};
-	private static final int[] TIER = {2,4,5,6,6,7}, LEVEL = {8,22,30,38,38,46};
+	private static final int[] HIDE = {3333,3334,3335,3336,3337,3338,3392};
+	private static final int[] BASE = {3356,3362,3368,3374,3380,3386,3393};
+	private static final int[] TIER = {2,4,5,6,6,7,4}, LEVEL = {8,22,30,38,38,46,22};
 	private static final int[] COST = {1,2,2,3,4}, OFFSET = {0,1,1,2,3}, SLOT = {5,8,9,7,6};
-	private static final int[][] PROFILE = {{10,20,35},{40,40,40},{20,65,95},{55,55,55},{30,30,30},{120,100,120}};
+	private static final int[][] PROFILE = {{10,20,35},{40,40,40},{20,65,95},{55,55,55},{30,30,30},{120,100,120},{45,4,4}};
 	public static void main(String[] args) throws Exception {
 		try(CurrentCombatHarness h = new CurrentCombatHarness()) {
+			com.openrsc.server.model.entity.npc.Npc ugthanki = h.npc(653,450,451);
+			check(ugthanki.getMeleeDefense()==45 && ugthanki.getRangedDefense()==4 && ugthanki.getMagicDefense()==4,"Ugthanki effective source defenses");
+			com.openrsc.server.content.DropTable drops = h.world().getNpcDrops().getDropTable(653);
+			check(drops.hasItemDrop(3392,1,0,false),"guaranteed Ugthanki hide");
+			check(drops.hasItemDrop(ItemId.RAW_UGTHANKI_MEAT.id(),1,0,false),"existing meat retained");
+			Player looter=h.player("ugthanki loot",449,451);
+			for(int roll=0;roll<8;roll++) {
+				int hides=0;
+				for(Item item:drops.clone(drops.getDescription()).invariableItems(looter)) if(item.getCatalogId()==3392) hides+=item.getAmount();
+				check(hides==1,"off-task guaranteed hide quantity");
+			}
 			ItemDefinition pendant=h.server().getEntityHandler().getItemDef(3355);
 			check(pendant.getMeleeOffense()==0 && pendant.getRangedOffense()==0 && pendant.getMagicOffense()==0,
 				"literal zero stats never load as patch sentinels");
@@ -28,7 +40,7 @@ public final class SlayerLeatherFixture {
 			Method sessionMethod = craftingType.getDeclaredMethod("createLeatherProductionSession",Player.class,Item.class); sessionMethod.setAccessible(true);
 			Method produce = craftingType.getMethod("beginProductionFromInterface",Player.class,ProductionSession.class,int.class,int.class);
 			for(int family=0;family<BASE.length;family++) {
-				int hide=3333+family, base=BASE[family];
+				int hide=HIDE[family], base=BASE[family];
 				Player p=h.player("leather test"+family,440+family,440);
 				p.getClientLimitations().maxItemId=Integer.MAX_VALUE;
 				p.getCarriedItems().getInventory().add(new Item(hide,12));
@@ -79,7 +91,7 @@ public final class SlayerLeatherFixture {
 			check(find.invoke(rack,3339)==null && find.invoke(rack,3340)==null,"feathers and residue cannot be tanned");
 			check(sessionMethod.invoke(crafting,h.player("excluded armor",450,450),new Item(3339))==null
 				&& sessionMethod.invoke(crafting,h.player("excluded residue",451,450),new Item(3340))==null,"no excluded armor recipes or null-enum crash");
-			System.out.println("PASS Slayer leather: 6 tanning families, 30 crafted pieces, tier budgets/source ratios, levels, thread use, equipment slots and no borrowed bonuses");
+			System.out.println("PASS Slayer leather: 7 tanning families, 35 crafted pieces, Ugthanki drops/source defenses, tier budgets/source ratios, levels, thread use, equipment slots and no borrowed bonuses");
 		}
 	}
 	private static int field(Object object,String name)throws Exception { Field f=object.getClass().getDeclaredField(name);f.setAccessible(true);return f.getInt(object); }

@@ -4,6 +4,13 @@ Status: new-set foundations implemented; special bonuses pending. Source retirem
 and passive exceptions now selected by the owner; runtime changes pending.
 Updated: 2026-09-21.
 
+The owner has **completed the source-coverage audit**. Rats/large rats, giant
+bats and animated axes are accepted no-material exceptions; leave their tasks
+and drops alone. Ugthanki is the only new hide/armor family requested and its
+[tier-4 foundation is implemented](ugthanki-leather-implementation.md), with its
+bonus still undecided. This resolves the audit; retirement and boss opt-in
+runtime changes remain pending rather than being implicitly completed.
+
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
 [Slayer Tower expansion](slayer-tower-npc-integration.md), and
 [boss leather progression](../in-progress-work-plans/boss-leather-tier-progression-plan.md).
@@ -32,8 +39,8 @@ grandfathered holdings remain unchanged.
   tanning, crafting, armor and normal tradability, but keep them outside Slayer.
   Remove the existing bear assignment. Black unicorns remain Slayer tasks and
   retain their leather family (owner-confirmed exception to the unicorn wording).
-  Every task monster should supply hide or an owner-approved thematic substitute
-  where appropriate.
+  Task monsters should supply hide or an owner-approved thematic substitute,
+  except the accepted rats/large rats, giant bats and animated axes.
   Confirmed exceptions are **Slimey residue (1–3 per kill)** for Abyssal demons
   and **Cockatrice Feathers (1–3 per kill)** for cockatrices; see
   [special drops and assembly](slayer-special-drops-and-assembly.md).
@@ -58,7 +65,7 @@ controls assignments, not whether that creature can drop its hide.
 
 ## Review order
 
-Before assigning the six new leather set bonuses, perform the bounded
+Before assigning the seven new leather set bonuses (including Ugthanki), use the bounded
 [material coverage and armor-theme review](#material-coverage-and-shared-armor-themes)
 below. The wider effect-standardization project is deliberately deferred until
 the Slayer Tower work is complete.
@@ -70,7 +77,8 @@ new set bonuses. Review existing retained sets alongside the new sets so related
 materials have a coherent theme before deciding their individual effects.
 
 - Every creature actually assigned through mandatory or repeatable Slayer tasks
-  must drop hide/carapace or an explicitly approved equivalent. Check the
+  must drop hide/carapace or an explicitly approved equivalent, unless it is
+  one of the three accepted no-material exceptions above. For future additions, check the
   effective roster after approved removals, the staged eight-monster expansion,
   and the optional boss additions. Check every eligible NPC variant, not only
   one representative ID or a family definition that is never assigned.
@@ -95,7 +103,7 @@ materials have a coherent theme before deciding their individual effects.
   cleanse theme supplements or replaces those effects is also undecided.
 - Review the current bonuses first, then propose shared family themes and
   individual set identities together. Do not implement arbitrary numerical
-  bonuses merely to fill the six new sets. Retired grandfathered armor keeps
+  bonuses merely to fill the seven new sets. Retired grandfathered armor keeps
   its existing stats/effects under the separate preservation rule.
 
 This theme/coverage direction is documented, not yet implemented. It does not
