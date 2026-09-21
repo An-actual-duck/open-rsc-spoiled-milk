@@ -74,7 +74,15 @@ poisoned Dagger of Terror variants, so alternate forms cannot bypass the gate.
 - Recipe: **1 Abyssal Rib, 10 Abyssal Vertibrae, 50 Slimey Residue**.
 - Attack power: **tier 10 longsword**; attack speed: **dagger**.
 - On each eligible positive-damage primary hit, a **10% chance to delay the
-  opponent's actions by one tick**.
+  opponent's attacks and movement for one tick**.
+- **No stacking or refreshing**. When that tick ends, the target gains
+  **three ticks of immunity** to this effect. Track delay/immunity on the
+  target across all whip attackers; another attacker must not bypass the
+  protection. Hits during the delay or immunity do not queue another delay
+  or extend either timer.
+- This is not a full-action trap: it does not add restrictions on eating,
+  potions or other actions. The future PvP intent is a chasing weapon, subject
+  to legal PvP targeting; PvP remains disabled for now.
 - Visual construction: rib handle, spinal-column lash, sticky flesh binding.
   Slimey Residue is the baseline Abyssal material, not a second material item
   distinct from the previously written Slimey residue.
@@ -83,8 +91,8 @@ Exact examine text:
 
 > Made from an abyssal demon's rib and spinal column, and held together with it's gooey flesh. Disgusting
 
-Before implementation: define affected action categories, repeated-proc scheduling and
-PvP applicability. Do not silently turn the one-tick delay into the demon's
+Before implementation: map the tick boundaries to the existing attack/movement
+scheduler and test multiple attackers. Do not turn this delay into the demon's
 three-second full-action trap or the future stacking-slow system.
 
 ## Thunder Spire Staff
@@ -96,32 +104,59 @@ three-second full-action trap or the future stacking-slow system.
   around the target. This is radius, not diameter; identify actual spell IDs
   in ascending tier order before implementation.
 - Removes the damage cap from **Thunder Strike**.
+- Otherwise follow existing **god-spell AoE rules** for NPC splash. See the
+  implementation reference below; the thunder radii replace the god spells'
+  fixed radius, not their eligibility/suppression rules.
+- Future player splash requires **PvP enabled**, legal combat in a **PvP
+  area**, and a target who is **neither in the caster's party nor clan**.
+  Do not enable PvP or damage players through splash while PvP is off.
 - Visual: a staff with a Dark Beast's horn attached at its end.
 
 Exact examine text:
 
 > A staff that conducts electricity using a Dark Beast's horn
 
-Before implementation: audit thunder spell membership and the existing Thunder
-Strike cap; define eligible targets, distance metric and how spell damage is rolled
-for additional targets. Removing this spell's damage cap does not authorize
+Implementation reference, inspected at `fc6d19a8d`:
+
+- [SpellHandler.java](../../../server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java)
+  `applyGodSpellAreaEffects` respects player area-effect suppression, excludes
+  the primary target from splash, and rolls each secondary NPC separately.
+  `isValidGodSpellAreaTarget` admits living, attackable, non-removed NPCs,
+  excludes summons, and checks distance from the primary target. Candidates
+  come from the caster's view area. Splash can cause idle NPCs to chase.
+- [Point.java](../../../server/src/com/openrsc/server/model/Point.java)
+  `withinRange` uses Pythagorean distance, not a square tile neighborhood.
+- Current god-spell secondary power is **25% of maximum for ordinary god
+  spells and 50% for advanced god spells**, before the secondary magic damage
+  calculation. These are not guaranteed final-damage percentages. The mapping
+  of these two categories onto three thunder tiers is **still open**; do not
+  silently use full-strength splash. God-specific debuffs/lifesteal are not
+  part of this staff's approved effects.
+- The target helper does not itself establish line-of-sight, single-combat or
+  player relationship checks. Audit the authoritative permission/damage path
+  during implementation rather than claiming these are already covered.
+
+Before implementation: resolve the splash-power mapping, actual thunder spell
+IDs and the existing Thunder Strike cap. Removing this cap does not authorize
 removing unrelated engine safety limits. Equip/cast/projectile timing and
-PvP/multi-combat interaction also need explicit handling.
+combat-permission handling need tests; this is not authorization to redesign
+shared god-spell behavior.
 
 ## Leaching Bow
 
 - Recipe: **2 Leach Tongue components and 1 tier 9 log**.
 - **Tier 9 longbow stats**.
-- **20% lifesteal**.
+- **20% lifesteal, primary hit only**. Secondary/off-hand hits, splash,
+  poison and other secondary damage sources do not heal through this bow.
 - Visual construction: two tongues woven into the bowstring.
 
 Exact examine text:
 
 > Two Bloodveld tongues are woven together to make the bowstring
 
-Before implementation: define eligible damage sources, damage basis, rounding,
+Before implementation: define damage basis, rounding,
 overkill and healing limits, including any interaction with ammunition effects.
-No minimum heal on a miss is specified.
+No minimum heal on a miss or fractional-healing accumulator is approved.
 
 ## Dagger of Terror
 
@@ -145,26 +180,30 @@ future slow coating is not an instruction to implement that system now.
 - Equipment slot: **neck**.
 - **10% chance each time the wearer takes eligible primary-hit damage** to have the pendant
   **"cry out in pain"** and retaliate against the offending enemy.
-- Retaliation rolls **1%–20% of that enemy's maximum HP**, displayed as
+- Retaliation rolls **1%–10% of a normal enemy's maximum HP**, displayed as
   **yellow damage**. This uses enemy maximum HP, not wearer HP, damage
   received or enemy remaining HP.
-- Against **bosses and players**, reduce the retaliation ceiling to **10% of
-  their maximum HP** (working interpretation: a 1%–10% roll). The activation
-  chance stays 10%; the owner changed the damage percentage, not proc chance.
-- Support **per-boss overrides**, potentially complete immunity with an
-  activation message such as **"The King Black Dragon is unaffected by the
-  Sullen Pendant"**. This is an example of an allowed override, not a finalized
-  King Black Dragon immunity assignment or a blanket boss exemption.
+- Retaliation **bypasses defenses**.
+- Against **players**, the future ceiling is **5% of their maximum HP**
+  (1%–5% roll), only when PvP returns and the retaliation is legally allowed.
+  No player retaliation damage while PvP is disabled.
+- **Bosses are immune**. On activation against a boss, show the response
+  **"Is uneffected"** rather than dealing retaliation damage. This supersedes
+  the earlier 10% boss ceiling and proposed individual boss exceptions.
+- The **activation chance remains 10%**. The latest changes lower damage
+  ceilings, not proc chance. The ranges above retain the previously specified
+  1% lower bound; the owner did not change that lower bound.
 - Concept: a smaller, reactive analogue of the Banshee's wail.
 
 Exact examine text:
 
 > You carry the Banshee's sorrows with you
 
-Before implementation: settle percentage-roll distribution/
-rounding, mitigation and individual boss overrides. Use the shared primary-hit
-and positive-damage rules; retaliation chaining is excluded. No further hidden
-caps or exemptions are approved.
+Before implementation: settle percentage-roll distribution/rounding, identify
+the authoritative boss classification, and audit non-defense protections and
+combat permissions. Defense bypass does not authorize bypassing PvP-off or
+boss immunity. Use the shared primary-hit and positive-damage rules;
+retaliation chaining is excluded.
 
 ## Cockatrice feather shield (name pending)
 
@@ -176,8 +215,12 @@ caps or exemptions are approved.
   demon's sticky-flesh/slime debuffs**.
 - This includes frog attack prevention despite it not being a movement root,
   and the demon's full-action trap, not just its movement restriction.
-- Broader intent: immunity to immobilization effects. Inventory all other
-  relevant effects before defining a generic immunity category.
+- Prevents **all immobilization effects from enemies**, beyond these three
+  named examples. Inventory enemy effect entry points to implement this
+  consistently rather than only special-casing the new monsters.
+- **PvP behavior requires closer inspection and adjustment before PvP is
+  re-enabled**. Do not assume blanket protection against player-sourced
+  effects has been approved. PvP remains off/on hold.
 
 Exact examine text:
 
@@ -187,6 +230,30 @@ Before implementation: choose the item name and exact stats. Decide
 whether solvent duration still drains when this shield supplies immunity.
 Protection against the named debuffs does not establish poison, wail, lightning
 or Feeding Frenzy immunity.
+
+## Effect acceptance checks and future PvP gate
+
+These are implementation/test requirements, not a claim that effects exist:
+
+- Whip: one tick blocks attacks and movement, then three full ticks of
+  immunity, then proc eligibility returns. Test repeated hits and multiple
+  attackers; none may refresh, queue or stack delays during either window.
+  Test unrelated action categories remain usable.
+- Shield: cover every enemy immobilization route, including the attack-only
+  frog debuff and full-action demon trap. Equipping after application must
+  not cure an active effect. Unrelated enemy damage/debuffs remain effective.
+- Staff: test radii 1/2/3, separate secondary rolls, primary exclusion,
+  summons/dead/non-attackable exclusion, suppression and legal damage delivery.
+  Confirm the splash-power mapping before locking expected damage values.
+- Pendant: positive primary damage can activate once; secondary/zero damage
+  and retaliation chains cannot. Verify normal-enemy 10% ceiling, defense
+  bypass, boss immunity/feedback and no player damage while PvP is disabled.
+- Bow: only primary hits contribute lifesteal; verify secondary and poison
+  damage cannot produce additional heals.
+- Before any future PvP activation, explicitly review the shield's scope;
+  test the whip's shared-target immunity across multiple attackers; test staff
+  party/clan exclusions and legal PvP areas; and test the pendant's 5% player
+  ceiling and legal retaliation rules. **This plan does not enable PvP.**
 
 ## Naga: deferred unique component
 
