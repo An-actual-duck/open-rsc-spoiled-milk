@@ -13,6 +13,10 @@ existing item definitions, drops or accounts have already changed.
 
 - Give leather armor a stronger Slayer identity while retaining Crafting as
   its production route.
+- New ordinary hides follow standard **hide -> tanned leather -> crafted
+  leather armor** production and receive unique set effects like existing
+  leather armor. Exact hide/set identities, recipes, stats and effect designs
+  remain separate audit/design outputs; do not invent them during drop setup.
 - Only monsters offered as Slayer tasks should drop hide. Every task monster
   should supply hide or an owner-approved thematic substitute where appropriate.
   Confirmed exceptions are **Slimey residue (1–3 per kill)** for Abyssal demons
@@ -22,17 +26,64 @@ existing item definitions, drops or accounts have already changed.
 - Audit existing hide sources and Slayer task families in both directions.
   Some current hide drops will be removed; some qualifying monsters should
   instead gain assignments so their hide production remains part of Slayer.
-- Add Balrog and Elder Green Dragon to Slayer assignments. Provide a way to
-  opt out when a player lacks access. Elder Green Dragon has a Mining access
-  restriction; audit the actual requirement rather than inventing a threshold.
+- Add Balrog and Elder Green Dragon as **optional, explicitly opted-in
+  repeatable assignments only**, never mandatory tasks. Elder Green Dragon
+  requires access to a special Mining Guild area; Balrog is behind a quest
+  line. Audit exact access predicates rather than inventing levels or flags.
 - Review the roster for overly humanoid enemies. The owner believes it is
   already largely clean; do not assume wholesale removals are necessary.
   Giants were raised as a possible non-qualifying source, not a confirmed
   current assignment or finalized item-removal list.
 
-Working interpretation: task eligibility defines a monster's hide drop, rather
-than requiring its killer to have that specific task active. Confirm this before
-implementation; the owner has not requested an on-task-only drop restriction.
+Confirmed: inclusion in the Slayer roster defines an eligible hide source;
+the killer does **not** need that particular task active. Individual boss opt-in
+controls assignments, not whether that creature can drop its hide.
+
+## Optional access-gated boss assignments
+
+- Balrog and Elder Green Dragon begin excluded from each player's random task
+  chances. Unlocking access does not by itself opt a player in.
+- Give the player a deliberate way to enable each boss independently. The
+  owner's proposed presentation is nearby-associate dialogue:
+  **"I'm ready to take on the Elder Green Dragon"** and
+  **"I'm Ready to take on the Balrog"**. Exact associate IDs/locations and
+  final dialogue routing remain to be selected.
+- Choosing the relevant option adds that boss to eligible random task chances,
+  not a guaranteed immediate boss assignment or a replacement for an active
+  task. Keep the one-active-task contract and existing progress intact.
+- Persist each choice per player and never silently opt existing accounts in.
+  No boss opt-in may become a prerequisite for rank progression, guild quest
+  completion or the mandatory King Black Dragon capstone.
+- Dialogue must not grant access or bypass the Mining Guild/quest gates. Audit
+  the actual requirements and recheck eligibility at assignment so players are
+  not sent to an inaccessible encounter. Count, payout, challenge tier, weight
+  and minimum rank for each boss are still undecided.
+- A reversible "stop assigning this boss" option is recommended, not yet
+  approved. Also settle how it interacts with an already active assignment;
+  do not introduce a free task reroll or invent cancellation costs implicitly.
+
+The earlier blanket exclusion of Balrog from Slayer is superseded for opted-in
+repeatable tasks. Its exclusion from the mandatory line remains intact. Elder
+Green Dragon's optional inclusion is confirmed; older suggestions of a specific
+post-Legend assignment tier do not settle the current rank/count/payout design.
+
+## Leather-source audit deliverable
+
+Inventory all hide/leather armor families and their sources, including any
+finished leather-armor drops. For each, present NPC IDs, raw hide IDs, tanned
+leather IDs, crafted armor IDs, current set effects and task membership. Mark
+the proposed disposition: retain with an existing task; retain and add a task;
+or retire the source/family subject to owner approval.
+
+Include Balrog and Elder Green Dragon as confirmed task additions, but do not
+assume any other current source is approved for removal. Leather armor remains
+Crafting-produced; this audit is not permission to add finished armor drops or
+silently remove existing ones. Reconcile any discovered finished-item sources
+with the owner alongside the hide sources.
+
+Preserve existing mandatory entries during this audit. If a proposed source
+retirement conflicts with that rule or a currently assigned monster's required
+hide supply, surface the conflict before changing either system.
 
 ## Confirmed grandfathering rule
 
@@ -68,13 +119,13 @@ after the final affected item list is approved.
    sets, and classify each as retained, proposed task addition or proposed
    retirement. Review the eight new tower creatures as part of this coverage.
 3. Present exact NPC/item IDs, hide types and leather-tier impacts before
-   changing definitions. Beyond the explicitly approved 1–3 residue/feather
-   quantities, no hide type, drop quantity/chance, new armor set or tier
-   rebalance is implied merely by the universal hide-source rule.
+   changing definitions. The tanning/Crafting/unique-set-effect direction is
+   approved, but specific armor recipes/bonuses and balance changes are not.
+   Residue/feather quantities are 1–3 with equal chances for each amount.
 4. Define Balrog/Elder assignment counts, tier, rewards and access handling.
-   Suggested safeguard: filter inaccessible random assignments and provide a
-   free replacement if an inaccessible assignment still occurs. These are
-   proposals; the confirmed requirement is a usable opt-out for lack of access.
+   Implement the explicit opt-in model above, with default exclusion and real
+   access checks. A free replacement for an unexpectedly inaccessible active
+   assignment remains a proposal, not an approved reroll mechanism.
    Avoid mandatory progression dead ends; preserve unrelated account progress.
 5. Specify and test an idempotent preservation/binding migration with backups
    and rollback. Test quantities, equipped items, bank holdings, alternate forms,

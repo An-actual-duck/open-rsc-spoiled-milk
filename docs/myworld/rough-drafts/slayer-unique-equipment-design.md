@@ -23,7 +23,8 @@ rarity policy, ordinary loot and assembly transaction requirements.
   parts are valid for assembly. There is no personal-kill requirement. This
   does not repeal the separate grandfathered retired-leather untradability rule.
 - Rewards occupy weapon, shield or jewelry slots, preserving leather set slots
-  and bonuses. Equipment requirements, IDs, death behavior and
+  and bonuses. Weapon wear requirements are approved below; the pendant and
+  shield have no wear requirements. IDs, death behavior and
   exact numeric stat mappings remain undecided unless stated below.
 - Tier references identify the intended existing stat benchmark, not a newly
   invented item level. Resolve the actual tier 9/10 log items and weapon stats
@@ -39,6 +40,34 @@ rarity policy, ordinary loot and assembly transaction requirements.
   Pendant retaliation cannot trigger another retaliation. Map primary attack
   events explicitly for NPCs and resolve direct-spell eligibility before coding;
   do not treat every damage callback as an eligible weapon hit.
+
+## Approved wear requirements
+
+The owner's correction supersedes the earlier blanket no-restrictions answer:
+weapons require the standard level for the explicitly selected requirement
+tier. **Non-weapon equipment has no wear requirements** (Sullen Pendant and
+Cockatrice feather shield). Do not add Slayer-rank, quest or extra skill gates
+to wearing these rewards. Acquisition/shop access is a separate contract.
+
+| Weapon | Approved requirement tier | Required skill level | Stat benchmark remains |
+| --- | --- | ---: | --- |
+| Abyssal Whip | Tier 10 melee | 70 Melee | Tier 10 longsword power, dagger speed |
+| Dagger of Terror | Tier 5 melee | 30 Melee | Approximately tier 5 dagger damage, one-tick attacks |
+| Thunder Spire Staff | Tier 9 magic | 62 Magic | Tier 10 magic staff stats |
+| Leaching Bow | Tier 8 ranged | 54 Ranged | Tier 9 longbow stats |
+
+Verified against tracked definitions at `dd0f64f22`: Rune long sword `75`
+requires 70 and Steel dagger `63` requires 30 in
+[ItemDefs.json](../../../server/conf/server/defs/ItemDefs.json). Magic Staff
+`1784` requires 62 Magic and Ebony Longbow `2125` requires 54 Ranged in
+[ItemDefsMyWorld.json](../../../server/conf/server/defs/ItemDefsMyWorld.json).
+The same overrides give Blood Staff `2146` tier-10 stats and Magic Longbow
+`656` tier-9 stats; the new rewards' lower wear tiers are intentional, not a
+request to lower their approved stats or change their log recipes.
+
+Use the current Melee requirement path rather than reintroducing separate
+legacy Attack/Strength gates. Cover every supported equip route, including
+poisoned Dagger of Terror variants, so alternate forms cannot bypass the gate.
 
 ## Abyssal Whip
 
@@ -163,8 +192,9 @@ or Feeding Frenzy immunity.
 
 **Serpant's Tail is on hold and must not be added to drops for now.** Naga stays
 a normal/filler encounter with its ordinary loot and default hide/bones.
-A unique leather armor is a possible later direction, not an approved recipe
-or new armor set. No Tail reward or active icon requirement is established.
+Its hide follows the now-approved tanning/Crafting leather-set direction;
+exact set recipes and bonuses belong to the leather audit/design pass. No
+Tail reward or active icon requirement is established.
 
 ## Future coating: collectible ingredients now, system later
 
@@ -202,13 +232,12 @@ approved below-backpack, source-tier-only assembly charges for all six rewards.
 1. Follow the confirmed whip rates: **Abyssal Rib 1/2,000; single Abyssal
    Vertibrae 1/128**. These replace the earlier very-rare-vertebra direction;
    the rib is the intended rare component. The drop document distinguishes
-   average rib acquisition from collecting all whip components. Balance the
-   other equipment rates against **2,000 kills for staff/bow and 1,000 for
-   pendant/dagger**.
+   average rib acquisition from collecting all whip components. The other
+   equipment rates are also approved: horn 1/2,000 and tongue/fang/tear 1/1,000,
+   each one per successful independent roll, including off-task kills.
 2. Use the approved fixed Slayer-currency amounts and source-tier-only assembly
    rule. The pendant requires one Frozen Tear. Feather
-   quantities remain 1–3 per kill; their distribution affects the 500-feather
-   shield's acquisition effort.
+   quantities are 1–3 per kill with equal probability for each amount.
 3. Resolve the effect-policy questions above and inspect existing tier stats,
    log identities, poison variants and combat scheduling before coding.
 4. Produce approved icons using these designs and NPC references, including

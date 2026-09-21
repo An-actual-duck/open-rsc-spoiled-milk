@@ -211,10 +211,20 @@ Abyssal Rib is 1/2,000 and single vertebrae are 1/128. The rib is the whip's
 intended rare component, and collecting the complete recipe can take longer
 than the average 2,000-kill rib wait. Other equipment acquisition targets are
 2,000 kills for staff/bow and 1,000 for pendant/dagger. The pendant requires
-one Frozen Tear, visually a crystallized tear on a string. Other equipment
-drop rates remain open; the six equipment assembly currency prices are approved;
+one Frozen Tear, visually a crystallized tear on a string. Horn is 1/2,000;
+tongue, fang and tear are each 1/1,000. Unique rolls are independent and do not
+require an active task. Feathers and residue give 1, 2 or 3 with equal chance.
+The six equipment assembly currency prices are approved;
 "rare" does not automatically mean 1/128, and appropriate parts should reach
 1/1,000 or rarer. Do not infer implemented drops from accepted combat tests.
+
+The [equipment requirements](slayer-unique-equipment-design.md#approved-wear-requirements)
+are 70 Melee for the whip, 30 Melee for the dagger, 62 Magic for the staff and
+54 Ranged for the bow; pendant and shield have no wear requirements. Stat tiers
+and assembly-currency tiers remain distinct from these wear requirements.
+The [leather audit](slayer-hide-and-leather-overhaul.md) retains tanning/Crafting
+and unique set effects, and adds Balrog/Elder Green Dragon only to opt-in
+repeatable chances. Neither boss enters mandatory progression.
 
 ## Sprite-to-game integration checklist
 
@@ -258,8 +268,8 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Dark beast and Abyssal mechanics accepted; finalize remaining drop rates
-   against the documented recipes and approved equipment currency prices.
+3. Dark beast and Abyssal mechanics accepted; implement the approved component
+   rates/recipes/prices and settle ordinary loot and modifier policies.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.

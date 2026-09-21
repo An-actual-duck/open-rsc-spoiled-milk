@@ -82,14 +82,15 @@ making unprepared fights the baseline for compensation. Monitor prepared kill
 times, consumable costs, spawn density and travel during later playtesting;
 do not silently change these approved values based only on combat level.
 
-Proposal: keep existing repeatable choices and add each new choice at weight 1,
+Approved: keep existing repeatable choices and add each new choice at weight 1,
 matching current weights. This produces 3/3/4/4/3/3 choices by tier. Existing
 individual choices consequently become less frequent; do not describe this as
 unchanged selection probability. Keep the one-active-task rule.
 
 Preserve existing mandatory tasks' keys, counts, payouts and relative order.
-Place additions at suitable preparation/difficulty points; exact insertion
-positions remain to be reviewed. In particular, **King Black Dragon remains the
+Insert additions by prepared difficulty while retaining the existing relative
+order; this placement policy is approved, with concrete indices to be mapped
+and tested during implementation. In particular, **King Black Dragon remains the
 final mandatory capstone**, so do not append the Abyssal demon after it. Mapping
 progress by stable completed-task identity must handle insertion, not merely
 increment an old numeric cursor.
@@ -139,6 +140,10 @@ Implementation requirements:
   work, not permission to fabricate coordinates here.
 
 ## Grandfathering and migration contract
+
+Balrog and Elder Green Dragon are separate **opt-in repeatable** additions under
+the [leather/source audit](slayer-hide-and-leather-overhaul.md#optional-access-gated-boss-assignments).
+Neither enters mandatory progression or changes the approved 43-task total.
 
 Approved policy: **all already-completed tiers remain complete**. Preserve rank,
 quest completion, balances, purchased backpack entitlements and promotion
@@ -225,15 +230,16 @@ Task equivalents illustrate earnings, not a requirement to complete that
 particular monster's assignments or a guaranteed sequence of random tasks.
 For example, the approved 85 Elite bow cost takes five 20-point Bloodveld
 tasks (100 points, 100 kills) from zero balance, while two tongues at the
-proposed 1/1,000 rate average 2,000 kills. Random selection, mandatory payouts,
+approved 1/1,000 rate average 2,000 kills. Random selection, mandatory payouts,
 other tasks, existing balances and bought parts alter the actual path. Currency
 is an additional substantial assembly charge, not necessarily the dominant
 time gate. Buyers of finished tradable equipment do not personally pay it.
 
 ## Implementation acceptance and decisions still needed
 
-- Task counts/payouts and the six assembly currency amounts/vectors are approved.
-  Resolve task insertion positions and repeatable weights separately.
+- Task counts/payouts, equal repeatable weights, difficulty-based insertion
+  policy and the six assembly currency amounts/vectors are approved. Implement
+  concrete insertion positions without losing saved progress or old tasks.
 - Implement the approved fixed backpack prices and corresponding loader/tests
   before modifying mandatory definitions; verify all six prices stay unchanged.
 - Verify existing old-task identity/order/count/payout preservation; test all
