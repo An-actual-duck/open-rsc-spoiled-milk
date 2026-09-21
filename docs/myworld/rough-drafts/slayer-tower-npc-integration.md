@@ -200,14 +200,17 @@ draft assignment tips, approved task counts/payouts and unchanged backpack
 prices. All six below-backpack, source-tier-only assembly prices are approved.
 The task expansion is now implemented behind a disabled rollout setting; see
 [activation and migration notes](slayer-task-expansion-implementation.md).
-Equipment assembly prices remain unimplemented.
+Equipment assembly recipes and prices are implemented; see
+[equipment implementation](slayer-equipment-implementation.md).
 
 The [special drops and assembly document](slayer-special-drops-and-assembly.md)
 is the reference for the confirmed eight-monster drop roster, material/remains
 exceptions, 1–3 residue/feather quantities, rare-component ordering and icon work.
 The [initial component pass](slayer-component-implementation.md) now implements
-the 16 materials and their drops with temporary icons. Ordinary loot expansion,
-equipment assembly and leather production remain pending.
+the 16 materials and their drops with temporary icons. Subsequent passes implement
+[ordinary loot](slayer-ordinary-loot-implementation.md), equipment assembly, and
+[leather production](slayer-leather-implementation.md). New leather set bonuses
+and final item artwork remain pending.
 Default hide and bones plus level-appropriate existing ordinary loot are implied
 unless explicitly overridden. The [equipment design](slayer-unique-equipment-design.md)
 records six rewards, approved recipes and the deferred coating system. Naga's

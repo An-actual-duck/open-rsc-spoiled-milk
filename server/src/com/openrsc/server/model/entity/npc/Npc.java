@@ -1066,6 +1066,7 @@ public class Npc extends Mob {
 	private void dropHiddenUniqueItems(final Player owner, final double contributionScale, final boolean personalDrop) {
 		final ArrayList<Item> items = getWorld().getNpcDrops().rollHiddenUniqueDrops(this.getID(), contributionScale);
 		items.addAll(getWorld().getNpcDrops().rollSlayerComponentDrops(getID(), owner, contributionScale));
+		items.addAll(getWorld().getNpcDrops().rollSlayerEquipmentDrops(getID(), owner, contributionScale));
 		for (Item item : items) {
 			if (item == null || !worldAllowsDrop(item)) {
 				continue;
