@@ -379,6 +379,16 @@ def main() -> None:
         "Production footer divider should not run through expanded icon grids",
     )
 
+    require(do_skill_interface_text,
+            "drawProductionIngredientCosts(selected, x + 24, footerY + 4)",
+            "Slayer purchases must show ingredients on the bottom left alongside currency")
+    require(do_skill_interface_text,
+            "< (long)selected.getIngredientAmount(i) * productionQuantity",
+            "Slayer affordability must include multiplied ingredients, with overflow-safe arithmetic")
+    require(do_skill_interface_text,
+            "ingredientCountLabel(owned)",
+            "Large ingredient counts must remain bounded in the cost panel; tooltip retains exact counts")
+
     print("PASS: Production UI structure validated")
 
 

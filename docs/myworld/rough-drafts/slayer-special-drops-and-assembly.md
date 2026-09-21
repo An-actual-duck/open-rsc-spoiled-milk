@@ -1,7 +1,8 @@
 # Slayer special drops and unique equipment assembly
 
-Status: component definitions/drops implemented; ordinary loot, assembly and rewards pending.
-Updated: 2026-09-20.
+Status: component definitions/drops, ingredient shop purchases and Shield of
+Mobility implemented; ordinary loot and other rewards pending.
+Updated: 2026-09-21.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
 [tower roster](slayer-tower-npc-integration.md), and
@@ -12,6 +13,7 @@ in [unique equipment design](slayer-unique-equipment-design.md).
 
 Current implementation and temporary icon/ID manifest:
 [Slayer component implementation](slayer-component-implementation.md).
+Reward progress: [Slayer equipment implementation](slayer-equipment-implementation.md).
 
 ## Owner direction
 

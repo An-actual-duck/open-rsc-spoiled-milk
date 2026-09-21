@@ -59,6 +59,7 @@ public final class CockatriceCombat {
 			|| source.killed || source.getSkills().getLevel(Skill.HITS.id()) <= 0) return;
 		final Player player = (Player) target;
 		if (player.killed || player.getSkills().getLevel(Skill.HITS.id()) <= 0
+			|| SlayerEquipmentEffects.preventsEnemyImmobilization(source, player)
 			|| protectedByEyeDrops(player) || reapplicationBlocked(player)) return;
 		player.getCache().store(GLARE, now(player) + GLARE_MILLIS);
 		// Active glares never extend either timer, including hits from another cockatrice.

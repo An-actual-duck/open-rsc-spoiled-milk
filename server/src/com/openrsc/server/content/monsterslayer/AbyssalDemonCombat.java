@@ -61,6 +61,7 @@ public final class AbyssalDemonCombat {
 		if (!isDemon(source) || !(target instanceof Player) || damage <= 0) return;
 		Player player = (Player)target;
 		if (!live(player)) return;
+		if (SlayerEquipmentEffects.preventsEnemyImmobilization(source, player)) return;
 		if (GiantFrogCombat.protectedBySolvent(player)) {
 			// Protection covers the hit which consumes its last seconds; the next hit can trap.
 			GiantFrogCombat.drainSolvent(player, SOLVENT_DRAIN_MILLIS);

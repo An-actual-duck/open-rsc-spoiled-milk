@@ -94,7 +94,16 @@ public final class MonsterSlayerChallengeShops {
 		int[] stock = new int[rewards.size()];
 		for (int i = 0; i < rewards.size(); i++) {
 			MonsterSlayerDefinitions.Reward reward = rewards.get(i);
-			recipes.add(new ProductionRecipe(reward.getItemId(), 1, 1, reward.getAmount(), true, true));
+			int[] ingredientIds = new int[reward.getIngredients().size()];
+			int[] ingredientAmounts = new int[ingredientIds.length];
+			int[] fallbackIds = new int[ingredientIds.length];
+			for (int m = 0; m < ingredientIds.length; m++) {
+				ingredientIds[m] = reward.getIngredients().get(m).getItemId();
+				ingredientAmounts[m] = reward.getIngredients().get(m).getAmount();
+				fallbackIds[m] = -1;
+			}
+			recipes.add(new ProductionRecipe(reward.getItemId(), 1, 1, reward.getAmount(), true, true,
+				ingredientIds, fallbackIds, ingredientAmounts));
 			List<Integer> codes = new ArrayList<Integer>();
 			List<Integer> amounts = new ArrayList<Integer>();
 			for (MonsterSlayerChallenge challenge : MonsterSlayerChallenge.values()) {
@@ -147,8 +156,9 @@ public final class MonsterSlayerChallengeShops {
 		if ("points".equals(reason)) return "You do not have all of the required challenge points for that.";
 		if ("stock".equals(reason)) return "That reward is sold out or its stock changed.";
 		if ("inventory".equals(reason)) return "You do not have enough inventory space for that.";
+		if ("ingredients".equals(reason)) return "You do not have all of the required unnoted ingredients for that.";
 		if ("quantity".equals(reason)) return "Choose a valid smaller quantity.";
-		if ("grant".equals(reason)) return "The reward could not be delivered. Your points and stock were restored.";
+		if ("grant".equals(reason)) return "The reward could not be delivered. Your ingredients and points were restored.";
 		if ("failure".equals(reason)) return "Your Monster Slayer record needs staff attention.";
 		return "That reward is not available to you.";
 	}

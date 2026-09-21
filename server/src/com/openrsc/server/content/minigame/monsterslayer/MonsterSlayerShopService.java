@@ -1,11 +1,16 @@
 package com.openrsc.server.content.minigame.monsterslayer;
 
 import com.openrsc.server.model.container.Item;
+import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.net.rsc.ActionSender;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Iterator;
 import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Reward;
 import static com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Shop;
 
-/** Headless typed-currency shop boundary; dialogue/UI callers remain future work. */
+/** Authoritative, atomic ingredient-and-typed-currency Slayer shop purchases. */
 public final class MonsterSlayerShopService {
 	private final MonsterSlayerData data;
 	private final ItemGrant itemGrant;
@@ -43,6 +48,8 @@ public final class MonsterSlayerShopService {
 		try {
 			long output = reward.outputAmountFor(quantity);
 			if (output > Integer.MAX_VALUE) return RedemptionProposal.rejected("quantity");
+			for (MonsterSlayerDefinitions.Ingredient ingredient : reward.getIngredients())
+				if (ingredient.amountFor(quantity) > Integer.MAX_VALUE) return RedemptionProposal.rejected("quantity");
 			MonsterSlayerState.SpendProposal spend = MonsterSlayerState.proposeSpend(current, data, reward.getCost(), quantity);
 			return spend.isSuccessful() ? RedemptionProposal.accepted(reward, (int) output, spend) : RedemptionProposal.rejected("points");
 		} catch (RuntimeException ex) { return RedemptionProposal.rejected("quantity"); }
@@ -55,20 +62,60 @@ public final class MonsterSlayerShopService {
 					MonsterSlayerState.Snapshot current = MonsterSlayerState.read(player.getCache(), data);
 					RedemptionProposal proposal = proposeRedemption(current, shopKey, rewardKey, quantity);
 					if (!proposal.isSuccessful()) return Result.rejected(proposal.getReason());
-					if (!player.getCarriedItems().getInventory().canHold(proposal.reward.getItemId(), proposal.output)) return Result.rejected("inventory");
-					MonsterSlayerState.SpendProposal spent = proposal.spend;
-					MonsterSlayerState.write(player.getCache(), data, spent.getSnapshot());
-					try {
-						if (!itemGrant.grant(player, proposal.reward.getItemId(), proposal.output)) return rollback(player, spent);
-					} catch (RuntimeException failure) { return rollback(player, spent); }
-					return Result.success();
+					return exchange(player, proposal, quantity);
 				}
 			}
 		} catch (RuntimeException failure) { return Result.rejected("failure"); }
 	}
-	private Result rollback(Player player, MonsterSlayerState.SpendProposal spent) {
-		MonsterSlayerState.write(player.getCache(), data, spent.getReceipt().refund(spent.getSnapshot(), data));
-		return Result.rejected("grant");
+	private Result exchange(Player player, RedemptionProposal proposal, long quantity) {
+		Inventory inventory = player.getCarriedItems().getInventory();
+		List<Item> items = inventory.getItems();
+		synchronized (items) {
+			// Preserve actual instances (including identity, durability and attributes), not fresh item copies.
+			List<Item> original = new ArrayList<Item>(items);
+			int[] amounts = new int[original.size()];
+			int[] durability = new int[original.size()];
+			for (int i = 0; i < original.size(); i++) {
+				amounts[i] = original.get(i).getAmount();
+				durability[i] = original.get(i).getItemStatus().getDurability();
+			}
+			boolean complete = false, charged = false;
+			try {
+				for (MonsterSlayerDefinitions.Ingredient ingredient : proposal.reward.getIngredients()) {
+					long remaining = ingredient.amountFor(quantity);
+					for (Iterator<Item> it = items.iterator(); it.hasNext() && remaining > 0;) {
+						Item item = it.next();
+						if (item.getCatalogId() != ingredient.getItemId() || item.getNoted() || item.isWielded()) continue;
+						int take = (int)Math.min(remaining, item.getAmount());
+						remaining -= take;
+						if (take == item.getAmount()) it.remove();
+						else item.changeAmount(-take);
+					}
+					if (remaining > 0) return Result.rejected("ingredients");
+				}
+				// Check after reserving materials: consuming a stack can free the output slot.
+				if (!inventory.canHold(proposal.reward.getItemId(), proposal.output)) return Result.rejected("inventory");
+				MonsterSlayerState.write(player.getCache(), data, proposal.spend.getSnapshot());
+				charged = true;
+				if (!itemGrant.grant(player, proposal.reward.getItemId(), proposal.output)) return Result.rejected("grant");
+				complete = true;
+				return Result.success();
+			} catch (RuntimeException failure) {
+				return Result.rejected("grant");
+			} finally {
+				if (!complete) {
+					items.clear();
+					for (int i = 0; i < original.size(); i++) {
+						original.get(i).setAmount(amounts[i]);
+						original.get(i).getItemStatus().setDurability(durability[i]);
+					}
+					items.addAll(original);
+					if (charged) MonsterSlayerState.write(player.getCache(), data,
+						proposal.spend.getReceipt().refund(proposal.spend.getSnapshot(), data));
+				}
+				ActionSender.sendInventory(player);
+			}
+		}
 	}
 	public Result purchaseCapacity(Player player, String shopKey) {
 		try {

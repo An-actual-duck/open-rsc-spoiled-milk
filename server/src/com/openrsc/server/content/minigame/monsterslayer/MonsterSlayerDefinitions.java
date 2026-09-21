@@ -198,6 +198,7 @@ public final class MonsterSlayerDefinitions {
 	}
 
 	public static final class Reward {
+		private final List<Ingredient> ingredients;
 		private final String key;
 		private final int itemId;
 		private final int amount;
@@ -206,6 +207,12 @@ public final class MonsterSlayerDefinitions {
 		private final int restockAmount;
 
 		Reward(String key, int itemId, int amount, MonsterSlayerCost cost, int stock, int restockAmount) {
+			this(key, itemId, amount, cost, stock, restockAmount, Collections.<Ingredient>emptyList());
+		}
+
+		Reward(String key, int itemId, int amount, MonsterSlayerCost cost, int stock, int restockAmount,
+				List<Ingredient> ingredients) {
+			this.ingredients = immutableCopy(ingredients);
 			this.key = key;
 			this.itemId = itemId;
 			this.amount = amount;
@@ -230,6 +237,7 @@ public final class MonsterSlayerDefinitions {
 			return cost;
 		}
 		public int getStock() { return stock; }
+		public List<Ingredient> getIngredients() { return ingredients; }
 		public int getRestockAmount() { return restockAmount; }
 
 		public MonsterSlayerCost costFor(long quantity) {
@@ -245,6 +253,18 @@ public final class MonsterSlayerDefinitions {
 			} catch (ArithmeticException ex) {
 				throw new IllegalArgumentException("Monster Slayer reward output overflow", ex);
 			}
+		}
+	}
+
+	/** Unnoted inventory materials, charged per purchased reward bundle. */
+	public static final class Ingredient {
+		private final int itemId, amount;
+		Ingredient(int itemId, int amount) { this.itemId = itemId; this.amount = amount; }
+		public int getItemId() { return itemId; }
+		public int getAmount() { return amount; }
+		public long amountFor(long quantity) {
+			if (quantity <= 0) throw new IllegalArgumentException("Ingredient quantity must be positive");
+			return Math.multiplyExact((long)amount, quantity);
 		}
 	}
 

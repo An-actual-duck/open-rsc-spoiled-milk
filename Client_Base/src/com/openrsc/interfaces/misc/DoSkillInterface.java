@@ -421,6 +421,10 @@ public final class DoSkillInterface {
 			} else if (isPointRedemptionInterface()) {
 				drawPointRedemptionDetails(selected, selectedDetailRightX, footerY);
 				if (!pointCoinHover.isEmpty()) hoverText = pointCoinHover;
+				if (selected.hasIngredientDetails()) {
+					String ingredientHover = drawProductionIngredientCosts(selected, x + 24, footerY + 4);
+					if (!ingredientHover.isEmpty()) hoverText = ingredientHover;
+				}
 			} else if (selected.hasIngredientDetails()) {
 				String ingredientHoverText = drawProductionIngredientCosts(selected, materialDetailX, footerY + 4);
 				if (!ingredientHoverText.isEmpty()) {
@@ -719,7 +723,15 @@ public final class DoSkillInterface {
 
 	private String pointBalancesText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount(productionResourceAmount) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); int code = selected.getPointCostCode(i); b.append(pointLabel(code)).append(": ").append(formatPointCount(pointBalance(code))); } return b.toString(); }
 	private String pointCostText(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return formatPointCount((long) selected.getInputAmount() * productionQuantity) + " pts"; StringBuilder b = new StringBuilder(); for (int i = 0; i < selected.getPointCostCount(); i++) { if (i > 0) b.append("; "); b.append(formatPointCount((long) selected.getPointCostAmount(i) * productionQuantity)).append(" ").append(pointLabel(selected.getPointCostCode(i))); } return b.toString(); }
-	private boolean canAffordPointCost(ProductionRecipeView selected) { if (!isMonsterSlayerRedemptionInterface()) return (long) selected.getInputAmount() * productionQuantity <= productionResourceAmount; for (int i = 0; i < selected.getPointCostCount(); i++) { if (pointBalance(selected.getPointCostCode(i)) < (long) selected.getPointCostAmount(i) * productionQuantity) return false; } return true; }
+	private boolean canAffordPointCost(ProductionRecipeView selected) {
+		if (!isMonsterSlayerRedemptionInterface()) return (long)selected.getInputAmount() * productionQuantity <= productionResourceAmount;
+		for (int i = 0; i < selected.getPointCostCount(); i++)
+			if (pointBalance(selected.getPointCostCode(i)) < (long)selected.getPointCostAmount(i) * productionQuantity) return false;
+		for (int i = 0; i < selected.getIngredientCount(); i++)
+			if (getOwnedIngredientCount(selected.getIngredientItemId(i), selected.getIngredientFallbackItemId(i))
+				< (long)selected.getIngredientAmount(i) * productionQuantity) return false;
+		return true;
+	}
 	private int pointBalance(int code) { for (int i = 0; i < productionPointCodes.length; i++) if (productionPointCodes[i] == code) return productionPointBalances[i]; return 0; }
 	private String pointLabel(int code) { String[] labels = {"Fledgling", "Adept", "Veteran", "Elite", "Champion", "Hero"}; return code >= 0 && code < labels.length ? labels[code] : "Points"; }
 	/** Shared material tint selected when the bundled grayscale coin sprite is drawn. */
@@ -761,6 +773,13 @@ public final class DoSkillInterface {
 		return Long.toString(Math.max(0, value));
 	}
 
+	private String ingredientCountLabel(long value) {
+		if (value >= 1_000_000_000L) return value / 1_000_000_000L + "b";
+		if (value >= 1_000_000L) return value / 1_000_000L + "m";
+		if (value >= 1_000L) return value / 1_000L + "k";
+		return Long.toString(value);
+	}
+
 	private String metalName(ItemDef def) {
 		String name = def.getName();
 		String lower = name.toLowerCase();
@@ -788,7 +807,7 @@ public final class DoSkillInterface {
 		for (int i = 0; i < count; i++) {
 			int itemId = selected.getIngredientItemId(i);
 			int fallbackItemId = selected.getIngredientFallbackItemId(i);
-			int required = selected.getIngredientAmount(i);
+			long required = (long)selected.getIngredientAmount(i) * (isPointRedemptionInterface() ? productionQuantity : 1);
 			int owned = getOwnedIngredientCount(itemId, fallbackItemId);
 			int displayItemId = getDisplayIngredientItemId(itemId, fallbackItemId, required);
 			ItemDef ingredientDef = EntityHandler.getItemDef(displayItemId);
@@ -797,7 +816,8 @@ public final class DoSkillInterface {
 			mc.getSurface().drawSpriteClipping(mc.spriteSelect(ingredientDef),
 				iconX, iconY, 32, 24, ingredientDef.getPictureMask(), 0,
 				ingredientDef.getBlueMask(), false, 0, 1);
-			String amountText = owned + "/" + required;
+			String amountText = isPointRedemptionInterface()
+				? ingredientCountLabel(owned) + "/" + ingredientCountLabel(required) : owned + "/" + required;
 			int amountColour = owned >= required ? 0x00FF00 : 0xFFAA55;
 			drawString(amountText,
 				iconX + 16 - (mc.getSurface().stringWidth(1, amountText) / 2),
@@ -811,7 +831,7 @@ public final class DoSkillInterface {
 		return hoverText;
 	}
 
-	private String ingredientTooltip(int itemId, int fallbackItemId, int owned, int required) {
+	private String ingredientTooltip(int itemId, int fallbackItemId, int owned, long required) {
 		String text = EntityHandler.getItemDef(itemId).getName();
 		if (isValidItemId(fallbackItemId)) {
 			text += " or " + EntityHandler.getItemDef(fallbackItemId).getName();
@@ -819,7 +839,7 @@ public final class DoSkillInterface {
 		return text + " - " + owned + "/" + required;
 	}
 
-	private int getDisplayIngredientItemId(int itemId, int fallbackItemId, int required) {
+	private int getDisplayIngredientItemId(int itemId, int fallbackItemId, long required) {
 		if (isValidItemId(fallbackItemId)
 			&& mc.getInventoryCount(itemId, false) < required
 			&& mc.getInventoryCount(fallbackItemId, false) >= required) {

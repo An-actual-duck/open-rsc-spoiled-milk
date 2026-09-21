@@ -5638,6 +5638,8 @@ public class EntityHandler {
 			0, 20, "items:20", false, false, 0, 0x91A4B2, false, false, true, 3347));
 		setCustomItemDefinition(3348, new ItemDef("Abyssal Rib", "A curved abyssal rib, held together by clinging flesh.", "",
 			0, 137, "items:137", false, false, 0, 0x8199AA, false, false, true, 3348));
+		setCustomItemDefinition(3349, new ItemDef("Shield of Mobility", "A lightweight shield that doesn't block well but keeps you mobile", "",
+			0, 3, "items:3", false, true, 8, 0x8A9675, false, false, true, 3349));
 	}
 
 	private static void addBangleJewelryDefinitions() {

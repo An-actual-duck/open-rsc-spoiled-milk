@@ -2,8 +2,9 @@
 
 Status: task expansion, preparation tips, grandfathering and fixed backpack
 prices implemented behind a **disabled** rollout setting. Equipment assembly
-prices remain approved design, not implemented.
-Updated: 2026-09-20. See [implementation and activation](slayer-task-expansion-implementation.md).
+prices are implemented for Shield of Mobility; other rewards remain planned.
+Updated: 2026-09-21. See [implementation and activation](slayer-task-expansion-implementation.md)
+and [equipment progress](slayer-equipment-implementation.md).
 
 Related: [tower roster](slayer-tower-npc-integration.md),
 [reward designs](slayer-unique-equipment-design.md),
@@ -131,8 +132,9 @@ Implementation requirements:
   neither has a special consumable requirement.
 - Do not promise Solvent poison immunity or pre-emptive, timed immunity from
   discharge wipes. Wipes remove existing marks, not future ones.
-- Shield of Mobility is planned, not implemented. Only add it as an alternative
-  counter tip once its prevention behavior is available in the same release.
+- Shield of Mobility's prevention behavior and shop purchase are implemented.
+  Preparation tips still recommend consumables, which remain the accessible
+  initial route before obtaining 500 feathers for the shield.
 - Ensure counter items can be obtained before the mandatory encounter. Verify
   actual shop stock/access/prices; the administrator `::slayergimmicks` kit is
   not a player acquisition route.
@@ -203,7 +205,8 @@ prices therefore do not mean identical total acquisition effort.
 **The owner approved all six amounts below and source-tier-only currency.**
 The amounts were chosen near 75% of each unchanged backpack price, rounded to
 the nearest five (halfway values rounded upward). These are fixed approved
-prices, not a new runtime auto-pricing formula. They are not implemented yet.
+prices, not a new runtime auto-pricing formula. Shield of Mobility's price is
+implemented; the other five await their equipment passes.
 
 | Reward | Source-tier currency | Backpack benchmark | Approved assembly currency | Equivalent source-monster tasks from zero balance |
 | --- | --- | ---: | ---: | ---: |
