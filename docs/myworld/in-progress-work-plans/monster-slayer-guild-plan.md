@@ -35,8 +35,14 @@ Related expansion design notes (not implemented):
   records component-plus-currency shop purchases and the abyssal whip concept.
   This is new reward design, not a return to progression material turn-ins.
 - [Slayer hide and leather overhaul](../rough-drafts/slayer-hide-and-leather-overhaul.md)
-  records the universal task-monster hide-source goal, boss task additions,
-  access opt-outs and preservation of retired player-owned items as untradeable.
+  records the hide/leather source audit, tanning/Crafting and unique set effects,
+  explicit player opt-in for Balrog/Elder Green Dragon repeatable tasks only,
+  and preservation of retired player-owned items as untradeable. Neither boss
+  may be added to the mandatory line; exact boss task balance/access checks are
+  still to be designed. Sources drop materials without an active-task requirement.
+- [Unique equipment](../rough-drafts/slayer-unique-equipment-design.md)
+  records corrected weapon wear requirements: 70 Melee whip, 30 Melee dagger,
+  62 Magic staff and 54 Ranged bow. Pendant/shield have no wear requirements.
 - [Slayer Tower NPC integration and consumable gimmicks](../rough-drafts/slayer-tower-npc-integration.md)
   records the owner's six-floor/eight-monster roster, initial combat targets,
   and counter-consumable concepts. Undecided details remain draft proposals.
@@ -422,16 +428,19 @@ Repository density and behavior impose these tuning constraints:
 - Wilderness travel is an accepted part of this quest, but every mandatory
   Wilderness-heavy task requires an explicit risk warning before assignment.
 - The King Black Dragon remains the final mandatory target and the quest's
-  iconic combat capstone. The level-275 Elder Green Dragon is reserved as a
-  possible post-`Legend` boss assignment rather than displacing that finale.
+  iconic combat capstone. Elder Green Dragon is now confirmed as an opt-in
+  repeatable boss assignment, never a mandatory replacement; its precise
+  challenge/rank placement remains undecided rather than fixed post-`Legend`.
 
 Death Wings remain possible post-`Legend` randomized content because their
 Legends Quest access and level 80 would break the mandatory level curve.
 Blessed Spiders and Dungeon Rats remain excluded from mandatory progression due
 to Underground Pass/Clock Tower access coupling. Otherworldly Beings would add
-an unrelated Lost City gate. The Balrog remains excluded because it is coupled
-to Dwarf Youth Rescue/lava-forge access and its level-217 label hides extreme
-repository stats of 999 Attack and 500 Hits.
+an unrelated Lost City gate. Balrog remains excluded from the mandatory line
+because of quest/access coupling. The later owner-approved expansion adds it
+only to explicitly opted-in repeatable chances. Re-audit current quest access
+and effective combat difficulty before assigning its count, tier and payout;
+older displayed-level/stat observations are not sufficient balance evidence.
 
 The merged `MonsterSlayer.json` does not match this confirmed ladder. A later
 implementation synchronization must replace all six mandatory family sequences,

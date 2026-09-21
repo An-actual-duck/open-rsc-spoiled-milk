@@ -36,11 +36,11 @@ definition work. Combat levels/floors follow the tower plan.
 | --- | --- | --- | --- |
 | 1 | Giant frog (863; 20) | Hide + bones | Sticky Saliva Gland (1/128) |
 | 2 | Cockatrice (864; 35) | **1–3 Cockatrice Feathers** instead of hide, plus bones | Cockatrice Eye (1/128) |
-| 3 | Banshee (865; 50) | Hide + bones | Frozen Tear |
+| 3 | Banshee (865; 50) | Hide + bones | Frozen Tear (1/1,000) |
 | 3 | Naga (866; 60) | Hide + bones | None for now; Serpant's Tail deferred and must not drop |
-| 4 | Terror dog (867; 75) | Hide + bones | Terror Fang |
-| 4 | Bloodveld (868; 85) | Hide + bones | Leach Tongue |
-| 5 | Dark beast (869; 105) | Hide + bones | Lightning Horn |
+| 4 | Terror dog (867; 75) | Hide + bones | Terror Fang (1/1,000) |
+| 4 | Bloodveld (868; 85) | Hide + bones | Leach Tongue (1/1,000) |
+| 5 | Dark beast (869; 105) | Hide + bones | Lightning Horn (1/2,000) |
 | 6 | Abyssal demon (870; 125) | **1–3 Slimey residue** instead of hide, plus Demon ash; **no ordinary bones** | Abyssal Vertibrae (1/128, one per drop); Abyssal Rib (1/2,000) |
 
 Unless the owner specifies an exception, future monster discussions listing
@@ -51,9 +51,11 @@ bone/remains drop. Existing **Demon ash (item 3112)** can supply its ash;
 do not create a duplicate ash item.
 
 The residue and feathers are baseline per-kill materials, each with a confirmed
-quantity range of 1–3, not rare component rolls. The distribution within that
-range, other hide identities/quantities, bone types/quantities and ash quantity
-remain to be specified. Do not infer a separate new leather set for each monster.
+quantity range of 1–3, with **equal probability of each amount**, not rare
+component rolls. Ordinary hides follow standard tanning into leather and
+Crafting into leather armor, with unique set effects. Exact hide identities,
+recipes, set bonuses, hide quantities and bone/ash types or quantities still
+need the [leather audit/design pass](slayer-hide-and-leather-overhaul.md).
 **Frozen Tear** means a teardrop (tear rhymes with ear), not a rip in material.
 
 Every monster also needs a complete, combat-level-appropriate ordinary loot
@@ -75,8 +77,9 @@ The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
 - **Abyssal Rib: 1/2,000. Abyssal Vertibrae: 1/128, one per drop.** The rib
   is the intended rare component; this replaces the earlier direction that
   both skeletal components should be very rare.
-- Other equipment-component rates remain proposals below, not finalized
-  probabilities. Use the approved recipe counts in the equipment design,
+- **Lightning Horn 1/2,000; Leach Tongue, Terror Fang and Frozen Tear each
+  1/1,000**, with one component per successful unique roll. These rates are
+  now approved. Use the approved recipe counts in the equipment design,
   including **one Frozen Tear** for the pendant. The six fixed source-tier-only
   currency prices are approved; see the
   [assembly price table](slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
@@ -88,17 +91,19 @@ The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
   expected kill count. Compare components separately; several independently
   collected requirements overlap, so do not simply add their expected counts.
   Record variability and the bottleneck as well as the average.
-- Decide independent versus shared rolls, simultaneous rare drops, luck
-  modifiers, on-task restrictions and any duplicate/bad-luck rules explicitly.
-  No pity system or guaranteed unique drop is implied.
+- **Unique drops roll independently**, so multiple components can drop on the
+  same kill, including a rib and a vertebra. They supplement ordinary loot.
+- **No active Slayer task is required** for these drops. Existing kill-credit/
+  loot ownership rules still apply. Luck modifiers and any duplicate/bad-luck
+  rules remain to be settled; no pity system or guaranteed unique is implied.
 
-### Confirmed acquisition targets and candidate rates
+### Confirmed acquisition targets and rates
 
 These targets answer the average kills-to-assemble question, not a guaranteed
 drop deadline or mandatory personal kill count. Trading remains allowed.
 Slayer currency and purchased logs are additional costs, not assumed to be
-earned in those same kills. The whip rates are **confirmed**; the other
-equipment-component rates below are **proposals**. None is implemented yet.
+earned in those same kills. The equipment-component rates below are
+**confirmed**. None is implemented yet.
 
 | Reward | Target average monster kills | Rate basis and approval state |
 | --- | --- | --- |
@@ -106,10 +111,10 @@ equipment-component rates below are **proposals**. None is implemented yet.
 | Thunder Spire Staff | 2,000 | One Lightning Horn at 1/2,000 |
 | Leaching Bow | 2,000 | Two tongues, each dropped singly at 1/1,000 |
 | Dagger of Terror | 1,000 | One Terror Fang at 1/1,000 |
-| Sullen Pendant | 1,000 | Proposed: one Frozen Tear at 1/1,000; one-tear recipe confirmed |
+| Sullen Pendant | 1,000 | One Frozen Tear at 1/1,000; one-tear recipe confirmed |
 
 No separate kill target has been assigned to the 500-feather shield. Its pace
-depends on the baseline 1–3 feather distribution plus the currency price.
+depends on the uniformly distributed baseline 1–3 feathers plus the currency price.
 
 The approved whip recipe remains **one rib, ten vertebrae and fifty residue**.
 At the chosen rates, ten vertebrae average 1,280 kills, and long-run production
@@ -117,10 +122,10 @@ averages **15.625 vertebrae per rib**. The surplus is intentional and can suppor
 future uses. The owner will design those later; do not invent additional
 recipes, conversions or material sinks now.
 
-RNG can still produce an early rib before ten vertebrae. Assuming independent
+RNG can still produce an early rib before ten vertebrae. With the approved independent
 single-unit rolls, the mean wait to collect both one rib and ten vertebrae is
 approximately **2,355 kills**, not exactly 2,000. This is a balance calculation,
-not an approved independence rule or a guaranteed completion deadline. Keep the
+not a guaranteed completion deadline. Keep the
 owner's specified rates rather than silently retuning them to force the earlier
 approximate target. Trading can cover an individual's missing components.
 
@@ -157,11 +162,11 @@ rules remain open; no extra currency tier may be added to this recipe.
   approved retired item families.
 - **Parts and finished equipment are tradable; bought parts are eligible.**
   Shop assembly still requires Slayer currency as an additional effort gate.
-  Active-task drop eligibility remains undecided; no personal kill-proof or
+  Drops do not require an active task; no personal kill-proof or
   account-bound component restriction is implied. This approval concerns new
   rewards, not the separate retired-hide/armor grandfathering policy.
-- Determine each rare component's drop chance, eligible NPC variants, quantity,
-  independent versus shared roll, and any luck modifiers deliberately.
+- Preserve the approved chances, independent rolls and one-unit unique-drop
+  quantities. Audit eligible NPC variants and luck modifiers explicitly.
 - Six equipment rewards now have owner-directed designs in the linked
   equipment document. Naga's component is deferred; Cockatrice Eye and Sticky
   Saliva Gland are collectible ingredients for a future coating system, not
@@ -197,8 +202,8 @@ that icons have been created, approved or imported.
   explicit approval if the existing limit prevents the requested result.
 
 Suggested sequence (not implementation approval): use the documented rewards
-and recipes to finalize remaining rarity decisions under the approved currency
-costs, then produce drop, equipment
+and recipes to finalize ordinary loot and remaining modifier policies under
+the approved unique rates/currency costs, then produce drop, equipment
 and counter-item icons against those designs. The already-defined gimmick
 items can receive icons independently of unresolved reward balancing. Follow
 with item definitions, full drop tables, atomic shop assembly and effects.
