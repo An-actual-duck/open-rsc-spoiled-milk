@@ -56,6 +56,52 @@ Confirmed: inclusion in the Slayer roster defines an eligible hide source;
 the killer does **not** need that particular task active. Individual boss opt-in
 controls assignments, not whether that creature can drop its hide.
 
+## Review order
+
+Before assigning the six new leather set bonuses, perform the bounded
+[material coverage and armor-theme review](#material-coverage-and-shared-armor-themes)
+below. The wider effect-standardization project is deliberately deferred until
+the Slayer Tower work is complete.
+
+## Material coverage and shared armor themes
+
+The owner wants a **partial leather-armor overhaul**, not merely six independent
+new set bonuses. Review existing retained sets alongside the new sets so related
+materials have a coherent theme before deciding their individual effects.
+
+- Every creature actually assigned through mandatory or repeatable Slayer tasks
+  must drop hide/carapace or an explicitly approved equivalent. Check the
+  effective roster after approved removals, the staged eight-monster expansion,
+  and the optional boss additions. Check every eligible NPC variant, not only
+  one representative ID or a family definition that is never assigned.
+- Produce a coverage table linking task family/NPC IDs to dropped material,
+  processed material and armor family (or approved non-armor use). Identify
+  missing materials and propose suitable names/types rather than silently
+  inventing new exceptions or assigning arbitrary existing hides.
+- This is a source-coverage rule, not an active-task drop restriction. Shared
+  material families remain possible; it does not require a unique armor set
+  for every NPC variant.
+- Preserve the already approved non-armor equivalents: Cockatrice Feathers and
+  Abyssal demon Slimey residue. Do not introduce hides or armor for those two
+  without a new owner decision. Preserve the passive cow/regular-unicorn/bear
+  leather exception and the black-unicorn Slayer decision above.
+- **All carapace armor families will increase the player's poison cleanse
+  rate.** This is faster clearance of poison affecting the wearer, not a new
+  poison-application proc or a promise of complete poison immunity. Include
+  existing scorpion, spider and magic-spider carapace and any future carapace.
+- Exact cleanse amounts, tier scaling, piece-versus-full-set activation, mixed
+  sets, and stacking with other cleansing sources still need design approval.
+  Existing carapace sets currently have offensive poison effects; whether the
+  cleanse theme supplements or replaces those effects is also undecided.
+- Review the current bonuses first, then propose shared family themes and
+  individual set identities together. Do not implement arbitrary numerical
+  bonuses merely to fill the six new sets. Retired grandfathered armor keeps
+  its existing stats/effects under the separate preservation rule.
+
+This theme/coverage direction is documented, not yet implemented. It does not
+authorize the wider timing/damage refactor described in the
+[post-tower effect-standardization follow-up](../in-progress-work-plans/effect-standardization-follow-up.md).
+
 ## Selected retirement scope
 
 The owner's latest direction selects the following five material families for

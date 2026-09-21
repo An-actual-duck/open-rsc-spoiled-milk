@@ -17,6 +17,10 @@ and grandfathering retired materials/equipment as untradeable.
 
 ## Goal and scope
 
+At the tower's completion review, **bring this back up once Slayer Tower work
+is done**: the owner's [effect timing and numerical-rule standardization review](../in-progress-work-plans/effect-standardization-follow-up.md).
+It is a later project, not a prerequisite or an expansion of the current work.
+
 - Convert eight approved NPC sprite sets into working in-game creatures.
 - Populate an owner-built Slayer Tower with six floors, one per Slayer tier.
 - Include at least one preparation-dependent Slayer gimmick on every floor.

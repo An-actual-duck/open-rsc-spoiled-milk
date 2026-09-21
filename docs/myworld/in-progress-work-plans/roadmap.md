@@ -61,6 +61,14 @@ General terrain workflow and Wilderness requirements are maintained in
 
 ## Major Alpha Milestones
 
+### Deferred follow-up: after the Slayer Tower
+
+**Bring this back up once Slayer Tower work is done:** review and standardize
+existing effect timing and numerical rules (ticks/seconds, percentages,
+stacking, refresh, caps and related interactions). This owner-requested review
+is outside the current tower scope; do not begin it automatically. See
+[effect-standardization follow-up](effect-standardization-follow-up.md).
+
 ### 1. Minor Terrain And Cosmic Altar
 
 Complete the outstanding focused terrain changes in established areas.
