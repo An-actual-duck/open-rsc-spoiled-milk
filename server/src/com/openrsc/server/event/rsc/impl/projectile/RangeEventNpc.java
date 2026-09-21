@@ -40,6 +40,7 @@ public class RangeEventNpc extends GameTickEvent {
 
     public void run() {
         final Mob owner = getOwner();
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(owner)) return;
         if (!owner.isCurrentRangeEventNpc(this)) {
             stop();
             return;

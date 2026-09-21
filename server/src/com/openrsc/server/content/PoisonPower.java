@@ -23,6 +23,7 @@ public final class PoisonPower {
 	}
 
 	private static int getWeaponTier(final int itemId) {
+		if (itemId == MyWorldItemId.POISONED_DAGGER_OF_TERROR) return 5;
 		if (isPoisonedExaltedRuneWeapon(itemId)) {
 			return 12;
 		}

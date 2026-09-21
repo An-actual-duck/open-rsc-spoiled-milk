@@ -122,6 +122,8 @@ public final class ProjectileLaunchSpecification {
 	private final int frostbiteProcChancePercent;
 	private final int splinterProcChancePercent;
 	private final boolean bloodSpell;
+	private final int thunderSpireTier;
+	private final double thunderSpirePower;
 	private final int dragonBreathDamage;
 	private final DuplicationStrategy duplicationStrategy;
 
@@ -144,6 +146,8 @@ public final class ProjectileLaunchSpecification {
 		this.frostbiteProcChancePercent = builder.frostbiteProcChancePercent;
 		this.splinterProcChancePercent = builder.splinterProcChancePercent;
 		this.bloodSpell = builder.bloodSpell;
+		this.thunderSpireTier = builder.thunderSpireTier;
+		this.thunderSpirePower = builder.thunderSpirePower;
 		this.dragonBreathDamage = builder.dragonBreathDamage;
 		this.duplicationStrategy = builder.duplicationStrategy;
 	}
@@ -241,6 +245,8 @@ public final class ProjectileLaunchSpecification {
 		return bloodSpell;
 	}
 
+	public int getThunderSpireTier() { return thunderSpireTier; }
+	public double getThunderSpirePower() { return thunderSpirePower; }
 	public int getDragonBreathDamage() {
 		return dragonBreathDamage;
 	}
@@ -268,6 +274,8 @@ public final class ProjectileLaunchSpecification {
 		private int frostbiteProcChancePercent;
 		private int splinterProcChancePercent;
 		private boolean bloodSpell;
+		private int thunderSpireTier;
+		private double thunderSpirePower;
 		private int dragonBreathDamage;
 		private DuplicationStrategy duplicationStrategy =
 			DuplicationStrategy.ONE_PER_MOB;
@@ -333,6 +341,13 @@ public final class ProjectileLaunchSpecification {
 
 		public Builder bloodSpell(final boolean bloodSpell) {
 			this.bloodSpell = bloodSpell;
+			return this;
+		}
+		public Builder thunderSpire(int tier, double spellPower) {
+			if (tier < 0 || tier > 3 || !Double.isFinite(spellPower) || spellPower < 0)
+				throw new IllegalArgumentException("Invalid Thunder Spire launch");
+			this.thunderSpireTier = tier;
+			this.thunderSpirePower = spellPower;
 			return this;
 		}
 

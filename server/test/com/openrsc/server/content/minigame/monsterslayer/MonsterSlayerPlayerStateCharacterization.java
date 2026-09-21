@@ -311,7 +311,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 				equals(challenge == shop.getChallenge() ? expected : 0L,
 					shop.getCapacityUpgrade().getCost().get(challenge), "capacity is single-tier " + shop.getKey() + " " + challenge);
 			}
-			equals("port_sarim".equals(shop.getKey()) ? 2 : 1, shop.getCategories().size(), "approved categories " + shop.getKey());
+			equals("falador".equals(shop.getKey()) ? 1 : 2, shop.getCategories().size(), "approved categories " + shop.getKey());
 			int expectedRewards = "legends".equals(shop.getKey()) ? 5 : 4;
 			equals(expectedRewards, shop.getCategories().get(0).getRewards().size(), "approved rewards " + shop.getKey());
 			for (MonsterSlayerDefinitions.Reward reward : shop.getCategories().get(0).getRewards()) {

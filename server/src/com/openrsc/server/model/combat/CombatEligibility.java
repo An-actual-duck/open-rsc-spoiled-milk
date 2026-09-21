@@ -20,6 +20,9 @@ public final class CombatEligibility {
 		final Mob target = request.getTarget();
 		if (source == null) return denied(request, CombatEligibilityReason.SOURCE_MISSING);
 		if (request.getPhase() != CombatEligibilityPhase.COMPATIBILITY
+			&& com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(source))
+			return denied(request, CombatEligibilityReason.SOURCE_ABYSSAL_WHIP);
+		if (request.getPhase() != CombatEligibilityPhase.COMPATIBILITY
 			&& com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.actionsBlocked(source)) {
 			return denied(request, CombatEligibilityReason.SOURCE_ABYSSAL_TRAP);
 		}

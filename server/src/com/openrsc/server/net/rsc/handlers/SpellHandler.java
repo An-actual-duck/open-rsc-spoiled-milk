@@ -2255,7 +2255,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							damageCapPercent += getPlayer().getMindRobeSpellCapBonus();
 						}
 
+						final int thunderSpireTier = com.openrsc.server.content.monsterslayer.SlayerRewardCombat.thunderTier(getPlayer(), spellEnum);
+						damageCapPercent = com.openrsc.server.content.monsterslayer.SlayerRewardCombat.thunderCap(thunderSpireTier, damageCapPercent);
 						int damage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, max, damageCapPercent);
+
 						final int windAccuracyDebuffPercent = SpellClassification.isAirSpell(spellEnum)
 							? SpellClassification.getWindAccuracyDebuffPercent(spellEnum) : 0;
 						final int waterMaxHitDebuffPercent = SpellClassification.isWaterSpell(spellEnum)
@@ -2291,6 +2294,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 										acidPoisonPower, frostbiteProcChancePercent,
 										splinterProcChancePercent)
 									.bloodSpell(SpellClassification.isBloodSpell(spell))
+									.thunderSpire(thunderSpireTier, max)
 									.build(), defaultSpellResources));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);

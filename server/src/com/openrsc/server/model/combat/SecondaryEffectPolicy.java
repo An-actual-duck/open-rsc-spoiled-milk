@@ -17,6 +17,8 @@ import java.util.Map;
  * planned effect cannot silently exceed an unrelated historical limit.</p>
  */
 public enum SecondaryEffectPolicy {
+	SULLEN_PENDANT("sullen-pendant", Family.REFLECTION),
+	THUNDER_SPIRE_SPLASH("thunder-spire-splash", Family.DELAYED_SPELL),
 	RECIPROCAL_MELEE_AUXILIARY_MAGIC(
 		"reciprocal-melee-auxiliary-magic", Family.AUXILIARY),
 	RECIPROCAL_MELEE_AUXILIARY_TRUE(

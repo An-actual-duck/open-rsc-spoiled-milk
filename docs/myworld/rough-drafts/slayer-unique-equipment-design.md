@@ -324,7 +324,7 @@ balancing can proceed without implementing this system.
 ## Next balance and implementation decisions
 
 The [new monster task counts and payouts](slayer-tower-task-expansion.md) are
-approved, not implemented. That plan records unchanged backpack prices and
+approved and implemented behind the tower rollout gate. That plan records unchanged backpack prices and
 approved below-backpack, source-tier-only assembly charges for all six rewards.
 
 1. Follow the confirmed whip rates: **Abyssal Rib 1/2,000; single Abyssal
@@ -343,5 +343,8 @@ approved below-backpack, source-tier-only assembly charges for all six rewards.
 5. Implement and test drops, atomic shop assembly and approved equipment
    effects in focused passes. Keep the coating system a separate future task.
 
-This update is documentation only: no items, drops, combat behavior, sprite
-assets or running servers were changed.
+Implementation status, exact item IDs, resolved tier benchmarks, recipes and
+test coverage are tracked in [Slayer equipment implementation](slayer-equipment-implementation.md).
+All six equipment rewards now have placeholder-art implementations. Final
+sprites and in-game tower placement remain separate; no server restart or
+deployment is implied by this design document.

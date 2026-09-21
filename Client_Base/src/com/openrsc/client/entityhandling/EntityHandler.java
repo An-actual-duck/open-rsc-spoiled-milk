@@ -5640,6 +5640,18 @@ public class EntityHandler {
 			0, 137, "items:137", false, false, 0, 0x8199AA, false, false, true, 3348));
 		setCustomItemDefinition(3349, new ItemDef("Shield of Mobility", "A lightweight shield that doesn't block well but keeps you mobile", "",
 			0, 3, "items:3", false, true, 8, 0x8A9675, false, false, true, 3349));
+		setCustomItemDefinition(3350, new ItemDef("Abyssal Whip", "Made from an abyssal demon's rib and spinal column, and held together with it's gooey flesh. Disgusting", "",
+			0, 81, "items:81", false, true, 16, 0x8199AA, false, false, true, 3350));
+		setCustomItemDefinition(3351, new ItemDef("Thunder Spire Staff", "A staff that conducts electricity using a Dark Beast's horn", "",
+			0, 123, "items:123", false, true, 16, 0xD8BC61, false, false, true, 3351));
+		setCustomItemDefinition(3352, new ItemDef("Leaching Bow", "Two Bloodveld tongues are woven together to make the bowstring", "",
+			0, 54, "items:54", false, true, 24, 0xAF6262, false, false, true, 3352));
+		setCustomItemDefinition(3353, new ItemDef("Dagger of Terror", "It stabs swiftly and ferociously", "",
+			0, 80, "items:80", false, true, 16, 0xD6C5A0, false, false, true, 3353));
+		setCustomItemDefinition(3354, new ItemDef("Poisoned Dagger of Terror", "It stabs swiftly and ferociously", "",
+			0, 80, "items:80", false, true, 16, 0x8A9675, false, false, true, 3354));
+		setCustomItemDefinition(3355, new ItemDef("Sullen Pendant", "You carry the Banshee's sorrows with you", "",
+			0, 24, "items:24", false, true, 1024, 0x99CDDD, false, false, true, 3355));
 	}
 
 	private static void addBangleJewelryDefinitions() {

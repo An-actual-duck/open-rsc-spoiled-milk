@@ -534,6 +534,7 @@ public class NpcBehavior {
 	}
 
 	private boolean tryProjectileAttack(final long now) {
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(npc)) return true;
 		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.tryPull(npc, target)) return true;
 		final NpcCombatProfile profile = NpcCombatProfile.resolve(npc);
 		if (profile.isMeleeOnly() || target == null || target.isRemoved()) {

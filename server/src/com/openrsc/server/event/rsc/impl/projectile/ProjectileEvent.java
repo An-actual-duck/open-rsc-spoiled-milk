@@ -82,6 +82,9 @@ public class ProjectileEvent extends SingleTickEvent {
 		"projectile-unclassified-compatibility";
 	Mob caster, opponent;
 	protected int damage;
+	private final boolean leachingBowAtLaunch;
+	private final int thunderSpireTier;
+	private final double thunderSpirePower;
 	protected int windAccuracyDebuffPercent;
 	protected int waterMaxHitDebuffPercent;
 	protected int earthAttackSpeedDebuffPercent;
@@ -249,6 +252,11 @@ public class ProjectileEvent extends SingleTickEvent {
 		this.caster = caster;
 		this.opponent = opponent;
 		this.damage = launchSpecification.getProposedDamage();
+		this.leachingBowAtLaunch = launchSpecification.getProducer() == ProjectileLaunchSpecification.Producer.PLAYER_BOW
+			&& com.openrsc.server.content.monsterslayer.SlayerRewardCombat.mainhand(caster)
+				== com.openrsc.server.constants.custom.MyWorldItemId.LEACHING_BOW;
+		this.thunderSpireTier = launchSpecification.getThunderSpireTier();
+		this.thunderSpirePower = launchSpecification.getThunderSpirePower();
 		this.poisonWeaponId = launchSpecification.getPoisonWeaponId();
 		this.windAccuracyDebuffPercent =
 			launchSpecification.getWindAccuracyDebuffPercent();
@@ -629,6 +637,12 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (impactEffectType > 0 && !trueDefenseBlocked) {
 			opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, impactEffectType));
 		}
+		final int slayerActualDamage = Math.max(0, lastHits - opponent.getLevel(Skill.HITS.id()));
+		if (leachingBowAtLaunch && !attackSuppressed)
+			com.openrsc.server.content.monsterslayer.SlayerRewardCombat.leachingBowHit((Player)caster, slayerActualDamage);
+		if (thunderSpireTier > 0 && caster instanceof Player && !attackSuppressed)
+			com.openrsc.server.content.monsterslayer.SlayerRewardCombat.thunderSplash(
+				(Player)caster, opponent, thunderSpireTier, thunderSpirePower);
 
 		if (caster.isNpc() && opponent.isPlayer()) {
 			((Player) opponent).updateDamageAndBlockedDamageTracking(
@@ -670,6 +684,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			Player affectedPlayer = (Player) opponent;
 			ActionSender.sendStat(affectedPlayer, Skill.HITS.id());
 			CorrosiveAura.apply(affectedPlayer, caster, damageDealt);
+			if (isPrimaryProjectileAttackType() && !attackSuppressed
+				&& com.openrsc.server.content.monsterslayer.SlayerRewardCombat.pendantHit(affectedPlayer, caster, slayerActualDamage))
+				caster.killedBy(affectedPlayer);
 			DivineRetribution.Result result = DivineRetribution.apply(affectedPlayer, caster, damageDealt);
 			if (result.killedAttacker()) {
 				if (type == 2 || type == 5) {
