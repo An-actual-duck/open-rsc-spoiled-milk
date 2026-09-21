@@ -218,6 +218,8 @@ public class ServerConfiguration {
 	public boolean WANT_QUEST_STARTED_INDICATOR;
 	public boolean WANT_POISON_NPCS;
 	public boolean WANT_CUSTOM_QUESTS;
+	/** Enable only after tower access, spawns and counter shops are playable. */
+	public boolean WANT_SLAYER_TOWER_TASKS;
 	public boolean FISHING_SPOTS_DEPLETABLE;
 	public boolean IMPROVED_ITEM_OBJECT_NAMES;
 	public boolean CRYSTAL_KEY_GIVES_XP;
@@ -765,6 +767,7 @@ public class ServerConfiguration {
 		WANT_CUSTOM_SPRITES = tryReadBool("custom_sprites").orElse(false);
 		WANT_CUSTOM_UI = tryReadBool("want_custom_ui").orElse(false);
 		WANT_CUSTOM_QUESTS = tryReadBool("want_custom_quests").orElse(false);
+		WANT_SLAYER_TOWER_TASKS = tryReadBool("want_slayer_tower_tasks").orElse(false);
 		WANT_MYWORLD = tryReadBool("want_myworld").orElse(false);
 		SPAWN_AUCTION_NPCS = tryReadBool("spawn_auction_npcs").orElse(false);
 		SPAWN_IRON_MAN_NPCS = tryReadBool("spawn_iron_man_npcs").orElse(false);

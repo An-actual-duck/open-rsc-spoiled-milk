@@ -359,6 +359,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	private static String[] branHazardRemarks(MonsterSlayerHazard hazard) {
 		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
+		if (hazard.getPreparationLines().length > 0) return hazard.getPreparationLines();
 		switch (hazard) {
 		case DESERT_HEAT: return new String[] {
 			"Hot work! Prepare for the desert heat!",
@@ -448,6 +449,7 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	}
 	private static String[] doranHazardRemarks(MonsterSlayerHazard hazard) {
 		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
+		if (hazard.getPreparationLines().length > 0) return hazard.getPreparationLines();
 		switch (hazard) {
 		case DESERT_HEAT: return new String[] {
 			"Desert heat! Prepare for it, then get moving!",
@@ -558,16 +560,21 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 	/** Compatibility seam retained for callers that only need the opening supply line. */
 	public static String associateSupplyLine(int index) { return associateSupplyLines(index)[0]; }
 	public static boolean isAssociateShopOperation(String command) { return "Trade".equalsIgnoreCase(command) || "Shop".equalsIgnoreCase(command); }
-	/** One short NPC sentence per hazard, preserving definition order. */
+	/** Short preparation lines in definition order, including strategy-only advice. */
 	public static String[] hazardWarningLines(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task task) {
 		if (task == null || task.getHazards().isEmpty()) return new String[0];
-		String[] lines = new String[task.getHazards().size()];
-		for (int index = 0; index < lines.length; index++) lines[index] = hazardWarningLine(task.getHazards().get(index));
-		return lines;
+		java.util.List<String> lines = new java.util.ArrayList<String>();
+		for (MonsterSlayerHazard hazard : task.getHazards()) {
+			String[] preparation = hazard.getPreparationLines();
+			if (preparation.length == 0) lines.add(hazardWarningLine(hazard));
+			else java.util.Collections.addAll(lines, preparation);
+		}
+		return lines.toArray(new String[0]);
 	}
 	/** Player-facing wording; enum names remain stable definition compatibility keys. */
 	public static String hazardWarningLine(com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard hazard) {
 		if (hazard == null) throw new IllegalArgumentException("Monster Slayer hazard is required");
+		if (hazard.getPreparationLines().length > 0) return hazard.getPreparationLines()[0];
 		switch (hazard) {
 		case PRAYER_DRAIN: return "You should expect Worship drain.";
 		case DESERT_HEAT: return "You should prepare for the desert heat.";

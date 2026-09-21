@@ -34,6 +34,7 @@ public final class MonsterSlayerPlayerStateCharacterization {
 		headlessShopPreflightKeepsTypedCostsAndStockBounded(data);
 		cacheWritesRestoreOnlyOwnedKeysAfterRuntimeFailure(data);
 		failureDiagnosticsAreDuplicateSuppressedAndBounded();
+		MonsterSlayerTowerCharacterization.run();
 
 		System.out.println("Monster Slayer player-state characterization: PASS");
 	}
@@ -330,7 +331,9 @@ public final class MonsterSlayerPlayerStateCharacterization {
 			}
 			for (MonsterSlayerDefinitions.Task task : contact.getMandatoryTasks()) hazards.addAll(task.getHazards());
 		}
-		for (MonsterSlayerHazard hazard : MonsterSlayerHazard.values()) assertTrue(hazards.contains(hazard), "declared hazard coverage " + hazard);
+		for (MonsterSlayerHazard hazard : MonsterSlayerHazard.values()) {
+			if (hazard.getPreparationLines().length == 0) assertTrue(hazards.contains(hazard), "legacy hazard coverage " + hazard);
+		}
 	}
 
 	private static void headlessShopPreflightKeepsTypedCostsAndStockBounded(MonsterSlayerData data) {

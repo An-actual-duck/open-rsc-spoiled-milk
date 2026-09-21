@@ -198,7 +198,9 @@ records the approved addition of all eight monsters to mandatory progression
 without removing existing tasks, preservation of every already-completed tier,
 draft assignment tips, approved task counts/payouts and unchanged backpack
 prices. All six below-backpack, source-tier-only assembly prices are approved.
-Neither the task expansion nor the equipment prices are implemented yet.
+The task expansion is now implemented behind a disabled rollout setting; see
+[activation and migration notes](slayer-task-expansion-implementation.md).
+Equipment assembly prices remain unimplemented.
 
 The [special drops and assembly document](slayer-special-drops-and-assembly.md)
 is the reference for the confirmed eight-monster drop roster, material/remains
