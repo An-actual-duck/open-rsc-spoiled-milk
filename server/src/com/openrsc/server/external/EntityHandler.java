@@ -584,13 +584,15 @@ public final class EntityHandler {
 					if (toAdd.getCommand().length == 1 && "".equals(toAdd.getCommand()[0])) {
 						toAdd.nullCommand();
 					}
-					if (item.has("meleeOffense")) toAdd.setMeleeOffense((int) ifZeroReserve(item.getInt("meleeOffense")));
-					if (item.has("rangedOffense")) toAdd.setRangedOffense((int) ifZeroReserve(item.getInt("rangedOffense")));
-					if (item.has("magicOffense")) toAdd.setMagicOffense((int) ifZeroReserve(item.getInt("magicOffense")));
-					if (item.has("weaponSpeed")) toAdd.setWeaponSpeed((int) ifZeroReserve(item.getInt("weaponSpeed")));
-					if (item.has("meleeDefense")) toAdd.setMeleeDefense((int) ifZeroReserve(item.getInt("meleeDefense")));
-					if (item.has("rangedDefense")) toAdd.setRangedDefense((int) ifZeroReserve(item.getInt("rangedDefense")));
-					if (item.has("magicDefense")) toAdd.setMagicDefense((int) ifZeroReserve(item.getInt("magicDefense")));
+					// Complete definitions are final values, not partial patches. The
+					// zero sentinel is only for loadPatchItems' later merge operation.
+					if (item.has("meleeOffense")) toAdd.setMeleeOffense(item.getInt("meleeOffense"));
+					if (item.has("rangedOffense")) toAdd.setRangedOffense(item.getInt("rangedOffense"));
+					if (item.has("magicOffense")) toAdd.setMagicOffense(item.getInt("magicOffense"));
+					if (item.has("weaponSpeed")) toAdd.setWeaponSpeed(item.getInt("weaponSpeed"));
+					if (item.has("meleeDefense")) toAdd.setMeleeDefense(item.getInt("meleeDefense"));
+					if (item.has("rangedDefense")) toAdd.setRangedDefense(item.getInt("rangedDefense"));
+					if (item.has("magicDefense")) toAdd.setMagicDefense(item.getInt("magicDefense"));
 					addItemDefinition(toAdd);
 				}
 		}

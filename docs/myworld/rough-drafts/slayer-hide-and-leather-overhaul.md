@@ -1,7 +1,7 @@
 # Slayer hide sources and grandfathered leather equipment
 
-Status: owner-directed design notes; not implemented.
-Updated: 2026-09-20.
+Status: new-set foundations implemented; special bonuses pending. Existing-family audit deferred.
+Updated: 2026-09-21.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
 [Slayer Tower expansion](slayer-tower-npc-integration.md), and
@@ -9,23 +9,30 @@ Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-gu
 These notes describe a future source/roster overhaul, not an assertion that
 existing item definitions, drops or accounts have already changed.
 The separate [component pass](slayer-component-implementation.md) has added six
-new collectible raw hides; it has not changed existing hide families, tanning,
-armor recipes or grandfathered holdings.
+new collectible raw hides. The [leather foundation pass](slayer-leather-implementation.md)
+adds their tanning and five-piece armor recipes; existing hide families and
+grandfathered holdings remain unchanged.
 
 ## Owner direction
 
 - Give leather armor a stronger Slayer identity while retaining Crafting as
   its production route.
 - New ordinary hides follow standard **hide -> tanned leather -> crafted
-  leather armor** production and receive unique set effects like existing
-  leather armor. Exact hide/set identities, recipes, stats and effect designs
-  remain separate audit/design outputs; do not invent them during drop setup.
+  leather armor** production. All six sets use the usual coif, gloves, boots,
+  chaps and cuirass slots. Choose tiers by source-monster combat-level
+  equivalency with existing leather families. Preserve the existing per-tier,
+  per-slot total defense budget; distribute it proportionally to the source's
+  current melee/ranged/magic defenses using the established rounding method.
+  Standard tanning, crafting, material/thread costs and wear rules apply.
+  Special set bonuses remain undecided: do not invent, borrow or activate
+  another family's effect when adding these base items.
 - Only monsters offered as Slayer tasks should drop hide. Every task monster
   should supply hide or an owner-approved thematic substitute where appropriate.
   Confirmed exceptions are **Slimey residue (1–3 per kill)** for Abyssal demons
   and **Cockatrice Feathers (1–3 per kill)** for cockatrices; see
   [special drops and assembly](slayer-special-drops-and-assembly.md).
-  Substitute-material armor/Crafting uses are undecided, not automatic.
+  Neither Abyssal demons nor cockatrices get hide, leather or an armor set.
+  Their residue/feather component uses remain as separately approved.
 - Audit existing hide sources and Slayer task families in both directions.
   Some current hide drops will be removed; some qualifying monsters should
   instead gain assignments so their hide production remains part of Slayer.
@@ -41,6 +48,17 @@ armor recipes or grandfathered holdings.
 Confirmed: inclusion in the Slayer roster defines an eligible hide source;
 the killer does **not** need that particular task active. Individual boss opt-in
 controls assignments, not whether that creature can drop its hide.
+
+## Implementation order clarified by owner
+
+Finish adding the eight new monsters, including their sprite work, **before**
+auditing or retiring existing hide/leather families. The audit and all specific
+grandfathering decisions are postponed until that later phase establishes
+which items, if any, are affected. They do not block new-item implementation
+or the upcoming sprite pass. Do not remove existing sources, change existing
+tradability, migrate holdings or resolve legacy crafting/death behavior now.
+The preservation direction below remains the future intent, not authorization
+to apply a retirement migration before the audit.
 
 ## Optional access-gated boss assignments
 
@@ -122,8 +140,8 @@ after the final affected item list is approved.
    sets, and classify each as retained, proposed task addition or proposed
    retirement. Review the eight new tower creatures as part of this coverage.
 3. Present exact NPC/item IDs, hide types and leather-tier impacts before
-   changing definitions. The tanning/Crafting/unique-set-effect direction is
-   approved, but specific armor recipes/bonuses and balance changes are not.
+   changing existing definitions. New armor foundations follow the approved
+   tier/ratio rules above; their special bonuses remain undecided.
    Residue/feather quantities are 1–3 with equal chances for each amount.
 4. Define Balrog/Elder assignment counts, tier, rewards and access handling.
    Implement the explicit opt-in model above, with default exclusion and real
@@ -136,5 +154,6 @@ after the final affected item list is approved.
 6. Verify retained/new eligible monsters drop their intended hides, retired
    sources no longer do, and existing Slayer credit and Crafting still work.
 
-This pass authorizes documentation only, not asset imports, roster changes,
-drop-table changes, account migration or live deployment.
+New-set foundations may be implemented under the owner's current direction.
+Existing-family retirement, account migration and live deployment remain
+outside this pass. See [new leather implementation](slayer-leather-implementation.md).

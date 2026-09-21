@@ -142,6 +142,11 @@ cap, radius, target and launch metadata rules.
 
 ## Still separate work
 
-Ordinary loot completion, consumable shop pricing, leather/tanning/set effects,
+Ordinary loot completion, consumable shop pricing, new leather set effects,
 optional gated boss tasks, final sprites and tower map placement remain separate
 work. The future slow/poison coating system remains intentionally deferred.
+
+The six new hide families now have [baseline tanning and armor recipes](slayer-leather-implementation.md).
+Their special bonuses remain unassigned. The owner deferred the existing-hide
+audit and grandfathering work until all eight new additions and their sprite
+work are complete; those do not block the new-content art pass.

@@ -20,6 +20,12 @@ import static com.openrsc.server.plugins.Functions.*;
 public final class TanningRack implements OpLocTrigger, UseLocTrigger {
 
 	private static final MaterialProcess[] PROCESSES = {
+		new MaterialProcess(MyWorldItemId.GIANT_FROG_HIDE, MyWorldItemId.GIANT_FROG_LEATHER, 2, 15),
+		new MaterialProcess(MyWorldItemId.BANSHEE_HIDE, MyWorldItemId.BANSHEE_LEATHER, 4, 25),
+		new MaterialProcess(MyWorldItemId.NAGA_HIDE, MyWorldItemId.NAGA_LEATHER, 5, 30),
+		new MaterialProcess(MyWorldItemId.TERROR_DOG_HIDE, MyWorldItemId.TERROR_DOG_LEATHER, 6, 35),
+		new MaterialProcess(MyWorldItemId.BLOODVELD_HIDE, MyWorldItemId.BLOODVELD_LEATHER, 6, 35),
+		new MaterialProcess(MyWorldItemId.DARK_BEAST_HIDE, MyWorldItemId.DARK_BEAST_LEATHER, 7, 40),
 		new MaterialProcess(ItemId.COW_HIDE.id(), ItemId.LEATHER.id(), 1, 10),
 		new MaterialProcess(ItemId.GOBLIN_HIDE.id(), ItemId.GOBLIN_LEATHER.id(), 1, 10),
 		new MaterialProcess(ItemId.UNICORN_HIDE.id(), ItemId.UNICORN_LEATHER.id(), 2, 15),
