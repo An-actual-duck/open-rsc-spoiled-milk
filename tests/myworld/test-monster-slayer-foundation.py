@@ -290,6 +290,31 @@ public final class MonsterSlayerFoundationFixture {
 				.getJSONObject("cost").put("HERO", 1);
 			MonsterSlayerData.parse(bad, new Catalog());
 		}}, "cost above shop tier");
+		MonsterSlayerDefinitions.Reward shield = shopData.getShop("port_sarim")
+			.getCategories().get(1).getRewards().get(0);
+		check(shield.getItemId() == 3349 && shield.getIngredients().size() == 1
+			&& shield.getIngredients().get(0).getItemId() == 3339
+			&& shield.getIngredients().get(0).amountFor(3) == 1500
+			&& shield.getCost().asMap().size() == 1
+			&& shield.getCost().get(MonsterSlayerChallenge.INITIATE) == 110, "approved shield recipe");
+		for (final int variant : new int[]{0, 1, 2, 3, 4, 5, 6, 7}) {
+			reject(new Action() { public void run() {
+				JSONObject bad = copy(root);
+				JSONObject reward = bad.getJSONArray("shops").getJSONObject(1).getJSONArray("categories")
+					.getJSONObject(1).getJSONArray("rewards").getJSONObject(0);
+				org.json.JSONArray ingredients = reward.getJSONArray("ingredients");
+				JSONObject ingredient = ingredients.getJSONObject(0);
+				if (variant == 0) ingredient.put("amount", 0);
+				if (variant == 1) ingredient.put("amount", 10001);
+				if (variant == 2) ingredient.put("itemId", 3349);
+				if (variant == 3) ingredient.put("itemId", 40000);
+				if (variant == 4) ingredients.put(copy(ingredient));
+				if (variant == 5) reward.put("ingredients", new org.json.JSONArray());
+				if (variant == 6) reward.getJSONObject("cost").put("FLEDGLING", 1);
+				if (variant == 7) ingredient.put("unknown", 1);
+				MonsterSlayerData.parse(bad, new Catalog());
+			}}, "invalid assembly ingredient/currency " + variant);
+		}
 	}
 
 	private static void assertVectors() {

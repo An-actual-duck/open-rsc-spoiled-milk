@@ -1,7 +1,8 @@
 # Slayer unique equipment and future weapon coating
 
-Status: owner-approved design direction; not implemented.
-Updated: 2026-09-20.
+Status: Shield of Mobility and normal-shop ingredient purchases implemented;
+other rewards remain approved design. See [implementation](slayer-equipment-implementation.md).
+Updated: 2026-09-21.
 
 Related: [drops, rarity and assembly](slayer-special-drops-and-assembly.md)
 and [tower integration](slayer-tower-npc-integration.md).
@@ -19,6 +20,9 @@ rarity policy, ordinary loot and assembly transaction requirements.
   assembly exception are approved in the
   [assembly price table](slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
   Currency is an additional effort gate even when the player buys components.
+- Assembly is an ordinary Slayer shop purchase: ingredients and currency are
+  displayed together in the existing cost panel. No separate assembly screen,
+  crafting activity or associate dialogue transaction is needed.
 - **All these components and finished rewards are tradable**, and purchased
   parts are valid for assembly. There is no personal-kill requirement. This
   does not repeal the separate grandfathered retired-leather untradability rule.
@@ -246,8 +250,10 @@ Exact examine text:
 
 > A lightweight shield that doesn't block well but keeps you mobile
 
-Before implementation: resolve exact tier-3 shield stats and all relevant
-enemy immobilization entry points.
+Implemented as item **3349** for **500 feathers + 110 Adept currency**.
+Tier-3 bronze square-shield benchmark: **5 melee / 1 ranged / 0 magic defense**,
+no wear requirement. Application-time checks cover the current enemy lock
+entry points; see the [audit and tests](slayer-equipment-implementation.md).
 Protection against the named debuffs does not establish poison, wail, lightning
 or Feeding Frenzy immunity.
 

@@ -59,6 +59,7 @@ public final class MyWorldItemId {
 	public static final int LIGHTNING_HORN = 3346;
 	public static final int ABYSSAL_VERTIBRAE = 3347;
 	public static final int ABYSSAL_RIB = 3348;
+	public static final int SHIELD_OF_MOBILITY = 3349;
 
 	private MyWorldItemId() {
 	}

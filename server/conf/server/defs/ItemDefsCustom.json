@@ -47776,6 +47776,32 @@
       "prayerBonus": 0,
       "basePrice": 0,
       "isNoteable": 1
+    },
+    {
+      "id": 3349,
+      "name": "Shield of Mobility",
+      "description": "A lightweight shield that doesn't block well but keeps you mobile",
+      "command": "",
+      "isFemaleOnly": 0,
+      "isMembersOnly": 0,
+      "isStackable": 0,
+      "isUntradable": 0,
+      "isWearable": 1,
+      "appearanceID": 98,
+      "wearableID": 8,
+      "wearSlot": 3,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "armourBonus": 6,
+      "meleeDefense": 5,
+      "rangedDefense": 1,
+      "magicDefense": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 0,
+      "basePrice": 0,
+      "isNoteable": 1
     }
   ]
 }

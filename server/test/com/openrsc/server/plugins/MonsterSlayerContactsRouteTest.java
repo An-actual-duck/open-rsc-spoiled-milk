@@ -1900,7 +1900,8 @@ public final class MonsterSlayerContactsRouteTest {
 		assertEquals("That reward is sold out or its stock changed.", MonsterSlayerChallengeShops.redemptionFailureMessage("stock"), "stale stock failure");
 		assertEquals("You do not have enough inventory space for that.", MonsterSlayerChallengeShops.redemptionFailureMessage("inventory"), "inventory failure");
 		assertEquals("Choose a valid smaller quantity.", MonsterSlayerChallengeShops.redemptionFailureMessage("quantity"), "quantity failure");
-		assertEquals("The reward could not be delivered. Your points and stock were restored.", MonsterSlayerChallengeShops.redemptionFailureMessage("grant"), "rollback failure");
+		assertEquals("The reward could not be delivered. Your ingredients and points were restored.", MonsterSlayerChallengeShops.redemptionFailureMessage("grant"), "rollback failure");
+		assertEquals("You do not have all of the required unnoted ingredients for that.", MonsterSlayerChallengeShops.redemptionFailureMessage("ingredients"), "ingredient failure");
 	}
 	private static void guildAccessModesAndQuestStates(Server server) {
 		Player player = player(server, "slayerguildaccess", 206, 600);

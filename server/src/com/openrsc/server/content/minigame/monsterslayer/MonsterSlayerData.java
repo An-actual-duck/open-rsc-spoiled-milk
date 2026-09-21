@@ -357,7 +357,9 @@ public final class MonsterSlayerData {
 				List<Reward> rewards = new ArrayList<Reward>();
 				for (int rewardIndex = 0; rewardIndex < rewardArray.length(); rewardIndex++) {
 					JSONObject reward = rewardArray.getJSONObject(rewardIndex);
-				requireFields(reward, "reward", "key", "itemId", "amount", "cost", "stock", "restockAmount");
+					if (reward.has("ingredients"))
+						requireFields(reward, "reward", "key", "itemId", "amount", "cost", "stock", "restockAmount", "ingredients");
+					else requireFields(reward, "reward", "key", "itemId", "amount", "cost", "stock", "restockAmount");
 					String rewardKey = stableKey(reward.getString("key"), "reward");
 					if (!rewardKeys.add(rewardKey)) {
 						throw new IllegalArgumentException("Duplicate reward " + rewardKey);
@@ -370,9 +372,25 @@ public final class MonsterSlayerData {
 						"amount for " + rewardKey);
 					MonsterSlayerCost cost = parseCost(reward.getJSONObject("cost"));
 					cost.validateForShop(challenge, true);
+					List<MonsterSlayerDefinitions.Ingredient> ingredients = new ArrayList<MonsterSlayerDefinitions.Ingredient>();
+					if (reward.has("ingredients")) {
+						JSONArray materials = reward.getJSONArray("ingredients");
+						if (materials.length() < 1 || materials.length() > 3 || !hasOnly(cost, challenge))
+							throw new IllegalArgumentException("Assembly requires 1-3 ingredients and source-tier currency only");
+						Set<Integer> materialIds = new HashSet<Integer>();
+						for (int m = 0; m < materials.length(); m++) {
+							JSONObject material = materials.getJSONObject(m);
+							requireFields(material, "ingredient", "itemId", "amount");
+							int id = material.getInt("itemId");
+							if (id < 0 || id > 32767 || id == itemId || !catalog.itemExists(id) || !materialIds.add(id))
+								throw new IllegalArgumentException("Invalid/duplicate ingredient for " + rewardKey);
+							ingredients.add(new MonsterSlayerDefinitions.Ingredient(id,
+								positiveBounded(material.getInt("amount"), MAX_REWARD_AMOUNT, "ingredient amount")));
+						}
+					}
 					int stock = positiveBounded(reward.getInt("stock"), 10_000, "stock for " + rewardKey);
 					int restock = positiveBounded(reward.getInt("restockAmount"), stock, "restock for " + rewardKey);
-					rewards.add(new Reward(rewardKey, itemId, amount, cost, stock, restock));
+					rewards.add(new Reward(rewardKey, itemId, amount, cost, stock, restock, ingredients));
 				}
 				categories.add(new Category(categoryKey, label, iconItemId, rewards));
 			}

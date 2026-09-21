@@ -54,7 +54,8 @@ public final class GiantFrogCombat {
 			victim.applyPoison(POISON_POWER, POISON_POWER, source);
 		}
 		// The target owns the lock: hits from any frog cannot refresh or reannounce it.
-		if (protectedBySolvent(victim) || attacksBlocked(victim)) return;
+		if (SlayerEquipmentEffects.preventsEnemyImmobilization(source, victim)
+			|| protectedBySolvent(victim) || attacksBlocked(victim)) return;
 		victim.getCache().store(SPIT, now(victim) + SPIT_MILLIS);
 		victim.message("Slimy Spit coats you. You cannot attack for 10 seconds!");
 		ActionSender.sendActivePotionEffects(victim);
