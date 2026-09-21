@@ -1024,6 +1024,8 @@ public class Npc extends Mob {
 
 		/* 4. Drop items that should always drop, that are not bones. */
 		ArrayList<Item> invariableItems = drops.invariableItems(owner);
+		Item slayerMaterial = getWorld().getNpcDrops().getSlayerBaselineDrop(getID());
+		if (slayerMaterial != null) invariableItems.add(slayerMaterial);
 		for (Item item : invariableItems) {
 			if (!worldAllowsDrop(item)) {
 				continue;
@@ -1063,6 +1065,7 @@ public class Npc extends Mob {
 
 	private void dropHiddenUniqueItems(final Player owner, final double contributionScale, final boolean personalDrop) {
 		final ArrayList<Item> items = getWorld().getNpcDrops().rollHiddenUniqueDrops(this.getID(), contributionScale);
+		items.addAll(getWorld().getNpcDrops().rollSlayerComponentDrops(getID(), owner, contributionScale));
 		for (Item item : items) {
 			if (item == null || !worldAllowsDrop(item)) {
 				continue;

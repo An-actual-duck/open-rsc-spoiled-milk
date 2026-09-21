@@ -203,6 +203,9 @@ Neither the task expansion nor the equipment prices are implemented yet.
 The [special drops and assembly document](slayer-special-drops-and-assembly.md)
 is the reference for the confirmed eight-monster drop roster, material/remains
 exceptions, 1–3 residue/feather quantities, rare-component ordering and icon work.
+The [initial component pass](slayer-component-implementation.md) now implements
+the 16 materials and their drops with temporary icons. Ordinary loot expansion,
+equipment assembly and leather production remain pending.
 Default hide and bones plus level-appropriate existing ordinary loot are implied
 unless explicitly overridden. The [equipment design](slayer-unique-equipment-design.md)
 records six rewards, approved recipes and the deferred coating system. Naga's
@@ -268,8 +271,9 @@ credit. Naga and Bloodveld require no special consumable.
 
 1. Test the frog's approved slime/solvent rules and tune its initial combat values.
 2. Tune Bloodveld lifesteal and pulling; no Bloodveld counter item is required.
-3. Dark beast and Abyssal mechanics accepted; implement the approved component
-   rates/recipes/prices and settle ordinary loot and modifier policies.
+3. Dark beast and Abyssal mechanics accepted; component drops are implemented.
+   Implement assembly recipes/prices and settle ordinary loot. Component luck
+   modifiers now follow the existing rare-table rules.
 4. Set shared consumable lifecycle and shop rules, then per-monster values.
 5. Audit final sprite exports and runtime integration requirements.
 6. Approve combat tuning, tower access/spawns and assignment/reward additions.

@@ -3,6 +3,10 @@ package com.openrsc.server.constants;
 import com.openrsc.server.ServerConfiguration;
 import com.openrsc.server.content.BadLuckMitigation;
 import com.openrsc.server.content.DropTable;
+import com.openrsc.server.content.monsterslayer.SlayerComponentDrops;
+import com.openrsc.server.content.monsterslayer.AbyssalDemonCombat;
+import com.openrsc.server.content.monsterslayer.GiantFrogCombat;
+import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.util.rsc.DataConversions;
@@ -25,6 +29,7 @@ public class NpcDrops {
 	private final HashSet<Integer> dragonNpcs;
 	private final HashSet<Integer> ashesNpcs;
 	private final HashMap<Integer, ArrayList<HiddenUniqueDrop>> hiddenUniqueDrops;
+	private final SlayerComponentDrops slayerComponents = new SlayerComponentDrops();
 
 	private DropTable herbDropTable;
 	private DropTable rareDropTable;
@@ -76,6 +81,22 @@ public class NpcDrops {
 			applyMyWorldMaterialDrops();
 			retireLegacyAlternateEquipmentDrops();
 		}
+		if (config.WANT_MYWORLD) {
+			// Keep component loot independent; ordinary loot can be expanded separately.
+			for (int npcId = GiantFrogCombat.NPC_ID; npcId <= AbyssalDemonCombat.NPC_ID; npcId++) {
+				npcDrops.putIfAbsent(npcId, new DropTable("Slayer tower NPC " + npcId));
+			}
+			ashesNpcs.add(AbyssalDemonCombat.NPC_ID);
+		}
+	}
+
+	public ArrayList<Item> rollSlayerComponentDrops(int npcId, Player owner, double contributionScale) {
+		return slayerComponents.rollRare(npcId, owner, contributionScale);
+	}
+
+	public Item getSlayerBaselineDrop(int npcId) {
+		return config.WANT_MYWORLD
+			? slayerComponents.baseline(npcId, world.getServer().getCombatRandom()) : null;
 	}
 
 	public void unload() {
