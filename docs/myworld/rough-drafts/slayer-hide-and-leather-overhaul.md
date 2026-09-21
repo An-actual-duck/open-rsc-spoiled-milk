@@ -1,6 +1,7 @@
 # Slayer hide sources and grandfathered leather equipment
 
-Status: new-set foundations implemented; special bonuses pending. Existing-family audit deferred.
+Status: new-set foundations implemented; special bonuses pending. Source retirement
+and passive exceptions now selected by the owner; runtime changes pending.
 Updated: 2026-09-21.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
@@ -26,8 +27,13 @@ grandfathered holdings remain unchanged.
   Standard tanning, crafting, material/thread costs and wear rules apply.
   Special set bonuses remain undecided: do not invent, borrow or activate
   another family's effect when adding these base items.
-- Only monsters offered as Slayer tasks should drop hide. Every task monster
-  should supply hide or an owner-approved thematic substitute where appropriate.
+- Slayer monsters should supply the combat-focused hide families. Explicit
+  passive exceptions are cows, regular unicorns and bears: retain their drops,
+  tanning, crafting, armor and normal tradability, but keep them outside Slayer.
+  Remove the existing bear assignment. Black unicorns remain Slayer tasks and
+  retain their leather family (owner-confirmed exception to the unicorn wording).
+  Every task monster should supply hide or an owner-approved thematic substitute
+  where appropriate.
   Confirmed exceptions are **Slimey residue (1–3 per kill)** for Abyssal demons
   and **Cockatrice Feathers (1–3 per kill)** for cockatrices; see
   [special drops and assembly](slayer-special-drops-and-assembly.md).
@@ -40,35 +46,66 @@ grandfathered holdings remain unchanged.
   repeatable assignments only**, never mandatory tasks. Elder Green Dragon
   requires access to a special Mining Guild area; Balrog is behind a quest
   line. Audit exact access predicates rather than inventing levels or flags.
-- Review the roster for overly humanoid enemies. The owner believes it is
-  already largely clean; do not assume wholesale removals are necessary.
-  Giants were raised as a possible non-qualifying source, not a confirmed
-  current assignment or finalized item-removal list.
+- Remove regular, moss, ice and fire giants, ogres and jogres from Slayer
+  wherever assigned, and retire their hide/leather/armor acquisition. This
+  concerns the giant humanoid families, not creatures merely named "giant"
+  such as giant frogs, giant spiders or giant bats. Other families are not
+  implicitly approved for retirement.
 
 Confirmed: inclusion in the Slayer roster defines an eligible hide source;
 the killer does **not** need that particular task active. Individual boss opt-in
 controls assignments, not whether that creature can drop its hide.
 
-## Implementation order clarified by owner
+## Selected retirement scope
 
-Finish adding the eight new monsters, including their sprite work, **before**
-auditing or retiring existing hide/leather families. The audit and all specific
-grandfathering decisions are postponed until that later phase establishes
-which items, if any, are affected. They do not block new-item implementation
-or the upcoming sprite pass. Do not remove existing sources, change existing
-tradability, migrate holdings or resolve legacy crafting/death behavior now.
-The preservation direction below remains the future intent, not authorization
-to apply a retirement migration before the audit.
+The owner's latest direction selects the following five material families for
+retirement, superseding the earlier deferral for this specific scope. It does
+not authorize unrelated source removals or a live database/deployment operation.
+
+| Family | Raw hide | Processed leather | Five armor IDs |
+| --- | ---: | ---: | --- |
+| Giant | 1807 | 1808 | 1875–1879 |
+| Moss giant | 1809 | 1810 | 1895–1899 |
+| Ice giant | 1811 | 1812 | 1900–1904 |
+| Fire giant | 1813 | 1814 | 1915–1919 |
+| Ogre, including jogre sources | 1815 | 1816 | 1880–1884 |
+
+This is **35 item definitions**. Leave every existing instance and item ID in
+place. Bind the retired definitions as untradeable; do not delete or replace
+holdings, reset quantities, change armor stats or remove existing set effects.
+The preserved items are intentional "I was here for it" legacy collectibles.
+
+Remove raw hide drops from every affected source variant, tanning/processing,
+armor crafting, and the corresponding player-visible recipe/help listings.
+Existing retained raw hide/leather cannot be used to make more retired items.
+Also close alternative normal acquisition routes: the current Fishing special
+reward table includes gloves and boots from all five retired families. Keeping
+those rewards would continue issuing the purported legacy items to new players.
+Audit shops, other loot, direct crafting calls and ingredient-use routes too.
+Developer item-grant tools are not ordinary player acquisition.
+
+Current assigned removals are `falador.bears`, `brimhaven.jogres`,
+`brimhaven.moss_giants`, `champions.ice_giants`, `heroes.fire_giants`, and the
+jogre/ice-giant repeatables. Regular giant/ogre family definitions exist but
+are not currently assigned. Retain black unicorns and their assignment.
+
+Task changes require a versioned migration for both the legacy roster and
+the staged tower roster. Do not rewrite the historical roster in place:
+existing numeric cursors and completed-task identities depend on it. Preserve
+earned ranks/completed tiers, balances, backpack upgrades and unrelated active
+tasks. Retired active assignments must not strand a player; specify and test
+their resolution without silently paying unearned rewards. Backpack/shop
+prices are not implicitly repriced by the shorter mandatory route.
 
 ## Optional access-gated boss assignments
 
 - Balrog and Elder Green Dragon begin excluded from each player's random task
   chances. Unlocking access does not by itself opt a player in.
 - Give the player a deliberate way to enable each boss independently. The
-  owner's proposed presentation is nearby-associate dialogue:
-  **"I'm ready to take on the Elder Green Dragon"** and
-  **"I'm Ready to take on the Balrog"**. Exact associate IDs/locations and
-  final dialogue routing remain to be selected.
+  owner's approved presentation is nearby-associate dialogue:
+  **"I'm ready for Elder Green Dragon tasks"** and
+  **"I'm ready for Balrog tasks"**. Both are handled by the existing Legends'
+  Guild Slayer shop associate (857), near Radimus; no new placement is needed.
 - Choosing the relevant option adds that boss to eligible random task chances,
   not a guaranteed immediate boss assignment or a replacement for an active
   task. Keep the one-active-task contract and existing progress intact.
@@ -77,16 +114,26 @@ to apply a retirement migration before the audit.
   completion or the mandatory King Black Dragon capstone.
 - Dialogue must not grant access or bypass the Mining Guild/quest gates. Audit
   the actual requirements and recheck eligibility at assignment so players are
-  not sent to an inaccessible encounter. Count, payout, challenge tier, weight
-  and minimum rank for each boss are still undecided.
-- A reversible "stop assigning this boss" option is recommended, not yet
-  approved. Also settle how it interacts with an already active assignment;
-  do not introduce a free task reroll or invent cancellation costs implicitly.
+  not sent to an inaccessible encounter. Both join the Legends' Guild repeatable
+  pool and follow its existing rank/progression eligibility, not an earlier
+  mandatory tier.
+- Offer **"I'm unable to complete"** in the relevant boss dialogue while opted
+  in. The owner confirmed this disables future assignments for that boss and
+  cancels a currently active assignment for that same boss **without rewards**.
+  Do not cancel a different active task, award partial completion, modify the
+  other boss preference, or immediately roll a replacement. Players can opt in
+  again deliberately after resolving their access/preparation problem.
+
+Approved for each boss: **one kill per task, 80 Hero points, weight 1**, in the
+Legends' Guild repeatable pool, controlled through associate 857. Existing
+mandatory King Black Dragon stays unchanged at 60 Hero points. The pool's
+normal eligibility requires completion of that contact's mandatory progression;
+opting in does not bypass it. These values are approved but not yet implemented.
 
 The earlier blanket exclusion of Balrog from Slayer is superseded for opted-in
 repeatable tasks. Its exclusion from the mandatory line remains intact. Elder
-Green Dragon's optional inclusion is confirmed; older suggestions of a specific
-post-Legend assignment tier do not settle the current rank/count/payout design.
+Green Dragon's optional inclusion is confirmed; the approved settings above
+replace older undecided rank/count/payout notes.
 
 ## Leather-source audit deliverable
 
@@ -96,15 +143,14 @@ leather IDs, crafted armor IDs, current set effects and task membership. Mark
 the proposed disposition: retain with an existing task; retain and add a task;
 or retire the source/family subject to owner approval.
 
-Include Balrog and Elder Green Dragon as confirmed task additions, but do not
-assume any other current source is approved for removal. Leather armor remains
-Crafting-produced; this audit is not permission to add finished armor drops or
-silently remove existing ones. Reconcile any discovered finished-item sources
-with the owner alongside the hide sources.
+Include Balrog and Elder Green Dragon as confirmed task additions. The five
+families above are approved retirements; no others are assumed. Retained armor
+remains Crafting-produced. Retire the selected families' finished-item sources
+along with their material sources; preserve acquisition of unrelated families.
 
-Preserve existing mandatory entries during this audit. If a proposed source
-retirement conflicts with that rule or a currently assigned monster's required
-hide supply, surface the conflict before changing either system.
+The selected task removals supersede the earlier instruction to only lengthen
+mandatory tasks for these specific entries. Preserve completed progression and
+unrelated mandatory entries, including the staged eight-monster additions.
 
 ## Confirmed grandfathering rule
 
@@ -120,22 +166,20 @@ source must not remove the definitions needed to load and display old items.
 The grandfathering rule applies to retired families; it does not make all
 remaining leather equipment untradeable.
 
-Before implementation, settle whether retained raw materials may still be
-tanned/crafted. If allowed, their outputs must not provide a route around the
-untradeable restriction. Do not infer recipe deletion or continued crafting
-from the preservation rule alone.
+The owner explicitly disallows continued tanning/crafting of retired materials.
+Remove those recipes rather than showing new players inaccessible content.
 
 Audit certificates/noted forms, shop sale and buyback, trade, player-visible
 ground drops, death/loot, refunds and any other item-transfer paths so binding
 cannot be bypassed. Exact death/recovery behavior is still a design decision:
 preserving existing holdings during migration does not define future death rules.
-Choose item-definition-wide retirement or another identity-safe mechanism only
-after the final affected item list is approved.
+The affected definition list is now fixed above; implementation must preserve
+identity rather than converting holdings to a new item family.
 
 ## Audit and implementation preparation
 
 1. Enumerate current task families and every included NPC variant against hide
-   drop tables. Flag humanoids for owner review; do not auto-remove them.
+   drop tables. Apply only the selected retirements and passive exceptions.
 2. Enumerate hide sources, tanning outputs and armor recipes, including boss
    sets, and classify each as retained, proposed task addition or proposed
    retirement. Review the eight new tower creatures as part of this coverage.
@@ -143,17 +187,18 @@ after the final affected item list is approved.
    changing existing definitions. New armor foundations follow the approved
    tier/ratio rules above; their special bonuses remain undecided.
    Residue/feather quantities are 1–3 with equal chances for each amount.
-4. Define Balrog/Elder assignment counts, tier, rewards and access handling.
-   Implement the explicit opt-in model above, with default exclusion and real
-   access checks. A free replacement for an unexpectedly inaccessible active
-   assignment remains a proposal, not an approved reroll mechanism.
+4. Use the approved Balrog/Elder counts, tier and rewards; audit access handling.
+   Implement the explicit opt-in/out model above, with default exclusion and
+   real access checks. Same-boss cancellation without rewards is approved;
+   unrelated task cancellation and immediate rerolls are not.
    Avoid mandatory progression dead ends; preserve unrelated account progress.
 5. Specify and test an idempotent preservation/binding migration with backups
    and rollback. Test quantities, equipped items, bank holdings, alternate forms,
-   trade rejection, transfer loopholes and any approved legacy crafting paths.
+   trade rejection, transfer loopholes and rejection/absence of retired recipes.
 6. Verify retained/new eligible monsters drop their intended hides, retired
    sources no longer do, and existing Slayer credit and Crafting still work.
 
-New-set foundations may be implemented under the owner's current direction.
-Existing-family retirement, account migration and live deployment remain
-outside this pass. See [new leather implementation](slayer-leather-implementation.md).
+This document records approved policy, not completed runtime retirement. No
+holdings, drops, recipes or tasks were changed by this documentation pass.
+Live activation still requires its separate backup/deployment permissions.
+See [new leather implementation](slayer-leather-implementation.md).
