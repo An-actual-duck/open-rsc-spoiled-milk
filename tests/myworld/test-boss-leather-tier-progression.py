@@ -187,9 +187,9 @@ def main() -> int:
     legacy_melee = read("server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java")
     modern_melee = read("server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java")
     assert legacy_melee.index("applyWeaponPoison(hitter, target, damage);") \
-        < legacy_melee.index("inflictDamage(hitter, target, damage);")
+        < legacy_melee.index("inflictDamage(hitter, target, damage, attackSuppressed);")
     assert modern_melee.index("applyWeaponPoison(attackerMob, targetMob, damage);") \
-        < modern_melee.index("inflictDamage(attackerMob, targetMob, damage);")
+        < modern_melee.index("inflictDamage(attackerMob, targetMob, damage, attackSuppressed);")
     require_all(inferno_splash, (
         "new CombatEffect(target, CombatEffect.HELLS_INFERNO)",
         "auxiliaryMagicDamage.apply(target, splashDamage)",

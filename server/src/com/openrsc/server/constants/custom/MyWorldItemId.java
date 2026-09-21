@@ -66,6 +66,42 @@ public final class MyWorldItemId {
 	public static final int DAGGER_OF_TERROR = 3353;
 	public static final int POISONED_DAGGER_OF_TERROR = 3354;
 	public static final int SULLEN_PENDANT = 3355;
+	public static final int GIANT_FROG_LEATHER = 3356;
+	public static final int GIANT_FROG_COIF = 3357;
+	public static final int GIANT_FROG_GLOVES = 3358;
+	public static final int GIANT_FROG_BOOTS = 3359;
+	public static final int GIANT_FROG_CHAPS = 3360;
+	public static final int GIANT_FROG_CUIRASS = 3361;
+	public static final int BANSHEE_LEATHER = 3362;
+	public static final int BANSHEE_COIF = 3363;
+	public static final int BANSHEE_GLOVES = 3364;
+	public static final int BANSHEE_BOOTS = 3365;
+	public static final int BANSHEE_CHAPS = 3366;
+	public static final int BANSHEE_CUIRASS = 3367;
+	public static final int NAGA_LEATHER = 3368;
+	public static final int NAGA_COIF = 3369;
+	public static final int NAGA_GLOVES = 3370;
+	public static final int NAGA_BOOTS = 3371;
+	public static final int NAGA_CHAPS = 3372;
+	public static final int NAGA_CUIRASS = 3373;
+	public static final int TERROR_DOG_LEATHER = 3374;
+	public static final int TERROR_DOG_COIF = 3375;
+	public static final int TERROR_DOG_GLOVES = 3376;
+	public static final int TERROR_DOG_BOOTS = 3377;
+	public static final int TERROR_DOG_CHAPS = 3378;
+	public static final int TERROR_DOG_CUIRASS = 3379;
+	public static final int BLOODVELD_LEATHER = 3380;
+	public static final int BLOODVELD_COIF = 3381;
+	public static final int BLOODVELD_GLOVES = 3382;
+	public static final int BLOODVELD_BOOTS = 3383;
+	public static final int BLOODVELD_CHAPS = 3384;
+	public static final int BLOODVELD_CUIRASS = 3385;
+	public static final int DARK_BEAST_LEATHER = 3386;
+	public static final int DARK_BEAST_COIF = 3387;
+	public static final int DARK_BEAST_GLOVES = 3388;
+	public static final int DARK_BEAST_BOOTS = 3389;
+	public static final int DARK_BEAST_CHAPS = 3390;
+	public static final int DARK_BEAST_CUIRASS = 3391;
 
 	private MyWorldItemId() {
 	}

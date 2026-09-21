@@ -1610,12 +1610,43 @@ public class Crafting implements UseInvTrigger,
 	}
 
 	private HideArmorRecipe getHideArmorRecipe(int materialId) {
+		if (materialId == MyWorldItemId.GIANT_FROG_LEATHER) {
+			return new HideArmorRecipe(materialId, "Giant frog hide", 2, 8,
+				MyWorldItemId.GIANT_FROG_COIF, MyWorldItemId.GIANT_FROG_GLOVES,
+				MyWorldItemId.GIANT_FROG_BOOTS, MyWorldItemId.GIANT_FROG_CHAPS, MyWorldItemId.GIANT_FROG_CUIRASS);
+		}
+		if (materialId == MyWorldItemId.BANSHEE_LEATHER) {
+			return new HideArmorRecipe(materialId, "Banshee hide", 4, 22,
+				MyWorldItemId.BANSHEE_COIF, MyWorldItemId.BANSHEE_GLOVES,
+				MyWorldItemId.BANSHEE_BOOTS, MyWorldItemId.BANSHEE_CHAPS, MyWorldItemId.BANSHEE_CUIRASS);
+		}
+		if (materialId == MyWorldItemId.NAGA_LEATHER) {
+			return new HideArmorRecipe(materialId, "Naga hide", 5, 30,
+				MyWorldItemId.NAGA_COIF, MyWorldItemId.NAGA_GLOVES,
+				MyWorldItemId.NAGA_BOOTS, MyWorldItemId.NAGA_CHAPS, MyWorldItemId.NAGA_CUIRASS);
+		}
+		if (materialId == MyWorldItemId.TERROR_DOG_LEATHER) {
+			return new HideArmorRecipe(materialId, "Terror dog hide", 6, 38,
+				MyWorldItemId.TERROR_DOG_COIF, MyWorldItemId.TERROR_DOG_GLOVES,
+				MyWorldItemId.TERROR_DOG_BOOTS, MyWorldItemId.TERROR_DOG_CHAPS, MyWorldItemId.TERROR_DOG_CUIRASS);
+		}
+		if (materialId == MyWorldItemId.BLOODVELD_LEATHER) {
+			return new HideArmorRecipe(materialId, "Bloodveld hide", 6, 38,
+				MyWorldItemId.BLOODVELD_COIF, MyWorldItemId.BLOODVELD_GLOVES,
+				MyWorldItemId.BLOODVELD_BOOTS, MyWorldItemId.BLOODVELD_CHAPS, MyWorldItemId.BLOODVELD_CUIRASS);
+		}
+		if (materialId == MyWorldItemId.DARK_BEAST_LEATHER) {
+			return new HideArmorRecipe(materialId, "Dark beast hide", 7, 46,
+				MyWorldItemId.DARK_BEAST_COIF, MyWorldItemId.DARK_BEAST_GLOVES,
+				MyWorldItemId.DARK_BEAST_BOOTS, MyWorldItemId.DARK_BEAST_CHAPS, MyWorldItemId.DARK_BEAST_CUIRASS);
+		}
 		if (materialId == MyWorldItemId.KING_BLACK_DRAGON_LEATHER) {
 			return new HideArmorRecipe(materialId, "King black dragon hide", 10, 70,
 				MyWorldItemId.KING_BLACK_DRAGON_COIF, MyWorldItemId.KING_BLACK_DRAGON_GLOVES,
 				MyWorldItemId.KING_BLACK_DRAGON_BOOTS, MyWorldItemId.KING_BLACK_DRAGON_CHAPS,
 				MyWorldItemId.KING_BLACK_DRAGON_CUIRASS);
 		}
+		if (ItemId.getById(materialId) == null) return null;
 		switch (ItemId.getById(materialId)) {
 			case LEATHER:
 				return new HideArmorRecipe(materialId, "Cow hide", 1, 1,
