@@ -121,7 +121,13 @@ That policy is documented, not yet applied to runtime. Broader auditing remains
 separate. The original implementation boundary was to wait until the eight
 new NPC additions and their sprite work are finished. Nothing in this pass
 removes old drops, alters old equipment, binds holdings or changes death rules.
-New armor bonuses still need designs. [Ordinary monster loot](slayer-ordinary-loot-implementation.md)
+New armor bonuses still need designs. Before assigning them, review retained
+sets and source coverage together under the owner's
+[shared armor-theme direction](slayer-hide-and-leather-overhaul.md#material-coverage-and-shared-armor-themes),
+including increased poison cleanse rate for every carapace family. Exact
+mechanics remain undecided; the broader effect-standardization review waits
+until the Slayer Tower is done.
+[Ordinary monster loot](slayer-ordinary-loot-implementation.md)
 and [consumable shop access/pricing](slayer-gimmick-shop-implementation.md) are
 implemented. Optional boss tasks remain pending. [Tower associate definitions
 and dialogue](slayer-tower-associates.md) are implemented; map placement and
