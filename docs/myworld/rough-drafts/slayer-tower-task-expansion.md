@@ -130,7 +130,7 @@ Implementation requirements:
   neither has a special consumable requirement.
 - Do not promise Solvent poison immunity or pre-emptive, timed immunity from
   discharge wipes. Wipes remove existing marks, not future ones.
-- The feather shield is planned, not implemented. Only add it as an alternative
+- Shield of Mobility is planned, not implemented. Only add it as an alternative
   counter tip once its prevention behavior is available in the same release.
 - Ensure counter items can be obtained before the mandatory encounter. Verify
   actual shop stock/access/prices; the administrator `::slayergimmicks` kit is
@@ -206,7 +206,7 @@ prices, not a new runtime auto-pricing formula. They are not implemented yet.
 
 | Reward | Source-tier currency | Backpack benchmark | Approved assembly currency | Equivalent source-monster tasks from zero balance |
 | --- | --- | ---: | ---: | ---: |
-| Cockatrice feather shield | Adept | 148 | 110 | 14 at 8 each |
+| Shield of Mobility | Adept | 148 | 110 | 14 at 8 each |
 | Sullen Pendant | Veteran | 138 | 105 | 9 at 12 each |
 | Dagger of Terror | Elite | 110 | 85 | 5 at 18 each |
 | Leaching Bow | Elite | 110 | 85 | 5 at 20 each |

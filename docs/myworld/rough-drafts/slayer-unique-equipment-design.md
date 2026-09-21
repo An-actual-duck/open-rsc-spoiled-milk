@@ -37,16 +37,18 @@ rarity policy, ordinary loot and assembly transaction requirements.
 - Whip/pendant hit-trigger effects require **actual positive damage from the
   primary weapon/attack only**. Secondary/off-hand damage, poison ticks,
   reflected damage and other secondary damage sources do not trigger them.
-  Pendant retaliation cannot trigger another retaliation. Map primary attack
-  events explicitly for NPCs and resolve direct-spell eligibility before coding;
-  do not treat every damage callback as an eligible weapon hit.
+  Pendant retaliation cannot trigger another retaliation. For the pendant,
+  direct melee, ranged and magic hits all qualify when they deal positive
+  primary damage. Map primary attack events explicitly for NPCs; do not treat
+  every damage callback as eligible. This does not give the whip a proc from
+  casting spells while holding it; its effect belongs to its own primary hits.
 
 ## Approved wear requirements
 
 The owner's correction supersedes the earlier blanket no-restrictions answer:
 weapons require the standard level for the explicitly selected requirement
 tier. **Non-weapon equipment has no wear requirements** (Sullen Pendant and
-Cockatrice feather shield). Do not add Slayer-rank, quest or extra skill gates
+Shield of Mobility). Do not add Slayer-rank, quest or extra skill gates
 to wearing these rewards. Acquisition/shop access is a separate contract.
 
 | Weapon | Approved requirement tier | Required skill level | Stat benchmark remains |
@@ -157,15 +159,20 @@ shared god-spell behavior.
 - **Tier 9 longbow stats**.
 - **20% lifesteal, primary hit only**. Secondary/off-hand hits, splash,
   poison and other secondary damage sources do not heal through this bow.
+- Calculate healing from **actual HP removed**, excluding overkill, and cap
+  healing at the wearer's maximum HP. Carry fractional healing between
+  qualifying hits so repeated small hits retain the intended 20% return;
+  do not round each hit down and discard its fraction. No heal on a miss.
 - Visual construction: two tongues woven into the bowstring.
 
 Exact examine text:
 
 > Two Bloodveld tongues are woven together to make the bowstring
 
-Before implementation: define damage basis, rounding,
-overkill and healing limits, including any interaction with ammunition effects.
-No minimum heal on a miss or fractional-healing accumulator is approved.
+Before implementation: map ammunition damage to primary versus secondary
+events and define the fractional remainder's lifecycle across equipment and
+session changes. The accumulator is for fractions, not banked whole-point
+overhealing above maximum HP.
 
 ## Dagger of Terror
 
@@ -189,6 +196,8 @@ future slow coating is not an instruction to implement that system now.
 - Equipment slot: **neck**.
 - **10% chance each time the wearer takes eligible primary-hit damage** to have the pendant
   **"cry out in pain"** and retaliate against the offending enemy.
+- Direct **melee, ranged and magic** hits all qualify when they deal positive
+  primary damage. Splash, poison and other secondary damage do not qualify.
 - Retaliation rolls **1%–10% of a normal enemy's maximum HP**, displayed as
   **yellow damage**. This uses enemy maximum HP, not wearer HP, damage
   received or enemy remaining HP.
@@ -214,10 +223,12 @@ combat permissions. Defense bypass does not authorize bypassing PvP-off or
 boss immunity. Use the shared primary-hit and positive-damage rules;
 retaliation chaining is excluded.
 
-## Cockatrice feather shield (name pending)
+## Shield of Mobility
 
 - Recipe: **500 Cockatrice Feathers**.
 - Approximately **tier 3 shield stats**; deliberately weak ordinary blocking.
+- While equipped, prevents the Abyssal demon's **extra Solvent timer drain**
+  as well as its trap. An active Solvent buff's normal countdown continues.
 - **Prevention only while equipped**. Equipping does not clear an existing
   debuff or bypass the demon trap's prohibition on equipment/other actions.
 - Nullifies the **frog's Slimy Spit, cockatrice's Stony Glare and Abyssal
@@ -235,8 +246,8 @@ Exact examine text:
 
 > A lightweight shield that doesn't block well but keeps you mobile
 
-Before implementation: choose the item name and exact stats. Decide
-whether solvent duration still drains when this shield supplies immunity.
+Before implementation: resolve exact tier-3 shield stats and all relevant
+enemy immobilization entry points.
 Protection against the named debuffs does not establish poison, wail, lightning
 or Feeding Frenzy immunity.
 
@@ -251,6 +262,8 @@ These are implementation/test requirements, not a claim that effects exist:
 - Shield: cover every enemy immobilization route, including the attack-only
   frog debuff and full-action demon trap. Equipping after application must
   not cure an active effect. Unrelated enemy damage/debuffs remain effective.
+  Verify demon hits do not accelerate Solvent expiry while shielded, but its
+  ordinary countdown still runs.
 - Staff: test radii 1/2/3, separate secondary rolls, primary exclusion,
   summons/dead/non-attackable exclusion, suppression and legal damage delivery.
   Verify tier splash coefficients of 15%/25%/40% respectively, applied before
@@ -258,8 +271,10 @@ These are implementation/test requirements, not a claim that effects exist:
 - Pendant: positive primary damage can activate once; secondary/zero damage
   and retaliation chains cannot. Verify normal-enemy 10% ceiling, defense
   bypass, boss immunity/feedback and no player damage while PvP is disabled.
+  Cover direct melee, ranged and magic hits, with splash and poison excluded.
 - Bow: only primary hits contribute lifesteal; verify secondary and poison
-  damage cannot produce additional heals.
+  damage cannot produce additional heals. Test overkill exclusion, the maximum
+  HP cap and fractional carry across repeated small hits.
 - Before any future PvP activation, explicitly review the shield's scope;
   test the whip's shared-target immunity across multiple attackers; test staff
   party/clan exclusions and legal PvP areas; and test the pendant's 5% player
