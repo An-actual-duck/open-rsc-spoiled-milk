@@ -94,8 +94,12 @@ The owner subsequently fixed **Cockatrice Eye and Sticky Saliva Gland at
 - **Unique drops roll independently**, so multiple components can drop on the
   same kill, including a rib and a vertebra. They supplement ordinary loot.
 - **No active Slayer task is required** for these drops. Existing kill-credit/
-  loot ownership rules still apply. Luck modifiers and any duplicate/bad-luck
-  rules remain to be settled; no pity system or guaranteed unique is implied.
+  loot ownership rules still apply.
+- **Existing applicable luck modifiers apply** to these unique components.
+  All documented rates are **base chances**, before those modifiers. Reuse
+  existing eligibility and modifier rules rather than inventing new bonuses
+  or applying luck twice. **No new pity system or guaranteed unique** is added.
+  The acquisition estimates below are baseline estimates without luck bonuses.
 
 ### Confirmed acquisition targets and rates
 
@@ -166,7 +170,8 @@ rules remain open; no extra currency tier may be added to this recipe.
   account-bound component restriction is implied. This approval concerns new
   rewards, not the separate retired-hide/armor grandfathering policy.
 - Preserve the approved chances, independent rolls and one-unit unique-drop
-  quantities. Audit eligible NPC variants and luck modifiers explicitly.
+  quantities. Audit eligible NPC variants and apply the existing applicable
+  luck modifiers to the documented base rates explicitly.
 - Six equipment rewards now have owner-directed designs in the linked
   equipment document. Naga's component is deferred; Cockatrice Eye and Sticky
   Saliva Gland are collectible ingredients for a future coating system, not
@@ -188,7 +193,7 @@ that icons have been created, approved or imported.
   discharge wipe**. They currently borrow potion artwork. Solvent is shared
   by frog and Abyssal demon, not a second item/icon.
 - Equipment icons: **Abyssal Whip, Thunder Spire Staff, Leaching Bow, Dagger
-  of Terror, Sullen Pendant and the unnamed Cockatrice feather shield**.
+  of Terror, Sullen Pendant and Shield of Mobility**.
   Use the linked reward descriptions and construction details. Future coating
   potion/weapon-variant icons are deferred with that system.
 - Use established RSC inventory/ground icon styling and the existing item
