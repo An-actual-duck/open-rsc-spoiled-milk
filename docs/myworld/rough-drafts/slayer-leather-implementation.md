@@ -115,10 +115,14 @@ no new raster art was generated here.
 
 ## Deferred work and ordering
 
-Retirement/source auditing and grandfathering are deferred until the eight
+The earlier retirement deferral is superseded for the owner's selected five
+families; see [approved retirement and passive exceptions](slayer-hide-and-leather-overhaul.md).
+That policy is documented, not yet applied to runtime. Broader auditing remains
+separate. The original implementation boundary was to wait until the eight
 new NPC additions and their sprite work are finished. Nothing in this pass
 removes old drops, alters old equipment, binds holdings or changes death rules.
 New armor bonuses still need designs. [Ordinary monster loot](slayer-ordinary-loot-implementation.md)
 and [consumable shop access/pricing](slayer-gimmick-shop-implementation.md) are
-implemented. Optional boss tasks and tower gatekeepers are separate remaining
-content tasks; map placement remains the owner's job.
+implemented. Optional boss tasks remain pending. [Tower associate definitions
+and dialogue](slayer-tower-associates.md) are implemented; map placement and
+actual door connections remain pending the owner's tower layout.
