@@ -253,6 +253,7 @@ public final class EntityHandler {
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/VisualTestNpcDefs.json");
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MyWorldNpcDefs.json");
 			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/SlayerMovementPreviewNpcDefs.json");
+			loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/MonsterSlayerTowerNpcDefs.json");
 		}
 		//loadNpcs(getServer().getConfig().CONFIG_DIR + "/defs/NpcDefsExpansion.json");
 		patchNpcs();

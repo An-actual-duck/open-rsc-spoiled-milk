@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CLIENT_JAR = ROOT / "Client_Base/Open_RSC_Client.jar"
 SERVER_DEFINITIONS = ROOT / "server/conf/server/defs/MonsterSlayerNpcDefs.json"
 CLIENT_HANDLER = ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java"
-EXPECTED_IDS = tuple(range(846, 861))
+EXPECTED_IDS = tuple(range(846, 861)) + tuple(range(871, 877))
 RENAMED_WORLD_NPCS = {
     4: "Tough Goblin",
     23: "Young Giant Spider",
@@ -65,7 +65,7 @@ def fixture(entries: list[dict]) -> str:
 
             public static void main(String[] args) {{
                 EntityHandler.load(true);
-                if (EntityHandler.npcCount() < 861) {{
+                if (EntityHandler.npcCount() < 877) {{
                     throw new AssertionError("Monster Slayer NPC definitions did not extend the client catalog");
                 }}
                 {assertions}
@@ -112,6 +112,8 @@ def fixture(entries: list[dict]) -> str:
 def main() -> None:
     document = json.loads(SERVER_DEFINITIONS.read_text(encoding="utf-8"))
     entries = document["npcs"]
+    entries += json.loads((SERVER_DEFINITIONS.parent / "MonsterSlayerTowerNpcDefs.json")
+                          .read_text(encoding="utf-8"))["npcs"]
     require(tuple(entry["id"] for entry in entries) == EXPECTED_IDS,
             "Monster Slayer server definition inventory drift")
     source = CLIENT_HANDLER.read_text(encoding="utf-8")
