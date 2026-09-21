@@ -28,8 +28,9 @@ Source designs: [drops and assembly](slayer-special-drops-and-assembly.md),
   existing hides and crafting recipes are unchanged.
 - No Serpant's Tail, completed reward equipment, assembly purchases, coating,
   new leather recipes, set bonuses, task expansion or grandfathering migration.
-  Full ordinary loot tables remain a separate balance/implementation pass;
-  the new NPC tables currently provide the materials and remains described here.
+  The later [ordinary loot pass](slayer-ordinary-loot-implementation.md) adds
+  specialty supplies, coins, shared rare-table access and independent equipment
+  drops without changing the component probabilities documented here.
 
 ## Temporary visual manifest
 

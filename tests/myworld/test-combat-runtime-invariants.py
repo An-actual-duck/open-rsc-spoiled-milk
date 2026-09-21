@@ -264,7 +264,7 @@ def main() -> None:
     require_order(
         PVM_MELEE_EVENT,
         "ElderGreenDragonSpecialAttacks.shouldUseMeleeSweep(attackerMob, targetMob, attackSuppressed)",
-        "inflictDamage(attackerMob, targetMob, damage)",
+        "inflictDamage(attackerMob, targetMob, damage, attackSuppressed)",
     )
     require_contains(PROJECTILE_EVENT, "ElderGreenDragonSpecialAttacks.maybeApplyProjectileAoe")
     require_contains(ELDER_GREEN_DRAGON_SPECIALS, "public static final int AOE_RADIUS = 6;")
