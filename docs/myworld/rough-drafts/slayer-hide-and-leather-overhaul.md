@@ -8,6 +8,9 @@ Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-gu
 [boss leather progression](../in-progress-work-plans/boss-leather-tier-progression-plan.md).
 These notes describe a future source/roster overhaul, not an assertion that
 existing item definitions, drops or accounts have already changed.
+The separate [component pass](slayer-component-implementation.md) has added six
+new collectible raw hides; it has not changed existing hide families, tanning,
+armor recipes or grandfathered holdings.
 
 ## Owner direction
 

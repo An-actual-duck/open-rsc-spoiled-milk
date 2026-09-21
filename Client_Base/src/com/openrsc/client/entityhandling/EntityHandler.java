@@ -5604,6 +5604,42 @@ public class EntityHandler {
 		}
 	}
 
+	/** Temporary canonical sprite reuse: tint hides and use recognizable component stand-ins. */
+	private static void addSlayerComponentDefinitions() {
+		setCustomItemDefinition(3333, new ItemDef("Giant frog hide", "A slick hide from a giant frog.", "",
+			0, 69, "items:69", false, false, 0, 0x378B83, false, false, true, 3333));
+		setCustomItemDefinition(3334, new ItemDef("Banshee hide", "A pale, ghostly hide from a banshee.", "",
+			0, 69, "items:69", false, false, 0, 0xA58CAB, false, false, true, 3334));
+		setCustomItemDefinition(3335, new ItemDef("Naga hide", "A supple hide covered in naga scales.", "",
+			0, 69, "items:69", false, false, 0, 0x56753E, false, false, true, 3335));
+		setCustomItemDefinition(3336, new ItemDef("Terror dog hide", "A tough hide from a terror dog.", "",
+			0, 69, "items:69", false, false, 0, 0x655951, false, false, true, 3336));
+		setCustomItemDefinition(3337, new ItemDef("Bloodveld hide", "A soft, fleshy hide from a bloodveld.", "",
+			0, 69, "items:69", false, false, 0, 0x9B8065, false, false, true, 3337));
+		setCustomItemDefinition(3338, new ItemDef("Dark beast hide", "A thick, dark hide from a dark beast.", "",
+			0, 69, "items:69", false, false, 0, 0x393225, false, false, true, 3338));
+		setCustomItemDefinition(3339, new ItemDef("Cockatrice Feathers", "Feathers that twitch at the slightest touch.", "",
+			0, 176, "items:176", true, false, 0, 0x8F9B5B, false, false, false, 3339));
+		setCustomItemDefinition(3340, new ItemDef("Slimey Residue", "Sticky abyssal flesh that refuses to hold its shape.", "",
+			0, 262, "items:262", true, false, 0, 0x62798C, false, false, false, 3340));
+		setCustomItemDefinition(3341, new ItemDef("Sticky Saliva Gland", "A giant frog's gland, still oozing sticky saliva.", "",
+			0, 116, "items:116", false, false, 0, 0x80A65B, false, false, true, 3341));
+		setCustomItemDefinition(3342, new ItemDef("Cockatrice Eye", "A lifeless eye with an unsettling stare.", "",
+			0, 116, "items:116", false, false, 0, 0xB9A65B, false, false, true, 3342));
+		setCustomItemDefinition(3343, new ItemDef("Frozen Tear", "A banshee's sorrow, crystallized into a single tear.", "",
+			0, 74, "items:74", false, false, 0, 0x99CDDD, false, false, true, 3343));
+		setCustomItemDefinition(3344, new ItemDef("Terror Fang", "A sharp fang from a terror dog.", "",
+			0, 145, "items:145", false, false, 0, 0xD6C5A0, false, false, true, 3344));
+		setCustomItemDefinition(3345, new ItemDef("Leach Tongue", "A bloodveld's tongue, disturbingly elastic.", "",
+			0, 103, "items:103", false, false, 0, 0xAF6262, false, false, true, 3345));
+		setCustomItemDefinition(3346, new ItemDef("Lightning Horn", "A dark beast's horn, prickling with static.", "",
+			0, 145, "items:145", false, false, 0, 0xD8BC61, false, false, true, 3346));
+		setCustomItemDefinition(3347, new ItemDef("Abyssal Vertibrae", "A segment of an abyssal demon's spine, slick with residue.", "",
+			0, 20, "items:20", false, false, 0, 0x91A4B2, false, false, true, 3347));
+		setCustomItemDefinition(3348, new ItemDef("Abyssal Rib", "A curved abyssal rib, held together by clinging flesh.", "",
+			0, 137, "items:137", false, false, 0, 0x8199AA, false, false, true, 3348));
+	}
+
 	private static void addBangleJewelryDefinitions() {
 		final String[] gems = {"Sapphire", "Emerald", "Ruby", "Diamond", "Dragonstone"};
 		final int[] banglePrices = {1800, 3000, 6000, 12000, 35000};
@@ -5914,6 +5950,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3260, new ItemDef("Blue flower", "A blue flower used as a potion ingredient", "", 40, -1, "external-png:blue-flower@15x18", false, false, 0, 0, false, false, true, 3260));
 		addExaltedRuneDefinitions();
 		addKingBlackDragonLeatherDefinitions();
+		addSlayerComponentDefinitions();
 		addBangleJewelryDefinitions();
 		addClericSigilDefinitions();
 		addScytheLineDefinitions();

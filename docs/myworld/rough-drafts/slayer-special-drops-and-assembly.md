@@ -1,6 +1,6 @@
 # Slayer special drops and unique equipment assembly
 
-Status: owner-directed design notes; not implemented.
+Status: component definitions/drops implemented; ordinary loot, assembly and rewards pending.
 Updated: 2026-09-20.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
@@ -9,6 +9,9 @@ Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-gu
 
 Reward behavior, approved component recipes and exact examine text are recorded
 in [unique equipment design](slayer-unique-equipment-design.md).
+
+Current implementation and temporary icon/ID manifest:
+[Slayer component implementation](slayer-component-implementation.md).
 
 ## Owner direction
 
@@ -53,9 +56,11 @@ do not create a duplicate ash item.
 The residue and feathers are baseline per-kill materials, each with a confirmed
 quantity range of 1–3, with **equal probability of each amount**, not rare
 component rolls. Ordinary hides follow standard tanning into leather and
-Crafting into leather armor, with unique set effects. Exact hide identities,
-recipes, set bonuses, hide quantities and bone/ash types or quantities still
-need the [leather audit/design pass](slayer-hide-and-leather-overhaul.md).
+Crafting into leather armor, with unique set effects, remains the planned
+production route. The initial component pass defines six raw hides, one per
+kill, and one ordinary Bones item per non-demon or one Demon ash per Abyssal
+demon. Recipes and set bonuses still need the
+[leather audit/design pass](slayer-hide-and-leather-overhaul.md).
 **Frozen Tear** means a teardrop (tear rhymes with ear), not a rip in material.
 
 Every monster also needs a complete, combat-level-appropriate ordinary loot
@@ -107,7 +112,8 @@ These targets answer the average kills-to-assemble question, not a guaranteed
 drop deadline or mandatory personal kill count. Trading remains allowed.
 Slayer currency and purchased logs are additional costs, not assumed to be
 earned in those same kills. The equipment-component rates below are
-**confirmed**. None is implemented yet.
+**confirmed and implemented as component drops**; finished rewards and assembly
+are not implemented yet.
 
 | Reward | Target average monster kills | Rate basis and approval state |
 | --- | --- | --- |
@@ -147,7 +153,8 @@ imply importing OSRS assets or copying its stats/requirements.
 
 These are the current component names. The rib replaces the formerly planned
 horn; the vertebrae replaces the spinal-fragment working name. Do not add the
-old components alongside the new ones. Item IDs remain unallocated.
+old components alongside the new ones. IDs are allocated in the linked
+[component implementation manifest](slayer-component-implementation.md).
 The [Abyssal Whip design](slayer-unique-equipment-design.md#abyssal-whip)
 specifies the approved quantities, tier benchmarks, hit-delay effect and exact
 examine text. All three component types plus Slayer currency are required.
@@ -179,9 +186,10 @@ rules remain open; no extra currency tier may be added to this recipe.
 
 ## Icon work and visual reference
 
-Icon artwork is needed for the new drops, the equipment they will produce,
-and the existing gimmick solutions. This is an artwork backlog, not a claim
-that icons have been created, approved or imported.
+Final icon artwork is needed for the new drops, the equipment they will
+produce, and existing gimmick solutions. Components now use temporary reused/
+recolored canonical sprites; this remains the final-art backlog, not a claim
+that dedicated finished icons have been approved.
 
 - Active drop icons: the eight rare components in the roster plus Slimey
   residue and Cockatrice Feathers (ten named drop-icon subjects). Serpant's

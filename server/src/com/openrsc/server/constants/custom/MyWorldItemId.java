@@ -42,6 +42,23 @@ public final class MyWorldItemId {
 	public static final int KING_BLACK_DRAGON_BOOTS = 3315;
 	public static final int KING_BLACK_DRAGON_CHAPS = 3316;
 	public static final int KING_BLACK_DRAGON_CUIRASS = 3317;
+	// Slayer materials: collectible now; tanning, assembly and equipment are separate passes.
+	public static final int GIANT_FROG_HIDE = 3333;
+	public static final int BANSHEE_HIDE = 3334;
+	public static final int NAGA_HIDE = 3335;
+	public static final int TERROR_DOG_HIDE = 3336;
+	public static final int BLOODVELD_HIDE = 3337;
+	public static final int DARK_BEAST_HIDE = 3338;
+	public static final int COCKATRICE_FEATHERS = 3339;
+	public static final int SLIMEY_RESIDUE = 3340;
+	public static final int STICKY_SALIVA_GLAND = 3341;
+	public static final int COCKATRICE_EYE = 3342;
+	public static final int FROZEN_TEAR = 3343;
+	public static final int TERROR_FANG = 3344;
+	public static final int LEACH_TONGUE = 3345;
+	public static final int LIGHTNING_HORN = 3346;
+	public static final int ABYSSAL_VERTIBRAE = 3347;
+	public static final int ABYSSAL_RIB = 3348;
 
 	private MyWorldItemId() {
 	}
