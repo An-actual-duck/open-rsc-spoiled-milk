@@ -218,7 +218,8 @@ Known pre-existing test failure: `test-loot-goblin-summon.py` still expects an
 
 ## Remaining work
 
-Consumable shop pricing/access, leather set-effect designs, tower associates,
+Protection consumables now have [shop access and prices](slayer-gimmick-shop-implementation.md).
+Leather set-effect designs, tower associates,
 final artwork and owner map placement remain separate. Optional access-gated
 boss tasks and the deferred existing-hide retirement/grandfathering audit are
 not altered by this pass.

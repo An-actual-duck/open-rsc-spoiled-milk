@@ -142,11 +142,13 @@ cap, radius, target and launch metadata rules.
 
 ## Still separate work
 
-Consumable shop pricing, new leather set effects,
+New leather set effects,
 optional gated boss tasks, final sprites and tower map placement remain separate
 work. The future slow/poison coating system remains intentionally deferred.
 
 The eight monsters now have [ordinary supply loot and independent equipment drops](slayer-ordinary-loot-implementation.md).
+All five protection consumables are sold in every shop at their
+[approved single-tier prices](slayer-gimmick-shop-implementation.md).
 
 The six new hide families now have [baseline tanning and armor recipes](slayer-leather-implementation.md).
 Their special bonuses remain unassigned. The owner deferred the existing-hide
