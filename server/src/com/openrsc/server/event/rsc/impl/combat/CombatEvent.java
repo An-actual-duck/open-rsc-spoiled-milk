@@ -201,6 +201,7 @@ public class CombatEvent extends GameTickEvent {
 			target.setLastCombatState(CombatState.ERROR);
 			resetCombat();
 		} else {
+			if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(hitter)) return;
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(hitter)) return;
 				com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(hitter,
@@ -450,6 +451,7 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private int getAdjustedMeleeDelayTicks(Mob hitter, int baseDelayTicks) {
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return 1;
 		double multiplier = getCombatSpeedMultiplier(hitter);
 		if (multiplier == 1.0D) {
 			return baseDelayTicks;
@@ -586,6 +588,8 @@ public class CombatEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
+			hitter, target, damageResult.getActualDamage());
 		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
 			hitter, target, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
@@ -623,6 +627,9 @@ public class CombatEvent extends GameTickEvent {
 			updateParty((Player)target);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0) {
 				CorrosiveAura.apply((Player) target, hitter, damageDealt);
+				if (!offhand && !attackSuppressed
+					&& com.openrsc.server.content.monsterslayer.SlayerRewardCombat.pendantHit(
+						(Player)target, hitter, damageResult.getActualDamage())) onDeath(hitter, target);
 				DivineRetribution.Result result = DivineRetribution.apply(
 					(Player) target, hitter, damageDealt);
 				if (result.killedAttacker()) {

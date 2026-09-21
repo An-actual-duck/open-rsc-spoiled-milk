@@ -40,6 +40,7 @@ public class RangeUtils {
 	private static final int THROWING_DART_RANGE = 4;
 
     private final static Set<Integer> BOWS = ImmutableSet.of(
+			com.openrsc.server.constants.custom.MyWorldItemId.LEACHING_BOW,
             ItemId.LONGBOW.id(), ItemId.SHORTBOW.id(),
             ItemId.PINE_LONGBOW.id(), ItemId.PINE_SHORTBOW.id(),
             ItemId.OAK_LONGBOW.id(), ItemId.OAK_SHORTBOW.id(),
@@ -137,6 +138,8 @@ public class RangeUtils {
         allowedProjectilesMap.put(ItemId.BLOOD_CROSSBOW.id(), combine(TIN_BOLTS, COPPER_BOLTS, BRONZE_BOLTS, IRON_BOLTS, STEEL_BOLTS, MITHRIL_BOLTS, TITAN_BOLTS, ADDY_BOLTS, ORICHALCUM_BOLTS, RUNE_BOLTS));
         allowedProjectilesMap.put(ItemId.DRAGON_CROSSBOW.id(), combine(TIN_BOLTS, COPPER_BOLTS, BRONZE_BOLTS, IRON_BOLTS, STEEL_BOLTS, MITHRIL_BOLTS, TITAN_BOLTS, ADDY_BOLTS, ORICHALCUM_BOLTS, RUNE_BOLTS, DRAGON_BOLTS));
 
+        allowedProjectilesMap.put(com.openrsc.server.constants.custom.MyWorldItemId.LEACHING_BOW,
+            allowedProjectilesMap.get(ItemId.MAGIC_LONGBOW.id()));
         ALLOWED_PROJECTILES = ImmutableMap.copyOf(allowedProjectilesMap);
     }
 

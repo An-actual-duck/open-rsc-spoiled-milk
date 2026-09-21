@@ -33,6 +33,8 @@ public final class CombatEligibilityMessageAdapter {
 			return Collections.emptyList();
 		}
 		switch (reason) {
+			case SOURCE_ABYSSAL_WHIP:
+				return Collections.singletonList("The abyssal whip briefly hinders your attack.");
 			case SOURCE_SLIMED:
 				return Collections.singletonList("Slimy Spit prevents you from attacking.");
 			case SOURCE_STONY_GLARE:

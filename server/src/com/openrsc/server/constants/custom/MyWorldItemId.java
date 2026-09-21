@@ -60,6 +60,12 @@ public final class MyWorldItemId {
 	public static final int ABYSSAL_VERTIBRAE = 3347;
 	public static final int ABYSSAL_RIB = 3348;
 	public static final int SHIELD_OF_MOBILITY = 3349;
+	public static final int ABYSSAL_WHIP = 3350;
+	public static final int THUNDER_SPIRE_STAFF = 3351;
+	public static final int LEACHING_BOW = 3352;
+	public static final int DAGGER_OF_TERROR = 3353;
+	public static final int POISONED_DAGGER_OF_TERROR = 3354;
+	public static final int SULLEN_PENDANT = 3355;
 
 	private MyWorldItemId() {
 	}

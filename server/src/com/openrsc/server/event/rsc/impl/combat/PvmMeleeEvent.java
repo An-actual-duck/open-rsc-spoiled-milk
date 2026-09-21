@@ -158,6 +158,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			setDelayTicks(3);
 			return;
 		}
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(attackerMob)) {
+			setDelayTicks(1); return;
+		}
 		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.recovering(attackerMob)) {
 			setDelayTicks(1);
 			return;
@@ -432,6 +435,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
+		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
+			hitter, target, damageResult.getActualDamage());
 		if (!attackSuppressed) com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.onDamage(
 			hitter, target, damageResult.getActualDamage());
 		com.openrsc.server.content.monsterslayer.BloodveldCombat.lifesteal(hitter, damageResult.getActualDamage());
@@ -468,6 +473,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 			updateParty((Player) target);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0) {
 				CorrosiveAura.apply((Player) target, hitter, damageDealt);
+				if (!offhand && !attackSuppressed
+					&& com.openrsc.server.content.monsterslayer.SlayerRewardCombat.pendantHit(
+						(Player)target, hitter, damageResult.getActualDamage())) onDeath(hitter, target);
 				DivineRetribution.Result result = DivineRetribution.apply(
 					(Player) target, hitter, damageDealt);
 				if (result.killedAttacker()) {
@@ -1027,6 +1035,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private int getAdjustedMeleeDelayTicks(final Mob hitter, final int baseDelayTicks) {
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return 1;
 		double multiplier = getCombatSpeedMultiplier(hitter);
 		double effectiveDelay = baseDelayTicks / multiplier;
 		return Math.max(1, (int) Math.floor(effectiveDelay));

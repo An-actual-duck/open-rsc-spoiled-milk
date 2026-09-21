@@ -2,6 +2,7 @@ package com.openrsc.server.model.combat;
 
 /** First failed rule from the side-effect-free combat eligibility check. */
 public enum CombatEligibilityReason {
+	SOURCE_ABYSSAL_WHIP,
 	SOURCE_ABYSSAL_TRAP,
 	ALLOWED,
 	SOURCE_SLIMED,
