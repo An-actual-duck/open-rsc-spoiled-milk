@@ -15,6 +15,7 @@ the owning plan before changing a subsystem.
 | Server tests | `server/test/` | Focused compiled fixtures. The combat gate is invoked through `server/test_combat`. |
 | Definitions/configuration | `server/conf/server/defs/`, `server/conf/server/` | JSON/XML/YAML data, locations, and settings which are runtime authority for many IDs and behavior choices. |
 | Client assets/content | `Client_Base/Cache/`, `dev/myworld/assets/` | Cache/runtime inputs and source artwork. Follow asset plans; do not infer an asset's runtime route from a filename alone. |
+| AI item-art references | `dev/myworld/reference-library/items/` | Visually grouped inventory/ground icons, full original canvases, contact sheets and scale/style notes. Start with its README before designing an item icon. Not runtime assets. |
 | Code generators | `tools/generators/`, `tools/world-builder/` | Generated definition/override inputs. Read generator manifests and validation scripts before editing generated outputs. |
 | Tests and automation | `tests/myworld/`, `scripts/` | Repository guards, build wrappers, static analysis, release validation, and workspace controls. |
 
