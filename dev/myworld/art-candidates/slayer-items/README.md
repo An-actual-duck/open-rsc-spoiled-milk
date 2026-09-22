@@ -22,7 +22,7 @@ Art review assets only: these do not replace live inventory/ground sprites.
 - `shield-of-mobility-approved.png`: user approved. Round feather shield,
   densely mottled center and clear protruding feather tips; brown/olive/straw
   cockatrice palette. See `shield-preview.html` for native-size comparison.
-- `sullen-pendant-candidate.png`: pending review. Pale-blue crystallized tear
+- `sullen-pendant-approved.png`: user approved. Pale-blue crystallized tear
   on a thin white/grey thread, based on the authentic strung amulet references.
   See `pendant-preview.html` for native-size comparison.
 
