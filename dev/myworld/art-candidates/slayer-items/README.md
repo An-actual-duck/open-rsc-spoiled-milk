@@ -2,11 +2,17 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
-`cockatrice-eye-candidate.png`: pending review, yellow birdlike Eye of Newt
+`cockatrice-eye-approved.png`: user approved, yellow birdlike Eye of Newt
 variant with a round dark pupil. Native 48x32; fitted 11x10 at (18,14) to match
 the source eye placement. Generated art fitted with export-native.cjs to 11x11,
 then translated from (19,11) to (18,14) without resampling using ffmpeg crop/pad.
 See `cockatrice-eye-preview.html` and `cockatrice-eye-prompt.txt`.
+
+`abyssal-vertibrae-candidate.png`: pending review. Single ivory vertebra,
+based on the user's photographic shape reference, with RSC bone shading.
+48x32 canvas, fitted 10x11 at (18,14), comparable in size to the approved eye.
+Packaged at 11x11 maximum, then crop/pad translated from (19,11) to (18,14).
+See `vertebra-preview.html`; prompt and reference URL in `vertebra-prompt.txt`.
 
 Latest gland revision: `sticky-saliva-gland-candidate-v2.png` lowers the gland
 into the puddle to remove the floating appearance. Same native 48x32 canvas
