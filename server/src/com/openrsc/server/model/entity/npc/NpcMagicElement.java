@@ -7,5 +7,6 @@ public enum NpcMagicElement {
 	EARTH,
 	FIRE,
 	THUNDER,
-	WOOD
+	WOOD,
+	ICE
 }

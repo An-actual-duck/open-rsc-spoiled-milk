@@ -2287,6 +2287,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 										waterMaxHitDebuffPercent,
 										earthAttackSpeedDebuffPercent,
 										fireDefenseDebuffPercent)
+									.magicElement(SpellClassification.getResistanceElement(spellEnum))
 									.presentation(projectileVisual, impactEffect,
 										SpellClassification.shouldShowSpellProjectile(
 											spellEnum, impactEffect))

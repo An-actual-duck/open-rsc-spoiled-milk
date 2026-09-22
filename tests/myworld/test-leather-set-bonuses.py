@@ -113,8 +113,8 @@ def main() -> None:
     expect_contains(EQUIPMENT_PATH, "hasFullBalrogSet()", "balrog full-set detection")
     expect_contains(EQUIPMENT_PATH, "hasFullFireGiantSet()", "fire giant full-set detection")
     expect_contains(EQUIPMENT_PATH,
-                    "if (combatStyle == PrayerCatalog.CombatStyle.MAGIC && hasFullMagicSpiderCarapaceSet()) {\n\t\t\treturn 0;\n\t\t}",
-                    "magic spider leather magic-power penalty exemption")
+                    "if (!player.getConfig().WANT_MYWORLD && combatStyle == PrayerCatalog.CombatStyle.MAGIC && hasFullMagicSpiderCarapaceSet()) {\n\t\t\treturn 0;\n\t\t}",
+                    "legacy exemption is disabled in MyWorld")
 
     expect_contains(PLAYER_PATH, "syncHitsEquipmentBonuses()", "player hits sync")
     expect_contains(PLAYER_PATH, 'setAttribute("cow_hide_hits_bonus"', "cow hits tracking")
@@ -372,7 +372,7 @@ def main() -> None:
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.", "earth giant leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.", "water giant leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.", "fire giant leather examine description")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.", "magic spider leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.", "magic spider leather examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might: raises current melee and ranged levels by 10%.", "old giant current-level examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "+10% current melee/ranged levels", "old elemental giant current-level examine description")
     expect_not_contains(CLIENT_ENTITY_HANDLER_PATH, "20% chance to apply Earth", "old earth giant vague examine description")
@@ -382,7 +382,7 @@ def main() -> None:
     expect_item_descriptions(range(1840, 1845), "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.", "goblin leather generated item examine")
     expect_item_descriptions(range(1850, 1855), "Bear's Maul: melee hits become two hits for 60% damage each.", "bear leather generated item examine")
     expect_item_descriptions(range(1875, 1880), "Giant's Might: +10% of base Melee and Ranged levels.", "giant leather generated item examine")
-    expect_item_descriptions(range(1890, 1895), "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.", "magic spider leather generated item examine")
+    expect_item_descriptions(range(1890, 1895), "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.", "magic spider leather generated item examine")
     expect_item_descriptions(range(1895, 1900), "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.", "earth giant leather generated item examine")
     expect_item_descriptions(range(1900, 1905), "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.", "water giant leather generated item examine")
     expect_item_descriptions(range(1915, 1920), "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.", "fire giant leather generated item examine")

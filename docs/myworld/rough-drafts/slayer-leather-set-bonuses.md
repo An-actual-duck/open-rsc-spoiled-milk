@@ -1,8 +1,14 @@
 # Slayer leather set bonuses and cleansing direction
 
-Updated: 2026-09-21. Owner-approved design directions; runtime implementation
-pending. This document supersedes earlier undecided-theme notes and the plan
-to retain Banshee hide armor. It does not claim these effects are active.
+Updated: 2026-09-21. Six retained new set bonuses and the carapace replacement
+are implemented. This is a code status, not a live-deployment claim. This
+document supersedes earlier undecided-theme notes and the plan to retain
+Banshee hide armor; that separate withdrawal is still pending.
+
+See [runtime rules and verification](slayer-leather-effects-implementation.md).
+The owner's concepts below are approved; the numerical/edge-case defaults
+identified in the implementation note were chosen during implementation and
+remain tuning choices, not separately confirmed owner decisions.
 
 ## Carapace: poison cleansing
 
@@ -37,11 +43,11 @@ Implementation references:
 - `server/src/com/openrsc/server/model/container/Equipment.java`, carapace
   poison getters and magic-spider armor-penalty exemption.
 
-Before implementation, settle numerical tier scaling, full-set versus
-per-piece activation, mixed-set behavior, and how all cleansing sources stack.
-Recommended starting architecture: one shared poison-clearance calculation,
-without shortening the damaging poison event interval. This is a proposal,
-not approval of an additive formula or particular values.
+Implemented starting values: full five-piece scorpion/spider/magic-spider
+sets add **2/3/5** poison-power removal per resolution, respectively. This
+adds to baseline 3 and the Nature necklace bonus without changing tick cadence.
+Mixed/partial sets do not activate it. Values are implementation defaults,
+not a finalized decision for future cleansing potions.
 
 ## Dark beast: Electrically Charged
 
@@ -52,11 +58,11 @@ not approval of an additive formula or particular values.
 - This is a retaliation effect, not the monster's marked-target lightning
   mechanic and not a Static discharge wipe interaction.
 
-Still settle: whether only direct hits qualify or damage-over-time also counts;
-reset versus remainder carry after discharge; charge retention on unequip,
-death and logout; and the spell's offensive-stat source, accuracy/damage
-calculation and valid enemy-target policy. No arbitrary damage value, free
-PvP activation, or recursion between retaliatory effects is authorized here.
+Implemented default: positive direct hits only; reset to zero on discharge,
+unequip, death or logout. Use the wearer's magic roll with tier-2 thunder power
+and cap, and the existing secondary-spell enemy eligibility rules. DOT and
+secondary procs do not charge the meter. PvP remains gated off. See the runtime
+note for exact formula and test coverage.
 
 ## Bloodveld: Essense Absorption
 
@@ -71,7 +77,7 @@ summon ownership and periodic-effect provenance). Count each resolved damage
 event once; do not duplicate healing through multiple hit callbacks. Healing
 itself is not damage and cannot trigger this effect again. Respect normal
 maximum HP. Multi-target damage can qualify separately per damaged enemy;
-confirm that granularity before implementation if introducing an event cap.
+there is no per-tick event cap in this implementation.
 
 ## Giant frog: Sticky Skin
 
@@ -82,8 +88,9 @@ full action lock, or the frog monster's Slimy Spit debuff.
 Tie the implementation to the planned **Slow** vocabulary: a delay measured
 in action ticks. The eventual slow-stacking weapon coating is a separate
 project; do not import its point thresholds or movement restrictions here.
-Still settle: whether a zero-damage hit qualifies, repeated-proc stacking or
-immunity, and interaction with existing whip delays or other slows.
+Implemented default: positive direct hits only, one pending delay with no
+stacking/refresh. It waits for the next otherwise-ready attack, including its
+normal cooldown and existing action locks; it does not consume a movement turn.
 
 ## Banshee: Ectoplasm, no current armor
 
@@ -110,7 +117,7 @@ Enhanced Bear's Maul: the owner approved **two 75% melee hits**, nominally
 150% combined before rounding and downstream settlement. Retain Bear's
 five-piece, melee-only eligibility and positive-hit/surviving-target checks.
 Use its existing rounding behavior with the improved 0.75 factor. This is
-approved design, not yet implemented.
+implemented as the approved design.
 
 Verified current Bear's Maul baseline:
 
@@ -136,10 +143,10 @@ not always upward (`ceil`). For example, base food healing 6 becomes 7
 requirement to always round down.
 
 This is a food-healing bonus, not general lifesteal, regeneration or potion
-healing. Normal maximum-HP behavior remains unchanged. Before implementation,
-confirm combination/order with other food bonuses (such as Nature jewelry),
-round once at the agreed stage, and check multi-bite or delayed-healing foods.
-Do not invent additive versus multiplicative stacking from the 20% alone.
+healing. Normal maximum-HP behavior remains unchanged. Implemented default:
+add the Nature food bonus to the 20%, then round the total once. Ordinary
+food, multi-bite food through the normal eating path, sweet fruit and kebabs
+use this rule. Without the set, pre-existing food behavior is unchanged.
 
 ## Naga: Cold Blooded
 
@@ -154,19 +161,21 @@ Record an [element-tag audit](../in-progress-work-plans/effect-standardization-f
 instead of asserting coverage. Verify the paths used by this bonus as part
 of implementation; the comprehensive audit remains a follow-up.
 
-Before implementation, settle damage rounding and stacking/order with other
-mitigation. Audit secondary/AOE damage and whether ongoing damage from a
-spell retains its element; do not silently assume every burn or dragonbreath
-is an eligible fire spell.
+Implemented in the common tagged elemental mitigation path, after existing
+elemental resistance, using `ceil(damage * 0.80)` (minimum 1 for a positive
+incoming hit, matching existing resistance rounding). Ordinary ice NPCs now
+carry explicit ICE rather than WATER, and player ice/fire projectile sources
+carry their element into impacts. Tagged projectile splash shares that path.
+Untagged custom damage/burns/dragonbreath are not guessed to be eligible; the
+comprehensive producer/secondary/DOT audit remains deferred.
 
 ## Remaining design and sequencing
 
 The six retained new families are giant frog, naga, terror dog, bloodveld,
 dark beast and Ugthanki. **All six now have set-bonus concepts determined.**
-Runtime implementation is still pending; carapace cleanse values and some
-event/stacking/rounding boundaries still need finalizing. Do not confuse
-complete concept selection with completed implementation.
-
-Document and resolve these bounded set rules before runtime changes. The
+Runtime implementation and item descriptions now cover these six plus the
+carapace replacement; the linked implementation note records defaults and
+verification separately from owner-approved concepts. Banshee withdrawal,
+old-family retirement and optional boss tasks remain separate work. The
 broader [effect standardization follow-up](../in-progress-work-plans/effect-standardization-follow-up.md)
 remains a post-tower reminder, explicitly including cleansing and Slow.

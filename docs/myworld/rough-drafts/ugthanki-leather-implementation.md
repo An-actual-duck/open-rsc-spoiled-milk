@@ -1,7 +1,8 @@
 # Ugthanki leather and post-audit tier spread
 
-Updated: 2026-09-21. Ugthanki foundation implemented; Storage Hump bonus
-designed (food heals 20% more, nearest-integer rounding), not yet implemented.
+Updated: 2026-09-21. Ugthanki foundation and Storage Hump bonus implemented
+(food heals 20% more, nearest-integer rounding). See
+[runtime rules](slayer-leather-effects-implementation.md) for stacking defaults.
 See [current set-bonus decisions](slayer-leather-set-bonuses.md#ugthanki-storage-hump).
 Retirement and optional boss-task implementation remain separate pending work.
 

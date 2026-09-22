@@ -13,8 +13,10 @@ import java.util.Objects;
  * Applies one already-resolved legacy damage request to the current Hits and
  * presentation fields.
  *
- * <p>This A05.2-A05.6 boundary deliberately owns no formula, mitigation,
- * contribution, lifesteal, effect, packet, XP, or death policy. Callers retain
+ * <p>The legacy boundary owns no formula, mitigation, contribution, XP or
+ * death policy. Callers retain their existing effects and packet ordering.
+ * New opt-in Slayer leather effects receive one explicit post-settlement
+ * callback (not an observation callback). Otherwise callers retain
  * those responsibilities and their existing order around this transaction.
  * The request also selects whether settlement emits both the damage update and
  * hitsplat or only the damage update; the latter preserves sparse legacy
@@ -42,6 +44,9 @@ public final class ResolvedDamageTransaction {
 		final DamageResult result = DamageResult.appliedCurrentPath(
 			checkedRequest, hitsBefore, target.getLevel(Skill.HITS.id()));
 		CombatDamageObservation.publish(result);
+		// Explicit opt-in gameplay hook, separate from the non-authoritative observer.
+		// Existing caller-local effects/credit/death order remain owned by their callers.
+		com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.afterDamage(result);
 		return result;
 	}
 }

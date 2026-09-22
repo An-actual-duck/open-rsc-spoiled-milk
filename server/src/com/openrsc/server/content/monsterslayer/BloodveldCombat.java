@@ -67,6 +67,7 @@ public final class BloodveldCombat {
 		if (pullDestination(npc, player) == null) return false;
 		npc.resetPath(); npc.face(player);
 		if (!attackReady(npc)) return true;
+		if (SlayerLeatherEffects.delayAttack(npc)) return true;
 		recordAttack(npc, 3);
 		npc.setCombatTimer();
 		if (npc.consumeOgreStaggerDebuff() || npc.consumeStartleDebuff()) return true;

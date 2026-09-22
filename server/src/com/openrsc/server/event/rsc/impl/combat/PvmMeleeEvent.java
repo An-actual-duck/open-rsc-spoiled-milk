@@ -237,18 +237,21 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 
 		attackerMob.resetPath();
+		// Sticky Skin is consumed only when an attack can actually happen, not while
+		// chasing or waiting out a shared melee/projectile cooldown.
+		if ((com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)
+			&& !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(attackerMob))
+			|| (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)
+			&& !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob))) {
+			setDelayTicks(1); return;
+		}
+		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(attackerMob)) {
+			setDelayTicks(1); return;
+		}
 		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)) {
-			if (!com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(attackerMob)) {
-				setDelayTicks(1);
-				return;
-			}
 			com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(attackerMob, 2);
 		}
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)) {
-			if (!com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob)) {
-				setDelayTicks(1);
-				return;
-			}
 			com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(attackerMob,
 				com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
 		}

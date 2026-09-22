@@ -23,7 +23,8 @@ public final class BearMaulSecondHit {
 	 */
 	public static boolean tryApply(final Mob source, final Mob target,
 			final int damage, final AuxiliaryTrueDamage auxiliaryTrueDamage) {
-		if (!source.isPlayer() || !((Player) source).hasFullBearHideSet()
+		if (!source.isPlayer() || (!((Player) source).hasFullBearHideSet()
+				&& !com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.ferocious((Player) source))
 				|| damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return false;
 		}

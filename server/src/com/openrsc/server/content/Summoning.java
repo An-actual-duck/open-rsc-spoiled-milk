@@ -768,7 +768,7 @@ public final class Summoning {
 		return isSummon(npc) && SOURCE_ARMOR.equals(npc.getAttribute(SUMMON_SOURCE_KEY, ""));
 	}
 
-	private static Player getSummonOwner(final Npc summon) {
+	public static Player getSummonOwner(final Npc summon) {
 		if (!isSummon(summon)) {
 			return null;
 		}

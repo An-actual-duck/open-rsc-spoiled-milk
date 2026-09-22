@@ -136,6 +136,7 @@ public enum NpcAttackStyleProfile {
 			case AIR:
 				return Projectile.WIND_ARROW;
 			case WATER:
+			case ICE:
 				return Projectile.WATER_BALL;
 			case EARTH:
 				return Projectile.ROCK_THROW;
@@ -330,7 +331,7 @@ public enum NpcAttackStyleProfile {
 			case "ice giant":
 			case "ice warrior":
 			case "ice queen":
-				return NpcMagicElement.WATER;
+				return NpcMagicElement.ICE;
 			case "moss giant":
 			case "tree spirit":
 				return NpcMagicElement.EARTH;

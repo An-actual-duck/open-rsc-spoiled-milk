@@ -2503,6 +2503,9 @@ public final class Player extends Mob {
 	}
 
 	public int applyBearMaulDamage(final int damage) {
+		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.ferocious(this)) {
+			return Math.max(0, (int) Math.floor(damage * 0.75D));
+		}
 		return hasFullBearHideSet() ? Math.max(0, (int) Math.floor(damage * 0.60D)) : damage;
 	}
 
@@ -2885,7 +2888,8 @@ public final class Player extends Mob {
 		if (incomingDamage > 0) {
 			setAttribute("last_damage_taken_at", System.currentTimeMillis());
 		}
-		final int remainingDamage = applyElementalRobeResistance(incomingDamage, magicElement);
+		final int remainingDamage = com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.coldBlooded(
+			this, applyElementalRobeResistance(incomingDamage, magicElement), magicElement);
 		if (remainingDamage > 0) {
 			chargeBodyRobeWeaponPower(remainingDamage);
 		}
@@ -2902,6 +2906,7 @@ public final class Player extends Mob {
 				tierTotal = getCarriedItems().getEquipment().getAirRobeTierTotal();
 				break;
 			case WATER:
+			case ICE:
 				tierTotal = getCarriedItems().getEquipment().getWaterRobeTierTotal();
 				break;
 			case EARTH:
@@ -5347,6 +5352,7 @@ public final class Player extends Mob {
 	}
 
 	public void updateWornItems(final int indexPosition, final int appearanceId, final int wearableId, final boolean isEquipped) {
+		com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.equipmentChanged(this);
 		int resolvedAppearanceId = resolveBodyAppearance(indexPosition, appearanceId);
 
 		// Generally don't need to show arrows or rings

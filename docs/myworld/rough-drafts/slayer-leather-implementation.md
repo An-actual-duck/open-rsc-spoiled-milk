@@ -1,7 +1,8 @@
 # New Slayer leather foundations
 
-Updated: 2026-09-21. Baseline production and armor implemented; special set bonuses
-await owner designs. No deployment, world placement, existing-family retirement
+Updated: 2026-09-21. Baseline production, armor and the six retained families'
+[set bonuses](slayer-leather-effects-implementation.md) implemented.
+No deployment, world placement, existing-family retirement
 or player-item migration.
 
 Latest design supersedes Banshee's continued availability: replace its hide
@@ -11,10 +12,10 @@ The seven-set implementation and original recipe table below record existing
 code, not the revised six-family target.
 
 Subsequent audit addition: [Ugthanki's tier-4 leather set](ugthanki-leather-implementation.md)
-is now implemented with no active bonus. All six retained new families now
-have [bonus concepts selected](slayer-leather-set-bonuses.md), including
-Ugthanki's Storage Hump and Naga's Cold Blooded; runtime effects remain
-pending. The Ugthanki note also records the tier spread and Banshee revision.
+is now implemented with Storage Hump. All six retained new families now
+have [selected bonuses](slayer-leather-set-bonuses.md) implemented, including
+Naga's Cold Blooded. The Ugthanki note also records the tier spread and Banshee
+revision.
 
 Design authority: [hide/leather scope](slayer-hide-and-leather-overhaul.md).
 This implements six leather families, not eight. Cockatrice Feathers and Slimey
@@ -99,13 +100,14 @@ Terror dog 55:55:55, Bloodveld 30:30:30 and Dark beast 120:100:120.
 Bloodveld's low absolute NPC defenses do not reduce its armor's tier budget;
 its equal proportions produce a balanced set.
 
-## Deliberately absent special effects
+## Set effects
 
-The new item IDs do not enter any existing full-set effect detector. No frog
-poison, banshee wail, naga effect, frenzy, lifesteal or lightning armor bonus has
-been invented. Normal leather equipment rules/penalties still apply. Existing
-sets retain their behavior. Special bonuses remain a separate owner decision,
-not a completed feature claimed by this implementation.
+The later [set-effect implementation](slayer-leather-effects-implementation.md)
+adds the six approved retained-family bonuses and replaces carapace offensive
+poison procs with cleansing. Normal leather rules/penalties still apply,
+including restoration of the magic-spider penalty. Banshee receives no bonus;
+its production withdrawal remains pending. Borrowed appearances do not grant
+another armor's effects.
 
 ## Placeholder visuals
 
@@ -133,12 +135,9 @@ That policy is documented, not yet applied to runtime. Broader auditing remains
 separate. The original implementation boundary was to wait until the eight
 new NPC additions and their sprite work are finished. Nothing in this pass
 removes old drops, alters old equipment, binds holdings or changes death rules.
-New armor bonuses still need designs. Before assigning them, review retained
-sets and source coverage together under the owner's
-[shared armor-theme direction](slayer-hide-and-leather-overhaul.md#material-coverage-and-shared-armor-themes),
-including increased poison cleanse rate for every carapace family. Exact
-mechanics remain undecided; the broader effect-standardization review waits
-until the Slayer Tower is done.
+New armor bonuses and tier-scaled carapace cleansing are implemented; the
+linked runtime note records starting defaults and tests. The broader
+effect-standardization review still waits until the Slayer Tower is done.
 [Ordinary monster loot](slayer-ordinary-loot-implementation.md)
 and [consumable shop access/pricing](slayer-gimmick-shop-implementation.md) are
 implemented. Optional boss tasks remain pending. [Tower associate definitions
