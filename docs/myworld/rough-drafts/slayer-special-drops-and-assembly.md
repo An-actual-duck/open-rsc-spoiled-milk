@@ -27,7 +27,8 @@ Reward progress: [Slayer equipment implementation](slayer-equipment-implementati
   guild's kill-credit and progression rules.
 - Where appropriate, monsters may drop a thematically suitable material in
   place of hide. Confirmed substitutes are **Slimey residue** from Abyssal
-  demons and **Cockatrice Feathers** from cockatrices.
+  demons, **Cockatrice Feathers** from cockatrices, and **Ectoplasm** from
+  Banshees (latest approved replacement; runtime change pending).
   This revises the earlier literal requirement that every task monster drop
   hide; do not force ordinary hide onto incompatible creature anatomy.
 
@@ -41,7 +42,7 @@ definition work. Combat levels/floors follow the tower plan.
 | --- | --- | --- | --- |
 | 1 | Giant frog (863; 20) | Hide + bones | Sticky Saliva Gland (1/128) |
 | 2 | Cockatrice (864; 35) | **1–3 Cockatrice Feathers** instead of hide, plus bones | Cockatrice Eye (1/128) |
-| 3 | Banshee (865; 50) | Hide + bones | Frozen Tear (1/1,000) |
+| 3 | Banshee (865; 50) | Ectoplasm instead of hide (pending); existing bones unchanged | Frozen Tear (1/1,000) |
 | 3 | Naga (866; 60) | Hide + bones | None for now; Serpant's Tail deferred and must not drop |
 | 4 | Terror dog (867; 75) | Hide + bones | Terror Fang (1/1,000) |
 | 4 | Bloodveld (868; 85) | Hide + bones | Leach Tongue (1/1,000) |
@@ -50,7 +51,10 @@ definition work. Combat levels/floors follow the tower plan.
 
 Unless the owner specifies an exception, future monster discussions listing
 only unique rare drops still imply hide and bones. Do not infer another
-exception from anatomy: Banshee retains that default in this plan.
+exception from anatomy. The owner has explicitly replaced Banshee hide with
+unused Ectoplasm and deferred spirit armor; hide its leather armor/production
+paths as recorded in [set-bonus decisions](slayer-leather-set-bonuses.md).
+This revises the material only; no separate bones change was specified.
 The Abyssal demon's rare skeletal components do not count as its ordinary
 bone/remains drop. Existing **Demon ash (item 3112)** can supply its ash;
 do not create a duplicate ash item.

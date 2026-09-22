@@ -43,6 +43,23 @@ combat balance and should have its own focused implementation plan.
 
 ## Current-work boundary
 
+### Explicit owner directions added during leather design
+
+- Make poison **cleanse rate** the principal counter rather than prevention.
+  Nature necklaces already add poison-power removal at the existing poison
+  event cadence. Plan tiered cleansing potions in place of anti-poison
+  potions, with stacking across sources; exact numbers/rules remain open.
+- Standardize **Slow** as tick-based action delay, especially for the future
+  stacking weapon coating. Giant-frog Sticky Skin specifically delays only
+  the next attack by one tick on a 10% on-hit proc; it does not implicitly
+  root movement or lock every action.
+- [Set-bonus design](../rough-drafts/slayer-leather-set-bonuses.md) records the
+  immediate armor scope. Carapace cleansing replaces its offensive poison
+  procs and removes magic-spider's leather magic-penalty exception.
+
+These directions do not select numerical cleanse scaling, stacking caps or
+Slow immunity rules, and do not authorize the deferred game-wide overhaul now.
+
 The bounded [Slayer leather coverage/theme review](../rough-drafts/slayer-hide-and-leather-overhaul.md#material-coverage-and-shared-armor-themes)
 is current planning work. In particular, all carapace families are intended to
 increase the wearer's poison cleanse rate, with exact mechanics still to be

@@ -3,6 +3,11 @@
 Updated: 2026-09-21. Ugthanki foundation implemented; set bonus unassigned.
 Retirement and optional boss-task implementation remain separate pending work.
 
+Subsequent [set-bonus decision](slayer-leather-set-bonuses.md) removes Banshee
+from the future leather roster in favor of unused Ectoplasm. The original
+27-family table below therefore becomes **26** after that pending change;
+tier 4 retains baby dragon and Ugthanki. All tiers remain represented.
+
 ## Audit conclusion
 
 The owner accepted rats/large rats, giant bats and animated axes as task monsters

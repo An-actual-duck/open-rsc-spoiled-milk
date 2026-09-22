@@ -4,6 +4,12 @@ Updated: 2026-09-21. Baseline production and armor implemented; special set bonu
 await owner designs. No deployment, world placement, existing-family retirement
 or player-item migration.
 
+Latest design supersedes Banshee's continued availability: replace its hide
+with Ectoplasm and hide its armor/production paths. This is **pending**, not
+yet a runtime change. See [set-bonus decisions](slayer-leather-set-bonuses.md).
+The seven-set implementation and original recipe table below record existing
+code, not the revised six-family target.
+
 Subsequent audit addition: [Ugthanki's tier-4 leather set](ugthanki-leather-implementation.md)
 is now implemented with no bonus. There are **seven sets awaiting bonus design**:
 giant frog, banshee, naga, terror dog, bloodveld, dark beast and Ugthanki. That
