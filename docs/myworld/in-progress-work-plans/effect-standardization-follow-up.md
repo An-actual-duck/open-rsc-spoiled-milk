@@ -41,6 +41,80 @@ These are review topics, not approved replacement formulas or balance values.
 Audit and discuss before changing existing mechanics; this may materially alter
 combat balance and should have its own focused implementation plan.
 
+## Debuff power versus cleanse rate: owner clarification
+
+The intended shared model is a contest between **power being applied** and
+**power being removed**. Applications build a debuff's accumulated power;
+power thresholds determine its effective strength. Cleansing reduces that
+power over time, allowing effects to weaken as they fall below thresholds.
+Use **cleanse rate** as the player-facing term for this removal rate.
+
+Armor, jewelry and cleansing potions should be able to contribute to that
+rate. The exact combination formula, caps and timing boundaries remain to be
+designed. This is not a request to make incoming application fail, nor to
+speed up damaging poison ticks. The intended gameplay is applying poison
+faster than an opponent can cleanse it, or cleansing faster than it builds.
+
+### Poison: verified existing arithmetic
+
+`PoisonEvent` uses integer division before its `Math.round` call, so for
+nonnegative poison power the damage is effectively `floor(power / 10)`.
+Thus 10–19 power yields 1 damage and 20–29 yields 2. With no further
+application and baseline cleansing, a resolution at 20 power deals 2 damage
+and reduces power to 17; the next resolution deals 1 damage. Damage is
+calculated before that resolution's removal, not after it.
+
+The current resolution interval is 8 game ticks and baseline removal is 3
+power per resolution. Nature necklaces add their tier to that removal amount.
+`PoisonPowerReduction.shouldCure` treats power below 10 as cured; preserve
+this as an observed current rule, not an implicit decision that all future
+debuffs must discard below-threshold power in the same way.
+
+Repeated application is intended to keep pushing accumulated power upward.
+The later audit must trace the actual application/refresh/cap rules of each
+existing poison source; checking the damage formula alone does not establish
+that every current application source already behaves consistently.
+
+References: `server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java`,
+`server/src/com/openrsc/server/content/PoisonPowerReduction.java`, and
+`EnchantingItemEffects.getNatureCleansingPoisonDecayBonus`.
+
+### Slow: proposed extension for the weapon coating
+
+The future coating applies accumulating **slowing power**. As it accumulates,
+the NPC becomes progressively "slimed up". The owner's illustrative threshold
+is **20 power per additional tick of action delay**: at 20 power, its actions
+are delayed by one turn/tick; at higher effective thresholds it becomes more
+slowed, subject to limits still to be chosen. This is broader than delaying
+only an attack: the intended scope is **all of that NPC's actions**.
+
+Twenty is an example, not a finalized balance constant. This latest example
+supersedes treating any earlier illustrative 50-point threshold as fixed.
+Review exactly which schedulers/actions count, whether delay affects already
+scheduled actions or subsequent cadence, movement handling, threshold
+crossings, cleanse intervals, residual power, maximum delays, immunity and
+multi-attacker accumulation. Increasing power must not be allowed to defer
+the same queued action indefinitely by repeatedly rescheduling it.
+
+### Post-Slayer review sequence
+
+1. Establish the shared vocabulary, power thresholds, application rules and
+   cleanse-rate calculation, using current poison as the initial reference.
+2. Audit existing slows and slow-adjacent effects for suitable conversions.
+   Candidate review entries include weapon action delays (Abyssal Whip),
+   Sticky Skin, stagger/frostbite and action-lock or root mechanics. Record
+   actual behavior before deciding; a root or one-off delay is not
+   automatically the same as accumulating Slow.
+3. Assess other existing debuffs for the same build-up-versus-cleansing model.
+   Inventory their current behavior and identify which benefit, which should
+   retain distinct mechanics, and what balance/migration work each needs.
+   Do not convert every status merely to make it uniform.
+4. Propose tuned values and tests for repeated application, combined cleansing,
+   caps, threshold crossings, event order and recovery before implementation.
+
+These are deferred design/audit tasks, not authorization to perform that audit
+or change gameplay during current Slayer work. Keep the reminder above active.
+
 ## Current-work boundary
 
 ### Explicit owner directions added during leather design

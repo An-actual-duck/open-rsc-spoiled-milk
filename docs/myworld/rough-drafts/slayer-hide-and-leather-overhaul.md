@@ -8,7 +8,7 @@ Latest [set-bonus decisions](slayer-leather-set-bonuses.md): Banshee hide is
 to become **Ectoplasm**, with no current armor/production route. Carapace
 cleansing replaces offensive poison procs; magic-spider loses its special
 magic-penalty exemption. Dark beast, Bloodveld and frog have new effect
-directions; Terror dog awaits improved Bear's Maul values. These runtime
+directions; Terror dog's Ferocious is approved at two 75% melee hits. These runtime
 changes are pending. The earlier implementation counts below are historical.
 
 The owner has **completed the source-coverage audit**. Rats/large rats, giant

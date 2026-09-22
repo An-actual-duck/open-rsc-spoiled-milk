@@ -106,7 +106,11 @@ retains 32 craftable families until these removals are implemented.
 
 ## Terror dog: Ferocious
 
-Enhanced Bear's Maul: a second hit. Exact improved values await the owner.
+Enhanced Bear's Maul: the owner approved **two 75% melee hits**, nominally
+150% combined before rounding and downstream settlement. Retain Bear's
+five-piece, melee-only eligibility and positive-hit/surviving-target checks.
+Use its existing rounding behavior with the improved 0.75 factor. This is
+approved design, not yet implemented.
 
 Verified current Bear's Maul baseline:
 
@@ -120,15 +124,14 @@ Verified current Bear's Maul baseline:
 - References: `Player.applyBearMaulDamage`, `PlayerMeleeDamageBuff`,
   `BearMaulSecondHit`, and melee-event auxiliary-damage settlement.
 
-Discussion proposal only: Ferocious could use two 75% hits (nominally 150%)
-with Bear's existing melee-only eligibility. Do not implement these proposed
-values without confirmation, or add an independent proc chance unrequested.
+Ferocious's 75% values are now confirmed. Do not add an independent random
+proc chance or broaden the effect to ranged/magic without a new decision.
 
 ## Remaining design and sequencing
 
 The six retained new families are giant frog, naga, terror dog, bloodveld,
 dark beast and Ugthanki. Naga and Ugthanki still need effect concepts; Terror
-dog needs final numbers. The other three have the directions above, with
+dog's numbers are approved. The other three have the directions above, with
 event/stacking boundaries to settle before implementation.
 
 Document and resolve these bounded set rules before runtime changes. The
