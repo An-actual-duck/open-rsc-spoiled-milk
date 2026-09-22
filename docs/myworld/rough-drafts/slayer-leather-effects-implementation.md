@@ -55,10 +55,9 @@ Charge is session/lifecycle-bound and clears when a piece is removed, on death
 or logout, and on discharge (no remainder). DOT/owned secondary procs cannot
 recharge it or create retaliatory loops. The burst uses the wearer's normal
 secondary magic formula with Thunder Splash power 7.2 and its 60% damage cap,
-not Thunder Spire's 25% splash multiplier. The explicit Thunder Splash power
-is read from the existing F2P-only spell table because MODERNMAGIC currently
-does not contain that spell entry; this patch does not change general casting
-tables. Existing secondary-spell spatial, summon, party/clan and attack rules
+not Thunder Spire's 25% splash multiplier. Thunder Splash power is read from
+the shared modern spell table, now including the existing lower-tier hybrid
+spells. Existing secondary-spell spatial, summon, party/clan and attack rules
 apply. Players are excluded while PvP is off. Actual damage receives normal
 credit, hit presentation and death settlement.
 

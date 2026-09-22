@@ -111,7 +111,7 @@ public final class SlayerLeatherEffects {
 		if (target == player || !player.withinRange(target, 2) || !SlayerRewardCombat.legalSecondary(player, target)) return;
 		double power = player.getWorld().getServer().getConstants().getSpellDamages()
 			.getSpellDamage(Spells.THUNDER_SPLASH, target.isNpc() ? EntityType.NPC : EntityType.PLAYER,
-				SpellDamages.MagicType.F2PONLYMAGIC);
+				SpellDamages.MagicType.MODERNMAGIC);
 		int damage = CombatFormula.calculateSecondaryMagicDamage(player, target, power, .60D);
 		if (target instanceof Player) {
 			Player victim = (Player)target;

@@ -140,6 +140,24 @@ and projectile equipment swaps, both dagger schedulers and real poison
 conversion, pendant bounds/boss immunity/PvP exclusion, and thunder tier,
 cap, radius, target and launch metadata rules.
 
+## Thunder casting correction (2026-09-22)
+
+The modern damage table now inherits the existing lower-tier spell book.
+This restores Thunder Ball/Splash powers of 4.8/7.2 (Thunder Strike remains
+9.6) and the same missing first/second-tier ice, acid and wood entries.
+Previously these casts supplied -1 to projectile launch validation and failed.
+The invalid-power guard remains intact; no new balance values were introduced.
+Thunder Spire retains radius 1/2/3, secondary power scaling 15%/25%/40%, and
+removes the primary cap only for Thunder Strike. Electrically Charged now
+reads Thunder Splash from this same modern table with unchanged damage.
+
+`ant test_thunder_spell_casting` exercises actual spell packets through rune
+payment, launch and impact for all three thunder spells with and without the
+staff, plus the six affected sibling spells. It checks primary capped rolls,
+splash radius boundaries, PvP exclusion, one-time rune/impact settlement,
+lower-book table coverage and continued rejection of invalid launch power.
+The fixture reproduced the launch exception before the table correction.
+
 ## Still separate work
 
 New leather set effects,
