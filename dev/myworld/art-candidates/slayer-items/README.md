@@ -2,6 +2,13 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+Pending review: `cockatrice-feathers-candidate.png` preserves the authentic
+feather alpha/geometry, recolored brown/straw by `recolor-cockatrice-feather.cjs`.
+`frozen-tear-candidate.png` is a glossy pale-blue gem (15x22 at 17,5).
+`terror-fang-candidate.png` is an oversized ivory fang (27x22 at 11,5).
+The tear and fang use built-in imagegen, with prompts/source renders retained.
+All three use 48x32 canvases. See `feather-tear-fang-preview.html`.
+
 `cockatrice-eye-approved.png`: user approved, yellow birdlike Eye of Newt
 variant with a round dark pupil. Native 48x32; fitted 11x10 at (18,14) to match
 the source eye placement. Generated art fitted with export-native.cjs to 11x11,
@@ -14,7 +21,7 @@ based on the user's photographic shape reference, with RSC bone shading.
 Packaged at 11x11 maximum, then crop/pad translated from (19,11) to (18,14).
 See `vertebra-preview.html`; prompt and reference URL in `vertebra-prompt.txt`.
 
-`slimey-residue-candidate.png` and `ectoplasm-candidate.png`: pending review.
+`slimey-residue-approved.png` and `ectoplasm-approved.png`: user approved.
 Gelatinous puddles matching approved demon skin blues and banshee exposed
 skin purples respectively. Each uses 48x32 canvas, fitted 34x14 at (7,9).
 Swamp tar was the footprint/style reference. See `puddles-preview.html`,
