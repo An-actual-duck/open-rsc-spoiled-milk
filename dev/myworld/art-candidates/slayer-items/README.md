@@ -2,9 +2,16 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`cockatrice-eye-candidate.png`: pending review, yellow birdlike Eye of Newt
+variant with a round dark pupil. Native 48x32; fitted 11x10 at (18,14) to match
+the source eye placement. Generated art fitted with export-native.cjs to 11x11,
+then translated from (19,11) to (18,14) without resampling using ffmpeg crop/pad.
+See `cockatrice-eye-preview.html` and `cockatrice-eye-prompt.txt`.
+
 Latest gland revision: `sticky-saliva-gland-candidate-v2.png` lowers the gland
 into the puddle to remove the floating appearance. Same native 48x32 canvas
-and 16-pixel width; fitted height 13 pixels. Pending review; original retained.
+and 16-pixel width; fitted height 13 pixels. User approved; selected copy is
+`sticky-saliva-gland-approved.png`. Original retained.
 See `gland-preview-v2.html` and `gland-v2-prompt.txt`.
 
 Remaining order, approved armor colors and simple worn-item reuse are specified
