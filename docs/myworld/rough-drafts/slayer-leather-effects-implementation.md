@@ -106,7 +106,9 @@ was changed to bypass that boundary. Reproduce the isolated run with an empty
 
 ## Separate pending work
 
-Banshee Ectoplasm/armor withdrawal, selected old hide/armor retirements,
+Selected old hide/armor retirements,
 optional boss-task opt-ins, final sprites and map integration are unchanged.
 The broader cleansing-potion, stacking Slow and effect-standardization work
 still waits until the Slayer Tower is done.
+
+[Banshee Ectoplasm/armor withdrawal](banshee-ectoplasm-implementation.md) is now implemented.

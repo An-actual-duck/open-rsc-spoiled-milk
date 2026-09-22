@@ -5,11 +5,10 @@ Updated: 2026-09-21. Baseline production, armor and the six retained families'
 No deployment, world placement, existing-family retirement
 or player-item migration.
 
-Latest design supersedes Banshee's continued availability: replace its hide
-with Ectoplasm and hide its armor/production paths. This is **pending**, not
-yet a runtime change. See [set-bonus decisions](slayer-leather-set-bonuses.md).
-The seven-set implementation and original recipe table below record existing
-code, not the revised six-family target.
+Update 2026-09-22: [Banshee withdrawal is implemented](banshee-ectoplasm-implementation.md).
+Ectoplasm replaces its hide drop; tanning and crafting no longer offer its set.
+Old definitions remain valid for existing holdings. Banshee entries in the
+original recipe/stat tables below are historical, not obtainable recipes.
 
 Subsequent audit addition: [Ugthanki's tier-4 leather set](ugthanki-leather-implementation.md)
 is now implemented with Storage Hump. All six retained new families now
@@ -106,7 +105,7 @@ The later [set-effect implementation](slayer-leather-effects-implementation.md)
 adds the six approved retained-family bonuses and replaces carapace offensive
 poison procs with cleansing. Normal leather rules/penalties still apply,
 including restoration of the magic-spider penalty. Banshee receives no bonus;
-its production withdrawal remains pending. Borrowed appearances do not grant
+its production paths have been withdrawn. Borrowed appearances do not grant
 another armor's effects.
 
 ## Placeholder visuals

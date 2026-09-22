@@ -2,6 +2,7 @@ package com.openrsc.server.combat;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.constants.custom.MyWorldItemId;
 import com.openrsc.server.content.production.*;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.container.Item;
@@ -11,11 +12,11 @@ import java.util.*;
 
 /** Exercises existing tanning, production recipes, actual crafting and equipment with new materials. */
 public final class SlayerLeatherFixture {
-	private static final int[] HIDE = {3333,3334,3335,3336,3337,3338,3392};
-	private static final int[] BASE = {3356,3362,3368,3374,3380,3386,3393};
-	private static final int[] TIER = {2,4,5,6,6,7,4}, LEVEL = {8,22,30,38,38,46,22};
+	private static final int[] HIDE = {3333,3335,3336,3337,3338,3392};
+	private static final int[] BASE = {3356,3368,3374,3380,3386,3393};
+	private static final int[] TIER = {2,5,6,6,7,4}, LEVEL = {8,30,38,38,46,22};
 	private static final int[] COST = {1,2,2,3,4}, OFFSET = {0,1,1,2,3}, SLOT = {5,8,9,7,6};
-	private static final int[][] PROFILE = {{10,20,35},{40,40,40},{20,65,95},{55,55,55},{30,30,30},{120,100,120},{45,4,4}};
+	private static final int[][] PROFILE = {{10,20,35},{20,65,95},{55,55,55},{30,30,30},{120,100,120},{45,4,4}};
 	public static void main(String[] args) throws Exception {
 		try(CurrentCombatHarness h = new CurrentCombatHarness()) {
 			com.openrsc.server.model.entity.npc.Npc ugthanki = h.npc(653,450,451);
@@ -91,7 +92,32 @@ public final class SlayerLeatherFixture {
 			check(find.invoke(rack,3339)==null && find.invoke(rack,3340)==null,"feathers and residue cannot be tanned");
 			check(sessionMethod.invoke(crafting,h.player("excluded armor",450,450),new Item(3339))==null
 				&& sessionMethod.invoke(crafting,h.player("excluded residue",451,450),new Item(3340))==null,"no excluded armor recipes or null-enum crash");
-			System.out.println("PASS Slayer leather: 7 tanning families, 35 crafted pieces, Ugthanki drops/source defenses, tier budgets/source ratios, levels, thread use, equipment slots and no borrowed bonuses");
+			// Retired Banshee materials remain valid possessions, but never expose production.
+			Player retired = h.player("retired banshee",452,450);
+			retired.getClientLimitations().maxItemId = Integer.MAX_VALUE;
+			retired.getSkills().setTemporaryLevelAndMaxStat(Skill.CRAFTING.id(),99,99,false);
+			retired.getCarriedItems().getInventory().add(new Item(ItemId.NEEDLE.id()));
+			retired.getCarriedItems().getInventory().add(new Item(ItemId.THREAD.id(),5));
+			for (int id : new int[]{MyWorldItemId.BANSHEE_HIDE, MyWorldItemId.BANSHEE_LEATHER, MyWorldItemId.ECTOPLASM}) {
+				check(retired.getCarriedItems().getInventory().add(new Item(id,4)), "existing/new material can be held");
+				check(find.invoke(rack,id)==null, "no Banshee tanning route " + id);
+				check(sessionMethod.invoke(crafting,retired,new Item(id))==null, "no Banshee production menu " + id);
+			}
+			Method available=rackType.getDeclaredMethod("getAvailableProcesses",Player.class); available.setAccessible(true);
+			check(((List<?>)available.invoke(rack,retired)).isEmpty(), "tanning menu hides old Banshee materials and Ectoplasm");
+			for (int id=MyWorldItemId.BANSHEE_COIF;id<=MyWorldItemId.BANSHEE_CUIRASS;id++) {
+				ProductionSession stale=new ProductionSession(ProductionSession.TYPE_CRAFTING,"Old Banshee recipe",
+					MyWorldItemId.BANSHEE_LEATHER,Collections.singletonList(new ProductionRecipe(id,1,1,1,true,true)));
+				check(!(Boolean)produce.invoke(null,retired,stale,id,1), "stale production request rejected " + id);
+				check(retired.getCarriedItems().getInventory().countId(id)==0, "no retired armor created");
+				ItemDefinition legacy=h.server().getEntityHandler().getItemDef(id);
+				check(legacy!=null && legacy.isWieldable() && !legacy.isUntradable(), "legacy definition/trading preserved");
+				check(retired.getCarriedItems().getInventory().add(new Item(id)), "legacy armor holdings remain readable");
+				h.equip(retired,id,1);
+			}
+			check(retired.getCarriedItems().getInventory().countId(MyWorldItemId.BANSHEE_LEATHER)==4
+				&& retired.getCarriedItems().getInventory().countId(ItemId.THREAD.id())==5, "rejected production consumes nothing");
+			System.out.println("PASS Slayer leather: 6 tanning families, 30 crafted pieces, Ugthanki drops/source defenses, tier budgets/source ratios, levels, thread use, equipment slots, no borrowed bonuses and Banshee withdrawal/preservation");
 		}
 	}
 	private static int field(Object object,String name)throws Exception { Field f=object.getClass().getDeclaredField(name);f.setAccessible(true);return f.getInt(object); }

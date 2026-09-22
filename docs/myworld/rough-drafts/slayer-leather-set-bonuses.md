@@ -3,7 +3,8 @@
 Updated: 2026-09-22. Six retained new set bonuses and the carapace replacement
 are implemented. This is a code status, not a live-deployment claim. This
 document supersedes earlier undecided-theme notes and the plan to retain
-Banshee hide armor; that separate withdrawal is still pending.
+Banshee hide armor; [Ectoplasm and production withdrawal](banshee-ectoplasm-implementation.md)
+are now implemented as well.
 
 See [runtime rules and verification](slayer-leather-effects-implementation.md).
 The owner confirmed the implemented carapace values/stacking, Electrically
@@ -100,17 +101,16 @@ unused collectible reserved for possible future spirit armor. Hide Banshee
 armor and remove its player-facing production paths (tanning and crafting),
 rather than continuing to present it as an available leather set.
 
-Current implementation to change: hide 3334, leather 3362, armor 3363–3367.
-Do not renumber or repurpose old armor IDs, delete account holdings, or invent
-a new grandfathering/trading rule without a migration decision. Ectoplasm's
-ID, quantity, visuals and treatment of existing Banshee hides/leathers still
-need an implementation decision. Frozen Tear remains unchanged. The owner
-has not separately changed the existing bones rule in this instruction.
+Implemented: Ectoplasm 3399 drops one per kill (base quantity), stacks, and
+uses a temporary pale-purple swamp-tar icon. Hide 3334, leather 3362 and armor
+3363–3367 retain their definitions and existing account holdings/trading rules;
+they are no longer dropped, tanned or crafted. Frozen Tear and bones remain
+unchanged. See [implementation and verification](banshee-ectoplasm-implementation.md).
 
 After this and the already selected giant/ogre retirements, the target is
 **26 obtainable leather/carapace families**. Tier 4 retains baby dragon and
 Ugthanki, so every tier 1–11 still has representation. Runtime currently
-retains 32 craftable families until these removals are implemented.
+retains 31 craftable families until the other removals are implemented.
 
 ## Terror dog: Ferocious
 
@@ -177,7 +177,7 @@ The six retained new families are giant frog, naga, terror dog, bloodveld,
 dark beast and Ugthanki. **All six now have set-bonus concepts determined.**
 Runtime implementation and item descriptions now cover these six plus the
 carapace replacement; the linked implementation note records defaults and
-verification separately from owner-approved concepts. Banshee withdrawal,
-old-family retirement and optional boss tasks remain separate work. The
+verification separately from owner-approved concepts. Old-family retirement
+and optional boss tasks remain separate work. The
 broader [effect standardization follow-up](../in-progress-work-plans/effect-standardization-follow-up.md)
 remains a post-tower reminder, explicitly including cleansing and Slow.

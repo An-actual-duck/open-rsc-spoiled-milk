@@ -1620,11 +1620,6 @@ public class Crafting implements UseInvTrigger,
 				MyWorldItemId.GIANT_FROG_COIF, MyWorldItemId.GIANT_FROG_GLOVES,
 				MyWorldItemId.GIANT_FROG_BOOTS, MyWorldItemId.GIANT_FROG_CHAPS, MyWorldItemId.GIANT_FROG_CUIRASS);
 		}
-		if (materialId == MyWorldItemId.BANSHEE_LEATHER) {
-			return new HideArmorRecipe(materialId, "Banshee hide", 4, 22,
-				MyWorldItemId.BANSHEE_COIF, MyWorldItemId.BANSHEE_GLOVES,
-				MyWorldItemId.BANSHEE_BOOTS, MyWorldItemId.BANSHEE_CHAPS, MyWorldItemId.BANSHEE_CUIRASS);
-		}
 		if (materialId == MyWorldItemId.NAGA_LEATHER) {
 			return new HideArmorRecipe(materialId, "Naga hide", 5, 30,
 				MyWorldItemId.NAGA_COIF, MyWorldItemId.NAGA_GLOVES,

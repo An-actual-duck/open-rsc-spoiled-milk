@@ -56,7 +56,7 @@ public final class SlayerComponentDrops {
 			case GiantFrogCombat.NPC_ID: return new Item(MyWorldItemId.GIANT_FROG_HIDE);
 			case CockatriceCombat.NPC_ID:
 				return new Item(MyWorldItemId.COCKATRICE_FEATHERS, 1 + random.nextInt(3));
-			case BansheeCombat.NPC_ID: return new Item(MyWorldItemId.BANSHEE_HIDE);
+			case BansheeCombat.NPC_ID: return new Item(MyWorldItemId.ECTOPLASM);
 			case NagaCombat.NPC_ID: return new Item(MyWorldItemId.NAGA_HIDE);
 			case TerrorDogCombat.NPC_ID: return new Item(MyWorldItemId.TERROR_DOG_HIDE);
 			case BloodveldCombat.NPC_ID: return new Item(MyWorldItemId.BLOODVELD_HIDE);

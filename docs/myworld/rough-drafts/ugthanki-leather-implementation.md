@@ -8,7 +8,7 @@ Retirement and optional boss-task implementation remain separate pending work.
 
 Subsequent [set-bonus decision](slayer-leather-set-bonuses.md) removes Banshee
 from the future leather roster in favor of unused Ectoplasm. The original
-27-family table below therefore becomes **26** after that pending change;
+27-family table below therefore becomes **26** after that implemented change;
 tier 4 retains baby dragon and Ugthanki. All tiers remain represented.
 
 ## Audit conclusion
@@ -17,7 +17,7 @@ The owner accepted rats/large rats, giant bats and animated axes as task monster
 that do not need a hide/carapace or replacement material. Do not add materials
 or remove those assignments just to satisfy the earlier blanket coverage rule.
 Ugthanki is the only new material/armor family requested by the completed audit.
-Cockatrice Feathers and Slimey residue remain the two non-armor material
+Cockatrice Feathers, Slimey residue and Ectoplasm are non-armor material
 substitutes. The prior selected giant/ogre retirements and passive exceptions
 remain unchanged; this addition does not execute their runtime changes.
 
@@ -100,15 +100,16 @@ for retirement; they are legacy collectibles, not future obtainable choices.
 | 11 | Balrog, Elder Green Dragon | 2 |
 | **Total** | | **27** |
 
-Current code still has **32 craftable families** because retirement is not yet
+After [Banshee withdrawal](banshee-ectoplasm-implementation.md), current code
+has **31 craftable families** because the five old-family retirements are not yet
 implemented. The five additional current choices are giant (tier 3), ogre
 (tier 4), moss giant and ice giant (tier 5), and fire giant (tier 7).
-Their removal yields the 27-family target above without repricing/rebalancing
+Their removal yields a 26-family target (the historical table above minus Banshee) without repricing/rebalancing
 the retained families. All tiers retain at least one set.
 
 ## Verification
 
-- `ant test_slayer_leather`: all seven new families, 35 actual crafted pieces,
+- `ant test_slayer_leather`: all six retained new families, 30 actual crafted pieces,
   Ugthanki effective defenses and guaranteed off-task drops, preserved meat,
   tanning, level gates, thread costs, equipment stats and no borrowed effects.
 - Build client, then `python3 tests/myworld/test-ugthanki-leather-items.py`:
