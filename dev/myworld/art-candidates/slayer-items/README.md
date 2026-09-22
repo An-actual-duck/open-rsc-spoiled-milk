@@ -6,9 +6,15 @@ Art review assets only: these do not replace live inventory/ground sprites.
   native 48x32 RGBA, object 28x19 at (10,7). Approved after comparing the
   smaller 23x16 candidate and granting about 20% more object space. Canvas
   remains unchanged. Keep this selected version; do not regenerate casually.
-- `abyssal-whip-candidate.png`: pending user review, native 48x32. Exposed
-  vertebrae with slate-blue connective flesh and a rib-bone handle. No approval
-  is implied by saving a candidate here.
+- `abyssal-whip-approved.png`: user approved with no notes (2026-09-22),
+  native 48x32, object 40x22 at (4,5). Exposed vertebrae with slate-blue
+  connective flesh and a rib-bone handle. The earlier `candidate` filename
+  remains a byte-identical preview reference.
+- `thunder-spire-staff-candidate.png`: pending user review. Wood shaft,
+  grey-brown Dark Beast horn, leather lashings at the mount, and yellow arcs.
+  `staff-preview.html` compares its native canvas with the three god-staff
+  bases. In the export catalog Guthix aliases the plain wooden staff (2235),
+  Zamorak the red-headed staff (2487), and Saradomin uses sprite 2564.
 
 Artwork generated using the built-in imagegen tool. Prompts are saved alongside
 the art. Source renders are retained for reproducible native-size packaging.
