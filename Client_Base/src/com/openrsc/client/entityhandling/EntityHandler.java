@@ -5557,6 +5557,7 @@ public class EntityHandler {
 
 	private static void addKingBlackDragonLeatherDefinitions() {
 		addSlayerLeatherDefinitions();
+		applyMyWorldLeatherArmorDescriptions();
 		final int colour = 0x2B2A1A;
 		final String setDescription = "Full KBD-hide set: 40% chance for True Dragon's Breath: up to 10 bonus damage, 20 poison (max 40), and one elemental debuff.";
 		setCustomItemDefinition(3311, new ItemDef("King black dragon hide", "A heavy hide from the king black dragon", "",
@@ -6707,17 +6708,23 @@ public class EntityHandler {
 	}
 
 	private static void applyMyWorldLeatherArmorDescriptions() {
+		setLeatherSetDescription(3357, 3361, "Sticky Skin: full set gives a 10% chance on a damaging direct hit to delay the attacker's next attack by 1 tick. Does not stack.");
+		setLeatherSetDescription(3369, 3373, "Cold Blooded: full set reduces ice and fire magic damage by 20%.");
+		setLeatherSetDescription(3375, 3379, "Ferocious: full set makes melee attacks hit twice for 75% damage each.");
+		setLeatherSetDescription(3381, 3385, "Essense Absorption: full set heals 1 HP for each positive damage event you cause, including poison and summons.");
+		setLeatherSetDescription(3387, 3391, "Electrically Charged: full set gains 1-3 charge per damaging direct hit; at 30, releases tier-2 thunder within 2 tiles.");
+		setLeatherSetDescription(3394, 3398, "Storage Hump: full set makes food heal 20% more, rounded to the nearest whole HP.");
 		setLeatherSetDescription(1835, 1839, "Full cow-hide set: +5 Hits.");
 		setLeatherSetDescription(1840, 1844, "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.");
 		setLeatherSetDescription(1845, 1849, "Full unicorn-hide set: +10 Prayer.");
 		setLeatherSetDescription(1850, 1854, "Bear's Maul: melee hits become two hits for 60% damage each.");
-		setLeatherSetDescription(1860, 1864, "Full scorpion-carapace set: 20% melee poison chance, up to 10 poison.");
+		setLeatherSetDescription(1860, 1864, "Full scorpion-carapace set: +2 poison cleanse rate.");
 		setLeatherSetDescription(1865, 1869, "Full wolf-hide set: summons a spirit wolf companion.");
-		setLeatherSetDescription(1870, 1874, "Full spider-carapace set: 20% ranged poison chance, up to 10 poison.");
+		setLeatherSetDescription(1870, 1874, "Full spider-carapace set: +3 poison cleanse rate.");
 		setLeatherSetDescription(1875, 1879, "Giant's Might: +10% of base Melee and Ranged levels.");
 		setLeatherSetDescription(1880, 1884, "Full ogre-hide set: 20% chance to stagger enemy attacks. No cooldown.");
 		setLeatherSetDescription(1885, 1889, "Full baby-dragon-hide set: 20% chance to reduce enemy accuracy by 10%.");
-		setLeatherSetDescription(1890, 1894, "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.");
+		setLeatherSetDescription(1890, 1894, "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.");
 		setLeatherSetDescription(1895, 1899, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.");
 		setLeatherSetDescription(1900, 1904, "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.");
 		setLeatherSetDescription(1905, 1909, "Full demon-hide set: 20% chance for infernal fire, max hit 8.");

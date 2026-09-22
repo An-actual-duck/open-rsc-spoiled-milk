@@ -134,8 +134,10 @@ unverified expectation, not an audit result.
   unrelated attacks are not. Define ongoing-damage and mitigation-order rules.
 
 This note does not authorize an immediate broad combat refactor. Cold Blooded
-implementation still needs bounded verification of its supported damage
-paths; deferring the global audit does not excuse an unverified bonus.
+implementation now has bounded verification of the common tagged projectile
+paths, explicit ICE versus WATER NPC profiles, and player ice/fire producer
+tags. See [implementation coverage](../rough-drafts/slayer-leather-effects-implementation.md).
+The global audit of scripted/secondary/periodic sources remains open.
 
 ## Current-work boundary
 
@@ -158,6 +160,8 @@ Slow immunity rules, and do not authorize the deferred game-wide overhaul now.
 
 The bounded [Slayer leather coverage/theme review](../rough-drafts/slayer-hide-and-leather-overhaul.md#material-coverage-and-shared-armor-themes)
 is current planning work. In particular, all carapace families are intended to
-increase the wearer's poison cleanse rate, with exact mechanics still to be
-decided. That theme does not bring this game-wide standardization project into
+increase the wearer's poison cleanse rate. Full-set +2/+3/+5 additive removal
+is now the documented implementation default for scorpion/spider/magic-spider;
+future potion strengths and global stacking/caps remain undecided. That does
+not bring this game-wide standardization project into
 the tower's scope or make it a prerequisite for finishing the tower.

@@ -1813,38 +1813,47 @@ public class Equipment {
 	}
 
 	public int getMeleePoisonArmorMaxPower() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullScorpionCarapaceSet() ? 10 : 0;
 	}
 
 	public int getMeleePoisonArmorAppliedPower() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullScorpionCarapaceSet() ? 5 : 0;
 	}
 
 	public double getMeleePoisonArmorProcChance() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullScorpionCarapaceSet() ? 0.20D : 0.0D;
 	}
 
 	public int getRangedPoisonArmorMaxPower() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullSpiderCarapaceSet() ? 10 : 0;
 	}
 
 	public int getRangedPoisonArmorAppliedPower() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullSpiderCarapaceSet() ? 5 : 0;
 	}
 
 	public double getRangedPoisonArmorProcChance() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullSpiderCarapaceSet() ? 0.20D : 0.0D;
 	}
 
 	public int getMagicPoisonArmorMaxPower() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullMagicSpiderCarapaceSet() ? 20 : 0;
 	}
 
 	public int getMagicPoisonArmorAppliedPower() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullMagicSpiderCarapaceSet() ? 10 : 0;
 	}
 
 	public double getMagicPoisonArmorProcChance() {
+		if (player.getConfig().WANT_MYWORLD) return 0;
 		return hasFullMagicSpiderCarapaceSet() ? 0.20D : 0.0D;
 	}
 
@@ -2720,7 +2729,7 @@ public class Equipment {
 	}
 
 	private int getArmorPowerPenalty(final PrayerCatalog.CombatStyle combatStyle) {
-		if (combatStyle == PrayerCatalog.CombatStyle.MAGIC && hasFullMagicSpiderCarapaceSet()) {
+		if (!player.getConfig().WANT_MYWORLD && combatStyle == PrayerCatalog.CombatStyle.MAGIC && hasFullMagicSpiderCarapaceSet()) {
 			return 0;
 		}
 		int pieces = 0;

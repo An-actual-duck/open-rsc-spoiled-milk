@@ -88,6 +88,9 @@ public class RangeEventNpc extends GameTickEvent {
                 return;
             }
             owner.face(victim);
+            if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(owner)) {
+                setDelayTicks(1); return;
+            }
             setDelayTicks(RangeUtils.getAdjustedRangeDelayTicks(owner, 3));
 
 

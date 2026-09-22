@@ -5315,6 +5315,7 @@
     },
     {
       "id": 1860,
+      "description": "Full scorpion-carapace set: +2 poison cleanse rate.",
       "rangedDefense": 2,
       "requiredLevel": 0,
       "requiredSkillID": -1,
@@ -5322,6 +5323,7 @@
     },
     {
       "id": 1861,
+      "description": "Full scorpion-carapace set: +2 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 3,
       "requiredLevel": 0,
@@ -5330,6 +5332,7 @@
     },
     {
       "id": 1862,
+      "description": "Full scorpion-carapace set: +2 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 3,
       "requiredLevel": 0,
@@ -5338,6 +5341,7 @@
     },
     {
       "id": 1863,
+      "description": "Full scorpion-carapace set: +2 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "requiredLevel": 0,
@@ -5346,6 +5350,7 @@
     },
     {
       "id": 1864,
+      "description": "Full scorpion-carapace set: +2 poison cleanse rate.",
       "meleeDefense": 2,
       "rangedDefense": 6,
       "requiredLevel": 0,
@@ -5395,6 +5400,7 @@
     },
     {
       "id": 1870,
+      "description": "Full spider-carapace set: +3 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 2,
       "requiredLevel": 0,
@@ -5403,6 +5409,7 @@
     },
     {
       "id": 1871,
+      "description": "Full spider-carapace set: +3 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "requiredLevel": 0,
@@ -5411,6 +5418,7 @@
     },
     {
       "id": 1872,
+      "description": "Full spider-carapace set: +3 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "requiredLevel": 0,
@@ -5419,6 +5427,7 @@
     },
     {
       "id": 1873,
+      "description": "Full spider-carapace set: +3 poison cleanse rate.",
       "meleeDefense": 1,
       "rangedDefense": 7,
       "magicDefense": 1,
@@ -5428,6 +5437,7 @@
     },
     {
       "id": 1874,
+      "description": "Full spider-carapace set: +3 poison cleanse rate.",
       "meleeDefense": 2,
       "rangedDefense": 8,
       "magicDefense": 1,
@@ -5576,7 +5586,7 @@
     },
     {
       "id": 1890,
-      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
+      "description": "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.",
       "meleeDefense": 1,
       "rangedDefense": 3,
       "magicDefense": 1,
@@ -5586,7 +5596,7 @@
     },
     {
       "id": 1891,
-      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
+      "description": "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "magicDefense": 3,
@@ -5596,7 +5606,7 @@
     },
     {
       "id": 1892,
-      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
+      "description": "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.",
       "meleeDefense": 1,
       "rangedDefense": 5,
       "magicDefense": 3,
@@ -5606,7 +5616,7 @@
     },
     {
       "id": 1893,
-      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
+      "description": "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.",
       "meleeDefense": 2,
       "rangedDefense": 8,
       "magicDefense": 4,
@@ -5616,7 +5626,7 @@
     },
     {
       "id": 1894,
-      "description": "Mystic Venom: 20% magic poison chance, up to 20 poison; removes leather magic-power penalty.",
+      "description": "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.",
       "meleeDefense": 3,
       "rangedDefense": 10,
       "magicDefense": 5,

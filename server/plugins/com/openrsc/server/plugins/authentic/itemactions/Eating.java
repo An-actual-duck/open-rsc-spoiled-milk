@@ -213,10 +213,7 @@ public class Eating implements OpInvTrigger {
 				int baseHeal = item.eatingHeals(player.getWorld());
 				int extraHeal = item.canLevelDependentHeal(player.getWorld()) ? player.getSkills().getMaxStat(Skill.COOKING.id()) / 15 : 0;
 				int totalHeal = baseHeal + extraHeal + hitsCapeHeal(player);
-				double foodBonus = player.getCarriedItems().getEquipment().getNatureFoodHealingBonus();
-				if (foodBonus > 0.0D) {
-					totalHeal = (int) Math.ceil(totalHeal * (1.0D + foodBonus));
-				}
+				totalHeal = com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.foodHealing(player, totalHeal);
 				int newHp = player.getSkills().getLevel(Skill.HITS.id()) + totalHeal;
 				if (newHp > maximumHits) {
 					newHp = maximumHits;
@@ -229,7 +226,7 @@ public class Eating implements OpInvTrigger {
 			}
 			if (heals && !gaveMessage) {
 				player.playerServerMessage(MessageType.QUEST, "It heals some health");
-				if (config().WANT_PARTIES) {
+				if (player.getConfig().WANT_PARTIES) {
 					if (player.getParty() != null) {
 						player.getUpdateFlags().setHpUpdate(new HpUpdate(player, 0));
 						player.getParty().sendParty();
@@ -251,7 +248,7 @@ public class Eating implements OpInvTrigger {
 			final int maximumHits = player.getHealingMaximumHits();
 			if (player.getSkills().getLevel(Skill.HITS.id()) < maximumHits) {
 				int hpBefore = player.getSkills().getLevel(Skill.HITS.id());
-				int newHp = hpBefore + DataConversions.random(1, 2);
+				int newHp = hpBefore + com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.storageHump(player, DataConversions.random(1, 2));
 				if (newHp > maximumHits) {
 					newHp = maximumHits;
 				}
@@ -320,7 +317,7 @@ public class Eating implements OpInvTrigger {
 		final int maximumHits = player.getHealingMaximumHits();
 		if (hpRestored > 0 && player.getSkills().getLevel(Skill.HITS.id()) < maximumHits) {
 			int hpBefore = player.getSkills().getLevel(Skill.HITS.id());
-			int newStat = hpBefore + hpRestored;
+			int newStat = hpBefore + com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.storageHump(player, hpRestored);
 			if (newStat > maximumHits) {
 				newStat = maximumHits;
 			}

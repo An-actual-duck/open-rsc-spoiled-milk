@@ -95,6 +95,12 @@ final class SpellClassification {
 			|| spellEnum == Spells.ICE_CRYSTAL;
 	}
 
+	static com.openrsc.server.model.entity.npc.NpcMagicElement getResistanceElement(final Spells spell) {
+		if (isIceSpell(spell)) return com.openrsc.server.model.entity.npc.NpcMagicElement.ICE;
+		if (isFireSpell(spell)) return com.openrsc.server.model.entity.npc.NpcMagicElement.FIRE;
+		return com.openrsc.server.model.entity.npc.NpcMagicElement.NONE;
+	}
+
 	static boolean isWoodSpell(final Spells spellEnum) {
 		return spellEnum == Spells.BRANCH_SPORE
 			|| spellEnum == Spells.WOOD_DRILL

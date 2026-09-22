@@ -19,6 +19,7 @@ import java.util.Map;
 public enum SecondaryEffectPolicy {
 	SULLEN_PENDANT("sullen-pendant", Family.REFLECTION),
 	THUNDER_SPIRE_SPLASH("thunder-spire-splash", Family.DELAYED_SPELL),
+	ELECTRICALLY_CHARGED("slayer-leather-electrically-charged", Family.REFLECTION),
 	RECIPROCAL_MELEE_AUXILIARY_MAGIC(
 		"reciprocal-melee-auxiliary-magic", Family.AUXILIARY),
 	RECIPROCAL_MELEE_AUXILIARY_TRUE(

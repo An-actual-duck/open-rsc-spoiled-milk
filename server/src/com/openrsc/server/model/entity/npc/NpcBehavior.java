@@ -569,6 +569,7 @@ public class NpcBehavior {
 
 		npc.resetPath();
 		npc.face(target);
+		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(npc)) return true;
 		npc.setCombatTimer();
 		if (banshee) com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(npc, 3);
 		if (naga) com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(npc,

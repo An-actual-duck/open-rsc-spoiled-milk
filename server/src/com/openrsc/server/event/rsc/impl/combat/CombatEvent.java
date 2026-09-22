@@ -204,19 +204,15 @@ public class CombatEvent extends GameTickEvent {
 			if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(hitter)) return;
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(hitter)) return;
-				com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(hitter,
-					com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
 			}
 			if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(hitter, target)) return;
 			if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.recovering(hitter)) return;
 			if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(hitter)) return;
-				com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(hitter, 2);
 			}
 			hitter.faceCombat(target);
 			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(hitter)) return;
-				com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(hitter, 2);
 			}
 			if (com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(hitter)
 				|| com.openrsc.server.content.monsterslayer.SlayerCombatEffects.attacksBlocked(hitter)) return;
@@ -226,6 +222,17 @@ public class CombatEvent extends GameTickEvent {
 				((Npc)hitter).getBehavior().retreat();
 				return;
 			}
+			if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(hitter)) {
+				roundNumber--; // Retry this hitter next tick instead of giving away its turn.
+				setDelayTicks(1); return;
+			}
+			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(hitter))
+				com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(hitter,
+					com.openrsc.server.content.monsterslayer.NagaCombat.MELEE_TICKS);
+			if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(hitter))
+				com.openrsc.server.content.monsterslayer.BloodveldCombat.recordAttack(hitter, 2);
+			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(hitter))
+				com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(hitter, 2);
 
 			//if(hitter.isNpc() && target.isPlayer() || target.isNpc() && hitter.isPlayer()) {
 			int damage;

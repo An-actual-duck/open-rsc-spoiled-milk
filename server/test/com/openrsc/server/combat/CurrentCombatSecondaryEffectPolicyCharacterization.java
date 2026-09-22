@@ -10,6 +10,9 @@ import java.util.Set;
 /** Executable A07.1 coverage for the descriptive secondary-effect catalog. */
 final class CurrentCombatSecondaryEffectPolicyCharacterization {
 	private static final String[] EXPECTED_STABLE_KEYS = {
+		"sullen-pendant",
+		"thunder-spire-splash",
+		"slayer-leather-electrically-charged",
 		"reciprocal-melee-auxiliary-magic",
 		"reciprocal-melee-auxiliary-true",
 		"pvm-melee-auxiliary-magic",
@@ -60,7 +63,7 @@ final class CurrentCombatSecondaryEffectPolicyCharacterization {
 		final Set<String> expected = new LinkedHashSet<String>(
 			Arrays.asList(EXPECTED_STABLE_KEYS));
 
-		assertEquals(39, SecondaryEffectPolicy.currentPolicyCount(),
+		assertEquals(42, SecondaryEffectPolicy.currentPolicyCount(),
 			"current secondary-effect policy count");
 		assertTrue(SecondaryEffectPolicy.currentPolicyCount() > 32,
 			"32 entries cannot be used as a total catalog capacity");
@@ -70,13 +73,13 @@ final class CurrentCombatSecondaryEffectPolicyCharacterization {
 			"one enum policy per stable key");
 		assertEquals(6, count(SecondaryEffectPolicy.Family.AUXILIARY),
 			"auxiliary family count");
-		assertEquals(10, count(SecondaryEffectPolicy.Family.REFLECTION),
+		assertEquals(12, count(SecondaryEffectPolicy.Family.REFLECTION),
 			"reflection family count");
 		assertEquals(11, count(SecondaryEffectPolicy.Family.PLAYER_CHILD),
 			"player child family count");
 		assertEquals(9, count(SecondaryEffectPolicy.Family.OWNED_CONTENT),
 			"owned content family count");
-		assertEquals(3, count(SecondaryEffectPolicy.Family.DELAYED_SPELL),
+		assertEquals(4, count(SecondaryEffectPolicy.Family.DELAYED_SPELL),
 			"delayed spell family count");
 
 		for (final String key : expected) {

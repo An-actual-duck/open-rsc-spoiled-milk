@@ -31,7 +31,7 @@ public final class DarkBeastCombat {
 	private DarkBeastCombat() { }
 	private static final class State {
 		final CombatParticipantSnapshot lifetime;
-		boolean halfHealthUsed;
+		boolean halfHealthUsed, pendingStickyCharge;
 		long nextDecision, recoveryUntil;
 		volatile Charge charge;
 		State(Npc npc) { lifetime = CombatParticipantSnapshot.capture(npc); }
@@ -65,9 +65,14 @@ public final class DarkBeastCombat {
 		if (!(target instanceof Player) || !live((Player)target) || !npc.sharesSpatialDomain(target)
 			|| !npc.withinRange(target, RADIUS)) return false;
 		boolean half = !state.halfHealthUsed && npc.getLevel(Skill.HITS.id()) * 2 <= npc.getSkills().getMaxStat(Skill.HITS.id());
-		if (!half && tick < state.nextDecision) return false;
-		state.nextDecision = tick + 3;
-		if (!half && npc.getWorld().getServer().getCombatRandom().nextInt(100) >= 20) return false;
+		if (!state.pendingStickyCharge) {
+			if (!half && tick < state.nextDecision) return false;
+			state.nextDecision = tick + 3;
+			if (!half && npc.getWorld().getServer().getCombatRandom().nextInt(100) >= 20) return false;
+			state.pendingStickyCharge = true;
+		}
+		if (SlayerLeatherEffects.delayAttack(npc)) return true;
+		state.pendingStickyCharge = false;
 		if (half) state.halfHealthUsed = true;
 		npc.face(target);
 		startCharge(npc);
