@@ -1,14 +1,15 @@
 # Slayer leather set bonuses and cleansing direction
 
-Updated: 2026-09-21. Six retained new set bonuses and the carapace replacement
+Updated: 2026-09-22. Six retained new set bonuses and the carapace replacement
 are implemented. This is a code status, not a live-deployment claim. This
 document supersedes earlier undecided-theme notes and the plan to retain
 Banshee hide armor; that separate withdrawal is still pending.
 
 See [runtime rules and verification](slayer-leather-effects-implementation.md).
-The owner's concepts below are approved; the numerical/edge-case defaults
-identified in the implementation note were chosen during implementation and
-remain tuning choices, not separately confirmed owner decisions.
+The owner confirmed the implemented carapace values/stacking, Electrically
+Charged hit/reset/roll rules, Sticky Skin positive-hit/non-stacking rules and
+Storage Hump additive stacking on 2026-09-22. Cold Blooded's integer rounding
+remains an implementation choice rather than a separately confirmed decision.
 
 ## Carapace: poison cleansing
 
@@ -43,11 +44,11 @@ Implementation references:
 - `server/src/com/openrsc/server/model/container/Equipment.java`, carapace
   poison getters and magic-spider armor-penalty exemption.
 
-Implemented starting values: full five-piece scorpion/spider/magic-spider
+Owner-approved values (2026-09-22): full five-piece scorpion/spider/magic-spider
 sets add **2/3/5** poison-power removal per resolution, respectively. This
 adds to baseline 3 and the Nature necklace bonus without changing tick cadence.
-Mixed/partial sets do not activate it. Values are implementation defaults,
-not a finalized decision for future cleansing potions.
+Mixed/partial sets do not activate it. This approval does not select values
+for future cleansing potions.
 
 ## Dark beast: Electrically Charged
 
@@ -58,7 +59,7 @@ not a finalized decision for future cleansing potions.
 - This is a retaliation effect, not the monster's marked-target lightning
   mechanic and not a Static discharge wipe interaction.
 
-Implemented default: positive direct hits only; reset to zero on discharge,
+Owner-approved rules (2026-09-22): positive direct hits only; reset to zero on discharge,
 unequip, death or logout. Use the wearer's magic roll with tier-2 thunder power
 and cap, and the existing secondary-spell enemy eligibility rules. DOT and
 secondary procs do not charge the meter. PvP remains gated off. See the runtime
@@ -88,7 +89,7 @@ full action lock, or the frog monster's Slimy Spit debuff.
 Tie the implementation to the planned **Slow** vocabulary: a delay measured
 in action ticks. The eventual slow-stacking weapon coating is a separate
 project; do not import its point thresholds or movement restrictions here.
-Implemented default: positive direct hits only, one pending delay with no
+Owner-approved rules (2026-09-22): positive direct hits only, one pending delay with no
 stacking/refresh. It waits for the next otherwise-ready attack, including its
 normal cooldown and existing action locks; it does not consume a movement turn.
 
@@ -143,7 +144,8 @@ not always upward (`ceil`). For example, base food healing 6 becomes 7
 requirement to always round down.
 
 This is a food-healing bonus, not general lifesteal, regeneration or potion
-healing. Normal maximum-HP behavior remains unchanged. Implemented default:
+healing. Normal maximum-HP behavior remains unchanged. Owner-approved stacking
+(2026-09-22):
 add the Nature food bonus to the 20%, then round the total once. Ordinary
 food, multi-bite food through the normal eating path, sweet fruit and kebabs
 use this rule. Without the set, pre-existing food behavior is unchanged.
