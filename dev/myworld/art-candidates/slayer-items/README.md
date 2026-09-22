@@ -8,11 +8,17 @@ the source eye placement. Generated art fitted with export-native.cjs to 11x11,
 then translated from (19,11) to (18,14) without resampling using ffmpeg crop/pad.
 See `cockatrice-eye-preview.html` and `cockatrice-eye-prompt.txt`.
 
-`abyssal-vertibrae-candidate.png`: pending review. Single ivory vertebra,
+`abyssal-vertibrae-approved.png`: user approved. Single ivory vertebra,
 based on the user's photographic shape reference, with RSC bone shading.
 48x32 canvas, fitted 10x11 at (18,14), comparable in size to the approved eye.
 Packaged at 11x11 maximum, then crop/pad translated from (19,11) to (18,14).
 See `vertebra-preview.html`; prompt and reference URL in `vertebra-prompt.txt`.
+
+`slimey-residue-candidate.png` and `ectoplasm-candidate.png`: pending review.
+Gelatinous puddles matching approved demon skin blues and banshee exposed
+skin purples respectively. Each uses 48x32 canvas, fitted 34x14 at (7,9).
+Swamp tar was the footprint/style reference. See `puddles-preview.html`,
+`residue-prompt.txt` and `ectoplasm-prompt.txt`. Generated with built-in imagegen.
 
 Latest gland revision: `sticky-saliva-gland-candidate-v2.png` lowers the gland
 into the puddle to remove the floating appearance. Same native 48x32 canvas
