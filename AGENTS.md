@@ -80,6 +80,15 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 - See [`docs/workspaces/rsc-sprite-baker.md`](docs/workspaces/rsc-sprite-baker.md)
   for routing and lifecycle commands.
 
+## Inventory / Ground Sprite References
+
+- Before designing a new inventory/ground icon, read
+  `dev/myworld/reference-library/items/README.md`, then the requested visual
+  family's notes and contact sheet (for example `weapons/daggers`).
+- Inspect the individual full-canvas PNG as the scale/position anchor. These
+  are visual references, not gameplay item definitions or production assets.
+  Keep the original export untouched and follow the library's canvas guidance.
+
 ## Public Server Shutdown Gate
 
 - Building, tagging, uploading, publishing, or being asked to "release" or
