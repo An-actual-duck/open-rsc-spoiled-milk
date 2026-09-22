@@ -10,11 +10,15 @@ Art review assets only: these do not replace live inventory/ground sprites.
   native 48x32, object 40x22 at (4,5). Exposed vertebrae with slate-blue
   connective flesh and a rib-bone handle. The earlier `candidate` filename
   remains a byte-identical preview reference.
-- `thunder-spire-staff-candidate.png`: pending user review. Wood shaft,
+- `thunder-spire-staff-approved.png`: user approved first attempt. Wood shaft,
   grey-brown Dark Beast horn, leather lashings at the mount, and yellow arcs.
   `staff-preview.html` compares its native canvas with the three god-staff
   bases. In the export catalog Guthix aliases the plain wooden staff (2235),
   Zamorak the red-headed staff (2487), and Saradomin uses sprite 2564.
+- `leaching-bow-candidate.png`: pending review, Ebony Longbow reference with
+  muted red woven Bloodveld-tongue string. Tier-8 stats/logs supersede the
+  previous tier-9 design target; see the corrected equipment design and
+  implementation ledger. The Magic Longbow reference is historical only.
 
 Artwork generated using the built-in imagegen tool. Prompts are saved alongside
 the art. Source renders are retained for reproducible native-size packaging.

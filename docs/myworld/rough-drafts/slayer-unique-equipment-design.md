@@ -31,7 +31,7 @@ rarity policy, ordinary loot and assembly transaction requirements.
   shield have no wear requirements. IDs, death behavior and
   exact numeric stat mappings remain undecided unless stated below.
 - Tier references identify the intended existing stat benchmark, not a newly
-  invented item level. Resolve the actual tier 9/10 log items and weapon stats
+  invented item level. Resolve the actual tier 8/9 log items and weapon stats
   from current game definitions before implementation.
 - Preserve the supplied item names and quoted descriptions. Do not silently
   correct spelling in names such as Leaching Bow or Abyssal Vertibrae.
@@ -59,17 +59,22 @@ to wearing these rewards. Acquisition/shop access is a separate contract.
 | --- | --- | ---: | --- |
 | Abyssal Whip | Tier 10 melee | 70 Melee | Tier 10 longsword power, dagger speed |
 | Dagger of Terror | Tier 5 melee | 30 Melee | Approximately tier 5 dagger damage, one-tick attacks |
-| Thunder Spire Staff | Tier 9 magic | 62 Magic | Tier 10 magic staff stats |
-| Leaching Bow | Tier 8 ranged | 54 Ranged | Tier 9 longbow stats |
+| Thunder Spire Staff | Tier 9 magic | 62 Magic | Tier 9 Magic Staff stats |
+| Leaching Bow | Tier 8 ranged | 54 Ranged | Tier 8 Ebony Longbow stats |
 
 Verified against tracked definitions at `dd0f64f22`: Rune long sword `75`
 requires 70 and Steel dagger `63` requires 30 in
 [ItemDefs.json](../../../server/conf/server/defs/ItemDefs.json). Magic Staff
 `1784` requires 62 Magic and Ebony Longbow `2125` requires 54 Ranged in
 [ItemDefsMyWorld.json](../../../server/conf/server/defs/ItemDefsMyWorld.json).
-The same overrides give Blood Staff `2146` tier-10 stats and Magic Longbow
-`656` tier-9 stats; the new rewards' lower wear tiers are intentional, not a
-request to lower their approved stats or change their log recipes.
+Owner correction (2026-09-22): requirement, stats and log tier now align.
+Bloodveld rewards tier 8, Dark Beast tier 9, Abyssal Demon tier 10. The
+special effects are the upside rather than an extra tier of ordinary stats.
+Ebony Longbow `2125` supplies 40 ranged offense and weapon speed 3; Ebony
+Logs `2113` replace Magic Logs in the bow recipe. Magic Staff `1784` supplies
+48 magic offense; Magic Logs `636` replace Blood Logs in the staff recipe.
+The whip's tier-10 benchmark and existing effects remain unchanged.
+See the implementation ledger for whether these corrected targets are live.
 
 Use the current Melee requirement path rather than reintroducing separate
 legacy Attack/Strength gates. Cover every supported equip route, including
@@ -103,8 +108,8 @@ three-second full-action trap or the future stacking-slow system.
 
 ## Thunder Spire Staff
 
-- Recipe: **1 Lightning Horn and 1 tier 10 log**.
-- **Tier 10 magic staff stats**.
+- Recipe: **1 Lightning Horn and 1 tier 9 Magic Logs (636)**.
+- **Tier 9 Magic Staff stats: 48 magic offense**.
 - Makes **all thunder spells area-of-effect**.
 - The three thunder spell tiers gain **1-, 2- and 3-tile radii**, respectively,
   around the target. This is radius, not diameter; identify actual spell IDs
@@ -159,8 +164,8 @@ shared god-spell behavior.
 
 ## Leaching Bow
 
-- Recipe: **2 Leach Tongue components and 1 tier 9 log**.
-- **Tier 9 longbow stats**.
+- Recipe: **2 Leach Tongue components and 1 tier 8 Ebony Logs (2113)**.
+- **Tier 8 Ebony Longbow stats: 40 ranged offense, weapon speed 3**.
 - **20% lifesteal, primary hit only**. Secondary/off-hand hits, splash,
   poison and other secondary damage sources do not heal through this bow.
 - Calculate healing from **actual HP removed**, excluding overkill, and cap

@@ -5,6 +5,25 @@ Updated: 2026-09-21. Feature work only; no deployment or server restart.
 Design authority: [unique equipment](slayer-unique-equipment-design.md),
 [assembly prices](slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
 
+## Pending owner tier correction — 2026-09-22
+
+The art pass corrected the design authority, not the runtime definitions.
+The implemented table below records the old values until a gameplay patch:
+
+- Leaching Bow: use Ebony Logs `2113` instead of Magic Logs `636`; reduce
+  ranged offense 44 to 40 (Ebony Longbow `2125`), retaining speed 3, 54 Ranged,
+  20% primary-hit lifesteal and 85 Elite currency. Review arrow compatibility
+  against the tier-8 benchmark instead of inheriting Magic Longbow's ceiling.
+- Thunder Spire Staff: use Magic Logs `636` instead of Blood Logs `2114`;
+  reduce magic offense 56 to 48 (Magic Staff `1784`), retaining 62 Magic,
+  thunder effects and 200 Champion currency.
+- Abyssal Whip remains tier 10 unchanged. Progression is Bloodveld 8,
+  Dark Beast 9, Abyssal Demon 10; do not reintroduce the old split tiers.
+
+Update item definitions, shop ingredient data and relevant regression tests
+together before considering the correction implemented. Bow artwork now uses
+the tier-8 Ebony Longbow, not the superseded Magic Longbow reference.
+
 ## Implemented: Shield of Mobility
 
 - Item **3349**, `MyWorldItemId.SHIELD_OF_MOBILITY`.
