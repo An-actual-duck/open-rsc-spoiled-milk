@@ -1,6 +1,6 @@
 # Slayer leather set effects — implementation
 
-Updated: 2026-09-21. Implements the [selected bonuses](slayer-leather-set-bonuses.md)
+Updated: 2026-09-22. Implements the [selected bonuses](slayer-leather-set-bonuses.md)
 under `WANT_MYWORLD` and `WANT_CUSTOM_LEATHER`. No deployment, server restart,
 map placement, art changes or account migration is part of this patch.
 
@@ -19,11 +19,19 @@ appearance IDs do not grant another family's effect.
 | Ugthanki — Storage Hump | `round(foodHeal * (1.20 + natureFoodBonus))`, once per food-healing application; no general potion/regeneration bonus. |
 | Scorpion / spider / magic-spider carapace | Full sets add 2 / 3 / 5 poison power removed at each existing poison resolution, added to baseline 3 and Nature necklace. Old offensive poison procs removed. |
 
-Carapace values, positive-direct-only retaliation, non-stacking Sticky Skin,
-charge reset rules, additive food bonuses and mitigation rounding are explicit
-implementation defaults where the owner supplied a concept but not every
-edge rule. They were raised for confirmation during this implementation, not
-silently recorded as separately owner-approved balance decisions.
+Owner confirmation on 2026-09-22 approved all three requested rule groups:
+
+- Full five-piece carapace +2/+3/+5 cleansing, added to baseline and Nature necklace.
+- Electrically Charged positive direct hits only; reset on discharge,
+  unequipping, death or logout; the wearer's normal tier-2 thunder roll against
+  eligible nearby enemies.
+- Sticky Skin positive direct hits only, one pending one-tick attack delay
+  without stacking; Storage Hump added to Nature food bonuses before rounding once.
+
+These rules were already implemented, so confirmation required no runtime
+change. Cold Blooded mitigation rounding remains an implementation default;
+the three confirmations do not separately approve that choice or the deferred
+game-wide potion/Slow overhaul.
 
 ## Damage ownership and timing
 

@@ -155,13 +155,15 @@ The global audit of scripted/secondary/periodic sources remains open.
   immediate armor scope. Carapace cleansing replaces its offensive poison
   procs and removes magic-spider's leather magic-penalty exception.
 
-These directions do not select numerical cleanse scaling, stacking caps or
-Slow immunity rules, and do not authorize the deferred game-wide overhaul now.
+The owner subsequently approved the bounded carapace +2/+3/+5 additive
+cleansing rules on 2026-09-22. Global stacking caps, potion scaling and
+accumulating Slow immunity rules remain undecided; this does not authorize
+the deferred game-wide overhaul now.
 
 The bounded [Slayer leather coverage/theme review](../rough-drafts/slayer-hide-and-leather-overhaul.md#material-coverage-and-shared-armor-themes)
 is current planning work. In particular, all carapace families are intended to
 increase the wearer's poison cleanse rate. Full-set +2/+3/+5 additive removal
-is now the documented implementation default for scorpion/spider/magic-spider;
+is now owner-approved (2026-09-22) for scorpion/spider/magic-spider;
 future potion strengths and global stacking/caps remain undecided. That does
 not bring this game-wide standardization project into
 the tower's scope or make it a prerequisite for finishing the tower.

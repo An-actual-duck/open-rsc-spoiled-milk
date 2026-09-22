@@ -136,7 +136,7 @@ separate. The original implementation boundary was to wait until the eight
 new NPC additions and their sprite work are finished. Nothing in this pass
 removes old drops, alters old equipment, binds holdings or changes death rules.
 New armor bonuses and tier-scaled carapace cleansing are implemented; the
-linked runtime note records starting defaults and tests. The broader
+linked runtime note records approved rules, remaining defaults and tests. The broader
 effect-standardization review still waits until the Slayer Tower is done.
 [Ordinary monster loot](slayer-ordinary-loot-implementation.md)
 and [consumable shop access/pricing](slayer-gimmick-shop-implementation.md) are
