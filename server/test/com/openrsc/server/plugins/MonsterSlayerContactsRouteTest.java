@@ -170,6 +170,7 @@ public final class MonsterSlayerContactsRouteTest {
 					}
 				}
 			}
+			optionalBossDialogueRoutes(server);
 		} finally {
 			install(server, "monsterSlayerData", previous); install(server, "monsterSlayerTaskService", previousTasks);
 		}
@@ -1670,6 +1671,30 @@ public final class MonsterSlayerContactsRouteTest {
 	private static boolean containsAnyNpcLine(java.util.List<String> events, String[] lines) {
 		for (String line : lines) if (events.contains("N:" + line)) return true;
 		return false;
+	}
+
+	private static void optionalBossDialogueRoutes(Server server) {
+		MonsterSlayerData data = server.getWorld().getMonsterSlayerData();
+		Player player = player(server, "bossdialogue", 290, 600);
+		MonsterSlayerState.write(player.getCache(), data, MonsterSlayerState.defaults(data));
+		Npc associate = new Npc(server.getWorld(), 857, 290, 600);
+		server.getConfig().WANT_CUSTOM_QUESTS = true;
+		player.getCache().store("miniquest_dwarf_youth_rescue", true);
+		player.getSkills().setTemporaryLevelAndMaxStat(com.openrsc.server.constants.Skill.MINING.id(), 80, 80, false);
+		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.Boss boss :
+			com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.Boss.values()) {
+			RecordingDialogue enable = new RecordingDialogue(3, boss.ordinal(), 0);
+			new MonsterSlayerContacts(enable).onTalkNpc(player, associate);
+			assertTrue(boss.optedIn(player), "dialogue enables chosen boss");
+			assertTrue(enable.events.contains("P:I'm ready for " + boss.displayName + " tasks"), "exact readiness option");
+			RecordingDialogue disable = new RecordingDialogue(3, boss.ordinal(), 0);
+			new MonsterSlayerContacts(disable).onTalkNpc(player, associate);
+			assertFalse(boss.optedIn(player), "dialogue disables chosen boss");
+			assertTrue(disable.events.contains("P:I'm unable to complete"), "exact opt-out option");
+			RecordingDialogue declined = new RecordingDialogue(3, boss.ordinal(), 1);
+			new MonsterSlayerContacts(declined).onTalkNpc(player, associate);
+			assertFalse(boss.optedIn(player), "cancelled menu never opts in");
+		}
 	}
 
 	private static final class RecordingDialogue implements MonsterSlayerContacts.DialogueRenderer {

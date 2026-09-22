@@ -4,6 +4,7 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAcces
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
@@ -220,12 +221,11 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 			if (choice == 3 && index == 5) {
 				int selected = speakChoice(player, npc, "Balrog", "Elder Green Dragon", "Never mind.");
 				if (selected < 0 || selected > 1) return;
-				com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.Boss boss =
-					com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.Boss.values()[selected];
+				MonsterSlayerBossTasks.Boss boss = MonsterSlayerBossTasks.Boss.values()[selected];
 				boolean enable = !boss.optedIn(player);
 				int confirm = speakChoice(player, npc, enable ? "I'm ready for " + boss.displayName + " tasks" : "I'm unable to complete", "Never mind.");
 				if (confirm == 0) dialogue.npc(player, npc,
-					com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.choose(player,
+					MonsterSlayerBossTasks.choose(player,
 						player.getWorld().getMonsterSlayerData(), boss, enable));
 			}
 		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }

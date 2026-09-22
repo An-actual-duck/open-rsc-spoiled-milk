@@ -372,6 +372,13 @@ final class CurrentMonsterSlayerShopRuntimeCharacterization {
 			final int selected = pick; final MonsterSlayerDefinitions.Contact contact = data.getContacts().get(tier);
 			MonsterSlayerContactService randomized = new MonsterSlayerContactService(data, new com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskService(data), new MonsterSlayerContactService.RandomSource() { public int nextInt(int bound) { return selected; }});
 			Player repeatable = h.player("mssrepeat" + fixture, 870 + fixture++, 790); state(repeatable, data, 0L, 0, tier + 1);
+			// This loop covers the entire definition pool, including opt-in bosses.
+			h.server().getConfig().WANT_CUSTOM_QUESTS = true;
+			repeatable.getCache().store("miniquest_dwarf_youth_rescue", true);
+			repeatable.getSkills().setTemporaryLevelAndMaxStat(com.openrsc.server.constants.Skill.MINING.id(), 80, 80, false);
+			for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.Boss boss :
+				com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.Boss.values())
+				com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks.choose(repeatable, data, boss, true);
 			Map<String, Object> beforePreview = new LinkedHashMap<String, Object>(repeatable.getCache().getCacheMap());
 			MonsterSlayerDefinitions.Task preview = randomized.previewTask(repeatable, contact.getKey());
 			assertEquals(contact.getRepeatableTasks().get(pick).getKey(), preview.getKey(), "injectable repeatable pick " + contact.getKey() + " " + pick);

@@ -2231,8 +2231,6 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.SCORPION_GRAVE.id(), ItemId.SCORPION_CARAPACE.id(), "Scorpion carapace");
 		addGuaranteedDrop(NpcId.PIT_SCORPION.id(), ItemId.SCORPION_CARAPACE.id(), "Pit Scorpion carapace");
 
-
-
 		addGuaranteedDrop(NpcId.BABY_BLUE_DRAGON.id(), ItemId.BABY_DRAGON_HIDE.id(), "Baby Dragon hide");
 		DropTable babyBlueDragonDrops = this.npcDrops.get(NpcId.BABY_BLUE_DRAGON.id());
 		babyBlueDragonDrops.addItemDrop(ItemId.BLUE_DRAGON_SCALE.id(), 1, 4);

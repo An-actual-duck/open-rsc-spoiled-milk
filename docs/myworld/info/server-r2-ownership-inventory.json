@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "1badd834ebc94f1fc97fde0b50bab7d79e0f18918378aeeacb810ba6841f74a9",
+  "inputTreeSha256": "60d120c11fc3277f4014c8b8266a87e73449707bdb3447d4f4adce61dde08964",
   "inputs": [
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 25050,
+      "bytes": 31709,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "ad8560962e97be5af7ee1e78907c602ec802e0958a9eb62f53bfc62ef56119d0"
+      "sha256": "c061af0fdd37a730d40090e845dc271bc63dc332d70122eef32670212c23bb1f"
     },
     {
       "brandSignals": [],
@@ -1711,7 +1711,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 1246605,
+      "bytes": 1287699,
       "category": "spoiled-milk-content",
       "classificationReason": "Named Spoiled Milk definition override",
       "classificationRule": "server/conf/server/defs/*{MyWorld,Custom}*",
@@ -1720,11 +1720,11 @@
       "kind": "definition",
       "path": "server/conf/server/defs/ItemDefsCustom.json",
       "reverseDependencies": [],
-      "sha256": "3a873a15a7174ef264afee1840bface8c08d481aaaa5ead8fe1db451323b6906"
+      "sha256": "35b09f0358a3c4214ce3aa2ca891342c1b5261fb4c8d074be38149c2ac8a1b77"
     },
     {
       "brandSignals": [],
-      "bytes": 285340,
+      "bytes": 286095,
       "category": "spoiled-milk-content",
       "classificationReason": "Named Spoiled Milk definition override",
       "classificationRule": "server/conf/server/defs/*{MyWorld,Custom}*",
@@ -1733,7 +1733,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/ItemDefsMyWorld.json",
       "reverseDependencies": [],
-      "sha256": "565a44b59a335824ca6a18718e324858319b2b2ffe02e0ec711f52fd3e8ec264"
+      "sha256": "936eba686b7b74943b29bca4e925a3759437f69d122af04e710d6b947eb68d4c"
     },
     {
       "brandSignals": [],
@@ -1760,6 +1760,19 @@
       "path": "server/conf/server/defs/MonsterSlayerNpcDefs.json",
       "reverseDependencies": [],
       "sha256": "5e7e6e276d46d37e9572679518740d431f034e209f8bb64411bd58d53883c213"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 3789,
+      "category": "unresolved",
+      "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
+      "classificationRule": "server/conf/server/defs/**",
+      "dependencies": [],
+      "javaFqn": null,
+      "kind": "definition",
+      "path": "server/conf/server/defs/MonsterSlayerTowerNpcDefs.json",
+      "reverseDependencies": [],
+      "sha256": "93af568535e0c2a8735d018432b88c1bb0b2c45b4ede8c3d26d00374bb09f73b"
     },
     {
       "brandSignals": [],
@@ -2127,7 +2140,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 14232,
+      "bytes": 19886,
       "category": "unresolved",
       "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
       "classificationRule": "server/conf/server/defs/**",
@@ -2136,7 +2149,20 @@
       "kind": "definition",
       "path": "server/conf/server/defs/extras/MonsterSlayer.json",
       "reverseDependencies": [],
-      "sha256": "6378846f60e5aa096b52c595330fd0c54aaf6316e547532430cf34a6e4764c4f"
+      "sha256": "fedb45259186a4d6c741ae298e79c8ce1b4e66244e52dd39bb39a5bebb14b11a"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 3559,
+      "category": "unresolved",
+      "classificationReason": "Definition ownership is not encoded strongly enough to infer safely",
+      "classificationRule": "server/conf/server/defs/**",
+      "dependencies": [],
+      "javaFqn": null,
+      "kind": "definition",
+      "path": "server/conf/server/defs/extras/MonsterSlayerTower.json",
+      "reverseDependencies": [],
+      "sha256": "91972baf6cd02041bf6ab3b4f70f88d0b02a63f107e3edbc8ee7b24e5e8c564a"
     },
     {
       "brandSignals": [],
@@ -4542,7 +4568,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 22419,
+      "bytes": 22535,
       "category": "target-profile",
       "classificationReason": "Spoiled Milk distribution composition profile",
       "classificationRule": "server/myworld*.conf",
@@ -4551,7 +4577,7 @@
       "kind": "configuration",
       "path": "server/myworld.conf",
       "reverseDependencies": [],
-      "sha256": "5aa7d5aa16087246a1b55530f1a7d3fc8df0fdac46058304fa8e6fea8755b146"
+      "sha256": "1591582b6ea402c5d87f91dbb0879954529dc701e5b9354458d6888bc6b5b441"
     },
     {
       "brandSignals": [
@@ -5958,7 +5984,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 21705,
+      "bytes": 21799,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -6012,7 +6038,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/itemactions/Eating.java",
       "reverseDependencies": [],
-      "sha256": "03d28a5616b867656cc9451cda733beb9aa8c33291f23372875dbb5c2894319c"
+      "sha256": "d513a23e6c015074169702e0ff093f348d1525844a378305f2438a4314f725b1"
     },
     {
       "brandSignals": [],
@@ -9724,7 +9750,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4168,
+      "bytes": 3982,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -9774,7 +9800,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/npcs/alkharid/Tanner.java",
       "reverseDependencies": [],
-      "sha256": "93fe42e6d9b67de8bc1f46be6198441198beaab413a59ef993aac0b201984b23"
+      "sha256": "34df936c7afa8289f1c8eb8bc0073a8741c4ff03ad428bd76e0a653ab2314fdd"
     },
     {
       "brandSignals": [],
@@ -24401,7 +24427,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 121656,
+      "bytes": 122225,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -24517,7 +24543,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smelting.java"
       ],
-      "sha256": "f7a357b5411309300e4e678f9a69f9baf3a24eb741c49855946ba12079d52a3d"
+      "sha256": "59f9ea38f21bba407e5f75a4f1851f0bd9dba1777f3b09a3a02e7f29fc51fea2"
     },
     {
       "brandSignals": [],
@@ -24615,7 +24641,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 44948,
+      "bytes": 44327,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -24703,7 +24729,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java"
       ],
-      "sha256": "5ca1ecf55d69998f2f64a6c64d7d497ec7d4b5ef011de88d142fba5ee58ec3e6"
+      "sha256": "93b9b5302e2288e8f78001de5158923e3ca291eaff5dc12667bb33d177f9b470"
     },
     {
       "brandSignals": [],
@@ -27787,7 +27813,7 @@
         "myworld-name",
         "myworld-plugin-namespace"
       ],
-      "bytes": 9574,
+      "bytes": 10143,
       "category": "spoiled-milk-content",
       "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
@@ -27845,18 +27871,22 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerChallengeShops.java",
       "reverseDependencies": [],
-      "sha256": "8209790c3f4f1546936bf4ad9479147e9da33a77f2be941dba715a4d19b2c030"
+      "sha256": "1cb4b34d63b3ae55c2306da92386e9b47b366417b38c083b4af9548ad581bdab"
     },
     {
       "brandSignals": [
         "myworld-name",
         "myworld-plugin-namespace"
       ],
-      "bytes": 37943,
+      "bytes": 39207,
       "category": "spoiled-milk-content",
       "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
       "dependencies": [
+        {
+          "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks",
+          "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerBossTasks.java"
+        },
         {
           "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService",
           "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerContactService.java"
@@ -27940,7 +27970,57 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/npcs/LegendsQuestSirRadimusErkle.java"
       ],
-      "sha256": "ee4450316eb953351067066d020f660d86ebc2d3b44022b3f687afe21799f25b"
+      "sha256": "40b5a20cdc8c62d619912a5c8a56554f5a993a051155520258631c5d09992258"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "myworld-plugin-namespace",
+        "want-myworld-flag"
+      ],
+      "bytes": 2552,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
+      "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank",
+          "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerRank.java"
+        },
+        {
+          "import": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTowerAccess",
+          "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTowerAccess.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.plugins.Functions.multi",
+          "path": "server/src/com/openrsc/server/plugins/Functions.java"
+        },
+        {
+          "import": "com.openrsc.server.plugins.Functions.npcsay",
+          "path": "server/src/com/openrsc/server/plugins/Functions.java"
+        },
+        {
+          "import": "com.openrsc.server.plugins.Functions.say",
+          "path": "server/src/com/openrsc/server/plugins/Functions.java"
+        },
+        {
+          "import": "com.openrsc.server.plugins.triggers.TalkNpcTrigger",
+          "path": "server/src/com/openrsc/server/plugins/triggers/TalkNpcTrigger.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.plugins.custom.myworld.npcs.MonsterSlayerTowerAssociates",
+      "kind": "ant-plugin-source",
+      "path": "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java",
+      "reverseDependencies": [],
+      "sha256": "3b588ae0ca8fa04eeab87b028d7b9501e6ebb34fcd0a51f03cb740940e8ea0e0"
     },
     {
       "brandSignals": [
@@ -30232,7 +30312,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 7212,
+      "bytes": 7333,
       "category": "spoiled-milk-content",
       "classificationReason": "Custom plugins shipped by the Spoiled Milk distribution",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/custom/**",
@@ -30282,7 +30362,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/custom/skills/crafting/TanningRack.java",
       "reverseDependencies": [],
-      "sha256": "313c4cbf0a620b08a317caeac0a16e55b779f7b6c49ece995098044406f44f41"
+      "sha256": "31eda1c306e5cfcc12516c62ce7733f337327d8425ddb3ce4533285b478a0eae"
     },
     {
       "brandSignals": [
@@ -31683,7 +31763,7 @@
         "spoiled-milk-name",
         "want-myworld-flag"
       ],
-      "bytes": 59398,
+      "bytes": 59600,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -31759,7 +31839,7 @@
         "server/src/com/openrsc/server/util/NamedThreadFactory.java",
         "server/src/com/openrsc/server/util/ServerAwareThreadFactory.java"
       ],
-      "sha256": "6046fded9accc109fcd14a74c2a6e4cf8ef783ae430943a94c752d7bf558074f"
+      "sha256": "af991a4fe31e7c8add4f3ba113ed90162cdcb4e3942d806e00be91079ca5b32a"
     },
     {
       "brandSignals": [],
@@ -32622,6 +32702,7 @@
         "server/src/com/openrsc/server/content/market/task/NewMarketItemTask.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerContactService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java",
         "server/src/com/openrsc/server/database/WorldPopulator.java",
         "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/custom/HolidayDropEvent.java",
@@ -32702,9 +32783,10 @@
     },
     {
       "brandSignals": [
-        "myworld-name"
+        "myworld-name",
+        "want-myworld-flag"
       ],
-      "bytes": 128537,
+      "bytes": 127702,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -32726,8 +32808,24 @@
           "path": "server/src/com/openrsc/server/content/DropTable.java"
         },
         {
+          "import": "com.openrsc.server.content.monsterslayer.AbyssalDemonCombat",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java"
+        },
+        {
+          "import": "com.openrsc.server.content.monsterslayer.SlayerComponentDrops",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java"
+        },
+        {
+          "import": "com.openrsc.server.content.monsterslayer.SlayerOrdinaryDrops",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java"
+        },
+        {
           "import": "com.openrsc.server.model.container.Item",
           "path": "server/src/com/openrsc/server/model/container/Item.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
         },
         {
           "import": "com.openrsc.server.model.world.World",
@@ -32749,7 +32847,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "adbdec5eabceb210138a609b34a0739d0abcbe1e7fa7d9fa75a60c1d0bd6a1fa"
+      "sha256": "f804eaaac6b67b72a1eb322aa19e1eb1ba0640a24c991d84cab11e899ba09ad8"
     },
     {
       "brandSignals": [],
@@ -33536,12 +33634,15 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerBossTasks.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
         "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/content/party/PartyPlayer.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
@@ -33628,7 +33729,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 8530,
+      "bytes": 6819,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -33642,9 +33743,10 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/constants/SpellDamages.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "376417a8f3f69bcb7833ddd95429523928bdb27c08b84864e22accdef16b21c7"
+      "sha256": "7870ae8a3abb326af64851e8d728c3bfae39c84097d5b7ebc0ad60ad2327984c"
     },
     {
       "brandSignals": [],
@@ -33659,6 +33761,8 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/authentic/defaults/Default.java",
         "server/plugins/com/openrsc/server/plugins/shared/MagePlayer.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java",
@@ -33719,7 +33823,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 2346,
+      "bytes": 5704,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit MyWorld content identity catalog",
       "classificationRule": "server/src/com/openrsc/server/constants/custom/MyWorld*",
@@ -33751,6 +33855,10 @@
         "server/src/com/openrsc/server/content/FutureMedallionCatalog.java",
         "server/src/com/openrsc/server/content/LegacyAmuletCompatibility.java",
         "server/src/com/openrsc/server/content/PoisonPower.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerEquipmentEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/external/EntityHandler.java",
         "server/src/com/openrsc/server/external/ObjectWoodcuttingDef.java",
@@ -33759,7 +33867,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/util/rsc/Formulae.java"
       ],
-      "sha256": "93862c350497c4f57c30720d76f411230245cf9ec2ef38d19ae3541734f7aae9"
+      "sha256": "6cfdcac0fd8630391819417afeb29bdae1b9a3193b8a4aa24001a17daa6f1efb"
     },
     {
       "brandSignals": [],
@@ -34163,6 +34271,8 @@
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Development.java",
         "server/plugins/com/openrsc/server/plugins/custom/misc/Present.java",
         "server/src/com/openrsc/server/constants/NpcDrops.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeUtils.java",
         "server/src/com/openrsc/server/model/entity/npc/Npc.java"
       ],
@@ -34609,7 +34719,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 1819,
+      "bytes": 1886,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -34631,7 +34741,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
       ],
-      "sha256": "1981e5fe555a2ff5db1be778c55cb0ea2e22529f5e9789deaba0dfdcc2a70f42"
+      "sha256": "5df7debfc041fab441a44c082eb58ed7c6da301483a2ce96765db5f2589fc6b1"
     },
     {
       "brandSignals": [],
@@ -34825,7 +34935,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 86996,
+      "bytes": 86995,
       "category": "spoiled-milk-content",
       "classificationReason": "Explicit Spoiled Milk gameplay implementation",
       "classificationRule": "server/src/com/openrsc/server/content/{BadLuckMitigation,CorrosiveAura,Devotion,DevotionHalfOfferingBalance,DivineGrace,DivineRetribution,EnchantingItemEffects,FutureMedallionCatalog,GodArtifacts,Leach,PoisonPower,PoisonProcChance,RangersGuildArea,RangersGuildPoints,SkillCapes,Summoning,TrueDefense}.java",
@@ -34976,6 +35086,8 @@
         "server/plugins/com/openrsc/server/plugins/authentic/skills/smithing/Smelting.java",
         "server/src/com/openrsc/server/GameStateUpdater.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -35009,7 +35121,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "fa0699562527edcdb6632f50e2dbddc07e61d8f8757d092c5c3597a176d2eb5f"
+      "sha256": "366f0acd2d043e6d17d3a570506a18439561f1e4ce195c697a950598d0a6493f"
     },
     {
       "brandSignals": [],
@@ -36322,7 +36434,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5709,
+      "bytes": 5990,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -36372,7 +36484,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/market/task/BuyMarketItemTask.java",
       "reverseDependencies": [],
-      "sha256": "e9b52b18de5540ab0f153a13e6d91a055d1577a4f29269abf4c8ca2a4b2e8b95"
+      "sha256": "3aca84222b3e839e6634c2dcaa77fe3e689244e4e6f2078e823a60c08f2a0cc4"
     },
     {
       "brandSignals": [],
@@ -36776,6 +36888,30 @@
     },
     {
       "brandSignals": [],
+      "bytes": 2565,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Monster Slayer content",
+      "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerBossTasks.java",
+      "reverseDependencies": [
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java"
+      ],
+      "sha256": "24d789a32d435901955bcfc44b0777452d89de41ec27f0d29eb2c7142cb10c5f"
+    },
+    {
+      "brandSignals": [],
       "bytes": 1624,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
@@ -36792,7 +36928,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 12082,
+      "bytes": 12447,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -36820,7 +36956,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java"
       ],
-      "sha256": "b74ab9435bff364105448f709ac773310069d4bcbffe52d48791b1f368f20448"
+      "sha256": "134b76f50bd37aa2919013e21d6773c9244cf36cbfbcebca226ca4b5c528c1cd"
     },
     {
       "brandSignals": [],
@@ -36837,7 +36973,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 21573,
+      "bytes": 29890,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -36871,6 +37007,26 @@
           "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerDefinitions.java"
         },
         {
+          "import": "com.openrsc.server.content.monsterslayer.BansheeCombat",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java"
+        },
+        {
+          "import": "com.openrsc.server.content.monsterslayer.CockatriceCombat",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java"
+        },
+        {
+          "import": "com.openrsc.server.content.monsterslayer.DarkBeastCombat",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java"
+        },
+        {
+          "import": "com.openrsc.server.content.monsterslayer.GiantFrogCombat",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java"
+        },
+        {
+          "import": "com.openrsc.server.content.monsterslayer.TerrorDogCombat",
+          "path": "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java"
+        },
+        {
           "import": "com.openrsc.server.external.ItemDefinition",
           "path": "server/src/com/openrsc/server/external/ItemDefinition.java"
         },
@@ -36897,11 +37053,11 @@
         "server/src/com/openrsc/server/model/world/World.java",
         "server/src/com/openrsc/server/service/PlayerService.java"
       ],
-      "sha256": "165b71912bf81f2222fbe5dc9f59f181befb8e4fa341fa4740b42dd7cec9c186"
+      "sha256": "4c603a49d194865960a3cb5a66c8c2c32d3d12690977447d19b9099de3dcf141"
     },
     {
       "brandSignals": [],
-      "bytes": 6505,
+      "bytes": 7427,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -36917,7 +37073,7 @@
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerState.java"
       ],
-      "sha256": "03f3138809e0c8423160f02f716efabf4690fe83eb0d4a76df12b5ce9ac5dc43"
+      "sha256": "6a768b074ee0f6e649ecbd7da19641cedc187d358161551360b4ac37c4344d3d"
     },
     {
       "brandSignals": [],
@@ -36979,7 +37135,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 460,
+      "bytes": 2995,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -36990,7 +37146,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java"
       ],
-      "sha256": "13339b5d7efe44be40c152e64c012c0c7d8044fe108317ebc35b73a594ed91e4"
+      "sha256": "fea9a5531e666a78986df8b008a6d2d3a8b3838adc3ca3336e8cd39131df4692"
     },
     {
       "brandSignals": [],
@@ -37003,13 +37159,14 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerRank.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java"
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java"
       ],
       "sha256": "e06dd27e54ec857ef93cdfac75d2d3c17e076e655a361b91ec74f21c47782373"
     },
     {
       "brandSignals": [],
-      "bytes": 7286,
+      "bytes": 9265,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -37023,12 +37180,20 @@
           "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerDefinitions.java"
         },
         {
+          "import": "com.openrsc.server.model.container.Inventory",
+          "path": "server/src/com/openrsc/server/model/container/Inventory.java"
+        },
+        {
           "import": "com.openrsc.server.model.container.Item",
           "path": "server/src/com/openrsc/server/model/container/Item.java"
         },
         {
           "import": "com.openrsc.server.model.entity.player.Player",
           "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ActionSender",
+          "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
         }
       ],
       "javaFqn": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService",
@@ -37039,11 +37204,11 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "88a431051c908f367232ea7e25a6db00d1bb37b084e35815592986e8c023e4f7"
+      "sha256": "665490589155889971cec8e6cf3f77d90327155944f28e25b7a397691eb957f5"
     },
     {
       "brandSignals": [],
-      "bytes": 40903,
+      "bytes": 49431,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -37075,11 +37240,11 @@
         "server/src/com/openrsc/server/model/container/Inventory.java",
         "server/src/com/openrsc/server/service/PlayerService.java"
       ],
-      "sha256": "6cd121cb04c5e1564a68b74e61d723f1da6853d78a294fc06d778d302d2ec8e3"
+      "sha256": "08cd6759dc7b127bd1abc95e2b6549ee699b41838bd793d82245d57b2f400de0"
     },
     {
       "brandSignals": [],
-      "bytes": 7857,
+      "bytes": 7997,
       "category": "spoiled-milk-content",
       "classificationReason": "Spoiled Milk Monster Slayer content",
       "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
@@ -37096,14 +37261,37 @@
         "server/src/com/openrsc/server/model/entity/npc/Npc.java",
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "e083bd4736db7f61e5cc42772ad1d3fcf7a986d01650883f5de96ab0e614a185"
+      "sha256": "cc3901d5b041843b12b61e6f34386a8f01353bb4b343cf17243c44fd06a378c5"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 8113,
+      "bytes": 2691,
+      "category": "spoiled-milk-content",
+      "classificationReason": "Spoiled Milk Monster Slayer content",
+      "classificationRule": "server/src/com/openrsc/server/content/minigame/monsterslayer/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTowerAccess",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTowerAccess.java",
+      "reverseDependencies": [
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java"
+      ],
+      "sha256": "b948fc0fdabc29be76de7089205fd49ad755948db33488a7ff30db339ba2ff08"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 8195,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37160,8 +37348,10 @@
       "javaFqn": "com.openrsc.server.content.monsterslayer.AbyssalDemonCombat",
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
-      "reverseDependencies": [],
-      "sha256": "2883d48dbec96403002ae926984e844ccabd9d565e9abb05bc43a3fe53cbfa01"
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/constants/NpcDrops.java"
+      ],
+      "sha256": "387539d1b68ee8d19c9908b6943c54b0f55e1f75fff6154dd407781169c2c256"
     },
     {
       "brandSignals": [
@@ -37194,7 +37384,8 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/WaxEarplugs.java"
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/WaxEarplugs.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
       ],
       "sha256": "6b94d39367364fbc1eee3d08d97b9f08991fb8ef8aaca4b82d737ceead580111"
     },
@@ -37203,7 +37394,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 5209,
+      "bytes": 5267,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37265,14 +37456,14 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
       "reverseDependencies": [],
-      "sha256": "4880dfb9f220227209716185e92c20bd90d8cab81416081275f83a2dc6a18dd5"
+      "sha256": "a882f720935ac2f5fdf62d03ea9de259c15cd58412d9ed7f1fc4c2634bb8e40d"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 4972,
+      "bytes": 5045,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37310,16 +37501,17 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/EyeDrops.java"
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/EyeDrops.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
       ],
-      "sha256": "0308f1e03528b9370f9f2b3d11b89247a798ab5e00b0fe69ed54cc4e3a3fd205"
+      "sha256": "c82200bd02b9bd136003136c509513a29735f7c0781eba7f1982d374c5f5c5b1"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 9045,
+      "bytes": 9241,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37389,16 +37581,17 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/StaticDischargeWipe.java"
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/StaticDischargeWipe.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
       ],
-      "sha256": "699ab9421622c75546d47c099b2c07c78e6d7616e50b68909230402a621cd5c9"
+      "sha256": "145adb257f82e77e93897b20a8e3946227b68e7b448a9b9046c9f8e94e8f3e9c"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 3915,
+      "bytes": 3988,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37424,9 +37617,10 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/SlimeSolvent.java"
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/SlimeSolvent.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
       ],
-      "sha256": "5c696dfb2454d041998aaba3667457c6f671d4a1bba1c5e869356b85f2713c91"
+      "sha256": "2e9d8da24a07e038e3ebe45e2206d0fa8fb034d7f8706cc3c2c02db98d4e95ab"
     },
     {
       "brandSignals": [
@@ -37459,7 +37653,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 439,
+      "bytes": 478,
       "category": "unresolved",
       "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
       "classificationRule": "server/src/com/openrsc/server/content/**",
@@ -37473,7 +37667,79 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerCombatEffects.java",
       "reverseDependencies": [],
-      "sha256": "9871786b512ff6041d638ce0279d35833a415195aae44d3a0914a5bbe8de5934"
+      "sha256": "b1385d3e097aad4d7f4a968694ed7723adfe53049c2d0b7e293567418736220b"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 3176,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+          "path": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+        },
+        {
+          "import": "com.openrsc.server.content.DropTable",
+          "path": "server/src/com/openrsc/server/content/DropTable.java"
+        },
+        {
+          "import": "com.openrsc.server.model.container.Item",
+          "path": "server/src/com/openrsc/server/model/container/Item.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.runtime.GameRandom",
+          "path": "server/src/com/openrsc/server/runtime/GameRandom.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.SlayerComponentDrops",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/constants/NpcDrops.java"
+      ],
+      "sha256": "e5521a8b1a92a6634e859bbb6c8e2e8d05cfd8b61734b08f6717434d00b7137a"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 780,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+          "path": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.SlayerEquipmentEffects",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerEquipmentEffects.java",
+      "reverseDependencies": [],
+      "sha256": "7f81bd4879a221f2a3c354c71d23c8ded3a9fb47e4e2072750097bec1d5a81a4"
     },
     {
       "brandSignals": [
@@ -37503,6 +37769,217 @@
       "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerGimmickTestKit.java",
       "reverseDependencies": [],
       "sha256": "715194e9fd356b7dfc2d03aa61ebc225922aac9e078165758bce89acac28c640"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 8507,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.SpellDamages",
+          "path": "server/src/com/openrsc/server/constants/SpellDamages.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.Spells",
+          "path": "server/src/com/openrsc/server/constants/Spells.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+          "path": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+        },
+        {
+          "import": "com.openrsc.server.content.Summoning",
+          "path": "server/src/com/openrsc/server/content/Summoning.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.combat.CombatFormula",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.CombatParticipantSnapshot",
+          "path": "server/src/com/openrsc/server/model/combat/CombatParticipantSnapshot.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.CombatStyle",
+          "path": "server/src/com/openrsc/server/model/combat/CombatStyle.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.DamageRequest",
+          "path": "server/src/com/openrsc/server/model/combat/DamageRequest.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.DamageResult",
+          "path": "server/src/com/openrsc/server/model/combat/DamageResult.java"
+        },
+        {
+          "import": "com.openrsc.server.model.combat.SecondaryEffectPolicy",
+          "path": "server/src/com/openrsc/server/model/combat/SecondaryEffectPolicy.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.EntityType",
+          "path": "server/src/com/openrsc/server/model/entity/EntityType.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.NpcMagicElement",
+          "path": "server/src/com/openrsc/server/model/entity/npc/NpcMagicElement.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.update.CombatEffect",
+          "path": "server/src/com/openrsc/server/model/entity/update/CombatEffect.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.update.HitSplat",
+          "path": "server/src/com/openrsc/server/model/entity/update/HitSplat.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ActionSender",
+          "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.SlayerLeatherEffects",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+      "reverseDependencies": [],
+      "sha256": "e9cc8c0d5fdc07bbee130a797a1d7df8a536a0ebbfb889c817a9459ee2a378c3"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 8775,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.ItemId",
+          "path": "server/src/com/openrsc/server/constants/ItemId.java"
+        },
+        {
+          "import": "com.openrsc.server.content.DropTable",
+          "path": "server/src/com/openrsc/server/content/DropTable.java"
+        },
+        {
+          "import": "com.openrsc.server.model.container.Item",
+          "path": "server/src/com/openrsc/server/model/container/Item.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.SlayerOrdinaryDrops",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java",
+      "reverseDependencies": [
+        "server/src/com/openrsc/server/constants/NpcDrops.java"
+      ],
+      "sha256": "95f6170d8d680c5c9484ec5c157dddac2d47904b6a0a18e5fb050b75db62aa09"
+    },
+    {
+      "brandSignals": [],
+      "bytes": 697,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.SlayerRewardBosses",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardBosses.java",
+      "reverseDependencies": [],
+      "sha256": "5eb6c487f3067c555d7a9e87e323923c0524ae229573c4b0f7c8c92057d09f56"
+    },
+    {
+      "brandSignals": [
+        "myworld-name",
+        "want-myworld-flag"
+      ],
+      "bytes": 8899,
+      "category": "unresolved",
+      "classificationReason": "Mixed inherited/custom content owner requires an R2 extraction decision",
+      "classificationRule": "server/src/com/openrsc/server/content/**",
+      "dependencies": [
+        {
+          "import": "com.openrsc.server.constants.Skill",
+          "path": "server/src/com/openrsc/server/constants/Skill.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.Spells",
+          "path": "server/src/com/openrsc/server/constants/Spells.java"
+        },
+        {
+          "import": "com.openrsc.server.constants.custom.MyWorldItemId",
+          "path": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
+        },
+        {
+          "import": "com.openrsc.server.content.Summoning",
+          "path": "server/src/com/openrsc/server/content/Summoning.java"
+        },
+        {
+          "import": "com.openrsc.server.event.rsc.impl.combat.CombatFormula",
+          "path": "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
+        },
+        {
+          "import": "com.openrsc.server.model.container.Item",
+          "path": "server/src/com/openrsc/server/model/container/Item.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.Mob",
+          "path": "server/src/com/openrsc/server/model/entity/Mob.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.npc.Npc",
+          "path": "server/src/com/openrsc/server/model/entity/npc/Npc.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.player.Player",
+          "path": "server/src/com/openrsc/server/model/entity/player/Player.java"
+        },
+        {
+          "import": "com.openrsc.server.model.entity.update.HitSplat",
+          "path": "server/src/com/openrsc/server/model/entity/update/HitSplat.java"
+        },
+        {
+          "import": "com.openrsc.server.net.rsc.ActionSender",
+          "path": "server/src/com/openrsc/server/net/rsc/ActionSender.java"
+        }
+      ],
+      "javaFqn": "com.openrsc.server.content.monsterslayer.SlayerRewardCombat",
+      "kind": "ant-core-source",
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
+      "reverseDependencies": [],
+      "sha256": "9989c274e65927e7840c7973523e8ce6c71c30beba570a24f807c64e9c4a61d1"
     },
     {
       "brandSignals": [
@@ -37551,7 +38028,8 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
       "reverseDependencies": [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/DogTreats.java"
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/itemactions/DogTreats.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerData.java"
       ],
       "sha256": "886d4a83ac16f6a3052196e345945ee200158f634c7bbdb4eb54beaddf23c20d"
     },
@@ -42755,7 +43233,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5840,
+      "bytes": 5945,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -42825,7 +43303,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "5a8d60045bae76f4e818eb18838caebf855337634b78cc0214993dfabe2a12c8"
+      "sha256": "d9b81ae3335cc40d066e5403774e95bbaef5968b6474f8f5d882a94b93b8161b"
     },
     {
       "brandSignals": [
@@ -43019,7 +43497,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 39899,
+      "bytes": 40908,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43256,7 +43734,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/PlayerDuelHandler.java"
       ],
-      "sha256": "b34ea40eee583278570384571ca3d2d0eb4a617d9257f22d8f4d6f1b60b8d259"
+      "sha256": "2f4ab63c90c9fe3c337be170592765d4a3a257d1d1a2370d57ac07ba597308d6"
     },
     {
       "brandSignals": [
@@ -43343,6 +43821,8 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeUtils.java",
@@ -43542,7 +44022,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 46344,
+      "bytes": 47326,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -43809,7 +44289,7 @@
         "server/src/com/openrsc/server/model/entity/Mob.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "f935e79f75ed67cb6f9b9d2c974c426b89f2c639d03499270cb18049ba57fd65"
+      "sha256": "4b51590c4f557eeffec286328868e4e3c54bc7a26864e7e4a07d5b0e384405a6"
     },
     {
       "brandSignals": [],
@@ -44843,8 +45323,10 @@
       "sha256": "32e08dde75b23eff93d5f7936c1e5770821da9f63a377f414193d3f7de4a67cf"
     },
     {
-      "brandSignals": [],
-      "bytes": 57771,
+      "brandSignals": [
+        "myworld-name"
+      ],
+      "bytes": 59002,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45081,7 +45563,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/WalkRequest.java"
       ],
-      "sha256": "47d550d3615356469b4d2c00da74791ddc3e1f73c1ea8690b5bc30276393ad37"
+      "sha256": "537ab268e5afd6655562fedf4fe619e91560955e5490a4893be436950dd13d1b"
     },
     {
       "brandSignals": [],
@@ -45232,7 +45714,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 7475,
+      "bytes": 7725,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45309,11 +45791,13 @@
         "server/plugins/com/openrsc/server/plugins/authentic/commands/Admins.java",
         "server/src/com/openrsc/server/model/entity/Mob.java"
       ],
-      "sha256": "4006024c831305cb4744bb91f9809c1329003642f72065e689d38a8f47e560ff"
+      "sha256": "444d59319e541ff508547ce85d30cd784b0af21c7e94b31863534889a3859924"
     },
     {
-      "brandSignals": [],
-      "bytes": 26206,
+      "brandSignals": [
+        "myworld-name"
+      ],
+      "bytes": 26438,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45404,7 +45888,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/AttackHandler.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "8d94bb09c4da9d8a77f2b7b85867df4b87846a857d96d42e02cdd973b95563ee"
+      "sha256": "feb99635212eead33b773ec0bb325a6ad0433653ef9129738f32dac5a0f57fb1"
     },
     {
       "brandSignals": [
@@ -45775,7 +46259,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 62263,
+      "bytes": 62351,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45858,7 +46342,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "a077bac6396ce65410a87bf87dcbf2a4d9740b7421e8f7bd164e6e1b832eff9e"
+      "sha256": "d938d80049b06dcf0015134c91843fdd20123b8851464f053e07df4564597017"
     },
     {
       "brandSignals": [],
@@ -48342,7 +48826,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 4393,
+      "bytes": 4485,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48364,7 +48848,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/WalkingQueue.java",
       "reverseDependencies": [],
-      "sha256": "845bfde1b95f1022158d4e63f06cdd93b8235041d4aee31ecdc2aa49c7a4cdef"
+      "sha256": "27d0315a2372c7b88be86cd706452a3c276386b2edd6c3cf084cb8e326ffe8b6"
     },
     {
       "brandSignals": [],
@@ -48605,7 +49089,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 1071,
+      "bytes": 1170,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48630,7 +49114,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
       ],
-      "sha256": "f6b6e506ff145b415c6abbca9ea4b01f0f82d5c2baaff1a5625979693dd3ed62"
+      "sha256": "1ce263acbfe0bb4c299777dd2b214ad1aba3c4e46e061a9f5e51fb3b8bdc74bd"
     },
     {
       "brandSignals": [],
@@ -48770,7 +49254,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 8499,
+      "bytes": 8723,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48807,7 +49291,7 @@
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "facd3c041341e6fe53320f7b8bf9b9d852aa7ea26b56e4e8465861445186347f"
+      "sha256": "bc51c41484fe86465a93f2deba5657d561fda868d2d2213cb817889c10d1c965"
     },
     {
       "brandSignals": [],
@@ -48829,7 +49313,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 2804,
+      "bytes": 2920,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48845,7 +49329,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "30ad68839b3de96ed4e3882f15494449d8dcaa02433c058fff1e2a225b64d5fb"
+      "sha256": "f85bf2c8ce45696cf0cb8432bd36a5db97694ca2c4d0bdc291e3fe1d89de437c"
     },
     {
       "brandSignals": [],
@@ -48865,7 +49349,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 973,
+      "bytes": 995,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -48876,7 +49360,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "6eedc32879e4ed6fd621cf28b09485ef105d943c66171c7df69b138c3b3c15ab"
+      "sha256": "ce7e486843b6633211ce1fb14c59282d16a48e5dd56cb1d2618a16e0eaafd915"
     },
     {
       "brandSignals": [],
@@ -49027,6 +49511,7 @@
         "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
       ],
@@ -49046,6 +49531,7 @@
         "server/src/com/openrsc/server/content/DivineRetribution.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/diagnostics/ActiveCombatBenchmark.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -49095,6 +49581,7 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -49123,6 +49610,7 @@
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -49739,7 +50227,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 11473,
+      "bytes": 12161,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -49773,7 +50261,7 @@
         "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "a2666093efd6f752955467139a22da511954f184d636836c619f42ce47de6ef5"
+      "sha256": "65fd8b4690481371c3ce77e5fd3343ae5a7b93c2c9b6b89d27fae4fb07a99217"
     },
     {
       "brandSignals": [],
@@ -49850,7 +50338,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5671,
+      "bytes": 5875,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -49862,6 +50350,7 @@
         "server/src/com/openrsc/server/content/DivineRetribution.java",
         "server/src/com/openrsc/server/content/ElderGreenDragonArmorEffect.java",
         "server/src/com/openrsc/server/content/Summoning.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
@@ -49869,7 +50358,7 @@
         "server/src/com/openrsc/server/model/entity/player/Player.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "4d16e433904e7f18bb6cf2e1c91688b0d52b668d83c93a6f8be2fd8d5b1b877e"
+      "sha256": "a96f714dc2003ceee415e7b87b9c7c987e53066abac9a79471064fe3fbc76cb2"
     },
     {
       "brandSignals": [],
@@ -50192,9 +50681,10 @@
     },
     {
       "brandSignals": [
-        "myworld-name"
+        "myworld-name",
+        "want-myworld-flag"
       ],
-      "bytes": 115332,
+      "bytes": 116356,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -50304,7 +50794,7 @@
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java",
         "server/src/com/openrsc/server/service/PlayerService.java"
       ],
-      "sha256": "1429acc5aa1ffac925c435cf1c18cf17cca324f89b7ab6b60667505297745985"
+      "sha256": "f5192305f5eea110d949b5844cd74e6ffda7e1b82b9fe06c848ca4b03641c413"
     },
     {
       "brandSignals": [],
@@ -50431,6 +50921,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java",
         "server/src/com/openrsc/server/content/Summoning.java",
         "server/src/com/openrsc/server/content/market/MarketInventoryAdmission.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
         "server/src/com/openrsc/server/content/monsterslayer/SlayerGimmickTestKit.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/RangeEvent.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
@@ -50860,7 +51351,10 @@
         "server/src/com/openrsc/server/content/market/task/PlayerCollectItemsTask.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerContactService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
         "server/src/com/openrsc/server/content/monsterslayer/SlayerGimmickTestKit.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
         "server/src/com/openrsc/server/database/impl/mysql/MySqlGameDatabase.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
@@ -51027,6 +51521,7 @@
       "path": "server/src/com/openrsc/server/model/entity/EntityType.java",
       "reverseDependencies": [
         "server/src/com/openrsc/server/constants/SpellDamages.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/model/entity/death/DeathContext.java",
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
@@ -51736,6 +52231,10 @@
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/SlayerCombatEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerEquipmentEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardBosses.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/database/impl/mysql/queries/logging/DeathLog.java",
         "server/src/com/openrsc/server/diagnostics/ProjectileCombatBenchmark.java",
@@ -52024,7 +52523,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 68948,
+      "bytes": 69300,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52481,6 +52980,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/Kresh.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerChallengeShops.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/Sedridor.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/quests/free/PeelingTheOnion.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/gathering/ResourceSeeds.java",
@@ -52522,6 +53022,10 @@
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/NagaCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerEquipmentEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardBosses.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/content/worldedit/WorldEditorSessionManager.java",
         "server/src/com/openrsc/server/database/GameDatabase.java",
@@ -52606,11 +53110,11 @@
         "server/src/com/openrsc/server/util/PathfindingDebug.java",
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java"
       ],
-      "sha256": "1a5faa8e9f3635ebe6809110d46132163ed246527fc67df9376b2ede7c50476e"
+      "sha256": "9c7a5235e5a8b887010f8f0959dd35ba846eeb83d3686c5578e2d55dd8448c55"
     },
     {
       "brandSignals": [],
-      "bytes": 14018,
+      "bytes": 14029,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52634,14 +53138,14 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/entity/Mob.java"
       ],
-      "sha256": "288309a860d97d2d73599fb51918929ba0415c4d51b0b1c9ed075f9a8c93d51f"
+      "sha256": "faa0a153a5a9d26c22c8b8d5a33b9cc76fee1d5c68896469b70e333df48c40b1"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 30259,
+      "bytes": 30455,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52743,7 +53247,7 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcBehavior.java",
       "reverseDependencies": [],
-      "sha256": "c0b4ff5bffd4ff80f8474b95059a7fcbe85c040d5205969514c66a9d3103e3ec"
+      "sha256": "3fef0a0a2482e9c5c8f5e9289633bffdfcfc28de59d79b21d2d346a67485ad04"
     },
     {
       "brandSignals": [],
@@ -52840,7 +53344,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 130,
+      "bytes": 136,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -52849,12 +53353,13 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/model/entity/npc/NpcMagicElement.java",
       "reverseDependencies": [
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java",
         "server/src/com/openrsc/server/model/combat/ProjectileLaunchSpecification.java",
         "server/src/com/openrsc/server/model/entity/player/Player.java"
       ],
-      "sha256": "c35a1edd1679db7f4daed0ecfda894df6fd604a6565c307e13c4599b5d242811"
+      "sha256": "665ec938b9fe56dcc67e1252a4c3de69c01dfe556fb02c574f3a4c0f7c723ef4"
     },
     {
       "brandSignals": [],
@@ -52939,7 +53444,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 234751,
+      "bytes": 235099,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -53833,6 +54338,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/Kresh.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerChallengeShops.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/Sedridor.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/quests/free/PeelingTheOnion.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/agility/AgilityRewardPouches.java",
@@ -53891,6 +54397,7 @@
         "server/plugins/com/openrsc/server/plugins/shared/RangePlayer.java",
         "server/src/com/openrsc/server/GameStateUpdater.java",
         "server/src/com/openrsc/server/Server.java",
+        "server/src/com/openrsc/server/constants/NpcDrops.java",
         "server/src/com/openrsc/server/content/BadLuckMitigation.java",
         "server/src/com/openrsc/server/content/BlackUnicornOfferingHealing.java",
         "server/src/com/openrsc/server/content/CorrosiveAura.java",
@@ -53930,17 +54437,24 @@
         "server/src/com/openrsc/server/content/market/task/OpenMarketTask.java",
         "server/src/com/openrsc/server/content/market/task/PlayerCollectItemsTask.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerBossTasks.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerContactService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerGuildAccess.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
         "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTaskService.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerTowerAccess.java",
         "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerEquipmentEffects.java",
         "server/src/com/openrsc/server/content/monsterslayer/SlayerGimmickTestKit.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/content/party/Party.java",
         "server/src/com/openrsc/server/content/party/PartyInvite.java",
@@ -54215,7 +54729,7 @@
         "server/src/com/openrsc/server/util/rsc/CombatEffectUtil.java",
         "server/src/com/openrsc/server/util/rsc/Formulae.java"
       ],
-      "sha256": "de0724f55c2c5a4b0b9156d6c57430f414aae026c9a753faee30f9923ab212a0"
+      "sha256": "363e7c41ec9784ba79650f49c84ca9291d8afc39d9db4cbe2d975047549c1faf"
     },
     {
       "brandSignals": [
@@ -54634,6 +55148,7 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -54733,6 +55248,8 @@
         "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/ElderGreenDragonSpecialAttacks.java",
@@ -59391,12 +59908,15 @@
         "server/src/com/openrsc/server/content/market/task/NewMarketItemTask.java",
         "server/src/com/openrsc/server/content/market/task/PlayerCollectItemsTask.java",
         "server/src/com/openrsc/server/content/minigame/fishingtrawler/FishingTrawler.java",
+        "server/src/com/openrsc/server/content/minigame/monsterslayer/MonsterSlayerShopService.java",
         "server/src/com/openrsc/server/content/monsterslayer/AbyssalDemonCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BansheeCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/BloodveldCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/CockatriceCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/DarkBeastCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/GiantFrogCombat.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
         "server/src/com/openrsc/server/content/monsterslayer/TerrorDogCombat.java",
         "server/src/com/openrsc/server/content/party/Party.java",
         "server/src/com/openrsc/server/content/party/PartyInvite.java",
@@ -63445,7 +63965,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 10732,
+      "bytes": 11086,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -63479,14 +63999,14 @@
       "kind": "ant-core-source",
       "path": "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java",
       "reverseDependencies": [],
-      "sha256": "f1e1382e1ab74e1b9dc3dc4558384036c12dd8ea3c4f601af70522c00bbc2af3"
+      "sha256": "a9d98965d48b941a059b33823cc192a419da918573d6781d04de4c6705d85c31"
     },
     {
       "brandSignals": [
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 116042,
+      "bytes": 116430,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -63807,7 +64327,7 @@
         "server/plugins/com/openrsc/server/plugins/authentic/quests/members/legendsquest/obstacles/LegendsQuestDarkMetalGate.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/MagicCombatEvent.java"
       ],
-      "sha256": "5e5812a7d7292a7da808b881962ba1f37efdd66524e3abf4375478ee1e73b456"
+      "sha256": "bb1330744ecfc4d208bcb8758a7a67f60da8628bc71bea35e3a751beab1bc153"
     },
     {
       "brandSignals": [],
@@ -68142,6 +68662,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/myworld/misc/PeelingTheOnionItems/LeatherVestCrafting.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/misc/PeelingTheOnionItems/YellowgreenClay.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/agility/AgilityRewardPouches.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/agility/LumbridgeAlKharidSteppingStones.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java",
@@ -69559,6 +70080,7 @@
         "server/plugins/com/openrsc/server/plugins/custom/misc/WoodcuttingGuild.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/Kresh.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerTowerAssociates.java",
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/Sedridor.java",
         "server/plugins/com/openrsc/server/plugins/custom/npcs/CustomCerter.java",
         "server/plugins/com/openrsc/server/plugins/custom/npcs/Lily.java",
@@ -70114,6 +70636,7 @@
         "server/src/com/openrsc/server/Server.java",
         "server/src/com/openrsc/server/constants/NpcDrops.java",
         "server/src/com/openrsc/server/content/DropTable.java",
+        "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java",
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/model/combat/BabyDragonSmokeProc.java",
@@ -70159,7 +70682,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 1900,
+      "bytes": 2291,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -70195,7 +70718,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/Server.java"
       ],
-      "sha256": "0bf8c3fc32c5fdc98fd2a017028604986e7c362eb8a76a6ac60c179f260bf470"
+      "sha256": "9ed4c1ac36c9b40ffbcb234aa31c60826f48a2cbad68c1c97562721498d71f2b"
     },
     {
       "brandSignals": [],
@@ -143857,21 +144380,21 @@
       "diagnostic-proof": 14,
       "foundation": 6360,
       "maintained-compatibility": 91,
-      "spoiled-milk-content": 215,
+      "spoiled-milk-content": 218,
       "target-profile": 412,
       "tool-only": 155,
-      "unresolved": 138
+      "unresolved": 146
     },
     "configurationInputs": 22,
-    "coreJavaFiles": 1090,
+    "coreJavaFiles": 1098,
     "databasePatchInputs": 27,
-    "definitionInputs": 46,
-    "directBrandSignalFiles": 319,
+    "definitionInputs": 48,
+    "directBrandSignalFiles": 328,
     "foundationToSpoiledMilkDependencies": 107,
     "kindCounts": {
-      "ant-core-source": 1090,
+      "ant-core-source": 1098,
       "ant-library": 21,
-      "ant-plugin-source": 499,
+      "ant-plugin-source": 500,
       "build-definition": 2,
       "build-launch-or-operator-script": 12,
       "compatibility-launcher": 12,
@@ -143880,7 +144403,7 @@
       "database-query": 8,
       "database-schema-or-addon": 35,
       "database-seed": 1,
-      "definition": 46,
+      "definition": 48,
       "layered-proof-fixture": 8,
       "layered-tool-input": 110,
       "map-or-asset-archive": 32,
@@ -143892,13 +144415,13 @@
     "libraryJars": 21,
     "pluginFamilies": {
       "authentic": 389,
-      "custom": 92,
+      "custom": 93,
       "retro": 3,
       "shared": 15
     },
-    "pluginJavaFiles": 499,
+    "pluginJavaFiles": 500,
     "populationInputs": 41,
-    "shippedInputs": 7385
+    "shippedInputs": 7396
   },
   "unresolvedInputs": [
     {
@@ -143907,6 +144430,10 @@
     },
     {
       "path": "server/conf/server/defs/MonsterSlayerNpcDefs.json",
+      "reason": "Definition ownership is not encoded strongly enough to infer safely"
+    },
+    {
+      "path": "server/conf/server/defs/MonsterSlayerTowerNpcDefs.json",
       "reason": "Definition ownership is not encoded strongly enough to infer safely"
     },
     {
@@ -143995,6 +144522,10 @@
     },
     {
       "path": "server/conf/server/defs/extras/MonsterSlayer.json",
+      "reason": "Definition ownership is not encoded strongly enough to infer safely"
+    },
+    {
+      "path": "server/conf/server/defs/extras/MonsterSlayerTower.json",
       "reason": "Definition ownership is not encoded strongly enough to infer safely"
     },
     {
@@ -144394,7 +144925,31 @@
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerComponentDrops.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerEquipmentEffects.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
       "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerGimmickTestKit.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerLeatherEffects.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerOrdinaryDrops.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardBosses.java",
+      "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
+    },
+    {
+      "path": "server/src/com/openrsc/server/content/monsterslayer/SlayerRewardCombat.java",
       "reason": "Mixed inherited/custom content owner requires an R2 extraction decision"
     },
     {
