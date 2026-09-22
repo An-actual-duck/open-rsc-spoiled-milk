@@ -2,6 +2,9 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+Remaining order, approved armor colors and simple worn-item reuse are specified
+in [the sprite completion plan](../../../../docs/myworld/rough-drafts/slayer-sprite-completion-plan.md).
+
 - `dagger-of-terror-approved.png`: user-selected larger dagger (2026-09-22),
   native 48x32 RGBA, object 28x19 at (10,7). Approved after comparing the
   smaller 23x16 candidate and granting about 20% more object space. Canvas
