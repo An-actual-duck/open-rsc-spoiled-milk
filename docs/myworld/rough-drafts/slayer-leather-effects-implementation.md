@@ -86,6 +86,17 @@ leather-defense/poison source-contract checks. The secondary-effect catalog
 test is updated for the two previously registered Slayer rewards and the new
 Electrically Charged entry; this preserves its exact inventory assertion.
 
+Results: focused leather effects, Slayer rewards/production, Dark beast,
+Bloodveld, Naga and Abyssal demon fixtures passed against the installed map.
+Client build and six leather/poison/defense/client-catalog checks passed.
+The strict combat gate passed **144/144 scenarios** with an isolated empty
+map-discovery root. Its default run encounters an unrelated pre-existing
+fixture move outside installed native-map terrain; no map or runtime policy
+was changed to bypass that boundary. Reproduce the isolated run with an empty
+`mktemp -d` directory passed only to the test process through
+`JAVA_TOOL_OPTIONS=-Dopenrsc.worldBuilderTargetRoot=<empty-directory>` and
+`ant test_combat_strict`.
+
 ## Separate pending work
 
 Banshee Ectoplasm/armor withdrawal, selected old hide/armor retirements,
