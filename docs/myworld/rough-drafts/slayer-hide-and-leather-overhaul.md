@@ -4,6 +4,13 @@ Status: new-set foundations implemented; special bonuses pending. Source retirem
 and passive exceptions now selected by the owner; runtime changes pending.
 Updated: 2026-09-21.
 
+Latest [set-bonus decisions](slayer-leather-set-bonuses.md): Banshee hide is
+to become **Ectoplasm**, with no current armor/production route. Carapace
+cleansing replaces offensive poison procs; magic-spider loses its special
+magic-penalty exemption. Dark beast, Bloodveld and frog have new effect
+directions; Terror dog awaits improved Bear's Maul values. These runtime
+changes are pending. The earlier implementation counts below are historical.
+
 The owner has **completed the source-coverage audit**. Rats/large rats, giant
 bats and animated axes are accepted no-material exceptions; leave their tasks
 and drops alone. Ugthanki is the only new hide/armor family requested and its
@@ -65,7 +72,7 @@ controls assignments, not whether that creature can drop its hide.
 
 ## Review order
 
-Before assigning the seven new leather set bonuses (including Ugthanki), use the bounded
+Before implementing the six retained new leather set bonuses (including Ugthanki, excluding Banshee), use the bounded
 [material coverage and armor-theme review](#material-coverage-and-shared-armor-themes)
 below. The wider effect-standardization project is deliberately deferred until
 the Slayer Tower work is complete.
@@ -99,11 +106,11 @@ materials have a coherent theme before deciding their individual effects.
   existing scorpion, spider and magic-spider carapace and any future carapace.
 - Exact cleanse amounts, tier scaling, piece-versus-full-set activation, mixed
   sets, and stacking with other cleansing sources still need design approval.
-  Existing carapace sets currently have offensive poison effects; whether the
-  cleanse theme supplements or replaces those effects is also undecided.
+  Cleansing **replaces** the current offensive poison effects. Remove the
+  magic-spider set's exemption from the normal leather magic penalty.
 - Review the current bonuses first, then propose shared family themes and
   individual set identities together. Do not implement arbitrary numerical
-  bonuses merely to fill the seven new sets. Retired grandfathered armor keeps
+  bonuses merely to fill the remaining sets. Retired grandfathered armor keeps
   its existing stats/effects under the separate preservation rule.
 
 This theme/coverage direction is documented, not yet implemented. It does not
