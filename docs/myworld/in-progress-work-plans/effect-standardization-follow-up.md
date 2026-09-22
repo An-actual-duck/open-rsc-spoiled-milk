@@ -115,6 +115,28 @@ the same queued action indefinitely by repeatedly rescheduling it.
 These are deferred design/audit tasks, not authorization to perform that audit
 or change gameplay during current Slayer work. Keep the reminder above active.
 
+## Enemy-spell element tags
+
+Add a comprehensive enemy-spell element-tag audit to the post-Slayer work.
+The immediate motivation is Naga armor's **Cold Blooded** bonus: 20% damage
+reduction from ice and fire magic. The owner believes ice tagging is present
+but is unsure whether all enemy spells have appropriate tags. This is an
+unverified expectation, not an audit result.
+
+- Inventory ordinary enemy spells and custom/scripted magic attacks, including
+  secondary, AOE and periodic damage paths, and record their intended element.
+- Trace whether that identity reaches damage settlement and resistance checks;
+  a projectile or spell name alone is not a reliable semantic tag.
+- Find missing, incorrect or lost tags and decide how truly untyped magic is
+  handled. Distinguish ice from other water magic and explicitly classify
+  special cases such as dragonbreath rather than guessing from visuals.
+- Add resistance tests proving intended ice/fire hits are reduced and
+  unrelated attacks are not. Define ongoing-damage and mitigation-order rules.
+
+This note does not authorize an immediate broad combat refactor. Cold Blooded
+implementation still needs bounded verification of its supported damage
+paths; deferring the global audit does not excuse an unverified bonus.
+
 ## Current-work boundary
 
 ### Explicit owner directions added during leather design

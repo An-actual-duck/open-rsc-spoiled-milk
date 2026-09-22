@@ -11,9 +11,10 @@ The seven-set implementation and original recipe table below record existing
 code, not the revised six-family target.
 
 Subsequent audit addition: [Ugthanki's tier-4 leather set](ugthanki-leather-implementation.md)
-is now implemented with no bonus. There are **seven sets awaiting bonus design**:
-giant frog, banshee, naga, terror dog, bloodveld, dark beast and Ugthanki. That
-note also records the complete tier spread after the planned retirements.
+is now implemented with no active bonus. All six retained new families now
+have [bonus concepts selected](slayer-leather-set-bonuses.md), including
+Ugthanki's Storage Hump and Naga's Cold Blooded; runtime effects remain
+pending. The Ugthanki note also records the tier spread and Banshee revision.
 
 Design authority: [hide/leather scope](slayer-hide-and-leather-overhaul.md).
 This implements six leather families, not eight. Cockatrice Feathers and Slimey
