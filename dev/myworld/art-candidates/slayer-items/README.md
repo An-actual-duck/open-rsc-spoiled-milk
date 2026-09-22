@@ -2,6 +2,12 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`cockatrice-feathers-approved.png`: user-approved multicolor v2, unchanged.
+`leach-tongue-candidate.png`: pending review. Detached thin red tongue lying
+in a loose squiggle, based on approved Bloodveld tongue-attack frames and RSC
+rat-tail inventory scale. Native 48x32, fitted 38x9 at (5,12). Built-in imagegen;
+see `tongue-preview.html` and `tongue-prompt.txt`. Source render retained.
+
 User approved Frozen Tear and Terror Fang: authoritative selected copies are
 `frozen-tear-approved.png` and `terror-fang-approved.png`, unchanged from candidates.
 The single-color feather was rejected. `cockatrice-feathers-candidate-v2.png`
