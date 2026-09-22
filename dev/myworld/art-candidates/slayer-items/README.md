@@ -19,9 +19,12 @@ Art review assets only: these do not replace live inventory/ground sprites.
   muted red woven Bloodveld-tongue string. Tier-8 stats/logs supersede the
   previous tier-9 design target; see the corrected equipment design and
   implementation ledger. The Magic Longbow reference is historical only.
-- `shield-of-mobility-candidate.png`: pending review. Round feather shield,
+- `shield-of-mobility-approved.png`: user approved. Round feather shield,
   densely mottled center and clear protruding feather tips; brown/olive/straw
   cockatrice palette. See `shield-preview.html` for native-size comparison.
+- `sullen-pendant-candidate.png`: pending review. Pale-blue crystallized tear
+  on a thin white/grey thread, based on the authentic strung amulet references.
+  See `pendant-preview.html` for native-size comparison.
 
 Artwork generated using the built-in imagegen tool. Prompts are saved alongside
 the art. Source renders are retained for reproducible native-size packaging.
