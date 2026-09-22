@@ -48,7 +48,7 @@ public final class MonsterSlayerTowerCharacterization {
 	}
 
 	private static MonsterSlayerData load(boolean enabled, final boolean spawned) {
-		return MonsterSlayerData.load(Paths.get("conf/server/defs/extras/MonsterSlayer.json"),
+		return MonsterSlayerData.loadHistorical(Paths.get("conf/server/defs/extras/MonsterSlayer.json"),
 			new MonsterSlayerData.ReferenceCatalog() {
 				public boolean npcExists(int id) { return true; }
 				public boolean npcAttackable(int id) { return true; }
@@ -139,7 +139,9 @@ public final class MonsterSlayerTowerCharacterization {
 			eq(Collections.singletonList(863 + i), data.getFamily(task.getFamilyKey()).getNpcIds(), "NPC identity");
 			check(task.getHazards().get(0).getPreparationLines().length > 0, "typed preparation");
 		}
-		for (MonsterSlayerHazard hazard : MonsterSlayerHazard.values()) check(hazards.contains(hazard), "hazard coverage");
+		for (MonsterSlayerHazard hazard : MonsterSlayerHazard.values())
+			if (hazard != MonsterSlayerHazard.BALROG && hazard != MonsterSlayerHazard.ELDER_DRAGON)
+				check(hazards.contains(hazard), "historical hazard coverage");
 		List<Task> hero = data.getContact("legends").getMandatoryTasks();
 		eq("legends.king_black_dragon", hero.get(hero.size() - 1).getKey(), "KBD capstone");
 	}

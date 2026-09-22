@@ -55,9 +55,15 @@ public final class MonsterSlayerData {
 	private final Map<String, Task> tasks;
 	private final Map<String, Shop> shops;
 	private final MonsterSlayerData legacyRoster;
+	private final int rosterVersion;
 
-	public int getRosterVersion() { return legacyRoster == null ? 1 : 2; }
+	public int getRosterVersion() { return rosterVersion; }
 	MonsterSlayerData getLegacyRoster() { return legacyRoster; }
+	MonsterSlayerData historicalRoster(int version) {
+		for (MonsterSlayerData roster = this; roster != null; roster = roster.legacyRoster)
+			if (roster.rosterVersion == version) return roster;
+		return null;
+	}
 
 	private MonsterSlayerData(Map<String, Family> families, Map<String, Contact> contacts,
 						   Map<String, Task> tasks, Map<String, Shop> shops) {
@@ -71,6 +77,7 @@ public final class MonsterSlayerData {
 		this.tasks = immutableMap(tasks);
 		this.shops = immutableMap(shops);
 		this.legacyRoster = legacyRoster;
+		this.rosterVersion = legacyRoster == null ? 1 : legacyRoster.rosterVersion + 1;
 	}
 
 	public static MonsterSlayerData loadForWorld(final World world) {
@@ -113,8 +120,17 @@ public final class MonsterSlayerData {
 		return load(path, catalog, false);
 	}
 
-	/** The disabled rollout never loads tower families or requires their spawns. */
+	/** The disabled rollout excludes active tower families and does not require their spawns. */
 	public static MonsterSlayerData load(Path path, ReferenceCatalog catalog, boolean towerEnabled) {
+		return load(path, catalog, towerEnabled, true);
+	}
+
+	/** Historical rosters are immutable migration inputs, never edited in place. */
+	public static MonsterSlayerData loadHistorical(Path path, ReferenceCatalog catalog, boolean towerEnabled) {
+		return load(path, catalog, towerEnabled, false);
+	}
+
+	private static MonsterSlayerData load(Path path, ReferenceCatalog catalog, boolean towerEnabled, boolean retirement) {
 		if (path == null || catalog == null) {
 			throw new IllegalArgumentException("Monster Slayer path and reference catalog are required");
 		}
@@ -122,18 +138,61 @@ public final class MonsterSlayerData {
 			String json = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
 			JSONObject base = new JSONObject(json);
 			MonsterSlayerData legacy = parse(base, catalog);
-			if (!towerEnabled) return legacy;
+			if (!towerEnabled && !retirement) return legacy;
+			JSONObject retiredBase = new JSONObject(json);
 			JSONObject additions = new JSONObject(new String(Files.readAllBytes(
 				path.resolveSibling("MonsterSlayerTower.json")), StandardCharsets.UTF_8));
+			// Historical tower records must be available to validate existing v2 saves.
+			// Only validate their spawn requirements when the tower is enabled.
+			ReferenceCatalog historicalCatalog = towerEnabled ? catalog : new ReferenceCatalog() {
+				public boolean npcExists(int id) { return id >= 863 && id <= 870 || catalog.npcExists(id); }
+				public boolean npcAttackable(int id) { return id >= 863 && id <= 870 || catalog.npcAttackable(id); }
+				public boolean npcSpawned(int id) { return id >= 863 && id <= 870 || catalog.npcSpawned(id); }
+				public boolean itemExists(int id) { return catalog.itemExists(id); }
+			};
 			applyTowerAdditions(base, additions);
-			MonsterSlayerData expanded = parse(base, catalog);
-			return new MonsterSlayerData(expanded.families, expanded.contacts, expanded.tasks, expanded.shops, legacy);
+			MonsterSlayerData expanded = parse(base, historicalCatalog);
+			expanded = new MonsterSlayerData(expanded.families, expanded.contacts, expanded.tasks, expanded.shops, legacy);
+			if (!retirement) return expanded;
+			applyRetirement(retiredBase);
+			MonsterSlayerData retired = parse(retiredBase, catalog);
+			retired = new MonsterSlayerData(retired.families, retired.contacts, retired.tasks, retired.shops, expanded);
+			if (!towerEnabled) return retired;
+			applyRetirement(base);
+			MonsterSlayerData current = parse(base, catalog);
+			return new MonsterSlayerData(current.families, current.contacts, current.tasks, current.shops, retired);
 		} catch (RuntimeException ex) {
 			throw new IllegalArgumentException("Invalid Monster Slayer definitions at " + path + ": "
 				+ ex.getMessage(), ex);
 		} catch (Exception ex) {
 			throw new IllegalArgumentException("Unable to load Monster Slayer definitions at " + path, ex);
 		}
+	}
+
+	private static void applyRetirement(JSONObject root) {
+		JSONArray contacts = root.getJSONArray("contacts");
+		for (int c = 0; c < contacts.length(); c++) {
+			JSONObject contact = contacts.getJSONObject(c);
+			for (String list : new String[]{"mandatoryTasks", "repeatableTasks"}) {
+				JSONArray old = contact.getJSONArray(list), kept = new JSONArray();
+				for (int i = 0; i < old.length(); i++) {
+					JSONObject task = old.getJSONObject(i);
+					if (!isRetiredFamily(task.getString("familyKey"))) kept.put(task);
+				}
+				contact.put(list, kept);
+			}
+			if ("legends".equals(contact.getString("key"))) for (MonsterSlayerBossTasks.Boss boss : MonsterSlayerBossTasks.Boss.values()) {
+				root.getJSONArray("families").put(new JSONObject().put("key", boss.familyKey)
+					.put("displayName", boss.displayName).put("npcIds", new JSONArray().put(boss.npcId)));
+				contact.getJSONArray("repeatableTasks").put(new JSONObject().put("key", boss.taskKey())
+					.put("familyKey", boss.familyKey).put("requiredKills", 1).put("pointReward", 80).put("weight", 1)
+					.put("hazards", new JSONArray().put(boss == MonsterSlayerBossTasks.Boss.BALROG ? "BALROG" : "ELDER_DRAGON")));
+			}
+		}
+	}
+
+	static boolean isRetiredFamily(String family) {
+		return java.util.Arrays.asList("giant", "moss_giant", "ice_giant", "fire_giant", "ogre", "jogre", "bear").contains(family);
 	}
 
 	static MonsterSlayerData parse(JSONObject root, ReferenceCatalog catalog) {

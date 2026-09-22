@@ -1,8 +1,8 @@
 # Slayer hide sources and grandfathered leather equipment
 
-Status: new-set foundations and special bonuses implemented. Source retirement
-and passive exceptions now selected by the owner; runtime changes pending.
-Updated: 2026-09-21.
+Status: foundations, bonuses, Banshee withdrawal, selected source retirements
+and optional boss assignments implemented; not deployed.
+Updated: 2026-09-22.
 
 Latest [set-bonus decisions](slayer-leather-set-bonuses.md): Banshee hide is
 replaced by **Ectoplasm**, with no current armor/production route. Carapace
@@ -13,21 +13,19 @@ Storage Hump boosts food healing by 20% (nearest-integer rounding); Naga's
 Cold Blooded reduces ice/fire magic damage by 20%. All retained new set
 concepts are now selected and [implemented](slayer-leather-effects-implementation.md).
 [Banshee withdrawal](banshee-ectoplasm-implementation.md) is implemented too.
-The earlier implementation counts below are historical; other source retirements
-remain pending.
+The earlier implementation counts below are historical. See the current
+[retirement and boss-task implementation](slayer-retirement-and-boss-tasks-implementation.md).
 
 The owner has **completed the source-coverage audit**. Rats/large rats, giant
 bats and animated axes are accepted no-material exceptions; leave their tasks
 and drops alone. Ugthanki is the only new hide/armor family requested and its
 [tier-4 foundation is implemented](ugthanki-leather-implementation.md), with its
-Storage Hump bonus designed but not implemented. This resolves the audit; retirement and boss opt-in
-runtime changes remain pending rather than being implicitly completed.
+Storage Hump bonus also implemented. This resolves the approved source audit.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
 [Slayer Tower expansion](slayer-tower-npc-integration.md), and
 [boss leather progression](../in-progress-work-plans/boss-leather-tier-progression-plan.md).
-These notes describe a future source/roster overhaul, not an assertion that
-existing item definitions, drops or accounts have already changed.
+Historical planning below is superseded by the implementation links above.
 The separate [component pass](slayer-component-implementation.md) has added six
 new collectible raw hides. The [leather foundation pass](slayer-leather-implementation.md)
 adds their tanning and five-piece armor recipes; existing hide families and
@@ -118,7 +116,7 @@ materials have a coherent theme before deciding their individual effects.
   bonuses merely to fill the remaining sets. Retired grandfathered armor keeps
   its existing stats/effects under the separate preservation rule.
 
-This theme/coverage direction is documented, not yet implemented. It does not
+This theme/coverage direction is implemented with the approved bonuses. It does not
 authorize the wider timing/damage refactor described in the
 [post-tower effect-standardization follow-up](../in-progress-work-plans/effect-standardization-follow-up.md).
 
@@ -194,7 +192,7 @@ Approved for each boss: **one kill per task, 80 Hero points, weight 1**, in the
 Legends' Guild repeatable pool, controlled through associate 857. Existing
 mandatory King Black Dragon stays unchanged at 60 Hero points. The pool's
 normal eligibility requires completion of that contact's mandatory progression;
-opting in does not bypass it. These values are approved but not yet implemented.
+opting in does not bypass it. These values are now implemented.
 
 The earlier blanket exclusion of Balrog from Slayer is superseded for opted-in
 repeatable tasks. Its exclusion from the mandatory line remains intact. Elder
@@ -264,7 +262,7 @@ identity rather than converting holdings to a new item family.
 6. Verify retained/new eligible monsters drop their intended hides, retired
    sources no longer do, and existing Slayer credit and Crafting still work.
 
-This document records approved policy, not completed runtime retirement. No
-holdings, drops, recipes or tasks were changed by this documentation pass.
+The linked implementation records completed code changes and preservation tests.
+Player holdings have not been rewritten or removed.
 Live activation still requires its separate backup/deployment permissions.
 See [new leather implementation](slayer-leather-implementation.md).

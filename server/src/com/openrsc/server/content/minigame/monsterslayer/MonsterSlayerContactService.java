@@ -172,7 +172,7 @@ public final class MonsterSlayerContactService {
 			if (snapshot.getActiveTaskKey() != null) return data.getTask(snapshot.getActiveTaskKey());
 			int cursor = snapshot.getMandatoryCursors().get(contactKey).intValue();
 			if (snapshot.getRank() == contact.getRequiredRank() && cursor < contact.getMandatoryTasks().size()) return snapshot.nextMandatoryTask(contact);
-			MonsterSlayerDefinitions.Task selected = selectRepeatable(contact);
+			MonsterSlayerDefinitions.Task selected = selectRepeatable(player, contact);
 			if (selected != null) synchronized (previews) { previews.put(player.getUUID(), new PendingSelection(contactKey, snapshot.getTasksCompleted(), selected)); }
 			return selected;
 		} catch (RuntimeException failure) { return null; }
@@ -181,14 +181,17 @@ public final class MonsterSlayerContactService {
 	private MonsterSlayerDefinitions.Task consumePreview(Player player, MonsterSlayerState.Snapshot snapshot, MonsterSlayerDefinitions.Contact contact) {
 		synchronized (previews) {
 			PendingSelection pending = previews.remove(player.getUUID());
-			if (pending != null && pending.contactKey.equals(contact.getKey()) && pending.tasksCompleted == snapshot.getTasksCompleted()) return pending.task;
+			if (pending != null && pending.contactKey.equals(contact.getKey()) && pending.tasksCompleted == snapshot.getTasksCompleted()
+				&& MonsterSlayerBossTasks.eligible(player, pending.task.getKey())) return pending.task;
 		}
-		return selectRepeatable(contact);
+		return selectRepeatable(player, contact);
 	}
 
-	private MonsterSlayerDefinitions.Task selectRepeatable(MonsterSlayerDefinitions.Contact contact) {
-		if (contact.getRepeatableTasks().isEmpty()) return null;
-		return contact.getRepeatableTasks().get(random.nextInt(contact.getRepeatableTasks().size()));
+	private MonsterSlayerDefinitions.Task selectRepeatable(Player player, MonsterSlayerDefinitions.Contact contact) {
+		java.util.List<MonsterSlayerDefinitions.Task> eligible = new java.util.ArrayList<>();
+		for (MonsterSlayerDefinitions.Task task : contact.getRepeatableTasks())
+			if (MonsterSlayerBossTasks.eligible(player, task.getKey())) eligible.add(task);
+		return eligible.isEmpty() ? null : eligible.get(random.nextInt(eligible.size()));
 	}
 
 	public Result acknowledgePromotion(Player player, String contactKey) {

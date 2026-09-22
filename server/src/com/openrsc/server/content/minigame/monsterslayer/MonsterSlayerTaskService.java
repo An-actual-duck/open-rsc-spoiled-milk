@@ -19,8 +19,11 @@ public final class MonsterSlayerTaskService {
 
 	public MonsterSlayerState.TaskResult assignRepeatable(Player player, String contactKey, String taskKey) {
 		player = requirePlayer(player);
-		synchronized (player) { return apply(player, MonsterSlayerState.assignRepeatable(
-			MonsterSlayerState.read(player.getCache(), data), data, contactKey, taskKey)); }
+		synchronized (player) {
+			if (!MonsterSlayerBossTasks.eligible(player, taskKey)) throw new IllegalArgumentException("Boss task requires opt-in and access");
+			return apply(player, MonsterSlayerState.assignRepeatable(
+				MonsterSlayerState.read(player.getCache(), data), data, contactKey, taskKey));
+		}
 	}
 
 	/** Invoked only after NPC lifecycle code has established player eligibility. */

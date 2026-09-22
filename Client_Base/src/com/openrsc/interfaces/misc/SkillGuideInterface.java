@@ -1570,15 +1570,10 @@ public final class SkillGuideInterface {
 			addLeatherGuide(1864, "8", "Scorpion carapace armor");
 			addLeatherGuide(1869, "15", "Wolf hide armor");
 			addLeatherGuide(1874, "15", "Spider carapace armor");
-			addLeatherGuide(1879, "15", "Giant hide armor");
-			addLeatherGuide(1884, "22", "Ogre hide armor");
 			addLeatherGuide(1889, "22", "Baby dragon hide armor");
 			addLeatherGuide(1894, "30", "Magic spider carapace armor");
-			addLeatherGuide(1899, "30", "Moss giant hide armor");
-			addLeatherGuide(1904, "30", "Ice giant hide armor");
 			addLeatherGuide(1909, "38", "Demon hide armor");
 			addLeatherGuide(1914, "46", "Hellhound hide armor");
-			addLeatherGuide(1919, "46", "Fire giant hide armor");
 			addLeatherGuide(1924, "46", "Blue dragon hide armor");
 			addLeatherGuide(1929, "46", "Green dragon hide armor");
 			addLeatherGuide(1934, "54", "Red dragon hide armor");

@@ -2010,8 +2010,10 @@ public final class MonsterSlayerContactsRouteTest {
 
 	private static Player player(Server server, String name, int x, int y) {
 		Player player = new Player(server.getWorld(), DataConversions.usernameToHash(name));
-		player.setClientVersion(server.getConfig().CLIENT_VERSION);
-		player.setClientLimitations(ClientLimitations.forVersion(server.getConfig().CLIENT_VERSION));
+		// Dialogue purchase scenarios exercise the negotiated inventory-capacity client.
+		int clientVersion = Math.max(10052, server.getConfig().CLIENT_VERSION);
+		player.setClientVersion(clientVersion);
+		player.setClientLimitations(ClientLimitations.forVersion(clientVersion));
 		player.setInitialLocation(Point.location(x, y));
 		server.getWorld().getPlayers().add(player); player.updateRegion(); player.setBusy(false); player.setLoggedIn(true);
 		return player;
