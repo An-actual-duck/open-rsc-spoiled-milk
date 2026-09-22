@@ -16,6 +16,7 @@ public final class SlayerComponentItemFixture {
 		check(3338, "Dark beast hide", "A thick, dark hide from a dark beast.", 69, 0x393225, false);
 		check(3339, "Cockatrice Feathers", "Feathers that twitch at the slightest touch.", 176, 0x8F9B5B, true);
 		check(3340, "Slimey Residue", "Sticky abyssal flesh that refuses to hold its shape.", 262, 0x62798C, true);
+		check(3399, "Ectoplasm", "A cold, quivering remnant of a banshee's spirit.", 262, 0xB5A4CF, true);
 		check(3341, "Sticky Saliva Gland", "A giant frog's gland, still oozing sticky saliva.", 116, 0x80A65B, false);
 		check(3342, "Cockatrice Eye", "A lifeless eye with an unsettling stare.", 116, 0xB9A65B, false);
 		check(3343, "Frozen Tear", "A banshee's sorrow, crystallized into a single tear.", 74, 0x99CDDD, false);
@@ -27,7 +28,7 @@ public final class SlayerComponentItemFixture {
 		Set<Integer> hideTints = new HashSet<>();
 		for (int id = 3333; id <= 3338; id++) hideTints.add(EntityHandler.getItemDef(id).getPictureMask());
 		if (hideTints.size() != 6) throw new AssertionError("Hides need distinct colors");
-		System.out.println("PASS: 16 Slayer client materials, sprite references, tint colors, names, flags and note forms");
+		System.out.println("PASS: 17 Slayer client materials including retained Banshee hide and new Ectoplasm, sprite references, tint colors, names, flags and note forms");
 	}
 	private static void check(int id, String name, String description, int sprite, int mask, boolean stackable) {
 		ItemDef item = EntityHandler.getItemDef(id);

@@ -22,7 +22,6 @@ public final class TanningRack implements OpLocTrigger, UseLocTrigger {
 	private static final MaterialProcess[] PROCESSES = {
 		new MaterialProcess(MyWorldItemId.UGTHANKI_HIDE, MyWorldItemId.UGTHANKI_LEATHER, 4, 25),
 		new MaterialProcess(MyWorldItemId.GIANT_FROG_HIDE, MyWorldItemId.GIANT_FROG_LEATHER, 2, 15),
-		new MaterialProcess(MyWorldItemId.BANSHEE_HIDE, MyWorldItemId.BANSHEE_LEATHER, 4, 25),
 		new MaterialProcess(MyWorldItemId.NAGA_HIDE, MyWorldItemId.NAGA_LEATHER, 5, 30),
 		new MaterialProcess(MyWorldItemId.TERROR_DOG_HIDE, MyWorldItemId.TERROR_DOG_LEATHER, 6, 35),
 		new MaterialProcess(MyWorldItemId.BLOODVELD_HIDE, MyWorldItemId.BLOODVELD_LEATHER, 6, 35),

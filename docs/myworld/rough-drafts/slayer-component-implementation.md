@@ -3,6 +3,10 @@
 Status: component definitions and component drops implemented; not deployed by this task.
 Updated: 2026-09-20.
 
+Update 2026-09-22: [Ectoplasm 3399 replaces Banshee hide drops](banshee-ectoplasm-implementation.md).
+The original hide definition remains for existing holdings; the original
+six-hide implementation below is historical for Banshee.
+
 Source designs: [drops and assembly](slayer-special-drops-and-assembly.md),
 [equipment](slayer-unique-equipment-design.md), [hide overhaul](slayer-hide-and-leather-overhaul.md).
 
@@ -57,6 +61,7 @@ pending the final icon-art pass.
 | 3346 | Lightning Horn | `items:145` | `#D8BC61` | No; noteable |
 | 3347 | Abyssal Vertibrae | `items:20` | `#91A4B2` | No; noteable |
 | 3348 | Abyssal Rib | `items:137` | `#8199AA` | No; noteable |
+| 3399 | Ectoplasm | `items:262` | `#B5A4CF` | Yes |
 
 Hides reuse the standard hide silhouette (69); feathers use 176; residue uses
 swamp tar (262); gland/eye use eye of newt (116); tear uses a gem (74);

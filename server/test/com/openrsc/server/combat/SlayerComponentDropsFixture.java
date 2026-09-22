@@ -24,7 +24,11 @@ public final class SlayerComponentDropsFixture {
 				check(def.isStackable() == (id == 3339 || id == 3340), "stack rule " + id);
 				check(def.isNoteable() == !def.isStackable(), "noting rule " + id);
 			}
-			int[] baseline = {3333, 3339, 3334, 3335, 3336, 3337, 3338, 3340};
+			ItemDefinition ectoplasm = h.server().getEntityHandler().getItemDef(MyWorldItemId.ECTOPLASM);
+			check(ectoplasm != null && "Ectoplasm".equals(ectoplasm.getName())
+				&& ectoplasm.isStackable() && !ectoplasm.isNoteable()
+				&& !ectoplasm.isUntradable() && !ectoplasm.isWieldable(), "collectible Ectoplasm definition");
+			int[] baseline = {3333, 3339, MyWorldItemId.ECTOPLASM, 3335, 3336, 3337, 3338, 3340};
 			for (int index = 0; index < baseline.length; index++) {
 				for (int draw = 0; draw < 3; draw++) {
 					h.random().reset(1);
@@ -113,6 +117,9 @@ public final class SlayerComponentDropsFixture {
 				npc.dropItems(player);
 				GroundItem material = ground(h, npc, player, baseline[index]);
 				check(material != null && material.getAmount() >= 1, "ground material " + index);
+				if (index == 2) check(material.getAmount() == 1
+					&& ground(h, npc, player, MyWorldItemId.BANSHEE_HIDE) == null,
+					"one Ectoplasm replaces Banshee hide on actual ground delivery");
 				int remains = index == 7 ? ItemId.DEMON_ASH.id() : ItemId.BONES.id();
 				check(ground(h, npc, player, remains) != null, "ground remains " + index);
 				if (rare[index] >= 0) check(ground(h, npc, player, rare[index]) != null,

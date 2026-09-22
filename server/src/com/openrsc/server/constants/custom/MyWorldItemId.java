@@ -109,6 +109,7 @@ public final class MyWorldItemId {
 	public static final int UGTHANKI_BOOTS = 3396;
 	public static final int UGTHANKI_CHAPS = 3397;
 	public static final int UGTHANKI_CUIRASS = 3398;
+	public static final int ECTOPLASM = 3399;
 
 	private MyWorldItemId() {
 	}

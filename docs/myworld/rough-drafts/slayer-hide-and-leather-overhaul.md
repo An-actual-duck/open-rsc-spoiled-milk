@@ -1,18 +1,20 @@
 # Slayer hide sources and grandfathered leather equipment
 
-Status: new-set foundations implemented; special bonuses pending. Source retirement
+Status: new-set foundations and special bonuses implemented. Source retirement
 and passive exceptions now selected by the owner; runtime changes pending.
 Updated: 2026-09-21.
 
 Latest [set-bonus decisions](slayer-leather-set-bonuses.md): Banshee hide is
-to become **Ectoplasm**, with no current armor/production route. Carapace
+replaced by **Ectoplasm**, with no current armor/production route. Carapace
 cleansing replaces offensive poison procs; magic-spider loses its special
 magic-penalty exemption. Dark beast, Bloodveld and frog have new effect
 directions; Terror dog's Ferocious is approved at two 75% melee hits. Ugthanki's
 Storage Hump boosts food healing by 20% (nearest-integer rounding); Naga's
 Cold Blooded reduces ice/fire magic damage by 20%. All retained new set
-concepts are now selected. These runtime
-changes are pending. The earlier implementation counts below are historical.
+concepts are now selected and [implemented](slayer-leather-effects-implementation.md).
+[Banshee withdrawal](banshee-ectoplasm-implementation.md) is implemented too.
+The earlier implementation counts below are historical; other source retirements
+remain pending.
 
 The owner has **completed the source-coverage audit**. Rats/large rats, giant
 bats and animated axes are accepted no-material exceptions; leave their tasks

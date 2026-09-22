@@ -304,7 +304,7 @@ public final class SlayerOrdinaryDropsFixture {
 				"supply reaches ground with quantity/noting");
 			for (int[] equipment : equipmentFor(npc.getID()))
 				check(ground(h, npc, player, equipment[1]) != null, "equipment reaches ground");
-			int[] materials = {3333,3339,3334,3335,3336,3337,3338,3340};
+			int[] materials = {3333,3339,3399,3335,3336,3337,3338,3340};
 			check(ground(h, npc, player, materials[family]) != null, "baseline material retained");
 			check(ground(h, npc, player, family == 7 ? ItemId.DEMON_ASH.id() : ItemId.BONES.id()) != null,
 				"correct remains retained");

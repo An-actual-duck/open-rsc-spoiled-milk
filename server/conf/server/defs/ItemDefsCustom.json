@@ -49046,6 +49046,29 @@
       "meleeDefense": 13,
       "rangedDefense": 1,
       "magicDefense": 1
+    },
+    {
+      "id": 3399,
+      "name": "Ectoplasm",
+      "description": "A cold, quivering remnant of a banshee's spirit.",
+      "command": "",
+      "isFemaleOnly": 0,
+      "isMembersOnly": 0,
+      "isStackable": 1,
+      "isUntradable": 0,
+      "isWearable": 0,
+      "appearanceID": 0,
+      "wearableID": 0,
+      "wearSlot": -1,
+      "requiredLevel": 0,
+      "requiredSkillID": -1,
+      "armourBonus": 0,
+      "weaponAimBonus": 0,
+      "weaponPowerBonus": 0,
+      "magicBonus": 0,
+      "prayerBonus": 0,
+      "basePrice": 0,
+      "isNoteable": 0
     }
   ]
 }

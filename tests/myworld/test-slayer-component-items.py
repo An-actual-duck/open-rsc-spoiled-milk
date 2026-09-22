@@ -20,11 +20,11 @@ def main():
     assert len(entries) == len(definitions), "Duplicate custom item IDs"
     constants = (ROOT / "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java").read_text()
     fixture = (ROOT / "tests/myworld/SlayerComponentItemFixture.java").read_text()
-    for item_id, name in enumerate(NAMES, 3333):
+    for item_id, name in [*enumerate(NAMES, 3333), (3399, "Ectoplasm")]:
         entry = definitions[item_id]
         assert entry["name"] == name, (item_id, "name")
         assert len(re.findall(rf"= {item_id};", constants)) == 1, (item_id, "constant")
-        stackable = item_id in (3339, 3340)
+        stackable = item_id in (3339, 3340, 3399)
         for field, expected in {
             "command": "", "isStackable": int(stackable), "isUntradable": 0,
             "isWearable": 0, "isNoteable": int(not stackable), "basePrice": 0,
