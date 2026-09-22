@@ -2,6 +2,11 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`leach-tongue-approved.png`: user-approved tongue candidate, unchanged.
+`abyssal-rib-candidate.png`: pending review. One plain curved ivory rib bone,
+48x32 canvas, fitted 32x20 at (8,6). Built-in imagegen; source render retained.
+See `rib-preview.html` and `rib-prompt.txt`.
+
 `cockatrice-feathers-approved.png`: user-approved multicolor v2, unchanged.
 `leach-tongue-candidate.png`: pending review. Detached thin red tongue lying
 in a loose squiggle, based on approved Bloodveld tongue-attack frames and RSC
