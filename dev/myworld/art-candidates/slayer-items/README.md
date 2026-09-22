@@ -30,6 +30,11 @@ in [the sprite completion plan](../../../../docs/myworld/rough-drafts/slayer-spr
   See `pendant-preview.html` for native-size comparison.
 
 Artwork generated using the built-in imagegen tool. Prompts are saved alongside
+the art. `sticky-saliva-gland-candidate.png` is pending user review: pale-green
+rounded gland with attached drips and a small puddle, inspired by the spider
+eye's Eye of Newt source sprite (items:116). Native 48x32, fitted 16x18 at
+(16,7). See `gland-preview.html` and `gland-prompt.txt`. No production replacement.
+Sources and prompts for all candidates are kept alongside
 the art. Source renders are retained for reproducible native-size packaging.
 The references are in `../../reference-library/items/` (daggers and
 bones-and-monster-parts); originals are untouched. The abyssal demon's approved
