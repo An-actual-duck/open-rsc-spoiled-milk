@@ -2,6 +2,11 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+Latest gland revision: `sticky-saliva-gland-candidate-v2.png` lowers the gland
+into the puddle to remove the floating appearance. Same native 48x32 canvas
+and 16-pixel width; fitted height 13 pixels. Pending review; original retained.
+See `gland-preview-v2.html` and `gland-v2-prompt.txt`.
+
 Remaining order, approved armor colors and simple worn-item reuse are specified
 in [the sprite completion plan](../../../../docs/myworld/rough-drafts/slayer-sprite-completion-plan.md).
 
