@@ -15,11 +15,21 @@ public enum MonsterSlayerHazard {
 	STICKY_FLESH,
 	// Strategy-only entries: these do not require a gimmick consumable.
 	NAGA_STRATEGY,
-	BLOODVELD_STRATEGY;
+	BLOODVELD_STRATEGY,
+	BALROG,
+	ELDER_DRAGON;
 
 	/** Short, mechanically specific preparation lines, also used on active-task reminders. */
 	public String[] getPreparationLines() {
 		switch (this) {
+		case BALROG: return new String[] {
+			"Use the Dwarven Mine ladder after rescuing the dwarven youth.",
+			"Bring strong magic defense and plenty of food; its magic splashes nearby players."
+		};
+		case ELDER_DRAGON: return new String[] {
+			"The elite Mining Guild area requires level 80 Mining.",
+			"Bring dragonfire protection, food and poison treatment. Watch for its area attacks."
+		};
 		case FROG_SPIT: return new String[] {
 			"Bring Slime Solvent so its sticky spit cannot stop you attacking.",
 			"Bring an antidote for its poison as well."

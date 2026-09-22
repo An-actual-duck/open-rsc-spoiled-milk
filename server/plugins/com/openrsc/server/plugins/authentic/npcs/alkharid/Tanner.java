@@ -31,10 +31,6 @@ public class Tanner extends AbstractShop {
 		new Item(ItemId.CURED_SPIDER_CARAPACE.id(), 10),
 		new Item(ItemId.CURED_MAGIC_SPIDER_CARAPACE.id(), 10),
 		new Item(ItemId.CURED_SCORPION_CARAPACE.id(), 10),
-		new Item(ItemId.GIANT_LEATHER.id(), 10),
-		new Item(ItemId.MOSS_GIANT_LEATHER.id(), 10),
-		new Item(ItemId.ICE_GIANT_LEATHER.id(), 10),
-		new Item(ItemId.FIRE_GIANT_LEATHER.id(), 10),
 		new Item(ItemId.THREAD.id(), 100),
 		new Item(ItemId.NEEDLE.id(), 10));
 

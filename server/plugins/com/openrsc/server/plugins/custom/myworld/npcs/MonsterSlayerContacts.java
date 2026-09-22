@@ -4,6 +4,7 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerGuildAcces
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDialoguePlan;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerContactService;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerData;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerBossTasks;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerHazard;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
@@ -212,9 +213,21 @@ public final class MonsterSlayerContacts implements TalkNpcTrigger, OpNpcTrigger
 		try {
 			if (trade) { MonsterSlayerChallengeShops.open(player, npc, CONTACTS[index]); return; }
 			dialogue.npc(player, npc, associateGreetingLines(index));
-			int choice = speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
+			int choice = index == 5
+				? speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.", "Boss tasks")
+				: speakChoice(player, npc, "What kind of supplies do you sell?", "Can you upgrade my satchel?", "No thanks.");
 			if (choice == 0) { dialogue.npc(player, npc, associateSupplyLines(index)); return; }
 			if (choice == 1) purchaseSatchelUpgrade(player, npc, index);
+			if (choice == 3 && index == 5) {
+				int selected = speakChoice(player, npc, "Balrog", "Elder Green Dragon", "Never mind.");
+				if (selected < 0 || selected > 1) return;
+				MonsterSlayerBossTasks.Boss boss = MonsterSlayerBossTasks.Boss.values()[selected];
+				boolean enable = !boss.optedIn(player);
+				int confirm = speakChoice(player, npc, enable ? "I'm ready for " + boss.displayName + " tasks" : "I'm unable to complete", "Never mind.");
+				if (confirm == 0) dialogue.npc(player, npc,
+					MonsterSlayerBossTasks.choose(player,
+						player.getWorld().getMonsterSlayerData(), boss, enable));
+			}
 		} catch (RuntimeException ex) { player.message("Your Monster Slayer record needs staff attention."); }
 	}
 

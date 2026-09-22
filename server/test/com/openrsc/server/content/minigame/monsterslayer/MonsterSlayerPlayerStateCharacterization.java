@@ -12,8 +12,8 @@ public final class MonsterSlayerPlayerStateCharacterization {
 	}
 
 	public static void main(String[] args) {
-		MonsterSlayerData data = MonsterSlayerData.load(Paths.get(
-			"conf", "server", "defs", "extras", "MonsterSlayer.json"), acceptingCatalog());
+		MonsterSlayerData data = MonsterSlayerData.loadHistorical(Paths.get(
+			"conf", "server", "defs", "extras", "MonsterSlayer.json"), acceptingCatalog(), false);
 		CombatOdysseyMigration.LegacyData legacyData = CombatOdysseyMigration.LegacyData.load(
 			Paths.get("conf", "server", "defs", "extras", "CombatOdyssey.json"));
 

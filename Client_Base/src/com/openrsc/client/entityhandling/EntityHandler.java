@@ -10180,6 +10180,9 @@ public class EntityHandler {
 			applyMyWorldNpcDefinitionOverrides();
 			loadItemDefinitions();
 			MyWorldItemOverrides.apply(items);
+			// Retired leather families remain displayable, including their note forms.
+			for (int[] range : new int[][]{{1807,1816},{1875,1884},{1895,1904},{1915,1919}})
+				for (int id = range[0]; id <= range[1]; id++) items.get(id).untradeable = true;
 			applyBangleVisuals();
 		loadTextureDefinitions();
 		loadAnimationDefinitions();

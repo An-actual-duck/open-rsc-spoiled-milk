@@ -1680,14 +1680,6 @@ public class Crafting implements UseInvTrigger,
 				return new HideArmorRecipe(materialId, "Spider carapace", 3, 15,
 					ItemId.SPIDER_COIF.id(), ItemId.SPIDER_GLOVES.id(), ItemId.SPIDER_BOOTS.id(),
 					ItemId.SPIDER_CHAPS.id(), ItemId.SPIDER_CUIRASS.id());
-			case GIANT_LEATHER:
-				return new HideArmorRecipe(materialId, "Giant hide", 3, 15,
-					ItemId.GIANT_COIF.id(), ItemId.GIANT_GLOVES.id(), ItemId.GIANT_BOOTS.id(),
-					ItemId.GIANT_CHAPS.id(), ItemId.GIANT_CUIRASS.id());
-			case OGRE_LEATHER:
-				return new HideArmorRecipe(materialId, "Ogre hide", 4, 22,
-					ItemId.OGRE_COIF.id(), ItemId.OGRE_GLOVES.id(), ItemId.OGRE_BOOTS.id(),
-					ItemId.OGRE_CHAPS.id(), ItemId.OGRE_CUIRASS.id());
 			case BABY_DRAGON_LEATHER:
 				return new HideArmorRecipe(materialId, "Baby dragon hide", 4, 22,
 					ItemId.BABY_DRAGON_COIF.id(), ItemId.BABY_DRAGON_GLOVES.id(), ItemId.BABY_DRAGON_BOOTS.id(),
@@ -1696,14 +1688,6 @@ public class Crafting implements UseInvTrigger,
 				return new HideArmorRecipe(materialId, "Magic spider carapace", 5, 30,
 					ItemId.MAGIC_SPIDER_COIF.id(), ItemId.MAGIC_SPIDER_GLOVES.id(), ItemId.MAGIC_SPIDER_BOOTS.id(),
 					ItemId.MAGIC_SPIDER_CHAPS.id(), ItemId.MAGIC_SPIDER_CUIRASS.id());
-			case MOSS_GIANT_LEATHER:
-				return new HideArmorRecipe(materialId, "Moss giant hide", 5, 30,
-					ItemId.MOSS_GIANT_COIF.id(), ItemId.MOSS_GIANT_GLOVES.id(), ItemId.MOSS_GIANT_BOOTS.id(),
-					ItemId.MOSS_GIANT_CHAPS.id(), ItemId.MOSS_GIANT_CUIRASS.id());
-			case ICE_GIANT_LEATHER:
-				return new HideArmorRecipe(materialId, "Ice giant hide", 5, 30,
-					ItemId.ICE_GIANT_COIF.id(), ItemId.ICE_GIANT_GLOVES.id(), ItemId.ICE_GIANT_BOOTS.id(),
-					ItemId.ICE_GIANT_CHAPS.id(), ItemId.ICE_GIANT_CUIRASS.id());
 			case DEMON_LEATHER:
 				return new HideArmorRecipe(materialId, "Demon hide", 6, 38,
 					ItemId.DEMON_COIF.id(), ItemId.DEMON_GLOVES.id(), ItemId.DEMON_BOOTS.id(),
@@ -1712,10 +1696,6 @@ public class Crafting implements UseInvTrigger,
 				return new HideArmorRecipe(materialId, "Hellhound hide", 7, 46,
 					ItemId.HELLHOUND_COIF.id(), ItemId.HELLHOUND_GLOVES.id(), ItemId.HELLHOUND_BOOTS.id(),
 					ItemId.HELLHOUND_CHAPS.id(), ItemId.HELLHOUND_CUIRASS.id());
-			case FIRE_GIANT_LEATHER:
-				return new HideArmorRecipe(materialId, "Fire giant hide", 7, 46,
-					ItemId.FIRE_GIANT_COIF.id(), ItemId.FIRE_GIANT_GLOVES.id(), ItemId.FIRE_GIANT_BOOTS.id(),
-					ItemId.FIRE_GIANT_CHAPS.id(), ItemId.FIRE_GIANT_CUIRASS.id());
 			case BLUE_DRAGON_LEATHER:
 				return new HideArmorRecipe(materialId, "Blue dragon hide", 7, 46,
 					ItemId.BLUE_DRAGON_COIF.id(), ItemId.BLUE_DRAGON_GLOVES.id(), ItemId.BLUE_DRAGON_BOOTS.id(),

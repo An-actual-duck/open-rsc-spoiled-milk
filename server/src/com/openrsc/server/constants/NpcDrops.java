@@ -2231,31 +2231,6 @@ public class NpcDrops {
 		addGuaranteedDrop(NpcId.SCORPION_GRAVE.id(), ItemId.SCORPION_CARAPACE.id(), "Scorpion carapace");
 		addGuaranteedDrop(NpcId.PIT_SCORPION.id(), ItemId.SCORPION_CARAPACE.id(), "Pit Scorpion carapace");
 
-		addGuaranteedDrop(NpcId.GIANT.id(), ItemId.GIANT_HIDE.id(), "Giant hide");
-		addGuaranteedDrop(NpcId.MOSS_GIANT.id(), ItemId.MOSS_GIANT_HIDE.id(), "Moss Giant hide");
-		addGuaranteedDrop(NpcId.MOSS_GIANT2.id(), ItemId.MOSS_GIANT_HIDE.id(), "Moss Giant hide");
-		addGuaranteedDrop(NpcId.ICE_GIANT.id(), ItemId.ICE_GIANT_HIDE.id(), "Ice Giant hide");
-		addGuaranteedDrop(NpcId.FIRE_GIANT.id(), ItemId.FIRE_GIANT_HIDE.id(), "Fire Giant hide");
-
-		addGuaranteedDrop(NpcId.OGRE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.JOGRE.id(), ItemId.OGRE_HIDE.id(), "Jogre hide");
-		addGuaranteedDrop(NpcId.KHAZARD_OGRE.id(), ItemId.OGRE_HIDE.id(), "Khazard Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_TRAINING_CAMP.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.GUARD_TRAINING_CAMP_OGRE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_CHIEFTAN.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_SHAMAN.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_GUARD_EASTGATE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_GUARD_WESTGATE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_GUARD_BATTLEMENT.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_GUARD_CAVE_ENTRANCE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_GUARD_BRIDGE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_MERCHANT.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_TRADER_GENSTORE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_TRADER_ROCKCAKE.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_TRADER_FOOD.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_CITIZEN.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-		addGuaranteedDrop(NpcId.OGRE_GENERAL.id(), ItemId.OGRE_HIDE.id(), "Ogre hide");
-
 		addGuaranteedDrop(NpcId.BABY_BLUE_DRAGON.id(), ItemId.BABY_DRAGON_HIDE.id(), "Baby Dragon hide");
 		DropTable babyBlueDragonDrops = this.npcDrops.get(NpcId.BABY_BLUE_DRAGON.id());
 		babyBlueDragonDrops.addItemDrop(ItemId.BLUE_DRAGON_SCALE.id(), 1, 4);

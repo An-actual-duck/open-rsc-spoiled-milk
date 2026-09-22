@@ -46,9 +46,11 @@ public final class MonsterSlayerState {
 		}
 		Map<String, Object> values = cache.getCacheMap();
 		int version = readInteger(values, STATE_VERSION_KEY, STATE_VERSION);
-		if (version == 1 && data.getRosterVersion() == 2) {
+		if (version < data.getRosterVersion() && data.historicalRoster(version) != null) {
 			// Validate against the old roster BEFORE expanding any completed tier.
-			return migrateRoster(read(cache, data.getLegacyRoster()), data);
+			if (version == 2 && data.getRosterVersion() == 3)
+				throw new ValidationException("Cannot disable an enabled tower roster");
+			return migrateRoster(read(cache, data.historicalRoster(version)), data);
 		}
 		if (version != data.getRosterVersion()) {
 			throw new ValidationException("Unsupported Monster Slayer roster version (rollout rollback is not supported)");
@@ -103,7 +105,7 @@ public final class MonsterSlayerState {
 		}
 		try {
 			cache.set(STATE_VERSION_KEY, snapshot.stateVersion);
-			if (snapshot.stateVersion == 2) {
+			if (snapshot.stateVersion >= 2) {
 				String encoded = String.join(",", snapshot.completedMandatoryTasks);
 				int parts = (encoded.length() + COMPLETED_PART_SIZE - 1) / COMPLETED_PART_SIZE;
 				cache.set(COMPLETED_TASKS_KEY, parts);
@@ -639,18 +641,33 @@ public final class MonsterSlayerState {
 	private static Snapshot migrateRoster(Snapshot old, MonsterSlayerData expanded) {
 		Set<String> completed = new LinkedHashSet<String>(old.completedMandatoryTasks);
 		Map<String, Integer> counts = new LinkedHashMap<String, Integer>(old.mandatoryCursors);
+		completed.removeIf(key -> expanded.getTask(key) == null);
 		for (Contact contact : expanded.getContactsInChallengeOrder()) {
 			if (old.rank.isAtLeast(contact.getAwardedRank())) {
 				for (Task task : contact.getMandatoryTasks()) completed.add(task.getKey());
-				counts.put(contact.getKey(), contact.getMandatoryTasks().size());
 			}
+			int count = 0;
+			for (Task task : contact.getMandatoryTasks()) if (completed.contains(task.getKey())) count++;
+			counts.put(contact.getKey(), count);
 		}
-		Snapshot migrated = new Snapshot(expanded.getRosterVersion(), old.introStage, old.rank,
-			old.balances, counts, old.activeTaskKey, old.activeKills, old.tasksCompleted,
+		MonsterSlayerRank rank = old.rank;
+		for (Contact contact : expanded.getContactsInChallengeOrder())
+			if (rank == contact.getRequiredRank() && counts.get(contact.getKey()) == contact.getMandatoryTasks().size()) rank = contact.getAwardedRank();
+		boolean retiredActive = old.activeTaskKey != null && expanded.getTask(old.activeTaskKey) == null;
+		Snapshot migrated = new Snapshot(expanded.getRosterVersion(), old.introStage, rank,
+			old.balances, counts, retiredActive ? null : old.activeTaskKey, retiredActive ? 0 : old.activeKills, old.tasksCompleted,
 			old.inventoryUpgrades, old.promotionAcknowledgements, old.migrationVersion,
 			old.legacyStatus, old.legacyPrestige, completed);
 		validate(migrated, expanded);
 		return migrated;
+	}
+
+	/** Cancels only the requested assignment, with no reward or automatic replacement. */
+	public static Snapshot cancelTask(Snapshot current, MonsterSlayerData data, String taskKey) {
+		validate(current, data);
+		Snapshot next = taskKey.equals(current.activeTaskKey) ? current.withActiveTask(null, 0) : current;
+		validate(next, data);
+		return next;
 	}
 
 	private static int readInteger(Map<String, Object> values, String key, int defaultValue) {

@@ -15,6 +15,7 @@ python3 ./tests/myworld/test-static-analysis-baseline.py
 python3 ./tests/myworld/test-compatibility-labels-and-prune-proof.py
 python3 ./tests/myworld/audit_client_item_coverage.py
 python3 ./tests/myworld/test-client-runtime-item-definitions.py
+python3 ./tests/myworld/test-retired-leather-items.py
 python3 ./tests/myworld/test-client-definition-registry-extraction.py
 python3 ./tests/myworld/test-client-server-object-collision-parity.py
 python3 ./tests/myworld/test-native-blocking-overlay.py

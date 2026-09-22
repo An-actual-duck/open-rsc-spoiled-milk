@@ -63,6 +63,12 @@ public class BuyMarketItemTask extends MarketTask {
 			}
 
 			ItemDefinition def = playerBuyer.getWorld().getServer().getEntityHandler().getItemDef(item.getCatalogID());
+			// Existing listings may predate a definition's retirement. Leave the seller's
+			// listing intact for cancellation/collection, but never transfer a bound item.
+			if (def.isUntradable()) {
+				playerBuyer.message("This legacy item can no longer be traded.");
+				return;
+			}
 			if (MarketInventoryAdmission.canReceive(playerBuyer.getCarriedItems().getInventory(),
 				item.getCatalogID(), amount, def.isStackable())) {
 				if (!def.isStackable() && amount == 1)
