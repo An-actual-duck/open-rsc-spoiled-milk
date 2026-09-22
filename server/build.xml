@@ -82,6 +82,20 @@
         </java>
     </target>
 
+    <target name="test_monster_slayer_placement" depends="compile_core,compile_plugins"
+            description="Validate Heroes' Guild NPC roaming against the configured terrain, independently of dialogue">
+        <mkdir dir="../output/monster-slayer-placement-test"/>
+        <javac srcdir="${test.src}" destdir="../output/monster-slayer-placement-test" debug="on"
+               includes="com/openrsc/server/plugins/MonsterSlayerContactsRouteTest.java"
+               includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+            <classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </javac>
+        <java classname="com.openrsc.server.plugins.MonsterSlayerContactsRouteTest" fork="true" failonerror="true" dir="${basedir}">
+            <arg value="--placement"/>
+            <classpath><pathelement location="../output/monster-slayer-placement-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+    </target>
+
     <target name="test_monster_slayer_contact_routes" depends="compile_core,compile_plugins">
         <delete dir="../output/monster-slayer-contact-test"/>
         <mkdir dir="../output/monster-slayer-contact-test"/>
@@ -98,6 +112,8 @@
         <copy todir="../output/monster-slayer-contact-test/database"><fileset dir="database"/></copy>
         <copy todir="../output/monster-slayer-contact-test/conf"><fileset dir="conf"/></copy>
         <java classname="com.openrsc.server.plugins.MonsterSlayerInfluenceGuildAccessTest" fork="true" failonerror="true" dir="../output/monster-slayer-contact-test">
+            <!-- Its copied config still refers to this checkout's installed-map profile/package. -->
+            <sysproperty key="openrsc.worldBuilderTargetRoot" value="${basedir}/.."/>
             <classpath><pathelement location="../output/monster-slayer-contact-test"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
     </target>

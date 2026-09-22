@@ -800,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "60d120c11fc3277f4014c8b8266a87e73449707bdb3447d4f4adce61dde08964",
+  "inputTreeSha256": "88b22d0942837eaee25f5f95f44572d12735cbcdd8735317820d15ae0cd269df",
   "inputs": [
     {
       "brandSignals": [
@@ -1176,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 31709,
+      "bytes": 33042,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1185,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "c061af0fdd37a730d40090e845dc271bc63dc332d70122eef32670212c23bb1f"
+      "sha256": "1b4a9c28a45d85f9b18cc21a29eb3235b3bdeaa9ef0227a14f1fddc0b0667f61"
     },
     {
       "brandSignals": [],
@@ -37146,7 +37146,7 @@
       "reverseDependencies": [
         "server/plugins/com/openrsc/server/plugins/custom/myworld/npcs/MonsterSlayerContacts.java"
       ],
-      "sha256": "fea9a5531e666a78986df8b008a6d2d3a8b3838adc3ca3336e8cd39131df4692"
+      "sha256": "13ddf72c8749240d0f464d9761e5656372ecb0273d14cbf727f31fd5d9daacc8"
     },
     {
       "brandSignals": [],

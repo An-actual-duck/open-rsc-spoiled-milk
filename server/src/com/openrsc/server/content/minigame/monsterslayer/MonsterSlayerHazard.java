@@ -24,7 +24,7 @@ public enum MonsterSlayerHazard {
 		switch (this) {
 		case BALROG: return new String[] {
 			"Use the Dwarven Mine ladder after rescuing the dwarven youth.",
-			"Bring strong magic defense and plenty of food; its magic splashes nearby players."
+			"Bring strong magic defense and plenty of food. Its magic splashes nearby players."
 		};
 		case ELDER_DRAGON: return new String[] {
 			"The elite Mining Guild area requires level 80 Mining.",

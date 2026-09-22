@@ -80,10 +80,22 @@ boss opt-in/access/preview/cancel behavior and exact one-kill payouts.
 `test-retired-leather-items.py` compares the retired server definitions to the
 immutable pre-retirement revision, allowing only the binding change, then checks
 client normal/note forms. Broader player-state, tower dialogue, associate,
-gimmick shop, leather and combat regressions accompany this pass. The old full
-contact-route suite has a separate Heroes' Guild terrain assertion incompatible
-with the installed native map; focused tower/boss dialogue tests do not assume
-that historical map layout.
+gimmick shop, leather and combat regressions accompany this pass.
+
+The former Heroes' Guild terrain failure was a legacy-only `getTile(x, y)`
+lookup while the native replacement profile deliberately skipped legacy terrain
+loading. It was not a blocked tile in the installed map. The placement check
+now converts NPC definition coordinates with `LegacyPackedPointAdapter` and
+uses `WorldLocation` terrain/path queries, selecting native terrain when present
+and retaining legacy support. All walkability, start-to-roam connectivity and
+Sella-to-associate path assertions remain enforced; no map or placement changed.
+
+Run `ant test_monster_slayer_placement` from `server` for the independent
+configured-map integration check. `ant test_monster_slayer_contact_routes`
+tests dialogue without loading terrain; its retired-task expectations now use
+the approved current roster. `ant test_monster_slayer_tower_routes` remains the
+focused staged tower/boss dialogue check. Missing terrain is still a failure of
+the placement check, not a reason to skip its assertions.
 
 Spritework and owner-authored tower placement remain separate. The broader
 [effect-standardization follow-up](../in-progress-work-plans/effect-standardization-follow-up.md)
