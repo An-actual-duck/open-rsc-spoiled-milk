@@ -2,6 +2,13 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+User approved Frozen Tear and Terror Fang: authoritative selected copies are
+`frozen-tear-approved.png` and `terror-fang-approved.png`, unchanged from candidates.
+The single-color feather was rejected. `cockatrice-feathers-candidate-v2.png`
+adds distinct olive, brown and cream plumage areas using built-in imagegen.
+Native 48x32, fitted 35x16 at (7,8). Pending approval; see `feather-v2-preview.html`
+and `feather-v2-prompt.txt`. Earlier candidate retained for comparison.
+
 Pending review: `cockatrice-feathers-candidate.png` preserves the authentic
 feather alpha/geometry, recolored brown/straw by `recolor-cockatrice-feather.cjs`.
 `frozen-tear-candidate.png` is a glossy pale-blue gem (15x22 at 17,5).
