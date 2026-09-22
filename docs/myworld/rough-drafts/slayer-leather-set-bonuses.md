@@ -127,12 +127,45 @@ Verified current Bear's Maul baseline:
 Ferocious's 75% values are now confirmed. Do not add an independent random
 proc chance or broaden the effect to ranged/magic without a new decision.
 
+## Ugthanki: Storage Hump
+
+Food heals **20% more**. Round the boosted healing to the nearest whole HP,
+not always upward (`ceil`). For example, base food healing 6 becomes 7
+(`6 * 1.20 = 7.2`), while 8 becomes 10 (`8 * 1.20 = 9.6`). This records
+"rounded properly, not up" as ordinary nearest-integer rounding, not a
+requirement to always round down.
+
+This is a food-healing bonus, not general lifesteal, regeneration or potion
+healing. Normal maximum-HP behavior remains unchanged. Before implementation,
+confirm combination/order with other food bonuses (such as Nature jewelry),
+round once at the agreed stage, and check multi-bite or delayed-healing foods.
+Do not invent additive versus multiplicative stacking from the 20% alone.
+
+## Naga: Cold Blooded
+
+Take **20% less damage from ice and fire magic**. The approved categories are
+ice and fire, not all magic or a blanket classification of every water spell
+as ice. This mitigates qualifying damage; it does not grant debuff immunity.
+
+Use semantic elemental tags carried by the damage/spell source, not projectile
+appearance or display-name matching. Enemy spell-tag coverage is uncertain:
+the owner believes ice tagging exists but has not confirmed all spell paths.
+Record an [element-tag audit](../in-progress-work-plans/effect-standardization-follow-up.md#enemy-spell-element-tags)
+instead of asserting coverage. Verify the paths used by this bonus as part
+of implementation; the comprehensive audit remains a follow-up.
+
+Before implementation, settle damage rounding and stacking/order with other
+mitigation. Audit secondary/AOE damage and whether ongoing damage from a
+spell retains its element; do not silently assume every burn or dragonbreath
+is an eligible fire spell.
+
 ## Remaining design and sequencing
 
 The six retained new families are giant frog, naga, terror dog, bloodveld,
-dark beast and Ugthanki. Naga and Ugthanki still need effect concepts; Terror
-dog's numbers are approved. The other three have the directions above, with
-event/stacking boundaries to settle before implementation.
+dark beast and Ugthanki. **All six now have set-bonus concepts determined.**
+Runtime implementation is still pending; carapace cleanse values and some
+event/stacking/rounding boundaries still need finalizing. Do not confuse
+complete concept selection with completed implementation.
 
 Document and resolve these bounded set rules before runtime changes. The
 broader [effect standardization follow-up](../in-progress-work-plans/effect-standardization-follow-up.md)

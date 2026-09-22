@@ -1,6 +1,8 @@
 # Ugthanki leather and post-audit tier spread
 
-Updated: 2026-09-21. Ugthanki foundation implemented; set bonus unassigned.
+Updated: 2026-09-21. Ugthanki foundation implemented; Storage Hump bonus
+designed (food heals 20% more, nearest-integer rounding), not yet implemented.
+See [current set-bonus decisions](slayer-leather-set-bonuses.md#ugthanki-storage-hump).
 Retirement and optional boss-task implementation remain separate pending work.
 
 Subsequent [set-bonus decision](slayer-leather-set-bonuses.md) removes Banshee
@@ -68,9 +70,11 @@ hide `#B99A70`, darker leather/armor `#947654`. Worn appearance temporarily uses
 the existing baby-dragon armor sprites. Shared appearance does not activate its
 Blow Smoke bonus. Final art remains part of the later sprite pass.
 
-## Seven sets awaiting bonus design
+## Original bonus-design backlog (superseded)
 
-Giant frog, banshee, naga, terror dog, bloodveld, dark beast, and **Ugthanki**.
+Originally: giant frog, banshee, naga, terror dog, bloodveld, dark beast, and
+**Ugthanki**. Banshee armor has since been withdrawn from the plan; all six
+retained families now have concepts in the linked set-bonus document.
 Review these alongside retained armor families and the shared carapace cleansing
 theme. No new set effect was invented or inherited by this addition.
 

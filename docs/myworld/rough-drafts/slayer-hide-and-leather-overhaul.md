@@ -8,14 +8,17 @@ Latest [set-bonus decisions](slayer-leather-set-bonuses.md): Banshee hide is
 to become **Ectoplasm**, with no current armor/production route. Carapace
 cleansing replaces offensive poison procs; magic-spider loses its special
 magic-penalty exemption. Dark beast, Bloodveld and frog have new effect
-directions; Terror dog's Ferocious is approved at two 75% melee hits. These runtime
+directions; Terror dog's Ferocious is approved at two 75% melee hits. Ugthanki's
+Storage Hump boosts food healing by 20% (nearest-integer rounding); Naga's
+Cold Blooded reduces ice/fire magic damage by 20%. All retained new set
+concepts are now selected. These runtime
 changes are pending. The earlier implementation counts below are historical.
 
 The owner has **completed the source-coverage audit**. Rats/large rats, giant
 bats and animated axes are accepted no-material exceptions; leave their tasks
 and drops alone. Ugthanki is the only new hide/armor family requested and its
 [tier-4 foundation is implemented](ugthanki-leather-implementation.md), with its
-bonus still undecided. This resolves the audit; retirement and boss opt-in
+Storage Hump bonus designed but not implemented. This resolves the audit; retirement and boss opt-in
 runtime changes remain pending rather than being implicitly completed.
 
 Related: [Monster Slayer guild plan](../in-progress-work-plans/monster-slayer-guild-plan.md),
