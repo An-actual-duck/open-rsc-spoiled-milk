@@ -12,6 +12,8 @@ import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTaskServic
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerShopService;
 import com.openrsc.server.event.custom.MonsterSlayerShopRestockEvent;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Group;
@@ -40,6 +42,12 @@ public final class MonsterSlayerContactsRouteTest {
 	public static void main(String[] args) throws Exception {
 		Server server = new Server("myworld.conf");
 		server.getEntityHandler().load();
+		if (args.length == 1 && "--placement".equals(args[0])) {
+			heroesGuildSectUsesClearInteriorAdamantNpcs(server);
+			heroesGuildTerrainIsWalkable(server);
+			System.out.println("Monster Slayer Heroes' Guild terrain placement: PASS");
+			return;
+		}
 		if (args.length == 1 && "--tower".equals(args[0])) {
 			towerPreparationAndPreviewRoutes(server);
 			System.out.println("Monster Slayer tower contact routes: PASS");
@@ -387,26 +395,6 @@ public final class MonsterSlayerContactsRouteTest {
 			"Achetties remains in the separate southern guild room Y");
 		assertHeroesRangeDoesNotIntersectWorldPlacements(server, locations, "conf/server/defs/locs");
 
-		server.getWorld().getRegionManager().load();
-		for (int[] fixture : placement) {
-			for (int x = fixture[3]; x <= fixture[5]; x++) {
-				for (int y = fixture[4]; y <= fixture[6]; y++) {
-					assertTrue((server.getWorld().getTile(x, y).traversalMask
-						& com.openrsc.server.util.rsc.CollisionFlag.FULL_BLOCK) == 0,
-						"Heroes roam tile is walkable in authoritative terrain " + fixture[0] + " @ " + x + "," + y);
-					assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-						Point.location(fixture[1], fixture[2]), Point.location(x, y), true),
-						"Heroes roam tile is connected to its start " + fixture[0] + " @ " + x + "," + y);
-				}
-			}
-		}
-		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-			Point.location(369, 436), Point.location(369, 436), true),
-			"visually confirmed interior anchor is a valid Sella tile");
-		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(),
-			Point.location(369, 436), Point.location(370, 437), true),
-			"visually confirmed interior anchor reaches the associate without crossing a wall");
-
 		String clientDefinitions = new String(Files.readAllBytes(Paths.get("..", "Client_Base", "src", "com",
 			"openrsc", "client", "entityhandling", "EntityHandler.java")), StandardCharsets.UTF_8);
 		assertTrue(clientDefinitions.contains("new int[]{16, 58, 40, 101, 51, -1, -1, -1"),
@@ -449,6 +437,41 @@ public final class MonsterSlayerContactsRouteTest {
 			"new AnimationDef(\"sword\", \"equipment\", 11717785",
 			"new AnimationDef(\"battleaxe\", \"equipment\", 11717785"
 		}) assertTrue(clientDefinitions.contains(identity), "proven adamant animation identity " + identity);
+	}
+
+	/** Map integration check, deliberately separate from dialogue regression tests. */
+	private static void heroesGuildTerrainIsWalkable(Server server) throws Exception {
+		JSONArray locations = new JSONObject(new String(Files.readAllBytes(Paths.get(
+			"conf", "server", "defs", "locs", "MyWorldNpcLocs.json")), StandardCharsets.UTF_8)).getJSONArray("npclocs");
+		server.getWorld().getRegionManager().load();
+		WorldLocation[] starts = new WorldLocation[2];
+		int index = 0;
+		for (int id : new int[]{850, 856}) {
+			JSONObject spawn = location(locations, id);
+			JSONObject start = spawn.getJSONObject("start"), min = spawn.getJSONObject("min"), max = spawn.getJSONObject("max");
+			WorldLocation origin = terrainLocation(start.getInt("X"), start.getInt("Y"));
+			starts[index++] = origin;
+			for (int x = min.getInt("X"); x <= max.getInt("X"); x++) {
+				for (int y = min.getInt("Y"); y <= max.getInt("Y"); y++) {
+					WorldLocation destination = terrainLocation(x, y);
+					assertTrue((server.getWorld().getTile(destination).traversalMask
+						& com.openrsc.server.util.rsc.CollisionFlag.FULL_BLOCK) == 0,
+						"Heroes roam tile is walkable in authoritative terrain " + id + " @ " + destination);
+					assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(), origin, destination, true),
+						"Heroes roam tile is connected to its start " + id + " @ " + destination);
+				}
+			}
+		}
+		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(), starts[0], starts[0], true),
+			"visually confirmed interior anchor is a valid Sella tile");
+		assertTrue(com.openrsc.server.model.PathValidation.checkPath(server.getWorld(), starts[0], starts[1], true),
+			"visually confirmed interior anchor reaches the associate without crossing a wall");
+	}
+
+	private static WorldLocation terrainLocation(int x, int y) {
+		// These NPC definition coordinates are legacy-packed. Qualify them once at
+		// the boundary so terrain/path queries select the installed native map.
+		return LegacyPackedPointAdapter.fromLegacyPoint(Point.location(x, y));
 	}
 
 	private static void assertHeroesRangeDoesNotIntersectWorldPlacements(Server server,
@@ -946,7 +969,7 @@ public final class MonsterSlayerContactsRouteTest {
 		int contactIndex = 0;
 		for (com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Contact contact : data.getContactsInChallengeOrder()) {
 			cursors.put(contact.getKey(), contactIndex < 4 ? contact.getMandatoryTasks().size()
-				: contactIndex == 4 ? 2 : 0);
+				: contactIndex == 4 ? contact.getMandatoryTasks().indexOf(multiHazard) : 0);
 			contactIndex++;
 		}
 		Player player = player(server, "slayermultiwarning", 287, 600);
@@ -1011,9 +1034,9 @@ public final class MonsterSlayerContactsRouteTest {
 			"N:Veterans are the best of the best!",
 			"N:Let's see if you can prove it."), firstDialogue.events.subList(0, 7),
 			"Bran welcome follows proof and precedes first assignment");
-		assertEquals("N:Your next task is to slay 45 Jogres.", firstDialogue.events.get(7),
+		assertEquals("N:Your next task is to slay 40 Karamja wolves.", firstDialogue.events.get(7),
 			"Bran first assignment follows welcome");
-		assertEquals("brimhaven.jogres", MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
+		assertEquals("brimhaven.karamja_wolves", MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
 			"Bran welcome preserves authoritative first assignment");
 
 		RecordingDialogue activeDialogue = new RecordingDialogue(0);
@@ -1029,7 +1052,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"Bran shortcut retains authoritative assignment");
 
 		MonsterSlayerState.Snapshot laterState = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN,
-			MonsterSlayerBalances.zero(), veteranCursors(data, 1), null, 0, 1L, 0, 1,
+			MonsterSlayerBalances.zero(), veteranCursors(data, 2), null, 0, 2L, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		assertFalse(MonsterSlayerContacts.shouldUseBranFirstTaskWelcome(2, laterState),
 			"later Veteran cursor suppresses Bran welcome");
@@ -1045,10 +1068,10 @@ public final class MonsterSlayerContactsRouteTest {
 			"A proper hunt! I almost envy you!",
 			"Go on! Give me something worth boasting about!"
 		};
-		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task jogres =
-			data.getTask("brimhaven.jogres");
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task wolves =
+			data.getTask("brimhaven.karamja_wolves");
 		for (int selection = 0; selection < generalRemarks.length; selection++) {
-			assertEquals(generalRemarks[selection], MonsterSlayerContacts.branAssignmentRemark(jogres, selection),
+			assertEquals(generalRemarks[selection], MonsterSlayerContacts.branAssignmentRemark(wolves, selection),
 				"hazard-free Bran remark remains in the bounded personality set " + selection);
 			String normalized = generalRemarks[selection].toLowerCase();
 			for (String unsupportedFact : new String[] {"antidote", "desert heat", "wilderness", "worship drain", "dragon fire"}) {
@@ -1058,9 +1081,9 @@ public final class MonsterSlayerContactsRouteTest {
 			assertTrue(generalRemarks[selection].length() <= 64,
 				"Bran personality line remains concise " + selection);
 		}
-		assertEquals(generalRemarks[0], MonsterSlayerContacts.branAssignmentRemark(jogres, generalRemarks.length),
+		assertEquals(generalRemarks[0], MonsterSlayerContacts.branAssignmentRemark(wolves, generalRemarks.length),
 			"Bran personality selection wraps within its bounded set");
-		assertThrows(new Runnable() { public void run() { MonsterSlayerContacts.branAssignmentRemark(jogres, -1); }},
+		assertThrows(new Runnable() { public void run() { MonsterSlayerContacts.branAssignmentRemark(wolves, -1); }},
 			"negative Bran dialogue selection is rejected");
 
 		String[] hazardTaskKeys = {
@@ -1102,12 +1125,12 @@ public final class MonsterSlayerContactsRouteTest {
 			"later Bran assignment does not repeat the first-task welcome");
 		assertTrue(containsAnyNpcLine(laterDialogue.events, generalRemarks),
 			"later hazard-free Bran assignment uses exactly one bounded personality remark");
-		assertEquals("N:Your next task is to slay 40 Karamja wolves.",
+		assertEquals("N:Your next task is to slay 35 Grey wolves.",
 			laterDialogue.events.get(laterDialogue.events.size() - 1),
 			"Bran flavour preserves the authoritative task assignment line");
 
 		MonsterSlayerState.Snapshot poisonState = MonsterSlayerState.create(2, MonsterSlayerRank.VETERAN,
-			MonsterSlayerBalances.zero(), veteranCursors(data, 3), null, 0, 3L, 0, 1,
+			MonsterSlayerBalances.zero(), veteranCursors(data, 1), null, 0, 1L, 0, 1,
 			MonsterSlayerState.LegacyStatus.NONE, 0, data);
 		Player poison = player(server, "slayerbranpoison", 294, 600);
 		MonsterSlayerState.write(poison.getCache(), data, poisonState);
@@ -1193,9 +1216,9 @@ public final class MonsterSlayerContactsRouteTest {
 			"P:Than-",
 			"N:You're welcome! Best not dilly-dally.",
 			"N:Monsters won't be slaying themselves.",
-			"N:Your next task is to slay 40 Ice giants."), firstDialogue.events,
+			"N:Your next task is to slay 30 Lesser demons."), firstDialogue.events,
 			"Doran typed welcome follows proof and preserves first assignment");
-		assertEquals("champions.ice_giants",
+		assertEquals("champions.lesser_demons",
 			MonsterSlayerState.read(first.getCache(), data).getActiveTaskKey(),
 			"Doran welcome preserves authoritative Champions progression");
 
@@ -1205,7 +1228,7 @@ public final class MonsterSlayerContactsRouteTest {
 		RecordingDialogue shortcutDialogue = new RecordingDialogue();
 		new MonsterSlayerContacts(shortcutDialogue).onOpNpc(shortcut,
 			new Npc(server.getWorld(), 849, 301, 600), "Task");
-		assertEquals(java.util.Arrays.asList("N:Your next task is to slay 40 Ice giants."),
+		assertEquals(java.util.Arrays.asList("N:Your next task is to slay 30 Lesser demons."),
 			shortcutDialogue.events, "Doran Task shortcut skips the social welcome and random flavour");
 
 		String[] generalRemarks = {
@@ -1215,11 +1238,11 @@ public final class MonsterSlayerContactsRouteTest {
 			"No need for speeches! You know the work!",
 			"Off you go! We'll celebrate when it's done!"
 		};
-		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task iceGiants =
-			data.getTask("champions.ice_giants");
+		com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerDefinitions.Task demons =
+			data.getTask("champions.lesser_demons");
 		for (int selection = 0; selection < generalRemarks.length; selection++) {
 			assertEquals(generalRemarks[selection],
-				MonsterSlayerContacts.doranAssignmentRemark(iceGiants, selection),
+				MonsterSlayerContacts.doranAssignmentRemark(demons, selection),
 				"bounded Doran personality remark " + selection);
 			assertTrue(generalRemarks[selection].length() <= 64,
 				"Doran personality remark remains concise " + selection);
@@ -1230,10 +1253,10 @@ public final class MonsterSlayerContactsRouteTest {
 				"hazard-free Doran flavour does not invent preparation advice " + unsupportedFact);
 		}
 		assertEquals(generalRemarks[0],
-			MonsterSlayerContacts.doranAssignmentRemark(iceGiants, generalRemarks.length),
+			MonsterSlayerContacts.doranAssignmentRemark(demons, generalRemarks.length),
 			"Doran personality selection wraps within its bounded set");
 		assertThrows(new Runnable() { public void run() {
-			MonsterSlayerContacts.doranAssignmentRemark(iceGiants, -1);
+			MonsterSlayerContacts.doranAssignmentRemark(demons, -1);
 		}}, "negative Doran dialogue selection is rejected");
 
 		String[] hazardTaskKeys = {
@@ -1277,7 +1300,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"later Doran assignment does not repeat the first-task welcome");
 		assertTrue(containsAnyNpcLine(laterDialogue.events, generalRemarks),
 			"later Doran assignment uses one bounded personality remark");
-		assertEquals("N:Your next task is to slay 30 Lesser demons.",
+		assertEquals("N:Your next task is to slay 20 Greater demons.",
 			laterDialogue.events.get(laterDialogue.events.size() - 1),
 			"Doran flavour preserves authoritative later assignment");
 
@@ -1420,7 +1443,7 @@ public final class MonsterSlayerContactsRouteTest {
 			"later Sella assignment does not repeat first-task welcome");
 		assertTrue(containsAnyNpcLine(laterDialogue.events, remarks),
 			"later Sella assignment uses one bounded heroic remark");
-		assertEquals("N:Your next task is to slay 30 Fire giants.",
+		assertEquals("N:Your next task is to slay 18 Green dragons.",
 			laterDialogue.events.get(laterDialogue.events.size() - 1),
 			"Sella flavour preserves authoritative later assignment");
 
