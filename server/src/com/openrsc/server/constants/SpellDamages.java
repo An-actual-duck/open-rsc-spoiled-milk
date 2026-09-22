@@ -95,42 +95,8 @@ public class SpellDamages {
 	}};
 
 	private final Map<Spells, ArrayList<Pair<EntityType, Double>>> modernMagicProjectiles = new HashMap<Spells, ArrayList<Pair<EntityType, Double>>>() {{
-		put(Spells.WIND_STRIKE, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 4.0)); add(Pair.of(EntityType.NPC, 4.0));
-		}});
-		put(Spells.WATER_STRIKE, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 4.0)); add(Pair.of(EntityType.NPC, 4.0));
-		}});
-		put(Spells.EARTH_STRIKE, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 4.0)); add(Pair.of(EntityType.NPC, 4.0));
-		}});
-		put(Spells.FIRE_STRIKE, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 4.0)); add(Pair.of(EntityType.NPC, 4.0));
-		}});
-		put(Spells.WIND_BOLT, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 6.0)); add(Pair.of(EntityType.NPC, 6.0));
-		}});
-		put(Spells.WATER_BOLT, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 6.0)); add(Pair.of(EntityType.NPC, 6.0));
-		}});
-		put(Spells.EARTH_BOLT, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 6.0)); add(Pair.of(EntityType.NPC, 6.0));
-		}});
-		put(Spells.FIRE_BOLT, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 6.0)); add(Pair.of(EntityType.NPC, 6.0));
-		}});
-		put(Spells.WIND_BLAST, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 8.0)); add(Pair.of(EntityType.NPC, 8.0));
-		}});
-		put(Spells.WATER_BLAST, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 8.0)); add(Pair.of(EntityType.NPC, 8.0));
-		}});
-		put(Spells.EARTH_BLAST, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 8.0)); add(Pair.of(EntityType.NPC, 8.0));
-		}});
-		put(Spells.FIRE_BLAST, new ArrayList<Pair<EntityType, Double>>(){{
-			add(Pair.of(EntityType.PLAYER, 8.0)); add(Pair.of(EntityType.NPC, 8.0));
-		}});
+		// Modern magic includes the complete lower-tier book, including hybrid elements.
+		putAll(f2pOnlyMagicProjectiles);
 		put(Spells.THUNDER_STRIKE, new ArrayList<Pair<EntityType, Double>>(){{
 			add(Pair.of(EntityType.PLAYER, 9.6)); add(Pair.of(EntityType.NPC, 9.6));
 		}});
