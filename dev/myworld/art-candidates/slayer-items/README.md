@@ -120,6 +120,13 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Static wipes revision: `static-wipes-candidate-v2.png` supersedes the first
+candidate for review. Plain brown product sleeve with straight opening and
+three white sheets, referencing anti-static dryer sheets rather than letters.
+Native 48x32; fitted 30x27 at (9,3). See `static-wipes-preview-v2.html` and
+`static-wipes-v2-prompt.txt`. Built-in imagegen edit; original retained.
+Pending approval, not installed.
+
 Latest approvals and candidate:
 - `dog-treats-approved.png`: user approved the yellow box with a brown bone
   symbol; no branding. Native 48x32, object 34x28.
