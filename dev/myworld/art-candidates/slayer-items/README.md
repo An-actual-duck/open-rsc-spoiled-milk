@@ -120,5 +120,13 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Latest approvals and candidate:
+- `dog-treats-approved.png`: user approved the yellow box with a brown bone
+  symbol; no branding. Native 48x32, object 34x28.
+- `static-wipes-candidate.png`: pending user review. Exactly three blank white
+  sheets fanned out of a tan envelope. Native 48x32, packed within 34x27.
+  See `static-wipes-preview.html` and `static-wipes-prompt.txt`. Source retained
+  in `sources/static-wipes-generated.png`; not installed in production.
+
 Review at 1x and matching integer pixel zoom, not from the high-resolution
 source alone. Preserving a design does not automatically make it game-ready.
