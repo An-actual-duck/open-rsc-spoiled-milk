@@ -1,0 +1,194 @@
+[
+  {
+    "family": "giant-frog",
+    "kind": "hide",
+    "itemId": 3333,
+    "file": "giant-frog-hide.png",
+    "color": "#238fff",
+    "baseColor": "#238fff",
+    "tintScale": 1,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "giant-frog",
+    "kind": "leather",
+    "itemId": 3356,
+    "file": "giant-frog-leather.png",
+    "color": "#1c72cc",
+    "baseColor": "#238fff",
+    "tintScale": 0.8,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "naga",
+    "kind": "hide",
+    "itemId": 3335,
+    "file": "naga-hide.png",
+    "color": "#589d40",
+    "baseColor": "#589d40",
+    "tintScale": 1,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "naga",
+    "kind": "leather",
+    "itemId": 3368,
+    "file": "naga-leather.png",
+    "color": "#467e33",
+    "baseColor": "#589d40",
+    "tintScale": 0.8,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "kind": "hide",
+    "itemId": 3336,
+    "file": "terror-dog-hide.png",
+    "color": "#d34538",
+    "baseColor": "#d34538",
+    "tintScale": 1,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "terror-dog",
+    "kind": "leather",
+    "itemId": 3374,
+    "file": "terror-dog-leather.png",
+    "color": "#a9372d",
+    "baseColor": "#d34538",
+    "tintScale": 0.8,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "kind": "hide",
+    "itemId": 3337,
+    "file": "bloodveld-hide.png",
+    "color": "#e3b59a",
+    "baseColor": "#e3b59a",
+    "tintScale": 1,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "bloodveld",
+    "kind": "leather",
+    "itemId": 3380,
+    "file": "bloodveld-leather.png",
+    "color": "#b6917b",
+    "baseColor": "#e3b59a",
+    "tintScale": 0.8,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "kind": "hide",
+    "itemId": 3338,
+    "file": "dark-beast-hide.png",
+    "color": "#55565a",
+    "baseColor": "#55565a",
+    "tintScale": 1,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "dark-beast",
+    "kind": "leather",
+    "itemId": 3386,
+    "file": "dark-beast-leather.png",
+    "color": "#444548",
+    "baseColor": "#55565a",
+    "tintScale": 0.8,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "kind": "hide",
+    "itemId": 3392,
+    "file": "ugthanki-hide.png",
+    "color": "#efd04b",
+    "baseColor": "#efd04b",
+    "tintScale": 1,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  },
+  {
+    "family": "ugthanki",
+    "kind": "leather",
+    "itemId": 3393,
+    "file": "ugthanki-leather.png",
+    "color": "#bfa63c",
+    "baseColor": "#efd04b",
+    "tintScale": 0.8,
+    "source": "items:69",
+    "canvas": [
+      48,
+      32
+    ],
+    "recoloredPixels": 774,
+    "alphaUnchanged": true
+  }
+]

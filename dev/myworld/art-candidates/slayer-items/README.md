@@ -120,6 +120,10 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Latest hides/leathers: `hide-leathers-v2/` keeps raw hides unchanged and
+darkens each tanned leather tint by 20%, following existing tanning palettes.
+See `hide-leathers-v2-preview.html`. Original pairs retained; not installed.
+
 Hides/leathers: all 12 inventory candidates are in `hide-leathers/`, using
 the armor palettes and original items:69 geometry. See its README/manifest
 and `hide-leathers-preview.html`. Palette swaps only, not installed.
