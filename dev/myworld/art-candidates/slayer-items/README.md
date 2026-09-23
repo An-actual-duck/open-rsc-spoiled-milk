@@ -2,6 +2,11 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`wax-earplugs-approved.png`: user approved unchanged.
+`dog-treats-candidate.png`: pending review, unbranded yellow carton with brown
+bone symbol. Native 48x32, fitted 34x28 at (7,2). Built-in imagegen;
+see `dog-treats-preview.html` and `dog-treats-prompt.txt`. Source retained.
+
 `eye-drops-approved.png`: user approved without changes.
 `wax-earplugs-candidate.png`: pending review; warm cream-yellow soft wax lump
 with one small stretched/pinched-off piece beside it. Native 48x32, fitted
