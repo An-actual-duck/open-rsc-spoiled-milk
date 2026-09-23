@@ -120,6 +120,10 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Hides/leathers: all 12 inventory candidates are in `hide-leathers/`, using
+the armor palettes and original items:69 geometry. See its README/manifest
+and `hide-leathers-preview.html`. Palette swaps only, not installed.
+
 Leather armor: all 30 inventory candidates are in `leather-sets/`, with the
 six requested family palettes. See `leather-sets-preview.html` and the folder
 README/manifest for exact tints, source IDs and verification. Not installed;

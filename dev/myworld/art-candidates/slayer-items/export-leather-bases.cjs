@@ -5,8 +5,10 @@ const root=path.resolve(__dirname,'../../../..');
 const data=zlib.gunzipSync(fs.readFileSync(path.join(root,'Client_Base/Cache/video/Custom_Sprites.osar')));
 let p=0;const u8=()=>data[p++],u16=()=>{const v=data.readUInt16BE(p);p+=2;return v;},i16=()=>{const v=data.readInt16BE(p);p+=2;return v;};
 const str=()=>{const start=p;while(data[p++]!==0){}return data.toString('latin1',start,p-1);};
-const wanted={'5':'coif','7':'cuirass','17':'gloves','223':'boots','590':'chaps'};
-fs.mkdirSync(path.join(__dirname,'leather-bases'),{recursive:true});
+const materials=process.argv.includes('--materials');
+const wanted=materials?{'69':'hide-leather'}:{'5':'coif','7':'cuirass','17':'gloves','223':'boots','590':'chaps'};
+const outputFolder=materials?'hide-leather-bases':'leather-bases';
+fs.mkdirSync(path.join(__dirname,outputFolder),{recursive:true});
 for(let s=0,n=u8();s<n;s++){
  const space=str(),count=u16();
  for(let e=0;e<count;e++){
@@ -22,7 +24,7 @@ for(let s=0,n=u8();s<n;s++){
     if(rgb.every(v=>v===0)||dx<0||dy<0||dx>=bw||dy>=bh)continue;
     const i=(dy*bw+dx)*4;pixels.set([...rgb,255],i);
    }
-   const dest=path.join(__dirname,'leather-bases',wanted[id]+'.png');
+   const dest=path.join(__dirname,outputFolder,wanted[id]+'.png');
    execFileSync('ffmpeg',['-v','error','-n','-f','rawvideo','-pix_fmt','rgba','-s',bw+'x'+bh,'-i','-','-frames:v','1',dest],{input:pixels});
    console.log({id,slot:wanted[id],w,h,shift,ox,oy,bw,bh});
   }
