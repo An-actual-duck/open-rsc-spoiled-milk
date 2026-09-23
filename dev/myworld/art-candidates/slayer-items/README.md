@@ -120,6 +120,14 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Leather armor: all 30 inventory candidates are in `leather-sets/`, with the
+six requested family palettes. See `leather-sets-preview.html` and the folder
+README/manifest for exact tints, source IDs and verification. Not installed;
+worn sprites remain a separate task.
+
+Poisoned dagger approved by user; selected copy:
+`dagger-of-terror-poisoned-approved.png`.
+
 Poison dagger: `dagger-of-terror-poisoned-candidate.png` adds a green tip to
 the approved dagger. Built-in imagegen edit, tip colors composited onto original
 with `package-poison-dagger.cjs`. Original alpha and pixels outside x>=31
