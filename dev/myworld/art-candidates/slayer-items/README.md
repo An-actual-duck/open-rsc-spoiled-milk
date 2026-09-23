@@ -2,6 +2,14 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`abyssal-rib-approved.png`: user-approved single rib, unchanged.
+`lightning-horn-candidate.png`: pending review, detached Dark Beast grey-brown
+horn, fitted 32x20 at (8,6) on 48x32.
+`slime-solvent-candidate.png`: pending review, orange liquid in classic conical
+potion vial, fitted 20x29 at (14,2) on 48x32. Both use built-in imagegen.
+See `horn-solvent-preview.html`, `horn-prompt.txt`, `solvent-prompt.txt`.
+Other gimmick icons remain deferred until these are reviewed.
+
 `leach-tongue-approved.png`: user-approved tongue candidate, unchanged.
 `abyssal-rib-candidate.png`: pending review. One plain curved ivory rib bone,
 48x32 canvas, fitted 32x20 at (8,6). Built-in imagegen; source render retained.
