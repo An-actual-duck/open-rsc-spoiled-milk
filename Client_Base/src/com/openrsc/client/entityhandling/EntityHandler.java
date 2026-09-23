@@ -5652,7 +5652,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3352, new ItemDef("Leaching Bow", "Two Bloodveld tongues are woven together to make the bowstring", "",
 			0, 54, "items:54", false, true, 24, 0xAF6262, false, false, true, 3352));
 		setCustomItemDefinition(3353, new ItemDef("Dagger of Terror", "It stabs swiftly and ferociously", "",
-			0, 80, "items:80", false, true, 16, 0xD6C5A0, false, false, true, 3353));
+			0, -1, "external-png:dagger-of-terror-icon@28x19", false, true, 16, 0, false, false, true, 3353));
 		setCustomItemDefinition(3354, new ItemDef("Poisoned Dagger of Terror", "It stabs swiftly and ferociously", "",
 			0, 80, "items:80", false, true, 16, 0x8A9675, false, false, true, 3354));
 		setCustomItemDefinition(3355, new ItemDef("Sullen Pendant", "You carry the Banshee's sorrows with you", "",
@@ -8087,6 +8087,12 @@ public class EntityHandler {
 			slayerPreviewAnimations.put(preview, animations.size());
 			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0,
 				preview.combatEnabled(), false, 0));
+		}
+		// Append only: existing equipment and NPC animation IDs stay stable.
+		if (Config.S_WANT_CUSTOM_SPRITES) {
+			if (animations.size() != 1092) throw new IllegalStateException("Dagger of Terror appearance ID drift");
+			animations.add(new AnimationDef("daggerofterror", "equipment", 0, 0, true, false, 0));
+			verifyAnimationDefinition(1092, "daggerofterror", 0);
 		}
 	}
 

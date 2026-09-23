@@ -22258,6 +22258,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		// Custom dagger uses the same canonical hand anchors as the sword family.
+		loadExternalCombatMainHandEquipmentSprite("daggerofterror", getExternalEquipmentNumberedFolder("dagger-of-terror"),
+			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
 		loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"));
 		loadExternalCombatMainHandEquipmentSprite("firesword", getExternalEquipmentNumberedFolder("fire-sword"),
