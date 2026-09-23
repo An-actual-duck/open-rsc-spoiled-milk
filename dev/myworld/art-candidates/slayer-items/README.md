@@ -2,6 +2,12 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`lightning-horn-approved.png` and `slime-solvent-approved.png`: user approved,
+unchanged from candidates. All eleven unique drop subjects now have approved art.
+`eye-drops-candidate.png`: pending review. Smaller blue potion bottle with
+pipette bulb top. 48x32 transparent canvas, fitted 14x22 at (17,5).
+Built-in imagegen; see `eye-drops-preview.html` and `eye-drops-prompt.txt`.
+
 `abyssal-rib-approved.png`: user-approved single rib, unchanged.
 `lightning-horn-candidate.png`: pending review, detached Dark Beast grey-brown
 horn, fitted 32x20 at (8,6) on 48x32.
