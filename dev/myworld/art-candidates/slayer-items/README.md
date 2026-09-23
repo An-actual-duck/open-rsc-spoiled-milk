@@ -120,6 +120,11 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Held Dagger of Terror: `held-dagger-of-terror/` contains the full custom dagger
+18-frame bone recolor, source copies, offsets, manifest and animated preview.
+Yellow hilt removed; original shape/gaps/alpha retained. Attack alignment is
+inferred from the existing frames, not yet verified in game. Not installed.
+
 Latest hides/leathers: `hide-leathers-v2/` keeps raw hides unchanged and
 darkens each tanned leather tint by 20%, following existing tanning palettes.
 See `hide-leathers-v2-preview.html`. Original pairs retained; not installed.
