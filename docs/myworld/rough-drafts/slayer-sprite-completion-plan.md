@@ -42,6 +42,12 @@ shadows when recoloring rather than flattening every pixel to one color.
 
 ## Worn and held equipment
 
+Before selecting sources, inspect the existing custom family spritework and
+a verified working item. The owner reported newer equipment inheriting legacy
+held sprites (Tin dagger using sword visuals). Apply the source-selection rule
+now; the broader [equipment assignment audit](../in-progress-work-plans/custom-equipment-sprite-assignment-audit.md)
+is documented as a separate follow-up, not a completed fix.
+
 - Leaching Bow: standard longbow geometry and animations; make the drawstring
   red, with no major other visual changes. The approved inventory bow remains
   separate; this is not a request to regenerate it.
