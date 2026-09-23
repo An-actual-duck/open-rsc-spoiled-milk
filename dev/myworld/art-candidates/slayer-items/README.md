@@ -120,6 +120,15 @@ pixels cleared to zero. It never overwrites an output or repaints artwork.
 The approved dagger was packed with the earlier 1.2x exporter, giving 28x19;
 its packaged pixels are authoritative.
 
+Poison dagger: `dagger-of-terror-poisoned-candidate.png` adds a green tip to
+the approved dagger. Built-in imagegen edit, tip colors composited onto original
+with `package-poison-dagger.cjs`. Original alpha and pixels outside x>=31
+remain identical. Native 48x32; see `poison-dagger-preview.html` and prompt.
+Pending review, not installed.
+
+Static wipes v2 was approved by the user; selected copy is
+`static-wipes-approved.png`.
+
 Static wipes revision: `static-wipes-candidate-v2.png` supersedes the first
 candidate for review. Plain brown product sleeve with straight opening and
 three white sheets, referencing anti-static dryer sheets rather than letters.
