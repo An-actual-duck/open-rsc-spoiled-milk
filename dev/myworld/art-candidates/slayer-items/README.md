@@ -2,6 +2,11 @@
 
 Art review assets only: these do not replace live inventory/ground sprites.
 
+`eye-drops-approved.png`: user approved without changes.
+`wax-earplugs-candidate.png`: pending review; warm cream-yellow soft wax lump
+with one small stretched/pinched-off piece beside it. Native 48x32, fitted
+30x15 at (9,9). Built-in imagegen; see `wax-preview.html` and `wax-prompt.txt`.
+
 `lightning-horn-approved.png` and `slime-solvent-approved.png`: user approved,
 unchanged from candidates. All eleven unique drop subjects now have approved art.
 `eye-drops-candidate.png`: pending review. Smaller blue potion bottle with
