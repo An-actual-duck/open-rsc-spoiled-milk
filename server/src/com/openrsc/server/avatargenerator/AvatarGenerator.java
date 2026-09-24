@@ -783,12 +783,13 @@ public final class AvatarGenerator {
 					int k4 = 0;
 					int i5 = 0;
 					int ANGLE = 1;
-					int k5 = ANGLE + animations.get(animationIndex).getNumber();
+					AnimationDef animation = HeldEquipmentAvatarAnimations.resolve(animations, animationIndex);
+					int k5 = ANGLE + animation.getNumber();
 					k4 = (k4 * scaleX) / sprites[k5].getSomething1();
 					i5 = (i5 * scaleY) / sprites[k5].getSomething2();
-					int l5 = (scaleX * sprites[k5].getSomething1()) / sprites[animations.get(animationIndex).getNumber()].getSomething1();
+					int l5 = (scaleX * sprites[k5].getSomething1()) / sprites[animation.getNumber()].getSomething1();
 					k4 -= (l5 - scaleX) / 2;
-					int colour = animations.get(animationIndex).getGrayMask();
+					int colour = animation.getGrayMask();
 					int skinColour = Constants.characterSkinColours[appearance.getSkinColour()];
 					if (colour == 1)
 						colour = Constants.characterHairColours[appearance.getHairColour()];
@@ -1265,7 +1266,7 @@ public final class AvatarGenerator {
 					int animationIndex = wornItems[mappedLayer] - 1;
 
 					if (animationIndex >= 0) {
-						AnimationDef animationDef = animations.get(animationIndex);
+						AnimationDef animationDef = HeldEquipmentAvatarAnimations.resolve(animations, animationIndex);
 						Sprite sprite = spriteTree.get(animationDef.getCategory()).get(animationDef.getName()).getFrames()[1].getSprite();
 
 						int something1 = sprite.getSomething1();

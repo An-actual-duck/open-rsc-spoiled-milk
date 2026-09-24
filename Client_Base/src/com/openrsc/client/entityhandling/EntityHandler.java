@@ -8113,6 +8113,12 @@ public class EntityHandler {
 			verifyAnimationDefinition(1127, "chainmail", 0xefd04b);
 			animations.add(new AnimationDef("abyssalwhip", "equipment", 0, 0, true, false, 0));
 			verifyAnimationDefinition(1128, "abyssalwhip", 0);
+			// Append only, after every published Slayer appearance.
+			for (HeldEquipmentFamilies.Definition definition : HeldEquipmentFamilies.DEFINITIONS) {
+				if (animations.size() != definition.appearanceId - 1)
+					throw new IllegalStateException("Held-family appearance ID drift");
+				animations.add(new AnimationDef(definition.family, "equipment", definition.mask, 0, true, false, 0));
+			}
 		}
 	}
 

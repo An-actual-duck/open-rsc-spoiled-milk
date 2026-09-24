@@ -275,6 +275,7 @@ public final class EntityHandler {
 		if (getServer().getConfig().WANT_MYWORLD) {
 			applyOptionalItemOverrides(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefsMyWorld.json");
 		}
+		applyHeldEquipmentAppearanceOverrides();
 		LOGGER.info("Loaded " + items.size() + " item definitions");
 
 		doors = (DoorDef[]) getPersistenceManager().load("defs/DoorDef.xml");
@@ -1028,6 +1029,16 @@ public final class EntityHandler {
 				items.get(ItemId.MAGIC_FISHING_ROD.id()).setAppearanceId(123);
 				items.get(ItemId.BLOOD_FISHING_ROD.id()).setAppearanceId(123);
 			}
+		}
+	}
+
+	/** Final visual-only pass, after generated item overrides. */
+	private void applyHeldEquipmentAppearanceOverrides() {
+		for (HeldEquipmentFamilies.Mapping mapping : HeldEquipmentFamilies.MAPPINGS) {
+			// All audited IDs >=1900 are MyWorld additions, not authentic quest items.
+			if (mapping.itemId >= 1900 && !getServer().getConfig().WANT_MYWORLD) continue;
+			setItemAppearance(mapping.itemId, getServer().getConfig().WANT_CUSTOM_SPRITES
+				? mapping.appearanceId : mapping.fallbackAppearance);
 		}
 	}
 
