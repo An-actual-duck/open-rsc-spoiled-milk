@@ -1,0 +1,8 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Abyssal Whip — fold-over grip</title>
+<style>body{background:#292d32;color:#eee;font:16px system-ui;padding:24px}img,canvas{image-rendering:pixelated;background:#74787c}main{display:flex;gap:20px;flex-wrap:wrap}canvas{width:336px;height:408px}.sheet{width:504px;height:1224px}</style>
+<h1>Abyssal Whip — fold-over grip</h1><p>Upright bone handle, with the segmented lash hanging from its top. Three approved attack frames retained unchanged.</p><p>Same sprite scale and grip coordinates. Only diagonal-rear frame 11 widened from 64 to 66 pixels, at the right edge. Isolated equipment preview; body occlusion still needs in-game testing. Not installed.</p><main></main><details><summary>Full sheet</summary><img class="sheet" src="contact.png"></details>
+<script>
+const frames=Array.from({length:18},(_,n)=>{const i=new Image();i.src='full-canvas/frame-'+String(n).padStart(2,'0')+'.png';return i});
+const contexts=['Front','Diagonal front','Side','Diagonal rear','Rear','Lash'].map(label=>{const s=document.createElement('section');s.innerHTML='<h2>'+label+'</h2><canvas width="84" height="102"></canvas>';document.querySelector('main').append(s);return s.querySelector('canvas').getContext('2d')});
+let t=0;function draw(){contexts.forEach((ctx,g)=>{const n=g*3+(g===5?[0,1,2,1]:[0,1,0,2])[t%4];ctx.clearRect(0,0,84,102);if(frames[n].complete&&frames[n].naturalWidth)ctx.drawImage(frames[n],g<5?10:0,0)});t++}Promise.all(frames.map(i=>i.decode())).then(()=>{draw();setInterval(draw,220)});
+</script></html>

@@ -7,9 +7,11 @@ const read=f=>run('ffmpeg',['-v','error','-i',f,'-f','rawvideo','-pix_fmt','rgba
 const file=path.join(out,'generated.png'),info=JSON.parse(run('ffprobe',['-v','error','-show_entries','stream=width,height','-of','json',file])).streams[0],src=read(file);
 const previous=JSON.parse(fs.readFileSync(path.join(old,'candidate-manifest.json'))),scale=previous.sharedScale,sheet=Buffer.alloc(252*612*4),frames=[];
 for(const d of ['frames','full-canvas'])fs.mkdirSync(path.join(out,d),{recursive:true});
-const write=(f,p,w,h)=>run('ffmpeg',['-v','error','-n','-f','rawvideo','-pix_fmt','rgba','-s',w+'x'+h,'-i','-','-frames:v','1',f],{input:p});
+const write=(f,p,w,h)=>{if(fs.existsSync(f)){assert.deepEqual(read(f),p,'existing output must match '+f);return;}run('ffmpeg',['-v','error','-n','-f','rawvideo','-pix_fmt','rgba','-s',w+'x'+h,'-i','-','-frames:v','1',f],{input:p});};
 for(let n=0;n<18;n++){
- const name='frame-'+String(n).padStart(2,'0')+'.png',ref=previous.frames[n];let f,full;
+ const name='frame-'+String(n).padStart(2,'0')+'.png',ref={...previous.frames[n]};let f,full;
+ // User-approved right-edge extension only; preserve hand anchor and scale.
+ if(n===11)ref.boundWidth=66;
  if(n>=15){
   for(const d of ['frames','full-canvas']){fs.copyFileSync(path.join(old,d,name),path.join(out,d,name));assert.deepEqual(fs.readFileSync(path.join(old,d,name)),fs.readFileSync(path.join(out,d,name)));}
   f={...ref,preservedOriginalAttack:true};full=read(path.join(out,'full-canvas',name));
@@ -28,10 +30,9 @@ for(let n=0;n<18;n++){
   write(path.join(out,'frames',name),p,w,h);write(path.join(out,'full-canvas',name),full,ref.boundWidth,ref.boundHeight);
   f={...ref,l,r,t,b,ax,ay,width:w,height:h,xShift:x,yShift:y};
  }
- for(let y=0;y<f.boundHeight;y++)for(let x=0;x<f.boundWidth;x++){const i=(y*f.boundWidth+x)*4;full.copy(sheet,((Math.floor(n/3)*102+y)*252+n%3*84+Math.floor((84-f.boundWidth)/2)+x)*4,i,i+4);}
+ for(let y=0;y<f.boundHeight;y++)for(let x=0;x<f.boundWidth;x++){const i=(y*f.boundWidth+x)*4;full.copy(sheet,((Math.floor(n/3)*102+y)*252+n%3*84+(n<15?10:0)+x)*4,i,i+4);}
  frames.push(f);
 }
 write(path.join(out,'contact.png'),sheet,252,612);
 fs.writeFileSync(path.join(out,'candidate-manifest.json'),JSON.stringify({status:'Review candidate; grip/body occlusion requires in-game validation; not installed',sharedScale:scale,frames},null,2)+'\n');
-fs.writeFileSync(path.join(out,'preview.html'),fs.readFileSync(path.join(old,'preview.html'),'utf8').replace('held candidate','fold-over grip revision').replace('Bone handle, exposed vertebrae and muted blue connective flesh.','Upright handle with top-attached hanging lash. Original three attack frames retained byte-for-byte.'));
-console.log('PASS: 15 revised movement frames within original bounds; 3 byte-identical attacks; original scale retained.');
+console.log('PASS: 15 revised movement frames; only frame 11 widened to approved 66px; 3 byte-identical attacks; original scale retained.');
