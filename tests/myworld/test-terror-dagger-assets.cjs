@@ -19,6 +19,7 @@ const icon=fs.readFileSync(path.join(art,'dagger-of-terror-approved.png'));
 assert.ok(icon.equals(execFileSync('unzip',['-p',jar,'myworld-assets/sprites/items/inventory-ground/weapons/dagger-of-terror-icon.png'])));
 const defs=JSON.parse(fs.readFileSync(path.join(root,'server/conf/server/defs/ItemDefsCustom.json')));
 const item=defs.items||defs.item;
-assert.equal(item.find(i=>i.id===3353).appearanceID,1092);
+// Player rendering subtracts one from the wire appearance ID.
+assert.equal(item.find(i=>i.id===3353).appearanceID - 1,1092);
 assert.equal(item.find(i=>i.id===3354).appearanceID,50);
 console.log('PASS: server mapping, 18 exact packaged frames, anchor arrays, approved packaged icon; poison variant unchanged');

@@ -2,7 +2,7 @@
 
 Local test implementation, 2026-09-23; not deployed to public server.
 
-- Existing item 3353 now uses appended appearance 1092 (`daggerofterror`).
+- Existing item 3353 uses one-based equipped appearance 1093, resolving to appended animation index 1092 (`daggerofterror`). Player rendering subtracts one; NPC animation indices are already zero-based. The runtime audit checks this conversion against the server item definition.
 - Approved 18 custom-dagger bone frames are installed under
   `dev/myworld/assets/sprites/equipment/dagger-of-terror/numbered/`.
 - Existing external combat equipment loader preserves canonical dagger
