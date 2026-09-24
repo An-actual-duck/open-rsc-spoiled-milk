@@ -22258,6 +22258,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalLeachingBowSprite();
 		// Custom dagger uses the same canonical hand anchors as the sword family.
 		loadExternalCombatMainHandEquipmentSprite("daggerofterror", getExternalEquipmentNumberedFolder("dagger-of-terror"),
 			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
@@ -22352,6 +22353,24 @@ public final class mudclient implements Runnable {
 	private static final int[] DEMON_PITCHFORK_EQUIPMENT_OFFSET_X = new int[] {13, 12, 11, 8, 10, 22, 17, 25, 35, 32, 37, 46, 41, 41, 41, 3, 22, 2};
 	private static final int[] DEMON_PITCHFORK_EQUIPMENT_OFFSET_Y = new int[] {16, 15, 13, 15, 15, 14, 16, 16, 14, 15, 13, 13, 15, 14, 11, -7, -4, 31};
 	private static final int[] COMBAT_MAIN_HAND_EQUIPMENT_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 84, 84, 84};
+
+	private void loadExternalLeachingBowSprite() {
+		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
+		File folder = getExternalEquipmentNumberedFolder("leaching-bow");
+		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(folder)) return;
+		final int[] offsetX = {39, 40, 39, 34, 28, 24, 27, 22, 13, 12, 8, 3, 13, 14, 15};
+		final int[] offsetY = {29, 28, 27, 23, 26, 24, 17, 18, 19, 17, 19, 22, 24, 28, 32};
+		orsc.graphics.two.SpriteArchive.Entry entry = new orsc.graphics.two.SpriteArchive.Entry(
+			"leachingbow", orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_NOCOMBAT,
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.OFF_HAND, 15);
+		for (int i = 0; i < 15; i++) {
+			orsc.graphics.two.SpriteArchive.Frame frame = this.externalAssetLoader.loadExternalEquipmentFrame(
+				new File(folder, String.format(Locale.ENGLISH, "%02d.png", i)), offsetX[i], offsetY[i]);
+			if (frame == null) return;
+			entry.getFrames()[i] = frame;
+		}
+		equipmentSprites.put("leachingbow", entry);
+	}
 
 	private void loadExternalNeckEquipmentSprite(String spriteName, File numberedFolder) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");

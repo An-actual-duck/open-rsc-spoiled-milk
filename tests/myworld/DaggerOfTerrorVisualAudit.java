@@ -12,6 +12,12 @@ public final class DaggerOfTerrorVisualAudit {
   if (EntityHandler.getAnimationDef(1092).getCharColour()!=0) throw new AssertionError("double tint");
   if (!"external-png:dagger-of-terror-icon@28x19".equals(EntityHandler.getItemDef(3353).getSpriteLocation())) throw new AssertionError("icon");
   if (EntityHandler.getItemDef(3353).getPictureMask()!=0) throw new AssertionError("icon tint");
+  java.util.regex.Matcher bow = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*3352\\s*,[^}]*?\"appearanceID\"\\s*:\\s*(\\d+)").matcher(defs);
+  if (!bow.find()) throw new AssertionError("missing bow");
+  int bowIndex = Integer.parseInt(bow.group(1)) - 1;
+  if (!"leachingbow".equals(EntityHandler.getAnimationDef(bowIndex).getName())) throw new AssertionError("bow appearance");
+  if (EntityHandler.getAnimationDef(bowIndex).getCharColour()!=0x333333) throw new AssertionError("ebony wood tint");
+  if (!"external-png:leaching-bow-icon@39x25".equals(EntityHandler.getItemDef(3352).getSpriteLocation()) || EntityHandler.getItemDef(3352).getPictureMask()!=0) throw new AssertionError("bow icon");
   System.out.println("PASS: server appearance resolves through player renderer indexing to Dagger of Terror; icon, neutral tints");
  }
 }
