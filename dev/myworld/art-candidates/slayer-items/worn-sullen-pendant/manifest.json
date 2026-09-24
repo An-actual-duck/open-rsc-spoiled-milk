@@ -1,0 +1,193 @@
+{
+  "status": "review candidate; not installed",
+  "source": "Custom_Sprites.osar equipment:amulet",
+  "palette": {
+    "ffffff": "c1d5fa",
+    "eaeaea": "a8c2eb",
+    "c6c6c6": "6f91ba",
+    "d4d4ff": "d8e7ff",
+    "b8b8ff": "8fafdf"
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "width": 12,
+      "height": 19,
+      "xShift": 26,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 32
+    },
+    {
+      "frame": 1,
+      "width": 12,
+      "height": 19,
+      "xShift": 26,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 32
+    },
+    {
+      "frame": 2,
+      "width": 12,
+      "height": 19,
+      "xShift": 26,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 32
+    },
+    {
+      "frame": 3,
+      "width": 13,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 32
+    },
+    {
+      "frame": 4,
+      "width": 13,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 32
+    },
+    {
+      "frame": 5,
+      "width": 13,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 32
+    },
+    {
+      "frame": 6,
+      "width": 16,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 28
+    },
+    {
+      "frame": 7,
+      "width": 16,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 28
+    },
+    {
+      "frame": 8,
+      "width": 16,
+      "height": 18,
+      "xShift": 25,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 28
+    },
+    {
+      "frame": 9,
+      "width": 11,
+      "height": 3,
+      "xShift": 25,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 0
+    },
+    {
+      "frame": 10,
+      "width": 11,
+      "height": 3,
+      "xShift": 25,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 0
+    },
+    {
+      "frame": 11,
+      "width": 11,
+      "height": 3,
+      "xShift": 25,
+      "yShift": 24,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 0
+    },
+    {
+      "frame": 12,
+      "width": 14,
+      "height": 3,
+      "xShift": 25,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 0
+    },
+    {
+      "frame": 13,
+      "width": 14,
+      "height": 3,
+      "xShift": 25,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 0
+    },
+    {
+      "frame": 14,
+      "width": 14,
+      "height": 3,
+      "xShift": 25,
+      "yShift": 25,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "changedPixels": 0
+    },
+    {
+      "frame": 15,
+      "width": 16,
+      "height": 18,
+      "xShift": 10,
+      "yShift": 24,
+      "boundWidth": 84,
+      "boundHeight": 102,
+      "changedPixels": 18
+    },
+    {
+      "frame": 16,
+      "width": 16,
+      "height": 18,
+      "xShift": 15,
+      "yShift": 24,
+      "boundWidth": 84,
+      "boundHeight": 102,
+      "changedPixels": 20
+    },
+    {
+      "frame": 17,
+      "width": 16,
+      "height": 18,
+      "xShift": 20,
+      "yShift": 24,
+      "boundWidth": 84,
+      "boundHeight": 102,
+      "changedPixels": 25
+    }
+  ]
+}
