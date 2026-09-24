@@ -47,6 +47,7 @@ final class ClientExternalAssetLoader {
 		"dev/myworld/assets/sprites/items/inventory-ground/tools",
 		"dev/myworld/assets/sprites/items/inventory-ground/weapons",
 		"dev/myworld/assets/sprites/items/inventory-ground/jewelry",
+		"dev/myworld/assets/sprites/items/inventory-ground/armor",
 		"dev/myworld/assets/sprites/items/inventory-ground/resources/sigils",
 		"dev/myworld/assets/sprites/items/inventory-ground/resources",
 		"dev/myworld/assets/sprites/items/inventory-ground",

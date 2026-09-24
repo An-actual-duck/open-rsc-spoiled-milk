@@ -28,6 +28,11 @@ public final class DaggerOfTerrorVisualAudit {
   int pendantIndex = Integer.parseInt(pendant.group(1)) - 1;
   if (!"sullenpendant".equals(EntityHandler.getAnimationDef(pendantIndex).getName()) || EntityHandler.getAnimationDef(pendantIndex).getCharColour()!=0) throw new AssertionError("pendant appearance/tint");
   if (!"external-png:sullen-pendant-icon@26x25".equals(EntityHandler.getItemDef(3355).getSpriteLocation()) || EntityHandler.getItemDef(3355).getPictureMask()!=0) throw new AssertionError("pendant icon");
+  java.util.regex.Matcher shield = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*3349\\s*,[^}]*?\"appearanceID\"\\s*:\\s*(\\d+)").matcher(defs);
+  if (!shield.find()) throw new AssertionError("missing shield");
+  int shieldIndex = Integer.parseInt(shield.group(1)) - 1;
+  if (!"shieldofmobility".equals(EntityHandler.getAnimationDef(shieldIndex).getName()) || EntityHandler.getAnimationDef(shieldIndex).getCharColour()!=0) throw new AssertionError("shield appearance/tint");
+  if (!"external-png:shield-of-mobility-icon@34x26".equals(EntityHandler.getItemDef(3349).getSpriteLocation()) || EntityHandler.getItemDef(3349).getPictureMask()!=0) throw new AssertionError("shield icon");
   System.out.println("PASS: server appearance resolves through player renderer indexing to Dagger of Terror; icon, neutral tints");
  }
 }

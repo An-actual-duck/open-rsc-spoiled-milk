@@ -22258,6 +22258,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalLayeredEquipmentSprite("shieldofmobility", getExternalEquipmentNumberedFolder("shield-of-mobility"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.OFF_HAND, MOBILITY_SHIELD_OFFSET_X, MOBILITY_SHIELD_OFFSET_Y,
+			COMBAT_MAIN_HAND_EQUIPMENT_BOUND_WIDTH);
 		loadExternalNeckEquipmentSprite("sullenpendant", getExternalEquipmentNumberedFolder("sullen-pendant"));
 		loadExternalCombatMainHandEquipmentSprite("thunderspirestaff", getExternalEquipmentNumberedFolder("thunder-spire-staff"),
 			STAFF_EQUIPMENT_OFFSET_X, STAFF_EQUIPMENT_OFFSET_Y);
@@ -22351,6 +22354,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private static final int[] SWORD_EQUIPMENT_OFFSET_X = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42, 5, 32, 40};
+	private static final int[] MOBILITY_SHIELD_OFFSET_X = new int[] {34, 35, 34, 32, 33, 35, 40, 37, 34, 13, 12, 12, 1, 1, 1, 22, 21, 24};
+	private static final int[] MOBILITY_SHIELD_OFFSET_Y = new int[] {50, 49, 46, 45, 44, 43, 42, 42, 42, 43, 44, 44, 42, 43, 44, 31, 31, 31};
 	private static final int[] STAFF_EQUIPMENT_OFFSET_X = new int[] {16, 15, 14, 5, 13, 24, 15, 27, 37, 30, 39, 48, 44, 43, 42, 7, 20, 7};
 	private static final int[] STAFF_EQUIPMENT_OFFSET_Y = new int[] {21, 21, 21, 23, 22, 20, 24, 21, 19, 24, 21, 18, 25, 22, 16, 1, 5, 31};
 	private static final int[] SWORD_EQUIPMENT_OFFSET_Y = new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23, 6, 9, 29};

@@ -5644,7 +5644,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3348, new ItemDef("Abyssal Rib", "A curved abyssal rib, held together by clinging flesh.", "",
 			0, 137, "items:137", false, false, 0, 0x8199AA, false, false, true, 3348));
 		setCustomItemDefinition(3349, new ItemDef("Shield of Mobility", "A lightweight shield that doesn't block well but keeps you mobile", "",
-			0, 3, "items:3", false, true, 8, 0x8A9675, false, false, true, 3349));
+			0, -1, "external-png:shield-of-mobility-icon@34x26", false, true, 8, 0, false, false, true, 3349));
 		setCustomItemDefinition(3350, new ItemDef("Abyssal Whip", "Made from an abyssal demon's rib and spinal column, and held together with it's gooey flesh. Disgusting", "",
 			0, 81, "items:81", false, true, 16, 0x8199AA, false, false, true, 3350));
 		setCustomItemDefinition(3351, new ItemDef("Thunder Spire Staff", "A staff that conducts electricity using a Dark Beast's horn", "",
@@ -8099,6 +8099,8 @@ public class EntityHandler {
 			verifyAnimationDefinition(1094, "thunderspirestaff", 0);
 			animations.add(new AnimationDef("sullenpendant", "equipment", 0, 0, true, false, 0));
 			verifyAnimationDefinition(1095, "sullenpendant", 0);
+			animations.add(new AnimationDef("shieldofmobility", "equipment", 0, 0, true, false, 0));
+			verifyAnimationDefinition(1096, "shieldofmobility", 0);
 		}
 	}
 
