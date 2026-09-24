@@ -22258,6 +22258,9 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalLayeredEquipmentSprite("abyssalwhip", getExternalEquipmentNumberedFolder("abyssal-whip"),
+			orsc.graphics.two.SpriteArchive.Frame.LAYER.MAIN_HAND, ABYSSAL_WHIP_OFFSET_X, ABYSSAL_WHIP_OFFSET_Y,
+			ABYSSAL_WHIP_BOUND_WIDTH);
 		loadExternalCombatMainHandEquipmentSprite("daggerofterrorpoisoned", getExternalEquipmentNumberedFolder("dagger-of-terror-poisoned"),
 			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalLayeredEquipmentSprite("shieldofmobility", getExternalEquipmentNumberedFolder("shield-of-mobility"),
@@ -22356,6 +22359,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private static final int[] SWORD_EQUIPMENT_OFFSET_X = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42, 5, 32, 40};
+	// Approved fold-over grips; only frame 11 needs two extra right-edge pixels.
+	private static final int[] ABYSSAL_WHIP_OFFSET_X = new int[] {9, 8, 6, 20, 22, 25, 22, 26, 28, 43, 50, 51, 37, 38, 36, 12, 33, 40};
+	private static final int[] ABYSSAL_WHIP_OFFSET_Y = new int[] {44, 44, 42, 47, 46, 45, 45, 43, 44, 48, 41, 39, 44, 43, 40, 15, 22, 33};
+	private static final int[] ABYSSAL_WHIP_BOUND_WIDTH = new int[] {64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 66, 64, 64, 64, 84, 84, 84};
 	private static final int[] MOBILITY_SHIELD_OFFSET_X = new int[] {34, 35, 34, 32, 33, 35, 40, 37, 34, 13, 12, 12, 1, 1, 1, 22, 21, 24};
 	private static final int[] MOBILITY_SHIELD_OFFSET_Y = new int[] {50, 49, 46, 45, 44, 43, 42, 42, 42, 43, 44, 44, 42, 43, 44, 31, 31, 31};
 	private static final int[] STAFF_EQUIPMENT_OFFSET_X = new int[] {16, 15, 14, 5, 13, 24, 15, 27, 37, 30, 39, 48, 44, 43, 42, 7, 20, 7};
