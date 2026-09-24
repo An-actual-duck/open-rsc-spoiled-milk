@@ -1,0 +1,4 @@
+Built-in imagegen; precise-object-edit.
+Inputs: standard-staff-reference.png (18-frame pose/layout target), ../thunder-spire-staff-approved.png (design reference).
+Preserve the standard staff's 3-column, 6-row layout, directions, shaft anchors, endpoints and intentional grip gaps. Replace the upper curved end with a modest pointed grey-tan Dark Beast horn secured by 2-3 brown leather lashings. Brown wooden shaft. No electricity, glow, sparks, gold fittings, hands or characters. Keep compact RSC pixel shading and transparent background. Top horn adapts to every shaft angle, including right-facing final attack frame. Native logical sheet 252x612; no added length or canvas expansion.
+This generated sheet is a review candidate, not verified runtime alignment or installed equipment.

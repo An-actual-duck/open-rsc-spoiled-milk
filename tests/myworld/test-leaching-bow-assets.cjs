@@ -9,5 +9,5 @@ for(let i=0;i<15;i++){
  assert.ok(expected.equals(fs.readFileSync(base+rel)));
  assert.ok(expected.equals(execFileSync('unzip',['-p',jar,'myworld-assets/'+rel])));
 }
-assert.ok(fs.readFileSync(art+'leaching-bow-approved.png').equals(execFileSync('unzip',['-p',jar,'myworld-assets/sprites/items/inventory-ground/weapons/leaching-bow-icon.png'])));
+assert.ok(fs.readFileSync(art+'leaching-bow-ebony-candidate.png').equals(execFileSync('unzip',['-p',jar,'myworld-assets/sprites/items/inventory-ground/weapons/leaching-bow-icon.png'])));
 console.log('PASS: approved bow icon and 15 frames packaged exactly; longbow anchors and off-hand type preserved');
