@@ -1,5 +1,7 @@
 package com.openrsc.server.combat;
 
+import com.openrsc.server.model.Point;
+
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
@@ -148,12 +150,13 @@ final class CurrentCombatProjectileResourceCharacterization {
 			"invalid and duplicate bow impacts cannot replay XP");
 		ranger.setLoggedIn(true);
 
-		final Player thrower = harness.player("resource shuriken", 630, 760);
-		harness.openCombatProjectileRectangle(628, 632, 758, 762);
+		final Point throwingArea = harness.clearCombatRectangle(2, 2);
+		final int throwingX = throwingArea.getX(), throwingY = throwingArea.getY();
+		final Player thrower = harness.player("resource shuriken", throwingX, throwingY);
 		final Npc primary = harness.npc(
-			NpcId.GREATER_DEMON.id(), 631, 760);
-		harness.npc(NpcId.GREATER_DEMON.id(), 630, 761);
-		harness.npc(NpcId.GREATER_DEMON.id(), 631, 761);
+			NpcId.GREATER_DEMON.id(), throwingX + 1, throwingY);
+		harness.npc(NpcId.GREATER_DEMON.id(), throwingX, throwingY + 1);
+		harness.npc(NpcId.GREATER_DEMON.id(), throwingX + 1, throwingY + 1);
 		harness.equip(thrower, ItemId.TIN_SHURIKEN.id(), 4);
 		final int thrownExperienceBefore = thrower.getSkills()
 			.getExperience(Skill.RANGED.id());
@@ -370,11 +373,11 @@ final class CurrentCombatProjectileResourceCharacterization {
 
 	static void magicLaunchSettlement(
 			final CurrentCombatHarness harness) throws Exception {
-		harness.openCombatProjectileRectangle(670, 681, 760, 760);
+		final Point ordinaryArea = harness.clearCombatRectangle(2, 1);
 		final Player ordinary = spellCaster(
-			harness, "resource magic", 670, 760, Spells.WIND_STRIKE);
+			harness, "resource magic", ordinaryArea.getX(), ordinaryArea.getY(), Spells.WIND_STRIKE);
 		final Npc ordinaryTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 671, 760);
+			NpcId.GREATER_DEMON.id(), ordinaryArea.getX() + 1, ordinaryArea.getY());
 		final SpellDef spell = harness.server().getEntityHandler()
 			.getSpellDef(Spells.WIND_STRIKE);
 		final int ordinaryXpBefore = ordinary.getSkills()
@@ -394,10 +397,11 @@ final class CurrentCombatProjectileResourceCharacterization {
 			ordinaryLedger.getExperienceAwards().get(0).getAppliedAmount(),
 			"ordinary spell receipt records actual XP");
 
+		final Point capeArea = harness.clearCombatRectangle(2, 1);
 		final Player capeCaster = spellCaster(
-			harness, "resource cape", 675, 760, Spells.WIND_STRIKE);
+			harness, "resource cape", capeArea.getX(), capeArea.getY(), Spells.WIND_STRIKE);
 		final Npc capeTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 676, 760);
+			NpcId.GREATER_DEMON.id(), capeArea.getX() + 1, capeArea.getY());
 		harness.equip(capeCaster, ItemId.MAGIC_CAPE.id(), 1);
 		final int[] capeRunesBefore = runeCounts(capeCaster, spell);
 		DataConversions.getRandom().setSeed(4096L);
@@ -411,10 +415,11 @@ final class CurrentCombatProjectileResourceCharacterization {
 		assertRuneCounts(capeCaster, spell, capeRunesBefore,
 			"Magic cape preserves all requested runes");
 
+		final Point staffArea = harness.clearCombatRectangle(2, 1);
 		final Player staffCaster = spellCaster(
-			harness, "resource staff", 680, 760, Spells.WIND_STRIKE);
+			harness, "resource staff", staffArea.getX(), staffArea.getY(), Spells.WIND_STRIKE);
 		final Npc staffTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 681, 760);
+			NpcId.GREATER_DEMON.id(), staffArea.getX() + 1, staffArea.getY());
 		harness.equip(staffCaster, ItemId.STAFF_OF_AIR.id(), 1);
 		final int[] staffRunesBefore = runeCounts(staffCaster, spell);
 		DataConversions.getRandom().setSeed(0L);

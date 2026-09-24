@@ -36,5 +36,6 @@ icons, held frames and worn colors are unchanged.
 - Server Slayer rewards, component drops and gimmick shops tests cover the
   unchanged behavior and corrected tier-8 bow/tier-9 staff recipes/stats.
 
-The staged tower roster, physical map gates, broader terrain regression issue
+The [terrain regression issue](slayer-combat-terrain-regression.md) was resolved
+in a subsequent test-only pass. The staged tower roster, physical map gates
 and final manager integration/release remain separate work.
