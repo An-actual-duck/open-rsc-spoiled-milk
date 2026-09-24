@@ -139,7 +139,7 @@ public class RangeUtils {
         allowedProjectilesMap.put(ItemId.DRAGON_CROSSBOW.id(), combine(TIN_BOLTS, COPPER_BOLTS, BRONZE_BOLTS, IRON_BOLTS, STEEL_BOLTS, MITHRIL_BOLTS, TITAN_BOLTS, ADDY_BOLTS, ORICHALCUM_BOLTS, RUNE_BOLTS, DRAGON_BOLTS));
 
         allowedProjectilesMap.put(com.openrsc.server.constants.custom.MyWorldItemId.LEACHING_BOW,
-            allowedProjectilesMap.get(ItemId.MAGIC_LONGBOW.id()));
+            allowedProjectilesMap.get(ItemId.EBONY_LONGBOW.id()));
         ALLOWED_PROJECTILES = ImmutableMap.copyOf(allowedProjectilesMap);
     }
 

@@ -1,28 +1,21 @@
 # Slayer equipment implementation
 
-Updated: 2026-09-21. Feature work only; no deployment or server restart.
+Updated: 2026-09-24. Feature work only; no deployment or server restart.
 
 Design authority: [unique equipment](slayer-unique-equipment-design.md),
 [assembly prices](slayer-tower-task-expansion.md#approved-assembly-prices-below-the-backpack-benchmark).
 
-## Pending owner tier correction — 2026-09-22
+## Owner tier correction implemented — 2026-09-24
 
-The art pass corrected the design authority, not the runtime definitions.
-The implemented table below records the old values until a gameplay patch:
+- Leaching Bow: tier 8, Ebony Logs `2113`, ranged offense 40 and Ebony
+  Longbow `2125` arrow compatibility. Speed 3, 54 Ranged, 20% primary-hit
+  lifesteal and 85 Elite currency are unchanged.
+- Thunder Spire Staff: tier 9, Magic Logs `636`, magic offense 48. Its
+  62 Magic requirement, thunder effects and 200 Champion currency are unchanged.
+- Abyssal Whip remains tier 10. Progression is Bloodveld 8, Dark Beast 9,
+  Abyssal Demon 10; the earlier split tiers are superseded.
 
-- Leaching Bow: use Ebony Logs `2113` instead of Magic Logs `636`; reduce
-  ranged offense 44 to 40 (Ebony Longbow `2125`), retaining speed 3, 54 Ranged,
-  20% primary-hit lifesteal and 85 Elite currency. Review arrow compatibility
-  against the tier-8 benchmark instead of inheriting Magic Longbow's ceiling.
-- Thunder Spire Staff: use Magic Logs `636` instead of Blood Logs `2114`;
-  reduce magic offense 56 to 48 (Magic Staff `1784`), retaining 62 Magic,
-  thunder effects and 200 Champion currency.
-- Abyssal Whip remains tier 10 unchanged. Progression is Bloodveld 8,
-  Dark Beast 9, Abyssal Demon 10; do not reintroduce the old split tiers.
-
-Update item definitions, shop ingredient data and relevant regression tests
-together before considering the correction implemented. Bow artwork now uses
-the tier-8 Ebony Longbow, not the superseded Magic Longbow reference.
+Runtime definitions, shop recipes and reward regression assertions now agree.
 
 ## Implemented: Shield of Mobility
 
@@ -31,10 +24,9 @@ the tier-8 Ebony Longbow, not the superseded Magic Longbow reference.
   Any existing Slayer associate can open the normal shop picker. No new
   assembly interface, kill-credit requirement or rank gate was added.
 - Tradable, nonstackable, noteable offhand; no wear skill/level requirement.
-  Standard item death/trade behavior; provisional base price 0, as with parts.
+  Standard item death/trade behavior; approved base price 40,000.
 - Tier-3 bronze square-shield defenses: 5 melee, 1 ranged, 0 magic.
-- Temporary inventory icon `items:3`, olive tint `#8A9675`; existing bronze
-  square-shield worn appearance 98. Final artwork remains outstanding.
+- Approved inventory and held shield artwork is installed.
 - Exact examine: `A lightweight shield that doesn't block well but keeps you mobile`.
 
 Equipped protection is tested at effect application, never at active-effect
@@ -92,15 +84,15 @@ remains deferred for review before PvP is enabled.
 
 These use the same ordinary, atomic Slayer-shop purchase flow as the shield.
 No new assembly interface, personal kill counter, or purchase-rank requirement.
-All are tradable, noteable, nonstackable, with provisional base price 0. Final
-art is outstanding; server worn appearances and recolored client inventory
-icons reuse existing items. Exact examines follow the approved design.
+All are tradable, noteable and nonstackable. Approved inventory and held/worn
+artwork is installed, and approved base values are supplied by the generated
+Slayer economy overrides. Exact examines follow the approved design.
 
 | Item / ID | Recipe plus source-tier currency | Wear requirement | Combat benchmark |
 | --- | --- | --- | --- |
 | Abyssal Whip / 3350 | Rib + 10 Vertibrae + 50 Slimey Residue + 210 Hero | 70 Melee | 72 melee offense, dagger weapon speed 5 |
-| Thunder Spire Staff / 3351 | Lightning Horn + Blood Logs (2114) + 200 Champion | 62 Magic | Blood Staff: 56 magic offense |
-| Leaching Bow / 3352 | 2 Leach Tongues + Magic Logs (636) + 85 Elite | 54 Ranged | Magic Longbow: 44 ranged offense, weapon speed 3 |
+| Thunder Spire Staff / 3351 | Lightning Horn + Magic Logs (636) + 200 Champion | 62 Magic | Magic Staff: 48 magic offense |
+| Leaching Bow / 3352 | 2 Leach Tongues + Ebony Logs (2113) + 85 Elite | 54 Ranged | Ebony Longbow: 40 ranged offense, weapon speed 3 |
 | Dagger of Terror / 3353 | Terror Fang + 85 Elite | 30 Melee | Steel dagger: 9 melee offense; explicit one-tick attack cadence |
 | Sullen Pendant / 3355 | Frozen Tear + 105 Veteran | None | Neck slot; no additional ordinary combat bonuses |
 
@@ -119,7 +111,7 @@ cadence, with ordinary tier-5 poison (20 applied power, 50 maximum power).
   small hits remain useful, but full HP discards surplus. Fractions survive
   equipment swaps, not a new combat lifetime. Eligibility is captured at
   projectile launch; changing equipment in flight cannot acquire the effect.
-  Uses the Magic Longbow's ordinary arrow compatibility.
+  Uses the Ebony Longbow's ordinary arrow compatibility.
 - Staff: Thunder Ball/Splash/Strike splash radii are 1/2/3 around the impacted
   target. The primary target is excluded; each eligible secondary target gets
   a separate modern magic roll from 15%/25%/40% spell power, rounded up before
@@ -150,8 +142,8 @@ disabled. Future rules are guarded by legal wilderness targeting and
 party/clan exclusion; pendant player retaliation is 1–5%. Review these and
 Shield of Mobility interactions before enabling PvP.
 
-Placeholder icon sources: whip `items:81`, staff `items:123`, bow `items:54`,
-daggers `items:80`, pendant `items:24`. These do not represent finished art.
+Approved external PNG icons now replace the original placeholders for all
+seven equipment definitions, including the poisoned dagger.
 
 Additional verification: `ant test_slayer_rewards` exercises all five recipes,
 wear requirements, whip timing/shared immunity/lifetime reset, bow fractions
@@ -177,17 +169,18 @@ splash radius boundaries, PvP exclusion, one-time rune/impact settlement,
 lower-book table coverage and continued rejection of invalid launch power.
 The fixture reproduced the launch exception before the table correction.
 
-## Still separate work
+## Implementation status
 
-New leather set effects,
-optional gated boss tasks, final sprites and tower map placement remain separate
-work. The future slow/poison coating system remains intentionally deferred.
+Leather effects, optional boss tasks and hide retirement are implemented in
+linked companion documents. Tower map placement, physical gate bindings and
+activation of the staged task roster remain map-dependent. The future
+slow/poison coating system remains intentionally deferred.
 
-The eight monsters now have [ordinary supply loot and independent equipment drops](slayer-ordinary-loot-implementation.md).
+The eight monsters have [ordinary supply loot and independent equipment drops](slayer-ordinary-loot-implementation.md).
 All five protection consumables are sold in every shop at their
 [approved single-tier prices](slayer-gimmick-shop-implementation.md).
+The six active hide families have [tanning and armor recipes](slayer-leather-implementation.md)
+and [set effects](slayer-leather-effects-implementation.md).
 
-The six new hide families now have [baseline tanning and armor recipes](slayer-leather-implementation.md).
-Their special bonuses remain unassigned. The owner deferred the existing-hide
-audit and grandfathering work until all eight new additions and their sprite
-work are complete; those do not block the new-content art pass.
+Approved material and consumable inventory art is installed as documented in
+[the final icon integration](slayer-material-icon-integration.md).

@@ -1,6 +1,23 @@
 # Slayer item artwork
 
-Art review assets only: these do not replace live inventory/ground sprites.
+## Current integration status — 2026-09-24
+
+Approved equipment inventory and held/worn art, all 30 leather armor icons,
+all 11 component icons, all five consumable families (each charge variant),
+and the 12 raw/tanned `hide-leathers-v2` images are now installed in production
+asset sources and packaged by the client build. This is worker-branch state,
+not a claim of public deployment.
+
+`material-icons-integration.json` maps the 28 material/consumable images to
+38 active item definitions. `package-material-icons.cjs` copies accepted art
+verbatim; retired Banshee hide/leather/armor are deliberately excluded.
+See [integration and verification](../../../../docs/myworld/rough-drafts/slayer-material-icon-integration.md).
+
+## Historical art review log
+
+The following candidate-review notes describe the sequence of earlier passes.
+Their "pending" and "not installed" statements are historical, superseded by
+the current integration status above. Original references/candidates are kept.
 
 `wax-earplugs-approved.png`: user approved unchanged.
 `dog-treats-candidate.png`: pending review, unbranded yellow carton with brown

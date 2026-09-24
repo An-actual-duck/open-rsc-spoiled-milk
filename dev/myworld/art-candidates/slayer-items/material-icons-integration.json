@@ -1,0 +1,292 @@
+[
+  {
+    "name": "slime-solvent",
+    "ids": [
+      3318,
+      3319,
+      3320
+    ],
+    "source": "slime-solvent-approved.png",
+    "width": 20,
+    "height": 29,
+    "sprite": "external-png:slime-solvent@20x29"
+  },
+  {
+    "name": "eye-drops",
+    "ids": [
+      3321,
+      3322,
+      3323
+    ],
+    "source": "eye-drops-approved.png",
+    "width": 14,
+    "height": 22,
+    "sprite": "external-png:eye-drops@14x22"
+  },
+  {
+    "name": "wax-earplugs",
+    "ids": [
+      3324,
+      3325,
+      3326
+    ],
+    "source": "wax-earplugs-approved.png",
+    "width": 30,
+    "height": 15,
+    "sprite": "external-png:wax-earplugs@30x15"
+  },
+  {
+    "name": "dog-treats",
+    "ids": [
+      3327,
+      3328,
+      3329
+    ],
+    "source": "dog-treats-approved.png",
+    "width": 34,
+    "height": 28,
+    "sprite": "external-png:dog-treats@34x28"
+  },
+  {
+    "name": "static-wipes",
+    "ids": [
+      3330,
+      3331,
+      3332
+    ],
+    "source": "static-wipes-approved.png",
+    "width": 30,
+    "height": 27,
+    "sprite": "external-png:static-wipes@30x27"
+  },
+  {
+    "name": "cockatrice-feathers",
+    "ids": [
+      3339
+    ],
+    "source": "cockatrice-feathers-approved.png",
+    "width": 35,
+    "height": 16,
+    "sprite": "external-png:cockatrice-feathers@35x16"
+  },
+  {
+    "name": "slimey-residue",
+    "ids": [
+      3340
+    ],
+    "source": "slimey-residue-approved.png",
+    "width": 34,
+    "height": 14,
+    "sprite": "external-png:slimey-residue@34x14"
+  },
+  {
+    "name": "sticky-saliva-gland",
+    "ids": [
+      3341
+    ],
+    "source": "sticky-saliva-gland-approved.png",
+    "width": 16,
+    "height": 13,
+    "sprite": "external-png:sticky-saliva-gland@16x13"
+  },
+  {
+    "name": "cockatrice-eye",
+    "ids": [
+      3342
+    ],
+    "source": "cockatrice-eye-approved.png",
+    "width": 11,
+    "height": 10,
+    "sprite": "external-png:cockatrice-eye@11x10"
+  },
+  {
+    "name": "frozen-tear",
+    "ids": [
+      3343
+    ],
+    "source": "frozen-tear-approved.png",
+    "width": 15,
+    "height": 22,
+    "sprite": "external-png:frozen-tear@15x22"
+  },
+  {
+    "name": "terror-fang",
+    "ids": [
+      3344
+    ],
+    "source": "terror-fang-approved.png",
+    "width": 27,
+    "height": 22,
+    "sprite": "external-png:terror-fang@27x22"
+  },
+  {
+    "name": "leach-tongue",
+    "ids": [
+      3345
+    ],
+    "source": "leach-tongue-approved.png",
+    "width": 38,
+    "height": 9,
+    "sprite": "external-png:leach-tongue@38x9"
+  },
+  {
+    "name": "lightning-horn",
+    "ids": [
+      3346
+    ],
+    "source": "lightning-horn-approved.png",
+    "width": 32,
+    "height": 20,
+    "sprite": "external-png:lightning-horn@32x20"
+  },
+  {
+    "name": "abyssal-vertibrae",
+    "ids": [
+      3347
+    ],
+    "source": "abyssal-vertibrae-approved.png",
+    "width": 10,
+    "height": 11,
+    "sprite": "external-png:abyssal-vertibrae@10x11"
+  },
+  {
+    "name": "abyssal-rib",
+    "ids": [
+      3348
+    ],
+    "source": "abyssal-rib-approved.png",
+    "width": 32,
+    "height": 20,
+    "sprite": "external-png:abyssal-rib@32x20"
+  },
+  {
+    "name": "ectoplasm",
+    "ids": [
+      3399
+    ],
+    "source": "ectoplasm-approved.png",
+    "width": 34,
+    "height": 14,
+    "sprite": "external-png:ectoplasm@34x14"
+  },
+  {
+    "name": "giant-frog-hide",
+    "ids": [
+      3333
+    ],
+    "source": "hide-leathers-v2/giant-frog-hide.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:giant-frog-hide@38x24"
+  },
+  {
+    "name": "giant-frog-leather",
+    "ids": [
+      3356
+    ],
+    "source": "hide-leathers-v2/giant-frog-leather.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:giant-frog-leather@38x24"
+  },
+  {
+    "name": "naga-hide",
+    "ids": [
+      3335
+    ],
+    "source": "hide-leathers-v2/naga-hide.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:naga-hide@38x24"
+  },
+  {
+    "name": "naga-leather",
+    "ids": [
+      3368
+    ],
+    "source": "hide-leathers-v2/naga-leather.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:naga-leather@38x24"
+  },
+  {
+    "name": "terror-dog-hide",
+    "ids": [
+      3336
+    ],
+    "source": "hide-leathers-v2/terror-dog-hide.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:terror-dog-hide@38x24"
+  },
+  {
+    "name": "terror-dog-leather",
+    "ids": [
+      3374
+    ],
+    "source": "hide-leathers-v2/terror-dog-leather.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:terror-dog-leather@38x24"
+  },
+  {
+    "name": "bloodveld-hide",
+    "ids": [
+      3337
+    ],
+    "source": "hide-leathers-v2/bloodveld-hide.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:bloodveld-hide@38x24"
+  },
+  {
+    "name": "bloodveld-leather",
+    "ids": [
+      3380
+    ],
+    "source": "hide-leathers-v2/bloodveld-leather.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:bloodveld-leather@38x24"
+  },
+  {
+    "name": "dark-beast-hide",
+    "ids": [
+      3338
+    ],
+    "source": "hide-leathers-v2/dark-beast-hide.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:dark-beast-hide@38x24"
+  },
+  {
+    "name": "dark-beast-leather",
+    "ids": [
+      3386
+    ],
+    "source": "hide-leathers-v2/dark-beast-leather.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:dark-beast-leather@38x24"
+  },
+  {
+    "name": "ugthanki-hide",
+    "ids": [
+      3392
+    ],
+    "source": "hide-leathers-v2/ugthanki-hide.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:ugthanki-hide@38x24"
+  },
+  {
+    "name": "ugthanki-leather",
+    "ids": [
+      3393
+    ],
+    "source": "hide-leathers-v2/ugthanki-leather.png",
+    "width": 38,
+    "height": 24,
+    "sprite": "external-png:ugthanki-leather@38x24"
+  }
+]

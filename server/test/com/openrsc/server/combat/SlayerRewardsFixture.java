@@ -46,10 +46,10 @@ public final class SlayerRewardsFixture {
 		}
 		check(h.server().getEntityHandler().getItemDef(3350).getMeleeOffense() == 72, "whip tier ten");
 		check(h.server().getEntityHandler().getItemDef(3350).getWeaponSpeed() == 5, "whip dagger speed");
-		check(h.server().getEntityHandler().getItemDef(3351).getMagicOffense() == 56, "staff tier ten");
-		check(h.server().getEntityHandler().getItemDef(3352).getRangedOffense() == 44 && RangeUtils.isBow(3352), "bow tier nine and recognized");
+		check(h.server().getEntityHandler().getItemDef(3351).getMagicOffense() == 48, "staff tier nine");
+		check(h.server().getEntityHandler().getItemDef(3352).getRangedOffense() == 40 && RangeUtils.isBow(3352), "bow tier eight and recognized");
 		for (int arrow = 0; arrow < h.server().getEntityHandler().items.size(); arrow++)
-			check(RangeUtils.canFire(3352, arrow) == RangeUtils.canFire(656, arrow), "bow arrow parity " + arrow);
+			check(RangeUtils.canFire(3352, arrow) == RangeUtils.canFire(2125, arrow), "bow arrow parity " + arrow);
 		check(h.server().getEntityHandler().getItemDef(3353).getMeleeOffense() == 9, "dagger tier five");
 	}
 	private static void shops(CurrentCombatHarness h) throws Exception {
@@ -63,7 +63,7 @@ public final class SlayerRewardsFixture {
 		String[] shop = {"legends", "heroes", "champions", "champions", "brimhaven"};
 		String[] reward = {"abyssal_whip", "thunder_spire_staff", "leaching_bow", "dagger_of_terror", "sullen_pendant"};
 		int[] outputs = {3350,3351,3352,3353,3355}, costs = {210,200,85,85,105};
-		int[][] inputs = {{3348,3347,3340},{3346,2114},{3345,636},{3344},{3343}};
+		int[][] inputs = {{3348,3347,3340},{3346,636},{3345,2113},{3344},{3343}};
 		int[][] amounts = {{1,10,50},{1,1},{2,1},{1},{1}};
 		MonsterSlayerShopService service = new MonsterSlayerShopService(data);
 		for (int i = 0; i < shop.length; i++) {

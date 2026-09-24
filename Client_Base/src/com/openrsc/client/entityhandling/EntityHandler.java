@@ -5578,71 +5578,70 @@ public class EntityHandler {
 			int itemId = 3321 - dose;
 			setCustomItemDefinition(itemId, new ItemDef("Slime Solvent (" + dose + ")",
 				"Slimy frog spit begone!", "Drink",
-				0, 48, "items:48", false, false, 0, 5289585, false, true, false, itemId));
+				0, -1, "external-png:slime-solvent@20x29", false, false, 0, 0, false, true, false, itemId));
 		}
 		for (int dose = 3; dose >= 1; dose--) {
 			int itemId = 3324 - dose;
 			setCustomItemDefinition(itemId, new ItemDef("Eye Drops (" + dose + ")",
 				"Keep a stony stare out of your eyes!", "Apply",
-				0, 48, "items:48", false, false, 0, 7976910, false, true, false, itemId));
+				0, -1, "external-png:eye-drops@14x22", false, false, 0, 0, false, true, false, itemId));
 		}
 		for (int uses = 3; uses >= 1; uses--) {
 			int itemId = 3327 - uses;
 			setCustomItemDefinition(itemId, new ItemDef("Wax earplugs (" + uses + ")",
 				"Desolve after 10 minutes", "Insert",
-				0, 48, "items:48", false, false, 0, 14729344, false, true, false, itemId));
+				0, -1, "external-png:wax-earplugs@30x15", false, false, 0, 0, false, true, false, itemId));
 		}
 		for (int uses = 3; uses >= 1; uses--) {
 			int itemId = 3330 - uses;
 			setCustomItemDefinition(itemId, new ItemDef("Dog Treats (" + uses + ")",
 				"Something for your dog to chew on for awhile besides you", "Scatter",
-				0, 48, "items:48", false, false, 0, 11241806, false, true, false, itemId));
+				0, -1, "external-png:dog-treats@34x28", false, false, 0, 0, false, true, false, itemId));
 		}
 		for (int uses = 3; uses >= 1; uses--) {
 			int itemId = 3333 - uses;
 			setCustomItemDefinition(itemId, new ItemDef("Static discharge wipe (" + uses + ")",
 				"Wipe away a dangerous static charge.", "Wipe",
-				0, 48, "items:48", false, false, 0, 14729344, false, true, false, itemId));
+				0, -1, "external-png:static-wipes@30x27", false, false, 0, 0, false, true, false, itemId));
 		}
 	}
 
-	/** Temporary canonical sprite reuse: tint hides and use recognizable component stand-ins. */
+	/** Approved Slayer artwork; retired Banshee hide remains unchanged. */
 	private static void addSlayerComponentDefinitions() {
 		setCustomItemDefinition(3333, new ItemDef("Giant frog hide", "A slick hide from a giant frog.", "",
-			0, 69, "items:69", false, false, 0, 0x378B83, false, false, true, 3333));
+			0, -1, "external-png:giant-frog-hide@38x24", false, false, 0, 0, false, false, true, 3333));
 		setCustomItemDefinition(3334, new ItemDef("Banshee hide", "A pale, ghostly hide from a banshee.", "",
 			0, 69, "items:69", false, false, 0, 0xA58CAB, false, false, true, 3334));
 		setCustomItemDefinition(3335, new ItemDef("Naga hide", "A supple hide covered in naga scales.", "",
-			0, 69, "items:69", false, false, 0, 0x56753E, false, false, true, 3335));
+			0, -1, "external-png:naga-hide@38x24", false, false, 0, 0, false, false, true, 3335));
 		setCustomItemDefinition(3336, new ItemDef("Terror dog hide", "A tough hide from a terror dog.", "",
-			0, 69, "items:69", false, false, 0, 0x655951, false, false, true, 3336));
+			0, -1, "external-png:terror-dog-hide@38x24", false, false, 0, 0, false, false, true, 3336));
 		setCustomItemDefinition(3337, new ItemDef("Bloodveld hide", "A soft, fleshy hide from a bloodveld.", "",
-			0, 69, "items:69", false, false, 0, 0x9B8065, false, false, true, 3337));
+			0, -1, "external-png:bloodveld-hide@38x24", false, false, 0, 0, false, false, true, 3337));
 		setCustomItemDefinition(3338, new ItemDef("Dark beast hide", "A thick, dark hide from a dark beast.", "",
-			0, 69, "items:69", false, false, 0, 0x393225, false, false, true, 3338));
+			0, -1, "external-png:dark-beast-hide@38x24", false, false, 0, 0, false, false, true, 3338));
 		setCustomItemDefinition(3339, new ItemDef("Cockatrice Feathers", "Feathers that twitch at the slightest touch.", "",
-			0, 176, "items:176", true, false, 0, 0x8F9B5B, false, false, false, 3339));
+			0, -1, "external-png:cockatrice-feathers@35x16", true, false, 0, 0, false, false, false, 3339));
 		setCustomItemDefinition(3340, new ItemDef("Slimey Residue", "Sticky abyssal flesh that refuses to hold its shape.", "",
-			0, 262, "items:262", true, false, 0, 0x62798C, false, false, false, 3340));
-		// Temporary swamp-tar icon; final Slayer component art is a separate pass.
+			0, -1, "external-png:slimey-residue@34x14", true, false, 0, 0, false, false, false, 3340));
 		setCustomItemDefinition(3399, new ItemDef("Ectoplasm", "A cold, quivering remnant of a banshee's spirit.", "",
-			0, 262, "items:262", true, false, 0, 0xB5A4CF, false, false, false, 3399));
+			0, -1, "external-png:ectoplasm@34x14", true, false, 0, 0, false, false, false, 3399));
 		setCustomItemDefinition(3341, new ItemDef("Sticky Saliva Gland", "A giant frog's gland, still oozing sticky saliva.", "",
-			0, 116, "items:116", false, false, 0, 0x80A65B, false, false, true, 3341));
+			0, -1, "external-png:sticky-saliva-gland@16x13", false, false, 0, 0, false, false, true, 3341));
 		setCustomItemDefinition(3342, new ItemDef("Cockatrice Eye", "A lifeless eye with an unsettling stare.", "",
-			0, 116, "items:116", false, false, 0, 0xB9A65B, false, false, true, 3342));
+			0, -1, "external-png:cockatrice-eye@11x10", false, false, 0, 0, false, false, true, 3342));
 		setCustomItemDefinition(3343, new ItemDef("Frozen Tear", "A banshee's sorrow, crystallized into a single tear.", "",
-			0, 74, "items:74", false, false, 0, 0x99CDDD, false, false, true, 3343));
+			0, -1, "external-png:frozen-tear@15x22", false, false, 0, 0, false, false, true, 3343));
 		setCustomItemDefinition(3344, new ItemDef("Terror Fang", "A sharp fang from a terror dog.", "",
-			0, 145, "items:145", false, false, 0, 0xD6C5A0, false, false, true, 3344));
+			0, -1, "external-png:terror-fang@27x22", false, false, 0, 0, false, false, true, 3344));
 		setCustomItemDefinition(3345, new ItemDef("Leach Tongue", "A bloodveld's tongue, disturbingly elastic.", "",
-			0, 103, "items:103", false, false, 0, 0xAF6262, false, false, true, 3345));
+			0, -1, "external-png:leach-tongue@38x9", false, false, 0, 0, false, false, true, 3345));
 		setCustomItemDefinition(3346, new ItemDef("Lightning Horn", "A dark beast's horn, prickling with static.", "",
-			0, 145, "items:145", false, false, 0, 0xD8BC61, false, false, true, 3346));
+			0, -1, "external-png:lightning-horn@32x20", false, false, 0, 0, false, false, true, 3346));
 		setCustomItemDefinition(3347, new ItemDef("Abyssal Vertibrae", "A segment of an abyssal demon's spine, slick with residue.", "",
-			0, 20, "items:20", false, false, 0, 0x91A4B2, false, false, true, 3347));
+			0, -1, "external-png:abyssal-vertibrae@10x11", false, false, 0, 0, false, false, true, 3347));
 		setCustomItemDefinition(3348, new ItemDef("Abyssal Rib", "A curved abyssal rib, held together by clinging flesh.", "",
-			0, 137, "items:137", false, false, 0, 0x8199AA, false, false, true, 3348));
+			0, -1, "external-png:abyssal-rib@32x20", false, false, 0, 0, false, false, true, 3348));
 		setCustomItemDefinition(3349, new ItemDef("Shield of Mobility", "A lightweight shield that doesn't block well but keeps you mobile", "",
 			0, -1, "external-png:shield-of-mobility-icon@34x26", false, true, 8, 0, false, false, true, 3349));
 		setCustomItemDefinition(3350, new ItemDef("Abyssal Whip", "Made from an abyssal demon's rib and spinal column, and held together with it's gooey flesh. Disgusting", "",
@@ -5661,9 +5660,9 @@ public class EntityHandler {
 
 	private static void addSlayerLeatherDefinitions() {
 		setCustomItemDefinition(3392, new ItemDef("Ugthanki hide", "A tough, sandy hide from an ugthanki.", "",
-			0, 69, "items:69", false, false, 0, 0xB99A70, false, false, true, 3392));
+			0, -1, "external-png:ugthanki-hide@38x24", false, false, 0, 0, false, false, true, 3392));
 		setCustomItemDefinition(3393, new ItemDef("Ugthanki leather", "Processed ugthanki hide", "",
-			250, 69, "items:69", false, false, 0, 0x947654, false, false, true, 3393));
+			250, -1, "external-png:ugthanki-leather@38x24", false, false, 0, 0, false, false, true, 3393));
 		setCustomItemDefinition(3394, new ItemDef("Ugthanki-hide coif", "Coif made from ugthanki leather.", "",
 			225, -1, "external-png:ugthanki-coif@21x22", false, true, 32, 0, false, false, true, 3394));
 		setCustomItemDefinition(3395, new ItemDef("Ugthanki-hide gloves", "Gloves made from ugthanki leather.", "",
@@ -5675,7 +5674,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3398, new ItemDef("Ugthanki-hide cuirass", "Cuirass made from ugthanki leather.", "",
 			900, -1, "external-png:ugthanki-cuirass@34x18", false, true, 64, 0, false, false, true, 3398));
 		setCustomItemDefinition(3356, new ItemDef("Giant frog leather", "Processed giant frog hide", "",
-			50, 69, "items:69", false, false, 0, 0x378B83, false, false, true, 3356));
+			50, -1, "external-png:giant-frog-leather@38x24", false, false, 0, 0, false, false, true, 3356));
 		setCustomItemDefinition(3357, new ItemDef("Giant-frog-hide coif", "Coif made from giant frog leather.", "",
 			45, -1, "external-png:giant-frog-coif@21x22", false, true, 32, 0, false, false, true, 3357));
 		setCustomItemDefinition(3358, new ItemDef("Giant-frog-hide gloves", "Gloves made from giant frog leather.", "",
@@ -5699,7 +5698,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3367, new ItemDef("Banshee-hide cuirass", "Cuirass made from banshee leather.", "",
 			900, 7, "items:7", false, true, 64, 0xA58CAB, false, false, true, 3367));
 		setCustomItemDefinition(3368, new ItemDef("Naga leather", "Processed naga hide", "",
-			550, 69, "items:69", false, false, 0, 0x56753E, false, false, true, 3368));
+			550, -1, "external-png:naga-leather@38x24", false, false, 0, 0, false, false, true, 3368));
 		setCustomItemDefinition(3369, new ItemDef("Naga-hide coif", "Coif made from naga leather.", "",
 			500, -1, "external-png:naga-coif@21x22", false, true, 32, 0, false, false, true, 3369));
 		setCustomItemDefinition(3370, new ItemDef("Naga-hide gloves", "Gloves made from naga leather.", "",
@@ -5711,7 +5710,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3373, new ItemDef("Naga-hide cuirass", "Cuirass made from naga leather.", "",
 			2000, -1, "external-png:naga-cuirass@34x18", false, true, 64, 0, false, false, true, 3373));
 		setCustomItemDefinition(3374, new ItemDef("Terror dog leather", "Processed terror dog hide", "",
-			1400, 69, "items:69", false, false, 0, 0x655951, false, false, true, 3374));
+			1400, -1, "external-png:terror-dog-leather@38x24", false, false, 0, 0, false, false, true, 3374));
 		setCustomItemDefinition(3375, new ItemDef("Terror-dog-hide coif", "Coif made from terror dog leather.", "",
 			1250, -1, "external-png:terror-dog-coif@21x22", false, true, 32, 0, false, false, true, 3375));
 		setCustomItemDefinition(3376, new ItemDef("Terror-dog-hide gloves", "Gloves made from terror dog leather.", "",
@@ -5723,7 +5722,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3379, new ItemDef("Terror-dog-hide cuirass", "Cuirass made from terror dog leather.", "",
 			5000, -1, "external-png:terror-dog-cuirass@34x18", false, true, 64, 0, false, false, true, 3379));
 		setCustomItemDefinition(3380, new ItemDef("Bloodveld leather", "Processed bloodveld hide", "",
-			1400, 69, "items:69", false, false, 0, 0x9B8065, false, false, true, 3380));
+			1400, -1, "external-png:bloodveld-leather@38x24", false, false, 0, 0, false, false, true, 3380));
 		setCustomItemDefinition(3381, new ItemDef("Bloodveld-hide coif", "Coif made from bloodveld leather.", "",
 			1250, -1, "external-png:bloodveld-coif@21x22", false, true, 32, 0, false, false, true, 3381));
 		setCustomItemDefinition(3382, new ItemDef("Bloodveld-hide gloves", "Gloves made from bloodveld leather.", "",
@@ -5735,7 +5734,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3385, new ItemDef("Bloodveld-hide cuirass", "Cuirass made from bloodveld leather.", "",
 			5000, -1, "external-png:bloodveld-cuirass@34x18", false, true, 64, 0, false, false, true, 3385));
 		setCustomItemDefinition(3386, new ItemDef("Dark beast leather", "Processed dark beast hide", "",
-			3000, 69, "items:69", false, false, 0, 0x393225, false, false, true, 3386));
+			3000, -1, "external-png:dark-beast-leather@38x24", false, false, 0, 0, false, false, true, 3386));
 		setCustomItemDefinition(3387, new ItemDef("Dark-beast-hide coif", "Coif made from dark beast leather.", "",
 			3000, -1, "external-png:dark-beast-coif@21x22", false, true, 32, 0, false, false, true, 3387));
 		setCustomItemDefinition(3388, new ItemDef("Dark-beast-hide gloves", "Gloves made from dark beast leather.", "",

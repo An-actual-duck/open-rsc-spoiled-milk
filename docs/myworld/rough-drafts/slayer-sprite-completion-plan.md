@@ -1,5 +1,12 @@
 # Slayer sprite completion plan
 
+Completion update 2026-09-24: the approved inventory/ground and held/worn
+assets are installed in the worker's production asset sources, including the
+[final material/consumable mappings](slayer-material-icon-integration.md).
+The bow/staff tier corrections are also implemented. No public deployment is
+implied. The remaining text preserves the original art work order; the final
+approved shield and staff designs supersede the initial simplification ideas.
+
 Owner direction: 2026-09-22. This is an artwork plan, not an implementation or
 deployment claim. Approved inventory candidates are recorded in
 [the art manifest](../../../dev/myworld/art-candidates/slayer-items/README.md).
@@ -81,6 +88,6 @@ generated concepts. Preserve approved files, use versioned candidates, and
 request approval before enlarging the canvas. Art approval does not mean the
 assets have been installed in the client or deployed.
 
-The tier correction (bow 8/Ebony Logs, staff 9/Magic Logs, whip 10) is tracked
-separately in the equipment implementation ledger and still requires a gameplay
-patch; artwork choices must not silently restore the superseded tiers.
+The tier correction (bow 8/Ebony Logs, staff 9/Magic Logs, whip 10) is implemented
+and tracked in the equipment implementation ledger; artwork choices must not
+silently restore the superseded tiers.

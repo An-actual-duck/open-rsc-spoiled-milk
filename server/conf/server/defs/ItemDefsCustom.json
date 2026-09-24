@@ -47850,7 +47850,7 @@
       "prayerBonus": 0,
       "basePrice": 0,
       "isNoteable": 1,
-      "magicOffense": 56
+      "magicOffense": 48
     },
     {
       "id": 3352,
@@ -47874,7 +47874,7 @@
       "prayerBonus": 0,
       "basePrice": 0,
       "isNoteable": 1,
-      "rangedOffense": 44,
+      "rangedOffense": 40,
       "weaponSpeed": 3
     },
     {
