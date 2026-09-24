@@ -1,6 +1,10 @@
 # Held shears candidate
 
-Reference preparation only; no production assignment or replacement yet.
+Review candidate only; no production assignment or replacement. `preview.html` shows existing versus candidate shears in eight directions. `generated.png` preserves the manager's selected second built-in generation, `frames/` contains 15 cropped native sprites, and `full-canvas/` registers them within 64×102 native canvases. `candidate-manifest.json` records generation intent, crop bounds, approximate grip anchors, alpha at the anchor, and offsets.
+
+Processing uses a shared 0.13 nearest-neighbor scale to fit the existing native bounds and aligns generated red-handle centroids to the prior sword-derived grip estimates. This is more compact than the current shears; sizing needs visual approval. Original sampled alpha is preserved, not replaced with binary alpha. No pixels are painted or recolored. Generated fist gaps are imperfect; some grips contain artwork and require review. Final body occlusion is not validated, and these files are not game-ready merely because their canvas bounds pass.
+
+Reprocess the saved candidate with `node dev/myworld/art-candidates/slayer-items/package-held-shears-candidate.cjs`. An optional argument imports a new source; do not supply one unless intentionally replacing this candidate source.
 
 `references/` mechanically composes existing pixels at their recorded runtime offsets. Each sheet has three walk phases per row, five rows: front, diagonal front, side, diagonal away, away. The cells are 84×102 presentation space with the native 64×102 bound centered (10 pixels padding); previews are enlarged 3× with nearest-neighbor. Padding preserves original tool pixels extending beyond their nominal bounds. No attack frames are included.
 

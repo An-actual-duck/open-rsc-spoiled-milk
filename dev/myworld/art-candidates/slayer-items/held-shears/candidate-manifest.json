@@ -1,0 +1,345 @@
+{
+  "status": "Review candidate only; not installed. Approximate handle-centroid registration; generated fist gaps imperfect and body occlusion unvalidated.",
+  "source": "Built-in imagegen second output exec-00cb31de-3703-4c48-8890-dfc12c787427.png",
+  "promptSummary": "15 held shears frames; red straight handles, gray tapered slightly parted blades matching authentic inventory icon; pickaxe/sword grips and hand gaps; front, diagonal front, side, diagonal away, rear; no attacks.",
+  "scale": 0.13,
+  "alpha": "Original RGBA retained by nearest-neighbor sampling; no painted or binary-alpha edits.",
+  "walkCycle": [
+    0,
+    1,
+    2,
+    1
+  ],
+  "frames": [
+    {
+      "frame": 0,
+      "width": 5,
+      "height": 16,
+      "xShift": 18,
+      "yShift": 46,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 19.48152617990277,
+      "handY": 57.7499431191226,
+      "sourceGrip": [
+        94.07272727272728,
+        201.29090909090908
+      ],
+      "sourceBounds": [
+        79,
+        111,
+        31,
+        120
+      ],
+      "gripAlpha": 251
+    },
+    {
+      "frame": 1,
+      "width": 5,
+      "height": 16,
+      "xShift": 16,
+      "yShift": 46,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 17.968458139329513,
+      "handY": 57.253818045211595,
+      "sourceGrip": [
+        369.1678082191781,
+        200.96849315068494
+      ],
+      "sourceBounds": [
+        354,
+        111,
+        31,
+        120
+      ],
+      "gripAlpha": 252
+    },
+    {
+      "frame": 2,
+      "width": 4,
+      "height": 16,
+      "xShift": 15,
+      "yShift": 46,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 16.498499583544856,
+      "handY": 55.259424712622824,
+      "sourceGrip": [
+        647.531914893617,
+        183.04728132387706
+      ],
+      "sourceBounds": [
+        637,
+        112,
+        28,
+        119
+      ],
+      "gripAlpha": 252
+    },
+    {
+      "frame": 3,
+      "width": 17,
+      "height": 7,
+      "xShift": 18,
+      "yShift": 57,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 22.51985979307447,
+      "handY": 60.269727603183654,
+      "sourceGrip": [
+        105.00415923945336,
+        608.1853832442067
+      ],
+      "sourceBounds": [
+        74,
+        582,
+        130,
+        52
+      ],
+      "gripAlpha": 133
+    },
+    {
+      "frame": 4,
+      "width": 17,
+      "height": 13,
+      "xShift": 19,
+      "yShift": 51,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 23.963954744174586,
+      "handY": 59.25249386599106,
+      "sourceGrip": [
+        383.85201238390096,
+        625.0377708978328
+      ],
+      "sourceBounds": [
+        347,
+        561,
+        124,
+        99
+      ],
+      "gripAlpha": 190
+    },
+    {
+      "frame": 5,
+      "width": 15,
+      "height": 15,
+      "xShift": 23,
+      "yShift": 49,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 27.48152617990277,
+      "handY": 58.7499431191226,
+      "sourceGrip": [
+        651.249184605349,
+        625.0071754729289
+      ],
+      "sourceBounds": [
+        617,
+        551,
+        113,
+        110
+      ],
+      "gripAlpha": 184
+    },
+    {
+      "frame": 6,
+      "width": 19,
+      "height": 7,
+      "xShift": 28,
+      "yShift": 55,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 32.5274724783942,
+      "handY": 58.27334936297015,
+      "sourceGrip": [
+        115.49415384615385,
+        1033.3513846153846
+      ],
+      "sourceBounds": [
+        80,
+        1009,
+        140,
+        50
+      ],
+      "gripAlpha": 253
+    },
+    {
+      "frame": 7,
+      "width": 18,
+      "height": 14,
+      "xShift": 30,
+      "yShift": 49,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 35.73112622106849,
+      "handY": 57.338087631326026,
+      "sourceGrip": [
+        391.6186868686869,
+        1041.7474747474748
+      ],
+      "sourceBounds": [
+        351,
+        977,
+        133,
+        101
+      ],
+      "gripAlpha": 250
+    },
+    {
+      "frame": 8,
+      "width": 17,
+      "height": 15,
+      "xShift": 34,
+      "yShift": 48,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 38.48369589295822,
+      "handY": 57.74995569568845,
+      "sourceGrip": [
+        652.9407540394973,
+        1039.311789347696
+      ],
+      "sourceBounds": [
+        617,
+        963,
+        124,
+        113
+      ],
+      "gripAlpha": 3
+    },
+    {
+      "frame": 9,
+      "width": 17,
+      "height": 13,
+      "xShift": 40,
+      "yShift": 53,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 44.75,
+      "handY": 61.75,
+      "sourceGrip": [
+        177.17741935483872,
+        1423.592258064516
+      ],
+      "sourceBounds": [
+        138,
+        1360,
+        129,
+        98
+      ],
+      "gripAlpha": 249
+    },
+    {
+      "frame": 10,
+      "width": 17,
+      "height": 16,
+      "xShift": 47,
+      "yShift": 45,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 51.66355670851663,
+      "handY": 54.810892010584915,
+      "sourceGrip": [
+        411.55953827460513,
+        1414.0091130012152
+      ],
+      "sourceBounds": [
+        373,
+        1335,
+        124,
+        116
+      ],
+      "gripAlpha": 234
+    },
+    {
+      "frame": 11,
+      "width": 14,
+      "height": 17,
+      "xShift": 49,
+      "yShift": 41,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 53.30912317111999,
+      "handY": 52.68507313304826,
+      "sourceGrip": [
+        675.2254733218589,
+        1419.7360872059667
+      ],
+      "sourceBounds": [
+        640,
+        1328,
+        105,
+        130
+      ],
+      "gripAlpha": 4
+    },
+    {
+      "frame": 12,
+      "width": 4,
+      "height": 11,
+      "xShift": 46,
+      "yShift": 51,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 47.48683473712977,
+      "handY": 58.26652093943222,
+      "sourceGrip": [
+        163.0522151898734,
+        1916.8006329113923
+      ],
+      "sourceBounds": [
+        151,
+        1858,
+        24,
+        83
+      ],
+      "gripAlpha": 45
+    },
+    {
+      "frame": 13,
+      "width": 3,
+      "height": 16,
+      "xShift": 46,
+      "yShift": 46,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 47.0571130989961,
+      "handY": 57.246197147193904,
+      "sourceGrip": [
+        414.3853383458647,
+        1903.2161654135339
+      ],
+      "sourceBounds": [
+        403,
+        1817,
+        23,
+        123
+      ],
+      "gripAlpha": 8
+    },
+    {
+      "frame": 14,
+      "width": 4,
+      "height": 18,
+      "xShift": 43,
+      "yShift": 41,
+      "boundWidth": 64,
+      "boundHeight": 102,
+      "handX": 44.53690766460577,
+      "handY": 53.749772962124524,
+      "sourceGrip": [
+        678.7186147186147,
+        1890.1367965367965
+      ],
+      "sourceBounds": [
+        666,
+        1794,
+        24,
+        131
+      ],
+      "gripAlpha": 246
+    }
+  ]
+}
