@@ -22258,6 +22258,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalCombatMainHandEquipmentSprite("daggerofterrorpoisoned", getExternalEquipmentNumberedFolder("dagger-of-terror-poisoned"),
+			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalLayeredEquipmentSprite("shieldofmobility", getExternalEquipmentNumberedFolder("shield-of-mobility"),
 			orsc.graphics.two.SpriteArchive.Frame.LAYER.OFF_HAND, MOBILITY_SHIELD_OFFSET_X, MOBILITY_SHIELD_OFFSET_Y,
 			COMBAT_MAIN_HAND_EQUIPMENT_BOUND_WIDTH);

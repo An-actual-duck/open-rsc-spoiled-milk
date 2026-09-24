@@ -21,5 +21,5 @@ const defs=JSON.parse(fs.readFileSync(path.join(root,'server/conf/server/defs/It
 const item=defs.items||defs.item;
 // Player rendering subtracts one from the wire appearance ID.
 assert.equal(item.find(i=>i.id===3353).appearanceID - 1,1092);
-assert.equal(item.find(i=>i.id===3354).appearanceID,50);
-console.log('PASS: server mapping, 18 exact packaged frames, anchor arrays, approved packaged icon; poison variant unchanged');
+assert.equal(item.find(i=>i.id===3354).appearanceID,1098);
+console.log('PASS: server mapping, 18 exact packaged frames, anchor arrays, approved packaged icon; poison variant uses dedicated appearance');

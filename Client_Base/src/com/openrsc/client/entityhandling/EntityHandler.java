@@ -5654,7 +5654,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3353, new ItemDef("Dagger of Terror", "It stabs swiftly and ferociously", "",
 			0, -1, "external-png:dagger-of-terror-icon@28x19", false, true, 16, 0, false, false, true, 3353));
 		setCustomItemDefinition(3354, new ItemDef("Poisoned Dagger of Terror", "It stabs swiftly and ferociously", "",
-			0, 80, "items:80", false, true, 16, 0x8A9675, false, false, true, 3354));
+			0, -1, "external-png:dagger-of-terror-poisoned-icon@28x19", false, true, 16, 0, false, false, true, 3354));
 		setCustomItemDefinition(3355, new ItemDef("Sullen Pendant", "You carry the Banshee's sorrows with you", "",
 			0, -1, "external-png:sullen-pendant-icon@26x25", false, true, 1024, 0, false, false, true, 3355));
 	}
@@ -5665,27 +5665,27 @@ public class EntityHandler {
 		setCustomItemDefinition(3393, new ItemDef("Ugthanki leather", "Processed ugthanki hide", "",
 			250, 69, "items:69", false, false, 0, 0x947654, false, false, true, 3393));
 		setCustomItemDefinition(3394, new ItemDef("Ugthanki-hide coif", "Coif made from ugthanki leather.", "",
-			225, 5, "items:5", false, true, 32, 0x947654, false, false, true, 3394));
+			225, -1, "external-png:ugthanki-coif@21x22", false, true, 32, 0, false, false, true, 3394));
 		setCustomItemDefinition(3395, new ItemDef("Ugthanki-hide gloves", "Gloves made from ugthanki leather.", "",
-			450, 17, "items:17", false, true, 256, 0x947654, false, false, true, 3395));
+			450, -1, "external-png:ugthanki-gloves@24x18", false, true, 256, 0, false, false, true, 3395));
 		setCustomItemDefinition(3396, new ItemDef("Ugthanki-hide boots", "Boots made from ugthanki leather.", "",
-			450, 223, "items:223", false, true, 512, 0x947654, false, false, true, 3396));
+			450, -1, "external-png:ugthanki-boots@33x30", false, true, 512, 0, false, false, true, 3396));
 		setCustomItemDefinition(3397, new ItemDef("Ugthanki-hide chaps", "Chaps made from ugthanki leather.", "",
-			675, 590, "items:590", false, true, 128, 0x947654, false, false, true, 3397));
+			675, -1, "external-png:ugthanki-chaps@33x24", false, true, 128, 0, false, false, true, 3397));
 		setCustomItemDefinition(3398, new ItemDef("Ugthanki-hide cuirass", "Cuirass made from ugthanki leather.", "",
-			900, 7, "items:7", false, true, 64, 0x947654, false, false, true, 3398));
+			900, -1, "external-png:ugthanki-cuirass@34x18", false, true, 64, 0, false, false, true, 3398));
 		setCustomItemDefinition(3356, new ItemDef("Giant frog leather", "Processed giant frog hide", "",
 			50, 69, "items:69", false, false, 0, 0x378B83, false, false, true, 3356));
 		setCustomItemDefinition(3357, new ItemDef("Giant-frog-hide coif", "Coif made from giant frog leather.", "",
-			45, 5, "items:5", false, true, 32, 0x378B83, false, false, true, 3357));
+			45, -1, "external-png:giant-frog-coif@21x22", false, true, 32, 0, false, false, true, 3357));
 		setCustomItemDefinition(3358, new ItemDef("Giant-frog-hide gloves", "Gloves made from giant frog leather.", "",
-			90, 17, "items:17", false, true, 256, 0x378B83, false, false, true, 3358));
+			90, -1, "external-png:giant-frog-gloves@24x18", false, true, 256, 0, false, false, true, 3358));
 		setCustomItemDefinition(3359, new ItemDef("Giant-frog-hide boots", "Boots made from giant frog leather.", "",
-			90, 223, "items:223", false, true, 512, 0x378B83, false, false, true, 3359));
+			90, -1, "external-png:giant-frog-boots@33x30", false, true, 512, 0, false, false, true, 3359));
 		setCustomItemDefinition(3360, new ItemDef("Giant-frog-hide chaps", "Chaps made from giant frog leather.", "",
-			135, 590, "items:590", false, true, 128, 0x378B83, false, false, true, 3360));
+			135, -1, "external-png:giant-frog-chaps@33x24", false, true, 128, 0, false, false, true, 3360));
 		setCustomItemDefinition(3361, new ItemDef("Giant-frog-hide cuirass", "Cuirass made from giant frog leather.", "",
-			180, 7, "items:7", false, true, 64, 0x378B83, false, false, true, 3361));
+			180, -1, "external-png:giant-frog-cuirass@34x18", false, true, 64, 0, false, false, true, 3361));
 		setCustomItemDefinition(3362, new ItemDef("Banshee leather", "Processed banshee hide", "",
 			250, 69, "items:69", false, false, 0, 0xA58CAB, false, false, true, 3362));
 		setCustomItemDefinition(3363, new ItemDef("Banshee-hide coif", "Coif made from banshee leather.", "",
@@ -5701,51 +5701,51 @@ public class EntityHandler {
 		setCustomItemDefinition(3368, new ItemDef("Naga leather", "Processed naga hide", "",
 			550, 69, "items:69", false, false, 0, 0x56753E, false, false, true, 3368));
 		setCustomItemDefinition(3369, new ItemDef("Naga-hide coif", "Coif made from naga leather.", "",
-			500, 5, "items:5", false, true, 32, 0x56753E, false, false, true, 3369));
+			500, -1, "external-png:naga-coif@21x22", false, true, 32, 0, false, false, true, 3369));
 		setCustomItemDefinition(3370, new ItemDef("Naga-hide gloves", "Gloves made from naga leather.", "",
-			1000, 17, "items:17", false, true, 256, 0x56753E, false, false, true, 3370));
+			1000, -1, "external-png:naga-gloves@24x18", false, true, 256, 0, false, false, true, 3370));
 		setCustomItemDefinition(3371, new ItemDef("Naga-hide boots", "Boots made from naga leather.", "",
-			1000, 223, "items:223", false, true, 512, 0x56753E, false, false, true, 3371));
+			1000, -1, "external-png:naga-boots@33x30", false, true, 512, 0, false, false, true, 3371));
 		setCustomItemDefinition(3372, new ItemDef("Naga-hide chaps", "Chaps made from naga leather.", "",
-			1500, 590, "items:590", false, true, 128, 0x56753E, false, false, true, 3372));
+			1500, -1, "external-png:naga-chaps@33x24", false, true, 128, 0, false, false, true, 3372));
 		setCustomItemDefinition(3373, new ItemDef("Naga-hide cuirass", "Cuirass made from naga leather.", "",
-			2000, 7, "items:7", false, true, 64, 0x56753E, false, false, true, 3373));
+			2000, -1, "external-png:naga-cuirass@34x18", false, true, 64, 0, false, false, true, 3373));
 		setCustomItemDefinition(3374, new ItemDef("Terror dog leather", "Processed terror dog hide", "",
 			1400, 69, "items:69", false, false, 0, 0x655951, false, false, true, 3374));
 		setCustomItemDefinition(3375, new ItemDef("Terror-dog-hide coif", "Coif made from terror dog leather.", "",
-			1250, 5, "items:5", false, true, 32, 0x655951, false, false, true, 3375));
+			1250, -1, "external-png:terror-dog-coif@21x22", false, true, 32, 0, false, false, true, 3375));
 		setCustomItemDefinition(3376, new ItemDef("Terror-dog-hide gloves", "Gloves made from terror dog leather.", "",
-			2500, 17, "items:17", false, true, 256, 0x655951, false, false, true, 3376));
+			2500, -1, "external-png:terror-dog-gloves@24x18", false, true, 256, 0, false, false, true, 3376));
 		setCustomItemDefinition(3377, new ItemDef("Terror-dog-hide boots", "Boots made from terror dog leather.", "",
-			2500, 223, "items:223", false, true, 512, 0x655951, false, false, true, 3377));
+			2500, -1, "external-png:terror-dog-boots@33x30", false, true, 512, 0, false, false, true, 3377));
 		setCustomItemDefinition(3378, new ItemDef("Terror-dog-hide chaps", "Chaps made from terror dog leather.", "",
-			3750, 590, "items:590", false, true, 128, 0x655951, false, false, true, 3378));
+			3750, -1, "external-png:terror-dog-chaps@33x24", false, true, 128, 0, false, false, true, 3378));
 		setCustomItemDefinition(3379, new ItemDef("Terror-dog-hide cuirass", "Cuirass made from terror dog leather.", "",
-			5000, 7, "items:7", false, true, 64, 0x655951, false, false, true, 3379));
+			5000, -1, "external-png:terror-dog-cuirass@34x18", false, true, 64, 0, false, false, true, 3379));
 		setCustomItemDefinition(3380, new ItemDef("Bloodveld leather", "Processed bloodveld hide", "",
 			1400, 69, "items:69", false, false, 0, 0x9B8065, false, false, true, 3380));
 		setCustomItemDefinition(3381, new ItemDef("Bloodveld-hide coif", "Coif made from bloodveld leather.", "",
-			1250, 5, "items:5", false, true, 32, 0x9B8065, false, false, true, 3381));
+			1250, -1, "external-png:bloodveld-coif@21x22", false, true, 32, 0, false, false, true, 3381));
 		setCustomItemDefinition(3382, new ItemDef("Bloodveld-hide gloves", "Gloves made from bloodveld leather.", "",
-			2500, 17, "items:17", false, true, 256, 0x9B8065, false, false, true, 3382));
+			2500, -1, "external-png:bloodveld-gloves@24x18", false, true, 256, 0, false, false, true, 3382));
 		setCustomItemDefinition(3383, new ItemDef("Bloodveld-hide boots", "Boots made from bloodveld leather.", "",
-			2500, 223, "items:223", false, true, 512, 0x9B8065, false, false, true, 3383));
+			2500, -1, "external-png:bloodveld-boots@33x30", false, true, 512, 0, false, false, true, 3383));
 		setCustomItemDefinition(3384, new ItemDef("Bloodveld-hide chaps", "Chaps made from bloodveld leather.", "",
-			3750, 590, "items:590", false, true, 128, 0x9B8065, false, false, true, 3384));
+			3750, -1, "external-png:bloodveld-chaps@33x24", false, true, 128, 0, false, false, true, 3384));
 		setCustomItemDefinition(3385, new ItemDef("Bloodveld-hide cuirass", "Cuirass made from bloodveld leather.", "",
-			5000, 7, "items:7", false, true, 64, 0x9B8065, false, false, true, 3385));
+			5000, -1, "external-png:bloodveld-cuirass@34x18", false, true, 64, 0, false, false, true, 3385));
 		setCustomItemDefinition(3386, new ItemDef("Dark beast leather", "Processed dark beast hide", "",
 			3000, 69, "items:69", false, false, 0, 0x393225, false, false, true, 3386));
 		setCustomItemDefinition(3387, new ItemDef("Dark-beast-hide coif", "Coif made from dark beast leather.", "",
-			3000, 5, "items:5", false, true, 32, 0x393225, false, false, true, 3387));
+			3000, -1, "external-png:dark-beast-coif@21x22", false, true, 32, 0, false, false, true, 3387));
 		setCustomItemDefinition(3388, new ItemDef("Dark-beast-hide gloves", "Gloves made from dark beast leather.", "",
-			6000, 17, "items:17", false, true, 256, 0x393225, false, false, true, 3388));
+			6000, -1, "external-png:dark-beast-gloves@24x18", false, true, 256, 0, false, false, true, 3388));
 		setCustomItemDefinition(3389, new ItemDef("Dark-beast-hide boots", "Boots made from dark beast leather.", "",
-			6000, 223, "items:223", false, true, 512, 0x393225, false, false, true, 3389));
+			6000, -1, "external-png:dark-beast-boots@33x30", false, true, 512, 0, false, false, true, 3389));
 		setCustomItemDefinition(3390, new ItemDef("Dark-beast-hide chaps", "Chaps made from dark beast leather.", "",
-			9000, 590, "items:590", false, true, 128, 0x393225, false, false, true, 3390));
+			9000, -1, "external-png:dark-beast-chaps@33x24", false, true, 128, 0, false, false, true, 3390));
 		setCustomItemDefinition(3391, new ItemDef("Dark-beast-hide cuirass", "Cuirass made from dark beast leather.", "",
-			12000, 7, "items:7", false, true, 64, 0x393225, false, false, true, 3391));
+			12000, -1, "external-png:dark-beast-cuirass@34x18", false, true, 64, 0, false, false, true, 3391));
 	}
 
 	private static void addBangleJewelryDefinitions() {
@@ -8101,6 +8101,17 @@ public class EntityHandler {
 			verifyAnimationDefinition(1095, "sullenpendant", 0);
 			animations.add(new AnimationDef("shieldofmobility", "equipment", 0, 0, true, false, 0));
 			verifyAnimationDefinition(1096, "shieldofmobility", 0);
+			animations.add(new AnimationDef("daggerofterrorpoisoned", "equipment", 0, 0, true, false, 0));
+			verifyAnimationDefinition(1097, "daggerofterrorpoisoned", 0);
+			// Dedicated Slayer palette entries: do not recolor other families sharing these shapes.
+			final int[] slayerLeatherColors = {0x238fff, 0x589d40, 0xd34538, 0xe3b59a, 0x55565a, 0xefd04b};
+			final String[] slayerLeatherShapes = {"mediumhelm", "hidegloves", "hideboots", "chainmaillegs", "chainmail"};
+			for (int color : slayerLeatherColors) {
+				for (String shape : slayerLeatherShapes) {
+					animations.add(new AnimationDef(shape, "equipment", color, 0, true, false, 0));
+				}
+			}
+			verifyAnimationDefinition(1127, "chainmail", 0xefd04b);
 		}
 	}
 
