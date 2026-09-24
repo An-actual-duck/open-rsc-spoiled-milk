@@ -31,4 +31,6 @@ for(let n=0;n<15;n++){
 }
 write(path.join(out,'contact.png'),sheet,192,510);
 fs.writeFileSync(path.join(out,'candidate-manifest.json'),JSON.stringify({status:'Review candidate only; not installed. Approximate handle-centroid registration; generated fist gaps imperfect and body occlusion unvalidated.',source:'Built-in imagegen second output exec-00cb31de-3703-4c48-8890-dfc12c787427.png',promptSummary:'15 held shears frames; red straight handles, gray tapered slightly parted blades matching authentic inventory icon; pickaxe/sword grips and hand gaps; front, diagonal front, side, diagonal away, rear; no attacks.',scale,alpha:'Original RGBA retained by nearest-neighbor sampling; no painted or binary-alpha edits.',walkCycle:[0,1,2,1],frames},null,2)+'\n');
+const preview=path.join(out,'preview.html');
+fs.writeFileSync(preview,fs.readFileSync(preview,'utf8').replace(/(<script id="grip-data" type="application\/json">)[\s\S]*?(<\/script>)/,'$1'+JSON.stringify(frames.map(f=>[f.handX,f.handY]))+'$2'));
 console.log('PASS: 15 native frames, all inside64x102; alpha preserved; no runtime changes');

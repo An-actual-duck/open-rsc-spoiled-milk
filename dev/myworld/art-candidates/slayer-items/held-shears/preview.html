@@ -2,18 +2,22 @@
 <style>body{background:#292d32;color:#eee;font:16px system-ui;padding:24px}main{display:flex;gap:20px;flex-wrap:wrap}canvas,img{image-rendering:pixelated}canvas{background:#65696d;width:384px;height:306px}section{width:384px}button{padding:8px}.ref{max-width:100%}</style>
 <h1>Held shears — candidate review</h1><p>Each panel: existing shears left, new candidate right. Eight directions; walk cycle 0,1,2,1. No attack frames.</p>
 <p>Not installed. Grip positions are approximate; some generated handles have imperfect fist gaps. These isolated sprites do not simulate body occlusion and are not in-game validated.</p>
-<button id="pause">Pause</button> <button id="marker">Show grip markers</button><main></main>
+<p id="status" role="status">Loading sprite frames…</p><button id="pause">Pause</button> <button id="marker">Show grip markers</button><main></main>
 <h2>Inventory design</h2><img width="288" height="192" src="../../../reference-library/items/tools/gathering/id-02216.png">
 <h2>Native-size sheet</h2><img src="contact.png">
 <details><summary>Generated source</summary><img class="ref" src="generated.png"></details>
 <details><summary>In-game sword directions — occlusion reference only</summary><img class="ref" src="../held-abyssal-whip-v3/eight-direction-reference.png"></details>
+<script id="grip-data" type="application/json">[[19.48,57.75],[17.97,57.25],[16.5,55.26],[22.52,60.27],[23.96,59.25],[27.48,58.75],[32.53,58.27],[35.73,57.34],[38.48,57.75],[44.75,61.75],[51.66,54.81],[53.31,52.69],[47.49,58.27],[47.06,57.25],[44.54,53.75]]</script>
 <script>
 const load=folder=>Array.from({length:15},(_,n)=>{const i=new Image();i.src=folder+'/frame-'+String(n).padStart(2,'0')+'.png';return i});
 const images=load('full-canvas'),old=load('original-full-canvas'),views=[['Front',0,0],['Diagonal front →',1,0],['Side →',2,0],['Diagonal away →',3,0],['Away',4,0],['Diagonal away ←',3,1],['Side ←',2,1],['Diagonal front ←',1,1]];
 const contexts=views.map(([name])=>{const s=document.createElement('section');s.innerHTML='<h2>'+name+'</h2><canvas width="128" height="102"></canvas>';document.querySelector('main').append(s);return s.querySelector('canvas').getContext('2d')});
-let paused=false,marker=false,t=0,manifest;
+let paused=false,marker=false,t=0,grips=[];
+const status=document.querySelector('#status');
+try{grips=JSON.parse(document.querySelector('#grip-data').textContent)}catch(e){status.textContent='Grip metadata unavailable; sprites still load.'}
+window.addEventListener('error',e=>{status.textContent='Preview error: '+e.message});
 document.querySelector('#pause').onclick=e=>{paused=!paused;e.target.textContent=paused?'Play':'Pause'};
 document.querySelector('#marker').onclick=()=>{marker=!marker;draw()};
-function draw(){views.forEach(([name,d,flip],j)=>{const c=contexts[j],n=d*3+[0,1,2,1][t%4];c.clearRect(0,0,128,102);[old,images].forEach((set,k)=>{c.save();c.translate(k*64,0);if(flip){c.translate(64,0);c.scale(-1,1)}c.drawImage(set[n],0,0);if(marker&&k===1){const f=manifest.frames[n];c.strokeStyle='#f76dde';c.strokeRect(Math.round(f.handX)-2,Math.round(f.handY)-2,4,4)}c.restore()})})}
-Promise.all([...images,...old].map(i=>i.decode())).then(()=>fetch('candidate-manifest.json')).then(r=>r.json()).then(m=>{manifest=m;draw();setInterval(()=>{if(!paused){t++;draw()}},240)});
+function draw(){views.forEach(([name,d,flip],j)=>{const c=contexts[j],n=d*3+[0,1,2,1][t%4];c.clearRect(0,0,128,102);[old,images].forEach((set,k)=>{c.save();c.translate(k*64,0);if(flip){c.translate(64,0);c.scale(-1,1)}if(set[n].complete&&set[n].naturalWidth)c.drawImage(set[n],0,0);else{c.fillStyle='#ffbaba';c.font='8px sans-serif';c.fillText('Missing frame',2,52)}if(marker&&k===1&&grips[n]){const [x,y]=grips[n];c.strokeStyle='#f76dde';c.strokeRect(Math.round(x)-2,Math.round(y)-2,4,4)}c.restore()})})}
+Promise.allSettled([...images,...old].map(i=>i.decode())).then(results=>{const failed=results.filter(r=>r.status==='rejected').length;status.textContent=failed?failed+' sprite frames failed to load; remaining frames shown.':'Loaded all 30 sprite frames. Candidate is compact; grip and body occlusion need review.';draw();setInterval(()=>{if(!paused){t++;draw()}},240)}).catch(e=>{status.textContent='Preview failed: '+e.message});
 </script></html>
