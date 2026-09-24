@@ -1,0 +1,168 @@
+{
+  "status": "review candidate; not installed",
+  "registration": "square shield center; 32 pixel height; original canvas",
+  "frames": [
+    {
+      "frame": 0,
+      "width": 30,
+      "height": 29,
+      "xShift": 34,
+      "yShift": 50,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 1,
+      "width": 29,
+      "height": 29,
+      "xShift": 35,
+      "yShift": 49,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 2,
+      "width": 30,
+      "height": 32,
+      "xShift": 34,
+      "yShift": 46,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 3,
+      "width": 23,
+      "height": 32,
+      "xShift": 32,
+      "yShift": 45,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 4,
+      "width": 23,
+      "height": 32,
+      "xShift": 33,
+      "yShift": 44,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 5,
+      "width": 19,
+      "height": 32,
+      "xShift": 35,
+      "yShift": 43,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 6,
+      "width": 9,
+      "height": 32,
+      "xShift": 40,
+      "yShift": 42,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 7,
+      "width": 9,
+      "height": 32,
+      "xShift": 37,
+      "yShift": 42,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 8,
+      "width": 9,
+      "height": 32,
+      "xShift": 34,
+      "yShift": 42,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 9,
+      "width": 26,
+      "height": 32,
+      "xShift": 13,
+      "yShift": 43,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 10,
+      "width": 25,
+      "height": 32,
+      "xShift": 12,
+      "yShift": 44,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 11,
+      "width": 21,
+      "height": 32,
+      "xShift": 12,
+      "yShift": 44,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 12,
+      "width": 33,
+      "height": 32,
+      "xShift": 1,
+      "yShift": 42,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 13,
+      "width": 33,
+      "height": 32,
+      "xShift": 1,
+      "yShift": 43,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 14,
+      "width": 32,
+      "height": 32,
+      "xShift": 1,
+      "yShift": 44,
+      "boundWidth": 64,
+      "boundHeight": 102
+    },
+    {
+      "frame": 15,
+      "width": 9,
+      "height": 32,
+      "xShift": 22,
+      "yShift": 31,
+      "boundWidth": 84,
+      "boundHeight": 102
+    },
+    {
+      "frame": 16,
+      "width": 9,
+      "height": 32,
+      "xShift": 21,
+      "yShift": 31,
+      "boundWidth": 84,
+      "boundHeight": 102
+    },
+    {
+      "frame": 17,
+      "width": 9,
+      "height": 32,
+      "xShift": 24,
+      "yShift": 31,
+      "boundWidth": 84,
+      "boundHeight": 102
+    }
+  ]
+}
