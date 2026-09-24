@@ -23,6 +23,11 @@ public final class DaggerOfTerrorVisualAudit {
   int staffIndex = Integer.parseInt(staff.group(1)) - 1;
   if (!"thunderspirestaff".equals(EntityHandler.getAnimationDef(staffIndex).getName()) || EntityHandler.getAnimationDef(staffIndex).getCharColour()!=0) throw new AssertionError("staff appearance/tint");
   if (!"external-png:thunder-spire-staff-icon@34x30".equals(EntityHandler.getItemDef(3351).getSpriteLocation()) || EntityHandler.getItemDef(3351).getPictureMask()!=0) throw new AssertionError("staff icon");
+  java.util.regex.Matcher pendant = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*3355\\s*,[^}]*?\"appearanceID\"\\s*:\\s*(\\d+)").matcher(defs);
+  if (!pendant.find()) throw new AssertionError("missing pendant");
+  int pendantIndex = Integer.parseInt(pendant.group(1)) - 1;
+  if (!"sullenpendant".equals(EntityHandler.getAnimationDef(pendantIndex).getName()) || EntityHandler.getAnimationDef(pendantIndex).getCharColour()!=0) throw new AssertionError("pendant appearance/tint");
+  if (!"external-png:sullen-pendant-icon@26x25".equals(EntityHandler.getItemDef(3355).getSpriteLocation()) || EntityHandler.getItemDef(3355).getPictureMask()!=0) throw new AssertionError("pendant icon");
   System.out.println("PASS: server appearance resolves through player renderer indexing to Dagger of Terror; icon, neutral tints");
  }
 }

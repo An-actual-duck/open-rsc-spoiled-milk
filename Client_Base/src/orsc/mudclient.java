@@ -22258,6 +22258,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalNeckEquipmentSprite("sullenpendant", getExternalEquipmentNumberedFolder("sullen-pendant"));
 		loadExternalCombatMainHandEquipmentSprite("thunderspirestaff", getExternalEquipmentNumberedFolder("thunder-spire-staff"),
 			STAFF_EQUIPMENT_OFFSET_X, STAFF_EQUIPMENT_OFFSET_Y);
 		loadExternalLeachingBowSprite();

@@ -5656,7 +5656,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3354, new ItemDef("Poisoned Dagger of Terror", "It stabs swiftly and ferociously", "",
 			0, 80, "items:80", false, true, 16, 0x8A9675, false, false, true, 3354));
 		setCustomItemDefinition(3355, new ItemDef("Sullen Pendant", "You carry the Banshee's sorrows with you", "",
-			0, 24, "items:24", false, true, 1024, 0x99CDDD, false, false, true, 3355));
+			0, -1, "external-png:sullen-pendant-icon@26x25", false, true, 1024, 0, false, false, true, 3355));
 	}
 
 	private static void addSlayerLeatherDefinitions() {
@@ -8097,6 +8097,8 @@ public class EntityHandler {
 			verifyAnimationDefinition(1093, "leachingbow", 0x333333);
 			animations.add(new AnimationDef("thunderspirestaff", "equipment", 0, 0, true, false, 0));
 			verifyAnimationDefinition(1094, "thunderspirestaff", 0);
+			animations.add(new AnimationDef("sullenpendant", "equipment", 0, 0, true, false, 0));
+			verifyAnimationDefinition(1095, "sullenpendant", 0);
 		}
 	}
 
