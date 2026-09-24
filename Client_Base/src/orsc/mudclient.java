@@ -22258,6 +22258,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalEquipmentSprites() {
+		loadExternalCombatMainHandEquipmentSprite("thunderspirestaff", getExternalEquipmentNumberedFolder("thunder-spire-staff"),
+			STAFF_EQUIPMENT_OFFSET_X, STAFF_EQUIPMENT_OFFSET_Y);
 		loadExternalLeachingBowSprite();
 		// Custom dagger uses the same canonical hand anchors as the sword family.
 		loadExternalCombatMainHandEquipmentSprite("daggerofterror", getExternalEquipmentNumberedFolder("dagger-of-terror"),
@@ -22348,6 +22350,8 @@ public final class mudclient implements Runnable {
 	}
 
 	private static final int[] SWORD_EQUIPMENT_OFFSET_X = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42, 5, 32, 40};
+	private static final int[] STAFF_EQUIPMENT_OFFSET_X = new int[] {16, 15, 14, 5, 13, 24, 15, 27, 37, 30, 39, 48, 44, 43, 42, 7, 20, 7};
+	private static final int[] STAFF_EQUIPMENT_OFFSET_Y = new int[] {21, 21, 21, 23, 22, 20, 24, 21, 19, 24, 21, 18, 25, 22, 16, 1, 5, 31};
 	private static final int[] SWORD_EQUIPMENT_OFFSET_Y = new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23, 6, 9, 29};
 	// Register the tightly cropped fork frames to the canonical spear hand/shaft anchors.
 	private static final int[] DEMON_PITCHFORK_EQUIPMENT_OFFSET_X = new int[] {13, 12, 11, 8, 10, 22, 17, 25, 35, 32, 37, 46, 41, 41, 41, 3, 22, 2};

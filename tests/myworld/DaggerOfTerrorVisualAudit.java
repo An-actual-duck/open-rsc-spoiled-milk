@@ -18,6 +18,11 @@ public final class DaggerOfTerrorVisualAudit {
   if (!"leachingbow".equals(EntityHandler.getAnimationDef(bowIndex).getName())) throw new AssertionError("bow appearance");
   if (EntityHandler.getAnimationDef(bowIndex).getCharColour()!=0x333333) throw new AssertionError("ebony wood tint");
   if (!"external-png:leaching-bow-icon@39x25".equals(EntityHandler.getItemDef(3352).getSpriteLocation()) || EntityHandler.getItemDef(3352).getPictureMask()!=0) throw new AssertionError("bow icon");
+  java.util.regex.Matcher staff = java.util.regex.Pattern.compile("\"id\"\\s*:\\s*3351\\s*,[^}]*?\"appearanceID\"\\s*:\\s*(\\d+)").matcher(defs);
+  if (!staff.find()) throw new AssertionError("missing staff");
+  int staffIndex = Integer.parseInt(staff.group(1)) - 1;
+  if (!"thunderspirestaff".equals(EntityHandler.getAnimationDef(staffIndex).getName()) || EntityHandler.getAnimationDef(staffIndex).getCharColour()!=0) throw new AssertionError("staff appearance/tint");
+  if (!"external-png:thunder-spire-staff-icon@34x30".equals(EntityHandler.getItemDef(3351).getSpriteLocation()) || EntityHandler.getItemDef(3351).getPictureMask()!=0) throw new AssertionError("staff icon");
   System.out.println("PASS: server appearance resolves through player renderer indexing to Dagger of Terror; icon, neutral tints");
  }
 }

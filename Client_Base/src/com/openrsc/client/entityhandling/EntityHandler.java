@@ -5648,7 +5648,7 @@ public class EntityHandler {
 		setCustomItemDefinition(3350, new ItemDef("Abyssal Whip", "Made from an abyssal demon's rib and spinal column, and held together with it's gooey flesh. Disgusting", "",
 			0, 81, "items:81", false, true, 16, 0x8199AA, false, false, true, 3350));
 		setCustomItemDefinition(3351, new ItemDef("Thunder Spire Staff", "A staff that conducts electricity using a Dark Beast's horn", "",
-			0, 123, "items:123", false, true, 16, 0xD8BC61, false, false, true, 3351));
+			0, -1, "external-png:thunder-spire-staff-icon@34x30", false, true, 16, 0, false, false, true, 3351));
 		setCustomItemDefinition(3352, new ItemDef("Leaching Bow", "Two Bloodveld tongues are woven together to make the bowstring", "",
 			0, -1, "external-png:leaching-bow-icon@39x25", false, true, 24, 0, false, false, true, 3352));
 		setCustomItemDefinition(3353, new ItemDef("Dagger of Terror", "It stabs swiftly and ferociously", "",
@@ -8095,6 +8095,8 @@ public class EntityHandler {
 			verifyAnimationDefinition(1092, "daggerofterror", 0);
 			animations.add(new AnimationDef("leachingbow", "equipment", 0x333333, 0, false, false, 0));
 			verifyAnimationDefinition(1093, "leachingbow", 0x333333);
+			animations.add(new AnimationDef("thunderspirestaff", "equipment", 0, 0, true, false, 0));
+			verifyAnimationDefinition(1094, "thunderspirestaff", 0);
 		}
 	}
 
