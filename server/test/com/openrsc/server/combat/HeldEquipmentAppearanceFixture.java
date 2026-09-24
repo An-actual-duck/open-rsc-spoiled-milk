@@ -9,6 +9,8 @@ public final class HeldEquipmentAppearanceFixture {
  public static void main(String[] args) throws Exception {
   try (CurrentCombatHarness h = new CurrentCombatHarness()) {
    Object handler = h.server().getEntityHandler();
+   for(int id:new int[]{144,2215,2216,2217,2218,2219,2220,2221,2222,2223,3272})
+    check(h.server().getEntityHandler().getItemDef(id).getAppearanceId()==1042,"unchanged shears appearance "+id);
    Method apply = handler.getClass().getDeclaredMethod("applyHeldEquipmentAppearanceOverrides"); apply.setAccessible(true);
    Map<Integer, Map<String,Object>> original = new HashMap<>();
    for (HeldEquipmentFamilies.Mapping m : HeldEquipmentFamilies.MAPPINGS) {

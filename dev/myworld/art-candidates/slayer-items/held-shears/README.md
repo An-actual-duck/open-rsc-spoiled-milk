@@ -1,6 +1,16 @@
 # Held shears candidate
 
-Review candidate only; no production assignment or replacement. `preview.html` shows existing versus candidate shears in eight directions. `generated.png` preserves the manager's selected second built-in generation, `frames/` contains 15 cropped native sprites, and `full-canvas/` registers them within 64×102 native canvases. `candidate-manifest.json` records generation intent, crop bounds, approximate grip anchors, alpha at the anchor, and offsets.
+Approved for in-game testing and installed into the held shears assets; final visual acceptance is pending. `preview.html` shows existing versus candidate shears in eight directions. `generated.png` preserves the manager's selected second built-in generation, `frames/` contains 15 cropped native sprites, and `full-canvas/` registers them within 64×102 native canvases. `candidate-manifest.json` retains the original candidate-stage generation intent, crop bounds, approximate grip anchors, alpha at the anchor, and offsets.
+
+## In-game test integration
+
+`install-held-shears.cjs` copies the 15 full-canvas files byte-for-byte to the existing equipment/shears/numbered path. Previous cropped originals are preserved in `previous-numbered/` (the old source sheet is also untouched). The client loads these already-registered canvases at offset (0,0). Appearance 1042 remains unchanged for Tin shears 144, Copper–Rune shears 2215–2223, and Exalted Rune shears 3272. Item stats, harvesting behavior and inventory icons are unchanged.
+
+No attack art exists: the shears animation now correctly declares `hasA=false`, so the existing player combat renderer skips this tool during attack poses instead of indexing missing frames 15–17. No server code or server sprite archive changed; this path is client-side external equipment PNGs packaged inside the client JAR. Existing server avatar-generator limitations are not changed by this task.
+
+Validation: `node tests/myworld/test-held-shears.cjs` checks exact candidate/production/JAR PNG parity, real disk and embedded client decoding, registration, stable appearance count, and absence of attack lookup. `ant test_held_equipment_appearances` also checks all 11 effective server shears appearance assignments. Existing held-family and stable animation-ID regressions pass.
+
+Private testing reuses the existing ai3 server on 127.0.0.1:43616 (its running socket, not the current config default 43615). Launch the client with `bash scripts/run-client.sh --target 127.0.0.1:43616`. Spawn Tin shears with `::item 144`; equip to review. No private or public server restart is needed for this client-only change.
 
 Processing uses a shared 0.13 nearest-neighbor scale to fit the existing native bounds and aligns generated red-handle centroids to the prior sword-derived grip estimates. This is more compact than the current shears; sizing needs visual approval. Original sampled alpha is preserved, not replaced with binary alpha. No pixels are painted or recolored. Generated fist gaps are imperfect; some grips contain artwork and require review. Final body occlusion is not validated, and these files are not game-ready merely because their canvas bounds pass.
 

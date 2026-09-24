@@ -8045,7 +8045,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0xC86A2B, 0, true, false, 0)); // 1038 - Copper female plate top
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x8EA6BB, 0, true, false, 0)); // 1039 - Titan Steel female plate top
 			animations.add(new AnimationDef("fplatemailtop", "equipment", 0x5A3F7D, 0, true, false, 0)); // 1040 - Orichalcum female plate top
-			animations.add(new AnimationDef("shears", "equipment", 0, 0, true, false, 0)); // 1041 - Universal shears
+			animations.add(new AnimationDef("shears", "equipment", 0, 0, false, false, 0)); // 1041 - Universal shears; no attack frames
 			animations.add(new AnimationDef("demonpitchfork", "equipment", 0, 0, true, false, 0)); // 1042 - Demon pitchfork
 			animations.add(new AnimationDef("mace", "equipment", 0xFFD84A, 0, true, false, 0)); // 1043 - Saradomin mace
 			animations.add(new AnimationDef("mace", "equipment", 0x8A2BE2, 0, true, false, 0)); // 1044 - Zamorak mace

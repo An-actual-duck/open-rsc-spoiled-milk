@@ -22277,7 +22277,8 @@ public final class mudclient implements Runnable {
 		loadExternalCombatMainHandEquipmentSprite("daggerofterror", getExternalEquipmentNumberedFolder("dagger-of-terror"),
 			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalMainHandEquipmentSprite("fishingpole", getExternalEquipmentNumberedFolder("fishing-pole"));
-		loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"));
+		// Shears candidate is already registered on full 64x102 native canvases.
+		loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"), new int[15], new int[15]);
 		loadExternalCombatMainHandEquipmentSprite("firesword", getExternalEquipmentNumberedFolder("fire-sword"),
 			SWORD_EQUIPMENT_OFFSET_X, SWORD_EQUIPMENT_OFFSET_Y);
 		loadExternalCombatMainHandEquipmentSprite("icesword", getExternalEquipmentNumberedFolder("ice-sword"),
@@ -22302,13 +22303,20 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder) {
+		loadExternalMainHandEquipmentSprite(spriteName, numberedFolder,
+			new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42},
+			new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23});
+	}
+
+	private void loadExternalMainHandEquipmentSprite(String spriteName, File numberedFolder, int[] offsetX, int[] offsetY) {
 		Map<String, orsc.graphics.two.SpriteArchive.Entry> equipmentSprites = getSurface().spriteTree.get("equipment");
 		if (equipmentSprites == null || !this.externalAssetLoader.assetDirectoryExists(numberedFolder)) {
 			return;
 		}
 		final int frameCount = 15;
-		final int[] offsetX = new int[] {17, 15, 13, 18, 21, 25, 27, 32, 36, 44, 49, 44, 40, 41, 42};
-		final int[] offsetY = new int[] {27, 29, 27, 32, 31, 28, 30, 29, 27, 28, 24, 25, 41, 36, 23};
+		if (offsetX.length != frameCount || offsetY.length != frameCount) {
+			throw new IllegalArgumentException("Noncombat equipment requires 15 frame offsets");
+		}
 		orsc.graphics.two.SpriteArchive.Entry spriteEntry = new orsc.graphics.two.SpriteArchive.Entry(
 			spriteName,
 			orsc.graphics.two.SpriteArchive.Entry.TYPE.PLAYER_EQUIPPABLE_NOCOMBAT,
