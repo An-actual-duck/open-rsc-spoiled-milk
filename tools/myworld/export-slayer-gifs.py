@@ -17,9 +17,9 @@ NAMES = {
     "giant-frog": [("spit", 5, [0, 1, 2], [200]*3)],
     "cockatrice": [("melee", 5, MELEE, [120]*8)],
     "banshee": [("melee", 2, MELEE, [120]*8), ("magic-shared-pose", 2, [0, 1, 2], [200]*3)],
-    "naga": [("cleave", 5, MELEE, [120]*8), ("sword-throw", 6, [0, 1, 2], [200]*3)],
+    "naga": [("cleave", 5, [0, 1, 2], [200]*3), ("sword-throw", 6, [0, 1, 2], [200]*3)],
     "terror-dog": [("bite", 5, MELEE, [120]*8)],
-    "bloodveld": [("chomp", 5, MELEE, [120]*8), ("tongue-pull", 6, [0, 1, 2], [200]*3)],
+    "bloodveld": [("chomp", 5, [0, 1, 2], [200]*3), ("tongue-pull", 6, [0, 1, 2], [200]*3)],
     "dark-beast": [("melee", 5, MELEE, [120]*8), ("lightning-charge", 6, [0, 1]*5+[2], [640]*11)],
     "abyssal-demon": [("stab", 5, [0, 1, 2], [80, 160, 400]), ("sink-spikes-rise", 6, [0, 1, 2], [80, 1200, 1280])],
 }
@@ -101,7 +101,7 @@ def main():
     intro = """<!doctype html><meta charset='utf-8'><title>Approved Slayer NPC animations</title>
 <style>body{background:#121417;color:#ddd;font:16px system-ui;margin:24px}a{color:#8bd}h2{border-bottom:1px solid #454545}.row{display:flex;flex-wrap:wrap;align-items:end;gap:18px}figure{margin:8px;text-align:center}img{image-rendering:pixelated;max-width:100%;height:auto}small{color:#aaa}p{max-width:1000px;line-height:1.5}</style>
 <h1>Approved Slayer NPC animations</h1><p>8 monsters · 8 front walks · 13 attack previews. Exported from the current production sheets, without new art. Banshee melee and magic share side-view art. All images loop; right-facing attack art is shown.</p>
-<p>Walk review cadence: 200 ms per pose (walking speed in-game depends on movement). Melee uses client Combat A's 0,1,2,1,0,0,0,0 pattern at the nominal 20 ms update rate; projectile poses are 200 ms each. Dark Beast pulses for ten 640 ms ticks, then discharges for one tick. Abyssal stab: 80/160/400 ms; spikes: 80/1200/1280 ms. These are sprite previews, not recordings of damage or complete encounter cooldowns.</p>
+<p>Walk review cadence: 200 ms per pose (walking speed in-game depends on movement). Bloodveld chomp and Naga cleave use clean 0,1,2 review loops at 200 ms each; other ordinary melee uses client Combat A's 0,1,2,1,0,0,0,0 pattern at the nominal 20 ms update rate. Projectile poses are 200 ms each. Dark Beast pulses for ten 640 ms ticks, then discharges for one tick. Abyssal stab: 80/160/400 ms; spikes: 80/1200/1280 ms. These are sprite previews, not recordings of damage or complete encounter cooldowns. The chomp/cleave preview timing does not change gameplay.</p>
 <p>Original cell padding and common foot height are retained. Wider attacks use their original canvas widths, centered like the client; no per-frame auto-fit. GIF requires a 256-color palette per animation, without dithering. Source PNGs are untouched. <a href='slayer-npc-gifs.zip'>Download all GIFs and gallery</a> · <a href='manifest.json'>Source/timing manifest</a></p>"""
     (out/"index.html").write_text(intro+"\n".join(cards))
     (out/"manifest.json").write_text(json.dumps(manifest, indent=2)+"\n")
