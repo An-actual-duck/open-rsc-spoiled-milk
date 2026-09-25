@@ -1655,6 +1655,9 @@ final class MyWorldItemOverrides {
 		new ItemOverride(3355, null, null, 100000, -1, -1),
 		new ItemOverride(3392, null, null, 175, -1, -1),
 		new ItemOverride(3399, null, null, 60, -1, -1),
+		new ItemOverride(1474, null, "3 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes.", -1, -1, -1),
+		new ItemOverride(1475, null, "2 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes.", -1, -1, -1),
+		new ItemOverride(1476, null, "1 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes.", -1, -1, -1),
 	};
 
 	private MyWorldItemOverrides() {

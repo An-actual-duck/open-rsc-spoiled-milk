@@ -104,7 +104,7 @@ def main() -> None:
         "case FULL_WARRIORS_BREW: return xpBrew(\"warrior\", 20, 30",
         "case FULL_STRONG_WARRIORS_BREW: return xpBrew(\"warrior\", 40, 60",
         "player.setStatReductionProtection(TimeUnit.MINUTES.toMillis(10), itemId);",
-        "player.setPoisonProtection(TimeUnit.MINUTES.toMillis(5), itemId);",
+        "com.openrsc.server.content.AntidoteCleansing.activate(player, itemId);",
     ):
         require(drinkables_text, snippet, f"Drinkables missing new Herblaw behavior: {snippet}")
 

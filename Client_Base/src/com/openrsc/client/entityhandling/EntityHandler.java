@@ -5606,6 +5606,21 @@ public class EntityHandler {
 		}
 	}
 
+	/** Three cleansing tiers share standard potion artwork; eggs are authored recolors. */
+	private static void addAntidoteDefinitions() {
+		setCustomItemDefinition(3400, new ItemDef("Giant Spider Eggs", "Giant Spider Eggs used to brew an antidote.", "", 7, -1, "external-png:giant-spider-eggs@21x15", false, false, 0, 0, false, false, true, 3400));
+		setCustomItemDefinition(3401, new ItemDef("Jungle Spider Eggs", "Jungle Spider Eggs used to brew an antidote.", "", 7, -1, "external-png:jungle-spider-eggs@21x15", false, false, 0, 0, false, false, true, 3401));
+		for (int tier=0;tier<3;tier++) {
+			int first=tier==0?3402:tier==1?1474:3405, power=tier==0?5:tier==1?10:20;
+			String name=tier==0?"Weak Antidote":tier==1?"Antidote":"Strong Antidote";
+			for(int n=0;n<3;n++) {
+				int sprite=n==0||!Config.S_WANT_CUSTOM_SPRITES?48:435+n;
+				int price=tier==1?288-72*n:Math.round((tier==0?144:432)*(3-n)/3.0F);
+				setCustomItemDefinition(first+n,new ItemDef(name,(3-n)+" dose(s). Adds "+power+" poison cleansing power per pulse for 10 minutes.","Drink",price,sprite,"items:"+sprite,false,false,0,tier==0?0xD8C847:tier==1?3192558:0x42B85A,true,false,true,first+n));
+			}
+		}
+	}
+
 	/** Approved Slayer artwork; retired Banshee hide remains unchanged. */
 	private static void addSlayerComponentDefinitions() {
 		setCustomItemDefinition(3333, new ItemDef("Giant frog hide", "A slick hide from a giant frog.", "",
@@ -6058,6 +6073,7 @@ public class EntityHandler {
 		addExaltedRuneDefinitions();
 		addKingBlackDragonLeatherDefinitions();
 		addSlayerComponentDefinitions();
+		addAntidoteDefinitions();
 		addBangleJewelryDefinitions();
 		addClericSigilDefinitions();
 		addScytheLineDefinitions();

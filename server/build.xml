@@ -375,6 +375,17 @@
         </java>
     </target>
 
+    <target name="test_antidote_cleansing" depends="compile_core,compile_plugins,compile_combat_tests">
+        <java classname="com.openrsc.server.combat.AntidoteCleansingFixture" fork="true" failonerror="true" dir="${basedir}">
+            <classpath>
+                <pathelement location="${basedir}/plugins.jar"/>
+                <pathelement location="${combat.build.test}"/>
+                <pathelement location="${combat.build.core}"/>
+                <fileset dir="${lib}" includes="*.jar"/>
+            </classpath>
+        </java>
+    </target>
+
     <target name="test_held_equipment_appearances" depends="compile_core,compile_plugins,compile_combat_tests">
         <java classname="com.openrsc.server.combat.HeldEquipmentAppearanceFixture"
               fork="true" failonerror="true" dir="${basedir}">

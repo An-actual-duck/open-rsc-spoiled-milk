@@ -269,6 +269,7 @@ public final class EntityHandler {
 		LOGGER.info("Loading item definitions...");
 		loadItems(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefs.json");
 		loadItems(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefsCustom.json");
+		loadItems(getServer().getConfig().CONFIG_DIR + "/defs/AntidoteItemDefs.json");
 		//loadItems(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefsExpansion.json");
 		patchItems();
 		customItemConditions();

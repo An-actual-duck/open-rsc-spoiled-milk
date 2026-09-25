@@ -212,16 +212,11 @@ Open questions:
 
 ### Poison Antidote
 
-Desired:
+Implemented cleansing revision: see [antidote cleansing tiers](../in-progress-work-plans/antidote-cleansing-tiers.md).
 
-- Recipe: `Marrentill` + `Red spiders eggs`.
-- A potion that cures current poison.
-- Also grants poison immunity for 5 minutes.
-
-Open questions:
-
-- Whether stronger antidotes should exist.
-- Whether immunity should block all poison sources or only normal poison.
+- All tiers use Marrentill and water: Giant Spider Eggs at level 8, red spiders eggs at level 22, Jungle Spider Eggs at level 38.
+- Weak Antidote / Antidote / Strong Antidote add 5 / 10 / 20 power removed per poison pulse for 10 minutes. No instant cure or immunity.
+- Only the strongest tier applies; equal doses refresh, stronger replaces, weaker is rejected without consumption. Necklace and carapace cleansing add normally.
 
 ### Stat Restore
 

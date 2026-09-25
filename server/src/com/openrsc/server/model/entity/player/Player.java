@@ -2110,6 +2110,9 @@ public final class Player extends Mob {
 		addXpBrewStatus(statuses, "warrior");
 		addTimedPotionStatus(statuses, "stat_reduction_protection", "stat_reduction_protection_expires_at", now);
 		addPoisonProtectionStatus(statuses, now);
+		addPotionStatus(statuses, "antidote_cleanse",
+			com.openrsc.server.content.AntidoteCleansing.itemId(this),
+			com.openrsc.server.content.AntidoteCleansing.remainingMillis(this));
 
 		// Retain display support for legacy timed potion APIs even though the
 		// current My World dispatcher routes those item IDs through the families
