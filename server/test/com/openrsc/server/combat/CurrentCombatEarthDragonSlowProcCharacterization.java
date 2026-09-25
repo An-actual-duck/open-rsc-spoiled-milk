@@ -53,14 +53,14 @@ final class CurrentCombatEarthDragonSlowProcCharacterization {
 
 		assertDamage(target, source, 7,
 			path + " settled-zero primary earth damage");
-		assertSlowState(target, DEBUFF_PERCENT, DEBUFF_ATTACKS,
+		assertSlowState(target, 10, 12,
 			path + " settled-zero primary earth slow");
 		assertRandomTranscript(harness, path, random,
 			path + " successful earth draw order");
 
 		target.consumeAttackBasedDebuffs();
 		target.consumeAttackBasedDebuffs();
-		assertSlowState(target, DEBUFF_PERCENT, DEBUFF_ATTACKS - 2,
+		assertSlowState(target, 10, 12,
 			path + " earth slow before refresh");
 
 		final Object damageUpdateBefore =
@@ -73,7 +73,7 @@ final class CurrentCombatEarthDragonSlowProcCharacterization {
 		assertDamageUnchanged(target, source, 13, 7,
 			damageUpdateBefore, hitSplatCountBefore,
 			path + " zero-roll earth damage");
-		assertSlowState(target, DEBUFF_PERCENT, DEBUFF_ATTACKS,
+		assertSlowState(target, 12, 12,
 			path + " zero-roll successful refresh");
 		assertRandomTranscript(harness, path, random,
 			path + " zero-roll earth draw order");
@@ -81,8 +81,10 @@ final class CurrentCombatEarthDragonSlowProcCharacterization {
 		for (int attack = 0; attack < DEBUFF_ATTACKS; attack++) {
 			target.consumeAttackBasedDebuffs();
 		}
-		assertSlowState(target, 0, 0,
-			path + " earth slow expires after five target attacks");
+		assertSlowState(target, 12, 12,
+			path + " earth Slow is no longer attack-count based");
+		for (int tick = 0; tick < 25; tick++) harness.advanceOneCombatTick();
+		assertSlowState(target, 0, 0, path + " earth Slow decays to zero over time");
 	}
 
 	private static void assertFailedRollConsumesOneDraw(
@@ -354,17 +356,14 @@ final class CurrentCombatEarthDragonSlowProcCharacterization {
 	}
 
 	private static void assertSlowState(final Mob target,
-			final int expectedPercent, final int expectedAttacks,
+			final int expectedPower, final int expectedCap,
 			final String label) throws Exception {
-		assertEquals(Integer.valueOf(expectedPercent),
-			Integer.valueOf(target.getEarthAttackSpeedDebuffPercent()),
-			label + " attack-speed reduction");
-		assertEquals(Integer.valueOf(expectedPercent),
-			readMobField(target, "dragonEarthAttackSpeedDebuffPercent"),
-			label + " stored percent");
-		assertEquals(Integer.valueOf(expectedAttacks),
-			readMobField(target, "dragonEarthAttackSpeedDebuffAttacksRemaining"),
-			label + " attacks remaining");
+		assertEquals(Integer.valueOf(expectedPower),
+			Integer.valueOf(com.openrsc.server.content.Slow.power(target)), label + " shared power");
+		assertEquals(Integer.valueOf(expectedCap),
+			Integer.valueOf(com.openrsc.server.content.Slow.cap(target)), label + " retained cap");
+		assertEquals(Integer.valueOf(0), Integer.valueOf(target.getEarthAttackSpeedDebuffPercent()),
+			label + " old percentage untouched");
 	}
 
 	private static Object readMobField(final Mob target,

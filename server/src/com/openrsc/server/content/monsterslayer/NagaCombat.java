@@ -18,7 +18,7 @@ public final class NagaCombat {
 		return mob.getWorld().getServer().getCurrentTick() >= mob.getAttribute(NEXT_ATTACK, -1L);
 	}
 	public static void recordAttack(Mob mob, int ticks) {
-		mob.setAttribute(NEXT_ATTACK, mob.getWorld().getServer().getCurrentTick() + ticks);
+		mob.setAttribute(NEXT_ATTACK, mob.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(mob, ticks));
 	}
 	public static boolean canOffhand(Mob source, Mob target, boolean suppressed) {
 		return isNaga(source) && !suppressed && !source.isRemoved() && !target.isRemoved()

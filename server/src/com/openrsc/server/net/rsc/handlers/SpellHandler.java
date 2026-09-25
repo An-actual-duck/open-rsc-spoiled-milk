@@ -244,7 +244,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if ((player.isBusy() && !player.inCombat()) || player.isRanging()) {
 			return;
 		}
-		if (!canCast(player)) {
+		if (!canCast(player) || !player.combatCastTimer(player.getConfig().RAPID_CAST_SPELLS)) {
 			return;
 		}
 		OpcodeIn opcode = affectedMob.isPlayer() ? OpcodeIn.PLAYER_CAST_PVP : OpcodeIn.CAST_ON_NPC;
@@ -490,7 +490,9 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 			return;
 		}
-		if (!SpellClassification.isHealSpell(payload.spell) && !canCast(player)) {
+		if (!SpellClassification.isHealSpell(payload.spell) && (!canCast(player)
+			|| (opcode == OpcodeIn.CAST_ON_NPC || opcode == OpcodeIn.PLAYER_CAST_PVP)
+				&& !player.combatCastTimer(player.getConfig().RAPID_CAST_SPELLS))) {
 			if (SpellClassification.isMobCastOpcode(opcode)) {
 				magicDebug(player, "packet_reject reason=cast_timer wait=" + player.getSpellWait());
 			}
@@ -936,6 +938,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		if (giveExp) player.incExp(getMagicId(player, spell), spell.getExp(), true);
 		if (setCastTimer) {
 			player.setCastTimer();
+			if (spell.getSpellType() == 2) player.scheduleCombatCast();
 		}
 	}
 
@@ -1660,7 +1663,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				getPlayer().resetFollowing();
 				getPlayer().resetPath();
 				SpellDef spell = getPlayer().getWorld().getServer().getEntityHandler().getSpellDef(spellEnum);
-				if (!canCast(getPlayer()) || affectedMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
+				if (!canCast(getPlayer()) || (spellType == 2 && !getPlayer().combatCastTimer(getPlayer().getConfig().RAPID_CAST_SPELLS))
+					|| affectedMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 					magicDebug(getPlayer(), "walk_action_reject reason=cast_timer_or_dead wait=" + getPlayer().getSpellWait()
 						+ " targetHits=" + affectedMob.getSkills().getLevel(Skill.HITS.id()));
 					getPlayer().resetPath();
@@ -2237,6 +2241,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().playerServerMessage(MessageType.QUEST, "Cast spell successfully");
 							// Note: it is authentic not to play the "spellok" sound when casting mind spells on Salarin. See kRiStOf/Salarin The Twisted
 							getPlayer().setCastTimer();
+							getPlayer().scheduleCombatCast();
 							completeProjectileSpellResources(defaultSpellResources,
 								getPlayer(), spell, defaultSpellExperienceBefore, false);
 							return;
@@ -2543,7 +2548,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		final int percent = advancedSpell ? 20 : 10;
 		target.applyWindDebuff(percent);
 		target.applyWaterMaxHitDebuff(percent);
-		target.applyEarthAttackSpeedDebuff(percent);
+		com.openrsc.server.content.Slow.apply(target, advancedSpell ? 12 : 8,
+			advancedSpell ? com.openrsc.server.content.Slow.CAP_TWO : com.openrsc.server.content.Slow.CAP_ONE);
 		target.applyFireDefenseDebuff(percent);
 	}
 

@@ -41,7 +41,7 @@ public final class BansheeCombat {
 		return source.getWorld().getServer().getCurrentTick() >= source.getAttribute(NEXT_ATTACK, -1L);
 	}
 	public static void recordAttack(Mob source, int ticks) {
-		source.setAttribute(NEXT_ATTACK, source.getWorld().getServer().getCurrentTick() + ticks);
+		source.setAttribute(NEXT_ATTACK, source.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(source, ticks));
 	}
 	public static void applyEarplugs(Player player) {
 		player.getCache().store(PROTECTION, player.getWorld().getServer().getGameClock().currentTimeMillis() + PROTECTION_MILLIS);

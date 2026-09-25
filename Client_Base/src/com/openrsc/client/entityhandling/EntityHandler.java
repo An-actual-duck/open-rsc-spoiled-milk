@@ -6743,13 +6743,13 @@ public class EntityHandler {
 		setLeatherSetDescription(1880, 1884, "Full ogre-hide set: 20% chance to stagger enemy attacks. No cooldown.");
 		setLeatherSetDescription(1885, 1889, "Full baby-dragon-hide set: 20% chance to reduce enemy accuracy by 10%.");
 		setLeatherSetDescription(1890, 1894, "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.");
-		setLeatherSetDescription(1895, 1899, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.");
+		setLeatherSetDescription(1895, 1899, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).");
 		setLeatherSetDescription(1900, 1904, "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.");
 		setLeatherSetDescription(1905, 1909, "Full demon-hide set: 20% chance for infernal fire, max hit 8.");
 		setLeatherSetDescription(1910, 1914, "Full hellhound-hide set: summons a spirit hellhound companion.");
 		setLeatherSetDescription(1915, 1919, "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.");
 		setLeatherSetDescription(1920, 1924, "Full blue-dragon-hide set: 20% chance to dampen enemy max hit by 10%.");
-		setLeatherSetDescription(1925, 1929, "Full green-dragon-hide set: 20% chance to slow enemy attacks by 6%.");
+		setLeatherSetDescription(1925, 1929, "Full green-dragon-hide set: 20% chance to apply 10 Slow power (cap 12).");
 		setLeatherSetDescription(1930, 1934, "Full red-dragon-hide set: 20% chance to weaken enemy defense by 6%.");
 		setLeatherSetDescription(1935, 1939, "Full black-demon-hide set: 20% chance for infernal fire, max hit 12.");
 		setLeatherSetDescription(1940, 1944, "Full black-dragon-hide set: 20% chance for dragon breath, max hit 30.");
@@ -8161,7 +8161,7 @@ public class EntityHandler {
 		runes.clear();
 		runes.put(34, 1);
 		runes.put(35, 1);
-		spells.add(new SpellDef("Rock Throw", "Applies Weaker Slow for 5 attacks",
+		spells.add(new SpellDef("Rock Throw", "Applies 4 Slow power (cap 12)",
 			1, 2, 2, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(31, 1);
@@ -8246,7 +8246,7 @@ public class EntityHandler {
 		runes.clear();
 		runes.put(34, 2);
 		runes.put(41, 1);
-		spells.add(new SpellDef("Earth Hammer", "Applies Weak Slow for 5 attacks",
+		spells.add(new SpellDef("Earth Hammer", "Applies 6 Slow power (cap 12)",
 			20, 2, 2, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(31, 2);
@@ -8307,7 +8307,7 @@ public class EntityHandler {
 		runes.clear();
 		runes.put(34, 3);
 		runes.put(38, 1);
-		spells.add(new SpellDef("Earth Burst", "Applies Strong Slow for 5 attacks",
+		spells.add(new SpellDef("Earth Burst", "Applies 8 Slow power (cap 22)",
 			40, 2, 2, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(31, 3);
@@ -8362,7 +8362,7 @@ public class EntityHandler {
 		runes.clear();
 		runes.put(34, 4);
 		runes.put(619, 1);
-		spells.add(new SpellDef("Earth Impale", "Applies Stronger Slow for 5 attacks",
+		spells.add(new SpellDef("Earth Impale", "Applies 10 Slow power (cap 22)",
 			60, 2, 2, (LinkedHashMap<Integer, Integer>) runes.clone()));
 		runes.clear();
 		runes.put(31, 4);

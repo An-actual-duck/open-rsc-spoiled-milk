@@ -351,7 +351,7 @@ public class CombatFormula {
 				target.applyWaterMaxHitDebuff(ELEMENTAL_SWORD_WATER_DEBUFF_PERCENT);
 				break;
 			case CombatEffect.EARTH_SWORD:
-				target.applyEarthAttackSpeedDebuff(ELEMENTAL_SWORD_EARTH_DEBUFF_PERCENT);
+				com.openrsc.server.content.Slow.apply(target, 10, com.openrsc.server.content.Slow.CAP_ONE);
 				break;
 			default:
 				break;

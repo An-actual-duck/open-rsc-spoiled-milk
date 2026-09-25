@@ -126,7 +126,7 @@ public final class AbyssalDemonCombat {
 		State state = state(npc);
 		long tick = tick(npc);
 		if (tick < state.nextAttack || recovering(npc)) return true;
-		state.nextAttack = tick + 1;
+		state.nextAttack = tick + com.openrsc.server.content.Slow.delay(npc, 1);
 		if (suppressed) return true;
 		if (target instanceof Player && tick >= state.nextSpikes
 			&& npc.getWorld().getServer().getCombatRandom().nextInt(100) < 20) {
@@ -142,7 +142,7 @@ public final class AbyssalDemonCombat {
 		final State state = state(npc);
 		final long start = tick(npc);
 		state.recoveryUntil = start + RECOVERY_TICKS;
-		state.nextAttack = state.recoveryUntil;
+		state.nextAttack = state.recoveryUntil + com.openrsc.server.content.Slow.tier(npc);
 		state.nextSpikes = state.recoveryUntil + 4;
 		npc.resetPath();
 		npc.getUpdateFlags().setCombatEffect(new CombatEffect(npc, CombatEffect.ABYSSAL_SPIKES));

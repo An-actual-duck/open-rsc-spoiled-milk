@@ -50,8 +50,7 @@ public final class KingBlackDragonBreathFollowup {
 					WATER_MAX_HIT_DEBUFF_PERCENT);
 				break;
 			case 1:
-				target.applyDragonEarthAttackSpeedDebuff(
-					EARTH_ATTACK_SPEED_DEBUFF_PERCENT);
+				com.openrsc.server.content.Slow.apply(target, 12, com.openrsc.server.content.Slow.CAP_TWO);
 				break;
 			default:
 				target.applyDragonFireDefenseDebuff(

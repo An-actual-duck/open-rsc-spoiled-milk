@@ -49,6 +49,8 @@ public class NpcBehavior {
 	private boolean plaguedSheep;
 	private boolean gnomeBaller;
 	private int tickFactor;
+	private long nextProjectileTick;
+	private com.openrsc.server.model.combat.CombatParticipantSnapshot projectileCooldownLifetime;
 
 	NpcBehavior(final Npc npc) {
 		this.npc = npc;
@@ -555,9 +557,11 @@ public class NpcBehavior {
 		}
 		final boolean banshee = com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(npc);
 		final boolean naga = com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(npc);
+		final boolean slowCooldown = projectileCooldownLifetime != null && projectileCooldownLifetime.matches(npc)
+			&& npc.getWorld().getServer().getCurrentTick() < nextProjectileTick;
 		if (naga ? !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(npc)
 			: banshee ? !com.openrsc.server.content.monsterslayer.BansheeCombat.attackReady(npc)
-			: !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
+			: slowCooldown || !checkCombatTimer(now, npc.getCombatTimer(), 3 * tickFactor)) {
 			// A clear ranged shot on cooldown is not a reason to approach melee.
 			if (banshee || com.openrsc.server.content.monsterslayer.GiantFrogCombat.isFrog(npc)) {
 				npc.resetPath();
@@ -571,6 +575,9 @@ public class NpcBehavior {
 		npc.face(target);
 		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(npc)) return true;
 		npc.setCombatTimer();
+		projectileCooldownLifetime = com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(npc);
+		nextProjectileTick = npc.getWorld().getServer().getCurrentTick()
+			+ com.openrsc.server.content.Slow.delay(npc, 3 * tickFactor);
 		if (banshee) com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(npc, 3);
 		if (naga) com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(npc,
 			com.openrsc.server.content.monsterslayer.NagaCombat.THROW_TICKS);

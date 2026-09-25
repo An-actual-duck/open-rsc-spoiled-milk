@@ -26,7 +26,7 @@ public final class BloodveldCombat {
 		return mob.getWorld().getServer().getCurrentTick() >= mob.<Long>getAttribute(NEXT, -1L);
 	}
 	public static void recordAttack(Mob mob, int ticks) {
-		mob.setAttribute(NEXT, mob.getWorld().getServer().getCurrentTick() + ticks);
+		mob.setAttribute(NEXT, mob.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(mob, ticks));
 	}
 	public static void lifesteal(Mob source, int damage) {
 		if (!isBloodveld(source) || source.isRemoved() || source.getLevel(Skill.HITS.id()) <= 0 || damage <= 0) return;

@@ -242,7 +242,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if ((com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)
 			&& !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(attackerMob))
 			|| (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)
-			&& !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob))) {
+			&& !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob))
+			|| !com.openrsc.server.content.monsterslayer.DarkBeastCombat.attackReady(attackerMob)) {
 			setDelayTicks(1); return;
 		}
 		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(attackerMob)) {
@@ -1038,10 +1039,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private int getAdjustedMeleeDelayTicks(final Mob hitter, final int baseDelayTicks) {
-		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return 1;
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return com.openrsc.server.content.Slow.delay(hitter, 1);
 		double multiplier = getCombatSpeedMultiplier(hitter);
 		double effectiveDelay = baseDelayTicks / multiplier;
-		return Math.max(1, (int) Math.floor(effectiveDelay));
+		return com.openrsc.server.content.Slow.delay(hitter, Math.max(1, (int) Math.floor(effectiveDelay)));
 	}
 
 	private double getCombatSpeedMultiplier(final Mob hitter) {
@@ -1049,9 +1050,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (hitter.isPlayer()) {
 			Player player = (Player) hitter;
 			multiplier = getWeaponSpeedMultiplier(player) * player.getPotionAttackSpeedMultiplier() * player.getLeatherSetAttackSpeedMultiplier();
-		}
-		if (hitter.getEarthAttackSpeedDebuffPercent() > 0) {
-			multiplier *= Math.max(0.10D, 1.0D - (hitter.getEarthAttackSpeedDebuffPercent() / 100.0D));
 		}
 		return multiplier;
 	}

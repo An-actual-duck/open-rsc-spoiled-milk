@@ -364,6 +364,8 @@ public final class Player extends Mob {
 	 * The time of the last spell cast, used as a throttle
 	 */
 	private long lastSpellCast = 0;
+	private long nextCombatCastMillis;
+	private com.openrsc.server.model.combat.CombatParticipantSnapshot combatCastLifetime;
 	/**
 	 * The time the player had a skull status from combat
 	 */
@@ -963,6 +965,18 @@ public final class Player extends Mob {
 	public boolean castTimer(boolean allowRapid) {
 		final long holdTimer = allowRapid ? 0L : getSpellCastHoldTimerMillis();
 		return System.currentTimeMillis() - lastSpellCast > holdTimer;
+	}
+
+	/** Combat-only scheduled deadline; utility casts keep their original timer. */
+	public boolean combatCastTimer(boolean allowRapid) {
+		return castTimer(allowRapid) && (combatCastLifetime == null || !combatCastLifetime.matches(this)
+			|| getWorld().getServer().getGameClock().currentTimeMillis() >= nextCombatCastMillis);
+	}
+	public void scheduleCombatCast() {
+		combatCastLifetime = com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(this);
+		nextCombatCastMillis = getWorld().getServer().getGameClock().currentTimeMillis()
+			+ (getConfig().RAPID_CAST_SPELLS ? 0L : getSpellCastHoldTimerMillis())
+			+ (long)com.openrsc.server.content.Slow.tier(this) * getConfig().GAME_TICK;
 	}
 
 	public boolean addOwnedPlugin(final PluginTask plugin) {
@@ -2101,6 +2115,7 @@ public final class Player extends Mob {
 
 	public List<ActiveStatusEntry> getActivePotionEffectStatuses() {
 		final ArrayList<ActiveStatusEntry> statuses = new ArrayList<>();
+		com.openrsc.server.content.Slow.appendStatus(this, statuses);
 		final long now = System.currentTimeMillis();
 		syncHerblawSkillPotionBonuses();
 		addTimedPotionStatus(statuses, "brawn", "potion_brawn_expires_at", now);
@@ -2585,7 +2600,7 @@ public final class Player extends Mob {
 			return;
 		}
 		if (hasFullMossGiantSet()) {
-			target.applyEarthAttackSpeedDebuff(6);
+			com.openrsc.server.content.Slow.apply(target, 10, com.openrsc.server.content.Slow.CAP_ONE);
 		} else if (hasFullIceGiantSet()) {
 			target.applyWaterMaxHitDebuff(10);
 		} else if (hasFullFireGiantSet()) {

@@ -2242,6 +2242,7 @@ public abstract class Mob extends Entity {
 
 	public long advanceCombatLifecycle(
 			final CombatEngagementTerminalReason reason) {
+		com.openrsc.server.content.Slow.clear(this);
 		terminateCombatOwnership(reason);
 		return combatLifecycle.incrementAndGet();
 	}

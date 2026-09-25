@@ -45,7 +45,11 @@ final class CurrentCombatKingBlackDragonBreathProcCharacterization {
 		assertEquals(0, target.getWaterMaxHitDebuffPercent(),
 			"KBD water expires");
 		assertEquals(0, target.getEarthAttackSpeedDebuffPercent(),
-			"KBD earth expires");
+			"KBD no longer writes percentage Slow");
+		assertEquals(element == 1 ? 12 : 0, com.openrsc.server.content.Slow.power(target),
+			"KBD Slow survives attack consumption");
+		for (int tick = 0; tick < 25; tick++) harness.advanceOneCombatTick();
+		assertEquals(0, com.openrsc.server.content.Slow.power(target), "KBD Slow decays over time");
 		assertEquals(0, target.getFireDefenseDebuffPercent(),
 			"KBD fire expires");
 	}
@@ -114,8 +118,10 @@ final class CurrentCombatKingBlackDragonBreathProcCharacterization {
 			final String label) {
 		assertEquals(element == 0 ? 10 : 0,
 			target.getWaterMaxHitDebuffPercent(), label + " water");
-		assertEquals(element == 1 ? 6 : 0,
-			target.getEarthAttackSpeedDebuffPercent(), label + " earth");
+		assertEquals(element == 1 ? 12 : 0,
+			com.openrsc.server.content.Slow.power(target), label + " earth power");
+		assertEquals(element == 1 ? 22 : 0,
+			com.openrsc.server.content.Slow.cap(target), label + " earth cap");
 		assertEquals(element == 2 ? 6 : 0,
 			target.getFireDefenseDebuffPercent(), label + " fire");
 	}
