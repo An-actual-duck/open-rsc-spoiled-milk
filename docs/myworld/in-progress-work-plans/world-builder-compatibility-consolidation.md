@@ -143,8 +143,10 @@ Do not call this complete based on content discovery, a successful compile, one 
 ## Progress and evidence tracking
 
 - Complete: source-and-data baseline preparation, with the limitations above.
-- Complete: preliminary archive/overlay inspection only.
-- Next: Phase 1 workspace/version isolation, followed by Phase 2 runtime and behavior audit.
+- Complete: exact disposable-copy verification and initial static source, archive, overlay, and adapter audit; see [initial audit](world-builder-compatibility-initial-audit.md).
+- Phase 1 partial: versions pinned and 215,935 copied file/link entries verified; launch isolation and restoration drills remain.
+- Phase 2 partial: dependency conflicts and overlay/API differences identified; source fits existing adapter checks, but actual consumer and active behavior verification remain.
+- Next: resolve focused implementation workspace ownership, complete isolation/preservation checks, and correct Core dependency packaging. Generic post-rebuild Editor verification is confirmed as a separate required implementation.
 - Pending: all consolidation, compatibility implementation, full acceptance, and rollout phases.
 
 At each checkpoint, record the phase, repository and commit, affected paths, retained behavior, exact test commands/results, evidence locations, remaining blockers, and next action. Update this document as facts replace assumptions. Keep private artifacts local; publish only sanitized reports.
