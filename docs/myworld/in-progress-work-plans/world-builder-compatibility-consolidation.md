@@ -4,7 +4,60 @@ Prepared September 30, 2026 for the owner and coordinating Core manager.
 
 The goal is to make Spoiled Milk build and run its own maintained server and matching player client with the common World Builder map contract, preserving custom content, gameplay, maps, and player state. Compatibility must survive ordinary rebuilds and repeated map imports. Replacing the game with the editor runtime, or merely making discovery accept it, is not completion.
 
-This is the execution guideline. Only baseline preparation and preliminary inspection are complete. No compatibility implementation, live rollout, or full preservation certification is implied.
+This is the execution guideline. Disposable-target implementation and the normal-build/re-verification/repeated-import acceptance sequence now pass. Normal Core runtime integration, private gameplay/visual acceptance, and live rollout are not complete. The phase descriptions below remain the full checklist, not a declaration that every gate has passed.
+
+## Latest acceptance checkpoint — alpha 9
+
+The owner-deployed World Builder `v0.8.1-alpha.9` identifies Editor commit
+`c0468eea88e6a5614bbf2ff6dac61420933dcbfd` and unchanged provider
+`deb55301702dc80f49497ac722341895145363e1`. Its tools JAR matches the packaged
+candidate exactly. Core independently exercised its actual maintained build
+scripts, not only the separate compiler procedure used by Editor acceptance.
+
+- Core source checkpoint: `72ef40014a1cc9c6df6c96af1a0ec44a69e20e4b`, on the
+  authorized disposable implementation branch. It is not merged into normal
+  Core. The verified bundle is
+  `/home/justin/core-map-compat-audit-5XvTqI/maintained-map-integration.bundle`.
+- Alpha 8 already passed successive imports and fixed the false post-upgrade
+  source-drift refusal. Its acceptance evidence remains at
+  `/home/justin/core-map-alpha8-retest-xe8V9X/acceptance-results.json`.
+- Alpha 9 acceptance used a fresh complete copy at
+  `/home/justin/core-map-alpha9-retest-ePUpKw`, retaining the attached project
+  `e18ed8b4-b64f-47cd-9632-e7a137e0dd63` and its complete history.
+- Both `scripts/build-server.sh` and `scripts/build-client.sh` passed with the
+  candidate's Java 17 toolchain and the repository's Java 8 source/target levels.
+  Outside generated client build output, only `core.jar`, `plugins.jar`, and
+  `Open_RSC_Client.jar` changed during this normal rebuild.
+- Re-verification transaction `729746c0-bac4-4894-83f4-51a930a529ae` succeeded.
+  Inventory comparison confirmed its sole target change was the installed
+  compatibility proof; rebuilt archive bytes and saved project files remained
+  intact.
+- Three subsequent save/export/preview/import transactions passed. Each changed
+  exactly its 3,581 planned map-package/activation files, preserved the rebuilt
+  runtime and unrelated custom content, and left the saved working map unchanged
+  during import. The maintained server decoded elevations 1280, 1536, and 1792
+  at level -2, tile (240,576); matching client package payloads were also checked.
+- All 16,251 pre-existing source/history/backup/export files checked at the end
+  retained their exact hashes. Detailed results, inventories, plans, receipts,
+  build logs, and reproducible test scripts are in the alpha 9 acceptance
+  directory; start with `acceptance-results.json`.
+
+No public or private game server/client was launched for these checks. Normal
+Core's runtime/configuration and the earlier audit copies were not modified.
+This manager documentation checkpoint is the only normal-checkout update.
+
+Supported scope remains bounded: alpha 9 proves equivalent rebuilds, not
+arbitrary changed gameplay sources or dependencies. Such changes need reviewed
+integration; sibling floor-project re-verification is also unsupported. Full
+history import applies took several minutes each, which should remain visible
+as an operational performance concern rather than be hidden by bypassing checks.
+
+Next gates: private server/client gameplay and visual preservation acceptance,
+then exact-commit review/integration of the maintained Core changes together
+with the newer Slayer content into the normal checkout. Preserve its existing
+local configuration edits and occupied worker branches. Do not copy temporary
+test map activations or target-bound receipts into normal Core. Public activation
+still requires fresh explicit shutdown authorization and its warning procedure.
 
 ## Authority and boundaries
 
