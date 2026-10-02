@@ -2,6 +2,8 @@
 
 Prepared September 30, 2026 for the owner and coordinating Core manager.
 
+October 2 direction update: the owner has requested an Editor-led content lifecycle refactor and complete round-trip acceptance, rather than further isolated compatibility fixes. See [World Builder content lifecycle implementation handoff](world-builder-content-lifecycle-handoff.md) for current evidence, ownership, delivery phases, preservation requirements, and acceptance gates. The alpha 9 checkpoint below remains historical evidence; it is not the latest overall status.
+
 The goal is to make Spoiled Milk build and run its own maintained server and matching player client with the common World Builder map contract, preserving custom content, gameplay, maps, and player state. Compatibility must survive ordinary rebuilds and repeated map imports. Replacing the game with the editor runtime, or merely making discovery accept it, is not completion.
 
 This is the execution guideline. Disposable-target implementation and the normal-build/re-verification/repeated-import acceptance sequence now pass. Normal Core runtime integration, private gameplay/visual acceptance, and live rollout are not complete. The phase descriptions below remain the full checklist, not a declaration that every gate has passed.
