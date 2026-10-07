@@ -104,7 +104,7 @@ def main() -> None:
         "Demon pitchfork should have an external inventory/ground icon")
     shears_frames = sorted((ROOT / "dev/myworld/assets/sprites/equipment/shears/numbered").glob("*.png"))
     require(len(shears_frames) == 15, "Universal shears should have 15 no-combat equipment frames")
-    require('loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"))' in mudclient,
+    require('loadExternalMainHandEquipmentSprite("shears", getExternalEquipmentNumberedFolder("shears"), new int[15], new int[15])' in mudclient,
         "Client should load the external universal shears frames")
 
     require("DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT = 10" in formula,

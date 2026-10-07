@@ -433,7 +433,7 @@ def require_shears_smithing_and_defs() -> None:
         'addMetalShearsDefinition("Exalted Rune shears", 3272, 52000, EXALTED_RUNE_COLOR);',
         'new ItemDef(name, name + " for harvesting", "", price, 66, "items:66"',
         "true, 16, pictureMask, false, false, true, id);",
-        'new AnimationDef("shears", "equipment", 0, 0, true, false, 0)); // 1041 - Universal shears',
+        'new AnimationDef("shears", "equipment", 0, 0, false, false, 0)); // 1041 - Universal shears; no attack frames',
         "while (items.size() <= id)",
         'addMetalArrowHeadDefinition("Tin arrow heads", 2004, 1, 0xB7C9D9);',
         'addMetalArrowHeadDefinition("Copper arrow heads", 2015, 2, 0xC86A2B);',

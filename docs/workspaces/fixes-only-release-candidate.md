@@ -42,6 +42,9 @@ Integration adaptations:
 Fresh server/core/plugin and desktop-client builds pass. The strict combat
 gate passes all 143 scenarios. Also passing:
 
+- Private startup smoke test, using a fresh isolated seed database; no live
+  database or public listener was used.
+
 - 330 worn mapping checks and slot/range checks across 1,770 visible wearables.
 - All 36 effective held-family mappings, authentic fallback mode, gameplay
   field invariance and 21 avatar variants.
