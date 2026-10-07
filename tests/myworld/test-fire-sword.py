@@ -140,8 +140,8 @@ def main() -> None:
 
     custom_items = load_json(ROOT / "server/conf/server/defs/ItemDefsCustom.json", "items")
     myworld_items = load_json(ROOT / "server/conf/server/defs/ItemDefsMyWorld.json", "items")
-    require_sword_item(custom_items, myworld_items, 3235, "Fire sword", 1035)
-    require_sword_item(custom_items, myworld_items, 3236, "Ice sword", 1036)
+    require_sword_item(custom_items, myworld_items, 3235, "Fire sword", 1036)
+    require_sword_item(custom_items, myworld_items, 3236, "Ice sword", 1037)
     require_sword_item(custom_items, myworld_items, 3237, "Earth sword", 49)
 
     client_handler = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java").read_text(encoding="utf-8")

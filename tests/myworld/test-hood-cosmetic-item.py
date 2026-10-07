@@ -36,7 +36,7 @@ def main() -> None:
     require(hood is not None, "ItemDefsCustom should define Hood")
     require(hood["name"] == "Hood", "Hood should have the expected name")
     require(hood["isWearable"] == 1, "Hood should be wearable")
-    require(hood["appearanceID"] == 1034, "Hood should use its custom appearance")
+    require(hood["appearanceID"] == 1035, "Hood should use its custom appearance")
     require(hood["wearableID"] == 32, "Hood should occupy the head equipment group")
     require(hood["wearSlot"] == 5, "Hood should use the head wear slot")
     require(hood["armourBonus"] == 0, "Hood should be aesthetic only")

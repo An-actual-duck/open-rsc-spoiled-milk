@@ -69,7 +69,7 @@ def main() -> None:
     require(custom_items[3173]["name"] == "Unstrung symbol of Guthix", "Guthix unstrung symbol name mismatch")
     require(custom_items[3174]["name"] == "Unblessed symbol of Guthix", "Guthix unblessed symbol name mismatch")
     require(custom_items[3175]["name"] == "Symbol of Guthix", "Guthix blessed symbol name mismatch")
-    require(custom_items[3174]["appearanceID"] == 995 and custom_items[3175]["appearanceID"] == 995,
+    require(custom_items[3174]["appearanceID"] == 996 and custom_items[3175]["appearanceID"] == 996,
             "Guthix worn symbols should use the external Guthix symbol appearance")
     require('new ItemDef("Saradomin symbol mould"' in client, "Client Saradomin mould name mismatch")
     require('new ItemDef("Zamorak symbol mould"' in client, "Client Zamorak mould name mismatch")
