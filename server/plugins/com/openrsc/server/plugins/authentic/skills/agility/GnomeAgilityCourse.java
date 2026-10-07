@@ -49,7 +49,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				player.message("you stand on the slippery log");
 				boundaryTeleport(player, Point.location(692, 494));
 				delay();
-				teleport(player, 692, 495);
+				player.teleport(692, 495, 0, false);
 				delay();
 				boundaryTeleport(player, Point.location(692, 496));
 				delay();
@@ -70,7 +70,9 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				}
 				player.message("you climb the net");
 				delay(3);
-				teleport(player, 692, 1448);
+				// Hard course destinations use geographic Y and an explicit level.
+				// Native layered Points do not decode the old 944-per-floor Y packing.
+				player.teleport(692, 504, 1, false);
 				player.message("and pull yourself onto the platform");
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 150, ItemId.TIER_1_AGILITY_POUCH.id());
@@ -82,7 +84,8 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				}
 				player.message("you pull yourself up the tree");
 				delay(2);
-				teleport(player, 693, 2394);
+				// The upper platform is (690..691, 507); (693, 506) is invisible floor.
+				player.teleport(691, 507, 2, false);
 				player.message("to the platform above");
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 150, ItemId.TIER_1_AGILITY_POUCH.id());
@@ -92,7 +95,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				delay(2);
 				player.message("you hold on tight");
 				delay(4);
-				teleport(player, 685, 2396);
+				player.teleport(685, 508, 2, false);
 				player.message("and swing to the oppisite platform");
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 150, ItemId.TIER_1_AGILITY_POUCH.id());
@@ -100,7 +103,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 			case LANDING:
 				player.message("you hang down from the tower");
 				delay(2);
-				teleport(player, 683, 506);
+				player.teleport(683, 506, 0, false);
 				player.message("and drop to the floor");
 				say(player, null, "ooof");
 				player.incExp(Skill.AGILITY.id(), 30, true);
@@ -116,7 +119,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				player.setLocation(Point.location(683, 505));
 				player.message("and run towards the net");
 				delay();
-				teleport(player, 683, 501);
+				player.teleport(683, 501, 0, false);
 				player.incExp(Skill.AGILITY.id(), 30, true);
 				AgilityUtils.completedObstacle(player, obj.getID(), obstacles, lastObstacle, 150, ItemId.TIER_1_AGILITY_POUCH.id());
 				return;
@@ -125,7 +128,7 @@ public class GnomeAgilityCourse implements OpLocTrigger {
 				delay(3);
 				mes("and shuffle down into it");
 				delay(3);
-				teleport(player, 683, 494);
+				player.teleport(683, 494, 0, false);
 				gnomeTrainer = ifnearvisnpc(player, NpcId.GNOME_TRAINER_ENTRANCE.id(), 10);
 				if (gnomeTrainer != null && !AgilityUtils.hasDoneObstacle(player, PIPE, obstacles)) {
 					npcsay(player, gnomeTrainer, "that's the way, well done");
