@@ -11,6 +11,8 @@ WINDOWS_JRE=""
 ASSETS_CLEARED=false
 SKIP_BUILD=false
 SOURCE_COMMIT=""
+FIXES_ONLY_BRANCH=""
+FIXES_ONLY_COMMIT=""
 RELEASE_MARKER_ENTRY="spoiled-milk-release-build.marker"
 
 fail() {
@@ -29,6 +31,9 @@ Usage:
     --assets-cleared
 
 Options:
+  --fixes-only-source BRANCH --source-commit HASH
+                    Explicit reviewed fixes-only source; clean HEAD must match
+                    the actual pushed branch and the approved live baseline.
   --assets-cleared  Acknowledge that redistribution terms for packaged visual
                     assets were checked before creating publishable archives.
   --skip-build      Use an already-built client jar. Intended for packaging
@@ -38,6 +43,12 @@ EOF
 
 while (($#)); do
   case "$1" in
+    --fixes-only-source)
+      [[ $# -ge 2 ]] || fail "--fixes-only-source requires a branch"
+      FIXES_ONLY_BRANCH="$2"; shift 2 ;;
+    --source-commit)
+      [[ $# -ge 2 ]] || fail "--source-commit requires a commit"
+      FIXES_ONLY_COMMIT="$2"; shift 2 ;;
     --version)
       [[ $# -ge 2 ]] || fail "--version requires a value"
       VERSION="$2"
@@ -98,6 +109,13 @@ done
 
 require_release_git_state() {
   local expected_commit="${1:-}"
+  if [[ -n "$FIXES_ONLY_BRANCH" || -n "$FIXES_ONLY_COMMIT" ]]; then
+    source "$SCRIPT_ROOT/scripts/lib/fixes-only-release-source.sh"
+    fixes_only_require_source "$ROOT_DIR" "$FIXES_ONLY_BRANCH" "$FIXES_ONLY_COMMIT"
+    [[ -z "$expected_commit" || "$expected_commit" == "$FIXES_ONLY_COMMIT" ]] || fail "Release source changed during packaging"
+    SOURCE_COMMIT="$FIXES_ONLY_COMMIT"
+    return
+  fi
   local git_dir
   local current_branch
   local current_commit

@@ -7,6 +7,8 @@ ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"
 source "$SCRIPT_ROOT/scripts/lib/layered-world-package.sh"
 
 VERSION=""
+FIXES_ONLY_BRANCH=""
+FIXES_ONLY_COMMIT=""
 
 fail() {
   printf 'FAIL: %s\n' "$*" >&2
@@ -20,11 +22,19 @@ Usage:
 
 Creates the exact validated Spoiled Milk layered-world server artifact beside
 the player archives and adds all three ZIP files to SHA256SUMS.txt.
+For an approved fixes-only source, pass --fixes-only-source BRANCH and
+--source-commit HASH together. Default packaging still requires published main.
 EOF
 }
 
 while (($#)); do
   case "$1" in
+    --fixes-only-source)
+      [[ $# -ge 2 ]] || fail "--fixes-only-source requires a branch"
+      FIXES_ONLY_BRANCH="$2"; shift 2 ;;
+    --source-commit)
+      [[ $# -ge 2 ]] || fail "--source-commit requires a commit"
+      FIXES_ONLY_COMMIT="$2"; shift 2 ;;
     --version)
       [[ $# -ge 2 ]] || fail "--version requires a value"
       VERSION="$2"
@@ -49,6 +59,11 @@ for command_name in git java javac python3 sha256sum zip; do
 done
 
 current_branch="$(git -C "$ROOT_DIR" symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+if [[ -n "$FIXES_ONLY_BRANCH" || -n "$FIXES_ONLY_COMMIT" ]]; then
+  source "$SCRIPT_ROOT/scripts/lib/fixes-only-release-source.sh"
+  fixes_only_require_source "$ROOT_DIR" "$FIXES_ONLY_BRANCH" "$FIXES_ONLY_COMMIT"
+  source_commit="$FIXES_ONLY_COMMIT"
+else
 [[ "$current_branch" == main ]] \
   || fail "Layered-world packaging must run from manager branch main"
 worktree_status="$(git -C "$ROOT_DIR" status --porcelain --untracked-files=all)"
@@ -58,6 +73,7 @@ source_commit="$(git -C "$ROOT_DIR" rev-parse HEAD)"
 published_commit="$(git -C "$ROOT_DIR" rev-parse --verify 'spoiled-milk/main^{commit}' 2>/dev/null || true)"
 [[ -n "$published_commit" && "$source_commit" == "$published_commit" ]] \
   || fail "Layered-world packaging requires HEAD to match spoiled-milk/main"
+fi
 
 output_dir="$ROOT_DIR/output/releases/$VERSION"
 java_archive="$output_dir/spoiled-milk-$VERSION-java.zip"
@@ -65,10 +81,20 @@ windows_archive="$output_dir/spoiled-milk-$VERSION-windows-x64.zip"
 for player_archive in "$java_archive" "$windows_archive"; do
   [[ -f "$player_archive" ]] \
     || fail "Create the player release first; missing $player_archive"
+  python3 - "$player_archive" "$source_commit" <<'PY'
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    entries = [name for name in archive.namelist() if name.endswith('/game-files/SOURCE-COMMIT.txt')]
+    if len(entries) != 1 or archive.read(entries[0]).decode().strip() != sys.argv[2]:
+        raise SystemExit('FAIL: player archive does not match the release source commit')
+PY
 done
 
 workspace="$ROOT_DIR/tools/layered-maps/workspace/release-$VERSION"
 package_root="$(layered_world_generate_package "$ROOT_DIR" "$workspace")"
+if [[ -n "$FIXES_ONLY_BRANCH" ]]; then
+  fixes_only_require_source "$ROOT_DIR" "$FIXES_ONLY_BRANCH" "$FIXES_ONLY_COMMIT"
+fi
 layered_world_require_promotion_approved "$workspace/generation-report.json"
 staging_dir="$output_dir/staging-layered"
 package_name="spoiled-milk-$VERSION-layered-world"
@@ -116,5 +142,8 @@ rm -rf "$staging_dir"
 )
 
 printf 'Created layered-world release artifact:\n'
+if [[ -n "$FIXES_ONLY_BRANCH" ]]; then
+  fixes_only_require_source "$ROOT_DIR" "$FIXES_ONLY_BRANCH" "$FIXES_ONLY_COMMIT"
+fi
 printf '  %s\n' "$archive"
 printf '  %s\n' "$output_dir/SHA256SUMS.txt"

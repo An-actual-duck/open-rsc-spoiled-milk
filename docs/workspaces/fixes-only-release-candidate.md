@@ -61,6 +61,10 @@ gate passes all 143 scenarios. Also passing:
 - Thirteen related equipment/combat definition regressions.
 - R2 boundary audit (6 tests), dependency guard (3 tests), generator freshness
   and prerequisite checks.
+- Fixes-only release-source guards: exact clean pushed source accepted; dirty,
+  wrong branch/commit, missing or changed remote, wrong baseline and all eight
+  pending Git-operation states rejected. Existing player packaging regressions
+  pass, retaining the default published-main policy and asset/provenance checks.
 
 Catalog comparison against the deployed baseline confirms identical item-ID
 sets and no changed item fields besides appearances; deployed NPC definitions,
@@ -73,10 +77,15 @@ has not been claimed as passing.
 ## Release gate
 
 This candidate is not a published player release and is not deployed.
-Current release packaging requires clean published manager `main`; that branch
-already contains excluded Slayer work. Do not fake a published-main reference,
-skip build/provenance checks or rewrite main to get past that guard.
-
-Obtain approval for explicit exact-commit fixes-only release-branch support,
-or defer packaging until a release workflow is agreed. Public activation still
+The user approved explicit exact-commit fixes-only release support. Invoke
+`bash /path/to/candidate/scripts/package-fixes-only-release.sh` from the Core
+manager checkout with the standard player-release arguments plus
+`--fixes-only-source fix/fixes-only-october-release --source-commit HASH`.
+The source must be clean, attached, based on the deployed baseline and match
+the actual pushed remote tip. Workers must remain clean and backed up; no Git
+operation may be pending. The manager's existing local settings are not inputs
+to this isolated build. Default release behavior still requires published main.
+Fresh build, assets, legal notices, runtime and provenance checks remain active;
+paired client/server archives must have the same source commit. Do not fake
+refs, skip checks or rewrite main. Public activation still
 requires fresh shutdown authorization and the full in-game update countdown.
