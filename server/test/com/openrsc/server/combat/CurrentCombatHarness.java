@@ -6,6 +6,10 @@ import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.combat.CombatTick;
 import com.openrsc.server.model.Point;
+import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.world.coordinate.LegacyPackedPointAdapter;
+import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -234,6 +238,34 @@ final class CurrentCombatHarness implements AutoCloseable {
 		final Field field = target.getClass().getDeclaredField(fieldName);
 		field.setAccessible(true);
 		return field.get(target);
+	}
+
+	/** Read-only fixture placement on real terrain, isolated from earlier scenario actors. */
+	Point clearCombatRectangle(final int width, final int height) {
+		if (width < 1 || height < 1 || width > 10 || height > 10)
+			throw new IllegalArgumentException("Invalid combat fixture rectangle");
+		List<Mob> actors = new ArrayList<Mob>();
+		actors.addAll(players);
+		actors.addAll(npcs);
+		for (int y = 400; y < 650; y++) {
+			candidate: for (int x = 100; x < 600; x++) {
+				for (Mob actor : actors) {
+					if (actor.getX() >= x - 8 && actor.getX() <= x + width + 8
+						&& actor.getY() >= y - 8 && actor.getY() <= y + height + 8)
+						continue candidate;
+				}
+				List<WorldLocation> tiles = new ArrayList<WorldLocation>();
+				for (int dx = 0; dx < width; dx++) for (int dy = 0; dy < height; dy++)
+					tiles.add(LegacyPackedPointAdapter.fromLegacyPoint(Point.location(x + dx, y + dy)));
+				for (WorldLocation source : tiles) for (WorldLocation target : tiles) {
+					if (!PathValidation.checkPath(world, source, target, false)
+						|| !PathValidation.checkEnemyCombatProjectilePath(world, source, target))
+						continue candidate;
+				}
+				return Point.location(x, y);
+			}
+		}
+		throw new AssertionError("No clear isolated combat rectangle in installed terrain");
 	}
 
 	void openTile(final int x, final int packedY) {

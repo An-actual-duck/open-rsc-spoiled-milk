@@ -2858,7 +2858,7 @@
     },
     {
       "id": 2224,
-      "appearanceID": 1027,
+      "appearanceID": 1028,
       "meleeDefense": 2,
       "requiredLevel": 0,
       "requiredSkillID": -1,
@@ -2866,7 +2866,7 @@
     },
     {
       "id": 2225,
-      "appearanceID": 1028,
+      "appearanceID": 1029,
       "meleeDefense": 3,
       "rangedDefense": 1,
       "requiredLevel": 0,
@@ -2875,7 +2875,7 @@
     },
     {
       "id": 2226,
-      "appearanceID": 1029,
+      "appearanceID": 1030,
       "meleeDefense": 11,
       "rangedDefense": 3,
       "requiredLevel": 0,
@@ -2884,7 +2884,7 @@
     },
     {
       "id": 2227,
-      "appearanceID": 1030,
+      "appearanceID": 1031,
       "meleeDefense": 14,
       "rangedDefense": 4,
       "requiredLevel": 0,

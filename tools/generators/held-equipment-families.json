@@ -1,0 +1,365 @@
+{
+  "description": "Append-only held-family normalization. Existing palettes preserved; disabled-custom fallback uses authentic nearest metal. No gameplay or inventory changes.",
+  "firstAppearanceId": 1130,
+  "definitions": [
+    {
+      "appearanceId": 1130,
+      "family": "dagger",
+      "mask": 12044761
+    },
+    {
+      "appearanceId": 1131,
+      "family": "shortsword",
+      "mask": 12044761
+    },
+    {
+      "appearanceId": 1132,
+      "family": "scimitar",
+      "mask": 12044761
+    },
+    {
+      "appearanceId": 1133,
+      "family": "2hander",
+      "mask": 12044761
+    },
+    {
+      "appearanceId": 1134,
+      "family": "dagger",
+      "mask": 13134379
+    },
+    {
+      "appearanceId": 1135,
+      "family": "shortsword",
+      "mask": 13134379
+    },
+    {
+      "appearanceId": 1136,
+      "family": "scimitar",
+      "mask": 13134379
+    },
+    {
+      "appearanceId": 1137,
+      "family": "2hander",
+      "mask": 13134379
+    },
+    {
+      "appearanceId": 1138,
+      "family": "dagger",
+      "mask": 9348795
+    },
+    {
+      "appearanceId": 1139,
+      "family": "shortsword",
+      "mask": 9348795
+    },
+    {
+      "appearanceId": 1140,
+      "family": "scimitar",
+      "mask": 9348795
+    },
+    {
+      "appearanceId": 1141,
+      "family": "2hander",
+      "mask": 9348795
+    },
+    {
+      "appearanceId": 1142,
+      "family": "dagger",
+      "mask": 5914493
+    },
+    {
+      "appearanceId": 1143,
+      "family": "shortsword",
+      "mask": 5914493
+    },
+    {
+      "appearanceId": 1144,
+      "family": "scimitar",
+      "mask": 5914493
+    },
+    {
+      "appearanceId": 1145,
+      "family": "2hander",
+      "mask": 5914493
+    },
+    {
+      "appearanceId": 1146,
+      "family": "dagger",
+      "mask": 14221311
+    },
+    {
+      "appearanceId": 1147,
+      "family": "shortsword",
+      "mask": 14221311
+    },
+    {
+      "appearanceId": 1148,
+      "family": "scimitar",
+      "mask": 14221311
+    },
+    {
+      "appearanceId": 1149,
+      "family": "poisoneddagger",
+      "mask": 14221311
+    },
+    {
+      "appearanceId": 1150,
+      "family": "hatchet",
+      "mask": 14221311
+    }
+  ],
+  "mappings": [
+    {
+      "itemId": 1995,
+      "name": "Tin dagger",
+      "previousAppearance": 706,
+      "appearanceId": 1130,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 1997,
+      "name": "Tin Short Sword",
+      "previousAppearance": 706,
+      "appearanceId": 1131,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 1999,
+      "name": "Tin Scimitar",
+      "previousAppearance": 706,
+      "appearanceId": 1132,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 2000,
+      "name": "Tin 2-handed Sword",
+      "previousAppearance": 706,
+      "appearanceId": 1133,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 2006,
+      "name": "Copper dagger",
+      "previousAppearance": 707,
+      "appearanceId": 1134,
+      "fallbackAppearance": 48
+    },
+    {
+      "itemId": 2008,
+      "name": "Copper Short Sword",
+      "previousAppearance": 707,
+      "appearanceId": 1135,
+      "fallbackAppearance": 48
+    },
+    {
+      "itemId": 2010,
+      "name": "Copper Scimitar",
+      "previousAppearance": 707,
+      "appearanceId": 1136,
+      "fallbackAppearance": 48
+    },
+    {
+      "itemId": 2011,
+      "name": "Copper 2-handed Sword",
+      "previousAppearance": 707,
+      "appearanceId": 1137,
+      "fallbackAppearance": 48
+    },
+    {
+      "itemId": 2017,
+      "name": "Titan Steel dagger",
+      "previousAppearance": 708,
+      "appearanceId": 1138,
+      "fallbackAppearance": 51
+    },
+    {
+      "itemId": 2019,
+      "name": "Titan Steel Short Sword",
+      "previousAppearance": 708,
+      "appearanceId": 1139,
+      "fallbackAppearance": 51
+    },
+    {
+      "itemId": 2021,
+      "name": "Titan Steel Scimitar",
+      "previousAppearance": 708,
+      "appearanceId": 1140,
+      "fallbackAppearance": 51
+    },
+    {
+      "itemId": 2022,
+      "name": "Titan Steel 2-handed Sword",
+      "previousAppearance": 708,
+      "appearanceId": 1141,
+      "fallbackAppearance": 51
+    },
+    {
+      "itemId": 2028,
+      "name": "Orichalcum dagger",
+      "previousAppearance": 709,
+      "appearanceId": 1142,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 2030,
+      "name": "Orichalcum Short Sword",
+      "previousAppearance": 709,
+      "appearanceId": 1143,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 2032,
+      "name": "Orichalcum Scimitar",
+      "previousAppearance": 709,
+      "appearanceId": 1144,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 2033,
+      "name": "Orichalcum 2-handed Sword",
+      "previousAppearance": 709,
+      "appearanceId": 1145,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 3262,
+      "name": "Exalted Rune dagger",
+      "previousAppearance": 1047,
+      "appearanceId": 1146,
+      "fallbackAppearance": 53
+    },
+    {
+      "itemId": 3263,
+      "name": "Exalted Rune Short Sword",
+      "previousAppearance": 1047,
+      "appearanceId": 1147,
+      "fallbackAppearance": 53
+    },
+    {
+      "itemId": 3265,
+      "name": "Exalted Rune Scimitar",
+      "previousAppearance": 1047,
+      "appearanceId": 1148,
+      "fallbackAppearance": 53
+    },
+    {
+      "itemId": 3309,
+      "name": "Poisoned Exalted Rune dagger",
+      "previousAppearance": 1047,
+      "appearanceId": 1149,
+      "fallbackAppearance": 53
+    },
+    {
+      "itemId": 3267,
+      "name": "Exalted Rune Hatchet",
+      "previousAppearance": 1049,
+      "appearanceId": 1150,
+      "fallbackAppearance": 114
+    },
+    {
+      "itemId": 2151,
+      "name": "White dagger",
+      "previousAppearance": 54,
+      "appearanceId": 272,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 2152,
+      "name": "White Short Sword",
+      "previousAppearance": 54,
+      "appearanceId": 265,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 2154,
+      "name": "White 2-handed Sword",
+      "previousAppearance": 54,
+      "appearanceId": 286,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 2155,
+      "name": "White Scimitar",
+      "previousAppearance": 54,
+      "appearanceId": 480,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 3113,
+      "name": "Grey dagger",
+      "previousAppearance": 54,
+      "appearanceId": 272,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 3114,
+      "name": "Grey Short Sword",
+      "previousAppearance": 54,
+      "appearanceId": 265,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 3116,
+      "name": "Grey 2-handed Sword",
+      "previousAppearance": 54,
+      "appearanceId": 286,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 3117,
+      "name": "Grey Scimitar",
+      "previousAppearance": 54,
+      "appearanceId": 480,
+      "fallbackAppearance": 54
+    },
+    {
+      "itemId": 1205,
+      "name": "A Silver Dagger",
+      "previousAppearance": 49,
+      "appearanceId": 267,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 1230,
+      "name": "A Silver Dagger",
+      "previousAppearance": 49,
+      "appearanceId": 267,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 1236,
+      "name": "Dagger",
+      "previousAppearance": 49,
+      "appearanceId": 267,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 1255,
+      "name": "Dark Dagger",
+      "previousAppearance": 49,
+      "appearanceId": 267,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 1256,
+      "name": "Glowing Dark Dagger",
+      "previousAppearance": 49,
+      "appearanceId": 267,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 3235,
+      "name": "Fire sword",
+      "previousAppearance": 1035,
+      "appearanceId": 1036,
+      "fallbackAppearance": 49
+    },
+    {
+      "itemId": 3236,
+      "name": "Ice sword",
+      "previousAppearance": 1036,
+      "appearanceId": 1037,
+      "fallbackAppearance": 49
+    }
+  ]
+}

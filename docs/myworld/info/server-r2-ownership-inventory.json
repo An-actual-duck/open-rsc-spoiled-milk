@@ -250,13 +250,7 @@
       "core": "src",
       "plugins": "plugins"
     },
-    "validationErrors": [
-      "missing explicit Ant classpath entry compile_plugins: core.jar",
-      "missing explicit Ant classpath entry runserver: core-gameplay-overlay.jar",
-      "missing explicit Ant classpath entry runserver: core.jar",
-      "missing explicit Ant classpath entry runserverzgc: core-gameplay-overlay.jar",
-      "missing explicit Ant classpath entry runserverzgc: core.jar"
-    ]
+    "validationErrors": []
   },
   "categories": [
     "foundation",
@@ -806,7 +800,7 @@
       "target": "server/src/com/openrsc/server/constants/custom/MyWorldItemId.java"
     }
   ],
-  "inputTreeSha256": "528c38a8d8f0ccdcc1e6af27aa00ef8297f70058a84a4ed0f9f7c99a007f066d",
+  "inputTreeSha256": "fba2cb7aea098f1ec7023fdc1e5afd126b44d5e25d5c183a26502e011faba029",
   "inputs": [
     {
       "brandSignals": [
@@ -1182,7 +1176,7 @@
       "brandSignals": [
         "myworld-name"
       ],
-      "bytes": 21900,
+      "bytes": 22486,
       "category": "foundation",
       "classificationReason": "Authoritative Ant build definition",
       "classificationRule": "server/build.xml",
@@ -1191,7 +1185,7 @@
       "kind": "build-definition",
       "path": "server/build.xml",
       "reverseDependencies": [],
-      "sha256": "de53e03bb73b3943ea614eb6e6cf22157dd38193ff522f6d2e9ba8d5e7fa2c04"
+      "sha256": "d7560195e222183a64f9ece9eb65c641f706754fb3d56c241a084d250cc94917"
     },
     {
       "brandSignals": [],
@@ -1713,11 +1707,11 @@
       "kind": "definition",
       "path": "server/conf/server/defs/ItemDefs.json",
       "reverseDependencies": [],
-      "sha256": "7e6676f67667ab14dc19efc751b7a1b5cc4dc9ec4744dba4a7a9e9b0e8ea05e1"
+      "sha256": "770c6411774d16e76455c3f7b4d273f043ee3c0afb2b3cf80d6ab87a0011bef8"
     },
     {
       "brandSignals": [],
-      "bytes": 1238034,
+      "bytes": 1238043,
       "category": "spoiled-milk-content",
       "classificationReason": "Named Spoiled Milk definition override",
       "classificationRule": "server/conf/server/defs/*{MyWorld,Custom}*",
@@ -1726,7 +1720,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/ItemDefsCustom.json",
       "reverseDependencies": [],
-      "sha256": "f86ec0aa4b5d3ab9c82f441faff7f28b417cd3f2cd4fe932aca8b37dae3aba30"
+      "sha256": "fa48d6550a031baab9c5dd57dbad3ba4077d736845ba0b74da2220e2eb99c980"
     },
     {
       "brandSignals": [],
@@ -1739,7 +1733,7 @@
       "kind": "definition",
       "path": "server/conf/server/defs/ItemDefsMyWorld.json",
       "reverseDependencies": [],
-      "sha256": "565a44b59a335824ca6a18718e324858319b2b2ffe02e0ec711f52fd3e8ec264"
+      "sha256": "3fe1694a7834892e58ce65e2e1e08970ccca5a590c340e513c193e4829805fcf"
     },
     {
       "brandSignals": [],
@@ -24166,7 +24160,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 5718,
+      "bytes": 6003,
       "category": "target-profile",
       "classificationReason": "Authentic gameplay target-profile plugins",
       "classificationRule": "server/plugins/com/openrsc/server/plugins/authentic/**",
@@ -24208,7 +24202,7 @@
       "kind": "ant-plugin-source",
       "path": "server/plugins/com/openrsc/server/plugins/authentic/skills/agility/GnomeAgilityCourse.java",
       "reverseDependencies": [],
-      "sha256": "72a8e1fa3da899e93d3e7e6d33dbe97efd38e4d4bdd1e7fbe58b291dbeebe742"
+      "sha256": "858399d142f794235b26c324bbfee13f1fe667bcb96541ccab99cba0c1b261e8"
     },
     {
       "brandSignals": [],
@@ -31567,7 +31561,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 75641,
+      "bytes": 75710,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -31591,7 +31585,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/model/world/World.java"
       ],
-      "sha256": "d72499410c8cbcfc418f079c4e4ab7834a5192d60221a7ee41626caa09a6a935"
+      "sha256": "37336c0269fa2087c7303d3d838bfd935928fb3060227f301a78f37b234a078f"
     },
     {
       "brandSignals": [],
@@ -33405,7 +33399,7 @@
     },
     {
       "brandSignals": [],
-      "bytes": 8530,
+      "bytes": 6819,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -33421,7 +33415,7 @@
       "reverseDependencies": [
         "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
       ],
-      "sha256": "376417a8f3f69bcb7833ddd95429523928bdb27c08b84864e22accdef16b21c7"
+      "sha256": "7870ae8a3abb326af64851e8d728c3bfae39c84097d5b7ebc0ad60ad2327984c"
     },
     {
       "brandSignals": [],
@@ -34408,7 +34402,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java",
         "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
       ],
-      "sha256": "1981e5fe555a2ff5db1be778c55cb0ea2e22529f5e9789deaba0dfdcc2a70f42"
+      "sha256": "f9264e2f8b1a3a57ae7a772f84556ef05569f9c524a610f37353fe9456fd01fd"
     },
     {
       "brandSignals": [],
@@ -45078,7 +45072,7 @@
         "myworld-name",
         "want-myworld-flag"
       ],
-      "bytes": 62170,
+      "bytes": 62722,
       "category": "foundation",
       "classificationReason": "Current Ant core source; direct content signals are recorded separately as debt",
       "classificationRule": "server/src/**",
@@ -45161,7 +45155,7 @@
         "server/src/com/openrsc/server/event/rsc/impl/PrayerDrainEvent.java",
         "server/src/com/openrsc/server/model/world/region/RegionManager.java"
       ],
-      "sha256": "ff6c67ac8add2aecc86dce40413796bd403567492724ff49ada9017c914cec79"
+      "sha256": "080f9c3930fe15edce09574e027c2532f12c1b3c31d333d863e5573b8cb86b7f"
     },
     {
       "brandSignals": [],
