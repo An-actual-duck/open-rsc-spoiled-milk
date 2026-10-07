@@ -507,10 +507,10 @@ def main() -> None:
     require_exact(items_by_id, 593, "weaponSpeed", 3, "Dragon sword tier-11 fire-breath profile")
     require_exact(items_by_id, 3235, "meleeOffense", items_by_id[74]["meleeOffense"], "Fire sword tier-9 long sword profile")
     require_exact(items_by_id, 3235, "weaponSpeed", items_by_id[74]["weaponSpeed"], "Fire sword tier-9 long sword profile")
-    require_exact(effective_items_by_id, 3235, "appearanceID", 1035, "Fire sword custom equipped visual")
+    require_exact(effective_items_by_id, 3235, "appearanceID", 1036, "Fire sword custom equipped visual")
     require_exact(items_by_id, 3236, "meleeOffense", items_by_id[74]["meleeOffense"], "Ice sword tier-9 long sword profile")
     require_exact(items_by_id, 3236, "weaponSpeed", items_by_id[74]["weaponSpeed"], "Ice sword tier-9 long sword profile")
-    require_exact(effective_items_by_id, 3236, "appearanceID", 1036, "Ice sword custom equipped visual")
+    require_exact(effective_items_by_id, 3236, "appearanceID", 1037, "Ice sword custom equipped visual")
     require_exact(items_by_id, 3237, "meleeOffense", items_by_id[74]["meleeOffense"], "Earth sword tier-9 long sword profile")
     require_exact(items_by_id, 3237, "weaponSpeed", items_by_id[74]["weaponSpeed"], "Earth sword tier-9 long sword profile")
     require_exact(effective_items_by_id, 3237, "appearanceID", 49, "Earth sword iron long sword equipped visual")
@@ -733,10 +733,10 @@ def main() -> None:
     shield_appearances = {
         1962: 698, 1968: 699, 128: 238, 2: 239, 129: 240, 130: 242,
         1974: 700, 131: 243, 1980: 701, 404: 244, 433: 241,
-        1426: 449, 2162: 1025, 3124: 1026,
-        2224: 1027, 2225: 1028, 2226: 1029, 2227: 1030,
+        1426: 449, 2162: 1026, 3124: 1027,
+        2224: 1028, 2225: 1029, 2226: 1030, 2227: 1031,
         124: 98, 3: 99, 125: 100, 126: 101, 127: 102, 403: 103,
-        432: 104, 2161: 1031, 3123: 1032,
+        432: 104, 2161: 1032, 3123: 1033,
     }
     for item_id, appearance_id in shield_appearances.items():
         require_exact(effective_items_by_id, item_id, "appearanceID", appearance_id, "shield shape appearance")

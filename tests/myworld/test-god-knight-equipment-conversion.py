@@ -24,12 +24,12 @@ def main() -> None:
     client = (ROOT / "Client_Base/src/com/openrsc/client/entityhandling/EntityHandler.java").read_text(encoding="utf-8")
 
     expected_items = {
-        3131: ("Black gauntlets", 8, 217, "items:217", 989),
-        3132: ("Black greaves", 9, 223, "items:223", 990),
-        3133: ("White gauntlets", 8, 217, "items:217", 991),
-        3134: ("White greaves", 9, 223, "items:223", 992),
-        3135: ("Grey gauntlets", 8, 217, "items:217", 993),
-        3136: ("Grey greaves", 9, 223, "items:223", 994),
+        3131: ("Black gauntlets", 8, 217, "items:217", 990),
+        3132: ("Black greaves", 9, 223, "items:223", 991),
+        3133: ("White gauntlets", 8, 217, "items:217", 992),
+        3134: ("White greaves", 9, 223, "items:223", 993),
+        3135: ("Grey gauntlets", 8, 217, "items:217", 994),
+        3136: ("Grey greaves", 9, 223, "items:223", 995),
         3229: ("Black Spear", 4, 283, "items:283", 181),
         3230: ("White Spear", 4, 283, "items:283", 181),
         3231: ("Grey Spear", 4, 283, "items:283", 181),

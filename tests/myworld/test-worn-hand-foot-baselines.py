@@ -62,29 +62,29 @@ def main() -> None:
         )
 
     expected_base_appearances = {
-        698: 1000,  # Steel gauntlets
-        699: 1006,  # gauntlets of goldsmithing
-        700: 1007,  # gauntlets of cooking
-        701: 1008,  # gauntlets of chaos
-        1006: 1009,  # Klank's gauntlets
+        698: 1001,  # Steel gauntlets
+        699: 1007,  # gauntlets of goldsmithing
+        700: 1008,  # gauntlets of cooking
+        701: 1009,  # gauntlets of chaos
+        1006: 1010,  # Klank's gauntlets
     }
     for item_id, appearance_id in expected_base_appearances.items():
         item = base_items[item_id]
         require(item["appearanceID"] == appearance_id, f"{item['name']} should use appearance {appearance_id}")
 
     expected_custom_appearances = {
-        1960: 996, 1966: 997, 1983: 998, 1985: 999, 1989: 1001,
-        1972: 1002, 1991: 1003, 1978: 1004, 1993: 1005,
-        3131: 989, 3132: 990, 3133: 991, 3134: 992, 3135: 993, 3136: 994,
-        3137: 1010, 3138: 1011, 3139: 1012, 3140: 1013, 3141: 1014,
-        3142: 1015, 3143: 1016, 3144: 1017, 3145: 1018, 3146: 1019,
-        3147: 1020, 3148: 1021, 3149: 1022, 3150: 1023, 3151: 1024,
+        1960: 997, 1966: 998, 1983: 999, 1985: 1000, 1989: 1002,
+        1972: 1003, 1991: 1004, 1978: 1005, 1993: 1006,
+        3131: 990, 3132: 991, 3133: 992, 3134: 993, 3135: 994, 3136: 995,
+        3137: 1011, 3138: 1012, 3139: 1013, 3140: 1014, 3141: 1015,
+        3142: 1016, 3143: 1017, 3144: 1018, 3145: 1019, 3146: 1020,
+        3147: 1021, 3148: 1022, 3149: 1023, 3150: 1024, 3151: 1025,
     }
     for item_id, appearance_id in expected_custom_appearances.items():
         item = custom_items[item_id]
         require(item["appearanceID"] == appearance_id, f"{item['name']} should use appearance {appearance_id}")
 
-    for appearance_id in range(1010, 1025):
+    for appearance_id in range(1011, 1026):
         item = next((candidate for candidate in custom_items.values() if candidate["appearanceID"] == appearance_id), None)
         require(item is not None, f"God wool appearance {appearance_id} should be assigned")
 
