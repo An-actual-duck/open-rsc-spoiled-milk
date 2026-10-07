@@ -54,6 +54,32 @@ or from a report that no players are online.
 
 ## Authorized Live Activation
 
+### Reviewed fixes-only release exception
+
+When the user approves a fixes-only release excluding unfinished main content,
+use the isolated, clean, exactly pushed source and published immutable tag.
+This remains subject to the same shutdown authorization, stopped-port, SQLite
+backup, clean detached live checkout and native-package checks. It never changes
+main to impersonate the release or edits production source in the live tree.
+
+From the manager checkout after the authorized shutdown has completed:
+
+```bash
+bash scripts/deploy-fixes-only-release.sh SOURCE BRANCH FULL_COMMIT VERSION
+bash scripts/run-hosted-release.sh VERSION
+```
+
+Launch the second command in its own graphical terminal. The tag is verified
+against the actual remote on deployment and again on startup. The launch marker
+records the release tag, and manager `live-status.sh` verifies it separately from
+published main. Keep using this explicit runner for this detached release;
+the default live runner continues to require published main. Existing manager
+local settings are excluded from the release source and remain untouched.
+
+For v0.2.88, SOURCE is `/home/justin/fixes-only-release-uebbT3/target`, BRANCH
+is `fix/fixes-only-october-release`, and FULL_COMMIT is
+`9e334b0da7e48825dabfe871b4b02c2e970f8eda`.
+
 The in-game admin command is:
 
 ```text
