@@ -1,5 +1,10 @@
 # Spoiled Milk World Builder Compatibility Plan
 
+> Historical compatibility/recovery evidence, not the active tool roadmap.
+> The October 9, 2026 standalone toolkit reset supersedes manager assignments
+> here. Existing game behavior and saved imports remain preserved. See
+> [active toolkit ownership](../../workspaces/rsc-dev-toolkit.md).
+
 Prepared September 30, 2026 for the owner and coordinating Core manager.
 
 October 2 direction update: the owner has requested an Editor-led content lifecycle refactor and complete round-trip acceptance, rather than further isolated compatibility fixes. See [World Builder content lifecycle implementation handoff](world-builder-content-lifecycle-handoff.md) for current evidence, ownership, delivery phases, preservation requirements, and acceptance gates. The alpha 9 checkpoint below remains historical evidence; it is not the latest overall status.

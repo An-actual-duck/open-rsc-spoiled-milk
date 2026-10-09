@@ -1,5 +1,10 @@
 # World Builder content lifecycle implementation handoff
 
+> Historical: superseded by the owner-approved standalone toolkit reset on
+> October 9, 2026. Do not resume these manager assignments or treat the reuse
+> recommendation below as current architecture. See
+> [active toolkit ownership](../../workspaces/rsc-dev-toolkit.md).
+
 Prepared October 2, 2026 by the Core manager for the RSC World Editor manager.
 
 The owner needs to finish the Slayer Tower and other major Spoiled Milk content. Repeated compatibility failures have delayed that work and made the owner the integration tester between projects. The requested outcome is a dependable editing workflow, not another isolated compatibility exception. Substantial refactoring is appropriate where it removes a demonstrated architectural obstacle and shortens the path to that outcome.

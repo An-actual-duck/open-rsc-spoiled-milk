@@ -123,6 +123,16 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.fixture.close()
 
+    def test_ancillary_repository_guide_uses_its_own_identity(self) -> None:
+        f = self.fixture
+        f.env["AI_PROJECT_NAME"] = "rsc-dev-toolkit"
+        f.run("ai-workspace.sh", "init", "1")
+        slot = f.base / "rsc-dev-toolkit-ai-1"
+        guide = (slot / "AI_WORKSPACE.md").read_text(encoding="utf-8")
+        self.assertIn("this slot belongs only to `rsc-dev-toolkit`", guide)
+        self.assertNotIn("this slot belongs only to Spoiled Milk/Core-Framework", guide)
+        self.assertNotIn("/home/justin/rsc-world-editor", guide)
+
     def test_checkpoint_handoff_merge_and_safe_recycle(self) -> None:
         f = self.fixture
         f.run("ai-workspace.sh", "init", "2")
@@ -133,8 +143,9 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
         f.run("ai-workspace.sh", "start", "ai-1", "fix/fixture-task")
         self.assertEqual(f.git("branch", "--show-current", cwd=slot).stdout.strip(), "fix/fixture-task")
         guide = (slot / "AI_WORKSPACE.md").read_text(encoding="utf-8")
-        self.assertIn("Never accept World Editor, World Builder", guide)
-        self.assertIn("/home/justin/rsc-world-editor-runtime", guide)
+        self.assertIn("this slot belongs only to `Core-Framework`", guide)
+        self.assertIn("retired Editor/runtime managers", guide)
+        self.assertNotIn("/home/justin/rsc-world-editor-runtime", guide)
         (slot / "untracked-preserved.txt").write_text("checkpoint me\n", encoding="utf-8")
 
         f.run("ai-workspace.sh", "checkpoint", "-m", "Checkpoint fixture", cwd=slot)

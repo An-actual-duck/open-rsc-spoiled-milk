@@ -1,5 +1,8 @@
 # Core Map Compatibility Initial Audit
 
+> Historical preservation evidence. New tool work follows the October 9, 2026
+> standalone toolkit reset and [toolkit ownership](../../workspaces/rsc-dev-toolkit.md).
+
 September 30, 2026. This records the opening audit for the [compatibility plan](world-builder-compatibility-consolidation.md). It is not a runtime acceptance or deployment report.
 
 ## Preservation and workspace

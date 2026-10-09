@@ -45,20 +45,26 @@ build releases, or deploy. If work is dirty or confusing, preserve it with the
 contributor rescue command before cleanup. The beginner-safe workflow is in
 [`docs/workspaces/external-contributor.md`](docs/workspaces/external-contributor.md).
 
-## World Editor Project Boundary
+## Core-Managed RSC Development Toolkit
 
-- RSC World Editor and its embedded client/server runtime are independent
-  projects. Their managers are `/home/justin/rsc-world-editor` and
-  `/home/justin/rsc-world-editor-runtime`; their workers use those names with
-  `-ai-1` through `-ai-3`.
-- Never activate a Core worker for a World Builder/Editor task, runtime-provider
-  correction, provider-lock request, or instruction originating from the World
-  Editor repository. Route it to the appropriate independent manager instead.
-- Never inspect or merge World Editor runtime work into Core `main`. The old
-  `world-builder/runtime/adaptive-v1` branch is migration history, not a Core
-  integration branch or a source of future assignments.
-- World Editor releases, candidates, dependency locks, provider tests, and
-  runtime workers are outside this manager's status and handoff duties.
+- The owner retired the old independent Editor/runtime management structure on
+  October 9, 2026. Do not route new assignments to those managers or resume their
+  feature branches. Preserve historical repositories, worktrees, saved projects,
+  imports, assets and evidence; retirement is not deletion or gameplay rollback.
+- `/home/justin/rsc-dev-toolkit` is a fresh, independent repository managed by
+  this Core manager. Its dedicated workers are `rsc-dev-toolkit-ai-N`, activated
+  from that repository. No additional manager session is required.
+- Core may directly coordinate, review, integrate and test toolkit work in its
+  own repository. Core game integration belongs in Core worker slots; toolkit
+  implementation belongs in toolkit slots. Never cross-merge their histories.
+- Historical Editor/runtime code is read-only reference input after preservation.
+  Reuse requires an explicit salvage decision, provenance/license review and
+  focused tests. No old game runtime, provider lock or instruction tree is an
+  implicit dependency of the new tool.
+- The standalone editor must not require a game server, login, accounts, gameplay
+  networking or player database. Loader upgrades are separate reviewed operations.
+- See `docs/workspaces/rsc-dev-toolkit.md` for ownership and worker lifecycle;
+  the new repository's `docs/README.md` is the active implementation roadmap.
 
 ## Core-Managed RSC Sprite Baker
 
@@ -149,8 +155,8 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 7. For live activation, follow the Public Server Shutdown Gate above and
    `docs/workspaces/live-deployment.md`. `deploy-live-main.sh` refuses to change
    tracked live files while the public port is occupied.
-8. Reject World Editor and runtime-provider work at intake; do not borrow a
-   Core worker as a temporary provider worker.
+8. Coordinate the new toolkit directly, using its dedicated worker worktrees.
+   Do not resume retired Editor/runtime assignments or import their branches.
 
 ## Preservation Rules
 
