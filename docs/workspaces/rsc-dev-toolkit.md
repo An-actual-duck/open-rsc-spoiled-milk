@@ -332,7 +332,7 @@ The next boundary remains unification of terrain access/residency and truthful
 capability exposure, after this slice's acceptance. Instances, coordinate/ID
 widening, new schemas and editor/upgrader implementation remain deferred.
 
-### Third slice: authoritative source facade (private acceptance pending)
+### Third slice: authoritative source facade (private server acceptance passed)
 
 The activated `refactor/map-authority-facade` worker starts from published
 `df4954b0108e69d17a934dc069ed107373ca3fb0`. Its bounded inventory found these
@@ -416,9 +416,25 @@ The independently built server JAR had SHA-256
 `428e9bd15121ceb0d6e05aa1305c57600905697d556a67251c3d8b64c99a28d0`.
 Evidence is retained in the isolated validation directory named above, including
 `map-lookup-before-facade.log` and `map-lookup-after-facade.log`.
-Full private startup acceptance remains a separate manager gate, not inferred
-from these lookup tests or the owner's previous unchanged client review.
-No next-slice, instance, widening or editor implementation begins.
+Final private server acceptance was independently completed with the same runtime
+sources and exact test/documentation checkpoint
+`1e6776b48c75eeeda2b4b9e57f396e990564626e`. All 54 focused checks passed:
+facade (8), runtime validation (16), activation (10), native source/wire (14),
+recovery (2) and atomic activation (4). The 8910-tile golden comparison remained
+identical after all 33,545 placements were registered. Actual source-built private
+startup on loopback port 43629 completed in 3493 ms without errors or exceptions,
+with 877 NPC definitions, 3400 item definitions and 475 plugin handlers. Evidence
+is retained in `server-startup-facade-review.log` in the isolated validation
+directory above. The temporary process was stopped only after its exact private
+directory and absence of client connections were verified; the owner's candidate,
+baseline and public deployment were unchanged.
+
+This acceptance is independent maintained-server startup, full population and
+lookup parity. It is not a new graphical owner review: the owner's continued
+successful gameplay was on the earlier candidate, not this source facade build.
+Loader closeout still requires the remaining schema/capability contract slice and
+the manager's cumulative readiness judgment. No next-slice, instance, widening or
+editor implementation begins in this task.
 The next contract slice must characterize effective terrain material IDs: current
 native overlay lookup can dereference a missing TileDef. This extraction preserves
 that behavior; typed pre-mutation material validation and its control-value rules
