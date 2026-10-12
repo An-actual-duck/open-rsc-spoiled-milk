@@ -332,7 +332,7 @@ The next boundary remains unification of terrain access/residency and truthful
 capability exposure, after this slice's acceptance. Instances, coordinate/ID
 widening, new schemas and editor/upgrader implementation remain deferred.
 
-### Third slice: authoritative lookup inventory (implementation pending)
+### Third slice: authoritative source facade (private acceptance pending)
 
 The activated `refactor/map-authority-facade` worker starts from published
 `df4954b0108e69d17a934dc069ed107373ca3fb0`. Its bounded inventory found these
@@ -359,15 +359,70 @@ maintained boundaries; they are not interchangeable loaders:
   legacy base suppression and RegionManager's legacy archive suppression are
   deliberate replacement semantics and must remain aligned.
 
-Proposed boundary for manager review: one immutable source facade bound to the
-resolved activation plan and validated catalog, with explicit legacy projection,
-native server-field/collision conversion and opt-in authoring adapters. First
-delegate typed terrain/owner lookup and catalog population-policy access; retain
-the packed compatibility backend, actual object registry, transition guards and
-all presentation/readiness/prediction machinery. Capture pre-change parity before
-moving conversion. Missing authored terrain is not an unloaded scene, and no
-neighbor lookup may silently cross to another owner or classic fallback.
-This inventory does not start instances, widening or editor development.
+The approved extraction implements `RuntimeMapAuthority`, bound to the immutable
+resolved activation plan and validated catalog. Typed terrain/owner lookup,
+authored package iteration and legacy archive/population policy use this single
+entry point. `LegacyTerrainProjectionAdapter` contains the existing exact packed
+conversion; `NativeTerrainTileAdapter` contains the existing server field casts
+and static collision derivation. Actual registered-object collision is applied
+after static terrain collision, not inferred from rendering or speculative data.
+Packed integer/Point APIs remain the compatibility backend and never infer a
+signed native level. Transition validation, registration/spatial indexes, codecs,
+readiness, prediction and client wire/presentation are not rewritten.
+
+The retained authoring bridge is explicit and evaluated lazily. It preserves the
+existing mutable WORLD_BUILDER_MODE condition and does not access session state
+during Server/World construction. Disabled authoring cannot manufacture native
+ownership; enabled historical drafts still resolve through their retained bridge.
+No historical implementation or repository history was imported.
+
+Compatibility narrowing is deliberate parity, not new wide-height support:
+TileValue elevation/walls remain byte fields and diagonal remains a short;
+immutable raw native terrain and packets retain their separate wider contracts.
+The authoring parity fixture uses raw elevation 65535 and proves the existing
+byte projection is unchanged, not that all gameplay height handling is widened.
+Missing authored terrain is not an unloaded scene. Signed/nonrepresentable absence
+still refuses; representable blank backend regions remain blocked. Native collision
+neighbors resolve only through the original owner, even at adjacent catalog edges.
+
+One bounded correctness fix is intentionally distinct from extraction parity:
+previous RegionManager.load suppressed classic archives whenever a retained
+replacement profile was named, even when the resolved plan disabled native maps
+and legacy placement population remained enabled. Archive and population policy
+now both follow the plan/catalog's classic/additive/replacement ownership. The
+failure-first rollback test uses a real minimal packed ZIP sector: the old build
+skipped elevation-23 walkable data, leaving a blocked elevation-0 blank tile; the
+corrected path invokes the real classic loader and reads the expected tile.
+Malformed installed evidence and corrupt selected native sources still fail before
+fallback, as verified by the prior activation tests.
+
+`test-map-authority-facade.py` exercises eight maintained entry-point/contract scenarios:
+classic typed/packed and mutable identity; additive signed/native plus registered
+collision and classic availability; replacement absence/field parity; owner-local
+neighbor collision; synthetic mutable refusal; explicit runtime-conditional drafts;
+the intentional classic rollback fix; and resolved plan/catalog mismatch refusal
+with inactive authority unable to consult authoring or silently select a catalog.
+Null/overflow error snapshots and six
+parity scenarios compare exactly with a frozen maintained baseline when
+MAP_FACADE_BASELINE_CORE_JAR is supplied. The rollback counterexample is excluded
+from old/new equality because its known bug is intentionally corrected.
+
+Independent manager maintained-content lookup comparison from extraction source
+`a1bf480d3f1a02b8da89e330593edef87ac5118d` read the four corners and center of
+every sorted actual sector after all 33,545 placements were registered. The
+1782-sector / 8910-tile snapshot digest matched the pre-facade build exactly:
+`421fcabcdbdffba979349538892a174be31b1c83c4200e581212a498c725adfa`.
+The independently built server JAR had SHA-256
+`428e9bd15121ceb0d6e05aa1305c57600905697d556a67251c3d8b64c99a28d0`.
+Evidence is retained in the isolated validation directory named above, including
+`map-lookup-before-facade.log` and `map-lookup-after-facade.log`.
+Full private startup acceptance remains a separate manager gate, not inferred
+from these lookup tests or the owner's previous unchanged client review.
+No next-slice, instance, widening or editor implementation begins.
+The next contract slice must characterize effective terrain material IDs: current
+native overlay lookup can dereference a missing TileDef. This extraction preserves
+that behavior; typed pre-mutation material validation and its control-value rules
+need their own bounded tests rather than an unrelated fix here.
 
 ## Active versus historical documentation
 

@@ -108,6 +108,42 @@ public final class MapAuthorityFixture {
 }
 '''
 
+CONTRACT_HARNESS = r'''
+import com.openrsc.server.io.*;
+import com.openrsc.server.model.world.coordinate.*;
+import com.openrsc.server.model.world.region.*;
+public final class MapAuthorityContractFixture {
+ static MapSourceActivationPlan plan(boolean enabled,String path){
+  boolean[] gates=new boolean[9];for(int i=0;i<4;i++)gates[i]=enabled;
+  return MapSourceActivationPlan.resolve(gates,new boolean[9],true,path,"","native-additive","test","absent","","");
+ }
+ static RuntimeMapAuthority authority(MapSourceActivationPlan plan,NativeLayeredWorldPackageCatalog catalog,TileValue legacy){
+  return new RuntimeMapAuthority(plan,catalog,new LegacyTerrainProjectionAdapter(()->false,p->legacy,p->legacy),()->false,
+   new RuntimeMapAuthority.AuthoringAccess(){public boolean hasDraft(WorldLocation location){throw new AssertionError("inactive authoring touched");}
+    public NativeLayeredTerrainTile resolve(WorldLocation location,NativeLayeredTerrainTile base){return base;}},
+   new NativeTerrainTileAdapter(x->false,x->false,x->false,x->false,x->false),(location,tile)->tile);
+ }
+ static void refused(Runnable operation){try{operation.run();throw new AssertionError("plan/catalog mismatch accepted");}catch(IllegalArgumentException expected){}}
+ public static void main(String[] args)throws Exception {
+  NativeLayeredWorldPackageCatalog catalog=NativeLayeredWorldPackageCatalog.loadConfigured(args[0]);
+  NativeLayeredWorldRuntimeProfile.NATIVE_ADDITIVE.validate(catalog);
+  TileValue legacy=new TileValue();
+  refused(()->authority(plan(true,args[0]),null,legacy));
+  refused(()->authority(plan(false,""),catalog,legacy));
+  RuntimeMapAuthority inactive=authority(plan(false,""),null,legacy);
+  WorldLocation classic=WorldLocation.global(new WorldCoordinate(450,600,0));
+  if(inactive.getTile(classic)!=legacy||inactive.getMutableTile(classic)!=legacy||inactive.hasNativeTerrain(classic)
+    ||inactive.replacesLegacyPopulation()||inactive.skipsLegacyTerrain())throw new AssertionError("inactive source selected hidden fallback");
+  RuntimeMapAuthority selected=authority(plan(true,args[0]),catalog,legacy);
+  WorldLocation owned=WorldLocation.global(new WorldCoordinate(488,600,42));
+  if(!selected.hasNativeTerrain(owned)||selected.findOwner(owned).get()!=catalog.getPrimaryPackage()
+    ||selected.getTile(owned)==legacy||selected.authoredPackages().size()!=1)throw new AssertionError("selected source lost authoritative catalog");
+  try{selected.authoredPackages().clear();throw new AssertionError("catalog mutated");}catch(UnsupportedOperationException expected){}
+  System.out.println("PASS resolved plan/catalog mismatch refusal and inactive no-fallback policy");
+ }
+}
+'''
+
 
 class MapAuthorityFacadeTest(unittest.TestCase):
     @classmethod
@@ -121,6 +157,11 @@ class MapAuthorityFacadeTest(unittest.TestCase):
         source=cls.work/"MapAuthorityFixture.java"
         source.write_text(HARNESS)
         subprocess.run(["javac","-cp",cls.cp,"-d",str(cls.work),str(source)],check=True)
+        with zipfile.ZipFile(cls.core) as archive:
+            cls.has_facade="com/openrsc/server/model/world/region/RuntimeMapAuthority.class" in archive.namelist()
+        if cls.has_facade:
+            contract=cls.work/"MapAuthorityContractFixture.java";contract.write_text(CONTRACT_HARNESS)
+            subprocess.run(["javac","-cp",cls.cp,"-d",str(cls.work),str(contract)],check=True)
         data=cls.work/"conf/server/data";data.mkdir(exist_ok=True)
         with zipfile.ZipFile(data/"Custom_Landscape.orsc","w") as archive:
             archive.writestr("h0x57y49",bytes([23,2,0,0,0,0,0,0,0,0])*2304)
@@ -144,6 +185,15 @@ class MapAuthorityFacadeTest(unittest.TestCase):
 
     def test_classic_typed_packed_identity_and_nonrepresentable_refusal(self):
         self.invoke("classic","native-additive",self.work)
+
+    def test_resolved_source_catalog_guards_and_inactive_no_fallback(self):
+        if not self.has_facade:
+            self.skipTest("new facade API is absent in this deliberately frozen pre-change build")
+        package=self.support.generic("source-contract")
+        result=subprocess.run(["java","-cp",self.cp,"MapAuthorityContractFixture",str(package)],
+                              cwd=self.work,text=True,capture_output=True,timeout=30)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        self.assertIn("PASS resolved plan/catalog",result.stdout)
 
     def test_classic_rollback_with_retained_replacement_profile_loads_real_archive(self):
         self.invoke("classic-rollback","native-replacement",self.work)

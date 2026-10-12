@@ -1586,10 +1586,11 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             "NativeLayeredTerrainTile source =",
-            region_manager,
+            (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text(),
         )
         self.assertIn("resolveNativeTerrainTile(", region_manager)
-        self.assertIn("owner.findTile(location).orElse(null)", region_manager)
+        self.assertIn("owner.findTile(location).orElse(null)",
+                      (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text())
         self.assertIn("placement.getMinX()", region_manager)
         self.assertIn("placement.getMaxX()", region_manager)
         self.assertIn("placement.getMinY()", region_manager)
