@@ -33,6 +33,9 @@
         <delete file="${jar}.world-builder-new"/>
         <delete dir="${build}"/>
         <mkdir dir="${build}"/>
+        <copy todir="${build}/map-runtime">
+            <fileset dir="../runtime-contract"/>
+        </copy>
         <copy file="${release.marker.file}"
               tofile="${build}/spoiled-milk-release-build.marker"
               failonerror="false"

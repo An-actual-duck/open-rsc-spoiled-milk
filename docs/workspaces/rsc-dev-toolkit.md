@@ -440,6 +440,136 @@ native overlay lookup can dereference a missing TileDef. This extraction preserv
 that behavior; typed pre-mutation material validation and its control-value rules
 need their own bounded tests rather than an unrelated fix here.
 
+### Fourth slice: schema/material contract (worker verification in progress)
+
+The activated `feat/map-runtime-contract` worker starts from published
+`64f3e48c0c73c6c41529126bad831eedcf32ed38`. Its initial audit keeps independent
+axes separate: package schema 1; uniform/RLE v1 byte-height and raw v1/raw v2-u16
+terrain codecs; placement schemas 1–4; scene-context header schemas 1–8;
+terrain snapshot protocols 3–10 (9/10 are stage payloads, not context headers); terrain
+stage protocols 1–5; readiness receipts 1/2; and scene baseline schemas including
+schema 7 atomic fences versus schema 8 presentation pages. Numeric version order
+within one axis is not proof of capability in another axis.
+
+The retained Core target-evidence generator's encodingVersions `[1]` accompanies
+mapFormatId `legacy-packed-orsc-v1`; it does not declare placement schemas 1–4 or
+all wire versions. Owner-local capability edits remain preserved and are not used
+as behavioral evidence or overwritten by this task. A separate data-only contract
+and maintained-source golden tests are proposed rather than weakening historical
+evidence parsers or treating their ambiguous version list as universal support.
+
+Material audit findings before implementation:
+
+- Native overlay lookup dereferences missing effective TileDefs. Overlay 0 is
+  absent decoration, 250 aliases overlay 2 for collision, and 255 is blocking
+  base color outside TileDef inventory; these controls must not become IDs.
+- Native vertical/horizontal walls use effective DoorDefs with one-based terrain
+  IDs; missing definitions currently silently lose collision. Diagonal ranges
+  `(0,12000)` and `(12000,24000)` select the two wall orientations. Embedded
+  scenery uses `(48000,60000)` and definition index `raw - 48001`; other raw
+  ranges/endpoint controls require explicit existing-behavior characterization.
+- Server EntityHandler has no roof/ElevationDef inventory. The matching client's
+  EntityHandler creates six scalar ElevationDefs in code, with no other writer.
+  A canonical data-only shared roof resource with preserved scalar pairs and
+  byte-identical server/client build copies is proposed for review. It would
+  supply effective roof inventory without inventing a vanilla ID ceiling or
+  introducing art/format changes.
+- Client Tile groundElevation is an integer; terrain presentation sampling uses
+  three mesh units per raw elevation unit. Existing isolated wire tests exercise
+  wide decoding, but an actual maintained generator-to-client materialization/
+  geometry check with heights above 255 remains required before capability claims.
+
+No codec widening, instance/editor/upgrader work, account/map/art changes or
+public activation is authorized by this audit. Missing terrain, blocked void and
+pending presentation remain different states; actual private-game closeout is
+still required after the bounded contract implementation.
+
+The bounded implementation introduces `runtime-contract/map-runtime-v1.json` as
+advisory, source-backed data, not permissive configuration or a new negotiated
+protocol. It separates accepted schemas from currently emitted schemas, stored
+terrain/placement encodings from wire headers, and finite implementation budgets
+from theoretical future expansion. In particular atomic fence schema 7 and
+presentation baseline schema 8 remain independently supported.
+
+`roof-definitions-v1.properties` is the canonical shared effective roof inventory.
+Its six default `(height,fill)` pairs remain exactly `(64,6)`, `(64,3)`, `(96,2)`,
+`(80,33)`, `(80,15)`, `(90,49)`. Separate strict readers require explicit ordered
+contiguous zero-based IDs, at most 255 entries for the existing one-based byte
+carrier. Reordering physical property rows does not renumber IDs; reordering,
+duplicating or skipping declared IDs is rejected. Missing or malformed resources
+fail closed without hardcoded fallback. Standard server/client builds and the
+server's direct combat classpath copy the same canonical bytes. Read-only tools
+that invoke the actual client EntityHandler must retain this packaged resource
+on their classpath too.
+
+This preserves current roof appearance and formats, but does not make arbitrary
+extensions safe for old clients. Custom extensions require reviewed matching
+server/client inventories and packaging/discovery. Existing package manifest and
+paired-content fingerprints do **not** negotiate this new classpath resource;
+no roof-resource hash handshake is added or claimed here.
+
+Whole-catalog effective material preflight runs before first placement registration
+without constructing entities or changing collision. Invalid overlays, walls,
+roofs and embedded scenery now fail with package/sector/tile/field/raw selector
+diagnostics. Existing overlay controls/aliases, diagonal control endpoints and
+signed raw bit carriers remain unchanged. The failure-first maintained startup
+test reproduced the prior overlay NPE after partial NPC population and missing
+wall/roof/embedded-object acceptance; corrected cases refuse before population.
+The check covers immutable native catalogs, not a new general authoring mutation
+validator.
+
+The wide-height replay uses the maintained server generator/compressor, real
+client decoder and resident cache, actual World tile application and CPU terrain
+mesh/sampling methods at 255, 256, 1024 and 65535. Context 5 is compatibility
+coverage; context 8 covers current resident/atomic activation. Both use 48-tile
+wire/source chunks, deliberately distinct from package presentation metadata 24.
+The GPU/window constructor alone is bypassed; geometry methods are not mocked.
+This is not graphical owner acceptance. Existing byte-height uniform/RLE formats
+and byte/short server TileValue compatibility projections remain narrow; wider
+raw-u16 terrain does not imply those compatibility fields were widened.
+
+Worker matching server/client builds, including maintained source-authority
+audits, pass. The focused checks currently pass 79 cases: material preflight (5),
+resources and source-backed contract/direct combat classpath (4), wide height (1,
+with context 5/8 subcases), activation (10), runtime validation (16), authority
+facade (8), native source/wire (14), recovery (2), atomic activation (4), residency
+(4), readiness (2), prediction (5), and symmetric residency (4). The recovery
+replay also dispatches server-generated unsupported context headers 9/10 through
+the real PacketHandler in ordinary and quarantined state: both refuse, while
+generated baseline 7/8 remains supported and unknown schema 9 refuses.
+
+Independent manager full-map review of runtime source checkpoint
+`1cb5a2f8b9d3cf32a9c1b2150907c00cf54d4ffe` passed material preflight over all
+1782 actual sectors and retained all 33,545 placements, 877 NPC definitions and
+3400 item definitions. The 8910-tile typed lookup/collision digest remains exactly
+`421fcabcdbdffba979349538892a174be31b1c83c4200e581212a498c725adfa`.
+Its independently source-built private core JAR SHA-256 is
+`7d4df4d625bf50b554b244f33e7b96e2f0d21f3732f5c875924304e6129f732c`.
+Evidence is retained outside Git under the isolated validation directory above,
+including `contract-fullmap-review.log` and independent material/resource/height
+reviews. The manager also independently passed material (5), initial resource
+(3) and wide-height (1) cases including current context 8. The added direct
+combat classpath case and extended protocol counterexamples are test-only
+checkpoint `a45bae2103c8186ed85a78f874aa20af6867f0a3`.
+
+Final independent manager acceptance of exact source/test handoff
+`8b180f2ee90af6bdf792f58d08ea8579aab5d2d1` passed all 79 focused checks above.
+Whole-map population remains 33,545 placements with 877 NPC definitions and
+3400 item definitions; the complete 1782-sector material scan and 8910-tile
+lookup golden remain unchanged. Actual source-built private server startup on
+loopback port 43629 completed in 3761 ms with 475 plugin handlers and no errors.
+Evidence is retained in `server-startup-contract-review.log` under the isolated
+validation directory above. The temporary process was stopped only after its
+exact private directory and absence of client connections were verified.
+The matching independently source-built private client SHA-256 is
+`96fc644b3a87f78e95bcb699c42aa35b5ce6ac726c1260d31c7f61aeab5b4c6a`.
+
+This completes this slice's independent tests, full-map and private startup
+acceptance, not overall loader closeout. Combined gameplay review of all four
+slices remains pending; no new graphical owner review is claimed. The existing
+owner candidate, baseline and public deployment remain unchanged. No further
+feature implementation is included in this acceptance update.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous

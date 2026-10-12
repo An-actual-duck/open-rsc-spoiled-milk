@@ -1,0 +1,104 @@
+{
+  "contractSchemaVersion": 1,
+  "contractId": "rsc-layered-map-runtime-v1",
+  "purpose": "Advisory maintained-source capability contract; not permissive runtime configuration or negotiated wire data",
+  "axes": {
+    "packageSchema": [1],
+    "classicPackedMapEncoding": [1],
+    "terrainCodecs": {
+      "uniform-layered-sector-v1": {"heightBits": 8, "storedSchemaVersion": 1, "wireTileBytes": 10},
+      "rle-layered-sector-v1": {"heightBits": 8, "storedSchemaVersion": 1, "wireTileBytes": 10},
+      "raw-layered-sector-v1": {"heightBits": 8, "wireTileBytes": 10},
+      "raw-layered-sector-v2-u16": {"heightBits": 16, "wireTileBytes": 11}
+    },
+    "placementSchemas": {
+      "layered-entity-placements-v1": 1,
+      "layered-world-placements-v2": 2,
+      "layered-world-placements-v3": 3,
+      "layered-world-placements-v4": 4
+    },
+    "sceneContextReaders": [1, 2, 3, 4, 5, 6, 7, 8],
+    "currentSceneContextWriters": {"classic": 1, "synthetic": 2, "nativeFull": 5, "nativeResident": 6, "nativeReady": 7, "nativeAtomic": 8},
+    "terrainProtocols": {"uniform": 3, "legacyChunked": 4, "fullSectors": 5, "resident": 6, "readiness": 7, "atomic": 8, "symmetricVisual": 9, "symmetricStructure": 10},
+    "terrainStageProtocols": {
+      "regular": {"version": 1, "terrainProtocol": 7, "canonicalResidencyWrites": true},
+      "symmetricVisual": {"version": 2, "terrainProtocol": 9, "canonicalResidencyWrites": true},
+      "symmetricStructure": {"version": 3, "terrainProtocol": 10, "canonicalResidencyWrites": true},
+      "predictedVisual": {"version": 4, "terrainProtocol": 9, "canonicalResidencyWrites": false},
+      "predictedStructure": {"version": 5, "terrainProtocol": 10, "canonicalResidencyWrites": false}
+    },
+    "terrainReadyReceipts": {"ready": 1, "resynchronize": 2},
+    "terrainStageReadyReceipts": [1, 2, 3, 4, 5],
+    "sceneBaselineReaders": [1, 2, 3, 4, 5, 6, 7, 8],
+    "currentSceneBaselineWriters": {"ordinary": 5, "layered": 6, "atomicFence": 7, "presentationPages": 8},
+    "movementSnapshotReaders": [1, 2],
+    "currentMovementSnapshotWriters": {"ordinary": 1, "layered": 2}
+  },
+  "geometry": {
+    "storageSectorTiles": 48,
+    "packagePresentationChunkTiles": 24,
+    "legacyProtocol4ChunkTiles": 24,
+    "currentActiveWireChunkTiles": 48,
+    "activeSectorRadius": 1,
+    "symmetricSectorRadius": 2,
+    "terrainMeshUnitsPerElevationUnit": 3,
+    "horizontalMeshUnitsPerTile": 128,
+    "rawNativeElevationRange": [0, 65535],
+    "uniformRleElevationRange": [0, 255],
+    "serverTileValueCompatibility": {"elevationBits": 8, "wallBits": 8, "diagonalBits": 16, "preservesWideRawHeight": false},
+    "rawDiagonalBits": 32
+  },
+  "identityAndBudgets": {
+    "signedLevelRange": [-2147483648, 2147483647],
+    "runtimeWorldSpace": "global",
+    "runtimeWorldSpaceKind": "static",
+    "instancesSupported": false,
+    "pointHorizontalRange": [0, 32767],
+    "objectCollisionWorldSize": [1008, 4032],
+    "packageCountMaximum": 128,
+    "parsedWorldSpaceCountMaximum": 128,
+    "declaredLevelCountMaximum": 4096,
+    "terrainSectorCountMaximum": 65536,
+    "placementSetCountMaximum": 4096,
+    "placementsPerSetMaximum": 65536,
+    "npcRoamRadiusMaximum": 64,
+    "npcRoamSpanMaximum": 4096,
+    "jsonBytesMaximum": 16777216,
+    "residentCacheEntries": 64,
+    "npcRegistrationCapacity": 4000,
+    "npcDefinitionIdMaximum": 1023,
+    "groundItemIdMaximum": 32511,
+    "sceneryBoundaryIdMaximum": 65279,
+    "sceneryBoundaryRemovalControlId": 60000,
+    "groundItemRemovalFlag": 32768,
+    "legacyRegionClearFirstByte": 255
+  },
+  "materialSelectors": {
+    "groundTexture": "Complete byte color palette, not a TileDef index",
+    "overlay": {"none": 0, "collisionAlias": {"raw": 250, "effective": 2}, "blockingBaseColor": 255, "definitionIndex": "effective overlay - 1 except controls"},
+    "serverCompatibilityVoidOverlay": 10,
+    "straightWalls": "Nonzero raw byte selects DoorDef(raw - 1)",
+    "diagonalWallRangesExclusive": [[0, 12000], [12000, 24000]],
+    "diagonalWallDefinitionIndex": "raw - 1 or raw - 12001 according to orientation",
+    "embeddedSceneryRangeExclusive": [48000, 60000],
+    "embeddedSceneryDefinitionIndex": "raw - 48001",
+    "otherDiagonalBits": "Preserved control/unused ranges and raw signed carriers are not ordinary definition IDs",
+    "roof": {"none": 0, "definitionIndex": "raw - 1", "resource": "map-runtime/roof-definitions-v1.properties", "ids": "Explicit contiguous ordered IDs; at most 255 entries", "matchingServerClientInventoryRequired": true, "runtimeInventoryHashNegotiation": false, "extensionsRequireReviewedMatchingBuilds": true}
+  },
+  "activation": {
+    "nativeRequiredGates": ["WANT_LAYERED_PLAYER_LOCATION_AUTHORITY", "WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY", "WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY", "WANT_LAYERED_NATIVE_TERRAIN_PACKAGE"],
+    "effectiveFeatureDependencies": {
+      "readiness": ["WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY", "WANT_LAYERED_NATIVE_TERRAIN_READINESS"],
+      "prediction": ["WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY", "WANT_LAYERED_NATIVE_TERRAIN_READINESS", "WANT_LAYERED_NATIVE_TERRAIN_PREDICTION"],
+      "symmetric": ["WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY", "WANT_LAYERED_NATIVE_TERRAIN_READINESS", "WANT_LAYERED_NATIVE_TERRAIN_PREDICTION", "WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY"],
+      "atomic": ["WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY", "WANT_LAYERED_NATIVE_TERRAIN_READINESS", "WANT_LAYERED_NATIVE_TERRAIN_PREDICTION", "WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION", "WANT_SYNC_SCENE_BASELINE"]
+    },
+    "sourceAuthority": "Resolved startup plan and validated immutable catalog, plus explicitly enabled retained authoring adapter; never renderer or speculative stage state",
+    "readinessOwner": "Exact context generation/world space/signed level/center/manifest acknowledgement; stale or missing reference cannot publish partial replacement",
+    "predictionOwner": "Private preparation snapshots; no canonical LRU/cache publication or map authority",
+    "absence": "No authored owner. Signed/nonrepresentable lookup refuses; representable blank compatibility backend remains blocked and is not native ownership",
+    "void": "Authored blocking terrain is different from absent data",
+    "unloadedPresentation": "Does not create terrain or make it walkable; last complete accepted scene remains until verified activation",
+    "malformedSelectedSource": "Refuse before fallback, including malformed installed evidence during explicit override or classic rollback"
+  }
+}

@@ -318,12 +318,10 @@ public class EntityHandler {
 	}
 
 	private static void loadElevationDefinitions() {
-		elevation.add(new ElevationDef(64, 6));
-		elevation.add(new ElevationDef(64, 3));
-		elevation.add(new ElevationDef(96, 2));
-		elevation.add(new ElevationDef(80, 33));
-		elevation.add(new ElevationDef(80, 15));
-		elevation.add(new ElevationDef(90, 49));
+		TerrainRoofDefinitionCatalog roofs = TerrainRoofDefinitionCatalog.shared();
+		for (int id = 0; id < roofs.getCount(); id++) {
+			elevation.add(new ElevationDef(roofs.getHeight(id), roofs.getFill(id)));
+		}
 	}
 
 	private static void loadTextureDefinitions() {
