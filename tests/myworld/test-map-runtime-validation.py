@@ -33,11 +33,12 @@ public final class RuntimeValidationFixture {
    profile.validate(catalog);profile.validateConfiguredManifest(catalog,args[3]);
    System.out.println("MANIFEST VALID");return;
   }
-  if(args[0].equals("preflight")) {
+  if(args[0].startsWith("preflight")) {
+   final int collisionType=args[0].equals("preflight3")?3:1;
    NativeLayeredWorldPackageCatalog catalog=NativeLayeredWorldPackageCatalog.loadConfigured(args[2]);
    NativeLayeredWorldPlacementPreflight.validate(catalog,new NativeLayeredWorldPlacementPreflight.Definitions() {
     public boolean npc(int id){return true;} public boolean item(int id){return true;}
-    public GameObjectDef scenery(int id){GameObjectDef d=new GameObjectDef();d.name="fixture";d.type=1;d.width=2;d.height=1;return d;}
+    public GameObjectDef scenery(int id){GameObjectDef d=new GameObjectDef();d.name="fixture";d.type=collisionType;d.width=2;d.height=1;return d;}
     public DoorDef boundary(int id){DoorDef d=new DoorDef();d.name="fixture";d.doorType=1;return d;}
    });System.out.println("PREFLIGHT VALID");return;
   }
@@ -182,6 +183,11 @@ class MapRuntimeValidationTest(unittest.TestCase):
     def test_existing_collision_world_bounds_not_silently_widened(self):
         package=self.generic("outside-collision-world",empty=False,sector_x=21)
         self.assertIn("OUT_OF_WORLD_EFFECT",self.invoke("preflight","native-replacement",package,success=False))
+
+    def test_npc_blocking_grid_bounds_even_without_collision_contributions(self):
+        package=self.generic("npc-grid-edge",empty=False,sector_x=20)
+        self.change_payload(package,"placements/deep-l2-entities.json",lambda d:d["scenery"][0]["position"].update(x=1007))
+        self.assertIn("NPC-blocking footprint leaves supported collision world",self.invoke("preflight3","native-replacement",package,success=False))
 
     def test_payload_hash_mismatch_still_refused(self):
         package=self.generic("bad-hash")

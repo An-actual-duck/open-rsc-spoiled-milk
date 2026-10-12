@@ -67,8 +67,12 @@ public final class NativeLayeredWorldPlacementPreflight {
 							throw new IllegalStateException("NPC-blocking footprint exceeds supported runtime budget: " + scenery.getPlacementId());
 						}
 						for (int x = 0; x < width; x++) for (int y = 0; y < height; y++) {
-							requireTerrain(loaded, at(origin, Math.addExact(origin.getCoordinate().getX(), x),
-								Math.addExact(origin.getCoordinate().getY(), y)), scenery.getPlacementId());
+							int tileX = Math.addExact(origin.getCoordinate().getX(), x);
+							int tileY = Math.addExact(origin.getCoordinate().getY(), y);
+							if (tileX < 0 || tileY < 0 || tileX >= Constants.MAX_WIDTH || tileY >= Constants.MAX_HEIGHT) {
+								throw new IllegalStateException("NPC-blocking footprint leaves supported collision world: " + scenery.getPlacementId());
+							}
+							requireTerrain(loaded, at(origin, tileX, tileY), scenery.getPlacementId());
 						}
 					}
 				}
