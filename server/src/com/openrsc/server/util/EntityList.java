@@ -72,6 +72,11 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
         return getOccupiedIndices().size();
     }
 
+    /** Read-only registration budget, including any indices absent from the pool. */
+    public synchronized int getAvailableCapacity() {
+        return Math.max(0, Math.min(capacity - size(), priorityIdPool.size()));
+    }
+
     @SuppressWarnings("unchecked")
     public T get(final int index) {
         if(entities[index] != null) {

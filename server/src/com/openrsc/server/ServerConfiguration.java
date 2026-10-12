@@ -11,6 +11,7 @@ import com.openrsc.server.config.ToolsConfiguration;
 import com.openrsc.server.config.ContentConfiguration;
 import com.openrsc.server.io.WorldBuilderInstalledMapActivation;
 import com.openrsc.server.io.MapSourceActivationPlan;
+import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import com.openrsc.server.util.EntityList;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.YMLReader;
@@ -607,7 +608,7 @@ public class ServerConfiguration {
 			"openrsc.layeredNativeWorldRuntimeProfile",
 			"OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE",
 			"layered_native_world_runtime_profile",
-			"fixture-additive");
+			NativeLayeredWorldRuntimeProfile.DEFAULT_ID);
 		applyInstalledWorldBuilderMap();
 		MOVEMENT_STUTTER_DIAGNOSTIC_SUMMARY_SECONDS = Math.max(5, readIntSystemEnvConfig(
 			"openrsc.movementStutterDiagnosticSummarySeconds",
