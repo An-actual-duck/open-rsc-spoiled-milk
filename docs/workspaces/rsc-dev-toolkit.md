@@ -552,10 +552,23 @@ reviews. The manager also independently passed material (5), initial resource
 combat classpath case and extended protocol counterexamples are test-only
 checkpoint `a45bae2103c8186ed85a78f874aa20af6867f0a3`.
 
-Actual private startup and final combined graphical acceptance remain pending
-manager review; full-map checks do not substitute for those. The existing owner
-session and public deployment are unchanged. No complete-loader acceptance or
-new graphical owner review is claimed by this worker checkpoint.
+Final independent manager acceptance of exact source/test handoff
+`8b180f2ee90af6bdf792f58d08ea8579aab5d2d1` passed all 79 focused checks above.
+Whole-map population remains 33,545 placements with 877 NPC definitions and
+3400 item definitions; the complete 1782-sector material scan and 8910-tile
+lookup golden remain unchanged. Actual source-built private server startup on
+loopback port 43629 completed in 3761 ms with 475 plugin handlers and no errors.
+Evidence is retained in `server-startup-contract-review.log` under the isolated
+validation directory above. The temporary process was stopped only after its
+exact private directory and absence of client connections were verified.
+The matching independently source-built private client SHA-256 is
+`96fc644b3a87f78e95bcb699c42aa35b5ce6ac726c1260d31c7f61aeab5b4c6a`.
+
+This completes this slice's independent tests, full-map and private startup
+acceptance, not overall loader closeout. Combined gameplay review of all four
+slices remains pending; no new graphical owner review is claimed. The existing
+owner candidate, baseline and public deployment remain unchanged. No further
+feature implementation is included in this acceptance update.
 
 ## Active versus historical documentation
 
