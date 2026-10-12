@@ -22,6 +22,7 @@ import java.util.zip.Deflater;
 import sun.misc.Unsafe;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainClientResidency;
 import com.openrsc.server.net.rsc.struct.outgoing.SceneBaselineStruct;
+import com.openrsc.server.net.rsc.struct.outgoing.LayeredSceneContextStruct;
 import com.openrsc.server.net.rsc.enums.OpcodeOut;
 import com.openrsc.server.net.rsc.generators.impl.PayloadCustomGenerator;
 import com.openrsc.server.net.Packet;
@@ -156,6 +157,16 @@ public final class NativeRecoveryFixture {
  static void refuses(PacketHandler h,int opcode,byte[] payload,String why){
   try{deliver(h,opcode,payload);throw new AssertionError(why);}catch(RuntimeException expected){}
  }
+ static byte[] unsupportedServerContext(int protocol)throws Exception{
+  LayeredSceneContextStruct context=new LayeredSceneContextStruct();context.setOpcode(OpcodeOut.SEND_LAYERED_SCENE_CONTEXT);
+  context.protocolVersion=protocol;context.sequence=2;context.serverTick=101;
+  context.worldSpace="global";context.projectionId=LayeredSceneContextState.NATIVE_LAYERED_PROJECTION;
+  context.logicalX=context.legacyX=190;context.logicalY=context.legacyY=623;context.logicalLevel=0;
+  context.nativePackageId=PACKAGE;context.nativePackageVersion=VERSION;context.nativeManifestSha256=SHA;
+  context.nativePresentationChunkSize=48;context.nativeCurrentChunkX=3;context.nativeCurrentChunkY=13;context.nativeChunkRadius=1;
+  Packet packet=new PayloadCustomGenerator().generate(context,null);
+  byte[] bytes=new byte[packet.getBuffer().readableBytes()];packet.getBuffer().readBytes(bytes);packet.getBuffer().release();return bytes;
+ }
  static void recovery()throws Exception{
   Config.DEBUG=false;RendererDouble r=renderer();PacketHandler h=new PacketHandler(r);
   Field unsafe=Unsafe.class.getDeclaredField("theUnsafe");unsafe.setAccessible(true);
@@ -169,6 +180,7 @@ public final class NativeRecoveryFixture {
   LayeredSceneContextState state=(LayeredSceneContextState)field(h,"layeredSceneContextState");
   state.acceptNative(8,1,100,"global",LayeredSceneContextState.NATIVE_LAYERED_PROJECTION,190,623,0,190,623,old);
   serverLoginPages(h,1);check(r.presentations==1,"ordinary login rejected server version8 presentation");
+  for(int protocol:new int[]{9,10})refuses(h,157,unsupportedServerContext(protocol),"terrain-stage protocol accepted as context header");
   refuses(h,143,serverBaseline(8,1,SceneBaselineState.PAGE_ATOMIC_FENCE),"version8 carried a version7-only atomic fence");
   c.clear(); // lost authoritative references, reproduces old prediction eviction
   Body staged=body(s,4,13,1,NativeLayeredTerrainChunk.UNIFORM_ENCODING);
@@ -181,6 +193,7 @@ public final class NativeRecoveryFixture {
   deliver(h,143,baseline(2,false)); // PRE-FIX crashes here, real handlePacket entrypoint
   deliver(h,146,movement(2,false));
   serverLoginPages(h,2);check(r.presentations==1,"failed-context server version8 pages were published");
+  for(int protocol:new int[]{9,10})refuses(h,157,unsupportedServerContext(protocol),"recovery accepted terrain-stage protocol as context header");
   refuses(h,143,serverBaseline(8,2,SceneBaselineState.PAGE_ATOMIC_FENCE),"quarantine bypassed atomic fence schema");
   check(r.movements==0&&state.getSequence()==1,"failed tail changed retained player");
   deliver(h,146,movement(1,false));
