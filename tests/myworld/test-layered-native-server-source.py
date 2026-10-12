@@ -1574,7 +1574,7 @@ public final class WorldBuilderClientProfile {
             "replacesLegacyBasePopulation()", world_populator
         )
         self.assertIn(
-            "nativeLayeredWorldRuntimeProfile.skipsLegacyTerrainArchive()",
+            "mapAuthority.skipsLegacyTerrain()",
             region_manager,
         )
         self.assertIn(
@@ -1586,19 +1586,21 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             "NativeLayeredTerrainTile source =",
-            region_manager,
+            (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text(),
         )
         self.assertIn("resolveNativeTerrainTile(", region_manager)
-        self.assertIn("owner.findTile(location).orElse(null)", region_manager)
+        self.assertIn("owner.findTile(location).orElse(null)",
+                      (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text())
         self.assertIn("placement.getMinX()", region_manager)
         self.assertIn("placement.getMaxX()", region_manager)
         self.assertIn("placement.getMinY()", region_manager)
         self.assertIn("placement.getMaxY()", region_manager)
         self.assertIn(
-            "return nativeLayeredTile(location)", region_manager
+            "return mapAuthority.getTile(location)", region_manager
         )
         self.assertIn(
-            "return syntheticDeepFixtureTile()", region_manager
+            "Synthetic deep fixture terrain is immutable",
+            (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text(),
         )
         self.assertIn(
             "Native layered deep ", development
