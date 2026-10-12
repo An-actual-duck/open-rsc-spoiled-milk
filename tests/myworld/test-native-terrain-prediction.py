@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import subprocess
 import tempfile
 import textwrap
@@ -785,8 +786,7 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                 "playerWasWalking = true;", hold_call
             ),
         )
-        self.assertIn("commitResidentTransaction", decoder)
-        self.assertIn("true,\n\t\t\tfalse);", decoder)
+        self.assertIn("if (residentTransaction != null && !predictedSymmetric)", decoder)
         accept_method = updater.split(
             "public void acceptLayeredTerrainStageReady", 1
         )[1].split(
@@ -944,6 +944,8 @@ class NativeTerrainPredictionTest(unittest.TestCase):
             subprocess.run(
                 [
                     "javac",
+                    "-cp",
+                    str(ROOT / "Client_Base/Open_RSC_Client.jar"),
                     "-Xlint:all",
                     "-source",
                     "8",
@@ -958,7 +960,7 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                 cwd=ROOT,
             )
             subprocess.run(
-                ["java", "-cp", str(work), class_name],
+                ["java", "-cp", os.pathsep.join([str(work), str(ROOT / "Client_Base/Open_RSC_Client.jar")]), class_name],
                 check=True,
                 cwd=ROOT,
             )

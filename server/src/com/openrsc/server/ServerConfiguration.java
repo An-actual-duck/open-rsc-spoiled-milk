@@ -10,6 +10,7 @@ import com.openrsc.server.config.CompatibilityConfiguration;
 import com.openrsc.server.config.ToolsConfiguration;
 import com.openrsc.server.config.ContentConfiguration;
 import com.openrsc.server.io.WorldBuilderInstalledMapActivation;
+import com.openrsc.server.io.MapSourceActivationPlan;
 import com.openrsc.server.util.EntityList;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.YMLReader;
@@ -25,6 +26,13 @@ import java.util.Optional;
 public class ServerConfiguration {
 
 	private static final Logger LOGGER = LogManager.getLogger();
+	private MapSourceActivationPlan mapSourceActivationPlan;
+	public MapSourceActivationPlan mapSourceActivationPlan() {
+		if (mapSourceActivationPlan == null) {
+			throw new IllegalStateException("Map source has not been resolved");
+		}
+		return mapSourceActivationPlan;
+	}
 
 
 	public boolean DEBUG = false; // enables print out of the config being sent to the client
@@ -1134,30 +1142,77 @@ public class ServerConfiguration {
 	}
 
 	private void applyInstalledWorldBuilderMap() throws IOException {
-		Optional<WorldBuilderInstalledMapActivation.Activation> requested =
-			WorldBuilderInstalledMapActivation.discover();
-		if (!requested.isPresent()) {
-			return;
+		boolean[] gates = {WANT_LAYERED_PLAYER_LOCATION_AUTHORITY,
+			WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY, WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY,
+			WANT_LAYERED_NATIVE_TERRAIN_PACKAGE, WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY,
+			WANT_LAYERED_NATIVE_TERRAIN_READINESS, WANT_LAYERED_NATIVE_TERRAIN_PREDICTION,
+			WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY,
+			WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION};
+		String[] names = {"PlayerLocationAuthority", "SpatialRuntimeAuthority",
+			"ProtocolClientAuthority", "NativeTerrainPackage", "NativeTerrainResidency",
+			"NativeTerrainReadiness", "NativeTerrainPrediction",
+			"NativeTerrainSymmetricResidency", "NativeTerrainAtomicActivation",
+			"NativeTerrainPackagePath", "NativeTerrainManifestSha256", "NativeWorldRuntimeProfile"};
+		String[] env = {"PLAYER_LOCATION_AUTHORITY", "SPATIAL_RUNTIME_AUTHORITY",
+			"PROTOCOL_CLIENT_AUTHORITY", "NATIVE_TERRAIN_PACKAGE", "NATIVE_TERRAIN_RESIDENCY",
+			"NATIVE_TERRAIN_READINESS", "NATIVE_TERRAIN_PREDICTION",
+			"NATIVE_TERRAIN_SYMMETRIC_RESIDENCY", "NATIVE_TERRAIN_ATOMIC_ACTIVATION",
+			"NATIVE_TERRAIN_PACKAGE_PATH", "NATIVE_TERRAIN_MANIFEST_SHA256",
+			"NATIVE_WORLD_RUNTIME_PROFILE"};
+		boolean[] launch = new boolean[gates.length];
+		boolean explicitSource = false;
+		StringBuilder provenance = new StringBuilder();
+		for (int i = 0; i < names.length; i++) {
+			String system = System.getProperty("openrsc.layered" + names[i]);
+			String environment = System.getenv("OPENRSC_LAYERED_" + env[i]);
+			boolean fromSystem = system != null && !system.trim().isEmpty();
+			boolean fromEnv = !fromSystem && environment != null && !environment.trim().isEmpty();
+			boolean explicit = fromSystem || fromEnv;
+			if (i < gates.length) {
+				launch[i] = explicit;
+				String raw = fromSystem ? system : environment;
+				if (explicit && !"true".equalsIgnoreCase(raw.trim())
+					&& !"false".equalsIgnoreCase(raw.trim())) {
+					throw new IOException("Invalid map authority boolean: " + names[i]);
+				}
+			}
+			if (i == MapSourceActivationPlan.NATIVE_PACKAGE || i >= gates.length) {
+				explicitSource |= explicit;
+			}
+			if (i == gates.length && explicit && !gates[MapSourceActivationPlan.NATIVE_PACKAGE]) {
+				throw new IOException("Explicit package path conflicts with disabled native terrain authority");
+			}
+			if (i > 0) provenance.append(',');
+			provenance.append(names[i]).append(':').append(
+				fromSystem ? "system" : fromEnv ? "environment" : "configuration/default");
 		}
-		WorldBuilderInstalledMapActivation.Activation activation = requested.get();
-		WANT_LAYERED_PLAYER_LOCATION_AUTHORITY = true;
-		WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = true;
-		WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY = true;
-		WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = true;
-		WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY = true;
-		WANT_LAYERED_NATIVE_TERRAIN_READINESS = true;
-		WANT_LAYERED_NATIVE_TERRAIN_PREDICTION = true;
-		WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY = true;
-		WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION = true;
-		LAYERED_NATIVE_TERRAIN_PACKAGE_PATH =
-			activation.getServerPackageRoot().toString();
-		LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 =
-			activation.getManifestSha256();
-		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE =
-			WorldBuilderInstalledMapActivation.RUNTIME_PROFILE;
-		LOGGER.info(
-			"Activated verified World Builder layered package {} from primary configuration",
-			activation.getPackageFingerprintSha256());
+		WorldBuilderInstalledMapActivation.Evidence evidence =
+			WorldBuilderInstalledMapActivation.inspect();
+		WorldBuilderInstalledMapActivation.Activation installed =
+			evidence.getActivation().orElse(null);
+		try {
+			mapSourceActivationPlan = MapSourceActivationPlan.resolve(gates, launch,
+				explicitSource, LAYERED_NATIVE_TERRAIN_PACKAGE_PATH,
+				LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256, LAYERED_NATIVE_WORLD_RUNTIME_PROFILE,
+				provenance.toString(), evidence.getStatus(),
+				installed == null ? "" : installed.getServerPackageRoot().toString(),
+				installed == null ? "" : installed.getManifestSha256());
+		} catch (IllegalArgumentException invalid) {
+			throw new IOException("Map source selection failed: " + invalid.getMessage(), invalid);
+		}
+		WANT_LAYERED_PLAYER_LOCATION_AUTHORITY = mapSourceActivationPlan.gate(0);
+		WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY = mapSourceActivationPlan.gate(1);
+		WANT_LAYERED_PROTOCOL_CLIENT_AUTHORITY = mapSourceActivationPlan.gate(2);
+		WANT_LAYERED_NATIVE_TERRAIN_PACKAGE = mapSourceActivationPlan.gate(3);
+		WANT_LAYERED_NATIVE_TERRAIN_RESIDENCY = mapSourceActivationPlan.gate(4);
+		WANT_LAYERED_NATIVE_TERRAIN_READINESS = mapSourceActivationPlan.gate(5);
+		WANT_LAYERED_NATIVE_TERRAIN_PREDICTION = mapSourceActivationPlan.gate(6);
+		WANT_LAYERED_NATIVE_TERRAIN_SYMMETRIC_RESIDENCY = mapSourceActivationPlan.gate(7);
+		WANT_LAYERED_NATIVE_TERRAIN_ATOMIC_ACTIVATION = mapSourceActivationPlan.gate(8);
+		LAYERED_NATIVE_TERRAIN_PACKAGE_PATH = mapSourceActivationPlan.getPackagePath();
+		LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 = mapSourceActivationPlan.getManifestSha256();
+		LAYERED_NATIVE_WORLD_RUNTIME_PROFILE = mapSourceActivationPlan.getRuntimeProfile();
+		LOGGER.info("Resolved map startup: {}", mapSourceActivationPlan.report());
 	}
 
 	/**

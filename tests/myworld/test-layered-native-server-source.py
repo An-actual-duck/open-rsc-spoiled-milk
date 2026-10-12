@@ -11,9 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 CORE_JAR = SERVER / "core.jar"
-MANAGED_RUNTIME_JAR = (
-    SERVER / "world-builder-runtime/world-builder-managed-runtime.jar"
-)
+# Historical fixture classpath variable retained to keep the harness diff small.
+# Never let a retired class-shadowing archive hide regressions in maintained Core.
+MANAGED_RUNTIME_JAR = CORE_JAR
 PACKAGE = ROOT / "tools/layered-maps/fixtures/native-package-v1"
 SOURCE = SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackage.java"
 CATALOG = (
@@ -1267,7 +1267,9 @@ public final class WorldBuilderClientProfile {
                     "-cp",
                     f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
-                    "world-builder-installed",
+                    # Exact historical distribution pin, not the installed
+                    # manifest-bound profile (which permits additional levels).
+                    "spoiled-milk-replacement",
                     str(package),
                     "false",
                     "true",
