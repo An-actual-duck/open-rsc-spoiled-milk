@@ -239,8 +239,98 @@ named product/release fixture policy**. Characterize the strict installed checks
 move historical package identity/count/level assertions into explicit distribution
 validation, and retain supported-format, ownership, placement completeness and
 effective-definition safety checks before world mutation. Preserve existing
-reviewed manifests and release pinning. This boundary is planned, not started;
-no widening, instances, editor/upgrader work or full-loader completion is implied.
+reviewed manifests and release pinning. This boundary is now implemented in the
+focused worker slice below; private startup acceptance remains a separate gate.
+No widening, instances, editor/upgrader work or full-loader completion is implied.
+
+### Second slice: generic validation and whole-catalog preflight
+
+Ordinary native operation defaults to `native-additive`: legacy terrain and
+population remain active, with the existing authority gates still required when
+native packages are enabled. `native-replacement` skips legacy terrain/population
+and requires a configured manifest SHA-256 plus exactly one explicit placement
+set for every declared level. Empty levels use an explicit empty supported set.
+Additive mode permits partial placement coverage; an optional configured manifest
+hash, when supplied, is verified rather than ignored.
+
+The existing `world-builder-installed` and `spoiled-milk-editor-installed`
+spellings select generic, manifest-bound replacement operation. This deliberately
+removes product branding, fixed base-level membership and historical counts from
+ordinary installed validation. Installed descriptor/path, paired inventory,
+content identity and activation checks are unchanged. Existing named fixture,
+Preservation, Spoiled Milk pinned release, draft and export profiles retain their
+historical policy. `spoiled-milk-installed-review` explicitly selects the old
+installed product-shape checks; its retained diagnostic wording uses the old name.
+
+Generic validation is not unrestricted capability: the current matching client
+requires global static world space and 24-tile presentation chunks. Supported
+encodings, finite parser/catalog budgets, payload hashes, overlap/ownership and
+placement/roam terrain checks remain enforced. Signed authored levels are not
+restricted to the six Spoiled Milk fixture levels. Effective custom definition
+IDs are not restricted to vanilla distribution ceilings. Actual maintained wire
+identities are enforced: NPC definitions fit 10 bits (0–1023); ground-item IDs
+fit 0–32511 so both addition and removal avoid bit-15 removal and first-byte-255
+region-clear controls; scenery/boundary IDs fit 0–65279 excluding removal ID
+60000. These are encoder/decoder control boundaries, not product content policy.
+Existing packet widths, compatibility carriers and collision bounds are not widened.
+
+Before any native entity is registered, the complete catalog is checked against
+effective definitions, configured item restrictions and authored owner terrain.
+Scenery/boundary collision and NPC-blocking footprints are checked with the
+existing pure scalar planner: no gameplay entity is constructed and no collision
+or registration state is mutated during preflight. The existing 1008-by-4032
+object collision bounds and footprint resource budgets remain explicit refusals.
+Per-object registration guards remain for dynamic staleness. The catalog's entire
+NPC count must fit the currently available registration slots before the first
+native NPC is added. EntityList's zero index is usable: the current 4000-entry
+NPC list has 4000 total slots, not 3999. Available capacity is read from its
+occupied count and free-index pool without reserving or consuming slots. World
+startup preflights before legacy population and again afterward, accounting for
+existing additive NPCs. This does not impose permanent reservations on later
+dynamic NPCs or promise transaction rollback of concurrent gameplay exhaustion.
+
+Failure-first characterization against the pre-change maintained server showed
+a parsed independent package at level 42 rejected solely by installed branding,
+and a later missing item definition leaving one earlier NPC registered. The new
+focused tests exercise arbitrary signed levels/custom IDs, explicit product
+refusals, additive/replacement completeness, manifest/payload mismatches,
+unsupported instance-template capability, terrain-edge and collision-bound
+footprints, all effective definition families, and configured item restrictions.
+The added capacity counterexample against the first implementation showed 3999
+existing NPCs plus two authored NPCs failing after the first raised the count to
+4000; wire-ID counterexamples were also accepted before the guards. Both now
+refuse before mutation, with legal edge IDs retained. The focused suite has 16
+tests. Independent manager source-built private startup of the first implementation
+loaded all 33,545 unchanged placements (3803 NPCs, 879 items, 27,892 scenery and
+971 boundaries), 877 NPC definitions and 3400 item definitions without errors.
+Final server acceptance was independently repeated from exact implementation
+commit `03314d292d53b6bb9650da1b332f288d9529101a`, frozen and source-built in the
+manager's isolated fixture. The maintained server JAR there had SHA-256
+`a86e191b4e4da751f2a8a04989a3bfb80aed105ceae220a27d801695ed02612d`.
+Whole-catalog preflight and real population again preserved all 33,545 placements
+and the same 877/3400 effective NPC/item definition counts. Full private server
+startup on loopback port 43629 completed in 3386 ms without exceptions, using
+empty seed accounts and no copied player accounts. That isolated process was
+stopped after its exact directory and absence of connections were verified;
+the owner's existing private sessions and public server were untouched.
+
+The manager independently reran all 16 focused validation tests successfully.
+The same current capacity/wire counterexamples failed against the frozen
+pre-guard `8a12b072a` JAR (partial 3999-to-4000 population and unsupported wire
+ID acceptance), then passed against the corrected implementation. Evidence is
+retained outside Git under
+`/home/justin/.local/share/spoiled-milk-runtime-validation-emQrFR47/`, including
+`server-startup-final-review.log` and `full-population-final-review.log`.
+
+This is independent maintained-server startup/population acceptance, not a new
+graphical owner review. The earlier owner acceptance covers the unchanged client
+visual/gameplay behavior recorded for the first slice. Matching-client and broader
+integration checks remain the manager's collection gate; no whole-loader or
+future-instance completion is claimed.
+
+The next boundary remains unification of terrain access/residency and truthful
+capability exposure, after this slice's acceptance. Instances, coordinate/ID
+widening, new schemas and editor/upgrader implementation remain deferred.
 
 ## Active versus historical documentation
 

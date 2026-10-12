@@ -1536,7 +1536,7 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             '"layered_native_world_runtime_profile",\n'
-            '\t\t\t"fixture-additive"',
+            '\t\t\tNativeLayeredWorldRuntimeProfile.DEFAULT_ID',
             configuration,
         )
         self.assertIn(
@@ -1546,9 +1546,10 @@ public final class WorldBuilderClientProfile {
             "profile.validate(loaded)",
             region_manager,
         )
-        self.assertIn("profile.requiresConfiguredManifestSha256()", region_manager)
+        self.assertIn("profile.validateConfiguredManifest(loaded, configuredManifest)", region_manager)
+        runtime_contract = (SERVER / "src/com/openrsc/server/io/NativeLayeredWorldRuntimeContract.java").read_text()
         self.assertIn(
-            "loaded.getPrimaryPackage().getManifestSha256()", region_manager
+            "catalog.getPrimaryPackage().getManifestSha256()", runtime_contract
         )
         self.assertIn("spoiled-milk-world-builder-export", runtime_profile)
         self.assertIn(
@@ -1563,13 +1564,12 @@ public final class WorldBuilderClientProfile {
         self.assertIn(
             "SPOILED_MILK_MANIFEST_SHA256", runtime_profile
         )
-        self.assertIn(
-            "validatePreservationDefinitionIds(loaded)", runtime_profile
-        )
-        self.assertIn("VANILLA_MAX_SCENERY_ID", runtime_profile)
-        self.assertIn("VANILLA_MAX_NPC_ID", runtime_profile)
-        self.assertIn("VANILLA_MAX_ITEM_ID", runtime_profile)
-        self.assertIn("VANILLA_MAX_BOUNDARY_ID", runtime_profile)
+        distribution_policy = (SERVER / "src/com/openrsc/server/io/NativeLayeredWorldDistributionPolicy.java").read_text()
+        self.assertIn("validatePreservationDefinitionIds(loaded)", distribution_policy)
+        self.assertIn("VANILLA_MAX_SCENERY_ID", distribution_policy)
+        self.assertIn("VANILLA_MAX_NPC_ID", distribution_policy)
+        self.assertIn("VANILLA_MAX_ITEM_ID", distribution_policy)
+        self.assertIn("VANILLA_MAX_BOUNDARY_ID", distribution_policy)
         self.assertIn(
             "replacesLegacyBasePopulation()", world_populator
         )
@@ -1611,7 +1611,7 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             "Native layered runtime requires 24-tile presentation chunks",
-            runtime_profile,
+            (ROOT / "server/src/com/openrsc/server/io/NativeLayeredWorldRuntimeContract.java").read_text(),
         )
         self.assertIn(
             "hasNativeLayeredTerrain", region_manager

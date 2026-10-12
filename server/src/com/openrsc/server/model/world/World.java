@@ -493,6 +493,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				getMarket().start();
 			}
 			getRegionManager().load();
+			getRegionManager().preflightNativeLayeredPlacements();
 			getWorldLoader().getWorldPopulator().populateWorld();
 			getRegionManager().populateNativeLayeredPlacements();
 			getNpcDrops().load();
