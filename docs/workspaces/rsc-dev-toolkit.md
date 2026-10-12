@@ -127,6 +127,47 @@ authoritative terrain/collision facade and compatibility projection isolation;
 capability/version matrix, widening and instances; build-overlay consolidation.
 Keep existing safety validation until those bounded slices provide replacements.
 
+### Blocking private-review terrain recovery fix
+
+The first private review exposed a cache/activation failure near Falador. Both
+the original baseline and first-slice client reproduced it through the real
+decoder and `PacketHandler`: a missing context reference followed by baseline
+packets failed with “Scene baseline does not match layered scene context”.
+
+The server already discards canonical residency transactions for predicted
+symmetric visual/structure stages (protocol 4/5). The client decoder had committed
+them, evicting confirmed sectors from its 64-entry cache without matching server
+eviction. Predicted snapshots now retain their private payloads but do not change
+canonical cache contents or LRU order. Confirmed context/halo behavior is unchanged.
+
+Recovery sends one request per pending refresh, clears canonical residency once,
+cancels speculative preparation and retains the last accepted context/scene.
+Only a fully validated, self-contained native context decoded into an empty
+temporary cache can replace that cache and finish recovery. Reconnect resets it.
+No server packet layout, content, account or public-server change is involved.
+
+Missing-reference contexts have their headers validated before their exact
+sequence and world/level identity enter a bounded (16-entry) quarantine. Tagged
+baseline/movement tails for those exact sequences retain normal schema, payload
+length, page and record validation but cannot publish. Unknown context sequences,
+wrong scope/projection, unsupported protocols and malformed packets still fail.
+Legacy scene-only deltas have no scope tags: after a positively identified context
+gap, they are counted/discarded until verified refresh. Their framing is checked,
+but their body cannot be interpreted using the retained old scope; this is not
+semantic validation of those discarded deltas. Non-scene traffic is unaffected.
+The existing client compatibility projection is global-world-space-only; instance
+presentation remains deferred, not newly restricted by recovery header checks.
+
+`tests/myworld/test-native-terrain-recovery.py` replays the real decoder across
+the route `(2,13)` through `(6,11)`, back to `(2,13)` and toward `(4,12)`, exercising
+full-cache pressure, confirmed halos and repeated private predictions. Its real
+packet-handler replay checks repeated missing stages/contexts, deduplicated outgoing
+resync, known tails versus unknown/malformed packets, scope/projection rejection,
+verified refresh readiness, retained atomic cover and reconnect cleanup. Only the
+renderer boundary is replaced with a disposable no-window double. Set
+`MAP_RECOVERY_CLIENT_JAR` to a frozen pre-fix client to independently reproduce
+failure. The matching private graphical-route acceptance remains required.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous
