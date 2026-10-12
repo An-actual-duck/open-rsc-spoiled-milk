@@ -594,6 +594,19 @@ or runtime upgrade is authorized by this acceptance.
 
 ## Active versus historical documentation
 
+The October 12 copy-first conversion review foundation is integrated separately
+in toolkit main at `3751d40f02fda34a9c8fcb6835fc9c0bc136af0b` (exact READY
+`0b68a55e344f9443008968428044d5101ed18862`). Independent post-merge verification
+passed all 372 toolkit tests. A fresh read-only Preservation inspection found
+the existing native-server/client-map disagreements and retained them as explicit
+upgrade blockers. Both comparison terrain packages passed the maintained Core
+parser; all 4,064,256 client tiles matched the original ZIP across all seven
+fields. Source maps and accounts were untouched; no runtime was installed.
+See toolkit `docs/CLASSIC-MODERN-CONVERSION.md` for evidence and exact limits.
+This accepts a review/field-conversion foundation, not a game-ready classic
+upgrade. Next is the advanced toolkit adapter against Spoiled Milk's already
+accepted native package; classic conversion semantics remain separately gated.
+
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous
 World Builder compatibility plans remain recovery/history references, not
 current implementation assignments. Existing owner saves and private test
