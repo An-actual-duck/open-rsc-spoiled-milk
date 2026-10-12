@@ -440,7 +440,7 @@ native overlay lookup can dereference a missing TileDef. This extraction preserv
 that behavior; typed pre-mutation material validation and its control-value rules
 need their own bounded tests rather than an unrelated fix here.
 
-### Fourth slice: schema/material contract (worker verification in progress)
+### Fourth slice: schema/material contract (accepted)
 
 The activated `feat/map-runtime-contract` worker starts from published
 `64f3e48c0c73c6c41529126bad831eedcf32ed38`. Its initial audit keeps independent
@@ -564,11 +564,33 @@ exact private directory and absence of client connections were verified.
 The matching independently source-built private client SHA-256 is
 `96fc644b3a87f78e95bcb699c42aa35b5ce6ac726c1260d31c7f61aeab5b4c6a`.
 
-This completes this slice's independent tests, full-map and private startup
-acceptance, not overall loader closeout. Combined gameplay review of all four
-slices remains pending; no new graphical owner review is claimed. The existing
-owner candidate, baseline and public deployment remain unchanged. No further
-feature implementation is included in this acceptance update.
+### Combined loader closeout — October 12, 2026
+
+All four slices are integrated and published at Core commit
+`0e7bebf7d92d049d68bcd47f4f7081cd2e9f1248`. Integrated server/client builds and
+material, resource and wide-height checks passed after merge. The manager
+launched the independently rebuilt combined server and matching OpenGL client
+from the isolated validation directory on loopback port 43629. Only private
+test accounts were copied consistently into its previously empty database;
+the empty database was preserved separately. The public deployment and earlier
+owner test session were not changed.
+
+After reviewing the combined game, the owner reported "no issues found".
+Logs are retained as `server-combined-owner-review.log` and
+`client-combined-owner-review.log` in the validation directory. This completes
+the combined gameplay gate alongside the 79 focused checks, unchanged full-map
+population/material scan and typed lookup golden recorded above. It does not
+claim exhaustive gameplay coverage or a graphical review of every wide height.
+
+Manager readiness judgment: no remaining known major correctness,
+content-preservation or source-authority issue within the four cleanup slices.
+The loader is ready for copy-first migration and advanced toolkit adapter work.
+Retained bounded carriers/codecs, global-only world-space support, classic
+archive compatibility behavior, explicit authoring bridge and paired-build roof
+extension requirements remain documented constraints, not promises of wider
+support. A future converter must independently refuse corrupt input and prove
+lossless conversion before offering activation. No public release, deployment
+or runtime upgrade is authorized by this acceptance.
 
 ## Active versus historical documentation
 
