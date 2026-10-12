@@ -72,6 +72,176 @@ The implementation order and test checklist are maintained in
 `/home/justin/rsc-dev-toolkit/docs/MODERN-LOADER-CLEANUP.md`; toolkit
 `docs/README.md` and `docs/ROADMAP.md` must retain this Spoiled Milk-first gate.
 
+### First loader slice: startup authority (private-game acceptance passed)
+
+`ServerConfiguration` resolves an immutable `MapSourceActivationPlan` once during
+startup and applies it to the existing compatibility fields. The report includes
+representation, additive/replacement ownership, selected package/manifest,
+profile, effective gates and input provenance. It does not change terrain codecs,
+wire bytes, placements, collision, art, population or default gate values.
+
+Selection rules:
+
+- Existing per-field precedence stays system property, environment, configuration,
+  then default. Nonempty launch values are explicit; blank values remain absent.
+- An explicit launch native-package switch, package path, manifest hash or runtime
+  profile selects launch/configuration values rather than installed-primary values.
+  This retains an external hosted package path and makes explicit legacy rollback
+  effective. An explicit path with disabled native authority is an error.
+- Without explicit launch source selection, a verified layered primary remains
+  preferred over configuration-file defaults. Configuration file settings cannot
+  distinguish deliberate selection from old installed pins; this compatibility
+  rule is intentional for existing imports. An explicitly disabled launch gate
+  conflicting with automatically selected installed authority fails startup.
+- Absent primary, inert packed primary and verified layered primary are distinct
+  discovery outcomes. Malformed, symlinked/nonregular, mismatched paired packages
+  or bad fingerprints fail startup, **even during launch override/rollback**.
+  No corrupt selected source silently falls back to classic maps.
+- `world-builder-installed` is an alias of `spoiled-milk-editor-installed`, with
+  exactly the same strict validator, configured-manifest requirement and replacement
+  ownership. It is not a new generic or release-pinned policy.
+
+The matching client caches one pre-login bootstrap decision. Valid explicit
+adaptive selection outranks a valid installed default (including a differing
+identity); its report says the installed profile was not selected. Installed
+profile parsing still fails closed if malformed. Ordinary installed and classic
+bootstrap behavior remains unchanged. The report is available through
+`WorldBuilderTerrainBootstrap.report()`.
+
+Executable checks: `scripts/build-server.sh`, `scripts/build-client.sh`,
+`tests/myworld/test-map-source-activation.py` (source-built JARs required),
+`test-layered-native-server-source.py` and `test-native-terrain-atomic-activation.py`.
+The native-source suite now uses maintained Core rather than a retired
+class-shadowing runtime archive. Its historical exact-release rejection uses
+`spoiled-milk-replacement`; installed validation intentionally permits added levels.
+Custom combat characterization is supplementary, not gameplay acceptance.
+
+The corrected first slice passed owner inspection in the isolated source-built
+Spoiled Milk game described below. Executable rejection/recovery tests supplement
+that inspection; they do not stand in for the private game. This is not public
+deployment or overall loader-cleanup closeout. Further slices retain the same
+Spoiled Milk-first acceptance gate.
+
+Deferred boundaries: generic structural policy versus named product fixtures;
+authoritative terrain/collision facade and compatibility projection isolation;
+capability/version matrix, widening and instances; build-overlay consolidation.
+Keep existing safety validation until those bounded slices provide replacements.
+
+### Blocking private-review terrain recovery fix
+
+The first private review exposed a cache/activation failure near Falador. Both
+the original baseline and first-slice client reproduced it through the real
+decoder and `PacketHandler`: a missing context reference followed by baseline
+packets failed with “Scene baseline does not match layered scene context”.
+
+The server already discards canonical residency transactions for predicted
+symmetric visual/structure stages (protocol 4/5). The client decoder had committed
+them, evicting confirmed sectors from its 64-entry cache without matching server
+eviction. Predicted snapshots now retain their private payloads but do not change
+canonical cache contents or LRU order. Confirmed context/halo behavior is unchanged.
+
+Recovery sends one request per pending refresh, clears canonical residency once,
+cancels speculative preparation and retains the last accepted context/scene.
+Only a fully validated, self-contained native context decoded into an empty
+temporary cache can replace that cache and finish recovery. Reconnect resets it.
+No server packet layout, content, account or public-server change is involved.
+
+Missing-reference contexts have their headers validated before their exact
+sequence and world/level identity enter a bounded (16-entry) quarantine. Tagged
+baseline/movement tails for those exact sequences retain normal schema, payload
+length, page and record validation but cannot publish. Unknown context sequences,
+wrong scope/projection, unsupported protocols and malformed packets still fail.
+Legacy scene-only deltas have no scope tags: after a positively identified context
+gap, they are counted/discarded until verified refresh. Their framing is checked,
+but their body cannot be interpreted using the retained old scope; this is not
+semantic validation of those discarded deltas. Non-scene traffic is unaffected.
+The existing client compatibility projection is global-world-space-only; instance
+presentation remains deferred, not newly restricted by recovery header checks.
+
+`tests/myworld/test-native-terrain-recovery.py` replays the real decoder across
+the route `(2,13)` through `(6,11)`, back to `(2,13)` and toward `(4,12)`, exercising
+full-cache pressure, confirmed halos and repeated private predictions. Its real
+packet-handler replay checks repeated missing stages/contexts, deduplicated outgoing
+resync, known tails versus unknown/malformed packets, scope/projection rejection,
+verified refresh readiness, retained atomic cover and reconnect cleanup. Only the
+renderer boundary is replaced with a disposable no-window double. Set
+`MAP_RECOVERY_CLIENT_JAR` to a frozen pre-fix client to independently reproduce
+failure. The corrected matching client has now passed private graphical review,
+with the exact acceptance scope recorded below.
+
+Baseline protocol validation enumerates supported schemas independently of
+terrain/context versions: atomic fences use schema 7, while presentation pages
+use schema 8. The fence constant is **not** a maximum supported version. The
+recovery replay now generates baseline bytes using maintained server
+`PayloadCustomGenerator`/`SceneBaselineStruct`, dispatching schema-7 fences and
+schema-8 inner/outer scenery and wall pages through the actual client handler
+for ordinary login, failed-context quarantine and verified recovery. Unsupported
+schema 9, truncated schema-8 pages and schema-8 misuse of the schema-7-only fence
+remain rejected. The earlier recovery fix introduced a login regression by
+mistaking the schema-7 fence constant for the highest supported schema. This
+was corrected in `cba549a8a926a070ed1c99c4f7f51408b8b879dc`, and the corrected
+client passed the subsequent graphical owner retest.
+
+### First-slice private-game acceptance evidence
+
+Accepted implementation source: `cba549a8a926a070ed1c99c4f7f51408b8b879dc`
+on `refactor/map-source-activation`, based on published Core
+`d85e643987f452658ea09da91175cfccaa9ccbd9`. Documentation-only follow-up does
+not change those runtime sources. The manager independently source-built the
+accepted private client; its SHA-256 is
+`74f3918d5d5e170a50016bf447cd894f9ac0a77d57c47afdb30d356ebf91e00f`.
+Build timestamps/platform asset packaging can produce a different JAR hash from
+the worker artifact; the accepted game artifact and source identity are pinned
+separately, not inferred from matching archive filenames.
+
+The isolated candidate is
+`/home/justin/.local/share/spoiled-milk-loader-candidate-VhrrvGLi/game`, using
+loopback port `43628`. Its server remained unchanged during the client recovery
+and schema fixes. Original accounts, maps and the public deployment were not
+changed by this task. The manager verified paired package/content inventories:
+package fingerprint
+`f699e5a37709a0f127d676d91f07f64e256825bef6d65a7a4ccd13c8310f3b75`, manifest
+`f3489503d2c323e669ab3004345271c6137a58698cc8c0bf0b0fb2587eb52b29`, with
+1,789 files per role and the same authored placements/effective definitions as
+the isolated baseline. Later unmerged art/content branches were not silently
+adopted or claimed as part of that baseline.
+
+The manager verified actual private login and region-transition atomic fences
+1 and 2. The owner then reported custom areas and busy-area teleports working,
+no crashes, no missing visuals, level transitions working, and object interactions
+behaving correctly. This establishes the first-slice graphical acceptance in
+the selected installed-native mode, not proof of every future area or mode.
+Alternate selection/rollback, malformed evidence and forced cache-loss/recovery
+were exercised by executable characterization/replay, not by corrupting the
+owner's running private game.
+
+Two failures remain part of the evidence, not erased by the successful retest:
+
+- The original Falador cache/reference crash reproduced against both the frozen
+  pre-cleanup baseline and first-slice client. Predicted cache transactions and
+  exact failed-context recovery were corrected and replayed through real decoding
+  and packet dispatch.
+- The subsequent schema-8 login rejection was introduced by this work's incorrect
+  upper-bound guard. Server-generated baseline replay reproduced it, then verified
+  supported schema-7 fences and schema-8 pages, including the ordinary login path.
+
+Retained private crash/retest evidence lives outside Git; no databases or account
+backups belong in this documentation commit. Automated checks include maintained
+server/client builds, activation (10), recovery (2), native source/wire (14),
+atomic activation (4), residency (4), readiness (2), prediction (5), symmetric
+residency (4) and stage paging (2) tests. The manager independently reran activation
+and recovery checks. Existing unrelated fixture failures (broad combat's invalid
+native-terrain movement coordinates and the deferred-scenery source-substring
+assertion) are not concealed or treated as failures introduced by this slice.
+
+The next meaningful boundary is **generic structural runtime validation versus
+named product/release fixture policy**. Characterize the strict installed checks,
+move historical package identity/count/level assertions into explicit distribution
+validation, and retain supported-format, ownership, placement completeness and
+effective-definition safety checks before world mutation. Preserve existing
+reviewed manifests and release pinning. This boundary is planned, not started;
+no widening, instances, editor/upgrader work or full-loader completion is implied.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous

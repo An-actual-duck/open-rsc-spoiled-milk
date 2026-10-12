@@ -439,7 +439,10 @@ public final class NativeLayeredTerrainPacketDecoder {
 					requireAdjacentStage(activeTerrain, result);
 				}
 			}
-			if (residentTransaction != null) {
+			// Predicted visual/structure fields have no authoritative cache
+			// receipt. The server deliberately discards these transactions;
+			// committing here evicts confirmed sectors only on the client.
+			if (residentTransaction != null && !predictedSymmetric) {
 				residentTransaction.commit();
 			}
 			return result;

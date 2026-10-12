@@ -58,6 +58,25 @@ final class LayeredSceneContextState {
 	private int acceptedPlayerPositions;
 	private int scopeChanges;
 
+	/** Validate identity before a resident miss can establish a recovery quarantine. */
+	void requireValidResidentHeader(int protocol, int incomingSequence,
+		String space, String projection, int x, int y, int level,
+		int packedX, int packedY) {
+		if (protocol < RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION
+			|| protocol > ATOMIC_NATIVE_LAYERED_PROTOCOL_VERSION) {
+			throw new IllegalArgumentException("Unsupported resident scene-context protocol");
+		}
+		if (incomingSequence <= 0 || established && incomingSequence <= sequence) {
+			throw new IllegalStateException("Stale layered scene-context sequence");
+		}
+		if (space == null || !VALID_WORLD_SPACE.matcher(space).matches()
+			|| !GLOBAL_WORLD_SPACE.equals(space)
+			|| !NATIVE_LAYERED_PROJECTION.equals(projection)
+			|| x != packedX || y != packedY) {
+			throw new IllegalArgumentException("Invalid resident scene-context scope or receipt");
+		}
+	}
+
 	ApplyResult accept(
 		int incomingProtocolVersion,
 		int incomingSequence,

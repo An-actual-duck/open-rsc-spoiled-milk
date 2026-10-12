@@ -22,6 +22,23 @@ final class SceneBaselineState {
 	static final int PRESENTATION_PROTOCOL_VERSION = 8;
 	static final int PAGE_PRESENTATION_SCENERY = 4;
 	static final int PAGE_PRESENTATION_WALLS = 5;
+
+	/** Baseline schema IDs are a separate axis from terrain/context protocols. */
+	static boolean supportsProtocol(final int version) {
+		switch (version) {
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case ATOMIC_FENCE_PROTOCOL_VERSION:
+			case PRESENTATION_PROTOCOL_VERSION:
+				return true;
+			default:
+				return false;
+		}
+	}
 	private static final long PARITY_REFRESH_MILLIS = 500L;
 	private static final long SCENE_BASELINE_STALE_MILLIS = 15000L;
 	private static final int RECENT_SCENE_SYNC_LOG_LIMIT = 5;
