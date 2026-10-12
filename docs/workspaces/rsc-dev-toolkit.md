@@ -594,6 +594,19 @@ or runtime upgrade is authorized by this acceptance.
 
 ## Active versus historical documentation
 
+The October 12 modern read-only adapter foundation is integrated separately at
+toolkit `51c5bc33a2a9c7622de09a2be2a4d42247393541`, exact READY
+`e989a8a85e15eef1639020b24f941888395183bb`. Independent post-merge verification
+passed all 384 tests. A fresh read-only Spoiled Milk probe matched the maintained
+Core parser across all 4,105,728 tiles and 33,545 typed placements, with cache
+residency bounded to 64 sectors. Signed levels remain -2,-1,0,1,2,10.
+The original maps, runtime and account/session state were not changed.
+See toolkit `docs/MODERN-PACKAGE-READER.md` for exact source/codec limits and
+external evidence. This is data acceptance, not a visual editor release.
+Next is a separate reviewed neutral export of final definition/visual overrides
+and external artwork allocation, followed by signed-level/u16 geometry and
+navigation integration. Modern editing, draft creation and promotion remain gated.
+
 The October 12 copy-first conversion review foundation is integrated separately
 in toolkit main at `3751d40f02fda34a9c8fcb6835fc9c0bc136af0b` (exact READY
 `0b68a55e344f9443008968428044d5101ed18862`). Independent post-merge verification
