@@ -239,8 +239,60 @@ named product/release fixture policy**. Characterize the strict installed checks
 move historical package identity/count/level assertions into explicit distribution
 validation, and retain supported-format, ownership, placement completeness and
 effective-definition safety checks before world mutation. Preserve existing
-reviewed manifests and release pinning. This boundary is planned, not started;
-no widening, instances, editor/upgrader work or full-loader completion is implied.
+reviewed manifests and release pinning. This boundary is now implemented in the
+focused worker slice below; private startup acceptance remains a separate gate.
+No widening, instances, editor/upgrader work or full-loader completion is implied.
+
+### Second slice: generic validation and whole-catalog preflight
+
+Ordinary native operation defaults to `native-additive`: legacy terrain and
+population remain active, with the existing authority gates still required when
+native packages are enabled. `native-replacement` skips legacy terrain/population
+and requires a configured manifest SHA-256 plus exactly one explicit placement
+set for every declared level. Empty levels use an explicit empty supported set.
+Additive mode permits partial placement coverage; an optional configured manifest
+hash, when supplied, is verified rather than ignored.
+
+The existing `world-builder-installed` and `spoiled-milk-editor-installed`
+spellings select generic, manifest-bound replacement operation. This deliberately
+removes product branding, fixed base-level membership and historical counts from
+ordinary installed validation. Installed descriptor/path, paired inventory,
+content identity and activation checks are unchanged. Existing named fixture,
+Preservation, Spoiled Milk pinned release, draft and export profiles retain their
+historical policy. `spoiled-milk-installed-review` explicitly selects the old
+installed product-shape checks; its retained diagnostic wording uses the old name.
+
+Generic validation is not unrestricted capability: the current matching client
+requires global static world space and 24-tile presentation chunks. Supported
+encodings, finite parser/catalog budgets, payload hashes, overlap/ownership and
+placement/roam terrain checks remain enforced. Signed authored levels are not
+restricted to the six Spoiled Milk fixture levels. Effective custom definition
+IDs are not restricted to vanilla distribution ceilings. Existing packet ID
+widths, compatibility carriers and object-collision bounds are not widened.
+
+Before any native entity is registered, the complete catalog is checked against
+effective definitions, configured item restrictions and authored owner terrain.
+Scenery/boundary collision and NPC-blocking footprints are checked with the
+existing pure scalar planner: no gameplay entity is constructed and no collision
+or registration state is mutated during preflight. The existing 1008-by-4032
+object collision bounds and footprint resource budgets remain explicit refusals.
+Per-object registration guards remain for dynamic staleness. World startup also
+preflights before legacy population; it does not promise transaction rollback of
+unrelated dynamic gameplay or later resource exhaustion.
+
+Failure-first characterization against the pre-change maintained server showed
+a parsed independent package at level 42 rejected solely by installed branding,
+and a later missing item definition leaving one earlier NPC registered. The new
+focused tests exercise arbitrary signed levels/custom IDs, explicit product
+refusals, additive/replacement completeness, manifest/payload mismatches,
+unsupported instance-template capability, terrain-edge and collision-bound
+footprints, all effective definition families, and configured item restrictions.
+Private source-built startup with the unchanged Spoiled Milk installed content
+is still required before integration; synthetic checks alone are not acceptance.
+
+The next boundary remains unification of terrain access/residency and truthful
+capability exposure, after this slice's acceptance. Instances, coordinate/ID
+widening, new schemas and editor/upgrader implementation remain deferred.
 
 ## Active versus historical documentation
 

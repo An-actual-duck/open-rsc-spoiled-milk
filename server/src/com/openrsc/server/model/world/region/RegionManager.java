@@ -25,6 +25,7 @@ import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
+import com.openrsc.server.io.NativeLayeredWorldPlacementPreflight;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.entity.Entity;
@@ -264,20 +265,7 @@ public class RegionManager {
 			profile.validate(loaded);
 			final String configuredManifest = world.getServer().getConfig()
 				.LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256;
-			if (profile.requiresConfiguredManifestSha256()) {
-				if (configuredManifest == null
-					|| !configuredManifest.matches("[0-9a-f]{64}")) {
-					throw new IllegalStateException(
-						"The selected World Builder profile requires an exact "
-							+ "layered package manifest SHA-256");
-				}
-				if (!configuredManifest.equals(
-						loaded.getPrimaryPackage().getManifestSha256())) {
-					throw new IllegalStateException(
-						"The installed World Builder package does not match "
-							+ "the configured layered package manifest SHA-256");
-				}
-			}
+			profile.validateConfiguredManifest(loaded, configuredManifest);
 			return loaded;
 		} catch (IOException failure) {
 			throw new IllegalStateException(
@@ -4231,6 +4219,7 @@ public class RegionManager {
 			throw new IllegalStateException(
 				"Native layered placements were already populated");
 		}
+		preflightNativeLayeredPlacements();
 		int npcCount = 0;
 		int groundItemCount = 0;
 		int sceneryCount = 0;
@@ -4334,6 +4323,14 @@ public class RegionManager {
 			groundItemCount,
 			sceneryCount,
 			boundaryCount);
+	}
+
+	/** Validate all effective definitions and detached footprints before registration. */
+	public void preflightNativeLayeredPlacements() {
+		if (nativeLayeredWorldPackageCatalog != null) {
+			NativeLayeredWorldPlacementPreflight.validate(nativeLayeredWorldPackageCatalog,
+				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID);
+		}
 	}
 
 	private void populateNativeLayeredGameObject(
