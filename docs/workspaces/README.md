@@ -83,6 +83,39 @@ local and published `main`. It deletes the merged local and remote topic branch
 and returns the slot to detached IDLE state. Use `--keep-remote` only for a
 deliberate long-lived remote record.
 
+## Parking a superseded handoff
+
+When a clean READY task should be preserved rather than merged (for example,
+a retired compatibility experiment), the manager can free its seat with:
+
+```bash
+./scripts/ai-manager.sh park ai-2
+```
+
+Parking verifies the exact remote backup, retains both topic branches and a
+durable `refs/ai-parked/ai-N/COMMIT` ref, and saves the original READY record
+under the shared Git directory's `ai-workspaces/parked` folder. It switches the
+seat to detached published main without overwriting ignored-file collisions.
+Databases, assets and other ignored local files are not cleanup targets. The
+generated `AI_WORKSPACE.md` is replaced with the idle guide; its old contents
+are preserved alongside the record.
+
+Only clean READY work can be parked. If switching is interrupted, rerun the
+same command; recovery checks the original record and pinned destination.
+An incomplete record or unexpected state requires manager inspection, not a
+forced checkout. No merge, branch deletion, publication or deployment occurs.
+Parked unmerged branches still block the normal release check as unmanaged
+work; parking is not a way to claim they were integrated.
+
+To resume a parked handoff, the manager must first verify an idle clean seat,
+the retained local and remote tips, and the saved exact commit; then deliberately
+reattach the retained branch using `git switch --no-overwrite-ignore BRANCH`
+and run `ai-workspace.sh handoff` from that worker to re-register its READY
+state. Never reattach over an active task. Ordinary task allocation, merge,
+recycle and release requirements remain unchanged, including a clean published
+manager checkout. Parking alone can preserve work while the manager has local
+configuration edits, since it does not edit or integrate manager sources.
+
 ## When A Session Leaves A Mess
 
 Do not delete, reset, clean, or stash the slot. From the manager checkout run:

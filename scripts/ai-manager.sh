@@ -11,6 +11,7 @@ usage() {
 Usage:
   ./scripts/ai-manager.sh status
   ./scripts/ai-manager.sh rescue <ai-N> [-m message] [--local-only] [--allow-sensitive] [--allow-large]
+  ./scripts/ai-manager.sh park <ai-N>
   ./scripts/ai-manager.sh collect-contributor <ai-N> <remote-topic-branch> <exact-commit>
   ./scripts/ai-manager.sh merge <topic-branch>
   ./scripts/ai-manager.sh release-check
@@ -22,6 +23,84 @@ remote commit and imports it into an idle slot for review; it does not merge.
 None of these commands deletes a worktree.
 USAGE
 }
+
+# Parking is preservation, not integration: the manager working tree may have
+# local configuration edits. Merge, release, allocation and recycle retain
+# their stricter clean/published-main requirements.
+manager_park() (
+  local slot path branch head base record state parked_ref remote_head
+  umask 077
+  [[ $# -eq 1 ]] || ai_fail "park requires exactly one workspace slot."
+  ai_require_manager_identity
+  ai_require_no_git_operation "$ROOT_DIR"
+  [[ "$(ai_current_branch "$ROOT_DIR")" == "$AI_MAIN_BRANCH" ]] \
+    || ai_fail "Parking must be initiated from manager main."
+  slot="$(ai_normalize_slot "$1")"
+  path="$(ai_require_slot "$slot")"
+  mkdir -p "$AI_STATE_DIR/parked"
+  # Keep an interrupted operation recoverable and refuse simultaneous parking.
+  exec 9>"$AI_STATE_DIR/parked/$slot.lock"
+  flock -n 9 || ai_fail "Another parking operation holds $slot."
+  ai_require_no_git_operation "$path"
+  ai_require_clean "$path" "Workspace $slot"
+  state="$(ai_state_path "$slot")"
+  [[ -f "$state" ]] || ai_fail "$slot has no registered handoff."
+  [[ "$(sed -n 's/^phase=//p' "$state")" == READY ]] \
+    || ai_fail "Only a clean READY handoff can be parked."
+  branch="$(sed -n 's/^branch=//p' "$state")"
+  head="$(sed -n 's/^head=//p' "$state")"
+  [[ "$head" =~ ^[0-9a-f]{40}$ && "$branch" != "$AI_MAIN_BRANCH" && "$branch" != DETACHED ]] \
+    || ai_fail "Invalid READY handoff registration."
+  git -C "$ROOT_DIR" check-ref-format --branch "$branch" >/dev/null 2>&1 \
+    || ai_fail "Invalid registered topic branch."
+  [[ "$(ai_realpath "$(sed -n 's/^path=//p' "$state")")" == "$(ai_realpath "$path")" ]] \
+    || ai_fail "Registered workspace path differs."
+  ai_fetch_remote
+  remote_head="$(git -C "$ROOT_DIR" ls-remote --exit-code "$AI_REMOTE" "refs/heads/$branch" | cut -f1)" \
+    || ai_fail "Cannot verify the remote handoff backup."
+  [[ "$remote_head" == "$head" && "$(git -C "$ROOT_DIR" rev-parse "refs/heads/$branch")" == "$head" ]] \
+    || ai_fail "Local or remote handoff changed; do not park it."
+  record="$AI_STATE_DIR/parked/$slot-$head.state"
+  parked_ref="refs/ai-parked/$slot/$head"
+  if [[ -f "$record" ]]; then
+    # Recovery is allowed only at the original topic tip or pinned destination.
+    cmp -s "$state" "$record" \
+      || ai_fail "Parking record differs from READY state; inspect it before recovery."
+    base="$(cat "$record.base")"
+  else
+    ai_load_slot_state "$slot" "$path" \
+      || ai_fail "Cannot park an ambiguous handoff: $AI_SLOT_STATE_ERROR"
+    base="$(git -C "$ROOT_DIR" rev-parse "$(ai_published_ref)^{commit}")"
+    cp -p "$state" "$record"
+    printf '%s\n' "$base" > "$record.base"
+    if [[ -f "$path/AI_WORKSPACE.md" ]]; then
+      cp -p "$path/AI_WORKSPACE.md" "$record.guide"
+    fi
+  fi
+  [[ "$base" =~ ^[0-9a-f]{40}$ ]] || ai_fail "Invalid pinned parking destination."
+  if git -C "$ROOT_DIR" show-ref --verify --quiet "$parked_ref"; then
+    [[ "$(git -C "$ROOT_DIR" rev-parse "$parked_ref")" == "$head" ]] \
+      || ai_fail "Durable parking ref changed."
+  else
+    git -C "$ROOT_DIR" update-ref "$parked_ref" "$head" 0000000000000000000000000000000000000000
+  fi
+  if [[ "$(ai_current_branch "$path")" == "$branch" ]]; then
+    [[ "$(ai_head "$path")" == "$head" ]] || ai_fail "Handoff tip changed."
+    # Git normally overwrites ignored collisions. Explicitly forbid that.
+    git -C "$path" switch --no-overwrite-ignore --detach "$base"
+  else
+    [[ "$(ai_current_branch "$path")" == DETACHED && "$(ai_head "$path")" == "$base" ]] \
+      || ai_fail "Interrupted parking is not at its pinned destination."
+  fi
+  ai_require_clean "$path" "Parked workspace $slot"
+  [[ "$(git -C "$ROOT_DIR" rev-parse "refs/heads/$branch")" == "$head" ]] \
+    || ai_fail "Handoff branch changed during parking."
+  ai_write_state "$slot" IDLE "$path" DETACHED "$base"
+  ai_generate_workspace_guide "$slot" "$path" IDLE DETACHED "$base"
+  printf 'Parked %s at %s; %s is IDLE.\n' "$branch" "$head" "$slot"
+  printf 'Local branch, remote backup and durable ref retained: %s\n' "$parked_ref"
+  printf 'READY record: %s\nNo code was merged; no branch or local asset was deleted.\n' "$record"
+)
 
 manager_rescue() {
   local slot path message="" local_only=false allow_sensitive=false allow_large=false
@@ -341,6 +420,9 @@ case "$command" in
     ;;
   rescue)
     manager_rescue "$@"
+    ;;
+  park)
+    manager_park "$@"
     ;;
   collect-contributor)
     manager_collect_contributor "$@"

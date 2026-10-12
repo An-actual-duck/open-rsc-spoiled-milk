@@ -123,6 +123,102 @@ class AiWorkspaceWorkflowTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.fixture.close()
 
+    def ready_to_park(self) -> tuple[Path, str, str]:
+        f = self.fixture
+        f.run("ai-workspace.sh", "init", "1")
+        branch = "fix/retired-handoff"
+        f.run("ai-workspace.sh", "start", "ai-1", branch)
+        slot = f.slot(1)
+        (slot / "old-feature.txt").write_text("preserve this work\n")
+        f.run("ai-workspace.sh", "handoff", "-m", "Preserved handoff", cwd=slot)
+        return slot, branch, f.state(1)["head"]
+
+    def test_park_preserves_handoff_ignored_assets_and_dirty_manager(self) -> None:
+        f = self.fixture
+        slot, branch, head = self.ready_to_park()
+        ignored = slot / "private-asset.bin"
+        exclude = f.root / ".git" / "info" / "exclude"
+        with exclude.open("a") as stream:
+            stream.write("\nprivate-asset.bin\n")
+        ignored.write_bytes(b"local account/asset bytes\x00")
+        (f.root / "README.md").write_text("owner's local edit\n")
+        f.run("ai-manager.sh", "park", "ai-1")
+        self.assertEqual(ignored.read_bytes(), b"local account/asset bytes\x00")
+        self.assertEqual((f.root / "README.md").read_text(), "owner's local edit\n")
+        self.assertEqual(f.state(1)["phase"], "IDLE")
+        self.assertEqual(f.git("rev-parse", branch).stdout.strip(), head)
+        self.assertEqual(f.git("rev-parse", f"refs/ai-parked/ai-1/{head}").stdout.strip(), head)
+        self.assertIn(head, f.git("ls-remote", "spoiled-milk", f"refs/heads/{branch}").stdout)
+        self.assertEqual(f.git("show", f"{branch}:old-feature.txt").stdout, "preserve this work\n")
+        # Parking does not relax ordinary allocation or release safeguards.
+        blocked = f.run("ai-workspace.sh", "start", "ai-1", "refactor/new-task", check=False)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertIn("dirty", blocked.stderr)
+
+    def test_park_rejects_active_and_dirty_handoffs(self) -> None:
+        f = self.fixture
+        slot, branch, _ = self.ready_to_park()
+        (slot / "new-untracked.txt").write_text("do not discard")
+        blocked = f.run("ai-manager.sh", "park", "ai-1", check=False)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertEqual(f.git("branch", "--show-current", cwd=slot).stdout.strip(), branch)
+        f.run("ai-workspace.sh", "checkpoint", "-m", "Active again", cwd=slot)
+        blocked = f.run("ai-manager.sh", "park", "ai-1", check=False)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertIn("READY", blocked.stderr)
+
+    def test_park_rejects_changed_remote(self) -> None:
+        f = self.fixture
+        slot, branch, _ = self.ready_to_park()
+        f.git("push", "spoiled-milk", f"main:refs/heads/{branch}", "--force")
+        blocked = f.run("ai-manager.sh", "park", "ai-1", check=False)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertIn("changed", blocked.stderr)
+        self.assertEqual(f.git("branch", "--show-current", cwd=slot).stdout.strip(), branch)
+
+    def test_park_refuses_ignored_checkout_collision(self) -> None:
+        f = self.fixture
+        slot, branch, _ = self.ready_to_park()
+        (f.root / "collision.dat").write_text("published file")
+        f.git("add", "collision.dat")
+        f.git("commit", "-m", "Publish collision destination")
+        f.git("push", "spoiled-milk", "main")
+        with (f.root / ".git" / "info" / "exclude").open("a") as stream:
+            stream.write("\ncollision.dat\n")
+        (slot / "collision.dat").write_text("private local file")
+        blocked = f.run("ai-manager.sh", "park", "ai-1", check=False)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertEqual((slot / "collision.dat").read_text(), "private local file")
+        self.assertEqual(f.state(1)["phase"], "READY")
+        self.assertEqual(f.git("branch", "--show-current", cwd=slot).stdout.strip(), branch)
+
+    def test_park_recovers_interruption_after_detaching(self) -> None:
+        f = self.fixture
+        slot, _, head = self.ready_to_park()
+        directory = f.root / ".git" / "ai-workspaces" / "parked"
+        directory.mkdir()
+        record = directory / f"ai-1-{head}.state"
+        shutil.copy2(f.root / ".git" / "ai-workspaces" / "ai-1.state", record)
+        base = f.git("rev-parse", "spoiled-milk/main").stdout.strip()
+        Path(str(record) + ".base").write_text(base + "\n")
+        f.git("switch", "--detach", base, cwd=slot)
+        f.run("ai-manager.sh", "park", "ai-1")
+        self.assertEqual(f.state(1)["phase"], "IDLE")
+        self.assertEqual(f.state(1)["head"], base)
+
+    def test_park_frees_seat_but_does_not_approve_unmerged_release(self) -> None:
+        f = self.fixture
+        slot, branch, head = self.ready_to_park()
+        f.run("ai-manager.sh", "park", "ai-1")
+        blocked = f.run("ai-manager.sh", "release-check", check=False)
+        self.assertNotEqual(blocked.returncode, 0)
+        self.assertIn(branch, blocked.stdout + blocked.stderr)
+        f.run("ai-workspace.sh", "start", "ai-1", "refactor/map-source-activation")
+        self.assertEqual(f.state(1)["phase"], "ACTIVE")
+        self.assertEqual(f.git("rev-parse", branch).stdout.strip(), head)
+        worker_park = f.run("ai-manager.sh", "park", "ai-1", cwd=slot, check=False)
+        self.assertNotEqual(worker_park.returncode, 0)
+
     def test_ancillary_repository_guide_uses_its_own_identity(self) -> None:
         f = self.fixture
         f.env["AI_PROJECT_NAME"] = "rsc-dev-toolkit"
