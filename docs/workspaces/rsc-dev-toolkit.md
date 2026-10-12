@@ -303,8 +303,30 @@ refuse before mutation, with legal edge IDs retained. The focused suite has 16
 tests. Independent manager source-built private startup of the first implementation
 loaded all 33,545 unchanged placements (3803 NPCs, 879 items, 27,892 scenery and
 971 boundaries), 877 NPC definitions and 3400 item definitions without errors.
-Final wire/capacity-guard artifact startup re-verification remains required before
-integration; synthetic checks alone are not acceptance.
+Final server acceptance was independently repeated from exact implementation
+commit `03314d292d53b6bb9650da1b332f288d9529101a`, frozen and source-built in the
+manager's isolated fixture. The maintained server JAR there had SHA-256
+`a86e191b4e4da751f2a8a04989a3bfb80aed105ceae220a27d801695ed02612d`.
+Whole-catalog preflight and real population again preserved all 33,545 placements
+and the same 877/3400 effective NPC/item definition counts. Full private server
+startup on loopback port 43629 completed in 3386 ms without exceptions, using
+empty seed accounts and no copied player accounts. That isolated process was
+stopped after its exact directory and absence of connections were verified;
+the owner's existing private sessions and public server were untouched.
+
+The manager independently reran all 16 focused validation tests successfully.
+The same current capacity/wire counterexamples failed against the frozen
+pre-guard `8a12b072a` JAR (partial 3999-to-4000 population and unsupported wire
+ID acceptance), then passed against the corrected implementation. Evidence is
+retained outside Git under
+`/home/justin/.local/share/spoiled-milk-runtime-validation-emQrFR47/`, including
+`server-startup-final-review.log` and `full-population-final-review.log`.
+
+This is independent maintained-server startup/population acceptance, not a new
+graphical owner review. The earlier owner acceptance covers the unchanged client
+visual/gameplay behavior recorded for the first slice. Matching-client and broader
+integration checks remain the manager's collection gate; no whole-loader or
+future-instance completion is claimed.
 
 The next boundary remains unification of terrain access/residency and truthful
 capability exposure, after this slice's acceptance. Instances, coordinate/ID
