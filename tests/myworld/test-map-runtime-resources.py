@@ -96,6 +96,24 @@ class MapRuntimeResourcesTest(unittest.TestCase):
         self.assertEqual(contract["geometry"]["packagePresentationChunkTiles"], 24)
         self.assertEqual(contract["geometry"]["currentActiveWireChunkTiles"], 48)
         self.assertFalse(contract["materialSelectors"]["roof"]["runtimeInventoryHashNegotiation"])
+        snapshot = (ROOT / "Client_Base/src/orsc/NativeLayeredTerrainSnapshot.java").read_text()
+        for name, constant in {
+            "uniform": "UNIFORM_PAGE_PROTOCOL_VERSION", "legacyChunked": "LEGACY_CHUNKED_PROTOCOL_VERSION",
+            "fullSectors": "PROTOCOL_VERSION", "resident": "RESIDENT_PROTOCOL_VERSION",
+            "readiness": "READINESS_PROTOCOL_VERSION", "atomic": "ATOMIC_ACTIVATION_PROTOCOL_VERSION",
+            "symmetricVisual": "SYMMETRIC_RESIDENCY_PROTOCOL_VERSION", "symmetricStructure": "SYMMETRIC_STRUCTURE_PROTOCOL_VERSION"}.items():
+            match = re.search(r"\b" + constant + r"\s*=\s*(\d+)\s*;", snapshot)
+            self.assertIsNotNone(match, constant)
+            self.assertEqual(axes["terrainProtocols"][name], int(match.group(1)), constant)
+        package = (ROOT / "server/src/com/openrsc/server/io/NativeLayeredWorldPackage.java").read_text()
+        for name, constant in {
+            "parsedWorldSpaceCountMaximum": "MAX_WORLD_SPACES", "declaredLevelCountMaximum": "MAX_LEVELS",
+            "terrainSectorCountMaximum": "MAX_TERRAIN_SECTORS", "placementSetCountMaximum": "MAX_PLACEMENT_SETS",
+            "placementsPerSetMaximum": "MAX_PLACEMENTS_PER_SET", "npcRoamRadiusMaximum": "MAX_NPC_ROAM_RADIUS",
+            "npcRoamSpanMaximum": "MAX_NPC_ROAM_SPAN"}.items():
+            match = re.search(r"\b" + constant + r"\s*=\s*(\d+)\s*;", package)
+            self.assertIsNotNone(match, constant)
+            self.assertEqual(contract["identityAndBudgets"][name], int(match.group(1)), constant)
 
     def test_server_client_resources_identical_to_canonical_source(self):
         for filename in ("roof-definitions-v1.properties", "map-runtime-v1.json"):
@@ -114,6 +132,27 @@ class MapRuntimeResourcesTest(unittest.TestCase):
             result = subprocess.run(["java", "-cp", cp, "RoofResourceFixture"], cwd=work, text=True, capture_output=True, timeout=30)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("PASS shared strict readers", result.stdout)
+
+    def test_direct_combat_classpath_packages_same_resources(self):
+        with tempfile.TemporaryDirectory(prefix="map-contract-combat-") as directory:
+            work = Path(directory)
+            result = subprocess.run([
+                "sh", str(ROOT / "tools/vendor/apache-ant-1.10.5/bin/ant"),
+                "-f", str(ROOT / "server/build.xml"),
+                "-Dcombat.output.root=" + str(work), "compile_combat_core"],
+                cwd=ROOT, text=True, capture_output=True, timeout=120)
+            self.assertEqual(result.returncode, 0, result.stdout[-4000:] + result.stderr[-4000:])
+            classes = work / "core-classes"
+            for filename in ("roof-definitions-v1.properties", "map-runtime-v1.json"):
+                self.assertEqual((classes / "map-runtime" / filename).read_bytes(),
+                                 (ROOT / "runtime-contract" / filename).read_bytes())
+            source = work / "DirectRoofClasspath.java"
+            source.write_text('public final class DirectRoofClasspath { public static void main(String[] args) { '
+                              'if(com.openrsc.server.io.TerrainRoofDefinitionCatalog.shared().getCount()!=6) '
+                              'throw new AssertionError("missing direct inventory"); } }')
+            cp = os.pathsep.join(map(str, (work, classes)))
+            subprocess.run(["javac", "-cp", cp, "-d", str(work), str(source)], check=True)
+            subprocess.run(["java", "-cp", cp, "DirectRoofClasspath"], cwd=work, check=True, timeout=15)
 
 
 if __name__ == "__main__":
