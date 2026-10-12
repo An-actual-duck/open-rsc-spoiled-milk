@@ -72,6 +72,61 @@ The implementation order and test checklist are maintained in
 `/home/justin/rsc-dev-toolkit/docs/MODERN-LOADER-CLEANUP.md`; toolkit
 `docs/README.md` and `docs/ROADMAP.md` must retain this Spoiled Milk-first gate.
 
+### First loader slice: startup authority (private-game acceptance pending)
+
+`ServerConfiguration` resolves an immutable `MapSourceActivationPlan` once during
+startup and applies it to the existing compatibility fields. The report includes
+representation, additive/replacement ownership, selected package/manifest,
+profile, effective gates and input provenance. It does not change terrain codecs,
+wire bytes, placements, collision, art, population or default gate values.
+
+Selection rules:
+
+- Existing per-field precedence stays system property, environment, configuration,
+  then default. Nonempty launch values are explicit; blank values remain absent.
+- An explicit launch native-package switch, package path, manifest hash or runtime
+  profile selects launch/configuration values rather than installed-primary values.
+  This retains an external hosted package path and makes explicit legacy rollback
+  effective. An explicit path with disabled native authority is an error.
+- Without explicit launch source selection, a verified layered primary remains
+  preferred over configuration-file defaults. Configuration file settings cannot
+  distinguish deliberate selection from old installed pins; this compatibility
+  rule is intentional for existing imports. An explicitly disabled launch gate
+  conflicting with automatically selected installed authority fails startup.
+- Absent primary, inert packed primary and verified layered primary are distinct
+  discovery outcomes. Malformed, symlinked/nonregular, mismatched paired packages
+  or bad fingerprints fail startup, **even during launch override/rollback**.
+  No corrupt selected source silently falls back to classic maps.
+- `world-builder-installed` is an alias of `spoiled-milk-editor-installed`, with
+  exactly the same strict validator, configured-manifest requirement and replacement
+  ownership. It is not a new generic or release-pinned policy.
+
+The matching client caches one pre-login bootstrap decision. Valid explicit
+adaptive selection outranks a valid installed default (including a differing
+identity); its report says the installed profile was not selected. Installed
+profile parsing still fails closed if malformed. Ordinary installed and classic
+bootstrap behavior remains unchanged. The report is available through
+`WorldBuilderTerrainBootstrap.report()`.
+
+Executable checks: `scripts/build-server.sh`, `scripts/build-client.sh`,
+`tests/myworld/test-map-source-activation.py` (source-built JARs required),
+`test-layered-native-server-source.py` and `test-native-terrain-atomic-activation.py`.
+The native-source suite now uses maintained Core rather than a retired
+class-shadowing runtime archive. Its historical exact-release rejection uses
+`spoiled-milk-replacement`; installed validation intentionally permits added levels.
+Custom combat characterization is supplementary, not gameplay acceptance.
+
+Manager acceptance still requires an isolated source-built Spoiled Milk server
+and matching client with identical package/content inventories: startup/class
+origin, normal/custom areas, layer transitions/collision, placements/custom
+visuals and gameplay, reconnect/reload, and relevant rejection/recovery behavior.
+No public deployment or overall loader-cleanup closeout is implied by this slice.
+
+Deferred boundaries: generic structural policy versus named product fixtures;
+authoritative terrain/collision facade and compatibility projection isolation;
+capability/version matrix, widening and instances; build-overlay consolidation.
+Keep existing safety validation until those bounded slices provide replacements.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous

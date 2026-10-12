@@ -57,6 +57,11 @@ public enum NativeLayeredWorldRuntimeProfile {
 		final String requested) {
 		final String value = requested == null
 			? "" : requested.trim().toLowerCase(Locale.ROOT);
+		// Production launch scripts use this name. Keep the historical validator
+		// and ownership semantics; generic replacement policy is a separate slice.
+		if ("world-builder-installed".equals(value)) {
+			return SPOILED_MILK_EDITOR_INSTALLED;
+		}
 		for (NativeLayeredWorldRuntimeProfile profile : values()) {
 			if (profile.id.equals(value)) {
 				return profile;

@@ -61,9 +61,14 @@ public final class WorldBuilderInstalledMapActivation {
 	}
 
 	public static Optional<Activation> discover() throws IOException {
+		return inspect().getActivation();
+	}
+
+	/** Absence, a packed (inert) primary and a verified layered primary differ. */
+	public static Evidence inspect() throws IOException {
 		Path targetRoot = locateTargetRoot();
 		if (targetRoot == null) {
-			return Optional.empty();
+			return new Evidence("absent", null);
 		}
 		Path configuration = requiredRegularFile(
 			targetRoot, CONFIGURATION_RELATIVE, MAX_CONFIGURATION_BYTES);
@@ -77,7 +82,7 @@ public final class WorldBuilderInstalledMapActivation {
 		}
 		validateConfigurationIdentity(document);
 		if ("packed".equals(document.getString("representation"))) {
-			return Optional.empty();
+			return new Evidence("packed-inert", null);
 		}
 		validateLayeredConfiguration(document);
 
@@ -113,8 +118,21 @@ public final class WorldBuilderInstalledMapActivation {
 			throw new IOException(
 				"Installed World Builder package manifests do not agree");
 		}
-		return Optional.of(new Activation(
+		return new Evidence("layered-verified", new Activation(
 			serverRoot, clientRoot, fingerprint, loaded.getManifestSha256()));
+	}
+
+	public static final class Evidence {
+		private final String status;
+		private final Activation activation;
+		private Evidence(String status, Activation activation) {
+			this.status = status;
+			this.activation = activation;
+		}
+		public String getStatus() { return status; }
+		public Optional<Activation> getActivation() {
+			return Optional.ofNullable(activation);
+		}
 	}
 
 	private static void validateLayeredConfiguration(JSONObject value)
@@ -164,18 +182,18 @@ public final class WorldBuilderInstalledMapActivation {
 		String requested = System.getProperty("openrsc.worldBuilderTargetRoot", "").trim();
 		if (!requested.isEmpty()) {
 			Path root = Paths.get(requested).toAbsolutePath().normalize();
-			return Files.isRegularFile(root.resolve(CONFIGURATION_RELATIVE),
+			return Files.exists(root.resolve(CONFIGURATION_RELATIVE),
 				LinkOption.NOFOLLOW_LINKS) ? root : null;
 		}
 		Path working = Paths.get("").toAbsolutePath().normalize();
-		if (Files.isRegularFile(working.resolve(CONFIGURATION_RELATIVE),
+		if (Files.exists(working.resolve(CONFIGURATION_RELATIVE),
 			LinkOption.NOFOLLOW_LINKS)) {
 			return working;
 		}
 		if (working.getFileName() != null
 			&& "server".equals(working.getFileName().toString())
 			&& working.getParent() != null
-			&& Files.isRegularFile(
+			&& Files.exists(
 				working.resolve("world-builder-configs/primary.json"),
 				LinkOption.NOFOLLOW_LINKS)) {
 			return working.getParent();
