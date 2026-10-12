@@ -440,6 +440,49 @@ native overlay lookup can dereference a missing TileDef. This extraction preserv
 that behavior; typed pre-mutation material validation and its control-value rules
 need their own bounded tests rather than an unrelated fix here.
 
+### Fourth slice: schema/material contract audit (implementation pending)
+
+The activated `feat/map-runtime-contract` worker starts from published
+`64f3e48c0c73c6c41529126bad831eedcf32ed38`. Its initial audit keeps independent
+axes separate: package schema 1; uniform/RLE v1 byte-height and raw v1/raw v2-u16
+terrain codecs; placement schemas 1–4; terrain/context protocols 3–10; terrain
+stage protocols 1–5; readiness receipts 1/2; and scene baseline schemas including
+schema 7 atomic fences versus schema 8 presentation pages. Numeric version order
+within one axis is not proof of capability in another axis.
+
+The retained Core target-evidence generator's encodingVersions `[1]` accompanies
+mapFormatId `legacy-packed-orsc-v1`; it does not declare placement schemas 1–4 or
+all wire versions. Owner-local capability edits remain preserved and are not used
+as behavioral evidence or overwritten by this task. A separate data-only contract
+and maintained-source golden tests are proposed rather than weakening historical
+evidence parsers or treating their ambiguous version list as universal support.
+
+Material audit findings before implementation:
+
+- Native overlay lookup dereferences missing effective TileDefs. Overlay 0 is
+  absent decoration, 250 aliases overlay 2 for collision, and 255 is blocking
+  base color outside TileDef inventory; these controls must not become IDs.
+- Native vertical/horizontal walls use effective DoorDefs with one-based terrain
+  IDs; missing definitions currently silently lose collision. Diagonal ranges
+  `(0,12000)` and `(12000,24000)` select the two wall orientations. Embedded
+  scenery uses `(48000,60000)` and definition index `raw - 48001`; other raw
+  ranges/endpoint controls require explicit existing-behavior characterization.
+- Server EntityHandler has no roof/ElevationDef inventory. The matching client's
+  EntityHandler creates six scalar ElevationDefs in code, with no other writer.
+  A canonical data-only shared roof resource with preserved scalar pairs and
+  byte-identical server/client build copies is proposed for review. It would
+  supply effective roof inventory without inventing a vanilla ID ceiling or
+  introducing art/format changes.
+- Client Tile groundElevation is an integer; terrain presentation sampling uses
+  three mesh units per raw elevation unit. Existing isolated wire tests exercise
+  wide decoding, but an actual maintained generator-to-client materialization/
+  geometry check with heights above 255 remains required before capability claims.
+
+No codec widening, instance/editor/upgrader work, account/map/art changes or
+public activation is authorized by this audit. Missing terrain, blocked void and
+pending presentation remain different states; actual private-game closeout is
+still required after the bounded contract implementation.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous
