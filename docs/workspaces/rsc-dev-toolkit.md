@@ -332,6 +332,43 @@ The next boundary remains unification of terrain access/residency and truthful
 capability exposure, after this slice's acceptance. Instances, coordinate/ID
 widening, new schemas and editor/upgrader implementation remain deferred.
 
+### Third slice: authoritative lookup inventory (implementation pending)
+
+The activated `refactor/map-authority-facade` worker starts from published
+`df4954b0108e69d17a934dc069ed107373ca3fb0`. Its bounded inventory found these
+maintained boundaries; they are not interchangeable loaders:
+
+- `RegionManager.getTile(WorldLocation)` selects exact native ownership, the
+  explicit synthetic fixture, or exact legacy packed projection. Signed level
+  and world identity must survive this selection.
+- `getTile(int,int)` and `getTile(Point)` directly access the packed Region
+  backend. They cannot simply infer a native level from their temporary carrier.
+- `nativeLayeredTile` converts raw fields to the established server TileValue,
+  derives immutable terrain collision from owner-local positive-axis neighbors,
+  then applies actual registered-object collision. Client presentation and
+  readiness caches are not part of this authority.
+- `hasNativeLayeredTerrain`/`findNativeLayeredWorldPackage` currently repeat
+  immutable catalog versus explicitly enabled authoring-draft resolution.
+  Authoring edits are supplied by WorldEditorSessionManager; ordinary gameplay
+  must not acquire an implicit authoring dependency.
+- `requireLegacyTerrainProjection` performs exact logical-address validation.
+  Nonrepresentable logical tiles refuse; empty packed Regions are blocked by
+  default, not automatically authored or walkable terrain.
+- `populateNativeLayeredPlacements` consumes the immutable catalog; runtime
+  relookup uses registered identity and spatial membership. WorldPopulator's
+  legacy base suppression and RegionManager's legacy archive suppression are
+  deliberate replacement semantics and must remain aligned.
+
+Proposed boundary for manager review: one immutable source facade bound to the
+resolved activation plan and validated catalog, with explicit legacy projection,
+native server-field/collision conversion and opt-in authoring adapters. First
+delegate typed terrain/owner lookup and catalog population-policy access; retain
+the packed compatibility backend, actual object registry, transition guards and
+all presentation/readiness/prediction machinery. Capture pre-change parity before
+moving conversion. Missing authored terrain is not an unloaded scene, and no
+neighbor lookup may silently cross to another owner or classic fallback.
+This inventory does not start instances, widening or editor development.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous
