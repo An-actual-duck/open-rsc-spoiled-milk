@@ -45,7 +45,7 @@ public final class NativeLayeredWorldRuntimeContract {
 
 	public static void validateConfiguredManifest(NativeLayeredWorldPackageCatalog catalog,
 		String configured, boolean required) {
-		String value = configured == null ? "" : configured.trim();
+		String value = configured == null ? "" : configured;
 		if (!required && value.isEmpty()) return;
 		if (!value.matches("[0-9a-f]{64}")) throw new IllegalStateException(
 			"Selected native runtime requires a valid configured manifest SHA-256");
