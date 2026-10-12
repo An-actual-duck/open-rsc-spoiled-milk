@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import subprocess
 import tempfile
 import textwrap
@@ -959,7 +960,7 @@ class NativeTerrainPredictionTest(unittest.TestCase):
                 cwd=ROOT,
             )
             subprocess.run(
-                ["java", "-cp", str(work) + ":" + str(ROOT / "Client_Base/Open_RSC_Client.jar"), class_name],
+                ["java", "-cp", os.pathsep.join([str(work), str(ROOT / "Client_Base/Open_RSC_Client.jar")]), class_name],
                 check=True,
                 cwd=ROOT,
             )

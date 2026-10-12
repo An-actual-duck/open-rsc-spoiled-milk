@@ -2,6 +2,7 @@
 
 import os
 import re
+import os
 import subprocess
 import tempfile
 import textwrap
@@ -520,7 +521,7 @@ class NativeTerrainSymmetricResidencyTest(unittest.TestCase):
                 cwd=ROOT,
             )
             subprocess.run(
-                ["java", "-cp", str(work) + ":" + str(ROOT / "Client_Base/Open_RSC_Client.jar"), class_name],
+                ["java", "-cp", os.pathsep.join([str(work), str(ROOT / "Client_Base/Open_RSC_Client.jar")]), class_name],
                 check=True,
                 cwd=ROOT,
             )
