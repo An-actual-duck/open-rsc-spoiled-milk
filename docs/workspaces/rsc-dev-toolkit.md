@@ -440,12 +440,13 @@ native overlay lookup can dereference a missing TileDef. This extraction preserv
 that behavior; typed pre-mutation material validation and its control-value rules
 need their own bounded tests rather than an unrelated fix here.
 
-### Fourth slice: schema/material contract audit (implementation pending)
+### Fourth slice: schema/material contract (worker verification in progress)
 
 The activated `feat/map-runtime-contract` worker starts from published
 `64f3e48c0c73c6c41529126bad831eedcf32ed38`. Its initial audit keeps independent
 axes separate: package schema 1; uniform/RLE v1 byte-height and raw v1/raw v2-u16
-terrain codecs; placement schemas 1–4; terrain/context protocols 3–10; terrain
+terrain codecs; placement schemas 1–4; scene-context header schemas 1–8;
+terrain snapshot protocols 3–10 (9/10 are stage payloads, not context headers); terrain
 stage protocols 1–5; readiness receipts 1/2; and scene baseline schemas including
 schema 7 atomic fences versus schema 8 presentation pages. Numeric version order
 within one axis is not proof of capability in another axis.
@@ -482,6 +483,54 @@ No codec widening, instance/editor/upgrader work, account/map/art changes or
 public activation is authorized by this audit. Missing terrain, blocked void and
 pending presentation remain different states; actual private-game closeout is
 still required after the bounded contract implementation.
+
+The bounded implementation introduces `runtime-contract/map-runtime-v1.json` as
+advisory, source-backed data, not permissive configuration or a new negotiated
+protocol. It separates accepted schemas from currently emitted schemas, stored
+terrain/placement encodings from wire headers, and finite implementation budgets
+from theoretical future expansion. In particular atomic fence schema 7 and
+presentation baseline schema 8 remain independently supported.
+
+`roof-definitions-v1.properties` is the canonical shared effective roof inventory.
+Its six default `(height,fill)` pairs remain exactly `(64,6)`, `(64,3)`, `(96,2)`,
+`(80,33)`, `(80,15)`, `(90,49)`. Separate strict readers require explicit ordered
+contiguous zero-based IDs, at most 255 entries for the existing one-based byte
+carrier. Reordering physical property rows does not renumber IDs; reordering,
+duplicating or skipping declared IDs is rejected. Missing or malformed resources
+fail closed without hardcoded fallback. Standard server/client builds and the
+server's direct combat classpath copy the same canonical bytes. Read-only tools
+that invoke the actual client EntityHandler must retain this packaged resource
+on their classpath too.
+
+This preserves current roof appearance and formats, but does not make arbitrary
+extensions safe for old clients. Custom extensions require reviewed matching
+server/client inventories and packaging/discovery. Existing package manifest and
+paired-content fingerprints do **not** negotiate this new classpath resource;
+no roof-resource hash handshake is added or claimed here.
+
+Whole-catalog effective material preflight runs before first placement registration
+without constructing entities or changing collision. Invalid overlays, walls,
+roofs and embedded scenery now fail with package/sector/tile/field/raw selector
+diagnostics. Existing overlay controls/aliases, diagonal control endpoints and
+signed raw bit carriers remain unchanged. The failure-first maintained startup
+test reproduced the prior overlay NPE after partial NPC population and missing
+wall/roof/embedded-object acceptance; corrected cases refuse before population.
+The check covers immutable native catalogs, not a new general authoring mutation
+validator.
+
+The wide-height replay uses the maintained server generator/compressor, real
+client decoder and resident cache, actual World tile application and CPU terrain
+mesh/sampling methods at 255, 256, 1024 and 65535. Context 5 is compatibility
+coverage; context 8 covers current resident/atomic activation. Both use 48-tile
+wire/source chunks, deliberately distinct from package presentation metadata 24.
+The GPU/window constructor alone is bypassed; geometry methods are not mocked.
+This is not graphical owner acceptance. Existing byte-height uniform/RLE formats
+and byte/short server TileValue compatibility projections remain narrow; wider
+raw-u16 terrain does not imply those compatibility fields were widened.
+
+Independent full-map population/golden lookup, actual private startup and final
+combined acceptance remain pending manager review of the exact handoff. The
+existing owner session and public deployment are unchanged.
 
 ## Active versus historical documentation
 

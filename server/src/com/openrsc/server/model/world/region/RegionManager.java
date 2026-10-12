@@ -26,6 +26,7 @@ import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import com.openrsc.server.io.NativeLayeredWorldPlacementPreflight;
+import com.openrsc.server.io.NativeTerrainMaterialPreflight;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.entity.Entity;
@@ -4241,6 +4242,8 @@ public class RegionManager {
 	public void preflightNativeLayeredPlacements() {
 		NativeLayeredWorldPackageCatalog nativeLayeredWorldPackageCatalog = mapAuthority.catalog();
 		if (nativeLayeredWorldPackageCatalog != null) {
+			NativeTerrainMaterialPreflight.validate(nativeLayeredWorldPackageCatalog,
+				world.getServer().getEntityHandler());
 			NativeLayeredWorldPlacementPreflight.validateNpcCapacity(nativeLayeredWorldPackageCatalog,
 				world.getNpcs().getAvailableCapacity());
 			NativeLayeredWorldPlacementPreflight.validate(nativeLayeredWorldPackageCatalog,
