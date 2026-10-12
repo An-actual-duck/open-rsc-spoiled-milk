@@ -3143,7 +3143,7 @@ public class PacketHandler {
 		List<SceneBaselineState.Record> pageRecords = new ArrayList<SceneBaselineState.Record>();
 		if (length >= 21) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
-			if (protocolVersion < 1 || protocolVersion > SceneBaselineState.ATOMIC_FENCE_PROTOCOL_VERSION) {
+			if (!SceneBaselineState.supportsProtocol(protocolVersion)) {
 				throw new IllegalArgumentException("Unsupported scene baseline protocol");
 			}
 			serverTick = packetsIncoming.get32();

@@ -21,6 +21,10 @@ import java.util.*;
 import java.util.zip.Deflater;
 import sun.misc.Unsafe;
 import com.openrsc.server.net.rsc.NativeLayeredTerrainClientResidency;
+import com.openrsc.server.net.rsc.struct.outgoing.SceneBaselineStruct;
+import com.openrsc.server.net.rsc.enums.OpcodeOut;
+import com.openrsc.server.net.rsc.generators.impl.PayloadCustomGenerator;
+import com.openrsc.server.net.Packet;
 
 public final class NativeRecoveryFixture {
  static final String PACKAGE="test.layered", VERSION="1.0.0", SHA=repeat('a'), SOURCE=repeat('b');
@@ -82,7 +86,7 @@ public final class NativeRecoveryFixture {
   System.out.println("PASS route prediction/structure LRU parity at capacity64");
  }
  public static class RendererDouble extends mudclient {
-  public int clears, scopes, movements;public boolean cover;
+  public int clears, scopes, movements, presentations;public boolean cover;
   RendererDouble(){super(null);}
   @Override public void clearStaticScenePresentation(){clears++;}
   @Override public void resetLayeredSceneActivationPresentation(){cover=false;}
@@ -92,6 +96,9 @@ public final class NativeRecoveryFixture {
   @Override public void applyCustomMovementUpdate(int x,int y,int direction){movements++;}
   @Override public int getPlayerCount(){return 0;}
   @Override public int getNpcCount(){return 0;}
+  @Override public void replaceStaticScenePresentation(List<SceneBaselineState.Record> scenery,List<SceneBaselineState.Record> walls){
+   check(scenery.size()==1&&walls.size()==1,"server-produced presentation records missing");presentations++;
+  }
  }
  static Object field(Object target,String name)throws Exception{Field f=target.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(target);}
  static RendererDouble renderer(){return new RendererDouble();}
@@ -126,6 +133,26 @@ public final class NativeRecoveryFixture {
   o.writeByte(1);o.writeInt(3);o.writeInt(100);line(o,"global");
   o.writeInt(190);o.writeInt(623);o.writeInt(0);o.writeShort(190);o.writeShort(623);return bytes.toByteArray();
  }
+ static byte[] serverBaseline(int protocol,int sequence,int category)throws Exception{
+  SceneBaselineStruct b=new SceneBaselineStruct();b.setOpcode(OpcodeOut.SEND_SCENE_BASELINE);
+  b.protocolVersion=protocol;b.serverTick=100;b.localX=190;b.localY=623;b.locationContextSequence=sequence;
+  b.pageCategory=category;b.presentationCenterSectorX=3;b.presentationCenterSectorY=13;
+  b.presentationOuterRadius=2;b.presentationInnerRadius=1;
+  if(category!=SceneBaselineState.PAGE_ATOMIC_FENCE){
+   b.scenery=1;b.walls=1;b.presentationScenery=1;b.presentationWalls=1;
+   b.pageTotal=1;boolean wall=category==2||category==SceneBaselineState.PAGE_PRESENTATION_WALLS;
+   boolean outer=category==SceneBaselineState.PAGE_PRESENTATION_SCENERY||category==SceneBaselineState.PAGE_PRESENTATION_WALLS;
+   b.objectRecords.add(new SceneBaselineStruct.ObjectRecord(wall?2:1,outer?48:190,623,0,wall?1:0));
+  }
+  Packet p=new PayloadCustomGenerator().generate(b,null);
+  check(p!=null&&p.getID()==143,"server scene generator failed");
+  byte[] bytes=new byte[p.getBuffer().readableBytes()];p.getBuffer().readBytes(bytes);p.getBuffer().release();return bytes;
+ }
+ static void serverLoginPages(PacketHandler h,int sequence)throws Exception{
+  deliver(h,143,serverBaseline(SceneBaselineState.ATOMIC_FENCE_PROTOCOL_VERSION,sequence,SceneBaselineState.PAGE_ATOMIC_FENCE));
+  for(int category:new int[]{1,2,SceneBaselineState.PAGE_PRESENTATION_SCENERY,SceneBaselineState.PAGE_PRESENTATION_WALLS})
+   deliver(h,143,serverBaseline(SceneBaselineState.PRESENTATION_PROTOCOL_VERSION,sequence,category));
+ }
  static void refuses(PacketHandler h,int opcode,byte[] payload,String why){
   try{deliver(h,opcode,payload);throw new AssertionError(why);}catch(RuntimeException expected){}
  }
@@ -141,6 +168,8 @@ public final class NativeRecoveryFixture {
   NativeLayeredTerrainSnapshot old=context(s,c,3,13);
   LayeredSceneContextState state=(LayeredSceneContextState)field(h,"layeredSceneContextState");
   state.acceptNative(8,1,100,"global",LayeredSceneContextState.NATIVE_LAYERED_PROJECTION,190,623,0,190,623,old);
+  serverLoginPages(h,1);check(r.presentations==1,"ordinary login rejected server version8 presentation");
+  refuses(h,143,serverBaseline(8,1,SceneBaselineState.PAGE_ATOMIC_FENCE),"version8 carried a version7-only atomic fence");
   c.clear(); // lost authoritative references, reproduces old prediction eviction
   Body staged=body(s,4,13,1,NativeLayeredTerrainChunk.UNIFORM_ENCODING);
   deliver(h,154,stage(staged.bytes));int resyncBytes=transport.bufferBits.packetEnd;
@@ -151,6 +180,8 @@ public final class NativeRecoveryFixture {
   check(state.getSequence()==1&&r.scopes==0&&r.clears==0,"failed context changed complete scene");
   deliver(h,143,baseline(2,false)); // PRE-FIX crashes here, real handlePacket entrypoint
   deliver(h,146,movement(2,false));
+  serverLoginPages(h,2);check(r.presentations==1,"failed-context server version8 pages were published");
+  refuses(h,143,serverBaseline(8,2,SceneBaselineState.PAGE_ATOMIC_FENCE),"quarantine bypassed atomic fence schema");
   check(r.movements==0&&state.getSequence()==1,"failed tail changed retained player");
   deliver(h,146,movement(1,false));
   check(r.movements==1,"valid retained-context movement was swallowed");
@@ -163,6 +194,9 @@ public final class NativeRecoveryFixture {
   refuses(h,143,Arrays.copyOf(baseline(2,false),45),"truncated nonpaged baseline swallowed");
   byte[] unknownBaseline=baseline(2,false);unknownBaseline[0]=(byte)99;
   refuses(h,143,unknownBaseline,"unknown baseline schema swallowed");
+  refuses(h,143,serverBaseline(9,2,SceneBaselineState.PAGE_PRESENTATION_SCENERY),"unknown generated baseline schema swallowed");
+  byte[] truncatedPresentation=serverBaseline(8,2,SceneBaselineState.PAGE_PRESENTATION_SCENERY);
+  refuses(h,143,Arrays.copyOf(truncatedPresentation,truncatedPresentation.length-1),"malformed version8 quarantined page swallowed");
   refuses(h,157,Arrays.copyOf(contextPacket(3,references.bytes,"global",LayeredSceneContextState.NATIVE_LAYERED_PROJECTION),6),"truncated context swallowed");
   refuses(h,157,contextPacket(3,references.bytes,"instance-other",LayeredSceneContextState.NATIVE_LAYERED_PROJECTION),"wrong scope swallowed");
   refuses(h,157,contextPacket(3,references.bytes,"global","wrong-projection"),"wrong projection swallowed");
@@ -182,6 +216,7 @@ public final class NativeRecoveryFixture {
   deliver(h,157,contextPacket(8,fresh.bytes,"global",LayeredSceneContextState.NATIVE_LAYERED_PROJECTION));
   check(state.getSequence()==8&&r.scopes==1&&r.cover&&c.size()==9,"verified refresh failed atomic activation");
   check(transport.bufferBits.packetEnd>resyncBytes,"verified refresh had no readiness receipt");
+  serverLoginPages(h,8);check(r.presentations==2,"verified recovery rejected server version8 presentation");
   deliver(h,146,movement(8,false));check(r.movements==2&&r.cover,"fresh player receipt released unverified static scene");
   refuses(h,143,baseline(7,false),"old quarantined context survived recovery");
   c.clear();
@@ -217,6 +252,11 @@ public class mudclient {
  public int getPlayerCount(){return 0;}
  public int getNpcCount(){return 0;}
  public ORSCharacter getLocalPlayer(){return null;}
+ public int getGameObjectInstanceCount(){return 0;}
+ public int getWallObjectInstanceCount(){return 0;}
+ public int getMidRegionBaseX(){return 0;}
+ public int getMidRegionBaseZ(){return 0;}
+ public void replaceStaticScenePresentation(java.util.List<SceneBaselineState.Record> scenery,java.util.List<SceneBaselineState.Record> walls){}
 }''')
         cls.cp = os.pathsep.join(map(str, [cls.work, CLIENT, CORE]))
         subprocess.run(["javac", "-cp", cls.cp, "-d", str(cls.work), str(renderer), str(source)], check=True)

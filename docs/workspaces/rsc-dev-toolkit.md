@@ -168,6 +168,17 @@ renderer boundary is replaced with a disposable no-window double. Set
 `MAP_RECOVERY_CLIENT_JAR` to a frozen pre-fix client to independently reproduce
 failure. The matching private graphical-route acceptance remains required.
 
+Baseline protocol validation enumerates supported schemas independently of
+terrain/context versions: atomic fences use schema 7, while presentation pages
+use schema 8. The fence constant is **not** a maximum supported version. The
+recovery replay now generates baseline bytes using maintained server
+`PayloadCustomGenerator`/`SceneBaselineStruct`, dispatching schema-7 fences and
+schema-8 inner/outer scenery and wall pages through the actual client handler
+for ordinary login, failed-context quarantine and verified recovery. Unsupported
+schema 9, truncated schema-8 pages and schema-8 misuse of the schema-7-only fence
+remain rejected. This covers the login regression introduced by the earlier
+incorrect upper-bound guard before graphical owner retest.
+
 ## Active versus historical documentation
 
 Toolkit `docs/README.md` is authoritative for new tool work. Core's previous
