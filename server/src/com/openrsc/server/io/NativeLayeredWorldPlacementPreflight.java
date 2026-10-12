@@ -24,6 +24,13 @@ public final class NativeLayeredWorldPlacementPreflight {
 	}
 	private NativeLayeredWorldPlacementPreflight() {}
 
+	public static void validateNpcCapacity(NativeLayeredWorldPackageCatalog catalog, int availableSlots) {
+		long required = 0;
+		for (NativeLayeredWorldPackage loaded : catalog.getPackages()) required += loaded.getNpcPlacementCount();
+		if (availableSlots < 0 || required > availableSlots) throw new IllegalStateException(
+			"Native layered NPC catalog exceeds available registration capacity: required=" + required + " available=" + availableSlots);
+	}
+
 	public static void validate(NativeLayeredWorldPackageCatalog catalog, final EntityHandler handler,
 		final int restrictedItemId) {
 		validate(catalog, new Definitions() {
@@ -39,6 +46,7 @@ public final class NativeLayeredWorldPlacementPreflight {
 		for (NativeLayeredWorldPackage loaded : catalog.getPackages()) {
 			for (NativeLayeredPlacementSet set : loaded.getPlacementSets().values()) {
 				for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
+					requireWireId("NPC", npc.getNpcId(), 1023, false);
 					if (!definitions.npc(npc.getNpcId())) unavailable("NPC", npc.getNpcId());
 					requireTerrain(loaded, npc.getStart(), npc.getPlacementId());
 					// Loader already checked every roam sector; also check the
@@ -47,10 +55,14 @@ public final class NativeLayeredWorldPlacementPreflight {
 					requireTerrain(loaded, at(npc.getStart(), npc.getMaxX(), npc.getMaxY()), npc.getPlacementId());
 				}
 				for (NativeLayeredGroundItemPlacement item : set.getGroundItems()) {
+					// Bit 15 means removal; 0xff in the first byte means region clear,
+					// including the removal form (id + 32768).
+					requireWireId("item", item.getItemId(), 0x7eff, false);
 					if (!definitions.item(item.getItemId())) unavailable("item", item.getItemId());
 					requireTerrain(loaded, item.getLocation(), item.getPlacementId());
 				}
 				for (NativeLayeredSceneryPlacement scenery : set.getScenery()) {
+					requireWireId("scenery", scenery.getSceneryId(), 0xfeff, true);
 					GameObjectDef definition = definitions.scenery(scenery.getSceneryId());
 					if (definition == null) unavailable("scenery", scenery.getSceneryId());
 					WorldLocation origin = scenery.getLocation();
@@ -77,6 +89,7 @@ public final class NativeLayeredWorldPlacementPreflight {
 					}
 				}
 				for (NativeLayeredBoundaryPlacement boundary : set.getBoundaries()) {
+					requireWireId("boundary", boundary.getBoundaryId(), 0xfeff, true);
 					DoorDef definition = definitions.boundary(boundary.getBoundaryId());
 					if (definition == null) unavailable("boundary", boundary.getBoundaryId());
 					requireTerrain(loaded, boundary.getLocation(), boundary.getPlacementId());
@@ -110,5 +123,10 @@ public final class NativeLayeredWorldPlacementPreflight {
 	}
 	private static void unavailable(String family, int id) {
 		throw new IllegalStateException("Native layered " + family + " definition is unavailable: " + id);
+	}
+	private static void requireWireId(String family, int id, int maximum, boolean objectRemovalSentinel) {
+		if (id < 0 || id > maximum || (objectRemovalSentinel && id == 60000)) {
+			throw new IllegalStateException("Native layered " + family + " definition exceeds supported wire identity or uses a control sentinel: " + id);
+		}
 	}
 }

@@ -4328,6 +4328,8 @@ public class RegionManager {
 	/** Validate all effective definitions and detached footprints before registration. */
 	public void preflightNativeLayeredPlacements() {
 		if (nativeLayeredWorldPackageCatalog != null) {
+			NativeLayeredWorldPlacementPreflight.validateNpcCapacity(nativeLayeredWorldPackageCatalog,
+				world.getNpcs().getAvailableCapacity());
 			NativeLayeredWorldPlacementPreflight.validate(nativeLayeredWorldPackageCatalog,
 				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID);
 		}

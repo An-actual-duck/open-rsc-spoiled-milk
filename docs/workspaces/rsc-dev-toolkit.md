@@ -267,8 +267,12 @@ requires global static world space and 24-tile presentation chunks. Supported
 encodings, finite parser/catalog budgets, payload hashes, overlap/ownership and
 placement/roam terrain checks remain enforced. Signed authored levels are not
 restricted to the six Spoiled Milk fixture levels. Effective custom definition
-IDs are not restricted to vanilla distribution ceilings. Existing packet ID
-widths, compatibility carriers and object-collision bounds are not widened.
+IDs are not restricted to vanilla distribution ceilings. Actual maintained wire
+identities are enforced: NPC definitions fit 10 bits (0–1023); ground-item IDs
+fit 0–32511 so both addition and removal avoid bit-15 removal and first-byte-255
+region-clear controls; scenery/boundary IDs fit 0–65279 excluding removal ID
+60000. These are encoder/decoder control boundaries, not product content policy.
+Existing packet widths, compatibility carriers and collision bounds are not widened.
 
 Before any native entity is registered, the complete catalog is checked against
 effective definitions, configured item restrictions and authored owner terrain.
@@ -276,9 +280,14 @@ Scenery/boundary collision and NPC-blocking footprints are checked with the
 existing pure scalar planner: no gameplay entity is constructed and no collision
 or registration state is mutated during preflight. The existing 1008-by-4032
 object collision bounds and footprint resource budgets remain explicit refusals.
-Per-object registration guards remain for dynamic staleness. World startup also
-preflights before legacy population; it does not promise transaction rollback of
-unrelated dynamic gameplay or later resource exhaustion.
+Per-object registration guards remain for dynamic staleness. The catalog's entire
+NPC count must fit the currently available registration slots before the first
+native NPC is added. EntityList's zero index is usable: the current 4000-entry
+NPC list has 4000 total slots, not 3999. Available capacity is read from its
+occupied count and free-index pool without reserving or consuming slots. World
+startup preflights before legacy population and again afterward, accounting for
+existing additive NPCs. This does not impose permanent reservations on later
+dynamic NPCs or promise transaction rollback of concurrent gameplay exhaustion.
 
 Failure-first characterization against the pre-change maintained server showed
 a parsed independent package at level 42 rejected solely by installed branding,
@@ -287,8 +296,15 @@ focused tests exercise arbitrary signed levels/custom IDs, explicit product
 refusals, additive/replacement completeness, manifest/payload mismatches,
 unsupported instance-template capability, terrain-edge and collision-bound
 footprints, all effective definition families, and configured item restrictions.
-Private source-built startup with the unchanged Spoiled Milk installed content
-is still required before integration; synthetic checks alone are not acceptance.
+The added capacity counterexample against the first implementation showed 3999
+existing NPCs plus two authored NPCs failing after the first raised the count to
+4000; wire-ID counterexamples were also accepted before the guards. Both now
+refuse before mutation, with legal edge IDs retained. The focused suite has 16
+tests. Independent manager source-built private startup of the first implementation
+loaded all 33,545 unchanged placements (3803 NPCs, 879 items, 27,892 scenery and
+971 boundaries), 877 NPC definitions and 3400 item definitions without errors.
+Final wire/capacity-guard artifact startup re-verification remains required before
+integration; synthetic checks alone are not acceptance.
 
 The next boundary remains unification of terrain access/residency and truthful
 capability exposure, after this slice's acceptance. Instances, coordinate/ID

@@ -20,8 +20,20 @@ import com.openrsc.server.Server;
 import com.openrsc.server.io.*;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.external.*;
+import com.openrsc.server.model.entity.*;
+import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.world.coordinate.*;
+import com.openrsc.server.util.EntityList;
 public final class RuntimeValidationFixture {
  public static void main(String[] args)throws Exception {
+  if(args[0].equals("capacity")) {
+   EntityList<Entity> list=new EntityList<Entity>(3);
+   for(int i=0;i<3;i++) {Entity e=new Entity(null,EntityType.NPC){public boolean isOn(int x,int y){return false;}};list.add(e);if(e.getIndex()!=i)throw new AssertionError("reserved index");}
+   try {list.add(new Entity(null,EntityType.NPC){public boolean isOn(int x,int y){return false;}});throw new AssertionError("overflow accepted");}catch(IllegalStateException expected){}
+   list.remove(1);Entity replacement=new Entity(null,EntityType.NPC){public boolean isOn(int x,int y){return false;}};list.add(replacement);
+   if(replacement.getIndex()!=1||list.size()!=3)throw new AssertionError("capacity reuse differs");
+   System.out.println("CAPACITY3 indices0,1,2 reusable1");return;
+  }
   if(args[0].equals("validate")) {
    NativeLayeredWorldPackageCatalog catalog=NativeLayeredWorldPackageCatalog.loadConfigured(args[2]);
    NativeLayeredWorldRuntimeProfile.fromConfiguration(args[1]).validate(catalog);
@@ -50,8 +62,13 @@ public final class RuntimeValidationFixture {
   System.setProperty("openrsc.layeredNativeTerrainPackagePath",args[2]);
   System.setProperty("openrsc.layeredNativeWorldRuntimeProfile",args[1]);
   Server server=new Server("fixture.conf");server.getEntityHandler().load();
-  if(args.length>3)server.getConfig().RESTRICT_ITEM_ID=Integer.parseInt(args[3]);
+  if(args.length>3&&!args[0].equals("populate-capacity"))server.getConfig().RESTRICT_ITEM_ID=Integer.parseInt(args[3]);
   World world=server.getWorld();int before=world.getNpcs().size();
+  if(args[0].equals("populate-capacity")) {
+   for(int i=0;i<Integer.parseInt(args[3]);i++)world.getNpcs().add(new Npc(world,11,
+    WorldLocation.global(new WorldCoordinate(450,600,-2)),448,452,598,602));
+   before=world.getNpcs().size();
+  }
   try {world.getRegionManager().populateNativeLayeredPlacements();}
   catch(IllegalStateException refusal) {
    System.err.println("REFUSED "+refusal.getMessage()+" npcBefore="+before+" npcAfter="+world.getNpcs().size());
@@ -209,6 +226,32 @@ class MapRuntimeValidationTest(unittest.TestCase):
     def test_configured_item_restriction_refuses_before_npc_mutation(self):
         package=self.package("restricted-effective-item")
         self.assertIn("npcAfter=0",self.invoke("populate","fixture-additive",package,extra=["9"]))
+
+    def test_actual_capacity_includes_zero_and_reuses_released_index(self):
+        self.assertIn("CAPACITY3",self.invoke("capacity","native-additive",self.work))
+
+    def test_catalog_capacity_refuses_before_first_native_registration(self):
+        package=self.package("capacity-overflow")
+        def duplicate(d):
+            d["npcs"].append(dict(d["npcs"][0],placementId="second-npc"))
+        self.change_payload(package,"placements/deep-l2-entities.json",duplicate)
+        self.assertIn("npcAfter=3999",self.invoke("populate-capacity","native-additive",package,extra=["3999"]))
+
+    def test_wire_widths_and_control_sentinels_refused(self):
+        for family,key,ids in [("npcs","npcId",[1024]),("groundItems","itemId",[32512,32768,65536]),
+                               ("scenery","sceneryId",[60000,65280,65536]),("boundaries","boundaryId",[60000,65280,65536])]:
+            for value in ids:
+                package=self.generic("wire-"+family+str(value),empty=False)
+                self.change_payload(package,"placements/deep-l2-entities.json",lambda d:d[family][0].update({key:value}))
+                self.assertIn("supported wire identity",self.invoke("preflight","native-replacement",package,success=False))
+
+    def test_wire_edge_ids_remain_available(self):
+        package=self.generic("wire-edge",empty=False)
+        def edges(d):
+            d["npcs"][0]["npcId"]=1023;d["groundItems"][0]["itemId"]=32511
+            d["scenery"][0]["sceneryId"]=65279;d["boundaries"][0]["boundaryId"]=60001
+        self.change_payload(package,"placements/deep-l2-entities.json",edges)
+        self.assertIn("PREFLIGHT VALID",self.invoke("preflight","native-replacement",package))
 
 
 if __name__ == "__main__":
