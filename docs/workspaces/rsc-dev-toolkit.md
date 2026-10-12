@@ -528,9 +528,34 @@ This is not graphical owner acceptance. Existing byte-height uniform/RLE formats
 and byte/short server TileValue compatibility projections remain narrow; wider
 raw-u16 terrain does not imply those compatibility fields were widened.
 
-Independent full-map population/golden lookup, actual private startup and final
-combined acceptance remain pending manager review of the exact handoff. The
-existing owner session and public deployment are unchanged.
+Worker matching server/client builds, including maintained source-authority
+audits, pass. The focused checks currently pass 79 cases: material preflight (5),
+resources and source-backed contract/direct combat classpath (4), wide height (1,
+with context 5/8 subcases), activation (10), runtime validation (16), authority
+facade (8), native source/wire (14), recovery (2), atomic activation (4), residency
+(4), readiness (2), prediction (5), and symmetric residency (4). The recovery
+replay also dispatches server-generated unsupported context headers 9/10 through
+the real PacketHandler in ordinary and quarantined state: both refuse, while
+generated baseline 7/8 remains supported and unknown schema 9 refuses.
+
+Independent manager full-map review of runtime source checkpoint
+`1cb5a2f8b9d3cf32a9c1b2150907c00cf54d4ffe` passed material preflight over all
+1782 actual sectors and retained all 33,545 placements, 877 NPC definitions and
+3400 item definitions. The 8910-tile typed lookup/collision digest remains exactly
+`421fcabcdbdffba979349538892a174be31b1c83c4200e581212a498c725adfa`.
+Its independently source-built private core JAR SHA-256 is
+`7d4df4d625bf50b554b244f33e7b96e2f0d21f3732f5c875924304e6129f732c`.
+Evidence is retained outside Git under the isolated validation directory above,
+including `contract-fullmap-review.log` and independent material/resource/height
+reviews. The manager also independently passed material (5), initial resource
+(3) and wide-height (1) cases including current context 8. The added direct
+combat classpath case and extended protocol counterexamples are test-only
+checkpoint `a45bae2103c8186ed85a78f874aa20af6867f0a3`.
+
+Actual private startup and final combined graphical acceptance remain pending
+manager review; full-map checks do not substitute for those. The existing owner
+session and public deployment are unchanged. No complete-loader acceptance or
+new graphical owner review is claimed by this worker checkpoint.
 
 ## Active versus historical documentation
 
