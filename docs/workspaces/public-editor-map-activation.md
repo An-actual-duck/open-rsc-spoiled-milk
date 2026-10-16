@@ -78,3 +78,16 @@ registered IDLE/topic state and backup checks. Existing player packaging fixture
 now supply a real fingerprint-addressed paired selector rather than a fake
 client-only address. Runtime gameplay acceptance, publication and activation are
 manager gates, not performed by the worker's selector tests.
+
+Worker verification: all 11 new selector/orchestration/census tests pass, as do
+`test-player-release.py`, `test-layered-production-promotion.py`,
+`test-hosted-server-safety.py`, `test-published-release-identity.py` and
+`test-hosted-alpha-config.py`; shell syntax and `git diff --check` pass.
+The actual maintained pair passed the generic Java package parser and exact
+copy/promotion verification with JVM heap capped at 768 MiB: 1789 files per role,
+1782 sectors, exact-byte fingerprint `f699e5a37709a0f127d676d91f07f64e256825bef6d65a7a4ccd13c8310f3b75`,
+manifest `f3489503d2c323e669ab3004345271c6137a58698cc8c0bf0b0fb2587eb52b29`.
+The actual three registered worker states also passed the new census using the
+unchanged release-9e AI-common APIs, without writes/state changes. Temporary
+fixture Git repositories/remotes and promotion output were tool-owned only;
+no public runtime, deployment, release publication or database was touched.
