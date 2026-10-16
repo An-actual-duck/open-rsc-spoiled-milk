@@ -147,17 +147,19 @@ PY
 }
 
 layered_world_generate_package() {
+  # A present selector always wins, including refusal for malformed metadata.
+  if [[ -e "$1/server/world-builder-configs/primary.json" || -L "$1/server/world-builder-configs/primary.json" ]]; then
+    layered_world_generate_selected_package "$1" "$2"
+  else
+    layered_world_generate_pinned_package "$1" "$2"
+  fi
+}
+
+layered_world_generate_pinned_package() {
 	local repository_root="$1"
 	local workspace="$2"
 	local package_root="$workspace/package"
 	local source_package="$repository_root/$SPOILED_MILK_LAYERED_SOURCE_RELATIVE_PATH"
-
-  # An installed selector is authoritative, including malformed selections.
-  # Absence alone retains the explicit historical bootstrap/offline path.
-  if [[ -e "$repository_root/server/world-builder-configs/primary.json" || -L "$repository_root/server/world-builder-configs/primary.json" ]]; then
-    layered_world_generate_selected_package "$repository_root" "$workspace"
-    return $?
-  fi
 
   if [[ -e "$package_root" ]]; then
     layered_world_fail "Layered-world generation requires a fresh workspace; refusing existing package: $package_root"
@@ -251,7 +253,7 @@ layered_world_install_pinned_live_package() {
   local staging_root
 
   generation_workspace="$repository_root/tools/layered-maps/workspace/live-deploy"
-  package_root="$(layered_world_generate_package \
+  package_root="$(layered_world_generate_pinned_package \
     "$repository_root" "$generation_workspace")"
   layered_world_require_promotion_approved \
     "$generation_workspace/generation-report.json"
