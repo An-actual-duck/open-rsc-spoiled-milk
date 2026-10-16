@@ -118,6 +118,7 @@ print_pid_status() {
     marker_db_path=""
     marker_layered_package_path=""
     marker_layered_manifest_sha256=""
+    marker_layered_selection_sha256=""
     marker_layered_runtime_mode=""
     # shellcheck disable=SC1090
     source "$marker_path"
@@ -171,6 +172,12 @@ print_pid_status() {
         layered_marker_valid=true
       elif [[ "${marker_layered_runtime_mode:-}" == legacy-rollback ]]; then
         layered_marker_valid=true
+      elif [[ "${marker_layered_runtime_mode:-}" == production-installed ]]; then
+        if layered_world_installed_marker_matches "$root" \
+            "${marker_layered_package_path:-}" "${marker_layered_manifest_sha256:-}" \
+            "${marker_layered_selection_sha256:-}" 2>/dev/null; then
+          layered_marker_valid=true
+        fi
       elif [[ "${marker_layered_runtime_mode:-}" == production ]]; then
         expected_layered_path="$(layered_world_live_package_path "$MYWORLD_LIVE_DB_ROOT")"
         expected_layered_real="$(readlink -f "$expected_layered_path" 2>/dev/null || true)"

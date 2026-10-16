@@ -17,6 +17,46 @@ layered_world_fail() {
   return 1
 }
 
+# Selection/inventory is not permission to run placements. The maintained generic
+# package parser and the server's material/collision/capacity preflight still run.
+layered_world_selected_pair() {
+  local repository_root="$1" workspace="$2" before after package_root
+  before="$(python3 "$repository_root/scripts/installed-map-selection.py" "$repository_root")" || return 1
+  package_root="$(python3 -c 'import json,sys;print(json.loads(sys.argv[1])["serverPackage"])' "$before")" || return 1
+  LAYERED_MAPS_WORKSPACE="$workspace" \
+    "$repository_root/tools/layered-maps/layered-maps.sh" package-check --package "$package_root" >&2 || return 1
+  after="$(python3 "$repository_root/scripts/installed-map-selection.py" "$repository_root")" || return 1
+  [[ "$before" == "$after" ]] || { layered_world_fail 'Installed pair changed during validation'; return 1; }
+  printf '%s\n' "$after"
+}
+
+layered_world_generate_selected_package() {
+  local repository_root="$1" workspace="$2" selection package_root after
+  selection="$(layered_world_selected_pair "$repository_root" "$workspace/runtime-validation")" || return 1
+  package_root="$(python3 -c 'import json,sys;print(json.loads(sys.argv[1])["serverPackage"])' "$selection")" || return 1
+  [[ ! -e "$workspace/package" ]] || { layered_world_fail "Existing promotion output: $workspace/package"; return 1; }
+  mkdir -p "$workspace"
+  cp -a "$package_root" "$workspace/package" || return 1
+  after="$(python3 "$repository_root/scripts/installed-map-selection.py" "$repository_root")" || return 1
+  [[ "$selection" == "$after" ]] || { layered_world_fail 'Installed pair changed during copy'; return 1; }
+  python3 - "$repository_root" "$workspace" "$selection" <<'PY' || return 1
+import importlib.util, json, pathlib, subprocess, sys
+sys.dont_write_bytecode = True
+root, workspace, encoded = sys.argv[1:]
+spec = importlib.util.spec_from_file_location('selection', root+'/scripts/installed-map-selection.py')
+module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+report = json.loads(encoded)
+_, copied = module.inventory(pathlib.Path(workspace)/'package')
+if copied != report['packageFingerprintSha256']:
+    raise SystemExit('Copied installed package differs')
+report.update(reportType='source-selected-package-promotion', reviewState='reviewed-source-required',
+              sourceCommit=subprocess.check_output(['git','-C',root,'rev-parse','HEAD'],text=True).strip())
+pathlib.Path(workspace,'generation-report.json').write_text(json.dumps(report,sort_keys=True,indent=2)+'\n')
+PY
+  cp "$workspace/runtime-validation/package-validation.json" "$workspace/package-validation.json" || return 1
+  printf '%s\n' "$workspace/package"
+}
+
 layered_world_manifest_sha256() {
   local package_root="$1"
 
@@ -112,6 +152,13 @@ layered_world_generate_package() {
 	local package_root="$workspace/package"
 	local source_package="$repository_root/$SPOILED_MILK_LAYERED_SOURCE_RELATIVE_PATH"
 
+  # An installed selector is authoritative, including malformed selections.
+  # Absence alone retains the explicit historical bootstrap/offline path.
+  if [[ -e "$repository_root/server/world-builder-configs/primary.json" || -L "$repository_root/server/world-builder-configs/primary.json" ]]; then
+    layered_world_generate_selected_package "$repository_root" "$workspace"
+    return $?
+  fi
+
   if [[ -e "$package_root" ]]; then
     layered_world_fail "Layered-world generation requires a fresh workspace; refusing existing package: $package_root"
     return 1
@@ -163,6 +210,14 @@ import sys
 
 with open(sys.argv[1], "r", encoding="utf-8") as handle:
     report = json.load(handle)
+if report.get('reportType') == 'source-selected-package-promotion':
+    import subprocess
+    root = report['root']
+    if subprocess.check_output(['git','-C',root,'status','--porcelain','--untracked-files=all'],text=True):
+        raise SystemExit('Selected map promotion requires clean reviewed source; use an authoring copy, commit and publish first')
+    if subprocess.check_output(['git','-C',root,'rev-parse','HEAD'],text=True).strip() != report['sourceCommit']:
+        raise SystemExit('Selected map promotion source changed')
+    raise SystemExit(0)
 if report.get("contentTarget") != "spoiled-milk":
     raise SystemExit("Layered-world promotion requires the Spoiled Milk target")
 if report.get("reviewState") != "production-approved":
@@ -188,6 +243,13 @@ layered_world_install_live_package() {
   local live_state_root="$2"
   local generation_workspace package_root destination destination_parent
   local staging_root
+
+  # The exact release already carries both installed roles. Never regenerate or
+  # overwrite it with the historical external distribution snapshot.
+  if [[ -e "$repository_root/server/world-builder-configs/primary.json" || -L "$repository_root/server/world-builder-configs/primary.json" ]]; then
+    layered_world_require_live_package "$repository_root" "$live_state_root"
+    return $?
+  fi
 
   generation_workspace="$repository_root/tools/layered-maps/workspace/live-deploy"
   package_root="$(layered_world_generate_package \
@@ -231,6 +293,33 @@ layered_world_install_live_package() {
 }
 
 layered_world_require_live_package() {
+  local selection
+  selection="$(layered_world_selected_pair "$1" "$1/tools/layered-maps/workspace/installed-launch-validation")" || return 1
+  python3 -c 'import json,sys;print(json.loads(sys.argv[1])["serverPackage"])' "$selection"
+}
+
+layered_world_enable_hosted_installed_profile() {
+  local pin
+  for pin in OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE; do
+    [[ -z "${!pin:-}" ]] || { layered_world_fail "Hosted installed mode refuses explicit $pin; remove it or choose deliberate rollback"; return 1; }
+  done
+  layered_world_require_live_package "$1" "$2"
+}
+
+# Lightweight status attestation: byte/kind/selector checks only, no JVM/build.
+layered_world_installed_marker_matches() {
+  local observed
+  observed="$(python3 "$1/scripts/installed-map-selection.py" "$1")" || return 1
+  python3 - "$observed" "$2" "$3" "$4" <<'PY'
+import json,sys
+selection=json.loads(sys.argv[1])
+if [selection['serverPackage'],selection['manifestSha256'],selection['selectionSha256']] != sys.argv[2:]:
+    raise SystemExit('Installed launch marker no longer matches selected map inputs')
+PY
+}
+
+# Deliberate rollback only; normal hosted startup must consume PRIMARY instead.
+layered_world_require_pinned_live_package() {
   local repository_root="$1"
   local live_state_root="$2"
   local package_root

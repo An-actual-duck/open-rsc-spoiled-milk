@@ -130,9 +130,9 @@ def test_release_and_deployment_are_fail_closed() -> None:
         "live package installation must occur after shutdown verification and before checkout activation",
     )
     require(
-        "layered_world_require_live_package" in hosted
-        and "OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH" in hosted,
-        "hosted launch does not require and select the installed package",
+        "layered_world_enable_hosted_installed_profile" in hosted
+        and "export OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH" not in hosted,
+        "hosted launch must validate the installed pair without overriding PRIMARY",
     )
     require(
         "--legacy-map-rollback" in hosted

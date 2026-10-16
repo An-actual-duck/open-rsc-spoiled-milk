@@ -197,6 +197,9 @@ CLIENT_JAR="$ROOT_DIR/Client_Base/Open_RSC_Client.jar"
 CLIENT_CACHE="$ROOT_DIR/Client_Base/Cache"
 CLIENT_WORLD_BUILDER_PROFILE="$ROOT_DIR/Client_Base/world-builder-configs/installed-client.json"
 PACKAGE_ASSETS="$ROOT_DIR/release/player"
+# Player transport checks the same paired inventory. Generic package parsing and
+# runtime eligibility remain mandatory in layered artifact/server validation.
+SELECTED_RELEASE_PAIR="$(python3 "$ROOT_DIR/scripts/installed-map-selection.py" "$ROOT_DIR")"
 
 mapfile -t CLIENT_WORLD_BUILDER_PROFILE_VALUES < <(
   python3 - "$CLIENT_WORLD_BUILDER_PROFILE" <<'PY'
@@ -389,6 +392,9 @@ cp -R "$WINDOWS_JRE"/. "$WINDOWS_PAYLOAD_DIR/runtime/"
 # Recheck immediately before archive creation so SOURCE-COMMIT.txt cannot
 # describe a different or dirty source tree.
 require_release_git_state "$SOURCE_COMMIT"
+
+[[ "$SELECTED_RELEASE_PAIR" == "$(python3 "$ROOT_DIR/scripts/installed-map-selection.py" "$ROOT_DIR")" ]] \
+  || fail "Installed map selection changed during player packaging"
 
 (
   cd "$STAGING_DIR"

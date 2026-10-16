@@ -96,6 +96,24 @@ if [[ -n "$FIXES_ONLY_BRANCH" ]]; then
   fixes_only_require_source "$ROOT_DIR" "$FIXES_ONLY_BRANCH" "$FIXES_ONLY_COMMIT"
 fi
 layered_world_require_promotion_approved "$workspace/generation-report.json"
+mapfile -t selected_identity < <(python3 - "$workspace/generation-report.json" <<'PY'
+import json, sys
+value=json.load(open(sys.argv[1]))
+for key in ('packageId','packageVersion','manifestSha256','packageFingerprintSha256'):
+    print(value.get(key,''))
+PY
+)
+if [[ -n "${selected_identity[0]:-}" ]]; then
+  release_package_id="${selected_identity[0]}"
+  release_package_version="${selected_identity[1]}"
+  release_manifest="${selected_identity[2]}"
+  release_fingerprint="${selected_identity[3]}"
+else
+  release_package_id="$SPOILED_MILK_LAYERED_PACKAGE_ID"
+  release_package_version="$SPOILED_MILK_LAYERED_PACKAGE_VERSION"
+  release_manifest="$SPOILED_MILK_LAYERED_MANIFEST_SHA256"
+  release_fingerprint="$SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT"
+fi
 staging_dir="$output_dir/staging-layered"
 package_name="spoiled-milk-$VERSION-layered-world"
 stage="$staging_dir/$package_name"
@@ -109,9 +127,9 @@ cp "$workspace/package-validation.json" "$stage/PACKAGE-VALIDATION.json"
 cp "$ROOT_DIR/LICENSE" "$stage/LICENSE"
 printf '%s\n' "$VERSION" > "$stage/VERSION.txt"
 printf '%s\n' "$source_commit" > "$stage/SOURCE-COMMIT.txt"
-printf '%s\n' "$SPOILED_MILK_LAYERED_MANIFEST_SHA256" \
+printf '%s\n' "$release_manifest" \
   > "$stage/MANIFEST-SHA256.txt"
-printf '%s\n' "$SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT" \
+printf '%s\n' "$release_fingerprint" \
   > "$stage/PACKAGE-FINGERPRINT.txt"
 cat > "$stage/README.txt" <<EOF
 Spoiled Milk layered world for $VERSION
@@ -120,9 +138,9 @@ This is the server-side rsc-remastered layered-world package. Player clients
 do not install it directly. The guarded Spoiled Milk deployment installs and
 validates this package before enabling the layered runtime.
 
-Package: $SPOILED_MILK_LAYERED_PACKAGE_ID@$SPOILED_MILK_LAYERED_PACKAGE_VERSION
-Manifest SHA-256: $SPOILED_MILK_LAYERED_MANIFEST_SHA256
-Package fingerprint: $SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT
+Package: $release_package_id@$release_package_version
+Manifest SHA-256: $release_manifest
+Package fingerprint: $release_fingerprint
 Source commit: $source_commit
 EOF
 
