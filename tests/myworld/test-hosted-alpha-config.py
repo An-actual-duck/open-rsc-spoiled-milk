@@ -40,8 +40,8 @@ def main() -> None:
     require(runner, "myworld_require_live_database_link", "external hosted DB link guard")
     require(
         runner,
-        "OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256",
-        "hosted manifest environment handoff",
+        "layered_world_enable_hosted_installed_profile",
+        "validated installed-primary handoff without a fixed manifest override",
     )
     require(runner, "Refusing to create a fresh hosted database during server startup.", "hosted DB startup reset guard")
     require(runner, "-DconfFile=myworld-host", "hosted config launch")

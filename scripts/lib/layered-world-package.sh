@@ -239,17 +239,16 @@ layered_world_live_package_path() {
 }
 
 layered_world_install_live_package() {
+  # The exact release carries both roles. Absent/malformed selectors refuse;
+  # deploying must never silently regenerate the historical distribution.
+  layered_world_require_live_package "$1" "$2"
+}
+
+layered_world_install_pinned_live_package() {
   local repository_root="$1"
   local live_state_root="$2"
   local generation_workspace package_root destination destination_parent
   local staging_root
-
-  # The exact release already carries both installed roles. Never regenerate or
-  # overwrite it with the historical external distribution snapshot.
-  if [[ -e "$repository_root/server/world-builder-configs/primary.json" || -L "$repository_root/server/world-builder-configs/primary.json" ]]; then
-    layered_world_require_live_package "$repository_root" "$live_state_root"
-    return $?
-  fi
 
   generation_workspace="$repository_root/tools/layered-maps/workspace/live-deploy"
   package_root="$(layered_world_generate_package \
@@ -299,9 +298,14 @@ layered_world_require_live_package() {
 }
 
 layered_world_enable_hosted_installed_profile() {
-  local pin
+  local pin options property
   for pin in OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256 OPENRSC_LAYERED_NATIVE_WORLD_RUNTIME_PROFILE; do
     [[ -z "${!pin:-}" ]] || { layered_world_fail "Hosted installed mode refuses explicit $pin; remove it or choose deliberate rollback"; return 1; }
+  done
+  for options in JAVA_TOOL_OPTIONS _JAVA_OPTIONS JDK_JAVA_OPTIONS ANT_OPTS JAVA_OPTS; do
+    for property in openrsc.layeredNativeTerrainPackagePath openrsc.layeredNativeTerrainManifestSha256 openrsc.layeredNativeWorldRuntimeProfile openrsc.worldBuilderTargetRoot; do
+      [[ "${!options:-}" != *"-D$property"* ]] || { layered_world_fail "Hosted installed mode refuses source property $property in $options"; return 1; }
+    done
   done
   layered_world_require_live_package "$1" "$2"
 }
