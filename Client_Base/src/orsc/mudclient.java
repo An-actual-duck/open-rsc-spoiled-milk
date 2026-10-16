@@ -516,6 +516,7 @@ public final class mudclient implements Runnable {
 	private final String[] optionsMenuText = new String[20];
 	private int[] groundItemHeight = new int[GROUND_ITEM_INITIAL_CAPACITY];
 	private boolean[] groundItemNoted = new boolean[GROUND_ITEM_INITIAL_CAPACITY];
+	private final GroundItemAreaEpoch groundItemAreaEpoch = new GroundItemAreaEpoch();
 	private final int character2Colour = 2;
 	private final RSModel[] modelCache = new RSModel[1000];
 	private final int[] newBankItems = new int[500];
@@ -21500,7 +21501,7 @@ public final class mudclient implements Runnable {
 
 					phaseStartNanos = System.nanoTime();
 					if (hardAreaLoad || heightOffsetChanged) {
-						this.resetGroundItemsForHardAreaLoad();
+						this.resetGroundItemsForHardAreaLoad(baseDX, baseDZ);
 					} else {
 						int newGroundItemCount = 0;
 						for (int i = 0; this.groundItemCount > i; ++i) {
@@ -21559,6 +21560,9 @@ public final class mudclient implements Runnable {
 						System.nanoTime() - phaseStartNanos;
 					phaseStartNanos = System.nanoTime();
 					this.packetHandler.reapplyCompleteSceneBaselineAfterRegionLoad();
+					if (hardAreaLoad || heightOffsetChanged) {
+						this.refreshGroundItemSupportHeights();
+					}
 					long baselineNanos =
 						System.nanoTime() - phaseStartNanos;
 					RenderTelemetry.recordClientRegionTransition(
@@ -21604,8 +21608,27 @@ public final class mudclient implements Runnable {
 		clientPort.draw();
 	}
 
-	private void resetGroundItemsForHardAreaLoad() {
-		this.groundItemCount = 0;
+	private void resetGroundItemsForHardAreaLoad(int baseDX, int baseDZ) {
+		this.groundItemCount = this.groundItemAreaEpoch.complete(
+			this.groundItemCount, this.groundItemX, this.groundItemZ,
+			this.groundItemID, this.groundItemHeight, this.groundItemNoted,
+			baseDX, baseDZ, World.LOCAL_TILE_COUNT);
+	}
+
+	private void refreshGroundItemSupportHeights() {
+		// Destination announcements can precede scenery materialization. Resolve
+		// support height against the completed scene rather than the old area.
+		for (int i = 0; i < this.groundItemCount; i++) {
+			this.groundItemHeight[i] = 0;
+			for (int object = 0; object < this.getGameObjectInstanceCount(); object++) {
+				if (this.getGameObjectInstanceX(object) == this.groundItemX[i]
+					&& this.getGameObjectInstanceZ(object) == this.groundItemZ[i]) {
+					this.groundItemHeight[i] = EntityHandler.getObjectDef(
+						this.getGameObjectInstanceID(object)).getGroundItemVar();
+					break;
+				}
+			}
+		}
 	}
 
 	private void loadSounds() {
@@ -24298,7 +24321,7 @@ public final class mudclient implements Runnable {
 				this.dematerializeWallObjectInstance(i);
 			}
 
-			this.groundItemCount = 0;
+			this.groundItemCount = this.groundItemAreaEpoch.cancel();
 			this.setGameObjectInstanceCount(0);
 			this.setWallObjectInstanceCount(0);
 			this.playerCount = 0;
@@ -26027,11 +26050,17 @@ public final class mudclient implements Runnable {
 	}
 
 	public void setLoadingArea(boolean loading) {
-		this.loadingArea = loading;
+		if (loading) {
+			this.beginAreaLoad();
+		} else {
+			this.loadingArea = false;
+			this.groundItemCount = this.groundItemAreaEpoch.cancel();
+		}
 	}
 
 	public void beginAreaLoad() {
 		this.loadingArea = true;
+		this.groundItemCount = this.groundItemAreaEpoch.begin();
 		this.sceneInstanceStore.clearPendingAreaLoadMarks();
 	}
 
