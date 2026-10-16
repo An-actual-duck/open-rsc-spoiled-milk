@@ -36,6 +36,10 @@ print_pid_status() {
       checkout_state="UNSAFE dirty detached checkout"
     else
       case "$checkout_publication" in
+        release)
+          checkout_state="detached published release tag"
+          checkout_safe=true
+          ;;
         current)
           checkout_state="current detached published main"
           checkout_safe=true
@@ -134,6 +138,9 @@ print_pid_status() {
     fi
     launch_publication="$(myworld_git_commit_publication_state "$root" "${marker_commit:-}")"
     case "$launch_publication" in
+      release)
+        printf '  Runtime:  verified published release %s\n' "${marker_release_tag:-unknown}"
+        ;;
       current)
         printf '  Runtime:  current published main\n'
         ;;
@@ -225,6 +232,8 @@ print_pid_status() {
         printf '  Verdict:  OK LIVE HOSTED SERVER - running current published main\n'
       elif [[ "$launch_publication" == "previous" ]]; then
         printf '  Verdict:  OK LIVE HOSTED SERVER - running previous published main; restart pending\n'
+      elif [[ "$launch_publication" == "release" ]]; then
+        printf '  Verdict:  OK LIVE HOSTED SERVER - running verified published release %s\n' "${marker_release_tag:-unknown}"
       else
         printf '  Verdict:  DANGER: hosted launch commit is not verified published-main history\n'
       fi

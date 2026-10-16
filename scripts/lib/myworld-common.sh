@@ -110,7 +110,21 @@ myworld_git_branch() {
 }
 
 myworld_git_main_commit() {
+  if [[ -n "${MYWORLD_HOSTED_RELEASE_TAG:-}" ]]; then
+    myworld_git_verified_release_commit "$ROOT_DIR" "$MYWORLD_HOSTED_RELEASE_TAG"
+    return
+  fi
   myworld_git_published_main_commit "$ROOT_DIR"
+}
+
+myworld_git_verified_release_commit() {
+  local root="$1" tag="$2" local_commit remote_commit
+  [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || return 1
+  local_commit="$(git -C "$root" rev-parse --verify "refs/tags/$tag^{commit}")" || return 1
+  remote_commit="$(git -C "$root" ls-remote --exit-code spoiled-milk "refs/tags/$tag" "refs/tags/$tag^{}")" || return 1
+  remote_commit="$(awk '/\^\{\}$/ {peeled=$1} !/\^\{\}$/ {direct=$1} END {print peeled ? peeled : direct}' <<<"$remote_commit")"
+  [[ "$local_commit" == "$remote_commit" ]] || return 1
+  printf '%s\n' "$local_commit"
 }
 
 myworld_git_published_main_commit() {
@@ -122,7 +136,20 @@ myworld_git_published_main_commit() {
 myworld_git_commit_publication_state() {
   local root="$1"
   local commit="$2"
-  local main_commit
+  local main_commit release_tag release_commit
+
+  # A fixes-only deployment is deliberately outside main. Recognize only the
+  # exact launch-tag attestation, independently verified against the remote.
+  if [[ "$root" == "$MYWORLD_LIVE_ROOT" && -f "$root/server/run/server-${MYWORLD_PUBLIC_PORT}.env" ]]; then
+    release_tag="$(sed -n 's/^marker_release_tag=\(v[0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' "$root/server/run/server-${MYWORLD_PUBLIC_PORT}.env")"
+    if [[ -n "$release_tag" ]]; then
+      release_commit="$(myworld_git_verified_release_commit "$root" "$release_tag" 2>/dev/null || true)"
+      if [[ -n "$release_commit" && "$release_commit" == "$commit" ]]; then
+        printf 'release\n'
+        return
+      fi
+    fi
+  fi
 
   main_commit="$(myworld_git_published_main_commit "$root" 2>/dev/null || true)"
   if [[ -z "$main_commit" ]] || ! git -C "$root" rev-parse --verify --quiet "$commit^{commit}" >/dev/null; then
@@ -476,7 +503,11 @@ myworld_require_safe_hosted_launch() {
   [[ -n "$main_commit" ]] || myworld_fail "Unable to resolve spoiled-milk/main. Publish or fetch it before starting the hosted server."
   [[ "$head_commit" == "$main_commit" ]] || myworld_fail "Refusing hosted server launch from commit $head_commit; expected published main $main_commit."
 
-  printf 'Hosted launch safety: clean detached published main at %s\n' "$head_commit" >&2
+  if [[ -n "${MYWORLD_HOSTED_RELEASE_TAG:-}" ]]; then
+    printf 'Hosted launch safety: clean detached published release %s at %s\n' "$MYWORLD_HOSTED_RELEASE_TAG" "$head_commit" >&2
+  else
+    printf 'Hosted launch safety: clean detached published main at %s\n' "$head_commit" >&2
+  fi
 }
 
 myworld_prepare_generated_artifacts() {
