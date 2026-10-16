@@ -11,9 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 CORE_JAR = SERVER / "core.jar"
-MANAGED_RUNTIME_JAR = (
-    SERVER / "world-builder-runtime/world-builder-managed-runtime.jar"
-)
+# Historical fixture classpath variable retained to keep the harness diff small.
+# Never let a retired class-shadowing archive hide regressions in maintained Core.
+MANAGED_RUNTIME_JAR = CORE_JAR
 PACKAGE = ROOT / "tools/layered-maps/fixtures/native-package-v1"
 SOURCE = SERVER / "src/com/openrsc/server/io/NativeLayeredWorldPackage.java"
 CATALOG = (
@@ -1267,7 +1267,9 @@ public final class WorldBuilderClientProfile {
                     "-cp",
                     f"{self.classes}:{MANAGED_RUNTIME_JAR}:{CORE_JAR}",
                     "NativeLayeredRuntimeProfileFixture",
-                    "world-builder-installed",
+                    # Exact historical distribution pin, not the installed
+                    # manifest-bound profile (which permits additional levels).
+                    "spoiled-milk-replacement",
                     str(package),
                     "false",
                     "true",
@@ -1534,7 +1536,7 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             '"layered_native_world_runtime_profile",\n'
-            '\t\t\t"fixture-additive"',
+            '\t\t\tNativeLayeredWorldRuntimeProfile.DEFAULT_ID',
             configuration,
         )
         self.assertIn(
@@ -1544,9 +1546,10 @@ public final class WorldBuilderClientProfile {
             "profile.validate(loaded)",
             region_manager,
         )
-        self.assertIn("profile.requiresConfiguredManifestSha256()", region_manager)
+        self.assertIn("profile.validateConfiguredManifest(loaded, configuredManifest)", region_manager)
+        runtime_contract = (SERVER / "src/com/openrsc/server/io/NativeLayeredWorldRuntimeContract.java").read_text()
         self.assertIn(
-            "loaded.getPrimaryPackage().getManifestSha256()", region_manager
+            "catalog.getPrimaryPackage().getManifestSha256()", runtime_contract
         )
         self.assertIn("spoiled-milk-world-builder-export", runtime_profile)
         self.assertIn(
@@ -1561,18 +1564,17 @@ public final class WorldBuilderClientProfile {
         self.assertIn(
             "SPOILED_MILK_MANIFEST_SHA256", runtime_profile
         )
-        self.assertIn(
-            "validatePreservationDefinitionIds(loaded)", runtime_profile
-        )
-        self.assertIn("VANILLA_MAX_SCENERY_ID", runtime_profile)
-        self.assertIn("VANILLA_MAX_NPC_ID", runtime_profile)
-        self.assertIn("VANILLA_MAX_ITEM_ID", runtime_profile)
-        self.assertIn("VANILLA_MAX_BOUNDARY_ID", runtime_profile)
+        distribution_policy = (SERVER / "src/com/openrsc/server/io/NativeLayeredWorldDistributionPolicy.java").read_text()
+        self.assertIn("validatePreservationDefinitionIds(loaded)", distribution_policy)
+        self.assertIn("VANILLA_MAX_SCENERY_ID", distribution_policy)
+        self.assertIn("VANILLA_MAX_NPC_ID", distribution_policy)
+        self.assertIn("VANILLA_MAX_ITEM_ID", distribution_policy)
+        self.assertIn("VANILLA_MAX_BOUNDARY_ID", distribution_policy)
         self.assertIn(
             "replacesLegacyBasePopulation()", world_populator
         )
         self.assertIn(
-            "nativeLayeredWorldRuntimeProfile.skipsLegacyTerrainArchive()",
+            "mapAuthority.skipsLegacyTerrain()",
             region_manager,
         )
         self.assertIn(
@@ -1584,19 +1586,21 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             "NativeLayeredTerrainTile source =",
-            region_manager,
+            (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text(),
         )
         self.assertIn("resolveNativeTerrainTile(", region_manager)
-        self.assertIn("owner.findTile(location).orElse(null)", region_manager)
+        self.assertIn("owner.findTile(location).orElse(null)",
+                      (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text())
         self.assertIn("placement.getMinX()", region_manager)
         self.assertIn("placement.getMaxX()", region_manager)
         self.assertIn("placement.getMinY()", region_manager)
         self.assertIn("placement.getMaxY()", region_manager)
         self.assertIn(
-            "return nativeLayeredTile(location)", region_manager
+            "return mapAuthority.getTile(location)", region_manager
         )
         self.assertIn(
-            "return syntheticDeepFixtureTile()", region_manager
+            "Synthetic deep fixture terrain is immutable",
+            (ROOT / "server/src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java").read_text(),
         )
         self.assertIn(
             "Native layered deep ", development
@@ -1609,7 +1613,7 @@ public final class WorldBuilderClientProfile {
         )
         self.assertIn(
             "Native layered runtime requires 24-tile presentation chunks",
-            runtime_profile,
+            (ROOT / "server/src/com/openrsc/server/io/NativeLayeredWorldRuntimeContract.java").read_text(),
         )
         self.assertIn(
             "hasNativeLayeredTerrain", region_manager

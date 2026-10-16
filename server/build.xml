@@ -177,6 +177,9 @@
         <delete file="${jar}"/>
         <delete dir="${build}"/>
         <mkdir dir="${build}"/>
+        <copy todir="${build}/map-runtime">
+            <fileset dir="../runtime-contract"/>
+        </copy>
         <javac srcdir="${src}" destdir="${build}" debug="on" includeantruntime="false" target="${javac.target}"
                source="${javac.source}" encoding="UTF-8">
             <classpath refid="core.compile.classpath"/>
@@ -260,6 +263,9 @@
         <delete dir="${combat.build.test}"/>
         <delete file="${combat.summary.file}"/>
         <mkdir dir="${combat.build.core}"/>
+        <copy todir="${combat.build.core}/map-runtime">
+            <fileset dir="../runtime-contract"/>
+        </copy>
         <javac srcdir="${src}" destdir="${combat.build.core}" debug="on"
                includeantruntime="false" target="${javac.target}"
                source="${javac.source}" encoding="UTF-8">

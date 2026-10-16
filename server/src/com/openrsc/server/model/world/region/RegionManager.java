@@ -25,6 +25,8 @@ import com.openrsc.server.io.NativeLayeredPlacementSet;
 import com.openrsc.server.io.NativeLayeredWorldPackage;
 import com.openrsc.server.io.NativeLayeredWorldPackageCatalog;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
+import com.openrsc.server.io.NativeLayeredWorldPlacementPreflight;
+import com.openrsc.server.io.NativeTerrainMaterialPreflight;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.CombatProjectileCollision;
 import com.openrsc.server.model.entity.Entity;
@@ -158,9 +160,8 @@ public class RegionManager {
 	private final LayeredSpatialEntityIndex layeredSpatialEntityIndex;
 	private final NativeLayeredGameObjectRegistry<GameObject>
 		nativeLayeredGameObjects;
-	private final NativeLayeredWorldPackageCatalog
-		nativeLayeredWorldPackageCatalog;
-	private final NativeLayeredWorldPackage nativeLayeredWorldPackage;
+	private final RuntimeMapAuthority mapAuthority;
+	private final LegacyTerrainProjectionAdapter legacyTerrainProjection;
 	private final NativeLayeredWorldRuntimeProfile
 		nativeLayeredWorldRuntimeProfile;
 	private volatile boolean nativeLayeredPlacementsPopulated;
@@ -215,13 +216,9 @@ public class RegionManager {
 			NativeLayeredWorldRuntimeProfile.fromConfiguration(
 				world.getServer().getConfig()
 					.LAYERED_NATIVE_WORLD_RUNTIME_PROFILE);
-		this.nativeLayeredWorldPackageCatalog =
+		final NativeLayeredWorldPackageCatalog loadedCatalog =
 			loadNativeLayeredWorldPackages(
 				world, nativeLayeredWorldRuntimeProfile);
-		this.nativeLayeredWorldPackage =
-			nativeLayeredWorldPackageCatalog == null
-				? null
-				: nativeLayeredWorldPackageCatalog.getPrimaryPackage();
 		this.regions = new ConcurrentHashMap<>();
 		this.visibleRegionWindowCache = new ConcurrentHashMap<>();
 		this.visibleObjectWindowCache = new ConcurrentHashMap<>();
@@ -242,6 +239,25 @@ public class RegionManager {
 		this.nativeLayeredGameObjects =
 			new NativeLayeredGameObjectRegistry<GameObject>();
 		this.nativeLayeredPlacementsPopulated = false;
+		this.legacyTerrainProjection = new LegacyTerrainProjectionAdapter(
+			() -> world.getServer().getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			this::getTile, point -> getMutableTile(point.getX(), point.getY()));
+		this.mapAuthority = new RuntimeMapAuthority(world.getServer().getConfig().mapSourceActivationPlan(),
+			loadedCatalog, legacyTerrainProjection,
+			() -> world.getServer().getConfig().WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
+			new RuntimeMapAuthority.AuthoringAccess() {
+				public boolean hasDraft(WorldLocation location) {
+					return world.getServer().getConfig().WORLD_BUILDER_MODE
+						&& world.getServer().getWorldEditorSessions().hasNativeTerrainDraft(location);
+				}
+				public NativeLayeredTerrainTile resolve(WorldLocation location, NativeLayeredTerrainTile base) {
+					return world.getServer().getConfig().WORLD_BUILDER_MODE
+						? world.getServer().getWorldEditorSessions().resolveNativeTerrainTile(location, base) : base;
+				}
+			},
+			new NativeTerrainTileAdapter(this::nativeTerrainOverlayBlocks, this::nativeTerrainWallBlocks,
+				WorldLoader::projectileClipAllowed, this::nativeTerrainStructuralCombatProjectileWall,
+				this::nativeTerrainEnemyProjectileFenceWall), nativeLayeredGameObjects::applyCollision);
 	}
 
 	private static NativeLayeredWorldPackageCatalog loadNativeLayeredWorldPackages(
@@ -264,20 +280,7 @@ public class RegionManager {
 			profile.validate(loaded);
 			final String configuredManifest = world.getServer().getConfig()
 				.LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256;
-			if (profile.requiresConfiguredManifestSha256()) {
-				if (configuredManifest == null
-					|| !configuredManifest.matches("[0-9a-f]{64}")) {
-					throw new IllegalStateException(
-						"The selected World Builder profile requires an exact "
-							+ "layered package manifest SHA-256");
-				}
-				if (!configuredManifest.equals(
-						loaded.getPrimaryPackage().getManifestSha256())) {
-					throw new IllegalStateException(
-						"The installed World Builder package does not match "
-							+ "the configured layered package manifest SHA-256");
-				}
-			}
+			profile.validateConfiguredManifest(loaded, configuredManifest);
 			return loaded;
 		} catch (IOException failure) {
 			throw new IllegalStateException(
@@ -288,7 +291,7 @@ public class RegionManager {
 	}
 
 	public void load() {
-		if (nativeLayeredWorldRuntimeProfile.skipsLegacyTerrainArchive()) {
+		if (mapAuthority.skipsLegacyTerrain()) {
 			LOGGER.info(
 				"Skipping legacy terrain archives for native layered replacement profile {}",
 				nativeLayeredWorldRuntimeProfile.getId());
@@ -3909,38 +3912,22 @@ public class RegionManager {
 	 */
 	public boolean hasNativeLayeredTerrain(
 		final WorldLocation location) {
-		WorldLocation checked=Objects.requireNonNull(location,"location");
-		return nativeLayeredWorldPackageCatalog != null
-			&& (nativeLayeredWorldPackageCatalog.findPackage(checked).isPresent()
-				||hasWorldBuilderDraftTerrain(checked));
+		return mapAuthority.hasNativeTerrain(location);
 	}
 
 	public Optional<NativeLayeredWorldPackage> findNativeLayeredWorldPackage(
 		final WorldLocation location) {
-		if(nativeLayeredWorldPackageCatalog==null)
-			return Optional.<NativeLayeredWorldPackage>empty();
-		WorldLocation checked=Objects.requireNonNull(location,"location");
-		Optional<NativeLayeredWorldPackage> source=
-			nativeLayeredWorldPackageCatalog.findPackage(checked);
-		if(source.isPresent())return source;
-		return hasWorldBuilderDraftTerrain(checked)
-			?Optional.of(nativeLayeredWorldPackage)
-			:Optional.<NativeLayeredWorldPackage>empty();
+		return mapAuthority.findOwner(location);
 	}
 
 	private boolean hasWorldBuilderDraftTerrain(
 		final WorldLocation location){
-		return world.getServer().getConfig().WORLD_BUILDER_MODE
-			&&world.getServer().getWorldEditorSessions()
-				.hasNativeTerrainDraft(location);
+		return mapAuthority.hasDraft(location);
 	}
 
 	public Optional<NativeLayeredWorldPackage> findNativeLayeredWorldPackage(
 		final String packageId) {
-		return nativeLayeredWorldPackageCatalog == null
-			? Optional.<NativeLayeredWorldPackage>empty()
-			: nativeLayeredWorldPackageCatalog.findPackage(
-				Objects.requireNonNull(packageId, "packageId"));
+		return mapAuthority.findOwner(packageId);
 	}
 
 	public NativeLayeredWorldPackageCatalog.Transition
@@ -3951,6 +3938,7 @@ public class RegionManager {
 		WorldLocation checkedDestination = Objects.requireNonNull(
 			destination, "destination");
 		NativeLayeredWorldPackageCatalog.Transition transition = null;
+		NativeLayeredWorldPackageCatalog nativeLayeredWorldPackageCatalog = mapAuthority.catalog();
 		if(nativeLayeredWorldPackageCatalog!=null){
 			if(hasWorldBuilderDraftTerrain(checkedDestination)
 				||(source!=null&&hasWorldBuilderDraftTerrain(source))){
@@ -4067,95 +4055,11 @@ public class RegionManager {
 	 * terrain remains the compatibility backend.
 	 */
 	public TileValue getTile(final WorldLocation location) {
-		if (hasNativeLayeredTerrain(location)) {
-			return nativeLayeredTile(location);
-		}
-		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				location,
-				getWorld().getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-			return syntheticDeepFixtureTile();
-		}
-		Point packed = requireLegacyTerrainProjection(location);
-		return getTile(packed);
+		return mapAuthority.getTile(location);
 	}
 
 	public TileValue getMutableTile(final WorldLocation location) {
-		if (hasNativeLayeredTerrain(location)) {
-			throw new UnsupportedOperationException(
-				"Native layered package terrain is immutable");
-		}
-		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(location)) {
-			LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				location,
-				getWorld().getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-			throw new UnsupportedOperationException(
-				"Synthetic deep fixture terrain is immutable");
-		}
-		Point packed = requireLegacyTerrainProjection(location);
-		return getMutableTile(packed.getX(), packed.getY());
-	}
-
-	private static TileValue syntheticDeepFixtureTile() {
-		TileValue tile = new TileValue();
-		tile.overlay = 0;
-		tile.initializeTerrainCollision();
-		return tile;
-	}
-
-	private TileValue nativeLayeredTile(final WorldLocation location) {
-		NativeLayeredWorldPackage owner = findNativeLayeredWorldPackage(
-			location)
-			.orElseThrow(() -> new IllegalStateException(
-				"Native layered terrain has no package owner at "
-					+ location));
-		NativeLayeredTerrainTile source =
-			getWorld().getServer().getConfig().WORLD_BUILDER_MODE
-				?getWorld().getServer().getWorldEditorSessions()
-					.resolveNativeTerrainTile(
-						location,owner.findTile(location).orElse(null))
-				:owner.findTile(location).orElse(null);
-		if(source==null)throw new IllegalStateException(
-				"Native layered terrain disappeared after startup validation: "
-					+ location);
-		TileValue tile = new TileValue();
-		tile.overlay = (byte) source.getOverlay();
-		tile.diagWallVal = (short) source.getDiagonalWall();
-		tile.horizontalWallVal = (byte) source.getHorizontalWall();
-		tile.verticalWallVal = (byte) source.getVerticalWall();
-		tile.elevation = (byte) source.getElevation();
-		tile.initializeTerrainCollision();
-		NativeLayeredTerrainCollisionPlan.derive(
-			source,
-			nativeLayeredNeighbor(owner, location, 1, 0),
-			nativeLayeredNeighbor(owner, location, 0, 1),
-			this::nativeTerrainOverlayBlocks,
-			this::nativeTerrainWallBlocks,
-			WorldLoader::projectileClipAllowed,
-			this::nativeTerrainStructuralCombatProjectileWall,
-			this::nativeTerrainEnemyProjectileFenceWall)
-			.applyTo(tile);
-		return nativeLayeredGameObjects.applyCollision(location, tile);
-	}
-
-	private NativeLayeredTerrainTile nativeLayeredNeighbor(
-		final NativeLayeredWorldPackage owner,
-		final WorldLocation location,
-		final int deltaX,
-		final int deltaY) {
-		WorldCoordinate coordinate = location.getCoordinate();
-		WorldLocation neighbor = new WorldLocation(
-			location.getWorldSpace(),
-			new WorldCoordinate(
-				Math.addExact(coordinate.getX(), deltaX),
-				Math.addExact(coordinate.getY(), deltaY),
-				coordinate.getLevel()));
-		NativeLayeredTerrainTile source=owner.findTile(neighbor).orElse(null);
-		if(!getWorld().getServer().getConfig().WORLD_BUILDER_MODE)return source;
-		return getWorld().getServer().getWorldEditorSessions()
-			.resolveNativeTerrainTile(neighbor,source);
+		return mapAuthority.getMutableTile(location);
 	}
 
 	private boolean nativeTerrainOverlayBlocks(final int overlayId) {
@@ -4200,12 +4104,11 @@ public class RegionManager {
 	}
 
 	public NativeLayeredWorldPackage getNativeLayeredWorldPackage() {
-		return nativeLayeredWorldPackage;
+		return mapAuthority.primaryPackage();
 	}
 
 	public int getNativeLayeredWorldPackageCount() {
-		return nativeLayeredWorldPackageCatalog == null
-			? 0 : nativeLayeredWorldPackageCatalog.size();
+		return mapAuthority.authoredPackages().size();
 	}
 
 	public String getNativeLayeredWorldRuntimeProfileId() {
@@ -4218,25 +4121,24 @@ public class RegionManager {
 	 * legacy-populated.
 	 */
 	public boolean replacesLegacyBasePopulation() {
-		return nativeLayeredWorldPackageCatalog != null
-			&& nativeLayeredWorldRuntimeProfile
-				.replacesLegacyBasePopulation();
+		return mapAuthority.replacesLegacyPopulation();
 	}
 
 	public void populateNativeLayeredPlacements() {
-		if (nativeLayeredWorldPackageCatalog == null) {
+		if (mapAuthority.catalog() == null) {
 			return;
 		}
 		if (nativeLayeredPlacementsPopulated) {
 			throw new IllegalStateException(
 				"Native layered placements were already populated");
 		}
+		preflightNativeLayeredPlacements();
 		int npcCount = 0;
 		int groundItemCount = 0;
 		int sceneryCount = 0;
 		int boundaryCount = 0;
 		for (NativeLayeredWorldPackage worldPackage
-			: nativeLayeredWorldPackageCatalog.getPackages()) {
+			: mapAuthority.authoredPackages()) {
 		for (NativeLayeredPlacementSet set
 			: worldPackage.getPlacementSets().values()) {
 			for (NativeLayeredNpcPlacement placement : set.getNpcs()) {
@@ -4329,11 +4231,24 @@ public class RegionManager {
 		LOGGER.info(
 			"Populated {} native layered package(s) with {} NPC, {} "
 				+ "ground-item, {} scenery, and {} boundary placements",
-			nativeLayeredWorldPackageCatalog.size(),
+			mapAuthority.authoredPackages().size(),
 			npcCount,
 			groundItemCount,
 			sceneryCount,
 			boundaryCount);
+	}
+
+	/** Validate all effective definitions and detached footprints before registration. */
+	public void preflightNativeLayeredPlacements() {
+		NativeLayeredWorldPackageCatalog nativeLayeredWorldPackageCatalog = mapAuthority.catalog();
+		if (nativeLayeredWorldPackageCatalog != null) {
+			NativeTerrainMaterialPreflight.validate(nativeLayeredWorldPackageCatalog,
+				world.getServer().getEntityHandler());
+			NativeLayeredWorldPlacementPreflight.validateNpcCapacity(nativeLayeredWorldPackageCatalog,
+				world.getNpcs().getAvailableCapacity());
+			NativeLayeredWorldPlacementPreflight.validate(nativeLayeredWorldPackageCatalog,
+				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID);
+		}
 	}
 
 	private void populateNativeLayeredGameObject(
@@ -4773,7 +4688,7 @@ public class RegionManager {
 	public boolean isNativeLayeredPlacement(
 		final Entity entity, final String kind) {
 		if (entity == null
-			|| nativeLayeredWorldPackageCatalog == null
+			|| mapAuthority.catalog() == null
 			|| kind == null) {
 			return false;
 		}
@@ -4805,12 +4720,7 @@ public class RegionManager {
 		final String packageId,
 		final String placementId,
 		final String kind) {
-		NativeLayeredWorldPackage owner =
-			nativeLayeredWorldPackageCatalog == null
-				? null
-				: nativeLayeredWorldPackageCatalog.findPackage(
-					Objects.requireNonNull(packageId, "packageId"))
-					.orElse(null);
+		NativeLayeredWorldPackage owner = mapAuthority.findOwner(packageId).orElse(null);
 		if (owner == null) {
 			throw new IllegalStateException(
 				"Native layered placement package is not loaded: "
@@ -4864,27 +4774,7 @@ public class RegionManager {
 
 	private Point requireLegacyTerrainProjection(
 		final WorldLocation location) {
-		WorldLocation checked = Objects.requireNonNull(location, "location");
-		if (LayeredCompatibilityPointAdapter.isSyntheticDeepLevel(checked)) {
-			return LayeredCompatibilityPointAdapter.toCompatibilityPoint(
-				checked,
-				getWorld().getServer().getConfig()
-					.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE);
-		}
-		WorldRegionKey key = WorldRegionKey.from(checked);
-		LegacyLogicalTileAddress address = LegacyLogicalTileAddress.resolve(
-			key,
-			Math.floorMod(
-				checked.getCoordinate().getX(), WorldRegionKey.REGION_SIZE),
-			Math.floorMod(
-				checked.getCoordinate().getY(), WorldRegionKey.REGION_SIZE));
-		if (!address.isLegacyRepresentable()
-			|| !checked.equals(address.getLogicalLocation())) {
-			throw new IllegalArgumentException(
-				"Logical tile has no exact legacy terrain projection: "
-					+ checked);
-		}
-		return address.getLegacyPoint();
+		return legacyTerrainProjection.project(location);
 	}
 
 	/**

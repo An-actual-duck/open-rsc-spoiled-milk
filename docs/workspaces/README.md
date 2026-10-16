@@ -16,16 +16,16 @@ Use fewer slots if fewer sessions are needed.
 
 ## Project boundary
 
-These slots belong only to Spoiled Milk/Core-Framework. World Editor tooling
-uses `/home/justin/rsc-world-editor` and its own workers. Embedded World Editor
-client/server runtime work uses `/home/justin/rsc-world-editor-runtime` and its
-own workers. A World Editor provider-lock request, correction document, or
-handoff must be handled by those managers; it must never be assigned to or
-merged from a `Core-Framework-ai-*` slot.
+These slots belong to Spoiled Milk/Core game implementation. The same manager
+also owns the fresh standalone toolkit at `/home/justin/rsc-dev-toolkit`, using
+dedicated `rsc-dev-toolkit-ai-N` worktrees. No separate editor manager is needed.
+See [rsc-dev-toolkit.md](rsc-dev-toolkit.md). Sharing a manager does not combine
+Git histories, releases or source trees.
 
-The historical `world-builder/runtime/adaptive-v1` branch is retained only as
-migration evidence. It is not part of Core `main`, not an active provider
-route, and not a reason for this manager to monitor World Editor work.
+The former independent Editor and embedded-runtime management structure is
+retired. Its repositories and branches remain preserved historical inputs, not
+active assignment destinations. Existing game loader behavior is not removed
+by this organizational reset. New toolkit reuse is selective and reviewed.
 
 For a single end-to-end explanation of the model, including why it works and
 how a remote co-developer fits into it, read
@@ -82,6 +82,39 @@ Recycling is permitted only after the exact worker tip is contained in both
 local and published `main`. It deletes the merged local and remote topic branch
 and returns the slot to detached IDLE state. Use `--keep-remote` only for a
 deliberate long-lived remote record.
+
+## Parking a superseded handoff
+
+When a clean READY task should be preserved rather than merged (for example,
+a retired compatibility experiment), the manager can free its seat with:
+
+```bash
+./scripts/ai-manager.sh park ai-2
+```
+
+Parking verifies the exact remote backup, retains both topic branches and a
+durable `refs/ai-parked/ai-N/COMMIT` ref, and saves the original READY record
+under the shared Git directory's `ai-workspaces/parked` folder. It switches the
+seat to detached published main without overwriting ignored-file collisions.
+Databases, assets and other ignored local files are not cleanup targets. The
+generated `AI_WORKSPACE.md` is replaced with the idle guide; its old contents
+are preserved alongside the record.
+
+Only clean READY work can be parked. If switching is interrupted, rerun the
+same command; recovery checks the original record and pinned destination.
+An incomplete record or unexpected state requires manager inspection, not a
+forced checkout. No merge, branch deletion, publication or deployment occurs.
+Parked unmerged branches still block the normal release check as unmanaged
+work; parking is not a way to claim they were integrated.
+
+To resume a parked handoff, the manager must first verify an idle clean seat,
+the retained local and remote tips, and the saved exact commit; then deliberately
+reattach the retained branch using `git switch --no-overwrite-ignore BRANCH`
+and run `ai-workspace.sh handoff` from that worker to re-register its READY
+state. Never reattach over an active task. Ordinary task allocation, merge,
+recycle and release requirements remain unchanged, including a clean published
+manager checkout. Parking alone can preserve work while the manager has local
+configuration edits, since it does not edit or integrate manager sources.
 
 ## When A Session Leaves A Mess
 

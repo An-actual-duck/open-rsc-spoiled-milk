@@ -67,6 +67,28 @@ public final class NativeLayeredTerrainResidentCache {
 		version = Math.addExact(version, 1L);
 	}
 
+	/** Publish a fully decoded recovery context, never a partial failed receipt. */
+	public void replaceFrom(final NativeLayeredTerrainResidentCache verified) {
+		if (verified == this || verified.capacity != capacity) {
+			throw new IllegalArgumentException("Invalid native terrain recovery cache");
+		}
+		final LinkedHashMap<String, NativeLayeredTerrainChunk> replacement;
+		final int payloads;
+		final int references;
+		synchronized (verified) {
+			replacement = copyAccessOrder(verified.resident, capacity);
+			payloads = verified.lastPayloads;
+			references = verified.lastReferences;
+		}
+		synchronized (this) {
+			resident.clear();
+			resident.putAll(replacement);
+			lastPayloads = payloads;
+			lastReferences = references;
+			version = Math.addExact(version, 1L);
+		}
+	}
+
 	private synchronized void commit(final Transaction transaction) {
 		if (transaction.owner != this || transaction.committed) {
 			throw new IllegalStateException(

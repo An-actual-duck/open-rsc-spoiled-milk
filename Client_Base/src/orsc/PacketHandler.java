@@ -69,6 +69,9 @@ public class PacketHandler {
 	private final NativeLayeredTerrainStageAssembler
 		layeredTerrainStageAssembler =
 			new NativeLayeredTerrainStageAssembler();
+	private final NativeLayeredTerrainRecoveryState nativeTerrainRecovery =
+		new NativeLayeredTerrainRecoveryState();
+	private int quarantinedSceneDeltaCount;
 	private int appliedSceneBaselineKey = 0;
 	private int appliedScenePresentationKey = 0;
 	private int layeredTerrainReadySequence = 0;
@@ -243,6 +246,8 @@ public class PacketHandler {
 			pendingLayeredTerrainHaloPrebuild.cancel(true);
 		}
 		layeredSceneContextState.reset();
+		nativeTerrainRecovery.reset();
+		quarantinedSceneDeltaCount = 0;
 		layeredSceneActivationState.reset();
 		if (mc != null) {
 			mc.resetLayeredSceneActivationPresentation();
@@ -463,6 +468,9 @@ public class PacketHandler {
 	}
 
 	public final void handlePacket(int opcode, int length) {
+		if (length < 0) {
+			throw new IllegalArgumentException("Incoming packet length is negative");
+		}
 		if (length <= 0) {
 			return;
 		}
@@ -481,6 +489,20 @@ public class PacketHandler {
 
 	private void handlePacket1(int opcode, int length) {
 		try {
+			if (length > packetsIncoming.dataBuffer.length) {
+				throw new IllegalArgumentException("Incoming packet exceeds its buffer");
+			}
+			// These legacy scene deltas contain no context identity. TCP orders
+			// them behind the positively identified failed context, so interpreting
+			// them using the retained old scene would cross scopes. Tagged packets
+			// still take their full parsing/identity checks; non-scene traffic flows.
+			if (nativeTerrainRecovery.hasContextGap()
+				&& (opcode == 141 || opcode == 191 || opcode == 48 || opcode == 91
+					|| opcode == 79 || opcode == 104 || opcode == 211 || opcode == 99)) {
+				quarantinedSceneDeltaCount = Math.addExact(quarantinedSceneDeltaCount, 1);
+				packetsIncoming.packetEnd = length;
+				return;
+			}
 			if (Config.DEBUG) {
 				System.out.println("Frame: " + mc.getFrameCounter()
 					+ ", Opcode: " + incomingOpcodeMap.get(opcode) + " (" + opcode + "), Length: " + length);
@@ -662,6 +684,13 @@ public class PacketHandler {
 		int logicalLevel = packetsIncoming.get32();
 		int legacyX = packetsIncoming.getShort();
 		int legacyY = packetsIncoming.getShort();
+		if (packetsIncoming.packetEnd > length) {
+			throw new IllegalArgumentException("Layered scene-context header is truncated");
+		}
+		if (protocolVersion >= LayeredSceneContextState.RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
+			layeredSceneContextState.requireValidResidentHeader(protocolVersion, sequence,
+				worldSpace, projectionId, logicalX, logicalY, logicalLevel, legacyX, legacyY);
+		}
 		BoundaryLoadingDiagnostics.beginContextTransition(
 			protocolVersion,
 			sequence,
@@ -678,6 +707,10 @@ public class PacketHandler {
 				? 0L : System.nanoTime() - phaseStartedNanos);
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		NativeLayeredTerrainSnapshot nativeTerrain = null;
+		// Recovery contexts must be self-contained. In-flight references cannot
+		// re-establish the cache epoch the server just abandoned.
+		NativeLayeredTerrainResidentCache contextCache = nativeTerrainRecovery.isPending()
+			? new NativeLayeredTerrainResidentCache() : nativeLayeredTerrainResidentCache;
 		try {
 		if (protocolVersion
 				== LayeredSceneContextState.UNIFORM_NATIVE_LAYERED_PROTOCOL_VERSION) {
@@ -737,7 +770,7 @@ public class PacketHandler {
 					body,
 					worldSpace,
 					logicalLevel,
-					nativeLayeredTerrainResidentCache);
+					contextCache);
 			} else if (protocolVersion
 					== LayeredSceneContextState
 						.READY_RESIDENT_NATIVE_LAYERED_PROTOCOL_VERSION) {
@@ -745,16 +778,17 @@ public class PacketHandler {
 					body,
 					worldSpace,
 					logicalLevel,
-					nativeLayeredTerrainResidentCache);
+					contextCache);
 			} else {
 				nativeTerrain = NativeLayeredTerrainPacketDecoder.decodeV8(
 					body,
 					worldSpace,
 					logicalLevel,
-					nativeLayeredTerrainResidentCache);
+					contextCache);
 			}
 		}
 		} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
+			nativeTerrainRecovery.rejectContext(sequence, worldSpace, logicalLevel);
 			requestNativeTerrainResynchronization(
 				worldSpace, logicalLevel, "context", missing);
 			packetsIncoming.packetEnd = length;
@@ -769,6 +803,9 @@ public class PacketHandler {
 		phaseStartedNanos = BoundaryLoadingDiagnostics.now();
 		final boolean hadLayeredSceneContext =
 			layeredSceneContextState.hasContext();
+		if (nativeTerrainRecovery.isPending() && nativeTerrain == null) {
+			throw new IllegalStateException("Recovery requires a verified native context");
+		}
 		LayeredSceneContextState.ApplyResult result = nativeTerrain == null
 			? layeredSceneContextState.accept(
 				protocolVersion,
@@ -793,6 +830,15 @@ public class PacketHandler {
 				legacyX,
 				legacyY,
 				nativeTerrain);
+		if (nativeTerrainRecovery.isPending()) {
+			nativeLayeredTerrainResidentCache.replaceFrom(contextCache);
+			String recovered = "NATIVE_TERRAIN_RECOVERED context=" + sequence
+				+ " failedContexts=" + nativeTerrainRecovery.rejectedContextCount()
+				+ " discardedSceneDeltas=" + quarantinedSceneDeltaCount;
+			System.out.println(recovered);
+			ClientRuntimeLogger.log(recovered);
+			nativeTerrainRecovery.reset();
+		}
 		layeredTerrainStageAssembler.reset();
 		BoundaryLoadingDiagnostics.recordPhase(
 			"context",
@@ -908,6 +954,10 @@ public class PacketHandler {
 		final int logicalLevel,
 		final String source,
 		final RuntimeException missing) {
+		if (layeredSceneContextState.getNativeTerrainSnapshot() == null) {
+			throw new IllegalStateException("Initial native context cannot reference absent terrain", missing);
+		}
+		if (!nativeTerrainRecovery.begin()) return;
 		nativeLayeredTerrainResidentCache.clear();
 		cancelPendingLayeredTerrainPrebuild();
 		clearReadyPredictedLayeredTerrainHalo();
@@ -920,14 +970,15 @@ public class PacketHandler {
 			clientStream.bufferBits.putByte(2);
 			clientStream.bufferBits.putInt(
 				layeredSceneContextState.getSequence());
-			clientStream.bufferBits.putString(worldSpace);
-			clientStream.bufferBits.putInt(logicalLevel);
+			clientStream.bufferBits.putString(layeredSceneContextState.getWorldSpace());
+			clientStream.bufferBits.putInt(layeredSceneContextState.getLogicalLevel());
 			clientStream.bufferBits.putInt(activeTerrain.getCurrentChunkX());
 			clientStream.bufferBits.putInt(activeTerrain.getCurrentChunkY());
 			clientStream.bufferBits.putString(activeTerrain.getManifestSha256());
 			clientStream.finishPacket();
 		}
 		final String summary = "NATIVE_TERRAIN_RESYNC source=" + source
+			+ " context=" + layeredSceneContextState.getSequence()
 			+ " reason=" + missing.getMessage();
 		System.out.println(summary);
 		ClientRuntimeLogger.log(summary);
@@ -1067,6 +1118,8 @@ public class PacketHandler {
 		final long decodeStartedNanos =
 			BoundaryLoadingDiagnostics.now();
 		final NativeLayeredTerrainSnapshot stagedTerrain;
+		NativeLayeredTerrainResidentCache stageCache = nativeTerrainRecovery.isPending()
+			? new NativeLayeredTerrainResidentCache() : nativeLayeredTerrainResidentCache;
 		try {
 		stagedTerrain =
 			protocolVersion == 1
@@ -1074,21 +1127,21 @@ public class PacketHandler {
 					body,
 					worldSpace,
 					logicalLevel,
-					nativeLayeredTerrainResidentCache,
+					stageCache,
 					activeTerrain)
 				: protocolVersion == 2
 				? NativeLayeredTerrainPacketDecoder.decodeV9Halo(
 					body,
 					worldSpace,
 					logicalLevel,
-					nativeLayeredTerrainResidentCache,
+					stageCache,
 					activeTerrain)
 				: protocolVersion == 3
 				? NativeLayeredTerrainPacketDecoder.decodeV10Structure(
 					body,
 					worldSpace,
 					logicalLevel,
-					nativeLayeredTerrainResidentCache,
+					stageCache,
 					activeTerrain)
 				: protocolVersion == 4
 				? NativeLayeredTerrainPacketDecoder
@@ -1096,14 +1149,14 @@ public class PacketHandler {
 						body,
 						worldSpace,
 						logicalLevel,
-						nativeLayeredTerrainResidentCache,
+						stageCache,
 						activeTerrain)
 				: NativeLayeredTerrainPacketDecoder
 					.decodePredictedSymmetricStructure(
 						body,
 						worldSpace,
 						logicalLevel,
-						nativeLayeredTerrainResidentCache,
+						stageCache,
 						activeTerrain);
 		} catch (NativeLayeredTerrainResidentCache.MissingReferenceException missing) {
 			requestNativeTerrainResynchronization(
@@ -1114,6 +1167,10 @@ public class PacketHandler {
 		final long decodeNanos =
 			decodeStartedNanos == 0L
 				? 0L : System.nanoTime() - decodeStartedNanos;
+		if (nativeTerrainRecovery.isPending()) {
+			input.packetEnd = length;
+			return; // validated stage is not a replacement context or readiness receipt
+		}
 		if (pendingLayeredTerrainPrebuild != null
 			|| pendingLayeredTerrainHaloPrebuild != null) {
 			throw new IllegalStateException(
@@ -2956,12 +3013,19 @@ public class PacketHandler {
 		MovementSnapshotDiagnostics.CacheParity parity = movementSnapshotDiagnostics.createCacheParity();
 		MovementSnapshotDiagnostics.Fingerprint snapshotFingerprint = null;
 		MovementSnapshotStage.Frame stageFrame = null;
+		boolean quarantinedContext = false;
 		if (packetsIncoming.packetEnd + 16 <= length) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
+			if (protocolVersion != 1 && protocolVersion != 2) {
+				throw new IllegalArgumentException("Unsupported movement snapshot protocol");
+			}
 			int locationContextSequence = protocolVersion >= 2
 				? packetsIncoming.get32()
 				: 0;
+			quarantinedContext = protocolVersion >= 2
+				&& nativeTerrainRecovery.rejects(locationContextSequence);
 			if (protocolVersion >= 2
+				&& !quarantinedContext
 				&& !layeredSceneContextState.matchesSequence(
 					locationContextSequence)) {
 				throw new IllegalStateException(
@@ -2972,14 +3036,16 @@ public class PacketHandler {
 			localX = packetsIncoming.getShort();
 			localZ = packetsIncoming.getShort();
 			localDirection = packetsIncoming.getUnsignedByte();
-			if (protocolVersion >= 2) {
+			if (protocolVersion >= 2 && !quarantinedContext) {
 				acceptLayeredPlayerPosition(localX, localZ);
 			}
 			snapshotFingerprint = movementSnapshotDiagnostics.createFingerprint(localX, localZ, localDirection);
 			stageFrame = new MovementSnapshotStage.Frame(protocolVersion, serverTick, sequence);
 			stageFrame.setLocal(localX, localZ, localDirection);
-			mc.applyCustomMovementUpdate(localX, localZ, localDirection);
-			parity.checkLocal(mc, localX, localZ, localDirection);
+			if (!quarantinedContext) {
+				mc.applyCustomMovementUpdate(localX, localZ, localDirection);
+				parity.checkLocal(mc, localX, localZ, localDirection);
+			}
 			playerCount = packetsIncoming.getShort();
 			for (int i = 0; i < playerCount && packetsIncoming.packetEnd + 7 <= length; i++) {
 				int serverIndex = packetsIncoming.getShort();
@@ -2988,8 +3054,10 @@ public class PacketHandler {
 				int direction = packetsIncoming.getUnsignedByte();
 				snapshotFingerprint.addPlayer(serverIndex, x, z, direction);
 				stageFrame.addPlayer(serverIndex, x, z, direction);
-				mc.applyCustomPlayerMovementUpdate(serverIndex, x, z, direction);
-				parity.checkPlayer(mc, serverIndex, x, z, direction);
+				if (!quarantinedContext) {
+					mc.applyCustomPlayerMovementUpdate(serverIndex, x, z, direction);
+					parity.checkPlayer(mc, serverIndex, x, z, direction);
+				}
 				recordsRead++;
 			}
 			if (packetsIncoming.packetEnd + 2 <= length) {
@@ -3001,11 +3069,20 @@ public class PacketHandler {
 					int direction = packetsIncoming.getUnsignedByte();
 					snapshotFingerprint.addNpc(serverIndex, x, z, direction);
 					stageFrame.addNpc(serverIndex, x, z, direction);
-					mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);
-					parity.checkNpc(mc, serverIndex, x, z, direction);
+					if (!quarantinedContext) {
+						mc.applyCustomNpcMovementUpdate(serverIndex, x, z, direction);
+						parity.checkNpc(mc, serverIndex, x, z, direction);
+					}
 					recordsRead++;
 				}
 			}
+		}
+		if (quarantinedContext) {
+			if (stageFrame == null || recordsRead != playerCount + npcCount
+				|| packetsIncoming.packetEnd != length) {
+				throw new IllegalArgumentException("Quarantined movement snapshot is malformed");
+			}
+			return;
 		}
 		MovementSnapshotStage.Result stageResult = movementSnapshotStage.replaceFromSnapshot(stageFrame, mc);
 		movementSnapshotDiagnostics.recordSnapshot(
@@ -3062,16 +3139,21 @@ public class PacketHandler {
 		int recordsRead = 0;
 		int locationContextSequence = 0;
 		String scopeIdentity = "legacy";
+		boolean quarantinedContext = false;
 		List<SceneBaselineState.Record> pageRecords = new ArrayList<SceneBaselineState.Record>();
 		if (length >= 21) {
 			protocolVersion = packetsIncoming.getUnsignedByte();
+			if (!SceneBaselineState.supportsProtocol(protocolVersion)) {
+				throw new IllegalArgumentException("Unsupported scene baseline protocol");
+			}
 			serverTick = packetsIncoming.get32();
 			localX = packetsIncoming.getShort();
 			localY = packetsIncoming.getShort();
 			if (protocolVersion >= 6) {
 				locationContextSequence = packetsIncoming.get32();
+				quarantinedContext = nativeTerrainRecovery.rejects(locationContextSequence);
 				if (!layeredSceneContextState.matchesSequence(
-						locationContextSequence)) {
+						locationContextSequence) && !quarantinedContext) {
 					throw new IllegalStateException(
 						"Scene baseline does not match layered scene context");
 				}
@@ -3085,6 +3167,10 @@ public class PacketHandler {
 			if (protocolVersion >= 5 && packetsIncoming.packetEnd + 2 <= length) {
 				objectViewDistance = packetsIncoming.getShort();
 			}
+		}
+		if (packetsIncoming.packetEnd > length
+			|| quarantinedContext && packetsIncoming.packetEnd + 20 > length) {
+			throw new IllegalArgumentException("Scene baseline fixed header is truncated");
 		}
 		if (packetsIncoming.packetEnd + 20 <= length) {
 			packetsIncoming.get32();
@@ -3116,6 +3202,9 @@ public class PacketHandler {
 				throw new IllegalArgumentException(
 					"Presentation scene baseline has invalid radii");
 			}
+		}
+		if (quarantinedContext && packetsIncoming.packetEnd + SCENE_BASELINE_PAGE_HEADER_BYTES > length) {
+			throw new IllegalArgumentException("Quarantined scene baseline page header is truncated");
 		}
 		if (protocolVersion
 				>= SceneBaselineState.PRESENTATION_PROTOCOL_VERSION
@@ -3175,6 +3264,12 @@ public class PacketHandler {
 				pageRecords.add(new SceneBaselineState.Record(id, x, y, direction, type));
 				recordsRead++;
 			}
+		}
+		if (quarantinedContext) {
+			// Header, page count, records, radii and exact wire length have all
+			// passed normal validation. Never publish this known failed context.
+			packetsIncoming.packetEnd = length;
+			return;
 		}
 		BoundaryLoadingDiagnostics.recordSceneBaselinePacket(
 			protocolVersion,

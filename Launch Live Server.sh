@@ -38,7 +38,12 @@ printf '\nCurrent live server status:\n'
 ./scripts/live-status.sh || true
 
 printf 'Starting the already-deployed detached hosted server...\n\n'
-./scripts/run-hosted-server.sh
+RELEASE_TAG="$(sed -n 's/^marker_release_tag=\(v[0-9]*\.[0-9]*\.[0-9]*\)$/\1/p' server/run/server-43605.env 2>/dev/null || true)"
+if [[ -n "$RELEASE_TAG" ]]; then
+  bash /home/justin/Core-Framework/scripts/run-hosted-release.sh "$RELEASE_TAG"
+else
+  ./scripts/run-hosted-server.sh
+fi
 status=$?
 
 printf '\nHosted server process exited with status %s.\n' "$status"

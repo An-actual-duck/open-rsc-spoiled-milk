@@ -1032,6 +1032,17 @@ public final class NativeLayeredWorldPackage {
 		return worldSpaceKinds.size();
 	}
 
+	/** Immutable declared identity metadata, not allocated runtime instances. */
+	public Map<String, String> getWorldSpaceKinds() { return worldSpaceKinds; }
+
+	public Set<Integer> getDeclaredLevels(WorldSpaceId worldSpace) {
+		Set<Integer> result = new java.util.TreeSet<Integer>();
+		for (LevelKey level : levels) {
+			if (level.worldSpace.equals(worldSpace)) result.add(level.level);
+		}
+		return Collections.unmodifiableSet(result);
+	}
+
 	public int getLevelCount() {
 		return levels.size();
 	}
