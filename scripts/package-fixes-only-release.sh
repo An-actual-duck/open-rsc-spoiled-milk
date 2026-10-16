@@ -28,19 +28,7 @@ candidate_remote="$(git -C "$SOURCE_ROOT" remote get-url spoiled-milk)"
 # Existing worker work is not integrated. Require each registered slot to be
 # clean and backed up before proceeding, without packaging dirty manager inputs.
 for slot in /home/justin/Core-Framework-ai-{1,2,3}; do
-  fixes_only_require_no_git_operation "$slot"
-  [[ -z "$(git -C "$slot" status --porcelain --untracked-files=all)" ]] || fail "Worker slot is dirty: $slot"
-  worker_branch="$(git -C "$slot" symbolic-ref --short HEAD 2>/dev/null || true)"
-  worker_head="$(git -C "$slot" rev-parse HEAD)"
-  ai_load_slot_state "${slot##*-Framework-}" "$slot" || fail "Invalid registered worker state: $AI_SLOT_STATE_ERROR"
-  if [[ -z "$worker_branch" ]]; then
-    [[ "$AI_SLOT_STATE_PHASE" == IDLE && "$AI_SLOT_STATE_BRANCH" == DETACHED ]] || fail "Detached worker is not registered IDLE: $slot"
-    [[ "$worker_head" == "$(git -C "$slot" rev-parse 'spoiled-milk/main^{commit}')" ]] || fail "IDLE worker does not match published main: $slot"
-    continue
-  fi
-  [[ "$worker_branch" != main && "$AI_SLOT_STATE_PHASE" =~ ^(ACTIVE|READY)$ ]] || fail "Inspect worker phase/branch before fixes-only release: $slot"
-  worker_remote="$(git -C "$slot" ls-remote --exit-code spoiled-milk "refs/heads/$worker_branch" | awk '{print $1}')"
-  [[ "$worker_head" == "$worker_remote" ]] || fail "Worker is not backed up at its exact tip: $slot"
+  fixes_only_require_worker "$slot" "${slot##*-Framework-}"
 done
 ROOT_DIR="$SOURCE_ROOT" bash "$SOURCE_ROOT/scripts/package-player-release.sh" "$@"
 ROOT_DIR="$SOURCE_ROOT" bash "$SOURCE_ROOT/scripts/package-layered-world-release.sh" \

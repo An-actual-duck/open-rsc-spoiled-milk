@@ -141,6 +141,8 @@ class InstalledReleaseTest(unittest.TestCase):
     def test_hosted_inherited_pin_refuses_before_parser(self):
         self.shell('export OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH=/old/package; '
                    'layered_world_enable_hosted_installed_profile "'+str(self.root)+'" unused', False)
+        self.shell('export JAVA_TOOL_OPTIONS=-Dopenrsc.worldBuilderTargetRoot=/other; '
+                   'layered_world_enable_hosted_installed_profile "'+str(self.root)+'" unused', False)
 
     def test_hosted_clean_guard_and_explicit_rollback_wiring(self):
         source = (ROOT / "scripts/run-hosted-release.sh").read_text()
@@ -151,6 +153,43 @@ class InstalledReleaseTest(unittest.TestCase):
         common = (ROOT / "scripts/lib/myworld-common.sh").read_text()
         self.assertIn('[[ -z "$dirty_status" ]]', common)
         self.assertIn('[[ "$head_commit" == "$main_commit" ]]', common)
+
+    def test_registered_idle_and_backed_up_topic_census(self):
+        def git(*args):
+            return subprocess.check_output(["git", "-C", str(self.root), *args], text=True, stderr=subprocess.DEVNULL).strip()
+        git("init", "-q")
+        git("add", ".")
+        git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "fixture")
+        head = git("rev-parse", "HEAD")
+        git("update-ref", "refs/remotes/spoiled-milk/main", head)
+        git("checkout", "-q", "--detach")
+        states = Path(self.temp.name) / "states"
+        states.mkdir()
+        state = states / "ai-1.state"
+        def record(phase="IDLE", branch="DETACHED", commit=head, path=None):
+            state.write_text(f"slot=ai-1\nphase={phase}\npath={path or self.root}\nbranch={branch}\nhead={commit}\nremote_policy=KEEP\n")
+        command = ('source "'+str(ROOT / 'scripts/lib/ai-workspace-common.sh')+'"; '
+                   'source "'+str(ROOT / 'scripts/lib/fixes-only-release-source.sh')+'"; '
+                   'fail(){ echo "$*" >&2; exit 1; }; AI_STATE_DIR="'+str(states)+'"; '
+                   'fixes_only_require_worker "'+str(self.root)+'" ai-1')
+        record(); self.shell(command)
+        for phase in ("ACTIVE", "READY", "RECYCLING"):
+            record(phase=phase); self.shell(command, False)
+        record(commit="0"*40); self.shell(command, False)
+        record(path=states); self.shell(command, False)
+        record(); (self.root / "untracked").write_text("owned")
+        self.shell(command, False)
+        git("add", "untracked")
+        git("-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "next")
+        git("checkout", "-qb", "task/fixture")
+        head = git("rev-parse", "HEAD")
+        record(phase="READY", branch="task/fixture", commit=head)
+        self.shell(command, False)  # Not backed up; no remote yet.
+        remote = Path(self.temp.name) / "backup.git"
+        subprocess.run(["git", "init", "--bare", "-q", str(remote)], check=True)
+        git("remote", "add", "spoiled-milk", str(remote))
+        git("push", "-q", "spoiled-milk", "HEAD:refs/heads/task/fixture")
+        self.shell(command)
 
 
 if __name__ == "__main__": unittest.main()

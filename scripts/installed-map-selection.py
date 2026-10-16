@@ -69,7 +69,11 @@ def document(path, keys=None):
 def inventory(root):
     entries = []
     total = 0
+    nodes = 0
     for parent, directories, files in os.walk(root, followlinks=False):
+        nodes += len(directories) + len(files)
+        if nodes > 65536:
+            refuse("Selected package exceeds path budget")
         for name in directories:
             if not stat.S_ISDIR((Path(parent) / name).lstat().st_mode):
                 refuse("Non-directory/symlink in map package")
