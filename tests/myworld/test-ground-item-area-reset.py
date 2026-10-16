@@ -73,10 +73,11 @@ def main() -> None:
 \t\t\t\t\t&& this.lastHeightOffset == this.requestedPlane"""
     require(same_region_guard in region_load,
             "hard area loads must bypass the same-region early return and reach the unified reset")
-    require("if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.resetGroundItemsForHardAreaLoad();" in region_load,
+    require("if (hardAreaLoad || heightOffsetChanged) {\n\t\t\t\t\t\tthis.resetGroundItemsForHardAreaLoad(baseDX, baseDZ);" in region_load,
             "terrain/plane hard loads must use the same ground-item reset")
-    require("private void resetGroundItemsForHardAreaLoad() {\n\t\tthis.groundItemCount = 0;" in client,
-            "hard area reset must clear the client ground-item list")
+    require("this.groundItemAreaEpoch.complete(" in client
+            and "this.groundItemCount = this.groundItemAreaEpoch.begin();" in client,
+            "hard area reset must consume only the new announcement epoch")
     require("boolean removed = false;" in packet_handler,
             "packet removals must still remove only one real ground-item instance")
     require("removeGroundItemsAt(groundItemX, groundItemY, groundItemID);\n\t\t\t\t\tmc.setGroundItemX" not in packet_handler,
