@@ -117,8 +117,11 @@ def make_fixture(
     write(fixture / "Client_Base" / "Cache" / "uid.dat", "developer-state")
     write(fixture / "Client_Base" / "Cache" / "credentials.txt", "secret")
     write(fixture / "Client_Base" / "clientSettings.conf", "local-settings")
-    package_fingerprint = "a" * 64
-    package_manifest = '{"schemaVersion":1}\n'
+    package_manifest = '{"schemaVersion":1,"packageId":"fixture","packageVersion":"1"}\n'
+    manifest_sha256 = hashlib.sha256(package_manifest.encode()).hexdigest()
+    package_fingerprint = hashlib.sha256(
+        ("manifest.json\0" + str(len(package_manifest.encode())) + "\0" + manifest_sha256 + "\0").encode()
+    ).hexdigest()
     package_relative = (
         f"world-builder/packages/{package_fingerprint}/package"
     )
@@ -132,6 +135,9 @@ def make_fixture(
         json.dumps(
             {
                 "active": True,
+                "schemaVersion": 1,
+                "packageId": "fixture",
+                "packageVersion": "1",
                 "manifestSha256": manifest_sha256,
                 "manifestType": "world-builder-installed-client-profile",
                 "packageFingerprintSha256": package_fingerprint,
@@ -141,6 +147,15 @@ def make_fixture(
         )
         + "\n",
     )
+    shutil.copytree(fixture / "Client_Base" / package_relative, fixture / "server" / package_relative)
+    write(fixture / "server/world-builder-configs/primary.json", json.dumps(dict(
+        schemaVersion=1, manifestType="world-builder-map-configuration", configurationId="primary",
+        active=True, representation="layered", serverMapRelativePath="server/"+package_relative,
+        clientMapRelativePath="Client_Base/"+package_relative, assets=[], placements=[],
+        serverRuntimeRelativePath="server/runtime.json", clientRuntimeRelativePath="Client_Base/runtime.json",
+        serverDefinitionCatalogRelativePath="server/defs.json", clientDefinitionCatalogRelativePath="Client_Base/defs.json")))
+    (fixture / "scripts").mkdir(exist_ok=True)
+    shutil.copyfile(ROOT / "scripts/installed-map-selection.py", fixture / "scripts/installed-map-selection.py")
     write(fixture / "LICENSE", "AGPL fixture")
     shutil.copytree(ROOT / "release" / "player", fixture / "release" / "player")
 
@@ -274,7 +289,7 @@ def test_packaged_archives_are_clean_and_configured() -> None:
                     f"{package_name}/game-files/Cache/audio/audio.dat",
                     f"{package_name}/game-files/Cache/video/video.dat",
                     f"{package_name}/game-files/world-builder-configs/installed-client.json",
-                    f"{package_name}/game-files/world-builder/packages/{'a' * 64}/package/manifest.json",
+                    f"{package_name}/game-files/" + json.loads((fixture / "Client_Base/world-builder-configs/installed-client.json").read_text())["packageRelativePath"] + "/manifest.json",
                     f"{package_name}/game-files/LICENSE",
                     f"{package_name}/README.txt",
                     f"{package_name}/game-files/ASSET-SOURCES.txt",

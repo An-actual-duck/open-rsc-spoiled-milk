@@ -392,7 +392,7 @@ myworld_write_launch_marker() {
   local conf_name="$2"
   local safety_attestation="${3:-unverified}"
   local marker_path marker_dir root_real branch commit db_name server_name bind_address server_port ws_port
-  local database_path database_real layered_package_path layered_manifest_sha256 layered_runtime_mode
+  local database_path database_real layered_package_path layered_manifest_sha256 layered_runtime_mode layered_selection_sha256
 
   marker_path="$(myworld_launch_marker_path "$conf_name")"
   marker_dir="$(dirname "$marker_path")"
@@ -408,9 +408,13 @@ myworld_write_launch_marker() {
   ws_port="$(myworld_conf_value "$conf_name" ws_server_port)"
   database_path="$ROOT_DIR/server/inc/sqlite/${db_name}.db"
   database_real="$(readlink -f "$database_path" 2>/dev/null || true)"
-  layered_package_path="${OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH:-}"
+  layered_package_path="${OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH:-${HOSTED_LAYERED_PACKAGE:-}}"
   layered_manifest_sha256=""
   layered_runtime_mode="${SPOILED_MILK_LAYERED_RUNTIME_MODE:-legacy-default}"
+  layered_selection_sha256=""
+  if [[ "$layered_runtime_mode" == production-installed ]]; then
+    layered_selection_sha256="$(python3 "$ROOT_DIR/scripts/installed-map-selection.py" "$ROOT_DIR" | python3 -c 'import json,sys;print(json.load(sys.stdin)["selectionSha256"])')" || return 1
+  fi
   if [[ -n "$layered_package_path" && -f "$layered_package_path/manifest.json" ]]; then
     layered_package_path="$(myworld_realpath "$layered_package_path" 2>/dev/null || true)"
     layered_manifest_sha256="$(layered_world_manifest_sha256 "$layered_package_path")"
@@ -427,6 +431,7 @@ myworld_write_launch_marker() {
     printf 'marker_layered_package_path=%q\n' "$layered_package_path"
     printf 'marker_layered_manifest_sha256=%q\n' "$layered_manifest_sha256"
     printf 'marker_layered_runtime_mode=%q\n' "$layered_runtime_mode"
+    printf 'marker_layered_selection_sha256=%q\n' "$layered_selection_sha256"
     printf 'marker_safety=%q\n' "$safety_attestation"
     printf 'marker_server=%q\n' "$server_name"
     printf 'marker_bind=%q\n' "$bind_address"

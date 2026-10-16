@@ -33,18 +33,16 @@ if [[ "$LEGACY_MAP_ROLLBACK" == true ]]; then
   layered_world_enable_legacy_rollback_profile
   HOSTED_LAYERED_PACKAGE=""
 else
-  HOSTED_LAYERED_PACKAGE="$(layered_world_require_live_package \
+  HOSTED_LAYERED_PACKAGE="$(layered_world_enable_hosted_installed_profile \
     "$ROOT_DIR" "$MYWORLD_LIVE_DB_ROOT")"
-  export OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH="$HOSTED_LAYERED_PACKAGE"
-  export OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256="$SPOILED_MILK_LAYERED_MANIFEST_SHA256"
-  export SPOILED_MILK_LAYERED_RUNTIME_MODE=production
+  export SPOILED_MILK_LAYERED_RUNTIME_MODE=production-installed
 fi
 myworld_print_server_launch_banner "LIVE SPOILED MILK HOSTED ALPHA" "$SERVER_CONF"
 if [[ "$LEGACY_MAP_ROLLBACK" == true ]]; then
   printf 'Layered runtime: LEGACY ROLLBACK (explicit launch option)\n' >&2
 else
   printf 'Layered world: %s\n' "$HOSTED_LAYERED_PACKAGE" >&2
-  printf 'Layered manifest: %s\n' "$SPOILED_MILK_LAYERED_MANIFEST_SHA256" >&2
+  printf 'Layered manifest: %s\n' "$(layered_world_manifest_sha256 "$HOSTED_LAYERED_PACKAGE")" >&2
 fi
 myworld_prepare_generated_artifacts check
 # Recheck after every pre-launch command so a concurrent mutation cannot turn a

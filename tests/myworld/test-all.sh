@@ -201,6 +201,7 @@ python3 ./tests/myworld/test-ground-item-identity.py
 python3 ./tests/myworld/test-ground-item-rendering.py
 python3 ./tests/myworld/test-ground-item-area-reset.py
 python3 ./tests/myworld/test-death-ground-item-reconciliation.py
+python3 ./tests/myworld/test-installed-map-release-selection.py
 python3 ./tests/myworld/test-scene-entity-lifecycle.py
 python3 ./tests/myworld/test-rowboat-respawn-lifecycle.py
 python3 ./tests/myworld/test-herblaw-cleanup.py
