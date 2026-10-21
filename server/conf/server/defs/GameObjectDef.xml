@@ -14689,4 +14689,18 @@
     <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>log_balance1</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Pass-through double doors</name>
+    <description>The doors close after you pass through</description>
+    <command1>Open</command1><command2>Examine</command2>
+    <type>2</type><width>1</width><height>2</height><groundItemVar>0</groundItemVar>
+    <objectModel>doubledoorsclosed</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Pass-through double doors</name>
+    <description>The doors are briefly open</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>2</type><width>1</width><height>2</height><groundItemVar>0</groundItemVar>
+    <objectModel>doubledoorsopen</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

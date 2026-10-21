@@ -1136,6 +1136,9 @@ public class DoorAction {
 		}
 
 		switch (SceneryId.getById(obj.getID())) {
+			case DOORS_GENERIC_PASS_CLOSED:
+				doDoubleDoor(player, obj, SceneryId.DOORS_GENERIC_PASS_OPEN.id());
+				break;
 			case BLACK_KNIGHTS_FORTRESS_DOORS: // Black Knight Big Door
 				player.message("the doors are locked");
 				break;
