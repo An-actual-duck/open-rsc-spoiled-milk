@@ -10167,6 +10167,10 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "WalkTo", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1330 - visual centre
 		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1331 - Lumbridge to Al Kharid
 		objects.add(new GameObjectDef("Agility jump", "A configurable agility shortcut", "Agility-Jump", "Examine", 0, 1, 1, 0, "stonedisc", ++i));
+		objects.add(new GameObjectDef("Agility crawl", "A configurable crawling shortcut", "Agility-Crawl", "Examine", 0, 1, 1, 0, "obstical_pipe", ++i));
+		objects.add(new GameObjectDef("Agility climb", "A configurable climbing shortcut", "Agility-Climb", "Examine", 0, 2, 1, 0, "obstical_net", ++i));
+		objects.add(new GameObjectDef("Agility swing", "A configurable swinging shortcut", "Agility-Swing", "Examine", 0, 1, 1, 0, "obstical_ropeswing", ++i));
+		objects.add(new GameObjectDef("Agility balance", "A configurable balancing shortcut", "Agility-Balance", "Examine", 0, 1, 1, 0, "log_balance1", ++i));
 	}
 
 	public static void load(boolean loadMembers) {

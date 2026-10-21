@@ -69,8 +69,9 @@ public final class NativeLayeredWorldPlacementPreflight {
 					GameObjectDef definition = definitions.scenery(scenery.getSceneryId());
 					if (definition == null) unavailable("scenery", scenery.getSceneryId());
 					if (scenery.getAgilityShortcut() != null) {
-						if ((!AgilityShortcut.ACTION.equals(definition.getCommand1()) && !AgilityShortcut.ACTION.equals(definition.getCommand2())) || definition.getType() != 0)
-							throw new IllegalStateException("Configured shortcut requires generic agility-jump scenery: " + scenery.getPlacementId());
+						String action = scenery.getAgilityShortcut().getTemplate().action;
+						if ((!action.equals(definition.getCommand1()) && !action.equals(definition.getCommand2())) || definition.getType() != 0)
+							throw new IllegalStateException("Configured shortcut requires matching generic agility scenery: " + scenery.getPlacementId());
 						AgilityShortcutLanding.Terrain landings = new AgilityShortcutLanding.Terrain() {
 							public NativeLayeredTerrainTile tile(WorldLocation at) { return loaded.findTile(at).orElse(null); }
 							public TileDef definition(int id) { return definitions.tile(id); }

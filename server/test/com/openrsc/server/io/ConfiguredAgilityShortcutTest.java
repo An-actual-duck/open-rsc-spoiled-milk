@@ -40,6 +40,35 @@ public final class ConfiguredAgilityShortcutTest {
 		refuses(() -> new AgilityShortcut(1,20,90,30,at(0,4,0),FAILURE),"edge destination");
 		JSONObject valid = json();
 		check(AgilityShortcut.read(valid).chanceBasisPoints(45)==7500,"strict JSON parser");
+		for(AgilityShortcut.Template template:AgilityShortcut.Template.values()) {
+			JSONObject configured=new JSONObject(valid.toString()).put("template",template.id).put("action",template.action);
+			check(AgilityShortcut.read(configured).getTemplate()==template,"known exact pair "+template.id);
+			for(AgilityShortcut.Template other:AgilityShortcut.Template.values()) if(other!=template)
+				rejectJson(new JSONObject(configured.toString()).put("action",other.action));
+			for(int chance:new int[]{0,100}) {
+				Actor selected=new Actor(); AgilityShortcut behavior=new AgilityShortcut(template,1,chance,chance,1,SUCCESS,FAILURE);
+				start(selected,behavior,0);selected.complete();
+				check(selected.where.equals(chance==0?FAILURE:SUCCESS),"template outcome "+template.id);
+				check(selected.messages.get(0).equals(template.preparation)&&selected.messages.get(1).equals(chance==0?template.failure:template.success),"template messages "+template.id);
+			}
+			AgilityShortcut behavior=new AgilityShortcut(template,1,100,100,1,SUCCESS,FAILURE);
+			Actor cancelled=new Actor();start(cancelled,behavior,0);
+			cancelled.token=null;cancelled.busy=false;start(cancelled,behavior,0);
+			ConfiguredAgilityAction.begin(cancelled,behavior,()->{throw new AssertionError("duplicate template roll");});
+			check(cancelled.events.size()==2,"cancel retry with no duplicate callback "+template.id);
+			cancelled.events.get(0).run();check(cancelled.busy&&cancelled.lands==0&&cancelled.rolls==0,"old callback does not own retry "+template.id);
+			cancelled.events.get(1).run();cancelled.events.get(1).run();
+			check(!cancelled.busy&&cancelled.lands==1&&cancelled.rolls==1,"retry rolls/lands exactly once "+template.id);
+			for(String reason:new String[]{"unavailable","moved","replacement","unsafe"}) {
+				Actor interrupted=new Actor();start(interrupted,behavior,0);
+				if(reason.equals("unavailable"))interrupted.available=false;
+				if(reason.equals("moved"))interrupted.where=FAILURE;
+				if(reason.equals("replacement"))interrupted.current=false;
+				if(reason.equals("unsafe"))interrupted.safe=false;
+				interrupted.complete();
+				check(!interrupted.busy&&interrupted.lands==0&&interrupted.rolls==0,"template guarded completion "+template.id+" "+reason);
+			}
+		}
 		for (String field : new String[]{"schemaVersion","template","action","requiredLevel","successDestination"}) {
 			JSONObject bad = new JSONObject(valid.toString()); bad.remove(field); rejectJson(bad);
 		}
@@ -77,6 +106,12 @@ public final class ConfiguredAgilityShortcutTest {
 		refuses(()->start(broken,normal,0),"scheduler throws"); check(!actor.busy && actor.token==null,"scheduler failure releases busy");
 		JSONObject resource = new JSONObject(new String(Files.readAllBytes(java.nio.file.Paths.get("../runtime-contract/agility-shortcuts-v1.json")),StandardCharsets.UTF_8));
 		check(resource.getString("placementEncoding").equals(NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V5),"capability encoding");
+		check(resource.getJSONArray("templates").length()==AgilityShortcut.Template.values().length,"declaration template count");
+		for(int i=0;i<resource.getJSONArray("templates").length();i++) {
+			JSONObject declared=resource.getJSONArray("templates").getJSONObject(i);
+			AgilityShortcut.Template selected=AgilityShortcut.Template.forAction(declared.getJSONArray("actions").getString(0));
+			check(selected!=null&&selected.id.equals(declared.getString("id")),"declaration exact known pair");
+		}
 		check(ConfiguredAgilityShortcutTest.class.getResourceAsStream("/map-runtime/agility-shortcuts-v1.json")!=null,"capability embedded in built jar");
 		System.out.println("PASS configurable agility shortcut: "+checks+" assertions (parser, chance, landing, scheduled action lifecycle)");
 	}
@@ -129,11 +164,12 @@ public final class ConfiguredAgilityShortcutTest {
 	private static class Actor implements ConfiguredAgilityAction.Actor {
 		boolean available=true,busy,current=true,safe=true,throwSchedule;int level=45,lands,rolls;Object token; WorldLocation where=START;
 		List<Runnable> events=new ArrayList<Runnable>();
+		List<String> messages=new ArrayList<String>();
 		void complete(){events.get(0).run();} public boolean available(){return available;}public boolean busy(){return busy;}public void busy(boolean v){busy=v;}
 		public int effectiveAgility(){return level;}public WorldLocation location(){return where;}public Object pending(){return token;}public void pending(Object t){token=t;}
 		public boolean placementCurrent(){return current;} public void requireSafe(WorldLocation at){if(!safe)throw new IllegalStateException("unsafe");}
 		public void schedule(Runnable callback){if(throwSchedule)throw new IllegalStateException("scheduler failure");events.add(callback);}
-		public void message(String text){} public void land(WorldLocation at){lands++;where=at;}
+		public void message(String text){messages.add(text);} public void land(WorldLocation at){lands++;where=at;}
 	}
 	private static class Terrain implements AgilityShortcutLanding.Terrain {
 		int overlay=1; boolean clear=true,missing,wall,farWall,different; TileDef definition=new TileDef();

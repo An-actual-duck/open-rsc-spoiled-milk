@@ -20,8 +20,13 @@ for filename in ("badwords.txt", "goodwords.txt", "globalrules.txt", "alertwords
 (target / "connections.conf").write_text("database:\n\tdb_type: MYSQL\n\tdb_host: 127.0.0.1\n\tdb_user: isolated_test\n\tdb_pass: unused\n")
 
 definitions = ET.parse(root / "server/conf/server/defs/GameObjectDef.xml").getroot().findall("GameObjectDef")
-generic = [i for i, d in enumerate(definitions) if d.findtext("command1", "").lower() == "agility-jump"]
-assert len(generic) == 1
+templates = json.loads((root / "runtime-contract/agility-shortcuts-v1.json").read_text())["templates"]
+generic = {}
+for template in templates:
+    action = template["actions"][0]
+    matches = [i for i, d in enumerate(definitions) if d.findtext("command1", "").lower() == action]
+    assert len(matches) == 1
+    generic[action] = matches[0]
 package = target / "package"
 package.mkdir()
 def write(name, value):
@@ -44,11 +49,13 @@ for level in (0, 2, -3):
                                       "encoding": "uniform-layered-sector-v1", "path": "terrain.json", "sha256": terrain_hash})
     scenery = []
     if level == 2:
-        scenery.append({"placementId": "landing-marker", "sceneryId": generic[0], "position": {"x": 30, "y": 30}, "direction": 0})
+        scenery.append({"placementId": "landing-marker", "sceneryId": generic["agility-jump"], "position": {"x": 30, "y": 30}, "direction": 0})
     if level == 0:
-        for name, x, chance in (("success-jump", 20, 100), ("failure-jump", 24, 0)):
-            scenery.append({"placementId": name, "sceneryId": generic[0], "position": {"x": x, "y": 20}, "direction": 0,
-                            "agilityShortcut": {"schemaVersion": 1, "template": "jump-v1", "action": "agility-jump",
+        for index, template in enumerate(templates):
+          action = template["actions"][0]
+          for name, x, chance in (("success-", 20, 100), ("failure-", 24, 0)):
+            scenery.append({"placementId": name + template["id"], "sceneryId": generic[action], "position": {"x": x, "y": 20 + index * 4}, "direction": 0,
+                            "agilityShortcut": {"schemaVersion": 1, "template": template["id"], "action": action,
                                                 "requiredLevel": 30, "startChancePercent": chance, "maxChancePercent": chance,
                                                 "maxChanceLevel": 30, "successDestination": endpoint(30, 30, 2),
                                                 "failureDestination": endpoint(32, 30, -3)}})

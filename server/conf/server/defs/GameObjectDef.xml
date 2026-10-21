@@ -14661,4 +14661,32 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>stonedisc</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Agility crawl</name>
+    <description>A configurable crawling shortcut</description>
+    <command1>Agility-Crawl</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>obstical_pipe</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Agility climb</name>
+    <description>A configurable climbing shortcut</description>
+    <command1>Agility-Climb</command1><command2>Examine</command2>
+    <type>0</type><width>2</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>obstical_net</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Agility swing</name>
+    <description>A configurable swinging shortcut</description>
+    <command1>Agility-Swing</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>obstical_ropeswing</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Agility balance</name>
+    <description>A configurable balancing shortcut</description>
+    <command1>Agility-Balance</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>log_balance1</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

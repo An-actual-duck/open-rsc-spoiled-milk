@@ -19,11 +19,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class ConfiguredAgilityShortcutHandler {
 	private ConfiguredAgilityShortcutHandler() {}
 	public static boolean handle(final Player player, final GameObject object, String command) {
-		if (!AgilityShortcut.ACTION.equals(command)) return false;
+		if (AgilityShortcut.Template.forAction(command) == null) return false;
 		final RegionManager regions = player.getWorld().getRegionManager();
 		final NativeLayeredGameObjectIdentity identity = object.getLoc().getNativeLayeredGameObjectIdentity();
 		final NativeLayeredSceneryPlacement placement = find(regions, identity);
-		if (placement == null || placement.getAgilityShortcut() == null) {
+		if (placement == null || placement.getAgilityShortcut() == null || !placement.getAgilityShortcut().getTemplate().action.equals(command)) {
 			player.message("This shortcut has not been configured yet."); return true;
 		}
 		final NativeLayeredWorldPackage owner = regions.findNativeLayeredWorldPackage(identity.getPackageId()).orElse(null);
@@ -52,8 +52,8 @@ public final class ConfiguredAgilityShortcutHandler {
 			}
 			public void schedule(final Runnable completion) {
 				player.face(object);
-				boolean added = player.getWorld().getServer().getGameEventHandler().add(new SingleTickEvent(player.getWorld(), player, 1,
-					"Configured agility jump", DuplicationStrategy.ALLOW_MULTIPLE) {
+				boolean added = player.getWorld().getServer().getGameEventHandler().add(new SingleTickEvent(player.getWorld(), player, placement.getAgilityShortcut().getTemplate().ticks,
+					"Configured agility " + placement.getAgilityShortcut().getTemplate().id, DuplicationStrategy.ALLOW_MULTIPLE) {
 					public void action() { completion.run(); }
 				});
 				if (!added) throw new IllegalStateException("Shortcut could not be scheduled");

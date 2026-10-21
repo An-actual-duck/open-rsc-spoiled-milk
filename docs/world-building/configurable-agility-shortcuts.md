@@ -4,7 +4,7 @@ October 20, 2026. Maintained Core implementation; private acceptance required be
 This is an explicit runtime feature, not an editor import-time source patch. Existing
 agility courses, quest shortcuts and rewards retain their existing plugins.
 
-## Initial template
+## Supported templates
 
 `jump-v1` handles a generic scenery placement with reserved action `agility-jump`
 in either command slot. A new nonblocking **Agility jump** scenery definition uses
@@ -13,12 +13,31 @@ editor discovers it from the selected server/client's own definitions, not from
 an editor-maintained content ID list. Ordinary jumps and quest commands do not
 grant generic override permission.
 
-Each placement can carry its own requirements, chance curve, and absolute success
-and failure destinations. This initial template faces the object, announces the
-jump, and completes after one game tick. It awards **zero XP** and deals **zero
-failure damage**, avoiding repeatable XP exploits while the generic workflow is
-proved. Dedicated crawl/swing/balance animations and configurable rewards are
-not implemented aliases.
+Each placement carries its own requirements, chance curve, and absolute success
+and failure destinations. October 21 expansion adds these exact template/action
+pairs, with separately appended, paired server/client scenery definitions:
+
+| Template | Reserved action | Existing model | Footprint | Delay |
+| --- | --- | --- | --- | --- |
+| jump-v1 | agility-jump | stonedisc | 1×1 | 1 tick |
+| crawl-v1 | agility-crawl | obstical_pipe | 1×1 | 2 ticks |
+| climb-v1 | agility-climb | obstical_net | 2×1 | 3 ticks |
+| swing-v1 | agility-swing | obstical_ropeswing | 1×1 | 2 ticks |
+| balance-v1 | agility-balance | log_balance1 | 1×1 | 3 ticks |
+
+All five face the object, announce the activity, wait their template's delay,
+then teleport to the rolled destination. They award **zero XP**, deal **zero
+failure damage**, and do not claim unique sprite/motion animations. Their delays
+are inspired by maintained Yanille pipe (2), Gnome net (3), Yanille/Edge swing
+(2), and Yanille ledge (3) code. Those authentic actions likewise use messages,
+delays and teleports. Existing staged Gnome log/rope routines are not replaced.
+New failure messages do not presume that a configured destination is below,
+short of, or back at the obstacle. Jump retains its original text and behavior.
+
+Generic definitions are nonblocking, including the net's native 2×1 footprint;
+they are authoring tools, not overrides of existing quest/course objects. The
+editor reads their definitions and installed capability without an object-ID
+roster. Template and action must form an exact pair; cross-pairs are refused.
 
 ## Four chance controls
 
@@ -107,13 +126,13 @@ authoritative server check.
 
 ## Cancellation and action ownership
 
-Only one configured jump can be pending per player. Busy state prevents repeat
+Only one configured agility action can be pending per player. Busy state prevents repeat
 clicks. The scheduled callback checks the current token, login/alive/combat state,
 current effective level, unchanged start location, stable object and terrain
 before making its single roll. Resetting player actions removes the token and
 releases only that jump's busy state. Old callbacks cannot teleport later or
 release a newer action. The scheduler allows separately token-fenced callbacks
-to coexist for one tick, allowing cancellation followed by an immediate retry;
+to coexist during their token-fenced delay, allowing cancellation followed by an immediate retry;
 enqueue failure releases the token rather than leaving the player stuck.
 
 ## Verification
