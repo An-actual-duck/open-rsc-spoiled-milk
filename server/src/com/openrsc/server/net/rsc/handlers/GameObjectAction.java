@@ -69,6 +69,7 @@ public class GameObjectAction implements PayloadProcessor<TargetObjectStruct, Op
 				getPlayer().resetAll();
 				String command = (getPlayer().click == 0 ? def.getCommand1() : def
 					.getCommand2()).toLowerCase();
+				if (com.openrsc.server.model.action.ConfiguredAgilityShortcutHandler.handle(getPlayer(), object, command)) return;
 
 				int playerDirection = getPlayer().getSprite();
 				if (getPlayer().getWorld().getServer().getPluginHandler().handlePlugin(

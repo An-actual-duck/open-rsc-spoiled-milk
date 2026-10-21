@@ -15,7 +15,8 @@
       "layered-entity-placements-v1": 1,
       "layered-world-placements-v2": 2,
       "layered-world-placements-v3": 3,
-      "layered-world-placements-v4": 4
+      "layered-world-placements-v4": 4,
+      "layered-world-placements-v5": 5
     },
     "sceneContextReaders": [1, 2, 3, 4, 5, 6, 7, 8],
     "currentSceneContextWriters": {"classic": 1, "synthetic": 2, "nativeFull": 5, "nativeResident": 6, "nativeReady": 7, "nativeAtomic": 8},

@@ -14650,4 +14650,15 @@
     <groundItemVar>0</groundItemVar>
     <objectModel>stonedisc</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Agility jump</name>
+    <description>A configurable agility shortcut</description>
+    <command1>Agility-Jump</command1>
+    <command2>Examine</command2>
+    <type>0</type>
+    <width>1</width>
+    <height>1</height>
+    <groundItemVar>0</groundItemVar>
+    <objectModel>stonedisc</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

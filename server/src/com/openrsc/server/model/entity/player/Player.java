@@ -4737,6 +4737,11 @@ public final class Player extends Mob {
 	}
 
 	private void resetAllExceptTradeOrDuel(boolean resetBank, boolean resetWalkAction, boolean resetFollowing) {
+		// A cancelled configured jump must never retain a callback capable of teleporting later.
+		if (getAttribute(com.openrsc.server.model.action.ConfiguredAgilityAction.PENDING_ATTRIBUTE) != null) {
+			removeAttribute(com.openrsc.server.model.action.ConfiguredAgilityAction.PENDING_ATTRIBUTE);
+			setBusy(false);
+		}
 		resetCombatEvent();
 		resetCannonEvent();
 		setAttribute("bank_pin_entered", "cancel");
