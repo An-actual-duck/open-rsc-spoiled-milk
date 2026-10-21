@@ -34,7 +34,7 @@ public final class ConfiguredAgilityAction {
 		final WorldLocation start = actor.location();
 		final Object token = new Object();
 		actor.pending(token); actor.busy(true);
-		actor.message("You prepare to jump...");
+		actor.message(shortcut.getTemplate().preparation);
 		try {
 			actor.schedule(() -> {
 				if (actor.pending() != token) return;
@@ -47,7 +47,7 @@ public final class ConfiguredAgilityAction {
 					if (random < 0 || random >= 10000) throw new IllegalStateException("Shortcut random roll is outside 0..9999");
 					boolean success = random < chance;
 					actor.land(success ? shortcut.getSuccessDestination() : shortcut.getFailureDestination());
-					actor.message(success ? "You jump across safely." : "You lose your footing and land short.");
+					actor.message(success ? shortcut.getTemplate().success : shortcut.getTemplate().failure);
 				} catch (IllegalStateException unsafe) {
 					actor.message("This shortcut does not have a safe landing right now.");
 				} finally { release(actor, token); }

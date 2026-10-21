@@ -12,11 +12,34 @@ import java.util.Objects;
 public final class AgilityShortcut {
 	public static final String TEMPLATE = "jump-v1", ACTION = "agility-jump";
 	public static final int MAX_LEVEL = 99;
+	public enum Template {
+		JUMP("jump", 1, "You prepare to jump...", "You jump across safely.", "You lose your footing and land short."),
+		CRAWL("crawl", 2, "You prepare to crawl through...", "You crawl through safely.", "You slip while crawling."),
+		CLIMB("climb", 3, "You prepare to climb...", "You finish the climb safely.", "You lose your grip while climbing."),
+		SWING("swing", 2, "You grab hold and prepare to swing...", "You swing across safely.", "You lose your grip while swinging."),
+		BALANCE("balance", 3, "You prepare to balance across...", "You balance across safely.", "You lose your footing while balancing.");
+		public final String id, action, preparation, success, failure;
+		public final int ticks;
+		Template(String name, int ticks, String preparation, String success, String failure) {
+			this.id=name+"-v1"; this.action="agility-"+name; this.ticks=ticks;
+			this.preparation=preparation; this.success=success; this.failure=failure;
+		}
+		public static Template forAction(String action) {
+			for (Template template : values()) if (template.action.equals(action)) return template;
+			return null;
+		}
+	}
+	private final Template template;
 	private final int requiredLevel, startChancePercent, maxChancePercent, maxChanceLevel;
 	private final WorldLocation successDestination, failureDestination;
 
 	public AgilityShortcut(int required, int start, int maximum, int maximumLevel,
 		WorldLocation success, WorldLocation failure) {
+		this(Template.JUMP, required, start, maximum, maximumLevel, success, failure);
+	}
+	public AgilityShortcut(Template template, int required, int start, int maximum, int maximumLevel,
+		WorldLocation success, WorldLocation failure) {
+		this.template = Objects.requireNonNull(template, "template");
 		if (required < 1 || required > MAX_LEVEL || maximumLevel < required || maximumLevel > MAX_LEVEL
 			|| start < 0 || maximum > 100 || start > maximum || (maximumLevel == required && start != maximum)) {
 			throw new IllegalArgumentException("Agility shortcut chance settings are inconsistent");
@@ -40,15 +63,17 @@ public final class AgilityShortcut {
 		return startChancePercent * 100 + (maxChancePercent - startChancePercent) * 100 * progress / span;
 	}
 	public int getRequiredLevel() { return requiredLevel; }
+	public Template getTemplate() { return template; }
 	public WorldLocation getSuccessDestination() { return successDestination; }
 	public WorldLocation getFailureDestination() { return failureDestination; }
 	public static AgilityShortcut read(JSONObject value) throws IOException {
 		try {
 			keys(value, "schemaVersion", "template", "action", "requiredLevel", "startChancePercent", "maxChancePercent",
 				"maxChanceLevel", "successDestination", "failureDestination");
-			if (integer(value, "schemaVersion") != 1 || !TEMPLATE.equals(value.get("template")) || !ACTION.equals(value.get("action")))
+			Template template = Template.forAction(value.getString("action"));
+			if (integer(value, "schemaVersion") != 1 || template == null || !template.id.equals(value.get("template")))
 				throw new IllegalArgumentException("Unsupported agility shortcut schema, template or action");
-			return new AgilityShortcut(integer(value, "requiredLevel"), integer(value, "startChancePercent"),
+			return new AgilityShortcut(template, integer(value, "requiredLevel"), integer(value, "startChancePercent"),
 				integer(value, "maxChancePercent"), integer(value, "maxChanceLevel"),
 				readDestination(value.getJSONObject("successDestination")), readDestination(value.getJSONObject("failureDestination")));
 		} catch (RuntimeException exception) { throw new IOException("Invalid agilityShortcut: " + exception.getMessage(), exception); }

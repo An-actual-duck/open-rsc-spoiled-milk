@@ -16,15 +16,16 @@ public final class ConfiguredAgilityClientDefinitionTest {
 		int found=0;
 		for(int id=0;id<definitions.getLength();id++) {
 			Element server=(Element)definitions.item(id);
-			if(!"agility-jump".equals(text(server,"command1").toLowerCase(java.util.Locale.ROOT)))continue;
+			String action=text(server,"command1").toLowerCase(java.util.Locale.ROOT);
+			if(!action.matches("agility-(jump|crawl|climb|swing|balance)"))continue;
 			found++;
 			GameObjectDef client=EntityHandler.getObjectDef(id);
 			if(!client.getName().equals(text(server,"name")) || !client.getCommand1().equals(text(server,"command1"))
 				|| !client.getCommand2().equals(text(server,"command2")) || !client.getObjectModel().equals(text(server,"objectModel"))
-				|| client.getType()!=0 || client.getWidth()!=1 || client.getHeight()!=1 || client.modelID<0)
+				|| client.getType()!=0 || client.getWidth()!=Integer.parseInt(text(server,"width")) || client.getHeight()!=Integer.parseInt(text(server,"height")) || client.modelID<0)
 				throw new AssertionError("Generic scenery does not match the built paired client at "+id);
 		}
-		if(found!=1)throw new AssertionError("Expected one automatically discoverable generic jump definition");
+		if(found!=5)throw new AssertionError("Expected five automatically discoverable generic definitions");
 		System.out.println("PASS built paired client generic agility scenery: matching discovered ID, command, nonblocking footprint and existing model selector");
 	}
 	private static String text(Element value,String field){return value.getElementsByTagName(field).item(0).getTextContent();}

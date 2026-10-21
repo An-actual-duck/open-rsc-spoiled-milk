@@ -40,6 +40,35 @@ public final class ConfiguredAgilityRuntimeIntegrationTest {
 			server.getWorld().getPlayers().add(player);player.updateRegion();player.setBusy(false);player.setLoggedIn(true);
 			player.getSkills().setTemporaryLevelAndMaxStat(Skill.AGILITY.id(),45,45,false);
 			player.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),40,40,false);
+			int index=0;
+			for(AgilityShortcut.Template template:AgilityShortcut.Template.values()) {
+				for(int outcome=0;outcome<2;outcome++) {
+					int x=outcome==0?20:24, y=20+index*4;
+					GameObject obstacle=server.getWorld().getRegionManager().findNativeLayeredScenery(at(x,y,0));
+					check(obstacle!=null,"discovered placement "+template.id);
+					com.openrsc.server.external.GameObjectDef definition=server.getEntityHandler().getGameObjectDef(obstacle.getID());
+					check(definition.getCommand1().equals(template.action)&&definition.getType()==0&&definition.getWidth()==(template==AgilityShortcut.Template.CLIMB?2:1)&&definition.getHeight()==1,"paired native nonblocking footprint "+template.id);
+					player.teleportLayered(at(x+1,y,0),false);
+					check(!ConfiguredAgilityShortcutHandler.handle(player,obstacle,"jump to"),"authentic action not intercepted "+template.id);
+					String wrong=template==AgilityShortcut.Template.JUMP?"agility-climb":"agility-jump";
+					check(ConfiguredAgilityShortcutHandler.handle(player,obstacle,wrong)&&!player.isBusy(),"reserved mismatched action cannot activate "+template.id);
+					click(player,obstacle);
+					check(player.isBusy(),"packet starts "+template.id);
+					player.resetAll();
+					check(!player.isBusy()&&player.getAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE)==null,"packet transaction reset "+template.id);
+					click(player,obstacle);
+					Object retry=player.getAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE);
+					click(player,obstacle);
+					check(retry!=null&&retry==player.getAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE),"busy repeated packet retains one retry token "+template.id);
+					for(int tick=1;tick<template.ticks;tick++) {
+						drain(server,player);check(player.isBusy()&&player.getWorldLocation().equals(at(x+1,y,0)),"waits full template delay "+template.id);
+					}
+					drain(server,player);
+					check(!player.isBusy()&&player.getWorldLocation().equals(outcome==0?at(30,30,2):at(32,30,-3)),"signed success/failure "+template.id);
+				}
+				index++;
+			}
+			player.teleportLayered(at(21,20,0),false);
 			check(!ConfiguredAgilityShortcutHandler.handle(player,success,"examine"),"othercommands stay with ordinaryplugins");
 			click(player,success);
 			check(player.isBusy() && player.getAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE)!=null,"packetwalktohandler starts transaction");

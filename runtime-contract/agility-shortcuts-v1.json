@@ -19,5 +19,17 @@
     "startChancePercent": 25,
     "maxChancePercent": 95,
     "maxChanceLevel": 31
+  }, {
+    "id": "crawl-v1", "actions": ["agility-crawl"],
+    "requiredLevel": 1, "startChancePercent": 25, "maxChancePercent": 95, "maxChanceLevel": 31
+  }, {
+    "id": "climb-v1", "actions": ["agility-climb"],
+    "requiredLevel": 1, "startChancePercent": 25, "maxChancePercent": 95, "maxChanceLevel": 31
+  }, {
+    "id": "swing-v1", "actions": ["agility-swing"],
+    "requiredLevel": 1, "startChancePercent": 25, "maxChancePercent": 95, "maxChanceLevel": 31
+  }, {
+    "id": "balance-v1", "actions": ["agility-balance"],
+    "requiredLevel": 1, "startChancePercent": 25, "maxChancePercent": 95, "maxChanceLevel": 31
   }]
 }
