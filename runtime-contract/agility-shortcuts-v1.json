@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "contract": "configurable-agility-shortcuts-v1",
+  "placementEncoding": "layered-world-placements-v5",
+  "minSkillLevel": 1,
+  "maxSkillLevel": 99,
+  "worldSpace": "global",
+  "minX": 1,
+  "maxX": 32766,
+  "minY": 1,
+  "maxY": 32766,
+  "minLevel": -2147483648,
+  "maxLevel": 2147483647,
+  "landingRule": "homogeneous-full-floor-3x3-v1",
+  "templates": [{
+    "id": "jump-v1",
+    "actions": ["agility-jump"],
+    "requiredLevel": 1,
+    "startChancePercent": 25,
+    "maxChancePercent": 95,
+    "maxChanceLevel": 31
+  }]
+}

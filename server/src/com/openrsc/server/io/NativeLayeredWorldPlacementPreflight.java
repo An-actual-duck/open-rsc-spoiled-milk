@@ -4,6 +4,7 @@ import com.openrsc.server.constants.Constants;
 import com.openrsc.server.external.EntityHandler;
 import com.openrsc.server.external.GameObjectDef;
 import com.openrsc.server.external.DoorDef;
+import com.openrsc.server.external.TileDef;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.ConstructorState;
 import com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition;
@@ -21,6 +22,7 @@ public final class NativeLayeredWorldPlacementPreflight {
 		boolean item(int id);
 		GameObjectDef scenery(int id);
 		DoorDef boundary(int id);
+		default TileDef tile(int id) { return null; }
 	}
 	private NativeLayeredWorldPlacementPreflight() {}
 
@@ -39,6 +41,7 @@ public final class NativeLayeredWorldPlacementPreflight {
 				&& (restrictedItemId <= -1 || id <= restrictedItemId); }
 			public GameObjectDef scenery(int id) { return handler.getGameObjectDef(id); }
 			public DoorDef boundary(int id) { return handler.getDoorDef(id); }
+			public TileDef tile(int id) { return handler.getTileDef(id); }
 		});
 	}
 
@@ -65,6 +68,17 @@ public final class NativeLayeredWorldPlacementPreflight {
 					requireWireId("scenery", scenery.getSceneryId(), 0xfeff, true);
 					GameObjectDef definition = definitions.scenery(scenery.getSceneryId());
 					if (definition == null) unavailable("scenery", scenery.getSceneryId());
+					if (scenery.getAgilityShortcut() != null) {
+						if (!AgilityShortcut.ACTION.equals(definition.getCommand1()) || definition.getType() != 0)
+							throw new IllegalStateException("Configured shortcut requires generic agility-jump scenery: " + scenery.getPlacementId());
+						AgilityShortcutLanding.Terrain landings = new AgilityShortcutLanding.Terrain() {
+							public NativeLayeredTerrainTile tile(WorldLocation at) { return loaded.findTile(at).orElse(null); }
+							public TileDef definition(int id) { return definitions.tile(id); }
+							public boolean collisionClear(WorldLocation at) { return shortcutCollisionClear(catalog, definitions, at); }
+						};
+						AgilityShortcutLanding.requireSafe(scenery.getAgilityShortcut().getSuccessDestination(), landings);
+						AgilityShortcutLanding.requireSafe(scenery.getAgilityShortcut().getFailureDestination(), landings);
+					}
 					WorldLocation origin = scenery.getLocation();
 					requireTerrain(loaded, origin, scenery.getPlacementId());
 					verifyCollision(loaded, origin, scenery.getPlacementId(), scenery.getSceneryId(),
@@ -99,6 +113,28 @@ public final class NativeLayeredWorldPlacementPreflight {
 				}
 			}
 		}
+	}
+
+	/** All authored placement collision, including objects in another placement set. */
+	private static boolean shortcutCollisionClear(NativeLayeredWorldPackageCatalog catalog, Definitions definitions, WorldLocation at) {
+		for (NativeLayeredWorldPackage owner : catalog.getPackages()) for (NativeLayeredPlacementSet set : owner.getPlacementSets().values()) {
+			if (!set.getWorldSpace().equals(at.getWorldSpace()) || set.getLevel() != at.getCoordinate().getLevel()) continue;
+			for (NativeLayeredSceneryPlacement object : set.getScenery()) {
+				GameObjectDef def = definitions.scenery(object.getSceneryId());
+				if (def == null) return false;
+				if (def.getType() == 0) continue;
+				int width = object.getDirection() == 0 || object.getDirection() == 4 ? def.getWidth() : def.getHeight();
+				int height = object.getDirection() == 0 || object.getDirection() == 4 ? def.getHeight() : def.getWidth();
+				long dx = (long)at.getCoordinate().getX() - object.getLocation().getCoordinate().getX();
+				long dy = (long)at.getCoordinate().getY() - object.getLocation().getCoordinate().getY();
+				if (dx >= 0 && dy >= 0 && dx < width && dy < height) return false;
+			}
+			for (NativeLayeredBoundaryPlacement boundary : set.getBoundaries()) {
+				if (Math.abs((long)boundary.getLocation().getCoordinate().getX() - at.getCoordinate().getX()) <= 1
+					&& Math.abs((long)boundary.getLocation().getCoordinate().getY() - at.getCoordinate().getY()) <= 1) return false;
+			}
+		}
+		return true;
 	}
 
 	private static void verifyCollision(NativeLayeredWorldPackage loaded, WorldLocation origin,

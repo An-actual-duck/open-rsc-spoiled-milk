@@ -10166,6 +10166,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1329 - Al Kharid to Lumbridge
 		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "WalkTo", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1330 - visual centre
 		objects.add(new GameObjectDef("Stepping Stone", "It looks like I could jump on this", "Jump to", "Examine", 1, 1, 1, 0, "stonedisc", ++i)); //1331 - Lumbridge to Al Kharid
+		objects.add(new GameObjectDef("Agility jump", "A configurable agility shortcut", "Agility-Jump", "Examine", 0, 1, 1, 0, "stonedisc", ++i));
 	}
 
 	public static void load(boolean loadMembers) {

@@ -9,12 +9,18 @@ public final class NativeLayeredSceneryPlacement {
 	private final int sceneryId;
 	private final WorldLocation location;
 	private final int direction;
+	private final AgilityShortcut agilityShortcut;
 
 	public NativeLayeredSceneryPlacement(
 		final String placementId,
 		final int sceneryId,
 		final WorldLocation location,
 		final int direction) {
+		this(placementId, sceneryId, location, direction, null);
+	}
+
+	public NativeLayeredSceneryPlacement(String placementId, int sceneryId,
+		WorldLocation location, int direction, AgilityShortcut agilityShortcut) {
 		this.placementId = Objects.requireNonNull(
 			placementId, "placementId");
 		if (sceneryId < 0 || direction < 0 || direction > 8) {
@@ -24,6 +30,7 @@ public final class NativeLayeredSceneryPlacement {
 		this.sceneryId = sceneryId;
 		this.location = Objects.requireNonNull(location, "location");
 		this.direction = direction;
+		this.agilityShortcut = agilityShortcut;
 	}
 
 	public String getPlacementId() {
@@ -41,4 +48,5 @@ public final class NativeLayeredSceneryPlacement {
 	public int getDirection() {
 		return direction;
 	}
+	public AgilityShortcut getAgilityShortcut() { return agilityShortcut; }
 }

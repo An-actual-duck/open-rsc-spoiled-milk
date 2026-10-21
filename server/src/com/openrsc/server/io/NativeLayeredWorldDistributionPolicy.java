@@ -56,10 +56,11 @@ final class NativeLayeredWorldDistributionPolicy {
 			String encoding = set.getSourceEncoding();
 			if (!WorldSpaceId.GLOBAL.equals(set.getWorldSpace())
 				|| !(NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V3.equals(encoding)
-					|| NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V4.equals(encoding))
+					|| NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V4.equals(encoding)
+					|| NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V5.equals(encoding))
 				|| !placementLevels.add(Integer.valueOf(set.getLevel()))) {
 				throw new IllegalStateException(
-					"The installed Spoiled Milk package requires one global v3/v4 "
+					"The installed Spoiled Milk package requires one global v3/v4/v5 "
 						+ "placement set per declared level");
 			}
 		}
