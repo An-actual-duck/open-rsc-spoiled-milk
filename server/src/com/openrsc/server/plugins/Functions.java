@@ -1983,6 +1983,11 @@ public class Functions {
 		// }
 	}
 
+	/** Generic double-door passage only; existing guild/quest helpers are unchanged. */
+	public static void doDoubleDoor(final Player player, final GameObject object, int replaceID) {
+		com.openrsc.server.model.action.DoubleDoorPassage.begin(player, object, replaceID);
+	}
+
 	public static void doGate(final Player player, final GameObject object) {
 		doGate(player, object, 181);
 	}

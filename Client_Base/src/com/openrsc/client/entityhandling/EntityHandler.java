@@ -10171,6 +10171,8 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Agility climb", "A configurable climbing shortcut", "Agility-Climb", "Examine", 0, 2, 1, 0, "obstical_net", ++i));
 		objects.add(new GameObjectDef("Agility swing", "A configurable swinging shortcut", "Agility-Swing", "Examine", 0, 1, 1, 0, "obstical_ropeswing", ++i));
 		objects.add(new GameObjectDef("Agility balance", "A configurable balancing shortcut", "Agility-Balance", "Examine", 0, 1, 1, 0, "log_balance1", ++i));
+		objects.add(new GameObjectDef("Pass-through double doors", "The doors close after you pass through", "Open", "Examine", 2, 1, 2, 0, "doubledoorsclosed", ++i));
+		objects.add(new GameObjectDef("Pass-through double doors", "The doors are briefly open", "WalkTo", "Examine", 2, 1, 2, 0, "doubledoorsopen", ++i));
 	}
 
 	public static void load(boolean loadMembers) {
