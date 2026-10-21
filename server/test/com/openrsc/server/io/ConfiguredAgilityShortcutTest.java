@@ -121,6 +121,7 @@ public final class ConfiguredAgilityShortcutTest {
 		terrain.definition.objectType=0;
 		terrain.missing=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"missing neighbor terrain");terrain.missing=false;
 		terrain.wall=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"wall in safety footprint");terrain.wall=false;
+		terrain.farWall=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"far owning wall anchor");terrain.farWall=false;
 		terrain.clear=false;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"dynamic obstruction");terrain.clear=true;
 		terrain.different=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"ambiguous half floor seam");
 	}
@@ -135,10 +136,10 @@ public final class ConfiguredAgilityShortcutTest {
 		public void message(String text){} public void land(WorldLocation at){lands++;where=at;}
 	}
 	private static class Terrain implements AgilityShortcutLanding.Terrain {
-		int overlay=1; boolean clear=true,missing,wall,different; TileDef definition=new TileDef();
+		int overlay=1; boolean clear=true,missing,wall,farWall,different; TileDef definition=new TileDef();
 		Terrain(){definition.colour=-10;definition.objectType=0;definition.unknown=1;}
 		public NativeLayeredTerrainTile tile(WorldLocation at){if(missing&&at.getCoordinate().getX()==49)return null;
-			return new NativeLayeredTerrainTile(0,different&&at.getCoordinate().getX()==49?1:0,overlay,0,wall?1:0,0,0);}
+			return new NativeLayeredTerrainTile(0,different&&at.getCoordinate().getX()==49?1:0,overlay,0,wall?1:0,farWall&&at.getCoordinate().getX()==52?1:0,0);}
 		public TileDef definition(int id){return definition;}public boolean collisionClear(WorldLocation at){return clear;}
 	}
 }

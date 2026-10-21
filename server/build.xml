@@ -53,11 +53,19 @@
             description="Offline configurable shortcut parser, landing and scheduled gameplay lifecycle regression">
         <mkdir dir="../output/configurable-agility-test"/>
         <javac srcdir="${test.src}" destdir="../output/configurable-agility-test" debug="on"
-               includes="com/openrsc/server/io/ConfiguredAgilityShortcutTest.java" includeantruntime="false"
+               includes="com/openrsc/server/io/ConfiguredAgilityShortcutTest.java,com/openrsc/server/io/ConfiguredAgilityRuntimeIntegrationTest.java" includeantruntime="false"
                target="${javac.target}" source="${javac.source}" encoding="UTF-8">
             <classpath><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </javac>
         <java classname="com.openrsc.server.io.ConfiguredAgilityShortcutTest" fork="true" maxmemory="384m" failonerror="true" dir="${basedir}">
+            <jvmarg value="-XX:+UseSerialGC"/>
+            <classpath><pathelement location="../output/configurable-agility-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+    </target>
+
+    <target name="test_configurable_agility_integration" depends="test_configurable_agility">
+        <fail unless="agility.fixture.dir" message="Pass -Dagility.fixture.dir with a disposable prepared fixture, never a server root"/>
+        <java classname="com.openrsc.server.io.ConfiguredAgilityRuntimeIntegrationTest" fork="true" maxmemory="512m" failonerror="true" dir="${agility.fixture.dir}">
             <jvmarg value="-XX:+UseSerialGC"/>
             <classpath><pathelement location="../output/configurable-agility-test"/><pathelement location="core.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>

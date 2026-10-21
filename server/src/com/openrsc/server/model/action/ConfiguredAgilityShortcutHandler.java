@@ -2,6 +2,7 @@ package com.openrsc.server.model.action;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.event.rsc.SingleTickEvent;
+import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.io.AgilityShortcut;
 import com.openrsc.server.io.AgilityShortcutLanding;
 import com.openrsc.server.io.NativeLayeredSceneryPlacement;
@@ -37,7 +38,9 @@ public final class ConfiguredAgilityShortcutHandler {
 			public void pending(Object token) { if (token == null) player.removeAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE);
 				else player.setAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE, token); }
 			public boolean placementCurrent() { return !object.isRemoved() && regions.findNativeLayeredGameObject(object) == object
-				&& find(regions, identity) == placement && player.atObject(object); }
+				&& find(regions, identity) == placement && player.getWorldLocation().getWorldSpace().equals(identity.getLocation().getWorldSpace())
+				&& player.getWorldLocation().getCoordinate().getLevel() == identity.getLocation().getCoordinate().getLevel()
+				&& player.atObject(object); }
 			public void requireSafe(WorldLocation location) {
 				if (owner == null || regions.findNativeLayeredWorldPackage(location).orElse(null) != owner)
 					throw new IllegalStateException("Shortcut destination has no matching authored package");
@@ -49,9 +52,11 @@ public final class ConfiguredAgilityShortcutHandler {
 			}
 			public void schedule(final Runnable completion) {
 				player.face(object);
-				player.getWorld().getServer().getGameEventHandler().add(new SingleTickEvent(player.getWorld(), player, 1, "Configured agility jump") {
+				boolean added = player.getWorld().getServer().getGameEventHandler().add(new SingleTickEvent(player.getWorld(), player, 1,
+					"Configured agility jump", DuplicationStrategy.ALLOW_MULTIPLE) {
 					public void action() { completion.run(); }
 				});
+				if (!added) throw new IllegalStateException("Shortcut could not be scheduled");
 			}
 			public void message(String message) { player.message(message); }
 			public void land(WorldLocation location) { player.teleportLayered(location, false); }
