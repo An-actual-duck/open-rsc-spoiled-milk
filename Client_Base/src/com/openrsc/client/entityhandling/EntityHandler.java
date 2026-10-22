@@ -8807,6 +8807,14 @@ public class EntityHandler {
 			"Use", "Search", 1, 1, 275, 2, 2, i++));
 		doors.add(new DoorDef("Door", "The door is shut", "Open", "Examine", 1,
 			1, 192, 0, 0, i++));
+		// Native structural carriers: the opening stays clear while the full
+		// wall height continues to support the next story. Existing stone texture.
+		doors.add(new DoorDef("Stone doorway header (Highwall)",
+			"Stone masonry above a doorway in a high wall", "WalkTo", "Examine",
+			0, 0, 275, 2, 2, i++, 192, 7));
+		doors.add(new DoorDef("Stone doorway header (Ancient wall)",
+			"Stone masonry above a doorway in an ancient wall", "WalkTo", "Examine",
+			0, 0, 275, 2, 2, i++, 192, 212));
 	}
 
 	private static void loadGameObjectDefinitionsA() { // GOOD

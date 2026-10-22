@@ -3543,6 +3543,7 @@ public final class mudclient implements Runnable {
 		int texFront = EntityHandler.getDoorDef(type).getModelVar2();
 		int texBack = EntityHandler.getDoorDef(type).getModelVar3();
 		int height = EntityHandler.getDoorDef(type).getWallObjectHeight();
+		int openingHeight = EntityHandler.getDoorDef(type).getDoorOpeningHeight();
 		RSModel model = new RSModel(4, 1);
 		if (dir == 1) {
 			y2 = 1 + y;
@@ -3576,11 +3577,11 @@ public final class mudclient implements Runnable {
 			if (elevation2 == World.PRESENTATION_ELEVATION_UNAVAILABLE) {
 				elevation2 = this.world.getElevation(x2, y2);
 			}
-			int v1 = model.insertVertex(x1, -elevation1, z1);
+			int v1 = model.insertVertex(x1, -elevation1 - openingHeight, z1);
 			int v2 = model.insertVertex(x1, -elevation1 - height, z1);
 
 			int v3 = model.insertVertex(x2, -height - elevation2, y2);
-			int v4 = model.insertVertex(x2, -elevation2, y2);
+			int v4 = model.insertVertex(x2, -elevation2 - openingHeight, y2);
 		int[] indices = new int[]{v1, v2, v3, v4};
 		model.insertFace(4, indices, texFront, texBack, false);
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);

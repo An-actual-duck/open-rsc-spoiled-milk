@@ -3742,6 +3742,7 @@ public final class World {
 		if (Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getUnknown() == 0 || this.showInvisibleWalls) {
 			int height = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getWallObjectHeight();
 			int frontTexture = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getModelVar2();
+			int openingHeight = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getDoorOpeningHeight();
 			int backTexture = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getModelVar3();
 			int x1 = t1X * 128;
 			int z1 = t1Z * 128;
@@ -3755,10 +3756,10 @@ public final class World {
 				? 30000 + wallID
 				: 0;
 			segments.add(new WallSegmentInput(wallID, kind, x, z, frontTexture, backTexture, facePickIndex,
-				x1, y1, z1,
+				x1, y1 - openingHeight, z1,
 				x1, y1 - height, z1,
 				x2, y2 - height, z2,
-				x2, y2, z2));
+				x2, y2 - openingHeight, z2));
 		}
 	}
 
@@ -4535,6 +4536,7 @@ public final class World {
 			this.setVertexLightOther(t1X, t1Z, 40);
 			this.setVertexLightOther(t2X, t2Z, 40);
 			int height = Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getWallObjectHeight();// CacheValues.wallObjectHeight[var1];
+			int openingHeight = Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getDoorOpeningHeight();
 			int frontTex = Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getModelVar2();
 			if (var6 != -14584)
 				this.getTerrainColour((int) 104, -113);
@@ -4544,10 +4546,10 @@ public final class World {
 			int z1 = t1Z * 128;
 			int x2 = t2X * 128;
 			int z2 = t2Z * 128;
-			int v1 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z], z1);
+			int v1 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z] - openingHeight, z1);
 			int v2 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z] - height, z1);
 			int v3 = model.insertVertex(x2, -height - this.tileElevationCache[t2X][t2Z], z2);
-			int v4 = model.insertVertex(x2, -this.tileElevationCache[t2X][t2Z], z2);
+			int v4 = model.insertVertex(x2, -this.tileElevationCache[t2X][t2Z] - openingHeight, z2);
 			int[] var19 = new int[]{v1, v2, v3, v4};
 			int face = model.insertFace(4, var19, frontTex, backTex, false);
 			if (Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getUnknown() == 5)
