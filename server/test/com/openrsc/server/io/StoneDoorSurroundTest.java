@@ -33,7 +33,7 @@ public final class StoneDoorSurroundTest {
 			check(client.getDoorSurroundFor()==number(row,"doorSurroundFor"),"association parity "+id);
 			check(client.getDoorType()==number(row,"doorType")&&client.getUnknown()==number(row,"unknown"),"collision parity "+id);
 			check(client.getModelVar2()==number(row,"modelVar2")&&client.getModelVar3()==number(row,"modelVar3"),"material parity "+id);
-			if(client.getDoorOpeningHeight()>0) {
+			if(client.getName().startsWith("Stone doorway header (")) {
 				headers.add(id); DoorDef source=EntityHandler.getDoorDef(client.getDoorSurroundFor());
 				check(id+1<=255,"native byte carrier");
 				check(client.getWallObjectHeight()==275&&client.getDoorOpeningHeight()==192,"bounded stone dimensions");

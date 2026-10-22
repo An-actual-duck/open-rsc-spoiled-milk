@@ -11,7 +11,8 @@ current = ET.parse(ROOT / PATH).getroot()
 assert len(current) >= len(baseline) + 2
 for old, new in zip(baseline, current):
     assert [(x.tag, x.text) for x in old] == [(x.tag, x.text) for x in new], "Existing wall definition changed"
-headers = [row for row in current if int(row.findtext("doorOpeningHeight", "0")) > 0]
+headers = [row for row in current if row.findtext("name", "").startswith("Stone doorway header (")]
+assert len(headers) == 2
 for header in headers:
     source = current[int(header.findtext("doorSurroundFor"))]
     assert header.findtext("doorOpeningHeight") == "192"
