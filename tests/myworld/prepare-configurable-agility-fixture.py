@@ -21,6 +21,8 @@ for filename in ("badwords.txt", "goodwords.txt", "globalrules.txt", "alertwords
 
 definitions = ET.parse(root / "server/conf/server/defs/GameObjectDef.xml").getroot().findall("GameObjectDef")
 templates = json.loads((root / "runtime-contract/agility-shortcuts-v1.json").read_text())["templates"]
+wall_defs = ET.parse(root / "server/conf/server/defs/DoorDef.xml").getroot().findall("DoorDef")
+wall_id = next(i for i, d in enumerate(wall_defs) if d.findtext("doorType") == "1")
 generic = {}
 for template in templates:
     action = template["actions"][0]
@@ -59,8 +61,12 @@ for level in (0, 2, -3):
                                                 "requiredLevel": 30, "startChancePercent": chance, "maxChancePercent": chance,
                                                 "maxChanceLevel": 30, "successDestination": endpoint(30, 30, 2),
                                                 "failureDestination": endpoint(32, 30, -3)}})
+    boundaries = []
+    if level in (2, -3):
+        boundaries.append({"placementId": f"landing-edge-{level}", "boundaryId": wall_id,
+                           "position": {"x": 30 if level == 2 else 32, "y": 30}, "direction": 0})
     payload = {"schemaVersion": 5, "encoding": "layered-world-placements-v5", "worldSpace": "global", "level": level,
-               "npcs": [], "groundItems": [], "scenery": scenery, "boundaries": []}
+               "npcs": [], "groundItems": [], "scenery": scenery, "boundaries": boundaries}
     name = f"placements-{level}.json"
     digest = write(name, payload)
     manifest["placementSets"].append({"id": f"placements-{level}".replace("--", "-minus-"), "worldSpace": "global", "level": level,
@@ -69,7 +75,23 @@ for level in (0, 2, -3):
 for sector in manifest["terrainSectors"]:
     name = f"terrain-{sector['level']}.json"
     sector["path"] = name
-    write(name, terrain)
+    # Real raw cardinal wall beside crawl's approach tile, not a synthetic mask.
+    if sector["level"] == 0:
+        runs = []
+        for x in range(48):
+            for y in range(48):
+                tile = dict(terrain["tile"])
+                if (x, y) == (21, 24):
+                    tile["verticalWall"] = wall_id + 1
+                if runs and runs[-1]["tile"] == tile:
+                    runs[-1]["count"] += 1
+                else:
+                    runs.append({"count": 1, "tile": tile})
+        sector["encoding"] = "rle-layered-sector-v1"
+        sector["sha256"] = write(name, {"schemaVersion": 1, "encoding": sector["encoding"],
+                                      "size": 48, "tileOrder": "x-major-y-minor", "runs": runs})
+    else:
+        write(name, terrain)
 manifest_hash = write("manifest.json", manifest)
 configuration = (root / "server/myworld.conf").read_text()
 replacements = {"layered_native_terrain_package_path": str(package), "layered_native_terrain_manifest_sha256": manifest_hash,

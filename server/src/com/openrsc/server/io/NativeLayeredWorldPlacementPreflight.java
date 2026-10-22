@@ -123,17 +123,32 @@ public final class NativeLayeredWorldPlacementPreflight {
 			for (NativeLayeredSceneryPlacement object : set.getScenery()) {
 				GameObjectDef def = definitions.scenery(object.getSceneryId());
 				if (def == null) return false;
-				if (def.getType() == 0) continue;
-				int width = object.getDirection() == 0 || object.getDirection() == 4 ? def.getWidth() : def.getHeight();
-				int height = object.getDirection() == 0 || object.getDirection() == 4 ? def.getHeight() : def.getWidth();
-				long dx = (long)at.getCoordinate().getX() - object.getLocation().getCoordinate().getX();
-				long dy = (long)at.getCoordinate().getY() - object.getLocation().getCoordinate().getY();
-				if (dx >= 0 && dy >= 0 && dx < width && dy < height) return false;
+				if (!shortcutFootprintClear(object.getLocation(), object.getSceneryId(), object.getDirection(), 0,
+					Definition.scenery(def.getType(), def.getWidth(), def.getHeight(), def.getName(),
+						Constants.objectsProjectileClipAllowed), at)) return false;
 			}
 			for (NativeLayeredBoundaryPlacement boundary : set.getBoundaries()) {
-				if (Math.abs((long)boundary.getLocation().getCoordinate().getX() - at.getCoordinate().getX()) <= 1
-					&& Math.abs((long)boundary.getLocation().getCoordinate().getY() - at.getCoordinate().getY()) <= 1) return false;
+				DoorDef def = definitions.boundary(boundary.getBoundaryId());
+				if (def == null || !shortcutFootprintClear(boundary.getLocation(), boundary.getBoundaryId(),
+					boundary.getDirection(), 1, Definition.boundary(def.getDoorType(), def.getName(),
+						Constants.objectsProjectileClipAllowed), at)) return false;
 			}
+		}
+		return true;
+	}
+
+	/** Use the same collision contribution policy as real native object registration. */
+	static boolean shortcutFootprintClear(WorldLocation origin, int id, int direction, int type,
+		Definition definition, WorldLocation at) {
+		GameTickEventRestorationCollisionFootprintPlanner.Result footprint =
+			GameTickEventRestorationCollisionFootprintPlanner.plan(Operation.REGISTER,
+				ConstructorState.of(id, origin.getCoordinate().getX(), origin.getCoordinate().getY(), direction, type),
+				definition, false, WorldBounds.of(Constants.MAX_WIDTH, Constants.MAX_HEIGHT));
+		if (!footprint.isFootprintAvailable()) return false;
+		for (GameTickEventRestorationTransientRollbackSnapshot.CollisionContribution contribution : footprint.getContributions()) {
+			if (contribution.getX() == at.getCoordinate().getX() && contribution.getY() == at.getCoordinate().getY()
+				&& (contribution.getBlockingSceneryCount() > 0
+					|| !AgilityShortcutLanding.collisionMaskClear(contribution.getDynamicCollisionMask()))) return false;
 		}
 		return true;
 	}

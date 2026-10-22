@@ -102,7 +102,7 @@ metadata; the rest of classic editing remains available.
 
 ## Safe floor rule
 
-`homogeneous-full-floor-3x3-v1` deliberately proves more than walkability:
+`homogeneous-full-floor-3x3-wall-adjacent-v2` deliberately proves more than walkability:
 
 - All nine surrounding tiles must be authored in the **same package** as the
   obstacle, with identical raw floor overlay and base color.
@@ -111,18 +111,27 @@ metadata; the rest of classic editing remains available.
   `objectType == 0` (movement), `unknown` in 0–2 (visual type), and color other
   than the transparent `12345678` sentinel. Water, bridges, invisible floors,
   partial seams and missing definitions cannot be used as ambiguous landings.
-- The 3×3 area must have no terrain walls or diagonal fields. Far-side landing
-  boundary anchors and authored scenery/boundary collision are also checked.
-- Runtime checks the effective collision of all nine tiles again at action time,
-  before movement. Dynamic blocking scenery can therefore cancel a previously
+- Cardinal walls and edge-only scenery (including fences) may border the actual
+  approach or landing tile. A pipe exit beside a wall is a sensible destination.
+  Raw diagonal/embedded fields on the actual tile are still refused. Authored
+  placements use the native registration collision planner, not a radius-based
+  wall exclusion: full blocking scenery and diagonal boundary collision may not
+  occupy the actual tile. Nearby unrelated obstacles do not block a landing.
+- Runtime checks the actual tile's effective `FULL_BLOCK` and `OBJECT` collision
+  flags again at action time, before movement, while allowing cardinal edge
+  flags. Dynamic blocking scenery can therefore cancel a previously
   valid jump. Players/NPCs are not themselves treated as static blocked floors.
 
 Startup preflight validates both destinations before population. The player's
 actual approach tile is checked at action start and completion, as are both
-landings. The rule is conservative: build a complete clear landing pad rather
+landings. The floor rule is conservative: build a complete matching landing pad rather
 than guessing whether an upper-level void or half-floor is safe. The editor may
 reject an even more conservative boundary neighborhood; it never weakens the
-authoritative server check.
+authoritative server check. The former `homogeneous-full-floor-3x3-v1` resource
+required a completely wall-free neighborhood; editors must retain that stricter
+behavior when targeting an older installed runtime. Existing placement metadata
+is unchanged; this resource advertises the corrected policy only after rebuilding
+and deliberately installing the server runtime.
 
 ## Cancellation and action ownership
 

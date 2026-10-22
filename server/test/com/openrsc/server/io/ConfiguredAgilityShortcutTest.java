@@ -78,6 +78,7 @@ public final class ConfiguredAgilityShortcutTest {
 			new JSONObject(valid.toString()).put("startChancePercent","60")}) rejectJson(bad);
 		parserVersions(valid);
 		landingTests();
+		collisionProducts();
 		Actor actor = new Actor(); start(actor,normal,7499); check(actor.busy && actor.events.size()==1,"scheduled/busy");
 		ConfiguredAgilityAction.begin(actor,normal,()->{throw new AssertionError("duplicate roll");});
 		check(actor.events.size()==1,"repeat click cannot add event"); actor.complete();
@@ -106,6 +107,7 @@ public final class ConfiguredAgilityShortcutTest {
 		refuses(()->start(broken,normal,0),"scheduler throws"); check(!actor.busy && actor.token==null,"scheduler failure releases busy");
 		JSONObject resource = new JSONObject(new String(Files.readAllBytes(java.nio.file.Paths.get("../runtime-contract/agility-shortcuts-v1.json")),StandardCharsets.UTF_8));
 		check(resource.getString("placementEncoding").equals(NativeLayeredWorldPackage.WORLD_PLACEMENT_ENCODING_V5),"capability encoding");
+		check(resource.getString("landingRule").equals("homogeneous-full-floor-3x3-wall-adjacent-v2"),"installed wall-adjacent rule");
 		check(resource.getJSONArray("templates").length()==AgilityShortcut.Template.values().length,"declaration template count");
 		for(int i=0;i<resource.getJSONArray("templates").length();i++) {
 			JSONObject declared=resource.getJSONArray("templates").getJSONObject(i);
@@ -155,10 +157,35 @@ public final class ConfiguredAgilityShortcutTest {
 		terrain.definition.colour=-10;terrain.definition.objectType=1;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"blocked material");
 		terrain.definition.objectType=0;
 		terrain.missing=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"missing neighbor terrain");terrain.missing=false;
-		terrain.wall=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"wall in safety footprint");terrain.wall=false;
-		terrain.farWall=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"far owning wall anchor");terrain.farWall=false;
+		terrain.wall=true;AgilityShortcutLanding.requireSafe(START,terrain);checks++;terrain.wall=false;
+		terrain.farWall=true;AgilityShortcutLanding.requireSafe(START,terrain);checks++;terrain.farWall=false;
+		terrain.diagonal=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"actual diagonal/embedded tile");terrain.diagonal=false;
 		terrain.clear=false;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"dynamic obstruction");terrain.clear=true;
 		terrain.different=true;refuses(()->AgilityShortcutLanding.requireSafe(START,terrain),"ambiguous half floor seam");
+	}
+	private static void collisionProducts() {
+		for(int mask=0;mask<256;mask++) check(AgilityShortcutLanding.collisionMaskClear(mask)==((mask&240)==0),"cardinal vs occupied mask "+mask);
+		com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition full =
+			com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition.scenery(1,2,1,"block",new String[0]);
+		com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition fence =
+			com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition.scenery(2,2,1,"fence",new String[0]);
+		com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition boundary =
+			com.openrsc.server.event.rsc.GameTickEventRestorationCollisionFootprintPlanner.Definition.boundary(1,"wall",new String[0]);
+		for(int facing:new int[]{0,2,4,6}) {
+			check(!NativeLayeredWorldPlacementPreflight.shortcutFootprintClear(START,1,facing,0,full,START),"native full scenery occupies landing "+facing);
+			check(NativeLayeredWorldPlacementPreflight.shortcutFootprintClear(START,1,facing,0,full,at(49,50,0)),"adjacent full scenery safe "+facing);
+			check(NativeLayeredWorldPlacementPreflight.shortcutFootprintClear(START,1,facing,0,fence,START),"native edge-only fence safe "+facing);
+		}
+		for(int facing=0;facing<4;facing++) {
+			check(NativeLayeredWorldPlacementPreflight.shortcutFootprintClear(START,1,facing,1,boundary,START)==(facing<2),"native boundary edge vs diagonal "+facing);
+			check(NativeLayeredWorldPlacementPreflight.shortcutFootprintClear(START,1,facing,1,boundary,at(51,50,0)),"neighbor boundary safe "+facing);
+		}
+		for(int diagonal:new int[]{0,1,12001}) {
+			NativeLayeredTerrainTile tile=new NativeLayeredTerrainTile(0,0,1,0,1,1,diagonal);
+			com.openrsc.server.model.world.region.NativeLayeredTerrainCollisionPlan.Result plan=
+				com.openrsc.server.model.world.region.NativeLayeredTerrainCollisionPlan.derive(tile,null,null,id->false,id->true,id->false,id->false,id->false);
+			check(AgilityShortcutLanding.collisionMaskClear(plan.getTraversalMask())==(diagonal==0),"native terrain cardinal/diagonal product "+diagonal);
+		}
 	}
 	private static void start(Actor actor,AgilityShortcut shortcut,int roll) {ConfiguredAgilityAction.begin(actor,shortcut,()->{actor.rolls++;return roll;});}
 	private static class Actor implements ConfiguredAgilityAction.Actor {
@@ -172,10 +199,10 @@ public final class ConfiguredAgilityShortcutTest {
 		public void message(String text){messages.add(text);} public void land(WorldLocation at){lands++;where=at;}
 	}
 	private static class Terrain implements AgilityShortcutLanding.Terrain {
-		int overlay=1; boolean clear=true,missing,wall,farWall,different; TileDef definition=new TileDef();
+		int overlay=1; boolean clear=true,missing,wall,farWall,different,diagonal; TileDef definition=new TileDef();
 		Terrain(){definition.colour=-10;definition.objectType=0;definition.unknown=1;}
 		public NativeLayeredTerrainTile tile(WorldLocation at){if(missing&&at.getCoordinate().getX()==49)return null;
-			return new NativeLayeredTerrainTile(0,different&&at.getCoordinate().getX()==49?1:0,overlay,0,wall?1:0,farWall&&at.getCoordinate().getX()==52?1:0,0);}
+			return new NativeLayeredTerrainTile(0,different&&at.getCoordinate().getX()==49?1:0,overlay,0,wall?1:0,farWall&&at.getCoordinate().getX()==52?1:0,diagonal?1:0);}
 		public TileDef definition(int id){return definition;}public boolean collisionClear(WorldLocation at){return clear;}
 	}
 }

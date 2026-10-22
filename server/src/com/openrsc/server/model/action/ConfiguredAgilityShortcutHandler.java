@@ -47,7 +47,7 @@ public final class ConfiguredAgilityShortcutHandler {
 				AgilityShortcutLanding.requireSafe(location, new AgilityShortcutLanding.Terrain() {
 					public com.openrsc.server.io.NativeLayeredTerrainTile tile(WorldLocation at) { return owner.findTile(at).orElse(null); }
 					public com.openrsc.server.external.TileDef definition(int id) { return player.getWorld().getServer().getEntityHandler().getTileDef(id); }
-					public boolean collisionClear(WorldLocation at) { return regions.getTile(at).traversalMask == 0; }
+					public boolean collisionClear(WorldLocation at) { return AgilityShortcutLanding.collisionMaskClear(regions.getTile(at).traversalMask); }
 				});
 			}
 			public void schedule(final Runnable completion) {

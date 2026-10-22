@@ -4,6 +4,7 @@ import com.openrsc.server.external.TileDef;
 import com.openrsc.server.model.world.coordinate.LayeredCompatibilityPointAdapter;
 import com.openrsc.server.model.world.coordinate.WorldCoordinate;
 import com.openrsc.server.model.world.coordinate.WorldLocation;
+import com.openrsc.server.util.rsc.CollisionFlag;
 
 /** Conservative authored full-floor proof, independent from walkability in upper-level void. */
 public final class AgilityShortcutLanding {
@@ -13,6 +14,10 @@ public final class AgilityShortcutLanding {
 		boolean collisionClear(WorldLocation location);
 	}
 	private AgilityShortcutLanding() {}
+	/** Cardinal edge flags bound a tile; they do not occupy its interior. */
+	public static boolean collisionMaskClear(int mask) {
+		return (mask & (CollisionFlag.FULL_BLOCK | CollisionFlag.OBJECT)) == 0;
+	}
 	public static void requireSafe(WorldLocation location, Terrain terrain) {
 		LayeredCompatibilityPointAdapter.toCompatibilityPoint(location, false, true);
 		int x = location.getCoordinate().getX(), y = location.getCoordinate().getY(), level = location.getCoordinate().getLevel();
@@ -33,19 +38,11 @@ public final class AgilityShortcutLanding {
 			NativeLayeredTerrainTile tile = terrain.tile(at(location, dx, dy));
 			if (tile == null || tile.getOverlay() != overlay || tile.getTexture() != center.getTexture())
 				refuse(location, "landing needs a complete matching 3 by 3 floor area");
-			if (tile.getHorizontalWall() != 0 || tile.getVerticalWall() != 0 || tile.getDiagonalWall() != 0
-				|| !terrain.collisionClear(at(location, dx, dy))) refuse(location, "landing area is obstructed");
 		}
-		// These anchors own the far edges of the surrounding safety footprint.
-		for (int offset = -1; offset <= 1; offset++) {
-			NativeLayeredTerrainTile farX = terrain.tile(at(location, 2, offset));
-			NativeLayeredTerrainTile farY = terrain.tile(at(location, offset, 2));
-			if (farX == null || farY == null || farX.getHorizontalWall() != 0 || farY.getVerticalWall() != 0)
-				refuse(location, "landing area has an unavailable or obstructed outer edge");
-		}
-		NativeLayeredTerrainTile east = terrain.tile(at(location, 1, 0)), south = terrain.tile(at(location, 0, 1));
-		if (center.getHorizontalWall() != 0 || center.getVerticalWall() != 0 || center.getDiagonalWall() != 0
-			|| east.getHorizontalWall() != 0 || south.getVerticalWall() != 0 || !terrain.collisionClear(location))
+		// A diagonal/embedded field crosses the actual tile. Neighbor walls and
+		// cardinal edges are safe beside a pipe exit; the floor proof above is
+		// intentionally still a homogeneous 3x3 area, not merely walkability.
+		if (center.getDiagonalWall() != 0 || !terrain.collisionClear(location))
 			refuse(location, "landing is obstructed");
 	}
 	private static WorldLocation at(WorldLocation location, int dx, int dy) {

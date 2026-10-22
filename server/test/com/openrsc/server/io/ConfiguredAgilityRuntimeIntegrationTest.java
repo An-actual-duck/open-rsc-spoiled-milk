@@ -30,6 +30,9 @@ public final class ConfiguredAgilityRuntimeIntegrationTest {
 			server.getEntityHandler().load();
 			server.getWorld().getRegionManager().preflightNativeLayeredPlacements();
 			server.getWorld().getRegionManager().populateNativeLayeredPlacements();
+			check((server.getWorld().getRegionManager().getTile(at(21,24,0)).traversalMask & 15)!=0,"raw cardinal wall materialized beside crawl source");
+			check((server.getWorld().getRegionManager().getTile(at(30,30,2)).traversalMask & 15)!=0,"placed cardinal wall beside success");
+			check((server.getWorld().getRegionManager().getTile(at(32,30,-3)).traversalMask & 15)!=0,"placed cardinal wall beside failure");
 			GameObject success=server.getWorld().getRegionManager().findNativeLayeredScenery(at(20,20,0));
 			GameObject failure=server.getWorld().getRegionManager().findNativeLayeredScenery(at(24,20,0));
 			check(success!=null && failure!=null,"v5genericplacements registered by authored identity");
@@ -68,7 +71,21 @@ public final class ConfiguredAgilityRuntimeIntegrationTest {
 				}
 				index++;
 			}
+			player.teleportLayered(at(30,30,2),false);
+			GameObject edge=server.getWorld().getRegionManager().findInteractionBoundary(Point.location(30,30),player);
+			check(edge!=null,"authored landing boundary available for native replacements");
 			player.teleportLayered(at(21,20,0),false);
+			for(int mask:new int[]{16,32,64}) {
+				GameObject original=mask==64?server.getWorld().getRegionManager().findNativeLayeredScenery(at(30,30,2)):edge;
+				GameObject blocked=new GameObject(server.getWorld(),Point.location(30,30),mask==64?2:0,mask==16?2:mask==32?3:0,mask==64?0:1);
+				server.getWorld().replaceGameObject(original,blocked);
+				check((server.getWorld().getRegionManager().getTile(at(30,30,2)).traversalMask&mask)!=0,"registered collision materializes fullblock "+mask);
+				ConfiguredAgilityShortcutHandler.handle(player,success,"agility-jump");
+				check(!player.isBusy()&&player.getAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE)==null,"live fullblock refuses before schedule "+mask);
+				GameObject restored=new GameObject(server.getWorld(),Point.location(30,30),original.getID(),original.getDirection(),original.getType());
+				server.getWorld().replaceGameObject(blocked,restored);
+				if(mask!=64)edge=restored;
+			}
 			check(!ConfiguredAgilityShortcutHandler.handle(player,success,"examine"),"othercommands stay with ordinaryplugins");
 			click(player,success);
 			check(player.isBusy() && player.getAttribute(ConfiguredAgilityAction.PENDING_ATTRIBUTE)!=null,"packetwalktohandler starts transaction");
