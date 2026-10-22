@@ -278,6 +278,7 @@ public final class EntityHandler {
 		LOGGER.info("Loaded " + items.size() + " item definitions");
 
 		doors = (DoorDef[]) getPersistenceManager().load("defs/DoorDef.xml");
+		for (DoorDef definition : doors) definition.validateDoorSurround(doors);
 		gameObjects = (GameObjectDef[]) getPersistenceManager().load("defs/GameObjectDef.xml");
 		prayers = (PrayerDef[]) getPersistenceManager().load("defs/PrayerDef.xml");
 		if (!getServer().getConfig().LACKS_PRAYERS) {

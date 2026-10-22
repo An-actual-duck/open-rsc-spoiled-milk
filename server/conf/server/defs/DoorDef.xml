@@ -2353,4 +2353,30 @@
     <doorType>1</doorType>
     <unknown>1</unknown>
   </DoorDef>
+  <DoorDef>
+    <name>Stone doorway header (Highwall)</name>
+    <description>Stone masonry above a doorway in a high wall</description>
+    <command1>WalkTo</command1>
+    <command2>Examine</command2>
+    <modelVar1>275</modelVar1>
+    <modelVar2>2</modelVar2>
+    <modelVar3>2</modelVar3>
+    <doorType>0</doorType>
+    <unknown>0</unknown>
+    <doorOpeningHeight>192</doorOpeningHeight>
+    <doorSurroundFor>7</doorSurroundFor>
+  </DoorDef>
+  <DoorDef>
+    <name>Stone doorway header (Ancient wall)</name>
+    <description>Stone masonry above a doorway in an ancient wall</description>
+    <command1>WalkTo</command1>
+    <command2>Examine</command2>
+    <modelVar1>275</modelVar1>
+    <modelVar2>2</modelVar2>
+    <modelVar3>2</modelVar3>
+    <doorType>0</doorType>
+    <unknown>0</unknown>
+    <doorOpeningHeight>192</doorOpeningHeight>
+    <doorSurroundFor>212</doorSurroundFor>
+  </DoorDef>
 </DoorDef-array>
