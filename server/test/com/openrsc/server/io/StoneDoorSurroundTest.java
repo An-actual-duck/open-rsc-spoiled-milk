@@ -88,6 +88,9 @@ public final class StoneDoorSurroundTest {
 		field(World.class,"modelLandscapeGrid").set(world,new RSModel[1024]);
 		field(World.class,"tileElevationCache").set(world,base);
 		field(World.class,"collisionFlags").set(world,new int[side][side]);
+		field(World.class,"sectors").set(world,sectors);
+		orsc.mudclient client=(orsc.mudclient)unsafeType.getMethod("allocateInstance",Class.class).invoke(unsafe,orsc.mudclient.class);
+		field(orsc.mudclient.class,"world").set(client,world);
 		Method insert=method(World.class,"insertWallIntoModel",int.class,RSModel.class,int.class,int.class,int.class,int.class,int.class);
 		for(int id:headers) for(int kind=0;kind<4;kind++) {
 			List<Object> segments=new ArrayList<Object>();
@@ -96,7 +99,10 @@ public final class StoneDoorSurroundTest {
 			check(xyz[1]==-209&&xyz[4]==-292&&xyz[7]==-292&&xyz[10]==-209,"static header opening/top kind "+kind);
 			RSModel model=new RSModel(4,1); insert.invoke(world,id,model,3,2,2,-14584,3);
 			int[] ys=(int[])field(RSModel.class,"vertY").get(model);
-			check(ys[0]==-209&&ys[1]==-292&&ys[2]==-292&&ys[3]==-209,"dynamic header opening/top");
+			check(ys[0]==-209&&ys[1]==-292&&ys[2]==-292&&ys[3]==-209,"legacy terrain header opening/top");
+			RSModel directed=client.createWallObjectModel(2,2,id,kind,0);
+			int[] directedYs=(int[])field(RSModel.class,"vertY").get(directed);
+			check(directedYs[0]==-192&&directedYs[1]==-275&&directedYs[2]==-275&&directedYs[3]==-192,"directed network boundary header opening/top "+kind);
 			world.applyWallToCollisionFlags(id,2,2,kind);
 			check(((int[][])field(World.class,"collisionFlags").get(world))[2][2]==0,"header collision remains empty");
 		}
@@ -113,6 +119,10 @@ public final class StoneDoorSurroundTest {
 		add.invoke(world,ordinarySegments,source,base,8,0,2,2,3,2,2,3);
 		int[] unchanged=(int[])field(ordinarySegments.get(0).getClass(),"vertexCoords").get(ordinarySegments.get(0));
 		check(ordinary.getDoorOpeningHeight()==0&&unchanged[1]==-17&&unchanged[10]==-17,"ordinary geometry unchanged");
+		for(int direction=0;direction<4;direction++) {
+			int[] ys=(int[])field(RSModel.class,"vertY").get(client.createWallObjectModel(2,2,7,direction,0));
+			check(ys[0]==0&&ys[1]==-275&&ys[2]==-275&&ys[3]==0,"ordinary directed geometry unchanged "+direction);
+		}
 		System.out.println("PASS "+checks+" stone surround native definition/geometry/support/collision checks");
 	}
 }

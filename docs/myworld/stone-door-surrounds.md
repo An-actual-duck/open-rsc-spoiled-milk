@@ -21,7 +21,8 @@ meaningful with a positive opening. Both properties have pure public getters on
 server and client definitions. The server rejects malformed dimensions, blocking
 headers, missing sources and mismatched source height/material at definition load.
 
-Both cached/static and dynamic native wall geometry honor the opening. Roof and
+Cached/static, dynamic native wall geometry and directed network boundary
+models all honor the opening. Roof and
 upper-story support continue using the full height, including the midpoint of a
 two-edge doorway. Existing software/OpenGL wall geometry and material pathways
 remain shared. No new map format, texture slot, archive asset, glyph allocation,
