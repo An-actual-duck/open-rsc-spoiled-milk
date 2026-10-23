@@ -4,7 +4,8 @@
 
 On October 22, 2026 the owner approved Model Studio's visual candidate and
 requested an in-game aesthetic check. This is an original stone-brick rubble
-prop, not a copied game model. In-game aesthetic approval remains pending.
+prop, not a copied game model. The owner approved its actual in-game appearance
+on October 22, 2026 after reviewing the private OpenGL client.
 Nothing in this task deploys or restarts the public server, places persistent
 objects in its map, or changes the standalone editor.
 
@@ -107,3 +108,27 @@ Inspect the low pile against existing stone walls, rotate the camera, walk
 around its two-by-one footprint, and test ranged/magic across it. Review dark
 stone shading under actual client lighting before making palette changes.
 No fixed world placement is included in source control.
+
+### Owner acceptance and private placement correction
+
+The full client and server builds passed in the isolated review installation
+`/home/justin/collapsed-wall-private-8vInKUKb`. The owner confirmed the model
+appeared correctly and approved its aesthetic. This approves the visual asset,
+not an assertion that every interactive collision scenario was manually tested.
+
+Two local-only review props were placed at global level 0, (122,647), direction
+0 and (126,649), direction 2. The initial legacy JSON test placements did not
+load because the native replacement runtime intentionally skips legacy base
+population. The corrected fixture uses a separate copy of the native package,
+with both props merged into its existing surface placement set and updated
+payload/manifest hashes. The private launcher explicitly selects that package;
+installed-primary discovery otherwise takes precedence over configuration-only
+paths. Startup confirmed 27,894 scenery placements (27,892 original plus two).
+The original installed package and public deployment remained unchanged.
+
+Native fixture manifest SHA256:
+`d6829db3fa923d0951b0c7a9cb286b9bf88d02ff2878dc301f2460653810f8fa`.
+These test placements, private account operations and launch configuration are
+not production changes. Normal editor content discovery should find scenery
+1339 from the maintained game definitions and native archive, without an
+editor-specific asset entry. Existing editor projects may need content refresh.
