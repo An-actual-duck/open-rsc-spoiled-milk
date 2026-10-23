@@ -3588,7 +3588,8 @@ public final class mudclient implements Runnable {
 			int v3 = model.insertVertex(x2, -top - elevation2, y2);
 			int v4 = model.insertVertex(x2, -elevation2 - bottom, y2);
 			int[] indices = new int[]{v1, v2, v3, v4};
-			model.insertFace(4, indices, front, back, false);
+			int face = model.insertFace(4, indices, front, back, false);
+            model.setFaceTextureURange(face, bottom, top, height);
 		}
 		model.setRenderer3DModelKind(Renderer3DModelKind.WALL_OBJECT);
 		model.setDiffuseLightAndColor(-50, -10, -50, 60, 24, false, -95);
