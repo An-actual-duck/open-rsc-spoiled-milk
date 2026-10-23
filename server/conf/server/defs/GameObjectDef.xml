@@ -14758,4 +14758,10 @@
     <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_smashed_mirror</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Hanging cage</name><description>An empty iron cage hangs from a short rusted chain</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_hanging_cage</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>
