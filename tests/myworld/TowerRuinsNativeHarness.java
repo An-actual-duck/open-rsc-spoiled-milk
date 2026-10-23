@@ -43,7 +43,8 @@ public final class TowerRuinsNativeHarness {
             }
             if (minY != -HEIGHTS[asset] || maxY != 0)
                 throw new AssertionError("Native ground/height mismatch " + name);
-            for (int angle = 0; angle < 1024; angle += 256) {
+            // Denser sweep covers the previously flickering barrel base/loose wood.
+            for (int angle = 0; angle < 1024; angle += asset == 1 ? 64 : 256) {
                 MudClientGraphics graphics = new MudClientGraphics(512, 384, 1);
                 Arrays.fill(graphics.pixelData, 0x8d987e);
                 Scene scene = new Scene(graphics, 8, 2048, 4);
@@ -63,7 +64,7 @@ public final class TowerRuinsNativeHarness {
                 System.out.println(name + " angle=" + angle + " visiblePixels=" + changed);
             }
         }
-        System.out.println("PASS five native models, registries, ground/height and 20 actual Scene renders; modelCount="
+        System.out.println("PASS five native models, registries, ground/height and 32 actual Scene renders; modelCount="
             + EntityHandler.getModelCount());
     }
 }

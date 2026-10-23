@@ -5,7 +5,7 @@
 On October 23, 2026 the owner requested an in-game look at five Model Studio
 candidates: the larger 2×1 broken table, destroyed barrel, fallen pillar,
 dilapidated bookshelf and ruined books. This is a review integration, not
-final aesthetic approval, a public deployment or permanent world placement.
+final batch aesthetic approval, a public deployment or permanent world placement.
 The proposed statue remains deferred. No standalone editor changes or bundled
 editor assets are required: content is defined in the selected game installation.
 
@@ -20,6 +20,14 @@ The `<asset>` names below use hyphens rather than the native model underscores.
 Those are original closed-component meshes using flat colours, not copied
 native models or texture images. Existing game renders were read-only style
 references. The game owns the reviewed native exports.
+
+The owner approved the table, pillar, bookshelf and book pile in game. The
+barrel needs a focused retest after the owner spotted bottom-plank clipping
+and camera-dependent flicker. Its corrected original export is preserved in
+`/home/justin/rsc-model-studio/projects/local/destroyed-barrel-manager-002/`,
+Model Studio handoff `4367492`, integrated `7b5b320`. The other four reviewed
+meshes are unchanged. This continuation edits asset geometry only, not game
+draw ordering, lighting or collision systems.
 
 ## Additive game definitions
 
@@ -51,13 +59,13 @@ All 502 previously stored archive headers, payloads and ordering—including the
 approved collapsed wall—remain exact. Their concatenated header/payload SHA256:
 `fb29bcd37aaf2b61d8f5cdc70bc564b921ff533e7c2f911f61a1d2112f7d890e`.
 
-New complete models.orsc SHA256:
-`efefd2d7e3f3de7dc662eec8764f2b8f424d19d0fc5b8dbfbf058b311e3bef0d`.
+New complete models.orsc SHA256 after the barrel correction:
+`d88245d27c95d4f4aaf15cf6a8a640a7850ec8b40d84b588915625cc47fdddb6`.
 
 | Asset | Source OBJ SHA256 | Native OB3 SHA256 |
 | --- | --- | --- |
 |broken-table|0728fc352ea2fd5f9344076eb39b31e48f350770f460f0c072044e3429abff1e|fe75c68fca1fccb61aa0a1d88e5f1ef77570d0037082b79959c45add8b4abaf2|
-|destroyed-barrel|2953bf543840c229add982b83adb3260c365a8877a3ac0f9bcc76baac8b77465|1e62129e68cc034cb5492da66dbbe274c6432f536792493d8a715f8c31f1e9fb|
+|destroyed-barrel|c67a02e321f4efa90a2e0dd1697b026814ceb237ffa872dbc0dc1a74fb8554fe|99614bd48f28e1743ef348022715cdaf7c91cf5fa8cb32f30dafdd9418573f29|
 |fallen-pillar|c26a9d21f866b03d0dd3493a0122b449d32214e14c4e6c2380f6e08905d0bfd2|6ab8f1eba991a0c32fe90c38e503f6bb640dbc17ddfa9a61a745915465b83595|
 |dilapidated-bookshelf|afedc274a0f8131c393bcb348cd66dbbbcbfa71700771198a17c7952c57b429b|6a928e193e5a2ce09be3cef974cc44c5a0216507c212e2d51000337153f0d42a|
 |ruined-books|440662c601013572a722478a16bad26f65782adcd531b0086d53c91a9e1b1377|2e46927d3f72883816a279cb696d7965842d42c0fb7c516e32131015dd5400a1|
@@ -102,6 +110,29 @@ All five registries, native mesh counts, ground/heights and all20 renders
 passed, with 3,024–17,572 visible pixels; current registry model count465
 (plus24 animation registrations) remains below the existing1000 cache bound.
 Native previews were visually inspected; owner in-game approval is still pending.
+
+### Barrel base correction
+
+The original base and fallen stave top both rounded to native height 7 while
+their horizontal footprints overlapped. The original Model Studio geometry was
+corrected by moving the fallen stave and splinter completely outside the base,
+with no scale, height, material, face-count or vertex-count change. The exported
+barrel remains 190 vertices/135 faces, height89, within its assumed1×1 footprint.
+
+Core rebuilt the five-entry addition from the preserved pre-batch502-entry
+archive with the reviewed importer. Comparing both507-entry archives confirmed
+that **only entry503 (the barrel) changed**; the other506 stored headers and
+payloads are byte-exact. The previous candidate remains recoverable at commit
+`0b0c501f9164acd141cbda842a691a283620460e` and in ignored local evidence.
+
+Five native regression tests pass. The added regression decodes native integer
+X/Z coordinates and applies convex-hull separating-axis checks to the base,
+fallen stave and splinter; all three are strictly pairwise separated after
+native rounding. The actual Scene harness now renders16 barrel camera angles
+(step64/1024) plus the existing four angles for each other prop:32 renders pass,
+with3,103–5,046 visible barrel pixels. This is geometry/render evidence, not a
+substitute for the owner's final in-game camera-motion retest. No client rebuild
+or server restart is necessary for this cache-only geometry replacement.
 
 The manager stages a private native map copy and explicitly selects its path,
 manifest hash and runtime profile. Native replacement profiles ignore legacy

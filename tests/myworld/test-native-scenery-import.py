@@ -65,7 +65,7 @@ class NativeImportTest(unittest.TestCase):
         definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
         expected = (
             ("broken_table", 140, 100, 90, 1, 2, "fe75c68fca1fccb61aa0a1d88e5f1ef77570d0037082b79959c45add8b4abaf2"),
-            ("destroyed_barrel", 190, 135, 89, 1, 1, "1e62129e68cc034cb5492da66dbbe274c6432f536792493d8a715f8c31f1e9fb"),
+            ("destroyed_barrel", 190, 135, 89, 1, 1, "99614bd48f28e1743ef348022715cdaf7c91cf5fa8cb32f30dafdd9418573f29"),
             ("fallen_pillar", 62, 41, 69, 1, 2, "6ab8f1eba991a0c32fe90c38e503f6bb640dbc17ddfa9a61a745915465b83595"),
             ("dilapidated_bookshelf", 202, 149, 183, 1, 2, "6a928e193e5a2ce09be3cef974cc44c5a0216507c212e2d51000337153f0d42a"),
             ("ruined_books", 170, 127, 43, 0, 1, "2e46927d3f72883816a279cb696d7965842d42c0fb7c516e32131015dd5400a1"),
@@ -91,6 +91,41 @@ class NativeImportTest(unittest.TestCase):
                 self.assertEqual(definition.findtext("objectModel"), "sm_" + key)
                 self.assertEqual([definition.findtext(k) for k in ("type", "width", "height")],
                                  list(map(str, (kind, width, 1))))
+
+    def test_barrel_loose_wood_is_separate_from_base_after_native_rounding(self):
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        data = entries[503][1]
+        vertices = struct.unpack(">H", data[:2])[0]
+        xs = struct.unpack(">" + "h" * vertices, data[4:4 + vertices*2])
+        zs = struct.unpack(">" + "h" * vertices, data[4 + vertices*4:4 + vertices*6])
+
+        def hull(start, end):
+            points = sorted(set(zip(xs[start:end], zs[start:end])))
+            def cross(a, b, c):
+                return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+            lower, upper = [], []
+            for p in points:
+                while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0: lower.pop()
+                lower.append(p)
+            for p in reversed(points):
+                while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0: upper.pop()
+                upper.append(p)
+            return lower[:-1] + upper[:-1]
+
+        def strictly_separate(a, b):
+            for polygon in (a, b):
+                for p, q in zip(polygon, polygon[1:]+polygon[:1]):
+                    axis = (q[1]-p[1], p[0]-q[0])
+                    pa = [x*axis[0]+z*axis[1] for x, z in a]
+                    pb = [x*axis[0]+z*axis[1] for x, z in b]
+                    if max(pa) < min(pb) or max(pb) < min(pa): return True
+            return False
+
+        # Component ranges are pinned to the reviewed OBJ/native hash above.
+        parts = [hull(70, 90), hull(170, 180), hull(180, 190)]
+        for i, a in enumerate(parts):
+            for b in parts[i+1:]:
+                self.assertTrue(strictly_separate(a, b), "Base/loose wood must not overlap even after integer native rounding")
 
 
 if __name__ == "__main__":
