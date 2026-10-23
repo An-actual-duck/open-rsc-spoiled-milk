@@ -166,6 +166,9 @@ classification_fixtures = "".join(
         fixture(1342, "NONE"),  # fallen pillar
         fixture(1343, "NONE"),  # dilapidated bookshelf
         fixture(1344, "NONE"),  # ruined books (also passable)
+        fixture(1345, "NONE"),  # decorative hanging shackles
+        fixture(1346, "NONE"),  # decorative banner
+        fixture(1347, "NONE"),  # decorative broken mirror
     ]
 )
 boundary_classification_fixtures = "".join(

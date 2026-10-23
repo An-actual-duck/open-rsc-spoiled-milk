@@ -127,6 +127,51 @@ class NativeImportTest(unittest.TestCase):
             for b in parts[i+1:]:
                 self.assertTrue(strictly_separate(a, b), "Base/loose wood must not overlap even after integer native rounding")
 
+    def test_wall_props_preserve_hanging_height_wide_indices_and_prior_content(self):
+        import hashlib
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        self.assertGreaterEqual(len(entries), 510)
+        self.assertEqual(hashlib.sha256(b"".join(h+p for h,p in entries[:507])).hexdigest(),
+                         "b8a1b3239a644407fad39ee5980899539fa396195a4de60db7e88f535ddddf4c")
+        definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
+        expected = (
+            ("rusted_shackles", 692, 518, -179, -60, "4b80f3f998cd9ca572c5507e4a0c2109af677137535492b85e1f517a1a46b787"),
+            ("tattered_banner", 82, 63, -187, -45, "9996ad35ea7d10c754d707e9c342b8262f04ba9f700a09f303a692367668735f"),
+            ("smashed_mirror", 88, 64, -194, -57, "09425d6db7dd2408967718a8b291777b6c94b98d17cbb7c3d860b785b5d58880"),
+        )
+        for i, (key, count, faces, low, high, digest) in enumerate(expected):
+            with self.subTest(asset=key):
+                header, data = entries[507+i]
+                self.assertEqual(int.from_bytes(header[:4], "big"), native.name_hash("sm_"+key+".ob3"))
+                self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
+                self.assertEqual(struct.unpack(">HH", data[:4]), (count, faces))
+                axes = [struct.unpack(">"+"h"*count, data[4+axis*count*2:4+(axis+1)*count*2]) for axis in range(3)]
+                self.assertEqual((min(axes[1]), max(axes[1])), (low, high), "Keep authored hanging height, never ground-normalize")
+                self.assertGreaterEqual(min(axes[2])-(-64), 2, "Back stays in front of the wall")
+                offset = 4+count*6
+                sizes = data[offset:offset+faces]
+                materials = struct.unpack(">"+"h"*faces*2, data[offset+faces:offset+faces*5])
+                self.assertTrue(all(c<0 for c in materials))
+                self.assertEqual(materials[:faces], materials[faces:])
+                self.assertEqual(data[offset+faces*5:offset+faces*6], bytes(faces))
+                payload = data[offset+faces*6:]
+                width = 1 if count<256 else 2
+                self.assertEqual(len(payload), sum(sizes)*width)
+                indices = list(payload) if width==1 else list(struct.unpack(">"+"H"*sum(sizes), payload))
+                self.assertTrue(all(j<count for j in indices))
+                if i==0: self.assertEqual(max(indices), 691, "Shackles require full 16-bit native indices")
+                cursor = 0
+                for size in sizes:
+                    a,b,c = indices[cursor:cursor+3]
+                    u = [axes[d][b]-axes[d][a] for d in range(3)]
+                    v = [axes[d][c]-axes[d][a] for d in range(3)]
+                    normal = (u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0])
+                    self.assertTrue(any(normal), "No collapsed face after native rounding")
+                    cursor += size
+                definition = definitions[1345+i]
+                self.assertEqual(definition.findtext("objectModel"), "sm_"+key)
+                self.assertEqual([definition.findtext(k) for k in ("type","width","height")], ["0","1","1"])
+
 
 if __name__ == "__main__":
     unittest.main()

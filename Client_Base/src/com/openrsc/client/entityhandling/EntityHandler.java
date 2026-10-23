@@ -10187,6 +10187,9 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Fallen pillar", "Broken sections of an old stone pillar", "WalkTo", "Examine", 1, 2, 1, 0, "sm_fallen_pillar", ++i)); //1342
 		objects.add(new GameObjectDef("Dilapidated bookshelf", "A few old books remain on the sagging shelves", "WalkTo", "Examine", 1, 2, 1, 0, "sm_dilapidated_bookshelf", ++i)); //1343
 		objects.add(new GameObjectDef("Ruined books", "Battered books and scattered pages", "WalkTo", "Examine", 0, 1, 1, 0, "sm_ruined_books", ++i)); //1344
+		objects.add(new GameObjectDef("Rusted shackles", "Old iron restraints hang from the wall", "WalkTo", "Examine", 0, 1, 1, 0, "sm_rusted_shackles", ++i)); //1345
+		objects.add(new GameObjectDef("Tattered banner", "A faded crest on torn and weathered cloth", "WalkTo", "Examine", 0, 1, 1, 0, "sm_tattered_banner", ++i)); //1346
+		objects.add(new GameObjectDef("Smashed mirror", "Broken glass remains in a battered wooden frame", "WalkTo", "Examine", 0, 1, 1, 0, "sm_smashed_mirror", ++i)); //1347
 	}
 
 	public static void load(boolean loadMembers) {
