@@ -31,6 +31,12 @@ public final class CombatProjectileCollision {
 		final String description = normalize(definition.getDescription());
 		final String model = normalize(definition.getObjectModel());
 
+		// Low original masonry rubble blocks walking, not projectiles. Its useful
+		// display name contains "wall", but it is not an upright structural wall.
+		if ("sm_collapsed_wall".equals(model)) {
+			return Cover.NONE;
+		}
+
 		if (isFence(name, description)) {
 			return Cover.ENEMY_ONLY_FENCE;
 		}

@@ -10181,6 +10181,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Agility balance", "A configurable balancing shortcut", "Agility-Balance", "Examine", 0, 1, 1, 0, "log_balance1", ++i));
 		objects.add(new GameObjectDef("Pass-through double doors", "The doors close after you pass through", "Open", "Examine", 2, 1, 2, 0, "doubledoorsclosed", ++i));
 		objects.add(new GameObjectDef("Pass-through double doors", "The doors are briefly open", "WalkTo", "Examine", 2, 1, 2, 0, "doubledoorsopen", ++i));
+		objects.add(new GameObjectDef("Collapsed wall", "A pile of fallen stone bricks", "WalkTo", "Examine", 1, 2, 1, 0, "sm_collapsed_wall", ++i)); //1339
 	}
 
 	public static void load(boolean loadMembers) {
