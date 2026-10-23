@@ -14710,4 +14710,34 @@
     <type>1</type><width>2</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_collapsed_wall</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Broken table</name><description>A large wooden table, snapped and slumped</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>1</type><width>2</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_broken_table</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Destroyed barrel</name><description>Split staves and broken barrel hoops</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>1</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_destroyed_barrel</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Fallen pillar</name><description>Broken sections of an old stone pillar</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>1</type><width>2</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_fallen_pillar</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Dilapidated bookshelf</name><description>A few old books remain on the sagging shelves</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>1</type><width>2</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_dilapidated_bookshelf</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Ruined books</name><description>Battered books and scattered pages</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_ruined_books</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

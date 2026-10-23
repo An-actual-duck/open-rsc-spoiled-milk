@@ -41,19 +41,91 @@ class NativeImportTest(unittest.TestCase):
     def test_installed_asset_is_additive_and_native(self):
         import hashlib
         entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
-        self.assertEqual(len(entries), 502)
+        self.assertGreaterEqual(len(entries), 502)
         # All 501 historical stored entry headers and payloads are byte-exact.
-        self.assertEqual(hashlib.sha256(b"".join(h + p for h, p in entries[:-1])).hexdigest(),
+        self.assertEqual(hashlib.sha256(b"".join(h + p for h, p in entries[:501])).hexdigest(),
                          "463ef68aa0496473ebbad6e8fac0bf9297ae6f4eee9840c84b6f9c8d24028ae9")
-        header, data = entries[-1]
+        header, data = entries[501]
         self.assertEqual(int.from_bytes(header[:4], "big"), native.name_hash("sm_collapsed_wall.ob3"))
         self.assertEqual(struct.unpack(">HH", data[:4]), (130, 91))
         self.assertEqual(hashlib.sha256(data).hexdigest(), "8aeeef3577b9367a7bbcbbdac78045b4364d1b9a995081fb3a4da54c49bc9f03")
         definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
-        self.assertEqual(len(definitions), 1340)
+        self.assertGreaterEqual(len(definitions), 1340)
         definition = definitions[1339]
         self.assertEqual(definition.findtext("objectModel"), "sm_collapsed_wall")
         self.assertEqual([definition.findtext(k) for k in ("type", "width", "height")], ["1", "2", "1"])
+
+    def test_ruined_furnishings_additive_native_contract(self):
+        import hashlib
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        self.assertGreaterEqual(len(entries), 507)
+        # Includes the previously approved collapsed wall, not just vanilla.
+        self.assertEqual(hashlib.sha256(b"".join(h + p for h, p in entries[:502])).hexdigest(),
+                         "fb29bcd37aaf2b61d8f5cdc70bc564b921ff533e7c2f911f61a1d2112f7d890e")
+        definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
+        expected = (
+            ("broken_table", 140, 100, 90, 1, 2, "fe75c68fca1fccb61aa0a1d88e5f1ef77570d0037082b79959c45add8b4abaf2"),
+            ("destroyed_barrel", 190, 135, 89, 1, 1, "99614bd48f28e1743ef348022715cdaf7c91cf5fa8cb32f30dafdd9418573f29"),
+            ("fallen_pillar", 62, 41, 69, 1, 2, "6ab8f1eba991a0c32fe90c38e503f6bb640dbc17ddfa9a61a745915465b83595"),
+            ("dilapidated_bookshelf", 202, 149, 183, 1, 2, "6a928e193e5a2ce09be3cef974cc44c5a0216507c212e2d51000337153f0d42a"),
+            ("ruined_books", 170, 127, 43, 0, 1, "2e46927d3f72883816a279cb696d7965842d42c0fb7c516e32131015dd5400a1"),
+        )
+        for index, (key, vertices, faces, height, kind, width, digest) in enumerate(expected):
+            with self.subTest(asset=key):
+                header, data = entries[502 + index]
+                self.assertEqual(int.from_bytes(header[:4], "big"), native.name_hash("sm_" + key + ".ob3"))
+                self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
+                self.assertEqual(struct.unpack(">HH", data[:4]), (vertices, faces))
+                y = struct.unpack(">" + "h" * vertices, data[4 + vertices*2:4 + vertices*4])
+                self.assertEqual((min(y), max(y)), (-height, 0))
+                offset = 4 + vertices*6
+                sizes = data[offset:offset+faces]
+                materials = struct.unpack(">" + "h" * faces*2, data[offset+faces:offset+faces*5])
+                self.assertTrue(all(c < 0 for c in materials), "No new texture dependencies")
+                self.assertEqual(materials[:faces], materials[faces:])
+                self.assertEqual(data[offset+faces*5:offset+faces*6], bytes(faces), "Authored flat-light flags")
+                indices = data[offset+faces*6:]
+                self.assertEqual(len(indices), sum(sizes))
+                self.assertTrue(all(i < vertices for i in indices))
+                definition = definitions[1340 + index]
+                self.assertEqual(definition.findtext("objectModel"), "sm_" + key)
+                self.assertEqual([definition.findtext(k) for k in ("type", "width", "height")],
+                                 list(map(str, (kind, width, 1))))
+
+    def test_barrel_loose_wood_is_separate_from_base_after_native_rounding(self):
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        data = entries[503][1]
+        vertices = struct.unpack(">H", data[:2])[0]
+        xs = struct.unpack(">" + "h" * vertices, data[4:4 + vertices*2])
+        zs = struct.unpack(">" + "h" * vertices, data[4 + vertices*4:4 + vertices*6])
+
+        def hull(start, end):
+            points = sorted(set(zip(xs[start:end], zs[start:end])))
+            def cross(a, b, c):
+                return (b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0])
+            lower, upper = [], []
+            for p in points:
+                while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0: lower.pop()
+                lower.append(p)
+            for p in reversed(points):
+                while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0: upper.pop()
+                upper.append(p)
+            return lower[:-1] + upper[:-1]
+
+        def strictly_separate(a, b):
+            for polygon in (a, b):
+                for p, q in zip(polygon, polygon[1:]+polygon[:1]):
+                    axis = (q[1]-p[1], p[0]-q[0])
+                    pa = [x*axis[0]+z*axis[1] for x, z in a]
+                    pb = [x*axis[0]+z*axis[1] for x, z in b]
+                    if max(pa) < min(pb) or max(pb) < min(pa): return True
+            return False
+
+        # Component ranges are pinned to the reviewed OBJ/native hash above.
+        parts = [hull(70, 90), hull(170, 180), hull(180, 190)]
+        for i, a in enumerate(parts):
+            for b in parts[i+1:]:
+                self.assertTrue(strictly_separate(a, b), "Base/loose wood must not overlap even after integer native rounding")
 
 
 if __name__ == "__main__":
