@@ -233,3 +233,31 @@ the final acceptance gate. The Toolkit must separately recognize the revised
 source algorithm, retain old full-range semantics for unchanged targets, and
 apply the discovered range in its preview. No owner project or live service is
 modified by this Core worker.
+
+### Manager verification and installed correction
+
+Core main204dffe2a integrates the exact READY source fix. A fresh maintained
+client build and independent718mapping,901window,1389header checks passed,
+along with the seven native scenery tests and combat projectile policy. The
+manager inspected actual-stone comparisons under `output/wall-cap-manager-review/`.
+The corrected private client JAR is staged for later game review; no server
+restart is necessary for this client-only correction.
+
+Toolkit maina9856d2 integrates exact READY618eeec52193a250580b671cd52c2269f3514b8e.
+Its full package verification passed1235tests, zero failures/errors and two
+existing conditional UI skips. The manager independently passed25focused tests
+and a cold source probe against maintained Core, discovering all six partial
+definitions with parent-height mapping. Old-source and isolated helper/producer/
+consumer mutation probes passed separately. The mapping policy is retained per
+catalog entry, preserving older snapshots until an explicit content refresh.
+
+The verified package is installed at
+`/home/justin/Core-Framework/RSC Development Toolkit`. The prior installation,
+package, checksums, source-probe logs and installation receipt are preserved in
+`/home/justin/.local/share/cap-texture-policy-probe/`. Package SHA256:
+`f73c2ff6695bce1f53f16ddf39b5f7f4313c60e10dba64b082513e7daf5f648b`.
+All101packaged file hashes passed after installation. The owner confirmed the
+editor/launcher were closed; no saved project, tower placement or public runtime
+was changed. Reopen the project and use View → Refresh content to adopt the
+corrected source mapping. Owner visual acceptance of this correction remains
+pending; the earlier asset approval does not replace that review.
