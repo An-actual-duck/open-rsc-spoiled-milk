@@ -33,6 +33,8 @@ public final class RSModel {
 	int[] scenePolyNormalMagnitude;
 	int[] faceTextureBack;
 	int[] faceTextureFront;
+	private float[] faceTextureUStart;
+	private float[] faceTextureUScale;
 	private Renderer3DModelKind renderer3DModelKind = Renderer3DModelKind.UNCLASSIFIED;
 	private Renderer3DMaterialFamily renderer3DMaterialFamily = Renderer3DMaterialFamily.UNCLASSIFIED;
 	private int renderer3DGlowColor;
@@ -280,6 +282,12 @@ public final class RSModel {
 			this.scenePolyNormalShift = Arrays.copyOf(this.scenePolyNormalShift, faceCapacity);
 			this.faceTextureBack = Arrays.copyOf(this.faceTextureBack, faceCapacity);
 			this.faceTextureFront = Arrays.copyOf(this.faceTextureFront, faceCapacity);
+            if (this.faceTextureUStart != null) {
+                int previous = this.faceTextureUScale.length;
+                this.faceTextureUStart = Arrays.copyOf(this.faceTextureUStart, faceCapacity);
+                this.faceTextureUScale = Arrays.copyOf(this.faceTextureUScale, faceCapacity);
+                Arrays.fill(this.faceTextureUScale, previous, faceCapacity, 1.0f);
+            }
 			this.faceIndices = Arrays.copyOf(this.faceIndices, faceCapacity);
 			this.faceIndexCount = Arrays.copyOf(this.faceIndexCount, faceCapacity);
 			this.faceDiffuseLight = Arrays.copyOf(this.faceDiffuseLight, faceCapacity);
@@ -891,6 +899,7 @@ public final class RSModel {
 
 					v = this.insertFace(model.faceIndexCount[f], newIndices, model.faceTextureFront[f],
 						model.faceTextureBack[f], false);
+					this.copyFaceTextureRangeFrom(model, f, v);
 					this.faceDiffuseLight[v] = model.faceDiffuseLight[f];
 					this.scenePolyNormalShift[v] = model.scenePolyNormalShift[f];
 					this.scenePolyNormalMagnitude[v] = model.scenePolyNormalMagnitude[f];
@@ -1286,6 +1295,7 @@ public final class RSModel {
 				dest.facePickIndex[i] = this.facePickIndex[srcFaceID];
 			}
 
+			dest.copyFaceTextureRangeFrom(this, srcFaceID, i);
 			dest.faceDiffuseLight[i] = this.faceDiffuseLight[srcFaceID];
 			dest.scenePolyNormalShift[i] = this.scenePolyNormalShift[srcFaceID];
 			dest.scenePolyNormalMagnitude[i] = this.scenePolyNormalMagnitude[srcFaceID];
@@ -1407,6 +1417,39 @@ public final class RSModel {
 		}
 	}
 
+    public void setFaceTextureURange(int face, int bottom, int top, int height) {
+        if (face < 0 || face >= faceHead) throw new IndexOutOfBoundsException("Face " + face);
+        float start = WallTextureMapping.start(bottom, top, height);
+        float scale = WallTextureMapping.scale(bottom, top, height);
+        if (faceTextureUStart == null && start == 0.0f && scale == 1.0f) return;
+        ensureFaceTextureRanges();
+        faceTextureUStart[face] = start;
+        faceTextureUScale[face] = scale;
+        renderer3DTransformVersion++;
+    }
+
+    public float getFaceTextureUStart(int face) {
+        return faceTextureUStart == null ? 0.0f : faceTextureUStart[face];
+    }
+
+    public float getFaceTextureUScale(int face) {
+        return faceTextureUScale == null ? 1.0f : faceTextureUScale[face];
+    }
+
+    private void ensureFaceTextureRanges() {
+        if (faceTextureUStart != null) return;
+        faceTextureUStart = new float[faceTextureFront.length];
+        faceTextureUScale = new float[faceTextureFront.length];
+        Arrays.fill(faceTextureUScale, 1.0f);
+    }
+
+    private void copyFaceTextureRangeFrom(RSModel source, int sourceFace, int destinationFace) {
+        if (source.faceTextureUStart == null) return;
+        ensureFaceTextureRanges();
+        faceTextureUStart[destinationFace] = source.faceTextureUStart[sourceFace];
+        faceTextureUScale[destinationFace] = source.faceTextureUScale[sourceFace];
+    }
+
 	public final int insertFace(int indexCount, int[] indices, int texFront, int texBack, boolean var5) {
 		try {
 
@@ -1419,6 +1462,10 @@ public final class RSModel {
 			this.faceIndices[this.faceHead] = indices;
 			this.faceTextureFront[this.faceHead] = texFront;
 			this.faceTextureBack[this.faceHead] = texBack;
+            if (faceTextureUStart != null) {
+                faceTextureUStart[this.faceHead] = 0.0f;
+                faceTextureUScale[this.faceHead] = 1.0f;
+            }
 			if (this.faceParam1 != null && this.faceParam1[this.faceHead] == null) {
 				this.faceParam1[this.faceHead] = new int[]{this.faceHead};
 			}
@@ -1685,7 +1732,7 @@ public final class RSModel {
 					model.faceTextureBack[face],
 					faceVertexCoords,
 					frontVertexLights,
-					backVertexLights);
+					backVertexLights, model.getFaceTextureUStart(face), model.getFaceTextureUScale(face));
 			}
 		}
 
@@ -1709,7 +1756,7 @@ public final class RSModel {
 			int backMaterial,
 			int[] faceVertexCoords,
 			int[] frontVertexLights,
-			int[] backVertexLights) {
+			int[] backVertexLights, float textureUStart, float textureUScale) {
 			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
 			if (vertexCount < 3) {
 				return;
@@ -1717,10 +1764,10 @@ public final class RSModel {
 			boolean visibleFront = isVisibleMaterial(frontMaterial);
 			boolean visibleBack = isVisibleMaterial(backMaterial);
 			if (visibleFront) {
-				addMaterialSide(kind, family, frontMaterial, faceVertexCoords, frontVertexLights, false);
+				addMaterialSide(kind, family, frontMaterial, faceVertexCoords, frontVertexLights, false, textureUStart, textureUScale);
 			}
 			if (visibleBack) {
-				addMaterialSide(kind, family, backMaterial, faceVertexCoords, backVertexLights, true);
+				addMaterialSide(kind, family, backMaterial, faceVertexCoords, backVertexLights, true, textureUStart, textureUScale);
 			}
 			if (visibleFront != visibleBack) {
 				int visibleMaterial = visibleFront ? frontMaterial : backMaterial;
@@ -1730,7 +1777,7 @@ public final class RSModel {
 					visibleMaterial,
 					faceVertexCoords,
 					visibleFront ? backVertexLights : frontVertexLights,
-					visibleFront);
+					visibleFront, textureUStart, textureUScale);
 			}
 		}
 
@@ -1744,7 +1791,7 @@ public final class RSModel {
 			int material,
 			int[] faceVertexCoords,
 			int[] faceVertexLights,
-			boolean reversed) {
+			boolean reversed, float textureUStart, float textureUScale) {
 			if (material == Scene.TRANSPARENT) {
 				return;
 			}
@@ -1756,6 +1803,7 @@ public final class RSModel {
 			float[] textureU = new float[vertexCount];
 			float[] textureV = new float[vertexCount];
 			populateTextureCoordinates(resolved.texture, faceVertexCoords, textureU, textureV);
+            WallTextureMapping.apply(textureU, textureUStart, textureUScale);
 			for (int vertex = 1; vertex < vertexCount - 1; vertex++) {
 				if (reversed) {
 					addTriangle(
@@ -2445,6 +2493,8 @@ public final class RSModel {
 			this.scenePolyNormalShift = new int[faceCount];
 			this.vertZ = new int[vertexCount];
 			this.faceTextureBack = new int[faceCount];
+            this.faceTextureUStart = null;
+            this.faceTextureUScale = null;
 			this.vertDiffuseLight = new int[vertexCount];
 			this.faceTextureFront = new int[faceCount];
 			this.faceIndices = new int[faceCount][];

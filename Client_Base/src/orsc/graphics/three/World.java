@@ -3038,10 +3038,13 @@ public final class World {
 		for (WallSegmentInput segment : input.segments) {
 			builder.addFace(
 				Renderer3DModelKind.WALL,
+                Renderer3DMaterialClassifier.fallbackFor(Renderer3DModelKind.WALL),
 				segment.frontTexture,
 				segment.backTexture,
 				offsetCoords(drawOriginX, drawOriginZ, segment.vertexCoords),
-				null);
+                null, null, null, 0,
+                WallTextureMapping.start(segment.textureBottom, segment.textureTop, segment.textureHeight),
+                WallTextureMapping.scale(segment.textureBottom, segment.textureTop, segment.textureHeight));
 		}
 	}
 
@@ -3766,6 +3769,7 @@ public final class World {
 					x1, y1 - top, z1,
 					x2, y2 - top, z2,
 					x2, y2 - bottom, z2));
+                segments.get(segments.size() - 1).setTextureRange(bottom, top, height);
 			}
 		}
 	}
@@ -3796,6 +3800,7 @@ public final class World {
 					segment.vertexCoords[offset + 2]);
 			}
 			int face = this.modelAccumulate.insertFace(4, indices, segment.frontTexture, segment.backTexture, false);
+			this.modelAccumulate.setFaceTextureURange(face, segment.textureBottom, segment.textureTop, segment.textureHeight);
 			this.modelAccumulate.facePickIndex[face] = segment.facePickIndex;
 			if (showWallOnMinimap && Objects.requireNonNull(EntityHandler.getDoorDef(segment.wallID)).getDoorType() != 0) {
 				applyWallSegmentCollision(segment);
@@ -4565,6 +4570,7 @@ public final class World {
 				int v4 = model.insertVertex(x2, -this.tileElevationCache[t2X][t2Z] - bottom, z2);
 				int[] var19 = new int[]{v1, v2, v3, v4};
 				int face = model.insertFace(4, var19, front, back, false);
+                model.setFaceTextureURange(face, bottom, top, height);
 				if (Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getUnknown() == 5)
 					model.facePickIndex[face] = 30000 + var1;
 				else
@@ -6750,6 +6756,14 @@ public final class World {
 			int[] faceVertexTerrainBlendColors,
 			int[] faceVertexTerrainBlendStrengths,
 			int terrainVariationMask) {
+            addFace(kind, family, texture, fallbackColor, faceVertexCoords, faceVertexLights,
+                faceVertexTerrainBlendColors, faceVertexTerrainBlendStrengths, terrainVariationMask, 0.0f, 1.0f);
+        }
+
+        private void addFace(Renderer3DModelKind kind, Renderer3DMaterialFamily family,
+            int texture, int fallbackColor, int[] faceVertexCoords, int[] faceVertexLights,
+            int[] faceVertexTerrainBlendColors, int[] faceVertexTerrainBlendStrengths,
+            int terrainVariationMask, float textureUStart, float textureUScale) {
 			int vertexCount = faceVertexCoords == null ? 0 : faceVertexCoords.length / 3;
 			if (vertexCount < 3) {
 				return;
@@ -6759,6 +6773,7 @@ public final class World {
 			float[] textureU = new float[vertexCount];
 			float[] textureV = new float[vertexCount];
 			populateTextureCoordinates(texture, faceVertexCoords, textureU, textureV);
+            WallTextureMapping.apply(textureU, textureUStart, textureUScale);
 			for (int vertex = 1; vertex < vertexCount - 1; vertex++) {
 				addTriangle(
 					kind,
@@ -7360,6 +7375,16 @@ public final class World {
 		private final int backTexture;
 		private final int facePickIndex;
 		private final int[] vertexCoords;
+        private int textureBottom;
+        private int textureTop = 1;
+        private int textureHeight = 1;
+
+        private void setTextureRange(int bottom, int top, int height) {
+            WallTextureMapping.start(bottom, top, height);
+            textureBottom = bottom;
+            textureTop = top;
+            textureHeight = height;
+        }
 
 		private WallSegmentInput(
 			int wallID,

@@ -77,15 +77,17 @@ the new lower window band matches that geometry in each path and direction.
 Legacy door header dimensions, opening clearance, collision and roof support
 retain their existing regression tests.
 
-## Texture mapping: explicit limitation
+## Original texture mapping limitation — corrected October 23
 
-The upper stone band uses the **same existing83-unit-face texture mapping as
+The initial implementation used the **same existing83-unit-face texture mapping as
 approved doorway header214**. This gives the agreed visual precedent and fills
 the extra wall height without stretching the window texture. It does not claim
 continuous brick-course UV alignment with an adjacent unsplit275-unit Highwall7:
 the legacy face-relative texture mapping visibly changes masonry course scale
 between an83-unit cap and the full-height face. No new UV system, cropped texture
 or texture-capacity change was introduced to disguise that difference.
+The owner subsequently identified the scale mismatch in the actual tower. The
+shared partial-wall U mapping described below supersedes that limitation.
 
 Actual maintained software Scene comparisons were rendered using
 `mudclient.createWallObjectModel` and its maintained `loadTextureFromPixels`
@@ -182,3 +184,52 @@ does not identify these variants by a built-in content roster. The maintained
 client was rebuilt with the combined accepted content. Existing projects need
 View → Refresh content; no owner map placements, public activation or player
 release are part of this acceptance.
+
+## Partial-wall stone texture correction — October 23
+
+The stone cap above both window and door openings originally compressed the
+whole texture into83units. The corrected generic mapping samples the same
+vertical texture range as the complete275unit wall: U192/275 through1, with
+horizontal V unchanged. The full original192unit window texture remains0..1.
+Existing `doorOpeningHeight`, `wallLowerHeight` and total wall height supply all
+parameters; no wall IDs, new textures, map encoding or per-install asset roster
+are added. Ordinary walls and unrelated models retain their exact default UVs.
+
+`WallTextureMapping` provides the shared calculation. `RSModel` lazily retains
+per-face U start/scale and preserves it through growth, cloning, merging and
+sector splitting. Reusing a face resets its range; changing a range invalidates
+the resident model version. Legacy/directed/native producers set ranges from
+existing definition data. Native cached GPU wall products, resident object GPU
+meshes, projected and near-clipped faces, and the software projective raster
+all consume the same range. Software rendering changes only virtual texture
+basis points, never geometry, picking, clearance, collision, shadows or roof
+support. GPU signatures already include actual UV arrays and the focused test
+proves a mapping-only change alters them.
+
+Verification: `python3 tests/myworld/test-wall-cap-texture-mapping.py` exercises
+actual producers, four wall directions with sloped endpoints, an arbitrary
+360unit synthetic wall with123unit split, all consumers, copy/split/growth/reuse
+and clipped-source interpolation. A synthetic striped texture compares the
+rendered cap against the corresponding pixels of a full wall at three camera
+angles. Integer projective rounding yields1.3–2.2% differing samples around
+stripe edges, compared with approximately95% for the old squashed texture.
+The meaningful visual scale and phase are retained. Existing901window and
+1389door surround geometry/clearance/collision/roof checks pass unchanged.
+
+Optional actual-stone before/after diagnostics, using the existing read-only
+texture reference folder and a fresh output path:
+
+```sh
+python3 tests/myworld/test-wall-cap-texture-mapping.py \
+  output/sprite-png-export-20260702-154351/authentic-sprites/textures \
+  output/wall-cap-stone-review
+```
+
+Four styles each produce before/after PNGs. Screen left-to-right: doorway
+header, tall window, original window, full Highwall. Before views explicitly
+restore the old0..1 texture mapping without changing geometry. These diagnostics
+are game-rendered software evidence; actual private OpenGL owner review remains
+the final acceptance gate. The Toolkit must separately recognize the revised
+source algorithm, retain old full-range semantics for unchanged targets, and
+apply the discovered range in its preview. No owner project or live service is
+modified by this Core worker.

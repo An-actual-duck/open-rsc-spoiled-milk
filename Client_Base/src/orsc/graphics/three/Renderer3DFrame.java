@@ -1457,6 +1457,8 @@ public final class Renderer3DFrame {
 		private float[] clippedTextureV;
 		private int legacyDrawOrder = -1;
 		private int clippedVertexCount;
+        private float textureUStart;
+        private float textureUScale;
 
 		private FaceCommand(int vertexCount) {
 			this.cameraX = new int[vertexCount];
@@ -1485,6 +1487,8 @@ public final class Renderer3DFrame {
 			this.modelKind = modelKind;
 			this.modelIndex = modelIndex;
 			this.faceId = faceId;
+            this.textureUStart = model.getFaceTextureUStart(faceId);
+            this.textureUScale = model.getFaceTextureUScale(faceId);
 			this.texture = texture;
 			this.color = color;
 			this.orientation = orientation;
@@ -1707,6 +1711,7 @@ public final class Renderer3DFrame {
 				destinationU[vertex] = (float) ((pu * vv - pv * uv) / determinant);
 				destinationV[vertex] = (float) ((pv * uu - pu * uv) / determinant);
 			}
+            WallTextureMapping.apply(destinationU, textureUStart, textureUScale);
 		}
 
 		private static double dot(

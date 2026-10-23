@@ -1942,7 +1942,7 @@ public final class Scene {
 		}
 	}
 
-	private void setFrustum(int[] var1, RSModel model, int var3, int var4, int var5, int[] var6, int[] var7, int var8,
+	private void setFrustum(int[] var1, RSModel model, int faceId, int var3, int var4, int var5, int[] var6, int[] var7, int var8,
 							int var9) {
 		try {
 
@@ -1973,6 +1973,20 @@ public final class Scene {
 					var16 = var7[var4] - var10;
 					var17 = var1[var4] - var11;
 					var18 = var6[var4] - var12;
+                    float start = model.getFaceTextureUStart(faceId);
+                    float scale = model.getFaceTextureUScale(faceId);
+                    if (start != 0.0f || scale != 1.0f) {
+                        int x0 = WallTextureMapping.legacyBasisCoordinate(var7[0], var7[1], var7[var4], 0, start, scale);
+                        int y0 = WallTextureMapping.legacyBasisCoordinate(var1[0], var1[1], var1[var4], 0, start, scale);
+                        int z0 = WallTextureMapping.legacyBasisCoordinate(var6[0], var6[1], var6[var4], 0, start, scale);
+                        var13 = x0 - WallTextureMapping.legacyBasisCoordinate(var7[0], var7[1], var7[var4], 1, start, scale);
+                        var14 = y0 - WallTextureMapping.legacyBasisCoordinate(var1[0], var1[1], var1[var4], 1, start, scale);
+                        var15 = z0 - WallTextureMapping.legacyBasisCoordinate(var6[0], var6[1], var6[var4], 1, start, scale);
+                        var16 = WallTextureMapping.legacyBasisCoordinate(var7[0], var7[1], var7[var4], 2, start, scale) - x0;
+                        var17 = WallTextureMapping.legacyBasisCoordinate(var1[0], var1[1], var1[var4], 2, start, scale) - y0;
+                        var18 = WallTextureMapping.legacyBasisCoordinate(var6[0], var6[1], var6[var4], 2, start, scale) - z0;
+                        var10 = x0; var11 = y0; var12 = z0;
+                    }
 					int var20;
 					int var21;
 					int var22;
@@ -3321,7 +3335,7 @@ public final class Scene {
 							this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14);
 						}
 						if (!skipLegacyWorldRaster && this.m_Xb < this.m_Cb && var25.m_b != Scene.TRANSPARENT) {
-							this.setFrustum(this.m_Vb, var2, 1, var17, var25.m_b, this.m_J, this.m_Qb, 0, 0);
+							this.setFrustum(this.m_Vb, var2, var3, 1, var17, var25.m_b, this.m_J, this.m_Qb, 0, 0);
 						}
 					}
 				}
