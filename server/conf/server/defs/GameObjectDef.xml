@@ -14740,4 +14740,22 @@
     <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_ruined_books</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Rusted shackles</name><description>Old iron restraints hang from the wall</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_rusted_shackles</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Tattered banner</name><description>A faded crest on torn and weathered cloth</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_tattered_banner</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Smashed mirror</name><description>Broken glass remains in a battered wooden frame</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_smashed_mirror</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>
