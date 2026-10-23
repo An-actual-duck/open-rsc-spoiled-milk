@@ -14703,4 +14703,11 @@
     <type>2</type><width>1</width><height>2</height><groundItemVar>0</groundItemVar>
     <objectModel>doubledoorsopen</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Collapsed wall</name>
+    <description>A pile of fallen stone bricks</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>1</type><width>2</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_collapsed_wall</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>
