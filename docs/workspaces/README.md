@@ -22,6 +22,12 @@ dedicated `rsc-dev-toolkit-ai-N` worktrees. No separate editor manager is needed
 See [rsc-dev-toolkit.md](rsc-dev-toolkit.md). Sharing a manager does not combine
 Git histories, releases or source trees.
 
+Core also coordinates independent asset-authoring repositories. The dedicated
+[RSC Model Studio](rsc-model-studio.md) workspace owns 3D modeling tools and local
+asset projects; it does not use Core game-worker slots. Finished, approved
+exports require a separate Core integration. Sprite Trainer remains the separate
+2D authoring workflow, and [Sprite Baker](rsc-sprite-baker.md) retains its own role.
+
 The former independent Editor and embedded-runtime management structure is
 retired. Its repositories and branches remain preserved historical inputs, not
 active assignment destinations. Existing game loader behavior is not removed

@@ -86,6 +86,25 @@ contributor rescue command before cleanup. The beginner-safe workflow is in
 - See [`docs/workspaces/rsc-sprite-baker.md`](docs/workspaces/rsc-sprite-baker.md)
   for routing and lifecycle commands.
 
+## Core-Managed RSC Model Studio
+
+- `/home/justin/rsc-model-studio` is the independent 3D asset-authoring
+  workspace. Core directly manages it, with one exclusive implementation worker
+  at `/home/justin/rsc-model-studio-ai-1`; no separate manager is required.
+- Use that repository's `AGENTS.md`, authoring standards and local lifecycle
+  wrappers. Never allocate Core, toolkit or Sprite Baker workers for its tools,
+  and never merge its Git history into Core.
+- It owns Blender authoring scripts, editable local model projects, previews,
+  geometry validation and reviewed export candidates, not gameplay or map editing.
+  Keep references, models, textures, generated assets and tool binaries out of Git.
+- Only a separate approved Core integration may install reviewed exports into
+  game-owned content. Native conversion and in-game compatibility require proof;
+  an interchange OBJ or Blender preview is not automatically game-ready.
+- The standalone editor discovers finished game content; it must not bundle
+  Model Studio's custom assets or a model-ID roster.
+- See [`docs/workspaces/rsc-model-studio.md`](docs/workspaces/rsc-model-studio.md)
+  for routing, ownership and the initial scope.
+
 ## Inventory / Ground Sprite References
 
 - Before designing a new inventory/ground icon, read
