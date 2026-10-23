@@ -3,8 +3,9 @@
 ## Scope and ownership
 
 The owner requested an in-game look at three original Model Studio candidates:
-rusted shackles, tattered banner and smashed mirror. This is a private review
-integration; final in-game aesthetic approval is pending. No public deployment,
+rusted shackles, tattered banner and smashed mirror. The owner approved all
+three after the private OpenGL review on October 23, 2026 and requested their
+availability through ordinary editor discovery. No public deployment,
 permanent map placements, new attachment mechanic or editor asset roster is
 included. These are ordinary game-owned scenery definitions and native models
 which the standalone editor discovers from the selected game installation.
@@ -119,3 +120,13 @@ walls. Native replacement runtimes ignore legacy placement JSON, so review
 objects belong in the existing surface placement set, not a second same-level
 set. Startup counts and actual OpenGL inspection remain the final private gate.
 No test placements, accounts or launcher configuration are tracked in this task.
+
+## Owner acceptance and editor use
+
+Actual private startup loaded all three models against ten ordinary stone
+Highwall sections. The owner accepted the assortment. Final models and matching
+client/server definitions are maintained in Core; the editor must discover them
+from this installation, never from a bundled custom asset list. Existing saved
+projects retain their previous content until View → Refresh content is used.
+The standalone editor and the owner's tower project are not modified by this
+integration. The private test wall and prop placements are not production data.
