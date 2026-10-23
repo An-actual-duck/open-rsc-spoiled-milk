@@ -3,7 +3,7 @@
 The owner accepted Dot's hanging-cage authoring preview on October 23, 2026 and
 requested an in-game look. This is a separately reviewed Core asset integration,
 not a Model Studio history merge, game deployment or permanent map placement.
-Actual private OpenGL appearance and gameplay remain pending owner review.
+The owner accepted the actual private OpenGL preview on October 23, 2026.
 
 ## Source and game definitions
 
@@ -74,3 +74,24 @@ remain readable. Registry modelCount469 plus24 animation registrations remains
 below1000. This software Scene check does not replace the final private OpenGL
 world inspection. No owner map, live data, account, toolkit or server process
 was modified by this worker. The manager stages private placements separately.
+
+## Owner acceptance and maintained availability
+
+The manager independently reran all seven native tests and projectile policy,
+rebuilt the private client, and passed the eight-angle harness against that
+fresh build. Private startup loaded the separate hanging-cage review map with
+two rotations at (120,648,0) and (123,648,0). The owner inspected it in game and
+reported "looks good, no complaints", then requested official inclusion.
+
+The native asset and matching definitions are integrated in maintained Core
+main d5d203b12. Authoring source is preserved in independent Model Studio main
+d882c4a and `/home/justin/rsc-model-studio/projects/local/hanging-cage-dot-reviewed-001/`.
+The maintained client was rebuilt after integration. The installed Toolkit's
+ordinary source discovery resolved scenery1348 as RAW_ARCHIVE with264vertices
+and198faces, with matching server/client bindings. The same probe resolved all
+four accepted high window definitions with matching material bands. Evidence:
+`/home/justin/.local/share/cage-official-acceptance/discovery.log`.
+No editor registration or bundled cage is added. Existing editor projects need
+View → Refresh content to see new content.
+Private comparison placements are not copied into the owner's tower or live map.
+This acceptance does not publish a player release or activate the public server.

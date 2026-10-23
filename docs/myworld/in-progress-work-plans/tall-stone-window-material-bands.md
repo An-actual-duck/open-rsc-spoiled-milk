@@ -94,7 +94,7 @@ four window styles, screen left-to-right shows approved header214, new tall
 window, original192-height window, Highwall7. The window's shape and192 physical
 height are unchanged; new top height275 aligns with Highwall. Core's manager
 reviewed those comparisons and confirmed this meets the agreed header approach.
-Final owner in-game acceptance is still pending.
+The owner subsequently approved official inclusion on October 23, 2026.
 
 Read-only texture reference PNGs come from the existing Core export folder:
 `output/sprite-png-export-20260702-154351/authentic-sprites/textures/`.
@@ -155,7 +155,7 @@ The private comparison package contains a row repeating original1.5window,
 new2.15window and plainHighwall for all four styles. Native startup confirmed
 983boundaries and27892scenery with valid new definitions. Its original source
 package and the owner's tower project were not changed. Owner visual review
-of these specific window variants remains pending.
+of these specific window variants was subsequently accepted on October 23.
 
 Toolkit mainf796232d97431ca603601347fc9484b085adc52c adds generic discovered
 band rendering. Full package verification reported1228tests, no failures or
@@ -171,3 +171,14 @@ The previous installation is recoverable in the same evidence directory as
 `previous-toolkit-installation`. Package and per-file hashes passed verification.
 Existing saved projects need normal View → Refresh content; none was modified.
 The public deployment was not updated or restarted.
+
+## Official content acceptance — October 23
+
+The owner requested official inclusion of the extended window walls alongside
+the accepted hanging cage. Boundary definitions216–219 and all supporting
+client/server geometry are already integrated in maintained Core main. The
+installed Toolkit contains the generic discovered material-band support; it
+does not identify these variants by a built-in content roster. The maintained
+client was rebuilt with the combined accepted content. Existing projects need
+View → Refresh content; no owner map placements, public activation or player
+release are part of this acceptance.
