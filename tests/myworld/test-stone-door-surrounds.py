@@ -23,6 +23,7 @@ world = (ROOT / "Client_Base/src/orsc/graphics/three/World.java").read_text()
 assert world.count(".getDoorOpeningHeight()") == 2, "Both native wall geometry paths must honor declared openings"
 client = (ROOT / "Client_Base/src/orsc/mudclient.java").read_text()
 assert "int openingHeight = EntityHandler.getDoorDef(type).getDoorOpeningHeight();" in client
-assert "model.insertVertex(x1, -elevation1 - openingHeight, z1)" in client
-assert "model.insertVertex(x2, -elevation2 - openingHeight, y2)" in client
+assert "int bottom = band == 0 ? openingHeight : lowerHeight;" in client
+assert "model.insertVertex(x1, -elevation1 - bottom, z1)" in client
+assert "model.insertVertex(x2, -elevation2 - bottom, y2)" in client
 print("PASS additive stone door definitions and unchanged original wall definitions")

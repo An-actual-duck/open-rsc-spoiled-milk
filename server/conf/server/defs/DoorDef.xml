@@ -2379,4 +2379,32 @@
     <doorOpeningHeight>192</doorOpeningHeight>
     <doorSurroundFor>212</doorSurroundFor>
   </DoorDef>
+  <DoorDef>
+    <name>High stone window</name><description>A stone window with masonry above</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>5</modelVar2><modelVar3>5</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+    <wallLowerHeight>192</wallLowerHeight><wallUpperFront>2</wallUpperFront><wallUpperBack>2</wallUpperBack>
+  </DoorDef>
+  <DoorDef>
+    <name>High stained glass window</name><description>Stained glass with stone masonry above</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>18</modelVar2><modelVar3>18</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+    <wallLowerHeight>192</wallLowerHeight><wallUpperFront>2</wallUpperFront><wallUpperBack>2</wallUpperBack>
+  </DoorDef>
+  <DoorDef>
+    <name>High stone arrowslit</name><description>An arrowslit with stone masonry above</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>7</modelVar2><modelVar3>7</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+    <wallLowerHeight>192</wallLowerHeight><wallUpperFront>2</wallUpperFront><wallUpperBack>2</wallUpperBack>
+  </DoorDef>
+  <DoorDef>
+    <name>High barred stone window</name><description>A barred window with stone masonry above</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>27</modelVar2><modelVar3>27</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+    <wallLowerHeight>192</wallLowerHeight><wallUpperFront>2</wallUpperFront><wallUpperBack>2</wallUpperBack>
+  </DoorDef>
 </DoorDef-array>
