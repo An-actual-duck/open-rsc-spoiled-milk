@@ -130,3 +130,16 @@ from this installation, never from a bundled custom asset list. Existing saved
 projects retain their previous content until View → Refresh content is used.
 The standalone editor and the owner's tower project are not modified by this
 integration. The private test wall and prop placements are not production data.
+
+On October 23 the manager verified discovery using the installed toolkit's
+production `SourceEffectiveServerContent.discover` and `SourceWorldModels.discover`
+APIs against this Core checkout and `myworld.conf`. All scenery IDs1339–1347
+were found in matching server/client definitions; all nine models resolved as
+`RAW_ARCHIVE` with their exact approved vertex/face counts, including the
+692-vertex shackles. No editor code, catalog roster or registration was changed.
+The external verifier is test evidence, not a content-provider implementation.
+
+Evidence: `/home/justin/.local/share/wall-props-integration-wM6fZRWy/scenery-discovery.log`.
+The full editor snapshot probe also progressed through unrelated item/NPC
+processing; it was cancelled after the focused production scenery proof passed
+to free resources. Full-catalog snapshot completion is not claimed by this check.
