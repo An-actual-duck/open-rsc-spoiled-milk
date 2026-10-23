@@ -173,5 +173,44 @@ class NativeImportTest(unittest.TestCase):
                 self.assertEqual([definition.findtext(k) for k in ("type","width","height")], ["0","1","1"])
 
 
+    def test_hanging_cage_is_additive_suspended_and_flat(self):
+        import hashlib
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        self.assertGreaterEqual(len(entries), 511)
+        self.assertEqual(hashlib.sha256(b"".join(h+p for h,p in entries[:510])).hexdigest(),
+                         "e487ab178f3eb96740f402212852482af31fa2fde9fe816f302b1627cf24263e")
+        header, data = entries[510]
+        self.assertEqual(int.from_bytes(header[:4], "big"), native.name_hash("sm_hanging_cage.ob3"))
+        self.assertEqual(hashlib.sha256(data).hexdigest(), "4424069c4295b4f3cd4b10932674741581a18185e9cb95e6ec1040dc71aa675a")
+        count, faces = struct.unpack(">HH", data[:4])
+        self.assertEqual((count, faces), (264, 198))
+        axes = [struct.unpack(">"+"h"*count, data[4+i*count*2:4+(i+1)*count*2]) for i in range(3)]
+        self.assertEqual([(min(a), max(a)) for a in axes], [(-61, 61), (-289, -70), (-56, 56)])
+        offset = 4+count*6
+        sizes = data[offset:offset+faces]
+        mats = struct.unpack(">"+"h"*faces*2, data[offset+faces:offset+faces*5])
+        self.assertTrue(all(c<0 for c in mats))
+        self.assertEqual(mats[:faces], mats[faces:])
+        self.assertEqual(data[offset+faces*5:offset+faces*6], bytes(faces))
+        payload = data[offset+faces*6:]
+        self.assertEqual(len(payload), sum(sizes)*2)
+        indices = struct.unpack(">"+"H"*sum(sizes), payload)
+        self.assertEqual(max(indices), 263)
+        cursor = 0
+        for size in sizes:
+            face = indices[cursor:cursor+size]
+            self.assertTrue(all(i<count for i in face))
+            a,b,c = face[:3]
+            u = [axes[d][b]-axes[d][a] for d in range(3)]
+            v = [axes[d][c]-axes[d][a] for d in range(3)]
+            n = (u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
+            self.assertTrue(any(n))
+            cursor += size
+        definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
+        definition = definitions[1348]
+        self.assertEqual(definition.findtext("objectModel"), "sm_hanging_cage")
+        self.assertEqual([definition.findtext(k) for k in ("name","type","width","height","groundItemVar","command1","command2")],
+                         ["Hanging cage","0","1","1","0","WalkTo","Examine"])
+
 if __name__ == "__main__":
     unittest.main()
