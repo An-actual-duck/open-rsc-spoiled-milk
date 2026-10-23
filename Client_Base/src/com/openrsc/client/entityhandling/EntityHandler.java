@@ -10182,6 +10182,11 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Pass-through double doors", "The doors close after you pass through", "Open", "Examine", 2, 1, 2, 0, "doubledoorsclosed", ++i));
 		objects.add(new GameObjectDef("Pass-through double doors", "The doors are briefly open", "WalkTo", "Examine", 2, 1, 2, 0, "doubledoorsopen", ++i));
 		objects.add(new GameObjectDef("Collapsed wall", "A pile of fallen stone bricks", "WalkTo", "Examine", 1, 2, 1, 0, "sm_collapsed_wall", ++i)); //1339
+		objects.add(new GameObjectDef("Broken table", "A large wooden table, snapped and slumped", "WalkTo", "Examine", 1, 2, 1, 0, "sm_broken_table", ++i)); //1340
+		objects.add(new GameObjectDef("Destroyed barrel", "Split staves and broken barrel hoops", "WalkTo", "Examine", 1, 1, 1, 0, "sm_destroyed_barrel", ++i)); //1341
+		objects.add(new GameObjectDef("Fallen pillar", "Broken sections of an old stone pillar", "WalkTo", "Examine", 1, 2, 1, 0, "sm_fallen_pillar", ++i)); //1342
+		objects.add(new GameObjectDef("Dilapidated bookshelf", "A few old books remain on the sagging shelves", "WalkTo", "Examine", 1, 2, 1, 0, "sm_dilapidated_bookshelf", ++i)); //1343
+		objects.add(new GameObjectDef("Ruined books", "Battered books and scattered pages", "WalkTo", "Examine", 0, 1, 1, 0, "sm_ruined_books", ++i)); //1344
 	}
 
 	public static void load(boolean loadMembers) {

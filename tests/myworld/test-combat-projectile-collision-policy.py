@@ -161,6 +161,11 @@ classification_fixtures = "".join(
         fixture(951, "ENEMY_ONLY_FENCE"),  # type-0 fence
         fixture(1000, "NONE"),  # open chest is ordinary scenery
         fixture(1339, "NONE"),  # collapsed masonry is low projectile-transparent rubble
+        fixture(1340, "NONE"),  # broken table
+        fixture(1341, "NONE"),  # destroyed barrel
+        fixture(1342, "NONE"),  # fallen pillar
+        fixture(1343, "NONE"),  # dilapidated bookshelf
+        fixture(1344, "NONE"),  # ruined books (also passable)
     ]
 )
 boundary_classification_fixtures = "".join(
