@@ -3755,11 +3755,18 @@ public final class World {
 			int facePickIndex = Objects.requireNonNull(EntityHandler.getDoorDef(wallID)).getUnknown() == 5
 				? 30000 + wallID
 				: 0;
-			segments.add(new WallSegmentInput(wallID, kind, x, z, frontTexture, backTexture, facePickIndex,
-				x1, y1 - openingHeight, z1,
-				x1, y1 - height, z1,
-				x2, y2 - height, z2,
-				x2, y2 - openingHeight, z2));
+			int lowerHeight = EntityHandler.getDoorDef(wallID).getWallLowerHeight();
+			for (int band = 0; band < (lowerHeight > 0 ? 2 : 1); band++) {
+				int bottom = band == 0 ? openingHeight : lowerHeight;
+				int top = band == 0 && lowerHeight > 0 ? lowerHeight : height;
+				int front = band == 0 ? frontTexture : EntityHandler.getDoorDef(wallID).getWallUpperFront();
+				int back = band == 0 ? backTexture : EntityHandler.getDoorDef(wallID).getWallUpperBack();
+				segments.add(new WallSegmentInput(wallID, kind, x, z, front, back, facePickIndex,
+					x1, y1 - bottom, z1,
+					x1, y1 - top, z1,
+					x2, y2 - top, z2,
+					x2, y2 - bottom, z2));
+			}
 		}
 	}
 
@@ -4546,16 +4553,23 @@ public final class World {
 			int z1 = t1Z * 128;
 			int x2 = t2X * 128;
 			int z2 = t2Z * 128;
-			int v1 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z] - openingHeight, z1);
-			int v2 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z] - height, z1);
-			int v3 = model.insertVertex(x2, -height - this.tileElevationCache[t2X][t2Z], z2);
-			int v4 = model.insertVertex(x2, -this.tileElevationCache[t2X][t2Z] - openingHeight, z2);
-			int[] var19 = new int[]{v1, v2, v3, v4};
-			int face = model.insertFace(4, var19, frontTex, backTex, false);
-			if (Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getUnknown() == 5)
-				model.facePickIndex[face] = 30000 + var1;
-			else
-				model.facePickIndex[face] = 0;
+			int lowerHeight = EntityHandler.getDoorDef(var1).getWallLowerHeight();
+			for (int band = 0; band < (lowerHeight > 0 ? 2 : 1); band++) {
+				int bottom = band == 0 ? openingHeight : lowerHeight;
+				int top = band == 0 && lowerHeight > 0 ? lowerHeight : height;
+				int front = band == 0 ? frontTex : EntityHandler.getDoorDef(var1).getWallUpperFront();
+				int back = band == 0 ? backTex : EntityHandler.getDoorDef(var1).getWallUpperBack();
+				int v1 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z] - bottom, z1);
+				int v2 = model.insertVertex(x1, -this.tileElevationCache[t1X][t1Z] - top, z1);
+				int v3 = model.insertVertex(x2, -top - this.tileElevationCache[t2X][t2Z], z2);
+				int v4 = model.insertVertex(x2, -this.tileElevationCache[t2X][t2Z] - bottom, z2);
+				int[] var19 = new int[]{v1, v2, v3, v4};
+				int face = model.insertFace(4, var19, front, back, false);
+				if (Objects.requireNonNull(EntityHandler.getDoorDef(var1)).getUnknown() == 5)
+					model.facePickIndex[face] = 30000 + var1;
+				else
+					model.facePickIndex[face] = 0;
+			}
 
 		} catch (RuntimeException var21) {
 			throw GenUtil.makeThrowable(var21, "k.F(" + var1 + ',' + (model != null ? "{...}" : "null") + ',' + t2X

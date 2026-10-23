@@ -29,6 +29,26 @@ public class DoorDef extends EntityDef {
 	public int doorOpeningHeight;
 	/** Source wall lookup ID matched by this header, meaningful only with an opening. */
 	public int doorSurroundFor;
+	/** Optional two-band static wall: original material below, alternate above. */
+	public int wallLowerHeight;
+	public int wallUpperFront;
+	public int wallUpperBack;
+
+	public int getWallLowerHeight() { return wallLowerHeight; }
+	public int getWallUpperFront() { return wallUpperFront; }
+	public int getWallUpperBack() { return wallUpperBack; }
+
+	public void validateWallBands() {
+		if (wallLowerHeight == 0 && wallUpperFront == 0 && wallUpperBack == 0) return;
+		if (wallLowerHeight <= 0 || wallLowerHeight >= modelVar1
+			|| wallUpperFront < -32768 || wallUpperFront >= 32767
+			|| wallUpperBack < -32768 || wallUpperBack >= 32767
+			|| doorOpeningHeight != 0 || doorSurroundFor != 0
+			|| doorType != 1 || unknown != 0
+			|| !"WalkTo".equalsIgnoreCase(command1) || !"Examine".equalsIgnoreCase(command2)) {
+			throw new IllegalArgumentException("Invalid static wall material bands: " + getName());
+		}
+	}
 
 	public int getDoorOpeningHeight() {
 		return doorOpeningHeight;
@@ -40,6 +60,7 @@ public class DoorDef extends EntityDef {
 
 	/** Reject malformed optional content before the map can reference it. */
 	public void validateDoorSurround(DoorDef[] definitions) {
+		validateWallBands();
 		if (doorOpeningHeight == 0) return;
 		if (doorOpeningHeight < 0 || doorOpeningHeight >= modelVar1
 			|| doorSurroundFor < 0 || doorSurroundFor >= definitions.length
@@ -48,7 +69,7 @@ public class DoorDef extends EntityDef {
 			throw new IllegalArgumentException("Invalid passable door surround: " + getName());
 		}
 		DoorDef source = definitions[doorSurroundFor];
-		if (source == null || source.doorOpeningHeight != 0 || source.modelVar1 != modelVar1
+		if (source == null || source.doorOpeningHeight != 0 || source.wallLowerHeight != 0 || source.modelVar1 != modelVar1
 			|| source.modelVar2 != modelVar2 || source.modelVar3 != modelVar3) {
 			throw new IllegalArgumentException("Door surround does not match its source wall: " + getName());
 		}

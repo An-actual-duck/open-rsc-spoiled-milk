@@ -8815,6 +8815,14 @@ public class EntityHandler {
 		doors.add(new DoorDef("Stone doorway header (Ancient wall)",
 			"Stone masonry above a doorway in an ancient wall", "WalkTo", "Examine",
 			0, 0, 275, 2, 2, i++, 192, 212));
+		doors.add(new DoorDef("High stone window", "A stone window with masonry above", "WalkTo", "Examine",
+			1, 0, 275, 5, 5, i++, 0, 0, 192, 2, 2)); //216
+		doors.add(new DoorDef("High stained glass window", "Stained glass with stone masonry above", "WalkTo", "Examine",
+			1, 0, 275, 18, 18, i++, 0, 0, 192, 2, 2)); //217
+		doors.add(new DoorDef("High stone arrowslit", "An arrowslit with stone masonry above", "WalkTo", "Examine",
+			1, 0, 275, 7, 7, i++, 0, 0, 192, 2, 2)); //218
+		doors.add(new DoorDef("High barred stone window", "A barred window with stone masonry above", "WalkTo", "Examine",
+			1, 0, 275, 27, 27, i++, 0, 0, 192, 2, 2)); //219
 	}
 
 	private static void loadGameObjectDefinitionsA() { // GOOD
