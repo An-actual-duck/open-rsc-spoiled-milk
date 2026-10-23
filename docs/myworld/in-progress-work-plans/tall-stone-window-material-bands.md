@@ -142,3 +142,32 @@ other whitespace checks remain enabled and no user/global Git config changes.
 
 Private test placements and map-package changes belong only in the manager's
 isolated review installation, not in production source or the owner's tower.
+
+## Manager integration and local tool installation — October 23
+
+Core main7687c6d26 integrates the exact READY handoff. Independent maintained
+client/server builds and the901new/1389header checks passed after rebuilding
+the client classes; the first test invocation used stale pre-update classes,
+then passed when rerun against fresh builds. Original216definitions remain
+unchanged. Native scenery and combat projectile regression checks also passed.
+
+The private comparison package contains a row repeating original1.5window,
+new2.15window and plainHighwall for all four styles. Native startup confirmed
+983boundaries and27892scenery with valid new definitions. Its original source
+package and the owner's tower project were not changed. Owner visual review
+of these specific window variants remains pending.
+
+Toolkit mainf796232d97431ca603601347fc9484b085adc52c adds generic discovered
+band rendering. Full package verification reported1228tests, no failures or
+errors,2skipped. The manager independently ran its source probe against Core
+main: four active definitions were discovered with matching client/server band
+getters, rendered as four triangles and exposed by the existing wall flyout;
+the prior header algorithm proof remained accepted. No content roster was added.
+
+The verified extractable Linux package is retained under
+`/home/justin/.local/share/tall-windows-integration-G0wypBwt/toolkit-package/`.
+It is installed at `/home/justin/Core-Framework/RSC Development Toolkit`.
+The previous installation is recoverable in the same evidence directory as
+`previous-toolkit-installation`. Package and per-file hashes passed verification.
+Existing saved projects need normal View → Refresh content; none was modified.
+The public deployment was not updated or restarted.
