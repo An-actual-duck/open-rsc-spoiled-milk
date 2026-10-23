@@ -4,8 +4,10 @@
 
 On October 23, 2026 the owner requested an in-game look at five Model Studio
 candidates: the larger 2×1 broken table, destroyed barrel, fallen pillar,
-dilapidated bookshelf and ruined books. This is a review integration, not
-final batch aesthetic approval, a public deployment or permanent world placement.
+dilapidated bookshelf and ruined books. The owner subsequently approved the
+four unaffected props and confirmed the corrected barrel works better. The
+five assets are accepted for use; this is not a public deployment or permanent
+world placement.
 The proposed statue remains deferred. No standalone editor changes or bundled
 editor assets are required: content is defined in the selected game installation.
 
@@ -21,9 +23,10 @@ Those are original closed-component meshes using flat colours, not copied
 native models or texture images. Existing game renders were read-only style
 references. The game owns the reviewed native exports.
 
-The owner approved the table, pillar, bookshelf and book pile in game. The
-barrel needs a focused retest after the owner spotted bottom-plank clipping
-and camera-dependent flicker. Its corrected original export is preserved in
+The owner approved the table, pillar, bookshelf and book pile in game. After
+reporting bottom-plank clipping and camera-dependent flicker, the owner tested
+and accepted the corrected barrel on October 23, 2026 before requesting the
+next scenery batch. Its corrected original export is preserved in
 `/home/justin/rsc-model-studio/projects/local/destroyed-barrel-manager-002/`,
 Model Studio handoff `4367492`, integrated `7b5b320`. The other four reviewed
 meshes are unchanged. This continuation edits asset geometry only, not game
@@ -109,7 +112,8 @@ java -Xmx384m -Djava.awt.headless=true \
 All five registries, native mesh counts, ground/heights and all20 renders
 passed, with 3,024–17,572 visible pixels; current registry model count465
 (plus24 animation registrations) remains below the existing1000 cache bound.
-Native previews were visually inspected; owner in-game approval is still pending.
+Native previews and the actual private OpenGL client were reviewed; owner
+in-game acceptance is recorded above.
 
 ### Barrel base correction
 
@@ -131,7 +135,8 @@ fallen stave and splinter; all three are strictly pairwise separated after
 native rounding. The actual Scene harness now renders16 barrel camera angles
 (step64/1024) plus the existing four angles for each other prop:32 renders pass,
 with3,103–5,046 visible barrel pixels. This is geometry/render evidence, not a
-substitute for the owner's final in-game camera-motion retest. No client rebuild
+substitute for the owner's in-game camera-motion retest, which the owner then
+completed successfully. No client rebuild
 or server restart is necessary for this cache-only geometry replacement.
 
 The manager stages a private native map copy and explicitly selects its path,
