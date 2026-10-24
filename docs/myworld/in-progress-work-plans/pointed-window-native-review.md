@@ -3,8 +3,9 @@
 The owner requested a scenery cutout after the surrounding stone of tall window
 walls failed to match ordinary walls. This additive pilot puts a shallow pointed
 stone frame and opaque dark pane on an existing wall, like the accepted hanging
-props. It does not cut a hole in the wall. Owner in-game approval is pending;
-this document does not authorize a public release or map placement.
+props. It does not cut a hole in the wall. The owner approved the private in-game appearance on October24,2026 and liked
+the chunky frame and sill. The pilot is integrated in Core main79578d78b.
+This document does not authorize a public release or automatic map placement.
 
 ## Provenance and binding
 
@@ -96,6 +97,6 @@ java -Xmx384m -Djava.awt.headless=true \
 
 Bounded regression checks cover all prior model entries and server definitions,
 new binding, exact native hash/bounds, colour parity, index widths and
-nondegenerate polygons. Final private OpenGL world review remains necessary;
-software proof does not replace owner approval. The worker changes no private
+nondegenerate polygons. The manager subsequently staged the exact candidate privately and the owner
+approved its OpenGL appearance. Software proof alone did not replace that review. The worker changes no private
 installation, account, server process, owner map, toolkit or live deployment.

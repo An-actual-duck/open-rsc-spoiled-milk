@@ -14770,4 +14770,22 @@
     <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_pointed_window</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Stone window</name><description>A blue-paned window in a thick stone frame</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_stone_window</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Stained glass window</name><description>Coloured glass fills a thick stone frame</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_stained_glass_window</objectModel>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Stone arrowslit</name><description>A narrow cross-shaped opening in a stone frame</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_stone_arrowslit</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>
