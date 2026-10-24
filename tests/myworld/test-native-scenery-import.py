@@ -262,6 +262,9 @@ class NativeImportTest(unittest.TestCase):
         import json
         entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
         self.assertGreaterEqual(len(entries), 515)
+        # Stained-glass revisions may replace only entry513; all accepted models stay exact.
+        self.assertEqual(hashlib.sha256(b"".join(h+p for i,(h,p) in enumerate(entries[:515]) if i!=513)).hexdigest(),
+                         "dcd18b437b850ddfe936fd8ec34d281abe849c606f9a052eb0a8a410b1cc95b1")
         self.assertEqual(hashlib.sha256(b"".join(h+p for h,p in entries[:512])).hexdigest(),
                          "2d1534597440605ae9c5ab9fdefd19b9b373ef50c7813291ae78f2fe55f89a62")
         definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
@@ -271,8 +274,8 @@ class NativeImportTest(unittest.TestCase):
         expected = (
             ("Stone window", "sm_stone_window", 236, 190, ((-40,40),(-177,-40),(-56,-45)),
              "f045b0e8c7ef6c2d1279a6623adfa882b470ea68dbb536cae765859ea8056779"),
-            ("Stained glass window", "sm_stained_glass_window", 268, 206, ((-34,34),(-190,-33),(-60,-43)),
-             "3601b3a6014f27ea932f0adfe29086665e18884b580fae46e3f9eece5f7b3392"),
+            ("Stained glass window", "sm_stained_glass_window", 356, 272, ((-34,34),(-190,-33),(-60,-51)),
+             "3b5ae950db76393c2a3288c9f51205051f80c1cf0cf75c54682088d1a54350b6"),
             ("Stone arrowslit", "sm_stone_arrowslit", 162, 133, ((-24,24),(-190,-33),(-60,-51)),
              "550dff4184ed6d770dc58db9b78819663cf7ad3e4ead62fa00792838d6870281"),
         )
@@ -284,6 +287,11 @@ class NativeImportTest(unittest.TestCase):
                 self.assertEqual(struct.unpack(">HH",data[:4]), (count,faces))
                 axes = [struct.unpack(">"+"h"*count,data[4+d*count*2:4+(d+1)*count*2]) for d in range(3)]
                 self.assertEqual(tuple((min(a),max(a)) for a in axes), bounds)
+                if model == "sm_stained_glass_window":
+                    # Nine unchanged 12-vertex stones, then recessed backing;
+                    # all coloured cells, including the sword, share one glass plane.
+                    self.assertEqual(set(axes[2][108:126]), {-59,-58})
+                    self.assertEqual(set(axes[2][126:]), {-57,-55})
                 offset = 4+count*6
                 sizes = data[offset:offset+faces]
                 materials = struct.unpack(">"+"h"*faces*2,data[offset+faces:offset+faces*5])
