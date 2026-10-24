@@ -14764,4 +14764,10 @@
     <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_hanging_cage</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Pointed window</name><description>A dark window in a pointed stone frame</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_pointed_window</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>

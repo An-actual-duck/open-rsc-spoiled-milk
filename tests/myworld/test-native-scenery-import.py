@@ -212,5 +212,50 @@ class NativeImportTest(unittest.TestCase):
         self.assertEqual([definition.findtext(k) for k in ("name","type","width","height","groundItemVar","command1","command2")],
                          ["Hanging cage","0","1","1","0","WalkTo","Examine"])
 
+    def test_pointed_window_preserves_prior_content_and_passive_binding(self):
+        import hashlib
+        import json
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        self.assertGreaterEqual(len(entries), 512)
+        self.assertEqual(hashlib.sha256(b"".join(h+p for h,p in entries[:511])).hexdigest(),
+                         "e22b5941ebd1ee4ab781851c5965d5a08f1391582fdc46ae23a20175fbc1f387")
+        self.assertEqual(int.from_bytes(entries[511][0][:4], "big"),
+                         native.name_hash("sm_pointed_window.ob3"))
+        data = entries[511][1]
+        self.assertEqual(hashlib.sha256(data).hexdigest(),
+                         "bc393caddb63366f019ef341ccea7bfdc8e03d92b4299fe3c61561108d985006")
+        count, faces = struct.unpack(">HH", data[:4])
+        self.assertEqual((count, faces), (216, 189), "Coarse closed relief, not hundreds of tiny pixel quads")
+        axes = [struct.unpack(">"+"h"*count, data[4+i*count*2:4+(i+1)*count*2]) for i in range(3)]
+        self.assertEqual([(min(a), max(a)) for a in axes], [(-34,34),(-189,-34),(-60,-51)])
+        offset = 4+count*6
+        sizes = data[offset:offset+faces]
+        mats = struct.unpack(">"+"h"*faces*2, data[offset+faces:offset+faces*5])
+        self.assertTrue(all(c<0 for c in mats), "Opaque RGB555, no texture allocation")
+        self.assertEqual(mats[:faces], mats[faces:])
+        self.assertEqual(data[offset+faces*5:offset+faces*6], bytes(faces))
+        indices = list(data[offset+faces*6:])
+        self.assertEqual(len(indices), sum(sizes))
+        self.assertEqual(max(indices), count-1)
+        cursor = 0
+        for size in sizes:
+            face = indices[cursor:cursor+size]
+            self.assertTrue(all(i<count for i in face))
+            a,b,c = face[:3]
+            u = [axes[d][b]-axes[d][a] for d in range(3)]
+            v = [axes[d][c]-axes[d][a] for d in range(3)]
+            self.assertTrue(any((u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])),
+                            "No collapsed native polygon")
+            cursor += size
+        definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
+        self.assertGreaterEqual(len(definitions), 1350)
+        historical = [[(e.tag, e.text) for e in d] for d in definitions[:1349]]
+        self.assertEqual(hashlib.sha256(json.dumps(historical, separators=(",", ":")).encode()).hexdigest(),
+                         "9085576e195b169a6a1c1cda5f74ab3fb03958827d4ebedd00b8ff131e8b6767")
+        definition = definitions[1349]
+        self.assertEqual([definition.findtext(k) for k in
+                          ("name", "objectModel", "type", "width", "height", "groundItemVar", "command1", "command2")],
+                         ["Pointed window", "sm_pointed_window", "0", "1", "1", "0", "WalkTo", "Examine"])
+
 if __name__ == "__main__":
     unittest.main()
