@@ -167,6 +167,8 @@ public final class ActiveStatusHudModel {
 		public long getRemainingSeconds() { return remainingSeconds; }
 		public boolean isCleric() { return identityKind == 1 && clericSpell != null; }
 		public String getSlayerHoverText() {
+			if (identityKind == 2 && stableIdentity == 4) return "Slow 1";
+			if (identityKind == 2 && stableIdentity == 5) return "Slow 2";
 			if (identityKind == 0 && stableIdentity == 3318) return "Slime Solvent";
 			if (identityKind == 0 && stableIdentity == 3321) return "Eye Drops";
 			if (identityKind == 0 && stableIdentity == 3324) return "Wax earplugs";

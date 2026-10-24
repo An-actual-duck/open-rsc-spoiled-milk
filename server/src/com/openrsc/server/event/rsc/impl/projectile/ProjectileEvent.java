@@ -760,7 +760,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				opponent.applyWaterMaxHitDebuff(waterMaxHitDebuffPercent);
 			}
 			if (damage > 0 && earthAttackSpeedDebuffPercent > 0) {
-				opponent.applyEarthAttackSpeedDebuff(earthAttackSpeedDebuffPercent);
+				com.openrsc.server.content.Slow.earthSpell(opponent, earthAttackSpeedDebuffPercent);
 			}
 			if (damage > 0 && fireDefenseDebuffPercent > 0) {
 				opponent.applyFireDefenseDebuff(fireDefenseDebuffPercent);

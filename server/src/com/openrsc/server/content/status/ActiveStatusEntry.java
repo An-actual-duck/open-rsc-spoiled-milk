@@ -93,6 +93,12 @@ public final class ActiveStatusEntry {
 			iconItemId, remainingSeconds, 0, CounterKind.NONE, 0);
 	}
 
+	public static ActiveStatusEntry slow(int tier, int remainingSeconds) {
+		if (tier < 1 || tier > 2) throw new IllegalArgumentException("Unknown Slow tier");
+		return new ActiveStatusEntry("combat:slow", IdentityKind.SLAYER, 3 + tier,
+			33, remainingSeconds, 0, CounterKind.NONE, 0);
+	}
+
 	public String getStableKey() {
 		return stableKey;
 	}

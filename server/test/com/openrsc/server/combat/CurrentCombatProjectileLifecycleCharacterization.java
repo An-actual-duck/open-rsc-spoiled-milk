@@ -478,8 +478,9 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			final int layerHits = layerTarget.getLevel(Skill.HITS.id());
 			final ProjectileEvent crossLayer = projectile(
 				harness, layerSource, layerTarget, 3);
-			layerTarget.setLocation(Point.location(
-				901, LegacyPackedPointAdapter.LEVEL_STRIDE + 700), true);
+			// Explicit domain transition; ordinary native movement must remain rejected.
+			layerTarget.setWorldLocation(LegacyPackedPointAdapter.fromLegacyPoint(Point.location(
+				901, LegacyPackedPointAdapter.LEVEL_STRIDE + 700)));
 			crossLayer.action();
 			assertEquals(layerHits, layerTarget.getLevel(Skill.HITS.id()),
 				"a signed-level change must suppress impact");
@@ -849,8 +850,8 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 				LegacyPackedPointAdapter.LEVEL_STRIDE + 780);
 			layerSource.setLocation(Point.location(920,
 				LegacyPackedPointAdapter.LEVEL_STRIDE + 780), true);
-			layerTarget.setLocation(Point.location(921,
-				LegacyPackedPointAdapter.LEVEL_STRIDE + 780), true);
+			layerTarget.setWorldLocation(LegacyPackedPointAdapter.fromLegacyPoint(Point.location(921,
+				LegacyPackedPointAdapter.LEVEL_STRIDE + 780)));
 			pairedLayerChange.action();
 			assertEquals(layerHits,
 				layerTarget.getLevel(Skill.HITS.id()),
@@ -884,22 +885,18 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 
 	private static void collisionRetargetAndProtectionEvidence(
 			final CurrentCombatHarness harness) throws Exception {
-		harness.openRectangle(950, 954, 780, 780);
+		harness.openRectangle(440, 442, 440, 440);
 		final Player collisionSource = harness.player(
-			"pj collision source", 950, 780);
+			"pj collision source", 440, 440);
 		final Npc collisionTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 954, 780);
+			NpcId.GREATER_DEMON.id(), 442, 440);
 		assertTrue(PathValidation.checkPath(harness.world(),
 			collisionSource.getWorldLocation(), collisionTarget.getWorldLocation(),
 			false), "collision fixture begins with a clear projectile path");
 		final int collisionHits = collisionTarget.getLevel(Skill.HITS.id());
 		final ProjectileEvent collisionChanged = projectile(
 			harness, collisionSource, collisionTarget, 3);
-		harness.world().getTile(952, 780).projectileAllowed = false;
-		harness.world().getTile(952, 780).traversalMask =
-			(byte) CollisionFlag.FULL_BLOCK;
-		harness.world().getTile(952, 780)
-			.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK);
+		com.openrsc.server.model.entity.GameObject hardCover = addFixtureBoundary(harness, 441, 440, 0);
 		assertFalse(PathValidation.checkCombatProjectilePath(harness.world(),
 			collisionSource.getWorldLocation(), collisionTarget.getWorldLocation()),
 			"hard cover appearing during flight blocks the path authority");
@@ -912,7 +909,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			"player combat-projectile collision reason");
 
 		final Npc compatibilityTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 954, 780);
+			NpcId.GREATER_DEMON.id(), 442, 440);
 		final int compatibilityHits =
 			compatibilityTarget.getLevel(Skill.HITS.id());
 		final ProjectileEvent positionalCompatibility = typedProjectile(
@@ -923,11 +920,12 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			compatibilityTarget.getLevel(Skill.HITS.id()),
 			"positional compatibility retains its explicit no-recheck semantic");
 
-		openCombatProjectileRectangle(harness, 700, 704, 780, 780);
+		harness.world().unregisterGameObject(hardCover);
+		openCombatProjectileRectangle(harness, 440, 442, 440, 440);
 		final Npc hostileSource = harness.npc(
-			NpcId.GREATER_DEMON.id(), 700, 780);
+			NpcId.GREATER_DEMON.id(), 440, 440);
 		final Player hostileTarget = harness.player(
-			"pj hostile collision target", 704, 780);
+			"pj hostile collision target", 442, 440);
 		assertTrue(PathValidation.checkCombatProjectilePath(harness.world(),
 			hostileSource.getWorldLocation(), hostileTarget.getWorldLocation()),
 			"hostile collision fixture begins with clear hard cover");
@@ -935,8 +933,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		final ProjectileEvent hostileChanged = typedProjectile(
 			harness, hostileSource, hostileTarget, 3,
 			ProjectileLaunchSpecification.Producer.NPC_RANGED, 2);
-		harness.world().getTile(702, 780)
-			.addCombatProjectileCollision(CollisionFlag.FULL_BLOCK);
+		hardCover = addFixtureBoundary(harness, 441, 440, 0);
 		assertFalse(PathValidation.checkCombatProjectilePath(harness.world(),
 			hostileSource.getWorldLocation(), hostileTarget.getWorldLocation()),
 			"new hard cover blocks the hostile-projectile semantic");
@@ -947,13 +944,13 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			hostileChanged.getInitialProjectileImpactDecision().getReason(),
 			"hostile-projectile collision reason");
 
-		openCombatProjectileRectangle(harness, 710, 714, 780, 780);
+		harness.world().unregisterGameObject(hardCover);
+		openCombatProjectileRectangle(harness, 440, 442, 440, 440);
 		final Player alliedFenceSource = harness.player(
-			"pj allied fence source", 710, 780);
+			"pj allied fence source", 440, 440);
 		final Npc alliedFenceTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 714, 780);
-		harness.world().getTile(712, 780)
-			.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK);
+			NpcId.GREATER_DEMON.id(), 442, 440);
+		hardCover = addFixtureBoundary(harness, 441, 440, 5);
 		assertTrue(PathValidation.checkCombatProjectilePath(harness.world(),
 			alliedFenceSource.getWorldLocation(), alliedFenceTarget.getWorldLocation()),
 			"player-allied launch passes through enemy-only fence cover");
@@ -968,11 +965,12 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			alliedFenceTarget.getLevel(Skill.HITS.id()),
 			"player-allied delayed impact passes through an existing fence");
 
-		openCombatProjectileRectangle(harness, 710, 714, 790, 790);
+		harness.world().unregisterGameObject(hardCover);
+		openCombatProjectileRectangle(harness, 440, 442, 440, 440);
 		final Npc enemyFenceSource = harness.npc(
-			NpcId.GREATER_DEMON.id(), 710, 790);
+			NpcId.GREATER_DEMON.id(), 440, 440);
 		final Player enemyFenceTarget = harness.player(
-			"pj enemy fence target", 714, 790);
+			"pj enemy fence target", 442, 440);
 		final int enemyFenceHits = enemyFenceTarget.getLevel(Skill.HITS.id());
 		final ProjectileEvent enemyFenceImpact = typedProjectile(
 			harness, enemyFenceSource, enemyFenceTarget, 3,
@@ -980,8 +978,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		assertTrue(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
 			enemyFenceSource.getWorldLocation(), enemyFenceTarget.getWorldLocation()),
 			"enemy delayed-impact fence fixture launches clear");
-		harness.world().getTile(712, 790)
-			.addEnemyProjectileFenceCollision(CollisionFlag.FULL_BLOCK);
+		hardCover = addFixtureBoundary(harness, 441, 440, 5);
 		assertFalse(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
 			enemyFenceSource.getWorldLocation(), enemyFenceTarget.getWorldLocation()),
 			"fence appearing during flight blocks the enemy path authority");
@@ -993,12 +990,13 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			enemyFenceImpact.getInitialProjectileImpactDecision().getReason(),
 			"enemy fence impact collision reason");
 
+		harness.world().unregisterGameObject(hardCover);
 		final Player retargetedSource = harness.player(
-			"pj retarget source", 960, 780);
+			"pj retarget source", 440, 440);
 		final Npc originalTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 961, 780);
+			NpcId.GREATER_DEMON.id(), 441, 440);
 		final Npc replacementTarget = harness.npc(
-			NpcId.GREATER_DEMON.id(), 962, 780);
+			NpcId.GREATER_DEMON.id(), 442, 440);
 		final int originalHits = originalTarget.getLevel(Skill.HITS.id());
 		final int replacementHits = replacementTarget.getLevel(Skill.HITS.id());
 		final ProjectileEvent originalTargetImpact = projectile(
@@ -1018,9 +1016,9 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		harness.server().getConfig().WANT_MYWORLD = false;
 		try {
 			final Player protectedSource = harness.player(
-				"pj protected source", 300, 300);
+				"pj protected source", 440, 440);
 			final Player protectedTarget = harness.player(
-				"pj protected target", 301, 300);
+				"pj protected target", 441, 440);
 			harness.equip(protectedSource, ItemId.SHORTBOW.id(), 1);
 			protectedTarget.getPrayers().setPrayer(
 				Prayers.PROTECT_FROM_MISSILES, true, false);
@@ -1052,17 +1050,19 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 
 	private static void authoredFenceEndToEndEvidence(
 			final CurrentCombatHarness harness) throws Exception {
-		final int westX = 367;
-		final int fenceX = 369;
-		final int eastX = 371;
-		final int y = 3265;
+		// Register a real boundary on open native terrain. Mutating rollback
+		// TileValues cannot alter the installed package's signed collision authority.
+		final int westX = 440;
+		final int fenceX = 441;
+		final int eastX = 443;
+		final int y = 440;
 		openCombatProjectileRectangle(
 			harness, westX, eastX, y, y);
 		assertEquals(CombatProjectileCollision.Cover.ENEMY_ONLY_FENCE,
 			CombatProjectileCollision.boundaryCover(
 				harness.server().getEntityHandler().getDoorDef(5)),
 			"Heroes Guild raw wall ID 6 railings retain fence semantics");
-		addAuthoredHeroesRailing(harness, fenceX, y);
+		com.openrsc.server.model.entity.GameObject railing = addAuthoredHeroesRailing(harness, fenceX, y);
 
 		final Player player = harness.player(
 			"heroes railing ranger", westX, y);
@@ -1107,7 +1107,7 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		assertEquals(projectileCountBeforeNpc, countProjectileEvents(harness),
 			"real NPC range eligibility cannot launch through authored railing");
 
-		removeAuthoredHeroesRailing(harness, fenceX, y);
+		harness.world().unregisterGameObject(railing);
 		final ProjectileEvent npcInFlight = new ProjectileEvent(
 			harness.world(), npc, player,
 			ProjectileLaunchSpecification.builder(
@@ -1116,33 +1116,27 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 		assertTrue(PathValidation.checkEnemyCombatProjectilePath(harness.world(),
 			npc.getWorldLocation(), player.getWorldLocation()),
 			"NPC delayed-impact fixture launches while railing is absent");
-		addAuthoredHeroesRailing(harness, fenceX, y);
+		railing = addAuthoredHeroesRailing(harness, fenceX, y);
 		npcInFlight.action();
 		assertEquals(ProjectileImpactDecision.Reason.IMPACT_PATH_BLOCKED,
 			npcInFlight.getInitialProjectileImpactDecision().getReason(),
 			"NPC delayed impact observes restored authored railing");
+		harness.world().unregisterGameObject(railing);
 	}
 
-	private static void addAuthoredHeroesRailing(
-			final CurrentCombatHarness harness,
-			final int fenceX, final int y) {
-		harness.world().getTile(fenceX, y)
-			.addTerrainCollision(CollisionFlag.WALL_EAST);
-		harness.world().getTile(fenceX - 1, y)
-			.addTerrainCollision(CollisionFlag.WALL_WEST);
-		harness.world().getTile(fenceX, y)
-			.addEnemyProjectileFenceCollision(CollisionFlag.WALL_EAST);
-		harness.world().getTile(fenceX - 1, y)
-			.addEnemyProjectileFenceCollision(CollisionFlag.WALL_WEST);
+	private static com.openrsc.server.model.entity.GameObject addAuthoredHeroesRailing(
+			final CurrentCombatHarness harness, final int fenceX, final int y) {
+		return addFixtureBoundary(harness, fenceX, y, 5);
 	}
 
-	private static void removeAuthoredHeroesRailing(
-			final CurrentCombatHarness harness,
-			final int fenceX, final int y) {
-		harness.world().getTile(fenceX, y)
-			.removeEnemyProjectileFenceCollision(CollisionFlag.WALL_EAST);
-		harness.world().getTile(fenceX - 1, y)
-			.removeEnemyProjectileFenceCollision(CollisionFlag.WALL_WEST);
+	private static com.openrsc.server.model.entity.GameObject addFixtureBoundary(
+			final CurrentCombatHarness harness, final int fenceX, final int y, final int id) {
+		com.openrsc.server.model.entity.GameObject railing = new com.openrsc.server.model.entity.GameObject(
+			harness.world(), Point.location(fenceX, y), id, 1, 1);
+		railing.setInitialWorldLocation(LegacyPackedPointAdapter.fromLegacyPoint(Point.location(fenceX, y)));
+		harness.world().getRegionManager().markNativeLayeredPlacement(railing, "fixture-heroes-railing", "boundary");
+		harness.world().registerGameObject(railing);
+		return railing;
 	}
 
 	private static void familyAndSiblingEvidence(

@@ -355,6 +355,13 @@ public final class ActiveStatusHudFixture {
 			"client decremented authoritative counter");
 
 		byte[] legacyNoOverflow = packet(prefix, -1, null);
+		ActiveStatusHudModel slowModel = new ActiveStatusHudModel();
+		byte[] slowPacket = packet(new int[][] {{33, 5}, {33, 4}}, 0,
+			new int[][] {{2, 4, 0, 0, 0}, {2, 5, 0, 0, 0}});
+		slowModel.replace(ActiveStatusPacketDecoder.decode(slowPacket), catalog(), 1_000L);
+		check("Slow 1".equals(slowModel.snapshot(1_000L).getRows().get(0).getSlayerHoverText())
+			&& "Slow 2".equals(slowModel.snapshot(1_000L).getRows().get(1).getSlayerHoverText()),
+			"appended Slow identities must decode and display both tiers");
 		check(!ActiveStatusPacketDecoder.decode(legacyNoOverflow).isEnriched(),
 			"legacy no-suffix prefix rejected");
 		byte[] legacyOverflow = packet(prefix, 5, null);

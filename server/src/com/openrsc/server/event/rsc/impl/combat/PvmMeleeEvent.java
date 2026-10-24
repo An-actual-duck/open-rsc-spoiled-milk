@@ -165,7 +165,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			setDelayTicks(1);
 			return;
 		}
-		if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(attackerMob, targetMob)) {
+		if (com.openrsc.server.content.Slow.ready(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE)
+			&& com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(attackerMob, targetMob)) {
 			setDelayTicks(1);
 			return;
 		}
@@ -236,13 +237,17 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 
+		if (!com.openrsc.server.content.Slow.ready(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE)) {
+			setDelayTicks(1); return;
+		}
 		attackerMob.resetPath();
 		// Sticky Skin is consumed only when an attack can actually happen, not while
 		// chasing or waiting out a shared melee/projectile cooldown.
 		if ((com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)
 			&& !com.openrsc.server.content.monsterslayer.BloodveldCombat.attackReady(attackerMob))
 			|| (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(attackerMob)
-			&& !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob))) {
+			&& !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(attackerMob))
+			|| !com.openrsc.server.content.monsterslayer.DarkBeastCombat.attackReady(attackerMob)) {
 			setDelayTicks(1); return;
 		}
 		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(attackerMob)) {
@@ -272,7 +277,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 				return;
 			}
 			attackerMob.consumeAttackBasedDebuffs();
-			setDelayTicks(getAdjustedMeleeDelayTicks(attackerMob, 2));
+			int delay = getAdjustedMeleeDelayTicks(attackerMob, 2);
+			com.openrsc.server.content.Slow.commit(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE, delay);
+			setDelayTicks(delay);
 			return;
 		}
 
@@ -334,6 +341,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (scytheTargetsHit > 1) {
 			delayTicks += scytheTargetsHit - 1;
 		}
+		com.openrsc.server.content.Slow.commit(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE, delayTicks);
 		setDelayTicks(delayTicks);
 	}
 
@@ -1038,10 +1046,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private int getAdjustedMeleeDelayTicks(final Mob hitter, final int baseDelayTicks) {
-		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return 1;
+		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return com.openrsc.server.content.Slow.delay(hitter, 1);
 		double multiplier = getCombatSpeedMultiplier(hitter);
 		double effectiveDelay = baseDelayTicks / multiplier;
-		return Math.max(1, (int) Math.floor(effectiveDelay));
+		return com.openrsc.server.content.Slow.delay(hitter, Math.max(1, (int) Math.floor(effectiveDelay)));
 	}
 
 	private double getCombatSpeedMultiplier(final Mob hitter) {
@@ -1049,9 +1057,6 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (hitter.isPlayer()) {
 			Player player = (Player) hitter;
 			multiplier = getWeaponSpeedMultiplier(player) * player.getPotionAttackSpeedMultiplier() * player.getLeatherSetAttackSpeedMultiplier();
-		}
-		if (hitter.getEarthAttackSpeedDebuffPercent() > 0) {
-			multiplier *= Math.max(0.10D, 1.0D - (hitter.getEarthAttackSpeedDebuffPercent() / 100.0D));
 		}
 		return multiplier;
 	}

@@ -152,8 +152,22 @@ final class CurrentCombatProjectileResourceCharacterization {
 		harness.openCombatProjectileRectangle(628, 632, 758, 762);
 		final Npc primary = harness.npc(
 			NpcId.GREATER_DEMON.id(), 631, 760);
-		harness.npc(NpcId.GREATER_DEMON.id(), 630, 761);
-		harness.npc(NpcId.GREATER_DEMON.id(), 631, 761);
+		final Npc second = harness.npc(NpcId.GREATER_DEMON.id(), 630, 761);
+		final Npc third = harness.npc(NpcId.GREATER_DEMON.id(), 631, 761);
+		// Find real open native terrain; opening rollback tiles cannot clear
+		// immutable native walls. Keep all three sibling and RNG assertions.
+		boolean clear = false;
+		for (int x = 480; x < 520 && !clear; x++) for (int y = 440; y < 480 && !clear; y++) {
+			thrower.setLocation(com.openrsc.server.model.Point.location(x, y));
+			primary.setLocation(com.openrsc.server.model.Point.location(x + 1, y));
+			second.setLocation(com.openrsc.server.model.Point.location(x, y + 1));
+			third.setLocation(com.openrsc.server.model.Point.location(x + 1, y + 1));
+			clear = true;
+			for (Npc candidate : new Npc[] {primary, second, third})
+				clear &= com.openrsc.server.model.PathValidation.checkCombatProjectilePath(
+					harness.world(), thrower.getWorldLocation(), candidate.getWorldLocation());
+		}
+		assertTrue(clear, "shuriken fixture has three clear native targets");
 		harness.equip(thrower, ItemId.TIN_SHURIKEN.id(), 4);
 		final int thrownExperienceBefore = thrower.getSkills()
 			.getExperience(Skill.RANGED.id());
@@ -629,6 +643,17 @@ final class CurrentCombatProjectileResourceCharacterization {
 
 	private static void castOnNpc(final Player caster, final Npc target,
 			final Spells spell) throws Exception {
+		// Cast-resource tests need actual adjacent native tiles, not just open
+		// rollback projections. Preserve every resource/XP/proc assertion below.
+		int originX = 440, originY = 440;
+		boolean adjacent = com.openrsc.server.model.PathValidation.checkAdjacentDistance(caster, target, false, true);
+		for (int x = originX; x < originX + 80 && !adjacent; x++)
+			for (int y = originY; y < originY + 40 && !adjacent; y++) {
+				caster.setLocation(com.openrsc.server.model.Point.location(x, y));
+				target.setLocation(com.openrsc.server.model.Point.location(x + 1, y));
+				adjacent = com.openrsc.server.model.PathValidation.checkAdjacentDistance(caster, target, false, true);
+			}
+		assertTrue(adjacent, "cast resource fixture has adjacent native tiles");
 		final SpellStruct payload = new SpellStruct();
 		payload.setOpcode(OpcodeIn.CAST_ON_NPC);
 		payload.spell = spell;

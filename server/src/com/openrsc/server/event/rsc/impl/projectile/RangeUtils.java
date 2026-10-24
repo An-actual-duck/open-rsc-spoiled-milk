@@ -444,9 +444,9 @@ public class RangeUtils {
         }
         final double multiplier = getRangeSpeedMultiplier(attacker);
         if (multiplier == 1.0D) {
-            return baseDelayTicks;
+            return com.openrsc.server.content.Slow.delay(attacker, baseDelayTicks);
         }
-        return Math.max(1, (int) Math.floor(baseDelayTicks / multiplier));
+        return com.openrsc.server.content.Slow.delay(attacker, Math.max(1, (int) Math.floor(baseDelayTicks / multiplier)));
     }
 
     private static double getRangeSpeedMultiplier(final Mob attacker) {
@@ -473,9 +473,6 @@ public class RangeUtils {
                     break;
             }
             multiplier *= player.getPotionAttackSpeedMultiplier();
-        }
-        if (attacker.getEarthAttackSpeedDebuffPercent() > 0) {
-            multiplier *= Math.max(0.10D, 1.0D - (attacker.getEarthAttackSpeedDebuffPercent() / 100.0D));
         }
         return multiplier;
     }

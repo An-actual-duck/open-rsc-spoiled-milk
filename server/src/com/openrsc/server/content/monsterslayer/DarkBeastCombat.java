@@ -32,7 +32,7 @@ public final class DarkBeastCombat {
 	private static final class State {
 		final CombatParticipantSnapshot lifetime;
 		boolean halfHealthUsed, pendingStickyCharge;
-		long nextDecision, recoveryUntil;
+		long nextDecision, recoveryUntil, nextAttack;
 		volatile Charge charge;
 		State(Npc npc) { lifetime = CombatParticipantSnapshot.capture(npc); }
 	}
@@ -54,6 +54,9 @@ public final class DarkBeastCombat {
 	public static int mitigate(Mob target, int damage) {
 		return damage > 0 && charging(target) ? damage / 2 : damage;
 	}
+	public static boolean attackReady(Mob mob) {
+		return !isDarkBeast(mob) || mob.getWorld().getServer().getCurrentTick() >= state((Npc)mob).nextAttack;
+	}
 	/** Called before chasing or attacking. Random decisions are shared across combat paths. */
 	public static boolean tryAttack(Mob source, Mob target) {
 		if (!isDarkBeast(source)) return false;
@@ -62,6 +65,8 @@ public final class DarkBeastCombat {
 		State state = state(npc);
 		long tick = npc.getWorld().getServer().getCurrentTick();
 		if (state.charge != null || tick < state.recoveryUntil) { npc.resetPath(); return true; }
+		// Slow delays the next attack, not ordinary approach movement.
+		if (!attackReady(npc)) return false;
 		if (!(target instanceof Player) || !live((Player)target) || !npc.sharesSpatialDomain(target)
 			|| !npc.withinRange(target, RADIUS)) return false;
 		boolean half = !state.halfHealthUsed && npc.getLevel(Skill.HITS.id()) * 2 <= npc.getSkills().getMaxStat(Skill.HITS.id());
@@ -127,12 +132,14 @@ public final class DarkBeastCombat {
 		final Npc npc;
 		final State state;
 		final long start, due;
+		final int slowRecovery;
 		final List<Player> players = new ArrayList<>();
 		Charge(Npc npc, State state) {
 			// Unowned so death/removal still executes cleanup on all captured players.
 			super(npc.getWorld(), null, 1, "Dark beast lightning charge", DuplicationStrategy.ALLOW_MULTIPLE);
 			this.npc = npc; this.state = state;
 			start = npc.getWorld().getServer().getCurrentTick(); due = start + CHARGE_TICKS;
+			slowRecovery = com.openrsc.server.content.Slow.tier(npc);
 		}
 		boolean valid() {
 			return state.lifetime.matches(npc) && !npc.isRemoved() && !npc.isRespawning()
@@ -156,6 +163,7 @@ public final class DarkBeastCombat {
 			// Drop resistance before retaliation effects are evaluated on release.
 			state.charge = null;
 			state.recoveryUntil = npc.getWorld().getServer().getCurrentTick() + 1;
+			state.nextAttack = state.recoveryUntil + slowRecovery;
 			state.nextDecision = state.recoveryUntil + 3;
 			for (Player player : players) {
 				CombatParticipantSnapshot victim = marks(player).remove(this);

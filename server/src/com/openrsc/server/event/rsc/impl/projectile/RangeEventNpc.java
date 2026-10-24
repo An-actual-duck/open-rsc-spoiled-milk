@@ -2,6 +2,7 @@ package com.openrsc.server.event.rsc.impl.projectile;
 
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.Skill;
+import com.openrsc.server.content.Slow;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
@@ -45,6 +46,7 @@ public class RangeEventNpc extends GameTickEvent {
             stop();
             return;
         }
+        if (!Slow.ready(owner, Slow.Cadence.RANGED)) return;
         if ((victim.isPlayer() && !((Player) victim).loggedIn())
                 || victim.getSkills().getLevel(Skill.HITS.id()) <= 0
                 || !owner.withinRange(victim)) {
@@ -91,7 +93,8 @@ public class RangeEventNpc extends GameTickEvent {
             if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(owner)) {
                 setDelayTicks(1); return;
             }
-            setDelayTicks(RangeUtils.getAdjustedRangeDelayTicks(owner, 3));
+            final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(owner, 3);
+            setDelayTicks(adjustedDelay);
 
 
                 if (victim.isPlayer()) {
@@ -102,7 +105,7 @@ public class RangeEventNpc extends GameTickEvent {
                         return;
                     }
                 }
-                int damage = RangeUtils.doRangedDamage(getPlayerOwner(), ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
+                int damage = RangeUtils.doRangedDamage(owner, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
 
                 final ProjectileResourceLedger resourceLedger =
                     ProjectileResourceLedger.trackedLaunch(
@@ -111,7 +114,7 @@ public class RangeEventNpc extends GameTickEvent {
                     ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED;
                 int recoveredAmount = 0;
                 if (Formulae.loseArrow(damage)) {
-                    GroundItem arrows = getArrows(getPlayerOwner());
+                    GroundItem arrows = getArrows();
                     if (arrows == null) {
                         for (Player p : getWorld().getPlayers()) {
                             getWorld().registerItem(new GroundItem(
@@ -141,6 +144,7 @@ public class RangeEventNpc extends GameTickEvent {
                 if (victim.isPlayer() && owner.isNpc()) {
                     ((Player) victim).message(owner + " is shooting at you!");
                 }
+                Slow.commit(owner, Slow.Cadence.RANGED, adjustedDelay);
                 getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
                         getWorld(), owner, victim,
                         ProjectileLaunchSpecification.builder(
@@ -159,8 +163,9 @@ public class RangeEventNpc extends GameTickEvent {
         stop();
     }
 
-    private GroundItem getArrows(Player player) {
-        return victim.getViewArea().getVisibleGroundItem(ItemId.BRONZE_ARROWS.id(), victim.getLocation(), player);
+    private GroundItem getArrows() {
+        return getWorld().getRegionManager().findInteractionGroundItem(
+            ItemId.BRONZE_ARROWS.id(), victim.getLocation(), getOwner());
     }
 
     private boolean isUnreachable(Mob mob) {
