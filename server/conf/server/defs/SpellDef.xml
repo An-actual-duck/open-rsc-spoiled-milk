@@ -37,7 +37,7 @@
       </requiredRunes>
       <exp>88</exp>
       <name>Rock Throw</name>
-      <description>Applies Weaker Slow for 5 attacks</description>
+      <description>Applies up to Slow 1</description>
       <members>false</members>
       <evil>true</evil>
     </SpellDef>
@@ -254,7 +254,7 @@
       </requiredRunes>
       <exp>216</exp>
       <name>Earth Hammer</name>
-      <description>Applies Weak Slow for 5 attacks</description>
+      <description>Applies up to Slow 1</description>
       <members>false</members>
       <evil>true</evil>
     </SpellDef>
@@ -412,7 +412,7 @@
       </requiredRunes>
       <exp>392</exp>
       <name>Earth Burst</name>
-      <description>Applies Strong Slow for 5 attacks</description>
+      <description>Applies up to Slow 2</description>
       <members>false</members>
       <evil>false</evil>
     </SpellDef>
@@ -557,7 +557,7 @@
       </requiredRunes>
       <exp>576</exp>
       <name>Earth Impale</name>
-      <description>Applies Stronger Slow for 5 attacks</description>
+      <description>Applies up to Slow 2</description>
       <members>true</members>
       <evil>false</evil>
     </SpellDef>

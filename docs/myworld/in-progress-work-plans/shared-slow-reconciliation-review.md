@@ -31,7 +31,7 @@ server operations, main integration or main publication.
 | Lifecycle | Current `Mob.advanceCombatLifecycle` clears pool/HUD; player death/logout/session ID and NPC removal/respawn retain current lifecycle authority |
 | Melee | Current actor-owned `PvmMeleeEvent`; modifier calculation first, integer Slow tier second; replacement cannot bypass captured deadline |
 | Bow/thrown | `RangeUtils`, `RangeEvent`, `ThrowingEvent`; fixed deadlines survive retarget truncation of the separate legacy timer |
-| NPC projectiles | Existing `RangeEventNpc` shared delay helper; profile `NpcBehavior` gains lifetime-qualified committed tick deadline |
+| NPC projectiles | `RangeEventNpc` adjusted delay plus actor-owned RANGED ready/commit latch (Core review follow-up below); profile `NpcBehavior` gains lifetime-qualified committed tick deadline |
 | Combat magic | Player's ordinary cast timer retained; separate current-game-clock deadline checked by packet, queued and autocast paths; only offensive finalization commits it |
 | Specials | Banshee/Naga/Bloodveld shared deadlines gain Slow once and reject old lifetimes; Abyssal recovery and Dark Beast charge remain fixed |
 | HUD | Existing `ActiveStatusEntry`, Player collector, packet decoder/HUD model; append kind 2 identities 4/5 with Earth rune 33 |
@@ -154,3 +154,89 @@ The work is ready for exact-commit Core review after the worker handoff script
 confirms its pushed commit. There are no remaining implementation or validation
 blockers. PvP cadence redesign, coating design/implementation, and the broader
 post-Slayer effect audit remain deferred.
+
+
+## Core review follow-up to Dot's exact handoff
+
+Core explicitly reassigned this same focused worker/branch after Dot stopped
+cleanly at READY `935f172d2021dd6ee1d90ab467142028a5bb90b0`. Its commits are
+preserved; this is an additive internal maintainer review correction, not a
+history rewrite or another session working concurrently in the slot.
+
+Core independently found that `RangeEventNpc` used the adjusted event delay but
+omitted the actor-owned RANGED readiness/commit latch. A real first `doRun()`,
+three production ticks, `Slow.clear`, and replacement event could launch at tick3
+before the previously committed tick5. Distinct `ProjectileEvent` instances can
+compare equal, so counts or equality-based `contains` were insufficient proof.
+The review input and failing original probe are preserved outside the repository
+at `/home/justin/.local/share/slow-core-review-935f172d/`.
+
+The focused correction checks existing `Slow.ready(owner, RANGED)` before the
+legacy action and commits its already adjusted delay only at actual projectile
+launch, consistent with the player ranged path. Clearing or gaining Slow cannot
+recapture a pending slowed deadline through retargeting. No-Slow ordinary delay
+remains three ticks; normal authority is not replaced with another timer. No
+formula, RNG/recovery loop, resource ledger, projectile ownership, spatial gate,
+legacy victim policy or generic Slow API is changed by this follow-up.
+
+`SlowLegacyNpcRange` is called by the existing `test_slow` fixture. Four real-event
+scenarios cover:
+
+- Slow2 cleared after three ticks: a replacement targeting another player is
+  blocked before tick5 and launches exactly at the original deadline.
+- Slow1 increased to Slow2: retargeting cannot bypass or postpone the original
+  four-tick deadline; only the following committed shot takes five ticks.
+- A normal three-tick commitment followed by new Slow is ready at its original
+  due tick, then captures Slow for the following shot.
+- Combat lifetime replacement releases the old deadline and power, allowing the
+  new lifetime's normal shot before the old slowed deadline.
+
+Tests use production scheduler ticks, actual `doRun`, and identity-backed sets
+of launched projectiles; they do not infer cadence from `getDelayTicks` alone.
+The existing103boundary/interaction assertions and producer/damage/RNG tests
+remain intact. The external original failing probe was independently recompiled
+against current classes and now reports tick3 / committedDue5 / newLaunch=false.
+The broad gate deletes its temporary classes by design, so `compile_combat_tests`
+was run again before that external probe; no gameplay process was launched.
+
+### Player-facing descriptions
+
+The four server `SpellDef.xml` descriptions still used old five-attack wording.
+They now match client descriptions: Rock Throw/Earth Hammer **Applies up to
+Slow1**, Earth Burst/Earth Impale **Applies up to Slow2** (rendered with spaces:
+`Slow 1`, `Slow 2`). The exact source additions4/6/8/10 and caps12/12/22/22 remain
+in code/design documentation, not player-facing descriptions.
+
+Moss1895–1899 and green dragon1925–1929 descriptions retain their20%proc chance
+and say **apply up to Slow1**. The existing authoritative item-generator records
+and both generated mirrors agree. Green records previously inherited a stale
+custom description; five description-only overrides now supply the same text
+as the client's full-set description. There are still2049override rows, with
+identical IDs, prices, stats, recipes and gameplay. Retired sets remain retired.
+The skill guide explains Slow1/2 as one/two extra combat ticks that fade over
+time, without exposing backend power bookkeeping. HUD labels/identities and
+mechanical producer mappings remain unchanged.
+
+### Follow-up verification
+
+Offline, sequential bounded Java jobs used Ant768MB and fixtures512MB. No
+private/public client or server was launched, no map/art/configuration changed,
+and no main or release operation was performed.
+
+| Check | Result |
+| --- | --- |
+| `ant test_slow` | PASS, including four additional real legacy-event scenarios and existing foundation/producer tests |
+| `ant test_combat_strict` | PASS144/144 current scenarios; exact damage/RNG/resource/spatial coverage retained |
+| Original Core retarget probe | PASS: replacement tick3 cannot launch before captured due5 |
+| `python3 tests/myworld/test-cleric-status-hud.py` | PASS with512MB Java bound |
+| `python3 tests/myworld/test-leather-set-bonuses.py` | PASS, including generated Moss/green wording |
+| `python3 tests/myworld/test-generator-scripts.py` | PASS item/NPC generator regressions |
+| `python3 tools/generators/run-generators.py --only item --check` | PASS2049records and generated server/client parity |
+| Independent spell XML comparison | Exactly four description fields changed; every other spell field/ID unchanged and matching client text |
+| `git diff --check` | PASS |
+
+The full nine-target Slayer batch and full client packaging were not repeated:
+this bounded correction changes only legacy ranged scheduling and descriptions;
+prior Dot results above remain provenance, not newly repeated claims. Core will
+independently review and rerun relevant gates before integration. PvP and weapon
+coating work remain deferred; no private gameplay acceptance is claimed.

@@ -18,6 +18,7 @@ public final class SlowFixture {
   try(CurrentCombatHarness h = new CurrentCombatHarness()) {
    SlowBoundaries.run(h);
    SlowProducers.run(h);
+   SlowLegacyNpcRange.run(h);
    Player p=h.player("slow player",440,440);
    Npc n=h.npc(3,441,440);
    Slow.apply(p,8,Slow.CAP_ONE); eq(8,Slow.power(p),"subthreshold retained"); eq(0,Slow.tier(p),"no early tier");
