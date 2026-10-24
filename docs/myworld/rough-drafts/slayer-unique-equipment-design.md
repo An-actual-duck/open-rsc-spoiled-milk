@@ -296,6 +296,15 @@ Tail reward or active icon requirement is established.
 
 ## Future coating: collectible ingredients now, system later
 
+**Historical examples below are superseded for the existing combat Slow foundation.**
+The approved rule is 10 power per tier, bounded source caps 12/22, and two power
+removed every four game ticks, affecting subsequent combat action cadence only.
+See [shared Slow foundation](../in-progress-work-plans/shared-slow-foundation.md). Earlier 20/50-power and all-action examples
+remain design history, not current behavior. Weapon coating is still deferred:
+herb, recipe level/yield, per-hit poison/Slow amounts, cap and lifetime/charges
+remain undecided. The broader post-Slayer review reminder remains active.
+
+
 **Cockatrice Eye** and **Sticky Saliva Gland** are each confirmed at **1/128 per
 kill of their respective monsters**. Their eventual potion uses **one of each**
 plus an **unspecified herb**, producing a new weapon coating. Herb identity/

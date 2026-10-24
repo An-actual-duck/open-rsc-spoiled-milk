@@ -17,6 +17,7 @@ public final class SlowFixture {
  public static void main(String[] args) throws Exception {
   try(CurrentCombatHarness h = new CurrentCombatHarness()) {
    SlowBoundaries.run(h);
+   SlowProducers.run(h);
    Player p=h.player("slow player",440,440);
    Npc n=h.npc(3,441,440);
    Slow.apply(p,8,Slow.CAP_ONE); eq(8,Slow.power(p),"subthreshold retained"); eq(0,Slow.tier(p),"no early tier");
@@ -69,7 +70,9 @@ public final class SlowFixture {
    Slow.clear(p); check(!p.combatCastTimer(false),"cleansing cannot shorten scheduled cast");
    h.clock().advanceMillis(h.server().getConfig().MILLISECONDS_BETWEEN_CASTS+2*h.server().getConfig().GAME_TICK);
    check(p.combatCastTimer(false),"combat deadline reached");
-   p.scheduleCombatCast(); Slow.apply(p,22,Slow.CAP_TWO);
+   p.setCastTimer(0); p.scheduleCombatCast();
+   check(p.combatCastTimer(false),"unslowed cast keeps ordinary timer authority");
+   Slow.apply(p,22,Slow.CAP_TWO);
    h.clock().advanceMillis(h.server().getConfig().MILLISECONDS_BETWEEN_CASTS);
    check(p.combatCastTimer(false),"new Slow cannot postpone existing cast");
    for(int rank=1;rank<=4;rank++) {Slow.clear(n); Slow.earthSpell(n,rank*3);eq(2+rank*2,Slow.power(n),"earth rank power");eq(rank<=2?12:22,Slow.cap(n),"earth rank cap");}
@@ -88,7 +91,12 @@ public final class SlowFixture {
    check(AbyssalDemonCombat.beforeMelee(demon,p,true,(victim,hit)->{}),"pending attack cooldown remains after recovery");
    while(h.server().getCurrentTick()<spikeStart+6)h.advanceOneCombatTick();
    check(!AbyssalDemonCombat.beforeMelee(demon,n,false,(victim,hit)->{}),"stab resumes after latched Slow");
+   CurrentCombatEarthDragonSlowProcCharacterization.earthDragonSlowPolicies(h);
+   CurrentCombatKingBlackDragonBreathProcCharacterization.kingBlackDragonBreathPolicies(h);
+   CurrentCombatElementalSwordProcCharacterization.elementalSwordPolicies(h);
+   CurrentCombatSharedProcCharacterization.ogreStaggeringBlowPolicies(h);
   }
+  System.out.println("PASS: retained Earth Dragon/KBD/sword/Ogre damage and RNG characterizations");
   System.out.println("PASS: shared Slow caps, decay, lifetimes, HUD, melee/range, dagger, special cooldowns, combat cast deadline");
  }
  private static void actualMagicGates(CurrentCombatHarness h) throws Exception {

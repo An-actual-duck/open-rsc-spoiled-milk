@@ -20,7 +20,7 @@ import com.openrsc.server.net.rsc.enums.OpcodeOut;
 final class SlowBoundaries {
  private static int assertions;
  static void run(CurrentCombatHarness h) throws Exception {
-  pool(h); hud(h); lifetime(h); melee(h); ranged(h);
+  pool(h); hud(h); lifetime(h); melee(h); ranged(h); separateEffects(h);
   System.out.println("PASS Slow reconciliation boundary assertions="+assertions);
  }
  private static void pool(CurrentCombatHarness h) throws Exception {
@@ -77,7 +77,16 @@ final class SlowBoundaries {
   h.logout(p);eq(0,Slow.power(p),"actual logout clears");
   Player replacement=h.player("slow session",464,440);eq(0,Slow.power(replacement),"relogin has no transient pool");
   Npc n=h.npc(3,465,440);Slow.apply(n,22,22);n.superRemove();eq(0,Slow.power(n),"actual NPC removal clears");
-  Npc respawn=h.npc(3,466,440);Slow.apply(respawn,22,22);respawn.remove();eq(0,Slow.power(respawn),"respawning NPC clears");
+  Npc respawn=h.npc(3,466,440);Slow.apply(respawn,22,22);
+  java.util.List<GameTickEvent> prior=h.server().getGameEventHandler().getEvents();
+  respawn.remove();eq(0,Slow.power(respawn),"respawning NPC clears");
+  GameTickEvent respawnEvent=h.server().getGameEventHandler().getEvents().stream()
+   .filter(e->!prior.contains(e)&&"Respawn NPC".equals(e.getDescriptor())).findFirst().orElseThrow(()->new AssertionError("missing respawn event"));
+  respawnEvent.run();eq(0,Slow.power(respawn),"actual NPC respawn has no pool");
+  Slow.apply(respawn,10,12);advanceTo(h,h.server().getCurrentTick()+4);eq(8,Slow.power(respawn),"stale pre-respawn event cannot decay new lifetime");Slow.clear(respawn);
+  Player dying=h.player("slow actual death",468,440);h.recordOutgoingPackets(dying);Slow.apply(dying,22,22);
+  dying.killedBy(respawn);eq(0,Slow.power(dying),"actual player death clears");
+  check(dying.getActivePotionEffectStatuses().stream().noneMatch(s->s.getStableKey().equals("combat:slow")),"actual death clears HUD");
   for(int id:new int[]{865,866,868}) {
    Npc special=h.npc(id,467,440);Slow.apply(special,22,22);
    if(id==865)BansheeCombat.recordAttack(special,3);else if(id==866)NagaCombat.recordAttack(special,3);else BloodveldCombat.recordAttack(special,3);
@@ -112,6 +121,13 @@ final class SlowBoundaries {
    check(n.getHitsMade()>hits,"NPC ready at captured deadline "+id+" running="+replacement.isRunning()+" current="+n.isCurrentPvmMeleeEvent(replacement)+" hp="+n.getLevel(3)+" removed="+n.isRemoved()+" positions="+n.getLocation()+"/"+p.getLocation()+" slowReady="+Slow.ready(n,Slow.Cadence.MELEE)+" tick="+h.server().getCurrentTick()+" due="+due);
    replacement.stop();n.resetCombatEvent();p.resetCombatEvent();
   }
+
+  Player player=h.player("slow dagger action",480,440);Npc target=h.npc(3,481,440);
+  target.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),10000,10000,false);
+  h.equip(player,com.openrsc.server.constants.custom.MyWorldItemId.DAGGER_OF_TERROR,1);
+  Slow.apply(player,22,22);PvmMeleeEvent action=new PvmMeleeEvent(h.world(),player,target);player.setPvmMeleeEvent(action);
+  action.run();check(player.getHitsMade()>0,"actual player dagger action committed");eq(3,(int)action.getDelayTicks(),"actual dagger 1 plus tier");
+  Slow.clear(player);action.stop();player.resetCombatEvent();target.resetCombatEvent();
  }
  private static void ranged(CurrentCombatHarness h) throws Exception {
   for(boolean throwing:new boolean[]{false,true}) {
@@ -133,6 +149,20 @@ final class SlowBoundaries {
    advanceTo(h,due);e.run();check(p.<Long>getAttribute("can_range_again",0L)>due,"ranged/thrown resumes at deadline "+throwing);
    e.stop();p.resetRange();
   }
+ }
+ private static void separateEffects(CurrentCombatHarness h) throws Exception {
+  Player source=h.player("slow separate",470,440), defender=h.player("slow reflect victim",472,440);
+  Npc attacker=h.npc(3,471,440);attacker.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),20,20,false);
+  Slow.apply(attacker,22,22);attacker.applyStartleDebuff(source);
+  check(attacker.consumeStartleDebuff(),"Startle still cancels an attack");eq(22,Slow.power(attacker),"Startle does not consume Slow");
+  attacker.applyOgreStaggerDebuff();check(attacker.consumeOgreStaggerDebuff(),"Ogre still cancels an attack");eq(22,Slow.power(attacker),"Ogre does not consume Slow");
+  attacker.applyFrostbiteDebuff(source);PvmMeleeEvent event=new PvmMeleeEvent(h.world(),attacker,defender);
+  int pending=(Integer)CurrentCombatHarness.invokePrivate(event,"applyFrostbiteReflection",new Class<?>[]{Mob.class,Mob.class,int.class},attacker,defender,9);
+  eq(4,pending,"Frostbite retains pending-hit reduction");eq(15,attacker.getLevel(Skill.HITS.id()),"Frostbite retains reflected damage");eq(22,Slow.power(attacker),"Frostbite remains separate from Slow");
+  h.equip(source,com.openrsc.server.constants.custom.MyWorldItemId.ABYSSAL_WHIP,1);h.random().reset(123);h.random().scriptInts(0);
+  SlayerRewardCombat.whipHit(source,attacker,1);check(SlayerRewardCombat.whipBlocked(attacker),"whip remains an independent lock");
+  Slow.clear(attacker);check(SlayerRewardCombat.whipBlocked(attacker),"clearing Slow cannot clear whip");
+  h.advanceOneCombatTick();check(!SlayerRewardCombat.whipBlocked(attacker),"Slow does not extend whip duration");
  }
  private static void advanceTo(CurrentCombatHarness h,long tick)throws Exception{while(h.server().getCurrentTick()<tick)h.advanceOneCombatTick();}
  private static void check(boolean condition,String message){assertions++;if(!condition)throw new AssertionError(message);}

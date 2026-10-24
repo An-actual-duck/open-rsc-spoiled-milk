@@ -102,7 +102,7 @@ public class RangeEventNpc extends GameTickEvent {
                         return;
                     }
                 }
-                int damage = RangeUtils.doRangedDamage(getPlayerOwner(), ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
+                int damage = RangeUtils.doRangedDamage(owner, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
 
                 final ProjectileResourceLedger resourceLedger =
                     ProjectileResourceLedger.trackedLaunch(
@@ -111,7 +111,7 @@ public class RangeEventNpc extends GameTickEvent {
                     ProjectileResourceLedger.RecoveryDestination.NOT_RECOVERED;
                 int recoveredAmount = 0;
                 if (Formulae.loseArrow(damage)) {
-                    GroundItem arrows = getArrows(getPlayerOwner());
+                    GroundItem arrows = getArrows();
                     if (arrows == null) {
                         for (Player p : getWorld().getPlayers()) {
                             getWorld().registerItem(new GroundItem(
@@ -159,8 +159,9 @@ public class RangeEventNpc extends GameTickEvent {
         stop();
     }
 
-    private GroundItem getArrows(Player player) {
-        return victim.getViewArea().getVisibleGroundItem(ItemId.BRONZE_ARROWS.id(), victim.getLocation(), player);
+    private GroundItem getArrows() {
+        return getWorld().getRegionManager().findInteractionGroundItem(
+            ItemId.BRONZE_ARROWS.id(), victim.getLocation(), getOwner());
     }
 
     private boolean isUnreachable(Mob mob) {

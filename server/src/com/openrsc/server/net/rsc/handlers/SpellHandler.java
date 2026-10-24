@@ -475,6 +475,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		return true;
 	}
 
+	private static boolean isOffensiveSpell(Player player, Spells spell) {
+		SpellDef definition = spell == null ? null : player.getWorld().getServer().getEntityHandler().getSpellDef(spell);
+		return definition != null && definition.getSpellType() == 2;
+	}
+
 	public void process(SpellStruct payload, Player player) throws Exception {
 		OpcodeIn opcode = payload.getOpcode();
 		if (SpellClassification.isMobCastOpcode(opcode)) {
@@ -492,6 +497,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		}
 		if (!SpellClassification.isHealSpell(payload.spell) && (!canCast(player)
 			|| (opcode == OpcodeIn.CAST_ON_NPC || opcode == OpcodeIn.PLAYER_CAST_PVP)
+				&& isOffensiveSpell(player, payload.spell)
 				&& !player.combatCastTimer(player.getConfig().RAPID_CAST_SPELLS))) {
 			if (SpellClassification.isMobCastOpcode(opcode)) {
 				magicDebug(player, "packet_reject reason=cast_timer wait=" + player.getSpellWait());

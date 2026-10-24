@@ -575,7 +575,8 @@ public class NpcBehavior {
 		npc.face(target);
 		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(npc)) return true;
 		npc.setCombatTimer();
-		projectileCooldownLifetime = com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(npc);
+		projectileCooldownLifetime = com.openrsc.server.content.Slow.tier(npc) == 0 ? null
+			: com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(npc);
 		nextProjectileTick = npc.getWorld().getServer().getCurrentTick()
 			+ com.openrsc.server.content.Slow.delay(npc, 3 * tickFactor);
 		if (banshee) com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(npc, 3);

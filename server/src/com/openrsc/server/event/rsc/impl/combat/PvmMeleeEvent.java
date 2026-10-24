@@ -165,7 +165,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			setDelayTicks(1);
 			return;
 		}
-		if (com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(attackerMob, targetMob)) {
+		if (com.openrsc.server.content.Slow.ready(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE)
+			&& com.openrsc.server.content.monsterslayer.DarkBeastCombat.tryAttack(attackerMob, targetMob)) {
 			setDelayTicks(1);
 			return;
 		}

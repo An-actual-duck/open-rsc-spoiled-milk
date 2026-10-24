@@ -973,10 +973,16 @@ public final class Player extends Mob {
 			|| getWorld().getServer().getGameClock().currentTimeMillis() >= nextCombatCastMillis);
 	}
 	public void scheduleCombatCast() {
+		final int slowTier = com.openrsc.server.content.Slow.tier(this);
+		if (slowTier == 0) {
+			combatCastLifetime = null;
+			nextCombatCastMillis = 0;
+			return;
+		}
 		combatCastLifetime = com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(this);
 		nextCombatCastMillis = getWorld().getServer().getGameClock().currentTimeMillis()
 			+ (getConfig().RAPID_CAST_SPELLS ? 0L : getSpellCastHoldTimerMillis())
-			+ (long)com.openrsc.server.content.Slow.tier(this) * getConfig().GAME_TICK;
+			+ (long)slowTier * getConfig().GAME_TICK;
 	}
 
 	public boolean addOwnedPlugin(final PluginTask plugin) {

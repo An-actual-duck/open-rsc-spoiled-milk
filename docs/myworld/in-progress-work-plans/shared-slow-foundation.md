@@ -1,6 +1,7 @@
 # Shared combat Slow foundation
 
-Implemented in the Slayer worker, September 2026. This supersedes percentage
+Reconciled against current Core in October 2026 from the preserved September
+implementation `5e79e8f069c5c6f2cb7a4ed37bd50ce5e39d6e34`. This supersedes percentage
 attack-speed Slow for the sources listed below. No weapon coating is added yet.
 
 ## Power, caps, and cleansing
@@ -9,8 +10,12 @@ One transient target-owned pool: `floor(power / 10)` produces Slow 1 or Slow 2.
 Source caps are **12** and **22**, including the approved two-power buffer. The
 highest received cap is retained until power reaches zero; subsequent lower-cap
 sources can refill that retained higher cap. Applications add rather than replace.
-Power 1–9 remains present without a timing penalty. Remove two power every four
+Only caps 12 and 22 are accepted; invalid applications are ignored and additions
+use widened bounded arithmetic. Power 1–9 remains present without a timing
+penalty. Remove two power every four
 game ticks, bounded at zero. Reapplication does not restart the decay deadline.
+Due decay is settled before a same-tick application, independent of callback order.
+Clearing stops the old event immediately; each live pool has one decay process.
 Threshold, buffer, decay amount and interval are centralized in `content/Slow.java`.
 
 | Source | Power | Source cap | Trigger preserved |
@@ -38,7 +43,9 @@ speed. Dagger of Terror is therefore 1 + Slow tier ticks, not immune to Slow.
 Actor-owned melee, player ranged/thrown attacks, legacy NPC ranged events, NPC
 profile ranged/magic attacks, and combat spell casting consume this rule.
 The extra delay is snapshotted when scheduling the next action; gaining or losing
-Slow cannot move an already scheduled deadline. This does not change movement,
+Slow cannot move an already scheduled deadline. Slowed melee and ranged deadlines
+also survive event replacement and retargeting within that participant lifetime;
+readiness polls do not recreate or move them. This does not change movement,
 food/potion use, skilling, teleporting, enchanting, or other utility spell timing.
 
 Combat magic has its own latched deadline alongside the existing ordinary spell
@@ -63,7 +70,9 @@ PvP remains disabled. Revisit actor-owned PvP scheduling before reenabling PvP.
 ## Lifetime and presentation
 
 The pool is not saved: death, logout/session changes, and NPC respawn invalidate
-the captured combat lifetime. Explicit lifecycle advance clears the state/HUD;
+the captured combat lifetime. Explicit lifecycle advance clears the state/HUD, including when death has
+already marked the actor killed. Special shared attack cooldowns and the generic
+melee/ranged deadlines are qualified by participant lifetime;
 decay events reject dead, removed, logged-out, or replaced participants. No
 offline ticking or persistence migration is introduced.
 
@@ -78,14 +87,14 @@ Sticky Skin's pending next-attack delay, frog/cockatrice/abyssal immobilization,
 or unused Water Slow/Bear Intimidate APIs. Shield of Mobility coverage is not
 expanded by this task. These remain separate effects, not Slow power consumers.
 
-## Validation
+## Current reconciliation evidence
 
-- `ant test_slow`: cap/refill/decay, lifecycle/HUD, additive player/NPC speed,
-  dagger exception, special cooldown latching, combat-only magic, actual manual
-  and autocast gates, actual NPC ranged/magic scheduling.
-- `ant test_combat_strict`: existing 144 scenarios; Earth Dragon/KBD old
-  percentage/attack-count assertions replaced with power/time-decay assertions,
-  preserving their damage, target eligibility, and RNG checks.
-- `bash scripts/build-client.sh`; HUD and item-generator regression checks.
+See [the review report](shared-slow-reconciliation-review.md) for exact provenance,
+source/consumer mapping, current commands, baseline failures and coverage limits.
+The current `test_slow` includes deterministic tick-boundary/HUD/lifecycle checks,
+real player and NPC scheduling, all eight Slayer enemies' relevant cadence,
+source adapters and legacy NPC ranged ownership. The full current combat suite
+retains its damage/RNG checks; the historical 144-scenario total is not a target.
 
-No private or public session restart or deployment is part of this implementation.
+No coating, poison overhaul, map/package edits, gameplay session, release or
+deployment is part of this implementation.

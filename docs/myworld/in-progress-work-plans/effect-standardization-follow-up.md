@@ -81,6 +81,15 @@ References: `server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java`,
 
 ### Slow: proposed extension for the weapon coating
 
+**Historical examples below are superseded for the existing combat Slow foundation.**
+The approved rule is 10 power per tier, bounded source caps 12/22, and two power
+removed every four game ticks, affecting subsequent combat action cadence only.
+See [shared Slow foundation](shared-slow-foundation.md). Earlier 20/50-power and all-action examples
+remain design history, not current behavior. Weapon coating is still deferred:
+herb, recipe level/yield, per-hit poison/Slow amounts, cap and lifetime/charges
+remain undecided. The broader post-Slayer review reminder remains active.
+
+
 The future coating applies accumulating **slowing power**. As it accumulates,
 the NPC becomes progressively "slimed up". The owner's illustrative threshold
 is **20 power per additional tick of action delay**: at 20 power, its actions
