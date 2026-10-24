@@ -257,5 +257,66 @@ class NativeImportTest(unittest.TestCase):
                           ("name", "objectModel", "type", "width", "height", "groundItemVar", "command1", "command2")],
                          ["Pointed window", "sm_pointed_window", "0", "1", "1", "0", "WalkTo", "Examine"])
 
+    def test_window_family_preserves_approved_pointed_and_passive_bindings(self):
+        import hashlib
+        import json
+        entries = native.archive_entries((ROOT / "Client_Base/Cache/video/models.orsc").read_bytes())
+        self.assertGreaterEqual(len(entries), 515)
+        # Stained-glass revisions may replace only entry513; all accepted models stay exact.
+        self.assertEqual(hashlib.sha256(b"".join(h+p for i,(h,p) in enumerate(entries[:515]) if i!=513)).hexdigest(),
+                         "dcd18b437b850ddfe936fd8ec34d281abe849c606f9a052eb0a8a410b1cc95b1")
+        self.assertEqual(hashlib.sha256(b"".join(h+p for h,p in entries[:512])).hexdigest(),
+                         "2d1534597440605ae9c5ab9fdefd19b9b373ef50c7813291ae78f2fe55f89a62")
+        definitions = list(ET.parse(ROOT / "server/conf/server/defs/GameObjectDef.xml").getroot())
+        historical = [[(e.tag, e.text) for e in d] for d in definitions[:1350]]
+        self.assertEqual(hashlib.sha256(json.dumps(historical, separators=(",", ":")).encode()).hexdigest(),
+                         "90f69d8c56bf53dfd1b630926bd9e2e38914f28e5419676c7e93e649f0ce8ce6")
+        expected = (
+            ("Stone window", "sm_stone_window", 236, 190, ((-40,40),(-177,-40),(-56,-45)),
+             "f045b0e8c7ef6c2d1279a6623adfa882b470ea68dbb536cae765859ea8056779"),
+            ("Stained glass window", "sm_stained_glass_window", 356, 272, ((-34,34),(-190,-33),(-60,-51)),
+             "3b5ae950db76393c2a3288c9f51205051f80c1cf0cf75c54682088d1a54350b6"),
+            ("Stone arrowslit", "sm_stone_arrowslit", 162, 133, ((-24,24),(-190,-33),(-60,-51)),
+             "550dff4184ed6d770dc58db9b78819663cf7ad3e4ead62fa00792838d6870281"),
+        )
+        for i,(name,model,count,faces,bounds,digest) in enumerate(expected):
+            with self.subTest(model=model):
+                self.assertEqual(int.from_bytes(entries[512+i][0][:4], "big"), native.name_hash(model+".ob3"))
+                data = entries[512+i][1]
+                self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
+                self.assertEqual(struct.unpack(">HH",data[:4]), (count,faces))
+                axes = [struct.unpack(">"+"h"*count,data[4+d*count*2:4+(d+1)*count*2]) for d in range(3)]
+                self.assertEqual(tuple((min(a),max(a)) for a in axes), bounds)
+                if model == "sm_stained_glass_window":
+                    # Nine unchanged 12-vertex stones, then recessed backing;
+                    # all coloured cells, including the sword, share one glass plane.
+                    self.assertEqual(set(axes[2][108:126]), {-59,-58})
+                    self.assertEqual(set(axes[2][126:]), {-57,-55})
+                offset = 4+count*6
+                sizes = data[offset:offset+faces]
+                materials = struct.unpack(">"+"h"*faces*2,data[offset+faces:offset+faces*5])
+                self.assertTrue(all(c<0 for c in materials), "No texture slot allocation")
+                self.assertEqual(materials[:faces], materials[faces:])
+                self.assertEqual(data[offset+faces*5:offset+faces*6], bytes(faces))
+                payload = data[offset+faces*6:]
+                width = 1 if count<256 else 2
+                self.assertEqual(len(payload),sum(sizes)*width)
+                indices = list(payload) if width==1 else list(struct.unpack(">"+"H"*sum(sizes),payload))
+                self.assertEqual(max(indices),count-1)
+                cursor=0
+                for size in sizes:
+                    polygon=indices[cursor:cursor+size]
+                    self.assertTrue(all(0<=j<count for j in polygon))
+                    a,b,c=polygon[:3]
+                    u=[axes[d][b]-axes[d][a] for d in range(3)]
+                    v=[axes[d][c]-axes[d][a] for d in range(3)]
+                    self.assertTrue(any((u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])),
+                                    "No degenerate native face")
+                    cursor+=size
+                definition = definitions[1350+i]
+                self.assertEqual([definition.findtext(k) for k in
+                                  ("name","objectModel","type","width","height","groundItemVar","command1","command2")],
+                                 [name,model,"0","1","1","0","WalkTo","Examine"])
+
 if __name__ == "__main__":
     unittest.main()
