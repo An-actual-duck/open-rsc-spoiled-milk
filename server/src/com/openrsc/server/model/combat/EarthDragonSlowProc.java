@@ -44,8 +44,7 @@ public final class EarthDragonSlowProc {
 		if (rolledDamage > 0) {
 			auxiliaryTrueDamage.apply(rolledDamage);
 		}
-		target.applyDragonEarthAttackSpeedDebuff(
-			ATTACK_SPEED_DEBUFF_PERCENT);
+		com.openrsc.server.content.Slow.apply(target, 10, com.openrsc.server.content.Slow.CAP_ONE);
 		return true;
 	}
 }

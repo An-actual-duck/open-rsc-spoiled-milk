@@ -23,10 +23,13 @@ public final class BloodveldCombat {
 		return mob instanceof Npc && mob.getConfig().WANT_MYWORLD && mob.getID() == NPC_ID;
 	}
 	public static boolean attackReady(Mob mob) {
-		return mob.getWorld().getServer().getCurrentTick() >= mob.<Long>getAttribute(NEXT, -1L);
+		com.openrsc.server.model.combat.CombatParticipantSnapshot lifetime = mob.getAttribute(NEXT + "_lifetime", null);
+		return lifetime == null || !lifetime.matches(mob)
+			|| mob.getWorld().getServer().getCurrentTick() >= mob.<Long>getAttribute(NEXT, -1L);
 	}
 	public static void recordAttack(Mob mob, int ticks) {
-		mob.setAttribute(NEXT, mob.getWorld().getServer().getCurrentTick() + ticks);
+		mob.setAttribute(NEXT + "_lifetime", com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(mob));
+		mob.setAttribute(NEXT, mob.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(mob, ticks));
 	}
 	public static void lifesteal(Mob source, int damage) {
 		if (!isBloodveld(source) || source.isRemoved() || source.getLevel(Skill.HITS.id()) <= 0 || damage <= 0) return;

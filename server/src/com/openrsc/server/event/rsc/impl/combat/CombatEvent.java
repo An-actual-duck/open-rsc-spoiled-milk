@@ -458,6 +458,8 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private int getAdjustedMeleeDelayTicks(Mob hitter, int baseDelayTicks) {
+		// Reciprocal PvP cadence is intentionally not a Slow consumer: its shared
+		// timer would otherwise delay the opponent. PvM uses actor-owned events.
 		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.terrorDagger(hitter)) return 1;
 		double multiplier = getCombatSpeedMultiplier(hitter);
 		if (multiplier == 1.0D) {
@@ -486,9 +488,6 @@ public class CombatEvent extends GameTickEvent {
 		if (hitter.isPlayer()) {
 			Player player = (Player) hitter;
 			multiplier = getWeaponSpeedMultiplier(player) * player.getPotionAttackSpeedMultiplier() * player.getLeatherSetAttackSpeedMultiplier();
-		}
-		if (hitter.getEarthAttackSpeedDebuffPercent() > 0) {
-			multiplier *= Math.max(0.10D, 1.0D - (hitter.getEarthAttackSpeedDebuffPercent() / 100.0D));
 		}
 		return multiplier;
 	}

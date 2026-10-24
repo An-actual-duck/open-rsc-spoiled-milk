@@ -774,7 +774,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(42, "", "Teleport spells charge before moving you"));
 				skillMenuEntries.add(new SkillMenuItem(33, "", "Unsteady lowers average damage for 5 attacks"));
 				skillMenuEntries.add(new SkillMenuItem(32, "", "Dampen lowers max damage for 5 attacks"));
-				skillMenuEntries.add(new SkillMenuItem(34, "", "Slow lowers attack speed for 5 attacks"));
+				skillMenuEntries.add(new SkillMenuItem(34, "", "Slow: +1 combat tick per 10 power; cleanses 2 power every 4 ticks"));
 				skillMenuEntries.add(new SkillMenuItem(31, "", "Scorch lowers defense for 5 attacks"));
 				skillMenuEntries.add(new SkillMenuItem(41, "", "Withering combines all elemental debuffs"));
 				skillMenuEntries.add(new SkillMenuItem(701, "", "Spells using mind runes will do damage equal to chaos runes"));

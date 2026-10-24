@@ -125,7 +125,7 @@ def main() -> None:
     expect_contains(PLAYER_PATH, "syncGiantMightEquipmentBonuses()", "player giant skill synchronization")
     expect_contains(PLAYER_PATH, "getEquipmentAdjustedNormalLevel", "player equipment-adjusted normal level")
     expect_contains(PLAYER_PATH, "getPersistedSkillLevel", "player equipment-free persisted level")
-    expect_contains(PLAYER_PATH, "target.applyEarthAttackSpeedDebuff(6)", "earth giant debuff")
+    expect_contains(PLAYER_PATH, "Slow.apply(target, 10, com.openrsc.server.content.Slow.CAP_ONE)", "earth giant shared Slow")
     expect_contains(PLAYER_PATH, "target.applyWaterMaxHitDebuff(10)", "water giant debuff")
     expect_contains(PLAYER_PATH, "target.applyFireDefenseDebuff(6)", "fire giant debuff")
     expect_not_contains(PLAYER_PATH, "activateOgreStaggeringBlowCooldown()", "ogre cooldown")
@@ -227,11 +227,11 @@ def main() -> None:
                     "auxiliaryTrueDamage.apply(rolledDamage);",
                     "Earth Dragon event-owned true-damage callback")
     expect_contains(EARTH_DRAGON_SLOW_PROC_PATH,
-                    "target.applyDragonEarthAttackSpeedDebuff(\n\t\t\tATTACK_SPEED_DEBUFF_PERCENT);",
+                    "Slow.apply(target, 10, com.openrsc.server.content.Slow.CAP_ONE);",
                     "Earth Dragon slow debuff")
     expect_before(EARTH_DRAGON_SLOW_PROC_PATH,
                   "auxiliaryTrueDamage.apply(rolledDamage);",
-                  "target.applyDragonEarthAttackSpeedDebuff(",
+                  "Slow.apply(target, 10,",
                   "Earth Dragon damage-before-debuff policy")
     expect_contains(RED_DRAGON_FIRE_PROC_PATH,
                     "if (!source.hasFullRedDragonSet())",
@@ -337,7 +337,7 @@ def main() -> None:
                     "target.applyDragonWaterMaxHitDebuff(",
                     "KBD water debuff")
     expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
-                    "target.applyDragonEarthAttackSpeedDebuff(",
+                    "Slow.apply(target, 12, com.openrsc.server.content.Slow.CAP_TWO)",
                     "KBD earth debuff")
     expect_contains(KING_BLACK_DRAGON_BREATH_FOLLOWUP_PATH,
                     "target.applyDragonFireDefenseDebuff(",
@@ -369,7 +369,7 @@ def main() -> None:
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Goblin's Tenacity: 5% chance for lethal damage to leave you at 1 Hit.", "goblin leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Bear's Maul: melee hits become two hits for 60% damage each.", "bear leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Giant's Might: +10% of base Melee and Ranged levels.", "giant leather examine description")
-    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.", "earth giant leather examine description")
+    expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).", "earth giant leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.", "water giant leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.", "fire giant leather examine description")
     expect_contains(CLIENT_ENTITY_HANDLER_PATH, "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.", "magic spider leather examine description")
@@ -383,7 +383,7 @@ def main() -> None:
     expect_item_descriptions(range(1850, 1855), "Bear's Maul: melee hits become two hits for 60% damage each.", "bear leather generated item examine")
     expect_item_descriptions(range(1875, 1880), "Giant's Might: +10% of base Melee and Ranged levels.", "giant leather generated item examine")
     expect_item_descriptions(range(1890, 1895), "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.", "magic spider leather generated item examine")
-    expect_item_descriptions(range(1895, 1900), "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.", "earth giant leather generated item examine")
+    expect_item_descriptions(range(1895, 1900), "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).", "earth giant leather generated item examine")
     expect_item_descriptions(range(1900, 1905), "Water Giant's Might: +10% base Melee/Ranged; 20% chance to lower max hit by 10%.", "water giant leather generated item examine")
     expect_item_descriptions(range(1915, 1920), "Fire Giant's Might: +10% base Melee/Ranged; 20% chance to lower defense by 6%.", "fire giant leather generated item examine")
     expect_not_contains(COMBAT_FORMULA_PATH, "getGiantMightSkillMultiplier()", "legacy formula-only giant multiplier")

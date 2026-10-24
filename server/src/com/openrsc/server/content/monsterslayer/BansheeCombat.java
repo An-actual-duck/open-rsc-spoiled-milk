@@ -38,10 +38,13 @@ public final class BansheeCombat {
 		if (wail && dealt > 0 && target.isPlayer()) ((Player) target).message(WAIL_MESSAGE);
 	}
 	public static boolean attackReady(Mob source) {
-		return source.getWorld().getServer().getCurrentTick() >= source.getAttribute(NEXT_ATTACK, -1L);
+		com.openrsc.server.model.combat.CombatParticipantSnapshot lifetime = source.getAttribute(NEXT_ATTACK + "_lifetime", null);
+		return lifetime == null || !lifetime.matches(source)
+			|| source.getWorld().getServer().getCurrentTick() >= source.<Long>getAttribute(NEXT_ATTACK, -1L);
 	}
 	public static void recordAttack(Mob source, int ticks) {
-		source.setAttribute(NEXT_ATTACK, source.getWorld().getServer().getCurrentTick() + ticks);
+		source.setAttribute(NEXT_ATTACK + "_lifetime", com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(source));
+		source.setAttribute(NEXT_ATTACK, source.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(source, ticks));
 	}
 	public static void applyEarplugs(Player player) {
 		player.getCache().store(PROTECTION, player.getWorld().getServer().getGameClock().currentTimeMillis() + PROTECTION_MILLIS);

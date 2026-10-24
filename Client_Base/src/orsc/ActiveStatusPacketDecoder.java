@@ -92,7 +92,7 @@ public final class ActiveStatusPacketDecoder {
 			return stableIdentity == iconItemId && rank == 0
 				&& counterKind == 0 && remainingCounter == 0;
 		}
-		if (identityKind == 2) return (stableIdentity >= 1 && stableIdentity <= 3) && rank == 0
+		if (identityKind == 2) return (stableIdentity >= 1 && stableIdentity <= 5) && rank == 0
 			&& counterKind == 0 && remainingCounter == 0;
 		if (identityKind != 1 || rank <= 0 || counterKind < 0 || counterKind > 2) {
 			return false;

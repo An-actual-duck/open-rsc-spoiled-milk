@@ -78,6 +78,7 @@ public class RangeEvent extends GameTickEvent {
 
 		long currentTick = player.getWorld().getServer().getCurrentTick();
 		if (player.getAttribute("can_range_again", 0L) > currentTick) return;
+		if (!com.openrsc.server.content.Slow.ready(player, com.openrsc.server.content.Slow.Cadence.RANGED)) return;
 
 		final int weaponId = player.getRangeEquip();
 
@@ -206,6 +207,7 @@ public class RangeEvent extends GameTickEvent {
 		deliveredFirstProjectile = true;
 
         final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(player, delay);
+		com.openrsc.server.content.Slow.commit(player, com.openrsc.server.content.Slow.Cadence.RANGED, adjustedDelay);
         setDelayTicks(adjustedDelay);
 
         player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);

@@ -478,8 +478,9 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			final int layerHits = layerTarget.getLevel(Skill.HITS.id());
 			final ProjectileEvent crossLayer = projectile(
 				harness, layerSource, layerTarget, 3);
-			layerTarget.setLocation(Point.location(
-				901, LegacyPackedPointAdapter.LEVEL_STRIDE + 700), true);
+			// This is an explicit domain transition, not ordinary native movement.
+			layerTarget.setWorldLocation(LegacyPackedPointAdapter.fromLegacyPoint(Point.location(
+				901, LegacyPackedPointAdapter.LEVEL_STRIDE + 700)));
 			crossLayer.action();
 			assertEquals(layerHits, layerTarget.getLevel(Skill.HITS.id()),
 				"a signed-level change must suppress impact");
@@ -849,8 +850,8 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 				LegacyPackedPointAdapter.LEVEL_STRIDE + 780);
 			layerSource.setLocation(Point.location(920,
 				LegacyPackedPointAdapter.LEVEL_STRIDE + 780), true);
-			layerTarget.setLocation(Point.location(921,
-				LegacyPackedPointAdapter.LEVEL_STRIDE + 780), true);
+			layerTarget.setWorldLocation(LegacyPackedPointAdapter.fromLegacyPoint(Point.location(921,
+				LegacyPackedPointAdapter.LEVEL_STRIDE + 780)));
 			pairedLayerChange.action();
 			assertEquals(layerHits,
 				layerTarget.getLevel(Skill.HITS.id()),
@@ -1143,6 +1144,11 @@ final class CurrentCombatProjectileLifecycleCharacterization {
 			.removeEnemyProjectileFenceCollision(CollisionFlag.WALL_EAST);
 		harness.world().getTile(fenceX - 1, y)
 			.removeEnemyProjectileFenceCollision(CollisionFlag.WALL_WEST);
+		// Removing the authored railing removes its ordinary wall flags too.
+		harness.world().getTile(fenceX, y).removeTerrainCollision(CollisionFlag.WALL_EAST);
+		harness.world().getTile(fenceX - 1, y).removeTerrainCollision(CollisionFlag.WALL_WEST);
+		harness.world().getTile(fenceX, y).initializeTerrainCollision();
+		harness.world().getTile(fenceX - 1, y).initializeTerrainCollision();
 	}
 
 	private static void familyAndSiblingEvidence(

@@ -1618,7 +1618,7 @@
     },
     {
       "id": 1895,
-      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).",
       "meleeDefense": 3,
       "rangedDefense": 1,
       "magicDefense": 1,
@@ -1628,7 +1628,7 @@
     },
     {
       "id": 1896,
-      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -1638,7 +1638,7 @@
     },
     {
       "id": 1897,
-      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).",
       "meleeDefense": 6,
       "rangedDefense": 2,
       "magicDefense": 1,
@@ -1648,7 +1648,7 @@
     },
     {
       "id": 1898,
-      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).",
       "meleeDefense": 10,
       "rangedDefense": 2,
       "magicDefense": 2,
@@ -1658,7 +1658,7 @@
     },
     {
       "id": 1899,
-      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to slow attack speed by 6%.",
+      "description": "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply 10 Slow power (cap 12).",
       "meleeDefense": 12,
       "rangedDefense": 3,
       "magicDefense": 3,
