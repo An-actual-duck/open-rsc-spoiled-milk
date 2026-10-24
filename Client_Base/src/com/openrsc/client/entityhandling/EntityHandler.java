@@ -10199,6 +10199,7 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Tattered banner", "A faded crest on torn and weathered cloth", "WalkTo", "Examine", 0, 1, 1, 0, "sm_tattered_banner", ++i)); //1346
 		objects.add(new GameObjectDef("Smashed mirror", "Broken glass remains in a battered wooden frame", "WalkTo", "Examine", 0, 1, 1, 0, "sm_smashed_mirror", ++i)); //1347
 		objects.add(new GameObjectDef("Hanging cage", "An empty iron cage hangs from a short rusted chain", "WalkTo", "Examine", 0, 1, 1, 0, "sm_hanging_cage", ++i)); //1348
+		objects.add(new GameObjectDef("Pointed window", "A dark window in a pointed stone frame", "WalkTo", "Examine", 0, 1, 1, 0, "sm_pointed_window", ++i)); //1349
 	}
 
 	public static void load(boolean loadMembers) {
