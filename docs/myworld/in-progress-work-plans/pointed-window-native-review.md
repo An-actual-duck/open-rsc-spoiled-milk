@@ -8,14 +8,18 @@ this document does not authorize a public release or map placement.
 
 ## Provenance and binding
 
-The Model Studio relief-002 candidate is a derivative of local authentic RSC
+The Model Studio relief-003 candidate is a derivative of local authentic RSC
 texture27, `authentic-sprites/textures/id-03252.png`, SHA256
 `5feb30efd0b541068919023ba1069211b1635a7f022a731b20217df1fd510473`.
 It is not original artwork. Only the pointed frame, dark pane and coarse central
 pane tones are adapted; surrounding bricks are excluded. The reviewed source
 is kept outside Git in the separate Model Studio workspace at
-`/home/justin/rsc-model-studio-ai-1/projects/local/pointed-window-relief-002/`.
-Authoring exact READY commit: pending final authoring handoff.
+`/home/justin/rsc-model-studio-ai-1/projects/local/pointed-window-relief-003/`.
+Authoring exact READY commit: `d65c3eac8daa5b9d87508e6b441d1da63b2e631d`.
+Final003 source bytes are identical to the002 native proof inputs;003 updates
+validation provenance. Authoring37tests and independent saved-Blender inspection
+passed, including closed outward components, native nondegeneracy and no
+positive-area coplanar face overlap.
 
 Scenery1349, **Pointed window**, uses model `sm_pointed_window`, type0,
 1×1, groundItemVar0, WalkTo/Examine. Server XML and client definitions match.
