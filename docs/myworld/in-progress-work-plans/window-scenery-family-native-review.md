@@ -1,10 +1,11 @@
-# Stone window scenery family — private review candidates
+# Stone window scenery family — owner-approved assets
 
 The owner approved pointed scenery1349 in the private OpenGL client on
 October24,2026, liked its chunky frame/sill, and requested the remaining window
-styles. The owner subsequently approved the standard window and arrowslit in the private
-OpenGL game. Only the revised stained-glass motif remains pending review: it
-must depict a sword within the glass rather than a physical sword in front.
+styles. The owner subsequently approved the standard window and arrowslit,
+then approved revised stained004 in the private OpenGL game on October24,2026:
+"yep that's better, these can all be added". All four scenery styles are now
+owner-approved, including the sword depicted within the stained glass.
 No existing wall or map placement is replaced.
 
 ## Scope and game ownership
@@ -131,8 +132,9 @@ Original family evidence is under
 evidence is under `output/stained-glass-inset-correction/wall<height>/`.
 It includes front/back and wall-only PNGs plus `native-proof.log`. The standard
 192log deliberately ends in an assertion failure after recording every view.
-The approved pointed192failure is preserved in the same output tree. OpenGL owner approval remains pending only for revised stained004; standard
-and arrowslit are already owner-approved.
+The approved pointed192failure is preserved in the same output tree. The owner subsequently approved revised stained004 in private OpenGL, completing
+approval of all four styles. This does not fix or invalidate the measured
+192-unit software-rasterizer failures above.
 
 ## Reproduction and regression checks
 
@@ -177,5 +179,22 @@ The previous archive and comparison proof are preserved under
 004 passes all four275-unit front/rear views, with zero rear differences. Its
 192-unit rear check deliberately fails and records all directions; the failure
 must not be described as passing or silently classified as an outside-wall
-silhouette. The manager has reviewed the275-unit front appearance and will
-stage the exact asset for the owner's OpenGL review at both wall heights.
+silhouette. The manager staged the exact asset for private OpenGL review, and the owner
+approved004 on October24,2026. The measured192-unit software limitation remains
+known; owner approval must not be reported as a software-rasterizer fix.
+
+
+## Maintained integration and discovery
+
+Owner acceptance covers pointed1349, standard1350, revised stained1351 and
+arrowslit1352 as game-owned scenery. The manager may integrate this exact
+reviewed family and verify normal server/client content discovery. The editor
+must find the model archives and matching definitions from Core; no model-ID
+roster, bundled window asset or special editor implementation is authorized.
+Existing editor projects may need their ordinary content refresh to see newly
+integrated scenery. Private comparison placements do not become tower or live
+map placements automatically.
+
+This owner acceptance is not authorization to publish a player release, stop or
+restart the public server, or deploy these assets live. The public-server
+shutdown gate and normal release/integration checks remain applicable.
