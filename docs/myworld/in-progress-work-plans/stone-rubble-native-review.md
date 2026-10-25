@@ -21,14 +21,14 @@ no positive-area coplanar face overlap and support beneath upper fragments.
 Scenery **1353**, **Stone rubble**, model `sm_stone_rubble`, type 1, 1×1,
 groundItemVar 0, WalkTo/Examine. Matching client and server definitions are
 appended after approved 1352. It blocks ground movement using ordinary scenery
-collision. The existing low-model classification is extended alongside
-`sm_collapsed_wall`: it adds no combat-projectile cover for either player-allied
-or enemy ranged/magic attacks. No new mechanic, interaction or loot is added.
+collision. Existing ordinary-scenery policy already adds no combat-projectile cover for
+either player-allied or enemy ranged/magic attacks. The name/model requires
+no structural-wall exception or special whitelist. No new mechanic, interaction or loot is added.
 
-The only changed server runtime source is
-`server/src/com/openrsc/server/model/CombatProjectileCollision.java`; the manager
-must stage/rebuild that class for private gameplay checks along with the XML,
-client definition and model archive. No editor model roster or bundled asset
+No server runtime source is changed; `CombatProjectileCollision.java` remains
+byte-identical to the starting main revision. Core stages the XML, client
+definition and model archive for private gameplay checks without a new
+collision implementation or server-code rebuild. No editor model roster or bundled asset
 is introduced: the editor should discover finished game-owned content normally.
 
 ## Native conversion, dimensions and preservation

@@ -33,7 +33,7 @@ public final class CombatProjectileCollision {
 
 		// Low original masonry rubble blocks walking, not projectiles. Its useful
 		// display name contains "wall", but it is not an upright structural wall.
-		if ("sm_collapsed_wall".equals(model) || "sm_stone_rubble".equals(model)) {
+		if ("sm_collapsed_wall".equals(model)) {
 			return Cover.NONE;
 		}
 
