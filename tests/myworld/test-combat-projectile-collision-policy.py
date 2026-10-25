@@ -145,6 +145,12 @@ require(
     "Rangers Guild railing boundary definition changed",
 )
 
+require(
+    [field(definitions[1353], key) for key in ("type", "width", "height", "groundItemVar")]
+    == ["1", "1", "1", "0"],
+    "Stone rubble must retain ordinary one-tile ground-blocking scenery semantics",
+)
+
 classification_fixtures = "".join(
     [
         fixture(0, "NONE"),  # solid pine tree
@@ -161,6 +167,7 @@ classification_fixtures = "".join(
         fixture(951, "ENEMY_ONLY_FENCE"),  # type-0 fence
         fixture(1000, "NONE"),  # open chest is ordinary scenery
         fixture(1339, "NONE"),  # collapsed masonry is low projectile-transparent rubble
+        fixture(1353, "NONE"),  # new stone rubble blocks walking, not ranged/magic
         fixture(1340, "NONE"),  # broken table
         fixture(1341, "NONE"),  # destroyed barrel
         fixture(1342, "NONE"),  # fallen pillar
@@ -212,6 +219,16 @@ public final class CombatProjectileCollisionHarness {{
         tile.addBlockingScenery();
         require((tile.getCombatProjectileCollisionMask() & CollisionFlag.FULL_BLOCK_C) == 0,
             "ordinary solid scenery must not become combat projectile cover");
+
+        TileValue rubble = new TileValue();
+        rubble.initializeTerrainCollision();
+        rubble.overlay = 1;
+        rubble.addBlockingScenery();
+        require((rubble.traversalMask & CollisionFlag.FULL_BLOCK) != 0,
+            "low rubble must block ground traversal");
+        require(rubble.getCombatProjectileCollisionMask() == 0
+                && rubble.getEnemyProjectileCollisionMask() == 0,
+            "low rubble must allow both allied and enemy ranged/magic projectiles");
 
         tile.addTerrainCollision(CollisionFlag.WALL_NORTH);
         require((tile.getCombatProjectileCollisionMask() & CollisionFlag.WALL_NORTH) == 0,
