@@ -19,19 +19,34 @@ private gameplay acceptance remains separate. The launch twelve-spell Cleric
 book is already shipped; its later enemy-debuff/Unholy expansion remains design
 work. See the governing Cleric concept and Slayer equipment/coating design.
 
-The October24 readiness review also identified preserved antidote work outside
-main (`4d98e17833135ae3f150f7ad953099b184fe91d1`), including the Titan Steel
-poison correction, and pending Slayer art/content and Balrog splash-death
-handoffs. These need focused reconciliation, not wholesale historical branch
-merges. New antidote egg acquisition is still an open content decision.
+### Owner clarification: Slayer completion and release separation
 
-Other recommended release work is the deferred damage-element/effect audit,
-ordinary-player acquisition/progression and economy checks, and private
-death/logout/combat/travel plus update/restore acceptance. Ante remains a
-confirmed but unimplemented larger feature with unresolved activation values;
-whether it belongs in this release is a separate owner scope decision.
-These recommendations are planning inputs, not authorization to start every
-stream or to release/restart the public server.
+Most of the Slayer content has already been approved and tested. It was kept
+separate so unrelated fixes could be released while the tower was being built.
+Presence on a preserved branch or absence from current main is not evidence of
+unfinished implementation or missing owner approval. Do not turn release
+assembly into another broad content-development or reapproval pass.
+
+The two principal remaining Slayer pieces are:
+
+1. **Slayer Tower construction and final NPC placement**, owned by the owner in
+   the editor, followed by Core's planned door/rank bindings and final testing.
+2. **The axe-based Slow coating**, including its remaining design decisions and
+   implementation on the reconciled Slow foundation.
+
+Assemble the approved content into a coherent release candidate and run normal
+integration/migration checks without silently replacing it with historical code.
+Preserved approved work includes the antidote lineage
+`4d98e17833135ae3f150f7ad953099b184fe91d1`; concrete open decisions should be
+tracked in their subject plans rather than treating the whole system as new.
+Cleric expansion and the effect-standardization review remain separate planned
+work for the larger release push.
+
+**Ante is on hold while the owner reconsiders balance and whether the system can
+represent risk honestly.** Do not assign its implementation, foundation or
+simulator as current work. It is not a Slayer completion or beta requirement.
+The older proposal is preserved for reconsideration, not approved execution.
+No release planning note authorizes restarting or deploying the public server.
 
 ## Versioning
 

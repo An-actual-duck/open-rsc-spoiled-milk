@@ -4,6 +4,11 @@ This is the active planning list. Scope labels describe implementation size, not
 
 ## Recommended Next Work Order
 
+**October 24 owner update:** the remaining major Slayer pieces are the tower
+and final NPC placement, plus axe-based Slow coatings. Most other Slayer work
+is already approved/tested and was separated for fixes-only releases. Use the
+latest roadmap clarification when older ordering/status notes below disagree.
+
 This order was reconciled against published `main` and release `v0.2.75` on
 2026-08-21. Field-testing and balance changes should continue to be driven by
 observed play data rather than speculative rewrites.
@@ -20,9 +25,11 @@ observed play data rather than speculative rewrites.
    regression is waiting. It is the highest-value strategic backend stream,
    but not a reason to delay player-impacting fixes.
 5. Refine Ante's unresolved thresholds, caps, death/recovery transaction, and
-   LootShare math before authorizing implementation.
-6. Defer Monster Slayer unique rewards, broad content expansion, and another
-   large terrain project until live progression/economy feedback is available.
+   LootShare math only after the owner resumes the concept. Ante is on hold
+   (October 24, 2026); do not assign implementation, foundation or simulator
+   work, or make it a beta prerequisite.
+6. Complete the Slayer Tower/placement and axe-coating work, then assemble the
+   already approved Slayer content for release with normal integration checks.
 
 ## Implemented State
 

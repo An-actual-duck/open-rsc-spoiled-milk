@@ -2,7 +2,14 @@
 
 ## Status and Purpose
 
-Status: **CONFIRMED FEATURE DIRECTION; IMPLEMENTATION NOT STARTED.**
+Status: **ON HOLD — OWNER RECONSIDERING THE DESIGN; IMPLEMENTATION NOT STARTED.**
+
+Owner clarification, October 24, 2026: Ante remains interesting, but balancing
+it and representing risk/reward honestly need reconsideration. Preserve this
+proposal for reference. Its earlier confirmed-direction wording below does not
+authorize current implementation, foundation or simulator assignments. Ante is
+not a Slayer Tower completion or beta-release requirement. Resume only after
+the owner revisits the design and establishes the desired scope.
 
 Ante replaces unavoidable PvM inventory loss with a player-authored risk
 contract. A player chooses which eligible unstackable inventory items they are
@@ -17,10 +24,10 @@ ordinary and rare drop rates:
   chances; and
 - death loses the selected Ante items while protecting non-Ante inventory.
 
-The governing product principle is **low risk, high grind; high risk, high
-reward**. Ante is definitely intended for implementation. Exact economy values
-and a few scope boundaries remain balance decisions, not reasons to weaken the
-confirmed feature.
+The previous proposal's governing product principle was **low risk, high grind;
+high risk, high reward**. This and the detailed rules below are preserved design
+history subject to the owner's reconsideration, not an implementation-ready
+contract for the current release.
 
 ## Confirmed Product Direction
 

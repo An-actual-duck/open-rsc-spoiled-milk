@@ -304,8 +304,11 @@ to every weapon. Exact axe subfamilies, tier coverage, special-weapon
 exceptions and interactions with existing coatings remain design decisions.
 This does not change the existing ordinary poisoned-weapon families.
 
-Finishing the coating is an explicit goal for the major release after the
-Slayer Tower. Recipe and application decisions below still need resolution;
+The owner clarified that the two main missing pieces of the otherwise approved
+and tested Slayer content are the tower/final NPC placement and this coating.
+Finishing the coating is an explicit release goal. Release-separated approved
+equipment, sprites and encounters do not need another broad development or
+reapproval pass. Recipe and application decisions below still need resolution;
 this note does not authorize inventing their balance values.
 
 **Historical examples below are superseded for the existing combat Slow foundation.**
