@@ -76,7 +76,8 @@ proposal checkpoint.
 
 Definitions merged in current MyWorld order: `ItemDefs.json` +
 `ItemDefsCustom.json` + generated `ItemDefsMyWorld.json`. Full JSON/CSV evidence
-will accompany the independent coverage checkpoint. MO = explicit melee offense;
+accompanies the independent coverage checkpoint; see
+[battleaxe-coatings-phase1-review.md](battleaxe-coatings-phase1-review.md). MO = explicit melee offense;
 A/P = legacy aim/power, retained as authored. All require skill 0 (Melee), main
 hand slot 4, wearable mask 16. Speed **category** 3 is neutral 1.0 multiplier;
 normal player PvM cadence is 3 ticks before armor/potion/set modifiers and Slow.
@@ -117,8 +118,7 @@ from `10-melee-weapons.json`, `15-black-and-white-weapons.json`,
 `49-equipment-economy.json`, `50-exalted-rune.json`. Future mapping should be
 one reviewed data table generating server/client forms, source IDs and sprites;
 allocate appended IDs against current definitions, not historical free slots.
-No IDs allocated here. Client base palettes: bronze FF6619, iron EEDD DD
-(spelling rendered numerically in coverage JSON), steel EEEEEE, mithril 99B3CC,
+No IDs allocated here. Client base palettes: bronze FF6619, iron EEDDDD, steel EEEEEE, mithril 99B2CC,
 adamantite B2CC99, rune 00FFFF, black 303030, tin B7C9D9, copper C86A2B,
 titan 8EA6BB, orichalcum 5A3F7D, white E7E2D6, grey 9EA59F,
 dragon FF0044; Exalted uses EXALTED_RUNE_COLOR. Numeric extraction in coverage
@@ -209,9 +209,9 @@ size plus nearest-neighbor zoom. Isolated output candidates are not usable items
 
 | Coverage | Required review artifact | Phase1 status |
 |---|---|---|
-| 15 inventory/ground forms | Base/candidate pairs at1× and4×, source/palette manifest | Planned isolated candidates |
-| 3/2/1 coating doses | Same bottle silhouette, readable fill levels | Planned concept candidates |
-| Held family | Every stored battleaxe frame, mirrored directions, attack frames, palette per tier | Read-only archive coverage pending |
+| 15 inventory/ground forms | Base/candidate pairs at1× and4×, source/palette manifest | Completed isolated candidates; see review package |
+| 3/2/1 coating doses | Same bottle silhouette, readable fill levels | Completed3/2/1 dose concepts; review required |
+| Held family | Every stored battleaxe frame, mirrored directions, attack frames, palette per tier | All18 stored frames ×15 palettes, plus mirrors; see limitations |
 | Equipped composition | Hand gaps, body overlap, directional layer order | Only if existing offline tooling supports; never fabricated acceptance |
 | Archives/IDs | Before/after hashes, unrelated entries byte-identical | No production archive changes planned in Phase1 |
 
