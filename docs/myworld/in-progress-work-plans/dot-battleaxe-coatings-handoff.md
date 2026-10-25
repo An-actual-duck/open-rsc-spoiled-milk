@@ -135,3 +135,40 @@ changed files, approved design reference, complete before/after battleaxe matrix
 IDs/assets and provenance, reproducible commands/results, visual preview paths,
 known limitations and remaining owner gameplay/visual checks. Stop at READY;
 Core will independently review, integrate and arrange private testing.
+
+## Owner feedback after Phase 1 — October 25, 2026
+
+Reviewed Phase 1 handoff: `b41d37ee22cf9af21e3c3429dfb96ed6a0a96cef`.
+This feedback supersedes conflicting proposals, not unrelated undecided choices.
+
+- Recipe yield is **one single-use dose**, sufficient for **one weapon only**.
+  Do not produce three doses or retain three-dose economy assumptions. Proposed
+  bottle dose concepts are candidates, not a requirement for additional doses.
+- This remains a **primarily Slow coating with secondary poison**, not Slow-only.
+  The owner explicitly rejected compensating for weak low-tier poison through
+  a minimum effective damage, minimum application or minimum poison cap.
+- Compare against the actual standard weapon poison payload for each material.
+  Use approximately half standard poison strength: with today's standard tier×4
+  application and tier×10 cap, coating application is **tier×2**, cap **tier×5**.
+  Retain the established weapon proc policy and shared poison engine, including
+  target-owned accumulation, highest-source cap and ownership rules. No extra
+  independent poison pool or second proc roll.
+- Tin's application2/cap5 can legitimately deal no poison damage by itself.
+  Copper's application4/cap10 may be marginal. Multiple attackers/sources can
+  still contribute to a shared pool where existing retention rules permit it;
+  do not promise indefinite subthreshold persistence. Verify mixed-source
+  contribution before clearance with real poison pulse/cleanup paths.
+- Natural poison decay remains **3 power per 8 ticks**, with approved additive
+  cleansing bonuses and zero-clamping. Weapon tier changes poison application
+  and source cap, not pulse interval or natural decay.
+- Preserve the reviewed Slow proposal as the current recommendation: application
+  **4 power**, source cap **12 total**, natural decay **2 per 4 ticks**, all flat
+  across weapon tiers. The owner asked for clarification of these values; this
+  feedback approves weak poison and yield, and does not independently settle
+  every outstanding design choice. Shared 10-power thresholds, cap retention
+  and committed combat-deadline rules remain authoritative.
+
+Do not implement the manager's superseded recommendation to remove poison or
+add a minimum poison strength. Update the design/review documents to distinguish
+this explicit feedback from remaining proposals. Recipe economy must be revisited
+for the single-dose yield; other pending design approvals remain separate.
