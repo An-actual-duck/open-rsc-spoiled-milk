@@ -3,8 +3,9 @@
 The owner requested a pile of stone rubble on October 24, 2026. This is a new
 compact 1×1 low mound of irregular angular neutral-grey fragments, related to
 the approved collapsed wall's stone palette but without its laid-brick pattern.
-Owner in-game appearance approval remains pending. This worker prepares the
-exact reviewed candidate; it does not install it privately or change any map.
+The owner approved the private in-game appearance on October 24, 2026:
+"looks good, that can be added". The accepted model and definitions are the
+exact reviewed candidate; this worker does not install content or change maps.
 
 ## Original authoring and native binding
 
@@ -89,9 +90,14 @@ java -Xmx384m -Djava.awt.headless=true \
   Client_Base/Cache/video/models.orsc output/stone-rubble-native
 ```
 
-Native checks do not replace the owner's private OpenGL appearance and gameplay
-review. Core stages its separate fixture and performs that review before main
-integration. No public release, deployment or server restart is authorized by
-this handoff. Future editor content refresh should use normal discovery after
-approved game integration; private fixture placements never become tower/map
-placements automatically.
+Native checks did not replace private OpenGL review. Core staged a separate
+fixture and the owner approved the model on October 24, 2026. The manager may
+now integrate the exact accepted game-owned content and verify ordinary editor
+discovery. Existing editor projects can use **View → Refresh content** to find
+newly integrated scenery. No editor-specific asset bundle, ID roster or special
+implementation is needed.
+
+Private comparison placements remain separate from the owner's tower/map and
+are not copied to the live map automatically. This acceptance does not authorize
+a public release, deployment, shutdown or restart. Normal integration/release
+checks and the public-server shutdown gate remain applicable.
