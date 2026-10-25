@@ -296,6 +296,18 @@ Tail reward or active icon requirement is established.
 
 ## Future coating: collectible ingredients now, system later
 
+### Owner update — October 24, 2026
+
+The planned Slow/poison coating line is for **axes**. Its coated weapon
+variants must use that family rather than automatically extending the coating
+to every weapon. Exact axe subfamilies, tier coverage, special-weapon
+exceptions and interactions with existing coatings remain design decisions.
+This does not change the existing ordinary poisoned-weapon families.
+
+Finishing the coating is an explicit goal for the major release after the
+Slayer Tower. Recipe and application decisions below still need resolution;
+this note does not authorize inventing their balance values.
+
 **Historical examples below are superseded for the existing combat Slow foundation.**
 The approved rule is 10 power per tier, bounded source caps 12/22, and two power
 removed every four game ticks, affecting subsequent combat action cadence only.

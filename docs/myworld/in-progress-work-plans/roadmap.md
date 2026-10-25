@@ -4,6 +4,35 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
+## Latest owner planning update — October 24, 2026
+
+After completing the Slayer Tower, the owner intends a substantial push toward
+the next major release and may consider it the beta milestone. Beta designation
+and its final scope are not yet decided. The older milestone ordering and
+release-status statements below require reconciliation with current code; they
+are not automatic requirements to finish every planned region before beta.
+
+Explicit priorities are reliable poison/cleansing and shared Slow, the planned
+**axe-based Slow coatings**, and expansion of Cleric buff/debuff spells. Shared
+Slow is now integrated on main (`892701caf`) with offline regression acceptance;
+private gameplay acceptance remains separate. The launch twelve-spell Cleric
+book is already shipped; its later enemy-debuff/Unholy expansion remains design
+work. See the governing Cleric concept and Slayer equipment/coating design.
+
+The October24 readiness review also identified preserved antidote work outside
+main (`4d98e17833135ae3f150f7ad953099b184fe91d1`), including the Titan Steel
+poison correction, and pending Slayer art/content and Balrog splash-death
+handoffs. These need focused reconciliation, not wholesale historical branch
+merges. New antidote egg acquisition is still an open content decision.
+
+Other recommended release work is the deferred damage-element/effect audit,
+ordinary-player acquisition/progression and economy checks, and private
+death/logout/combat/travel plus update/restore acceptance. Ante remains a
+confirmed but unimplemented larger feature with unresolved activation values;
+whether it belongs in this release is a separate owner scope decision.
+These recommendations are planning inputs, not authorization to start every
+stream or to release/restart the public server.
+
 ## Versioning
 
 The numbered limited-alpha release sequence ended with
