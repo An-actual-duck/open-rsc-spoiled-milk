@@ -14788,4 +14788,10 @@
     <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_stone_arrowslit</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Stone rubble</name><description>A low heap of broken stone</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <type>1</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>sm_stone_rubble</objectModel>
+  </GameObjectDef>
 </GameObjectDef-array>
