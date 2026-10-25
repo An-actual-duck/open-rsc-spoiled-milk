@@ -12,6 +12,13 @@ and its final scope are not yet decided. The older milestone ordering and
 release-status statements below require reconciliation with current code; they
 are not automatic requirements to finish every planned region before beta.
 
+The owner's [immediate next-release goals](next-major-release-goals.md) now
+define the active content list: finish Slayer Tower/placement and axe coatings;
+expand Cleric buffs/debuffs through Curse sigils and underground ichor rivers;
+add Mystic Blue and Fierce Red boss dragons; add gem dragons beneath the
+Crafting Guild; and add the dual-form Corporeal Beast Slayer boss. The owner
+will supply remaining Cleric tiers and unresolved encounter details.
+
 Explicit priorities are reliable poison/cleansing and shared Slow, the planned
 **axe-based Slow coatings**, and expansion of Cleric buff/debuff spells. Shared
 Slow is now integrated on main (`892701caf`) with offline regression acceptance;
@@ -65,9 +72,9 @@ Current version progression:
 - Major-version changes are reserved for a later project-wide release stage
   and are not part of the current alpha plan.
 
-The project remains in alpha while the milestones below are being built.
-Finishing all four major milestones creates the checkpoint for deciding
-whether the project is ready to enter beta.
+The project remains in alpha until the owner decides to change its release
+stage. Evaluate beta against the active next-release goals and readiness gates;
+the older four-milestone expansion list is not an automatic prerequisite.
 
 ### Versioning Transition
 
@@ -407,8 +414,9 @@ Completion gate:
 
 ## Beta Readiness Checkpoint
 
-After all four major alpha milestones are complete, evaluate the project for a
-beta transition.
+After completing the active owner-defined release goals, evaluate the project
+for a beta transition. The older expansion milestones remain separate planning
+unless the owner adds them to the active release scope.
 
 Beta readiness should require:
 

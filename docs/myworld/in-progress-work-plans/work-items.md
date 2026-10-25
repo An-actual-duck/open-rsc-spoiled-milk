@@ -9,6 +9,12 @@ and final NPC placement, plus axe-based Slow coatings. Most other Slayer work
 is already approved/tested and was separated for fixes-only releases. Use the
 latest roadmap clarification when older ordering/status notes below disagree.
 
+The [immediate next-major-release goals](next-major-release-goals.md) also add
+Cleric Curse sigils/underground ichor and remaining buff/debuff tiers, Mystic
+Blue and Fierce Red boss dragons, Crafting Guild gem dragons, and the
+physical/spirit-form Corporeal Beast Slayer boss. That owner-defined list
+governs the current release scope; older backlogs are not automatic additions.
+
 This order was reconciled against published `main` and release `v0.2.75` on
 2026-08-21. Field-testing and balance changes should continue to be driven by
 observed play data rather than speculative rewrites.

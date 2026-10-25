@@ -9,9 +9,20 @@ Ordered implementation work is tracked in
 which may not invent answers to the unresolved sections below.
 
 The twelve-spell launch book and Blessing production foundation are complete
-and shipped in `v0.2.64`. This concept remains active only for later expansion,
-especially the planned Fountain of Ichor, Unholy sigils, and enemy-facing
-debuff spells.
+and shipped in `v0.2.64`. This concept remains active for later expansion,
+especially Curse sigils, underground ichor rivers, enemy-facing debuffs and
+the remaining buff/debuff tiers.
+
+**October 24, 2026 update:** the next-release direction is a **Curse sigil**
+dipped at fishing-spot-style interaction points along **purple ichor rivers
+beneath graveyards**, with a new dirt-wall asset showing ichor leakage.
+This supersedes the older standalone Fountain of Ichor location concept.
+Hostile debuffs are caster-centered area spells affecting **enemies only**,
+mirroring the spatial approach of support buffs. The owner will define the
+remaining buff and debuff tiers. See
+[immediate release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch).
+The older Unholy terminology/material recipes are preserved design history;
+their relationship to the Curse-sigil line needs an explicit decision.
 
 No spell list, numerical effect, production level, experience award, or
 resource quantity is settled unless it appears under **Confirmed Direction**.
@@ -168,16 +179,14 @@ skill.
   expression.
 - Secondary sigils are outside the first rollout. Their names, materials,
   imbuing method, production skill requirements, and exact costs remain open.
-- A future post-launch extension introduces a **Fountain of Ichor**. Using an
-  unblessed sigil on the fountain is presented in flavor text as "dipping" the
-  sigil in ichor and produces an **Unholy sigil**. Both unblessed stone and
-  unblessed silver sigils are eligible, preserving those two material tiers in
-  the Unholy family.
-- Unholy sigils are intended as resources for a later hostile branch of the
-  Cleric spellbook. Those spells target enemies and apply debuffs, in contrast
-  to the initial player-support roster. The fountain and Unholy family are not
-  part of the initial Cleric rollout and do not make hostile Cleric casting
-  reachable yet.
+- The next-release extension adds a **Curse sigil**, dipped in underground
+  ichor rivers rather than blessed at an ordinary altar. Fishing-spot-style
+  objects at the river edges provide the interaction. These areas sit beneath
+  graveyards and use purple water and ichor-leaking dirt-wall visuals.
+- Curse sigils support the hostile Cleric branch: caster-centered area debuffs
+  affecting enemies only. This is later expansion of the shipped support book.
+  Exact recipes/material tiers and the relationship to the earlier stone/silver
+  Unholy-sigil proposal remain open; no new item/cast is implemented by this note.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -1035,11 +1044,11 @@ on animation availability.
 - The eventual secondary-sigil catalog and how those lesser symbols are
   imbued. No secondary-sigil production path should be invented for the first
   rollout.
-- The Fountain of Ichor's location and access requirements; whether dipping
-  preserves, replaces, or ignores the source sigil's alignment; the exact
-  Unholy item identities; interaction batching, stackability, production-skill
-  requirements, XP, and any additional cost. Only the stone-and-silver input
-  families and their hostile-debuff purpose are confirmed.
+- Exact entrances/access for the ichor rivers beneath graveyards, Curse-sigil
+  materials and raw/dipped item identities, alignment behavior, interaction
+  batching, stackability, production-skill requirements, XP and additional cost.
+  The old stone/silver Unholy proposal must be reconciled explicitly with the
+  newer Curse-sigil direction rather than assumed to define its recipes.
 - Neither carving, blessing, nor casting awards Worship XP. Material inputs,
   one-to-one base carving quantity, level requirements, base Crafting/Blessing
   XP, Crafting batch interruption, altar transactionality, and inventory
@@ -1143,6 +1152,17 @@ primary ladder.
   version bump; authentic/legacy stat packet layouts remain unchanged.
 
 ## Decision Log
+
+### 2026-10-24: Curse sigils, graveyard ichor rivers and area debuffs
+
+The owner selected a new Curse sigil with an underground ichor-dipping route
+instead of altar blessing. River water will reuse the water tile recoloured
+purple, with fishing-spot-style interaction points along the banks. The new
+areas will be beneath graveyards and use an additional dirt-wall asset with
+ichor leaking from it. Debuffs apply in an area around the caster to enemies
+only. Remaining buff and debuff tiers will be supplied by the owner. This
+supersedes the older standalone fountain concept; exact materials, recipes,
+spell effects, eligibility and numerical progression remain to be designed.
 
 ### 2026-08-06: Deferred Fountain of Ichor and Unholy sigils
 
