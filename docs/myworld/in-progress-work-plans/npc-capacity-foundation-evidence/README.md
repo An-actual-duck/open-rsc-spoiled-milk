@@ -17,8 +17,11 @@ python3 tests/myworld/benchmark-npc-capacity-runtime.py --output /tmp/npc-curren
 python3 tests/myworld/test-layered-native-placement-runtime.py
 ```
 
-The last command has the separately documented inherited source-assertion failure.
-Do not bypass it or treat it as a new behavioral failure in this branch.
+At the original Dot handoff the last command had the inherited source-assertion
+failure preserved in known-baseline-failure.txt. Core subsequently corrected the
+assertion to require the actual maintained collision-facade path and passed all
+three tests, including all previously unreached assertions. No coverage was
+bypassed; see core-review-follow-up.txt and the main review report.
 
 ## Method
 
@@ -70,10 +73,14 @@ state and uncollected garbage and are snapshots rather than retained/peak values
 - offline-gate.txt: filtered PASS/build summary from the dedicated gate.
 - production-protocol.txt: latest stronger production/login/interaction fixture.
 - failure-first-client.txt: captured initial stale-chat and malformed-type failures.
-- known-baseline-failure.txt: exact inherited assertion evidence.
+- known-baseline-failure.txt: exact historical inherited assertion evidence.
+- core-review-follow-up.txt: baseline reproduction, complete repaired suite, hosted
+  profile failure-first check and independent Core gate result.
 - artifact-hashes.sha256: final source-built artifacts and neutral contract.
 
-The owner tower-copy/export gate is denied and pending explicit permission.
-There is no tower export artifact in this evidence package. Core private gameplay,
+The original Dot export denial remains historical evidence; Dot did not retry.
+Core later authorized a separately verified isolated owner-candidate copy. Its
+export/validation acceptance is tracked separately in the main review report;
+no owner export artifact is bundled in this worker evidence package. Core private gameplay,
 Toolkit import preview, real reconnect/picking and full network/movement cadence
 acceptance remain separate. See the main review document for the contract matrix.

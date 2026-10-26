@@ -3,8 +3,10 @@
 Starting HEAD: `96cdabf534a123b31db9c763d7a079d3ae812361`.
 Worker: `/home/justin/Core-Framework-ai-2`, `feat/npc-capacity-foundation`.
 The implementation and offline evidence are ready for a **Core-only review
-handoff**. The owner tower-copy/export check remains unapproved and unexecuted;
-this handoff does not certify that separate map/import/private-game gate.
+handoff**. At the original Dot handoff, the owner tower-copy/export check had not run;
+that report did not certify the separate map/import/private-game gate. Core
+subsequently authorized an isolated verified copy; current follow-up status is
+recorded below, without claiming uncompleted export/gameplay acceptance.
 No server/client was launched, map imported, owner data modified, main published,
 or deployment performed. Java fixtures call production methods without listeners
 or a gameplay/client loop.
@@ -62,9 +64,11 @@ setting. Successful authenticated entry remains a Core private-game check.
 Failure-first evidence includes five original registry failures, stale chat
 record desynchronization, and acceptance of unknown NPC update types. No test
 coverage was removed. The separately run native-placement suite has an inherited
-source assertion failure: its expected `nativeLayeredGameObjects.applyCollision`
-text is absent at both starting and current commits. Two other tests in that
-suite pass; later assertions in the failing method were not reached. See
+source assertion failure at the original Dot handoff: its expected
+`nativeLayeredGameObjects.applyCollision` text was absent at both starting and
+original READY commits. Two other tests passed then; later assertions were not
+reached. Core corrected this inherited assertion and subsequently passed the
+complete three-test suite, as documented below. See
 [evidence](npc-capacity-foundation-evidence/known-baseline-failure.txt).
 
 ## Measurements and practical limits
@@ -147,7 +151,9 @@ The final handoff is limited to Core code and offline evidence. Toolkit adaptati
 owner candidate export/validation and private gameplay remain explicit Core gates.
 The denied export source is:
 `/home/justin/RSC Development Toolkit/Projects/modern-session-bc36ad33-dc25-4129-b381-2827c0a793e4/saves/project-a398aa11-dedf-48cb-a1a3-ad9682cb3967`.
-Reconnection is not export approval. No retry occurred.
+Reconnection was not export approval and Dot did not retry. This remains the
+historical Dot boundary, not a prohibition on Core's subsequently authorized
+isolated-copy review described below.
 
 Checkpoint history before the final completion checkpoint:
 
@@ -158,3 +164,78 @@ Checkpoint history before the final completion checkpoint:
 EntityList retains immutable snapshot iterators and its specialized entity/index
 removal APIs. No broader bulk-collection mutation API or concurrent AI scheduling
 contract was introduced.
+
+
+## Core maintainer review corrections after original READY
+
+Core explicitly reassigned the stopped, clean worker at original Dot READY
+`513789291` on the same topic branch. These are additive review fixes; no earlier
+commits are rewritten and no concurrent implementation session is used.
+
+### Maintained native-placement collision authority
+
+Before editing, Core reproduced the inherited source-contract failure from
+`96cdabf534a123b31db9c763d7a079d3ae812361` using an isolated, read-only source
+snapshot. The original method fails at line556 expecting the direct call
+`nativeLayeredGameObjects.applyCollision(location, tile)`. The same expectation
+fails at original READY513789291. This baseline check invokes only the source
+contract method, not a server, map export or gameplay loop.
+
+The actual maintained path is:
+
+1. `RegionManager.getTile(WorldLocation)` delegates to `RuntimeMapAuthority`.
+2. RegionManager constructs that facade with the typed
+   `nativeLayeredGameObjects::applyCollision` callback.
+3. The facade materializes immutable native terrain into a `TileValue`, then
+   returns `registeredCollision.apply(location, tile)` before legacy fallback.
+
+The stale direct-call assertion now requires all three links, including the
+materialize/collision ordering and original typed location. It does not permit
+an alternate legacy shortcut or delete collision coverage. Existing functional
+registry checks for signed levels, footprints, blocking/projectile collision,
+replacement, retirement and generation-safe respawn remain intact. The updated
+source-contract method also passes against unchanged96cdab production sources,
+confirming that this is inherited test maintenance rather than a capacity runtime
+change. No production collision, map-authority or NPC behavior code is modified.
+
+The complete `test-layered-native-placement-runtime.py` suite now passes **3/3**,
+including every later assertion in the previously blocked method. It rebuilds
+the matching server and compiles/runs the real registry fixture. The job used
+bounded sequential Java heaps (Ant768MB, fixture512MB); no listeners or owner
+map operations were started. Logs are retained under
+`output/npc-capacity-core-review/`.
+
+### Paired maintained hosted release profile
+
+Core independently found that tracked `server/myworld-host.conf` still selected
+client10052 while the maintained expanded client and `myworld.conf` selected
+10053. Strict client enforcement would refuse that pair and the hosted profile
+would retain the old capacity default. The sole host configuration change is
+`client_version: 10052` → `client_version: 10053`; every other byte/setting is
+preserved. No live configuration or deployment is touched.
+
+The new focused `test-npc-capacity-profile-configs.py` first reproduced the stale
+hosted-version failure, then passed for both maintained profiles. It resolves
+both actual configured versions, strict enforcement and any capacity override
+against the generated production contract. Its small compiled fixture proves
+expanded default16384, accepted512-slot transient reserve and rejection at511,
+as well as server/client version pairing. The test is a fail-fast entry in
+`test-npc-capacity.sh`; it opens no server or account data and uses a128MB JVM.
+The canonical contract/generators and all Dot production server/client source
+remain unchanged.
+
+### Isolated owner-candidate acceptance status
+
+The earlier denied export is historical and was not retried by Dot. Core later
+reported a manager-authorized isolated copy of all13480files, with every file
+hash verified, at
+`/home/justin/.local/share/npc-capacity-core-review-zhiz2efh/owner-candidate-copy`.
+The original save remains untouched. Core independently completed
+`./scripts/test-npc-capacity.sh` with exit0, all dedicated fixtures and144/144
+combat scenarios; log:
+`/home/justin/.local/share/npc-capacity-core-review-zhiz2efh/independent-core-gate.log`.
+Artifact hashes were refreshed from that completed build without rebuilding
+again. Isolated-copy export/validation is still pending completion at this
+worker report; no export/import/private-game success is inferred here. The worker performs no
+owner-copy/export, map mutation or gameplay/server operation. Core records its
+independent results before final integration and owner acceptance.

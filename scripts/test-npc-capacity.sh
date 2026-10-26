@@ -3,6 +3,7 @@
 set -euo pipefail
 NPC_TASK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$NPC_TASK_ROOT"
+python3 tests/myworld/test-npc-capacity-profile-configs.py
 ./scripts/build-server.sh
 ./scripts/build-client.sh
 python3 tests/myworld/test-entity-list-safety.py
