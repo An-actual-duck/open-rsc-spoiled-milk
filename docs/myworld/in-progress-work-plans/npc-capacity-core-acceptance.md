@@ -56,3 +56,28 @@ No listener/server/client loop or account access was used for this validation.
 This resolves the isolated-copy/export/offline-candidate gate only. Actual game
 startup/population, user gameplay, paired Toolkit import preview/rollback and
 installed editor refresh are not claimed by this ledger yet.
+
+## Integrated private startup and Toolkit adapter review
+
+Maintained source-built server/client artifacts passed the independent integrated
+profile and production tests. Toolkit exact READY
+de018783e3cf46880f867c8f86295a09ab595bca was reviewed and integrated in its own
+repository. Its data-only paired-runtime probe against maintained Core main
+passed:16384 budget,65535 definition maximum,512 reserve,15872 authored budget;
+25 runtime identity observations,46 absence observations,14-file roof proof.
+No target classes are executed and no custom content roster was added.
+
+Private source archive:156e6697294b687c8af698ff8c240743871fe8bd.
+Private root:/home/justin/npc-capacity-private-6zev63w1.
+Its copied disposable review accounts and paired validated tower packages are
+isolated from owner projects and live accounts. Server started on localhost43615
+in its own terminal. Native replacement population reported4047NPCs,894ground
+items,28438scenery and979boundaries; no startup exception. Matching client
+connected and completed native scene activation. Logs/private-session.json live
+in the independent evidence directory above.
+
+User gameplay acceptance remains pending. Owner-project content refresh and
+import preview/rollback remain separate uncompleted gates. Public v0.2.89, its
+map, accounts and process remain unchanged. Tower stair-associate bindings and
+contextual dialogue remain a later placement task; this capacity test does not
+claim those restrictions are active.
