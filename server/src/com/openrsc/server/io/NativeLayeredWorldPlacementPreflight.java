@@ -27,10 +27,15 @@ public final class NativeLayeredWorldPlacementPreflight {
 	private NativeLayeredWorldPlacementPreflight() {}
 
 	public static void validateNpcCapacity(NativeLayeredWorldPackageCatalog catalog, int availableSlots) {
-		long required = 0;
+        validateNpcCapacity(catalog, availableSlots, 0);
+    }
+
+    public static void validateNpcCapacity(NativeLayeredWorldPackageCatalog catalog, int availableSlots, int headroom) {
+        if (headroom < 0) throw new IllegalArgumentException("Negative transient NPC headroom");
+		long required = headroom;
 		for (NativeLayeredWorldPackage loaded : catalog.getPackages()) required += loaded.getNpcPlacementCount();
 		if (availableSlots < 0 || required > availableSlots) throw new IllegalStateException(
-			"Native layered NPC catalog exceeds available registration capacity: required=" + required + " available=" + availableSlots);
+			"Native layered NPC catalog exceeds available registration capacity: required=" + required + " available=" + availableSlots + " transientHeadroom=" + headroom);
 	}
 
 	public static void validate(NativeLayeredWorldPackageCatalog catalog, final EntityHandler handler,

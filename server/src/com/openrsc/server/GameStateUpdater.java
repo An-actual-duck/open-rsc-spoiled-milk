@@ -3497,7 +3497,8 @@ public final class GameStateUpdater {
 			final int REMOVE_NPC = 3;
 			final boolean useCustomMovementStream = playerToUpdate.isUsingCustomClient()
 				&& getServer().getConfig().WANT_CUSTOM_WALK_SPEED;
-			final List<Npc> prioritizedVisibleNpcs = useCustomMovementStream
+			final List<Npc> prioritizedVisibleNpcs = (useCustomMovementStream
+                || playerToUpdate.isUsingCustomClient() && visibleNpcCount > localNpcLimit)
 				? prioritizeVisibleNpcs(playerToUpdate, visibleNpcs)
 				: null;
 			final HashSet<Npc> prioritizedVisibleNpcSet = prioritizedVisibleNpcs == null

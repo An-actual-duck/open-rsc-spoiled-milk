@@ -1981,7 +1981,7 @@ public class PacketHandler {
 		com.openrsc.client.entityhandling.defs.NPCDef newNpc = new com.openrsc.client.entityhandling.defs.NPCDef(name, description, optionCommand, attack, strength, hits, defense,
 			attackable, sprites, hairColour, topColour, bottomColour, skinColour, camera1, camera2,
 			walkModel, combatModel, combatSprite, id);
-		com.openrsc.client.entityhandling.EntityHandler.npcs.set(id, newNpc);
+		com.openrsc.client.entityhandling.EntityHandler.setRuntimeNpcDefinition(id, newNpc);
 	}
 
 	private void updateBatchProgression() {
@@ -4087,6 +4087,7 @@ public class PacketHandler {
 						mc.detachNpcCombatEffect(npc);
 						if (npc != null) {
 							mc.invalidateCustomNpcMovementTarget(npc.serverIndex);
+                            mc.invalidateRemovedNpcProjectiles(npc.serverIndex);
 							npc.clearTransientVisualState();
 						}
 						continue;
@@ -4130,6 +4131,9 @@ public class PacketHandler {
 		}
 
         while (length * 8 >= packetsIncoming.getBitHead() + NPC_COORD_ADD_ENTRY_BITS) {
+            if (mc.getNpcCount() >= NpcCapacityContract.VISIBLE_NPC_LIMIT) {
+                throw new IllegalArgumentException("NPC additions exceed supported view budget");
+            }
             NpcSpawnRecord record = NpcSpawnRecord.read(packetsIncoming, length);
             mc.createNpc(record.sprite, record.definition,
                 (record.offsetX + mc.getLocalPlayerX()) * tileSize + 64,
@@ -4149,8 +4153,8 @@ public class PacketHandler {
 			int updateType = packetsIncoming.getUnsignedByte();
 			if (updateType == 1) { // NPC Chat
 				int chatRecipient = packetsIncoming.getShort();
+                String message = packetsIncoming.readString();
 				if (npc != null) {
-					String message = packetsIncoming.readString();
 					npc.messageTimeout = 150;
 					npc.message = message;
 					if (mc.getLocalPlayer().serverIndex == chatRecipient) {
@@ -4257,7 +4261,9 @@ public class PacketHandler {
 				if (npc != null) {
 					npc.spiritSummon = spiritSummon;
 				}
-			}
+            } else {
+                throw new IllegalArgumentException("Unsupported NPC appearance update type: " + updateType);
+            }
 		}
 	}
 

@@ -1,0 +1,7 @@
+npc-capacity-client-stale-failure.log
+Exception in thread "main" java.lang.AssertionError: stale chat desynchronized following high-index hit
+	at NpcClientCapacityFixture.check(NpcClientCapacityFixture.java:9)
+	at NpcClientCapacityFixture.main(NpcClientCapacityFixture.java:47)
+npc-capacity-client-malformed-failure.log
+Exception in thread "main" java.lang.AssertionError: unknown NPC update type accepted
+	at NpcClientCapacityFixture.main(NpcClientCapacityFixture.java:68)

@@ -481,7 +481,7 @@ public class ServerConfiguration {
 		AUTO_SAVE = tryReadInt("auto_save").orElse(30000); // 30 seconds
 		CLIENT_VERSION = tryReadInt("client_version").orElse(10009);
 		NPC_CAPACITY = tryReadInt("npc_capacity").orElse(
-			Math.min(NpcCapacityContract.LEGACY_CUSTOM_CAPACITY, NpcCapacityContract.supportedCapacity(CLIENT_VERSION)));
+			NpcCapacityContract.defaultCapacity(CLIENT_VERSION));
 		NpcCapacityContract.requireCapacity(CLIENT_VERSION, NPC_CAPACITY);
 		ENFORCE_CUSTOM_CLIENT_VERSION = tryReadBool("enforce_custom_client_version").orElse(true);
 		SERVER_BIND_ADDRESS = tryReadString("server_bind_address").orElse("0.0.0.0");

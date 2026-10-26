@@ -2,6 +2,8 @@
 """Generate matching standalone server/client NPC contracts from one source."""
 from pathlib import Path
 import argparse
+import json
+import re
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--check', action='store_true')
@@ -15,4 +17,26 @@ for directory, package in [('server/src/com/openrsc/server/net/rsc', 'com.openrs
             raise SystemExit('Stale NPC contract: ' + str(path))
     else:
         path.write_text(text)
+constants = {key: int(value) for key, value in re.findall(r'public static final int (\w+) = (\d+);', source)}
+contract = {
+    'contractSchemaVersion': 1,
+    'contractId': 'npc-capacity-v1',
+    'purpose': 'Maintained-source capability contract; configuration and login gates remain authoritative',
+    'canonicalSource': 'tools/protocol/NpcCapacityContract.java',
+    'constants': constants,
+    'capacityConfigurationKey': 'npc_capacity',
+    'expandedDefaultCapacity': constants['TARGET_CAPACITY'],
+    'expandedProfileRequiresExpandedClients': True,
+    'classicCapacityByVersion': {**{str(version): constants['CLASSIC_EARLY_CAPACITY'] for version in (38, 39, 40, 69)}, '115': constants['CLASSIC_115_CAPACITY'], '140': constants['CLASSIC_140_CAPACITY'], '177..235': constants['CLASSIC_LATE_CAPACITY']},
+    'indexRemovalSentinel': None,
+    'localAbsentTargetSentinel': -1,
+    'playerRegistryChanged': False
+}
+path = root / 'runtime-contract/npc-capacity-v1.json'
+text = json.dumps(contract, indent=2) + '\n'
+if args.check:
+    if not path.exists() or path.read_text() != text:
+        raise SystemExit('Stale neutral NPC contract: ' + str(path))
+else:
+    path.write_text(text)
 print('PASS matching NPC capacity contracts')

@@ -1,0 +1,11 @@
+OVERLAP n=32 scene=sparse baseline_median_ns=5619 baseline_p95_ns=11396 grouped_median_ns=4691 grouped_p95_ns=7047 baseline_allocated_bytes=0 grouped_allocated_bytes=0
+OVERLAP n=32 scene=dense baseline_median_ns=4136 baseline_p95_ns=4556 grouped_median_ns=2423 grouped_p95_ns=2763 baseline_allocated_bytes=0 grouped_allocated_bytes=0
+OVERLAP n=128 scene=sparse baseline_median_ns=36439 baseline_p95_ns=37234 grouped_median_ns=10564 grouped_p95_ns=14439 baseline_allocated_bytes=0 grouped_allocated_bytes=16736
+OVERLAP n=128 scene=dense baseline_median_ns=68979 baseline_p95_ns=69470 grouped_median_ns=6952 grouped_p95_ns=9231 baseline_allocated_bytes=0 grouped_allocated_bytes=3984
+OVERLAP n=256 scene=sparse baseline_median_ns=144111 baseline_p95_ns=148575 grouped_median_ns=5307 grouped_p95_ns=6319 baseline_allocated_bytes=0 grouped_allocated_bytes=35400
+OVERLAP n=256 scene=dense baseline_median_ns=273378 baseline_p95_ns=279264 grouped_median_ns=13051 grouped_p95_ns=17618 baseline_allocated_bytes=0 grouped_allocated_bytes=7096
+OVERLAP n=512 scene=sparse baseline_median_ns=572537 baseline_p95_ns=584938 grouped_median_ns=11907 grouped_p95_ns=14020 baseline_allocated_bytes=0 grouped_allocated_bytes=72784
+OVERLAP n=512 scene=dense baseline_median_ns=1091070 baseline_p95_ns=1094511 grouped_median_ns=23383 grouped_p95_ns=24410 baseline_allocated_bytes=0 grouped_allocated_bytes=16184
+OVERLAP n=1024 scene=sparse baseline_median_ns=2296984 baseline_p95_ns=2320929 grouped_median_ns=25422 grouped_p95_ns=28714 baseline_allocated_bytes=0 grouped_allocated_bytes=147680
+OVERLAP n=1024 scene=dense baseline_median_ns=4367772 baseline_p95_ns=4387980 grouped_median_ns=33714 grouped_p95_ns=38083 baseline_allocated_bytes=0 grouped_allocated_bytes=30328
+PASS overlap equivalence 22 scenes; nulls, negative/moving tiles, equal indexes, dense/sparse

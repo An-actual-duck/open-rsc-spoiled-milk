@@ -155,6 +155,10 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	public World(final Server server) {
 		this.server = server;
 		this.npcs = new EntityList<>(server.getConfig().NPC_CAPACITY);
+        LOGGER.info("NPC registry budget={} clientProfile={} transientStartupHeadroom={}",
+            server.getConfig().NPC_CAPACITY, server.getConfig().CLIENT_VERSION,
+            com.openrsc.server.net.rsc.NpcCapacityContract.expanded(server.getConfig().CLIENT_VERSION)
+                ? com.openrsc.server.net.rsc.NpcCapacityContract.TRANSIENT_HEADROOM : 0);
 		this.players = new PlayerList(2000);
 		this.sceneryLocs = new HashMap<>();
 		this.npcDrops = new NpcDrops(this);
@@ -521,6 +525,9 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 					"Native layered world load failed closed", e);
 			}
 		}
+        // Backstop for every expanded profile, including legacy-map population.
+        com.openrsc.server.net.rsc.NpcCapacityContract.requireStartupHeadroom(
+            getServer().getConfig().CLIENT_VERSION, getNpcs().getAvailableCapacity());
 	}
 
 	public void unloadPlayers() {
@@ -926,7 +933,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 		}
 
         try {
-            if (n.getID() < 0 || n.getID() > com.openrsc.server.net.rsc.NpcCapacityContract.CARRIER_MAX) {
+            if (n.getID() < 0 || n.getID() >= (1 << com.openrsc.server.net.rsc.NpcCapacityContract.definitionBits(getServer().getConfig().CLIENT_VERSION))) {
                 throw new IllegalArgumentException("NPC definition exceeds custom wire carrier: " + n.getID());
             }
             getNpcs().add(n);
@@ -937,6 +944,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
             if (!getNpcs().contains(n)) {
                 try {
                     n.superRemove();
+                    n.setIndex(-1);
                     n.getStatRestorationEvent().stop();
                     getServer().getGameEventHandler().remove(n.getStatRestorationEvent());
                 } catch (RuntimeException cleanupFailure) {
@@ -950,7 +958,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	}
 
 	public boolean registerPlayer(final Player player) {
-		if (!getPlayers().contains(player)) {
+		if (!getPlayers().contains(player) && getPlayer(player.getUsernameHash()) == null) {
 			player.setBusy(false);
 
 			getPlayers().add(player);

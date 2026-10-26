@@ -52,6 +52,13 @@ public class EntityListSafety {
             list.forEachLive(e -> { seen.add(e); if(e==a) {list.remove(c); list.add(d);} });
             check(seen.equals(Arrays.asList(a,d)),"ascending live higher-slot mutation visibility");
         });
+        run("live callback expands upper range and preserves captured clear", () -> {
+            EntityList<Entity> list=new EntityList<>(4); Entity a=new Entity(), b=new Entity();list.add(a);
+            List<Entity> seen=new ArrayList<>();list.forEachLive(e->{seen.add(e);if(e==a)list.add(b);});
+            check(seen.equals(Arrays.asList(a,b)),"new higher range skipped");
+            seen.clear();list.forEachLive(e->{seen.add(e);if(e==a)list.clear();});
+            check(seen.equals(Arrays.asList(a,b)),"captured-array clear semantics changed");
+        });
         run("clear resets entity handles", () -> {
             EntityList<Entity> list=new EntityList<>(2); Entity e=new Entity(); list.add(e); list.clear();
             check(e.getIndex()==-1 && list.isEmpty() && list.getAvailableCapacity()==2,"clear ownership");

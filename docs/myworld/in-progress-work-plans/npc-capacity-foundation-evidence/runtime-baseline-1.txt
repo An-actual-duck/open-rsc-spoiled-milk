@@ -1,0 +1,58 @@
+REGISTRY_IMPLEMENTATION starting-commit
+2026-10-26 16:45:22 [InitThread] INFO  Server: - RUNTIME population=4000 workload=idle phase=events median_ns=813537 p95_ns=1819352 p99_ns=2490176 workload_allocated_bytes_per_tick=223499
+2026-10-26 16:45:22 [InitThread] INFO  Server: - RUNTIME population=4000 workload=idle phase=npc-behavior median_ns=163873 p95_ns=419342 p99_ns=509756 workload_allocated_bytes_per_tick=223499
+2026-10-26 16:45:22 [InitThread] INFO  Server: - RUNTIME population=4000 workload=idle phase=movement median_ns=242023 p95_ns=556255 p99_ns=951942 workload_allocated_bytes_per_tick=223499
+2026-10-26 16:45:22 [InitThread] INFO  Server: - RUNTIME population=4000 workload=idle phase=visibility-packets median_ns=6853 p95_ns=16742 p99_ns=25910 workload_allocated_bytes_per_tick=223499
+2026-10-26 16:45:22 [InitThread] INFO  Server: - RUNTIME population=4000 workload=idle phase=cleanup median_ns=137924 p95_ns=439671 p99_ns=761297 workload_allocated_bytes_per_tick=223499
+2026-10-26 16:45:22 [InitThread] INFO  Server: - RUNTIME population=4000 workload=idle phase=total median_ns=1375693 p95_ns=3632322 p99_ns=4314046 workload_allocated_bytes_per_tick=223499
+2026-10-26 16:45:22 [InitThread] INFO  Server: - VISIBILITY local_npc_references=0
+2026-10-26 16:45:22 [InitThread] INFO  Server: - HEAP snapshot_used_bytes=308844384
+2026-10-26 16:45:22 [InitThread] INFO  Server: - PASS listener-free runtime workload
+2026-10-26 16:45:26 [InitThread] INFO  Server: - RUNTIME population=4000 workload=active phase=events median_ns=1850161 p95_ns=3949478 p99_ns=4503689 workload_allocated_bytes_per_tick=5213955
+2026-10-26 16:45:26 [InitThread] INFO  Server: - RUNTIME population=4000 workload=active phase=npc-behavior median_ns=690391 p95_ns=1204114 p99_ns=1606544 workload_allocated_bytes_per_tick=5213955
+2026-10-26 16:45:26 [InitThread] INFO  Server: - RUNTIME population=4000 workload=active phase=movement median_ns=238687 p95_ns=758511 p99_ns=870436 workload_allocated_bytes_per_tick=5213955
+2026-10-26 16:45:26 [InitThread] INFO  Server: - RUNTIME population=4000 workload=active phase=visibility-packets median_ns=4857926 p95_ns=7210268 p99_ns=9616814 workload_allocated_bytes_per_tick=5213955
+2026-10-26 16:45:26 [InitThread] INFO  Server: - RUNTIME population=4000 workload=active phase=cleanup median_ns=248636 p95_ns=759173 p99_ns=918838 workload_allocated_bytes_per_tick=5213955
+2026-10-26 16:45:26 [InitThread] INFO  Server: - RUNTIME population=4000 workload=active phase=total median_ns=8319260 p95_ns=12759618 p99_ns=16144966 workload_allocated_bytes_per_tick=5213955
+2026-10-26 16:45:26 [InitThread] INFO  Server: - VISIBILITY local_npc_references=1024
+2026-10-26 16:45:26 [InitThread] INFO  Server: - HEAP snapshot_used_bytes=262045456
+2026-10-26 16:45:26 [InitThread] INFO  Server: -  activeCombatPairs=32 activeCombatBackgroundNpcsRemoved=0 activeCombatLivePairs=32 activeCombatEngagedPairs=32 activeCombatPluginDispatches=196 activeCombatPlayerHits=316462 activeCombatNpcHits=319932 activeCombatDistributionHash=13922015939565130783 activeCombatRandomDraws=7472 activeCombatDeterminism=32-32-32-196-316462-319932-7472 activeCombatRandom=seed=1511506148,draws=7472 activeCombatInvariant=pass
+2026-10-26 16:45:26 [InitThread] INFO  Server: - PASS listener-free runtime workload
+2026-10-26 16:45:29 [InitThread] INFO  Server: - RUNTIME population=8000 workload=idle phase=events median_ns=1773454 p95_ns=2937722 p99_ns=4338763 workload_allocated_bytes_per_tick=447496
+2026-10-26 16:45:29 [InitThread] INFO  Server: - RUNTIME population=8000 workload=idle phase=npc-behavior median_ns=370078 p95_ns=634925 p99_ns=1003340 workload_allocated_bytes_per_tick=447496
+2026-10-26 16:45:29 [InitThread] INFO  Server: - RUNTIME population=8000 workload=idle phase=movement median_ns=438058 p95_ns=761347 p99_ns=1587397 workload_allocated_bytes_per_tick=447496
+2026-10-26 16:45:29 [InitThread] INFO  Server: - RUNTIME population=8000 workload=idle phase=visibility-packets median_ns=7394 p95_ns=20720 p99_ns=43243 workload_allocated_bytes_per_tick=447496
+2026-10-26 16:45:29 [InitThread] INFO  Server: - RUNTIME population=8000 workload=idle phase=cleanup median_ns=381460 p95_ns=601000 p99_ns=1165681 workload_allocated_bytes_per_tick=447496
+2026-10-26 16:45:29 [InitThread] INFO  Server: - RUNTIME population=8000 workload=idle phase=total median_ns=3001474 p95_ns=4946155 p99_ns=7816859 workload_allocated_bytes_per_tick=447496
+2026-10-26 16:45:29 [InitThread] INFO  Server: - VISIBILITY local_npc_references=0
+2026-10-26 16:45:29 [InitThread] INFO  Server: - HEAP snapshot_used_bytes=307160976
+2026-10-26 16:45:29 [InitThread] INFO  Server: - PASS listener-free runtime workload
+2026-10-26 16:45:34 [InitThread] INFO  Server: - RUNTIME population=8000 workload=active phase=events median_ns=3607192 p95_ns=5195331 p99_ns=8338586 workload_allocated_bytes_per_tick=6149534
+2026-10-26 16:45:34 [InitThread] INFO  Server: - RUNTIME population=8000 workload=active phase=npc-behavior median_ns=1781990 p95_ns=2223374 p99_ns=4935664 workload_allocated_bytes_per_tick=6149534
+2026-10-26 16:45:34 [InitThread] INFO  Server: - RUNTIME population=8000 workload=active phase=movement median_ns=604337 p95_ns=946121 p99_ns=1687319 workload_allocated_bytes_per_tick=6149534
+2026-10-26 16:45:34 [InitThread] INFO  Server: - RUNTIME population=8000 workload=active phase=visibility-packets median_ns=4889135 p95_ns=6443429 p99_ns=8937722 workload_allocated_bytes_per_tick=6149534
+2026-10-26 16:45:34 [InitThread] INFO  Server: - RUNTIME population=8000 workload=active phase=cleanup median_ns=619755 p95_ns=1000004 p99_ns=1083743 workload_allocated_bytes_per_tick=6149534
+2026-10-26 16:45:34 [InitThread] INFO  Server: - RUNTIME population=8000 workload=active phase=total median_ns=11644572 p95_ns=15720211 p99_ns=17307037 workload_allocated_bytes_per_tick=6149534
+2026-10-26 16:45:34 [InitThread] INFO  Server: - VISIBILITY local_npc_references=1024
+2026-10-26 16:45:34 [InitThread] INFO  Server: - HEAP snapshot_used_bytes=259882368
+2026-10-26 16:45:34 [InitThread] INFO  Server: -  activeCombatPairs=32 activeCombatBackgroundNpcsRemoved=0 activeCombatLivePairs=32 activeCombatEngagedPairs=32 activeCombatPluginDispatches=196 activeCombatPlayerHits=316493 activeCombatNpcHits=319668 activeCombatDistributionHash=3753405839259078232 activeCombatRandomDraws=11472 activeCombatDeterminism=32-32-32-196-316493-319668-11472 activeCombatRandom=seed=1511506148,draws=11472 activeCombatInvariant=pass
+2026-10-26 16:45:34 [InitThread] INFO  Server: - PASS listener-free runtime workload
+2026-10-26 16:45:38 [InitThread] INFO  Server: - RUNTIME population=16384 workload=idle phase=events median_ns=7200989 p95_ns=7729961 p99_ns=7872653 workload_allocated_bytes_per_tick=917006
+2026-10-26 16:45:38 [InitThread] INFO  Server: - RUNTIME population=16384 workload=idle phase=npc-behavior median_ns=1305007 p95_ns=1491745 p99_ns=1587598 workload_allocated_bytes_per_tick=917006
+2026-10-26 16:45:38 [InitThread] INFO  Server: - RUNTIME population=16384 workload=idle phase=movement median_ns=1565616 p95_ns=1904164 p99_ns=2353684 workload_allocated_bytes_per_tick=917006
+2026-10-26 16:45:38 [InitThread] INFO  Server: - RUNTIME population=16384 workload=idle phase=visibility-packets median_ns=11362 p95_ns=23084 p99_ns=35868 workload_allocated_bytes_per_tick=917006
+2026-10-26 16:45:38 [InitThread] INFO  Server: - RUNTIME population=16384 workload=idle phase=cleanup median_ns=1323803 p95_ns=1464312 p99_ns=1534345 workload_allocated_bytes_per_tick=917006
+2026-10-26 16:45:38 [InitThread] INFO  Server: - RUNTIME population=16384 workload=idle phase=total median_ns=11404471 p95_ns=12357975 p99_ns=12626659 workload_allocated_bytes_per_tick=917006
+2026-10-26 16:45:38 [InitThread] INFO  Server: - VISIBILITY local_npc_references=0
+2026-10-26 16:45:38 [InitThread] INFO  Server: - HEAP snapshot_used_bytes=345088424
+2026-10-26 16:45:38 [InitThread] INFO  Server: - PASS listener-free runtime workload
+2026-10-26 16:45:43 [InitThread] INFO  Server: - RUNTIME population=16384 workload=active phase=events median_ns=8845153 p95_ns=10681346 p99_ns=11910488 workload_allocated_bytes_per_tick=8144842
+2026-10-26 16:45:43 [InitThread] INFO  Server: - RUNTIME population=16384 workload=active phase=npc-behavior median_ns=4145892 p95_ns=4830802 p99_ns=5613441 workload_allocated_bytes_per_tick=8144842
+2026-10-26 16:45:43 [InitThread] INFO  Server: - RUNTIME population=16384 workload=active phase=movement median_ns=2153400 p95_ns=3225010 p99_ns=4971933 workload_allocated_bytes_per_tick=8144842
+2026-10-26 16:45:43 [InitThread] INFO  Server: - RUNTIME population=16384 workload=active phase=visibility-packets median_ns=4837986 p95_ns=5790409 p99_ns=6328899 workload_allocated_bytes_per_tick=8144842
+2026-10-26 16:45:43 [InitThread] INFO  Server: - RUNTIME population=16384 workload=active phase=cleanup median_ns=1646651 p95_ns=2170463 p99_ns=2338795 workload_allocated_bytes_per_tick=8144842
+2026-10-26 16:45:43 [InitThread] INFO  Server: - RUNTIME population=16384 workload=active phase=total median_ns=21706650 p95_ns=25922417 p99_ns=28221084 workload_allocated_bytes_per_tick=8144842
+2026-10-26 16:45:43 [InitThread] INFO  Server: - VISIBILITY local_npc_references=1024
+2026-10-26 16:45:43 [InitThread] INFO  Server: - HEAP snapshot_used_bytes=364767984
+2026-10-26 16:45:43 [InitThread] INFO  Server: -  activeCombatPairs=32 activeCombatBackgroundNpcsRemoved=0 activeCombatLivePairs=32 activeCombatEngagedPairs=32 activeCombatPluginDispatches=196 activeCombatPlayerHits=316500 activeCombatNpcHits=319113 activeCombatDistributionHash=15150573621274885766 activeCombatRandomDraws=19856 activeCombatDeterminism=32-32-32-196-316500-319113-19856 activeCombatRandom=seed=1511506148,draws=19856 activeCombatInvariant=pass
+2026-10-26 16:45:43 [InitThread] INFO  Server: - PASS listener-free runtime workload

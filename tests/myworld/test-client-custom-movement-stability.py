@@ -122,7 +122,7 @@ def main() -> None:
     )
     require(
         server_updater,
-        "final int localNpcLimit = localMobLimit(playerToUpdate);",
+        "final int localNpcLimit = localNpcLimit(playerToUpdate);",
         "custom movement NPC local cache limit",
     )
     require(
@@ -161,6 +161,11 @@ def main() -> None:
         "NPC death visual tick marker",
     )
 
+    require(server_updater,
+        "Math.min(localMobLimit(player), com.openrsc.server.net.rsc.NpcCapacityContract.VISIBLE_NPC_LIMIT)",
+        "NPC picking namespace bound must remain independent of the player cache budget")
+    require(client, "NpcProjectileReferences.clear(npcsCache, npcCacheCount, serverIndex);",
+        "NPC removal must clear projectile references still waiting in the old local cache")
     print("PASS: custom movement update and resize stability guards are present")
 
 

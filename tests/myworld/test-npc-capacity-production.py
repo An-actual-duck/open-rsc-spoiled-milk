@@ -9,5 +9,7 @@ with tempfile.TemporaryDirectory(prefix='npc-capacity-production-') as directory
     fixture=ROOT/'server/test/com/openrsc/server/combat'
     sources=[fixture/(name+'.java') for name in ['CurrentCombatHarness','MutableGameClock','SeededGameRandom']]
     sources.append(ROOT/'tests/myworld/NpcCapacityProductionFixture.java')
+    sources.append(ROOT/'tests/myworld/NpcClientCapacityFixture.java')
     subprocess.run(['javac','-cp',cp,'-d',directory,*map(str,sources)],check=True)
     subprocess.run(['java','-Xms256m','-Xmx1024m','-cp',directory+':'+cp,'com.openrsc.server.combat.NpcCapacityProductionFixture'],cwd=ROOT/'server',check=True)
+    subprocess.run(['java','-Xms128m','-Xmx512m','-Djava.awt.headless=true','-cp',directory+':'+cp,'NpcClientCapacityFixture'],cwd=ROOT/'server',check=True)

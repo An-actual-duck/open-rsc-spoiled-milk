@@ -25504,6 +25504,12 @@ public final class mudclient implements Runnable {
 		this.customNpcMovementTargetResult[serverIndex] = "stored";
 	}
 
+    public void invalidateRemovedNpcProjectiles(int serverIndex) {
+        NpcProjectileReferences.clear(players, playerCount, serverIndex);
+        NpcProjectileReferences.clear(npcs, npcCount, serverIndex);
+        NpcProjectileReferences.clear(npcsCache, npcCacheCount, serverIndex);
+    }
+
 	public void invalidateCustomNpcMovementTarget(int serverIndex) {
 		if (serverIndex < 0 || serverIndex >= this.customNpcMovementTargetValid.length) {
 			return;

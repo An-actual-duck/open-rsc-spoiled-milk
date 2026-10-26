@@ -6,10 +6,15 @@ public final class NpcCapacityContract {
     public static final int DEFINITION_BITS = 16;
     public static final int CARRIER_MAX = 65535;
     public static final int TARGET_CAPACITY = 16384;
-    // Scene pick tags use decimal 10000-wide namespaces, independently of global IDs.
-    public static final int VISIBLE_NPC_LIMIT = 10000;
+    // Independently bounded view budget: measured layout and 16-bit frame headroom.
+    // It also stays below decimal 10000-wide scene picking namespaces.
+    public static final int VISIBLE_NPC_LIMIT = 1024;
     public static final int LEGACY_CUSTOM_CAPACITY = 4000;
     public static final int TRANSIENT_HEADROOM = 512;
+    public static final int CLASSIC_EARLY_CAPACITY = 1000;
+    public static final int CLASSIC_115_CAPACITY = 1500;
+    public static final int CLASSIC_140_CAPACITY = 2048;
+    public static final int CLASSIC_LATE_CAPACITY = 4096;
 
     private NpcCapacityContract() {}
 
@@ -20,11 +25,25 @@ public final class NpcCapacityContract {
     public static int supportedCapacity(int version) {
         if (expanded(version)) return TARGET_CAPACITY;
         if (version >= 10000 && version < CUSTOM_VERSION_LIMIT) return LEGACY_CUSTOM_CAPACITY;
-        if (version >= 38 && version <= 40 || version == 69) return 1000;
-        if (version == 115) return 1500;
-        if (version == 140) return 2048;
-        if (version >= 177 && version <= 235) return 4096;
+        if (version >= 38 && version <= 40 || version == 69) return CLASSIC_EARLY_CAPACITY;
+        if (version == 115) return CLASSIC_115_CAPACITY;
+        if (version == 140) return CLASSIC_140_CAPACITY;
+        if (version >= 177 && version <= 235) return CLASSIC_LATE_CAPACITY;
         return 0;
+    }
+
+    public static int defaultCapacity(int version) {
+        return expanded(version) ? TARGET_CAPACITY : Math.min(LEGACY_CUSTOM_CAPACITY, supportedCapacity(version));
+    }
+
+    public static void requireStartupHeadroom(int version, int availableSlots) {
+        int required = expanded(version) ? TRANSIENT_HEADROOM : 0;
+        if (availableSlots < required) throw new IllegalStateException(
+            "NPC startup leaves insufficient transient capacity: available=" + availableSlots + " required=" + required);
+    }
+
+    public static boolean supportsWorld(int clientVersion, int worldVersion, int capacity) {
+        return supports(clientVersion, capacity) && (!expanded(worldVersion) || expanded(clientVersion));
     }
 
     public static boolean supports(int version, int capacity) {
@@ -38,10 +57,10 @@ public final class NpcCapacityContract {
     }
 
     public static int indexBits(int version) {
-        return expanded(version) ? INDEX_BITS : version == 115 || version == 140 ? 11 : 12;
+        return expanded(version) ? INDEX_BITS : version >= 38 && version <= 40 ? 10 : version == 115 || version == 140 ? 11 : 12;
     }
 
     public static int definitionBits(int version) {
-        return expanded(version) ? DEFINITION_BITS : version == 115 ? 8 : version == 140 ? 9 : 10;
+        return expanded(version) ? DEFINITION_BITS : version >= 38 && version <= 40 || version == 115 ? 8 : version == 140 ? 9 : 10;
     }
 }
