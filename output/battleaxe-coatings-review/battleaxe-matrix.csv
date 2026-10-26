@@ -1,0 +1,16 @@
+id,name,tier,level,meleeOffense,speedCategory,aim,power,prayer,value,inventorySprite,inventoryPalette,appearance,heldPalette,proposedCounterpart,notes
+2002,Tin battle Axe,1,1,1,3,4,5,0,72,84,B7C9D9,710,B7C9D9,Viscous Tin battle Axe,
+429,Black battle Axe,5,5,38,3,15,20,3,1248,84,303030,115,303030,Viscous Black battle Axe,
+2156,White battle Axe,5,5,38,3,15,20,3,1800,84,E7E2D6,115,303030,Viscous White battle Axe,Inventory/held palette mismatch inherited from base
+3118,Grey battle Axe,5,5,38,3,15,20,3,1800,84,9EA59F,115,303030,Viscous Grey battle Axe,Inventory/held palette mismatch inherited from base
+2013,Copper battle Axe,2,8,6,3,5,7,0,144,84,C86A2B,711,C86A2B,Viscous Copper battle Axe,
+205,Bronze battle Axe,3,15,12,3,7,9,0,300,84,FF6619,109,FF6619,Viscous Bronze battle Axe,
+89,Iron battle Axe,4,22,25,3,9,13,0,720,84,EEDDDD,110,EEDDDD,Viscous Iron battle Axe,
+90,Steel battle Axe,5,30,38,3,15,20,0,1800,84,EEEEEE,111,EEEEEE,Viscous Steel battle Axe,
+91,Mithril battle Axe,6,38,50,3,21,29,0,4800,84,99B2CC,112,99B2CC,Viscous Mithril battle Axe,
+2024,Titan Steel battle Axe,7,46,56,3,25,35,0,10800,84,8EA6BB,712,8EA6BB,Viscous Titan Steel battle Axe,
+92,Adamantite battle Axe,8,54,62,3,30,41,0,22800,84,B2CC99,113,B2CC99,Viscous Adamantite battle Axe,
+2035,Orichalcum battle Axe,9,62,69,3,38,52,0,39000,84,5A3F7D,713,5A3F7D,Viscous Orichalcum battle Axe,
+93,Rune battle Axe,10,70,75,3,47,64,0,60000,84,00FFFF,114,00FFFF,Viscous Rune battle Axe,
+2752,Dragon battle Axe,11,80,82,3,69,75,0,280000,272,FF0044,162,FF0044,Viscous Dragon battle Axe,Hero quest gate must be preserved
+3269,Exalted Rune battle Axe,12,90,88,3,60,78,0,156000,84,D8FFFF,1049,D8FFFF,Viscous Exalted Rune battle Axe,Outside current Equipment high-roll list
