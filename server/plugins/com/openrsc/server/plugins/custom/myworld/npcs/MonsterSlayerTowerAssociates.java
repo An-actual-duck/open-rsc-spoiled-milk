@@ -2,6 +2,9 @@ package com.openrsc.server.plugins.custom.myworld.npcs;
 
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerRank;
 import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTowerAccess;
+import com.openrsc.server.content.minigame.monsterslayer.MonsterSlayerTowerPassages;
+import com.openrsc.server.model.entity.GameObject;
+import com.openrsc.server.plugins.triggers.OpLocTrigger;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.plugins.triggers.TalkNpcTrigger;
@@ -10,8 +13,8 @@ import static com.openrsc.server.plugins.Functions.multi;
 import static com.openrsc.server.plugins.Functions.npcsay;
 import static com.openrsc.server.plugins.Functions.say;
 
-/** Tower dialogue only. Actual passage enforcement awaits the owner's mapped doors. */
-public final class MonsterSlayerTowerAssociates implements TalkNpcTrigger {
+/** Tower dialogue; passage rank checks are enforced independently at the mapped entrance and upward stairs. */
+public final class MonsterSlayerTowerAssociates implements TalkNpcTrigger, OpLocTrigger {
 	public interface Dialogue {
 		default void npc(Player player, Npc npc, String... lines) { npcsay(player, npc, lines); }
 		default void player(Player player, Npc npc, String line) { say(player, npc, line); }
@@ -23,6 +26,19 @@ public final class MonsterSlayerTowerAssociates implements TalkNpcTrigger {
 	public MonsterSlayerTowerAssociates(Dialogue dialogue) {
 		if (dialogue == null) throw new IllegalArgumentException("Dialogue is required");
 		this.dialogue = dialogue;
+	}
+
+	@Override public boolean blockOpLoc(Player player, GameObject object, String command) {
+		MonsterSlayerTowerAccess access = MonsterSlayerTowerPassages.passage(player, object, command);
+		return access != null && !access.allows(player);
+	}
+
+	@Override public void onOpLoc(Player player, GameObject object, String command) {
+		MonsterSlayerTowerAccess access = MonsterSlayerTowerPassages.passage(player, object, command);
+		if (access == null || access.allows(player)) return;
+		player.message(MonsterSlayerTowerAccess.readRank(player) == null
+			? "I can't verify your Slayer rank right now. Please try again later."
+			: access.getRefusal());
 	}
 
 	@Override public boolean blockTalkNpc(Player player, Npc npc) {

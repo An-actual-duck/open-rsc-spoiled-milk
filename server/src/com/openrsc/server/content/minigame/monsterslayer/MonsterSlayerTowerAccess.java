@@ -2,26 +2,26 @@ package com.openrsc.server.content.minigame.monsterslayer;
 
 import com.openrsc.server.model.entity.player.Player;
 
-/** Placement-independent tower entry policy. Door bindings are added after the map is authored. */
+/** Tower rank and dialogue policy; exact entrance and upward-stair bindings live in MonsterSlayerTowerPassages. */
 public enum MonsterSlayerTowerAccess {
 	FLEDGLING(871, MonsterSlayerRank.FLEDGLING,
 		"I can't let you in until you've joined the Monster Slayer's Guild, pal.",
 		"Go on through, friend."),
 	ADEPT(872, MonsterSlayerRank.INITIATE,
-		"Slow down before you hurt yourself. Adept rank or higher past this point.",
+		"Slow down before you hurt yourself. Adept rank or higher up these stairs.",
 		"All right, up you go. Watch your step."),
 	VETERAN(873, MonsterSlayerRank.VETERAN,
 		"I don't see a Veteran button. No button, no passage. Regulations.",
-		"Your credentials are in order. Proceed."),
+		"Your credentials are in order. You may go upstairs."),
 	ELITE(874, MonsterSlayerRank.ELITE,
 		"Elite rank or higher. I'm tired of carrying people back down these stairs.",
-		"Through you go. Coming back down is your responsibility."),
+		"Up you go. Coming back down is your responsibility."),
 	CHAMPION(875, MonsterSlayerRank.CHAMPION,
 		"Champions only. Everyone else tends to come back extra crispy.",
 		"A Champion! Lovely. Try not to scorch the handrail."),
 	HERO(876, MonsterSlayerRank.HERO,
-		"Only Heroes beyond this door. Whatever you hear, don't answer it.",
-		"You've earned your way in. I hope that's a good thing.");
+		"Only Heroes up these stairs. Whatever you hear, don't answer it.",
+		"You've earned your way upstairs. I hope that's a good thing.");
 
 	private final int npcId;
 	private final MonsterSlayerRank requiredRank;
