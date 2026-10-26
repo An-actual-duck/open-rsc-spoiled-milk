@@ -53,3 +53,27 @@ server/client builds, full current combat/Slow/Slayer/spatial gates, reproducibl
 raw baseline/final benchmark outputs, source artifact hashes, independent tower
 copy validation, and a private acceptance checklist for Core. No 16K practical
 support or editor import readiness is claimed by this checkpoint.
+
+## Registry safety checkpoint
+
+Failure-first command: `python3 tests/myworld/test-entity-list-safety.py`.
+Original production EntityList failed repeated removal/full recovery, stale
+object removal, bounded lookup/removal, duplicate/null add, and clear handle
+reset. The ascending snapshot/live-mutation characterization already passed.
+All seven scenario groups now pass, including shared PlayerList hash ownership.
+
+The registry now tracks registration by object identity, independently of the
+mutable entity index and username equality. Only an occupied slot returns to the
+free pool. Snapshot order and live same-tick traversal remain unchanged.
+IP-filtered players are a plain list, preventing a query from reassigning live
+player indexes. Logout removes the exact player handle once; hash removal now
+removes the corresponding registry membership as well.
+
+Offline `./scripts/build-server.sh` passed production core/plugin compilation
+and artifact audit. `./server/test_combat` passed **144/144** scenarios. An initial
+attempt to reject distinct Player instances sharing a username broke a fixture
+that intentionally uses truncated equivalent names; that restriction was removed
+before this checkpoint. Production login remains the duplicate-login authority;
+registry ownership uses identity, including hash removal guards.
+
+No scan optimization or capacity/protocol increase is enabled in this slice.

@@ -226,6 +226,7 @@ python3 ./tests/myworld/test-npc-defense-profiles.py
 python3 ./tests/myworld/test-npc-visual-fixes.py
 python3 ./tests/myworld/test-wizard-frumscone-cage.py
 python3 ./tests/myworld/test-wizard-frumscone-trades.py
+python3 ./tests/myworld/test-entity-list-safety.py
 python3 ./tests/myworld/test-npc-processing-cleanup.py
 python3 ./tests/myworld/test-poison-balance.py
 python3 ./tests/myworld/test-poison-model.py

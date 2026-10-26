@@ -388,8 +388,8 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 	/**
 	 * Get list of players by IP
 	 */
-	public EntityList<Player> getPlayers(String ip) {
-		return players.stream().filter(p -> p.getCurrentIP().equals(ip)).collect(Collectors.toCollection(EntityList::new));
+	public List<Player> getPlayers(String ip) {
+		return players.stream().filter(p -> p.getCurrentIP().equals(ip)).collect(Collectors.toList());
 	}
 
 	/**

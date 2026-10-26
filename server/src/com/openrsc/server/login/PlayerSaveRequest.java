@@ -71,7 +71,6 @@ public class PlayerSaveRequest extends LoginExecutorProcess {
 
 		getPlayer().remove(); // remove player from region
 		getServer().getWorld().getPlayers().remove(getPlayer()); // remove player from player list
-		getServer().getWorld().removePlayer(getPlayer().getUsernameHash()); // remove player by hash in case they were not found in region
 		getPlayer().setLoggedIn(false);
 
 		LOGGER.info("Removed player " + getPlayer().getUsername());

@@ -8,6 +8,8 @@ import java.text.MessageFormat;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -25,12 +27,14 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
     private ConcurrentHashMap<Integer, Object> occupiedIndices;
     private final int capacity;
     private Object[] entities;
+    private final Map<T, Integer> registrations = new IdentityHashMap<>();
 
     public EntityList() {
         this(DEFAULT_CAPACITY);
     }
 
     public EntityList(final int capacity) {
+		if (capacity <= 0) throw new IllegalArgumentException("capacity must be positive");
 		this.capacity = capacity;
 		initialize();
     }
@@ -44,6 +48,8 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
 	}
 
     public synchronized boolean add(final T entity) {
+        Objects.requireNonNull(entity, "entity");
+        if (registrations.containsKey(entity)) return false;
         if (size() >= capacity) {
             throw new IllegalStateException(
                     MessageFormat.format(
@@ -57,11 +63,13 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
         entities[nextId] = entity;
         entity.setIndex(nextId);
         occupiedIndices.put(nextId, new Object());
+        registrations.put(entity, nextId);
         return true;
     }
 
-    public boolean contains(final T entity) {
-        return indexOf(entity) > -1;
+    @Override
+    public synchronized boolean contains(final Object entity) {
+        return registrations.containsKey(entity);
     }
 
     public int count() {
@@ -78,33 +86,16 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public T get(final int index) {
+    public synchronized T get(final int index) {
+        if (index < 0 || index >= capacity) return null;
         if(entities[index] != null) {
             return (T) entities[index];
         }
         return null;
     }
 
-    private int indexOf(final T entity) {
-        // Check if the entity at the index provided by the entity matches first
-        final int candidateIndex = entity.getIndex();
-        if (candidateIndex >= 0 && candidateIndex < capacity) {
-            if (entity.equals(entities[candidateIndex])) {
-                return candidateIndex;
-            }
-        }
-
-        // If it wasn't a match, iterate and find it
-        for (int index : getOccupiedIndices()) {
-            if (entities[index].equals(entity)) {
-                return index;
-            }
-        }
-        return -1;
-    }
-
     @SuppressWarnings("unchecked")
-    public Iterator<T> iterator() {
+    public synchronized Iterator<T> iterator() {
         return Arrays.stream(entities)
                 .filter(Objects::nonNull)
                 .map(entity -> (T) entity)
@@ -128,30 +119,29 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
         }
     }
 
-	public void clear() {
-		initialize();
-	}
+    public synchronized void clear() {
+        for (T entity : registrations.keySet()) entity.setIndex(-1);
+        registrations.clear();
+        initialize();
+    }
 
     @SuppressWarnings("unchecked")
     public synchronized T remove(final int index) {
-        if(index >= 0) {
-            T entity = (T) entities[index];
-            if (entity != null) {
-				// regression check, the below code was added back
-				// to see if removing it was the cause of login 4 for uranium
-				entity.setIndex(-1);
-			}
-            entities[index] = null;
-            occupiedIndices.remove(index);
-            priorityIdPool.offer(index);
-            return entity;
-        }
-        return null;
+        if (index < 0 || index >= capacity) return null;
+        T entity = (T) entities[index];
+        if (entity == null) return null;
+        entities[index] = null;
+        occupiedIndices.remove(index);
+        registrations.remove(entity);
+        entity.setIndex(-1);
+        priorityIdPool.offer(index);
+        return entity;
     }
 
     public synchronized void remove(final T entity) {
-        final int index = entity.getIndex();
-        remove(index);
+        // Entity equality (notably player username equality) is not registration ownership.
+        final Integer index = registrations.get(entity);
+        if (index != null && entities[index] == entity) remove(index.intValue());
     }
 
     private ConcurrentHashMap.KeySetView<Integer, Object> getOccupiedIndices() {
