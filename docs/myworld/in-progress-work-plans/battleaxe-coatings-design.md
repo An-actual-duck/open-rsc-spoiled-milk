@@ -6,6 +6,21 @@ Worker `feat/battleaxe-slow-poison-coatings`; starting HEAD
 The handoff's earlier baseline is `821526e736e112c8db0c8716c65a80c14812628b`.
 Core owns integration, private gameplay and visual acceptance. This is Phase 1.
 
+## Core preservation update — October 26, 2026
+
+This Phase 1 review package is preserved on main; no gameplay or production art
+is implemented or approved by that integration. The source worker is recycled
+for the separately assigned NPC capacity work. Resume coating implementation
+later on a new focused branch from then-current main.
+
+Owner feedback after this proposal supersedes its conflicting recommendations:
+**one single-use dose coats one weapon**; secondary poison remains at half the
+standard application/cap, **without a low-tier minimum**. Tin may deal no solo
+poison damage while contributing to a shared pool. See the owner-feedback section
+in dot-battleaxe-coatings-handoff.md. Three-dose art remains historical candidate
+exploration only. The remaining recipe/economy and other unresolved choices are
+still proposals; this preservation is not their approval.
+
 ## Approved requirements versus proposals
 
 Approved: battleaxe focus, one Cockatrice Eye plus one Sticky Saliva Gland,

@@ -172,3 +172,13 @@ Do not implement the manager's superseded recommendation to remove poison or
 add a minimum poison strength. Update the design/review documents to distinguish
 this explicit feedback from remaining proposals. Recipe economy must be revisited
 for the single-dose yield; other pending design approvals remain separate.
+
+## Workspace preservation — October 26, 2026
+
+Phase 1 exact READY b41d37ee22cf9af21e3c3429dfb96ed6a0a96cef is integrated as
+review-only documentation, diagnostic exporter and isolated visual evidence.
+Core independently reproduced all69 outputs byte-identically. No usable coating
+items or gameplay defaults were integrated. ai-2 is recycled for the separate
+NPC capacity task; do not follow this document's old branch/slot assignment.
+Phase 2 needs a newly activated coating branch after the remaining decisions.
+The recorded single-dose/half-strength-poison owner feedback remains authoritative.

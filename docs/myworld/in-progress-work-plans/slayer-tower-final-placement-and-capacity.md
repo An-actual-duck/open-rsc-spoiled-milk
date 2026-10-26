@@ -40,8 +40,10 @@ the larger candidate. Its Limits type additionally bounds this runtime family
 to4000. Do not bypass the import check or silently drop placements.
 
 Client `PacketHandler` currently decodes new NPC server indexes using12 bits;
-`NPC_COORD_ADD_ENTRY_BITS` includes that width. Global client `npcsServer` has
-5000 slots, while local visible arrays have500; these are separate budgets.
+`NPC_COORD_ADD_ENTRY_BITS` includes that width. Global client arrays start
+at5000 slots and local visible arrays at500; existing ensure-capacity helpers
+grow them. These initial sizes are not all hard limits. The registry, wire
+carriers and visible population are separate budgets.
 A registry bump alone beyond4096 would truncate/corrupt those spawn indexes.
 A bump to4096 fits these4047 map spawns but leaves only49 slots for all dynamic
 spawns. It is a stopgap, not the recommended completion of capacity work.
@@ -70,3 +72,12 @@ spawns. It is a stopgap, not the recommended completion of capacity work.
 No game implementation, map import, public operation, guard placement or dialogue
 change is claimed by this investigation. Do not mark the overall tower complete
 or begin deferred effect-standardization merely because decoration is complete.
+
+## Owner-approved modernization assignment — October 26, 2026
+
+The owner approved the bounded capacity/protocol expansion, registry hardening
+and measured scan/overlap improvements. Dot's implementation scope, exclusions,
+compatibility rules and acceptance gates are in
+[the NPC capacity assignment](dot-npc-capacity-foundation-handoff.md).
+Initial population target16384 remains subject to measured acceptance; broader
+active-area scheduling and a full AI rewrite are outside this task.
