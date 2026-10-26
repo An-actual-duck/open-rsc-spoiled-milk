@@ -1,0 +1,37 @@
+Core review follow-up to stopped Dot READY513789291, same topic branch.
+Baseline production source:96cdabf534a123b31db9c763d7a079d3ae812361.
+
+FAILURE FIRST — isolated original source-contract method:
+Both baseline96cdab and original READY513789291 fail line556 requiring:
+nativeLayeredGameObjects.applyCollision(location, tile)
+The direct call is absent in both; the maintained facade callback is present.
+No build/server/map operation is used for this source-only baseline reproduction.
+
+CORRECTION:
+Require RegionManager constructor wiring nativeLayeredGameObjects::applyCollision,
+typed getTile delegation to RuntimeMapAuthority, and materialization before
+registeredCollision.apply(location,tile) before legacy fallback.
+No production collision, region, map-authority or NPC code changes.
+Updated source-contract method also passes against unchanged96cdab sources.
+
+COMPLETE FOCUSED SUITE:
+JAVA_HOME=/home/justin/jdk8u482-b08
+ANT_OPTS=-Xmx768m JAVA_TOOL_OPTIONS=-Xmx512m
+python3 tests/myworld/test-layered-native-placement-runtime.py
+PASS3/3 tests,9.935seconds; all later assertions and functional registry fixture run.
+
+PROFILE FAILURE FIRST:
+python3 tests/myworld/test-npc-capacity-profile-configs.py
+Originalmyworld-host.conf10052 fails: must use expanded client version10053.
+Only hostclient_version changed10052->10053; every other host byte unchanged.
+PASS myworld.conf: paired version=10053 capacity=16384 reserve=512
+PASS myworld-host.conf: paired version=10053 capacity=16384 reserve=512
+Production generated contract fixture accepts reserve512 and rejects511.
+Profile check runs fail-fast in scripts/test-npc-capacity.sh.
+
+INDEPENDENT CORE GATE:
+./scripts/test-npc-capacity.sh PASS exit0, all dedicated fixtures, combat144/144.
+Log:/home/justin/.local/share/npc-capacity-core-review-zhiz2efh/independent-core-gate.log
+No extra rebuild after the independent gate; artifact-hashes.sha256 refreshed.
+All Dot production server/client/neutral-contract source remains unchanged.
+No server operations, owner export/import or deployment performed by worker.

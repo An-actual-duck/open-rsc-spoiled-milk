@@ -1,0 +1,8 @@
+Command: python3 tests/myworld/test-layered-native-placement-runtime.py
+Result: 3 tests, 1 failure; the two other tests passed.
+Failing test: test_world_load_owns_population_and_layered_item_respawn
+Failure at source-text assertion line 556: expected 'nativeLayeredGameObjects.applyCollision(location, tile)'
+Starting commit 96cdabf534a123b31db9c763d7a079d3ae812361: substring present = False
+Current source: substring present = False
+This is an inherited stale assertion, not a runtime fixture failure introduced here.
+Assertions after that line in the same test method were not reached. No fixture was removed or weakened.

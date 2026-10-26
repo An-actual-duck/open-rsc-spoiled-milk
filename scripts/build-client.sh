@@ -2,6 +2,7 @@
 set -euo pipefail
 
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+python3 "$SCRIPT_ROOT/scripts/generate-npc-capacity-contract.py" --check
 ROOT_DIR="${ROOT_DIR:-$SCRIPT_ROOT}"
 if [[ ! -f "$ROOT_DIR/Client_Base/build.xml" || ! -d "$ROOT_DIR/scripts" ]]; then
   printf 'WARN: Ignoring invalid ROOT_DIR=%s; using %s\n' "$ROOT_DIR" "$SCRIPT_ROOT" >&2

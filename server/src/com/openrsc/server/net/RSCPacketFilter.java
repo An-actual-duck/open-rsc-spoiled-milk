@@ -415,7 +415,7 @@ public class RSCPacketFilter {
 			ArrayList<Channel> hostConnections = connections.get(hostAddress);
 			if (hostConnections != null && hostConnections.size() > 0) {
 				initialLen = hostConnections.size();
-				EntityList<Player> hostPlayers = getServer().getWorld().getPlayers(hostAddress);
+				List<Player> hostPlayers = getServer().getWorld().getPlayers(hostAddress);
 				List<Channel> loggedInConnections = hostPlayers.stream().map(Player::getChannel).collect(Collectors.toList());
 				Iterator<Channel> connIter = hostConnections.iterator();
 				while (connIter.hasNext()) {

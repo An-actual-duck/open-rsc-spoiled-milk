@@ -16,17 +16,26 @@ public class PlayerList extends EntityList<Player> {
     public synchronized boolean add(Player entity) {
         if(super.add(entity)) {
             playerHashIndex.put(entity.getUsernameHash(), entity);
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override
     public synchronized Player remove(int index) {
         Player player = super.remove(index);
         if(player != null) {
-            playerHashIndex.remove(player.getUsernameHash());
+            if (playerHashIndex.get(player.getUsernameHash()) == player) {
+                playerHashIndex.remove(player.getUsernameHash());
+            }
         }
         return player;
+    }
+
+    @Override
+    public synchronized void clear() {
+        super.clear();
+        playerHashIndex.clear();
     }
 
     /**
@@ -34,7 +43,7 @@ public class PlayerList extends EntityList<Player> {
      * @param hash username hash
      * @return the player associated with this hash
      */
-    public Player getPlayerByHash(long hash) {
+    public synchronized Player getPlayerByHash(long hash) {
         return playerHashIndex.get(hash);
     }
 	/**
@@ -42,7 +51,9 @@ public class PlayerList extends EntityList<Player> {
 	 * @param hash username hash
 	 * @return the player associated with this hash
 	 */
-	public Player removePlayerByHash(long hash) {
-		return playerHashIndex.remove(hash);
+	public synchronized Player removePlayerByHash(long hash) {
+        Player player = playerHashIndex.get(hash);
+        if (player != null) remove(player);
+        return player;
 	}
 }

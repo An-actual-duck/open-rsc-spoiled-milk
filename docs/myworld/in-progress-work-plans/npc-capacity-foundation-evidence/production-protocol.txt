@@ -1,0 +1,4 @@
+Included in final dedicated gate; actual login refusal, interaction parsers, crowded movement modes and headless client coverage.
+
+2026-10-26 17:02:30 [InitThread] INFO  Server: - PASS production 16384 registrations; boundary spawn/definition encoder-decoder; high attack target; invalid carriers; index reuse/lifetimes; high client definition storage; classic/retro golden bytes; 1024 view priority and frame budget; profile matrix
+PASS maintained client decode: high indexes, all companion growth, stale chat/hit, removal/re-add, queued targets and projectile namespaces

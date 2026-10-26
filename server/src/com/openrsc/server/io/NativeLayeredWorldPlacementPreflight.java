@@ -27,14 +27,24 @@ public final class NativeLayeredWorldPlacementPreflight {
 	private NativeLayeredWorldPlacementPreflight() {}
 
 	public static void validateNpcCapacity(NativeLayeredWorldPackageCatalog catalog, int availableSlots) {
-		long required = 0;
+        validateNpcCapacity(catalog, availableSlots, 0);
+    }
+
+    public static void validateNpcCapacity(NativeLayeredWorldPackageCatalog catalog, int availableSlots, int headroom) {
+        if (headroom < 0) throw new IllegalArgumentException("Negative transient NPC headroom");
+		long required = headroom;
 		for (NativeLayeredWorldPackage loaded : catalog.getPackages()) required += loaded.getNpcPlacementCount();
 		if (availableSlots < 0 || required > availableSlots) throw new IllegalStateException(
-			"Native layered NPC catalog exceeds available registration capacity: required=" + required + " available=" + availableSlots);
+			"Native layered NPC catalog exceeds available registration capacity: required=" + required + " available=" + availableSlots + " transientHeadroom=" + headroom);
 	}
 
 	public static void validate(NativeLayeredWorldPackageCatalog catalog, final EntityHandler handler,
-		final int restrictedItemId) {
+        final int restrictedItemId) {
+        validate(catalog, handler, restrictedItemId, 1023);
+    }
+
+    public static void validate(NativeLayeredWorldPackageCatalog catalog, final EntityHandler handler,
+        final int restrictedItemId, final int maximumNpcId) {
 		validate(catalog, new Definitions() {
 			public boolean npc(int id) { return handler.getNpcDef(id) != null; }
 			public boolean item(int id) { return handler.getItemDef(id) != null
@@ -42,14 +52,18 @@ public final class NativeLayeredWorldPlacementPreflight {
 			public GameObjectDef scenery(int id) { return handler.getGameObjectDef(id); }
 			public DoorDef boundary(int id) { return handler.getDoorDef(id); }
 			public TileDef tile(int id) { return handler.getTileDef(id); }
-		});
+		}, maximumNpcId);
 	}
 
 	public static void validate(NativeLayeredWorldPackageCatalog catalog, Definitions definitions) {
+        validate(catalog, definitions, 1023);
+    }
+
+    public static void validate(NativeLayeredWorldPackageCatalog catalog, Definitions definitions, int maximumNpcId) {
 		for (NativeLayeredWorldPackage loaded : catalog.getPackages()) {
 			for (NativeLayeredPlacementSet set : loaded.getPlacementSets().values()) {
 				for (NativeLayeredNpcPlacement npc : set.getNpcs()) {
-					requireWireId("NPC", npc.getNpcId(), 1023, false);
+					requireWireId("NPC", npc.getNpcId(), maximumNpcId, false);
 					if (!definitions.npc(npc.getNpcId())) unavailable("NPC", npc.getNpcId());
 					requireTerrain(loaded, npc.getStart(), npc.getPlacementId());
 					// Loader already checked every roam sector; also check the

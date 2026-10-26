@@ -708,7 +708,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case NPC_USE_ITEM:
 			case PLAYER_USE_ITEM:
 				ItemOnMobStruct it = new ItemOnMobStruct();
-				it.serverIndex = packet.readShort();
+				it.serverIndex = packet.readUnsignedShort();
 				it.slotIndex = packet.readShort();
 				result = it;
 				break;
@@ -773,7 +773,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case PLAYER_ATTACK:
 			case PLAYER_FOLLOW:
 				TargetMobStruct t = new TargetMobStruct();
-				t.serverIndex = packet.readShort();
+				t.serverIndex = packet.readUnsignedShort();
 				result = t;
 				break;
 
@@ -793,7 +793,7 @@ public class PayloadCustomParser implements PayloadParser<OpcodeIn> {
 			case CAST_ON_NPC:
 				sp = new SpellStruct();
 				sp.spell = Constants.spellToEnum(packet.readShort());
-				sp.targetIndex = packet.readShort();
+				sp.targetIndex = packet.readUnsignedShort();
 				result = sp;
 				break;
 

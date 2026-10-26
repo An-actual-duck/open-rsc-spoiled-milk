@@ -1,0 +1,18 @@
+VERSION baseline
+SCAN fixture=packed count=4000 mode=live median_ns=6059 p95_ns=6578 allocated_bytes_per_pass=16.0
+SCAN fixture=packed count=4000 mode=snapshot median_ns=20154 p95_ns=22459 allocated_bytes_per_pass=81296.0
+SCAN fixture=packed count=8000 mode=live median_ns=8826 p95_ns=9092 allocated_bytes_per_pass=16.0
+SCAN fixture=packed count=8000 mode=snapshot median_ns=33284 p95_ns=46283 allocated_bytes_per_pass=129672.0
+SCAN fixture=packed count=16384 mode=live median_ns=23564 p95_ns=23670 allocated_bytes_per_pass=0.0
+SCAN fixture=packed count=16384 mode=snapshot median_ns=63831 p95_ns=75603 allocated_bytes_per_pass=284608.0
+SCAN fixture=sparse-low count=64 mode=live median_ns=3175 p95_ns=3307 allocated_bytes_per_pass=0.0
+SCAN fixture=sparse-scattered count=64 mode=live median_ns=3126 p95_ns=3211 allocated_bytes_per_pass=0.0
+VERSION current
+SCAN fixture=packed count=4000 mode=live median_ns=3231 p95_ns=3353 allocated_bytes_per_pass=16.0
+SCAN fixture=packed count=4000 mode=snapshot median_ns=7953 p95_ns=8397 allocated_bytes_per_pass=16088.0
+SCAN fixture=packed count=8000 mode=live median_ns=6483 p95_ns=6775 allocated_bytes_per_pass=16.0
+SCAN fixture=packed count=8000 mode=snapshot median_ns=15645 p95_ns=18193 allocated_bytes_per_pass=32088.0
+SCAN fixture=packed count=16384 mode=live median_ns=12026 p95_ns=13881 allocated_bytes_per_pass=0.0
+SCAN fixture=packed count=16384 mode=snapshot median_ns=29754 p95_ns=34916 allocated_bytes_per_pass=65568.0
+SCAN fixture=sparse-low count=64 mode=live median_ns=30 p95_ns=30 allocated_bytes_per_pass=0.0
+SCAN fixture=sparse-scattered count=64 mode=live median_ns=3795 p95_ns=4608 allocated_bytes_per_pass=16.0

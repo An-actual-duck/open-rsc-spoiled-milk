@@ -6770,6 +6770,13 @@ public class EntityHandler {
 		setCustomItemDefinition(item.id, item);
 	}
 
+    public static void setRuntimeNpcDefinition(int id, NPCDef npc) {
+        if (id < 0 || id > orsc.NpcCapacityContract.CARRIER_MAX) {
+            throw new IllegalArgumentException("NPC definition exceeds supported wire identity: " + id);
+        }
+        setCustomNpcDefinition(id, npc);
+    }
+
 	private static void setCustomNpcDefinition(int id, NPCDef npc) {
 		if (npc == null || npc.id != id) {
 			throw new IllegalArgumentException(

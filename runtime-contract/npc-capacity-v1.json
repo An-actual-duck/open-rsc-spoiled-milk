@@ -1,0 +1,36 @@
+{
+  "contractSchemaVersion": 1,
+  "contractId": "npc-capacity-v1",
+  "purpose": "Maintained-source capability contract; configuration and login gates remain authoritative",
+  "canonicalSource": "tools/protocol/NpcCapacityContract.java",
+  "constants": {
+    "FIRST_EXPANDED_CLIENT_VERSION": 10053,
+    "CUSTOM_VERSION_LIMIT": 20000,
+    "INDEX_BITS": 16,
+    "DEFINITION_BITS": 16,
+    "CARRIER_MAX": 65535,
+    "TARGET_CAPACITY": 16384,
+    "VISIBLE_NPC_LIMIT": 1024,
+    "LEGACY_CUSTOM_CAPACITY": 4000,
+    "TRANSIENT_HEADROOM": 512,
+    "CLASSIC_EARLY_CAPACITY": 1000,
+    "CLASSIC_115_CAPACITY": 1500,
+    "CLASSIC_140_CAPACITY": 2048,
+    "CLASSIC_LATE_CAPACITY": 4096
+  },
+  "capacityConfigurationKey": "npc_capacity",
+  "expandedDefaultCapacity": 16384,
+  "expandedProfileRequiresExpandedClients": true,
+  "classicCapacityByVersion": {
+    "38": 1000,
+    "39": 1000,
+    "40": 1000,
+    "69": 1000,
+    "115": 1500,
+    "140": 2048,
+    "177..235": 4096
+  },
+  "indexRemovalSentinel": null,
+  "localAbsentTargetSentinel": -1,
+  "playerRegistryChanged": false
+}

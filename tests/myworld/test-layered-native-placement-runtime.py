@@ -18,6 +18,9 @@ OBJECT_REGISTRY = (
 )
 GAME_OBJECT_LOC = SERVER / "src/com/openrsc/server/external/GameObjectLoc.java"
 WORLD = SERVER / "src/com/openrsc/server/model/world/World.java"
+MAP_AUTHORITY = (
+    SERVER / "src/com/openrsc/server/model/world/region/RuntimeMapAuthority.java"
+)
 GROUND_ITEM = SERVER / "src/com/openrsc/server/model/entity/GroundItem.java"
 NPC = SERVER / "src/com/openrsc/server/model/entity/npc/Npc.java"
 REGION_MANAGER = (
@@ -510,6 +513,7 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         item = GROUND_ITEM.read_text(encoding="utf-8")
         npc = NPC.read_text(encoding="utf-8")
         manager = REGION_MANAGER.read_text(encoding="utf-8")
+        authority = MAP_AUTHORITY.read_text(encoding="utf-8")
         loc = GAME_OBJECT_LOC.read_text(encoding="utf-8")
         functions = FUNCTIONS.read_text(encoding="utf-8")
         world_editor = WORLD_EDITOR.read_text(encoding="utf-8")
@@ -553,10 +557,26 @@ class LayeredNativePlacementRuntimeTest(unittest.TestCase):
         self.assertIn("NativeLayeredSceneryPlacement", manager)
         self.assertIn("NativeLayeredBoundaryPlacement", manager)
         self.assertIn("populateNativeLayeredGameObject(", manager)
+        # Collision is still owned by the layered registry, through the maintained
+        # source-authority facade rather than a duplicate RegionManager tile path.
+        constructor_start = manager.index("this.mapAuthority = new RuntimeMapAuthority(")
+        constructor_end = manager.index("\n\t}\n", constructor_start)
         self.assertIn(
-            "nativeLayeredGameObjects.applyCollision(location, tile)",
-            manager,
+            "nativeLayeredGameObjects::applyCollision",
+            manager[constructor_start:constructor_end],
         )
+        self.assertRegex(
+            manager,
+            r"public TileValue getTile\(final WorldLocation location\)\s*\{"
+            r"\s*return mapAuthority\.getTile\(location\);\s*\}",
+        )
+        lookup_start = authority.index("public TileValue getTile(WorldLocation location)")
+        lookup_end = authority.index("public TileValue getMutableTile(", lookup_start)
+        native_lookup = authority[lookup_start:lookup_end]
+        materialize = native_lookup.index("TileValue tile = nativeTiles.materialize(")
+        collision = native_lookup.index("return registeredCollision.apply(location, tile);")
+        self.assertLess(materialize, collision)
+        self.assertLess(collision, native_lookup.index("return legacy.getTile(location);"))
         self.assertIn(
             "nativeLayeredGameObjects.hasNpcBlockingSceneryAt(",
             manager,

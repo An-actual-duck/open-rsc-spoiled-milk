@@ -4245,9 +4245,13 @@ public class RegionManager {
 			NativeTerrainMaterialPreflight.validate(nativeLayeredWorldPackageCatalog,
 				world.getServer().getEntityHandler());
 			NativeLayeredWorldPlacementPreflight.validateNpcCapacity(nativeLayeredWorldPackageCatalog,
-				world.getNpcs().getAvailableCapacity());
+				world.getNpcs().getAvailableCapacity(),
+                com.openrsc.server.net.rsc.NpcCapacityContract.expanded(world.getServer().getConfig().CLIENT_VERSION)
+                    ? com.openrsc.server.net.rsc.NpcCapacityContract.TRANSIENT_HEADROOM : 0);
 			NativeLayeredWorldPlacementPreflight.validate(nativeLayeredWorldPackageCatalog,
-				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID);
+				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID,
+                (1 << com.openrsc.server.net.rsc.NpcCapacityContract.definitionBits(
+                    world.getServer().getConfig().CLIENT_VERSION)) - 1);
 		}
 	}
 

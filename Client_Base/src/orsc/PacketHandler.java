@@ -43,7 +43,7 @@ public class PacketHandler {
 	private static final int CUSTOM_MOB_COORD_OFFSET_SIGN = 1 << (CUSTOM_MOB_COORD_OFFSET_BITS - 1);
 	private static final int CUSTOM_MOB_COORD_OFFSET_WRAP = 1 << CUSTOM_MOB_COORD_OFFSET_BITS;
 	private static final int PLAYER_COORD_ADD_ENTRY_BITS = 11 + CUSTOM_MOB_COORD_OFFSET_BITS + CUSTOM_MOB_COORD_OFFSET_BITS + 4;
-	private static final int NPC_COORD_ADD_ENTRY_BITS = 12 + CUSTOM_MOB_COORD_OFFSET_BITS + CUSTOM_MOB_COORD_OFFSET_BITS + 4 + 10;
+	private static final int NPC_COORD_ADD_ENTRY_BITS = NpcSpawnRecord.BITS;
 	private static final int AUTHENTIC_LOCAL_MOB_COUNT_BITS = 8;
 	private static final int CUSTOM_LOCAL_MOB_COUNT_BITS = 16;
 	private static final int INCOMING_PACKET_BUFFER_INITIAL_SIZE = 30000;
@@ -1981,7 +1981,7 @@ public class PacketHandler {
 		com.openrsc.client.entityhandling.defs.NPCDef newNpc = new com.openrsc.client.entityhandling.defs.NPCDef(name, description, optionCommand, attack, strength, hits, defense,
 			attackable, sprites, hairColour, topColour, bottomColour, skinColour, camera1, camera2,
 			walkModel, combatModel, combatSprite, id);
-		com.openrsc.client.entityhandling.EntityHandler.npcs.set(id, newNpc);
+		com.openrsc.client.entityhandling.EntityHandler.setRuntimeNpcDefinition(id, newNpc);
 	}
 
 	private void updateBatchProgression() {
@@ -4069,6 +4069,10 @@ public class PacketHandler {
 
 		packetsIncoming.startBitAccess();
 		int count = readLocalMobCount();
+        if (count > mc.getNpcCacheCount() || count > NpcCapacityContract.VISIBLE_NPC_LIMIT
+                || packetsIncoming.getBitHead() > length * 8) {
+            throw new IllegalArgumentException("Invalid NPC local cache count");
+        }
 		int tileSize = mc.getTileSize();
 
 		int waypointCurrentIndex, rsDir, waypointX, var12, i;
@@ -4083,6 +4087,7 @@ public class PacketHandler {
 						mc.detachNpcCombatEffect(npc);
 						if (npc != null) {
 							mc.invalidateCustomNpcMovementTarget(npc.serverIndex);
+                            mc.invalidateRemovedNpcProjectiles(npc.serverIndex);
 							npc.clearTransientVisualState();
 						}
 						continue;
@@ -4125,16 +4130,16 @@ public class PacketHandler {
 			mc.setNpcCount(mc.getNpcCount() + 1);
 		}
 
-		while (length * 8 >= packetsIncoming.getBitHead() + NPC_COORD_ADD_ENTRY_BITS) {
-			i = packetsIncoming.getBitMask(12);
-			int var6 = readCustomMobCoordOffset();
-			int var7 = readCustomMobCoordOffset();
-			var12 = packetsIncoming.getBitMask(4);
-			rsDir = (var6 + mc.getLocalPlayerX()) * tileSize + 64;
-			waypointCurrentIndex = (var7 + mc.getLocalPlayerZ()) * tileSize + 64;
-			waypointX = packetsIncoming.getBitMask(10);
-			mc.createNpc(var12, waypointX, rsDir, waypointCurrentIndex, i);
-		}
+        while (length * 8 >= packetsIncoming.getBitHead() + NPC_COORD_ADD_ENTRY_BITS) {
+            if (mc.getNpcCount() >= NpcCapacityContract.VISIBLE_NPC_LIMIT) {
+                throw new IllegalArgumentException("NPC additions exceed supported view budget");
+            }
+            NpcSpawnRecord record = NpcSpawnRecord.read(packetsIncoming, length);
+            mc.createNpc(record.sprite, record.definition,
+                (record.offsetX + mc.getLocalPlayerX()) * tileSize + 64,
+                (record.offsetZ + mc.getLocalPlayerZ()) * tileSize + 64, record.index);
+        }
+        NpcSpawnRecord.requirePadding(packetsIncoming, length);
 
 		packetsIncoming.endBitAccess();
 	}
@@ -4148,8 +4153,8 @@ public class PacketHandler {
 			int updateType = packetsIncoming.getUnsignedByte();
 			if (updateType == 1) { // NPC Chat
 				int chatRecipient = packetsIncoming.getShort();
+                String message = packetsIncoming.readString();
 				if (npc != null) {
-					String message = packetsIncoming.readString();
 					npc.messageTimeout = 150;
 					npc.message = message;
 					if (mc.getLocalPlayer().serverIndex == chatRecipient) {
@@ -4256,7 +4261,9 @@ public class PacketHandler {
 				if (npc != null) {
 					npc.spiritSummon = spiritSummon;
 				}
-			}
+            } else {
+                throw new IllegalArgumentException("Unsupported NPC appearance update type: " + updateType);
+            }
 		}
 	}
 
