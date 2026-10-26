@@ -7,8 +7,11 @@ balance values or authorize public deployment.
 
 ## 1. Complete the Slayer Tower and associated content
 
-- The owner is building/decorating the tower and placing its final NPCs.
-- Core will connect the planned associate/door rank restrictions after placement.
+- The owner accepted the tower decoration on October 26. Preserve the authored map.
+- Core will guard initial entry and the later **upward stairs**, with associates
+  in safe rooms behind freely accessible auto-closing doors. Resolve the NPC
+  capacity import blocker before final placement/binding; see
+  [final tower placement and capacity](slayer-tower-final-placement-and-capacity.md).
 - Finish the axe-based Slow coating using the shared Slow foundation, including
   its remaining recipe, application and balance decisions.
 - Most existing Slayer encounters, equipment and sprites are already approved
