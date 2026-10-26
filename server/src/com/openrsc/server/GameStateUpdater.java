@@ -3317,7 +3317,10 @@ public final class GameStateUpdater {
 
 	private int safeNPCIndex(final Player player, final int npcIndex) {
 		if (!player.isUsingCustomClient()) {
-			return npcIndex % player.getClientLimitations().maxServerId;
+			if (npcIndex < 0 || npcIndex >= com.openrsc.server.net.rsc.NpcCapacityContract.supportedCapacity(player.getClientVersion())) {
+                throw new IllegalStateException("NPC index is incompatible with classic client: " + npcIndex);
+            }
+            return npcIndex;
 		}
 		return npcIndex;
 	}
@@ -3364,7 +3367,7 @@ public final class GameStateUpdater {
 	}
 
 	private static List<Npc> prioritizeVisibleNpcs(final Player player, final Collection<Npc> visibleNpcs) {
-		final int localNpcLimit = localMobLimit(player);
+		final int localNpcLimit = localNpcLimit(player);
 		final HashSet<Npc> existingLocalNpcs = new HashSet<>(player.getLocalNpcs());
 		final Mob playerOpponent = player.getOpponent();
 		final ArrayList<Npc> directCombat = new ArrayList<>(visibleNpcs.size());
@@ -3413,6 +3416,10 @@ public final class GameStateUpdater {
 	private static int localMobLimit(final Player player) {
 		return player.isUsingCustomClient() ? CUSTOM_LOCAL_MOB_LIMIT : AUTHENTIC_LOCAL_MOB_LIMIT;
 	}
+
+    private static int localNpcLimit(final Player player) {
+        return Math.min(localMobLimit(player), com.openrsc.server.net.rsc.NpcCapacityContract.VISIBLE_NPC_LIMIT);
+    }
 
 	private static int localMobCountBits(final Player player) {
 		return player.isUsingCustomClient() ? CUSTOM_LOCAL_MOB_COUNT_BITS : AUTHENTIC_LOCAL_MOB_COUNT_BITS;
@@ -3476,7 +3483,7 @@ public final class GameStateUpdater {
 		} else {
 			final int localNpcCount = playerToUpdate.getLocalNpcs().size();
 			final int visibleNpcCount = visibleNpcs.size();
-			final int localNpcLimit = localMobLimit(playerToUpdate);
+			final int localNpcLimit = localNpcLimit(playerToUpdate);
 			List<Map.Entry<Integer, Integer>> mobsUpdate =
 				new ArrayList<>(1 + (localNpcCount * 3) + (Math.min(localNpcLimit, visibleNpcCount) * 5));
 			final boolean traceNpcPackets = playerToUpdate.getAttribute("debug_npc_trace", false);
@@ -3582,11 +3589,11 @@ public final class GameStateUpdater {
 				boolean forClient140 = playerToUpdate.isUsing140CompatibleClient();
 				boolean forAuthentic = !playerToUpdate.isUsingCustomClient();
 				int offsetBits = forAuthentic ? 5 : CUSTOM_MOB_COORD_OFFSET_BITS;
-				mobsUpdate.add(bit(safeNPCIndex(playerToUpdate, newNPC.getIndex()), forClient115 || forClient140 ? 11 : 12));
+				mobsUpdate.add(bit(safeNPCIndex(playerToUpdate, newNPC.getIndex()), com.openrsc.server.net.rsc.NpcCapacityContract.indexBits(playerToUpdate.getClientVersion())));
 				mobsUpdate.add(bit(mobCoordOffset(newNPC.getX(), playerToUpdate.getX()), offsetBits));
 				mobsUpdate.add(bit(mobCoordOffset(newNPC.getY(), playerToUpdate.getY()), offsetBits));
 				mobsUpdate.add(bit(newNPC.getSprite(), 4));
-				int numBits = forClient115 ? 8 : (forClient140 ? 9 : 10);
+				int numBits = com.openrsc.server.net.rsc.NpcCapacityContract.definitionBits(playerToUpdate.getClientVersion());
 				mobsUpdate.add(bit(newNPC.getID(), numBits));
 
 				if (!playerToUpdate.getConfig().DISABLE_NPC_LOCATION_CACHE) {

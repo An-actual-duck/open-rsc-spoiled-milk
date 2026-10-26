@@ -1,0 +1,47 @@
+// Canonical protocol contract. scripts/generate-npc-capacity-contract.py adds packages.
+public final class NpcCapacityContract {
+    public static final int FIRST_EXPANDED_CLIENT_VERSION = 10053;
+    public static final int CUSTOM_VERSION_LIMIT = 20000;
+    public static final int INDEX_BITS = 16;
+    public static final int DEFINITION_BITS = 16;
+    public static final int CARRIER_MAX = 65535;
+    public static final int TARGET_CAPACITY = 16384;
+    // Scene pick tags use decimal 10000-wide namespaces, independently of global IDs.
+    public static final int VISIBLE_NPC_LIMIT = 10000;
+    public static final int LEGACY_CUSTOM_CAPACITY = 4000;
+    public static final int TRANSIENT_HEADROOM = 512;
+
+    private NpcCapacityContract() {}
+
+    public static boolean expanded(int version) {
+        return version >= FIRST_EXPANDED_CLIENT_VERSION && version < CUSTOM_VERSION_LIMIT;
+    }
+
+    public static int supportedCapacity(int version) {
+        if (expanded(version)) return TARGET_CAPACITY;
+        if (version >= 10000 && version < CUSTOM_VERSION_LIMIT) return LEGACY_CUSTOM_CAPACITY;
+        if (version >= 38 && version <= 40 || version == 69) return 1000;
+        if (version == 115) return 1500;
+        if (version == 140) return 2048;
+        if (version >= 177 && version <= 235) return 4096;
+        return 0;
+    }
+
+    public static boolean supports(int version, int capacity) {
+        return capacity > 0 && capacity <= supportedCapacity(version);
+    }
+
+    public static void requireCapacity(int version, int capacity) {
+        if (!supports(version, capacity)) throw new IllegalArgumentException(
+            "NPC capacity " + capacity + " is incompatible with client version " + version
+            + "; supported capacity=" + supportedCapacity(version));
+    }
+
+    public static int indexBits(int version) {
+        return expanded(version) ? INDEX_BITS : version == 115 || version == 140 ? 11 : 12;
+    }
+
+    public static int definitionBits(int version) {
+        return expanded(version) ? DEFINITION_BITS : version == 115 ? 8 : version == 140 ? 9 : 10;
+    }
+}

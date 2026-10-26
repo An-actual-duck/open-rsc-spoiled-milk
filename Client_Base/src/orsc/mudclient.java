@@ -3263,7 +3263,9 @@ public final class mudclient implements Runnable {
 
 	public final ORSCharacter createNpc(int sprite, int type, int x, int y, int serverIndex) {
 		try {
-			if (serverIndex < 0) {
+			if (serverIndex < 0 || serverIndex >= NpcCapacityContract.TARGET_CAPACITY
+                    || type < 0 || type > NpcCapacityContract.CARRIER_MAX
+                    || npcCount >= NpcCapacityContract.VISIBLE_NPC_LIMIT) {
 				return null;
 			}
 			ensureNpcServerCapacity(serverIndex + 1);
@@ -8555,7 +8557,7 @@ public final class mudclient implements Runnable {
 									enemyProjectile = false;
 								}
 							} else {
-								var16 = this.npcsServer[var3.attackingNpcServerIndex];
+								var16 = getNpcFromServer(var3.attackingNpcServerIndex);
 								shooterIsNpc = true;
 							}
 
@@ -8606,7 +8608,7 @@ public final class mudclient implements Runnable {
 									enemyProjectile = false;
 								}
 							} else {
-								var16 = this.npcsServer[var3.attackingNpcServerIndex];
+								var16 = getNpcFromServer(var3.attackingNpcServerIndex);
 								shooterIsNpc = true;
 							}
 
@@ -10362,36 +10364,25 @@ public final class mudclient implements Runnable {
 		}
 	}
 
-	private void updateNpcOverlapVisualOffsets() {
-		Arrays.fill(this.npcVisualOffsetX, 0, this.npcCount, 0);
-		Arrays.fill(this.npcVisualOffsetZ, 0, this.npcCount, 0);
+    private int[] npcOverlapRanks = new int[0];
+    private int[] npcOverlapCounts = new int[0];
 
-		for (int i = 0; i < this.npcCount; ++i) {
-			ORSCharacter npc = this.npcs[i];
-			if (npc == null) {
-				continue;
-			}
-
-			int count = 0;
-			int rank = 0;
-			for (int j = 0; j < this.npcCount; ++j) {
-				ORSCharacter other = this.npcs[j];
-				if (other == null || !isSameVisualNpcTile(npc, other)) {
-					continue;
-				}
-
-				++count;
-				if (compareNpcVisualOrder(other, npc) < 0) {
-					++rank;
-				}
-			}
-
-			if (count > 1) {
-				this.npcVisualOffsetX[i] = getNpcOverlapVisualOffsetX(rank, count);
-				this.npcVisualOffsetZ[i] = getNpcOverlapVisualOffsetZ(rank, count);
-			}
-		}
-	}
+    private void updateNpcOverlapVisualOffsets() {
+        Arrays.fill(this.npcVisualOffsetX, 0, this.npcCount, 0);
+        Arrays.fill(this.npcVisualOffsetZ, 0, this.npcCount, 0);
+        if (npcOverlapRanks.length < npcCount) {
+            npcOverlapRanks = new int[npcs.length];
+            npcOverlapCounts = new int[npcs.length];
+        }
+        NpcOverlapLayout.calculate(npcs, npcCount, tileSize, npcOverlapRanks, npcOverlapCounts);
+        for (int i = 0; i < npcCount; i++) {
+            int count = npcOverlapCounts[i];
+            if (count > 1) {
+                npcVisualOffsetX[i] = getNpcOverlapVisualOffsetX(npcOverlapRanks[i], count);
+                npcVisualOffsetZ[i] = getNpcOverlapVisualOffsetZ(npcOverlapRanks[i], count);
+            }
+        }
+    }
 
 	private boolean isSameVisualNpcTile(ORSCharacter first, ORSCharacter second) {
 		return getNpcVisualTileX(first) == getNpcVisualTileX(second)
@@ -25449,7 +25440,7 @@ public final class mudclient implements Runnable {
 	}
 
 	public void applyCustomNpcMovementUpdate(int serverIndex, int worldX, int worldZ, int direction) {
-		if (serverIndex < 0) {
+		if (serverIndex < 0 || serverIndex >= NpcCapacityContract.TARGET_CAPACITY) {
 			return;
 		}
 		ensureNpcServerCapacity(serverIndex + 1);

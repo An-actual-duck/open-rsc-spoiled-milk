@@ -6,7 +6,6 @@ import com.openrsc.server.model.entity.Entity;
 
 import java.text.MessageFormat;
 import java.util.AbstractCollection;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -27,6 +26,7 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
     private ConcurrentHashMap<Integer, Object> occupiedIndices;
     private final int capacity;
     private Object[] entities;
+    private volatile int scanUpperBound;
     private final Map<T, Integer> registrations = new IdentityHashMap<>();
 
     public EntityList() {
@@ -45,6 +45,7 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
 			.collect(Collectors.toCollection(() -> new PriorityQueue<>(capacity)));
 		this.occupiedIndices = new ConcurrentHashMap<>();
 		this.entities = new Object[capacity];
+        this.scanUpperBound = 0;
 	}
 
     public synchronized boolean add(final T entity) {
@@ -64,6 +65,7 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
         entity.setIndex(nextId);
         occupiedIndices.put(nextId, new Object());
         registrations.put(entity, nextId);
+        if (nextId >= scanUpperBound) scanUpperBound = nextId + 1;
         return true;
     }
 
@@ -96,26 +98,39 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
 
     @SuppressWarnings("unchecked")
     public synchronized Iterator<T> iterator() {
-        return Arrays.stream(entities)
-                .filter(Objects::nonNull)
-                .map(entity -> (T) entity)
-                .collect(ImmutableList.toImmutableList())
-                .iterator();
+        final ImmutableList.Builder<T> snapshot = ImmutableList.builderWithExpectedSize(size());
+        for (int index = 0; index < scanUpperBound; index++) {
+            if (entities[index] != null) snapshot.add((T) entities[index]);
+        }
+        return snapshot.build().iterator();
     }
 
     /**
      * Iterates the live backing array directly without creating a snapshot.
-     * Use this only in hot paths where same-tick visibility of list mutations is acceptable.
+     * Ascending index order. Removals before visitation are skipped; additions to
+     * higher unvisited indexes are visible in this pass. Lower indexes wait for
+     * the next pass. clear() retains the captured array for this pass. Like the
+     * original traversal, callers own tick-thread confinement; this method does
+     * not promise an atomic concurrent snapshot. iterator() supplies a snapshot.
      */
     @SuppressWarnings("unchecked")
     public void forEachLive(final Consumer<? super T> action) {
         Objects.requireNonNull(action, "action");
         final Object[] liveEntities = entities;
-        for (int index = 0; index < liveEntities.length; index++) {
-            final Object entity = liveEntities[index];
-            if (entity != null) {
-                action.accept((T) entity);
+        // Retain the captured array's initial range across clear(), as before.
+        // Higher-slot registrations during a callback remain visible this pass.
+        int limit = scanUpperBound;
+        int index = 0;
+        while (true) {
+            for (; index < limit; index++) {
+                final Object entity = liveEntities[index];
+                if (entity != null) action.accept((T) entity);
             }
+            // A callback can add above the original bound. Read it once per range,
+            // rather than paying for a volatile load on every occupied slot.
+            final int updatedLimit = scanUpperBound;
+            if (updatedLimit <= limit) break;
+            limit = updatedLimit;
         }
     }
 
@@ -133,6 +148,11 @@ public class EntityList<T extends Entity> extends AbstractCollection<T> {
         entities[index] = null;
         occupiedIndices.remove(index);
         registrations.remove(entity);
+        if (index + 1 == scanUpperBound) {
+            int limit = index;
+            while (limit > 0 && entities[limit - 1] == null) limit--;
+            scanUpperBound = limit;
+        }
         entity.setIndex(-1);
         priorityIdPool.offer(index);
         return entity;

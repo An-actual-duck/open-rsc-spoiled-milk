@@ -13,6 +13,7 @@ import com.openrsc.server.io.WorldBuilderInstalledMapActivation;
 import com.openrsc.server.io.MapSourceActivationPlan;
 import com.openrsc.server.io.NativeLayeredWorldRuntimeProfile;
 import com.openrsc.server.util.EntityList;
+import com.openrsc.server.net.rsc.NpcCapacityContract;
 import com.openrsc.server.util.SystemUtil;
 import com.openrsc.server.util.YMLReader;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +55,7 @@ public class ServerConfiguration {
 	public boolean MEMBER_WORLD;
 	public int WORLD_NUMBER;
 	public int CLIENT_VERSION;
+	public int NPC_CAPACITY;
 	public boolean ENFORCE_CUSTOM_CLIENT_VERSION;
 	public int MAX_PLAYERS;
 	public int MAX_PLAYERS_PER_IP;
@@ -478,6 +480,9 @@ public class ServerConfiguration {
 		IDLE_TIMER = tryReadInt("idle_timer").orElse(300000); // 5 minutes
 		AUTO_SAVE = tryReadInt("auto_save").orElse(30000); // 30 seconds
 		CLIENT_VERSION = tryReadInt("client_version").orElse(10009);
+		NPC_CAPACITY = tryReadInt("npc_capacity").orElse(
+			Math.min(NpcCapacityContract.LEGACY_CUSTOM_CAPACITY, NpcCapacityContract.supportedCapacity(CLIENT_VERSION)));
+		NpcCapacityContract.requireCapacity(CLIENT_VERSION, NPC_CAPACITY);
 		ENFORCE_CUSTOM_CLIENT_VERSION = tryReadBool("enforce_custom_client_version").orElse(true);
 		SERVER_BIND_ADDRESS = tryReadString("server_bind_address").orElse("0.0.0.0");
 		SERVER_PORT = tryReadInt("server_port").orElse(43594);

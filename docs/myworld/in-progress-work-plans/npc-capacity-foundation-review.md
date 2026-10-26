@@ -77,3 +77,48 @@ before this checkpoint. Production login remains the duplicate-login authority;
 registry ownership uses identity, including hash removal guards.
 
 No scan optimization or capacity/protocol increase is enabled in this slice.
+
+## Paired wire and measured traversal checkpoint
+
+The canonical source is `tools/protocol/NpcCapacityContract.java`; the generator
+writes both maintained source trees, and source build entry points check for
+drift. Custom version 10053 uses 16-bit global indexes and definition IDs;
+versions below it retain their existing spawn layout. `npc_capacity` is a checked
+configuration value, bounded by the client's proven profile. The current default
+remains 4000 pending the larger population timing gate. The login compatibility
+check applies even to administrators and when ordinary version enforcement is off.
+Classic profile budgets: 38/39/40/69=1000, 115=1500, 140=2048,
+177..235=4096. Classic packet index modulo is removed.
+
+Client addition decoding rejects indexes >=16384, incomplete records and invalid
+padding. Custom incoming mob targets use explicit unsigned shorts; classic parser
+layouts remain unchanged. Scene pick tags encode visible-list ordinals, not global
+indexes. Decimal 10000-wide namespaces impose a separate 10000 visible NPC bound;
+player budgets remain unchanged. Projectile render lookups use the bounded global
+accessor. Native placement definition validation receives the profile's actual
+wire maximum rather than an unconditional 1023.
+
+`test-npc-capacity-production.py` registered 16384 real production NPC instances
+and round-tripped actual GameStateUpdater packets through the production client
+addition decoder at 0/2047/4095/4096/8191/16383, with definition IDs
+1023/1024/2047/4096/32768/65535. It also checked a real custom attack parse/lookup,
+invalid indexes, truncated input, high-slot reuse and supported/unsupported profile
+budgets. The fixture opens no listener and starts no gameplay loop. Full combat
+regression remained 144/144 after the paired change.
+
+Registry traversal now skips the unallocated tail while preserving ascending order
+and higher-slot callback additions. Scattered holes still scan in index order;
+no dense-list reorder is introduced. Snapshot construction uses an exact-sized
+immutable builder. `benchmark-entity-list-scan.py` compares starting production
+source with current production source using identical stub identity objects and
+fixed -Xms256m/-Xmx256m. These are traversal/allocation microbenchmarks, not tick
+throughput. A representative run reduced 16K snapshot allocation from 284608 to
+65568 bytes/pass and median from ~64us to ~30us. Sparse-low occupancy benefits;
+scattered-hole scans remain a documented limit. Raw repeatable results will be
+preserved with final acceptance evidence.
+
+Client overlap grouping preserves original rank/tie behavior and offset functions.
+Equivalence covers 22 sparse/dense scenes, nulls, negative/moving tile positions,
+and duplicate indexes. Measurements retain the old loop for <=32 visible NPCs,
+where grouping overhead did not pay. Larger groups use tile grouping and sorted
+server-index ranks. Allocation and end-to-end throughput evidence remain pending.

@@ -4247,7 +4247,9 @@ public class RegionManager {
 			NativeLayeredWorldPlacementPreflight.validateNpcCapacity(nativeLayeredWorldPackageCatalog,
 				world.getNpcs().getAvailableCapacity());
 			NativeLayeredWorldPlacementPreflight.validate(nativeLayeredWorldPackageCatalog,
-				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID);
+				world.getServer().getEntityHandler(), world.getServer().getConfig().RESTRICT_ITEM_ID,
+                (1 << com.openrsc.server.net.rsc.NpcCapacityContract.definitionBits(
+                    world.getServer().getConfig().CLIENT_VERSION)) - 1);
 		}
 	}
 

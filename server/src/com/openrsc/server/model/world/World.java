@@ -154,7 +154,7 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 
 	public World(final Server server) {
 		this.server = server;
-		this.npcs = new EntityList<>(4000);
+		this.npcs = new EntityList<>(server.getConfig().NPC_CAPACITY);
 		this.players = new PlayerList(2000);
 		this.sceneryLocs = new HashMap<>();
 		this.npcDrops = new NpcDrops(this);
@@ -925,8 +925,28 @@ public final class World implements SimpleSubscriber<FishingTrawler>, Runnable {
 				+ npc.startY + "</startY>");
 		}
 
-		getNpcs().add(n);
-		return n;
+        try {
+            if (n.getID() < 0 || n.getID() > com.openrsc.server.net.rsc.NpcCapacityContract.CARRIER_MAX) {
+                throw new IllegalArgumentException("NPC definition exceeds custom wire carrier: " + n.getID());
+            }
+            getNpcs().add(n);
+            return n;
+        } catch (RuntimeException failure) {
+            // Constructors already establish spatial membership and restoration events.
+            // A failed registration must not leave a ghost in either owner domain.
+            if (!getNpcs().contains(n)) {
+                try {
+                    n.superRemove();
+                    n.getStatRestorationEvent().stop();
+                    getServer().getGameEventHandler().remove(n.getStatRestorationEvent());
+                } catch (RuntimeException cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
+            LOGGER.error("NPC registration failed: id={} registered={} capacity={} available={}",
+                n.getID(), getNpcs().size(), getServer().getConfig().NPC_CAPACITY, getNpcs().getAvailableCapacity());
+            throw failure;
+        }
 	}
 
 	public boolean registerPlayer(final Player player) {

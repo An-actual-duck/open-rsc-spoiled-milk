@@ -156,6 +156,11 @@ public abstract class LoginRequest extends LoginExecutorProcess{
 	}
 
 	public ValidatedLogin validateLogin() {
+        // Wire compatibility is mandatory, including administrators and disabled version enforcement.
+        if (!com.openrsc.server.net.rsc.NpcCapacityContract.supports(
+                getClientVersion(), getServer().getConfig().NPC_CAPACITY)) {
+            return new ValidatedLogin(LoginResponse.CLIENT_UPDATED);
+        }
 		PlayerLoginData playerData;
 		int groupId = Group.USER;
 		try {
