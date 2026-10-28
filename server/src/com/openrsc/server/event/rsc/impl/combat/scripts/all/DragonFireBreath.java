@@ -35,7 +35,9 @@ public class DragonFireBreath implements OnCombatStartScript {
 			player.playerServerMessage(MessageType.QUEST, "The dragon breathes fire at you");
 			int maxHit = 65; // ELVARG & KING BLACK DRAGON - MAXIMUM HIT FOR BOTH
 			int fireDamage;
-			if (dragon.getID() == NpcId.BABY_BLUE_DRAGON.id()) {
+			if (com.openrsc.server.content.gemdragons.GemDragons.contains(dragon.getID())) {
+				maxHit = com.openrsc.server.content.gemdragons.GemDragons.fireMaxHit(dragon.getID());
+			} else if (dragon.getID() == NpcId.BABY_BLUE_DRAGON.id()) {
 				//maxHit = 12; // NOT SURE BUT DEFINITELY NOT 65 FOR BABY BLUES.
 				maxHit = (int) Math.floor(getCurrentLevel(player, Skill.HITS.id()) * 10 / 100.0); // is 10% of players remaining HP
 			} else if (dragon.getID() == NpcId.BLUE_DRAGON.id()) {
@@ -77,7 +79,8 @@ public class DragonFireBreath implements OnCombatStartScript {
 			} else if (reduction <= critValue &&
 				(inArray(dragon.getID(), NpcId.DRAGON.id(), NpcId.BLUE_DRAGON.id(),
 				NpcId.RED_DRAGON.id(), NpcId.BLACK_DRAGON.id())
-					|| victim.getID() == NpcId.KING_BLACK_DRAGON.id())) {
+					|| victim.getID() == NpcId.KING_BLACK_DRAGON.id()
+					|| com.openrsc.server.content.gemdragons.GemDragons.contains(dragon.getID()))) {
 				// for elvarg when player has anti dragon breath, damage is same as when ranging
 				// for kbd damage is same as ranging too (only if player attacked first)
 				// for other dragons with anti dragon shield makes damage be low & compared to players hp
@@ -119,6 +122,8 @@ public class DragonFireBreath implements OnCombatStartScript {
 		} else if (npcId == NpcId.KING_BLACK_DRAGON.id()) {
 			// 0-3 damage
 			percentage = 3 + (int)(5 * reduction);
+		} else if (com.openrsc.server.content.gemdragons.GemDragons.contains(npcId)) {
+			percentage = 4 + (int)(5 * reduction);
 		} else if (npcId == NpcId.BLACK_DRAGON.id()) {
 			// 0-9 damage
 			percentage = 8 + (int)(10 * reduction);

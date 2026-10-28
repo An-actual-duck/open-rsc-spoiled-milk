@@ -1044,6 +1044,7 @@ public class Npc extends Mob {
 		/* 5. Roll for drops. */
 		if (drops.getTotalWeight() > 0) {
 			ArrayList<Item> items = personalDrop ? drops.rollPersonalLoot(owner, contributionScale) : drops.rollItem(owner);
+			com.openrsc.server.content.gemdragons.GemDragons.enforceOwnGemCap(getID(), items);
 			for (Item item : items) {
 				if (item != null) {
 					if (!worldAllowsDrop(item)) {

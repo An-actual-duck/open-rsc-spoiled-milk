@@ -1403,7 +1403,8 @@ public class Crafting implements UseInvTrigger,
 			if (player.getCarriedItems().remove(gemToCut) < 0) {
 				break;
 			}
-			if (DataConversions.inArray(gemsThatFail, gem.getCatalogId()) &&
+			if (!com.openrsc.server.content.gemdragons.GemCuttingEquipment.preventsFailure(player) &&
+				DataConversions.inArray(gemsThatFail, gem.getCatalogId()) &&
 				Formulae.smashGem(gem.getCatalogId(), gemDef.getReqLevel(), player.getSkills().getLevel(Skill.CRAFTING.id()))) {
 				player.message("You miss hit the chisel and smash the " + cutGem.getDef(player.getWorld()).getName() + " to pieces!");
 				player.getCarriedItems().getInventory().add(new Item(ItemId.CRUSHED_GEMSTONE.id()));
@@ -1416,7 +1417,9 @@ public class Crafting implements UseInvTrigger,
 					player.incExp(Skill.CRAFTING.id(), 15, true);
 				}
 			} else {
-				player.getCarriedItems().getInventory().add(cutGem, true);
+				if (com.openrsc.server.content.gemdragons.GemCuttingEquipment.awardSuccessfulCut(player, gemDef.getGemID())) {
+					player.message("Your monocle reveals a second gem within the stone!");
+				}
 				String gemName = cutGem.getDef(player.getWorld()).getName();
 				if (!DataConversions.inArray(gemsThatFail, gem.getCatalogId())) {
 					gemName.toLowerCase();

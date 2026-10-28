@@ -84,6 +84,8 @@ public class NpcDrops {
 		}
 		if (config.WANT_MYWORLD) {
 			slayerOrdinary.register(npcDrops, rareDropTable);
+			com.openrsc.server.content.gemdragons.GemDragons.register(npcDrops);
+			for (int id=877; id<=881; id++) dragonNpcs.add(id);
 			ashesNpcs.add(AbyssalDemonCombat.NPC_ID);
 		}
 	}
@@ -176,6 +178,13 @@ public class NpcDrops {
 
 	private void createHiddenUniqueDrops() {
 		// Keep hidden chase drops out of the normal 128-weight NPC tables.
+		if (config.WANT_MYWORLD) {
+			for (int id=877; id<=881; id++) {
+				int denominator = com.openrsc.server.content.gemdragons.GemDragons.UNIQUE_DENOMINATORS[id-877];
+				addHiddenUniqueDrop(id, MyWorldItemId.GEM_CUTTER_GLOVES, 1, 1, denominator);
+				addHiddenUniqueDrop(id, MyWorldItemId.GEM_CUTTERS_MONOCLE, 1, 1, denominator);
+			}
+		}
 		addHiddenUniqueDrop(NpcId.FIRE_GIANT.id(), ItemId.FIRE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
 		addHiddenUniqueDrop(NpcId.RED_DRAGON.id(), ItemId.FIRE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);
 		addHiddenUniqueDrop(NpcId.ICE_GIANT.id(), ItemId.ICE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);

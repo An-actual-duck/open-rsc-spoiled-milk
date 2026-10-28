@@ -1,0 +1,86 @@
+generators
+/economy=13]
+  - 15-black-and-white-weapons.json: 20 items [melee/economy=20]
+  - 20-ranged-weapons.json: 142 items [economy=6, identity=5, identity/ranged=1, identity/ranged/economy=1, melee/identity/ranged=1, melee/ranged=62, melee/ranged/economy=32, ranged=11, ranged/economy=23]
+  - 30-magic-weapons-and-hybrids.json: 195 items [identity/magic=1, magic=31, melee=3, melee/identity/identity/magic/defense/economy=1, melee/identity/identity/magic/economy=1, melee/magic=157, melee/magic/defense=1]
+  - 40-armor-and-defense.json: 397 items [melee/defense=107, melee/defense/economy=210, melee/identity/defense=2, melee/identity/defense/economy=63, melee/identity/identity/defense=8, melee/identity/identity/defense/economy=2, other=5]
+  - 41-enchanted-robe-defense.json: 381 items [melee/defense/economy=381]
+  - 45-black-and-white-armor.json: 28 items [melee/defense=26, melee/identity/defense=2]
+  - 47-plate-unification.json: 24 items [melee/defense=6, melee/identity/defense=6, melee/identity/defense/economy=12]
+  - 49-equipment-economy.json: 635 items [defense/economy=2, economy=258, identity=1, identity/economy=13, identity/identity/economy=10, melee/defense/economy=280, melee/identity/identity/economy=71]
+  - 50-exalted-rune.json: 22 items [identity/economy=1, melee/identity/defense/economy=7, melee/identity/economy=11, melee/identity/ranged/magic/economy=3]
+Validated /home/justin/Core-Framework-ai-2/Client_Base/src/com/openrsc/client/entityhandling/MyWorldItemOverrides.java
+Validated server/conf/server/defs/NpcDefsMyWorld.json against tools/generators/npc-overrides (324 npcs)
+  - 00-strength-overrides-and-bosses.json: 22 npcs [identity=2, mixed=2, strength=18]
+  - 10-melee-resistant.json: 167 npcs [identity=3, melee=162, ranged=1, strength=1]
+  - 20-ranged-resistant.json: 42 npcs [identity=2, ranged=40]
+  - 30-magic-resistant.json: 71 npcs [magic=67, strength=4]
+  - 40-mixed-and-balanced.json: 21 npcs [melee=6, mixed=15]
+  - 50-interaction-commands.json: 1 npcs [other=1]
+
+
+regular-dragon
+PASS: ordinary Green Dragon is isolated from vanilla quest Elvarg
+
+
+animation-id
+PASS: stable equipment animation IDs and all scythe appearances align
+
+
+item-resolution
+Files checked: 501
+Item references checked: 8024
+
+PASS: plugin item references, drop tables, ground items, and production defs resolve to defined non-placeholder items
+
+
+combat-data
+PASS: combat override data validated
+Items overridden: 2049
+NPCs overridden: 324
+
+
+poison-balance
+Poison balance simulation
+Assumptions:
+- server tick = 640ms
+- poison ticks every 8 server ticks (5.12s)
+- successful hit opportunity every 3 ticks (1.92s)
+- every attack is treated as a successful hit to isolate poison throughput
+- weapon poison starts at 100%, drops to 50% after first success, then steps down to a 20% floor
+- armor poison starts at 50% and steps down to a 10% floor
+- every 5 failed proc attempts recharges a source by one step, with weapon 50% jumping back to 100%
+- poison drains 3 power per poison tick
+- if weapon and armor both proc on one attack, only the stronger applied value is used
+
+SCENARIO tier1_weapon_only
+  weapon: tier 1 (max 10, applied 4, proc ramp 100% -> 50% -> 20% floor)
+  armor: max 0, applied 0, proc ramp 50% -> 10% floor
+  combined max: 10, attack interval: 1.92s, poison tick: 5.12s
+  reach cap by 60s/120s/180s: 100.0% / 100.0% / 100.0%
+  cap timing (when reached): median 9.6s, p90 15.4s
+  avg poison damage over 180s: 17.71 (avg dps 0.098)
+  avg ending poison power: 7.00
+
+SCENARIO tier6_plus_20max_armor
+  weapon: tier 6 (max 60, applied 24, proc ramp 100% -> 50% -> 20% floor)
+  armor: max 20, applied 10, proc ramp 50% -> 10% floor
+  combined max: 80, attack interval: 1.92s, poison tick: 5.12s
+  reach cap by 60s/120s/180s: 100.0% / 100.0% / 100.0%
+  cap timing (when reached): median 13.4s, p90 19.2s
+  avg poison damage over 180s: 272.07 (avg dps 1.512)
+  avg ending poison power: 75.96
+
+SCENARIO tier11_plus_40max_poison_armor
+  weapon: tier 11 (max 110, applied 44, proc ramp 100% -> 50% -> 20% floor)
+  armor: max 40, applied 20, proc ramp 50% -> 10% floor
+  combined max: 150, attack interval: 1.92s, poison tick: 5.12s
+  reach cap by 60s/120s/180s: 100.0% / 100.0% / 100.0%
+  cap timing (when reached): median 13.4s, p90 19.2s
+  avg poison damage over 180s: 511.98 (avg dps 2.844)
+  avg ending poison power: 145.96
+
+
+
+poison-lifecycle
+PASS: NPC poison is bounded to one live death/respawn lifecycle
