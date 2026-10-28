@@ -22227,20 +22227,20 @@ public final class mudclient implements Runnable {
 	}
 
 	private void loadGemDragonSprites() {
-		String[] gems = {"sapphire", "emerald", "ruby", "diamond", "dragonstone"};
-		for (int tier=0; tier<gems.length; tier++) {
-			String name = "gemdragon" + gems[tier];
-			File source = this.externalAssetLoader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/gem-dragons"}, gems[tier]+".png");
-			orsc.graphics.two.SpriteArchive.Entry entry = this.externalAssetLoader.loadExternalNpcDirectionSheet(source, name, new int[]{226,226,226,226,226,335},3);
-			if (entry == null) { System.out.println("Missing gem dragon sprite: " + gems[tier]); continue; }
-			EntityHandler.activateGemDragonVisual(tier);
-			if (S_WANT_CUSTOM_SPRITES) {
-				Map<String,orsc.graphics.two.SpriteArchive.Entry> sprites = getSurface().spriteTree.get("npc");
-				if (sprites != null) sprites.put(name,entry);
-			} else {
-				AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getGemDragonAnimationId(tier));
-				for (int frame=0; frame<entry.getFrames().length; frame++) getSurface().sprites[animation.getNumber()+frame] = entry.getFrames()[frame].getSprite();
-			}
+		File source = this.externalAssetLoader.findFirstFile(
+			new String[]{"dev/myworld/assets/sprites/npcs/gem-dragons"}, "gemdragon.png");
+		orsc.graphics.two.SpriteArchive.Entry entry = this.externalAssetLoader.loadExternalNpcDirectionSheet(
+			source, "gemdragon", new int[]{226,226,226,226,226,335}, 3);
+		if (entry == null) { System.out.println("Missing gem dragon sprite sheet"); return; }
+		for (int tier=0; tier<5; tier++) EntityHandler.activateGemDragonVisual(tier);
+		if (S_WANT_CUSTOM_SPRITES) {
+			Map<String,orsc.graphics.two.SpriteArchive.Entry> sprites = getSurface().spriteTree.get("npc");
+			if (sprites != null) sprites.put("gemdragon",entry);
+		} else {
+			// The authentic loader already aliases equal animation names to one number.
+			AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getGemDragonAnimationId(0));
+			for (int frame=0; frame<entry.getFrames().length; frame++)
+				getSurface().sprites[animation.getNumber()+frame] = entry.getFrames()[frame].getSprite();
 		}
 	}
 

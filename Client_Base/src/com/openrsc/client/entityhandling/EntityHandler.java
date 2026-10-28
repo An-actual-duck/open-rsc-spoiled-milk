@@ -8103,10 +8103,11 @@ public class EntityHandler {
 			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0,
 				preview.combatEnabled(), false, 0));
 		}
-		String[] gems = {"sapphire", "emerald", "ruby", "diamond", "dragonstone"};
-		for (int tier=0; tier<gems.length; tier++) {
+		int[] gemColours = {0x004CFF, 0x33CC33, 0xFF3300, 0xFFFFFF, 0xBB00FF};
+		for (int tier=0; tier<gemColours.length; tier++) {
 			gemDragonAnimationIds[tier] = animations.size();
-			animations.add(new AnimationDef("gemdragon" + gems[tier], "npc", 0, 0, true, false, 0));
+			// Like ordinary coloured dragons: one neutral sprite family, per-variant tint.
+			animations.add(new AnimationDef("gemdragon", "npc", gemColours[tier], 0, true, false, 0));
 			activateGemDragonVisual(tier);
 		}
 	}

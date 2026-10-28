@@ -100,11 +100,16 @@ No additional ring-of-wealth multiplication is added to these hidden rolls.
 
 `dev/myworld/assets/sprites/npcs/gem-dragons/base-frames` contains the exact
 18 approved native PNGs. `provenance.json` records their source hashes and the
-five generated sheet hashes. Native walk canvases are 226×163, attack 335×163.
-The directional sheets are 1465×489: widths 226/226/226/226/226/335 and three rows.
+shared neutral sheet hash. Native walk canvases are 226×163, attack 335×163.
+The shared directional sheet is 1465×489: widths 226/226/226/226/226/335 and three rows.
 No frame resampling, silhouette edits or offset normalization is performed.
-The Aseprite packer recolors neutral mineral shades only; green/yellow body,
-alpha, original motion and flame colors stay fixed. All sprites are included by
+The Aseprite packer normalizes only the approved near-gray mineral shades to
+exact average gray (5,094 samples). Original approved PNGs remain untouched.
+Five AnimationDef entries share the name `gemdragon` and carry the native gem
+color in charColour, just like the ordinary colored dragons. This uses one
+physical sheet and one named Entry; the authentic allocator aliases the five
+definitions to one frame range. Green/yellow body, alpha, motion and fire stay
+fixed. The existing native >>8 tint/global-transform arithmetic applies. All sprites are included by
 the normal client asset packaging rules. Build from approved inputs with:
 
 ```
@@ -127,12 +132,30 @@ standalone toolkit. Generic discovery still needs independent Core verification.
   gems, level checks, dust prevention, unchanged single-cut XP, all five developer
   Superchisel conversions, regular dragon combat profiles and actual protected
   fire-breath damage for every gem tier.
-- `python3 tests/myworld/test-gem-dragons.py`: exact approved base hashes, all
-  recolor pixels, fixed body/alpha, packaged icons/sheets, real client decoding
-  from disk and packaged JAR, all 18 frames/variant and sparse item identities.
+- `python3 tests/myworld/test-gem-dragons.py`: exact approved base hashes,
+  neutral-only shade normalization, fixed body/alpha, one packaged sheet and
+  both icons, disk/JAR decoding, server/client stat parity, sparse item IDs,
+  actual authentic alias allocation, named/classic sprite selection, and all
+  18 frames under each of the five native tint masks. It invokes the actual
+  software rasterizer and the production OpenGL texture conversion path.
+  Software opacity255 compositing uses /256 and is checked explicitly instead
+  of claiming its already-composited pixels equal raw GL texture pixels.
 - Wider regression gates and independent discovery review are recorded in the
   final handoff evidence when complete.
 
 Private gameplay acceptance, gem equipment visual acceptance, final map/NPC
 placement and release/deployment remain Core/owner gates. No public server,
 owner map, credentials or player account data were operated on by this worker.
+
+## Shared neutral asset revision after independent discovery
+
+Core's first independent generic discovery accepted all new server/client
+sources, but the five separately precolored full sheets exceeded the existing
+12-million-pixel NPC materialization budget. The implementation now follows
+RSC's native dragon design: one neutral sheet and five appearance/tint aliases.
+No toolkit budget was raised and no custom-content roster was added to it.
+
+This reduces the family's raw frame materialization from 3,581,925 to 716,385
+pixels. Old precolored candidates are preserved in the earlier worker commit
+and in Core's external staging art; they are removed from the runtime asset
+folder/JAR. The revised generic discovery verdict is a separate Core gate.

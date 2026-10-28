@@ -25,8 +25,8 @@
   "checks": {
     "sourceBuilds": "PASS client, core, overlay and plugins",
     "gemProductionFixture": "PASS 23,217 assertions: complete NPC death, eight normal gem cuts, five Superchisel cuts, inventory overflow and actual anti-dragon shield fire protection",
-    "clientNativeSprites": "PASS 18 frames per variant, native canvas/exact pixel decoding, server/client stat parity, disk and JAR",
-    "packReproducibility": "PASS five native sheets byte-identical via Aseprite",
+    "clientNativeSprites": "PASS one shared neutral sheet; five native charColour aliases; real authentic allocation, named/classic selection, software rasterizer and OpenGL texture conversion; disk/JAR and server/client parity",
+    "packReproducibility": "PASS shared neutral sheet byte-identical via Aseprite",
     "generators": "PASS",
     "contentItemResolution": "PASS 501 files and 8,024 references",
     "stableEquipmentAnimationIds": "PASS",
@@ -35,17 +35,17 @@
     "slayerAndSlow": "PASS 13 selected independent targets; see commands.txt",
     "combatOverrideData": "see static-checks.txt",
     "poisonBalanceAndLifecycle": "see static-checks.txt",
-    "genericToolkitDiscovery": "Core independent review pending"
+    "genericToolkitDiscovery": "Initial precolored asset version exceeded 12m NPC pixel materialization budget after source evaluation passed. Shared neutral asset revision awaiting Core independent verdict."
   },
   "artifactSha256": {
     "server/core.jar": "73a450ff7a8702817815d7403569581f847aca0e6e80c306a1f9305d6cad4d30",
     "server/core-gameplay-overlay.jar": "cef2045a19a206cf5538b74f0903d6842fe0b905c956cea676011edbca6a7f65",
     "server/plugins.jar": "ff2ad06985822c251b2fa8df5c65d2c36190d944c4519202544cf817a13743b1",
-    "Client_Base/Open_RSC_Client.jar": "e678b9a4d88aa8a762cad079c44014e1a622acc5bb268a6156c74a8828d7021a"
+    "Client_Base/Open_RSC_Client.jar": "49fa60161b8b02747ed7e8a4a746052be83893cb2e9961577e5b94bc33b9997d"
   },
   "contentSha256": {
     "server/conf/server/defs/GemDragonNpcDefs.json": "0df44eb5ac0985b42fbc1762930c2fa21fe3e6dc9d11e5eb1482a99a10e4e72b",
-    "dev/myworld/assets/sprites/npcs/gem-dragons/provenance.json": "7fb351ba9f623d899acbdab35b22e3f1912728e5a8c60622b7e0f277aa2f4834",
+    "dev/myworld/assets/sprites/npcs/gem-dragons/provenance.json": "aaa057539771b190b213a2050becc84996fdec23105a806544a04fc3e306c4c1",
     "dev/myworld/assets/sprites/items/inventory-ground/gem-cutter-gloves.png": "fe84d2a73c8a3de71daa705f0cdc0e1899f6439f57511edb8239ddec844a30d9",
     "dev/myworld/assets/sprites/items/inventory-ground/gem-cutters-monocle.png": "9c3b189601b838cb37a3eb567ef145322d2714d42770c6259a04ffd32efb8fc9"
   },
@@ -55,5 +55,13 @@
     "dedicated worn monocle visual instead of provisional eye patch",
     "final owner map placements and separately authorized release/deployment"
   ],
-  "operations": "No server listener, player database/account changes, owner map changes, toolkit changes or live operations performed"
+  "operations": "No server listener, player database/account changes, owner map changes, toolkit changes or live operations performed",
+  "sharedAssetRevision": {
+    "previousPixels": 3581925,
+    "currentPixels": 716385,
+    "physicalSheets": 1,
+    "appearanceAliases": 5,
+    "nearGraySamplesNormalized": 5094,
+    "toolkitChanges": false
+  }
 }

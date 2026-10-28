@@ -23,7 +23,7 @@
     1465,
     489
   ],
-  "colorRule": "Retain green/yellow body and alpha; recolor only neutral mineral shades without resampling.",
+  "colorRule": "One shared neutral sheet. Normalize only approved near-gray mineral shades to exact average gray for native tinting. Body green/yellow, silhouettes, alpha and offsets remain fixed.",
   "frameSources": [
     {
       "slot": 0,
@@ -315,10 +315,7 @@
     }
   ],
   "sha256": {
-    "sapphire.png": "1c8fe5f653e6bf84f1158e2f4e1f4ebf23543c3336fb7aa57c1c726546b4d94a",
-    "emerald.png": "bcb6bdbcbb7da166bf4e26b5477155d347ec1debe372f023dad9687f034d8a16",
-    "dragonstone.png": "410da2d32dd4bae2c85040c14fcf5210ac117c27ece2042ce85b6282b6de4bb0",
-    "ruby.png": "f1611bdd7b3924c88227fc97ed5c92098f6017cd64a08e17ccbeae7c11293334",
-    "diamond.png": "a6532051b2850d6b016d5ee7e86dafd02a6c6d875c090137cdcfc1bcbc6becc5"
-  }
+    "gemdragon.png": "a6532051b2850d6b016d5ee7e86dafd02a6c6d875c090137cdcfc1bcbc6becc5"
+  },
+  "runtimeTint": "Five AnimationDef aliases named gemdragon, with charColour sapphire0x004CFF/emerald0x33CC33/ruby0xFF3300/diamond0xFFFFFF/dragonstone0xBB00FF. Canonical renderer >>8 tint arithmetic applies."
 }
