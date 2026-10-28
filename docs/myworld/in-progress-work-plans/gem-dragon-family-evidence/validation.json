@@ -1,0 +1,59 @@
+{
+  "workerBranch": "feat/gem-dragon-family",
+  "codeCheckpoint": "46cf7a874c2c7e3020fb26506aaee47c155926fa",
+  "npcIds": [
+    877,
+    878,
+    879,
+    880,
+    881
+  ],
+  "itemIds": [
+    3408,
+    3409
+  ],
+  "reservedItemIdsPreserved": [
+    3400,
+    3401,
+    3402,
+    3403,
+    3404,
+    3405,
+    3406,
+    3407
+  ],
+  "checks": {
+    "sourceBuilds": "PASS client, core, overlay and plugins",
+    "gemProductionFixture": "PASS 23,217 assertions: complete NPC death, eight normal gem cuts, five Superchisel cuts, inventory overflow and actual anti-dragon shield fire protection",
+    "clientNativeSprites": "PASS 18 frames per variant, native canvas/exact pixel decoding, server/client stat parity, disk and JAR",
+    "packReproducibility": "PASS five native sheets byte-identical via Aseprite",
+    "generators": "PASS",
+    "contentItemResolution": "PASS 501 files and 8,024 references",
+    "stableEquipmentAnimationIds": "PASS",
+    "ordinaryGreenDragon": "PASS",
+    "combatGate": "PASS 144/144",
+    "slayerAndSlow": "PASS 13 selected independent targets; see commands.txt",
+    "combatOverrideData": "see static-checks.txt",
+    "poisonBalanceAndLifecycle": "see static-checks.txt",
+    "genericToolkitDiscovery": "Core independent review pending"
+  },
+  "artifactSha256": {
+    "server/core.jar": "73a450ff7a8702817815d7403569581f847aca0e6e80c306a1f9305d6cad4d30",
+    "server/core-gameplay-overlay.jar": "cef2045a19a206cf5538b74f0903d6842fe0b905c956cea676011edbca6a7f65",
+    "server/plugins.jar": "ff2ad06985822c251b2fa8df5c65d2c36190d944c4519202544cf817a13743b1",
+    "Client_Base/Open_RSC_Client.jar": "e678b9a4d88aa8a762cad079c44014e1a622acc5bb268a6156c74a8828d7021a"
+  },
+  "contentSha256": {
+    "server/conf/server/defs/GemDragonNpcDefs.json": "0df44eb5ac0985b42fbc1762930c2fa21fe3e6dc9d11e5eb1482a99a10e4e72b",
+    "dev/myworld/assets/sprites/npcs/gem-dragons/provenance.json": "7fb351ba9f623d899acbdab35b22e3f1912728e5a8c60622b7e0f277aa2f4834",
+    "dev/myworld/assets/sprites/items/inventory-ground/gem-cutter-gloves.png": "fe84d2a73c8a3de71daa705f0cdc0e1899f6439f57511edb8239ddec844a30d9",
+    "dev/myworld/assets/sprites/items/inventory-ground/gem-cutters-monocle.png": "9c3b189601b838cb37a3eb567ef145322d2714d42770c6259a04ffd32efb8fc9"
+  },
+  "acceptanceRemaining": [
+    "Core generic content discovery verdict",
+    "private gameplay and visual acceptance",
+    "dedicated worn monocle visual instead of provisional eye patch",
+    "final owner map placements and separately authorized release/deployment"
+  ],
+  "operations": "No server listener, player database/account changes, owner map changes, toolkit changes or live operations performed"
+}

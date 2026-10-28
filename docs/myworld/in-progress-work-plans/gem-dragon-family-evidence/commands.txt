@@ -1,0 +1,32 @@
+Builds (sequential):
+./scripts/build-client.sh
+./scripts/build-server.sh
+
+Behavior and full regression:
+./server/test_combat test_gem_dragons test_slow test_slayer_component_drops test_slayer_ordinary_loot test_slayer_rewards test_slayer_leather test_slayer_leather_effects test_slayer_tower_associates test_abyssal_demon_combat test_dark_beast_combat test_bloodveld_combat test_terror_dog_combat test_naga_combat
+PASS all targets; combat 144/144. Forked fixtures run without a server listener.
+
+Final focused build/test after alternate cutting-path coverage:
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_gem_dragons
+PASS 23,202 assertions. Additional fire checks were compiled against those same built core/plugin classes and run with java -Xmx512m, PASS 23,217 assertions. The test target now reproduces those final checks on its next invocation.
+
+Client native assets and definition parity:
+python3 tests/myworld/test-gem-dragons.py
+PASS from disk and JAR. Includes 18 frames for each of five variants, full pixel comparisons, fixed body/gem-only palette checks and server/client stat parity.
+
+Static and focused checks:
+python3 tools/generators/run-generators.py --check
+python3 tests/myworld/test-regular-green-dragon.py
+python3 tests/myworld/test-equipment-animation-id-contract.py
+python3 tests/myworld/test-content-item-resolution.py
+python3 tests/myworld/test-combat-data.py
+python3 tests/myworld/test-poison-balance.py
+python3 tests/myworld/test-npc-poison-death-lifecycle.py
+
+Aseprite pack reproducibility:
+Re-run tools/myworld/pack-gem-dragons.lua with the tracked base-frames input and a temporary output directory. All five generated PNGs reproduce byte-identically.
+
+Fixture adaptation notes:
+- Direct developer Superchisel XP can trigger a level-up which requires PlayerService. The listener-free fixture sets Crafting level/max to 99 to avoid unrelated database persistence, matching the existing normal cutting fixtures. No production behavior changed.
+- Protected fire checks use the same known open authored source/target tiles for each variant. One previous coordinate was blocked by a real authored wall and correctly prevented fire. Legacy mask clears do not guarantee native path openness. No map/runtime behavior changed.
+- Use bounded ANT_OPTS for future invocations. The initial multi-target Ant parent held compilation memory until gate exit. No additional builds are needed while acceptance proceeds.

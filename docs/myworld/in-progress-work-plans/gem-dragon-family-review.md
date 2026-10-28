@@ -84,7 +84,10 @@ No additional ring-of-wealth multiplication is added to these hidden rolls.
   while consuming only one input. No recursion and no extra XP. The normal
   single-output inventory precheck remains; if only one slot is free, the bonus
   uses the existing owner-ground overflow rather than disappearing or preventing
-  an ordinary cut. Equipment is read after the batch delay at actual resolution.
+  an ordinary cut. Equipment is read after the batch delay at actual resolution. The five
+  direct gem conversions on the existing developer Superchisel also use the
+  same output helper; its non-cutting item-spawn menus are unchanged. No new
+  level bypass is introduced (the developer tool retains its pre-existing rules).
 - No combat bonuses or additional skill requirements were invented.
 - New 48×32 inventory/ground icon candidates are integrated, provided by Core
   from Aseprite work rooted in existing game references. **Owner visual review
@@ -121,7 +124,9 @@ standalone toolkit. Generic discovery still needs independent Core verification.
   delivery with forced Cosmic-necklace own-gem duplication, bones/unique delivery,
   unchanged material extras, reserved item holes, exact 5/100 bonus boundary,
   equipped/unequipped state, inventory overflow, real gem cutting for all eight
-  gems, level checks, dust prevention and unchanged single-cut XP.
+  gems, level checks, dust prevention, unchanged single-cut XP, all five developer
+  Superchisel conversions, regular dragon combat profiles and actual protected
+  fire-breath damage for every gem tier.
 - `python3 tests/myworld/test-gem-dragons.py`: exact approved base hashes, all
   recolor pixels, fixed body/alpha, packaged icons/sheets, real client decoding
   from disk and packaged JAR, all 18 frames/variant and sparse item identities.

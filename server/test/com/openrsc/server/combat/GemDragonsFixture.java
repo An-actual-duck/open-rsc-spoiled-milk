@@ -26,6 +26,7 @@ public final class GemDragonsFixture {
             h.server().getConfig().MEMBER_WORLD=true;
             Player p=h.player("gem fixture",449,450);p.getClientLimitations().maxItemId=Integer.MAX_VALUE;
             h.recordOutgoingPackets(p);
+            h.openCombatProjectileRectangle(448,460,449,451);
             int previousAttack=0,previousHits=0,previousMelee=0;
             for(int tier=0;tier<5;tier++) {
                 Npc npc=h.npc(877+tier,450+tier*2,450);npc.updateRegion();
@@ -35,6 +36,16 @@ public final class GemDragonsFixture {
                 check(npc.getRangedDefense()==(int)Math.floor(npc.getDef().getDef()*.9375),"physical ranged bonus");
                 check(npc.getMagicDefense()==npc.getDef().getDef(),"no magic crystallization bonus");
                 check(h.world().getNpcDrops().isDragon(npc.getID()),"dragon bones classification");
+                // Keep all fire checks on the same verified open authored tiles.
+                Npc fireSource=h.npc(npc.getID(),450,450);
+                Player protectedPlayer=h.player("gemfire"+tier,449,450);h.recordOutgoingPackets(protectedPlayer);
+                protectedPlayer.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),99,99,false);
+                h.equip(protectedPlayer,ItemId.ANTI_DRAGON_BREATH_SHIELD.id(),1);
+                com.openrsc.server.event.rsc.impl.combat.scripts.all.DragonFireBreath breath=new com.openrsc.server.event.rsc.impl.combat.scripts.all.DragonFireBreath();
+                check(breath.shouldExecute(fireSource,protectedPlayer),"normal dragon fire handler recognizes each variant");
+                breath.executeScript(fireSource,protectedPlayer);
+                check(protectedPlayer.getSkills().getLevel(Skill.HITS.id())==95,"anti-dragon shield routes each variant to protected HP-based fire damage: tier="+tier+" HP="+protectedPlayer.getSkills().getLevel(Skill.HITS.id()));
+                check(com.openrsc.server.model.entity.npc.NpcAttackStyleProfile.forNpc(npc)==com.openrsc.server.model.entity.npc.NpcAttackStyleProfile.MELEE_MAGIC,"regular dragon attack profile retained");
                 DropTable table=h.world().getNpcDrops().getDropTable(npc.getID());
                 check(table.getTotalWeight()==128,"normal table budget");
                 for(int ticket=0;ticket<128;ticket++)for(int child=0;child<28;child++) {
@@ -118,6 +129,16 @@ public final class GemDragonsFixture {
                 low.getCarriedItems().getInventory().add(new Item(GEMS[index],1));
                 com.openrsc.server.plugins.Functions.startbatch(low,1);cut.invoke(crafting,low,new Item(GEMS[index]),definition);
                 check(low.getCarriedItems().getInventory().countId(GEMS[index])==1,"level requirement preserved");
+            }
+            Object superchisel=Class.forName("com.openrsc.server.plugins.custom.misc.Superchisel").getConstructor().newInstance();
+            java.lang.reflect.Method specialCut=superchisel.getClass().getMethod("onUseInv",Player.class,Integer.class,Item.class,Item.class);
+            for(int index=3;index<GEMS.length;index++) {
+                Player dev=h.player("devgem"+index,430+index,458);dev.getClientLimitations().maxItemId=Integer.MAX_VALUE;h.recordOutgoingPackets(dev);h.equip(dev,3409,1);dev.getSkills().setTemporaryLevelAndMaxStat(Skill.CRAFTING.id(),99,99,false);
+                dev.getCarriedItems().getInventory().add(new Item(GEMS[index],1));
+                h.random().reset(1);h.random().scriptInts(0);
+                specialCut.invoke(superchisel,dev,0,new Item(ItemId.SUPERCHISEL.id()),new Item(GEMS[index]));
+                int cutId=h.server().getEntityHandler().getItemGemDef(GEMS[index]).getGemID();
+                check(dev.getCarriedItems().getInventory().countId(GEMS[index])==0&&dev.getCarriedItems().getInventory().countId(cutId)==2,"alternate dev chisel path uses same one-input bonus");
             }
             Player full=h.player("full gem fixture",448,451);full.getClientLimitations().maxItemId=Integer.MAX_VALUE;h.recordOutgoingPackets(full);h.equip(full,3409,1);
             for(int i=0;i<full.getCarriedItems().getInventory().getCapacity()-1;i++)full.getCarriedItems().getInventory().add(new Item(ItemId.CHISEL.id()));

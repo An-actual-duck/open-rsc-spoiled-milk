@@ -23,7 +23,7 @@
     1465,
     489
   ],
-  "colorRule": "Bodygreen/yellow retained; onlyneutralmineralshades recolored; no resampling",
+  "colorRule": "Retain green/yellow body and alpha; recolor only neutral mineral shades without resampling.",
   "frameSources": [
     {
       "slot": 0,

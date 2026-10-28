@@ -1,0 +1,3 @@
+PASS five production client definitions,18 frames/variant, exact pixels, sparse IDs, disk/JAR loading
+PASS five production client definitions,18 frames/variant, exact pixels, sparse IDs, disk/JAR loading
+PASS exact approved frame provenance, fixed body palette,5gemrecolors, packaged assets and real client decoding

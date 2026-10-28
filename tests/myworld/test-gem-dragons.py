@@ -26,8 +26,10 @@ with zipfile.ZipFile(ROOT/'Client_Base/Open_RSC_Client.jar')as jar:
  for name in ['gem-cutter-gloves','gem-cutters-monocle']:
   p=ROOT/'dev/myworld/assets/sprites/items/inventory-ground'/f'{name}.png';assert Image.open(p).size==(48,32)
   assert jar.read('myworld-assets/sprites/items/inventory-ground/'+name+'.png')==p.read_bytes()
+npcs=json.loads((ROOT/'server/conf/server/defs/GemDragonNpcDefs.json').read_text())['npcs']
+expected=';'.join(','.join(str(n[k])for k in ['attack','strength','hits','defense'])for n in npcs)
 with tempfile.TemporaryDirectory(prefix='gem-dragon-client-')as scratch:
  subprocess.run(['javac','-cp',str(ROOT/'Client_Base/Open_RSC_Client.jar'),'-d',scratch,str(ROOT/'tests/myworld/GemDragonClientFixture.java')],check=True)
  for cwd in [ROOT,Path(scratch)]:
-  subprocess.run(['java','-Xmx384m','-Djava.awt.headless=true','-cp',scratch+':'+str(ROOT/'Client_Base/Open_RSC_Client.jar'),'orsc.GemDragonClientFixture',str(cwd)],cwd=cwd,check=True)
+  subprocess.run(['java','-Xmx384m','-Djava.awt.headless=true','-cp',scratch+':'+str(ROOT/'Client_Base/Open_RSC_Client.jar'),'orsc.GemDragonClientFixture',str(cwd),expected],cwd=cwd,check=True)
 print('PASS exact approved frame provenance, fixed body palette,5gemrecolors, packaged assets and real client decoding')

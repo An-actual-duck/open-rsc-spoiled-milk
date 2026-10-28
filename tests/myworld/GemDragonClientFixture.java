@@ -12,12 +12,16 @@ public final class GemDragonClientFixture {
     static void check(boolean value,String label) {if(!value)throw new AssertionError(label);}
     public static void main(String[] args)throws Exception {
         EntityHandler.load(true);
+        String[] expectedStats=args[1].split(";");
         String[] gems={"sapphire","emerald","ruby","diamond","dragonstone"};
         ClientExternalAssetLoader loader=new ClientExternalAssetLoader(Paths.get(args[0]),GemDragonClientFixture.class);
         int[] widths={226,226,226,226,226,335};
         for(int tier=0;tier<gems.length;tier++) {
             NPCDef npc=EntityHandler.getNpcDef(877+tier);
             check(npc.getName().equals(Character.toUpperCase(gems[tier].charAt(0))+gems[tier].substring(1)+" Dragon"),"NPC identity");
+            String[] expectedTier=expectedStats[tier].split(",");
+            check(npc.getAtt()==Integer.parseInt(expectedTier[0])&&npc.getStr()==Integer.parseInt(expectedTier[1])
+                &&npc.getHits()==Integer.parseInt(expectedTier[2])&&npc.getDef()==Integer.parseInt(expectedTier[3]),"server/client stat parity");
             int animation=EntityHandler.getGemDragonAnimationId(tier);
             check(npc.sprites[0]==animation,"registered animation identity, not green fallback");
             check(EntityHandler.getAnimationDef(animation).getName().equals("gemdragon"+gems[tier]),"variant animation name");

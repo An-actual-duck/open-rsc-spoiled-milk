@@ -304,27 +304,27 @@ public class Superchisel implements OpInvTrigger, UseInvTrigger, UseNpcTrigger {
 			}
 		} else if (notSuperchisel.getCatalogId() == ItemId.UNCUT_SAPPHIRE.id()) {
 			if (player.getCarriedItems().remove(new Item(ItemId.UNCUT_SAPPHIRE.id())) > -1) {
-				give(player, ItemId.SAPPHIRE.id(), 1);
+				com.openrsc.server.content.gemdragons.GemCuttingEquipment.awardSuccessfulCut(player, ItemId.SAPPHIRE.id());
 				player.incExp(Skill.CRAFTING.id(), 50 * 4, true);
 			}
 		} else if (notSuperchisel.getCatalogId() == ItemId.UNCUT_EMERALD.id()) {
 			if (player.getCarriedItems().remove(new Item(ItemId.UNCUT_EMERALD.id())) > -1) {
-				give(player, ItemId.EMERALD.id(), 1);
+				com.openrsc.server.content.gemdragons.GemCuttingEquipment.awardSuccessfulCut(player, ItemId.EMERALD.id());
 				player.incExp(Skill.CRAFTING.id(), (int) (67.5 * 4), true);
 			}
 		} else if (notSuperchisel.getCatalogId() == ItemId.UNCUT_RUBY.id()) {
 			if (player.getCarriedItems().remove(new Item(ItemId.UNCUT_RUBY.id())) > -1) {
-				give(player, ItemId.RUBY.id(), 1);
+				com.openrsc.server.content.gemdragons.GemCuttingEquipment.awardSuccessfulCut(player, ItemId.RUBY.id());
 				player.incExp(Skill.CRAFTING.id(), 85 * 4, true);
 			}
 		} else if (notSuperchisel.getCatalogId() == ItemId.UNCUT_DIAMOND.id()) {
 			if (player.getCarriedItems().remove(new Item(ItemId.UNCUT_DIAMOND.id())) > -1) {
-				give(player, ItemId.DIAMOND.id(), 1);
+				com.openrsc.server.content.gemdragons.GemCuttingEquipment.awardSuccessfulCut(player, ItemId.DIAMOND.id());
 				player.incExp(Skill.CRAFTING.id(), (int) (107.5 * 4), true);
 			}
 		} else if (notSuperchisel.getCatalogId() == ItemId.UNCUT_DRAGONSTONE.id()) {
 			if (player.getCarriedItems().remove(new Item(ItemId.UNCUT_DRAGONSTONE.id())) > -1) {
-				give(player, ItemId.DRAGONSTONE.id(), 1);
+				com.openrsc.server.content.gemdragons.GemCuttingEquipment.awardSuccessfulCut(player, ItemId.DRAGONSTONE.id());
 				player.incExp(Skill.CRAFTING.id(), (int) (137.5 * 4), true);
 			}
 		}
