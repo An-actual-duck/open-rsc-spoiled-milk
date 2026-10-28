@@ -110,6 +110,9 @@ public final class MyWorldItemId {
 	public static final int UGTHANKI_CHAPS = 3397;
 	public static final int UGTHANKI_CUIRASS = 3398;
 	public static final int ECTOPLASM = 3399;
+	// 3400–3407 reserved for antidote reconciliation.
+	public static final int GEM_CUTTER_GLOVES = 3408;
+	public static final int GEM_CUTTERS_MONOCLE = 3409;
 
 	private MyWorldItemId() {
 	}

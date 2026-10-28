@@ -21194,6 +21194,7 @@ public final class mudclient implements Runnable {
 			loadExternalFoundryDragonNpcSprite();
 			loadExternalKingBlackDragonNpcSprite();
 			loadExternalGorakNpcSprite();
+			loadGemDragonSprites();
 			loadSlayerMovementPreviewSprites();
 			loadExternalEquipmentSprites();
 		}
@@ -21216,7 +21217,7 @@ public final class mudclient implements Runnable {
 			}
 			if (com.openrsc.client.entityhandling.SlayerMovementPreview.isAnimation(s)
 				|| "foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)
-				|| "gorak".equalsIgnoreCase(s)) {
+				|| "gorak".equalsIgnoreCase(s) || s.startsWith("gemdragon")) {
 				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
 				animationNumber += 27;
 				continue;
@@ -22222,6 +22223,24 @@ public final class mudclient implements Runnable {
 		for (int frame = 0; frame < spriteEntry.getFrames().length; frame++) {
 			getSurface().sprites[animation.getNumber() + frame] =
 				spriteEntry.getFrames()[frame].getSprite();
+		}
+	}
+
+	private void loadGemDragonSprites() {
+		String[] gems = {"sapphire", "emerald", "ruby", "diamond", "dragonstone"};
+		for (int tier=0; tier<gems.length; tier++) {
+			String name = "gemdragon" + gems[tier];
+			File source = this.externalAssetLoader.findFirstFile(new String[]{"dev/myworld/assets/sprites/npcs/gem-dragons"}, gems[tier]+".png");
+			orsc.graphics.two.SpriteArchive.Entry entry = this.externalAssetLoader.loadExternalNpcDirectionSheet(source, name, new int[]{226,226,226,226,226,335},3);
+			if (entry == null) { System.out.println("Missing gem dragon sprite: " + gems[tier]); continue; }
+			EntityHandler.activateGemDragonVisual(tier);
+			if (S_WANT_CUSTOM_SPRITES) {
+				Map<String,orsc.graphics.two.SpriteArchive.Entry> sprites = getSurface().spriteTree.get("npc");
+				if (sprites != null) sprites.put(name,entry);
+			} else {
+				AnimationDef animation = EntityHandler.getAnimationDef(EntityHandler.getGemDragonAnimationId(tier));
+				for (int frame=0; frame<entry.getFrames().length; frame++) getSurface().sprites[animation.getNumber()+frame] = entry.getFrames()[frame].getSprite();
+			}
 		}
 	}
 
@@ -28055,6 +28074,7 @@ public final class mudclient implements Runnable {
 							this.loadExternalFoundryDragonNpcSprite();
 							this.loadExternalKingBlackDragonNpcSprite();
 							this.loadExternalGorakNpcSprite();
+			loadGemDragonSprites();
 							this.loadSlayerMovementPreviewSprites();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);

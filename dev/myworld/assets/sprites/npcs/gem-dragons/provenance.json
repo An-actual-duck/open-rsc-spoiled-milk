@@ -1,0 +1,324 @@
+{
+  "approval": "Owner approved full walking and attack set on 2026-10-27",
+  "source": "gem-dragon-base-approved",
+  "nativeCanvases": {
+    "walk": [
+      226,
+      163
+    ],
+    "attack": [
+      335,
+      163
+    ]
+  },
+  "columnWidths": [
+    226,
+    226,
+    226,
+    226,
+    226,
+    335
+  ],
+  "sheetSize": [
+    1465,
+    489
+  ],
+  "colorRule": "Bodygreen/yellow retained; onlyneutralmineralshades recolored; no resampling",
+  "frameSources": [
+    {
+      "slot": 0,
+      "direction": "Front",
+      "pose": 0,
+      "file": "frames/00.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "8e656d042cb20aab860449c562ff1a64e9629b284f2abf45dfab954caee60e10",
+      "approvedSource": "gem-dragon-green-front-v12/review-0.png"
+    },
+    {
+      "slot": 1,
+      "direction": "Front",
+      "pose": 1,
+      "file": "frames/01.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "d194b810c504b32e4ec3e55062080a859970418694e759b69682e6f2f8130a54",
+      "approvedSource": "gem-dragon-green-front-v12/review-1.png"
+    },
+    {
+      "slot": 2,
+      "direction": "Front",
+      "pose": 2,
+      "file": "frames/02.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "f0a9d259a395f0f01d0943ec2f405bcba333a0b0865d5bccacf9bd8cc1be0710",
+      "approvedSource": "gem-dragon-green-front-v12/review-2.png"
+    },
+    {
+      "slot": 3,
+      "direction": "Diagonal front",
+      "pose": 0,
+      "file": "frames/03.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "9995fbfc6020738283195d15316068a6b5dfa68fbf0d1f6d8d5bd0361c9f5286",
+      "approvedSource": "gem-dragon-green-diagonal-front-v3/review-0.png"
+    },
+    {
+      "slot": 4,
+      "direction": "Diagonal front",
+      "pose": 1,
+      "file": "frames/04.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "2ff248ebcc4d9341c0ccbf24b0d948102803d7da2ec321d91b1faa84246e9546",
+      "approvedSource": "gem-dragon-green-diagonal-front-v3/review-1.png"
+    },
+    {
+      "slot": 5,
+      "direction": "Diagonal front",
+      "pose": 2,
+      "file": "frames/05.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "58e2c4978090d8c0a43843d55fde96fe10cc06ee7650229b0ae6d751c8938292",
+      "approvedSource": "gem-dragon-green-diagonal-front-v3/review-2.png"
+    },
+    {
+      "slot": 6,
+      "direction": "Side",
+      "pose": 0,
+      "file": "frames/06.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "c36665da71b622ddd15ee7f5ba0b13da39f63c0bb49b83d45a220ef1c281804c",
+      "approvedSource": "gem-dragon-green-side-movement-v1/review-0.png"
+    },
+    {
+      "slot": 7,
+      "direction": "Side",
+      "pose": 1,
+      "file": "frames/07.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "8aaa33392b102af1f7b2d0307d4fd19a71caeec7324622a23fa87bc382117d8e",
+      "approvedSource": "gem-dragon-green-side-movement-v1/review-1.png"
+    },
+    {
+      "slot": 8,
+      "direction": "Side",
+      "pose": 2,
+      "file": "frames/08.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "6eb40773e4ebab81605f249fc52fa22d4a68dcec7fde2cef0772dedbd959c09d",
+      "approvedSource": "gem-dragon-green-side-movement-v1/review-2.png"
+    },
+    {
+      "slot": 9,
+      "direction": "Diagonal away",
+      "pose": 0,
+      "file": "frames/09.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "a28357434119ef7a702b6ad1c05e1bfab0968ac03720d3425e57e18b039dc0c3",
+      "approvedSource": "gem-dragon-green-diagonal-away-v4/review-0.png"
+    },
+    {
+      "slot": 10,
+      "direction": "Diagonal away",
+      "pose": 1,
+      "file": "frames/10.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "b7c5b5184d2a08f4d241359aeea49402558e41b298c14ceaaadcd95502e8c842",
+      "approvedSource": "gem-dragon-green-diagonal-away-v4/review-1.png"
+    },
+    {
+      "slot": 11,
+      "direction": "Diagonal away",
+      "pose": 2,
+      "file": "frames/11.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "a8b1fc2194c1411125194bffab0c462d4365f433808b2355ebaa9f561225998d",
+      "approvedSource": "gem-dragon-green-diagonal-away-v4/review-2.png"
+    },
+    {
+      "slot": 12,
+      "direction": "Away",
+      "pose": 0,
+      "file": "frames/12.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "a9bddba0d1dad46eb8bf7432403b1567ed2126296a940cb77bbb76413c29c0bb",
+      "approvedSource": "gem-dragon-green-away-v3/review-0.png"
+    },
+    {
+      "slot": 13,
+      "direction": "Away",
+      "pose": 1,
+      "file": "frames/13.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "c4a88ce66fbb5bd6e67e3abf7cf271c4e2072ba3d6d8f37c46f9cac4002505ee",
+      "approvedSource": "gem-dragon-green-away-v3/review-1.png"
+    },
+    {
+      "slot": 14,
+      "direction": "Away",
+      "pose": 2,
+      "file": "frames/14.png",
+      "logicalCanvas": [
+        226,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "5550ae5512bb7a20f251f247a0dd0a5ed6cac787770d228adbddce9e64f96146",
+      "approvedSource": "gem-dragon-green-away-v3/review-2.png"
+    },
+    {
+      "slot": 15,
+      "direction": "Attack",
+      "pose": 0,
+      "file": "frames/15.png",
+      "logicalCanvas": [
+        335,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "a745e8276449d2a772932b01a44306aa5aa5ed79c1ace29c2295344117856f25",
+      "approvedSource": "gem-dragon-green-attack-v3/review-0.png"
+    },
+    {
+      "slot": 16,
+      "direction": "Attack",
+      "pose": 1,
+      "file": "frames/16.png",
+      "logicalCanvas": [
+        335,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "33069007754b7c429c452fcc7a2b217a06b7a1fb1b1d9a0460ee562d4c5f1f6d",
+      "approvedSource": "gem-dragon-green-attack-v3/review-1.png"
+    },
+    {
+      "slot": 17,
+      "direction": "Attack",
+      "pose": 2,
+      "file": "frames/17.png",
+      "logicalCanvas": [
+        335,
+        163
+      ],
+      "offset": [
+        0,
+        0
+      ],
+      "sha256": "a544a7637a204c9878050ee609bd0513f1d498c446a8e0ff8ce4152b67ac74dc",
+      "approvedSource": "gem-dragon-green-attack-v3/review-2.png"
+    }
+  ],
+  "sha256": {
+    "sapphire.png": "1c8fe5f653e6bf84f1158e2f4e1f4ebf23543c3336fb7aa57c1c726546b4d94a",
+    "emerald.png": "bcb6bdbcbb7da166bf4e26b5477155d347ec1debe372f023dad9687f034d8a16",
+    "dragonstone.png": "410da2d32dd4bae2c85040c14fcf5210ac117c27ece2042ce85b6282b6de4bb0",
+    "ruby.png": "f1611bdd7b3924c88227fc97ed5c92098f6017cd64a08e17ccbeae7c11293334",
+    "diamond.png": "a6532051b2850d6b016d5ee7e86dafd02a6c6d875c090137cdcfc1bcbc6becc5"
+  }
+}

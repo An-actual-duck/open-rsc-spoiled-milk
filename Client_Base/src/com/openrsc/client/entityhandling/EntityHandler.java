@@ -115,6 +115,9 @@ public class EntityHandler {
 	private static int foundryDragonAnimationId = -1;
 	private static int kingBlackDragonAnimationId = -1;
 	private static int gorakAnimationId = -1;
+	private static final int[] gemDragonAnimationIds = new int[5];
+	public static int getGemDragonAnimationId(int tier) { return gemDragonAnimationIds[tier]; }
+	public static void activateGemDragonVisual(int tier) { getNpcDef(877 + tier).sprites[0] = gemDragonAnimationIds[tier]; }
 	private static final Map<SlayerMovementPreview, Integer> slayerPreviewAnimations = new HashMap<>();
 
 	public static int getSlayerPreviewAnimationId(SlayerMovementPreview preview) {
@@ -5623,6 +5626,8 @@ public class EntityHandler {
 		setCustomItemDefinition(3340, new ItemDef("Slimey Residue", "Sticky abyssal flesh that refuses to hold its shape.", "",
 			0, 262, "items:262", true, false, 0, 0x62798C, false, false, false, 3340));
 		// Temporary swamp-tar icon; final Slayer component art is a separate pass.
+		setCustomItemDefinition(3408, new ItemDef("Gem cutter gloves", "Prevent gems from being crushed while cutting.", "", 10000,-1,"external-png:gem-cutter-gloves",false,true,256,0,false,false,true,3408));
+		setCustomItemDefinition(3409, new ItemDef("Gem cutter's monocle", "A 5% chance to cut two gems from one uncut gem.", "",10000,-1,"external-png:gem-cutters-monocle",false,true,32,0,false,false,true,3409));
 		setCustomItemDefinition(3399, new ItemDef("Ectoplasm", "A cold, quivering remnant of a banshee's spirit.", "",
 			0, 262, "items:262", true, false, 0, 0xB5A4CF, false, false, false, 3399));
 		setCustomItemDefinition(3341, new ItemDef("Sticky Saliva Gland", "A giant frog's gland, still oozing sticky saliva.", "",
@@ -6953,6 +6958,11 @@ public class EntityHandler {
 			new int[]{144, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 			0, 0, 0, 0, 452, 326, 10, 7, 70, 862
 		));
+		setCustomNpcDefinition(877, new NPCDef("Sapphire Dragon", "A dragon slowly turning to sapphire from within.", "", 100, 90, 100, 100, true, new int[]{144,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, 0,0,0,0,452,326,10,7,70,877));
+		setCustomNpcDefinition(878, new NPCDef("Emerald Dragon", "A dragon slowly turning to emerald from within.", "", 122, 110, 120, 123, true, new int[]{144,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, 0,0,0,0,452,326,10,7,70,878));
+		setCustomNpcDefinition(879, new NPCDef("Ruby Dragon", "A dragon slowly turning to ruby from within.", "", 146, 132, 143, 148, true, new int[]{144,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, 0,0,0,0,452,326,10,7,70,879));
+		setCustomNpcDefinition(880, new NPCDef("Diamond Dragon", "A dragon slowly turning to diamond from within.", "", 174, 153, 166, 173, true, new int[]{144,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, 0,0,0,0,452,326,10,7,70,880));
+		setCustomNpcDefinition(881, new NPCDef("Dragonstone Dragon", "A dragon slowly turning to dragonstone from within.", "", 202, 178, 190, 198, true, new int[]{144,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1}, 0,0,0,0,452,326,10,7,70,881));
 		for (SlayerMovementPreview preview : SlayerMovementPreview.values()) {
 			setCustomNpcDefinition(preview.npcId, new NPCDef(
 				preview.displayName, preview == SlayerMovementPreview.GIANT_FROG
@@ -8092,6 +8102,12 @@ public class EntityHandler {
 			slayerPreviewAnimations.put(preview, animations.size());
 			animations.add(new AnimationDef(preview.animationName(), "npc", 0, 0,
 				preview.combatEnabled(), false, 0));
+		}
+		String[] gems = {"sapphire", "emerald", "ruby", "diamond", "dragonstone"};
+		for (int tier=0; tier<gems.length; tier++) {
+			gemDragonAnimationIds[tier] = animations.size();
+			animations.add(new AnimationDef("gemdragon" + gems[tier], "npc", 0, 0, true, false, 0));
+			activateGemDragonVisual(tier);
 		}
 	}
 
