@@ -1,0 +1,14 @@
+Run from the activated Core worker root; all JVM work was bounded and sequential.
+
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_gem_dragons
+PASS retained gem equipment/fire/stats232 assertions, guaranteed gems7379 assertions (897tickets,258 actual deliveries), standard loot80616 assertions (10240root/child tickets,264 actual deliveries).
+
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_slayer_ordinary_loot test_slayer_component_drops test_slayer_rewards
+PASS all three relevant loot regression targets.
+
+Read-only table economy probe:
+Compile GemLootEconomyProbe.java from this evidence folder into a temporary directory with output/combat-test/core-classes, output/combat-test/test-classes and server/lib/* on the classpath; run from server/ with java -Xmx512m -XX:+UseSerialGC and include plugins.jar plus those same class directories/libraries. It uses CurrentCombatHarness without a server listener or account/database operations and recursively weights the actual loaded DropTable objects with current ItemDefinition base prices. Output values are in runtime-base-value-summary.txt.
+
+Expected values were prepared independently by Core. The five new normal-table results match expected-normal-drops.json exactly. Regular green/blue/red/black normal-table results are unchanged from the pre-edit probe. This is nominal base-price accounting, not a market/alchemy/profit or kill-time benchmark.
+
+The guaranteed gem methods and rank/quantity arrays are byte-for-byte unchanged; only the independent normal table and rare scrap registration changed production behavior. No full combat/client/render rerun was warranted.

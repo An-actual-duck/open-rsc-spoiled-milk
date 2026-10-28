@@ -57,7 +57,6 @@ public final class GuaranteedGemLootFixture {
             Method personal=Npc.class.getDeclaredMethod("dropItems",Player.class,double.class,boolean.class);personal.setAccessible(true);
             for(int tier=0;tier<5;tier++) {
                 Npc npc=h.npc(877+tier,450,450);npc.updateRegion();
-                verifyNormalMaterials(h,player,npc,tier);
                 // Neither necklace can reroll/multiply this separate guaranteed roll.
                 // They occupy the same slot, so exercise them independently.
                 for(int necklace:new int[]{0,1647,1667}) {
@@ -67,7 +66,7 @@ public final class GuaranteedGemLootFixture {
                         for(int outcome=0;outcome<OUTCOMES[tier];outcome++) {
                             int[] row=MATRIX[outcome];
                             clearGround(h,player);
-                            h.random().reset(1);h.random().scriptInts(start,127,127).scriptDoubles(.999,.999,0.0);
+                            h.random().reset(1);h.random().scriptInts(start,127,127).scriptDoubles(.999,.999,.999,0.0);
                             if(personalLoot)personal.invoke(npc,player,.01,true);else npc.dropItems(player);
                             List<GroundItem> gems=gemDrops(player,npc);
                             check(gems.size()==1,"one guaranteed gem outcome, even when normal table rolls nothing");
@@ -91,7 +90,7 @@ public final class GuaranteedGemLootFixture {
                 }
                 // Winning both separate uniques still gives exactly one gem outcome.
                 clearEquipment(player);clearGround(h,player);
-                h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(0.0,0.0);
+                h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(0.0,0.0,.999);
                 npc.dropItems(player);
                 check(gemDrops(player,npc).size()==1,"independent unique wins do not add another gem roll");
                 check(count(player,npc,3408)==1&&count(player,npc,3409)==1,"both unique rolls still deliver independently");
@@ -136,33 +135,13 @@ public final class GuaranteedGemLootFixture {
             Ticket random=new Ticket(0,1);check(GemDragons.rollGuaranteedGem(id,random)==null&&random.calls==0,"unrelated NPCs receive no gem or extra RNG draw");
         }
     }
-    private static void verifyNormalMaterials(CurrentCombatHarness h,Player player,Npc npc,int tier)throws Exception {
-        clearEquipment(player);DropTable table=h.world().getNpcDrops().getDropTable(npc.getID());
-        check(table.getTotalWeight()==128,"normal material table remains 128 weight");
-        int bars=0,gold=0,ring=0,nothing=0;
-        for(int ticket=0;ticket<128;ticket++) {
-            h.random().reset(1);h.random().scriptInts(ticket);
-            ArrayList<Item> items=table.clone().rollItem(player);
-            if(ticket>=44) {check(items.isEmpty(),"84 empty material tickets");nothing++;continue;}
-            check(items.size()==1,"one material outcome");Item item=items.get(0);
-            if(ticket<28) {check(item.getCatalogId()==ItemId.GOLD_BAR.id()&&item.getAmount()==2+tier&&item.getNoted(),"gold bar chance/quantity unchanged");bars++;}
-            else if(ticket<36) {check(item.getCatalogId()==ItemId.GOLD_RING.id()&&item.getAmount()==1,"plain ring chance unchanged");gold++;}
-            else {check(item.getCatalogId()==RINGS[tier]&&item.getAmount()==1,"own unenchanted ring chance unchanged");ring++;}
-            for(int gem:GEMS)check(item.getCatalogId()!=gem,"normal materials cannot duplicate guaranteed gems");
-        }
-        check(bars==28&&gold==8&&ring==8&&nothing==84,"normal table exact weights preserved");
-        h.equip(player,1647,1);h.random().reset(1);h.random().scriptInts(0,0).scriptDoubles(0.0);
-        ArrayList<Item> doubled=table.clone().rollItem(player);
-        check(doubled.size()==2&&doubled.get(0).getCatalogId()==ItemId.GOLD_BAR.id()&&doubled.get(1).getCatalogId()==ItemId.GOLD_BAR.id(),"Cosmic material reroll still works");
-        clearEquipment(player);
-    }
     private static void verifyBanking(CurrentCombatHarness h,Player player,Npc npc,Method personal)throws Exception {
         clearEquipment(player);h.equip(player,1662,1);
         Item neck=equipment(player)[10];EnchantingItemEffects.setLawBankingItemCharges(player,neck,100);
         int start=0;
         for(int outcome=0;outcome<3;outcome++) {
             clearGround(h,player);int[] row=MATRIX[outcome];int before=player.getBank().countId(S);
-            h.random().reset(1);h.random().scriptInts(start,127).scriptDoubles(.999,.999);
+            h.random().reset(1);h.random().scriptInts(start,127).scriptDoubles(.999,.999,.999);
             personal.invoke(npc,player,.05,true);
             if(row[1]==1) {
                 check(player.getBank().countId(S)==before+1&&gemDrops(player,npc).isEmpty(),"single unnoted gem uses existing Law banking");
@@ -178,7 +157,7 @@ public final class GuaranteedGemLootFixture {
         clearEquipment(player);clearGround(h,player);
         int previous=h.server().getConfig().RESTRICT_ITEM_ID;h.server().getConfig().RESTRICT_ITEM_ID=S-1;
         try {
-            h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(.999,.999);
+            h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(.999,.999,.999);
             npc.dropItems(player);check(gemDrops(player,npc).isEmpty(),"world item restriction still takes precedence over reward delivery");
         } finally {h.server().getConfig().RESTRICT_ITEM_ID=previous;}
     }

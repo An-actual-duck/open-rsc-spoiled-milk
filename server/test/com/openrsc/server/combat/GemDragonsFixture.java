@@ -50,10 +50,10 @@ public final class GemDragonsFixture {
                 check(table.getTotalWeight()==128,"normal table budget");
                 // Both independent shared-unique rolls win; exact upper boundary loses.
                 double chance=1.0/GemDragons.UNIQUE_DENOMINATORS[tier];
-                h.random().reset(1);h.random().scriptDoubles(Math.nextDown(chance),Math.nextDown(chance));
+                h.random().reset(1);h.random().scriptDoubles(Math.nextDown(chance),Math.nextDown(chance),.999);
                 ArrayList<Item> uniques=h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),1.0);
                 check(uniques.size()==2&&uniques.get(0).getCatalogId()==3408&&uniques.get(1).getCatalogId()==3409,"both shared uniques reachable");
-                h.random().reset(1);h.random().scriptDoubles(chance,chance);
+                h.random().reset(1);h.random().scriptDoubles(chance,chance,.999);
                 check(h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),1.0).isEmpty(),"unique probability exclusive boundary");
                 clearEquipment(p);
             }

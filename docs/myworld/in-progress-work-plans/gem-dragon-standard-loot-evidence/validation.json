@@ -1,0 +1,51 @@
+{
+  "branch": "feat/gem-dragon-standard-loot",
+  "baseCommit": "14478979fe833ac73f57d7bc8077e98597da9b46",
+  "normalWeights": {
+    "goldBars": 28,
+    "plainGoldRing": 8,
+    "ownGemRing": 8,
+    "bolts": 16,
+    "arrows": 4,
+    "runes": 20,
+    "coins": 36,
+    "empty": 8
+  },
+  "scrapDenominators": [
+    1024,
+    768,
+    512,
+    256,
+    128
+  ],
+  "counts": {
+    "standardLootAssertions": 80616,
+    "rootChildTickets": 10240,
+    "standardNecklacePersonalDeliveries": 264,
+    "guaranteedGemAssertions": 7379,
+    "guaranteedTickets": 897,
+    "guaranteedNecklacePersonalDeliveries": 258,
+    "retainedGearFireStatAssertions": 232
+  },
+  "checks": {
+    "test_gem_dragons": "PASS all three fixtures with positive completion markers",
+    "SlayerOrdinaryLoot": "PASS",
+    "SlayerComponents": "PASS",
+    "SlayerRewards": "PASS",
+    "runtimeBaseValueProbe": "PASS exact match to independently prepared matrix; four ordinary dragon normal-table values unchanged",
+    "guaranteedRollMethodsAndArrays": "PASS source-identical to baseline",
+    "guaranteedMethodBlockSha256": "4e73e61e4d92ab462c2327ee151feaa099654cd25374dca1c323db4505221463",
+    "fullCombatClientRenderRuns": "Not rerun: combat, client and visuals unchanged"
+  },
+  "artifactSha256": {
+    "server/core.jar": "de7da57158821811376afa233a0bd003faf78643e4f8cbd6fdf2f97605725d53",
+    "server/core-gameplay-overlay.jar": "2b674213a6cfc0839bcdf9da28a63b0574b70e919775f3e9b18f69292840faad",
+    "server/plugins.jar": "6fbb75327172522eb1af8bae2aea2264ddcc5a93b5d39f212a2e5631543877e0",
+    "Client_Base/Open_RSC_Client.jar": "e6e77130d8ae6664743447a68ae4594938aa85b202216a14466f3ced87656885"
+  },
+  "contentSha256": {
+    "server/src/com/openrsc/server/content/gemdragons/GemDragons.java": "7a7c25728b922c73a6945a7bee2a98d4bf68d3fc7485c088a2afa60ad3f48c5e",
+    "server/src/com/openrsc/server/constants/NpcDrops.java": "2af75ee0ed05ca74c1c6f88f70150f22c24f50b501263c7375d882af55dd9554"
+  },
+  "operations": "No live operations, owner map/account changes, toolkit modifications, new IDs, client builds or asset edits"
+}

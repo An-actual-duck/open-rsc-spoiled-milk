@@ -38,10 +38,14 @@ Cosmic necklaces cannot repeat it; Death necklaces cannot alter 1/3/5 or the
 single Dragonstone. They still affect their ordinary eligible loot. The obsolete
 `enforceOwnGemCap` method and its old optional-gem tests were removed.
 
-Ordinary loot remains 128 weight: gold bars 28, plain ring 8, own-tier unenchanted
-ring 8, nothing 84. Gold-bar quantities remain 2/3/4/5/6. The old 82 gem weights join
-the previous 2 empty weights; all non-gem material chances remain unchanged.
-Shared unique odds and standard dragon bones are unchanged. No hides are added.
+The subsequent October 28 standard-loot expansion supersedes this revision's
+ordinary-table details. Current normal weights are gold bars 28, plain ring 8,
+own-tier unenchanted ring 8, bolts 16, arrows 4, rune subtable 20, coins 36 and empty 8.
+Gold/jewelry chances and gold-bar quantities remain unchanged. Shared unique
+odds and standard dragon bones are unchanged; rare Dragon Metal Scrap is an
+additional independent roll. No hides are added. See
+`gem-dragon-standard-loot-review.md` for the latest standard loot. The guaranteed
+gem matrix and necklace protections documented here remain unchanged.
 
 Single gems are unnoted; 3/5 are noted. The ordinary NPC delivery helper retains
 world item restrictions, recipient ownership, personal-loot flags and banking
@@ -67,7 +71,7 @@ monocle artwork or new approval for the glove icon.
 
 ## Verification
 
-- 9,354 guaranteed-loot assertions: all 897 tickets, 43 outcome boundaries, equal
+- The guaranteed-loot fixture exhausts all 897 tickets, 43 outcome boundaries, equal
  rank weights, exact totals, no forbidden/higher-tier gems, Dragonstone 1 only,
  unchanged normal material weights and actual NPC death delivery.
 - 258 normal/personal deliveries span every outcome with no necklace, Cosmic
