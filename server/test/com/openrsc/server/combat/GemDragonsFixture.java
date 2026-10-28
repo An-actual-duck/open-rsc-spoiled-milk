@@ -48,17 +48,6 @@ public final class GemDragonsFixture {
                 check(com.openrsc.server.model.entity.npc.NpcAttackStyleProfile.forNpc(npc)==com.openrsc.server.model.entity.npc.NpcAttackStyleProfile.MELEE_MAGIC,"regular dragon attack profile retained");
                 DropTable table=h.world().getNpcDrops().getDropTable(npc.getID());
                 check(table.getTotalWeight()==128,"normal table budget");
-                for(int ticket=0;ticket<128;ticket++)for(int child=0;child<28;child++) {
-                    h.random().reset(1);h.random().scriptInts(ticket,child);
-                    ArrayList<Item> items=table.clone().rollItem(p);
-                    for(Item item:items) {
-                        for(int gem=0;gem<GEMS.length;gem++)if(item.getCatalogId()==GEMS[gem]) {
-                            check(gem<=tier+3,"no higher tier gem");
-                            if(gem==tier+3) check(item.getAmount()==1,"one own gem normal roll");
-                            else check(item.getNoted(),"lower clusters compact noted supply");
-                        }
-                    }
-                }
                 // Both independent shared-unique rolls win; exact upper boundary loses.
                 double chance=1.0/GemDragons.UNIQUE_DENOMINATORS[tier];
                 h.random().reset(1);h.random().scriptDoubles(Math.nextDown(chance),Math.nextDown(chance));
@@ -66,23 +55,6 @@ public final class GemDragonsFixture {
                 check(uniques.size()==2&&uniques.get(0).getCatalogId()==3408&&uniques.get(1).getCatalogId()==3409,"both shared uniques reachable");
                 h.random().reset(1);h.random().scriptDoubles(chance,chance);
                 check(h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),1.0).isEmpty(),"unique probability exclusive boundary");
-                // Force the Cosmic necklace's real standard reroll to select own tier twice.
-                h.equip(p,1647,1);
-                h.random().reset(1);h.random().scriptInts(0,0).scriptDoubles(0.0);
-                check(table.clone().rollItem(p).size()==2,"fixture truly forces own-gem extra roll");
-                Integer[] wins=new Integer[30];Double[] doubles=new Double[20];Arrays.fill(wins,0);Arrays.fill(doubles,0.0);
-                h.random().reset(1);h.random().scriptInts(wins).scriptDoubles(doubles);
-                npc.dropItems(p);
-                int ownCount=0;
-                for(GroundItem item:p.getViewArea().getItemsInView())if(item.getID()==GEMS[tier+3]&&item.getLocation().equals(npc.getLocation())) ownCount+=item.getAmount();
-                check(ownCount==1,"complete death delivery caps own gem after necklace reroll");
-                GroundItem bones=h.world().getRegionManager().getRegion(npc.getLocation()).getItem(ItemId.DRAGON_BONES.id(),npc.getLocation(),p);
-                check(bones!=null,"standard dragon bones delivered");
-                check(h.world().getRegionManager().getRegion(npc.getLocation()).getItem(3408,npc.getLocation(),p)!=null,"unique gloves delivered");
-                // Lower materials retain the necklace's extra standard roll.
-                h.random().reset(1);h.random().scriptInts(82,82).scriptDoubles(0.0);
-                ArrayList<Item> materials=table.clone().rollItem(p);GemDragons.enforceOwnGemCap(npc.getID(),materials);
-                check(materials.size()==2&&materials.get(0).getCatalogId()==ItemId.GOLD_BAR.id(),"material bonus unaffected");
                 clearEquipment(p);
             }
             // Reserved antidote holes must stay absent server-side.

@@ -994,6 +994,17 @@ public class Npc extends Mob {
 		}
 		dropHiddenUniqueItems(owner, contributionScale, personalDrop);
 
+		// Gem dragons always make one independent gem roll. Keep it outside the
+		// generic guaranteed-drop bonuses and standard-table rerolls so its exact
+		// 1/3/5 quantities (or single dragonstone) cannot be multiplied by necklaces.
+		if (getConfig().WANT_MYWORLD) {
+			Item gem = com.openrsc.server.content.gemdragons.GemDragons.rollGuaranteedGem(
+				getID(), getWorld().getServer().getCombatRandom());
+			if (gem != null && worldAllowsDrop(gem)) {
+				dropStandardItem(gem, owner, personalDrop);
+			}
+		}
+
 		/* 2. Drop bones (or nothing). */
 		int bones = getBonesDrop();
 		if (bones != ItemId.NOTHING.id()) {
@@ -1044,7 +1055,6 @@ public class Npc extends Mob {
 		/* 5. Roll for drops. */
 		if (drops.getTotalWeight() > 0) {
 			ArrayList<Item> items = personalDrop ? drops.rollPersonalLoot(owner, contributionScale) : drops.rollItem(owner);
-			com.openrsc.server.content.gemdragons.GemDragons.enforceOwnGemCap(getID(), items);
 			for (Item item : items) {
 				if (item != null) {
 					if (!worldAllowsDrop(item)) {

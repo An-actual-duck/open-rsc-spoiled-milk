@@ -1,0 +1,4 @@
+Files checked: 501
+Item references checked: 8024
+
+PASS: plugin item references, drop tables, ground items, and production defs resolve to defined non-placeholder items

@@ -1,0 +1,68 @@
+{
+  "branch": "feat/gem-dragon-guaranteed-gems",
+  "baseCommit": "6c68bae5204cc52c7567b6a38845e4b0df5675db",
+  "status": "validated worker candidate; Core integration pending",
+  "behavior": "One guaranteed independent uncut-gem outcome per eligible reward recipient; no quantity multiplier/reroll from Death/Cosmic necklaces",
+  "tableTotals": [
+    112,
+    168,
+    196,
+    210,
+    211
+  ],
+  "rankWeights": [
+    64,
+    32,
+    16,
+    8,
+    4,
+    2
+  ],
+  "dragonstoneWeight": 1,
+  "counts": {
+    "gemLootAssertions": 9354,
+    "retainedEquipmentFireStatAssertions": 232,
+    "exhaustiveTickets": 897,
+    "distinctOutcomes": 43,
+    "actualNormalPersonalNecklaceDeliveries": 258
+  },
+  "checks": {
+    "boundedFocusedBuildAndCompletionMarker": "PASS",
+    "SlayerOrdinaryLoot": "PASS",
+    "SlayerComponents": "PASS",
+    "SlayerRewards": "PASS",
+    "clientBuild": "PASS bounded, one build for approved loupe PNG",
+    "sharedAssetRendererAndJarCheck": "PASS",
+    "itemReferenceResolution": "PASS 501 files and 8024 references",
+    "fullCombatGate": "Not rerun: combat behavior unchanged; prior family baseline remains documented separately"
+  },
+  "artifactsSha256": {
+    "server/core.jar": "73ecb966861094efbb9689d03e6c127859d02f083cf872ffce1974248f29d06a",
+    "server/core-gameplay-overlay.jar": "e4ee7f4496a13429dbdbae9ac7edb937e9627ab8e19ac31fddc98816d7957860",
+    "server/plugins.jar": "367a5f957852b744d12cbc51a874e199e7162c8e9023a7b8207cb46692d1a70b",
+    "Client_Base/Open_RSC_Client.jar": "e6e77130d8ae6664743447a68ae4594938aa85b202216a14466f3ced87656885"
+  },
+  "contentSha256": {
+    "server/src/com/openrsc/server/content/gemdragons/GemDragons.java": "8ad2f229e9f4cdbcff451395e809ad7c0d27e7bca194b92708149e4d5ef5e1f8",
+    "server/src/com/openrsc/server/model/entity/npc/Npc.java": "8ffd0d80343c654e8c7430ba9e4555a87a8ba339483ebcceb9c1631676b25ff9",
+    "dev/myworld/assets/sprites/items/inventory-ground/gem-cutters-monocle.png": "4f68d9aadad4a3b45ff586edffcc7362ec493b28ddd769beb0b3fc919bf2db05"
+  },
+  "approvedIcon": {
+    "source": "/home/justin/spoiled-milk-next-update/art/gem-cutters-loupe-v2/gem-cutters-monocle.png",
+    "dimensions": [
+      48,
+      32
+    ],
+    "sha256": "4f68d9aadad4a3b45ff586edffcc7362ec493b28ddd769beb0b3fc919bf2db05",
+    "pixelModification": false
+  },
+  "untouched": [
+    "NPC combat stats and fire logic",
+    "unique equipment odds and effects",
+    "dragon bones",
+    "map placements and terrain",
+    "native dragon animation assets and selectors",
+    "worn monocle placeholder",
+    "live runtime and player data"
+  ]
+}

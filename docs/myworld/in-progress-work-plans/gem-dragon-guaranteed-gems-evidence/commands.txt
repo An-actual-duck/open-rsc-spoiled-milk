@@ -1,0 +1,19 @@
+Run from the Core worker root. All builds/tests were sequential.
+
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_gem_dragons test_slayer_ordinary_loot test_slayer_component_drops test_slayer_rewards
+PASS focused guaranteed gems and three relevant loot regressions.
+
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ./scripts/build-client.sh
+python3 tests/myworld/test-gem-dragons.py
+python3 tests/myworld/test-content-item-resolution.py
+PASS approved loupe packaging, retained shared NPC assets/renderer paths, and item resolution.
+
+Final focused check after adding the explicit completion-marker guard:
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_gem_dragons
+PASS Gem dragons232 assertions and Guaranteed gem loot9354 assertions, with required completion marker and BUILD SUCCESSFUL.
+
+Fixture setup notes:
+- Initialize the ordinary in-memory Bank on the listener-free test player to exercise Law-necklace banking. No account/database is loaded or saved.
+- Construct CurrentCombatHarness before creating reward Item objects so the normal definition/skill context is initialized.
+- test_gem_dragons now requires the guaranteed fixture's positive completion marker, preventing a premature successful process exit from being mistaken for completed tests.
+- The independent expected weight matrix was supplied by Core and copied into this evidence folder; all totals, ranks and43 outcomes agree.

@@ -1,0 +1,4 @@
+[java] 2026-10-28 12:10:49 [InitThread] INFO  Server: - Gem dragons: PASS 232 assertions
+[echo] 2026-10-28 12:10:52 [InitThread] INFO  Server: - Guaranteed gem loot: PASS 9354 assertions; all 897 tickets and 258 normal/personal necklace deliveries
+BUILD SUCCESSFUL
+Total time: 19 seconds

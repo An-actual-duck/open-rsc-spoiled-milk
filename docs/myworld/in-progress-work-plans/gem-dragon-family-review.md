@@ -34,30 +34,62 @@ new hides or permanent spawns are added.
 
 ## Crafting loot
 
-All gem drops are **uncut**. One 128-weight standard table per dragon:
+**Updated October 28, 2026: these guaranteed-gem rules supersede the original
+optional gem roll, variable lower-tier clusters and one-own-gem cap.** Each
+gem dragon now makes one separate guaranteed roll, choosing one uncut gem type
+and quantity. Sapphire, emerald, ruby and diamond can each occur as 1, 3 or 5,
+provided the gem is at or below that dragon's tier. No opal, jade or red topaz
+is included. Dragonstone Dragons alone add one dragonstone, never 3 or 5.
 
-| Roll | Weight | Quantity |
+Rarity rank is gem tier (Sapphire 0 through Diamond 3) plus quantity rank
+(1 → 0, 3 → 1, 5 → 2). Initial rank weights are 64, 32, 16, 8, 4, 2. The single
+Dragonstone outcome has weight 1, so it is individually rarer than Diamond 5.
+
+| Guaranteed outcome | Sapphire Dragon | Emerald Dragon | Ruby Dragon | Diamond Dragon | Dragonstone Dragon |
+|---|---:|---:|---:|---:|---:|
+| Sapphire 1 | 64 | 64 | 64 | 64 | 64 |
+| Sapphire 3 | 32 | 32 | 32 | 32 | 32 |
+| Sapphire 5 | 16 | 16 | 16 | 16 | 16 |
+| Emerald 1 | — | 32 | 32 | 32 | 32 |
+| Emerald 3 | — | 16 | 16 | 16 | 16 |
+| Emerald 5 | — | 8 | 8 | 8 | 8 |
+| Ruby 1 | — | — | 16 | 16 | 16 |
+| Ruby 3 | — | — | 8 | 8 | 8 |
+| Ruby 5 | — | — | 4 | 4 | 4 |
+| Diamond 1 | — | — | — | 8 | 8 |
+| Diamond 3 | — | — | — | 4 | 4 |
+| Diamond 5 | — | — | — | 2 | 2 |
+| Dragonstone 1 | — | — | — | — | 1 |
+| **Total weight** | **112** | **168** | **196** | **210** | **211** |
+
+Entries are per-outcome weights, normalized by the selected dragon's total.
+Equal-rank outcomes have equal probability **within that dragon's table**;
+this does not mean equal absolute probability across different dragons.
+For example Sapphire 5, Emerald 3 and Ruby 1 each have weight 16 in a Ruby
+Dragon's table. Sapphire 1 is 64/112 on a Sapphire Dragon and 64/211 on a
+Dragonstone Dragon. The lowest four dragons can drop 3 or 5 of their own gem;
+the old own-gem cap is deliberately removed. Single gems are unnoted and 3/5
+rewards are noted, retaining the previous cluster convention.
+
+The guaranteed roll is independent of the ordinary 128-weight material table:
+
+| Ordinary material roll | Weight | Quantity |
 |---|---:|---|
-| Own gem | 16 | 1 |
-| Lower gems | 50 | 1 + floor(tier distance / 2) |
-| Lower gem cluster | 16 | 3 + 2 × tier distance |
 | Gold bars | 28 | 2 / 3 / 4 / 5 / 6 |
 | Plain gold ring | 8 | 1 |
 | Own-tier unenchanted gem ring | 8 | 1 |
-| Nothing | 2 | — |
+| Nothing | 84 | — |
 
-Lower gem order is opal, jade, red topaz, sapphire, emerald, ruby, diamond,
-dragonstone. A lower-gem roll may select only gems below that dragon's own
-tier; weights favor the lower/cheaper gems in proportion to tier distance.
-Clusters and gold bars are noted to avoid flooding ground/inventory slots.
-The own gem is unnoted. No generic gem or rare-drop table is inherited.
-Standard dragon bones are preserved.
-
-The final resolved normal loot list enforces **at most one own-tier gem per
-recipient per kill**, after extra standard rolls such as the Cosmic necklace.
-Lower-gem/material bonuses still work. Shared uniques are separate independent
-rolls and cannot produce extra gems. The boundary is in NPC death delivery,
-because the existing NPC system clones normal tables before rolling them.
+Material probabilities, unique probabilities and standard dragon bones are
+unchanged. No generic gem/rare-drop table or hide is added. The Cosmic necklace
+can still reroll ordinary materials, but cannot repeat the separate guaranteed
+gem roll. Death-necklace guaranteed-drop bonuses still apply to bones and other
+ordinary guarantees, but do not turn a 1/3/5 gem outcome into another quantity
+or produce more than one dragonstone. The new gem delivery reuses ordinary
+NPC delivery helpers and their item restrictions, recipient ownership, personal
+loot flags and banking behavior. Existing Law-necklace rules bank a single
+unnoted gem; noted 3/5 rewards stay intact on the ground. A personal-loot
+recipient gets one guaranteed gem outcome without contribution-chance gating.
 
 Both unique items use the following independent per-kill chances:
 
@@ -89,9 +121,10 @@ No additional ring-of-wealth multiplication is added to these hidden rolls.
   same output helper; its non-cutting item-spawn menus are unchanged. No new
   level bypass is introduced (the developer tool retains its pre-existing rules).
 - No combat bonuses or additional skill requirements were invented.
-- New 48×32 inventory/ground icon candidates are integrated, provided by Core
-  from Aseprite work rooted in existing game references. **Owner visual review
-  is still pending for these two icons.** Worn glove geometry reuses the existing
+- The 48×32 inventory/ground icons are integrated from Core's Aseprite work.
+  The owner approved the monocle's jeweller's loupe v2 icon; the October 28
+  update copies its PNG exactly (see guaranteed-gems review for source/hash).
+  Glove icon approval remains a separate visual gate. Worn glove geometry reuses the existing
   leather glove appearance. The monocle currently uses the existing eye-patch
   worn geometry as a provisional visual: it is **not an approved finished worn
   monocle**, and should receive a dedicated visual before final release.
@@ -119,15 +152,21 @@ aseprite -b --script-param input="$PWD/dev/myworld/assets/sprites/npcs/gem-drago
 Server definitions are ordinary game-owned `GemDragonNpcDefs.json`, loaded after
 the existing tower definitions. Client animation definitions and external asset
 selectors are also game owned. No custom NPC IDs or assets are added to the
-standalone toolkit. Generic discovery still needs independent Core verification.
+standalone toolkit. Core independently resolved all 40 requested gem-dragon
+views (five variants × eight directions) with the shared asset on October 28.
+Equipment icon candidates retained correct pixels under the existing declared
+classpath authority limitations; the loot revision changes no discovery selector.
 
 ## Validation and remaining acceptance
 
 - Source client/server/plugin builds pass.
 - `test_gem_dragons`: production definitions, monotonic physical stats,
-  exhaustive normal/lower-gem tickets, rare-roll boundaries, actual NPC death
-  delivery with forced Cosmic-necklace own-gem duplication, bones/unique delivery,
-  unchanged material extras, reserved item holes, exact 5/100 bonus boundary,
+  retained gem-cutting equipment/fire behavior and unique probability boundaries.
+  `GuaranteedGemLootFixture` exhausts all 897 guaranteed tickets and all 43
+  outcome boundaries, checks unchanged material weights, and exercises actual
+  normal/personal NPC death under Cosmic/Death necklaces, bones/uniques and Law
+  banking. It replaces the obsolete own-gem-cap and optional-cluster tests.
+  Remaining coverage includes reserved item holes, exact 5/100 bonus boundary,
   equipped/unequipped state, inventory overflow, real gem cutting for all eight
   gems, level checks, dust prevention, unchanged single-cut XP, all five developer
   Superchisel conversions, regular dragon combat profiles and actual protected
