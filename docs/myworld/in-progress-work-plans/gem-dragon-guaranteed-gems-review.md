@@ -41,10 +41,9 @@ single Dragonstone. They still affect their ordinary eligible loot. The obsolete
 The subsequent October 28 standard-loot expansion supersedes this revision's
 ordinary-table details. Current normal weights are gold bars 28, plain ring 8,
 own-tier unenchanted ring 8, bolts 16, arrows 4, rune subtable 20, coins 36 and empty 8.
-Gold/jewelry chances and gold-bar quantities remain unchanged. Shared unique
-odds and standard dragon bones are unchanged; rare Dragon Metal Scrap is an
-additional independent roll. No hides are added. See
-`gem-dragon-standard-loot-review.md` for the latest standard loot. The guaranteed
+These are conditional common-child weights; amounts remain unchanged. Shared unique
+odds and standard dragon bones are unchanged; rare Dragon Metal Scrap now replaces the common child on a 1/D normal roll. No hides are added. See
+`gem-dragon-standard-loot-review.md` and `gem-dragon-normal-scrap-review.md` for the latest normal-root structure. The guaranteed
 gem matrix and necklace protections documented here remain unchanged.
 
 Single gems are unnoted; 3/5 are noted. The ordinary NPC delivery helper retains

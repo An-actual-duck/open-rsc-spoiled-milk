@@ -183,8 +183,6 @@ public class NpcDrops {
 				int denominator = com.openrsc.server.content.gemdragons.GemDragons.UNIQUE_DENOMINATORS[id-877];
 				addHiddenUniqueDrop(id, MyWorldItemId.GEM_CUTTER_GLOVES, 1, 1, denominator);
 				addHiddenUniqueDrop(id, MyWorldItemId.GEM_CUTTERS_MONOCLE, 1, 1, denominator);
-				addHiddenUniqueDrop(id, ItemId.RAW_DRAGON_METAL.id(), 1, 1,
-					com.openrsc.server.content.gemdragons.GemDragons.SCRAP_DENOMINATORS[id-877]);
 			}
 		}
 		addHiddenUniqueDrop(NpcId.FIRE_GIANT.id(), ItemId.FIRE_SWORD.id(), 1, HiddenUniqueRarity.ULTRA_RARE_UNIQUE);

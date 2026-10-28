@@ -65,17 +65,17 @@ public final class GemDragonStandardLootFixture {
                 check(rune.getRuneId()==RUNES[tier]&&rune.getRequiredLvl()==RUNE_LEVELS[tier]&&rune.getRequiredLvl()>previousRuneLevel,"actual Runecraft progression supplies higher rune choices");
                 previousRuneLevel=rune.getRequiredLvl();
                 DropTable table=h.world().getNpcDrops().getDropTable(npc.getID());
-                check(table.getTotalWeight()==128,"normal table total remains128");
+                check(table.getTotalWeight()==SCRAP_DENOMINATORS[tier],"normal root total equals scrap denominator");
                 int[] categories=new int[8];
                 for(int ticket=0;ticket<128;ticket++)for(int child=0;child<16;child++) {
-                    h.random().reset(1);h.random().scriptInts(ticket,child);
+                    h.random().reset(1);h.random().scriptInts(0,ticket,child);
                     ArrayList<Item> rolled=table.clone().rollItem(player);
                     Outcome outcome=expected(tier,ticket,child);
                     if(outcome==null) {check(rolled.isEmpty(),"eight empty tickets");categories[7]++;continue;}
                     check(rolled.size()==1,"one ordinary outcome per root roll");Item item=rolled.get(0);
                     check(item.getCatalogId()==outcome.id&&item.getAmount()==outcome.quantity&&item.getNoted()==outcome.noted,"every normal and child ticket matches matrix");
                     for(int gem:UNCUT)check(item.getCatalogId()!=gem,"normal roll cannot add an uncut gem");
-                    check(item.getCatalogId()!=SCRAP,"scrap remains a separate rare roll");
+                    check(item.getCatalogId()!=SCRAP,"common child excludes scrap");
                     int category=ticket<28?0:ticket<36?1:ticket<44?2:ticket<60?3:ticket<64?4:ticket<84?5:6;categories[category]++;
                 }
                 int[] weights={28,8,8,16,4,20,36,8};
@@ -90,9 +90,9 @@ public final class GemDragonStandardLootFixture {
                     for(boolean privateLoot:new boolean[]{false,true})for(int[] root:roots) {
                         clearGround(h,player);int ticket=root[0],child=root[1];
                         h.random().reset(1);
-                        if(ticket>=64&&ticket<84)h.random().scriptInts(0,ticket,child,ticket,child);
-                        else h.random().scriptInts(0,ticket,ticket);
-                        h.random().scriptDoubles(.999,.999,0.0,0.0);
+                        if(ticket>=64&&ticket<84)h.random().scriptInts(0,0,ticket,child,0,ticket,child);
+                        else h.random().scriptInts(0,0,ticket,0,ticket);
+                        h.random().scriptDoubles(.999,.999,0.0);
                         if(privateLoot)personal.invoke(npc,player,.01,true);else npc.dropItems(player);deliveries++;
                         Outcome outcome=expected(tier,ticket,child);
                         int multiplier=necklace==1647?2:1;
@@ -107,31 +107,62 @@ public final class GemDragonStandardLootFixture {
                         }
                         check(count(player,npc,UNCUT[0])==1,"guaranteed gem stays independent of normal/Cosmic/Death outcomes");
                         for(int gem=1;gem<UNCUT.length;gem++)check(count(player,npc,UNCUT[gem])==0,"no other gem from normal or rare paths");
-                        check(count(player,npc,SCRAP)==1,"rare scrap delivered once without necklace duplication");
+                        check(count(player,npc,SCRAP)==0,"common outcome cannot also deliver scrap");
                         check(count(player,npc,3408)==0&&count(player,npc,3409)==0,"scrap roll does not force either unique");
                         check(count(player,npc,ItemId.DRAGON_BONES.id())>=(necklace==1667?2:1),"ordinary bones/Death bonus retained");
                     }
                 }
                 clearEquipment(player);clearGround(h,player);
-                h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(0.0,0.0,0.0);
+                h.random().reset(1);h.random().scriptInts(0,SCRAP_DENOMINATORS[tier]-1,0).scriptDoubles(0.0,0.0,0.0);
                 npc.dropItems(player);
                 check(count(player,npc,3408)==1&&count(player,npc,3409)==1&&count(player,npc,SCRAP)==1&&count(player,npc,UNCUT[0])==1,"all independent rare wins and guaranteed gem coexist");
                 clearGround(h,player);
             }
         }
-        System.out.println("Gem dragon standard loot: PASS "+assertions+" assertions; 10240 root/child tickets and "+deliveries+" complete necklace/personal deliveries");
+        System.out.println("Gem dragon standard loot: PASS "+assertions+" assertions; 10240 common/rune combinations plus 2688 rare gate tickets and "+deliveries+" complete necklace/personal deliveries");
     }
-    private static void verifyScrapBoundaries(CurrentCombatHarness h,Npc npc,int tier) {
-        check(GemDragons.SCRAP_DENOMINATORS[tier]==SCRAP_DENOMINATORS[tier],"approved scrap denominator");
-        if(tier>0)check(SCRAP_DENOMINATORS[tier]<SCRAP_DENOMINATORS[tier-1],"scrap chance strictly rises");
-        for(double contribution:new double[]{1.0,.25}) {
-            double chance=contribution/SCRAP_DENOMINATORS[tier];
-            h.random().reset(1);h.random().scriptDoubles(.999,.999,Math.nextDown(chance));
-            ArrayList<Item> win=h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),contribution);
-            check(win.size()==1&&win.get(0).getCatalogId()==SCRAP&&win.get(0).getAmount()==1&&!win.get(0).getNoted(),"scrap wins independently just below boundary");
-            h.random().reset(1);h.random().scriptDoubles(.999,.999,chance);
-            check(h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),contribution).isEmpty(),"scrap fails at exclusive boundary");
+    private static void verifyScrapBoundaries(CurrentCombatHarness h,Npc npc,int tier)throws Exception {
+        int denominator=SCRAP_DENOMINATORS[tier];
+        check(GemDragons.SCRAP_DENOMINATORS[tier]==denominator,"approved scrap denominator");
+        if(tier>0)check(denominator<SCRAP_DENOMINATORS[tier-1],"scrap chance strictly rises");
+        Player p=h.player("scrap"+tier,449,450);p.getClientLimitations().maxItemId=Integer.MAX_VALUE;h.recordOutgoingPackets(p);
+        DropTable table=h.world().getNpcDrops().getDropTable(npc.getID());
+        for(int ticket=0;ticket<denominator;ticket++) {
+            h.random().reset(1);h.random().scriptInts(ticket,0).scriptDoubles(0.0);
+            ArrayList<Item> result=table.clone().rollItem(p);
+            check(result.size()==1,"every base root ticket yields exactly one selected branch reward");
+            check(result.get(0).getCatalogId()==(ticket==denominator-1?SCRAP:ItemId.GOLD_BAR.id()),"one scrap gate ticket replaces common branch");
         }
+        h.random().reset(1);h.random().scriptDoubles(0.0,0.0);
+        ArrayList<Item> hidden=h.world().getNpcDrops().rollHiddenUniqueDrops(npc.getID(),1);
+        check(hidden.size()==2,"only the two equipment uniques remain hidden");
+        for(Item item:hidden)check(item.getCatalogId()!=SCRAP,"no duplicate hidden scrap path");
+        for(double contribution:new double[]{1.0,.25,.01}) {
+            double gate=Math.max(.05,contribution);
+            for(double roll:gate==1.0?new double[]{Math.nextDown(gate)}:new double[]{Math.nextDown(gate),gate}) {
+                h.random().reset(1);h.random().scriptInts(denominator-1,0).scriptDoubles(roll);
+                ArrayList<Item> result=table.clone().rollPersonalLoot(p,contribution);
+                check(result.size()==(roll<gate?1:0),"existing rare-table contribution boundary and minimum apply");
+                if(!result.isEmpty())check(result.get(0).getCatalogId()==SCRAP&&result.get(0).getAmount()==1&&!result.get(0).getNoted(),"one unnoted scrap only");
+            }
+        }
+        // Real death: baseline, Death, Cosmic and Wealth; normal/personal recipient clones.
+        Method personal=Npc.class.getDeclaredMethod("dropItems",Player.class,double.class,boolean.class);personal.setAccessible(true);
+        for(int gear:new int[]{0,1667,1647,1701})for(boolean privateLoot:new boolean[]{false,true}) {
+            clearEquipment(p);if(gear!=0)h.equip(p,gear,1);clearGround(h,p);
+            h.random().reset(1);h.random().scriptInts(0,denominator-1,0,denominator-1).scriptDoubles(.999,.999,0.0,0.0,0.0);
+            if(privateLoot)personal.invoke(npc,p,1.0,true);else npc.dropItems(p);deliveries++;
+            check(count(p,npc,SCRAP)==1,"normal rare reward survives death delivery but Cosmic cannot repeat rare child");
+            check(count(p,npc,ItemId.GOLD_BAR.id())==0,"scrap branch replaces common material");
+            check(count(p,npc,UNCUT[0])==1,"guaranteed gem independent of normal rare branch");
+            for(GroundItem item:ground(p,npc))if(item.getID()==SCRAP)check(item.getAttribute("personalNpcDrop",false)==privateLoot,"rare recipient metadata retained");
+        }
+        // Wealth can add the existing bonus rare roll after a common outcome.
+        clearEquipment(p);h.equip(p,1701,1);
+        h.random().reset(1);h.random().scriptInts(0,0,denominator-1,0).scriptDoubles(0.0,0.0);
+        ArrayList<Item> wealth=table.clone().rollItem(p);
+        check(wealth.size()==2&&wealth.get(0).getCatalogId()==ItemId.GOLD_BAR.id()&&wealth.get(1).getCatalogId()==SCRAP,"Wealth's established bonus rare reward remains enabled");
+        clearEquipment(p);clearGround(h,p);
         check(h.server().getEntityHandler().getItemDef(SCRAP).getName().equals("Dragon Metal Scrap")&&h.server().getEntityHandler().getItemDef(SCRAP).getDefaultPrice()==100000,"reuse existing scrap identity/value");
     }
     private static void clearEquipment(Player player)throws Exception {Field field=Equipment.class.getDeclaredField("list");field.setAccessible(true);Arrays.fill((Item[])field.get(player.getCarriedItems().getEquipment()),null);}

@@ -66,7 +66,7 @@ public final class GuaranteedGemLootFixture {
                         for(int outcome=0;outcome<OUTCOMES[tier];outcome++) {
                             int[] row=MATRIX[outcome];
                             clearGround(h,player);
-                            h.random().reset(1);h.random().scriptInts(start,127,127).scriptDoubles(.999,.999,.999,0.0);
+                            h.random().reset(1);h.random().scriptInts(start,0,127,0,127).scriptDoubles(.999,.999,0.0);
                             if(personalLoot)personal.invoke(npc,player,.01,true);else npc.dropItems(player);
                             List<GroundItem> gems=gemDrops(player,npc);
                             check(gems.size()==1,"one guaranteed gem outcome, even when normal table rolls nothing");
@@ -90,7 +90,7 @@ public final class GuaranteedGemLootFixture {
                 }
                 // Winning both separate uniques still gives exactly one gem outcome.
                 clearEquipment(player);clearGround(h,player);
-                h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(0.0,0.0,.999);
+                h.random().reset(1);h.random().scriptInts(0,0,127).scriptDoubles(0.0,0.0);
                 npc.dropItems(player);
                 check(gemDrops(player,npc).size()==1,"independent unique wins do not add another gem roll");
                 check(count(player,npc,3408)==1&&count(player,npc,3409)==1,"both unique rolls still deliver independently");
@@ -141,7 +141,7 @@ public final class GuaranteedGemLootFixture {
         int start=0;
         for(int outcome=0;outcome<3;outcome++) {
             clearGround(h,player);int[] row=MATRIX[outcome];int before=player.getBank().countId(S);
-            h.random().reset(1);h.random().scriptInts(start,127).scriptDoubles(.999,.999,.999);
+            h.random().reset(1);h.random().scriptInts(start,0,127).scriptDoubles(.999,.999);
             personal.invoke(npc,player,.05,true);
             if(row[1]==1) {
                 check(player.getBank().countId(S)==before+1&&gemDrops(player,npc).isEmpty(),"single unnoted gem uses existing Law banking");
@@ -157,7 +157,7 @@ public final class GuaranteedGemLootFixture {
         clearEquipment(player);clearGround(h,player);
         int previous=h.server().getConfig().RESTRICT_ITEM_ID;h.server().getConfig().RESTRICT_ITEM_ID=S-1;
         try {
-            h.random().reset(1);h.random().scriptInts(0,127).scriptDoubles(.999,.999,.999);
+            h.random().reset(1);h.random().scriptInts(0,0,127).scriptDoubles(.999,.999);
             npc.dropItems(player);check(gemDrops(player,npc).isEmpty(),"world item restriction still takes precedence over reward delivery");
         } finally {h.server().getConfig().RESTRICT_ITEM_ID=previous;}
     }

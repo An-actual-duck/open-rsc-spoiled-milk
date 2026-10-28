@@ -71,7 +71,8 @@ Dragonstone Dragon. The lowest four dragons can drop 3 or 5 of their own gem;
 the old own-gem cap is deliberately removed. Single gems are unnoted and 3/5
 rewards are noted, retaining the previous cluster convention.
 
-The guaranteed roll is independent of the ordinary 128-weight material table:
+The guaranteed roll is independent of the normal loot root. Conditional on
+selecting its common child, these 128 weights apply:
 
 | Ordinary material roll | Weight | Quantity |
 |---|---:|---|
@@ -93,13 +94,14 @@ from Chaos 10 to equal Chaos/Nature 15, Nature/Law 20, Law/Death 25 and Death/Bl
 subtable choices. These follow actual Runecraft requirements (22/38/46/54/70),
 not rune prices. No generic gem/rare-drop table or hide is added.
 
-Each dragon also has an independent single **Dragon Metal Scrap** roll (existing
-item 3228) at 1/1024, 1/768, 1/512, 1/256 and 1/128 respectively. Its frequency rises
-strictly with dragon strength. This is separate from both unique-equipment rolls,
-the guaranteed gem roll and normal materials; Cosmic/Death necklaces do not
-multiply it. Existing personal-loot contribution scaling applies. See
-`gem-dragon-standard-loot-review.md` for the complete initial balance, tests and
-base-value context. The Cosmic necklace
+Each dragon's normal loot root selects either the common 128-weight child
+(weight D−1) or one **Dragon Metal Scrap** (rare child, weight 1), where D is
+1024/768/512/256/128. Scrap replaces the common outcome on that base roll; it is
+not a hidden independent roll. Both equipment uniques and the guaranteed gem
+remain separate. Existing rare-table contribution gates and Wealth bonuses apply;
+Cosmic suppresses rare children on its extra roll. See
+`gem-dragon-normal-scrap-review.md` for the superseding structure and conditional
+probabilities. The Cosmic necklace
 can still reroll ordinary materials, but cannot repeat the separate guaranteed
 gem roll. Death-necklace guaranteed-drop bonuses still apply to bones and other
 ordinary guarantees, but do not turn a 1/3/5 gem outcome into another quantity
