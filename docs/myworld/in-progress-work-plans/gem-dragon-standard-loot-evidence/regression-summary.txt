@@ -1,0 +1,5 @@
+[java] 2026-10-28 13:37:42 [InitThread] INFO  Server: - PASS Slayer ordinary loot: all tickets, specialty weights, coin scaling, stackable supplies, exact independent equipment odds, luck/contribution, ground delivery and reload/world isolation
+[java] 2026-10-28 13:37:48 [InitThread] INFO  Server: - PASS Slayer components: definitions, quantities, exact odds, independence, luck, contribution, ground delivery and world gating
+[java] 2026-10-28 13:38:01 [InitThread] INFO  Server: - PASS Slayer rewards: all recipes, requirements, whip immunity, bow launch ownership/fractions, dagger cadence/poison, pendant immunity and thunder selection/scaling
+BUILD SUCCESSFUL
+Total time: 33 seconds

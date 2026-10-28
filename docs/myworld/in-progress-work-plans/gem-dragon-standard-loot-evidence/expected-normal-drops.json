@@ -1,0 +1,236 @@
+[
+  {
+    "dragon": "Sapphire",
+    "npcId": 877,
+    "tableWeight": 128,
+    "weights": {
+      "goldBars": 28,
+      "plainGoldRing": 8,
+      "ownGemRing": 8,
+      "bolts": 16,
+      "arrows": 4,
+      "runes": 20,
+      "coins": 36,
+      "empty": 8
+    },
+    "bolts": {
+      "id": 2186,
+      "name": "Mithril bolts",
+      "quantity": 2
+    },
+    "arrows": {
+      "id": 642,
+      "name": "Mithril Arrows",
+      "quantity": 1
+    },
+    "runes": [
+      {
+        "id": 41,
+        "name": "Chaos-Rune",
+        "quantity": 10,
+        "childWeight": 16
+      }
+    ],
+    "coins": 300,
+    "scrap": {
+      "id": 3228,
+      "quantity": 1,
+      "denominator": 1024
+    },
+    "normalDeclaredBaseEV": 621.25,
+    "guaranteedGemBaseEV": 750.0,
+    "scrapBaseEV": 97.65625
+  },
+  {
+    "dragon": "Emerald",
+    "npcId": 878,
+    "tableWeight": 128,
+    "weights": {
+      "goldBars": 28,
+      "plainGoldRing": 8,
+      "ownGemRing": 8,
+      "bolts": 16,
+      "arrows": 4,
+      "runes": 20,
+      "coins": 36,
+      "empty": 8
+    },
+    "bolts": {
+      "id": 2188,
+      "name": "Titan Steel bolts",
+      "quantity": 3
+    },
+    "arrows": {
+      "id": 2041,
+      "name": "Titan Steel Arrows",
+      "quantity": 2
+    },
+    "runes": [
+      {
+        "id": 41,
+        "name": "Chaos-Rune",
+        "quantity": 15,
+        "childWeight": 8
+      },
+      {
+        "id": 40,
+        "name": "Nature-Rune",
+        "quantity": 15,
+        "childWeight": 8
+      }
+    ],
+    "coins": 450,
+    "scrap": {
+      "id": 3228,
+      "quantity": 1,
+      "denominator": 768
+    },
+    "normalDeclaredBaseEV": 1098.984375,
+    "guaranteedGemBaseEV": 1142.8571428571427,
+    "scrapBaseEV": 130.20833333333334
+  },
+  {
+    "dragon": "Ruby",
+    "npcId": 879,
+    "tableWeight": 128,
+    "weights": {
+      "goldBars": 28,
+      "plainGoldRing": 8,
+      "ownGemRing": 8,
+      "bolts": 16,
+      "arrows": 4,
+      "runes": 20,
+      "coins": 36,
+      "empty": 8
+    },
+    "bolts": {
+      "id": 2190,
+      "name": "Adamantite bolts",
+      "quantity": 4
+    },
+    "arrows": {
+      "id": 644,
+      "name": "Adamantite Arrows",
+      "quantity": 3
+    },
+    "runes": [
+      {
+        "id": 40,
+        "name": "Nature-Rune",
+        "quantity": 20,
+        "childWeight": 8
+      },
+      {
+        "id": 42,
+        "name": "Law-Rune",
+        "quantity": 20,
+        "childWeight": 8
+      }
+    ],
+    "coins": 650,
+    "scrap": {
+      "id": 3228,
+      "quantity": 1,
+      "denominator": 512
+    },
+    "normalDeclaredBaseEV": 2071.25,
+    "guaranteedGemBaseEV": 1653.0612244897957,
+    "scrapBaseEV": 195.3125
+  },
+  {
+    "dragon": "Diamond",
+    "npcId": 880,
+    "tableWeight": 128,
+    "weights": {
+      "goldBars": 28,
+      "plainGoldRing": 8,
+      "ownGemRing": 8,
+      "bolts": 16,
+      "arrows": 4,
+      "runes": 20,
+      "coins": 36,
+      "empty": 8
+    },
+    "bolts": {
+      "id": 2192,
+      "name": "Orichalcum bolts",
+      "quantity": 5
+    },
+    "arrows": {
+      "id": 2042,
+      "name": "Orichalcum Arrows",
+      "quantity": 4
+    },
+    "runes": [
+      {
+        "id": 42,
+        "name": "Law-Rune",
+        "quantity": 25,
+        "childWeight": 8
+      },
+      {
+        "id": 38,
+        "name": "Death-Rune",
+        "quantity": 25,
+        "childWeight": 8
+      }
+    ],
+    "coins": 900,
+    "scrap": {
+      "id": 3228,
+      "quantity": 1,
+      "denominator": 256
+    },
+    "normalDeclaredBaseEV": 3728.125,
+    "guaranteedGemBaseEV": 2328.571428571429,
+    "scrapBaseEV": 390.625
+  },
+  {
+    "dragon": "Dragonstone",
+    "npcId": 881,
+    "tableWeight": 128,
+    "weights": {
+      "goldBars": 28,
+      "plainGoldRing": 8,
+      "ownGemRing": 8,
+      "bolts": 16,
+      "arrows": 4,
+      "runes": 20,
+      "coins": 36,
+      "empty": 8
+    },
+    "bolts": {
+      "id": 2194,
+      "name": "Rune bolts",
+      "quantity": 6
+    },
+    "arrows": {
+      "id": 646,
+      "name": "Rune Arrows",
+      "quantity": 5
+    },
+    "runes": [
+      {
+        "id": 38,
+        "name": "Death-Rune",
+        "quantity": 30,
+        "childWeight": 8
+      },
+      {
+        "id": 619,
+        "name": "Blood-Rune",
+        "quantity": 30,
+        "childWeight": 8
+      }
+    ],
+    "coins": 1200,
+    "scrap": {
+      "id": 3228,
+      "quantity": 1,
+      "denominator": 128
+    },
+    "normalDeclaredBaseEV": 7099.21875,
+    "guaranteedGemBaseEV": 2402.8436018957345,
+    "scrapBaseEV": 781.25
+  }
+]

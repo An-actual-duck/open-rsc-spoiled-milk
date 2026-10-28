@@ -11,10 +11,19 @@ public final class GemDragons {
     public static final int FIRST_ID = 877;
     public static final int LAST_ID = 881;
     public static final int[] UNIQUE_DENOMINATORS = {2048, 1536, 1024, 768, 512};
+    public static final int[] SCRAP_DENOMINATORS = {1024, 768, 512, 256, 128};
     private static final int[] GEMS = {ItemId.UNCUT_SAPPHIRE.id(), ItemId.UNCUT_EMERALD.id(),
         ItemId.UNCUT_RUBY.id(), ItemId.UNCUT_DIAMOND.id(), ItemId.UNCUT_DRAGONSTONE.id()};
     private static final int[] RINGS = {ItemId.SAPPHIRE_RING.id(), ItemId.EMERALD_RING.id(),
         ItemId.RUBY_RING.id(), ItemId.DIAMOND_RING.id(), ItemId.DRAGONSTONE_RING.id()};
+    private static final int[] BOLTS = {ItemId.MITHRIL_BOLTS.id(), ItemId.TITAN_STEEL_BOLTS.id(),
+        ItemId.ADAMANTITE_BOLTS.id(), ItemId.ORICHALCUM_BOLTS.id(), ItemId.RUNE_BOLTS.id()};
+    private static final int[] ARROWS = {ItemId.MITHRIL_ARROWS.id(), ItemId.TITAN_STEEL_ARROWS.id(),
+        ItemId.ADAMANTITE_ARROWS.id(), ItemId.ORICHALCUM_ARROWS.id(), ItemId.RUNE_ARROWS.id()};
+    // Actual Runecraft requirements: Chaos22, Nature38, Law46, Death54, Blood70.
+    private static final int[] PRIMARY_RUNES = {ItemId.CHAOS_RUNE.id(), ItemId.NATURE_RUNE.id(),
+        ItemId.LAW_RUNE.id(), ItemId.DEATH_RUNE.id(), ItemId.BLOOD_RUNE.id()};
+    private static final int[] COIN_AMOUNTS = {300, 450, 650, 900, 1200};
     private static final int[] QUANTITIES = {1, 3, 5};
     private static final int[] RANK_WEIGHTS = {64, 32, 16, 8, 4, 2};
 
@@ -65,7 +74,19 @@ public final class GemDragons {
         table.addItemDrop(ItemId.GOLD_BAR.id(), 2 + tier, 28, true);
         table.addItemDrop(ItemId.GOLD_RING.id(), 1, 8);
         table.addItemDrop(RINGS[tier], 1, 8);
-        table.addEmptyDrop(84);
+        // Enhanced ammunition is expensive; use small, steadily rising stacks.
+        table.addItemDrop(BOLTS[tier], 2 + tier, 16);
+        table.addItemDrop(ARROWS[tier], 1 + tier, 4);
+        DropTable runes = new DropTable("Gem dragon runes (" + id + ")");
+        if (tier == 0) {
+            runes.addItemDrop(PRIMARY_RUNES[0], 10, 16);
+        } else {
+            runes.addItemDrop(PRIMARY_RUNES[tier - 1], 10 + 5 * tier, 8);
+            runes.addItemDrop(PRIMARY_RUNES[tier], 10 + 5 * tier, 8);
+        }
+        table.addTableDrop(runes, 20);
+        table.addItemDrop(ItemId.COINS.id(), COIN_AMOUNTS[tier], 36);
+        table.addEmptyDrop(8);
         return table;
     }
 

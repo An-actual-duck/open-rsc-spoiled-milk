@@ -78,10 +78,28 @@ The guaranteed roll is independent of the ordinary 128-weight material table:
 | Gold bars | 28 | 2 / 3 / 4 / 5 / 6 |
 | Plain gold ring | 8 | 1 |
 | Own-tier unenchanted gem ring | 8 | 1 |
-| Nothing | 84 | — |
+| Material-tier bolts | 16 | 2 / 3 / 4 / 5 / 6 |
+| Material-tier arrows | 4 | 1 / 2 / 3 / 4 / 5 |
+| Rune subtable | 20 | 10 / 15 / 20 / 25 / 30 |
+| Coins | 36 | 300 / 450 / 650 / 900 / 1200 |
+| Nothing | 8 | — |
 
-Material probabilities, unique probabilities and standard dragon bones are
-unchanged. No generic gem/rare-drop table or hide is added. The Cosmic necklace
+The October 28 standard-loot expansion replaces the previous 84 empty weights
+with ammunition, runes, coins and eight remaining empty weights. Gold-bar and
+jewelry probabilities, unique-equipment probabilities and standard dragon bones
+are unchanged. Ammo materials rise through Mithril, Titan Steel, Adamantite,
+Orichalcum and Rune. Bolts are four times as common as arrows. Runes progress
+from Chaos 10 to equal Chaos/Nature 15, Nature/Law 20, Law/Death 25 and Death/Blood 30
+subtable choices. These follow actual Runecraft requirements (22/38/46/54/70),
+not rune prices. No generic gem/rare-drop table or hide is added.
+
+Each dragon also has an independent single **Dragon Metal Scrap** roll (existing
+item 3228) at 1/1024, 1/768, 1/512, 1/256 and 1/128 respectively. Its frequency rises
+strictly with dragon strength. This is separate from both unique-equipment rolls,
+the guaranteed gem roll and normal materials; Cosmic/Death necklaces do not
+multiply it. Existing personal-loot contribution scaling applies. See
+`gem-dragon-standard-loot-review.md` for the complete initial balance, tests and
+base-value context. The Cosmic necklace
 can still reroll ordinary materials, but cannot repeat the separate guaranteed
 gem roll. Death-necklace guaranteed-drop bonuses still apply to bones and other
 ordinary guarantees, but do not turn a 1/3/5 gem outcome into another quantity
@@ -166,6 +184,8 @@ classpath authority limitations; the loot revision changes no discovery selector
   outcome boundaries, checks unchanged material weights, and exercises actual
   normal/personal NPC death under Cosmic/Death necklaces, bones/uniques and Law
   banking. It replaces the obsolete own-gem-cap and optional-cluster tests.
+  The standard-loot fixture additionally exhausts all 128×16 normal/child tickets
+  for each dragon, rare scrap boundaries and actual death delivery with necklaces.
   Remaining coverage includes reserved item holes, exact 5/100 bonus boundary,
   equipped/unequipped state, inventory overflow, real gem cutting for all eight
   gems, level checks, dust prevention, unchanged single-cut XP, all five developer
