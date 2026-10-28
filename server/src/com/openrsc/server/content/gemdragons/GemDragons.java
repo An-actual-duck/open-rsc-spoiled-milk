@@ -87,7 +87,12 @@ public final class GemDragons {
         table.addTableDrop(runes, 20);
         table.addItemDrop(ItemId.COINS.id(), COIN_AMOUNTS[tier], 36);
         table.addEmptyDrop(8);
-        return table;
+        DropTable scrap = new DropTable("Gem dragon metal scrap (" + id + ")", true);
+        scrap.addItemDrop(ItemId.RAW_DRAGON_METAL.id(), 1, 1);
+        DropTable root = new DropTable("Gem dragon normal loot (" + id + ")");
+        root.addTableDrop(table, SCRAP_DENOMINATORS[tier] - 1);
+        root.addTableDrop(scrap, 1);
+        return root;
     }
 
     public static void register(Map<Integer,DropTable> tables) {

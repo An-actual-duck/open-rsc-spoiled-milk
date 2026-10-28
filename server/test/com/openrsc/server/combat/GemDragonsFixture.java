@@ -47,7 +47,7 @@ public final class GemDragonsFixture {
                 check(protectedPlayer.getSkills().getLevel(Skill.HITS.id())==95,"anti-dragon shield routes each variant to protected HP-based fire damage: tier="+tier+" HP="+protectedPlayer.getSkills().getLevel(Skill.HITS.id()));
                 check(com.openrsc.server.model.entity.npc.NpcAttackStyleProfile.forNpc(npc)==com.openrsc.server.model.entity.npc.NpcAttackStyleProfile.MELEE_MAGIC,"regular dragon attack profile retained");
                 DropTable table=h.world().getNpcDrops().getDropTable(npc.getID());
-                check(table.getTotalWeight()==128,"normal table budget");
+                check(table.getTotalWeight()==GemDragons.SCRAP_DENOMINATORS[tier],"normal table budget");
                 // Both independent shared-unique rolls win; exact upper boundary loses.
                 double chance=1.0/GemDragons.UNIQUE_DENOMINATORS[tier];
                 h.random().reset(1);h.random().scriptDoubles(Math.nextDown(chance),Math.nextDown(chance),.999);

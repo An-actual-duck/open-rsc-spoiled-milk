@@ -1,0 +1,7 @@
+From Core-Framework-ai-2, sequentially with bounded parent JVM:
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_gem_dragons
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5 sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml test_slayer_ordinary_loot test_slayer_component_drops test_slayer_rewards
+
+Focused fixture passed after correcting test-only RNG boundary and current ring1701 identity.
+No client/render/full combat reruns because this task changes only game-owned loot structure.
+No live servers, accounts, owner maps or toolkit modifications.

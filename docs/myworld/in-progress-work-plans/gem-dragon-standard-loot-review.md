@@ -1,5 +1,9 @@
 # Gem dragon standard loot — Core review
 
+**Historical expansion record.** The later `gem-dragon-normal-scrap-review.md`
+supersedes independent Scrap delivery and unconditional common probabilities/EV
+below. The amounts, conditional common weights and guaranteed gem matrix remain.
+
 This expands only the normal loot and adds a rare resource roll. The guaranteed
 uncut-gem matrix, exact 1/3/5 quantities, single Dragonstone outcome, necklace
 boundaries, stats, fire, unique equipment odds/effects, bones, native sprites,

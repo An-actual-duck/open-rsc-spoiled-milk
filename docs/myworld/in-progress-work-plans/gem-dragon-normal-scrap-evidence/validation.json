@@ -1,0 +1,35 @@
+{
+  "baseline": "20e06500ff3f96a554e50088d9e1d02b440ae65c",
+  "rootTotals": [
+    1024,
+    768,
+    512,
+    256,
+    128
+  ],
+  "commonWeights": [
+    28,
+    8,
+    8,
+    16,
+    4,
+    20,
+    36,
+    8
+  ],
+  "commonTotal": 128,
+  "rareChildWeight": 1,
+  "guaranteedMethodsIdentical": true,
+  "guaranteedMethodsSha256": "4e73e61e4d92ab462c2327ee151feaa099654cd25374dca1c323db4505221463",
+  "standardAssertions": 86163,
+  "commonRuneCombinations": 10240,
+  "rareGateTickets": 2688,
+  "actualStandardDeliveries": 304,
+  "guaranteedAssertions": 7379,
+  "guaranteedTickets": 897,
+  "equipmentFireAssertions": 232,
+  "sourceSha256": {
+    "server/src/com/openrsc/server/content/gemdragons/GemDragons.java": "e70fa41333d1d14f8c29569b4eb3064c3f97e4b3bc77879e6565f29a0b3bce52",
+    "server/src/com/openrsc/server/constants/NpcDrops.java": "839054a88c0a4f55ebd5b1b2045d58aa0b9d3a0a922ef57b21b4d2a4918b6f61"
+  }
+}
