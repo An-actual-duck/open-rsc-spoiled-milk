@@ -1,0 +1,3 @@
+PASS one shared neutral sheet, five native tints, actual authentic alias allocation, named/classic sprite selection, all 18 frames, software/OpenGL texture parity, sparse IDs and stat parity
+PASS one shared neutral sheet, five native tints, actual authentic alias allocation, named/classic sprite selection, all 18 frames, software/OpenGL texture parity, sparse IDs and stat parity
+PASS original frame provenance, 5,094 neutral-only shade normalizations, one shared packaged sheet, real native alias and renderer paths

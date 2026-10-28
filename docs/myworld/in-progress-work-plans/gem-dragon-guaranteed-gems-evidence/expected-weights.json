@@ -1,0 +1,338 @@
+[
+  {
+    "dragon": "Sapphire",
+    "totalWeight": 112,
+    "outcomes": [
+      {
+        "gem": "Sapphire",
+        "quantity": 1,
+        "rank": 0,
+        "weight": 64,
+        "chance": 0.5714285714285714
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 3,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.2857142857142857
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 5,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.14285714285714285
+      }
+    ],
+    "expectedQuantity": 2.142857142857143
+  },
+  {
+    "dragon": "Emerald",
+    "totalWeight": 168,
+    "outcomes": [
+      {
+        "gem": "Sapphire",
+        "quantity": 1,
+        "rank": 0,
+        "weight": 64,
+        "chance": 0.38095238095238093
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 3,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.19047619047619047
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 5,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.09523809523809523
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 1,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.19047619047619047
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 3,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.09523809523809523
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 5,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.047619047619047616
+      }
+    ],
+    "expectedQuantity": 2.142857142857143
+  },
+  {
+    "dragon": "Ruby",
+    "totalWeight": 196,
+    "outcomes": [
+      {
+        "gem": "Sapphire",
+        "quantity": 1,
+        "rank": 0,
+        "weight": 64,
+        "chance": 0.32653061224489793
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 3,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.16326530612244897
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 5,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.08163265306122448
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 1,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.16326530612244897
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 3,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.08163265306122448
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 5,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.04081632653061224
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 1,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.08163265306122448
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 3,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.04081632653061224
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 5,
+        "rank": 4,
+        "weight": 4,
+        "chance": 0.02040816326530612
+      }
+    ],
+    "expectedQuantity": 2.142857142857143
+  },
+  {
+    "dragon": "Diamond",
+    "totalWeight": 210,
+    "outcomes": [
+      {
+        "gem": "Sapphire",
+        "quantity": 1,
+        "rank": 0,
+        "weight": 64,
+        "chance": 0.3047619047619048
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 3,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.1523809523809524
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 5,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.0761904761904762
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 1,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.1523809523809524
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 3,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.0761904761904762
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 5,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.0380952380952381
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 1,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.0761904761904762
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 3,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.0380952380952381
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 5,
+        "rank": 4,
+        "weight": 4,
+        "chance": 0.01904761904761905
+      },
+      {
+        "gem": "Diamond",
+        "quantity": 1,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.0380952380952381
+      },
+      {
+        "gem": "Diamond",
+        "quantity": 3,
+        "rank": 4,
+        "weight": 4,
+        "chance": 0.01904761904761905
+      },
+      {
+        "gem": "Diamond",
+        "quantity": 5,
+        "rank": 5,
+        "weight": 2,
+        "chance": 0.009523809523809525
+      }
+    ],
+    "expectedQuantity": 2.1428571428571432
+  },
+  {
+    "dragon": "Dragonstone",
+    "totalWeight": 211,
+    "outcomes": [
+      {
+        "gem": "Sapphire",
+        "quantity": 1,
+        "rank": 0,
+        "weight": 64,
+        "chance": 0.3033175355450237
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 3,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.15165876777251186
+      },
+      {
+        "gem": "Sapphire",
+        "quantity": 5,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.07582938388625593
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 1,
+        "rank": 1,
+        "weight": 32,
+        "chance": 0.15165876777251186
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 3,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.07582938388625593
+      },
+      {
+        "gem": "Emerald",
+        "quantity": 5,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.037914691943127965
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 1,
+        "rank": 2,
+        "weight": 16,
+        "chance": 0.07582938388625593
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 3,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.037914691943127965
+      },
+      {
+        "gem": "Ruby",
+        "quantity": 5,
+        "rank": 4,
+        "weight": 4,
+        "chance": 0.018957345971563982
+      },
+      {
+        "gem": "Diamond",
+        "quantity": 1,
+        "rank": 3,
+        "weight": 8,
+        "chance": 0.037914691943127965
+      },
+      {
+        "gem": "Diamond",
+        "quantity": 3,
+        "rank": 4,
+        "weight": 4,
+        "chance": 0.018957345971563982
+      },
+      {
+        "gem": "Diamond",
+        "quantity": 5,
+        "rank": 5,
+        "weight": 2,
+        "chance": 0.009478672985781991
+      },
+      {
+        "gem": "Dragonstone",
+        "quantity": 1,
+        "rank": 6,
+        "weight": 1,
+        "chance": 0.004739336492890996
+      }
+    ],
+    "expectedQuantity": 2.137440758293839
+  }
+]

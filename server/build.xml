@@ -411,6 +411,12 @@
         <java classname="com.openrsc.server.combat.GemDragonsFixture" fork="true" maxmemory="512m" failonerror="true" dir="${basedir}">
             <classpath><pathelement location="${basedir}/plugins.jar"/><pathelement location="${combat.build.test}"/><pathelement location="${combat.build.core}"/><fileset dir="${lib}" includes="*.jar"/></classpath>
         </java>
+        <java classname="com.openrsc.server.combat.GuaranteedGemLootFixture" fork="true" maxmemory="512m" failonerror="true" dir="${basedir}" outputproperty="gem.guaranteed.output">
+            <classpath><pathelement location="${basedir}/plugins.jar"/><pathelement location="${combat.build.test}"/><pathelement location="${combat.build.core}"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+        <echo message="${gem.guaranteed.output}"/>
+        <condition property="gem.guaranteed.completed"><contains string="${gem.guaranteed.output}" substring="Guaranteed gem loot: PASS "/></condition>
+        <fail unless="gem.guaranteed.completed" message="Guaranteed gem fixture exited without its completion marker."/>
     </target>
 
     <target name="test_slow" depends="compile_combat_tests"
