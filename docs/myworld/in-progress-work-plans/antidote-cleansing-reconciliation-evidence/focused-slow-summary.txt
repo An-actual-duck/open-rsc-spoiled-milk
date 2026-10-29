@@ -1,0 +1,8 @@
+[echo] 2026-10-29 12:47:42 [InitThread] INFO  Server: - PASS: Titan poison families, antidote tiers/refresh/rejection, 33 cleansing, safe cure, recipes/doses/HUD; 102 assertions
+[java] 2026-10-29 12:47:49 [InitThread] INFO  Server: - PASS Slow reconciliation boundary assertions=103
+[java] 2026-10-29 12:47:49 [InitThread] INFO  Server: - PASS Slow source adapters: earth impacts 4 ranks/zero/duplicate, Withering, sword and moss RNG
+[java] 2026-10-29 12:47:49 [InitThread] INFO  Server: - PASS legacy NPC ranged: cleared/gained Slow retarget deadlines, exact due ticks, ordinary cadence and replacement lifetime
+[java] 2026-10-29 12:47:49 [InitThread] INFO  Server: - PASS: retained Earth Dragon/KBD/sword/Ogre damage and RNG characterizations
+[java] 2026-10-29 12:47:49 [InitThread] INFO  Server: - PASS: shared Slow caps, decay, lifetimes, HUD, melee/range, dagger, special cooldowns, combat cast deadline
+BUILD SUCCESSFUL
+Total time: 22 seconds

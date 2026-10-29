@@ -14,8 +14,8 @@ that saved map while finishing gameplay and release integration.
 
 - The owner accepted the tower decoration on October 26. Preserve the authored map.
 - Core will guard initial entry and the later **upward stairs**, with associates
-  in safe rooms behind freely accessible auto-closing doors. Resolve the NPC
-  capacity import blocker before final placement/binding; see
+  in safe rooms behind freely accessible auto-closing doors. Final migration must
+  include the reviewed NPC-capacity work and completed placement/binding; see
   [final tower placement and capacity](slayer-tower-final-placement-and-capacity.md).
 - Finish the axe-based Slow coating using the shared Slow foundation, including
   its remaining recipe, application and balance decisions.

@@ -1,0 +1,22 @@
+All Ant jobs run sequentially with ANT_OPTS='-Xmx512m -XX:+UseSerialGC', ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5, bundled launcher sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml:
+ test_antidote_cleansing test_slow
+ test_combat_strict
+ test_slayer_leather_effects test_slayer_rewards test_slayer_mobility_shield test_abyssal_demon_combat test_dark_beast_combat test_bloodveld_combat test_terror_dog_combat test_naga_combat test_thunder_spell_casting
+
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' bash scripts/build-client.sh
+node tests/myworld/test-antidote-icons.cjs
+python3 tools/generators/generate-item-overrides.py --check
+node tools/generators/generate-antidote-items.cjs (deterministic exact restored outputs)
+python3 tests/myworld/test-herblaw-remap.py
+python3 tests/myworld/test-potion-runtime.py
+python3 tests/myworld/test-potion-hud.py
+python3 tests/myworld/test-poison-model.py
+python3 tests/myworld/test-poison-balance.py (existing explanatory simulator; not production acceptance)
+python3 tests/myworld/test-npc-poison-death-lifecycle.py
+python3 tests/myworld/test-generator-scripts.py
+python3 tests/myworld/test-retired-leather-items.py
+python3 tests/myworld/test-slayer-component-items.py
+python3 tests/myworld/test-equipment-animation-id-contract.py
+
+Initial added recipe fixture needed an actual PluginTask script context. Test helper now binds a production ScriptContext with the real actor for config()/batch/decant calls; no gameplay functions were altered to accommodate the test. Focused successful output is positively marker-checked by Ant.
+No game/client was launched; builds and isolated production-model harness only.
