@@ -155,7 +155,7 @@ was introduced. Independent logs are copied beside this review.
 Portable review folder:
 `output/battleaxe-coatings-implementation-review/` — self-contained `review.html`
 embeds all images; the folder also has inventory contact and held/mirror sheets.
-Reproduce with `python 3 scripts/review-battleaxe-coatings.py`. Core may copy the
+Reproduce with `python3 scripts/review-battleaxe-coatings.py`. Core may copy the
 whole folder into staged `art/battleaxe-coatings`. Native/zoom inventory and
 representative Tin/Dragon held sheets were visually inspected. No supported
 existing offline full-character compositor was found: body/hand/camera overlap,
