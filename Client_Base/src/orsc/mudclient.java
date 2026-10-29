@@ -21731,8 +21731,10 @@ public final class mudclient implements Runnable {
 		int customTextureCount = getCustomTextureCount();
 		this.scene.setFrustum(0, 11, 7, baseTextureCount + customTextureCount);
 		for (int i = 0; i < baseTextureCount; i++) {
-			loadSprite(spriteTexture + i, "texture", 1);
-			Sprite sprite = getSurface().sprites[spriteTexture + i];
+			int spriteId = EntityHandler.getTextureDef(i).getNativeSpriteId();
+			if (spriteId < 0) spriteId = spriteTexture + i;
+			loadSprite(spriteId, "texture", 1);
+			Sprite sprite = getSurface().sprites[spriteId];
 			loadTextureFromPixels(i, sprite.getPixels(), sprite.getWidth(), sprite.getHeight(), sprite.getSomething1() / 64 - 1);
 		}
 		if (customTextureCount > 0) {

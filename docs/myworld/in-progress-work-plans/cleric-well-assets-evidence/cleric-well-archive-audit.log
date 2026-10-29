@@ -1,0 +1,3 @@
+PASS 2277 original ZIP records preserve payload/ZipInfo/localheader/compressedbytes; 1003 original OSAR serialized entries exact; additions18+6 only
+PASS TileDef.xml preserved original 26 definition rows and metadata; appended 2
+PASS DoorDef.xml preserved original 220 definition rows and metadata; appended 8

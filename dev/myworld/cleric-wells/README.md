@@ -1,8 +1,10 @@
 # Cleric well texture candidates — October 29, 2026
 
-Review candidates only. No texture/item/scenery IDs, definitions or runtime
-archives have been installed. Owner art approval and private-game acceptance
-remain pending. Open [review/index.html](review/index.html); copy this **whole
+Owner approved all six texture candidates on October29,2026. They are now
+installed in maintained game assets and paired floor/wall definitions;
+private-game acceptance remains pending. No shoreline interaction objects or
+infusion economy have been installed. The original art manifest is a preserved
+candidate-generation record; see installation.json for production bindings. Open [review/index.html](review/index.html); copy this **whole
 cleric-wells directory** for a self-contained review (all references are relative).
 
 ## Native provenance
@@ -45,7 +47,7 @@ no ripple geometry is added. Walls retain every original pixel outside the
 stored masks. Short fissures seek the existing dark crack pixels, feeding three
 thin, staggered gravity-descending rivulets that reach the base. The changed
 areas are a localized liquid seam/flow, not a background material recolor.
-These are first art candidates; the pattern strength/spacing awaits owner review.
+The owner approved this pattern strength/spacing on October29,2026.
 
 `generate.py` is the controlled pixel authoring recipe. `author.lua` assembles
 six editable Aseprite documents with an untouched native-source layer and a
@@ -92,3 +94,35 @@ picking blocker. A missing/empty/transparent model is **not** a proven clickable
 shoreline object. Runtime metadata/pick-proxy and generic editor helpers need a
 separate implementation with software/OpenGL/picking/pathing acceptance. No
 infusion recipe, rate, Devotion rule or new production ID is implied by this art.
+
+## Approved game installation
+
+Run `python3 scripts/install-cleric-well-assets.py --check` from the game root.
+The installer owns six texture records67–72, blocked liquid floor values27/28
+and wall definition IDs220–227 (both192/275 heights for each of four materials).
+Every preexisting definition ID, original archive payload and custom texture
+record remains unchanged. Eighteen supplemental native records4100–4117 avoid
+the original contiguous texture slots colliding with GUI icons. The first12
+are exact RGB conversions of already-present custom textures55–66, not new art.
+Both sprite modes now expose73 textures. `TextureDef.nativeSpriteId` is generic
+metadata; old two-argument definitions retain their original3225+index mapping.
+The runtime glyph is still appended after loaded base textures (now73 in both
+modes); no owner map or persisted material reference was converted. Its old
+classic/custom55/67 mismatch is resolved. No native shipped floor/wall definition
+referenced that transient glyph; its generated air-glyph model remains empty.
+
+`python3 scripts/audit-cleric-well-archives.py` compares the preinstallation Git
+revision to current bytes: all2277 original ZIP entries retain payload, metadata,
+local headers and compressed bytes; all1003 original OSAR serialized entries
+remain exact. It requires exactly18 native and six OSAR additions.
+
+The focused `ClericWellAssetsTest` invokes both actual client texture loaders,
+the maintained quantizer and software renderer. It verifies293 definition/safe-slot/palette/GL-resource checks, including
+all extension materials and the55/67 boundaries. GL resource construction is
+covered; no live OpenGL context/gameplay claim is made. Generic editor source
+proof must understand the explicit mapping before the new content is usable
+there; toolkit implementation is coordinated separately, with no custom roster.
+
+“Dip sigils” is owner-approved wording. Invisible shoreline admission, pickable
+proxy geometry and generic editor helpers remain a separate coordinated runtime/
+toolkit step. No unimplemented production object is offered to map authors.

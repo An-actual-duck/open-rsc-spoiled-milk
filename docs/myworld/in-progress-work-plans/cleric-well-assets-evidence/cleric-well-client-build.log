@@ -1,0 +1,38 @@
+PASS matching NPC capacity contracts
+Buildfile: /home/justin/Core-Framework-ai-2/Client_Base/build.xml
+
+compile:
+     [echo] Using Java version 1.8.
+   [delete] Deleting directory /home/justin/Core-Framework-ai-2/Client_Base/build
+    [mkdir] Created dir: /home/justin/Core-Framework-ai-2/Client_Base/build
+     [copy] Copying 4 files to /home/justin/Core-Framework-ai-2/Client_Base/build/map-runtime
+     [copy] Copying 6 files to /home/justin/Core-Framework-ai-2/Client_Base/build/res
+     [copy] Copying 2953 files to /home/justin/Core-Framework-ai-2/Client_Base/build/myworld-assets
+    [javac] Compiling 308 source files to /home/justin/Core-Framework-ai-2/Client_Base/build
+      [jar] Building jar: /home/justin/Core-Framework-ai-2/Client_Base/Open_RSC_Client.jar.world-builder-new
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/linux/x64/org/lwjgl/liblwjgl.so.sha1 already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/windows/x64/org/lwjgl/lwjgl.dll.sha1 already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/linux/x64/org/lwjgl/glfw/libglfw.so.sha1 already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/windows/x64/org/lwjgl/glfw/glfw.dll.sha1 already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/INDEX.LIST already added, skipping
+      [jar] META-INF/linux/x64/org/lwjgl/opengl/liblwjgl_opengl.so.sha1 already added, skipping
+      [jar] META-INF/versions/9/module-info.class already added, skipping
+      [jar] META-INF/windows/x64/org/lwjgl/opengl/lwjgl_opengl.dll.sha1 already added, skipping
+     [move] Moving 1 file to /home/justin/Core-Framework-ai-2/Client_Base
+
+BUILD SUCCESSFUL
+Total time: 4 seconds

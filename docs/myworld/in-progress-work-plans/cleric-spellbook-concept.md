@@ -1978,3 +1978,18 @@ remaining hit/pulse count using rank metadata from the server-authoritative
 Cleric catalog. Potions retain their current item identity and naming. Unique
 icons can later replace catalog fields without changing status identity or the
 wire contract, and origin tokens remain private server state.
+
+
+### Approved well textures and Blight symbol — October29
+
+The owner approved the six native water/seep texture candidates and the
+**Dip sigils** interaction wording. Maintained game installation and validation
+are recorded in [the focused asset review](cleric-well-assets-review.md). These
+are new selected-game definitions/assets for automatic discovery, not toolkit
+content. Invisible shore interactions and infusion economy remain unimplemented.
+
+The owner selected **A — Thorn**: a short crooked central stem with two
+downward hooks. Its native-size Aseprite translation is a visual-review
+candidate, not yet a production Blight sigil. No skull or droplet motif,
+no change to existing god/Grace visuals and no new carving/infusion cost is
+implied by that selection.
