@@ -318,6 +318,11 @@ public class EntityHandler {
 		tiles.add(new TileDef(-14594, 1, 1));
 		tiles.add(new TileDef(1, 3, 0));
 		tiles.add(new TileDef(12345678, 5, 0));
+		// CLERIC WELL FLOORS START
+		tiles.add(new TileDef(67, 3, 1));
+		tiles.add(new TileDef(68, 3, 1));
+		// CLERIC WELL FLOORS END
+
 	}
 
 	private static void loadElevationDefinitions() {
@@ -383,6 +388,27 @@ public class EntityHandler {
 		textures.add(new TextureDef("cavern", "crumbled"));
 		textures.add(new TextureDef("cavern2", "crumbled"));
 		textures.add(new TextureDef("lava", "flames"));
+		// CLERIC WELL TEXTURES START
+		textures.add(new TextureDef("existing-custom-texture-55", "", 4100));
+		textures.add(new TextureDef("existing-custom-texture-56", "", 4101));
+		textures.add(new TextureDef("existing-custom-texture-57", "", 4102));
+		textures.add(new TextureDef("existing-custom-texture-58", "", 4103));
+		textures.add(new TextureDef("existing-custom-texture-59", "", 4104));
+		textures.add(new TextureDef("existing-custom-texture-60", "", 4105));
+		textures.add(new TextureDef("existing-custom-texture-61", "", 4106));
+		textures.add(new TextureDef("existing-custom-texture-62", "", 4107));
+		textures.add(new TextureDef("existing-custom-texture-63", "", 4108));
+		textures.add(new TextureDef("existing-custom-texture-64", "", 4109));
+		textures.add(new TextureDef("existing-custom-texture-65", "", 4110));
+		textures.add(new TextureDef("existing-custom-texture-66", "", 4111));
+		textures.add(new TextureDef("ichor-water", "", 4112));
+		textures.add(new TextureDef("divine-water-water", "", 4113));
+		textures.add(new TextureDef("ichor-stone-seep", "", 4114));
+		textures.add(new TextureDef("ichor-dirt-seep", "", 4115));
+		textures.add(new TextureDef("divine-water-stone-seep", "", 4116));
+		textures.add(new TextureDef("divine-water-dirt-seep", "", 4117));
+		// CLERIC WELL TEXTURES END
+
 
 		if (Config.S_WANT_CUSTOM_SPRITES) {
 			loadCustomTextureDefinitions();
@@ -8865,6 +8891,17 @@ public class EntityHandler {
 			1, 0, 275, 7, 7, i++, 0, 0, 192, 2, 2)); //218
 		doors.add(new DoorDef("High barred stone window", "A barred window with stone masonry above", "WalkTo", "Examine",
 			1, 0, 275, 27, 27, i++, 0, 0, 192, 2, 2)); //219
+		// CLERIC WELL WALLS START
+		doors.add(new DoorDef("Ichor-seeping stone wall", "Deep-purple ichor seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 192, 69, 69, i++));
+		doors.add(new DoorDef("High ichor-seeping stone wall", "Deep-purple ichor seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 275, 69, 69, i++));
+		doors.add(new DoorDef("Ichor-seeping dirt wall", "Deep-purple ichor seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 192, 70, 70, i++));
+		doors.add(new DoorDef("High ichor-seeping dirt wall", "Deep-purple ichor seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 275, 70, 70, i++));
+		doors.add(new DoorDef("Divine-water-seeping stone wall", "Divine water seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 192, 71, 71, i++));
+		doors.add(new DoorDef("High divine-water-seeping stone wall", "Divine water seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 275, 71, 71, i++));
+		doors.add(new DoorDef("Divine-water-seeping dirt wall", "Divine water seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 192, 72, 72, i++));
+		doors.add(new DoorDef("High divine-water-seeping dirt wall", "Divine water seeps through cracks to the ground.", "WalkTo", "Examine", 1, 0, 275, 72, 72, i++));
+		// CLERIC WELL WALLS END
+
 	}
 
 	private static void loadGameObjectDefinitionsA() { // GOOD

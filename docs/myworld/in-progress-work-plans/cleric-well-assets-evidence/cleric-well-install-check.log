@@ -1,0 +1,3 @@
+/home/justin/Core-Framework-ai-2/scripts/install-cleric-well-assets.py:24: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  w,h=image.size;pix=list(image.convert('RGB').getdata());pal=sorted(set(pix));assert len(pal)<=256
+PASS73 textures in both modes;6 approved palettes;18 native records;2 blocked floors;8 walls; preexisting payloads preserved

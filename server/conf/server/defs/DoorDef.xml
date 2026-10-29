@@ -2407,4 +2407,63 @@
     <doorType>1</doorType><unknown>0</unknown>
     <wallLowerHeight>192</wallLowerHeight><wallUpperFront>2</wallUpperFront><wallUpperBack>2</wallUpperBack>
   </DoorDef>
+
+<!-- CLERIC WELL WALLS START -->
+  <DoorDef>
+    <name>Ichor-seeping stone wall</name>
+    <description>Deep-purple ichor seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>192</modelVar1><modelVar2>69</modelVar2><modelVar3>69</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>High ichor-seeping stone wall</name>
+    <description>Deep-purple ichor seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>69</modelVar2><modelVar3>69</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>Ichor-seeping dirt wall</name>
+    <description>Deep-purple ichor seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>192</modelVar1><modelVar2>70</modelVar2><modelVar3>70</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>High ichor-seeping dirt wall</name>
+    <description>Deep-purple ichor seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>70</modelVar2><modelVar3>70</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>Divine-water-seeping stone wall</name>
+    <description>Divine water seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>192</modelVar1><modelVar2>71</modelVar2><modelVar3>71</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>High divine-water-seeping stone wall</name>
+    <description>Divine water seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>71</modelVar2><modelVar3>71</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>Divine-water-seeping dirt wall</name>
+    <description>Divine water seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>192</modelVar1><modelVar2>72</modelVar2><modelVar3>72</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+  <DoorDef>
+    <name>High divine-water-seeping dirt wall</name>
+    <description>Divine water seeps through cracks to the ground.</description>
+    <command1>WalkTo</command1><command2>Examine</command2>
+    <modelVar1>275</modelVar1><modelVar2>72</modelVar2><modelVar3>72</modelVar3>
+    <doorType>1</doorType><unknown>0</unknown>
+  </DoorDef>
+<!-- CLERIC WELL WALLS END -->
 </DoorDef-array>

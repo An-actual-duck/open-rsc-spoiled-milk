@@ -129,4 +129,9 @@
     <unknown>5</unknown>
     <objectType>0</objectType>
   </TileDef>
+
+<!-- CLERIC WELL FLOORS START -->
+  <TileDef><colour>67</colour><unknown>3</unknown><objectType>1</objectType></TileDef>
+  <TileDef><colour>68</colour><unknown>3</unknown><objectType>1</objectType></TileDef>
+<!-- CLERIC WELL FLOORS END -->
 </TileDef-array>

@@ -1,0 +1,25 @@
+Buildfile: /home/justin/Core-Framework-ai-2/server/build.xml
+
+compile:
+
+compile_core:
+   [delete] Deleting: /home/justin/Core-Framework-ai-2/server/core.jar
+    [mkdir] Created dir: /home/justin/Core-Framework-ai-2/server/build
+     [copy] Copying 4 files to /home/justin/Core-Framework-ai-2/server/build/map-runtime
+    [javac] Compiling 1120 source files to /home/justin/Core-Framework-ai-2/server/build
+    [javac] Note: Some input files use unchecked or unsafe operations.
+    [javac] Note: Recompile with -Xlint:unchecked for details.
+    [javac] Creating empty /home/justin/Core-Framework-ai-2/server/build/com/openrsc/server/model/world/coordinate/package-info.class
+      [jar] Building jar: /home/justin/Core-Framework-ai-2/server/core.jar
+      [jar] Building jar: /home/justin/Core-Framework-ai-2/server/core-gameplay-overlay.jar
+   [delete] Deleting directory /home/justin/Core-Framework-ai-2/server/build
+
+compile_plugins:
+   [delete] Deleting: /home/justin/Core-Framework-ai-2/server/plugins.jar
+    [mkdir] Created dir: /home/justin/Core-Framework-ai-2/server/buildplugins
+    [javac] Compiling 501 source files to /home/justin/Core-Framework-ai-2/server/buildplugins
+      [jar] Building jar: /home/justin/Core-Framework-ai-2/server/plugins.jar
+   [delete] Deleting directory /home/justin/Core-Framework-ai-2/server/buildplugins
+
+BUILD SUCCESSFUL
+Total time: 9 seconds

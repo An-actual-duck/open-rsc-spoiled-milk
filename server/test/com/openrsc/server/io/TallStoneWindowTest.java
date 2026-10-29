@@ -69,7 +69,7 @@ public final class TallStoneWindowTest {
     public static void main(String[]args)throws Exception{
         EntityHandler.load(true);
         NodeList rows=DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(new File(args[0])).getDocumentElement().getElementsByTagName("DoorDef");
-        check(rows.getLength()==220&&rows.getLength()==EntityHandler.doorCount(),"definition counts");
+        check(rows.getLength()>=220&&rows.getLength()==EntityHandler.doorCount(),"definition counts");
         com.openrsc.server.external.DoorDef[] definitions=new com.openrsc.server.external.DoorDef[rows.getLength()];
         for(int id=0;id<rows.getLength();id++){
             Element row=(Element)rows.item(id);DoorDef client=EntityHandler.getDoorDef(id);

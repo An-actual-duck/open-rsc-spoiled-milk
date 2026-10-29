@@ -1,0 +1,46 @@
+{
+  "status": "Owner-selected A Thorn; native-size candidate awaits visual approval, not installed",
+  "nativeSize": [
+    28,
+    25
+  ],
+  "inventoryCanvas": [
+    48,
+    32
+  ],
+  "inventoryOffset": [
+    13,
+    4
+  ],
+  "glyphPixels": 44,
+  "palette": {
+    "infused": [
+      96,
+      24,
+      100,
+      255
+    ],
+    "carved": [
+      160,
+      160,
+      160,
+      255
+    ]
+  },
+  "source": "dev/myworld/assets/sprites/items/inventory-ground/resources/sigils/stone.png",
+  "sourceSha256": "387da42b21bd3bef4640c9ade132ee44707d5ee238f876576395deb0931afc75",
+  "files": {
+    "blight-thorn-carved.aseprite": "b16d19e9e286c4de59206b430f8e5f680913ca3f9e77f9bf68b5f00223c8e5d8",
+    "blight-thorn-carved-28x25.png": "3525032555175807048964dd8f0ddb45c268c2b3bc99fbb530b2a513443c8867",
+    "blight-thorn-carved-48x32.png": "cc7161e8c5f8bd5b1d0a04da7092f51eb15042474ec82760b2a1badf26ce9786",
+    "blight-thorn-infused-48x32.png": "b435380208a16186a20f8f021b4a8b4d564e63281283d460660089c2d260c689",
+    "README.md": "c112285a7dbbd0bdde66460e5d3e1fea31513d3650e4a9c45b6ea97f43b4f26a",
+    "author.lua": "3dd6656754a0bb71a1ce8b45463ec71487baead1dfed027db5bb405cf922489e",
+    "blight-thorn-infused-28x25.png": "feb3a761fc555c72efc158eff1dbfc98e9642a37f0d8526defaaeebcdb3141a9",
+    "blight-thorn-infused.aseprite": "9e767e006e94a2d3840fc14104fdcc73ba7ce88e7bdda00d1bb9388c6d6e2ee5",
+    "review/comparison.png": "06dbf4567fa6bec6f12189e677426f36bc009b6ec95a59a715ab0f5d271108b6",
+    "review/index.html": "a59ea691328b0c1740dc4dafa8cf4dc3026df989a5fbf95850807c9b98629995",
+    "review/roundtrip-carved.png": "3525032555175807048964dd8f0ddb45c268c2b3bc99fbb530b2a513443c8867",
+    "review/roundtrip-infused.png": "feb3a761fc555c72efc158eff1dbfc98e9642a37f0d8526defaaeebcdb3141a9"
+  }
+}
