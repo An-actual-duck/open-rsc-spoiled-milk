@@ -17,47 +17,61 @@ that saved map while finishing gameplay and release integration.
   in safe rooms behind freely accessible auto-closing doors. Final migration must
   include the reviewed NPC-capacity work and completed placement/binding; see
   [final tower placement and capacity](slayer-tower-final-placement-and-capacity.md).
-- The owner approved the remaining axe-coating design on October29. Its full
-  implementation is a private review candidate; finish Core integration and
-  owner visual/gameplay acceptance rather than reopen the approved design.
+- The axe-based coating implementation is integrated into Core and staged;
+  owner visual/private-gameplay review remains. Preserve the approved October 29
+  design rather than reopen its recipe, application and balance decisions.
   See [coating implementation](battleaxe-coatings-implementation-review.md).
 - Most existing Slayer encounters, equipment and sprites are already approved
   and tested. They were separated to allow unrelated fixes-only releases.
   Assemble that approved content with normal integration checks; do not treat
   release separation as a new development or broad reapproval backlog.
-- Verify poison/cleansing and Slow behavior as part of the final combined build.
+- Antidote/poison cleansing and shared Slow are integrated and checked. The
+  owner added ground spawns for the new antidote eggs to the latest saved map;
+  their acquisition awaits that map's final migration, not invented new drops.
+- Verify the assembled content and final map together before coordinated release.
 
 References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
 [Slow foundation](shared-slow-foundation.md), and the existing tower plans.
 
 ## 2. Expand Cleric buffs and add the hostile debuff branch
 
-### Curse sigils and ichor
+### Confirmed overhaul direction — October 29, 2026
 
-- Add a **Curse sigil**.
-- Its ichor-dipping route replaces taking it to an ordinary blessing altar.
-- Ichor is found in **underground rivers beneath graveyards**.
-- Reuse the existing water visual, recoloured **purple**, for the rivers.
-- Add fishing-spot-style interactable scenery along the river edges for dipping
-  the sigils. The spots are the interaction points; the water visual is separate.
-- Add a new wall asset based on the existing **dirt walls**, with **ichor leaking
-  from them**, to support these underground areas.
+- Keep **Saradomin, Guthix and Zamorak sigils** and their existing stone/silver
+  carving and god-altar production process unchanged.
+- Remove the neutral sigil from the intended new resource model. Preserve
+  existing item identities and player stock until migration is designed.
+- Add **two distinct carved resource families**, provisionally described as
+  **beneficial** and **hostile**. Final names remain open; the owner does not
+  want “Holy/Unholy” as final names.
+- God sigil + beneficial resource supplies aligned buffs; god sigil + hostile
+  resource supplies aligned debuffs. Either purpose resource without a god
+  assignment supplies its respective generic buff/debuff role. This does not
+  give generic spells every god's properties.
+- **Consume the distinct resources together when casting**, like rune costs.
+  This is owner-confirmed, not a physical item-combination recipe.
+- Dip hostile carvings at **ichor-well edges under graveyards**: large
+  underground liquid areas, not bucket-shaft wells or the prior named Fountain.
+  Preserve the purple-water/ichor-leaking dirt-wall visual direction.
+- Dip beneficial carvings at **holy wellsprings beneath Entrana, the Monastery
+  and other well-known holy areas**. Exact sites/access are not yet assigned.
+- Reorganize the spellbook while salvaging existing effects and infrastructure.
+  Area buffs affect allies and area debuffs affect enemies around the caster;
+  existing PvP exclusions remain in force.
 
-This is the current direction in place of the older standalone Fountain of
-Ichor proposal. Exact raw/dipped item identities, materials, tier recipes,
-requirements and costs still need design. Do not silently assume the older
-Unholy-sigil names or stone/silver recipes define the new Curse-sigil line.
+This supersedes the older four-primary/neutral-altar, Unholy-carving recipe and
+Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the current
+runtime and reuse baseline, not a completed implementation of this overhaul.
 
-### Debuff casting and remaining tiers
+### Decisions still needed
 
-- Hostile Cleric spells work like the support buffs spatially: they affect an
-  area **around the caster**, but affect **enemies only**.
-- The owner will define the remaining tiers for **both buffs and debuffs**.
-- The shipped twelve-spell launch book remains the existing foundation.
-- Exact hostile eligibility, boss/PvP rules, effects, radii, costs and numerical
-  progression remain to be specified; existing PvP exclusions are not lifted.
+Final resource names; new carving materials/recipes/levels/XP/yields/quantities;
+remaining tiers, spell list/layout and per-spell god identities/exact casting
+costs; and neutral-stock conversion. Joint consumption during casting is settled;
+its quantities are not. Existing god-production numbers do not automatically
+become recipes for the new resource families.
 
-Reference: [governing Cleric concept](cleric-spellbook-concept.md).
+Reference: [governing Cleric concept and impact audit](cleric-spellbook-concept.md).
 
 ## 3. Round out the boss-dragon roster
 
@@ -71,16 +85,21 @@ Encounter mechanics, stats, drops, locations and access requirements for the
 new dragons need their own specifications. Their names alone do not establish
 attack-style or balance rules, or authorize reworking the existing two bosses.
 
-## 4. Add gem dragons beneath the Crafting Guild
+## 4. Finish gem-dragon acceptance and migrate the Crafting Guild cave
 
-- Expand beneath the **Crafting Guild** to give it a meaningful **high-level
-  area** and additional functionality.
-- Populate it with **gem dragons**.
-- Their drop tables emphasize **high gem drop rates** and **other useful
-  Crafting drops**.
+- **Sapphire, Emerald, Ruby, Diamond and Dragonstone dragons** are implemented
+  and staged, with the approved native gem-dragon model, scaling defenses,
+  guaranteed gem outcomes, tiered Crafting-oriented normal loot and shared
+  unique equipment. This is no longer an unstarted variety/drop-table design.
+- The owner confirmed the **Crafting Guild gem-dragon cave is authored** in the
+  latest saved editor map. Preserve that map alongside the finished Slayer Tower.
+- Complete combined private testing/owner acceptance and final map migration
+  with the update package. Do not invent new access requirements or re-author
+  the owner's underground layout while doing integration.
 
-Gem-dragon varieties, levels, encounter behavior, exact materials/drop rates,
-entry requirements and the underground layout remain to be designed.
+References: [gem-dragon implementation](gem-dragon-family-review.md),
+[guaranteed gems](gem-dragon-guaranteed-gems-review.md) and
+[normal rare Scrap outcome](gem-dragon-normal-scrap-review.md).
 
 ## 5. Add the Corporeal Beast as a Slayer boss
 
