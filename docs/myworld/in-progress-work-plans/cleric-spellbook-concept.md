@@ -2,32 +2,60 @@
 
 ## Status and Purpose
 
-This is the governing design document for a Worship-tiered Cleric spellbook.
-Confirmed direction is recorded separately from unresolved design questions.
-Ordered implementation work is tracked in
-[`cleric-spellbook-implementation-plan.md`](../completed-work-plans/cleric-spellbook-implementation-plan.md),
-which may not invent answers to the unresolved sections below.
+This is the governing design document for the Worship-tiered Cleric spellbook.
+The latest confirmed direction below supersedes conflicting older requirements;
+unresolved choices remain explicit. The twelve-spell launch book and Blessing
+foundation shipped in `v0.2.64` and remain the current runtime until an overhaul
+is implemented. Their effect contracts are valuable reuse material, not a
+requirement to preserve their old resource assignments or book layout.
 
-The twelve-spell launch book and Blessing production foundation are complete
-and shipped in `v0.2.64`. This concept remains active for later expansion,
-especially Curse sigils, underground ichor rivers, enemy-facing debuffs and
-the remaining buff/debuff tiers.
+The [completed implementation plan](../completed-work-plans/cleric-spellbook-implementation-plan.md)
+is a historical launch record, not an active overhaul assignment. No code,
+resource conversion or map change is authorized by this documentation update.
 
-**October 24, 2026 update:** the next-release direction is a **Curse sigil**
-dipped at fishing-spot-style interaction points along **purple ichor rivers
-beneath graveyards**, with a new dirt-wall asset showing ichor leakage.
-This supersedes the older standalone Fountain of Ichor location concept.
-Hostile debuffs are caster-centered area spells affecting **enemies only**,
-mirroring the spatial approach of support buffs. The owner will define the
-remaining buff and debuff tiers. See
-[immediate release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch).
-The older Unholy terminology/material recipes are preserved design history;
-their relationship to the Curse-sigil line needs an explicit decision.
+### Owner direction — October 29, 2026
 
-No spell list, numerical effect, production level, experience award, or
-resource quantity is settled unless it appears under **Confirmed Direction**.
-Ranges explicitly labelled as provisional tuning targets remain open even when
-recorded beside an otherwise confirmed spell identity.
+- Keep the **three god sigils: Saradomin, Guthix and Zamorak**. Their existing
+  stone/silver carving, god-altar blessing and production process stay unchanged.
+- Remove **neutral sigils** from the intended new model. Existing neutral player
+  stock and stable item identities need a deliberate migration decision; this is
+  not permission to delete stock or recycle IDs.
+- Add **two distinct carved resource families**, described here only as
+  **beneficial** and **hostile**. These are working labels. The owner does **not**
+  want the final names to be “Holy” and “Unholy.”
+- A god sigil together with the beneficial type supplies aligned **buffs**; a
+  god sigil together with the hostile type supplies aligned **debuffs**. Either
+  purpose type without a god assignment supplies its respective **generic
+  buff or debuff**, replacing the former neutral-resource role. This does not
+  grant a generic spell every god's properties.
+- **Consume the separate resources together when casting**, like distinct rune
+  costs. The owner explicitly confirmed this interpretation; do not physically
+  combine them into a new sigil or item. Exact cost quantities remain open.
+- Infuse hostile carvings by dipping them at **ichor-well edges under
+  graveyards**. “Wells” here means **large underground liquid areas**, not a
+  bucket-and-shaft well or the old named Fountain of Ichor. The previous purple
+  water/ichor-leaking dirt-wall visual direction is retained; those visual plans
+  do not establish recipes or access requirements.
+- Infuse beneficial carvings by dipping them at **holy wellsprings beneath
+  Entrana, the Monastery and other well-known holy areas**. Exact sites and
+  access remain to be authored; no new coordinates are assigned here.
+- Reorganize the spellbook while salvaging as much existing content as practical.
+  Preserve the established caster-centered area approach: support benefits
+  allies, hostile spells affect enemies. Existing PvP exclusions remain; this
+  direction does not introduce new PvP behavior.
+
+**Still unresolved:** final names; the new families' materials, carving recipes,
+production skills/levels, XP, yields and quantities; the remaining tiers, spell
+list and layout; per-spell god identity and exact casting-cost quantities; and
+conversion of existing neutral player stock. Joint consumption as distinct
+casting resources is confirmed; physical combination is not the design.
+No numbers, new item IDs, stock conversion or generic god properties are implied.
+
+The four-primary/neutral-at-any-altar model describes the shipped launch only.
+Older Unholy stone/silver recipes, the named Fountain and the October 24
+Curse-sigil/ichor-river wording are **superseded historical proposals**, not
+additional active requirements alongside this model. The [release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch)
+track the same direction.
 
 ## Confirmed Direction
 
@@ -113,25 +141,30 @@ god-specific Devotion relationships. Devotion is an additional requirement and
 economy for Blessing; it does not collapse Worship and Blessing back into one
 skill.
 
-### Sigils
+### Sigils — three unchanged god lines, two new purpose families
+
+The October 29 direction above owns the new taxonomy. The production rules
+below apply **only to the three existing god lines** and preserve their shipped
+behavior. They do not assign the new beneficial/hostile families stone/silver
+recipes, levels, XP, quantities, Devotion charges, batching or stackability.
+
 
 - Cleric spells use new consumable resources called **sigils**, serving the
   spellbook role that runes serve for Magic.
-- Saradomin, Guthix, Zamorak, and neutral sigils are **primary sigils**. Every
-  Cleric spell requires the primary sigils associated with its god or neutral
-  identity.
+- Saradomin, Guthix and Zamorak remain the god-aligned resources. The new
+  purpose resources determine the buff/debuff branch; exact per-spell cost
+  vectors remain open; the separate resources are consumed together at cast time.
 - Sigils begin with the same `Rune stone` resource used by Runecraft.
 - Sigils have stone and advanced silver material families. Stone sigils are
   carved from one `Rune stone`; silver sigils are carved from one existing
   `Silver nugget` (item `383`), not from a Silver bar.
 - Using the chisel opens the normal Crafting selection window. For each
-  material family, the player chooses one of four sigils: Saradomin, Guthix,
-  Zamorak, or neutral.
+  material family, the intended god-symbol choices are Saradomin, Guthix and
+  Zamorak. Removing the shipped neutral choice is future implementation work.
 - Carving uses the existing Crafting quantity/batch flow rather than requiring
   a new interface or one repeated interaction per input. Every selected base
   action consumes exactly one Rune stone or Silver nugget and produces exactly
-  one unblessed sigil. Saradomin, Guthix, Zamorak, and neutral recipes use the
-  same material quantity.
+  one unblessed sigil. All three god recipes use the same material quantity.
 - Stone sigils require level `1` Crafting to carve and level `1` Blessing to
   convert at an altar. Silver sigils require level `20` Crafting and level `16`
   Blessing. Alignment does not change either skill requirement.
@@ -163,30 +196,9 @@ skill.
 - Sigils are aligned to Saradomin, Guthix, or Zamorak. A Saradomin sigil can be
   blessed only at a Saradomin altar, and the same matching rule applies to the
   other two gods.
-- The spellbook may also contain non-aligned support spells when an effect does
-  not fit one god naturally. Those spells consume neutral sigils rather than
-  being forced into a misleading god theme.
-- A neutral carved sigil can be blessed at any Saradomin, Guthix, or Zamorak
-  altar. The altar used determines which god's Devotion pays the blessing cost,
-  but the resulting item remains one neutral sigil rather than retaining an
-  altar-specific variant.
-- Future **secondary sigils** may be added to individual spell recipes for
-  flavor and balance. They supplement mandatory primary sigils rather than
-  replacing the spell's god/neutral cost.
-- The relationship is analogous to a tier-defining rune plus an elemental rune
-  in Magic: the primary sigil establishes the Cleric tier and god identity,
-  while a secondary sigil can later distinguish the spell's particular
-  expression.
-- Secondary sigils are outside the first rollout. Their names, materials,
-  imbuing method, production skill requirements, and exact costs remain open.
-- The next-release extension adds a **Curse sigil**, dipped in underground
-  ichor rivers rather than blessed at an ordinary altar. Fishing-spot-style
-  objects at the river edges provide the interaction. These areas sit beneath
-  graveyards and use purple water and ichor-leaking dirt-wall visuals.
-- Curse sigils support the hostile Cleric branch: caster-centered area debuffs
-  affecting enemies only. This is later expansion of the shipped support book.
-  Exact recipes/material tiers and the relationship to the earlier stone/silver
-  Unholy-sigil proposal remain open; no new item/cast is implemented by this note.
+- The generic resource role moves to an unassigned beneficial or hostile
+  carving as appropriate. The old neutral-at-any-altar behavior is historical;
+  no stock or catalog is removed by documenting its planned replacement.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -364,17 +376,22 @@ sigil costs and gives each Devotion economy a distinct purpose.
 - **Guthix:** cleansing, restoration, and balance.
 - **Zamorak:** buffs and ally empowerment, with an offensive or forceful tone
   but without turning the normal Cleric catalog into direct-damage magic.
-- **Non-aligned:** support effects that do not fit a god cleanly. Neutral
-  design is preferable to assigning a misleading theme merely to fill a god's
-  quota.
+- **Generic:** effects without a god assignment use their beneficial or hostile
+  purpose resource. This replaces the neutral resource role; exact per-spell
+  assignments remain open and generic does not mean inheriting every god trait.
 
 Sacrifice or health-exchange mechanics are not part of Zamorak's assumed
 identity. They may not fit RSC's combat and support model well and should not be
 used as a default design pattern.
 
-### Initial Spell Roster
+### Shipped twelve-spell roster — historical resource/layout baseline
 
-All twelve launch slots now have confirmed identities and effect directions.
+This table records current shipped behavior, including the old neutral labels.
+The overhaul salvages useful effects but must deliberately migrate costs and
+assignments. It does not automatically rename or remap these spells. In current
+`ClericSpellCatalog`, the neutral spells are **Unify** and **Respite**, not Vigor.
+
+All twelve launch slots have confirmed identities and effect directions.
 Numerical values recorded in the confirmed effect contracts below are settled.
 Any remaining ranges explicitly described as provisional tuning targets stay
 open until separately approved.
@@ -1038,21 +1055,21 @@ on animation availability.
 
 ### Sigil Taxonomy and Production
 
-- The third and later material identities. Gold remains possible, but the
-  current preference is to expand silver through an enhanced form rather than
-  immediately changing to a wholly separate precious metal.
-- The eventual secondary-sigil catalog and how those lesser symbols are
-  imbued. No secondary-sigil production path should be invented for the first
-  rollout.
-- Exact entrances/access for the ichor rivers beneath graveyards, Curse-sigil
-  materials and raw/dipped item identities, alignment behavior, interaction
-  batching, stackability, production-skill requirements, XP and additional cost.
-  The old stone/silver Unholy proposal must be reconciled explicitly with the
-  newer Curse-sigil direction rather than assumed to define its recipes.
-- Neither carving, blessing, nor casting awards Worship XP. Material inputs,
-  one-to-one base carving quantity, level requirements, base Crafting/Blessing
-  XP, Crafting batch interruption, altar transactionality, and inventory
-  transformations are settled.
+- Final names for the beneficial/hostile resource families; “Holy/Unholy” are
+  explicitly not approved final item names.
+- New carving materials, recipes, skills/levels, XP, quantities, yields and
+  stackability, and precise dipping interactions/batching at the two site types.
+  Existing god production remains unchanged; its stone/silver values do not
+  automatically become the new families' recipes.
+- Spellbook tiers, remaining spells/layout, per-spell god assignment and cost
+  vectors, including the generic buff/debuff resource roles.
+- Migration of the shipped neutral choices, item identities and player stock.
+  Do not delete stock, reuse old IDs or infer a conversion ratio.
+- Exact ichor-well and holy-wellspring entrances, access and interaction scenery.
+  Preserve the confirmed types/locations without inventing coordinates.
+- Later god-material expansion remains open. No production or casting step
+  grants Worship XP; preserve the existing three god lines' settled production
+  transactions and XP rather than silently rebalance them during the overhaul.
 
 ### Holy Power and Support Rules
 
@@ -1085,7 +1102,13 @@ on animation availability.
   Mage with their current Magic and staff requirements for the initial Cleric
   rollout.
 
-## Cumulative Sigil Cost Ladder
+## Shipped cumulative sigil cost ladder — historical until cost migration
+
+This is the launch cost system and its earlier expansion formula. It is not
+approval of the new two-family resource quantities or material progression.
+Neutral references below describe existing stock/casts awaiting a migration
+plan, not a fourth god-sigil requirement in the new model.
+
 
 Spell tiers retain and increase all earlier sigil materials. A tier does not
 replace the tier below it.
@@ -1151,9 +1174,64 @@ primary ladder.
   custom skill payload. Appending Blessing must be paired with a custom-client
   version bump; authentic/legacy stat packet layouts remain unchanged.
 
+## Implementation impact and reuse audit — October 29
+
+This is a bounded inventory of affected maintained code, not an implementation
+plan or permission to settle the open choices:
+
+- [ClericAlignment](../../../server/src/com/openrsc/server/content/cleric/ClericAlignment.java)
+  currently enumerates `NEUTRAL` plus the three gods. Represent god assignment
+  separately from beneficial/hostile purpose rather than assuming either new
+  family is another god; the actual schema remains to be designed.
+- [ClericSigilProductionCatalog](../../../server/src/com/openrsc/server/content/cleric/ClericSigilProductionCatalog.java)
+  currently enumerates all four launch alignments for each material.
+  [ClericSigilMaterial](../../../server/src/com/openrsc/server/content/cleric/ClericSigilMaterial.java)
+  owns stone/silver requirements and XP; preserve the three god paths.
+  [SigilProduction](../../../server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java)
+  and Crafting selection/batching are reusable integration points. Add the new
+  carving/dipping routes only after recipes and transaction rules are settled.
+- [ClericSigilItemId](../../../server/src/com/openrsc/server/content/cleric/ClericSigilItemId.java)
+  owns the stable sigil item identities, including neutral stone `3299/3300`
+  and silver `3307/3308`. These are deliberately outside the legacy
+  [ItemId](../../../server/src/com/openrsc/server/constants/ItemId.java) enum,
+  which supplies `RUNE_STONE(1299)` and `SILVER(383)` for existing god production.
+  Audit inventory/bank/ground stock and compatibility references before a
+  neutral migration; no new IDs or retirement/conversion policy are set here.
+- [ClericSpellCatalog](../../../server/src/com/openrsc/server/content/cleric/ClericSpellCatalog.java),
+  `ClericSpellId`, `ClericSigilCost` and `ClericCastTransaction` own spell IDs,
+  launch resource vectors and useful-cast atomic spending. Salvage effect,
+  targeting, lifecycle, Holy Power and HUD infrastructure while explicitly
+  revising resources/layout as the design is completed. Current neutral spells
+  are Unify and Respite; no Vigor entry exists in the current catalog.
+- Client `ClericSpellbookCatalog` / `ClericSpellGuideCatalog`, server spellbook
+  transport, `EntityHandler.addClericSigilDefinitions`, item/note artwork and
+  Crafting/Blessing UI all need coordinated catalog/description updates. They
+  must reflect the same approved costs and production routes, with separate
+  resources consumed together at cast time; do not infer extra god properties
+  or introduce a physically combined item. Existing stable IDs, notes,
+  snapshots and old-client compatibility require review during migration.
+
 ## Decision Log
 
-### 2026-10-24: Curse sigils, graveyard ichor rivers and area debuffs
+Older entries describe decisions at their recorded date. The October 29 entry
+supersedes conflicting neutral/four-primary, Unholy-recipe and river/Fountain
+requirements; keep the history without treating it as concurrent instructions.
+
+### 2026-10-29: Three god sigils and two dipped purpose resources
+
+Confirmed the direction in the status section: unchanged Saradomin/Guthix/Zamorak
+production; removal of neutral sigils from the new model; two separately carved,
+as-yet unnamed beneficial/hostile families; god-plus-purpose buffs/debuffs and
+unassigned-purpose generic spells; hostile dipping in large underground ichor
+wells beneath graveyards, beneficial dipping at holy wellsprings beneath Entrana,
+the Monastery and other holy areas. “Holy/Unholy” are not approved item names.
+Reorganize and salvage the book without adding PvP. The owner then explicitly
+confirmed “Consume together when casting”: separate costs, like runes, not a
+physical combined item. Recipes, exact cost quantities, remaining spell design
+and neutral-stock migration stay open.
+
+
+### 2026-10-24: Curse sigils and ichor rivers — superseded location/resource proposal
 
 The owner selected a new Curse sigil with an underground ichor-dipping route
 instead of altar blessing. River water will reuse the water tile recoloured
@@ -1164,7 +1242,7 @@ only. Remaining buff and debuff tiers will be supplied by the owner. This
 supersedes the older standalone fountain concept; exact materials, recipes,
 spell effects, eligibility and numerical progression remain to be designed.
 
-### 2026-08-06: Deferred Fountain of Ichor and Unholy sigils
+### 2026-08-06: Fountain of Ichor and Unholy sigils — superseded proposal
 
 Confirmed a future Fountain of Ichor interaction where an unblessed sigil is
 used on the fountain and described as being dipped in ichor. Both stone and

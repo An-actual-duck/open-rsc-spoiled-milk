@@ -2,6 +2,10 @@
 
 ## Status
 
+**Historical launch record:** the October 29, 2026 sigil/book overhaul is governed
+by the latest direction in the linked concept, not this completed plan's older
+neutral/Unholy expansion references. This file is not a new implementation task.
+
 - Branch: `main` (C12 integrated; Cleric launch implementation complete and
   released in `v0.2.64`)
 - Governing design: [`cleric-spellbook-concept.md`](../in-progress-work-plans/cleric-spellbook-concept.md)
