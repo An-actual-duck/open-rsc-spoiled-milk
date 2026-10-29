@@ -974,6 +974,7 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(3402, "8", "Weak Antidote - Marrentill & Giant Spider Eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1474, "22", "Antidote - Marrentill & red spiders' eggs"));
 				skillMenuEntries.add(new SkillMenuItem(3405, "38", "Strong Antidote - Marrentill & Jungle Spider Eggs"));
+                skillMenuEntries.add(new SkillMenuItem(3410,"46","Viscous coating - Avantoe, Cockatrice Eye & Sticky Saliva Gland; one use"));
 				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
 				skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
 				skillMenuEntries.add(new SkillMenuItem(1471, "22", "Stat restore - Harralander & ground unicorn horn"));

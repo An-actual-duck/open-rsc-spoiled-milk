@@ -1,6 +1,9 @@
 # Battleaxe coating Phase 1 review package
 
-2026-10-25. **Review-only; Phase 2 remains blocked on explicit gameplay/design feedback.**
+2026-10-25 historical review-only record. **October29 update:** the owner approved
+the remaining design bundle; Phase2 is implemented as a separate private candidate.
+See [implementation review](battleaxe-coatings-implementation-review.md).
+The unallocated-ID/proposal statements below describe Phase1 only.
 Branch: `feat/battleaxe-slow-poison-coatings`.
 Starting HEAD: `ed8b55bfa94b4d2471b8421f0ba68c8ea2dbe0fa`.
 Initial pushed proposal: `25444ea5768f920e40a215d84e17c310398e700f`.

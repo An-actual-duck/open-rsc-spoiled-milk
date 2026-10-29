@@ -3,7 +3,7 @@
     {
       "id": 3410,
       "name": "Viscous weapon coating",
-      "description": "One single-use dose. Coat one battleaxe with accumulating Slow and weaker poison.",
+      "description": "Applies Slow and weaker poison to one battleaxe.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,
@@ -26,7 +26,7 @@
     {
       "id": 3411,
       "name": "Viscous Iron battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -51,7 +51,7 @@
     {
       "id": 3412,
       "name": "Viscous Steel battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -76,7 +76,7 @@
     {
       "id": 3413,
       "name": "Viscous Mithril battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -101,7 +101,7 @@
     {
       "id": 3414,
       "name": "Viscous Adamantite battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -126,7 +126,7 @@
     {
       "id": 3415,
       "name": "Viscous Rune battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -151,7 +151,7 @@
     {
       "id": 3416,
       "name": "Viscous Bronze battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -176,7 +176,7 @@
     {
       "id": 3417,
       "name": "Viscous Black battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -201,7 +201,7 @@
     {
       "id": 3418,
       "name": "Viscous Tin battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -226,7 +226,7 @@
     {
       "id": 3419,
       "name": "Viscous Copper battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -251,7 +251,7 @@
     {
       "id": 3420,
       "name": "Viscous Titan Steel battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -276,7 +276,7 @@
     {
       "id": 3421,
       "name": "Viscous Orichalcum battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -301,7 +301,7 @@
     {
       "id": 3422,
       "name": "Viscous White battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -326,7 +326,7 @@
     {
       "id": 3423,
       "name": "Viscous Dragon battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,
@@ -351,7 +351,7 @@
     {
       "id": 3424,
       "name": "Viscous Grey battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -376,7 +376,7 @@
     {
       "id": 3425,
       "name": "Viscous Exalted Rune battle Axe",
-      "description": "Adds 4 accumulating Slow power (cap 12) and weaker weapon poison. Wipe clean to remove; no refund.",
+      "description": "Applies up to Slow1 and weaker poison. Wipe clean to remove the coating.",
       "command": "Wipe clean",
       "isFemaleOnly": 0,
       "isMembersOnly": 1,

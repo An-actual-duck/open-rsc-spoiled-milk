@@ -27,7 +27,7 @@ public final class BattleaxeCoatings {
     public static void primaryHit(Mob source, Mob target, int committedWeaponId, int actualDamage) {
         if (!(source instanceof Player) || !(target instanceof Npc) || actualDamage<=0
                 || !source.getConfig().WANT_MYWORLD || !BattleaxeCoatingCatalog.isCoated(committedWeaponId)
-                || source.isRemoved() || source.killed || source.getLevel(Skill.HITS.id())<=0
+                || !((Player)source).loggedIn() || source.isRemoved() || source.killed || source.getLevel(Skill.HITS.id())<=0
                 || target.isRemoved() || target.killed || target.getLevel(Skill.HITS.id())<=0
                 || ((Npc)target).isRespawning()) return;
         Slow.apply(target,4,Slow.CAP_ONE);

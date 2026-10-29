@@ -407,6 +407,15 @@
         </java>
     </target>
 
+    <target name="test_battleaxe_coatings" depends="compile_core,compile_plugins,compile_combat_tests">
+        <java classname="com.openrsc.server.combat.BattleaxeCoatingsFixture" fork="true" maxmemory="512m" failonerror="true" dir="${basedir}" outputproperty="coatings.output">
+            <classpath><pathelement location="${basedir}/plugins.jar"/><pathelement location="${combat.build.test}"/><pathelement location="${combat.build.core}"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+        <echo message="${coatings.output}"/>
+        <condition property="coatings.completed"><contains string="${coatings.output}" substring="PASS battleaxe coatings:"/></condition>
+        <fail unless="coatings.completed" message="Coating fixture exited without its completion marker."/>
+    </target>
+
     <target name="test_antidote_cleansing" depends="compile_core,compile_plugins,compile_combat_tests">
         <java classname="com.openrsc.server.combat.AntidoteCleansingFixture" fork="true" maxmemory="512m" failonerror="true" dir="${basedir}" outputproperty="antidote.output">
             <classpath><pathelement location="${basedir}/plugins.jar"/><pathelement location="${combat.build.test}"/><pathelement location="${combat.build.core}"/><fileset dir="${lib}" includes="*.jar"/></classpath>

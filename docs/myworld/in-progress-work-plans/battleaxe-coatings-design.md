@@ -1,6 +1,28 @@
-# Battleaxe Slow/poison coating — audit and design proposal
+# Battleaxe Slow/poison coating — approved design and historical audit
 
-2026-10-25. **REVIEW REQUIRED: no coating balance, items or production art approved or implemented.**
+## Current authority — October 29, 2026
+
+The owner answered **“Use those recommendations”** to the remaining exact design
+bundle. All fifteen battleaxes, permanent Viscous variants with wipe-clean/no
+refund, flat Slow4/cap12, teal edges, and unfinished Avantoe + Eye1 + Gland1 at
+Herblaw46/XP300 yielding **one single-use dose** are approved. Earlier explicit
+half-standard poison approval remains tier×2 application/tier×5 cap, no minimum.
+Crafting-only single-dose value300 and base-weapon value+300 are the chosen
+initial economy. No ingredient drop-rate change, new Slayer gate or intrinsic
+plain Titan Steel poison is introduced.
+
+Implementation is now a private Core review candidate on
+`feat/battleaxe-coatings-implementation`. See
+[battleaxe-coatings-implementation-review.md](battleaxe-coatings-implementation-review.md)
+for exact IDs, native art, tests, qualifications and remaining owner acceptance.
+Antidote/Titan prerequisite reconciliation is already integrated; the **historical
+Phase1 audit below** describes the pre-reconciliation baseline, not current gaps.
+Its three-dose coating, floor/minimum and unresolved-decision statements are
+superseded by this section. Antidotes retain their separate approved three doses.
+
+## Historical Phase1 snapshot — October 25, 2026
+
+Review-only at that date; no production coating existed then.
 Worker `feat/battleaxe-slow-poison-coatings`; starting HEAD
 `ed8b55bfa94b4d2471b8421f0ba68c8ea2dbe0fa` (clean ACTIVE slot).
 The handoff's earlier baseline is `821526e736e112c8db0c8716c65a80c14812628b`.
