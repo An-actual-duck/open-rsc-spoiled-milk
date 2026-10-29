@@ -1,0 +1,4 @@
+PASS coating manifest/catalog/native assets; 15 forms, 18 frames, untouched archive entries preserved
+PASS coating client: 192180 checks;15icons,18nativeframes,classic/named alias allocation,software/GL masks and policy fields
+PASS coating client: 192180 checks;15icons,18nativeframes,classic/named alias allocation,software/GL masks and policy fields
+PASS coating assets:15 inventory forms,34 Aseprite sources,18 native frames,all original archive entries identical,paired packaged client modes

@@ -1,0 +1,25 @@
+Run from the worker root with ANT_OPTS='-Xmx512m -XX:+UseSerialGC' and ANT_HOME=$PWD/tools/vendor/apache-ant-1.10.5; bundled Ant launcher sh tools/vendor/apache-ant-1.10.5/bin/ant -f server/build.xml:
+ test_battleaxe_coatings test_antidote_cleansing test_slow test_combat_strict
+ test_slayer_leather_effects test_slayer_rewards test_slayer_mobility_shield test_abyssal_demon_combat test_dark_beast_combat test_bloodveld_combat test_terror_dog_combat test_naga_combat test_thunder_spell_casting
+ test_battleaxe_coatings (after adding the actual downstream-zero counterexample; no production code changes)
+
+ANT_OPTS='-Xmx512m -XX:+UseSerialGC' bash scripts/build-client.sh
+python3 scripts/generate-battleaxe-coatings.py --check
+python3 tests/myworld/test-battleaxe-coatings.py
+python3 scripts/review-battleaxe-coatings.py
+python3 tests/myworld/test-herblaw-remap.py
+python3 tests/myworld/test-poison-model.py
+python3 tests/myworld/test-potion-runtime.py
+python3 tests/myworld/test-potion-hud.py
+python3 tests/myworld/test-npc-poison-death-lifecycle.py
+python3 tests/myworld/test-generator-scripts.py
+python3 tests/myworld/test-retired-leather-items.py
+python3 tests/myworld/test-slayer-component-items.py
+python3 tests/myworld/test-equipment-animation-id-contract.py
+python3 tests/myworld/test-exalted-rune-poisoned-weapons.py
+python3 tests/myworld/test-poisoned-god-weapon-alignment.py
+node tests/myworld/test-antidote-icons.cjs
+
+Main build/combat/regression jobs were bounded and sequential. Client native pixel fixture forks use384MiB. No game/server/private-client launch, account/DB access, map import or installed-toolkit change occurred.
+
+Test setup adaptations: retire stopped ONE_PER_MOB poison stream by advancing the real scheduler before a new stream; disable uninitialized harness PID shuffler for direct PvP-event constructor; bind only exact inventory instances. No production checks or fixture gates were weakened. Initial Aseprite sequence auto-loading was fixed with --oneframe and exact RGBA/native-canvas roundtrips. Redundant PNG runtime loader removed in favor of existing native archive paths. Original classic ZIP zeroattributes/UTF8+descriptor flags remain exact by replacing only the generated append tail.

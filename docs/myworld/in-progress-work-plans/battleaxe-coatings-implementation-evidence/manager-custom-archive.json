@@ -1,0 +1,8 @@
+{
+  "status": "PASS",
+  "baseline": "3925067ce",
+  "originalEntries": 1002,
+  "addition": "equipment:viscousbattleaxe",
+  "allOriginalSerializedEntryBytesPreserved": true,
+  "currentSha256": "8117edae645ce7b377780ec799825d88c8955d1cf34e049ec7880ca67a9804c0"
+}

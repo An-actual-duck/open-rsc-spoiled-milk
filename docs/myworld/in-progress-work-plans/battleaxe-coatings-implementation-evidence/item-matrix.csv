@@ -1,0 +1,16 @@
+baseId,coatedId,name,tier,meleeLevel,meleeOffense,weaponSpeed,aim,power,prayer,price,appearance,inventoryMask,heldMask,poisonApplication,poisonCap,slowApplication,slowSourceCap
+89,3411,Viscous Iron battle Axe,4,22,25,3,9,13,0,1020,1097,0xeedddd,0xeedddd,8,20,4,12
+90,3412,Viscous Steel battle Axe,5,30,38,3,15,20,0,2100,1098,0xeeeeee,0xeeeeee,10,25,4,12
+91,3413,Viscous Mithril battle Axe,6,38,50,3,21,29,0,5100,1099,0x99b2cc,0x99b2cc,12,30,4,12
+92,3414,Viscous Adamantite battle Axe,8,54,62,3,30,41,0,23100,1100,0xb2cc99,0xb2cc99,16,40,4,12
+93,3415,Viscous Rune battle Axe,10,70,75,3,47,64,0,60300,1101,0xffff,0xffff,20,50,4,12
+205,3416,Viscous Bronze battle Axe,3,15,12,3,7,9,0,600,1102,0xff6619,0xff6619,6,15,4,12
+429,3417,Viscous Black battle Axe,5,5,38,3,15,20,3,1548,1103,0x303030,0x303030,10,25,4,12
+2002,3418,Viscous Tin battle Axe,1,1,1,3,4,5,0,372,1104,0xb7c9d9,0xb7c9d9,2,5,4,12
+2013,3419,Viscous Copper battle Axe,2,8,6,3,5,7,0,444,1105,0xc86a2b,0xc86a2b,4,10,4,12
+2024,3420,Viscous Titan Steel battle Axe,7,46,56,3,25,35,0,11100,1106,0x8ea6bb,0x8ea6bb,14,35,4,12
+2035,3421,Viscous Orichalcum battle Axe,9,62,69,3,38,52,0,39300,1107,0x5a3f7d,0x5a3f7d,18,45,4,12
+2156,3422,Viscous White battle Axe,5,5,38,3,15,20,3,2100,1108,0xe7e2d6,0x303030,10,25,4,12
+2752,3423,Viscous Dragon battle Axe,11,80,82,3,69,75,0,280300,1109,0xff0044,0xff0044,22,55,4,12
+3118,3424,Viscous Grey battle Axe,5,5,38,3,15,20,3,2100,1110,0x9ea59f,0x303030,10,25,4,12
+3269,3425,Viscous Exalted Rune battle Axe,12,90,88,3,60,78,0,156300,1111,0xd8ffff,0xd8ffff,24,60,4,12

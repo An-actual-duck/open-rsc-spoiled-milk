@@ -1,0 +1,22 @@
+DIAGNOSTICS [Other source UI cells require unestablished caller arguments; not claimed by this canonical cell projection: 1]
+AUTHORITY canonical selected-source inventory-cell authoring raster at raw loader/external boundary; no inventory validity, ground/UI/game/backend/remastered or 16.16 parity claim
+ITEM Request[storageIndex=3410, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3411, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3412, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3413, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3414, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3415, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3416, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3417, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3418, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3419, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3420, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3421, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3422, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3423, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3424, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=3425, noted=false] CANDIDATE Source-ordered canonical cell masks/full canvas/note layers; nearest authoring raster
+ITEM Request[storageIndex=1474, noted=true] UNSUPPORTED Recipe source-state mutation unsupported at /home/justin/Core-Framework-ai-2/Client_Base/src/com/openrsc/client/entityhandling/defs/EntityDef.java:11 [MEMBER_SELECT]
+ITEM Request[storageIndex=3409, noted=true] UNSUPPORTED Recipe source-state mutation unsupported at /home/justin/Core-Framework-ai-2/Client_Base/src/com/openrsc/client/entityhandling/defs/EntityDef.java:11 [MEMBER_SELECT]
+DIAGNOSTICS [Other source UI cells require unestablished caller arguments; not claimed by this canonical cell projection: 1]
+PASS generic discovery:16 unnoted coating/weapon views with selected-source assets; baseline note limitations and source authority retained as reported
