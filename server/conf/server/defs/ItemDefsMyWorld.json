@@ -14370,6 +14370,18 @@
       "basePrice": 52000,
       "requiredLevel": 90,
       "requiredSkillID": 0
+    },
+    {
+      "id": 1474,
+      "description": "3 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes."
+    },
+    {
+      "id": 1475,
+      "description": "2 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes."
+    },
+    {
+      "id": 1476,
+      "description": "1 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes."
     }
   ]
 }

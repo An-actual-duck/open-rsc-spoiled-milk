@@ -1,0 +1,8 @@
+{
+  "description": "Existing Antidote keeps its IDs and prices, replacing immunity with cleansing.",
+  "items": [
+    {"id": 1474, "description": "3 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes."},
+    {"id": 1475, "description": "2 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes."},
+    {"id": 1476, "description": "1 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes."}
+  ]
+}

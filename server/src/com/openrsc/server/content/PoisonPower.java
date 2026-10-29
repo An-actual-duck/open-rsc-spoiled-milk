@@ -53,14 +53,14 @@ public final class PoisonPower {
 		if (name.contains("BLACK")) {
 			return 5;
 		}
+		if (name.contains("TITAN_STEEL")) {
+			return 7;
+		}
 		if (name.contains("STEEL")) {
 			return 5;
 		}
 		if (name.contains("MITHRIL")) {
 			return 6;
-		}
-		if (name.contains("TITAN_STEEL")) {
-			return 7;
 		}
 		if (name.contains("ADAMANTITE")) {
 			return 8;

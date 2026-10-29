@@ -60,8 +60,9 @@ public class PoisonEvent extends GameTickEvent {
 			Player player = (Player) mob;
 			poisonDrain += player.getCarriedItems().getEquipment().getNatureCleansingPoisonDecayBonus();
 			poisonDrain += com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.carapaceCleanse(player);
+			poisonDrain += com.openrsc.server.content.AntidoteCleansing.bonus(player);
 		}
-		poisonPower -= poisonDrain;
+		poisonPower = PoisonPowerReduction.remainingPower(poisonPower, poisonDrain);
 		mob.setPoisonDamage(poisonPower);
 		if (mob.isPlayer()) {
 			Player player = (Player) mob;
@@ -71,6 +72,9 @@ public class PoisonEvent extends GameTickEvent {
 			final int actualDamage = settleTypedPoisonDamage(damage);
 			applyLeach(actualDamage);
 		}
+		// Exhausted poison must not leave stale state. Positive subthreshold power
+		// retains the established next-pulse cleanup timing.
+		if (poisonPower == 0) mob.curePoison();
 	}
 
 	private int settleTypedPoisonDamage(final int requestedDamage) {

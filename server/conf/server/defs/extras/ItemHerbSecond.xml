@@ -136,8 +136,22 @@
 		<secondID>219</secondID>
 		<unfinishedID>455</unfinishedID>
 		<potionID>1474</potionID>
+		<requiredLvl>22</requiredLvl>
+		<exp>220</exp>
+	</ItemHerbSecond>
+	<ItemHerbSecond>
+		<secondID>3400</secondID>
+		<unfinishedID>455</unfinishedID>
+		<potionID>3402</potionID>
 		<requiredLvl>8</requiredLvl>
 		<exp>160</exp>
+	</ItemHerbSecond>
+	<ItemHerbSecond>
+		<secondID>3401</secondID>
+		<unfinishedID>455</unfinishedID>
+		<potionID>3405</potionID>
+		<requiredLvl>38</requiredLvl>
+		<exp>300</exp>
 	</ItemHerbSecond>
 	<ItemHerbSecond>
 		<secondID>472</secondID>

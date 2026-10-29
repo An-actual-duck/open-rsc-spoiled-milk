@@ -1616,6 +1616,9 @@ final class MyWorldItemOverrides {
 		new ItemOverride(3280, "Exalted Rune Plate Mail Body", null, 260000, -1, -1),
 		new ItemOverride(3309, "Poisoned Exalted Rune dagger", null, 52000, -1, -1),
 		new ItemOverride(3310, "Poisoned Exalted Rune Spear", null, 52000, -1, -1),
+		new ItemOverride(1474, null, "3 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes.", -1, -1, -1),
+		new ItemOverride(1475, null, "2 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes.", -1, -1, -1),
+		new ItemOverride(1476, null, "1 dose(s). Adds 10 poison cleansing power per pulse for 10 minutes.", -1, -1, -1),
 	};
 
 	private MyWorldItemOverrides() {
