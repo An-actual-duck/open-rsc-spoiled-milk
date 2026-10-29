@@ -14794,4 +14794,16 @@
     <type>1</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
     <objectModel>sm_stone_rubble</objectModel>
   </GameObjectDef>
+  <GameObjectDef>
+    <name>Ichor well</name><description>A dark pool of ichor seeps through the earth.</description>
+    <command1>Dip sigils</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>interaction_spot</objectModel><interactionOnly>true</interactionOnly>
+  </GameObjectDef>
+  <GameObjectDef>
+    <name>Divine wellspring</name><description>Divine water gathers here, pale blue and still.</description>
+    <command1>Dip sigils</command1><command2>Examine</command2>
+    <type>0</type><width>1</width><height>1</height><groundItemVar>0</groundItemVar>
+    <objectModel>interaction_spot</objectModel><interactionOnly>true</interactionOnly>
+  </GameObjectDef>
 </GameObjectDef-array>

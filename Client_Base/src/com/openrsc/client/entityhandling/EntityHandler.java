@@ -10283,6 +10283,8 @@ public class EntityHandler {
 		objects.add(new GameObjectDef("Stained glass window", "Coloured glass fills a thick stone frame", "WalkTo", "Examine", 0, 1, 1, 0, "sm_stained_glass_window", ++i)); //1351
 		objects.add(new GameObjectDef("Stone arrowslit", "A narrow cross-shaped opening in a stone frame", "WalkTo", "Examine", 0, 1, 1, 0, "sm_stone_arrowslit", ++i)); //1352
 		objects.add(new GameObjectDef("Stone rubble", "A low heap of broken stone", "WalkTo", "Examine", 1, 1, 1, 0, "sm_stone_rubble", ++i)); //1353
+		objects.add(new GameObjectDef("Ichor well", "A dark pool of ichor seeps through the earth.", "Dip sigils", "Examine", 0, 1, 1, 0, "interaction_spot", ++i, true)); //1354
+		objects.add(new GameObjectDef("Divine wellspring", "Divine water gathers here, pale blue and still.", "Dip sigils", "Examine", 0, 1, 1, 0, "interaction_spot", ++i, true)); //1355
 	}
 
 	public static void load(boolean loadMembers) {

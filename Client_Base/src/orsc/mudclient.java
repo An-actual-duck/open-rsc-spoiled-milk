@@ -25862,6 +25862,9 @@ public final class mudclient implements Runnable {
 			return null;
 		}
 
+		GameObjectDef definition = EntityHandler.getObjectDef(objectId);
+		model.setInteractionOnly(definition != null && definition.isInteractionOnly());
+
 		if (objectId == DRAGON_SULFUR_ROCK_OBJECT_ID) {
 			model.tintVisibleFaces(DRAGON_SULFUR_ROCK_COLOR_RESOURCE);
 		}

@@ -41,6 +41,12 @@ public final class RSModel {
 	private int renderer3DGlowRadius;
 	private int renderer3DGlowIntensity;
 	private int pickBoundsScale = 1;
+	private boolean interactionOnly;
+
+	public boolean isInteractionOnly() { return interactionOnly; }
+	public void setInteractionOnly(boolean value) {
+		if (interactionOnly != value) { interactionOnly = value; renderer3DTransformVersion++; }
+	}
 	boolean m_db = false;
 	boolean m_dc = true;
 	int m_hc = 0;
@@ -411,6 +417,7 @@ public final class RSModel {
 		combined.m_cb = this.m_cb;
 		combined.m_hc = this.m_hc;
 		combined.renderer3DModelKind = this.renderer3DModelKind;
+		combined.interactionOnly = this.interactionOnly;
 		combined.renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 		combined.copyRenderer3DGlowEmitterFrom(this);
 		combined.pickBoundsScale = this.pickBoundsScale;
@@ -849,6 +856,7 @@ public final class RSModel {
 			RSModel copy = new RSModel(var6, 1, var4, var5, noDiffuse, var1);
 			copy.m_hc = this.m_hc;
 			copy.renderer3DModelKind = this.renderer3DModelKind;
+			copy.interactionOnly = this.interactionOnly;
 			copy.renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 			copy.copyRenderer3DGlowEmitterFrom(this);
 			copy.pickBoundsScale = this.pickBoundsScale;
@@ -1102,6 +1110,7 @@ public final class RSModel {
 			var3.m_cb = this.m_cb;
 			var3.m_hc = this.m_hc;
 			var3.renderer3DModelKind = this.renderer3DModelKind;
+			var3.interactionOnly = this.interactionOnly;
 			var3.renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 			var3.copyRenderer3DGlowEmitterFrom(this);
 			var3.pickBoundsScale = this.pickBoundsScale;
@@ -1364,6 +1373,7 @@ public final class RSModel {
 
 				output[i] = new RSModel(outVertCount[i], outFaceCount[i], true, true, true, var8, true);
 				output[i].renderer3DModelKind = this.renderer3DModelKind;
+				output[i].interactionOnly = this.interactionOnly;
 				output[i].renderer3DMaterialFamily = this.renderer3DMaterialFamily;
 				output[i].copyRenderer3DGlowEmitterFrom(this);
 				output[i].diffuseParam2 = this.diffuseParam2;
@@ -1669,7 +1679,7 @@ public final class RSModel {
 			long triangleCount = 0L;
 			for (int index = 0; index < limit; index++) {
 				RSModel model = models[index];
-				if (model == null) {
+				if (model == null || model.isInteractionOnly()) {
 					continue;
 				}
 				Renderer3DModelKind kind = model.getRenderer3DModelKind();
@@ -1697,7 +1707,7 @@ public final class RSModel {
 		}
 
 		private void addModel(RSModel model) {
-			if (model == null) {
+			if (model == null || model.isInteractionOnly()) {
 				return;
 			}
 			Renderer3DModelKind kind = model.getRenderer3DModelKind();

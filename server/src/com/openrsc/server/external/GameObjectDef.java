@@ -35,6 +35,11 @@ public class GameObjectDef extends EntityDef {
 	 */
 	public int width;
 
+	/** Invisible, nonblocking location interaction footprint; false for existing content. */
+	public boolean interactionOnly;
+
+	public boolean isInteractionOnly() { return interactionOnly; }
+
 	public String getCommand1() {
 		return command1.toLowerCase();
 	}
