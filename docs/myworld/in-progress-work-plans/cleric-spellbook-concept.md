@@ -17,10 +17,11 @@ resource conversion or map change is authorized by this documentation update.
 
 - Keep the **three god sigils: Saradomin, Guthix and Zamorak**. Their existing
   stone/silver carving, god-altar blessing and production process stay unchanged.
-- Remove **neutral sigils** from the intended new model. Existing neutral player
-  stock and stable item identities need a deliberate migration decision; this is
-  not permission to delete stock or recycle IDs.
-- Add two distinct carved resource families with owner-confirmed names:
+- **Repurpose the existing neutral sigils as Grace**, keeping their stable IDs,
+  stone/silver forms, quantities and artwork. The neutral role/name goes away;
+  the items are not retired, deleted, exchanged or duplicated into new Grace IDs.
+  Existing usable stock remains usable; carved stock still needs infusion.
+- Use two distinct carved resource families with owner-confirmed names:
   **Grace** for support/buffs and **Blight** for future hostile/debuff spells.
   These replace the earlier beneficial/hostile working labels; “Holy/Unholy”
   are not their item names.
@@ -45,21 +46,56 @@ resource conversion or map change is authorized by this documentation update.
   allies, hostile spells affect enemies. Existing PvP exclusions remain; this
   direction does not introduce new PvP behavior.
 
-**Still unresolved:** the new families' material grades, carving recipes,
-production skills/levels, XP, yields and quantities; exact casting costs and
-layout; future spells/tiers beyond the current mapping; and conversion of
-existing neutral player stock. The twelve existing support spells retain the
-mapping below; their current effects and unlocks are reuse references, not a
-new numerical rebalance. Joint consumption as distinct
-casting resources is confirmed; physical combination is not the design.
+**Still unresolved:** Blight's new carving materials/recipes and item allocation;
+new infusion requirements, XP, yields, quantities and Devotion policy; exact
+casting costs and grade use; layout and future spells/tiers beyond the current
+mapping. Grace reuses the existing neutral stone/silver grades and carving
+recipes; stock preservation is settled by same-ID reuse, not a pending
+exchange. The twelve existing support spells retain the mapping below; their
+current effects and unlocks are reuse references, not a new numerical rebalance.
+Joint consumption as distinct casting resources is confirmed; physical
+combination is not the design.
 The generic-cost substitution rule below is confirmed, but no fixed per-spell
-quantities, new item IDs, stock conversion or generic god properties are implied.
+quantities, new Blight IDs, compensation or generic god properties are implied.
 
 The four-primary/neutral-at-any-altar model describes the shipped launch only.
 Older Unholy stone/silver recipes, the named Fountain and the October 24
 Curse-sigil/ichor-river wording are **superseded historical proposals**, not
 additional active requirements alongside this model. The [release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch)
 track the same direction.
+
+### Grace reuse — existing neutral items keep their IDs and readiness
+
+The owner confirmed: **“we can just repurpose the neutral sigil as grace.”**
+The mapping below is checked against current `ClericSigilItemId` and client item
+names. The Grace labels describe the intended rename; no catalog is changed by
+this documentation task.
+
+| Stable ID | Current item | Intended Grace form | Existing readiness |
+|---:|---|---|---|
+| 3299 | Unblessed neutral stone sigil | Carved/uninfused Stone Grace | Still needs infusion |
+| 3300 | Neutral stone sigil | Infused/usable Stone Grace | Remains ready for casting |
+| 3307 | Unblessed neutral silver sigil | Carved/uninfused Silver Grace | Still needs infusion |
+| 3308 | Neutral silver sigil | Infused/usable Silver Grace | Remains ready for casting |
+
+Keep every existing quantity and form in inventories, banks and other containers,
+on ground/map placements and through note references under the **same IDs**.
+No conversion ratio, compensation, mass database rewrite or duplicate Grace
+items are needed. Retain the existing neutral artwork; no redesign is required.
+Raw stock is not granted a free charge, and already infused stock does not lose
+its readiness when its display identity becomes Grace.
+
+Reuse neutral stone/silver **carving** as Grace's baseline: the existing Rune
+stone/Silver nugget inputs, one-input/one-carving recipes, Crafting requirements
+and carving XP stay unchanged. Stone/silver Grace grades are therefore settled,
+not both awaiting invention. Further grades are outside this confirmation.
+
+Future Grace **infusion** moves to holy wellsprings. Repurposing an item does not
+preserve neutral-at-any-god-altar as the new Grace production route. New infusion
+balance and Devotion policy remain open; do not assume a god is charged or carry
+the old altar's Devotion charge into wellspring dipping. All three god lines'
+production stays unchanged. Blight remains a separate new carving family with
+its materials/recipes and IDs unallocated.
 
 ### Current two-tier mapping and generic Grace costs
 
@@ -94,8 +130,9 @@ The owner's example, **`1 god sigil + 1 Grace` versus `2 Grace`**, illustrates t
 rule. It does **not** fix every tier-one spell at those numbers, approve any
 tier-two quantity, or specify how Grace grades correspond to existing stone or
 silver god sigils. Do not sum incompatible grades or reuse the shipped
-`2 stone + 1 silver` vector as the new tier-two overhaul cost. New material
-grades, exact quantities and cross-grade correspondence remain to be designed.
+`2 stone + 1 silver` vector as the new tier-two overhaul cost. Grace's reused
+stone/silver grades do not settle exact casting quantities, per-spell grade use
+or cross-grade cost correspondence; those remain to be designed.
 
 The table confirms the current twelve-spell mapping, not every future roster,
 layout or effect revision. Preserve the existing effects as the salvage baseline;
@@ -189,8 +226,10 @@ skill.
 
 The October 29 direction and Grace mapping above own the new taxonomy. The production rules
 below apply **only to the three existing god lines** and preserve their shipped
-behavior. They do not assign the new Grace/Blight families stone/silver
-recipes, levels, XP, quantities, Devotion charges, batching or stackability.
+behavior. Grace separately reuses neutral stone/silver forms/art and carving
+recipes as confirmed above. That does not settle Grace's new wellspring infusion
+balance/Devotion policy or assign Blight materials, recipes, levels, XP, yields,
+charges or item IDs.
 
 
 - Cleric spells use new consumable resources called **sigils**, serving the
@@ -205,7 +244,8 @@ recipes, levels, XP, quantities, Devotion charges, batching or stackability.
   `Silver nugget` (item `383`), not from a Silver bar.
 - Using the chisel opens the normal Crafting selection window. For each
   material family, the intended god-symbol choices are Saradomin, Guthix and
-  Zamorak. Removing the shipped neutral choice is future implementation work.
+  Zamorak; the shipped neutral carving choice is repurposed as Grace, using its
+  same stone/silver identities and carving process rather than being deleted.
 - Carving uses the existing Crafting quantity/batch flow rather than requiring
   a new interface or one repeated interaction per input. Every selected base
   action consumes exactly one Rune stone or Silver nugget and produces exactly
@@ -242,8 +282,9 @@ recipes, levels, XP, quantities, Devotion charges, batching or stackability.
   blessed only at a Saradomin altar, and the same matching rule applies to the
   other two gods.
 - The generic resource role moves to unassigned Grace (or future Blight),
-  replacing the god portion with additional compatible-purpose resources. The old neutral-at-any-altar behavior is historical;
-  no stock or catalog is removed by documenting its planned replacement.
+  replacing the god portion with additional compatible-purpose resources. The
+  old neutral-at-any-altar infusion behavior is historical; Grace keeps the
+  stock/IDs while new infusion moves to holy wellsprings.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
   represented by the sigil and altar.
@@ -1100,20 +1141,23 @@ on animation availability.
 
 ### Sigil Taxonomy and Production
 
-- New carving materials, recipes, skills/levels, XP, quantities, yields and
-  stackability, and precise dipping interactions/batching at the two site types.
-  Existing god production remains unchanged; its stone/silver values do not
-  automatically become the new families' recipes.
-- Exact cost quantities and new resource grades, their correspondence to god
-  resource grades, and the book's layout. The two-tier twelve-spell Grace mapping
-  is confirmed above; future spells/tiers and the Blight roster remain open.
-- Migration of the shipped neutral choices, item identities and player stock.
-  Do not delete stock, reuse old IDs or infer a conversion ratio.
+- Blight's new materials, carving recipes, levels/XP, yields, forms and item IDs.
+  Grace's neutral stone/silver forms, artwork, carving materials/recipes,
+  Crafting requirements and carving XP are reused without rebalance.
+- Exact new Grace/Blight infusion interactions/batching, requirements, XP,
+  quantities/yields and Devotion policy. The holy-wellspring route replaces
+  neutral-at-any-altar for new Grace production; it implies no god charge.
+- Exact casting quantities, per-spell use/correspondence of grades and layout.
+  The twelve-spell Grace mapping and generic substitution rule are confirmed;
+  future spells/tiers and the Blight roster remain open.
 - Exact ichor-well and holy-wellspring entrances, access and interaction scenery.
   Preserve the confirmed types/locations without inventing coordinates.
 - Later god-material expansion remains open. No production or casting step
-  grants Worship XP; preserve the existing three god lines' settled production
-  transactions and XP rather than silently rebalance them during the overhaul.
+  grants Worship XP; preserve the three god lines' settled production and XP.
+
+Same-ID Grace reuse settles old neutral stock: preserve all quantities and
+raw/infused readiness. There is no unresolved stock exchange or compensation
+scheme to design, and no permission to delete stock or recycle the four IDs.
 
 ### Holy Power and Support Rules
 
@@ -1150,8 +1194,9 @@ on animation availability.
 
 This is the launch cost system and its earlier expansion formula. It is not
 approval of the new two-family resource quantities or material progression.
-Neutral references below describe existing stock/casts awaiting a migration
-plan, not a fourth god-sigil requirement in the new model.
+Neutral references below describe shipped costs before the Grace rename.
+Existing neutral stock becomes Grace under the same IDs; only new casting-cost
+design remains open. Neutral is not a fourth god-sigil requirement.
 
 
 Spell tiers retain and increase all earlier sigil materials. A tier does not
@@ -1230,17 +1275,20 @@ plan or permission to settle the open choices:
 - [ClericSigilProductionCatalog](../../../server/src/com/openrsc/server/content/cleric/ClericSigilProductionCatalog.java)
   currently enumerates all four launch alignments for each material.
   [ClericSigilMaterial](../../../server/src/com/openrsc/server/content/cleric/ClericSigilMaterial.java)
-  owns stone/silver requirements and XP; preserve the three god paths.
+  owns stone/silver requirements and XP; preserve the three god paths and reuse
+  the neutral carving material/level/XP baseline for Grace.
   [SigilProduction](../../../server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java)
-  and Crafting selection/batching are reusable integration points. Add the new
-  carving/dipping routes only after recipes and transaction rules are settled.
+  and Crafting selection/batching are reusable integration points. Repurpose the
+  existing neutral carving entries as Grace; implement new wellspring infusion
+  only after its balance/transaction rules are settled. Blight carving is new.
 - [ClericSigilItemId](../../../server/src/com/openrsc/server/content/cleric/ClericSigilItemId.java)
   owns the stable sigil item identities, including neutral stone `3299/3300`
   and silver `3307/3308`. These are deliberately outside the legacy
   [ItemId](../../../server/src/com/openrsc/server/constants/ItemId.java) enum,
   which supplies `RUNE_STONE(1299)` and `SILVER(383)` for existing god production.
-  Audit inventory/bank/ground stock and compatibility references before a
-  neutral migration; no new IDs or retirement/conversion policy are set here.
+  Preserve these four IDs as Grace, including inventory/bank/ground/note and map
+  references with unchanged quantities and raw/infused readiness. Adapt names
+  and consumers without retiring the IDs, duplicating items or rewriting stock.
 - [ClericSpellCatalog](../../../server/src/com/openrsc/server/content/cleric/ClericSpellCatalog.java),
   `ClericSpellId`, `ClericSigilCost` and `ClericCastTransaction` own spell IDs,
   launch resource vectors and useful-cast atomic spending. Salvage effect,
@@ -1261,6 +1309,16 @@ Older entries describe decisions at their recorded date. The October 29 entry
 supersedes conflicting neutral/four-primary, Unholy-recipe and river/Fountain
 requirements; keep the history without treating it as concurrent instructions.
 
+### 2026-10-29: Repurpose neutral sigils as Grace
+
+Confirmed reuse of existing neutral stone/silver identities, raw/infused forms,
+quantities, art and carving recipes as Grace. IDs `3299/3300/3307/3308` stay the
+same everywhere; usable stock remains ready and carved stock remains uninfused.
+No retirement, duplicate items, conversion ratio, compensation or database stock
+rewrite is needed. New Grace infusion uses holy wellsprings, not the former
+any-god-altar route; its balance and Devotion policy remain open. Three god lines
+are unchanged, and Blight still needs its own new carving/material/ID design.
+
 ### 2026-10-29: Grace/Blight names and two-tier support cost mapping
 
 The owner accepted **Grace** and **Blight**. All twelve existing spells in the
@@ -1270,7 +1328,8 @@ references. A generic Grace spell replaces the missing god-sigil share with
 more Grace: `A god + B Grace` becomes compatible-grade `A + B Grace`. The
 `1 + 1` versus `2` example illustrates substitution, not fixed tier-one prices
 or approval of tier-two counts/materials. Exact new grades/quantities, future
-spells/layout and neutral-stock migration remain open.
+spells/layout remained open at that point. The later same-ID Grace decision
+recorded above settles stock reuse; it does not settle new cast quantities.
 
 ### 2026-10-29: Three god sigils and two dipped purpose resources
 
@@ -1284,7 +1343,8 @@ resources Grace and Blight; “Holy/Unholy” are not their names.
 Reorganize and salvage the book without adding PvP. The owner then explicitly
 confirmed “Consume together when casting”: separate costs, like runes, not a
 physical combined item. Recipes, exact cost quantities, remaining spell design
-and neutral-stock migration stay open.
+and stock treatment were open at that point; the later same-ID Grace decision
+settles stock reuse without a conversion or compensation scheme.
 
 
 ### 2026-10-24: Curse sigils and ichor rivers — superseded location/resource proposal

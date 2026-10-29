@@ -39,9 +39,14 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
 
 - Keep **Saradomin, Guthix and Zamorak sigils** and their existing stone/silver
   carving and god-altar production process unchanged.
-- Remove the neutral sigil from the intended new resource model. Preserve
-  existing item identities and player stock until migration is designed.
-- Add two distinct carved resource families with final owner-approved names:
+- Repurpose existing neutral sigils as **Grace**, preserving their stable IDs,
+  stone/silver forms, all quantities and artwork: raw IDs `3299`/`3307` still
+  need infusion; usable IDs `3300`/`3308` remain ready for casting. Keep existing
+  inventory, bank, container, map and note references; no duplicate Grace items,
+  stock exchange, compensation or database rewrite is needed.
+- Reuse the existing neutral stone/silver carving materials, recipes, Crafting
+  requirements and XP as Grace's baseline, without a carving-cost rebalance.
+- Use two distinct carved resource families with final owner-approved names:
   **Grace** for support/buffs and **Blight** for future hostile/debuff spells.
   “Holy/Unholy” are not their item names.
 - God sigil + Grace supplies aligned support; god sigil + Blight will supply
@@ -53,7 +58,9 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
   underground liquid areas, not bucket-shaft wells or the prior named Fountain.
   Preserve the purple-water/ichor-leaking dirt-wall visual direction.
 - Dip **Grace** carvings at **holy wellsprings beneath Entrana, the Monastery
-  and other well-known holy areas**. Exact sites/access are not yet assigned.
+  and other well-known holy areas**. This replaces neutral-at-any-god-altar
+  for future Grace infusion; it does not imply charging a god's Devotion.
+  Exact sites/access and new infusion balance/Devotion policy remain open.
 - Reorganize the spellbook while salvaging existing effects and infrastructure.
   Area buffs affect allies and area debuffs affect enemies around the caster;
   existing PvP exclusions remain in force.
@@ -79,11 +86,13 @@ The old `2 stone + 1 silver` launch vector is not an approved new overhaul price
 
 ### Decisions still needed
 
-New material grades/carving recipes/levels/XP/yields/quantities; exact casting
-costs and grade correspondence; future spells/tiers and layout; and neutral-stock
-conversion. Joint consumption during casting is settled;
-its quantities are not. Existing god-production numbers do not automatically
-become recipes for the new resource families.
+Blight's new carving materials, recipes and unallocated IDs; new infusion
+requirements/XP/yields/quantities and Devotion policy; exact casting costs and
+grade correspondence; and future spells/tiers and layout. Grace's existing
+stone/silver carving baseline and same-ID stock preservation are settled.
+Joint consumption during casting is settled; its quantities are not. Existing
+god-production numbers do not automatically become new wellspring/ichor infusion
+rules. The three god-production lines remain unchanged.
 
 Reference: [governing Cleric concept and impact audit](cleric-spellbook-concept.md).
 
