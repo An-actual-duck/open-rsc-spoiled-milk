@@ -11,44 +11,54 @@ import com.openrsc.server.net.rsc.struct.incoming.TargetObjectStruct;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.plugins.custom.myworld.skills.blessing.SigilWells;
 import com.openrsc.server.util.rsc.CollisionFlag;
-import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.lang.reflect.Field;
+import com.openrsc.server.model.container.Item;
+import com.openrsc.server.plugins.triggers.OpLocTrigger;
 
-/** Real maintained World/Player registration, collision reach, packet location selection and Dip plugin. No game loop/listeners/accounts. */
+/** Real native authored package/World/Player, collision reach, packet selection and plugin. No game loop/listeners/accounts. */
 public final class ClericWellInteractionFixture {
  static int checks;static void check(boolean ok,String what){checks++;if(!ok)throw new AssertionError(what);}
- static com.openrsc.server.model.world.region.TileValue tile(CurrentCombatHarness h,int x,int y){return h.world().getRegionManager().getMutableTile(WorldLocation.global(new WorldCoordinate(x,y,0)));}
- static GameObject place(CurrentCombatHarness h,int id,int direction){GameObject o=new GameObject(h.world(),Point.location(450,450),id,direction,0);h.world().registerGameObject(o);return o;}
+ static WorldLocation at(int x,int y,int level){return WorldLocation.global(new WorldCoordinate(x,y,level));}
  public static void main(String[] args)throws Exception{
   try(CurrentCombatHarness h=new CurrentCombatHarness()){
    h.server().getConfig().WANT_MYWORLD=true;
-   for(int x=445;x<=455;x++)for(int y=445;y<=455;y++)tile(h,x,y).traversalMask=0;Player p=h.player("wellfixture",451,450);SigilWells plugin=new SigilWells();
+   h.world().getRegionManager().preflightNativeLayeredPlacements();h.world().getRegionManager().populateNativeLayeredPlacements();
+   Player p=h.player("wellfixture",441,440);SigilWells plugin=new SigilWells();h.recordOutgoingPackets(p);h.installPlugin(OpLocTrigger.class,plugin);p.getCarriedItems().getInventory().add(new Item(3299,3));
    for(int id:new int[]{1354,1355})for(int direction=0;direction<8;direction++){
-    GameObject o=place(h,id,direction);check(p.getViewArea().getGameObject(o.getLocation())==o,"actual registered view identity");check(o.getGameObjectDef().isInteractionOnly()&&o.getGameObjectDef().getType()==0,"paired server metadata");
-    check(tile(h,450,450).traversalMask==0,"invisible spot itself adds no movement collision");tile(h,450,450).traversalMask=(byte)CollisionFlag.FULL_BLOCK; // blocked liquid
+    int x=440+4*direction,y=id==1354?440:448;
+    GameObject o=h.world().getRegionManager().findNativeLayeredScenery(at(x,y,0));
+    check(o!=null&&o.getID()==id&&o.getDirection()==direction,"authored identity/definition/rotation materialized");
+    p.teleport(x+1,y,false);check(p.getViewArea().getGameObject(o.getLocation())==o,"actual current registered view identity");
+    check(o.getGameObjectDef().isInteractionOnly()&&o.getGameObjectDef().getType()==0,"paired server metadata");
+    check((p.getTileAtCurrentLevel(x,y).traversalMask&CollisionFlag.FULL_BLOCK)!=0,"authored liquid really blocks walking");
+    check((p.getTileAtCurrentLevel(x+1,y).traversalMask&(CollisionFlag.FULL_BLOCK|CollisionFlag.OBJECT))==0,"nonblocking spot adds no collision to adjacent land");
     for(int[] delta:new int[][]{{1,0},{-1,0},{0,1},{0,-1},{1,1},{-1,1},{1,-1},{-1,-1}}){
-     p.teleport(450+delta[0],450+delta[1],false);p.resetAll();check(ClericWellInteraction.canInteract(p,o),"adjacent land approach at rotation"+direction+" delta"+Arrays.toString(delta));
+     p.teleport(x+delta[0],y+delta[1],false);p.resetAll();check(ClericWellInteraction.canInteract(p,o),"adjacent land approach rotation"+direction+" delta"+Arrays.toString(delta));
     }
-    p.teleport(451,450,false);tile(h,450,450).traversalMask=(byte)(CollisionFlag.FULL_BLOCK|CollisionFlag.WALL_WEST|CollisionFlag.WALL_EAST|CollisionFlag.WALL_NORTH|CollisionFlag.WALL_SOUTH);check(!ClericWellInteraction.canInteract(p,o),"solid wall cannot be reached through");
-    tile(h,450,450).traversalMask=(byte)CollisionFlag.FULL_BLOCK;
-    p.teleport(450,450,false);check(!ClericWellInteraction.canInteract(p,o),"standing in blocked liquid does not bypass shoreline admission");
-    p.teleport(454,450,false);check(!ClericWellInteraction.canInteract(p,o),"range not bypassed");p.teleport(451,450,false);
+    p.teleport(x,y,false);check(!ClericWellInteraction.canInteract(p,o),"standing in blocked liquid cannot bypass land admission");
+    p.teleport(x+3,y,false);check(!ClericWellInteraction.canInteract(p,o),"range not bypassed");p.teleport(x+1,y,false);
     check(plugin.blockOpLoc(p,o,"dip sigils"),"production Dip command selected");check(!plugin.blockOpLoc(p,o,"examine"),"native examine left intact");
-    int inventory=p.getCarriedItems().getInventory().size();double blessing=p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id());
-    plugin.onOpLoc(p,o,"dip sigils");check(p.getCarriedItems().getInventory().size()==inventory&&p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id())==blessing,"authoring-stage guidance grants/consumes nothing");
+    int inventory=p.getCarriedItems().getInventory().size();int raw=p.getCarriedItems().getInventory().countId(3299,java.util.Optional.of(false));double blessing=p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id());
+    int messages=p.getOutgoingPacketQueueSize();plugin.onOpLoc(p,o,"dip sigils");check(p.getOutgoingPacketQueueSize()==messages+1,"production Dip sends explicit player guidance");check(p.getCarriedItems().getInventory().size()==inventory&&p.getCarriedItems().getInventory().countId(3299,java.util.Optional.of(false))==raw&&p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id())==blessing,"authoring guidance grants/consumes nothing");
     check(ClericWellInteraction.guidance(id).contains(id==1354?"Blight":"Grace"),"purpose-specific guidance");
-    final GameObject captured=o;WalkToObjectAction pending=new WalkToObjectAction(p,o){public void executeInternal(){}};check(pending.shouldExecute(),"normal object walker permits adjacent liquid interaction");
-    h.world().unregisterGameObject(o);GameObject replacement=place(h,id,direction);check(!ClericWellInteraction.canInteract(p,captured)&&ClericWellInteraction.canInteract(p,replacement),"stale captured object rejected after replacement");
-    h.world().unregisterGameObject(replacement);tile(h,450,450).traversalMask=0;
+    WalkToObjectAction pending=new WalkToObjectAction(p,o){public void executeInternal(){}};check(pending.shouldExecute(),"ordinary object walker admits adjacent land");
+    GameObject replacement=new GameObject(h.world(),Point.location(o.getX(),o.getY()),id,direction,0);h.world().replaceGameObject(o,replacement);
+    check(!ClericWellInteraction.canInteract(p,o)&&ClericWellInteraction.canInteract(p,replacement),"native replacement rejects stale captured identity");
    }
-   GameObject o=place(h,1354,0);p.teleport(451,450,false);
-   TargetObjectStruct packet=new TargetObjectStruct();packet.setOpcode(OpcodeIn.OBJECT_COMMAND);packet.coordObject=Point.location(450,450);new GameObjectAction().process(packet,p);check(p.getWalkToAction()!=null&&p.getWalkToAction().shouldExecute(),"actual game packet resolves well and establishes ordinary walking action");
-   h.world().unregisterGameObject(o);check(!ClericWellInteraction.canInteract(p,o),"removed object rejected");
-   GameObject otherLevel=new GameObject(h.world(),Point.location(450,1394),1354,0,0);otherLevel.setInitialLocation(Point.location(450,1394));check(!ClericWellInteraction.canInteract(p,otherLevel),"same XY different native level rejected before view admission");
-   GameObject otherInstance=new GameObject(h.world(),Point.location(450,450),1354,0,0);otherInstance.setInitialWorldLocation(new WorldLocation(new WorldSpaceId("well-instance"),new WorldCoordinate(450,450,0)));check(!ClericWellInteraction.canInteract(p,otherInstance),"same coordinate in another world-space rejected");
-   GameObject uninitialized=new GameObject(h.world(),Point.location(450,450),1354,0,0);check(!ClericWellInteraction.canInteract(p,uninitialized),"unavailable object scope fails closed");
+   GameObject blocked=h.world().getRegionManager().findNativeLayeredScenery(at(440,456,0));
+   check((h.world().getTile(at(440,456,0)).traversalMask&15)==15,"fixture's real native raw wall edges surround liquid");
+   for(int[] d:new int[][]{{1,0},{-1,0},{0,1},{0,-1}}){p.teleport(440+d[0],456+d[1],false);check(!ClericWellInteraction.canInteract(p,blocked),"solid wall cannot be reached through");}
+   GameObject o=h.world().getRegionManager().findNativeLayeredScenery(at(440,440,0));p.teleport(441,440,false);
+   TargetObjectStruct packet=new TargetObjectStruct();packet.setOpcode(OpcodeIn.OBJECT_COMMAND);packet.coordObject=Point.location(440,440);new GameObjectAction().process(packet,p);check(p.getWalkToAction()!=null&&p.getWalkToAction().shouldExecute(),"real game packet resolves well and creates normal walking action");
+   int packetMessages=p.getOutgoingPacketQueueSize();p.getWalkToAction().execute();h.advanceOneCombatTick();Field executor=CurrentCombatHarness.class.getDeclaredField("pluginExecutor");executor.setAccessible(true);((ExecutorService)executor.get(h)).submit(()->{}).get();check(p.getOutgoingPacketQueueSize()==packetMessages+1,"real packet action dispatches registered Dip plugin and guidance");
+   p.teleportLayered(at(441,440,2),false);check(!ClericWellInteraction.canInteract(p,o),"same XY different native level rejected");
+   p.teleportLayered(at(441,440,-3),false);check(!ClericWellInteraction.canInteract(p,o),"negative signed level cannot reach surface well");
+   p.teleportLayered(at(441,440,0),false);h.world().unregisterGameObject(o);check(!ClericWellInteraction.canInteract(p,o),"removed object rejected");
+   GameObject uninitialized=new GameObject(h.world(),Point.location(440,440),1354,0,0);check(!ClericWellInteraction.canInteract(p,uninitialized),"unavailable object scope fails closed");
    check(!ClericWellInteraction.canInteract(p,null)&&!ClericWellInteraction.canInteract(null,o),"null input rejected");
-   System.out.println("PASS "+checks+" production well registry/land/liquid/wall/rotation/range/replacement/packet/plugin/no-charge checks");
+   System.out.println("PASS "+checks+" production native well/land/liquid/wall/rotation/range/replacement/level/packet/plugin/no-charge checks");
   }
  }
 }

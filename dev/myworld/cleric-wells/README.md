@@ -126,3 +126,36 @@ there; toolkit implementation is coordinated separately, with no custom roster.
 “Dip sigils” is owner-approved wording. Invisible shoreline admission, pickable
 proxy geometry and generic editor helpers remain a separate coordinated runtime/
 toolkit step. No unimplemented production object is offered to map authors.
+
+## Invisible shoreline spots — installed authoring stage, October29
+
+The owner approved preparing areas now and implementing sigil charging later.
+Two ordinary game-owned scenery definitions are now available: **Ichor well**
+(ID1354) and **Divine wellspring** (ID1355), each1×1, nonblocking and invisible
+in game, with **Dip sigils** and native Examine commands. Place them on the
+liquid tiles along **the entire shoreline**, adjacent to walkable land. They
+are scenery placements; they do not paint a liquid floor or automatically fill
+an area's perimeter. Both regular/tall seep walls and the floor materials from
+the approved texture installation remain unchanged.
+
+The generic `isInteractionOnly` definition property explicitly authorizes an
+invisible native interaction footprint. A missing/empty/transparent model alone
+still does not authorize picking. The game-owned native `interaction_spot.ob3`
+quad supplies the actual1×1 click area, and the updated toolkit discovers that
+metadata/geometry to show editor-only footprint guides. No asset/ID list lives
+in the toolkit. Existing game scenery retains the defaultfalse behavior.
+
+During this owner-approved building stage, clicking **Dip sigils** approaches
+from land and gives the matching liquid/purpose guidance, explicitly saying
+that sigil infusion is not available yet. It consumes nothing and grants no
+sigils, XP or Devotion. Final charging is a separate Cleric-overhaul task.
+Stale/removed/replaced objects, wrong levels/world spaces, blocked standing
+tiles, walls and out-of-range attempts fail admission. Existing world floors
+remain authoritative; game code does not edit map terrain.
+
+Native primitive provenance, object IDs and all516 preserved archive records
+are recorded in `interaction-spots.json`. Reproduce/install the one generated
+native quad with `python3 scripts/install-cleric-well-spots.py`; `--check` is
+read-only. Run `python3 tests/myworld/test-cleric-well-spots.py` after maintained
+client/server builds. This is offline picking/resource proof, not a claim of
+owner private-gameplay acceptance or a hardware OpenGL context run.

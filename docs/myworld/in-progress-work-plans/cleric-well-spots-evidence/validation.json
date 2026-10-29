@@ -1,0 +1,28 @@
+{
+  "status": "PASS offline source/artifact checks; private owner gameplay not run",
+  "gameCodeCheckpoint": "6e8a0cdca8c983673fd3007bb1dca52b8967b89b",
+  "objects": [
+    1354,
+    1355
+  ],
+  "nativeModel": "interaction_spot.ob3",
+  "unchangedNativeRecords": 516,
+  "checks": {
+    "softwareNativeClientAssertions": 1420,
+    "projectedGlResourceAssertions": 1428,
+    "nativeRuntimeAssertions": 364,
+    "nativeSceneryImportTests": 10,
+    "existingWallMappingAssertions": 718,
+    "sceneModelRemoval": "PASS 12000-model exact order/metadata equivalence",
+    "rendererV2ShadowInventoryCache": "PASS",
+    "residentObjectGrid": "PASS",
+    "sceneInstanceStore": "PASS"
+  },
+  "artifacts": {
+    "server/core.jar": "d982e5d2461867921aedb2af35450ec3b0b89e50c1730a57d06b95d39f1ed4db",
+    "server/core-gameplay-overlay.jar": "d47d3a09bca38fcb0bc46602bd7f4022d4a54c0bcc4e29c562c41b8663ec1418",
+    "server/plugins.jar": "3412568ae477e07431b125fb5e1e651db619b5f7c0e7bdf40b3e94b48b6fbcd9",
+    "Client_Base/Open_RSC_Client.jar": "71b44bd5503bfeb3a6e315cc054d9f049e202a577a785493515ff5c442b5196e",
+    "Client_Base/Cache/video/models.orsc": "edabd984ef4bed99df0f7d4874c66b36acda1f7e3dff08f46c20f6afb64eb340"
+  }
+}
