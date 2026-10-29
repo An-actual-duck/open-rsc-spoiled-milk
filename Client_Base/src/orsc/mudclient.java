@@ -21223,6 +21223,8 @@ public final class mudclient implements Runnable {
 				continue;
 			}
 
+            // Appended native family uses a new free classic range; old entities/media stay intact.
+            if("viscousbattleaxe".equals(s))animationNumber=4000;
 			loadSprite(animationNumber, "entity", 15);
 			if (EntityHandler.getAnimationDef(animationIndex).hasA()) {
 				loadSprite(animationNumber + 15, "entity", 3);

@@ -14,15 +14,17 @@ public final class PoisonPower {
 
 	public static int getWeaponMaxPoisonPower(final int itemId) {
 		final int tier = getWeaponTier(itemId);
-		return tier <= 0 ? 0 : tier * 10;
+        return tier <= 0 ? 0 : tier * (com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.isCoated(itemId)?5:10);
 	}
 
 	public static int getWeaponAppliedPoisonPower(final int itemId) {
 		final int tier = getWeaponTier(itemId);
-		return tier <= 0 ? 0 : tier * 4;
+        return tier <= 0 ? 0 : tier * (com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.isCoated(itemId)?2:4);
 	}
 
 	private static int getWeaponTier(final int itemId) {
+        int coatingTier=com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.tier(itemId);
+        if(coatingTier>0)return coatingTier;
 		if (itemId == MyWorldItemId.POISONED_DAGGER_OF_TERROR) return 5;
 		if (isPoisonedExaltedRuneWeapon(itemId)) {
 			return 12;

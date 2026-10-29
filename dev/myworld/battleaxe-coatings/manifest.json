@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "coatingId": 3410,
+  "appearanceStart": 1097,
+  "entry": "viscousbattleaxe",
+  "slowPower": 4,
+  "slowCap": 12,
+  "price": 300,
+  "herblawLevel": 46,
+  "experience": 300,
+  "unfinishedId": 460,
+  "eyeId": 3342,
+  "glandId": 3341,
+  "variants": [
+    {
+      "baseId": 89,
+      "coatedId": 3411,
+      "tier": 4,
+      "inventoryMask": 15654365,
+      "heldMask": 15654365,
+      "appearanceId": 1097
+    },
+    {
+      "baseId": 90,
+      "coatedId": 3412,
+      "tier": 5,
+      "inventoryMask": 15658734,
+      "heldMask": 15658734,
+      "appearanceId": 1098
+    },
+    {
+      "baseId": 91,
+      "coatedId": 3413,
+      "tier": 6,
+      "inventoryMask": 10072780,
+      "heldMask": 10072780,
+      "appearanceId": 1099
+    },
+    {
+      "baseId": 92,
+      "coatedId": 3414,
+      "tier": 8,
+      "inventoryMask": 11717785,
+      "heldMask": 11717785,
+      "appearanceId": 1100
+    },
+    {
+      "baseId": 93,
+      "coatedId": 3415,
+      "tier": 10,
+      "inventoryMask": 65535,
+      "heldMask": 65535,
+      "appearanceId": 1101
+    },
+    {
+      "baseId": 205,
+      "coatedId": 3416,
+      "tier": 3,
+      "inventoryMask": 16737817,
+      "heldMask": 16737817,
+      "appearanceId": 1102
+    },
+    {
+      "baseId": 429,
+      "coatedId": 3417,
+      "tier": 5,
+      "inventoryMask": 3158064,
+      "heldMask": 3158064,
+      "appearanceId": 1103
+    },
+    {
+      "baseId": 2002,
+      "coatedId": 3418,
+      "tier": 1,
+      "inventoryMask": 12044761,
+      "heldMask": 12044761,
+      "appearanceId": 1104
+    },
+    {
+      "baseId": 2013,
+      "coatedId": 3419,
+      "tier": 2,
+      "inventoryMask": 13134379,
+      "heldMask": 13134379,
+      "appearanceId": 1105
+    },
+    {
+      "baseId": 2024,
+      "coatedId": 3420,
+      "tier": 7,
+      "inventoryMask": 9348795,
+      "heldMask": 9348795,
+      "appearanceId": 1106
+    },
+    {
+      "baseId": 2035,
+      "coatedId": 3421,
+      "tier": 9,
+      "inventoryMask": 5914493,
+      "heldMask": 5914493,
+      "appearanceId": 1107
+    },
+    {
+      "baseId": 2156,
+      "coatedId": 3422,
+      "tier": 5,
+      "inventoryMask": 15196886,
+      "heldMask": 3158064,
+      "appearanceId": 1108
+    },
+    {
+      "baseId": 2752,
+      "coatedId": 3423,
+      "tier": 11,
+      "inventoryMask": 16711748,
+      "heldMask": 16711748,
+      "appearanceId": 1109
+    },
+    {
+      "baseId": 3118,
+      "coatedId": 3424,
+      "tier": 5,
+      "inventoryMask": 10397087,
+      "heldMask": 3158064,
+      "appearanceId": 1110
+    },
+    {
+      "baseId": 3269,
+      "coatedId": 3425,
+      "tier": 12,
+      "inventoryMask": 14221311,
+      "heldMask": 14221311,
+      "appearanceId": 1111
+    }
+  ],
+  "classicSpriteStart": 4000
+}

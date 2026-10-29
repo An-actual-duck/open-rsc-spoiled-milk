@@ -1,0 +1,3 @@
+[echo] 2026-10-29 13:29:06 [InitThread] INFO  Server: - PASS battleaxe coatings: 1042 assertions; all15 templates, atomic recipe/apply/wipe, actual primary damage and poison paths
+BUILD SUCCESSFUL
+Total time: 15 seconds

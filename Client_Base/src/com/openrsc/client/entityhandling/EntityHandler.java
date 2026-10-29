@@ -6078,6 +6078,7 @@ public class EntityHandler {
 		addKingBlackDragonLeatherDefinitions();
 		addSlayerComponentDefinitions();
 		addAntidoteDefinitions();
+        for(ItemDef item:BattleaxeCoatingDefinitions.items())setCustomItemDefinition(item.id,item);
 		addBangleJewelryDefinitions();
 		addClericSigilDefinitions();
 		addScytheLineDefinitions();
@@ -8126,6 +8127,7 @@ public class EntityHandler {
 			animations.add(new AnimationDef("gemdragon", "npc", gemColours[tier], 0, true, false, 0));
 			activateGemDragonVisual(tier);
 		}
+        BattleaxeCoatingDefinitions.animations(animations);
 	}
 
 	private static void verifyAnimationDefinition(int appearanceId, String expectedName, int expectedColour) {

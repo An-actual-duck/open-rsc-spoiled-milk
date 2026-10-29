@@ -1,0 +1,2 @@
+PASS: Exalted Rune Dagger and Spear preserve full parity and tier-12 poison behavior
+PASS: neutral Iron Short Sword and Zamorak-aligned Poisoned Black Dagger validated

@@ -283,6 +283,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			return;
 		}
 
+        final int committedPrimaryWeapon = attackerMob instanceof Player
+            ? com.openrsc.server.content.coatings.BattleaxeCoatings.equipped((Player)attackerMob) : -1;
 		int damage;
 		if (attackSuppressed) {
 			damage = 0;
@@ -295,7 +297,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
-		inflictDamage(attackerMob, targetMob, damage, attackSuppressed);
+		inflictDamage(attackerMob, targetMob, damage, attackSuppressed, false, committedPrimaryWeapon);
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(attackerMob, targetMob, attackSuppressed)) {
 			inflictDamage(attackerMob, targetMob,
 				CombatFormula.doOffhandMeleeDamage(attackerMob, targetMob), false, true);
@@ -381,7 +383,12 @@ public class PvmMeleeEvent extends GameTickEvent {
 		inflictDamage(hitter, target, damage, attackSuppressed, false);
 	}
 
-	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
+    private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
+        int weapon=hitter instanceof Player?com.openrsc.server.content.coatings.BattleaxeCoatings.equipped((Player)hitter):-1;
+        inflictDamage(hitter,target,damage,attackSuppressed,offhand,weapon);
+    }
+
+    private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand, int committedCoatingWeapon) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -445,6 +452,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
+        if(!offhand&&!attackSuppressed)com.openrsc.server.content.coatings.BattleaxeCoatings.primaryHit(
+            hitter,target,committedCoatingWeapon,damageResult.getActualDamage());
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
 			hitter, target, damageResult.getActualDamage());

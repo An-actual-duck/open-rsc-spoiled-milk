@@ -1175,7 +1175,7 @@ public class Equipment {
 		}
 
 		// Dragon battle axe
-		else if (!player.getConfig().EQUIP_QUEST_ITEMS_WITHOUT_QUESTS && item.getCatalogId() == ItemId.DRAGON_BATTLE_AXE.id() && player.getQuestStage(Quests.HEROS_QUEST) != -1) {
+		else if (!player.getConfig().EQUIP_QUEST_ITEMS_WITHOUT_QUESTS && com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.base(item.getCatalogId()) == ItemId.DRAGON_BATTLE_AXE.id() && player.getQuestStage(Quests.HEROS_QUEST) != -1) {
 			player.message("you have not earned the right to wear this yet");
 			player.message("you need to complete the Hero's guild entry quest");
 			return false;
@@ -3282,7 +3282,7 @@ public class Equipment {
 	}
 
 	private boolean isBattleaxe(Item item) {
-		int catalogId = item.getCatalogId();
+        int catalogId = com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.base(item.getCatalogId());
 		for (int battleaxeId : battleaxeIds) {
 			if (catalogId == battleaxeId) {
 				return true;

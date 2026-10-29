@@ -17,8 +17,10 @@ that saved map while finishing gameplay and release integration.
   in safe rooms behind freely accessible auto-closing doors. Final migration must
   include the reviewed NPC-capacity work and completed placement/binding; see
   [final tower placement and capacity](slayer-tower-final-placement-and-capacity.md).
-- Finish the axe-based Slow coating using the shared Slow foundation, including
-  its remaining recipe, application and balance decisions.
+- The owner approved the remaining axe-coating design on October29. Its full
+  implementation is a private review candidate; finish Core integration and
+  owner visual/gameplay acceptance rather than reopen the approved design.
+  See [coating implementation](battleaxe-coatings-implementation-review.md).
 - Most existing Slayer encounters, equipment and sprites are already approved
   and tested. They were separated to allow unrelated fixes-only releases.
   Assemble that approved content with normal integration checks; do not treat

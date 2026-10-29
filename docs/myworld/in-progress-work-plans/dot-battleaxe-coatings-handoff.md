@@ -182,3 +182,22 @@ items or gameplay defaults were integrated. ai-2 is recycled for the separate
 NPC capacity task; do not follow this document's old branch/slot assignment.
 Phase 2 needs a newly activated coating branch after the remaining decisions.
 The recorded single-dose/half-strength-poison owner feedback remains authoritative.
+
+
+## Owner approval and implementation — October 29, 2026
+
+The owner explicitly answered **“Use those recommendations”** to: all15 battleaxes
+including Grey/Exalted; permanent Viscous counterparts and explicit wipe-clean
+returning the base without refund; flat4 Slow power/cap12 on a resolved positive
+primary main-hand hit to a surviving legal NPC; teal blade edges; unfinished
+Avantoe + one Cockatrice Eye + one Sticky Saliva Gland, Herblaw46, XP300, yielding
+**one single-use dose**. The earlier half-standard poison rule remains tier×2 /
+tier×5 with no minimum and the existing proc/shared-pool policies.
+
+This approval resolves the prior remaining Phase2 design dependency. Implementation
+is assigned to `feat/battleaxe-coatings-implementation`; see its implementation
+review for exact IDs, inherited policies and gates. The original Phase1 branch,
+slot references, three-dose coating proposals and “await remaining decisions”
+statements above are historical. Antidotes are independently reconciled on main
+and still have three doses. Coating art and private gameplay acceptance remain
+owner/Core review gates; no deployment is authorized by this approval.
