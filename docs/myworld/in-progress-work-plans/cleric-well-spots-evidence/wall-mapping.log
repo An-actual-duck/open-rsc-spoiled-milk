@@ -1,0 +1,4 @@
+SOFTWARE phase angle=512 mismatch=119/9282 stretched=8806
+SOFTWARE phase angle=640 mismatch=140/6462 stretched=6220
+SOFTWARE phase angle=384 mismatch=64/6515 stretched=6175
+PASS 718 actual wall-cap texture mapping checks

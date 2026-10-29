@@ -1,0 +1,6 @@
+Summary of the single ordinary-regression run; original full stdout was returned in the worker tool transcript.
+python3 tests/myworld/test-native-scenery-import.py: Ran10tests, OK.
+python3 tests/myworld/test-client-scene-model-removal.py: PASS Scene model removals compact once with exact order and metadata (12000-model fixture).
+python3 tests/myworld/test-renderer-v2-shadow-inventory-cache.py: PASS renderer-v2 shadow inventory cache.
+python3 tests/myworld/test-resident-object-chunk-grid.py: PASS resident object cells keep unique world-aligned renderer origins.
+Wall718checks and scene-instance-store full console outputs are preserved separately.

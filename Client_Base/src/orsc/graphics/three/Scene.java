@@ -48,6 +48,9 @@ public final class Scene {
 	private int m_cb;
 	private int m_Cb;
 	private int m_cc = 0;
+	private boolean interactionOnlyPickActive;
+	private boolean interactionLegacyRaster;
+	private double interactionOpaqueDepth = Double.POSITIVE_INFINITY;
 	private long[] m_D;
 	private GraphicsController graphics;
 	private int m_e;
@@ -780,7 +783,7 @@ public final class Scene {
 	}
 
 	private void setFrustum(int var1, int var2, int[] var3, int var4, int var5, RSModel var6, int[] var7, int[] var8,
-							int var9, int var10, int var11) {
+							int var9, int var10, int var11, int pickMaterial) {
 		try {
 
 			int var12;
@@ -1397,6 +1400,7 @@ public final class Scene {
 						withinPickBounds = this.m_j >= var52.m_d >> 8 && this.m_j <= var52.m_k >> 8
 							&& var52.m_k >= var52.m_d;
 					}
+					boolean withinOpaquePolygon = withinPickBounds;
 					if (!withinPickBounds && var6.getPickBoundsScale() > 1) {
 						int minX = var7[0];
 						int maxX = var7[0];
@@ -1415,6 +1419,7 @@ public final class Scene {
 						withinPickBounds = this.m_j >= minX - xPadding && this.m_j <= maxX + xPadding
 							&& this.m_Wb >= minY - yPadding && this.m_Wb <= maxY + yPadding;
 					}
+					if (withinOpaquePolygon && this.interactionOnlyPickActive) recordInteractionPickOccluder(var6, var2, pickMaterial);
 					if (withinPickBounds && !var6.m_db
 						&& var6.m_zb[var2] == 0) {
 						this.addPickCandidate(var6, var2);
@@ -2478,11 +2483,39 @@ public final class Scene {
 	}
 
 	private void addPickCandidate(RSModel model, int faceId) {
+        if (model.isInteractionOnly()) {
+            double depth = interactionPickDepth(model, faceId);
+            if (!Double.isFinite(depth) || depth < this.rot1024_zTop || depth > this.interactionOpaqueDepth + 0.01D) return;
+        }
 		this.ensurePickCapacity(this.m_cc + 1);
 		this.m_Ab[this.m_cc] = model;
 		this.m_qb[this.m_cc] = faceId;
 		++this.m_cc;
 	}
+
+    private double interactionPickDepth(RSModel model, int faceId) {
+        double projection = (double) (1 << this.rot1024_vp_src);
+        return InteractionPickGeometry.depth(model, faceId, this.m_j / projection, (this.m_Wb - this.m_Nb) / projection);
+    }
+
+    private void recordInteractionPickOccluder(RSModel model, int faceId, int material) {
+        if (!this.interactionOnlyPickActive || model.isInteractionOnly()
+                || (material == -2 && this.interactionLegacyRaster)) return;
+        double depth = interactionPickDepth(model, faceId);
+        if (!Double.isFinite(depth) || depth < this.rot1024_zTop || depth >= this.interactionOpaqueDepth) return;
+        double projection = (double) (1 << this.rot1024_vp_src);
+        if (!InteractionPickGeometry.opaqueAt(model, faceId, material, depth,
+                this.m_j / projection, (this.m_Wb - this.m_Nb) / projection, this.renderer3DTextures)) return;
+        this.interactionOpaqueDepth = depth;
+        int retained = 0;
+        for (int pick = 0; pick < this.m_cc; pick++) {
+            RSModel candidate = this.m_Ab[pick];
+            if (candidate.isInteractionOnly() && interactionPickDepth(candidate, this.m_qb[pick]) > depth + 0.01D) continue;
+            this.m_Ab[retained] = candidate;
+            this.m_qb[retained++] = this.m_qb[pick];
+        }
+        this.m_cc = retained;
+    }
 
 	private static int growSceneCapacity(int currentCapacity, int requiredCapacity) {
 		int newCapacity = Math.max(currentCapacity + Math.max(128, currentCapacity / 2), 1);
@@ -2841,6 +2874,9 @@ public final class Scene {
 	public final void endScene(int var1) {
 		try {
 
+            this.interactionOnlyPickActive = false;
+            this.interactionOpaqueDepth = Double.POSITIVE_INFINITY;
+
 			long modelRotateNanos = 0L;
 			long worldCullNanos = 0L;
 			long depthExportNanos = 0L;
@@ -2901,6 +2937,16 @@ public final class Scene {
 			for (var3 = 0; this.modelCount > var3; ++var3) {
 				this.models[var3].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x, (byte) -122,
 					this.rot1024_off_z, this.cameraProjY, this.cameraProjZ, this.cameraProjX, this.rot1024_zTop);
+                RSModel rotated = this.models[var3];
+                if (this.m_K && !this.interactionOnlyPickActive && rotated.m_dc && rotated.isInteractionOnly()) {
+                    for (int face = 0; face < rotated.faceHead; face++) {
+                        if (isProjectedFacePickable(rotated, face)
+                                && projectedFaceCouldContainMouse(rotated, rotated.faceIndices[face], rotated.faceIndexCount[face])) {
+                            this.interactionOnlyPickActive = true;
+                            break;
+                        }
+                    }
+                }
 			}
 
 			this.models[this.modelCount].rotate1024(this.rot1024_off_y, this.rot1024_vp_src, this.rot1024_off_x,
@@ -2997,11 +3043,12 @@ public final class Scene {
 										var13 = var2.faceTextureBack[var3];
 									}
 
-									boolean pickableTransparentFace = var2.facePickIndex != null
+									boolean pickableTransparentFace = (var2.isInteractionOnly() && isProjectedFacePickable(var2, var3)) || var2.facePickIndex != null
 										&& var3 >= 0
 										&& var3 < var2.facePickIndex.length
 										&& var2.facePickIndex[var3] >= 200000
 										&& var2.facePickIndex[var3] <= 300000;
+									if (var2.isInteractionOnly()) var13 = Scene.TRANSPARENT;
 									if (var13 != Scene.TRANSPARENT || pickableTransparentFace) {
 										var6 = 0;
 
@@ -3095,6 +3142,7 @@ public final class Scene {
 			int legacySceneDrawOrder = 0;
 			boolean skipLegacyWorldRaster =
 				Renderer3DSettings.canSkipLegacyWorldRaster() && !forceLegacyWorldRaster;
+            this.interactionLegacyRaster = !skipLegacyWorldRaster;
 			long legacyDrawStart = RenderTelemetry.now();
 			if (this.m_zb != 0) {
 				this.setFrustum(0, -1, this.polygons, this.m_zb - 1);
@@ -3205,7 +3253,7 @@ public final class Scene {
 						int[] var18 = var2.faceIndices[var3];
 						boolean mouseCouldPickProjectedFace =
 							this.m_K
-								&& isProjectedFacePickable(var2, var3)
+								&& (isProjectedFacePickable(var2, var3) || this.interactionOnlyPickActive)
 								&& projectedFaceCouldContainMouse(var2, var18, var17);
 						boolean faceNeedsNearPlaneClip = projectedFaceNeedsNearPlaneClip(var2, var18, var17);
 						boolean needsLegacyClippedGeometry =
@@ -3332,7 +3380,7 @@ public final class Scene {
 						boolean needsLegacyScanline =
 							!skipLegacyWorldRaster || mouseCouldPickProjectedFace;
 						if (needsLegacyScanline) {
-							this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14);
+							this.setFrustum(0, var3, this.m_B, 0, 0, var2, this.m_yb, this.m_r, 0, 5960, var14, var25.m_b);
 						}
 						if (!skipLegacyWorldRaster && this.m_Xb < this.m_Cb && var25.m_b != Scene.TRANSPARENT) {
 							this.setFrustum(this.m_Vb, var2, var3, 1, var17, var25.m_b, this.m_J, this.m_Qb, 0, 0);
@@ -3388,7 +3436,7 @@ public final class Scene {
 			return false;
 		}
 		if (this.m_K
-			&& isProjectedFacePickable(model, faceId)
+			&& (isProjectedFacePickable(model, faceId) || this.interactionOnlyPickActive)
 			&& projectedFaceCouldContainMouse(model, faceIndices, vertexCount)) {
 			return false;
 		}

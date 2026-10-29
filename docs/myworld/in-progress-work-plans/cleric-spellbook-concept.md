@@ -1993,3 +1993,23 @@ downward hooks. Its native-size Aseprite translation is a visual-review
 candidate, not yet a production Blight sigil. No skull or droplet motif,
 no change to existing god/Grace visuals and no new carving/infusion cost is
 implied by that selection.
+
+
+### Shoreline building stage approved and implemented — October29,2026
+
+The owner explicitly chose **“Prepare the areas now; charging later.”** This
+supersedes the earlier requirement to delay all placeable shoreline objects
+until final infusion rules exist. Ichor well1354 and Divine wellspring1355 are
+now game-owned1×1, nonblocking, invisible scenery with **Dip sigils** and native
+Examine. Their ordinary native transparent model and generic interaction-only
+metadata provide real picking; the toolkit reads the selected game definitions
+to show editor-only guides. Custom content remains game-owned and discovered.
+Place spots on liquid edge tiles along the entire shoreline, next to land.
+The current Dip action validates active object identity, spatial scope and
+ordinary reach from land, then provides purpose-specific guidance that charging
+is not yet available. There are no inventory, XP, recipe or Devotion changes.
+Final Grace/Blight infusion behavior remains part of the Cleric overhaul.
+
+The owner also approved the native **Thorn** carved/infused Blight visual.
+`dev/myworld/blight-sigil-candidate` is the approved artwork source; production
+Blight item identities/material tiers/recipes still await their own task.

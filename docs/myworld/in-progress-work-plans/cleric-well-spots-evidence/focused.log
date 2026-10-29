@@ -1,0 +1,7 @@
+PASS shared native transparent footprint; 516 existing native records byte-exact; only one new model
+1024-proxy complete Scene mouse-query average ms=1.0902993333333333
+PASS 1420 native footprint/definition/clone/cache/actual mouse/occlusion/cutout/GL export checks; capture=false
+1024-proxy complete Scene mouse-query average ms=1.4577966666666669
+PASS 1428 native footprint/definition/clone/cache/actual mouse/occlusion/cutout/GL export checks; capture=true
+
+2026-10-29 18:41:53 [InitThread] INFO  Server: - PASS 364 production native well/land/liquid/wall/rotation/range/replacement/level/packet/plugin/no-charge checks

@@ -1,7 +1,7 @@
-# Blight — Thorn native-size candidate
+# Blight — approved Thorn artwork
 
 The owner selected concept A, Thorn, on October29,2026. This is its native-size
-translation, awaiting visual approval. No gameplay IDs, definitions, recipes,
+translation, visually approved by the owner on October29,2026 ("that'll work"). No gameplay IDs, definitions, recipes,
 infusion cost or production icon were installed.
 
 The owner-authored existing `resources/sigils/stone.png` substrate stays exact

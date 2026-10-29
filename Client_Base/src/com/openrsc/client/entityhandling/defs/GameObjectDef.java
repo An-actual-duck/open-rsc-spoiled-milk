@@ -9,9 +9,16 @@ public class GameObjectDef extends EntityDef {
 	private int groundItemVar;
 	private String objectModel;
 	public int modelID;
+	private final boolean interactionOnly;
 
 	public GameObjectDef(String name, String description, String command1, String command2, int type, int width, int height, int groundItemVar, String objectModel, int id) {
+		this(name, description, command1, command2, type, width, height, groundItemVar, objectModel, id, false);
+	}
+
+	/** Invisible scenery whose native footprint is still available for interaction. */
+	public GameObjectDef(String name, String description, String command1, String command2, int type, int width, int height, int groundItemVar, String objectModel, int id, boolean interactionOnly) {
 		super(name, description, id);
+		this.interactionOnly = interactionOnly;
 		this.command1 = command1;
 		this.command2 = command2;
 		this.type = type;
@@ -20,6 +27,8 @@ public class GameObjectDef extends EntityDef {
 		this.groundItemVar = groundItemVar;
 		this.objectModel = objectModel;
 	}
+
+	public boolean isInteractionOnly() { return interactionOnly; }
 
 	public String getObjectModel() {
 		return objectModel;
