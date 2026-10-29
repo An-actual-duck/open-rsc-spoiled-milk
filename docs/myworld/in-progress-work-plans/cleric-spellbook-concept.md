@@ -20,23 +20,24 @@ resource conversion or map change is authorized by this documentation update.
 - Remove **neutral sigils** from the intended new model. Existing neutral player
   stock and stable item identities need a deliberate migration decision; this is
   not permission to delete stock or recycle IDs.
-- Add **two distinct carved resource families**, described here only as
-  **beneficial** and **hostile**. These are working labels. The owner does **not**
-  want the final names to be “Holy” and “Unholy.”
-- A god sigil together with the beneficial type supplies aligned **buffs**; a
-  god sigil together with the hostile type supplies aligned **debuffs**. Either
-  purpose type without a god assignment supplies its respective **generic
-  buff or debuff**, replacing the former neutral-resource role. This does not
+- Add two distinct carved resource families with owner-confirmed names:
+  **Grace** for support/buffs and **Blight** for future hostile/debuff spells.
+  These replace the earlier beneficial/hostile working labels; “Holy/Unholy”
+  are not their item names.
+- A god sigil together with **Grace** supplies aligned support/buffs; a god
+  sigil together with **Blight** will supply aligned debuffs. Either purpose
+  type without a god assignment supplies its respective generic role,
+  replacing the former neutral-resource role. This does not
   grant a generic spell every god's properties.
 - **Consume the separate resources together when casting**, like distinct rune
   costs. The owner explicitly confirmed this interpretation; do not physically
   combine them into a new sigil or item. Exact cost quantities remain open.
-- Infuse hostile carvings by dipping them at **ichor-well edges under
+- Infuse **Blight** carvings by dipping them at **ichor-well edges under
   graveyards**. “Wells” here means **large underground liquid areas**, not a
   bucket-and-shaft well or the old named Fountain of Ichor. The previous purple
   water/ichor-leaking dirt-wall visual direction is retained; those visual plans
   do not establish recipes or access requirements.
-- Infuse beneficial carvings by dipping them at **holy wellsprings beneath
+- Infuse **Grace** carvings by dipping them at **holy wellsprings beneath
   Entrana, the Monastery and other well-known holy areas**. Exact sites and
   access remain to be authored; no new coordinates are assigned here.
 - Reorganize the spellbook while salvaging as much existing content as practical.
@@ -44,18 +45,61 @@ resource conversion or map change is authorized by this documentation update.
   allies, hostile spells affect enemies. Existing PvP exclusions remain; this
   direction does not introduce new PvP behavior.
 
-**Still unresolved:** final names; the new families' materials, carving recipes,
-production skills/levels, XP, yields and quantities; the remaining tiers, spell
-list and layout; per-spell god identity and exact casting-cost quantities; and
-conversion of existing neutral player stock. Joint consumption as distinct
+**Still unresolved:** the new families' material grades, carving recipes,
+production skills/levels, XP, yields and quantities; exact casting costs and
+layout; future spells/tiers beyond the current mapping; and conversion of
+existing neutral player stock. The twelve existing support spells retain the
+mapping below; their current effects and unlocks are reuse references, not a
+new numerical rebalance. Joint consumption as distinct
 casting resources is confirmed; physical combination is not the design.
-No numbers, new item IDs, stock conversion or generic god properties are implied.
+The generic-cost substitution rule below is confirmed, but no fixed per-spell
+quantities, new item IDs, stock conversion or generic god properties are implied.
 
 The four-primary/neutral-at-any-altar model describes the shipped launch only.
 Older Unholy stone/silver recipes, the named Fountain and the October 24
 Curse-sigil/ichor-river wording are **superseded historical proposals**, not
 additional active requirements alongside this model. The [release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch)
 track the same direction.
+
+### Current two-tier mapping and generic Grace costs
+
+The owner requested mapping the **two existing tiers only**. All twelve spells
+below are support spells and therefore use **Grace**. Blight is a planned
+resource family for later debuffs; this mapping does not introduce debuffs or
+invent a mirrored hostile roster. Alignments, Worship unlocks and effects were
+checked against the current maintained `ClericSpellCatalog`.
+
+| Tier | Worship unlock (existing) | Spell | God assignment | New resource direction (quantities open) |
+|---|---:|---|---|---|
+| 1 | 1 | Mend | Saradomin | Saradomin sigil + Grace |
+| 1 | 3 | Unify | Generic | Grace only; replace the god portion with more Grace |
+| 1 | 5 | Fervor | Zamorak | Zamorak sigil + Grace |
+| 1 | 8 | Purify | Guthix | Guthix sigil + Grace |
+| 1 | 11 | Restore | Guthix | Guthix sigil + Grace |
+| 1 | 14 | Ward | Saradomin | Saradomin sigil + Grace |
+| 2 | 16 | Greater Mend | Saradomin | Saradomin sigil + Grace |
+| 2 | 19 | Zeal | Zamorak | Zamorak sigil + Grace |
+| 2 | 22 | Thorns | Guthix | Guthix sigil + Grace |
+| 2 | 25 | Aegis | Saradomin | Saradomin sigil + Grace |
+| 2 | 28 | Rally | Zamorak | Zamorak sigil + Grace |
+| 2 | 30 | Respite | Generic | Grace only; replace the god portion with more Grace |
+
+**Confirmed substitution rule:** if an aligned cost is `A matching god sigils +
+B Grace`, its equivalent generic cost is **`A + B Grace`**, within a compatible
+tier/grade. The generic spell replaces the god-resource portion with additional
+Grace instead of simply omitting that cost. Resources are consumed together
+when casting; there is no physical combined sigil.
+
+The owner's example, **`1 god sigil + 1 Grace` versus `2 Grace`**, illustrates the
+rule. It does **not** fix every tier-one spell at those numbers, approve any
+tier-two quantity, or specify how Grace grades correspond to existing stone or
+silver god sigils. Do not sum incompatible grades or reuse the shipped
+`2 stone + 1 silver` vector as the new tier-two overhaul cost. New material
+grades, exact quantities and cross-grade correspondence remain to be designed.
+
+The table confirms the current twelve-spell mapping, not every future roster,
+layout or effect revision. Preserve the existing effects as the salvage baseline;
+further tiers, Blight spells and later changes remain discussion items.
 
 ## Confirmed Direction
 
@@ -143,17 +187,18 @@ skill.
 
 ### Sigils — three unchanged god lines, two new purpose families
 
-The October 29 direction above owns the new taxonomy. The production rules
+The October 29 direction and Grace mapping above own the new taxonomy. The production rules
 below apply **only to the three existing god lines** and preserve their shipped
-behavior. They do not assign the new beneficial/hostile families stone/silver
+behavior. They do not assign the new Grace/Blight families stone/silver
 recipes, levels, XP, quantities, Devotion charges, batching or stackability.
 
 
 - Cleric spells use new consumable resources called **sigils**, serving the
   spellbook role that runes serve for Magic.
 - Saradomin, Guthix and Zamorak remain the god-aligned resources. The new
-  purpose resources determine the buff/debuff branch; exact per-spell cost
-  vectors remain open; the separate resources are consumed together at cast time.
+  Grace/Blight resources determine the support/debuff branch. The twelve current
+  spells use Grace as mapped above; exact quantities remain open and the
+  separate resources are consumed together at cast time.
 - Sigils begin with the same `Rune stone` resource used by Runecraft.
 - Sigils have stone and advanced silver material families. Stone sigils are
   carved from one `Rune stone`; silver sigils are carved from one existing
@@ -196,8 +241,8 @@ recipes, levels, XP, quantities, Devotion charges, batching or stackability.
 - Sigils are aligned to Saradomin, Guthix, or Zamorak. A Saradomin sigil can be
   blessed only at a Saradomin altar, and the same matching rule applies to the
   other two gods.
-- The generic resource role moves to an unassigned beneficial or hostile
-  carving as appropriate. The old neutral-at-any-altar behavior is historical;
+- The generic resource role moves to unassigned Grace (or future Blight),
+  replacing the god portion with additional compatible-purpose resources. The old neutral-at-any-altar behavior is historical;
   no stock or catalog is removed by documenting its planned replacement.
 - The player's currently selected worship alignment does not restrict sigil
   blessing. The relevant resource and eligibility checks use the god
@@ -376,9 +421,9 @@ sigil costs and gives each Devotion economy a distinct purpose.
 - **Guthix:** cleansing, restoration, and balance.
 - **Zamorak:** buffs and ally empowerment, with an offensive or forceful tone
   but without turning the normal Cleric catalog into direct-damage magic.
-- **Generic:** effects without a god assignment use their beneficial or hostile
-  purpose resource. This replaces the neutral resource role; exact per-spell
-  assignments remain open and generic does not mean inheriting every god trait.
+- **Generic:** Unify and Respite use Grace only under the confirmed substitution
+  rule. Future generic hostile spells would use Blight. This replaces the
+  neutral resource role and does not mean inheriting every god trait.
 
 Sacrifice or health-exchange mechanics are not part of Zamorak's assumed
 identity. They may not fit RSC's combat and support model well and should not be
@@ -1055,14 +1100,13 @@ on animation availability.
 
 ### Sigil Taxonomy and Production
 
-- Final names for the beneficial/hostile resource families; “Holy/Unholy” are
-  explicitly not approved final item names.
 - New carving materials, recipes, skills/levels, XP, quantities, yields and
   stackability, and precise dipping interactions/batching at the two site types.
   Existing god production remains unchanged; its stone/silver values do not
   automatically become the new families' recipes.
-- Spellbook tiers, remaining spells/layout, per-spell god assignment and cost
-  vectors, including the generic buff/debuff resource roles.
+- Exact cost quantities and new resource grades, their correspondence to god
+  resource grades, and the book's layout. The two-tier twelve-spell Grace mapping
+  is confirmed above; future spells/tiers and the Blight roster remain open.
 - Migration of the shipped neutral choices, item identities and player stock.
   Do not delete stock, reuse old IDs or infer a conversion ratio.
 - Exact ichor-well and holy-wellspring entrances, access and interaction scenery.
@@ -1181,7 +1225,7 @@ plan or permission to settle the open choices:
 
 - [ClericAlignment](../../../server/src/com/openrsc/server/content/cleric/ClericAlignment.java)
   currently enumerates `NEUTRAL` plus the three gods. Represent god assignment
-  separately from beneficial/hostile purpose rather than assuming either new
+  separately from Grace/Blight purpose rather than assuming either new
   family is another god; the actual schema remains to be designed.
 - [ClericSigilProductionCatalog](../../../server/src/com/openrsc/server/content/cleric/ClericSigilProductionCatalog.java)
   currently enumerates all four launch alignments for each material.
@@ -1217,14 +1261,26 @@ Older entries describe decisions at their recorded date. The October 29 entry
 supersedes conflicting neutral/four-primary, Unholy-recipe and river/Fountain
 requirements; keep the history without treating it as concurrent instructions.
 
+### 2026-10-29: Grace/Blight names and two-tier support cost mapping
+
+The owner accepted **Grace** and **Blight**. All twelve existing spells in the
+two existing tiers use Grace/support for this mapping; no debuffs exist in this
+mapped roster yet. Keep their existing god assignments and Worship unlocks as
+references. A generic Grace spell replaces the missing god-sigil share with
+more Grace: `A god + B Grace` becomes compatible-grade `A + B Grace`. The
+`1 + 1` versus `2` example illustrates substitution, not fixed tier-one prices
+or approval of tier-two counts/materials. Exact new grades/quantities, future
+spells/layout and neutral-stock migration remain open.
+
 ### 2026-10-29: Three god sigils and two dipped purpose resources
 
 Confirmed the direction in the status section: unchanged Saradomin/Guthix/Zamorak
 production; removal of neutral sigils from the new model; two separately carved,
-as-yet unnamed beneficial/hostile families; god-plus-purpose buffs/debuffs and
+beneficial/hostile families (subsequently named Grace/Blight); god-plus-purpose buffs/debuffs and
 unassigned-purpose generic spells; hostile dipping in large underground ichor
 wells beneath graveyards, beneficial dipping at holy wellsprings beneath Entrana,
-the Monastery and other holy areas. “Holy/Unholy” are not approved item names.
+the Monastery and other holy areas. The later confirmation below names the
+resources Grace and Blight; “Holy/Unholy” are not their names.
 Reorganize and salvage the book without adding PvP. The owner then explicitly
 confirmed “Consume together when casting”: separate costs, like runes, not a
 physical combined item. Recipes, exact cost quantities, remaining spell design
