@@ -45,7 +45,7 @@
 		<int>450</int>
 		<ItemHerbDef>
 			<potionId>460</potionId>
-			<requiredLvl>50</requiredLvl>
+			<requiredLvl>46</requiredLvl>
 		</ItemHerbDef>
 	</entry>
 	<entry>

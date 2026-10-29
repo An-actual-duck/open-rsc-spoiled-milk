@@ -276,6 +276,7 @@ public final class EntityHandler {
 		customItemConditions();
 		if (getServer().getConfig().WANT_MYWORLD) {
 			applyOptionalItemOverrides(getServer().getConfig().CONFIG_DIR + "/defs/ItemDefsMyWorld.json");
+            loadItems(getServer().getConfig().CONFIG_DIR + "/defs/BattleaxeCoatingItemDefs.json");
 		}
 		LOGGER.info("Loaded " + items.size() + " item definitions");
 

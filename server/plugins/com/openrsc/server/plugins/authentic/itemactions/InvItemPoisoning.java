@@ -27,6 +27,9 @@ public class InvItemPoisoning implements UseInvTrigger {
 
 
 	private void applyPoison(Player player, Item item) {
+        if(com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.isCoated(item.getCatalogId())) {
+            player.message("Wipe the viscous coating away first.");return;
+        }
 		int makeAmount = 1, maxAmount;
 		String rawItemName = item.getDef(player.getWorld()).getName().toLowerCase();
 		String procItemName;

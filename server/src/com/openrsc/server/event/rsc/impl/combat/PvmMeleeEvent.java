@@ -382,6 +382,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
+        final int committedCoatingWeapon = hitter instanceof Player
+            ? com.openrsc.server.content.coatings.BattleaxeCoatings.equipped((Player)hitter) : -1;
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -445,6 +447,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
+        if(!offhand&&!attackSuppressed)com.openrsc.server.content.coatings.BattleaxeCoatings.primaryHit(
+            hitter,target,committedCoatingWeapon,damageResult.getActualDamage());
 		final int damageDealt = damageResult.getLegacyDamageDealt();
 		if (!offhand && !attackSuppressed) com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipHit(
 			hitter, target, damageResult.getActualDamage());

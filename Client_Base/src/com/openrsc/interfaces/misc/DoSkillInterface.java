@@ -1400,7 +1400,7 @@ public final class DoSkillInterface {
 		} else if (skillToDo.equals("Mix avantoe")) {
 			title = "Choose an amount to mix";
 			skillDoing = "Herblaw";
-			doSkillItems.add(new DoSkillItem(460, "1", ""));
+			doSkillItems.add(new DoSkillItem(460, "46", ""));
 		} else if (skillToDo.equals("Mix kwuarm")) {
 			title = "Choose an amount to mix";
 			skillDoing = "Herblaw";

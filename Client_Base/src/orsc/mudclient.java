@@ -21195,6 +21195,7 @@ public final class mudclient implements Runnable {
 			loadExternalKingBlackDragonNpcSprite();
 			loadExternalGorakNpcSprite();
 			loadGemDragonSprites();
+            loadBattleaxeCoatingSprites();
 			loadSlayerMovementPreviewSprites();
 			loadExternalEquipmentSprites();
 		}
@@ -21217,7 +21218,7 @@ public final class mudclient implements Runnable {
 			}
 			if (com.openrsc.client.entityhandling.SlayerMovementPreview.isAnimation(s)
 				|| "foundrydragon".equalsIgnoreCase(s) || "kingblackdragon".equalsIgnoreCase(s)
-				|| "gorak".equalsIgnoreCase(s) || s.startsWith("gemdragon")) {
+				|| "gorak".equalsIgnoreCase(s) || s.startsWith("gemdragon") || "viscousbattleaxe".equals(s)) {
 				EntityHandler.getAnimationDef(animationIndex).number = animationNumber;
 				animationNumber += 27;
 				continue;
@@ -22225,6 +22226,15 @@ public final class mudclient implements Runnable {
 				spriteEntry.getFrames()[frame].getSprite();
 		}
 	}
+
+    private void loadBattleaxeCoatingSprites() {
+        orsc.graphics.two.SpriteArchive.Entry entry=BattleaxeCoatingSprites.load();
+        if(S_WANT_CUSTOM_SPRITES)getSurface().spriteTree.get("equipment").put("viscousbattleaxe",entry);
+        else {
+            AnimationDef animation=EntityHandler.getAnimationDef(1097);
+            for(int n=0;n<entry.getFrames().length;n++)getSurface().sprites[animation.getNumber()+n]=entry.getFrames()[n].getSprite();
+        }
+    }
 
 	private void loadGemDragonSprites() {
 		File source = this.externalAssetLoader.findFirstFile(
@@ -28075,6 +28085,7 @@ public final class mudclient implements Runnable {
 							this.loadExternalKingBlackDragonNpcSprite();
 							this.loadExternalGorakNpcSprite();
 			loadGemDragonSprites();
+            loadBattleaxeCoatingSprites();
 							this.loadSlayerMovementPreviewSprites();
 							this.scene = new Scene(this.getSurface(), SCENE_MODEL_CAPACITY, SCENE_POLYGON_CAPACITY,
 								SCENE_PICK_MODEL_CAPACITY);

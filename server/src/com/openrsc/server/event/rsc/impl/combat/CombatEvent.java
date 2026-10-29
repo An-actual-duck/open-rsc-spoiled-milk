@@ -419,7 +419,7 @@ public class CombatEvent extends GameTickEvent {
 			return;
 		}
 		final Item weapon = player.getCarriedItems().getEquipment().get(EquipmentSlot.SLOT_MAINHAND.getIndex());
-		final int poisonWeaponId = weapon == null ? -1 : weapon.getCatalogId();
+		final int poisonWeaponId = weapon == null || com.openrsc.server.content.coatings.BattleaxeCoatingCatalog.isCoated(weapon.getCatalogId()) ? -1 : weapon.getCatalogId();
 		final int weaponMaxPower = PoisonPower.getWeaponMaxPoisonPower(poisonWeaponId);
 		final int styleArmorMaxPower = player.getMeleePoisonArmorMaxPower();
 		final int breathArmorMaxPower = player.getDragonBreathArmorMaxPoisonPower();
