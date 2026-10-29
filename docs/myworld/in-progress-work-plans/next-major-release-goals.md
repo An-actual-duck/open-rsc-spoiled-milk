@@ -41,19 +41,18 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
   carving and god-altar production process unchanged.
 - Remove the neutral sigil from the intended new resource model. Preserve
   existing item identities and player stock until migration is designed.
-- Add **two distinct carved resource families**, provisionally described as
-  **beneficial** and **hostile**. Final names remain open; the owner does not
-  want “Holy/Unholy” as final names.
-- God sigil + beneficial resource supplies aligned buffs; god sigil + hostile
-  resource supplies aligned debuffs. Either purpose resource without a god
-  assignment supplies its respective generic buff/debuff role. This does not
+- Add two distinct carved resource families with final owner-approved names:
+  **Grace** for support/buffs and **Blight** for future hostile/debuff spells.
+  “Holy/Unholy” are not their item names.
+- God sigil + Grace supplies aligned support; god sigil + Blight will supply
+  aligned debuffs. Unassigned Grace/Blight serves its respective generic role. This does not
   give generic spells every god's properties.
 - **Consume the distinct resources together when casting**, like rune costs.
   This is owner-confirmed, not a physical item-combination recipe.
-- Dip hostile carvings at **ichor-well edges under graveyards**: large
+- Dip **Blight** carvings at **ichor-well edges under graveyards**: large
   underground liquid areas, not bucket-shaft wells or the prior named Fountain.
   Preserve the purple-water/ichor-leaking dirt-wall visual direction.
-- Dip beneficial carvings at **holy wellsprings beneath Entrana, the Monastery
+- Dip **Grace** carvings at **holy wellsprings beneath Entrana, the Monastery
   and other well-known holy areas**. Exact sites/access are not yet assigned.
 - Reorganize the spellbook while salvaging existing effects and infrastructure.
   Area buffs affect allies and area debuffs affect enemies around the caster;
@@ -63,11 +62,26 @@ This supersedes the older four-primary/neutral-altar, Unholy-carving recipe and
 Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the current
 runtime and reuse baseline, not a completed implementation of this overhaul.
 
+### Current two-tier Grace mapping
+
+Map all twelve existing spells as **Grace/support**, retaining their current god
+assignments and Worship unlocks: tier one Mend, Unify, Fervor, Purify, Restore,
+Ward; tier two Greater Mend, Zeal, Thorns, Aegis, Rally, Respite. Unify and Respite
+are generic; the others use matching god sigils plus Grace. The [full mapping](cleric-spellbook-concept.md#current-two-tier-mapping-and-generic-grace-costs)
+records each god and existing unlock without introducing a rebalance. Blight
+remains for future debuffs; no mirrored hostile spell list is invented.
+
+A generic Grace cost substitutes additional Grace for the god-resource share:
+within compatible tier/grade, `A matching god + B Grace` becomes `A + B Grace`.
+The owner's `1 god + 1 Grace` versus `2 Grace` example illustrates this rule;
+it does not fix all tier-one costs or approve tier-two counts/material grades.
+The old `2 stone + 1 silver` launch vector is not an approved new overhaul price.
+
 ### Decisions still needed
 
-Final resource names; new carving materials/recipes/levels/XP/yields/quantities;
-remaining tiers, spell list/layout and per-spell god identities/exact casting
-costs; and neutral-stock conversion. Joint consumption during casting is settled;
+New material grades/carving recipes/levels/XP/yields/quantities; exact casting
+costs and grade correspondence; future spells/tiers and layout; and neutral-stock
+conversion. Joint consumption during casting is settled;
 its quantities are not. Existing god-production numbers do not automatically
 become recipes for the new resource families.
 
