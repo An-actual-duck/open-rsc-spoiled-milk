@@ -1,0 +1,7 @@
+4d98e178:server/conf/server/defs/AntidoteItemDefs.json:5:      "name": "Giant Spider Eggs",
+4d98e178:server/conf/server/defs/AntidoteItemDefs.json:6:      "description": "Giant Spider Eggs used to brew an antidote.",
+4d98e178:server/conf/server/defs/AntidoteItemDefs.json:28:      "name": "Jungle Spider Eggs",
+4d98e178:server/conf/server/defs/AntidoteItemDefs.json:29:      "description": "Jungle Spider Eggs used to brew an antidote.",
+4d98e178:server/src/com/openrsc/server/content/AntidoteCleansing.java:7: public static final int GIANT_SPIDER_EGGS=3400, JUNGLE_SPIDER_EGGS=3401;
+
+No acquisition implementations occur in the approved historical diff; no drops/spawns are added in reconciliation. Item3400/3401 appearances in recipe XML are ingredient references, not acquisition.

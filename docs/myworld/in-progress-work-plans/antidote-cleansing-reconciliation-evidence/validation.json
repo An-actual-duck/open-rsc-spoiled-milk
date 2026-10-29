@@ -1,0 +1,48 @@
+{
+  "baseline": "67bed332372fb5925092cd68e48001bebe2952cc",
+  "historicalApproval": "4d98e17833135ae3f150f7ad953099b184fe91d1",
+  "antidoteAssertions": 102,
+  "combatScenarios": 144,
+  "slayerTargets": 9,
+  "durationMillis": 600000,
+  "cleansePowers": [
+    5,
+    10,
+    20
+  ],
+  "recipesThreeDoses": true,
+  "reservedIds": [
+    3400,
+    3401,
+    3402,
+    3403,
+    3404,
+    3405,
+    3406,
+    3407
+  ],
+  "gemGearIdsRetained": [
+    3408,
+    3409
+  ],
+  "modernSourceUntouched": [
+    "server/src/com/openrsc/server/model/entity/Mob.java",
+    "server/src/com/openrsc/server/model/combat/dot/PoisonTargetState.java",
+    "server/src/com/openrsc/server/model/combat/dot/PoisonTargetPolicy.java",
+    "server/src/com/openrsc/server/content/Slow.java"
+  ],
+  "eggAcquisitionImplemented": false,
+  "coatingIncluded": false,
+  "privateGameplayRun": false,
+  "sha256": {
+    "server/conf/server/defs/AntidoteItemDefs.json": "c8dbba7f3fa99b0c15dd8ec33e99ca7ce1d309125cec36b53af6d2936ea2e2ac",
+    "server/src/com/openrsc/server/content/AntidoteCleansing.java": "c04e6e98050b8a1776324e1b1c677c43307bc71b86ee99a589e45385c6e6b596",
+    "server/src/com/openrsc/server/content/PoisonPower.java": "b2ea2c6c134553934e5cbe2bb875f8b2bb13a3eb2dfb53324d442979b9792ff0",
+    "server/src/com/openrsc/server/event/rsc/impl/PoisonEvent.java": "d3379e997de8a4a758160824809f32a897c17c76ae7d2b69a97bf752b9a8953d",
+    "dev/myworld/assets/sprites/items/inventory-ground/resources/giant-spider-eggs.png": "3f482e701a332401670a05ac0335429d8cfffbcaa7cfa209698bb4c4852ecb8c",
+    "dev/myworld/assets/sprites/items/inventory-ground/resources/jungle-spider-eggs.png": "42d8b66b8027978c8a24001ece3f6dfdac281b046a7dff47c5afd907519649b1",
+    "Client_Base/Open_RSC_Client.jar": "76a1a8103022dee8e6b9cb541b8d20a53363bcad3de55b355a0b1832660ab054",
+    "server/core.jar": "d4db8c985945312c3bbf663a24362bb37e093e3fa060345263ea9c7a0b0e4e31",
+    "server/plugins.jar": "cd41e40e803ed789669787d66a56b89e9f3837b39676968ad1c1a138dd431769"
+  }
+}

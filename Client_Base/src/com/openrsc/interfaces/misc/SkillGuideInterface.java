@@ -971,7 +971,9 @@ public final class SkillGuideInterface {
 						"10 fine quality fish oil", "10 high quality fish oil", "10 superior quality fish oil"});
 				addHerblawPotionFamilyGuide(569, 963, 1411, 1414, 1468, 3204, "Potion of Insight",
 					new String[] {"eye of newt", "spider eye", "zombie eye", "bat eye", "baby dragon's eye", "demon eye"});
-				skillMenuEntries.add(new SkillMenuItem(1474, "8", "Antidote - Marrentill & red spiders' eggs"));
+				skillMenuEntries.add(new SkillMenuItem(3402, "8", "Weak Antidote - Marrentill & Giant Spider Eggs"));
+				skillMenuEntries.add(new SkillMenuItem(1474, "22", "Antidote - Marrentill & red spiders' eggs"));
+				skillMenuEntries.add(new SkillMenuItem(3405, "38", "Strong Antidote - Marrentill & Jungle Spider Eggs"));
 				skillMenuEntries.add(new SkillMenuItem(1176, "10", "Explosive compound - Nitro & nitrate & charcoal & a. root"));
 				skillMenuEntries.add(new SkillMenuItem(1053, "18", "Ogre potion - Guam leaf, jangerberries, ground bat bones"));
 				skillMenuEntries.add(new SkillMenuItem(1471, "22", "Stat restore - Harralander & ground unicorn horn"));
@@ -992,7 +994,8 @@ public final class SkillGuideInterface {
 				skillMenuEntries.add(new SkillMenuItem(221, "", "Strong Skiller's Brew gives non-combat XP: 40% for 60 minutes"));
 				skillMenuEntries.add(new SkillMenuItem(3192, "", "Warrior's Brew gives combat XP: 20% for 30 minutes"));
 				skillMenuEntries.add(new SkillMenuItem(3195, "", "Strong Warrior's Brew gives combat XP: 40% for 60 minutes"));
-				skillMenuEntries.add(new SkillMenuItem(1474, "", "Antidote cures poison and grants poison immunity"));
+				skillMenuEntries.add(new SkillMenuItem(1474, "", "Antidotes add 5/10/20 poison cleansing per pulse for 10 minutes"));
+				skillMenuEntries.add(new SkillMenuItem(3405, "", "Only the strongest applies; another equal dose refreshes it"));
 				skillMenuEntries.add(new SkillMenuItem(1471, "", "Stat restore restores reduced stats and blocks stat reduction"));
 				if (Config.S_WANT_CUSTOM_SPRITES) {
 					addSkillCapeGuide(1521, "Herblaw");

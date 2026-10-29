@@ -1,0 +1,11 @@
+[java] 2026-10-29 12:49:41 [InitThread] INFO  Server: - PASS all six leather effects, full-set gates, sticky timing, charge radius/reset/PvP, elemental tags, food rounding, cleanse stacking and owned damage healing
+[java] 2026-10-29 12:49:54 [InitThread] INFO  Server: - PASS Slayer rewards: all recipes, requirements, whip immunity, bow launch ownership/fractions, dagger cadence/poison, pendant immunity and thunder selection/scaling
+[java] 2026-10-29 12:50:08 [InitThread] INFO  Server: - PASS Shield of Mobility: assembly transactions, ingredient protocol, prevention-only protection and solvent isolation
+[java] 2026-10-29 12:50:15 [InitThread] INFO  Server: - PASS Abyssal stats, one-tick stabs, radius-one immediate spikes, four-tick recovery, full-action trap, shared immunity, solvent and lifecycle
+[java] 2026-10-29 12:50:23 [InitThread] INFO  Server: - PASS Dark beast stats, timed poses, marking, range escape, late arrivals, resistance, threshold, wipes and lifecycle
+[java] 2026-10-29 12:50:29 [InitThread] INFO  Server: - PASS Bloodveld modern stats, range, hold/chase, delayed pull, melee switch, cooldown, cancellation and lifesteal
+[java] 2026-10-29 12:50:37 [InitThread] INFO  Server: - PASS Feeding Frenzy radius, exclusions, stacked attackers, yellow independent bites, zero/suppressed/protected hits, death cutoff and Dog Treats
+[java] 2026-10-29 12:50:45 [InitThread] INFO  Server: - PASS Naga modern stats, deterministic style, chase, shared cooldown, independent capped offhand and red/yellow hits
+[java] 2026-10-29 12:50:54 [InitThread] INFO  Server: - PASS real thunder casting with/without staff: lookup, caps, runes, launch, impact, splash radii/scaling, PvP exclusion and duplicate settlement; sibling spells and table coverage
+BUILD SUCCESSFUL
+Total time: 1 minute 27 seconds

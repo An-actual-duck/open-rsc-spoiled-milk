@@ -1441,10 +1441,18 @@ public final class DoSkillInterface {
 			title = "Choose an amount to mix";
 			skillDoing = "Herblaw";
 			doSkillItems.add(new DoSkillItem(486, "45", ""));
-		} else if (skillToDo.equals("Mix poison antidote")) {
+		} else if (skillToDo.equals("Mix weak antidote")) {
 			title = "Choose an amount to mix";
 			skillDoing = "Herblaw";
-			doSkillItems.add(new DoSkillItem(569, "48", ""));
+			doSkillItems.add(new DoSkillItem(3402, "8", ""));
+		} else if (skillToDo.equals("Mix strong antidote")) {
+			title = "Choose an amount to mix";
+			skillDoing = "Herblaw";
+			doSkillItems.add(new DoSkillItem(3405, "38", ""));
+		} else if (skillToDo.equals("Mix poison antidote") || skillToDo.equals("Mix antidote")) {
+			title = "Choose an amount to mix";
+			skillDoing = "Herblaw";
+			doSkillItems.add(new DoSkillItem(1474, "22", ""));
 		} else if (skillToDo.equals("Mix fishing")) {
 			title = "Choose an amount to mix";
 			skillDoing = "Herblaw";

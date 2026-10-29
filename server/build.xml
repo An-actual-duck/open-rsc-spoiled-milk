@@ -407,6 +407,15 @@
         </java>
     </target>
 
+    <target name="test_antidote_cleansing" depends="compile_core,compile_plugins,compile_combat_tests">
+        <java classname="com.openrsc.server.combat.AntidoteCleansingFixture" fork="true" maxmemory="512m" failonerror="true" dir="${basedir}" outputproperty="antidote.output">
+            <classpath><pathelement location="${basedir}/plugins.jar"/><pathelement location="${combat.build.test}"/><pathelement location="${combat.build.core}"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+        </java>
+        <echo message="${antidote.output}"/>
+        <condition property="antidote.completed"><contains string="${antidote.output}" substring="PASS: Titan poison families"/></condition>
+        <fail unless="antidote.completed" message="Antidote fixture exited without its completion marker."/>
+    </target>
+
     <target name="test_gem_dragons" depends="compile_core,compile_plugins,compile_combat_tests">
         <java classname="com.openrsc.server.combat.GemDragonsFixture" fork="true" maxmemory="512m" failonerror="true" dir="${basedir}">
             <classpath><pathelement location="${basedir}/plugins.jar"/><pathelement location="${combat.build.test}"/><pathelement location="${combat.build.core}"/><fileset dir="${lib}" includes="*.jar"/></classpath>

@@ -10,6 +10,8 @@ import static com.openrsc.server.plugins.Functions.*;
 public class CombinePotions implements UseInvTrigger {
 
 	int[][] combinePotions = {
+		{3404, 3403, 3402},
+		{3407, 3406, 3405},
 		{ItemId.ONE_ATTACK_POTION.id(), ItemId.TWO_ATTACK_POTION.id(), ItemId.FULL_ATTACK_POTION.id()},
 		{ItemId.ONE_STAT_RESTORATION_POTION.id(), ItemId.TWO_STAT_RESTORATION_POTION.id(), ItemId.FULL_STAT_RESTORATION_POTION.id()},
 		{ItemId.ONE_DEFENSE_POTION.id(), ItemId.TWO_DEFENSE_POTION.id(), ItemId.FULL_DEFENSE_POTION.id()},

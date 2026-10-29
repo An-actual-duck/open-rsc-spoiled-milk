@@ -98,6 +98,8 @@ public class Drinkables implements OpInvTrigger {
 		else if (id == ItemId.POISON_CHALICE.id())
 			handlePoisonChalice(player, item);
 
+		else if (com.openrsc.server.content.AntidoteCleansing.powerForItem(id) > 0)
+			useCleansingAntidote(player, item);
 		else if (getHerblawPotionEffect(id) != null)
 			useHerblawPotion(player, item, getHerblawPotionEffect(id));
 
@@ -379,9 +381,23 @@ public class Drinkables implements OpInvTrigger {
 			restoreReducedStats(player);
 			player.setStatReductionProtection(TimeUnit.MINUTES.toMillis(10), itemId);
 		} else if ("antidote".equals(effect.family)) {
-			player.curePoison();
-			player.setPoisonProtection(TimeUnit.MINUTES.toMillis(5), itemId);
+			com.openrsc.server.content.AntidoteCleansing.activate(player, itemId);
 		}
+	}
+
+	private void useCleansingAntidote(Player player, Item item) {
+		int id=item.getCatalogId(), doses=com.openrsc.server.content.AntidoteCleansing.doses(id);
+		if (!com.openrsc.server.content.AntidoteCleansing.canActivate(player,id)) {
+			player.message("A stronger antidote is already helping you cleanse poison.");
+			return;
+		}
+		if(player.getCarriedItems().remove(item)==-1)return;
+		com.openrsc.server.content.AntidoteCleansing.activate(player,id);
+		player.getCarriedItems().getInventory().add(new Item(doses>1?id+1:ItemId.EMPTY_VIAL.id()));
+		player.message("You drink some of your " + item.getDef(player.getWorld()).getName().toLowerCase() + ".");
+		com.openrsc.server.net.rsc.ActionSender.sendActivePotionEffects(player);
+		delay(2);
+		player.message(doses>1?"You have "+(doses-1)+" dose(s) of potion left":"You have finished your potion");
 	}
 
 	private void restoreReducedStats(final Player player) {

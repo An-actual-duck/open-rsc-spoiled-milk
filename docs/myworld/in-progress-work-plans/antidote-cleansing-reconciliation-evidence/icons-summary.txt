@@ -1,0 +1,1 @@
+PASS: all antidote doses and egg icons/notes in custom and fallback client catalogs

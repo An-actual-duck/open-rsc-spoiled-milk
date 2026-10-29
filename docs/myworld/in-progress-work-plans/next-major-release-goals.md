@@ -5,12 +5,17 @@ goals before the next release. Beta designation remains a later decision.
 This records intent and confirmed mechanics; it does not settle unspecified
 balance values or authorize public deployment.
 
+Owner confirmation, October 29, 2026: the Slayer Tower and the Crafting Guild's
+gem-dragon cave are authored in the latest saved editor map. Both await final
+migration with the coordinated update package; do not replace or re-author
+that saved map while finishing gameplay and release integration.
+
 ## 1. Complete the Slayer Tower and associated content
 
 - The owner accepted the tower decoration on October 26. Preserve the authored map.
 - Core will guard initial entry and the later **upward stairs**, with associates
-  in safe rooms behind freely accessible auto-closing doors. Resolve the NPC
-  capacity import blocker before final placement/binding; see
+  in safe rooms behind freely accessible auto-closing doors. Final migration must
+  include the reviewed NPC-capacity work and completed placement/binding; see
   [final tower placement and capacity](slayer-tower-final-placement-and-capacity.md).
 - Finish the axe-based Slow coating using the shared Slow foundation, including
   its remaining recipe, application and balance decisions.
