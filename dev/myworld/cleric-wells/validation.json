@@ -1,0 +1,27 @@
+{
+  "checks": {
+    "asepriteExactRoundTrips": 6,
+    "candidateHashChecks": 18,
+    "secondManifestIdentical": true,
+    "nativeSoftwareContexts": 8,
+    "wallCapMappingRegression": 718,
+    "markdownLinksAndAnchors": 23,
+    "productionArchiveUnchanged": true
+  },
+  "softwareContextHashes": {
+    "divine-water-dirt-192-context.png": "05cf77df97d5e5d5d6525f27d65ad451bdc5f4945e7dc9570201eeb6f349dd96",
+    "divine-water-dirt-275-context.png": "f7e3739efb2b076e932849db2dcc55b1d368a1fd4198a473291c654f1b7974ce",
+    "divine-water-stone-192-context.png": "39e4af819fe20cffe0677b05b6d3bd6a90aee7357ccf2851e9c7801901fa9405",
+    "divine-water-stone-275-context.png": "44033ca062f8f2d188d23f3fad33656a715be8894e91a1728a9d25b382de34b1",
+    "ichor-dirt-192-context.png": "cb3e23246a684cf4bf8b9d620b920bd6c7a6902bfce0c73f039b04e2c933594a",
+    "ichor-dirt-275-context.png": "57c0157fad352e9ddd4379bdf866209e4dd102bdf270aad6e5969070346d1d26",
+    "ichor-stone-192-context.png": "05604d826e33420413b2a337626d497680682f78ef1cdd9ae7dd4e8cd9f0377e",
+    "ichor-stone-275-context.png": "85f364af80a2fd7c0f280c78ca13eb4f09ddbcc9934d3c5a435c3e65eb1e1477"
+  },
+  "limitations": [
+    "Owner art acceptance pending",
+    "No OpenGL/private-game visual proof",
+    "Invisible shoreline metadata/pick proxy/editor helper not implemented",
+    "Infusion balance and Blight recipes/IDs remain unresolved"
+  ]
+}

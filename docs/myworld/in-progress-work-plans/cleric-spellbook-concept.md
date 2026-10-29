@@ -64,6 +64,65 @@ Curse-sigil/ichor-river wording are **superseded historical proposals**, not
 additional active requirements alongside this model. The [release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch)
 track the same direction.
 
+### Well assets and shoreline interaction — confirmed October 29
+
+**Ichor** is a deep-purple recolor of the existing native water floor. Holy
+wellsprings contain **Divine Water**, a pale-blue recolor of that same water
+floor, explicitly divine rather than ordinary water. Preserve the original
+ripple pattern and native scale; no replacement water drawing is requested.
+Both liquids need **dirt and stone wall variants** matching the existing native
+materials, with liquid visibly seeping between cracks and descending **all the
+way to the floor**. Preserve masonry/earth shading outside the localized flow;
+no blanket tint or separate pasted-on wall structure. Ordinary 192-unit and
+tall 275-unit walls keep their existing geometry and correct texture mapping.
+
+[Six native visual candidates and provenance](../../../dev/myworld/cleric-wells/README.md)
+are prepared for owner review: two water recolors and four liquid/material wall
+combinations, with editable Aseprite layers, reproducible masks, native/nearest
+comparisons and actual offline software wall/floor contexts. They are not yet
+installed or approved; no production IDs/archives have changed.
+
+Each liquid also needs its **own essentially invisible shoreline scenery
+interaction**, placed along the **entire accessible edge**, like fishing spots,
+so any approach point offers **Dip sigils**. Working labels and proposed flavor
+text (not final strings):
+
+| Interaction | Proposed examine text | Action |
+|---|---|---|
+| Ichor well | A dark pool of ichor seeps through the earth. | Dip sigils |
+| Divine wellspring | Divine water gathers here, pale blue and still. | Dip sigils |
+
+The future edge carrier should be 1×1 and nonblocking. Its approach target must
+remain on reachable land beside the liquid; no walking into the pool or through
+a wall. Edge-wide placement must account for corners and wall-adjacent shores,
+not merely one special clickable spot or a visible well structure.
+
+**Current client limitation and minimum follow-up:** ordinary invisible scenery
+is not already proven pickable. In maintained `Scene.java`, the
+`pickableTransparentFace` exception accepts `Scene.TRANSPARENT` faces only for
+terrain-style `facePickIndex` values 200000..300000. Ordinary scenery does not
+qualify. Empty/missing models or setting every face transparent therefore cannot
+be presented as a working invisible object. Do not borrow terrain IDs or insert
+fake visible structures to bypass this boundary.
+
+A separate coordinated runtime/editor change must provide **generic invisible
+interaction metadata and a deliberate pick proxy** associated with the object,
+without drawing that proxy as game scenery. The editor needs discoverable,
+editable helper markers/coverage for such edge carriers, with a helper-visibility
+control; it must read game-owned metadata and must not hardcode well IDs or
+bundle these custom textures. Preserve normal collision, entity identity and
+menu dispatch. Prove software and OpenGL invisibility, stable picking from
+multiple camera angles/zoom, correct menu/examine/Dip behavior, land-side pathing,
+wall/corner handling and no phantom interactions when helpers are hidden or
+unrelated scenery overlaps. This art task implements none of that runtime work.
+
+These visual/interaction requirements settle no infusion balance: Grace keeps
+its four existing IDs/art/forms/carving baseline; its new wellspring infusion
+requirements, XP/yields and Devotion policy remain open. Blight's new recipes,
+materials and IDs remain unallocated. All twelve Grace support assignments,
+joint god+Grace consumption and the generic substitution rule below remain
+unchanged.
+
 ### Grace reuse — existing neutral items keep their IDs and readiness
 
 The owner confirmed: **“we can just repurpose the neutral sigil as grace.”**
