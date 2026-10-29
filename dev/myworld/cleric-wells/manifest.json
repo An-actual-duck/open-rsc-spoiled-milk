@@ -1,0 +1,108 @@
+{
+  "status": "REVIEW CANDIDATES ONLY - not installed/approved",
+  "sourceArchive": "Client_Base/Cache/video/Authentic_Sprites.orsc",
+  "sourceArchiveSha256": "ed1fd03b0c23b833b42f45b430e6721cf61084866a0174cb44f521f3ce3ecb53",
+  "sources": {
+    "water": {
+      "textureIndex": 1,
+      "archiveEntry": "3226",
+      "dimensions": [
+        64,
+        64
+      ],
+      "entrySha256": "9f1eb6f81284ebe55be0e6bba67cc296caf9dfcad947f0040dde24389b16a810",
+      "pngSha256": "47274d247f040505b8018b88c064da35df4777234b0350d537041ab8acc5e521",
+      "headerHex": "00000040000000400000000000000000000000004000000040"
+    },
+    "stone": {
+      "textureIndex": 2,
+      "archiveEntry": "3227",
+      "dimensions": [
+        128,
+        128
+      ],
+      "entrySha256": "2e9cebf26c3c45a173024b857f78b11832c49c9e123c049fc8bf662ceda8270e",
+      "pngSha256": "90bbe43479c6c229ad3a26e2377dce9d566841c1f1dcdd878b9471b6a4d9394e",
+      "headerHex": "00000080000000800000000000000000000000008000000080"
+    },
+    "dirt": {
+      "textureIndex": 29,
+      "archiveEntry": "3254",
+      "dimensions": [
+        64,
+        64
+      ],
+      "entrySha256": "4d5ba4d0ef2afb40c558654f3ac52f59c80be00b68c7ad526f8f556420e40357",
+      "pngSha256": "dc9f8ade8072dc91845d2496075bd053519225c57b8f0f817ddbc7d94147d47b",
+      "headerHex": "00000040000000400000000000000000000000004000000040"
+    }
+  },
+  "candidates": [
+    {
+      "name": "ichor-water",
+      "source": "water",
+      "changedPixels": 4096,
+      "maskPixels": 4096,
+      "files": {
+        "candidates/ichor-water.png": "815160e98f1a926fbe646e19903c26eccd34fc6cbf0fc3abf0dbd03d66f80293",
+        "masks/ichor-water.png": "f5258cdd1d063491a5410827b0a5a5b1c7ba8a81fe539d4870f7b5001ea40279",
+        "aseprite/ichor-water.aseprite": "05ae18d0203d87e253c35e5f26c37cdc89af7b3f909e6d229fd95df886da77a6"
+      }
+    },
+    {
+      "name": "ichor-stone-seep",
+      "source": "stone",
+      "changedPixels": 675,
+      "maskPixels": 675,
+      "files": {
+        "candidates/ichor-stone-seep.png": "0accb699290cf90d7650173095717bffa40599a90185047e60e71df562b12584",
+        "masks/ichor-stone-seep.png": "64665784aa8851f067a6a17989ea5472a725e4404b13a7157957ec8a4247e14d",
+        "aseprite/ichor-stone-seep.aseprite": "40b4a1ca6d3bc996dbb52a3330a45fa09e0204e2ab948879f77219f837cea2c0"
+      }
+    },
+    {
+      "name": "ichor-dirt-seep",
+      "source": "dirt",
+      "changedPixels": 190,
+      "maskPixels": 190,
+      "files": {
+        "candidates/ichor-dirt-seep.png": "4ffc70268111177d93aa17a200dc247cfad0d82976e569909c9258cd1b1e7352",
+        "masks/ichor-dirt-seep.png": "1ab1bdfed23b1e92e48ff3b09b1c56a7430550b8a24fd267109077eb2df88241",
+        "aseprite/ichor-dirt-seep.aseprite": "b9d74949f55fecd110941e678253d77b8bc18040304a755ab69179464c83c8ef"
+      }
+    },
+    {
+      "name": "divine-water-water",
+      "source": "water",
+      "changedPixels": 4096,
+      "maskPixels": 4096,
+      "files": {
+        "candidates/divine-water-water.png": "07217fa32375c2d8e599234227a9ba3c5f58638060ddcf10af79efa864f3426a",
+        "masks/divine-water-water.png": "f5258cdd1d063491a5410827b0a5a5b1c7ba8a81fe539d4870f7b5001ea40279",
+        "aseprite/divine-water-water.aseprite": "63f0df6f83e604a7a1e1e7cd17b296ca517ce3b8e13e9f157c59f5121a09e814"
+      }
+    },
+    {
+      "name": "divine-water-stone-seep",
+      "source": "stone",
+      "changedPixels": 675,
+      "maskPixels": 675,
+      "files": {
+        "candidates/divine-water-stone-seep.png": "2af0f255a9fc0b824b5664f20e826b170f4786211c8f7f886d3e5a43bf12328d",
+        "masks/divine-water-stone-seep.png": "64665784aa8851f067a6a17989ea5472a725e4404b13a7157957ec8a4247e14d",
+        "aseprite/divine-water-stone-seep.aseprite": "b3ac2e2472321722ace7e315c1eea407cc6efd8fee6eb722006aa156d0be48bc"
+      }
+    },
+    {
+      "name": "divine-water-dirt-seep",
+      "source": "dirt",
+      "changedPixels": 190,
+      "maskPixels": 190,
+      "files": {
+        "candidates/divine-water-dirt-seep.png": "cd448464facb031bb18bffe708617730a22009baaf1b903abbea6f0e29848dfd",
+        "masks/divine-water-dirt-seep.png": "1ab1bdfed23b1e92e48ff3b09b1c56a7430550b8a24fd267109077eb2df88241",
+        "aseprite/divine-water-dirt-seep.aseprite": "a44414cf25e679c3af328e2a61c9a6bc8ccf66af987bf3e4c8eb79d40ca77023"
+      }
+    }
+  ]
+}

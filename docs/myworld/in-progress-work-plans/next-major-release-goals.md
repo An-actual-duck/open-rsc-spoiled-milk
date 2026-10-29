@@ -69,6 +69,27 @@ This supersedes the older four-primary/neutral-altar, Unholy-carving recipe and
 Curse-sigil/ichor-river proposals. The shipped twelve-spell book is the current
 runtime and reuse baseline, not a completed implementation of this overhaul.
 
+### Well visuals and edge access
+
+Use the existing native water pattern for both liquids: **deep-purple Ichor** and
+**pale-blue Divine Water**. Each needs matching native **dirt and stone** walls
+with liquid seeping through cracks and descending to the floor, preserving the
+background material and 192/275-unit wall geometry. [Six native texture candidates](../../../dev/myworld/cleric-wells/README.md)
+are ready for art review only; no definitions/IDs/archives are installed.
+
+Provide separate essentially invisible, 1×1/nonblocking **Ichor well** and
+**Divine wellspring** shoreline interactions along the **entire accessible edge**,
+with **Dip sigils** and reachable land-side approach points, like fishing spots.
+Divine-water examine flavor must identify it as divine water, not generic water.
+Names/flavor strings are proposals. An empty or transparent scenery model is not
+already pickable: a separate generic runtime pick proxy/metadata and discoverable
+editor helper are required, with software/OpenGL invisibility, picking and
+pathing checks. No hardcoded editor roster or fake visible well structures.
+The [interaction audit](cleric-spellbook-concept.md#well-assets-and-shoreline-interaction--confirmed-october-29)
+records the current terrain-only transparent-face exception and acceptance gates.
+Infusion balance and Blight recipes remain unresolved; this is not functional
+infusion implementation or a new casting-cost approval.
+
 ### Current two-tier Grace mapping
 
 Map all twelve existing spells as **Grace/support**, retaining their current god
