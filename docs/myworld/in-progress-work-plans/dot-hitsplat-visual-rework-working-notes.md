@@ -347,3 +347,29 @@ its existing test DB/settings/map/config, verify process cwd and command before
 signals, then check localhost readiness and real client connection. No public
 runtime, owner data or other worker is in scope. This is an inspection increment,
 not overall acceptance, READY or consolidated Core handoff.
+
+
+### Private review refreshed October 31, 18:55 UTC
+
+Code checkpoint: `26001e8a51a30803efd325147e1e1d6ead5fdf57`, pushed and clean.
+Both prior recorded processes were absent; a current process scan found no Java
+process in either private cwd and port 43825 was free. No shutdown signal was
+needed. Private SQLite backup, settings, previous jars/launchers/logs/manifest
+are preserved in runtime `backups/pre-26001e8a5`. The same private DB, map and
+configuration were retained. Only four compiled jars and source banners changed.
+Runtime artifact hashes match the tested worker outputs, recorded in its manifest.
+
+Private server PID **3931622**, client PID **3931747**; each current /proc cwd and
+expected command was checked. Server bound only `127.0.0.1:43825`, reported online,
+with no startup errors. Client fetched configs from that endpoint, received them,
+and activated OpenGL device/presenter/input/primary window and world rendering.
+The config connection is short-lived by design; authenticated gameplay and the
+new appearance remain for Justin to inspect. Public listener PID 2863465 on 43605
+was unchanged. No owner data or public runtime action occurred.
+
+Use the open private desktop client and existing private test character. Style
+control: Options → General → Interface → Hit number style. Runtime remains
+`/tmp/spoiled-milk-hitsplat-review-qn22pbsi`; own terminal titles and safe-stop
+instructions above still apply. Updated local access and hash/process manifest
+copies: task/hitsplat-private-runtime.txt and task/hitsplat-private-review-manifest.json.
+The assignment remains ACTIVE, with no overall READY/handoff or manager contact.
