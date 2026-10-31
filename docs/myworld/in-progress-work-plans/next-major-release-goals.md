@@ -144,7 +144,8 @@ Do not silently reduce them or treat the formulas as unapproved.
 These progression/composite rules are **design only**. The existing twelve-spell
 runtime, costs/effects and spell-specific ranks remain unchanged. Its two-tier
 roster is salvage/history, not the active future roster. **Keep Unify unchanged
-except for a cost of two Grace sigils, no god sigil; exclude Respite from the
+except for a flat cost of two Grace sigils per cast, no god sigil (not per
+recipient); exclude Respite from the
 future book because of abuse concerns.** Unify retains Worship 3, radius 4,
 party-allies-only targeting excluding the caster, a maximum of two safe ordinary
 walking steps toward the caster stopping within two tiles, same-level/world

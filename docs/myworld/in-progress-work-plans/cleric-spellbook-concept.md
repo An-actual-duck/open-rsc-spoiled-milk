@@ -83,7 +83,8 @@ recorded explicitly for balance review; it is not silently reduced or treated
 as an unapproved interpretation. Exact timing still needs its final contract.
 
 **Generic spell decision — October 30:** keep **Unify** with its existing
-behavior, changing only its casting cost to **two Grace sigils, no god sigil**.
+behavior, changing only its casting cost to **two Grace sigils per cast, no god sigil**.
+This is a flat casting cost, not a cost per recipient.
 It remains Worship 3, radius 4, party allies excluding the caster, with at most
 two safe ordinary walking steps toward the caster, stopping within two tiles.
 Same-level/world and line-of-effect restrictions remain, PvP remains disabled,
