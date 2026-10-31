@@ -10,7 +10,8 @@ root = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='hitsplat-check-') as build:
     cp = os.pathsep.join([str(root / 'Client_Base/build'), str(root / 'PC_Client/lib/*')])
     subprocess.run(['javac', '-J-Xmx384m', '-cp', cp, '-d', build,
-                    str(root / 'tests/myworld/FloatingHitSplatFixture.java')], check=True)
+                    str(root / 'tests/myworld/FloatingHitSplatFixture.java'),
+                    str(root / 'tests/myworld/HitSplatSettingsFixture.java')], check=True)
     for profile in ['software', 'phased', 'native-ui']:
         command = ['java', '-Xmx384m', '-Djava.awt.headless=true']
         if profile != 'software':
@@ -24,3 +25,9 @@ with tempfile.TemporaryDirectory(prefix='hitsplat-check-') as build:
         if profile == 'software' and len(sys.argv) > 1:
             command += [str(Path(sys.argv[1]).resolve())]
         subprocess.run(command, cwd=root, check=True)
+
+    with tempfile.TemporaryDirectory(prefix='hitsplat-local-settings-') as settings_dir:
+        for mode in ['write', 'reload']:
+            subprocess.run(['java', '-Xmx384m', '-Djava.awt.headless=true', '-cp',
+                            build + os.pathsep + cp, 'orsc.HitSplatSettingsFixture', str(root), mode],
+                           cwd=settings_dir, check=True)

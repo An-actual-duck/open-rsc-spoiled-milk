@@ -19,12 +19,12 @@ public final class FloatingHitSplatRenderer {
     private final Map<String, Sprite> sprites = new LinkedHashMap<String, Sprite>(128, .75f, true) {
         protected boolean removeEldestEntry(Map.Entry<String, Sprite> eldest) { return size() > 256; }
     };
-    private final Style style;
+    private final Style fixedStyle;
     public FloatingHitSplatRenderer() {
-        this("background".equalsIgnoreCase(System.getProperty("spoiledmilk.hitSplatStyle", "text"))
-            ? Style.BACKGROUND : Style.TEXT);
+        this.fixedStyle = null;
     }
-    public FloatingHitSplatRenderer(Style style) { this.style = style; }
+    public FloatingHitSplatRenderer(Style style) { this.fixedStyle = style; }
+    public Style getStyle() { return fixedStyle == null ? HitSplatDisplaySettings.getStyle() : fixedStyle; }
     public void beginFrame() { frame.clear(); collected.clear(); }
 
     public void collect(ORSCharacter owner, int centerX, int headY, long now, MudClientGraphics surface) {
@@ -77,6 +77,7 @@ public final class FloatingHitSplatRenderer {
     }
 
     private Sprite sprite(int type, int amount, MudClientGraphics surface) {
+        Style style = getStyle();
         String digits = Integer.toString(amount);
         String key = style + ":" + type + ":" + digits;
         Sprite cached = sprites.get(key);

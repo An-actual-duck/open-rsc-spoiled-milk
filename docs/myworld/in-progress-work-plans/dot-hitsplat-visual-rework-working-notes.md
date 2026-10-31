@@ -41,9 +41,8 @@ lifebars, and tries horizontal shifts up to 24px in 2px steps. It uses native
 font 0, a small shadow, digit-measured width plus 4px total padding, and the
 existing sprite alpha path in WORLD_OVERLAY. A bounded 256-entry sprite cache
 keeps font rasterization out of the normal repeated draw path. Scratch font
-rasters remain software-owned under native UI replacement. Initial text-only
-mode is a provisional default. Set `-Dspoiledmilk.hitSplatStyle=background`
-when launching this worker client to compare the other mode (restart needed).
+rasters remain software-owned under native UI replacement. The initial implementation used a provisional text-only default; the later
+owner-selected Options implementation below supersedes that startup-only choice.
 
 Type 2 remains other/alternate damage, provisionally orange. Its callers include
 offhand hits, armor procs, chained/area effects, elemental specials, Frostbite,
@@ -144,3 +143,52 @@ Validation:
 Continue direct collaboration and checkpoints. Only Justin's explicit statement
 that the overall task is complete and ready for Core permits the consolidated
 handoff and READY transition.
+
+
+## Owner-selected style toggle, October 31, 2026
+
+Justin chose to retain both styles and requested a player-facing Options toggle.
+Background is the reversible default, consistent with his preference for its
+appearance. Exact appearance tuning and the overall task remain open.
+
+Location: **Options (wrench) → General → Interface**, directly below Spellbook
+layout. Label: **Hit number style - Background** / **Hit number style - Text only**.
+The existing scrolling list handles any needed scrolling. Both labels fit the
+normal 195px Options control (tested with its actual font).
+
+`HitSplatDisplaySettings` follows the existing client-local Properties pattern:
+`hit_splat_style=background` or `hit_splat_style=text` in `./clientSettings.conf`.
+Missing, empty or invalid values default to background. Client construction loads
+it alongside Spellbook layout; a normal left-click cycles it and performs the
+existing read-modify-save operation, preserving unrelated keys. Hover/right-click
+does not change it. No setting packet, player-database field, protocol addition
+or server change is required. The existing General UI is used; classic and
+native rendering paths share the preference. The strict authentic Options menu
+layout is unchanged, as with the existing local Spellbook-layout option.
+
+The normal renderer follows the preference on each collection; explicit-style
+preview renderers stay fixed so the existing paired comparison remains valid.
+Switching restyles existing active values immediately on the next rendered frame,
+retaining their amount, owner, queue, age and movement. Cache keys include style,
+so repeated switching safely reuses the appropriate native-font sprites. The old
+provisional `spoiledmilk.hitSplatStyle` startup property is superseded by this
+persisted Options setting; no restart is needed to switch styles.
+
+Validation for this increment:
+
+- Client build PASS.
+- `python3 tests/myworld/test-floating-hit-splats.py` PASS: existing 318 software,
+  323 phased-native and 323 native-UI checks; 51 actual Options/persistence checks;
+  3 checks in a separate fresh JVM confirming saved text selection reloads.
+- Options fixture uses the production scrolling-list control and actual General
+  row builder/click handler, exercises repeated switches under both custom-UI
+  states, verifies both labels fit, compares pixels for a live number in both
+  styles, and confirms no event loss/duplication or server connection is needed.
+  All settings-file writes occur in a disposable temporary working directory.
+- `test-renderer-v2-phased-overlay.py` PASS.
+- `test-spellbook-text-layouts.py` PASS (neighboring setting regression).
+- `git diff --check` PASS.
+
+No comparison regeneration or Library replacement was needed: both explicit
+styles are visually unchanged, and their saved identities above remain current.
+No new playback claim, service, final acceptance or READY transition is implied.

@@ -1384,6 +1384,7 @@ public final class mudclient implements Runnable {
 		initConfig();
 		Properties clientSettings = loadClientSettings();
 		SpellbookLayoutSettings.loadFromClientSettings(clientSettings);
+		HitSplatDisplaySettings.loadFromClientSettings(clientSettings);
 		RemasteredSpriteSettings.loadFromClientSettings(clientSettings);
 		if (RendererProfileSettings.getMode() == RendererProfileSettings.Mode.CLASSIC) {
 			RemasteredSpriteSettings.applyClassicProfile();
@@ -1414,6 +1415,12 @@ public final class mudclient implements Runnable {
 		Properties props = loadClientSettings();
 		SpellbookLayoutSettings.saveToClientSettings(props);
 
+		saveClientSettings(props);
+	}
+
+	private static void saveHitSplatDisplaySettings() {
+		Properties props = loadClientSettings();
+		HitSplatDisplaySettings.saveToClientSettings(props);
 		saveClientSettings(props);
 	}
 
@@ -15687,6 +15694,8 @@ public final class mudclient implements Runnable {
 		index = addSettingsRow(index,
 			"@whi@Spellbook layout - " + SpellbookLayoutSettings.getMode().label, 65);
 
+		index = addSettingsRow(index, HitSplatDisplaySettings.optionLabel(), HitSplatDisplaySettings.OPTION_ACTION);
+
 		// custom UI
 		if (S_WANT_CUSTOM_UI) {
 			if (!C_CUSTOM_UI) {
@@ -16239,6 +16248,11 @@ public final class mudclient implements Runnable {
 
 		if (settingIndex == 65 && this.mouseButtonClick == 1) {
 			this.cycleSpellbookLayoutMode();
+		}
+
+		if (settingIndex == HitSplatDisplaySettings.OPTION_ACTION && this.mouseButtonClick == 1) {
+			HitSplatDisplaySettings.cycleStyle();
+			saveHitSplatDisplaySettings();
 		}
 
 		// custom UI - byte index 39
