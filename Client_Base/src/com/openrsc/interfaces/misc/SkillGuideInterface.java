@@ -15,7 +15,7 @@ import java.util.List;
 
 
 public final class SkillGuideInterface {
-	private static final int CLERIC_SPELL_GUIDE_ROW_HEIGHT = 165;
+	private static final int CLERIC_SPELL_GUIDE_ROW_HEIGHT = 190;
 	private static final int CLERIC_SPELL_GUIDE_VISIBLE_ROWS = 1;
 
 	public int curTab = 0;
@@ -384,7 +384,7 @@ public final class SkillGuideInterface {
 		mc.getSurface().drawBoxAlpha(x, allY, width,
 			CLERIC_SPELL_GUIDE_ROW_HEIGHT, 0x45454545, 90);
 		drawString(entry.getHeader(), x + 10, allY + 13, 2, textColour);
-		for(int line=0;line<entry.getLines().size();line++)drawString(entry.getLines().get(line),x+10,allY+26+line*11,1,textColour);
+		for(int line=0;line<entry.getLines().size();line++)drawString(entry.getLines().get(line),x+10,allY+26+line*13,1,textColour);
 		if (rowIndex != skillMenuEntries.size() - 1 && rowIndex != listEndPoint) {
 			mc.getSurface().drawBoxBorder(x, width, allY,
 				CLERIC_SPELL_GUIDE_ROW_HEIGHT + 1, 0);

@@ -14011,11 +14011,11 @@ public final class mudclient implements Runnable {
 			return;
 		}
         this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,definition.getName(),0xFFFF00,0,0,tooltipY+12);
-        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,"Worship "+definition.getWorshipLevel()+" · Tier "+definition.getSpellTier(),0xFFFFFF,0,0,tooltipY+24);
+        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,"Worship "+definition.getWorshipLevel()+" - Tier "+definition.getSpellTier(),0xFFFFFF,0,0,tooltipY+24);
         this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,this.shortenTooltipDescription(definition.getDescription()),0xFFFFFF,0,0,tooltipY+36);
         int count=definition.getCosts().size();int[] ids=new int[count],amounts=new int[count];
         for(int i=0;i<count;i++){ids[i]=definition.getCosts().get(i).getItemId();amounts[i]=definition.getCosts().get(i).getCount();}
-        this.drawTooltipCosts(ids,amounts,count,panelX,tooltipY+41,panelWidth);
+        this.drawTooltipCosts(ids,amounts,count,panelX,tooltipY+41,panelWidth,true);
         this.drawClericPowerTooltip(definition,panelX,tooltipY);
 	}
 
@@ -14027,7 +14027,7 @@ public final class mudclient implements Runnable {
         if(rank==0)lines.add("Holy Power is not available yet.");
         else {
             com.openrsc.client.entityhandling.defs.ClericEffectRankDef effect=definition.getEffectRank(rank);
-            lines.add("Holy Power "+power+" · P"+rank+" · "+(effect.getDurationMilliseconds()/1000)+" sec");
+            lines.add("Holy Power "+power+" - P"+rank+" - "+(effect.getDurationMilliseconds()/1000)+" sec");
             for(com.openrsc.client.entityhandling.defs.ClericComponentDef component:effect.getComponents())
                 lines.addAll(ClericTextLayout.wrap(component.describe(),280,text->getSurface().stringWidth(0,text)));
         }
@@ -14084,7 +14084,7 @@ public final class mudclient implements Runnable {
 	}
 
     private boolean hasClericSigils(ClericSpellDef definition) {
-        return definition!=null&&definition.hasResources(id->this.getInventoryCount(id));
+        return definition!=null&&definition.hasResources(id->this.getInventoryCount(id,false));
     }
 
 	private void switchSpellsSubtab(int nextSubtab) {
@@ -14509,6 +14509,10 @@ public final class mudclient implements Runnable {
 	}
 
 	private void drawTooltipCosts(int[] itemIds, int[] amounts, int count, int panelX, int y, int panelWidth) {
+        drawTooltipCosts(itemIds,amounts,count,panelX,y,panelWidth,false);
+    }
+
+    private void drawTooltipCosts(int[] itemIds,int[] amounts,int count,int panelX,int y,int panelWidth,boolean unnotedOnly) {
 		if (count <= 0) {
 			return;
 		}
@@ -14539,7 +14543,7 @@ public final class mudclient implements Runnable {
 			int iconY = y + (maxIconHeight - drawHeight) / 2;
 			this.getSurface().drawSpriteClipping(sprite, x, iconY, drawWidth, drawHeight,
 				itemDef.getPictureMask(), 0, itemDef.getBlueMask(), false, 0, 1);
-			int available = this.getInventoryCount(itemId);
+			int available = unnotedOnly ? this.getInventoryCount(itemId,false) : this.getInventoryCount(itemId);
 			String color = available >= required ? "@gre@" : "@red@";
 			this.getSurface().drawColoredStringCentered(startX + i * slotWidth + slotWidth / 2,
 				color + available + "/" + required, 0xFFFFFF, 0, 1, y + maxIconHeight + 9);
@@ -15089,9 +15093,14 @@ public final class mudclient implements Runnable {
 				String tooltip = status.isCleric()
 					? status.getClericHoverText() : itemDef.getName();
 				if (status.getSlayerHoverText() != null) tooltip = status.getSlayerHoverText();
-				java.util.List<String> lines=ClericTextLayout.wrap(tooltip,Math.max(80,getGameWidth()-tooltipX-8),text->getSurface().stringWidth(1,text));
-                int top=Math.max(16,Math.min(y+15,getGameHeight()-lines.size()*14-5));
-                for(int line=0;line<lines.size();line++)getSurface().drawString(lines.get(line),tooltipX,top+line*14,0xFFFFFF,1);
+				java.util.List<String> lines=new java.util.ArrayList<String>();
+                java.util.List<String> details=status.getClericHoverLines();
+                if(details==null)details=java.util.Collections.singletonList(tooltip);
+                for(String detail:details)lines.addAll(ClericTextLayout.wrap(detail,Math.max(80,getGameWidth()-tooltipX-16),text->getSurface().stringWidth(1,text)));
+                int top=Math.max(16,Math.min(y+15,getGameHeight()-lines.size()*14-8));
+                int width=0;for(String line:lines)width=Math.max(width,getSurface().stringWidth(1,line));
+                getSurface().drawBoxAlpha(tooltipX-4,top-12,width+10,lines.size()*14+6,0x111111,225);
+                for(int line=0;line<lines.size();line++)getSurface().drawString(lines.get(line),tooltipX,top+line*14,line==0&&status.isCleric()?0xFFFF00:0xFFFFFF,1);
 			}
 		}
 		if (snapshot.getOverflowCount() > 0) {
