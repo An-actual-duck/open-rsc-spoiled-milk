@@ -1,76 +1,40 @@
-# Three-tier blessings implementation checkpoint
+# Three-tier blessings implementation progress
 
-Status: **WORK IN PROGRESS**, not READY for integration or gameplay.
+The `feat/cleric-three-tier-buffs` candidate implements the approved October31
+buff model. It remains ACTIVE pending final combined verification and exact
+READY handoff; no public deployment, server session or owner-map import occurred.
 
-The focused worker branch is `feat/cleric-three-tier-buffs`. The owner requested
-implementation of the agreed nine god blessings plus Unify. The owner has now
-requested design review before dependent numerical implementation: first power
-strengths and inherited P6 combinations, then Greater Unify, then return to
-debuff design. This does not abandon the buff implementation. Strengths,
-duration and mixed god/purpose costs remain unapproved; no proposed values were
-locked in here. Base Unify costs two Grace; exactly one Greater Unify upgrade
-is confirmed at six Grace per cast, with final grade/unlock/radius/movement
-budget still awaiting review.
+Implemented server work:
 
-Independent foundation completed:
+- Active sparse identities: Unify1, nine god blessings12–20, Greater Unify21.
+  Historical0/2–11 stay reserved and fail closed, without aliases to new effects.
+- Universal generated immutable Holy Power thresholds0/20/45/75/115/160; Worship
+  tier unlocks1/20/40, caps2/4/6 and radii2/3/4. Worship plus strongest staff
+  remains authoritative. Blessed staff Magic-only normalization passed117 actual
+  definition/equipment admission checks.
+- One60-second atomic snapshot per god, complete components, per-god precedence,
+  coexisting different gods, safe equal refresh and preserved periodic cadence.
+- Approved incremental values, delayed Sara healing through the final endpoint,
+  additive poison cleansing, gradual non-HP restoration, defense and primary
+  direct combat hooks, factual-damage fractions and no secondary proc loops.
+- Unify Worship3/radius3/one actual safe step/two Stone Grace; Greater Worship30/
+  radius5/three safe steps/six Stone Grace, both stopping within2. No Holy Power
+  scaling. Manager's initial mixed god/Grace cost defaults commit once per cast.
+- Schema3 numeric cost/component metadata, min client10054, matching generated
+  contract and derived-stat-only Holy Power/Barkskin refresh packets.
+- Real native World/packet/party/inventory/effect/combat fixtures; generic old
+  math/counter characterization retained with explicit frozen test-only data.
 
-- Reserved appended spell codes12–20 and three composite god-family slots;
-  historical codes remain intact. Composite snapshots carry god/tier/power.
-- Reserved a generated matching schema3/client10054 contract with bounded costs
-  and typed numeric components. This contract is **not activated** yet; current
-  wire schema2 remains until serializer/decoder migrate together.
-- Client catalog now distinguishes stable protocol identity from ordered UI
-  position; UI callers still need migration when active noncontiguous codes ship.
-- Blessed staff requirements now consistently use Magic only and the existing
-  Zamorak level ladder1/8/15/22/30/38/46/54/62/70. All30 definitions retain stats,
-  prices, art and alignment. God staves and ordinary weapons are untouched.
-  This removes old Saradomin/Guthix melee gates and the accidental raw Zamorak
-  Worship gate that coexisted with its optional Magic admission.
-- Generated overrides and the source generator agree. A real isolated World/
-  definition/equip fixture passed117 checks across all30 staves: Magic ladder,
-  threshold rejection, no extra melee/Worship gate and no-level-requirements
-  bypass. Prayer alignment is deliberately preserved by the fixture.
+Client implementation is managed in the separate Core client worker topic and
+will be merged by exact READY dependency into this task before its final handoff.
+It owns the schema3 decoder, sparse UI positions, mixed unnoted-cost checks,
+selected-rank preview using authoritative equipment stat7, guide/HUD components
+and existing icon reuse. This repository's manager integrates the combined task.
 
-The existing twelve-spell runtime/catalog is retained at this checkpoint, not
-claimed as the finished overhaul. The temporary legacy coverage assertion in
-ClericSpellCatalog must be replaced during active-catalog migration. No buffs,
-costs, strength constants, periodic schedule or gameplay hooks have been replaced
-yet. The nine new symbols are reserved but not yet exposed/castable.
+Current validation includes the real144-scenario combat gate, current native
+Cleric acceptance, metadata roundtrip and focused server/client regressions.
+Final evidence and exact commands are recorded in the implementation review.
+Remaining scope is review/verification, not additional unapproved mechanics.
 
-Current review checklist (documentation only; no new gameplay/source changes):
-
-- Universal thresholds/caps resolve rank, not one universal effect coefficient.
-  Review each component's base/increment or authored table. Standalone Tier 1
-  caps at P2; its inherited component can reach P6 within Tier 3. Saradomin's
-  confirmed P+1 formulas stand; other 3P/2P/P proposals remain proposals.
-- God buff/future debuff radii are 2/3/4, tier+1, not Holy Power scaling.
-- Greater Unify is one upgrade, six Grace (same eventual grade as base), no god
-  or Holy Power scaling. Radius 5/max three safe steps/stopping within 2 is the
-  recommendation, not finalized movement. Base remains radius 4/two steps/two Grace.
-- Future Guthix debuffs: poison/summon/recoil weaknesses. Poison's 10%+5%(P−1)
-  example and rounding/cleansing direction are recorded in the active concept;
-  no hostile coefficients, caps, stacking/lifecycle or PvP policy are finalized.
-
-Resume implementation after the owner balance/cost and Greater Unify review:
-
-1. Populate the active 11-definition catalog (nine god blessings, Unify and Greater
-   Unify) and exact flat mixed-resource vectors;
-   retire all legacy requests except Unify without reusing their codes.
-2. Replace timed catalog with per-god composite snapshots, safe refresh cadence,
-   delayed healing/restoration schedule and complete lifecycle admission.
-3. Hook poison/natural regeneration and primary direct combat max rolls, dealt
-   damage, three defenses, reflection and lifesteal with indirect/PvP exclusions.
-4. Atomically migrate schema3 serializer/client decoder, typed component display,
-   mixed-cost inventory greyouts and index-to-stable-ID UI mapping; activate
-   matched client admission only with completed transport.
-5. Actual packet/runtime/combat/metadata/HUD and compatibility gates, governing
-   docs, full review evidence and exact READY handoff.
-
-Read-only combat audit findings are available from Core's audit agent. Important
-points: explicit primary CombatFormula max-roll hooks (not global offenseToMaxHit),
-all three Player defense methods, additive PoisonEvent drain, preserve natural
-regen's restoration clock, and the delayed tenth HoT pulse at the expiry boundary.
-
-No server launch, account operation, owner-map change/import, staged-package edit,
-asset change or live operation occurred. Fresh fixtures use only checked-in
-configuration/schema and a tiny authored native map.
+Saradomin's extra third component/message remains open: Resplendence raises the
+cap of its existing two components. Hostile debuffs remain documentation only.

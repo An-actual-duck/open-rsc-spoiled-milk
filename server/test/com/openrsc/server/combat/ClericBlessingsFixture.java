@@ -504,7 +504,7 @@ public final class ClericBlessingsFixture {
       java.util.Arrays.fill(r.getCarriedItems().getEquipment().getList(), null);
       cast(c, r, 17);
       skill(r, Skill.HITS, 5, 1000);
-      r.setGroupID(com.openrsc.server.constants.Group.ADMIN);
+      r.setGroupID(com.openrsc.server.model.entity.player.Group.ADMIN);
       n.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 1000, 1000, false);
       inflict.invoke(event, n, r, 100, false, false);
       check(

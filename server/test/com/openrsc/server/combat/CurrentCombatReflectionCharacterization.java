@@ -196,7 +196,7 @@ final class CurrentCombatReflectionCharacterization {
 			assertEquals(0, contribution(
 				attacker, defender, "getMageDamageInfoBy"),
 				path + " Thorns excludes Magic contribution");
-			assertFalse(defender.killed,
+			assertTrue(!defender.killed,
 				path + " nonfatal primary victim remains alive");
 			final java.util.List<DamageResult> results = observedResults(harness);
 			assertEquals(resultsBeforeHit + 2, results.size(),
