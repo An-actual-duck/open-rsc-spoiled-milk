@@ -100,7 +100,7 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 
 | God | Tier 1 component | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
-| Guthix | Increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
+| Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
 | Saradomin | Faster natural Hits regeneration: ×2 at P1, adding ×0.5 per power step | Heal over time: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute | Open |
 | Zamorak | Percentage increase to maximum damage | Percentage increase to total dealt damage | Lifesteal |
 
@@ -128,15 +128,26 @@ regeneration spell. **Zamorak's Fervor** names the new tier-one maximum-damage
 blessing; it does not preserve the old accuracy mechanic. The new Guthix
 recipient text supersedes the earlier sap line.
 
-**October 31 naming/flavor review:** the current active-status label is the
-spell name, with descriptive component text. There is not yet a separately
-approved complete set of flavor names for the individual effects. Barkskin and
-Thorns are existing component labels; old icon keys such as Mend, Purify, Zeal
-or Rally do not independently select new effect names. The owner wants to
-review spell names versus effect names before finalizing that distinction.
-Buffs need names and recipient flavor; debuffs need flavor names without new
-recipient flavor messages. Unify and Greater Unify retain those spell names and
-movement descriptions, with no bespoke recipient flavor line currently defined.
+**Owner-confirmed naming model — October 31:** distinguish **spell name** from
+the **flavor names of its component effects**. Present the spell, its named
+effects and their plain mechanical descriptions; buffs also have recipient
+flavor messages. Debuffs need spell/effect names without new recipient flavor
+messages. Named effects should convey what is happening to the recipient,
+rather than merely repeat the statistic. Higher tiers retain all earlier named
+effects; naming does not change their composite timer or stacking rules.
+
+Guthix is the completed buff naming example: **Guthix's Respite → Sap Blood**
+(poison cleansing and gradual drained-stat restoration); **Guthix's Protection**
+adds **Barkskin**; **Guthix's Vengeance** adds **Thorns**. The existing recipient
+messages above remain. Thus Vengeance includes Sap Blood, Barkskin and Thorns,
+not only the newly added effect. The remaining buffs still need their component
+flavor names; Saradomin's third component itself also remains open.
+
+The current runtime still labels the composite status by spell name with
+descriptive component text; this separate naming presentation is not implemented.
+Old icon keys such as Mend, Purify, Zeal or Rally do not independently select
+new effect names. Unify and Greater Unify retain those spell names and movement
+descriptions, with no bespoke recipient flavor line currently defined.
 
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
@@ -204,9 +215,9 @@ reduction, retaining at least 1 cleansing where applicable; exact integer
 settlement must be checked against current poison/cleansing paths before code.
 Do not apply vulnerability repeatedly through secondary-hit/reflect recursion.
 
-These are approved flavor labels. The separate spell-name/effect-name review
-above is still pending; do not silently introduce a second naming scheme or
-rename current gameplay IDs. Stacking, lifecycle, precise source admission and
+These are approved **effect names**, not spell names. Separate god-themed spell
+names remain to be selected, using the naming model above. Do not rename stable
+gameplay IDs as part of flavor work. Stacking, lifecycle, precise source admission and
 PvP policy still require implementation review. No hostile runtime code or
 new PvP permission is implied by this design approval.
 
@@ -214,9 +225,9 @@ new PvP permission is implied by this design approval.
 
 **Design recorded; hostile gameplay is not implemented.** Higher tiers retain
 the earlier components, with the common Holy Power curve and tier caps 2/4/6.
-The owner selected these tier names and effects:
+The owner selected these **effect names**; separate spell names remain open:
 
-| Tier | Name | Added effect |
+| Tier addition | Effect name | Added effect |
 |---|---|---|
 | 1 | Magical Allergy | Reduces afflicted enemies' Magic defense only |
 | 2 | Muscular Atrophy | Reduces afflicted enemies' maximum melee damage only |

@@ -226,9 +226,13 @@ damage and reduces cleansing per pulse, without inflicting poison or removing
 immunity. Summon/recoil weakness increases only its corresponding damage.
 Integer rounding, stacking, lifecycle, precise source admission and PvP policy
 still require implementation review; hostile gameplay is not implemented.
-The owner is reviewing separate spell/effect naming: buffs need recipient flavor
-messages as well as names, while debuffs need names without recipient flavor.
-Existing spell names and effect descriptions remain until that review is settled.
+The owner confirmed separate spell/effect naming: buffs need recipient flavor
+messages as well as spell/effect names; debuffs need spell/effect names without
+recipient flavor. Guthix's Respite grants **Sap Blood**, Protection adds
+**Barkskin**, and Vengeance adds **Thorns**, retaining the earlier components.
+Toxiphobia/Agrizoophobia/Hematophobia are **effect names**; their spell names
+remain open. The remaining buff component flavor names are also under review.
+This is the approved presentation model, not an implemented runtime rename.
 
 Owner's order: **review power strengths/inherited P6 combinations → Greater
 Unify → return to debuffs**. The latest buff review is now approved and implemented; hostile work stays
@@ -260,7 +264,7 @@ Also planned, not yet coded: Zamorak's maximum/dealt-damage buffs become melee
 only and Guthix Barkskin becomes ranged defense only. The current prepared
 build retains the broader styles. Extending the melee restriction to lifesteal
 is a manager recommendation, not a separately confirmed owner requirement.
-Saradomin's hostile tier names/effects are now selected: **Magical Allergy**
+Saradomin's hostile effect names are now selected: **Magical Allergy**
 (Magic-defense reduction), **Muscular Atrophy** (maximum-melee-damage reduction)
 and **Molecular Antipode** (temporary reusable non-corporeal state, with Magic
 permitted in both directions). Entry rolls occur each eligible tick at
