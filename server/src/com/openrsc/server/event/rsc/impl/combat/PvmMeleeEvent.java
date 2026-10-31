@@ -470,7 +470,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		final int rawDamage = damage;
-		final int hitSplatType = offhand ? HitSplat.TYPE_ARMOR_PROC : Summoning.getSummonDamageHitSplatType(hitter);
+		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
 		final java.util.UUID encounterId = engagement != null
 			&& engagement.peerOf(hitter) == target
@@ -661,7 +661,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			FROSTBITE_REFLECTION_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -767,7 +767,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	private void applyDragonWeaponBreathDamage(final Mob hitter, final Mob target) {
 		DragonMeleeBreathFollowup.tryApply(hitter, target, combatRandom(),
 			() -> CombatFormula.rollDragonMeleeBreathDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage, HitSplat.TYPE_STANDARD));
 	}
 
 	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
@@ -776,14 +776,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 			() -> CombatFormula.rollElementalSwordProcChance(hitter),
 			effect -> CombatFormula.applyElementalSwordProcDebuff(target, effect),
 			() -> CombatFormula.rollElementalSwordProcDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage, HitSplat.TYPE_STANDARD));
 	}
 
 	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {
 		DemonPitchforkHellBlazeProc.tryApply(target, damage,
 			() -> CombatFormula.rollDemonPitchforkHellBlazeProc(hitter),
 			() -> CombatFormula.rollDemonPitchforkHellBlazeDamage(hitter),
-			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage, HitSplat.TYPE_STANDARD));
 	}
 
 	private void applyNpcMeleeSpecialProc(final Mob hitter, final Mob target, final int damage) {
@@ -919,6 +919,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage) {
+		return inflictAuxiliaryMagicDamage(hitter, target, damage, HitSplat.TYPE_ARMOR_PROC);
+	}
+
+	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage, final int presentationType) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}
@@ -936,7 +940,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(presentationType)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -954,6 +958,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage) {
+		inflictAuxiliaryTrueDamage(hitter, target, damage, HitSplat.TYPE_ARMOR_PROC);
+	}
+
+	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage, final int presentationType) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -969,7 +977,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(presentationType)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -1061,7 +1069,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
 			.hitSplatType(effectPolicy == JEWELRY_RECOIL_POLICY
-				? HitSplat.TYPE_RECOIL : HitSplat.TYPE_ARMOR_PROC)
+				? HitSplat.TYPE_RECOIL : HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);

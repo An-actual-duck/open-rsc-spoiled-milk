@@ -9,6 +9,33 @@ Justin has accepted the floating behavior and retaining both selectable styles.
 Only glyph/background centering is changed in this increment. No additional
 damage types, gameplay rules, policies or palette assignments are implemented.
 
+## Implemented source grouping (supersedes palette proposal below)
+
+Justin chose source ownership, with red as the fallback for anything not otherwise
+classified. The inventory and original proposal below are historical audit evidence.
+The implemented mapping is:
+
+- Red/type 0: main attacks and weapon/spell offshoots, including Dragon weapon
+  breath, elemental swords, Pitchfork Hell Blaze, Frostbite reflection, Splinter,
+  Naga/Terror Dog extra main strikes, Balrog splash and Elder boss initial Fireshot.
+  Cleric Thorns and Divine Retribution also use the confirmed red default.
+- Purple/type 2: armor/jewelry procs, including Infernal/Hell's Inferno, dragon
+  armor effects, Bear/Ferocious extra hits, Chaos necklace chain, Dark Beast
+  discharge, blood/death robe splash and death jewelry effects. Recoil/type 5
+  retains its distinct priority but shares the same purple palette.
+- Yellow/type 4: summons, including Relentless, Spell Echo and Hellfire bonus hits.
+- Green/type 1: independent poison; blue/type 3: healing.
+- Orange/new additive type 6: explicit Elder armor and Elder boss burn pulses.
+  Initial Elder armor direct/splash remains purple; initial boss attack is red.
+- Unknown client presentation IDs normalize to red, preserving paired-update
+  deduplication. Classic damage updates remain unchanged.
+
+Generic auxiliary settlement keeps an armor default for its armor callers; weapon
+callbacks pass standard presentation explicitly. Bear/Ferocious is purple because
+its actual gate is an armor set, despite the extra hit happening during an attack.
+No damage amounts, RNG/chances, policies, timing or settlement rules changed.
+There is no remaining ambiguous existing burn producer in the audited code.
+
 ## Coverage and classification boundary
 
 Audited all tracked Java under `server/src` and `server/plugins`: every

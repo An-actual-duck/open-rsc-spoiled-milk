@@ -11,6 +11,7 @@ public class HitSplat {
 	// Additive custom-client presentation IDs; classic damage updates are unchanged.
 	public static final int TYPE_SUMMON = 4;
 	public static final int TYPE_RECOIL = 5;
+	public static final int TYPE_BURN = 6;
 
 	private final Mob mob;
 	private final int type;

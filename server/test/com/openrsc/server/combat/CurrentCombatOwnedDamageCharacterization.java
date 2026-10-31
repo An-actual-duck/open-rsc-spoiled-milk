@@ -297,7 +297,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 
 			assertEquals(38, valid.getLevel(Skill.HITS.id()),
 				"Balrog splash applies fire Magic then potion mitigation");
-			assertHit(valid, 2, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(valid, 2, HitSplat.TYPE_STANDARD,
 				"Balrog splash presentation");
 			assertEquals(2, valid.getTrackedDamage(balrog),
 				"Balrog splash damage tracking");
@@ -354,12 +354,12 @@ final class CurrentCombatOwnedDamageCharacterization {
 			assertDamageResult(resultFor(results, valid,
 				"projectile-balrog-magic-splash"), balrog, valid,
 				"projectile-balrog-magic-splash", CombatStyle.MAGIC,
-				2, 2, 0, false, HitSplat.TYPE_ARMOR_PROC, event.getUUID(),
+				2, 2, 0, false, HitSplat.TYPE_STANDARD, event.getUUID(),
 				"Balrog mitigated child transaction");
 			assertDamageResult(resultFor(results, lethal,
 				"projectile-balrog-magic-splash"), balrog, lethal,
 				"projectile-balrog-magic-splash", CombatStyle.MAGIC,
-				5, 3, 2, true, HitSplat.TYPE_ARMOR_PROC, event.getUUID(),
+				5, 3, 2, true, HitSplat.TYPE_STANDARD, event.getUUID(),
 				"Balrog lethal child transaction");
 		} finally {
 			harness.server().getConfig().WANT_LAYERED_SPATIAL_RUNTIME_AUTHORITY =
@@ -399,7 +399,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 		final Player ranged = harness.player("elder ranged", 743, 820);
 		ranged.activateRangedResistancePotion(50, 60_000L);
 		assertEquals(4, inflictElderDamage(
-			dragon, ranged, 8, "RANGED", HitSplat.TYPE_ARMOR_PROC, false),
+			dragon, ranged, 8, "RANGED", HitSplat.TYPE_STANDARD, false),
 			"Elder fireshot uses Ranged potion mitigation");
 		assertEquals(4, ranged.getTrackedDamage(dragon),
 			"Elder fireshot owns damage tracking when requested");
@@ -419,9 +419,9 @@ final class CurrentCombatOwnedDamageCharacterization {
 		equipExaltedRune(harness, burned);
 		forceNextLegacyDoubleBelow(0.30D);
 		assertEquals(4, inflictElderDamage(
-			dragon, burned, 4, "BURN", HitSplat.TYPE_ARMOR_PROC, false),
+			dragon, burned, 4, "BURN", HitSplat.TYPE_BURN, false),
 			"Elder burn remains excluded from True Defense");
-		assertHit(burned, 4, HitSplat.TYPE_ARMOR_PROC,
+		assertHit(burned, 4, HitSplat.TYPE_BURN,
 			"Elder burn presentation");
 
 		final Player saved = harness.player("elder life", 746, 820);
@@ -431,7 +431,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 		final int savedX = saved.getX();
 		final int savedY = saved.getY();
 		assertEquals(2, inflictElderDamage(
-			dragon, saved, 2, "RANGED", HitSplat.TYPE_ARMOR_PROC, false),
+			dragon, saved, 2, "RANGED", HitSplat.TYPE_STANDARD, false),
 			"Elder nonlethal Ring of Life damage");
 		assertTrue(saved.getX() != savedX || saved.getY() != savedY,
 			"Elder nonlethal victim retains Ring of Life check");
@@ -446,7 +446,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 			incomingVisibleAtDeath, divine);
 		forceNextLegacyDoubleBelow(0.20D);
 		assertEquals(3, inflictElderDamage(reflectedDragon, divine, 3,
-			"RANGED", HitSplat.TYPE_ARMOR_PROC, false),
+			"RANGED", HitSplat.TYPE_STANDARD, false),
 			"Elder reflected hit return value");
 		assertEquals(1, dragonDeaths.get(),
 			"Elder caller owns reflected dragon death");
@@ -482,7 +482,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 		assertDamageResult(resultFor(observed, ranged,
 			"elder-green-dragon-ranged-fireshot"), dragon, ranged,
 			"elder-green-dragon-ranged-fireshot", CombatStyle.RANGED,
-			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			4, 4, 0, false, HitSplat.TYPE_STANDARD, null,
 			"Elder ranged transaction");
 		assertDamageResult(resultFor(observed, blocked,
 			"elder-green-dragon-melee-sweep"), dragon, blocked,
@@ -492,17 +492,17 @@ final class CurrentCombatOwnedDamageCharacterization {
 		assertDamageResult(resultFor(observed, burned,
 			"elder-green-dragon-burn-pulse"), dragon, burned,
 			"elder-green-dragon-burn-pulse", null,
-			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			4, 4, 0, false, HitSplat.TYPE_BURN, null,
 			"Elder burn transaction");
 		assertDamageResult(resultFor(observed, saved,
 			"elder-green-dragon-ranged-fireshot"), dragon, saved,
 			"elder-green-dragon-ranged-fireshot", CombatStyle.RANGED,
-			2, 2, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			2, 2, 0, false, HitSplat.TYPE_STANDARD, null,
 			"Elder Ring of Life transaction");
 		assertDamageResult(resultFor(observed, divine,
 			"elder-green-dragon-ranged-fireshot"), reflectedDragon, divine,
 			"elder-green-dragon-ranged-fireshot", CombatStyle.RANGED,
-			3, 3, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			3, 3, 0, false, HitSplat.TYPE_STANDARD, null,
 			"Elder reflected-hit incoming transaction");
 		assertEquals("elder-green-dragon-ranged-fireshot",
 			observed.get(5).getRequest().getEffectKey(),
@@ -526,7 +526,7 @@ final class CurrentCombatOwnedDamageCharacterization {
 			new AtomicBoolean(), owner);
 		assertTrue(inflictSummonBonusDamage(summon, lethalNpc, 7, false),
 			"Summon bonus reports lethal NPC settlement");
-		assertHit(lethalNpc, 7, HitSplat.TYPE_ARMOR_PROC,
+		assertHit(lethalNpc, 7, HitSplat.TYPE_SUMMON,
 			"Summon bonus displayed overkill");
 		assertEquals(5, summonContribution(lethalNpc, owner),
 			"Summon bonus caps owner contribution to target Hits");
@@ -581,23 +581,23 @@ final class CurrentCombatOwnedDamageCharacterization {
 			"Summon bonus publishes one result per effective hit");
 		assertDamageResult(resultFor(results, lethalNpc, "summon-bonus-melee"),
 			summon, lethalNpc, "summon-bonus-melee", CombatStyle.MELEE,
-			7, 5, 2, true, HitSplat.TYPE_ARMOR_PROC, null,
+			7, 5, 2, true, HitSplat.TYPE_SUMMON, null,
 			"Summon lethal NPC bonus transaction");
 		assertDamageResult(resultFor(results, magicTarget, "summon-bonus-magic"),
 			summon, magicTarget, "summon-bonus-magic", CombatStyle.MAGIC,
-			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			4, 4, 0, false, HitSplat.TYPE_SUMMON, null,
 			"Summon Magic bonus transaction");
 		assertDamageResult(resultFor(results, meleeTarget, "summon-bonus-melee"),
 			summon, meleeTarget, "summon-bonus-melee", CombatStyle.MELEE,
-			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			4, 4, 0, false, HitSplat.TYPE_SUMMON, null,
 			"Summon Melee bonus transaction");
 		assertDamageResult(resultFor(results, lethalPlayer, "summon-bonus-magic"),
 			summon, lethalPlayer, "summon-bonus-magic", CombatStyle.MAGIC,
-			7, 5, 2, true, HitSplat.TYPE_ARMOR_PROC, null,
+			7, 5, 2, true, HitSplat.TYPE_SUMMON, null,
 			"Summon lethal player bonus transaction");
 		assertDamageResult(resultFor(results, noOwnerTarget, "summon-bonus-melee"),
 			noOwnerSummon, noOwnerTarget, "summon-bonus-melee", CombatStyle.MELEE,
-			4, 4, 0, false, HitSplat.TYPE_ARMOR_PROC, null,
+			4, 4, 0, false, HitSplat.TYPE_SUMMON, null,
 			"Offline-owner summon bonus transaction");
 	}
 

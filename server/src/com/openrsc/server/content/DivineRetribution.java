@@ -40,7 +40,7 @@ public final class DivineRetribution {
 			SecondaryEffectPolicy.DIVINE_RETRIBUTION.getStableKey(),
 			com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(attacker, reflectedDamage))
 			.style(CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = attacker.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);

@@ -313,3 +313,37 @@ been built and tested separately, not hot-installed or restarted into that sessi
 Check with the parent/user before interrupting that running review, and verify
 process identity before any later runtime action. No manager contact, deployment,
 main integration, consolidated handoff or READY transition occurred. ACTIVE.
+
+
+## Source palette implemented; authorized private refresh
+
+Justin chose source grouping and confirmed red is the default until otherwise
+classified. Source decisions now supersede the prior multi-element proposal:
+weapon/main damage and offshoots red, armor/jewelry purple, summons (including
+bonus traits) yellow, poison green, healing blue, explicit burn pulses orange.
+See the updated source audit for caller-level distinctions. Initial Elder armor
+hits are purple; its independent burn ticks and Elder boss burn ticks are orange.
+Unknown custom types also safely display red. Combat rules and accepted movement,
+spacing, timing, both styles and persisted toggle remain unchanged.
+
+Validation: client build and server/core/plugin build/audit PASS; **145/145 combat
+scenarios PASS**, including new actual weapon/armor callback gates and explicit
+burn presentation assertions. Software 322, phased 327, native UI 327 rendering
+checks PASS; Options/persistence 51 and fresh-JVM reload 3 PASS; **9,216** pixel
+centering/glyph-preservation checks PASS across seven presentation IDs. Phased
+renderer guard, neighboring Spellbook layout regression and diff whitespace PASS.
+Updated actual-renderer static comparison inspected; center padding and source
+colors readable. GIF playback remains unverified following the earlier denial.
+
+Updated Library comparison, GIF and timed sequence retain the same IDs at version
+2. Files respectively: file_00000000cdb481fdb2fa619074b382b6,
+file_00000000971c81fd97dd4ce2690ccb10, file_00000000f65c81fd9f7fcf3af5e375c3.
+Centering-detail remains unchanged at version 0. Local artifacts and identity
+metadata are under the existing task/hitsplat-preview directory.
+
+Justin explicitly authorized relaunching our private server/client after these
+changes. Refresh only its compiled jars after checkpoint, back up and preserve
+its existing test DB/settings/map/config, verify process cwd and command before
+signals, then check localhost readiness and real client connection. No public
+runtime, owner data or other worker is in scope. This is an inspection increment,
+not overall acceptance, READY or consolidated Core handoff.

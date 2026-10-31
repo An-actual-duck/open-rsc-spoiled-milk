@@ -2015,7 +2015,7 @@ public final class Summoning {
 				: SecondaryEffectPolicy.SUMMON_BONUS_MELEE.getStableKey(),
 			com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.style(magicDamage ? CombatStyle.MAGIC : CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_SUMMON)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);

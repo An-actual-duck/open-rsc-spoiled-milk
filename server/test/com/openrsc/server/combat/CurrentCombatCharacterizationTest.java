@@ -347,6 +347,8 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "baby_dragon_smoke_preserves_rng_projectile_and_refresh_policy",
 				CurrentCombatBabyDragonSmokeCharacterization
 					::babyDragonSmokePolicies);
+			run(harness, "hit_splat_colors_follow_actual_equipment_and_weapon_sources",
+				CurrentCombatHitSplatSourceCharacterization::sourceColors);
 			run(harness, "blue_dragon_water_preserves_rng_damage_and_refresh_policy",
 				CurrentCombatBlueDragonWaterProcCharacterization
 					::blueDragonWaterPolicies);

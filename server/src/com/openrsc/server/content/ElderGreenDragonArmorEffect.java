@@ -154,7 +154,8 @@ public final class ElderGreenDragonArmorEffect {
 		final DamageRequest request = DamageRequest.resolvedLegacy(
 			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
 			effectPolicy.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(effectPolicy == SecondaryEffectPolicy.ELDER_GREEN_DRAGON_ARMOR_BURN
+				? HitSplat.TYPE_BURN : HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult result = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(request);

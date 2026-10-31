@@ -39,7 +39,7 @@ public final class FloatingHitSplatState {
     }
 
     public void offer(int type, int amount, long now) {
-        if (type < 0 || type >= ORSCharacter.HIT_SPLAT_COUNT) return;
+        if (type < 0 || type >= ORSCharacter.HIT_SPLAT_COUNT) type = ORSCharacter.HIT_SPLAT_STANDARD;
         if (pending.size() == MAX_PENDING) pending.remove(0);
         pending.add(new Entry(type, Math.max(0, amount), now, sequence++, receiveBatch));
     }

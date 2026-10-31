@@ -852,7 +852,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			FROSTBITE_REFLECTION_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, reflectedDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -888,7 +888,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			SPLINTER_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(splinterTarget, splinterDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = splinterTarget.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -1066,7 +1066,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			? CombatEffect.DRAGON_WEAPON_BREATH
 			: CombatEffect.DRAGON_WEAPON_SLASH_2;
 		opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, slashEffect));
-		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage);
+		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage, HitSplat.TYPE_STANDARD);
 	}
 
 	private int applyPlayerProjectileDamageBuff(final Player player, final int damage) {
@@ -1169,7 +1169,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				BALROG_MAGIC_SPLASH_POLICY.getStableKey(), splashDamage)
 				.eventId(getUUID())
 				.style(CombatStyle.MAGIC)
-				.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+				.hitSplatType(HitSplat.TYPE_STANDARD)
 				.build();
 			final DamageResult damageResult = splashTarget.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);
@@ -1186,6 +1186,10 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int bonusDamage) {
+		return inflictAuxiliaryMagicDamage(hitter, target, bonusDamage, HitSplat.TYPE_ARMOR_PROC);
+	}
+
+	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int bonusDamage, final int presentationType) {
 		if (bonusDamage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}
@@ -1203,7 +1207,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, bonusDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(presentationType)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -1221,6 +1225,10 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int bonusDamage) {
+		inflictAuxiliaryTrueDamage(hitter, target, bonusDamage, HitSplat.TYPE_ARMOR_PROC);
+	}
+
+	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int bonusDamage, final int presentationType) {
 		if (bonusDamage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -1236,7 +1244,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, bonusDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(presentationType)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -1396,7 +1404,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			CLERIC_THORNS_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(caster, reflectedDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = caster.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);

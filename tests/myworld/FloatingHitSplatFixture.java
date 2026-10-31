@@ -50,6 +50,15 @@ public final class FloatingHitSplatFixture {
         s.offer(5, 5, 19); s.offer(0, 8, 21);
         check(s.advance(22).get(0).type == 0, "semantic batch priority spans wall-clock boundaries");
         s = state();
+        s.legacyDamage(17); s.typed(255, 17, 0);
+        check(s.advance(0).size() == 1 && s.advance(0).get(0).type == ORSCharacter.HIT_SPLAT_STANDARD,
+            "unknown typed event becomes one red number, preserving classic deduplication");
+        check(FloatingHitSplatRenderer.textColor(255) == FloatingHitSplatRenderer.textColor(0)
+            && FloatingHitSplatRenderer.backgroundColor(-1) == FloatingHitSplatRenderer.backgroundColor(0), "unknown color fallback is red");
+        check(FloatingHitSplatRenderer.textColor(2) == FloatingHitSplatRenderer.textColor(5)
+            && FloatingHitSplatRenderer.backgroundColor(2) == FloatingHitSplatRenderer.backgroundColor(5), "armor and jewelry share purple");
+        check(FloatingHitSplatRenderer.textColor(6) != FloatingHitSplatRenderer.textColor(2), "burn has its own orange");
+        s = state();
         s.offer(0, 11, 0); s.offer(0, 12, 0); s.offer(0, 13, 0);
         check(s.advance(0).get(0).amount == 11 && s.pendingCount() == 2, "repeated type preserved");
         check(s.advance(140).size() == 2 && s.pendingCount() == 1, "next repeated event activates");
@@ -138,10 +147,10 @@ public final class FloatingHitSplatFixture {
         FloatingHitSplatRenderer[] renderers = {
             new FloatingHitSplatRenderer(FloatingHitSplatRenderer.Style.TEXT),
             new FloatingHitSplatRenderer(FloatingHitSplatRenderer.Style.BACKGROUND)};
-        ORSCharacter[][] actors = new ORSCharacter[2][13];
-        int[] types = {0, 3, 1, 4, 5, 2};
-        String[] names = {"Primary", "Healing", "Poison", "Summon", "Recoil", "Other"};
-        for (int col = 0; col < 2; col++) for (int i = 0; i < 13; i++) {
+        ORSCharacter[][] actors = new ORSCharacter[2][14];
+        int[] types = {0, 3, 1, 4, 5, 2, 6};
+        String[] names = {"Attack", "Healing", "Poison", "Summon", "Jewelry", "Armor", "Burn"};
+        for (int col = 0; col < 2; col++) for (int i = 0; i < 14; i++) {
             actors[col][i] = new ORSCharacter(); actors[col][i].serverIndex = i;
         }
         for (int frame = 0; frame <= 150; frame++) {
@@ -159,31 +168,31 @@ public final class FloatingHitSplatFixture {
                 int base = col * 480;
                 FloatingHitSplatRenderer r = renderers[col]; r.beginFrame();
                 s.drawString(col == 0 ? "A / COLORED TEXT" : "B / TIGHT COLORED BACKGROUND", base + 18, 82, 0xF1E3BC, 1);
-                for (int i = 0; i < 6; i++) {
-                    int x = base + 42 + i * 78, y = 185;
-                    if (now == 0 || now == 2400) actors[col][i].floatingHitSplats.offer(types[i], new int[] {28, 9, 3, 12, 6, 14}[i], now);
+                for (int i = 0; i < 7; i++) {
+                    int x = base + 36 + i * 68, y = 185;
+                    if (now == 0 || now == 2400) actors[col][i].floatingHitSplats.offer(types[i], new int[] {28, 9, 3, 12, 6, 14, 1}[i], now);
                     actor(s, x, y, i % 2 == 0);
                     s.drawString(names[i], x - 22, y + 72, 0xD3D9D3, 0);
                     r.collect(actors[col][i], x, y, now, s);
                 }
                 s.drawString("Crowded owners / repeated hits / simultaneous burst", base + 18, 292, 0xC8D5D1, 0);
-                for (int i = 6; i < 12; i++) {
-                    int x = base + 105 + (i - 6) * 21;
+                for (int i = 7; i < 13; i++) {
+                    int x = base + 105 + (i - 7) * 21;
                     int y = 392 + (i % 2) * 10;
-                    if (now < 3600 && (frame + i * 2) % 10 == 0) actors[col][i].floatingHitSplats.offer(types[i - 6], 4 + i, now);
+                    if (now < 3600 && (frame + i * 2) % 10 == 0) actors[col][i].floatingHitSplats.offer(types[i - 7], 4 + i, now);
                     actor(s, x, y, i % 2 == 0);
                     r.collect(actors[col][i], x, y, now, s);
                 }
                 int x = base + 360 + (int) (Math.sin(now / 850.0) * 24), y = 392;
                 if (now == 0 || now == 2400) {
-                    for (int type : new int[] {5, 4, 1, 3, 0}) actors[col][12].floatingHitSplats.offer(type, 5 + type, now);
+                    for (int type : new int[] {5, 4, 1, 3, 0}) actors[col][13].floatingHitSplats.offer(type, 5 + type, now);
                 }
                 actor(s, x, y, true);
-                r.collect(actors[col][12], x, y, now, s);
+                r.collect(actors[col][13], x, y, now, s);
                 s.drawString("Moving owner", base + 316, 466, 0xD3D9D3, 0);
                 r.draw(s);
             }
-            s.drawString("Red primary / blue healing / green poison / yellow summon / purple recoil / orange other", 18, 511, 0xC8D5D1, 0);
+            s.drawString("Red attacks / blue healing / green poison / yellow summons / purple armor + jewelry / orange burn", 18, 511, 0xC8D5D1, 0);
             s.drawString("t=" + now + "ms | 64px rise cap | 2.1s lifetime | finite queue; extreme crowding may still overlap", 18, 529, 0xADB9B4, 0);
             png(s, out.resolve(String.format("frame-%03d.png", frame)));
             if (now == 1000) png(s, out.resolve("comparison.png"));

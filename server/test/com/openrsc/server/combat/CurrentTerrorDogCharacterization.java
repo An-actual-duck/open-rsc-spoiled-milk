@@ -62,7 +62,7 @@ final class CurrentTerrorDogCharacterization {
 			}
 			check(hits.size() == 9, "three attackers each make one main plus two extra hits, no recursion");
 			for (int i = 0; i < hits.size(); i++) {
-				check(hits.get(i).getRequest().getHitSplatType() == (i % 3 == 0 ? HitSplat.TYPE_STANDARD : HitSplat.TYPE_ARMOR_PROC), "red main, yellow extras");
+				check(hits.get(i).getRequest().getHitSplatType() == HitSplat.TYPE_STANDARD, "red main and attack-caused extra bites");
 				check(hits.get(i).getRequest().getTick() == h.server().getCurrentTick(), "all bites same tick");
 			}
 			hits.clear(); hit(h, mode, dog, p, 0, false);

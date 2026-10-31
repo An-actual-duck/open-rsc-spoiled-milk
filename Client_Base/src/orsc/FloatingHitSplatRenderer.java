@@ -134,8 +134,10 @@ public final class FloatingHitSplatRenderer {
             case ORSCharacter.HIT_SPLAT_POISON: return 0x65DF80;
             case ORSCharacter.HIT_SPLAT_HEAL: return 0x69B8FF;
             case ORSCharacter.HIT_SPLAT_SUMMON: return 0xFFE263;
+            case ORSCharacter.HIT_SPLAT_ARMOR_PROC:
             case ORSCharacter.HIT_SPLAT_RECOIL: return 0xCD96FF;
-            default: return 0xFFB575;
+            case ORSCharacter.HIT_SPLAT_BURN: return 0xFFB575;
+            default: return 0xFF6860;
         }
     }
     public static int backgroundColor(int type) {
@@ -144,8 +146,10 @@ public final class FloatingHitSplatRenderer {
             case ORSCharacter.HIT_SPLAT_POISON: return 0x256938;
             case ORSCharacter.HIT_SPLAT_HEAL: return 0x245B9B;
             case ORSCharacter.HIT_SPLAT_SUMMON: return 0x876611;
+            case ORSCharacter.HIT_SPLAT_ARMOR_PROC:
             case ORSCharacter.HIT_SPLAT_RECOIL: return 0x663897;
-            default: return 0x965126;
+            case ORSCharacter.HIT_SPLAT_BURN: return 0x965126;
+            default: return 0xA62B28;
         }
     }
 

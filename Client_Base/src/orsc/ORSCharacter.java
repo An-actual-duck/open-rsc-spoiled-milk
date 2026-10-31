@@ -16,7 +16,8 @@ public final class ORSCharacter {
 	public static final int HIT_SPLAT_HEAL = 3;
 	public static final int HIT_SPLAT_SUMMON = 4;
 	public static final int HIT_SPLAT_RECOIL = 5;
-	public static final int HIT_SPLAT_COUNT = 6;
+	public static final int HIT_SPLAT_BURN = 6;
+	public static final int HIT_SPLAT_COUNT = 7;
 	public static final int HIT_SPLAT_TIMEOUT = 200;
 
 	public String accountName;

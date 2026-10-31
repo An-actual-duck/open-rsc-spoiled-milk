@@ -184,7 +184,7 @@ final class CurrentCombatChildDamageCharacterization {
 			invoke(event, "applySplinter", new Class<?>[0]);
 			assertEquals(15, valid.getLevel(Skill.HITS.id()),
 				"Splinter uses ceil half of the resolved primary damage");
-			assertHit(valid, 5, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(valid, 5, HitSplat.TYPE_STANDARD,
 				"Splinter child presentation");
 			assertEquals(5, contribution(valid, caster,
 				"getMageDamageInfoBy"), "Splinter Magic contribution");
@@ -199,7 +199,7 @@ final class CurrentCombatChildDamageCharacterization {
 				"Splinter excludes summons");
 			assertDamageResult(result(harness, 0), caster, valid,
 				"projectile-splinter", CombatStyle.MAGIC,
-				5, 5, 0, false, HitSplat.TYPE_ARMOR_PROC, true,
+				5, 5, 0, false, HitSplat.TYPE_STANDARD, true,
 				"Splinter transaction");
 
 			final Player suppressed = harness.player("splinter guarded", 820, 620);
