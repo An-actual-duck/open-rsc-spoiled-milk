@@ -256,8 +256,18 @@ Also planned, not yet coded: Zamorak's maximum/dealt-damage buffs become melee
 only and Guthix Barkskin becomes ranged defense only. The current prepared
 build retains the broader styles. Extending the melee restriction to lifesteal
 is a manager recommendation, not a separately confirmed owner requirement.
-Saradomin Magic weakness is the proposed first debuff component; later tiers
-remain open. Other hostile suggestions remain unselected.
+Saradomin's hostile tier names/effects are now selected: **Magical Allergy**
+(Magic-defense reduction), **Muscular Atrophy** (maximum-melee-damage reduction)
+and **Molecular Antipode** (temporary reusable non-corporeal state, with Magic
+permitted in both directions). Entry rolls occur each eligible tick at
+5/7/9/11/13/15% for P1–P6; state duration is 1/1/1/2/2/3, with its unit awaiting
+clarification. Re-entry requires at least one attack after returning corporeal.
+Core proposes Magic-defense reductions 10/13/16/19/22/25% and melee-maximum
+reductions 5/7/9/11/13/15%; these numerical recommendations are not yet approved.
+Existing NPC opacity support makes shared translucent rendering feasible
+without per-NPC sprite replacements; implementation/rendering acceptance is
+pending. See the governing Cleric document for decisions and open boundaries.
+Other hostile suggestions remain unselected.
 
 God+Grace buffs, god+Blight debuffs and joint resource consumption remain
 confirmed future casting direction. Generic purpose-only costs replace the god
@@ -267,7 +277,7 @@ above. Production remains complete; hostile casting is separate.
 
 ### Decisions still needed
 
-Saradomin's additional third component and recipient message; later cost/economy
+Saradomin's additional third buff component and recipient message; later cost/economy
 refinement; hostile components/names, balance and lifecycle. Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.

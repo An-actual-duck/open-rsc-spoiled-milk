@@ -178,6 +178,70 @@ only where poison-cleansing adjustment is irrelevant. Exact caps, stacking,
 lifecycle, enemy eligibility and PvP policy remain to be designed; no hostile
 runtime implementation or new PvP permission is implied.
 
+### Owner-selected Saradomin debuffs — October 31, 2026
+
+**Design recorded; hostile gameplay is not implemented.** Higher tiers retain
+the earlier components, with the common Holy Power curve and tier caps 2/4/6.
+The owner selected these tier names and effects:
+
+| Tier | Name | Added effect |
+|---|---|---|
+| 1 | Magical Allergy | Reduces afflicted enemies' Magic defense only |
+| 2 | Muscular Atrophy | Reduces afflicted enemies' maximum melee damage only |
+| 3 | Molecular Antipode | Periodic entry into the reusable **non-corporeal** state |
+
+While non-corporeal, the afflicted enemy cannot harm or be harmed through
+ordinary physical combat; **Magic works in both directions**. The intended
+advantage is continued magical offense against an enemy whose physical attacks
+are intermittently ineffective. The state is a reusable combatant concept for
+later content, potentially including the Corporeal Beast. It does not itself
+approve that boss, player potions, a new spirit-damage type or their mechanics.
+
+During the active debuff, roll once per eligible game tick to enter the state.
+Entry chance is `5 + 2 * (P - 1)` percent. Duration follows the owner's deliberate
+irregular progression below. **The duration unit is not yet explicit**: Core
+recommended game ticks and asked whether the owner instead meant attack turns.
+No implementation may silently choose a different unit.
+
+| Power | P1 | P2 | P3 | P4 | P5 | P6 |
+|---|---|---|---|---|---|---|
+| Entry chance per eligible tick | 5% | 7% | 9% | 11% | 13% | 15% |
+| Non-corporeal duration, unit pending | 1 | 1 | 1 | 2 | 2 | 3 |
+
+After the enemy returns to corporeal form, the owner requires immunity to
+re-entry for **at least one attack** before the tick-based entry rolls resume.
+This recovery belongs to the afflicted actor; source changes and recasts must
+not defeat it. The exact qualifying attack boundary, Stagger interaction,
+effect expiry, already-launched hits and secondary/periodic damage policy need
+explicit coverage before implementation. Core recommends resuming entry rolls
+only after an actual corporeal attack attempt, including natural misses/zeros,
+rather than after an elapsed-time cooldown or a successful damage requirement.
+
+Core's initial numerical recommendations below are **proposals, not approved
+values**. The relatively modest melee reduction allows for Tier 3's additional
+physical protection. Magic weakness reduces defense rather than multiplying all
+incoming magic damage by that percentage.
+
+| Component proposal | Formula at power P | P1 | P2 | P3 | P4 | P5 | P6 |
+|---|---|---|---|---|---|---|---|
+| Magic-defense reduction | `10 + 3 * (P - 1)` percent | 10% | 13% | 16% | 19% | 22% | 25% |
+| Maximum-melee-damage reduction | `5 + 2 * (P - 1)` percent | 5% | 7% | 9% | 11% | 13% | 15% |
+
+Integer rounding against small defenses/maxima and stacking with existing
+defense/maximum-hit debuffs must be evaluated before finalizing those values.
+No new names, costs or runtime effects are approved beyond the owner's choices.
+
+Client feasibility: existing NPC sprite drawing already applies 60% opacity to
+spirit summons through `getNpcSpriteColourTransform`; player invisibility uses
+the same sprite colour/opacity facility. Non-corporeal NPCs can reuse existing
+frames with an independently synchronized appearance state. They need no
+per-NPC replacement sprite set. Core recommends testing roughly 50% opacity
+for this effect, preserving colors/animations and readable overlays. This is
+feasibility evidence, not implemented/proven rendering: both software/OpenGL
+paths and layered NPCs still need verification. Do not reuse the spirit-summon
+gameplay flag as the non-corporeal state. Coordinate any shared client-file
+integration with the separate hit-splat topic branch at final collection.
+
 ### Owner-selected Zamorak debuffs — October 31, 2026
 
 **Design recorded; hostile gameplay is not implemented.** These owner-selected
@@ -251,8 +315,8 @@ maximum/dealt-damage bonuses to melee and Guthix's Barkskin to ranged defense.
 The prepared implementation still has the broader style coverage documented
 above; this narrowing has not been coded. The manager also recommended
 melee-only Zamorak lifesteal, but that additional scope is not separately
-owner-confirmed. Saradomin Magic weakness is the proposed Tier 1 hostile
-component; its later components remain open. None of the manager's other
+owner-confirmed. Saradomin's three selected hostile components and proposed
+numerical values are recorded above. None of the manager's other
 suggested hostile components is silently adopted.
 
 The buff numerical review and Greater Unify are implemented in the private
@@ -264,8 +328,8 @@ is a future spell-roster decision only: the current twelve-spell runtime remains
 unchanged during design. It does not remove planned Saradomin regeneration,
 other regeneration from equipment/potions, assets or item identities.
 
-Still open: Saradomin's additional third component and recipient message, later
-cost/economy refinement, and hostile debuff components/names and balance. God-plus-Grace and
+Still open: Saradomin's additional third **buff** component and recipient message,
+later cost/economy refinement, and remaining hostile balance/timing details. God-plus-Grace and
 god-plus-Blight joint consumption remains confirmed, and generic purpose-only
 costs replace the missing god share with extra purpose sigils; Unify's specific
 two-Grace quantity is settled. The buff casting implementation is now the private candidate; hostile runtime
