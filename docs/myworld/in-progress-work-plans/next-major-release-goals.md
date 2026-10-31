@@ -108,28 +108,56 @@ This completes production, not the mixed-resource casting or hostile spellbook
 overhaul. Current casting remains the twelve legacy spells with unchanged
 costs/effects/categories; their neutral resource is now displayed as Grace.
 
-### Current two-tier Grace mapping
+### Confirmed future progression — three tiers, six power levels
 
-Map all twelve existing spells as **Grace/support**, retaining their current god
-assignments and Worship unlocks: tier one Mend, Unify, Fervor, Purify, Restore,
-Ward; tier two Greater Mend, Zeal, Thorns, Aegis, Rally, Respite. Unify and Respite
-are generic; the others use matching god sigils plus Grace. The [full mapping](cleric-spellbook-concept.md#current-two-tier-mapping-and-generic-grace-costs)
-records each god and existing unlock without introducing a rebalance. Blight
-remains for future debuffs; no mirrored hostile spell list is invented.
+The new ordinary book has three tiers, each with one blessing per god and a
+future debuff per god. Later blessings add the next god component to the earlier
+ones. Tier unlocks use **Worship**, not Blessing. Tier 3 targets roughly Worship
+40, matching elemental single-element tiers 1/20/40 (dual-element 10/30/50).
+Cleric tier 1/2 unlocks 1/20 are a planning baseline pending explicit finalization.
+Tier 4 unique buffs/debuffs remain deferred.
 
-A generic Grace cost substitutes additional Grace for the god-resource share:
-within compatible tier/grade, `A matching god + B Grace` becomes `A + B Grace`.
-The owner's `1 god + 1 Grace` versus `2 Grace` example illustrates this rule;
-it does not fix all tier-one costs or approve tier-two counts/material grades.
-The old `2 stone + 1 silver` launch vector is not an approved new overhaul price.
+Shared power levels P1–P6 require Holy Power **0/20/45/75/115/160**. Tier caps
+are **2/4/6**: two additional available ranks per tier, with no raised minimum.
+Actual power is `min(Holy-Power-resolved rank, tier cap)`. Holy Power includes
+**Worship + strongest applicable holy staff**; unequipping a staff does not
+remove Worship's contribution. Maple/Yew/Ebony/Magicwood/Blood/god staffs add
+32/40/44/48/56/64 respectively; 99+64=163 permits P6. Examples with sufficient
+tier caps: Worship 40 + Maple 32 = 72→P3; 60 + Ebony 44 = 104→P4; 80 + god 64 = 144→P5;
+96 + god 64 = 160→P6.
+Staff-access cleanup is still needed: Zamorak Ebony/Magicwood currently require
+Magic 54/62, versus Saradomin/Guthix legacy Magic 52/59 and legacy melee gates.
+These are current inconsistencies, not approved new equipment restrictions.
+
+| God | Tier 1 | Tier 2 addition | Tier 3 addition |
+|---|---|---|---|
+| Guthix | Faster poison cleansing over time + gradual drained-stat restoration, on the same blessing timer | Barkskin defense increase (not Ward's flat damage reduction) | Thorns reflect |
+| Saradomin | Natural HP regeneration multiplier `P+1` (minimum ×2) | `P+1` HP per pulse (minimum 2), 10 pulses roughly 6 seconds apart/about a minute | Open |
+| Zamorak | Maximum-damage percentage increase | Total-dealt-damage percentage increase | Lifesteal |
+
+Guthix flavor: “Your blood thickens like sap, slowing your ailments.” The old
+Fervor accuracy effect is not part of Zamorak's new first component. Saradomin
+at P6 means **×7 regeneration and 7 HP per pulse/70 HP per minute**; those are the
+confirmed formulas' arithmetic consequences, with balance review still needed.
+Do not silently reduce them or treat the formulas as unapproved.
+
+These progression/composite rules are **design only**. The existing twelve-spell
+runtime, costs/effects and spell-specific ranks remain unchanged. Its two-tier
+roster is salvage/history, not the active future roster. Generic Unify/Respite
+placement is open, not an owner-approved commitment.
+
+God+Grace buffs, god+Blight debuffs and joint resource consumption remain
+confirmed future casting direction. Generic purpose-only costs replace the god
+share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
+compatible grades); exact vectors are still open. Production remains complete.
 
 ### Decisions still needed
 
-Exact mixed casting costs and grade correspondence; future hostile spells/tiers
-and book layout. Carving, well requirements/yields/XP, no-Devotion purpose policy,
-Blight identities/art and Grace same-ID stock preservation are implemented.
-Joint consumption during future casting is settled; its quantities are not.
-The three god-production lines remain unchanged.
+Saradomin's third component; remaining magnitudes, exact tier unlocks, names,
+durations and mixed casting costs/grades; composite targeting/stacking; debuff
+components; generic utility placement and book layout. Tier 4 remains later work.
+The [active governing design](cleric-spellbook-concept.md#active-overhaul-three-ordinary-tiers-and-six-power-levels--october-30-2026)
+records the six thresholds, examples and distinction from the historical book.
 
 Reference: [governing Cleric concept and impact audit](cleric-spellbook-concept.md).
 

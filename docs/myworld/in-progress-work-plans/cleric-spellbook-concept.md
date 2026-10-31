@@ -13,6 +13,84 @@ The [completed implementation plan](../completed-work-plans/cleric-spellbook-imp
 is a historical launch record, not an active overhaul assignment. No code,
 resource conversion or map change is authorized by this documentation update.
 
+### Active overhaul: three ordinary tiers and six power levels — October 30, 2026
+
+This is the latest owner-confirmed **future design**, superseding the old
+individually unlocked twelve-spell roster and spell-specific rank tables as the
+desired overhaul. None of the new tiers, shared ranks or composite blessings
+below is implemented. The existing twelve spells remain the current runtime
+and salvage reference; their costs/effects have not changed. Grace/Blight well
+production is already implemented separately, as recorded below.
+
+**Worship unlocks spell tiers; Blessing produces their resources.** The ordinary
+book has three buff tiers, with one blessing per god at each tier, and a future
+debuff branch with one debuff per god per tier. Each later blessing tier adds
+its god's next component to the earlier components. Tier 3 targets roughly
+Worship 40, matching the elemental single-element progression of 1/20/40
+(dual-element progression is 10/30/50). Worship 1/20 for Cleric tiers 1/2 remains
+the planning baseline, not an explicitly finalized pair of unlocks. Tier 4's
+unique buffs/debuffs are deferred.
+
+A shared six-level potency ladder replaces the old per-spell rank schemes:
+
+| Power level | Minimum Holy Power | First tier permitting it |
+|---|---:|---|
+| P1 | 0 | Tier 1 |
+| P2 | 20 | Tier 1 |
+| P3 | 45 | Tier 2 |
+| P4 | 75 | Tier 2 |
+| P5 | 115 | Tier 3 |
+| P6 | 160 | Tier 3 |
+
+Tier caps are **2/4/6**, adding two available power levels per tier. A higher
+tier raises the maximum, not the minimum: resolve the highest rank whose Holy
+Power threshold is met, then use `actual power = min(resolved rank, tier cap)`.
+A Tier 3 blessing can therefore still operate at P1. Access to a tier never
+grants its new ranks automatically.
+
+Holy Power is the current **Worship level + strongest applicable holy-staff
+contribution**, not equipment alone. Without a holy staff, Worship still
+contributes. Existing staff contributions include Maple 32, Yew 40, Ebony 44,
+Magicwood 48, Blood 56 and god staves 64. At Worship 99 plus a god staff, Holy Power
+is 163, enough for P6; the top threshold is deliberately reachable.
+
+| Example (with a sufficient tier cap) | Holy Power | Power level |
+|---|---:|---|
+| Worship 40 + Maple 32 |72 |P3 |
+| Worship 60 + Ebony 44 |104 |P4 |
+| Worship 80 + god staff 64 |144 |P5 |
+| Worship 96 + god staff 64 |160 |P6 |
+
+These are potency examples, not equipment-access promises. Staff requirements
+need cleanup before implementation: Zamorak Ebony/Magicwood currently require
+Magic 54/62, while Saradomin/Guthix counterparts retain raw legacy Magic 52/59
+and legacy melee gates. This documentation does not alter those requirements.
+
+| God | Tier 1 component | Tier 2 addition | Tier 3 addition |
+|---|---|---|---|
+| Guthix | Increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
+| Saradomin | Faster natural Hits regeneration: minimum ×2 at P1, adding one multiplier per power step (`P + 1`) | Heal over time: minimum 2 HP per pulse at P1, adding 1 HP per power step (`P + 1`), 10 pulses roughly 6 seconds apart over about a minute | Open |
+| Zamorak | Percentage increase to maximum damage | Percentage increase to total dealt damage | Lifesteal |
+
+Guthix flavor: **“Your blood thickens like sap, slowing your ailments.”** This
+is poison cleansing, not an unapproved blanket ailment cure. Zamorak's new first
+component is maximum damage; the old Fervor accuracy mechanic is not carried
+into this design.
+
+Saradomin's confirmed arithmetic means P6 gives **×7 natural regeneration** and
+**7 HP per pulse, 70 HP over ten pulses/about a minute**. This consequence is
+recorded explicitly for balance review; it is not silently reduced or treated
+as an unapproved interpretation. Exact timing still needs its final contract.
+
+Still open: Saradomin's third component; remaining component magnitudes, exact
+tier unlocks, final names/durations/cost vectors, composite targeting/stacking,
+and debuff components. The future placement of generic Unify/Respite is also
+open: preserving them as generic utilities was an assistant recommendation,
+not owner approval. God-plus-Grace and god-plus-Blight joint consumption remains
+confirmed, and generic purpose-only costs replace the missing god share with
+extra purpose sigils; exact vectors and the new casting implementation remain
+future work. No part of this documentation authorizes source implementation.
+
 ### Owner direction — October 29, 2026
 
 - Keep the **three god sigils: Saradomin, Guthix and Zamorak**. Their existing
@@ -55,8 +133,8 @@ Purpose wells charge no Devotion. Grace retains IDs3299/3300/3307/3308 and all
 stock/art; Blight uses3426–3429. Grace now uses Divine wellsprings instead of
 altars; the three god sigils retain their original altar rules.
 
-**Still unresolved:** exact joint casting costs and grade use; book layout and
-future hostile spells/tiers. Current casting remains the legacy twelve-spell
+**Still unresolved:** exact joint casting costs and grade use; book layout,
+remaining components and hostile spell design. Current casting remains the legacy twelve-spell
 runtime, with the neutral resource displayed as Grace. God-plus-Grace casting
 vectors and Blight debuffs are not implemented by this production task. Joint
 consumption as distinct resources is the confirmed future direction.
@@ -67,7 +145,13 @@ Curse-sigil/ichor-river wording are **superseded historical proposals**, not
 additional active requirements alongside this model. The [release goals](next-major-release-goals.md#2-expand-cleric-buffs-and-add-the-hostile-debuff-branch)
 track the same direction.
 
-### Well assets and shoreline interaction — confirmed October 29
+<a id="well-assets-and-shoreline-interaction--confirmed-october-29"></a>
+
+### Historical October 29 asset/interaction planning — superseded by installed production
+
+The following records the pre-installation stage. The implemented assets,
+shoreline interactions and infusion policy are summarized above and in the
+October 30 infusion review; statements of uninstalled/open work below are history.
 
 **Ichor** is a deep-purple recolor of the existing native water floor. Holy
 wellsprings contain **Divine Water**, a pale-blue recolor of that same water
@@ -159,7 +243,13 @@ the old altar's Devotion charge into wellspring dipping. All three god lines'
 production stays unchanged. Blight remains a separate new carving family with
 its materials/recipes and IDs unallocated.
 
-### Current two-tier mapping and generic Grace costs
+<a id="current-two-tier-mapping-and-generic-grace-costs"></a>
+
+### Historical two-tier mapping and generic Grace costs
+
+The table below is the current runtime/salvage roster and an earlier resource
+mapping, superseded as the desired future roster by the active three-tier
+composite design above. It does not lock Unify/Respite into the future book.
 
 The owner requested mapping the **two existing tiers only**. All twelve spells
 below are support spells and therefore use **Grace**. Blight is a planned
@@ -196,11 +286,15 @@ silver god sigils. Do not sum incompatible grades or reuse the shipped
 stone/silver grades do not settle exact casting quantities, per-spell grade use
 or cross-grade cost correspondence; those remain to be designed.
 
-The table confirms the current twelve-spell mapping, not every future roster,
+This historical table confirms the earlier twelve-spell mapping, not the new roster,
 layout or effect revision. Preserve the existing effects as the salvage baseline;
 further tiers, Blight spells and later changes remain discussion items.
 
-## Confirmed Direction
+## Historical launch direction and implementation detail
+
+These sections retain the shipped twelve-spell contracts and earlier design
+decisions for salvage and compatibility review. Where they conflict with the
+active overhaul above, they are not current future-design requirements.
 
 ### Identity and Progression
 
@@ -398,9 +492,9 @@ charges or item IDs.
   spellbook.
 - Blessed staves and god staves gain a **Holy Power** stat.
 - Ordinary Magic staves have no Holy Power.
-- A Cleric spell does not require a holy staff to cast. With no equipped
-  blessed or god staff, the caster has `0` Holy Power and receives only the
-  lowest available effect rank.
+- A Cleric spell does not require a holy staff to cast. Holy Power includes
+  Worship plus the strongest applicable holy-staff contribution. With no
+  blessed or god staff, Worship still contributes; it is not zero Holy Power.
 - The three god-aligned blessed-staff lines share the same Holy Power ladder.
   Any of them empowers any ordinary Cleric support spell; staff alignment does
   not split the shared book or require three staff swaps. Matching-staff rules
@@ -1150,7 +1244,10 @@ These are current implementation facts, not new design decisions:
   and supports active Cleric maintenance without displacing those longer-lived
   consumables solely through duration.
 
-## Holy Power Effect Rank Model
+## Historical Holy Power Effect Rank Model
+
+This spell-specific launch model remains a current-runtime salvage reference.
+The desired overhaul uses the shared six power levels and tier caps above.
 
 The confirmed direction is to map Holy Power into a small number of discrete
 effect ranks instead of persisting arbitrary floating-point strength. For
