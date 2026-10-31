@@ -82,14 +82,28 @@ Saradomin's confirmed arithmetic means P6 gives **×7 natural regeneration** and
 recorded explicitly for balance review; it is not silently reduced or treated
 as an unapproved interpretation. Exact timing still needs its final contract.
 
+**Generic spell decision — October 30:** keep **Unify** with its existing
+behavior, changing only its casting cost to **two Grace sigils, no god sigil**.
+It remains Worship 3, radius 4, party allies excluding the caster, with at most
+two safe ordinary walking steps toward the caster, stopping within two tiles.
+Same-level/world and line-of-effect restrictions remain, PvP remains disabled,
+and Unify has no Holy Power ranks. No new Unify tiers or unlock shifts are
+approved. Two Grace is the confirmed quantity; the overhaul's grade
+correspondence remains open. Existing Stone Grace 3300 is the current-runtime
+grade reference, not an additional owner decision fixing the future grade.
+
+**Exclude Respite from the future spellbook** because of abuse concerns. This
+is a future spell-roster decision only: the current twelve-spell runtime remains
+unchanged during design. It does not remove planned Saradomin regeneration,
+other regeneration from equipment/potions, assets or item identities.
+
 Still open: Saradomin's third component; remaining component magnitudes, exact
-tier unlocks, final names/durations/cost vectors, composite targeting/stacking,
-and debuff components. The future placement of generic Unify/Respite is also
-open: preserving them as generic utilities was an assistant recommendation,
-not owner approval. God-plus-Grace and god-plus-Blight joint consumption remains
-confirmed, and generic purpose-only costs replace the missing god share with
-extra purpose sigils; exact vectors and the new casting implementation remain
-future work. No part of this documentation authorizes source implementation.
+tier unlocks, final names/durations and other cost vectors, grade correspondence,
+composite targeting/stacking, and debuff components. God-plus-Grace and
+god-plus-Blight joint consumption remains confirmed, and generic purpose-only
+costs replace the missing god share with extra purpose sigils; Unify's specific
+two-Grace quantity is settled. The new casting implementation remains future
+work. No part of this documentation authorizes source implementation.
 
 ### Owner direction — October 29, 2026
 
@@ -249,7 +263,8 @@ its materials/recipes and IDs unallocated.
 
 The table below is the current runtime/salvage roster and an earlier resource
 mapping, superseded as the desired future roster by the active three-tier
-composite design above. It does not lock Unify/Respite into the future book.
+composite design above. The active decision retains Unify with a two-Grace cost
+and excludes Respite from the future book; the historical rows remain intact.
 
 The owner requested mapping the **two existing tiers only**. All twelve spells
 below are support spells and therefore use **Grace**. Blight is a planned
