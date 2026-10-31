@@ -116,10 +116,20 @@ Validation:
 - Static native-font output and a timed frame sequence were visually inspected.
   A browser attempt to play the local GIF was denied because file URLs are
   prohibited. No alternate browser route was attempted; playback is unverified.
-- Library saving attempted the supported prepared-upload helper, which stopped
-  with `Library prepare_uploads is not available` before creating any files.
-  No confirmed output Library IDs exist; deliver the actual local files. Preserve
-  any subsequently created IDs on later revisions rather than making duplicates.
+- Library saving initially stopped before creation because the prepared-upload
+  helper reported `Library prepare_uploads is not available`. Recovery through
+  the documented direct-create batch succeeded for all three previews; local
+  identity/version metadata was applied successfully. All are version 0:
+  - `comparison.png`: `libfile_e80b5fa1d8608191bfd44886f8b3bd6b`
+    (`file_000000002e5081fd995bb5062701847f`).
+  - `floating-styles.gif`: `libfile_c01be5a836ec8191a55b8f1a896ed1d2`
+    (`file_000000006a7c8230abd844ca4b112690`).
+  - `motion-sequence.png`: `libfile_7af262c8d2888191b1b3079afe02d58d`
+    (`file_00000000689081fdaae6033d1a3031f5`).
+  Their Library paths are `/comparison.png`, `/floating-styles.gif` and
+  `/motion-sequence.png`; original local paths remain in the review directory
+  above. Replace these same Library IDs for subsequent revisions. Local
+  `library-identities.json` and file metadata retain the exact correspondence.
 - Full client scene/login and GPU presentation have not been visually tested.
   Pixel rendering and native command capture are verified offscreen. Actual
   character sprite anchors, camera/zoom changes, nametags/skulls, dense battle
