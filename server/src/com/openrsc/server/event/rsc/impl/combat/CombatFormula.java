@@ -90,7 +90,7 @@ public class CombatFormula {
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
-        if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
+        if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.MAGIC);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
         CriticalHitResolver.cosmic(
@@ -120,7 +120,7 @@ public class CombatFormula {
 		int spellMax = Math.max(1, (int) Math.ceil(spellPower));
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
-        if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
+        if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.MAGIC);
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
     final int resolvedMaximum = cappedAttackMax;
@@ -270,7 +270,9 @@ public class CombatFormula {
   private static AttackRoll rollMeleeDamage(
       final Mob source, final Mob victim, final boolean directAttack, final int capDivisor) {
 		int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense())) / capDivisor;
-        if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
+        if(source instanceof com.openrsc.server.model.entity.npc.Npc)
+          attackMax=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMaximumMelee((com.openrsc.server.model.entity.npc.Npc)source,attackMax);
+        else if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
         CriticalHitResolver.cosmic(
@@ -319,7 +321,7 @@ public class CombatFormula {
 			attackMax *= 2;
 		}
 		attackMax = getDragonBreathMainAttackMax(source, bowId, arrowId, attackMax);
-        attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
+        attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.RANGED);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
         CriticalHitResolver.cosmic(

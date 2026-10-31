@@ -1,0 +1,9 @@
+{
+  "description": "Reviewed custom undead classification for Hallowed Strikes; legacy/quest gates unchanged.",
+  "npcs": [
+    {
+      "id": 865,
+      "undead": true
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import com.openrsc.client.entityhandling.defs.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/** Atomic, bounds-checked schema-3 decoder. No partial catalog is exposed. */
+/** Atomic, bounds-checked schema-4 decoder. No partial catalog is exposed. */
 public final class ClericSpellbookPacketDecoder {
   private ClericSpellbookPacketDecoder() {}
 
@@ -20,9 +20,10 @@ public final class ClericSpellbookPacketDecoder {
       String key = in.text(128),
           name = in.text(128),
           description = in.text(2048),
+          flavor = in.text(512),
           alignment = in.text(32);
-      int worship = in.u8(), tier = in.u8(), radius = in.u8(), caster = in.u8();
-      if (caster > 1) throw new IllegalArgumentException("Invalid Cleric caster flag");
+      int worship = in.u8(), tier = in.u8(), radius = in.u8(), caster = in.u8(), target = in.u8();
+      if (caster > 1 || target > 1) throw new IllegalArgumentException("Invalid Cleric caster flag");
       int icon = in.u16(), costCount = in.u8();
       if (costCount < 1 || costCount > ClericBlessingContract.MAX_COSTS)
         throw new IllegalArgumentException("Invalid Cleric cost count");
@@ -42,7 +43,7 @@ public final class ClericSpellbookPacketDecoder {
             primary = in.u16(),
             secondary = in.u16(),
             components = in.u8();
-        if (kind != ClericBlessingContract.BLESSING_PRESENTATION
+        if (kind != (target==1 ? ClericBlessingContract.HOSTILE_PRESENTATION : ClericBlessingContract.BLESSING_PRESENTATION)
             || components < 1
             || components > ClericBlessingContract.MAX_COMPONENTS
             || duration > 3600000)
@@ -76,7 +77,7 @@ public final class ClericSpellbookPacketDecoder {
               casterIcon,
               animation,
               statusIcon,
-              ranks));
+              ranks, flavor, target == 1));
     }
     if (in.remaining() != 0) throw new IllegalArgumentException("Trailing Cleric catalog bytes");
     ClericSpellbookCatalog checked = new ClericSpellbookCatalog();

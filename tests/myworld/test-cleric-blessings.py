@@ -17,4 +17,4 @@ with tempfile.TemporaryDirectory(prefix='cleric-blessings-') as folder:
  fixture=tmp/'runtime';run(['python3',str(ROOT/'tests/myworld/prepare-cleric-well-fixture.py'),str(fixture)],quiet=True)
  cp=':'.join(str(ROOT/p) for p in ['server/core.jar','server/plugins.jar','server/lib/*'])
  run([javac,'-proc:none','-cp',cp,'-sourcepath',str(ROOT/'server/test'),'-d',str(classes),str(ROOT/'server/test/com/openrsc/server/combat/ClericBlessingsFixture.java')])
- run([java,'-Xmx512m','-XX:+UseSerialGC','-Djava.awt.headless=true','-cp',str(classes)+':'+cp,'com.openrsc.server.combat.ClericBlessingsFixture','/tmp/cleric-blessings-schema3.bin'],cwd=fixture,quiet=True)
+ run([java,'-Xmx512m','-XX:+UseSerialGC','-Djava.awt.headless=true','-cp',str(classes)+':'+cp,'com.openrsc.server.combat.ClericBlessingsFixture','/tmp/cleric-blessings-schema4.bin'],cwd=fixture,quiet=True)

@@ -344,6 +344,7 @@ public class RangeUtils {
               MessageType.QUEST, "Your shield prevents some of the damage from the flames");
                 }
                 fireDamage = (int) Math.floor(getCurrentLevel(player, Skill.HITS.id()) * percentage / 100.0);
+                // Explicit magical combat harm: phase permits it; retain legacy settlement/death order.
                 player.damage(fireDamage);
 
                 //reduce ranged level (case for KBD)

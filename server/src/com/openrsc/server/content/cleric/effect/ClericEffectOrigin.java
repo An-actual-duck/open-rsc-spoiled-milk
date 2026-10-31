@@ -28,6 +28,16 @@ public final class ClericEffectOrigin {
         this.worldSpace=worldSpace;this.signedLevel=signedLevel;
 	}
 
+    /** Hostile origins have a caster session and spatial scope, but no party membership. */
+    public static ClericEffectOrigin hostile(TransientEffectSessionToken session,Object space,int level) {
+        return new ClericEffectOrigin(session,space,level);
+    }
+    private ClericEffectOrigin(TransientEffectSessionToken session,Object space,int level) {
+        if(session==null || space==null) throw new IllegalArgumentException("Hostile origin requires scope");
+        casterSession=session; casterMembership=null; recipientMembership=null;
+        worldSpace=space; signedLevel=level;
+    }
+
     public boolean matchesScope(Object space,int level){return worldSpace==null || worldSpace.equals(space)&&signedLevel!=null&&signedLevel==level;}
 
 	public TransientEffectSessionToken getCasterSession() {

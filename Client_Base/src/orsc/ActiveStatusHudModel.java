@@ -274,8 +274,14 @@ public final class ActiveStatusHudModel {
               != ClericBlessingContract.BLESSING_PRESENTATION) return null;
       ArrayList<String> lines = new ArrayList<String>();
       lines.add(clericSpell.getName() + " P" + rank);
-      for (com.openrsc.client.entityhandling.defs.ClericComponentDef c :
-          clericSpell.getEffectRank(rank).getComponents()) lines.add(c.describe());
+      String previous=null;
+      for(com.openrsc.client.entityhandling.defs.ClericComponentDef c:clericSpell.getEffectRank(rank).getComponents()) {
+        if(c.getName().equals(previous)) {
+          int last=lines.size()-1;
+          lines.set(last,lines.get(last)+"; "+ClericBlessingContract.describeComponentDetail(c.getKind(),c.getMagnitude(),c.getParameter1(),c.getParameter2()));
+        } else lines.add(c.describe());
+        previous=c.getName();
+      }
       return Collections.unmodifiableList(lines);
     }
 

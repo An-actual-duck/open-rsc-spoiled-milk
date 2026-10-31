@@ -154,6 +154,8 @@ public final class ElderGreenDragonArmorEffect {
 		final DamageRequest request = DamageRequest.resolvedLegacy(
 			source, target, DamageRequest.SourceCategory.OWNED_EFFECT,
 			effectPolicy.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
+            // Reviewed phase nature is nonmagical; true-damage calculation and burn cadence are unchanged.
+            .harmNature(com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult result = target.getWorld().getServer()

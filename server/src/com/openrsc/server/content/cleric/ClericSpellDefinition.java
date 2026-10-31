@@ -4,150 +4,183 @@ import java.util.Arrays;
 
 /** Immutable common metadata shared by later Cleric transport and spell handlers. */
 public final class ClericSpellDefinition {
-	private final ClericSpellId id;
-	private final String displayName;
-	private final String effectDescription;
-	private final ClericAlignment alignment;
-	private final int worshipLevel;
-	private final int spellTier;
-	private final int radius;
-	private final boolean affectsCaster;
-	private final ClericSigilCost primarySigilCost;
-	private final ClericSpellPresentation presentation;
-	private final int[] holyPowerThresholds;
+  private final ClericSpellId id;
+  private final String displayName;
+  private final String effectDescription;
+  private final ClericAlignment alignment;
+  private final int worshipLevel;
+  private final int spellTier;
+  private final int radius;
+  private final boolean affectsCaster;
+  private final ClericSigilCost primarySigilCost;
+  private final ClericSpellPresentation presentation;
+  private final int[] holyPowerThresholds;
 
-	ClericSpellDefinition(ClericSpellId id, String displayName, String effectDescription,
-			ClericAlignment alignment,
-			int worshipLevel, int spellTier, int radius, boolean affectsCaster,
-			ClericSigilCost primarySigilCost, ClericSpellPresentation presentation,
-			int... holyPowerThresholds) {
-		if (id == null || alignment == null || primarySigilCost == null || presentation == null) {
-			throw new IllegalArgumentException(
-				"Cleric spell identity, alignment, cost, and presentation are required");
-		}
-		if (displayName == null || displayName.trim().isEmpty()) {
-			throw new IllegalArgumentException("Cleric spell display name is required");
-		}
-		if (effectDescription == null || effectDescription.trim().isEmpty()) {
-			throw new IllegalArgumentException("Cleric spell effect description is required");
-		}
-		if (worshipLevel < 1 || spellTier < 1 || radius < 1) {
-			throw new IllegalArgumentException("Cleric spell level, tier, and radius must be positive");
-		}
-		validateThresholds(holyPowerThresholds);
-		this.id = id;
-		this.displayName = displayName;
-		this.effectDescription = effectDescription;
-		this.alignment = alignment;
-		this.worshipLevel = worshipLevel;
-		this.spellTier = spellTier;
-		this.radius = radius;
-		this.affectsCaster = affectsCaster;
-		this.primarySigilCost = primarySigilCost;
-		this.presentation = presentation;
-		this.holyPowerThresholds = holyPowerThresholds.clone();
-	}
-
-	private static void validateThresholds(int[] thresholds) {
-		if (thresholds == null || thresholds.length == 0 || thresholds[0] != 0) {
-			throw new IllegalArgumentException("Cleric Holy Power thresholds must begin at zero");
-		}
-		for (int index = 1; index < thresholds.length; index++) {
-			if (thresholds[index] <= thresholds[index - 1]) {
-				throw new IllegalArgumentException("Cleric Holy Power thresholds must increase strictly");
-			}
-		}
-	}
-
-	public ClericSpellId getId() {
-		return id;
-	}
-
-	public int getStableCode() {
-		return id.getCode();
-	}
-
-	public String getStableKey() {
-		return id.getKey();
-	}
-
-	public String getDisplayName() {
-		return displayName;
-	}
-
-	public String getEffectDescription() {
-		return effectDescription;
-	}
-
-	public ClericAlignment getAlignment() {
-		return alignment;
-	}
-
-	public int getWorshipLevel() {
-		return worshipLevel;
-	}
-
-	public int getSpellTier() {
-		return spellTier;
-	}
-
-	public int getRadius() {
-		return radius;
-	}
-
-	public boolean affectsCaster() {
-		return affectsCaster;
-	}
-
-	public ClericSigilCost getPrimarySigilCost() {
-		return primarySigilCost;
-	}
-
-    /** Initial private-build cost vector; one exact exchange per cast, never per recipient. */
-    public java.util.List<ClericResourceCost> getResourceCosts() {
-        java.util.List<ClericResourceCost> result = new java.util.ArrayList<ClericResourceCost>();
-        if (id == ClericSpellId.UNIFY || id == ClericSpellId.GREATER_UNIFY) {
-            result.add(new ClericResourceCost(3300, id == ClericSpellId.UNIFY ? 2 : 6));
-        } else {
-            ClericSigilMaterial material = spellTier == 3 ? ClericSigilMaterial.SILVER : ClericSigilMaterial.STONE;
-            int count = spellTier == 1 ? 1 : 2;
-            result.add(new ClericResourceCost(ClericSigilItemId.get(material, alignment, true).getItemId(), count));
-            result.add(new ClericResourceCost(ClericSigilItemId.get(material, ClericAlignment.NEUTRAL, true).getItemId(), count));
-        }
-        return java.util.Collections.unmodifiableList(result);
+  ClericSpellDefinition(
+      ClericSpellId id,
+      String displayName,
+      String effectDescription,
+      ClericAlignment alignment,
+      int worshipLevel,
+      int spellTier,
+      int radius,
+      boolean affectsCaster,
+      ClericSigilCost primarySigilCost,
+      ClericSpellPresentation presentation,
+      int... holyPowerThresholds) {
+    if (id == null || alignment == null || primarySigilCost == null || presentation == null) {
+      throw new IllegalArgumentException(
+          "Cleric spell identity, alignment, cost, and presentation are required");
     }
+    if (displayName == null || displayName.trim().isEmpty()) {
+      throw new IllegalArgumentException("Cleric spell display name is required");
+    }
+    if (effectDescription == null || effectDescription.trim().isEmpty()) {
+      throw new IllegalArgumentException("Cleric spell effect description is required");
+    }
+    if (worshipLevel < 1 || spellTier < 1 || radius < 1) {
+      throw new IllegalArgumentException("Cleric spell level, tier, and radius must be positive");
+    }
+    validateThresholds(holyPowerThresholds);
+    this.id = id;
+    this.displayName = displayName;
+    this.effectDescription = effectDescription;
+    this.alignment = alignment;
+    this.worshipLevel = worshipLevel;
+    this.spellTier = spellTier;
+    this.radius = radius;
+    this.affectsCaster = affectsCaster;
+    this.primarySigilCost = primarySigilCost;
+    this.presentation = presentation;
+    this.holyPowerThresholds = holyPowerThresholds.clone();
+  }
 
-	public ClericSpellPresentation getPresentation() {
-		return presentation;
-	}
+  private static void validateThresholds(int[] thresholds) {
+    if (thresholds == null || thresholds.length == 0 || thresholds[0] != 0) {
+      throw new IllegalArgumentException("Cleric Holy Power thresholds must begin at zero");
+    }
+    for (int index = 1; index < thresholds.length; index++) {
+      if (thresholds[index] <= thresholds[index - 1]) {
+        throw new IllegalArgumentException("Cleric Holy Power thresholds must increase strictly");
+      }
+    }
+  }
 
-	public int[] getHolyPowerThresholds() {
-		return holyPowerThresholds.clone();
-	}
+  public ClericSpellId getId() {
+    return id;
+  }
 
-	public int getEffectRankCount() {
-		return holyPowerThresholds.length;
-	}
+  public int getStableCode() {
+    return id.getCode();
+  }
 
-	/** Returns the one-based authored effect rank snapshotted at cast time. */
-	public int resolveEffectRank(int holyPower) {
-		if (holyPower < 0) {
-			throw new IllegalArgumentException("Holy Power cannot be negative: " + holyPower);
-		}
-		int rank = 1;
-		for (int index = 1; index < holyPowerThresholds.length; index++) {
-			if (holyPower < holyPowerThresholds[index]) {
-				break;
-			}
-			rank = index + 1;
-		}
-		return rank;
-	}
+  public String getStableKey() {
+    return id.getKey();
+  }
 
-	@Override
-	public String toString() {
-		return "ClericSpellDefinition{id=" + id + ", worshipLevel=" + worshipLevel
-			+ ", spellTier=" + spellTier + ", holyPowerThresholds="
-			+ Arrays.toString(holyPowerThresholds) + '}';
-	}
+  public String getRecipientFlavor() {
+    String value = ClericSpellText.recipientFlavor(id);
+    return value == null ? "" : value;
+  }
+
+  public boolean isHostile() {
+    return id.isHostile();
+  }
+
+  public String getDisplayName() {
+    return displayName;
+  }
+
+  public String getEffectDescription() {
+    return effectDescription;
+  }
+
+  public ClericAlignment getAlignment() {
+    return alignment;
+  }
+
+  public int getWorshipLevel() {
+    return worshipLevel;
+  }
+
+  public int getSpellTier() {
+    return spellTier;
+  }
+
+  public int getRadius() {
+    return radius;
+  }
+
+  public boolean affectsCaster() {
+    return affectsCaster;
+  }
+
+  public ClericSigilCost getPrimarySigilCost() {
+    return primarySigilCost;
+  }
+
+  /** Initial private-build cost vector; one exact exchange per cast, never per recipient. */
+  public java.util.List<ClericResourceCost> getResourceCosts() {
+    java.util.List<ClericResourceCost> result = new java.util.ArrayList<ClericResourceCost>();
+    if (id == ClericSpellId.UNIFY || id == ClericSpellId.GREATER_UNIFY) {
+      result.add(new ClericResourceCost(3300, id == ClericSpellId.UNIFY ? 2 : 6));
+    } else {
+      ClericSigilMaterial material =
+          spellTier == 3 ? ClericSigilMaterial.SILVER : ClericSigilMaterial.STONE;
+      int count = spellTier == 1 ? 1 : 2;
+      result.add(
+          new ClericResourceCost(
+              ClericSigilItemId.get(material, alignment, true).getItemId(), count));
+      result.add(
+          new ClericResourceCost(
+              isHostile()
+                  ? (material == ClericSigilMaterial.STONE
+                          ? ClericWellSigil.STONE_BLIGHT
+                          : ClericWellSigil.SILVER_BLIGHT)
+                      .getInfusedItemId()
+                  : ClericSigilItemId.get(material, ClericAlignment.NEUTRAL, true).getItemId(),
+              count));
+    }
+    return java.util.Collections.unmodifiableList(result);
+  }
+
+  public ClericSpellPresentation getPresentation() {
+    return presentation;
+  }
+
+  public int[] getHolyPowerThresholds() {
+    return holyPowerThresholds.clone();
+  }
+
+  public int getEffectRankCount() {
+    return holyPowerThresholds.length;
+  }
+
+  /** Returns the one-based authored effect rank snapshotted at cast time. */
+  public int resolveEffectRank(int holyPower) {
+    if (holyPower < 0) {
+      throw new IllegalArgumentException("Holy Power cannot be negative: " + holyPower);
+    }
+    int rank = 1;
+    for (int index = 1; index < holyPowerThresholds.length; index++) {
+      if (holyPower < holyPowerThresholds[index]) {
+        break;
+      }
+      rank = index + 1;
+    }
+    return rank;
+  }
+
+  @Override
+  public String toString() {
+    return "ClericSpellDefinition{id="
+        + id
+        + ", worshipLevel="
+        + worshipLevel
+        + ", spellTier="
+        + spellTier
+        + ", holyPowerThresholds="
+        + Arrays.toString(holyPowerThresholds)
+        + '}';
+  }
 }

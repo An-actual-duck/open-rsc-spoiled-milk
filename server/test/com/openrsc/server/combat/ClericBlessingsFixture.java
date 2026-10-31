@@ -99,7 +99,7 @@ public final class ClericBlessingsFixture {
       h.world().getRegionManager().populateNativeLayeredPlacements();
       Player c = h.player("clericcast", 450, 450), r = h.player("clerically", 451, 450);
       for (Player p : new Player[] {c, r}) {
-        p.setClientVersion(10054);
+        p.setClientVersion(10055);
         p.getClientLimitations().maxItemId = 65535;
         h.recordOutgoingPackets(p);
         skill(p, Skill.HITS, 100, 1000);
@@ -116,7 +116,7 @@ public final class ClericBlessingsFixture {
           !ClericSpellCatalog.fromCode(1).getPresentation().hasOnEntityAnimation()
               && !ClericSpellCatalog.fromCode(21).getPresentation().hasOnEntityAnimation(),
           "both Unify forms stay animationless");
-      check(ClericSpellCatalog.getAll().size() == 11, "active11 book");
+      check(ClericSpellCatalog.getAll().size() == 17, "active17 book");
       int[] thresholds = {0, 20, 45, 75, 115, 160};
       for (ClericSpellDefinition d : ClericSpellCatalog.getAll()) {
         check(d.getId().isActive(), "no retired metadata");
@@ -171,7 +171,7 @@ public final class ClericBlessingsFixture {
       c.setClientVersion(10053);
       packet(c, 12);
       check(count(c, 3294) == 100, "old maintained client failclosed");
-      c.setClientVersion(10054);
+      c.setClientVersion(10055);
       clear(r);
       fund(c, ClericSpellCatalog.fromCode(12));
       inv(c).getItems().removeIf(item -> item.getCatalogId() == 3300);
@@ -204,22 +204,22 @@ public final class ClericBlessingsFixture {
       check(
           ClericTimedEffectRuntime.getRespiteSpeedBonus(r) == 0,
           "all composite components expire at60s");
-      cast(c, r, 13);
+      cast(c, r, 14);
       start = r.getSkills().getLevel(Skill.HITS.id());
       h.clock().advanceMillis(1000);
-      fund(c, ClericSpellCatalog.fromCode(13));
-      packet(c, 13);
+      fund(c, ClericSpellCatalog.fromCode(14));
+      packet(c, 14);
       check(r.getSkills().getLevel(Skill.HITS.id()) == start, "equal refresh no immediate healing");
       h.clock().advanceMillis(5000);
       ClericTimedEffectRuntime.getRespiteSpeedBonus(r);
       check(
-          r.getSkills().getLevel(Skill.HITS.id()) == start + 4,
+          r.getSkills().getLevel(Skill.HITS.id()) == start + 6,
           "refresh preserves original6s cadence");
       fund(c, ClericSpellCatalog.fromCode(12));
       packet(c, 12);
       check(
           ClericTimedEffectRuntime.blessing(r, ClericEffectFamily.SARADOMIN_BLESSING).getTier()
-              == 2,
+              == 3,
           "lower tier cannot downgrade");
       fund(c, ClericSpellCatalog.fromCode(17));
       packet(c, 17);
@@ -415,8 +415,8 @@ public final class ClericBlessingsFixture {
       int[] afterDefense = {r.getMeleeDefense(), r.getRangedDefense(), r.getMagicDefense()};
       for (int i = 0; i < 3; i++)
         check(
-            afterDefense[i] == beforeDefense[i] + beforeDefense[i] * 15 / 100,
-            "actual Barkskin all three defense values");
+            afterDefense[i] == beforeDefense[i] + (i==1?beforeDefense[i] * 15 / 100:0),
+            "actual Barkskin ranged-only defense value");
       com.openrsc.server.content.AntidoteCleansing.activate(r, 3405);
       r.applyPoison(100, 100);
       int poisonBefore = r.getCurrentPoisonPower();
@@ -426,7 +426,7 @@ public final class ClericBlessingsFixture {
           r.getCurrentPoisonPower() == 70, "actual poison pulse adds baseline3,antidote20,Guthix7");
       r.curePoison();
       Player crit = h.player("clericcrit", 451, 450);
-      crit.setClientVersion(10054);
+      crit.setClientVersion(10055);
       crit.getClientLimitations().maxItemId = 65535;
       h.recordOutgoingPackets(crit);
       skill(crit, Skill.HITS, 100, 1000);
@@ -464,20 +464,20 @@ public final class ClericBlessingsFixture {
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doRangedDamage(
                   crit, 11, 10, n, false)
-              == ClericDirectCombatRuntime.addMaximumPercent(ranged, 15),
-          "actual ranged crit uses boosted maximum");
-      int boostedMagic = ClericDirectCombatRuntime.addMaximumPercent(magic, 15);
+              == ranged,
+          "actual ranged crit excludes melee-only maximum");
+      int boostedMagic = magic;
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateMagicDamage(crit, n, 10)
               == boostedMagic,
-          "actual Magic crit uses boosted maximum");
+          "actual Magic crit excludes melee-only maximum");
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.calculateMagicDamage(
                   crit, n, 10, 0.5)
               == (int) Math.ceil(boostedMagic * 0.5),
-          "capped Magic applies percent cap after boosted maximum");
+          "capped Magic preserves percent cap without melee-only bonus");
       h.random().scriptDoubles(0.0);
       check(
           com.openrsc.server.event.rsc.impl.combat.CombatFormula.doOffhandMeleeDamage(crit, n)
@@ -557,14 +557,14 @@ public final class ClericBlessingsFixture {
           "dead player cannot heal through blessing lifesteal");
       ClericSpellbookStruct payload = new ClericSpellbookStruct();
       payload.setOpcode(OpcodeOut.SEND_CLERIC_SPELLBOOK);
-      payload.schemaVersion = 3;
+      payload.schemaVersion = 4;
       payload.gameTickMilliseconds = h.server().getConfig().GAME_TICK;
       payload.definitions = ClericSpellCatalog.getAll().toArray(new ClericSpellDefinition[0]);
       Packet wire = new PayloadCustomGenerator().generate(payload, c);
       byte[] bytes = new byte[wire.getBuffer().readableBytes()];
       wire.getBuffer().getBytes(wire.getBuffer().readerIndex(), bytes);
       if (args.length > 0) Files.write(Paths.get(args[0]), bytes);
-      check(bytes[0] == 3 && bytes[1] == 11, "actual generated schema3 eleven entries");
+      check(bytes[0] == 4 && bytes[1] == 17, "actual generated schema4 seventeen entries");
       System.out.println(
           "PASS "
               + checks

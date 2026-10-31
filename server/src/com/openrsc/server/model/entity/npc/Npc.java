@@ -724,7 +724,7 @@ public class Npc extends Mob {
 		int defense = getDef().getMagicDefense() > 0
 			? getDef().getMagicDefense()
 			: deriveDefense(getDef().getDef(), getDef().getMagicDefenseMultiplier(), getDef().getMagicDefenseDivisor(), DEFAULT_MAGIC_DEFENSE_MULTIPLIER);
-		return applyFireDefenseDebuffToValue(defense);
+		return com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMagicDefense(this,applyFireDefenseDebuffToValue(defense));
 	}
 
 	@Override

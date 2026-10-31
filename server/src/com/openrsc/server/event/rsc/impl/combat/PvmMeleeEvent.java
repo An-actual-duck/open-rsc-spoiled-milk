@@ -301,8 +301,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (attackerMob.isPlayer()) {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
-		applyWeaponPoison(attackerMob, targetMob, damage);
-    inflictDamage(
+		if(!com.openrsc.server.model.combat.NonCorporealState.blocks(attackerMob,targetMob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) applyWeaponPoison(attackerMob, targetMob, damage);
+    final DamageResult primarySettlement=inflictDamage(
         attackerMob,
         targetMob,
         damage,
@@ -310,28 +310,30 @@ public class PvmMeleeEvent extends GameTickEvent {
         false,
         committedPrimaryWeapon,
         primaryRoll);
-		if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(attackerMob, targetMob, attackSuppressed)) {
+        final boolean effectsSuppressed=attackSuppressed;
+        if(primarySettlement!=null&&primarySettlement.isNonCorporealBlocked())damage=0;
+		if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(attackerMob, targetMob, effectsSuppressed)) {
       com.openrsc.server.model.combat.AttackRoll offhandRoll =
           CombatFormula.rollOffhandMeleeDamage(attackerMob, targetMob);
       inflictDamage(attackerMob, targetMob, offhandRoll.getDamage(), false, true, -1, offhandRoll);
 		}
-		com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(attackerMob, targetMob, attackSuppressed);
+		com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(attackerMob, targetMob, effectsSuppressed);
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-    if (!attackSuppressed) applyBearMaulSecondHit(attackerMob, targetMob, damage);
-		if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+    if (!effectsSuppressed) applyBearMaulSecondHit(attackerMob, targetMob, damage);
+		if (!effectsSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 			applyDragonWeaponBreathDamage(attackerMob, targetMob);
 			applyElementalSwordProc(attackerMob, targetMob);
 			applyDemonPitchforkHellBlazeProc(attackerMob, targetMob, damage);
 			applyNpcMeleeSpecialProc(attackerMob, targetMob, damage);
 		}
-		applyChaosAmuletChainLightning(attackerMob, targetMob, damage);
+		if(!effectsSuppressed) applyChaosAmuletChainLightning(attackerMob, targetMob, damage);
 		int scytheTargetsHit = 1;
-		if (!attackSuppressed && attackerMob.isPlayer() && targetMob.isNpc()) {
+		if (!effectsSuppressed && attackerMob.isPlayer() && targetMob.isNpc()) {
 			scytheTargetsHit += applyScytheNpcCleave((Player) attackerMob, (Npc) targetMob);
 		}
-		if (targetMob.isPlayer()) {
+		if (!effectsSuppressed && targetMob.isPlayer()) {
 			final Player targetPlayer = (Player) targetMob;
 			final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
 			if (recoilChance > 0.0D) {
@@ -413,7 +415,7 @@ public class PvmMeleeEvent extends GameTickEvent {
         com.openrsc.server.model.combat.AttackRoll.normal(damage));
   }
 
-  private void inflictDamage(
+  private DamageResult inflictDamage(
       final Mob hitter,
       final Mob target,
       int damage,
@@ -421,20 +423,25 @@ public class PvmMeleeEvent extends GameTickEvent {
       boolean offhand,
       int committedCoatingWeapon,
       com.openrsc.server.model.combat.AttackRoll attackRoll) {
+    final boolean committedSuppressed=attackSuppressed;
+    final boolean magicalWail=com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(hitter,target);
+    final boolean phaseBlocked=com.openrsc.server.model.combat.NonCorporealState.blocks(hitter,target,
+        magicalWail?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+    if(phaseBlocked)damage=0;
 		if (!Summoning.canSummonAttack(hitter, target)) {
-			return;
+			return null;
 		}
 		if (!offhand) hitter.incHitsMade();
 		damage = Summoning.applySummonOutgoingDamage(hitter, damage);
 
 		if (target.isPlayer()) {
 			Player targetPlayer = (Player) target;
-			if (!attackSuppressed) hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatSideEffectScript(hitter, target);
+			if (!attackSuppressed && !phaseBlocked) hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatSideEffectScript(hitter, target);
 
 			if (hitter.isNpc()) {
 				if (!targetPlayer.getConfig().WANT_MYWORLD && targetPlayer.getPrayers().isPrayerActivated(Prayers.PARALYZE_MONSTER)) {
 					setDelayTicks(2);
-					return;
+					return null;
 				} else {
 					hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatScript(hitter, target);
 				}
@@ -489,9 +496,10 @@ public class PvmMeleeEvent extends GameTickEvent {
             .eventId(getUUID())
             .encounterId(encounterId)
             .style(CombatStyle.MELEE)
+            .harmNature(magicalWail?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)
             .hitSplatType(hitSplatType)
             .attackCommitment(
-                attackSuppressed
+                committedSuppressed
                     ? com.openrsc.server.model.combat.AttackCommitment.staggered()
                     : com.openrsc.server.model.combat.AttackCommitment.normal())
             .attackRoll(attackRoll)
@@ -519,7 +527,7 @@ public class PvmMeleeEvent extends GameTickEvent {
           && target.getSkills().getLevel(Skill.HITS.id()) > 0
           && player.applyDeathRingChargeHit(n)) {
 				onDeath(target, hitter);
-				return;
+				return damageResult;
 			}
 		}
 		if (hitter.isPlayer()) {
@@ -574,7 +582,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
       if (!attackSuppressed && Summoning.applySummonOnHitEffects(hitter, target, damage)) {
 				onDeath(target, hitter);
-				return;
+				return damageResult;
 			}
       if (!attackSuppressed) applyLeatherSetOnHitEffects(hitter, target, damage);
 			tryAutoRetaliateAfterIncomingAttack(hitter, target);
@@ -589,6 +597,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				hitter, target, damageResult.getActualDamage(), attackSuppressed,
 				bite -> inflictDamage(hitter, target, bite, false, true));
 		}
+        return damageResult;
 	}
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
@@ -727,23 +736,23 @@ public class PvmMeleeEvent extends GameTickEvent {
 		}
 		BlueDragonWaterProc.tryApply(player, target, combatRandom(),
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		EarthDragonSlowProc.tryApply(player, target, combatRandom(),
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		RedDragonFireProc.tryApply(player, target, combatRandom(),
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		final String dragonBreathProc = player.getAttribute("dragon_breath_armor_proc", "");
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
 		}
 		BlackDragonBreathFollowup.tryApply(player, dragonBreathProc,
 			combatRandom(), procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		KingBlackDragonBreathFollowup.tryApply(player, target, dragonBreathProc,
 			combatRandom(), procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		ElderGreenDragonArmorProc.tryApply(player, damage, combatRandom(),
 			procDamage -> ElderGreenDragonArmorEffect.applyProc(
 				player, target, procDamage));
@@ -767,7 +776,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 	private void applyDragonWeaponBreathDamage(final Mob hitter, final Mob target) {
 		DragonMeleeBreathFollowup.tryApply(hitter, target, combatRandom(),
 			() -> CombatFormula.rollDragonMeleeBreathDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 	}
 
 	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
@@ -776,7 +785,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			() -> CombatFormula.rollElementalSwordProcChance(hitter),
 			effect -> CombatFormula.applyElementalSwordProcDebuff(target, effect),
 			() -> CombatFormula.rollElementalSwordProcDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 	}
 
 	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {
@@ -813,6 +822,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			}
 			damage = applyPlayerMeleeDamageBuff(player, damage);
 			inflictScytheCleaveDamage(player, npc, damage);
+            if(com.openrsc.server.model.combat.NonCorporealState.blocks(player,npc,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL))damage=0;
 			applyBearMaulSecondHit(player, npc, damage);
 			if (!getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(player, npc);
@@ -954,6 +964,9 @@ public class PvmMeleeEvent extends GameTickEvent {
 	}
 
 	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage) {
+        inflictAuxiliaryTrueDamage(hitter,target,damage,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+    }
+    private void inflictAuxiliaryTrueDamage(final Mob hitter,final Mob target,int damage,com.openrsc.server.model.combat.CombatHarmNature nature) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -969,6 +982,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
+            .harmNature(nature)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()

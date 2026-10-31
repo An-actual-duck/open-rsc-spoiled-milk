@@ -102,6 +102,7 @@ public class DragonFireBreath implements OnCombatStartScript {
 			if (fireDamage >= 25 || (fireDamage >= 20 && getMaxLevel(player, Skill.HITS.id()) * 2/5 < 25)) {
 				player.message("You are fried");
 			}
+			// Explicit magical combat harm: non-corporeal form permits it. Preserve legacy settlement/death order.
 			player.damage(fireDamage);
 
 			//reduce ranged level (case for KBD if engaging with melee or ranging)

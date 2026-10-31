@@ -166,7 +166,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		}
 
 		if (ClericSupportCasting.isPvpContext(player)) {
-			player.message("Cleric support spells cannot be cast in PvP areas");
+			player.message("Cleric spells cannot be cast in PvP areas");
 			return;
 		}
 		if (player.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) {
@@ -180,11 +180,11 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 		switch (result.getOutcome()) {
 			case SUCCESS:
 				player.message("You cast " + definition.getDisplayName() + " on "
-					+ result.getAffectedRecipientCount() + " party "
-					+ (result.getAffectedRecipientCount() == 1 ? "member" : "members"));
+					+ result.getAffectedRecipientCount() + (definition.isHostile() ? " enemy NPC" : " party member")
+                    + (result.getAffectedRecipientCount() == 1 ? "" : "s"));
 				break;
 			case NO_USEFUL_RECIPIENT:
-				player.message("There are no eligible party members for "
+				player.message("There are no eligible " + (definition.isHostile()?"enemy NPCs":"party members") + " for "
 					+ definition.getDisplayName());
 				break;
 			case INSUFFICIENT_SIGILS:

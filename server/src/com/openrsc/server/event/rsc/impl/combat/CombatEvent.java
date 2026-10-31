@@ -261,25 +261,27 @@ public class CombatEvent extends GameTickEvent {
 				damage = 0;
 			}
 
-			applyWeaponPoison(hitter, target, damage);
-      inflictDamage(hitter, target, damage, attackSuppressed, false, primaryRoll);
-			if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(hitter, target, attackSuppressed)) {
+			if(!com.openrsc.server.model.combat.NonCorporealState.blocks(hitter,target,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) applyWeaponPoison(hitter, target, damage);
+      final DamageResult primarySettlement=inflictDamage(hitter, target, damage, attackSuppressed, false, primaryRoll);
+        final boolean effectsSuppressed=attackSuppressed;
+        if(primarySettlement!=null&&primarySettlement.isNonCorporealBlocked())damage=0;
+			if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(hitter, target, effectsSuppressed)) {
         com.openrsc.server.model.combat.AttackRoll offhandRoll =
             CombatFormula.rollOffhandMeleeDamage(hitter, target);
         inflictDamage(hitter, target, offhandRoll.getDamage(), false, true, offhandRoll);
 			}
-			com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(hitter, target, attackSuppressed);
+			com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(hitter, target, effectsSuppressed);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}
-      if (!attackSuppressed) applyBearMaulSecondHit(hitter, target, damage);
-			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+      if (!effectsSuppressed) applyBearMaulSecondHit(hitter, target, damage);
+			if (!effectsSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(hitter, target);
 				applyElementalSwordProc(hitter, target);
 				applyDemonPitchforkHellBlazeProc(hitter, target, damage);
 			}
-			applyChaosAmuletChainLightning(hitter, target, damage);
-			if (target.isPlayer()) {
+			if(!effectsSuppressed) applyChaosAmuletChainLightning(hitter, target, damage);
+			if (!effectsSuppressed && target.isPlayer()) {
 				final Player targetPlayer = (Player) target;
 				final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
 				if (recoilChance > 0.0D) {
@@ -546,15 +548,20 @@ public class CombatEvent extends GameTickEvent {
         com.openrsc.server.model.combat.AttackRoll.normal(damage));
   }
 
-  private void inflictDamage(
+  private DamageResult inflictDamage(
       final Mob hitter,
       final Mob target,
       int damage,
       boolean attackSuppressed,
       boolean offhand,
       com.openrsc.server.model.combat.AttackRoll attackRoll) {
+    final boolean committedSuppressed=attackSuppressed;
+    final boolean magicalWail=com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(hitter,target);
+    final boolean phaseBlocked=com.openrsc.server.model.combat.NonCorporealState.blocks(hitter,target,
+        magicalWail?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+    if(phaseBlocked)damage=0;
 		if (!Summoning.canSummonAttack(hitter, target)) {
-			return;
+			return null;
 		}
 		if (!offhand) hitter.incHitsMade();
 		damage = Summoning.applySummonOutgoingDamage(hitter, damage);
@@ -562,14 +569,14 @@ public class CombatEvent extends GameTickEvent {
 		if (target.isPlayer()) {
 			Player targetPlayer = (Player) target;
 			// side effects that may occur during combat (like poison) are regardless protect
-			if (!attackSuppressed) hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatSideEffectScript(hitter, target);
+			if (!attackSuppressed && !phaseBlocked) hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatSideEffectScript(hitter, target);
 
 			if (hitter.isNpc()) {
 				// If the hitter is an NPC, we want to check and execute their combat script
 				// However if the player has the paralyze prayer on, we just want to return
 				// so that the NPC is stopped from damaging the player.
 				if (!targetPlayer.getConfig().WANT_MYWORLD && targetPlayer.getPrayers().isPrayerActivated(Prayers.PARALYZE_MONSTER)) {
-					return;
+					return null;
 				} else {
 					hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatScript(hitter, target);
 				}
@@ -626,9 +633,10 @@ public class CombatEvent extends GameTickEvent {
             .eventId(getUUID())
             .encounterId(encounterId)
             .style(CombatStyle.MELEE)
+            .harmNature(magicalWail?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)
             .hitSplatType(hitSplatType)
             .attackCommitment(
-                attackSuppressed
+                committedSuppressed
                     ? com.openrsc.server.model.combat.AttackCommitment.staggered()
                     : com.openrsc.server.model.combat.AttackCommitment.normal())
             .attackRoll(attackRoll)
@@ -654,7 +662,7 @@ public class CombatEvent extends GameTickEvent {
           && target.getSkills().getLevel(Skill.HITS.id()) > 0
           && player.applyDeathRingChargeHit(n)) {
 				onDeath(target, hitter);
-				return;
+				return damageResult;
 			}
 		}
 		if (hitter.isPlayer()) {
@@ -721,6 +729,7 @@ public class CombatEvent extends GameTickEvent {
 				hitter, target, damageResult.getActualDamage(), attackSuppressed,
 				bite -> inflictDamage(hitter, target, bite, false, true));
 		}
+        return damageResult;
 	}
 
 	private void applyDeathRobeOverkillSplash(final Player player, final Npc primaryTarget, final int overkillDamage) {
@@ -782,6 +791,9 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage) {
+        inflictAuxiliaryTrueDamage(hitter,target,damage,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+    }
+    private void inflictAuxiliaryTrueDamage(final Mob hitter,final Mob target,int damage,com.openrsc.server.model.combat.CombatHarmNature nature) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -797,6 +809,7 @@ public class CombatEvent extends GameTickEvent {
 			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
+            .harmNature(nature)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
@@ -862,15 +875,15 @@ public class CombatEvent extends GameTickEvent {
 		BlueDragonWaterProc.tryApply(player, target,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		EarthDragonSlowProc.tryApply(player, target,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		RedDragonFireProc.tryApply(player, target,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		final String dragonBreathProc = player.getAttribute("dragon_breath_armor_proc", "");
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.DRAGON_BREATH));
@@ -878,10 +891,10 @@ public class CombatEvent extends GameTickEvent {
 		BlackDragonBreathFollowup.tryApply(player, dragonBreathProc,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		KingBlackDragonBreathFollowup.tryApply(player, target, dragonBreathProc,
 			ProductionGameRandom.INSTANCE, procDamage -> inflictAuxiliaryTrueDamage(
-				hitter, target, procDamage));
+				hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		ElderGreenDragonArmorProc.tryApply(player, damage,
 			ProductionGameRandom.INSTANCE, procDamage ->
 				ElderGreenDragonArmorEffect.applyProc(player, target, procDamage));
@@ -936,7 +949,7 @@ public class CombatEvent extends GameTickEvent {
 		DragonMeleeBreathFollowup.tryApply(hitter, target,
 			ProductionGameRandom.INSTANCE,
 			() -> CombatFormula.rollDragonMeleeBreathDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 	}
 
 	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
@@ -945,7 +958,7 @@ public class CombatEvent extends GameTickEvent {
 			() -> CombatFormula.rollElementalSwordProcChance(hitter),
 			effect -> CombatFormula.applyElementalSwordProcDebuff(target, effect),
 			() -> CombatFormula.rollElementalSwordProcDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 	}
 
 	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {

@@ -6,7 +6,7 @@ This is the governing design document for the Worship-tiered Cleric spellbook.
 The latest confirmed direction below supersedes conflicting older requirements;
 unresolved choices remain explicit. The twelve-spell launch book and Blessing
 foundation shipped in `v0.2.64`; the maintained private candidate now has the
-eleven-spell buff roster below. Their effect contracts are useful reuse material, not a
+seventeen-spell roster below (nine blessings, two Unify forms and six Guthix/Saradomin hostile spells). Their effect contracts are useful reuse material, not a
 requirement to preserve their old resource assignments or book layout.
 
 The [completed implementation plan](../completed-work-plans/cleric-spellbook-implementation-plan.md)
@@ -19,7 +19,7 @@ Map imports and public activation remain separate operations.
 This is the latest owner-confirmed **future design**, superseding the old
 individually unlocked twelve-spell roster and spell-specific rank tables as the
 desired overhaul. The implementation candidate now exposes the nine god
-blessings, Unify and Greater Unify; retired launch codes stay reserved and fail
+blessings, Unify, Greater Unify and six Guthix/Saradomin hostile spells; retired launch codes stay reserved and fail
 closed. The twelve-spell launch book remains historical salvage, not the active
 candidate roster. No public deployment or owner-map change is implied.
 Grace/Blight well production remains implemented separately.
@@ -30,7 +30,7 @@ debuff branch with one debuff per god per tier. Each later blessing tier adds
 its god's next component to the earlier components. Tier 3 targets roughly
 Worship 40, matching the elemental single-element progression of 1/20/40
 (dual-element progression is 10/30/50). Worship 1/20 for Cleric tiers 1/2 remains
-the planning baseline, not an explicitly finalized pair of unlocks. Tier 4's
+the initial implementation baseline; exact unlock tuning remains reviewable. Tier 4's
 unique buffs/debuffs are deferred.
 
 A shared six-level potency ladder replaces the old per-spell rank schemes:
@@ -64,7 +64,7 @@ base value occurs. All components share one **60-second** god blessing.
 | Saradomin HP per delayed pulse (moved to Tier 3) | 1 / 2 / 3 / 4 / 5 / 6; ten pulses, about six seconds apart |
 | Guthix extra poison cleansing per existing pulse | 2 / 3 / 4 / 5 / 6 / 7, additive with equipment/potion cleansing |
 | Guthix one-point restoration of each drained non-HP stat | Every 10 / 9 / 8 / 7 / 6 / 5 seconds; capped at current normal levels |
-| Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to ranged defense; earlier runtime affects all three styles |
+| Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to ranged defense |
 | Guthix reflection (Tier 3) | 5 / 6 / 7 / 8 / 9 / 10% of factual direct damage received |
 | Zamorak maximum direct melee damage | +5 / 7 / 9 / 11 / 13 / 15% |
 | Zamorak dealt direct melee damage (Tier 2+) | +3 / 4 / 5 / 6 / 7 / 8% |
@@ -101,9 +101,9 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 
 | God | Tier 1 component | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
-| Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
+| Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased ranged defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
 | Saradomin | **Hallowed Strikes**: extra damage against undead, 25% at P1 and +10 percentage points per power step | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute |
-| Zamorak | **Unnatural Might**: percentage increase to maximum damage | **Bloodrage**: percentage increase to total dealt damage | **Blood Hunger**: lifesteal |
+| Zamorak | **Unnatural Might**: percentage increase to maximum melee damage | **Bloodrage**: percentage increase to melee damage dealt | **Blood Hunger**: lifesteal |
 
 ### Confirmed blessing names and recipient flavor
 
@@ -141,12 +141,12 @@ effects; naming does not change their composite timer or stacking rules.
 
 Guthix is the completed buff naming example: **Guthix's Respite → Sap Blood**
 (poison cleansing and gradual drained-stat restoration); **Guthix's Protection**
-adds **Barkskin**; **Guthix's Vengeance** adds **Thorns**. The existing recipient
+adds **Barkskin** (ranged defense); **Guthix's Vengeance** adds **Thorns**. The existing recipient
 messages above remain. Thus Vengeance includes Sap Blood, Barkskin and Thorns,
 not only the newly added effect.
 
 The owner also approved **Quickened Pulse** (now Saradomin's Aura), **Mending
-Flesh** (now Saradomin's Resplendence), **Unnatural Might** (Zamorak's Fervor), **Bloodrage**
+Flesh** (now Saradomin's Resplendence), **Unnatural Might** (melee maximum; Zamorak's Fervor), **Bloodrage**
 (Zamorak's Fury) and **Blood Hunger** (Zamorak's Wrath). These names describe
 the associated components without independently changing their mechanics.
 The owner approved **Saradomin's Light** as the first spell's display name,
@@ -163,27 +163,27 @@ spell's maximum potency, Light gives 35%; Aura gives 55% plus up to ×3.5
 regeneration; Resplendence gives 75%, up to ×4.5 regeneration and six HP per
 delayed healing pulse. Tier unlocks do not grant these maximum powers for free.
 
-This is an approved design revision; the runtime/private candidate still has
-the earlier regeneration/HoT order until implementation is reviewed. The scope
-of the new damage bonus is owner-confirmed: **melee, ranged and Magic**.
-Secondary/periodic/summon damage and
-stacking/rounding must be explicit, without amplifying a bonus repeatedly.
+This revision is implemented in the isolated candidate, pending Core collection and
+private gameplay acceptance. Hallowed Strikes applies once to eligible primary
+direct melee/ranged/Magic damage against the server-owned undead predicate.
+It excludes periodic, reflected, summon and offhand/secondary damage. Fractional
+carry preserves tiny-hit value; Zamorak's melee dealt bonus precedes Hallowed.
 
-Undead classification already has a legacy foundation: `Constants.UNDEAD_NPCS`
-contains 19 IDs and NPC construction stamps an `isUndead` attribute. Audit that
-coverage and existing consumers, then use server-owned classification with
-reviewed data tags for missing/custom undead. Do not classify NPCs by display
-name at runtime, add a roster to the editor, or silently redefine quest spell
-eligibility. No undead classifications or damage code have changed yet.
+The new optional `NPCDef.undead` field overrides the legacy19 fallback for this
+feature only. Explicit true tags cover359,498,613,614,615,865; ordinary Farmer319
+is explicitly false. Ambiguous Death Wing768 remains untagged. Legacy constructor
+attributes, sounds and Crumble Undead quest/classic admission remain unchanged.
 
-The current runtime still labels the composite status by spell name with
-descriptive component text; this separate naming presentation is not implemented.
+The candidate consistently exposes spell title, inherited named effects and
+numeric descriptions; Sap Blood groups its two mechanics beneath one label.
+All nine approved recipient messages follow the revised tier associations.
+Schema4/client10055 carries typed components, recipient flavor and target kind.
 Old icon keys such as Mend, Purify, Zeal or Rally do not independently select
 new effect names. Unify and Greater Unify retain those spell names and movement
 descriptions, with no bespoke recipient flavor line currently defined.
 
 **Owner-approved debuff spell names — October 31:** the following titles were
-accepted together. They are design names, not implemented runtime spell entries.
+accepted together. Guthix/Saradomin entries are implemented in the candidate; Zamorak names remain reserved design only.
 The effect labels are retained; higher spell tiers include the earlier effects.
 
 | God | Tier | Spell name | Named effect added |
@@ -206,8 +206,7 @@ robe decisions, and no hostile recipient flavor messages are added.
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
-as recorded above. The private candidate still has the earlier Saradomin order
-and messages; the new first-effect flavor and tier move await implementation.
+as recorded above. The candidate implements the revised Saradomin order and all nine messages.
 
 Under the revised design, Saradomin at Tier 3/P6 gives **+75% damage against
 undead, ×4.5 natural regeneration and 6 HP per pulse, 60 HP across ten delayed
@@ -242,7 +241,7 @@ precedence prevents stacking or downgrade, and equal strength safely refreshes.
 
 ### Owner-approved Guthix debuffs — October 31, 2026
 
-**Design approved; hostile gameplay is not implemented.** The owner approved
+**Implemented in the isolated candidate; private gameplay acceptance remains.** The owner approved
 the same incremental curve for all three weaknesses and selected these flavor
 names. Higher tiers retain the earlier components and use the shared Holy Power
 curve/tier caps 2/4/6.
@@ -264,19 +263,46 @@ can reach 35% on all three. Poison weakness increases poison damage and reduces
 cleansing per pulse; summon/recoil weakness affects their respective damage
 only. It does not apply poison by itself or remove poison immunity. The earlier
 poison rounding example used ceiling damage and a rounded-up cleansing
-reduction, retaining at least 1 cleansing where applicable; exact integer
-settlement must be checked against current poison/cleansing paths before code.
+reduction, retaining at least1 cleansing where applicable. The candidate uses
+that rule for poison, and separate fractional carries for summon/recoil weakness.
 Do not apply vulnerability repeatedly through secondary-hit/reflect recursion.
 
 These are approved **effect names**, not spell names. Their approved god-themed
 spell names are listed above. Do not rename stable
-gameplay IDs as part of flavor work. Stacking, lifecycle, precise source admission and
-PvP policy still require implementation review. No hostile runtime code or
-new PvP permission is implied by this design approval.
+gameplay IDs as part of flavor work. Hostile casts affect eligible attackable
+NPCs with same-world/signed-level/line-of-effect checks, without requiring prior
+combat or a party. Summons and unattackable NPCs are excluded. PvP remains disabled.
+
+### Candidate phase and integer policy — October31 implementation
+
+The owner explicitly confirmed that **only magical combat damage gets through**
+non-corporeal form, including indirect damage. Ordinary poison is nonmagical
+regardless of its originating attack: its status/cleansing continues with no
+damage or catch-up. Actual harm nature is separate from delivery style and
+attribution. Genuine quest/environment HP paths remain unaffected. Existing
+Frostbite is magical; ordinary recoil/Thorns/Divine Retribution is nonmagical.
+Authored elemental/weapon/dragon-breath magic retains its original true-damage
+calculation where applicable, with an explicit magical nature.
+
+Phase is evaluated at harm settlement, including already-launched projectiles;
+Stagger's immutable receipt and cadence are unchanged. Blocked harm has a distinct
+zero outcome, not an ordinary miss. Independent per-attempt/AoE producers retain
+their existing eligibility and each victim settles its own harm. Positive-hit and
+physical-contact triggers cannot reuse a phase-rejected positive roll.
+An actual tangible attack attempt rearms phase, including a Staggered attempt;
+entry rolls resume no earlier than the following game tick. This is separate
+from Stagger's five **unstaggered** recovery attacks. Recasts/source changes do
+not reset the actor receipt; lifecycle expiry clears active owned phase.
+
+Magical Allergy subtracts a rounded-up defense reduction, possibly reaching0.
+Muscular Atrophy subtracts a rounded-up maximum reduction with floor1 for a
+positive maximum (zero stayszero), matching existing water-reduction quantization.
+All source-owned timed slots invalidate on source logout/death/scope changes and
+recipient death/respawn; no cast resource is charged per enemy.
 
 ### Owner-selected Saradomin debuffs — October 31, 2026
 
-**Design recorded; hostile gameplay is not implemented.** Higher tiers retain
+**Implemented in the isolated candidate; private gameplay acceptance remains.** Higher tiers retain
 the earlier components, with the common Holy Power curve and tier caps 2/4/6.
 The owner selected these **effect names**; their approved spell names are listed above:
 
@@ -306,11 +332,11 @@ least one actual corporeal NPC attack attempt before entry rolls resume.
 After the enemy returns to corporeal form, the owner requires immunity to
 re-entry for **at least one attack** before the tick-based entry rolls resume.
 This recovery belongs to the afflicted actor; source changes and recasts must
-not defeat it. The exact qualifying attack boundary, Stagger interaction,
-effect expiry, already-launched hits and secondary/periodic damage policy need
-explicit coverage before implementation. Core recommends resuming entry rolls
-only after an actual corporeal attack attempt, including natural misses/zeros,
-rather than after an elapsed-time cooldown or a successful damage requirement.
+not defeat it. The candidate uses the shared admitted attack-commit boundary,
+including natural misses/zeros and a tangible Staggered attempt, then waits until
+the following tick before entry rolls resume. Polls, elapsed time, impacts and
+secondary victims do not rearm. Stagger retains its separate five unstaggered
+attack recovery rule.
 
 The owner **approved the numerical values below** before implementation. The
 relatively modest melee reduction allows for Tier 3's additional
@@ -322,24 +348,21 @@ incoming magic damage by that percentage.
 | Magic-defense reduction | `10 + 3 * (P - 1)` percent | 10% | 13% | 16% | 19% | 22% | 25% |
 | Maximum-melee-damage reduction | `5 + 2 * (P - 1)` percent | 5% | 7% | 9% | 11% | 13% | 15% |
 
-Integer rounding against small defenses/maxima and stacking with existing
-defense/maximum-hit debuffs must be evaluated before finalizing those values.
+The candidate uses rounded-up reductions: Magic defense may reach0, while
+positive melee maxima retain floor1. Existing maximum/defense effects retain
+their calculation order.
 No new names, costs or runtime effects are approved beyond the owner's choices.
 
-Client feasibility: existing NPC sprite drawing already applies 60% opacity to
-spirit summons through `getNpcSpriteColourTransform`; player invisibility uses
-the same sprite colour/opacity facility. Non-corporeal NPCs can reuse existing
-frames with an independently synchronized appearance state. They need no
-per-NPC replacement sprite set. Core recommends testing roughly 50% opacity
-for this effect, preserving colors/animations and readable overlays. This is
-feasibility evidence, not implemented/proven rendering: both software/OpenGL
+The candidate uses an independent appearance16 flag and50% color/opacity transform
+through the existing NPC sprite pipeline. Spirit-summon opacity remains separate;
+no sprite set is replaced. Both software/OpenGL
 paths and layered NPCs still need verification. Do not reuse the spirit-summon
 gameplay flag as the non-corporeal state. Coordinate any shared client-file
 integration with the separate hit-splat topic branch at final collection.
 
 ### Owner-selected Zamorak debuffs — October 31, 2026
 
-**Design recorded; hostile gameplay is not implemented.** These owner-selected
+**Design recorded; not implemented. Activation awaits the owner's luck-centered Cosmic redesign.** These owner-selected
 components replace the earlier manager suggestions for Zamorak. Higher tiers
 retain the earlier components, using the shared Holy Power thresholds and
 tier caps **2/4/6**. The quoted names below are the owner's effect labels;
@@ -406,29 +429,18 @@ of the hostile spells. Costs, duration,
 enemy admission, immunity/stacking rules and PvP policy remain separate hostile
 decisions. No new PvP permission or live activation is implied.
 
-**Planned buff specialization from the same discussion:** narrow Zamorak's
-maximum/dealt-damage bonuses to melee and Guthix's Barkskin to ranged defense.
-The prepared implementation still has the broader style coverage documented
-above; this narrowing has not been coded. The manager also recommended
-melee-only Zamorak lifesteal, but that additional scope is not separately
-owner-confirmed. Saradomin's three selected hostile components and proposed
-numerical values are recorded above. None of the manager's other
-suggested hostile components is silently adopted.
+**Implemented specialization:** Zamorak maximum/dealt bonuses apply to melee,
+Barkskin to ranged defense; lifesteal retains its existing direct-hit scope.
+The candidate includes Saradomin's undead damage/tier-order revision and the
+six Guthix/Saradomin hostile spells. Zamorak hostile activation remains deferred
+pending the owner's unselected luck-centered Cosmic redesign.
 
-The preceding buff numerical review and Greater Unify are implemented in the
-private candidate. The latest Saradomin undead-damage/tier-order revision and
-the hostile branch remain design work, recorded for later implementation.
-
-**Exclude the old neutral Respite from the future spellbook** because of abuse concerns. This
-is retained in the active eleven-spell buff roster. It does not remove Saradomin regeneration,
-other regeneration from equipment/potions, assets or item identities.
-
-Still open: later cost/economy refinement and remaining hostile balance/timing
-details. God-plus-Grace and
-god-plus-Blight joint consumption remains confirmed, and generic purpose-only
-costs replace the missing god share with extra purpose sigils; Unify's specific
-two-Grace quantity is settled. The buff casting implementation is now the private candidate; hostile runtime
-work remains separate. No public activation is authorized by this design.
+The old neutral Respite stays absent from the active17-entry candidate. This
+does not remove Saradomin regeneration, other equipment/potion regeneration,
+assets or item identities. Initial manager cost vectors remain reviewable;
+God+Grace/God+Blight are exchanged atomically once per useful cast. Unify's
+confirmed quantity is2Grace and Greater Unify6Grace (current initial grade: stone).
+No public activation is authorized by this implementation.
 
 ### Owner direction — October 29, 2026
 

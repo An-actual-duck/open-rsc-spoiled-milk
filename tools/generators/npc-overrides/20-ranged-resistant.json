@@ -181,7 +181,8 @@
       "id": 498,
       "meleeDefenseMultiplier": 0.25,
       "rangedDefenseMultiplier": 1.0,
-      "magicDefenseMultiplier": 0.5
+      "magicDefenseMultiplier": 0.5,
+      "undead": true
     },
     {
       "id": 521,
@@ -193,13 +194,15 @@
       "id": 614,
       "meleeDefenseMultiplier": 0.25,
       "rangedDefenseMultiplier": 1.0,
-      "magicDefenseMultiplier": 0.5
+      "magicDefenseMultiplier": 0.5,
+      "undead": true
     },
     {
       "id": 615,
       "meleeDefenseMultiplier": 0.5,
       "rangedDefenseMultiplier": 1.0,
-      "magicDefenseMultiplier": 0.25
+      "magicDefenseMultiplier": 0.25,
+      "undead": true
     },
     {
       "id": 630,

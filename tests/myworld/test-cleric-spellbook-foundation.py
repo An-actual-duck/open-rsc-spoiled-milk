@@ -56,6 +56,7 @@ def validate_source_boundaries() -> None:
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java",
         "server/src/com/openrsc/server/content/status/ClericActiveStatusCollector.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
+        "server/src/com/openrsc/server/content/cleric/runtime/ClericHostileRuntime.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
         "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
@@ -85,7 +86,7 @@ import com.openrsc.server.content.cleric.effect.*;
 public final class ClericSpellbookFoundationFixture {
  static int checks;static void check(boolean b,String s){checks++;if(!b)throw new AssertionError(s);}
  public static void main(String[] args){
-  check(ClericSpellCatalog.SCHEMA_VERSION==3,"schema3");check(ClericSpellCatalog.getAll().size()==11,"active book eleven");
+  check(ClericSpellCatalog.SCHEMA_VERSION==4,"schema3");check(ClericSpellCatalog.getAll().size()==17,"active book eleven");
   Set<Integer> ids=new HashSet<Integer>();Set<String> keys=new HashSet<String>();
   for(ClericSpellDefinition d:ClericSpellCatalog.getAll()){
    check(ids.add(d.getStableCode())&&keys.add(d.getStableKey()),"unique stable identities");check(ClericSpellCatalog.fromKey(d.getStableKey())==d&&ClericSpellCatalog.fromCode(d.getStableCode())==d,"identity lookup");
@@ -95,13 +96,14 @@ public final class ClericSpellbookFoundationFixture {
     check(d.getEffectRankCount()==tier*2&&d.resolveEffectRank(163)==tier*2&&d.resolveEffectRank(0)==1,"cap raises maximum not minimum");
     for(int power=1;power<=tier*2;power++){
      ClericBlessingMagnitude m=(ClericBlessingMagnitude)ClericEffectCatalog.get(d.getId(),power).getMagnitude();
-     if(d.getAlignment()==ClericAlignment.SARADOMIN)check(m.regenerationPercent()==200+50*(power-1)&&m.healingPerPulse()==(tier>=2?power:0),"Sara incremental values");
+     if(d.getAlignment()==ClericAlignment.SARADOMIN)check(m.undeadDamagePercent()==25+10*(power-1)&&m.regenerationPercent()==(tier>=2?200+50*(power-1):100)&&m.healingPerPulse()==(tier==3?power:0),"Sara incremental values");
      if(d.getAlignment()==ClericAlignment.GUTHIX)check(m.poisonCleanse()==power+1&&m.restoreIntervalSeconds()==11-power&&m.defensePercent()==(tier>=2?3+2*power:0)&&m.reflectPercent()==(tier>=3?power+4:0),"Guthix incremental values");
      if(d.getAlignment()==ClericAlignment.ZAMORAK)check(m.maxDamagePercent()==3+2*power&&m.dealtDamagePercent()==(tier>=2?power+2:0)&&m.lifestealPercent()==(tier>=3?power+4:0),"Zam incremental values");
      check(ClericEffectCatalog.get(d.getId(),power).getDuration().toMilliseconds(640)==60000,"shared60s");
     }
     check(d.getResourceCosts().size()==2,"mixed god+Grace");for(ClericResourceCost cost:d.getResourceCosts())check(cost.getCount()==(tier==1?1:2),"reviewable initial private costs");
-   }else check(d.getId()==ClericSpellId.UNIFY||d.getId()==ClericSpellId.GREATER_UNIFY,"only generic utilities");
+   }else if(d.isHostile()) check(d.getStableCode()>=22&&d.getStableCode()<=27&&d.getResourceCosts().size()==2,"appended hostile identities and mixed God+Blight costs");
+   else check(d.getId()==ClericSpellId.UNIFY||d.getId()==ClericSpellId.GREATER_UNIFY,"only generic utilities");
   }
   for(int code:new int[]{0,2,3,4,5,6,7,8,9,10,11,-1,65535}){try{ClericSpellCatalog.fromCode(code);throw new AssertionError("retired code accepted");}catch(IllegalArgumentException expected){checks++;}}
   check(ClericSpellId.MEND.getCode()==0&&ClericSpellId.UNIFY.getCode()==1&&ClericSpellId.RESPITE.getCode()==11&&ClericSpellId.GREATER_UNIFY.getCode()==21,"old codes reserved, new code appended");

@@ -38,6 +38,8 @@ public final class ClericSupportCasting {
 			return CastResult.notImplemented();
 		}
 
+		if (definition.isHostile()) return ClericHostileRuntime.cast(caster, definition);
+
 		final Party party = caster.getParty();
 		if (party == null) {
 			return new CastResult(Outcome.NO_USEFUL_RECIPIENT, 0);
@@ -273,7 +275,7 @@ public final class ClericSupportCasting {
 		private final Outcome outcome;
 		private final int affectedRecipientCount;
 
-		private CastResult(Outcome outcome, int affectedRecipientCount) {
+		CastResult(Outcome outcome, int affectedRecipientCount) {
 			this.outcome = outcome;
 			this.affectedRecipientCount = affectedRecipientCount;
 		}

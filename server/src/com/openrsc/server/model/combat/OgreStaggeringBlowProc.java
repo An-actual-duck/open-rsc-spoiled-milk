@@ -6,28 +6,27 @@ import com.openrsc.server.runtime.GameRandom;
 
 /** Shared execution policy for the current Ogre Staggering Blow proc. */
 public final class OgreStaggeringBlowProc {
-	private OgreStaggeringBlowProc() {
-	}
+  private OgreStaggeringBlowProc() {}
 
-	/**
-	 * Attempts the equipment-gated proc and applies its one-attack debuff.
-	 *
-	 * <p>The event owner must establish the current surviving-target phase: a
-	 * player source and a living target. Settled zero damage remains eligible.
-	 * This method consumes no random value without the complete Ogre set and
-	 * exactly one value otherwise.</p>
-	 *
-	 * @return whether the stagger was applied
-	 */
-	public static boolean tryApply(final Player source, final Mob target,
-			final GameRandom random) {
-		if (!source.hasFullOgreSet()) {
-			return false;
-		}
-		if (random.nextDouble()
-				>= source.getOgreStaggeringBlowProcChance()) {
-			return false;
-		}
+  /**
+   * Attempts the equipment-gated proc and applies its one-attack debuff.
+   *
+   * <p>The event owner must establish the current surviving-target phase: a player source and a
+   * living target. Settled zero damage remains eligible. This method consumes no random value
+   * without the complete Ogre set and exactly one value otherwise when corporeal contact is
+   * possible.
+   *
+   * @return whether the stagger was applied
+   */
+  public static boolean tryApply(final Player source, final Mob target, final GameRandom random) {
+    if (!source.hasFullOgreSet()) {
+      return false;
+    }
+    // Ogre is physical contact even when the delivering attack deals magical damage.
+    if (NonCorporealState.blocks(source, target, CombatHarmNature.NONMAGICAL)) return false;
+    if (random.nextDouble() >= source.getOgreStaggeringBlowProcChance()) {
+      return false;
+    }
     return target.applyStagger(1);
-	}
+  }
 }

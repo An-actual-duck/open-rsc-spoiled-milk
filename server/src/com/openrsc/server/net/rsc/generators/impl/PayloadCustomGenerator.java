@@ -400,11 +400,13 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeString(definition.getStableKey());
 						builder.writeString(definition.getDisplayName());
 						builder.writeString(definition.getEffectDescription());
+                        builder.writeString(definition.getRecipientFlavor());
 						builder.writeString(definition.getAlignment().getKey());
 						builder.writeByte((byte) definition.getWorshipLevel());
 						builder.writeByte((byte) definition.getSpellTier());
 						builder.writeByte((byte) definition.getRadius());
 						builder.writeByte((byte) (definition.affectsCaster() ? 1 : 0));
+                        builder.writeByte((byte) (definition.isHostile() ? 1 : 0));
 						builder.writeShort(definition.getPresentation().getSpellbookIconItemId());
                         java.util.List<com.openrsc.server.content.cleric.ClericResourceCost> costs=definition.getResourceCosts();
                         builder.writeByte((byte)costs.size());
@@ -430,7 +432,7 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 							builder.writeShort(rank.getInitialCounter());
 							builder.writeShort(presentationKind.getPrimaryMagnitude(rank.getMagnitude()));
 							builder.writeShort(presentationKind.getSecondaryMagnitude(rank.getMagnitude()));
-                            java.util.List<com.openrsc.server.content.cleric.effect.ClericBlessingComponent> components=((com.openrsc.server.content.cleric.effect.ClericBlessingMagnitude)rank.getMagnitude()).components();
+                            java.util.List<com.openrsc.server.content.cleric.effect.ClericBlessingComponent> components=((com.openrsc.server.content.cleric.effect.ClericCompositeMagnitude)rank.getMagnitude()).components();
                             builder.writeByte((byte)components.size());
                             for(com.openrsc.server.content.cleric.effect.ClericBlessingComponent component:components){builder.writeByte((byte)component.getKind());builder.writeShort(component.getMagnitude());builder.writeShort(component.getParameter1());builder.writeShort(component.getParameter2());}
 

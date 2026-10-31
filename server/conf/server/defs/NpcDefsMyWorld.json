@@ -547,7 +547,8 @@
       "id": 319,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.1,
-      "magicDefenseMultiplier": 0.1
+      "magicDefenseMultiplier": 0.1,
+      "undead": false
     },
     {
       "id": 320,
@@ -637,7 +638,8 @@
       "id": 359,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.5,
-      "magicDefenseMultiplier": 0.5
+      "magicDefenseMultiplier": 0.5,
+      "undead": true
     },
     {
       "id": 373,
@@ -883,7 +885,8 @@
       "id": 613,
       "meleeDefenseMultiplier": 1.0,
       "rangedDefenseMultiplier": 0.5,
-      "magicDefenseMultiplier": 0.5
+      "magicDefenseMultiplier": 0.5,
+      "undead": true
     },
     {
       "id": 632,
@@ -1343,7 +1346,8 @@
       "id": 498,
       "meleeDefenseMultiplier": 0.25,
       "rangedDefenseMultiplier": 1.0,
-      "magicDefenseMultiplier": 0.5
+      "magicDefenseMultiplier": 0.5,
+      "undead": true
     },
     {
       "id": 521,
@@ -1355,13 +1359,15 @@
       "id": 614,
       "meleeDefenseMultiplier": 0.25,
       "rangedDefenseMultiplier": 1.0,
-      "magicDefenseMultiplier": 0.5
+      "magicDefenseMultiplier": 0.5,
+      "undead": true
     },
     {
       "id": 615,
       "meleeDefenseMultiplier": 0.5,
       "rangedDefenseMultiplier": 1.0,
-      "magicDefenseMultiplier": 0.25
+      "magicDefenseMultiplier": 0.25,
+      "undead": true
     },
     {
       "id": 630,
@@ -1976,6 +1982,10 @@
     {
       "id": 785,
       "command": "Task"
+    },
+    {
+      "id": 865,
+      "undead": true
     }
   ]
 }

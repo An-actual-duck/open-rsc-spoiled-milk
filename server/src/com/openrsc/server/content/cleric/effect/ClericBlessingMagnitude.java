@@ -5,7 +5,7 @@ import com.openrsc.server.net.rsc.ClericBlessingContract;
 import java.util.*;
 
 /** Immutable authoritative component values for one cast-time god/tier/power snapshot. */
-public final class ClericBlessingMagnitude implements ClericEffectMagnitude {
+public final class ClericBlessingMagnitude implements ClericCompositeMagnitude {
   private final ClericAlignment god;
   private final int tier, power;
 
@@ -33,12 +33,16 @@ public final class ClericBlessingMagnitude implements ClericEffectMagnitude {
     return power;
   }
 
+  public int undeadDamagePercent() {
+    return god == ClericAlignment.SARADOMIN ? 25 + 10 * (power - 1) : 0;
+  }
+
   public int regenerationPercent() {
-    return god == ClericAlignment.SARADOMIN ? 200 + 50 * (power - 1) : 100;
+    return god == ClericAlignment.SARADOMIN && tier >= 2 ? 200 + 50 * (power - 1) : 100;
   }
 
   public int healingPerPulse() {
-    return god == ClericAlignment.SARADOMIN && tier >= 2 ? power : 0;
+    return god == ClericAlignment.SARADOMIN && tier >= 3 ? power : 0;
   }
 
   public int poisonCleanse() {
@@ -72,9 +76,8 @@ public final class ClericBlessingMagnitude implements ClericEffectMagnitude {
   public List<ClericBlessingComponent> components() {
     List<ClericBlessingComponent> out = new ArrayList<ClericBlessingComponent>();
     if (god == ClericAlignment.SARADOMIN) {
-      out.add(
-          new ClericBlessingComponent(
-              ClericBlessingContract.REGENERATION, regenerationPercent(), 0, 0));
+      out.add(new ClericBlessingComponent(ClericBlessingContract.UNDEAD_DAMAGE, undeadDamagePercent(),0,0));
+      if(tier >= 2) out.add(new ClericBlessingComponent(ClericBlessingContract.REGENERATION,regenerationPercent(),0,0));
       if (healingPerPulse() > 0)
         out.add(
             new ClericBlessingComponent(

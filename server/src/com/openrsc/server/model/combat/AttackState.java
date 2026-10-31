@@ -47,6 +47,7 @@ public final class AttackState {
     synchronized (mob) {
       AttackState state = state(mob);
       state.cadence.committed();
+      NonCorporealState.attackCommitted(mob);
       return state.stagger.commit();
     }
   }
