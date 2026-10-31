@@ -66,7 +66,7 @@ final class CurrentCombatReflectionCharacterization {
 				path + " Frostbite reduces the pending hit by reflected damage");
 			assertEquals(15, attacker.getLevel(Skill.HITS.id()),
 				path + " Frostbite reflected Hits");
-			assertHit(attacker, 5, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(attacker, 5, HitSplat.TYPE_STANDARD,
 				path + " Frostbite presentation");
 			assertEquals(5, contribution(
 				attacker, source, "getMageDamageInfoBy"),
@@ -108,7 +108,7 @@ final class CurrentCombatReflectionCharacterization {
 				lethalAttacker, lethalDefender, Integer.valueOf(9))).intValue();
 			assertEquals(4, lethalPending,
 				path + " lethal Frostbite preserves pending-hit reduction");
-			assertHit(lethalAttacker, 5, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(lethalAttacker, 5, HitSplat.TYPE_STANDARD,
 				path + " lethal Frostbite displayed overkill");
 			assertEquals(3, contribution(
 				lethalAttacker, lethalSource, "getMageDamageInfoBy"),
@@ -188,7 +188,7 @@ final class CurrentCombatReflectionCharacterization {
 				path + " Thorns attacker death callback cardinality");
 			assertTrue(primarySettledBeforeThorns.get(),
 				path + " Thorns follows primary settlement and established healing");
-			assertHit(attacker, 1, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(attacker, 1, HitSplat.TYPE_STANDARD,
 				path + " Thorns presentation");
 			assertEquals(1, contribution(
 				attacker, defender, "getCombatDamageInfoBy"),
@@ -228,7 +228,7 @@ final class CurrentCombatReflectionCharacterization {
 			invoke(event, "inflictMeleeJewelryRecoilDamage",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
 				defender, attacker, Integer.valueOf(5));
-			assertHit(attacker, 5, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(attacker, 5, HitSplat.TYPE_RECOIL,
 				path + " melee jewelry displayed overkill");
 			assertEquals(3, contribution(
 				attacker, defender, "getCombatDamageInfoBy"),
@@ -332,7 +332,7 @@ final class CurrentCombatReflectionCharacterization {
 		invoke(rangedEvent, "recoilDamage",
 			new Class<?>[] {Player.class, Mob.class, int.class},
 			rangedOwner, rangedCaster, Integer.valueOf(8));
-		assertHit(rangedCaster, 2, HitSplat.TYPE_ARMOR_PROC,
+		assertHit(rangedCaster, 2, HitSplat.TYPE_RECOIL,
 			"ranged projectile recoil presentation");
 		assertEquals(1, rangedDeaths.get(),
 			"ranged projectile recoil death callback cardinality");
@@ -391,7 +391,7 @@ final class CurrentCombatReflectionCharacterization {
 			"Divine Retribution returns twice incoming damage");
 		assertTrue(result.killedAttacker(),
 			"Divine Retribution returns terminal attacker fact");
-		assertHit(attacker, 40, HitSplat.TYPE_ARMOR_PROC,
+		assertHit(attacker, 40, HitSplat.TYPE_STANDARD,
 			"Divine Retribution displayed overkill");
 		assertEquals(CombatEffect.DIVINE_RETRIBUTION,
 			attacker.getUpdateFlags().getCombatEffect().get().getEffectType(),
@@ -595,7 +595,9 @@ final class CurrentCombatReflectionCharacterization {
 		assertTrue(request.getTarget() == target, label + " target identity");
 		assertEquals(event == null ? null : ((GameTickEvent) event).getUUID(),
 			request.getEventId(), label + " event identity");
-		assertEquals(HitSplat.TYPE_ARMOR_PROC, request.getHitSplatType(),
+		assertEquals(effectKey.endsWith("jewelry-recoil") ? HitSplat.TYPE_RECOIL
+			: effectKey.endsWith("chain-lightning") || effectKey.contains("auxiliary-")
+				? HitSplat.TYPE_ARMOR_PROC : HitSplat.TYPE_STANDARD, request.getHitSplatType(),
 			label + " hitsplat type");
 		assertEquals(resolvedDamage, request.getResolvedDamage(),
 			label + " resolved damage");

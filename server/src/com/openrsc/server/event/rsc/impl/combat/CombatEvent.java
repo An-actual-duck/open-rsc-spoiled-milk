@@ -367,7 +367,8 @@ public class CombatEvent extends GameTickEvent {
 			effectPolicy.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(effectPolicy == JEWELRY_RECOIL_POLICY
+				? HitSplat.TYPE_RECOIL : HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -406,7 +407,7 @@ public class CombatEvent extends GameTickEvent {
 			FROSTBITE_REFLECTION_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_STANDARD)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -614,7 +615,7 @@ public class CombatEvent extends GameTickEvent {
 		int lastHits = target.getLevel(Skill.HITS.id());
 		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		final int rawDamage = damage;
-		final int hitSplatType = offhand ? HitSplat.TYPE_ARMOR_PROC : Summoning.getSummonDamageHitSplatType(hitter);
+		final int hitSplatType = Summoning.getSummonDamageHitSplatType(hitter);
 		final CombatEngagement engagement = hitter.getOutgoingCombatEngagement();
 		final java.util.UUID encounterId = engagement != null
 			&& engagement.peerOf(hitter) == target
@@ -756,6 +757,10 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage) {
+		return inflictAuxiliaryMagicDamage(hitter, target, damage, HitSplat.TYPE_ARMOR_PROC);
+	}
+
+	private int inflictAuxiliaryMagicDamage(final Mob hitter, final Mob target, int damage, final int presentationType) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}
@@ -773,7 +778,7 @@ public class CombatEvent extends GameTickEvent {
 			AUXILIARY_MAGIC_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MAGIC)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(presentationType)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -791,9 +796,12 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage) {
-        inflictAuxiliaryTrueDamage(hitter,target,damage,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+        inflictAuxiliaryTrueDamage(hitter, target, damage, com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL, HitSplat.TYPE_ARMOR_PROC);
     }
-    private void inflictAuxiliaryTrueDamage(final Mob hitter,final Mob target,int damage,com.openrsc.server.model.combat.CombatHarmNature nature) {
+    private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage, com.openrsc.server.model.combat.CombatHarmNature nature) {
+        inflictAuxiliaryTrueDamage(hitter, target, damage, nature, HitSplat.TYPE_ARMOR_PROC);
+    }
+    private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int damage, com.openrsc.server.model.combat.CombatHarmNature nature, final int presentationType) {
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -810,7 +818,7 @@ public class CombatEvent extends GameTickEvent {
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
             .harmNature(nature)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(presentationType)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
@@ -949,7 +957,7 @@ public class CombatEvent extends GameTickEvent {
 		DragonMeleeBreathFollowup.tryApply(hitter, target,
 			ProductionGameRandom.INSTANCE,
 			() -> CombatFormula.rollDragonMeleeBreathDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL, HitSplat.TYPE_STANDARD));
 	}
 
 	private void applyElementalSwordProc(final Mob hitter, final Mob target) {
@@ -958,14 +966,14 @@ public class CombatEvent extends GameTickEvent {
 			() -> CombatFormula.rollElementalSwordProcChance(hitter),
 			effect -> CombatFormula.applyElementalSwordProcDebuff(target, effect),
 			() -> CombatFormula.rollElementalSwordProcDamage(hitter),
-			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
+			procDamage -> inflictAuxiliaryTrueDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL, HitSplat.TYPE_STANDARD));
 	}
 
 	private void applyDemonPitchforkHellBlazeProc(final Mob hitter, final Mob target, final int damage) {
 		DemonPitchforkHellBlazeProc.tryApply(target, damage,
 			() -> CombatFormula.rollDemonPitchforkHellBlazeProc(hitter),
 			() -> CombatFormula.rollDemonPitchforkHellBlazeDamage(hitter),
-			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage));
+			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage, HitSplat.TYPE_STANDARD));
 	}
 
 	// Players in combat with an NPC will receive unique NPC

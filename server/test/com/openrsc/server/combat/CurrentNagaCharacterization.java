@@ -80,7 +80,7 @@ final class CurrentNagaCharacterization {
 		for (DamageResult result : outcomes) if (result.getRequest().getSource() == n && result.getRequest().getTarget() == p) strikes.add(result);
 		check(strikes.size() == 2, "two resolved strikes per swing");
 		check(strikes.get(0).getRequest().getHitSplatType() == HitSplat.TYPE_STANDARD, "main red");
-		check(strikes.get(1).getRequest().getHitSplatType() == HitSplat.TYPE_ARMOR_PROC, "offhand yellow");
+		check(strikes.get(1).getRequest().getHitSplatType() == HitSplat.TYPE_STANDARD, "offhand attack source red");
 		check(strikes.get(0).getRequest().getTick() == strikes.get(1).getRequest().getTick(), "simultaneous hits in one game tick");
 		check("naga-melee-offhand".equals(strikes.get(1).getRequest().getEffectKey()), "distinct offhand transaction");
 		int count = outcomes.size();

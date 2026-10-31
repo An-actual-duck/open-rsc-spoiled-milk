@@ -4132,6 +4132,7 @@ public class PacketHandler {
 
 				if (null != npc) {
 					npc.damageTaken = damage;
+					npc.floatingHitSplats.legacyDamage(damage);
 					npc.healthMax = maximumHits;
 					npc.combatTimeout = 200;
 					npc.healthCurrent = currentHits;
@@ -4958,6 +4959,7 @@ public class PacketHandler {
 					player.healthMax = maxhp;
 					player.healthCurrent = curhp;
 					player.damageTaken = damage;
+					player.floatingHitSplats.legacyDamage(damage);
 					if (mc.getLocalPlayer() == player) {
 						mc.setPlayerStatCurrent(3, curhp);
 						mc.setPlayerStatBase(3, maxhp);

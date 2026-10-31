@@ -122,7 +122,7 @@ public final class ElderGreenDragonSpecialAttacks {
 					}
 					dragon.setKillType(KillType.RANGED);
 					int damage = CombatFormula.doRangedDamage(dragon, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), player, false);
-					inflictPlayerDamage(dragon, player, damage, DamageStyle.RANGED, HitSplat.TYPE_ARMOR_PROC);
+					inflictPlayerDamage(dragon, player, damage, DamageStyle.RANGED, HitSplat.TYPE_STANDARD);
 				}
 			});
 		}
@@ -352,7 +352,7 @@ public final class ElderGreenDragonSpecialAttacks {
 			}
 			dragon.setKillType(KillType.MAGIC);
 			final int damage = DataConversions.random(BURN_DAMAGE_MIN, BURN_DAMAGE_MAX);
-			inflictPlayerDamage(dragon, player, damage, DamageStyle.BURN, HitSplat.TYPE_ARMOR_PROC);
+			inflictPlayerDamage(dragon, player, damage, DamageStyle.BURN, HitSplat.TYPE_BURN);
 			if (player.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				clearBurn(player);
 			}

@@ -922,7 +922,7 @@ public final class Summoning {
 	}
 
 	public static int getSummonDamageHitSplatType(final Mob hitter) {
-		return isSummon(hitter) ? HitSplat.TYPE_ARMOR_PROC : HitSplat.TYPE_STANDARD;
+		return isSummon(hitter) ? HitSplat.TYPE_SUMMON : HitSplat.TYPE_STANDARD;
 	}
 
 	public static void recordCombatSummonEngagement(final Player owner, final Npc target) {
@@ -2015,7 +2015,7 @@ public final class Summoning {
 				: SecondaryEffectPolicy.SUMMON_BONUS_MELEE.getStableKey(),
 			com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.style(magicDamage ? CombatStyle.MAGIC : CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_SUMMON)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);

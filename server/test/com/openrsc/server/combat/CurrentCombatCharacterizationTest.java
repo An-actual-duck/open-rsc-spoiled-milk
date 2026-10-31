@@ -347,6 +347,8 @@ public final class CurrentCombatCharacterizationTest {
 			run(harness, "baby_dragon_smoke_preserves_rng_projectile_and_refresh_policy",
 				CurrentCombatBabyDragonSmokeCharacterization
 					::babyDragonSmokePolicies);
+			run(harness, "hit_splat_colors_follow_actual_equipment_and_weapon_sources",
+				CurrentCombatHitSplatSourceCharacterization::sourceColors);
 			run(harness, "blue_dragon_water_preserves_rng_damage_and_refresh_policy",
 				CurrentCombatBlueDragonWaterProcCharacterization
 					::blueDragonWaterPolicies);
@@ -2070,10 +2072,10 @@ public final class CurrentCombatCharacterizationTest {
 				"projectile-npc-ranged-primary", CombatStyle.RANGED, 0),
 			new PrimaryProjectileVariant("summon magic", 2, 1, -1,
 				Projectile.HOLY_MAGIC, 0, "getSummonDamageInfoBy",
-				"projectile-summon-magic-primary", CombatStyle.MAGIC, 2),
+				"projectile-summon-magic-primary", CombatStyle.MAGIC, HitSplat.TYPE_SUMMON),
 			new PrimaryProjectileVariant("summon ranged", 2, 2, -1,
 				Projectile.ROCK_THROW, 0, "getSummonDamageInfoBy",
-				"projectile-summon-ranged-primary", CombatStyle.RANGED, 2),
+				"projectile-summon-ranged-primary", CombatStyle.RANGED, HitSplat.TYPE_SUMMON),
 			new PrimaryProjectileVariant("Iban compatibility", 0, 4, -1,
 				Projectile.SKULL,
 				com.openrsc.server.model.entity.update.CombatEffect.IBAN_BLAST,

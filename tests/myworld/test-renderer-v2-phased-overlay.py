@@ -434,9 +434,9 @@ def main() -> None:
         "OpenGL world composite masks primitive and text overlay rectangles",
     )
     require(
-        mudclient,
-        "private void drawHitSplatBox(int x, int y, int amount, int color) {\n\t\tthis.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);",
-        "OpenGL world overlay phase for hit splat primitive/text replay",
+        (ROOT / "Client_Base/src/orsc/FloatingHitSplatRenderer.java").read_text(),
+        "surface.setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);",
+        "OpenGL world overlay phase for floating hit splat sprite replay",
     )
     require(
         mudclient,
