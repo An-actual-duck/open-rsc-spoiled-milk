@@ -157,7 +157,7 @@ tier caps: Worship 40 + Maple 32 = 72→P3; 60 + Ebony 44 = 104→P4; 80 + god 6
 | God | Tier 1 | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
 | Guthix | Faster poison cleansing over time + gradual drained-stat restoration, on the same blessing timer | Barkskin defense increase (not Ward's flat damage reduction) | Thorns reflect |
-| Saradomin | Extra damage against undead: 25% +10 percentage points per power step | Quickened Pulse: natural HP regeneration ×2 +0.5 per power step | Mending Flesh: P HP per delayed pulse, ten pulses about six seconds apart |
+| Saradomin | Hallowed Strikes: extra damage against undead, 25% +10 percentage points per power step | Quickened Pulse: natural HP regeneration ×2 +0.5 per power step | Mending Flesh: P HP per delayed pulse, ten pulses about six seconds apart |
 | Zamorak | Maximum-damage percentage increase | Total-dealt-damage percentage increase | Lifesteal |
 
 ### Confirmed blessing names and recipient flavor
@@ -168,7 +168,7 @@ appear are not specified here.
 
 | God | Tier | Blessing name | Recipient message |
 |---|---|---|---|
-| Saradomin | 1 | Saradomin's Warmth | New undead-damage effect's message pending |
+| Saradomin | 1 | Saradomin's Light | Your attacks carry a holy light that burns the restless dead. |
 | Saradomin | 2 | Saradomin's Aura | You feel your blood rush and your spirits lift |
 | Saradomin | 3 | Saradomin's Resplendence | Your wounds seal up as soon as they are opened |
 | Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
@@ -195,8 +195,9 @@ The owner revised Saradomin's order: undead damage → regeneration → delayed
 healing. At Tier 3/P6 the revised design gives **+75% damage against undead,
 ×4.5 regeneration and 6 HP per pulse/60 HP over ten delayed pulses**. The healing
 values still replace the earlier ×7/70 HP draft. The owner confirmed that the
-undead bonus applies to **melee, ranged and Magic**. The new first effect needs
-a flavor name/message. Existing legacy undead classification must be audited
+undead bonus applies to **melee, ranged and Magic**. The owner approved
+**Saradomin's Light → Hallowed Strikes** and the recipient message in the table
+above. Existing legacy undead classification must be audited
 and extended with server-owned tags as appropriate. No code/classification has
 changed for this revision.
 
@@ -241,7 +242,8 @@ Toxiphobia/Agrizoophobia/Hematophobia are **effect names**. The owner approved
 the other defined buff effect names:
 **Quickened Pulse** and **Mending Flesh**, now Saradomin's Tier 2/3 components;
 **Unnatural Might**, **Bloodrage** and **Blood Hunger** for Zamorak's three.
-Saradomin's new Tier 1 undead-damage effect name/message remain open.
+Saradomin's Tier 1 flavor is approved: **Light → Hallowed Strikes**, with the
+holy-light/restless-dead recipient message above.
 The owner approved all three debuff spell-title chains: Guthix's
 Unease/Dread/Terror; Saradomin's Censure/Condemnation/Unmaking; Zamorak's
 Malice/Cruelty/Ruin. The governing Cleric document maps each title to its effect.
@@ -298,8 +300,8 @@ above. Production remains complete; hostile casting is separate.
 
 ### Decisions still needed
 
-Saradomin's new undead-damage effect name/recipient message; later cost/economy
-refinement; hostile components/names, balance and lifecycle. Unify and Greater
+Later cost/economy refinement; remaining hostile balance, timing and lifecycle.
+Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.
 The [active governing design](cleric-spellbook-concept.md#active-overhaul-three-ordinary-tiers-and-six-power-levels--october-30-2026)

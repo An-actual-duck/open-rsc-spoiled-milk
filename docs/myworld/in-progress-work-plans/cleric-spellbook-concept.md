@@ -102,7 +102,7 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 | God | Tier 1 component | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
 | Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
-| Saradomin | Extra damage against undead: 25% at P1 and +10 percentage points per power step; effect flavor name pending | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute |
+| Saradomin | **Hallowed Strikes**: extra damage against undead, 25% at P1 and +10 percentage points per power step | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute |
 | Zamorak | **Unnatural Might**: percentage increase to maximum damage | **Bloodrage**: percentage increase to total dealt damage | **Blood Hunger**: lifesteal |
 
 ### Confirmed blessing names and recipient flavor
@@ -115,7 +115,7 @@ inherited lower-tier line.
 
 | God | Tier | Blessing name | Recipient message |
 |---|---|---|---|
-| Saradomin | 1 | Saradomin's Warmth | New undead-damage effect's recipient message pending |
+| Saradomin | 1 | Saradomin's Light | Your attacks carry a holy light that burns the restless dead. |
 | Saradomin | 2 | Saradomin's Aura | You feel your blood rush and your spirits lift |
 | Saradomin | 3 | Saradomin's Resplendence | Your wounds seal up as soon as they are opened |
 | Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
@@ -149,13 +149,17 @@ The owner also approved **Quickened Pulse** (now Saradomin's Aura), **Mending
 Flesh** (now Saradomin's Resplendence), **Unnatural Might** (Zamorak's Fervor), **Bloodrage**
 (Zamorak's Fury) and **Blood Hunger** (Zamorak's Wrath). These names describe
 the associated components without independently changing their mechanics.
-Saradomin's new first effect still needs a flavor name and recipient message.
+The owner approved **Saradomin's Light** as the first spell's display name,
+replacing Warmth, with effect name **Hallowed Strikes** and recipient message:
+"Your attacks carry a holy light that burns the restless dead." This display
+rename does not request changing stable spell identities or adding a visual
+attack effect beyond the separately reviewed presentation work.
 
 **Owner-revised Saradomin progression — October 31:** move regeneration from
 Tier 1 to Tier 2 and the delayed heal from Tier 2 to Tier 3, preserving their
 approved magnitudes/cadences. Tier 1 instead grants extra damage against undead,
 `25 + 10 * (P - 1)` percent. Higher tiers inherit that damage bonus. At each
-spell's maximum potency, Warmth gives 35%; Aura gives 55% plus up to ×3.5
+spell's maximum potency, Light gives 35%; Aura gives 55% plus up to ×3.5
 regeneration; Resplendence gives 75%, up to ×4.5 regeneration and six HP per
 delayed healing pulse. Tier unlocks do not grant these maximum powers for free.
 
@@ -420,8 +424,8 @@ the hostile branch remain design work, recorded for later implementation.
 is retained in the active eleven-spell buff roster. It does not remove Saradomin regeneration,
 other regeneration from equipment/potions, assets or item identities.
 
-Still open: Saradomin's new first buff effect name and recipient message,
-later cost/economy refinement, and remaining hostile balance/timing details. God-plus-Grace and
+Still open: later cost/economy refinement and remaining hostile balance/timing
+details. God-plus-Grace and
 god-plus-Blight joint consumption remains confirmed, and generic purpose-only
 costs replace the missing god share with extra purpose sigils; Unify's specific
 two-Grace quantity is settled. The buff casting implementation is now the private candidate; hostile runtime
