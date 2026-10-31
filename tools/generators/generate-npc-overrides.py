@@ -31,6 +31,7 @@ ALLOWED_NPC_FIELDS = {
     "bottomColour",
     "skinColour",
     "projectileRange",
+    "undead",
     "meleeDefenseMultiplier",
     "rangedDefenseMultiplier",
     "magicDefenseMultiplier",
@@ -80,6 +81,10 @@ def validate_npc_entry(entry: object, source_path: Path) -> dict[str, Any]:
 
     for field, value in typed_entry.items():
         if field == "id":
+            continue
+        if field == "undead":
+            if not isinstance(value, bool):
+                fail(f"{source_path.name} entry {npc_id} field undead must be Boolean")
             continue
         if field in {"name", "description", "command"}:
             if not isinstance(value, str) or not value.strip():

@@ -71,6 +71,9 @@ public final class ClericSpellDefinition {
 		return id.getKey();
 	}
 
+	public String getRecipientFlavor() { String value=ClericSpellText.recipientFlavor(id); return value==null ? "" : value; }
+    public boolean isHostile() { return false; }
+
 	public String getDisplayName() {
 		return displayName;
 	}

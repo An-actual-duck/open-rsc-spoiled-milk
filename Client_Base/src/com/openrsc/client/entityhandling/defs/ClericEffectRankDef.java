@@ -100,9 +100,12 @@ public final class ClericEffectRankDef {
 
   public String describeComponents() {
     StringBuilder text = new StringBuilder();
+    String previousName=null;
     for (ClericComponentDef c : components) {
       if (text.length() > 0) text.append("; ");
-      text.append(c.describe());
+      boolean continuation = previousName != null && previousName.equals(c.getName());
+      text.append(continuation ? orsc.ClericBlessingContract.describeComponentDetail(c.getKind(),c.getMagnitude(),c.getParameter1(),c.getParameter2()) : c.describe());
+      previousName=c.getName();
     }
     return text.toString();
   }

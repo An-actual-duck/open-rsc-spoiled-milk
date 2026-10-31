@@ -11,6 +11,8 @@ public final class ClericSpellDef {
   private final String stableKey;
   private final String name;
   private final String description;
+  private final String recipientFlavor;
+  private final boolean hostile;
   private final String alignment;
   private final int worshipLevel;
   private final int spellTier;
@@ -125,6 +127,26 @@ public final class ClericSpellDef {
       int casterAnimationId,
       String iconAssetKey,
       List<ClericEffectRankDef> effectRanks) {
+    this(stableCode,stableKey,name,description,alignment,worshipLevel,spellTier,radius,affectsCaster,
+        spellbookIconItemId,costs,casterIconItemId,casterAnimationId,iconAssetKey,effectRanks,"",false);
+  }
+
+  public ClericSpellDef(
+      int stableCode,
+      String stableKey,
+      String name,
+      String description,
+      String alignment,
+      int worshipLevel,
+      int spellTier,
+      int radius,
+      boolean affectsCaster,
+      int spellbookIconItemId,
+      List<ClericCostDef> costs,
+      int casterIconItemId,
+      int casterAnimationId,
+      String iconAssetKey,
+      List<ClericEffectRankDef> effectRanks, String recipientFlavor, boolean hostile) {
     if (stableCode < 0
         || stableCode > 65535
         || isBlank(stableKey)
@@ -181,6 +203,8 @@ public final class ClericSpellDef {
     this.stableKey = stableKey;
     this.name = name;
     this.description = description;
+    if(recipientFlavor == null || recipientFlavor.length()>512) throw new IllegalArgumentException("Invalid recipient flavor");
+    this.recipientFlavor=recipientFlavor;this.hostile=hostile;
     this.alignment = alignment;
     this.worshipLevel = worshipLevel;
     this.spellTier = spellTier;
@@ -200,6 +224,9 @@ public final class ClericSpellDef {
   private static boolean isBlank(String value) {
     return value == null || value.trim().isEmpty();
   }
+
+  public String getRecipientFlavor() { return recipientFlavor; }
+  public boolean isHostile() { return hostile; }
 
   public boolean hasResources(java.util.function.IntUnaryOperator inventory) {
     for (ClericCostDef cost : costs)

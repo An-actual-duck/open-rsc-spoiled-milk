@@ -197,7 +197,7 @@ public final class DarkBeastCombat {
 		damage = com.openrsc.server.content.Summoning.applySummonDamageAbsorption(player, npc, damage);
 		damage = com.openrsc.server.content.TrueDefense.apply(player, damage);
 		com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.BeforeDamage cleric =
-			com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.beforeDirectDamage(npc, player, damage);
+			com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.beforeDirectDamage(npc, player, damage, CombatStyle.MAGIC);
 		damage = cleric.getDamage();
     DamageResult result =
         player

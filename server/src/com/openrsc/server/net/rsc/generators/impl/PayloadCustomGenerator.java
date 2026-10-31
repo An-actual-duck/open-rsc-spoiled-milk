@@ -400,11 +400,13 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeString(definition.getStableKey());
 						builder.writeString(definition.getDisplayName());
 						builder.writeString(definition.getEffectDescription());
+                        builder.writeString(definition.getRecipientFlavor());
 						builder.writeString(definition.getAlignment().getKey());
 						builder.writeByte((byte) definition.getWorshipLevel());
 						builder.writeByte((byte) definition.getSpellTier());
 						builder.writeByte((byte) definition.getRadius());
 						builder.writeByte((byte) (definition.affectsCaster() ? 1 : 0));
+                        builder.writeByte((byte) (definition.isHostile() ? 1 : 0));
 						builder.writeShort(definition.getPresentation().getSpellbookIconItemId());
                         java.util.List<com.openrsc.server.content.cleric.ClericResourceCost> costs=definition.getResourceCosts();
                         builder.writeByte((byte)costs.size());

@@ -48,7 +48,7 @@ public final class ClericSpellGuideCatalog {
     String header =
         "Lvl " + d.getWorshipLevel() + "  " + d.getName() + " (Tier " + d.getSpellTier() + ")";
     String area =
-        "Area: party allies within "
+        (d.isHostile() ? "Area: enemy NPCs within " : "Area: party allies within ")
             + d.getRadius()
             + " tiles; "
             + (d.affectsCaster() ? "includes caster" : "caster excluded");
@@ -60,6 +60,7 @@ public final class ClericSpellGuideCatalog {
     }
     add(lines, cost.toString());
     add(lines, area);
+    if(!d.getRecipientFlavor().isEmpty()) add(lines,"Recipient: "+d.getRecipientFlavor());
     if (d.getEffectRanks().isEmpty()) {
       add(lines, d.getDescription());
       add(lines, "Fixed effect: no Holy Power scaling. Stops within 2 tiles.");
@@ -104,45 +105,8 @@ public final class ClericSpellGuideCatalog {
             same &= rank.getComponents().get(component).getMagnitude() == first.getMagnitude();
           if (same) v = Integer.toString(first.getMagnitude());
         }
-        switch (first.getKind()) {
-          case ClericBlessingContract.REGENERATION:
-            text = "Natural Hits regeneration (% of normal): " + v;
-            break;
-          case ClericBlessingContract.HEALING_PULSE:
-            text =
-                "Hits per pulse: "
-                    + v
-                    + "; "
-                    + first.getParameter2()
-                    + " pulses every "
-                    + (first.getParameter1() / 1000)
-                    + " sec";
-            break;
-          case ClericBlessingContract.POISON_CLEANSING:
-            text = "Extra poison cleansing per poison pulse: " + v;
-            break;
-          case ClericBlessingContract.STAT_RESTORATION:
-            text =
-                "Each drained non-Hits stat: restore " + v + " point every " + intervals + " sec";
-            break;
-          case ClericBlessingContract.DEFENSE:
-            text = "Melee/ranged/Magic defense (%): +" + v;
-            break;
-          case ClericBlessingContract.MAX_DAMAGE:
-            text = "Maximum direct damage (%): +" + v;
-            break;
-          case ClericBlessingContract.DEALT_DAMAGE:
-            text = "Total direct damage dealt (%): +" + v;
-            break;
-          case ClericBlessingContract.LIFESTEAL:
-            text = "Lifesteal (%): " + v + "; strictly below " + first.getParameter1() + "% Hits";
-            break;
-          case ClericBlessingContract.REFLECTION:
-            text = "Direct damage reflected (%): " + v;
-            break;
-          default:
-            throw new IllegalArgumentException("Unsupported guide component");
-        }
+        boolean continuation = component>0 && d.getEffectRanks().get(0).getComponents().get(component-1).getName().equals(first.getName());
+        text=continuation ? ClericBlessingContract.describeComponentTableDetail(first.getKind(),v,intervals.toString(),first.getParameter1(),first.getParameter2()) : ClericBlessingContract.describeComponentTable(first.getKind(),v,intervals.toString(),first.getParameter1(),first.getParameter2());
         add(lines, text);
       }
     }

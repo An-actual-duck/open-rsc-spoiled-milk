@@ -24,16 +24,6 @@ public final class ClericSpellCatalog {
             3,
             "unify",
             -1));
-    String[][] names = {
-      {"Saradomin's Warmth", "Saradomin's Aura", "Saradomin's Resplendence"},
-      {"Guthix's Respite", "Guthix's Protection", "Guthix's Vengeance"},
-      {"Zamorak's Fervor", "Zamorak's Fury", "Zamorak's Wrath"}
-    };
-    String[] descriptions = {
-      "Speeds allies' natural regeneration.",
-      "Cleanses allies' poison and restores drained stats.",
-      "Raises allies' maximum direct damage."
-    };
     ClericAlignment[] gods = {
       ClericAlignment.SARADOMIN, ClericAlignment.GUTHIX, ClericAlignment.ZAMORAK
     };
@@ -49,8 +39,8 @@ public final class ClericSpellCatalog {
         defs.add(
             make(
                 id,
-                names[god][tier - 1],
-                descriptions[god] + (tier > 1 ? " Includes earlier blessing components." : ""),
+                ClericSpellText.buffName(god,tier),
+                ClericSpellText.blessingDescription(gods[god],tier),
                 gods[god],
                 tier == 1 ? 1 : tier == 2 ? 20 : 40,
                 tier,

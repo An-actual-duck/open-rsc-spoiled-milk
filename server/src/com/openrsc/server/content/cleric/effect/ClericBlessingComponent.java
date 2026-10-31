@@ -8,7 +8,7 @@ public final class ClericBlessingComponent {
 
   public ClericBlessingComponent(int kind, int magnitude, int parameter1, int parameter2) {
     if (kind < 1
-        || kind > ClericBlessingContract.MAX_COMPONENTS
+        || kind > ClericBlessingContract.LAST_COMPONENT_KIND
         || magnitude < 1
         || magnitude > 65535
         || parameter1 < 0

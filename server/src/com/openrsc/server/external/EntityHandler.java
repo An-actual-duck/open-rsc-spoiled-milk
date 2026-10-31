@@ -45,7 +45,7 @@ public final class EntityHandler {
 	private static final Logger LOGGER = LogManager.getLogger();
 	private static final Set<String> MYWORLD_NPC_OVERRIDE_FIELDS = new HashSet<>(Arrays.asList(
 		"id", "name", "description", "command", "attack", "strength", "hits", "defense", "ranged",
-		"projectileRange",
+		"projectileRange", "undead",
 		"meleeOffense", "rangedOffense", "magicOffense",
 		"meleeDefense", "rangedDefense", "magicDefense",
 		"meleeDefenseMultiplier", "rangedDefenseMultiplier", "magicDefenseMultiplier",
@@ -354,6 +354,7 @@ public final class EntityHandler {
 				NPCDef def = new NPCDef();
 				JSONObject npc = npcDefs.getJSONObject(i);
 				def.name = npc.getString("name");
+                def.undead = npc.has("undead") ? npc.getBoolean("undead") : null;
 				def.description = npc.getString("description");
 				def.command1 = npc.getString("command");
 				def.command2 = npc.getString("command2");
@@ -412,7 +413,8 @@ public final class EntityHandler {
 				JSONObject npc = npcPatchDefs.getJSONObject(i);
 				NPCDef.NPCDefinitionBuilder toAddBuild =
 					new NPCDef.NPCDefinitionBuilder(npc.getInt("id"), npc.getString("name"))
-						.description(npc.getString("description"))
+						.undead(npc.has("undead") ? npc.getBoolean("undead") : null)
+                        .description(npc.getString("description"))
 						.command(npc.getString("command"))
 						.attack((int)ifZeroReserve(npc.getInt("attack")))
 						.strength((int)ifZeroReserve(npc.getInt("strength")))
@@ -487,6 +489,7 @@ public final class EntityHandler {
 					throw new IllegalArgumentException("Npc override references unknown id " + npcId);
 				}
 				NPCDef staged = new NPCDef(npcs.get(npcId));
+                if(npc.has("undead")) staged.undead = npc.getBoolean("undead");
 				if (npc.has("name")) staged.name = npc.getString("name");
 				if (npc.has("description")) staged.description = npc.getString("description");
 				if (npc.has("command")) staged.command1 = npc.getString("command");

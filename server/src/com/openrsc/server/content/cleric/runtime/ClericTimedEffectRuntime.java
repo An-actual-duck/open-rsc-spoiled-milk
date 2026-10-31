@@ -90,6 +90,10 @@ public final class ClericTimedEffectRuntime {
   }
 
   public static int defense(Player player, int base) {
+    return defense(player,base,com.openrsc.server.model.combat.CombatStyle.RANGED);
+  }
+  public static int defense(Player player, int base, com.openrsc.server.model.combat.CombatStyle style) {
+    if(style != com.openrsc.server.model.combat.CombatStyle.RANGED) return base;
     ClericBlessingMagnitude m = blessing(player, ClericEffectFamily.GUTHIX_BLESSING);
     return addPercent(base, m == null ? 0 : m.defensePercent());
   }
@@ -156,25 +160,6 @@ public final class ClericTimedEffectRuntime {
   }
 
   private static String recipientFlavor(ClericSpellId id) {
-    switch (id) {
-      case SARADOMIN_WARMTH:
-        return "You feel your blood rush and your spirits lift";
-      case SARADOMIN_AURA:
-        return "Your wounds seal up as soon as they are opened";
-      case GUTHIX_RESPITE:
-        return "Your blood feels thick in your veins like sap. Your ailments slow to a halt";
-      case GUTHIX_PROTECTION:
-        return "Your skin grows a thick layer of bark";
-      case GUTHIX_VENGEANCE:
-        return "Sharp spikes protrude from you, piercing your foes.";
-      case ZAMORAK_FERVOR:
-        return "Your muscles bulge and your mind feels sharper";
-      case ZAMORAK_FURY:
-        return "Your enemies seem much smaller than before";
-      case ZAMORAK_WRATH:
-        return "Your weapon will breathe new life into you should you feel weak";
-      default:
-        return null;
-    }
+    return ClericSpellText.recipientFlavor(id);
   }
 }

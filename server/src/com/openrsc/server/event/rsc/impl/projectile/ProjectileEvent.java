@@ -589,7 +589,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		int clericPreventedDamage = 0;
 		if (!wail && isClericEligibleProjectileType()) {
 			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
-				ClericDirectCombatRuntime.beforeDirectDamage(caster, opponent, damage);
+				ClericDirectCombatRuntime.beforeDirectDamage(caster, opponent, damage, primaryProjectileCombatStyle());
 			damage = clericDamage.getDamage();
 			clericPreventedDamage = clericDamage.getPreventedDamage();
 		}

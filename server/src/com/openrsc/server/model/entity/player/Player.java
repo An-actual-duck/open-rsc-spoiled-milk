@@ -2955,7 +2955,7 @@ public final class Player extends Mob {
 
 	@Override
 	public int getMeleeDefense() {
-		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMeleeDefense()));
+		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMeleeDefense(),com.openrsc.server.model.combat.CombatStyle.MELEE));
 	}
 
 	@Override
@@ -2965,7 +2965,7 @@ public final class Player extends Mob {
 
 	@Override
 	public int getMagicDefense() {
-		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMagicDefense()));
+		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMagicDefense(),com.openrsc.server.model.combat.CombatStyle.MAGIC));
 	}
 
 	@Override

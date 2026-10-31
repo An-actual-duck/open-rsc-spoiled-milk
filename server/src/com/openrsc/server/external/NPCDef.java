@@ -17,6 +17,8 @@ public class NPCDef extends EntityDef {
 	 */
 	public Boolean attackable;
 	public Boolean members;
+    /** Explicit server-owned classification; null retains reviewed legacy defaults. */
+    public Boolean undead;
 	/**
 	 * Colour of our legs
 	 */
@@ -104,6 +106,7 @@ public class NPCDef extends EntityDef {
 
 	public NPCDef(NPCDef.NPCDefinitionBuilder builder) {
 		this.id = builder.id;
+        this.undead = builder.undead;
 		super.name = builder.name;
 		super.description = builder.description;
 		this.command1 = builder.command1;
@@ -133,6 +136,7 @@ public class NPCDef extends EntityDef {
 
 	public NPCDef(NPCDef source) {
 		this.id = source.id;
+        this.undead = source.undead;
 		this.name = source.name;
 		this.description = source.description;
 		this.aggressive = source.aggressive;
@@ -339,6 +343,7 @@ public class NPCDef extends EntityDef {
 			private double magicDefenseDivisor;
 			private int combatLevel;
 		private Boolean members;
+        private Boolean undead;
 		private Boolean attackable;
 		private Boolean aggressive;
 		private int id;
@@ -348,7 +353,9 @@ public class NPCDef extends EntityDef {
 			this.name = name;
 		}
 
-		public NPCDef.NPCDefinitionBuilder description(String description) {
+		public NPCDef.NPCDefinitionBuilder undead(Boolean value) { this.undead=value; return this; }
+
+        public NPCDef.NPCDefinitionBuilder description(String description) {
 			this.description = description;
 			return this;
 		}

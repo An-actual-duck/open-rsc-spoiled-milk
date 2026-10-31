@@ -82,7 +82,7 @@ public final class ClericEffectRegistry implements TransientEffectState {
     int percent =
         component == 7
             ? m.dealtDamagePercent()
-            : component == 8 ? m.lifestealPercent() : component == 9 ? m.reflectPercent() : 0;
+            : component == 8 ? m.lifestealPercent() : component == 9 ? m.reflectPercent() : component == 10 ? m.undeadDamagePercent() : 0;
     if (percent <= 0) return 0;
     String key = family.getKey() + ":" + component;
     long total =
