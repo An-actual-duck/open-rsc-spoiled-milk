@@ -178,9 +178,71 @@ only where poison-cleansing adjustment is irrelevant. Exact caps, stacking,
 lifecycle, enemy eligibility and PvP policy remain to be designed; no hostile
 runtime implementation or new PvP permission is implied.
 
-Review order: **power strengths and inherited P6 balance → Greater Unify →
-return to debuff design**. The buff implementation remains active work, awaiting
-the numerical review rather than adopting the manager's earlier proposals.
+### Owner-selected Zamorak debuffs — October 31, 2026
+
+**Design recorded; hostile gameplay is not implemented.** These owner-selected
+components replace the earlier manager suggestions for Zamorak. Higher tiers
+retain the earlier components, using the shared Holy Power thresholds and
+tier caps **2/4/6**. The quoted names below are the owner's component labels;
+final spell titles, descriptions and cast messages remain to be settled.
+
+| Tier addition | Component | Formula at power P | P1 / P2 / P3 / P4 / P5 / P6 |
+|---|---|---|---|
+| 1 | Expose Weakness | Critical chance `5 + 2 * (P - 1)` percent | 5 / 7 / 9 / 11 / 13 / 15% |
+| 2 | Weak Legs | Stagger chance per critical hit `25 + 5 * (P - 1)` percent | 25 / 30 / 35 / 40 / 45 / 50% |
+| 3 | Weak Constitution | Execution eligibility at or below `15 + 2 * (P - 1)` percent HP | 15 / 17 / 19 / 21 / 23 / 25% HP |
+| 3 | Weak Constitution | Execution chance per eligible critical hit `50 + 5 * (P - 1)` percent | 50 / 55 / 60 / 65 / 70 / 75% |
+
+**Expose Weakness** gives afflicted enemies susceptibility to critical hits
+from the three main combat styles: **melee, ranged and Magic**, not just melee.
+A critical converts the qualifying damage roll into a maximum-damage hit.
+This is not an instruction to make every naturally rolled maximum a critical.
+The Tier 1 spell itself caps at 7%; its inherited component can reach 15%
+inside Tier 3. Existing equipment critical chance and the exact eligible-hit
+boundary must be reconciled explicitly before implementation.
+
+**Weak Legs** rolls only on critical hits. A successful stagger makes the NPC
+lose **one attack turn**. After that turn is lost, the NPC is immune to another
+stagger until it has completed its next **five uninterrupted attacks**. Five
+ticks, five incoming hits or elapsed seconds cannot substitute for those attacks.
+The protection belongs to the NPC, so multiple attackers cannot each obtain
+their own independent stagger allowance. Pending losses must not queue, and
+recasting must not bypass the five-attack protection. How existing Ogre Stagger,
+Startle and other attack cancellations honor this guarantee needs explicit
+integration; the separate legacy flags do not already provide this protection.
+
+**Weak Constitution** rolls on critical hits against an afflicted enemy at or
+below the power-dependent HP threshold. A success instantly kills that enemy.
+The owner explicitly chose **ordinary enemies only; bosses are exempt from
+this execution effect**. This does not establish blanket boss immunity to
+Expose Weakness or Weak Legs. Boss classification must be reviewed before
+implementation, with normal kill attribution, loot and death cleanup retained.
+
+At the highest permitted rank of each spell: Tier 1 has 7% crit chance;
+Tier 2 has 11% crit chance and 40% stagger chance per crit; Tier 3 has 15%
+crit chance, 50% stagger chance per crit, and 75% execution chance per eligible
+crit against ordinary enemies at 25% HP or lower. These are conditional proc
+chances, not additional guaranteed effects on every normal attack.
+
+Before hostile implementation, resolve: aggregation with existing critical
+equipment; offhand/secondary/multi-hit eligibility; the HP checkpoint used for
+execution (before or after the triggering hit); critical-result propagation
+and shared stagger recovery across all NPC attack paths. Costs, duration,
+enemy admission, immunity/stacking rules and PvP policy remain separate hostile
+decisions. No new PvP permission or live activation is implied.
+
+**Planned buff specialization from the same discussion:** narrow Zamorak's
+maximum/dealt-damage bonuses to melee and Guthix's Barkskin to ranged defense.
+The prepared implementation still has the broader style coverage documented
+above; this narrowing has not been coded. The manager also recommended
+melee-only Zamorak lifesteal, but that additional scope is not separately
+owner-confirmed. Saradomin Magic weakness is the proposed Tier 1 hostile
+component; its later components remain open. None of the manager's other
+suggested hostile components is silently adopted.
+
+The buff numerical review and Greater Unify are implemented in the private
+candidate. The current design work is the hostile branch; the values above
+are recorded for its later implementation.
 
 **Exclude the old neutral Respite from the future spellbook** because of abuse concerns. This
 is a future spell-roster decision only: the current twelve-spell runtime remains

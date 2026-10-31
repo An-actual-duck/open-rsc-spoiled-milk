@@ -230,6 +230,35 @@ Owner's order: **review power strengths/inherited P6 combinations → Greater
 Unify → return to debuffs**. The latest buff review is now approved and implemented; hostile work stays
 documentation only.
 
+### Zamorak critical-hit debuffs — owner direction, October 31
+
+Design only, not yet implemented. Higher tiers inherit earlier components
+under the existing shared Holy Power curve and power caps2/4/6:
+
+- **Expose Weakness:** melee/ranged/Magic damage rolls can become maximum-damage
+  critical hits; chance5% +2 percentage points per power step, reaching15% atP6.
+- **Weak Legs:** critical hits have25% +5 percentage points per power step to
+  stagger, reaching50% atP6. Stagger loses one NPC attack turn. The NPC must then
+  complete five uninterrupted attacks before it can be staggered again;
+  recasts/multiple attackers must not bypass this protection.
+- **Weak Constitution:** critical hits against sufficiently wounded ordinary
+  enemies can instantly kill them. HP threshold15% +2 percentage points per
+  power step; proc chance50% +5 percentage points per power step. P6 is at or
+  below25% HP with75% chance per qualifying crit. **Bosses are exempt from the
+  instant kill**, explicitly confirmed by the owner.
+
+See the [governing debuff design](cleric-spellbook-concept.md#owner-selected-zamorak-debuffs--october-31-2026)
+for all six values, conditional proc semantics and outstanding critical/stagger
+integration choices. Do not infer boss immunity to all three components from
+the execution restriction, or count five ticks as five completed NPC attacks.
+
+Also planned, not yet coded: Zamorak's maximum/dealt-damage buffs become melee
+only and Guthix Barkskin becomes ranged defense only. The current prepared
+build retains the broader styles. Extending the melee restriction to lifesteal
+is a manager recommendation, not a separately confirmed owner requirement.
+Saradomin Magic weakness is the proposed first debuff component; later tiers
+remain open. Other hostile suggestions remain unselected.
+
 God+Grace buffs, god+Blight debuffs and joint resource consumption remain
 confirmed future casting direction. Generic purpose-only costs replace the god
 share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
