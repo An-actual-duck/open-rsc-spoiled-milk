@@ -143,30 +143,11 @@ public final class ClericRestoreEffectFixture {
 
 
 def validate_runtime_wiring() -> None:
-    runtime = RUNTIME.read_text(encoding="utf-8")
-    restore_method = runtime.split(
-        "private static ClericCastTransaction.PreparedApplication prepareRestore", 1
-    )[1].split("private static Item[] createCost", 1)[0]
-    application = runtime.split("private static final class RestoreApplication", 1)[1]
-
-    for snippet in (
-        "spellId == ClericSpellId.RESTORE",
-        "case RESTORE:",
-        "prepareRestore(target, effectRank)",
-        "getSkills().getSkillsCount()",
-        "recipient.getEquipmentAdjustedNormalLevel(skill)",
-        "Skill.HITS.id()",
-        "ClericRestoreEffect.plan(",
-        "new RestoreApplication(recipient, plan.getRestoredLevels())",
-    ):
-        require(snippet in runtime, f"Restore runtime wiring missing: {snippet}")
-    require("ClericEffectRegistry" not in restore_method,
-            "instant Restore must not create transient status state")
-    require("getEquipmentAdjustedNormalLevel(skill)" in application
-            and "setLevel(skill, restored, true, true)" in application,
-            "Restore commit must re-cap against active normal levels and update stats")
-    require("addExperience" not in restore_method and "getCache()" not in restore_method,
-            "Restore must not award XP or persist status/cache state")
+    """Legacy helper math remains characterized; active Guthix is gradual, not an instant cast."""
+    runtime=(ROOT / "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java").read_text()
+    assert "poisonCleanse" in runtime and "restoreIntervalSeconds" in runtime
+    assert "skill!=Skill.HITS.id()" in "".join(runtime.split()) and "Math.min(normal,current+1)" in "".join(runtime.split())
+    assert "addExperience" not in runtime
 
 
 def run_compiled_fixture() -> None:

@@ -27,7 +27,8 @@ public final class ClericEffectOrigins {
 			throw new IllegalStateException("Cleric effect origin is not current");
 		}
 		return new ClericEffectOrigin(caster.getTransientEffectSessionToken(),
-			casterMembership, recipientMembership);
+			casterMembership, recipientMembership, recipient.getWorldLocation().getWorldSpace(),
+            recipient.getWorldLocation().getCoordinate().getLevel());
 	}
 
 	public static ClericEffectOriginValidator validatorFor(final Player recipient) {
@@ -44,15 +45,22 @@ public final class ClericEffectOrigins {
 
 	private static boolean isCurrentFor(Player recipient, ClericEffectOrigin origin) {
 		Party party = recipient.getParty();
-		if (origin == null || party == null
+		if (origin == null || party == null || !recipient.isLoggedIn() || recipient.isRemoved()
+                || !origin.matchesScope(recipient.getWorldLocation().getWorldSpace(),recipient.getWorldLocation().getCoordinate().getLevel())
+                || recipient.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id()) <= 0
+                || com.openrsc.server.content.cleric.runtime.ClericSupportCasting.isPvpContext(recipient)
 				|| recipient.getTransientEffectMembershipToken()
 					!= origin.getRecipientMembership()) {
 			return false;
 		}
 		for (PartyPlayer member : new ArrayList<PartyPlayer>(party.getPlayers())) {
 			Player caster = member.getPlayerReference();
-			if (caster != null && caster.isLoggedIn() && !caster.isUnregistering()
+			if (caster != null && caster.isLoggedIn() && !caster.isRemoved() && !caster.isUnregistering()
 					&& caster.getParty() == party
+                    && caster.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id()) > 0
+                    && !com.openrsc.server.content.cleric.runtime.ClericSupportCasting.isPvpContext(caster)
+                    && caster.getWorldLocation().getWorldSpace().equals(recipient.getWorldLocation().getWorldSpace())
+                    && caster.getWorldLocation().getCoordinate().getLevel() == recipient.getWorldLocation().getCoordinate().getLevel()
 					&& caster.getTransientEffectSessionToken() == origin.getCasterSession()
 					&& caster.getTransientEffectMembershipToken()
 						== origin.getCasterMembership()) {

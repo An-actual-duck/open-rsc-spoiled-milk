@@ -20,7 +20,8 @@ public final class ClericSigilCost {
 			case 1:
 				return new ClericSigilCost(1, 0);
 			case 2:
-				return new ClericSigilCost(2, 1);
+				return new ClericSigilCost(2, 0);
+            case 3: return new ClericSigilCost(0, 2);
 			default:
 				throw new IllegalArgumentException("Unsupported Cleric launch spell tier: " + spellTier);
 		}

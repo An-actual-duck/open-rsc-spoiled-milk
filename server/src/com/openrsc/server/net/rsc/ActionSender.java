@@ -546,17 +546,7 @@ public class ActionSender {
 	public static void sendEquipmentStats(Player player, int slot) {
 		player.syncHitsEquipmentBonuses();
 		player.syncGiantMightEquipmentBonuses();
-		EquipmentStatsStruct struct = new EquipmentStatsStruct();
-		struct.armourPoints = player.getRangedDefense();
-		struct.weaponAimPoints = player.getMagicDefense();
-		struct.weaponPowerPoints = player.getMeleeDefense();
-		struct.magicPoints = player.getCarriedItems().getEquipment().getDisplayedMeleeOffense();
-		struct.prayerPoints = player.getPrayerPoints();
-		struct.hidingPoints = player.getHidingPoints();
-		struct.rangedPoints = player.getCarriedItems().getEquipment().getDisplayedRangedOffense();
-		struct.magicPowerPoints = player.getCarriedItems().getEquipment().getDisplayedMagicOffense();
-		struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();
-		tryFinalizeAndSendPacket(OpcodeOut.SEND_EQUIPMENT_STATS, struct, player);
+        sendDerivedEquipmentStats(player);
 		if (player.getConfig().WANT_MYWORLD) {
 			player.getPrayers().deactivateOverflowingPrayers();
 		}
@@ -570,6 +560,21 @@ public class ActionSender {
             }
 		}
 	}
+
+    /** Derived-stat packet only: no equipment inventory, prayer or Hits synchronization. */
+    public static void sendDerivedEquipmentStats(Player player) {
+		EquipmentStatsStruct struct = new EquipmentStatsStruct();
+		struct.armourPoints = player.getRangedDefense();
+		struct.weaponAimPoints = player.getMagicDefense();
+		struct.weaponPowerPoints = player.getMeleeDefense();
+		struct.magicPoints = player.getCarriedItems().getEquipment().getDisplayedMeleeOffense();
+		struct.prayerPoints = player.getPrayerPoints();
+		struct.hidingPoints = player.getHidingPoints();
+		struct.rangedPoints = player.getCarriedItems().getEquipment().getDisplayedRangedOffense();
+		struct.magicPowerPoints = player.getCarriedItems().getEquipment().getDisplayedMagicOffense();
+		struct.holyPowerPoints = player.getCarriedItems().getEquipment().getHolyPower();
+		tryFinalizeAndSendPacket(OpcodeOut.SEND_EQUIPMENT_STATS, struct, player);
+    }
 
 	private static void debugJewelryEquipmentStats(final Player player, final EquipmentStatsStruct struct) {
 	}
@@ -1527,6 +1532,7 @@ public class ActionSender {
 		struct.maxLevel = player.getSkills().getMaxStat(stat);
 		struct.experience = player.getSkills().getExperience(stat);
 		tryFinalizeAndSendPacket(OpcodeOut.SEND_STAT, struct, player);
+        if (stat == com.openrsc.server.constants.Skill.PRAYER.id() && player.getConfig().WANT_MYWORLD) sendDerivedEquipmentStats(player);
 	}
 
 	public static void sendExperience(Player player, int stat) {
@@ -2218,6 +2224,7 @@ public class ActionSender {
 	 * supplied remaining seconds down for presentation.
 	 */
 	public static void sendActivePotionEffects(Player player) {
+        com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.refreshDerivedDefense(player);
 		if (!player.isUsingCustomClient()) {
 			return;
 		}
@@ -2258,7 +2265,7 @@ public class ActionSender {
 
 	/** Sends authoritative Cleric display metadata only to the maintained client. */
 	public static void sendClericSpellbook(Player player) {
-		if (!player.isUsingCustomClient()) {
+        if (!com.openrsc.server.net.rsc.ClericBlessingContract.supports(player.getClientVersion())) {
 			return;
 		}
 		ClericSpellbookStruct struct = new ClericSpellbookStruct();

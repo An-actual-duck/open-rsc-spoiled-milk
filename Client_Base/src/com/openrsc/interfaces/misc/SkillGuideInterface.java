@@ -15,8 +15,8 @@ import java.util.List;
 
 
 public final class SkillGuideInterface {
-	private static final int CLERIC_SPELL_GUIDE_ROW_HEIGHT = 55;
-	private static final int CLERIC_SPELL_GUIDE_VISIBLE_ROWS = 4;
+	private static final int CLERIC_SPELL_GUIDE_ROW_HEIGHT = 190;
+	private static final int CLERIC_SPELL_GUIDE_VISIBLE_ROWS = 1;
 
 	public int curTab = 0;
 	public int skillGuideScroll;
@@ -384,9 +384,7 @@ public final class SkillGuideInterface {
 		mc.getSurface().drawBoxAlpha(x, allY, width,
 			CLERIC_SPELL_GUIDE_ROW_HEIGHT, 0x45454545, 90);
 		drawString(entry.getHeader(), x + 10, allY + 13, 2, textColour);
-		drawString(entry.getArea(), x + 10, allY + 26, 1, textColour);
-		drawString(entry.getMechanics(), x + 10, allY + 38, 1, textColour);
-		drawString(entry.getHolyPower(), x + 10, allY + 50, 1, textColour);
+		for(int line=0;line<entry.getLines().size();line++)drawString(entry.getLines().get(line),x+10,allY+26+line*13,1,textColour);
 		if (rowIndex != skillMenuEntries.size() - 1 && rowIndex != listEndPoint) {
 			mc.getSurface().drawBoxBorder(x, width, allY,
 				CLERIC_SPELL_GUIDE_ROW_HEIGHT + 1, 0);
@@ -1518,7 +1516,7 @@ public final class SkillGuideInterface {
 
 	private void addClericSpellGuideEntries() {
 		List<ClericSpellGuideCatalog.Entry> entries = ClericSpellGuideCatalog.build(
-			mc.getClericSpellbookDefinitions());
+			mc.getClericSpellbookDefinitions(),id->{com.openrsc.client.entityhandling.defs.ItemDef item=EntityHandler.getItemDef(id);return item==null?"item #"+id:item.getName();});
 		for (ClericSpellGuideCatalog.Entry entry : entries) {
 			skillMenuEntries.add(new ClericSpellMenuItem(entry));
 		}

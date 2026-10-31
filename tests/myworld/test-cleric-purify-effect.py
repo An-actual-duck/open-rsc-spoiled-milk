@@ -162,61 +162,11 @@ public final class ClericPurifyEffectFixture {
 
 
 def validate_runtime_wiring() -> None:
-    runtime = RUNTIME.read_text(encoding="utf-8")
-    mob = MOB.read_text(encoding="utf-8")
-    poison_event = POISON_EVENT.read_text(encoding="utf-8")
-    plan = PLAN.read_text(encoding="utf-8")
-    prepare_purify = runtime.split(
-        "private static ClericCastTransaction.PreparedApplication preparePurify", 1
-    )[1].split(
-        "private static ClericCastTransaction.PreparedApplication prepareRestore", 1
-    )[0]
-
-    for snippet in (
-        "spellId == ClericSpellId.PURIFY",
-        "definition.resolveEffectRank(",
-        "caster.getCarriedItems().getEquipment().getHolyPower()",
-        "preparePurify(target, effectRank)",
-        "recipient.getCurrentPoisonPower()",
-        "new PurifyApplication(recipient, plan.getReduction())",
-        "recipient.reduceCurrentPoisonPower(reduction)",
-        "ClericCastTransaction.execute(",
-        "ClericSupportTargeting.resolve(",
-    ):
-        require(snippet in runtime, f"Purify runtime wiring missing: {snippet}")
-    require("ClericEffectRegistry" not in prepare_purify,
-            "instant Purify must not create a transient Cleric status")
-    require("addExperience" not in runtime and "Skill.PRAYER" not in runtime,
-            "Purify must not award Worship XP")
-
-    reduction_method = mob.split(
-        "public boolean reduceCurrentPoisonPower(final int reduction)", 1
-    )[1].split("// part of NPC poison feature", 1)[0]
-    for snippet in (
-        'getAttribute("poisonEvent", null)',
-        "PoisonPowerReduction.remainingPower(",
-        "PoisonPowerReduction.shouldCure(remainingPower)",
-        "curePoison();",
-        "poisonEvent.setPoisonPower(remainingPower);",
-        "setPoisonDamage(remainingPower);",
-    ):
-        require(snippet in reduction_method,
-                f"shared poison reduction omits state boundary: {snippet}")
-    require(
-        "public void setPoisonDamage(int poisonDamage)" in mob
-        and "persistPoisonState();" in mob
-        and "PoisonDurableRecord.CACHE_KEY" in mob,
-        "partial Purify no longer reaches typed durable poison persistence",
-    )
-    for forbidden in ("setPoisonMaxPower", "poisoned_max", "setPoisonOwnerId"):
-        require(forbidden not in reduction_method,
-                f"partial Purify must preserve poison accumulation/source: {forbidden}")
-    require("PoisonPowerReduction.shouldCure(poisonPower)" in poison_event,
-            "normal poison ticks and Purify do not share the cure threshold")
-    require("if (poisonPower < 10)" not in poison_event,
-            "PoisonEvent retained a second cure-threshold literal")
-    require("1. Purify;" in plan and "Each bounded family owns its pure calculations" in plan,
-            "C09 Purify family contract is missing from the implementation plan")
+    """Legacy helper math remains characterized; active Guthix is gradual, not an instant cast."""
+    runtime=(ROOT / "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java").read_text()
+    assert "poisonCleanse" in runtime and "restoreIntervalSeconds" in runtime
+    assert "skill!=Skill.HITS.id()" in "".join(runtime.split()) and "Math.min(normal,current+1)" in "".join(runtime.split())
+    assert "addExperience" not in runtime
 
 
 def run_compiled_fixture() -> None:

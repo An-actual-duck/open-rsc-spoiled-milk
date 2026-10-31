@@ -628,7 +628,7 @@ public class PacketHandler {
 
 			else if (opcode == 157) updateLayeredSceneContext(length);
 
-			else if (opcode == 158) updateClericSpellbook();
+			else if (opcode == 158) updateClericSpellbook(length);
 
 				// Set Server Configs
 			else if (opcode == 19) setServerConfiguration();
@@ -1638,54 +1638,12 @@ public class PacketHandler {
 		mc.replaceActiveStatuses(ActiveStatusPacketDecoder.decode(payload));
 	}
 
-	private void updateClericSpellbook() {
-		int schemaVersion = packetsIncoming.getByte() & 0xff;
-		int count = packetsIncoming.getByte() & 0xff;
-		if (count > ClericSpellbookCatalog.MAX_DEFINITIONS) {
-			mc.clearClericSpellbook();
-			return;
-		}
-		ArrayList<ClericSpellDef> definitions = new ArrayList<ClericSpellDef>(count);
-		for (int i = 0; i < count; i++) {
-			int stableCode = packetsIncoming.getShort() & 0xffff;
-			String stableKey = packetsIncoming.readString();
-			String name = packetsIncoming.readString();
-			String description = packetsIncoming.readString();
-			String alignment = packetsIncoming.readString();
-			int worshipLevel = packetsIncoming.getByte() & 0xff;
-			int spellTier = packetsIncoming.getByte() & 0xff;
-			int radius = packetsIncoming.getByte() & 0xff;
-			boolean affectsCaster = packetsIncoming.getByte() != 0;
-			int spellbookIconItemId = packetsIncoming.getShort() & 0xffff;
-			int stoneSigilItemId = packetsIncoming.getShort() & 0xffff;
-			int stoneSigilCount = packetsIncoming.getByte() & 0xff;
-			int silverSigilItemId = packetsIncoming.getShort() & 0xffff;
-			int silverSigilCount = packetsIncoming.getByte() & 0xff;
-			int casterIconItemId = packetsIncoming.get32();
-			int casterAnimationId = packetsIncoming.get32();
-			String iconAssetKey = packetsIncoming.readString();
-			int rankCount = packetsIncoming.getByte() & 0xff;
-			ArrayList<ClericEffectRankDef> ranks =
-				new ArrayList<ClericEffectRankDef>(rankCount);
-			for (int rank = 0; rank < rankCount; rank++) {
-				ranks.add(new ClericEffectRankDef(
-					packetsIncoming.getByte() & 0xff,
-					packetsIncoming.get32(),
-					packetsIncoming.getByte() & 0xff,
-					packetsIncoming.getByte() & 0xff,
-					packetsIncoming.getShort() & 0xffff,
-					packetsIncoming.getShort() & 0xffff,
-					packetsIncoming.getShort() & 0xffff));
-			}
-			definitions.add(new ClericSpellDef(
-				stableCode, stableKey, name, description, alignment, worshipLevel,
-				spellTier, radius, affectsCaster, spellbookIconItemId,
-				stoneSigilItemId, stoneSigilCount, silverSigilItemId,
-				silverSigilCount, casterIconItemId, casterAnimationId,
-				iconAssetKey, ranks));
-		}
-		mc.replaceClericSpellbook(schemaVersion, definitions);
-	}
+    private void updateClericSpellbook(int length) {
+        int payloadLength=Math.max(0,length-packetsIncoming.packetEnd);
+        byte[] payload=new byte[payloadLength];packetsIncoming.readBytes(payloadLength,payload);
+        try { mc.replaceClericSpellbook(ClericSpellbookCatalog.SCHEMA_VERSION,ClericSpellbookPacketDecoder.decode(payload)); }
+        catch(IllegalArgumentException invalid){mc.clearClericSpellbook();System.out.println("Rejected Cleric catalog: "+invalid.getMessage());}
+    }
 
 	public final void handlePacket2(int opcode, int length) {
 		try {
@@ -4912,6 +4870,7 @@ public class PacketHandler {
 		}
 		// Below is for newer clients to get armour stats as integers (will be ignored by older clients)
 		int intCount = Math.max(0, (length - 5) / 4);
+        mc.setClericHolyPowerKnown(intCount>=8);
 		for (int eq = 0; eq < intCount; ++eq) {
 			int value = (int)(packetsIncoming.get32() & 0xffffffffL);
 			if (eq < mc.playerStatEquipment.length) {

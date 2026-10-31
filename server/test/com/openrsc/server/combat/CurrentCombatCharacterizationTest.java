@@ -275,7 +275,7 @@ public final class CurrentCombatCharacterizationTest {
 					::namedPoisonProducerParity);
 			run(harness, "poisoned_exalted_rune_dagger_and_spear_apply_tier_twelve_poison",
 				CurrentCombatCharacterizationTest::poisonedExaltedRuneWeaponPower);
-			run(harness, "cleric_ward_aegis_rally_thorns_order",
+			run(harness, "cleric_composite_max_damage_lifesteal_reflection_order",
 				CurrentCombatCharacterizationTest::clericDirectEffectOrder);
 			run(harness, "summon_damage_contributes_to_owner_credit_not_style_xp",
 				CurrentCombatCharacterizationTest::summonOwnerContribution);
@@ -327,7 +327,7 @@ public final class CurrentCombatCharacterizationTest {
 				CurrentCombatSecondaryDamageCharacterization::auxiliaryMitigationAcrossEvents);
 			run(harness, "frostbite_reflection_preserves_pending_hit_and_magic_attribution",
 				CurrentCombatReflectionCharacterization::frostbitePolicies);
-			run(harness, "cleric_thorns_preserves_post_hit_and_simultaneous_death_order",
+			run(harness, "cleric_composite_reflection_primary_order_without_dead_procs",
 				CurrentCombatReflectionCharacterization::clericThornsPolicies);
 			run(harness, "melee_jewelry_recoil_preserves_combat_attribution_and_death_adapters",
 				CurrentCombatReflectionCharacterization::meleeJewelryRecoilPolicies);
@@ -1481,69 +1481,29 @@ public final class CurrentCombatCharacterizationTest {
 			"Exalted Rune gathering tools must remain outside weapon poison");
 	}
 
-	private static void clericDirectEffectOrder(final CurrentCombatHarness harness)
-			throws Exception {
-		final Player caster = harness.player("cleric caster", 250, 550);
-		final Player defender = harness.player("cleric defender", 251, 550);
-		final Player attacker = harness.player("cleric attacker", 250, 551);
-		final Npc enemy = harness.npc(3, 251, 551);
-		final Party party = party(caster, defender, attacker);
-		assertTrue(caster.getParty() == party && defender.getParty() == party,
-			"Cleric origin party fixture");
-
-		final ClericEffectRegistry defenderEffects = registry(defender);
-		final ClericEffectOrigin defenderOrigin = ClericEffectOrigins.current(
-			caster, defender);
-		final ClericEffectOriginValidator defenderValidator =
-			ClericEffectOrigins.validatorFor(defender);
-		apply(defenderEffects, ClericSpellId.WARD, 1,
-			defenderOrigin, defenderValidator);
-		ClericDirectCombatRuntime.BeforeDamage ward =
-			ClericDirectCombatRuntime.beforeDirectDamage(enemy, defender, 20);
-		assertEquals(15, ward.getDamage(), "Ward 25 percent protection");
-		assertEquals(5, ward.getPreventedDamage(), "Ward prevented damage");
-
-		apply(defenderEffects, ClericSpellId.AEGIS, 1,
-			defenderOrigin, defenderValidator);
-		ClericDirectCombatRuntime.BeforeDamage aegis =
-			ClericDirectCombatRuntime.beforeDirectDamage(enemy, defender, 20);
-		assertEquals(10, aegis.getDamage(), "Aegis replaces Ward before damage");
-		assertEquals(10, aegis.getPreventedDamage(), "Aegis prevented damage");
-
-		apply(defenderEffects, ClericSpellId.THORNS, 1,
-			defenderOrigin, defenderValidator);
-		ClericDirectCombatRuntime.AfterDamage thorns =
-			ClericDirectCombatRuntime.afterExistingLifesteal(enemy, defender, 20);
-		assertEquals(1, thorns.getThornsDamage(),
-			"Thorns resolves after established direct damage");
-
-		final ClericEffectRegistry attackerEffects = registry(attacker);
-		apply(attackerEffects, ClericSpellId.RALLY, 1,
-			ClericEffectOrigins.current(caster, attacker),
-			ClericEffectOrigins.validatorFor(attacker));
-		attacker.getSkills().setTemporaryLevelAndMaxStat(
-			Skill.HITS.id(), 40, 100, false);
-		ClericDirectCombatRuntime.AfterDamage rally =
-			ClericDirectCombatRuntime.afterExistingLifesteal(attacker, enemy, 10);
-		assertEquals(2, rally.getRallyHealing(),
-			"Rally resolves after existing lifesteal");
-		assertEquals(42, attacker.getSkills().getLevel(Skill.HITS.id()),
-			"Rally applies its returned healing");
-
-		final long thornsDurationMillis = ClericEffectCatalog
-			.get(ClericSpellId.THORNS, 1).getDuration()
-			.toMilliseconds(harness.server().getConfig().GAME_TICK);
-		harness.clock().advanceMillis(thornsDurationMillis - 1L);
-		assertTrue(defenderEffects.get(
-			com.openrsc.server.content.cleric.effect.ClericEffectFamily.REFLECTION,
-			defenderValidator).isPresent(),
-			"Cleric effect remains active immediately before its existing deadline");
-		harness.clock().advanceMillis(1L);
-		assertFalse(defenderEffects.get(
-			com.openrsc.server.content.cleric.effect.ClericEffectFamily.REFLECTION,
-			defenderValidator).isPresent(),
-			"Cleric effect expires at its existing monotonic deadline");
-	}
+    private static void clericDirectEffectOrder(final CurrentCombatHarness harness) throws Exception {
+        final Player caster=harness.player("cleric caster",250,550), defender=harness.player("cleric defender",251,550),attacker=harness.player("cleric attacker",250,551);
+        final Npc enemy=harness.npc(3,251,551);party(caster,defender,attacker);
+        final ClericEffectRegistry defending=registry(defender), attacking=registry(attacker);
+        final ClericEffectOrigin origin=ClericEffectOrigins.current(caster,defender);
+        final ClericEffectOriginValidator validator=ClericEffectOrigins.validatorFor(defender);
+        apply(defending,ClericSpellId.GUTHIX_PROTECTION,4,origin,validator);
+        ClericDirectCombatRuntime.BeforeDamage protection=ClericDirectCombatRuntime.beforeDirectDamage(enemy,defender,20);
+        assertEquals(20,protection.getDamage(),"Barkskin changes defense, not final flat damage");
+        assertEquals(0,protection.getPreventedDamage(),"retired Ward/Aegis reduction absent");
+        apply(defending,ClericSpellId.GUTHIX_VENGEANCE,6,origin,validator);
+        assertEquals(2,ClericDirectCombatRuntime.afterExistingLifesteal(enemy,defender,20).getThornsDamage(),"P6 reflection uses factual direct damage");
+        apply(attacking,ClericSpellId.ZAMORAK_WRATH,6,ClericEffectOrigins.current(caster,attacker),ClericEffectOrigins.validatorFor(attacker));
+        attacker.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),40,100,false);
+        assertEquals(23,ClericDirectCombatRuntime.maximum(attacker,enemy,20),"maximum bonus precedes mitigation");
+        assertEquals(21,ClericDirectCombatRuntime.beforeDirectDamage(attacker,enemy,20).getDamage(),"dealt bonus after mitigation with conservative carry");
+        assertEquals(1,ClericDirectCombatRuntime.afterExistingLifesteal(attacker,enemy,10).getRallyHealing(),"P6 lifesteal belowhalf");
+        assertEquals(41,attacker.getLevel(Skill.HITS.id()),"lifesteal actual healing");
+        harness.clock().advanceMillis(59999);
+        assertTrue(defending.get(com.openrsc.server.content.cleric.effect.ClericEffectFamily.GUTHIX_BLESSING,validator).isPresent(),"composite before deadline");
+        harness.clock().advanceMillis(1);
+        assertFalse(defending.get(com.openrsc.server.content.cleric.effect.ClericEffectFamily.GUTHIX_BLESSING,validator).isPresent(),"composite expires at60seconds");
+    }
 
 	@SuppressWarnings("unchecked")
 	private static void summonOwnerContribution(final CurrentCombatHarness harness)

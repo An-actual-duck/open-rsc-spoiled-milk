@@ -6,7 +6,7 @@ import com.openrsc.server.model.entity.player.Player;
 
 /** One recipient-owned delayed-pulse clock shared by Mend and Greater Mend. */
 public final class ClericHealingPulseEvent extends GameTickEvent {
-	private static final int PULSE_INTERVAL_TICKS = 8;
+	private static final int PULSE_INTERVAL_TICKS = 1;
 
 	private ClericHealingPulseEvent(final Player recipient) {
 		super(recipient.getWorld(), recipient, PULSE_INTERVAL_TICKS,
@@ -20,7 +20,7 @@ public final class ClericHealingPulseEvent extends GameTickEvent {
 		for (GameTickEvent event : recipient.getWorld().getServer()
 				.getGameEventHandler().getEvents(ClericHealingPulseEvent.class)) {
 			if (event.isRunning() && event.belongsTo(recipient)) {
-				event.resetCountdown();
+				// Existing cadence belongs to the recipient, never reset by a recast.
 				return;
 			}
 		}
@@ -33,8 +33,7 @@ public final class ClericHealingPulseEvent extends GameTickEvent {
 		final Player recipient = getPlayerOwner();
 		if (recipient == null || !recipient.isLoggedIn() || recipient.isRemoved()
 				|| recipient.isUnregistering()
-				|| ClericTimedEffectRuntime.pulseHealing(recipient)
-					!= ClericTimedEffectRuntime.PulseResult.CONTINUES) {
+				|| !ClericTimedEffectRuntime.tick(recipient)) {
 			stop();
 		}
 	}

@@ -2954,17 +2954,17 @@ public final class Player extends Mob {
 
 	@Override
 	public int getMeleeDefense() {
-		return applyFireDefenseDebuffToValue(getCarriedItems().getEquipment().getMeleeDefense());
+		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMeleeDefense()));
 	}
 
 	@Override
 	public int getRangedDefense() {
-		return applyFireDefenseDebuffToValue(getCarriedItems().getEquipment().getRangedDefense());
+		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getRangedDefense()));
 	}
 
 	@Override
 	public int getMagicDefense() {
-		return applyFireDefenseDebuffToValue(getCarriedItems().getEquipment().getMagicDefense());
+		return applyFireDefenseDebuffToValue(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.defense(this,getCarriedItems().getEquipment().getMagicDefense()));
 	}
 
 	@Override

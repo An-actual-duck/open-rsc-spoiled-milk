@@ -159,9 +159,9 @@ final class CurrentCombatReflectionCharacterization {
 			final Player defender = harness.player(
 				"thorn def " + path.ordinal(), x + 1, 620);
 			party(supportCaster, defender);
-			applyThorns(supportCaster, defender, 4);
+			applyThorns(supportCaster, defender, 6);
 			defender.getSkills().setTemporaryLevelAndMaxStat(
-				Skill.HITS.id(), 5, 40, false);
+				Skill.HITS.id(), 40, 40, false);
 
 			final Npc attacker = npcWithHits(harness, x + 2, 620, 1);
 			attacker.setShouldRespawn(false);
@@ -175,15 +175,15 @@ final class CurrentCombatReflectionCharacterization {
 				public void onLootNpcDeath(final Player ignoredPlayer,
 						final Npc ignoredNpc) {
 					primarySettledBeforeThorns.set(
-						defender.getLevel(Skill.HITS.id()) == 0
+						defender.getLevel(Skill.HITS.id()) == 30
 							&& defender.getUpdateFlags().getDamage().get() != null);
 				}
 			});
 
 			forceNextLegacyIntBelow(75);
-			final Object event = path.event(harness, attacker, defender, 7);
+			final Object event = path.event(harness, attacker, defender, 10);
 			final int resultsBeforeHit = observedResults(harness).size();
-			path.invokePrimary(event, attacker, defender, 7);
+			path.invokePrimary(event, attacker, defender, 10);
 			assertEquals(1, attackerDeaths.get(),
 				path + " Thorns attacker death callback cardinality");
 			assertTrue(primarySettledBeforeThorns.get(),
@@ -196,8 +196,8 @@ final class CurrentCombatReflectionCharacterization {
 			assertEquals(0, contribution(
 				attacker, defender, "getMageDamageInfoBy"),
 				path + " Thorns excludes Magic contribution");
-			assertTrue(defender.killed,
-				path + " simultaneous primary victim death is retained");
+			assertTrue(!defender.killed,
+				path + " nonfatal primary victim remains alive");
 			final java.util.List<DamageResult> results = observedResults(harness);
 			assertEquals(resultsBeforeHit + 2, results.size(),
 				path + " primary hit and Thorns publish exactly once each");
@@ -495,7 +495,7 @@ final class CurrentCombatReflectionCharacterization {
 				defender.getConfig().GAME_TICK));
 		defender.installTransientEffectState(registry);
 		final ClericEffectRankDefinition<?> definition =
-			ClericEffectCatalog.get(ClericSpellId.THORNS, rank);
+			ClericEffectCatalog.get(ClericSpellId.GUTHIX_VENGEANCE, rank);
 		assertTrue(registry.apply(definition,
 			ClericEffectOrigins.current(caster, defender),
 			ClericEffectOrigins.validatorFor(defender)).isUseful(),

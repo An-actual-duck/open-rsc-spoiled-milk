@@ -12,7 +12,10 @@ public enum ClericEffectFamily {
 	DAMAGE(3, "cleric:damage"),
 	REFLECTION(4, "cleric:reflection"),
 	LIFESTEAL(5, "cleric:lifesteal"),
-	PASSIVE_REGENERATION(6, "cleric:passive_regeneration");
+	PASSIVE_REGENERATION(6, "cleric:passive_regeneration"),
+    SARADOMIN_BLESSING(7, "cleric:saradomin_blessing"),
+    GUTHIX_BLESSING(8, "cleric:guthix_blessing"),
+    ZAMORAK_BLESSING(9, "cleric:zamorak_blessing");
 
 	private static final Map<Integer, ClericEffectFamily> BY_CODE;
 	private static final Map<String, ClericEffectFamily> BY_KEY;

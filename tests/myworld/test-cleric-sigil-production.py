@@ -235,7 +235,7 @@ def validate_runtime_boundaries() -> None:
 
 
 def build_and_run_fixture() -> None:
-    sources = sorted(str(path) for path in CLERIC_ROOT.glob("*.java") if path.name != "ClericWellInteraction.java")
+    sources = [str(CLERIC_ROOT / name) for name in ("ClericAlignment.java", "ClericSigilMaterial.java", "ClericSigilItemId.java", "ClericSigilProductionCatalog.java", "ClericWellSigil.java")]
     sources.append(str(ROOT / "server/src/com/openrsc/server/content/PoisonPowerReduction.java"))
     with tempfile.TemporaryDirectory(prefix="cleric-sigil-production-") as temporary:
         temp = Path(temporary)

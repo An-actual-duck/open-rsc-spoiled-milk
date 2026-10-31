@@ -8,17 +8,27 @@ public final class ClericEffectOrigin {
 	private final TransientEffectSessionToken casterSession;
 	private final TransientEffectMembershipToken casterMembership;
 	private final TransientEffectMembershipToken recipientMembership;
+    private final Object worldSpace;
+    private final Integer signedLevel;
 
 	public ClericEffectOrigin(TransientEffectSessionToken casterSession,
 			TransientEffectMembershipToken casterMembership,
 			TransientEffectMembershipToken recipientMembership) {
+        this(casterSession,casterMembership,recipientMembership,null,null);
+    }
+    public ClericEffectOrigin(TransientEffectSessionToken casterSession,
+            TransientEffectMembershipToken casterMembership,
+            TransientEffectMembershipToken recipientMembership,Object worldSpace,Integer signedLevel) {
 		if (casterSession == null || casterMembership == null || recipientMembership == null) {
 			throw new IllegalArgumentException("Complete Cleric effect origin is required");
 		}
 		this.casterSession = casterSession;
 		this.casterMembership = casterMembership;
 		this.recipientMembership = recipientMembership;
+        this.worldSpace=worldSpace;this.signedLevel=signedLevel;
 	}
+
+    public boolean matchesScope(Object space,int level){return worldSpace==null || worldSpace.equals(space)&&signedLevel!=null&&signedLevel==level;}
 
 	public TransientEffectSessionToken getCasterSession() {
 		return casterSession;

@@ -212,7 +212,9 @@ def main() -> None:
         "release/world-builder-v2/world-builder-runtime.conf",
     ):
         version_source = read(relative)
-        if relative == "Client_Base/src/orsc/Config.java" and "CLIENT_VERSION = NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION" in version_source:
+        if relative == "Client_Base/src/orsc/Config.java" and "CLIENT_VERSION = ClericBlessingContract.CLIENT_VERSION" in version_source:
+            version_source += "\nCLIENT_VERSION = " + re.search(r"CLIENT_VERSION\s*=\s*(\d+)", read("Client_Base/src/orsc/ClericBlessingContract.java")).group(1)
+        elif relative == "Client_Base/src/orsc/Config.java" and "CLIENT_VERSION = NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION" in version_source:
             version_source += "\nCLIENT_VERSION = " + re.search(r"FIRST_EXPANDED_CLIENT_VERSION\s*=\s*(\d+)", read("Client_Base/src/orsc/NpcCapacityContract.java")).group(1)
         versions = re.findall(
             r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", version_source

@@ -103,6 +103,20 @@ public final class ClericSpellDefinition {
 		return primarySigilCost;
 	}
 
+    /** Initial private-build cost vector; one exact exchange per cast, never per recipient. */
+    public java.util.List<ClericResourceCost> getResourceCosts() {
+        java.util.List<ClericResourceCost> result = new java.util.ArrayList<ClericResourceCost>();
+        if (id == ClericSpellId.UNIFY || id == ClericSpellId.GREATER_UNIFY) {
+            result.add(new ClericResourceCost(3300, id == ClericSpellId.UNIFY ? 2 : 6));
+        } else {
+            ClericSigilMaterial material = spellTier == 3 ? ClericSigilMaterial.SILVER : ClericSigilMaterial.STONE;
+            int count = spellTier == 1 ? 1 : 2;
+            result.add(new ClericResourceCost(ClericSigilItemId.get(material, alignment, true).getItemId(), count));
+            result.add(new ClericResourceCost(ClericSigilItemId.get(material, ClericAlignment.NEUTRAL, true).getItemId(), count));
+        }
+        return java.util.Collections.unmodifiableList(result);
+    }
+
 	public ClericSpellPresentation getPresentation() {
 		return presentation;
 	}

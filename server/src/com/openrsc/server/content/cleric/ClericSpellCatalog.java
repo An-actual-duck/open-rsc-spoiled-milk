@@ -1,193 +1,129 @@
 package com.openrsc.server.content.cleric;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.openrsc.server.net.rsc.ClericBlessingContract;
+import java.util.*;
 
-/**
- * Authoritative launch metadata shared by maintained-client presentation and
- * the bounded Cleric cast-request boundary. It remains independent of the
- * legacy Magic spell list and does not implement spell effects.
- */
+/** Active authoritative book; retired stable codes remain reserved and fail closed. */
 public final class ClericSpellCatalog {
-	public static final int SCHEMA_VERSION = 2;
-	public static final int MAX_LAUNCH_HOLY_POWER = 64;
+  public static final int SCHEMA_VERSION = ClericBlessingContract.SCHEMA_VERSION;
+  public static final int MAX_LAUNCH_HOLY_POWER = 163;
+  private static final List<ClericSpellDefinition> DEFINITIONS;
+  private static final Map<Integer, ClericSpellDefinition> BY_CODE =
+      new HashMap<Integer, ClericSpellDefinition>();
 
-	private static final List<ClericSpellDefinition> DEFINITIONS;
-	private static final Map<ClericSpellId, ClericSpellDefinition> BY_ID;
-	private static final Map<Integer, ClericSpellDefinition> BY_CODE;
-	private static final Map<String, ClericSpellDefinition> BY_KEY;
+  static {
+    List<ClericSpellDefinition> defs = new ArrayList<ClericSpellDefinition>();
+    defs.add(
+        make(
+            ClericSpellId.UNIFY,
+            "Unify",
+            "Pulls party allies up to one safe walking step, stopping within two tiles.",
+            ClericAlignment.NEUTRAL,
+            3,
+            1,
+            3,
+            "unify",
+            -1));
+    String[][] names = {
+      {"Saradomin's Warmth", "Saradomin's Aura", "Saradomin's Resplendence"},
+      {"Guthix's Respite", "Guthix's Protection", "Guthix's Vengeance"},
+      {"Zamorak's Fervor", "Zamorak's Fury", "Zamorak's Wrath"}
+    };
+    String[] descriptions = {
+      "Speeds allies' natural regeneration.",
+      "Cleanses allies' poison and restores drained stats.",
+      "Raises allies' maximum direct damage."
+    };
+    ClericAlignment[] gods = {
+      ClericAlignment.SARADOMIN, ClericAlignment.GUTHIX, ClericAlignment.ZAMORAK
+    };
+    String[][] icons = {
+      {"mend", "greater-mend", "aegis"},
+      {"purify", "restore", "thorns"},
+      {"fervor", "zeal", "rally"}
+    };
+    int[][] animations = {{67, 72, 75}, {69, 70, 74}, {68, 73, 76}};
+    for (int tier = 1; tier <= 3; tier++)
+      for (int god = 0; god < 3; god++) {
+        ClericSpellId id = ClericSpellId.fromCode(12 + god * 3 + tier - 1);
+        defs.add(
+            make(
+                id,
+                names[god][tier - 1],
+                descriptions[god] + (tier > 1 ? " Includes earlier blessing components." : ""),
+                gods[god],
+                tier == 1 ? 1 : tier == 2 ? 20 : 40,
+                tier,
+                tier + 1,
+                icons[god][tier - 1],
+                animations[god][tier - 1]));
+      }
+    defs.add(
+        make(
+            ClericSpellId.GREATER_UNIFY,
+            "Greater Unify",
+            "Pulls party allies up to three safe walking steps, stopping within two tiles.",
+            ClericAlignment.NEUTRAL,
+            30,
+            2,
+            5,
+            "unify",
+            -1));
+    for (ClericSpellDefinition d : defs)
+      if (BY_CODE.put(d.getStableCode(), d) != null)
+        throw new IllegalStateException("Duplicate spell code");
+    DEFINITIONS = Collections.unmodifiableList(defs);
+  }
 
-	static {
-		List<ClericSpellDefinition> definitions = new ArrayList<ClericSpellDefinition>();
-		definitions.add(definition(ClericSpellId.MEND, "Mend",
-			"Heals nearby allies.", ClericAlignment.SARADOMIN,
-			1, 1, 2, 0, 12, 28));
-		definitions.add(definition(ClericSpellId.UNIFY, "Unify",
-			"Draws nearby allies closer.", ClericAlignment.NEUTRAL,
-			3, 1, 4, 0));
-		definitions.add(definition(ClericSpellId.FERVOR, "Fervor",
-			"Improves nearby allies' accuracy.", ClericAlignment.ZAMORAK,
-			5, 1, 2, 0, 12, 28, 44));
-		definitions.add(definition(ClericSpellId.PURIFY, "Purify",
-			"Reduces poison on nearby allies.", ClericAlignment.GUTHIX,
-			8, 1, 2, 0, 12, 28, 44));
-		definitions.add(definition(ClericSpellId.RESTORE, "Restore",
-			"Restores nearby allies' reduced stats.", ClericAlignment.GUTHIX,
-			11, 1, 2, 0, 12, 28, 44));
-		definitions.add(definition(ClericSpellId.WARD, "Ward",
-			"Reduces damage to nearby allies.", ClericAlignment.SARADOMIN,
-			14, 1, 2, 0, 12, 24, 32));
-		definitions.add(definition(ClericSpellId.GREATER_MEND, "Greater Mend",
-			"Greatly heals nearby allies.", ClericAlignment.SARADOMIN,
-			16, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.ZEAL, "Zeal",
-			"Increases nearby allies' damage.", ClericAlignment.ZAMORAK,
-			19, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.THORNS, "Thorns",
-			"Makes nearby allies reflect damage.", ClericAlignment.GUTHIX,
-			22, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.AEGIS, "Aegis",
-			"Greatly reduces damage to nearby allies.", ClericAlignment.SARADOMIN,
-			25, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.RALLY, "Rally",
-			"Grants nearby allies lifesteal.", ClericAlignment.ZAMORAK,
-			28, 2, 3, 0, 24, 44, 64));
-		definitions.add(definition(ClericSpellId.RESPITE, "Respite",
-			"Improves nearby allies' regeneration.", ClericAlignment.NEUTRAL,
-			30, 2, 3, 0, 24, 44, 64));
+  private static ClericSpellDefinition make(
+      ClericSpellId id,
+      String name,
+      String description,
+      ClericAlignment god,
+      int level,
+      int tier,
+      int radius,
+      String icon,
+      int animation) {
+    int[] thresholds =
+        id.isBlessing() ? ClericBlessingContract.powerThresholds(tier * 2) : new int[] {0};
+    return new ClericSpellDefinition(
+        id,
+        name,
+        description,
+        god,
+        level,
+        tier,
+        radius,
+        false,
+        ClericSigilCost.forLaunchTier(tier),
+        new ClericSpellPresentation(
+            ClericSigilItemId.get(ClericSigilMaterial.STONE, god, true).getItemId(),
+            icon,
+            -1,
+            animation),
+        thresholds);
+  }
 
-		EnumMap<ClericSpellId, ClericSpellDefinition> ids =
-			new EnumMap<ClericSpellId, ClericSpellDefinition>(ClericSpellId.class);
-		Map<Integer, ClericSpellDefinition> codes = new HashMap<Integer, ClericSpellDefinition>();
-		Map<String, ClericSpellDefinition> keys = new HashMap<String, ClericSpellDefinition>();
-		for (ClericSpellDefinition definition : definitions) {
-			putUnique(ids, definition.getId(), definition, "identity");
-			putUnique(codes, definition.getStableCode(), definition, "code");
-			putUnique(keys, definition.getStableKey(), definition, "key");
-			validateDefinition(definition);
-		}
-		if (ids.size() != ClericSpellId.values().length) {
-			throw new IllegalStateException("Every Cleric spell identity requires one definition");
-		}
-		for (int index = 0; index < definitions.size(); index++) {
-			if (definitions.get(index).getStableCode() != index) {
-				throw new IllegalStateException("Launch Cleric catalog must remain in stable-code order");
-			}
-		}
-		DEFINITIONS = Collections.unmodifiableList(new ArrayList<ClericSpellDefinition>(definitions));
-		BY_ID = Collections.unmodifiableMap(ids);
-		BY_CODE = Collections.unmodifiableMap(codes);
-		BY_KEY = Collections.unmodifiableMap(keys);
-	}
+  private ClericSpellCatalog() {}
 
-	private ClericSpellCatalog() {
-	}
+  public static List<ClericSpellDefinition> getAll() {
+    return DEFINITIONS;
+  }
 
-	private static ClericSpellDefinition definition(ClericSpellId id, String displayName,
-			String effectDescription,
-			ClericAlignment alignment, int worshipLevel, int spellTier, int radius,
-			int... holyPowerThresholds) {
-		int spellbookIconItemId = ClericSigilItemId.get(
-			ClericSigilMaterial.STONE, alignment, true).getItemId();
-		return new ClericSpellDefinition(id, displayName, effectDescription, alignment,
-			worshipLevel, spellTier,
-			radius, false, ClericSigilCost.forLaunchTier(spellTier),
-			new ClericSpellPresentation(spellbookIconItemId, statusIconAssetKey(id),
-				ClericSpellPresentation.NONE, onEntityAnimationId(id)),
-			holyPowerThresholds);
-	}
+  public static ClericSpellDefinition get(ClericSpellId id) {
+    if (id == null) throw new IllegalArgumentException("Missing spell");
+    return fromCode(id.getCode());
+  }
 
-	private static int onEntityAnimationId(ClericSpellId id) {
-		switch (id) {
-			case MEND:
-				return 67;
-			case UNIFY:
-				return ClericSpellPresentation.NONE;
-			case FERVOR:
-				return 68;
-			case PURIFY:
-				return 69;
-			case RESTORE:
-				return 70;
-			case WARD:
-				return 71;
-			case GREATER_MEND:
-				return 72;
-			case ZEAL:
-				return 73;
-			case THORNS:
-				return 74;
-			case AEGIS:
-				return 75;
-			case RALLY:
-				return 76;
-			case RESPITE:
-				return 77;
-			default:
-				throw new IllegalArgumentException("Unknown Cleric animation identity: " + id);
-		}
-	}
+  public static ClericSpellDefinition fromCode(int code) {
+    ClericSpellDefinition d = BY_CODE.get(code);
+    if (d == null) throw new IllegalArgumentException("Retired or unknown Cleric spell: " + code);
+    return d;
+  }
 
-	private static String statusIconAssetKey(ClericSpellId id) {
-		// All twelve launch icons use the owner-approved Atelier Pixerelia set.
-		return id.getKey().substring("cleric.".length()).replace('_', '-');
-	}
-
-	private static void validateDefinition(ClericSpellDefinition definition) {
-		int expectedRadius = definition.getId() == ClericSpellId.UNIFY
-			? 4 : definition.getSpellTier() + 1;
-		if (definition.getRadius() != expectedRadius) {
-			throw new IllegalStateException("Invalid Cleric radius for " + definition.getStableKey());
-		}
-		if (definition.affectsCaster()) {
-			throw new IllegalStateException("Launch Cleric spells must exclude the caster");
-		}
-		int[] thresholds = definition.getHolyPowerThresholds();
-		if (thresholds[thresholds.length - 1] > MAX_LAUNCH_HOLY_POWER) {
-			throw new IllegalStateException("Cleric Holy Power threshold exceeds the launch progression scale");
-		}
-		ClericSigilCost expectedCost = ClericSigilCost.forLaunchTier(definition.getSpellTier());
-		if (!expectedCost.equals(definition.getPrimarySigilCost())) {
-			throw new IllegalStateException("Invalid Cleric sigil cost for " + definition.getStableKey());
-		}
-	}
-
-	private static <K> void putUnique(Map<K, ClericSpellDefinition> values, K key,
-			ClericSpellDefinition definition, String label) {
-		if (values.put(key, definition) != null) {
-			throw new IllegalStateException("Duplicate Cleric spell " + label + ": " + key);
-		}
-	}
-
-	public static List<ClericSpellDefinition> getAll() {
-		return DEFINITIONS;
-	}
-
-	public static ClericSpellDefinition get(ClericSpellId id) {
-		ClericSpellDefinition definition = BY_ID.get(id);
-		if (definition == null) {
-			throw new IllegalArgumentException("Unknown Cleric spell identity: " + id);
-		}
-		return definition;
-	}
-
-	public static ClericSpellDefinition fromCode(int code) {
-		ClericSpellDefinition definition = BY_CODE.get(code);
-		if (definition == null) {
-			throw new IllegalArgumentException("Unknown Cleric spell code: " + code);
-		}
-		return definition;
-	}
-
-	public static ClericSpellDefinition fromKey(String key) {
-		ClericSpellDefinition definition = BY_KEY.get(key);
-		if (definition == null) {
-			throw new IllegalArgumentException("Unknown Cleric spell key: " + key);
-		}
-		return definition;
-	}
+  public static ClericSpellDefinition fromKey(String key) {
+    for (ClericSpellDefinition d : DEFINITIONS) if (d.getStableKey().equals(key)) return d;
+    throw new IllegalArgumentException("Retired or unknown Cleric key");
+  }
 }

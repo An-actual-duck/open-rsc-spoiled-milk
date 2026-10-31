@@ -151,7 +151,7 @@ public class InterfaceOptionHandler implements PayloadProcessor<OptionsStruct, O
 
 	/** C06 request validation followed by C07's server-authoritative cast boundary. */
 	private void handleClericSpellCastRequest(Player player, OptionsStruct payload) {
-		if (!player.isUsingCustomClient() || !player.getConfig().WANT_MYWORLD) {
+		if (!com.openrsc.server.net.rsc.ClericBlessingContract.supports(player.getClientVersion()) || !player.getConfig().WANT_MYWORLD) {
 			return;
 		}
 

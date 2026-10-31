@@ -2,8 +2,6 @@ package com.openrsc.server.content.cleric.runtime;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.cleric.ClericCastTransaction;
-import com.openrsc.server.content.cleric.ClericPurifyEffect;
-import com.openrsc.server.content.cleric.ClericRestoreEffect;
 import com.openrsc.server.content.cleric.ClericSigilItemId;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
@@ -34,7 +32,9 @@ public final class ClericSupportCasting {
 		if (caster == null || definition == null) {
 			throw new IllegalArgumentException("Cleric casting requires a player and definition");
 		}
-		if (!isImplemented(definition.getId())) {
+        if (caster.getSkills().getLevel(Skill.HITS.id())<=0 || isPvpContext(caster)
+            || caster.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) return new CastResult(Outcome.NO_USEFUL_RECIPIENT,0);
+        if (!isImplemented(definition.getId())) {
 			return CastResult.notImplemented();
 		}
 
@@ -52,31 +52,11 @@ public final class ClericSupportCasting {
 				caster.getCarriedItems().getEquipment().getHolyPower()) : 0;
 		for (Player target : targets) {
 			final ClericCastTransaction.PreparedApplication application;
-			switch (definition.getId()) {
-				case UNIFY:
-					application = prepareUnify(target, caster);
-					break;
-				case PURIFY:
-					application = preparePurify(target, effectRank);
-					break;
-				case RESTORE:
-					application = prepareRestore(target, effectRank);
-					break;
-				case MEND:
-				case FERVOR:
-				case WARD:
-				case GREATER_MEND:
-				case ZEAL:
-				case THORNS:
-				case AEGIS:
-				case RALLY:
-				case RESPITE:
-					application = ClericTimedEffectRuntime.prepare(
-						caster, target, definition, effectRank);
-					break;
-				default:
-					throw new IllegalStateException("Unprepared implemented Cleric spell");
-			}
+            if (definition.getId() == ClericSpellId.UNIFY || definition.getId() == ClericSpellId.GREATER_UNIFY) {
+                application = prepareUnify(target, caster, definition);
+            } else {
+                application = ClericTimedEffectRuntime.prepare(caster,target,definition,effectRank);
+            }
 			applications.add(withOnEntityAnimation(target, definition, application));
 		}
 
@@ -117,20 +97,7 @@ public final class ClericSupportCasting {
 			|| player.getDuel().isDuelActive();
 	}
 
-	private static boolean isImplemented(final ClericSpellId spellId) {
-		return spellId == ClericSpellId.UNIFY
-			|| spellId == ClericSpellId.PURIFY
-			|| spellId == ClericSpellId.RESTORE
-			|| spellId == ClericSpellId.MEND
-			|| spellId == ClericSpellId.FERVOR
-			|| spellId == ClericSpellId.WARD
-			|| spellId == ClericSpellId.GREATER_MEND
-			|| spellId == ClericSpellId.ZEAL
-			|| spellId == ClericSpellId.THORNS
-			|| spellId == ClericSpellId.AEGIS
-			|| spellId == ClericSpellId.RALLY
-			|| spellId == ClericSpellId.RESPITE;
-	}
+    private static boolean isImplemented(final ClericSpellId id) { return id != null && id.isActive(); }
 
 	private static List<Player> snapshotPartyPlayers(Party party) {
 		final List<PartyPlayer> members = new ArrayList<PartyPlayer>(party.getPlayers());
@@ -144,11 +111,11 @@ public final class ClericSupportCasting {
 	}
 
 	private static ClericCastTransaction.PreparedApplication prepareUnify(
-			final Player recipient, final Player caster) {
+			final Player recipient, final Player caster, final ClericSpellDefinition definition) {
 		final Point start = recipient.getLocation();
 		final Point destination = caster.getLocation();
 		final List<ClericUnifyStepPlanner.Step> planned = ClericUnifyStepPlanner.plan(
-			start.getX(), start.getY(), destination.getX(), destination.getY(),
+			start.getX(), start.getY(), destination.getX(), destination.getY(), definition.getRadius(), definition.getId() == ClericSpellId.GREATER_UNIFY ? 3 : 1,
 			new ClericUnifyStepPlanner.Traversability() {
 				@Override
 				public boolean canStep(int startX, int startY, int destinationX, int destinationY) {
@@ -171,43 +138,11 @@ public final class ClericSupportCasting {
 		return new UnifyApplication(recipient, steps);
 	}
 
-	private static ClericCastTransaction.PreparedApplication preparePurify(
-			final Player recipient, final int effectRank) {
-		final ClericPurifyEffect.Plan plan = ClericPurifyEffect.plan(
-			recipient.getCurrentPoisonPower(), effectRank);
-		return plan.isUseful()
-			? new PurifyApplication(recipient, plan.getReduction())
-			: IneffectiveApplication.INSTANCE;
-	}
-
-	private static ClericCastTransaction.PreparedApplication prepareRestore(
-			final Player recipient, final int effectRank) {
-		final int skillCount = recipient.getWorld().getServer().getConstants()
-			.getSkills().getSkillsCount();
-		final int[] currentLevels = new int[skillCount];
-		final int[] validMaximums = new int[skillCount];
-		for (int skill = 0; skill < skillCount; skill++) {
-			currentLevels[skill] = recipient.getSkills().getLevel(skill);
-			validMaximums[skill] = recipient.getEquipmentAdjustedNormalLevel(skill);
-		}
-		final ClericRestoreEffect.Plan plan = ClericRestoreEffect.plan(
-			currentLevels, validMaximums, Skill.HITS.id(), effectRank);
-		return plan.isUseful()
-			? new RestoreApplication(recipient, plan.getRestoredLevels())
-			: IneffectiveApplication.INSTANCE;
-	}
-
-	private static Item[] createCost(ClericSpellDefinition definition) {
-		final List<Item> cost = new ArrayList<Item>(ClericSigilMaterial.values().length);
-		for (ClericSigilMaterial material : ClericSigilMaterial.values()) {
-			final int count = definition.getPrimarySigilCost().getCount(material);
-			if (count > 0) {
-				cost.add(new Item(ClericSigilItemId.get(
-					material, definition.getAlignment(), true).getItemId(), count));
-			}
-		}
-		return cost.toArray(new Item[cost.size()]);
-	}
+    private static Item[] createCost(ClericSpellDefinition definition) {
+        List<Item> cost=new ArrayList<Item>();
+        for(com.openrsc.server.content.cleric.ClericResourceCost resource:definition.getResourceCosts())cost.add(new Item(resource.getItemId(),resource.getCount(),false));
+        return cost.toArray(new Item[cost.size()]);
+    }
 
 	private static final class PlayerCandidateView
 			implements ClericSupportTargeting.CandidateView<Player> {
@@ -221,7 +156,7 @@ public final class ClericSupportCasting {
 
 		@Override
 		public boolean isEligibleRecipient(Player candidate) {
-			return candidate.getParty() == party
+			return candidate.getSkills().getLevel(Skill.HITS.id()) > 0 && candidate.getParty() == party
 				&& candidate.isLoggedIn()
 				&& !candidate.isRemoved()
 				&& !candidate.isUnregistering()
@@ -323,54 +258,6 @@ public final class ClericSupportCasting {
 		}
 	}
 
-	private static final class PurifyApplication
-			implements ClericCastTransaction.PreparedApplication {
-		private final Player recipient;
-		private final int reduction;
-
-		private PurifyApplication(final Player recipient, final int reduction) {
-			this.recipient = recipient;
-			this.reduction = reduction;
-		}
-
-		@Override
-		public boolean isUseful() {
-			return true;
-		}
-
-		@Override
-		public void commit() {
-			recipient.reduceCurrentPoisonPower(reduction);
-		}
-	}
-
-	private static final class RestoreApplication
-			implements ClericCastTransaction.PreparedApplication {
-		private final Player recipient;
-		private final int[] restoredLevels;
-
-		private RestoreApplication(final Player recipient, final int[] restoredLevels) {
-			this.recipient = recipient;
-			this.restoredLevels = restoredLevels.clone();
-		}
-
-		@Override
-		public boolean isUseful() {
-			return true;
-		}
-
-		@Override
-		public void commit() {
-			for (int skill = 0; skill < restoredLevels.length; skill++) {
-				final int current = recipient.getSkills().getLevel(skill);
-				final int validMaximum = recipient.getEquipmentAdjustedNormalLevel(skill);
-				final int restored = Math.min(restoredLevels[skill], validMaximum);
-				if (current < restored) {
-					recipient.getSkills().setLevel(skill, restored, true, true);
-				}
-			}
-		}
-	}
 
 	public enum Outcome {
 		SUCCESS,

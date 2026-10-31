@@ -426,6 +426,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			if (target.isPlayer()) {
 				damage = TrueDefense.apply((Player) target, damage);
 			}
+            if (!offhand) {
 			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
 				ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
 			damage = clericDamage.getDamage();
@@ -433,6 +434,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				((Player) target).updateDamageAndBlockedDamageTracking(
 					hitter, 0, clericDamage.getPreventedDamage());
 			}
+            }
 		}
 		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		final int rawDamage = damage;
@@ -480,12 +482,14 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);
 		}
+        if (!offhand) {
 		final ClericDirectCombatRuntime.AfterDamage clericAfter =
-			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageDealt);
+			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageResult.getActualDamage());
 		if (clericAfter.getThornsDamage() > 0) {
 			inflictClericThornsDamage(
 				target, hitter, clericAfter.getThornsDamage());
 		}
+        }
 
 		if (target.isPlayer()) {
 			sendSound((Player) target, hitter, damage > 0);
