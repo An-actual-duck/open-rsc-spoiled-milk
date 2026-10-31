@@ -373,3 +373,22 @@ control: Options → General → Interface → Hit number style. Runtime remains
 instructions above still apply. Updated local access and hash/process manifest
 copies: task/hitsplat-private-runtime.txt and task/hitsplat-private-review-manifest.json.
 The assignment remains ACTIVE, with no overall READY/handoff or manager contact.
+
+
+## Final owner acceptance and consolidated Core review
+
+Justin explicitly declared the overall task complete after basic private-client
+inspection: the visual flow looked good during movement and camera rotation, and
+the examples looked good. This is not exhaustive gameplay/source-combination
+acceptance. The full final design, file inventory, source palette, automated checks,
+compatibility, preview identities, baseline failures and coverage limits are in
+[dot-hitsplat-visual-rework-core-review.md](dot-hitsplat-visual-rework-core-review.md).
+
+Final acceptance-stage rendering/settings/centering repeat PASS (322/327/327,
+51+3 and 9,216); phased overlay, Spellbook layout and whitespace checks PASS.
+Final runtime inspection found both recorded private Java processes absent and
+port 43825 free. Data and backups remain preserved; no signal or cleanup was
+needed. The public listener was unchanged. The documented final handoff command
+now records the exact pushed commit READY; no implementation changes followed the
+tested/visually reviewed code checkpoint 26001e8a51a30803efd325147e1e1d6ead5fdf57.
+No merge, main publication, deployment or direct manager contact occurred.
