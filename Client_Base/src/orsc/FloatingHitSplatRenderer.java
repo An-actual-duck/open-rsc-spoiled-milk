@@ -82,19 +82,50 @@ public final class FloatingHitSplatRenderer {
         String key = style + ":" + type + ":" + digits;
         Sprite cached = sprites.get(key);
         if (cached != null) return cached;
-        int width = surface.stringWidth(0, digits) + 4;
-        int height = surface.fontHeight(0) + 2;
-        MudClientGraphics scratch = new MudClientGraphics(width, height, 1);
-        // This scratch raster owns its pixels even when the main window uses native UI replacement.
-        scratch.beginSoftwareOwnedRenderer2DFrame();
         if (style == Style.BACKGROUND) {
-            scratch.drawBoxAlpha(0, 0, width, height, backgroundColor(type), 256);
+            cached = backgroundSprite(type, digits, surface);
+        } else {
+            // Keep the accepted text-only placement and appearance unchanged.
+            int width = surface.stringWidth(0, digits) + 4;
+            int height = surface.fontHeight(0) + 2;
+            MudClientGraphics scratch = new MudClientGraphics(width, height, 1);
+            scratch.beginSoftwareOwnedRenderer2DFrame();
+            scratch.drawShadowText(digits, 2, height - 3, textColor(type), 0, false);
+            cached = new Sprite(scratch.pixelData, width, height);
         }
-        int textColor = style == Style.BACKGROUND ? 0xFFFFFF : textColor(type);
-        scratch.drawShadowText(digits, 2, height - 3, textColor, 0, false);
-        cached = new Sprite(scratch.pixelData, width, height);
         sprites.put(key, cached);
         return cached;
+    }
+
+
+    private Sprite backgroundSprite(int type, String digits, MudClientGraphics surface) {
+        // Advance width includes bearings/trailing space, and line height includes baseline
+        // space. Measure the native foreground raster instead so 1, 28 and 100 all
+        // have identical visible padding, without clipping their actual glyphs.
+        int measureWidth = surface.stringWidth(0, digits) + 12;
+        int measureHeight = surface.fontHeight(0) + 12;
+        int originX = 6, baseline = measureHeight - 6;
+        MudClientGraphics measure = new MudClientGraphics(measureWidth, measureHeight, 1);
+        measure.beginSoftwareOwnedRenderer2DFrame();
+        measure.drawString(digits, originX, baseline, 0xFFFFFF, 0);
+        int left = measureWidth, top = measureHeight, right = -1, bottom = -1;
+        for (int y = 0; y < measureHeight; y++) {
+            for (int x = 0; x < measureWidth; x++) {
+                if (measure.pixelData[y * measureWidth + x] != 0) {
+                    left = Math.min(left, x); right = Math.max(right, x);
+                    top = Math.min(top, y); bottom = Math.max(bottom, y);
+                }
+            }
+        }
+        if (right < left || bottom < top) throw new IllegalStateException("Missing native hit-number glyphs");
+        int padding = 2;
+        int width = right - left + 1 + padding * 2;
+        int height = bottom - top + 1 + padding * 2;
+        MudClientGraphics scratch = new MudClientGraphics(width, height, 1);
+        scratch.beginSoftwareOwnedRenderer2DFrame();
+        scratch.drawBoxAlpha(0, 0, width, height, backgroundColor(type), 256);
+        scratch.drawShadowText(digits, originX + padding - left, baseline + padding - top, 0xFFFFFF, 0, false);
+        return new Sprite(scratch.pixelData, width, height);
     }
 
     public static int textColor(int type) {

@@ -253,3 +253,63 @@ signal any other server. The isolated start scripts may be reused only after the
 current copies have stopped; preserve this directory/private database rather
 than treating ignored or temporary paths as disposable. Running processes are
 intentionally left up for the user's inspection. Assignment remains ACTIVE.
+
+
+## Owner behavior acceptance, centering correction and catchall audit
+
+Justin reports the movement is working as desired and is happy with its behavior.
+He requested centering the number inside its background and auditing the old yellow
+catchall for other meaningful damage sources. This accepts the floating behavior;
+it does not declare overall completion or approve additional color assignments.
+
+Background centering now uses the actual foreground glyph raster bounds rather
+than font advance/line metrics. Every digit has 2px visible padding on all four
+sides. Previously, `1`, `11` and `111` had 2px left versus 5px right padding;
+ordinary digits had 2px left versus 3px right. All had 3px top/bottom spacing.
+The accepted text-only sprite construction remains unchanged. Backgrounds become
+more tightly fitted, within the existing row gap. No state/timing/priority/owner
+tracking/crowd-placement rules or combat producer types change.
+
+Validation: client build PASS; existing 318 software / 323 phased-native / 323
+native-UI checks PASS; Options/persistence 51 plus fresh-JVM reload 3 PASS;
+**7,936 pixel centering/glyph-preservation checks PASS** across all byte amounts
+0–255 and all six colors, including exact preservation of the text-only sprites.
+The paired comparison's entire text-only half is also pixel-identical to its
+pre-correction export. Renderer phased-overlay and neighboring Spellbook layout
+regressions PASS; `git diff --check` PASS. New centering-detail, paired comparison
+and timed frames were visually inspected. GIF playback remains unverified; the
+previous file-URL denial was not retried or bypassed.
+
+Previews retain their existing Library identities, now at version 1:
+
+- `comparison.png`: `libfile_e80b5fa1d8608191bfd44886f8b3bd6b`,
+  file `file_00000000cddc81fda1ee53779a84979b`.
+- `floating-styles.gif`: `libfile_c01be5a836ec8191a55b8f1a896ed1d2`,
+  file `file_0000000071408230bdead3a879666944`.
+- `motion-sequence.png`: `libfile_7af262c8d2888191b1b3079afe02d58d`,
+  file `file_00000000fe1082309a6fe71cd73c67dd`.
+- New `centering-detail.png`: `libfile_d79a46dc5b208191981e89867f409477`,
+  version 0, file `file_0000000067cc82309edccf5cbace04cd`.
+
+All saves and local identity metadata succeeded. Their actual local paths remain
+under `/home/justin/Documents/Codex/2026-10-31/task/hitsplat-preview/` and the local
+identity manifest has been updated. Regenerate via the existing preview exporter;
+its tests now also emit the centering detail.
+
+The full source inventory and color proposal are in
+[dot-hitsplat-secondary-source-audit.md](dot-hitsplat-secondary-source-audit.md).
+It covers 32 catchall selector references in 10 production files, all type-setting
+APIs/variable forwarders, and the actual callers behind shared settlement aliases.
+Key discovery: summon on-hit trait bonus damage still bypasses the normal summon
+classifier and remains type 2. Other sources include actual extra physical hits,
+multiple elemental armor/weapon effects, several reflection/retaliation families,
+blood/death splash, charged jewelry and boss specials. No new taxonomy/colors are
+implemented until Justin chooses meaningful grouping/precedence; a color per item
+or per adapter method would misrepresent shared sources.
+
+The user's private runtime/client remain unchanged and running the earlier
+`6d856b5ee6b2aeac5c77b6f0bf8f927bb644afed` snapshot. The centering correction has
+been built and tested separately, not hot-installed or restarted into that session.
+Check with the parent/user before interrupting that running review, and verify
+process identity before any later runtime action. No manager contact, deployment,
+main integration, consolidated handoff or READY transition occurred. ACTIVE.

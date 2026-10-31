@@ -11,7 +11,8 @@ with tempfile.TemporaryDirectory(prefix='hitsplat-check-') as build:
     cp = os.pathsep.join([str(root / 'Client_Base/build'), str(root / 'PC_Client/lib/*')])
     subprocess.run(['javac', '-J-Xmx384m', '-cp', cp, '-d', build,
                     str(root / 'tests/myworld/FloatingHitSplatFixture.java'),
-                    str(root / 'tests/myworld/HitSplatSettingsFixture.java')], check=True)
+                    str(root / 'tests/myworld/HitSplatSettingsFixture.java'),
+                    str(root / 'tests/myworld/HitSplatCenteringFixture.java')], check=True)
     for profile in ['software', 'phased', 'native-ui']:
         command = ['java', '-Xmx384m', '-Djava.awt.headless=true']
         if profile != 'software':
@@ -31,3 +32,9 @@ with tempfile.TemporaryDirectory(prefix='hitsplat-check-') as build:
             subprocess.run(['java', '-Xmx384m', '-Djava.awt.headless=true', '-cp',
                             build + os.pathsep + cp, 'orsc.HitSplatSettingsFixture', str(root), mode],
                            cwd=settings_dir, check=True)
+
+    centering = ['java', '-Xmx384m', '-Djava.awt.headless=true', '-cp', build + os.pathsep + cp,
+                 'orsc.HitSplatCenteringFixture', str(root)]
+    if len(sys.argv) > 1:
+        centering += [str(Path(sys.argv[1]).resolve())]
+    subprocess.run(centering, cwd=root, check=True)
