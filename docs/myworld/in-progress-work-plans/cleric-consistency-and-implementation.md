@@ -149,3 +149,13 @@ summary, undead classification audit, implementation limitations and no gameplay
 acceptance claim. Core handles final integration, publication and staging.
 Never operate the public server, accounts, owner maps, installed toolkit or
 `/home/justin/spoiled-milk-next-update` from this worker.
+
+## Completion checkpoint
+
+The scoped source candidate is complete. See [the implementation review](cleric-consistency-implementation-review.md)
+for exact identities, nature classification, lifetime/rounding policy and durable
+validation receipts. All A buffs/presentation and six B Guthix/Saradomin hostile
+spells are implemented; Zamorak hostile activation and Cosmic's unselected
+luck-centered redesign remain deferred. Private gameplay and manager integration/
+prepared-package refresh are separate. No owner world, account or game session
+was modified by this worker.

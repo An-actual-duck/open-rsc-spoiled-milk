@@ -64,7 +64,7 @@ base value occurs. All components share one **60-second** god blessing.
 | Saradomin HP per delayed pulse (moved to Tier 3) | 1 / 2 / 3 / 4 / 5 / 6; ten pulses, about six seconds apart |
 | Guthix extra poison cleansing per existing pulse | 2 / 3 / 4 / 5 / 6 / 7, additive with equipment/potion cleansing |
 | Guthix one-point restoration of each drained non-HP stat | Every 10 / 9 / 8 / 7 / 6 / 5 seconds; capped at current normal levels |
-| Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to ranged defense; earlier runtime affects all three styles |
+| Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to ranged defense |
 | Guthix reflection (Tier 3) | 5 / 6 / 7 / 8 / 9 / 10% of factual direct damage received |
 | Zamorak maximum direct melee damage | +5 / 7 / 9 / 11 / 13 / 15% |
 | Zamorak dealt direct melee damage (Tier 2+) | +3 / 4 / 5 / 6 / 7 / 8% |
@@ -101,9 +101,9 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 
 | God | Tier 1 component | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
-| Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
+| Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased ranged defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
 | Saradomin | **Hallowed Strikes**: extra damage against undead, 25% at P1 and +10 percentage points per power step | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute |
-| Zamorak | **Unnatural Might**: percentage increase to maximum damage | **Bloodrage**: percentage increase to total dealt damage | **Blood Hunger**: lifesteal |
+| Zamorak | **Unnatural Might**: percentage increase to maximum melee damage | **Bloodrage**: percentage increase to melee damage dealt | **Blood Hunger**: lifesteal |
 
 ### Confirmed blessing names and recipient flavor
 
@@ -141,12 +141,12 @@ effects; naming does not change their composite timer or stacking rules.
 
 Guthix is the completed buff naming example: **Guthix's Respite → Sap Blood**
 (poison cleansing and gradual drained-stat restoration); **Guthix's Protection**
-adds **Barkskin**; **Guthix's Vengeance** adds **Thorns**. The existing recipient
+adds **Barkskin** (ranged defense); **Guthix's Vengeance** adds **Thorns**. The existing recipient
 messages above remain. Thus Vengeance includes Sap Blood, Barkskin and Thorns,
 not only the newly added effect.
 
 The owner also approved **Quickened Pulse** (now Saradomin's Aura), **Mending
-Flesh** (now Saradomin's Resplendence), **Unnatural Might** (Zamorak's Fervor), **Bloodrage**
+Flesh** (now Saradomin's Resplendence), **Unnatural Might** (melee maximum; Zamorak's Fervor), **Bloodrage**
 (Zamorak's Fury) and **Blood Hunger** (Zamorak's Wrath). These names describe
 the associated components without independently changing their mechanics.
 The owner approved **Saradomin's Light** as the first spell's display name,
