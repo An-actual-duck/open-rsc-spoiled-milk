@@ -5,8 +5,8 @@
 This is the governing design document for the Worship-tiered Cleric spellbook.
 The latest confirmed direction below supersedes conflicting older requirements;
 unresolved choices remain explicit. The twelve-spell launch book and Blessing
-foundation shipped in `v0.2.64` and remain the current runtime until an overhaul
-is implemented. Their effect contracts are valuable reuse material, not a
+foundation shipped in `v0.2.64`; the maintained private candidate now has the
+eleven-spell buff roster below. Their effect contracts are useful reuse material, not a
 requirement to preserve their old resource assignments or book layout.
 
 The [completed implementation plan](../completed-work-plans/cleric-spellbook-implementation-plan.md)
@@ -64,10 +64,10 @@ base value occurs. All components share one **60-second** god blessing.
 | Saradomin HP per delayed pulse (moved to Tier 3) | 1 / 2 / 3 / 4 / 5 / 6; ten pulses, about six seconds apart |
 | Guthix extra poison cleansing per existing pulse | 2 / 3 / 4 / 5 / 6 / 7, additive with equipment/potion cleansing |
 | Guthix one-point restoration of each drained non-HP stat | Every 10 / 9 / 8 / 7 / 6 / 5 seconds; capped at current normal levels |
-| Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to all three defense values |
+| Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to ranged defense; earlier runtime affects all three styles |
 | Guthix reflection (Tier 3) | 5 / 6 / 7 / 8 / 9 / 10% of factual direct damage received |
-| Zamorak maximum direct damage | +5 / 7 / 9 / 11 / 13 / 15% |
-| Zamorak dealt direct damage (Tier 2+) | +3 / 4 / 5 / 6 / 7 / 8% |
+| Zamorak maximum direct melee damage | +5 / 7 / 9 / 11 / 13 / 15% |
+| Zamorak dealt direct melee damage (Tier 2+) | +3 / 4 / 5 / 6 / 7 / 8% |
 | Zamorak lifesteal (Tier 3) | 5 / 6 / 7 / 8 / 9 / 10%, active only while below half HP |
 
 The maximum-roll bonus uses a rounded-up positive integer increment, so early
@@ -295,14 +295,13 @@ approve that boss, player potions, a new spirit-damage type or their mechanics.
 
 During the active debuff, roll once per eligible game tick to enter the state.
 Entry chance is `5 + 2 * (P - 1)` percent. Duration follows the owner's deliberate
-irregular progression below. **The duration unit is not yet explicit**: Core
-recommended game ticks and asked whether the owner instead meant attack turns.
-No implementation may silently choose a different unit.
+irregular progression below. **The owner confirmed game ticks**, including at
+least one actual corporeal NPC attack attempt before entry rolls resume.
 
 | Power | P1 | P2 | P3 | P4 | P5 | P6 |
 |---|---|---|---|---|---|---|
 | Entry chance per eligible tick | 5% | 7% | 9% | 11% | 13% | 15% |
-| Non-corporeal duration, unit pending | 1 | 1 | 1 | 2 | 2 | 3 |
+| Non-corporeal duration in game ticks | 1 | 1 | 1 | 2 | 2 | 3 |
 
 After the enemy returns to corporeal form, the owner requires immunity to
 re-entry for **at least one attack** before the tick-based entry rolls resume.
@@ -313,12 +312,12 @@ explicit coverage before implementation. Core recommends resuming entry rolls
 only after an actual corporeal attack attempt, including natural misses/zeros,
 rather than after an elapsed-time cooldown or a successful damage requirement.
 
-Core's initial numerical recommendations below are **proposals, not approved
-values**. The relatively modest melee reduction allows for Tier 3's additional
+The owner **approved the numerical values below** before implementation. The
+relatively modest melee reduction allows for Tier 3's additional
 physical protection. Magic weakness reduces defense rather than multiplying all
 incoming magic damage by that percentage.
 
-| Component proposal | Formula at power P | P1 | P2 | P3 | P4 | P5 | P6 |
+| Approved component | Formula at power P | P1 | P2 | P3 | P4 | P5 | P6 |
 |---|---|---|---|---|---|---|---|
 | Magic-defense reduction | `10 + 3 * (P - 1)` percent | 10% | 13% | 16% | 19% | 22% | 25% |
 | Maximum-melee-damage reduction | `5 + 2 * (P - 1)` percent | 5% | 7% | 9% | 11% | 13% | 15% |

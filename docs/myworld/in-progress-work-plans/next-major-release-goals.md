@@ -133,10 +133,10 @@ spells; retired launch IDs remain reserved and are refused. All blessings last
 | Sara delayed HoT (moved to Tier 3) | 1/2/3/4/5/6 HP per pulse; 10 delayed pulses about 6s apart |
 | Guthix extra cleanse | 2/3/4/5/6/7 per existing poison pulse, additive |
 | Guthix drained non-HP stats | Restore 1 each, every 10/9/8/7/6/5s, cap at normal |
-| Guthix Barkskin (Tier 2+) | +5/7/9/11/13/15% to melee/ranged/Magic defense |
+| Guthix Barkskin (Tier 2+) | +5/7/9/11/13/15% to ranged defense; runtime narrowing pending |
 | Guthix reflection (Tier 3) | 5/6/7/8/9/10% factual direct damage |
-| Zam maximum damage | +5/7/9/11/13/15% |
-| Zam dealt damage (Tier 2+) | +3/4/5/6/7/8% |
+| Zam maximum melee damage | +5/7/9/11/13/15% |
+| Zam dealt melee damage (Tier 2+) | +3/4/5/6/7/8% |
 | Zam lifesteal (Tier 3) | 5/6/7/8/9/10%, only while below half HP |
 
 Positive maximum increments round up (zero remains zero); defense rounds down.
@@ -283,10 +283,10 @@ Saradomin's hostile effect names are now selected: **Magical Allergy**
 (Magic-defense reduction), **Muscular Atrophy** (maximum-melee-damage reduction)
 and **Molecular Antipode** (temporary reusable non-corporeal state, with Magic
 permitted in both directions). Entry rolls occur each eligible tick at
-5/7/9/11/13/15% for P1–P6; state duration is 1/1/1/2/2/3, with its unit awaiting
-clarification. Re-entry requires at least one attack after returning corporeal.
-Core proposes Magic-defense reductions 10/13/16/19/22/25% and melee-maximum
-reductions 5/7/9/11/13/15%; these numerical recommendations are not yet approved.
+5/7/9/11/13/15% for P1–P6; state duration is 1/1/1/2/2/3 game ticks, explicitly
+confirmed by the owner. Re-entry requires at least one actual corporeal NPC
+attack attempt. The owner approved Magic-defense reductions
+10/13/16/19/22/25% and melee-maximum reductions 5/7/9/11/13/15%.
 Existing NPC opacity support makes shared translucent rendering feasible
 without per-NPC sprite replacements; implementation/rendering acceptance is
 pending. See the governing Cleric document for decisions and open boundaries.
