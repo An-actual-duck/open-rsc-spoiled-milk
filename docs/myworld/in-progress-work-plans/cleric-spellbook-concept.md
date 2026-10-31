@@ -101,8 +101,8 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 | God | Tier 1 component | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
 | Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
-| Saradomin | Faster natural Hits regeneration: ×2 at P1, adding ×0.5 per power step | Heal over time: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute | Open |
-| Zamorak | Percentage increase to maximum damage | Percentage increase to total dealt damage | Lifesteal |
+| Saradomin | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute | Open |
+| Zamorak | **Unnatural Might**: percentage increase to maximum damage | **Bloodrage**: percentage increase to total dealt damage | **Blood Hunger**: lifesteal |
 
 ### Confirmed blessing names and recipient flavor
 
@@ -140,14 +140,40 @@ Guthix is the completed buff naming example: **Guthix's Respite → Sap Blood**
 (poison cleansing and gradual drained-stat restoration); **Guthix's Protection**
 adds **Barkskin**; **Guthix's Vengeance** adds **Thorns**. The existing recipient
 messages above remain. Thus Vengeance includes Sap Blood, Barkskin and Thorns,
-not only the newly added effect. The remaining buffs still need their component
-flavor names; Saradomin's third component itself also remains open.
+not only the newly added effect.
+
+The owner also approved **Quickened Pulse** (Saradomin's Warmth), **Mending
+Flesh** (Saradomin's Aura), **Unnatural Might** (Zamorak's Fervor), **Bloodrage**
+(Zamorak's Fury) and **Blood Hunger** (Zamorak's Wrath). These names describe
+the existing components without adding or changing mechanics. Saradomin's
+third component, its effect name and its bespoke recipient message remain open.
 
 The current runtime still labels the composite status by spell name with
 descriptive component text; this separate naming presentation is not implemented.
 Old icon keys such as Mend, Purify, Zeal or Rally do not independently select
 new effect names. Unify and Greater Unify retain those spell names and movement
 descriptions, with no bespoke recipient flavor line currently defined.
+
+**Debuff spell-name recommendations, awaiting owner selection:** the following
+are proposed spell titles, not approved replacements for current names or IDs.
+The effect labels are retained; higher spell tiers include the earlier effects.
+
+| God | Tier | Proposed spell name | Named effect added |
+|---|---|---|---|
+| Guthix | 1 | Guthix's Unease | Toxiphobia |
+| Guthix | 2 | Guthix's Dread | Agrizoophobia |
+| Guthix | 3 | Guthix's Terror | Hematophobia |
+| Saradomin | 1 | Saradomin's Censure | Magical Allergy |
+| Saradomin | 2 | Saradomin's Condemnation | Muscular Atrophy |
+| Saradomin | 3 | Saradomin's Unmaking | Molecular Antipode |
+| Zamorak | 1 | Zamorak's Malice | Expose Weakness |
+| Zamorak | 2 | Zamorak's Cruelty | Weak Legs |
+| Zamorak | 3 | Zamorak's Ruin | Weak Constitution |
+
+The proposed chains use mounting fear for Guthix, escalating divine judgment
+and bodily unraveling for Saradomin, and increasingly destructive intent for
+Zamorak. Naming approval does not resolve outstanding timing, balance or Cosmic
+robe decisions, and no hostile recipient flavor messages are added.
 
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.

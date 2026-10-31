@@ -231,7 +231,13 @@ messages as well as spell/effect names; debuffs need spell/effect names without
 recipient flavor. Guthix's Respite grants **Sap Blood**, Protection adds
 **Barkskin**, and Vengeance adds **Thorns**, retaining the earlier components.
 Toxiphobia/Agrizoophobia/Hematophobia are **effect names**; their spell names
-remain open. The remaining buff component flavor names are also under review.
+remain open. The owner approved the other defined buff effect names:
+**Quickened Pulse** and **Mending Flesh** for Saradomin's first two components;
+**Unnatural Might**, **Bloodrage** and **Blood Hunger** for Zamorak's three.
+Saradomin's additional third buff component/effect name/message remain open.
+Proposed debuff spell-title chains, not yet approved: Guthix's
+Unease/Dread/Terror; Saradomin's Censure/Condemnation/Unmaking; Zamorak's
+Malice/Cruelty/Ruin. The governing Cleric document maps each title to its effect.
 This is the approved presentation model, not an implemented runtime rename.
 
 Owner's order: **review power strengths/inherited P6 combinations → Greater
