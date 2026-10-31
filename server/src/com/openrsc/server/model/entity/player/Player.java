@@ -974,6 +974,7 @@ public final class Player extends Mob {
 	}
 	public void scheduleCombatCast() {
 		final int slowTier = com.openrsc.server.content.Slow.tier(this);
+        com.openrsc.server.content.Slow.capture(this, com.openrsc.server.content.Slow.Cadence.MAGIC, slowTier);
 		if (slowTier == 0) {
 			combatCastLifetime = null;
 			nextCombatCastMillis = 0;
@@ -2795,8 +2796,8 @@ public final class Player extends Mob {
 
 	public boolean rollCosmicRobeCrit() {
 		final double chance = getCosmicRobeCritChance();
-		return chance > 0.0D
-			&& getWorld().getServer().getCombatRandom().nextDouble() < chance;
+		return com.openrsc.server.model.combat.CriticalHitResolver.rollChance(chance,
+            () -> getWorld().getServer().getCombatRandom().nextDouble());
 	}
 
 	public double getChaosRobeSurroundedDamageMultiplier() {

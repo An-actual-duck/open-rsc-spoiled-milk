@@ -43,8 +43,11 @@ public final class BansheeCombat {
 			|| source.getWorld().getServer().getCurrentTick() >= source.<Long>getAttribute(NEXT_ATTACK, -1L);
 	}
 	public static void recordAttack(Mob source, int ticks) {
+        com.openrsc.server.content.Slow.Interval interval = com.openrsc.server.content.Slow.plan(source,ticks);
+        com.openrsc.server.content.Slow.capture(source, com.openrsc.server.content.Slow.Cadence.MELEE, interval.tier);
+        com.openrsc.server.content.Slow.capture(source, com.openrsc.server.content.Slow.Cadence.RANGED, interval.tier);
 		source.setAttribute(NEXT_ATTACK + "_lifetime", com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(source));
-		source.setAttribute(NEXT_ATTACK, source.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(source, ticks));
+		source.setAttribute(NEXT_ATTACK, source.getWorld().getServer().getCurrentTick() + interval.ticks);
 	}
 	public static void applyEarplugs(Player player) {
 		player.getCache().store(PROTECTION, player.getWorld().getServer().getGameClock().currentTimeMillis() + PROTECTION_MILLIS);

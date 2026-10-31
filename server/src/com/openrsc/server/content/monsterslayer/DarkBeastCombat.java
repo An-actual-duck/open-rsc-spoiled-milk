@@ -2,8 +2,8 @@ package com.openrsc.server.content.monsterslayer;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.status.ActiveStatusEntry;
-import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
+import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.model.combat.CombatParticipantSnapshot;
 import com.openrsc.server.model.combat.CombatStyle;
@@ -16,9 +16,9 @@ import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.update.CombatEffect;
 import com.openrsc.server.net.rsc.ActionSender;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /** One-shot target acquisition; marks are not a range tether or an immunity buff. */
 public final class DarkBeastCombat {
@@ -66,7 +66,7 @@ public final class DarkBeastCombat {
 		long tick = npc.getWorld().getServer().getCurrentTick();
 		if (state.charge != null || tick < state.recoveryUntil) { npc.resetPath(); return true; }
 		// Slow delays the next attack, not ordinary approach movement.
-		if (!attackReady(npc)) return false;
+		if (!attackReady(npc) || !com.openrsc.server.content.Slow.ready(npc, com.openrsc.server.content.Slow.Cadence.MELEE)) return false;
 		if (!(target instanceof Player) || !live((Player)target) || !npc.sharesSpatialDomain(target)
 			|| !npc.withinRange(target, RADIUS)) return false;
 		boolean half = !state.halfHealthUsed && npc.getLevel(Skill.HITS.id()) * 2 <= npc.getSkills().getMaxStat(Skill.HITS.id());
@@ -133,13 +133,21 @@ public final class DarkBeastCombat {
 		final State state;
 		final long start, due;
 		final int slowRecovery;
+    final com.openrsc.server.model.combat.AttackCommitment attack;
 		final List<Player> players = new ArrayList<>();
 		Charge(Npc npc, State state) {
-			// Unowned so death/removal still executes cleanup on all captured players.
-			super(npc.getWorld(), null, 1, "Dark beast lightning charge", DuplicationStrategy.ALLOW_MULTIPLE);
+      // Unowned so death/removal still executes cleanup on all captured players.
+      super(
+          npc.getWorld(),
+          null,
+          1,
+          "Dark beast lightning charge",
+          DuplicationStrategy.ALLOW_MULTIPLE);
 			this.npc = npc; this.state = state;
+      attack = com.openrsc.server.model.combat.AttackState.commitAttack(npc);
 			start = npc.getWorld().getServer().getCurrentTick(); due = start + CHARGE_TICKS;
 			slowRecovery = com.openrsc.server.content.Slow.tier(npc);
+      com.openrsc.server.content.Slow.capture(npc, com.openrsc.server.content.Slow.Cadence.MELEE, slowRecovery);
 		}
 		boolean valid() {
 			return state.lifetime.matches(npc) && !npc.isRemoved() && !npc.isRespawning()
@@ -169,14 +177,21 @@ public final class DarkBeastCombat {
 				CombatParticipantSnapshot victim = marks(player).remove(this);
 				if (victim == null || !victim.matches(player) || !live(player)) continue;
 				ActionSender.sendActivePotionEffects(player);
-				if (discharge) strike(npc, player);
+        if (discharge) strike(npc, player, attack);
 			}
 			players.clear();
 		}
 	}
-	private static void strike(Npc npc, Player player) {
+
+  private static void strike(
+      Npc npc, Player player, com.openrsc.server.model.combat.AttackCommitment attack) {
 		player.getUpdateFlags().setCombatEffect(new CombatEffect(player, CombatEffect.THUNDER_STRIKE));
-		int damage = CombatFormula.calculateMagicDamage(npc, player, NpcCombatProfile.resolve(npc).getMagicSpellPower());
+    com.openrsc.server.model.combat.AttackRoll roll =
+        attack.isSuppressed()
+            ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+            : CombatFormula.rollMagicDamage(
+                npc, player, NpcCombatProfile.resolve(npc).getMagicSpellPower());
+    int damage = roll.getDamage();
 		damage = player.applyRobeDamageMitigation(damage);
 		damage = player.applyPotionMagicDamageReduction(damage);
 		damage = com.openrsc.server.content.Summoning.applySummonDamageAbsorption(player, npc, damage);
@@ -184,9 +199,22 @@ public final class DarkBeastCombat {
 		com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.BeforeDamage cleric =
 			com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.beforeDirectDamage(npc, player, damage);
 		damage = cleric.getDamage();
-		DamageResult result = player.getWorld().getServer().getResolvedDamageTransaction().apply(
-			DamageRequest.resolvedLegacy(npc, player, DamageRequest.SourceCategory.OWNED_EFFECT, "dark-beast-lightning", damage)
-				.style(CombatStyle.MAGIC).build());
+    DamageResult result =
+        player
+            .getWorld()
+            .getServer()
+            .getResolvedDamageTransaction()
+            .apply(
+                DamageRequest.resolvedLegacy(
+                        npc,
+                        player,
+                        DamageRequest.SourceCategory.OWNED_EFFECT,
+                        "dark-beast-lightning",
+                        damage)
+                    .style(CombatStyle.MAGIC)
+                    .attackCommitment(attack)
+                    .attackRoll(roll)
+                    .build());
 		player.updateDamageAndBlockedDamageTracking(npc, result.getActualDamage(), cleric.getPreventedDamage());
 		ActionSender.sendStat(player, Skill.HITS.id());
 		if (player.getConfig().WANT_PARTIES && player.getParty() != null) player.getParty().sendParty();

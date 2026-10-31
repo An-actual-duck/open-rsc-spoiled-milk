@@ -6,40 +6,39 @@ import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.ElderGreenDragonArmorEffect;
-import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
+import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
-import com.openrsc.server.model.container.Item;
-import com.openrsc.server.model.container.Equipment.EquipmentSlot;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
 import com.openrsc.server.model.combat.BearMaulSecondHit;
 import com.openrsc.server.model.combat.BlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.BlueDragonWaterProc;
+import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
+import com.openrsc.server.model.combat.ChaosChainLightningProc;
 import com.openrsc.server.model.combat.CombatEngagement;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
 import com.openrsc.server.model.combat.CombatStyle;
-import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
-import com.openrsc.server.model.combat.ChaosChainLightningProc;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
+import com.openrsc.server.model.combat.DemonPitchforkHellBlazeProc;
+import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
-import com.openrsc.server.model.combat.DemonPitchforkHellBlazeProc;
-import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
-import com.openrsc.server.model.combat.PlayerMeleeDamageBuff;
 import com.openrsc.server.model.combat.ElementalSwordProc;
-import com.openrsc.server.model.combat.DragonMeleeBreathFollowup;
-import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
+import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
-import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
+import com.openrsc.server.model.combat.PlayerMeleeDamageBuff;
 import com.openrsc.server.model.combat.RedDragonFireProc;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
+import com.openrsc.server.model.container.Equipment.EquipmentSlot;
+import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
@@ -201,7 +200,6 @@ public class CombatEvent extends GameTickEvent {
 			target.setLastCombatState(CombatState.ERROR);
 			resetCombat();
 		} else {
-			if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(hitter)) return;
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.isNaga(hitter)) {
 				if (!hitter.withinRange(target, 1) || !com.openrsc.server.content.monsterslayer.NagaCombat.attackReady(hitter)) return;
 			}
@@ -222,7 +220,12 @@ public class CombatEvent extends GameTickEvent {
 				((Npc)hitter).getBehavior().retreat();
 				return;
 			}
-			if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(hitter)) {
+      if (!com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.attackReady(hitter)) {
+        roundNumber--;
+        setDelayTicks(1);
+        return;
+      }
+      if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(hitter, com.openrsc.server.content.Slow.Cadence.RECIPROCAL)) {
 				roundNumber--; // Retry this hitter next tick instead of giving away its turn.
 				setDelayTicks(1); return;
 			}
@@ -234,17 +237,23 @@ public class CombatEvent extends GameTickEvent {
 			if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(hitter))
 				com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(hitter, 2);
 
-			//if(hitter.isNpc() && target.isPlayer() || target.isNpc() && hitter.isPlayer()) {
+      // if(hitter.isNpc() && target.isPlayer() || target.isNpc() && hitter.isPlayer()) {
+      final boolean attackSuppressed =
+          com.openrsc.server.model.combat.AttackState.commitAttack(hitter).isSuppressed();
+      com.openrsc.server.model.combat.AttackRoll primaryRoll =
+          com.openrsc.server.model.combat.AttackRoll.normal(0);
 			int damage;
-			if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+      if (attackSuppressed) {
+        damage = 0;
+      } else if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				damage = OSRSCombatFormula.Melee.doMeleeDamage(hitter, target);
 			} else {
-				damage = CombatFormula.doMeleeDamage(hitter, target);
+        primaryRoll = CombatFormula.rollMeleeDamage(hitter, target);
+        damage = primaryRoll.getDamage();
 			}
 			if (hitter.isPlayer()) {
 				damage = applyPlayerMeleeDamageBuff((Player) hitter, damage);
 			}
-			final boolean attackSuppressed = hitter.consumeOgreStaggerDebuff() || hitter.consumeStartleDebuff();
 			final Mob abyssalHitter = hitter;
 			if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.beforeMelee(
 				hitter, target, attackSuppressed, (victim, hit) -> inflictDamage(abyssalHitter, victim, hit, false))) return;
@@ -253,15 +262,17 @@ public class CombatEvent extends GameTickEvent {
 			}
 
 			applyWeaponPoison(hitter, target, damage);
-			inflictDamage(hitter, target, damage, attackSuppressed);
+      inflictDamage(hitter, target, damage, attackSuppressed, false, primaryRoll);
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(hitter, target, attackSuppressed)) {
-				inflictDamage(hitter, target, CombatFormula.doOffhandMeleeDamage(hitter, target), false, true);
+        com.openrsc.server.model.combat.AttackRoll offhandRoll =
+            CombatFormula.rollOffhandMeleeDamage(hitter, target);
+        inflictDamage(hitter, target, offhandRoll.getDamage(), false, true, offhandRoll);
 			}
 			com.openrsc.server.content.monsterslayer.CockatriceCombat.onMeleeSwing(hitter, target, attackSuppressed);
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}
-			applyBearMaulSecondHit(hitter, target, damage);
+      if (!attackSuppressed) applyBearMaulSecondHit(hitter, target, damage);
 			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(hitter, target);
 				applyElementalSwordProc(hitter, target);
@@ -282,7 +293,7 @@ public class CombatEvent extends GameTickEvent {
 					}
 				}
 			}
-			hitter.consumeAttackBasedDebuffs();
+      hitter.consumeAttackBasedDebuffs();
 			if (hitter.isPlayer()) {
 				((Player) hitter).consumeLeatherSetAttackBuffs();
 			}
@@ -453,7 +464,8 @@ public class CombatEvent extends GameTickEvent {
 
 			target.applyPoison(appliedPoisonPower, totalMaxPower, player);
 		if (target.isNpc()) {
-			player.message("@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) target).getDef().name + "!");
+      player.message(
+          "@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) target).getDef().name + "!");
 		}
 	}
 
@@ -525,6 +537,22 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
+    inflictDamage(
+        hitter,
+        target,
+        damage,
+        attackSuppressed,
+        offhand,
+        com.openrsc.server.model.combat.AttackRoll.normal(damage));
+  }
+
+  private void inflictDamage(
+      final Mob hitter,
+      final Mob target,
+      int damage,
+      boolean attackSuppressed,
+      boolean offhand,
+      com.openrsc.server.model.combat.AttackRoll attackRoll) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -534,7 +562,7 @@ public class CombatEvent extends GameTickEvent {
 		if (target.isPlayer()) {
 			Player targetPlayer = (Player) target;
 			// side effects that may occur during combat (like poison) are regardless protect
-			hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatSideEffectScript(hitter, target);
+			if (!attackSuppressed) hitter.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatSideEffectScript(hitter, target);
 
 			if (hitter.isNpc()) {
 				// If the hitter is an NPC, we want to check and execute their combat script
@@ -584,15 +612,27 @@ public class CombatEvent extends GameTickEvent {
 		final java.util.UUID encounterId = engagement != null
 			&& engagement.peerOf(hitter) == target
 			? engagement.getEncounterId() : null;
-		final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
-			hitter, target, DamageRequest.SourceCategory.ACTOR,
-			offhand ? (com.openrsc.server.content.monsterslayer.TerrorDogCombat.isTerrorDog(hitter)
-				? "terror-dog-feeding-frenzy" : "naga-melee-offhand") : "reciprocal-melee-primary", damage)
-			.eventId(getUUID())
-			.encounterId(encounterId)
-			.style(CombatStyle.MELEE)
-			.hitSplatType(hitSplatType)
-			.build();
+    final DamageRequest damageRequest =
+        DamageRequest.resolvedLegacy(
+                hitter,
+                target,
+                DamageRequest.SourceCategory.ACTOR,
+                offhand
+                    ? (com.openrsc.server.content.monsterslayer.TerrorDogCombat.isTerrorDog(hitter)
+                        ? "terror-dog-feeding-frenzy"
+                        : "naga-melee-offhand")
+                    : "reciprocal-melee-primary",
+                damage)
+            .eventId(getUUID())
+            .encounterId(encounterId)
+            .style(CombatStyle.MELEE)
+            .hitSplatType(hitSplatType)
+            .attackCommitment(
+                attackSuppressed
+                    ? com.openrsc.server.model.combat.AttackCommitment.staggered()
+                    : com.openrsc.server.model.combat.AttackCommitment.normal())
+            .attackRoll(attackRoll)
+            .build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
@@ -610,7 +650,9 @@ public class CombatEvent extends GameTickEvent {
 			n.addCombatDamage(player, damage);
 			Summoning.recordOwnerCombatSummonDamage(player, n, damage);
 			DivineGrace.apply(player, damage);
-			if (target.getSkills().getLevel(Skill.HITS.id()) > 0 && player.applyDeathRingChargeHit(n)) {
+      if (!attackSuppressed
+          && target.getSkills().getLevel(Skill.HITS.id()) > 0
+          && player.applyDeathRingChargeHit(n)) {
 				onDeath(target, hitter);
 				return;
 			}
@@ -664,7 +706,7 @@ public class CombatEvent extends GameTickEvent {
 			if (target.isNpc() || ringOfLifeScript) {
 				target.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatScript(hitter, target);
 			}
-			applyLeatherSetOnHitEffects(hitter, target, damage);
+      if (!attackSuppressed) applyLeatherSetOnHitEffects(hitter, target, damage);
 		}
 
 		// Mob has <= 0 hits.
@@ -791,12 +833,31 @@ public class CombatEvent extends GameTickEvent {
 			procDamageDealt -> applyHellsInfernoFollowup(player, target,
 				infernalMaxHit, procDamageDealt));
 		if (infernal.isConfigured()) {
-			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
-				infernal.getMaxHit(), infernal.getRoll(), infernal.getChance(), infernal.isTriggered(),
-				infernal.getRolledDamage(), infernal.getDamageDealt());
+      CombatEffectUtil.sendInfernalProcDebug(
+          player,
+          "pvp_melee",
+          target,
+          damage,
+          infernalPieces,
+          infernal.getMaxHit(),
+          infernal.getRoll(),
+          infernal.getChance(),
+          infernal.isTriggered(),
+          infernal.getRolledDamage(),
+          infernal.getDamageDealt());
 		} else if (infernalPieces > 0) {
-			CombatEffectUtil.sendInfernalProcDebug(player, "pvp_melee", target, damage, infernalPieces,
-				infernal.getMaxHit(), -1.0D, 0.0D, false, 0, 0);
+      CombatEffectUtil.sendInfernalProcDebug(
+          player,
+          "pvp_melee",
+          target,
+          damage,
+          infernalPieces,
+          infernal.getMaxHit(),
+          -1.0D,
+          0.0D,
+          false,
+          0,
+          0);
 		}
 		BlueDragonWaterProc.tryApply(player, target,
 			ProductionGameRandom.INSTANCE,

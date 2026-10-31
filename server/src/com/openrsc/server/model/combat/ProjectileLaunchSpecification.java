@@ -104,6 +104,8 @@ public final class ProjectileLaunchSpecification {
 		}
 	}
 
+  private final AttackCommitment attackCommitment;
+  private final AttackRoll attackRoll;
 	private final Producer producer;
 	private final int proposedDamage;
 	private final int attackType;
@@ -128,8 +130,14 @@ public final class ProjectileLaunchSpecification {
 	private final DuplicationStrategy duplicationStrategy;
 
 	private ProjectileLaunchSpecification(final Builder builder) {
-		this.producer = builder.producer;
-		this.proposedDamage = builder.proposedDamage;
+    this.attackCommitment = builder.attackCommitment;
+    this.attackRoll =
+        (builder.attackRoll == null
+                ? AttackRoll.normal(builder.proposedDamage)
+                : builder.attackRoll)
+            .committed(attackCommitment);
+    this.producer = builder.producer;
+    this.proposedDamage = attackCommitment.resolveDamage(builder.proposedDamage);
 		this.attackType = builder.attackType;
 		this.shouldChase = builder.shouldChase;
 		this.poisonWeaponId = builder.poisonWeaponId;
@@ -156,6 +164,14 @@ public final class ProjectileLaunchSpecification {
 			final int proposedDamage, final int attackType) {
 		return new Builder(producer, proposedDamage, attackType);
 	}
+
+  public AttackCommitment getAttackCommitment() {
+    return attackCommitment;
+  }
+
+  public AttackRoll getAttackRoll() {
+    return attackRoll;
+  }
 
 	public Producer getProducer() {
 		return producer;
@@ -256,6 +272,8 @@ public final class ProjectileLaunchSpecification {
 	}
 
 	public static final class Builder {
+    private AttackCommitment attackCommitment = AttackCommitment.normal();
+    private AttackRoll attackRoll;
 		private final Producer producer;
 		private final int proposedDamage;
 		private final int attackType;
@@ -290,6 +308,16 @@ public final class ProjectileLaunchSpecification {
 			this.attackType = attackType;
 			this.projectileType = attackType;
 		}
+
+    public Builder attackCommitment(AttackCommitment value) {
+      this.attackCommitment = java.util.Objects.requireNonNull(value);
+      return this;
+    }
+
+    public Builder attackRoll(AttackRoll value) {
+      this.attackRoll = java.util.Objects.requireNonNull(value);
+      return this;
+    }
 
 		public Builder chase(final boolean shouldChase) {
 			this.shouldChase = shouldChase;

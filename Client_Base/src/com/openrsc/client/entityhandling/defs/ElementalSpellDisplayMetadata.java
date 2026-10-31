@@ -194,7 +194,7 @@ public final class ElementalSpellDisplayMetadata {
 	}
 
 	private static String getTierEffectQualifier(int tier) {
-		return tier == 1 ? "Weaker" : tier == 2 ? "Weak" : tier == 3 ? "Strong" : "Stronger";
+    return tier == 1 ? "Weaker" : tier == 2 ? "Weak" : tier == 3 ? "Strong" : "Stronger";
 	}
 
 	public int getSpellIndex() {
@@ -234,6 +234,12 @@ public final class ElementalSpellDisplayMetadata {
 	}
 
 	public String getGuideTooltip() {
+    if (classification == Classification.THUNDER) {
+      return "Deals "
+          + damageWord
+          + " damage. Startle staggers the opponent for 1 attack; then 5 unstaggered attacks before"
+          + " reapplication.";
+    }
 		if (isDualElement()) {
 			return "Deals " + damageWord + " damage. Can " + effectName + ".";
 		}

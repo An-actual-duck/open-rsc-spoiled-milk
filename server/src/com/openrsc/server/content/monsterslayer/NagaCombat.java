@@ -20,8 +20,11 @@ public final class NagaCombat {
 			|| mob.getWorld().getServer().getCurrentTick() >= mob.<Long>getAttribute(NEXT_ATTACK, -1L);
 	}
 	public static void recordAttack(Mob mob, int ticks) {
+        com.openrsc.server.content.Slow.Interval interval = com.openrsc.server.content.Slow.plan(mob,ticks);
+        com.openrsc.server.content.Slow.capture(mob, com.openrsc.server.content.Slow.Cadence.MELEE, interval.tier);
+        com.openrsc.server.content.Slow.capture(mob, com.openrsc.server.content.Slow.Cadence.RANGED, interval.tier);
 		mob.setAttribute(NEXT_ATTACK + "_lifetime", com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(mob));
-		mob.setAttribute(NEXT_ATTACK, mob.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(mob, ticks));
+		mob.setAttribute(NEXT_ATTACK, mob.getWorld().getServer().getCurrentTick() + interval.ticks);
 	}
 	public static boolean canOffhand(Mob source, Mob target, boolean suppressed) {
 		return isNaga(source) && !suppressed && !source.isRemoved() && !target.isRemoved()

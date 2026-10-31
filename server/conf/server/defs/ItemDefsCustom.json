@@ -14447,7 +14447,7 @@
     {
       "id": 1880,
       "name": "Ogre-hide coif",
-      "description": "Coif made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
+      "description": "Coif made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to stagger your opponent for 1 attack, making it deal 0 damage. Afterward the opponent must perform 5 unstaggered attacks before being staggered again.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14470,7 +14470,7 @@
     {
       "id": 1881,
       "name": "Ogre-hide gloves",
-      "description": "Gloves made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
+      "description": "Gloves made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to stagger your opponent for 1 attack, making it deal 0 damage. Afterward the opponent must perform 5 unstaggered attacks before being staggered again.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14493,7 +14493,7 @@
     {
       "id": 1882,
       "name": "Ogre-hide boots",
-      "description": "Boots made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
+      "description": "Boots made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to stagger your opponent for 1 attack, making it deal 0 damage. Afterward the opponent must perform 5 unstaggered attacks before being staggered again.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14516,7 +14516,7 @@
     {
       "id": 1883,
       "name": "Ogre-hide chaps",
-      "description": "Chaps made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
+      "description": "Chaps made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to stagger your opponent for 1 attack, making it deal 0 damage. Afterward the opponent must perform 5 unstaggered attacks before being staggered again.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,
@@ -14539,7 +14539,7 @@
     {
       "id": 1884,
       "name": "Ogre-hide cuirass",
-      "description": "Cuirass made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to proc with each attack, reducing your opponent's next hit to 0. It has no cooldown.",
+      "description": "Cuirass made from ogre leather. When wearing 5 matching Ogre armor pieces you will get the Staggering Blow trait. Staggering Blow has a 20% chance to stagger your opponent for 1 attack, making it deal 0 damage. Afterward the opponent must perform 5 unstaggered attacks before being staggered again.",
       "command": "",
       "isFemaleOnly": 0,
       "isMembersOnly": 0,

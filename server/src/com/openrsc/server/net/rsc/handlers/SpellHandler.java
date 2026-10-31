@@ -332,6 +332,20 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		return true;
 	}
 
+    /** Called only after the selected damaging spell's own target/staff/quest admission. */
+    private static ProjectileResourceLedger consumeCombatAttackRunes(final Player player,
+            final SpellDef spell, final Spells spellEnum, final Boolean capeActivated,
+            final ProjectileLaunchSpecification.Producer producer) {
+        if (!Boolean.TRUE.equals(capeActivated) && !hasRequiredRunesForAutoCast(player,spell)) {
+            // Existing failure message/ledger behavior, before any extra-delay token is latched.
+            return consumeProjectileSpellRunes(player,spell,capeActivated,producer);
+        }
+        if (SpellClassification.isDamagingAttack(spellEnum)
+                && com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(
+                    player,com.openrsc.server.content.Slow.Cadence.MAGIC)) return null;
+        return consumeProjectileSpellRunes(player,spell,capeActivated,producer);
+    }
+
 	private static ProjectileResourceLedger consumeProjectileSpellRunes(
 			final Player player, final SpellDef spell,
 			final Boolean magicCapeActivated,
@@ -1991,14 +2005,17 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							getPlayer().playerServerMessage(MessageType.QUEST, "This spell can only be used on skeletons, zombies and ghosts");
 							return;
 						}
-						int damaga = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, Constants.CRUMBLE_UNDEAD_MAX);
+
 						final ProjectileResourceLedger crumbleResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (crumbleResources == null) {
 							return;
 						}
+                        final com.openrsc.server.model.combat.AttackCommitment crumbleAttack = com.openrsc.server.model.combat.AttackState.commitAttack(getPlayer());
+                        final com.openrsc.server.model.combat.AttackRoll crumbleRoll = crumbleAttack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollMagicDamage(getPlayer(),affectedMob,Constants.CRUMBLE_UNDEAD_MAX);
+                        int damaga = crumbleRoll.getDamage();
 						final int crumbleExperienceBefore = getPlayer().getSkills()
 							.getExperience(getMagicId(getPlayer(), spell));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(
@@ -2007,7 +2024,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
 									damaga, 1)
 									.chase(setChasing)
-									.build(), crumbleResources));
+									.attackCommitment(crumbleAttack).attackRoll(crumbleRoll).build(), crumbleResources));
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						completeProjectileSpellResources(crumbleResources,
 							getPlayer(), spell, crumbleExperienceBefore, true);
@@ -2023,16 +2040,18 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 						final ProjectileResourceLedger ibanResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated, ProjectileLaunchSpecification.Producer
 									.PLAYER_IBAN_MAGIC);
 						if (ibanResources == null) {
 							return;
 						}
+                        final com.openrsc.server.model.combat.AttackCommitment ibanAttack = com.openrsc.server.model.combat.AttackState.commitAttack(getPlayer());
 						final int ibanExperienceBefore = getPlayer().getSkills()
 							.getExperience(getMagicId(getPlayer(), spell));
 						final double ibanDamageCapPercent = SpellClassification.getSpellDamageCapPercent(spellEnum);
-						final int ibanPrimaryDamage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
+						final com.openrsc.server.model.combat.AttackRoll ibanRoll = ibanAttack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollMagicDamage(getPlayer(), affectedMob, 15, ibanDamageCapPercent);
+                        final int ibanPrimaryDamage = ibanRoll.getDamage();
 						getPlayer().getWorld().getServer().getGameEventHandler().add(
 							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
 								affectedMob, ProjectileLaunchSpecification.builder(
@@ -2041,11 +2060,11 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									.chase(setChasing)
 									.presentation(Projectile.SKULL,
 										CombatEffect.IBAN_BLAST, true)
-									.build(), ibanResources));
+									.attackCommitment(ibanAttack).attackRoll(ibanRoll).build(), ibanResources));
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Iban blast area effect") {
 							@Override
 							public void action() {
-								applyIbanBlastAreaEffects(
+								if (!ibanAttack.isSuppressed()) applyIbanBlastAreaEffects(
 									getPlayer(), affectedMob, getUUID());
 							}
 						});
@@ -2087,12 +2106,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						}
 
 						final ProjectileResourceLedger godSpellResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (godSpellResources == null) {
 							return;
 						}
+                        final com.openrsc.server.model.combat.AttackCommitment godAttack = com.openrsc.server.model.combat.AttackState.commitAttack(getPlayer());
 						final int godSpellExperienceBefore = getPlayer().getSkills()
 							.getExperience(getMagicId(getPlayer(), spell));
 
@@ -2106,11 +2126,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								giveExp = false;
 							}
 
-							godSpellObject(getPlayer(), affectedMob, spellEnum);
+							if (!godAttack.isSuppressed()) godSpellObject(getPlayer(), affectedMob, spellEnum);
 						}
 						final int godSpellProjectile = SpellClassification.getGodSpellProjectileVisual(spellEnum);
 						final int godSpellImpact = SpellClassification.getGodSpellImpactEffect(spellEnum);
-						final int primaryDamage = CombatFormula.calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum);
+						final com.openrsc.server.model.combat.AttackRoll godRoll = godAttack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollGodSpellDamage(getPlayer(), affectedMob, spellEnum);
+                        final int primaryDamage = godRoll.getDamage();
 						final ProjectileEvent godSpellEvent = new ProjectileEvent(
 							getPlayer().getWorld(), getPlayer(), affectedMob,
 							ProjectileLaunchSpecification.builder(
@@ -2118,13 +2139,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 								primaryDamage, 1)
 								.chase(setChasing)
 								.presentation(godSpellProjectile, godSpellImpact, true)
-								.build(), godSpellResources);
+								.attackCommitment(godAttack).attackRoll(godRoll).build(), godSpellResources);
 						godSpellEvent.deferClericRally();
 						getPlayer().getWorld().getServer().getGameEventHandler().add(godSpellEvent);
 						getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "God spell area effect") {
 							@Override
 							public void action() {
-								applyGodSpellAreaEffects(getPlayer(), affectedMob,
+								if (!godAttack.isSuppressed()) applyGodSpellAreaEffects(getPlayer(), affectedMob,
 									spellEnum, primaryDamage, getUUID());
 								godSpellEvent.resolveDeferredClericRally();
 							}
@@ -2139,19 +2160,21 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					case ELEMENTAL_BOLT:
 					case WIND_BOLT_R:
 						final ProjectileResourceLedger boltResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (boltResources == null) {
 							return;
 						}
+                        final com.openrsc.server.model.combat.AttackCommitment boltAttack = com.openrsc.server.model.combat.AttackState.commitAttack(getPlayer());
 						final int boltExperienceBefore = getPlayer().getSkills()
 							.getExperience(getMagicId(getPlayer(), spell));
 
 						double maxR = getPlayer().getWorld().getServer().getConstants().getSpellDamages().getSpellDamage(spellEnum, entityType, SpellDamages.MagicType.GOODEVILMAGIC);
 						maxR = applyElementalRingDamageBonus(getPlayer(), spellEnum, maxR);
 
-						int damageR = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, maxR);
+						final com.openrsc.server.model.combat.AttackRoll boltRoll = boltAttack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollMagicDamage(getPlayer(), affectedMob, maxR);
+                        final int damageR = boltRoll.getDamage();
 
 						getPlayer().getWorld().getServer().getGameEventHandler().add(
 							new ProjectileEvent(getPlayer().getWorld(), getPlayer(),
@@ -2159,7 +2182,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
 									damageR, 1)
 									.chase(setChasing)
-									.build(), boltResources));
+									.attackCommitment(boltAttack).attackRoll(boltRoll).build(), boltResources));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						completeProjectileSpellResources(boltResources,
@@ -2168,12 +2191,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 					default:
 						final ProjectileResourceLedger defaultSpellResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (defaultSpellResources == null) {
 							return;
 						}
+                        final com.openrsc.server.model.combat.AttackCommitment defaultAttack = com.openrsc.server.model.combat.AttackState.commitAttack(getPlayer());
 						final int defaultSpellExperienceBefore =
 							getPlayer().getSkills().getExperience(
 								getMagicId(getPlayer(), spell));
@@ -2204,12 +2228,13 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 									affectedMob, ProjectileLaunchSpecification.builder(
 									ProjectileLaunchSpecification.Producer.PLAYER_MAGIC,
 									firstDamage, 1)
-									.build(), defaultSpellResources));
+									.attackCommitment(defaultAttack).build(), defaultSpellResources));
 							// Deal Second Damage
 							getPlayer().getWorld().getServer().getGameEventHandler().add(new MiniEvent(getPlayer().getWorld(), getPlayer(), getPlayer().getConfig().GAME_TICK, "Salarin the Twisted Strike") {
 								@Override
 								public void action() {
-									int appliedSecondDamage = secondAdditionalDamage;
+									if (defaultAttack.isSuppressed()) return;
+                                    int appliedSecondDamage = secondAdditionalDamage;
 									if (affectedMob.isPlayer()) {
 										appliedSecondDamage = ((Player) affectedMob).applyPotionMagicDamageReduction(appliedSecondDamage);
 									}
@@ -2268,7 +2293,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 						final int thunderSpireTier = com.openrsc.server.content.monsterslayer.SlayerRewardCombat.thunderTier(getPlayer(), spellEnum);
 						damageCapPercent = com.openrsc.server.content.monsterslayer.SlayerRewardCombat.thunderCap(thunderSpireTier, damageCapPercent);
-						int damage = CombatFormula.calculateMagicDamage(getPlayer(), affectedMob, max, damageCapPercent);
+						final com.openrsc.server.model.combat.AttackRoll defaultRoll = defaultAttack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollMagicDamage(getPlayer(), affectedMob, max, damageCapPercent);
+                        final int damage = defaultRoll.getDamage();
 
 						final int windAccuracyDebuffPercent = SpellClassification.isAirSpell(spellEnum)
 							? SpellClassification.getWindAccuracyDebuffPercent(spellEnum) : 0;
@@ -2307,7 +2333,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 										splinterProcChancePercent)
 									.bloodSpell(SpellClassification.isBloodSpell(spell))
 									.thunderSpire(thunderSpireTier, max)
-									.build(), defaultSpellResources));
+									.attackCommitment(defaultAttack).attackRoll(defaultRoll).build(), defaultSpellResources));
 						getPlayer().setKillType(KillType.MAGIC);
 						finalizeSpell(getPlayer(), spell, DEFAULT);
 						completeProjectileSpellResources(defaultSpellResources,
@@ -2423,10 +2449,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidGodSpellAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateSecondaryMagicDamage(caster, npc, secondaryMax);
+			final com.openrsc.server.model.combat.AttackRoll secondaryRoll =
+                CombatFormula.rollSecondaryMagicDamage(caster, npc, secondaryMax);
+            final int damage = secondaryRoll.getDamage();
 			final int appliedDamage = applyGodSpellSecondaryDamage(
 				caster, npc, damage,
-				SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY, eventId);
+				SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY, eventId, secondaryRoll);
 			totalDamage += appliedDamage;
 			applyGodSpellSpecialEffect(caster, npc, spellEnum, appliedDamage, false);
 		}
@@ -2445,10 +2473,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateSecondaryMagicDamage(
-				caster, npc, secondaryMax, SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
+			final com.openrsc.server.model.combat.AttackRoll secondaryRoll =
+                CombatFormula.rollSecondaryMagicDamage(caster, npc, secondaryMax,
+                    SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
+            final int damage = secondaryRoll.getDamage();
 			applyGodSpellSecondaryDamage(caster, npc, damage,
-				SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY, eventId);
+				SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY, eventId, secondaryRoll);
 		}
 	}
 
@@ -2485,8 +2515,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private int applyGodSpellSecondaryDamage(final Player caster,
 			final Mob target, int damage,
 			final SecondaryEffectPolicy effectPolicy,
-			final UUID eventId) {
-		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
+            final UUID eventId) {
+        return applyGodSpellSecondaryDamage(caster, target, damage, effectPolicy, eventId,
+            com.openrsc.server.model.combat.AttackRoll.normal(damage));
+    }
+
+    private int applyGodSpellSecondaryDamage(final Player caster, final Mob target, int damage,
+            final SecondaryEffectPolicy effectPolicy, final UUID eventId,
+            final com.openrsc.server.model.combat.AttackRoll attackRoll) {
+        damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}
@@ -2499,6 +2536,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				.eventId(eventId)
 				.style(CombatStyle.MAGIC)
 				.hitSplatType(HitSplat.TYPE_STANDARD)
+                .attackRoll(attackRoll)
 				.build();
 			final DamageResult damageResult = target.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);

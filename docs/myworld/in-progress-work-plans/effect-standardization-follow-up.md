@@ -1,5 +1,43 @@
 # Effect timing and numerical-rule standardization
 
+## October 31 shared attack foundation candidate
+
+The current implementation task replaces separate Ogre/Startle loss flags with
+one actor-owned Stagger state. All existing sources retain one attack; the API
+accepts an explicit count and rejects replacement while losses or five normal
+recovery attacks remain. Count actual admitted attacks, including natural zero;
+never count scheduler polls or projectile impacts again. Suppression snapshots
+at melee strike, projectile launch or custom telegraph commitment. An already
+committed projectile/telegraph is not retroactively canceled by a new Stagger.
+Death/respawn/logout lifetimes clear the state.
+
+Ogre's full-set 20% chance and Thunder Startle's 7/15/25% remain unchanged and
+independent of critical hits. Current Cosmic chance/cap is the sole modern crit
+source; explicit immutable outcomes distinguish true crits, normal maxima and
+forced zero. Future hostile spell triggers remain disabled.
+
+Whip keeps its 10% proc, one-tick movement pause and three following immunity
+ticks. Sticky keeps its 10% qualifying-hit, next-attack-only delay. Each source
+can own one actor-wide extra-delay token. Otherwise-ready attacks latch the sum
+after their ordinary base/Slow deadline; polls and event/style changes cannot
+multiply, clear or hide tokens. A source arriving during a latched wait extends
+that same deadline once. Ordinary style cooldowns stay with their existing
+owners. Each owner records the exact Slow tier already included in its interval.
+At attack admission, only a newly uncaptured current tier delta is added to the
+shared wait: fresh Slow1 + Whip + Sticky adds three ticks to the next otherwise-
+ready attack, while captured Slow1 becoming Slow2 adds only one further Slow
+tick. Polling/style changes cannot duplicate credit; decay cannot shorten a
+latched wait. This upcoming-attack policy is the manager's disclosed working
+interpretation of the owner's three-ticks example. The optional clarification
+question had not received an explicit answer when implemented; it is not
+recorded as a separate owner answer. Reciprocal melee's existing Slow exclusion
+and utility spell timing stay unchanged.
+
+See [implementation and validation](shared-critical-stagger-foundation-review.md).
+Historical proposals below remain context rather than approval of a larger
+game-wide status overhaul.
+
+
 Status: deferred owner-requested follow-up; not part of current Slayer Tower work.
 Recorded: 2026-09-21.
 

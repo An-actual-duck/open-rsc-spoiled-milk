@@ -75,7 +75,7 @@ public final class SlowFixture {
    check(p.combatCastTimer(false),"unslowed cast keeps ordinary timer authority");
    Slow.apply(p,22,Slow.CAP_TWO);
    h.clock().advanceMillis(h.server().getConfig().MILLISECONDS_BETWEEN_CASTS);
-   check(p.combatCastTimer(false),"new Slow cannot postpone existing cast");
+   check(p.combatCastTimer(false),"existing base cast timer stays separate from fresh Slow admission");
    for(int rank=1;rank<=4;rank++) {Slow.clear(n); Slow.earthSpell(n,rank*3);eq(2+rank*2,Slow.power(n),"earth rank power");eq(rank<=2?12:22,Slow.cap(n),"earth rank cap");}
    actualMagicGates(h);
    actualNpcProjectileGates(h);
@@ -116,6 +116,10 @@ public final class SlowFixture {
   new SpellHandler().process(packet,p);
   check(p.getWalkToAction()!=null&&p.getWalkToAction().shouldExecute(),"manual initial cast queued");
   p.getWalkToAction().execute(); p.setWalkToAction(null);
+  check(p.getCarriedItems().getInventory().countId(rune)==100,"fresh Slow2 delays cast without spending runes");
+  h.advanceOneCombatTick();h.advanceOneCombatTick();
+  new SpellHandler().process(packet,p);check(p.getWalkToAction()!=null&&p.getWalkToAction().shouldExecute(),"cast re-admitted after exact fresh Slow wait");
+  p.getWalkToAction().execute();p.setWalkToAction(null);
   long after=p.getCarriedItems().getInventory().countId(rune);
   check(after<100,"manual spell actually committed runes");
   p.setCastTimer(0); Slow.clear(p);

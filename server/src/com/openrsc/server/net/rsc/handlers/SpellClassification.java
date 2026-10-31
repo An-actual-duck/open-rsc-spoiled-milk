@@ -14,6 +14,17 @@ final class SpellClassification {
 	private SpellClassification() {
 	}
 
+    /** Offensive damage producers only; retro hostile utility spells keep their existing timers. */
+    static boolean isDamagingAttack(final Spells spell) {
+        return spell != null && (isAirSpell(spell) || isWaterSpell(spell) || isEarthSpell(spell)
+            || isFireSpell(spell) || isThunderSpell(spell) || isIceSpell(spell)
+            || isAcidSpell(spell) || isWoodSpell(spell) || isGuthixGodSpell(spell)
+            || isSaradominGodSpell(spell) || isZamorakGodSpell(spell)
+            || spell == Spells.CRUMBLE_UNDEAD || spell == Spells.IBAN_BLAST
+            || spell == Spells.CHILL_BOLT || spell == Spells.SHOCK_BOLT
+            || spell == Spells.ELEMENTAL_BOLT);
+    }
+
 	static boolean isMobCastOpcode(final OpcodeIn opcode) {
 		return opcode == OpcodeIn.CAST_ON_NPC || opcode == OpcodeIn.PLAYER_CAST_PVP;
 	}

@@ -207,9 +207,10 @@ stagger until it has completed its next **five uninterrupted attacks**. Five
 ticks, five incoming hits or elapsed seconds cannot substitute for those attacks.
 The protection belongs to the NPC, so multiple attackers cannot each obtain
 their own independent stagger allowance. Pending losses must not queue, and
-recasting must not bypass the five-attack protection. How existing Ogre Stagger,
-Startle and other attack cancellations honor this guarantee needs explicit
-integration; the separate legacy flags do not already provide this protection.
+recasting must not bypass the five-attack protection. The shared Stagger foundation now consolidates Ogre and Startle into one
+actor-owned pending-loss/recovery authority in the implementation candidate.
+Every existing source still requests one attack; the API supports an explicit
+attack count without stacking applications. This does not enable Weak Legs.
 
 **Weak Constitution** rolls on critical hits against an afflicted enemy at or
 below the power-dependent HP threshold. A success instantly kills that enemy.
@@ -224,10 +225,24 @@ crit chance, 50% stagger chance per crit, and 75% execution chance per eligible
 crit against ordinary enemies at 25% HP or lower. These are conditional proc
 chances, not additional guaranteed effects on every normal attack.
 
+The shared critical foundation carries an immutable explicit outcome through
+ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic
+remains the only enabled modern critical-chance source, with its existing values
+and cap. A normal maximum is not a critical; a Stagger-forced zero is not a
+critical. Existing secondary/offhand damage eligibility is retained, without
+permission to trigger these future hostile components. Remaining legacy integer-only secondary/death helpers retain their historical
+damage/RNG and attribution ordering. In particular, lethal God/Iban secondary
+damage still has its older direct death path. Those compatibility helpers do
+not have complete critical provenance and are not approved hostile-trigger
+boundaries. Primary outcome propagation is complete; it does not silently
+finalize future offhand/secondary debuff eligibility.
+
 Before hostile implementation, resolve: aggregation with existing critical
 equipment; offhand/secondary/multi-hit eligibility; the HP checkpoint used for
-execution (before or after the triggering hit); critical-result propagation
-and shared stagger recovery across all NPC attack paths. Costs, duration,
+execution (before or after the triggering hit), and final hostile-trigger
+eligibility at the explicit outcome boundary. Shared Stagger recovery and
+primary critical-result propagation are foundation work, not implementation
+of the hostile spells. Costs, duration,
 enemy admission, immunity/stacking rules and PvP policy remain separate hostile
 decisions. No new PvP permission or live activation is implied.
 

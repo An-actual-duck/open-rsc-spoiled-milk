@@ -61,8 +61,10 @@ final class SlowLegacyNpcRange {
         Player newTarget=victim(h,clear?"clear next":"gain next",444);
         Slow.apply(npc,clear?22:12,clear?22:12);
         RangeEventNpc first=event(h,npc,firstTarget);
+        fire(h,first,false,"fresh Slow delays first admitted legacy shot");
+        for(int i=0;i<(clear?2:1);i++)h.advanceOneCombatTick();
         long start=h.server().getCurrentTick();
-        fire(h,first,true,"initial slowed legacy shot actually launches");
+        fire(h,first,true,"initial slowed legacy shot launches after fresh delta");
         int delay=clear?5:4;
         check(first.getDelayTicks()==delay,"legacy shot captures its Slow tier once");
         for(int i=0;i<(clear?3:1);i++)h.advanceOneCombatTick();
@@ -76,7 +78,11 @@ final class SlowLegacyNpcRange {
             check(newShots(h,before)==0,"production scheduler cannot launch before committed due tick");
         }
         check(h.server().getCurrentTick()==start+delay,"exact original due tick reached");
-        fire(h,replacement,true,"retarget resumes exactly at original due tick");
+        if(!clear) {
+            fire(h,replacement,false,"new Slow tier adds only uncaptured delta at old due tick");
+            h.advanceOneCombatTick();
+        }
+        fire(h,replacement,true,"retarget resumes at captured deadline plus only fresh tier delta");
         check(replacement.getDelayTicks()==(clear?3:5),"only the next commitment captures current Slow");
         npc.setRangeEventNpc(null);npc.advanceCombatLifecycle();
     }
@@ -91,8 +97,10 @@ final class SlowLegacyNpcRange {
         h.advanceOneCombatTick();Slow.apply(npc,22,22);
         while(h.server().getCurrentTick()<start+3)h.advanceOneCombatTick();
         RangeEventNpc replacement=event(h,npc,p);
-        fire(h,replacement,true,"new Slow cannot postpone an already committed ordinary due tick");
-        check(replacement.getDelayTicks()==5,"gained Slow affects the following shot only");
+        fire(h,replacement,false,"fresh Slow2 adds two ticks to next otherwise-ready shot");
+        h.advanceOneCombatTick();fire(h,replacement,false,"fresh two-tick Slow wait retains second tick");
+        h.advanceOneCombatTick();fire(h,replacement,true,"fresh Slow2 upcoming attack resolves exactly two ticks later");
+        check(replacement.getDelayTicks()==5,"next interval captures current Slow without multiplying it");
         npc.setRangeEventNpc(null);npc.advanceCombatLifecycle();
     }
 
@@ -100,7 +108,9 @@ final class SlowLegacyNpcRange {
         Npc npc=h.npc(3,440,440);Player p=victim(h,"lifetime next",443);
         Slow.apply(npc,22,22);
         RangeEventNpc first=event(h,npc,p);
-        fire(h,first,true,"old lifetime launches slowed shot");
+        fire(h,first,false,"old lifetime fresh Slow wait starts");
+        h.advanceOneCombatTick();h.advanceOneCombatTick();
+        fire(h,first,true,"old lifetime launches after fresh Slow wait");
         h.advanceOneCombatTick();
         npc.advanceCombatLifecycle();
         RangeEventNpc replacement=event(h,npc,p);

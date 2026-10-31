@@ -65,6 +65,7 @@ final class SlowProducers {
   victim.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),1000,1000,false);
   RangeEventNpc legacyEvent=new RangeEventNpc(h.world(),legacy,victim);legacy.setRangeEventNpc(legacyEvent);
   Slow.apply(legacy,22,22);legacyEvent.run();
+  check(legacyEvent.getDelayTicks()==1,"fresh Slow admission does not pretend a projectile committed");h.advanceOneCombatTick();h.advanceOneCombatTick();legacyEvent.run();
   check(legacyEvent.getDelayTicks()==5,"actual legacy NPC ranged action captures two Slow ticks");
   Slow.clear(legacy);check(legacyEvent.getDelayTicks()==5,"legacy NPC deadline remains after clearing");
   check(h.server().getGameEventHandler().getEvents().stream().anyMatch(e->e instanceof ProjectileEvent

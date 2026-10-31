@@ -52,7 +52,10 @@ public final class SlayerRewardCombat {
 			|| !legalSecondary((Player)source, target)) return;
 		WhipDelay old = whipState(target);
 		if (old != null && tick(target) < old.immuneUntil) return;
-		if (source.getWorld().getServer().getCombatRandom().nextInt(100) < 10) target.setAttribute(WHIP, new WhipDelay(target));
+    if (source.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
+      target.setAttribute(WHIP, new WhipDelay(target));
+      AttackState.delay(target, AttackCadenceState.Source.WHIP);
+    }
 	}
 	private static final class BowFraction {
 		final CombatParticipantSnapshot lifetime;
@@ -85,7 +88,9 @@ public final class SlayerRewardCombat {
 			|| !legalSecondary(wearer, attacker)) return false;
 		if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) >= 10) return false;
 		wearer.message("Your Sullen Pendant cries out in pain!");
-		if (SlayerRewardBosses.isBoss(attacker)) { wearer.message("Is uneffected"); return false; }
+		if (SlayerRewardBosses.isBoss(attacker)) {
+      wearer.message("Is uneffected");
+      return false; }
 		int percent = 1 + wearer.getWorld().getServer().getCombatRandom().nextInt(attacker.isPlayer() ? 5 : 10);
 		int damage = Math.max(1, (int)((long)attacker.getSkills().getMaxStat(Skill.HITS.id()) * percent / 100));
 		// Defense bypass is not immunity/mitigation bypass.
@@ -134,12 +139,27 @@ public final class SlayerRewardCombat {
 			if (thunderTarget(caster, primary, player, tier)) thunderHit(caster, player, tier, spellPower);
 	}
 	private static void thunderHit(Player caster, Mob target, int tier, double spellPower) {
-		int damage = CombatFormula.calculateSecondaryMagicDamage(caster, target, thunderSecondaryPower(tier, spellPower));
+    com.openrsc.server.model.combat.AttackRoll roll =
+        CombatFormula.rollSecondaryMagicDamage(
+            caster, target, thunderSecondaryPower(tier, spellPower));
+    int damage = roll.getDamage();
 		damage = DarkBeastCombat.mitigate(target, damage);
-		DamageResult result = target.getWorld().getServer().getResolvedDamageTransaction().apply(
-			DamageRequest.resolvedLegacy(caster, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-				SecondaryEffectPolicy.THUNDER_SPIRE_SPLASH.getStableKey(), damage)
-				.style(CombatStyle.MAGIC).hitSplatType(HitSplat.TYPE_STANDARD).build());
+    DamageResult result =
+        target
+            .getWorld()
+            .getServer()
+            .getResolvedDamageTransaction()
+            .apply(
+                DamageRequest.resolvedLegacy(
+                        caster,
+                        target,
+                        DamageRequest.SourceCategory.OWNED_EFFECT,
+                        SecondaryEffectPolicy.THUNDER_SPIRE_SPLASH.getStableKey(),
+                        damage)
+                    .style(CombatStyle.MAGIC)
+                    .hitSplatType(HitSplat.TYPE_STANDARD)
+                    .attackRoll(roll)
+                    .build());
 		if (target instanceof Npc) {
 			Npc npc = (Npc)target; npc.addMageDamage(caster, result.getActualDamage());
 			if (!npc.isChasing() && !npc.inCombat()

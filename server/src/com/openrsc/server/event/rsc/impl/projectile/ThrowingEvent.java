@@ -8,6 +8,8 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
@@ -15,15 +17,12 @@ import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
-import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
-import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.triggers.PlayerRangeNpcTrigger;
 import com.openrsc.server.plugins.triggers.PlayerRangePlayerTrigger;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MessageType;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -141,7 +140,7 @@ public class ThrowingEvent extends GameTickEvent {
 		if (target.isPlayer()) {
 			Player playerTarget = (Player) target;
 			if (!playerTarget.getConfig().WANT_MYWORLD && playerTarget.getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
-				player.message("Player has a protection from missiles prayer active!");
+        player.message("Player has a protection from missiles prayer active!");
 				return;
 			}
 		}
@@ -181,6 +180,7 @@ public class ThrowingEvent extends GameTickEvent {
 		while (throwingTargets.size() > throwsToConsume) {
 			throwingTargets.remove(throwingTargets.size() - 1);
 		}
+    if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(player, com.openrsc.server.content.Slow.Cadence.RANGED)) return;
 		if (!removeThrowingItems(player, throwingID, throwsToConsume)) {
 			terminateCurrent(player);
 			return;
@@ -202,21 +202,33 @@ public class ThrowingEvent extends GameTickEvent {
 
 		int delay = 3;
 		if (skillCape) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your Ranged cape activates, letting you shoot two arrows at once!");
+      player.playerServerMessage(
+          MessageType.QUEST,
+          "@gre@Your Ranged cape activates, letting you shoot two arrows at once!");
 			delay = 1;
 		}
 
-		final boolean isShuriken = RangeUtils.SHURIKENS.contains(throwingID);
+    final com.openrsc.server.model.combat.AttackCommitment attack =
+        com.openrsc.server.model.combat.AttackState.commitAttack(player);
+    final boolean isShuriken = RangeUtils.SHURIKENS.contains(throwingID);
 		for (int i = 0; i < throwingTargets.size(); i++) {
-			applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0 || isShuriken, i == 0);
+      applyThrowingHit(
+          player,
+          throwingID,
+          throwingTargets.get(i),
+          skillCape,
+          i == 0 || isShuriken,
+          i == 0,
+          attack);
 		}
 		ActionSender.sendSound(player, "shoot");
 
-		final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(player, delay);
-		com.openrsc.server.content.Slow.commit(player, com.openrsc.server.content.Slow.Cadence.RANGED, adjustedDelay);
+		final com.openrsc.server.content.Slow.Interval interval = RangeUtils.getAdjustedRangePlan(player, delay);
+        final int adjustedDelay = interval.ticks;
+		com.openrsc.server.content.Slow.commit(player, com.openrsc.server.content.Slow.Cadence.RANGED, adjustedDelay, interval.tier);
 		setDelayTicks(adjustedDelay);
 
-		player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
+    player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
 		getOwner().setKillType(KillType.RANGED);
 		deliveredFirstProjectile = true;
 	}
@@ -501,8 +513,19 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 	}
 
-	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile, boolean firstProjectileThisAttack) {
-		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
+  private void applyThrowingHit(
+      Player player,
+      int throwingID,
+      Mob hitTarget,
+      boolean skillCape,
+      boolean showProjectile,
+      boolean firstProjectileThisAttack,
+      com.openrsc.server.model.combat.AttackCommitment attack) {
+    com.openrsc.server.model.combat.AttackRoll roll =
+        attack.isSuppressed()
+            ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+            : RangeUtils.rollRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
+    int damage = roll.getDamage();
 		final ProjectileLaunchSpecification.Producer projectileProducer =
 			RangeUtils.SHURIKENS.contains(throwingID)
 				? ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN
@@ -548,14 +571,22 @@ public class ThrowingEvent extends GameTickEvent {
 		final DuplicationStrategy projectileDuplicationStrategy = RangeUtils.SHURIKENS.contains(throwingID)
 			? DuplicationStrategy.ALLOW_MULTIPLE
 			: DuplicationStrategy.ONE_PER_MOB;
-		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
-			getWorld(), player, hitTarget,
-			ProjectileLaunchSpecification.builder(
-				projectileProducer, damage, 2)
-				.chase(true)
-				.poisonWeaponId(throwingID)
-				.presentation(projectileType, 0, showProjectile)
-				.duplicationStrategy(projectileDuplicationStrategy)
-				.build(), resourceLedger));
+    getWorld()
+        .getServer()
+        .getGameEventHandler()
+        .add(
+            new ProjectileEvent(
+                getWorld(),
+                player,
+                hitTarget,
+                ProjectileLaunchSpecification.builder(projectileProducer, damage, 2)
+                    .chase(true)
+                    .poisonWeaponId(throwingID)
+                    .presentation(projectileType, 0, showProjectile)
+                    .duplicationStrategy(projectileDuplicationStrategy)
+                    .attackCommitment(attack)
+                    .attackRoll(roll)
+                    .build(),
+                resourceLedger));
 	}
 }
