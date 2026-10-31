@@ -130,3 +130,16 @@ The client changes only existing Ogre/Thunder descriptions. Full repository-wide
 `test-all` and owner hands-on gameplay are not claimed. Core integrates, verifies
 and stages the exact READY commit separately; live activation is not part of this
 handoff.
+
+### Core integration checks
+
+The first manager verification found two source-hook checks still naming the
+replaced Cosmic/Ogre helpers. They now check the shared resolver and one-attack
+Stagger authority, including the unchanged Cosmic chance/cap and five-attack
+recovery. Native behavior is covered by the launch/settlement fixtures above.
+The Magecraft source check also still required retired percentage-based Earth
+timing; that check already failed on the pre-integration main commit. It now
+checks shared Slow timing and the reciprocal profile, and rejects reintroduction
+of the old percentage hook. These are integration-test updates, with no further
+gameplay or balance changes. Manager matched-build receipts are preserved in
+the prepared update's `evidence/critical-stagger-foundation/` directory.

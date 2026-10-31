@@ -336,7 +336,7 @@ def ensure_source_support(items: dict[int, dict]) -> None:
             fail(f"WaterSlowEvent.java missing expected snippet: {snippet}")
     for snippet in (
         "getCombatSpeedMultiplier",
-        "hitter.getEarthAttackSpeedDebuffPercent()",
+        "Slow.Cadence.RECIPROCAL",
     ):
         if snippet not in combat_event_text:
             fail(f"CombatEvent.java missing expected snippet: {snippet}")
@@ -370,10 +370,15 @@ def ensure_source_support(items: dict[int, dict]) -> None:
             fail(f"Wood Bind implementation should be retired in favor of Splinter: {snippet}")
     for snippet in (
         "getAdjustedRangeDelayTicks(final Mob attacker",
-        "attacker.getEarthAttackSpeedDebuffPercent()",
+        "Slow.plan(attacker,",
     ):
         if snippet not in range_utils_text:
             fail(f"RangeUtils.java missing expected snippet: {snippet}")
+    # Shared Slow owns current cadence; the old percentage timing must not return.
+    # Reciprocal melee intentionally excludes Slow because its timer is shared.
+    for source in (combat_event_text, pvm_melee_event_text, range_utils_text):
+        if ".getEarthAttackSpeedDebuffPercent()" in source:
+            fail("Combat cadence should use shared Slow instead of retired Earth percentage timing")
 
 
 def main() -> None:

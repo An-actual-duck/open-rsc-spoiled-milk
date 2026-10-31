@@ -16,6 +16,7 @@ COMBAT_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/
 PVM_MELEE_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/PvmMeleeEvent.java"
 PROJECTILE_EVENT_PATH = ROOT / "server/src/com/openrsc/server/event/rsc/impl/projectile/ProjectileEvent.java"
 OGRE_STAGGER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/OgreStaggeringBlowProc.java"
+STAGGER_STATE_PATH = ROOT / "server/src/com/openrsc/server/model/combat/StaggerState.java"
 BABY_DRAGON_SMOKE_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BabyDragonSmokeProc.java"
 BLUE_DRAGON_WATER_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/BlueDragonWaterProc.java"
 EARTH_DRAGON_SLOW_PROC_PATH = ROOT / "server/src/com/openrsc/server/model/combat/EarthDragonSlowProc.java"
@@ -187,7 +188,8 @@ def main() -> None:
     expect_contains(OGRE_STAGGER_PROC_PATH, "if (!source.hasFullOgreSet())", "Ogre complete-set gate")
     expect_contains(OGRE_STAGGER_PROC_PATH, "random.nextDouble()", "Ogre single random draw")
     expect_contains(OGRE_STAGGER_PROC_PATH, "source.getOgreStaggeringBlowProcChance()", "Ogre configured chance")
-    expect_contains(OGRE_STAGGER_PROC_PATH, "target.applyOgreStaggerDebuff();", "Ogre target debuff")
+    expect_contains(OGRE_STAGGER_PROC_PATH, "return target.applyStagger(1);", "Ogre shared one-attack Stagger")
+    expect_contains(STAGGER_STATE_PATH, "RECOVERY_ATTACKS = 5", "shared five-attack Stagger recovery")
     expect_contains(BABY_DRAGON_SMOKE_PROC_PATH,
                     "source.getBabyDragonSmokeAccuracyDebuffPercent()",
                     "Baby Dragon equipment effect gate")

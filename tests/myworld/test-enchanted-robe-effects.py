@@ -11,6 +11,7 @@ EQUIPMENT = ROOT / "server/src/com/openrsc/server/model/container/Equipment.java
 PLAYER = ROOT / "server/src/com/openrsc/server/model/entity/player/Player.java"
 STAT_RESTORATION = ROOT / "server/src/com/openrsc/server/event/rsc/impl/StatRestorationEvent.java"
 COMBAT_FORMULA = ROOT / "server/src/com/openrsc/server/event/rsc/impl/combat/CombatFormula.java"
+CRITICAL_RESOLVER = ROOT / "server/src/com/openrsc/server/model/combat/CriticalHitResolver.java"
 SPELL_HANDLER = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellHandler.java"
 SPELL_CLASSIFICATION = ROOT / "server/src/com/openrsc/server/net/rsc/handlers/SpellClassification.java"
 SUMMONING = ROOT / "server/src/com/openrsc/server/content/Summoning.java"
@@ -58,6 +59,7 @@ def main() -> None:
 	player = PLAYER.read_text(encoding="utf-8")
 	stat_restoration = STAT_RESTORATION.read_text(encoding="utf-8")
 	combat_formula = COMBAT_FORMULA.read_text(encoding="utf-8")
+	critical_resolver = CRITICAL_RESOLVER.read_text(encoding="utf-8")
 	spell_handler = SPELL_HANDLER.read_text(encoding="utf-8")
 	spell_classification = SPELL_CLASSIFICATION.read_text(encoding="utf-8")
 	summoning = SUMMONING.read_text(encoding="utf-8")
@@ -94,7 +96,16 @@ def main() -> None:
 	require(stat_restoration, "tickBodyRobeWeaponPowerDecay();", "Body robe temporary power should decay")
 	require(stat_restoration, "getSoulRobeHealthRegenerationBonus()", "Soul robe should speed health regeneration")
 
-	require(combat_formula, "rollPlayerCrit(source, attackMax)", "Cosmic robe crit should affect melee/ranged/magic rolls")
+	for signature in (
+		"private static AttackRoll rollMagicDamage(",
+		"private static AttackRoll rollMeleeDamage(",
+		"public static AttackRoll rollRangedDamage(",
+	):
+		require(java_method_body(combat_formula, signature), "CriticalHitResolver.cosmic(",
+			"Cosmic robe crit should enter the shared resolver for each main style")
+	require(critical_resolver, "getCosmicRobeCritChance()", "Shared critical source should use authored Cosmic chance")
+	require(player, "Math.min(0.50D, getCarriedItems().getEquipment().getCosmicRobeTierTotal() * 0.01D)",
+		"Cosmic chance and cap remain unchanged pending redesign")
 	require(combat_formula, "getChaosRobeSurroundedDamageMultiplier()", "Chaos robe adjacency bonus should enter damage multiplier")
 	for retired in (
 		"getLawRobeExtraDamageRolls",
