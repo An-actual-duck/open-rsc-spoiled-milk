@@ -42,8 +42,9 @@ public final class ClericSpellGuideCatalog {
 	}
 
 	private static Entry format(ClericSpellDef definition) {
+        String resourceName = "neutral".equalsIgnoreCase(definition.getAlignment()) ? "Grace" : titleCase(definition.getAlignment());
 		String header = "Lvl " + definition.getWorshipLevel() + "  " + definition.getName()
-			+ " - " + titleCase(definition.getAlignment()) + " sigil";
+			+ " - " + resourceName + " sigil";
 		String area = "Area: party allies within " + definition.getRadius()
 			+ " tiles; caster excluded";
 		return new Entry(definition.getStableCode(), header, area,

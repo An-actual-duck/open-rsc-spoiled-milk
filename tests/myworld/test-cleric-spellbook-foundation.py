@@ -257,7 +257,7 @@ public final class ClericSpellbookFoundationFixture {
 
 
 def run_compiled_fixture() -> None:
-    sources = sorted(str(path) for path in JAVA_ROOT.glob("*.java"))
+    sources = sorted(str(path) for path in JAVA_ROOT.glob("*.java") if path.name != "ClericWellInteraction.java")
     sources.append(str(ROOT / "server/src/com/openrsc/server/content/PoisonPowerReduction.java"))
     with tempfile.TemporaryDirectory(prefix="cleric-foundation-") as temporary:
         temp = Path(temporary)

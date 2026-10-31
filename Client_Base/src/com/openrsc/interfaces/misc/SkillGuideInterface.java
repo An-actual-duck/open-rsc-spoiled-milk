@@ -1214,6 +1214,12 @@ public final class SkillGuideInterface {
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Altar conversion awards Blessing experience"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Carving sigils awards Crafting experience"));
 		skillMenuEntries.add(new SkillMenuItem(3293, "", "Production does not award Worship experience"));
+        skillMenuEntries.add(new SkillMenuItem(3300, "", "Grace: dip uninfused sigils in Divine wellsprings"));
+        skillMenuEntries.add(new SkillMenuItem(3427, "", "Blight: dip uninfused sigils in Ichor wells"));
+        skillMenuEntries.add(new SkillMenuItem(3300, "1", "Stone infusion; silver infusion needs Blessing 16"));
+        skillMenuEntries.add(new SkillMenuItem(3429, "", "Extra output every 10 levels above the requirement"));
+        skillMenuEntries.add(new SkillMenuItem(3300, "", "Well infusion awards Blessing XP and spends no Devotion"));
+        skillMenuEntries.add(new SkillMenuItem(3294, "", "God sigils still need their god's altar and Devotion"));
 	}
 
 	private void populateSummoningGuide() {

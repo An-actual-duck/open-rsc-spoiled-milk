@@ -25,7 +25,7 @@ public final class ClericWellInteractionFixture {
   try(CurrentCombatHarness h=new CurrentCombatHarness()){
    h.server().getConfig().WANT_MYWORLD=true;
    h.world().getRegionManager().preflightNativeLayeredPlacements();h.world().getRegionManager().populateNativeLayeredPlacements();
-   Player p=h.player("wellfixture",441,440);SigilWells plugin=new SigilWells();h.recordOutgoingPackets(p);h.installPlugin(OpLocTrigger.class,plugin);p.getCarriedItems().getInventory().add(new Item(3299,3));
+   Player p=h.player("wellfixture",441,440);SigilWells plugin=new SigilWells();h.recordOutgoingPackets(p);h.installPlugin(OpLocTrigger.class,plugin);
    for(int id:new int[]{1354,1355})for(int direction=0;direction<8;direction++){
     int x=440+4*direction,y=id==1354?440:448;
     GameObject o=h.world().getRegionManager().findNativeLayeredScenery(at(x,y,0));
@@ -41,7 +41,7 @@ public final class ClericWellInteractionFixture {
     p.teleport(x+3,y,false);check(!ClericWellInteraction.canInteract(p,o),"range not bypassed");p.teleport(x+1,y,false);
     check(plugin.blockOpLoc(p,o,"dip sigils"),"production Dip command selected");check(!plugin.blockOpLoc(p,o,"examine"),"native examine left intact");
     int inventory=p.getCarriedItems().getInventory().size();int raw=p.getCarriedItems().getInventory().countId(3299,java.util.Optional.of(false));double blessing=p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id());
-    int messages=p.getOutgoingPacketQueueSize();plugin.onOpLoc(p,o,"dip sigils");check(p.getOutgoingPacketQueueSize()==messages+1,"production Dip sends explicit player guidance");check(p.getCarriedItems().getInventory().size()==inventory&&p.getCarriedItems().getInventory().countId(3299,java.util.Optional.of(false))==raw&&p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id())==blessing,"authoring guidance grants/consumes nothing");
+    int messages=p.getOutgoingPacketQueueSize();plugin.onOpLoc(p,o,"dip sigils");check(p.getOutgoingPacketQueueSize()==messages+1,"production Dip sends explicit player guidance");check(p.getCarriedItems().getInventory().size()==inventory&&p.getCarriedItems().getInventory().countId(3299,java.util.Optional.of(false))==raw&&p.getSkills().getExperience(com.openrsc.server.constants.Skill.BLESSING.id())==blessing,"empty-inventory guidance grants/consumes nothing");
     check(ClericWellInteraction.guidance(id).contains(id==1354?"Blight":"Grace"),"purpose-specific guidance");
     WalkToObjectAction pending=new WalkToObjectAction(p,o){public void executeInternal(){}};check(pending.shouldExecute(),"ordinary object walker admits adjacent land");
     GameObject replacement=new GameObject(h.world(),Point.location(o.getX(),o.getY()),id,direction,0);h.world().replaceGameObject(o,replacement);
@@ -58,7 +58,7 @@ public final class ClericWellInteractionFixture {
    p.teleportLayered(at(441,440,0),false);h.world().unregisterGameObject(o);check(!ClericWellInteraction.canInteract(p,o),"removed object rejected");
    GameObject uninitialized=new GameObject(h.world(),Point.location(440,440),1354,0,0);check(!ClericWellInteraction.canInteract(p,uninitialized),"unavailable object scope fails closed");
    check(!ClericWellInteraction.canInteract(p,null)&&!ClericWellInteraction.canInteract(null,o),"null input rejected");
-   System.out.println("PASS "+checks+" production native well/land/liquid/wall/rotation/range/replacement/level/packet/plugin/no-charge checks");
+   System.out.println("PASS "+checks+" production native well/land/liquid/wall/rotation/range/replacement/level/packet/plugin/empty-inventory checks");
   }
  }
 }
