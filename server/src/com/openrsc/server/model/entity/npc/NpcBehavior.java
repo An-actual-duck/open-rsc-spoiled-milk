@@ -1,18 +1,20 @@
 package com.openrsc.server.model.entity.npc;
 
+import static com.openrsc.server.plugins.Functions.*;
+
 import com.openrsc.server.Server;
 import com.openrsc.server.constants.ItemId;
 import com.openrsc.server.constants.NpcId;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.Summoning;
+import com.openrsc.server.event.rsc.impl.combat.AggroEvent;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent;
-import com.openrsc.server.event.rsc.impl.combat.AggroEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
-import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
@@ -23,11 +25,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.MessageType;
-
 import java.util.Optional;
-
-import static com.openrsc.server.plugins.Functions.*;
-
 
 public class NpcBehavior {
 	private static final int ROAM_BASE_TICKS = 4;
@@ -295,9 +293,10 @@ public class NpcBehavior {
 			&& gnomeBaller) {
 			for (Player player : npc.getViewArea().getPlayersInView()) {
 				int range = 1;
-				if (!player.withinRange(npc, range) || !player.getCarriedItems().hasCatalogID(ItemId.GNOME_BALL.id(), Optional.of(false))
-					|| !inArray(player.getAttribute("gnomeball_npc", -1), -1, 0))
-					continue; // Not in range, does not have a gnome ball or a gnome baller already has ball.
+        if (!player.withinRange(npc, range)
+            || !player.getCarriedItems().hasCatalogID(ItemId.GNOME_BALL.id(), Optional.of(false))
+            || !inArray(player.getAttribute("gnomeball_npc", -1), -1, 0))
+          continue; // Not in range, does not have a gnome ball or a gnome baller already has ball.
 
 				//set tackle
 				state = State.TACKLE;
@@ -536,7 +535,6 @@ public class NpcBehavior {
 	}
 
 	private boolean tryProjectileAttack(final long now) {
-		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(npc)) return true;
 		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.tryPull(npc, target)) return true;
 		final NpcCombatProfile profile = NpcCombatProfile.resolve(npc);
 		if (profile.isMeleeOnly() || target == null || target.isRemoved()) {
@@ -571,66 +569,88 @@ public class NpcBehavior {
 			return false;
 		}
 
-			if (profile.usesRangedProjectiles() && target.isPlayer()
-				&& !((Player) target).getConfig().WANT_MYWORLD
-				&& ((Player) target).getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
-				((Player) target).message(npc + " is trying to shoot you!");
-				return true;
-			}
+    if (profile.usesRangedProjectiles()
+        && target.isPlayer()
+        && !((Player) target).getConfig().WANT_MYWORLD
+        && ((Player) target).getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
+      ((Player) target).message(npc + " is trying to shoot you!");
+      return true;
+    }
 		npc.resetPath();
 		npc.face(target);
-		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(npc)) return true;
+		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(npc, com.openrsc.server.content.Slow.Cadence.RANGED)) return true;
 		npc.setCombatTimer();
-		projectileCooldownLifetime = com.openrsc.server.content.Slow.tier(npc) == 0 ? null
+        com.openrsc.server.content.Slow.Interval interval = com.openrsc.server.content.Slow.plan(npc,3 * tickFactor);
+        if(!banshee && !naga) com.openrsc.server.content.Slow.capture(npc, com.openrsc.server.content.Slow.Cadence.RANGED, interval.tier);
+		projectileCooldownLifetime = interval.tier == 0 ? null
 			: com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(npc);
 		nextProjectileTick = npc.getWorld().getServer().getCurrentTick()
-			+ com.openrsc.server.content.Slow.delay(npc, 3 * tickFactor);
+			+ interval.ticks;
 		if (banshee) com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(npc, 3);
 		if (naga) com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(npc,
 			com.openrsc.server.content.monsterslayer.NagaCombat.THROW_TICKS);
 
-        final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(npc);
+    final com.openrsc.server.model.combat.AttackCommitment attack =
+        com.openrsc.server.model.combat.AttackState.commitAttack(npc);
 		if (profile.usesRangedProjectiles()) {
 
-
-			com.openrsc.server.model.combat.AttackRoll roll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false);
-            int damage = roll.getDamage();
+      com.openrsc.server.model.combat.AttackRoll roll =
+          attack.isSuppressed()
+              ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+              : CombatFormula.rollRangedDamage(
+                  npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false);
+      int damage = roll.getDamage();
 			npc.setKillType(KillType.RANGED);
-			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
-				npc.getWorld(), npc, target,
-				ProjectileLaunchSpecification.builder(
-					ProjectileLaunchSpecification.Producer.NPC_RANGED,
-					damage, 2)
-					.chase(true)
-					.presentation(profile.getRangedProjectileVisual(), 0, true)
-					.attackCommitment(attack).attackRoll(roll).build()));
+      npc.getWorld()
+          .getServer()
+          .getGameEventHandler()
+          .add(
+              new ProjectileEvent(
+                  npc.getWorld(),
+                  npc,
+                  target,
+                  ProjectileLaunchSpecification.builder(
+                          ProjectileLaunchSpecification.Producer.NPC_RANGED, damage, 2)
+                      .chase(true)
+                      .presentation(profile.getRangedProjectileVisual(), 0, true)
+                      .attackCommitment(attack)
+                      .attackRoll(roll)
+                      .build()));
 			return true;
 		}
 
 		if (profile.usesMagicProjectiles()) {
 			final NpcMagicAttack magicAttack = profile.selectMagicAttack();
-			com.openrsc.server.model.combat.AttackRoll roll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollMagicDamage(npc,target,profile.getMagicSpellPower());
-            int damage = roll.getDamage();
+      com.openrsc.server.model.combat.AttackRoll roll =
+          attack.isSuppressed()
+              ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+              : CombatFormula.rollMagicDamage(npc, target, profile.getMagicSpellPower());
+      int damage = roll.getDamage();
 			int impactEffectType = magicAttack.getImpactEffect();
 			int startleProcChancePercent = magicAttack.getStartleProcChancePercent();
 			int acidPoisonPower = magicAttack.getAcidPoisonPower();
 			int fireDefenseDebuffPercent = magicAttack.getFireDefenseDebuffPercent();
 			int splinterProcChancePercent = magicAttack.getSplinterProcChancePercent();
 			npc.setKillType(KillType.MAGIC);
-			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
-				npc.getWorld(), npc, target,
-				ProjectileLaunchSpecification.builder(
-					ProjectileLaunchSpecification.Producer.NPC_MAGIC,
-					damage, 1)
-					.chase(true)
-					.elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)
-					.presentation(
-						magicAttack.getProjectileVisual(),
-						impactEffectType, true)
-					.magicElement(magicAttack.getElement())
-					.dualElementProcs(startleProcChancePercent,
-						acidPoisonPower, 0, splinterProcChancePercent)
-					.attackCommitment(attack).attackRoll(roll).build()));
+      npc.getWorld()
+          .getServer()
+          .getGameEventHandler()
+          .add(
+              new ProjectileEvent(
+                  npc.getWorld(),
+                  npc,
+                  target,
+                  ProjectileLaunchSpecification.builder(
+                          ProjectileLaunchSpecification.Producer.NPC_MAGIC, damage, 1)
+                      .chase(true)
+                      .elementalDebuffs(0, 0, 0, fireDefenseDebuffPercent)
+                      .presentation(magicAttack.getProjectileVisual(), impactEffectType, true)
+                      .magicElement(magicAttack.getElement())
+                      .dualElementProcs(
+                          startleProcChancePercent, acidPoisonPower, 0, splinterProcChancePercent)
+                      .attackCommitment(attack)
+                      .attackRoll(roll)
+                      .build()));
 			return true;
 		}
 
@@ -655,26 +675,28 @@ public class NpcBehavior {
 
 	private synchronized void attemptTackle(final Npc n, final Player player, final long now) {
 		int otherNpcId = player.getAttribute("gnomeball_npc", -1);
-		if ((!inArray(otherNpcId, -1, 0) && npc.getID() != otherNpcId) || player.getAttribute("throwing_ball_game", false)) {
+    if ((!inArray(otherNpcId, -1, 0) && npc.getID() != otherNpcId)
+        || player.getAttribute("throwing_ball_game", false)) {
 			return;
 		}
 		//TODO: FIXME: solve the thinkbubble requiring context
 		//thinkbubble(new Item(ItemId.GNOME_BALL.id()));
 		player.message("the gnome trys to tackle you");
 		if (DataConversions.random(0, 1) == 0) {
-			//successful avoiding tackles gives agility xp
-			player.playerServerMessage(MessageType.QUEST, "You manage to push him away");
+      // successful avoiding tackles gives agility xp
+      player.playerServerMessage(MessageType.QUEST, "You manage to push him away");
 			npcYell(player, npc, "grrrrr");
 			player.incExp(Skill.AGILITY.id(), TACKLING_XP[DataConversions.random(0, 3)], true);
 		} else {
-			if (!inArray(player.getAttribute("gnomeball_npc", -1), -1, 0) || player.getAttribute("throwing_ball_game", false)) {
+      if (!inArray(player.getAttribute("gnomeball_npc", -1), -1, 0)
+          || player.getAttribute("throwing_ball_game", false)) {
 				// some other gnome beat here or player is shooting at goal
 				return;
 			}
 			player.setAttribute("gnomeball_npc", npc.getID());
 			player.getCarriedItems().remove(new Item(ItemId.GNOME_BALL.id()));
 			player.playerServerMessage(MessageType.QUEST, "he takes the ball...");
-			player.playerServerMessage(MessageType.QUEST, "and pushes you to the floor");
+      player.playerServerMessage(MessageType.QUEST, "and pushes you to the floor");
 			player.damage((int) (Math.ceil(player.getSkills().getLevel(Skill.HITS.id()) * 0.05)));
 			say(player, "ouch");
 			npcYell(player, npc, "yeah");
@@ -797,7 +819,7 @@ public class NpcBehavior {
 
 	private boolean grandTreeGnome(final Npc npc) {
 		String npcName = npc.getDef().getName();
-		return npcName.equalsIgnoreCase("gnome child") || npcName.equalsIgnoreCase("gnome local");
+    return npcName.equalsIgnoreCase("gnome child") || npcName.equalsIgnoreCase("gnome local");
 	}
 
 	public State getBehaviorState() {

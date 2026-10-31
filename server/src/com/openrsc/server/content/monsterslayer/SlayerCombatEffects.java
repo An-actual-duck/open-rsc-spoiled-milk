@@ -6,7 +6,8 @@ import com.openrsc.server.model.entity.Mob;
 public final class SlayerCombatEffects {
 	private SlayerCombatEffects() { }
 	public static boolean attacksBlocked(Mob mob) {
-		return GiantFrogCombat.attacksBlocked(mob) || CockatriceCombat.attacksBlocked(mob)
-			|| AbyssalDemonCombat.actionsBlocked(mob) || SlayerRewardCombat.whipBlocked(mob);
+    return GiantFrogCombat.attacksBlocked(mob)
+        || CockatriceCombat.attacksBlocked(mob)
+        || AbyssalDemonCombat.actionsBlocked(mob);
 	}
 }

@@ -10,6 +10,7 @@ public final class AttackCadenceState {
   private int tokens;
   private long due = Long.MIN_VALUE;
   private boolean latched;
+  private int accountedSlow = -1;
 
   public synchronized boolean addDelay(long now, Source source) {
     int bit = 1 << source.ordinal();
@@ -23,9 +24,20 @@ public final class AttackCadenceState {
    * Only after ordinary readiness/path/resource admission, never from general eligibility polls.
    */
   public synchronized boolean ready(long now) {
-    if (!latched && tokens != 0) {
-      due = plus(now, Integer.bitCount(tokens));
+    return ready(now, 0, 0);
+  }
+
+  public synchronized boolean ready(long now, int currentSlow, int capturedSlow) {
+    if (currentSlow < 0 || capturedSlow < 0)
+      throw new IllegalArgumentException("Negative Slow tier");
+    accountedSlow = Math.max(accountedSlow, capturedSlow);
+    int additionalSlow = Math.max(0, currentSlow - accountedSlow);
+    accountedSlow = Math.max(accountedSlow, currentSlow);
+    if (!latched && (tokens != 0 || additionalSlow > 0)) {
+      due = plus(now, Integer.bitCount(tokens) + (long) additionalSlow);
       latched = true;
+    } else if (latched && additionalSlow > 0) {
+      due = plus(Math.max(now, due), additionalSlow);
     }
     return !latched || now >= due;
   }
@@ -35,6 +47,7 @@ public final class AttackCadenceState {
     tokens = 0;
     due = Long.MIN_VALUE;
     latched = false;
+    accountedSlow = -1;
   }
 
   public synchronized boolean has(Source source) {

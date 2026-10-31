@@ -29,11 +29,27 @@ public class SharedAttackStateFixture {
   ok(c.due()==12);ok(!c.ready(11));ok(c.ready(12));ok(!c.addDelay(12,AttackCadenceState.Source.STICKY));
   c.committed();ok(c.ready(12));ok(c.addDelay(12,AttackCadenceState.Source.STICKY));
   c.clear();ok(c.ready(12));
+  c.clear();ok(!c.ready(10,1,0));ok(c.due()==11);ok(!c.ready(10,2,0));ok(c.due()==12);
+  ok(!c.ready(11,0,0));ok(c.due()==12);ok(c.ready(12,1,0));
+  c.committed();ok(!c.ready(20,2,1));ok(c.due()==21);ok(!c.ready(20,2,0));ok(c.due()==21);ok(c.ready(21,0,0));
+  c.committed();ok(!c.ready(30,1,0));ok(c.due()==31);
+  final int[] random={0},normal={0};
+  java.util.function.DoubleSupplier rng=()->{random[0]++;return 0.0;};
+  java.util.function.IntSupplier ordinary=()->{normal[0]++;return 20;};
+  AttackRoll critical=CriticalHitResolver.resolve(20,.10,AttackRoll.Critical.COSMIC,rng,ordinary);
+  ok(critical.isCritical()&&critical.getDamage()==20&&random[0]==1&&normal[0]==0);
+  AttackRoll maximum=CriticalHitResolver.resolve(20,0,AttackRoll.Critical.NONE,rng,ordinary);
+  ok(!maximum.isCritical()&&maximum.getDamage()==20&&random[0]==1&&normal[0]==1);
+  AttackRoll miss=CriticalHitResolver.resolve(0,.50,AttackRoll.Critical.COSMIC,rng,()->0);
+  ok(!miss.isCritical()&&random[0]==1);
+  ok(!critical.committed(AttackCommitment.staggered()).isCritical());
+  ok(critical.withDamage(0).isCritical());
+  ok(!CriticalHitResolver.resolve(20,.10,AttackRoll.Critical.COSMIC,()->.10,ordinary).isCritical());
   System.out.println("PASS "+n+" shared attack-state assertions");
  }
 }'''
 with tempfile.TemporaryDirectory(prefix='shared-attack-state-') as tmp:
  p=pathlib.Path(tmp);(p/'SharedAttackStateFixture.java').write_text(fixture)
- sources=[root/'server/src/com/openrsc/server/model/combat'/f'{name}.java' for name in ['StaggerState','AttackCommitment','AttackCadenceState']]
- subprocess.run([str(java/'javac'),'-d',tmp,*map(str,sources),str(p/'SharedAttackStateFixture.java')],check=True)
- subprocess.run([str(java/'java'),'-Xmx128m','-cp',tmp,'SharedAttackStateFixture'],check=True)
+ sources=[root/'server/src/com/openrsc/server/model/combat'/f'{name}.java' for name in ['StaggerState','AttackCommitment','AttackCadenceState','AttackRoll','CriticalHitResolver']]
+ subprocess.run([str(java/'javac'),'-cp',str(root/'server/core.jar'),'-d',tmp,*map(str,sources),str(p/'SharedAttackStateFixture.java')],check=True)
+ subprocess.run([str(java/'java'),'-Xmx128m','-cp',tmp+':'+str(root/'server/core.jar'),'SharedAttackStateFixture'],check=True)

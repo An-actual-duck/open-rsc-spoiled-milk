@@ -5,8 +5,8 @@ import com.openrsc.server.content.CorrosiveAura;
 import com.openrsc.server.content.DivineGrace;
 import com.openrsc.server.content.DivineRetribution;
 import com.openrsc.server.content.ElderGreenDragonArmorEffect;
-import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.PoisonPower;
+import com.openrsc.server.content.PoisonProcChance;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.TrueDefense;
 import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
@@ -16,27 +16,27 @@ import com.openrsc.server.event.rsc.impl.combat.ElderGreenDragonSpecialAttacks;
 import com.openrsc.server.model.combat.BabyDragonSmokeProc;
 import com.openrsc.server.model.combat.BlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.BlueDragonWaterProc;
-import com.openrsc.server.model.combat.CombatEngagement;
-import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.ChainLightningTraversalPolicy;
 import com.openrsc.server.model.combat.ChaosChainLightningProc;
+import com.openrsc.server.model.combat.CombatEngagement;
+import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.model.combat.DamageRequest;
 import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
 import com.openrsc.server.model.combat.EarthDragonSlowProc;
 import com.openrsc.server.model.combat.ElderGreenDragonArmorProc;
-import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.HellsInfernoNpcSplash;
-import com.openrsc.server.model.combat.DeathRobeOverkillSplash;
-import com.openrsc.server.model.combat.PlayerProjectileDamageBuff;
+import com.openrsc.server.model.combat.InfernalFireProc;
 import com.openrsc.server.model.combat.KingBlackDragonBreathFollowup;
 import com.openrsc.server.model.combat.OgreStaggeringBlowProc;
+import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
+import com.openrsc.server.model.combat.PlayerProjectileDamageBuff;
 import com.openrsc.server.model.combat.ProjectileImpactDecision;
 import com.openrsc.server.model.combat.ProjectileImpactLedger;
 import com.openrsc.server.model.combat.ProjectileImpactValidator;
 import com.openrsc.server.model.combat.ProjectileLaunchSnapshot;
 import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
 import com.openrsc.server.model.combat.ProjectileResourceLedger;
-import com.openrsc.server.model.combat.PlayerOwnedNpcRadiusSelection;
 import com.openrsc.server.model.combat.RedDragonFireProc;
 import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.combat.SplinterTargetSelectionPolicy;
@@ -436,8 +436,8 @@ public class ProjectileEvent extends SingleTickEvent {
 						return;
 					}
 				}
-				if (!launchSnapshot.getSpecification().getAttackCommitment().isSuppressed()) caster.consumeAttackBasedDebuffs();
-				if (caster.isPlayer() && !launchSnapshot.getSpecification().getAttackCommitment().isSuppressed()) {
+        caster.consumeAttackBasedDebuffs();
+        if (caster.isPlayer()) {
 					((Player) caster).consumeLeatherSetAttackBuffs();
 				}
 			}
@@ -559,7 +559,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (caster.isPlayer()) {
 			damage = applyPlayerProjectileDamageBuff((Player) caster, damage);
 		}
-		final boolean attackSuppressed = launchSnapshot.getSpecification().getAttackCommitment().isSuppressed();
+    final boolean attackSuppressed =
+        launchSnapshot.getSpecification().getAttackCommitment().isSuppressed();
 		final boolean wail = !attackSuppressed && type == 1
 			&& com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(caster, opponent);
 		if (attackSuppressed) {
@@ -603,15 +604,20 @@ public class ProjectileEvent extends SingleTickEvent {
 			final java.util.UUID encounterId = engagement != null
 				&& engagement.peerOf(caster) == opponent
 				? engagement.getEncounterId() : null;
-			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
-				caster, opponent, DamageRequest.SourceCategory.ACTOR,
-				primaryProjectileEffectKey(), damage)
-				.eventId(getUUID())
-				.encounterId(encounterId)
-				.style(primaryProjectileCombatStyle())
-                .attackRoll(launchSnapshot.getSpecification().getAttackRoll())
-				.hitSplatType(hitSplatType)
-				.build();
+      final DamageRequest damageRequest =
+          DamageRequest.resolvedLegacy(
+                  caster,
+                  opponent,
+                  DamageRequest.SourceCategory.ACTOR,
+                  primaryProjectileEffectKey(),
+                  damage)
+              .eventId(getUUID())
+              .encounterId(encounterId)
+              .style(primaryProjectileCombatStyle())
+              .attackCommitment(launchSnapshot.getSpecification().getAttackCommitment())
+              .attackRoll(launchSnapshot.getSpecification().getAttackRoll())
+              .hitSplatType(hitSplatType)
+              .build();
 			final DamageResult damageResult = opponent.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);
 			damageDealt = damageResult.getLegacyDamageDealt();
@@ -727,25 +733,28 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 
-		if (!attackSuppressed && caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
-			&& ((Player) caster).applyDeathRingChargeHit((Npc) opponent)) {
+    if (!attackSuppressed
+        && caster.isPlayer()
+        && opponent.isNpc()
+        && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
+        && ((Player) caster).applyDeathRingChargeHit((Npc) opponent)) {
 			handleDeath();
 			return;
 		}
 
-		if (!attackSuppressed) applySplinterOnHitEffect();
+    if (!attackSuppressed) applySplinterOnHitEffect();
 		if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (caster.isPlayer() && opponent.isNpc()) {
 				applyDeathRobeOverkillSplash((Player) caster, (Npc) opponent, damage - lastHits);
 			}
 			handleDeath();
 		} else {
-			if (!attackSuppressed && Summoning.applySummonOnHitEffects(caster, opponent, damage)) {
+      if (!attackSuppressed && Summoning.applySummonOnHitEffects(caster, opponent, damage)) {
 				handleDeath();
 				return;
 			}
 			applyWeaponPoison();
-			if (!attackSuppressed) applyLeatherSetOnHitEffects();
+      if (!attackSuppressed) applyLeatherSetOnHitEffects();
 			if (!attackSuppressed) {
 				applyDragonWeaponBreathDamage();
 				ElderGreenDragonSpecialAttacks.maybeApplyProjectileAoe(getWorld(), caster, opponent, false);
@@ -788,7 +797,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (acidPoisonPower > 0 && rollsPercent(getDualElementProcChancePercent())) {
 				opponent.applyPoison(acidPoisonPower, acidPoisonPower, caster);
 			if (caster.isPlayer() && opponent.isNpc()) {
-				((Player) caster).message("@gr2@Corrode poisons the " + ((Npc) opponent).getDef().name + ".");
+        ((Player) caster)
+            .message("@gr2@Corrode poisons the " + ((Npc) opponent).getDef().name + ".");
 			}
 		}
 		if (frostbiteProcChancePercent > 0 && rollsPercent(frostbiteProcChancePercent)) {
@@ -957,7 +967,8 @@ public class ProjectileEvent extends SingleTickEvent {
 
 			opponent.applyPoison(appliedPoisonPower, totalMaxPower, casterPlayer);
 		if (opponent.isNpc()) {
-			casterPlayer.message("@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) opponent).getDef().name + "!");
+      casterPlayer.message(
+          "@gr3@You @gr2@have @gr1@poisioned @gr2@the " + ((Npc) opponent).getDef().name + "!");
 		}
 	}
 
@@ -985,12 +996,31 @@ public class ProjectileEvent extends SingleTickEvent {
 				}
 			});
 		if (infernal.isConfigured()) {
-			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
-				infernal.getMaxHit(), infernal.getRoll(), infernal.getChance(), infernal.isTriggered(),
-				infernal.getRolledDamage(), infernal.getDamageDealt());
+      CombatEffectUtil.sendInfernalProcDebug(
+          casterPlayer,
+          "projectile",
+          opponent,
+          damage,
+          infernalPieces,
+          infernal.getMaxHit(),
+          infernal.getRoll(),
+          infernal.getChance(),
+          infernal.isTriggered(),
+          infernal.getRolledDamage(),
+          infernal.getDamageDealt());
 		} else if (infernalPieces > 0) {
-			CombatEffectUtil.sendInfernalProcDebug(casterPlayer, "projectile", opponent, damage, infernalPieces,
-				infernal.getMaxHit(), -1.0D, 0.0D, false, 0, 0);
+      CombatEffectUtil.sendInfernalProcDebug(
+          casterPlayer,
+          "projectile",
+          opponent,
+          damage,
+          infernalPieces,
+          infernal.getMaxHit(),
+          -1.0D,
+          0.0D,
+          false,
+          0,
+          0);
 		}
 		BlueDragonWaterProc.tryApply(casterPlayer, opponent,
 			ProductionGameRandom.INSTANCE,
@@ -1004,7 +1034,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
 				caster, opponent, procDamage));
-		final String dragonBreathProc = casterPlayer.getAttribute("dragon_breath_armor_proc", "");
+    final String dragonBreathProc = casterPlayer.getAttribute("dragon_breath_armor_proc", "");
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			casterPlayer.getUpdateFlags().setCombatEffect(new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH));
 		}

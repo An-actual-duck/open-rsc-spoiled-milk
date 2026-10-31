@@ -90,11 +90,13 @@ public final class SlayerRewardsFixture {
 		h.random().reset(1); h.random().scriptInts(0);
 		SlayerRewardCombat.whipHit(a,n,0); check(!SlayerRewardCombat.whipBlocked(n), "zero cannot delay");
 		SlayerRewardCombat.whipHit(a,n,1); check(SlayerRewardCombat.whipBlocked(n), "proc delays target");
-		check(SlayerCombatEffects.attacksBlocked(n), "attack scheduler gate");
-		check(!CombatEligibility.evaluate(CombatEligibilityRequest.builder(n,a,CombatEligibilityPhase.COMMIT,CombatStyle.MELEE).build()).isAllowed(), "admission gate");
+		check(!SlayerCombatEffects.attacksBlocked(n), "Whip attack delay is not a blanket offensive action lock");
+        check(com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(n),"otherwise-ready attack latches the Whip tick");
+		check(CombatEligibility.evaluate(CombatEligibilityRequest.builder(n,a,CombatEligibilityPhase.COMMIT,CombatStyle.MELEE).build()).getReason()!=CombatEligibilityReason.SOURCE_ABYSSAL_WHIP, "Whip leaves legality admission separate from its delay receipt");
 		for (int i = 1; i <= 3; i++) {
 			h.advanceOneCombatTick(); h.random().reset(1); h.random().scriptInts(0);
 			SlayerRewardCombat.whipHit(b,n,1); check(!SlayerRewardCombat.whipBlocked(n), "shared immunity tick " + i);
+            if(i==1)com.openrsc.server.model.combat.AttackState.commitAttack(n);
 		}
 		h.advanceOneCombatTick(); h.random().reset(1); h.random().scriptInts(0);
 		SlayerRewardCombat.whipHit(b,n,1); check(SlayerRewardCombat.whipBlocked(n), "can proc after immunity");

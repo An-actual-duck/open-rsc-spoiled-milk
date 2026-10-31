@@ -1,7 +1,6 @@
 package com.openrsc.server.model.combat;
 
 import com.openrsc.server.model.entity.Mob;
-
 import java.util.Objects;
 import java.util.UUID;
 
@@ -52,7 +51,8 @@ public final class DamageRequest {
 	private final int hitSplatType;
 	private final Presentation presentation;
 	private final boolean applyGoblinTenacity;
-    private final AttackRoll attackRoll;
+  private final AttackRoll attackRoll;
+  private final AttackCommitment attackCommitment;
 
 	private DamageRequest(final Builder builder) {
 		requestId = builder.requestId;
@@ -73,7 +73,10 @@ public final class DamageRequest {
 		hitSplatType = builder.hitSplatType;
 		presentation = builder.presentation;
 		applyGoblinTenacity = builder.applyGoblinTenacity;
-        attackRoll = builder.attackRoll == null ? AttackRoll.normal(resolvedDamage) : builder.attackRoll;
+    attackCommitment = builder.attackCommitment;
+    attackRoll =
+        (builder.attackRoll == null ? AttackRoll.normal(resolvedDamage) : builder.attackRoll)
+            .committed(attackCommitment);
 	}
 
 	public static Builder resolvedLegacy(final Mob source, final Mob target,
@@ -83,8 +86,22 @@ public final class DamageRequest {
 			resolvedDamage);
 	}
 
-	public AttackRoll getAttackRoll() { return attackRoll; }
-    public boolean isCritical() { return attackRoll.isCritical(); }
+  public boolean isAttackSuppressed() {
+    return attackCommitment.isSuppressed();
+  }
+
+  public AttackCommitment getAttackCommitment() {
+    return attackCommitment;
+  }
+
+  public AttackRoll getAttackRoll() {
+    return attackRoll;
+  }
+
+  public boolean isCritical() {
+    return attackRoll.isCritical();
+  }
+
 	public UUID getRequestId() { return requestId; }
 	public UUID getParentRequestId() { return parentRequestId; }
 	public UUID getEventId() { return eventId; }
@@ -130,7 +147,8 @@ public final class DamageRequest {
 		private int hitSplatType;
 		private Presentation presentation = Presentation.DAMAGE_AND_HITSPLAT;
 		private boolean applyGoblinTenacity = true;
-        private AttackRoll attackRoll;
+    private AttackRoll attackRoll;
+    private AttackCommitment attackCommitment = AttackCommitment.normal();
 
 		private Builder(final Mob source, final Mob target,
 				final SourceCategory sourceCategory, final String effectKey,
@@ -151,7 +169,15 @@ public final class DamageRequest {
 			tick = target.getWorld().getServer().getCurrentTick();
 		}
 
-		public Builder attackRoll(AttackRoll value) { attackRoll = Objects.requireNonNull(value, "attackRoll"); return this; }
+    public Builder attackCommitment(AttackCommitment value) {
+      attackCommitment = Objects.requireNonNull(value, "attackCommitment");
+      return this;
+    }
+
+    public Builder attackRoll(AttackRoll value) {
+      attackRoll = Objects.requireNonNull(value, "attackRoll");
+      return this;
+    }
 
 		public Builder requestId(final UUID value) {
 			requestId = Objects.requireNonNull(value, "requestId");

@@ -1,8 +1,8 @@
 package com.openrsc.server.content.monsterslayer;
 
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.event.rsc.DuplicationStrategy;
+import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.Point;
 import com.openrsc.server.model.combat.CombatParticipantSnapshot;
@@ -23,13 +23,18 @@ public final class BloodveldCombat {
 		return mob instanceof Npc && mob.getConfig().WANT_MYWORLD && mob.getID() == NPC_ID;
 	}
 	public static boolean attackReady(Mob mob) {
-		com.openrsc.server.model.combat.CombatParticipantSnapshot lifetime = mob.getAttribute(NEXT + "_lifetime", null);
+    com.openrsc.server.model.combat.CombatParticipantSnapshot lifetime =
+        mob.getAttribute(NEXT + "_lifetime", null);
 		return lifetime == null || !lifetime.matches(mob)
 			|| mob.getWorld().getServer().getCurrentTick() >= mob.<Long>getAttribute(NEXT, -1L);
 	}
 	public static void recordAttack(Mob mob, int ticks) {
-		mob.setAttribute(NEXT + "_lifetime", com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(mob));
-		mob.setAttribute(NEXT, mob.getWorld().getServer().getCurrentTick() + com.openrsc.server.content.Slow.delay(mob, ticks));
+        com.openrsc.server.content.Slow.Interval interval = com.openrsc.server.content.Slow.plan(mob,ticks);
+        com.openrsc.server.content.Slow.capture(mob, com.openrsc.server.content.Slow.Cadence.MELEE, interval.tier);
+        com.openrsc.server.content.Slow.capture(mob, com.openrsc.server.content.Slow.Cadence.RANGED, interval.tier);
+    mob.setAttribute(
+        NEXT + "_lifetime", com.openrsc.server.model.combat.CombatParticipantSnapshot.capture(mob));
+		mob.setAttribute(NEXT, mob.getWorld().getServer().getCurrentTick() + interval.ticks);
 	}
 	public static void lifesteal(Mob source, int damage) {
 		if (!isBloodveld(source) || source.isRemoved() || source.getLevel(Skill.HITS.id()) <= 0 || damage <= 0) return;
@@ -73,7 +78,7 @@ public final class BloodveldCombat {
 		if (SlayerLeatherEffects.delayAttack(npc)) return true;
 		recordAttack(npc, 3);
 		npc.setCombatTimer();
-		if (com.openrsc.server.model.combat.AttackState.commitAttack(npc).isSuppressed()) return true;
+    if (com.openrsc.server.model.combat.AttackState.commitAttack(npc).isSuppressed()) return true;
 		// Existing blank projectile packet triggers the client attack pose, without a missile.
 		player.getUpdateFlags().setProjectile(new Projectile(npc, player, Projectile.BLANK));
 		CombatParticipantSnapshot source = CombatParticipantSnapshot.capture(npc);

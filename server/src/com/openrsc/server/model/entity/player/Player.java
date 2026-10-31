@@ -974,6 +974,7 @@ public final class Player extends Mob {
 	}
 	public void scheduleCombatCast() {
 		final int slowTier = com.openrsc.server.content.Slow.tier(this);
+        com.openrsc.server.content.Slow.capture(this, com.openrsc.server.content.Slow.Cadence.MAGIC, slowTier);
 		if (slowTier == 0) {
 			combatCastLifetime = null;
 			nextCombatCastMillis = 0;

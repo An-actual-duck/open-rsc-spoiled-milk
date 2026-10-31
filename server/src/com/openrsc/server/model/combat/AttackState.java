@@ -77,8 +77,19 @@ public final class AttackState {
   }
 
   public static boolean ready(Mob mob) {
+    return ready(mob, com.openrsc.server.content.Slow.Cadence.MELEE);
+  }
+
+  public static boolean ready(Mob mob, com.openrsc.server.content.Slow.Cadence cadence) {
     synchronized (mob) {
-      return state(mob).cadence.ready(mob.getWorld().getServer().getCurrentTick());
+      return state(mob)
+          .cadence
+          .ready(
+              mob.getWorld().getServer().getCurrentTick(),
+              cadence == com.openrsc.server.content.Slow.Cadence.RECIPROCAL
+                  ? 0
+                  : com.openrsc.server.content.Slow.tier(mob),
+              com.openrsc.server.content.Slow.captured(mob, cadence));
     }
   }
 

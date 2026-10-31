@@ -339,3 +339,20 @@ risk/reward. It is not part of these immediate goals. Older expansion plans
 remain preserved; they do not automatically enlarge this release's scope.
 New visual assets remain game-owned content discovered by the editor, rather
 than a roster or asset bundle built into the editor itself.
+
+### Shared Stagger and critical-hit foundation — October 31 candidate
+
+The implementation candidate consolidates Ogre/Startle into one actor-owned
+Stagger authority: the next attack deals zero without surrendering its normal
+turn/cadence, followed by five actual unstaggered attacks before reapplication.
+Pending multi-attack losses cannot be replaced or queued. Natural zero attacks
+count toward recovery; polls, incoming hits and elapsed time do not. NPCs and
+the existing NPC-to-player Startle path share the rule, without new PvP admission.
+
+Critical hits now have explicit immutable per-hit identity across ordinary
+melee, player ranged/throwing, and Magic launch/settlement. Cosmic keeps its
+existing chance/cap; no Expose Weakness, Weak Legs or Weak Constitution effects
+are enabled. Their balance and eligible-hit decisions remain future work.
+Whip/Sticky extra attack delays compose separately from Stagger, preserving
+normal style/base cooldown ownership and existing movement/utility scope.
+See [the foundation review](shared-critical-stagger-foundation-review.md).

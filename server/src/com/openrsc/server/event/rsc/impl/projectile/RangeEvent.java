@@ -10,6 +10,8 @@ import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.external.ItemDefinition;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.container.Equipment;
 import com.openrsc.server.model.container.Inventory;
 import com.openrsc.server.model.container.Item;
@@ -18,8 +20,6 @@ import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.entity.update.Projectile;
-import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
-import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.net.rsc.ActionSender;
 import com.openrsc.server.plugins.handler.PluginHandler;
@@ -130,7 +130,7 @@ public class RangeEvent extends GameTickEvent {
 			final Player playerTarget = (Player) target;
 
 			if (!playerTarget.getConfig().WANT_MYWORLD && playerTarget.getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
-				player.message("Player has a protection from missiles prayer active!");
+        player.message("Player has a protection from missiles prayer active!");
 				// TODO Should range event be reset here?
 				return;
 			}
@@ -149,15 +149,16 @@ public class RangeEvent extends GameTickEvent {
 		final int ammoId;
 		final boolean isCrossbow = RangeUtils.isCrossbow(weaponId);
 
-        final int availableAmmo = config.WANT_EQUIPMENT_TAB
+    final int availableAmmo =
+        config.WANT_EQUIPMENT_TAB
             ? takeAmmoFromEquipment(weaponId, isCrossbow, false)
             : takeAmmoFromInventory(weaponId, isCrossbow, false);
-        if (availableAmmo == -1) return;
-        if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(player)) return;
+    if (availableAmmo == -1) return;
+    if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(player, com.openrsc.server.content.Slow.Cadence.RANGED)) return;
 		if (config.WANT_EQUIPMENT_TAB) {
-			ammoId = takeAmmoFromEquipment(weaponId, isCrossbow, true);
+      ammoId = takeAmmoFromEquipment(weaponId, isCrossbow, true);
 		} else {
-			ammoId = takeAmmoFromInventory(weaponId, isCrossbow, true);
+      ammoId = takeAmmoFromInventory(weaponId, isCrossbow, true);
 		}
 
 		if (ammoId == -1) {
@@ -168,16 +169,25 @@ public class RangeEvent extends GameTickEvent {
 			boolean skillCape = SkillCapes.shouldActivate(player, ItemId.RANGED_CAPE);
 		int delay = 3;
 		if (skillCape) {
-			player.playerServerMessage(MessageType.QUEST, "@gre@Your Ranged cape activates, letting you shoot two arrows at once!");
+      player.playerServerMessage(
+          MessageType.QUEST,
+          "@gre@Your Ranged cape activates, letting you shoot two arrows at once!");
 			delay = 1;
 		}
 
-		final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(player);
-        final com.openrsc.server.model.combat.AttackRoll attackRoll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : RangeUtils.rollRangedDamage(player, weaponId, ammoId, target, skillCape);
-        final int damage = attackRoll.getDamage();
-		final int dragonBreathDamage = attack.isSuppressed() ? 0 : getWorld().getServer().getConfig().OSRS_COMBAT_RANGED
-			? 0
-			: CombatFormula.rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape);
+    final com.openrsc.server.model.combat.AttackCommitment attack =
+        com.openrsc.server.model.combat.AttackState.commitAttack(player);
+    final com.openrsc.server.model.combat.AttackRoll attackRoll =
+        attack.isSuppressed()
+            ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+            : RangeUtils.rollRangedDamage(player, weaponId, ammoId, target, skillCape);
+    final int damage = attackRoll.getDamage();
+    final int dragonBreathDamage =
+        attack.isSuppressed()
+            ? 0
+            : getWorld().getServer().getConfig().OSRS_COMBAT_RANGED
+                ? 0
+                : CombatFormula.rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape);
 
 		final ProjectileResourceLedger resourceLedger =
 			ProjectileResourceLedger.trackedLaunch(
@@ -213,27 +223,35 @@ public class RangeEvent extends GameTickEvent {
 		getOwner().setKillType(KillType.RANGED);
 		deliveredFirstProjectile = true;
 
-        final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(player, delay);
-		com.openrsc.server.content.Slow.commit(player, com.openrsc.server.content.Slow.Cadence.RANGED, adjustedDelay);
+        final com.openrsc.server.content.Slow.Interval interval = RangeUtils.getAdjustedRangePlan(player, delay);
+        final int adjustedDelay = interval.ticks;
+		com.openrsc.server.content.Slow.commit(player, com.openrsc.server.content.Slow.Cadence.RANGED, adjustedDelay, interval.tier);
         setDelayTicks(adjustedDelay);
 
-        player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
+    player.setAttribute("can_range_again", getWorld().getServer().getCurrentTick() + adjustedDelay);
         ActionSender.sendSound(player, "shoot");
-		getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
-			getWorld(), player, target,
-			ProjectileLaunchSpecification.builder(
-				ProjectileLaunchSpecification.Producer.PLAYER_BOW, damage, 2)
-				.chase(true)
-				.poisonWeaponId(ammoId)
-				.presentation(isCrossbow ? Projectile.BOLT : Projectile.ARROW,
-					0, true)
-				.dragonBreathDamage(dragonBreathDamage)
-				.duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
-				.attackCommitment(attack).attackRoll(attackRoll)
-                .build(), resourceLedger));
+    getWorld()
+        .getServer()
+        .getGameEventHandler()
+        .add(
+            new ProjectileEvent(
+                getWorld(),
+                player,
+                target,
+                ProjectileLaunchSpecification.builder(
+                        ProjectileLaunchSpecification.Producer.PLAYER_BOW, damage, 2)
+                    .chase(true)
+                    .poisonWeaponId(ammoId)
+                    .presentation(isCrossbow ? Projectile.BOLT : Projectile.ARROW, 0, true)
+                    .dragonBreathDamage(dragonBreathDamage)
+                    .duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
+                    .attackCommitment(attack)
+                    .attackRoll(attackRoll)
+                    .build(),
+                resourceLedger));
 	}
 
-	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow, boolean consume) {
+  private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow, boolean consume) {
 		final int[] ammoIds = isCrossbow ? Formulae.boltIDs : Formulae.arrowIDs;
 
 		final Inventory inventory = player.getCarriedItems().getInventory();
@@ -262,14 +280,14 @@ public class RangeEvent extends GameTickEvent {
 			}
 
 			final Item item = new Item(ammo.getCatalogId(), 1, false, ammo.getItemId());
-			if (consume) player.getCarriedItems().remove(item);
+      if (consume) player.getCarriedItems().remove(item);
 			return ammoId;
 		}
 
 		return -1;
 	}
 
-	private int takeAmmoFromEquipment(final int weaponId, final boolean isCrossbow, boolean consume) {
+  private int takeAmmoFromEquipment(final int weaponId, final boolean isCrossbow, boolean consume) {
 		final Equipment equipment = player.getCarriedItems().getEquipment();
 
 		final Item ammo = equipment.getAmmoItem();
@@ -318,10 +336,10 @@ public class RangeEvent extends GameTickEvent {
 			return -1;
 		}
 
-		if (consume) {
-            equipment.remove(ammo, 1);
-		    ActionSender.updateEquipmentSlot(player, 12);
-        }
+    if (consume) {
+      equipment.remove(ammo, 1);
+      ActionSender.updateEquipmentSlot(player, 12);
+    }
 		return ammoId;
 	}
 

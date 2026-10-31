@@ -1,5 +1,7 @@
 package com.openrsc.server.event.rsc.impl.projectile;
 
+import static com.openrsc.server.plugins.Functions.getCurrentLevel;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.openrsc.server.constants.ItemId;
@@ -10,24 +12,20 @@ import com.openrsc.server.content.Summoning;
 import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.event.rsc.impl.combat.OSRSCombatFormula;
 import com.openrsc.server.model.PathValidation;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.container.Item;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.world.World;
-import com.openrsc.server.util.rsc.DataConversions;
 import com.openrsc.server.util.rsc.Formulae;
 import com.openrsc.server.util.rsc.MessageType;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.openrsc.server.plugins.Functions.getCurrentLevel;
 
 public class RangeUtils {
     public static final int WEARABLE_ARROWS_ID = 1000;
@@ -342,7 +340,8 @@ public class RangeUtils {
                     } else {
                         percentage = 0;
                     }
-                    player.playerServerMessage(MessageType.QUEST, "Your shield prevents some of the damage from the flames");
+          player.playerServerMessage(
+              MessageType.QUEST, "Your shield prevents some of the damage from the flames");
                 }
                 fireDamage = (int) Math.floor(getCurrentLevel(player, Skill.HITS.id()) * percentage / 100.0);
                 player.damage(fireDamage);
@@ -418,12 +417,14 @@ public class RangeUtils {
                 && ALLOWED_PROJECTILES.get(weaponId).contains(arrowId);
     }
 
+  public static com.openrsc.server.model.combat.AttackRoll rollRangedDamage(
+      Mob source, int bow, int ammo, Mob target, boolean cape) {
+    if (source.getConfig().OSRS_COMBAT_RANGED)
+      return com.openrsc.server.model.combat.AttackRoll.normal(
+          doRangedDamage(source, bow, ammo, target, cape));
+    return CombatFormula.rollRangedDamage(source, bow, ammo, target, cape);
+  }
 
-    public static com.openrsc.server.model.combat.AttackRoll rollRangedDamage(Mob source, int bow, int ammo, Mob target, boolean cape) {
-        if (source.getConfig().OSRS_COMBAT_RANGED)
-            return com.openrsc.server.model.combat.AttackRoll.normal(doRangedDamage(source,bow,ammo,target,cape));
-        return CombatFormula.rollRangedDamage(source,bow,ammo,target,cape);
-    }
     public static int doRangedDamage(final Mob attacker, final int bowId, final int arrowId, final Mob defender, final boolean skillCape) {
 		if (attacker.getWorld().getServer().getConfig().OSRS_COMBAT_RANGED) {
 			return OSRSCombatFormula.Ranged.doRangedDamage(attacker, bowId, arrowId, defender, skillCape);
@@ -445,14 +446,12 @@ public class RangeUtils {
     }
 
     public static int getAdjustedRangeDelayTicks(final Mob attacker, final int baseDelayTicks) {
-        if (attacker == null) {
-            return baseDelayTicks;
-        }
-        final double multiplier = getRangeSpeedMultiplier(attacker);
-        if (multiplier == 1.0D) {
-            return com.openrsc.server.content.Slow.delay(attacker, baseDelayTicks);
-        }
-        return com.openrsc.server.content.Slow.delay(attacker, Math.max(1, (int) Math.floor(baseDelayTicks / multiplier)));
+        return getAdjustedRangePlan(attacker,baseDelayTicks).ticks;
+    }
+    public static com.openrsc.server.content.Slow.Interval getAdjustedRangePlan(final Mob attacker, final int baseDelayTicks) {
+        if(attacker == null) return com.openrsc.server.content.Slow.plan(null,baseDelayTicks);
+        double multiplier=getRangeSpeedMultiplier(attacker);
+        return com.openrsc.server.content.Slow.plan(attacker,Math.max(1,(int)Math.floor(baseDelayTicks/multiplier)));
     }
 
     private static double getRangeSpeedMultiplier(final Mob attacker) {

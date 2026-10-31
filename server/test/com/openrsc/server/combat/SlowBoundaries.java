@@ -111,6 +111,8 @@ final class SlowBoundaries {
    PvmMeleeEvent e=new PvmMeleeEvent(h.world(),n,p);n.setPvmMeleeEvent(e);
    Slow.apply(n,22,22);h.random().scriptInts(99,99,99,99,99,99);
    int before=n.getHitsMade();e.run();
+   eq(before,n.getHitsMade(),"fresh Slow2 delays upcoming first melee "+id);
+   advanceTo(h,h.server().getCurrentTick()+2);e.run();
    check(n.getHitsMade()>before,"actual NPC melee committed "+id);
    eq(id==870?3:4,(int)e.getDelayTicks(),"actual slowed NPC melee delay "+id);
    long due=h.server().getCurrentTick()+e.getDelayTicks();Slow.clear(n);
@@ -126,7 +128,7 @@ final class SlowBoundaries {
   target.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),10000,10000,false);
   h.equip(player,com.openrsc.server.constants.custom.MyWorldItemId.DAGGER_OF_TERROR,1);
   Slow.apply(player,22,22);PvmMeleeEvent action=new PvmMeleeEvent(h.world(),player,target);player.setPvmMeleeEvent(action);
-  action.run();check(player.getHitsMade()>0,"actual player dagger action committed");eq(3,(int)action.getDelayTicks(),"actual dagger 1 plus tier");
+  action.run();check(player.getHitsMade()==0,"fresh Slow2 delays dagger initial action");advanceTo(h,h.server().getCurrentTick()+2);action.run();check(player.getHitsMade()>0,"actual player dagger action committed");eq(3,(int)action.getDelayTicks(),"actual dagger 1 plus tier");
   Slow.clear(player);action.stop();player.resetCombatEvent();target.resetCombatEvent();
  }
  private static void ranged(CurrentCombatHarness h) throws Exception {
@@ -140,7 +142,7 @@ final class SlowBoundaries {
    Slow.apply(p,22,22);
    GameTickEvent e=throwing?new ThrowingEvent(h.world(),p,1,n):new RangeEvent(h.world(),p,1,n);
    if(throwing)p.setThrowingEvent((ThrowingEvent)e);else p.setRangeEvent((RangeEvent)e);
-   e.run();long due=p.<Long>getAttribute("can_range_again",0L);
+   e.run();check(p.<Long>getAttribute("can_range_again",0L)==0L,"fresh Slow2 delays initial range/throw "+throwing);advanceTo(h,h.server().getCurrentTick()+2);e.run();long due=p.<Long>getAttribute("can_range_again",0L);
    check(due>=h.server().getCurrentTick()+3,"actual ranged/thrown commitment "+throwing+" weapon="+p.getRangeEquip()+" path="+PathValidation.checkCombatProjectilePath(h.world(),p.getWorldLocation(),n.getWorldLocation())+" running="+e.isRunning()+" due="+due+" tick="+h.server().getCurrentTick());
    Slow.clear(p);
    if(throwing)((ThrowingEvent)e).reTarget(n);else ((RangeEvent)e).reTarget(n);
@@ -155,7 +157,9 @@ final class SlowBoundaries {
   Npc attacker=h.npc(3,471,440);attacker.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(),20,20,false);
   Slow.apply(attacker,22,22);attacker.applyStartleDebuff(source);
   check(attacker.consumeStartleDebuff(),"Startle still cancels an attack");eq(22,Slow.power(attacker),"Startle does not consume Slow");
-  attacker.applyOgreStaggerDebuff();check(attacker.consumeOgreStaggerDebuff(),"Ogre still cancels an attack");eq(22,Slow.power(attacker),"Ogre does not consume Slow");
+  attacker.applyOgreStaggerDebuff();check(!attacker.consumeOgreStaggerDebuff(),"Ogre cannot bypass shared Startle recovery");
+  for(int i=0;i<5;i++) com.openrsc.server.model.combat.AttackState.commitAttack(attacker);
+  attacker.applyOgreStaggerDebuff();check(attacker.consumeOgreStaggerDebuff(),"Ogre can stagger after five normal attacks");eq(22,Slow.power(attacker),"Ogre does not consume Slow");
   attacker.applyFrostbiteDebuff(source);PvmMeleeEvent event=new PvmMeleeEvent(h.world(),attacker,defender);
   int pending=(Integer)CurrentCombatHarness.invokePrivate(event,"applyFrostbiteReflection",new Class<?>[]{Mob.class,Mob.class,int.class},attacker,defender,9);
   eq(4,pending,"Frostbite retains pending-hit reduction");eq(15,attacker.getLevel(Skill.HITS.id()),"Frostbite retains reflected damage");eq(22,Slow.power(attacker),"Frostbite remains separate from Slow");

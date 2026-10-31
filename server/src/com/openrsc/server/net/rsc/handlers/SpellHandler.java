@@ -332,6 +332,20 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		return true;
 	}
 
+    /** Called only after the selected damaging spell's own target/staff/quest admission. */
+    private static ProjectileResourceLedger consumeCombatAttackRunes(final Player player,
+            final SpellDef spell, final Spells spellEnum, final Boolean capeActivated,
+            final ProjectileLaunchSpecification.Producer producer) {
+        if (!Boolean.TRUE.equals(capeActivated) && !hasRequiredRunesForAutoCast(player,spell)) {
+            // Existing failure message/ledger behavior, before any extra-delay token is latched.
+            return consumeProjectileSpellRunes(player,spell,capeActivated,producer);
+        }
+        if (SpellClassification.isDamagingAttack(spellEnum)
+                && com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(
+                    player,com.openrsc.server.content.Slow.Cadence.MAGIC)) return null;
+        return consumeProjectileSpellRunes(player,spell,capeActivated,producer);
+    }
+
 	private static ProjectileResourceLedger consumeProjectileSpellRunes(
 			final Player player, final SpellDef spell,
 			final Boolean magicCapeActivated,
@@ -1781,7 +1795,6 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				} else {
 					getPlayer().resetAllExceptDueling();
 				}
-                if (spellType == 2 && com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(getPlayer())) return;
 				EntityType entityType = mob.isPlayer() ? EntityType.PLAYER : EntityType.NPC;
 				boolean isClaws = false;
 				switch (spellEnum) {
@@ -1994,7 +2007,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						}
 
 						final ProjectileResourceLedger crumbleResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (crumbleResources == null) {
@@ -2027,7 +2040,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							return;
 						}
 						final ProjectileResourceLedger ibanResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated, ProjectileLaunchSpecification.Producer
 									.PLAYER_IBAN_MAGIC);
 						if (ibanResources == null) {
@@ -2093,7 +2106,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 						}
 
 						final ProjectileResourceLedger godSpellResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (godSpellResources == null) {
@@ -2147,7 +2160,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 					case ELEMENTAL_BOLT:
 					case WIND_BOLT_R:
 						final ProjectileResourceLedger boltResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (boltResources == null) {
@@ -2178,7 +2191,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 
 					default:
 						final ProjectileResourceLedger defaultSpellResources =
-							consumeProjectileSpellRunes(getPlayer(), spell,
+							consumeCombatAttackRunes(getPlayer(), spell, spellEnum,
 								capeActivated,
 								ProjectileLaunchSpecification.Producer.PLAYER_MAGIC);
 						if (defaultSpellResources == null) {
@@ -2436,10 +2449,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidGodSpellAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateSecondaryMagicDamage(caster, npc, secondaryMax);
+			final com.openrsc.server.model.combat.AttackRoll secondaryRoll =
+                CombatFormula.rollSecondaryMagicDamage(caster, npc, secondaryMax);
+            final int damage = secondaryRoll.getDamage();
 			final int appliedDamage = applyGodSpellSecondaryDamage(
 				caster, npc, damage,
-				SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY, eventId);
+				SecondaryEffectPolicy.DELAYED_GOD_SPELL_SECONDARY, eventId, secondaryRoll);
 			totalDamage += appliedDamage;
 			applyGodSpellSpecialEffect(caster, npc, spellEnum, appliedDamage, false);
 		}
@@ -2458,10 +2473,12 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			if (npc == primaryTarget || !isValidIbanBlastAreaTarget(primaryTarget, npc)) {
 				continue;
 			}
-			final int damage = CombatFormula.calculateSecondaryMagicDamage(
-				caster, npc, secondaryMax, SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
+			final com.openrsc.server.model.combat.AttackRoll secondaryRoll =
+                CombatFormula.rollSecondaryMagicDamage(caster, npc, secondaryMax,
+                    SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST));
+            final int damage = secondaryRoll.getDamage();
 			applyGodSpellSecondaryDamage(caster, npc, damage,
-				SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY, eventId);
+				SecondaryEffectPolicy.DELAYED_IBAN_BLAST_SECONDARY, eventId, secondaryRoll);
 		}
 	}
 
@@ -2498,8 +2515,15 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	private int applyGodSpellSecondaryDamage(final Player caster,
 			final Mob target, int damage,
 			final SecondaryEffectPolicy effectPolicy,
-			final UUID eventId) {
-		damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
+            final UUID eventId) {
+        return applyGodSpellSecondaryDamage(caster, target, damage, effectPolicy, eventId,
+            com.openrsc.server.model.combat.AttackRoll.normal(damage));
+    }
+
+    private int applyGodSpellSecondaryDamage(final Player caster, final Mob target, int damage,
+            final SecondaryEffectPolicy effectPolicy, final UUID eventId,
+            final com.openrsc.server.model.combat.AttackRoll attackRoll) {
+        damage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage);
 		if (damage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return 0;
 		}
@@ -2512,6 +2536,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				.eventId(eventId)
 				.style(CombatStyle.MAGIC)
 				.hitSplatType(HitSplat.TYPE_STANDARD)
+                .attackRoll(attackRoll)
 				.build();
 			final DamageResult damageResult = target.getWorld().getServer()
 				.getResolvedDamageTransaction().apply(damageRequest);

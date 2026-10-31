@@ -28,6 +28,6 @@ public final class OgreStaggeringBlowProc {
 				>= source.getOgreStaggeringBlowProcChance()) {
 			return false;
 		}
-		return target.applyStagger(1);
+    return target.applyStagger(1);
 	}
 }

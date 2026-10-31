@@ -7,13 +7,13 @@ import com.openrsc.server.event.rsc.DuplicationStrategy;
 import com.openrsc.server.event.rsc.GameTickEvent;
 import com.openrsc.server.model.PathValidation;
 import com.openrsc.server.model.combat.CombatEngagementTerminalReason;
+import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
+import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.entity.GroundItem;
 import com.openrsc.server.model.entity.KillType;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.combat.ProjectileLaunchSpecification;
-import com.openrsc.server.model.combat.ProjectileResourceLedger;
 import com.openrsc.server.model.entity.player.Prayers;
 import com.openrsc.server.model.world.World;
 import com.openrsc.server.util.rsc.Formulae;
@@ -41,7 +41,6 @@ public class RangeEventNpc extends GameTickEvent {
 
     public void run() {
         final Mob owner = getOwner();
-		if (com.openrsc.server.content.monsterslayer.SlayerRewardCombat.whipBlocked(owner)) return;
         if (!owner.isCurrentRangeEventNpc(this)) {
             stop();
             return;
@@ -98,16 +97,22 @@ public class RangeEventNpc extends GameTickEvent {
                         return;
                     }
                 }
-            if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(owner)) {
-                setDelayTicks(1); return;
-            }
-            final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(owner, 3);
-            setDelayTicks(adjustedDelay);
+      if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(owner, com.openrsc.server.content.Slow.Cadence.RANGED)) {
+        setDelayTicks(1);
+        return;
+      }
+      final com.openrsc.server.content.Slow.Interval interval = RangeUtils.getAdjustedRangePlan(owner, 3);
+        final int adjustedDelay = interval.ticks;
+      setDelayTicks(adjustedDelay);
 
-
-                final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(owner);
-        final com.openrsc.server.model.combat.AttackRoll attackRoll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : RangeUtils.rollRangedDamage(owner, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
-        final int damage = attackRoll.getDamage();
+      final com.openrsc.server.model.combat.AttackCommitment attack =
+          com.openrsc.server.model.combat.AttackState.commitAttack(owner);
+      final com.openrsc.server.model.combat.AttackRoll attackRoll =
+          attack.isSuppressed()
+              ? com.openrsc.server.model.combat.AttackRoll.normal(0)
+              : RangeUtils.rollRangedDamage(
+                  owner, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
+      final int damage = attackRoll.getDamage();
 
                 final ProjectileResourceLedger resourceLedger =
                     ProjectileResourceLedger.trackedLaunch(
@@ -146,14 +151,21 @@ public class RangeEventNpc extends GameTickEvent {
                 if (victim.isPlayer() && owner.isNpc()) {
                     ((Player) victim).message(owner + " is shooting at you!");
                 }
-                Slow.commit(owner, Slow.Cadence.RANGED, adjustedDelay);
-                getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
-                        getWorld(), owner, victim,
-                        ProjectileLaunchSpecification.builder(
-                                ProjectileLaunchSpecification.Producer.LEGACY_NPC_RANGED,
-                                damage, 2)
-                                .attackCommitment(attack).attackRoll(attackRoll)
-                .build(), resourceLedger));
+                Slow.commit(owner, Slow.Cadence.RANGED, adjustedDelay, interval.tier);
+      getWorld()
+          .getServer()
+          .getGameEventHandler()
+          .add(
+              new ProjectileEvent(
+                  getWorld(),
+                  owner,
+                  victim,
+                  ProjectileLaunchSpecification.builder(
+                          ProjectileLaunchSpecification.Producer.LEGACY_NPC_RANGED, damage, 2)
+                      .attackCommitment(attack)
+                      .attackRoll(attackRoll)
+                      .build(),
+                  resourceLedger));
                 owner.setKillType(KillType.RANGED);
             }
     }

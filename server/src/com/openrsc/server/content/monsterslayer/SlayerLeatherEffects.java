@@ -1,28 +1,29 @@
 package com.openrsc.server.content.monsterslayer;
 
 import com.openrsc.server.constants.Skill;
-import com.openrsc.server.constants.custom.MyWorldItemId;
-import com.openrsc.server.model.entity.player.Player;
-import com.openrsc.server.model.entity.npc.NpcMagicElement;
-import com.openrsc.server.model.entity.npc.Npc;
-import com.openrsc.server.model.entity.Mob;
-import com.openrsc.server.model.combat.DamageResult;
-import com.openrsc.server.content.Summoning;
-import com.openrsc.server.model.entity.update.HitSplat;
-import com.openrsc.server.net.rsc.ActionSender;
-import com.openrsc.server.model.combat.CombatParticipantSnapshot;
-import com.openrsc.server.model.combat.DamageRequest;
-import com.openrsc.server.model.combat.CombatStyle;
-import com.openrsc.server.model.combat.SecondaryEffectPolicy;
-import com.openrsc.server.model.entity.update.CombatEffect;
-import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
 import com.openrsc.server.constants.SpellDamages;
 import com.openrsc.server.constants.Spells;
+import com.openrsc.server.constants.custom.MyWorldItemId;
+import com.openrsc.server.content.Summoning;
+import com.openrsc.server.event.rsc.impl.combat.CombatFormula;
+import com.openrsc.server.model.combat.CombatParticipantSnapshot;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.combat.DamageRequest;
+import com.openrsc.server.model.combat.DamageResult;
+import com.openrsc.server.model.combat.SecondaryEffectPolicy;
 import com.openrsc.server.model.entity.EntityType;
+import com.openrsc.server.model.entity.Mob;
+import com.openrsc.server.model.entity.npc.Npc;
+import com.openrsc.server.model.entity.npc.NpcMagicElement;
+import com.openrsc.server.model.entity.player.Player;
+import com.openrsc.server.model.entity.update.CombatEffect;
+import com.openrsc.server.model.entity.update.HitSplat;
+import com.openrsc.server.net.rsc.ActionSender;
 
 /** Full-set policies for the new leather families. No effect is inherited from borrowed art. */
 public final class SlayerLeatherEffects {
-	private static final String CHARGE = "slayer_leather_charge";
+  private static final String CHARGE = "slayer_leather_charge";
+
 	private SlayerLeatherEffects() { }
 
 	public static boolean hasSet(Player player, int coif) {
@@ -57,19 +58,29 @@ public final class SlayerLeatherEffects {
 	}
 
 	private static long tick(Mob mob) { return mob.getWorld().getServer().getCurrentTick(); }
-    /** Admit queued extra delays only when the ordinary attack is otherwise ready. */
-    public static boolean delayAttack(Mob mob) {
-        return !com.openrsc.server.model.combat.AttackState.ready(mob);
-    }
 
-    private static void stickyHit(Player wearer, Mob attacker) {
-        if (!hasSet(wearer, MyWorldItemId.GIANT_FROG_COIF) || attacker == null || attacker == wearer
-            || attacker.getLevel(Skill.HITS.id()) <= 0 || attacker.isRemoved()) return;
-        if (com.openrsc.server.model.combat.AttackState.hasDelay(attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY)) return;
-        if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
-            com.openrsc.server.model.combat.AttackState.delay(attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY);
-        }
+  /** Admit queued extra delays only when the ordinary attack is otherwise ready. */
+  public static boolean delayAttack(Mob mob) {
+    return delayAttack(mob, com.openrsc.server.content.Slow.Cadence.MELEE);
+  }
+  public static boolean delayAttack(Mob mob, com.openrsc.server.content.Slow.Cadence cadence) {
+    return !com.openrsc.server.model.combat.AttackState.ready(mob,cadence);
+  }
+
+  private static void stickyHit(Player wearer, Mob attacker) {
+    if (!hasSet(wearer, MyWorldItemId.GIANT_FROG_COIF)
+        || attacker == null
+        || attacker == wearer
+        || attacker.getLevel(Skill.HITS.id()) <= 0
+        || attacker.isRemoved()) return;
+    if (com.openrsc.server.model.combat.AttackState.hasDelay(
+        attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY)) return;
+    if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
+      com.openrsc.server.model.combat.AttackState.delay(
+          attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY);
     }
+  }
+
 	private static final class Charge {
 		final CombatParticipantSnapshot lifetime;
 		int power;
@@ -103,17 +114,31 @@ public final class SlayerLeatherEffects {
 		double power = player.getWorld().getServer().getConstants().getSpellDamages()
 			.getSpellDamage(Spells.THUNDER_SPLASH, target.isNpc() ? EntityType.NPC : EntityType.PLAYER,
 				SpellDamages.MagicType.MODERNMAGIC);
-		int damage = CombatFormula.calculateSecondaryMagicDamage(player, target, power, .60D);
+    com.openrsc.server.model.combat.AttackRoll roll =
+        CombatFormula.rollSecondaryMagicDamage(player, target, power, .60D);
+    int damage = roll.getDamage();
 		if (target instanceof Player) {
 			Player victim = (Player)target;
 			damage = victim.applyPotionMagicDamageReduction(victim.applyRobeDamageMitigation(damage, NpcMagicElement.THUNDER));
 		}
 		damage = DarkBeastCombat.mitigate(target, damage);
 		target.getUpdateFlags().setCombatEffect(new CombatEffect(target, CombatEffect.THUNDER_SPLASH));
-		DamageResult result = target.getWorld().getServer().getResolvedDamageTransaction().apply(
-			DamageRequest.resolvedLegacy(player, target, DamageRequest.SourceCategory.OWNED_EFFECT,
-				SecondaryEffectPolicy.ELECTRICALLY_CHARGED.getStableKey(), damage).style(CombatStyle.MAGIC)
-				.hitSplatType(HitSplat.TYPE_ARMOR_PROC).build());
+    DamageResult result =
+        target
+            .getWorld()
+            .getServer()
+            .getResolvedDamageTransaction()
+            .apply(
+                DamageRequest.resolvedLegacy(
+                        player,
+                        target,
+                        DamageRequest.SourceCategory.OWNED_EFFECT,
+                        SecondaryEffectPolicy.ELECTRICALLY_CHARGED.getStableKey(),
+                        damage)
+                    .style(CombatStyle.MAGIC)
+                    .hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+                    .attackRoll(roll)
+                    .build());
 		if (target instanceof Npc) {
 			Npc npc = (Npc)target; npc.addMageDamage(player, result.getActualDamage());
 			if (!result.isTargetTerminal() && !npc.isChasing() && !npc.inCombat()) npc.setChasing(player);
