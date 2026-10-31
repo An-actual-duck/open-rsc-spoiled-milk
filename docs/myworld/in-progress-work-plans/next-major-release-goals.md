@@ -143,19 +143,30 @@ Do not silently reduce them or treat the formulas as unapproved.
 
 These progression/composite rules are **design only**. The existing twelve-spell
 runtime, costs/effects and spell-specific ranks remain unchanged. Its two-tier
-roster is salvage/history, not the active future roster. Generic Unify/Respite
-placement is open, not an owner-approved commitment.
+roster is salvage/history, not the active future roster. **Keep Unify unchanged
+except for a flat cost of two Grace sigils per cast, no god sigil (not per
+recipient); exclude Respite from the
+future book because of abuse concerns.** Unify retains Worship 3, radius 4,
+party-allies-only targeting excluding the caster, a maximum of two safe ordinary
+walking steps toward the caster stopping within two tiles, same-level/world
+and line-of-effect checks, disabled PvP and no Holy Power ranks. No added tiers
+or unlock shift are approved. Two Grace is the confirmed quantity; grade
+correspondence remains open (current Stone Grace 3300 is a reference, not a
+new grade decision). Excluding Respite does not remove Saradomin's planned
+regeneration, other potion/equipment regeneration, assets or item IDs.
 
 God+Grace buffs, god+Blight debuffs and joint resource consumption remain
 confirmed future casting direction. Generic purpose-only costs replace the god
 share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
-compatible grades); exact vectors are still open. Production remains complete.
+compatible grades); Unify's two-Grace quantity is settled, while other exact
+vectors and grade correspondence remain open. Production remains complete.
 
 ### Decisions still needed
 
 Saradomin's third component; remaining magnitudes, exact tier unlocks, names,
 durations and mixed casting costs/grades; composite targeting/stacking; debuff
-components; generic utility placement and book layout. Tier 4 remains later work.
+components and book layout. Unify is retained and Respite excluded; neither
+roster decision remains open. Tier 4 remains later work.
 The [active governing design](cleric-spellbook-concept.md#active-overhaul-three-ordinary-tiers-and-six-power-levels--october-30-2026)
 records the six thresholds, examples and distinction from the historical book.
 
