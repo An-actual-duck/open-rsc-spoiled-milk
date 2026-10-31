@@ -84,9 +84,6 @@ public abstract class Mob extends Entity {
 	private int windDebuffAttacksRemaining = 0;
 	private int bearIntimidatePercent = 0;
 	private int bearIntimidateAttacksRemaining = 0;
-	private int ogreStaggerAttacksRemaining = 0;
-	private int startleDebuffAttacksRemaining = 0;
-	private Mob startleSource = null;
 	private int frostbiteDebuffAttacksRemaining = 0;
 	private Mob frostbiteSource = null;
 	private int smokeAccuracyDebuffPercent = 0;
@@ -1654,14 +1651,8 @@ public abstract class Mob extends Entity {
 		bearIntimidateAttacksRemaining = 0;
 	}
 
-	public void clearOgreStaggerDebuff() {
-		ogreStaggerAttacksRemaining = 0;
-	}
-
-	public void clearStartleDebuff() {
-		startleDebuffAttacksRemaining = 0;
-		startleSource = null;
-	}
+    public void clearOgreStaggerDebuff() { com.openrsc.server.model.combat.AttackState.clearStagger(this); }
+    public void clearStartleDebuff() { com.openrsc.server.model.combat.AttackState.clearStagger(this); }
 
 	public void clearFrostbiteDebuff() {
 		frostbiteDebuffAttacksRemaining = 0;
@@ -1690,20 +1681,13 @@ public abstract class Mob extends Entity {
 		}
 	}
 
-	public void applyOgreStaggerDebuff() {
-		ogreStaggerAttacksRemaining = 1;
-		if (isPlayer()) {
-			((Player) this).message("@yel@A staggering blow leaves your next strike dead in your hands.");
-		}
-	}
-
-	public void applyStartleDebuff(Mob source) {
-		startleDebuffAttacksRemaining = 1;
-		startleSource = source;
-		if (isPlayer()) {
-			((Player) this).message("@yel@Startle makes your next attack falter.");
-		}
-	}
+    public boolean applyStagger(int attacks) {
+        boolean applied = com.openrsc.server.model.combat.AttackState.stagger(this, attacks);
+        if (applied && isPlayer()) ((Player)this).message("@yel@You are staggered for " + attacks + " attack" + (attacks == 1 ? "." : "s."));
+        return applied;
+    }
+    public void applyOgreStaggerDebuff() { applyStagger(1); }
+    public void applyStartleDebuff(Mob source) { applyStagger(1); }
 
 	public void applyFrostbiteDebuff(Mob source) {
 		frostbiteDebuffAttacksRemaining = 1;
@@ -1713,27 +1697,12 @@ public abstract class Mob extends Entity {
 		}
 	}
 
-	public boolean consumeOgreStaggerDebuff() {
-		if (ogreStaggerAttacksRemaining <= 0) {
-			return false;
-		}
-		clearOgreStaggerDebuff();
-		if (isPlayer()) {
-			((Player) this).message("@yel@You fail to recover your next strike.");
-		}
-		return true;
-	}
-
-	public boolean consumeStartleDebuff() {
-		if (startleDebuffAttacksRemaining <= 0) {
-			return false;
-		}
-		clearStartleDebuff();
-		if (isPlayer()) {
-			((Player) this).message("@yel@Startle stops your attack.");
-		}
-		return true;
-	}
+    /** Compatibility consumption for explicit old callers, never readiness polling. */
+    public boolean consumeOgreStaggerDebuff() {
+        return com.openrsc.server.model.combat.AttackState.pendingStaggers(this) > 0
+            && com.openrsc.server.model.combat.AttackState.commitAttack(this).isSuppressed();
+    }
+    public boolean consumeStartleDebuff() { return consumeOgreStaggerDebuff(); }
 
 	public Mob consumeFrostbiteSource() {
 		if (frostbiteDebuffAttacksRemaining <= 0) {
@@ -2243,6 +2212,7 @@ public abstract class Mob extends Entity {
 	public long advanceCombatLifecycle(
 			final CombatEngagementTerminalReason reason) {
 		com.openrsc.server.content.Slow.clear(this);
+        com.openrsc.server.model.combat.AttackState.clear(this);
 		terminateCombatOwnership(reason);
 		return combatLifecycle.incrementAndGet();
 	}

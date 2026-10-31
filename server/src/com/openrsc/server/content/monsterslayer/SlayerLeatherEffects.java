@@ -62,23 +62,24 @@ public final class SlayerLeatherEffects {
 		long blockedUntil = Long.MIN_VALUE;
 		Sticky(Mob mob) { lifetime = CombatParticipantSnapshot.capture(mob); }
 	}
-	/** Called only at an otherwise-ready attack: delay that attempt one tick, never movement. */
-	public static boolean delayAttack(Mob mob) {
-		Sticky sticky = mob.getAttribute(STICKY, null);
-		if (sticky == null || !sticky.lifetime.matches(mob)) return false;
-		if (sticky.blockedUntil == Long.MIN_VALUE) sticky.blockedUntil = tick(mob) + 1;
-		if (tick(mob) < sticky.blockedUntil) return true;
-		mob.removeAttribute(STICKY);
-		return false;
-	}
-	private static void stickyHit(Player wearer, Mob attacker) {
-		if (!hasSet(wearer, MyWorldItemId.GIANT_FROG_COIF) || attacker == null || attacker == wearer
-			|| attacker.getLevel(Skill.HITS.id()) <= 0 || attacker.isRemoved()) return;
-		Sticky existing = attacker.getAttribute(STICKY, null);
-		if (existing != null && existing.lifetime.matches(attacker)) return;
-		if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) < 10)
-			attacker.setAttribute(STICKY, new Sticky(attacker));
-	}
+    /** Offensive Sticky is already composed into the actor deadline when applied. */
+    public static boolean delayAttack(Mob mob) {
+        Sticky sticky = mob.getAttribute(STICKY, null);
+        if (sticky == null || !sticky.lifetime.matches(mob)) return false;
+        if (!com.openrsc.server.model.combat.AttackState.ready(mob)) return true;
+        mob.removeAttribute(STICKY);
+        return false;
+    }
+    private static void stickyHit(Player wearer, Mob attacker) {
+        if (!hasSet(wearer, MyWorldItemId.GIANT_FROG_COIF) || attacker == null || attacker == wearer
+            || attacker.getLevel(Skill.HITS.id()) <= 0 || attacker.isRemoved()) return;
+        Sticky existing = attacker.getAttribute(STICKY, null);
+        if (existing != null && existing.lifetime.matches(attacker)) return;
+        if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
+            attacker.setAttribute(STICKY, new Sticky(attacker));
+            com.openrsc.server.model.combat.AttackState.delay(attacker, 1);
+        }
+    }
 	private static final class Charge {
 		final CombatParticipantSnapshot lifetime;
 		int power;

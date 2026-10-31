@@ -52,7 +52,10 @@ public final class SlayerRewardCombat {
 			|| !legalSecondary((Player)source, target)) return;
 		WhipDelay old = whipState(target);
 		if (old != null && tick(target) < old.immuneUntil) return;
-		if (source.getWorld().getServer().getCombatRandom().nextInt(100) < 10) target.setAttribute(WHIP, new WhipDelay(target));
+		if (source.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
+            target.setAttribute(WHIP, new WhipDelay(target));
+            AttackState.delay(target, 1);
+        }
 	}
 	private static final class BowFraction {
 		final CombatParticipantSnapshot lifetime;
