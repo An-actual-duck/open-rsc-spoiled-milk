@@ -6,7 +6,8 @@ import java.util.Objects;
 public final class DamageResult {
 	public enum Status {
 		OBSERVED_CURRENT_PATH,
-		APPLIED_CURRENT_PATH
+		APPLIED_CURRENT_PATH,
+        BLOCKED_NON_CORPOREAL
 	}
 
 	private final Status status;
@@ -41,8 +42,8 @@ public final class DamageResult {
 		this.hitsBefore = hitsBefore;
 		this.hitsAfter = hitsAfter;
 		actualDamage = hitsBefore - hitsAfter;
-		legacyDamageDealt = Math.min(request.getResolvedDamage(), hitsBefore);
-		overkillDamage = Math.max(0,
+		legacyDamageDealt = status==Status.BLOCKED_NON_CORPOREAL ? 0 : Math.min(request.getResolvedDamage(), hitsBefore);
+		overkillDamage = status==Status.BLOCKED_NON_CORPOREAL ? 0 : Math.max(0,
 			request.getResolvedDamage() - hitsBefore);
 		targetTerminal = hitsAfter == 0;
 	}
@@ -59,8 +60,13 @@ public final class DamageResult {
 			hitsBefore, hitsAfter);
 	}
 
+  public static DamageResult blockedNonCorporeal(DamageRequest request,int hits) {
+    return new DamageResult(Status.BLOCKED_NON_CORPOREAL,request,hits,hits);
+  }
+  public boolean isNonCorporealBlocked() { return status==Status.BLOCKED_NON_CORPOREAL; }
+
   public boolean isAttackSuppressed() {
-    return request.isAttackSuppressed();
+    return request.isAttackSuppressed() || isNonCorporealBlocked();
   }
 
   public boolean isCritical() {

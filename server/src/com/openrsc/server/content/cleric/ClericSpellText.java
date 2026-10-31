@@ -30,6 +30,12 @@ public final class ClericSpellText {
         int index=id.getCode()-12;
         return index>=0 && index<BUFF_FLAVOR.length ? BUFF_FLAVOR[index] : null;
     }
+    public static String hostileDescription(ClericAlignment god,int tier) {
+        Set<String> names=new LinkedHashSet<String>();
+        for(ClericBlessingComponent c:new com.openrsc.server.content.cleric.effect.ClericHostileMagnitude(god,tier,1).components())
+            names.add(ClericBlessingContract.componentName(c.getKind()));
+        return String.join("; ",names)+". Afflicts eligible enemy NPCs.";
+    }
     public static String blessingDescription(ClericAlignment god,int tier) {
         Set<String> names=new LinkedHashSet<String>();
         for(ClericBlessingComponent c:new ClericBlessingMagnitude(god,tier,1).components())

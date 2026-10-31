@@ -23,6 +23,8 @@ public final class ClericDirectCombatRuntime {
   }
   public static int maximum(Mob attacker, Mob defender, int maximum, CombatStyle style) {
     if(style != CombatStyle.MELEE) return maximum;
+    if(attacker instanceof com.openrsc.server.model.entity.npc.Npc)
+      maximum=ClericHostileRuntime.reduceMaximumMelee((com.openrsc.server.model.entity.npc.Npc)attacker,maximum);
     if (!eligible(attacker, defender) || !(attacker instanceof Player)) return maximum;
     ClericBlessingMagnitude m =
         ClericTimedEffectRuntime.blessing((Player) attacker, ClericEffectFamily.ZAMORAK_BLESSING);

@@ -97,7 +97,7 @@ public final class ClericBlessingContract {
             case RECOIL_WEAKNESS:text="recoil/reflection weakness (%): "+values;break;
             case MAGIC_DEFENSE_REDUCTION:text="Magic defense reduction (%): "+values;break;
             case MAX_MELEE_REDUCTION:text="maximum melee damage reduction (%): "+values;break;
-            case NON_CORPOREAL:text="entry chance per eligible tick (%): "+values+"; see each power's game-tick duration";break;
+            case NON_CORPOREAL:text="entry chance per eligible tick (%): "+values+"; non-corporeal game ticks: "+intervals+"; then one corporeal attack attempt to rearm";break;
             default:throw new IllegalArgumentException("Unknown Cleric component");
         }
         return text;

@@ -3819,9 +3819,20 @@ public final class GameStateUpdater {
 		final ArrayDeque<Npc> npcSummonHealthNeedingDisplayed = new ArrayDeque<>();
 		final ArrayDeque<Npc> npcSummonSpritesNeedingDisplayed = new ArrayDeque<>();
 		final ArrayDeque<Npc> npcSpiritSummonFlagsNeedingDisplayed = new ArrayDeque<>();
+        final ArrayDeque<Npc> npcPhaseFlagsNeedingDisplayed = new ArrayDeque<>();
+        final java.util.Map<java.util.UUID,Boolean> phaseCache=player.getAttribute("npc_phase_display_cache",null)==null
+            ? new java.util.HashMap<java.util.UUID,Boolean>() : player.getAttribute("npc_phase_display_cache",null);
+        player.setAttribute("npc_phase_display_cache",phaseCache);
+        final java.util.Set<java.util.UUID> currentPhaseIds=new java.util.HashSet<>();
 
 		for (final Npc npc : player.getLocalNpcs()) {
 			final UpdateFlags updateFlags = npc.getUpdateFlags();
+            if(player.isUsingCustomClient()&&player.getClientVersion()>=com.openrsc.server.net.rsc.ClericBlessingContract.CLIENT_VERSION) {
+                boolean active=com.openrsc.server.model.combat.NonCorporealState.isActive(npc);
+                currentPhaseIds.add(npc.getUUID());
+                Boolean previous=phaseCache.put(npc.getUUID(),active);
+                if(previous==null||previous.booleanValue()!=active)npcPhaseFlagsNeedingDisplayed.add(npc);
+            }
 			if (player.isUsingCustomClient() && Summoning.isSummon(npc)) {
 				npcSummonFlagsNeedingDisplayed.add(npc);
 				npcSummonHealthNeedingDisplayed.add(npc);
@@ -3873,7 +3884,8 @@ public final class GameStateUpdater {
 			updateSize += npcProjectilesNeedingDisplayed.size() + npcSkullsNeedingDisplayed.size() + npcWieldsNeedingDisplayed.size()
 				+ npcBubblesNeedingDisplayed.size() + npcCombatEffectsNeedingDisplayed.size() + npcHitSplatsNeedingDisplayed.size()
 				+ npcSummonFlagsNeedingDisplayed.size() + npcSummonHealthNeedingDisplayed.size()
-				+ npcSummonSpritesNeedingDisplayed.size() + npcSpiritSummonFlagsNeedingDisplayed.size();
+				+ npcSummonSpritesNeedingDisplayed.size() + npcSpiritSummonFlagsNeedingDisplayed.size() + npcPhaseFlagsNeedingDisplayed.size();
+        phaseCache.keySet().retainAll(currentPhaseIds);
 		}
 		if (updateSize > 0) {
 			AppearanceUpdateStruct struct = new AppearanceUpdateStruct();
@@ -3975,6 +3987,13 @@ public final class GameStateUpdater {
 					updates.add((byte) 14);
 					updates.add((byte) summonedNpcSprite.getSprite());
 				}
+                Npc phasedNpc;
+                while((phasedNpc=npcPhaseFlagsNeedingDisplayed.poll())!=null) {
+                    updates.add((short)safeNPCIndex(player,phasedNpc.getIndex()));
+                    updates.add((byte)16);
+                    updates.add((byte)(com.openrsc.server.model.combat.NonCorporealState.isActive(phasedNpc)?1:0));
+                }
+
 				Npc spiritSummonNpc;
 				while ((spiritSummonNpc = npcSpiritSummonFlagsNeedingDisplayed.poll()) != null) {
 					updates.add((short) safeNPCIndex(player, spiritSummonNpc.getIndex()));

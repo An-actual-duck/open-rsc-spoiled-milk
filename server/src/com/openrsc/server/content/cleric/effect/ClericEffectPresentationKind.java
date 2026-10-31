@@ -9,7 +9,7 @@ public enum ClericEffectPresentationKind {
 	REFLECTION(5),
 	LIFESTEAL(6),
 	REGENERATION(7),
-    BLESSING(8);
+    BLESSING(8), HOSTILE(9);
 
 	private final int code;
 
@@ -22,7 +22,8 @@ public enum ClericEffectPresentationKind {
 	}
 
 	public static ClericEffectPresentationKind forMagnitude(ClericEffectMagnitude magnitude) {
-		if (magnitude instanceof ClericBlessingMagnitude) return BLESSING;
+		if (magnitude instanceof ClericHostileMagnitude) return HOSTILE;
+        if (magnitude instanceof ClericBlessingMagnitude) return BLESSING;
 		if (magnitude instanceof ClericEffectMagnitudes.HealingPulse) {
 			return HEALING_PULSE;
 		}
@@ -50,7 +51,7 @@ public enum ClericEffectPresentationKind {
 	public int getPrimaryMagnitude(ClericEffectMagnitude magnitude) {
 		requireMatching(magnitude);
 		switch (this) {
-            case BLESSING: return ((ClericBlessingMagnitude) magnitude).getPower();
+            case HOSTILE: case BLESSING: return ((ClericCompositeMagnitude) magnitude).getPower();
 			case HEALING_PULSE:
 				return ((ClericEffectMagnitudes.HealingPulse) magnitude).getHitsPerPulse();
 			case ACCURACY:
@@ -71,7 +72,7 @@ public enum ClericEffectPresentationKind {
 
 	public int getSecondaryMagnitude(ClericEffectMagnitude magnitude) {
 		requireMatching(magnitude);
-		if (this == BLESSING) return ((ClericBlessingMagnitude) magnitude).getTier();
+		if (this == BLESSING || this == HOSTILE) return ((ClericCompositeMagnitude) magnitude).getTier();
 		if (this == ACCURACY) {
 			return ((ClericEffectMagnitudes.Accuracy) magnitude).getRollIncrease();
 		}

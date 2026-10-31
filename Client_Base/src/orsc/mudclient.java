@@ -10557,7 +10557,7 @@ public final class mudclient implements Runnable {
 	}
 
 	private int getNpcSpriteColourTransform(ORSCharacter npc) {
-		return npc != null && npc.spiritSummon ? 0x99FFFFFF : 0xFFFFFFFF;
+		return npc != null && npc.nonCorporeal ? 0x80FFFFFF : npc != null && npc.spiritSummon ? 0x99FFFFFF : 0xFFFFFFFF;
 	}
 
 	private int getPlayerCombatAnchorScreenOffset(ORSCharacter player, int width, boolean mirrorX) {

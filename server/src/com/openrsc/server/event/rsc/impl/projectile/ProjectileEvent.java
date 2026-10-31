@@ -560,7 +560,9 @@ public class ProjectileEvent extends SingleTickEvent {
 			damage = applyPlayerProjectileDamageBuff((Player) caster, damage);
 		}
     final boolean attackSuppressed =
-        launchSnapshot.getSpecification().getAttackCommitment().isSuppressed();
+        launchSnapshot.getSpecification().getAttackCommitment().isSuppressed()
+        || com.openrsc.server.model.combat.NonCorporealState.blocks(caster,opponent,
+            primaryProjectileCombatStyle()==CombatStyle.MAGIC?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
 		final boolean wail = !attackSuppressed && type == 1
 			&& com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(caster, opponent);
 		if (attackSuppressed) {

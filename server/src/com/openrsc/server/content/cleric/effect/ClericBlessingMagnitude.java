@@ -5,7 +5,7 @@ import com.openrsc.server.net.rsc.ClericBlessingContract;
 import java.util.*;
 
 /** Immutable authoritative component values for one cast-time god/tier/power snapshot. */
-public final class ClericBlessingMagnitude implements ClericEffectMagnitude {
+public final class ClericBlessingMagnitude implements ClericCompositeMagnitude {
   private final ClericAlignment god;
   private final int tier, power;
 

@@ -24,10 +24,17 @@ import java.util.Objects;
  */
 public final class ResolvedDamageTransaction {
 	public DamageResult apply(final DamageRequest request) {
-		final DamageRequest checkedRequest = Objects.requireNonNull(
-			request, "request");
+		final DamageRequest checkedRequest = com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.amplify(Objects.requireNonNull(request, "request"));
 		final Mob target = checkedRequest.getTarget();
 		final int hitsBefore = target.getLevel(Skill.HITS.id());
+        if (com.openrsc.server.model.combat.NonCorporealState.blocks(checkedRequest.getSource(),target,checkedRequest.getHarmNature())) {
+            target.getUpdateFlags().setDamage(new Damage(target,0));
+            if(checkedRequest.getPresentation()==DamageRequest.Presentation.DAMAGE_AND_HITSPLAT)
+                target.getUpdateFlags().addHitSplat(new HitSplat(target,checkedRequest.getHitSplatType(),0));
+            DamageResult blocked=DamageResult.blockedNonCorporeal(checkedRequest,hitsBefore);
+            CombatDamageObservation.publish(blocked);
+            return blocked;
+        }
 
 		target.getSkills().subtractLevel(Skill.HITS.id(),
 			checkedRequest.getResolvedDamage(), false,

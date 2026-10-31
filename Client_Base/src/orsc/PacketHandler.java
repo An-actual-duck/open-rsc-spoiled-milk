@@ -4219,6 +4219,10 @@ public class PacketHandler {
 				if (npc != null) {
 					npc.spiritSummon = spiritSummon;
 				}
+            } else if (updateType == 16) {
+                int value=packetsIncoming.getUnsignedByte();
+                if(value>1)throw new IllegalArgumentException("Invalid NPC phase flag");
+                if(npc!=null)npc.nonCorporeal=value==1;
             } else {
                 throw new IllegalArgumentException("Unsupported NPC appearance update type: " + updateType);
             }

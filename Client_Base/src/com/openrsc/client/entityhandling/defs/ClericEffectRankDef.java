@@ -43,7 +43,7 @@ public final class ClericEffectRankDef {
         || rank > 255
         || durationMilliseconds <= 0
         || presentationKind < 1
-        || presentationKind > 8
+        || presentationKind > 9
         || counterKind < 0
         || counterKind > 2
         || (counterKind == 0 && initialCounter != 0)
@@ -55,7 +55,7 @@ public final class ClericEffectRankDef {
       throw new IllegalArgumentException("Invalid Cleric effect-rank presentation metadata");
     }
     boolean validShape =
-        presentationKind == 8
+        presentationKind >= 8
             ? counterKind == 0
                 && initialCounter == 0
                 && rank <= 6
@@ -76,7 +76,7 @@ public final class ClericEffectRankDef {
     }
     if (components == null
         || components.size() > orsc.ClericBlessingContract.MAX_COMPONENTS
-        || (presentationKind == 8 ? components.isEmpty() : !components.isEmpty()))
+        || (presentationKind >= 8 ? components.isEmpty() : !components.isEmpty()))
       throw new IllegalArgumentException("Invalid blessing components");
     java.util.Set<Integer> kinds = new java.util.HashSet<Integer>();
     for (ClericComponentDef component : components)

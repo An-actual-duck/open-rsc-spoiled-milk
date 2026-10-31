@@ -553,6 +553,11 @@ public class CombatEvent extends GameTickEvent {
       boolean attackSuppressed,
       boolean offhand,
       com.openrsc.server.model.combat.AttackRoll attackRoll) {
+    final boolean committedSuppressed=attackSuppressed;
+    final boolean magicalWail=com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(hitter,target);
+    final boolean phaseBlocked=com.openrsc.server.model.combat.NonCorporealState.blocks(hitter,target,
+        magicalWail?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+    if(phaseBlocked){attackSuppressed=true;damage=0;}
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -626,9 +631,10 @@ public class CombatEvent extends GameTickEvent {
             .eventId(getUUID())
             .encounterId(encounterId)
             .style(CombatStyle.MELEE)
+            .harmNature(magicalWail?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)
             .hitSplatType(hitSplatType)
             .attackCommitment(
-                attackSuppressed
+                committedSuppressed
                     ? com.openrsc.server.model.combat.AttackCommitment.staggered()
                     : com.openrsc.server.model.combat.AttackCommitment.normal())
             .attackRoll(attackRoll)

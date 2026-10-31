@@ -17,18 +17,18 @@ public final class ClericEffectCatalog {
     List<ClericEffectRankDefinition<? extends ClericEffectMagnitude>> all =
         new ArrayList<ClericEffectRankDefinition<? extends ClericEffectMagnitude>>();
     for (ClericSpellDefinition spell : ClericSpellCatalog.getAll())
-      if (spell.getId().isBlessing()) {
+      if (spell.getId().isBlessing() || spell.isHostile()) {
         List<ClericEffectRankDefinition<? extends ClericEffectMagnitude>> ranks =
             new ArrayList<ClericEffectRankDefinition<? extends ClericEffectMagnitude>>();
         ClericEffectFamily family =
-            spell.getAlignment() == ClericAlignment.SARADOMIN
+            spell.isHostile() ? (spell.getAlignment() == ClericAlignment.GUTHIX ? ClericEffectFamily.GUTHIX_HOSTILE : ClericEffectFamily.SARADOMIN_HOSTILE) : spell.getAlignment() == ClericAlignment.SARADOMIN
                 ? ClericEffectFamily.SARADOMIN_BLESSING
                 : spell.getAlignment() == ClericAlignment.GUTHIX
                     ? ClericEffectFamily.GUTHIX_BLESSING
                     : ClericEffectFamily.ZAMORAK_BLESSING;
         for (int power = 1; power <= spell.getEffectRankCount(); power++)
           ranks.add(
-              new ClericEffectRankDefinition<ClericBlessingMagnitude>(
+              new ClericEffectRankDefinition<ClericCompositeMagnitude>(
                   spell.getId(),
                   family,
                   power,
@@ -36,7 +36,7 @@ public final class ClericEffectCatalog {
                   ClericEffectDuration.seconds(60),
                   ClericEffectCounterKind.NONE,
                   0,
-                  new ClericBlessingMagnitude(spell.getAlignment(), spell.getSpellTier(), power)));
+                  spell.isHostile() ? new ClericHostileMagnitude(spell.getAlignment(), spell.getSpellTier(), power) : new ClericBlessingMagnitude(spell.getAlignment(), spell.getSpellTier(), power)));
         BY_SPELL.put(spell.getId(), Collections.unmodifiableList(ranks));
         all.addAll(ranks);
       }

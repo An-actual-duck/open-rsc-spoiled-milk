@@ -72,7 +72,7 @@ public final class ClericSpellDefinition {
 	}
 
 	public String getRecipientFlavor() { String value=ClericSpellText.recipientFlavor(id); return value==null ? "" : value; }
-    public boolean isHostile() { return false; }
+    public boolean isHostile() { return id.isHostile(); }
 
 	public String getDisplayName() {
 		return displayName;
@@ -115,7 +115,7 @@ public final class ClericSpellDefinition {
             ClericSigilMaterial material = spellTier == 3 ? ClericSigilMaterial.SILVER : ClericSigilMaterial.STONE;
             int count = spellTier == 1 ? 1 : 2;
             result.add(new ClericResourceCost(ClericSigilItemId.get(material, alignment, true).getItemId(), count));
-            result.add(new ClericResourceCost(ClericSigilItemId.get(material, ClericAlignment.NEUTRAL, true).getItemId(), count));
+            result.add(new ClericResourceCost(isHostile() ? (material == ClericSigilMaterial.STONE ? ClericWellSigil.STONE_BLIGHT : ClericWellSigil.SILVER_BLIGHT).getInfusedItemId() : ClericSigilItemId.get(material, ClericAlignment.NEUTRAL, true).getItemId(), count));
         }
         return java.util.Collections.unmodifiableList(result);
     }

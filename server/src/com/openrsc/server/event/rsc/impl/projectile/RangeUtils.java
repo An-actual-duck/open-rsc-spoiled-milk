@@ -344,7 +344,7 @@ public class RangeUtils {
               MessageType.QUEST, "Your shield prevents some of the damage from the flames");
                 }
                 fireDamage = (int) Math.floor(getCurrentLevel(player, Skill.HITS.id()) * percentage / 100.0);
-                player.damage(fireDamage);
+                com.openrsc.server.model.combat.CombatHarmSettlement.immediate(npc,player,fireDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL,"ranged-dragon-fire-breath");
 
                 //reduce ranged level (case for KBD)
                 if (npc.getID() == NpcId.KING_BLACK_DRAGON.id()) {

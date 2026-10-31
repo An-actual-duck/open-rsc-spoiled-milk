@@ -76,6 +76,13 @@ public final class ClericEffectRankDefinition<M extends ClericEffectMagnitude> {
 	private static void validateIdentityShape(ClericSpellId spellId,
 			ClericEffectFamily family, ClericEffectCounterKind counterKind,
 			ClericEffectMagnitude magnitude) {
+        if (spellId.isHostile()) {
+            requireShape(counterKind==ClericEffectCounterKind.NONE && magnitude instanceof ClericHostileMagnitude,spellId);
+            ClericHostileMagnitude hostile=(ClericHostileMagnitude)magnitude;
+            requireShape(family==(hostile.getGod()==com.openrsc.server.content.cleric.ClericAlignment.GUTHIX
+                ?ClericEffectFamily.GUTHIX_HOSTILE:ClericEffectFamily.SARADOMIN_HOSTILE),spellId);
+            return;
+        }
         if (spellId.isBlessing()) {
             requireShape(counterKind == ClericEffectCounterKind.NONE
                 && magnitude instanceof ClericBlessingMagnitude, spellId);

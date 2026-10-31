@@ -45,6 +45,7 @@ public final class DamageRequest {
 	private final CombatParticipantSnapshot targetSnapshot;
 	private final SourceCategory sourceCategory;
 	private final CombatStyle style;
+    private final CombatHarmNature harmNature;
 	private final String effectKey;
 	private final InputStage inputStage;
 	private final int resolvedDamage;
@@ -67,6 +68,7 @@ public final class DamageRequest {
 		targetSnapshot = CombatParticipantSnapshot.capture(target);
 		sourceCategory = builder.sourceCategory;
 		style = builder.style;
+        harmNature = builder.harmNature==null ? CombatHarmNature.classify(sourceCategory,style) : builder.harmNature;
 		effectKey = builder.effectKey;
 		inputStage = InputStage.RESOLVED_LEGACY;
 		attackCommitment = builder.attackCommitment;
@@ -78,6 +80,22 @@ public final class DamageRequest {
         (builder.attackRoll == null ? AttackRoll.normal(resolvedDamage) : builder.attackRoll)
             .committed(attackCommitment);
 	}
+
+    private DamageRequest(DamageRequest original,int damage) {
+        requestId=original.requestId; parentRequestId=original.parentRequestId;
+        eventId=original.eventId; encounterId=original.encounterId; tick=original.tick;
+        source=original.source;target=original.target;sourceSnapshot=original.sourceSnapshot;
+        targetSnapshot=original.targetSnapshot;sourceCategory=original.sourceCategory;
+        style=original.style;harmNature=original.harmNature;effectKey=original.effectKey;
+        inputStage=original.inputStage;resolvedDamage=damage;hitSplatType=original.hitSplatType;
+        presentation=original.presentation;applyGoblinTenacity=original.applyGoblinTenacity;
+        attackRoll=original.attackRoll;attackCommitment=original.attackCommitment;
+    }
+    /** Settlement-local adjusted amount; attribution, immutable roll and attack receipt are preserved. */
+    public DamageRequest withResolvedDamage(int amount) {
+        if(amount<0)throw new IllegalArgumentException("Negative adjusted damage");
+        return new DamageRequest(this,attackCommitment.resolveDamage(amount));
+    }
 
 	public static Builder resolvedLegacy(final Mob source, final Mob target,
 			final SourceCategory sourceCategory, final String effectKey,
@@ -113,6 +131,7 @@ public final class DamageRequest {
 	public CombatParticipantSnapshot getTargetSnapshot() { return targetSnapshot; }
 	public SourceCategory getSourceCategory() { return sourceCategory; }
 	public CombatStyle getStyle() { return style; }
+    public CombatHarmNature getHarmNature() { return harmNature; }
 	public String getEffectKey() { return effectKey; }
 	public InputStage getInputStage() { return inputStage; }
 	public int getResolvedDamage() { return resolvedDamage; }
@@ -142,6 +161,7 @@ public final class DamageRequest {
 		private final Mob target;
 		private final SourceCategory sourceCategory;
 		private CombatStyle style;
+        private CombatHarmNature harmNature;
 		private final String effectKey;
 		private final int resolvedDamage;
 		private int hitSplatType;
@@ -168,6 +188,8 @@ public final class DamageRequest {
 			this.resolvedDamage = resolvedDamage;
 			tick = target.getWorld().getServer().getCurrentTick();
 		}
+
+    public Builder harmNature(CombatHarmNature nature) { harmNature=Objects.requireNonNull(nature,"harmNature"); return this; }
 
     public Builder attackCommitment(AttackCommitment value) {
       attackCommitment = Objects.requireNonNull(value, "attackCommitment");

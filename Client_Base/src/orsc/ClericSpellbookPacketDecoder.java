@@ -43,7 +43,7 @@ public final class ClericSpellbookPacketDecoder {
             primary = in.u16(),
             secondary = in.u16(),
             components = in.u8();
-        if (kind != ClericBlessingContract.BLESSING_PRESENTATION
+        if (kind != (target==1 ? ClericBlessingContract.HOSTILE_PRESENTATION : ClericBlessingContract.BLESSING_PRESENTATION)
             || components < 1
             || components > ClericBlessingContract.MAX_COMPONENTS
             || duration > 3600000)

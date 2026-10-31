@@ -96,7 +96,7 @@ public final class ClericSpellGuideCatalog {
             intervals.append('/');
           }
           values.append(c.getMagnitude());
-          intervals.append(c.getParameter1() / 1000);
+          intervals.append(c.getKind()==orsc.ClericBlessingContract.NON_CORPOREAL?c.getParameter1():c.getParameter1() / 1000);
         }
         String v = values.toString(), text;
         if (first.getKind() == ClericBlessingContract.STAT_RESTORATION) {

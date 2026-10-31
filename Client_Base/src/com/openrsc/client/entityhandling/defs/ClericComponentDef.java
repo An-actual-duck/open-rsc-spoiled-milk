@@ -22,7 +22,7 @@ public final class ClericComponentDef {
                 ? parameter1 > 0 && parameter2 == 0
                 : kind == ClericBlessingContract.LIFESTEAL
                     ? magnitude <= 100 && parameter1 > 0 && parameter1 <= 100 && parameter2 == 0
-                    : parameter1 == 0 && parameter2 == 0;
+                    : kind == ClericBlessingContract.NON_CORPOREAL ? parameter1>=1 && parameter1<=3 && parameter2==1 : parameter1 == 0 && parameter2 == 0;
     if (!valid || (kind >= ClericBlessingContract.DEFENSE && magnitude > 100))
       throw new IllegalArgumentException("Invalid blessing component units");
     this.kind = kind;

@@ -102,7 +102,7 @@ public class DragonFireBreath implements OnCombatStartScript {
 			if (fireDamage >= 25 || (fireDamage >= 20 && getMaxLevel(player, Skill.HITS.id()) * 2/5 < 25)) {
 				player.message("You are fried");
 			}
-			player.damage(fireDamage);
+			com.openrsc.server.model.combat.CombatHarmSettlement.immediate(dragon,player,fireDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL,"dragon-fire-breath");
 
 			//reduce ranged level (case for KBD if engaging with melee or ranging)
 			if (dragon.getID() == NpcId.KING_BLACK_DRAGON.id() && (player.isRanging() || attacker.isPlayer())) {

@@ -59,6 +59,15 @@ public final class ClericSpellCatalog {
             5,
             "unify",
             -1));
+    String[][] hostileNames = {{"Guthix's Unease", "Guthix's Dread", "Guthix's Terror"},
+        {"Saradomin's Censure", "Saradomin's Condemnation", "Saradomin's Unmaking"}};
+    for (int tier=1;tier<=3;tier++) for(int god=0;god<2;god++) {
+      ClericAlignment alignment=god==0?ClericAlignment.GUTHIX:ClericAlignment.SARADOMIN;
+      defs.add(make(ClericSpellId.fromCode(22+god*3+tier-1),hostileNames[god][tier-1],
+          ClericSpellText.hostileDescription(alignment,tier),
+          alignment,tier==1?1:tier==2?20:40,tier,tier+1,
+          icons[god==0?1:0][tier-1],animations[god==0?1:0][tier-1]));
+    }
     for (ClericSpellDefinition d : defs)
       if (BY_CODE.put(d.getStableCode(), d) != null)
         throw new IllegalStateException("Duplicate spell code");
@@ -76,7 +85,7 @@ public final class ClericSpellCatalog {
       String icon,
       int animation) {
     int[] thresholds =
-        id.isBlessing() ? ClericBlessingContract.powerThresholds(tier * 2) : new int[] {0};
+        (id.isBlessing() || id.isHostile()) ? ClericBlessingContract.powerThresholds(tier * 2) : new int[] {0};
     return new ClericSpellDefinition(
         id,
         name,

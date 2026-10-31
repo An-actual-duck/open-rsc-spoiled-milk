@@ -77,6 +77,7 @@ public final class ORSCharacter {
 	public boolean isInvulnerable = false;
 	public boolean suppressAttackOption = false;
 	public boolean spiritSummon = false;
+    public boolean nonCorporeal = false;
 	int icon = 0;
 	public int groupID = Group.DEFAULT_GROUP;
 	ORSCharacterDirection direction = ORSCharacterDirection.NORTH;
@@ -127,6 +128,7 @@ public final class ORSCharacter {
 		incomingProjectileSprite = null;
 		suppressAttackOption = false;
 		spiritSummon = false;
+        nonCorporeal = false;
 		for (int i = 0; i < HIT_SPLAT_COUNT; ++i) {
 			hitSplatAmount[i] = 0;
 			hitSplatTimeout[i] = 0;
