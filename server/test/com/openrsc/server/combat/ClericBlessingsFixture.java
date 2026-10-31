@@ -172,6 +172,24 @@ public final class ClericBlessingsFixture {
       packet(c, 12);
       check(count(c, 3294) == 100, "old maintained client failclosed");
       c.setClientVersion(10054);
+      clear(r);
+      fund(c, ClericSpellCatalog.fromCode(12));
+      inv(c).getItems().removeIf(item -> item.getCatalogId() == 3300);
+      inv(c).getItems().add(new Item(3300, 100, true));
+      packet(c, 12);
+      check(
+          count(c, 3294) == 100 && count(c, 3300) == 0,
+          "noted Grace cannot satisfy or partially consume mixed cost");
+      clear(r);
+      skill(r, Skill.HITS, 1000, 1000);
+      fund(c, ClericSpellCatalog.fromCode(12));
+      packet(c, 12);
+      check(
+          count(c, 3294) == 99
+              && ClericTimedEffectRuntime.blessing(r, ClericEffectFamily.SARADOMIN_BLESSING)
+                  != null,
+          "fullHP recipient still eligible for whole blessing");
+
       cast(c, r, 14);
       double rate = ClericTimedEffectRuntime.getRespiteSpeedBonus(r);
       check(rate == 3.5, "P6 total regen4.5x, additional3.5");
@@ -371,6 +389,27 @@ public final class ClericBlessingsFixture {
           h.countOutgoingPackets(r, OpcodeOut.SEND_EQUIPMENT_STATS) == statsPackets + 1
               && r.getCarriedItems().getEquipment().getHolyPower() == 45,
           "Worship change sends bounded derived HolyPower stats");
+      Field packetsField = Player.class.getDeclaredField("outgoingPackets");
+      packetsField.setAccessible(true);
+      @SuppressWarnings("unchecked")
+      List<Packet> outgoing = (List<Packet>) packetsField.get(r);
+      int statsOpcode =
+          com.openrsc.server.net.rsc.ActionSender.getGenerator(r)
+              .fromOpcodeEnum(OpcodeOut.SEND_EQUIPMENT_STATS, r)
+              .getOpcode();
+      Packet lastStats = null;
+      for (Packet packet : outgoing) if (packet.getID() == statsOpcode) lastStats = packet;
+      check(
+          lastStats != null
+              && lastStats.getBuffer().getInt(lastStats.getBuffer().writerIndex() - 4) == 45,
+          "actual equipment packet contains combined HolyPower45");
+      fund(r, ClericSpellCatalog.fromCode(14));
+      packet(r, 14);
+      check(
+          ClericTimedEffectRuntime.blessing(c, ClericEffectFamily.SARADOMIN_BLESSING).getPower()
+              == 3,
+          "next cast resolves fresh Worship-derived rank");
+      c.getTransientEffectState().clearAll();
       int[] beforeDefense = {r.getMeleeDefense(), r.getRangedDefense(), r.getMagicDefense()};
       cast(c, r, 17);
       int[] afterDefense = {r.getMeleeDefense(), r.getRangedDefense(), r.getMagicDefense()};
@@ -508,8 +547,10 @@ public final class ClericBlessingsFixture {
       n.getSkills().setTemporaryLevelAndMaxStat(Skill.HITS.id(), 1000, 1000, false);
       inflict.invoke(event, n, r, 100, false, false);
       check(
-          r.getLevel(Skill.HITS.id()) == 0 && n.getLevel(Skill.HITS.id()) == 1000,
+          n.getLevel(Skill.HITS.id()) == 1000
+              && registry(r).size(ClericEffectOrigins.validatorFor(r)) == 0,
           "actual lethal primary hit creates no new dead-recipient reflection");
+      skill(r, Skill.HITS, 0, 1000);
       check(
           ClericDirectCombatRuntime.applyDeferredRally(r, n, 100) == 0
               && r.getLevel(Skill.HITS.id()) == 0,

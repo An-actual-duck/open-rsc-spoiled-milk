@@ -10,8 +10,9 @@ is implemented. Their effect contracts are valuable reuse material, not a
 requirement to preserve their old resource assignments or book layout.
 
 The [completed implementation plan](../completed-work-plans/cleric-spellbook-implementation-plan.md)
-is a historical launch record, not an active overhaul assignment. No code,
-resource conversion or map change is authorized by this documentation update.
+is a historical launch record. The owner separately authorized the buff
+implementation now tracked in [the candidate review](cleric-three-tier-buffs-review.md).
+Map imports and public activation remain separate operations.
 
 ### Active overhaul: three ordinary tiers and six power levels — October 30, 2026
 
@@ -130,7 +131,8 @@ recipient text supersedes the earlier sap line.
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
-as recorded above. These names/messages are design, not runtime implementation.
+as recorded above. The private candidate applies these names/messages after successful blessing
+application; Saradomin's third message remains unset.
 
 Saradomin at P6 now gives **×4.5 natural regeneration and 6 HP per pulse,
 60 HP across ten delayed pulses**. This explicitly supersedes the earlier

@@ -1,8 +1,8 @@
 # Three-tier blessings implementation progress
 
-The `feat/cleric-three-tier-buffs` candidate implements the approved October31
-buff model. It remains ACTIVE pending final combined verification and exact
-READY handoff; no public deployment, server session or owner-map import occurred.
+The `feat/cleric-three-tier-buffs` candidate implements the approved October 31
+buff model. Combined verification is complete and the candidate is ready for
+Core review; no public deployment, server session or owner-map import occurred.
 
 Implemented server work:
 
@@ -25,16 +25,17 @@ Implemented server work:
 - Real native World/packet/party/inventory/effect/combat fixtures; generic old
   math/counter characterization retained with explicit frozen test-only data.
 
-Client implementation is managed in the separate Core client worker topic and
-will be merged by exact READY dependency into this task before its final handoff.
-It owns the schema3 decoder, sparse UI positions, mixed unnoted-cost checks,
-selected-rank preview using authoritative equipment stat7, guide/HUD components
-and existing icon reuse. This repository's manager integrates the combined task.
+The exact client READY dependency `d2c29d1467bbff2453362020f2eee66b7841b434`
+is merged into this task, preserving both ancestries. The combined client handles
+schema 3, sparse UI positions, mixed unnoted costs, authoritative equipment-stat
+Holy Power preview, component guides/HUD and existing icons.
 
-Current validation includes the real144-scenario combat gate, current native
-Cleric acceptance, metadata roundtrip and focused server/client regressions.
-Final evidence and exact commands are recorded in the implementation review.
-Remaining scope is review/verification, not additional unapproved mechanics.
+Combined Java 8 server/client builds passed. Final acceptance includes 354 native
+runtime assertions, the actual 2,752-byte server payload decoded through 2,986
+client assertions, 68 generic HUD assertions, 21 focused Cleric targets, all 144
+combat scenarios, Slow/coatings/poison and all nine requested Slayer targets.
+See [the implementation review](cleric-three-tier-buffs-review.md) for exact scope,
+arithmetic, timing, retained historical coverage, evidence and limitations.
 
 Saradomin's extra third component/message remains open: Resplendence raises the
 cap of its existing two components. Hostile debuffs remain documentation only.

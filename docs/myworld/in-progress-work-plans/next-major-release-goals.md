@@ -186,7 +186,8 @@ recipient text supersedes the earlier sap line.
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
-as recorded above. These names/messages are design, not runtime implementation.
+as recorded above. The private candidate applies these names/messages after successful blessing
+application; Saradomin's third message remains unset.
 
 Saradomin at P6 now means **×4.5 regeneration and 6 HP per pulse/60 HP over ten
 delayed pulses**, explicitly replacing the earlier ×7/70 HP draft. Its third
