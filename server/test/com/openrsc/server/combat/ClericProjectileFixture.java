@@ -131,49 +131,83 @@ public final class ClericProjectileFixture {
             "secondary does not inherit Hallowed");
         p.setParty(null);
       }
-      // A physically missed root is not a performed-contact Ogre hit, but independent elemental magic still runs.
-      Player melee=h.player("phasecontact",470,450);Npc phased=h.npc(3,471,450);
-      SharedAttackFoundationFixture.healthy(melee);SharedAttackFoundationFixture.healthy(phased);
-      ClericBlessingsFixture.skill(melee,Skill.MELEE,99,99);
-      for(int id=1880;id<=1884;id++)h.equip(melee,id,1);
-      h.equip(melee,ItemId.FIRE_SWORD.id(),1);
-      Object phaseOwner=new Object();NonCorporealState.tryEnter(phased,phaseOwner,100,20,()->true);
-      int before=results.size();melee.startCombat(phased);
-      h.random().scriptDoubles(0.0,0.0,0.0,0.0).scriptInts(1,1,1,1,1,1);
+      // A physically missed root is not a performed-contact Ogre hit, but independent elemental
+      // magic still runs.
+      Player melee = h.player("phasecontact", 470, 450);
+      Npc phased = h.npc(3, 471, 450);
+      SharedAttackFoundationFixture.healthy(melee);
+      SharedAttackFoundationFixture.healthy(phased);
+      ClericBlessingsFixture.skill(melee, Skill.MELEE, 99, 99);
+      for (int id = 1880; id <= 1884; id++) h.equip(melee, id, 1);
+      h.equip(melee, ItemId.FIRE_SWORD.id(), 1);
+      Object phaseOwner = new Object();
+      NonCorporealState.tryEnter(phased, phaseOwner, 100, 20, () -> true);
+      int before = results.size();
+      melee.startCombat(phased);
+      h.random().scriptDoubles(0.0, 0.0, 0.0, 0.0).scriptInts(1, 1, 1, 1, 1, 1);
       melee.getPvmMeleeEvent().run();
-      boolean blockedRoot=false,allowedMagic=false;
-      for(int i=before;i<results.size();i++) {
-        DamageResult result=results.get(i);
-        if(result.getRequest().getSource()==melee&&result.getRequest().getTarget()==phased) {
-          if(result.getRequest().getSourceCategory()==DamageRequest.SourceCategory.ACTOR)blockedRoot|=result.isNonCorporealBlocked();
-          if(result.getRequest().getHarmNature()==CombatHarmNature.MAGICAL&&result.getActualDamage()>0)allowedMagic=true;
+      boolean blockedRoot = false, allowedMagic = false;
+      for (int i = before; i < results.size(); i++) {
+        DamageResult result = results.get(i);
+        if (result.getRequest().getSource() == melee && result.getRequest().getTarget() == phased) {
+          if (result.getRequest().getSourceCategory() == DamageRequest.SourceCategory.ACTOR)
+            blockedRoot |= result.isNonCorporealBlocked();
+          if (result.getRequest().getHarmNature() == CombatHarmNature.MAGICAL
+              && result.getActualDamage() > 0) allowedMagic = true;
         }
       }
-      check(blockedRoot&&allowedMagic,"actual physical root blocked while independent elemental Magic still damages");
-      check(AttackState.pendingStaggers(phased)==0,"blocked physical root does not manufacture Ogre contact");
-      NonCorporealState.clearOwned(phased,phaseOwner);melee.resetCombatEvent();
-      Player cleaver=h.player("phasecleaver",480,450);Npc primary=h.npc(3,481,450),neighbor=h.npc(3,481,451);
-      SharedAttackFoundationFixture.healthy(cleaver);SharedAttackFoundationFixture.healthy(primary);SharedAttackFoundationFixture.healthy(neighbor);
-      ClericBlessingsFixture.skill(cleaver,Skill.MELEE,99,99);h.equip(cleaver,cosmic,1);h.equip(cleaver,ItemId.TIN_SCYTHE.id(),1);
-      NonCorporealState.tryEnter(primary,phaseOwner,100,20,()->true);
-      cleaver.startCombat(primary);h.random().scriptDoubles(0.0,0.0,0.0,0.0);cleaver.getPvmMeleeEvent().run();
-      check(primary.getLevel(Skill.HITS.id())==1000&&neighbor.getLevel(Skill.HITS.id())<1000,"independent cleave still strikes tangible neighbor of phased primary");
+      check(
+          blockedRoot && allowedMagic,
+          "actual physical root blocked while independent elemental Magic still damages");
+      check(
+          AttackState.pendingStaggers(phased) == 0,
+          "blocked physical root does not manufacture Ogre contact");
+      NonCorporealState.clearOwned(phased, phaseOwner);
+      melee.resetCombatEvent();
+      Player cleaver = h.player("phasecleaver", 480, 450);
+      Npc primary = h.npc(3, 481, 450), neighbor = h.npc(3, 481, 451);
+      SharedAttackFoundationFixture.healthy(cleaver);
+      SharedAttackFoundationFixture.healthy(primary);
+      SharedAttackFoundationFixture.healthy(neighbor);
+      ClericBlessingsFixture.skill(cleaver, Skill.MELEE, 99, 99);
+      h.equip(cleaver, cosmic, 1);
+      h.equip(cleaver, ItemId.TIN_SCYTHE.id(), 1);
+      NonCorporealState.tryEnter(primary, phaseOwner, 100, 20, () -> true);
+      cleaver.startCombat(primary);
+      h.random().scriptDoubles(0.0, 0.0, 0.0, 0.0);
+      cleaver.getPvmMeleeEvent().run();
+      check(
+          primary.getLevel(Skill.HITS.id()) == 1000 && neighbor.getLevel(Skill.HITS.id()) < 1000,
+          "independent cleave still strikes tangible neighbor of phased primary");
       cleaver.resetCombatEvent();
-      Npc poisoner=h.npc(3,493,491);Player poisoned=h.player("phasepoisoned",492,491);
-      SharedAttackFoundationFixture.healthy(poisoner);SharedAttackFoundationFixture.healthy(poisoned);poisoned.setClientVersion(10055);h.recordOutgoingPackets(poisoned);
-      NonCorporealState.tryEnter(poisoner,phaseOwner,100,3,()->true);poisoned.applyPoison(100,100,poisoner);
-      ((com.openrsc.server.event.rsc.impl.PoisonEvent)poisoned.getAttribute("poisonEvent",null)).run();
-      DamageResult poisonResult=results.get(results.size()-1);
-      check(poisonResult.isNonCorporealBlocked()&&poisonResult.getRequest().getPeriodicProvenance()!=null,"blocked poison retains durable source/lifetime provenance");
-      check(poisoned.getLevel(Skill.HITS.id())==1000&&poisoned.getCurrentPoisonPower()==97,"outgoing phased poison cleanses without damage");
-      java.lang.reflect.Field outgoing=Player.class.getDeclaredField("outgoingPackets");outgoing.setAccessible(true);
-      boolean factualMessage=false;
-      for(Object value:(java.util.List<?>)outgoing.get(poisoned)) {
-        com.openrsc.server.net.Packet message=(com.openrsc.server.net.Packet)value;
-        byte[] bytes=new byte[message.getBuffer().readableBytes()];message.getBuffer().getBytes(message.getBuffer().readerIndex(),bytes);
-        if(new String(bytes,"ISO-8859-1").contains("lose @gr2@0"))factualMessage=true;
+      Npc poisoner = h.npc(3, 493, 491);
+      Player poisoned = h.player("phasepoisoned", 492, 491);
+      SharedAttackFoundationFixture.healthy(poisoner);
+      SharedAttackFoundationFixture.healthy(poisoned);
+      poisoned.setClientVersion(10055);
+      h.recordOutgoingPackets(poisoned);
+      NonCorporealState.tryEnter(poisoner, phaseOwner, 100, 3, () -> true);
+      poisoned.applyPoison(100, 100, poisoner);
+      ((com.openrsc.server.event.rsc.impl.PoisonEvent) poisoned.getAttribute("poisonEvent", null))
+          .run();
+      DamageResult poisonResult = results.get(results.size() - 1);
+      check(
+          poisonResult.isNonCorporealBlocked()
+              && poisonResult.getRequest().getPeriodicProvenance() != null,
+          "blocked poison retains durable source/lifetime provenance");
+      check(
+          poisoned.getLevel(Skill.HITS.id()) == 1000 && poisoned.getCurrentPoisonPower() == 97,
+          "outgoing phased poison cleanses without damage");
+      java.lang.reflect.Field outgoing = Player.class.getDeclaredField("outgoingPackets");
+      outgoing.setAccessible(true);
+      boolean factualMessage = false;
+      for (Object value : (java.util.List<?>) outgoing.get(poisoned)) {
+        com.openrsc.server.net.Packet message = (com.openrsc.server.net.Packet) value;
+        byte[] bytes = new byte[message.getBuffer().readableBytes()];
+        message.getBuffer().getBytes(message.getBuffer().readerIndex(), bytes);
+        if (new String(bytes, "ISO-8859-1").contains("lose @gr2@0")) factualMessage = true;
       }
-      check(factualMessage,"blocked poison chat reports actual zero health loss");
+      check(factualMessage, "blocked poison chat reports actual zero health loss");
       System.out.println("PASS " + checks + " real Cleric projectile and phase assertions");
     }
   }

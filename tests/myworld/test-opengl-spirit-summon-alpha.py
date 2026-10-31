@@ -29,6 +29,10 @@ package orsc;
 
 public final class OpenGLSpriteAlphaTestHarness {
     public static void main(String[] args) {
+        assertRgba("single non-corporeal layer", 0xC0804080,
+            OpenGLSpriteAlpha.blendStraightRgbaOver(0, 0xC08040, 0x80));
+        assertRgba("two non-corporeal layers", 0xC08040C0,
+            OpenGLSpriteAlpha.blendStraightRgbaOver(0xC0804080, 0xC08040, 0x80));
         assertRgba("single spirit layer", 0xC0804099,
             OpenGLSpriteAlpha.blendStraightRgbaOver(0, 0xC08040, 0x99));
         assertRgba("two matching spirit layers", 0xC08040D6,

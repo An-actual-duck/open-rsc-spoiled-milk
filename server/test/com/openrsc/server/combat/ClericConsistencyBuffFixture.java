@@ -46,10 +46,37 @@ public final class ClericConsistencyBuffFixture {
       check(
           ClericSpellCatalog.fromCode(12).getDisplayName().equals("Saradomin's Light"),
           "Light name");
-      for (int code = 12; code <= 20; code++)
+      String[] approvedFlavor = {
+        "Your attacks carry a holy light that burns the restless dead.",
+        "You feel your blood rush and your spirits lift",
+        "Your wounds seal up as soon as they are opened",
+        "Your blood feels thick in your veins like sap. Your ailments slow to a halt",
+        "Your skin grows a thick layer of bark",
+        "Sharp spikes protrude from you, piercing your foes.",
+        "Your muscles bulge and your mind feels sharper",
+        "Your enemies seem much smaller than before",
+        "Your weapon will breathe new life into you should you feel weak"
+      };
+      java.lang.reflect.Field outgoing = Player.class.getDeclaredField("outgoingPackets");
+      outgoing.setAccessible(true);
+      for (int code = 12; code <= 20; code++) {
         check(
-            !ClericSpellCatalog.fromCode(code).getRecipientFlavor().isEmpty(),
-            "all nine recipient flavors");
+            ClericSpellCatalog.fromCode(code)
+                .getRecipientFlavor()
+                .equals(approvedFlavor[code - 12]),
+            "exact approved receiver flavor metadata");
+        java.util.List<Packet> messages = (java.util.List<Packet>) outgoing.get(ally);
+        int before = messages.size();
+        ClericBlessingsFixture.cast(caster, ally, code);
+        boolean received = false;
+        for (int index = before; index < messages.size(); index++) {
+          Packet message = messages.get(index);
+          byte[] bytes = new byte[message.getBuffer().readableBytes()];
+          message.getBuffer().getBytes(message.getBuffer().readerIndex(), bytes);
+          if (new String(bytes, "ISO-8859-1").contains(approvedFlavor[code - 12])) received = true;
+        }
+        check(received, "actual receiver message for blessing" + code);
+      }
       for (int tier = 1; tier <= 3; tier++)
         for (int power = 1; power <= tier * 2; power++) {
           ClericBlessingMagnitude m =
@@ -68,6 +95,26 @@ public final class ClericConsistencyBuffFixture {
       check(
           UndeadClassification.isUndead(undead) && !UndeadClassification.isUndead(ordinary),
           "legacy undead and ordinary defaults");
+      com.openrsc.server.external.NPCDef legacy = undead.getDef();
+      Boolean original = legacy.undead;
+      legacy.undead = Boolean.FALSE;
+      check(
+          !UndeadClassification.isUndead(undead),
+          "explicit false overrides legacy constructor attribute");
+      check(
+          Boolean.FALSE.equals(new com.openrsc.server.external.NPCDef(legacy).undead),
+          "definition copy retains explicit false");
+      legacy.undead = original;
+      check(
+          new com.openrsc.server.external.NPCDef().undead == null,
+          "missing tag is a nullable legacy default");
+      check(
+          Boolean.TRUE.equals(
+              new com.openrsc.server.external.NPCDef.NPCDefinitionBuilder(3, "fixture")
+                  .undead(Boolean.TRUE)
+                  .build()
+                  .undead),
+          "builder retains explicit true");
       for (int id : new int[] {359, 498, 613, 614, 615, 865})
         check(UndeadClassification.isUndead(h.npc(id, 453, 450)), "authored extra undead " + id);
       check(

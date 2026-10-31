@@ -47,9 +47,9 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
 - Reuse the existing neutral stone/silver carving materials, recipes, Crafting
   requirements and XP as Grace's baseline, without a carving-cost rebalance.
 - Use two distinct carved resource families with final owner-approved names:
-  **Grace** for support/buffs and **Blight** for future hostile/debuff spells.
+  **Grace** for support/buffs and **Blight** for hostile/debuff spells.
   “Holy/Unholy” are not their item names.
-- God sigil + Grace supplies aligned support; god sigil + Blight will supply
+- God sigil + Grace supplies aligned support; god sigil + Blight supplies
   aligned debuffs. Unassigned Grace/Blight serves its respective generic role. This does not
   give generic spells every god's properties.
 - **Consume the distinct resources together when casting**, like rune costs.
@@ -104,9 +104,8 @@ are refused without that grade's consumption or XP. God-sigil altars retain
 their existing production and Devotion rules.
 
 See [the implementation and validation review](grace-blight-well-infusion-review.md).
-This completes production, not the mixed-resource casting or hostile spellbook
-overhaul. Current casting remains the twelve legacy spells with unchanged
-costs/effects/categories; their neutral resource is now displayed as Grace.
+Production and the mixed-resource overhaul are implemented in the candidate.
+The launch twelve-spell roster is historical; the active candidate has17 spells.
 
 ### Confirmed future progression — three tiers, six power levels
 
@@ -122,7 +121,7 @@ independent of Holy Power. The universal curve selects rank; each component
 uses its own approved incremental values. Standalone Tier 1 caps at P2; its
 inherited component inside Tier 3 can reach P6. The owner approved the revised
 values below on October 31, superseding earlier `3P`/`2P` proposals and the
-former Saradomin `P+1` draft. The private implementation candidate exposes eleven
+former Saradomin `P+1` draft. The private implementation candidate exposes seventeen
 spells; retired launch IDs remain reserved and are refused. All blessings last
 **60 seconds**, with one composite snapshot/expiry per god.
 
@@ -133,7 +132,7 @@ spells; retired launch IDs remain reserved and are refused. All blessings last
 | Sara delayed HoT (moved to Tier 3) | 1/2/3/4/5/6 HP per pulse; 10 delayed pulses about 6s apart |
 | Guthix extra cleanse | 2/3/4/5/6/7 per existing poison pulse, additive |
 | Guthix drained non-HP stats | Restore 1 each, every 10/9/8/7/6/5s, cap at normal |
-| Guthix Barkskin (Tier 2+) | +5/7/9/11/13/15% to ranged defense; runtime narrowing pending |
+| Guthix Barkskin (Tier 2+) | +5/7/9/11/13/15% to ranged defense |
 | Guthix reflection (Tier 3) | 5/6/7/8/9/10% factual direct damage |
 | Zam maximum melee damage | +5/7/9/11/13/15% |
 | Zam dealt melee damage (Tier 2+) | +3/4/5/6/7/8% |
@@ -187,9 +186,7 @@ recipient text supersedes the earlier sap line.
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
-as recorded above. The private candidate applies these names/messages after successful blessing
-application under the earlier Saradomin layout; the revised associations above
-are design changes awaiting implementation.
+as recorded above. The candidate applies the revised names/messages and Saradomin tier order.
 
 The owner revised Saradomin's order: undead damage → regeneration → delayed
 healing. At Tier 3/P6 the revised design gives **+75% damage against undead,
@@ -198,11 +195,9 @@ values still replace the earlier ×7/70 HP draft. The owner confirmed that the
 undead bonus applies to **melee, ranged and Magic**. The owner approved
 **Saradomin's Light → Hallowed Strikes** and the recipient message in the table
 above. Existing legacy undead classification must be audited
-and extended with server-owned tags as appropriate. No code/classification has
-changed for this revision.
+and extended with server-owned nullable tags. Explicit true additions359/498/613/614/615/865 and Farmer319=false are implemented; old quest/classic predicates remain unchanged.
 
-The preceding progression/composite foundation is implemented in the **private
-candidate**, except the latest Saradomin damage/tier-order revision;
+The progression/composite foundation and latest Saradomin revision are implemented in the **private candidate**;
 the old twelve-spell roster is historical salvage, not its active roster. **Keep Unify unchanged
 except for a flat cost of two Grace sigils per cast, no god sigil (not per
 recipient); exclude the old neutral Respite from the
@@ -232,8 +227,9 @@ the common tier caps 2/4/6. Tier 1 reaches 15%; Tier 2 reaches 25% on both
 components; Tier 3 reaches 35% on all three. Poison weakness increases poison
 damage and reduces cleansing per pulse, without inflicting poison or removing
 immunity. Summon/recoil weakness increases only its corresponding damage.
-Integer rounding, stacking, lifecycle, precise source admission and PvP policy
-still require implementation review; hostile gameplay is not implemented.
+The candidate implements exclusive per-god NPC slots, solo-capable logical area admission,
+atomic flat God+Blight costs, poison ceil/cleansing floor1 and summon/recoil fractional
+carry. No poison immunity is removed and PvP stays disabled.
 The owner confirmed separate spell/effect naming: buffs need recipient flavor
 messages as well as spell/effect names; debuffs need spell/effect names without
 recipient flavor. Guthix's Respite grants **Sap Blood**, Protection adds
@@ -247,11 +243,10 @@ holy-light/restless-dead recipient message above.
 The owner approved all three debuff spell-title chains: Guthix's
 Unease/Dread/Terror; Saradomin's Censure/Condemnation/Unmaking; Zamorak's
 Malice/Cruelty/Ruin. The governing Cleric document maps each title to its effect.
-This is the approved presentation model, not an implemented runtime rename.
+The candidate implements the approved presentation model for all active spells.
 
 Owner's order: **review power strengths/inherited P6 combinations → Greater
-Unify → return to debuffs**. The latest buff review is now approved and implemented; hostile work stays
-documentation only.
+Unify → return to debuffs**. The latest buff review is now approved and implemented; Guthix/Saradomin hostile spells are also implemented, pending private gameplay acceptance.
 
 ### Zamorak critical-hit debuffs — owner direction, October 31
 
@@ -275,10 +270,9 @@ for all six values, conditional proc semantics and outstanding critical/stagger
 integration choices. Do not infer boss immunity to all three components from
 the execution restriction, or count five ticks as five completed NPC attacks.
 
-Also planned, not yet coded: Zamorak's maximum/dealt-damage buffs become melee
-only and Guthix Barkskin becomes ranged defense only. The current prepared
-build retains the broader styles. Extending the melee restriction to lifesteal
-is a manager recommendation, not a separately confirmed owner requirement.
+The isolated implementation now narrows Zamorak's maximum/dealt bonuses to melee
+and Barkskin to ranged defense. Blood Hunger retains its existing eligible
+direct-hit scope. The prepared package is updated separately after Core review.
 Saradomin's hostile effect names are now selected: **Magical Allergy**
 (Magic-defense reduction), **Muscular Atrophy** (maximum-melee-damage reduction)
 and **Molecular Antipode** (temporary reusable non-corporeal state, with Magic
@@ -287,20 +281,22 @@ permitted in both directions). Entry rolls occur each eligible tick at
 confirmed by the owner. Re-entry requires at least one actual corporeal NPC
 attack attempt. The owner approved Magic-defense reductions
 10/13/16/19/22/25% and melee-maximum reductions 5/7/9/11/13/15%.
-Existing NPC opacity support makes shared translucent rendering feasible
-without per-NPC sprite replacements; implementation/rendering acceptance is
-pending. See the governing Cleric document for decisions and open boundaries.
+The candidate implements shared50% NPC opacity without sprite replacements,
+with native packet and software/OpenGL alpha checks. Private gameplay acceptance
+remains. See the governing Cleric document for decisions and open boundaries.
 Other hostile suggestions remain unselected.
 
-God+Grace buffs, god+Blight debuffs and joint resource consumption remain
-confirmed future casting direction. Generic purpose-only costs replace the god
+God+Grace buffs, the six implemented god+Blight debuffs and atomic joint resource
+consumption are present in the candidate. Generic purpose-only costs replace the god
 share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
 compatible grades); Unify/Greater use 2/6 Stone Grace and initial mixed-cost defaults are recorded
-above. Production remains complete; hostile casting is separate.
+above. Production and the scoped hostile casting branch are complete in source;
+Core integration/private gameplay acceptance are separate.
 
 ### Decisions still needed
 
-Later cost/economy refinement; remaining hostile balance, timing and lifecycle.
+Later cost/economy refinement and private gameplay balance review; Zamorak hostile
+activation and the unselected luck-centered Cosmic redesign.
 Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.
@@ -308,6 +304,21 @@ The [active governing design](cleric-spellbook-concept.md#active-overhaul-three-
 records the six thresholds, examples and distinction from the historical book.
 
 Reference: [governing Cleric concept and impact audit](cleric-spellbook-concept.md).
+
+Candidate completion now includes Guthix Unease/Dread/Terror and Saradomin
+Censure/Condemnation/Unmaking (appended22–27), all inherited component names,
+receiver flavor for buffs only, Hallowed undead damage, ranged-only Barkskin and
+melee-only Zamorak damage bonuses. Non-corporeal durations1/1/1/2/2/3 game ticks
+and the confirmed magical-combat-only exception are implemented with independent
+50% NPC opacity. Poison keeps cleansing without harm while phased; no catch-up.
+Rearm requires a tangible attack attempt and a following tick before another roll.
+Matched schema4/client10055 is required; owner maps and public activation remain
+separate. See [implementation review](cleric-consistency-implementation-review.md).
+
+Zamorak hostile activation remains deferred. The owner explicitly wants Cosmic's
+future redesign centered on **luck** and has not selected a replacement; current
+Cosmic chance/cap is unchanged. No Expose Weakness/Weak Legs/Weak Constitution
+mechanics or proposed penetration redesign are activated.
 
 ## 3. Round out the boss-dragon roster
 

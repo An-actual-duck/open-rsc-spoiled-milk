@@ -57,9 +57,13 @@ public final class ClericHostileRuntime {
                                         npc, spell.getPresentation().getOnEntityAnimationId()));
                           state.pruneOrigins();
                           state.ensureTick();
-              // Match authentic hostile non-damaging spell retaliation without replacing an existing fight.
-              if(!npc.isChasing()&&!npc.inCombat()&&npc.getCombatState()!=com.openrsc.server.model.states.CombatState.RUNNING)
-                npc.setChasing(caster);
+                          // Match authentic hostile non-damaging spell retaliation without
+                          // replacing an existing fight.
+                          if (!npc.isChasing()
+                              && !npc.inCombat()
+                              && npc.getCombatState()
+                                  != com.openrsc.server.model.states.CombatState.RUNNING)
+                            npc.setChasing(caster);
                         } else state.origins.remove(origin);
                       }
                     return applied[0] > 0;
@@ -284,11 +288,11 @@ public final class ClericHostileRuntime {
     }
 
     void retire() {
-      NonCorporealState.clearOwned(npc,this);
+      NonCorporealState.clearOwned(npc, this);
       registry.clearAll();
       origins.clear();
-      if(npc.getAttribute(KEY,null)==this)npc.removeAttribute(KEY);
-      ticking=false;
+      if (npc.getAttribute(KEY, null) == this) npc.removeAttribute(KEY);
+      ticking = false;
     }
 
     void ensureTick() {

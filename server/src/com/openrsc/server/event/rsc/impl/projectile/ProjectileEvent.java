@@ -982,8 +982,6 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (damage > 0 && (type == 2 || type == 5)) {
 			casterPlayer.applyElementalGiantMightDebuff(opponent);
 		}
-        if(!com.openrsc.server.model.combat.NonCorporealState.blocks(caster,opponent,
-            primaryProjectileCombatStyle()==CombatStyle.MAGIC?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL))
 		OgreStaggeringBlowProc.tryApply(
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE);
 		BabyDragonSmokeProc.tryApply(
@@ -992,7 +990,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final int infernalPieces = casterPlayer.getInfernalArmorPieceCount();
 		final InfernalFireProc.Result infernal = InfernalFireProc.tryApply(
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE,
-			procDamage -> inflictAuxiliaryMagicDamage(caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL),
+			procDamage -> inflictAuxiliaryMagicDamage(caster, opponent, procDamage),
 			procDamageDealt -> {
 				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT
 						&& opponent.isNpc()) {

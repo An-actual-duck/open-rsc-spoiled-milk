@@ -81,7 +81,9 @@ public final class ClericHostileFixture {
               "phase chance and game ticks");
         }
       cast(c, 24);
-      check(target.isChasing()||target.inCombat(),"successful hostile cast uses existing NPC retaliation");
+      check(
+          target.isChasing() || target.inCombat(),
+          "successful hostile cast uses existing NPC retaliation");
       check(
           ClericHostileRuntime.effect(target, ClericEffectFamily.GUTHIX_HOSTILE).getPower() == 6,
           "real hostile packet applies without party or existing combat");
@@ -134,7 +136,11 @@ public final class ClericHostileFixture {
       check(
           target.getMagicDefense() == Math.max(0, magic - (magic * 25 + 99) / 100),
           "actual Magic defense reduced");
-      for(int maximum:new int[]{0,1,2,3,7,14})check(ClericHostileRuntime.reduceMaximumMelee(target,maximum)==(maximum==0?0:Math.max(1,maximum-(maximum*15+99)/100)),"atrophy low maxima remain positive");
+      for (int maximum : new int[] {0, 1, 2, 3, 7, 14})
+        check(
+            ClericHostileRuntime.reduceMaximumMelee(target, maximum)
+                == (maximum == 0 ? 0 : Math.max(1, maximum - (maximum * 15 + 99) / 100)),
+            "atrophy low maxima remain positive");
       check(
           ClericDirectCombatRuntime.maximum(target, source, 100) == 85,
           "NPC max melee reduced15percent");
@@ -237,35 +243,66 @@ public final class ClericHostileFixture {
           "phase rearm does not advance Stagger recovery");
       NonCorporealState.clearOwned(target, owner);
       check(!NonCorporealState.isActive(target), "owned phase clear");
-      Object retainedState=target.getAttribute("cleric_hostile_state",null);
+      Object retainedState = target.getAttribute("cleric_hostile_state", null);
       c.setLoggedIn(false);
       check(
           ClericHostileRuntime.effect(target, ClericEffectFamily.GUTHIX_HOSTILE) == null,
           "caster logout clears hostile origin");
       h.advanceOneCombatTick();
-      check(target.getAttribute("cleric_hostile_state",null)==null,"final invalid caster removes NPC hostile authority");
-      java.lang.reflect.Field origins=retainedState.getClass().getDeclaredField("origins");origins.setAccessible(true);
-      check(((java.util.Map<?,?>)origins.get(retainedState)).isEmpty(),"expired state retains no caster references");
+      check(
+          target.getAttribute("cleric_hostile_state", null) == null,
+          "final invalid caster removes NPC hostile authority");
+      java.lang.reflect.Field origins = retainedState.getClass().getDeclaredField("origins");
+      origins.setAccessible(true);
+      check(
+          ((java.util.Map<?, ?>) origins.get(retainedState)).isEmpty(),
+          "expired state retains no caster references");
       c.setLoggedIn(true);
       c.setClientVersion(10055);
-      // A separate solo area makes all no-target outcomes observable at the real packet resource boundary.
-      Player solo=h.player("admissioncleric",490,490);solo.setClientVersion(10055);solo.getClientLimitations().maxItemId=65535;h.recordOutgoingPackets(solo);
-      ClericBlessingsFixture.skill(solo,Skill.HITS,100,100);ClericBlessingsFixture.skill(solo,Skill.PRAYER,160,99);
-      Npc admission=h.npc(3,491,490);
-      admission.teleport(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(491,490,1)));
-      cast(solo,22);
-      check(ClericBlessingsFixture.count(solo,3427)==100,"other signed level is not charged or afflicted");
-      admission.teleport(com.openrsc.server.model.world.coordinate.WorldLocation.global(new com.openrsc.server.model.world.coordinate.WorldCoordinate(491,490,0)));
-      admission.setAttribute("myworld_summon_owner",123L);
-      cast(solo,22);check(ClericBlessingsFixture.count(solo,3427)==100,"summon exclusion keeps resources");
+      // A separate solo area makes all no-target outcomes observable at the real packet resource
+      // boundary.
+      Player solo = h.player("admissioncleric", 490, 490);
+      solo.setClientVersion(10055);
+      solo.getClientLimitations().maxItemId = 65535;
+      h.recordOutgoingPackets(solo);
+      ClericBlessingsFixture.skill(solo, Skill.HITS, 100, 100);
+      ClericBlessingsFixture.skill(solo, Skill.PRAYER, 160, 99);
+      Npc admission = h.npc(3, 491, 490);
+      admission.teleport(
+          com.openrsc.server.model.world.coordinate.WorldLocation.global(
+              new com.openrsc.server.model.world.coordinate.WorldCoordinate(491, 490, 1)));
+      cast(solo, 22);
+      check(
+          ClericBlessingsFixture.count(solo, 3427) == 100,
+          "other signed level is not charged or afflicted");
+      admission.teleport(
+          com.openrsc.server.model.world.coordinate.WorldLocation.global(
+              new com.openrsc.server.model.world.coordinate.WorldCoordinate(491, 490, 0)));
+      admission.setAttribute("myworld_summon_owner", 123L);
+      cast(solo, 22);
+      check(ClericBlessingsFixture.count(solo, 3427) == 100, "summon exclusion keeps resources");
       admission.removeAttribute("myworld_summon_owner");
-      cast(solo,24);check(ClericBlessingsFixture.count(solo,3429)==98,"solo eligible NPC succeeds");
-      cast(solo,22);check(ClericBlessingsFixture.count(solo,3427)==100,"all weaker no-op recipients do not spend");
-      admission.teleport(500,500);
-      Npc banker=h.npc(95,491,490);check(!banker.getDef().isAttackable(),"ordinary quest/service NPC fixture unattackable");
-      cast(solo,22);check(ClericBlessingsFixture.count(solo,3427)==100&&!banker.isChasing()&&!banker.inCombat(),"unattackable service NPC excluded without retaliation");
-      solo.setClientVersion(10054);admission.teleport(491,491);
-      cast(solo,27);check(ClericBlessingsFixture.count(solo,3429)==100,"old schema3 client cannot activate hostile casts");
+      cast(solo, 24);
+      check(ClericBlessingsFixture.count(solo, 3429) == 98, "solo eligible NPC succeeds");
+      cast(solo, 22);
+      check(
+          ClericBlessingsFixture.count(solo, 3427) == 100,
+          "all weaker no-op recipients do not spend");
+      admission.teleport(500, 500);
+      Npc banker = h.npc(95, 491, 490);
+      check(!banker.getDef().isAttackable(), "ordinary quest/service NPC fixture unattackable");
+      cast(solo, 22);
+      check(
+          ClericBlessingsFixture.count(solo, 3427) == 100
+              && !banker.isChasing()
+              && !banker.inCombat(),
+          "unattackable service NPC excluded without retaliation");
+      solo.setClientVersion(10054);
+      admission.teleport(491, 491);
+      cast(solo, 27);
+      check(
+          ClericBlessingsFixture.count(solo, 3429) == 100,
+          "old schema3 client cannot activate hostile casts");
       ClericSpellbookStruct payload = new ClericSpellbookStruct();
       payload.setOpcode(OpcodeOut.SEND_CLERIC_SPELLBOOK);
       payload.schemaVersion = 4;

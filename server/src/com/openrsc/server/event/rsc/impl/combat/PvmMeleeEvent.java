@@ -694,14 +694,13 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (damage > 0) {
 			player.applyElementalGiantMightDebuff(target);
 		}
-        if(!com.openrsc.server.model.combat.NonCorporealState.blocks(hitter,target,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL))
 		OgreStaggeringBlowProc.tryApply(player, target, combatRandom());
 		BabyDragonSmokeProc.tryApply(player, target, combatRandom());
 		final int infernalMaxHit = player.getInfernalFireProcMaxHit();
 		final int infernalPieces = player.getInfernalArmorPieceCount();
 		final InfernalFireProc.Result infernal = InfernalFireProc.tryApply(player,
 			target, combatRandom(),
-			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL),
+			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage),
 			procDamageDealt -> {
 				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT
 						&& target.isNpc()) {

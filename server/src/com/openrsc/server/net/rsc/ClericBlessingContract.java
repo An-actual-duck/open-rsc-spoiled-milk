@@ -90,7 +90,7 @@ public final class ClericBlessingContract {
         text =
             "Restore "
                 + amount
-                + " point to each drained non-Hits stat every "
+                + " point to each drained stat other than Hits every "
                 + seconds(first)
                 + " sec";
         break;
@@ -107,10 +107,10 @@ public final class ClericBlessingContract {
         text = amount + "% direct-hit lifesteal strictly below " + first + "% Hits";
         break;
       case REFLECTION:
-        text = "Reflect " + amount + "% factual direct damage";
+        text = "Reflect " + amount + "% direct damage received";
         break;
       case UNDEAD_DAMAGE:
-        text = "+" + amount + "% primary melee, ranged and Magic damage against undead";
+        text = "+" + amount + "% direct melee, ranged and Magic attack damage against undead";
         break;
       case POISON_WEAKNESS:
         text = "+" + amount + "% poison damage and reduced cleansing at the existing pulse";
@@ -173,7 +173,7 @@ public final class ClericBlessingContract {
         text =
             "restore "
                 + values
-                + " point to each drained non-Hits stat every "
+                + " point to each drained stat other than Hits every "
                 + intervals
                 + " sec";
         break;
@@ -190,10 +190,10 @@ public final class ClericBlessingContract {
         text = "direct-hit lifesteal (%): " + values + "; strictly below " + first + "% Hits";
         break;
       case REFLECTION:
-        text = "factual direct damage reflected (%): " + values;
+        text = "direct damage received reflected (%): " + values;
         break;
       case UNDEAD_DAMAGE:
-        text = "primary melee/ranged/Magic damage against undead (%): +" + values;
+        text = "direct melee/ranged/Magic attack damage against undead (%): +" + values;
         break;
       case POISON_WEAKNESS:
         text = "poison weakness (%): " + values;

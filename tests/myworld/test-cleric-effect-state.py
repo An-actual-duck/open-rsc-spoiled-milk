@@ -135,7 +135,7 @@ public final class ClericEffectStateFixture {
 	}
 
 	private static void catalogChecks() {
-		check(ClericEffectFamily.values().length == 10, "effect-family count drift");
+		check(ClericEffectFamily.values().length == 12, "effect-family count drift");
 		for (int code = 0; code < ClericEffectFamily.values().length; code++) {
 			ClericEffectFamily family = ClericEffectFamily.fromCode(code);
 			check(ClericEffectFamily.fromKey(family.getKey()) == family,
@@ -243,7 +243,7 @@ public final class ClericEffectStateFixture {
 		reject(() -> ClericEffectDuration.gameTicks(0), "zero duration");
 		reject(() -> ClericEffectDuration.seconds(Long.MAX_VALUE), "duration overflow");
 		reject(() -> ClericEffectClock.system(0), "zero game tick");
-		reject(() -> ClericEffectFamily.fromCode(10), "unknown family code");
+		reject(() -> ClericEffectFamily.fromCode(12), "unknown family code");
 		reject(() -> ClericEffectCounterKind.fromCode(3), "unknown counter code");
 		reject(() -> new ClericEffectMagnitudes.Accuracy(0, 1), "zero accuracy");
 		reject(() -> new ClericEffectMagnitudes.Protection(100), "complete protection");
@@ -606,6 +606,7 @@ def validate_source_boundaries() -> None:
                 production_catalog_references.append(path.relative_to(ROOT).as_posix())
     require(set(production_catalog_references) == {
                 "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
+                "server/src/com/openrsc/server/content/cleric/runtime/ClericHostileRuntime.java",
                 "server/src/com/openrsc/server/net/rsc/generators/impl/PayloadCustomGenerator.java",
             },
             f"effect catalog escaped approved C08B/C09 consumers: {production_catalog_references}")

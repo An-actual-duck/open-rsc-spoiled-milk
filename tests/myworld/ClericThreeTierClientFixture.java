@@ -137,6 +137,7 @@ public final class ClericThreeTierClientFixture {
     }
     reject(() -> ClericSpellbookPacketDecoder.decode(change(packet, 0, 2)), "schema2");
     reject(() -> ClericSpellbookPacketDecoder.decode(change(packet, 0, 3)), "schema3");
+    reject(()->ClericSpellbookPacketDecoder.decode(recordedHex("cleric-schema3-payload.hex")),"actual retired schema3 payload");
     reject(
         () -> ClericSpellbookPacketDecoder.decode(change(packet, 1, 33)), "too many definitions");
     reject(
@@ -236,11 +237,13 @@ public final class ClericThreeTierClientFixture {
         "Saradomin details");
     check(
         rows.get(1).getClericHoverText().contains("7 poison")
-            && rows.get(1).getClericHoverText().contains("each drained non-Hits stat every 5 sec")
+            && rows.get(1).getClericHoverText().contains("each drained stat other than Hits every 5 sec")
             && rows.get(1).getClericHoverText().contains("15% ranged defense"),
         "Guthix details");
     check(
         rows.get(2).getClericHoverText().contains("strictly below 50% Hits"), "lifesteal boundary");
+    String groupedHud=rows.get(1).getClericHoverLines().toString();
+    check(groupedHud.indexOf("Sap Blood")==groupedHud.lastIndexOf("Sap Blood"),"HUD one Sap Blood effect label");
     check(hud.snapshot(61000).getRows().isEmpty(), "expiry");
     hud.replace(ActiveStatusPacketDecoder.decode(statuses(14)), catalog, 1000);
     hud.replace(ActiveStatusPacketDecoder.decode(new byte[] {0}), catalog, 1001);
@@ -253,6 +256,7 @@ public final class ClericThreeTierClientFixture {
     check(entries.size() >= 17, "guide contains all spells with bounded pages");
     for (ClericSpellGuideCatalog.Entry e : entries) {
       check(e.getLines().size() <= 12, "bounded guide row");
+      check(e.getLines().isEmpty()||!e.getLines().get(0).matches("[0-9]+/[0-9]+.*"),"guide pages do not orphan an effect values table");
       for (String line : e.getLines()) check(line.length() <= 70, "bounded guide line");
       if (e.getStableCode() == 14 && e.getLines().toString().contains("0/20/45/75/115/160"))
         check(
@@ -351,6 +355,13 @@ public final class ClericThreeTierClientFixture {
         "old stats stay unknown");
   }
 
+  static byte[] recordedHex(String name)throws Exception {
+    StringBuilder text=new StringBuilder();
+    for(String line:Files.readAllLines(Paths.get("tests/myworld/fixtures/"+name)))if(!line.startsWith("#"))text.append(line.trim());
+    byte[] bytes=new byte[text.length()/2];for(int i=0;i<bytes.length;i++)bytes[i]=(byte)Integer.parseInt(text.substring(i*2,i*2+2),16);
+    return bytes;
+  }
+
   static void phaseAppearance() throws Exception {
     mudclient mc=(mudclient)unsafe().allocateInstance(mudclient.class);
     ORSCharacter npc=new ORSCharacter();npc.serverIndex=5;npc.npcId=3;npc.animationNext=2;
@@ -367,6 +378,18 @@ public final class ClericThreeTierClientFixture {
     npc.spiritSummon=true;check((Integer)colour.invoke(mc,npc)==0x99FFFFFF,"existing summon opacity unchanged");
     npc.nonCorporeal=true;check((Integer)colour.invoke(mc,npc)==0x80FFFFFF,"phase does not mutate summon flag");
     npc.clearTransientVisualState();check(!npc.nonCorporeal&&!npc.spiritSummon,"slot reuse clears both independent flags");
+    actors=new ORSCharacter[16384];
+    for(int i=0;i<1023;i++){actors[i]=new ORSCharacter();actors[i].serverIndex=i;actors[i].npcId=3;}
+    ORSCharacter high=new ORSCharacter();high.serverIndex=16383;high.npcId=65535;high.animationNext=2;actors[16383]=high;
+    set(mc,"npcsServer",actors);
+    handler.getPacketsIncoming().dataBuffer=recordedHex("cleric-phase-1024.hex");handler.getPacketsIncoming().packetEnd=0;
+    appearance.invoke(handler);
+    check(high.nonCorporeal&&high.npcId==65535&&high.animationNext==2,"native high-runtime-index phase flag preserves definition and animation");
+    for(int i=0;i<1023;i++)check(!actors[i].nonCorporeal,"full1024 phase batch has no index aliasing");
+    high.clearTransientVisualState();
+    handler.getPacketsIncoming().dataBuffer=recordedHex("cleric-phase-reuse.hex");handler.getPacketsIncoming().packetEnd=0;
+    appearance.invoke(handler);check(!high.nonCorporeal,"native high-index replacement clears opacity");
+
     orsc.graphics.two.MudClientGraphics surface=new orsc.graphics.two.MudClientGraphics(8,8,1);
     Arrays.fill(surface.pixelData,0x204060);
     com.openrsc.client.model.Sprite layer=new com.openrsc.client.model.Sprite(new int[]{0xCC4422,0xCC4422,0xCC4422,0xCC4422},2,2);

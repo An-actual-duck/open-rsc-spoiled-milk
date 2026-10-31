@@ -842,7 +842,7 @@ public class CombatEvent extends GameTickEvent {
 		final int infernalPieces = player.getInfernalArmorPieceCount();
 		final InfernalFireProc.Result infernal = InfernalFireProc.tryApply(player,
 			target, ProductionGameRandom.INSTANCE,
-			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL),
+			procDamage -> inflictAuxiliaryMagicDamage(hitter, target, procDamage),
 			procDamageDealt -> applyHellsInfernoFollowup(player, target,
 				infernalMaxHit, procDamageDealt));
 		if (infernal.isConfigured()) {

@@ -29,17 +29,26 @@ public final class ClericSpellGuideCatalog {
     ArrayList<Entry> entries = new ArrayList<Entry>();
     for (ClericSpellDef d : ordered) {
       Entry entry = format(d, resourceName);
-      int pages = (entry.lines.size() + 11) / 12;
-      for (int page = 0; page < pages; page++) {
+      List<List<String>> pages = new ArrayList<List<String>>();
+      List<String> page = new ArrayList<String>();
+      for (List<String> block : entry.blocks) {
+        if (!page.isEmpty() && page.size() + block.size() > 12) {
+          pages.add(page);
+          page = new ArrayList<String>();
+        }
+        page.addAll(block);
+      }
+      if (!page.isEmpty()) pages.add(page);
+      for (int index = 0; index < pages.size(); index++)
         entries.add(
             new Entry(
                 entry.code,
-                entry.header + (pages > 1 ? " [" + (page + 1) + "/" + pages + "]" : ""),
+                entry.header
+                    + (pages.size() > 1 ? " [" + (index + 1) + "/" + pages.size() + "]" : ""),
                 entry.area,
                 entry.mechanics,
                 entry.power,
-                entry.lines.subList(page * 12, Math.min(entry.lines.size(), (page + 1) * 12))));
-      }
+                pages.get(index)));
     }
     return Collections.unmodifiableList(entries);
   }
@@ -52,7 +61,7 @@ public final class ClericSpellGuideCatalog {
             + d.getRadius()
             + " tiles; "
             + (d.affectsCaster() ? "includes caster" : "caster excluded");
-    ArrayList<String> lines = new ArrayList<String>();
+    DocumentLines lines = new DocumentLines();
     StringBuilder cost = new StringBuilder("Per cast: ");
     for (ClericCostDef c : d.getCosts()) {
       if (cost.length() > 10) cost.append(" + ");
@@ -60,7 +69,7 @@ public final class ClericSpellGuideCatalog {
     }
     add(lines, cost.toString());
     add(lines, area);
-    if(!d.getRecipientFlavor().isEmpty()) add(lines,"Recipient: "+d.getRecipientFlavor());
+    if (!d.getRecipientFlavor().isEmpty()) add(lines, "Recipient: " + d.getRecipientFlavor());
     if (d.getEffectRanks().isEmpty()) {
       add(lines, d.getDescription());
       add(lines, "Fixed effect: no Holy Power scaling. Stops within 2 tiles.");
@@ -83,6 +92,7 @@ public final class ClericSpellGuideCatalog {
               + " sec. Values below follow P1-P"
               + cap
               + ".");
+      ArrayList<String> effectBlocks = new ArrayList<String>();
       for (int component = 0;
           component < d.getEffectRanks().get(0).getComponents().size();
           component++) {
@@ -96,7 +106,10 @@ public final class ClericSpellGuideCatalog {
             intervals.append('/');
           }
           values.append(c.getMagnitude());
-          intervals.append(c.getKind()==orsc.ClericBlessingContract.NON_CORPOREAL?c.getParameter1():c.getParameter1() / 1000);
+          intervals.append(
+              c.getKind() == orsc.ClericBlessingContract.NON_CORPOREAL
+                  ? c.getParameter1()
+                  : c.getParameter1() / 1000);
         }
         String v = values.toString(), text;
         if (first.getKind() == ClericBlessingContract.STAT_RESTORATION) {
@@ -105,10 +118,34 @@ public final class ClericSpellGuideCatalog {
             same &= rank.getComponents().get(component).getMagnitude() == first.getMagnitude();
           if (same) v = Integer.toString(first.getMagnitude());
         }
-        boolean continuation = component>0 && d.getEffectRanks().get(0).getComponents().get(component-1).getName().equals(first.getName());
-        text=continuation ? ClericBlessingContract.describeComponentTableDetail(first.getKind(),v,intervals.toString(),first.getParameter1(),first.getParameter2()) : ClericBlessingContract.describeComponentTable(first.getKind(),v,intervals.toString(),first.getParameter1(),first.getParameter2());
-        add(lines, text);
+        boolean continuation =
+            component > 0
+                && d.getEffectRanks()
+                    .get(0)
+                    .getComponents()
+                    .get(component - 1)
+                    .getName()
+                    .equals(first.getName());
+        text =
+            continuation
+                ? ClericBlessingContract.describeComponentTableDetail(
+                    first.getKind(),
+                    v,
+                    intervals.toString(),
+                    first.getParameter1(),
+                    first.getParameter2())
+                : ClericBlessingContract.describeComponentTable(
+                    first.getKind(),
+                    v,
+                    intervals.toString(),
+                    first.getParameter1(),
+                    first.getParameter2());
+        if (continuation) {
+          int last = effectBlocks.size() - 1;
+          effectBlocks.set(last, effectBlocks.get(last) + "; " + text);
+        } else effectBlocks.add(text);
       }
+      for (String block : effectBlocks) add(lines, block);
     }
     return new Entry(
         d.getStableCode(),
@@ -120,13 +157,20 @@ public final class ClericSpellGuideCatalog {
   }
 
   private static void add(List<String> lines, String text) {
-    lines.addAll(ClericTextLayout.wrap(text, MAX_LINE_CHARACTERS, String::length));
+    List<String> wrapped = ClericTextLayout.wrap(text, MAX_LINE_CHARACTERS, String::length);
+    lines.addAll(wrapped);
+    if (lines instanceof DocumentLines) ((DocumentLines) lines).blocks.add(wrapped);
+  }
+
+  private static final class DocumentLines extends ArrayList<String> {
+    final List<List<String>> blocks = new ArrayList<List<String>>();
   }
 
   public static final class Entry {
     private final int code;
     private final String header, area, mechanics, power;
     private final List<String> lines;
+    private final List<List<String>> blocks;
 
     Entry(
         int code, String header, String area, String mechanics, String power, List<String> lines) {
@@ -135,6 +179,10 @@ public final class ClericSpellGuideCatalog {
       this.area = area;
       this.mechanics = mechanics;
       this.power = power;
+      this.blocks =
+          lines instanceof DocumentLines
+              ? new ArrayList<List<String>>(((DocumentLines) lines).blocks)
+              : Collections.singletonList(lines);
       this.lines = Collections.unmodifiableList(new ArrayList<String>(lines));
     }
 

@@ -136,7 +136,7 @@ def verify_source_boundaries() -> None:
     require("source.getMagicOffense()" in combat_formula
             and "victim.getMagicDefense()" in combat_formula,
             "offensive spell calculation no longer uses Magic offense/defense")
-    require("calculateGodSpellDamage(getPlayer(), affectedMob, spellEnum)" in spell_handler,
+    require("rollGodSpellDamage(getPlayer(), affectedMob, spellEnum)" in spell_handler,
             "god spells no longer use the established offensive damage path")
     require("getHolyPower" not in combat_formula and "getHolyPower" not in spell_handler,
             "Holy Power must not affect offensive god spells")
