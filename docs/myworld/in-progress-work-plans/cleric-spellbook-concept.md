@@ -46,17 +46,20 @@ resource conversion or map change is authorized by this documentation update.
   allies, hostile spells affect enemies. Existing PvP exclusions remain; this
   direction does not introduce new PvP behavior.
 
-**Still unresolved:** Blight's new carving materials/recipes and item allocation;
-new infusion requirements, XP, yields, quantities and Devotion policy; exact
-casting costs and grade use; layout and future spells/tiers beyond the current
-mapping. Grace reuses the existing neutral stone/silver grades and carving
-recipes; stock preservation is settled by same-ID reuse, not a pending
-exchange. The twelve existing support spells retain the mapping below; their
-current effects and unlocks are reuse references, not a new numerical rebalance.
-Joint consumption as distinct casting resources is confirmed; physical
-combination is not the design.
-The generic-cost substitution rule below is confirmed, but no fixed per-spell
-quantities, new Blight IDs, compensation or generic god properties are implied.
+**Current implementation boundary (October 30):** Grace/Blight carving and well
+infusion are implemented as described in [the infusion review](grace-blight-well-infusion-review.md).
+Stone uses Rune stone + chisel (Crafting1,5XP), and silver uses Silver nugget +
+chisel (Crafting20,10XP), for both purposes. Infusion requires Blessing1/16,
+base5/10XP, and exactly the existing altar yield/diminishing-XP progression.
+Purpose wells charge no Devotion. Grace retains IDs3299/3300/3307/3308 and all
+stock/art; Blight uses3426–3429. Grace now uses Divine wellsprings instead of
+altars; the three god sigils retain their original altar rules.
+
+**Still unresolved:** exact joint casting costs and grade use; book layout and
+future hostile spells/tiers. Current casting remains the legacy twelve-spell
+runtime, with the neutral resource displayed as Grace. God-plus-Grace casting
+vectors and Blight debuffs are not implemented by this production task. Joint
+consumption as distinct resources is the confirmed future direction.
 
 The four-primary/neutral-at-any-altar model describes the shipped launch only.
 Older Unholy stone/silver recipes, the named Fountain and the October 24
@@ -2013,3 +2016,16 @@ Final Grace/Blight infusion behavior remains part of the Cleric overhaul.
 The owner also approved the native **Thorn** carved/infused Blight visual.
 `dev/myworld/blight-sigil-candidate` is the approved artwork source; production
 Blight item identities/material tiers/recipes still await their own task.
+
+
+### October 30: functional Grace/Blight dipping
+
+This supersedes the authoring-only stage above and its unsettled infusion
+rules. The owner confirmed the existing altar's increased-yield progression.
+Dip sigils now infuses both matching grades independently; using an uninfused
+sigil on its well infuses all matching stock of that grade. Divine water serves
+Grace, dark ichor serves Blight. Land-side approach and ordinary wall/reach
+checks remain mandatory; the editor does not automatically create safe shores.
+No god, Devotion fee, item exchange, map edit, casting change or new spell is
+introduced at wells. The exact identities, arithmetic, asset provenance and
+offline evidence are in [the implementation review](grace-blight-well-infusion-review.md).

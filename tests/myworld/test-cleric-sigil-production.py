@@ -192,7 +192,7 @@ def validate_runtime_boundaries() -> None:
         "ItemId.CHISEL.id()",
         "startbatch(player, makeCount);",
         "ifinterrupted()",
-        "replaceExact(source, new Item(output.getItemId(), 1), true)",
+        "replaceExact(source, new Item(outputItemId, 1), true)",
         "Skill.CRAFTING.id()",
         "Skill.BLESSING.id()",
         "PrayerCatalog.getGodLineForAltar",
@@ -216,9 +216,9 @@ def validate_runtime_boundaries() -> None:
             f"&& altarGod == PrayerCatalog.GodLine.{god}" in plugin,
             f"aligned altar policy drift for {alignment}",
         )
-    require("if (alignment == ClericAlignment.NEUTRAL)" in plugin
-            and "return altarGod;" in plugin,
-            "neutral sigils must charge the recognized altar god")
+    require("if (alignment == ClericAlignment.NEUTRAL)" not in plugin
+            and "ClericWellSigil.fromAny(item.getCatalogId())" in plugin,
+            "Grace must use divine wells instead of god altars")
     require("replaceExactStacked" not in inventory,
             "carving must not retain the obsolete stack-merging replacement path")
     require("synchronized (list)" in inventory and "canReplaceAllCatalogStackedLocked" in inventory,
@@ -235,7 +235,7 @@ def validate_runtime_boundaries() -> None:
 
 
 def build_and_run_fixture() -> None:
-    sources = sorted(str(path) for path in CLERIC_ROOT.glob("*.java"))
+    sources = sorted(str(path) for path in CLERIC_ROOT.glob("*.java") if path.name != "ClericWellInteraction.java")
     sources.append(str(ROOT / "server/src/com/openrsc/server/content/PoisonPowerReduction.java"))
     with tempfile.TemporaryDirectory(prefix="cleric-sigil-production-") as temporary:
         temp = Path(temporary)

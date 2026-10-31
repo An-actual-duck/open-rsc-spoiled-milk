@@ -211,8 +211,11 @@ def main() -> None:
         "server/myworld-host.conf",
         "release/world-builder-v2/world-builder-runtime.conf",
     ):
+        version_source = read(relative)
+        if relative == "Client_Base/src/orsc/Config.java" and "CLIENT_VERSION = NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION" in version_source:
+            version_source += "\nCLIENT_VERSION = " + re.search(r"FIRST_EXPANDED_CLIENT_VERSION\s*=\s*(\d+)", read("Client_Base/src/orsc/NpcCapacityContract.java")).group(1)
         versions = re.findall(
-            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", read(relative)
+            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", version_source
         )
         require(
             versions and max(map(int, versions)) >= 10051,
@@ -223,9 +226,10 @@ def main() -> None:
     for path in (ROOT / "server/plugins").rglob("*.java"):
         if "Skill.BLESSING" in path.read_text(encoding="utf-8"):
             blessing_plugins.append(str(path.relative_to(ROOT)))
-    require(blessing_plugins == [
-        "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java"
-    ], "Blessing gameplay must remain limited to the approved C05 sigil production path")
+    require(sorted(blessing_plugins) == [
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilProduction.java",
+        "server/plugins/com/openrsc/server/plugins/custom/myworld/skills/blessing/SigilWells.java",
+    ], "Blessing gameplay must remain limited to sigil carving, god altars and purpose wells")
 
     print("PASS: Blessing is append-only, persistent, ranked, and Quest-Points safe")
 

@@ -5849,11 +5849,11 @@ public class EntityHandler {
 			0, 443, "external-png:blessed-zam-sigil@28x25", true, false, 0, 0,
 			false, false, false, 3298));
 		setCustomItemDefinition(3299, new ItemDef(
-			"Unblessed neutral stone sigil", "A carved neutral stone sigil awaiting a blessing", "",
+			"Uninfused stone Grace sigil", "A carved stone Grace sigil awaiting divine water", "",
 			0, 443, "external-png:unblessed-neutral-sigil@28x25", false, false, 0, 0,
 			false, false, false, 3299));
 		setCustomItemDefinition(3300, new ItemDef(
-			"Neutral stone sigil", "A neutral stone sigil blessed at a god altar", "",
+			"Stone Grace sigil", "A stone Grace sigil infused with divine water", "",
 			0, 443, "external-png:blessed-neutral-sigil@28x25", true, false, 0, 0,
 			false, false, false, 3300));
 		setCustomItemDefinition(3301, new ItemDef(
@@ -5881,13 +5881,29 @@ public class EntityHandler {
 			0, 134, "external-png:silver-blessed-zam-sigil@24x21", true, false, 0, 0,
 			false, false, false, 3306));
 		setCustomItemDefinition(3307, new ItemDef(
-			"Unblessed neutral silver sigil", "A carved neutral silver sigil awaiting a blessing", "",
+			"Uninfused silver Grace sigil", "A carved silver Grace sigil awaiting divine water", "",
 			0, 134, "external-png:silver-unblessed-neutral-sigil@24x21", false, false, 0, 0,
 			false, false, false, 3307));
 		setCustomItemDefinition(3308, new ItemDef(
-			"Neutral silver sigil", "A neutral silver sigil blessed at a god altar", "",
+			"Silver Grace sigil", "A silver Grace sigil infused with divine water", "",
 			0, 134, "external-png:silver-blessed-neutral-sigil@24x21", true, false, 0, 0,
 			false, false, false, 3308));
+		setCustomItemDefinition(3426, new ItemDef(
+			"Uninfused stone Blight sigil", "A carved stone Blight sigil awaiting ichor", "",
+			0, 443, "external-png:blight-stone-uninfused@28x25", false, false, 0, 0,
+			false, false, false, 3426));
+		setCustomItemDefinition(3427, new ItemDef(
+			"Stone Blight sigil", "A stone Blight sigil infused with ichor", "",
+			0, 443, "external-png:blight-stone-infused@28x25", true, false, 0, 0,
+			false, false, false, 3427));
+		setCustomItemDefinition(3428, new ItemDef(
+			"Uninfused silver Blight sigil", "A carved silver Blight sigil awaiting ichor", "",
+			0, 134, "external-png:blight-silver-uninfused@24x21", false, false, 0, 0,
+			false, false, false, 3428));
+		setCustomItemDefinition(3429, new ItemDef(
+			"Silver Blight sigil", "A silver Blight sigil infused with ichor", "",
+			0, 134, "external-png:blight-silver-infused@24x21", true, false, 0, 0,
+			false, false, false, 3429));
 	}
 
 	private static void applyBangleVisuals() {

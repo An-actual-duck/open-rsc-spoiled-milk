@@ -59,8 +59,8 @@ References: [coating design](../rough-drafts/slayer-unique-equipment-design.md),
   Preserve the purple-water/ichor-leaking dirt-wall visual direction.
 - Dip **Grace** carvings at **holy wellsprings beneath Entrana, the Monastery
   and other well-known holy areas**. This replaces neutral-at-any-god-altar
-  for future Grace infusion; it does not imply charging a god's Devotion.
-  Exact sites/access and new infusion balance/Devotion policy remain open.
+  for Grace infusion. Purpose wells charge no Devotion. Sites/access are map
+  authoring; production rules are implemented as recorded below.
 - Reorganize the spellbook while salvaging existing effects and infrastructure.
   Area buffs affect allies and area debuffs affect enemies around the caster;
   existing PvP exclusions remain in force.
@@ -71,24 +71,42 @@ runtime and reuse baseline, not a completed implementation of this overhaul.
 
 ### Well visuals and edge access
 
-Use the existing native water pattern for both liquids: **deep-purple Ichor** and
-**pale-blue Divine Water**. Each needs matching native **dirt and stone** walls
-with liquid seeping through cracks and descending to the floor, preserving the
-background material and 192/275-unit wall geometry. [Six native texture candidates](../../../dev/myworld/cleric-wells/README.md)
-are ready for art review only; no definitions/IDs/archives are installed.
+The approved water/seep assets are installed as game-owned content: deep-purple
+**Ichor** and pale-blue **Divine Water**, matching dirt/stone seep walls in
+192/275-unit heights, floor definitions 27/28, texture definitions 67/68 and wall
+definitions 220–227. See [the native asset review](cleric-well-assets-review.md).
+They are automatically discovered from the selected game's definitions/assets.
 
-Provide separate essentially invisible, 1×1/nonblocking **Ichor well** and
-**Divine wellspring** shoreline interactions along the **entire accessible edge**,
-with **Dip sigils** and reachable land-side approach points, like fishing spots.
-Divine-water examine flavor must identify it as divine water, not generic water.
-Names/flavor strings are proposals. An empty or transparent scenery model is not
-already pickable: a separate generic runtime pick proxy/metadata and discoverable
-editor helper are required, with software/OpenGL invisibility, picking and
-pathing checks. No hardcoded editor roster or fake visible well structures.
-The [interaction audit](cleric-spellbook-concept.md#well-assets-and-shoreline-interaction--confirmed-october-29)
-records the current terrain-only transparent-face exception and acceptance gates.
-Infusion balance and Blight recipes remain unresolved; this is not functional
-infusion implementation or a new casting-cost approval.
+**Ichor well 1354** and **Divine wellspring 1355** are installed as invisible,
+1×1/nonblocking shoreline interactions with **Dip sigils** and appropriate liquid
+examine flavor. Generic interaction-only metadata/native picking and discovered
+editor-only markers are implemented and tested for software/OpenGL, occlusion
+and land-side reach. Place them along the entire accessible liquid edge, next
+to walkable shore; no hardcoded editor roster or visible well structure is used.
+Blocked shores still need authoring; infusion does not bypass walls or water.
+
+### Implemented carving and infusion — October 30, 2026
+
+The owner confirmed the existing altar's increased-yield progression for wells.
+Grace and Blight both carve from Rune stone + chisel (Crafting 1, 5 XP) or Silver
+nugget + chisel (Crafting 20, 10 XP), producing one uninfused sigil. Their stone/
+silver infusion requirements are Blessing 1/16 with base 5/10 XP. Output increases
+by one per ten levels above the requirement, using the exact existing altar
+multiplier and diminishing-XP formula. Purpose wells charge **no Devotion**.
+
+Grace retains raw/infused IDs 3299/3300/3307/3308, all stock and original artwork;
+it now uses Divine wellsprings instead of god altars. Blight uses new IDs 3426–3429
+and the approved Thorn artwork. Uninfused forms are nonstackable; infused forms
+stack; neither is noteable. **Dip sigils** processes both matching grades
+independently; using a raw sigil on its well processes all stock of that grade.
+Wrong wells, already infused/god/noted items, unsupported output and fatigue
+are refused without that grade's consumption or XP. God-sigil altars retain
+their existing production and Devotion rules.
+
+See [the implementation and validation review](grace-blight-well-infusion-review.md).
+This completes production, not the mixed-resource casting or hostile spellbook
+overhaul. Current casting remains the twelve legacy spells with unchanged
+costs/effects/categories; their neutral resource is now displayed as Grace.
 
 ### Current two-tier Grace mapping
 
@@ -107,13 +125,11 @@ The old `2 stone + 1 silver` launch vector is not an approved new overhaul price
 
 ### Decisions still needed
 
-Blight's new carving materials, recipes and unallocated IDs; new infusion
-requirements/XP/yields/quantities and Devotion policy; exact casting costs and
-grade correspondence; and future spells/tiers and layout. Grace's existing
-stone/silver carving baseline and same-ID stock preservation are settled.
-Joint consumption during casting is settled; its quantities are not. Existing
-god-production numbers do not automatically become new wellspring/ichor infusion
-rules. The three god-production lines remain unchanged.
+Exact mixed casting costs and grade correspondence; future hostile spells/tiers
+and book layout. Carving, well requirements/yields/XP, no-Devotion purpose policy,
+Blight identities/art and Grace same-ID stock preservation are implemented.
+Joint consumption during future casting is settled; its quantities are not.
+The three god-production lines remain unchanged.
 
 Reference: [governing Cleric concept and impact audit](cleric-spellbook-concept.md).
 

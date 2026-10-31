@@ -118,8 +118,11 @@ def validate_wiring() -> None:
         ROOT / "release/world-builder-v2/world-builder-runtime.conf",
     )
     for surface in version_surfaces:
+        version_source = read(surface)
+        if surface == CLIENT / "orsc/Config.java" and "CLIENT_VERSION = NpcCapacityContract.FIRST_EXPANDED_CLIENT_VERSION" in version_source:
+            version_source += "\nCLIENT_VERSION = " + re.search(r"FIRST_EXPANDED_CLIENT_VERSION\s*=\s*(\d+)", read(CLIENT / "orsc/NpcCapacityContract.java")).group(1)
         versions = re.findall(
-            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", read(surface)
+            r"(?:CLIENT_VERSION\s*=\s*|client_version:\s*)(\d+)", version_source
         )
         require(versions and max(map(int, versions)) >= 10051,
                 f"maintained-client protocol version drift: {surface.relative_to(ROOT)}")

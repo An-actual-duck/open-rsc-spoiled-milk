@@ -38,10 +38,10 @@ SIGILS = (
      "A carved stone sigil awaiting Zamorak's blessing", 443, "unblessed-zam-sigil@28x25"),
     (3298, "BLESSED_STONE_ZAMORAK_SIGIL", "Stone sigil of Zamorak",
      "A stone sigil blessed by Zamorak", 443, "blessed-zam-sigil@28x25"),
-    (3299, "UNBLESSED_STONE_NEUTRAL_SIGIL", "Unblessed neutral stone sigil",
-     "A carved neutral stone sigil awaiting a blessing", 443, "unblessed-neutral-sigil@28x25"),
-    (3300, "BLESSED_STONE_NEUTRAL_SIGIL", "Neutral stone sigil",
-     "A neutral stone sigil blessed at a god altar", 443, "blessed-neutral-sigil@28x25"),
+    (3299, "UNBLESSED_STONE_NEUTRAL_SIGIL", "Uninfused stone Grace sigil",
+     "A carved stone Grace sigil awaiting divine water", 443, "unblessed-neutral-sigil@28x25"),
+    (3300, "BLESSED_STONE_NEUTRAL_SIGIL", "Stone Grace sigil",
+     "A stone Grace sigil infused with divine water", 443, "blessed-neutral-sigil@28x25"),
     (3301, "UNBLESSED_SILVER_SARADOMIN_SIGIL", "Unblessed silver sigil of Saradomin",
      "A carved silver sigil awaiting Saradomin's blessing", 134, "silver-unblessed-sara-sigil@24x21"),
     (3302, "BLESSED_SILVER_SARADOMIN_SIGIL", "Silver sigil of Saradomin",
@@ -54,10 +54,10 @@ SIGILS = (
      "A carved silver sigil awaiting Zamorak's blessing", 134, "silver-unblessed-zam-sigil@24x21"),
     (3306, "BLESSED_SILVER_ZAMORAK_SIGIL", "Silver sigil of Zamorak",
      "A silver sigil blessed by Zamorak", 134, "silver-blessed-zam-sigil@24x21"),
-    (3307, "UNBLESSED_SILVER_NEUTRAL_SIGIL", "Unblessed neutral silver sigil",
-     "A carved neutral silver sigil awaiting a blessing", 134, "silver-unblessed-neutral-sigil@24x21"),
-    (3308, "BLESSED_SILVER_NEUTRAL_SIGIL", "Neutral silver sigil",
-     "A neutral silver sigil blessed at a god altar", 134, "silver-blessed-neutral-sigil@24x21"),
+    (3307, "UNBLESSED_SILVER_NEUTRAL_SIGIL", "Uninfused silver Grace sigil",
+     "A carved silver Grace sigil awaiting divine water", 134, "silver-unblessed-neutral-sigil@24x21"),
+    (3308, "BLESSED_SILVER_NEUTRAL_SIGIL", "Silver Grace sigil",
+     "A silver Grace sigil infused with divine water", 134, "silver-blessed-neutral-sigil@24x21"),
 )
 
 SOURCE_HASHES = {
@@ -131,7 +131,7 @@ def require(condition: bool, message: str) -> None:
 def validate_definitions_and_scope() -> None:
     payload = json.loads(SERVER_ITEMS.read_text(encoding="utf-8"))["items"]
     entries = {int(entry["id"]): entry for entry in payload}
-    require(max(entries) == 3317, "custom definitions must include the current contiguous item range")
+    require(max(entries) == 3429, "custom definitions must include the current contiguous item range")
     require(set(range(3293, 3309)) <= entries.keys(), "server sigil definition range is incomplete")
 
     legacy_constants = LEGACY_ITEM_IDS.read_text(encoding="utf-8")
@@ -197,6 +197,7 @@ def validate_source_assets() -> None:
     expected_pngs = set(SOURCE_HASHES) | {
         f"silver-{name}" for name in SOURCE_HASHES if name != "stone.png"
     }
+    expected_pngs |= {f"blight-{material}-{state}.png" for material in ("stone", "silver") for state in ("uninfused", "infused")}
     require(actual_pngs == expected_pngs,
             f"sigil PNG inventory drift: expected {sorted(expected_pngs)}, got {sorted(actual_pngs)}")
     for name, expected_hash in SOURCE_HASHES.items():
@@ -205,7 +206,7 @@ def validate_source_assets() -> None:
 
 
 def build_and_run_server_identity_fixture() -> None:
-    sources = sorted(str(path) for path in SERVER_CLERIC_ROOT.glob("*.java"))
+    sources = sorted(str(path) for path in SERVER_CLERIC_ROOT.glob("*.java") if path.name != "ClericWellInteraction.java")
     sources.append(str(ROOT / "server/src/com/openrsc/server/content/PoisonPowerReduction.java"))
     with tempfile.TemporaryDirectory(prefix="cleric-sigil-identities-") as temporary:
         temp = Path(temporary)
@@ -246,11 +247,11 @@ public final class ClericSigilItemAssetFixture {
 		"Unblessed stone sigil of Saradomin", "Stone sigil of Saradomin",
 		"Unblessed stone sigil of Guthix", "Stone sigil of Guthix",
 		"Unblessed stone sigil of Zamorak", "Stone sigil of Zamorak",
-		"Unblessed neutral stone sigil", "Neutral stone sigil",
+		"Uninfused stone Grace sigil", "Stone Grace sigil",
 		"Unblessed silver sigil of Saradomin", "Silver sigil of Saradomin",
 		"Unblessed silver sigil of Guthix", "Silver sigil of Guthix",
 		"Unblessed silver sigil of Zamorak", "Silver sigil of Zamorak",
-		"Unblessed neutral silver sigil", "Neutral silver sigil"
+		"Uninfused silver Grace sigil", "Silver Grace sigil"
 	};
 	private static final String[] ASSETS = {
 		"unblessed-sara-sigil@28x25", "blessed-sara-sigil@28x25",
@@ -276,7 +277,7 @@ public final class ClericSigilItemAssetFixture {
 		Path root = Paths.get(args[0]);
 		Path assets = root.resolve("dev/myworld/assets/sprites/items/inventory-ground/resources/sigils");
 		EntityHandler.load(true);
-		check(EntityHandler.itemCount() == 3318, "client item count drift");
+		check(EntityHandler.itemCount() == 3430, "client item count drift");
 
 		ClientExternalAssetLoader local = new ClientExternalAssetLoader(root, mudclient.class);
 		ClientExternalAssetLoader packaged = new ClientExternalAssetLoader(
@@ -302,6 +303,18 @@ public final class ClericSigilItemAssetFixture {
 				check(bounds[2] <= 24 && bounds[3] <= 21, "silver render bound drift " + IDS[index]);
 			}
 		}
+
+        for (int id = 3426; id <= 3429; id++) {
+            ItemDef item = EntityHandler.getItemDef(id);
+            String grade = id < 3428 ? "stone" : "silver", state = id % 2 == 0 ? "uninfused" : "infused";
+            check(item != null && item.getSpriteID() == (id < 3428 ? 443 : 134), "Blight native fallback identity " + id);
+            check(item.getSpriteLocation().equals("external-png:blight-" + grade + "-" + state + (id < 3428 ? "@28x25" : "@24x21")), "Blight selector " + id);
+            check(item.isStackable() == (id % 2 == 1) && !item.noteable && !item.isWieldable(), "Blight flags " + id);
+            Sprite first = local.getExternalItemSprite(item), second = packaged.getExternalItemSprite(item);
+            check(first != null && second != null, "Blight local/classpath assets " + id);
+            int[] box = visibleBounds(first);
+            check(box[2] <= (id < 3428 ? 28 : 24) && box[3] <= (id < 3428 ? 25 : 21), "Blight native render size " + id);
+        }
 
 		ItemDef missing = new ItemDef("Missing", "Missing", "", 0, 443,
 			"external-png:missing-cleric-sigil", true, false, 0, 0,

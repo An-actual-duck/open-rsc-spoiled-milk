@@ -6,7 +6,7 @@ import com.openrsc.server.model.world.coordinate.WorldLocation;
 import com.openrsc.server.model.world.region.TileValue;
 import com.openrsc.server.util.rsc.CollisionFlag;
 
-/** Game-owned well identities and authoring-stage admission. Does not charge sigils. */
+/** Game-owned well identities and land-side admission for sigil infusion. */
 public final class ClericWellInteraction {
     public static final int ICHOR_WELL = 1354;
     public static final int DIVINE_WELLSPRING = 1355;
@@ -30,8 +30,8 @@ public final class ClericWellInteraction {
     }
 
     public static String guidance(int id) {
-        if (id == ICHOR_WELL) return "Dark ichor gathers here. These waters are not ready to infuse Blight sigils yet.";
-        if (id == DIVINE_WELLSPRING) return "Pale-blue divine water gathers here. These waters are not ready to infuse Grace sigils yet.";
+        if (id == ICHOR_WELL) return "Dip uninfused Blight sigils into this dark ichor.";
+        if (id == DIVINE_WELLSPRING) return "Dip uninfused Grace sigils into this pale-blue divine water.";
         throw new IllegalArgumentException("Not a sigil well");
     }
 }

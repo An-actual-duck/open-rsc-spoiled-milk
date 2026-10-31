@@ -6,6 +6,7 @@ import com.openrsc.server.content.Devotion;
 import com.openrsc.server.content.cleric.ClericAlignment;
 import com.openrsc.server.content.cleric.ClericSigilItemId;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
+import com.openrsc.server.content.cleric.ClericWellSigil;
 import com.openrsc.server.content.cleric.ClericSigilProductionCatalog;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
@@ -63,9 +64,10 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 
 	@Override
 	public boolean blockUseLoc(Player player, GameObject obj, Item item) {
-		return isEnabled(player) && obj != null && item != null && !item.getNoted()
+		return isEnabled(player) && obj != null && item != null
 			&& PrayerCatalog.getGodLineForAltar(obj.getID(), obj.getX(), obj.getY()) != null
-			&& isUnblessedSigil(item.getCatalogId());
+			&& ((!item.getNoted() && isUnblessedSigil(item.getCatalogId()))
+                || ClericWellSigil.fromAny(item.getCatalogId()) != null);
 	}
 
 	@Override
@@ -73,6 +75,12 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 		if (!blockUseLoc(player, obj, item)) {
 			return;
 		}
+        ClericWellSigil purpose = ClericWellSigil.fromAny(item.getCatalogId());
+        if (purpose != null) {
+            player.message(purpose.getPurpose().getName() + " sigils are infused at "
+                + purpose.getPurpose().getDestination() + ", not at a god altar.");
+            return;
+        }
 		final PrayerCatalog.GodLine altarGod = PrayerCatalog.getGodLineForAltar(
 			obj.getID(), obj.getX(), obj.getY());
 		final ClericSigilItemId unblessed = ClericSigilProductionCatalog.fromUnblessedItemId(
@@ -96,14 +104,14 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 			return false;
 		}
 		final ClericSigilMaterial material;
-		final ClericSigilItemId output;
+		final ClericSigilMaterial outputMaterial;
 		try {
 			material = ClericSigilProductionCatalog.fromSourceItemId(session.getInputItemId());
-			output = ClericSigilProductionCatalog.fromUnblessedItemId(itemId);
+			outputMaterial = ClericSigilProductionCatalog.getCarvingMaterial(itemId);
 		} catch (IllegalArgumentException ignored) {
 			return false;
 		}
-		if (output.getMaterial() != material || session.getRecipeByItemId(itemId) == null) {
+		if (outputMaterial != material || session.getRecipeByItemId(itemId) == null) {
 			return false;
 		}
 		if (!canCarve(player, material, true)) {
@@ -118,7 +126,7 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 		}
 
 		startbatch(player, makeCount);
-		new SigilProduction().carveBatch(player, material, output, makeCount);
+		new SigilProduction().carveBatch(player, material, itemId, makeCount);
 		return true;
 	}
 
@@ -132,10 +140,10 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 			&& player.getCarriedItems().getInventory().countId(
 				material.getSourceItemId(), Optional.of(false)) > 0;
 		final List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
-		for (ClericSigilItemId identity
-				: ClericSigilProductionCatalog.getUnblessedIdentities(material)) {
+		for (Integer outputItemId
+				: ClericSigilProductionCatalog.getCarvingOutputItemIds(material)) {
 			recipes.add(new ProductionRecipe(
-				identity.getItemId(),
+				outputItemId,
 				material.getCraftingLevel(),
 				1,
 				1,
@@ -153,7 +161,7 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 	}
 
 	private void carveBatch(Player player, ClericSigilMaterial material,
-			ClericSigilItemId output, int requestedCount) {
+			int outputItemId, int requestedCount) {
 		int completed = 0;
 		while (!ifinterrupted() && !isbatchcomplete() && completed < requestedCount) {
 			if (!canCarve(player, material, completed == 0)) {
@@ -175,13 +183,13 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 				stopbatch();
 				break;
 			}
-			if (!inventory.replaceExact(source, new Item(output.getItemId(), 1), true)) {
+			if (!inventory.replaceExact(source, new Item(outputItemId, 1), true)) {
 				player.message("The sigil could not be carved; your materials were not changed.");
 				stopbatch();
 				break;
 			}
 			player.playSound("chisel");
-			player.message("You carve " + getItemName(player, output.getItemId()) + ".");
+			player.message("You carve " + getItemName(player, outputItemId) + ".");
 			player.incExp(
 				Skill.CRAFTING.id(),
 				ClericSigilProductionCatalog.toInternalExperience(
@@ -272,7 +280,7 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 		return !isTooFatigued(player, "carve sigils");
 	}
 
-	private static boolean isTooFatigued(Player player, String action) {
+	static boolean isTooFatigued(Player player, String action) {
 		if (player.getConfig().WANT_FATIGUE
 			&& player.getConfig().STOP_SKILLING_FATIGUED >= 2
 			&& player.getFatigue() >= player.MAX_FATIGUE) {
@@ -310,9 +318,6 @@ public final class SigilProduction implements UseInvTrigger, UseLocTrigger {
 
 	private static PrayerCatalog.GodLine getChargedGod(ClericAlignment alignment,
 			PrayerCatalog.GodLine altarGod) {
-		if (alignment == ClericAlignment.NEUTRAL) {
-			return altarGod;
-		}
 		if (alignment == ClericAlignment.SARADOMIN && altarGod == PrayerCatalog.GodLine.SARADOMIN) {
 			return altarGod;
 		}
