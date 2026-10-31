@@ -455,6 +455,8 @@ public final class mudclient implements Runnable {
 	public final String[] equipmentStatNames = new String[]{"Rng. Def", "Mag. Def", "Mel. Def", "Mel. Pow",
 		"Prayer", "Rng. Pow", "Mag. Pow", "Holy Pow"};
 	public final int[] playerStatEquipment = new int[equipmentStatNames.length];
+    private boolean clericHolyPowerKnown;
+    public void setClericHolyPowerKnown(boolean known){clericHolyPowerKnown=known;}
 	private final int[] mouseClickX = new int[8192];
 	private final int[] mouseClickY = new int[8192];
 	private final int[][] animDirLayer_To_CharLayer = new int[][]{{11, 2, 9, 7, 1, 6, 10, 0, 5, 8, 3, 4},
@@ -1205,8 +1207,7 @@ public final class mudclient implements Runnable {
 		"acid-armor-proc", "ice-sword-stab", "naga-scimitar"
 	};
 	private final Sprite[] spellIconSprites = new Sprite[MAX_SPELL_ICONS];
-	private final Sprite[] clericIconSprites =
-		new Sprite[ClericSpellbookCatalog.MAX_DEFINITIONS];
+	private final java.util.Map<Integer,Sprite> clericIconSprites = new java.util.HashMap<Integer,Sprite>();
 	private final Sprite[] prayerIconSprites = new Sprite[MAX_PRAYER_ICONS];
 	private final Sprite[] summoningIconSprites = new Sprite[SUMMONING_NAMES.length];
 	private final ClientExternalAssetLoader externalAssetLoader = new ClientExternalAssetLoader();
@@ -13793,7 +13794,7 @@ public final class mudclient implements Runnable {
 							if (this.spellsSubtab == SPELLS_SUBTAB_CLERIC) {
 								int clericSpellCode;
 								if (SpellbookLayoutSettings.usesTextLayout()) {
-									clericSpellCode = this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+									clericSpellCode = this.clericSpellbook.codeAtIndex(this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel));
 								} else {
 									clericSpellCode = this.getClericSpellCodeAt(
 										magicPanelX, relativeMouseY - 45, magicPanelWidth);
@@ -13943,9 +13944,10 @@ public final class mudclient implements Runnable {
 		int first = this.clericIconScrollRow * MAGIC_ICON_COLUMNS;
 		int last = first + MAGIC_ICON_COLUMNS * MAGIC_ICON_VISIBLE_ROWS;
 		int hovered = -1;
-		for (int code = first; code < this.clericSpellbook.size() && code < last; code++) {
-			ClericSpellDef definition = this.clericSpellbook.get(code);
-			int visible = code - first;
+		for (int index = first; index < this.clericSpellbook.size() && index < last; index++) {
+			ClericSpellDef definition = this.clericSpellbook.atIndex(index);
+            int code=definition.getStableCode();
+			int visible = index - first;
 			int column = visible % MAGIC_ICON_COLUMNS;
 			int row = visible / MAGIC_ICON_COLUMNS;
 			int x = gridX + column * (MAGIC_ICON_SIZE + MAGIC_ICON_GAP);
@@ -13975,7 +13977,7 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawColoredStringCentered(x + MAGIC_ICON_SIZE / 2,
 					this.getSpellInitials(definition.getName()), textColor, 0, 0, y + 12);
 			}
-			if (!hasLevel) {
+			if (!hasLevel || !hasSigils) {
 				this.getSurface().drawBoxAlpha(x + 1, y + 1,
 					MAGIC_ICON_SIZE - 2, MAGIC_ICON_SIZE - 2, 0, 140);
 			}
@@ -13992,7 +13994,7 @@ public final class mudclient implements Runnable {
 	private int drawClericTextList() {
 		this.panelMagic.clearList(this.controlMagicPanel);
 		for (int code = 0; code < this.clericSpellbook.size(); code++) {
-			ClericSpellDef definition = this.clericSpellbook.get(code);
+			ClericSpellDef definition = this.clericSpellbook.atIndex(code);
 			String color = !this.hasClericWorshipLevel(definition)
 				? "@bla@" : this.hasClericSigils(definition) ? "@yel@" : "@whi@";
 			this.panelMagic.setListEntry(this.controlMagicPanel, code,
@@ -14000,7 +14002,7 @@ public final class mudclient implements Runnable {
 				0, null, null);
 		}
 		this.panelMagic.drawPanel();
-		return this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel);
+		return this.clericSpellbook.codeAtIndex(this.panelMagic.getControlSelectedListIndex(this.controlMagicPanel));
 	}
 
 	private void drawClericTooltip(int stableCode, int panelX, int tooltipY, int panelWidth) {
@@ -14008,18 +14010,32 @@ public final class mudclient implements Runnable {
 		if (definition == null) {
 			return;
 		}
-		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			definition.getName() + " (Worship " + definition.getWorshipLevel() + ")",
-			0xFFFF00, 0, 1, tooltipY + 13);
-		this.getSurface().drawColoredStringCentered(panelX + panelWidth / 2,
-			this.shortenTooltipDescription(definition.getDescription()),
-			0xFFFFFF, 0, 0, tooltipY + 26);
-		int count = definition.getSilverSigilCount() > 0 ? 2 : 1;
-		this.drawTooltipCosts(
-			new int[] {definition.getStoneSigilItemId(), definition.getSilverSigilItemId()},
-			new int[] {definition.getStoneSigilCount(), definition.getSilverSigilCount()},
-			count, panelX, tooltipY + 31, panelWidth);
+        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,definition.getName(),0xFFFF00,0,0,tooltipY+12);
+        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,"Worship "+definition.getWorshipLevel()+" · Tier "+definition.getSpellTier(),0xFFFFFF,0,0,tooltipY+24);
+        this.getSurface().drawColoredStringCentered(panelX+panelWidth/2,this.shortenTooltipDescription(definition.getDescription()),0xFFFFFF,0,0,tooltipY+36);
+        int count=definition.getCosts().size();int[] ids=new int[count],amounts=new int[count];
+        for(int i=0;i<count;i++){ids[i]=definition.getCosts().get(i).getItemId();amounts[i]=definition.getCosts().get(i).getCount();}
+        this.drawTooltipCosts(ids,amounts,count,panelX,tooltipY+41,panelWidth);
+        this.drawClericPowerTooltip(definition,panelX,tooltipY);
 	}
+
+    private void drawClericPowerTooltip(ClericSpellDef definition,int panelX,int tooltipY){
+        if(definition.getEffectRanks().isEmpty())return;
+        int power=clericHolyPowerKnown&&playerStatEquipment.length>7?playerStatEquipment[7]:-1;
+        int rank=ClericPowerPresentation.rank(power,definition.getEffectRanks().size());
+        java.util.List<String> lines=new java.util.ArrayList<String>();
+        if(rank==0)lines.add("Holy Power is not available yet.");
+        else {
+            com.openrsc.client.entityhandling.defs.ClericEffectRankDef effect=definition.getEffectRank(rank);
+            lines.add("Holy Power "+power+" · P"+rank+" · "+(effect.getDurationMilliseconds()/1000)+" sec");
+            for(com.openrsc.client.entityhandling.defs.ClericComponentDef component:effect.getComponents())
+                lines.addAll(ClericTextLayout.wrap(component.describe(),280,text->getSurface().stringWidth(0,text)));
+        }
+        int width=296,height=lines.size()*13+12;
+        int x=Math.max(5,panelX-width-5),y=Math.max(20,Math.min(tooltipY,getGameHeight()-height-4));
+        getSurface().drawBoxAlpha(x,y,width,height,0x111111,225);getSurface().drawBoxBorder(x,width,y,height,0xB7B7B7);
+        for(int i=0;i<lines.size();i++)getSurface().drawString(lines.get(i),x+7,y+14+i*13,i==0?0xFFFF00:0xFFFFFF,0);
+    }
 
 	private int getClericSpellCodeAt(int localPanelX, int localGridY, int panelWidth) {
 		int gridWidth = MAGIC_ICON_COLUMNS * MAGIC_ICON_SIZE
@@ -14036,8 +14052,7 @@ public final class mudclient implements Runnable {
 				|| localGridY % (MAGIC_ICON_SIZE + MAGIC_ICON_GAP) >= MAGIC_ICON_SIZE) {
 			return -1;
 		}
-		int stableCode = (this.clericIconScrollRow + row) * MAGIC_ICON_COLUMNS + column;
-		return this.clericSpellbook.get(stableCode) == null ? -1 : stableCode;
+		return this.clericSpellbook.codeAtIndex((this.clericIconScrollRow + row) * MAGIC_ICON_COLUMNS + column);
 	}
 
 	private void activateClericSpell(int stableCode) {
@@ -14051,6 +14066,7 @@ public final class mudclient implements Runnable {
 				MessageType.GAME, 0, null);
 			return;
 		}
+        if(!this.hasClericSigils(definition)){this.showMessage(false,null,"You need all the required sigils to cast "+definition.getName(),MessageType.GAME,0,null);return;}
 		this.packetHandler.getClientStream().newPacket(Opcodes.Out.INTERFACE_OPTIONS.getOpcode());
 		this.packetHandler.getClientStream().bufferBits.putByte(INTERFACE_OPTION_CAST_CLERIC_SPELL);
 		this.packetHandler.getClientStream().bufferBits.putShort(definition.getStableCode());
@@ -14067,12 +14083,9 @@ public final class mudclient implements Runnable {
 			&& this.playerStatBase[5] >= definition.getWorshipLevel();
 	}
 
-	private boolean hasClericSigils(ClericSpellDef definition) {
-		return definition != null
-			&& this.getInventoryCount(definition.getStoneSigilItemId()) >= definition.getStoneSigilCount()
-			&& (definition.getSilverSigilCount() == 0
-				|| this.getInventoryCount(definition.getSilverSigilItemId()) >= definition.getSilverSigilCount());
-	}
+    private boolean hasClericSigils(ClericSpellDef definition) {
+        return definition!=null&&definition.hasResources(id->this.getInventoryCount(id));
+    }
 
 	private void switchSpellsSubtab(int nextSubtab) {
 		if (nextSubtab != SPELLS_SUBTAB_MAGE && nextSubtab != SPELLS_SUBTAB_CLERIC) {
@@ -14113,7 +14126,8 @@ public final class mudclient implements Runnable {
 
 	public void clearClericSpellbook() {
 		this.clericSpellbook.clear();
-		Arrays.fill(this.clericIconSprites, null);
+        this.clericHolyPowerKnown=false;
+		this.clericIconSprites.clear();
 		this.clericIconScrollRow = 0;
 		this.clericTextScrollPosition = 0;
 	}
@@ -14834,12 +14848,7 @@ public final class mudclient implements Runnable {
 		return this.spellIconSprites[spellIndex];
 	}
 
-	private Sprite getClericIconSprite(int stableCode) {
-		if (stableCode < 0 || stableCode >= this.clericIconSprites.length) {
-			return null;
-		}
-		return this.clericIconSprites[stableCode];
-	}
+    private Sprite getClericIconSprite(int stableCode) {return this.clericIconSprites.get(stableCode);}
 
 	private Sprite getPrayerIconSprite(int prayerIndex) {
 		if (prayerIndex < 0 || prayerIndex >= this.prayerIconSprites.length) {
@@ -15080,7 +15089,9 @@ public final class mudclient implements Runnable {
 				String tooltip = status.isCleric()
 					? status.getClericHoverText() : itemDef.getName();
 				if (status.getSlayerHoverText() != null) tooltip = status.getSlayerHoverText();
-				getSurface().drawString(tooltip, tooltipX, y + 15, 0xFFFFFF, 1);
+				java.util.List<String> lines=ClericTextLayout.wrap(tooltip,Math.max(80,getGameWidth()-tooltipX-8),text->getSurface().stringWidth(1,text));
+                int top=Math.max(16,Math.min(y+15,getGameHeight()-lines.size()*14-5));
+                for(int line=0;line<lines.size();line++)getSurface().drawString(lines.get(line),tooltipX,top+line*14,0xFFFFFF,1);
 			}
 		}
 		if (snapshot.getOverflowCount() > 0) {
@@ -22745,7 +22756,7 @@ public final class mudclient implements Runnable {
 		}
 
 	private void loadExternalClericIconSprites() {
-		Arrays.fill(this.clericIconSprites, null);
+		this.clericIconSprites.clear();
 		for (ClericSpellDef definition : this.clericSpellbook.snapshot()) {
 			String iconAssetKey = definition.getIconAssetKey();
 			if (iconAssetKey.isEmpty()) {
@@ -22757,7 +22768,7 @@ public final class mudclient implements Runnable {
 			}
 			Sprite sprite = this.externalAssetLoader.loadExternalWorldSprite(iconFile, 56);
 			if (sprite != null) {
-				this.clericIconSprites[definition.getStableCode()] = sprite;
+				this.clericIconSprites.put(definition.getStableCode(),sprite);
 			}
 		}
 	}

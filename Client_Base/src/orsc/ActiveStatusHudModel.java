@@ -182,7 +182,8 @@ public final class ActiveStatusHudModel {
 		public int getRank() { return rank; }
 		public int getRemainingCounter() { return remainingCounter; }
 		public String getCounterBadge() {
-			return counterKind == 1 ? remainingCounter + "H"
+			return isCleric() && clericSpell.getEffectRank(rank).getPresentationKind()==ClericBlessingContract.BLESSING_PRESENTATION ? "P"+rank
+                : counterKind == 1 ? remainingCounter + "H"
 				: counterKind == 2 ? remainingCounter + "P" : "";
 		}
 		public String getClericHoverText() {
@@ -190,12 +191,13 @@ public final class ActiveStatusHudModel {
 				return null;
 			}
 			ClericEffectRankDef effectRank = clericSpell.getEffectRank(rank);
-			String prefix = clericSpell.getName() + " " + roman(rank) + " — ";
+			String prefix = clericSpell.getName() + " P" + rank + " — ";
 			String counter = counterKind == 1
 				? " — " + remainingCounter + " protected hits remaining"
 				: counterKind == 2
 					? " — " + remainingCounter + " healing pulses remaining" : "";
 			switch (effectRank.getPresentationKind()) {
+                case ClericBlessingContract.BLESSING_PRESENTATION: return prefix+effectRank.describeComponents();
 				case 1:
 					return prefix + effectRank.getPrimaryMagnitude() + " Hits per pulse" + counter;
 				case 2:
