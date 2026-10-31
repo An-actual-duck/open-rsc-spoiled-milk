@@ -66,30 +66,29 @@ public class PoisonEvent extends GameTickEvent {
 		if(mob instanceof Npc)poisonDrain=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.poisonCleanse((Npc)mob,poisonDrain);
 		poisonPower = PoisonPowerReduction.remainingPower(poisonPower, poisonDrain);
 		mob.setPoisonDamage(poisonPower);
-		if (mob.isPlayer()) {
-			Player player = (Player) mob;
-			player.message("@gr3@You @gr2@are @gr1@poisioned! @gr2@You @gr3@lose @gr2@" + damage + " @gr1@health.");
-		}
-		if (damage > 0) {
-			final int actualDamage = settleTypedPoisonDamage(damage);
-			applyLeach(actualDamage);
-		}
+        final int actualDamage=damage>0?settleTypedPoisonDamage(damage):0;
+        if(mob.isPlayer()) {
+            ((Player)mob).message("@gr3@You @gr2@are @gr1@poisioned! @gr2@You @gr3@lose @gr2@"+actualDamage+" @gr1@health.");
+        }
+        if(actualDamage>0)applyLeach(actualDamage);
+
 		// Exhausted poison must not leave stale state. Positive subthreshold power
 		// retains the established next-pulse cleanup timing.
 		if (poisonPower == 0) mob.curePoison();
 	}
 
 	private int settleTypedPoisonDamage(final int requestedDamage) {
+        final Mob source = resolveLiveSource();
 		int resolvedDamage = requestedDamage;
-		if (mob.isPlayer()) {
+		if (mob.isPlayer()&&!com.openrsc.server.model.combat.NonCorporealState.blocks(source,mob,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL)) {
 			final Player player = (Player) mob;
 			player.setAttribute("last_damage_taken_at", System.currentTimeMillis());
 			resolvedDamage = player.applyGoblinTenacity(resolvedDamage);
 		}
-		final Mob source = resolveLiveSource();
 		resolvedDamage = com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(mob, resolvedDamage);
 		final DamageRequest request = DamageRequest.resolvedLegacy(source, mob,
 			DamageRequest.SourceCategory.DOT, "generic-poison", resolvedDamage)
+			.periodicProvenance(provenance)
 			.eventId(getUUID())
 			.hitSplatType(HitSplat.TYPE_POISON)
 			.goblinTenacityAlreadyApplied()

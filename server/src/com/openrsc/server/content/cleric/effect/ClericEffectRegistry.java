@@ -77,12 +77,11 @@ public final class ClericEffectRegistry implements TransientEffectState {
     ClericEffectEntry entry = entries.get(family);
     if (entry == null
         || amount <= 0
-        || !(entry.getDefinition().getMagnitude() instanceof ClericBlessingMagnitude)) return 0;
-    ClericBlessingMagnitude m = (ClericBlessingMagnitude) entry.getDefinition().getMagnitude();
-    int percent =
-        component == 7
-            ? m.dealtDamagePercent()
-            : component == 8 ? m.lifestealPercent() : component == 9 ? m.reflectPercent() : component == 10 ? m.undeadDamagePercent() : 0;
+        || !(entry.getDefinition().getMagnitude() instanceof ClericCompositeMagnitude)) return 0;
+    ClericCompositeMagnitude magnitude = (ClericCompositeMagnitude) entry.getDefinition().getMagnitude();
+    int percent=0;
+    for(ClericBlessingComponent part:magnitude.components())if(part.getKind()==component)percent=part.getMagnitude();
+
     if (percent <= 0) return 0;
     String key = family.getKey() + ":" + component;
     long total =

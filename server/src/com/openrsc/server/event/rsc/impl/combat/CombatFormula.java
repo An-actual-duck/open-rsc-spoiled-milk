@@ -270,7 +270,9 @@ public class CombatFormula {
   private static AttackRoll rollMeleeDamage(
       final Mob source, final Mob victim, final boolean directAttack, final int capDivisor) {
 		int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense())) / capDivisor;
-        if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
+        if(source instanceof com.openrsc.server.model.entity.npc.Npc)
+          attackMax=com.openrsc.server.content.cleric.runtime.ClericHostileRuntime.reduceMaximumMelee((com.openrsc.server.model.entity.npc.Npc)source,attackMax);
+        else if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
         CriticalHitResolver.cosmic(

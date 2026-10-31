@@ -560,12 +560,12 @@ public class ProjectileEvent extends SingleTickEvent {
 			damage = applyPlayerProjectileDamageBuff((Player) caster, damage);
 		}
     final boolean attackSuppressed =
-        launchSnapshot.getSpecification().getAttackCommitment().isSuppressed()
-        || com.openrsc.server.model.combat.NonCorporealState.blocks(caster,opponent,
-            primaryProjectileCombatStyle()==CombatStyle.MAGIC?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+        launchSnapshot.getSpecification().getAttackCommitment().isSuppressed();
+    final boolean phaseBlocked=com.openrsc.server.model.combat.NonCorporealState.blocks(caster,opponent,
+        primaryProjectileCombatStyle()==CombatStyle.MAGIC?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
 		final boolean wail = !attackSuppressed && type == 1
 			&& com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(caster, opponent);
-		if (attackSuppressed) {
+		if (attackSuppressed || phaseBlocked) {
 			damage = 0;
 		}
 
@@ -658,7 +658,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				caster, damageDealt, clericPreventedDamage);
 			com.openrsc.server.content.monsterslayer.BansheeCombat.onDamage(opponent, damageDealt, wail);
 			applyBalrogMagicSplash((Npc) caster, (Player) opponent, damageDealt);
-			if (type == 2 && !attackSuppressed) {
+			if (type == 2 && !attackSuppressed && !phaseBlocked) {
 				com.openrsc.server.content.monsterslayer.GiantFrogCombat.onSpitImpact(caster, (Player) opponent, damageDealt);
 			}
 		}
@@ -684,7 +684,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				DivineGrace.apply(casterPlayer, damageDealt);
 			}
 		} else if (Summoning.isSummon(caster) && opponent.isNpc()) {
-			Summoning.creditSummonProjectileDamage(caster, opponent, Math.min(damage, lastHits), type);
+			Summoning.creditSummonProjectileDamage(caster, opponent, damageDealt, type);
 		}
 		Summoning.applySummonLifesteal(caster, opponent, damageDealt);
 
@@ -755,7 +755,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				handleDeath();
 				return;
 			}
-			applyWeaponPoison();
+			if(!phaseBlocked)applyWeaponPoison();
       if (!attackSuppressed) applyLeatherSetOnHitEffects();
 			if (!attackSuppressed) {
 				applyDragonWeaponBreathDamage();
@@ -982,6 +982,8 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (damage > 0 && (type == 2 || type == 5)) {
 			casterPlayer.applyElementalGiantMightDebuff(opponent);
 		}
+        if(!com.openrsc.server.model.combat.NonCorporealState.blocks(caster,opponent,
+            primaryProjectileCombatStyle()==CombatStyle.MAGIC?com.openrsc.server.model.combat.CombatHarmNature.MAGICAL:com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL))
 		OgreStaggeringBlowProc.tryApply(
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE);
 		BabyDragonSmokeProc.tryApply(
@@ -990,7 +992,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		final int infernalPieces = casterPlayer.getInfernalArmorPieceCount();
 		final InfernalFireProc.Result infernal = InfernalFireProc.tryApply(
 			casterPlayer, opponent, ProductionGameRandom.INSTANCE,
-			procDamage -> inflictAuxiliaryMagicDamage(caster, opponent, procDamage),
+			procDamage -> inflictAuxiliaryMagicDamage(caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL),
 			procDamageDealt -> {
 				if (infernalMaxHit == CombatEffectUtil.HELLS_INFERNO_MAX_HIT
 						&& opponent.isNpc()) {
@@ -1027,15 +1029,15 @@ public class ProjectileEvent extends SingleTickEvent {
 		BlueDragonWaterProc.tryApply(casterPlayer, opponent,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				caster, opponent, procDamage));
+				caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		EarthDragonSlowProc.tryApply(casterPlayer, opponent,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				caster, opponent, procDamage));
+				caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		RedDragonFireProc.tryApply(casterPlayer, opponent,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				caster, opponent, procDamage));
+				caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
     final String dragonBreathProc = casterPlayer.getAttribute("dragon_breath_armor_proc", "");
 		if ("black".equals(dragonBreathProc) || "king_black".equals(dragonBreathProc)) {
 			casterPlayer.getUpdateFlags().setCombatEffect(new CombatEffect(casterPlayer, CombatEffect.DRAGON_BREATH));
@@ -1043,10 +1045,10 @@ public class ProjectileEvent extends SingleTickEvent {
 		BlackDragonBreathFollowup.tryApply(casterPlayer, dragonBreathProc,
 			ProductionGameRandom.INSTANCE,
 			procDamage -> inflictAuxiliaryTrueDamage(
-				caster, opponent, procDamage));
+				caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		KingBlackDragonBreathFollowup.tryApply(casterPlayer, opponent,
 			dragonBreathProc, ProductionGameRandom.INSTANCE,
-			procDamage -> inflictAuxiliaryTrueDamage(caster, opponent, procDamage));
+			procDamage -> inflictAuxiliaryTrueDamage(caster, opponent, procDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL));
 		ElderGreenDragonArmorProc.tryApply(casterPlayer, damage,
 			ProductionGameRandom.INSTANCE, procDamage ->
 				ElderGreenDragonArmorEffect.applyProc(casterPlayer, opponent,
@@ -1068,7 +1070,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			? CombatEffect.DRAGON_WEAPON_BREATH
 			: CombatEffect.DRAGON_WEAPON_SLASH_2;
 		opponent.getUpdateFlags().setCombatEffect(new CombatEffect(opponent, slashEffect));
-		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage);
+		inflictAuxiliaryTrueDamage(caster, opponent, dragonBreathDamage,com.openrsc.server.model.combat.CombatHarmNature.MAGICAL);
 	}
 
 	private int applyPlayerProjectileDamageBuff(final Player player, final int damage) {
@@ -1223,6 +1225,9 @@ public class ProjectileEvent extends SingleTickEvent {
 	}
 
 	private void inflictAuxiliaryTrueDamage(final Mob hitter, final Mob target, int bonusDamage) {
+        inflictAuxiliaryTrueDamage(hitter,target,bonusDamage,com.openrsc.server.model.combat.CombatHarmNature.NONMAGICAL);
+    }
+    private void inflictAuxiliaryTrueDamage(final Mob hitter,final Mob target,int bonusDamage,com.openrsc.server.model.combat.CombatHarmNature nature) {
 		if (bonusDamage <= 0 || target.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
@@ -1238,6 +1243,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			AUXILIARY_TRUE_DAMAGE_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, bonusDamage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
+            .harmNature(nature)
 			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()

@@ -8,7 +8,7 @@ import orsc.ClericTextLayout;
 
 /** Detailed numeric guide, derived from the same checked metadata as the HUD. */
 public final class ClericSpellGuideCatalog {
-  public static final int MAX_LINE_CHARACTERS = 70;
+  public static final int MAX_LINE_CHARACTERS = 58;
 
   private ClericSpellGuideCatalog() {}
 

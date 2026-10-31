@@ -3,10 +3,10 @@ package com.openrsc.server.content.cleric.runtime;
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.Summoning;
 import com.openrsc.server.content.cleric.ClericDirectCombatEffects;
-import com.openrsc.server.content.cleric.effect.*;
-import com.openrsc.server.model.entity.Mob;
-import com.openrsc.server.model.combat.CombatStyle;
 import com.openrsc.server.content.cleric.UndeadClassification;
+import com.openrsc.server.content.cleric.effect.*;
+import com.openrsc.server.model.combat.CombatStyle;
+import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.player.Player;
 
 /** Primary direct PvE hits only. Terminal reflection never returns through these hooks. */
@@ -19,12 +19,15 @@ public final class ClericDirectCombatRuntime {
   }
 
   public static int maximum(Mob attacker, Mob defender, int maximum) {
-    return maximum(attacker,defender,maximum,CombatStyle.MELEE);
+    return maximum(attacker, defender, maximum, CombatStyle.MELEE);
   }
+
   public static int maximum(Mob attacker, Mob defender, int maximum, CombatStyle style) {
-    if(style != CombatStyle.MELEE) return maximum;
-    if(attacker instanceof com.openrsc.server.model.entity.npc.Npc)
-      maximum=ClericHostileRuntime.reduceMaximumMelee((com.openrsc.server.model.entity.npc.Npc)attacker,maximum);
+    if (style != CombatStyle.MELEE) return maximum;
+    if (attacker instanceof com.openrsc.server.model.entity.npc.Npc)
+      maximum =
+          ClericHostileRuntime.reduceMaximumMelee(
+              (com.openrsc.server.model.entity.npc.Npc) attacker, maximum);
     if (!eligible(attacker, defender) || !(attacker instanceof Player)) return maximum;
     ClericBlessingMagnitude m =
         ClericTimedEffectRuntime.blessing((Player) attacker, ClericEffectFamily.ZAMORAK_BLESSING);
@@ -39,20 +42,26 @@ public final class ClericDirectCombatRuntime {
   }
 
   public static BeforeDamage beforeDirectDamage(Mob attacker, Mob defender, int damage) {
-    return beforeDirectDamage(attacker,defender,damage,CombatStyle.MELEE);
+    return beforeDirectDamage(attacker, defender, damage, CombatStyle.MELEE);
   }
-  public static BeforeDamage beforeDirectDamage(Mob attacker, Mob defender, int damage, CombatStyle style) {
+
+  public static BeforeDamage beforeDirectDamage(
+      Mob attacker, Mob defender, int damage, CombatStyle style) {
     if (damage < 0) throw new IllegalArgumentException("Negative damage");
     int bonus =
         eligible(attacker, defender) && attacker instanceof Player && style == CombatStyle.MELEE
             ? carry((Player) attacker, ClericEffectFamily.ZAMORAK_BLESSING, 7, damage)
             : 0;
-    int modified = ClericDirectCombatEffects.addBounded(damage,bonus);
-    if(eligible(attacker,defender) && attacker instanceof Player && UndeadClassification.isUndead(defender)) {
-      modified = ClericDirectCombatEffects.addBounded(modified,
-          carry((Player)attacker,ClericEffectFamily.SARADOMIN_BLESSING,10,modified));
+    int modified = ClericDirectCombatEffects.addBounded(damage, bonus);
+    if (eligible(attacker, defender)
+        && attacker instanceof Player
+        && UndeadClassification.isUndead(defender)) {
+      modified =
+          ClericDirectCombatEffects.addBounded(
+              modified,
+              carry((Player) attacker, ClericEffectFamily.SARADOMIN_BLESSING, 10, modified));
     }
-    return new BeforeDamage(modified,0);
+    return new BeforeDamage(modified, 0);
   }
 
   public static AfterDamage afterExistingLifesteal(Mob attacker, Mob defender, int actual) {

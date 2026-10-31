@@ -149,6 +149,24 @@ public final class NpcCapacityProductionFixture {
                 else throw new AssertionError("unexpected fixture appearance type="+type);
             }
             check(hit&&projectile,"missing hit/projectile record");
+            // New independent phase state uses the expanded runtime index, never the catalog ID.
+            player.setClientVersion(10055);player.setClientLimitations(ClientLimitations.forVersion(10055));
+            player.getLocalNpcs().clear();
+            for(int index=0;index<1023;index++){Npc visible=registry.get(index);visible.resetAfterUpdate();player.getLocalNpcs().add(visible);}
+            high.resetAfterUpdate();player.getLocalNpcs().add(high);
+            Object phaseOwner=new Object();
+            check(com.openrsc.server.model.combat.NonCorporealState.tryEnter(high,phaseOwner,100,3,()->true),"high-index phase entry");
+            packets(player).clear();appearances.invoke(harness.server().getGameUpdater(),player);
+            Packet phasePacket=packets(player).stream().filter(p->p.getID()==104).findFirst().orElseThrow(()->new AssertionError("missing phase batch"));
+            byte[] phaseBytes=new byte[phasePacket.getBuffer().readableBytes()];phasePacket.getBuffer().getBytes(0,phaseBytes);
+            check(phaseBytes.length==4098,"full1024 phase batch length");
+            orsc.buffers.RSBuffer phaseInput=new orsc.buffers.RSBuffer(phaseBytes.length);phaseInput.dataBuffer=phaseBytes;
+            check(phaseInput.getShort()==1024,"full phase update count");
+            for(int record=0;record<1024;record++){int sender=phaseInput.getShort();check(phaseInput.getUnsignedByte()==16,"independent phase appearance type");check(phaseInput.getUnsignedByte()==(sender==16383?1:0),"runtime-index phase flag");}
+            java.nio.file.Files.write(java.nio.file.Paths.get("/tmp/cleric-phase-1024.bin"),phaseBytes);
+            com.openrsc.server.model.combat.NonCorporealState.clearOwned(high,phaseOwner);
+            packets(player).clear();appearances.invoke(harness.server().getGameUpdater(),player);
+            check(packets(player).stream().anyMatch(p->p.getID()==104),"phase removal carrier");
             Npc old=boundary.get(5);
             long oldLifetime=old.getCombatLifecycle();
             com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent delayed=new com.openrsc.server.event.rsc.impl.projectile.ProjectileEvent(harness.world(),player,old,3,1);
@@ -157,6 +175,13 @@ public final class NpcCapacityProductionFixture {
             Npc replacement=new Npc(harness.world(),3,450,450,0);harness.world().registerNpc(replacement);
             old.setIndex(16383);registry.remove(old);
             check(registry.get(16383)==replacement,"stale removal after high-index reuse");
+            player.getLocalNpcs().clear();player.getLocalNpcs().add(replacement);replacement.resetAfterUpdate();packets(player).clear();
+            appearances.invoke(harness.server().getGameUpdater(),player);
+            Packet reusePacket=packets(player).stream().filter(p->p.getID()==104).findFirst().orElseThrow(()->new AssertionError("missing reuse phase reset"));
+            byte[] reuseBytes=new byte[reusePacket.getBuffer().readableBytes()];reusePacket.getBuffer().getBytes(0,reuseBytes);
+            check(java.util.Arrays.equals(reuseBytes,new byte[]{0,1,63,(byte)255,16,0}),"high index reuse is explicitly corporeal");
+            java.nio.file.Files.write(java.nio.file.Paths.get("/tmp/cleric-phase-reuse.bin"),reuseBytes);
+
             int replacementHits=replacement.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id());
             delayed.action();
             check(replacement.getSkills().getLevel(com.openrsc.server.constants.Skill.HITS.id())==replacementHits,"old projectile hit replacement");

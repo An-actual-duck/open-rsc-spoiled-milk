@@ -50,7 +50,7 @@ public final class ClericThreeTierClientRenderFixture {
     List<ClericSpellDef> defs =
         ClericSpellbookPacketDecoder.decode(Files.readAllBytes(Paths.get(args[1])));
     ClericSpellbookCatalog catalog = new ClericSpellbookCatalog();
-    catalog.replace(3, defs);
+    catalog.replace(4, defs);
     mudclient mc =
         (mudclient) ClericThreeTierClientFixture.unsafe().allocateInstance(mudclient.class);
     ClericThreeTierClientFixture.set(mc, "clericSpellbook", catalog);
@@ -111,9 +111,17 @@ public final class ClericThreeTierClientRenderFixture {
     for (ClericSpellGuideCatalog.Entry entry :
         ClericSpellGuideCatalog.build(
             defs, id -> com.openrsc.client.entityhandling.EntityHandler.getItemDef(id).getName()))
-      for (String text : entry.getLines())
-        if (surface.stringWidth(1, text) > 410)
-          throw new AssertionError("Real guide line exceeds width: " + text);
+      {
+        MudClientGraphics page=new MudClientGraphics(460,210,1);
+        Arrays.fill(page.pixelData,0x22262b);
+        page.drawString(entry.getHeader(),10,22,0xffffff,2);
+        int row=0;
+        for(String text:entry.getLines()) {
+          if(page.stringWidth(1,text)>410)throw new AssertionError("Real guide line exceeds width: "+text);
+          page.drawString(text,10,42+(row++)*13,0xffffff,1);
+        }
+        png(page,out.resolve("guide-"+entry.getStableCode()+"-"+Math.abs(entry.getHeader().hashCode())+".png"));
+      }
     System.out.println("GUIDE LINES " + chosen.getLines());
     surface.drawString(chosen.getHeader(), 10, 22, 0xffffff, 2);
     int line = 0;
@@ -125,7 +133,7 @@ public final class ClericThreeTierClientRenderFixture {
     png(surface, out.resolve("native-guide-row.png"));
     Files.write(out.resolve("native-font-widths.txt"), measurements);
     System.out.println(
-        "PASS native font bounds for all11 names, actual mudclient power tooltip/HUD rendering and"
+        "PASS native font bounds for all17 names, actual mudclient power tooltip/HUD rendering and"
             + " detailed guide row: "
             + out);
   }

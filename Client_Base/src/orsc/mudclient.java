@@ -14028,8 +14028,8 @@ public final class mudclient implements Runnable {
         else {
             com.openrsc.client.entityhandling.defs.ClericEffectRankDef effect=definition.getEffectRank(rank);
             lines.add("Holy Power "+power+" - P"+rank+" - "+(effect.getDurationMilliseconds()/1000)+" sec");
-            for(com.openrsc.client.entityhandling.defs.ClericComponentDef component:effect.getComponents())
-                lines.addAll(ClericTextLayout.wrap(component.describe(),280,text->getSurface().stringWidth(0,text)));
+            lines.add((definition.isHostile()?"Enemy NPCs":"Party allies")+" within "+definition.getRadius()+" tiles; caster excluded");
+            lines.addAll(ClericTextLayout.wrap(effect.describeComponents(),280,text->getSurface().stringWidth(0,text)));
         }
         int width=296,height=lines.size()*13+12;
         int x=Math.max(5,panelX-width-5),y=Math.max(20,Math.min(tooltipY,getGameHeight()-height-4));

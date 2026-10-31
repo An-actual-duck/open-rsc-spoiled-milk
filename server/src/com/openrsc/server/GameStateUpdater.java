@@ -3820,8 +3820,10 @@ public final class GameStateUpdater {
 		final ArrayDeque<Npc> npcSummonSpritesNeedingDisplayed = new ArrayDeque<>();
 		final ArrayDeque<Npc> npcSpiritSummonFlagsNeedingDisplayed = new ArrayDeque<>();
         final ArrayDeque<Npc> npcPhaseFlagsNeedingDisplayed = new ArrayDeque<>();
-        final java.util.Map<java.util.UUID,Boolean> phaseCache=player.getAttribute("npc_phase_display_cache",null)==null
+        final boolean newPhaseSession=player.getAttribute("npc_phase_display_session",null)!=player.getTransientEffectSessionToken();
+        final java.util.Map<java.util.UUID,Boolean> phaseCache=newPhaseSession||player.getAttribute("npc_phase_display_cache",null)==null
             ? new java.util.HashMap<java.util.UUID,Boolean>() : player.getAttribute("npc_phase_display_cache",null);
+        player.setAttribute("npc_phase_display_session",player.getTransientEffectSessionToken());
         player.setAttribute("npc_phase_display_cache",phaseCache);
         final java.util.Set<java.util.UUID> currentPhaseIds=new java.util.HashSet<>();
 
