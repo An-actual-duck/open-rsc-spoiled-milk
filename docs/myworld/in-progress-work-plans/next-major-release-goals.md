@@ -217,14 +217,18 @@ The entire vector is spent atomically once per cast, never per recipient; no
 eligible/useful target means no cost. Same-god versions do not stack or downgrade,
 equal strength safely refreshes, and all three gods may coexist.
 
-Future Guthix debuff direction: tier 1 poison weakness, tier 2 summon weakness,
-tier 3 recoil weakness against eligible nearby enemies. Poison example for review:
-`10% + 5% * (P - 1)` → 10/15/20/25/30/35%, increasing poison damage with ceiling
-rounding and reducing cleansing by a rounded-up reduction (minimum 1 cleansing
-where applicable). No instant poisoning or immunity removal. Summon/recoil
-weakness affects their damage only where cleansing is irrelevant. Final hostile
-balance, caps, stacking, lifecycle, targeting and PvP policy remain open; there
-is no hostile implementation approval yet.
+Owner-approved Guthix debuff design: **Toxiphobia** adds poison weakness,
+**Agrizoophobia** adds summon weakness and **Hematophobia** adds recoil/reflected
+damage weakness. All three use `10% + 5% * (P - 1)` → 10/15/20/25/30/35% with
+the common tier caps 2/4/6. Tier 1 reaches 15%; Tier 2 reaches 25% on both
+components; Tier 3 reaches 35% on all three. Poison weakness increases poison
+damage and reduces cleansing per pulse, without inflicting poison or removing
+immunity. Summon/recoil weakness increases only its corresponding damage.
+Integer rounding, stacking, lifecycle, precise source admission and PvP policy
+still require implementation review; hostile gameplay is not implemented.
+The owner is reviewing separate spell/effect naming: buffs need recipient flavor
+messages as well as names, while debuffs need names without recipient flavor.
+Existing spell names and effect descriptions remain until that review is settled.
 
 Owner's order: **review power strengths/inherited P6 combinations → Greater
 Unify → return to debuffs**. The latest buff review is now approved and implemented; hostile work stays

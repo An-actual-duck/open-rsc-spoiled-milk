@@ -107,14 +107,14 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 ### Confirmed blessing names and recipient flavor
 
 These messages are addressed to the recipient when the blessing is cast/applied
-to them. Exact additional trigger policy and whether lower-tier messages also
-appear are not specified here.
+to them. The current implementation sends the line for the spell actually
+applied, rather than repeating every inherited lower-tier line.
 
 | God | Tier | Blessing name | Recipient message |
 |---|---|---|---|
 | Saradomin | 1 | Saradomin's Warmth | You feel your blood rush and your spirits lift |
 | Saradomin | 2 | Saradomin's Aura | Your wounds seal up as soon as they are opened |
-| Saradomin | 3 | Saradomin's Resplendence | Open; third component and message remain undecided |
+| Saradomin | 3 | Saradomin's Resplendence | No bespoke line selected; runtime fallback: Saradomin's Resplendence surrounds you. |
 | Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
 | Guthix | 2 | Guthix's Protection | Your skin grows a thick layer of bark |
 | Guthix | 3 | Guthix's Vengeance | Sharp spikes protrude from you, piercing your foes. |
@@ -127,6 +127,16 @@ restoration blessing. It is distinct from the removed **old neutral Respite**
 regeneration spell. **Zamorak's Fervor** names the new tier-one maximum-damage
 blessing; it does not preserve the old accuracy mechanic. The new Guthix
 recipient text supersedes the earlier sap line.
+
+**October 31 naming/flavor review:** the current active-status label is the
+spell name, with descriptive component text. There is not yet a separately
+approved complete set of flavor names for the individual effects. Barkskin and
+Thorns are existing component labels; old icon keys such as Mend, Purify, Zeal
+or Rally do not independently select new effect names. The owner wants to
+review spell names versus effect names before finalizing that distinction.
+Buffs need names and recipient flavor; debuffs need flavor names without new
+recipient flavor messages. Unify and Greater Unify retain those spell names and
+movement descriptions, with no bespoke recipient flavor line currently defined.
 
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
@@ -166,17 +176,39 @@ The whole mixed vector commits atomically once per cast; no eligible/useful
 recipient means no resource cost. Different gods coexist; same-god tier/potency
 precedence prevents stacking or downgrade, and equal strength safely refreshes.
 
-**Future Guthix debuff direction — discussion after Greater Unify:** tier 1
-poison weakness, tier 2 summon weakness, tier 3 recoil weakness, affecting
-eligible enemies around the caster. A poison-weakness example is a base 10%
-plus 5% per power increment: `10 + 5 * (P - 1)` → 10/15/20/25/30/35%. This is a
-review example, not finalized hostile balance. It increases poison damage with
-ceiling rounding and reduces the cleansing amount by a rounded-up reduction,
-keeping at least 1 cleansing where applicable. It neither applies poison
-instantly nor removes immunity. Summon/recoil weakness affects their damage
-only where poison-cleansing adjustment is irrelevant. Exact caps, stacking,
-lifecycle, enemy eligibility and PvP policy remain to be designed; no hostile
-runtime implementation or new PvP permission is implied.
+### Owner-approved Guthix debuffs — October 31, 2026
+
+**Design approved; hostile gameplay is not implemented.** The owner approved
+the same incremental curve for all three weaknesses and selected these flavor
+names. Higher tiers retain the earlier components and use the shared Holy Power
+curve/tier caps 2/4/6.
+
+| Tier addition | Owner-selected flavor name | Added effect |
+|---|---|---|
+| 1 | Toxiphobia | Poison weakness: increased poison damage and reduced cleansing per pulse |
+| 2 | Agrizoophobia | Summon weakness: increased damage received from summons |
+| 3 | Hematophobia | Recoil weakness: increased recoil/reflected damage received |
+
+All three use `10 + 5 * (P - 1)` percent:
+
+| Power | P1 | P2 | P3 | P4 | P5 | P6 |
+|---|---|---|---|---|---|---|
+| Each applicable weakness | 10% | 15% | 20% | 25% | 30% | 35% |
+
+Standalone Tier 1 caps at 15%; Tier 2 can reach 25% on both components; Tier 3
+can reach 35% on all three. Poison weakness increases poison damage and reduces
+cleansing per pulse; summon/recoil weakness affects their respective damage
+only. It does not apply poison by itself or remove poison immunity. The earlier
+poison rounding example used ceiling damage and a rounded-up cleansing
+reduction, retaining at least 1 cleansing where applicable; exact integer
+settlement must be checked against current poison/cleansing paths before code.
+Do not apply vulnerability repeatedly through secondary-hit/reflect recursion.
+
+These are approved flavor labels. The separate spell-name/effect-name review
+above is still pending; do not silently introduce a second naming scheme or
+rename current gameplay IDs. Stacking, lifecycle, precise source admission and
+PvP policy still require implementation review. No hostile runtime code or
+new PvP permission is implied by this design approval.
 
 ### Owner-selected Saradomin debuffs — October 31, 2026
 
