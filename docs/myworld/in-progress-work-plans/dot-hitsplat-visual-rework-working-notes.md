@@ -1,0 +1,136 @@
+# Hit-splat visual rework: working notes
+
+Status: ACTIVE, first implementation for Justin's review. This is a working
+record, not a final Core handoff. Justin has authorized implementation, not
+accepted a final appearance or declared the overall task complete.
+
+## Agreed direction
+
+- Replace body-centered fixed boxes with small numbers above each entity's head
+  and lifebar. Players and NPCs share the behavior; values follow their owners.
+- Compare colored text with white/shadowed text on tightly fitted colored backgrounds.
+- Red primary, blue healing, green poison, yellow summon, purple recoil. Other
+  secondary effects need deliberate classification rather than recoloring all
+  existing alternate damage as recoil.
+- Slowly rise; incoming same-owner events push older values up faster. Finite
+  travel, lifetime and queues prevent long strings. Preserve successive hits.
+- Batch priority: primary, healing, poison, summon, recoil, other. Try limited
+  sideways crowd spacing while preserving ownership.
+
+## First implementation, October 31, 2026
+
+Starting commit: `9093a09fa8e2818cceeb33fd387244dd90497972` on
+`feat/hitsplat-visual-rework`. Core's later main commits have not been merged.
+
+`FloatingHitSplatState` holds each entity's bounded presentation queue. Times use
+monotonic milliseconds, independent of the legacy/modern client update rates.
+Initial tuning: 16px/sec natural rise, 110px/sec pushed rise, 14px row gap,
+64px maximum rise, 2.1s active lifetime, final 450ms alpha fade (also fades near
+the height limit), at most 6 active/12 pending events. Pending events expire
+after 1.2s. At queue capacity the oldest pending event is dropped; this deliberate
+overload limit can omit individual numbers during extreme bursts rather than
+creating a long-delayed backlog. Normal successive same-type values are retained.
+
+Events received before the next update/render form one priority batch. New values
+wait until the bottom lane clears while older obstructing values accelerate.
+They never move downward relative to their owner. Owner movement itself can move
+their entire group in either direction on screen.
+
+`FloatingHitSplatRenderer` collects visible player/NPC anchors, draws after
+lifebars, and tries horizontal shifts up to 24px in 2px steps. It uses native
+font 0, a small shadow, digit-measured width plus 4px total padding, and the
+existing sprite alpha path in WORLD_OVERLAY. A bounded 256-entry sprite cache
+keeps font rasterization out of the normal repeated draw path. Scratch font
+rasters remain software-owned under native UI replacement. Initial text-only
+mode is a provisional default. Set `-Dspoiledmilk.hitSplatStyle=background`
+when launching this worker client to compare the other mode (restart needed).
+
+Type 2 remains other/alternate damage, provisionally orange. Its callers include
+offhand hits, armor procs, chained/area effects, elemental specials, Frostbite,
+Cleric Thorns, Divine Retribution and other owned secondary effects. No attempt
+has been made to split all those families into final colors. Summons now use
+additive presentation ID 4; chaos jewelry recoil uses ID 5 in reciprocal melee,
+PvM melee and projectile paths. Only presentation selections change; combat
+formulas, damage settlement, contribution, XP, timing and effect policies stay
+unchanged. The executable combat expectations assert the new presentation IDs
+while retaining their outcome checks.
+
+No packet shape or classic-client update changes: custom update 11 still contains
+type, amount, current HP and maximum HP as bytes. Authentic/classic clients keep
+their original damage updates. Older custom clients do not know IDs 4/5 and will
+need the updated client for the new colors (their legacy red fallback remains).
+The new client coalesces a paired classic damage update plus typed event into one
+number; a classic-only event also uses the floating presentation. The old fixed
+box renderer has been removed.
+
+## Reproduce previews and checks
+
+From this worker only, serially, with bounded build heaps:
+
+```bash
+ANT_OPTS='-Xmx768m' ./scripts/build-client.sh
+ANT_OPTS='-Xmx768m' ./scripts/build-server.sh
+python3 tests/myworld/test-floating-hit-splats.py
+python3 scripts/preview-floating-hit-splats.py /tmp/hitsplat-preview
+ANT_OPTS='-Xmx768m' ./server/test_combat
+python3 tests/myworld/test-renderer-v2-phased-overlay.py
+git diff --check
+```
+
+The preview exporter requires Pillow and the worker's existing native font cache
+`Client_Base/Cache/video/library.orsc`. It opens no server or login. It exports
+151 frames at 40ms intervals, `comparison.png`, `floating-styles.gif` and a timed
+`motion-sequence.png`. The exact production overlay/state/font/alpha rendering
+path runs against explicitly schematic actors; these are not in-game screenshots.
+Both styles appear side by side with identical event feeds and owner movement.
+
+Current review files:
+`/home/justin/Documents/Codex/2026-10-31/task/hitsplat-preview/`.
+Reference: Library `libfile_d8c14cb515fc819188a722593ca3072e`, materialized and
+visually inspected at
+`/home/justin/Documents/Codex/2026-10-31/task/reference.png`.
+It is a visual reference only; no reference-image pixels or third-party game
+assets were incorporated. No new raster art assets are needed by the client.
+
+Validation:
+
+- Client build PASS; server/core/plugin builds and classpath audit PASS.
+- Executable state/layout/render checks PASS: 318 software checks, 323 phased
+  native-capture checks, 323 native-UI replacement checks. Includes semantic
+  ordering across wall-clock boundaries, repeated type retention, pushed spacing,
+  legacy deduplication/fallback, fade/expiry, bounds, owner movement, crowd spacing,
+  duplicate scene calls, lifebar clearance and full/faded native sprite capture.
+- Authoritative combat gate PASS: 144/144 scenarios. Receipt is the task-local
+  ignored `output/combat-test/summary.properties`.
+- Renderer phased-overlay guard PASS; `git diff --check` PASS.
+- Supplemental `test-summon-lifesteal.py` fails its old combat-XP-distribution
+  source guard; `test-combat-runtime-invariants.py` fails its old NpcBehavior
+  `dualElementProcs` source guard. Both identical failures were reproduced using
+  tests and file content from the untouched starting HEAD. They were not changed
+  or relaxed to hide those existing failures.
+
+## Review limits and next work
+
+- Justin has not reviewed or accepted either first visual style. Tune size,
+  brightness/background colors, rise/spacing/fade and duration with him.
+- Static native-font output and a timed frame sequence were visually inspected.
+  A browser attempt to play the local GIF was denied because file URLs are
+  prohibited. No alternate browser route was attempted; playback is unverified.
+- Library saving attempted the supported prepared-upload helper, which stopped
+  with `Library prepare_uploads is not available` before creating any files.
+  No confirmed output Library IDs exist; deliver the actual local files. Preserve
+  any subsequently created IDs on later revisions rather than making duplicates.
+- Full client scene/login and GPU presentation have not been visually tested.
+  Pixel rendering and native command capture are verified offscreen. Actual
+  character sprite anchors, camera/zoom changes, nametags/skulls, dense battle
+  attribution and all renderer profiles need in-game review before final acceptance.
+- Horizontal placement is intentionally limited. Extreme crowding can still
+  overlap; movement can change nearby placement. Large-crowd performance has not
+  been benchmarked. Viewport edges clip rather than pulling numbers into lifebars.
+- No private/public service has been started, no owner map/config/account data
+  changed, no installed client/package overwritten, and no manager contact,
+  integration, publication, deployment or READY handoff occurred.
+
+Continue direct collaboration and checkpoints. Only Justin's explicit statement
+that the overall task is complete and ready for Core permits the consolidated
+handoff and READY transition.

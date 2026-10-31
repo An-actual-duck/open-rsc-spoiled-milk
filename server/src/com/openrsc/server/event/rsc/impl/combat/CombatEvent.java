@@ -365,7 +365,8 @@ public class CombatEvent extends GameTickEvent {
 			effectPolicy.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(target, damage))
 			.eventId(getUUID())
 			.style(CombatStyle.MELEE)
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(effectPolicy == JEWELRY_RECOIL_POLICY
+				? HitSplat.TYPE_RECOIL : HitSplat.TYPE_ARMOR_PROC)
 			.build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);

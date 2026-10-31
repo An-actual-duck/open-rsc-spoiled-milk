@@ -8,6 +8,9 @@ public class HitSplat {
 	public static final int TYPE_POISON = 1;
 	public static final int TYPE_ARMOR_PROC = 2;
 	public static final int TYPE_HEAL = 3;
+	// Additive custom-client presentation IDs; classic damage updates are unchanged.
+	public static final int TYPE_SUMMON = 4;
+	public static final int TYPE_RECOIL = 5;
 
 	private final Mob mob;
 	private final int type;

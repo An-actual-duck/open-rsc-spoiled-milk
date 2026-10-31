@@ -384,13 +384,7 @@ public final class mudclient implements Runnable {
 	private static final int CUSTOM_UI_SOCIAL_PANEL_HEIGHT = 182;
 	private static final int CUSTOM_UI_CLAN_PANEL_EXTRA_HEIGHT = 19;
 	private static final int CUSTOM_UI_OPTIONS_PANEL_HEIGHT = 265;
-	private static final int HIT_SPLAT_VISIBLE_THRESHOLD = 150;
-	private static final int HIT_SPLAT_WIDTH = 24;
-	private static final int HIT_SPLAT_HEIGHT = 14;
-	private static final int HIT_SPLAT_STANDARD_COLOR = 0xD32F2F;
-	private static final int HIT_SPLAT_POISON_COLOR = 0x2E7D32;
-	private static final int HIT_SPLAT_ARMOR_PROC_COLOR = 0xF0C419;
-	private static final int HIT_SPLAT_HEAL_COLOR = 0x1976D2;
+	private final FloatingHitSplatRenderer floatingHitSplatRenderer = new FloatingHitSplatRenderer();
 	private static final String[] ALTAR_ELEMENTS = new String[] {
 		"air", "water", "earth", "fire", "mind", "body", "cosmic", "chaos", "nature", "law", "death", "blood", "soul", "life"
 	};
@@ -6213,6 +6207,8 @@ public final class mudclient implements Runnable {
 				this.getSurface().drawBoxAlpha(percent - 15 + x, y - 3, 30 - percent, 5, 0xFF0000, 192);
 			}
 
+			floatingHitSplatRenderer.draw(this.getSurface());
+
 		} catch (RuntimeException var12) {
 			throw GenUtil.makeThrowable(var12, "client.VA(" + "dummy" + ')');
 		}
@@ -8793,6 +8789,7 @@ public final class mudclient implements Runnable {
 
 					this.characterBubbleCount = 0;
 					this.characterHealthCount = 0;
+					floatingHitSplatRenderer.beginFrame();
 					this.characterDialogCount = 0;
 					if (this.cameraAutoAngleDebug) {
 						if (this.optionCameraModeAuto && !this.isInFirstPersonView() && !this.doCameraZoom) {
@@ -10933,17 +10930,13 @@ public final class mudclient implements Runnable {
 					this.characterHealthBar[this.characterHealthCount++] = var16;
 				}
 
-				if (hasVisibleHitSplats(npc)) {
-					var15 = x + getCombatScreenOffset(npc.direction, overlayMovement, 10);
-
-					drawTypedHitSplats(npc, width1 / 2 - 1 + var15, y + height / 2);
-				} else if (!npc.suppressAttackOption && npc.combatTimeout > 150) {
-					var15 = x + getCombatScreenOffset(npc.direction, overlayMovement, 10);
-
-					drawSingleHitSplat(width1 / 2 - 1 + var15, y + height / 2 - 18, npc.damageTaken, HIT_SPLAT_STANDARD_COLOR);
-				}
-
 			}
+			if (!hideSummonDuringArrival) {
+				floatingHitSplatRenderer.collect(npc,
+					width1 / 2 + x + getCombatScreenOffset(npc.direction, overlayMovement, 20),
+					y, FloatingHitSplatState.now(), this.getSurface());
+			}
+
 			/*if (npc.bubbleItem == 221) {
 				this.characterBubbleX[this.characterBubbleCount] = width1 / 2 + x;
 				this.characterBubbleY[this.characterBubbleCount] = y;
@@ -11026,52 +11019,6 @@ public final class mudclient implements Runnable {
 		}
 		int cameraRelativeDirection = (direction.rsDir + (this.cameraRotation + 16) / 32) & 7;
 		return isCombatBHalf(cameraRelativeDirection);
-	}
-
-	private boolean hasVisibleHitSplats(ORSCharacter character) {
-		if (character == null) {
-			return false;
-		}
-		for (int i = 0; i < ORSCharacter.HIT_SPLAT_COUNT; ++i) {
-			if (character.hitSplatTimeout[i] > HIT_SPLAT_VISIBLE_THRESHOLD) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void drawTypedHitSplats(ORSCharacter character, int centerX, int centerY) {
-		drawHitSplatSlot(character, ORSCharacter.HIT_SPLAT_STANDARD, centerX - HIT_SPLAT_WIDTH - 1,
-			centerY - HIT_SPLAT_HEIGHT - 4, HIT_SPLAT_STANDARD_COLOR);
-		drawHitSplatSlot(character, ORSCharacter.HIT_SPLAT_POISON, centerX + 1,
-			centerY - HIT_SPLAT_HEIGHT - 4, HIT_SPLAT_POISON_COLOR);
-		drawHitSplatSlot(character, ORSCharacter.HIT_SPLAT_ARMOR_PROC, centerX - HIT_SPLAT_WIDTH - 1,
-			centerY + 2, HIT_SPLAT_ARMOR_PROC_COLOR);
-		drawHitSplatSlot(character, ORSCharacter.HIT_SPLAT_HEAL, centerX + 1,
-			centerY + 2, HIT_SPLAT_HEAL_COLOR);
-	}
-
-	private void drawHitSplatSlot(ORSCharacter character, int type, int x, int y, int color) {
-		if (character.hitSplatTimeout[type] <= HIT_SPLAT_VISIBLE_THRESHOLD) {
-			return;
-		}
-		drawHitSplatBox(x, y, character.hitSplatAmount[type], color);
-	}
-
-	private void drawSingleHitSplat(int centerX, int y, int amount, int color) {
-		drawHitSplatBox(centerX - HIT_SPLAT_WIDTH / 2, y, amount, color);
-	}
-
-	private void drawHitSplatBox(int x, int y, int amount, int color) {
-		this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.WORLD_OVERLAY);
-		try {
-			this.getSurface().drawBoxAlpha(x, y, HIT_SPLAT_WIDTH, HIT_SPLAT_HEIGHT, color, 192);
-			this.getSurface().drawBoxBorder(x, HIT_SPLAT_WIDTH, y, HIT_SPLAT_HEIGHT, 0);
-			this.getSurface().drawColoredStringCentered(x + HIT_SPLAT_WIDTH / 2, Integer.toString(amount),
-				0xFFFFFF, 0, 0, y + 11);
-		} finally {
-			this.getSurface().setRenderer2DPhase(Renderer2DFrame.Phase.SCENE);
-		}
 	}
 
 	public final void drawPlayer(int index, int x, int y, int width, int height, int topPixelSkew, int var3,
@@ -11259,16 +11206,11 @@ public final class mudclient implements Runnable {
 						this.characterHealthY[this.characterHealthCount] = y;
 						this.characterHealthBar[this.characterHealthCount++] = healthStep;
 					}
-					if (hasVisibleHitSplats(player)) {
-						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 10);
-
-						drawTypedHitSplats(player, width / 2 + (var14 - 1), y + height / 2);
-					} else if (player.combatTimeout > 150) {
-						int var14 = x + getCombatScreenOffset(player.direction, overlayMovement, 10);
-
-						drawSingleHitSplat(width / 2 + (var14 - 1), y + height / 2 - 18, player.damageTaken, HIT_SPLAT_STANDARD_COLOR);
-					}
 				}
+				floatingHitSplatRenderer.collect(player,
+					width / 2 + x + getCombatScreenOffset(player.direction, overlayMovement, 20),
+					y, FloatingHitSplatState.now(), this.getSurface());
+
 				if (player.skullVisible == 1 && player.bubbleTimeout == 0) {
 					int skullX = topPixelSkew + x + width / 2 + getCombatScreenOffset(player.direction, overlayMovement, 20);
 

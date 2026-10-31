@@ -528,7 +528,7 @@ public class ProjectileEvent extends SingleTickEvent {
 			opponent, caster, DamageRequest.SourceCategory.OWNED_EFFECT,
 			JEWELRY_RECOIL_POLICY.getStableKey(), com.openrsc.server.content.monsterslayer.DarkBeastCombat.mitigate(caster, reflectedDamage))
 			.eventId(getUUID())
-			.hitSplatType(HitSplat.TYPE_ARMOR_PROC)
+			.hitSplatType(HitSplat.TYPE_RECOIL)
 			.build();
 		caster.getWorld().getServer().getResolvedDamageTransaction()
 			.apply(damageRequest);

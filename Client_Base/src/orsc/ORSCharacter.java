@@ -14,7 +14,9 @@ public final class ORSCharacter {
 	public static final int HIT_SPLAT_POISON = 1;
 	public static final int HIT_SPLAT_ARMOR_PROC = 2;
 	public static final int HIT_SPLAT_HEAL = 3;
-	public static final int HIT_SPLAT_COUNT = 4;
+	public static final int HIT_SPLAT_SUMMON = 4;
+	public static final int HIT_SPLAT_RECOIL = 5;
+	public static final int HIT_SPLAT_COUNT = 6;
 	public static final int HIT_SPLAT_TIMEOUT = 200;
 
 	public String accountName;
@@ -43,8 +45,7 @@ public final class ORSCharacter {
 	public int currentX;
 	public int currentZ;
 	public int damageTaken = 0;
-	public int[] hitSplatAmount = new int[HIT_SPLAT_COUNT];
-	public int[] hitSplatTimeout = new int[HIT_SPLAT_COUNT];
+	public final FloatingHitSplatState floatingHitSplats = new FloatingHitSplatState();
 	public int skull = 0;
 	public int wield = 0;
 	public int wield2 = 0;
@@ -82,29 +83,12 @@ public final class ORSCharacter {
 	ORSCharacterDirection direction = ORSCharacterDirection.NORTH;
 
 	public void setHitSplat(int type, int amount) {
-		if (type < 0 || type >= HIT_SPLAT_COUNT) {
-			return;
-		}
-		hitSplatAmount[type] = Math.max(0, amount);
-		hitSplatTimeout[type] = HIT_SPLAT_TIMEOUT;
-	}
+        floatingHitSplats.typed(type, amount, FloatingHitSplatState.now());
+    }
 
-	public boolean hasActiveHitSplats() {
-		for (int i = 0; i < HIT_SPLAT_COUNT; ++i) {
-			if (hitSplatTimeout[i] > 0) {
-				return true;
-			}
-		}
-		return false;
-	}
+    public boolean hasActiveHitSplats() { return floatingHitSplats.isActive(); }
 
-	public void tickHitSplats() {
-		for (int i = 0; i < HIT_SPLAT_COUNT; ++i) {
-			if (hitSplatTimeout[i] > 0) {
-				--hitSplatTimeout[i];
-			}
-		}
-	}
+    public void tickHitSplats() { floatingHitSplats.advance(FloatingHitSplatState.now()); }
 
 	public void clearTransientVisualState() {
 		bubbleItem = 0;
@@ -127,10 +111,7 @@ public final class ORSCharacter {
 		incomingProjectileSprite = null;
 		suppressAttackOption = false;
 		spiritSummon = false;
-		for (int i = 0; i < HIT_SPLAT_COUNT; ++i) {
-			hitSplatAmount[i] = 0;
-			hitSplatTimeout[i] = 0;
-		}
+		floatingHitSplats.clear();
 	}
 
 	// from com.openrsc.server.model.entity.player.Group.java

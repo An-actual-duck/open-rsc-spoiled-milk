@@ -922,7 +922,7 @@ public final class Summoning {
 	}
 
 	public static int getSummonDamageHitSplatType(final Mob hitter) {
-		return isSummon(hitter) ? HitSplat.TYPE_ARMOR_PROC : HitSplat.TYPE_STANDARD;
+		return isSummon(hitter) ? HitSplat.TYPE_SUMMON : HitSplat.TYPE_STANDARD;
 	}
 
 	public static void recordCombatSummonEngagement(final Player owner, final Npc target) {

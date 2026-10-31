@@ -228,7 +228,7 @@ final class CurrentCombatReflectionCharacterization {
 			invoke(event, "inflictMeleeJewelryRecoilDamage",
 				new Class<?>[] {Mob.class, Mob.class, int.class},
 				defender, attacker, Integer.valueOf(5));
-			assertHit(attacker, 5, HitSplat.TYPE_ARMOR_PROC,
+			assertHit(attacker, 5, HitSplat.TYPE_RECOIL,
 				path + " melee jewelry displayed overkill");
 			assertEquals(3, contribution(
 				attacker, defender, "getCombatDamageInfoBy"),
@@ -332,7 +332,7 @@ final class CurrentCombatReflectionCharacterization {
 		invoke(rangedEvent, "recoilDamage",
 			new Class<?>[] {Player.class, Mob.class, int.class},
 			rangedOwner, rangedCaster, Integer.valueOf(8));
-		assertHit(rangedCaster, 2, HitSplat.TYPE_ARMOR_PROC,
+		assertHit(rangedCaster, 2, HitSplat.TYPE_RECOIL,
 			"ranged projectile recoil presentation");
 		assertEquals(1, rangedDeaths.get(),
 			"ranged projectile recoil death callback cardinality");
@@ -595,7 +595,8 @@ final class CurrentCombatReflectionCharacterization {
 		assertTrue(request.getTarget() == target, label + " target identity");
 		assertEquals(event == null ? null : ((GameTickEvent) event).getUUID(),
 			request.getEventId(), label + " event identity");
-		assertEquals(HitSplat.TYPE_ARMOR_PROC, request.getHitSplatType(),
+		assertEquals(effectKey.endsWith("jewelry-recoil") ? HitSplat.TYPE_RECOIL
+			: HitSplat.TYPE_ARMOR_PROC, request.getHitSplatType(),
 			label + " hitsplat type");
 		assertEquals(resolvedDamage, request.getResolvedDamage(),
 			label + " resolved damage");

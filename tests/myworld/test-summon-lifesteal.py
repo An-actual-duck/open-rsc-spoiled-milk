@@ -39,7 +39,7 @@ def main() -> None:
     require(summoning, "TRAIT_VAMPIRISM", "bat vampirism trait")
     require(summoning, '"Duskwind Bat", 26, 110, NpcId.GIANT_BAT.id(), KIND_GIANT_BAT, 7, 9, 3, 18, 30, TRAIT_VAMPIRISM', "lowered bat max hit")
     require(summoning, "public static int getSummonDamageHitSplatType(final Mob hitter)", "summon damage hitsplat helper")
-    require(summoning, "return isSummon(hitter) ? HitSplat.TYPE_ARMOR_PROC : HitSplat.TYPE_STANDARD;", "yellow summon damage hitsplat")
+    require(summoning, "return isSummon(hitter) ? HitSplat.TYPE_SUMMON : HitSplat.TYPE_STANDARD;", "yellow summon damage hitsplat")
     require(summoning, "targetNpc.addSummonDamage(owner, damage);", "projectile summon damage should avoid combat XP maps")
     require(summoning, "((Npc) target).addSummonDamage(owner, damageDealt);", "special summon damage should avoid combat XP maps")
     require(client, "private static final int SUMMON_BAT_VAMPIRISM_PROJECTILE_SIZE = 144;", "larger bat vampirism projectile size")
