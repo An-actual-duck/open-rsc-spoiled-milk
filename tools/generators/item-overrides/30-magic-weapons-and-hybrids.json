@@ -964,142 +964,182 @@
     {
       "id": 2228,
       "magicOffense": 4,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 1
     },
     {
       "id": 2229,
       "magicOffense": 6,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 8
     },
     {
       "id": 2230,
       "magicOffense": 8,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 15
     },
     {
       "id": 2231,
       "magicOffense": 12,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 22
     },
     {
       "id": 2232,
       "magicOffense": 14,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 30
     },
     {
       "id": 2233,
       "magicOffense": 16,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 38
     },
     {
       "id": 2234,
       "magicOffense": 20,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 46
     },
     {
       "id": 2235,
       "magicOffense": 22,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 54
     },
     {
       "id": 2236,
       "magicOffense": 24,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 62
     },
     {
       "id": 2237,
       "magicOffense": 28,
-      "requiredSkillID": 5,
+      "requiredSkillID": 6,
       "requiredLevel": 70
     },
     {
       "id": 3152,
-      "magicOffense": 4
+      "magicOffense": 4,
+      "requiredLevel": 1,
+      "requiredSkillID": 6
     },
     {
       "id": 3153,
-      "magicOffense": 6
+      "magicOffense": 6,
+      "requiredLevel": 8,
+      "requiredSkillID": 6
     },
     {
       "id": 3154,
-      "magicOffense": 8
+      "magicOffense": 8,
+      "requiredLevel": 15,
+      "requiredSkillID": 6
     },
     {
       "id": 3155,
-      "magicOffense": 12
+      "magicOffense": 12,
+      "requiredLevel": 22,
+      "requiredSkillID": 6
     },
     {
       "id": 3156,
-      "magicOffense": 14
+      "magicOffense": 14,
+      "requiredLevel": 30,
+      "requiredSkillID": 6
     },
     {
       "id": 3157,
-      "magicOffense": 16
+      "magicOffense": 16,
+      "requiredLevel": 38,
+      "requiredSkillID": 6
     },
     {
       "id": 3158,
-      "magicOffense": 20
+      "magicOffense": 20,
+      "requiredLevel": 46,
+      "requiredSkillID": 6
     },
     {
       "id": 3159,
-      "magicOffense": 22
+      "magicOffense": 22,
+      "requiredLevel": 54,
+      "requiredSkillID": 6
     },
     {
       "id": 3160,
-      "magicOffense": 24
+      "magicOffense": 24,
+      "requiredLevel": 62,
+      "requiredSkillID": 6
     },
     {
       "id": 3161,
-      "magicOffense": 28
+      "magicOffense": 28,
+      "requiredLevel": 70,
+      "requiredSkillID": 6
     },
     {
       "id": 3162,
-      "magicOffense": 4
+      "magicOffense": 4,
+      "requiredLevel": 1,
+      "requiredSkillID": 6
     },
     {
       "id": 3163,
-      "magicOffense": 6
+      "magicOffense": 6,
+      "requiredLevel": 8,
+      "requiredSkillID": 6
     },
     {
       "id": 3164,
-      "magicOffense": 8
+      "magicOffense": 8,
+      "requiredLevel": 15,
+      "requiredSkillID": 6
     },
     {
       "id": 3165,
-      "magicOffense": 12
+      "magicOffense": 12,
+      "requiredLevel": 22,
+      "requiredSkillID": 6
     },
     {
       "id": 3166,
-      "magicOffense": 14
+      "magicOffense": 14,
+      "requiredLevel": 30,
+      "requiredSkillID": 6
     },
     {
       "id": 3167,
-      "magicOffense": 16
+      "magicOffense": 16,
+      "requiredLevel": 38,
+      "requiredSkillID": 6
     },
     {
       "id": 3168,
-      "magicOffense": 20
+      "magicOffense": 20,
+      "requiredLevel": 46,
+      "requiredSkillID": 6
     },
     {
       "id": 3169,
-      "magicOffense": 22
+      "magicOffense": 22,
+      "requiredLevel": 54,
+      "requiredSkillID": 6
     },
     {
       "id": 3170,
-      "magicOffense": 24
+      "magicOffense": 24,
+      "requiredLevel": 62,
+      "requiredSkillID": 6
     },
     {
       "id": 3171,
-      "magicOffense": 28
+      "magicOffense": 28,
+      "requiredLevel": 70,
+      "requiredSkillID": 6
     },
     {
       "id": 314,

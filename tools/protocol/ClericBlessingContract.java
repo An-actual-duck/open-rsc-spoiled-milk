@@ -1,0 +1,22 @@
+/** Versioned numeric metadata only; no executable expressions cross the wire. */
+public final class ClericBlessingContract {
+    public static final int SCHEMA_VERSION = 3;
+    public static final int CLIENT_VERSION = 10054;
+    public static final int MAX_DEFINITIONS = 32;
+    public static final int MAX_COSTS = 4;
+    public static final int MAX_COMPONENTS = 9;
+    public static final int BLESSING_PRESENTATION = 8;
+    public static final int REGENERATION = 1;
+    public static final int HEALING_PULSE = 2;
+    public static final int POISON_CLEANSING = 3;
+    public static final int STAT_RESTORATION = 4;
+    public static final int DEFENSE = 5;
+    public static final int MAX_DAMAGE = 6;
+    public static final int DEALT_DAMAGE = 7;
+    public static final int LIFESTEAL = 8;
+    public static final int REFLECTION = 9;
+    private ClericBlessingContract() {}
+    public static boolean supports(int clientVersion) {
+        return clientVersion >= CLIENT_VERSION && clientVersion < 20000;
+    }
+}
