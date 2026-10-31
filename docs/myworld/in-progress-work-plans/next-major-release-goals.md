@@ -135,24 +135,51 @@ These are current inconsistencies, not approved new equipment restrictions.
 | Saradomin | Natural HP regeneration multiplier `P+1` (minimum ×2) | `P+1` HP per pulse (minimum 2), 10 pulses roughly 6 seconds apart/about a minute | Open |
 | Zamorak | Maximum-damage percentage increase | Total-dealt-damage percentage increase | Lifesteal |
 
-Guthix flavor: “Your blood thickens like sap, slowing your ailments.” The old
-Fervor accuracy effect is not part of Zamorak's new first component. Saradomin
-at P6 means **×7 regeneration and 7 HP per pulse/70 HP per minute**; those are the
-confirmed formulas' arithmetic consequences, with balance review still needed.
-Do not silently reduce them or treat the formulas as unapproved.
+### Confirmed blessing names and recipient flavor
+
+These messages are addressed to the recipient when the blessing is cast/applied
+to them. Exact additional trigger policy and whether lower-tier messages also
+appear are not specified here.
+
+| God | Tier | Blessing name | Recipient message |
+|---|---|---|---|
+| Saradomin | 1 | Saradomin's Warmth | You feel your blood rush and your spirits lift |
+| Saradomin | 2 | Saradomin's Aura | Your wounds seal up as soon as they are opened |
+| Saradomin | 3 | Saradomin's Resplendence | Open; third component and message remain undecided |
+| Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
+| Guthix | 2 | Guthix's Protection | Your skin grows a thick layer of bark |
+| Guthix | 3 | Guthix's Vengeance | Sharp spikes protrude from you, piercing your foes. |
+| Zamorak | 1 | Zamorak's Fervor | Your muscles bulge and your mind feels sharper |
+| Zamorak | 2 | Zamorak's Fury | Your enemies seem much smaller than before |
+| Zamorak | 3 | Zamorak's Wrath | Your weapon will breathe new life into you should you feel weak |
+
+**Guthix's Respite** names the new tier-one poison-cleansing/drained-stat
+restoration blessing. It is distinct from the removed **old neutral Respite**
+regeneration spell. **Zamorak's Fervor** names the new tier-one maximum-damage
+blessing; it does not preserve the old accuracy mechanic. The new Guthix
+recipient text supersedes the earlier sap line.
+
+Flavor imagery adds no mechanics: it does not make healing instant, guarantee
+ailment immunity, grant accuracy, or set a lifesteal activation threshold.
+Existing approved component formulas, timings and open balance decisions remain
+as recorded above. These names/messages are design, not runtime implementation.
+
+Saradomin at P6 means **×7 regeneration and 7 HP per pulse/70 HP per minute**;
+those are the confirmed formulas' arithmetic consequences, with balance review
+still needed. Do not silently reduce them or treat the formulas as unapproved.
 
 These progression/composite rules are **design only**. The existing twelve-spell
 runtime, costs/effects and spell-specific ranks remain unchanged. Its two-tier
 roster is salvage/history, not the active future roster. **Keep Unify unchanged
 except for a flat cost of two Grace sigils per cast, no god sigil (not per
-recipient); exclude Respite from the
+recipient); exclude the old neutral Respite from the
 future book because of abuse concerns.** Unify retains Worship 3, radius 4,
 party-allies-only targeting excluding the caster, a maximum of two safe ordinary
 walking steps toward the caster stopping within two tiles, same-level/world
 and line-of-effect checks, disabled PvP and no Holy Power ranks. No added tiers
 or unlock shift are approved. Two Grace is the confirmed quantity; grade
 correspondence remains open (current Stone Grace 3300 is a reference, not a
-new grade decision). Excluding Respite does not remove Saradomin's planned
+new grade decision). Excluding the old neutral Respite does not remove Saradomin's planned
 regeneration, other potion/equipment regeneration, assets or item IDs.
 
 God+Grace buffs, god+Blight debuffs and joint resource consumption remain
@@ -163,9 +190,10 @@ vectors and grade correspondence remain open. Production remains complete.
 
 ### Decisions still needed
 
-Saradomin's third component; remaining magnitudes, exact tier unlocks, names,
-durations and mixed casting costs/grades; composite targeting/stacking; debuff
-components and book layout. Unify is retained and Respite excluded; neither
+Saradomin's third component and recipient message; remaining magnitudes, exact
+tier unlocks, durations and mixed casting costs/grades; composite targeting/stacking;
+debuff components/names and book layout. Unify is retained and the old neutral
+Respite excluded; neither
 roster decision remains open. Tier 4 remains later work.
 The [active governing design](cleric-spellbook-concept.md#active-overhaul-three-ordinary-tiers-and-six-power-levels--october-30-2026)
 records the six thresholds, examples and distinction from the historical book.
