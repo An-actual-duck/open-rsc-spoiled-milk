@@ -72,10 +72,34 @@ and legacy melee gates. This documentation does not alter those requirements.
 | Saradomin | Faster natural Hits regeneration: minimum ×2 at P1, adding one multiplier per power step (`P + 1`) | Heal over time: minimum 2 HP per pulse at P1, adding 1 HP per power step (`P + 1`), 10 pulses roughly 6 seconds apart over about a minute | Open |
 | Zamorak | Percentage increase to maximum damage | Percentage increase to total dealt damage | Lifesteal |
 
-Guthix flavor: **“Your blood thickens like sap, slowing your ailments.”** This
-is poison cleansing, not an unapproved blanket ailment cure. Zamorak's new first
-component is maximum damage; the old Fervor accuracy mechanic is not carried
-into this design.
+### Confirmed blessing names and recipient flavor
+
+These messages are addressed to the recipient when the blessing is cast/applied
+to them. Exact additional trigger policy and whether lower-tier messages also
+appear are not specified here.
+
+| God | Tier | Blessing name | Recipient message |
+|---|---|---|---|
+| Saradomin | 1 | Saradomin's Warmth | You feel your blood rush and your spirits lift |
+| Saradomin | 2 | Saradomin's Aura | Your wounds seal up as soon as they are opened |
+| Saradomin | 3 | Saradomin's Resplendence | Open; third component and message remain undecided |
+| Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
+| Guthix | 2 | Guthix's Protection | Your skin grows a thick layer of bark |
+| Guthix | 3 | Guthix's Vengeance | Sharp spikes protrude from you, piercing your foes. |
+| Zamorak | 1 | Zamorak's Fervor | Your muscles bulge and your mind feels sharper |
+| Zamorak | 2 | Zamorak's Fury | Your enemies seem much smaller than before |
+| Zamorak | 3 | Zamorak's Wrath | Your weapon will breathe new life into you should you feel weak |
+
+**Guthix's Respite** names the new tier-one poison-cleansing/drained-stat
+restoration blessing. It is distinct from the removed **old neutral Respite**
+regeneration spell. **Zamorak's Fervor** names the new tier-one maximum-damage
+blessing; it does not preserve the old accuracy mechanic. The new Guthix
+recipient text supersedes the earlier sap line.
+
+Flavor imagery adds no mechanics: it does not make healing instant, guarantee
+ailment immunity, grant accuracy, or set a lifesteal activation threshold.
+Existing approved component formulas, timings and open balance decisions remain
+as recorded above. These names/messages are design, not runtime implementation.
 
 Saradomin's confirmed arithmetic means P6 gives **×7 natural regeneration** and
 **7 HP per pulse, 70 HP over ten pulses/about a minute**. This consequence is
@@ -93,14 +117,14 @@ approved. Two Grace is the confirmed quantity; the overhaul's grade
 correspondence remains open. Existing Stone Grace 3300 is the current-runtime
 grade reference, not an additional owner decision fixing the future grade.
 
-**Exclude Respite from the future spellbook** because of abuse concerns. This
+**Exclude the old neutral Respite from the future spellbook** because of abuse concerns. This
 is a future spell-roster decision only: the current twelve-spell runtime remains
 unchanged during design. It does not remove planned Saradomin regeneration,
 other regeneration from equipment/potions, assets or item identities.
 
-Still open: Saradomin's third component; remaining component magnitudes, exact
-tier unlocks, final names/durations and other cost vectors, grade correspondence,
-composite targeting/stacking, and debuff components. God-plus-Grace and
+Still open: Saradomin's third component and recipient message; remaining component
+magnitudes, exact tier unlocks, durations and other cost vectors, grade
+correspondence, composite targeting/stacking, and debuff components/names. God-plus-Grace and
 god-plus-Blight joint consumption remains confirmed, and generic purpose-only
 costs replace the missing god share with extra purpose sigils; Unify's specific
 two-Grace quantity is settled. The new casting implementation remains future
@@ -265,7 +289,8 @@ its materials/recipes and IDs unallocated.
 The table below is the current runtime/salvage roster and an earlier resource
 mapping, superseded as the desired future roster by the active three-tier
 composite design above. The active decision retains Unify with a two-Grace cost
-and excludes Respite from the future book; the historical rows remain intact.
+and excludes the old neutral Respite from the future book; the historical rows
+remain intact.
 
 The owner requested mapping the **two existing tiers only**. All twelve spells
 below are support spells and therefore use **Grace**. Blight is a planned
