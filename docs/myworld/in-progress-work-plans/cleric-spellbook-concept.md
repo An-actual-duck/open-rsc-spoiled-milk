@@ -59,8 +59,9 @@ base value occurs. All components share one **60-second** god blessing.
 
 | Component | P1 / P2 / P3 / P4 / P5 / P6 |
 |---|---|
-| Saradomin natural regeneration multiplier | ×2 / ×2.5 / ×3 / ×3.5 / ×4 / ×4.5 |
-| Saradomin HP per delayed pulse (Tier 2+) | 1 / 2 / 3 / 4 / 5 / 6; ten pulses, about six seconds apart |
+| Saradomin damage bonus against undead (new Tier 1+) | +25 / 35 / 45 / 55 / 65 / 75% |
+| Saradomin natural regeneration multiplier (moved to Tier 2+) | ×2 / ×2.5 / ×3 / ×3.5 / ×4 / ×4.5 |
+| Saradomin HP per delayed pulse (moved to Tier 3) | 1 / 2 / 3 / 4 / 5 / 6; ten pulses, about six seconds apart |
 | Guthix extra poison cleansing per existing pulse | 2 / 3 / 4 / 5 / 6 / 7, additive with equipment/potion cleansing |
 | Guthix one-point restoration of each drained non-HP stat | Every 10 / 9 / 8 / 7 / 6 / 5 seconds; capped at current normal levels |
 | Guthix Barkskin (Tier 2+) | +5 / 7 / 9 / 11 / 13 / 15% to all three defense values |
@@ -101,20 +102,22 @@ gates. Stats, artwork, alignment and god-staff requirements remain unchanged.
 | God | Tier 1 component | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
 | Guthix | **Sap Blood**: increased **poison** cleansing rate over time and gradual restoration of drained stats, sharing the blessing timer | **Barkskin**: increased defense, not Ward's fixed damage reduction | **Thorns**: reflected damage |
-| Saradomin | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute | Open |
+| Saradomin | Extra damage against undead: 25% at P1 and +10 percentage points per power step; effect flavor name pending | **Quickened Pulse**: faster natural Hits regeneration, ×2 at P1 and +×0.5 per power step | **Mending Flesh**: P HP per pulse, ten delayed pulses roughly six seconds apart over a minute |
 | Zamorak | **Unnatural Might**: percentage increase to maximum damage | **Bloodrage**: percentage increase to total dealt damage | **Blood Hunger**: lifesteal |
 
 ### Confirmed blessing names and recipient flavor
 
-These messages are addressed to the recipient when the blessing is cast/applied
-to them. The current implementation sends the line for the spell actually
-applied, rather than repeating every inherited lower-tier line.
+These selected messages belong to the named component added by the spell.
+The revised Saradomin associations below follow the owner-selected tier move;
+they are design changes, not yet runtime changes. The current implementation
+sends the line for the spell actually applied, rather than repeating every
+inherited lower-tier line.
 
 | God | Tier | Blessing name | Recipient message |
 |---|---|---|---|
-| Saradomin | 1 | Saradomin's Warmth | You feel your blood rush and your spirits lift |
-| Saradomin | 2 | Saradomin's Aura | Your wounds seal up as soon as they are opened |
-| Saradomin | 3 | Saradomin's Resplendence | No bespoke line selected; runtime fallback: Saradomin's Resplendence surrounds you. |
+| Saradomin | 1 | Saradomin's Warmth | New undead-damage effect's recipient message pending |
+| Saradomin | 2 | Saradomin's Aura | You feel your blood rush and your spirits lift |
+| Saradomin | 3 | Saradomin's Resplendence | Your wounds seal up as soon as they are opened |
 | Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
 | Guthix | 2 | Guthix's Protection | Your skin grows a thick layer of bark |
 | Guthix | 3 | Guthix's Vengeance | Sharp spikes protrude from you, piercing your foes. |
@@ -142,11 +145,32 @@ adds **Barkskin**; **Guthix's Vengeance** adds **Thorns**. The existing recipien
 messages above remain. Thus Vengeance includes Sap Blood, Barkskin and Thorns,
 not only the newly added effect.
 
-The owner also approved **Quickened Pulse** (Saradomin's Warmth), **Mending
-Flesh** (Saradomin's Aura), **Unnatural Might** (Zamorak's Fervor), **Bloodrage**
+The owner also approved **Quickened Pulse** (now Saradomin's Aura), **Mending
+Flesh** (now Saradomin's Resplendence), **Unnatural Might** (Zamorak's Fervor), **Bloodrage**
 (Zamorak's Fury) and **Blood Hunger** (Zamorak's Wrath). These names describe
-the existing components without adding or changing mechanics. Saradomin's
-third component, its effect name and its bespoke recipient message remain open.
+the associated components without independently changing their mechanics.
+Saradomin's new first effect still needs a flavor name and recipient message.
+
+**Owner-revised Saradomin progression — October 31:** move regeneration from
+Tier 1 to Tier 2 and the delayed heal from Tier 2 to Tier 3, preserving their
+approved magnitudes/cadences. Tier 1 instead grants extra damage against undead,
+`25 + 10 * (P - 1)` percent. Higher tiers inherit that damage bonus. At each
+spell's maximum potency, Warmth gives 35%; Aura gives 55% plus up to ×3.5
+regeneration; Resplendence gives 75%, up to ×4.5 regeneration and six HP per
+delayed healing pulse. Tier unlocks do not grant these maximum powers for free.
+
+This is an approved design revision; the runtime/private candidate still has
+the earlier regeneration/HoT order until implementation is reviewed. The scope
+of the new damage bonus is owner-confirmed: **melee, ranged and Magic**.
+Secondary/periodic/summon damage and
+stacking/rounding must be explicit, without amplifying a bonus repeatedly.
+
+Undead classification already has a legacy foundation: `Constants.UNDEAD_NPCS`
+contains 19 IDs and NPC construction stamps an `isUndead` attribute. Audit that
+coverage and existing consumers, then use server-owned classification with
+reviewed data tags for missing/custom undead. Do not classify NPCs by display
+name at runtime, add a roster to the editor, or silently redefine quest spell
+eligibility. No undead classifications or damage code have changed yet.
 
 The current runtime still labels the composite status by spell name with
 descriptive component text; this separate naming presentation is not implemented.
@@ -154,11 +178,11 @@ Old icon keys such as Mend, Purify, Zeal or Rally do not independently select
 new effect names. Unify and Greater Unify retain those spell names and movement
 descriptions, with no bespoke recipient flavor line currently defined.
 
-**Debuff spell-name recommendations, awaiting owner selection:** the following
-are proposed spell titles, not approved replacements for current names or IDs.
+**Owner-approved debuff spell names — October 31:** the following titles were
+accepted together. They are design names, not implemented runtime spell entries.
 The effect labels are retained; higher spell tiers include the earlier effects.
 
-| God | Tier | Proposed spell name | Named effect added |
+| God | Tier | Spell name | Named effect added |
 |---|---|---|---|
 | Guthix | 1 | Guthix's Unease | Toxiphobia |
 | Guthix | 2 | Guthix's Dread | Agrizoophobia |
@@ -170,7 +194,7 @@ The effect labels are retained; higher spell tiers include the earlier effects.
 | Zamorak | 2 | Zamorak's Cruelty | Weak Legs |
 | Zamorak | 3 | Zamorak's Ruin | Weak Constitution |
 
-The proposed chains use mounting fear for Guthix, escalating divine judgment
+The selected chains use mounting fear for Guthix, escalating divine judgment
 and bodily unraveling for Saradomin, and increasingly destructive intent for
 Zamorak. Naming approval does not resolve outstanding timing, balance or Cosmic
 robe decisions, and no hostile recipient flavor messages are added.
@@ -178,13 +202,12 @@ robe decisions, and no hostile recipient flavor messages are added.
 Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
-as recorded above. The private candidate applies these names/messages after successful blessing
-application; Saradomin's third message remains unset.
+as recorded above. The private candidate still has the earlier Saradomin order
+and messages; the new first-effect flavor and tier move await implementation.
 
-Saradomin at P6 now gives **×4.5 natural regeneration and 6 HP per pulse,
-60 HP across ten delayed pulses**. This explicitly supersedes the earlier
-×7/70 HP draft. Tier 3 Resplendence raises the potency cap for its two existing
-components; its additional third component and recipient message remain open.
+Under the revised design, Saradomin at Tier 3/P6 gives **+75% damage against
+undead, ×4.5 natural regeneration and 6 HP per pulse, 60 HP across ten delayed
+pulses**. The healing values still supersede the earlier ×7/70 HP draft.
 Recasting does not immediately heal or reset periodic cadence; the scheduled
 tenth pulse settles at the expiry boundary before the effect is removed.
 
@@ -241,8 +264,8 @@ reduction, retaining at least 1 cleansing where applicable; exact integer
 settlement must be checked against current poison/cleansing paths before code.
 Do not apply vulnerability repeatedly through secondary-hit/reflect recursion.
 
-These are approved **effect names**, not spell names. Separate god-themed spell
-names remain to be selected, using the naming model above. Do not rename stable
+These are approved **effect names**, not spell names. Their approved god-themed
+spell names are listed above. Do not rename stable
 gameplay IDs as part of flavor work. Stacking, lifecycle, precise source admission and
 PvP policy still require implementation review. No hostile runtime code or
 new PvP permission is implied by this design approval.
@@ -251,7 +274,7 @@ new PvP permission is implied by this design approval.
 
 **Design recorded; hostile gameplay is not implemented.** Higher tiers retain
 the earlier components, with the common Holy Power curve and tier caps 2/4/6.
-The owner selected these **effect names**; separate spell names remain open:
+The owner selected these **effect names**; their approved spell names are listed above:
 
 | Tier addition | Effect name | Added effect |
 |---|---|---|
@@ -316,8 +339,9 @@ integration with the separate hit-splat topic branch at final collection.
 **Design recorded; hostile gameplay is not implemented.** These owner-selected
 components replace the earlier manager suggestions for Zamorak. Higher tiers
 retain the earlier components, using the shared Holy Power thresholds and
-tier caps **2/4/6**. The quoted names below are the owner's component labels;
-final spell titles, descriptions and cast messages remain to be settled.
+tier caps **2/4/6**. The quoted names below are the owner's effect labels;
+the approved spell titles are listed above. Exact mechanical descriptions still
+need implementation review; hostile recipient flavor messages are not requested.
 
 | Tier addition | Component | Formula at power P | P1 / P2 / P3 / P4 / P5 / P6 |
 |---|---|---|---|
@@ -388,16 +412,15 @@ owner-confirmed. Saradomin's three selected hostile components and proposed
 numerical values are recorded above. None of the manager's other
 suggested hostile components is silently adopted.
 
-The buff numerical review and Greater Unify are implemented in the private
-candidate. The current design work is the hostile branch; the values above
-are recorded for its later implementation.
+The preceding buff numerical review and Greater Unify are implemented in the
+private candidate. The latest Saradomin undead-damage/tier-order revision and
+the hostile branch remain design work, recorded for later implementation.
 
 **Exclude the old neutral Respite from the future spellbook** because of abuse concerns. This
-is a future spell-roster decision only: the current twelve-spell runtime remains
-unchanged during design. It does not remove planned Saradomin regeneration,
+is retained in the active eleven-spell buff roster. It does not remove Saradomin regeneration,
 other regeneration from equipment/potions, assets or item identities.
 
-Still open: Saradomin's additional third **buff** component and recipient message,
+Still open: Saradomin's new first buff effect name and recipient message,
 later cost/economy refinement, and remaining hostile balance/timing details. God-plus-Grace and
 god-plus-Blight joint consumption remains confirmed, and generic purpose-only
 costs replace the missing god share with extra purpose sigils; Unify's specific

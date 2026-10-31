@@ -128,8 +128,9 @@ spells; retired launch IDs remain reserved and are refused. All blessings last
 
 | Component | P1→P6 progression |
 |---|---|
-| Sara regeneration | ×2 /2.5 /3 /3.5 /4 /4.5 |
-| Sara delayed HoT (Tier 2+) | 1/2/3/4/5/6 HP per pulse; 10 delayed pulses about 6s apart |
+| Sara bonus damage against undead (new Tier 1+) | +25/35/45/55/65/75% |
+| Sara regeneration (moved to Tier 2+) | ×2 /2.5 /3 /3.5 /4 /4.5 |
+| Sara delayed HoT (moved to Tier 3) | 1/2/3/4/5/6 HP per pulse; 10 delayed pulses about 6s apart |
 | Guthix extra cleanse | 2/3/4/5/6/7 per existing poison pulse, additive |
 | Guthix drained non-HP stats | Restore 1 each, every 10/9/8/7/6/5s, cap at normal |
 | Guthix Barkskin (Tier 2+) | +5/7/9/11/13/15% to melee/ranged/Magic defense |
@@ -156,7 +157,7 @@ tier caps: Worship 40 + Maple 32 = 72→P3; 60 + Ebony 44 = 104→P4; 80 + god 6
 | God | Tier 1 | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
 | Guthix | Faster poison cleansing over time + gradual drained-stat restoration, on the same blessing timer | Barkskin defense increase (not Ward's flat damage reduction) | Thorns reflect |
-| Saradomin | Natural HP regeneration ×2 +0.5 per power step | P HP per delayed pulse, ten pulses about six seconds apart | Open |
+| Saradomin | Extra damage against undead: 25% +10 percentage points per power step | Quickened Pulse: natural HP regeneration ×2 +0.5 per power step | Mending Flesh: P HP per delayed pulse, ten pulses about six seconds apart |
 | Zamorak | Maximum-damage percentage increase | Total-dealt-damage percentage increase | Lifesteal |
 
 ### Confirmed blessing names and recipient flavor
@@ -167,9 +168,9 @@ appear are not specified here.
 
 | God | Tier | Blessing name | Recipient message |
 |---|---|---|---|
-| Saradomin | 1 | Saradomin's Warmth | You feel your blood rush and your spirits lift |
-| Saradomin | 2 | Saradomin's Aura | Your wounds seal up as soon as they are opened |
-| Saradomin | 3 | Saradomin's Resplendence | Open; third component and message remain undecided |
+| Saradomin | 1 | Saradomin's Warmth | New undead-damage effect's message pending |
+| Saradomin | 2 | Saradomin's Aura | You feel your blood rush and your spirits lift |
+| Saradomin | 3 | Saradomin's Resplendence | Your wounds seal up as soon as they are opened |
 | Guthix | 1 | Guthix's Respite | Your blood feels thick in your veins like sap. Your ailments slow to a halt |
 | Guthix | 2 | Guthix's Protection | Your skin grows a thick layer of bark |
 | Guthix | 3 | Guthix's Vengeance | Sharp spikes protrude from you, piercing your foes. |
@@ -187,14 +188,20 @@ Flavor imagery adds no mechanics: it does not make healing instant, guarantee
 ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
 as recorded above. The private candidate applies these names/messages after successful blessing
-application; Saradomin's third message remains unset.
+application under the earlier Saradomin layout; the revised associations above
+are design changes awaiting implementation.
 
-Saradomin at P6 now means **×4.5 regeneration and 6 HP per pulse/60 HP over ten
-delayed pulses**, explicitly replacing the earlier ×7/70 HP draft. Its third
-component/message remains open; Resplendence currently raises the cap of the
-existing two components.
+The owner revised Saradomin's order: undead damage → regeneration → delayed
+healing. At Tier 3/P6 the revised design gives **+75% damage against undead,
+×4.5 regeneration and 6 HP per pulse/60 HP over ten delayed pulses**. The healing
+values still replace the earlier ×7/70 HP draft. The owner confirmed that the
+undead bonus applies to **melee, ranged and Magic**. The new first effect needs
+a flavor name/message. Existing legacy undead classification must be audited
+and extended with server-owned tags as appropriate. No code/classification has
+changed for this revision.
 
-These progression/composite rules are implemented in the **private candidate**;
+The preceding progression/composite foundation is implemented in the **private
+candidate**, except the latest Saradomin damage/tier-order revision;
 the old twelve-spell roster is historical salvage, not its active roster. **Keep Unify unchanged
 except for a flat cost of two Grace sigils per cast, no god sigil (not per
 recipient); exclude the old neutral Respite from the
@@ -230,12 +237,12 @@ The owner confirmed separate spell/effect naming: buffs need recipient flavor
 messages as well as spell/effect names; debuffs need spell/effect names without
 recipient flavor. Guthix's Respite grants **Sap Blood**, Protection adds
 **Barkskin**, and Vengeance adds **Thorns**, retaining the earlier components.
-Toxiphobia/Agrizoophobia/Hematophobia are **effect names**; their spell names
-remain open. The owner approved the other defined buff effect names:
-**Quickened Pulse** and **Mending Flesh** for Saradomin's first two components;
+Toxiphobia/Agrizoophobia/Hematophobia are **effect names**. The owner approved
+the other defined buff effect names:
+**Quickened Pulse** and **Mending Flesh**, now Saradomin's Tier 2/3 components;
 **Unnatural Might**, **Bloodrage** and **Blood Hunger** for Zamorak's three.
-Saradomin's additional third buff component/effect name/message remain open.
-Proposed debuff spell-title chains, not yet approved: Guthix's
+Saradomin's new Tier 1 undead-damage effect name/message remain open.
+The owner approved all three debuff spell-title chains: Guthix's
 Unease/Dread/Terror; Saradomin's Censure/Condemnation/Unmaking; Zamorak's
 Malice/Cruelty/Ruin. The governing Cleric document maps each title to its effect.
 This is the approved presentation model, not an implemented runtime rename.
@@ -291,7 +298,7 @@ above. Production remains complete; hostile casting is separate.
 
 ### Decisions still needed
 
-Saradomin's additional third buff component and recipient message; later cost/economy
+Saradomin's new undead-damage effect name/recipient message; later cost/economy
 refinement; hostile components/names, balance and lifecycle. Unify and Greater
 Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
 Tier 4 unique spells remain later work.
