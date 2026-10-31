@@ -355,4 +355,8 @@ existing chance/cap; no Expose Weakness, Weak Legs or Weak Constitution effects
 are enabled. Their balance and eligible-hit decisions remain future work.
 Whip/Sticky extra attack delays compose separately from Stagger, preserving
 normal style/base cooldown ownership and existing movement/utility scope.
+Fresh uncaptured Slow affects the upcoming attack, adding only its new tier
+delta to that wait; captured Slow is never multiplied again. This is the
+disclosed working interpretation of the owner's three-ticks example, not a
+claimed explicit reply to the optional timing clarification.
 See [the foundation review](shared-critical-stagger-foundation-review.md).

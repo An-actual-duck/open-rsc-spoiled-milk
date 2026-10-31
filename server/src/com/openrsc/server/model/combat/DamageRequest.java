@@ -69,11 +69,11 @@ public final class DamageRequest {
 		style = builder.style;
 		effectKey = builder.effectKey;
 		inputStage = InputStage.RESOLVED_LEGACY;
-		resolvedDamage = builder.resolvedDamage;
+		attackCommitment = builder.attackCommitment;
+        resolvedDamage = attackCommitment.resolveDamage(builder.resolvedDamage);
 		hitSplatType = builder.hitSplatType;
 		presentation = builder.presentation;
 		applyGoblinTenacity = builder.applyGoblinTenacity;
-    attackCommitment = builder.attackCommitment;
     attackRoll =
         (builder.attackRoll == null ? AttackRoll.normal(resolvedDamage) : builder.attackRoll)
             .committed(attackCommitment);

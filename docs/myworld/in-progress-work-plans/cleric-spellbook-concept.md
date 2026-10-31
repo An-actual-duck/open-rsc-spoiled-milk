@@ -230,9 +230,12 @@ ordinary melee, bow/throwing, and combat Magic launch/impact settlement. Cosmic
 remains the only enabled modern critical-chance source, with its existing values
 and cap. A normal maximum is not a critical; a Stagger-forced zero is not a
 critical. Existing secondary/offhand damage eligibility is retained, without
-permission to trigger these future hostile components. The historical lethal
-God/Iban secondary helper still preserves its older death ordering; it is not
-an approved hostile-trigger boundary.
+permission to trigger these future hostile components. Remaining legacy integer-only secondary/death helpers retain their historical
+damage/RNG and attribution ordering. In particular, lethal God/Iban secondary
+damage still has its older direct death path. Those compatibility helpers do
+not have complete critical provenance and are not approved hostile-trigger
+boundaries. Primary outcome propagation is complete; it does not silently
+finalize future offhand/secondary debuff eligibility.
 
 Before hostile implementation, resolve: aggregation with existing critical
 equipment; offhand/secondary/multi-hit eligibility; the HP checkpoint used for

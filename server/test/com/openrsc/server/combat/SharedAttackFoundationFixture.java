@@ -124,6 +124,11 @@ public final class SharedAttackFoundationFixture {
           AttackState.pendingStaggers(p) == 0 && AttackState.recoveryAttacks(p) == 0,
           "lifecycle clears recovery");
 
+      int invariantHP=n.getLevel(Skill.HITS.id());
+      DamageResult invariant=h.server().getResolvedDamageTransaction().apply(
+          DamageRequest.resolvedLegacy(p,n,DamageRequest.SourceCategory.ACTOR,"forced-zero-invariant",99)
+              .attackCommitment(AttackCommitment.staggered()).attackRoll(AttackRoll.critical(99,AttackRoll.Critical.COSMIC)).build());
+      check(invariant.isAttackSuppressed()&&!invariant.isCritical()&&invariant.getActualDamage()==0&&n.getLevel(Skill.HITS.id())==invariantHP,"settlement enforces forcedzero over positive rolled damage and critical metadata");
       Player archer = h.player("shared archer", 444, 440);
       Npc rangedTarget = h.npc(NpcId.GREATER_DEMON.id(), 446, 440);
       healthy(archer);

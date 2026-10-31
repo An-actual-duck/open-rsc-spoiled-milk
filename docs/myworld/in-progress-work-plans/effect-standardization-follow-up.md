@@ -22,8 +22,16 @@ can own one actor-wide extra-delay token. Otherwise-ready attacks latch the sum
 after their ordinary base/Slow deadline; polls and event/style changes cannot
 multiply, clear or hide tokens. A source arriving during a latched wait extends
 that same deadline once. Ordinary style cooldowns stay with their existing
-owners. Fresh Slow applied after an interval was latched is a separately pending
-owner timing decision, not silently changed by this foundation.
+owners. Each owner records the exact Slow tier already included in its interval.
+At attack admission, only a newly uncaptured current tier delta is added to the
+shared wait: fresh Slow1 + Whip + Sticky adds three ticks to the next otherwise-
+ready attack, while captured Slow1 becoming Slow2 adds only one further Slow
+tick. Polling/style changes cannot duplicate credit; decay cannot shorten a
+latched wait. This upcoming-attack policy is the manager's disclosed working
+interpretation of the owner's three-ticks example. The optional clarification
+question had not received an explicit answer when implemented; it is not
+recorded as a separate owner answer. Reciprocal melee's existing Slow exclusion
+and utility spell timing stay unchanged.
 
 See [implementation and validation](shared-critical-stagger-foundation-review.md).
 Historical proposals below remain context rather than approval of a larger
