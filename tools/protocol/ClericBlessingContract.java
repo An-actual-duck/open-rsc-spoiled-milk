@@ -15,6 +15,15 @@ public final class ClericBlessingContract {
     public static final int DEALT_DAMAGE = 7;
     public static final int LIFESTEAL = 8;
     public static final int REFLECTION = 9;
+    private static final int[] POWER_THRESHOLDS = {0,20,45,75,115,160};
+    public static int powerThreshold(int index) {
+        if(index<0 || index>=POWER_THRESHOLDS.length)throw new IllegalArgumentException("Invalid power rank index");
+        return POWER_THRESHOLDS[index];
+    }
+    public static int[] powerThresholds(int count) {
+        if(count<1 || count>POWER_THRESHOLDS.length)throw new IllegalArgumentException("Invalid power cap");
+        return java.util.Arrays.copyOf(POWER_THRESHOLDS,count);
+    }
     private ClericBlessingContract() {}
     public static boolean supports(int clientVersion) {
         return clientVersion >= CLIENT_VERSION && clientVersion < 20000;
