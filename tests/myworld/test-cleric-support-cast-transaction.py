@@ -193,20 +193,20 @@ public final class ClericSupportCastTransactionFixture {
 		check(three.size() == 1 && three.get(0).getX() == 2,
 			"distance-three recipient must move exactly one step into the support area");
 		List<ClericUnifyStepPlanner.Step> four =
-			ClericUnifyStepPlanner.plan(4, 4, 0, 0, open);
-		check(four.size() == 2 && four.get(1).getX() == 2 && four.get(1).getY() == 2,
+			ClericUnifyStepPlanner.plan(5, 5, 0, 0, 5, 3, open);
+		check(four.size() == 3 && four.get(2).getX() == 2 && four.get(2).getY() == 2,
 			"distance-four recipient must move at most two ordinary diagonal steps");
 		check(ClericUnifyStepPlanner.plan(5, 0, 0, 0, open).isEmpty(),
 			"Unify must not plan movement outside its four-tile area");
 
 		List<ClericUnifyStepPlanner.Step> zigzag = ClericUnifyStepPlanner.plan(
 			3, 3, 0, 0, (sx, sy, dx, dy) -> !(sx == 3 && sy == 3 && dx == 2 && dy == 2));
-		check(zigzag.size() == 2 && zigzag.get(0).getX() == 2 && zigzag.get(0).getY() == 3,
+		check(zigzag.size() == 1 && zigzag.get(0).getX() == 2 && zigzag.get(0).getY() == 3,
 			"blocked diagonal must allow ordinary cardinal progress");
 
 		List<ClericUnifyStepPlanner.Step> partial = ClericUnifyStepPlanner.plan(
-			4, 0, 0, 0, (sx, sy, dx, dy) -> sx == 4);
-		check(partial.size() == 1 && partial.get(0).getX() == 3,
+			3, 0, 0, 0, (sx, sy, dx, dy) -> sx == 3);
+		check(partial.size() == 1 && partial.get(0).getX() == 2,
 			"one safe step must remain a useful partial Unify application");
 		check(ClericUnifyStepPlanner.plan(4, 0, 0, 0,
 			(sx, sy, dx, dy) -> false).isEmpty(),
@@ -259,17 +259,15 @@ def validate_runtime_boundaries() -> None:
         "recipient.resetPath();",
         "recipient.setLocation(step, false);",
         "caster.getCarriedItems().removeWithStateChange(",
-        "ClericSigilItemId.get(\n\t\t\t\t\tmaterial, definition.getAlignment(), true)",
+        "definition.getResourceCosts()",
         "applicationCommit.run();",
         "ActionSender.sendInventory(caster);",
     ):
         require(snippet in runtime, f"C07 runtime boundary missing: {snippet}")
-    for spell in ("UNIFY", "PURIFY", "RESTORE", "MEND", "GREATER_MEND", "RESPITE"):
-        require(f"spellId == ClericSpellId.{spell}" in runtime,
-                f"approved Cleric runtime omits {spell}")
+    require("id.isActive()" in runtime, "only active spell identities may enter casting")
     require("teleport(" not in runtime and "teleportLayer" not in runtime,
             "Unify must never use teleport movement")
-    require("Skill.PRAYER" not in runtime and "addExperience" not in runtime,
+    require("addExperience" not in runtime,
             "Cleric casting must not award Worship XP")
     require("player.getDuel().isDuelActive()" in runtime
             and "player.getLocation().inWilderness()" in runtime

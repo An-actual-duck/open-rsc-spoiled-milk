@@ -55,7 +55,6 @@ def validate_source_boundaries() -> None:
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRankDefinition.java",
         "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java",
         "server/src/com/openrsc/server/content/status/ClericActiveStatusCollector.java",
-        "server/src/com/openrsc/server/content/cleric/runtime/ClericDirectCombatRuntime.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericSupportCasting.java",
         "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java",
         "server/src/com/openrsc/server/net/rsc/ActionSender.java",
@@ -81,177 +80,35 @@ def validate_source_boundaries() -> None:
 
 FIXTURE = r"""
 package com.openrsc.server.content.cleric;
-
-import java.util.Arrays;
-import java.util.List;
-
+import java.util.*;
+import com.openrsc.server.content.cleric.effect.*;
 public final class ClericSpellbookFoundationFixture {
-	private interface Action {
-		void run();
-	}
-
-	private static void check(boolean condition, String message) {
-		if (!condition) {
-			throw new AssertionError(message);
-		}
-	}
-
-	private static void reject(Action action, String message) {
-		try {
-			action.run();
-			throw new AssertionError("Expected rejection: " + message);
-		} catch (IllegalArgumentException expected) {
-			// Expected validation failure.
-		}
-	}
-
-	private static void checkArray(int[] actual, int[] expected, String message) {
-		check(Arrays.equals(actual, expected), message + ": " + Arrays.toString(actual));
-	}
-
-	public static void main(String[] args) {
-		check(ClericSpellCatalog.SCHEMA_VERSION == 2, "schema version drift");
-		check(ClericSpellCatalog.MAX_LAUNCH_HOLY_POWER == 64, "Holy Power cap drift");
-
-		ClericSpellId[] ids = ClericSpellId.values();
-		List<ClericSpellDefinition> definitions = ClericSpellCatalog.getAll();
-		check(ids.length == 12 && definitions.size() == 12, "launch roster must contain twelve spells");
-
-		String[] keys = {
-			"cleric.mend", "cleric.unify", "cleric.fervor", "cleric.purify",
-			"cleric.restore", "cleric.ward", "cleric.greater_mend", "cleric.zeal",
-			"cleric.thorns", "cleric.aegis", "cleric.rally", "cleric.respite"
-		};
-		String[] names = {
-			"Mend", "Unify", "Fervor", "Purify", "Restore", "Ward",
-			"Greater Mend", "Zeal", "Thorns", "Aegis", "Rally", "Respite"
-		};
-		String[] descriptions = {
-			"Heals nearby allies.", "Draws nearby allies closer.",
-			"Improves nearby allies' accuracy.", "Reduces poison on nearby allies.",
-			"Restores nearby allies' reduced stats.", "Reduces damage to nearby allies.",
-			"Greatly heals nearby allies.", "Increases nearby allies' damage.",
-			"Makes nearby allies reflect damage.",
-			"Greatly reduces damage to nearby allies.",
-			"Grants nearby allies lifesteal.", "Improves nearby allies' regeneration."
-		};
-		ClericAlignment[] alignments = {
-			ClericAlignment.SARADOMIN, ClericAlignment.NEUTRAL, ClericAlignment.ZAMORAK,
-			ClericAlignment.GUTHIX, ClericAlignment.GUTHIX, ClericAlignment.SARADOMIN,
-			ClericAlignment.SARADOMIN, ClericAlignment.ZAMORAK, ClericAlignment.GUTHIX,
-			ClericAlignment.SARADOMIN, ClericAlignment.ZAMORAK, ClericAlignment.NEUTRAL
-		};
-		int[] levels = {1, 3, 5, 8, 11, 14, 16, 19, 22, 25, 28, 30};
-		int[] tiers = {1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2};
-		int[] radii = {2, 4, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3};
-		int[] onEntityAnimations = {67, -1, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77};
-		int[][] thresholds = {
-			{0, 12, 28}, {0}, {0, 12, 28, 44}, {0, 12, 28, 44},
-			{0, 12, 28, 44}, {0, 12, 24, 32}, {0, 24, 44, 64}, {0, 24, 44, 64},
-			{0, 24, 44, 64}, {0, 24, 44, 64}, {0, 24, 44, 64}, {0, 24, 44, 64}
-		};
-
-		for (int index = 0; index < definitions.size(); index++) {
-			ClericSpellDefinition definition = definitions.get(index);
-			check(definition.getId() == ids[index], "stable identity order drift at " + index);
-			check(definition.getStableCode() == index, "stable code drift at " + index);
-			check(keys[index].equals(definition.getStableKey()), "stable key drift at " + index);
-			check(names[index].equals(definition.getDisplayName()), "display name drift at " + index);
-			check(descriptions[index].equals(definition.getEffectDescription()),
-				"compact effect description drift at " + index);
-			check(definition.getEffectDescription().length() <= 40,
-				"effect description exceeds spellbook layout at " + index);
-			check(definition.getAlignment() == alignments[index], "alignment drift at " + index);
-			check(definition.getWorshipLevel() == levels[index], "Worship level drift at " + index);
-			check(definition.getSpellTier() == tiers[index], "spell tier drift at " + index);
-			check(definition.getRadius() == radii[index], "radius drift at " + index);
-			check(!definition.affectsCaster(), "launch caster exclusion drift at " + index);
-			check(definition.getPresentation().getSpellbookIconItemId() >= 0,
-				"spellbook icon missing at " + index);
-			check(!definition.getPresentation().hasCasterIcon(),
-				"unapproved caster icon configured at " + index);
-			check(definition.getPresentation().getOnEntityAnimationId()
-				== onEntityAnimations[index], "on-entity animation drift at " + index);
-			check(definition.getPresentation().hasOnEntityAnimation()
-				== (onEntityAnimations[index] >= 0), "on-entity animation presence drift at " + index);
-			check(definition.getPresentation().getCasterAnimationId()
-				== onEntityAnimations[index], "legacy animation accessor drift at " + index);
-			check(definition.getPresentation().hasCasterAnimation()
-				== (onEntityAnimations[index] >= 0), "legacy animation predicate drift at " + index);
-			checkArray(definition.getHolyPowerThresholds(), thresholds[index],
-				"Holy Power thresholds drift at " + index);
-
-			ClericSigilCost cost = definition.getPrimarySigilCost();
-			check(cost.getCount(ClericSigilMaterial.STONE) == tiers[index],
-				"stone cost drift at " + index);
-			check(cost.getCount(ClericSigilMaterial.SILVER) == tiers[index] - 1,
-				"silver cost drift at " + index);
-			check(cost.getTotalCount() == (tiers[index] == 1 ? 1 : 3),
-				"total cost drift at " + index);
-
-			check(ClericSpellCatalog.get(ids[index]) == definition, "identity lookup drift at " + index);
-			check(ClericSpellCatalog.fromCode(index) == definition, "code lookup drift at " + index);
-			check(ClericSpellCatalog.fromKey(keys[index]) == definition, "key lookup drift at " + index);
-			check(ClericSpellId.fromCode(index) == ids[index], "identity code resolution drift at " + index);
-			check(ClericSpellId.fromKey(keys[index]) == ids[index], "identity key resolution drift at " + index);
-
-			int[] authored = thresholds[index];
-			for (int rankIndex = 0; rankIndex < authored.length; rankIndex++) {
-				check(definition.resolveEffectRank(authored[rankIndex]) == rankIndex + 1,
-					"rank threshold drift for " + keys[index]);
-				if (rankIndex > 0) {
-					check(definition.resolveEffectRank(authored[rankIndex] - 1) == rankIndex,
-						"rank lower boundary drift for " + keys[index]);
-				}
-			}
-			check(definition.resolveEffectRank(1_000) == authored.length,
-				"rank upper clamp drift for " + keys[index]);
-		}
-
-		int[] defensiveThresholds = ClericSpellCatalog.get(ClericSpellId.MEND).getHolyPowerThresholds();
-		defensiveThresholds[0] = 99;
-		check(ClericSpellCatalog.get(ClericSpellId.MEND).getHolyPowerThresholds()[0] == 0,
-			"threshold getter exposed mutable state");
-		try {
-			definitions.clear();
-			throw new AssertionError("catalog list must be immutable");
-		} catch (UnsupportedOperationException expected) {
-			// Expected immutable view.
-		}
-
-		check(ClericAlignment.fromKey("neutral") == ClericAlignment.NEUTRAL,
-			"neutral alignment lookup drift");
-		check(ClericAlignment.fromKey("saradomin") == ClericAlignment.SARADOMIN,
-			"Saradomin alignment lookup drift");
-		check(ClericAlignment.fromKey("guthix") == ClericAlignment.GUTHIX,
-			"Guthix alignment lookup drift");
-		check(ClericAlignment.fromKey("zamorak") == ClericAlignment.ZAMORAK,
-			"Zamorak alignment lookup drift");
-
-		reject(new Action() { public void run() { ClericSpellCatalog.fromCode(-1); } }, "unknown code");
-		reject(new Action() { public void run() { ClericSpellCatalog.fromKey("mend"); } }, "unknown key");
-		reject(new Action() { public void run() { ClericSpellId.fromCode(12); } }, "unknown identity code");
-		reject(new Action() { public void run() { ClericSpellId.fromKey(null); } }, "null identity key");
-		reject(new Action() { public void run() { ClericAlignment.fromKey("SARADOMIN"); } }, "unstable alignment key");
-		reject(new Action() { public void run() { ClericSigilCost.forLaunchTier(0); } }, "tier zero cost");
-		reject(new Action() { public void run() { ClericSigilCost.forLaunchTier(3); } }, "unsettled tier-three cost");
-		reject(new Action() { public void run() {
-			ClericSigilCost.forLaunchTier(1).getCount(null);
-		} }, "null material");
-		reject(new Action() { public void run() {
-			ClericSpellCatalog.get(ClericSpellId.MEND).resolveEffectRank(-1);
-		} }, "negative Holy Power");
-		reject(new Action() { public void run() {
-			new ClericSpellDefinition(ClericSpellId.MEND, "Bad", "Bad definition",
-				ClericAlignment.SARADOMIN, 1, 1, 2, false,
-				ClericSigilCost.forLaunchTier(1), new ClericSpellPresentation(1, -1, -1), 0, 0);
-		} }, "duplicate thresholds");
-		reject(new Action() { public void run() {
-			new ClericSpellDefinition(ClericSpellId.MEND, "Bad", "Bad definition",
-				ClericAlignment.SARADOMIN, 1, 1, 2, false,
-				ClericSigilCost.forLaunchTier(1), new ClericSpellPresentation(1, -1, -1), 1);
-		} }, "thresholds without zero");
-	}
+ static int checks;static void check(boolean b,String s){checks++;if(!b)throw new AssertionError(s);}
+ public static void main(String[] args){
+  check(ClericSpellCatalog.SCHEMA_VERSION==3,"schema3");check(ClericSpellCatalog.getAll().size()==11,"active book eleven");
+  Set<Integer> ids=new HashSet<Integer>();Set<String> keys=new HashSet<String>();
+  for(ClericSpellDefinition d:ClericSpellCatalog.getAll()){
+   check(ids.add(d.getStableCode())&&keys.add(d.getStableKey()),"unique stable identities");check(ClericSpellCatalog.fromKey(d.getStableKey())==d&&ClericSpellCatalog.fromCode(d.getStableCode())==d,"identity lookup");
+   check(!d.affectsCaster(),"caster exclusion");
+   if(d.getId().isBlessing()){
+    int tier=d.getSpellTier();check(d.getWorshipLevel()==(tier==1?1:tier==2?20:40)&&d.getRadius()==tier+1,"tier unlock and radius");
+    check(d.getEffectRankCount()==tier*2&&d.resolveEffectRank(163)==tier*2&&d.resolveEffectRank(0)==1,"cap raises maximum not minimum");
+    for(int power=1;power<=tier*2;power++){
+     ClericBlessingMagnitude m=(ClericBlessingMagnitude)ClericEffectCatalog.get(d.getId(),power).getMagnitude();
+     if(d.getAlignment()==ClericAlignment.SARADOMIN)check(m.regenerationPercent()==200+50*(power-1)&&m.healingPerPulse()==(tier>=2?power:0),"Sara incremental values");
+     if(d.getAlignment()==ClericAlignment.GUTHIX)check(m.poisonCleanse()==power+1&&m.restoreIntervalSeconds()==11-power&&m.defensePercent()==(tier>=2?3+2*power:0)&&m.reflectPercent()==(tier>=3?power+4:0),"Guthix incremental values");
+     if(d.getAlignment()==ClericAlignment.ZAMORAK)check(m.maxDamagePercent()==3+2*power&&m.dealtDamagePercent()==(tier>=2?power+2:0)&&m.lifestealPercent()==(tier>=3?power+4:0),"Zam incremental values");
+     check(ClericEffectCatalog.get(d.getId(),power).getDuration().toMilliseconds(640)==60000,"shared60s");
+    }
+    check(d.getResourceCosts().size()==2,"mixed god+Grace");for(ClericResourceCost cost:d.getResourceCosts())check(cost.getCount()==(tier==1?1:2),"reviewable initial private costs");
+   }else check(d.getId()==ClericSpellId.UNIFY||d.getId()==ClericSpellId.GREATER_UNIFY,"only generic utilities");
+  }
+  for(int code:new int[]{0,2,3,4,5,6,7,8,9,10,11,-1,65535}){try{ClericSpellCatalog.fromCode(code);throw new AssertionError("retired code accepted");}catch(IllegalArgumentException expected){checks++;}}
+  check(ClericSpellId.MEND.getCode()==0&&ClericSpellId.UNIFY.getCode()==1&&ClericSpellId.RESPITE.getCode()==11&&ClericSpellId.GREATER_UNIFY.getCode()==21,"old codes reserved, new code appended");
+  check(ClericSigilItemId.get(ClericSigilMaterial.STONE,ClericAlignment.NEUTRAL,true).getItemId()==3300,"Grace alias stable");
+  try{ClericSpellCatalog.getAll().clear();throw new AssertionError("mutable catalog");}catch(UnsupportedOperationException expected){checks++;}
+  System.out.println("PASS "+checks+" composite Cleric stable catalog/magnitude/retirement checks");
+ }
 }
 """
 
@@ -266,9 +123,9 @@ def run_compiled_fixture() -> None:
         fixture.write_text(textwrap.dedent(FIXTURE), encoding="utf-8")
         classes = temp / "classes"
         classes.mkdir()
-        subprocess.run(["javac", "-d", str(classes), *sources, str(fixture)], check=True)
+        subprocess.run(["javac", "-cp", str(ROOT / "server/core.jar") + ":" + str(ROOT / "server/lib/*"), "-d", str(classes), *sources, str(fixture)], check=True)
         subprocess.run(
-            ["java", "-cp", str(classes),
+            ["java", "-cp", str(classes) + ":" + str(ROOT / "server/core.jar") + ":" + str(ROOT / "server/lib/*"),
              "com.openrsc.server.content.cleric.ClericSpellbookFoundationFixture"],
             check=True,
         )

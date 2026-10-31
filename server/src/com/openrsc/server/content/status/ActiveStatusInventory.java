@@ -16,6 +16,9 @@ public final class ActiveStatusInventory {
 	public static final int MAX_VISIBLE = 32;
 
 	private static final List<String> AUTHORED_ORDER = Collections.unmodifiableList(Arrays.asList(
+        "cleric:saradomin_blessing",
+        "cleric:guthix_blessing",
+        "cleric:zamorak_blessing",
 		"cleric:healing_pulses",
 		"cleric:protection",
 		"potion:brawn",

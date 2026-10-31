@@ -118,14 +118,31 @@ Cleric tier 1/2 unlocks 1/20 are a planning baseline pending explicit finalizati
 Tier 4 unique buffs/debuffs remain deferred.
 
 Ordinary god buffs and future god debuffs have tier radii **2/3/4** (`tier + 1`),
-independent of Holy Power. The universal Holy Power curve selects potency rank;
-each component then needs its own `base + increment * (P - 1)` formula or rank
-table. It is not a universal coefficient or repeated addition of the full base.
-Standalone Tier 1 caps at P2; an inherited Tier 1 component inside Tier 3 may
-reach P6 and must be reviewed with the rest of that composite. Saradomin's
-`P + 1` formulas are confirmed; the proposed other `3P%`/`2P%`/`P` magnitudes,
-duration and mixed costs remain unapproved. Current runtime retains the old
-spell-specific thresholds pending migration.
+independent of Holy Power. The universal curve selects rank; each component
+uses its own approved incremental values. Standalone Tier 1 caps at P2; its
+inherited component inside Tier 3 can reach P6. The owner approved the revised
+values below on October 31, superseding earlier `3P`/`2P` proposals and the
+former Saradomin `P+1` draft. The private implementation candidate exposes eleven
+spells; retired launch IDs remain reserved and are refused. All blessings last
+**60 seconds**, with one composite snapshot/expiry per god.
+
+| Component | P1→P6 progression |
+|---|---|
+| Sara regeneration | ×2 /2.5 /3 /3.5 /4 /4.5 |
+| Sara delayed HoT (Tier 2+) | 1/2/3/4/5/6 HP per pulse; 10 delayed pulses about 6s apart |
+| Guthix extra cleanse | 2/3/4/5/6/7 per existing poison pulse, additive |
+| Guthix drained non-HP stats | Restore 1 each, every 10/9/8/7/6/5s, cap at normal |
+| Guthix Barkskin (Tier 2+) | +5/7/9/11/13/15% to melee/ranged/Magic defense |
+| Guthix reflection (Tier 3) | 5/6/7/8/9/10% factual direct damage |
+| Zam maximum damage | +5/7/9/11/13/15% |
+| Zam dealt damage (Tier 2+) | +3/4/5/6/7/8% |
+| Zam lifesteal (Tier 3) | 5/6/7/8/9/10%, only while below half HP |
+
+Positive maximum increments round up (zero remains zero); defense rounds down.
+Dealt damage/lifesteal/reflection carry separate fractional hundredths, not
+minimum-one damage per hit. Recasts preserve periodic cadence; delayed pulse 10
+settles at the 60-second boundary. Staff requirements are normalized in the
+candidate to Magic-only at the existing Zamorak ladder, preserving stats/art.
 
 Shared power levels P1–P6 require Holy Power **0/20/45/75/115/160**. Tier caps
 are **2/4/6**: two additional available ranks per tier, with no raised minimum.
@@ -135,14 +152,11 @@ remove Worship's contribution. Maple/Yew/Ebony/Magicwood/Blood/god staffs add
 32/40/44/48/56/64 respectively; 99+64=163 permits P6. Examples with sufficient
 tier caps: Worship 40 + Maple 32 = 72→P3; 60 + Ebony 44 = 104→P4; 80 + god 64 = 144→P5;
 96 + god 64 = 160→P6.
-Staff-access cleanup is still needed: Zamorak Ebony/Magicwood currently require
-Magic 54/62, versus Saradomin/Guthix legacy Magic 52/59 and legacy melee gates.
-These are current inconsistencies, not approved new equipment restrictions.
 
 | God | Tier 1 | Tier 2 addition | Tier 3 addition |
 |---|---|---|---|
 | Guthix | Faster poison cleansing over time + gradual drained-stat restoration, on the same blessing timer | Barkskin defense increase (not Ward's flat damage reduction) | Thorns reflect |
-| Saradomin | Natural HP regeneration multiplier `P+1` (minimum ×2) | `P+1` HP per pulse (minimum 2), 10 pulses roughly 6 seconds apart/about a minute | Open |
+| Saradomin | Natural HP regeneration ×2 +0.5 per power step | P HP per delayed pulse, ten pulses about six seconds apart | Open |
 | Zamorak | Maximum-damage percentage increase | Total-dealt-damage percentage increase | Lifesteal |
 
 ### Confirmed blessing names and recipient flavor
@@ -174,29 +188,33 @@ ailment immunity, grant accuracy, or set a lifesteal activation threshold.
 Existing approved component formulas, timings and open balance decisions remain
 as recorded above. These names/messages are design, not runtime implementation.
 
-Saradomin at P6 means **×7 regeneration and 7 HP per pulse/70 HP per minute**;
-those are the confirmed formulas' arithmetic consequences, with balance review
-still needed. Do not silently reduce them or treat the formulas as unapproved.
+Saradomin at P6 now means **×4.5 regeneration and 6 HP per pulse/60 HP over ten
+delayed pulses**, explicitly replacing the earlier ×7/70 HP draft. Its third
+component/message remains open; Resplendence currently raises the cap of the
+existing two components.
 
-These progression/composite rules are **design only**. The existing twelve-spell
-runtime, costs/effects and spell-specific ranks remain unchanged. Its two-tier
-roster is salvage/history, not the active future roster. **Keep Unify unchanged
+These progression/composite rules are implemented in the **private candidate**;
+the old twelve-spell roster is historical salvage, not its active roster. **Keep Unify unchanged
 except for a flat cost of two Grace sigils per cast, no god sigil (not per
 recipient); exclude the old neutral Respite from the
-future book because of abuse concerns.** Unify retains Worship 3, radius 4,
-party-allies-only targeting excluding the caster, a maximum of two safe ordinary
-walking steps toward the caster stopping within two tiles, same-level/world
+future book because of abuse concerns.** Unify uses Worship 3, radius 3,
+party-allies-only targeting excluding the caster, at most one safe ordinary
+walking step toward the caster stopping within two tiles, same-level/world
 and line-of-effect checks, disabled PvP and no Holy Power ranks. The base unlock and movement are unchanged. Two Grace is the confirmed quantity; grade
 correspondence remains open (current Stone Grace 3300 is a reference, not a
 new grade decision). Excluding the old neutral Respite does not remove Saradomin's planned
 regeneration, other potion/equipment regeneration, assets or item IDs.
 
-**Greater Unify** is confirmed as exactly one additional upgrade, with larger
-pull range and a flat **six Grace per cast** (triple base Unify), no god sigil,
-and the same Grace grade as base once finalized. No Holy Power scaling is added.
-Recommended for review: radius 5 instead of 4, maximum three safe ordinary steps
-instead of two, stopping within two tiles. Final unlock/radius/movement budget
-remain pending review; base Unify stays unchanged at radius 4/two steps/two Grace.
+**Greater Unify** is the only upgrade: Worship 30, radius 5, up to three safe
+ordinary steps stopping within two tiles, flat six Stone Grace per cast, no god
+sigil or Holy Power scaling. Base Unify uses two Stone Grace per cast.
+
+Initial reviewable manager defaults for this private build: god tiers 1/2/3 cost
+one stone god+one Stone Grace /two stone god+two Stone Grace /two silver god+two
+Silver Grace. These exact economic vectors were not separately owner-specified.
+The entire vector is spent atomically once per cast, never per recipient; no
+eligible/useful target means no cost. Same-god versions do not stack or downgrade,
+equal strength safely refreshes, and all three gods may coexist.
 
 Future Guthix debuff direction: tier 1 poison weakness, tier 2 summon weakness,
 tier 3 recoil weakness against eligible nearby enemies. Poison example for review:
@@ -208,22 +226,21 @@ balance, caps, stacking, lifecycle, targeting and PvP policy remain open; there
 is no hostile implementation approval yet.
 
 Owner's order: **review power strengths/inherited P6 combinations → Greater
-Unify → return to debuffs**. Buff implementation is still active, pending this
-review rather than selecting proposed values without approval.
+Unify → return to debuffs**. The latest buff review is now approved and implemented; hostile work stays
+documentation only.
 
 God+Grace buffs, god+Blight debuffs and joint resource consumption remain
 confirmed future casting direction. Generic purpose-only costs replace the god
 share with extra purpose sigils (`A god + B Grace` becomes `A+B Grace` within
-compatible grades); Unify's two-Grace quantity is settled, while other exact
-vectors and grade correspondence remain open. Production remains complete.
+compatible grades); Unify/Greater use 2/6 Stone Grace and initial mixed-cost defaults are recorded
+above. Production remains complete; hostile casting is separate.
 
 ### Decisions still needed
 
-Saradomin's third component and recipient message; remaining magnitudes, exact
-tier unlocks, Greater Unify radius/movement budget, durations and mixed casting costs/grades; composite targeting/stacking;
-debuff components/names and book layout. Unify is retained and the old neutral
-Respite excluded; neither
-roster decision remains open. Tier 4 remains later work.
+Saradomin's additional third component and recipient message; later cost/economy
+refinement; hostile components/names, balance and lifecycle. Unify and Greater
+Unify behavior/unlocks are settled; the old neutral Respite remains excluded.
+Tier 4 unique spells remain later work.
 The [active governing design](cleric-spellbook-concept.md#active-overhaul-three-ordinary-tiers-and-six-power-levels--october-30-2026)
 records the six thresholds, examples and distinction from the historical book.
 

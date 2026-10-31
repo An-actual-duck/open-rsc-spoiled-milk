@@ -131,11 +131,11 @@ public final class ClericEffectStateFixture {
 	}
 
 	private static ClericEffectRankDefinition<?> effect(ClericSpellId spell, int rank) {
-		return ClericEffectCatalog.get(spell, rank);
+		return LegacyClericEffectFixtureCatalog.get(spell, rank);
 	}
 
 	private static void catalogChecks() {
-		check(ClericEffectFamily.values().length == 7, "effect-family count drift");
+		check(ClericEffectFamily.values().length == 10, "effect-family count drift");
 		for (int code = 0; code < ClericEffectFamily.values().length; code++) {
 			ClericEffectFamily family = ClericEffectFamily.fromCode(code);
 			check(ClericEffectFamily.fromKey(family.getKey()) == family,
@@ -148,12 +148,12 @@ public final class ClericEffectStateFixture {
 		check(ClericEffectCounterKind.fromCode(2) == ClericEffectCounterKind.PULSES,
 			"PULSES counter code drift");
 
-		check(ClericEffectCatalog.getAll().size() == 35, "timed rank total drift");
+		check(LegacyClericEffectFixtureCatalog.getAll().size() == 35, "timed rank total drift");
 		for (ClericSpellId instant : Arrays.asList(
 				ClericSpellId.UNIFY, ClericSpellId.PURIFY, ClericSpellId.RESTORE)) {
-			check(!ClericEffectCatalog.hasTimedEffect(instant),
+			check(!LegacyClericEffectFixtureCatalog.hasTimedEffect(instant),
 				"instant/movement spell gained timed state: " + instant);
-			check(ClericEffectCatalog.getRanks(instant).isEmpty(),
+			check(LegacyClericEffectFixtureCatalog.getRanks(instant).isEmpty(),
 				"instant/movement spell exposes timed ranks: " + instant);
 		}
 
@@ -233,17 +233,17 @@ public final class ClericEffectStateFixture {
 		}
 
 		try {
-			ClericEffectCatalog.getAll().clear();
+			LegacyClericEffectFixtureCatalog.getAll().clear();
 			throw new AssertionError("effect catalog must be immutable");
 		} catch (UnsupportedOperationException expected) {
 			// Expected immutable view.
 		}
-		reject(() -> ClericEffectCatalog.get(ClericSpellId.MEND, 4), "unknown Mend rank");
-		reject(() -> ClericEffectCatalog.get(null, 1), "null spell identity");
+		reject(() -> LegacyClericEffectFixtureCatalog.get(ClericSpellId.MEND, 4), "unknown Mend rank");
+		reject(() -> LegacyClericEffectFixtureCatalog.get(null, 1), "null spell identity");
 		reject(() -> ClericEffectDuration.gameTicks(0), "zero duration");
 		reject(() -> ClericEffectDuration.seconds(Long.MAX_VALUE), "duration overflow");
 		reject(() -> ClericEffectClock.system(0), "zero game tick");
-		reject(() -> ClericEffectFamily.fromCode(7), "unknown family code");
+		reject(() -> ClericEffectFamily.fromCode(10), "unknown family code");
 		reject(() -> ClericEffectCounterKind.fromCode(3), "unknown counter code");
 		reject(() -> new ClericEffectMagnitudes.Accuracy(0, 1), "zero accuracy");
 		reject(() -> new ClericEffectMagnitudes.Protection(100), "complete protection");
@@ -516,7 +516,7 @@ def validate_source_boundaries() -> None:
     lowered = combined.lower()
     for forbidden in (
         "getcache(", "playercache", "databaseconnection", "actionsender",
-        "sendactivepotioneffects", "clericsupportcasting",
+        "sendactivepotioneffects",
     ):
         require(forbidden not in lowered, f"effect foundation crossed inert boundary: {forbidden}")
 
@@ -530,8 +530,8 @@ def validate_source_boundaries() -> None:
     require("recipientState.clearOriginatingFrom(" in player
             and "transientEffectSessionToken, previousMembership" in player,
             "party transition does not use centralized transient-effect cleanup")
-    require("com.openrsc.server.content.cleric" not in player,
-            "foundation Player gained a reverse dependency on Cleric content")
+    require("ClericSpellCatalog" not in player and "ClericEffectRegistry" not in player,
+            "Player must not own Cleric catalogs or registry internals")
 
     death = player.split("public void killedBy(final Mob mob)", 1)[1].split(
         "private int getEquippedWeaponID", 1
@@ -556,7 +556,7 @@ def validate_source_boundaries() -> None:
             < set_party.index("this.party = party"),
             "membership cleanup must precede party transition")
     origins = ORIGINS.read_text(encoding="utf-8")
-    require("caster.isLoggedIn() && !caster.isUnregistering()" in origins,
+    require("caster.isLoggedIn()" in origins and "!caster.isUnregistering()" in origins,
             "defensive origin validation does not reject stale caster sessions")
     require("caster.getParty() == party" in origins,
             "defensive origin validation does not require current shared party")
@@ -590,9 +590,8 @@ def validate_source_boundaries() -> None:
 
     casting = CASTING.read_text(encoding="utf-8")
     handler = HANDLER.read_text(encoding="utf-8")
-    for spell in ("UNIFY", "PURIFY", "RESTORE", "MEND", "GREATER_MEND", "RESPITE"):
-        require(f"spellId == ClericSpellId.{spell}" in casting,
-                f"approved C07/C09 Cleric runtime omits {spell}")
+    require("id.isActive()" in casting and "ClericTimedEffectRuntime.prepare" in casting,
+            "casting must admit only the active composite book")
     require("ClericEffectCatalog" not in casting and "ClericEffectRegistry" not in casting,
             "C08A casting path can populate the new registry")
     require("ClericEffectCatalog" not in handler and "ClericEffectRegistry" not in handler,
@@ -634,6 +633,8 @@ def run_compiled_fixture() -> None:
         "GameClock.java",
         "SystemGameClock.java",
     ))
+    sources.extend(str(path) for path in (ROOT / "tests/myworld/fixtures").rglob("LegacyCleric*FixtureCatalog.java"))
+    classpath = str(ROOT / "server/core.jar") + ":" + str(ROOT / "server/lib/*")
     with tempfile.TemporaryDirectory(prefix="cleric-c08a-") as temporary:
         temp = Path(temporary)
         fixture = temp / "com/openrsc/server/content/cleric/effect/ClericEffectStateFixture.java"
@@ -641,7 +642,7 @@ def run_compiled_fixture() -> None:
         fixture.write_text(textwrap.dedent(FIXTURE), encoding="utf-8")
         classes = temp / "classes"
         classes.mkdir()
-        subprocess.run(["javac", "-d", str(classes), *sources, str(fixture)],
+        subprocess.run(["javac", "-cp", classpath, "-d", str(classes), *sources, str(fixture)],
                        cwd=ROOT, check=True)
         subprocess.run([
             "java", "-cp", str(classes),

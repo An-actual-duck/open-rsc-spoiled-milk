@@ -564,6 +564,7 @@ public class CombatEvent extends GameTickEvent {
 			if (target.isPlayer()) {
 				damage = TrueDefense.apply((Player) target, damage);
 			}
+            if (!offhand) {
 			final ClericDirectCombatRuntime.BeforeDamage clericDamage =
 				ClericDirectCombatRuntime.beforeDirectDamage(hitter, target, damage);
 			damage = clericDamage.getDamage();
@@ -571,6 +572,7 @@ public class CombatEvent extends GameTickEvent {
 				((Player) target).updateDamageAndBlockedDamageTracking(
 					hitter, 0, clericDamage.getPreventedDamage());
 			}
+            }
 		}
 
 		// Reduce targets hits by supplied damage amount.
@@ -619,12 +621,14 @@ public class CombatEvent extends GameTickEvent {
 		if (target.isPlayer() && hitter.isPlayer()) {
 			DivineGrace.apply((Player) hitter, damageDealt);
 		}
+        if (!offhand) {
 		final ClericDirectCombatRuntime.AfterDamage clericAfter =
-			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageDealt);
+			ClericDirectCombatRuntime.afterExistingLifesteal(hitter, target, damageResult.getActualDamage());
 		if (clericAfter.getThornsDamage() > 0) {
 			inflictClericThornsDamage(
 				target, hitter, clericAfter.getThornsDamage());
 		}
+        }
 
 		// Update players sound and party.
 		if (target.isPlayer()) {

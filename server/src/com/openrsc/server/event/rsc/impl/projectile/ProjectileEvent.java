@@ -708,11 +708,11 @@ public class ProjectileEvent extends SingleTickEvent {
 			((Player) caster).applyBloodAmuletLifesteal(damageDealt);
 		}
 		if (isClericEligibleProjectileType()) {
-			clericDirectDamageDealt = damageDealt;
+			clericDirectDamageDealt = slayerActualDamage;
 			clericDirectImpactResolved = true;
 			final ClericDirectCombatRuntime.AfterDamage clericAfter =
 				ClericDirectCombatRuntime.afterExistingLifesteal(
-					caster, opponent, damageDealt, !deferClericRally);
+					caster, opponent, slayerActualDamage, !deferClericRally);
 			if (clericAfter.getThornsDamage() > 0) {
 				inflictClericThornsDamage(clericAfter.getThornsDamage());
 			}

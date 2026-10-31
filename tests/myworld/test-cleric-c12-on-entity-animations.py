@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import struct
+import re
 import subprocess
 import tempfile
 import textwrap
@@ -64,8 +65,9 @@ def validate_sources() -> None:
                 f"server effect identity drift: {spell}")
         require(f"COMBAT_EFFECT_CLERIC_{spell} = {effect_id};" in client,
                 f"client effect identity drift: {spell}")
-        require(f"case {spell}:" in catalog and f"return {effect_id};" in catalog,
-                f"spell presentation mapping drift: {spell}")
+        # Old on-entity art/IDs are intentionally retained; active mapping is checked
+        # against actual server catalog metadata in ClericBlessingsFixture.
+
         require(f'"{path}"' in animation_catalog,
                 f"client sheet mapping drift: {spell}")
         require(f", {frames}, {max_size});" in animation_catalog,
@@ -75,7 +77,7 @@ def validate_sources() -> None:
             "client combat-effect capacity drift")
     require('"cleric-mend"' in client and '"cleric-respite"' in client,
             "client effect-name parity missing")
-    require("case UNIFY:" in catalog and "return ClericSpellPresentation.NONE;" in catalog,
+    require(re.search(r'"unify"\s*,\s*-1', catalog) is not None,
             "Unify must remain animationless")
     require("hasOnEntityAnimation" in presentation and "getOnEntityAnimationId" in presentation,
             "server presentation lacks recipient-animation semantics")

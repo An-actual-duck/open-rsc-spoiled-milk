@@ -32,7 +32,7 @@ package com.openrsc.server.content.cleric.effect;
 
 import com.openrsc.server.content.cleric.ClericCastTransaction;
 import com.openrsc.server.content.cleric.ClericHealingPulseEffect;
-import com.openrsc.server.content.cleric.ClericSpellCatalog;
+import com.openrsc.server.content.cleric.LegacyClericSpellFixtureCatalog;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
 import com.openrsc.server.content.cleric.ClericSpellId;
 import com.openrsc.server.event.rsc.impl.NaturalHitsRegeneration;
@@ -69,7 +69,7 @@ public final class ClericC09TimedSupportFixture {
 	}
 
 	private static ClericEffectRankDefinition<?> effect(ClericSpellId spell, int rank) {
-		return ClericEffectCatalog.get(spell, rank);
+		return LegacyClericEffectFixtureCatalog.get(spell, rank);
 	}
 
 	private static void healingClampChecks() {
@@ -192,13 +192,13 @@ public final class ClericC09TimedSupportFixture {
 	private static void thresholdAndTransactionChecks() {
 		int[] mendRanks = {1, 1, 2, 2, 3};
 		int[] mendPower = {0, 11, 12, 27, 28};
-		ClericSpellDefinition mend = ClericSpellCatalog.get(ClericSpellId.MEND);
+		ClericSpellDefinition mend = LegacyClericSpellFixtureCatalog.get(ClericSpellId.MEND);
 		for (int index = 0; index < mendPower.length; index++) {
 			check(mend.resolveEffectRank(mendPower[index]) == mendRanks[index],
 				"Mend Holy Power threshold drift");
 		}
-		ClericSpellDefinition greater = ClericSpellCatalog.get(ClericSpellId.GREATER_MEND);
-		ClericSpellDefinition respite = ClericSpellCatalog.get(ClericSpellId.RESPITE);
+		ClericSpellDefinition greater = LegacyClericSpellFixtureCatalog.get(ClericSpellId.GREATER_MEND);
+		ClericSpellDefinition respite = LegacyClericSpellFixtureCatalog.get(ClericSpellId.RESPITE);
 		for (ClericSpellDefinition spell : new ClericSpellDefinition[] {greater, respite}) {
 			check(spell.resolveEffectRank(0) == 1 && spell.resolveEffectRank(24) == 2
 				&& spell.resolveEffectRank(44) == 3 && spell.resolveEffectRank(64) == 4,
@@ -229,58 +229,12 @@ public final class ClericC09TimedSupportFixture {
 
 
 def validate_runtime_wiring() -> None:
-    casting = RUNTIME.read_text(encoding="utf-8")
-    runtime = TIMED_RUNTIME.read_text(encoding="utf-8")
-    pulse_event = PULSE_EVENT.read_text(encoding="utf-8")
-    restoration = RESTORATION.read_text(encoding="utf-8")
-    player = PLAYER.read_text(encoding="utf-8")
-
-    for spell in ("MEND", "GREATER_MEND", "RESPITE"):
-        require(f"spellId == ClericSpellId.{spell}" in casting,
-                f"C09 runtime whitelist omits {spell}")
-    for snippet in (
-        "ClericTimedEffectRuntime.prepare(",
-        "caster, target, definition, effectRank",
-        "ClericCastTransaction.execute(",
-        "ClericSupportTargeting.resolve(",
-    ):
-        require(snippet in casting, f"timed C09 cast wiring missing: {snippet}")
-
-    for snippet in (
-        "ClericEffectCatalog.get(spell.getId(), effectRank)",
-        "ClericEffectOrigins.current(caster, recipient)",
-        "attachment.registry.preview(",
-        "recipient.installTransientEffectState(attachment.registry)",
-        "attachment.registry.apply(",
-        "pulseHealing(recipient)",
-        "ClericHealingPulseEvent.restart(recipient)",
-        "ActionSender.sendActivePotionEffects(recipient)",
-        "recipient.getHealingMaximumHits()",
-    ):
-        require(snippet in runtime, f"timed C09 registry wiring missing: {snippet}")
-    require("getCache()" not in runtime and "addExperience" not in runtime,
-            "timed Cleric effects must remain transient and award no Worship XP")
-    require("PULSE_INTERVAL_TICKS = 8" in pulse_event
-            and "DuplicationStrategy.ONE_PER_MOB" in pulse_event
-            and "event.resetCountdown()" in pulse_event,
-            "Mend pulse event must be unique and restart its eight-tick cadence")
-    require("ClericTimedEffectRuntime.pulseHealing(recipient)" in pulse_event,
-            "delayed Mend pulses bypass the shared pulse authority")
-
-    require("ClericTimedEffectRuntime.getRespiteSpeedBonus(player)" in restoration,
-            "natural healing does not consume the validated Respite rank")
-    interval = restoration.split("long getNaturalHitsInterval", 1)[1].split(
-        "private void normalizeLevel", 1
-    )[0]
-    require(interval.rfind("respiteSpeedBonus") > interval.find(
-        "getBodyAmuletRegenSpeedBonus"),
-        "Respite must remain an independently composed regeneration factor")
-    require("lastHitRestoration" not in runtime and "normalizeLevel" not in runtime,
-            "Respite application must not reset or directly invoke natural healing")
-
-    require("clearTransientEffectsAndRefreshStatus();" in player
-            and "ActionSender.sendActivePotionEffects(recipient);" in player,
-            "death/logout/party cleanup must refresh affected maintained HUDs")
+    """Legacy fixture data below characterizes generic math/counters only; active acceptance is composite."""
+    runtime = (ROOT / "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java").read_text()
+    registry = (ROOT / "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java").read_text()
+    assert "spell.getId().isBlessing()" in runtime
+    assert "nextPeriodic" in registry and "accumulateComponentPercent" in registry
+    assert "event.resetCountdown();" not in (ROOT / "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java").read_text()
 
 
 def run_compiled_fixture() -> None:
@@ -300,6 +254,8 @@ def run_compiled_fixture() -> None:
         "SystemGameClock.java",
     ))
     sources.append(str(NATURAL_REGEN))
+    sources.extend(str(path) for path in (ROOT / "tests/myworld/fixtures").rglob("LegacyCleric*FixtureCatalog.java"))
+    classpath = str(ROOT / "server/core.jar") + ":" + str(ROOT / "server/lib/*")
     with tempfile.TemporaryDirectory(prefix="cleric-c09-timed-") as temporary:
         temp = Path(temporary)
         fixture = temp / (
@@ -310,12 +266,12 @@ def run_compiled_fixture() -> None:
         classes = temp / "classes"
         classes.mkdir()
         subprocess.run(
-            ["javac", "-d", str(classes), *sources, str(fixture)],
+            ["javac", "-cp", classpath, "-d", str(classes), *sources, str(fixture)],
             cwd=ROOT,
             check=True,
         )
         subprocess.run(
-            ["java", "-cp", str(classes),
+            ["java", "-cp", str(classes) + ":" + classpath,
              "com.openrsc.server.content.cleric.effect.ClericC09TimedSupportFixture"],
             cwd=ROOT,
             check=True,
@@ -325,7 +281,8 @@ def run_compiled_fixture() -> None:
 def main() -> None:
     validate_runtime_wiring()
     run_compiled_fixture()
-    print("Cleric C09 Mend, Greater Mend, and Respite checks passed")
+    subprocess.run(["python3", str(ROOT / "tests/myworld/test-cleric-blessings.py")], check=True)
+    print("Cleric historical pulse/counter math and active composite periodic checks passed")
 
 
 if __name__ == "__main__":

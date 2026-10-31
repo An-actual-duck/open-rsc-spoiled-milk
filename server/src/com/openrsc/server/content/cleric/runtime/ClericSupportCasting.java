@@ -2,8 +2,6 @@ package com.openrsc.server.content.cleric.runtime;
 
 import com.openrsc.server.constants.Skill;
 import com.openrsc.server.content.cleric.ClericCastTransaction;
-import com.openrsc.server.content.cleric.ClericPurifyEffect;
-import com.openrsc.server.content.cleric.ClericRestoreEffect;
 import com.openrsc.server.content.cleric.ClericSigilItemId;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
 import com.openrsc.server.content.cleric.ClericSpellDefinition;
@@ -140,32 +138,6 @@ public final class ClericSupportCasting {
 		return new UnifyApplication(recipient, steps);
 	}
 
-	private static ClericCastTransaction.PreparedApplication preparePurify(
-			final Player recipient, final int effectRank) {
-		final ClericPurifyEffect.Plan plan = ClericPurifyEffect.plan(
-			recipient.getCurrentPoisonPower(), effectRank);
-		return plan.isUseful()
-			? new PurifyApplication(recipient, plan.getReduction())
-			: IneffectiveApplication.INSTANCE;
-	}
-
-	private static ClericCastTransaction.PreparedApplication prepareRestore(
-			final Player recipient, final int effectRank) {
-		final int skillCount = recipient.getWorld().getServer().getConstants()
-			.getSkills().getSkillsCount();
-		final int[] currentLevels = new int[skillCount];
-		final int[] validMaximums = new int[skillCount];
-		for (int skill = 0; skill < skillCount; skill++) {
-			currentLevels[skill] = recipient.getSkills().getLevel(skill);
-			validMaximums[skill] = recipient.getEquipmentAdjustedNormalLevel(skill);
-		}
-		final ClericRestoreEffect.Plan plan = ClericRestoreEffect.plan(
-			currentLevels, validMaximums, Skill.HITS.id(), effectRank);
-		return plan.isUseful()
-			? new RestoreApplication(recipient, plan.getRestoredLevels())
-			: IneffectiveApplication.INSTANCE;
-	}
-
     private static Item[] createCost(ClericSpellDefinition definition) {
         List<Item> cost=new ArrayList<Item>();
         for(com.openrsc.server.content.cleric.ClericResourceCost resource:definition.getResourceCosts())cost.add(new Item(resource.getItemId(),resource.getCount(),false));
@@ -286,54 +258,6 @@ public final class ClericSupportCasting {
 		}
 	}
 
-	private static final class PurifyApplication
-			implements ClericCastTransaction.PreparedApplication {
-		private final Player recipient;
-		private final int reduction;
-
-		private PurifyApplication(final Player recipient, final int reduction) {
-			this.recipient = recipient;
-			this.reduction = reduction;
-		}
-
-		@Override
-		public boolean isUseful() {
-			return true;
-		}
-
-		@Override
-		public void commit() {
-			recipient.reduceCurrentPoisonPower(reduction);
-		}
-	}
-
-	private static final class RestoreApplication
-			implements ClericCastTransaction.PreparedApplication {
-		private final Player recipient;
-		private final int[] restoredLevels;
-
-		private RestoreApplication(final Player recipient, final int[] restoredLevels) {
-			this.recipient = recipient;
-			this.restoredLevels = restoredLevels.clone();
-		}
-
-		@Override
-		public boolean isUseful() {
-			return true;
-		}
-
-		@Override
-		public void commit() {
-			for (int skill = 0; skill < restoredLevels.length; skill++) {
-				final int current = recipient.getSkills().getLevel(skill);
-				final int validMaximum = recipient.getEquipmentAdjustedNormalLevel(skill);
-				final int restored = Math.min(restoredLevels[skill], validMaximum);
-				if (current < restored) {
-					recipient.getSkills().setLevel(skill, restored, true, true);
-				}
-			}
-		}
-	}
 
 	public enum Outcome {
 		SUCCESS,

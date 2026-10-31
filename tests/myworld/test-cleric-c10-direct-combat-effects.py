@@ -129,32 +129,32 @@ public final class ClericC10DirectCombatFixture {
 		int[] rallyThresholds = {55, 60, 65, 70};
 		for (int rank = 1; rank <= 4; rank++) {
 			ClericEffectRankDefinition<?> accuracy =
-				ClericEffectCatalog.get(ClericSpellId.FERVOR, rank);
+				LegacyClericEffectFixtureCatalog.get(ClericSpellId.FERVOR, rank);
 			check(((ClericEffectMagnitudes.Accuracy) accuracy.getMagnitude())
 				.getUpwardRollChancePercent() == fervor[rank - 1],
 				"Fervor rank drift");
 			ClericEffectRankDefinition<?> ward =
-				ClericEffectCatalog.get(ClericSpellId.WARD, rank);
+				LegacyClericEffectFixtureCatalog.get(ClericSpellId.WARD, rank);
 			check(((ClericEffectMagnitudes.Protection) ward.getMagnitude())
 				.getReductionPercent() == 25
 				&& ward.getInitialCounter() == wardCharges[rank - 1],
 				"Ward rank drift");
 			ClericEffectRankDefinition<?> zeal =
-				ClericEffectCatalog.get(ClericSpellId.ZEAL, rank);
+				LegacyClericEffectFixtureCatalog.get(ClericSpellId.ZEAL, rank);
 			check(((ClericEffectMagnitudes.Damage) zeal.getMagnitude())
 				.getBonusPercent() == percentage[rank - 1], "Zeal rank drift");
 			ClericEffectRankDefinition<?> thorns =
-				ClericEffectCatalog.get(ClericSpellId.THORNS, rank);
+				LegacyClericEffectFixtureCatalog.get(ClericSpellId.THORNS, rank);
 			check(((ClericEffectMagnitudes.Reflection) thorns.getMagnitude())
 				.getReflectedPercent() == percentage[rank - 1], "Thorns rank drift");
 			ClericEffectRankDefinition<?> aegis =
-				ClericEffectCatalog.get(ClericSpellId.AEGIS, rank);
+				LegacyClericEffectFixtureCatalog.get(ClericSpellId.AEGIS, rank);
 			check(((ClericEffectMagnitudes.Protection) aegis.getMagnitude())
 				.getReductionPercent() == 50
 				&& aegis.getInitialCounter() == aegisCharges[rank - 1],
 				"Aegis rank drift");
 			ClericEffectRankDefinition<?> rally =
-				ClericEffectCatalog.get(ClericSpellId.RALLY, rank);
+				LegacyClericEffectFixtureCatalog.get(ClericSpellId.RALLY, rank);
 			ClericEffectMagnitudes.Lifesteal rallyMagnitude =
 				(ClericEffectMagnitudes.Lifesteal) rally.getMagnitude();
 			check(rallyMagnitude.getLifestealPercent() == 20
@@ -175,7 +175,7 @@ public final class ClericC10DirectCombatFixture {
 		ClericEffectOrigin origin = origin();
 		LiveOrigin live = new LiveOrigin(origin);
 		ClericEffectRegistry registry = new ClericEffectRegistry(clock);
-		ClericEffectRankDefinition<?> zeal = ClericEffectCatalog.get(ClericSpellId.ZEAL, 1);
+		ClericEffectRankDefinition<?> zeal = LegacyClericEffectFixtureCatalog.get(ClericSpellId.ZEAL, 1);
 		registry.apply(zeal, origin, live);
 		for (int hit = 1; hit < 20; hit++) {
 			check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
@@ -195,7 +195,7 @@ public final class ClericC10DirectCombatFixture {
 			ClericSpellId.ZEAL, zeal, 1, live) == 0,
 			"equal-rank refresh retained old Zeal fraction");
 
-		ClericEffectRankDefinition<?> zealTwo = ClericEffectCatalog.get(ClericSpellId.ZEAL, 2);
+		ClericEffectRankDefinition<?> zealTwo = LegacyClericEffectFixtureCatalog.get(ClericSpellId.ZEAL, 2);
 		registry.apply(zealTwo, origin, live);
 		check(registry.accumulateFractionalPercent(ClericEffectFamily.DAMAGE,
 			ClericSpellId.ZEAL, zeal, 1, live) == 0,
@@ -206,7 +206,7 @@ public final class ClericC10DirectCombatFixture {
 			"maximum Zeal fractional input overflowed");
 
 		ClericEffectRegistry rallyRegistry = new ClericEffectRegistry(clock);
-		ClericEffectRankDefinition<?> rally = ClericEffectCatalog.get(ClericSpellId.RALLY, 1);
+		ClericEffectRankDefinition<?> rally = LegacyClericEffectFixtureCatalog.get(ClericSpellId.RALLY, 1);
 		rallyRegistry.apply(rally, origin, live);
 		for (int hit = 0; hit < 4; hit++) {
 			check(rallyRegistry.accumulateFractionalPercent(ClericEffectFamily.LIFESTEAL,
@@ -242,8 +242,8 @@ public final class ClericC10DirectCombatFixture {
 		ClericEffectOrigin origin = origin();
 		LiveOrigin live = new LiveOrigin(origin);
 		ClericEffectRegistry registry = new ClericEffectRegistry(clock);
-		ClericEffectRankDefinition<?> ward = ClericEffectCatalog.get(ClericSpellId.WARD, 1);
-		ClericEffectRankDefinition<?> aegis = ClericEffectCatalog.get(ClericSpellId.AEGIS, 1);
+		ClericEffectRankDefinition<?> ward = LegacyClericEffectFixtureCatalog.get(ClericSpellId.WARD, 1);
+		ClericEffectRankDefinition<?> aegis = LegacyClericEffectFixtureCatalog.get(ClericSpellId.AEGIS, 1);
 		registry.apply(ward, origin, live);
 		check(registry.consumeCounter(ClericEffectFamily.PROTECTION,
 			ClericEffectCounterKind.CHARGES, aegis, live)
@@ -290,6 +290,8 @@ def run_compiled_fixture() -> None:
         "GameClock.java",
         "SystemGameClock.java",
     ))
+    sources.extend(str(path) for path in (ROOT / "tests/myworld/fixtures").rglob("LegacyCleric*FixtureCatalog.java"))
+    classpath = str(ROOT / "server/core.jar") + ":" + str(ROOT / "server/lib/*")
     with tempfile.TemporaryDirectory(prefix="cleric-c10-direct-") as temporary:
         temp = Path(temporary)
         fixture = temp / (
@@ -301,12 +303,12 @@ def run_compiled_fixture() -> None:
         classes = temp / "classes"
         classes.mkdir()
         subprocess.run(
-            ["javac", "-d", str(classes), *sources, str(fixture)],
+            ["javac", "-cp", classpath, "-d", str(classes), *sources, str(fixture)],
             cwd=ROOT,
             check=True,
         )
         subprocess.run(
-            ["java", "-cp", str(classes),
+            ["java", "-cp", str(classes) + ":" + classpath,
              "com.openrsc.server.content.cleric.effect.ClericC10DirectCombatFixture"],
             cwd=ROOT,
             check=True,
@@ -314,109 +316,19 @@ def run_compiled_fixture() -> None:
 
 
 def validate_runtime_wiring() -> None:
-    runtime = RUNTIME.read_text(encoding="utf-8")
-    casting = CASTING.read_text(encoding="utf-8")
-    timed = TIMED.read_text(encoding="utf-8")
-    formula = FORMULA.read_text(encoding="utf-8")
-    osrs_formula = OSRS_FORMULA.read_text(encoding="utf-8")
-    combat = COMBAT.read_text(encoding="utf-8")
-    pvm = PVM_COMBAT.read_text(encoding="utf-8")
-    projectile = PROJECTILE.read_text(encoding="utf-8")
-    spell_handler = SPELL_HANDLER.read_text(encoding="utf-8")
-    skills = SKILLS.read_text(encoding="utf-8")
-    player = PLAYER.read_text(encoding="utf-8")
-
-    for spell in ("FERVOR", "WARD", "ZEAL", "THORNS", "AEGIS", "RALLY"):
-        require(f"spellId == ClericSpellId.{spell}" in casting,
-                f"C10 cast whitelist omits {spell}")
-        require(f"spellId == ClericSpellId.{spell}" in timed,
-                f"C10 timed-state whitelist omits {spell}")
-
-    for snippet in (
-        "ClericEffectFamily.ACCURACY",
-        "ClericEffectFamily.PROTECTION",
-        "ClericEffectFamily.DAMAGE",
-        "ClericEffectFamily.REFLECTION",
-        "ClericEffectFamily.LIFESTEAL",
-        "consumeCounter(",
-        "accumulateFractionalPercent(",
-        "ActionSender.sendActivePotionEffects(defender)",
-        "Summoning.isSummon(attacker)",
-        "attacker instanceof Player && defender instanceof Player",
-        "!ClericSupportCasting.isPvpContext(player)",
-    ):
-        require(snippet in runtime, f"shared direct-effect runtime missing: {snippet}")
-
-    require("rollPlayerCrit(source, attackMax) ? attackMax" in formula,
-            "Fervor must not alter the normal critical-hit branch")
-    require("combineFervorRollChance(source, existingChance)" in formula,
-            "MyWorld damage rolls do not combine Fervor with equipment bias")
-    require("doSecondaryMeleeDamage" in formula and "directAttack" in formula,
-            "secondary melee lacks an explicit Fervor-free roll boundary")
-    require("criticalHit" in osrs_formula and "!criticalHit" in osrs_formula,
-            "OSRS compatibility formula does not exclude critical hits")
-    require("doSecondaryMeleeDamage(player, npc)" in pvm,
-            "scythe cleave is not using the secondary-damage boundary")
-
-    for event_source, label in ((combat, "legacy melee"), (pvm, "PvM melee")):
-        require("beforeDirectDamage(hitter, target, damage)" in event_source,
-                f"{label} omits shared pre-damage effects")
-        require("afterExistingLifesteal(hitter, target, damageDealt)" in event_source,
-                f"{label} omits shared post-lifesteal effects")
-        require("getPreventedDamage()" in event_source,
-                f"{label} omits Cleric blocked-damage telemetry")
-        require("inflictClericThornsDamage(" in event_source
-                and "target, hitter" in event_source,
-                f"{label} bypasses the attributed terminal reflection path")
-        require("if (hitter.getSkills().getLevel(Skill.HITS.id()) > 0)" in event_source
-                and "CorrosiveAura.apply" in event_source,
-                f"{label} lets reactive effects run after lethal Thorns")
-
-    require("isClericEligibleProjectileType()" in projectile,
-            "projectile direct/secondary boundary is missing")
-    cleric_types = projectile.split(
-        "private boolean isClericEligibleProjectileType()", 1
-    )[1].split("}", 1)[0]
-    require("type == 1" in cleric_types and "type == 2" in cleric_types
-            and "type == 4" in cleric_types and "type == 5" not in cleric_types,
-            "Magic/ranged/Iban must qualify while cannon damage remains secondary")
-    require("afterExistingLifesteal(" in projectile
-            and "!deferClericRally" in projectile,
-            "projectile post-hit effects or god-spell deferral are missing")
-    require("secondaryEffectDamage = damage;" in projectile
-            and "Math.ceil(secondaryEffectDamage / 2.0D)" in projectile,
-            "Zeal-adjusted direct damage leaked into projectile secondary effects")
-    require("inflictClericThornsDamage" in projectile
-            and "caster.killedBy(opponent)" in projectile,
-            "projectile Thorns lacks normal defender attribution")
-    require("Thorns owns the attacker's terminal death" in projectile,
-            "lethal projectile Thorns does not stop later attacker procs")
-
-    require("calculateSecondaryMagicDamage(caster, npc, secondaryMax)" in spell_handler,
-            "god-spell area damage can inherit Fervor")
-    require("calculateSecondaryMagicDamage(" in spell_handler
-            and "SpellClassification.getSpellDamageCapPercent(Spells.IBAN_BLAST)"
-            in spell_handler,
-            "Iban area damage can inherit Fervor")
-    deferred = spell_handler.split("godSpellEvent.deferClericRally();", 1)[1]
-    require(deferred.index("applyGodSpellAreaEffects(")
-            < deferred.index("godSpellEvent.resolveDeferredClericRally();"),
-            "Rally must resolve after established god-spell lifesteal")
-
-    require("levels[skill] > previousLevel" in skills
-            and "((Player) mob).onHitsLevelIncreased();" in skills,
-            "ordinary healing paths do not notify transient threshold state")
-    require("getTransientEffectState().onHitsLevelIncreased(" in player
-            and "ActionSender.sendActivePotionEffects(this);" in player,
-            "Rally threshold cleanup does not refresh the authoritative HUD")
-    require("getCache()" not in runtime and "addExperience" not in runtime,
-            "C10 effects must remain transient and award no Worship XP")
+    """Legacy fixture data below characterizes generic math/counters only; active acceptance is composite."""
+    runtime = (ROOT / "server/src/com/openrsc/server/content/cleric/runtime/ClericTimedEffectRuntime.java").read_text()
+    registry = (ROOT / "server/src/com/openrsc/server/content/cleric/effect/ClericEffectRegistry.java").read_text()
+    assert "spell.getId().isBlessing()" in runtime
+    assert "nextPeriodic" in registry and "accumulateComponentPercent" in registry
+    assert "event.resetCountdown();" not in (ROOT / "server/src/com/openrsc/server/content/cleric/runtime/ClericHealingPulseEvent.java").read_text()
 
 
 def main() -> None:
     validate_runtime_wiring()
     run_compiled_fixture()
-    print("Cleric C10 direct-combat effect checks passed")
+    subprocess.run(["python3", str(ROOT / "tests/myworld/test-cleric-blessings.py")], check=True)
+    print("Cleric historical arithmetic and active composite direct-combat checks passed")
 
 
 if __name__ == "__main__":

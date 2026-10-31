@@ -39,6 +39,10 @@ public final class ClericActiveStatusCollector {
 
 	private static String priorityKey(ClericEffectRankDefinition<?> definition) {
 		switch (definition.getFamily()) {
+            case SARADOMIN_BLESSING:
+            case GUTHIX_BLESSING:
+            case ZAMORAK_BLESSING:
+                return definition.getFamily().getKey();
 			case HEALING_PULSES:
 			case PROTECTION:
 				return definition.getFamily().getKey();
