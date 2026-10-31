@@ -63,6 +63,22 @@ public final class ClericSigilProductionCatalog {
 		return identity;
 	}
 
+    /** Existing god/Grace carvings plus the independent Blight purpose carving. */
+    public static List<Integer> getCarvingOutputItemIds(ClericSigilMaterial material) {
+        List<Integer> outputs = new ArrayList<Integer>();
+        for (ClericSigilItemId identity : getUnblessedIdentities(material)) outputs.add(identity.getItemId());
+        for (ClericWellSigil sigil : ClericWellSigil.values()) {
+            if (sigil.getMaterial() == material && sigil.getPurpose() == ClericWellSigil.Purpose.BLIGHT) outputs.add(sigil.getRawItemId());
+        }
+        return Collections.unmodifiableList(outputs);
+    }
+
+    public static ClericSigilMaterial getCarvingMaterial(int rawItemId) {
+        ClericWellSigil purpose = ClericWellSigil.fromRaw(rawItemId);
+        if (purpose != null) return purpose.getMaterial();
+        return fromUnblessedItemId(rawItemId).getMaterial();
+    }
+
 	public static ClericSigilMaterial fromSourceItemId(int itemId) {
 		for (ClericSigilMaterial material : ClericSigilMaterial.values()) {
 			if (material.getSourceItemId() == itemId) {
