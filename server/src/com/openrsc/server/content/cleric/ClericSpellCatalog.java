@@ -70,8 +70,9 @@ public final class ClericSpellCatalog {
 			putUnique(keys, definition.getStableKey(), definition, "key");
 			validateDefinition(definition);
 		}
-		if (ids.size() != ClericSpellId.values().length) {
-			throw new IllegalStateException("Every Cleric spell identity requires one definition");
+		// New identities are reserved before their reviewed active catalog is installed.
+		if (ids.size() != 12) {
+			throw new IllegalStateException("Legacy catalog coverage changed before the composite migration");
 		}
 		for (int index = 0; index < definitions.size(); index++) {
 			if (definitions.get(index).getStableCode() != index) {

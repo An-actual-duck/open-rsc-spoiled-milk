@@ -76,6 +76,17 @@ public final class ClericEffectRankDefinition<M extends ClericEffectMagnitude> {
 	private static void validateIdentityShape(ClericSpellId spellId,
 			ClericEffectFamily family, ClericEffectCounterKind counterKind,
 			ClericEffectMagnitude magnitude) {
+        if (spellId.isBlessing()) {
+            requireShape(counterKind == ClericEffectCounterKind.NONE
+                && magnitude instanceof ClericBlessingMagnitude, spellId);
+            ClericBlessingMagnitude blessing = (ClericBlessingMagnitude) magnitude;
+            ClericEffectFamily expected = blessing.getGod() == com.openrsc.server.content.cleric.ClericAlignment.SARADOMIN
+                ? ClericEffectFamily.SARADOMIN_BLESSING : blessing.getGod() == com.openrsc.server.content.cleric.ClericAlignment.GUTHIX
+                ? ClericEffectFamily.GUTHIX_BLESSING : ClericEffectFamily.ZAMORAK_BLESSING;
+            requireShape(family == expected, spellId);
+            return;
+        }
+
 		switch (spellId) {
 			case MEND:
 			case GREATER_MEND:
