@@ -571,6 +571,12 @@ public class NpcBehavior {
 			return false;
 		}
 
+			if (profile.usesRangedProjectiles() && target.isPlayer()
+				&& !((Player) target).getConfig().WANT_MYWORLD
+				&& ((Player) target).getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
+				((Player) target).message(npc + " is trying to shoot you!");
+				return true;
+			}
 		npc.resetPath();
 		npc.face(target);
 		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(npc)) return true;
@@ -583,15 +589,12 @@ public class NpcBehavior {
 		if (naga) com.openrsc.server.content.monsterslayer.NagaCombat.recordAttack(npc,
 			com.openrsc.server.content.monsterslayer.NagaCombat.THROW_TICKS);
 
+        final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(npc);
 		if (profile.usesRangedProjectiles()) {
-			if (target.isPlayer()
-				&& !((Player) target).getConfig().WANT_MYWORLD
-				&& ((Player) target).getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
-				((Player) target).message(npc + " is trying to shoot you!");
-				return true;
-			}
 
-			int damage = CombatFormula.doRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false);
+
+			com.openrsc.server.model.combat.AttackRoll roll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollRangedDamage(npc, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), target, false);
+            int damage = roll.getDamage();
 			npc.setKillType(KillType.RANGED);
 			npc.getWorld().getServer().getGameEventHandler().add(new ProjectileEvent(
 				npc.getWorld(), npc, target,
@@ -600,14 +603,14 @@ public class NpcBehavior {
 					damage, 2)
 					.chase(true)
 					.presentation(profile.getRangedProjectileVisual(), 0, true)
-					.build()));
+					.attackCommitment(attack).attackRoll(roll).build()));
 			return true;
 		}
 
 		if (profile.usesMagicProjectiles()) {
 			final NpcMagicAttack magicAttack = profile.selectMagicAttack();
-			int damage = CombatFormula.calculateMagicDamage(npc, target,
-				profile.getMagicSpellPower());
+			com.openrsc.server.model.combat.AttackRoll roll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : CombatFormula.rollMagicDamage(npc,target,profile.getMagicSpellPower());
+            int damage = roll.getDamage();
 			int impactEffectType = magicAttack.getImpactEffect();
 			int startleProcChancePercent = magicAttack.getStartleProcChancePercent();
 			int acidPoisonPower = magicAttack.getAcidPoisonPower();
@@ -627,7 +630,7 @@ public class NpcBehavior {
 					.magicElement(magicAttack.getElement())
 					.dualElementProcs(startleProcChancePercent,
 						acidPoisonPower, 0, splinterProcChancePercent)
-					.build()));
+					.attackCommitment(attack).attackRoll(roll).build()));
 			return true;
 		}
 

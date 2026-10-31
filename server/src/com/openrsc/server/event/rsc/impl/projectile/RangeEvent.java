@@ -149,10 +149,15 @@ public class RangeEvent extends GameTickEvent {
 		final int ammoId;
 		final boolean isCrossbow = RangeUtils.isCrossbow(weaponId);
 
+        final int availableAmmo = config.WANT_EQUIPMENT_TAB
+            ? takeAmmoFromEquipment(weaponId, isCrossbow, false)
+            : takeAmmoFromInventory(weaponId, isCrossbow, false);
+        if (availableAmmo == -1) return;
+        if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(player)) return;
 		if (config.WANT_EQUIPMENT_TAB) {
-			ammoId = takeAmmoFromEquipment(weaponId, isCrossbow);
+			ammoId = takeAmmoFromEquipment(weaponId, isCrossbow, true);
 		} else {
-			ammoId = takeAmmoFromInventory(weaponId, isCrossbow);
+			ammoId = takeAmmoFromInventory(weaponId, isCrossbow, true);
 		}
 
 		if (ammoId == -1) {
@@ -167,8 +172,10 @@ public class RangeEvent extends GameTickEvent {
 			delay = 1;
 		}
 
-		final int damage = RangeUtils.doRangedDamage(player, weaponId, ammoId, target, skillCape);
-		final int dragonBreathDamage = getWorld().getServer().getConfig().OSRS_COMBAT_RANGED
+		final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(player);
+        final com.openrsc.server.model.combat.AttackRoll attackRoll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : RangeUtils.rollRangedDamage(player, weaponId, ammoId, target, skillCape);
+        final int damage = attackRoll.getDamage();
+		final int dragonBreathDamage = attack.isSuppressed() ? 0 : getWorld().getServer().getConfig().OSRS_COMBAT_RANGED
 			? 0
 			: CombatFormula.rollDragonRangedBreathDamage(player, weaponId, ammoId, skillCape);
 
@@ -222,10 +229,11 @@ public class RangeEvent extends GameTickEvent {
 					0, true)
 				.dragonBreathDamage(dragonBreathDamage)
 				.duplicationStrategy(DuplicationStrategy.ONE_PER_MOB)
-				.build(), resourceLedger));
+				.attackCommitment(attack).attackRoll(attackRoll)
+                .build(), resourceLedger));
 	}
 
-	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow) {
+	private int takeAmmoFromInventory(final int weaponId, final boolean isCrossbow, boolean consume) {
 		final int[] ammoIds = isCrossbow ? Formulae.boltIDs : Formulae.arrowIDs;
 
 		final Inventory inventory = player.getCarriedItems().getInventory();
@@ -254,14 +262,14 @@ public class RangeEvent extends GameTickEvent {
 			}
 
 			final Item item = new Item(ammo.getCatalogId(), 1, false, ammo.getItemId());
-			player.getCarriedItems().remove(item);
+			if (consume) player.getCarriedItems().remove(item);
 			return ammoId;
 		}
 
 		return -1;
 	}
 
-	private int takeAmmoFromEquipment(final int weaponId, final boolean isCrossbow) {
+	private int takeAmmoFromEquipment(final int weaponId, final boolean isCrossbow, boolean consume) {
 		final Equipment equipment = player.getCarriedItems().getEquipment();
 
 		final Item ammo = equipment.getAmmoItem();
@@ -310,8 +318,10 @@ public class RangeEvent extends GameTickEvent {
 			return -1;
 		}
 
-		equipment.remove(ammo, 1);
-		ActionSender.updateEquipmentSlot(player, 12);
+		if (consume) {
+            equipment.remove(ammo, 1);
+		    ActionSender.updateEquipmentSlot(player, 12);
+        }
 		return ammoId;
 	}
 

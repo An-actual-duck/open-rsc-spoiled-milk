@@ -59,6 +59,7 @@ public final class DamageResult {
 			hitsBefore, hitsAfter);
 	}
 
+	public boolean isCritical() { return request.isCritical(); }
 	public Status getStatus() { return status; }
 	public DamageRequest getRequest() { return request; }
 	public int getHitsBefore() { return hitsBefore; }

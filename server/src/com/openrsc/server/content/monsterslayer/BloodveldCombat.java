@@ -73,7 +73,7 @@ public final class BloodveldCombat {
 		if (SlayerLeatherEffects.delayAttack(npc)) return true;
 		recordAttack(npc, 3);
 		npc.setCombatTimer();
-		if (npc.consumeOgreStaggerDebuff() || npc.consumeStartleDebuff()) return true;
+		if (com.openrsc.server.model.combat.AttackState.commitAttack(npc).isSuppressed()) return true;
 		// Existing blank projectile packet triggers the client attack pose, without a missile.
 		player.getUpdateFlags().setProjectile(new Projectile(npc, player, Projectile.BLANK));
 		CombatParticipantSnapshot source = CombatParticipantSnapshot.capture(npc);

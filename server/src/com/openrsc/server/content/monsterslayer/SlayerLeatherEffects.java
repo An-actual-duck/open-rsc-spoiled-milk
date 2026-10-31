@@ -22,7 +22,7 @@ import com.openrsc.server.model.entity.EntityType;
 
 /** Full-set policies for the new leather families. No effect is inherited from borrowed art. */
 public final class SlayerLeatherEffects {
-	private static final String CHARGE = "slayer_leather_charge", STICKY = "slayer_leather_sticky";
+	private static final String CHARGE = "slayer_leather_charge";
 	private SlayerLeatherEffects() { }
 
 	public static boolean hasSet(Player player, int coif) {
@@ -57,27 +57,17 @@ public final class SlayerLeatherEffects {
 	}
 
 	private static long tick(Mob mob) { return mob.getWorld().getServer().getCurrentTick(); }
-	private static final class Sticky {
-		final CombatParticipantSnapshot lifetime;
-		long blockedUntil = Long.MIN_VALUE;
-		Sticky(Mob mob) { lifetime = CombatParticipantSnapshot.capture(mob); }
-	}
-    /** Offensive Sticky is already composed into the actor deadline when applied. */
+    /** Admit queued extra delays only when the ordinary attack is otherwise ready. */
     public static boolean delayAttack(Mob mob) {
-        Sticky sticky = mob.getAttribute(STICKY, null);
-        if (sticky == null || !sticky.lifetime.matches(mob)) return false;
-        if (!com.openrsc.server.model.combat.AttackState.ready(mob)) return true;
-        mob.removeAttribute(STICKY);
-        return false;
+        return !com.openrsc.server.model.combat.AttackState.ready(mob);
     }
+
     private static void stickyHit(Player wearer, Mob attacker) {
         if (!hasSet(wearer, MyWorldItemId.GIANT_FROG_COIF) || attacker == null || attacker == wearer
             || attacker.getLevel(Skill.HITS.id()) <= 0 || attacker.isRemoved()) return;
-        Sticky existing = attacker.getAttribute(STICKY, null);
-        if (existing != null && existing.lifetime.matches(attacker)) return;
+        if (com.openrsc.server.model.combat.AttackState.hasDelay(attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY)) return;
         if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
-            attacker.setAttribute(STICKY, new Sticky(attacker));
-            com.openrsc.server.model.combat.AttackState.delay(attacker, 1);
+            com.openrsc.server.model.combat.AttackState.delay(attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY);
         }
     }
 	private static final class Charge {

@@ -119,6 +119,9 @@ public final class AbyssalDemonCombat {
 		mob.resetPath();
 		return true;
 	}
+    public static boolean attackReady(Mob source) {
+        return !isDemon(source) || tick(source) >= state((Npc)source).nextAttack;
+    }
 	/** Called only once melee reach is established. True consumes this attack opportunity. */
 	public static boolean beforeMelee(Mob source, Mob target, boolean suppressed, BiConsumer<Player,Integer> strike) {
 		if (!isDemon(source)) return false;

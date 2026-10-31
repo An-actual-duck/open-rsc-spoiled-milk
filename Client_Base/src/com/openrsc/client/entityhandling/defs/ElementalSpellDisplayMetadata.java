@@ -234,6 +234,9 @@ public final class ElementalSpellDisplayMetadata {
 	}
 
 	public String getGuideTooltip() {
+		if (classification == Classification.THUNDER) {
+            return "Deals " + damageWord + " damage. Startle staggers the opponent for 1 attack; then 5 unstaggered attacks before reapplication.";
+        }
 		if (isDualElement()) {
 			return "Deals " + damageWord + " damage. Can " + effectName + ".";
 		}

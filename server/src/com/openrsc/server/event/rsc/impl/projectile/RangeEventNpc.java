@@ -90,13 +90,6 @@ public class RangeEventNpc extends GameTickEvent {
                 return;
             }
             owner.face(victim);
-            if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(owner)) {
-                setDelayTicks(1); return;
-            }
-            final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(owner, 3);
-            setDelayTicks(adjustedDelay);
-
-
                 if (victim.isPlayer()) {
                     Player playerTarget = (Player) victim;
                     if (!playerTarget.getConfig().WANT_MYWORLD && playerTarget.getPrayers().isPrayerActivated(Prayers.PROTECT_FROM_MISSILES)) {
@@ -105,7 +98,16 @@ public class RangeEventNpc extends GameTickEvent {
                         return;
                     }
                 }
-                int damage = RangeUtils.doRangedDamage(owner, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
+            if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(owner)) {
+                setDelayTicks(1); return;
+            }
+            final int adjustedDelay = RangeUtils.getAdjustedRangeDelayTicks(owner, 3);
+            setDelayTicks(adjustedDelay);
+
+
+                final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(owner);
+        final com.openrsc.server.model.combat.AttackRoll attackRoll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : RangeUtils.rollRangedDamage(owner, ItemId.LONGBOW.id(), ItemId.BRONZE_ARROWS.id(), victim, false);
+        final int damage = attackRoll.getDamage();
 
                 final ProjectileResourceLedger resourceLedger =
                     ProjectileResourceLedger.trackedLaunch(
@@ -150,7 +152,8 @@ public class RangeEventNpc extends GameTickEvent {
                         ProjectileLaunchSpecification.builder(
                                 ProjectileLaunchSpecification.Producer.LEGACY_NPC_RANGED,
                                 damage, 2)
-                                .build(), resourceLedger));
+                                .attackCommitment(attack).attackRoll(attackRoll)
+                .build(), resourceLedger));
                 owner.setKillType(KillType.RANGED);
             }
     }

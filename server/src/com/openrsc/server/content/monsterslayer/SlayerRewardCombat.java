@@ -54,7 +54,7 @@ public final class SlayerRewardCombat {
 		if (old != null && tick(target) < old.immuneUntil) return;
 		if (source.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
             target.setAttribute(WHIP, new WhipDelay(target));
-            AttackState.delay(target, 1);
+            AttackState.delay(target, AttackCadenceState.Source.WHIP);
         }
 	}
 	private static final class BowFraction {

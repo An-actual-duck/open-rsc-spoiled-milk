@@ -78,13 +78,26 @@ public final class Slow {
 	}
 
 	public enum Cadence { MELEE, RANGED }
-	/** Actor cadence persists even without Slow, across style/event replacement. */
+	private static final class Deadline {
+		final CombatParticipantSnapshot lifetime;
+		final long due;
+		Deadline(Mob mob, int ticks) {
+			lifetime = CombatParticipantSnapshot.capture(mob);
+			due = tick(mob) + ticks;
+		}
+	}
+
+	/** Preserve a slowed commitment across event replacement/retargeting, independently of the pool. */
 	public static void commit(Mob mob, Cadence cadence, int adjustedTicks) {
-        com.openrsc.server.model.combat.AttackState.commitCadence(mob, adjustedTicks);
-    }
-    public static boolean ready(Mob mob, Cadence cadence) {
-        return com.openrsc.server.model.combat.AttackState.ready(mob);
-    }
+		String key = "combat_slow_deadline_" + cadence;
+		if (tier(mob) > 0) mob.setAttribute(key, new Deadline(mob, adjustedTicks));
+		else mob.removeAttribute(key);
+	}
+
+	public static boolean ready(Mob mob, Cadence cadence) {
+		Deadline deadline = mob.getAttribute("combat_slow_deadline_" + cadence, null);
+		return deadline == null || !deadline.lifetime.matches(mob) || tick(mob) >= deadline.due;
+	}
 
 	public static void apply(final Mob mob, int amount, int sourceCap) {
 		if (!live(mob) || amount <= 0 || (sourceCap != CAP_ONE && sourceCap != CAP_TWO)) return;

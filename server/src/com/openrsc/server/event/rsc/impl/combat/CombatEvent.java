@@ -222,7 +222,8 @@ public class CombatEvent extends GameTickEvent {
 				((Npc)hitter).getBehavior().retreat();
 				return;
 			}
-			if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(hitter)) {
+			        if (!com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.attackReady(hitter)) { roundNumber--; setDelayTicks(1); return; }
+        if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(hitter)) {
 				roundNumber--; // Retry this hitter next tick instead of giving away its turn.
 				setDelayTicks(1); return;
 			}
@@ -235,16 +236,18 @@ public class CombatEvent extends GameTickEvent {
 				com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(hitter, 2);
 
 			//if(hitter.isNpc() && target.isPlayer() || target.isNpc() && hitter.isPlayer()) {
+			final boolean attackSuppressed = com.openrsc.server.model.combat.AttackState.commitAttack(hitter).isSuppressed();
+			com.openrsc.server.model.combat.AttackRoll primaryRoll = com.openrsc.server.model.combat.AttackRoll.normal(0);
 			int damage;
-			if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
+			if (attackSuppressed) { damage = 0; } else if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				damage = OSRSCombatFormula.Melee.doMeleeDamage(hitter, target);
 			} else {
-				damage = CombatFormula.doMeleeDamage(hitter, target);
+				primaryRoll = CombatFormula.rollMeleeDamage(hitter, target);
+            damage = primaryRoll.getDamage();
 			}
 			if (hitter.isPlayer()) {
 				damage = applyPlayerMeleeDamageBuff((Player) hitter, damage);
 			}
-			final boolean attackSuppressed = hitter.consumeOgreStaggerDebuff() || hitter.consumeStartleDebuff();
 			final Mob abyssalHitter = hitter;
 			if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.beforeMelee(
 				hitter, target, attackSuppressed, (victim, hit) -> inflictDamage(abyssalHitter, victim, hit, false))) return;
@@ -253,7 +256,7 @@ public class CombatEvent extends GameTickEvent {
 			}
 
 			applyWeaponPoison(hitter, target, damage);
-			inflictDamage(hitter, target, damage, attackSuppressed);
+			inflictDamage(hitter, target, damage, attackSuppressed, false, primaryRoll);
 			if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(hitter, target, attackSuppressed)) {
 				inflictDamage(hitter, target, CombatFormula.doOffhandMeleeDamage(hitter, target), false, true);
 			}
@@ -261,7 +264,7 @@ public class CombatEvent extends GameTickEvent {
 			if (hitter.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}
-			applyBearMaulSecondHit(hitter, target, damage);
+			if (!attackSuppressed) applyBearMaulSecondHit(hitter, target, damage);
 			if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 				applyDragonWeaponBreathDamage(hitter, target);
 				applyElementalSwordProc(hitter, target);
@@ -282,7 +285,7 @@ public class CombatEvent extends GameTickEvent {
 					}
 				}
 			}
-			hitter.consumeAttackBasedDebuffs();
+			if (!attackSuppressed) hitter.consumeAttackBasedDebuffs();
 			if (hitter.isPlayer()) {
 				((Player) hitter).consumeLeatherSetAttackBuffs();
 			}
@@ -525,6 +528,9 @@ public class CombatEvent extends GameTickEvent {
 	}
 
 	private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand) {
+        inflictDamage(hitter,target,damage,attackSuppressed,offhand,com.openrsc.server.model.combat.AttackRoll.normal(damage));
+    }
+    private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand, com.openrsc.server.model.combat.AttackRoll attackRoll) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -592,7 +598,8 @@ public class CombatEvent extends GameTickEvent {
 			.encounterId(encounterId)
 			.style(CombatStyle.MELEE)
 			.hitSplatType(hitSplatType)
-			.build();
+			.attackRoll(attackSuppressed ? com.openrsc.server.model.combat.AttackRoll.normal(0) : attackRoll)
+            .build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
 		final int damageDealt = damageResult.getLegacyDamageDealt();
@@ -664,7 +671,7 @@ public class CombatEvent extends GameTickEvent {
 			if (target.isNpc() || ringOfLifeScript) {
 				target.getWorld().getServer().getCombatScriptLoader().checkAndExecuteCombatScript(hitter, target);
 			}
-			applyLeatherSetOnHitEffects(hitter, target, damage);
+			if (!attackSuppressed) applyLeatherSetOnHitEffects(hitter, target, damage);
 		}
 
 		// Mob has <= 0 hits.

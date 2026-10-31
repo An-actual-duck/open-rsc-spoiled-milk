@@ -250,7 +250,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			|| !com.openrsc.server.content.monsterslayer.DarkBeastCombat.attackReady(attackerMob)) {
 			setDelayTicks(1); return;
 		}
-		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(attackerMob)) {
+		        if (!com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.attackReady(attackerMob)) { setDelayTicks(1); return; }
+        if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(attackerMob)) {
 			setDelayTicks(1); return;
 		}
 		if (com.openrsc.server.content.monsterslayer.BloodveldCombat.isBloodveld(attackerMob)) {
@@ -264,7 +265,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (com.openrsc.server.content.monsterslayer.BansheeCombat.isBanshee(attackerMob))
 			com.openrsc.server.content.monsterslayer.BansheeCombat.recordAttack(attackerMob, 2);
 
-		boolean attackSuppressed = attackerMob.consumeOgreStaggerDebuff() || attackerMob.consumeStartleDebuff();
+		boolean attackSuppressed = com.openrsc.server.model.combat.AttackState.commitAttack(attackerMob).isSuppressed();
 		if (com.openrsc.server.content.monsterslayer.AbyssalDemonCombat.beforeMelee(
 			attackerMob, targetMob, attackSuppressed,
 			(victim, hit) -> inflictDamage(attackerMob, victim, hit, false))) {
@@ -276,7 +277,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 			if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 				return;
 			}
-			attackerMob.consumeAttackBasedDebuffs();
+			if (!attackSuppressed) attackerMob.consumeAttackBasedDebuffs();
 			int delay = getAdjustedMeleeDelayTicks(attackerMob, 2);
 			com.openrsc.server.content.Slow.commit(attackerMob, com.openrsc.server.content.Slow.Cadence.MELEE, delay);
 			setDelayTicks(delay);
@@ -285,19 +286,21 @@ public class PvmMeleeEvent extends GameTickEvent {
 
         final int committedPrimaryWeapon = attackerMob instanceof Player
             ? com.openrsc.server.content.coatings.BattleaxeCoatings.equipped((Player)attackerMob) : -1;
+		com.openrsc.server.model.combat.AttackRoll primaryRoll = com.openrsc.server.model.combat.AttackRoll.normal(0);
 		int damage;
 		if (attackSuppressed) {
 			damage = 0;
 		} else if (getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 			damage = OSRSCombatFormula.Melee.doMeleeDamage(attackerMob, targetMob);
 		} else {
-			damage = CombatFormula.doMeleeDamage(attackerMob, targetMob);
+			primaryRoll = CombatFormula.rollMeleeDamage(attackerMob, targetMob);
+            damage = primaryRoll.getDamage();
 		}
 		if (attackerMob.isPlayer()) {
 			damage = applyPlayerMeleeDamageBuff((Player) attackerMob, damage);
 		}
 		applyWeaponPoison(attackerMob, targetMob, damage);
-		inflictDamage(attackerMob, targetMob, damage, attackSuppressed, false, committedPrimaryWeapon);
+		inflictDamage(attackerMob, targetMob, damage, attackSuppressed, false, committedPrimaryWeapon, primaryRoll);
 		if (com.openrsc.server.content.monsterslayer.NagaCombat.canOffhand(attackerMob, targetMob, attackSuppressed)) {
 			inflictDamage(attackerMob, targetMob,
 				CombatFormula.doOffhandMeleeDamage(attackerMob, targetMob), false, true);
@@ -306,7 +309,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 		if (attackerMob.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			return;
 		}
-		applyBearMaulSecondHit(attackerMob, targetMob, damage);
+		if (!attackSuppressed) applyBearMaulSecondHit(attackerMob, targetMob, damage);
 		if (!attackSuppressed && !getWorld().getServer().getConfig().OSRS_COMBAT_MELEE) {
 			applyDragonWeaponBreathDamage(attackerMob, targetMob);
 			applyElementalSwordProc(attackerMob, targetMob);
@@ -332,7 +335,7 @@ public class PvmMeleeEvent extends GameTickEvent {
 				}
 			}
 		}
-		attackerMob.consumeAttackBasedDebuffs();
+		if (!attackSuppressed) attackerMob.consumeAttackBasedDebuffs();
 		if (attackerMob.isPlayer()) {
 			((Player) attackerMob).consumeLeatherSetAttackBuffs();
 		}
@@ -389,6 +392,9 @@ public class PvmMeleeEvent extends GameTickEvent {
     }
 
     private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand, int committedCoatingWeapon) {
+        inflictDamage(hitter,target,damage,attackSuppressed,offhand,committedCoatingWeapon,com.openrsc.server.model.combat.AttackRoll.normal(damage));
+    }
+    private void inflictDamage(final Mob hitter, final Mob target, int damage, boolean attackSuppressed, boolean offhand, int committedCoatingWeapon, com.openrsc.server.model.combat.AttackRoll attackRoll) {
 		if (!Summoning.canSummonAttack(hitter, target)) {
 			return;
 		}
@@ -451,7 +457,8 @@ public class PvmMeleeEvent extends GameTickEvent {
 			.encounterId(encounterId)
 			.style(CombatStyle.MELEE)
 			.hitSplatType(hitSplatType)
-			.build();
+			.attackRoll(attackSuppressed ? com.openrsc.server.model.combat.AttackRoll.normal(0) : attackRoll)
+            .build();
 		final DamageResult damageResult = target.getWorld().getServer()
 			.getResolvedDamageTransaction().apply(damageRequest);
         if(!offhand&&!attackSuppressed)com.openrsc.server.content.coatings.BattleaxeCoatings.primaryHit(
@@ -526,11 +533,11 @@ public class PvmMeleeEvent extends GameTickEvent {
 				target.setLastOpponent(hitter);
 				target.setCombatTimer();
 			}
-			if (Summoning.applySummonOnHitEffects(hitter, target, damage)) {
+			if (!attackSuppressed && Summoning.applySummonOnHitEffects(hitter, target, damage)) {
 				onDeath(target, hitter);
 				return;
 			}
-			applyLeatherSetOnHitEffects(hitter, target, damage);
+			if (!attackSuppressed) applyLeatherSetOnHitEffects(hitter, target, damage);
 			tryAutoRetaliateAfterIncomingAttack(hitter, target);
 		} else {
 			if (target.isNpc() && hitter.isPlayer()) {

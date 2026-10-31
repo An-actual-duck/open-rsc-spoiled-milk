@@ -436,8 +436,8 @@ public class ProjectileEvent extends SingleTickEvent {
 						return;
 					}
 				}
-				caster.consumeAttackBasedDebuffs();
-				if (caster.isPlayer()) {
+				if (!launchSnapshot.getSpecification().getAttackCommitment().isSuppressed()) caster.consumeAttackBasedDebuffs();
+				if (caster.isPlayer() && !launchSnapshot.getSpecification().getAttackCommitment().isSuppressed()) {
 					((Player) caster).consumeLeatherSetAttackBuffs();
 				}
 			}
@@ -559,7 +559,7 @@ public class ProjectileEvent extends SingleTickEvent {
 		if (caster.isPlayer()) {
 			damage = applyPlayerProjectileDamageBuff((Player) caster, damage);
 		}
-		final boolean attackSuppressed = caster.consumeOgreStaggerDebuff() || caster.consumeStartleDebuff();
+		final boolean attackSuppressed = launchSnapshot.getSpecification().getAttackCommitment().isSuppressed();
 		final boolean wail = !attackSuppressed && type == 1
 			&& com.openrsc.server.content.monsterslayer.BansheeCombat.usesWail(caster, opponent);
 		if (attackSuppressed) {
@@ -609,6 +609,7 @@ public class ProjectileEvent extends SingleTickEvent {
 				.eventId(getUUID())
 				.encounterId(encounterId)
 				.style(primaryProjectileCombatStyle())
+                .attackRoll(launchSnapshot.getSpecification().getAttackRoll())
 				.hitSplatType(hitSplatType)
 				.build();
 			final DamageResult damageResult = opponent.getWorld().getServer()
@@ -726,25 +727,25 @@ public class ProjectileEvent extends SingleTickEvent {
 			return;
 		}
 
-		if (caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
+		if (!attackSuppressed && caster.isPlayer() && opponent.isNpc() && opponent.getSkills().getLevel(Skill.HITS.id()) > 0
 			&& ((Player) caster).applyDeathRingChargeHit((Npc) opponent)) {
 			handleDeath();
 			return;
 		}
 
-		applySplinterOnHitEffect();
+		if (!attackSuppressed) applySplinterOnHitEffect();
 		if (opponent.getSkills().getLevel(Skill.HITS.id()) <= 0) {
 			if (caster.isPlayer() && opponent.isNpc()) {
 				applyDeathRobeOverkillSplash((Player) caster, (Npc) opponent, damage - lastHits);
 			}
 			handleDeath();
 		} else {
-			if (Summoning.applySummonOnHitEffects(caster, opponent, damage)) {
+			if (!attackSuppressed && Summoning.applySummonOnHitEffects(caster, opponent, damage)) {
 				handleDeath();
 				return;
 			}
 			applyWeaponPoison();
-			applyLeatherSetOnHitEffects();
+			if (!attackSuppressed) applyLeatherSetOnHitEffects();
 			if (!attackSuppressed) {
 				applyDragonWeaponBreathDamage();
 				ElderGreenDragonSpecialAttacks.maybeApplyProjectileAoe(getWorld(), caster, opponent, false);

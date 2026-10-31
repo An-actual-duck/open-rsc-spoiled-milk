@@ -418,6 +418,12 @@ public class RangeUtils {
                 && ALLOWED_PROJECTILES.get(weaponId).contains(arrowId);
     }
 
+
+    public static com.openrsc.server.model.combat.AttackRoll rollRangedDamage(Mob source, int bow, int ammo, Mob target, boolean cape) {
+        if (source.getConfig().OSRS_COMBAT_RANGED)
+            return com.openrsc.server.model.combat.AttackRoll.normal(doRangedDamage(source,bow,ammo,target,cape));
+        return CombatFormula.rollRangedDamage(source,bow,ammo,target,cape);
+    }
     public static int doRangedDamage(final Mob attacker, final int bowId, final int arrowId, final Mob defender, final boolean skillCape) {
 		if (attacker.getWorld().getServer().getConfig().OSRS_COMBAT_RANGED) {
 			return OSRSCombatFormula.Ranged.doRangedDamage(attacker, bowId, arrowId, defender, skillCape);

@@ -181,6 +181,7 @@ public class ThrowingEvent extends GameTickEvent {
 		while (throwingTargets.size() > throwsToConsume) {
 			throwingTargets.remove(throwingTargets.size() - 1);
 		}
+		if (com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.delayAttack(player)) return;
 		if (!removeThrowingItems(player, throwingID, throwsToConsume)) {
 			terminateCurrent(player);
 			return;
@@ -206,9 +207,10 @@ public class ThrowingEvent extends GameTickEvent {
 			delay = 1;
 		}
 
-		final boolean isShuriken = RangeUtils.SHURIKENS.contains(throwingID);
+		final com.openrsc.server.model.combat.AttackCommitment attack = com.openrsc.server.model.combat.AttackState.commitAttack(player);
+        final boolean isShuriken = RangeUtils.SHURIKENS.contains(throwingID);
 		for (int i = 0; i < throwingTargets.size(); i++) {
-			applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0 || isShuriken, i == 0);
+			applyThrowingHit(player, throwingID, throwingTargets.get(i), skillCape, i == 0 || isShuriken, i == 0, attack);
 		}
 		ActionSender.sendSound(player, "shoot");
 
@@ -501,8 +503,9 @@ public class ThrowingEvent extends GameTickEvent {
 		}
 	}
 
-	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile, boolean firstProjectileThisAttack) {
-		int damage = RangeUtils.doRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
+	private void applyThrowingHit(Player player, int throwingID, Mob hitTarget, boolean skillCape, boolean showProjectile, boolean firstProjectileThisAttack, com.openrsc.server.model.combat.AttackCommitment attack) {
+        com.openrsc.server.model.combat.AttackRoll roll = attack.isSuppressed() ? com.openrsc.server.model.combat.AttackRoll.normal(0) : RangeUtils.rollRangedDamage(player, throwingID, throwingID, hitTarget, skillCape);
+        int damage = roll.getDamage();
 		final ProjectileLaunchSpecification.Producer projectileProducer =
 			RangeUtils.SHURIKENS.contains(throwingID)
 				? ProjectileLaunchSpecification.Producer.PLAYER_SHURIKEN
@@ -556,6 +559,6 @@ public class ThrowingEvent extends GameTickEvent {
 				.poisonWeaponId(throwingID)
 				.presentation(projectileType, 0, showProjectile)
 				.duplicationStrategy(projectileDuplicationStrategy)
-				.build(), resourceLedger));
+				.attackCommitment(attack).attackRoll(roll).build(), resourceLedger));
 	}
 }

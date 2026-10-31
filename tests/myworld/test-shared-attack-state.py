@@ -13,17 +13,22 @@ public class SharedAttackStateFixture {
   ok(s.apply(3)); for(int i=0;i<3;i++){ok(s.commit().isSuppressed());ok(!s.apply(1));}
   for(int i=0;i<5;i++){ok(!s.apply(1));ok(!s.commit().isSuppressed());}
   ok(s.apply(1)); s.clear();ok(s.pendingAttacks()==0&&s.recoveryAttacks()==0);ok(!s.commit().isSuppressed());
-  for(int slow=0;slow<=2;slow++)for(int extras=0;extras<=2;extras++){
-   AttackCadenceState c=new AttackCadenceState();c.commit(10,3+slow);
-   for(int i=0;i<extras;i++)c.addDelay(11,1);
-   long due=13+slow+extras;ok(c.due()==due);
-   for(long t=11;t<due;t++){ok(!c.ready(t));ok(!c.ready(t));ok(c.due()==due);}
-   ok(c.ready(due));
+  for(int extras=0;extras<=2;extras++){
+   AttackCadenceState c=new AttackCadenceState();
+   if(extras>0)ok(c.addDelay(10,AttackCadenceState.Source.WHIP));
+   if(extras>1)ok(c.addDelay(10,AttackCadenceState.Source.STICKY));
+   long baseAndSlowReady=15;boolean ready=c.ready(baseAndSlowReady);
+   ok(ready==(extras==0));
+   for(long t=15;t<15+extras;t++){ok(!c.ready(t));ok(!c.ready(t));ok(c.due()==15+extras);}
+   ok(c.ready(15+extras));
+   if(extras>0)ok(!c.addDelay(15+extras,AttackCadenceState.Source.WHIP));
+   c.committed();ok(c.addDelay(20,AttackCadenceState.Source.WHIP));
   }
-  AttackCadenceState c=new AttackCadenceState();c.addDelay(0,1);c.addDelay(0,1);
-  ok(!c.ready(0));ok(c.due()==2);ok(!c.ready(1));ok(c.ready(2));
-  c.addDelay(2,1);c.commit(2,4);ok(c.due()==7);ok(c.ready(7));
-  c.clear();c.commit(10,4);c.commit(10,4);ok(c.due()==14);
+  AttackCadenceState c=new AttackCadenceState();c.addDelay(0,AttackCadenceState.Source.WHIP);
+  ok(!c.ready(10));ok(c.due()==11);ok(c.addDelay(10,AttackCadenceState.Source.STICKY));
+  ok(c.due()==12);ok(!c.ready(11));ok(c.ready(12));ok(!c.addDelay(12,AttackCadenceState.Source.STICKY));
+  c.committed();ok(c.ready(12));ok(c.addDelay(12,AttackCadenceState.Source.STICKY));
+  c.clear();ok(c.ready(12));
   System.out.println("PASS "+n+" shared attack-state assertions");
  }
 }'''

@@ -6787,7 +6787,7 @@ public class EntityHandler {
 		setLeatherSetDescription(1865, 1869, "Full wolf-hide set: summons a spirit wolf companion.");
 		setLeatherSetDescription(1870, 1874, "Full spider-carapace set: +3 poison cleanse rate.");
 		setLeatherSetDescription(1875, 1879, "Giant's Might: +10% of base Melee and Ranged levels.");
-		setLeatherSetDescription(1880, 1884, "Full ogre-hide set: 20% chance to stagger enemy attacks. No cooldown.");
+		setLeatherSetDescription(1880, 1884, "Full ogre-hide set: 20% chance to stagger enemy attacks. Shared Stagger: 1 attack deals 0 damage, then 5 unstaggered attacks before reapplication.");
 		setLeatherSetDescription(1885, 1889, "Full baby-dragon-hide set: 20% chance to reduce enemy accuracy by 10%.");
 		setLeatherSetDescription(1890, 1894, "Full magic-spider-carapace set: +5 poison cleanse rate. Normal leather magic penalty applies.");
 		setLeatherSetDescription(1895, 1899, "Earth Giant's Might: +10% base Melee/Ranged; 20% chance to apply up to Slow 1.");
