@@ -48,6 +48,27 @@ Power threshold is met, then use `actual power = min(resolved rank, tier cap)`.
 A Tier 3 blessing can therefore still operate at P1. Access to a tier never
 grants its new ranks automatically.
 
+**Power-strength review — October 31:** the universal curve answers only
+which P1–P6 rank Holy Power resolves, subject to the tier cap. It does not
+impose a universal magnitude formula. Each component needs its own base value
+and increment, such as `base + increment * (P - 1)`, or an authored rank table.
+Do not compound the base once per rank or apply Saradomin's `P + 1` formula to
+every effect automatically. The current twelve-spell runtime still uses its
+older spell-specific thresholds until the overhaul migration is complete.
+
+A standalone Tier 1 spell caps at P2 and never becomes P6. Its **inherited Tier
+1 component inside a Tier 3 composite** can reach P6, alongside later components;
+that combined strength is the balance review's focus. Saradomin's two `P + 1`
+formulas are confirmed. The manager's proposed `3P%`, `2P%` and `P` values for
+other components, proposed common duration and mixed cost vectors remain
+**unapproved proposals**. Review base strengths, increments and inherited P6
+combinations before choosing them; this design review does not cancel the
+implementation task.
+
+Ordinary god buffs and future god debuffs have radii **2/3/4 tiles** at tiers
+1/2/3 (`tier + 1`). Radius rises by one per spell tier, not per Holy Power rank.
+This does not change Unify's separate movement/area contract.
+
 Holy Power is the current **Worship level + strongest applicable holy-staff
 contribution**, not equipment alone. Without a holy staff, Worship still
 contributes. Existing staff contributions include Maple 32, Yew 40, Ebony 44,
@@ -112,10 +133,36 @@ This is a flat casting cost, not a cost per recipient.
 It remains Worship 3, radius 4, party allies excluding the caster, with at most
 two safe ordinary walking steps toward the caster, stopping within two tiles.
 Same-level/world and line-of-effect restrictions remain, PvP remains disabled,
-and Unify has no Holy Power ranks. No new Unify tiers or unlock shifts are
-approved. Two Grace is the confirmed quantity; the overhaul's grade
+and Unify has no Holy Power ranks. Its base unlock and movement remain unchanged.
+Two Grace is the confirmed quantity; the overhaul's grade
 correspondence remains open. Existing Stone Grace 3300 is the current-runtime
 grade reference, not an additional owner decision fixing the future grade.
+
+**Greater Unify — one additional tier confirmed:** add exactly one upgrade
+with a larger pull range and **six Grace sigils per cast**, triple base Unify's
+flat cost, with no god sigil. It uses the same Grace grade as base Unify once
+grade correspondence is finalized. Neither version gains Holy Power scaling.
+For review, the recommended upgrade is radius 5 (base 4 plus one), at most three
+safe ordinary walking steps toward the caster, still stopping within two tiles.
+The final Greater Unify unlock, radius and movement budget remain pending owner
+review; no extra tiers or source implementation are approved by this discussion.
+Base Unify remains radius 4/two safe steps/two Grace.
+
+**Future Guthix debuff direction — discussion after Greater Unify:** tier 1
+poison weakness, tier 2 summon weakness, tier 3 recoil weakness, affecting
+eligible enemies around the caster. A poison-weakness example is a base 10%
+plus 5% per power increment: `10 + 5 * (P - 1)` → 10/15/20/25/30/35%. This is a
+review example, not finalized hostile balance. It increases poison damage with
+ceiling rounding and reduces the cleansing amount by a rounded-up reduction,
+keeping at least 1 cleansing where applicable. It neither applies poison
+instantly nor removes immunity. Summon/recoil weakness affects their damage
+only where poison-cleansing adjustment is irrelevant. Exact caps, stacking,
+lifecycle, enemy eligibility and PvP policy remain to be designed; no hostile
+runtime implementation or new PvP permission is implied.
+
+Review order: **power strengths and inherited P6 balance → Greater Unify →
+return to debuff design**. The buff implementation remains active work, awaiting
+the numerical review rather than adopting the manager's earlier proposals.
 
 **Exclude the old neutral Respite from the future spellbook** because of abuse concerns. This
 is a future spell-roster decision only: the current twelve-spell runtime remains
@@ -123,7 +170,7 @@ unchanged during design. It does not remove planned Saradomin regeneration,
 other regeneration from equipment/potions, assets or item identities.
 
 Still open: Saradomin's third component and recipient message; remaining component
-magnitudes, exact tier unlocks, durations and other cost vectors, grade
+magnitudes, exact tier unlocks, Greater Unify radius/movement budget, durations and other cost vectors, grade
 correspondence, composite targeting/stacking, and debuff components/names. God-plus-Grace and
 god-plus-Blight joint consumption remains confirmed, and generic purpose-only
 costs replace the missing god share with extra purpose sigils; Unify's specific

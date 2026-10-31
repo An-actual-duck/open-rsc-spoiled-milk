@@ -3,9 +3,14 @@
 Status: **WORK IN PROGRESS**, not READY for integration or gameplay.
 
 The focused worker branch is `feat/cleric-three-tier-buffs`. The owner requested
-implementation of the agreed nine god blessings plus unchanged Unify with its
-new flat Grace cost. Strengths, duration and exact mixed sigil costs are awaiting
-the manager's pending owner answer. No proposed values were locked in here.
+implementation of the agreed nine god blessings plus Unify. The owner has now
+requested design review before dependent numerical implementation: first power
+strengths and inherited P6 combinations, then Greater Unify, then return to
+debuff design. This does not abandon the buff implementation. Strengths,
+duration and mixed god/purpose costs remain unapproved; no proposed values were
+locked in here. Base Unify costs two Grace; exactly one Greater Unify upgrade
+is confirmed at six Grace per cast, with final grade/unlock/radius/movement
+budget still awaiting review.
 
 Independent foundation completed:
 
@@ -32,9 +37,24 @@ ClericSpellCatalog must be replaced during active-catalog migration. No buffs,
 costs, strength constants, periodic schedule or gameplay hooks have been replaced
 yet. The nine new symbols are reserved but not yet exposed/castable.
 
-Resume after the owner balance/cost answer:
+Current review checklist (documentation only; no new gameplay/source changes):
 
-1. Populate the active10-definition catalog and exact flat mixed-resource vectors;
+- Universal thresholds/caps resolve rank, not one universal effect coefficient.
+  Review each component's base/increment or authored table. Standalone Tier 1
+  caps at P2; its inherited component can reach P6 within Tier 3. Saradomin's
+  confirmed P+1 formulas stand; other 3P/2P/P proposals remain proposals.
+- God buff/future debuff radii are 2/3/4, tier+1, not Holy Power scaling.
+- Greater Unify is one upgrade, six Grace (same eventual grade as base), no god
+  or Holy Power scaling. Radius 5/max three safe steps/stopping within 2 is the
+  recommendation, not finalized movement. Base remains radius 4/two steps/two Grace.
+- Future Guthix debuffs: poison/summon/recoil weaknesses. Poison's 10%+5%(P−1)
+  example and rounding/cleansing direction are recorded in the active concept;
+  no hostile coefficients, caps, stacking/lifecycle or PvP policy are finalized.
+
+Resume implementation after the owner balance/cost and Greater Unify review:
+
+1. Populate the active 11-definition catalog (nine god blessings, Unify and Greater
+   Unify) and exact flat mixed-resource vectors;
    retire all legacy requests except Unify without reusing their codes.
 2. Replace timed catalog with per-god composite snapshots, safe refresh cadence,
    delayed healing/restoration schedule and complete lifecycle admission.
