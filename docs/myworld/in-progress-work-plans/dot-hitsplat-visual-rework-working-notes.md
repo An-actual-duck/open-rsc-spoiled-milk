@@ -192,3 +192,64 @@ Validation for this increment:
 No comparison regeneration or Library replacement was needed: both explicit
 styles are visually unchanged, and their saved identities above remain current.
 No new playback claim, service, final acceptance or READY transition is implied.
+
+
+## Authorized private in-game review, October 31, 2026
+
+Justin requested launching a private server/client to inspect the implementation.
+The assignment explicitly permits an isolated private setup on fresh test data
+and unused localhost ports, without another Core review. No manager was contacted.
+
+Running snapshot: `feat/hitsplat-visual-rework` code commit
+`6d856b5ee6b2aeac5c77b6f0bf8f927bb644afed`.
+Runtime: `/tmp/spoiled-milk-hitsplat-review-qn22pbsi`.
+Server PID `3903299`; client PID `3903365`. Both have their own dedicated GNOME
+terminal, titled `PRIVATE HIT-NUMBER SERVER :43825` and
+`PRIVATE HIT-NUMBER CLIENT :43825`. The matching OpenGL desktop client is open.
+Endpoint: **127.0.0.1:43825** only; WebSockets disabled (43826 not listening).
+No firewall, router, system security or public-network settings changed.
+
+The runtime contains copies of this branch's compiled artifacts and selected
+tracked dependencies, not an owner runtime, credentials or account database.
+It uses the shipped classic terrain/map archives with installed layered/native
+map authority disabled. The owner installed map/export, custom landscape and
+saved authored placement overrides were excluded. The empty tracked seed had
+zero players. A private account now exists after the client was opened; do not
+reuse or manipulate owner/live account data.
+
+Eight fresh fixed NPC fixture records at `x=300+2*index,y=750` satisfy existing
+Monster Slayer startup references: IDs `846,847,848,849,850,862,809,844`. They are
+synthetic test placements, not copied from owner placements. Base stock locations
+remain available for ordinary combat; this is not a test of the owner map/tower.
+No forbidden export or import was retried.
+
+Initial launch failures were confined to this new runtime and preserved under
+`logs/`: the first used incompatible fat-JAR dependency precedence under Java 21;
+subsequent fixture attempts lacked required custom-NPC catalog references. Each
+owned private process was stopped before correction. Final launch uses the
+repository's Java 8 runtime and documented server classpath precedence, and the
+full world/Monster Slayer/plugins load without errors. Project code was not
+changed for these runtime fixes.
+
+Verified: both process working directories match the isolated tree; the listener
+is loopback-only; private TCP accepts a connection; client logs `Got server
+configs!` from the private endpoint, initializes its OpenGL primary window and
+enters world-region rendering. The public server PID/43605 listener remain
+unchanged. Logs and file hashes are in runtime `logs/` and
+`review-manifest.json`; a manifest copy is also at
+`/home/justin/Documents/Codex/2026-10-31/task/hitsplat-private-review-manifest.json`.
+This proves startup/connection, not Justin's visual acceptance.
+
+For inspection, use the already-open private desktop client. Register a fresh
+character if needed, then use Options → General → Interface → Hit number style.
+The first live scene/rendering/overlap review is now for Justin to perform.
+No acceptance or overall completion signal has been received.
+
+To stop safely after review: close the private client, then Ctrl-C only in its
+`PRIVATE HIT-NUMBER SERVER :43825` terminal. Alternatively execute
+`python3 /tmp/spoiled-milk-hitsplat-review-qn22pbsi/stop-private-review.py`, which
+checks each exact PID's working directory and command before SIGTERM. Do not
+signal any other server. The isolated start scripts may be reused only after the
+current copies have stopped; preserve this directory/private database rather
+than treating ignored or temporary paths as disposable. Running processes are
+intentionally left up for the user's inspection. Assignment remains ACTIVE.
