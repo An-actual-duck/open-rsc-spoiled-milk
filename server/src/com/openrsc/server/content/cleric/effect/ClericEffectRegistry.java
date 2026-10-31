@@ -46,6 +46,38 @@ public final class ClericEffectRegistry implements TransientEffectState {
 	private final EnumMap<ClericEffectFamily, Integer> fractionalHundredths =
 		new EnumMap<ClericEffectFamily, Integer>(ClericEffectFamily.class);
 
+    private final EnumMap<ClericEffectFamily,Long> nextPeriodic = new EnumMap<ClericEffectFamily,Long>(ClericEffectFamily.class);
+    private java.util.function.Consumer<ClericEffectEntry> periodicListener;
+    private boolean settlingPeriodic;
+    public synchronized void setPeriodicListener(java.util.function.Consumer<ClericEffectEntry> listener) {
+        if (periodicListener != null && periodicListener != listener) throw new IllegalStateException("Periodic owner already installed");
+        periodicListener=listener;
+    }
+    private long periodNanos(ClericEffectRankDefinition<?> definition) {
+        if (!(definition.getMagnitude() instanceof ClericBlessingMagnitude)) return 0;
+        ClericBlessingMagnitude m=(ClericBlessingMagnitude)definition.getMagnitude();
+        int seconds=m.healingPerPulse()>0?6:m.restoreIntervalSeconds();
+        return seconds*1_000_000_000L;
+    }
+
+    private final Map<String,Integer> componentCarry = new java.util.HashMap<String,Integer>();
+    private void clearComponentCarry(ClericEffectFamily family){
+        String prefix=family.getKey()+":";
+        componentCarry.keySet().removeIf(key->key.startsWith(prefix));
+    }
+    public synchronized int accumulateComponentPercent(ClericEffectFamily family,int component,int amount,
+            ClericEffectOriginValidator validator){
+        purgeInvalidLocked(clock.nanoTime(),validator);
+        ClericEffectEntry entry=entries.get(family);
+        if(entry==null || amount<=0 || !(entry.getDefinition().getMagnitude() instanceof ClericBlessingMagnitude))return 0;
+        ClericBlessingMagnitude m=(ClericBlessingMagnitude)entry.getDefinition().getMagnitude();
+        int percent=component==7?m.dealtDamagePercent():component==8?m.lifestealPercent():component==9?m.reflectPercent():0;
+        if(percent<=0)return 0;
+        String key=family.getKey()+":"+component;
+        long total=(long)amount*percent+(componentCarry.containsKey(key)?componentCarry.get(key):0);
+        componentCarry.put(key,(int)(total%100));return (int)Math.min(Integer.MAX_VALUE,total/100);
+    }
+
 	public ClericEffectRegistry(ClericEffectClock clock) {
 		if (clock == null) {
 			throw new IllegalArgumentException("Cleric effect clock is required");
@@ -76,9 +108,13 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		} catch (ArithmeticException ex) {
 			throw new IllegalStateException("Cleric effect deadline overflow", ex);
 		}
-		entries.put(definition.getFamily(), new ClericEffectEntry(definition, origin,
+		long period=periodNanos(definition);
+        if(period>0 && !nextPeriodic.containsKey(definition.getFamily())) nextPeriodic.put(definition.getFamily(),Math.addExact(nowNanos,period));
+        if(period==0) nextPeriodic.remove(definition.getFamily());
+        entries.put(definition.getFamily(), new ClericEffectEntry(definition, origin,
 			nowNanos, expiresAtNanos, definition.getInitialCounter()));
 		fractionalHundredths.remove(definition.getFamily());
+        clearComponentCarry(definition.getFamily());
 		return result;
 	}
 
@@ -192,6 +228,8 @@ public final class ClericEffectRegistry implements TransientEffectState {
 		}
 		entries.remove(family);
 		fractionalHundredths.remove(family);
+        nextPeriodic.remove(family);
+        clearComponentCarry(family);
 		return true;
 	}
 
@@ -248,6 +286,8 @@ public final class ClericEffectRegistry implements TransientEffectState {
 	public synchronized int clearAll() {
 		int removed = entries.size();
 		entries.clear();
+        nextPeriodic.clear();
+        componentCarry.clear();
 		fractionalHundredths.clear();
 		return removed;
 	}
@@ -265,6 +305,8 @@ public final class ClericEffectRegistry implements TransientEffectState {
 			ClericEffectEntry entry = iterator.next().getValue();
 			if (entry.getOrigin().originatedFrom(casterSession, casterMembership)) {
 				fractionalHundredths.remove(entry.getDefinition().getFamily());
+                nextPeriodic.remove(entry.getDefinition().getFamily());
+                clearComponentCarry(entry.getDefinition().getFamily());
 				iterator.remove();
 				removed++;
 			}
@@ -324,12 +366,35 @@ public final class ClericEffectRegistry implements TransientEffectState {
 	}
 
 	private void purgeInvalidLocked(long nowNanos, ClericEffectOriginValidator validator) {
+        // Settle one scheduled periodic action before expiration is purged. At the exact
+        // 60s endpoint (or its first scheduler tick) this preserves pulse10 without
+        // allowing attacks/defenses to use an expired blessing or catch-up heal bursts.
+        if(!settlingPeriodic && periodicListener!=null){
+            settlingPeriodic=true;
+            try{
+                for(ClericEffectEntry entry:new ArrayList<ClericEffectEntry>(entries.values())){
+                    ClericEffectFamily family=entry.getDefinition().getFamily();Long due=nextPeriodic.get(family);
+                    if(due!=null && due<=nowNanos && due<=entry.getExpiresAtNanos()
+                        && nowNanos<=entry.getExpiresAtNanos()+clock.getGameTickMilliseconds()*1_000_000L
+                        && validator.isCurrent(entry.getOrigin())){
+                        long period=periodNanos(entry.getDefinition());
+                        long next=Math.addExact(due,period);
+                        if(next<=nowNanos) next=Math.addExact(nowNanos,period);
+                        nextPeriodic.put(family,next);
+                        periodicListener.accept(entry);
+                    }
+                }
+            }finally{settlingPeriodic=false;}
+        }
+
 		Iterator<Map.Entry<ClericEffectFamily, ClericEffectEntry>> iterator =
 			entries.entrySet().iterator();
 		while (iterator.hasNext()) {
 			ClericEffectEntry entry = iterator.next().getValue();
 			if (entry.isExpired(nowNanos) || !validator.isCurrent(entry.getOrigin())) {
 				fractionalHundredths.remove(entry.getDefinition().getFamily());
+                nextPeriodic.remove(entry.getDefinition().getFamily());
+                clearComponentCarry(entry.getDefinition().getFamily());
 				iterator.remove();
 			}
 		}

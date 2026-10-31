@@ -406,14 +406,9 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 						builder.writeByte((byte) definition.getRadius());
 						builder.writeByte((byte) (definition.affectsCaster() ? 1 : 0));
 						builder.writeShort(definition.getPresentation().getSpellbookIconItemId());
-						builder.writeShort(ClericSigilItemId.get(ClericSigilMaterial.STONE,
-							definition.getAlignment(), true).getItemId());
-						builder.writeByte((byte) definition.getPrimarySigilCost()
-							.getCount(ClericSigilMaterial.STONE));
-						builder.writeShort(ClericSigilItemId.get(ClericSigilMaterial.SILVER,
-							definition.getAlignment(), true).getItemId());
-						builder.writeByte((byte) definition.getPrimarySigilCost()
-							.getCount(ClericSigilMaterial.SILVER));
+                        java.util.List<com.openrsc.server.content.cleric.ClericResourceCost> costs=definition.getResourceCosts();
+                        builder.writeByte((byte)costs.size());
+                        for(com.openrsc.server.content.cleric.ClericResourceCost cost:costs){builder.writeShort(cost.getItemId());builder.writeByte((byte)cost.getCount());}
 						builder.writeInt(definition.getPresentation().getCasterIconItemId());
 						builder.writeInt(definition.getPresentation().getCasterAnimationId());
 						builder.writeString(definition.getPresentation().getStatusIconAssetKey());
@@ -435,6 +430,10 @@ public class PayloadCustomGenerator implements PayloadGenerator<OpcodeOut> {
 							builder.writeShort(rank.getInitialCounter());
 							builder.writeShort(presentationKind.getPrimaryMagnitude(rank.getMagnitude()));
 							builder.writeShort(presentationKind.getSecondaryMagnitude(rank.getMagnitude()));
+                            java.util.List<com.openrsc.server.content.cleric.effect.ClericBlessingComponent> components=((com.openrsc.server.content.cleric.effect.ClericBlessingMagnitude)rank.getMagnitude()).components();
+                            builder.writeByte((byte)components.size());
+                            for(com.openrsc.server.content.cleric.effect.ClericBlessingComponent component:components){builder.writeByte((byte)component.getKind());builder.writeShort(component.getMagnitude());builder.writeShort(component.getParameter1());builder.writeShort(component.getParameter2());}
+
 						}
 					}
 					break;

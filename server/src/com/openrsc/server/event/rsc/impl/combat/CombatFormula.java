@@ -90,6 +90,7 @@ public class CombatFormula {
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
+        if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
 		int damage = rollPlayerCrit(source, attackMax) ? attackMax
 			: applyMitigationRoll(source, victim, attackMax, defenseMax, directAttack);
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.MAGIC);
@@ -111,6 +112,7 @@ public class CombatFormula {
 		int spellMax = Math.max(1, (int) Math.ceil(spellPower));
 		int offenseBonus = offenseBonus(source, source.getMagicOffense());
 		int attackMax = applyOutgoingMaxHitDebuff(source, spellMax + offenseBonus);
+        if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
 		int defenseMax = defenseToMitigation(victim.getMagicDefense());
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
 		int damage = rollPlayerCrit(source, cappedAttackMax) ? cappedAttackMax
@@ -249,7 +251,8 @@ public class CombatFormula {
 
 	private static int doMeleeDamage(final Mob source, final Mob victim,
 			final boolean directAttack, final int capDivisor) {
-		final int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense())) / capDivisor;
+		int attackMax = getDragonBreathMainAttackMax(source, offenseToMaxHit(source, source.getMeleeOffense())) / capDivisor;
+        if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
 		int damage = rollPlayerCrit(source, attackMax) ? attackMax
 			: applyMitigationRoll(source, victim, attackMax,
 				defenseToMitigation(victim.getMeleeDefense()), directAttack);
@@ -279,6 +282,7 @@ public class CombatFormula {
 			attackMax *= 2;
 		}
 		attackMax = getDragonBreathMainAttackMax(source, bowId, arrowId, attackMax);
+        attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
 		int damage = rollPlayerCrit(source, attackMax) ? attackMax : applyMitigationRoll(source, victim, attackMax, defenseToMitigation(victim.getRangedDefense()));
 		damage = applyMyWorldPrayerModifiers(source, victim, damage, PrayerCatalog.CombatStyle.RANGED);
 		return applyDamageMultiplier(source, damage);

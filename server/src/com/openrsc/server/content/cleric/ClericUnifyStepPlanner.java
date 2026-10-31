@@ -6,26 +6,31 @@ import java.util.List;
 
 /** Pure, bounded step selection for Unify; it never mutates or teleports a mob. */
 public final class ClericUnifyStepPlanner {
-	public static final int SETTLED_RADIUS = 4;
+	public static final int SETTLED_RADIUS = 3;
 	public static final int SETTLED_SAFE_RADIUS = 2;
-	public static final int MAXIMUM_STEPS = 2;
+	public static final int MAXIMUM_STEPS = 1;
 
 	private ClericUnifyStepPlanner() {
 	}
 
 	public static List<Step> plan(final int startX, final int startY,
 			final int casterX, final int casterY, final Traversability traversability) {
+        return plan(startX,startY,casterX,casterY,SETTLED_RADIUS,MAXIMUM_STEPS,traversability);
+    }
+    public static List<Step> plan(final int startX, final int startY,
+            final int casterX, final int casterY, final int radius, final int maximumSteps,
+            final Traversability traversability) {
 		if (traversability == null) {
 			throw new IllegalArgumentException("Unify traversability is required");
 		}
-		final List<Step> steps = new ArrayList<Step>(MAXIMUM_STEPS);
+		final List<Step> steps = new ArrayList<Step>(maximumSteps);
 		int currentX = startX;
 		int currentY = startY;
-		if (chebyshevDistance(currentX, currentY, casterX, casterY) > SETTLED_RADIUS) {
+		if (chebyshevDistance(currentX, currentY, casterX, casterY) > radius) {
 			return Collections.emptyList();
 		}
 
-		while (steps.size() < MAXIMUM_STEPS
+		while (steps.size() < maximumSteps
 			&& chebyshevDistance(currentX, currentY, casterX, casterY) > SETTLED_SAFE_RADIUS) {
 			final int stepX = Integer.compare(casterX, currentX);
 			final int stepY = Integer.compare(casterY, currentY);

@@ -26,7 +26,8 @@ public enum ClericSpellId {
     GUTHIX_VENGEANCE(17, "cleric.guthix_vengeance"),
     ZAMORAK_FERVOR(18, "cleric.zamorak_fervor"),
     ZAMORAK_FURY(19, "cleric.zamorak_fury"),
-    ZAMORAK_WRATH(20, "cleric.zamorak_wrath");
+    ZAMORAK_WRATH(20, "cleric.zamorak_wrath"),
+    GREATER_UNIFY(21, "cleric.greater_unify");
 
 	private static final Map<Integer, ClericSpellId> BY_CODE;
 	private static final Map<String, ClericSpellId> BY_KEY;
@@ -64,7 +65,7 @@ public enum ClericSpellId {
 
     /** Legacy identities retain their codes but cannot be cast from the active book. */
     public boolean isBlessing() { return code >= 12 && code <= 20; }
-    public boolean isActive() { return this == UNIFY || isBlessing(); }
+    public boolean isActive() { return this == UNIFY || this == GREATER_UNIFY || isBlessing(); }
 
 	public static ClericSpellId fromCode(int code) {
 		ClericSpellId spell = BY_CODE.get(code);

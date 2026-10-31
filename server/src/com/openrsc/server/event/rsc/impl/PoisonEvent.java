@@ -61,6 +61,7 @@ public class PoisonEvent extends GameTickEvent {
 			poisonDrain += player.getCarriedItems().getEquipment().getNatureCleansingPoisonDecayBonus();
 			poisonDrain += com.openrsc.server.content.monsterslayer.SlayerLeatherEffects.carapaceCleanse(player);
 			poisonDrain += com.openrsc.server.content.AntidoteCleansing.bonus(player);
+            poisonDrain += com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.poisonCleanse(player);
 		}
 		poisonPower = PoisonPowerReduction.remainingPower(poisonPower, poisonDrain);
 		mob.setPoisonDamage(poisonPower);

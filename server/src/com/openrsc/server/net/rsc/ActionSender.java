@@ -2258,7 +2258,7 @@ public class ActionSender {
 
 	/** Sends authoritative Cleric display metadata only to the maintained client. */
 	public static void sendClericSpellbook(Player player) {
-		if (!player.isUsingCustomClient()) {
+        if (!com.openrsc.server.net.rsc.ClericBlessingContract.supports(player.getClientVersion())) {
 			return;
 		}
 		ClericSpellbookStruct struct = new ClericSpellbookStruct();

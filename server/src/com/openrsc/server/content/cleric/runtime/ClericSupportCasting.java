@@ -34,7 +34,9 @@ public final class ClericSupportCasting {
 		if (caster == null || definition == null) {
 			throw new IllegalArgumentException("Cleric casting requires a player and definition");
 		}
-		if (!isImplemented(definition.getId())) {
+        if (caster.getSkills().getLevel(Skill.HITS.id())<=0 || isPvpContext(caster)
+            || caster.getSkills().getMaxStat(Skill.PRAYER.id()) < definition.getWorshipLevel()) return new CastResult(Outcome.NO_USEFUL_RECIPIENT,0);
+        if (!isImplemented(definition.getId())) {
 			return CastResult.notImplemented();
 		}
 
@@ -52,31 +54,11 @@ public final class ClericSupportCasting {
 				caster.getCarriedItems().getEquipment().getHolyPower()) : 0;
 		for (Player target : targets) {
 			final ClericCastTransaction.PreparedApplication application;
-			switch (definition.getId()) {
-				case UNIFY:
-					application = prepareUnify(target, caster);
-					break;
-				case PURIFY:
-					application = preparePurify(target, effectRank);
-					break;
-				case RESTORE:
-					application = prepareRestore(target, effectRank);
-					break;
-				case MEND:
-				case FERVOR:
-				case WARD:
-				case GREATER_MEND:
-				case ZEAL:
-				case THORNS:
-				case AEGIS:
-				case RALLY:
-				case RESPITE:
-					application = ClericTimedEffectRuntime.prepare(
-						caster, target, definition, effectRank);
-					break;
-				default:
-					throw new IllegalStateException("Unprepared implemented Cleric spell");
-			}
+            if (definition.getId() == ClericSpellId.UNIFY || definition.getId() == ClericSpellId.GREATER_UNIFY) {
+                application = prepareUnify(target, caster, definition);
+            } else {
+                application = ClericTimedEffectRuntime.prepare(caster,target,definition,effectRank);
+            }
 			applications.add(withOnEntityAnimation(target, definition, application));
 		}
 
@@ -117,20 +99,7 @@ public final class ClericSupportCasting {
 			|| player.getDuel().isDuelActive();
 	}
 
-	private static boolean isImplemented(final ClericSpellId spellId) {
-		return spellId == ClericSpellId.UNIFY
-			|| spellId == ClericSpellId.PURIFY
-			|| spellId == ClericSpellId.RESTORE
-			|| spellId == ClericSpellId.MEND
-			|| spellId == ClericSpellId.FERVOR
-			|| spellId == ClericSpellId.WARD
-			|| spellId == ClericSpellId.GREATER_MEND
-			|| spellId == ClericSpellId.ZEAL
-			|| spellId == ClericSpellId.THORNS
-			|| spellId == ClericSpellId.AEGIS
-			|| spellId == ClericSpellId.RALLY
-			|| spellId == ClericSpellId.RESPITE;
-	}
+    private static boolean isImplemented(final ClericSpellId id) { return id != null && id.isActive(); }
 
 	private static List<Player> snapshotPartyPlayers(Party party) {
 		final List<PartyPlayer> members = new ArrayList<PartyPlayer>(party.getPlayers());
@@ -144,11 +113,11 @@ public final class ClericSupportCasting {
 	}
 
 	private static ClericCastTransaction.PreparedApplication prepareUnify(
-			final Player recipient, final Player caster) {
+			final Player recipient, final Player caster, final ClericSpellDefinition definition) {
 		final Point start = recipient.getLocation();
 		final Point destination = caster.getLocation();
 		final List<ClericUnifyStepPlanner.Step> planned = ClericUnifyStepPlanner.plan(
-			start.getX(), start.getY(), destination.getX(), destination.getY(),
+			start.getX(), start.getY(), destination.getX(), destination.getY(), definition.getRadius(), definition.getId() == ClericSpellId.GREATER_UNIFY ? 3 : 1,
 			new ClericUnifyStepPlanner.Traversability() {
 				@Override
 				public boolean canStep(int startX, int startY, int destinationX, int destinationY) {
@@ -197,17 +166,11 @@ public final class ClericSupportCasting {
 			: IneffectiveApplication.INSTANCE;
 	}
 
-	private static Item[] createCost(ClericSpellDefinition definition) {
-		final List<Item> cost = new ArrayList<Item>(ClericSigilMaterial.values().length);
-		for (ClericSigilMaterial material : ClericSigilMaterial.values()) {
-			final int count = definition.getPrimarySigilCost().getCount(material);
-			if (count > 0) {
-				cost.add(new Item(ClericSigilItemId.get(
-					material, definition.getAlignment(), true).getItemId(), count));
-			}
-		}
-		return cost.toArray(new Item[cost.size()]);
-	}
+    private static Item[] createCost(ClericSpellDefinition definition) {
+        List<Item> cost=new ArrayList<Item>();
+        for(com.openrsc.server.content.cleric.ClericResourceCost resource:definition.getResourceCosts())cost.add(new Item(resource.getItemId(),resource.getCount(),false));
+        return cost.toArray(new Item[cost.size()]);
+    }
 
 	private static final class PlayerCandidateView
 			implements ClericSupportTargeting.CandidateView<Player> {
@@ -221,7 +184,7 @@ public final class ClericSupportCasting {
 
 		@Override
 		public boolean isEligibleRecipient(Player candidate) {
-			return candidate.getParty() == party
+			return candidate.getSkills().getLevel(Skill.HITS.id()) > 0 && candidate.getParty() == party
 				&& candidate.isLoggedIn()
 				&& !candidate.isRemoved()
 				&& !candidate.isUnregistering()
