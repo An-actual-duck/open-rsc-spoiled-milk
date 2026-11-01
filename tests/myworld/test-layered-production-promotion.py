@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import os
+import hashlib
+import importlib.util
 import json
 import re
 import subprocess
@@ -25,6 +27,28 @@ GENERATOR = ROOT / (
     "tools/layered-maps/src/com/openrsc/layeredmaps/"
     "PreservationTerrainPackageGenerator.java"
 )
+
+
+
+spec = importlib.util.spec_from_file_location("installed_selection", ROOT / "scripts/installed-map-selection.py")
+selection = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(selection)
+# This immutable historical product remains the deliberate no-selector fallback.
+# It is not the identity of whichever valid map PRIMARY currently selects.
+PINNED_FALLBACK = {
+    "SPOILED_MILK_LAYERED_PACKAGE_ID": "rsc-remastered.spoiled-milk-layered-world",
+    "SPOILED_MILK_LAYERED_PACKAGE_VERSION": "0.5.0",
+    "SPOILED_MILK_LAYERED_MANIFEST_SHA256": "f3489503d2c323e669ab3004345271c6137a58698cc8c0bf0b0fb2587eb52b29",
+    "SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT": "f699e5a37709a0f127d676d91f07f64e256825bef6d65a7a4ccd13c8310f3b75",
+    "SPOILED_MILK_LAYERED_TERRAIN_SECTORS": "1782",
+    "SPOILED_MILK_LAYERED_PLACEMENTS": "33545",
+}
+
+
+def run_library(command: str, *arguments: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(["bash", "-euc", 'source "$1"; shift; ' + command,
+                           "test", str(LAYERED_LIBRARY), *map(str, arguments)],
+                          cwd=ROOT, text=True, capture_output=True)
 
 
 def fail(message: str) -> None:
@@ -79,29 +103,30 @@ def test_hosted_profile_is_explicit() -> None:
         )
 
 
-def test_package_identity_has_one_source_of_release_truth() -> None:
-    library = read(LAYERED_LIBRARY)
+def test_selected_pair_and_pinned_fallback_have_distinct_authorities() -> None:
+    selected = selection.select(ROOT)
+    require(config_value(read(HOST_CONFIG), "layered_native_terrain_manifest_sha256")
+            == selected["manifestSha256"], "hosted manifest disagrees with exact selected source pair")
     profile = json.loads(read(INSTALLED_CLIENT_PROFILE))
-    require(
-        shell_constant(library, "SPOILED_MILK_LAYERED_PACKAGE_ID")
-        == profile["packageId"],
-        "release and installed-client package IDs disagree",
-    )
-    require(
-        shell_constant(library, "SPOILED_MILK_LAYERED_PACKAGE_VERSION")
-        == profile["packageVersion"],
-        "release and installed-client package versions disagree",
-    )
-    require(
-        shell_constant(library, "SPOILED_MILK_LAYERED_MANIFEST_SHA256")
-        == profile["manifestSha256"],
-        "release and installed-client manifest pins disagree",
-    )
-    require(
-        shell_constant(library, "SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT")
-        == profile["packageFingerprintSha256"],
-        "release and installed-client package fingerprints disagree",
-    )
+    for key in ("packageId", "packageVersion", "manifestSha256", "packageFingerprintSha256"):
+        require(profile[key] == selected[key], "installed-client selection disagrees for " + key)
+    library = read(LAYERED_LIBRARY)
+    for key, value in PINNED_FALLBACK.items():
+        require(shell_constant(library, key) == value, "historical fallback pin changed: " + key)
+    fallback = ROOT / "server/world-builder/packages" / PINNED_FALLBACK["SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT"] / "package"
+    _, fingerprint = selection.inventory(fallback)
+    require(fingerprint == PINNED_FALLBACK["SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT"],
+            "historical fallback inventory changed")
+    require(hashlib.sha256((fallback / "manifest.json").read_bytes()).hexdigest()
+            == PINNED_FALLBACK["SPOILED_MILK_LAYERED_MANIFEST_SHA256"], "historical fallback manifest changed")
+    with tempfile.TemporaryDirectory(prefix="layered-fallback-validation-") as temp:
+        result = run_library('layered_world_validate_package "$1" "$2" "$3"', ROOT, fallback, temp)
+        require(result.returncode == 0, "strict fallback validation failed:\n" + result.stdout + result.stderr)
+        # A selected edit must not silently replace the immutable fallback pin.
+        if selected["packageFingerprintSha256"] != fingerprint:
+            result = run_library('layered_world_validate_package "$1" "$2" "$3"',
+                                 ROOT, selected["serverPackage"], temp)
+            require(result.returncode != 0, "historical pin accepted a different selected package")
 
 
 def test_release_and_deployment_are_fail_closed() -> None:
@@ -201,60 +226,82 @@ def test_release_and_deployment_are_fail_closed() -> None:
         require(required in packager, f"layered release omits {required}")
 
 
-def test_generated_package_matches_runtime_pin() -> None:
+def test_promoted_package_matches_selected_source_pair() -> None:
     package = os.environ.get("SPOILED_MILK_LAYERED_PACKAGE", "")
     require(package != "", "test suite did not provide SPOILED_MILK_LAYERED_PACKAGE")
-    with tempfile.TemporaryDirectory(prefix="layered-production-validation-") as temp:
-        script = (
-            f'source "{LAYERED_LIBRARY}"; '
-            f'layered_world_validate_package "{ROOT}" "{package}" "{temp}"'
-        )
-        result = subprocess.run(
-            ["bash", "-c", script],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-        )
-    require(
-        result.returncode == 0,
-        "generated package does not match the production pin:\n"
-        + result.stdout
-        + result.stderr,
-    )
-
+    selected = selection.select(ROOT)
+    _, fingerprint = selection.inventory(Path(package))
+    require(fingerprint == selected["packageFingerprintSha256"], "promoted package differs from selected source inventory")
+    require(hashlib.sha256((Path(package) / "manifest.json").read_bytes()).hexdigest()
+            == selected["manifestSha256"], "promoted package manifest differs from selected source")
+    with tempfile.TemporaryDirectory(prefix="layered-selected-validation-") as temp:
+        result = run_library('layered_world_selected_pair "$1" "$2"', ROOT, temp)
+        require(result.returncode == 0, "selected package runtime-format validation failed:\n" + result.stdout + result.stderr)
+        require(json.loads(result.stdout) == selected, "selected source changed during validation")
     generation_report = Path(package).parent / "generation-report.json"
-    approval = subprocess.run(
-        [
-            "bash",
-            "-c",
-            f'source "{LAYERED_LIBRARY}"; '
-            f'layered_world_require_promotion_approved "{generation_report}"',
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-    )
-    require(
-        approval.returncode == 0,
-        "release/deployment promotion gate did not accept the owner-approved package:\n"
-        + approval.stdout
-        + approval.stderr,
-    )
+    report = json.loads(read(generation_report))
+    require(report.get("reportType") == "source-selected-package-promotion",
+            "source-selected package lost its source-review promotion receipt")
+    for key in ("root", "packageId", "packageVersion", "manifestSha256", "packageFingerprintSha256"):
+        require(report.get(key) == selected[key], "promotion receipt selection mismatch: " + key)
+    approval = run_library('layered_world_require_promotion_approved "$1"', generation_report)
+    require(approval.returncode == 0, "source-reviewed promotion refused:\n" + approval.stdout + approval.stderr)
 
 
-def test_failed_generation_never_reuses_a_stale_package() -> None:
+def test_missing_malformed_and_unreviewed_promotion_refuse() -> None:
+    with tempfile.TemporaryDirectory(prefix="layered-promotion-guards-") as temp:
+        temp = Path(temp)
+        path = temp / "generation-report.json"
+        def approval(accepted):
+            result = run_library('layered_world_require_promotion_approved "$1"', path)
+            require((result.returncode == 0) == accepted, "promotion guard result differs:\n" + result.stdout + result.stderr)
+        approval(False)
+        path.write_text("{malformed")
+        approval(False)
+        approved = dict(contentTarget="spoiled-milk", reviewState="production-approved", runtimePromotionApproved=True)
+        path.write_text(json.dumps(approved)); approval(True)
+        for field, value in (("contentTarget", "preservation"), ("reviewState", "pending"),
+                             ("runtimePromotionApproved", False)):
+            path.write_text(json.dumps(dict(approved, **{field: value}))); approval(False)
+        root = temp / "source"; root.mkdir()
+        (root / "source.txt").write_text("reviewed source\n")
+        subprocess.run(["git", "init", "-q", str(root)], check=True)
+        subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(root), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                        "commit", "-qm", "reviewed fixture"], check=True)
+        head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+        selected = dict(reportType="source-selected-package-promotion", root=str(root), sourceCommit=head)
+        path.write_text(json.dumps(selected)); approval(True)
+        for field in ("root", "sourceCommit"):
+            malformed = dict(selected); del malformed[field]
+            path.write_text(json.dumps(malformed)); approval(False)
+        path.write_text(json.dumps(dict(selected, sourceCommit="0" * 40))); approval(False)
+        path.write_text(json.dumps(selected))
+        (root / "source.txt").write_text("unreviewed edit\n"); approval(False)
+        (root / "source.txt").write_text("reviewed source\n")
+        (root / "untracked.txt").write_text("unreviewed addition\n"); approval(False)
+
+
+def test_private_profile_uses_validated_package_identity() -> None:
+    selected = selection.select(ROOT)
+    fallback = ROOT / "server/world-builder/packages" / PINNED_FALLBACK["SPOILED_MILK_LAYERED_PACKAGE_FINGERPRINT"] / "package"
+    for package in (Path(selected["serverPackage"]), fallback):
+        manifest = hashlib.sha256((package / "manifest.json").read_bytes()).hexdigest()
+        result = run_library('layered_world_enable_private_production_profile "$1"; '
+                             'printf "%s\\n%s\\n" "$OPENRSC_LAYERED_NATIVE_TERRAIN_PACKAGE_PATH" '
+                             '"$OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256"', package)
+        require(result.returncode == 0, "private profile refused validated package:\n" + result.stdout + result.stderr)
+        require(result.stdout.splitlines() == [str(package), manifest], "private profile pinned another map: " + result.stdout)
+    with tempfile.TemporaryDirectory(prefix="layered-profile-missing-") as temp:
+        result = run_library('layered_world_enable_private_production_profile "$1"', temp)
+        require(result.returncode != 0, "private profile accepted a missing manifest")
+    require('"$OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256"' in read(RUN_PRIVATE),
+            "private banner prints a historical manifest instead of the selected export")
+
+
+def test_missing_pinned_input_never_reuses_a_stale_package() -> None:
     with tempfile.TemporaryDirectory(prefix="layered-stale-generation-") as temp:
         root = Path(temp) / "repository"
-        generator = root / "tools/layered-maps/layered-maps.sh"
-        generator.parent.mkdir(parents=True)
-        generator.write_text(
-            "#!/usr/bin/env bash\n"
-            "mkdir -p \"$LAYERED_MAPS_WORKSPACE/package\"\n"
-            "printf '{}\\n' > \"$LAYERED_MAPS_WORKSPACE/package/manifest.json\"\n"
-            "exit 3\n",
-            encoding="utf-8",
-        )
-        generator.chmod(0o755)
         workspace = Path(temp) / "workspace"
         (workspace / "package").mkdir(parents=True)
         (workspace / "package/manifest.json").write_text("{}\n", encoding="utf-8")
@@ -286,10 +333,10 @@ def test_failed_generation_never_reuses_a_stale_package() -> None:
         "requires a fresh workspace" in stale_result.stderr,
         "existing package did not trigger an explicit stale-workspace refusal",
     )
-    require(fresh_result.returncode != 0, "failed generator unexpectedly succeeded")
+    require(fresh_result.returncode != 0, "missing reviewed fallback input unexpectedly succeeded")
     require(
         "refusing all package output" in fresh_result.stderr,
-        "failed generator did not explicitly refuse failed-run package output",
+        "missing reviewed fallback input did not explicitly refuse package output",
     )
 
 
@@ -319,10 +366,12 @@ def test_shell_syntax() -> None:
 
 def main() -> None:
     test_hosted_profile_is_explicit()
-    test_package_identity_has_one_source_of_release_truth()
+    test_selected_pair_and_pinned_fallback_have_distinct_authorities()
     test_release_and_deployment_are_fail_closed()
-    test_generated_package_matches_runtime_pin()
-    test_failed_generation_never_reuses_a_stale_package()
+    test_promoted_package_matches_selected_source_pair()
+    test_missing_malformed_and_unreviewed_promotion_refuse()
+    test_private_profile_uses_validated_package_identity()
+    test_missing_pinned_input_never_reuses_a_stale_package()
     test_shell_syntax()
     print("PASS: layered-world production promotion is explicit and fail-closed")
 

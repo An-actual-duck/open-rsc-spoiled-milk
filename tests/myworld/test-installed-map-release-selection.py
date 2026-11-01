@@ -130,6 +130,36 @@ class InstalledReleaseTest(unittest.TestCase):
         (self.root / selection.PRIMARY).unlink()
         self.shell('layered_world_require_live_package "'+str(self.root)+'" "'+self.temp.name+'/external"', False)
 
+    def test_invalid_present_selector_and_missing_profile_never_use_pinned_fallback(self):
+        # A deliberately successful fallback double makes accidental fallback
+        # visible instead of merely failing later for an unrelated missing file.
+        command = ('layered_world_generate_pinned_package(){ echo UNEXPECTED-PINNED-FALLBACK; }; '
+                   'layered_world_generate_package "'+str(self.root)+'" "'+self.temp.name+'/promotion"')
+        primary = self.root / selection.PRIMARY
+        profile = self.root / selection.PROFILE
+        saved_primary, saved_profile = primary.read_bytes(), profile.read_bytes()
+        for invalid in (b"{malformed", b"{}"):
+            primary.write_bytes(invalid)
+            result = self.shell(command, False)
+            self.assertNotIn("UNEXPECTED-PINNED-FALLBACK", result.stdout)
+        primary.write_bytes(saved_primary)
+        profile.unlink()
+        result = self.shell(command, False)
+        self.assertNotIn("UNEXPECTED-PINNED-FALLBACK", result.stdout)
+        profile.write_bytes(saved_profile)
+        primary.unlink()
+        primary.symlink_to(self.root / "missing-primary")
+        result = self.shell(command, False)
+        self.assertNotIn("UNEXPECTED-PINNED-FALLBACK", result.stdout)
+
+    def test_parser_failure_cannot_enable_private_profile(self):
+        self.stub_parser('exit 7\n')
+        command = ('layered_world_enable_private_production_profile(){ echo UNEXPECTED-PRIVATE-PROFILE; }; '
+                   'package="$(layered_world_generate_package "'+str(self.root)+'" "'+self.temp.name+'/promotion")"; '
+                   'layered_world_enable_private_production_profile "$package"')
+        result = self.shell(command, False)
+        self.assertNotIn("UNEXPECTED-PRIVATE-PROFILE", result.stdout)
+
     def test_installed_marker_requires_exact_selection_no_jvm(self):
         observed = selection.select(self.root)
         command = 'layered_world_installed_marker_matches "'+str(self.root)+'" "'+observed['serverPackage']+'" "'+observed['manifestSha256']+'" "'+observed['selectionSha256']+'"'

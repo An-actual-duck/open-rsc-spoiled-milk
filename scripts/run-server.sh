@@ -39,7 +39,7 @@ myworld_print_server_launch_banner "PRIVATE SPOILED MILK DEV SERVER - NOT PUBLIC
 if [[ "$LAYERED_PRODUCTION_PROFILE" == true ]]; then
   printf 'Layered profile: world-builder-installed\n' >&2
   printf 'Layered world: %s\n' "$PRIVATE_LAYERED_PACKAGE" >&2
-  printf 'Layered manifest: %s\n' "$SPOILED_MILK_LAYERED_MANIFEST_SHA256" >&2
+  printf 'Layered manifest: %s\n' "$OPENRSC_LAYERED_NATIVE_TERRAIN_MANIFEST_SHA256" >&2
 fi
 myworld_prepare_generated_artifacts "$GENERATOR_MODE"
 myworld_write_launch_marker "PRIVATE SPOILED MILK DEV SERVER - NOT PUBLIC HOSTED ALPHA" "$SERVER_CONF"

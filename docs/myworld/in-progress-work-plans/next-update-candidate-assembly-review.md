@@ -134,3 +134,41 @@ remain pending. Provisional private `v0.3.0-alpha.1` is not a final public tag o
 beta decision. Mystic/Fierce dragons, Corporeal Beast, Ante, Cleric Tier 4,
 Zamorak hostile activation and the larger half-tile redesign remain deferred.
 The already accepted concise Cleric UI is unchanged.
+
+
+## Follow-up: selected hosting and private launch identity
+
+The final manager pass found two remaining historical-pin assumptions in tests.
+`test-hosted-alpha-config.py` now obtains the current manifest from the strict
+selected pair rather than requiring the old fallback literal.
+`test-layered-production-promotion.py` separately verifies the current
+source-selected pair/promotion and the unchanged historical fallback's six
+identity/count constants, exact inventory and maintained package validation.
+It requires the generated `SPOILED_MILK_LAYERED_PACKAGE` environment input and a
+fresh matching source-review receipt; no dirty-source approval bypass is added.
+
+The same audit reproduced a real private launch issue: after generating the new
+selected package, `layered_world_enable_private_production_profile` exported the
+old fallback manifest. That route would pair the new package path with the wrong
+hash. The helper now derives the manifest hash from the exact package that the
+caller just validated/generated, rejecting a missing/unreadable hash before
+exporting profile flags. The private launch banner reports that exported identity.
+The strict pinned fallback validator and hosted installed-source guards are
+unchanged. No server is launched by these tests.
+
+Additional negative coverage rejects malformed/missing/symlink selectors without
+entering an otherwise successful fallback, parser failures before private-profile
+enabling, missing manifests, missing/malformed/unreviewed promotion reports,
+changed source commits and dirty tracked/untracked source. Source-selected and
+historical fallback private-profile hashes are both exercised. The complete
+promotion fixture is run from a clean checkpoint using a freshly generated exact
+selected-package receipt, preserving the real clean-source approval requirement.
+Evidence and the final command results accompany the READY handoff under
+`output/next-update-candidate/hosting-validation/`.
+
+The nearest hosted safety/selection consumers retain their existing security
+checks. Historical native-package generation baselines and retired editor-draft
+fixture counts remain deliberate baseline tests rather than active map pins.
+This follow-up does not change the map, production Java/definitions, icons or
+public deployment. The manager's final clean-source release seal remains separate
+from this worker's tests while the owner completes Cleric artwork.
