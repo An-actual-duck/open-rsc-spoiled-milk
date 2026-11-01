@@ -337,10 +337,10 @@ public class PvmMeleeEvent extends GameTickEvent {
 			final Player targetPlayer = (Player) targetMob;
 			final double recoilChance = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilChance();
 			if (recoilChance > 0.0D) {
-				final double recoilRoll = combatRandom().nextDouble();
+				final boolean recoilSuccess=com.openrsc.server.model.combat.CombatLuck.favorable(targetPlayer,recoilChance,combatRandom()::nextDouble,()->combatRandom().nextDouble()<recoilChance);
 				final int divisor = targetPlayer.getCarriedItems().getEquipment().getChaosRecoilDamageDivisor();
 				final int reflectedDamage = damage <= 0 ? 0 : Math.max(1, damage / divisor);
-				final boolean proc = recoilRoll < recoilChance;
+				final boolean proc = recoilSuccess;
 				if (proc && reflectedDamage > 0) {
 					inflictMeleeJewelryRecoilDamage(
 						targetMob, attackerMob, reflectedDamage);

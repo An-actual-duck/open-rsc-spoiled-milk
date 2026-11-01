@@ -75,7 +75,7 @@ public final class SlayerLeatherEffects {
         || attacker.isRemoved()) return;
     if (com.openrsc.server.model.combat.AttackState.hasDelay(
         attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY)) return;
-    if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
+    if (com.openrsc.server.model.combat.CombatLuck.favorable(wearer,0.10,()->wearer.getWorld().getServer().getCombatRandom().nextDouble(),()->wearer.getWorld().getServer().getCombatRandom().nextInt(100)<10)) {
       com.openrsc.server.model.combat.AttackState.delay(
           attacker, com.openrsc.server.model.combat.AttackCadenceState.Source.STICKY);
     }

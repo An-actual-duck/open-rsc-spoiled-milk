@@ -30,14 +30,23 @@ public final class CriticalHitResolver {
     return chance > 0 && random.getAsDouble() < chance;
   }
 
-  /** Cosmic remains the sole enabled modern source; its authored values and RNG are unchanged. */
-  public static AttackRoll cosmic(Mob source, int maximum, IntSupplier ordinaryRoll) {
-    double chance = source instanceof Player ? ((Player) source).getCosmicRobeCritChance() : 0;
-    return resolve(
-        maximum,
-        chance,
-        AttackRoll.Critical.COSMIC,
-        () -> source.getWorld().getServer().getCombatRandom().nextDouble(),
-        ordinaryRoll);
+  /** Current ordinary attacks have no enabled critical chance; normal maxima remain noncritical. */
+  public static AttackRoll ordinary(Mob source,int maximum,IntSupplier ordinaryRoll) {
+    return AttackRoll.normal(ordinaryRoll.getAsInt());
+  }
+
+  /** Retained zero-critical compatibility path; luck belongs to the named roll inside the supplier. */
+  @Deprecated
+  public static AttackRoll cosmic(Mob source,int maximum,IntSupplier ordinaryRoll) {
+    return ordinary(source,maximum,ordinaryRoll);
+  }
+
+  /** Future authored critical sources can benefit without enabling any current critical provider. */
+  public static AttackRoll resolve(Mob beneficiary,int maximum,double chance,AttackRoll.Critical provenance,
+      com.openrsc.server.runtime.GameRandom random,IntSupplier ordinaryRoll) {
+    if(Double.isNaN(chance)||chance<0||chance>1||provenance==null)throw new IllegalArgumentException("Invalid critical chance/provenance");
+    if(maximum>0&&chance>0&&provenance!=AttackRoll.Critical.NONE&&CombatLuck.roll(beneficiary,chance,random))
+      return AttackRoll.critical(maximum,provenance);
+    return AttackRoll.normal(ordinaryRoll.getAsInt());
   }
 }

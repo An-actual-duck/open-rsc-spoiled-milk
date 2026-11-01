@@ -29,7 +29,7 @@ public final class DivineRetribution {
 			return Result.noProc();
 		}
 		final double chance = getProcChance(incomingDamage);
-		if (DataConversions.getRandom().nextDouble() >= chance) {
+		if (!com.openrsc.server.model.combat.CombatLuck.favorable(defender,chance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<chance)) {
 			return Result.noProc();
 		}
 

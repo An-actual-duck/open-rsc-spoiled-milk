@@ -84,7 +84,7 @@ public class EntityHandler {
 		{"Earth", "earth", "Reduces earth magic damage by 2% per robe tier."},
 		{"Fire", "fire", "Reduces fire magic damage by 2% per robe tier."},
 		{"Body", "body", "Damage taken grants up to +1 weapon power per robe tier."},
-		{"Cosmic", "cosmic", "Grants 1% crit chance per robe tier."},
+		{"Cosmic", "cosmic", "Makes you 1% luckier in a fight per tier."},
 		{"Chaos", "chaos", "Adjacent enemies increase damage by 2% per robe tier."},
 		{"Nature", "nature", "Potions are 2% stronger and last 2% longer per robe tier."},
 		{"Law", "law", "Runecrafting yields 2% more runes per robe tier."},

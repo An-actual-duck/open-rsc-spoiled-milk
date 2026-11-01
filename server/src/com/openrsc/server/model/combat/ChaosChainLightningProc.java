@@ -31,7 +31,7 @@ public final class ChaosChainLightningProc {
 		Mob anchor = primaryTarget;
 		int damage = initialDamage(primaryDamage);
 		for (int hop = 0; hop < ChainLightningTraversalPolicy.MAX_HOPS; hop++) {
-			if (random.nextDouble() >= chance) break;
+			if (!CombatLuck.roll(source,chance,random)) break;
 			final Mob target = targetSelector.select(anchor);
 			if (target == null) break;
 			target.getUpdateFlags().setProjectile(new Projectile(anchor, target,

@@ -163,7 +163,10 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 	 * @throws SpellFailureException when player lacks the required runes to cast spell
 	 */
 	public static Set<Entry<Integer, Integer>> checkSpellRunes(Player player, SpellDef spell, boolean rollMagicCape) throws SpellFailureException {
-		if (rollMagicCape && SkillCapes.shouldActivate(player, ItemId.MAGIC_CAPE)) {
+        return checkSpellRunes(player,spell,rollMagicCape,false);
+    }
+    private static Set<Entry<Integer,Integer>> checkSpellRunes(Player player,SpellDef spell,boolean rollMagicCape,boolean combatLuck) throws SpellFailureException {
+		if (rollMagicCape && (combatLuck?SkillCapes.shouldActivateForCombat(player,ItemId.MAGIC_CAPE):SkillCapes.shouldActivate(player,ItemId.MAGIC_CAPE))) {
 			player.message("You manage to cast the spell without using any runes");
 			return null;
 		}
@@ -180,7 +183,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			}
 			int amountToConsume = e.getValue();
 			double preservationChance = getRuneNegationChance(player, e.getKey());
-			if (preservationChance > 0.0D && DataConversions.getRandom().nextDouble() < preservationChance) {
+			if (preservationChance > 0.0D && (combatLuck?com.openrsc.server.model.combat.CombatLuck.favorable(player,preservationChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<preservationChance):DataConversions.getRandom().nextDouble()<preservationChance)) {
 				amountToConsume = 0;
 			}
 			if (amountToConsume > 0) {
@@ -358,7 +361,8 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 		} else {
 			try {
 				runesToConsume = checkSpellRunes(
-					player, spell, magicCapeActivated == null);
+					player, spell, magicCapeActivated == null,
+                        producer.getKind()==com.openrsc.server.model.combat.ProjectileLaunchSnapshot.Kind.DAMAGING);
 			} catch (SpellFailureException failure) {
 				return null;
 			}
@@ -1727,7 +1731,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 				boolean setChasing = true;
 				Set<Entry<Integer, Integer>> necessaryRunes;
 				try {
-					necessaryRunes = checkSpellRunes(player, spell, true);
+					necessaryRunes = checkSpellRunes(player,spell,true,SpellClassification.isDamagingAttack(spellEnum));
 				} catch (SpellFailureException re) {
 					// magic cape effect did not roll out and
 					// player does not meet required spell runes
@@ -2209,16 +2213,16 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 							final int secondAdditionalDamage;
 							if (spellEnum == Spells.FIRE_STRIKE) {
 								firstDamage = 12;
-								secondAdditionalDamage = DataConversions.getRandom().nextInt(5); // 4 // max.
+								secondAdditionalDamage = com.openrsc.server.model.combat.CombatLuck.higher(getPlayer(),com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,()->DataConversions.getRandom().nextInt(5)); // 4 // max.
 							} else if (spellEnum == Spells.EARTH_STRIKE) {
 								firstDamage = 11;
-								secondAdditionalDamage = DataConversions.getRandom().nextInt(4); // 3 // max.
+								secondAdditionalDamage = com.openrsc.server.model.combat.CombatLuck.higher(getPlayer(),com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,()->DataConversions.getRandom().nextInt(4)); // 3 // max.
 							} else if (spellEnum == Spells.WATER_STRIKE) {
 								firstDamage = 10;
-								secondAdditionalDamage = DataConversions.getRandom().nextInt(3); // 2 // max.
+								secondAdditionalDamage = com.openrsc.server.model.combat.CombatLuck.higher(getPlayer(),com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,()->DataConversions.getRandom().nextInt(3)); // 2 // max.
 							} else {
 								firstDamage = 9;
-								secondAdditionalDamage = DataConversions.getRandom().nextInt(2); // 1 // max														// max.
+								secondAdditionalDamage = com.openrsc.server.model.combat.CombatLuck.higher(getPlayer(),com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,()->DataConversions.getRandom().nextInt(2)); // 1 // max														// max.
 							}
 							// Shout message from NPC when being maged
 							affectedMob.getUpdateFlags().setChatMessage(new ChatMessage(affectedMob, "Aaarrgh my head", getPlayer()));
@@ -2578,7 +2582,7 @@ public class SpellHandler implements PayloadProcessor<SpellStruct, OpcodeIn> {
 			target.applyPoison(advancedSpell ? 40 : 20, advancedSpell ? 80 : 40, caster);
 		} else {
 			final double chance = advancedSpell ? 0.50D : 0.25D;
-			if (DataConversions.getRandom().nextDouble() >= chance) {
+			if (!com.openrsc.server.model.combat.CombatLuck.favorable(caster,chance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<chance)) {
 				return;
 			}
 			target.applyPoison(advancedSpell ? 20 : 10, advancedSpell ? 40 : 20, caster);

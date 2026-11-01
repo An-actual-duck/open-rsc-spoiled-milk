@@ -40,7 +40,7 @@ public final class KingBlackDragonBreathFollowup {
 				|| !KING_BLACK_MARKER.equals(marker)) {
 			return false;
 		}
-		final int rolledDamage = random.nextIntInclusive(0, MAX_PROC_DAMAGE);
+		final int rolledDamage = CombatLuck.higher(source,random,()->random.nextIntInclusive(0,MAX_PROC_DAMAGE));
 		if (rolledDamage > 0) {
 			auxiliaryTrueDamage.apply(rolledDamage);
 		}

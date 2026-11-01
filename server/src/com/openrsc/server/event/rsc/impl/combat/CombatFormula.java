@@ -10,6 +10,7 @@ import com.openrsc.server.constants.Spells;
 import com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime;
 import com.openrsc.server.model.combat.AttackRoll;
 import com.openrsc.server.model.combat.CriticalHitResolver;
+import com.openrsc.server.model.combat.CombatLuck;
 import com.openrsc.server.model.entity.Mob;
 import com.openrsc.server.model.entity.npc.Npc;
 import com.openrsc.server.model.entity.player.Player;
@@ -93,7 +94,7 @@ public class CombatFormula {
         if(directAttack) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.MAGIC);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
-        CriticalHitResolver.cosmic(
+        CriticalHitResolver.ordinary(
             source,
             resolvedMaximum,
             () -> applyMitigationRoll(source, victim, resolvedMaximum, defenseMax, directAttack));
@@ -125,7 +126,7 @@ public class CombatFormula {
 		int cappedAttackMax = Math.max(1, (int) Math.ceil(attackMax * maxHitPercent));
     final int resolvedMaximum = cappedAttackMax;
     AttackRoll roll =
-        CriticalHitResolver.cosmic(
+        CriticalHitResolver.ordinary(
             source,
             resolvedMaximum,
             () -> applyMitigationRoll(source, victim, resolvedMaximum, defenseMax, directAttack));
@@ -141,7 +142,7 @@ public class CombatFormula {
 	 * @return The randomized value.
 	 */
 	public static int calculateGodSpellDamage(final Player source) {
-		return calculateMagicDamage(getGodSpellMax(source, false));
+		return CombatLuck.higher(source,ProductionGameRandom.INSTANCE,()->calculateMagicDamage(getGodSpellMax(source,false)));
 	}
 
 	public static int getGodSpellMax(final Player source, final boolean advancedSpell) {
@@ -275,7 +276,7 @@ public class CombatFormula {
         else if(directAttack && capDivisor==1) attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
-        CriticalHitResolver.cosmic(
+        CriticalHitResolver.ordinary(
             source,
             resolvedMaximum,
             () ->
@@ -324,7 +325,7 @@ public class CombatFormula {
         attackMax=com.openrsc.server.content.cleric.runtime.ClericDirectCombatRuntime.maximum(source,victim,attackMax,com.openrsc.server.model.combat.CombatStyle.RANGED);
     final int resolvedMaximum = attackMax;
     AttackRoll roll =
-        CriticalHitResolver.cosmic(
+        CriticalHitResolver.ordinary(
             source,
             resolvedMaximum,
             () ->
@@ -407,8 +408,7 @@ public class CombatFormula {
 	}
 
 	public static boolean rollElementalSwordProcChance(final Mob source) {
-		return combatRandom(source, null).nextDouble()
-			< (ELEMENTAL_SWORD_PROC_CHANCE_PERCENT / 100.0D);
+		return CombatLuck.roll(source,ELEMENTAL_SWORD_PROC_CHANCE_PERCENT/100.0D,combatRandom(source,null));
 	}
 
 	public static int rollElementalSwordProcDamage(final Mob source) {
@@ -418,7 +418,7 @@ public class CombatFormula {
 		final int attackMax = offenseToMaxHit(source, source.getMeleeOffense());
 		final int procMax = getElementalSwordProcMax(attackMax);
 		return procMax <= 0 ? 0
-			: combatRandom(source, null).nextIntInclusive(0, procMax);
+			: CombatLuck.higher(source,combatRandom(source,null),()->combatRandom(source,null).nextIntInclusive(0,procMax));
 	}
 
 	public static void applyElementalSwordProcDebuff(final Mob target, final int effectType) {
@@ -443,8 +443,7 @@ public class CombatFormula {
 		}
 		final Player player = (Player) source;
 		return player.getCarriedItems().getEquipment().hasEquipped(DEMON_PITCHFORK.id())
-			&& combatRandom(source, null).nextDouble()
-				< (DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT / 100.0D);
+			&& CombatLuck.roll(source,DEMON_PITCHFORK_HELL_BLAZE_PROC_CHANCE_PERCENT/100.0D,combatRandom(source,null));
 	}
 
 	public static int rollDemonPitchforkHellBlazeDamage() {
@@ -452,8 +451,7 @@ public class CombatFormula {
 	}
 
 	public static int rollDemonPitchforkHellBlazeDamage(final Mob source) {
-		return combatRandom(source, null).nextIntInclusive(
-			0, DEMON_PITCHFORK_HELL_BLAZE_MAX_HIT);
+		return CombatLuck.higher(source,combatRandom(source,null),()->combatRandom(source,null).nextIntInclusive(0,DEMON_PITCHFORK_HELL_BLAZE_MAX_HIT));
 	}
 
 	public static boolean usesDragonMeleeBreathWeapon(final Mob source) {
@@ -491,7 +489,7 @@ public class CombatFormula {
 	private static int rollDragonBreathDamage(final Mob source, final int attackMax) {
 		final int breathMax = getDragonBreathMax(attackMax);
 		return breathMax <= 0 ? 0
-			: combatRandom(source, null).nextIntInclusive(0, breathMax);
+			: CombatLuck.higher(source,combatRandom(source,null),()->combatRandom(source,null).nextIntInclusive(0,breathMax));
 	}
 
 	private static int getDragonBreathMax(final int attackMax) {
@@ -552,6 +550,10 @@ public class CombatFormula {
 
 	private static int rollDamage(final Mob source, final int maxHit,
 			final boolean directAttack) {
+        if(maxHit<=0)return 0;
+        return CombatLuck.higher(source,combatRandom(source,null),()->rollDamageCandidate(source,maxHit,directAttack));
+    }
+    private static int rollDamageCandidate(final Mob source,final int maxHit,final boolean directAttack) {
 		if (maxHit <= 0) {
 			return 0;
 		}
@@ -613,7 +615,7 @@ public class CombatFormula {
 			final int attackMax, final int defenseMax, final boolean directAttack) {
 		int offenseRoll = rollIncomingDamage(source, victim, attackMax, directAttack);
 		int defenseRoll = defenseMax <= 0 ? 0
-			: combatRandom(source, victim).nextIntInclusive(1, defenseMax);
+            : CombatLuck.higher(victim,combatRandom(source,victim),()->combatRandom(source,victim).nextIntInclusive(1,defenseMax));
 		return Math.max(offenseRoll - defenseRoll, 0);
 	}
 

@@ -2382,7 +2382,7 @@ public final class Player extends Mob {
 		final Point center = getLocation();
 		for (Npc npc : PlayerOwnedNpcRadiusSelection.aroundFixedPoint(
 				this, center, killed, radius)) {
-			final int damage = minDamage + DataConversions.getRandom().nextInt(maxDamage - minDamage + 1);
+			final int damage = com.openrsc.server.model.combat.CombatLuck.higher(this,com.openrsc.server.runtime.ProductionGameRandom.INSTANCE,()->minDamage+DataConversions.getRandom().nextInt(maxDamage-minDamage+1));
 			final DamageRequest damageRequest = DamageRequest.resolvedLegacy(
 				this, npc, DamageRequest.SourceCategory.OWNED_EFFECT,
 				SecondaryEffectPolicy.PLAYER_DEATH_AMULET_BURST.getStableKey(),
@@ -2538,7 +2538,7 @@ public final class Player extends Mob {
 		final int currentHits = getSkills().getLevel(Skill.HITS.id());
 		final double procChance = getCarriedItems().getEquipment().getGoblinTenacityProcChance();
 		if (damage < currentHits || currentHits <= 1 || procChance <= 0.0D
-			|| DataConversions.getRandom().nextDouble() >= procChance) {
+			|| !com.openrsc.server.model.combat.CombatLuck.favorable(this,procChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<procChance)) {
 			return damage;
 		}
 		message("@yel@Goblin's Tenacity keeps you standing.");
@@ -2603,7 +2603,7 @@ public final class Player extends Mob {
 
 	public void applyElementalGiantMightDebuff(final Mob target) {
 		final double chance = getCarriedItems().getEquipment().getElementalGiantMightProcChance();
-		if (target == null || chance <= 0.0D || DataConversions.getRandom().nextDouble() >= chance) {
+		if (target == null || chance <= 0.0D || !com.openrsc.server.model.combat.CombatLuck.favorable(this,chance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<chance)) {
 			return;
 		}
 		if (hasFullMossGiantSet()) {
@@ -2790,15 +2790,17 @@ public final class Player extends Mob {
 		return Math.min(1.0D, getCarriedItems().getEquipment().getSoulRobeTierTotal() * 0.02D);
 	}
 
-	public double getCosmicRobeCritChance() {
-		return Math.min(0.50D, getCarriedItems().getEquipment().getCosmicRobeTierTotal() * 0.01D);
-	}
+    public double getCombatLuckChance() {
+        return Math.min(0.50D,getCarriedItems().getEquipment().getCosmicRobeTierTotal()*0.01D);
+    }
 
-	public boolean rollCosmicRobeCrit() {
-		final double chance = getCosmicRobeCritChance();
-		return com.openrsc.server.model.combat.CriticalHitResolver.rollChance(chance,
-            () -> getWorld().getServer().getCombatRandom().nextDouble());
-	}
+    /** Retired compatibility accessor: Cosmic robes no longer supply any critical chance. */
+    @Deprecated
+    public double getCosmicRobeCritChance() { return 0.0D; }
+
+    /** Retired compatibility roll; no active chance or RNG consumption remains here. */
+    @Deprecated
+    public boolean rollCosmicRobeCrit() { return false; }
 
 	public double getChaosRobeSurroundedDamageMultiplier() {
 		final int tierTotal = getCarriedItems().getEquipment().getChaosRobeTierTotal();
@@ -6590,6 +6592,7 @@ public final class Player extends Mob {
 			&& (!this.getLocation().inWilderness()
 			|| (this.getLocation().inWilderness() && this.getLocation().wildernessLevel() <= Constants.GLORY_TELEPORT_LIMIT))) {
 			if (((float) this.getSkills().getLevel(Skill.HITS.id())) / ((float) this.getSkills().getMaxStat(Skill.HITS.id())) <= 0.1f) {
+                final double luckBeforeReset=getCombatLuckChance();
 				this.resetCombatEvent();
 				this.resetRange();
 				this.resetAll();
@@ -6601,7 +6604,7 @@ public final class Player extends Mob {
 				this.teleportToConfiguredRespawn(false);
 				this.message("Your ring of life shines brightly");
 				final double survivalChance = EnchantingItemEffects.getSoulRingSurvivalChance(wornRing.getCatalogId());
-				if (DataConversions.getRandom().nextDouble() >= survivalChance) {
+				if (!com.openrsc.server.model.combat.CombatLuck.favorable(luckBeforeReset,survivalChance,()->DataConversions.getRandom().nextDouble(),()->DataConversions.getRandom().nextDouble()<survivalChance)) {
 					getCarriedItems().shatter(new Item(wornRing.getCatalogId()));
 				}
 				return true;

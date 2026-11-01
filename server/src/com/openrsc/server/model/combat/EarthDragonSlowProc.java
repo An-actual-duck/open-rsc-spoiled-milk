@@ -36,11 +36,11 @@ public final class EarthDragonSlowProc {
 		if (!source.hasFullEarthDragonSet()) {
 			return false;
 		}
-		if (random.nextDouble() >= PROC_CHANCE) {
+		if (!CombatLuck.roll(source,PROC_CHANCE,random)) {
 			return false;
 		}
 		final int rolledDamage =
-			random.nextIntInclusive(0, MAX_PROC_DAMAGE);
+			CombatLuck.higher(source,random,()->random.nextIntInclusive(0,MAX_PROC_DAMAGE));
 		if (rolledDamage > 0) {
 			auxiliaryTrueDamage.apply(rolledDamage);
 		}

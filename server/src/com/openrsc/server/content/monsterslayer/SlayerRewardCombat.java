@@ -52,7 +52,7 @@ public final class SlayerRewardCombat {
 			|| !legalSecondary((Player)source, target)) return;
 		WhipDelay old = whipState(target);
 		if (old != null && tick(target) < old.immuneUntil) return;
-    if (source.getWorld().getServer().getCombatRandom().nextInt(100) < 10) {
+    if (com.openrsc.server.model.combat.CombatLuck.favorable(source,0.10,()->source.getWorld().getServer().getCombatRandom().nextDouble(),()->source.getWorld().getServer().getCombatRandom().nextInt(100)<10)) {
       target.setAttribute(WHIP, new WhipDelay(target));
       AttackState.delay(target, AttackCadenceState.Source.WHIP);
     }
@@ -86,12 +86,12 @@ public final class SlayerRewardCombat {
 		if (actualDamage <= 0 || wearer == null || !wearer.getConfig().WANT_MYWORLD
 			|| !wearer.getCarriedItems().getEquipment().hasEquipped(MyWorldItemId.SULLEN_PENDANT)
 			|| !legalSecondary(wearer, attacker)) return false;
-		if (wearer.getWorld().getServer().getCombatRandom().nextInt(100) >= 10) return false;
+		if (!com.openrsc.server.model.combat.CombatLuck.favorable(wearer,0.10,()->wearer.getWorld().getServer().getCombatRandom().nextDouble(),()->wearer.getWorld().getServer().getCombatRandom().nextInt(100)<10)) return false;
 		wearer.message("Your Sullen Pendant cries out in pain!");
 		if (SlayerRewardBosses.isBoss(attacker)) {
       wearer.message("Is uneffected");
       return false; }
-		int percent = 1 + wearer.getWorld().getServer().getCombatRandom().nextInt(attacker.isPlayer() ? 5 : 10);
+		int percent = com.openrsc.server.model.combat.CombatLuck.higher(wearer,wearer.getWorld().getServer().getCombatRandom(),()->1+wearer.getWorld().getServer().getCombatRandom().nextInt(attacker.isPlayer()?5:10));
 		int damage = Math.max(1, (int)((long)attacker.getSkills().getMaxStat(Skill.HITS.id()) * percent / 100));
 		// Defense bypass is not immunity/mitigation bypass.
 		damage = DarkBeastCombat.mitigate(attacker, damage);

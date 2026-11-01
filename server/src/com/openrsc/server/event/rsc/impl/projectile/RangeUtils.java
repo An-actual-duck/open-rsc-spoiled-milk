@@ -397,16 +397,14 @@ public class RangeUtils {
     public static void applyPoison(Player player, Mob target, int arrowId) {
         final boolean isWeaponPoisoned = RangeUtils.POISONED_ITEMS.contains(arrowId);
         if (isWeaponPoisoned && target.isPlayer()) {
-            if (player.getWorld().getServer().getCombatRandom()
-                    .nextIntInclusive(1, 8) == 1) {
+            if (com.openrsc.server.model.combat.CombatLuck.favorable(player,1.0/8,()->player.getWorld().getServer().getCombatRandom().nextDouble(),()->player.getWorld().getServer().getCombatRandom().nextIntInclusive(1,8)==1)) {
                 poisonTarget(player, target, 20);
             }
         }
         // Poison Arrows/Bolts Ability to Poison an NPC
         if (player.getConfig().WANT_POISON_NPCS) {
             if (isWeaponPoisoned && target.isNpc()) {
-                if (player.getWorld().getServer().getCombatRandom()
-                        .nextIntInclusive(1, 50) == 1) {
+                if (com.openrsc.server.model.combat.CombatLuck.favorable(player,1.0/50,()->player.getWorld().getServer().getCombatRandom().nextDouble(),()->player.getWorld().getServer().getCombatRandom().nextIntInclusive(1,50)==1)) {
                     poisonTarget(player, target, 60);
                 }
             }
