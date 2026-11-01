@@ -1625,6 +1625,8 @@ public final class SkillGuideInterface {
 			skillMenuEntries.add(new SkillMenuItem(1027, "16", "Symbol of Zamorak"));
 			skillMenuEntries.add(new SkillMenuItem(3173, "16", "Symbol of Guthix"));
 			skillMenuEntries.add(new SkillMenuItem(285, "18", "Emerald Ring"));
+			skillMenuEntries.add(new SkillMenuItem(3431, "20", "3 Blank Silver Sigils - 1 silver bar and reusable sigil mould"));
+			skillMenuEntries.add(new SkillMenuItem(3432, "40", "3 Blank Moonsilver Sigils - 1 Moonsilver bar and sigil mould"));
 			skillMenuEntries.add(new SkillMenuItem(290, "22", "Emerald Necklace"));
 			skillMenuEntries.add(new SkillMenuItem(3283, "26", "Emerald Bangle"));
 			skillMenuEntries.add(new SkillMenuItem(286, "32", "Ruby Ring"));

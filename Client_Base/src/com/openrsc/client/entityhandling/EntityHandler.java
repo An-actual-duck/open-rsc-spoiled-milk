@@ -5906,8 +5906,8 @@ public class EntityHandler {
 			false, false, false, 3429));
 		setCustomItemDefinition(3430, new ItemDef(
 			"Moonsilver bar", "An alloy of silver and mithril, dark blue with a silvery sheen", "",
-			0, 79, "external-png:moonsilver-bar", false, false, 0, 0,
-			false, false, false, 3430));
+			450, 79, "external-png:moonsilver-bar", false, false, 0, 0,
+			false, false, true, 3430));
 		setCustomItemDefinition(3431, new ItemDef(
 			"Blank Silver Sigils", "A blank silver sigil ready to carve", "",
 			0, 134, "external-png:blank-silver-sigil@24x21", false, false, 0, 0,

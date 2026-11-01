@@ -424,9 +424,7 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 	}
 
 	private boolean makeSmeltingProduction(Player player, SmeltRecipe recipe, int requestedCount) {
-		if (recipe.barId == ClericMetalSigils.MOONSILVER_BAR && (!player.getConfig().WANT_MYWORLD
-			|| player.getClientLimitations().maxItemId < recipe.barId
-			|| (player.getConfig().RESTRICT_ITEM_ID >= 0 && player.getConfig().RESTRICT_ITEM_ID < recipe.barId))) return false;
+		if (recipe.barId == ClericMetalSigils.MOONSILVER_BAR && !canSmeltMoonsilver(player)) return false;
 		if (getCurrentLevel(player, Skill.SMITHING.id()) < recipe.requiredLevel) {
 			player.playerServerMessage(MessageType.QUEST,
 				"You need to be at least level-" + recipe.requiredLevel + " smithing to smelt "
@@ -460,6 +458,10 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			player.playerServerMessage(MessageType.QUEST, recipe.startMessage(player));
 			ActionSender.sendActionProgressBar(player, recipe.progressItemId(player), SMELTING_ACTION_DELAY_TICKS);
 			delay(SMELTING_ACTION_DELAY_TICKS);
+			if (recipe.barId == ClericMetalSigils.MOONSILVER_BAR && (ifinterrupted() || !canSmeltMoonsilver(player))) {
+				stopbatch();
+				break;
+			}
 			if (!recipe.consumeMaterials(player)) {
 				player.playerServerMessage(MessageType.QUEST, recipe.requirementMessage(player));
 				stopbatch();
@@ -499,6 +501,13 @@ public class Smelting implements OpLocTrigger, UseLocTrigger {
 			}
 		}
 		return made > 0;
+	}
+
+	private boolean canSmeltMoonsilver(Player player) {
+		return player.getConfig().WANT_MYWORLD && SigilMoulding.isAtFurnace(player)
+			&& getCurrentLevel(player, Skill.SMITHING.id()) >= ClericMetalSigils.MOONSILVER_SMITHING_LEVEL
+			&& player.getClientLimitations().maxItemId >= ClericMetalSigils.MOONSILVER_BAR
+			&& (player.getConfig().RESTRICT_ITEM_ID < 0 || player.getConfig().RESTRICT_ITEM_ID >= ClericMetalSigils.MOONSILVER_BAR);
 	}
 
 	private boolean natureRingSteadiesIronSmelt(Player player) {

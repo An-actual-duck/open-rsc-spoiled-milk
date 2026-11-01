@@ -55,7 +55,7 @@ public final class ClericMetalSigilFixture {
             h.world().getRegionManager().populateNativeLayeredPlacements();
             Player p=h.player("metal sigils",450,450);p.setClientVersion(10055);p.getClientLimitations().maxItemId=65535;h.recordOutgoingPackets(p);
             level(p,Skill.CRAFTING,99);level(p,Skill.SMITHING,99);level(p,Skill.BLESSING,99);
-            GameObject furnace=new GameObject(h.world(),Point.location(449,450),SceneryId.FURNACE.id(),0,0);
+            GameObject furnace=new GameObject(h.world(),Point.location(449,450),SceneryId.FURNACE.id(),0,0);furnace.setInitialLocation(Point.location(449,450));
             for(int blank:new int[]{3431,3432}) {
                 clear(p); int bar=blank==3431?384:3430; inv(p).add(new Item(bar));inv(p).add(new Item(3433));
                 ProductionSession session=menu(p,furnace);
@@ -88,7 +88,7 @@ public final class ClericMetalSigilFixture {
             check(run(h,p,()->p.teleport(455,455,false),()->SigilMoulding.beginProductionFromInterface(p,interrupted,3432,1)),"admitted delayed batch");
             check(count(p,3430)==1&&count(p,3432)==0,"movement during delay cancels without consumption");p.teleport(450,450,false);
             clear(p);inv(p).add(new Item(3430));inv(p).add(new Item(3433));ProductionSession missing=menu(p,furnace);
-            run(h,p,()->inv(p).remove(new Item(3433),false),()->SigilMoulding.beginProductionFromInterface(p,missing,3432,1));
+            run(h,p,()->inv(p).remove(inv(p).get(inv(p).getLastIndexById(3433,Optional.of(false))),false),()->SigilMoulding.beginProductionFromInterface(p,missing,3432,1));
             check(count(p,3430)==1&&count(p,3432)==0,"mould removed during delay cancels whole conversion");
             clear(p);inv(p).add(new Item(3430));inv(p).add(new Item(3430));inv(p).add(new Item(3433));ProductionSession batch=menu(p,furnace);
             final int[] pauses={0};run(h,p,()->{if(++pauses[0]==2)p.teleport(455,455,false);},()->SigilMoulding.beginProductionFromInterface(p,batch,3432,2));
@@ -99,16 +99,32 @@ public final class ClericMetalSigilFixture {
             clear(p);inv(p).add(new Item(3433));inv(p).getItems().add(new Item(3430,1,true));SigilMoulding.rememberFurnace(p,furnace);
             check(!SigilMoulding.mouldOne(p,material)&&count(p,3432)==0,"noted bar cannot be moulded");
 
+
+            clear(p);inv(p).add(new Item(384));inv(p).add(new Item(3433));
+            new com.openrsc.server.plugins.authentic.skills.crafting.Crafting().onUseLoc(p,furnace,inv(p).get(0));
+            ProductionSession silverMenu=p.getAttribute("production_session",null);
+            check(silverMenu.getRecipeByItemId(3431)!=null&&silverMenu.getRecipeByItemId(44)!=null,"using silver bar retains symbols and offers blanks");
+            check(!SigilMoulding.beginProductionFromInterface(p,silverMenu,3432,1)&&count(p,384)==1,"silver session cannot request Moonsilver output");
+            int beforeXp=p.getSkills().getExperience(Skill.CRAFTING.id());
+            check(run(h,p,()->{},()->com.openrsc.server.plugins.authentic.skills.crafting.Crafting.beginProductionFromInterface(p,silverMenu,3431,1)),"silver bar direct recipe delegates safely");
+            check(count(p,3431)==3&&count(p,384)==0&&p.getSkills().getExperience(Skill.CRAFTING.id())-beforeXp==40,"silver mould earns10displayedCraftingXP");
             // Ordinary furnace Bars menu actually smelts the existing silver/mithril bar pair.
             clear(p);inv(p).add(new Item(384));inv(p).add(new Item(173));new Smelting().onOpLoc(p,furnace,"Smelt");
             ProductionSession cats=p.getAttribute("production_session",null);Smelting.beginFurnaceCategoryFromInterface(p,cats,Smelting.FURNACE_CATEGORY_BARS,1);
             ProductionSession bars=p.getAttribute("production_session",null);check(bars.getRecipeByItemId(3430).getRequiredLevel()==38,"alloy appears at Smithing38");
+            check(bars.getRecipeByItemId(384).getIngredientItemIds()[0]==383&&bars.getRecipeByItemId(384).getRequiredLevel()==20,"ordinary raw silver smelting retained");
             check(run(h,p,()->{},()->Smelting.beginProductionFromInterface(p,bars,3430,1)),"native alloy recipe executes");
             check(count(p,384)==0&&count(p,173)==0&&count(p,3430)==1,"exact1silver+1mithril yields1Moonsilver");
             clear(p);inv(p).add(new Item(384));check(!Smelting.beginProductionFromInterface(p,bars,3430,1)&&count(p,384)==1,"missing alloy ingredient never partially consumed");
             clear(p);inv(p).add(new Item(384));inv(p).add(new Item(173));level(p,Skill.SMITHING,37);
             check(!Smelting.beginProductionFromInterface(p,bars,3430,1)&&count(p,384)==1&&count(p,173)==1,"underlevel alloy retains both bars");level(p,Skill.SMITHING,99);
 
+
+            clear(p);inv(p).add(new Item(384));inv(p).add(new Item(173));
+            check(!run(h,p,()->p.teleport(455,455,false),()->Smelting.beginProductionFromInterface(p,bars,3430,1)),"alloy movement cancellation reports no completed bar");
+            check(count(p,384)==1&&count(p,173)==1&&count(p,3430)==0,"alloy movement during delay retains both inputs");p.teleport(450,450,false);
+            p.getClientLimitations().maxItemId=3429;
+            check(!Smelting.beginProductionFromInterface(p,bars,3430,1)&&count(p,384)==1&&count(p,173)==1,"alloy output admission preserves both inputs");p.getClientLimitations().maxItemId=65535;
             SigilProduction carving=new SigilProduction();
             clear(p);inv(p).add(new Item(ItemId.CHISEL.id()));inv(p).add(new Item(383));
             check(!carving.blockUseInv(p,0,inv(p).get(0),inv(p).get(1)),"raw silver nugget no longer carves directly");
@@ -120,7 +136,7 @@ public final class ClericMetalSigilFixture {
             }
             for(ClericSigilItemId raw:ClericSigilProductionCatalog.getUnblessedIdentities(material))if(raw.getAlignment()!=ClericAlignment.NEUTRAL) {
                 clear(p);level(p,Skill.BLESSING,50);int altarId=raw.getAlignment()==ClericAlignment.SARADOMIN?19:raw.getAlignment()==ClericAlignment.GUTHIX?235:144;
-                GameObject altar=new GameObject(h.world(),Point.location(449,450),altarId,0,0);altar.setInitialLocation(altar.getLocation());
+                GameObject altar=new GameObject(h.world(),Point.location(449,450),altarId,0,0);altar.setInitialLocation(Point.location(449,450));
                 for(PrayerCatalog.GodLine god:PrayerCatalog.GodLine.values())Devotion.setDevotionLevel(p,god,500);
                 inv(p).add(new Item(raw.getItemId()));carving.onUseLoc(p,altar,inv(p).get(0));
                 check(count(p,raw.getItemId())==0&&count(p,raw.getItemId()+1)==2,"Moonsilver god altar retains50level duplication");
@@ -135,11 +151,27 @@ public final class ClericMetalSigilFixture {
             // Actual native packet admission: every missing part of a four-resource curse rejects without any spend/effect.
             Npc target=h.npc(3,451,450);ClericSpellDefinition curse=ClericSpellCatalog.fromCode(24);
             for(ClericResourceCost absent:curse.getResourceCosts()) {
-                clear(p);level(p,Skill.PRAYER,99);ClericBlessingsFixture.fund(p,curse);inv(p).remove(new Item(absent.getItemId(),100),false);
+                clear(p);level(p,Skill.PRAYER,99);ClericBlessingsFixture.fund(p,curse);p.getCarriedItems().remove(new Item[]{new Item(absent.getItemId(),100)},false);
                 ClericBlessingsFixture.packet(p,24);
                 for(ClericResourceCost cost:curse.getResourceCosts())check(count(p,cost.getItemId())==(cost.getItemId()==absent.getItemId()?0:100),"missing mixed cost refuses atomically");
                 check(ClericHostileRuntime.effect(target,ClericEffectFamily.GUTHIX_HOSTILE)==null,"missing mixed cost applies no curse");
             }
+
+            Player ally=h.player("sigil ally",450,451), second=h.player("sigil ally two",450,452);
+            h.recordOutgoingPackets(ally);h.recordOutgoingPackets(second);ClericBlessingsFixture.party(h,p,ally,second);
+            ClericSpellDefinition blessing=ClericSpellCatalog.fromCode(14);
+            for(ClericResourceCost absent:blessing.getResourceCosts()) {
+                clear(p);clear(ally);clear(second);level(p,Skill.PRAYER,99);ClericBlessingsFixture.fund(p,blessing);
+                p.getCarriedItems().remove(new Item[]{new Item(absent.getItemId(),100)},false);
+                ClericBlessingsFixture.packet(p,14);
+                for(ClericResourceCost cost:blessing.getResourceCosts())check(count(p,cost.getItemId())==(cost.getItemId()==absent.getItemId()?0:100),"missing blessing grade refuses atomically");
+                check(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.blessing(ally,ClericEffectFamily.SARADOMIN_BLESSING)==null,"missing grade applies no blessing");
+            }
+            clear(p);clear(ally);clear(second);level(p,Skill.PRAYER,99);ClericBlessingsFixture.fund(p,blessing);
+            ClericBlessingsFixture.packet(p,14);
+            for(ClericResourceCost cost:blessing.getResourceCosts())check(count(p,cost.getItemId())==99,"four-resource blessing cost spent once for multiple recipients");
+            check(com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.blessing(ally,ClericEffectFamily.SARADOMIN_BLESSING)!=null
+                &&com.openrsc.server.content.cleric.runtime.ClericTimedEffectRuntime.blessing(second,ClericEffectFamily.SARADOMIN_BLESSING)!=null,"one cast reaches both party allies");
             System.out.println("PASS "+checks+" native metal-sigil production, inventory, charging and mixed-cost assertions");
         }
     }

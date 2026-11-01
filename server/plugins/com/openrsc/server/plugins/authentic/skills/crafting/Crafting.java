@@ -1850,6 +1850,8 @@ public class Crafting implements UseInvTrigger,
 		Crafting crafting = new Crafting();
 		int inputId = session.getInputItemId();
 		if (inputId == ItemId.SILVER_BAR.id()) {
+			if (itemId == ClericMetalSigils.BLANK_SILVER_SIGIL)
+				return SigilMoulding.beginProductionFromInterface(player, session, itemId, quantity);
 			int type = crafting.getSilverJewelryProductionType(player, itemId);
 			if (type < 0) {
 				player.message("Nothing interesting happens");
@@ -2244,8 +2246,9 @@ public class Crafting implements UseInvTrigger,
 				new int[]{ItemId.SILVER_BAR.id(), silver_moulds[type]},
 				new int[]{-1, -1}, new int[]{1, 1}));
 		}
+		if (onlyType < 0 && player.getConfig().WANT_MYWORLD) recipes.add(SigilMoulding.silverBlankRecipe(player));
 		return recipes.isEmpty() ? null
-			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose silver jewelry to craft", ItemId.SILVER_BAR.id(), recipes);
+			: new ProductionSession(ProductionSession.TYPE_CRAFTING, "Choose silver items to craft", ItemId.SILVER_BAR.id(), recipes);
 	}
 
 	private void doRangedMouldCasting(final Item bar, final Player player) {

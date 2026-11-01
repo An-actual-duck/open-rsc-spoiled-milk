@@ -6,6 +6,7 @@ import com.openrsc.server.model.entity.GameObject;
 import com.openrsc.server.plugins.authentic.skills.smithing.ShiloFurnaceAccess;
 import com.openrsc.server.content.cleric.ClericMetalSigils;
 import com.openrsc.server.content.cleric.ClericSigilMaterial;
+import com.openrsc.server.content.cleric.ClericSigilProductionCatalog;
 import com.openrsc.server.content.production.ProductionRecipe;
 import com.openrsc.server.content.production.ProductionSession;
 import com.openrsc.server.content.production.ProductionStarter;
@@ -29,7 +30,7 @@ public final class SigilMoulding {
     }
 
     public static boolean openInterface(Player player) {
-        if (!player.getConfig().WANT_MYWORLD || !player.isUsingCustomClient() || !atFurnace(player)) return false;
+        if (!player.getConfig().WANT_MYWORLD || !player.isUsingCustomClient() || !isAtFurnace(player)) return false;
         List<ProductionRecipe> recipes = new ArrayList<ProductionRecipe>();
         for (ClericSigilMaterial material : METALS) {
             int bar = ClericMetalSigils.barFor(material);
@@ -46,11 +47,20 @@ public final class SigilMoulding {
         return true;
     }
 
+    public static ProductionRecipe silverBlankRecipe(Player player) {
+        return new ProductionRecipe(ClericMetalSigils.BLANK_SILVER_SIGIL, 20, 1, 3,
+            player.getSkills().getLevel(Skill.CRAFTING.id()) >= 20,
+            hasMould(player) && player.getCarriedItems().getInventory().countId(384, Optional.of(false)) > 0,
+            new int[]{384}, new int[]{-1}, new int[]{1});
+    }
+
     public static boolean beginProductionFromInterface(Player player, ProductionSession session, int itemId, int quantity) {
         if (!player.getConfig().WANT_MYWORLD || session == null || !session.isType(ProductionSession.TYPE_CRAFTING)
             || session != player.getAttribute("production_session", null)
             || session == player.getAttribute("sigil_mould_used_session", null)
-            || session.getInputItemId() != ClericMetalSigils.SIGIL_MOULD || session.getRecipeByItemId(itemId) == null
+            || !(session.getInputItemId() == ClericMetalSigils.SIGIL_MOULD
+                || (session.getInputItemId() == 384 && itemId == ClericMetalSigils.BLANK_SILVER_SIGIL))
+            || session.getRecipeByItemId(itemId) == null
             || quantity < 1) return false;
         ClericSigilMaterial material = materialForBlank(itemId);
         if (material == null || !canMould(player, material, true)) return false;
@@ -62,7 +72,8 @@ public final class SigilMoulding {
             ActionSender.sendActionProgressBar(player, material.getSourceItemId(), 3);
             delay(3);
             if (ifinterrupted() || !mouldOne(player, material)) { stopbatch(); break; }
-            player.incExp(Skill.CRAFTING.id(), material == ClericSigilMaterial.SILVER ? 10 : 15, true);
+            player.incExp(Skill.CRAFTING.id(), ClericSigilProductionCatalog.toInternalExperience(
+                material == ClericSigilMaterial.SILVER ? 10 : 15), true);
             player.message("You pour the metal into the mould and make three blank sigils");
             updatebatch();
         }
@@ -85,7 +96,7 @@ public final class SigilMoulding {
         Inventory inventory = player.getCarriedItems().getInventory();
         String failure = null;
         if (!player.getConfig().WANT_MYWORLD) return false;
-        if (!atFurnace(player)) failure = "Move back to the furnace to mould sigils";
+        if (!isAtFurnace(player)) failure = "Move back to the furnace to mould sigils";
         else if (player.getSkills().getLevel(Skill.CRAFTING.id()) < material.getCraftingLevel())
             failure = "You need level " + material.getCraftingLevel() + " Crafting to mould these sigils";
         else if (!hasMould(player)) failure = "You need a sigil mould to make blank sigils";
@@ -101,7 +112,7 @@ public final class SigilMoulding {
         return failure == null;
     }
 
-    private static boolean atFurnace(Player player) {
+    public static boolean isAtFurnace(Player player) {
         GameObject furnace = player.getAttribute("sigil_mould_furnace", null);
         return furnace != null && !furnace.isRemoved() && furnace.getWorld() == player.getWorld()
             && (furnace.getID() == SceneryId.FURNACE.id() || furnace.getID() == SceneryId.FURNACE_UNDERGROUND_PASS.id())

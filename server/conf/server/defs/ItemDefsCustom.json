@@ -49234,8 +49234,8 @@
       "weaponPowerBonus": 0,
       "magicBonus": 0,
       "prayerBonus": 0,
-      "basePrice": 0,
-      "isNoteable": 0
+      "basePrice": 450,
+      "isNoteable": 1
     },
     {
       "id": 3431,
