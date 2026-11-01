@@ -27,11 +27,29 @@ public final class ClericSpellGuideCatalog {
           return level != 0 ? level : Integer.compare(a.getStableCode(), b.getStableCode());
         });
     ArrayList<Entry> entries = new ArrayList<Entry>();
+    addOverview(entries);
     for (ClericSpellDef d : ordered) {
-      Entry entry = format(d, resourceName);
+      addPages(entries, format(d, resourceName));
+    }
+    return Collections.unmodifiableList(entries);
+  }
+
+  private static void addPages(List<Entry> entries, Entry entry) {
       List<List<String>> pages = new ArrayList<List<String>>();
       List<String> page = new ArrayList<String>();
       for (List<String> block : entry.blocks) {
+        if (block.size() > 12) {
+          if (!page.isEmpty()) { pages.add(page); page = new ArrayList<String>(); }
+          for (int start = 0; start < block.size();) {
+            List<String> continuation = new ArrayList<String>();
+            if (start > 0) continuation.add(block.get(0));
+            int end = Math.min(block.size(), start + 12 - continuation.size());
+            continuation.addAll(block.subList(start, end));
+            pages.add(continuation);
+            start = end;
+          }
+          continue;
+        }
         if (!page.isEmpty() && page.size() + block.size() > 12) {
           pages.add(page);
           page = new ArrayList<String>();
@@ -49,8 +67,31 @@ public final class ClericSpellGuideCatalog {
                 entry.mechanics,
                 entry.power,
                 pages.get(index)));
-    }
-    return Collections.unmodifiableList(entries);
+  }
+
+  private static void addOverview(List<Entry> entries) {
+    DocumentLines tiers = new DocumentLines();
+    add(tiers, "Worship unlocks Cleric spells. Holy Power determines their power level.");
+    add(tiers, "A spell's tier sets its maximum strength, not its minimum strength.");
+    add(tiers, "Tier 1 allows power levels 1-2; Tier 2 allows 1-4; Tier 3 allows 1-6.");
+    add(tiers, "Each new spell tier adds two possible power levels. You still need enough Holy Power to reach them.");
+    addPages(entries, new Entry(-1, "Cleric spells: tiers and power", "", "", "", tiers));
+
+    DocumentLines power = new DocumentLines();
+    add(power, "Holy Power combines your current Worship level with your strongest equipped holy staff bonus.");
+    add(power, "Reaching a threshold raises the spell's power level, up to its tier's cap.");
+    for (int rank = 1; rank <= 6; rank++)
+      add(power, "Power " + rank + ": " + ClericBlessingContract.powerThreshold(rank - 1) + " Holy Power");
+    add(power, "Tables below list values in power-level order (P1/P2/etc.).");
+    addPages(entries, new Entry(-2, "Holy Power thresholds", "", "", "", power));
+
+    DocumentLines lines = new DocumentLines();
+    add(lines, "Saradomin, Guthix and Zamorak have distinct god lines.");
+    add(lines, "Within a god's blessing or curse line, each higher-tier spell includes the effects from the tiers below.");
+    add(lines, "God sigils select the line. Grace fuels blessings; Blight fuels curses. They are consumed together when casting.");
+    add(lines, "Unify and Greater Unify use Grace alone. Their movement is fixed and does not scale with Holy Power.");
+    add(lines, "Each spell's pages give its targets, sigil cost and effect values. Scroll to continue through the guide.");
+    addPages(entries, new Entry(-3, "God lines and sigils", "", "", "", lines));
   }
 
   private static Entry format(ClericSpellDef d, IntFunction<String> names) {
@@ -146,6 +187,14 @@ public final class ClericSpellGuideCatalog {
         } else effectBlocks.add(text);
       }
       for (String block : effectBlocks) add(lines, block);
+      for (ClericComponentDef component : d.getEffectRanks().get(0).getComponents()) {
+        if (component.getKind() == ClericBlessingContract.POISON_WEAKNESS) {
+          add(lines, "Poison weakness increases poison damage and slows cleansing. Adjustments round up; at least 1 cleansing remains per pulse.");
+        } else if (component.getKind() == ClericBlessingContract.NON_CORPOREAL) {
+          add(lines, "Non-corporeal enemies cannot deal or receive non-magical damage. Magical damage still works in both directions.");
+          add(lines, "Poison keeps cleansing normally while non-corporeal. Blocked poison damage is not dealt later.");
+        }
+      }
     }
     return new Entry(
         d.getStableCode(),
