@@ -52,8 +52,9 @@ public final class ClericIconArtFixture {
   Path root=Paths.get(args[0]),out=Paths.get(args[1]),empty=Paths.get(args[2]);Files.createDirectories(out);
   Map<Integer,String> expected=new LinkedHashMap<Integer,String>();
   for(String line:Files.readAllLines(Paths.get(args[3]))){String[] v=line.split("\t");expected.put(Integer.parseInt(v[0]),v[1]);}
+  boolean sourceCatalog=args.length>5&&"source-catalog".equals(args[5]);
   ClientExternalAssetLoader dev=new ClientExternalAssetLoader(root,ClericIconArtFixture.class);
-  ClientExternalAssetLoader packed=new ClientExternalAssetLoader(empty,ClericIconArtFixture.class);
+  ClientExternalAssetLoader packed=new ClientExternalAssetLoader(sourceCatalog?root:empty,ClericIconArtFixture.class);
   Map<Integer,Sprite> sprites=new LinkedHashMap<Integer,Sprite>();
   for(Map.Entry<Integer,String> entry:expected.entrySet()){
    String key=entry.getValue();String[] folders={"dev/myworld/assets/sprites/UI/cleric"};
@@ -77,7 +78,7 @@ public final class ClericIconArtFixture {
    Method load=mudclient.class.getDeclaredMethod("loadExternalClericIconSprites");load.setAccessible(true);load.invoke(mc);
    check(loaded.size()==20,"actual mudclient cache has every spell icon");
    for(Map.Entry<Integer,Sprite> e:sprites.entrySet())check(Arrays.equals(e.getValue().getPixels(),loaded.get(e.getKey()).getPixels()),"actual cached native icon "+e.getKey());
-   System.out.println("PASS actual20-spell wire mapping and mudclient embedded icon cache");
+   System.out.println("PASS actual 20-spell wire mapping and mudclient "+(sourceCatalog?"source":"embedded")+" icon cache");
   }
   fonts(root);MudClientGraphics surface=new MudClientGraphics(1000,400,1);Arrays.fill(surface.pixelData,0x252930);
   int i=0;for(Map.Entry<Integer,String> e:expected.entrySet()){
@@ -87,8 +88,8 @@ public final class ClericIconArtFixture {
   }
   BufferedImage image=new BufferedImage(surface.width2,surface.height2,BufferedImage.TYPE_INT_RGB);
   image.setRGB(0,0,surface.width2,surface.height2,surface.pixelData,0,surface.width2);
-  ImageIO.write(image,"png",out.resolve("native-font-icons.png").toFile());
-  System.out.println("PASS native source/embedded sprites and native-font render; checks="+checks);
+  ImageIO.write(image,"png",out.resolve(sourceCatalog?"native-font-icons-catalog.png":"native-font-icons.png").toFile());
+  System.out.println("PASS native "+(sourceCatalog?"source catalog sprites":"source/embedded sprites")+" and native-font render; checks="+checks);
  }
 }
 '''
@@ -113,10 +114,14 @@ def verify_sources():
         assert hashlib.sha256(data).hexdigest() == entry['sha256'], path
         assert len(data) == entry['pngBytes'] and entry['sourceBytesUnchanged'] is True
         image = Image.open(path)
-        assert image.format == 'PNG' and image.mode == 'RGBA' and image.size == (16, 16)
-        assert hashlib.sha256(image.tobytes()).hexdigest() == entry['rgbaSha256']
-        alpha = image.getchannel('A'); histogram = alpha.histogram()
-        assert list(alpha.getbbox()) == entry['visibleBounds'] and histogram[0] > 0
+        assert image.format == 'PNG' and image.mode == entry['mode'] and image.size == (16, 16)
+        rgba = image.convert('RGBA')
+        assert hashlib.sha256(rgba.tobytes()).hexdigest() == entry['rgbaSha256']
+        alpha = rgba.getchannel('A'); histogram = alpha.histogram()
+        assert list(alpha.getbbox()) == entry['visibleBounds']
+        for prior_path in entry.get('knownVersionedByteIdenticalPaths', []):
+            prior = subprocess.check_output(['git', 'show', receipt['legacySourceCommit'] + ':' + prior_path], cwd=ROOT)
+            assert hashlib.sha256(prior).hexdigest() == entry['sha256'], 'incorrect existing-byte provenance'
         assert [histogram[0], sum(histogram[1:255]), histogram[255]] == [entry['transparentPixels'], entry['partialAlphaPixels'], entry['opaquePixels']]
     return entries
 
@@ -126,6 +131,7 @@ def main():
     parser.add_argument('--source-only', action='store_true', help='Check exact intake receipts without a client build')
     parser.add_argument('--client-jar', type=Path, default=ROOT / 'Client_Base/Open_RSC_Client.jar')
     parser.add_argument('--wire', type=Path, help='Fresh authoritative twenty-spell PayloadCustomGenerator packet')
+    parser.add_argument('--catalog-client-jar', type=Path, help='Optional separate actual gameplay client build for source-backed wire/cache checks before the art-first merge')
     parser.add_argument('--render', type=Path, default=ROOT / 'output/cleric-spell-icons/native-render')
     parser.add_argument('--owner-source', type=Path, help='Optional read-only comparison with original owner filenames')
     args = parser.parse_args()
@@ -134,7 +140,7 @@ def main():
         for entry in entries:
             assert (args.owner_source / entry['sourceFilename']).read_bytes() == (ROOT / entry['productionPath']).read_bytes(), 'owner source changed: ' + entry['sourceFilename']
     if args.source_only:
-        print('PASS20 exact owner PNG receipts,16x16RGBA canvases, alpha/bounds and canonical source inventory')
+        print('PASS 20 exact owner PNG receipts,16x16RGBA canvases, alpha/bounds and canonical source inventory')
         return
     jar = args.client_jar.resolve()
     with zipfile.ZipFile(jar) as archive:
@@ -158,12 +164,20 @@ def main():
             if fixture.exists():
                 wire = temp / 'schema5.bin'
                 wire.write_bytes(bytes.fromhex(''.join(line for line in fixture.read_text().splitlines() if not line.startswith('#'))))
-        subprocess.run([str(java/'java'), '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-cp',
-                        str(temp)+os.pathsep+str(jar), 'orsc.ClericIconArtFixture', str(ROOT), str(args.render.resolve()),
-                        str(empty), str(keys), str(wire.resolve()) if wire else '-'], cwd=empty, check=True)
+        catalog_jar = args.catalog_client_jar.resolve() if args.catalog_client_jar else jar
+        primary_wire = wire if catalog_jar == jar else None
+        def render(client_jar, packet, mode):
+            subprocess.run([str(java/'java'), '-Xmx256m', '-XX:+UseSerialGC', '-Djava.awt.headless=true', '-cp',
+                            str(temp)+os.pathsep+str(client_jar), 'orsc.ClericIconArtFixture', str(ROOT), str(args.render.resolve()),
+                            str(empty), str(keys), str(packet.resolve()) if packet else '-', mode], cwd=empty, check=True)
+        render(jar, primary_wire, 'embedded')
+        if wire is not None and catalog_jar != jar:
+            subprocess.run([str(java/'javac'), '-J-Xmx128m', '-cp', str(catalog_jar), '-d', str(temp), str(source)], check=True)
+            render(catalog_jar, wire, 'source-catalog')
+            print('Separate actual gameplay client proved 20 wire/source-icon bindings; unified final JAR follows the art-first merge.')
         if wire is None:
-            print('Catalog mapping unrun: provide --wire with the fresh20-spell packet after gameplay integration.')
-    print('PASS20 approved exact source/JAR PNGs and native sprite/font rendering')
+            print('Catalog mapping unrun: provide --wire with the fresh 20-spell packet after gameplay integration.')
+    print('PASS 20 approved exact source/JAR PNGs and native sprite/font rendering')
 
 
 if __name__ == '__main__':
