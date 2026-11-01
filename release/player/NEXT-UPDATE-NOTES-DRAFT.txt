@@ -1,0 +1,34 @@
+SPOILED MILK — NEXT UPDATE (DRAFT)
+
+PRIVATE ACCEPTANCE DRAFT — not published or final gameplay acceptance.
+Release version and alpha/beta label will be chosen after final testing. Update your client before logging in when this release goes live.
+
+Slayer Tower
+A fully decorated tower brings the new Slayer encounters together. Associates control initial entry and access to higher floors; their rooms provide a safe place to talk. Players can freely return down the stairs and leave.
+
+Gem dragons beneath the Crafting Guild
+The caves require level 70 Crafting. Five gem dragon varieties progress from sapphire to dragonstone. Each drops dragon bones and rolls guaranteed uncut gems, alongside a normal loot table focused on crafting supplies, bolts, runes, coins and rare Dragon Metal Scrap. Gem cutter gloves prevent gem-crushing failures; the Gem cutter’s monocle gives a 5% chance of an extra cut gem.
+
+Slow, coatings and antidotes
+Battleaxes can receive a permanent, single-dose Viscous coating, with an option to wipe it clean. Shared Slow and weaker poison contributions work with the existing combat systems. New spider-egg ingredients and antidotes provide more gathering and cleansing options.
+
+Cleric overhaul
+Three growing blessing tiers for Saradomin, Guthix and Zamorak combine their effects as stronger tiers are unlocked. Guthix and Saradomin also have hostile spell lines; Unify and Greater Unify help parties regroup. Holy Power controls spell strength within each tier. The in-game guide explains effects, power thresholds and costs.
+
+Grace, Blight and Moonsilver
+Existing neutral sigils become Grace without replacing players’ stocks. Charge Grace at Divine wellsprings and Blight at Ichor wells; god sigils still use their god altars. Silver and Moonsilver sigils start from moulded blanks, producing three blanks per bar before carving and infusion. Spell costs now use the appropriate combination of sigil grades.
+
+Combat presentation and equipment
+The revised floating hit numbers and their settings are included. Cosmic robes improve combat luck by giving eligible combat rolls another chance; their old critical-hit bonus is replaced. Shared Stagger prevents attacks and provides a common immunity window.
+
+Reliability
+Auction transactions now handle database failures and reconnects more safely. World navigation and NPC visibility have additional fixes for changing levels and reconnecting underground. The final map includes reviewed shoreline, ladder-return and isolated floor-colour repairs.
+
+Known minor visual limitations
+Four existing grey floor joins remain flagged because the current ground-colour palette cannot reproduce their intended grey closely. A broader system for automatic floor-edge matching and separate half-tile materials is deferred.
+
+Not part of this release
+Mystic Blue Dragon, Fierce Red Dragon, Corporeal Beast, Ante, Cleric Tier 4 and the remaining Zamorak hostile spell line remain future work. The development editor remains a separate private pre-alpha tool.
+
+Final artwork
+Cleric spell icons are still being selected by the owner. No new icon choice is assumed in this draft or the current candidate.

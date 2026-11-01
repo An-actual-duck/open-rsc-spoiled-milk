@@ -17,6 +17,7 @@ public final class LayeredEntityPlacements {
 	public static final String ENCODING_V2 = "layered-world-placements-v2";
 	public static final String ENCODING_V3 = "layered-world-placements-v3";
 	public static final String ENCODING_V4 = "layered-world-placements-v4";
+	public static final String ENCODING_V5 = "layered-world-placements-v5";
 	public static final String ENCODING = ENCODING_V3;
 	private static final int MAX_PLACEMENTS = 65536;
 	private static final int MAX_NPC_ROAM_RADIUS = 64;
@@ -67,7 +68,9 @@ public final class LayeredEntityPlacements {
 			schemaVersion == 3 && ENCODING_V3.equals(encoding);
 		boolean version4 =
 			schemaVersion == 4 && ENCODING_V4.equals(encoding);
-		if (!version1 && !version2 && !version3 && !version4) {
+		boolean version5 =
+			schemaVersion == 5 && ENCODING_V5.equals(encoding);
+		if (!version1 && !version2 && !version3 && !version4 && !version5) {
 			throw new PreflightException(
 				"Placement schemaVersion/encoding pair is unsupported.");
 		}
@@ -105,7 +108,7 @@ public final class LayeredEntityPlacements {
 		int placementCount = Math.addExact(
 			Math.addExact(npcValues.size(), itemValues.size()),
 			Math.addExact(sceneryValues.size(), boundaryValues.size()));
-		if ((!version3 && !version4 && placementCount < 1)
+		if ((!version3 && !version4 && !version5 && placementCount < 1)
 			|| npcValues.size() > MAX_PLACEMENTS
 			|| itemValues.size() > MAX_PLACEMENTS
 			|| sceneryValues.size() > MAX_PLACEMENTS
@@ -113,7 +116,7 @@ public final class LayeredEntityPlacements {
 			|| placementCount > MAX_PLACEMENTS) {
 			throw new PreflightException(
 				"World placement set count must be "
-					+ (version3 || version4 ? "0.." : "1..")
+					+ (version3 || version4 || version5 ? "0.." : "1..")
 					+ MAX_PLACEMENTS + ".");
 		}
 
@@ -122,7 +125,7 @@ public final class LayeredEntityPlacements {
 		for (int index = 0; index < npcValues.size(); index++) {
 			Map<String, Object> value =
 				object(npcValues.get(index), "npcs[" + index + "]");
-			if (version4) {
+			if (version4 || version5) {
 				exactKeys(
 					value,
 					"npcs[" + index + "]",
@@ -153,7 +156,7 @@ public final class LayeredEntityPlacements {
 			Position start = position(
 				object(value.get("start"), "npcs[" + index + "].start"),
 				"npcs[" + index + "].start");
-			if (version3 || version4) {
+			if (version3 || version4 || version5) {
 				Map<String, Object> bounds = object(
 					value.get("roamBounds"),
 					"npcs[" + index + "].roamBounds");
@@ -177,7 +180,7 @@ public final class LayeredEntityPlacements {
 					minimum,
 					maximum,
 					"npcs[" + index + "].roamBounds");
-				if (version4) {
+				if (version4 || version5) {
 					rangedInt(value, "respawnSeconds", -1, MAX_RESPAWN_SECONDS);
 				}
 				npcs.add(new NpcPlacement(
@@ -258,13 +261,14 @@ public final class LayeredEntityPlacements {
 		for (int index = 0; index < sceneryValues.size(); index++) {
 			Map<String, Object> value =
 				object(sceneryValues.get(index), "scenery[" + index + "]");
-			exactKeys(
-				value,
-				"scenery[" + index + "]",
-				"placementId",
-				"sceneryId",
-				"position",
-				"direction");
+			if (version5 && value.containsKey("agilityShortcut")) {
+				exactKeys(value, "scenery[" + index + "]",
+					"placementId", "sceneryId", "position", "direction", "agilityShortcut");
+				validateAgilityShortcut(object(value.get("agilityShortcut"), "agilityShortcut"));
+			} else {
+				exactKeys(value, "scenery[" + index + "]",
+					"placementId", "sceneryId", "position", "direction");
+			}
 			String placementId = uniquePlacementId(
 				value, "scenery[" + index + "]", placementIds);
 			Position location = position(
@@ -320,6 +324,40 @@ public final class LayeredEntityPlacements {
 		return new LayeredEntityPlacements(
 			worldSpace, level, encoding,
 			npcs, groundItems, scenery, boundaries);
+	}
+
+	/** Match the server's AgilityShortcut.read contract; never execute behavior. */
+	private static void validateAgilityShortcut(Map<String, Object> value)
+		throws PreflightException {
+		exactKeys(value, "agilityShortcut", "schemaVersion", "template", "action",
+			"requiredLevel", "startChancePercent", "maxChancePercent", "maxChanceLevel",
+			"successDestination", "failureDestination");
+		requireInt(value, "schemaVersion", 1);
+		String template = string(value, "template");
+		if (!Arrays.asList("jump-v1", "crawl-v1", "climb-v1", "swing-v1", "balance-v1")
+			.contains(template)
+			|| !("agility-" + template.substring(0, template.length() - 3))
+				.equals(string(value, "action"))) {
+			throw new PreflightException("Unsupported agility shortcut template/action pair.");
+		}
+		int required = rangedInt(value, "requiredLevel", 1, 99);
+		int maximumLevel = rangedInt(value, "maxChanceLevel", required, 99);
+		int start = rangedInt(value, "startChancePercent", 0, 100);
+		int maximum = rangedInt(value, "maxChancePercent", start, 100);
+		if (maximumLevel == required && start != maximum) {
+			throw new PreflightException("Equal shortcut levels require equal success chances.");
+		}
+		validateShortcutDestination(object(value.get("successDestination"), "successDestination"));
+		validateShortcutDestination(object(value.get("failureDestination"), "failureDestination"));
+	}
+
+	private static void validateShortcutDestination(Map<String, Object> value)
+		throws PreflightException {
+		exactKeys(value, "shortcut destination", "worldSpace", "level", "x", "y");
+		requireString(value, "worldSpace", "global");
+		integer(value, "level");
+		rangedInt(value, "x", 1, 32766);
+		rangedInt(value, "y", 1, 32766);
 	}
 
 	public String getWorldSpace() {

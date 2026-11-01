@@ -4,7 +4,7 @@ This document tracks the high-level path from the current alpha toward beta.
 Detailed implementation plans remain in their subject-specific documents; this
 roadmap defines priorities, milestone boundaries, and release progression.
 
-## Latest owner release checkpoint — October 31, 2026
+## Latest release assembly checkpoint — November 1, 2026
 
 The next major release is now in **assembly and acceptance**; both gem-equipment
 art loose ends are closed. The owner has completed the Slayer Tower and Crafting Guild
@@ -25,11 +25,20 @@ The owner approved the thumb-hidden v2 glove icon and accepted no worn monocle
 visual. Both equipment art loose ends are closed; the approved loupe inventory
 icon remains unchanged.
 
-1. Refresh the paired map export from the latest saved work, preserving it;
-   verify tower access/stairs, associates, gem cave, egg spawns and well shores.
-2. Test the assembled private candidate, then complete release/migration,
-   backup/rollback and launch/update checks. Address demonstrated issues.
-3. Let the owner decide whether the resulting release is the beta milestone.
+1. Finish the owner's Cleric spell-icon selection; preserve the accepted concise
+   spellbook presentation and guide. No icon choice is inferred.
+2. Test the assembled private candidate, then complete exact release artifacts,
+   migration/backups/rollback and final gameplay acceptance. Address demonstrated
+   issues; retain the offline packaging and migration evidence.
+3. Let the owner choose the final release version and whether it marks beta.
+
+The verified repaired map pair is now selected in source for **private final
+acceptance**: fingerprint `e343c03b…e58cf`, 1,787 sectors across nine levels and
+34,598 placements. This includes the tower, gem cave, egg spawns, reviewed well
+shore/ladder repairs and three isolated ground-colour corrections. Four grey
+cosmetic joins remain intentionally unchanged. The owner's editable project and
+older exported packages are preserved. See the
+[candidate assembly record](next-update-candidate-assembly-review.md).
 
 **Deferred:** Mystic Blue Dragon, Fierce Red Dragon and Corporeal Beast need
 worthwhile boss drops and potential hide/armor-set designs before resuming.
@@ -48,8 +57,10 @@ The numbered limited-alpha release sequence ended with
 Current version progression:
 
 - The current release line is `v0.2.x`; normal updates advance the patch
-  version from the latest published tag. The latest release checked during this
-  audit was `v0.2.75` on 2026-08-20.
+  version from the latest published tag. The public deployment verified for this
+  assembly remains `v0.2.89` at `a5043328f`, unchanged by private preparation.
+- `v0.3.0-alpha.1` is the provisional private packaging rehearsal version only.
+  It is not a public tag or a final version/beta decision.
 - The `v0.1.x` line has already advanced through the `v0.2.0` minor milestone.
 - Patch versions are used for fixes, balancing, polish, and incremental work
   within the current milestone.
@@ -81,9 +92,10 @@ rewards, production, persistence and updating. Do not turn that pass into a new
 architecture, boss-design or already-approved-content reapproval project.
 
 The private package is maintained at `/home/justin/spoiled-milk-next-update`.
-Its saved export is frozen and older than the owner's latest authoring work;
-refreshing and verifying it remains a deliberate migration task. Public
-activation follows separately, with fresh permission and the warning window.
+Its repaired paired export is now mirrored byte-for-byte in the Core source
+selection for private final acceptance. This is not public activation or final
+owner acceptance. Public activation follows separately, with fresh permission
+and the warning window.
 
 General terrain workflow and Wilderness requirements are maintained in
 [`terrain-expansion-plan.md`](terrain-expansion-plan.md).
