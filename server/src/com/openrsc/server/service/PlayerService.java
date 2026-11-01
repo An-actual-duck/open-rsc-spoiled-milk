@@ -66,7 +66,7 @@ public class PlayerService implements IPlayerService {
             final Player loaded = new Player(world, rq);
 
             boolean complete = database.atomically(() -> {
-                loadPlayerData(loaded);
+                final LegacyPlayerLocationPersistenceSnapshot persistedLocation = loadPlayerData(loaded);
                 if (loaded.getDatabaseID() != settledAccountId) throw new IllegalStateException("Account identity changed during load");
                 loadPlayerSkills(loaded);
                 loadPlayerLastRecoveryChangeRequest(loaded);
@@ -80,7 +80,7 @@ public class PlayerService implements IPlayerService {
                 loadPlayerCache(loaded);
 				initializeMonsterSlayerState(loaded);
                 loaded.getBank().loadPinnedSlotsFromCache();
-                restorePlayerLayeredLocation(loaded);
+                restorePlayerLayeredLocation(loaded, persistedLocation);
                 loadPlayerLastSpellCast(loaded);
                 loadPlayerNpcKills(loaded);
             });
@@ -214,14 +214,17 @@ public class PlayerService implements IPlayerService {
 		}
 	}
 
-	private void restorePlayerLayeredLocation(final Player player) {
+	private void restorePlayerLayeredLocation(final Player player,
+            final LegacyPlayerLocationPersistenceSnapshot persistedLocation) {
 		if (!configuration.WANT_LAYERED_PLAYER_LOCATION_AUTHORITY) {
 			return;
 		}
 		LayeredPlayerLocationPersistence.RestoreResult restored =
 			LayeredPlayerLocationPersistence.restore(
 				player.getCache().getCacheMap(),
-				player.getLocation(),
+                // Native initialization may already have normalized the runtime
+                // Point. Bootstrap/rebase must compare the original stored receipt.
+                persistedLocation.toLegacyPoint(),
 				configuration.WANT_LAYERED_SYNTHETIC_DEEP_FIXTURE,
 				player.getWorld().getRegionManager()
 					::hasNativeLayeredTerrain);
@@ -324,7 +327,7 @@ public class PlayerService implements IPlayerService {
 			player.getLayeredLocation());
 	}
 
-    private void loadPlayerData(final Player player) throws GameDatabaseException {
+    private LegacyPlayerLocationPersistenceSnapshot loadPlayerData(final Player player) throws GameDatabaseException {
         final PlayerData playerData = database.queryLoadPlayerData(player);
 
         player.setOwner(playerData.playerId);
@@ -386,6 +389,7 @@ public class PlayerService implements IPlayerService {
         player.getSettings().setAppearance(pa);
         player.setMale(playerData.male);
         player.setWornItems(player.getSettings().getAppearance().getSprites());
+        return locationSnapshot;
     }
 
     private void loadPlayerInventory(final Player player) throws GameDatabaseException {
