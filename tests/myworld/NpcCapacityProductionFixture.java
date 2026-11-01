@@ -8,6 +8,7 @@ import com.openrsc.server.net.Packet;
 import com.openrsc.server.net.PacketBuilder;
 import com.openrsc.server.net.rsc.NpcCapacityContract;
 import com.openrsc.server.net.rsc.ClientLimitations;
+import com.openrsc.server.net.rsc.ClericBlessingContract;
 import com.openrsc.server.net.rsc.enums.OpcodeIn;
 import com.openrsc.server.net.rsc.parsers.impl.PayloadCustomParser;
 import com.openrsc.server.net.rsc.struct.incoming.TargetMobStruct;
@@ -150,12 +151,19 @@ public final class NpcCapacityProductionFixture {
             }
             check(hit&&projectile,"missing hit/projectile record");
             // New independent phase state uses the expanded runtime index, never the catalog ID.
-            player.setClientVersion(10055);player.setClientLimitations(ClientLimitations.forVersion(10055));
+            final int phaseClientVersion=ClericBlessingContract.CLIENT_VERSION;
+            player.setClientVersion(phaseClientVersion);player.setClientLimitations(ClientLimitations.forVersion(phaseClientVersion));
             player.getLocalNpcs().clear();
             for(int index=0;index<1023;index++){Npc visible=registry.get(index);visible.resetAfterUpdate();player.getLocalNpcs().add(visible);}
             high.resetAfterUpdate();player.getLocalNpcs().add(high);
             Object phaseOwner=new Object();
             check(com.openrsc.server.model.combat.NonCorporealState.tryEnter(high,phaseOwner,100,3,()->true),"high-index phase entry");
+            // Keep the older consumer as an explicit rejection vector, not a renamed positive case.
+            player.setClientVersion(phaseClientVersion-1);player.setClientLimitations(ClientLimitations.forVersion(phaseClientVersion-1));
+            check(!ClericBlessingContract.supports(player.getClientVersion()),"older phase consumer remains unsupported");
+            packets(player).clear();appearances.invoke(harness.server().getGameUpdater(),player);
+            check(packets(player).stream().noneMatch(p->p.getID()==104),"older consumer received unsupported phase appearance");
+            player.setClientVersion(phaseClientVersion);player.setClientLimitations(ClientLimitations.forVersion(phaseClientVersion));
             packets(player).clear();appearances.invoke(harness.server().getGameUpdater(),player);
             Packet phasePacket=packets(player).stream().filter(p->p.getID()==104).findFirst().orElseThrow(()->new AssertionError("missing phase batch"));
             byte[] phaseBytes=new byte[phasePacket.getBuffer().readableBytes()];phasePacket.getBuffer().getBytes(0,phaseBytes);
