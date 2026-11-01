@@ -155,6 +155,19 @@
         </java>
     </target>
 
+	<target name="test_crafting_guild_cave_access" depends="compile_core,compile_plugins">
+		<mkdir dir="../output/crafting-guild-cave-test"/>
+		<javac srcdir="${test.src}" destdir="../output/crafting-guild-cave-test" debug="on"
+			includes="com/openrsc/server/combat/CraftingGuildCaveAccessFixture.java,com/openrsc/server/combat/CurrentCombatHarness.java,com/openrsc/server/combat/MutableGameClock.java,com/openrsc/server/combat/SeededGameRandom.java"
+			includeantruntime="false" target="${javac.target}" source="${javac.source}" encoding="UTF-8">
+			<classpath><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</javac>
+		<java classname="com.openrsc.server.combat.CraftingGuildCaveAccessFixture" fork="true" failonerror="true" dir="${basedir}">
+			<jvmarg value="-Xmx512m"/><jvmarg value="-XX:+UseSerialGC"/>
+			<classpath><pathelement location="../output/crafting-guild-cave-test"/><pathelement location="${gameplay.overlay.jar}"/><pathelement location="core.jar"/><pathelement location="plugins.jar"/><fileset dir="${lib}" includes="*.jar"/></classpath>
+		</java>
+	</target>
+
 	<target name="test_legends_guild_gate_shortcut" depends="compile_core,compile_plugins">
 		<delete dir="../output/legends-guild-gate-test"/>
 		<mkdir dir="../output/legends-guild-gate-test"/>
@@ -314,7 +327,7 @@
     <target name="compile_combat_tests" depends="compile_combat_core">
         <mkdir dir="${combat.build.test}"/>
         <javac srcdir="${test.src}" destdir="${combat.build.test}" debug="on"
-               includes="com/openrsc/server/combat/**/*.java" excludes="com/openrsc/server/combat/ClericWellInteractionFixture.java,com/openrsc/server/combat/GraceBlightWellInfusionFixture.java,com/openrsc/server/combat/ClericMetalSigilFixture.java"
+               includes="com/openrsc/server/combat/**/*.java" excludes="com/openrsc/server/combat/ClericWellInteractionFixture.java,com/openrsc/server/combat/GraceBlightWellInfusionFixture.java,com/openrsc/server/combat/ClericMetalSigilFixture.java,com/openrsc/server/combat/CraftingGuildCaveAccessFixture.java"
                includeantruntime="false" target="${javac.target}"
                source="${javac.source}" encoding="UTF-8">
             <classpath>

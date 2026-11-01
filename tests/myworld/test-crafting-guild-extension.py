@@ -38,14 +38,24 @@ def main() -> None:
     plugin = MASTER_CRAFTER.read_text(encoding="utf-8")
     require(plugin, "implements TalkNpcTrigger, OpLocTrigger", "Master Crafter object trigger")
     require(plugin, "private static final int CRAFTING_GUILD_EXTENSION_STAIRS = 42;", "stair id")
-    require(plugin, "Point.location(338, 614)", "stair coordinate")
+    require(plugin, "WorldLocation.global(new WorldCoordinate(338, 614, 0))", "exact surface stair location")
     require(plugin, "obj.getID() == CRAFTING_GUILD_EXTENSION_STAIRS", "exact stair guard")
-    require(plugin, "obj.getLocation().equals(CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION)", "coordinate guard")
+    require(plugin, "isCaveStairLocation(obj.getWorldLocation())", "signed-location guard")
     require(plugin, 'command.equals("go down")', "use-action guard")
-    require(plugin, '"That area is currently off limits"', "Master Crafter refusal")
-    require(plugin, '"The Crafting Guild extension is currently off limits"', "fallback refusal")
+    require(plugin, "CRAFTING_GUILD_EXTENSION_STAIRS_LOCATION.equals(location)", "worldspace-qualified guard")
+    require(plugin, "CRAFTING_GUILD_CAVES_LEVEL = 70", "advanced cave Crafting requirement")
+    require(plugin, "getMaxLevel(player, Skill.CRAFTING.id()) >= CRAFTING_GUILD_CAVES_LEVEL", "permanent level gate")
+    require(plugin, '"You need level 70 Crafting to enter the caves below the guild"', "level refusal")
+    require(plugin, '"Gem dragons lurk down there. Be prepared for a dangerous fight"', "danger warning")
+    require(plugin, "npcsay(player, master, CAVES_REQUIREMENT, CAVES_WARNING)", "Master Crafter refusal")
+    require(plugin, "player.message(CAVES_REQUIREMENT)", "fallback level guidance")
+    require(plugin, "player.message(CAVES_WARNING)", "fallback danger guidance")
+    require(plugin, "LADDERS.onObjectAction(obj, command, player)", "normal stair transport")
+    for retired in ("currently off limits", "still preparing the guild extension"):
+        if retired in plugin:
+            raise SystemExit(f"FAIL: retired permanent closure remains: {retired}")
 
-    print("PASS: Crafting Guild extension stairs are placed and blocked by the Master Crafter")
+    print("PASS: Crafting Guild cave stairs require 70 Crafting and retain normal transport with danger guidance")
 
 
 if __name__ == "__main__":
