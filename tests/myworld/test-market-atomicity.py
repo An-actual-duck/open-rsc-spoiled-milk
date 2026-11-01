@@ -26,15 +26,15 @@ if a.mysql_manifest:
 classpath = os.pathsep.join(str(x) for x in [root/'output/combat-test/test-classes', root/'output/combat-test/core-classes', *sorted((root/'server/lib').glob('*.jar'))])
 java = pathlib.Path(os.environ.get('JAVA_HOME','/home/justin/jdk8u482-b08'))/'bin/java'
 results=[]
-for mode, expected in [('test',0),('crash',77),('recover',0)]:
+for mode, expected in [('test',0),('crash-before',77),('recover-before',0),('crash',77),('recover',0)]:
     start=time.monotonic(); log=output/(mode+'.log')
     with log.open('w') as stream:
         result=subprocess.run([str(java),'-Xmx512m','-XX:+UseSerialGC','-cp',classpath,'com.openrsc.server.combat.MarketAtomicityFixture',mode],cwd=runtime,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=180)
     results.append(dict(mode=mode, exit=result.returncode, expected=expected, seconds=round(time.monotonic()-start,2), log=str(log)))
-    if result.returncode != expected:
+    if result.returncode != expected or (not mode.startswith('crash') and ('PASS market ' not in log.read_text() or 'java.lang.AssertionError' in log.read_text())):
         print(log.read_text()[-8000:]); raise SystemExit('Market fixture failed: '+mode+'; evidence '+str(output))
 (output/'results.json').write_text(json.dumps(dict(backend=backend, results=results),indent=2)+'\n')
-for mode in ['test','recover']:
+for mode in ['test','recover-before','recover']:
     for line in (output/(mode+'.log')).read_text().splitlines():
-        if line.startswith('PASS market'): print(line)
+        if 'PASS market' in line: print(line[line.index('PASS market'):])
 print('Evidence:',output)

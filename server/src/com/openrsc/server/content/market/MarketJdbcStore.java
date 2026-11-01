@@ -149,9 +149,9 @@ public class MarketJdbcStore {
 
     public void changeListing(Connection c, MarketItem old, int left, int price, boolean cancelled) throws SQLException {
         try (PreparedStatement s = c.prepareStatement("UPDATE " + table("auctions")
-                + " SET amount_left=?,price=?,`sold-out`=?,was_cancel=? WHERE auctionID=? AND `sold-out`=0 AND amount_left=? AND price=?")) {
+                + " SET amount_left=?,price=?,`sold-out`=?,was_cancel=?,buyer_info=? WHERE auctionID=? AND `sold-out`=0 AND amount_left=? AND price=?")) {
             s.setInt(1, left); s.setInt(2, price); s.setInt(3, left == 0 ? 1 : 0); s.setInt(4, cancelled ? 1 : 0);
-            s.setInt(5, old.getAuctionID()); s.setInt(6, old.getAmountLeft()); s.setInt(7, old.getPrice());
+            s.setString(5, old.getBuyers()); s.setInt(6, old.getAuctionID()); s.setInt(7, old.getAmountLeft()); s.setInt(8, old.getPrice());
             if (s.executeUpdate() != 1) throw new SQLException("Auction changed; refresh before trying again");
         }
         checkpoint("listing-update");
@@ -199,12 +199,18 @@ public class MarketJdbcStore {
     }
 
     public void saveContainers(Connection c, int actor, List<Item> inventory, List<Item> bank) throws SQLException {
+        Set<Long> previousIds = new HashSet<>();
+        for (String container : Arrays.asList("invitems", "bank")) {
+            try (PreparedStatement s = c.prepareStatement("SELECT itemID FROM " + table(container) + " WHERE playerID=?")) {
+                s.setInt(1, actor); try (ResultSet r = s.executeQuery()) { while (r.next()) previousIds.add(r.getLong(1)); }
+            }
+        }
         Set<Long> ids = new HashSet<>();
         for (List<Item> items : Arrays.asList(inventory, bank)) for (Item item : items) {
             if (item.getItemId() < 0 || item.getAmount() <= 0 || !ids.add(item.getItemId())) throw new SQLException("Invalid container item identity");
             for (String container : Arrays.asList("invitems", "bank", "equipped")) {
-                try (PreparedStatement s = c.prepareStatement("SELECT playerID FROM " + table(container) + " WHERE itemID=? AND playerID<>?")) {
-                    s.setLong(1, item.getItemId()); s.setInt(2, actor);
+                try (PreparedStatement s = c.prepareStatement("SELECT playerID FROM " + table(container) + " WHERE itemID=?" + (container.equals("equipped") ? "" : " AND playerID<>?"))) {
+                    s.setLong(1, item.getItemId()); if (!container.equals("equipped")) s.setInt(2, actor);
                     try (ResultSet rs = s.executeQuery()) { if (rs.next()) throw new SQLException("Item belongs to a different player"); }
                 }
             }
@@ -214,6 +220,15 @@ public class MarketJdbcStore {
         }
         writeContainer(c, actor, "invitems", inventory); checkpoint("inventory-save");
         writeContainer(c, actor, "bank", bank); checkpoint("bank-save");
+        previousIds.removeAll(ids);
+        for (Long removed : previousIds) {
+            try (PreparedStatement s = c.prepareStatement("DELETE FROM " + table("itemstatuses") + " WHERE itemID=?"
+                    + " AND NOT EXISTS (SELECT 1 FROM " + table("invitems") + " WHERE itemID=?)"
+                    + " AND NOT EXISTS (SELECT 1 FROM " + table("bank") + " WHERE itemID=?)"
+                    + " AND NOT EXISTS (SELECT 1 FROM " + table("equipped") + " WHERE itemID=?)")) {
+                for (int i=1;i<=4;i++) s.setLong(i,removed); s.executeUpdate();
+            }
+        }
     }
 
     private void writeContainer(Connection c, int actor, String name, List<Item> items) throws SQLException {

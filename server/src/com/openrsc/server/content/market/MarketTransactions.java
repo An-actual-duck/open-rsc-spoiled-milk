@@ -37,9 +37,10 @@ public final class MarketTransactions {
                     Inventory inventory = p.getCarriedItems().getInventory().copyForTransaction();
                     Bank bank = p.getBank().copyForTransaction();
                     boolean committed = false;
+                    MarketItem[] notice = new MarketItem[1];
                     try {
                         committed = store.transact(op, c -> {
-                            settle(c, op, inventory, bank);
+                            settle(c, op, inventory, bank, notice);
                             store.saveContainers(c, op.actorId, inventory.getItems(), bank.getItems());
                         });
                         if (committed) {
@@ -66,14 +67,26 @@ public final class MarketTransactions {
                     if (committed) {
                         ActionSender.sendInventory(p);
                         if (p.accessingBank()) ActionSender.showBank(p);
-                        p.message("Auction transaction completed. Refresh the auction to see the updated listings.");
+                        p.message("Auction transaction completed.");
+                        try {
+                            world.getMarket().addRequestOpenAuctionHouseTask(p);
+                            if (notice[0] != null && op.kind == MarketOperation.Kind.BUY) {
+                                Player seller = world.getPlayerID(notice[0].getSeller());
+                                if (seller != null) seller.message("An auction sale completed. You can collect your earnings from a bank.");
+                            }
+                            com.openrsc.server.net.DiscordService discord = world.getServer().getDiscordService();
+                            if (discord != null && notice[0] != null) {
+                                if (op.kind == MarketOperation.Kind.CREATE) discord.auctionAdd(notice[0]);
+                                else if (op.kind == MarketOperation.Kind.BUY) discord.auctionBuy(notice[0]);
+                            }
+                        } catch (RuntimeException notification) { LOGGER.warn("Auction committed; notification failed for {}", op.id, notification); }
                     } else p.message("That auction request was already completed.");
                 }
             }
         }
     }
 
-    private void settle(Connection c, MarketOperation op, Inventory inventory, Bank bank) throws SQLException {
+    private void settle(Connection c, MarketOperation op, Inventory inventory, Bank bank, MarketItem[] notice) throws SQLException {
         Player p = op.actor;
         if (!op.hasCurrentActor()) throw new SQLException("Auction session changed");
         if (p.isIronMan(IronmanMode.Ironman.id()) || p.isIronMan(IronmanMode.Ultimate.id())
@@ -95,7 +108,10 @@ public final class MarketTransactions {
                 store.checkpoint("buyer-stage");
                 store.creditClaim(c, listing.getSeller(), ItemId.COINS.id(), (int) total, "Auction sale");
                 int remaining = listing.getAmountLeft() - amount;
+                String buyer = "[" + (System.currentTimeMillis()/1000) + ": " + p.getUsername() + ": x" + amount + "]";
+                listing.setBuyers(listing.getBuyers().isEmpty() ? buyer : listing.getBuyers() + ", \n" + buyer);
                 store.changeListing(c, listing, remaining, Math.multiplyExact(remaining, unit), false);
+                listing.setAmountLeft(remaining); listing.setPrice(Math.multiplyExact(remaining, unit)); notice[0] = listing;
                 break;
             }
             case CREATE: {
@@ -105,6 +121,7 @@ public final class MarketTransactions {
                 debit(inventory, op.catalogId, op.amount, true);
                 store.checkpoint("seller-stage");
                 store.createListing(c, op, p.getUsername());
+                notice[0] = new MarketItem(-1, op.catalogId, op.amount, op.amount, op.price, op.actorId, p.getUsername(), "", System.currentTimeMillis()/1000);
                 break;
             }
             case CANCEL: {
@@ -156,7 +173,7 @@ public final class MarketTransactions {
         boolean note = !def.isStackable() && amount > 1;
         Item delivery = new Item(catalog, amount, note);
         if (!bankOnly && catalog <= player.getClientLimitations().maxItemId && (!note || def.isNoteable())
-                && inventory.canHold(delivery)) {
+                && MarketInventoryAdmission.canReceive(inventory, catalog, amount, def.isStackable())) {
             if (!inventory.add(delivery, false)) throw new SQLException("Auction inventory admission failed");
             return;
         }
